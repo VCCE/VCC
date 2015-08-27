@@ -1,0 +1,509 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU MENU DISCARDABLE 
+BEGIN
+    POPUP "File"
+    BEGIN
+        MENUITEM "Run",                         ID_FILE_RUN
+        MENUITEM "Save Config",                 ID_FILE_SAVE, GRAYED
+        MENUITEM "Load Config",                 ID_FILE_LOAD, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "[F9] Hard Reset",             ID_FILE_RESET
+        MENUITEM "[F5] Soft Reset",             ID_FILE_RESET_SFT
+        MENUITEM SEPARATOR
+        MENUITEM "Exit",                        ID_FILE_EXIT
+    END
+    POPUP "Configuration"
+    BEGIN
+        MENUITEM "Config",                      ID_CONFIGURE_OPTIONS
+    END
+    POPUP "Help", HELP
+    BEGIN
+        MENUITEM "About Vcc",                   IDM_HELP_ABOUT
+    END
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_COCO3               ICON    DISCARDABLE     "icon1.ico"
+IDI_BINFILE             ICON    DISCARDABLE     "binfile.ico"
+IDI_CART                ICON    DISCARDABLE     "progpack.ico"
+IDI_MOTO                ICON    DISCARDABLE     "moto.ico"
+IDI_HITACHI2            ICON    DISCARDABLE     "hitachi.ico"
+IDI_RGB                 ICON    DISCARDABLE     "rgb.ico"
+IDI_COMPOSITE           ICON    DISCARDABLE     "composite.ico"
+IDI_AUDIO               ICON    DISCARDABLE     "ico00004.ico"
+IDI_KEYBOARD            ICON    DISCARDABLE     "Keyboard.ico"
+IDI_JOYSTICK            ICON    DISCARDABLE     "joystick.ico"
+IDI_MOUSE               ICON    DISCARDABLE     "mouse.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 232, 311
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "About"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,172,295,50,14
+    CTEXT           "This space for notes",IDC_TITLE,14,133,65,8
+    LTEXT           "Copyright 2015 By",IDC_STATIC,17,143,61,8
+    LTEXT           "Joseph Forgione",IDC_STATIC,19,152,53,8
+    CONTROL         108,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,4,3,
+                    217,45
+    CONTROL         156,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE,12,53,
+                    77,57,WS_EX_DLGMODALFRAME
+    LTEXT           "Another classic computer canceled before it's time!",
+                    IDC_STATIC,12,115,81,19
+    LTEXT           "F11 = Fullscreen Toggle",IDC_STATIC,108,134,77,8
+    GROUPBOX        "Keyboard Special keys",IDC_STATIC,104,51,110,96,
+                    BS_CENTER
+    LTEXT           "F3 = NA",IDC_STATIC,108,62,27,8
+    LTEXT           "F10 = Fullscreen Status Toggle",IDC_STATIC,108,125,99,8
+    LTEXT           "F9 = Hard Reset (Power Cycle)",IDC_STATIC,108,116,98,8
+    LTEXT           "F4 = NA",IDC_STATIC,108,71,27,8
+    LTEXT           "F6 = RGB/Composite Toggle",IDC_STATIC,108,89,92,8
+    LTEXT           "F5 = Soft Reset",IDC_STATIC,108,80,50,8
+    LTEXT           "F7 = NA",IDC_STATIC,108,98,27,8
+    LTEXT           "F8 = Throttle Toggle",IDC_STATIC,108,107,65,8
+    LTEXT           "VCC (Virtual Color Computer) is free software: you can redistribute",
+                    IDC_STATIC,1,164,209,11
+    LTEXT           "it and/or modify it under the terms of the GNU General Public License",
+                    IDC_STATIC,1,175,224,11
+    LTEXT           "as published by the Free Software Foundation, either version 3 of the",
+                    IDC_STATIC,1,186,223,8
+    LTEXT           "License, or (at your option) any later version.",
+                    IDC_STATIC,1,197,159,8
+    LTEXT           "VCC (Virtual Color Computer) is distributed in the hope that it will ",
+                    IDC_STATIC,1,213,207,8
+    LTEXT           "be useful, but WITHOUT ANY WARRANTY; without even the implied warranty",
+                    IDC_STATIC,1,224,223,8
+    LTEXT           "of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+                    IDC_STATIC,1,235,226,8
+    LTEXT           "See the GNU General Public License for more details.",
+                    IDC_STATIC,1,246,174,8
+    LTEXT           "You should have received a copy of the GNU General Public License",
+                    IDC_STATIC,1,263,219,8
+    LTEXT           "along with VCC (Virtual Color Computer). If not, see http://www.gnu.org/licenses/.",
+                    IDC_STATIC,1,274,174,18
+END
+
+IDD_TCONFIG DIALOG DISCARDABLE  0, 0, 301, 205
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Vcc Options"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,6,187,36,14
+    PUSHBUTTON      "Cancel",IDCANCEL,82,187,36,14
+    CONTROL         "Tab1",IDC_CONFIGTAB,"SysTabControl32",0x0,6,2,289,181
+    PUSHBUTTON      "Apply",IDAPPLY,44,187,36,14
+END
+
+IDD_DISPLAY DIALOGEX 0, 0, 211, 82
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "[F8] Throttle Speed",IDC_THROTTLE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,71,60,77,10
+    CONTROL         "Slider1",IDC_FRAMESKIP,"msctls_trackbar32",TBS_TOP | 
+                    TBS_NOTICKS | WS_TABSTOP,108,20,51,15,WS_EX_CLIENTEDGE
+    EDITTEXT        IDC_FRAMEDISPLAY,169,20,27,15,ES_AUTOHSCROLL | 
+                    ES_READONLY
+    CONTROL         "Scan Lines",IDC_SCANLINES,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,9,48,51,10
+    GROUPBOX        "Frame Skip",IDC_STATIC,101,6,106,35,BS_CENTER
+    CONTROL         "Force Aspect",IDC_ASPECT,"Button",BS_AUTOCHECKBOX | 
+                    WS_DISABLED | WS_TABSTOP,9,60,58,10
+    CONTROL         "Allow Resize",IDC_RESIZE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,71,48,56,10
+    GROUPBOX        "[F6] Monitor Type",IDC_STATIC,5,6,88,34,BS_CENTER
+    ICON            "",IDC_MONTYPE,65,17,21,20
+    RADIOBUTTON     "RGB",IDC_RGB,9,15,31,10
+    RADIOBUTTON     "Composite",IDC_COMPOSITE,9,28,49,10
+END
+
+IDD_CPU DIALOGEX 0, 0, 257, 114
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "Slider1",IDC_CLOCKSPEED,"msctls_trackbar32",TBS_TOP | 
+                    TBS_NOTICKS | WS_TABSTOP,77,27,122,15,WS_EX_CLIENTEDGE
+    EDITTEXT        IDC_CLOCKDISPLAY,203,27,45,15,ES_AUTOHSCROLL | 
+                    ES_READONLY
+    GROUPBOX        "Over-Clocking",IDC_STATIC,75,16,178,34,BS_CENTER
+    ICON            "",IDC_CPUICON,88,76,20,20
+    RADIOBUTTON     "Motorola MC6809",IDC_6809,11,74,72,10
+    RADIOBUTTON     "Hitachi HD6309",IDC_6309,11,87,67,10,WS_TABSTOP
+    GROUPBOX        "Memory Size",IDC_STATIC,5,5,60,54,BS_CENTER
+    RADIOBUTTON     "128 K",IDC_128K,9,15,35,10
+    RADIOBUTTON     "512 K",IDC_512K,9,25,35,10
+    RADIOBUTTON     "2048 K",IDC_2M,9,36,39,10
+    RADIOBUTTON     "8192 K",IDC_8M,9,47,39,10
+    GROUPBOX        "CPU",IDC_STATIC,5,63,109,44,BS_CENTER
+END
+
+IDD_AUDIO DIALOG DISCARDABLE  0, 0, 217, 160
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Sound",IDC_STATIC,2,2,182,76,BS_CENTER
+    COMBOBOX        IDC_SOUNDCARD,8,20,129,53,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    LTEXT           "Output device",IDC_STATIC,9,10,46,8
+    COMBOBOX        IDC_RATE,7,47,92,58,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    LTEXT           "Sound Quality",IDC_STATIC,8,37,57,8
+    CONTROL         "Progress1",IDC_PROGRESSLEFT,"msctls_progress32",
+                    PBS_VERTICAL | PBS_SMOOTH,149,12,7,58
+    CONTROL         "Progress1",IDC_PROGRESSRIGHT,"msctls_progress32",
+                    PBS_VERTICAL | PBS_SMOOTH,167,12,7,58
+END
+
+IDD_INPUT DIALOG DISCARDABLE  0, 0, 270, 146
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    COMBOBOX        IDC_KBCONFIG,13,17,95,61,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    GROUPBOX        "Keyboard Mapping",IDC_STATIC,7,7,109,29,BS_CENTER
+END
+
+IDD_JOYSTICK DIALOG DISCARDABLE  0, 0, 271, 158
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "Fire 1",IDC_STATIC,56,118,18,8
+    LTEXT           "Fire 2",IDC_STATIC,56,134,18,8
+    LTEXT           "Left",IDC_STATIC,58,59,13,8
+    LTEXT           "Right",IDC_STATIC,54,73,18,8
+    LTEXT           "Up",IDC_STATIC,62,88,10,8
+    LTEXT           "Down",IDC_STATIC,54,104,20,8
+    LTEXT           "Fire 1",IDC_STATIC,190,118,18,8
+    LTEXT           "Fire 2",IDC_STATIC,190,134,18,8
+    LTEXT           "Left",IDC_STATIC,192,59,13,8
+    LTEXT           "Right",IDC_STATIC,188,73,18,8
+    LTEXT           "Up",IDC_STATIC,196,88,10,8
+    LTEXT           "Down",IDC_STATIC,188,104,20,8
+    COMBOBOX        IDC_LEFT_LEFT,75,56,48,88,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_LEFT_RIGHT,75,72,48,93,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_LEFT_UP,75,86,48,81,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_LEFT_DOWN,75,102,48,80,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_LEFT_FIRE1,75,116,48,82,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_LEFT_FIRE2,75,131,48,81,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_RIGHT_LEFT,210,56,48,97,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_RIGHT_RIGHT,210,72,48,97,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_RIGHT_UP,210,86,48,84,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_RIGHT_DOWN,210,101,48,77,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_RIGHT_FIRE1,210,116,48,84,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_RIGHT_FIRE2,210,131,48,99,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    RADIOBUTTON     "Keyboard",IDC_LEFT_KEYBOARD,8,58,46,10
+    RADIOBUTTON     "Joystick",IDC_LEFTJOYSTICK,8,30,41,10
+    RADIOBUTTON     "Audio",IDC_LEFTAUDIO,8,17,34,10,WS_DISABLED
+    COMBOBOX        IDC_LEFTAUDIODEVICE,49,15,75,57,CBS_DROPDOWNLIST | 
+                    WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_LEFTJOYSTICKDEVICE,49,30,75,56,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Left Joystick Input",IDC_STATIC,3,4,128,146,BS_CENTER
+    RADIOBUTTON     "Keyboard",IDC_RIGHT_KEYBOARD,143,58,46,10
+    RADIOBUTTON     "Joystick",IDC_RIGHTJOYSTICK,143,30,41,10
+    RADIOBUTTON     "Audio",IDC_RIGHTAUDIO,143,17,34,10,WS_DISABLED
+    COMBOBOX        IDC_RIGHTAUDIODEVICE,185,15,75,57,CBS_DROPDOWNLIST | 
+                    WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_RIGHTJOYSTICKDEVICE,185,31,75,56,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Right Joystick Input",IDC_STATIC,139,4,128,146,
+                    BS_CENTER
+    RADIOBUTTON     "Mouse",IDC_LEFT_USEMOUSE,8,44,37,10
+    RADIOBUTTON     "Mouse",IDC_RIGHT_USEMOUSE,143,44,37,10
+    ICON            "",IDC_LEFTICON,13,85,20,20
+    ICON            "",IDC_RIGHTICON,149,85,20,20
+END
+
+IDD_MISC DIALOG DISCARDABLE  0, 0, 222, 116
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "AutoStart Emulation",IDC_AUTOSTART,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,12,13,78,10
+    GROUPBOX        "Misc.",IDC_STATIC,6,5,88,38,BS_CENTER
+    CONTROL         "AutoStart Cart",IDC_AUTOCART,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,12,27,60,10
+END
+
+IDD_CASSETTE DIALOGEX 0, 0, 257, 93
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Play",IDC_PLAY,44,43,35,18,BS_CENTER | BS_VCENTER,
+                    WS_EX_DLGMODALFRAME
+    PUSHBUTTON      "Rec",IDC_REC,5,43,35,18,0,WS_EX_DLGMODALFRAME
+    PUSHBUTTON      "Rewind",IDC_RESET,161,43,35,18,0,WS_EX_DLGMODALFRAME
+    EDITTEXT        IDC_TAPEFILE,5,14,163,15,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Stop",IDC_STOP,83,43,35,18,0,WS_EX_DLGMODALFRAME
+    PUSHBUTTON      "Browse",IDC_TBROWSE,175,14,50,14
+    LTEXT           "Counter",IDC_STATIC,76,81,26,8
+    LTEXT           "Mode",IDC_STATIC,18,81,19,8
+    PUSHBUTTON      "Eject",IDC_EJECT,122,43,35,18,0,WS_EX_DLGMODALFRAME
+    CONTROL         "",IDC_TCOUNT,"RICHEDIT",ES_READONLY | ES_NUMBER | 
+                    WS_BORDER | WS_TABSTOP,53,65,77,15,WS_EX_CLIENTEDGE | 
+                    WS_EX_RIGHT | WS_EX_STATICEDGE
+    CONTROL         "",IDC_MODE,"RICHEDIT",ES_READONLY | WS_BORDER | 
+                    WS_TABSTOP,7,66,40,14,WS_EX_CLIENTEDGE | 
+                    WS_EX_STATICEDGE
+END
+
+IDD_BITBANGER DIALOG DISCARDABLE  0, 0, 268, 110
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDC_SERIALFILE,7,7,254,14,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Open",IDC_OPEN,7,26,50,14
+    PUSHBUTTON      "Close",IDC_CLOSE,61,26,50,14
+    CONTROL         "Add LF to CR",IDC_LF,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,46,61,10
+    CONTROL         "Print Monitor window",IDC_PRINTMON,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,58,81,10
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 1
+        RIGHTMARGIN, 230
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 309
+    END
+
+    IDD_TCONFIG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 294
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 198
+    END
+
+    IDD_DISPLAY, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 207
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 78
+    END
+
+    IDD_CPU, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 250
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 107
+    END
+
+    IDD_AUDIO, DIALOG
+    BEGIN
+        RIGHTMARGIN, 209
+        BOTTOMMARGIN, 154
+    END
+
+    IDD_INPUT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 263
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 139
+    END
+
+    IDD_JOYSTICK, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 264
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 151
+    END
+
+    IDD_MISC, DIALOG
+    BEGIN
+        RIGHTMARGIN, 186
+        BOTTOMMARGIN, 95
+    END
+
+    IDD_BITBANGER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 261
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 103
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 2,0,0,0
+ PRODUCTVERSION 2,0,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x29L
+#else
+ FILEFLAGS 0x28L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "How bored are you that your reading this?\0"
+            VALUE "CompanyName", "Not Radio Shack\0"
+            VALUE "FileDescription", "Vcc\0"
+            VALUE "FileVersion", "2, 0, 0, 0\0"
+            VALUE "InternalName", "Poco\0"
+            VALUE "LegalCopyright", "Copyright © 2010 by BitRot Software\0"
+            VALUE "LegalTrademarks", "BLAZEMONGER!\0"
+            VALUE "OriginalFilename", "Vcc.exe\0"
+            VALUE "PrivateBuild", "For a good time call 867-5309 Jenny ;)\0"
+            VALUE "ProductName", "Vcc\0"
+            VALUE "ProductVersion", "26-3334\0"
+            VALUE "SpecialBuild", "Tandy Color Computer 3\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BENDER              BITMAP  DISCARDABLE     "bender.bmp"
+IDB_NOMUTE              BITMAP  DISCARDABLE     "Speaker1.bmp"
+IDB_MUTE                BITMAP  DISCARDABLE     "Speaker2.bmp"
+IDB_VCC                 BITMAP  DISCARDABLE     "vcc.bmp"
+IDB_3GUYS               BITMAP  DISCARDABLE     "3guys.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_NONE                CURSOR  DISCARDABLE     "cursor1.cur"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_APP_TITLE           "Vcc 2.00"
+    IDS_CATNUMBER           "26-3334"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
