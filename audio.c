@@ -16,7 +16,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <dplay.h>
+//#include <dplay.h>
 #include <dsound.h>
 #include <stdio.h>
 #include "defines.h"

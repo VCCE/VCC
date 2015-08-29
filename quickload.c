@@ -57,7 +57,7 @@ unsigned char QuickLoad(char *BinFileName)
 		return(3);				//Not enough memory
 	}
 	strcpy(Extension,PathFindExtension(BinFileName));
-	strlwr(Extension);
+	_strlwr(Extension);
 	if ( (strcmp(Extension,".rom")==0) | (strcmp(Extension,".ccc")==0))
 	{
 		InsertModule (BinFileName);

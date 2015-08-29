@@ -27,7 +27,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "resource.h" 
 #include "wd1793.h"
 #include "distortc.h"
-//#include "diskrom.h"
 #include "fd502.h"
 #include "..\fileops.h"
 #define EXTROMSIZE 16384
@@ -641,6 +640,7 @@ void LoadConfig(void)
 	char ModName[MAX_LOADSTRING]="";
 	unsigned char Index=0;
 	char Temp[16]="";
+	char DiskRomPath[MAX_PATH], RGBRomPath[MAX_PATH];
 	char DiskName[MAX_PATH]="";
 	unsigned int RetVal=0;
 	HANDLE hr=NULL;
@@ -650,8 +650,13 @@ void LoadConfig(void)
 	PersistDisks=GetPrivateProfileInt(ModName,"Persist",1,IniFile);  
 	CheckPath(RomFileName);
 	LoadExtRom(External,RomFileName); //JF
-	LoadExtRom(TandyDisk,"disk11.rom");
-	LoadExtRom(RGBDisk,"rgbdos.rom");
+	GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
+	PathRemoveFileSpec(DiskRomPath);
+	strcpy(RGBRomPath, DiskRomPath);
+	strcat(DiskRomPath, "disk11.rom"); //Failing silent, Maybe we should throw a warning?
+	strcat(RGBRomPath, "rgbdos.rom");	//Future, Grey out dialog option if can't find file
+	LoadExtRom(TandyDisk, DiskRomPath);
+	LoadExtRom(RGBDisk, RGBRomPath);
 
 	if (PersistDisks)
 		for (Index=0;Index<4;Index++)

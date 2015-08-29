@@ -20,7 +20,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "windows.h"
 #include "defines.h"
-#include <iostream.h>
+//#include <iostream.h>
 #include <commctrl.h>
 #include "stdio.h"
 #include <Richedit.h>
@@ -80,7 +80,7 @@ static unsigned int TapeCounter=0;
 static unsigned char Tmode=STOP;
 char Tmodes[4][10]={"STOP","PLAY","REC","STOP"};
 
-static NumberOfSoundCards=0;
+static int NumberOfSoundCards=0;
 unsigned char XY2Disp (unsigned char,unsigned char);
 void Disp2XY(unsigned char *,unsigned char *,unsigned char);
 void BuildKeyboardTable(void);

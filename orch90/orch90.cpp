@@ -16,8 +16,10 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <windows.h>
+#include <stdio.h>
 #include "defines.h"
 #include "resource.h" 
+#include "..\fileops.h"
 
 typedef void (*SETCART)(unsigned char);
 typedef void (*SETCARTPOINTER)(SETCART);
@@ -25,6 +27,8 @@ typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 static HINSTANCE g_hinstDLL=NULL;
 static unsigned char LeftChannel=0,RightChannel=0;
 static void (*PakSetCart)(unsigned char)=NULL;
+unsigned char LoadExtRom(char *);
+static unsigned char Rom[8192];
 BOOL WINAPI DllMain(
     HINSTANCE hinstDLL,  // handle to DLL module
     DWORD fdwReason,     // reason for calling function
@@ -82,12 +86,19 @@ extern "C"
 {
 	__declspec(dllexport) unsigned char ModuleReset(void)
 	{
-		if (PakSetCart!=NULL)
+		char RomPath[MAX_PATH];
+
+		memset(Rom, 0xff, 8192);
+		GetModuleFileName(NULL, RomPath, MAX_PATH);
+		PathRemoveFileSpec(RomPath);
+		strcpy(RomPath, "ORCH90.ROM");
+		
+		if ((PakSetCart!=NULL) & LoadExtRom(RomPath))	//If we can load the rom them assert cart 
 			PakSetCart(1);
 		return(NULL);
 	}
 }
-/*
+
 extern "C"
 {
 	__declspec(dllexport) unsigned char SetCart(SETCART Pointer)
@@ -97,8 +108,8 @@ extern "C"
 		return(NULL);
 	}
 }
-*/
-/*
+
+
 extern "C"
 {
 	__declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
@@ -106,7 +117,7 @@ extern "C"
 		return(Rom[Address & 8191]);
 	}
 }
-*/
+
 
 
 // This gets called at the end of every scan line 262 Lines * 60 Frames = 15780 Hz 15720
@@ -121,3 +132,22 @@ extern "C"
 
 
 
+unsigned char LoadExtRom(char *FilePath)	//Returns 1 on if loaded
+{
+
+	FILE *rom_handle = NULL;
+	unsigned short index = 0;
+	unsigned char RetVal = 0;
+
+	rom_handle = fopen(FilePath, "rb");
+	if (rom_handle == NULL)
+		memset(Rom, 0xFF, 8192);
+	else
+	{
+		while ((feof(rom_handle) == 0) & (index<8192))
+			Rom[index++] = fgetc(rom_handle);
+		RetVal = 1;
+		fclose(rom_handle);
+	}
+	return(RetVal);
+}

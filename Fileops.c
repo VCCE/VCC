@@ -18,6 +18,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "fileops.h"
 
 void ValidatePath(char *Path)
@@ -41,7 +42,7 @@ int CheckPath( char *Path)	//Return 1 on Error
 
 	if ((strlen(Path)==0) | (strlen(Path) > MAX_PATH))
 		return(1);
-	hr=CreateFile(Path,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+	hr=CreateFile(Path,0,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
 	if (hr==INVALID_HANDLE_VALUE) //File Doesn't exist
 	{
 		GetModuleFileName(NULL,TempPath,MAX_PATH);
@@ -50,7 +51,7 @@ int CheckPath( char *Path)	//Return 1 on Error
 			return(1);
 
 		strcat(TempPath,Path);
-		hr=CreateFile(TempPath,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);			
+		hr=CreateFile(TempPath,0,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);			
 		if (hr ==INVALID_HANDLE_VALUE)
 			return(1);
 		strcpy(Path,TempPath);
@@ -58,10 +59,11 @@ int CheckPath( char *Path)	//Return 1 on Error
 	CloseHandle(hr);
 	return(0);
 }
+
 // These are here to remove dependance on shlwapi.dll. ASCII only
 void PathStripPath ( char *TextBuffer)  
 {
-	short Index=strlen(TextBuffer);
+	size_t Index=strlen(TextBuffer);
 	char TempBuffer[MAX_PATH]="";
 	if (strlen(TextBuffer) > MAX_PATH)	//Test for overflow
 		return;
@@ -78,7 +80,7 @@ void PathStripPath ( char *TextBuffer)
 
 BOOL PathRemoveFileSpec(char *Path)
 {
-	short unsigned Index=strlen(Path),Lenth=Index;
+	size_t Index=strlen(Path),Lenth=Index;
 	if ( (Index==0) | (Index > MAX_PATH))
 		return(false);
 	
@@ -94,7 +96,7 @@ BOOL PathRemoveFileSpec(char *Path)
 
 BOOL PathRemoveExtension(char *Path)
 {
-	short unsigned Index=strlen(Path),Lenth=Index;
+	size_t Index=strlen(Path),Lenth=Index;
 	if ( (Index==0) | (Index > MAX_PATH))
 		return(false);
 	
@@ -105,7 +107,7 @@ BOOL PathRemoveExtension(char *Path)
 
 char* PathFindExtension(char *Path)
 {
-	short unsigned Index=strlen(Path),Lenth=Index;
+	size_t Index=strlen(Path),Lenth=Index;
 	if ( (Index==0) | (Index > MAX_PATH))
 		return(&Path[strlen(Path)+1]);
 	while ( (Index>0) & (Path[Index--] != '.') );

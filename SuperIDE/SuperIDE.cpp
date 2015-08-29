@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "idebus.h"
 #include "cloud9.h"
 #include "logger.h"
-#include "fileops.h"
+#include "../fileops.h"
 
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);

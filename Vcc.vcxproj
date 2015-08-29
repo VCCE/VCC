@@ -1,0 +1,266 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Template|Win32">
+      <Configuration>Template</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <SccProjectName />
+    <SccLocalPath />
+    <ProjectGuid>{822E50CF-A326-4B7A-A2CA-2A4C4055FC34}</ProjectGuid>
+    <ProjectName>vcc</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>.\Release\</OutDir>
+    <IntDir>.\Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>.\Debug\</OutDir>
+    <IntDir>.\Debug\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <Optimization>MaxSpeed</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\Release\</AssemblerListingLocation>
+      <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeaderOutputFile>.\Release\Vcc.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>.\Release\</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release\</ProgramDataBaseFileName>
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <Midl>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TypeLibraryName>.\Release\Vcc.tlb</TypeLibraryName>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release\Vcc.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>.\Release\Vcc.exe</OutputFile>
+      <AdditionalDependencies>nafxcw.lib;libcmt.lib;ddraw.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>
+      </AdditionalOptions>
+      <IgnoreSpecificDefaultLibraries>nafxcw.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <Optimization>Disabled</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <MinimalRebuild>true</MinimalRebuild>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\Debug\</AssemblerListingLocation>
+      <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeaderOutputFile>.\Debug\Vcc.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>.\Debug\</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug\</ProgramDataBaseFileName>
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <Midl>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TypeLibraryName>.\Debug\Vcc.tlb</TypeLibraryName>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug\Vcc.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>.\Debug\Vcc.exe</OutputFile>
+      <AdditionalDependencies>nafxcwd.lib;libcmtd.lib;ddraw.lib;dxguid.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <IgnoreSpecificDefaultLibraries>nafxcwd.lib;libcmtd.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Audio.c" />
+    <ClCompile Include="Cassette.cpp" />
+    <ClCompile Include="coco3.cpp" />
+    <ClCompile Include="config.c" />
+    <ClCompile Include="DirectDrawInterface.cpp" />
+    <ClCompile Include="Fileops.c" />
+    <ClCompile Include="hd6309.c" />
+    <ClCompile Include="iobus.c" />
+    <ClCompile Include="joystickinput.c" />
+    <ClCompile Include="keyboard.c" />
+    <ClCompile Include="logger.c" />
+    <ClCompile Include="mc6809.c" />
+    <ClCompile Include="mc6821.c" />
+    <ClCompile Include="pakinterface.c" />
+    <ClCompile Include="quickload.c" />
+    <ClCompile Include="tcc1014graphics.c" />
+    <ClCompile Include="tcc1014mmu.c" />
+    <ClCompile Include="tcc1014registers.c" />
+    <ClCompile Include="throttle.c" />
+    <ClCompile Include="Vcc.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="audio.h" />
+    <ClInclude Include="Cassette.h" />
+    <ClInclude Include="cc2font.h" />
+    <ClInclude Include="cc3font.h" />
+    <ClInclude Include="coco3.h" />
+    <ClInclude Include="config.h" />
+    <ClInclude Include="defines.h" />
+    <ClInclude Include="DirectDrawInterface.h" />
+    <ClInclude Include="fileops.h" />
+    <ClInclude Include="hd6309.h" />
+    <ClInclude Include="hd6309defs.h" />
+    <ClInclude Include="iobus.h" />
+    <ClInclude Include="joystickinput.h" />
+    <ClInclude Include="keyboard.h" />
+    <ClInclude Include="logger.h" />
+    <ClInclude Include="mc6809.h" />
+    <ClInclude Include="mc6809defs.h" />
+    <ClInclude Include="mc6821.h" />
+    <ClInclude Include="pakinterface.h" />
+    <ClInclude Include="quickload.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="tcc1014graphics.h" />
+    <ClInclude Include="tcc1014mmu.h" />
+    <ClInclude Include="tcc1014registers.h" />
+    <ClInclude Include="throttle.h" />
+    <ClInclude Include="Vcc.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="3guys.bmp" />
+    <Image Include="bender.bmp" />
+    <Image Include="binfile.ico" />
+    <Image Include="bitmap1.bmp" />
+    <Image Include="bjork.bmp" />
+    <Image Include="bjork.ico" />
+    <Image Include="composite.ico" />
+    <Image Include="hitachi.ico" />
+    <Image Include="ico00001.ico" />
+    <Image Include="ico00002.ico" />
+    <Image Include="ico00003.ico" />
+    <Image Include="ico00004.ico" />
+    <Image Include="ico00005.ico" />
+    <Image Include="ico00006.ico" />
+    <Image Include="icon1.ico" />
+    <Image Include="joystick.ico" />
+    <Image Include="Keyboard.ico" />
+    <Image Include="moto.ico" />
+    <Image Include="mouse.ico" />
+    <Image Include="progpack.ico" />
+    <Image Include="rgb.ico" />
+    <Image Include="speaker.ico" />
+    <Image Include="Speaker1.bmp" />
+    <Image Include="Speaker2.bmp" />
+    <Image Include="vcc.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="cur00001.cur" />
+    <CustomBuild Include="cursor1.cur" />
+    <CustomBuild Include="nodrop.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Vcc.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="fd502\fd502.vcxproj">
+      <Project>{f4dc9499-4ff1-4a56-83dd-6499062972aa}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="harddisk\harddisk.vcxproj">
+      <Project>{fc5d90df-a488-4e57-a4b2-7c74ae861f9e}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="mpi\mpi.vcxproj">
+      <Project>{678097f4-f33b-4739-b3e1-7a72bd1f4a3a}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="orch90\orch90.vcxproj">
+      <Project>{89c050f1-9427-4c5f-b260-c5f9eb43e915}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="ramdisk\Ramdisk.vcxproj">
+      <Project>{23d3931c-364b-45e2-b58c-9b3fbc584c0f}</Project>
+    </ProjectReference>
+    <ProjectReference Include="superide\SuperIDE.vcxproj">
+      <Project>{95713490-9812-4348-9e5e-818f736a271a}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

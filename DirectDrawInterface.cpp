@@ -16,6 +16,9 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define NO_WARN_MBCS_MFC_DEPRECATION
+#define _WIN32_WINNT 0x05010000 // I want to support XP
+
 #include <afxwin.h>
 #include <commctrl.h>	// Windows common controls
 #include "defines.h"
@@ -303,7 +306,7 @@ unsigned char LockScreen(SystemState *LSState)
 void UnlockScreen(SystemState *USState)
 {
 	static HRESULT hr;
-	static unsigned char Index=0;
+	static size_t Index=0;
 	static HDC hdc;
 	if (USState->FullScreen  & InfoBand) //Put StatusText for full screen here
 	{
