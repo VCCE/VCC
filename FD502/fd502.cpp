@@ -648,6 +648,7 @@ void LoadConfig(void)
 	SelectRom = GetPrivateProfileInt(ModName,"DiskRom",1,IniFile);  //0 External 1=TRSDOS 2=RGB Dos
 	GetPrivateProfileString(ModName,"RomPath","",RomFileName,MAX_PATH,IniFile);
 	PersistDisks=GetPrivateProfileInt(ModName,"Persist",1,IniFile);  
+	SetTurboDisk(GetPrivateProfileInt(ModName, "TurboDisk", 0, IniFile));
 	CheckPath(RomFileName);
 	LoadExtRom(External,RomFileName); //JF
 	GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
@@ -690,6 +691,7 @@ void SaveConfig(void)
 	WritePrivateProfileInt(ModName,"DiskRom",SelectRom ,IniFile);
 	WritePrivateProfileString(ModName,"RomPath",RomFileName,IniFile);
 	WritePrivateProfileInt(ModName,"Persist",PersistDisks ,IniFile);
+	WritePrivateProfileInt(ModName, "TurboDisk", is_turbo_disk(), IniFile);
 	if (PersistDisks)
 		for (Index=0;Index<4;Index++)
 		{	
