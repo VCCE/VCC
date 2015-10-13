@@ -23,7 +23,6 @@ void unmount_disk_image(unsigned char drive);
 void DiskStatus(char *);
 void PingFdc(void);
 unsigned char SetTurboDisk( unsigned char);
-unsigned char is_turbo_disk(void);
 unsigned char UseKeyboardLeds(unsigned char);
 DWORD GetDriverVersion ();
 unsigned short InitController (void);

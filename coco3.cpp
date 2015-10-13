@@ -382,6 +382,8 @@ unsigned short SetAudioRate (unsigned short Rate)
 	SoundInterupt=0;
 	CycleDrift=0;
 	AudioIndex=0;
+	if (Rate != 0)	//Force Mute or 44100Hz
+		Rate = 44100;
 
 	if (Rate==0)
 		SndEnable=0;
@@ -429,6 +431,7 @@ unsigned char SetSndOutMode(unsigned char Mode)  //0 = Speaker 1= Cassette Out 2
 
 		AudioEvent=AudioOut;
 		SetAudioRate (PrimarySoundRate);
+//		SetAudioRate(44100);
 		break;
 
 	case 1:

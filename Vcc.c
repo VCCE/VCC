@@ -69,6 +69,7 @@ static unsigned char AutoStart=1;
 static unsigned char Qflag=0;
 static char CpuName[20]="CPUNAME";
 
+char ttbuff[256];
 char QuickLoadFile[256];
 /***Forward declarations of functions included in this code module*****/
 BOOL				InitInstance	(HINSTANCE, int);
@@ -678,11 +679,8 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		EndRender(EmuState.FrameSkip);
 		FPS/=EmuState.FrameSkip;
 		GetModuleStatus(&EmuState);
-		
-		static char ttbuff[256];
-		snprintf(ttbuff, sizeof(ttbuff), "Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s",EmuState.FrameSkip,FPS,CpuName,EmuState.CPUCurrentSpeed,EmuState.StatusLine);
+		sprintf(ttbuff,"Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s",EmuState.FrameSkip,FPS,CpuName,EmuState.CPUCurrentSpeed,EmuState.StatusLine);
 		SetStatusBarText(ttbuff,&EmuState);
-		
 		if (Throttle )	//Do nothing untill the frame is over returning unused time to OS
 			FrameWait();
 	} //Still Emulating

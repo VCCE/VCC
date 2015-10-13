@@ -648,7 +648,6 @@ void LoadConfig(void)
 	SelectRom = GetPrivateProfileInt(ModName,"DiskRom",1,IniFile);  //0 External 1=TRSDOS 2=RGB Dos
 	GetPrivateProfileString(ModName,"RomPath","",RomFileName,MAX_PATH,IniFile);
 	PersistDisks=GetPrivateProfileInt(ModName,"Persist",1,IniFile);  
-	SetTurboDisk(GetPrivateProfileInt(ModName, "TurboDisk", 0, IniFile));
 	CheckPath(RomFileName);
 	LoadExtRom(External,RomFileName); //JF
 	GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
@@ -658,7 +657,6 @@ void LoadConfig(void)
 	strcat(RGBRomPath, "rgbdos.rom");	//Future, Grey out dialog option if can't find file
 	LoadExtRom(TandyDisk, DiskRomPath);
 	LoadExtRom(RGBDisk, RGBRomPath);
-
 	if (PersistDisks)
 		for (Index=0;Index<4;Index++)
 		{
@@ -667,6 +665,7 @@ void LoadConfig(void)
 			if (strlen(DiskName))
 			{
 				RetVal=mount_disk_image(DiskName,Index);
+				//MessageBox(0, "Disk load attempt", "OK", 0);
 				if (RetVal)
 				{
 					if ( (!strcmp(DiskName,"*Floppy A:")) )	//RealDisks
@@ -677,6 +676,7 @@ void LoadConfig(void)
 			}
 		}
 	ClockEnabled=GetPrivateProfileInt(ModName,"ClkEnable",1,IniFile); 
+	SetTurboDisk(GetPrivateProfileInt(ModName, "TurboDisk", 1, IniFile));
 	BuildDynaMenu();
 	return;
 }
@@ -691,7 +691,6 @@ void SaveConfig(void)
 	WritePrivateProfileInt(ModName,"DiskRom",SelectRom ,IniFile);
 	WritePrivateProfileString(ModName,"RomPath",RomFileName,IniFile);
 	WritePrivateProfileInt(ModName,"Persist",PersistDisks ,IniFile);
-	WritePrivateProfileInt(ModName, "TurboDisk", is_turbo_disk(), IniFile);
 	if (PersistDisks)
 		for (Index=0;Index<4;Index++)
 		{	
@@ -699,6 +698,7 @@ void SaveConfig(void)
 			WritePrivateProfileString(ModName,Temp,Drive[Index].ImageName,IniFile);
 		}
 	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
+	WritePrivateProfileInt(ModName, "TurboDisk", SetTurboDisk(QUERY), IniFile);
 	return;
 }
 

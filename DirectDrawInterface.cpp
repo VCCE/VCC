@@ -175,7 +175,7 @@ bool CreateDDWindow(SystemState *CWState)
 		if (hr) return FALSE;
 		hr = g_pDD->SetCooperativeLevel(CWState->WindowHandle, DDSCL_EXCLUSIVE|DDSCL_FULLSCREEN|DDSCL_NOWINDOWCHANGES);
 		if (hr) return FALSE;
-		hr = g_pDD->SetDisplayMode(CWState->WindowSize.x, CWState->WindowSize.y, 8);	// Set 640x480x8 Bit full-screen mode
+		hr = g_pDD->SetDisplayMode(CWState->WindowSize.x, CWState->WindowSize.y, 32);	// Set 640x480x32 Bit full-screen mode
 		if (hr) return FALSE;
 		ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
 		ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;

@@ -28,6 +28,7 @@ LRESULT CALLBACK	Config			(HWND, UINT, WPARAM, LPARAM);
 
 typedef struct  {
 	unsigned char	CPUMultiplyer;
+	unsigned short	MaxOverclock;
 	unsigned char	FrameSkip;
 	unsigned char	SpeedThrottle;
 	unsigned char	CpuType;

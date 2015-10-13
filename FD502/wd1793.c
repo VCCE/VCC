@@ -1296,11 +1296,6 @@ unsigned char SetTurboDisk( unsigned char Tmp)
 	return(TurboMode);
 }
 
-unsigned char is_turbo_disk(void)
-{
-	return TurboMode;
-}
-
 HANDLE OpenKeyboardDevice(int *ErrorNumber)
 {
 	HANDLE	hndKbdDev;

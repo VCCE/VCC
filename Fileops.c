@@ -61,21 +61,22 @@ int CheckPath( char *Path)	//Return 1 on Error
 }
 
 // These are here to remove dependance on shlwapi.dll. ASCII only
-void PathStripPath ( char *TextBuffer)  
+void PathStripPath ( char *TextBuffer)
 {
-	size_t Index=strlen(TextBuffer);
-	char TempBuffer[MAX_PATH]="";
-	if (strlen(TextBuffer) > MAX_PATH)	//Test for overflow
+	char TempBuffer[MAX_PATH] = "";
+	short Index = (short)strlen(TextBuffer);
+
+	if ((Index > MAX_PATH) | (Index==0))	//Test for overflow
 		return;
 
-	while ( (Index>=0) & (TextBuffer[Index--] != '\\') );
-
-	if (Index>0)
-	{
-		strcpy(TempBuffer, &TextBuffer[Index+2]);
-		strcpy(TextBuffer,TempBuffer);
-	}
-	return;
+	for (; Index >= 0; Index--)
+		if (TextBuffer[Index] == '\\')
+			break;
+	
+	if (Index < 0)	//delimiter not found
+		return;
+	strcpy(TempBuffer, &TextBuffer[Index + 1]);
+	strcpy(TextBuffer, TempBuffer);
 }
 
 BOOL PathRemoveFileSpec(char *Path)

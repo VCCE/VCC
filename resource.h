@@ -1,26 +1,7 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by Vcc.rc
 //
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
-
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-
 #define IDS_APP_TITLE                   1
 #define IDS_CATNUMBER                   2
 #define IDAPPLY                         3
@@ -186,14 +167,21 @@ This file is part of VCC (Virtual Color Computer).
 #define IDC_RADIO5                      1069
 #define IDC_LALT                        1070
 #define IDC_LF                          1070
+#define IDC_RIGHTSTANDARD               1070
 #define IDC_RCTRL                       1071
 #define IDC_PRINTMON                    1071
+#define IDC_LEFTSTANDARD                1071
 #define IDC_RALT                        1072
 #define IDC_1                           1073
 #define IDC_2                           1074
+#define IDC_RIGHTTHRES                  1074
 #define IDC_3                           1075
+#define IDC_RIGHTCCMAX                  1075
 #define IDC_4                           1076
+#define IDC_LEFTTHIRES                  1076
 #define IDC_5                           1077
+#define IDC_RADIO11                     1077
+#define IDC_LEFTCCMAX                   1077
 #define IDC_6                           1078
 #define IDC_7                           1079
 #define IDC_8                           1080
@@ -315,9 +303,9 @@ This file is part of VCC (Virtual Color Computer).
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        161
+#define _APS_NEXT_RESOURCE_VALUE        163
 #define _APS_NEXT_COMMAND_VALUE         40031
-#define _APS_NEXT_CONTROL_VALUE         1072
+#define _APS_NEXT_CONTROL_VALUE         1074
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
