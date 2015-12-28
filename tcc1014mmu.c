@@ -29,6 +29,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "pakinterface.h"
 #include "logger.h"
 #include "hd6309.h"
+#include "fileops.h"
 static unsigned char *MemPages[1024];
 static unsigned short MemPageOffsets[1024];
 static unsigned char *memory=NULL;	//Emulated RAM
@@ -163,12 +164,21 @@ unsigned char * Getint_rom_pointer(void)
 
 void CopyRom(void)
 {
+	char ExecPath[MAX_PATH];
 	unsigned short temp=0;
 	temp=load_int_rom(BasicRomName());		//Try to load the image
-	if (temp==0)							// If we can't find it use internal copy
-		temp=load_int_rom("coco3.rom");
-	if (temp==0)
-		MessageBox(0,"Missing file coco3.rom","Error",0);
+	if (temp == 0)
+	{	// If we can't find it use default copy
+		GetModuleFileName(NULL, ExecPath, MAX_PATH);
+		PathRemoveFileSpec(ExecPath);
+		strcat(ExecPath, "coco3.rom");
+		temp = load_int_rom(ExecPath);
+	}
+	if (temp == 0)
+	{
+		MessageBox(0, "Missing file coco3.rom", "Error", 0);
+		exit(0);
+	}
 //		for (temp=0;temp<=32767;temp++)
 //			InternalRomBuffer[temp]=CC3Rom[temp];
 	return;

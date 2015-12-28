@@ -16,10 +16,18 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-void PathStripPath ( char *);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void PathStripPath(char *);
 void ValidatePath(char *Path);
-int CheckPath( char *);
+int CheckPath(char *);
 BOOL PathRemoveFileSpec(char *);
 BOOL PathRemoveExtension(char *);
 char* PathFindExtension(char *);
-DWORD WritePrivateProfileInt(LPCTSTR,LPCTSTR ,int ,LPCTSTR );
+DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
+
+#ifdef __cplusplus
+	}
+#endif

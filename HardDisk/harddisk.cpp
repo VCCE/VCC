@@ -244,6 +244,7 @@ void LoadHardDisk(void)
 void LoadConfig(void)
 {
 	char ModName[MAX_LOADSTRING]="";
+	char DiskRomPath[MAX_PATH]; 
 	HANDLE hr=NULL;
 
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
@@ -261,7 +262,10 @@ void LoadConfig(void)
 		MountHD(FileName);
 	}
 	BuildDynaMenu();
-	LoadExtRom("rgbdos.bin");
+	GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
+	PathRemoveFileSpec(DiskRomPath);
+	strcat(DiskRomPath, "rgbdos.rom");
+	LoadExtRom(DiskRomPath);
 	return;
 }
 

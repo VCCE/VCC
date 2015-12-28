@@ -20,7 +20,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "windows.h"
 #include "defines.h"
-#include <iostream.h>
 #include <commctrl.h>
 #include "stdio.h"
 #include <Richedit.h>
@@ -53,6 +52,8 @@ LRESULT CALLBACK TapeConfig(HWND , UINT , WPARAM , LPARAM );
 LRESULT CALLBACK BitBanger(HWND , UINT , WPARAM , LPARAM );
 int SelectFile(char *);
 static unsigned short int	Ramchoice[4]={IDC_128K,IDC_512K,IDC_2M,IDC_8M};
+static unsigned  int	LeftJoystickEmulation[3] = { IDC_LEFTSTANDARD,IDC_LEFTTHIRES,IDC_LEFTCCMAX };
+static unsigned int	RightJoystickEmulation[3] = { IDC_RIGHTSTANDARD,IDC_RIGHTTHRES,IDC_RIGHTCCMAX };
 static unsigned short int	Cpuchoice[2]={IDC_6809,IDC_6309};
 static unsigned short int	Monchoice[2]={IDC_COMPOSITE,IDC_RGB};
 static HICON CpuIcons[2],MonIcons[2],JoystickIcons[4];
@@ -80,7 +81,7 @@ static unsigned int TapeCounter=0;
 static unsigned char Tmode=STOP;
 char Tmodes[4][10]={"STOP","PLAY","REC","STOP"};
 
-static NumberOfSoundCards=0;
+static int NumberOfSoundCards=0;
 unsigned char XY2Disp (unsigned char,unsigned char);
 void Disp2XY(unsigned char *,unsigned char *,unsigned char);
 void BuildKeyboardTable(void);
@@ -139,6 +140,7 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("CPU","FrameSkip",CurrentConfig.FrameSkip,IniFilePath);
 	WritePrivateProfileInt("CPU","Throttle",CurrentConfig.SpeedThrottle,IniFilePath);
 	WritePrivateProfileInt("CPU","CpuType",CurrentConfig.CpuType,IniFilePath);
+	WritePrivateProfileInt("CPU", "MaxOverClock", CurrentConfig.MaxOverclock, IniFilePath);
 	WritePrivateProfileString("Audio","SndCard",CurrentConfig.SoundCardName,IniFilePath);
 	WritePrivateProfileInt("Audio","Rate",CurrentConfig.AudioRate,IniFilePath);
 	WritePrivateProfileInt("Video","MonitorType",CurrentConfig.MonitorType,IniFilePath);
@@ -160,6 +162,7 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("LeftJoyStick","Fire1",Left.Fire1,IniFilePath);
 	WritePrivateProfileInt("LeftJoyStick","Fire2",Left.Fire2,IniFilePath);
 	WritePrivateProfileInt("LeftJoyStick","DiDevice",Left.DiDevice,IniFilePath);
+	WritePrivateProfileInt("LeftJoyStick", "HiResDevice", Left.HiRes, IniFilePath);
 	WritePrivateProfileInt("RightJoyStick","UseMouse",Right.UseMouse,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick","Left",Right.Left,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick","Right",Right.Right,IniFilePath);
@@ -168,6 +171,7 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("RightJoyStick","Fire1",Right.Fire1,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick","Fire2",Right.Fire2,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick","DiDevice",Right.DiDevice,IniFilePath);
+	WritePrivateProfileInt("RightJoyStick", "HiResDevice", Right.HiRes, IniFilePath);
 	strcpy(FullMapPath,ExecDirectory);	
 	strcat(FullMapPath,CurrentConfig.KeymapFile);
 	WriteKeymapFile(FullMapPath);
@@ -183,6 +187,7 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.FrameSkip = GetPrivateProfileInt("CPU","FrameSkip",1,IniFilePath);
 	CurrentConfig.SpeedThrottle = GetPrivateProfileInt("CPU","Throttle",1,IniFilePath);
 	CurrentConfig.CpuType = GetPrivateProfileInt("CPU","CpuType",0,IniFilePath);
+	CurrentConfig.MaxOverclock = GetPrivateProfileInt("CPU", "MaxOverClock",100, IniFilePath);
 	CurrentConfig.AudioRate = GetPrivateProfileInt("Audio","Rate",3,IniFilePath);
 	GetPrivateProfileString("Audio","SndCard","",CurrentConfig.SoundCardName,63,IniFilePath);
 	CurrentConfig.MonitorType = GetPrivateProfileInt("Video","MonitorType",1,IniFilePath);
@@ -209,7 +214,7 @@ unsigned char ReadIniFile(void)
 	Left.Fire1=GetPrivateProfileInt("LeftJoyStick","Fire1",59,IniFilePath);
 	Left.Fire2=GetPrivateProfileInt("LeftJoyStick","Fire2",60,IniFilePath);
 	Left.DiDevice=GetPrivateProfileInt("LeftJoyStick","DiDevice",0,IniFilePath);
-
+	Left.HiRes= GetPrivateProfileInt("LeftJoyStick", "HiResDevice", 0, IniFilePath);
 	Right.UseMouse=GetPrivateProfileInt("RightJoyStick","UseMouse",1,IniFilePath);
 	Right.Left=GetPrivateProfileInt("RightJoyStick","Left",75,IniFilePath);
 	Right.Right=GetPrivateProfileInt("RightJoyStick","Right",77,IniFilePath);
@@ -218,6 +223,7 @@ unsigned char ReadIniFile(void)
 	Right.Fire1=GetPrivateProfileInt("RightJoyStick","Fire1",59,IniFilePath);
 	Right.Fire2=GetPrivateProfileInt("RightJoyStick","Fire2",60,IniFilePath);
 	Right.DiDevice=GetPrivateProfileInt("RightJoyStick","DiDevice",0,IniFilePath);
+	Right.HiRes = GetPrivateProfileInt("RightJoyStick", "HiResDevice", 0, IniFilePath);
 
 	for (Index=0;Index<NumberOfSoundCards;Index++)
 		if (!strcmp(SoundCards[Index].CardName,CurrentConfig.SoundCardName))
@@ -367,7 +373,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	switch (message)
 	{
 		case WM_INITDIALOG:
-			SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_SETRANGE,TRUE,MAKELONG(2,100) );
+			SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_SETRANGE,TRUE,MAKELONG(2,CurrentConfig.MaxOverclock ));	//Maximum overclock
 			sprintf(OutBuffer,"%2.3f Mhz",(float)TempConfig.CPUMultiplyer*.894);
 			SendDlgItemMessage(hDlg,IDC_CLOCKDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 			SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_SETPOS,TRUE,TempConfig.CPUMultiplyer);
@@ -647,6 +653,12 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 			for (temp=0;temp<6;temp++)
 				EnableWindow( GetDlgItem(hDlg,RightJoyStick[temp]),(Right.UseMouse==0));
 
+			for (temp=0;temp<=2;temp++)
+			{
+				SendDlgItemMessage(hDlg, LeftJoystickEmulation[temp], BM_SETCHECK, (temp == Left.HiRes), 0);
+				SendDlgItemMessage(hDlg, RightJoystickEmulation[temp], BM_SETCHECK, (temp == Right.HiRes), 0);
+			}
+
 			EnableWindow( GetDlgItem(hDlg,IDC_LEFTAUDIODEVICE),(Left.UseMouse==2));
 			EnableWindow( GetDlgItem(hDlg,IDC_RIGHTAUDIODEVICE),(Right.UseMouse==2));
 			EnableWindow( GetDlgItem(hDlg,IDC_LEFTJOYSTICKDEVICE),(Left.UseMouse==3));
@@ -705,6 +717,26 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 					SendDlgItemMessage(hDlg,RightRadios[temp],BM_SETCHECK,1,0);
 					TempRight.UseMouse=temp;
 				}
+
+			for (temp = 0; temp <= 2; temp++)
+				if (LOWORD(wParam) == LeftJoystickEmulation[temp])
+				{
+					for (temp2 = 0; temp2 <= 2; temp2++)
+						SendDlgItemMessage(hDlg, LeftJoystickEmulation[temp2], BM_SETCHECK, 0, 0);
+					SendDlgItemMessage(hDlg, LeftJoystickEmulation[temp], BM_SETCHECK, 1, 0);
+					TempLeft.HiRes = temp;
+				}
+
+			for (temp = 0; temp <= 2; temp++)
+				if (LOWORD(wParam) == RightJoystickEmulation[temp])
+				{
+					for (temp2 = 0; temp2 <= 2; temp2++)
+						SendDlgItemMessage(hDlg, RightJoystickEmulation[temp2], BM_SETCHECK, 0, 0);
+					SendDlgItemMessage(hDlg, RightJoystickEmulation[temp], BM_SETCHECK, 1, 0);
+					TempRight.HiRes = temp;
+				}
+
+
 
 			for (temp=0;temp<6;temp++)
 				EnableWindow( GetDlgItem(hDlg,LeftJoyStick[temp]),(TempLeft.UseMouse==0));

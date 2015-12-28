@@ -126,7 +126,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		strcpy(QuickLoadFile,lpCmdLine);
 		strcpy(temp1,lpCmdLine);
 		PathStripPath(temp1);
-		strlwr(temp1);
+		_strlwr(temp1);
 		temp1[0]=toupper(temp1[0]);
 		strcat (temp1,temp2);
 		strcat(temp1,g_szAppName);

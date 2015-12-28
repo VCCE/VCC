@@ -66,6 +66,7 @@ typedef struct {
 	unsigned char Fire1;
 	unsigned char Fire2;
 	unsigned char DiDevice;
+	unsigned char HiRes;
 } JoyStick;
 
 

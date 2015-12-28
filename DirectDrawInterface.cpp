@@ -16,6 +16,9 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define NO_WARN_MBCS_MFC_DEPRECATION
+#define _WIN32_WINNT 0x05010000 // I want to support XP
+
 #include <afxwin.h>
 #include <commctrl.h>	// Windows common controls
 #include "defines.h"
@@ -172,7 +175,7 @@ bool CreateDDWindow(SystemState *CWState)
 		if (hr) return FALSE;
 		hr = g_pDD->SetCooperativeLevel(CWState->WindowHandle, DDSCL_EXCLUSIVE|DDSCL_FULLSCREEN|DDSCL_NOWINDOWCHANGES);
 		if (hr) return FALSE;
-		hr = g_pDD->SetDisplayMode(CWState->WindowSize.x, CWState->WindowSize.y, 8);	// Set 640x480x8 Bit full-screen mode
+		hr = g_pDD->SetDisplayMode(CWState->WindowSize.x, CWState->WindowSize.y, 32);	// Set 640x480x32 Bit full-screen mode
 		if (hr) return FALSE;
 		ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
 		ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
@@ -303,7 +306,7 @@ unsigned char LockScreen(SystemState *LSState)
 void UnlockScreen(SystemState *USState)
 {
 	static HRESULT hr;
-	static unsigned char Index=0;
+	static size_t Index=0;
 	static HDC hdc;
 	if (USState->FullScreen  & InfoBand) //Put StatusText for full screen here
 	{

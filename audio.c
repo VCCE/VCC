@@ -16,7 +16,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <dplay.h>
+//#include <dplay.h>
 #include <dsound.h>
 #include <stdio.h>
 #include "defines.h"
@@ -63,6 +63,8 @@ BOOL CALLBACK DSEnumCallback(LPGUID,LPCSTR,LPCSTR,LPVOID);
 int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned short Rate)
 {
 	Rate=(Rate & 3);
+	if (Rate != 0)	//Force 44100 or Mute
+		Rate = 3;
 	CurrentRate=Rate;
 	if (InitPassed)
 	{
@@ -137,6 +139,7 @@ int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned short Rate)
 		AudioPause=0;
 	}
 	SetAudioRate (iRateList[Rate]);
+//	SetAudioRate(44100);
 	return(0);
 }
 
@@ -264,6 +267,7 @@ unsigned short GetSoundStatus(void)
 void ResetAudio (void)
 {
 	SetAudioRate (iRateList[CurrentRate]);
+//	SetAudioRate(44100);
 	if (InitPassed)
 		lpdsbuffer1->SetCurrentPosition(0);
 	BuffOffset=0;
