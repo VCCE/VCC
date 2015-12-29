@@ -82,16 +82,27 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_COCO3               ICON                    "icon1.ico"
+
 IDI_BINFILE             ICON                    "binfile.ico"
+
 IDI_CART                ICON                    "progpack.ico"
+
 IDI_MOTO                ICON                    "moto.ico"
+
 IDI_HITACHI2            ICON                    "hitachi.ico"
+
 IDI_RGB                 ICON                    "rgb.ico"
+
 IDI_COMPOSITE           ICON                    "composite.ico"
+
 IDI_AUDIO               ICON                    "ico00004.ico"
+
 IDI_KEYBOARD            ICON                    "Keyboard.ico"
+
 IDI_JOYSTICK            ICON                    "joystick.ico"
+
 IDI_MOUSE               ICON                    "mouse.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -191,9 +202,9 @@ BEGIN
     CONTROL         "Progress1",IDC_PROGRESSRIGHT,"msctls_progress32",PBS_SMOOTH | PBS_VERTICAL,167,12,7,58
 END
 
-IDD_INPUT DIALOG 0, 0, 270, 146
+IDD_INPUT DIALOGEX 0, 0, 270, 146
 STYLE DS_SETFONT | WS_CHILD
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     COMBOBOX        IDC_KBCONFIG,13,17,95,61,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Keyboard Mapping",IDC_STATIC,7,7,109,29,BS_CENTER
@@ -419,10 +430,15 @@ END
 //
 
 IDB_BENDER              BITMAP                  "bender.bmp"
+
 IDB_NOMUTE              BITMAP                  "Speaker1.bmp"
+
 IDB_MUTE                BITMAP                  "Speaker2.bmp"
+
 IDB_VCC                 BITMAP                  "vcc.bmp"
+
 IDB_3GUYS               BITMAP                  "3guys.bmp"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -430,6 +446,7 @@ IDB_3GUYS               BITMAP                  "3guys.bmp"
 //
 
 IDC_NONE                CURSOR                  "cursor1.cur"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -442,6 +459,11 @@ BEGIN
 END
 
 IDD_TCONFIG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_INPUT AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
