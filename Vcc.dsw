@@ -1,0 +1,116 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "Ramdisk"=".\Ramdisk\Ramdisk.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "SuperIDE"=".\SuperIDE\SuperIDE.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "Vcc"=".\Vcc.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name fd502
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name harddisk
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name mpi
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name orch90
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name SuperIDE
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "fd502"=".\FD502\fd502.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "harddisk"=".\HardDisk\harddisk.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "mpi"=".\mpi\mpi.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "orch90"=".\orch90\orch90.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

@@ -1,0 +1,286 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: fd502 - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x409 /fo"Release/fd502.res" /d "NDEBUG" "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\FD502\fd502.rc"" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP27C.tmp" with contents
+[
+/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "fd502_EXPORTS" /FR"Release/" /Fp"Release/fd502.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c     
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\FD502\distortc.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\FD502\fd502.cpp"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\Fileops.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\FD502\wd1793.c"
+]
+Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP27C.tmp" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP27D.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /pdb:"Release/fd502.pdb" /machine:I386 /out:"Release/fd502.dll" /implib:"Release/fd502.lib" 
+".\Release\distortc.obj"
+".\Release\fd502.obj"
+".\Release\Fileops.obj"
+".\Release\wd1793.obj"
+".\Release\fd502.res"
+]
+Creating command line "link.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP27D.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+distortc.c
+fd502.cpp
+Fileops.c
+wd1793.c
+Linking...
+   Creating library Release/fd502.lib and object Release/fd502.exp
+Creating command line "bscmake.exe /nologo /o"Release/fd502.bsc"  ".\Release\distortc.sbr" ".\Release\fd502.sbr" ".\Release\Fileops.sbr" ".\Release\wd1793.sbr""
+Creating browse info file...
+<h3>Output Window</h3>
+<h3>
+--------------------Configuration: harddisk - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x409 /fo"Release/harddisk.res" /d "NDEBUG" "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\HardDisk\harddisk.rc"" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP281.tmp" with contents
+[
+/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "harddisk_EXPORTS" /FR"Release/" /Fp"Release/harddisk.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c     
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\HardDisk\cc3vhd.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\HardDisk\cloud9.cpp"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\Fileops.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\HardDisk\harddisk.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP281.tmp" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP282.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib dinput8.lib dxguid.lib /nologo /dll /incremental:no /pdb:"Release/harddisk.pdb" /machine:I386 /out:"Release/harddisk.dll" /implib:"Release/harddisk.lib" 
+".\Release\cc3vhd.obj"
+".\Release\cloud9.obj"
+".\Release\Fileops.obj"
+".\Release\harddisk.obj"
+".\Release\harddisk.res"
+]
+Creating command line "link.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP282.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+cc3vhd.c
+cloud9.cpp
+Fileops.c
+harddisk.cpp
+Linking...
+   Creating library Release/harddisk.lib and object Release/harddisk.exp
+Creating command line "bscmake.exe /nologo /o"Release/harddisk.bsc"  ".\Release\cc3vhd.sbr" ".\Release\cloud9.sbr" ".\Release\Fileops.sbr" ".\Release\harddisk.sbr""
+Creating browse info file...
+<h3>Output Window</h3>
+<h3>
+--------------------Configuration: mpi - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x409 /fo"Release/mpi.res" /d "NDEBUG" "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\mpi\mpi.rc"" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP286.tmp" with contents
+[
+/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "MPI_EXPORTS" /FR"Release/" /Fp"Release/mpi.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c     
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\Fileops.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\mpi\mpi.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP286.tmp" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP287.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib dinput8.lib dxguid.lib /nologo /dll /incremental:no /pdb:"Release/mpi.pdb" /machine:I386 /out:"Release/mpi.dll" /implib:"Release/mpi.lib" 
+".\Release\Fileops.obj"
+".\Release\mpi.obj"
+".\Release\mpi.res"
+]
+Creating command line "link.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP287.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+Fileops.c
+mpi.cpp
+Linking...
+   Creating library Release/mpi.lib and object Release/mpi.exp
+<h3>
+--------------------Configuration: orch90 - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x409 /fo"Release/orch90.res" /d "NDEBUG" "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\orch90\orch90.rc"" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP28B.tmp" with contents
+[
+/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "ORCH90_EXPORTS" /FR"Release/" /Fp"Release/orch90.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
+"C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\orch90\orch90.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP28B.tmp" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP28C.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib dinput8.lib dxguid.lib /nologo /dll /incremental:no /pdb:"Release/orch90.pdb" /machine:I386 /out:"Release/orch90.dll" /implib:"Release/orch90.lib" 
+".\Release\orch90.obj"
+".\Release\orch90.res"
+]
+Creating command line "link.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP28C.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+orch90.cpp
+Linking...
+   Creating library Release/orch90.lib and object Release/orch90.exp
+<h3>
+--------------------Configuration: SuperIDE - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x409 /fo"Release/SuperIDE.res" /d "NDEBUG" "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\SuperIDE\SuperIDE.rc"" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP290.tmp" with contents
+[
+/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SUPERIDE_EXPORTS" /FR"Release/" /Fo"Release/" /Fd"Release/" /FD /c 
+"C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\SuperIDE\cloud9.cpp"
+"C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\SuperIDE\Fileops.cpp"
+"C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\SuperIDE\IdeBus.cpp"
+"C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\SuperIDE\logger.cpp"
+"C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\SuperIDE\SuperIDE.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP290.tmp" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP291.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /pdb:"Release/SuperIDE.pdb" /machine:I386 /out:"Release/SuperIDE.dll" /implib:"Release/SuperIDE.lib" 
+".\Release\cloud9.obj"
+".\Release\Fileops.obj"
+".\Release\IdeBus.obj"
+".\Release\logger.obj"
+".\Release\SuperIDE.obj"
+".\Release\SuperIDE.res"
+]
+Creating command line "link.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP291.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+cloud9.cpp
+Fileops.cpp
+IdeBus.cpp
+logger.cpp
+SuperIDE.cpp
+Generating Code...
+Linking...
+   Creating library Release/SuperIDE.lib and object Release/SuperIDE.exp
+Creating command line "bscmake.exe /nologo /o"Release/SuperIDE.bsc"  ".\Release\cloud9.sbr" ".\Release\Fileops.sbr" ".\Release\IdeBus.sbr" ".\Release\logger.sbr" ".\Release\SuperIDE.sbr""
+Creating browse info file...
+<h3>Output Window</h3>
+<h3>
+--------------------Configuration: Vcc - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x409 /fo"Release/Vcc.res" /d "NDEBUG" "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\Vcc.rc"" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP295.tmp" with contents
+[
+/nologo /G6 /MT /W3 /GX /O2 /Ob2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /Fr"Release/" /Fp"Release/Vcc.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c     
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\Audio.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\Cassette.cpp"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\coco3.cpp"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\config.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\DirectDrawInterface.cpp"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\Fileops.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\hd6309.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\iobus.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\joystickinput.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\keyboard.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\logger.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\mc6809.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\mc6821.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\pakinterface.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\quickload.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\tcc1014graphics.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\tcc1014mmu.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\tcc1014registers.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\throttle.c"
+/Tp "C:\Documents and Settings\Administrator\Desktop\Vcc 2.00\Vcc.c"
+]
+Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP295.tmp" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP296.tmp" with contents
+[
+ddraw.lib comctl32.lib Winmm.lib dsound.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib dinput8.lib dxguid.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/Vcc.pdb" /machine:I386 /out:"Release/Vcc.exe" /IGNORE:4089 
+".\Release\Audio.obj"
+".\Release\Cassette.obj"
+".\Release\coco3.obj"
+".\Release\config.obj"
+".\Release\DirectDrawInterface.obj"
+".\Release\Fileops.obj"
+".\Release\hd6309.obj"
+".\Release\iobus.obj"
+".\Release\joystickinput.obj"
+".\Release\keyboard.obj"
+".\Release\logger.obj"
+".\Release\mc6809.obj"
+".\Release\mc6821.obj"
+".\Release\pakinterface.obj"
+".\Release\quickload.obj"
+".\Release\tcc1014graphics.obj"
+".\Release\tcc1014mmu.obj"
+".\Release\tcc1014registers.obj"
+".\Release\throttle.obj"
+".\Release\Vcc.obj"
+".\Release\Vcc.res"
+".\FD502\Release\fd502.lib"
+".\HardDisk\Release\harddisk.lib"
+".\mpi\Release\mpi.lib"
+".\orch90\Release\orch90.lib"
+".\SuperIDE\Release\SuperIDE.lib"
+]
+Creating command line "link.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP296.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+Audio.c
+Cassette.cpp
+coco3.cpp
+config.c
+DirectDrawInterface.cpp
+Fileops.c
+hd6309.c
+iobus.c
+joystickinput.c
+keyboard.c
+logger.c
+mc6809.c
+mc6821.c
+pakinterface.c
+quickload.c
+tcc1014graphics.c
+tcc1014mmu.c
+tcc1014registers.c
+throttle.c
+Vcc.c
+Linking...
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP298.tmp" with contents
+[
+/nologo /o"Release/Vcc.bsc" 
+".\Release\Audio.sbr"
+".\Release\Cassette.sbr"
+".\Release\coco3.sbr"
+".\Release\config.sbr"
+".\Release\DirectDrawInterface.sbr"
+".\Release\Fileops.sbr"
+".\Release\hd6309.sbr"
+".\Release\iobus.sbr"
+".\Release\joystickinput.sbr"
+".\Release\keyboard.sbr"
+".\Release\logger.sbr"
+".\Release\mc6809.sbr"
+".\Release\mc6821.sbr"
+".\Release\pakinterface.sbr"
+".\Release\quickload.sbr"
+".\Release\tcc1014graphics.sbr"
+".\Release\tcc1014mmu.sbr"
+".\Release\tcc1014registers.sbr"
+".\Release\throttle.sbr"
+".\Release\Vcc.sbr"]
+Creating command line "bscmake.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP298.tmp"
+Creating browse info file...
+<h3>Output Window</h3>
+
+
+
+<h3>Results</h3>
+Vcc.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>
