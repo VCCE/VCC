@@ -69,7 +69,6 @@ static unsigned char AutoStart=1;
 static unsigned char Qflag=0;
 static char CpuName[20]="CPUNAME";
 
-char ttbuff[256];
 char QuickLoadFile[256];
 /***Forward declarations of functions included in this code module*****/
 BOOL				InitInstance	(HINSTANCE, int);
@@ -618,8 +617,7 @@ unsigned __stdcall EmuLoop(void *Dummy)
 {
 	HANDLE hEvent = (HANDLE)Dummy;
 	static float FPS;
-	static unsigned int FrameCounter=0;
-	unsigned char Frames=0;
+	static unsigned int FrameCounter=0;	
 	CalibrateThrottle();
 	Sleep(30);
 	SetEvent(hEvent) ;
@@ -640,47 +638,51 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		}
 
 		StartRender();
-		for (Frames=1;Frames<=EmuState.FrameSkip;Frames++)
+		for (uint8_t Frames = 1; Frames <= EmuState.FrameSkip; Frames++)
 		{
 			FrameCounter++;
-			if (EmuState.ResetPending)
+			if (EmuState.ResetPending != 0) {
 				switch (EmuState.ResetPending)
 				{
-					case 1:	//Soft Reset
-						SoftReset();
-						EmuState.ResetPending=0;
-					break;
-					case 2:	//Hard Reset
-						UpdateConfig ();
-						DoCls(&EmuState);
-						DoHardReset(&EmuState);
-						EmuState.ResetPending=0;
-					break;
-					case 3:
-						DoCls(&EmuState);
-						EmuState.ResetPending=0;
-					break;
-					case 4:
-						UpdateConfig ();
-						DoCls(&EmuState);
-						EmuState.ResetPending=0;
+				case 1:	//Soft Reset
+					SoftReset();
 					break;
 
-					default:
-						EmuState.ResetPending=0;
+				case 2:	//Hard Reset
+					UpdateConfig();
+					DoCls(&EmuState);
+					DoHardReset(&EmuState);
+					break;
+
+				case 3:
+					DoCls(&EmuState);
+					break;
+
+				case 4:
+					UpdateConfig();
+					DoCls(&EmuState);
+					break;
+
+				default:
 					break;
 				}
-
-			if (EmuState.EmulationRunning==1)
-				FPS+=RenderFrame (&EmuState);
-			else
-				FPS+=Static(&EmuState);
+				EmuState.ResetPending = 0;
+			}
+			
+			if (EmuState.EmulationRunning == 1) {
+				FPS += RenderFrame(&EmuState);
+			} else {
+				FPS += Static(&EmuState);
+			}
 		}
 		EndRender(EmuState.FrameSkip);
 		FPS/=EmuState.FrameSkip;
 		GetModuleStatus(&EmuState);
-		sprintf(ttbuff,"Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s",EmuState.FrameSkip,FPS,CpuName,EmuState.CPUCurrentSpeed,EmuState.StatusLine);
+		
+		char ttbuff[256];
+		snprintf(ttbuff,sizeof(ttbuff),"Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s",EmuState.FrameSkip,FPS,CpuName,EmuState.CPUCurrentSpeed,EmuState.StatusLine);
 		SetStatusBarText(ttbuff,&EmuState);
+		
 		if (Throttle )	//Do nothing untill the frame is over returning unused time to OS
 			FrameWait();
 	} //Still Emulating
