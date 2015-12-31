@@ -1,3 +1,6 @@
+#ifndef __DEFINES_H__
+#define __DEFINES_H__
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -106,3 +109,5 @@ char			StatusLine[256];
 static char RateList[4][7]={"Mute","11025","22050","44100"};
 static unsigned short iRateList[4]={0,11025,22050,44100};
 #define TAPEAUDIORATE 44100
+
+#endif

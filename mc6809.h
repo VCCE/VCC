@@ -1,3 +1,6 @@
+#ifndef __MC6809_H__
+#define __MC6809_H__
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -22,3 +25,5 @@ void MC6809Reset(void);
 void MC6809AssertInterupt(unsigned char,unsigned char);
 void MC6809DeAssertInterupt(unsigned char);// 4 nmi 2 firq 1 irq
 void MC6809ForcePC(unsigned short);
+
+#endif

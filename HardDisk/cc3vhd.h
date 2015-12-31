@@ -1,3 +1,5 @@
+#ifndef __CC3VHD_H__
+#define __CC3VHD_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -38,3 +40,5 @@ void DiskStatus(char *);
 #define SECTOR_READ		0
 #define SECTOR_WRITE	1
 #define DISK_FLUSH		2
+
+#endif

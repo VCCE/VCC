@@ -1,3 +1,5 @@
+#ifndef __TCC1014GRAPHICS_H__
+#define __TCC1014GRAPHICS_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -64,3 +66,5 @@ static unsigned char VcenterTable[4]={29,23,12,12};
 #define MCMP	0
 
 //void Set8BitPalette(void);
+
+#endif

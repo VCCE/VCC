@@ -1,3 +1,5 @@
+#ifndef __DEFINES_H__
+#define __DEFINES_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -41,3 +43,4 @@ This file is part of VCC (Virtual Color Computer).
 #define NMI		3
 
 
+#endif

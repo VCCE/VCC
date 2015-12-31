@@ -1,3 +1,5 @@
+#ifndef __MC6821_H__
+#define __MC6821_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -43,3 +45,5 @@ int OpenPrintFile(char *);
 #define FALLING 0
 #define RISING	1
 #define ANY		2
+
+#endif

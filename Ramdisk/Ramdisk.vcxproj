@@ -142,7 +142,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="memboard.h" />
-    <ClInclude Include="Ramdisk.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Ramdisk.rc" />

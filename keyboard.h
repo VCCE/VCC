@@ -1,3 +1,5 @@
+#ifndef __KEYBOARD_H__
+#define __KEYBOARD_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -26,3 +28,5 @@ unsigned short get_pot_value(unsigned char pot);
 void SetButtonStatus(unsigned char,unsigned char);
 void SetStickNumbers(unsigned char,unsigned char);
 //int InitJoyStick(void);
+
+#endif

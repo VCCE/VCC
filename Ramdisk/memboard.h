@@ -1,3 +1,5 @@
+#ifndef __MEMBOARD_H__
+#define __MEMBOARD_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -23,3 +25,5 @@ bool InitMemBoard(void);
 bool WritePort(unsigned char,unsigned char);
 bool WriteArray(unsigned char);
 unsigned char ReadArray(void);
+
+#endif

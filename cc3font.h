@@ -1,3 +1,5 @@
+#ifndef __CC3FONT_H__
+#define __CC3FONT_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -284,3 +286,4 @@ static unsigned char cc3Fontdata8x12[] =
 	0x00,0x00,0x00,0x00,0x00,0x00,0x7C,0x00,0x00,0x00,0x00,0x00
 };
 
+#endif
