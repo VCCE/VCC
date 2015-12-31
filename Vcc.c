@@ -467,9 +467,8 @@ unsigned char SetCPUMultiplyer(unsigned char Multiplyer)
 	return(EmuState.DoubleSpeedMultiplyer);
 }
 
-void DoHardReset(SystemState *HRState)
-{
-	static unsigned Count=0;
+void DoHardReset(SystemState* const HRState)
+{	
 	HRState->RamBuffer=MmuInit(HRState->RamSize);	//Alocate RAM/ROM & copy ROM Images from source
 	HRState->WRamBuffer=(unsigned short *)HRState->RamBuffer;
 	if (HRState->RamBuffer == NULL)
