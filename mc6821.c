@@ -17,10 +17,10 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <windows.h>
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
-#include <math.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
 #include "defines.h"
 #include "mc6821.h"
 #include "hd6309.h"
@@ -32,9 +32,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "cassette.h"
 #include "logger.h"
 #include "resource.h"
+#include <cstdint>
 
-
-static unsigned char VDG_gmode=0;
 static unsigned char rega[4]={0,0,0,0};
 static unsigned char regb[4]={0,0,0,0};
 static unsigned char rega_dd[4]={0,0,0,0}; 
@@ -296,19 +295,16 @@ void AssertCart(void)
 		CPUDeAssertInterupt(FIRQ); //Kludge but working
 }
 
-void PiaReset(void)
-{
-unsigned char Index=0;
-for (Index=0;Index<4;Index++)
-{
-	rega[Index]=0;
-	regb[Index]=0;
-	rega_dd[Index]=0;
-	regb_dd[Index]=0;
-}
-VDG_gmode=0;
-return;
-
+void PiaReset()
+{	
+	// Clear the PIA registers
+	for (uint8_t index=0; index<4; index++)
+	{
+		rega[index]=0;
+		regb[index]=0;
+		rega_dd[index]=0;
+		regb_dd[index]=0;
+	}
 }
 
 unsigned char GetMuxState(void)

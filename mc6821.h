@@ -33,7 +33,7 @@ void irq_fs(int);
 void AssertCart(void);
 void SetCart(unsigned char);
 unsigned char SetCartAutoStart(unsigned char);
-void PiaReset(void);
+void PiaReset();
 unsigned char GetMuxState(void);
 unsigned char DACState(void);
 unsigned int GetDACSample(void);
