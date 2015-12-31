@@ -42,14 +42,17 @@ This file is part of VCC (Virtual Color Computer).
 #define CARTRESET		1024
 #define SAVESINI		2048
 #define ASSERTCART		4096
+
+// Storage for Pak ROMs
+static uint8_t *ExternalRomBuffer = nullptr; 
+static bool RomPackLoaded = false;
+
 extern SystemState EmuState;
 static unsigned int BankedCartOffset=0;
-static unsigned char RomPackLoaded=0;
 static char DllPath[256]="";
 static unsigned short ModualParms=0;
 static HINSTANCE hinstLib; 
 static bool DialogOpen=false;
-static unsigned char *ExternalRomBuffer=NULL; //Used to load Rom packs
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 typedef void (*GETNAME)(char *,char *,DYNAMICMENUCALLBACK); 
 typedef void (*CONFIGIT)(unsigned char); 
@@ -138,8 +141,11 @@ void PackPortWrite(unsigned char Port,unsigned char Data)
 		PakPortWrite(Port,Data);
 		return;
 	}
-	if ((Port== 0x40) & (RomPackLoaded==1))
-		BankedCartOffset=(Data & 15)<<14;
+	
+	if ((Port == 0x40) && (RomPackLoaded == true)) {
+		BankedCartOffset = (Data & 15) << 14;
+	}
+
 	return;
 }
 
@@ -329,25 +335,44 @@ int InsertModule (char *ModulePath)
 	return(NOMODULE);
 }
 
+/**
+Load a ROM pack
+return total bytes loaded, or 0 on failure
+*/
 int load_ext_rom(char filename[MAX_PATH])
 {
-	unsigned int index=0;
-	FILE *rom_handle;
-	if (ExternalRomBuffer != NULL)
+	constexpr size_t PAK_MAX_MEM = 0x40000;
+
+	// If there is an existing ROM, ditch it
+	if (ExternalRomBuffer != nullptr) {
 		free(ExternalRomBuffer);
-	ExternalRomBuffer=(unsigned char *)malloc(0x40000);
-	if (ExternalRomBuffer==NULL)
-		MessageBox(0,"cant allocate ram","Ok",0);
-	rom_handle=fopen(filename,"rb");
-	if (rom_handle==NULL)
-		return(0);
-	while ((feof(rom_handle)==0) & (index<0x40000))
-		ExternalRomBuffer[index++]=fgetc(rom_handle);
+	}
+	
+	// Allocate memory for the ROM
+	ExternalRomBuffer = (uint8_t*)malloc(PAK_MAX_MEM);
+
+	// If memory was unable to be allocated, fail
+	if (ExternalRomBuffer == nullptr) {
+		MessageBox(0, "cant allocate ram", "Ok", 0);
+		return 0;
+	}
+	
+	// Open the ROM file, fail if unable to
+	FILE *rom_handle = fopen(filename, "rb");
+	if (rom_handle == nullptr) return 0;
+	
+	// Load the file, one byte at a time.. (TODO: Get size and read entire block)
+	size_t index=0;
+	while ((feof(rom_handle) == 0) && (index < PAK_MAX_MEM)) {
+		ExternalRomBuffer[index++] = fgetc(rom_handle);
+	}
 	fclose(rom_handle);
+	
 	UnloadDll();
 	BankedCartOffset=0;
-	RomPackLoaded=1;
-	return(index);
+	RomPackLoaded=true;
+	
+	return index;
 }
 
 void UnloadDll(void)
@@ -396,11 +421,14 @@ void UnloadPack(void)
 	UnloadDll();
 	strcpy(DllPath,"");
 	strcpy(Modname,"Blank");
-	RomPackLoaded=0;
+	RomPackLoaded=false;
 	SetCart(0);
-	if (ExternalRomBuffer != NULL)
+	
+	if (ExternalRomBuffer != nullptr) {
 		free(ExternalRomBuffer);
-	ExternalRomBuffer=NULL;
+	}
+	ExternalRomBuffer=nullptr;
+
 	EmuState.ResetPending=2;
 	DynamicMenuCallback( "",0, 0); //Refresh Menus
 	DynamicMenuCallback( "",1, 0);

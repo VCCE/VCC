@@ -26,6 +26,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "cloud9.h"
 #include "..\fileops.h"
 
+constexpr size_t EXTROMSIZE = 8192;
+static char FileName[MAX_PATH] { 0 };
+static char IniFile[MAX_PATH] { 0 };
+
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
@@ -35,8 +39,6 @@ static void (*AssertInt)(unsigned char,unsigned char)=NULL;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
 static unsigned char *Memory=NULL;
-static char FileName[MAX_PATH]="";
-static char IniFile[MAX_PATH]="";
 static unsigned char DiskRom[8192];
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
@@ -48,7 +50,7 @@ void SaveConfig(void);
 void BuildDynaMenu(void);
 unsigned char LoadExtRom( char *);
 static HINSTANCE g_hinstDLL;
-#define EXTROMSIZE 8192
+
 BOOL WINAPI DllMain(
     HINSTANCE hinstDLL,  // handle to DLL module
     DWORD fdwReason,     // reason for calling function
