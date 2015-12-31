@@ -1,3 +1,5 @@
+#ifndef __LOGGER_H__
+#define __LOGGER_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -22,3 +24,5 @@ void CpuDump(void);
 
 #define TOCONS	0
 #define TOFILE	1
+
+#endif

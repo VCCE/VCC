@@ -1,3 +1,5 @@
+#ifndef __WD1793_H__
+#define __WD1793_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -142,3 +144,4 @@ typedef struct _KEYBOARD_INDICATOR_PARAMETERS {
 
 #define TRACK_SIZE          ((128<<SECTOR_SIZE_CODE)*DISK_SECTORS)
 
+#endif

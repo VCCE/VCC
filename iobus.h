@@ -1,3 +1,5 @@
+#ifndef __IOBUS_H__
+#define __IOBUS_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -18,3 +20,5 @@ This file is part of VCC (Virtual Color Computer).
 
 unsigned char port_read(unsigned short addr);
 void port_write(unsigned char data,unsigned short addr);
+
+#endif

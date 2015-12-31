@@ -1,3 +1,5 @@
+#ifndef __CLOUD9_H__
+#define __CLOUD9_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -17,3 +19,5 @@ This file is part of VCC (Virtual Color Computer).
 */
 unsigned char ReadTime(unsigned short);
 unsigned char SetClockWrite(unsigned char);
+
+#endif

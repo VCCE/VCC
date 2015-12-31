@@ -1,4 +1,5 @@
-
+#ifndef __FDRAWCMD_SYS__
+#define __FDRAWCMD_SYS__
 // fdrawcmd.sys
 //
 // Low-level floppy filter, by Simon Owen
@@ -284,5 +285,7 @@ FD_RAW_READ_PARAMS, *PFD_RAW_READ_PARAMS;
 
 #pragma warning(pop)
 #pragma pack(pop)
+
+#endif
 
 #endif

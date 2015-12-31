@@ -1,3 +1,6 @@
+#ifndef __TCC1014MMU_H__
+#define __TCC1014MMU_H__
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -46,4 +49,4 @@ void SetCartMMU (unsigned char);
 #define _512K	1
 #define _2M		2
 
-
+#endif

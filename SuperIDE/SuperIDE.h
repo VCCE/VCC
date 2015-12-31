@@ -1,3 +1,5 @@
+#ifndef __SUPERIDE_H__
+#define __SUPERIDE_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -18,3 +20,5 @@ This file is part of VCC (Virtual Color Computer).
 #define	HEAD 0
 #define SLAVE 1
 #define STANDALONE 2
+
+#endif
