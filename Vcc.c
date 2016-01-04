@@ -172,9 +172,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	WaitForSingleObject( hEvent, INFINITE );
 	SetThreadPriority(hEMUThread,THREAD_PRIORITY_NORMAL);
 
-//	InitializeCriticalSection(&FrameRender);
+	//InitializeCriticalSection(&FrameRender);
 
-while (BinaryRunning) 
+	while (BinaryRunning) 
 	{
 		if (FlagEmuStop==TH_WAITING)		//Need to stop the EMU thread for screen mode change
 			{								//As it holds the Secondary screen buffer open while running
@@ -203,13 +203,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int wmId, wmEvent;
 	unsigned int x,y;
 	unsigned char kb_char; 
-	kb_char=(unsigned char)wParam;
 	static unsigned char OEMscan=0;
 	static char ascii=0;
 	static RECT ClientSize;
 	static unsigned long Width,Height;
 
-	switch (message) 
+	kb_char = (unsigned char)wParam;
+
+	switch (message)
 	{
 		case WM_COMMAND:
 			wmId    = LOWORD(wParam); 
@@ -295,70 +296,109 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
-			OEMscan=(unsigned char)((lParam & 0xFF0000)>>16);
-			KeyboardEvent(kb_char,OEMscan,0);
+			/*
+				lParam
+
+				Bits	Meaning
+				0-15	The repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. The repeat count is always 1 for a WM_KEYUP message.
+				16-23	The scan code. The value depends on the OEM.
+				24	Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
+				25-28	Reserved; do not use.
+				29	The context code. The value is always 0 for a WM_KEYUP message.
+				30	The previous key state. The value is always 1 for a WM_KEYUP message.
+				31	The transition state. The value is always 1 for a WM_KEYUP message.
+			*/
+			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16);
+
+			// send emulator key up event to the emulator
+			// TODO: Key up checks whether the emulation is running, this does not
+
+			vccKeyboardHandleKey(kb_char,OEMscan, kEventKeyUp);
+			
 			return 0;
 		break;
 
 		case WM_KEYDOWN: 
 		case WM_SYSKEYDOWN:
-			OEMscan=(unsigned char)((lParam & 0xFF0000)>>16);
+			/*
+				lParam
 
-			switch (OEMscan)
+				Bits	Meaning
+				0-15	The repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.
+				16-23	The scan code. The value depends on the OEM.
+				24	Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
+				25-28	Reserved; do not use.
+				29	The context code. The value is always 0 for a WM_KEYDOWN message.
+				30	The previous key state. The value is 1 if the key is down before the message is sent, or it is zero if the key is up.
+				31	The transition state. The value is always 0 for a WM_KEYDOWN message.
+			*/
+			// get key scan code for emulator control keys
+			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16); // just get the scan code
+
+			// kb_char = Windows virtual key code
+
+			switch ( OEMscan )
 			{
-				case 61:	//F3
-
-				break;
-				case 62:	//F4
+				case DIK_F3:
 
 				break;
 
-				case 63:	//F5
-					if (EmuState.EmulationRunning)
-						EmuState.ResetPending=1;
+				case DIK_F4:
+
 				break;
 
-				case 64:	//F6
+				case DIK_F5:
+					if ( EmuState.EmulationRunning )
+					{
+						EmuState.ResetPending = 1;
+					}
+				break;
+
+				case DIK_F6:
 					SetMonitorType(!SetMonitorType(QUERY));
 				break;
 
-	//			case 65:	//F7
-	//				SetArtifacts(!SetArtifacts(QUERY));
-	//			break;
+//				case DIK_F7:
+//					SetArtifacts(!SetArtifacts(QUERY));
+//				break;
 
-				case 66:	//F8
+				case DIK_F8:
 					SetSpeedThrottle(!SetSpeedThrottle(QUERY));
 				break;
 
-				case 67:	//F9
+				case DIK_F9:
 					EmuState.EmulationRunning=!EmuState.EmulationRunning;
-					if (EmuState.EmulationRunning)
+					if ( EmuState.EmulationRunning )
 						EmuState.ResetPending=2;
 					else
 						SetStatusBarText("",&EmuState);
 				break;
 
-				case 68:	//F10
+				case DIK_F10:
 					SetInfoBand(!SetInfoBand(QUERY));
 					InvalidateBoarder();
 				break;
 				
-				case 87:	//F11
-				if (FlagEmuStop==TH_RUNNING)
-				{
-					FlagEmuStop=TH_REQWAIT;
-					EmuState.FullScreen=!EmuState.FullScreen;
-				}
+				case DIK_F11:
+					if (FlagEmuStop == TH_RUNNING)
+					{
+						FlagEmuStop = TH_REQWAIT;
+						EmuState.FullScreen =! EmuState.FullScreen;
+					}
 		
 				break;
 
-	//			case 88:	//F12
-	//				CpuDump();
-	//				break;
+//				case DIK_F12:
+//					CpuDump();
+//				break;
 
 				default:
-					if (EmuState.EmulationRunning)
-						KeyboardEvent(kb_char,OEMscan,2);		
+					// send other keystroke to the emulator if it is active
+					if ( EmuState.EmulationRunning )
+					{
+						// send Key down event to the emulator
+						vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyDown);
+					}
 					break;
 			}
 			return 0;

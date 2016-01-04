@@ -45,6 +45,18 @@ static unsigned char IRQStearing[8]={0,0,0,0,0,0,0,0};
 static unsigned char FIRQStearing[8]={0,0,0,0,0,0,0,0};
 static unsigned char LastIrq=0,LastFirq=0,Temp=0;
 
+static unsigned char KeyboardInteruptEnabled = 0;
+
+unsigned char GimeGetKeyboardInteruptState()
+{
+	return KeyboardInteruptEnabled;
+}
+
+void GimeSetKeyboardInteruptState(unsigned char State)
+{
+	KeyboardInteruptEnabled = !!State;
+}
+
 void GimeWrite(unsigned char port,unsigned char data)
 {
 	GimeRegisters[port]=data;
@@ -203,9 +215,9 @@ unsigned char GetInit0(unsigned char port)
 void SetGimeIRQStearing(unsigned char data) //92
 {
 	if ( (GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2) )
-		SetKeyboardInteruptState(1);
+		GimeSetKeyboardInteruptState(1);
 	else
-		SetKeyboardInteruptState(0);
+		GimeSetKeyboardInteruptState(0);
 
 	if ( (GimeRegisters[0x92] & 8) | (GimeRegisters[0x93] & 8) )
 		SetVertInteruptState(1); 
@@ -227,9 +239,9 @@ void SetGimeIRQStearing(unsigned char data) //92
 void SetGimeFIRQStearing(unsigned char data) //93
 {
 	if ( (GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2) )
-		SetKeyboardInteruptState(1);
+		GimeSetKeyboardInteruptState(1);
 	else
-		SetKeyboardInteruptState(0);
+		GimeSetKeyboardInteruptState(0);
 
 	if ( (GimeRegisters[0x92] & 8) | (GimeRegisters[0x93] & 8) )
 		SetVertInteruptState(1);

@@ -1,3 +1,4 @@
+/*****************************************************************************/
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -15,14 +16,96 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+/*****************************************************************************/
 
-void KeyboardEvent( unsigned char, unsigned char,unsigned int);
-unsigned char kb_scan(unsigned char);
-void SetKeyboardInteruptState(unsigned char);
-//void KeyboardInit(void);
+#ifndef _keyboard_h_
+#define _keyboard_h_
 
-void joystick (short unsigned,short unsigned);
-unsigned short get_pot_value(unsigned char pot);
-void SetButtonStatus(unsigned char,unsigned char);
-void SetStickNumbers(unsigned char,unsigned char);
-//int InitJoyStick(void);
+/*****************************************************************************/
+/**
+*/
+typedef enum keyevent_e
+{
+	kEventKeyUp		= 0,
+	kEventKeyDown	= 1
+} keyevent_e;
+
+/**
+*/
+typedef enum keyboardlayout_e
+{
+	kKBLayoutCoCo = 0,
+	kKBLayoutNatural,
+	kKBLayoutCompact,
+//	kKBLayoutCustom,
+
+	kKBLayoutCount
+} keyboardlayout_e;
+
+/**
+	Keyboard layout names used to populate the 
+	layout selection pull-down in the config dialog
+
+	This of course must match keyboardlayout_e above
+*/
+const char * const k_keyboardLayoutNames[] =
+{
+	"CoCo",
+	"Natural",
+	"Compact",
+//	"Custom"
+} ;
+
+/**
+*/
+typedef struct keytranslationentry_t
+{
+	unsigned char ScanCode1;
+	unsigned char ScanCode2;
+	unsigned char Row1;
+	unsigned char Col1;
+	unsigned char Row2;
+	unsigned char Col2;
+} keytranslationentry_t;
+
+typedef struct {
+	unsigned char UseMouse;
+	unsigned char Up;
+	unsigned char Down;
+	unsigned char Left;
+	unsigned char Right;
+	unsigned char Fire1;
+	unsigned char Fire2;
+	unsigned char DiDevice;
+	unsigned char HiRes;
+} JoyStick;
+
+/*****************************************************************************/
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+	
+	void			vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout);
+	void			vccKeyboardHandleKey(unsigned char, unsigned char, keyevent_e keyState);
+	unsigned char	vccKeyboardGetScan(unsigned char);
+
+	// globals referenced from config.c
+	extern JoyStick	Left;
+	extern JoyStick Right;
+
+	void			joystick(short unsigned, short unsigned);
+	unsigned short	get_pot_value(unsigned char pot);
+	void			SetButtonStatus(unsigned char, unsigned char);
+	void			SetStickNumbers(unsigned char, unsigned char);
+
+#ifdef __cplusplus
+}
+#endif
+
+/*****************************************************************************/
+
+#endif // _keyboard_h_
+
+/*****************************************************************************/

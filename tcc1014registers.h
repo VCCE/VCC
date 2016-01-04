@@ -20,6 +20,7 @@ This file is part of VCC (Virtual Color Computer).
 void GimeWrite(unsigned char,unsigned char);
 unsigned char GimeRead(unsigned char);
 void GimeAssertKeyboardInterupt(void);
+unsigned char GimeGetKeyboardInteruptState();
 void GimeAssertHorzInterupt(void);
 void GimeAssertVertInterupt(void);
 void GimeAssertTimerInterupt(void);

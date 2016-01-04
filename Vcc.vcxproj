@@ -180,6 +180,7 @@
     <ClCompile Include="iobus.c" />
     <ClCompile Include="joystickinput.c" />
     <ClCompile Include="keyboard.c" />
+    <ClCompile Include="keyboardLayout.c" />
     <ClCompile Include="logger.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
@@ -190,6 +191,7 @@
     <ClCompile Include="tcc1014registers.c" />
     <ClCompile Include="throttle.c" />
     <ClCompile Include="Vcc.c" />
+    <ClCompile Include="_xDebug.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -209,6 +211,7 @@
     <ClInclude Include="iobus.h" />
     <ClInclude Include="joystickinput.h" />
     <ClInclude Include="keyboard.h" />
+    <ClInclude Include="keyboardLayout.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="mc6809.h" />
     <ClInclude Include="mc6809defs.h" />
@@ -221,6 +224,7 @@
     <ClInclude Include="tcc1014registers.h" />
     <ClInclude Include="throttle.h" />
     <ClInclude Include="Vcc.h" />
+    <ClInclude Include="xDebug.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="3guys.bmp" />

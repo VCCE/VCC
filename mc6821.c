@@ -73,7 +73,7 @@ unsigned char pia0_read(unsigned char port)
 			if (dda)
 			{
 				rega[1]=(rega[1] & 63);
-				return(kb_scan(rega[2])); //Read
+				return (vccKeyboardGetScan(rega[2])); //Read
 			}
 			else
 				return(rega_dd[port]);
