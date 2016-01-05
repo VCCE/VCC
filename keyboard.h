@@ -1,3 +1,6 @@
+#ifndef __KEYBOARD_H__
+#define __KEYBOARD_H__
+
 /*****************************************************************************/
 /*
 Copyright 2015 by Joseph Forgione
@@ -31,6 +34,7 @@ typedef enum keyevent_e
 } keyevent_e;
 
 /**
+	Keyboard layouts
 */
 typedef enum keyboardlayout_e
 {
@@ -106,6 +110,5 @@ extern "C"
 
 /*****************************************************************************/
 
-#endif // _keyboard_h_
+#endif // __KEYBOARD_H__
 
-/*****************************************************************************/

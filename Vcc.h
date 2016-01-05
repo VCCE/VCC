@@ -1,3 +1,6 @@
+#ifndef __VCC_H__
+#define __VCC_H__
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -31,7 +34,10 @@ void DoHardReset(SystemState *);
 void LoadPack (void);
 void DynamicMenuCallback( char *,int,int);
 //void RefreshWindow(void);
+
 //Type 0= HEAD TAG 1= Slave Tag 2=StandAlone
 #define	HEAD 0
 #define SLAVE 1
 #define STANDALONE 2
+
+#endif

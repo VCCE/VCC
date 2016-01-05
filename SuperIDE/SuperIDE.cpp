@@ -26,6 +26,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "logger.h"
 #include "../fileops.h"
 
+static char FileName[MAX_PATH] { 0 };
+static char IniFile[MAX_PATH]  { 0 };
+
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
@@ -35,8 +38,6 @@ static void (*AssertInt)(unsigned char,unsigned char)=NULL;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
 static unsigned char *Memory=NULL;
-static char FileName[MAX_PATH]="";
-static char IniFile[MAX_PATH]="";
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 static unsigned char BaseAddress=0x50;
 void BuildDynaMenu(void);

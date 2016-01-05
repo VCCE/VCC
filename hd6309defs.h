@@ -1,3 +1,5 @@
+#ifndef __HD6309DEFS_H__
+#define __HD6309DEFS_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -505,3 +507,5 @@ This file is part of VCC (Virtual Color Computer).
 #define LDF_E	0xF6	//6309
 #define STF_E	0xF7	//6309
 #define ADDF_E	0xFB	//6309
+
+#endif

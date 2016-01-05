@@ -1,3 +1,5 @@
+#ifndef __HARDDISK_H__
+#define __HARDDISK_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -17,3 +19,5 @@ This file is part of VCC (Virtual Color Computer).
 */
 void MemWrite(unsigned char,unsigned short );
 unsigned char MemRead(unsigned short );
+
+#endif

@@ -1,3 +1,5 @@
+#ifndef __HD6309_H__
+#define __HD6309_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -23,3 +25,5 @@ void HD6309AssertInterupt(unsigned char,unsigned char);
 void HD6309DeAssertInterupt(unsigned char);// 4 nmi 2 firq 1 irq
 void HD6309ForcePC(unsigned short);
 unsigned short GetPC(void);
+
+#endif

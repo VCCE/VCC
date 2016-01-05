@@ -1,3 +1,5 @@
+#ifndef __TCC1014REGISTERS_H__
+#define __TCC1014REGISTERS_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -29,3 +31,5 @@ void sam_write(unsigned char,unsigned char);
 void mc6883_reset();
 unsigned char VDG_Offset(void);
 unsigned char VDG_Modes(void);
+
+#endif

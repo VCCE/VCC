@@ -1,3 +1,5 @@
+#ifndef __COCO3_H__
+#define __COCO3_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -29,3 +31,5 @@ void SetTimerClockRate (unsigned char);
 void SetInteruptTimer(unsigned short);
 void MiscReset(void);
 unsigned short SetAudioRate (unsigned short);
+
+#endif

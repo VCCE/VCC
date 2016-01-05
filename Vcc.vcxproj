@@ -227,34 +227,22 @@
     <ClInclude Include="xDebug.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="3guys.bmp" />
-    <Image Include="bender.bmp" />
-    <Image Include="binfile.ico" />
-    <Image Include="bitmap1.bmp" />
-    <Image Include="composite.ico" />
-    <Image Include="hitachi.ico" />
-    <Image Include="ico00001.ico" />
-    <Image Include="ico00002.ico" />
-    <Image Include="ico00003.ico" />
-    <Image Include="ico00004.ico" />
-    <Image Include="ico00005.ico" />
-    <Image Include="ico00006.ico" />
-    <Image Include="icon1.ico" />
+    <Image Include="resources\binfile.ico" />
+    <Image Include="resources\hitachi.ico" />
+    <Image Include="resources\ico00004.ico" />
+    <Image Include="resources\icon1.ico" />
+    <Image Include="resources\3guys.bmp" />
     <Image Include="joystick.ico" />
-    <Image Include="Keyboard.ico" />
-    <Image Include="moto.ico" />
-    <Image Include="mouse.ico" />
-    <Image Include="progpack.ico" />
-    <Image Include="rgb.ico" />
-    <Image Include="speaker.ico" />
-    <Image Include="Speaker1.bmp" />
-    <Image Include="Speaker2.bmp" />
-    <Image Include="vcc.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="cur00001.cur" />
-    <CustomBuild Include="cursor1.cur" />
-    <CustomBuild Include="nodrop.cur" />
+    <Image Include="resources\Keyboard.ico" />
+    <Image Include="resources\moto.ico" />
+    <Image Include="resources\mouse.ico" />
+    <Image Include="resources\progpack.ico" />
+    <Image Include="resources\composite.ico" />
+    <Image Include="resources\speaker1.bmp" />
+    <Image Include="resources\speaker2.bmp" />
+    <Image Include="resources\vcc.bmp" />
+    <Image Include="resources\rgb.ico" />
+    <Image Include="resources\speaker.ico" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Vcc.rc" />
@@ -283,6 +271,9 @@
       <Project>{95713490-9812-4348-9e5e-818f736a271a}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="resources\cursor1.cur" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

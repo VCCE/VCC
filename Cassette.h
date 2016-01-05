@@ -1,3 +1,5 @@
+#ifndef __CASSETTE_H__
+#define __CASSETTE_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -33,3 +35,4 @@ void LoadCassetteBuffer(unsigned char *);
 void FlushCassetteBuffer(unsigned char *,unsigned int);
 void GetTapeName(char *);
 
+#endif
