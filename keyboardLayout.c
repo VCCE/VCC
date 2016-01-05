@@ -143,8 +143,8 @@ keytranslationentry_t keyTranslationsCoCo[] =
 	{ DIK_LEFTARROW,  0,              8,     5,     0,    0 }, //   LEFT
 	{ DIK_RIGHTARROW, 0,              8,     6,     0,    0 }, //   RIGHT
 
-	{ DIK_NUMPAD2,    0,              8,     3,     0,    0 }, //   UP
-	{ DIK_NUMPAD8,    0,              8,     4,     0,    0 }, //   DOWN
+	{ DIK_NUMPAD8,    0,              8,     3,     0,    0 }, //   UP
+	{ DIK_NUMPAD2,    0,              8,     4,     0,    0 }, //   DOWN
 	{ DIK_NUMPAD4,    0,              8,     5,     0,    0 }, //   LEFT
 	{ DIK_NUMPAD6,    0,              8,     6,     0,    0 }, //   RIGHT
 
@@ -276,8 +276,8 @@ keytranslationentry_t keyTranslationsNatural[] =
 	{ DIK_LEFTARROW,  0,              8,     5,     0,    0 }, //   LEFT
 	{ DIK_RIGHTARROW, 0,              8,     6,     0,    0 }, //   RIGHT
 
-	{ DIK_NUMPAD2,    0,              8,     3,     0,    0 }, //   UP
-	{ DIK_NUMPAD8,    0,              8,     4,     0,    0 }, //   DOWN
+	{ DIK_NUMPAD8,    0,              8,     3,     0,    0 }, //   UP
+	{ DIK_NUMPAD2,    0,              8,     4,     0,    0 }, //   DOWN
 	{ DIK_NUMPAD4,    0,              8,     5,     0,    0 }, //   LEFT
 	{ DIK_NUMPAD6,    0,              8,     6,     0,    0 }, //   RIGHT
 	{ DIK_SPACE,      0,              8,     7,     0,    0 }, //   SPACE
@@ -413,8 +413,8 @@ keytranslationentry_t keyTranslationsCompact[] =
 	{ DIK_LEFTARROW,  0,              8,     5,     0,    0 }, //   LEFT
 	{ DIK_RIGHTARROW, 0,              8,     6,     0,    0 }, //   RIGHT
 
-	{ DIK_NUMPAD2,    0,              8,     3,     0,    0 }, //   UP
-	{ DIK_NUMPAD8,    0,              8,     4,     0,    0 }, //   DOWN
+	{ DIK_NUMPAD8,    0,              8,     3,     0,    0 }, //   UP
+	{ DIK_NUMPAD2,    0,              8,     4,     0,    0 }, //   DOWN
 	{ DIK_NUMPAD4,    0,              8,     5,     0,    0 }, //   LEFT
 	{ DIK_NUMPAD6,    0,              8,     6,     0,    0 }, //   RIGHT
 	{ DIK_SPACE,      0,              8,     7,     0,    0 }, //   SPACE
