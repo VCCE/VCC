@@ -53,28 +53,6 @@ extern void (*CPUDeAssertInterupt)(unsigned char);
 extern void (*CPUForcePC)(unsigned short);
 
 
-typedef struct {
-	unsigned char ScanCode1;
-	unsigned char ScanCode2;
-	unsigned char Row1;
-	unsigned char Col1;
-	unsigned char Row2;
-	unsigned char Col2;
-} KeyBoardTable;
-
-typedef struct {
-	unsigned char UseMouse;
-	unsigned char Up;
-	unsigned char Down;
-	unsigned char Left;
-	unsigned char Right;
-	unsigned char Fire1;
-	unsigned char Fire2;
-	unsigned char DiDevice;
-	unsigned char HiRes;
-} JoyStick;
-
-
 typedef struct 
 {
 HWND			WindowHandle;

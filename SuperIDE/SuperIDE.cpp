@@ -286,11 +286,11 @@ void Select_Disk(unsigned char Disk)
 
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME);
-	ofn.hwndOwner         = NULL;
+	ofn.hwndOwner         = GetTopWindow(NULL);
 	ofn.Flags             = OFN_HIDEREADONLY;
 	ofn.hInstance         = GetModuleHandle(0);
-	ofn. lpstrDefExt      ="IMG";
-	ofn.lpstrFilter       =	"Hard Disk Images\0*.IMG\0\0";	// filter string "Disks\0*.DSK\0\0";
+	ofn.lpstrDefExt       ="IMG";
+	ofn.lpstrFilter = "Hard Disk Images\0*.img;*.vhd;*.os9\0All files\0*.*\0\0";	// filter string "Disks\0*.DSK\0\0";
 	ofn.nFilterIndex      = 0 ;								// current filter index
 	ofn.lpstrFile         = TempFileName;					// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
