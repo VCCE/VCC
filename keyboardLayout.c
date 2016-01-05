@@ -249,7 +249,7 @@ keytranslationentry_t keyTranslationsNatural[] =
 	{ DIK_3,          DIK_LSHIFT,    16,     3,    64,    7 }, //   #
 	{ DIK_4,          DIK_LSHIFT,    16,     4,    64,    7 }, //   $
 	{ DIK_5,          DIK_LSHIFT,    16,     5,	   64,    7 }, //   %
-	{ DIK_6,          DIK_LSHIFT,     8,     3,     0,    0 }, //   ^ (CoCo CTRL 7)
+	{ DIK_6,          DIK_LSHIFT,    16,     7,    64,    4 }, //   ^ (CoCo CTRL 7)
 	{ DIK_7,          DIK_LSHIFT,    16,     6,    64,    7 }, //   &
 	{ DIK_8,          DIK_LSHIFT,    32,     2,    64,    7 }, //   *
 	{ DIK_9,          DIK_LSHIFT,    32,     0,    64,    7 }, //   (
@@ -295,7 +295,7 @@ keytranslationentry_t keyTranslationsNatural[] =
 	{ DIK_RBRACKET,   DIK_LSHIFT,    64,     4,    32,    6 }, //   } (CoCo CTRL .)
 
 	{ DIK_BACKSLASH,  0,             32,     7,    64,    4 }, //   '\' (Back slash) (CoCo CTRL /)
-	{ DIK_BACKSLASH,  DIK_LSHIFT,    64,     1,    64,    4 }, //   | (Pipe) (CoCo CTRL 1)
+	{ DIK_BACKSLASH,  DIK_LSHIFT,    16,     1,    64,    4 }, //   | (Pipe) (CoCo CTRL 1)
 	{ DIK_GRAVE,      DIK_LSHIFT,    16,     3,    64,    4 }, //   ~ (tilde) (CoCo CTRL 3)
 
 	{ DIK_CAPSLOCK,   0,             64,     4,    16,    0 }, //   CAPS LOCK (CoCo CTRL 0 for OS-9)
@@ -386,7 +386,7 @@ keytranslationentry_t keyTranslationsCompact[] =
 	{ DIK_3,          DIK_LSHIFT,    16,     3,    64,    7 }, //   #
 	{ DIK_4,          DIK_LSHIFT,    16,     4,    64,    7 }, //   $
 	{ DIK_5,          DIK_LSHIFT,    16,     5,	   64,    7 }, //   %
-	{ DIK_6,          DIK_LSHIFT,     8,     3,     0,    0 }, //   ^ (CoCo CTRL 7)
+	{ DIK_6,          DIK_LSHIFT,    16,     7,    64,    4 }, //   ^ (CoCo CTRL 7)
 	{ DIK_7,          DIK_LSHIFT,    16,     6,    64,    7 }, //   &
 	{ DIK_8,          DIK_LSHIFT,    32,     2,    64,    7 }, //   *
 	{ DIK_9,          DIK_LSHIFT,    32,     0,    64,    7 }, //   (
@@ -432,7 +432,7 @@ keytranslationentry_t keyTranslationsCompact[] =
 	{ DIK_RBRACKET,   DIK_LSHIFT,    64,     4,    32,    6 }, //   } (CoCo CTRL .)
 
 	{ DIK_BACKSLASH,  0,             32,     7,    64,    4 }, //   '\' (Back slash) (CoCo CTRL /)
-	{ DIK_BACKSLASH,  DIK_LSHIFT,    64,     1,    64,    4 }, //   | (Pipe) (CoCo CTRL 1)
+	{ DIK_BACKSLASH,  DIK_LSHIFT,    16,     1,    64,    4 }, //   | (Pipe) (CoCo CTRL 1)
 	{ DIK_GRAVE,      DIK_LSHIFT,    16,     3,    64,    4 }, //   ~ (tilde) (CoCo CTRL 3)
 
 	{ DIK_CAPSLOCK,   0,             64,     4,    16,    0 }, //   CAPS LOCK (CoCo CTRL 0 for OS-9)

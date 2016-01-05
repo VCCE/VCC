@@ -50,9 +50,9 @@ typedef enum keyboardlayout_e
 */
 const char * const k_keyboardLayoutNames[] =
 {
-	"CoCo",
-	"Natural",
-	"Compact",
+	"CoCo (DECB)",
+	"Natural (OS-9)",
+	"Compact (OS-9)",
 //	"Custom"
 } ;
 
