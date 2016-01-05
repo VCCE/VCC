@@ -184,10 +184,8 @@ void LoadConfig(SystemState *LCState)
 
 unsigned char WriteIniFile(void)
 {
-	char FullMapPath[MAX_PATH]="";
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
-	ValidatePath(CurrentConfig.KeymapFile);
 	ValidatePath(CurrentConfig.ExternalBasicImage);
 	WritePrivateProfileString("Version","Release",AppName,IniFilePath);
 
@@ -210,7 +208,6 @@ unsigned char WriteIniFile(void)
 
 	WritePrivateProfileInt("Misc","AutoStart",CurrentConfig.AutoStart,IniFilePath);
 	WritePrivateProfileInt("Misc","CartAutoStart",CurrentConfig.CartAutoStart,IniFilePath);
-	WritePrivateProfileString("Misc","KeyMap",CurrentConfig.KeymapFile,IniFilePath);
 	WritePrivateProfileInt("Misc","KeyMapIndex",CurrentConfig.KeyMap,IniFilePath);
 
 	WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
@@ -233,11 +230,6 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("RightJoyStick","Fire2",Right.Fire2,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick","DiDevice",Right.DiDevice,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick", "HiResDevice", Right.HiRes, IniFilePath);
-
-	strcpy(FullMapPath,ExecDirectory);	
-	strcat(FullMapPath,CurrentConfig.KeymapFile);
-	
-	//WriteKeymapFile(FullMapPath);
 
 	return(0);
 }
@@ -270,10 +262,7 @@ unsigned char ReadIniFile(void)
 
 	GetPrivateProfileString("Module","OnBoot","",CurrentConfig.ModulePath,MAX_PATH,IniFilePath);
 	
-	GetPrivateProfileString("Misc","KeyMap","KeyMap.ini",CurrentConfig.KeymapFile,MAX_PATH,IniFilePath);
-	CheckPath(CurrentConfig.KeymapFile);
-	CurrentConfig.KeyMap=GetPrivateProfileInt("Misc","KeyMapIndex",0,IniFilePath);
-	//ReadKeymapFile(CurrentConfig.KeymapFile);
+	CurrentConfig.KeyMap = GetPrivateProfileInt("Misc","KeyMapIndex",0,IniFilePath);
 	if (CurrentConfig.KeyMap>3)
 		CurrentConfig.KeyMap=0;	//Default to DECB Mapping
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
