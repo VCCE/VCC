@@ -376,18 +376,21 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				
 				CurrentConfig=TempConfig;
 
-				for (temp=0;temp<TABS;temp++)
-					DestroyWindow(g_hWndConfig[temp]);
-
 				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
 				Right=TempRight;
 				Left=TempLeft;
 				SetStickNumbers(Left.DiDevice,Right.DiDevice);
 
-			//	EndDialog(hDlg, LOWORD(wParam)); //TEST
-				DestroyWindow(hDlg) ; //TEST
-
+				for (temp = 0; temp < TABS; temp++)
+				{
+					DestroyWindow(g_hWndConfig[temp]);
+				}
+#ifdef CONFIG_DIALOG_MODAL
+				EndDialog(hDlg, LOWORD(wParam));
+#else
+				DestroyWindow(hDlg);
+#endif
 				EmuState.ConfigDialog=NULL;
 				break;
 
@@ -408,10 +411,15 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 
 			case IDCANCEL:
-				for (temp=0;temp<TABS;temp++)
+				for (temp = 0; temp < TABS; temp++)
+				{
 					DestroyWindow(g_hWndConfig[temp]);
-				DestroyWindow(hDlg) ;
-			//	EndDialog(hDlg, LOWORD(wParam)); //TEST
+				}
+#ifdef CONFIG_DIALOG_MODAL
+				EndDialog(hDlg, LOWORD(wParam));
+#else
+				DestroyWindow(hDlg);
+#endif
 				EmuState.ConfigDialog=NULL;
 				break;
 			}
@@ -1032,7 +1040,7 @@ int SelectFile(char *FileName)
 
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME);
-	ofn.hwndOwner         = NULL;
+	ofn.hwndOwner = EmuState.WindowHandle; // GetTopWindow(NULL);
 	ofn.Flags             = OFN_HIDEREADONLY;
 	ofn.hInstance         = GetModuleHandle(0);
 	ofn. lpstrDefExt      = "txt";
