@@ -338,8 +338,8 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				case IDC_BROWSE:
 					memset(&ofn,0,sizeof(ofn));
 					ofn.lStructSize       = sizeof (OPENFILENAME) ;
-					ofn.hwndOwner         = NULL;
-					ofn.lpstrFilter       =	"Disk Rom Images\0*.rom\0\0";	// filter ROM images
+					ofn.hwndOwner         = GetTopWindow(NULL);
+					ofn.lpstrFilter		  = "Disk Rom Images\0*.rom;*.bin\0\0";	// filter ROM images
 					ofn.nFilterIndex      = 1 ;								// current filter index
 					ofn.lpstrFile         = TempRomFileName ;						// contains full path and filename on return
 					ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
@@ -381,11 +381,11 @@ void Load_Disk(unsigned char disk)
 		CreateFlag=1; 
 		memset(&ofn,0,sizeof(ofn));
 		ofn.lStructSize       = sizeof (OPENFILENAME) ;
-		ofn.hwndOwner         = NULL;
+		ofn.hwndOwner         = GetTopWindow(NULL);
 		ofn.Flags             = OFN_HIDEREADONLY;
 		ofn.hInstance         = GetModuleHandle(0);
-		ofn. lpstrDefExt      ="dsk";
-		ofn.lpstrFilter       =	"Disk Images\0*.DSK;*.OS9\0\0";	// filter string "Disks\0*.DSK\0\0";
+		ofn.lpstrDefExt       = "dsk";
+		ofn.lpstrFilter       =	"Disk Images\0*.dsk;*.os9\0\0";	// filter string "Disks\0*.DSK\0\0";
 		ofn.nFilterIndex      = 0 ;								// current filter index
 		ofn.lpstrFile         = TempFileName	 ;				// contains full path and filename on return
 		ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile

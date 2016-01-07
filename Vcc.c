@@ -225,17 +225,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			switch (wmId)
 			{	
 				case IDM_HELP_ABOUT:
-					DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
+					DialogBox(EmuState.WindowInstance, 
+						(LPCTSTR)IDD_ABOUTBOX, 
+						hWnd, 
+						(DLGPROC)About);
 				    break;
 
-				case ID_CONFIGURE_OPTIONS:
-					
+				case ID_CONFIGURE_OPTIONS:				
+#ifdef CONFIG_DIALOG_MODAL
+					// open config dialog modally
+					DialogBox(EmuState.WindowInstance,
+						(LPCTSTR)IDD_TCONFIG,
+						hWnd,
+						(DLGPROC)Config
+						);
+#else
+					// open config dialog if not already open
+					// opens modeless so you can control the cassette
+					// while emulator is still running (assumed)
 					if (EmuState.ConfigDialog==NULL)
 					{
-						EmuState.ConfigDialog = CreateDialog (NULL,(LPCTSTR)IDD_TCONFIG,EmuState.WindowHandle,(DLGPROC) Config) ;
-						ShowWindow (EmuState.ConfigDialog, SW_SHOWNORMAL) ;
+						EmuState.ConfigDialog = CreateDialog(
+							EmuState.WindowInstance, //NULL,
+							(LPCTSTR)IDD_TCONFIG,
+							EmuState.WindowHandle,
+							(DLGPROC)Config
+						) ;
+						// open modeless
+						ShowWindow(EmuState.ConfigDialog, SW_SHOWNORMAL) ;
 					}
-				//	DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_TCONFIG, hWnd, (DLGPROC)Config);
+#endif
 				    break;
 
 

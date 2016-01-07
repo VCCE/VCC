@@ -622,7 +622,7 @@ void LoadCartDLL(unsigned char Slot,char *DllPath)
 	UnloadModule(Slot);
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME) ;
-	ofn.hwndOwner         = NULL;
+	ofn.hwndOwner         = GetTopWindow(NULL);
 	ofn.lpstrFilter       =	"Program Packs\0*.ROM;*.DLL\0\0" ;			// filter string
 	ofn.nFilterIndex      = 1 ;								// current filter index
 	ofn.lpstrFile         = DllPath;						// contains full path and filename on return

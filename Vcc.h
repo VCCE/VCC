@@ -19,6 +19,11 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// define this to make the main config dialog modal
+// vs. modeless where you can interact with the main window
+// while the config dialog is open
+//#define CONFIG_DIALOG_MODAL
+
 void shutdown(void);
 void SetCPUMultiplyerFlag (unsigned char);
 void SetTurboMode(unsigned char);
