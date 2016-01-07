@@ -15,12 +15,11 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
-/********************************************************************************************
-*	fd502.cpp : Defines the entry point for the DLL application.							*
-*	DLL for use with Vcc 1.0 or higher. DLL interface 1.0 Beta								* 
-*	This Module will emulate a Tandy Floppy Disk Model FD-502 With 3 DSDD drives attached	* 
-*	Copyright 2006 (c) by Joseph Forgione 													*
-*********************************************************************************************/
+/*
+	fd502.cpp : Defines the entry point for the DLL application.
+	DLL for use with Vcc 1.0 or higher. DLL interface 1.0 Beta
+	This Module will emulate a Tandy Floppy Disk Model FD-502 With 3 DSDD drives attached
+*/
 
 #include <windows.h>
 #include <stdio.h>
@@ -29,32 +28,43 @@ This file is part of VCC (Virtual Color Computer).
 #include "distortc.h"
 #include "fd502.h"
 #include "..\fileops.h"
+
 #define EXTROMSIZE 16384
+
 extern DiskInfo Drive[5];
+
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
-static unsigned char ExternalRom[EXTROMSIZE];
-static unsigned char DiskRom[EXTROMSIZE];
-static unsigned char RGBDiskRom[EXTROMSIZE];
-static char RomFileName[MAX_PATH]="";
-static char TempRomFileName[MAX_PATH]="";
+
 static void (*AssertInt)(unsigned char,unsigned char)=NULL;
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
+
+static unsigned char ExternalRom[EXTROMSIZE];
+static unsigned char DiskRom[EXTROMSIZE];
+static unsigned char RGBDiskRom[EXTROMSIZE];
+static char RomFileName[MAX_PATH] = "";
+static char TempRomFileName[MAX_PATH] = "";
 static unsigned char *Memory=NULL;
 unsigned char PhysicalDriveA=0,PhysicalDriveB=0,OldPhysicalDriveA=0,OldPhysicalDriveB=0;
 static unsigned char *RomPointer[3]={ExternalRom,DiskRom,RGBDiskRom};
 static unsigned char SelectRom=0;
-unsigned char SetChip(unsigned char);
 static unsigned char NewDiskNumber=0,DialogOpen=0,CreateFlag=0;
 static unsigned char PersistDisks=0;
 static char IniFile[MAX_PATH]="";
 static unsigned char TempSelectRom=0;
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
+static HINSTANCE g_hinstDLL;
+static unsigned long RealDisks = 0;
+static char TempFileName[MAX_PATH] = "";
+
+unsigned char SetChip(unsigned char);
+long CreateDisk(unsigned char);
+unsigned char LoadExtRom(unsigned char, char *);
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 void LoadConfig(void);
@@ -62,11 +72,6 @@ void SaveConfig(void);
 long CreateDiskHeader(char *,unsigned char,unsigned char,unsigned char);
 void Load_Disk(unsigned char);
 
-static HINSTANCE g_hinstDLL;
-static unsigned long RealDisks=0;
-long CreateDisk (unsigned char);
-static char TempFileName[MAX_PATH]="";
-unsigned char LoadExtRom( unsigned char,char *);
 BOOL WINAPI DllMain(
     HINSTANCE hinstDLL,  // handle to DLL module
     DWORD fdwReason,     // reason for calling function

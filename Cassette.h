@@ -26,6 +26,8 @@ This file is part of VCC (Virtual Color Computer).
 #define WAV 0
 #define WRITEBUFFERSIZE	0x1FFFF
 
+extern char LastCassPath[MAX_PATH];
+
 unsigned int GetTapeCounter(void);
 unsigned int LoadTape(void);
 void SetTapeCounter(unsigned int);

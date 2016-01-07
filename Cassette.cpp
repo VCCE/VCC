@@ -24,11 +24,13 @@ This file is part of VCC (Virtual Color Computer).
 #include "cassette.h"
 #include "stdio.h"
 #include "logger.h"
+#include "fileops.h"
 
 static unsigned char MotorState=0,TapeMode=STOP,WriteProtect=0,Quiet=30;
 static HANDLE TapeHandle=NULL;
 static unsigned long TapeOffset=0,TotalSize=0;
-static char TapeFileName[MAX_PATH]="";
+static char TapeFileName[MAX_PATH] = "";
+char LastCassPath[MAX_PATH] = "";
 static unsigned char TempBuffer[8192];
 static unsigned char *CasBuffer=NULL;
 static char FileType=0;
@@ -263,12 +265,13 @@ unsigned int LoadTape(void)
 {
 	HANDLE hr=NULL;
 	OPENFILENAME ofn;	
-	char Dummy[MAX_PATH]="";
 	static unsigned char DialogOpen=0;
 	unsigned int RetVal=0;
+
 	if (DialogOpen ==1)	//Only allow 1 dialog open 
 		return(0);
 	DialogOpen=1;
+
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME);
 	ofn.hwndOwner         = NULL;
@@ -281,13 +284,23 @@ unsigned int LoadTape(void)
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;							// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = Dummy;							// initial directory
 	ofn.lpstrTitle        = "Insert Tape Image";			// title bar string
+	ofn.lpstrInitialDir   = NULL;							// initial directory
+
+	if (strlen(LastCassPath) > 0)
+	{
+		ofn.lpstrInitialDir = LastCassPath;					// initial directory
+	}
 	RetVal=GetOpenFileName(&ofn);
 	if (RetVal)
 	{
-		if (MountTape(TapeFileName)==0)	
-			MessageBox(NULL,"Can't open file","Error",0);
+		strcpy(LastCassPath, TapeFileName);
+		PathRemoveFileSpec(LastCassPath);
+
+		if (MountTape(TapeFileName) == 0)
+		{
+			MessageBox(NULL, "Can't open file", "Error", 0);
+		}
 	}
 	DialogOpen=0;
 	return(RetVal);

@@ -623,21 +623,20 @@ void LoadCartDLL(unsigned char Slot,char *DllPath)
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME) ;
 	ofn.hwndOwner         = NULL;
-	ofn.lpstrFilter       =	"Program Packs\0*.ROM;*.DLL\0\0" ;			// filter string
+	ofn.lpstrFilter		  = "Program Packs\0*.ROM;*.BIN;*.DLL\0\0";			// filter string
 	ofn.nFilterIndex      = 1 ;								// current filter index
 	ofn.lpstrFile         = DllPath;						// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;							// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH ;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = NULL;							// initial directory
 	ofn.lpstrTitle        = TEXT("Load Program Pack");	// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
+	ofn.lpstrInitialDir = NULL;							// initial directory
+
 	if ( GetOpenFileName (&ofn) )
 	{
 		RetVal= MountModule( Slot,DllPath);
-
 	}
-	return;
 }
 
 
@@ -660,7 +659,6 @@ void LoadConfig(void)
 		if (strlen(ModulePaths[Temp]) !=0)
 			MountModule(Temp,ModulePaths[Temp]);
 	BuildDynaMenu();
-	return;
 }
 
 void WriteConfig(void)
@@ -676,7 +674,6 @@ void WriteConfig(void)
 	WritePrivateProfileString(ModName,"SLOT3",ModulePaths[2],IniFile);
 	ValidatePath(ModulePaths[3]);
 	WritePrivateProfileString(ModName,"SLOT4",ModulePaths[3],IniFile);
-	return;
 }
 
 void ReadModuleParms(unsigned char Slot,char *String)
