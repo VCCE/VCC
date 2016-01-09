@@ -47,20 +47,20 @@ static bool DialogOpen=false;
 // Hooks into current loaded Pak
 // TODO: use vccpak_t struct
 //
-static GETNAME					GetModuleName			= NULL;
-static CONFIGIT					ConfigModule			= NULL;
-static SETINTERUPTCALLPOINTER	SetInteruptCallPointer	= NULL;
-static DMAMEMPOINTERS			DmaMemPointer			= NULL;
-static HEARTBEAT				HeartBeat				= NULL;
-static PACKPORTWRITE			PakPortWrite			= NULL;
-static PACKPORTREAD				PakPortRead				= NULL;
-static MEMWRITE8				PakMemWrite8			= NULL;
-static MEMREAD8					PakMemRead8				= NULL;
-static MODULESTATUS				ModuleStatus			= NULL;
-static MODULEAUDIOSAMPLE		ModuleAudioSample		= NULL;
-static MODULERESET				ModuleReset				= NULL;
-static SETINIPATH				SetIniPath				= NULL;
-static SETCARTPOINTER			PakSetCart				= NULL;
+static vccpakapi_getname_t					GetModuleName			= NULL;
+static vccpakapi_config_t					ConfigModule			= NULL;
+static vccpakapi_setintptr_t	SetInteruptCallPointer	= NULL;
+static vccpakapi_setmemptrs_t			DmaMemPointer			= NULL;
+static vccpakapi_heartbeat_t				HeartBeat				= NULL;
+static vccpakapi_portwrite_t			PakPortWrite			= NULL;
+static vccpakapi_portread_t				PakPortRead				= NULL;
+static vcccpu_write8_t				PakMemWrite8			= NULL;
+static vcccpu_read8_t					PakMemRead8				= NULL;
+static vccpakapi_status_t				ModuleStatus			= NULL;
+static vccpakapi_getaudiosample_t		ModuleAudioSample		= NULL;
+static vccpakapi_reset_t				ModuleReset				= NULL;
+static vccpakapi_setinipath_t				SetIniPath				= NULL;
+static vccpakapi_setcartptr_t			PakSetCart				= NULL;
 
 static char Did=0;
 
@@ -225,21 +225,24 @@ int InsertModule (char *ModulePath)
 		{
 			return(NOMODULE);
 		}
+
 		SetCart(0);
-		GetModuleName=(GETNAME)GetProcAddress(hinstLib, "ModuleName"); 
-		ConfigModule=(CONFIGIT)GetProcAddress(hinstLib, "ModuleConfig");
-		PakPortWrite=(PACKPORTWRITE) GetProcAddress(hinstLib, "PackPortWrite");
-		PakPortRead=(PACKPORTREAD) GetProcAddress(hinstLib, "PackPortRead");
-		SetInteruptCallPointer=(SETINTERUPTCALLPOINTER)GetProcAddress(hinstLib, "AssertInterupt");
-		DmaMemPointer=(DMAMEMPOINTERS) GetProcAddress(hinstLib, "MemPointers");
-		HeartBeat=(HEARTBEAT) GetProcAddress(hinstLib, "HeartBeat");
-		PakMemWrite8=(MEMWRITE8) GetProcAddress(hinstLib, "PakMemWrite8");
-		PakMemRead8=(MEMREAD8) 	GetProcAddress(hinstLib, "PakMemRead8");
-		ModuleStatus=(MODULESTATUS) GetProcAddress(hinstLib, "ModuleStatus");
-		ModuleAudioSample=(MODULEAUDIOSAMPLE) GetProcAddress(hinstLib, "ModuleAudioSample");
-		ModuleReset=(MODULERESET) GetProcAddress(hinstLib, "ModuleReset");
-		SetIniPath=(SETINIPATH) GetProcAddress(hinstLib,"SetIniPath");
-		PakSetCart=(SETCARTPOINTER) GetProcAddress(hinstLib,"SetCart");
+
+		GetModuleName	= (vccpakapi_getname_t)			GetProcAddress(hinstLib, VCC_PAKAPI_GETNAME);
+		ConfigModule	= (vccpakapi_config_t)		GetProcAddress(hinstLib, VCC_PAKAPI_CONFIG);
+		PakPortWrite	= (vccpakapi_portwrite_t)	GetProcAddress(hinstLib, VCC_PAKAPI_PORTWRITE);
+		PakPortRead		= (vccpakapi_portread_t)	GetProcAddress(hinstLib, VCC_PAKAPI_PORTREAD);
+		SetInteruptCallPointer=(vccpakapi_setintptr_t)GetProcAddress(hinstLib, VCC_PAKAPI_ASSERTINTERRUPT);
+		DmaMemPointer	= (vccpakapi_setmemptrs_t)	GetProcAddress(hinstLib, VCC_PAKAPI_MEMPOINTERS);
+		HeartBeat		= (vccpakapi_heartbeat_t)		GetProcAddress(hinstLib, VCC_PAKAPI_HEARTBEAT);
+		PakMemWrite8	= (vcccpu_write8_t)		GetProcAddress(hinstLib, VCC_PAKAPI_MEMWRITE);
+		PakMemRead8		= (vcccpu_read8_t) 		GetProcAddress(hinstLib, VCC_PAKAPI_MEMREAD);
+		ModuleStatus	= (vccpakapi_status_t)	GetProcAddress(hinstLib, VCC_PAKAPI_STATUS);
+		ModuleAudioSample=(vccpakapi_getaudiosample_t) GetProcAddress(hinstLib, VCC_PAKAPI_AUDIOSAMPLE);
+		ModuleReset		= (vccpakapi_reset_t)		GetProcAddress(hinstLib, VCC_PAKAPI_RESET);
+		SetIniPath		= (vccpakapi_setinipath_t)		GetProcAddress(hinstLib, VCC_PAKAPI_SETINIPATH);
+		PakSetCart		= (vccpakapi_setcartptr_t)	GetProcAddress(hinstLib, VCC_PAKAPI_SETCART);
+
 		if (GetModuleName == NULL)
 		{
 			FreeLibrary(hinstLib); 
@@ -247,16 +250,23 @@ int InsertModule (char *ModulePath)
 			return(NOTVCC);
 		}
 		BankedCartOffset=0;
+
+		//
+		// Initialize pak
+		//
 		if (DmaMemPointer != NULL)
 		{
+			// pass in our memory read/write functions
 			DmaMemPointer(MemRead8, MemWrite8);
 		}
 		if (SetInteruptCallPointer != NULL)
 		{
+			// pass in our assert interrrupt function
 			SetInteruptCallPointer(CPUAssertInterupt);
 		}
+		// initialize / start dynamic menu
+		GetModuleName(Modname, CatNumber, DynamicMenuCallback, EmuState.WindowHandle);
 
-		GetModuleName(Modname,CatNumber,DynamicMenuCallback);  //Instanciate the menus from HERE!
 		sprintf(Temp,"Configure %s",Modname);
 
 		strcat(String,"Module Name: ");
@@ -330,7 +340,9 @@ int InsertModule (char *ModulePath)
 			PakSetCart(SetCart);
 		}
 		strcpy(DllPath,ModulePath);
+
 		EmuState.ResetPending=2;
+		
 		return(0);
 		break;
 	}

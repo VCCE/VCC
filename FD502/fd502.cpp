@@ -63,10 +63,10 @@ extern DiskInfo Drive[5];
 /*
 	hooks back to emulator
 */
-static ASSERTINTERUPT AssertInt = NULL;
-static DYNAMICMENUCALLBACK DynamicMenuCallback = NULL;
-static MEMREAD8 MemRead8 = NULL;
-static MEMWRITE8 MemWrite8 = NULL;
+static vccpakapi_assertinterrupt_t AssertInt = NULL;
+static vccapi_dynamicmenucallback_t DynamicMenuCallback = NULL;
+static vcccpu_read8_t MemRead8 = NULL;
+static vcccpu_write8_t MemWrite8 = NULL;
 
 /*
 	globals
@@ -86,15 +86,14 @@ static unsigned char PersistDisks=0;
 static char IniFile[MAX_PATH]="";
 static unsigned char TempSelectRom=0;
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
-static HINSTANCE g_hinstDLL;
+static HINSTANCE g_hinstDLL = NULL;
+static HWND g_hWnd = NULL;
 static unsigned long RealDisks = 0;
 
 void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
 {
 	AssertInt(Interupt,Latencey);
-	return;
 }
-
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -194,9 +193,10 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 			case IDC_BROWSE:
+			{
 				memset(&ofn, 0, sizeof(ofn));
 				ofn.lStructSize = sizeof(OPENFILENAME);
-				ofn.hwndOwner = GetTopWindow(NULL);
+				ofn.hwndOwner = g_hWnd;
 				ofn.lpstrFilter = "Disk Rom Images\0*.rom;*.bin\0\0";	// filter ROM images
 				ofn.nFilterIndex = 1;								// current filter index
 				ofn.lpstrFile = TempRomFileName;						// contains full path and filename on return
@@ -210,7 +210,8 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					SendDlgItemMessage(hDlg, IDC_ROMPATH, WM_SETTEXT, strlen(TempRomFileName), (LPARAM)(LPCSTR)TempRomFileName);
 				}
-				break;
+			}
+			break;
 
 			case IDC_CLOCK:
 			case IDC_READONLY:
@@ -246,7 +247,7 @@ void Load_Disk(unsigned char disk)
 		CreateFlag=1; 
 		memset(&ofn,0,sizeof(ofn));
 		ofn.lStructSize       = sizeof (OPENFILENAME) ;
-		ofn.hwndOwner         = GetTopWindow(NULL);
+		ofn.hwndOwner         = g_hWnd;
 		ofn.Flags             = OFN_HIDEREADONLY;
 		ofn.hInstance         = GetModuleHandle(0);
 		ofn.lpstrDefExt       = "dsk";
@@ -280,10 +281,11 @@ void Load_Disk(unsigned char disk)
 					SaveConfig();
 				}
 			}
-			
 		}
 		else
-			FileNotSelected=0;
+		{
+			FileNotSelected = 0;
+		}
 
 		DialogOpen=0;
 
@@ -598,153 +600,108 @@ unsigned char LoadExtRom( unsigned char RomType,char *FilePath)	//Returns 1 on i
 	VCC Pak API
 */
 
-//extern "C"
-//{
-	extern "C" __declspec(dllexport) void ModuleName(char *ModName, char *CatNumber, DYNAMICMENUCALLBACK Temp)
-	{
-		int ErrorNumber = 0;
-		LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
-		LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
-		DynamicMenuCallback = Temp;
-		if (DynamicMenuCallback != NULL)
-		{
-			BuildDynaMenu();
-		}
-	}
-//}
-
-extern "C"
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char *ModName, char *CatNumber, vccapi_dynamicmenucallback_t Temp, void * wndHandle)
 {
-	__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+	int ErrorNumber = 0;
+
+	g_hWnd = (HWND)wndHandle;
+	LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
+	LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
+	DynamicMenuCallback = Temp;
+	if (DynamicMenuCallback != NULL)
 	{
-		switch (MenuID)
-		{
-		case 10:
-			Load_Disk(0);
-			break;
-		case 11:
-			unmount_disk_image(0);
-			SaveConfig();
-			break;
-		case 12:
-			Load_Disk(1);
-			break;
-		case 13:
-			unmount_disk_image(1);
-			SaveConfig();
-			break;
-		case 14:
-			Load_Disk(2);
-			break;
-		case 15:
-			unmount_disk_image(2);
-			SaveConfig();
-			break;
-		case 16:
-			DialogBox(g_hinstDLL, (LPCTSTR)IDD_CONFIG, NULL, (DLGPROC)Config);
-			break;
-		case 17:
-			Load_Disk(3);
-			break;
-		case 18:
-			unmount_disk_image(3);
-			SaveConfig();
-			break;
-		}
 		BuildDynaMenu();
-		return;
 	}
 }
 
-extern "C"
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(unsigned char MenuID)
 {
-	__declspec(dllexport) void SetIniPath(char *IniFilePath)
+	switch (MenuID)
 	{
-		strcpy(IniFile, IniFilePath);
-		LoadConfig();
-		return;
+	case 10:
+		Load_Disk(0);
+		break;
+	case 11:
+		unmount_disk_image(0);
+		SaveConfig();
+		break;
+	case 12:
+		Load_Disk(1);
+		break;
+	case 13:
+		unmount_disk_image(1);
+		SaveConfig();
+		break;
+	case 14:
+		Load_Disk(2);
+		break;
+	case 15:
+		unmount_disk_image(2);
+		SaveConfig();
+		break;
+	case 16:
+		DialogBox(g_hinstDLL, (LPCTSTR)IDD_CONFIG, NULL, (DLGPROC)Config);
+		break;
+	case 17:
+		Load_Disk(3);
+		break;
+	case 18:
+		unmount_disk_image(3);
+		SaveConfig();
+		break;
 	}
+	BuildDynaMenu();
+}
+
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
+{
+	strcpy(IniFile, IniFilePath);
+	LoadConfig();
 }
 
 // This captures the Fuction transfer point for the CPU assert interupt 
-extern "C"
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_ASSERTINTERRUPT(vccpakapi_assertinterrupt_t Dummy)
 {
-	__declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
+	AssertInt = Dummy;
+}
+
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
+{
+	if (((Port == 0x50) | (Port == 0x51)) & ClockEnabled)
 	{
-		AssertInt = Dummy;
-		return;
+		write_time(Data, Port);
+	}
+	else
+	{
+		disk_io_write(Data, Port);
 	}
 }
 
-extern "C"
+extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
 {
-	__declspec(dllexport) void PackPortWrite(unsigned char Port, unsigned char Data)
+	if (  (Port == 0x50) 
+		| ((Port == 0x51) & ClockEnabled)
+		)
 	{
-		if (((Port == 0x50) | (Port == 0x51)) & ClockEnabled)
-			write_time(Data, Port);
-		else
-			disk_io_write(Data, Port);
-		return;
+		return read_time(Port);
 	}
+
+	return disk_io_read(Port);
 }
 
-extern "C"
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_HEARTBEAT(void)
 {
-
-	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
-	{
-		if (((Port == 0x50) | (Port == 0x51)) & ClockEnabled)
-			return(read_time(Port));
-		return(disk_io_read(Port));
-	}
+	PingFdc();
 }
 
-extern "C"
+extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
 {
-	__declspec(dllexport) void HeartBeat(void)
-	{
-		PingFdc();
-		return;
-	}
+	return RomPointer[SelectRom][Address & (EXTROMSIZE - 1)];
 }
 
-//This captures the pointers to the MemRead8 and MemWrite8 functions. This allows the DLL to do DMA xfers with CPU ram.
-/*
-extern "C"
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char *MyStatus)
 {
-__declspec(dllexport) void MemPointers(MEMREAD8 Temp1,MEMWRITE8 Temp2)
-{
-MemRead8=Temp1;
-MemWrite8=Temp2;
-return;
-}
-}
-*/
-extern "C"
-{
-	__declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
-	{
-		return(RomPointer[SelectRom][Address & (EXTROMSIZE - 1)]);
-	}
-}
-/*
-extern "C"
-{
-__declspec(dllexport) void PakMemWrite8(unsigned char Data,unsigned short Address)
-{
-
-return;
-}
-}
-*/
-
-extern "C"
-{
-	__declspec(dllexport) void ModuleStatus(char *MyStatus)
-	{
-		DiskStatus(MyStatus);
-		return;
-	}
+	DiskStatus(MyStatus);
 }
 
 /****************************************************************************/

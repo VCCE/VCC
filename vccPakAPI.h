@@ -54,16 +54,17 @@ typedef struct vccpak_t vccpak_t;
 /*
  Function definitions needed by the Pak API
 */
-typedef void(*SETCART)(unsigned char);
+typedef void(*vccapi_setcart_t)(unsigned char);
+typedef void(*vccapi_dynamicmenucallback_t)(char *, int, int);
 
 /*
 function definitions for reading/writing memory
 and i/o ports
 */
-typedef unsigned char(*PACKPORTREAD)(unsigned char);
-typedef void(*PACKPORTWRITE)(unsigned char, unsigned char);
-typedef unsigned char(*MEMREAD8)(unsigned short);
-typedef void(*MEMWRITE8)(unsigned char, unsigned short);
+typedef unsigned char(*vccpakapi_portread_t)(unsigned char);
+typedef void(*vccpakapi_portwrite_t)(unsigned char, unsigned char);
+typedef unsigned char(*vcccpu_read8_t)(unsigned short);
+typedef void(*vcccpu_write8_t)(unsigned char, unsigned short);
 
 /*
 	API version
@@ -74,44 +75,69 @@ typedef void(*MEMWRITE8)(unsigned char, unsigned short);
 /*
 	Function definitions for plug-in API
 */
-typedef vccpak_t * (*INITIALIZE)(void);
-typedef void (*DYNAMICMENUCALLBACK)(char *, int, int);
-typedef void (*GETNAME)(char *, char *, DYNAMICMENUCALLBACK);
-typedef void (*CONFIGIT)(unsigned char);
-typedef void (*HEARTBEAT) (void);
-typedef void (*ASSERTINTERUPT) (unsigned char, unsigned char);
-typedef void (*MODULESTATUS)(char *);
-typedef void (*DMAMEMPOINTERS) (MEMREAD8, MEMWRITE8);
-typedef void (*SETCARTPOINTER)(SETCART);
-typedef void (*SETINTERUPTCALLPOINTER) (ASSERTINTERUPT);
-typedef unsigned short (*MODULEAUDIOSAMPLE)(void);
-typedef void (*MODULERESET)(void);
-typedef void (*SETINIPATH)(char *);
+//typedef vccpak_t * (*INITIALIZE)(void);
+typedef void(*vccpakapi_getname_t)(char * modName, char * catNumber, vccapi_dynamicmenucallback_t , void * wndHandle);
+typedef void (*vccpakapi_config_t)(unsigned char);
+typedef void (*vccpakapi_heartbeat_t) (void);
+typedef void (*vccpakapi_assertinterrupt_t) (unsigned char, unsigned char);
+typedef void (*vccpakapi_status_t)(char *);
+typedef void (*vccpakapi_setmemptrs_t) (vcccpu_read8_t, vcccpu_write8_t);
+typedef void (*vccpakapi_setcartptr_t)(vccapi_setcart_t);
+typedef void (*vccpakapi_setintptr_t) (vccpakapi_assertinterrupt_t);
+typedef unsigned short (*vccpakapi_getaudiosample_t)(void);
+typedef void (*vccpakapi_reset_t)(void);
+typedef void (*vccpakapi_setinipath_t)(char *);
 
 /*
 	VCCPak API function names
 
 	VCC will query the loaded DLL for these function names
+
+	Names must match definitions below
 */
-#define VCC_PAKAPI_INITIALIZE		"vccPakInit"		// INITIALIZE
+//#define VCC_PAKAPI_INITIALIZE		"vccPakAPIInit"		// INITIALIZE
 
-#define VCC_PAKAPI_MEMREAD			"PakMemRead8"		// MEMREAD8
-#define VCC_PAKAPI_MEMWRITE			"PakMemWrite8"		// MEMWRITE8
+#define VCC_PAKAPI_MEMREAD			"vccPakAPIMemRead8"		// vcccpu_read8_t
+#define VCC_PAKAPI_DEF_MEMREAD		vccPakAPIMemRead8
 
-#define VCC_PAKAPI_PORTREAD			"PackPortRead"		// PACKPORTREAD
-#define VCC_PAKAPI_PORTWRITE		"PackPortWrite"		// PACKPORTWRITE
+#define VCC_PAKAPI_MEMWRITE			"vccPakAPIMemWrite8"		// vcccpu_write8_t
+#define VCC_PAKAPI_DEF_MEMWRITE		vccPakAPIMemWrite8
 
-#define VCC_PAKAPI_MEMPOINTERS		"MemPointers"		// DMAMEMPOINTERS
-#define VCC_PAKAPI_SETCART			"SetCart"			// SETINTERUPTCALLPOINTER
+#define VCC_PAKAPI_PORTREAD			"vccPakAPIPortRead"		// vccpakapi_portread_t
+#define VCC_PAKAPI_DEF_PORTREAD		vccPakAPIPortRead
 
-#define VCC_PAKAPI_GETNAME			"ModuleName"		// GETNAME
-#define VCC_PAKAPI_CONFIG			"ModuleConfig"		// CONFIGIT
-#define VCC_PAKAPI_SETINIPATH		"SetIniPath"		// SETINIPATH
-#define VCC_PAKAPI_ASSERTINTERRUPT	"AssertInterupt"	// ASSERTINTERUPT
-#define VCC_PAKAPI_HEARTBEAT		"HeartBeat"			// HEARTBEAT
-#define VCC_PAKAPI_STATUS			"ModuleStatus"		// MODULESTATUS
-#define VCC_PAKAPI_AUDIOSAMPLE		"ModuleAudioSample"	// MODULEAUDIOSAMPLE
-#define VCC_PAKAPI_RESET			"ModuleReset"		// MODULERESET
+#define VCC_PAKAPI_PORTWRITE		"vccPakAPIPortWrite"		// vccpakapi_portwrite_t
+#define VCC_PAKAPI_DEF_PORTWRITE	vccPakAPIPortWrite
+
+#define VCC_PAKAPI_MEMPOINTERS		"vccPakAPISetMemPointers"		// vccpakapi_setmemptrs_t
+#define VCC_PAKAPI_DEF_MEMPOINTERS	vccPakAPISetMemPointers
+
+#define VCC_PAKAPI_SETCART			"vccPakAPISetCart"			// vccpakapi_setintptr_t
+#define VCC_PAKAPI_DEF_SETCART		vccPakAPISetCart
+
+#define VCC_PAKAPI_GETNAME			"vccPakAPIGetModuleName"	// vccpakapi_getname_t
+#define VCC_PAKAPI_DEF_GETNAME		vccPakAPIGetModuleName
+
+#define VCC_PAKAPI_CONFIG			"vccPakAPIConfig"		// vccpakapi_config_t
+#define VCC_PAKAPI_DEF_CONFIG		vccPakAPIConfig
+
+#define VCC_PAKAPI_SETINIPATH		"vccPakAPISetIniPath"		// vccpakapi_setinipath_t
+#define VCC_PAKAPI_DEF_SETINIPATH	vccPakAPISetIniPath
+
+#define VCC_PAKAPI_ASSERTINTERRUPT		"vccPakAPIAssertInterupt"	// vccpakapi_assertinterrupt_t
+#define VCC_PAKAPI_DEF_ASSERTINTERRUPT	vccPakAPIAssertInterupt
+
+#define VCC_PAKAPI_HEARTBEAT		"vccPakAPIHeartBeat"			// vccpakapi_heartbeat_t
+#define VCC_PAKAPI_DEF_HEARTBEAT	vccPakAPIHeartBeat
+
+#define VCC_PAKAPI_STATUS			"vccPakAPIStatus"		// vccpakapi_status_t
+#define VCC_PAKAPI_DEF_STATUS		vccPakAPIStatus
+
+#define VCC_PAKAPI_AUDIOSAMPLE		"vccPakAPIAudioSample"	// vccpakapi_getaudiosample_t
+#define VCC_PAKAPI_DEF_AUDIOSAMPLE	vccPakAPIAudioSample
+
+#define VCC_PAKAPI_RESET			"vccPakAPIReset"		// vccpakapi_reset_t
+#define VCC_PAKAPI_DEF_RESET		vccPakAPIReset
 
 /****************************************************************************/
 
@@ -125,34 +151,34 @@ struct vccpakapi_t
 	//
 	// VCC callbacks
 	//
-	//ASSERTINTERUPT			vccAssertInt;
-	//DYNAMICMENUCALLBACK		vccDynamicMenuCallback;
-	//MEMREAD8				vccMemRead8;
-	//MEMWRITE8				vccMemWrite8;
+	//vccpakapi_assertinterrupt_t			vccAssertInt;
+	//vccapi_dynamicmenucallback_t		vccDynamicMenuCallback;
+	//vcccpu_read8_t				vccMemRead8;
+	//vcccpu_write8_t				vccMemWrite8;
 
 	//
 	// Functions defined by Pak 
 	//
 
 	// interface for Pak reading/writing memory or i/o port
-	PACKPORTREAD			portRead;
-	PACKPORTWRITE			portWrite;
-	MEMREAD8				memRead;
-	MEMWRITE8				memWrite;
+	vccpakapi_portread_t			portRead;
+	vccpakapi_portwrite_t			portWrite;
+	vcccpu_read8_t				memRead;
+	vcccpu_write8_t				memWrite;
 
-	INITIALIZE				init;
-	DYNAMICMENUCALLBACK		dynMenu;
-	GETNAME					getName;
-	CONFIGIT				config;
-	HEARTBEAT				heartbeat;
-	ASSERTINTERUPT			assertInterrupt;
-	MODULESTATUS			status;
-	DMAMEMPOINTERS			memPointers;
-	SETCARTPOINTER			setCartPtr;
-	SETINTERUPTCALLPOINTER	setInterruptCallPtr;
-	MODULEAUDIOSAMPLE		getSample;
-	MODULERESET				reset;
-	SETINIPATH				setINIPath;
+	//INITIALIZE				init;
+	vccapi_dynamicmenucallback_t		dynMenu;
+	vccpakapi_getname_t		getName;
+	vccpakapi_config_t				config;
+	vccpakapi_heartbeat_t				heartbeat;
+	vccpakapi_assertinterrupt_t			assertInterrupt;
+	vccpakapi_status_t			status;
+	vccpakapi_setmemptrs_t			memPointers;
+	vccpakapi_setcartptr_t			setCartPtr;
+	vccpakapi_setintptr_t	setInterruptCallPtr;
+	vccpakapi_getaudiosample_t		getSample;
+	vccpakapi_reset_t				reset;
+	vccpakapi_setinipath_t				setINIPath;
 };
 
 /**

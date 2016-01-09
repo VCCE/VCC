@@ -4,20 +4,19 @@
 #include <windows.h>
 #include <process.h>
 #include <stdio.h>
-#include "..\logger.h"
 #include "becker.h"
-#include "resource.h" 
-#include "..\fileops.h"
+#include "resource.h"
+
+#include "../logger.h"
+#include "../fileops.h"
+#include "../vccPakAPI.h"
 
 // socket
 static SOCKET dwSocket = 0;
 
-// vcc stuff
-typedef void (*SETCART)(unsigned char);
-typedef void (*SETCARTPOINTER)(SETCART);
-typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
+static vccapi_setcart_t PakSetCart = NULL;
+
 static HINSTANCE g_hinstDLL=NULL;
-static void (*PakSetCart)(unsigned char)=NULL;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 static char IniFile[MAX_PATH]="";
 static unsigned char HDBRom[8192];
@@ -419,7 +418,7 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 
 
 // dll exported functions
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
+	__declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char *ModName,char *CatNumber,vccapi_dynamicmenucallback_t Temp, void * wndHandle)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
@@ -432,7 +431,7 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 		return ;
 	}
 
-	__declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
+	__declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port,unsigned char Data)
 	{
 		switch (Port)
 		{
@@ -445,7 +444,7 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 	}
 
 
-	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+	__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
 	{
 		switch (Port)
 		{
@@ -465,21 +464,21 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 		return 0;
 	}
 /*
-	__declspec(dllexport) unsigned char ModuleReset(void)
+	__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_RESET(void)
 	{
 		if (PakSetCart!=NULL)
 			PakSetCart(1);
 		return(0);
 	}
 */
-	__declspec(dllexport) unsigned char SetCart(SETCART Pointer)
+	__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_SETCART(vccapi_setcart_t Pointer)
 	{
 		
 		PakSetCart=Pointer;
 		return(0);
 	}
 
-	__declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
+	__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
 	{
 		//sprintf(msg,"PalMemRead8: addr %d  val %d\n",(Address & 8191), Rom[Address & 8191]);
         //WriteLog(msg,TOCONS);
@@ -487,13 +486,13 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 	
 	}
 
-	__declspec(dllexport) void HeartBeat(void)
+	__declspec(dllexport) void VCC_PAKAPI_DEF_HEARTBEAT(void)
 	{
 		// flush write buffer in the future..?
 		return;
 	}
 
-	__declspec(dllexport) void ModuleStatus(char *DWStatus)
+	__declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char *DWStatus)
 	{
         // calculate speed
         DWORD sinceCalc = GetTickCount() - LastStats;
@@ -552,7 +551,7 @@ void BuildDynaMenu(void)
 }
 
 
-	__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+	__declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(unsigned char MenuID)
 	{
 
 		DialogBox(g_hinstDLL, (LPCTSTR)IDD_PROPPAGE, NULL, (DLGPROC)Config);
@@ -560,7 +559,7 @@ void BuildDynaMenu(void)
 		return;
 	}
 
-	__declspec(dllexport) void SetIniPath (char *IniFilePath)
+	__declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
 	{
 		strcpy(IniFile,IniFilePath);
 		LoadConfig();
@@ -711,7 +710,6 @@ void SaveConfig(void)
 
 unsigned char LoadExtRom( char *FilePath)	//Returns 1 on if loaded
 {
-
 	FILE *rom_handle = NULL;
 	unsigned short index = 0;
 	unsigned char RetVal = 0;

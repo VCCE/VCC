@@ -76,7 +76,7 @@ LRESULT CALLBACK	About			(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK WndProc( HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam );
 
 void SoftReset(void);
-void LoadIniFile(void);
+//void LoadIniFile(void);
 unsigned __stdcall EmuLoop(void *);
 unsigned __stdcall CartLoad(void *);
 void (*CPUInit)(void)=NULL;
@@ -282,7 +282,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 
 				case ID_FILE_LOAD:
-					LoadIniFile();
+					//LoadIniFile();
 					EmuState.ResetPending=2;
 					SetClockSpeed(1); //Default clock speed .89 MHZ	
 					break;
@@ -649,6 +649,7 @@ unsigned char SetAutoStart(unsigned char Tmp)
 	return(AutoStart);
 }
 
+/*
 void LoadIniFile(void)
 {
 	OPENFILENAME ofn ;	
@@ -670,6 +671,7 @@ void LoadIniFile(void)
 //	if ( GetOpenFileName (&ofn) )
 //		LoadConfig(szFileName);
 }
+*/
 
 
 unsigned __stdcall EmuLoop(void *Dummy)
