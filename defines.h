@@ -21,6 +21,9 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <cstdint>
 
+#include <windows.h>
+#include <windowsx.h>
+
 //Speed throttling
 #define FRAMEINTERVAL 120	//Number of frames to sum the framecounter over
 #define TARGETFRAMERATE 60	//Number of throttled Frames per second to render
@@ -45,6 +48,9 @@ This file is part of VCC (Virtual Color Computer).
 #define FIRQ	2
 #define NMI		3
 
+//
+// CPU plug-in API
+//
 extern void (*CPUInit)(void);
 extern int  (*CPUExec)( int);
 extern void (*CPUReset)(void);

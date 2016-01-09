@@ -653,10 +653,11 @@ void LoadIniFile(void)
 {
 	OPENFILENAME ofn ;	
 	char szFileName[MAX_PATH]="";
+
 	memset(&ofn,0,sizeof(ofn));
-	ofn.lStructSize       = sizeof (OPENFILENAME) ;
+	ofn.lStructSize       = sizeof(OPENFILENAME) ;
 	ofn.hwndOwner         = EmuState.WindowHandle;
-	ofn.lpstrFilter       =	"INI\0*.ini\0\0" ;			// filter string
+	ofn.lpstrFilter       =	"vcc\0*.vcc\0\0" ;			// filter string
 	ofn.nFilterIndex      = 1 ;							// current filter index
 	ofn.lpstrFile         = szFileName ;				// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;					// sizeof lpstrFile
@@ -665,9 +666,9 @@ void LoadIniFile(void)
 	ofn.lpstrInitialDir   = NULL ;						// initial directory
 	ofn.lpstrTitle        = TEXT("Vcc Config File") ;	// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY ;
+
 //	if ( GetOpenFileName (&ofn) )
 //		LoadConfig(szFileName);
-	return;
 }
 
 

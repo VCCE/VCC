@@ -24,6 +24,9 @@ This file is part of VCC (Virtual Color Computer).
 // while the config dialog is open
 //#define CONFIG_DIALOG_MODAL
 
+#include "defines.h"
+extern SystemState EmuState;
+
 void shutdown(void);
 void SetCPUMultiplyerFlag (unsigned char);
 void SetTurboMode(unsigned char);
