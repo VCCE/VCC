@@ -187,13 +187,17 @@ void SetLinesperScreen (unsigned char Lines)
 	return;
 }
 
-
 _inline int CPUCycle(void)	
 {
 	if (HorzInteruptEnabled)
+	{
 		GimeAssertHorzInterupt();
+	}
 	irq_hs(ANY);
-	PakTimer();
+
+	// ping the in inserted Pak if any
+	vccPakTimer();
+
 	PicosThisLine+=PicosPerLine;	
 	while (PicosThisLine>1)		
 	{
