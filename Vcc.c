@@ -76,7 +76,7 @@ LRESULT CALLBACK	About			(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK WndProc( HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam );
 
 void SoftReset(void);
-void LoadIniFile(void);
+//void LoadIniFile(void);
 unsigned __stdcall EmuLoop(void *);
 unsigned __stdcall CartLoad(void *);
 void (*CPUInit)(void)=NULL;
@@ -282,7 +282,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 
 				case ID_FILE_LOAD:
-					LoadIniFile();
+					//LoadIniFile();
 					EmuState.ResetPending=2;
 					SetClockSpeed(1); //Default clock speed .89 MHZ	
 					break;
@@ -649,14 +649,16 @@ unsigned char SetAutoStart(unsigned char Tmp)
 	return(AutoStart);
 }
 
+/*
 void LoadIniFile(void)
 {
 	OPENFILENAME ofn ;	
 	char szFileName[MAX_PATH]="";
+
 	memset(&ofn,0,sizeof(ofn));
-	ofn.lStructSize       = sizeof (OPENFILENAME) ;
+	ofn.lStructSize       = sizeof(OPENFILENAME) ;
 	ofn.hwndOwner         = EmuState.WindowHandle;
-	ofn.lpstrFilter       =	"INI\0*.ini\0\0" ;			// filter string
+	ofn.lpstrFilter       =	"vcc\0*.vcc\0\0" ;			// filter string
 	ofn.nFilterIndex      = 1 ;							// current filter index
 	ofn.lpstrFile         = szFileName ;				// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;					// sizeof lpstrFile
@@ -665,10 +667,11 @@ void LoadIniFile(void)
 	ofn.lpstrInitialDir   = NULL ;						// initial directory
 	ofn.lpstrTitle        = TEXT("Vcc Config File") ;	// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY ;
+
 //	if ( GetOpenFileName (&ofn) )
 //		LoadConfig(szFileName);
-	return;
 }
+*/
 
 
 unsigned __stdcall EmuLoop(void *Dummy)

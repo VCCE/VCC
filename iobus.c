@@ -16,16 +16,16 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
-#include "stdio.h"
-#include "defines.h"
 #include "iobus.h"
+
+#include "defines.h"
 #include "mc6821.h"
 #include "pakinterface.h"
 #include "tcc1014registers.h"
 #include "tcc1014mmu.h"
 #include "logger.h"
 #include "config.h"
+
 unsigned char port_read(unsigned short addr)
 {
 	unsigned char port=0,temp=0;
@@ -161,7 +161,7 @@ if ( (port>=0x50) & (port <=0x5a))
 			temp=GimeRead(port);
 		break;
 		default:
-			temp=PackPortRead (port);
+			temp=vccPakPortRead (port);
 		}
 	return(temp);
 }
@@ -282,8 +282,7 @@ void port_write(unsigned char data,unsigned short addr)
 			GimeWrite(port,data);
 		break;
 		default:
-			PackPortWrite (port,data);
+			vccPakPortWrite (port,data);
 	}
-	return;
 }
 

@@ -19,10 +19,6 @@ This file is part of VCC (Virtual Color Computer).
 */
 void CPUAssertInterupt(unsigned char,unsigned char);
 void BuildDynaMenu(void);
-#define	HEAD 0
-#define SLAVE 1
-#define STANDALONE 2
-
 
 #define External 0
 #define TandyDisk 1

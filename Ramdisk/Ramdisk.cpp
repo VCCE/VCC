@@ -15,20 +15,17 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+/*
+	TODO: add module status?
+	TODO: get it working
+*/
 
 #include <windows.h>
 #include "resource.h" 
 #include "defines.h"
 #include "memboard.h"
+#include "../vccPakAPI.h"
 
-typedef unsigned char (*MEMREAD8)(unsigned short);
-typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
-typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
-typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
-static void (*AssertInt)(unsigned char,unsigned char)=NULL;
-static unsigned char (*MemRead8)(unsigned short);
-static void (*MemWrite8)(unsigned char,unsigned short);
 static unsigned char *Memory=NULL;
 static char FileName[MAX_PATH]="";
 static char IniFile[MAX_PATH]="";
@@ -50,61 +47,49 @@ BOOL WINAPI DllMain(
 	return(1);
 }
 
-extern "C" 
-{          
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
-	{
-		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
-		InitMemBoard();
-		DynamicMenuCallback =Temp;
-//		if (DynamicMenuCallback  != NULL)
-//			BuildDynaMenu();		
-		return ;
-	}
-}
-
-
-extern "C" 
-{         
-	__declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
-	{
-		switch (Port)
-		{
-			case 0x40:
-			case 0x41:
-			case 0x42:
-				WritePort(Port,Data);
-				return;
-			break;
-
-			case 0x43:
-				WriteArray(Data);
-				return;
-			break;
-
-			default:
-				return;
-			break;
-		}	//End port switch		
-		return;
-	}
-}
-
-
-extern "C"
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char *ModName,char *CatNumber,vccapi_dynamicmenucallback_t Temp, void * wndHandle)
 {
-	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
-	{
-		switch (Port)
-		{
-			case 0x43:
-				return(ReadArray());
-			break;
+	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
+	InitMemBoard();
+	DynamicMenuCallback =Temp;
+//	if (DynamicMenuCallback  != NULL)
+//		BuildDynaMenu();		
+}
 
-			default:
-				return(0);
-			break;
-		}	//End port switch
-	}
+
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port,unsigned char Data)
+{
+	switch (Port)
+	{
+		case 0x40:
+		case 0x41:
+		case 0x42:
+			WritePort(Port,Data);
+			return;
+		break;
+
+		case 0x43:
+			WriteArray(Data);
+			return;
+		break;
+
+		default:
+			return;
+		break;
+	}	//End port switch		
+}
+
+extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
+{
+	switch (Port)
+	{
+		case 0x43:
+			return(ReadArray());
+		break;
+
+		default:
+			return(0);
+		break;
+	}	//End port switch
 }

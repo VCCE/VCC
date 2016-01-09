@@ -24,6 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "cassette.h"
 #include "stdio.h"
 #include "logger.h"
+#include "Vcc.h"
 
 static unsigned char MotorState=0,TapeMode=STOP,WriteProtect=0,Quiet=30;
 static HANDLE TapeHandle=NULL;
@@ -271,7 +272,7 @@ unsigned int LoadTape(void)
 	DialogOpen=1;
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME);
-	ofn.hwndOwner         = GetTopWindow(NULL);
+	ofn.hwndOwner         = EmuState.WindowHandle;
 	ofn.Flags             = OFN_HIDEREADONLY ;
 	ofn.hInstance         = GetModuleHandle(0);
 	ofn.lpstrDefExt			="";

@@ -224,6 +224,7 @@
     <ClInclude Include="tcc1014registers.h" />
     <ClInclude Include="throttle.h" />
     <ClInclude Include="Vcc.h" />
+    <ClInclude Include="vccPakAPI.h" />
     <ClInclude Include="xDebug.h" />
   </ItemGroup>
   <ItemGroup>

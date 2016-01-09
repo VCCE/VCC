@@ -205,7 +205,7 @@ unsigned char MemRead8( unsigned short address)
 	{
 		if (MemPageOffsets[MmuRegisters[MmuState][address>>13]]==1)
 			return(MemPages[MmuRegisters[MmuState][address>>13]][address & 0x1FFF]);
-		return( PackMem8Read( MemPageOffsets[MmuRegisters[MmuState][address>>13]] + (address & 0x1FFF) ));
+		return( vccPakMem8Read( MemPageOffsets[MmuRegisters[MmuState][address>>13]] + (address & 0x1FFF) ));
 	}
 	if (address>0xFEFF)
 		return (port_read(address));
@@ -213,7 +213,7 @@ unsigned char MemRead8( unsigned short address)
 		return(memory[(0x2000*VectorMask[CurrentRamConfig])|(address & 0x1FFF)]); 
 	if (MemPageOffsets[MmuRegisters[MmuState][address>>13]]==1)
 		return(MemPages[MmuRegisters[MmuState][address>>13]][address & 0x1FFF]);
-	return( PackMem8Read( MemPageOffsets[MmuRegisters[MmuState][address>>13]] + (address & 0x1FFF) ));
+	return( vccPakMem8Read( MemPageOffsets[MmuRegisters[MmuState][address>>13]] + (address & 0x1FFF) ));
 }
 
 void MemWrite8(unsigned char data,unsigned short address)
@@ -249,7 +249,7 @@ unsigned char __fastcall fMemRead8( unsigned short address)
 	{
 		if (MemPageOffsets[MmuRegisters[MmuState][address>>13]]==1)
 			return(MemPages[MmuRegisters[MmuState][address>>13]][address & 0x1FFF]);
-		return( PackMem8Read( MemPageOffsets[MmuRegisters[MmuState][address>>13]] + (address & 0x1FFF) ));
+		return( vccPakMem8Read( MemPageOffsets[MmuRegisters[MmuState][address>>13]] + (address & 0x1FFF) ));
 	}
 	if (address>0xFEFF)
 		return (port_read(address));
@@ -257,7 +257,7 @@ unsigned char __fastcall fMemRead8( unsigned short address)
 		return(memory[(0x2000*VectorMask[CurrentRamConfig])|(address & 0x1FFF)]); 
 	if (MemPageOffsets[MmuRegisters[MmuState][address>>13]]==1)
 		return(MemPages[MmuRegisters[MmuState][address>>13]][address & 0x1FFF]);
-	return( PackMem8Read( MemPageOffsets[MmuRegisters[MmuState][address>>13]] + (address & 0x1FFF) ));
+	return( vccPakMem8Read( MemPageOffsets[MmuRegisters[MmuState][address>>13]] + (address & 0x1FFF) ));
 }
 
 void __fastcall fMemWrite8(unsigned char data,unsigned short address)

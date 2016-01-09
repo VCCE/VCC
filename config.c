@@ -1040,10 +1040,10 @@ int SelectFile(char *FileName)
 
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME);
-	ofn.hwndOwner = EmuState.WindowHandle; // GetTopWindow(NULL);
+	ofn.hwndOwner         = EmuState.WindowHandle;
 	ofn.Flags             = OFN_HIDEREADONLY;
 	ofn.hInstance         = GetModuleHandle(0);
-	ofn. lpstrDefExt      = "txt";
+	ofn.lpstrDefExt       = "txt";
 	ofn.lpstrFilter       =	"Text File\0*.txt\0\0";	
 	ofn.nFilterIndex      = 0 ;					// current filter index
 	ofn.lpstrFile         = TempFileName;		// contains full path and filename on return
@@ -1053,9 +1053,15 @@ int SelectFile(char *FileName)
 	ofn.lpstrInitialDir   = Dummy;				// initial directory
 	ofn.lpstrTitle        = "Open print capture file";		// title bar string
 
-	if ( GetOpenFileName(&ofn) )
-		if (!(OpenPrintFile(TempFileName)))
-			MessageBox(0,"Can't Open File","Can't open the file specified.",0);
-	strcpy(FileName,TempFileName);
+	if (GetOpenFileName(&ofn))
+	{
+		strcpy(FileName, TempFileName);
+
+		if ( ! OpenPrintFile(TempFileName) )
+		{
+			MessageBox(0, "Can't Open File", "Can't open the file specified.", 0);
+		}
+	}
+	
 	return(1);
 }
