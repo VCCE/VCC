@@ -47,20 +47,20 @@ static bool DialogOpen=false;
 // Hooks into current loaded Pak
 // TODO: use vccpak_t struct
 //
-static vccpakapi_getname_t					GetModuleName			= NULL;
-static vccpakapi_config_t					ConfigModule			= NULL;
-static vccpakapi_setintptr_t	SetInteruptCallPointer	= NULL;
-static vccpakapi_setmemptrs_t			DmaMemPointer			= NULL;
-static vccpakapi_heartbeat_t				HeartBeat				= NULL;
-static vccpakapi_portwrite_t			PakPortWrite			= NULL;
-static vccpakapi_portread_t				PakPortRead				= NULL;
+static vccpakapi_getname_t			GetModuleName			= NULL;
+static vccpakapi_config_t			ConfigModule			= NULL;
+static vccpakapi_setintptr_t		SetInteruptCallPointer	= NULL;
+static vccpakapi_setmemptrs_t		DmaMemPointer			= NULL;
+static vccpakapi_heartbeat_t		HeartBeat				= NULL;
+static vccpakapi_portwrite_t		PakPortWrite			= NULL;
+static vccpakapi_portread_t			PakPortRead				= NULL;
 static vcccpu_write8_t				PakMemWrite8			= NULL;
-static vcccpu_read8_t					PakMemRead8				= NULL;
-static vccpakapi_status_t				ModuleStatus			= NULL;
-static vccpakapi_getaudiosample_t		ModuleAudioSample		= NULL;
-static vccpakapi_reset_t				ModuleReset				= NULL;
-static vccpakapi_setinipath_t				SetIniPath				= NULL;
-static vccpakapi_setcartptr_t			PakSetCart				= NULL;
+static vcccpu_read8_t				PakMemRead8				= NULL;
+static vccpakapi_status_t			ModuleStatus			= NULL;
+static vccpakapi_getaudiosample_t	ModuleAudioSample		= NULL;
+static vccpakapi_reset_t			ModuleReset				= NULL;
+static vccpakapi_setinipath_t		SetIniPath				= NULL;
+static vccpakapi_setcartptr_t		PakSetCart				= NULL;
 
 static char Did=0;
 
@@ -74,7 +74,8 @@ static Dmenu MenuItem[100];
 static unsigned char MenuIndex=0;
 static HMENU hMenu = NULL;
 static HMENU hSubMenu[64] ;
-static 	char Modname[MAX_PATH]="Blank";
+static char Modname[MAX_PATH]="Blank";
+char LastPakPath[MAX_PATH] = "";
 
 void vccPakTimer(void)
 {
@@ -173,12 +174,21 @@ int LoadCart(void)
 	ofn.nMaxFile          = MAX_PATH;					// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;						// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH ;					// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = NULL ;						// initial directory
 	ofn.lpstrTitle        = TEXT("Load Program Pack") ;	// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
+	ofn.lpstrInitialDir = NULL;						// initial directory
+	if (strlen(LastPakPath) > 0)
+	{
+		ofn.lpstrInitialDir = LastPakPath;
+	}
+
 	result = GetOpenFileName(&ofn);
 	if (result)
 	{
+		// save last path
+		strcpy(LastPakPath, szFileName);
+		PathRemoveFileSpec(LastPakPath);
+
 		if (!InsertModule(szFileName))
 		{
 			return(0);

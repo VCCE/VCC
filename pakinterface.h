@@ -31,6 +31,8 @@ extern "C"
 {
 #endif
 
+	extern char LastPakPath[MAX_PATH];
+
 	void vccPakTimer(void);
 	unsigned char vccPakPortRead(unsigned char);
 	void vccPakPortWrite(unsigned char, unsigned char);

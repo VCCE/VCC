@@ -36,14 +36,15 @@ static char IniFile[MAX_PATH] { 0 };
 //
 // VCC Pak API
 //
-static vccpakapi_assertinterrupt_t		AssertInt			= NULL;
+static vccpakapi_assertinterrupt_t	AssertInt			= NULL;
 static vcccpu_read8_t				MemRead8			= NULL;
-static vcccpu_write8_t			MemWrite8			= NULL;
+static vcccpu_write8_t				MemWrite8			= NULL;
 static vccapi_dynamicmenucallback_t	DynamicMenuCallback = NULL;
 
 static unsigned char *Memory=NULL;
 static unsigned char DiskRom[8192];
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
+static char LastPath[MAX_PATH];
 
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 void Load_Disk(unsigned char);
@@ -82,12 +83,23 @@ void LoadHardDisk(void)
 	ofn.lpstrInitialDir   = NULL;							// initial directory
 	ofn.lpstrTitle        = TEXT("Load HardDisk Image") ;	// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
-	if ( GetOpenFileName (&ofn) )
-		if (MountHD(FileName)==0)
+
+	if (strlen(LastPath) > 0)
+	{
+		ofn.lpstrInitialDir = LastPath;
+	}
+
+	if (GetOpenFileName(&ofn))
+	{
+		// save last path
+		strcpy(LastPath, FileName);
+		PathRemoveFileSpec(LastPath);
+
+		if (MountHD(FileName) == 0)
 		{
-			MessageBox(NULL,"Can't open file","Error",0);
+			MessageBox(NULL, "Can't open file", "Error", 0);
 		}
-	return;
+	}
 }
 
 void LoadConfig(void)
@@ -110,12 +122,13 @@ void LoadConfig(void)
 		CloseHandle(hr);
 		MountHD(FileName);
 	}
+	GetPrivateProfileString(ModName, "LastPath", "", LastPath, MAX_PATH, IniFile);
+
 	BuildDynaMenu();
 	GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
 	PathRemoveFileSpec(DiskRomPath);
 	strcat(DiskRomPath, "rgbdos.rom");
 	LoadExtRom(DiskRomPath);
-	return;
 }
 
 void SaveConfig(void)
@@ -124,7 +137,7 @@ void SaveConfig(void)
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	ValidatePath(FileName);
 	WritePrivateProfileString(ModName,"VHDImage",FileName ,IniFile);
-	return;
+	WritePrivateProfileString(ModName, "LastPath", LastPath, IniFile);
 }
 
 void BuildDynaMenu(void)
