@@ -26,8 +26,6 @@ This file is part of VCC (Virtual Color Computer).
 #define WAV 0
 #define WRITEBUFFERSIZE	0x1FFFF
 
-extern char LastCassPath[MAX_PATH];
-
 unsigned int GetTapeCounter(void);
 unsigned int LoadTape(void);
 void SetTapeCounter(unsigned int);
@@ -35,6 +33,14 @@ void SetTapeMode(unsigned char);
 void Motor(unsigned char);
 void LoadCassetteBuffer(unsigned char *);
 void FlushCassetteBuffer(unsigned char *,unsigned int);
-void GetTapeName(char *);
+
+void setTapeName(const char* const name);
+
+namespace Cassette 
+{
+	void writeConfig(const char* const path);
+	void readConfig(const char* const path);
+	const char* getTapeName();
+};
 
 #endif

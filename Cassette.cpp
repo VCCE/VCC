@@ -31,13 +31,13 @@ This file is part of VCC (Virtual Color Computer).
 static unsigned char MotorState=0,TapeMode=STOP,WriteProtect=0,Quiet=30;
 static HANDLE TapeHandle=NULL;
 static unsigned long TapeOffset=0,TotalSize=0;
-static char TapeFileName[MAX_PATH]="";
+static char TapeFileName[MAX_PATH]{ 0 };
+static char LastCassPath[MAX_PATH]{ 0 };
 static unsigned char TempBuffer[8192];
 static unsigned char *CasBuffer=NULL;
 static char FileType=0;
 unsigned long BytesMoved=0;
 static unsigned int TempIndex=0;
-char LastCassPath[MAX_PATH];
 
 unsigned char One[21]={0x80,0xA8,0xC8,0xE8,0xE8,0xF8,0xF8,0xE8,0xC8,0xA8,0x78,0x50,0x50,0x30,0x10,0x00,0x00,0x10,0x30,0x30,0x50};
 unsigned char Zero[40]={0x80,0x90,0xA8,0xB8,0xC8,0xD8,0xE8,0xE8,0xF0,0xF8,0xF8,0xF8,0xF0,0xE8,0xD8,0xC8,0xB8,0xA8,0x90,0x78,0x78,0x68,0x50,0x40,0x30,0x20,0x10,0x08,0x00,0x00,0x00,0x08,0x10,0x10,0x20,0x30,0x40,0x50,0x68,0x68};
@@ -148,7 +148,7 @@ void SetTapeMode(unsigned char Mode)	//Handles button pressed from Dialog
 
 		case EJECT:
 			CloseTapeFile();
-			strcpy(TapeFileName,"EMPTY");
+			memset(TapeFileName, 0, sizeof(TapeFileName));
 		break;
 	}
 	UpdateTapeCounter(TapeOffset,TapeMode);
@@ -265,9 +265,14 @@ void CloseTapeFile(void)
 
 unsigned int LoadTape(void)
 {
+	char Dummy[MAX_PATH] {0};
+
+	if (strlen(TapeFileName) > 0) {
+		strncpy(Dummy, TapeFileName, sizeof(Dummy));
+	}
+
 	HANDLE hr=NULL;
 	OPENFILENAME ofn;	
-	char Dummy[MAX_PATH]="";
 	static unsigned char DialogOpen=0;
 	unsigned int RetVal=0;
 	if (DialogOpen ==1)	//Only allow 1 dialog open 
@@ -281,7 +286,7 @@ unsigned int LoadTape(void)
 	ofn.lpstrDefExt			="";
 	ofn.lpstrFilter       =	"Cassette Files (*.cas)\0*.cas\0Wave Files (*.wav)\0*.wav\0\0";
 	ofn.nFilterIndex      = 0 ;								// current filter index
-	ofn.lpstrFile         = TapeFileName;					// contains full path and filename on return
+	ofn.lpstrFile         = Dummy;					// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;							// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH;						// sizeof lpstrFileTitle
@@ -295,24 +300,26 @@ unsigned int LoadTape(void)
 	RetVal = GetOpenFileName(&ofn);
 	if (RetVal)
 	{
-		// save last path
-		strcpy(LastCassPath, TapeFileName);
-		PathRemoveFileSpec(LastCassPath);
-
-		if (MountTape(TapeFileName) == 0)
-		{
-			MessageBox(NULL, "Can't open file", "Error", 0);
-		}
+		setTapeName(Dummy);
 	}
 	DialogOpen=0;
 
 	return(RetVal);
 }
 
-void GetTapeName(char *Name)
+void setTapeName(const char* const name)
 {
-	strcpy(Name,TapeFileName);
-	return;
+	strncpy(TapeFileName, name, sizeof(TapeFileName));
+
+	// save last path
+	strncpy(LastCassPath, name, sizeof(LastCassPath));
+	PathRemoveFileSpec(LastCassPath);
+
+	// Warn if it is unmountable
+	if (MountTape(TapeFileName) == 0)
+	{
+		MessageBox(NULL, "Can't open file", "Error", 0);
+	}
 }
 
 void SyncFileBuffer (void)
@@ -463,4 +470,25 @@ void WavtoCas(unsigned char *WaveBuffer,unsigned int Lenth)
 	if (TapeOffset>TotalSize)
 		TotalSize=TapeOffset;
 	return;
+}
+
+const char* Cassette::getTapeName()
+{
+	return TapeFileName;
+}
+
+void Cassette::readConfig(const char* const path)
+{
+	char tempfile[MAX_PATH];
+
+	GetPrivateProfileString("Cassette", "LastPath", "", LastCassPath, sizeof(LastCassPath), path);
+	GetPrivateProfileString("Cassette", "FileName", "", tempfile, sizeof(tempfile), path);
+	
+	if (strlen(tempfile) > 0) setTapeName(tempfile);
+}
+
+void Cassette::writeConfig(const char* const path)
+{
+	WritePrivateProfileString("Cassette", "LastPath", LastCassPath, path);
+	WritePrivateProfileString("Cassette", "FileName", TapeFileName, path);
 }
