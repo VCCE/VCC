@@ -16,8 +16,6 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
-#include "resource.h"
 #include "defines.h"
 #include "coco3.h"
 #include "config.h"
@@ -25,6 +23,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "stdio.h"
 #include "logger.h"
 #include "Vcc.h"
+#include "fileops.h"
+
+#include <windows.h>
+#include "resource.h"
 
 static unsigned char MotorState=0,TapeMode=STOP,WriteProtect=0,Quiet=30;
 static HANDLE TapeHandle=NULL;
@@ -35,6 +37,7 @@ static unsigned char *CasBuffer=NULL;
 static char FileType=0;
 unsigned long BytesMoved=0;
 static unsigned int TempIndex=0;
+char LastCassPath[MAX_PATH];
 
 unsigned char One[21]={0x80,0xA8,0xC8,0xE8,0xE8,0xF8,0xF8,0xE8,0xC8,0xA8,0x78,0x50,0x50,0x30,0x10,0x00,0x00,0x10,0x30,0x30,0x50};
 unsigned char Zero[40]={0x80,0x90,0xA8,0xB8,0xC8,0xD8,0xE8,0xE8,0xF0,0xF8,0xF8,0xF8,0xF0,0xE8,0xD8,0xC8,0xB8,0xA8,0x90,0x78,0x78,0x68,0x50,0x40,0x30,0x20,0x10,0x08,0x00,0x00,0x00,0x08,0x10,0x10,0x20,0x30,0x40,0x50,0x68,0x68};
@@ -282,15 +285,27 @@ unsigned int LoadTape(void)
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;							// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = Dummy;							// initial directory
 	ofn.lpstrTitle        = "Insert Tape Image";			// title bar string
-	RetVal=GetOpenFileName(&ofn);
+	ofn.lpstrInitialDir = NULL;								// initial directory
+	if (strlen(LastCassPath) > 0)
+	{
+		ofn.lpstrInitialDir = LastCassPath;
+	}
+
+	RetVal = GetOpenFileName(&ofn);
 	if (RetVal)
 	{
-		if (MountTape(TapeFileName)==0)	
-			MessageBox(NULL,"Can't open file","Error",0);
+		// save last path
+		strcpy(LastCassPath, TapeFileName);
+		PathRemoveFileSpec(LastCassPath);
+
+		if (MountTape(TapeFileName) == 0)
+		{
+			MessageBox(NULL, "Can't open file", "Error", 0);
+		}
 	}
 	DialogOpen=0;
+
 	return(RetVal);
 }
 

@@ -42,6 +42,9 @@ This file is part of VCC (Virtual Color Computer).
 //#include "logger.h"
 #include <assert.h>
 
+extern SystemState EmuState;
+extern char StickName[MAXSTICKS][STRLEN];
+
 //
 // forward declarations
 //
@@ -76,6 +79,7 @@ static char IniFileName[]="Vcc.ini";
 static char IniFilePath[MAX_PATH]="";
 static char TapeFileName[MAX_PATH]="";
 static char ExecDirectory[MAX_PATH]="";
+static char LastPrnPath[MAX_PATH] = "";
 static char SerialCaptureFile[MAX_PATH]="";
 static char TextMode=1,PrtMon=0;;
 static unsigned char NumberofJoysticks=0;
@@ -83,8 +87,6 @@ char OutBuffer[MAX_PATH]="";
 char AppName[MAX_LOADSTRING]="";
 STRConfig CurrentConfig;
 static STRConfig TempConfig;
-extern SystemState EmuState;
-extern char StickName[MAXSTICKS][STRLEN];
 
 static unsigned int TapeCounter=0;
 static unsigned char Tmode=STOP;
@@ -203,12 +205,16 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Video","AllowResize",CurrentConfig.Resize,IniFilePath);
 	WritePrivateProfileInt("Video","ForceAspect",CurrentConfig.Aspect,IniFilePath);
 
+	WritePrivateProfileString("Cassette", "LastPath", LastCassPath, IniFilePath);
+
 	WritePrivateProfileInt("Memory","RamSize",CurrentConfig.RamSize,IniFilePath);
 	WritePrivateProfileString("Memory", "ExternalBasicImage", CurrentConfig.ExternalBasicImage, IniFilePath);
 
 	WritePrivateProfileInt("Misc","AutoStart",CurrentConfig.AutoStart,IniFilePath);
 	WritePrivateProfileInt("Misc","CartAutoStart",CurrentConfig.CartAutoStart,IniFilePath);
 	WritePrivateProfileInt("Misc","KeyMapIndex",CurrentConfig.KeyMap,IniFilePath);
+	WritePrivateProfileString("Misc", "LastPakPath", LastPakPath, IniFilePath);
+	WritePrivateProfileString("Misc", "LastPrnPath", LastPrnPath, IniFilePath);
 
 	WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
 
@@ -249,6 +255,8 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.AudioRate = GetPrivateProfileInt("Audio","Rate",3,IniFilePath);
 	GetPrivateProfileString("Audio","SndCard","",CurrentConfig.SoundCardName,63,IniFilePath);
 
+	GetPrivateProfileString("Cassette", "LastPath", "", LastCassPath, MAX_PATH, IniFilePath);
+
 	CurrentConfig.MonitorType = GetPrivateProfileInt("Video","MonitorType",1,IniFilePath);
 	CurrentConfig.ScanLines = GetPrivateProfileInt("Video","ScanLines",0,IniFilePath);
 	CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);	
@@ -256,6 +264,8 @@ unsigned char ReadIniFile(void)
 
 	CurrentConfig.AutoStart = GetPrivateProfileInt("Misc","AutoStart",1,IniFilePath);
 	CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc","CartAutoStart",1,IniFilePath);
+	GetPrivateProfileString("Misc", "LastPakPath", "", LastPakPath, MAX_PATH, IniFilePath);
+	GetPrivateProfileString("Misc", "LastPrnPath", "", LastPrnPath, MAX_PATH, IniFilePath);
 
 	CurrentConfig.RamSize = GetPrivateProfileInt("Memory","RamSize",1,IniFilePath);
 	GetPrivateProfileString("Memory","ExternalBasicImage","",CurrentConfig.ExternalBasicImage,MAX_PATH,IniFilePath);
@@ -1052,9 +1062,17 @@ int SelectFile(char *FileName)
 	ofn.nMaxFileTitle     = MAX_PATH;			// sizeof lpstrFileTitle
 	ofn.lpstrInitialDir   = Dummy;				// initial directory
 	ofn.lpstrTitle        = "Open print capture file";		// title bar string
+	if (strlen(LastPrnPath) > 0)
+	{
+		ofn.lpstrInitialDir = LastPrnPath;
+	}
 
 	if (GetOpenFileName(&ofn))
 	{
+		// save last path
+		strcpy(LastPrnPath, TempFileName);
+		PathRemoveFileSpec(LastPrnPath);
+
 		strcpy(FileName, TempFileName);
 
 		if ( ! OpenPrintFile(TempFileName) )

@@ -1,10 +1,24 @@
+/*
+Copyright 2015 by Joseph Forgione
+This file is part of VCC (Virtual Color Computer).
+
+VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+*/
 /*****************************************************************************/
-/**
-	xDebug.c
- 
-	uEng - micro cross platform engine
-	Copyright 2010 by Wes Gale All rights reserved.
-	Used by permission in VccX
+/*
+	_xDebug.c : simple platform specific debug helpers
+	Windows version
 */
 /*****************************************************************************/
 
@@ -13,11 +27,7 @@
 /*
 	System headers
 */ 
-//#include <ucontext.h>
-//#include <unistd.h>
-//#include <dlfcn.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdarg.h>
 #include <Windows.h>
 
@@ -29,6 +39,7 @@ int	g_bTraceMessageLogging	= TRUE;
 /*****************************************************************************/
 
 #if 0
+// stdio verison
 void _xDbgTrace(const void * pFile, const int iLine, const void * pFormat, ...)
 {
 	va_list		args;
@@ -47,10 +58,13 @@ void _xDbgTrace(const void * pFile, const int iLine, const void * pFormat, ...)
 void _xDbgTrace(const void * pFile, const int iLine, const void * pFormat, ...)
 {
 	va_list		args;
-	char temp[1024];
+	char temp[1024]; //yuck
 
 	va_start(args, pFormat);
 
+	// format string for Visual Studio Output window
+	// lets you double click it to take you to the source file line
+	// called from
 	sprintf(temp, "%s(%d) : ", (char *)pFile, iLine);
 	OutputDebugString(temp);
 
@@ -58,8 +72,6 @@ void _xDbgTrace(const void * pFile, const int iLine, const void * pFormat, ...)
 	OutputDebugString(temp);
 
 	va_end(args);
-
-//	fflush(stdout);
 }
 #endif
 

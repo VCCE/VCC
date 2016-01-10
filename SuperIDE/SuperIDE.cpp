@@ -16,35 +16,38 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
-#include "stdio.h"
-#include "resource.h" 
 #include "defines.h"
 #include "Superide.h"
 #include "idebus.h"
 #include "cloud9.h"
 #include "logger.h"
+
 #include "../fileops.h"
 #include "../vccPakAPI.h"
 
+#include <windows.h>
+#include <stdio.h>
+#include "resource.h" 
+
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
+static char LastPath[MAX_PATH] { 0 };
 
-static vccpakapi_assertinterrupt_t		AssertInt			= NULL;
+static vccpakapi_assertinterrupt_t	AssertInt			= NULL;
 static vcccpu_read8_t				MemRead8			= NULL;
-static vcccpu_write8_t			MemWrite8			= NULL;
+static vcccpu_write8_t				MemWrite8			= NULL;
 static vccapi_dynamicmenucallback_t	DynamicMenuCallback	= NULL;
 
-static unsigned char  *Memory = NULL;
-static unsigned char BaseAddress=0x50;
+static unsigned char *	Memory		= NULL;
+static unsigned char	BaseAddress	= 0x50;
 
 void BuildDynaMenu(void);
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 void Select_Disk(unsigned char);
 void SaveConfig();
 void LoadConfig();
-unsigned char BaseTable[4]={0x40,0x50,0x60,0x70};
 
+unsigned char BaseTable[4]={0x40,0x50,0x60,0x70};
 static unsigned char BaseAddr=1,ClockEnabled=1,ClockReadOnly=1;
 static unsigned char DataLatch=0;
 static HINSTANCE g_hinstDLL;
@@ -263,7 +266,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 void Select_Disk(unsigned char Disk)
 {
 	OPENFILENAME ofn ;	
-	char Dummy[MAX_PATH]="";
 	char TempFileName[MAX_PATH]="";
 
 	memset(&ofn,0,sizeof(ofn));
@@ -278,12 +280,20 @@ void Select_Disk(unsigned char Disk)
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;							// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = Dummy;							// initial directory
 	ofn.lpstrTitle        = "Mount IDE hard Disk Image";	// title bar string
+	ofn.lpstrInitialDir = NULL;							// initial directory
+	if (strlen(LastPath) > 0)
+	{
+		ofn.lpstrInitialDir = LastPath;
+	}
 
 	if (GetOpenFileName(&ofn))
 	{
-		if (!(MountDisk(TempFileName, Disk)))
+		// save last path
+		strcpy(LastPath, TempFileName);
+		PathRemoveFileSpec(LastPath);
+
+		if ( ! MountDisk(TempFileName, Disk) )
 		{
 			MessageBox(0, "Can't Open File", "Can't open the Image specified.", 0);
 		}
@@ -303,7 +313,8 @@ void SaveConfig(void)
 	WritePrivateProfileInt(ModName,"BaseAddr",BaseAddr ,IniFile);
 	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
 	WritePrivateProfileInt(ModName,"ClkRdOnly",ClockReadOnly ,IniFile);
-	return;
+	
+	WritePrivateProfileString(ModName, "LastPath", LastPath, IniFile);
 }
 
 void LoadConfig(void)
@@ -322,6 +333,9 @@ void LoadConfig(void)
 	BaseAddr=GetPrivateProfileInt(ModName,"BaseAddr",1,IniFile); 
 	ClockEnabled=GetPrivateProfileInt(ModName,"ClkEnable",1,IniFile); 
 	ClockReadOnly=GetPrivateProfileInt(ModName,"ClkRdOnly",1,IniFile); 
+
+	GetPrivateProfileString(ModName, "LastPath", "", LastPath, MAX_PATH, IniFile);
+
 	BaseAddr&=3;
 	if (BaseAddr==3)
 		ClockEnabled=0;
@@ -329,5 +343,4 @@ void LoadConfig(void)
 	SetClockWrite(!ClockReadOnly);
 	MountDisk(FileName ,SLAVE);
 	BuildDynaMenu();
-	return;
 }

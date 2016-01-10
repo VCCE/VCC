@@ -64,12 +64,12 @@ static vccapi_dynamicmenucallback_t	DynamicMenuCallback = NULL;
 // Array of fuction pointer for each Slot
 // TODO: change to an array of slots, each slot contains vccpakapi_t, etc
 //static INITIALIZE				InitializeCalls[MAXPAX]				= { NULL,NULL,NULL,NULL };
-static vccpakapi_getname_t					GetModuleNameCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
-static vccpakapi_config_t					ConfigModuleCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
-static vccpakapi_heartbeat_t				HeartBeatCalls[MAXPAX]				= {NULL,NULL,NULL,NULL};
+static vccpakapi_getname_t				GetModuleNameCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
+static vccpakapi_config_t				ConfigModuleCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
+static vccpakapi_heartbeat_t			HeartBeatCalls[MAXPAX]				= {NULL,NULL,NULL,NULL};
 static vccpakapi_portwrite_t			PakPortWriteCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
 static vccpakapi_portread_t				PakPortReadCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
-static vcccpu_write8_t				PakMemWrite8Calls[MAXPAX]			= {NULL,NULL,NULL,NULL};
+static vcccpu_write8_t					PakMemWrite8Calls[MAXPAX]			= {NULL,NULL,NULL,NULL};
 static vcccpu_read8_t					PakMemRead8Calls[MAXPAX]			= {NULL,NULL,NULL,NULL};
 static vccpakapi_status_t				ModuleStatusCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
 static vccpakapi_getaudiosample_t		ModuleAudioSampleCalls[MAXPAX]		= {NULL,NULL,NULL,NULL};
@@ -77,17 +77,17 @@ static vccpakapi_reset_t				ModuleResetCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
 static vccapi_setcart_t					SetCarts[MAXPAX]					= { SetCartSlot0,SetCartSlot1,SetCartSlot2,SetCartSlot3 };
 static vccapi_dynamicmenucallback_t		DynamicMenuCallbackCalls[MAXPAX]	= { DynamicMenuCallback0,DynamicMenuCallback1,DynamicMenuCallback2,DynamicMenuCallback3 };
 static vccpakapi_setcartptr_t			SetCartCalls[MAXPAX]				= { NULL,NULL,NULL,NULL };
-static vccpakapi_setinipath_t				SetIniPathCalls[MAXPAX]				= { NULL,NULL,NULL,NULL };
+static vccpakapi_setinipath_t			SetIniPathCalls[MAXPAX]				= { NULL,NULL,NULL,NULL };
 // Set callbacks for the DLL to call
-static vccpakapi_setintptr_t	SetInteruptCallPointerCalls[MAXPAX]	= {NULL,NULL,NULL,NULL};
+static vccpakapi_setintptr_t			SetInteruptCallPointerCalls[MAXPAX]	= {NULL,NULL,NULL,NULL};
 static vccpakapi_setmemptrs_t			DmaMemPointerCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
-static HINSTANCE				hinstLib[MAXPAX]					= { NULL,NULL,NULL,NULL };
-static char						ModuleNames[MAXPAX][MAX_LOADSTRING] = { "Empty","Empty","Empty","Empty" };
-static char						CatNumber[MAXPAX][MAX_LOADSTRING]	= { "","","","" };
-static char						SlotLabel[MAXPAX][MAX_LOADSTRING * 2] = { "Empty","Empty","Empty","Empty" };
-static char						ModulePaths[MAXPAX][MAX_PATH]		= { "","","","" };
-static unsigned char *			ExtRomPointers[MAXPAX]				= { NULL,NULL,NULL,NULL };
-static unsigned int				BankedCartOffset[MAXPAX]			= { 0,0,0,0 };
+static HINSTANCE						hinstLib[MAXPAX]					= { NULL,NULL,NULL,NULL };
+static char								ModuleNames[MAXPAX][MAX_LOADSTRING] = { "Empty","Empty","Empty","Empty" };
+static char								CatNumber[MAXPAX][MAX_LOADSTRING]	= { "","","","" };
+static char								SlotLabel[MAXPAX][MAX_LOADSTRING * 2] = { "Empty","Empty","Empty","Empty" };
+static char								ModulePaths[MAXPAX][MAX_PATH]		= { "","","","" };
+static unsigned char *					ExtRomPointers[MAXPAX]				= { NULL,NULL,NULL,NULL };
+static unsigned int						BankedCartOffset[MAXPAX]			= { 0,0,0,0 };
 
 static char MenuName0[MAX_MENUS][MAX_MENU_SIZE];
 static char MenuName1[MAX_MENUS][MAX_MENU_SIZE];
@@ -113,6 +113,7 @@ static unsigned char SlotRegister = 255;
 static HINSTANCE g_hinstDLL = NULL;
 static HWND g_hWnd = NULL;
 static char IniFile[MAX_PATH] = "";
+static char LastPath[MAX_PATH] = "";
 
 /****************************************************************************/
 
@@ -282,15 +283,22 @@ void LoadCartDLL(unsigned char Slot,char *DllPath)
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;							// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH ;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = NULL;							// initial directory
 	ofn.lpstrTitle        = TEXT("Load Program Pack");	// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
+	ofn.lpstrInitialDir = NULL;							// initial directory
+	if (strlen(LastPath) > 0)
+	{
+		ofn.lpstrInitialDir = LastPath;
+	}
+
 	if ( GetOpenFileName (&ofn) )
 	{
-		RetVal= MountModule( Slot,DllPath);
+		// save last path
+		strcpy(LastPath, DllPath);
+		PathRemoveFileSpec(LastPath);
 
+		RetVal = MountModule( Slot,DllPath);
 	}
-	return;
 }
 
 
@@ -316,6 +324,9 @@ void LoadConfig(void)
 			MountModule(Temp, ModulePaths[Temp]);
 		}
 	}
+
+	GetPrivateProfileString(ModName, "LastPath", "", LastPath, MAX_PATH, IniFile);
+
 	BuildDynaMenu();
 }
 
@@ -332,7 +343,8 @@ void WriteConfig(void)
 	WritePrivateProfileString(ModName,"SLOT3",ModulePaths[2],IniFile);
 	ValidatePath(ModulePaths[3]);
 	WritePrivateProfileString(ModName,"SLOT4",ModulePaths[3],IniFile);
-	return;
+	
+	WritePrivateProfileString(ModName, "LastPath", LastPath, IniFile);
 }
 
 void ReadModuleParms(unsigned char Slot,char *String)

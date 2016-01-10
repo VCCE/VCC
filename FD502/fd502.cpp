@@ -63,10 +63,10 @@ extern DiskInfo Drive[5];
 /*
 	hooks back to emulator
 */
-static vccpakapi_assertinterrupt_t AssertInt = NULL;
+static vccpakapi_assertinterrupt_t	AssertInt = NULL;
 static vccapi_dynamicmenucallback_t DynamicMenuCallback = NULL;
-static vcccpu_read8_t MemRead8 = NULL;
-static vcccpu_write8_t MemWrite8 = NULL;
+static vcccpu_read8_t				MemRead8 = NULL;
+static vcccpu_write8_t				MemWrite8 = NULL;
 
 /*
 	globals
@@ -76,6 +76,9 @@ static unsigned char DiskRom[EXTROMSIZE];
 static unsigned char RGBDiskRom[EXTROMSIZE];
 static char RomFileName[MAX_PATH]="";
 static char TempRomFileName[MAX_PATH]="";
+
+static char LastRomPath[EXTROMSIZE];
+static char LastDskPath[EXTROMSIZE];
 
 static unsigned char *Memory=NULL;
 unsigned char PhysicalDriveA=0,PhysicalDriveB=0,OldPhysicalDriveA=0,OldPhysicalDriveB=0;
@@ -206,8 +209,17 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				ofn.lpstrInitialDir = NULL;							// initial directory
 				ofn.lpstrTitle = TEXT("Disk Rom Image");	// title bar string
 				ofn.Flags = OFN_HIDEREADONLY;
+				if ( strlen(LastRomPath) > 0 )
+				{
+					ofn.lpstrInitialDir = LastRomPath;
+				}
+
 				if (GetOpenFileName(&ofn))
 				{
+					// save last cassette path
+					strcpy(LastRomPath, TempRomFileName);
+					PathRemoveFileSpec(LastRomPath);
+
 					SendDlgItemMessage(hDlg, IDC_ROMPATH, WM_SETTEXT, strlen(TempRomFileName), (LPARAM)(LPCSTR)TempRomFileName);
 				}
 			}
@@ -232,7 +244,6 @@ void Load_Disk(unsigned char disk)
 {
 	HANDLE hr=NULL;
 	OPENFILENAME ofn ;	
-	char Dummy[MAX_PATH]="";
 	unsigned char FileNotSelected=0;
 
 	if (DialogOpen == 1)	//Only allow 1 dialog open 
@@ -257,11 +268,19 @@ void Load_Disk(unsigned char disk)
 		ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
 		ofn.lpstrFileTitle    = NULL;							// filename and extension only
 		ofn.nMaxFileTitle     = MAX_PATH ;						// sizeof lpstrFileTitle
-		ofn.lpstrInitialDir   = Dummy;							// initial directory
 		ofn.lpstrTitle        = "Insert Disk Image" ;			// title bar string
+		ofn.lpstrInitialDir		= NULL;							// initial directory
+		if ( strlen(LastDskPath) > 0 )
+		{
+			ofn.lpstrInitialDir = LastDskPath;
+		}
 
 		if ( GetOpenFileName(&ofn) )
 		{
+			// save last path
+			strcpy(LastDskPath, TempFileName);
+			PathRemoveFileSpec(LastDskPath);
+
 			hr=CreateFile(TempFileName,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
 			if (hr==INVALID_HANDLE_VALUE) 
 			{
@@ -269,12 +288,16 @@ void Load_Disk(unsigned char disk)
 				DialogBox(g_hinstDLL, (LPCTSTR)IDD_NEWDISK, NULL, (DLGPROC)NewDisk);	//CreateFlag =0 on cancel
 			}
 			else
+			{
 				CloseHandle(hr);
+			}
 
 			if (CreateFlag==1)
 			{
-				if (mount_disk_image(TempFileName,disk)==0)	
-					MessageBox(NULL,"Can't open file","Error",0);
+				if (mount_disk_image(TempFileName, disk) == 0)
+				{
+					MessageBox(NULL, "Can't open file", "Error", 0);
+				}
 				else
 				{
 					FileNotSelected=0;
@@ -290,13 +313,15 @@ void Load_Disk(unsigned char disk)
 		DialogOpen=0;
 
 	}
-	return;
 }
 
 unsigned char SetChip(unsigned char Tmp)
 {
-	if (Tmp!=QUERY)
-		SelectRom=Tmp;
+	if (Tmp != QUERY)
+	{
+		SelectRom = Tmp;
+	}
+	
 	return(SelectRom);
 }
 
@@ -304,9 +329,11 @@ void BuildDynaMenu(void)
 {
 	char TempMsg[64]="";
 	char TempBuf[MAX_PATH]="";
-	if (DynamicMenuCallback ==NULL)
-		MessageBox(0,"No good","Ok",0);
-	DynamicMenuCallback("",0,0);
+	if (DynamicMenuCallback == NULL)
+	{
+		MessageBox(0, "No good", "Ok", 0);
+	}
+	DynamicMenuCallback("", 0, 0);
 	DynamicMenuCallback( "",6000,0);
 	DynamicMenuCallback( "FD-502 Drive 0",6000,HEAD);
 	DynamicMenuCallback( "Insert",5010,SLAVE);
@@ -499,6 +526,7 @@ long CreateDiskHeader(char *FileName,unsigned char Type,unsigned char Tracks,uns
 	SetFilePointer(hr,FileSize-1,0,FILE_BEGIN);
 	WriteFile(hr,&Dummy,1,&BytesWritten,NULL);
 	CloseHandle(hr);
+
 	return(0);
 }
 
@@ -544,6 +572,10 @@ void LoadConfig(void)
 		}
 	ClockEnabled=GetPrivateProfileInt(ModName,"ClkEnable",1,IniFile); 
 	SetTurboDisk(GetPrivateProfileInt(ModName, "TurboDisk", 1, IniFile));
+
+	GetPrivateProfileString(ModName, "LastRomPath", "", LastRomPath, MAX_PATH, IniFile);
+	GetPrivateProfileString(ModName, "LastDskPath", "", LastDskPath, MAX_PATH, IniFile);
+
 	BuildDynaMenu();
 	return;
 }
@@ -566,7 +598,9 @@ void SaveConfig(void)
 		}
 	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
 	WritePrivateProfileInt(ModName, "TurboDisk", SetTurboDisk(QUERY), IniFile);
-	return;
+
+	WritePrivateProfileString(ModName, "LastRomPath", LastRomPath, IniFile);
+	WritePrivateProfileString(ModName, "LastDskPath", LastDskPath, IniFile);
 }
 
 unsigned char LoadExtRom( unsigned char RomType,char *FilePath)	//Returns 1 on if loaded
@@ -667,7 +701,11 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_ASSERTINTERRUPT(vccpakapi_a
 
 extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
 {
-	if (((Port == 0x50) | (Port == 0x51)) & ClockEnabled)
+	if (  (   (Port == 0x50) 
+		    | (Port == 0x51)
+		  ) 
+		  & ClockEnabled
+		)
 	{
 		write_time(Data, Port);
 	}
@@ -679,9 +717,11 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Por
 
 extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
 {
-	if (  (Port == 0x50) 
-		| ((Port == 0x51) & ClockEnabled)
-		)
+	if ( (   (Port == 0x50) 
+		   | (Port == 0x51)
+		 ) 
+		 & ClockEnabled
+	   )
 	{
 		return read_time(Port);
 	}
