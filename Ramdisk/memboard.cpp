@@ -1,3 +1,4 @@
+/****************************************************************************/
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -15,63 +16,161 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+/****************************************************************************/
+/*
+	Disto RamPak emulation
 
-#include <windows.h>
-#include <stdio.h>
+	$FF40 - write only - lsb of 24 bit address
+	$FF41 - write only - nsb of 24 bit address
+	$FF42 - write only - msb of 24 bit address
+	$FF43 - read/write - data register
+
+	Read sector
+		for each byte
+			write each address byte
+			read data byte
+	
+	Write sector
+		for each byte
+			write each address byte
+			write data byte
+
+*/
+/****************************************************************************/
+
 #include "memboard.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <malloc.h>
+#include <memory.h>
+#include <string.h>
 
+/****************************************************************************/
 
-union
+unsigned char			g_Block		= 0;	// 0-255
+unsigned short			g_Address	= 0;	// 0-65535
+static unsigned char *	RamBuffer[256];
+
+char					DStatus[256] = "";
+static int				statusUpdate = 0;
+
+/****************************************************************************/
+/**
+	Initialize the memory Pak - allocate buffers
+*/
+int InitMemBoard(void)
 {
-	unsigned int Address;
-	struct
+	int x;
+
+	g_Address	= 0;
+	g_Block		= 0;
+
+	// allocate 256 blocks of 64k each = 16MB
+	for (x = 0; x<256; x++)
 	{
-		unsigned char lswlsb,lswmsb,mswlsb,mswmsb;
-	} Byte;
-} IndexAddress;//BufferAddress;
+		RamBuffer[x] = (unsigned char *)malloc(65536);
+		if (RamBuffer[x] == NULL)
+		{
+			// out of memory
+			return 1;
+		}
+		
+		memset(RamBuffer[x], 0, 65536);
+	}
 
-static unsigned char *RamBuffer=NULL;
+	strcpy(DStatus, "");
 
-bool InitMemBoard(void)
-{
-	IndexAddress.Address=0;
-	if (RamBuffer!=NULL)
-		free(RamBuffer);
-	RamBuffer=(unsigned char *)malloc(RAMSIZE);
-	if (RamBuffer==NULL)
-		return(true);
-	memset(RamBuffer,0,RAMSIZE);
-	return(false);
+	// success
+	return 0;
 }
 
-bool WritePort(unsigned char Port,unsigned char Data)
+/****************************************************************************/
+/**
+	Clean up - release memory
+*/
+int DestroyMemBoard(void)
+{
+	int x;
+
+	g_Block		= 0xFF;
+	g_Address	= 0xFFFF;
+	for (x = 0; x<256; x++)
+	{
+		if (RamBuffer[x] != NULL)
+		{
+			free(RamBuffer[x]);
+			RamBuffer[x] = NULL;
+		}
+	}
+
+	return 0;
+}
+
+/****************************************************************************/
+/**
+	Write a byte to one of our i/o ports
+*/
+int WritePort(unsigned char Port, unsigned char Data)
 {
 	switch (Port)
 	{
-	case 0x40:
-		IndexAddress.Byte.lswlsb=Data;
+	case BASE_PORT + 0:
+		g_Address = (g_Address & 0xFF00) | ((unsigned short)Data & 0xFF);
 		break;
-	case 0x41:
-		IndexAddress.Byte.lswmsb=Data;
+
+	case BASE_PORT + 1:
+		g_Address = (g_Address & 0x00FF) | (((unsigned short)Data << 8) & 0xFF00);
 		break;
-	case 0x42:
-		IndexAddress.Byte.mswlsb=(Data & 0x7);
+
+	case BASE_PORT + 2:
+		g_Block = (Data & 0xFF);
 		break;
 	}
-	return(false);
+
+	return 0;
 }
 
-bool WriteArray(unsigned char Data)
+/****************************************************************************/
+/**
+	Write a byte to the memory array
+*/
+int WriteArray(unsigned char Data)
 {
-	RamBuffer[IndexAddress.Address]=Data;
-	return(false);
+	if (statusUpdate == 0)
+	{
+		sprintf(DStatus, "W %0000.4X", (g_Address >> 8) | ((unsigned int)g_Block << 8));
+	}
+	statusUpdate++;
+	if (statusUpdate == 256)
+	{
+		statusUpdate = 0;
+	}
+
+	RamBuffer[g_Block][g_Address] = Data;
+
+	return 0;
 }
 
+/****************************************************************************/
+/**
+	Read a byte from the memory array
+*/
 unsigned char ReadArray(void)
 {
-	return(RamBuffer[IndexAddress.Address]);
+	if (statusUpdate == 0)
+	{
+		sprintf(DStatus, "R %0000.4X", ((g_Address >> 8)&0x00FF) | (((unsigned int)g_Block << 8)&0xFF00));
+	}
+	statusUpdate++;
+	if (statusUpdate == 256)
+	{
+		statusUpdate = 0;
+	}
+
+	return RamBuffer[g_Block][g_Address];
 }
 
+/****************************************************************************/
 
 
