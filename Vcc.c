@@ -475,6 +475,7 @@ void OnDestroy(HWND )
 }
 /*--------------------------------------------------------------------------*/
 // Window painting function
+#if 0
 void OnPaint(HWND hwnd)
 {
 	// Let Windows know we've redrawn the Window - since we've bypassed
@@ -490,6 +491,7 @@ void OnPaint(HWND hwnd)
 //	}
 //	EndPaint(hwnd, &ps);
 }
+#endif
 /*--------------------------------------------------------------------------*/
 
 void SetCPUMultiplyerFlag (unsigned char double_speed)

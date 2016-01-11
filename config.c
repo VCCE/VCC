@@ -77,7 +77,6 @@ static HICON CpuIcons[2],MonIcons[2],JoystickIcons[4];
 static unsigned char temp=0,temp2=0;
 static char IniFileName[]="Vcc.ini";
 static char IniFilePath[MAX_PATH]="";
-static char TapeFileName[MAX_PATH]="";
 static char ExecDirectory[MAX_PATH]="";
 static char LastPrnPath[MAX_PATH] = "";
 static char SerialCaptureFile[MAX_PATH]="";
@@ -105,7 +104,9 @@ CHARFORMAT ModeText;
 /*
 	for displaying key name
 */
-char * const keyNames[] = { "","ESC","1","2","3","4","5","6","7","8","9","0","-","=","BackSp","Tab","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","[","]","Bkslash",";","'","Comma",".","/","CapsLk","Shift","Ctrl","Alt","Space","Enter","Insert","Delete","Home","End","PgUp","PgDown","Left","Right","Up","Down","F1","F2" };
+char * const keyNames[] = { "","ESC","1","2","3","4","5","6","7","8","9","0","-","=","BackSp","Tab","A","B","C","D","E","F","G","H","I","J",
+                            "K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","[","]","Bkslash",";","'","Comma",".","/","CapsLk",
+	                        "Shift","Ctrl","Alt","Space","Enter","Insert","Delete","Home","End","PgUp","PgDown","Left","Right","Up","Down","F1","F2" };
 
 //					            0	1      2	3	4	5	6	7	8	9	10	11	12	13	14	    15    16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44        45  46  47      48  49   50       51     52     53    54      55      56       57       58     59    60     61       62     63      64   65     66   67	
 //char * const cocoKeyNames[] = { "","@","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","Up","Down","Left","Right","Space","0","1","2","3","4","5","6","7","8","9",":",";","Comma","-",".","/","Enter","Clear","Break","Alt","Ctrl","F1","F2","Shift" };
@@ -205,7 +206,7 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Video","AllowResize",CurrentConfig.Resize,IniFilePath);
 	WritePrivateProfileInt("Video","ForceAspect",CurrentConfig.Aspect,IniFilePath);
 
-	WritePrivateProfileString("Cassette", "LastPath", LastCassPath, IniFilePath);
+	Cassette::writeConfig(IniFilePath);
 
 	WritePrivateProfileInt("Memory","RamSize",CurrentConfig.RamSize,IniFilePath);
 	WritePrivateProfileString("Memory", "ExternalBasicImage", CurrentConfig.ExternalBasicImage, IniFilePath);
@@ -255,7 +256,7 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.AudioRate = GetPrivateProfileInt("Audio","Rate",3,IniFilePath);
 	GetPrivateProfileString("Audio","SndCard","",CurrentConfig.SoundCardName,63,IniFilePath);
 
-	GetPrivateProfileString("Cassette", "LastPath", "", LastCassPath, MAX_PATH, IniFilePath);
+	Cassette::readConfig(IniFilePath);
 
 	CurrentConfig.MonitorType = GetPrivateProfileInt("Video","MonitorType",1,IniFilePath);
 	CurrentConfig.ScanLines = GetPrivateProfileInt("Video","ScanLines",0,IniFilePath);
@@ -545,31 +546,29 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 	CounterText.dwEffects = CFE_BOLD;
 	CounterText.crTextColor=RGB(255,255,255);
 
-
 	ModeText.cbSize = sizeof(CHARFORMAT);
 	ModeText.dwMask = CFM_BOLD | CFM_COLOR ;
 	ModeText.dwEffects = CFE_BOLD;
 	ModeText.crTextColor=RGB(255,0,0);
 
-
-
 	switch (message)
 	{
 		case WM_INITDIALOG:
+			hDlgTape = hDlg;
 			TapeCounter=GetTapeCounter();
 			sprintf(OutBuffer,"%i",TapeCounter);
 			SendDlgItemMessage(hDlg,IDC_TCOUNT,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 			SendDlgItemMessage(hDlg,IDC_MODE,WM_SETTEXT,strlen(Tmodes[Tmode]),(LPARAM)(LPCSTR)Tmodes[Tmode]);
-			GetTapeName(TapeFileName);
-			SendDlgItemMessage(hDlg,IDC_TAPEFILE,WM_SETTEXT,strlen(TapeFileName),(LPARAM)(LPCSTR)TapeFileName);
+			
+			UpdateTapeCounter(TapeCounter, STOP);
+			
 //			hCounter=GetDlgItem(hDlg,IDC_TCOUNT);
 //			SendMessage (hCounter, EM_SETBKGNDCOLOR, 0, (LPARAM)RGB(0,0,0));
 			SendDlgItemMessage(hDlg,IDC_TCOUNT,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0)); 
 			SendDlgItemMessage(hDlg,IDC_TCOUNT,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&CounterText);
 			SendDlgItemMessage(hDlg,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0)); 
 			SendDlgItemMessage(hDlg,IDC_MODE,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&CounterText);
-//			SendDlgItemMessage(hDlg,IDC_MODE,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&ModeText);
-			hDlgTape=hDlg;
+//			SendDlgItemMessage(hDlg,IDC_MODE,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&ModeText);			
 		break;
 
 		case WM_COMMAND:
@@ -966,16 +965,22 @@ void UpdateSoundBar (unsigned short Left,unsigned short Right)
 
 void UpdateTapeCounter(unsigned int Counter,unsigned char TapeMode)
 {
-	if (hDlgTape==NULL)
-		return;
+	if (hDlgTape == nullptr) return;
+		
 	TapeCounter=Counter;
 	Tmode=TapeMode;
 	sprintf(OutBuffer,"%i",TapeCounter);
 	SendDlgItemMessage(hDlgTape,IDC_TCOUNT,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 	SendDlgItemMessage(hDlgTape,IDC_MODE,WM_SETTEXT,strlen(Tmodes[Tmode]),(LPARAM)(LPCSTR)Tmodes[Tmode]);
-	GetTapeName(TapeFileName);
-	PathStripPath ( TapeFileName);  
-	SendDlgItemMessage(hDlgTape,IDC_TAPEFILE,WM_SETTEXT,strlen(TapeFileName),(LPARAM)(LPCSTR)TapeFileName);
+	
+	// Set filename in the dialog, or "EMPTY" if none
+	char tempfile[MAX_PATH];
+	strncpy(tempfile, Cassette::getTapeName(), sizeof(tempfile));
+	if (strlen(tempfile) == 0) {
+		strncpy(tempfile, "EMPTY", sizeof(tempfile));
+	}	
+	PathStripPath(tempfile);
+	SendDlgItemMessage(hDlgTape,IDC_TAPEFILE,WM_SETTEXT,strlen(tempfile),(LPARAM)(LPCSTR)tempfile);	
 
 	switch (Tmode)
 	{

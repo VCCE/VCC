@@ -16,7 +16,8 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 /*
-	hardisk.cpp : Defines the entry point for the DLL application.
+	RTC: $FF78-$FF7C
+	IDE: $FF80-$FF86
 */
 
 #include "cc3vhd.h"
@@ -29,9 +30,13 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include "resource.h" 
 
-constexpr size_t EXTROMSIZE = 8192;
-static char FileName[MAX_PATH] { 0 };
-static char IniFile[MAX_PATH] { 0 };
+LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
+void Load_Disk(unsigned char);
+void LoadHardDisk(int iDiskNum);
+void LoadConfig(void);
+void SaveConfig(void);
+void BuildDynaMenu(void);
+unsigned char LoadExtRom(char *);
 
 //
 // VCC Pak API
@@ -41,18 +46,14 @@ static vcccpu_read8_t				MemRead8			= NULL;
 static vcccpu_write8_t				MemWrite8			= NULL;
 static vccapi_dynamicmenucallback_t	DynamicMenuCallback = NULL;
 
+static char VHD_FileName[2][MAX_PATH]	= { "","" };
+static char IniFile[MAX_PATH]		{ 0 };
+static char LastPath[MAX_PATH]		{ 0 };
+
+constexpr size_t EXTROMSIZE = 8192;
 static unsigned char *Memory=NULL;
 static unsigned char DiskRom[8192];
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
-static char LastPath[MAX_PATH];
-
-LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
-void Load_Disk(unsigned char);
-void LoadHardDisk(void);
-void LoadConfig(void);
-void SaveConfig(void);
-void BuildDynaMenu(void);
-unsigned char LoadExtRom( char *);
 
 static HINSTANCE g_hinstDLL;
 static HWND g_hWnd = NULL;
@@ -64,11 +65,11 @@ void MemWrite(unsigned char Data,unsigned short Address)
 
 unsigned char MemRead(unsigned short Address)
 {
-	return (MemRead8(Address));
+	return MemRead8(Address);
 }
 
 
-void LoadHardDisk(void)
+void LoadHardDisk(int iDiskNum)
 {
 	OPENFILENAME ofn ;	
 	memset(&ofn,0,sizeof(ofn));
@@ -76,7 +77,7 @@ void LoadHardDisk(void)
 	ofn.hwndOwner         = g_hWnd;
 	ofn.lpstrFilter       =	"HardDisk Images\0*.vhd\0\0";	// filter VHD images
 	ofn.nFilterIndex      = 1 ;								// current filter index
-	ofn.lpstrFile         = FileName ;						// contains full path and filename on return
+	ofn.lpstrFile         = VHD_FileName[iDiskNum];			// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;							// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH ;						// sizeof lpstrFileTitle
@@ -92,10 +93,10 @@ void LoadHardDisk(void)
 	if (GetOpenFileName(&ofn))
 	{
 		// save last path
-		strcpy(LastPath, FileName);
+		strcpy(LastPath, VHD_FileName[iDiskNum]);
 		PathRemoveFileSpec(LastPath);
 
-		if (MountHD(FileName) == 0)
+		if (MountHD(VHD_FileName[iDiskNum], iDiskNum) == 0)
 		{
 			MessageBox(NULL, "Can't open file", "Error", 0);
 		}
@@ -109,19 +110,35 @@ void LoadConfig(void)
 	HANDLE hr=NULL;
 
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	GetPrivateProfileString(ModName,"VHDImage","",FileName,MAX_PATH,IniFile);
-	CheckPath(FileName);
-	hr=CreateFile(FileName,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+
+	GetPrivateProfileString(ModName,"VHDImage","", VHD_FileName[0],MAX_PATH,IniFile);
+	CheckPath(VHD_FileName[0]);
+	hr=CreateFile(VHD_FileName[0],NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
 	if (hr==INVALID_HANDLE_VALUE)
 	{
-		strcpy(FileName,"");
-		WritePrivateProfileString(ModName,"VHDImage",FileName ,IniFile);
+		strcpy(VHD_FileName[0],"");
+		WritePrivateProfileString(ModName,"VHDImage", VHD_FileName[0],IniFile);
 	}
 	else
 	{
 		CloseHandle(hr);
-		MountHD(FileName);
+		MountHD(VHD_FileName[0],0);
 	}
+
+	GetPrivateProfileString(ModName, "VHDImage1", "", VHD_FileName[1], MAX_PATH, IniFile);
+	CheckPath(VHD_FileName[1]);
+	hr = CreateFile(VHD_FileName[1], NULL, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hr == INVALID_HANDLE_VALUE)
+	{
+		strcpy(VHD_FileName[1], "");
+		WritePrivateProfileString(ModName, "VHDImage1", VHD_FileName[1], IniFile);
+	}
+	else
+	{
+		CloseHandle(hr);
+		MountHD(VHD_FileName[1], 1);
+	}
+
 	GetPrivateProfileString(ModName, "LastPath", "", LastPath, MAX_PATH, IniFile);
 
 	BuildDynaMenu();
@@ -135,8 +152,10 @@ void SaveConfig(void)
 {
 	char ModName[MAX_LOADSTRING]="";
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	ValidatePath(FileName);
-	WritePrivateProfileString(ModName,"VHDImage",FileName ,IniFile);
+	ValidatePath(VHD_FileName[0]);
+	WritePrivateProfileString(ModName, "VHDImage", VHD_FileName[0] ,IniFile);
+	ValidatePath(VHD_FileName[1]);
+	WritePrivateProfileString(ModName, "VHDImage1", VHD_FileName[1], IniFile);
 	WritePrivateProfileString(ModName, "LastPath", LastPath, IniFile);
 }
 
@@ -144,18 +163,28 @@ void BuildDynaMenu(void)
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
+
 	DynamicMenuCallback("",0,0);
 	DynamicMenuCallback( "",6000,0);
 	DynamicMenuCallback( "HD Drive 0",6000,HEAD);
 	DynamicMenuCallback( "Insert",5010,SLAVE);
 	strcpy(TempMsg,"Eject: ");
-	strcpy(TempBuf,FileName);
+	strcpy(TempBuf, VHD_FileName[0]);
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
 	DynamicMenuCallback( TempMsg,5011,SLAVE);
-//	DynamicMenuCallback( "HD Config",5012,STANDALONE);
-	DynamicMenuCallback("",1,0);
 
+	DynamicMenuCallback("HD Drive 1", 6001, HEAD);
+	DynamicMenuCallback("Insert", 5012, SLAVE);
+	strcpy(TempMsg, "Eject: ");
+	strcpy(TempBuf, VHD_FileName[1]);
+	PathStripPath(TempBuf);
+	strcat(TempMsg, TempBuf);
+	DynamicMenuCallback(TempMsg, 5013, SLAVE);
+	
+	//DynamicMenuCallback( "HD Config",5012,STANDALONE);
+
+	DynamicMenuCallback("",1,0);
 }
 
 unsigned char LoadExtRom( char *FilePath)	//Returns 1 on if loaded
@@ -166,15 +195,20 @@ unsigned char LoadExtRom( char *FilePath)	//Returns 1 on if loaded
 
 
 	rom_handle=fopen(FilePath,"rb");
-	if (rom_handle==NULL)
-		memset(DiskRom,0xFF,EXTROMSIZE);
+	if (rom_handle == NULL)
+	{
+		memset(DiskRom, 0xFF, EXTROMSIZE);
+	}
 	else
 	{
-		while ((feof(rom_handle)==0) & (index<EXTROMSIZE))
-			DiskRom[index++]=fgetc(rom_handle);
-		RetVal=1;
+		while ((feof(rom_handle) == 0) & (index < EXTROMSIZE))
+		{
+			DiskRom[index++] = fgetc(rom_handle);
+		}
+		RetVal = 1;
 		fclose(rom_handle);
 	}
+
 	return(RetVal);
 }
 
@@ -192,6 +226,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char *ModName, char
 	LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
 	DynamicMenuCallback = Temp;
 	SetClockWrite(!ClockReadOnly);
+
 	if (DynamicMenuCallback != NULL)
 	{
 		BuildDynaMenu();
@@ -203,25 +238,38 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(unsigned char MenuID
 	switch (MenuID)
 	{
 	case 10:
-		LoadHardDisk();
+		LoadHardDisk(0);
 		SaveConfig();
 		BuildDynaMenu();
 		break;
 
 	case 11:
-		UnmountHD();
-		strcpy(FileName, "");
+		UnmountHD(0);
+		strcpy(VHD_FileName[0], "");
 		SaveConfig();
 		BuildDynaMenu();
 		break;
 
-		//		case 12:
-		//			DialogBox(g_hinstDLL, (LPCTSTR)IDD_CONFIG, NULL, (DLGPROC)Config);
-		//			SaveConfig();
-		//			break;
+	case 12:
+		LoadHardDisk(1);
+		SaveConfig();
+		BuildDynaMenu();
+		break;
+
+	case 13:
+		UnmountHD(1);
+		strcpy(VHD_FileName[1], "");
+		SaveConfig();
+		BuildDynaMenu();
+		break;
+
+		//case 14:
+		//	DialogBox(g_hinstDLL, (LPCTSTR)IDD_CONFIG, NULL, (DLGPROC)Config);
+		//	SaveConfig();
+		//	break;
 
 	}
-	//		DialogBox(g_hinstDLL, (LPCTSTR)IDD_CONFIG, NULL, (DLGPROC)Config);
+	//DialogBox(g_hinstDLL, (LPCTSTR)IDD_CONFIG, NULL, (DLGPROC)Config);
 }
 
 extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
@@ -252,7 +300,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_MEMPOINTERS(vcccpu_read8_t 
 
 extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
 {
-	return (DiskRom[Address & 8191]);
+	return DiskRom[Address & 8191];
 }
 
 extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char *MyStatus)
@@ -275,10 +323,14 @@ BOOL WINAPI DllMain(
 {
 	if (fdwReason == DLL_PROCESS_DETACH) //Clean Up 
 	{
-		UnmountHD();
+		UnmountHD(0);
+		UnmountHD(1);
+
 		return(1);
 	}
+
 	g_hinstDLL = hinstDLL;
+
 	return(1);
 }
 
