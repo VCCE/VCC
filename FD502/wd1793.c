@@ -283,11 +283,14 @@ void unmount_disk_image(unsigned char drive)
 
 void DiskStatus(char *Status)
 {
-	if (MotorOn==1) 
-		sprintf(Status,"FD-502:Drv:%1.1i %s Trk:%2.2i Sec:%2.2i Hd:%1.1i",CurrentDisk,ImageFormat[Drive[CurrentDisk].ImageType],Drive[CurrentDisk].HeadPosition,SectorReg,Side);
+	if (MotorOn == 1)
+	{
+		sprintf(Status, "FD-502:Drv:%1.1i %s Trk:%2.2i Sec:%2.2i Hd:%1.1i", CurrentDisk, ImageFormat[Drive[CurrentDisk].ImageType], Drive[CurrentDisk].HeadPosition, SectorReg, Side);
+	}
 	else
-		sprintf(Status,"FD-502:Idle");
-	return;
+	{
+		sprintf(Status, "FD-502:Idle");
+	}
 }
 
 unsigned char MountDisk(char *FileName,unsigned char disk)

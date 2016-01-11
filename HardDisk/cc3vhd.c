@@ -81,7 +81,7 @@ static unsigned char SectorBuffer[SECTORSIZE];
 static unsigned char Mounted=0,WpHD=0;
 static unsigned short ScanCount=0;
 static unsigned long LastSectorNum=0;
-static char DStatus[128]="";
+static char DStatus[256]="";
 static char Status = HD_PWRUP;
 unsigned long BytesMoved=0;
 
