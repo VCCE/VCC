@@ -37,27 +37,7 @@ This file is part of VCC (Virtual Color Computer).
 
 /****************************************************************************/
 
-// Storage for Pak ROMs
-static uint8_t *		ExternalRomBuffer = nullptr; 
-static bool				RomPackLoaded = false;
-static unsigned int		BankedCartOffset=0;
-
-static bool DialogOpen=false;
-
-static char Did=0;
-
-typedef struct {
-	char MenuName[512];
-	int MenuId;
-	int Type;
-} Dmenu;
-
-static Dmenu MenuItem[100];
-static unsigned char MenuIndex=0;
-static HMENU hMenu = NULL;
-static HMENU hSubMenu[64] ;
-
-/** the loaded Pak object - ROM or plug-in DLL */
+/** the single loaded Pak object - ROM or plug-in DLL */
 static vccpak_t		g_Pak = {
 	// init blank / empty
 	NULL,
@@ -69,12 +49,15 @@ static vccpak_t		g_Pak = {
 
 /** Last path used opening any Pak (ROM or DLL) */
 char LastPakPath[MAX_PATH] = "";
+//static bool DialogOpen = false;
 
 /****************************************************************************/
 /** 
-	detect the type of file the user is trying to load 
+	detect the type of Pak the user is trying to load
+
+	TODO: move to fileops.c
 */
-int FileID(char *Filename)
+int getFileType(char * Filename)
 {
 	FILE *DummyHandle = NULL;
 	char Temp[3] = "";
@@ -126,7 +109,7 @@ void vccPakTimer(void)
 */
 void vccPakReset(void)
 {
-	BankedCartOffset=0;
+	g_Pak.BankedCartOffset=0;
 	if (g_Pak.api.reset != NULL)
 	{
 		(*g_Pak.api.reset)();
@@ -171,9 +154,9 @@ void vccPakPortWrite(unsigned char Port,unsigned char Data)
 		(*g_Pak.api.portWrite)(Port,Data);
 	}
 	
-	if ((Port == 0x40) && (RomPackLoaded == true)) 
+	if ((Port == 0x40) && (g_Pak.RomPackLoaded == true))
 	{
-		BankedCartOffset = (Data & 15) << 14;
+		g_Pak.BankedCartOffset = (Data & 15) << 14;
 	}
 }
 
@@ -187,9 +170,9 @@ unsigned char vccPakMem8Read (unsigned short Address)
 		return (*g_Pak.api.memRead)(Address & 32767);
 	}
 
-	if ( ExternalRomBuffer != NULL )
+	if (g_Pak.ExternalRomBuffer != NULL )
 	{
-		return (ExternalRomBuffer[(Address & 32767) + BankedCartOffset]);
+		return (g_Pak.ExternalRomBuffer[(Address & 32767) + g_Pak.BankedCartOffset]);
 	}
 	
 	return(0);
@@ -233,7 +216,7 @@ void vccPakSetInterruptCallPtr(void)
 /****************************************************************************/
 /**
 */
-int LoadCart(void)
+int vccPakLoadCart(void)
 {
 	OPENFILENAME ofn ;	
 	char szFileName[MAX_PATH]="";
@@ -263,7 +246,7 @@ int LoadCart(void)
 		strcpy(LastPakPath, szFileName);
 		PathRemoveFileSpec(LastPakPath);
 
-		if (!InsertModule(szFileName))
+		if (!vccPakInsertModule(szFileName))
 		{
 			return(0);
 		}
@@ -370,14 +353,14 @@ void vccPakSetParamFlags(vccpak_t * pPak)
 /****************************************************************************/
 /**
 */
-int InsertModule (char *ModulePath)
+int vccPakInsertModule(char *ModulePath)
 {
 //	char Modname[MAX_LOADSTRING]="Blank";
 	char CatNumber[MAX_LOADSTRING]="";
 	char Temp[MAX_LOADSTRING]="";
 	unsigned char FileType=0;
 
-	FileType = FileID(ModulePath);
+	FileType = getFileType(ModulePath);
 
 	switch (FileType)
 	{
@@ -387,19 +370,19 @@ int InsertModule (char *ModulePath)
 
 	case 2:		//File is a ROM image
 
-		UnloadDll();
-		load_ext_rom(ModulePath);
+		vccPakUnloadDll();
+		vccPakLoadExtROM(ModulePath);
 		strncpy(g_Pak.name,ModulePath,MAX_PATH);
 		PathStripPath(g_Pak.name);
-		DynamicMenuCallback( "",0, 0); //Refresh Menus
-		DynamicMenuCallback( "",1, 0);
+		vccPakDynMenuCallback("",0, 0); //Refresh Menus
+		vccPakDynMenuCallback("",1, 0);
 		EmuState.ResetPending=2;
 		SetCart(1);
 		return(NOMODULE);
 	break;
 
 	case 1:		//File is a DLL
-		UnloadDll();
+		vccPakUnloadDll();
 		g_Pak.hDLib = LoadLibrary(ModulePath);
 		if (g_Pak.hDLib == NULL)
 		{
@@ -433,7 +416,7 @@ int InsertModule (char *ModulePath)
 			return(NOTVCC);
 		}
 
-		BankedCartOffset=0;
+		g_Pak.BankedCartOffset=0;
 
 		//
 		// Initialize pak
@@ -449,7 +432,7 @@ int InsertModule (char *ModulePath)
 			(*g_Pak.api.setInterruptCallPtr)(CPUAssertInterupt);
 		}
 		// initialize / start dynamic menu
-		(*g_Pak.api.getName)(g_Pak.name, CatNumber, DynamicMenuCallback, EmuState.WindowHandle);
+		(*g_Pak.api.getName)(g_Pak.name, CatNumber, vccPakDynMenuCallback, EmuState.WindowHandle);
 
 		sprintf(Temp,"Configure %s", g_Pak.name);
 		
@@ -472,38 +455,45 @@ int InsertModule (char *ModulePath)
 	
 	@return total bytes loaded, or 0 on failure
 */
-int load_ext_rom(char filename[MAX_PATH])
+int vccPakLoadExtROM(char filename[MAX_PATH])
 {
 	constexpr size_t PAK_MAX_MEM = 0x40000;
 
 	// If there is an existing ROM, ditch it
-	if (ExternalRomBuffer != nullptr) {
-		free(ExternalRomBuffer);
+	if (g_Pak.ExternalRomBuffer != nullptr) 
+	{
+		free(g_Pak.ExternalRomBuffer);
+		g_Pak.ExternalRomBuffer = NULL;
 	}
 	
 	// Allocate memory for the ROM
-	ExternalRomBuffer = (uint8_t*)malloc(PAK_MAX_MEM);
+	g_Pak.ExternalRomBuffer = (uint8_t*)malloc(PAK_MAX_MEM);
 
 	// If memory was unable to be allocated, fail
-	if (ExternalRomBuffer == nullptr) {
+	if (g_Pak.ExternalRomBuffer == nullptr) 
+	{
 		MessageBox(0, "cant allocate ram", "Ok", 0);
 		return 0;
 	}
 	
 	// Open the ROM file, fail if unable to
 	FILE *rom_handle = fopen(filename, "rb");
-	if (rom_handle == nullptr) return 0;
-	
+	if (rom_handle == nullptr)
+	{
+		return 0;
+	}
+
 	// Load the file, one byte at a time.. (TODO: Get size and read entire block)
 	size_t index=0;
-	while ((feof(rom_handle) == 0) && (index < PAK_MAX_MEM)) {
-		ExternalRomBuffer[index++] = fgetc(rom_handle);
+	while ((feof(rom_handle) == 0) && (index < PAK_MAX_MEM)) 
+	{
+		g_Pak.ExternalRomBuffer[index++] = fgetc(rom_handle);
 	}
 	fclose(rom_handle);
 	
-	UnloadDll();
-	BankedCartOffset=0;
-	RomPackLoaded=true;
+	vccPakUnloadDll();
+	g_Pak.BankedCartOffset=0;
+	g_Pak.RomPackLoaded=true;
 	
 	return index;
 }
@@ -511,13 +501,14 @@ int load_ext_rom(char filename[MAX_PATH])
 /****************************************************************************/
 /**
 */
-void UnloadDll(void)
+void vccPakUnloadDll(void)
 {
-	if ((DialogOpen==true) & (EmuState.EmulationRunning==1))
+/*	if ((DialogOpen==true) & (EmuState.EmulationRunning==1))
 	{
 		MessageBox(0,"Close Configuration Dialog before unloading","Ok",0);
 		return;
 	}
+*/
 
 	// clear Pak API calls
 	memset(&g_Pak.api, 0, sizeof(vccpakapi_t));
@@ -528,15 +519,14 @@ void UnloadDll(void)
 	}
 	g_Pak.hDLib =NULL;
 	
-	DynamicMenuCallback( "",0, 0); //Refresh Menus
-	DynamicMenuCallback( "",1, 0);
-//	DynamicMenuCallback("",0,0);
+	vccPakDynMenuCallback( "",0, 0); //Refresh Menus
+	vccPakDynMenuCallback( "",1, 0);
 }
 
 /****************************************************************************/
 /**
 */
-void GetCurrentModule(char * DefaultModule)
+void vccPakGetCurrentModule(char * DefaultModule)
 {
 	strcpy(DefaultModule, g_Pak.path);
 }
@@ -544,24 +534,25 @@ void GetCurrentModule(char * DefaultModule)
 /****************************************************************************/
 /**
 */
-void UnloadPack(void)
+void vccPakUnload(void)
 {
-	UnloadDll();
+	vccPakUnloadDll();
 	strcpy(g_Pak.path,"");
 	strcpy(g_Pak.name,"Blank");
 	memcpy(&g_Pak.api, 0, sizeof(vccpakapi_t));
-	RomPackLoaded=false;
+	g_Pak.RomPackLoaded=false;
 	SetCart(0);
 	
-	if (ExternalRomBuffer != nullptr) 
+	if (g_Pak.ExternalRomBuffer != nullptr)
 	{
-		free(ExternalRomBuffer);
+		free(g_Pak.ExternalRomBuffer);
 	}
-	ExternalRomBuffer=nullptr;
+	g_Pak.ExternalRomBuffer=nullptr;
 
 	EmuState.ResetPending=2;
-	DynamicMenuCallback( "",0, 0); //Refresh Menus
-	DynamicMenuCallback( "",1, 0);
+
+	vccPakDynMenuCallback( "",0, 0); //Refresh Menus
+	vccPakDynMenuCallback( "",1, 0);
 }
 
 /****************************************************************************/
@@ -570,7 +561,7 @@ void UnloadPack(void)
 /****************************************************************************/
 /**
 */
-void DynamicMenuActivated(unsigned char MenuItem)
+void vccPakDynMenuActivated(unsigned char MenuItem)
 {
 	switch (MenuItem)
 	{
@@ -578,7 +569,7 @@ void DynamicMenuActivated(unsigned char MenuItem)
 		LoadPack();
 		break;
 	case 2:
-		UnloadPack();
+		vccPakUnload();
 		break;
 	default:
 		if (g_Pak.api.config != NULL)
@@ -590,100 +581,110 @@ void DynamicMenuActivated(unsigned char MenuItem)
 }
 
 /****************************************************************************/
-
-void DynamicMenuCallback( char *MenuName,int MenuId, int Type)
+/**
+	@param MenuName
+	@param MenuId
+	@param Type
+*/
+void vccPakDynMenuCallback(char * MenuName, int MenuId, int Type)
 {
 	char Temp[256]="";
+
 	//MenuId=0 Flush Buffer MenuId=1 Done 
 	switch (MenuId)
 	{
 		case 0:
-			MenuIndex=0;
-			DynamicMenuCallback( "Cartridge",6000,HEAD);	//Recursion is fun
-			DynamicMenuCallback( "Load Cart",5001,SLAVE);
+			g_Pak.MenuIndex=0;
+			vccPakDynMenuCallback("Cartridge",6000,DMENU_HEAD);	//Recursion is fun
+			vccPakDynMenuCallback("Load Cart",5001,DMENU_SLAVE);
 			sprintf(Temp,"Eject Cart: ");
 			strcat(Temp, g_Pak.name);
-			DynamicMenuCallback( Temp,5002,SLAVE);
+			vccPakDynMenuCallback(Temp,5002,DMENU_SLAVE);
 		break;
 
 		case 1:
-			RefreshDynamicMenu();
+			vccPakDynMenuRefresh();
 		break;
 
 		default:
-			strcpy(MenuItem[MenuIndex].MenuName,MenuName);
-			MenuItem[MenuIndex].MenuId=MenuId;
-			MenuItem[MenuIndex].Type=Type;
-			MenuIndex++;
+			strcpy(g_Pak.MenuItem[g_Pak.MenuIndex].MenuName,MenuName);
+			g_Pak.MenuItem[g_Pak.MenuIndex].MenuId=MenuId;
+			g_Pak.MenuItem[g_Pak.MenuIndex].Type=Type;
+			g_Pak.MenuIndex++;
 		break;	
 	}
 }
 
 /****************************************************************************/
-
-void RefreshDynamicMenu(void)
+/**
+*/
+void vccPakDynMenuRefresh(void)
 {
 	MENUITEMINFO	Mii;
-	char MenuTitle[32]="Cartridge";
-	unsigned char TempIndex=0,Index=0;
-	static HWND hOld;
-	int SubMenuIndex=0;
-	if ((hMenu==NULL) | (EmuState.WindowHandle != hOld))
-		hMenu=GetMenu(EmuState.WindowHandle);
+	char			MenuTitle[32]="Cartridge";
+	unsigned char	TempIndex=0,Index=0;
+	static HWND		hOld;
+	int				SubMenuIndex=0;
+
+	if ((g_Pak.hMenu == NULL) | (EmuState.WindowHandle != hOld))
+	{
+		g_Pak.hMenu = GetMenu(EmuState.WindowHandle);
+	}
 	else
-		DeleteMenu(hMenu,2,MF_BYPOSITION);
+	{
+		DeleteMenu(g_Pak.hMenu, 2, MF_BYPOSITION);
+	}
 
 	hOld=EmuState.WindowHandle;
-	hSubMenu[SubMenuIndex]=CreatePopupMenu();
+	g_Pak.hSubMenu[SubMenuIndex]=CreatePopupMenu();
 	memset(&Mii,0,sizeof(MENUITEMINFO));
 	Mii.cbSize= sizeof(MENUITEMINFO);
 	Mii.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;
 	Mii.fType = MFT_STRING;
 	Mii.wID = 4999;
-	Mii.hSubMenu = hSubMenu[SubMenuIndex];
+	Mii.hSubMenu = g_Pak.hSubMenu[SubMenuIndex];
 	Mii.dwTypeData = MenuTitle;
 	Mii.cch=strlen(MenuTitle);
-	InsertMenuItem(hMenu,2,TRUE,&Mii);
+	InsertMenuItem(g_Pak.hMenu,2,TRUE,&Mii);
 	SubMenuIndex++;	
-	for (TempIndex=0;TempIndex<MenuIndex;TempIndex++)
+	for (TempIndex=0;TempIndex<g_Pak.MenuIndex;TempIndex++)
 	{
-		if (strlen(MenuItem[TempIndex].MenuName) ==0)
-			MenuItem[TempIndex].Type=STANDALONE;
+		if (strlen(g_Pak.MenuItem[TempIndex].MenuName) == 0)
+		{
+			g_Pak.MenuItem[TempIndex].Type = DMENU_STANDALONE;
+		}
 
 		//Create Menu item in title bar if no exist already
-		switch (MenuItem[TempIndex].Type)
+		switch (g_Pak.MenuItem[TempIndex].Type)
 		{
-		case HEAD:
-				SubMenuIndex++;
-				hSubMenu[SubMenuIndex]=CreatePopupMenu();
-				memset(&Mii,0,sizeof(MENUITEMINFO));
-				Mii.cbSize= sizeof(MENUITEMINFO);
-				Mii.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;
-				Mii.fType = MFT_STRING;
-				Mii.wID = MenuItem[TempIndex].MenuId;
-				Mii.hSubMenu =hSubMenu[SubMenuIndex];
-				Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-				Mii.cch=strlen(MenuItem[TempIndex].MenuName);
-				InsertMenuItem(hSubMenu[0],0,FALSE,&Mii);		
-
+		case DMENU_HEAD:
+			SubMenuIndex++;
+			g_Pak.hSubMenu[SubMenuIndex]=CreatePopupMenu();
+			memset(&Mii,0,sizeof(MENUITEMINFO));
+			Mii.cbSize= sizeof(MENUITEMINFO);
+			Mii.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;
+			Mii.fType = MFT_STRING;
+			Mii.wID = g_Pak.MenuItem[TempIndex].MenuId;
+			Mii.hSubMenu = g_Pak.hSubMenu[SubMenuIndex];
+			Mii.dwTypeData = g_Pak.MenuItem[TempIndex].MenuName;
+			Mii.cch=strlen(g_Pak.MenuItem[TempIndex].MenuName);
+			InsertMenuItem(g_Pak.hSubMenu[0],0,FALSE,&Mii);
 			break;
 
-		case SLAVE:
-				memset(&Mii,0,sizeof(MENUITEMINFO));
-				Mii.cbSize= sizeof(MENUITEMINFO);
-				Mii.fMask = MIIM_TYPE |  MIIM_ID;
-				Mii.fType = MFT_STRING;
-				Mii.wID = MenuItem[TempIndex].MenuId;
-				Mii.hSubMenu = hSubMenu[SubMenuIndex];
-				Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-				Mii.cch=strlen(MenuItem[TempIndex].MenuName);
-				InsertMenuItem(hSubMenu[SubMenuIndex],0,FALSE,&Mii);
+		case DMENU_SLAVE:
+			memset(&Mii,0,sizeof(MENUITEMINFO));
+			Mii.cbSize= sizeof(MENUITEMINFO);
+			Mii.fMask = MIIM_TYPE |  MIIM_ID;
+			Mii.fType = MFT_STRING;
+			Mii.wID = g_Pak.MenuItem[TempIndex].MenuId;
+			Mii.hSubMenu = g_Pak.hSubMenu[SubMenuIndex];
+			Mii.dwTypeData = g_Pak.MenuItem[TempIndex].MenuName;
+			Mii.cch=strlen(g_Pak.MenuItem[TempIndex].MenuName);
+			InsertMenuItem(g_Pak.hSubMenu[SubMenuIndex],0,FALSE,&Mii);
+			break;
 
-
-		break;
-
-		case STANDALONE:
-			if (strlen(MenuItem[TempIndex].MenuName) ==0)
+		case DMENU_STANDALONE:
+			if (strlen(g_Pak.MenuItem[TempIndex].MenuName) ==0)
 			{
 				memset(&Mii,0,sizeof(MENUITEMINFO));
 				Mii.cbSize= sizeof(MENUITEMINFO);
@@ -691,11 +692,11 @@ void RefreshDynamicMenu(void)
 				Mii.fType = MF_SEPARATOR; 
 			//	Mii.fType = MF_MENUBARBREAK;
 			//	Mii.fType = MFT_STRING;
-				Mii.wID = MenuItem[TempIndex].MenuId;
-				Mii.hSubMenu = hMenu;
-				Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-				Mii.cch=strlen(MenuItem[TempIndex].MenuName);
-				InsertMenuItem(hSubMenu[0],0,FALSE,&Mii);
+				Mii.wID = g_Pak.MenuItem[TempIndex].MenuId;
+				Mii.hSubMenu = g_Pak.hMenu;
+				Mii.dwTypeData = g_Pak.MenuItem[TempIndex].MenuName;
+				Mii.cch=strlen(g_Pak.MenuItem[TempIndex].MenuName);
+				InsertMenuItem(g_Pak.hSubMenu[0],0,FALSE,&Mii);
 			}
 			else
 			{
@@ -703,17 +704,17 @@ void RefreshDynamicMenu(void)
 				Mii.cbSize= sizeof(MENUITEMINFO);
 				Mii.fMask = MIIM_TYPE |  MIIM_ID;
 				Mii.fType = MFT_STRING;
-				Mii.wID = MenuItem[TempIndex].MenuId;
-				Mii.hSubMenu = hMenu;
-				Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-				Mii.cch=strlen(MenuItem[TempIndex].MenuName);
-				InsertMenuItem(hSubMenu[0],0,FALSE,&Mii);
+				Mii.wID = g_Pak.MenuItem[TempIndex].MenuId;
+				Mii.hSubMenu = g_Pak.hMenu;
+				Mii.dwTypeData = g_Pak.MenuItem[TempIndex].MenuName;
+				Mii.cch=strlen(g_Pak.MenuItem[TempIndex].MenuName);
+				InsertMenuItem(g_Pak.hSubMenu[0],0,FALSE,&Mii);
 			}
 		break;
 		}
 	}
+
 	DrawMenuBar(EmuState.WindowHandle);
-	return;
 }
 
 /****************************************************************************/

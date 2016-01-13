@@ -162,20 +162,6 @@ struct vccpakapi_t
 };
 
 /****************************************************************************/
-//
-// Pak load/insertion error codes
-//
-#define NOMODULE	1
-#define NOTVCC	2
-
-//
-// dynamic menu definitions
-//
-#define	HEAD 0
-#define SLAVE 1
-#define STANDALONE 2
-
-/****************************************************************************/
 
 #endif // __VCCPAKAPI_H__
 

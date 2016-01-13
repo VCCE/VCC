@@ -17,8 +17,8 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+
 //Misc
-#define MAX_LOADSTRING 100
 #define QUERY 255
 
 //Common CPU defs

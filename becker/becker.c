@@ -1,15 +1,18 @@
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
+// Note: had to tell MSVC to compile as C++.  for some reason it ended
+// up including C++ headers and would not compile until that change was made
 
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <winsock2.h>
 #include <windows.h>
 #include <process.h>
 #include <stdio.h>
+
 #include "becker.h"
 #include "resource.h"
 
 #include "../logger.h"
 #include "../fileops.h"
-#include "../vccPakAPI.h"
+#include "../pakinterface.h"
 
 // socket
 static SOCKET dwSocket = 0;
@@ -534,12 +537,14 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 
 void BuildDynaMenu(void)
 {
-
-	if (DynamicMenuCallback ==NULL)
-		MessageBox(0,"No good","Ok",0);
-	DynamicMenuCallback("",0,0);
+	if (DynamicMenuCallback == NULL)
+	{
+		// nice message, very informativce
+		MessageBox(0, "No good", "Ok", 0);
+	}
+	DynamicMenuCallback("", 0, 0);
 	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "DriveWire Server..",5016,STANDALONE);
+	DynamicMenuCallback( "DriveWire Server..",5016,DMENU_STANDALONE);
 	DynamicMenuCallback( "",1,0);
 	
 }

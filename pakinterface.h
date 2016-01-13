@@ -22,7 +22,12 @@ This file is part of VCC (Virtual Color Computer).
 /****************************************************************************/
 
 #include "vccPakAPI.h"
+#include "defines.h"
 
+#include <stdint.h>
+#include <stdio.h>
+
+// TOODO: the need for this will be removed eventually
 #include <Windows.h>
 
 /****************************************************************************/
@@ -45,6 +50,39 @@ This file is part of VCC (Virtual Color Computer).
 #define VCCPAK_ASSERTCART		(1 << 12)
 
 /****************************************************************************/
+//
+// Pak load/insertion error codes
+//
+
+#define NOMODULE	1
+#define NOTVCC		2
+
+/****************************************************************************/
+/*
+	definitions for dynamic menus
+*/
+
+#define MAX_MENUS		64		///< Maximum menus per Pak
+#define MAX_MENU_SIZE	512		///< Maximum text size for a menu item
+
+//
+// Defines the start and end IDs for the dynamic menus
+//
+#define ID_SDYNAMENU 5000	
+#define ID_EDYNAMENU 5100
+
+typedef struct {
+	char	MenuName[MAX_MENU_SIZE];
+	int		MenuId;
+	int		Type;
+} Dmenu;
+
+// Type 0= HEAD TAG 1= Slave Tag 2=StandAlone
+#define	DMENU_HEAD			0
+#define DMENU_SLAVE			1
+#define DMENU_STANDALONE	2
+
+/****************************************************************************/
 /**
 	VCC Plug-in Pak object
 
@@ -53,21 +91,40 @@ This file is part of VCC (Virtual Color Computer).
 typedef struct vccpak_t vccpak_t;
 struct vccpak_t
 {
-	void *			hDLib;			///< System dynamic library handle
-	char			path[MAX_PATH];	///< Path of loaded Pak
-	char			name[MAX_PATH];	///< Name of Pak for display
+	// note: if you change the order of any of these make sure
+	// to update where the global Pak is initialized in pakinterface.c
 
-	int				params;			///< Pak Status Flags indicating what this Pak supports via the Pak API
-	vccpakapi_t		api;			///< functions defined by the plug-in DLL (empty if ROM is loaded)
+	void *			hDLib;						///< System dynamic library handle
+	char			path[FILENAME_MAX];			///< Path of loaded Pak
+	char			name[FILENAME_MAX];			///< Name of Pak for display
+	char			catnumber[MAX_LOADSTRING];	///< Catalog number
+
+	// info for plug-in DLLs
+	int				params;				///< Pak Status Flags indicating what this Pak supports via the Pak API
+	vccpakapi_t		api;				///< functions defined by the plug-in DLL (empty if ROM is loaded)
+
+	// Storage for Pak ROMs
+	unsigned char *	ExternalRomBuffer;
+	bool			RomPackLoaded;
+	unsigned int	BankedCartOffset;
+
+	// dynamic menu info for this Pak
+	Dmenu			MenuItem[MAX_MENUS];
+	int				MenuIndex;
+	HMENU			hMenu;
+	HMENU			hSubMenu[MAX_MENUS];
 };
 
 /****************************************************************************/
 
-#ifndef __cplusplus
+#ifdef __cplusplus
 extern "C"
 {
 #endif
 
+	//
+	// VCC Pak API calls to interface with the Pak
+	//
 	void			vccPakTimer(void);
 	unsigned char	vccPakPortRead(unsigned char);
 	void			vccPakPortWrite(unsigned char, unsigned char);
@@ -78,29 +135,26 @@ extern "C"
 	unsigned short	vccPackGetAudioSample(void);
 	void			vccPakSetInterruptCallPtr(void);
 	
+	//
+	// General Pak support functions
+	//
 	char *			vccPakGetLastPath();
 	void			vccPakSetLastPath(char *);
 
-	int				LoadCart(void);
-	int				load_ext_rom(char *);
-	void			GetCurrentModule(char *);
-	int				InsertModule(char *);
-	void			UnloadDll(void);
-	void			UnloadPack(void);
-	void			DynamicMenuActivated(unsigned char);
-	void			RefreshDynamicMenu(void);
+	int				vccPakLoadCart(void);
+	int				vccPakLoadExtROM(char *);
+	void			vccPakGetCurrentModule(char *);
+	int				vccPakInsertModule(char *);
+	void			vccPakUnloadDll(void);
+	void			vccPakUnload(void);
 
-#ifndef __cplusplus
+	void			vccPakDynMenuActivated(unsigned char);
+	void			vccPakDynMenuRefresh(void);
+	void			vccPakDynMenuCallback(char *, int, int);
+
+#ifdef __cplusplus
 }
 #endif
-
-/****************************************************************************/
-
-//
-// Defines the start and end IDs for the dynamic menus
-//
-#define ID_SDYNAMENU 5000	
-#define ID_EDYNAMENU 5100
 
 /****************************************************************************/
 

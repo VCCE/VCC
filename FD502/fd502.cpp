@@ -31,7 +31,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "distortc.h"
 
 #include "..\fileops.h"
-#include "..\vccPakAPI.h"
+#include "../pakinterface.h"
 
 #include <stdio.h>
 #include "resource.h" 
@@ -335,39 +335,39 @@ void BuildDynaMenu(void)
 	}
 	DynamicMenuCallback("", 0, 0);
 	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "FD-502 Drive 0",6000,HEAD);
-	DynamicMenuCallback( "Insert",5010,SLAVE);
+	DynamicMenuCallback( "FD-502 Drive 0",6000,DMENU_HEAD);
+	DynamicMenuCallback( "Insert",5010,DMENU_SLAVE);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[0].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5011,SLAVE);
+	DynamicMenuCallback( TempMsg,5011,DMENU_SLAVE);
 
-	DynamicMenuCallback( "FD-502 Drive 1",6000,HEAD);
-	DynamicMenuCallback( "Insert",5012,SLAVE);
+	DynamicMenuCallback( "FD-502 Drive 1",6000,DMENU_HEAD);
+	DynamicMenuCallback( "Insert",5012,DMENU_SLAVE);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[1].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5013,SLAVE);
+	DynamicMenuCallback( TempMsg,5013,DMENU_SLAVE);
 
-	DynamicMenuCallback( "FD-502 Drive 2",6000,HEAD);
-	DynamicMenuCallback( "Insert",5014,SLAVE);
+	DynamicMenuCallback( "FD-502 Drive 2",6000,DMENU_HEAD);
+	DynamicMenuCallback( "Insert",5014,DMENU_SLAVE);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[2].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5015,SLAVE);
+	DynamicMenuCallback( TempMsg,5015,DMENU_SLAVE);
 //NEW
-	DynamicMenuCallback( "FD-502 Drive 3",6000,HEAD);
-	DynamicMenuCallback( "Insert",5017,SLAVE);
+	DynamicMenuCallback( "FD-502 Drive 3",6000,DMENU_HEAD);
+	DynamicMenuCallback( "Insert",5017,DMENU_SLAVE);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[3].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5018,SLAVE);
+	DynamicMenuCallback( TempMsg,5018,DMENU_SLAVE);
 //NEW 
-	DynamicMenuCallback( "FD-502 Config",5016,STANDALONE);
+	DynamicMenuCallback( "FD-502 Config",5016,DMENU_STANDALONE);
 	DynamicMenuCallback( "",1,0);
 }
 

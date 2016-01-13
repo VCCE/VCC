@@ -187,7 +187,7 @@ void LoadConfig(SystemState *LCState)
 
 unsigned char WriteIniFile(void)
 {
-	GetCurrentModule(CurrentConfig.ModulePath);
+	vccPakGetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ExternalBasicImage);
 	WritePrivateProfileString("Version","Release",AppName,IniFilePath);
@@ -311,7 +311,7 @@ unsigned char ReadIniFile(void)
 	}
 
 	TempConfig=CurrentConfig;
-	InsertModule (CurrentConfig.ModulePath);	// Should this be here?
+	vccPakInsertModule (CurrentConfig.ModulePath);	// Should this be here?
 	
 	return(0);
 }
@@ -474,7 +474,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_SETRANGE,TRUE,MAKELONG(2,CurrentConfig.MaxOverclock ));	//Maximum overclock
 			sprintf(OutBuffer,"%2.3f Mhz",(float)TempConfig.CPUMultiplyer*.894);
 			SendDlgItemMessage(hDlg,IDC_CLOCKDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
-			SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_SETPOS,TRUE,TempConfig.CPUMultiplyer/10);
+			SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_SETPOS,TRUE,TempConfig.CPUMultiplyer);
 			for (temp=0;temp<=3;temp++)
 				SendDlgItemMessage(hDlg,Ramchoice[temp],BM_SETCHECK,(temp==TempConfig.RamSize),0);
 			for (temp=0;temp<=1;temp++)
@@ -483,7 +483,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		break;
 
 		case WM_HSCROLL:
-			TempConfig.CPUMultiplyer=(unsigned char) SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_GETPOS,(WPARAM) 0, (WPARAM) 0)*10;
+			TempConfig.CPUMultiplyer=(unsigned char) SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_GETPOS,(WPARAM) 0, (WPARAM) 0);
 			sprintf(OutBuffer,"%2.3f Mhz",(float)TempConfig.CPUMultiplyer*.894);
 			SendDlgItemMessage(hDlg,IDC_CLOCKDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 			break;

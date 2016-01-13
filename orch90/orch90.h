@@ -23,7 +23,6 @@ void CPUAssertInterupt(unsigned char,unsigned char);
 
 
 //Misc
-#define MAX_LOADSTRING 100
 #define QUERY 255
 
 //Common CPU defs

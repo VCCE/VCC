@@ -79,12 +79,15 @@ void SoftReset(void);
 //void LoadIniFile(void);
 unsigned __stdcall EmuLoop(void *);
 unsigned __stdcall CartLoad(void *);
+
+// CPU plug-in function defs
 void (*CPUInit)(void)=NULL;
 int  (*CPUExec)( int)=NULL;
 void (*CPUReset)(void)=NULL;
 void (*CPUAssertInterupt)(unsigned char,unsigned char)=NULL;
 void (*CPUDeAssertInterupt)(unsigned char)=NULL;
 void (*CPUForcePC)(unsigned short)=NULL;
+
 void FullScreenToggle(void);
 
 // Message handlers
@@ -92,12 +95,13 @@ void FullScreenToggle(void);
 //void OnCommand(HWND hWnd, int iID, HWND hwndCtl, UINT uNotifyCode);
 //void OnPaint(HWND hwnd);
 // Globals
-static 	HANDLE hEMUThread ;
+static HANDLE hEMUThread ;
 
 static char g_szAppName[MAX_LOADSTRING] = "";
 bool BinaryRunning;
 static unsigned char FlagEmuStop=TH_RUNNING;
 //static CRITICAL_SECTION  FrameRender;
+
 /*--------------------------------------------------------------------------*/
 int APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -141,8 +145,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	}
 	
 	Cls(0,&EmuState);
-	DynamicMenuCallback( "",0, 0);
-	DynamicMenuCallback( "",1, 0);
+
+	vccPakDynMenuCallback("",0, 0);
+	vccPakDynMenuCallback("",1, 0);
 
 	LoadConfig(&EmuState);			//Loads the default config file Vcc.ini from the exec directory
 	EmuState.ResetPending=2;
@@ -188,9 +193,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	CloseHandle( hEvent ) ;	
 	CloseHandle( hEMUThread ) ;
 	timeEndPeriod(1);
-	UnloadDll();
+	vccPakUnloadDll();
 	SoundDeInit();
 	WriteIniFile(); //Save Any changes to ini File
+
 	return Msg.wParam;
 }
 
@@ -218,7 +224,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			// Added for Dynamic menu system
 			if ( (wmId >=ID_SDYNAMENU) & (wmId <=ID_EDYNAMENU) )
 			{
-				DynamicMenuActivated (wmId - ID_SDYNAMENU);	//Calls to the loaded DLL so it can do the right thing
+				vccPakDynMenuActivated (wmId - ID_SDYNAMENU);	//Calls to the loaded DLL so it can do the right thing
 				break;
 			}
 
@@ -767,7 +773,7 @@ void LoadPack(void)
 
 unsigned __stdcall CartLoad(void *Dummy)
 {
-	LoadCart();
+	vccPakLoadCart();
 	EmuState.EmulationRunning=TRUE;
 	DialogOpen=false;
 	return(NULL);
@@ -782,10 +788,9 @@ void FullScreenToggle(void)
 		exit(0);
 	}
 	InvalidateBoarder();
-	RefreshDynamicMenu();
+	vccPakDynMenuRefresh();
 	EmuState.ConfigDialog=NULL;
 	PauseAudio(false);
-	return;
 }
 
 

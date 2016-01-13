@@ -21,7 +21,9 @@ This file is part of VCC (Virtual Color Computer).
 	
 	It simulated the functions of the TRS-80 Multi-Pak Interface
 
-	TODO: <snippet from the Cloud9 web site>
+	TODO: emulation is not quite exact, according to...
+	
+		<snippet from the Cloud9 web site>
 
 		"Here's a simple test that will determine if your Mulit-Pak has already 
 		been upgraded to work with a CoCo 3. From BASIC's OK prompt, 
@@ -31,15 +33,17 @@ This file is part of VCC (Virtual Color Computer).
 
 		VCC is currently producing 204 as the return value
 
-	TODO: VCC GetStatus shoud be changed to use safe versions of sprintf, strcat
-			and so should each Pak (including us)
+	TODO: VCC Pak API call to get module/pak status shoud be changed to 
+			use safe versions of sprintf, strcat and so should each Pak 
+			(including us).  The buffer size should be passed into the 
+			call to us as well.
 */
 /****************************************************************************/
 
 #include "mpi.h"
 
 #include "../fileops.h"
-#include "../vccPakAPI.h"
+#include "../pakinterface.h"	// note: only for definitions right now
 
 #include <stdio.h>
 #include <assert.h>
@@ -69,12 +73,10 @@ void DynamicMenuCallback3(char *, int, int);
 */
 
 #define MAXPAX			(1<<2)	///< Maximum number of Paks, needs to be a power of 2, not more than (1<<4)
-#define MAX_MENUS		64		///< Maximum menus per Pak
-#define MAX_MENU_SIZE	512		///< Maximum text size for a menu item
 
 /****************************************************************************/
 
-// globsal/common functions provided by VCC that will be 
+// global/common functions provided by VCC that will be 
 // called by the Pak to interface with the emulator
 static vccpakapi_assertinterrupt_t	AssertInt			= NULL;
 static vcccpu_read8_t				MemRead8			= NULL;
@@ -83,7 +85,12 @@ static vccapi_setcart_t				PakSetCart			= NULL;
 static vccapi_dynamicmenucallback_t	DynamicMenuCallback = NULL;
 
 //
-// Arrays of fuction pointers, etc, for each Slot
+// Array of Paks - one per MPI slot
+//
+//vccpak_t g_Paks[MAXPAX];
+
+//
+// Arrays of function pointers, etc, for each Slot
 //
 // TODO: change to an array of slots, each slot contains vccpakapi_t, etc once it is defined
 //       in VCC and the Pak API is expanded.  when the VCC core is put into a library
@@ -463,27 +470,27 @@ void BuildDynaMenu(void)	//STUB
 		MessageBox(0,"No good","Ok",0);
 	DynamicMenuCallback( "",0,0);
 	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "MPI Slot 4",6000,HEAD);
-	DynamicMenuCallback( "Insert",5010,SLAVE);
+	DynamicMenuCallback( "MPI Slot 4",6000,DMENU_HEAD);
+	DynamicMenuCallback( "Insert",5010,DMENU_SLAVE);
 	sprintf(TempMsg,"Eject: ");
 	strcat(TempMsg,SlotLabel[3]);
-	DynamicMenuCallback( TempMsg,5011,SLAVE);
-	DynamicMenuCallback( "MPI Slot 3",6000,HEAD);
-	DynamicMenuCallback( "Insert",5012,SLAVE);
+	DynamicMenuCallback( TempMsg,5011,DMENU_SLAVE);
+	DynamicMenuCallback( "MPI Slot 3",6000,DMENU_HEAD);
+	DynamicMenuCallback( "Insert",5012,DMENU_SLAVE);
 	sprintf(TempMsg,"Eject: ");
 	strcat(TempMsg,SlotLabel[2]);
-	DynamicMenuCallback( TempMsg,5013,SLAVE);
-	DynamicMenuCallback( "MPI Slot 2",6000,HEAD);
-	DynamicMenuCallback( "Insert",5014,SLAVE);
+	DynamicMenuCallback( TempMsg,5013,DMENU_SLAVE);
+	DynamicMenuCallback( "MPI Slot 2",6000,DMENU_HEAD);
+	DynamicMenuCallback( "Insert",5014,DMENU_SLAVE);
 	sprintf(TempMsg,"Eject: ");
 	strcat(TempMsg,SlotLabel[1]);
-	DynamicMenuCallback( TempMsg,5015,SLAVE);
-	DynamicMenuCallback( "MPI Slot 1",6000,HEAD);
-	DynamicMenuCallback( "Insert",5016,SLAVE);
+	DynamicMenuCallback( TempMsg,5015,DMENU_SLAVE);
+	DynamicMenuCallback( "MPI Slot 1",6000,DMENU_HEAD);
+	DynamicMenuCallback( "Insert",5016,DMENU_SLAVE);
 	sprintf(TempMsg,"Eject: ");
 	strcat(TempMsg,SlotLabel[0]);
-	DynamicMenuCallback( TempMsg,5017,SLAVE);
-	DynamicMenuCallback( "MPI Config",5018,STANDALONE);
+	DynamicMenuCallback( TempMsg,5017,DMENU_SLAVE);
+	DynamicMenuCallback( "MPI Config",5018,DMENU_STANDALONE);
 
 	for (TempIndex=0;TempIndex<MenuIndex[3];TempIndex++)
 		DynamicMenuCallback(MenuName3[TempIndex],MenuId3[TempIndex]+80,Type3[TempIndex]);
@@ -605,6 +612,11 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		return TRUE;
 		break;
 
+	case WM_CLOSE:
+		EndDialog(hDlg, LOWORD(wParam));
+		return TRUE;
+		break;
+
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
@@ -613,7 +625,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			EndDialog(hDlg, LOWORD(wParam));
 			return TRUE;
 			break;
-
 		} //End switch LOWORD
 
 		for (Temp = 0; Temp<MAXPAX; Temp++)
@@ -659,6 +670,9 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			PakSetCart(1);
 		}
+		break;
+
+	default:
 		break;
 	}
 	return FALSE;
@@ -730,7 +744,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(unsigned char MenuID
 			BuildDynaMenu();
 			break;
 		case 18:
-			DialogBox(g_hinstDLL, (LPCTSTR)IDD_DIALOG1, NULL, (DLGPROC)Config);
+			DialogBox(g_hinstDLL, (LPCTSTR)IDD_DIALOG1, g_hWnd, (DLGPROC)Config);
 			break;
 		case 19:
 
@@ -1023,6 +1037,7 @@ BOOL WINAPI DllMain(
 	}
 
 	g_hinstDLL = hinstDLL;
+	//memset(g_Paks, 0, sizeof(g_Paks));
 
 	return(1);
 }
