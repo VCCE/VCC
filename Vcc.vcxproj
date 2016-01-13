@@ -234,6 +234,7 @@
     <Image Include="resources\icon1.ico" />
     <Image Include="resources\3guys.bmp" />
     <Image Include="joystick.ico" />
+    <Image Include="resources\joystick.ico" />
     <Image Include="resources\Keyboard.ico" />
     <Image Include="resources\moto.ico" />
     <Image Include="resources\mouse.ico" />

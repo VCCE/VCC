@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 #include "cloud9.h"
 #include "../fileops.h"
-#include "../vccPakAPI.h"
+#include "../pakinterface.h"
 
 #include <windows.h>
 #include <stdio.h>
@@ -165,24 +165,24 @@ void BuildDynaMenu(void)
 	char TempBuf[MAX_PATH]="";
 
 	DynamicMenuCallback("",0,0);
-	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "HD Drive 0",6000,HEAD);
-	DynamicMenuCallback( "Insert",5010,SLAVE);
+	DynamicMenuCallback("",6000,0);
+	DynamicMenuCallback("HD Drive 0",6000, DMENU_HEAD);
+	DynamicMenuCallback("Insert",5010, DMENU_SLAVE);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, VHD_FileName[0]);
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5011,SLAVE);
+	DynamicMenuCallback( TempMsg,5011, DMENU_SLAVE);
 
-	DynamicMenuCallback("HD Drive 1", 6001, HEAD);
-	DynamicMenuCallback("Insert", 5012, SLAVE);
+	DynamicMenuCallback("HD Drive 1", 6001, DMENU_HEAD);
+	DynamicMenuCallback("Insert", 5012, DMENU_SLAVE);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHD_FileName[1]);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	DynamicMenuCallback(TempMsg, 5013, SLAVE);
+	DynamicMenuCallback(TempMsg, 5013, DMENU_SLAVE);
 	
-	//DynamicMenuCallback( "HD Config",5012,STANDALONE);
+	//DynamicMenuCallback( "HD Config",5012,DMENU_STANDALONE);
 
 	DynamicMenuCallback("",1,0);
 }

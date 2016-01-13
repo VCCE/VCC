@@ -187,7 +187,7 @@ void LoadConfig(SystemState *LCState)
 
 unsigned char WriteIniFile(void)
 {
-	GetCurrentModule(CurrentConfig.ModulePath);
+	vccPakGetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ExternalBasicImage);
 	WritePrivateProfileString("Version","Release",AppName,IniFilePath);
@@ -214,7 +214,7 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Misc","AutoStart",CurrentConfig.AutoStart,IniFilePath);
 	WritePrivateProfileInt("Misc","CartAutoStart",CurrentConfig.CartAutoStart,IniFilePath);
 	WritePrivateProfileInt("Misc","KeyMapIndex",CurrentConfig.KeyMap,IniFilePath);
-	WritePrivateProfileString("Misc", "LastPakPath", LastPakPath, IniFilePath);
+	WritePrivateProfileString("Misc", "LastPakPath", vccPakGetLastPath(), IniFilePath);
 	WritePrivateProfileString("Misc", "LastPrnPath", LastPrnPath, IniFilePath);
 
 	WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
@@ -245,6 +245,7 @@ unsigned char ReadIniFile(void)
 {
 	HANDLE hr=NULL;
 	unsigned char Index=0;
+	char Temp[MAX_PATH];
 
 	//Loads the config structure from the hard disk
 	CurrentConfig.CPUMultiplyer = GetPrivateProfileInt("CPU","DoubleSpeedClock",2,IniFilePath);
@@ -265,7 +266,8 @@ unsigned char ReadIniFile(void)
 
 	CurrentConfig.AutoStart = GetPrivateProfileInt("Misc","AutoStart",1,IniFilePath);
 	CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc","CartAutoStart",1,IniFilePath);
-	GetPrivateProfileString("Misc", "LastPakPath", "", LastPakPath, MAX_PATH, IniFilePath);
+	GetPrivateProfileString("Misc", "LastPakPath", "", Temp, MAX_PATH, IniFilePath);
+	vccPakSetLastPath(Temp);
 	GetPrivateProfileString("Misc", "LastPrnPath", "", LastPrnPath, MAX_PATH, IniFilePath);
 
 	CurrentConfig.RamSize = GetPrivateProfileInt("Memory","RamSize",1,IniFilePath);
@@ -309,7 +311,7 @@ unsigned char ReadIniFile(void)
 	}
 
 	TempConfig=CurrentConfig;
-	InsertModule (CurrentConfig.ModulePath);	// Should this be here?
+	vccPakInsertModule (CurrentConfig.ModulePath);	// Should this be here?
 	
 	return(0);
 }

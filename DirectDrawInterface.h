@@ -31,8 +31,4 @@ unsigned char SetResize(unsigned char);
 unsigned char SetAspect (unsigned char);
 float Static(SystemState *);
 
-
-
-#define MAX_LOADSTRING 100
-
 #endif

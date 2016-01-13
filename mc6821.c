@@ -329,7 +329,7 @@ unsigned int GetDACSample(void)
 	static unsigned short SampleLeft=0,SampleRight=0,PakSample=0;
 	static unsigned short OutLeft=0,OutRight=0;
 	static unsigned short LastLeft=0,LastRight=0;
-	PakSample=PackAudioSample();
+	PakSample= vccPackGetAudioSample();
 	SampleLeft=(PakSample>>8)+Asample+Ssample;
 	SampleRight=(PakSample & 0xFF)+Asample+Ssample; //9 Bits each
 	SampleLeft=SampleLeft<<6;	//Conver to 16 bit values
