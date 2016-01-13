@@ -262,6 +262,12 @@ unsigned char LockScreen(SystemState *LSState)
 	ddsd.dwSize = sizeof(ddsd);		// The first parameter of the structure must contain the size of the structure
 	CheckSurfaces();
 	
+	// no surface, fail
+	if (g_pDDSBack == NULL)
+	{
+		return 1;
+	}
+
 	// Lock entire surface, wait if it is busy, return surface memory pointer
 	hr = g_pDDSBack->Lock( NULL, &ddsd, DDLOCK_WAIT | DDLOCK_SURFACEMEMORYPTR, NULL );
 	if (hr)

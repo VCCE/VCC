@@ -214,7 +214,7 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Misc","AutoStart",CurrentConfig.AutoStart,IniFilePath);
 	WritePrivateProfileInt("Misc","CartAutoStart",CurrentConfig.CartAutoStart,IniFilePath);
 	WritePrivateProfileInt("Misc","KeyMapIndex",CurrentConfig.KeyMap,IniFilePath);
-	WritePrivateProfileString("Misc", "LastPakPath", LastPakPath, IniFilePath);
+	WritePrivateProfileString("Misc", "LastPakPath", vccPakGetLastPath(), IniFilePath);
 	WritePrivateProfileString("Misc", "LastPrnPath", LastPrnPath, IniFilePath);
 
 	WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
@@ -245,6 +245,7 @@ unsigned char ReadIniFile(void)
 {
 	HANDLE hr=NULL;
 	unsigned char Index=0;
+	char Temp[MAX_PATH];
 
 	//Loads the config structure from the hard disk
 	CurrentConfig.CPUMultiplyer = GetPrivateProfileInt("CPU","DoubleSpeedClock",2,IniFilePath);
@@ -265,7 +266,8 @@ unsigned char ReadIniFile(void)
 
 	CurrentConfig.AutoStart = GetPrivateProfileInt("Misc","AutoStart",1,IniFilePath);
 	CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc","CartAutoStart",1,IniFilePath);
-	GetPrivateProfileString("Misc", "LastPakPath", "", LastPakPath, MAX_PATH, IniFilePath);
+	GetPrivateProfileString("Misc", "LastPakPath", "", Temp, MAX_PATH, IniFilePath);
+	vccPakSetLastPath(Temp);
 	GetPrivateProfileString("Misc", "LastPrnPath", "", LastPrnPath, MAX_PATH, IniFilePath);
 
 	CurrentConfig.RamSize = GetPrivateProfileInt("Memory","RamSize",1,IniFilePath);
@@ -472,7 +474,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_SETRANGE,TRUE,MAKELONG(2,CurrentConfig.MaxOverclock ));	//Maximum overclock
 			sprintf(OutBuffer,"%2.3f Mhz",(float)TempConfig.CPUMultiplyer*.894);
 			SendDlgItemMessage(hDlg,IDC_CLOCKDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
-			SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_SETPOS,TRUE,TempConfig.CPUMultiplyer);
+			SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_SETPOS,TRUE,TempConfig.CPUMultiplyer/10);
 			for (temp=0;temp<=3;temp++)
 				SendDlgItemMessage(hDlg,Ramchoice[temp],BM_SETCHECK,(temp==TempConfig.RamSize),0);
 			for (temp=0;temp<=1;temp++)
@@ -481,7 +483,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		break;
 
 		case WM_HSCROLL:
-			TempConfig.CPUMultiplyer=(unsigned char) SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_GETPOS,(WPARAM) 0, (WPARAM) 0);
+			TempConfig.CPUMultiplyer=(unsigned char) SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_GETPOS,(WPARAM) 0, (WPARAM) 0)*10;
 			sprintf(OutBuffer,"%2.3f Mhz",(float)TempConfig.CPUMultiplyer*.894);
 			SendDlgItemMessage(hDlg,IDC_CLOCKDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 			break;

@@ -23,9 +23,4 @@ extern const unsigned char Rom[8192];
 #define FIRQ	2
 #define NMI		3
 
-//menu 
-#define	HEAD 0
-#define SLAVE 1
-#define STANDALONE 2
-
 #endif

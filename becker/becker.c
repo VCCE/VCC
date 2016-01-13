@@ -17,6 +17,7 @@ static SOCKET dwSocket = 0;
 static vccapi_setcart_t PakSetCart = NULL;
 
 static HINSTANCE g_hinstDLL=NULL;
+static HWND g_hWnd = NULL;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 static char IniFile[MAX_PATH]="";
 static unsigned char HDBRom[8192];
@@ -44,8 +45,6 @@ static unsigned short dwsport = 65504;
 static char curaddress[MAX_PATH];
 static unsigned short curport = 65504;
 
-
-
 //thread handle
 static HANDLE hDWTCPThread;
 
@@ -65,7 +64,6 @@ void BuildDynaMenu(void);
 void LoadConfig(void);
 void SaveConfig(void);
 
-
 // dll entry hook
 BOOL APIENTRY DllMain( HINSTANCE  hinstDLL, 
                        DWORD  ul_reason_for_call, 
@@ -83,8 +81,6 @@ BOOL APIENTRY DllMain( HINSTANCE  hinstDLL,
 			break;
 		case DLL_PROCESS_DETACH:
 			// shutdown
-
-		
 			break;
 
 		// not used by Vcc
@@ -95,10 +91,6 @@ BOOL APIENTRY DllMain( HINSTANCE  hinstDLL,
 
     return TRUE;
 }
-
-
-
-
 
 
 // coco checks for data
@@ -420,6 +412,8 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 // dll exported functions
 	__declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char *ModName,char *CatNumber,vccapi_dynamicmenucallback_t Temp, void * wndHandle)
 	{
+		g_hWnd = (HWND)wndHandle;
+
 		LoadString(g_hinstDLL,IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
 		strcpy(ModName,"HDBDOS/DW/Becker");
@@ -625,9 +619,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
                  rcOwner.top + (rc.bottom / 2), 
                  0, 0,          // Ignores size arguments. 
                  SWP_NOSIZE); 
-
-		
-    
 
 			SendDlgItemMessage (hDlg,IDC_TCPHOST, WM_SETTEXT, strlen(dwaddress),(LPARAM)(LPCSTR)dwaddress);
 			sprintf(msg,"%d", dwsport);

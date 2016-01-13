@@ -560,9 +560,9 @@ void DoHardReset(SystemState* const HRState)
 	CPUInit();
 	CPUReset();		// Zero all CPU Registers and sets the PC to VRESET
 	GimeReset();
-	UpdateBusPointer();
 	EmuState.TurboSpeedFlag=1;
-	ResetBus();
+	vccPakSetInterruptCallPtr();
+	vccPakReset();
 	SetClockSpeed(1);
 	return;
 }
@@ -575,9 +575,8 @@ void SoftReset(void)
 	GimeReset();
 	MmuReset();
 	CopyRom();
-	ResetBus();
+	vccPakReset();
 	EmuState.TurboSpeedFlag=1;
-	return;
 }
 
 // Mesage handler for the About box.
@@ -740,15 +739,20 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		}
 		EndRender(EmuState.FrameSkip);
 		FPS/=EmuState.FrameSkip;
-		GetModuleStatus(&EmuState);
+
+		// get status line from the Pak
+		vccPakGetStatus(EmuState.StatusLine);
 		
 		char ttbuff[256];
 		snprintf(ttbuff,sizeof(ttbuff),"Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s",EmuState.FrameSkip,FPS,CpuName,EmuState.CPUCurrentSpeed,EmuState.StatusLine);
 		SetStatusBarText(ttbuff,&EmuState);
 		
-		if (Throttle )	//Do nothing untill the frame is over returning unused time to OS
+		if (Throttle)	//Do nothing untill the frame is over returning unused time to OS
+		{
 			FrameWait();
+		}
 	} //Still Emulating
+
 	return(NULL);
 }
 
