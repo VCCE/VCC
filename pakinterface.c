@@ -21,6 +21,16 @@ This file is part of VCC (Virtual Color Computer).
 	The CoCo Program Pak - ROM Pak or plug-in DLL device
 */
 /****************************************************************************/
+/*
+	Revision history:
+
+	2016-01-12 - @Wersley - Updated to use the new Pak API
+*/
+/****************************************************************************/
+/*
+	TODO: range checking when capturing a request to add a dynamic menu item
+*/
+/****************************************************************************/
 
 #include "pakinterface.h"
 #include "defines.h"
@@ -34,6 +44,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <commdlg.h>
 #include <stdio.h>
 #include <process.h>
+#include <assert.h>
 
 /****************************************************************************/
 
@@ -42,39 +53,47 @@ static vccpak_t		g_Pak = {
 	// init blank / empty
 	NULL,
 	"",
-	"Blank",
+	"Empty",
+	"",
+	"",
 	0,
 	{ NULL } 
 };	
 
+// dynamic menu info for all Paks
+int				g_DynMenuIndex;			///< menu count
+vccdynmenu_t	g_DynMenus[MAX_MENUS];	///< menu item info
+
 /** Last path used opening any Pak (ROM or DLL) */
-char LastPakPath[MAX_PATH] = "";
-//static bool DialogOpen = false;
+char LastPakPath[FILENAME_MAX] = "";
 
 /****************************************************************************/
 /** 
 	detect the type of Pak the user is trying to load
-
-	TODO: move to fileops.c
 */
-int getFileType(char * Filename)
+vccpaktype_t vccPakGetType(const char * Filename)
 {
-	FILE *DummyHandle = NULL;
-	char Temp[3] = "";
+	FILE *	DummyHandle = NULL;
+	char	Temp[3] = "";
+
 	DummyHandle = fopen(Filename, "rb");
 	if (DummyHandle == NULL)
 	{
-		return(0);	//File Doesn't exist
+		return VCCPAK_TYPE_NOFILE;	//File Doesn't exist
 	}
 
 	Temp[0] = fgetc(DummyHandle);
 	Temp[1] = fgetc(DummyHandle);
 	Temp[2] = 0;
 	fclose(DummyHandle);
-	if (strcmp(Temp, "MZ") == 0)
-		return(1);	//DLL File
 
-	return(2);		//Rom Image 
+	// TODO: is this valid for Win64 etc?
+	if (strcmp(Temp, "MZ") == 0)
+	{
+		return VCCPAK_TYPE_PLUGIN;	//DLL File
+	}
+
+	return VCCPAK_TYPE_ROM;		//Rom Image 
 }
 
 /****************************************************************************/
@@ -119,11 +138,11 @@ void vccPakReset(void)
 /****************************************************************************/
 /**
 */
-void vccPakGetStatus(char * pStatusBuffer)
+void vccPakGetStatus(char * pStatusBuffer, size_t bufferSize)
 {
 	if (g_Pak.api.status != NULL)
 	{
-		(*g_Pak.api.status)(pStatusBuffer);
+		(*g_Pak.api.status)(pStatusBuffer, bufferSize);
 	}
 	else
 	{
@@ -149,12 +168,15 @@ unsigned char vccPakPortRead (unsigned char port)
 */
 void vccPakPortWrite(unsigned char Port,unsigned char Data)
 {
-	if (g_Pak.api.portWrite != NULL)
+	if ( g_Pak.api.portWrite != NULL )
 	{
 		(*g_Pak.api.portWrite)(Port,Data);
 	}
 	
-	if ((Port == 0x40) && (g_Pak.RomPackLoaded == true))
+	// change ROM banks?
+	if (    (Port == 0x40) 
+		 && (g_Pak.RomPackLoaded == true)
+		)
 	{
 		g_Pak.BankedCartOffset = (Data & 15) << 14;
 	}
@@ -191,9 +213,9 @@ void vccPakMem8Write(unsigned char Port,unsigned char Data)
 */
 unsigned short vccPackGetAudioSample(void)
 {
-	if (g_Pak.api.getSample != NULL)
+	if (g_Pak.api.getAudioSample != NULL)
 	{
-		return(*g_Pak.api.getSample)();
+		return(*g_Pak.api.getAudioSample)();
 	}
 	
 	return NULL;
@@ -219,7 +241,7 @@ void vccPakSetInterruptCallPtr(void)
 int vccPakLoadCart(void)
 {
 	OPENFILENAME ofn ;	
-	char szFileName[MAX_PATH]="";
+	char szFileName[FILENAME_MAX]="";
 	BOOL result;
 
 	memset(&ofn,0,sizeof(ofn));
@@ -228,12 +250,12 @@ int vccPakLoadCart(void)
 	ofn.lpstrFilter       = "Program Packs\0*.ROM;*.BIN;*.DLL\0\0";			// filter string
 	ofn.nFilterIndex      = 1 ;							// current filter index
 	ofn.lpstrFile         = szFileName ;				// contains full path and filename on return
-	ofn.nMaxFile          = MAX_PATH;					// sizeof lpstrFile
+	ofn.nMaxFile          = FILENAME_MAX;				// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;						// filename and extension only
-	ofn.nMaxFileTitle     = MAX_PATH ;					// sizeof lpstrFileTitle
+	ofn.nMaxFileTitle     = FILENAME_MAX;				// sizeof lpstrFileTitle
 	ofn.lpstrTitle        = TEXT("Load Program Pack") ;	// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
-	ofn.lpstrInitialDir = NULL;						// initial directory
+	ofn.lpstrInitialDir = NULL;							// initial directory
 	if (strlen(LastPakPath) > 0)
 	{
 		ofn.lpstrInitialDir = LastPakPath;
@@ -261,7 +283,7 @@ int vccPakLoadCart(void)
 void vccPakSetParamFlags(vccpak_t * pPak)
 {
 	char String[1024] = "";
-	char TempIni[MAX_PATH] = "";
+	char TempIni[FILENAME_MAX] = "";
 
 	strcat(String, "Module Name: ");
 	strcat(String, g_Pak.name);
@@ -303,7 +325,7 @@ void vccPakSetParamFlags(vccpak_t * pPak)
 
 		strcat(String, "Needs Heartbeat\n");
 	}
-	if (g_Pak.api.getSample != NULL)
+	if (g_Pak.api.getAudioSample != NULL)
 	{
 		g_Pak.params |= VCCPAK_ANALOGAUDIO;
 
@@ -351,76 +373,118 @@ void vccPakSetParamFlags(vccpak_t * pPak)
 }
 
 /****************************************************************************/
+
+void vccPakGetAPI(vccpak_t * pPak)
+{
+	if (pPak != NULL)
+	{
+		pPak->api.init = (vccpakapi_init_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_INIT);
+		pPak->api.getName = (vccpakapi_getname_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_GETNAME);
+		pPak->api.config = (vccpakapi_config_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_CONFIG);
+		pPak->api.portWrite = (vccpakapi_portwrite_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_PORTWRITE);
+		pPak->api.portRead = (vccpakapi_portread_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_PORTREAD);
+		pPak->api.setInterruptCallPtr = (vccpakapi_setintptr_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_ASSERTINTERRUPT);
+		pPak->api.memPointers = (vccpakapi_setmemptrs_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_MEMPOINTERS);
+		pPak->api.heartbeat = (vccpakapi_heartbeat_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_HEARTBEAT);
+		pPak->api.memWrite = (vcccpu_write8_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_MEMWRITE);
+		pPak->api.memRead = (vcccpu_read8_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_MEMREAD);
+		pPak->api.status = (vccpakapi_status_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_STATUS);
+		pPak->api.getAudioSample = (vccpakapi_getaudiosample_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_AUDIOSAMPLE);
+		pPak->api.reset = (vccpakapi_reset_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_RESET);
+		pPak->api.setINIPath = (vccpakapi_setinipath_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_SETINIPATH);
+		pPak->api.setCartPtr = (vccpakapi_setcartptr_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_SETCART);
+		pPak->api.dynMenuBuild = (vccpakapi_dynmenubuild_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_DYNMENUBUILD);
+	}
+}
+
+/****************************************************************************/
+/**
+	TODO: rename function
+*/
+void vccPakGetCurrentModule(char * DefaultModule)
+{
+	strcpy(DefaultModule, g_Pak.path);
+}
+
+/****************************************************************************/
 /**
 */
-int vccPakInsertModule(char *ModulePath)
+int vccPakInsertModule(char * ModulePath)
 {
-//	char Modname[MAX_LOADSTRING]="Blank";
-	char CatNumber[MAX_LOADSTRING]="";
-	char Temp[MAX_LOADSTRING]="";
-	unsigned char FileType=0;
+	char			Temp[MAX_LOADSTRING]="";
+	vccpaktype_t	FileType = VCCPAK_TYPE_UNKNOWN;
 
-	FileType = getFileType(ModulePath);
+	FileType = vccPakGetType(ModulePath);
 
 	switch (FileType)
 	{
-	case 0:		//File doesn't exist
-		return(NOMODULE);
+		//File doesn't exist
+	case VCCPAK_TYPE_NOFILE:
+		return VCCPAK_NOMODULE;
 		break;
 
-	case 2:		//File is a ROM image
-
+	case VCCPAK_TYPE_ROM:
 		vccPakUnloadDll();
 		vccPakLoadExtROM(ModulePath);
-		strncpy(g_Pak.name,ModulePath,MAX_PATH);
+		strncpy(g_Pak.path, ModulePath, FILENAME_MAX);
+		strncpy(g_Pak.name,ModulePath, FILENAME_MAX);
 		PathStripPath(g_Pak.name);
-		vccPakDynMenuCallback("",0, 0); //Refresh Menus
-		vccPakDynMenuCallback("",1, 0);
-		EmuState.ResetPending=2;
+
+		vccPakRebuildMenu();
+
+		EmuState.ResetPending = VCC_RESET_PENDING_HARD;
+
+		// assert CART
 		SetCart(1);
-		return(NOMODULE);
+
+		return VCCPAK_NOMODULE;
 	break;
 
-	case 1:		//File is a DLL
+	case VCCPAK_TYPE_PLUGIN:
 		vccPakUnloadDll();
-		g_Pak.hDLib = LoadLibrary(ModulePath);
-		if (g_Pak.hDLib == NULL)
-		{
-			return(NOMODULE);
-		}
 
+		g_Pak.hDLib = LoadLibrary(ModulePath);
+		if ( g_Pak.hDLib == NULL )
+		{
+			memset(&g_Pak, 0, sizeof(g_Pak));
+
+			return VCCPAK_NOMODULE;
+		}
+		strcpy(g_Pak.path, ModulePath);
+
+		// clear CART
 		SetCart(0);
 
-		/*
-			
-		*/
-		g_Pak.api.getName		= (vccpakapi_getname_t)		GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_GETNAME);
-		g_Pak.api.config		= (vccpakapi_config_t)		GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_CONFIG);
-		g_Pak.api.portWrite		= (vccpakapi_portwrite_t)	GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_PORTWRITE);
-		g_Pak.api.portRead		= (vccpakapi_portread_t)	GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_PORTREAD);
-		g_Pak.api.setInterruptCallPtr = (vccpakapi_setintptr_t)GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_ASSERTINTERRUPT);
-		g_Pak.api.memPointers	= (vccpakapi_setmemptrs_t)	GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_MEMPOINTERS);
-		g_Pak.api.heartbeat		= (vccpakapi_heartbeat_t)	GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_HEARTBEAT);
-		g_Pak.api.memWrite		= (vcccpu_write8_t)			GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_MEMWRITE);
-		g_Pak.api.memRead		= (vcccpu_read8_t) 			GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_MEMREAD);
-		g_Pak.api.status		= (vccpakapi_status_t)		GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_STATUS);
-		g_Pak.api.getSample		= (vccpakapi_getaudiosample_t) GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_AUDIOSAMPLE);
-		g_Pak.api.reset			= (vccpakapi_reset_t)		GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_RESET);
-		g_Pak.api.setINIPath	= (vccpakapi_setinipath_t)	GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_SETINIPATH);
-		g_Pak.api.setCartPtr	= (vccpakapi_setcartptr_t)	GetProcAddress((HINSTANCE)g_Pak.hDLib, VCC_PAKAPI_SETCART);
+		vccPakGetAPI(&g_Pak);
 
-		if (g_Pak.api.getName == NULL)
+		// check for required functions, re: plug-in is valid
+		if (   g_Pak.api.init == NULL 
+			|| g_Pak.api.getName == NULL
+			)
 		{
 			FreeLibrary((HINSTANCE)g_Pak.hDLib);
-			g_Pak.hDLib =NULL;
-			return(NOTVCC);
+			memset(&g_Pak, 0, sizeof(g_Pak));
+			
+			return VCCPAK_NOTVCC;
 		}
-
-		g_Pak.BankedCartOffset=0;
 
 		//
 		// Initialize pak
 		//
+
+		g_Pak.BankedCartOffset = 0;
+
+		// init Pak
+		(*g_Pak.api.init)(0, EmuState.WindowHandle, vccPakDynMenuCallback);
+		// Get Pak name
+		(*g_Pak.api.getName)(g_Pak.name, g_Pak.catnumber);
+		
+		strcpy(g_Pak.label, g_Pak.name);
+		strcat(g_Pak.label, "  ");
+		strcat(g_Pak.label, g_Pak.catnumber);
+
+		vccPakSetParamFlags(&g_Pak);
+
 		if (g_Pak.api.memPointers != NULL)
 		{
 			// pass in our memory read/write functions
@@ -431,22 +495,34 @@ int vccPakInsertModule(char *ModulePath)
 			// pass in our assert interrrupt function
 			(*g_Pak.api.setInterruptCallPtr)(CPUAssertInterupt);
 		}
-		// initialize / start dynamic menu
-		(*g_Pak.api.getName)(g_Pak.name, CatNumber, vccPakDynMenuCallback, EmuState.WindowHandle);
+		if (g_Pak.api.setCartPtr != NULL)
+		{
+			// Transfer the address of the SetCart routine to the pak
+			(*g_Pak.api.setCartPtr)(SetCart);
+		}
+		// set INI path.  The Pak should load its settings at this point
+		if (g_Pak.api.setINIPath != NULL)
+		{
+			char TempIni[FILENAME_MAX];
+			GetIniFilePath(TempIni);
+			(*g_Pak.api.setINIPath)(TempIni);
+		}
+		// we should not have to do this here
+		// the soft/hard reset should do it
+		if (g_Pak.api.reset != NULL)
+		{
+			(*g_Pak.api.reset)();
+		}
 
-		sprintf(Temp,"Configure %s", g_Pak.name);
-		
-		vccPakSetParamFlags(&g_Pak);
+		vccPakRebuildMenu();
 
-		strcpy(g_Pak.path,ModulePath);
+		EmuState.ResetPending = VCC_RESET_PENDING_HARD;
 
-		EmuState.ResetPending=2;
-		
-		return(0);
+		return VCCPAK_LOADED;
 		break;
 	}
 
-	return(NOMODULE);
+	return VCCPAK_NOMODULE;
 }
 
 /****************************************************************************/
@@ -455,7 +531,7 @@ int vccPakInsertModule(char *ModulePath)
 	
 	@return total bytes loaded, or 0 on failure
 */
-int vccPakLoadExtROM(char filename[MAX_PATH])
+int vccPakLoadExtROM(char * filename)
 {
 	constexpr size_t PAK_MAX_MEM = 0x40000;
 
@@ -492,9 +568,9 @@ int vccPakLoadExtROM(char filename[MAX_PATH])
 	fclose(rom_handle);
 	
 	vccPakUnloadDll();
-	g_Pak.BankedCartOffset=0;
-	g_Pak.RomPackLoaded=true;
-	
+	g_Pak.BankedCartOffset = 0;
+	g_Pak.RomPackLoaded = true;
+	  
 	return index;
 }
 
@@ -503,13 +579,6 @@ int vccPakLoadExtROM(char filename[MAX_PATH])
 */
 void vccPakUnloadDll(void)
 {
-/*	if ((DialogOpen==true) & (EmuState.EmulationRunning==1))
-	{
-		MessageBox(0,"Close Configuration Dialog before unloading","Ok",0);
-		return;
-	}
-*/
-
 	// clear Pak API calls
 	memset(&g_Pak.api, 0, sizeof(vccpakapi_t));
 
@@ -518,17 +587,8 @@ void vccPakUnloadDll(void)
 		FreeLibrary((HINSTANCE)g_Pak.hDLib);
 	}
 	g_Pak.hDLib =NULL;
-	
-	vccPakDynMenuCallback( "",0, 0); //Refresh Menus
-	vccPakDynMenuCallback( "",1, 0);
-}
 
-/****************************************************************************/
-/**
-*/
-void vccPakGetCurrentModule(char * DefaultModule)
-{
-	strcpy(DefaultModule, g_Pak.path);
+	vccPakRebuildMenu();
 }
 
 /****************************************************************************/
@@ -537,40 +597,106 @@ void vccPakGetCurrentModule(char * DefaultModule)
 void vccPakUnload(void)
 {
 	vccPakUnloadDll();
-	strcpy(g_Pak.path,"");
-	strcpy(g_Pak.name,"Blank");
-	memcpy(&g_Pak.api, 0, sizeof(vccpakapi_t));
-	g_Pak.RomPackLoaded=false;
+
 	SetCart(0);
 	
 	if (g_Pak.ExternalRomBuffer != nullptr)
 	{
 		free(g_Pak.ExternalRomBuffer);
 	}
-	g_Pak.ExternalRomBuffer=nullptr;
+	g_Pak.ExternalRomBuffer = nullptr;
 
-	EmuState.ResetPending=2;
+	memset(&g_Pak, 0, sizeof(vccpak_t));
 
-	vccPakDynMenuCallback( "",0, 0); //Refresh Menus
-	vccPakDynMenuCallback( "",1, 0);
+	EmuState.ResetPending = VCC_RESET_PENDING_HARD;
+
+	vccPakRebuildMenu();
 }
 
 /****************************************************************************/
 /****************************************************************************/
+/*
+	Dynamic menus
+*/
+
+/****************************************************************************/
+
+HMENU g_hCartridgeMenu = NULL;
+
+// position in msain menu to insert the Cartridge top-level menu
+#define MAIN_MENU_PAK_MENU_POSITION	2
 
 /****************************************************************************/
 /**
+	Create the root Cartridge menu and insert it into the main menu bar
+	if it does not exist.
 */
-void vccPakDynMenuActivated(unsigned char MenuItem)
+void vccPakRootMenuCreate()
+{
+	if (g_hCartridgeMenu == NULL)
+	{
+		char			MenuTitle[MAX_MENU_TEXT];
+		MENUITEMINFO	menuItemInfo;
+
+		strcpy(MenuTitle, "Cartridge");
+
+		g_hCartridgeMenu = CreatePopupMenu();
+
+		memset(&menuItemInfo, 0, sizeof(MENUITEMINFO));
+		menuItemInfo.cbSize = sizeof(MENUITEMINFO);
+		menuItemInfo.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;
+		menuItemInfo.fType = MFT_STRING;
+		menuItemInfo.wID = ID_BASEMENU - 1;
+		menuItemInfo.hSubMenu = g_hCartridgeMenu;
+		menuItemInfo.dwTypeData = MenuTitle;
+		menuItemInfo.cch = strlen(MenuTitle);
+
+		InsertMenuItem(GetMenu(EmuState.WindowHandle), MAIN_MENU_PAK_MENU_POSITION, MF_BYPOSITION, &menuItemInfo);
+	}
+}
+
+/****************************************************************************/
+/**
+	Remove and destroy the main Cartridge menu from the main menu bar if it exists.
+*/
+void vccPakRootMenuDestroy()
+{
+	if (g_hCartridgeMenu != NULL)
+	{
+		// delete our menu we added to the main menu
+		DeleteMenu(GetMenu(EmuState.WindowHandle), MAIN_MENU_PAK_MENU_POSITION, MF_BYPOSITION);
+		g_hCartridgeMenu = NULL;
+	}
+}
+
+/****************************************************************************/
+
+void vccPakRebuildMenu()
+{
+	vccPakDynMenuCallback(0, "", VCC_DYNMENU_FLUSH, DMENU_TYPE_NONE);
+
+	vccPakDynMenuCallback(0, "", VCC_DYNMENU_REFRESH, DMENU_TYPE_NONE);
+}
+
+/****************************************************************************/
+/**
+	Take action on a dynamic menu being activated/selected
+*/
+void vccPakDynMenuActivated(int MenuItem)
 {
 	switch (MenuItem)
 	{
-	case 1:
+		// load a new Pak
+	case VCC_DYNMENU_ACTION_LOAD:
 		LoadPack();
 		break;
-	case 2:
+
+		// eject loaded Pak
+	case VCC_DYNMENU_ACTION_UNLOAD:
 		vccPakUnload();
 		break;
+
+		// Pak specific menu action to be taken
 	default:
 		if (g_Pak.api.config != NULL)
 		{
@@ -582,135 +708,149 @@ void vccPakDynMenuActivated(unsigned char MenuItem)
 
 /****************************************************************************/
 /**
-	@param MenuName
-	@param MenuId
-	@param Type
-*/
-void vccPakDynMenuCallback(char * MenuName, int MenuId, int Type)
-{
-	char Temp[256]="";
+	Dynamic menu callback used to add items to the Pak menu, clear the Pak menu,
+	or rebuild/refresh the system menu (mirroring the currently defined Pak menu).
 
-	//MenuId=0 Flush Buffer MenuId=1 Done 
+	@param MenuName Menu text to display for this menu item
+	@param MenuId The ID of the menu to add, defined by the caller
+		This can also be two special values.  If these vaslues are used, 
+		the other two parameters are ignored.  
+		VCC_DYNMENU_FLUSH = Clear the Pak menu
+		VCC_DYNMENU_REFRESH	= Rebuild the system 'Cartridge' menu to match the current Pak menu
+	@param Type Menu type.  
+		DMENU_HEAD = define the main menu for a pak.  The menu will be added to the Cartridge menu as a sub-item
+		DMENU_SLAVE = define a menu action item
+		DMENU_SEPARATOR = menu separator (added to main Cartridge menu)
+		DMENU_STANDALONE = MEnu item to add to main Cartridge menu
+
+	Menus are created in the order they are received.
+	Head menus are added directly as a sub-menu of Cartridge.
+	Slave items are menu action items added to the most recently defined head menu
+	Stand alone items are menu action items added to the Cartridge menu
+
+	Note: Currently you cannot add menu separators into a HEAD menu between SLAVE menu items
+*/
+void vccPakDynMenuCallback(int id, const char * MenuName, int MenuId, dynmenutype_t Type)
+{
 	switch (MenuId)
 	{
-		case 0:
-			g_Pak.MenuIndex=0;
-			vccPakDynMenuCallback("Cartridge",6000,DMENU_HEAD);	//Recursion is fun
-			vccPakDynMenuCallback("Load Cart",5001,DMENU_SLAVE);
-			sprintf(Temp,"Eject Cart: ");
-			strcat(Temp, g_Pak.name);
-			vccPakDynMenuCallback(Temp,5002,DMENU_SLAVE);
+		// reset the menu definitions
+		case VCC_DYNMENU_FLUSH:
+		{
+			char	Temp[MAX_MENU_TEXT];
+
+			// clear all menu definitions
+			memset(g_DynMenus, 0, sizeof(g_DynMenus));
+			g_DynMenuIndex = 0;
+
+			// 'main menu' for this Pak
+			sprintf(Temp, "Cartridge: %s", g_Pak.name);
+			vccPakDynMenuCallback(0, Temp, ID_BASEMENU, DMENU_TYPE_HEAD);
+
+			// action load
+			vccPakDynMenuCallback(0, "Load Cart", ID_SDYNAMENU + VCC_DYNMENU_ACTION_LOAD, DMENU_TYPE_SLAVE);
+
+			// action unload/eject
+			sprintf(Temp, "Eject Cart: %s", g_Pak.name);
+			vccPakDynMenuCallback(0, Temp, ID_SDYNAMENU + VCC_DYNMENU_ACTION_UNLOAD, DMENU_TYPE_SLAVE);
+
+			// rebuild menus specific to pak
+			if (g_Pak.api.dynMenuBuild != NULL)
+			{
+				(*g_Pak.api.dynMenuBuild)();
+			}
+		}
 		break;
 
-		case 1:
+		// rebuild/refresh the system menu to mirror Pak defined menus
+		case VCC_DYNMENU_REFRESH:
 			vccPakDynMenuRefresh();
 		break;
 
+		// add menu item to the Cartridge menu
 		default:
-			strcpy(g_Pak.MenuItem[g_Pak.MenuIndex].MenuName,MenuName);
-			g_Pak.MenuItem[g_Pak.MenuIndex].MenuId=MenuId;
-			g_Pak.MenuItem[g_Pak.MenuIndex].Type=Type;
-			g_Pak.MenuIndex++;
+			strcpy(g_DynMenus[g_DynMenuIndex].name,MenuName);
+			g_DynMenus[g_DynMenuIndex].id	= MenuId;
+			g_DynMenus[g_DynMenuIndex].type	= Type;
+			g_DynMenuIndex++;
 		break;	
 	}
 }
 
 /****************************************************************************/
 /**
+	Rebuild system menu from the Pak menu definitions (mirrors menus defined for the Pak)
+	(Windows version)
+
+	@sa vccPakDynMenuCallback for how the menus are set up
 */
 void vccPakDynMenuRefresh(void)
 {
-	MENUITEMINFO	Mii;
-	char			MenuTitle[32]="Cartridge";
-	unsigned char	TempIndex=0,Index=0;
-	static HWND		hOld;
-	int				SubMenuIndex=0;
+	MENUITEMINFO	menuItemInfo;
+	int				LastHeadMenu = -1;
 
-	if ((g_Pak.hMenu == NULL) | (EmuState.WindowHandle != hOld))
-	{
-		g_Pak.hMenu = GetMenu(EmuState.WindowHandle);
-	}
-	else
-	{
-		DeleteMenu(g_Pak.hMenu, 2, MF_BYPOSITION);
-	}
+	// clear and re-create the Cartridge menu
+	vccPakRootMenuDestroy();
+	vccPakRootMenuCreate();
 
-	hOld=EmuState.WindowHandle;
-	g_Pak.hSubMenu[SubMenuIndex]=CreatePopupMenu();
-	memset(&Mii,0,sizeof(MENUITEMINFO));
-	Mii.cbSize= sizeof(MENUITEMINFO);
-	Mii.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;
-	Mii.fType = MFT_STRING;
-	Mii.wID = 4999;
-	Mii.hSubMenu = g_Pak.hSubMenu[SubMenuIndex];
-	Mii.dwTypeData = MenuTitle;
-	Mii.cch=strlen(MenuTitle);
-	InsertMenuItem(g_Pak.hMenu,2,TRUE,&Mii);
-	SubMenuIndex++;	
-	for (TempIndex=0;TempIndex<g_Pak.MenuIndex;TempIndex++)
+	// interate through all of the menu definitions
+	for (int x=0; x<g_DynMenuIndex; x++)
 	{
-		if (strlen(g_Pak.MenuItem[TempIndex].MenuName) == 0)
+		// force menu item type to be a separator of there is no string
+		if (strlen(g_DynMenus[x].name) == 0)
 		{
-			g_Pak.MenuItem[TempIndex].Type = DMENU_STANDALONE;
+			g_DynMenus[x].type = DMENU_TYPE_SEPARATOR;
 		}
 
-		//Create Menu item in title bar if no exist already
-		switch (g_Pak.MenuItem[TempIndex].Type)
+		switch ( g_DynMenus[x].type )
 		{
-		case DMENU_HEAD:
-			SubMenuIndex++;
-			g_Pak.hSubMenu[SubMenuIndex]=CreatePopupMenu();
-			memset(&Mii,0,sizeof(MENUITEMINFO));
-			Mii.cbSize= sizeof(MENUITEMINFO);
-			Mii.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;
-			Mii.fType = MFT_STRING;
-			Mii.wID = g_Pak.MenuItem[TempIndex].MenuId;
-			Mii.hSubMenu = g_Pak.hSubMenu[SubMenuIndex];
-			Mii.dwTypeData = g_Pak.MenuItem[TempIndex].MenuName;
-			Mii.cch=strlen(g_Pak.MenuItem[TempIndex].MenuName);
-			InsertMenuItem(g_Pak.hSubMenu[0],0,FALSE,&Mii);
+			// create a pop-up menu
+		case DMENU_TYPE_HEAD:
+			g_DynMenus[x].hMenu = CreatePopupMenu();
+			memset(&menuItemInfo,0,sizeof(MENUITEMINFO));
+			menuItemInfo.cbSize		= sizeof(MENUITEMINFO);
+			menuItemInfo.fMask		= MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;
+			menuItemInfo.fType		= MFT_STRING;
+			menuItemInfo.wID		= g_DynMenus[x].id;
+			menuItemInfo.hSubMenu	= g_DynMenus[x].hMenu;
+			menuItemInfo.dwTypeData	= g_DynMenus[x].name;
+			menuItemInfo.cch		= strlen(g_DynMenus[x].name);
+			InsertMenuItem(g_hCartridgeMenu,GetMenuItemCount(g_hCartridgeMenu),TRUE,&menuItemInfo);
+			LastHeadMenu = x;
 			break;
 
-		case DMENU_SLAVE:
-			memset(&Mii,0,sizeof(MENUITEMINFO));
-			Mii.cbSize= sizeof(MENUITEMINFO);
-			Mii.fMask = MIIM_TYPE |  MIIM_ID;
-			Mii.fType = MFT_STRING;
-			Mii.wID = g_Pak.MenuItem[TempIndex].MenuId;
-			Mii.hSubMenu = g_Pak.hSubMenu[SubMenuIndex];
-			Mii.dwTypeData = g_Pak.MenuItem[TempIndex].MenuName;
-			Mii.cch=strlen(g_Pak.MenuItem[TempIndex].MenuName);
-			InsertMenuItem(g_Pak.hSubMenu[SubMenuIndex],0,FALSE,&Mii);
+			// add menu item to most recently defined HEAD menu
+		case DMENU_TYPE_SLAVE:
+			memset(&menuItemInfo,0,sizeof(MENUITEMINFO));
+			menuItemInfo.cbSize		= sizeof(MENUITEMINFO);
+			menuItemInfo.fMask		= MIIM_TYPE |  MIIM_ID;
+			menuItemInfo.fType		= MFT_STRING;
+			menuItemInfo.wID		= g_DynMenus[x].id;
+			menuItemInfo.dwTypeData = g_DynMenus[x].name;
+			menuItemInfo.cch		= strlen(g_DynMenus[x].name);
+			InsertMenuItem(g_DynMenus[LastHeadMenu].hMenu,GetMenuItemCount(g_DynMenus[LastHeadMenu].hMenu),TRUE,&menuItemInfo);
 			break;
 
-		case DMENU_STANDALONE:
-			if (strlen(g_Pak.MenuItem[TempIndex].MenuName) ==0)
-			{
-				memset(&Mii,0,sizeof(MENUITEMINFO));
-				Mii.cbSize= sizeof(MENUITEMINFO);
-				Mii.fMask = MIIM_TYPE |  MIIM_ID;
-				Mii.fType = MF_SEPARATOR; 
-			//	Mii.fType = MF_MENUBARBREAK;
-			//	Mii.fType = MFT_STRING;
-				Mii.wID = g_Pak.MenuItem[TempIndex].MenuId;
-				Mii.hSubMenu = g_Pak.hMenu;
-				Mii.dwTypeData = g_Pak.MenuItem[TempIndex].MenuName;
-				Mii.cch=strlen(g_Pak.MenuItem[TempIndex].MenuName);
-				InsertMenuItem(g_Pak.hSubMenu[0],0,FALSE,&Mii);
-			}
-			else
-			{
-				memset(&Mii,0,sizeof(MENUITEMINFO));
-				Mii.cbSize= sizeof(MENUITEMINFO);
-				Mii.fMask = MIIM_TYPE |  MIIM_ID;
-				Mii.fType = MFT_STRING;
-				Mii.wID = g_Pak.MenuItem[TempIndex].MenuId;
-				Mii.hSubMenu = g_Pak.hMenu;
-				Mii.dwTypeData = g_Pak.MenuItem[TempIndex].MenuName;
-				Mii.cch=strlen(g_Pak.MenuItem[TempIndex].MenuName);
-				InsertMenuItem(g_Pak.hSubMenu[0],0,FALSE,&Mii);
-			}
-		break;
+			// add a menu separator to the Cartridge menu
+		case DMENU_TYPE_SEPARATOR:
+			memset(&menuItemInfo, 0, sizeof(MENUITEMINFO));
+			menuItemInfo.cbSize = sizeof(MENUITEMINFO);
+			menuItemInfo.fType = MF_SEPARATOR;
+			menuItemInfo.wID = g_DynMenus[x].id;
+			InsertMenuItem(g_hCartridgeMenu, GetMenuItemCount(g_hCartridgeMenu), TRUE, &menuItemInfo);
+			break;
+
+			// add a stand-alone menu item to the cartridge menu
+		case DMENU_TYPE_STANDALONE:
+			memset(&menuItemInfo,0,sizeof(MENUITEMINFO));
+			menuItemInfo.cbSize		= sizeof(MENUITEMINFO);
+			menuItemInfo.fMask		= MIIM_TYPE |  MIIM_ID;
+			menuItemInfo.fType		= MFT_STRING;
+			menuItemInfo.wID		= g_DynMenus[x].id;
+			menuItemInfo.dwTypeData = g_DynMenus[x].name;
+			menuItemInfo.cch		= strlen(g_DynMenus[x].name);
+			InsertMenuItem(g_hCartridgeMenu, GetMenuItemCount(g_hCartridgeMenu), TRUE,&menuItemInfo);
+			break;
 		}
 	}
 

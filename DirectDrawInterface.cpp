@@ -106,17 +106,23 @@ bool CreateDDWindow(SystemState *CWState)
 		wcex.hCursor		= LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_NONE));
 	}
 	if (!RegisterClassEx(&wcex))
+	{
 		return FALSE;
+	}
 	switch (CWState->FullScreen)
 	{
 	case 0: //Windowed Mode
 		AdjustWindowRect( &rc, WS_OVERLAPPEDWINDOW, TRUE );  //Add the height of the menu bar 
 		CWState->WindowHandle = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,CW_USEDEFAULT, 0, rc.right-rc.left, rc.bottom-rc.top, NULL, NULL, g_hInstance, NULL);
 		if (!CWState->WindowHandle)	//Can't creat window
-		   return FALSE;
-		hwndStatusBar =CreateStatusWindow (WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | CCS_BOTTOM , "Ready", CWState->WindowHandle, 2) ;
+		{
+			return FALSE;
+		}
+		hwndStatusBar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | CCS_BOTTOM, "Ready", CWState->WindowHandle, 2);
 		if (!hwndStatusBar) //Can't create Status bar
-		   return FALSE;
+		{
+			return FALSE;
+		}
 
 		GetWindowRect(hwndStatusBar,&rStatBar); //Get the size of the Status bar
 		StatusBarHeight= rStatBar.bottom - rStatBar.top; //Calculate it height
@@ -127,38 +133,38 @@ bool CreateDDWindow(SystemState *CWState)
 		ShowWindow(CWState->WindowHandle, g_nCmdShow);
 		UpdateWindow(CWState->WindowHandle);
 		hr = DirectDrawCreate( NULL, &g_pDD, NULL );			// Initialize DirectDraw
-		if (hr) return FALSE;
+		if (hr!=0) return FALSE;
 		hr = g_pDD->SetCooperativeLevel(CWState->WindowHandle, DDSCL_NORMAL);	// Set DDSCL_NORMAL to use windowed mode
-		if (hr) return FALSE;
+		if (hr!=0) return FALSE;
 		ddsd.dwFlags = DDSD_CAPS ; 
 		ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
 		hr = g_pDD->CreateSurface(&ddsd, &g_pDDS, NULL);
-		if (hr) return FALSE;
+		if (hr!=0) return FALSE;
 		ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS ;
 		ddsd.dwWidth  = CWState->WindowSize.x;								// Make our off-screen surface 
 		ddsd.dwHeight = CWState->WindowSize.y;
 		ddsd.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY;				// Try to create back buffer in video RAM
 		hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, NULL);	
-		if (hr)													// If not enough Video Ram 			
+		if (hr!=0)													// If not enough Video Ram 			
 		{
 			ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;			// Try to create back buffer in System RAM
 			hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, NULL);
-			if (hr)	return FALSE;								//Giving Up
+			if (hr!=0)	return FALSE;								//Giving Up
 			MessageBox(0,"Creating Back Buffer in System Ram!\nThis will be slower","Performance Warning",0);
 		}
 
 		hr= g_pDD->GetDisplayMode(&ddsd);
-		if (hr) return FALSE;
+		if (hr != 0) return FALSE;
 		hr = g_pDD->CreateClipper(0, &g_pClipper, NULL);		// Create the clipper using the DirectDraw object
-		if (hr) return FALSE;
+		if (hr != 0) return FALSE;
 		hr = g_pClipper->SetHWnd(0, CWState->WindowHandle);						// Assign your window's HWND to the clipper
-		if (hr) return FALSE;
+		if (hr != 0) return FALSE;
 		hr = g_pDDS->SetClipper(g_pClipper);					// Attach the clipper to the primary surface
-		if (hr) return FALSE;
+		if (hr != 0) return FALSE;
 		hr= g_pDDSBack->Lock( NULL, &ddsd, DDLOCK_WAIT, NULL );
-		if (hr) return FALSE;
+		if (hr != 0) return FALSE;
 		hr = g_pDDSBack->Unlock( NULL );						// Unlock surface
-		if (hr) return FALSE;
+		if (hr != 0) return FALSE;
 		break;
 
 
@@ -172,20 +178,20 @@ bool CreateDDWindow(SystemState *CWState)
 		ShowWindow(CWState->WindowHandle, g_nCmdShow);
 		UpdateWindow(CWState->WindowHandle);
 		hr = DirectDrawCreate( NULL, &g_pDD, NULL );		// Initialize DirectDraw
-		if (hr) return FALSE;
+		if (hr != 0) return FALSE;
 		hr = g_pDD->SetCooperativeLevel(CWState->WindowHandle, DDSCL_EXCLUSIVE|DDSCL_FULLSCREEN|DDSCL_NOWINDOWCHANGES);
-		if (hr) return FALSE;
+		if (hr != 0) return FALSE;
 		hr = g_pDD->SetDisplayMode(CWState->WindowSize.x, CWState->WindowSize.y, 32);	// Set 640x480x32 Bit full-screen mode
-		if (hr) return FALSE;
+		if (hr != 0) return FALSE;
 		ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
 		ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
 		ddsd.dwBackBufferCount = 1;
 		hr = g_pDD->CreateSurface(&ddsd, &g_pDDS, NULL);
-		if (hr) return FALSE;
+		if (hr != 0) return FALSE;
 		ddsd.ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
 		g_pDDS->GetAttachedSurface(&ddsd.ddsCaps, &g_pDDSBack);
 		hr= g_pDD->GetDisplayMode(&ddsd);
-		if (hr) return FALSE;
+		if (hr != 0) return FALSE;
 //***********************************TEST*****************************************
 		for ( unsigned short i=0;i<=63;i++)
 		{

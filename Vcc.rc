@@ -24,26 +24,26 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Menu
 //
 
-IDR_MENU MENU
+IDR_MENU MENUEX
 BEGIN
-    POPUP "File"
+    POPUP "File",                           MFT_STRING,MFS_ENABLED
     BEGIN
-        MENUITEM "Run",                         ID_FILE_RUN
-        MENUITEM "Save Config",                 ID_FILE_SAVE, GRAYED
-        MENUITEM "Load Config",                 ID_FILE_LOAD, GRAYED
-        MENUITEM SEPARATOR
-        MENUITEM "[F9] Hard Reset",             ID_FILE_RESET
-        MENUITEM "[F5] Soft Reset",             ID_FILE_RESET_SFT
-        MENUITEM SEPARATOR
-        MENUITEM "Exit",                        ID_FILE_EXIT
+        MENUITEM "Run",                         ID_FILE_RUN,MFT_STRING,MFS_ENABLED
+        MENUITEM "Save Config",                 ID_FILE_SAVE,MFT_STRING,MFS_GRAYED
+        MENUITEM "Load Config",                 ID_FILE_LOAD,MFT_STRING,MFS_GRAYED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "[F9] Hard Reset",             ID_FILE_RESET,MFT_STRING,MFS_ENABLED
+        MENUITEM "[F5] Soft Reset",             ID_FILE_RESET_SFT,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Exit",                        ID_FILE_EXIT,MFT_STRING,MFS_ENABLED
     END
-    POPUP "Configuration"
+    POPUP "Configuration",                  MFT_STRING,MFS_ENABLED
     BEGIN
-        MENUITEM "Config",                      ID_CONFIGURE_OPTIONS
+        MENUITEM "Config",                      ID_CONFIGURE_OPTIONS,MFT_STRING,MFS_ENABLED
     END
-    POPUP "Help", HELP
+    POPUP "Help",                           MFT_STRING,MFS_ENABLED
     BEGIN
-        MENUITEM "About Vcc",                   IDM_HELP_ABOUT
+        MENUITEM "About Vcc",                   IDM_HELP_ABOUT,MFT_STRING,MFS_ENABLED
     END
 END
 
@@ -82,16 +82,27 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_COCO3               ICON                    "resources\\icon1.ico"
+
 IDI_BINFILE             ICON                    "resources\\binfile.ico"
+
 IDI_CART                ICON                    "resources\\progpack.ico"
+
 IDI_MOTO                ICON                    "resources\\moto.ico"
+
 IDI_HITACHI2            ICON                    "resources\\hitachi.ico"
+
 IDI_RGB                 ICON                    "resources\\rgb.ico"
+
 IDI_COMPOSITE           ICON                    "resources\\composite.ico"
+
 IDI_AUDIO               ICON                    "resources\\ico00004.ico"
+
 IDI_KEYBOARD            ICON                    "resources\\Keyboard.ico"
+
 IDI_JOYSTICK            ICON                    "resources\\joystick.ico"
+
 IDI_MOUSE               ICON                    "resources\\mouse.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -419,9 +430,13 @@ END
 //
 
 IDB_NOMUTE              BITMAP                  "resources\\speaker1.bmp"
+
 IDB_MUTE                BITMAP                  "resources\\speaker2.bmp"
+
 IDB_VCC                 BITMAP                  "resources\\vcc.bmp"
+
 IDB_3GUYS               BITMAP                  "resources\\3guys.bmp"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -429,6 +444,7 @@ IDB_3GUYS               BITMAP                  "resources\\3guys.bmp"
 //
 
 IDC_NONE                CURSOR                  "resources\\cursor1.cur"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //

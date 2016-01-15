@@ -262,7 +262,9 @@ int mount_disk_image(char filename[MAX_PATH],unsigned char drive)
 {
 	unsigned int Temp=0;
 	Temp=MountDisk(filename,drive);
-	BuildDynaMenu();
+
+	vccPakRebuildMenu();
+
 	return(!Temp);
 }
 
@@ -625,47 +627,50 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 			WriteIndex=0;		// Index to raw Buffer
 
 			TempBuffer=(unsigned char *)malloc(Drive[CurrentDisk].TrackSize);
-			memset(TempBuffer,0,Drive[CurrentDisk].TrackSize);
-			while (BufferIndex < Drive[CurrentDisk].TrackSize)
+			if (TempBuffer != NULL)
 			{
-				TempChar=WriteBuffer[WriteIndex++];
-				if (TempChar == 0xF7)			//This is working now
+				memset(TempBuffer, 0, Drive[CurrentDisk].TrackSize);
+				while (BufferIndex < Drive[CurrentDisk].TrackSize)
 				{
-					Crc = ccitt_crc16(Seed, &TempBuffer[DataBlockPointer],BufferIndex - DataBlockPointer );
-					TempBuffer[BufferIndex++]= (Crc >>8);
-					TempBuffer[BufferIndex++]= (Crc & 0xFF);
-				}
-				else
-				{
-					TempBuffer[BufferIndex]=TempChar;
-					if (TempChar == 0xFE) //ID Address mark Build Track Header Pointers
+					TempChar = WriteBuffer[WriteIndex++];
+					if (TempChar == 0xF7)			//This is working now
 					{
-						TempBuffer[IdamIndex++]=  (BufferIndex & 0xFF);
-						TempBuffer[IdamIndex++]= 0x80 |(BufferIndex>>8);
+						Crc = ccitt_crc16(Seed, &TempBuffer[DataBlockPointer], BufferIndex - DataBlockPointer);
+						TempBuffer[BufferIndex++] = (Crc >> 8);
+						TempBuffer[BufferIndex++] = (Crc & 0xFF);
 					}
-					if (TempChar == 0xFB)	//data Address Marker
+					else
 					{
-						DataBlockPointer = BufferIndex+1;
-						Seed = 0xE295;
-					}
-					if (TempChar == 0xFE)	//ID address marker
-					{
-						DataBlockPointer = BufferIndex;    
-						Seed = 0xCDB4;
-					}
-					
-					if (TempChar == 0xF5)
-						TempBuffer[BufferIndex]=0xA1;
-					if (TempChar == 0xF6)
-						TempBuffer[BufferIndex]=0xC2;
-					BufferIndex++;
-				}	
-			}
+						TempBuffer[BufferIndex] = TempChar;
+						if (TempChar == 0xFE) //ID Address mark Build Track Header Pointers
+						{
+							TempBuffer[IdamIndex++] = (BufferIndex & 0xFF);
+							TempBuffer[IdamIndex++] = 0x80 | (BufferIndex >> 8);
+						}
+						if (TempChar == 0xFB)	//data Address Marker
+						{
+							DataBlockPointer = BufferIndex + 1;
+							Seed = 0xE295;
+						}
+						if (TempChar == 0xFE)	//ID address marker
+						{
+							DataBlockPointer = BufferIndex;
+							Seed = 0xCDB4;
+						}
 
-			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize)  ) ;
-			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,0,FILE_BEGIN);
-			WriteFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesWritten,NULL);				
-			free(TempBuffer);
+						if (TempChar == 0xF5)
+							TempBuffer[BufferIndex] = 0xA1;
+						if (TempChar == 0xF6)
+							TempBuffer[BufferIndex] = 0xC2;
+						BufferIndex++;
+					}
+				}
+
+				FileOffset = Drive[CurrentDisk].HeaderSize + ((Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize) + (Side * Drive[CurrentDisk].TrackSize));
+				Result = SetFilePointer(Drive[CurrentDisk].FileHandle, FileOffset, 0, FILE_BEGIN);
+				WriteFile(Drive[CurrentDisk].FileHandle, TempBuffer, Drive[CurrentDisk].TrackSize, &BytesWritten, NULL);
+				free(TempBuffer);
+			}
 		break;
 
 
@@ -993,7 +998,7 @@ void DispatchCommand(unsigned char Tmp)
 			StatusReg=READY;
 			ExecTimeWaiter=1;
 			if ((Tmp & 15) != 0)
-				CPUAssertInterupt(NMI,0);
+				fd502CPUAssertInterupt(NMI,0);
 //			WriteLog("FORCEINTERUPT",0);
 			break;
 
@@ -1396,7 +1401,7 @@ long GetSectorInfo (SectorInfo *Sector,unsigned char *TempBuffer)
 void CommandDone(void)
 {
 	if (InteruptEnable)
-		CPUAssertInterupt(NMI,0);
+		fd502CPUAssertInterupt(NMI,0);
 		TransferBufferSize=0;
 		CurrentCommand=IDLE;
 }

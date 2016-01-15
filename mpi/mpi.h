@@ -18,12 +18,4 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//Misc
-#define QUERY 255
-
-//Common CPU defs
-#define IRQ		1
-#define FIRQ	2
-#define NMI		3
-
 #endif

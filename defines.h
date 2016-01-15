@@ -21,6 +21,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <cstdint>
 
+#define DIRECTINPUT_VERSION 0x0800
 #include <windows.h>
 #include <windowsx.h>
 
@@ -83,8 +84,8 @@ unsigned char	ScanLines;
 //bool			InRender;
 //unsigned char	PauseEmuLoop;
 //unsigned char	Waiting;
-unsigned char	EmulationRunning;
-unsigned char	ResetPending;
+int				EmulationRunning;
+int				ResetPending;
 POINT			WindowSize;
 unsigned char	FullScreen;
 char			StatusLine[256];

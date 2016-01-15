@@ -33,7 +33,7 @@ This file is part of VCC (Virtual Color Computer).
 /****************************************************************************/
 
 /*
-	Pak status flags
+Pak status flags
 */
 #define VCCPAK_HASCONFIG		(1 << 0)
 #define VCCPAK_HASIOWRITE		(1 << 1)
@@ -50,69 +50,59 @@ This file is part of VCC (Virtual Color Computer).
 #define VCCPAK_ASSERTCART		(1 << 12)
 
 /****************************************************************************/
-//
-// Pak load/insertion error codes
-//
+/*
+	Pak load/insertion error codes
+*/
 
-#define NOMODULE	1
-#define NOTVCC		2
+#define VCCPAK_LOADED		0
+#define VCCPAK_ERROR		-1
+#define VCCPAK_NOMODULE		1
+#define VCCPAK_NOTVCC		2
 
 /****************************************************************************/
 /*
-	definitions for dynamic menus
+	Pak type codes
 */
 
-#define MAX_MENUS		64		///< Maximum menus per Pak
-#define MAX_MENU_SIZE	512		///< Maximum text size for a menu item
-
-//
-// Defines the start and end IDs for the dynamic menus
-//
-#define ID_SDYNAMENU 5000	
-#define ID_EDYNAMENU 5100
-
-typedef struct {
-	char	MenuName[MAX_MENU_SIZE];
-	int		MenuId;
-	int		Type;
-} Dmenu;
-
-// Type 0= HEAD TAG 1= Slave Tag 2=StandAlone
-#define	DMENU_HEAD			0
-#define DMENU_SLAVE			1
-#define DMENU_STANDALONE	2
+typedef enum vccpaktype_t
+{
+	VCCPAK_TYPE_UNKNOWN = 0,
+	VCCPAK_TYPE_NOFILE,
+	VCCPAK_TYPE_PLUGIN,
+	VCCPAK_TYPE_ROM
+} vccpaktype_t;
 
 /****************************************************************************/
 /**
 	VCC Plug-in Pak object
 
-	ROM or Plug-in DLL
+	Encapsulates an external Program Pak ROM or Plug-in DLL
 */
 typedef struct vccpak_t vccpak_t;
+/**
+	VCC Plug-in Pak object
+*/
 struct vccpak_t
 {
-	// note: if you change the order of any of these make sure
+	// note: for now, if you change the order of any of these make sure
 	// to update where the global Pak is initialized in pakinterface.c
 
-	void *			hDLib;						///< System dynamic library handle
-	char			path[FILENAME_MAX];			///< Path of loaded Pak
-	char			name[FILENAME_MAX];			///< Name of Pak for display
-	char			catnumber[MAX_LOADSTRING];	///< Catalog number
+	void *				hDLib;						///< System dynamic library handle
+	char				path[FILENAME_MAX];			///< Path of loaded Pak
+	char				name[FILENAME_MAX];			///< Name of Pak for display
+	char				catnumber[MAX_LOADSTRING];	///< Catalog number
+	char				label[FILENAME_MAX];		///< ???
 
 	// info for plug-in DLLs
-	int				params;				///< Pak Status Flags indicating what this Pak supports via the Pak API
-	vccpakapi_t		api;				///< functions defined by the plug-in DLL (empty if ROM is loaded)
+	int					params;						///< Pak Status Flags indicating what this Pak supports via the Pak API
+	vccpakapi_t			api;						///< functions defined by the plug-in DLL (empty if ROM is loaded)
 
 	// Storage for Pak ROMs
-	unsigned char *	ExternalRomBuffer;
-	bool			RomPackLoaded;
-	unsigned int	BankedCartOffset;
+	unsigned char *		ExternalRomBuffer;			///< 
+	bool				RomPackLoaded;				///< 
+	unsigned int		BankedCartOffset;			///< 
 
-	// dynamic menu info for this Pak
-	Dmenu			MenuItem[MAX_MENUS];
-	int				MenuIndex;
-	HMENU			hMenu;
-	HMENU			hSubMenu[MAX_MENUS];
+	vccpakapiversion_t	version;					///< VCC Pak API supported by this Pak
 };
 
 /****************************************************************************/
@@ -121,7 +111,7 @@ struct vccpak_t
 extern "C"
 {
 #endif
-
+		
 	//
 	// VCC Pak API calls to interface with the Pak
 	//
@@ -130,7 +120,7 @@ extern "C"
 	void			vccPakPortWrite(unsigned char, unsigned char);
 	unsigned char	vccPakMem8Read(unsigned short);
 	void			vccPakMem8Write(unsigned char, unsigned char);
-	void			vccPakGetStatus(char *);
+	void			vccPakGetStatus(char *, size_t);
 	void			vccPakReset(void);
 	unsigned short	vccPackGetAudioSample(void);
 	void			vccPakSetInterruptCallPtr(void);
@@ -138,6 +128,7 @@ extern "C"
 	//
 	// General Pak support functions
 	//
+	vccpaktype_t	vccPakGetType(const char * Filename);
 	char *			vccPakGetLastPath();
 	void			vccPakSetLastPath(char *);
 
@@ -148,9 +139,10 @@ extern "C"
 	void			vccPakUnloadDll(void);
 	void			vccPakUnload(void);
 
-	void			vccPakDynMenuActivated(unsigned char);
+	void			vccPakRebuildMenu();
+	void			vccPakDynMenuActivated(int);
 	void			vccPakDynMenuRefresh(void);
-	void			vccPakDynMenuCallback(char *, int, int);
+	void			vccPakDynMenuCallback(int, const char *, int, dynmenutype_t);
 
 #ifdef __cplusplus
 }

@@ -33,10 +33,15 @@ This file is part of VCC (Virtual Color Computer).
 
 		VCC is currently producing 204 as the return value
 
-	TODO: VCC Pak API call to get module/pak status shoud be changed to 
-			use safe versions of sprintf, strcat and so should each Pak 
-			(including us).  The buffer size should be passed into the 
-			call to us as well.
+*/
+/****************************************************************************/
+/*
+	Revision history:
+
+	2016-01-12 - @Wersley - Updated to use the new Pak API.  The code is not
+							yet optimal, but it seems to work.  A portion of
+							code can still be removed once the vcc-core is in
+							a library related to Pak object management.
 */
 /****************************************************************************/
 
@@ -54,102 +59,98 @@ This file is part of VCC (Virtual Color Computer).
 
 /****************************************************************************/
 /*
-	Forward declarations
-*/
-
-void SetCartSlot0(unsigned char);
-void SetCartSlot1(unsigned char);
-void SetCartSlot2(unsigned char);
-void SetCartSlot3(unsigned char);
-void BuildDynaMenu(void);
-void DynamicMenuCallback0(char *, int, int);
-void DynamicMenuCallback1(char *, int, int);
-void DynamicMenuCallback2(char *, int, int);
-void DynamicMenuCallback3(char *, int, int);
-
-/****************************************************************************/
-/*
 	Local definitions
 */
 
-#define MAXPAX			(1<<2)	///< Maximum number of Paks, needs to be a power of 2, not more than (1<<4)
+/** 
+	Maximum number of Paks
+	This needs to be a power of 2, not more than (1<<4)
+	The UI would need to updated to handle more than
+	4 Paks dynamically
+*/
+#define MAXPAX			(1<<2)
 
 /****************************************************************************/
 
 // global/common functions provided by VCC that will be 
 // called by the Pak to interface with the emulator
-static vccpakapi_assertinterrupt_t	AssertInt			= NULL;
-static vcccpu_read8_t				MemRead8			= NULL;
-static vcccpu_write8_t				MemWrite8			= NULL;
-static vccapi_setcart_t				PakSetCart			= NULL;
-static vccapi_dynamicmenucallback_t	DynamicMenuCallback = NULL;
+// These will no longer be needed when vcc-core is in a DLL
+static vccpakapi_assertinterrupt_t	vccAssertInt		= NULL;
+static vcccpu_read8_t				vccMemRead			= NULL;
+static vcccpu_write8_t				vccMemWrite			= NULL;
+static vccapi_setcart_t				vccSetCart			= NULL;
+static vccapi_dynamicmenucallback_t	vccDynMenuCallback	= NULL;
+
+//
+// MPI variables
+//
+static HINSTANCE		g_hinstDLL	= NULL;
+static HWND				g_hWnd		= NULL;
+static int				g_id		= 0;
+
+static unsigned char	ChipSelectSlot	= 3;
+static unsigned char	SpareSelectSlot = 3;
+static unsigned char	SwitchSlot		= 3;
+static unsigned char	SlotRegister	= 255;
+
+static char				IniFile[FILENAME_MAX] = "";
+static char				LastPath[FILENAME_MAX] = "";
 
 //
 // Array of Paks - one per MPI slot
 //
-//vccpak_t g_Paks[MAXPAX];
+vccpak_t		g_Paks[MAXPAX];
 
 //
-// Arrays of function pointers, etc, for each Slot
+// Dynamic menus
 //
-// TODO: change to an array of slots, each slot contains vccpakapi_t, etc once it is defined
-//       in VCC and the Pak API is expanded.  when the VCC core is put into a library
-//       some of these API calls to get function pointers from VCC can be removed
-//
-//static INITIALIZE				InitializeCalls[MAXPAX]				= { NULL,NULL,NULL,NULL };
-static vccpakapi_getname_t				GetModuleNameCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
-static vccpakapi_config_t				ConfigModuleCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
-static vccpakapi_heartbeat_t			HeartBeatCalls[MAXPAX]				= {NULL,NULL,NULL,NULL};
-static vccpakapi_portwrite_t			PakPortWriteCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
-static vccpakapi_portread_t				PakPortReadCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
-static vcccpu_write8_t					PakMemWrite8Calls[MAXPAX]			= {NULL,NULL,NULL,NULL};
-static vcccpu_read8_t					PakMemRead8Calls[MAXPAX]			= {NULL,NULL,NULL,NULL};
-static vccpakapi_status_t				ModuleStatusCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
-static vccpakapi_getaudiosample_t		ModuleAudioSampleCalls[MAXPAX]		= {NULL,NULL,NULL,NULL};
-static vccpakapi_reset_t				ModuleResetCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
-static vccapi_setcart_t					SetCarts[MAXPAX]					= { SetCartSlot0,SetCartSlot1,SetCartSlot2,SetCartSlot3 };
-static vccapi_dynamicmenucallback_t		DynamicMenuCallbackCalls[MAXPAX]	= { DynamicMenuCallback0,DynamicMenuCallback1,DynamicMenuCallback2,DynamicMenuCallback3 };
-static vccpakapi_setcartptr_t			SetCartCalls[MAXPAX]				= { NULL,NULL,NULL,NULL };
-static vccpakapi_setinipath_t			SetIniPathCalls[MAXPAX]				= { NULL,NULL,NULL,NULL };
-// Set callbacks for the DLL to call
-static vccpakapi_setintptr_t			SetInteruptCallPointerCalls[MAXPAX]	= {NULL,NULL,NULL,NULL};
-static vccpakapi_setmemptrs_t			DmaMemPointerCalls[MAXPAX]			= {NULL,NULL,NULL,NULL};
-static HINSTANCE						hinstLib[MAXPAX]					= { NULL,NULL,NULL,NULL };
-static char								ModuleNames[MAXPAX][MAX_LOADSTRING] = { "Empty","Empty","Empty","Empty" };
-static char								CatNumber[MAXPAX][MAX_LOADSTRING]	= { "","","","" };
-static char								SlotLabel[MAXPAX][MAX_LOADSTRING * 2] = { "Empty","Empty","Empty","Empty" };
-static char								ModulePaths[MAXPAX][MAX_PATH]		= { "","","","" };
-static unsigned char *					ExtRomPointers[MAXPAX]				= { NULL,NULL,NULL,NULL };
-static unsigned int						BankedCartOffset[MAXPAX]			= { 0,0,0,0 };
 
-static char MenuName0[MAX_MENUS][MAX_MENU_SIZE];
-static char MenuName1[MAX_MENUS][MAX_MENU_SIZE];
-static char MenuName2[MAX_MENUS][MAX_MENU_SIZE];
-static char MenuName3[MAX_MENUS][MAX_MENU_SIZE];
-static int MenuId0[MAX_MENUS];
-static int MenuId1[MAX_MENUS];
-static int MenuId2[MAX_MENUS];
-static int MenuId3[MAX_MENUS];
-static int Type0[MAX_MENUS];
-static int Type1[MAX_MENUS];
-static int Type2[MAX_MENUS];
-static int Type3[MAX_MENUS];
-static int MenuIndex[MAXPAX]={0,0,0,0};
+// captured menu definitions from all of the Paks we have inserted right now
+int				g_DynMenusIndeces[MAXPAX];
+vccdynmenu_t	g_DynMenus[MAXPAX][MAX_MENUS];
 
-// CART enabled per slot
-static unsigned char CartForSlot[MAXPAX]={0,0,0,0};
-// MPI variables
-static unsigned char ChipSelectSlot = 3;
-static unsigned char SpareSelectSlot = 3;
-static unsigned char SwitchSlot = 3;
-static unsigned char SlotRegister = 255;
-static HINSTANCE g_hinstDLL = NULL;
-static HWND g_hWnd = NULL;
-static char IniFile[MAX_PATH] = "";
-static char LastPath[MAX_PATH] = "";
+void mpiDynamicMenuCallback(int id, const char * MenuName, int MenuId, dynmenutype_t Type);
 
 /****************************************************************************/
 /**
+	Rebuild the Pak menu
+*/
+void vccPakRebuildMenu()
+{
+	vccDynMenuCallback(g_id, "", VCC_DYNMENU_FLUSH, DMENU_TYPE_NONE);
+
+	vccDynMenuCallback(g_id, "", VCC_DYNMENU_REFRESH, DMENU_TYPE_NONE);
+}
+
+/****************************************************************************/
+/**
+*/
+boolean vccPakWantsCart(vccpak_t * pPak)
+{
+	// TODO: add a flag to disable CART per pak?
+
+	return (   g_Paks[SpareSelectSlot].api.setCartPtr != NULL
+			|| g_Paks[SpareSelectSlot].ExternalRomBuffer != NULL
+		);
+}
+
+/****************************************************************************/
+/**
+*/
+void vccPakAssertCART(vccpak_t * pPak)
+{
+	vccSetCart(0);
+	if (vccPakWantsCart(pPak))
+	{
+		vccSetCart(1);
+	}
+}
+
+/****************************************************************************/
+/**
+	Get file type user tried to open
+
+	TOOD: use one from VCC
 */
 int FileID(char *Filename)
 {
@@ -157,154 +158,179 @@ int FileID(char *Filename)
 	char Temp[3] = "";
 	DummyHandle = fopen(Filename, "rb");
 	if (DummyHandle == NULL)
-		return(0);	//File Doesn't exist
+	{
+		return VCCPAK_TYPE_NOFILE;	//File Doesn't exist
+	}
 
 	Temp[0] = fgetc(DummyHandle);
 	Temp[1] = fgetc(DummyHandle);
 	Temp[2] = 0;
 	fclose(DummyHandle);
+
+	// TODO: this may not be accurate anymore?
 	if (strcmp(Temp, "MZ") == 0)
-		return(1);	//DLL File
-	return(2);		//Rom Image 
+	{
+		return VCCPAK_TYPE_PLUGIN;
+	}
+
+	return VCCPAK_TYPE_ROM;
 }
 
+/****************************************************************************/
 /**
+	Unload a Pak from the given slot
 */
-void UnloadModule(unsigned char Slot)
+void UnloadModule(int Slot)
 {
-	GetModuleNameCalls[Slot] = NULL;
-	ConfigModuleCalls[Slot] = NULL;
-	PakPortWriteCalls[Slot] = NULL;
-	PakPortReadCalls[Slot] = NULL;
-	SetInteruptCallPointerCalls[Slot] = NULL;
-	DmaMemPointerCalls[Slot] = NULL;
-	HeartBeatCalls[Slot] = NULL;
-	PakMemWrite8Calls[Slot] = NULL;
-	PakMemRead8Calls[Slot] = NULL;
-	ModuleStatusCalls[Slot] = NULL;
-	ModuleAudioSampleCalls[Slot] = NULL;
-	ModuleResetCalls[Slot] = NULL;
-	SetIniPathCalls[Slot] = NULL;
-	//	SetCartCalls[Slot]=NULL;
-	strcpy(ModulePaths[Slot], "");
-	strcpy(ModuleNames[Slot], "Empty");
-	strcpy(CatNumber[Slot], "");
-	strcpy(SlotLabel[Slot], "Empty");
-	if (hinstLib[Slot] != NULL)
-		FreeLibrary(hinstLib[Slot]);
-	if (ExtRomPointers[Slot] != NULL)
-		free(ExtRomPointers[Slot]);
-	hinstLib[Slot] = NULL;
-	ExtRomPointers[Slot] = NULL;
-	CartForSlot[Slot] = 0;
-	MenuIndex[Slot] = 0;
-	return;
+	if (g_Paks[Slot].hDLib != NULL)
+	{
+		FreeLibrary((HMODULE)g_Paks[Slot].hDLib);
+	}
+	if (g_Paks[Slot].ExternalRomBuffer != NULL)
+	{
+		free(g_Paks[Slot].ExternalRomBuffer);
+	}
+	memset(&g_Paks[Slot], 0, sizeof(vccpak_t));
 }
 
+/****************************************************************************/
 /**
+	Load a Pak into the given slot
 */
-unsigned char MountModule(unsigned char Slot,char *ModName)
+int MountModule(int Slot, char * ModName)
 {
-	unsigned char ModuleType=0;
-	char ModuleName[MAX_PATH]="";
-	unsigned int index=0;
+	unsigned char	ModuleType	= 0;
+	char			ModuleName[FILENAME_MAX]="";
+	unsigned int	index		= 0;
+	FILE *			rom_handle;
+
 	strcpy(ModuleName,ModName);
-	FILE *rom_handle;
+
+	// Wah???
 	if (Slot > MAXPAX - 1)
 	{
-		return(0);
+		return VCCPAK_ERROR;
 	}
-	ModuleType=FileID(ModuleName);
+
+	ModuleType = FileID(ModuleName);
 	switch (ModuleType)
 	{
-	case 0: //File doesn't exist
-		return(0);
+	case VCCPAK_TYPE_NOFILE:
+		return VCCPAK_ERROR;
 	break;
 
-	case 2: //ROM image
+	case VCCPAK_TYPE_ROM:
 		UnloadModule(Slot);
-		ExtRomPointers[Slot]=(unsigned char *)malloc(0x40000);
-		if (ExtRomPointers[Slot]==NULL)
+		g_Paks[Slot].ExternalRomBuffer =(unsigned char *)malloc(0x40000);
+		if (g_Paks[Slot].ExternalRomBuffer ==NULL)
 		{
 			MessageBox(0,"Rom pointer is NULL","Error",0);
-			return(0); //Can Allocate RAM
+			return VCCPAK_ERROR; //Can Allocate RAM
 		}
 		rom_handle=fopen(ModuleName,"rb");
 		if (rom_handle==NULL)
 		{
 			MessageBox(0,"File handle is NULL","Error",0);
-			return(0);
+			return VCCPAK_ERROR;
 		}
-		while ((feof(rom_handle)==0) & (index<0x40000))
-			ExtRomPointers[Slot][index++]=fgetc(rom_handle);
+		while ((feof(rom_handle) == 0) & (index < 0x40000))
+		{
+			g_Paks[Slot].ExternalRomBuffer[index++] = fgetc(rom_handle);
+		}
 		fclose(rom_handle);
-		strcpy(ModulePaths[Slot],ModuleName);
+		strcpy(g_Paks[Slot].path,ModuleName);
 		PathStripPath(ModuleName);
 //		PathRemovePath(ModuleName);
 		PathRemoveExtension(ModuleName);
-		strcpy(ModuleNames[Slot],ModuleName);
-		strcpy(SlotLabel[Slot],ModuleName); //JF
-		CartForSlot[Slot]=1;
-//		if (CartForSlot[SpareSelectSlot]==1)
-//			PakSetCart(1);
-		return(1);
+		strcpy(g_Paks[Slot].name,ModuleName);
+		strcpy(g_Paks[Slot].label,ModuleName); //JF
+
+		return VCCPAK_LOADED;
 	break;
 
-	case 1:	//DLL File
+	case VCCPAK_TYPE_PLUGIN:
 		UnloadModule(Slot);
-		strcpy(ModulePaths[Slot],ModuleName);
-		hinstLib[Slot] = LoadLibrary(ModuleName);
-		if (hinstLib[Slot] ==NULL)
-			return(0);	//Error Can't open File
+		strcpy(g_Paks[Slot].path,ModuleName);
+		g_Paks[Slot].hDLib = LoadLibrary(ModuleName);
+		if (g_Paks[Slot].hDLib == NULL)
+		{
+			return VCCPAK_NOMODULE;	//Error Can't open File
+		}
 
-		GetModuleNameCalls[Slot]=(vccpakapi_getname_t)GetProcAddress(hinstLib[Slot], VCC_PAKAPI_GETNAME);
-		ConfigModuleCalls[Slot]=(vccpakapi_config_t)GetProcAddress(hinstLib[Slot], VCC_PAKAPI_CONFIG);
-		PakPortWriteCalls[Slot]=(vccpakapi_portwrite_t) GetProcAddress(hinstLib[Slot], VCC_PAKAPI_PORTWRITE);
-		PakPortReadCalls[Slot]=(vccpakapi_portread_t) GetProcAddress(hinstLib[Slot], VCC_PAKAPI_PORTREAD);
-		SetInteruptCallPointerCalls[Slot]=(vccpakapi_setintptr_t)GetProcAddress(hinstLib[Slot], VCC_PAKAPI_ASSERTINTERRUPT);
+		g_Paks[Slot].api.init		= (vccpakapi_init_t)GetProcAddress((HINSTANCE)g_Paks[Slot].hDLib, VCC_PAKAPI_INIT);
+		g_Paks[Slot].api.getName	= (vccpakapi_getname_t)GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_GETNAME);
+		g_Paks[Slot].api.config		= (vccpakapi_config_t)GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_CONFIG);
+		g_Paks[Slot].api.portWrite	= (vccpakapi_portwrite_t) GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_PORTWRITE);
+		g_Paks[Slot].api.portRead	= (vccpakapi_portread_t) GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_PORTREAD);
+		g_Paks[Slot].api.heartbeat	= (vccpakapi_heartbeat_t) GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_HEARTBEAT);
+		g_Paks[Slot].api.memWrite	= (vcccpu_write8_t) GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_MEMWRITE);
+		g_Paks[Slot].api.memRead	= (vcccpu_read8_t) GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_MEMREAD);
+		g_Paks[Slot].api.status		= (vccpakapi_status_t) GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_STATUS);
+		g_Paks[Slot].api.getAudioSample = (vccpakapi_getaudiosample_t) GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_AUDIOSAMPLE);
+		g_Paks[Slot].api.reset		= (vccpakapi_reset_t) GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_RESET);
 
-		DmaMemPointerCalls[Slot]=(vccpakapi_setmemptrs_t) GetProcAddress(hinstLib[Slot], VCC_PAKAPI_MEMPOINTERS);
-		SetCartCalls[Slot]=(vccpakapi_setcartptr_t) GetProcAddress(hinstLib[Slot], VCC_PAKAPI_SETCART);
-		
-		HeartBeatCalls[Slot]=(vccpakapi_heartbeat_t) GetProcAddress(hinstLib[Slot], VCC_PAKAPI_HEARTBEAT);
-		PakMemWrite8Calls[Slot]=(vcccpu_write8_t) GetProcAddress(hinstLib[Slot], VCC_PAKAPI_MEMWRITE);
-		PakMemRead8Calls[Slot]=(vcccpu_read8_t) GetProcAddress(hinstLib[Slot], VCC_PAKAPI_MEMREAD);
-		ModuleStatusCalls[Slot]=(vccpakapi_status_t) GetProcAddress(hinstLib[Slot], VCC_PAKAPI_STATUS);
-		ModuleAudioSampleCalls[Slot]=(vccpakapi_getaudiosample_t) GetProcAddress(hinstLib[Slot], VCC_PAKAPI_AUDIOSAMPLE);
-		ModuleResetCalls[Slot]=(vccpakapi_reset_t) GetProcAddress(hinstLib[Slot], VCC_PAKAPI_RESET);
-		SetIniPathCalls[Slot]=(vccpakapi_setinipath_t) GetProcAddress(hinstLib[Slot], VCC_PAKAPI_SETINIPATH);
+		g_Paks[Slot].api.setInterruptCallPtr = (vccpakapi_setintptr_t)GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_ASSERTINTERRUPT);
+		g_Paks[Slot].api.memPointers = (vccpakapi_setmemptrs_t)GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_MEMPOINTERS);
+		g_Paks[Slot].api.setCartPtr	= (vccpakapi_setcartptr_t)GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_SETCART);
+		g_Paks[Slot].api.setINIPath = (vccpakapi_setinipath_t)GetProcAddress((HMODULE)g_Paks[Slot].hDLib, VCC_PAKAPI_SETINIPATH);
+		g_Paks[Slot].api.dynMenuBuild = (vccpakapi_dynmenubuild_t)GetProcAddress((HINSTANCE)g_Paks[Slot].hDLib, VCC_PAKAPI_DYNMENUBUILD);
 
-		if (GetModuleNameCalls[Slot] == NULL)
+		g_Paks[Slot].api.dynMenuCallback = mpiDynamicMenuCallback;
+
+		if (   g_Paks[Slot].api.init == NULL
+			|| g_Paks[Slot].api.getName == NULL
+			)
 		{
 			UnloadModule(Slot);
 			MessageBox(0,"Not a valid Module","Ok",0);
-			return(0); //Error Not a Vcc Module 
+			return VCCPAK_NOTVCC; //Error Not a Vcc Module 
 		}
-		// TODO: Need to add address of local Dynamic menu callback function!
-		GetModuleNameCalls[Slot](ModuleNames[Slot],CatNumber[Slot],DynamicMenuCallbackCalls[Slot],g_hWnd);
-		strcpy(SlotLabel[Slot],ModuleNames[Slot]);
-		strcat(SlotLabel[Slot],"  ");
-		strcat(SlotLabel[Slot],CatNumber[Slot]);
+		
+		// init Pak - id is Slot number (1 is added since our id is probably 0)
+		(*g_Paks[Slot].api.init)(Slot + 1, g_hWnd, mpiDynamicMenuCallback);
+		// get Pak name
+		(*g_Paks[Slot].api.getName)(g_Paks[Slot].name, g_Paks[Slot].catnumber);
+		
+		strcpy(g_Paks[Slot].label, g_Paks[Slot].name);
+		strcat(g_Paks[Slot].label,"  ");
+		strcat(g_Paks[Slot].label, g_Paks[Slot].catnumber);
 
-		if (SetInteruptCallPointerCalls[Slot] !=NULL)
-			SetInteruptCallPointerCalls[Slot](AssertInt);
-		if (DmaMemPointerCalls[Slot] !=NULL)
-			DmaMemPointerCalls[Slot](MemRead8,MemWrite8);
-		if (SetIniPathCalls[Slot] != NULL)
-			SetIniPathCalls[Slot](IniFile);
-		if (SetCartCalls[Slot] !=NULL)
-			SetCartCalls[Slot](*SetCarts[Slot]);	//Transfer the address of the SetCart routin to the pak
-													//For the multpak there is 1 for each slot se we know where it came from
-		if (ModuleResetCalls[Slot]!=NULL)
-			ModuleResetCalls[Slot]();
-//		if (CartForSlot[SpareSelectSlot]==1)
-//			PakSetCart(1);
-		return(1);
+		if (g_Paks[Slot].api.setInterruptCallPtr != NULL)
+		{
+			(*g_Paks[Slot].api.setInterruptCallPtr)(vccAssertInt);
+		}
+		if (g_Paks[Slot].api.memPointers != NULL)
+		{
+			(*g_Paks[Slot].api.memPointers)(vccMemRead, vccMemWrite);
+		}
+		if (g_Paks[Slot].api.setCartPtr != NULL)
+		{
+			// Transfer the address of the SetCart routine to the pak
+			(*g_Paks[Slot].api.setCartPtr)(vccSetCart);
+		}
+		// set INI path.  The Pak should load its settings at this point
+		if (g_Paks[Slot].api.setINIPath != NULL)
+		{
+			(*g_Paks[Slot].api.setINIPath)(IniFile);
+		}
+		// we should not have to do this here
+		// the soft/hard reset should do it
+		if (g_Paks[Slot].api.reset != NULL)
+		{
+			(*g_Paks[Slot].api.reset)();
+		}
+
+		// TODO: pass hard reset call back to VCC
+		//EmuState.ResetPending = VCC_RESET_PENDING_HARD;
+
+		return VCCPAK_LOADED;
 	break;
 	}
+
 	return(0);
 }
 
+/****************************************************************************/
 /**
 */
 void LoadCartDLL(unsigned char Slot,char *DllPath)
@@ -316,15 +342,16 @@ void LoadCartDLL(unsigned char Slot,char *DllPath)
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME) ;
 	ofn.hwndOwner         = g_hWnd;
-	ofn.lpstrFilter       =	"Program Packs\0*.ROM;*.DLL\0\0" ;			// filter string
-	ofn.nFilterIndex      = 1 ;								// current filter index
-	ofn.lpstrFile         = DllPath;						// contains full path and filename on return
-	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
-	ofn.lpstrFileTitle    = NULL;							// filename and extension only
-	ofn.nMaxFileTitle     = MAX_PATH ;						// sizeof lpstrFileTitle
-	ofn.lpstrTitle        = TEXT("Load Program Pack");	// title bar string
+	ofn.lpstrFilter       =	"Program Packs\0*.ROM;*.DLL\0\0" ;	// filter string
+	ofn.nFilterIndex      = 1 ;									// current filter index
+	ofn.lpstrFile         = DllPath;							// contains full path and filename on return
+	ofn.nMaxFile          = FILENAME_MAX;						// sizeof lpstrFile
+	ofn.lpstrFileTitle    = NULL;								// filename and extension only
+	ofn.nMaxFileTitle     = FILENAME_MAX ;						// sizeof lpstrFileTitle
+	ofn.lpstrTitle        = TEXT("Load Program Pack");			// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
-	ofn.lpstrInitialDir = NULL;							// initial directory
+	ofn.lpstrInitialDir = NULL;									// initial directory
+	
 	if (strlen(LastPath) > 0)
 	{
 		ofn.lpstrInitialDir = LastPath;
@@ -336,253 +363,638 @@ void LoadCartDLL(unsigned char Slot,char *DllPath)
 		strcpy(LastPath, DllPath);
 		PathRemoveFileSpec(LastPath);
 
-		RetVal = MountModule( Slot,DllPath);
+		RetVal = MountModule(Slot,DllPath);
 	}
 }
 
+/****************************************************************************/
 /**
 */
 void LoadConfig(void)
 {
-	char ModName[MAX_LOADSTRING]="";
+	char	ModName[MAX_LOADSTRING]="";
+
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	SwitchSlot=GetPrivateProfileInt(ModName,"SWPOSITION",3,IniFile);
+	SwitchSlot=GetPrivateProfileInt(ModName,"SWPOSITION",MAXPAX-1,IniFile);
 	ChipSelectSlot=SwitchSlot;
 	SpareSelectSlot=SwitchSlot;
-	GetPrivateProfileString(ModName,"SLOT1","",ModulePaths[0],MAX_PATH,IniFile);
-	CheckPath(ModulePaths[0]);
-	GetPrivateProfileString(ModName,"SLOT2","",ModulePaths[1],MAX_PATH,IniFile);
-	CheckPath(ModulePaths[1]);
-	GetPrivateProfileString(ModName,"SLOT3","",ModulePaths[2],MAX_PATH,IniFile);
-	CheckPath(ModulePaths[2]);
-	GetPrivateProfileString(ModName,"SLOT4","",ModulePaths[3],MAX_PATH,IniFile);
-	CheckPath(ModulePaths[3]);
-	for (int Temp = 0; Temp < MAXPAX; Temp++)
+
+	for (int Slot = 0; Slot < MAXPAX; Slot++)
 	{
-		if (strlen(ModulePaths[Temp]) != 0)
+		char	SlotName[MAX_LOADSTRING];
+
+		sprintf(SlotName, "SLOT%d", Slot);
+		GetPrivateProfileString(ModName, SlotName, "", g_Paks[Slot].path, FILENAME_MAX, IniFile);
+		CheckPath(g_Paks[Slot].path);
+
+		if (strlen(g_Paks[Slot].path) != 0)
 		{
-			MountModule(Temp, ModulePaths[Temp]);
+			MountModule(Slot, g_Paks[Slot].path);
 		}
 	}
 
-	GetPrivateProfileString(ModName, "LastPath", "", LastPath, MAX_PATH, IniFile);
+	GetPrivateProfileString(ModName, "LastPath", "", LastPath, FILENAME_MAX, IniFile);
 
-	BuildDynaMenu();
+	vccPakRebuildMenu();
 }
 
+/****************************************************************************/
 /**
 */
 void WriteConfig(void)
 {
 	char ModName[MAX_LOADSTRING]="";
+
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	WritePrivateProfileInt(ModName,"SWPOSITION",SwitchSlot,IniFile);
-	ValidatePath(ModulePaths[0]);
-	WritePrivateProfileString(ModName,"SLOT1",ModulePaths[0],IniFile);
-	ValidatePath(ModulePaths[1]);
-	WritePrivateProfileString(ModName,"SLOT2",ModulePaths[1],IniFile);
-	ValidatePath(ModulePaths[2]);
-	WritePrivateProfileString(ModName,"SLOT3",ModulePaths[2],IniFile);
-	ValidatePath(ModulePaths[3]);
-	WritePrivateProfileString(ModName,"SLOT4",ModulePaths[3],IniFile);
+
+	for (int Slot = 0; Slot < MAXPAX; Slot++)
+	{
+		char	SlotName[MAX_LOADSTRING];
+
+		sprintf(SlotName, "SLOT%d", Slot);
+
+		ValidatePath(g_Paks[Slot].path);
+		WritePrivateProfileString(ModName, SlotName, g_Paks[Slot].path, IniFile);
+	}
 	
 	WritePrivateProfileString(ModName, "LastPath", LastPath, IniFile);
 }
 
+/****************************************************************************/
+/**
+	TODO: use vccPak call when it is in a library
+*/
+void ReadModuleParms(unsigned char Slot, char *String)
+{
+	strcat(String, "Module Name: ");
+	strcat(String, g_Paks[Slot].name);
+
+	strcat(String, "\r\n-----------------------------------------\r\n");
+
+	if (g_Paks[Slot].api.config != NULL)
+	{
+		strcat(String, "Has Configurable options\r\n");
+	}
+
+	if (g_Paks[Slot].api.setINIPath != NULL)
+	{
+		strcat(String, "Saves Config Info\r\n");
+	}
+
+	if (g_Paks[Slot].api.portWrite != NULL)
+	{
+		strcat(String, "Is IO writable\r\n");
+	}
+
+	if (g_Paks[Slot].api.portRead != NULL)
+	{
+		strcat(String, "Is IO readable\r\n");
+	}
+
+	if (g_Paks[Slot].api.setInterruptCallPtr != NULL)
+	{
+		strcat(String, "Generates Interupts\r\n");
+	}
+
+	if (g_Paks[Slot].api.memPointers != NULL)
+	{
+		strcat(String, "Generates DMA Requests\r\n");
+	}
+
+	if (g_Paks[Slot].api.heartbeat != NULL)
+	{
+		strcat(String, "Needs Heartbeat\r\n");
+	}
+
+	if (g_Paks[Slot].api.getAudioSample != NULL)
+	{
+		strcat(String, "Analog Audio Outputs\r\n");
+	}
+
+	if (g_Paks[Slot].api.memWrite != NULL)
+	{
+		strcat(String, "Needs CS Write\r\n");
+	}
+
+	if (g_Paks[Slot].api.memRead != NULL)
+	{
+		strcat(String, "Needs CS Read (onboard ROM)\r\n");
+	}
+
+	if (g_Paks[Slot].api.status != NULL)
+	{
+		strcat(String, "Returns Status\r\n");
+	}
+
+	if (g_Paks[Slot].api.reset != NULL)
+	{
+		strcat(String, "Needs Reset Notification\r\n");
+	}
+
+	if (vccPakWantsCart(&g_Paks[Slot]) )
+	{
+			strcat(String,"Asserts CART\r\n");
+	}
+}
+
+/****************************************************************************/
+/**
+The MPI dynamic menu callback.  We pass this to each Pak to capture
+their menu definitions.
+*/
+void mpiDynamicMenuCallback(int id, const char * MenuName, int MenuId, dynmenutype_t Type)
+{
+	int Slot = id - 1;
+
+	assert(Slot >= 0 && Slot < MAXPAX);
+
+	if (MenuId == VCC_DYNMENU_FLUSH)
+	{
+		// clear our captured menus
+		for (Slot = 0; Slot < MAXPAX; Slot++)
+		{
+			g_DynMenusIndeces[Slot] = 0;
+		}
+
+		vccDynMenuCallback(g_id, "", VCC_DYNMENU_FLUSH, DMENU_TYPE_NONE);
+
+		return;
+	}
+
+	if (MenuId == VCC_DYNMENU_REFRESH)
+	{
+		vccDynMenuCallback(g_id, "", VCC_DYNMENU_REFRESH, DMENU_TYPE_NONE);
+
+		return;
+	}
+
+	//
+	// Capture menu definition from our contained Paks
+	//
+	strcpy(g_DynMenus[Slot][g_DynMenusIndeces[Slot]].name, MenuName);
+	g_DynMenus[Slot][g_DynMenusIndeces[Slot]].id = MenuId;
+	g_DynMenus[Slot][g_DynMenusIndeces[Slot]].type = Type;
+	g_DynMenusIndeces[Slot]++;
+}
+
+/****************************************************************************/
+/****************************************************************************/
+/*
+	VCC Pak API
+*/
+/****************************************************************************/
+
 /**
 */
-void ReadModuleParms(unsigned char Slot,char *String)
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
 {
-	strcat(String,"Module Name: ");
-	strcat(String,ModuleNames[Slot]);
+	g_id = id;
+	g_hWnd = (HWND)wndHandle;
 
-	strcat(String,"\r\n-----------------------------------------\r\n");
-
-	if (ConfigModuleCalls[Slot]!=NULL)
-		strcat(String,"Has Configurable options\r\n");
-
-	if (SetIniPathCalls[Slot]!=NULL)
-		strcat(String,"Saves Config Info\r\n");
-
-	if (PakPortWriteCalls[Slot]!=NULL)
-		strcat(String,"Is IO writable\r\n");
-
-	if (PakPortReadCalls[Slot]!=NULL)
-		strcat(String,"Is IO readable\r\n");
-
-	if (SetInteruptCallPointerCalls[Slot]!=NULL)
-		strcat(String,"Generates Interupts\r\n");
-
-	if (DmaMemPointerCalls[Slot]!=NULL)
-		strcat(String,"Generates DMA Requests\r\n");
-
-	if (HeartBeatCalls[Slot]!=NULL)
-		strcat(String,"Needs Heartbeat\r\n");
-
-	if (ModuleAudioSampleCalls[Slot]!=NULL)
-		strcat(String,"Analog Audio Outputs\r\n");
-
-	if (PakMemWrite8Calls[Slot]!=NULL)
-		strcat(String,"Needs CS Write\r\n");
-
-	if (PakMemRead8Calls[Slot]!=NULL)
-		strcat(String,"Needs CS Read (onboard ROM)\r\n");
-
-	if (ModuleStatusCalls[Slot]!=NULL)
-		strcat(String,"Returns Status\r\n");
-
-	if (ModuleResetCalls[Slot]!=NULL)
-		strcat(String,"Needs Reset Notification\r\n");
-
-//	if (SetCartCalls[Slot]!=NULL)
-//		strcat(String,"Asserts CART\r\n");
+	vccDynMenuCallback = Temp;
 }
 
-void SetCartSlot0(unsigned char Tmp)
+/**
+	Return our module name to the emulator
+*/
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
 {
-	CartForSlot[0]=Tmp;
-	return;
+	LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
+	LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
 }
 
-void SetCartSlot1(unsigned char Tmp)
+/****************************************************************************/
+/**
+	This captures the Function transfer point for the CPU assert interupt
+*/
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_ASSERTINTERRUPT(vccpakapi_assertinterrupt_t vccAssertInterrupt)
 {
-	CartForSlot[1]=Tmp;
-	return;
-}
+	vccAssertInt = vccAssertInterrupt;
 
-void SetCartSlot2(unsigned char Tmp)
-{
-	CartForSlot[2]=Tmp;
-	return;
-}
-
-void SetCartSlot3(unsigned char Tmp)
-{
-	CartForSlot[3]=Tmp;
-	return;
-}
-
-void BuildDynaMenu(void)	//STUB
-{
-	unsigned char TempIndex=0;
-	char TempMsg[512]="";
-	if (DynamicMenuCallback ==NULL)
-		MessageBox(0,"No good","Ok",0);
-	DynamicMenuCallback( "",0,0);
-	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "MPI Slot 4",6000,DMENU_HEAD);
-	DynamicMenuCallback( "Insert",5010,DMENU_SLAVE);
-	sprintf(TempMsg,"Eject: ");
-	strcat(TempMsg,SlotLabel[3]);
-	DynamicMenuCallback( TempMsg,5011,DMENU_SLAVE);
-	DynamicMenuCallback( "MPI Slot 3",6000,DMENU_HEAD);
-	DynamicMenuCallback( "Insert",5012,DMENU_SLAVE);
-	sprintf(TempMsg,"Eject: ");
-	strcat(TempMsg,SlotLabel[2]);
-	DynamicMenuCallback( TempMsg,5013,DMENU_SLAVE);
-	DynamicMenuCallback( "MPI Slot 2",6000,DMENU_HEAD);
-	DynamicMenuCallback( "Insert",5014,DMENU_SLAVE);
-	sprintf(TempMsg,"Eject: ");
-	strcat(TempMsg,SlotLabel[1]);
-	DynamicMenuCallback( TempMsg,5015,DMENU_SLAVE);
-	DynamicMenuCallback( "MPI Slot 1",6000,DMENU_HEAD);
-	DynamicMenuCallback( "Insert",5016,DMENU_SLAVE);
-	sprintf(TempMsg,"Eject: ");
-	strcat(TempMsg,SlotLabel[0]);
-	DynamicMenuCallback( TempMsg,5017,DMENU_SLAVE);
-	DynamicMenuCallback( "MPI Config",5018,DMENU_STANDALONE);
-
-	for (TempIndex=0;TempIndex<MenuIndex[3];TempIndex++)
-		DynamicMenuCallback(MenuName3[TempIndex],MenuId3[TempIndex]+80,Type3[TempIndex]);
-
-	for (TempIndex=0;TempIndex<MenuIndex[2];TempIndex++)
-		DynamicMenuCallback(MenuName2[TempIndex],MenuId2[TempIndex]+60,Type2[TempIndex]);
-
-	for (TempIndex=0;TempIndex<MenuIndex[1];TempIndex++)
-		DynamicMenuCallback(MenuName1[TempIndex],MenuId1[TempIndex]+40,Type1[TempIndex]);
-
-	for (TempIndex=0;TempIndex<MenuIndex[0];TempIndex++)
-		DynamicMenuCallback(MenuName0[TempIndex],MenuId0[TempIndex]+20,Type0[TempIndex]);
-
-	DynamicMenuCallback( "",1,0);
-}
-
-void DynamicMenuCallback0( char *MenuName,int MenuId, int Type)
-{
-	if (MenuId==0)
+	//
+	// Pass the VCC Assert|Interrupt function pointer 
+	// to all currently loaded Paks
+	//
+	for (int Slot = 0; Slot < MAXPAX; Slot++)
 	{
-		MenuIndex[0]=0;
+		if (g_Paks[Slot].api.setInterruptCallPtr != NULL)
+		{
+			(*g_Paks[Slot].api.setInterruptCallPtr)(vccAssertInt);
+		}
+	}
+}
+
+/****************************************************************************/
+/**
+	Write a byte to one of our i/o ports
+*/
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
+{
+	if (Port == 0x7F) // Addressing the Multi-Pak
+	{
+		SpareSelectSlot = (Data & (MAXPAX-1));
+		ChipSelectSlot  = ((Data >> 4) & (MAXPAX-1));
+		assert(SpareSelectSlot < MAXPAX && ChipSelectSlot < MAXPAX);
+		SlotRegister = Data;
+
+		vccPakAssertCART(&g_Paks[ChipSelectSlot]);
+	}
+	else
+	if ( (Port>=0x40) & (Port<0x7F) )
+	{
+		//g_Paks[SpareSelectSlot].BankedCartOffset[SpareSelectSlot] = (Data & 15)<<14;
+
+		if ( g_Paks[SpareSelectSlot].api.portWrite != NULL)
+		{
+			(*g_Paks[SpareSelectSlot].api.portWrite)(Port, Data);
+		}
+	}
+	else
+	{
+		// Find a Module that we can write to
+		// TODO: what does the real MPI do here?
+		// Should we even ever get to this point?
+		// this assumes there is no conflict between two carts
+		// and writes to the lowest numbered slot
+		// that will accept it
+		for (int Slot = 0; Slot < MAXPAX; Slot++)
+		{
+			if (g_Paks[Slot].api.portWrite != NULL)
+			{
+				(*g_Paks[Slot].api.portWrite)(Port, Data);
+			}
+		}
+	}
+}
+
+/****************************************************************************/
+/**
+	Read a byte from one of our i/o ports
+*/
+extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
+{
+	// MPI register?
+	if ( Port == 0x7F )
+	{
+		assert(SpareSelectSlot < MAXPAX && ChipSelectSlot < MAXPAX);
+		SlotRegister |= (SpareSelectSlot | (ChipSelectSlot << 4));
+
+		return (SlotRegister);
+	}
+	else
+	// SCS range?
+	if ( (Port>=0x40) & (Port<0x7F) )
+	{
+		if (g_Paks[SpareSelectSlot].api.portRead != NULL )
+		{
+			return (*g_Paks[SpareSelectSlot].api.portRead)(Port);
+		}
+		
+		// is this what the MPI would return
+		// if there is no CART in that slot?
+		return 0;
+	}
+	else
+	{
+		// Find a Module that returns a value
+		// TODO: what does the real MPI do here?
+		// Should we even ever get to this point?
+		// this assumes there is no conflict between two carts
+		// and takes the first 'valid' value starting
+		// from the lowest numbered slot
+		for (int Slot = 0; Slot < MAXPAX; Slot++)
+		{
+			if (g_Paks[Slot].api.portRead != NULL )
+			{
+				int Temp2 = (*g_Paks[Slot].api.portRead)(Port);
+
+				if (Temp2 != 0)
+				{
+					return(Temp2);
+				}
+			}
+		}
+	}
+
+	return(0);
+}
+
+/****************************************************************************/
+/**
+	Periodic call from the emulator to us if we or our Paks need it
+*/
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_HEARTBEAT(void)
+{
+	for (int Slot = 0; Slot < MAXPAX; Slot++)
+	{
+		if (g_Paks[Slot].api.heartbeat != NULL)
+		{
+			(*g_Paks[Slot].api.heartbeat)();
+		}
+	}
+}
+
+/****************************************************************************/
+/**
+	This captures the pointers to the MemRead8 and MemWrite8 functions. This allows the DLL to do DMA xfers with CPU ram.
+*/
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_MEMPOINTERS(vcccpu_read8_t Temp1, vcccpu_write8_t Temp2)
+{
+	vccMemRead = Temp1;
+	vccMemWrite = Temp2;
+}
+
+/****************************************************************************/
+/**
+	Read byte from memory (ROM) in the current CTS slot
+*/
+extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
+{
+	if (g_Paks[ChipSelectSlot].ExternalRomBuffer != NULL)
+	{
+		//Bank Select ???
+		return(g_Paks[ChipSelectSlot].ExternalRomBuffer[(Address & 32767) + g_Paks[ChipSelectSlot].BankedCartOffset]);
+	}
+
+	if (g_Paks[ChipSelectSlot].api.memRead != NULL)
+	{
+		return(g_Paks[ChipSelectSlot].api.memRead(Address));
+	}
+
+	return 0;
+}
+
+/****************************************************************************/
+/**
+	Memory write (not implemented - cannot write to general addresses for us
+	or connected Paks)
+*/
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_MEMWRITE(unsigned char Data, unsigned short Address)
+{
+	// no memory write
+}
+
+/****************************************************************************/
+/**
+	Get module status
+
+	Return our status plus the status of all Paks appended
+*/
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
+{
+	char TempStatus[256] = "";
+
+	sprintf(buffer, "MPI:%i,%i", ChipSelectSlot, SpareSelectSlot);
+
+	for (int Slot = 0; Slot<MAXPAX; Slot++)
+	{
+		strcpy(TempStatus, "");
+
+		if (g_Paks[Slot].api.status != NULL)
+		{
+			(*g_Paks[Slot].api.status)(TempStatus,sizeof(TempStatus));
+
+			strcat(buffer, "|");
+			strcat(buffer, TempStatus);
+		}
+	}
+}
+
+/****************************************************************************/
+/**
+	Get audio sample
+
+	This gets called at the end of every scan line 262 Lines * 60 Frames = 15780 Hz 15720
+
+	All paks are scanned and the samples are merged/mixed
+*/
+extern "C" __declspec(dllexport) unsigned short VCC_PAKAPI_DEF_AUDIOSAMPLE(void)
+{
+	unsigned short TempSample = 0;
+
+	for (int Slot = 0; Slot<MAXPAX; Slot++)
+	{
+		if (g_Paks[Slot].api.getAudioSample != NULL)
+		{
+			TempSample += (*g_Paks[Slot].api.getAudioSample)();
+		}
+	}
+
+	return (TempSample);
+}
+
+/****************************************************************************/
+/**
+	RESET - pass onto each Pak
+*/
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_RESET(void)
+{
+	ChipSelectSlot = SwitchSlot;
+	SpareSelectSlot = SwitchSlot;
+
+	for (int Slot = 0; Slot<MAXPAX; Slot++)
+	{
+		// Do I need to keep independant selects?
+		g_Paks[Slot].BankedCartOffset = 0; 
+
+		if (g_Paks[Slot].api.reset != NULL)
+		{
+			(*g_Paks[Slot].api.reset)();
+		}
+	}
+
+	vccPakAssertCART(&g_Paks[ChipSelectSlot]);
+}
+
+/****************************************************************************/
+/**
+*/
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
+{
+	strcpy(IniFile, IniFilePath);
+	LoadConfig();
+}
+
+/****************************************************************************/
+/**
+*/
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_SETCART(vccapi_setcart_t Pointer)
+{
+	vccSetCart = Pointer;
+}
+
+/****************************************************************************/
+/****************************************************************************/
+/*
+	Dynamic menu handling
+
+	We capture the dynamic menu definitions from each Pak.  Then build the
+	full Pak menu with our own definition and the definitions from each
+	Pak when needed.
+*/
+
+/****************************************************************************/
+/**
+*/
+
+#define MENU_ITEMS_PER_SLOT	100
+#define MENU_PAK_BASE		20
+
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_DYNMENUBUILD()
+{
+	char	TempMsg[MAX_MENU_TEXT] = "";
+
+	if ( vccDynMenuCallback == NULL )
+	{
+		// nice message
+		MessageBox(g_hWnd, "No good", "Ok", 0);
 		return;
 	}
 
-	if (MenuId==1)
+	// Pass on the build menu request to all of our Paks
+	for (int Slot = 0; Slot < MAXPAX; Slot++)
 	{
-		BuildDynaMenu();
-		return;
+		// clear this Pak's dynamic menus
+		g_DynMenusIndeces[Slot] = 0;
+
+		if (g_Paks[Slot].api.dynMenuBuild != NULL)
+		{
+			(*g_Paks[Slot].api.dynMenuBuild)();
+		}
 	}
 
-	strcpy(MenuName0[MenuIndex[0]],MenuName);
-	MenuId0[MenuIndex[0]]=MenuId;
-	Type0[MenuIndex[0]]=Type;
-	MenuIndex[0]++;
+	//
+	// Now build the full menu
+	//
+	vccDynMenuCallback(g_id, "", ID_SDYNAMENU, DMENU_TYPE_SEPARATOR);
+
+	for (int Slot = MAXPAX - 1; Slot >= 0; Slot--)
+	{
+		// calculate base id for this slot
+		int		pakBaseID = ID_SDYNAMENU + MENU_PAK_BASE + (Slot * MENU_ITEMS_PER_SLOT);
+
+		//
+		// Added normal load/unload menu items for each slot
+		//
+		sprintf(TempMsg, "MPI Slot %d", Slot + 1);
+		vccDynMenuCallback(g_id, TempMsg, ID_BASEMENU + Slot + 1, DMENU_TYPE_HEAD);
+
+		vccDynMenuCallback(g_id, "Insert", pakBaseID + VCC_DYNMENU_ACTION_LOAD, DMENU_TYPE_SLAVE);
+
+		sprintf(TempMsg, "Eject: %s", g_Paks[Slot].label);
+		vccDynMenuCallback(g_id, TempMsg, pakBaseID + VCC_DYNMENU_ACTION_UNLOAD, DMENU_TYPE_SLAVE);
+	}
+
+	// add MPI config menu
+	vccDynMenuCallback(g_id, "MPI Config", ID_SDYNAMENU + VCC_DYNMENU_ACTION_CONFIG, DMENU_TYPE_STANDALONE);
+
+	//
+	// now add the menus from Paks
+	//
+	for (int Slot = MAXPAX - 1; Slot >= 0; Slot--)
+	{
+		// calculate base id for this slot
+		int		pakBaseID = ID_SDYNAMENU + MENU_PAK_BASE + (Slot * MENU_ITEMS_PER_SLOT);
+
+		for (int TempIndex = 0; TempIndex < g_DynMenusIndeces[Slot]; TempIndex++)
+		{
+			vccDynMenuCallback(g_id,
+				g_DynMenus[Slot][TempIndex].name,
+				// save as an index into the dynamic menus to get 
+				// the correct menu ID for this Pak
+				pakBaseID + TempIndex + VCC_DYNMENU_ACTION_COUNT,
+				g_DynMenus[Slot][TempIndex].type
+				);
+		}
+	}
 }
 
-void DynamicMenuCallback1( char *MenuName,int MenuId, int Type)
+/****************************************************************************/
+/****************************************************************************/
+
+/****************************************************************************/
+/**
+	Call config UI - pass onto correct Pak based on menu ID
+*/
+
+// forward declaration of the Windows Config dialog WndProc
+LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(int MenuID)
 {
-	if (MenuId==0)
+	if (MenuID == VCC_DYNMENU_ACTION_CONFIG)
 	{
-		MenuIndex[1]=0;
-		return;
+		// MPI config
+		DialogBox(g_hinstDLL, (LPCTSTR)IDD_DIALOG1, g_hWnd, (DLGPROC)Config);
 	}
+	else
+	{
+		// base on the MenuID, figure out what slot it is for and the menu id to pass on
+		int		temp	= MenuID - MENU_PAK_BASE;
+		int		Slot	= temp / MENU_ITEMS_PER_SLOT;
+		int		index	= temp % MENU_ITEMS_PER_SLOT;
 
-	if (MenuId==1)
-	{
-		BuildDynaMenu();
-		return;
+		// check if in range
+		if (Slot < MAXPAX)
+		{
+			switch ( index )
+			{
+			case VCC_DYNMENU_ACTION_LOAD:
+				LoadCartDLL(Slot, g_Paks[Slot].path);
+				WriteConfig();
+				vccPakRebuildMenu();
+				break;
+
+			case VCC_DYNMENU_ACTION_UNLOAD:
+				UnloadModule(Slot);
+				vccPakRebuildMenu();
+				break;
+
+			default:
+				assert(index - VCC_DYNMENU_ACTION_COUNT >= 0);
+
+				// this should not happen (the config function being NULL and us getting a menu id)
+				assert(g_Paks[Slot].api.config != NULL);
+				
+				if (g_Paks[Slot].api.config != NULL)
+				{
+					// look up real menu ID to pass to this Pak config
+					(*g_Paks[Slot].api.config)(g_DynMenus[Slot][index - VCC_DYNMENU_ACTION_COUNT].id - ID_SDYNAMENU);
+				}
+				break;
+			}
+		}
 	}
-	strcpy(MenuName1[MenuIndex[1]],MenuName);
-	MenuId1[MenuIndex[1]]=MenuId;
-	Type1[MenuIndex[1]]=Type;
-	MenuIndex[1]++;
 }
 
-void DynamicMenuCallback2( char *MenuName,int MenuId, int Type)
-{
-	if (MenuId==0)
-	{
-		MenuIndex[2]=0;
-		return;
-	}
+/****************************************************************************/
+/*
+	Debug only simple check to verify API matches the definitions
+	If the Pak API changes for one of our defined functions it
+	should produce a compile error
+*/
 
-	if (MenuId==1)
-	{
-		BuildDynaMenu();
-		return;
-	}
-	strcpy(MenuName2[MenuIndex[2]],MenuName);
-	MenuId2[MenuIndex[2]]=MenuId;
-	Type2[MenuIndex[2]]=Type;
-	MenuIndex[2]++;
-}
+#ifdef _DEBUG
 
-void DynamicMenuCallback3( char *MenuName,int MenuId, int Type)
-{
-	if (MenuId==0)
-	{
-		MenuIndex[3]=0;
-		return;
-	}
+static vccpakapi_init_t				__init				= VCC_PAKAPI_DEF_INIT;
+static vccpakapi_getname_t			__getName			= VCC_PAKAPI_DEF_GETNAME;
+static vccpakapi_dynmenubuild_t		__dynMenuBuild		= VCC_PAKAPI_DEF_DYNMENUBUILD;
+static vccpakapi_config_t			__config			= VCC_PAKAPI_DEF_CONFIG;
+static vccpakapi_heartbeat_t		__heartbeat			= VCC_PAKAPI_DEF_HEARTBEAT;
+static vccpakapi_status_t			__status			= VCC_PAKAPI_DEF_STATUS;
+static vccpakapi_getaudiosample_t	__getAudioSample	= VCC_PAKAPI_DEF_AUDIOSAMPLE;
+static vccpakapi_reset_t			__reset				= VCC_PAKAPI_DEF_RESET;
+static vccpakapi_portread_t			__portRead			= VCC_PAKAPI_DEF_PORTREAD;
+static vccpakapi_portwrite_t		__portWrite			= VCC_PAKAPI_DEF_PORTWRITE;
+static vcccpu_read8_t				__memRead			= VCC_PAKAPI_DEF_MEMREAD;
+static vcccpu_write8_t				__memWrite			= VCC_PAKAPI_DEF_MEMWRITE;
+static vccpakapi_setmemptrs_t		__memPointers		= VCC_PAKAPI_DEF_MEMPOINTERS;
+static vccpakapi_setcartptr_t		__setCartPtr		= VCC_PAKAPI_DEF_SETCART;
+static vccpakapi_setintptr_t		__assertInterrupt	= VCC_PAKAPI_DEF_ASSERTINTERRUPT;
+static vccpakapi_setinipath_t		__setINIPath		= VCC_PAKAPI_DEF_SETINIPATH;
 
-	if (MenuId==1)
-	{
-		BuildDynaMenu();
-		return;
-	}
-	strcpy(MenuName3[MenuIndex[3]],MenuName);
-	MenuId3[MenuIndex[3]]=MenuId;
-	Type3[MenuIndex[3]]=Type;
-	MenuIndex[3]++;
-}
+#endif // _DEBUG
 
 /****************************************************************************/
 /**
@@ -596,13 +1008,12 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	unsigned short CONFIGBTN[4] = { ID_CONFIG1,ID_CONFIG2,ID_CONFIG3,ID_CONFIG4 };
 	char ConfigText[1024] = "";
 
-	unsigned char Temp = 0;
 	switch (message)
 	{
 	case WM_INITDIALOG:
-		for (Temp = 0; Temp < MAXPAX; Temp++)
+		for (int Slot = 0; Slot < MAXPAX; Slot++)
 		{
-			SendDlgItemMessage(hDlg, EDITBOXS[Temp], WM_SETTEXT, 5, (LPARAM)(LPCSTR)SlotLabel[Temp]);
+			SendDlgItemMessage(hDlg, EDITBOXS[Slot], WM_SETTEXT, 5, (LPARAM)(LPCSTR)g_Paks[Slot].label);
 		}
 		SendDlgItemMessage(hDlg, IDC_PAKSELECT, TBM_SETRANGE, TRUE, MAKELONG(0, 3));
 		SendDlgItemMessage(hDlg, IDC_PAKSELECT, TBM_SETPOS, TRUE, SwitchSlot);
@@ -627,33 +1038,36 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		} //End switch LOWORD
 
-		for (Temp = 0; Temp<MAXPAX; Temp++)
+		for (int Slot = 0; Slot < MAXPAX; Slot++)
 		{
-			if (LOWORD(wParam) == INSERTBTN[Temp])
+			if (LOWORD(wParam) == INSERTBTN[Slot])
 			{
-				LoadCartDLL(Temp, ModulePaths[Temp]);
-				for (Temp = 0; Temp < MAXPAX; Temp++)
+				LoadCartDLL(Slot, g_Paks[Slot].path);
+
+				for (int Temp = 0; Temp < MAXPAX; Temp++)
 				{
-					SendDlgItemMessage(hDlg, EDITBOXS[Temp], WM_SETTEXT, strlen(SlotLabel[Temp]), (LPARAM)(LPCSTR)SlotLabel[Temp]);
+					SendDlgItemMessage(hDlg, EDITBOXS[Temp], WM_SETTEXT, strlen(g_Paks[Slot].label), (LPARAM)(LPCSTR)g_Paks[Slot].label);
 				}
 			}
 		}
 
-		for (Temp = 0; Temp<MAXPAX; Temp++)
+		for (int Slot = 0; Slot < MAXPAX; Slot++)
 		{
-			if (LOWORD(wParam) == REMOVEBTN[Temp])
+			if (LOWORD(wParam) == REMOVEBTN[Slot])
 			{
-				UnloadModule(Temp);
-				SendDlgItemMessage(hDlg, EDITBOXS[Temp], WM_SETTEXT, strlen(SlotLabel[Temp]), (LPARAM)(LPCSTR)SlotLabel[Temp]);
+				UnloadModule(Slot);
+				SendDlgItemMessage(hDlg, EDITBOXS[Slot], WM_SETTEXT, strlen(g_Paks[Slot].label), (LPARAM)(LPCSTR)g_Paks[Slot].label);
 			}
 		}
 
-		for (Temp = 0; Temp<MAXPAX; Temp++)
+		for (int Slot = 0; Slot < MAXPAX; Slot++)
 		{
-			if (LOWORD(wParam) == CONFIGBTN[Temp])
+			if (LOWORD(wParam) == CONFIGBTN[Slot])
 			{
-				if (ConfigModuleCalls[Temp] != NULL)
-					ConfigModuleCalls[Temp](NULL);
+				if (g_Paks[Slot].api.config != NULL)
+				{
+					(*g_Paks[Slot].api.config)(NULL);
+				}
 			}
 		}
 		return TRUE;
@@ -665,10 +1079,11 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		ChipSelectSlot = SwitchSlot;
 		ReadModuleParms(SwitchSlot, ConfigText);
 		SendDlgItemMessage(hDlg, IDC_MODINFO, WM_SETTEXT, strlen(ConfigText), (LPARAM)(LPCSTR)ConfigText);
-		PakSetCart(0);
-		if (CartForSlot[SpareSelectSlot] == 1)
+
+		vccSetCart(0);
+		if (vccPakWantsCart(&g_Paks[ChipSelectSlot]))
 		{
-			PakSetCart(1);
+			vccSetCart(1);
 		}
 		break;
 
@@ -680,338 +1095,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 /****************************************************************************/
 /****************************************************************************/
-/*
-	VCC Pak API
-*/
-/****************************************************************************/
-
-/**
-	Return our module name to the emulator
-*/
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber, vccapi_dynamicmenucallback_t Temp, void * wndHandle)
-{
-	g_hWnd = (HWND)wndHandle;
-
-	LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
-	LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
-
-	DynamicMenuCallback = Temp;
-}
-
-/**
-	Call config UI
-*/
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(unsigned char MenuID)
-{
-	if ((MenuID >= 10) & (MenuID <= 19)) //Local config menus
-		switch (MenuID)
-		{
-		case 10:
-			LoadCartDLL(3, ModulePaths[3]);
-			WriteConfig();
-			BuildDynaMenu();
-			break;
-
-		case 11:
-			UnloadModule(3);
-			BuildDynaMenu();
-			break;
-		case 12:
-			LoadCartDLL(2, ModulePaths[2]);
-			WriteConfig();
-			BuildDynaMenu();
-			break;
-		case 13:
-			UnloadModule(2);
-			BuildDynaMenu();
-			break;
-		case 14:
-			LoadCartDLL(1, ModulePaths[1]);
-			WriteConfig();
-			BuildDynaMenu();
-			break;
-		case 15:
-			UnloadModule(1);
-			BuildDynaMenu();
-			break;
-		case 16:
-			LoadCartDLL(0, ModulePaths[0]);
-			WriteConfig();
-			BuildDynaMenu();
-			break;
-		case 17:
-			UnloadModule(0);
-			BuildDynaMenu();
-			break;
-		case 18:
-			DialogBox(g_hinstDLL, (LPCTSTR)IDD_DIALOG1, g_hWnd, (DLGPROC)Config);
-			break;
-		case 19:
-
-			break;
-		}
-
-	//Add calls to sub-modules here		
-	if ((MenuID >= 20) & (MenuID <= 40))
-		ConfigModuleCalls[0](MenuID - 20);
-
-	if ((MenuID>40) & (MenuID <= 60))
-		ConfigModuleCalls[1](MenuID - 40);
-
-	if ((MenuID>61) & (MenuID <= 80))
-		ConfigModuleCalls[2](MenuID - 60);
-
-	if ((MenuID>80) & (MenuID <= 100))
-		ConfigModuleCalls[3](MenuID - 80);
-}
-
-/**
-	This captures the Function transfer point for the CPU assert interupt
-*/
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_ASSERTINTERRUPT(vccpakapi_assertinterrupt_t Dummy)
-{
-	AssertInt = Dummy;
-
-	for (int Temp = 0; Temp<MAXPAX; Temp++)
-	{
-		if (SetInteruptCallPointerCalls[Temp] != NULL)
-		{
-			SetInteruptCallPointerCalls[Temp](AssertInt);
-		}
-	}
-}
-
-/**
-	Write a byte to one of our i/o ports
-*/
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
-{
-	if (Port == 0x7F) //Addressing the Multi-Pak
-	{
-		SpareSelectSlot = (Data & (MAXPAX-1));
-		ChipSelectSlot  = ((Data >> 4) & (MAXPAX-1));
-		assert(SpareSelectSlot < MAXPAX && ChipSelectSlot < MAXPAX);
-		SlotRegister = Data;
-
-		PakSetCart(0);
-		if (CartForSlot[SpareSelectSlot] == 1)
-		{
-			PakSetCart(1);
-		}
-	}
-	else
-	if ( (Port>=0x40) & (Port<0x7F) )
-	{
-		//BankedCartOffset[SpareSelectSlot] = (Data & 15)<<14;
-
-		if (PakPortWriteCalls[SpareSelectSlot] != NULL)
-		{
-			PakPortWriteCalls[SpareSelectSlot](Port, Data);
-		}
-	}
-	else
-	{
-		// Find a Module that we can write to
-		// TODO: what does the real MPI do here?
-		// Should we even ever get to this point?
-		// this assumes there is no conflict between two carts
-		// and writes to the lowest numbered slot
-		// that will accept it
-		for (int Temp = 0; Temp < MAXPAX; Temp++)
-		{
-			if (PakPortWriteCalls[Temp] != NULL)
-			{
-				PakPortWriteCalls[Temp](Port, Data);
-			}
-		}
-	}
-}
-
-/**
-	Read a byte from one of our i/o ports
-*/
-extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
-{
-	// MPI register?
-	if ( Port == 0x7F )
-	{
-		assert(SpareSelectSlot < MAXPAX && ChipSelectSlot < MAXPAX);
-		SlotRegister |= (SpareSelectSlot | (ChipSelectSlot << 4));
-
-		return(SlotRegister);
-	}
-	else
-	// SCS range?
-	if ( (Port>=0x40) & (Port<0x7F) )
-	{
-		if ( PakPortReadCalls[SpareSelectSlot] != NULL )
-		{
-			return PakPortReadCalls[SpareSelectSlot](Port);
-		}
-		
-		// is this what the MPI would return
-		// if there is no CART in that slot
-		return 0;
-	}
-	else
-	{
-		// Find a Module that returns a value
-		// TODO: what does the real MPI do here?
-		// Should we even ever get to this point?
-		// this assumes there is no conflict between two carts
-		// and takes the first 'valid' value starting
-		// from the lowest numbered slot
-		for (int Temp = 0; Temp < MAXPAX; Temp++)
-		{
-			if ( PakPortReadCalls[Temp] != NULL )
-			{
-				int Temp2 = PakPortReadCalls[Temp](Port);
-				if (Temp2 != 0)
-				{
-					return(Temp2);
-				}
-			}
-		}
-	}
-
-	return(0);
-}
-
-/**
-	Periodic call from the emulator to us if we or our Paks need it
-*/
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_HEARTBEAT(void)
-{
-	for (int Temp = 0; Temp <MAXPAX; Temp++)
-	{
-		if (HeartBeatCalls[Temp] != NULL)
-		{
-			HeartBeatCalls[Temp]();
-		}
-	}
-}
-
-
-/**
-	This captures the pointers to the MemRead8 and MemWrite8 functions. This allows the DLL to do DMA xfers with CPU ram.
-*/
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_MEMPOINTERS(vcccpu_read8_t Temp1, vcccpu_write8_t Temp2)
-{
-	MemRead8 = Temp1;
-	MemWrite8 = Temp2;
-}
-
-/**
-	Read byte from memory (ROM) in the current CTS slot
-*/
-extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
-{
-	if (ExtRomPointers[ChipSelectSlot] != NULL)
-	{
-		return(ExtRomPointers[ChipSelectSlot][(Address & 32767) + BankedCartOffset[ChipSelectSlot]]); //Bank Select ???
-	}
-
-	if (PakMemRead8Calls[ChipSelectSlot] != NULL)
-	{
-		return(PakMemRead8Calls[ChipSelectSlot](Address));
-	}
-
-	return 0;
-}
-
-/**
-	Memory write (not implemented - cannot write to general addresses for us
-	or connected Paks)
-*/
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_MEMWRITE(unsigned char Data, unsigned short Address)
-{
-
-}
-
-/**
-	Get module status
-
-	Return our status plus the status of all Paks appended
-*/
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char *MyStatus)
-{
-	char TempStatus[256] = "";
-
-	sprintf(MyStatus, "MPI:%i,%i", ChipSelectSlot, SpareSelectSlot);
-	for (int Temp = 0; Temp<MAXPAX; Temp++)
-	{
-		strcpy(TempStatus, "");
-		if (ModuleStatusCalls[Temp] != NULL)
-		{
-			ModuleStatusCalls[Temp](TempStatus);
-			strcat(MyStatus, "|");
-			strcat(MyStatus, TempStatus);
-		}
-	}
-}
-
-/**
-	Get audio sample
-
-	This gets called at the end of every scan line 262 Lines * 60 Frames = 15780 Hz 15720
-
-	All paks are scanned and the samples are merged/mixed
-*/
-extern "C" __declspec(dllexport) unsigned short VCC_PAKAPI_DEF_AUDIOSAMPLE(void)
-{
-	unsigned short TempSample = 0;
-	for (int Temp = 0; Temp < MAXPAX; Temp++)
-	{
-		if (ModuleAudioSampleCalls[Temp] != NULL)
-		{
-			TempSample += ModuleAudioSampleCalls[Temp]();
-		}
-	}
-
-	return(TempSample);
-}
-
-/**
-	RESET - pass onto each Pak
-*/
-extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_RESET(void)
-{
-	ChipSelectSlot = SwitchSlot;
-	SpareSelectSlot = SwitchSlot;
-
-	for (int Temp = 0; Temp<MAXPAX; Temp++)
-	{
-		BankedCartOffset[Temp] = 0; // Do I need to keep independant selects?
-
-		if (ModuleResetCalls[Temp] != NULL)
-		{
-			ModuleResetCalls[Temp]();
-		}
-	}
-	PakSetCart(0);
-
-	if (CartForSlot[SpareSelectSlot] == 1)
-	{
-		PakSetCart(1);
-	}
-
-	return(NULL);
-}
-
-/**
-*/
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
-{
-	strcpy(IniFile, IniFilePath);
-	LoadConfig();
-}
-
-/**
-*/
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_SETCART(vccapi_setcart_t Pointer)
-{
-	PakSetCart = Pointer;
-}
 
 /****************************************************************************/
 /**
@@ -1022,8 +1105,14 @@ BOOL WINAPI DllMain(
 	DWORD fdwReason,     // reason for calling function
 	LPVOID lpReserved)  // reserved
 {
-	if (fdwReason == DLL_PROCESS_DETACH) //Clean Up 
+	switch (fdwReason)
 	{
+	case DLL_PROCESS_ATTACH:
+		g_hinstDLL = hinstDLL;
+		memset(g_Paks, 0, sizeof(g_Paks));
+		break;
+
+	case DLL_PROCESS_DETACH:
 		// save configuration
 		WriteConfig();
 
@@ -1032,12 +1121,14 @@ BOOL WINAPI DllMain(
 		{
 			UnloadModule(Temp);
 		}
+		break;
 
-		return(1);
+	case DLL_THREAD_ATTACH:
+		break;
+
+	case DLL_THREAD_DETACH:
+		break;
 	}
-
-	g_hinstDLL = hinstDLL;
-	//memset(g_Paks, 0, sizeof(g_Paks));
 
 	return(1);
 }

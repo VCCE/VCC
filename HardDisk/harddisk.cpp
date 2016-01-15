@@ -19,24 +19,33 @@ This file is part of VCC (Virtual Color Computer).
 	RTC: $FF78-$FF7C
 	IDE: $FF80-$FF86
 */
+/*
+	TODO: Add config for RTC (on/off)
+*/
 
 #include "cc3vhd.h"
-#include "defines.h"
 #include "cloud9.h"
+
+#include "../defines.h"
 #include "../fileops.h"
 #include "../pakinterface.h"
 
-#include <windows.h>
 #include <stdio.h>
+
+#include <windows.h>
 #include "resource.h" 
 
+/*
+	forward declarations
+*/
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 void Load_Disk(unsigned char);
 void LoadHardDisk(int iDiskNum);
 void LoadConfig(void);
 void SaveConfig(void);
-void BuildDynaMenu(void);
 unsigned char LoadExtRom(char *);
+
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_DYNMENUBUILD(void);
 
 //
 // VCC Pak API
@@ -57,6 +66,16 @@ static unsigned char ClockEnabled=1,ClockReadOnly=1;
 
 static HINSTANCE g_hinstDLL;
 static HWND g_hWnd = NULL;
+static int g_id = 0;
+
+/**
+*/
+void vccPakRebuildMenu()
+{
+	DynamicMenuCallback(g_id, "", VCC_DYNMENU_FLUSH, DMENU_TYPE_NONE);
+
+	DynamicMenuCallback(g_id, "", VCC_DYNMENU_REFRESH, DMENU_TYPE_NONE);
+}
 
 void MemWrite(unsigned char Data,unsigned short Address)
 {
@@ -141,7 +160,8 @@ void LoadConfig(void)
 
 	GetPrivateProfileString(ModName, "LastPath", "", LastPath, MAX_PATH, IniFile);
 
-	BuildDynaMenu();
+	vccPakRebuildMenu();
+
 	GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
 	PathRemoveFileSpec(DiskRomPath);
 	strcat(DiskRomPath, "rgbdos.rom");
@@ -159,32 +179,32 @@ void SaveConfig(void)
 	WritePrivateProfileString(ModName, "LastPath", LastPath, IniFile);
 }
 
-void BuildDynaMenu(void)
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_DYNMENUBUILD(void)
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
 
-	DynamicMenuCallback("",0,0);
-	DynamicMenuCallback("",6000,0);
-	DynamicMenuCallback("HD Drive 0",6000, DMENU_HEAD);
-	DynamicMenuCallback("Insert",5010, DMENU_SLAVE);
+	DynamicMenuCallback(g_id, "", 6000, DMENU_TYPE_HEAD);
+
+	DynamicMenuCallback(g_id, "HD Drive 0",6000, DMENU_TYPE_HEAD);
+	DynamicMenuCallback(g_id, "Insert",5010, DMENU_TYPE_SLAVE);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, VHD_FileName[0]);
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5011, DMENU_SLAVE);
+	DynamicMenuCallback(g_id, TempMsg,5011, DMENU_TYPE_SLAVE);
 
-	DynamicMenuCallback("HD Drive 1", 6001, DMENU_HEAD);
-	DynamicMenuCallback("Insert", 5012, DMENU_SLAVE);
+	DynamicMenuCallback(g_id, "HD Drive 1", 6001, DMENU_TYPE_HEAD);
+	DynamicMenuCallback(g_id, "Insert", 5012, DMENU_TYPE_SLAVE);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHD_FileName[1]);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	DynamicMenuCallback(TempMsg, 5013, DMENU_SLAVE);
+	DynamicMenuCallback(g_id, TempMsg, 5013, DMENU_TYPE_SLAVE);
 	
-	//DynamicMenuCallback( "HD Config",5012,DMENU_STANDALONE);
+	//DynamicMenuCallback(g_id, "HD Config",5014,DMENU_TYPE_STANDALONE);
 
-	DynamicMenuCallback("",1,0);
+	DynamicMenuCallback(g_id, "", VCC_DYNMENU_REFRESH, DMENU_TYPE_NONE);
 }
 
 unsigned char LoadExtRom( char *FilePath)	//Returns 1 on if loaded
@@ -219,57 +239,63 @@ unsigned char LoadExtRom( char *FilePath)	//Returns 1 on if loaded
 */
 /****************************************************************************/
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char *ModName, char *CatNumber, vccapi_dynamicmenucallback_t Temp, void * wndHandle)
+/****************************************************************************/
+/**
+*/
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
 {
+	g_id = id;
 	g_hWnd = (HWND)wndHandle;
-	LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
-	LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
-	DynamicMenuCallback = Temp;
-	SetClockWrite(!ClockReadOnly);
 
-	if (DynamicMenuCallback != NULL)
-	{
-		BuildDynaMenu();
-	}
+	DynamicMenuCallback = Temp;
+
+	// TODO: read config first?
+	SetClockWrite(!ClockReadOnly);
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(unsigned char MenuID)
+/**
+*/
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
+{
+	LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
+	LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
+}
+
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(int MenuID)
 {
 	switch (MenuID)
 	{
 	case 10:
 		LoadHardDisk(0);
 		SaveConfig();
-		BuildDynaMenu();
+		vccPakRebuildMenu();
 		break;
 
 	case 11:
 		UnmountHD(0);
 		strcpy(VHD_FileName[0], "");
 		SaveConfig();
-		BuildDynaMenu();
+		vccPakRebuildMenu();
 		break;
 
 	case 12:
 		LoadHardDisk(1);
 		SaveConfig();
-		BuildDynaMenu();
+		vccPakRebuildMenu();
 		break;
 
 	case 13:
 		UnmountHD(1);
 		strcpy(VHD_FileName[1], "");
 		SaveConfig();
-		BuildDynaMenu();
+		vccPakRebuildMenu();
 		break;
 
-		//case 14:
-		//	DialogBox(g_hinstDLL, (LPCTSTR)IDD_CONFIG, NULL, (DLGPROC)Config);
-		//	SaveConfig();
-		//	break;
-
+//	case 14:
+//		DialogBox(g_hinstDLL, (LPCTSTR)IDD_CONFIG, NULL, (DLGPROC)Config);
+//		SaveConfig();
+//		break;
 	}
-	//DialogBox(g_hinstDLL, (LPCTSTR)IDD_CONFIG, NULL, (DLGPROC)Config);
 }
 
 extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
@@ -303,33 +329,73 @@ extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned s
 	return DiskRom[Address & 8191];
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char *MyStatus)
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
 {
-	DiskStatus(MyStatus);
+	// TODO: use buffer size
+
+	DiskStatus(buffer);
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char * IniFilePath)
 {
 	strcpy(IniFile, IniFilePath);
 	LoadConfig();
 }
 
 /****************************************************************************/
+/*
+Debug only simple check to verify API matches the definitions
+If the Pak API changes for one of our defined functions it
+should produce a compile error
+*/
 
+#ifdef _DEBUG
+
+static vccpakapi_init_t				__init				= VCC_PAKAPI_DEF_INIT;
+static vccpakapi_getname_t			__getName			= VCC_PAKAPI_DEF_GETNAME;
+static vccpakapi_dynmenubuild_t		__dynMenuBuild		= VCC_PAKAPI_DEF_DYNMENUBUILD;
+static vccpakapi_config_t			__config			= VCC_PAKAPI_DEF_CONFIG;
+//static vccpakapi_heartbeat_t		__heartbeat			= VCC_PAKAPI_DEF_HEARTBEAT;
+static vccpakapi_status_t			__status			= VCC_PAKAPI_DEF_STATUS;
+//static vccpakapi_getaudiosample_t	__getAudioSample	= VCC_PAKAPI_DEF_AUDIOSAMPLE;
+//static vccpakapi_reset_t			__reset				= VCC_PAKAPI_DEF_RESET;
+static vccpakapi_portread_t			__portRead			= VCC_PAKAPI_DEF_PORTREAD;
+static vccpakapi_portwrite_t		__portWrite			= VCC_PAKAPI_DEF_PORTWRITE;
+static vcccpu_read8_t				__memRead			= VCC_PAKAPI_DEF_MEMREAD;
+//static vcccpu_write8_t			__memWrite			= VCC_PAKAPI_DEF_MEMWRITE;
+static vccpakapi_setmemptrs_t		__memPointers		= VCC_PAKAPI_DEF_MEMPOINTERS;
+//static vccpakapi_setcartptr_t		__setCartPtr		= VCC_PAKAPI_DEF_SETCART;
+//static vccpakapi_setintptr_t		__assertInterrupt	= VCC_PAKAPI_DEF_ASSERTINTERRUPT;
+static vccpakapi_setinipath_t		__setINIPath		= VCC_PAKAPI_DEF_SETINIPATH;
+
+#endif
+
+/****************************************************************************/
+/*
+DLL Main entry point (Windows)
+*/
 BOOL WINAPI DllMain(
 	HINSTANCE hinstDLL,  // handle to DLL module
 	DWORD fdwReason,     // reason for calling function
 	LPVOID lpReserved)  // reserved
 {
-	if (fdwReason == DLL_PROCESS_DETACH) //Clean Up 
+	switch (fdwReason)
 	{
-		UnmountHD(0);
-		UnmountHD(1);
+		case DLL_PROCESS_ATTACH:
+		{
+			// one-time init
+			g_hinstDLL = hinstDLL;
+		}
+		break;
 
-		return(1);
+		case DLL_PROCESS_DETACH:
+		{
+			// one time destruction
+			UnmountHD(0);
+			UnmountHD(1);
+		}
+		break;
 	}
-
-	g_hinstDLL = hinstDLL;
 
 	return(1);
 }
