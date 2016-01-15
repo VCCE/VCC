@@ -40,39 +40,40 @@ This file is part of VCC (Virtual Color Computer).
 #include "memboard.h"
 #include "defines.h"
 
+#include "../vccPakAPI.h"
+
 #include <windows.h>
 #include "resource.h" 
-#
-#include "../vccPakAPI.h"
 
 /****************************************************************************/
 
 static HINSTANCE	g_hinstDLL	= NULL;
 static HWND			g_hWnd		= NULL;
-static int			ScanCount	= 0;
-static int			LastSector	= 0;
+static int			g_id = 0;
+
 //static vccapi_dynamicmenucallback_t DynamicMenuCallback = NULL;
 
+static int			ScanCount	= 0;
+static int			LastSector	= 0;
+
 /****************************************************************************/
-/**
-	VCC calls this to get the module name
-*/
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char *ModName,char *CatNumber,vccapi_dynamicmenucallback_t Temp, void * wndHandle)
+
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
+{
+	g_id = id;
+	g_hWnd = (HWND)wndHandle;
+
+	//DynamicMenuCallback = Temp;
+
+	InitMemBoard();
+}
+
+/****************************************************************************/
+
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
 {
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
-
-	// save window handle from VCC
-	g_hWnd = (HWND)wndHandle;
-
-	// initialize the RamPak - allocate
-	InitMemBoard();
-
-//	DynamicMenuCallback = Temp;
-//	if (DynamicMenuCallback  != NULL)
-//  {
-//		BuildDynaMenu();		
-//  }
 }
 
 /****************************************************************************/
@@ -81,12 +82,12 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char *ModName,char 
 
 	we can return a short string
 */
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * Temp)
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
 {
 	int	sector = (((int)g_Address >> 8) & 0x00FF) | (((int)g_Block << 8) & 0xFF00);
 
-	strcpy(Temp, "RamPak: ");
-	strcat(Temp, DStatus);
+	strcpy(buffer, "RamPak: ");
+	strcat(buffer, DStatus);
 
 	ScanCount++;
 	if ( sector != LastSector )
@@ -149,22 +150,60 @@ extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned 
 }
 
 /****************************************************************************/
-/**
-	Main entry point for the DLL (Windows)
+/*
+	Debug only simple check to verify API matches the definitions
+	If the Pak API changes for one of our defined functions it
+	should produce a compile error
+*/
+
+#ifdef _DEBUG
+
+static vccpakapi_init_t				__init				= VCC_PAKAPI_DEF_INIT;
+static vccpakapi_getname_t			__getName			= VCC_PAKAPI_DEF_GETNAME;
+//static vccpakapi_dynmenubuild_t	__dynMenuBuild		= VCC_PAKAPI_DEF_DYNMENUBUILD;
+//static vccpakapi_config_t			__config			= VCC_PAKAPI_DEF_CONFIG;
+//static vccpakapi_heartbeat_t		__heartbeat			= VCC_PAKAPI_DEF_HEARTBEAT;
+static vccpakapi_status_t			__status			= VCC_PAKAPI_DEF_STATUS;
+//static vccpakapi_getaudiosample_t	__getAudioSample	= VCC_PAKAPI_DEF_AUDIOSAMPLE;
+//static vccpakapi_reset_t			__reset				= VCC_PAKAPI_DEF_RESET;
+static vccpakapi_portread_t			__portRead			= VCC_PAKAPI_DEF_PORTREAD;
+static vccpakapi_portwrite_t		__portWrite			= VCC_PAKAPI_DEF_PORTWRITE;
+//static vcccpu_read8_t				__memRead			= VCC_PAKAPI_DEF_MEMREAD;
+//static vcccpu_write8_t			__memWrite			= VCC_PAKAPI_DEF_MEMWRITE;
+//static vccpakapi_setmemptrs_t		__memPointers		= VCC_PAKAPI_DEF_MEMPOINTERS;
+//static vccpakapi_setcartptr_t		__setCartPtr		= VCC_PAKAPI_DEF_SETCART;
+//static vccpakapi_setintptr_t		__assertInterrupt	= VCC_PAKAPI_DEF_ASSERTINTERRUPT;
+//static vccpakapi_setinipath_t		__setINIPath		= VCC_PAKAPI_DEF_SETINIPATH;
+
+#endif // _DEBUG
+
+/****************************************************************************/
+/****************************************************************************/
+
+/*
+	DLL Main entry point (Windows)
 */
 BOOL WINAPI DllMain(
 	HINSTANCE hinstDLL,  // handle to DLL module
 	DWORD fdwReason,     // reason for calling function
 	LPVOID lpReserved)  // reserved
 {
-	if (fdwReason == DLL_PROCESS_DETACH) //Clean Up 
+	switch (fdwReason)
 	{
-		DestroyMemBoard();
+		case DLL_PROCESS_ATTACH:
+		{
+			// one-time init
+			g_hinstDLL = hinstDLL;
+		}
+		break;
 
-		return(1);
+		case DLL_PROCESS_DETACH:
+		{
+			// one time destruction
+			DestroyMemBoard();
+		}
+		break;
 	}
-
-	g_hinstDLL = hinstDLL;
 
 	return(1);
 }

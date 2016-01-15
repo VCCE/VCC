@@ -1,3 +1,8 @@
+/****************************************************************************/
+/*
+*/
+/****************************************************************************/
+
 // Note: had to tell MSVC to compile as C++.  for some reason it ended
 // up including C++ headers and would not compile until that change was made
 
@@ -14,6 +19,26 @@
 #include "../fileops.h"
 #include "../pakinterface.h"
 
+/****************************************************************************/
+/*
+	Forward declarations
+*/
+
+unsigned char LoadExtRom(char *);
+void SetDWTCPConnectionEnable(unsigned int enable);
+int dw_setaddr(char *bufdwaddr);
+int dw_setport(char *bufdwport);
+void WriteLog(char *Message, unsigned char Type);
+void LoadConfig(void);
+void SaveConfig(void);
+
+LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
+
+/****************************************************************************/
+/*
+	Global variables
+*/
+
 // socket
 static SOCKET dwSocket = 0;
 
@@ -21,7 +46,8 @@ static vccapi_setcart_t PakSetCart = NULL;
 
 static HINSTANCE g_hinstDLL=NULL;
 static HWND g_hWnd = NULL;
-LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
+static int g_id = 0;
+
 static char IniFile[MAX_PATH]="";
 static unsigned char HDBRom[8192];
 static bool DWTCPEnabled = false;
@@ -57,44 +83,20 @@ char msg[MAX_PATH];
 // log lots of stuff...
 static boolean logging = false;
 
-static void (*DynamicMenuCallback)( char *,int, int)=NULL;
-unsigned char LoadExtRom(char *);
-void SetDWTCPConnectionEnable(unsigned int enable);
-int dw_setaddr(char *bufdwaddr);
-int dw_setport(char *bufdwport);
-void WriteLog(char *Message,unsigned char Type);
-void BuildDynaMenu(void);
-void LoadConfig(void);
-void SaveConfig(void);
+static vccapi_dynamicmenucallback_t DynamicMenuCallback = NULL;
 
-// dll entry hook
-BOOL APIENTRY DllMain( HINSTANCE  hinstDLL, 
-                       DWORD  ul_reason_for_call, 
-                       LPVOID lpReserved
-					 )
+
+/****************************************************************************/
+/**
+*/
+void vccPakRebuildMenu()
 {
-    switch (ul_reason_for_call)
-	{
-		case DLL_PROCESS_ATTACH:
-			// init
-			g_hinstDLL=hinstDLL;
-			LastStats = GetTickCount();
-			SetDWTCPConnectionEnable(1);
+	DynamicMenuCallback(g_id, "", VCC_DYNMENU_FLUSH, DMENU_TYPE_NONE);
 
-			break;
-		case DLL_PROCESS_DETACH:
-			// shutdown
-			break;
-
-		// not used by Vcc
-		case DLL_THREAD_ATTACH:
-		case DLL_THREAD_DETACH:
-			break;
-    }
-
-    return TRUE;
+	DynamicMenuCallback(g_id, "", VCC_DYNMENU_REFRESH, DMENU_TYPE_NONE);
 }
 
+/****************************************************************************/
 
 // coco checks for data
 unsigned char dw_status( void )
@@ -404,197 +406,249 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 
 }
 
-
-
-
-
-
-
-
-
-// dll exported functions
-	__declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char *ModName,char *CatNumber,vccapi_dynamicmenucallback_t Temp, void * wndHandle)
+void WriteLog(char *Message, unsigned char Type)
+{
+	if (logging)
 	{
-		g_hWnd = (HWND)wndHandle;
-
-		LoadString(g_hinstDLL,IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
-		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
-		strcpy(ModName,"HDBDOS/DW/Becker");
-
-		DynamicMenuCallback =Temp;
-		if (DynamicMenuCallback  != NULL)
-			BuildDynaMenu();
-
-		return ;
-	}
-
-	__declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port,unsigned char Data)
-	{
-		switch (Port)
+		static HANDLE hout = NULL;
+		static FILE  *disk_handle = NULL;
+		unsigned long dummy;
+		switch (Type)
 		{
-			// write data 
-			case 0x42:
-				dw_write(Data);
-				break;
+		case TOCONS:
+			if (hout == NULL)
+			{
+				AllocConsole();
+				hout = GetStdHandle(STD_OUTPUT_HANDLE);
+				SetConsoleTitle("Logging Window");
+			}
+			WriteConsole(hout, Message, strlen(Message), &dummy, 0);
+			break;
+
+		case TOFILE:
+			if (disk_handle == NULL)
+				disk_handle = fopen("c:\\VccLog.txt", "w");
+
+			fprintf(disk_handle, "%s\r\n", Message);
+			fflush(disk_handle);
+			break;
 		}
-		return;
 	}
+}
 
 
-	__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
+void LoadConfig(void)
+{
+	char ModName[MAX_LOADSTRING] = "";
+	char saddr[MAX_LOADSTRING] = "";
+	char sport[MAX_LOADSTRING] = "";
+	char DiskRomPath[MAX_PATH];
+
+	LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
+	GetPrivateProfileString(ModName, "DWServerAddr", "", saddr, MAX_PATH, IniFile);
+	GetPrivateProfileString(ModName, "DWServerPort", "", sport, MAX_PATH, IniFile);
+
+	if (strlen(saddr) > 0)
+		dw_setaddr(saddr);
+	else
+		dw_setaddr("127.0.0.1");
+
+	if (strlen(sport) > 0)
+		dw_setport(sport);
+	else
+		dw_setport("65504");
+
+	vccPakRebuildMenu();
+
+	GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
+	PathRemoveFileSpec(DiskRomPath);
+	strcat(DiskRomPath, "hdbdwbck.rom");
+	LoadExtRom(DiskRomPath);
+	return;
+}
+
+void SaveConfig(void)
+{
+	char ModName[MAX_LOADSTRING] = "";
+	LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
+	WritePrivateProfileString(ModName, "DWServerAddr", dwaddress, IniFile);
+	sprintf(msg, "%d", dwsport);
+	WritePrivateProfileString(ModName, "DWServerPort", msg, IniFile);
+}
+
+unsigned char LoadExtRom(char *FilePath)	//Returns 1 on if loaded
+{
+	FILE *rom_handle = NULL;
+	unsigned short index = 0;
+	unsigned char RetVal = 0;
+
+	rom_handle = fopen(FilePath, "rb");
+	if (rom_handle == NULL)
+		memset(HDBRom, 0xFF, 8192);
+	else
 	{
-		switch (Port)
-		{
-			// read status
-			case 0x41:
-				if (dw_status() != 0)
-					return(2);
-				else
-					return(0);
-				break;
-			// read data 
-			case 0x42:
-				return(dw_read());
-				break;
-		}
-
-		return 0;
+		while ((feof(rom_handle) == 0) & (index<8192))
+			HDBRom[index++] = fgetc(rom_handle);
+		RetVal = 1;
+		fclose(rom_handle);
 	}
+	return(RetVal);
+}
+
+/****************************************************************************/
+/****************************************************************************/
 /*
-	__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_RESET(void)
-	{
-		if (PakSetCart!=NULL)
-			PakSetCart(1);
-		return(0);
-	}
+	VCC Pak API
 */
-	__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_SETCART(vccapi_setcart_t Pointer)
+
+/****************************************************************************/
+
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
+{
+	g_id = id;
+	g_hWnd = (HWND)wndHandle;
+
+	DynamicMenuCallback = Temp;
+}
+
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
+{
+	LoadString(g_hinstDLL,IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
+	LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
+}
+
+__declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port,unsigned char Data)
+{
+	switch (Port)
 	{
-		
-		PakSetCart=Pointer;
-		return(0);
+		// write data 
+		case 0x42:
+			dw_write(Data);
+			break;
+	}
+	return;
+}
+
+
+__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
+{
+	switch (Port)
+	{
+		// read status
+		case 0x41:
+			if (dw_status() != 0)
+				return(2);
+			else
+				return(0);
+			break;
+		// read data 
+		case 0x42:
+			return(dw_read());
+			break;
 	}
 
-	__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
-	{
-		//sprintf(msg,"PalMemRead8: addr %d  val %d\n",(Address & 8191), Rom[Address & 8191]);
-        //WriteLog(msg,TOCONS);
-		return(HDBRom[Address & 8191]);
+	return 0;
+}
+/*
+__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_RESET(void)
+{
+	if (PakSetCart!=NULL)
+		PakSetCart(1);
+	return(0);
+}
+*/
+
+__declspec(dllexport) void VCC_PAKAPI_DEF_SETCART(vccapi_setcart_t Pointer)
+{
+	PakSetCart=Pointer;
+}
+
+__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
+{
+	//sprintf(msg,"PalMemRead8: addr %d  val %d\n",(Address & 8191), Rom[Address & 8191]);
+    //WriteLog(msg,TOCONS);
+	return(HDBRom[Address & 8191]);
 	
-	}
+}
 
-	__declspec(dllexport) void VCC_PAKAPI_DEF_HEARTBEAT(void)
-	{
-		// flush write buffer in the future..?
-		return;
-	}
+__declspec(dllexport) void VCC_PAKAPI_DEF_HEARTBEAT(void)
+{
+	// flush write buffer in the future..?
+	return;
+}
 
-	__declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char *DWStatus)
-	{
-        // calculate speed
-        DWORD sinceCalc = GetTickCount() - LastStats;
-        if (sinceCalc > STATS_PERIOD_MS)
-        {
-                LastStats += sinceCalc;
+__declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
+{
+    // calculate speed
+    DWORD sinceCalc = GetTickCount() - LastStats;
+    if (sinceCalc > STATS_PERIOD_MS)
+    {
+        LastStats += sinceCalc;
                 
-                ReadSpeed = 8.0f * (BytesReadSince / (1000.0f - sinceCalc));
-                WriteSpeed = 8.0f * (BytesWrittenSince / (1000.0f - sinceCalc));
+        ReadSpeed = 8.0f * (BytesReadSince / (1000.0f - sinceCalc));
+        WriteSpeed = 8.0f * (BytesWrittenSince / (1000.0f - sinceCalc));
 
-                BytesReadSince = 0;
-                BytesWrittenSince = 0;
-        }
+        BytesReadSince = 0;
+        BytesWrittenSince = 0;
+	}
         
-
-        if (DWTCPEnabled)
+    if (DWTCPEnabled)
+    {
+        if (retry)
         {
-                if (retry)
-                {
-                        sprintf(DWStatus,"DW: Try %s", curaddress);
-                }
-                else if (dwSocket == 0)
-                {
-                        sprintf(DWStatus,"DW: ConError");
-                }
-                else
-                {
-                        int buffersize = InWritePos - InReadPos;
-                        if (InReadPos > InWritePos)
-                                buffersize = BUFFER_SIZE - InReadPos + InWritePos;
-
-                        
-                        sprintf(DWStatus,"DW: ConOK  R:%04.1f W:%04.1f", ReadSpeed , WriteSpeed);
-
-                        
-                }
+                sprintf(buffer,"DW: Try %s", curaddress);
+        }
+        else if (dwSocket == 0)
+        {
+                sprintf(buffer,"DW: ConError");
         }
         else
         {
-                        sprintf(DWStatus,"");
+                int buffersize = InWritePos - InReadPos;
+                if (InReadPos > InWritePos)
+                        buffersize = BUFFER_SIZE - InReadPos + InWritePos;
+   
+                sprintf(buffer,"DW: ConOK  R:%04.1f W:%04.1f", ReadSpeed , WriteSpeed);
         }
-        return;
 	}
+    else
+    {
+         sprintf(buffer,"");
+    }
+}
 
-
-void BuildDynaMenu(void)
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_DYNMENUBUILD(void)
 {
 	if (DynamicMenuCallback == NULL)
 	{
 		// nice message, very informativce
 		MessageBox(0, "No good", "Ok", 0);
+		return;
 	}
-	DynamicMenuCallback("", 0, 0);
-	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "DriveWire Server..",5016,DMENU_STANDALONE);
-	DynamicMenuCallback( "",1,0);
-	
+
+	DynamicMenuCallback(g_id, "", 0, DMENU_TYPE_NONE);
+
+	DynamicMenuCallback(g_id, "", 6000, DMENU_TYPE_SEPARATOR);
+
+	DynamicMenuCallback(g_id, "DriveWire Server..", 5016, DMENU_TYPE_STANDALONE);
+
+	DynamicMenuCallback(g_id, "", 1, DMENU_TYPE_NONE);
 }
 
-
-	__declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(unsigned char MenuID)
-	{
-
-		DialogBox(g_hinstDLL, (LPCTSTR)IDD_PROPPAGE, NULL, (DLGPROC)Config);
-		BuildDynaMenu();
-		return;
-	}
-
-	__declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
-	{
-		strcpy(IniFile,IniFilePath);
-		LoadConfig();
-		return;
-	}
-
-
-void WriteLog(char *Message,unsigned char Type)
+__declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(int MenuID)
 {
-	if (logging)
-	{
-		static HANDLE hout=NULL;
-		static FILE  *disk_handle=NULL;
-		unsigned long dummy;
-		switch (Type)
-		{
-		case TOCONS:
-			if (hout==NULL)
-			{
-				AllocConsole();
-				hout=GetStdHandle(STD_OUTPUT_HANDLE);
-				SetConsoleTitle("Logging Window"); 
-			}
-			WriteConsole(hout,Message,strlen(Message),&dummy,0);
-			break;
+	DialogBox(g_hinstDLL, (LPCTSTR)IDD_PROPPAGE, NULL, (DLGPROC)Config);
 
-		case TOFILE:
-		if (disk_handle ==NULL)
-			disk_handle=fopen("c:\\VccLog.txt","w");
-
-		fprintf(disk_handle,"%s\r\n",Message);
-		fflush(disk_handle);
-		break;
-		}
-	}
+	vccPakRebuildMenu();
 }
+
+__declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
+{
+	strcpy(IniFile,IniFilePath);
+	LoadConfig();
+}
+
+/****************************************************************************/
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -663,62 +717,65 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 
+/****************************************************************************/
+/*
+	Debug only simple check to verify API matches the definitions
+	If the Pak API changes for one of our defined functions it
+	should produce a compile error
+*/
 
-void LoadConfig(void)
+#ifdef _DEBUG
+
+static vccpakapi_init_t				__init				= VCC_PAKAPI_DEF_INIT;
+static vccpakapi_getname_t			__getName			= VCC_PAKAPI_DEF_GETNAME;
+static vccpakapi_dynmenubuild_t		__dynMenuBuild		= VCC_PAKAPI_DEF_DYNMENUBUILD;
+static vccpakapi_config_t			__config			= VCC_PAKAPI_DEF_CONFIG;
+static vccpakapi_heartbeat_t		__heartbeat			= VCC_PAKAPI_DEF_HEARTBEAT;
+static vccpakapi_status_t			__status			= VCC_PAKAPI_DEF_STATUS;
+//static vccpakapi_getaudiosample_t	__getAudioSample	= VCC_PAKAPI_DEF_AUDIOSAMPLE;
+//static vccpakapi_reset_t			__reset				= VCC_PAKAPI_DEF_RESET;
+static vccpakapi_portread_t			__portRead			= VCC_PAKAPI_DEF_PORTREAD;
+static vccpakapi_portwrite_t		__portWrite			= VCC_PAKAPI_DEF_PORTWRITE;
+static vcccpu_read8_t				__memRead			= VCC_PAKAPI_DEF_MEMREAD;
+//static vcccpu_write8_t			__memWrite			= VCC_PAKAPI_DEF_MEMWRITE;
+//static vccpakapi_setmemptrs_t		__memPointers		= VCC_PAKAPI_DEF_MEMPOINTERS;
+static vccpakapi_setcartptr_t		__setCartPtr		= VCC_PAKAPI_DEF_SETCART;
+//static vccpakapi_setintptr_t		__assertInterrupt	= VCC_PAKAPI_DEF_ASSERTINTERRUPT;
+static vccpakapi_setinipath_t		__setINIPath		= VCC_PAKAPI_DEF_SETINIPATH;
+
+#endif // _DEBUG
+
+/****************************************************************************/
+/****************************************************************************/
+
+/*
+	DLL Main entry point (Windows)
+*/
+BOOL WINAPI DllMain(
+	HINSTANCE hinstDLL,  // handle to DLL module
+	DWORD fdwReason,     // reason for calling function
+	LPVOID lpReserved)  // reserved
 {
-	char ModName[MAX_LOADSTRING]="";
-	char saddr[MAX_LOADSTRING]="";
-	char sport[MAX_LOADSTRING]="";
-	char DiskRomPath[MAX_PATH];
-
-	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	GetPrivateProfileString(ModName,"DWServerAddr","",saddr,MAX_PATH,IniFile);
-	GetPrivateProfileString(ModName,"DWServerPort","",sport,MAX_PATH,IniFile);
-	
-	if (strlen(saddr) > 0)
-		dw_setaddr(saddr);
-	else
-		dw_setaddr("127.0.0.1");
-
-	if (strlen(sport) > 0)
-		dw_setport(sport);
-	else
-		dw_setport("65504");
-
-	
-	BuildDynaMenu();
-	GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
-	PathRemoveFileSpec(DiskRomPath);
-	strcat( DiskRomPath, "hdbdwbck.rom");
-	LoadExtRom(DiskRomPath);
-	return;
-}
-
-void SaveConfig(void)
-{
-	char ModName[MAX_LOADSTRING]="";
-	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	WritePrivateProfileString(ModName,"DWServerAddr",dwaddress,IniFile);
-	sprintf(msg, "%d", dwsport);
-	WritePrivateProfileString(ModName,"DWServerPort",msg,IniFile);
-	return;
-}
-
-unsigned char LoadExtRom( char *FilePath)	//Returns 1 on if loaded
-{
-	FILE *rom_handle = NULL;
-	unsigned short index = 0;
-	unsigned char RetVal = 0;
-
-	rom_handle = fopen(FilePath, "rb");
-	if (rom_handle == NULL)
-		memset(HDBRom, 0xFF, 8192);
-	else
+	switch (fdwReason)
 	{
-		while ((feof(rom_handle) == 0) & (index<8192))
-			HDBRom[index++] = fgetc(rom_handle);
-		RetVal = 1;
-		fclose(rom_handle);
+		case DLL_PROCESS_ATTACH:
+		{
+			// one-time init
+			g_hinstDLL = hinstDLL;
+
+			LastStats = GetTickCount();
+			SetDWTCPConnectionEnable(1);
+		}
+		break;
+
+		case DLL_PROCESS_DETACH:
+		{
+			// one time destruction
+		}
+		break;
 	}
-	return(RetVal);
+
+	return(1);
 }
+
+/****************************************************************************/

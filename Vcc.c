@@ -29,16 +29,6 @@ This file is part of VCC (Virtual Color Computer).
 //#define ABOVE_NORMAL_PRIORITY_CLASS  32768
 #endif 
 
-#define TH_RUNNING	0
-#define TH_REQWAIT	1
-#define TH_WAITING	2
-
-#include <objbase.h>
-#include <windows.h>
-#include <process.h>
-#include <commdlg.h>
-#include <stdio.h>
-#include <Mmsystem.h>
 #include "fileops.h"
 #include "defines.h"
 #include "resource.h"
@@ -60,9 +50,18 @@ This file is part of VCC (Virtual Color Computer).
 #include "DirectDrawInterface.h"
 //#include "logger.h"
 
+#include <objbase.h>
+#include <windows.h>
+#include <process.h>
+#include <commdlg.h>
+#include <stdio.h>
+#include <Mmsystem.h>
+#include <assert.h>
+
 static HANDLE hout=NULL;
 
 SystemState EmuState;
+
 static bool DialogOpen=false;
 static unsigned char Throttle=0;
 static unsigned char AutoStart=1;
@@ -70,13 +69,14 @@ static unsigned char Qflag=0;
 static char CpuName[20]="CPUNAME";
 
 char QuickLoadFile[256];
-/***Forward declarations of functions included in this code module*****/
-BOOL				InitInstance	(HINSTANCE, int);
-LRESULT CALLBACK	About			(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK WndProc( HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam );
+/** Forward declarations of functions included in this code module */
+BOOL				InitInstance(HINSTANCE, int);
+LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK	WndProc( HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam );
 
 void SoftReset(void);
 //void LoadIniFile(void);
+
 unsigned __stdcall EmuLoop(void *);
 unsigned __stdcall CartLoad(void *);
 
@@ -103,6 +103,7 @@ static unsigned char FlagEmuStop=TH_RUNNING;
 //static CRITICAL_SECTION  FrameRender;
 
 /*--------------------------------------------------------------------------*/
+
 int APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPSTR     lpCmdLine,
@@ -121,7 +122,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 //	CoInitializeEx(NULL,COINIT_MULTITHREADED);
 //	CoInitialize(NULL);
 //	InitializeCriticalSection();
-	OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
+	OleInitialize(NULL); // Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
 	if ( strlen(lpCmdLine) !=0)
@@ -138,7 +139,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	EmuState.WindowSize.x=640;
 	EmuState.WindowSize.y=480;
 	InitInstance (hInstance, nCmdShow);
-	if (!CreateDDWindow(&EmuState))
+	if ( !CreateDDWindow(&EmuState) )
 	{
 		MessageBox(0,"Can't create primary Window","Error",0);
 		exit(0);
@@ -146,14 +147,13 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	
 	Cls(0,&EmuState);
 
-	vccPakDynMenuCallback("",0, 0);
-	vccPakDynMenuCallback("",1, 0);
+	vccPakRebuildMenu();
 
-	LoadConfig(&EmuState);			//Loads the default config file Vcc.ini from the exec directory
-	EmuState.ResetPending=2;
-	SetClockSpeed(1);	//Default clock speed .89 MHZ	
+	LoadConfig(&EmuState);	// Loads the default config file Vcc.ini from the exec directory
+	EmuState.ResetPending = VCC_RESET_PENDING_HARD;
+	SetClockSpeed(1);	// Default clock speed .89 MHZ	
 	BinaryRunning = true;
-	EmuState.EmulationRunning=AutoStart;
+	EmuState.EmulationRunning = AutoStart;
 	if (strlen(lpCmdLine)!=0)
 	{
 		Qflag=255;
@@ -200,12 +200,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	return Msg.wParam;
 }
 
-
 /*--------------------------------------------------------------------------*/
 // The Window Procedure
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	int wmId, wmEvent;
+	int wmId;
+	//int wmEvent;
 	unsigned int x,y;
 	unsigned char kb_char; 
 	static unsigned char OEMscan=0;
@@ -219,12 +219,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		case WM_COMMAND:
 			wmId    = LOWORD(wParam); 
-			wmEvent = HIWORD(wParam); 
+			//wmEvent = HIWORD(wParam); 
 			// Parse the menu selections:
 			// Added for Dynamic menu system
 			if ( (wmId >=ID_SDYNAMENU) & (wmId <=ID_EDYNAMENU) )
 			{
-				vccPakDynMenuActivated (wmId - ID_SDYNAMENU);	//Calls to the loaded DLL so it can do the right thing
+				vccPakDynMenuActivated(wmId - ID_SDYNAMENU);
 				break;
 			}
 
@@ -274,7 +274,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case ID_FILE_RESET:
 					if (EmuState.EmulationRunning)
-						EmuState.ResetPending=2;
+						EmuState.ResetPending = VCC_RESET_PENDING_HARD;
 					break;
 
 				case ID_FILE_RUN:
@@ -284,12 +284,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case ID_FILE_RESET_SFT:
 					if (EmuState.EmulationRunning)
-						EmuState.ResetPending=1;
+						EmuState.ResetPending = VCC_RESET_PENDING_SOFT;
 					break;
 
 				case ID_FILE_LOAD:
 					//LoadIniFile();
-					EmuState.ResetPending=2;
+					EmuState.ResetPending = VCC_RESET_PENDING_HARD;
 					SetClockSpeed(1); //Default clock speed .89 MHZ	
 					break;
 
@@ -374,7 +374,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				case DIK_F5:
 					if ( EmuState.EmulationRunning )
 					{
-						EmuState.ResetPending = 1;
+						EmuState.ResetPending = VCC_RESET_PENDING_SOFT;
 					}
 				break;
 
@@ -393,7 +393,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				case DIK_F9:
 					EmuState.EmulationRunning=!EmuState.EmulationRunning;
 					if ( EmuState.EmulationRunning )
-						EmuState.ResetPending=2;
+						EmuState.ResetPending = VCC_RESET_PENDING_HARD;
 					else
 						SetStatusBarText("",&EmuState);
 				break;
@@ -645,7 +645,7 @@ unsigned char SetCpuType( unsigned char Tmp)
 
 void DoReboot(void)
 {
-	EmuState.ResetPending=2;
+	EmuState.ResetPending = VCC_RESET_PENDING_HARD;
 	return;
 }
 
@@ -709,37 +709,42 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		for (uint8_t Frames = 1; Frames <= EmuState.FrameSkip; Frames++)
 		{
 			FrameCounter++;
-			if (EmuState.ResetPending != 0) {
-				switch (EmuState.ResetPending)
-				{
-				case 1:	//Soft Reset
-					SoftReset();
-					break;
 
-				case 2:	//Hard Reset
-					UpdateConfig();
-					DoCls(&EmuState);
-					DoHardReset(&EmuState);
-					break;
+			switch (EmuState.ResetPending)
+			{
+			case VCC_RESET_PENDING_NONE:
+				break;
+			case VCC_RESET_PENDING_SOFT:
+				SoftReset();
+				break;
 
-				case 3:
-					DoCls(&EmuState);
-					break;
+			case VCC_RESET_PENDING_HARD:
+				UpdateConfig();
+				DoCls(&EmuState);
+				DoHardReset(&EmuState);
+				break;
 
-				case 4:
-					UpdateConfig();
-					DoCls(&EmuState);
-					break;
+			case VCC_RESET_PENDING_CLEAR:
+				DoCls(&EmuState);
+				break;
 
-				default:
-					break;
-				}
-				EmuState.ResetPending = 0;
+			case VCC_RESET_PENDING_UPDATECONFIG:
+				UpdateConfig();
+				DoCls(&EmuState);
+				break;
+
+			default:
+				assert(0 && "invalid reset pending value");
+				break;
 			}
+			EmuState.ResetPending = VCC_RESET_PENDING_NONE;
 			
-			if (EmuState.EmulationRunning == 1) {
+			if ( EmuState.EmulationRunning == 1) 
+			{
 				FPS += RenderFrame(&EmuState);
-			} else {
+			} 
+			else 
+			{
 				FPS += Static(&EmuState);
 			}
 		}
@@ -747,7 +752,7 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		FPS/=EmuState.FrameSkip;
 
 		// get status line from the Pak
-		vccPakGetStatus(EmuState.StatusLine);
+		vccPakGetStatus(EmuState.StatusLine,sizeof(EmuState.StatusLine));
 		
 		char ttbuff[256];
 		snprintf(ttbuff,sizeof(ttbuff),"Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s",EmuState.FrameSkip,FPS,CpuName,EmuState.CPUCurrentSpeed,EmuState.StatusLine);

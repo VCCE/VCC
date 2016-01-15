@@ -176,7 +176,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cloud9.h" />
-    <ClInclude Include="defines.h" />
     <ClInclude Include="IdeBus.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="SuperIDE.h" />

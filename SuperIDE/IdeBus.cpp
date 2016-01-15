@@ -258,19 +258,27 @@ void ExecuteCommand(void)
 	}
 }
 
-void ByteSwap (char *String)
+void ByteSwap (char * String)
 {
-	int Index=0,Index2=0;
-	int Lenth=strlen(String);
-	char *NewString=(char*)malloc(Lenth+1);
-	memset(NewString,NULL,Lenth+1);
+	int		Index		= 0;
+	int		Index2		= 0;
+	int		Lenth		= strlen(String);
+	char *	NewString	= (char*)malloc(Lenth+1);
 
-	for (Index=0;Index<(Lenth+1);Index++)
-		if (String[Index^1])
-			NewString[Index2++]=String[Index^1];
-	memcpy(String,NewString,Lenth);
-	free(NewString);
-	return;
+	if (NewString != NULL)
+	{
+		memset(NewString, NULL, Lenth + 1);
+
+		for (Index = 0; Index < (Lenth + 1); Index++)
+		{
+			if (String[Index ^ 1])
+			{
+				NewString[Index2++] = String[Index ^ 1];
+			}
+		}
+		memcpy(String, NewString, Lenth);
+		free(NewString);
+	}
 }
 
 HANDLE OpenDisk(char *ImageFile,unsigned char DiskNum)

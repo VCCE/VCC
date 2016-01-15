@@ -16,10 +16,11 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "fileops.h"
+
 #include <windows.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include "fileops.h"
 
 void ValidatePath(char *Path)
 {

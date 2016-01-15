@@ -162,7 +162,6 @@
   <ItemGroup>
     <ClInclude Include="cc3vhd.h" />
     <ClInclude Include="cloud9.h" />
-    <ClInclude Include="defines.h" />
     <ClInclude Include="harddisk.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

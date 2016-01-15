@@ -16,13 +16,6 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define DIRECTINPUT_VERSION 0x0800
-
-#include <windows.h>
-#include <commctrl.h>
-#include <stdio.h>
-#include <Richedit.h>
-
 #include "defines.h"
 #include "resource.h"
 #include "config.h"
@@ -40,6 +33,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "Cassette.h"
 
 //#include "logger.h"
+
+#include <commctrl.h>
+#include <stdio.h>
+#include <Richedit.h>
+
 #include <assert.h>
 
 extern SystemState EmuState;
@@ -359,9 +357,11 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			
 			TabCtrl_SetCurSel(hWndTabDialog,0);	//Set Initial Tab to 0
-			for (TabCount=0;TabCount<TABS;TabCount++)	//Hide All the Sub Panels
-				ShowWindow(g_hWndConfig[TabCount],SW_HIDE);
-			SetWindowPos(g_hWndConfig[0],HWND_TOP,10,30,0,0,SWP_NOSIZE|SWP_SHOWWINDOW);
+			for (TabCount = 0; TabCount < TABS; TabCount++)	//Hide All the Sub Panels
+			{
+				ShowWindow(g_hWndConfig[TabCount], SW_HIDE);
+			}
+			SetWindowPos(g_hWndConfig[0], HWND_TOP, 10, 30, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW);
 			RefreshJoystickStatus();
 		break;
 
@@ -381,12 +381,15 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			case IDOK:
 				hDlgBar=NULL;
 				hDlgTape=NULL;
-				EmuState.ResetPending=4;
-				if ( (CurrentConfig.RamSize != TempConfig.RamSize) | (CurrentConfig.CpuType != TempConfig.CpuType) )
-					EmuState.ResetPending=2;
+				EmuState.ResetPending = VCC_RESET_PENDING_UPDATECONFIG;
+				if ((CurrentConfig.RamSize != TempConfig.RamSize) | (CurrentConfig.CpuType != TempConfig.CpuType))
+				{
+					EmuState.ResetPending = VCC_RESET_PENDING_HARD;
+				}
 				if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) | (CurrentConfig.AudioRate != TempConfig.AudioRate))
-					SoundInit(EmuState.WindowHandle,SoundCards[TempConfig.SndOutDev].Guid,TempConfig.AudioRate);
-				
+				{
+					SoundInit(EmuState.WindowHandle, SoundCards[TempConfig.SndOutDev].Guid, TempConfig.AudioRate);
+				}
 				CurrentConfig=TempConfig;
 
 				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
@@ -408,11 +411,15 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 			case IDAPPLY:
-				EmuState.ResetPending=4;	
-				if ( (CurrentConfig.RamSize != TempConfig.RamSize) | (CurrentConfig.CpuType != TempConfig.CpuType) )
-					EmuState.ResetPending=2;
+				EmuState.ResetPending = VCC_RESET_PENDING_UPDATECONFIG;
+				if ((CurrentConfig.RamSize != TempConfig.RamSize) | (CurrentConfig.CpuType != TempConfig.CpuType))
+				{
+					EmuState.ResetPending = VCC_RESET_PENDING_HARD;
+				}
 				if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) | (CurrentConfig.AudioRate != TempConfig.AudioRate))
-					SoundInit(EmuState.WindowHandle,SoundCards[TempConfig.SndOutDev].Guid,TempConfig.AudioRate);
+				{
+					SoundInit(EmuState.WindowHandle, SoundCards[TempConfig.SndOutDev].Guid, TempConfig.AudioRate);
+				}
 
 				CurrentConfig=TempConfig;
 
@@ -462,8 +469,10 @@ void UpdateConfig (void)
 	SetMonitorType(CurrentConfig.MonitorType);
 	SetCartAutoStart(CurrentConfig.CartAutoStart);
 	if (CurrentConfig.RebootNow)
+	{
 		DoReboot();
-	CurrentConfig.RebootNow=0;
+	}
+	CurrentConfig.RebootNow = 0;
 }
 
 LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -475,11 +484,15 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			sprintf(OutBuffer,"%2.3f Mhz",(float)TempConfig.CPUMultiplyer*.894);
 			SendDlgItemMessage(hDlg,IDC_CLOCKDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 			SendDlgItemMessage(hDlg,IDC_CLOCKSPEED,TBM_SETPOS,TRUE,TempConfig.CPUMultiplyer);
-			for (temp=0;temp<=3;temp++)
-				SendDlgItemMessage(hDlg,Ramchoice[temp],BM_SETCHECK,(temp==TempConfig.RamSize),0);
-			for (temp=0;temp<=1;temp++)
-				SendDlgItemMessage(hDlg,Cpuchoice[temp],BM_SETCHECK,(temp==TempConfig.CpuType),0);
-			SendDlgItemMessage(hDlg,IDC_CPUICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)CpuIcons[TempConfig.CpuType]);
+			for (temp = 0; temp <= 3; temp++)
+			{
+				SendDlgItemMessage(hDlg, Ramchoice[temp], BM_SETCHECK, (temp == TempConfig.RamSize), 0);
+			}
+			for (temp = 0; temp <= 1; temp++)
+			{
+				SendDlgItemMessage(hDlg, Cpuchoice[temp], BM_SETCHECK, (temp == TempConfig.CpuType), 0);
+			}
+			SendDlgItemMessage(hDlg, IDC_CPUICON, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)CpuIcons[TempConfig.CpuType]);
 		break;
 
 		case WM_HSCROLL:
@@ -495,27 +508,31 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 				case IDC_512K:
 				case IDC_2M:
 				case IDC_8M:
-					for (temp=0;temp<=3;temp++)
-						if (LOWORD(wParam)==Ramchoice[temp])
+					for (temp = 0; temp <= 3; temp++)
+					{
+						if (LOWORD(wParam) == Ramchoice[temp])
 						{
-							for (temp2=0;temp2<=3;temp2++)
-								SendDlgItemMessage(hDlg,Ramchoice[temp2],BM_SETCHECK,0,0);
-							SendDlgItemMessage(hDlg,Ramchoice[temp],BM_SETCHECK,1,0);
-							TempConfig.RamSize=temp;
+							for (temp2 = 0; temp2 <= 3; temp2++)
+								SendDlgItemMessage(hDlg, Ramchoice[temp2], BM_SETCHECK, 0, 0);
+							SendDlgItemMessage(hDlg, Ramchoice[temp], BM_SETCHECK, 1, 0);
+							TempConfig.RamSize = temp;
 						}
+					}
 				break;
 
 				case IDC_6809:
 				case IDC_6309:
-					for (temp=0;temp<=1;temp++)
-						if (LOWORD(wParam)==Cpuchoice[temp])
+					for (temp = 0; temp <= 1; temp++)
+					{
+						if (LOWORD(wParam) == Cpuchoice[temp])
 						{
-							for (temp2=0;temp2<=1;temp2++)
-							SendDlgItemMessage(hDlg,Cpuchoice[temp2],BM_SETCHECK,0,0);
-							SendDlgItemMessage(hDlg,Cpuchoice[temp],BM_SETCHECK,1,0);
-							TempConfig.CpuType=temp;
-							SendDlgItemMessage(hDlg,IDC_CPUICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)CpuIcons[TempConfig.CpuType]);
+							for (temp2 = 0; temp2 <= 1; temp2++)
+								SendDlgItemMessage(hDlg, Cpuchoice[temp2], BM_SETCHECK, 0, 0);
+							SendDlgItemMessage(hDlg, Cpuchoice[temp], BM_SETCHECK, 1, 0);
+							TempConfig.CpuType = temp;
+							SendDlgItemMessage(hDlg, IDC_CPUICON, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)CpuIcons[TempConfig.CpuType]);
 						}
+					}
 				break;
 			}	//End switch LOWORD(wParam)
 		break;	//Break WM_COMMAND
@@ -628,17 +645,25 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			SendDlgItemMessage(hDlg,IDC_PROGRESSRIGHT,PBM_SETBARCOLOR,0,0xFFFF); 
 			SendDlgItemMessage(hDlg,IDC_PROGRESSLEFT,PBM_SETBKCOLOR,0,0);
 			SendDlgItemMessage(hDlg,IDC_PROGRESSRIGHT,PBM_SETBKCOLOR,0,0);
-			for (Index=0;Index<NumberOfSoundCards;Index++)
-				SendDlgItemMessage(hDlg,IDC_SOUNDCARD,CB_ADDSTRING,(WPARAM)0,(LPARAM)SoundCards[Index].CardName);
+			for (Index = 0; Index < NumberOfSoundCards; Index++)
+			{
+				SendDlgItemMessage(hDlg, IDC_SOUNDCARD, CB_ADDSTRING, (WPARAM)0, (LPARAM)SoundCards[Index].CardName);
+			}
 
-			for (Index=0;Index<4;Index++)
-				SendDlgItemMessage(hDlg,IDC_RATE,CB_ADDSTRING,(WPARAM)0,(LPARAM)RateList[Index]);
+			for (Index = 0; Index < 4; Index++)
+			{
+				SendDlgItemMessage(hDlg, IDC_RATE, CB_ADDSTRING, (WPARAM)0, (LPARAM)RateList[Index]);
+			}
 
 			SendDlgItemMessage(hDlg,IDC_RATE,CB_SETCURSEL,(WPARAM)TempConfig.AudioRate,(LPARAM)0);
 			TempConfig.SndOutDev=0;
-			for (Index=0;Index<NumberOfSoundCards;Index++)
-				if (!strcmp(SoundCards[Index].CardName,TempConfig.SoundCardName))
-					TempConfig.SndOutDev=Index;
+			for (Index = 0; Index < NumberOfSoundCards; Index++)
+			{
+				if (!strcmp(SoundCards[Index].CardName, TempConfig.SoundCardName))
+				{
+					TempConfig.SndOutDev = Index;
+				}
+			}
 			SendDlgItemMessage(hDlg,IDC_SOUNDCARD,CB_SETCURSEL,(WPARAM)TempConfig.SndOutDev,(LPARAM)0);
 			//EnableWindow( GetDlgItem(hDlg,IDC_MUTE),SndCardPresent);
 		break;
@@ -666,9 +691,11 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			SendDlgItemMessage(hDlg,IDC_ASPECT,BM_SETCHECK,TempConfig.Aspect,0);
 			sprintf(OutBuffer,"%i",TempConfig.FrameSkip);
 			SendDlgItemMessage(hDlg,IDC_FRAMEDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
-			for (temp=0;temp<=1;temp++)
-				SendDlgItemMessage(hDlg,Monchoice[temp],BM_SETCHECK,(temp==TempConfig.MonitorType),0);
-			SendDlgItemMessage(hDlg,IDC_MONTYPE,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[TempConfig.MonitorType]);
+			for (temp = 0; temp <= 1; temp++)
+			{
+				SendDlgItemMessage(hDlg, Monchoice[temp], BM_SETCHECK, (temp == TempConfig.MonitorType), 0);
+			}
+			SendDlgItemMessage(hDlg, IDC_MONTYPE, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)MonIcons[TempConfig.MonitorType]);
 		break;
 
 		case WM_HSCROLL:
@@ -686,14 +713,16 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			{
 				case IDC_COMPOSITE:
 				case IDC_RGB:
-					for (temp=0;temp<=1;temp++)
-						if (LOWORD(wParam)==Monchoice[temp])
+					for (temp = 0; temp <= 1; temp++)
+					{
+						if (LOWORD(wParam) == Monchoice[temp])
 						{
-							for (temp2=0;temp2<=1;temp2++)
-								SendDlgItemMessage(hDlg,Monchoice[temp2],BM_SETCHECK,0,0);
-							SendDlgItemMessage(hDlg,Monchoice[temp],BM_SETCHECK,1,0);
-							TempConfig.MonitorType=temp;
+							for (temp2 = 0; temp2 <= 1; temp2++)
+								SendDlgItemMessage(hDlg, Monchoice[temp2], BM_SETCHECK, 0, 0);
+							SendDlgItemMessage(hDlg, Monchoice[temp], BM_SETCHECK, 1, 0);
+							TempConfig.MonitorType = temp;
 						}
+					}
 					SendDlgItemMessage(hDlg,IDC_MONTYPE,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[TempConfig.MonitorType]);
 				break;
 

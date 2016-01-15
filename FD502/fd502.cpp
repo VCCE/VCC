@@ -30,14 +30,13 @@ This file is part of VCC (Virtual Color Computer).
 #include "wd1793.h"
 #include "distortc.h"
 
-#include "..\fileops.h"
-#include "../pakinterface.h"
+#include "../fileops.h"
 
 #include <stdio.h>
 #include "resource.h" 
 
 /*
-forward declarations
+	forward declarations
 */
 unsigned char SetChip(unsigned char);
 void LoadConfig(void);
@@ -56,7 +55,7 @@ LRESULT CALLBACK NewDisk(HWND, UINT, WPARAM, LPARAM);
 #define EXTROMSIZE 16384
 
 /*
- externals
+	externals
 */
 extern DiskInfo Drive[5];
 
@@ -65,8 +64,6 @@ extern DiskInfo Drive[5];
 */
 static vccpakapi_assertinterrupt_t	AssertInt = NULL;
 static vccapi_dynamicmenucallback_t DynamicMenuCallback = NULL;
-static vcccpu_read8_t				MemRead8 = NULL;
-static vcccpu_write8_t				MemWrite8 = NULL;
 
 /*
 	globals
@@ -89,15 +86,33 @@ static unsigned char PersistDisks=0;
 static char IniFile[MAX_PATH]="";
 static unsigned char TempSelectRom=0;
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
-static HINSTANCE g_hinstDLL = NULL;
-static HWND g_hWnd = NULL;
 static unsigned long RealDisks = 0;
 
-void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
+/** plug-in DLL Windows module instance handle */
+static HINSTANCE g_hinstDLL = NULL;
+/** main VCC system window */
+static HWND g_hWnd = NULL;
+/** id given to us by VCC that we give back when modifying the dynamic menus */
+static int g_id = 0;
+
+/**
+*/
+void vccPakRebuildMenu()
+{
+	DynamicMenuCallback(g_id, "", VCC_DYNMENU_FLUSH, DMENU_TYPE_NONE);
+
+	DynamicMenuCallback(g_id, "", VCC_DYNMENU_REFRESH, DMENU_TYPE_NONE);
+}
+
+/**
+*/
+void fd502CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
 {
 	AssertInt(Interupt,Latencey);
 }
 
+/**
+*/
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	static unsigned char CurrentDisk=0,temp=0,temp2=0;
@@ -186,7 +201,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				for (temp = 0; temp <= 3; temp++)
 					if (LOWORD(wParam) == ChipChoice[temp])
 					{
-						for (temp2 = 0; temp2 <= 3; temp2++)
+						for (temp2 = 0; temp2 < 3; temp2++)
 						{
 							SendDlgItemMessage(hDlg, ChipChoice[temp2], BM_SETCHECK, 0, 0);
 						}
@@ -325,53 +340,7 @@ unsigned char SetChip(unsigned char Tmp)
 	return(SelectRom);
 }
 
-void BuildDynaMenu(void)
-{
-	char TempMsg[64]="";
-	char TempBuf[MAX_PATH]="";
-	if (DynamicMenuCallback == NULL)
-	{
-		MessageBox(0, "No good", "Ok", 0);
-	}
-	DynamicMenuCallback("", 0, 0);
-	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "FD-502 Drive 0",6000,DMENU_HEAD);
-	DynamicMenuCallback( "Insert",5010,DMENU_SLAVE);
-	strcpy(TempMsg,"Eject: ");
-	strcpy(TempBuf,Drive[0].ImageName);
-	PathStripPath(TempBuf);
-	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5011,DMENU_SLAVE);
-
-	DynamicMenuCallback( "FD-502 Drive 1",6000,DMENU_HEAD);
-	DynamicMenuCallback( "Insert",5012,DMENU_SLAVE);
-	strcpy(TempMsg,"Eject: ");
-	strcpy(TempBuf,Drive[1].ImageName);
-	PathStripPath(TempBuf);
-	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5013,DMENU_SLAVE);
-
-	DynamicMenuCallback( "FD-502 Drive 2",6000,DMENU_HEAD);
-	DynamicMenuCallback( "Insert",5014,DMENU_SLAVE);
-	strcpy(TempMsg,"Eject: ");
-	strcpy(TempBuf,Drive[2].ImageName);
-	PathStripPath(TempBuf);
-	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5015,DMENU_SLAVE);
-//NEW
-	DynamicMenuCallback( "FD-502 Drive 3",6000,DMENU_HEAD);
-	DynamicMenuCallback( "Insert",5017,DMENU_SLAVE);
-	strcpy(TempMsg,"Eject: ");
-	strcpy(TempBuf,Drive[3].ImageName);
-	PathStripPath(TempBuf);
-	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5018,DMENU_SLAVE);
-//NEW 
-	DynamicMenuCallback( "FD-502 Config",5016,DMENU_STANDALONE);
-	DynamicMenuCallback( "",1,0);
-}
-
-long CreateDisk (unsigned char Disk)
+long CreateDisk(unsigned char Disk)
 {
 	NewDiskNumber=Disk;
 	DialogBox(g_hinstDLL, (LPCTSTR)IDD_NEWDISK, NULL, (DLGPROC)NewDisk);
@@ -389,11 +358,15 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 		case WM_INITDIALOG:
-			for (temp=0;temp<=2;temp++)
-				SendDlgItemMessage(hDlg,DiskType[temp],BM_SETCHECK,(temp==NewDiskType),0);
-			for (temp=0;temp<=3;temp++)
-				SendDlgItemMessage(hDlg,DiskTracks[temp],BM_SETCHECK,(temp==NewDiskTracks),0);
-			SendDlgItemMessage(hDlg,IDC_DBLSIDE,BM_SETCHECK,DblSided,0);
+			for (temp = 0; temp < 3; temp++)
+			{
+				SendDlgItemMessage(hDlg, DiskType[temp], BM_SETCHECK, (temp == NewDiskType), 0);
+			}
+			for (temp = 0; temp < 3; temp++)
+			{
+				SendDlgItemMessage(hDlg, DiskTracks[temp], BM_SETCHECK, (temp == NewDiskTracks), 0);
+			}
+			SendDlgItemMessage(hDlg, IDC_DBLSIDE, BM_SETCHECK, DblSided, 0);
 			strcpy(Dummy,TempFileName);
 			PathStripPath(Dummy);
 			SendDlgItemMessage(hDlg,IDC_TEXT1,WM_SETTEXT,strlen(Dummy),(LPARAM)(LPCSTR)Dummy);	
@@ -576,8 +549,7 @@ void LoadConfig(void)
 	GetPrivateProfileString(ModName, "LastRomPath", "", LastRomPath, MAX_PATH, IniFile);
 	GetPrivateProfileString(ModName, "LastDskPath", "", LastDskPath, MAX_PATH, IniFile);
 
-	BuildDynaMenu();
-	return;
+	vccPakRebuildMenu();
 }
 
 void SaveConfig(void)
@@ -634,21 +606,65 @@ unsigned char LoadExtRom( unsigned char RomType,char *FilePath)	//Returns 1 on i
 	VCC Pak API
 */
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char *ModName, char *CatNumber, vccapi_dynamicmenucallback_t Temp, void * wndHandle)
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
 {
-	int ErrorNumber = 0;
-
+	g_id = id;
 	g_hWnd = (HWND)wndHandle;
-	LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
-	LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
+
 	DynamicMenuCallback = Temp;
-	if (DynamicMenuCallback != NULL)
-	{
-		BuildDynaMenu();
-	}
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(unsigned char MenuID)
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
+{
+	LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
+	LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
+}
+
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_DYNMENUBUILD(void)
+{
+	char TempMsg[64] = "";
+	char TempBuf[MAX_PATH] = "";
+
+	DynamicMenuCallback(g_id, "", 6000, DMENU_TYPE_SEPARATOR);
+
+	DynamicMenuCallback(g_id, "FD-502 Drive 0", 6000, DMENU_TYPE_HEAD);
+	DynamicMenuCallback(g_id, "Insert", 5010, DMENU_TYPE_SLAVE);
+	strcpy(TempMsg, "Eject: ");
+	strcpy(TempBuf, Drive[0].ImageName);
+	PathStripPath(TempBuf);
+	strcat(TempMsg, TempBuf);
+	DynamicMenuCallback(g_id, TempMsg, 5011, DMENU_TYPE_SLAVE);
+
+	DynamicMenuCallback(g_id, "FD-502 Drive 1", 6000, DMENU_TYPE_HEAD);
+	DynamicMenuCallback(g_id, "Insert", 5012, DMENU_TYPE_SLAVE);
+	strcpy(TempMsg, "Eject: ");
+	strcpy(TempBuf, Drive[1].ImageName);
+	PathStripPath(TempBuf);
+	strcat(TempMsg, TempBuf);
+	DynamicMenuCallback(g_id, TempMsg, 5013, DMENU_TYPE_SLAVE);
+
+	DynamicMenuCallback(g_id, "FD-502 Drive 2", 6000, DMENU_TYPE_HEAD);
+	DynamicMenuCallback(g_id, "Insert", 5014, DMENU_TYPE_SLAVE);
+	strcpy(TempMsg, "Eject: ");
+	strcpy(TempBuf, Drive[2].ImageName);
+	PathStripPath(TempBuf);
+	strcat(TempMsg, TempBuf);
+	DynamicMenuCallback(g_id, TempMsg, 5015, DMENU_TYPE_SLAVE);
+	//NEW
+	DynamicMenuCallback(g_id, "FD-502 Drive 3", 6000, DMENU_TYPE_HEAD);
+	DynamicMenuCallback(g_id, "Insert", 5017, DMENU_TYPE_SLAVE);
+	strcpy(TempMsg, "Eject: ");
+	strcpy(TempBuf, Drive[3].ImageName);
+	PathStripPath(TempBuf);
+	strcat(TempMsg, TempBuf);
+	DynamicMenuCallback(g_id, TempMsg, 5018, DMENU_TYPE_SLAVE);
+	//NEW 
+	DynamicMenuCallback(g_id, "FD-502 Config", 5016, DMENU_TYPE_STANDALONE);
+
+	DynamicMenuCallback(g_id, "", VCC_DYNMENU_REFRESH, DMENU_TYPE_NONE);
+}
+
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(int MenuID)
 {
 	switch (MenuID)
 	{
@@ -684,7 +700,8 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(unsigned char MenuID
 		SaveConfig();
 		break;
 	}
-	BuildDynaMenu();
+
+	vccPakRebuildMenu();
 }
 
 extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
@@ -739,10 +756,40 @@ extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned s
 	return RomPointer[SelectRom][Address & (EXTROMSIZE - 1)];
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char *MyStatus)
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
 {
-	DiskStatus(MyStatus);
+	// TODO: update to use buffer size
+
+	DiskStatus(buffer);
 }
+
+/****************************************************************************/
+/*
+	Debug only simple check to verify API matches the definitions
+	If the Pak API changes for one of our defined functions it
+	should produce a compile error
+*/
+
+#ifdef _DEBUG
+
+static vccpakapi_init_t				__init				= VCC_PAKAPI_DEF_INIT;
+static vccpakapi_getname_t			__getName			= VCC_PAKAPI_DEF_GETNAME;
+static vccpakapi_dynmenubuild_t		__dynMenuBuild		= VCC_PAKAPI_DEF_DYNMENUBUILD;
+static vccpakapi_config_t			__config			= VCC_PAKAPI_DEF_CONFIG;
+static vccpakapi_heartbeat_t		__heartbeat			= VCC_PAKAPI_DEF_HEARTBEAT;
+static vccpakapi_status_t			__status			= VCC_PAKAPI_DEF_STATUS;
+//static vccpakapi_getaudiosample_t	__getAudioSample	= VCC_PAKAPI_DEF_AUDIOSAMPLE;
+//static vccpakapi_reset_t			__reset				= VCC_PAKAPI_DEF_RESET;
+static vccpakapi_portread_t			__portRead			= VCC_PAKAPI_DEF_PORTREAD;
+static vccpakapi_portwrite_t		__portWrite			= VCC_PAKAPI_DEF_PORTWRITE;
+static vcccpu_read8_t				__memRead			= VCC_PAKAPI_DEF_MEMREAD;
+//static vcccpu_write8_t			__memWrite			= VCC_PAKAPI_DEF_MEMWRITE;
+//static vccpakapi_setmemptrs_t		__memPointers		= VCC_PAKAPI_DEF_MEMPOINTERS;
+//static vccpakapi_setcartptr_t		__setCartPtr		= VCC_PAKAPI_DEF_SETCART;
+static vccpakapi_setintptr_t		__assertInterrupt	= VCC_PAKAPI_DEF_ASSERTINTERRUPT;
+static vccpakapi_setinipath_t		__setINIPath		= VCC_PAKAPI_DEF_SETINIPATH;
+
+#endif // _DEBUG
 
 /****************************************************************************/
 /****************************************************************************/
@@ -755,17 +802,25 @@ BOOL WINAPI DllMain(
 	DWORD fdwReason,     // reason for calling function
 	LPVOID lpReserved)  // reserved
 {
-	if (fdwReason == DLL_PROCESS_DETACH) //Clean Up 
+	switch (fdwReason) 
 	{
-		for (unsigned char Drive = 0; Drive <= 3; Drive++)
+		case DLL_PROCESS_ATTACH:
 		{
-			unmount_disk_image(Drive);
+			// one-time init
+			g_hinstDLL = hinstDLL;
+			RealDisks = InitController();
 		}
-	}
-	else
-	{
-		g_hinstDLL = hinstDLL;
-		RealDisks = InitController();
+		break;
+	
+		case DLL_PROCESS_DETACH:
+		{
+			// one time destruction
+			for (unsigned char Drive = 0; Drive <= 3; Drive++)
+			{
+				unmount_disk_image(Drive);
+			}
+		}
+		break;
 	}
 
 	return(1);
