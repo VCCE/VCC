@@ -1,3 +1,6 @@
+#ifndef __DEFINES_H__
+#define __DEFINES_H__
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -15,6 +18,8 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#include <cstdint>
 
 //Speed throttling
 #define FRAMEINTERVAL 120	//Number of frames to sum the framecounter over
@@ -46,28 +51,6 @@ extern void (*CPUReset)(void);
 extern void (*CPUAssertInterupt)(unsigned char,unsigned char);
 extern void (*CPUDeAssertInterupt)(unsigned char);
 extern void (*CPUForcePC)(unsigned short);
-
-
-typedef struct {
-	unsigned char ScanCode1;
-	unsigned char ScanCode2;
-	unsigned char Row1;
-	unsigned char Col1;
-	unsigned char Row2;
-	unsigned char Col2;
-} KeyBoardTable;
-
-typedef struct {
-	unsigned char UseMouse;
-	unsigned char Up;
-	unsigned char Down;
-	unsigned char Left;
-	unsigned char Right;
-	unsigned char Fire1;
-	unsigned char Fire2;
-	unsigned char DiDevice;
-	unsigned char HiRes;
-} JoyStick;
 
 
 typedef struct 
@@ -104,3 +87,5 @@ char			StatusLine[256];
 static char RateList[4][7]={"Mute","11025","22050","44100"};
 static unsigned short iRateList[4]={0,11025,22050,44100};
 #define TAPEAUDIORATE 44100
+
+#endif

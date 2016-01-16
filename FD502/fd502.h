@@ -1,3 +1,5 @@
+#ifndef __FD502_H__
+#define __FD502_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -25,3 +27,5 @@ void BuildDynaMenu(void);
 #define External 0
 #define TandyDisk 1
 #define RGBDisk 2
+
+#endif

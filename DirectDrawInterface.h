@@ -1,3 +1,5 @@
+#ifndef __DIRECTDRAWINTERFACE_H__
+#define __DIRECTDRAWINTERFACE_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -32,3 +34,5 @@ float Static(SystemState *);
 
 
 #define MAX_LOADSTRING 100
+
+#endif

@@ -1,3 +1,5 @@
+#ifndef __ORCH90_H__
+#define __ORCH90_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -28,3 +30,5 @@ void CPUAssertInterupt(unsigned char,unsigned char);
 #define IRQ		1
 #define FIRQ	2
 #define NMI		3
+
+#endif

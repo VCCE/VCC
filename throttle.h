@@ -1,3 +1,5 @@
+#ifndef __THROTTLE_H__
+#define __THROTTLE_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -21,3 +23,5 @@ void StartRender(void);
 void EndRender(unsigned char);
 void FrameWait(void);
 float CalculateFPS(void);
+
+#endif

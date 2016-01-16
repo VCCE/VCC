@@ -1,7 +1,13 @@
+#OS files
+[Tt]humbs.db
+*.DS_Store
+
 *.o
 *.a
 *.stackdump
 
+
+# Visual Studio
 *.obj
 *.dll
 *.exe
@@ -14,8 +20,11 @@
 *.pch
 *.pch.*
 *.gch
+*.aps
 
 Debug
 Release
 All
 
+vcc/coco3.rom
+vcc/disk11.rom

@@ -1,3 +1,5 @@
+#ifndef __DISTORTC_H__
+#define __DISTORTC_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -17,3 +19,5 @@ This file is part of VCC (Virtual Color Computer).
 */
 unsigned char read_time(unsigned short);
 void write_time(unsigned char,unsigned char);
+
+#endif

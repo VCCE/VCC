@@ -1,3 +1,5 @@
+#ifndef __JOYSTICKINPUT_H__
+#define __JOYSTICKINPUT_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -23,3 +25,5 @@ This file is part of VCC (Virtual Color Computer).
 HRESULT JoyStickPoll(DIJOYSTATE2 * ,unsigned char);
 int EnumerateJoysticks(void);
 bool InitJoyStick (unsigned char);
+
+#endif

@@ -1,3 +1,5 @@
+#ifndef __MC6821_H__
+#define __MC6821_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -33,7 +35,7 @@ void irq_fs(int);
 void AssertCart(void);
 void SetCart(unsigned char);
 unsigned char SetCartAutoStart(unsigned char);
-void PiaReset(void);
+void PiaReset();
 unsigned char GetMuxState(void);
 unsigned char DACState(void);
 unsigned int GetDACSample(void);
@@ -43,3 +45,5 @@ int OpenPrintFile(char *);
 #define FALLING 0
 #define RISING	1
 #define ANY		2
+
+#endif

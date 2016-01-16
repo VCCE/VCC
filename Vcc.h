@@ -1,3 +1,6 @@
+#ifndef __VCC_H__
+#define __VCC_H__
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -16,6 +19,11 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// define this to make the main config dialog modal
+// vs. modeless where you can interact with the main window
+// while the config dialog is open
+//#define CONFIG_DIALOG_MODAL
+
 void shutdown(void);
 void SetCPUMultiplyerFlag (unsigned char);
 void SetTurboMode(unsigned char);
@@ -31,7 +39,10 @@ void DoHardReset(SystemState *);
 void LoadPack (void);
 void DynamicMenuCallback( char *,int,int);
 //void RefreshWindow(void);
+
 //Type 0= HEAD TAG 1= Slave Tag 2=StandAlone
 #define	HEAD 0
 #define SLAVE 1
 #define STANDALONE 2
+
+#endif

@@ -26,6 +26,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "logger.h"
 #include "../fileops.h"
 
+static char FileName[MAX_PATH] { 0 };
+static char IniFile[MAX_PATH]  { 0 };
+
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
@@ -35,8 +38,6 @@ static void (*AssertInt)(unsigned char,unsigned char)=NULL;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
 static unsigned char *Memory=NULL;
-static char FileName[MAX_PATH]="";
-static char IniFile[MAX_PATH]="";
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 static unsigned char BaseAddress=0x50;
 void BuildDynaMenu(void);
@@ -285,11 +286,11 @@ void Select_Disk(unsigned char Disk)
 
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME);
-	ofn.hwndOwner         = NULL;
+	ofn.hwndOwner         = GetTopWindow(NULL);
 	ofn.Flags             = OFN_HIDEREADONLY;
 	ofn.hInstance         = GetModuleHandle(0);
-	ofn. lpstrDefExt      ="IMG";
-	ofn.lpstrFilter       =	"Hard Disk Images\0*.IMG\0\0";	// filter string "Disks\0*.DSK\0\0";
+	ofn.lpstrDefExt       ="IMG";
+	ofn.lpstrFilter = "Hard Disk Images\0*.img;*.vhd;*.os9\0All files\0*.*\0\0";	// filter string "Disks\0*.DSK\0\0";
 	ofn.nFilterIndex      = 0 ;								// current filter index
 	ofn.lpstrFile         = TempFileName;					// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile

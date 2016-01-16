@@ -1,3 +1,6 @@
+#ifndef __BECKER_H__
+#define __BECKER_H__
+
 // functions
 void MemWrite(unsigned char,unsigned short );
 unsigned char MemRead(unsigned short );
@@ -24,3 +27,5 @@ extern const unsigned char Rom[8192];
 #define	HEAD 0
 #define SLAVE 1
 #define STANDALONE 2
+
+#endif

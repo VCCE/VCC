@@ -65,8 +65,8 @@ long WriteTrack (unsigned char,unsigned char,unsigned char,unsigned char *);
 unsigned short ccitt_crc16(unsigned short crc, const unsigned char *, unsigned short );
 long GetSectorInfo (SectorInfo *,unsigned char *);
 void CommandDone(void);
+HANDLE OpenKeyboardDevice(int *ErrorNumber);
 int CloseKeyboardDevice(HANDLE);
-HANDLE OpenKeyboardDevice(int *);
 extern unsigned char PhysicalDriveA,PhysicalDriveB;
 bool FormatTrack (HANDLE , BYTE , BYTE,BYTE );
 bool CmdFormat (HANDLE , PFD_FORMAT_PARAMS , ULONG );
@@ -119,7 +119,7 @@ KEYBOARD_INDICATOR_PARAMETERS InputBuffer;	  // Input buffer for DeviceIoControl
 KEYBOARD_INDICATOR_PARAMETERS OutputBuffer;	  // Output buffer for DeviceIoControl
 ULONG				DataLength = sizeof(KEYBOARD_INDICATOR_PARAMETERS);
 ULONG				ReturnedLength; // Number of bytes returned in output buffer
-static 	HANDLE hKbdDev;
+static 	HANDLE hKbdDev = INVALID_HANDLE_VALUE;
 /*************************************************************/
 unsigned char disk_io_read(unsigned char port)
 {
@@ -251,7 +251,7 @@ void DecodeControlReg(unsigned char Tmp)
 	InputBuffer.LedFlags=KBLeds ;
 	if (UseLeds)
 	{
-		if (hKbdDev==NULL)
+		if (hKbdDev== INVALID_HANDLE_VALUE)
 			hKbdDev=OpenKeyboardDevice(NULL);
 		DeviceIoControl(hKbdDev, IOCTL_KEYBOARD_SET_INDICATORS,&InputBuffer, DataLength,NULL,0,&ReturnedLength, NULL);
 	}
@@ -1309,15 +1309,13 @@ HANDLE OpenKeyboardDevice(int *ErrorNumber)
 
 	*LocalErrorNumber = 0;
 	
-	if (!DefineDosDevice (DDD_RAW_TARGET_PATH, "Kbd",
-				"\\Device\\KeyboardClass0"))
+	if (!DefineDosDevice (DDD_RAW_TARGET_PATH, "Kbd", "\\Device\\KeyboardClass0"))
 	{
 		*LocalErrorNumber = GetLastError();
 		return INVALID_HANDLE_VALUE;
 	}
 
-	hndKbdDev = CreateFile("\\\\.\\Kbd", GENERIC_WRITE, 0,
-				NULL,	OPEN_EXISTING,	0,	NULL);
+	hndKbdDev = CreateFile("\\\\.\\Kbd", GENERIC_WRITE, 0, NULL,	OPEN_EXISTING,	0,	NULL);
 	
 	if (hndKbdDev == INVALID_HANDLE_VALUE)
 		*LocalErrorNumber = GetLastError();
@@ -1326,16 +1324,17 @@ HANDLE OpenKeyboardDevice(int *ErrorNumber)
 }
 
 
-int CloseKeyboardDevice(HANDLE hndKbdDev)
+int CloseKeyboardDevice()
 {
 	int e = 0;
 
 	if (!DefineDosDevice (DDD_REMOVE_DEFINITION, "Kbd", NULL))
 		e = GetLastError();
 
-	if (!CloseHandle(hndKbdDev))					
-		e = GetLastError();
-	hKbdDev=NULL;
+	if (hKbdDev != INVALID_HANDLE_VALUE)
+		if (!CloseHandle(hKbdDev))
+			e = GetLastError();
+	hKbdDev= INVALID_HANDLE_VALUE;
 	return e;
 }
 
@@ -1346,7 +1345,7 @@ unsigned char UseKeyboardLeds(unsigned char Tmp)
 	{
 		UseLeds=Tmp;
 		if (!UseLeds)
-			CloseKeyboardDevice(&hKbdDev);
+			CloseKeyboardDevice();
 	}
 	return(UseLeds);
 }

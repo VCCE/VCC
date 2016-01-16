@@ -69,7 +69,6 @@ static unsigned char AutoStart=1;
 static unsigned char Qflag=0;
 static char CpuName[20]="CPUNAME";
 
-char ttbuff[256];
 char QuickLoadFile[256];
 /***Forward declarations of functions included in this code module*****/
 BOOL				InitInstance	(HINSTANCE, int);
@@ -172,9 +171,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	WaitForSingleObject( hEvent, INFINITE );
 	SetThreadPriority(hEMUThread,THREAD_PRIORITY_NORMAL);
 
-//	InitializeCriticalSection(&FrameRender);
+	//InitializeCriticalSection(&FrameRender);
 
-while (BinaryRunning) 
+	while (BinaryRunning) 
 	{
 		if (FlagEmuStop==TH_WAITING)		//Need to stop the EMU thread for screen mode change
 			{								//As it holds the Secondary screen buffer open while running
@@ -203,13 +202,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int wmId, wmEvent;
 	unsigned int x,y;
 	unsigned char kb_char; 
-	kb_char=(unsigned char)wParam;
 	static unsigned char OEMscan=0;
 	static char ascii=0;
 	static RECT ClientSize;
 	static unsigned long Width,Height;
 
-	switch (message) 
+	kb_char = (unsigned char)wParam;
+
+	switch (message)
 	{
 		case WM_COMMAND:
 			wmId    = LOWORD(wParam); 
@@ -225,17 +225,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			switch (wmId)
 			{	
 				case IDM_HELP_ABOUT:
-					DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
+					DialogBox(EmuState.WindowInstance, 
+						(LPCTSTR)IDD_ABOUTBOX, 
+						hWnd, 
+						(DLGPROC)About);
 				    break;
 
-				case ID_CONFIGURE_OPTIONS:
-					
+				case ID_CONFIGURE_OPTIONS:				
+#ifdef CONFIG_DIALOG_MODAL
+					// open config dialog modally
+					DialogBox(EmuState.WindowInstance,
+						(LPCTSTR)IDD_TCONFIG,
+						hWnd,
+						(DLGPROC)Config
+						);
+#else
+					// open config dialog if not already open
+					// opens modeless so you can control the cassette
+					// while emulator is still running (assumed)
 					if (EmuState.ConfigDialog==NULL)
 					{
-						EmuState.ConfigDialog = CreateDialog (NULL,(LPCTSTR)IDD_TCONFIG,EmuState.WindowHandle,(DLGPROC) Config) ;
-						ShowWindow (EmuState.ConfigDialog, SW_SHOWNORMAL) ;
+						EmuState.ConfigDialog = CreateDialog(
+							EmuState.WindowInstance, //NULL,
+							(LPCTSTR)IDD_TCONFIG,
+							EmuState.WindowHandle,
+							(DLGPROC)Config
+						) ;
+						// open modeless
+						ShowWindow(EmuState.ConfigDialog, SW_SHOWNORMAL) ;
 					}
-				//	DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_TCONFIG, hWnd, (DLGPROC)Config);
+#endif
 				    break;
 
 
@@ -295,70 +314,109 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
-			OEMscan=(unsigned char)((lParam & 0xFF0000)>>16);
-			KeyboardEvent(kb_char,OEMscan,0);
+			/*
+				lParam
+
+				Bits	Meaning
+				0-15	The repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. The repeat count is always 1 for a WM_KEYUP message.
+				16-23	The scan code. The value depends on the OEM.
+				24	Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
+				25-28	Reserved; do not use.
+				29	The context code. The value is always 0 for a WM_KEYUP message.
+				30	The previous key state. The value is always 1 for a WM_KEYUP message.
+				31	The transition state. The value is always 1 for a WM_KEYUP message.
+			*/
+			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16);
+
+			// send emulator key up event to the emulator
+			// TODO: Key up checks whether the emulation is running, this does not
+
+			vccKeyboardHandleKey(kb_char,OEMscan, kEventKeyUp);
+			
 			return 0;
 		break;
 
 		case WM_KEYDOWN: 
 		case WM_SYSKEYDOWN:
-			OEMscan=(unsigned char)((lParam & 0xFF0000)>>16);
+			/*
+				lParam
 
-			switch (OEMscan)
+				Bits	Meaning
+				0-15	The repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.
+				16-23	The scan code. The value depends on the OEM.
+				24	Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
+				25-28	Reserved; do not use.
+				29	The context code. The value is always 0 for a WM_KEYDOWN message.
+				30	The previous key state. The value is 1 if the key is down before the message is sent, or it is zero if the key is up.
+				31	The transition state. The value is always 0 for a WM_KEYDOWN message.
+			*/
+			// get key scan code for emulator control keys
+			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16); // just get the scan code
+
+			// kb_char = Windows virtual key code
+
+			switch ( OEMscan )
 			{
-				case 61:	//F3
-
-				break;
-				case 62:	//F4
+				case DIK_F3:
 
 				break;
 
-				case 63:	//F5
-					if (EmuState.EmulationRunning)
-						EmuState.ResetPending=1;
+				case DIK_F4:
+
 				break;
 
-				case 64:	//F6
+				case DIK_F5:
+					if ( EmuState.EmulationRunning )
+					{
+						EmuState.ResetPending = 1;
+					}
+				break;
+
+				case DIK_F6:
 					SetMonitorType(!SetMonitorType(QUERY));
 				break;
 
-	//			case 65:	//F7
-	//				SetArtifacts(!SetArtifacts(QUERY));
-	//			break;
+//				case DIK_F7:
+//					SetArtifacts(!SetArtifacts(QUERY));
+//				break;
 
-				case 66:	//F8
+				case DIK_F8:
 					SetSpeedThrottle(!SetSpeedThrottle(QUERY));
 				break;
 
-				case 67:	//F9
+				case DIK_F9:
 					EmuState.EmulationRunning=!EmuState.EmulationRunning;
-					if (EmuState.EmulationRunning)
+					if ( EmuState.EmulationRunning )
 						EmuState.ResetPending=2;
 					else
 						SetStatusBarText("",&EmuState);
 				break;
 
-				case 68:	//F10
+				case DIK_F10:
 					SetInfoBand(!SetInfoBand(QUERY));
 					InvalidateBoarder();
 				break;
 				
-				case 87:	//F11
-				if (FlagEmuStop==TH_RUNNING)
-				{
-					FlagEmuStop=TH_REQWAIT;
-					EmuState.FullScreen=!EmuState.FullScreen;
-				}
+				case DIK_F11:
+					if (FlagEmuStop == TH_RUNNING)
+					{
+						FlagEmuStop = TH_REQWAIT;
+						EmuState.FullScreen =! EmuState.FullScreen;
+					}
 		
 				break;
 
-	//			case 88:	//F12
-	//				CpuDump();
-	//				break;
+//				case DIK_F12:
+//					CpuDump();
+//				break;
 
 				default:
-					if (EmuState.EmulationRunning)
-						KeyboardEvent(kb_char,OEMscan,2);		
+					// send other keystroke to the emulator if it is active
+					if ( EmuState.EmulationRunning )
+					{
+						// send Key down event to the emulator
+						vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyDown);
+					}
 					break;
 			}
 			return 0;
@@ -468,9 +526,8 @@ unsigned char SetCPUMultiplyer(unsigned char Multiplyer)
 	return(EmuState.DoubleSpeedMultiplyer);
 }
 
-void DoHardReset(SystemState *HRState)
-{
-	static unsigned Count=0;
+void DoHardReset(SystemState* const HRState)
+{	
 	HRState->RamBuffer=MmuInit(HRState->RamSize);	//Alocate RAM/ROM & copy ROM Images from source
 	HRState->WRamBuffer=(unsigned short *)HRState->RamBuffer;
 	if (HRState->RamBuffer == NULL)
@@ -618,8 +675,7 @@ unsigned __stdcall EmuLoop(void *Dummy)
 {
 	HANDLE hEvent = (HANDLE)Dummy;
 	static float FPS;
-	static unsigned int FrameCounter=0;
-	unsigned char Frames=0;
+	static unsigned int FrameCounter=0;	
 	CalibrateThrottle();
 	Sleep(30);
 	SetEvent(hEvent) ;
@@ -640,47 +696,51 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		}
 
 		StartRender();
-		for (Frames=1;Frames<=EmuState.FrameSkip;Frames++)
+		for (uint8_t Frames = 1; Frames <= EmuState.FrameSkip; Frames++)
 		{
 			FrameCounter++;
-			if (EmuState.ResetPending)
+			if (EmuState.ResetPending != 0) {
 				switch (EmuState.ResetPending)
 				{
-					case 1:	//Soft Reset
-						SoftReset();
-						EmuState.ResetPending=0;
-					break;
-					case 2:	//Hard Reset
-						UpdateConfig ();
-						DoCls(&EmuState);
-						DoHardReset(&EmuState);
-						EmuState.ResetPending=0;
-					break;
-					case 3:
-						DoCls(&EmuState);
-						EmuState.ResetPending=0;
-					break;
-					case 4:
-						UpdateConfig ();
-						DoCls(&EmuState);
-						EmuState.ResetPending=0;
+				case 1:	//Soft Reset
+					SoftReset();
 					break;
 
-					default:
-						EmuState.ResetPending=0;
+				case 2:	//Hard Reset
+					UpdateConfig();
+					DoCls(&EmuState);
+					DoHardReset(&EmuState);
+					break;
+
+				case 3:
+					DoCls(&EmuState);
+					break;
+
+				case 4:
+					UpdateConfig();
+					DoCls(&EmuState);
+					break;
+
+				default:
 					break;
 				}
-
-			if (EmuState.EmulationRunning==1)
-				FPS+=RenderFrame (&EmuState);
-			else
-				FPS+=Static(&EmuState);
+				EmuState.ResetPending = 0;
+			}
+			
+			if (EmuState.EmulationRunning == 1) {
+				FPS += RenderFrame(&EmuState);
+			} else {
+				FPS += Static(&EmuState);
+			}
 		}
 		EndRender(EmuState.FrameSkip);
 		FPS/=EmuState.FrameSkip;
 		GetModuleStatus(&EmuState);
-		sprintf(ttbuff,"Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s",EmuState.FrameSkip,FPS,CpuName,EmuState.CPUCurrentSpeed,EmuState.StatusLine);
+		
+		char ttbuff[256];
+		snprintf(ttbuff,sizeof(ttbuff),"Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s",EmuState.FrameSkip,FPS,CpuName,EmuState.CPUCurrentSpeed,EmuState.StatusLine);
 		SetStatusBarText(ttbuff,&EmuState);
+		
 		if (Throttle )	//Do nothing untill the frame is over returning unused time to OS
 			FrameWait();
 	} //Still Emulating

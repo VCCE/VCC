@@ -1,3 +1,5 @@
+#ifndef __IDEBUS_H__
+#define __IDEBUS_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -62,4 +64,5 @@ void QueryDisk(unsigned char,char *);
 #define SLAVE 1
 
 
+#endif
 
