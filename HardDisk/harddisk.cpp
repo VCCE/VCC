@@ -28,7 +28,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "../defines.h"
 #include "../fileops.h"
-#include "../pakinterface.h"
+#include "../vccPak.h"
 
 #include <stdio.h>
 

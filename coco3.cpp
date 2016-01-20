@@ -16,24 +16,26 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "windows.h"
-#include "stdio.h"
-#include "ddraw.h"
-#include <math.h>
-#include "defines.h"
+#include "coco3.h"
+
+#include "vccPak.h"
+#include "Vcc.h"
+//#include "defines.h"
 #include "tcc1014graphics.h"
 #include "tcc1014registers.h"
 #include "mc6821.h"
 #include "hd6309.h"
 #include "mc6809.h"
-#include "pakinterface.h"
 #include "audio.h"
-#include "coco3.h"
 #include "throttle.h"
-#include "Vcc.h"
 #include "cassette.h"
 #include "DirectDrawInterface.h"
 #include "logger.h"
+
+#include <windows.h>
+#include <stdio.h>
+#include <ddraw.h>
+#include <math.h>
 
 //int CPUExeca(int);
 

@@ -19,11 +19,11 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <cstdint>
-
 #define DIRECTINPUT_VERSION 0x0800
+#define _WINSOCKAPI_    // stops windows.h including winsock.h
 #include <windows.h>
 #include <windowsx.h>
+#include <stdint.h>
 
 //Speed throttling
 #define FRAMEINTERVAL 120	//Number of frames to sum the framecounter over

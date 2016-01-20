@@ -48,7 +48,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "mpi.h"
 
 #include "../fileops.h"
-#include "../pakinterface.h"	// note: only for definitions right now
+#include "../vccPak.h"	// note: only for definitions right now
 
 #include <stdio.h>
 #include <assert.h>
@@ -601,6 +601,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Por
 		vccPakAssertCART(&g_Paks[ChipSelectSlot]);
 	}
 	else
+	// verify range is correct
 	if ( (Port>=0x40) & (Port<0x7F) )
 	{
 		//g_Paks[SpareSelectSlot].BankedCartOffset[SpareSelectSlot] = (Data & 15)<<14;
@@ -612,8 +613,11 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Por
 	}
 	else
 	{
-		// Find a Module that we can write to
 		// TODO: what does the real MPI do here?
+		// this seems like a bit of a hack so the harddisk
+		// plug-in would work as a program pack
+
+		// Find a Module that we can write to
 		// Should we even ever get to this point?
 		// this assumes there is no conflict between two carts
 		// and writes to the lowest numbered slot
@@ -643,6 +647,7 @@ extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned 
 		return (SlotRegister);
 	}
 	else
+	// TODO: verify range is correct
 	// SCS range?
 	if ( (Port>=0x40) & (Port<0x7F) )
 	{
@@ -657,8 +662,11 @@ extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned 
 	}
 	else
 	{
-		// Find a Module that returns a value
 		// TODO: what does the real MPI do here?
+		// this seems like a bit of a hack so the harddisk
+		// plug-in would work as a program pack
+
+		// Find a Module that returns a value
 		// Should we even ever get to this point?
 		// this assumes there is no conflict between two carts
 		// and takes the first 'valid' value starting

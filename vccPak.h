@@ -1,5 +1,5 @@
-#ifndef __PAKINTERFACE_H__
-#define __PAKINTERFACE_H__
+#ifndef __VCCPAK_H__
+#define __VCCPAK_H__
 
 /****************************************************************************/
 /*
@@ -26,9 +26,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <stdint.h>
 #include <stdio.h>
-
-// TOODO: the need for this will be removed eventually
-#include <Windows.h>
 
 /****************************************************************************/
 
@@ -99,11 +96,11 @@ struct vccpak_t
 
 	// Storage for Pak ROMs
 	unsigned char *		ExternalRomBuffer;			///< 
-	bool				RomPackLoaded;				///< 
+	int					RomPackLoaded;				///< 
 	unsigned int		BankedCartOffset;			///< 
 
 	vccpakapiversion_t	version;					///< VCC Pak API supported by this Pak
-};
+} ;
 
 /****************************************************************************/
 
@@ -150,5 +147,5 @@ extern "C"
 
 /****************************************************************************/
 
-#endif // __PAKINTERFACE_H__
+#endif // __VCCPAK_H__
 

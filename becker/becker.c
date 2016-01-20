@@ -3,21 +3,26 @@
 */
 /****************************************************************************/
 
-// Note: had to tell MSVC to compile as C++.  for some reason it ended
-// up including C++ headers and would not compile until that change was made
-
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#include <winsock2.h>
-#include <windows.h>
-#include <process.h>
-#include <stdio.h>
-
 #include "becker.h"
-#include "resource.h"
 
 #include "../logger.h"
 #include "../fileops.h"
-#include "../pakinterface.h"
+#include "../vccPak.h"
+
+#include <process.h>
+#include <stdio.h>
+
+// 
+// including these will not compile in plain C
+// had to tell MSVC to compile this file as C++
+//
+//#define _WINSOCKAPI_    // stops windows.h including winsock.h
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+//#include <windows.h>
+#include <winsock2.h>
+#include <WinUser.h>
+
+#include "resource.h"
 
 /****************************************************************************/
 /*

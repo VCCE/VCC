@@ -28,11 +28,13 @@ This file is part of VCC (Virtual Color Computer).
 */
 /****************************************************************************/
 /*
-	TODO: range checking when capturing a request to add a dynamic menu item
+	TODO: add range checking when capturing a request to add a dynamic menu 
+			item to keep it from going over the max menu count
 */
 /****************************************************************************/
 
-#include "pakinterface.h"
+#include "vccPak.h"
+
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "config.h"
@@ -175,7 +177,7 @@ void vccPakPortWrite(unsigned char Port,unsigned char Data)
 	
 	// change ROM banks?
 	if (    (Port == 0x40) 
-		 && (g_Pak.RomPackLoaded == true)
+		 && (g_Pak.RomPackLoaded == TRUE)
 		)
 	{
 		g_Pak.BankedCartOffset = (Data & 15) << 14;
@@ -623,7 +625,7 @@ void vccPakUnload(void)
 
 HMENU g_hCartridgeMenu = NULL;
 
-// position in msain menu to insert the Cartridge top-level menu
+// position in main menu to insert the Cartridge top-level menu
 #define MAIN_MENU_PAK_MENU_POSITION	2
 
 /****************************************************************************/

@@ -16,11 +16,11 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "windows.h"
-#include "stdio.h"
 #include "mc6809.h"
 #include "mc6809defs.h"
 #include "tcc1014mmu.h"
+
+#include <stdio.h>
 
 //Global variables for CPU Emulation-----------------------
 

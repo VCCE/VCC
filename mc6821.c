@@ -28,11 +28,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014graphics.h"
 #include "tcc1014registers.h"
 #include "coco3.h"
-#include "pakinterface.h"
+#include "vccPak.h"
 #include "cassette.h"
 #include "logger.h"
 #include "resource.h"
-#include <cstdint>
+#include <stdint.h>
 
 static unsigned char rega[4]={0,0,0,0};
 static unsigned char regb[4]={0,0,0,0};

@@ -29,11 +29,13 @@ This file is part of VCC (Virtual Color Computer).
 //#define ABOVE_NORMAL_PRIORITY_CLASS  32768
 #endif 
 
+#include "Vcc.h"
+#include "vccPak.h"
+
 #include "fileops.h"
 #include "defines.h"
 #include "resource.h"
 #include "joystickinput.h"
-#include "Vcc.h"
 #include "tcc1014mmu.h"
 #include "tcc1014graphics.h"
 #include "tcc1014registers.h"
@@ -42,7 +44,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "mc6821.h"
 #include "keyboard.h"
 #include "coco3.h"
-#include "pakinterface.h"
 #include "audio.h"
 #include "config.h"
 #include "quickload.h"

@@ -26,7 +26,7 @@ This file is part of VCC (Virtual Color Computer).
 //#include "cc3rom.h"
 #include "config.h"
 #include "tcc1014graphics.h"
-#include "pakinterface.h"
+#include "vccPak.h"
 #include "logger.h"
 #include "hd6309.h"
 #include "fileops.h"

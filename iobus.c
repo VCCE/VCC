@@ -18,29 +18,18 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "iobus.h"
 
-#include "defines.h"
 #include "mc6821.h"
-#include "pakinterface.h"
 #include "tcc1014registers.h"
-#include "tcc1014mmu.h"
-#include "logger.h"
-#include "config.h"
+#include "vccPak.h"
 
 unsigned char port_read(unsigned short addr)
 {
-	unsigned char port=0,temp=0;
-//	char Message[128]="";
+	unsigned char port = 0;
+	unsigned char temp = 0;
+
 	port = (addr & 0xFF);
-/*
-if ( (port>=0x50) & (port <=0x5a))
-{
-		sprintf(Message,"Reading from %x\n",addr);
-		WriteLog(Message,TOCONS);
-}
-*/
 	switch (port)
 	{
-
 		case 0:
 		case 1:
 		case 2:
@@ -161,7 +150,7 @@ if ( (port>=0x50) & (port <=0x5a))
 			temp=GimeRead(port);
 		break;
 		default:
-			temp=vccPakPortRead (port);
+			temp = vccPakPortRead(port);
 		}
 	return(temp);
 }
