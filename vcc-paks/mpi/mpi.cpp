@@ -47,8 +47,8 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "mpi.h"
 
-#include "../../fileops.h"
-#include "../../vccPak.h"	// note: only for definitions right now
+#include "../../vcc/fileops.h"
+#include "../../vcc/vccPak.h"	// note: only for definitions right now
 
 #include <stdio.h>
 #include <assert.h>

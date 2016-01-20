@@ -248,26 +248,26 @@
     <ResourceCompile Include="Vcc.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="fd502\fd502.vcxproj">
+    <ProjectReference Include="..\vcc-paks\fd502\fd502.vcxproj">
       <Project>{f4dc9499-4ff1-4a56-83dd-6499062972aa}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="harddisk\harddisk.vcxproj">
+    <ProjectReference Include="..\vcc-mods\harddisk\harddisk.vcxproj">
       <Project>{fc5d90df-a488-4e57-a4b2-7c74ae861f9e}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="mpi\mpi.vcxproj">
+    <ProjectReference Include="..\vcc-paks\mpi\mpi.vcxproj">
       <Project>{678097f4-f33b-4739-b3e1-7a72bd1f4a3a}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="orch90\orch90.vcxproj">
+    <ProjectReference Include="..\vcc-paks\orch90\orch90.vcxproj">
       <Project>{89c050f1-9427-4c5f-b260-c5f9eb43e915}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="ramdisk\Ramdisk.vcxproj">
+    <ProjectReference Include="..\vcc-paks\ramdisk\Ramdisk.vcxproj">
       <Project>{23d3931c-364b-45e2-b58c-9b3fbc584c0f}</Project>
     </ProjectReference>
-    <ProjectReference Include="superide\SuperIDE.vcxproj">
+    <ProjectReference Include="..\vcc-paks\superide\SuperIDE.vcxproj">
       <Project>{95713490-9812-4348-9e5e-818f736a271a}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>

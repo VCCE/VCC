@@ -168,7 +168,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Fileops.c" />
+    <ClCompile Include="..\..\vcc\Fileops.c" />
     <ClCompile Include="cloud9.cpp" />
     <ClCompile Include="IdeBus.cpp" />
     <ClCompile Include="logger.cpp" />

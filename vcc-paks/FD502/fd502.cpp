@@ -30,7 +30,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "wd1793.h"
 #include "distortc.h"
 
-#include "../../fileops.h"
+#include "../../vcc/fileops.h"
 
 #include <stdio.h>
 #include "resource.h" 

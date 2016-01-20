@@ -40,7 +40,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "memboard.h"
 #include "defines.h"
 
-#include "../../vccPakAPI.h"
+#include "../../vcc/vccPakAPI.h"
 
 #include <windows.h>
 #include "resource.h" 

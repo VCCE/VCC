@@ -26,9 +26,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "cc3vhd.h"
 #include "cloud9.h"
 
-#include "../../defines.h"
-#include "../../fileops.h"
-#include "../../vccPak.h"
+#include "../../vcc/defines.h"
+#include "../../vcc/fileops.h"
+#include "../../vcc/vccPak.h"
 
 #include <stdio.h>
 

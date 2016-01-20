@@ -17,9 +17,9 @@ This file is part of VCC (Virtual Color Computer).
 */
 /****************************************************************************/
 
-#include "../../defines.h"
-#include "../../fileops.h"
-#include "../../vccPakAPI.h"
+#include "../../vcc/defines.h"
+#include "../../vcc/fileops.h"
+#include "../../vcc/vccPakAPI.h"
 
 #include <stdio.h>
 #include "resource.h" 
