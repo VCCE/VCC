@@ -184,7 +184,6 @@
     <ClCompile Include="logger.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
-    <ClCompile Include="vccMod.c" />
     <ClCompile Include="vccPak.c" />
     <ClCompile Include="quickload.c" />
     <ClCompile Include="tcc1014graphics.c" />
@@ -206,7 +205,6 @@
     <ClInclude Include="fileops.h" />
     <ClInclude Include="hd6309.h" />
     <ClInclude Include="hd6309defs.h" />
-    <ClInclude Include="vccMod.h" />
     <ClInclude Include="iobus.h" />
     <ClInclude Include="joystickinput.h" />
     <ClInclude Include="keyboard.h" />
