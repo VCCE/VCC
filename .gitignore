@@ -26,5 +26,5 @@ Debug
 Release
 All
 
-vcc/coco3.rom
-vcc/disk11.rom
+_bin/coco3.rom
+_bin/disk11.rom
