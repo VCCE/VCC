@@ -5,9 +5,9 @@
 
 #include "becker.h"
 
-#include "../logger.h"
-#include "../fileops.h"
-#include "../vccPak.h"
+#include "../../logger.h"
+#include "../../fileops.h"
+#include "../../vccPak.h"
 
 #include <process.h>
 #include <stdio.h>

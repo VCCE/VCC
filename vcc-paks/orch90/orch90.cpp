@@ -1,4 +1,3 @@
-/****************************************************************************/
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -17,45 +16,54 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 /****************************************************************************/
-/*
-	Disto RamPak - up to 16MB
 
-	dmode /rp sct=40 t0s=40 cyl=3f0 vfy=0 drv=1
+#include "../../defines.h"
+#include "../../fileops.h"
+#include "../../vccPakAPI.h"
 
-	drv = MPI slot - 1
-	vfy = verify is not really needed
-
-	Note: cyl=400 should work but frequently (not always) it
-	produces an error #0000 in NitrOS9 3.3.0 when trying to format
-	3f0 seems to work always.  need to investigate further
-
-	TODO: save contents of RamPak on exit and re-load on startup?
-	TODO: add config 
-			- flag to save/restore as if it was non-volatile
-			- set mem size
-			- set base address
-*/
-/****************************************************************************/
-
-#include "memboard.h"
-#include "defines.h"
-
-#include "../vccPakAPI.h"
-
-#include <windows.h>
+#include <stdio.h>
 #include "resource.h" 
 
 /****************************************************************************/
 
-static HINSTANCE	g_hinstDLL	= NULL;
-static HWND			g_hWnd		= NULL;
-static int			g_id = 0;
+static HINSTANCE g_hinstDLL=NULL;
+static HWND g_hWnd = NULL;
+static int g_id = 0;
 
-//static vccapi_dynamicmenucallback_t DynamicMenuCallback = NULL;
+static unsigned char LeftChannel=0,RightChannel=0;
 
-static int			ScanCount	= 0;
-static int			LastSector	= 0;
+static vccapi_setcart_t PakSetCart	= NULL;
 
+static unsigned char Rom[8192];
+
+/****************************************************************************/
+
+unsigned char LoadExtRom(char *FilePath)	//Returns 1 on if loaded
+{
+
+	FILE *rom_handle = NULL;
+	unsigned short index = 0;
+	unsigned char RetVal = 0;
+
+	rom_handle = fopen(FilePath, "rb");
+	if (rom_handle == NULL)
+		memset(Rom, 0xFF, 8192);
+	else
+	{
+		while ((feof(rom_handle) == 0) & (index<8192))
+			Rom[index++] = fgetc(rom_handle);
+		RetVal = 1;
+		fclose(rom_handle);
+	}
+
+	return(RetVal);
+}
+
+/****************************************************************************/
+/****************************************************************************/
+/*
+	VCC Pak API
+*/
 /****************************************************************************/
 
 extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
@@ -64,89 +72,70 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHand
 	g_hWnd = (HWND)wndHandle;
 
 	//DynamicMenuCallback = Temp;
-
-	InitMemBoard();
 }
-
-/****************************************************************************/
 
 extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
 {
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
+	LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
 }
 
-/****************************************************************************/
-/**
-	Return the status of the Pak
-
-	we can return a short string
-*/
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
-{
-	int	sector = (((int)g_Address >> 8) & 0x00FF) | (((int)g_Block << 8) & 0xFF00);
-
-	strcpy(buffer, "RamPak: ");
-	strcat(buffer, DStatus);
-
-	ScanCount++;
-	if ( sector != LastSector )
-	{
-		ScanCount = 0;
-		LastSector = sector;
-	}
-
-	// some arbitrary value of loops through here
-	// before we indicate as Idle
-	if ( ScanCount > 63 )
-	{
-		ScanCount = 0;
-		strcpy(DStatus, "Idle");
-	}
-}
-
-/****************************************************************************/
-/**
-	Write a byte to our i/o ports
-*/
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
+extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port,unsigned char Data)
 {
 	switch (Port)
 	{
-		case BASE_PORT + 0:
-		case BASE_PORT + 1:
-		case BASE_PORT + 2:
-			WritePort(Port,Data);
-			return;
+	case 0x7A:
+		RightChannel=Data;			
 		break;
 
-		case BASE_PORT + 3:
-			WriteArray(Data);
-			return;
+	case 0x7B:
+		LeftChannel=Data;
 		break;
-
-		default:
-			return;
-		break;
-	}	//End port switch		
+	}
+	return;
 }
 
-/****************************************************************************/
-/**
-	Read a byte from our i/o ports
-*/
 extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
 {
-	switch (Port)
-	{
-		case BASE_PORT + 3:
-			return ReadArray();
-		break;
+	return(NULL);
+}
 
-		default:
-			return(0);
-		break;
-	}	//End port switch
+extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_RESET(void)
+{
+	char RomPath[MAX_PATH];
+
+	memset(Rom, 0xff, 8192);
+	GetModuleFileName(NULL, RomPath, MAX_PATH);
+	PathRemoveFileSpec(RomPath);
+	strcpy(RomPath, "ORCH90.ROM");
+	
+	// If we can load the rom them assert cart
+	if (    (PakSetCart != NULL) 
+		 && LoadExtRom(RomPath)
+		)	 
+	{
+		(*PakSetCart)(1);
+	}
+
+	return(NULL);
+}
+
+extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_SETCART(vccapi_setcart_t Pointer)
+{
+	PakSetCart=Pointer;
+
+	return(NULL);
+}
+
+extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
+{
+	return(Rom[Address & 8191]);
+}
+
+// This gets called at the end of every scan line 262 Lines * 60 Frames = 15780 Hz 15720
+extern "C" __declspec(dllexport) unsigned short VCC_PAKAPI_DEF_AUDIOSAMPLE(void)
+{
+	return((LeftChannel<<8) | RightChannel) ;
 }
 
 /****************************************************************************/
@@ -163,12 +152,12 @@ static vccpakapi_getname_t			__getName			= VCC_PAKAPI_DEF_GETNAME;
 //static vccpakapi_dynmenubuild_t	__dynMenuBuild		= VCC_PAKAPI_DEF_DYNMENUBUILD;
 //static vccpakapi_config_t			__config			= VCC_PAKAPI_DEF_CONFIG;
 //static vccpakapi_heartbeat_t		__heartbeat			= VCC_PAKAPI_DEF_HEARTBEAT;
-static vccpakapi_status_t			__status			= VCC_PAKAPI_DEF_STATUS;
-//static vccpakapi_getaudiosample_t	__getAudioSample	= VCC_PAKAPI_DEF_AUDIOSAMPLE;
+//static vccpakapi_status_t			__status			= VCC_PAKAPI_DEF_STATUS;
+static vccpakapi_getaudiosample_t	__getAudioSample	= VCC_PAKAPI_DEF_AUDIOSAMPLE;
 //static vccpakapi_reset_t			__reset				= VCC_PAKAPI_DEF_RESET;
 static vccpakapi_portread_t			__portRead			= VCC_PAKAPI_DEF_PORTREAD;
 static vccpakapi_portwrite_t		__portWrite			= VCC_PAKAPI_DEF_PORTWRITE;
-//static vcccpu_read8_t				__memRead			= VCC_PAKAPI_DEF_MEMREAD;
+static vcccpu_read8_t				__memRead			= VCC_PAKAPI_DEF_MEMREAD;
 //static vcccpu_write8_t			__memWrite			= VCC_PAKAPI_DEF_MEMWRITE;
 //static vccpakapi_setmemptrs_t		__memPointers		= VCC_PAKAPI_DEF_MEMPOINTERS;
 //static vccpakapi_setcartptr_t		__setCartPtr		= VCC_PAKAPI_DEF_SETCART;
@@ -190,19 +179,18 @@ BOOL WINAPI DllMain(
 {
 	switch (fdwReason)
 	{
-		case DLL_PROCESS_ATTACH:
-		{
-			// one-time init
-			g_hinstDLL = hinstDLL;
-		}
-		break;
+	case DLL_PROCESS_ATTACH:
+	{
+		// one-time init
+		g_hinstDLL = hinstDLL;
+	}
+	break;
 
-		case DLL_PROCESS_DETACH:
-		{
-			// one time destruction
-			DestroyMemBoard();
-		}
-		break;
+	case DLL_PROCESS_DETACH:
+	{
+		// one time destruction
+	}
+	break;
 	}
 
 	return(1);
