@@ -32,24 +32,16 @@ This file is part of VCC (Virtual Color Computer).
 
 /****************************************************************************/
 
-#define VCC_RESET_PENDING_NONE			0
-#define VCC_RESET_PENDING_SOFT			1
-#define VCC_RESET_PENDING_HARD			2
-#define VCC_RESET_PENDING_CLEAR			3
-#define VCC_RESET_PENDING_UPDATECONFIG	4
-
-/****************************************************************************/
-
 #define TH_RUNNING	0
 #define TH_REQWAIT	1
 #define TH_WAITING	2
 
 /****************************************************************************/
 
-//#ifdef __cplusplus
-//extern "C"
-//{
-//#endif
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 	extern SystemState EmuState;
 
@@ -66,9 +58,11 @@ This file is part of VCC (Virtual Color Computer).
 	void			DoHardReset(SystemState *);
 	void			LoadPack (void);
 
-//#ifdef __cplusplus
-//}
-//#endif
+	void			vccSetResetPending(int resetType);
+
+#ifdef __cplusplus
+}
+#endif
 
 /****************************************************************************/
 

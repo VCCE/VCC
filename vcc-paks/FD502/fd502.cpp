@@ -30,9 +30,15 @@ This file is part of VCC (Virtual Color Computer).
 #include "wd1793.h"
 #include "distortc.h"
 
-#include "../../vcc/fileops.h"
+//
+// vcc-core
+//
+#include "fileops.h"
+#include "vccPakDynMenu.h"
 
 #include <stdio.h>
+
+// our Windows resource definitions
 #include "resource.h" 
 
 /*
@@ -94,15 +100,6 @@ static HINSTANCE g_hinstDLL = NULL;
 static HWND g_hWnd = NULL;
 /** id given to us by VCC that we give back when modifying the dynamic menus */
 static int g_id = 0;
-
-/**
-*/
-void vccPakRebuildMenu()
-{
-	DynamicMenuCallback(g_id, "", VCC_DYNMENU_FLUSH, DMENU_TYPE_NONE);
-
-	DynamicMenuCallback(g_id, "", VCC_DYNMENU_REFRESH, DMENU_TYPE_NONE);
-}
 
 /**
 */
@@ -606,7 +603,7 @@ unsigned char LoadExtRom( unsigned char RomType,char *FilePath)	//Returns 1 on i
 	VCC Pak API
 */
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
 {
 	g_id = id;
 	g_hWnd = (HWND)wndHandle;
@@ -614,13 +611,13 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHand
 	DynamicMenuCallback = Temp;
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
 {
 	LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
 	LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_DYNMENUBUILD(void)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_DYNMENUBUILD(void)
 {
 	char TempMsg[64] = "";
 	char TempBuf[MAX_PATH] = "";
@@ -664,7 +661,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_DYNMENUBUILD(void)
 	DynamicMenuCallback(g_id, "", VCC_DYNMENU_REFRESH, DMENU_TYPE_NONE);
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(int MenuID)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_CONFIG(int MenuID)
 {
 	switch (MenuID)
 	{
@@ -704,19 +701,19 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(int MenuID)
 	vccPakRebuildMenu();
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
 {
 	strcpy(IniFile, IniFilePath);
 	LoadConfig();
 }
 
 // This captures the Fuction transfer point for the CPU assert interupt 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_ASSERTINTERRUPT(vccpakapi_assertinterrupt_t Dummy)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_ASSERTINTERRUPT(vccpakapi_assertinterrupt_t Dummy)
 {
 	AssertInt = Dummy;
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
 {
 	if (  (   (Port == 0x50) 
 		    | (Port == 0x51)
@@ -732,7 +729,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Por
 	}
 }
 
-extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
+extern "C" VCCPAK_API unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
 {
 	if ( (   (Port == 0x50) 
 		   | (Port == 0x51)
@@ -746,17 +743,17 @@ extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned 
 	return disk_io_read(Port);
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_HEARTBEAT(void)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_HEARTBEAT(void)
 {
 	PingFdc();
 }
 
-extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
+extern "C" VCCPAK_API unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
 {
 	return RomPointer[SelectRom][Address & (EXTROMSIZE - 1)];
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
 {
 	// TODO: update to use buffer size
 

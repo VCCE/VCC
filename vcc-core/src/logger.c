@@ -16,18 +16,18 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "logger.h"
+
 #include <windows.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "tcc1014mmu.h"	//Need memread for CpuDump
-#include "logger.h"
+#include <assert.h>
 
 void WriteLog(char *Message,unsigned char Type)
 {
 	static HANDLE hout=NULL;
 	static FILE  *disk_handle=NULL;
 	unsigned long dummy;
+
 	switch (Type)
 	{
 	case TOCONS:
@@ -52,16 +52,20 @@ void WriteLog(char *Message,unsigned char Type)
 }
 
 
-void CpuDump(void)
+void CpuDump(vcccpu_read8_t pfnMemRead)
 {
-	FILE* disk_handle=NULL;
-	int x;
-	disk_handle=fopen("c:\\cpuspace_dump.txt","wb");
-	for (x=0;x<=65535;x++)
-		fprintf(disk_handle,"%c",MemRead8(x));
+	assert(pfnMemRead != NULL);
+
+	FILE *	disk_handle=NULL;
+	int		x;
+
+	disk_handle=fopen("cpuspace_dump.txt","wb");
+	for (x = 0; x <= 65535; x++)
+	{
+		fprintf(disk_handle, "%c", (*pfnMemRead)(x));
+	}
 	fflush(disk_handle);
 	fclose(disk_handle);
-	return;
 }
 
 

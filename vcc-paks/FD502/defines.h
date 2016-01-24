@@ -32,7 +32,7 @@ This file is part of VCC (Virtual Color Computer).
 #define LINESPERFIELD 262
 
 //Misc
-#define MAX_LOADSTRING 100
+//#define MAX_LOADSTRING 100
 #define QUERY 255
 #define INDEXTIME ((LINESPERFIELD * TARGETFRAMERATE)/5)
 

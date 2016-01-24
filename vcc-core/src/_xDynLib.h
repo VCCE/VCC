@@ -1,13 +1,22 @@
-#ifndef _xDynLib_h_
-#define _xDynLib_h_
+#ifndef __xDynLib_h_
+#define __xDynLib_h_
 
+/*****************************************************************************/
+/*
+ uEng - micro cross platform engine
+ Copyright 2010-2011 by Wes Gale All rights reserved.
+ */
 /*****************************************************************************/
 
 #include "xTypes.h"
 
 /*****************************************************************************/
 
-typedef struct xdynlib_t * pxdynlib_t;
+struct xdynlib_t
+{
+	/** OS specific module handle */
+	void *	hModule;
+};
 
 /*****************************************************************************/
 
@@ -16,9 +25,6 @@ extern "C"
 {
 #endif
 	
-	VCCCORE_API result_t	VCCCORE_CALL xDynLibLoad(ppathname_t pPathname, pxdynlib_t * ppxdynlib);
-	VCCCORE_API result_t	VCCCORE_CALL xDynLibUnload(pxdynlib_t * ppxdynlib);
-	VCCCORE_API result_t	VCCCORE_CALL xDynLibGetSymbolAddress(pxdynlib_t pxdynlib, const char_t * pcszSymbol, void ** ppvSymbol);
 	
 #ifdef __cplusplus
 }

@@ -16,18 +16,22 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
-#include "defines.h"
 #include "tcc1014graphics.h"
-#include "ddraw.h"
+
+#include "Vcc.h"
 #include "coco3.h"
 #include "cc2font.h"
 #include "cc3font.h"
 #include "config.h"
 #include "DirectDrawInterface.h"
+
 #include "logger.h"
-#include "math.h"
+
+#include <math.h>
 #include <stdio.h>
+
+#include <windows.h>
+#include <ddraw.h>
 #include <commctrl.h>	// Windows common controls
 
 void SetupDisplay(void); //This routine gets called every time a software video register get updated.
@@ -35,6 +39,7 @@ void MakeRGBPalette (void);
 void MakeCMPpalette(void);
 bool  DDFailedCheck(HRESULT hr, char *szMessage);
 char *DDErrorString(HRESULT hr);
+
 //extern STRConfig CurrentConfig;
 static unsigned char ColorValues[4]={0,85,170,255};
 static unsigned char ColorTable16Bit[4]={0,10,21,31};	//Color brightness at 0 1 2 and 3 (2 bits)
@@ -59,7 +64,6 @@ static unsigned int   PalleteLookup32[2][64];	//0 = RGB 1=comp 32BIT
 static unsigned char MonType=1;
 static unsigned char CC3Vmode=0,CC3Vres=0,CC3BoarderColor=0;
 static unsigned int StartofVidram=0,Start=0,NewStartofVidram=0;
-static unsigned char LinesperScreen=0;
 static unsigned char Bpp=0;
 static unsigned char LinesperRow=1,BytesperRow=32;
 static unsigned char GraphicsMode=0;
@@ -82,6 +86,8 @@ static unsigned char BoarderChange=3;
 static unsigned char MasterMode=0;
 static unsigned char ColorInvert=1;
 static unsigned char BlinkState=1;
+
+int LinesperScreen = 0;
 
 // BEGIN of 8 Bit render loop *****************************************************************************************
 void UpdateScreen8 (SystemState *US8State)
@@ -9618,7 +9624,6 @@ void InvalidateBoarder(void)
 
 void SetupDisplay(void)
 {
-
 	static unsigned char CC2Bpp[8]={1,0,1,0,1,0,1,0};
 	static unsigned char CC2LinesperRow[8]={12,3,3,2,2,1,1,1};
 	static unsigned char CC3LinesperRow[8]={1,1,2,8,9,10,11,200};
@@ -9887,7 +9892,6 @@ unsigned char SetMonitorType(unsigned char Type)
 
 unsigned char SetScanLines(unsigned char Lines)
 {
-	extern SystemState EmuState;
 	if (Lines!=QUERY)
 	{
 		EmuState.ScanLines=Lines;

@@ -25,6 +25,8 @@ This file is part of VCC (Virtual Color Computer).
 */
 /****************************************************************************/
 
+#include "xTypes.h"
+
 // TODO: remove the need for this to be included here
 #include <Windows.h>
 

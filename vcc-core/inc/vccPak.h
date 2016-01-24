@@ -22,15 +22,16 @@ This file is part of VCC (Virtual Color Computer).
 /****************************************************************************/
 
 #include "vccPakAPI.h"
-#include "defines.h"
 
-#include <stdint.h>
-#include <stdio.h>
+#include <stdio.h>	// for FILENAME_MAX
 
 /****************************************************************************/
 
 /*
-Pak status flags
+	Pak status flags
+
+	These are set from scanning the exported functions available
+	in the plugin's dynamic library
 */
 #define VCCPAK_HASCONFIG		(1 << 0)
 #define VCCPAK_HASIOWRITE		(1 << 1)
@@ -112,34 +113,36 @@ extern "C"
 	//
 	// VCC Pak API calls to interface with the Pak
 	//
-	void			vccPakTimer(void);
-	unsigned char	vccPakPortRead(unsigned char);
-	void			vccPakPortWrite(unsigned char, unsigned char);
-	unsigned char	vccPakMem8Read(unsigned short);
-	void			vccPakMem8Write(unsigned char, unsigned char);
-	void			vccPakGetStatus(char *, size_t);
-	void			vccPakReset(void);
-	unsigned short	vccPackGetAudioSample(void);
-	void			vccPakSetInterruptCallPtr(void);
+	VCCCORE_API void			vccPakTimer(void);
+	VCCCORE_API unsigned char	vccPakPortRead(unsigned char);
+	VCCCORE_API void			vccPakPortWrite(unsigned char, unsigned char);
+	VCCCORE_API unsigned char	vccPakMem8Read(unsigned short);
+	VCCCORE_API void			vccPakMem8Write(unsigned char, unsigned char);
+	VCCCORE_API void			vccPakGetStatus(char *, size_t);
+	VCCCORE_API void			vccPakReset(void);
+	VCCCORE_API unsigned short	vccPackGetAudioSample(void);
+	VCCCORE_API void			vccPakSetInterruptCallPtr(vccpakapi_assertinterrupt_t CPUAssertInterupt);
 	
+	VCCCORE_API int				vccPakWantsCart(vccpak_t * pPak);
+
 	//
 	// General Pak support functions
 	//
-	vccpaktype_t	vccPakGetType(const char * Filename);
-	char *			vccPakGetLastPath();
-	void			vccPakSetLastPath(char *);
+	VCCCORE_API vccpaktype_t	vccPakGetType(const char * Filename);
+	VCCCORE_API char *			vccPakGetLastPath();
+	VCCCORE_API void			vccPakSetLastPath(char *);
 
-	int				vccPakLoadCart(void);
-	int				vccPakLoadExtROM(char *);
-	void			vccPakGetCurrentModule(char *);
-	int				vccPakInsertModule(char *);
-	void			vccPakUnloadDll(void);
-	void			vccPakUnload(void);
+	VCCCORE_API int				vccPakLoadCart(void);
+	VCCCORE_API int				vccPakLoadExtROM(char *);
+	VCCCORE_API void			vccPakGetCurrentModule(char *);
+	VCCCORE_API int				vccPakInsertModule(char *);
+	VCCCORE_API void			vccPakUnloadDll(void);
+	VCCCORE_API void			vccPakUnload(void);
 
-	void			vccPakRebuildMenu();
-	void			vccPakDynMenuActivated(int);
-	void			vccPakDynMenuRefresh(void);
-	void			vccPakDynMenuCallback(int, const char *, int, dynmenutype_t);
+	VCCCORE_API void			vccPakRebuildMenu();
+	VCCCORE_API void			vccPakDynMenuActivated(int);
+	VCCCORE_API void			vccPakDynMenuRefresh(void);
+	VCCCORE_API void			vccPakDynMenuCallback(int, const char *, int, dynmenutype_t);
 
 #ifdef __cplusplus
 }

@@ -40,9 +40,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "memboard.h"
 #include "defines.h"
 
-#include "../../vcc/vccPakAPI.h"
+#include "vccPakAPI.h"
 
 #include <windows.h>
+
 #include "resource.h" 
 
 /****************************************************************************/
@@ -58,7 +59,7 @@ static int			LastSector	= 0;
 
 /****************************************************************************/
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
 {
 	g_id = id;
 	g_hWnd = (HWND)wndHandle;
@@ -70,7 +71,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHand
 
 /****************************************************************************/
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
 {
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
@@ -82,7 +83,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, cha
 
 	we can return a short string
 */
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
 {
 	int	sector = (((int)g_Address >> 8) & 0x00FF) | (((int)g_Block << 8) & 0xFF00);
 
@@ -109,7 +110,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_
 /**
 	Write a byte to our i/o ports
 */
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
 {
 	switch (Port)
 	{
@@ -135,7 +136,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Por
 /**
 	Read a byte from our i/o ports
 */
-extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
+extern "C" VCCPAK_API unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
 {
 	switch (Port)
 	{

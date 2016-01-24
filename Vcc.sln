@@ -4,18 +4,39 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fd502", "vcc-paks\FD502\fd502.vcxproj", "{F4DC9499-4FF1-4A56-83DD-6499062972AA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{25DED965-DA90-4E8B-BEC8-14C4D7137E69} = {25DED965-DA90-4E8B-BEC8-14C4D7137E69}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "harddisk", "vcc-mods\HardDisk\harddisk.vcxproj", "{FC5D90DF-A488-4E57-A4B2-7C74AE861F9E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{25DED965-DA90-4E8B-BEC8-14C4D7137E69} = {25DED965-DA90-4E8B-BEC8-14C4D7137E69}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mpi", "vcc-paks\mpi\mpi.vcxproj", "{678097F4-F33B-4739-B3E1-7A72BD1F4A3A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{25DED965-DA90-4E8B-BEC8-14C4D7137E69} = {25DED965-DA90-4E8B-BEC8-14C4D7137E69}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "orch90", "vcc-paks\orch90\orch90.vcxproj", "{89C050F1-9427-4C5F-B260-C5F9EB43E915}"
+	ProjectSection(ProjectDependencies) = postProject
+		{25DED965-DA90-4E8B-BEC8-14C4D7137E69} = {25DED965-DA90-4E8B-BEC8-14C4D7137E69}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ramdisk", "vcc-paks\Ramdisk\Ramdisk.vcxproj", "{23D3931C-364B-45E2-B58C-9B3FBC584C0F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{25DED965-DA90-4E8B-BEC8-14C4D7137E69} = {25DED965-DA90-4E8B-BEC8-14C4D7137E69}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "superide", "vcc-paks\SuperIDE\SuperIDE.vcxproj", "{95713490-9812-4348-9E5E-818F736A271A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{25DED965-DA90-4E8B-BEC8-14C4D7137E69} = {25DED965-DA90-4E8B-BEC8-14C4D7137E69}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "becker", "vcc-mods\becker\becker.vcxproj", "{C78D7242-DB92-49BC-AFF5-433E16C3C9D4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{25DED965-DA90-4E8B-BEC8-14C4D7137E69} = {25DED965-DA90-4E8B-BEC8-14C4D7137E69}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vcc-core", "vcc-core\_build\win\vcc-core.vcxproj", "{25DED965-DA90-4E8B-BEC8-14C4D7137E69}"
 EndProject

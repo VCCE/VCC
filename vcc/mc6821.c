@@ -16,11 +16,6 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cmath>
 #include "defines.h"
 #include "mc6821.h"
 #include "hd6309.h"
@@ -28,11 +23,20 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014graphics.h"
 #include "tcc1014registers.h"
 #include "coco3.h"
-#include "vccPak.h"
 #include "cassette.h"
+
+#include "vccPak.h"
 #include "logger.h"
-#include "resource.h"
+
 #include <stdint.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
+
+#include <windows.h>
+
+#include "resource.h"
 
 static unsigned char rega[4]={0,0,0,0};
 static unsigned char regb[4]={0,0,0,0};

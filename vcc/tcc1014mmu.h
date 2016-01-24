@@ -29,8 +29,8 @@ unsigned char * MmuInit(unsigned char);
 unsigned char *	Getint_rom_pointer(void);
 unsigned char * Getext_rom_pointer(void);
 
-void __fastcall fMemWrite8(unsigned char,unsigned short );
-unsigned char __fastcall fMemRead8(short unsigned int);
+//void __fastcall fMemWrite8(unsigned char,unsigned short );
+//unsigned char __fastcall fMemRead8(short unsigned int);
 
 int load_int_rom(char * );
 void SetMapType(unsigned char);

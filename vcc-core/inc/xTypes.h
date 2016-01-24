@@ -1,15 +1,15 @@
-#ifndef _xTypes_h_
-#define _xTypes_h_
+#ifndef _XTYPES_H_
+#define _XTYPES_H_
 
 /*****************************************************************************/
 
-#include <stdlib.h>
-#include <memory.h>
-#include <string.h>
-#include <ctype.h>
-#include <math.h>
+#include <wchar.h>
+#include <stdint.h>
 
 /*****************************************************************************/
+/*
+	TODO: add recognition of other platforms
+*/
 
 #if (defined __GNUC__ && defined __APPLE__)
 #	define OSX
@@ -33,38 +33,47 @@
 	cross platform defines
 */
 
-#if (defined _LIB)
+#if (defined VCCCORE_EXPORTS)
 #	if (defined WIN32)
-#		define XAPI __declspec(dllexport)
-#		define XLOCAL __declspec(dllimport)
+#		define VCCCORE_API __declspec(dllexport)
+//#		define VCCLOCAL __declspec(dllimport)
 #	elif (defined OSX)
-#		define XAPI __attribute__((visibility("public")))
-#		define XLOCAL  __attribute__((visibility("hidden")))
+#		define VCCCORE_API __attribute__((visibility("public")))
+//#		define VCCLOCAL  __attribute__((visibility("hidden")))
 #	else
 #		error "platformed undefined for library build"
 #	endif
 #else
-#	define XAPI
-#	define XLOCAL
+#	if (defined WIN32)
+#		define VCCCORE_API __declspec(dllimport)
+//#		define VCCLOCAL __declspec(dllimport)
+#	elif (defined OSX)
+#		define VCCCORE_API	//__attribute__((visibility("public")))
+//#		define VCCLOCAL		//__attribute__((visibility("hidden")))
+#	else
+#		error "platformed undefined for app build"
+#	endif
 #endif
 
+//
+// are these used/useful at all?
+//
 #if (defined _WINDOWS)
-#	define XCALL __fastcall
-#	define XSTDCALL
-#	define XCDECL
-#	define XAPI_EXPORT __declspec(dllexport)
+#	define VCCCORE_CALL __fastcall
+#	define VCCCORE_STDCALL __stdcall
+#	define VCCCORE_CDECL __cdecl
 
 #	pragma warning (disable:4068)
 
 #else
-#	define XCALL
-#	define XSTDCALL
-#	define XCDECL
-#	define XAPI_EXPORT 
+#	define VCCCORE_CALL
+#	define VCCCORE_STDCALL
+#	define VCCCORE_CDECL
+//#	define VCCCORE_EXPORT 
 #endif
 
-#define XINLINE
-#define XCALLBACK
+#define VCCCORE_INLINE
+#define VCCCORE_CALLBACK
 
 /*****************************************************************************/
 
@@ -210,6 +219,12 @@ typedef u32_t					id_t;
 // #pragma message(TODO "Fix this problem!")
 #endif
 
+//
+// Other common definitions
+//
+#define MAX_LOADSTRING	100
+
 /*****************************************************************************/
 
-#endif
+#endif // _XTYPES_H_
+

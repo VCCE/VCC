@@ -1,5 +1,5 @@
-#ifndef __LOGGER_H__
-#define __LOGGER_H__
+#ifndef __FILEOPS_H__
+#define __FILEOPS_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -18,11 +18,24 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-void WriteLog(char *,unsigned char);
-void CpuDump(void);
+#include "xTypes.h"
 
-
-#define TOCONS	0
-#define TOFILE	1
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+	VCCCORE_API void			PathStripPath(char *);
+	VCCCORE_API void			ValidatePath(char *Path);
+	VCCCORE_API int				CheckPath(char *);
+	VCCCORE_API bool_t			PathRemoveFileSpec(char *);
+	VCCCORE_API bool_t			PathRemoveExtension(char *);
+	VCCCORE_API char*			PathFindExtension(char *);
+
+	/// TODO: move
+	VCCCORE_API u32_t			WritePrivateProfileInt(const char * SectionName, const char * KeyName, int KeyValue, const char * IniFileName);
+
+#ifdef __cplusplus
+	}
+#endif
+
+#endif // __FILEOPS_H__

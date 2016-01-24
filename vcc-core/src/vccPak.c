@@ -35,18 +35,25 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "vccPak.h"
 
-#include "defines.h"
-#include "tcc1014mmu.h"
-#include "config.h"
-#include "Vcc.h"
-#include "mc6821.h"
+// temporary
+#include "../_build/win/vcc-core.h"
+
+//
+// vcc-core
+//
 #include "logger.h"
 #include "fileops.h"
 
-#include <commdlg.h>
-#include <stdio.h>
+//
+// system
+//
 #include <process.h>
 #include <assert.h>
+
+//
+// platform
+//
+#include <commdlg.h>
 
 /****************************************************************************/
 
@@ -63,7 +70,7 @@ static vccpak_t		g_Pak = {
 };	
 
 // dynamic menu info for all Paks
-int				g_DynMenuIndex;			///< menu count
+int				g_DynMenuIndex = 0;			///< menu count
 vccdynmenu_t	g_DynMenus[MAX_MENUS];	///< menu item info
 
 /** Last path used opening any Pak (ROM or DLL) */
@@ -89,13 +96,12 @@ vccpaktype_t vccPakGetType(const char * Filename)
 	Temp[2] = 0;
 	fclose(DummyHandle);
 
-	// TODO: is this valid for Win64 etc?
 	if (strcmp(Temp, "MZ") == 0)
 	{
-		return VCCPAK_TYPE_PLUGIN;	//DLL File
+		return VCCPAK_TYPE_PLUGIN;
 	}
 
-	return VCCPAK_TYPE_ROM;		//Rom Image 
+	return VCCPAK_TYPE_ROM;
 }
 
 /****************************************************************************/
@@ -112,6 +118,22 @@ void vccPakSetLastPath(char * pLastPakPath)
 char * vccPakGetLastPath()
 {
 	return LastPakPath;
+}
+
+/****************************************************************************/
+/**
+*/
+int vccPakWantsCart(vccpak_t * pPak)
+{
+	// TODO: add a flag to disable CART per pak?
+	if (pPak != NULL)
+	{
+		return (pPak->api.setCartPtr != NULL
+			|| pPak->ExternalRomBuffer != NULL
+			);
+	}
+
+	return FALSE;
 }
 
 /****************************************************************************/
@@ -176,6 +198,7 @@ void vccPakPortWrite(unsigned char Port,unsigned char Data)
 	}
 	
 	// change ROM banks?
+	// TODO: this should be handled by i/o port registration if this is a ROM pack
 	if (    (Port == 0x40) 
 		 && (g_Pak.RomPackLoaded == TRUE)
 		)
@@ -194,6 +217,7 @@ unsigned char vccPakMem8Read (unsigned short Address)
 		return (*g_Pak.api.memRead)(Address & 32767);
 	}
 
+	// TODO: this should be handled by the plug-in if it is a ROM pak only
 	if (g_Pak.ExternalRomBuffer != NULL )
 	{
 		return (g_Pak.ExternalRomBuffer[(Address & 32767) + g_Pak.BankedCartOffset]);
@@ -220,13 +244,13 @@ unsigned short vccPackGetAudioSample(void)
 		return(*g_Pak.api.getAudioSample)();
 	}
 	
-	return NULL;
+	return 0;
 }
 
 /****************************************************************************/
 /**
 */
-void vccPakSetInterruptCallPtr(void)
+void vccPakSetInterruptCallPtr(vccpakapi_assertinterrupt_t CPUAssertInterupt)
 {
 	if (g_Pak.api.setInterruptCallPtr != NULL)
 	{
@@ -248,7 +272,7 @@ int vccPakLoadCart(void)
 
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME) ;
-	ofn.hwndOwner         = EmuState.WindowHandle;
+	ofn.hwndOwner         = (HWND)g_vccCorehWnd;
 	ofn.lpstrFilter       = "Program Packs\0*.ROM;*.BIN;*.DLL\0\0";			// filter string
 	ofn.nFilterIndex      = 1 ;							// current filter index
 	ofn.lpstrFile         = szFileName ;				// contains full path and filename on return
@@ -360,17 +384,12 @@ void vccPakSetParamFlags(vccpak_t * pPak)
 	if (g_Pak.api.setINIPath != NULL)
 	{
 		g_Pak.params |= VCCPAK_SAVESINI;
-
-		GetIniFilePath(TempIni);
-		(*g_Pak.api.setINIPath)(TempIni);
 	}
 	if (g_Pak.api.setCartPtr != NULL)
 	{
 		g_Pak.params |= VCCPAK_ASSERTCART;
 
 		strcat(String, "Can Assert CART\n");
-
-		(*g_Pak.api.setCartPtr)(SetCart);
 	}
 }
 
@@ -413,8 +432,8 @@ void vccPakGetCurrentModule(char * DefaultModule)
 */
 int vccPakInsertModule(char * ModulePath)
 {
-	char			Temp[MAX_LOADSTRING]="";
-	vccpaktype_t	FileType = VCCPAK_TYPE_UNKNOWN;
+	char			Temp[MAX_LOADSTRING]	= "";
+	vccpaktype_t	FileType			= VCCPAK_TYPE_UNKNOWN;
 
 	FileType = vccPakGetType(ModulePath);
 
@@ -434,10 +453,10 @@ int vccPakInsertModule(char * ModulePath)
 
 		vccPakRebuildMenu();
 
-		EmuState.ResetPending = VCC_RESET_PENDING_HARD;
+		vccCoreSetResetPending(VCC_RESET_PENDING_HARD);
 
 		// assert CART
-		SetCart(1);
+		vccCoreSetCart(1);
 
 		return VCCPAK_NOMODULE;
 	break;
@@ -455,7 +474,7 @@ int vccPakInsertModule(char * ModulePath)
 		strcpy(g_Pak.path, ModulePath);
 
 		// clear CART
-		SetCart(0);
+		vccCoreSetCart(0);
 
 		vccPakGetAPI(&g_Pak);
 
@@ -477,7 +496,7 @@ int vccPakInsertModule(char * ModulePath)
 		g_Pak.BankedCartOffset = 0;
 
 		// init Pak
-		(*g_Pak.api.init)(0, EmuState.WindowHandle, vccPakDynMenuCallback);
+		(*g_Pak.api.init)(0, g_vccCorehWnd, vccPakDynMenuCallback);
 		// Get Pak name
 		(*g_Pak.api.getName)(g_Pak.name, g_Pak.catnumber);
 		
@@ -490,23 +509,23 @@ int vccPakInsertModule(char * ModulePath)
 		if (g_Pak.api.memPointers != NULL)
 		{
 			// pass in our memory read/write functions
-			(*g_Pak.api.memPointers)(MemRead8, MemWrite8);
+			(*g_Pak.api.memPointers)(vccCoreMemRead, vccCoreMemWrite);
 		}
 		if (g_Pak.api.setInterruptCallPtr != NULL)
 		{
 			// pass in our assert interrrupt function
-			(*g_Pak.api.setInterruptCallPtr)(CPUAssertInterupt);
+			(*g_Pak.api.setInterruptCallPtr)(vccCoreAssertInterrupt);
 		}
 		if (g_Pak.api.setCartPtr != NULL)
 		{
 			// Transfer the address of the SetCart routine to the pak
-			(*g_Pak.api.setCartPtr)(SetCart);
+			(*g_Pak.api.setCartPtr)(vccCoreSetCart);
 		}
 		// set INI path.  The Pak should load its settings at this point
 		if (g_Pak.api.setINIPath != NULL)
 		{
 			char TempIni[FILENAME_MAX];
-			GetIniFilePath(TempIni);
+			vccCoreGetINIFilePath(TempIni);
 			(*g_Pak.api.setINIPath)(TempIni);
 		}
 		// we should not have to do this here
@@ -518,7 +537,7 @@ int vccPakInsertModule(char * ModulePath)
 
 		vccPakRebuildMenu();
 
-		EmuState.ResetPending = VCC_RESET_PENDING_HARD;
+		vccCoreSetResetPending(VCC_RESET_PENDING_HARD);
 
 		return VCCPAK_LOADED;
 		break;
@@ -535,10 +554,10 @@ int vccPakInsertModule(char * ModulePath)
 */
 int vccPakLoadExtROM(char * filename)
 {
-	constexpr size_t PAK_MAX_MEM = 0x40000;
+	const size_t PAK_MAX_MEM = 0x40000;
 
 	// If there is an existing ROM, ditch it
-	if (g_Pak.ExternalRomBuffer != nullptr) 
+	if (g_Pak.ExternalRomBuffer != NULL) 
 	{
 		free(g_Pak.ExternalRomBuffer);
 		g_Pak.ExternalRomBuffer = NULL;
@@ -548,7 +567,7 @@ int vccPakLoadExtROM(char * filename)
 	g_Pak.ExternalRomBuffer = (uint8_t*)malloc(PAK_MAX_MEM);
 
 	// If memory was unable to be allocated, fail
-	if (g_Pak.ExternalRomBuffer == nullptr) 
+	if (g_Pak.ExternalRomBuffer == NULL) 
 	{
 		MessageBox(0, "cant allocate ram", "Ok", 0);
 		return 0;
@@ -556,14 +575,16 @@ int vccPakLoadExtROM(char * filename)
 	
 	// Open the ROM file, fail if unable to
 	FILE *rom_handle = fopen(filename, "rb");
-	if (rom_handle == nullptr)
+	if (rom_handle == NULL)
 	{
 		return 0;
 	}
 
 	// Load the file, one byte at a time.. (TODO: Get size and read entire block)
 	size_t index=0;
-	while ((feof(rom_handle) == 0) && (index < PAK_MAX_MEM)) 
+	while (    (feof(rom_handle) == 0) 
+		    && (index < PAK_MAX_MEM)
+		) 
 	{
 		g_Pak.ExternalRomBuffer[index++] = fgetc(rom_handle);
 	}
@@ -600,17 +621,17 @@ void vccPakUnload(void)
 {
 	vccPakUnloadDll();
 
-	SetCart(0);
+	vccCoreSetCart(0);
 	
-	if (g_Pak.ExternalRomBuffer != nullptr)
+	if (g_Pak.ExternalRomBuffer != NULL)
 	{
 		free(g_Pak.ExternalRomBuffer);
 	}
-	g_Pak.ExternalRomBuffer = nullptr;
+	g_Pak.ExternalRomBuffer = NULL;
 
 	memset(&g_Pak, 0, sizeof(vccpak_t));
 
-	EmuState.ResetPending = VCC_RESET_PENDING_HARD;
+	vccCoreSetResetPending(VCC_RESET_PENDING_HARD);
 
 	vccPakRebuildMenu();
 }
@@ -653,7 +674,7 @@ void vccPakRootMenuCreate()
 		menuItemInfo.dwTypeData = MenuTitle;
 		menuItemInfo.cch = strlen(MenuTitle);
 
-		InsertMenuItem(GetMenu(EmuState.WindowHandle), MAIN_MENU_PAK_MENU_POSITION, MF_BYPOSITION, &menuItemInfo);
+		InsertMenuItem(GetMenu(g_vccCorehWnd), MAIN_MENU_PAK_MENU_POSITION, MF_BYPOSITION, &menuItemInfo);
 	}
 }
 
@@ -666,7 +687,7 @@ void vccPakRootMenuDestroy()
 	if (g_hCartridgeMenu != NULL)
 	{
 		// delete our menu we added to the main menu
-		DeleteMenu(GetMenu(EmuState.WindowHandle), MAIN_MENU_PAK_MENU_POSITION, MF_BYPOSITION);
+		DeleteMenu(GetMenu(g_vccCorehWnd), MAIN_MENU_PAK_MENU_POSITION, MF_BYPOSITION);
 		g_hCartridgeMenu = NULL;
 	}
 }
@@ -690,7 +711,7 @@ void vccPakDynMenuActivated(int MenuItem)
 	{
 		// load a new Pak
 	case VCC_DYNMENU_ACTION_LOAD:
-		LoadPack();
+		vccCoreLoadPack();
 		break;
 
 		// eject loaded Pak
@@ -856,7 +877,7 @@ void vccPakDynMenuRefresh(void)
 		}
 	}
 
-	DrawMenuBar(EmuState.WindowHandle);
+	DrawMenuBar(g_vccCorehWnd);
 }
 
 /****************************************************************************/

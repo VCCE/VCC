@@ -16,7 +16,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "logger.h"
+//#include "logger.h"
 #include "idebus.h"
 #include <stdio.h>
 #include <windows.h>

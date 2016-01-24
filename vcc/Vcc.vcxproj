@@ -85,6 +85,7 @@
       <ProgramDataBaseFileName>$(OutDir)</ProgramDataBaseFileName>
       <CompileAs>CompileAsCpp</CompileAs>
       <AdditionalOptions>/arch:SSE</AdditionalOptions>
+      <AdditionalIncludeDirectories>../vcc-core/inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -105,11 +106,16 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)Vcc.exe</OutputFile>
-      <AdditionalDependencies>nafxcw.lib;libcmt.lib;ddraw.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vcc-core.lib;nafxcw.lib;libcmt.lib;ddraw.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>
       </AdditionalOptions>
       <IgnoreSpecificDefaultLibraries>nafxcw.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <AdditionalLibraryDirectories>$(SolutionDir)__obj\$(Platform)\$(Configuration)\vcc-core\out\</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(SolutionDir)__obj\$(Platform)\$(Configuration)\vcc-core\out\vcc-core.dll " "$(OutDir)"</Command>
+      <Message>Copying vcc-core.dll to EXE location</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -128,6 +134,7 @@
       <ObjectFileName>$(OutDir)</ObjectFileName>
       <ProgramDataBaseFileName>$(OutDir)</ProgramDataBaseFileName>
       <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>../vcc-core/inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -149,10 +156,21 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)Vcc.exe</OutputFile>
-      <AdditionalDependencies>nafxcwd.lib;libcmtd.lib;ddraw.lib;dxguid.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vcc-core.lib;nafxcwd.lib;libcmtd.lib;ddraw.lib;dxguid.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <IgnoreSpecificDefaultLibraries>nafxcwd.lib;libcmtd.lib</IgnoreSpecificDefaultLibraries>
+      <AdditionalLibraryDirectories>$(SolutionDir)__obj\$(Platform)\$(Configuration)\vcc-core\out\</AdditionalLibraryDirectories>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <PostBuildEvent>
+      <Command>copy "$(SolutionDir)__obj\$(Platform)\$(Configuration)\vcc-core\out\vcc-core.dll " "$(OutDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying vcc-core.dll to EXE location</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
     <ClCompile>
@@ -175,23 +193,19 @@
     <ClCompile Include="coco3.cpp" />
     <ClCompile Include="config.c" />
     <ClCompile Include="DirectDrawInterface.cpp" />
-    <ClCompile Include="Fileops.c" />
     <ClCompile Include="hd6309.c" />
     <ClCompile Include="iobus.c" />
     <ClCompile Include="joystickinput.c" />
     <ClCompile Include="keyboard.c" />
     <ClCompile Include="keyboardLayout.c" />
-    <ClCompile Include="logger.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
-    <ClCompile Include="vccPak.c" />
     <ClCompile Include="quickload.c" />
     <ClCompile Include="tcc1014graphics.c" />
     <ClCompile Include="tcc1014mmu.c" />
     <ClCompile Include="tcc1014registers.c" />
     <ClCompile Include="throttle.c" />
     <ClCompile Include="Vcc.c" />
-    <ClCompile Include="_xDebug.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h" />
@@ -202,18 +216,15 @@
     <ClInclude Include="config.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="DirectDrawInterface.h" />
-    <ClInclude Include="fileops.h" />
     <ClInclude Include="hd6309.h" />
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="iobus.h" />
     <ClInclude Include="joystickinput.h" />
     <ClInclude Include="keyboard.h" />
     <ClInclude Include="keyboardLayout.h" />
-    <ClInclude Include="logger.h" />
     <ClInclude Include="mc6809.h" />
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6821.h" />
-    <ClInclude Include="vccPak.h" />
     <ClInclude Include="quickload.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="tcc1014graphics.h" />
@@ -221,9 +232,6 @@
     <ClInclude Include="tcc1014registers.h" />
     <ClInclude Include="throttle.h" />
     <ClInclude Include="Vcc.h" />
-    <ClInclude Include="vccPakAPI.h" />
-    <ClInclude Include="vccPakDynMenu.h" />
-    <ClInclude Include="xDebug.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\binfile.ico" />
