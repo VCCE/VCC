@@ -18,6 +18,8 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "defines.h"
+
 void LoadConfig(SystemState *);
 unsigned char WriteIniFile(void);
 unsigned char ReadIniFile(void);

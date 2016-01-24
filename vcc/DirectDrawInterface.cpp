@@ -16,19 +16,21 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define NO_WARN_MBCS_MFC_DEPRECATION
-#define _WIN32_WINNT 0x05010000 // I want to support XP
-
-#include <afxwin.h>
-#include <commctrl.h>	// Windows common controls
 #include "defines.h"
-#include "ddraw.h"
-#include "stdio.h"
-#include "DirectDrawInterface.h"
-#include "resource.h"
+
 #include "tcc1014graphics.h"
 #include "throttle.h"
 
+#include "DirectDrawInterface.h"
+
+#include <stdio.h>
+
+// MFC include
+//#include <afxwin.h>
+#include <commctrl.h>	// Windows common controls
+#include <ddraw.h>
+
+#include "resource.h"
 
 //Global Variables for Direct Draw funcions
 LPDIRECTDRAW        g_pDD		= NULL;  // The DirectDraw object
@@ -60,7 +62,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 	g_hInstance=hInstance;
 	g_nCmdShow=nCmdShow;
-	AfxInitRichEdit();
+	//AfxInitRichEdit();
 	LoadString(g_hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(g_hInstance, IDS_APP_TITLE, szWindowClass, MAX_LOADSTRING);
 	return TRUE;
@@ -192,6 +194,8 @@ bool CreateDDWindow(SystemState *CWState)
 		g_pDDS->GetAttachedSurface(&ddsd.ddsCaps, &g_pDDSBack);
 		hr= g_pDD->GetDisplayMode(&ddsd);
 		if (hr != 0) return FALSE;
+
+		// if this is a test, why is it still here :-)
 //***********************************TEST*****************************************
 		for ( unsigned short i=0;i<=63;i++)
 		{
@@ -205,6 +209,7 @@ bool CreateDDWindow(SystemState *CWState)
 //**********************************END TEST***************************************
 	break;
 	}
+
 	return TRUE;
 }
 

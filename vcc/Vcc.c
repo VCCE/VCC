@@ -19,22 +19,11 @@ This file is part of VCC (Virtual Color Computer).
 /*---------------------------------------------------------------
 
 ---------------------------------------------------------------*/
-//#define STRICT
-//#define WIN32_LEAN_AND_MEAN
 /*--------------------------------------------------------------------------*/
 
-#define DIRECTINPUT_VERSION 0x0800
-#define _WIN32_WINNT 0x0500
-#ifndef ABOVE_NORMAL_PRIORITY_CLASS 
-//#define ABOVE_NORMAL_PRIORITY_CLASS  32768
-#endif 
+#include "defines.h"
 
 #include "Vcc.h"
-#include "vccPak.h"
-
-#include "fileops.h"
-#include "defines.h"
-#include "resource.h"
 #include "joystickinput.h"
 #include "tcc1014mmu.h"
 #include "tcc1014graphics.h"
@@ -48,16 +37,30 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include "quickload.h"
 #include "throttle.h"
+#include "iobus.h"
+
 #include "DirectDrawInterface.h"
+
+// TEMP
+#include "../vcc-core/_build/win/vcc-core.h"
+
+#include "vccPak.h"
+#include "fileops.h"
 //#include "logger.h"
 
+//
+//
+//
 #include <objbase.h>
-#include <windows.h>
 #include <process.h>
 #include <commdlg.h>
 #include <stdio.h>
 #include <Mmsystem.h>
 #include <assert.h>
+
+//#include <windows.h>
+
+#include "resource.h"
 
 static HANDLE hout=NULL;
 
@@ -103,7 +106,14 @@ bool BinaryRunning;
 static unsigned char FlagEmuStop=TH_RUNNING;
 //static CRITICAL_SECTION  FrameRender;
 
-/*--------------------------------------------------------------------------*/
+/***************************************************************************/
+
+void vccSetResetPending(int resetType)
+{
+	EmuState.ResetPending = resetType;
+}
+
+/***************************************************************************/
 
 int APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -126,6 +136,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	OleInitialize(NULL); // Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
+	//
+	// TODO: handle this differently and allow launching command line to custom configurations
+	//
 	if ( strlen(lpCmdLine) !=0)
 	{
 		strcpy(QuickLoadFile,lpCmdLine);
@@ -137,6 +150,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		strcat(temp1,g_szAppName);
 		strcpy(g_szAppName,temp1);
 	}
+
 	EmuState.WindowSize.x=640;
 	EmuState.WindowSize.y=480;
 	InitInstance (hInstance, nCmdShow);
@@ -146,12 +160,30 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		exit(0);
 	}
 	
+	//
+	// Temporary - set function call pointers for vcc-core
+	//				for calls we provide 
+	//
+	vccCoreSetCart = SetCart;
+	vccCoreDynamicMenuCallback = vccPakDynMenuCallback;
+	vccCoreAssertInterrupt = CPUAssertInterupt;
+	vccCorePortRead = vccPakPortRead;
+	vccCorePortWrite = vccPakPortWrite;
+	vccCoreMemRead = MemRead8;
+	vccCoreMemWrite = MemWrite8;
+	g_vccCorehWnd	= EmuState.WindowHandle;
+	vccCoreSetResetPending = vccSetResetPending;
+	vccCoreGetINIFilePath = GetIniFilePath;
+	vccCoreLoadPack = LoadPack;
+
 	Cls(0,&EmuState);
 
+	// we should not have to do this here, we are not loaded yet
 	vccPakRebuildMenu();
 
 	LoadConfig(&EmuState);	// Loads the default config file Vcc.ini from the exec directory
-	EmuState.ResetPending = VCC_RESET_PENDING_HARD;
+	
+	vccSetResetPending(VCC_RESET_PENDING_HARD);
 	SetClockSpeed(1);	// Default clock speed .89 MHZ	
 	BinaryRunning = true;
 	EmuState.EmulationRunning = AutoStart;
@@ -275,7 +307,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case ID_FILE_RESET:
 					if (EmuState.EmulationRunning)
-						EmuState.ResetPending = VCC_RESET_PENDING_HARD;
+						vccSetResetPending(VCC_RESET_PENDING_HARD);
 					break;
 
 				case ID_FILE_RUN:
@@ -285,12 +317,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case ID_FILE_RESET_SFT:
 					if (EmuState.EmulationRunning)
-						EmuState.ResetPending = VCC_RESET_PENDING_SOFT;
+						vccSetResetPending(VCC_RESET_PENDING_SOFT);
 					break;
 
 				case ID_FILE_LOAD:
 					//LoadIniFile();
-					EmuState.ResetPending = VCC_RESET_PENDING_HARD;
+					vccSetResetPending(VCC_RESET_PENDING_HARD);
 					SetClockSpeed(1); //Default clock speed .89 MHZ	
 					break;
 
@@ -568,7 +600,7 @@ void DoHardReset(SystemState* const HRState)
 	CPUReset();		// Zero all CPU Registers and sets the PC to VRESET
 	GimeReset();
 	EmuState.TurboSpeedFlag=1;
-	vccPakSetInterruptCallPtr();
+	vccPakSetInterruptCallPtr(CPUAssertInterupt);
 	vccPakReset();
 	SetClockSpeed(1);
 	return;

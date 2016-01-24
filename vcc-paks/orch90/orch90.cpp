@@ -17,11 +17,18 @@ This file is part of VCC (Virtual Color Computer).
 */
 /****************************************************************************/
 
-#include "../../vcc/defines.h"
-#include "../../vcc/fileops.h"
-#include "../../vcc/vccPakAPI.h"
+#include "orch90.h"
+
+//
+// vcc-core
+//
+//#include "defines.h"
+#include "fileops.h"
+#include "vccPakAPI.h"
 
 #include <stdio.h>
+
+// our Windows resource definitions
 #include "resource.h" 
 
 /****************************************************************************/
@@ -66,7 +73,7 @@ unsigned char LoadExtRom(char *FilePath)	//Returns 1 on if loaded
 */
 /****************************************************************************/
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
 {
 	g_id = id;
 	g_hWnd = (HWND)wndHandle;
@@ -74,13 +81,13 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHand
 	//DynamicMenuCallback = Temp;
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
 {
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
+	LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port,unsigned char Data)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port,unsigned char Data)
 {
 	switch (Port)
 	{
@@ -95,12 +102,12 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Por
 	return;
 }
 
-extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
+extern "C" VCCPAK_API unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
 {
 	return(NULL);
 }
 
-extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_RESET(void)
+extern "C" VCCPAK_API unsigned char VCC_PAKAPI_DEF_RESET(void)
 {
 	char RomPath[MAX_PATH];
 
@@ -120,20 +127,20 @@ extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_RESET(void)
 	return(NULL);
 }
 
-extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_SETCART(vccapi_setcart_t Pointer)
+extern "C" VCCPAK_API unsigned char VCC_PAKAPI_DEF_SETCART(vccapi_setcart_t Pointer)
 {
 	PakSetCart=Pointer;
 
 	return(NULL);
 }
 
-extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
+extern "C" VCCPAK_API unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
 {
 	return(Rom[Address & 8191]);
 }
 
 // This gets called at the end of every scan line 262 Lines * 60 Frames = 15780 Hz 15720
-extern "C" __declspec(dllexport) unsigned short VCC_PAKAPI_DEF_AUDIOSAMPLE(void)
+extern "C" VCCPAK_API unsigned short VCC_PAKAPI_DEF_AUDIOSAMPLE(void)
 {
 	return((LeftChannel<<8) | RightChannel) ;
 }

@@ -16,16 +16,23 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "cassette.h"
+
 #include "defines.h"
 #include "coco3.h"
 #include "config.h"
-#include "cassette.h"
-#include "stdio.h"
 #include "logger.h"
 #include "Vcc.h"
+#include "audio.h"
+
 #include "fileops.h"
 
+#include <stdio.h>
+#include <malloc.h>
+
 #include <windows.h>
+#include <CommDlg.h>
+
 #include "resource.h"
 
 static unsigned char MotorState=0,TapeMode=STOP,WriteProtect=0,Quiet=30;
@@ -266,15 +273,15 @@ void CloseTapeFile(void)
 unsigned int LoadTape(void)
 {
 	char Dummy[MAX_PATH] {0};
+	HANDLE hr = NULL;
+	OPENFILENAME ofn;
+	static unsigned char DialogOpen = 0;
+	unsigned int RetVal = 0;
 
 	if (strlen(TapeFileName) > 0) {
 		strncpy(Dummy, TapeFileName, sizeof(Dummy));
 	}
 
-	HANDLE hr=NULL;
-	OPENFILENAME ofn;	
-	static unsigned char DialogOpen=0;
-	unsigned int RetVal=0;
 	if (DialogOpen ==1)	//Only allow 1 dialog open 
 		return(0);
 	DialogOpen=1;

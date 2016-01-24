@@ -1,27 +1,44 @@
 /****************************************************************************/
 /*
+	Becker Port
+
+	VCC Mod plug-in
 */
 /****************************************************************************/
 
-#include "becker.h"
-
-#include "../../vcc/logger.h"
-#include "../../vcc/fileops.h"
-#include "../../vcc/vccPak.h"
-
-#include <process.h>
-#include <stdio.h>
-
 // 
-// including these will not compile in plain C
-// had to tell MSVC to compile this file as C++
+// these are placed first because somewhere
+// in the headers, Windows.h is still included
+// which includes winsock.h by default
+// and then breaks the compile
 //
-//#define _WINSOCKAPI_    // stops windows.h including winsock.h
+#define _WINSOCKAPI_    // stops windows.h including winsock.h
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-//#include <windows.h>
+#include <windows.h>
 #include <winsock2.h>
 #include <WinUser.h>
 
+
+#include "becker.h"
+
+//
+// vcc-core
+//
+#include "logger.h"
+#include "fileops.h"
+#include "vccPak.h"
+
+//
+// system
+// 
+#include <process.h>
+#include <stdio.h>
+
+//
+// platform
+//
+
+// our Windows resource definitions
 #include "resource.h"
 
 /****************************************************************************/
@@ -33,7 +50,6 @@ unsigned char LoadExtRom(char *);
 void SetDWTCPConnectionEnable(unsigned int enable);
 int dw_setaddr(char *bufdwaddr);
 int dw_setport(char *bufdwport);
-void WriteLog(char *Message, unsigned char Type);
 void LoadConfig(void);
 void SaveConfig(void);
 
@@ -89,17 +105,6 @@ char msg[MAX_PATH];
 static boolean logging = false;
 
 static vccapi_dynamicmenucallback_t DynamicMenuCallback = NULL;
-
-
-/****************************************************************************/
-/**
-*/
-void vccPakRebuildMenu()
-{
-	DynamicMenuCallback(g_id, "", VCC_DYNMENU_FLUSH, DMENU_TYPE_NONE);
-
-	DynamicMenuCallback(g_id, "", VCC_DYNMENU_REFRESH, DMENU_TYPE_NONE);
-}
 
 /****************************************************************************/
 
@@ -411,36 +416,6 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 
 }
 
-void WriteLog(char *Message, unsigned char Type)
-{
-	if (logging)
-	{
-		static HANDLE hout = NULL;
-		static FILE  *disk_handle = NULL;
-		unsigned long dummy;
-		switch (Type)
-		{
-		case TOCONS:
-			if (hout == NULL)
-			{
-				AllocConsole();
-				hout = GetStdHandle(STD_OUTPUT_HANDLE);
-				SetConsoleTitle("Logging Window");
-			}
-			WriteConsole(hout, Message, strlen(Message), &dummy, 0);
-			break;
-
-		case TOFILE:
-			if (disk_handle == NULL)
-				disk_handle = fopen("c:\\VccLog.txt", "w");
-
-			fprintf(disk_handle, "%s\r\n", Message);
-			fflush(disk_handle);
-			break;
-		}
-	}
-}
-
 
 void LoadConfig(void)
 {
@@ -508,7 +483,7 @@ unsigned char LoadExtRom(char *FilePath)	//Returns 1 on if loaded
 
 /****************************************************************************/
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
+VCCPAK_API void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
 {
 	g_id = id;
 	g_hWnd = (HWND)wndHandle;
@@ -516,13 +491,13 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHand
 	DynamicMenuCallback = Temp;
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
+VCCPAK_API void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
 {
 	LoadString(g_hinstDLL,IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
 	LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
 }
 
-__declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port,unsigned char Data)
+VCCPAK_API void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
 {
 	switch (Port)
 	{
@@ -535,7 +510,7 @@ __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port,unsigned 
 }
 
 
-__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
+VCCPAK_API unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
 {
 	switch (Port)
 	{
@@ -555,7 +530,7 @@ __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
 	return 0;
 }
 /*
-__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_RESET(void)
+VCCPAK_API unsigned char VCC_PAKAPI_DEF_RESET(void)
 {
 	if (PakSetCart!=NULL)
 		PakSetCart(1);
@@ -563,12 +538,12 @@ __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_RESET(void)
 }
 */
 
-__declspec(dllexport) void VCC_PAKAPI_DEF_SETCART(vccapi_setcart_t Pointer)
+VCCPAK_API void VCC_PAKAPI_DEF_SETCART(vccapi_setcart_t Pointer)
 {
 	PakSetCart=Pointer;
 }
 
-__declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
+VCCPAK_API unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
 {
 	//sprintf(msg,"PalMemRead8: addr %d  val %d\n",(Address & 8191), Rom[Address & 8191]);
     //WriteLog(msg,TOCONS);
@@ -576,13 +551,13 @@ __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Addres
 	
 }
 
-__declspec(dllexport) void VCC_PAKAPI_DEF_HEARTBEAT(void)
+VCCPAK_API void VCC_PAKAPI_DEF_HEARTBEAT(void)
 {
 	// flush write buffer in the future..?
 	return;
 }
 
-__declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
+VCCPAK_API void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
 {
     // calculate speed
     DWORD sinceCalc = GetTickCount() - LastStats;
@@ -622,7 +597,7 @@ __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSiz
     }
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_DYNMENUBUILD(void)
+VCCPAK_API void VCC_PAKAPI_DEF_DYNMENUBUILD(void)
 {
 	if (DynamicMenuCallback == NULL)
 	{
@@ -640,14 +615,14 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_DYNMENUBUILD(void)
 	DynamicMenuCallback(g_id, "", 1, DMENU_TYPE_NONE);
 }
 
-__declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(int MenuID)
+VCCPAK_API void VCC_PAKAPI_DEF_CONFIG(int MenuID)
 {
 	DialogBox(g_hinstDLL, (LPCTSTR)IDD_PROPPAGE, NULL, (DLGPROC)Config);
 
 	vccPakRebuildMenu();
 }
 
-__declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
+VCCPAK_API void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
 {
 	strcpy(IniFile,IniFilePath);
 	LoadConfig();

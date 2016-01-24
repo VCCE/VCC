@@ -54,7 +54,6 @@ This file is part of VCC (Virtual Color Computer).
 
 static unsigned char HorzInteruptEnabled=0,VertInteruptEnabled=0;
 static unsigned char TopBoarder=0,BottomBoarder=0;
-static unsigned char LinesperScreen;
 static unsigned char TimerInteruptEnabled=0;
 static int MasterTimer=0; 
 static unsigned short TimerClockRate=0;
@@ -70,6 +69,11 @@ static int IntEnable=0;
 static int SndEnable=1;
 static int OverClock=1;
 static unsigned char SoundOutputMode=0;	//Default to Speaker 1= Cassette
+
+// dupe from tcc1014graphics
+//static unsigned char LinesperScreen = 0;
+
+
 void AudioOut(void);
 void CassOut(void);
 void CassIn(void);

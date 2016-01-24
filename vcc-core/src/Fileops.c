@@ -18,109 +18,151 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "fileops.h"
 
+
+//#include <stdint.h>
+#define WIN32_LEAN_AND_MEAN			// Exclude rarely-used stuff from Windows headers
 #include <windows.h>
 #include <stdio.h>
-#include <stdbool.h>
 
-void ValidatePath(char *Path)
+
+VCCCORE_API void ValidatePath(char *Path)
 {
 	char FullExePath[MAX_PATH]="";
 	char TempPath[MAX_PATH]="";
 
 	GetModuleFileName(NULL,FullExePath,MAX_PATH);
+
 	PathRemoveFileSpec(FullExePath);	//Get path to executable
 	strcpy(TempPath,Path);			
 	PathRemoveFileSpec(TempPath);		//Get path to Incomming file
-	if (!strcmp(TempPath,FullExePath))	// If they match remove the Path
+	if (!strcmp(TempPath, FullExePath))	// If they match remove the Path
+	{
 		PathStripPath(Path);
-	return;
+	}
 }
 
-int CheckPath( char *Path)	//Return 1 on Error
+VCCCORE_API int CheckPath( char *Path)	//Return 1 on Error
 {
 	char TempPath[MAX_PATH]="";
 	HANDLE hr=NULL;
 
-	if ((strlen(Path)==0) | (strlen(Path) > MAX_PATH))
+	if ((strlen(Path) == 0) | (strlen(Path) > MAX_PATH))
+	{
 		return(1);
-	hr=CreateFile(Path,0,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+	}
+	hr = CreateFile(Path, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hr==INVALID_HANDLE_VALUE) //File Doesn't exist
 	{
 		GetModuleFileName(NULL,TempPath,MAX_PATH);
 		PathRemoveFileSpec(TempPath);
-		if ( (strlen(TempPath)) + (strlen(Path)) > MAX_PATH)	//Resulting path is to large Bail.
+		if ((strlen(TempPath)) + (strlen(Path)) > MAX_PATH)	//Resulting path is to large Bail.
+		{
 			return(1);
+		}
 
 		strcat(TempPath,Path);
 		hr=CreateFile(TempPath,0,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);			
-		if (hr ==INVALID_HANDLE_VALUE)
+		if (hr == INVALID_HANDLE_VALUE)
+		{
 			return(1);
-		strcpy(Path,TempPath);
+		}
+		strcpy(Path, TempPath);
 	}
 	CloseHandle(hr);
 	return(0);
 }
 
 // These are here to remove dependance on shlwapi.dll. ASCII only
-void PathStripPath ( char *TextBuffer)
+VCCCORE_API void PathStripPath (char * TextBuffer)
 {
 	char TempBuffer[MAX_PATH] = "";
 	short Index = (short)strlen(TextBuffer);
 
-	if ((Index > MAX_PATH) | (Index==0))	//Test for overflow
+	if ((Index > MAX_PATH) | (Index == 0))	//Test for overflow
+	{
 		return;
+	}
 
 	for (; Index >= 0; Index--)
+	{
 		if (TextBuffer[Index] == '\\')
+		{
 			break;
-	
+		}
+	}
+
 	if (Index < 0)	//delimiter not found
+	{
 		return;
+	}
 	strcpy(TempBuffer, &TextBuffer[Index + 1]);
 	strcpy(TextBuffer, TempBuffer);
 }
 
-BOOL PathRemoveFileSpec(char *Path)
+VCCCORE_API bool_t PathRemoveFileSpec(char *Path)
 {
 	size_t Index=strlen(Path),Lenth=Index;
-	if ( (Index==0) | (Index > MAX_PATH))
-		return(false);
-	
-	while ( (Index>0) & (Path[Index] != '\\') )
+	if ((Index == 0) | (Index > MAX_PATH))
+	{
+		return FALSE;
+	}
+
+	while ((Index > 0) & (Path[Index] != '\\'))
+	{
 		Index--;
-	while ( (Index>0) & (Path[Index] == '\\') )
+	}
+	while ((Index > 0) & (Path[Index] == '\\'))
+	{
 		Index--;
-	if (Index==0)
-		return(false);
-	Path[Index+2]=0;
+	}
+	if (Index == 0)
+	{
+		return FALSE;
+	}
+	Path[Index + 2] = 0;
+
 	return( !(strlen(Path) == Lenth));
 }		
 
-BOOL PathRemoveExtension(char *Path)
+VCCCORE_API bool_t PathRemoveExtension(char *Path)
 {
 	size_t Index=strlen(Path),Lenth=Index;
-	if ( (Index==0) | (Index > MAX_PATH))
-		return(false);
-	
-	while ( (Index>0) & (Path[Index--] != '.') );
+	if ((Index == 0) | (Index > MAX_PATH))
+	{
+		return FALSE;
+	}
+
+	while ((Index > 0) & (Path[Index--] != '.'))
+	{
+
+	}
 	Path[Index+1]=0;
-	return( !(strlen(Path) == Lenth));
+
+	return ( !(strlen(Path) == Lenth) );
 }
 
-char* PathFindExtension(char *Path)
+VCCCORE_API char * PathFindExtension(char *Path)
 {
 	size_t Index=strlen(Path),Lenth=Index;
-	if ( (Index==0) | (Index > MAX_PATH))
-		return(&Path[strlen(Path)+1]);
-	while ( (Index>0) & (Path[Index--] != '.') );
+	if ((Index == 0) | (Index > MAX_PATH))
+	{
+		return(&Path[strlen(Path) + 1]);
+	}
+	while ((Index > 0) & (Path[Index--] != '.'))
+	{
+
+	}
+
 	return(&Path[Index+1]);
 }
 
-DWORD WritePrivateProfileInt(LPCTSTR SectionName,LPCTSTR KeyName,int KeyValue,LPCTSTR IniFileName)
+// TODO: move
+VCCCORE_API u32_t WritePrivateProfileInt(const char * SectionName, const char * KeyName, int KeyValue, const char * IniFileName)
 {
 	char Buffer[32]="";
 	sprintf(Buffer,"%i",KeyValue);
-	return(WritePrivateProfileString(SectionName,KeyName,Buffer,IniFileName));
+
+	return (WritePrivateProfileString(SectionName,KeyName,Buffer,IniFileName));
 }
 
 

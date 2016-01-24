@@ -1,27 +1,25 @@
 /*****************************************************************************/
 /**
 	_xDynLib.c - WIN32 specific support for dynamic libraries
- 
-	uEng - micro cross platform engine
-	Copyright 2010 by Wes Gale All rights reserved.
-	Used by permission in VccX
 */
 /*****************************************************************************/
 
 #include "xDynLib.h"
 
+// vcc-core private headers
 #include "_xDynLib.h"
 
-/*
-	uEng
-*/
-#include "xAssert.h"
+// vcc-core
 #include "xDebug.h"
-//#include "xMalloc.h"
 
-/*
-	system specific
- */
+//
+//
+//
+#include <assert.h>
+
+//
+// system specific
+//
 #include <Windows.h>
 
 /*****************************************************************************/
@@ -42,7 +40,7 @@
 	@sa xDynLibUnload xDynLibGetSymbolAddress
 			
 */
-XAPI result_t XCALL xDynLibLoad(ppathname_t pPathname, pxdynlib_t * ppxdynlib)
+VCCCORE_API result_t VCCCORE_CALL xDynLibLoad(ppathname_t pPathname, pxdynlib_t * ppxdynlib)
 {
 	result_t		errResult = XERROR_INVALID_PARAMETER;
 	
@@ -94,7 +92,7 @@ XAPI result_t XCALL xDynLibLoad(ppathname_t pPathname, pxdynlib_t * ppxdynlib)
 			XERROR_GENERIC is returned if the internal module handle is NULL
 							or the module could not be unloaded
 */
-XAPI result_t XCALL xDynLibUnload(pxdynlib_t * ppxdynlib)
+VCCCORE_API result_t VCCCORE_CALL xDynLibUnload(pxdynlib_t * ppxdynlib)
 {
 	result_t		errResult = XERROR_INVALID_PARAMETER;
 	int				iResult;
@@ -129,7 +127,7 @@ XAPI result_t XCALL xDynLibUnload(pxdynlib_t * ppxdynlib)
 /**
 	Dynamic library get symbol address
 */
-XAPI result_t XCALL xDynLibGetSymbolAddress(pxdynlib_t pxdynlib, const char_t * pcszSymbol, void ** ppvSymbol)
+VCCCORE_API result_t VCCCORE_CALL xDynLibGetSymbolAddress(pxdynlib_t pxdynlib, const char_t * pcszSymbol, void ** ppvSymbol)
 {
 	result_t		errResult = XERROR_INVALID_PARAMETER;
 

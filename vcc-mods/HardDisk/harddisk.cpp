@@ -26,13 +26,18 @@ This file is part of VCC (Virtual Color Computer).
 #include "cc3vhd.h"
 #include "cloud9.h"
 
-#include "../../vcc/defines.h"
-#include "../../vcc/fileops.h"
-#include "../../vcc/vccPak.h"
+//
+// vcc-core
+//
+//#include "defines.h"
+#include "fileops.h"
+#include "vccPak.h"
 
 #include <stdio.h>
 
 #include <windows.h>
+
+// our Windows resource definitions
 #include "resource.h" 
 
 /*
@@ -45,7 +50,7 @@ void LoadConfig(void);
 void SaveConfig(void);
 unsigned char LoadExtRom(char *);
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_DYNMENUBUILD(void);
+//extern "C" VCCPAK_API void VCC_PAKAPI_DEF_DYNMENUBUILD(void);
 
 //
 // VCC Pak API
@@ -67,15 +72,6 @@ static unsigned char ClockEnabled=1,ClockReadOnly=1;
 static HINSTANCE g_hinstDLL;
 static HWND g_hWnd = NULL;
 static int g_id = 0;
-
-/**
-*/
-void vccPakRebuildMenu()
-{
-	DynamicMenuCallback(g_id, "", VCC_DYNMENU_FLUSH, DMENU_TYPE_NONE);
-
-	DynamicMenuCallback(g_id, "", VCC_DYNMENU_REFRESH, DMENU_TYPE_NONE);
-}
 
 void MemWrite(unsigned char Data,unsigned short Address)
 {
@@ -179,7 +175,7 @@ void SaveConfig(void)
 	WritePrivateProfileString(ModName, "LastPath", LastPath, IniFile);
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_DYNMENUBUILD(void)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_DYNMENUBUILD(void)
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
@@ -242,7 +238,7 @@ unsigned char LoadExtRom( char *FilePath)	//Returns 1 on if loaded
 /****************************************************************************/
 /**
 */
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
 {
 	g_id = id;
 	g_hWnd = (HWND)wndHandle;
@@ -255,13 +251,13 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHand
 
 /**
 */
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
 {
 	LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
 	LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(int MenuID)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_CONFIG(int MenuID)
 {
 	switch (MenuID)
 	{
@@ -298,12 +294,12 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(int MenuID)
 	}
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port, unsigned char Data)
 {
 	IdeWrite(Data, Port);
 }
 
-extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
+extern "C" VCCPAK_API unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
 {
 	if (  (Port == 0x78) 
 		| (Port == 0x79) 
@@ -318,25 +314,25 @@ extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned 
 
 
 //This captures the pointers to the MemRead8 and MemWrite8 functions. This allows the DLL to do DMA xfers with CPU ram.
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_MEMPOINTERS(vcccpu_read8_t Temp1, vcccpu_write8_t Temp2)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_MEMPOINTERS(vcccpu_read8_t Temp1, vcccpu_write8_t Temp2)
 {
 	MemRead8 = Temp1;
 	MemWrite8 = Temp2;
 }
 
-extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
+extern "C" VCCPAK_API unsigned char VCC_PAKAPI_DEF_MEMREAD(unsigned short Address)
 {
 	return DiskRom[Address & 8191];
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
 {
 	// TODO: use buffer size
 
 	DiskStatus(buffer);
 }
 
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char * IniFilePath)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_SETINIPATH(char * IniFilePath)
 {
 	strcpy(IniFile, IniFilePath);
 	LoadConfig();

@@ -19,10 +19,29 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "xTypes.h"
+
+//
+// Windows incudes
+//
+//#define NO_WARN_MBCS_MFC_DEPRECATION
+//#define _WIN32_WINNT 0x05010000 // I want to support XP
+//#define STRICT
+//#define WIN32_LEAN_AND_MEAN
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0500
+#endif
+//#ifndef ABOVE_NORMAL_PRIORITY_CLASS 
+//#define ABOVE_NORMAL_PRIORITY_CLASS  32768
+//#endif 
+
 #define DIRECTINPUT_VERSION 0x0800
-#define _WINSOCKAPI_    // stops windows.h including winsock.h
+#define _WINSOCKAPI_				// stops windows.h including winsock.h
+#define WIN32_LEAN_AND_MEAN			// Exclude rarely-used stuff from Windows headers
+
 #include <windows.h>
 #include <windowsx.h>
+
 #include <stdint.h>
 
 //Speed throttling
@@ -38,8 +57,8 @@ This file is part of VCC (Virtual Color Computer).
 #define PICOSECOND (double)1000000000
 #define COLORBURST (double)3579545 
 #define AUDIOBUFFERS 12
+
 //Misc
-#define MAX_LOADSTRING 100
 #define QUERY 255
 #define INDEXTIME ((LINESPERSCREEN * TARGETFRAMERATE)/5)
 
@@ -73,26 +92,24 @@ unsigned char	DoubleSpeedMultiplyer;
 unsigned char	DoubleSpeedFlag;
 unsigned char	TurboSpeedFlag;
 unsigned char	CpuType;
-unsigned char	FrameSkip;
-unsigned char	BitDepth;
+
+int				FrameSkip;
+int				BitDepth;
 unsigned char	*PTRsurface8;
 unsigned short	*PTRsurface16;
 unsigned int	*PTRsurface32;
 long			SurfacePitch;
-unsigned short	LineCounter;
-unsigned char	ScanLines;
+int				LineCounter;
+int				ScanLines;
 //bool			InRender;
 //unsigned char	PauseEmuLoop;
 //unsigned char	Waiting;
+unsigned char	FullScreen;
+
 int				EmulationRunning;
 int				ResetPending;
 POINT			WindowSize;
-unsigned char	FullScreen;
 char			StatusLine[256];
 } SystemState;
-
-static char RateList[4][7]={"Mute","11025","22050","44100"};
-static unsigned short iRateList[4]={0,11025,22050,44100};
-#define TAPEAUDIORATE 44100
 
 #endif

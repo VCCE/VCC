@@ -24,14 +24,25 @@ This file is part of VCC (Virtual Color Computer).
 #include "Superide.h"
 #include "idebus.h"
 #include "cloud9.h"
+
+//
+// vcc-core
+//
+#include "fileops.h"
+#include "vccPakAPI.h"
 #include "logger.h"
 
-#include "../../vcc/defines.h"
-#include "../../vcc/fileops.h"
-#include "../../vcc/vccPakAPI.h"
-
-#include <windows.h>
+//
+//
+//
 #include <stdio.h>
+
+//
+//
+//
+#include <windows.h>
+
+// Our Windows resource definitions
 #include "resource.h" 
 
 /****************************************************************************/
@@ -177,7 +188,7 @@ void LoadConfig(void)
 /****************************************************************************/
 /**
 */
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_INIT(int id, void * wndHandle, vccapi_dynamicmenucallback_t Temp)
 {
 	g_id = id;
 	g_hWnd = (HWND)wndHandle;
@@ -189,7 +200,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_INIT(int id, void * wndHand
 
 /**
 */
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_GETNAME(char * ModName, char * CatNumber)
 {
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
@@ -197,7 +208,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_GETNAME(char * ModName, cha
 
 /**
 */
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port,unsigned char Data)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Port,unsigned char Data)
 {
 	if ((Port >= BaseAddress) & (Port <= (BaseAddress + 8)))
 	{
@@ -220,7 +231,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_PORTWRITE(unsigned char Por
 
 /**
 */
-extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
+extern "C" VCCPAK_API unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned char Port)
 {
 	unsigned char RetVal=0;
 	unsigned short Temp=0;
@@ -256,7 +267,7 @@ extern "C" __declspec(dllexport) unsigned char VCC_PAKAPI_DEF_PORTREAD(unsigned 
 
 /**
 */
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_STATUS(char * buffer, size_t bufferSize)
 {
 	// TODO: use buffer size
 	DiskStatus(buffer);
@@ -264,7 +275,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_STATUS(char * buffer, size_
 
 /**
 */
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(int MenuID)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_CONFIG(int MenuID)
 {
 	switch (MenuID)
 	{
@@ -301,7 +312,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_CONFIG(int MenuID)
 
 /**
 */
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePath)
 {
 	strcpy(IniFile,IniFilePath);
 	LoadConfig();
@@ -309,7 +320,7 @@ extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_SETINIPATH(char *IniFilePat
 
 /**
 */
-extern "C" __declspec(dllexport) void VCC_PAKAPI_DEF_DYNMENUBUILD(void)
+extern "C" VCCPAK_API void VCC_PAKAPI_DEF_DYNMENUBUILD(void)
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";

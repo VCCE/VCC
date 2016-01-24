@@ -18,6 +18,11 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "defines.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void UpdateScreen8 (SystemState *);
 void UpdateScreen16 (SystemState *);
@@ -60,11 +65,20 @@ void SetBoarderChange (unsigned char);
 //void Cls(unsigned int);
 unsigned char SetScanLines(unsigned char);
 void SetBlinkState(unsigned char);
+
 static unsigned char Lpf[4]={192,199,225,225}; // 2 is really undefined but I gotta put something here.
 static unsigned char VcenterTable[4]={29,23,12,12};
+
+
+extern int LinesperScreen;
+
 #define MRGB	1
 #define MCMP	0
 
 //void Set8BitPalette(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

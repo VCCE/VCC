@@ -17,20 +17,32 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "defines.h"
 
-unsigned char disk_io_read(unsigned char port);
-void disk_io_write(unsigned char data,unsigned char port);	
-int mount_disk_image(char *,unsigned char );
-void unmount_disk_image(unsigned char drive);
-void DiskStatus(char *);
-void PingFdc(void);
-unsigned char SetTurboDisk( unsigned char);
-unsigned char UseKeyboardLeds(unsigned char);
-DWORD GetDriverVersion ();
-unsigned short InitController (void);
-//unsigned long UseRawDisk(unsigned char,unsigned char);
-// Commands for the wd1793 disk controller $FF48
+#include <Windows.h>
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+	unsigned char disk_io_read(unsigned char port);
+	void disk_io_write(unsigned char data, unsigned char port);
+	int mount_disk_image(char *, unsigned char);
+	void unmount_disk_image(unsigned char drive);
+	void DiskStatus(char *);
+	void PingFdc(void);
+	unsigned char SetTurboDisk(unsigned char);
+	unsigned char UseKeyboardLeds(unsigned char);
+	unsigned long GetDriverVersion();
+	unsigned short InitController(void);
+	//unsigned long UseRawDisk(unsigned char,unsigned char);
+	// Commands for the wd1793 disk controller $FF48
+
+#ifdef __cplusplus
+}
+#endif
 
 struct DiskInfo 
 {

@@ -34,6 +34,26 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "vccPakDynMenu.h"
 
+#if (defined VCCPAKAPI_EXPORTS)
+#	if (defined WIN32)
+#		define VCCPAK_API __declspec(dllexport)
+#	elif (defined OSX)
+#		define VCCPAK_API __attribute__((visibility("public")))
+#	else
+#		error "platformed undefined for library build"
+#	endif
+#else
+#	define VCCPAK_API
+#endif
+
+/****************************************************************************/
+
+#define VCC_RESET_PENDING_NONE			0
+#define VCC_RESET_PENDING_SOFT			1
+#define VCC_RESET_PENDING_HARD			2
+#define VCC_RESET_PENDING_CLEAR			3
+#define VCC_RESET_PENDING_UPDATECONFIG	4
+
 /****************************************************************************/
 
 /*

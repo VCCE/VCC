@@ -3,7 +3,7 @@
 
 /*****************************************************************************/
 
-//#include "xTypes.h"
+#include "xTypes.h"
 
 /*****************************************************************************/
 
@@ -23,7 +23,7 @@ extern "C"
 {
 #endif
 	
-	void		_xDbgTrace(const void * pFile, const int iLine, const void * pFormat, ...);
+	VCCCORE_API void		VCCCORE_CALL _xDbgTrace(const void * pFile, const int iLine, const void * pFormat, ...);
 	
 #ifdef __cplusplus
 }

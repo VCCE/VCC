@@ -16,31 +16,34 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "defines.h"
-#include "resource.h"
 #include "config.h"
+
+#include "defines.h"
+#include "audio.h"
 #include "tcc1014graphics.h"
 #include "mc6821.h"
 #include "Vcc.h"
 #include "tcc1014mmu.h"
 #include "audio.h"
-#include "vccPak.h"
 #include "vcc.h"
 #include "DirectDrawInterface.h"
 #include "joystickinput.h"
 #include "keyboard.h"
-#include "fileops.h"
 #include "Cassette.h"
 
 //#include "logger.h"
-
-#include <commctrl.h>
-#include <stdio.h>
-#include <Richedit.h>
+#include "fileops.h"
+#include "vccPak.h"
 
 #include <assert.h>
 
-extern SystemState EmuState;
+#include <commctrl.h>
+#include <commdlg.h>
+#include <stdio.h>
+#include <Richedit.h>
+
+#include "resource.h"
+
 extern char StickName[MAXSTICKS][STRLEN];
 
 //
@@ -452,7 +455,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 void GetIniFilePath( char *Path)
 {
 	strcpy(Path,IniFilePath);
-	return;
 }
 
 void UpdateConfig (void)

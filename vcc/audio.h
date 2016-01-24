@@ -34,4 +34,9 @@ typedef struct CardList {
 
 int GetSoundCardList (SndCardList *);
 
+static const char RateList[4][7] = { "Mute","11025","22050","44100" };
+static const unsigned short iRateList[4] = { 0,11025,22050,44100 };
+
+#define TAPEAUDIORATE 44100
+
 #endif

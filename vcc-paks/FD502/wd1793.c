@@ -31,13 +31,18 @@ This file is part of VCC (Virtual Color Computer).
 *																				*
 ********************************************************************************/
 
+#include "wd1793.h"
+#include "fd502.h"
+
+#include "defines.h"
+
+#include "vccPakDynMenu.h"
+
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <winioctl.h>
-#include "defines.h"
-#include "wd1793.h"
-#include "fd502.h"
+
 #include "fdrawcmd.h"	// http://simonowen.com/fdrawcmd/
 /****************Fuction Protos for this Module************/
 
@@ -1459,9 +1464,9 @@ unsigned short ccitt_crc16(unsigned short crc, const unsigned char *buffer, unsi
 
 //Stolen from fdrawcmd.sys Demo Disk Utility by Simon Owen <simon@simonowen.com>
 
-DWORD GetDriverVersion ()
+unsigned long GetDriverVersion ()
 {
-    DWORD dwVersion = 0;
+	unsigned long dwVersion = 0;
     HANDLE h = CreateFile("\\\\.\\fdrawcmd", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
     if (h != INVALID_HANDLE_VALUE)
@@ -1469,6 +1474,7 @@ DWORD GetDriverVersion ()
         DeviceIoControl(h, IOCTL_FDRAWCMD_GET_VERSION, NULL, 0, &dwVersion, sizeof(dwVersion), &dwRet, NULL);
         CloseHandle(h);
     }
+
     return dwVersion;
 }
 

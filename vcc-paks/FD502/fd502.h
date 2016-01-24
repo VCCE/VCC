@@ -18,14 +18,15 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "../../vcc/vccPak.h"
+//
+// vcc-core
+//
+#include "vccPak.h"
 
 #define External 0
 #define TandyDisk 1
 #define RGBDisk 2
 
 void fd502CPUAssertInterupt(unsigned char, unsigned char);
-
-void vccPakRebuildMenu();
 
 #endif
