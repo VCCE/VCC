@@ -1,5 +1,11 @@
+#
+#	GCC makefile for Vcc (Coco3 emulator)
+#
+# - builds under mingw64 (2016-02-16)
+# - run 'buildtools.bat' and type 'make'
+#
+
 PLATFORM = win
-MINGW_DIR = c:/mingw-20121207/mingw64-w64
 
 # compiler, linker and utilities
 AS = as
@@ -8,8 +14,7 @@ LD = g++
 CPP = g++
 ECHO = @echo
 RM = rm
-#MD = mkdir
-MD = $(MINGW_DIR)/bin/mkdir.exe
+MD = mkdir
 OBJC = objcopy
 MAKEFILE = makefile
 
@@ -37,7 +42,7 @@ LIBS = -lkernel32 -lgdi32 -lcomdlg32 -lcomctl32 -lriched20 -ldinput -ldinput8 -l
 
 CFLAGS = $(INCS) -std=gnu++0x
 CPPFLAGS = $(INCS) -std=gnu++0x
-LDFLAGS = -Wl,-L,$(MINGW_DIR)/x86_64-w64-mingw32/lib $(LIBS)
+LDFLAGS = $(LIBS)
 
 OBJDIR = obj/$(PLATFORM)
 FD502_OBJDIR = $(OBJDIR)/$(FD502_DIR)
@@ -56,44 +61,44 @@ OBJDIRS = \
 	$(SUPERIDE_OBJDIR)
 
 FD502_OBJS = \
-	$(OBJDIR)/fileops.o \
+	$(OBJDIR)/Fileops.o \
 	$(FD502_OBJDIR)/distortc.o \
 	$(FD502_OBJDIR)/wd1793.o \
 	$(FD502_OBJDIR)/fd502_res.o \
 	$(FD502_OBJDIR)/fd502.o
 
 HARDDISK_OBJS = \
-	$(OBJDIR)/fileops.o \
+	$(OBJDIR)/Fileops.o \
 	$(HARDDISK_OBJDIR)/cc3vhd.o \
 	$(HARDDISK_OBJDIR)/cloud9.o \
 	$(HARDDISK_OBJDIR)/harddisk_res.o \
 	$(HARDDISK_OBJDIR)/harddisk.o
 
 MPI_OBJS = \
-	$(OBJDIR)/fileops.o \
+	$(OBJDIR)/Fileops.o \
 	$(MPI_OBJDIR)/mpi_res.o \
 	$(MPI_OBJDIR)/mpi.o
 
 ORCH90_OBJS = \
-	$(OBJDIR)/fileops.o \
+	$(OBJDIR)/Fileops.o \
 	$(ORCH90_OBJDIR)/orch90_res.o \
 	$(ORCH90_OBJDIR)/orch90.o
 
 RAMDISK_OBJS = \
 	$(RAMDISK_OBJDIR)/memboard.o \
 	$(RAMDISK_OBJDIR)/ramdisk_res.o \
-	$(RAMDISK_OBJDIR)/ramdisk.o
+	$(RAMDISK_OBJDIR)/Ramdisk.o
 
 SUPERIDE_OBJS = \
-	$(OBJDIR)/fileops.o \
+	$(OBJDIR)/Fileops.o \
 	$(SUPERIDE_OBJDIR)/cloud9.o \
-	$(SUPERIDE_OBJDIR)/idebus.o \
+	$(SUPERIDE_OBJDIR)/IdeBus.o \
 	$(SUPERIDE_OBJDIR)/logger.o \
 	$(SUPERIDE_OBJDIR)/superide_res.o \
-	$(SUPERIDE_OBJDIR)/superide.o
+	$(SUPERIDE_OBJDIR)/SuperIDE.o
 
 VCC_OBJS = \
-	$(OBJDIR)/Audio.o \
+	$(OBJDIR)/audio.o \
 	$(OBJDIR)/Cassette.o \
 	$(OBJDIR)/coco3.o \
 	$(OBJDIR)/config.o \
@@ -114,10 +119,10 @@ VCC_OBJS = \
 	$(OBJDIR)/tcc1014registers.o \
 	$(OBJDIR)/throttle.o \
 	$(OBJDIR)/_xDebug.o \
-	$(OBJDIR)/Vcc_res.o \
+	$(OBJDIR)/vcc_res.o \
 	$(OBJDIR)/Vcc.o
 
-all: $(OBJDIRS) $(DLLS) $(VCC)
+all: $(OBJDIRS) $(DLLS) $(VCC) makefile
 .PHONY: all
 
 $(OBJDIR):
@@ -238,5 +243,5 @@ clean:
 	$(RM) -f $(SUPERIDE_OBJDIR)/*.o
 	$(RM) -f $(OBJDIR)/*.o
 	$(ECHO) Deleting dlls and executables...
-	$(RM) -f $(FD502_DLL)
+	$(RM) -f $(DLLS)
 	$(RM) -f $(VCC)

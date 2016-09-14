@@ -118,6 +118,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 //	CoInitialize(NULL);
 //	InitializeCriticalSection();
 	OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
+	
+	// the version number should be read from the version resource
+	// - not embedded in the application name string resource
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
 	if ( strlen(lpCmdLine) !=0)
