@@ -32,7 +32,7 @@ static  short StartAddress=0;
 static unsigned short XferAddress=0;
 static unsigned char *MemImage=NULL;
 FILE *BinImage=NULL;
-HANDLE hr;
+static HANDLE hr;
 static unsigned char Flag=1;
 static int temp=255;
 static char Extension[MAX_PATH]="";
@@ -41,7 +41,7 @@ unsigned char QuickLoad(char *BinFileName)
 {
 	unsigned int MemIndex=0;
 
-	hr=CreateFile(BinFileName,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+	hr=CreateFile(BinFileName,0,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
 	if (hr==INVALID_HANDLE_VALUE)
 		return(1);				//File Not Found
 

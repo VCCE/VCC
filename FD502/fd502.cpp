@@ -270,7 +270,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				SendDlgItemMessage(hDlg,ChipChoice[temp],BM_SETCHECK,(temp==TempSelectRom),0);
 			for (temp=0;temp<2;temp++)
 				for (temp2=0;temp2<5;temp2++)
-						SendDlgItemMessage (hDlg,VirtualDrive[temp], CB_ADDSTRING, NULL,(LPARAM) VirtualNames[temp2]);
+						SendDlgItemMessage (hDlg,VirtualDrive[temp], CB_ADDSTRING, 0,(LPARAM) VirtualNames[temp2]);
 
 //			GetDlgItem(hDlg,IDC_DISKA)->EnableWindow(FALSE); 
 //			SendDlgItemMessage (hDlg, IDC_DISKA,WM_ENABLE  ,(WPARAM)0,(LPARAM)0);
@@ -303,14 +303,14 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 							if (OldPhysicalDriveA!=0)
 								unmount_disk_image(OldPhysicalDriveA-1);
 							if (PhysicalDriveA!=0)
-								mount_disk_image("*Floppy A:",PhysicalDriveA-1);
+								mount_disk_image((char *)"*Floppy A:",PhysicalDriveA-1);
 						}
 						if (PhysicalDriveB != OldPhysicalDriveB)	//Drive changed
 						{					
 							if (OldPhysicalDriveB!=0)
 								unmount_disk_image(OldPhysicalDriveB-1);
 							if (PhysicalDriveB!=0)
-								mount_disk_image("*Floppy B:",PhysicalDriveB-1);
+								mount_disk_image((char *)"*Floppy B:",PhysicalDriveB-1);
 						}	
 					}
 					EndDialog(hDlg, LOWORD(wParam));
@@ -396,7 +396,7 @@ void Load_Disk(unsigned char disk)
 
 		if ( GetOpenFileName(&ofn) )
 		{
-			hr=CreateFile(TempFileName,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+			hr=CreateFile(TempFileName,0,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
 			if (hr==INVALID_HANDLE_VALUE) 
 			{
 				NewDiskNumber=disk;
@@ -439,42 +439,42 @@ void BuildDynaMenu(void)
 	char TempBuf[MAX_PATH]="";
 	if (DynamicMenuCallback ==NULL)
 		MessageBox(0,"No good","Ok",0);
-	DynamicMenuCallback("",0,0);
-	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "FD-502 Drive 0",6000,HEAD);
-	DynamicMenuCallback( "Insert",5010,SLAVE);
+	DynamicMenuCallback((char *)"",0,0);
+	DynamicMenuCallback( (char *)"",6000,0);
+	DynamicMenuCallback( (char *)"FD-502 Drive 0",6000,HEAD);
+	DynamicMenuCallback( (char *)"Insert",5010,SLAVE);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[0].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
 	DynamicMenuCallback( TempMsg,5011,SLAVE);
 
-	DynamicMenuCallback( "FD-502 Drive 1",6000,HEAD);
-	DynamicMenuCallback( "Insert",5012,SLAVE);
+	DynamicMenuCallback( (char *)"FD-502 Drive 1",6000,HEAD);
+	DynamicMenuCallback( (char *)"Insert",5012,SLAVE);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[1].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
 	DynamicMenuCallback( TempMsg,5013,SLAVE);
 
-	DynamicMenuCallback( "FD-502 Drive 2",6000,HEAD);
-	DynamicMenuCallback( "Insert",5014,SLAVE);
+	DynamicMenuCallback( (char *)"FD-502 Drive 2",6000,HEAD);
+	DynamicMenuCallback( (char *)"Insert",5014,SLAVE);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[2].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
 	DynamicMenuCallback( TempMsg,5015,SLAVE);
 //NEW
-	DynamicMenuCallback( "FD-502 Drive 3",6000,HEAD);
-	DynamicMenuCallback( "Insert",5017,SLAVE);
+	DynamicMenuCallback( (char *)"FD-502 Drive 3",6000,HEAD);
+	DynamicMenuCallback( (char *)"Insert",5017,SLAVE);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[3].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
 	DynamicMenuCallback( TempMsg,5018,SLAVE);
 //NEW 
-	DynamicMenuCallback( "FD-502 Config",5016,STANDALONE);
-	DynamicMenuCallback( "",1,0);
+	DynamicMenuCallback( (char *)"FD-502 Config",5016,STANDALONE);
+	DynamicMenuCallback( (char *)"",1,0);
 }
 
 long CreateDisk (unsigned char Disk)

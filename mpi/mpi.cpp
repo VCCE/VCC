@@ -311,7 +311,7 @@ extern "C"
 			return(ExtRomPointers[ChipSelectSlot][(Address & 32767)+BankedCartOffset[ChipSelectSlot]]); //Bank Select ???
 		if (PakMemRead8Calls[ChipSelectSlot] != NULL)
 			return(PakMemRead8Calls[ChipSelectSlot](Address));
-		return(NULL);
+		return((unsigned char)0);
 	}
 }
 
@@ -374,7 +374,7 @@ extern "C"
 		PakSetCart(0);
 		if (CartForSlot[SpareSelectSlot]==1)
 			PakSetCart(1);
-		return(NULL);
+		return((unsigned char)0);
 	}
 }
 
@@ -462,7 +462,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				if ( LOWORD(wParam) == CONFIGBTN[Temp] )
 				{
 					if (ConfigModuleCalls[Temp] != NULL)
-						ConfigModuleCalls[Temp](NULL);
+						ConfigModuleCalls[Temp]((unsigned char)0);
 				}
 			}
 			return TRUE;
@@ -773,29 +773,29 @@ void BuildDynaMenu(void)	//STUB
 	char TempMsg[512]="";
 	if (DynamicMenuCallback ==NULL)
 		MessageBox(0,"No good","Ok",0);
-	DynamicMenuCallback( "",0,0);
-	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "MPI Slot 4",6000,HEAD);
-	DynamicMenuCallback( "Insert",5010,SLAVE);
+	DynamicMenuCallback( (char *)"",0,0);
+	DynamicMenuCallback( (char *)"",6000,0);
+	DynamicMenuCallback( (char *)"MPI Slot 4",6000,HEAD);
+	DynamicMenuCallback( (char *)"Insert",5010,SLAVE);
 	sprintf(TempMsg,"Eject: ");
 	strcat(TempMsg,SlotLabel[3]);
 	DynamicMenuCallback( TempMsg,5011,SLAVE);
-	DynamicMenuCallback( "MPI Slot 3",6000,HEAD);
-	DynamicMenuCallback( "Insert",5012,SLAVE);
+	DynamicMenuCallback( (char *)"MPI Slot 3",6000,HEAD);
+	DynamicMenuCallback( (char *)"Insert",5012,SLAVE);
 	sprintf(TempMsg,"Eject: ");
 	strcat(TempMsg,SlotLabel[2]);
 	DynamicMenuCallback( TempMsg,5013,SLAVE);
-	DynamicMenuCallback( "MPI Slot 2",6000,HEAD);
-	DynamicMenuCallback( "Insert",5014,SLAVE);
+	DynamicMenuCallback( (char *)"MPI Slot 2",6000,HEAD);
+	DynamicMenuCallback( (char *)"Insert",5014,SLAVE);
 	sprintf(TempMsg,"Eject: ");
 	strcat(TempMsg,SlotLabel[1]);
 	DynamicMenuCallback( TempMsg,5015,SLAVE);
-	DynamicMenuCallback( "MPI Slot 1",6000,HEAD);
-	DynamicMenuCallback( "Insert",5016,SLAVE);
+	DynamicMenuCallback( (char *)"MPI Slot 1",6000,HEAD);
+	DynamicMenuCallback( (char *)"Insert",5016,SLAVE);
 	sprintf(TempMsg,"Eject: ");
 	strcat(TempMsg,SlotLabel[0]);
 	DynamicMenuCallback( TempMsg,5017,SLAVE);
-	DynamicMenuCallback( "MPI Config",5018,STANDALONE);
+	DynamicMenuCallback( (char *)"MPI Config",5018,STANDALONE);
 
 	for (TempIndex=0;TempIndex<MenuIndex[3];TempIndex++)
 		DynamicMenuCallback(MenuName3[TempIndex],MenuId3[TempIndex]+80,Type3[TempIndex]);
@@ -809,7 +809,7 @@ void BuildDynaMenu(void)	//STUB
 	for (TempIndex=0;TempIndex<MenuIndex[0];TempIndex++)
 		DynamicMenuCallback(MenuName0[TempIndex],MenuId0[TempIndex]+20,Type0[TempIndex]);
 
-	DynamicMenuCallback( "",1,0);
+	DynamicMenuCallback( (char *)"",1,0);
 }
 
 void DynamicMenuCallback0( char *MenuName,int MenuId, int Type)

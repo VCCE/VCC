@@ -18,6 +18,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "windows.h"
 #include "stdio.h"
+#include "defines.h"
 #include "mc6809.h"
 #include "mc6809defs.h"
 #include "tcc1014mmu.h"
@@ -69,7 +70,7 @@ static char InInterupt=0;
 //END Global variables for CPU Emulation-------------------
 
 //Fuction Prototypes---------------------------------------
-_inline unsigned short CalculateEA(unsigned char);
+static INLINE unsigned short CalculateEA(unsigned char);
 static void setcc (unsigned char);
 static unsigned char getcc(void);
 static void cpu_firq(void);

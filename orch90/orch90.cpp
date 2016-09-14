@@ -78,7 +78,7 @@ extern "C"
 {
 	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
 	{
-		return(NULL);
+		return((unsigned char)0);
 	}
 }
 
@@ -95,7 +95,7 @@ extern "C"
 		
 		if ((PakSetCart!=NULL) & LoadExtRom(RomPath))	//If we can load the rom them assert cart 
 			PakSetCart(1);
-		return(NULL);
+		return((unsigned char)0);
 	}
 }
 
@@ -105,7 +105,7 @@ extern "C"
 	{
 		
 		PakSetCart=Pointer;
-		return(NULL);
+		return((unsigned char)0);
 	}
 }
 

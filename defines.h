@@ -21,6 +21,13 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <cstdint>
 
+#ifdef _MSC_VER
+	#define INLINE _inline
+#endif 
+#ifdef __GNUC__
+	#define INLINE inline
+#endif
+
 //Speed throttling
 #define FRAMEINTERVAL 120	//Number of frames to sum the framecounter over
 #define TARGETFRAMERATE 60	//Number of throttled Frames per second to render

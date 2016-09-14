@@ -295,6 +295,7 @@
 #define ID_FIRQ                         40024
 #define ID_NMI                          40025
 #define ID_CARTRIDGE_INSERT             40026
+#define ID_FILE_SAVE                    40027
 #define ID_FILE_LOAD                    40028
 #define ID_CARTS_EJECT                  40030
 #define ID_CONFIGURE_OPTIONS            65535

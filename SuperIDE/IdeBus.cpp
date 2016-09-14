@@ -263,7 +263,7 @@ void ByteSwap (char *String)
 	int Index=0,Index2=0;
 	int Lenth=strlen(String);
 	char *NewString=(char*)malloc(Lenth+1);
-	memset(NewString,NULL,Lenth+1);
+	memset(NewString,0,Lenth+1);
 
 	for (Index=0;Index<(Lenth+1);Index++)
 		if (String[Index^1])

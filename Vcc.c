@@ -141,8 +141,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	}
 	
 	Cls(0,&EmuState);
-	DynamicMenuCallback( "",0, 0);
-	DynamicMenuCallback( "",1, 0);
+	DynamicMenuCallback( (char *)"",0, 0);
+	DynamicMenuCallback( (char *)"",1, 0);
 
 	LoadConfig(&EmuState);			//Loads the default config file Vcc.ini from the exec directory
 	EmuState.ResetPending=2;
@@ -389,7 +389,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					if ( EmuState.EmulationRunning )
 						EmuState.ResetPending=2;
 					else
-						SetStatusBarText("",&EmuState);
+						SetStatusBarText((char *)"",&EmuState);
 				break;
 
 				case DIK_F10:
@@ -744,7 +744,7 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		if (Throttle )	//Do nothing untill the frame is over returning unused time to OS
 			FrameWait();
 	} //Still Emulating
-	return(NULL);
+	return(0);
 }
 
 void LoadPack(void)
@@ -761,7 +761,7 @@ unsigned __stdcall CartLoad(void *Dummy)
 	LoadCart();
 	EmuState.EmulationRunning=TRUE;
 	DialogOpen=false;
-	return(NULL);
+	return(0);
 }
 
 void FullScreenToggle(void)

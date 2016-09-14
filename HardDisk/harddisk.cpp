@@ -252,7 +252,7 @@ void LoadConfig(void)
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	GetPrivateProfileString(ModName,"VHDImage","",FileName,MAX_PATH,IniFile);
 	CheckPath(FileName);
-	hr=CreateFile(FileName,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+	hr=CreateFile(FileName,0,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
 	if (hr==INVALID_HANDLE_VALUE)
 	{
 		strcpy(FileName,"");
@@ -284,17 +284,17 @@ void BuildDynaMenu(void)
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
-	DynamicMenuCallback("",0,0);
-	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "HD Drive 0",6000,HEAD);
-	DynamicMenuCallback( "Insert",5010,SLAVE);
+	DynamicMenuCallback((char *)"",0,0);
+	DynamicMenuCallback( (char *)"",6000,0);
+	DynamicMenuCallback( (char *)"HD Drive 0",6000,HEAD);
+	DynamicMenuCallback( (char *)"Insert",5010,SLAVE);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,FileName);
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
 	DynamicMenuCallback( TempMsg,5011,SLAVE);
 //	DynamicMenuCallback( "HD Config",5012,STANDALONE);
-	DynamicMenuCallback("",1,0);
+	DynamicMenuCallback((char *)"",1,0);
 
 }
 

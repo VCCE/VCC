@@ -195,25 +195,25 @@ void BuildDynaMenu(void)
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
-	DynamicMenuCallback("",0,0);
-	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "IDE Master",6000,HEAD);
-	DynamicMenuCallback( "Insert",5010,SLAVE);
+	DynamicMenuCallback((char *)"",0,0);
+	DynamicMenuCallback( (char *)"",6000,0);
+	DynamicMenuCallback( (char *)"IDE Master",6000,HEAD);
+	DynamicMenuCallback( (char *)"Insert",5010,SLAVE);
 	QueryDisk(MASTER,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
 
 	DynamicMenuCallback( TempMsg,5011,SLAVE);
-	DynamicMenuCallback( "IDE Slave",6000,HEAD);
-	DynamicMenuCallback( "Insert",5012,SLAVE);
+	DynamicMenuCallback( (char *)"IDE Slave",6000,HEAD);
+	DynamicMenuCallback( (char *)"Insert",5012,SLAVE);
 	QueryDisk(SLAVE,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
 	DynamicMenuCallback( TempMsg,5013,SLAVE);
-	DynamicMenuCallback( "IDE Config",5014,STANDALONE);
-	DynamicMenuCallback("",1,0);
+	DynamicMenuCallback( (char *)"IDE Config",5014,STANDALONE);
+	DynamicMenuCallback((char *)"",1,0);
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -224,10 +224,10 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_INITDIALOG:
 			SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnabled,0);
 			SendDlgItemMessage(hDlg,IDC_READONLY,BM_SETCHECK,ClockReadOnly,0);
-			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_ADDSTRING, NULL,(LPARAM) "40");
-			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_ADDSTRING, NULL,(LPARAM) "50");
-			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_ADDSTRING, NULL,(LPARAM) "60");
-			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_ADDSTRING, NULL,(LPARAM) "70");
+			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_ADDSTRING, 0, (LPARAM)"40");
+			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_ADDSTRING, 0, (LPARAM)"50");
+			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_ADDSTRING, 0, (LPARAM)"60");
+			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_ADDSTRING, 0, (LPARAM)"70");
 			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_SETCURSEL,BaseAddr,(LPARAM)0);
 			EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), TRUE);
 			if (BaseAddr==3)

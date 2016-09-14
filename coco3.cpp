@@ -76,7 +76,7 @@ void SetMasterTickCounter(void);
 void (*DrawTopBoarder[4]) (SystemState *)={DrawTopBoarder8,DrawTopBoarder16,DrawTopBoarder24,DrawTopBoarder32};
 void (*DrawBottomBoarder[4]) (SystemState *)={DrawBottomBoarder8,DrawBottomBoarder16,DrawBottomBoarder24,DrawBottomBoarder32};
 void (*UpdateScreen[4]) (SystemState *)={UpdateScreen8,UpdateScreen16,UpdateScreen24,UpdateScreen32};
-_inline int CPUCycle(void);
+INLINE int CPUCycle(void);
 float RenderFrame (SystemState *RFState)
 {
 	static unsigned short FrameCounter=0;
@@ -188,7 +188,7 @@ void SetLinesperScreen (unsigned char Lines)
 }
 
 
-_inline int CPUCycle(void)	
+INLINE int CPUCycle(void)	
 {
 	if (HorzInteruptEnabled)
 		GimeAssertHorzInterupt();

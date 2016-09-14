@@ -131,7 +131,7 @@ unsigned char PackPortRead (unsigned char port)
 	if (PakPortRead != NULL)
 		return(PakPortRead(port));
 	else
-		return(NULL);
+		return((unsigned char)0);
 }
 
 void PackPortWrite(unsigned char Port,unsigned char Data)
@@ -167,7 +167,7 @@ unsigned short PackAudioSample(void)
 {
 	if (ModuleAudioSample !=NULL)
 		return(ModuleAudioSample());
-	return(NULL);
+	return((short)0);
 }
 
 int LoadCart(void)
@@ -215,8 +215,8 @@ int InsertModule (char *ModulePath)
 		load_ext_rom(ModulePath);
 		strncpy(Modname,ModulePath,MAX_PATH);
 		PathStripPath(Modname);
-		DynamicMenuCallback( "",0, 0); //Refresh Menus
-		DynamicMenuCallback( "",1, 0);
+		DynamicMenuCallback( (char *)"",0, 0); //Refresh Menus
+		DynamicMenuCallback( (char *)"",1, 0);
 		EmuState.ResetPending=2;
 		SetCart(1);
 		return(NOMODULE);
@@ -397,8 +397,8 @@ void UnloadDll(void)
 	if (hinstLib !=NULL)
 		FreeLibrary(hinstLib); 
 	hinstLib=NULL;
-	DynamicMenuCallback( "",0, 0); //Refresh Menus
-	DynamicMenuCallback( "",1, 0);
+	DynamicMenuCallback( (char *)"",0, 0); //Refresh Menus
+	DynamicMenuCallback( (char *)"",1, 0);
 //	DynamicMenuCallback("",0,0);
 	return;
 }
@@ -430,8 +430,8 @@ void UnloadPack(void)
 	ExternalRomBuffer=nullptr;
 
 	EmuState.ResetPending=2;
-	DynamicMenuCallback( "",0, 0); //Refresh Menus
-	DynamicMenuCallback( "",1, 0);
+	DynamicMenuCallback( (char *)"",0, 0); //Refresh Menus
+	DynamicMenuCallback( (char *)"",1, 0);
 	return;
 }
 
@@ -478,8 +478,8 @@ void DynamicMenuCallback( char *MenuName,int MenuId, int Type)
 	{
 		case 0:
 			MenuIndex=0;
-			DynamicMenuCallback( "Cartridge",6000,HEAD);	//Recursion is fun
-			DynamicMenuCallback( "Load Cart",5001,SLAVE);
+			DynamicMenuCallback( (char *)"Cartridge",6000,HEAD);	//Recursion is fun
+			DynamicMenuCallback( (char *)"Load Cart",5001,SLAVE);
 			sprintf(Temp,"Eject Cart: ");
 			strcat(Temp,Modname);
 			DynamicMenuCallback( Temp,5002,SLAVE);

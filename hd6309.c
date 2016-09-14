@@ -619,7 +619,7 @@ case Page2:
 		break;
 
 		case ADCR: //1031 6309
-			WriteLog("Hitting UNEMULATED INS ADCR",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS ADCR",TOCONS);
 			CycleCounter+=4;
 		break;
 
@@ -673,7 +673,7 @@ case Page2:
 		break;
 
 		case SBCR: //1033 6309
-			WriteLog("Hitting UNEMULATED INS SBCR",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS SBCR",TOCONS);
 			CycleCounter+=4;
 		break;
 
@@ -1155,7 +1155,7 @@ case Page2:
 		break;
 
 		case SBCD_D: //1092 6309
-			WriteLog("Hitting UNEMULATED INS SBCD_D",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS SBCD_D",TOCONS);
 			CycleCounter+=InsCycles[md[NATIVE6309]][M75];
 		break;
 
@@ -1211,7 +1211,7 @@ case Page2:
 		break;
 
 		case ADCD_D: //1099 6309
-			WriteLog("Hitting UNEMULATED INS ADCD_D",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS ADCD_D",TOCONS);
 			CycleCounter+=InsCycles[md[NATIVE6309]][M75];
 		
 		break;
@@ -1424,7 +1424,7 @@ case Page2:
 		break;
 
 		case SBCD_E: //10B2 6309
-			WriteLog("Hitting UNEMULATED INS SBCD_E",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS SBCD_E",TOCONS);
 			CycleCounter+=InsCycles[md[NATIVE6309]][M86];
 		break;
 
@@ -1485,7 +1485,7 @@ case Page2:
 		break;
 
 		case ADCD_E: //10B9 6309
-			WriteLog("Hitting UNEMULATED INS ADCD_E",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS ADCD_E",TOCONS);
 			CycleCounter+=InsCycles[md[NATIVE6309]][M86];
 		break;
 
@@ -1659,42 +1659,42 @@ case	Page3:
 		switch (MemRead8(PC_REG++))
 		{
 		case BAND: //1130 6309
-			WriteLog("Hitting UNEMULATED INS BAND",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS BAND",TOCONS);
 			CycleCounter+=InsCycles[md[NATIVE6309]][M76];
 		break;
 
 		case BIAND: //1131 6309
-			WriteLog("Hitting UNEMULATED INS BIAND",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS BIAND",TOCONS);
 			CycleCounter+=InsCycles[md[NATIVE6309]][M76];
 		break;
 
 		case BOR: //1132 6309
-			WriteLog("Hitting UNEMULATED INS BOR",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS BOR",TOCONS);
 			CycleCounter+=InsCycles[md[NATIVE6309]][M76];
 		break;
 
 		case BIOR: //1133 6309
-			WriteLog("Hitting UNEMULATED INS BIOR",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS BIOR",TOCONS);
 			CycleCounter+=InsCycles[md[NATIVE6309]][M76];
 		break;
 
 		case BEOR: //1134 6309
-			WriteLog("Hitting UNEMULATED INS BEOR",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS BEOR",TOCONS);
 			CycleCounter+=InsCycles[md[NATIVE6309]][M76];
 		break;
 
 		case BIEOR: //1135 6309
-			WriteLog("Hitting UNEMULATED INS BIEOR",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS BIEOR",TOCONS);
 			CycleCounter+=InsCycles[md[NATIVE6309]][M76];
 		break;
 
 		case LDBT: //1136 6309
-			WriteLog("Hitting UNEMULATED INS LDBT",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS LDBT",TOCONS);
 			CycleCounter+=InsCycles[md[NATIVE6309]][M76];
 		break;
 
 		case STBT: //1137 6309
-			WriteLog("Hitting UNEMULATED INS STBT",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS STBT",TOCONS);
 			CycleCounter+=InsCycles[md[NATIVE6309]][M87];
 		break;
 
@@ -1742,7 +1742,7 @@ case	Page3:
 		break;
 
 		case TFM3: //113A 6309
-			WriteLog("Hitting TFM3",TOCONS);
+			WriteLog((char *)"Hitting TFM3",TOCONS);
 			CycleCounter+=6;
 		break;
 
@@ -1768,7 +1768,7 @@ case	Page3:
 		break;
 
 		case BITMD_M: //113C  6309
-			WriteLog("Hitting bitmd_m",TOCONS);
+			WriteLog((char *)"Hitting bitmd_m",TOCONS);
 			CycleCounter+=4;
 		break;
 
@@ -1977,7 +1977,7 @@ case	Page3:
 		break;
 
 		case DIVQ_M: //118E 6309
-			WriteLog("Hitting UNEMULATED INS DIVQ_M",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS DIVQ_M",TOCONS);
 			CycleCounter+=36;
 		break;
 
@@ -2091,7 +2091,7 @@ case	Page3:
 		break;
 
 		case DIVQ_D: //119E 6309
-			WriteLog("Hitting UNEMULATED INS DIVQ_D",TOCONS);
+			WriteLog((char *)"Hitting UNEMULATED INS DIVQ_D",TOCONS);
 			CycleCounter+=InsCycles[md[NATIVE6309]][M3635];
 		break;
 
@@ -2203,7 +2203,7 @@ case	Page3:
 		break;
 
 		case DIVQ_X: //11AE 6309
-			WriteLog("Hitting DIVQ_X",TOCONS);
+			WriteLog((char *)"Hitting DIVQ_X",TOCONS);
 			CycleCounter+=36;
 		break;
 

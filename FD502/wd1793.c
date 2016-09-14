@@ -230,7 +230,7 @@ void DecodeControlReg(unsigned char Tmp)
 	{
 		MotorOn=1;
 		if ( Drive[CurrentDisk].ImageType == RAW)
-			DeviceIoControl(Drive[CurrentDisk].FileHandle, IOCTL_FD_MOTOR_ON, NULL, NULL, NULL, 0, &dwRet, NULL);
+			DeviceIoControl(Drive[CurrentDisk].FileHandle, IOCTL_FD_MOTOR_ON, NULL, 0, NULL, 0, &dwRet, NULL);
 	}
 
 	if ( (Side==1) & (CurrentDisk==NONE) )
