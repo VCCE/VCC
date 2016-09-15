@@ -357,8 +357,8 @@ int load_ext_rom(char filename[MAX_PATH])
 
 	// If memory was unable to be allocated, fail
 	if (ExternalRomBuffer == nullptr) {
-		MessageBox(0, "cant allocate ram", "Ok", 0);
-		return 0;
+    MessageBox(0, "cant allocate ram", "Ok", 0);
+    return 0;
 	}
 	
 	// Open the ROM file, fail if unable to

@@ -24,8 +24,6 @@ This file is part of VCC (Virtual Color Computer).
 #endif
 #ifdef __GNUC__
 	#include <windows.h>
-	#define AFXAPI __stdcall
-	BOOL AFXAPI AfxInitRichEdit2( );
 #endif
 #include <commctrl.h>	// Windows common controls
 #include "defines.h"
@@ -70,6 +68,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 #ifdef _MSC_VER
 	AfxInitRichEdit();
 #endif
+#ifdef __GNUC__
+	LoadLibrary ("riched32.dll");
+#endif	
 	LoadString(g_hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(g_hInstance, IDS_APP_TITLE, szWindowClass, MAX_LOADSTRING);
 	return TRUE;

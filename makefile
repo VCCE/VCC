@@ -2,7 +2,8 @@
 #	GCC makefile for Vcc (Coco3 emulator)
 #
 # - builds under mingw64 (2016-02-16)
-# - run 'buildtools.bat' and type 'make'
+# - run 'conemu.bat' or 'buildtools.bat'
+# - type 'make'
 #
 
 PLATFORM = win
@@ -125,27 +126,9 @@ VCC_OBJS = \
 all: $(OBJDIRS) $(DLLS) $(VCC) makefile
 .PHONY: all
 
-$(OBJDIR):
-	$(MD) -p $(OBJDIR)
-		
-$(FD502_OBJDIR): $(OBJDIR)
-	$(MD) -p $(FD502_OBJDIR)
-
-$(HARDDISK_OBJDIR): $(OBJDIR)
-	$(MD) -p $(HARDDISK_OBJDIR)
-
-$(MPI_OBJDIR): $(OBJDIR)
-	$(MD) -p $(MPI_OBJDIR)
-
-$(ORCH90_OBJDIR): $(OBJDIR)
-	$(MD) -p $(ORCH90_OBJDIR)
-
-$(RAMDISK_OBJDIR): $(OBJDIR)
-	$(MD) -p $(RAMDISK_OBJDIR)
-
-$(SUPERIDE_OBJDIR): $(OBJDIR)
-	$(MD) -p $(SUPERIDE_OBJDIR)
-
+$(OBJDIRS):
+	$(MD) -p $@
+  
 $(OBJDIR)/%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 	
