@@ -16,6 +16,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <sys/stat.h>
 #include <windows.h>
 #include <windowsx.h>
 #include "commdlg.h"
@@ -343,6 +344,9 @@ int load_ext_rom(char filename[MAX_PATH])
 {
 	constexpr size_t PAK_MAX_MEM = 0x40000;
 
+	struct stat	fs;
+	int					fd;
+
 	// If there is an existing ROM, ditch it
 	if (ExternalRomBuffer != nullptr) {
 		free(ExternalRomBuffer);
@@ -360,19 +364,33 @@ int load_ext_rom(char filename[MAX_PATH])
 	// Open the ROM file, fail if unable to
 	FILE *rom_handle = fopen(filename, "rb");
 	if (rom_handle == nullptr) return 0;
-	
-	// Load the file, one byte at a time.. (TODO: Get size and read entire block)
-	size_t index=0;
-	while ((feof(rom_handle) == 0) && (index < PAK_MAX_MEM)) {
-		ExternalRomBuffer[index++] = fgetc(rom_handle);
+	fd = fileno (rom_handle);
+	if (fstat	(fd, &fs)) {
+		MessageBox(0, "fstat() failed!", "Ok", 0);
+		return (0);
 	}
+
+  if (fs.st_size > PAK_MAX_MEM)
+    fs.st_size = PAK_MAX_MEM;
+    
+  // *** quick hack for msmcdoug only
+  if (fs.st_size > 16*1024)
+  {
+    fread (&ExternalRomBuffer[16*1024], sizeof(uint8_t), 16*1024, rom_handle);    
+    fread (ExternalRomBuffer, sizeof(uint8_t), fs.st_size-16*1024, rom_handle);    
+  }
+  else
+  // *** end of quick hack
+        
+  fread (ExternalRomBuffer, sizeof(uint8_t), fs.st_size, rom_handle);    
+	
 	fclose(rom_handle);
 	
 	UnloadDll();
 	BankedCartOffset=0;
 	RomPackLoaded=true;
 	
-	return index;
+	return (fs.st_size);
 }
 
 void UnloadDll(void)
