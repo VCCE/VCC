@@ -120,6 +120,7 @@ VCC_OBJS = \
 	$(OBJDIR)/tcc1014registers.o \
 	$(OBJDIR)/throttle.o \
 	$(OBJDIR)/_xDebug.o \
+	$(OBJDIR)/profiler.o \
 	$(OBJDIR)/vcc_res.o \
 	$(OBJDIR)/Vcc.o
 

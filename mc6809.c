@@ -22,6 +22,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "mc6809.h"
 #include "mc6809defs.h"
 #include "tcc1014mmu.h"
+#include "profiler.h"
 
 //Global variables for CPU Emulation-----------------------
 
@@ -93,6 +94,9 @@ void MC6809Reset(void)
 	SyncWaiting=0;
 	pc.Reg=MemRead16(VRESET);	//PC gets its reset vector
 	SetMapType(0);
+	
+	profiler_reset_hook ();
+	
 	return;
 }
 
@@ -117,6 +121,9 @@ void MC6809Init(void)
 
 	cc[I]=1;
 	cc[F]=1;
+	
+	profiler_init_hook ();
+	
 	return;
 }
 
@@ -124,10 +131,16 @@ int MC6809Exec( int CycleFor)
 {
 static unsigned char opcode=0;
 static unsigned char msn,lsn;
-CycleCounter=0; 
 
-while (CycleCounter<CycleFor) {
+int CycleForCounter = 0;
 
+while (CycleForCounter<CycleFor) {
+
+  unsigned char opcode;
+  unsigned char opcode_post_byte;
+  
+  CycleCounter=0; 
+  
 	if (PendingInterupts)
 	{
 		if (PendingInterupts & 4)
@@ -148,7 +161,12 @@ while (CycleCounter<CycleFor) {
 	if (SyncWaiting==1)
 		return(0);
 
-switch (MemRead8(pc.Reg++)){
+  opcode = MemRead8(pc.Reg);
+  opcode_post_byte = MemRead8(pc.Reg+1);
+  profiler_fetch_hook (pc.Reg, opcode, opcode_post_byte);
+  pc.Reg++;
+
+switch (opcode){
 
 case NEG_D: //0
 	temp16=(dp.Reg |MemRead8(pc.Reg++));
@@ -2983,9 +3001,14 @@ default:
 //	MessageBox(0,"Unhandled Op","Ok",0);
 	break;
 	}//End Switch
+
+  profiler_post_fetch_hook (pc.Reg, CycleCounter);
+  	
+	CycleForCounter += CycleCounter;
+	
 }//End While
 
-return(CycleFor-CycleCounter);
+return(CycleFor-CycleForCounter);
 
 }
 
@@ -3002,6 +3025,7 @@ void cpu_firq(void)
 		cc[I]=1;
 		cc[F]=1;
 		pc.Reg=MemRead16(VFIRQ);
+		profiler_firq_hook (pc.Reg);
 	}
 	PendingInterupts=PendingInterupts & 253;
 	return;
@@ -3027,6 +3051,7 @@ void cpu_irq(void)
 		MemWrite8(A_REG,--s.Reg);
 		MemWrite8(getcc(),--s.Reg);
 		pc.Reg=MemRead16(VIRQ);
+		profiler_irq_hook (pc.Reg);
 		cc[I]=1; 
 	} //Fi I test
 	PendingInterupts=PendingInterupts & 254;
@@ -3051,6 +3076,7 @@ void cpu_nmi(void)
 	cc[I]=1;
 	cc[F]=1;
 	pc.Reg=MemRead16(VNMI);
+		profiler_nmi_hook (pc.Reg);
 	PendingInterupts=PendingInterupts & 251;
 	return;
 }

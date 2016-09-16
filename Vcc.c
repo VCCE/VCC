@@ -50,6 +50,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "hd6309.h"
 #include "mc6809.h"
 #include "mc6821.h"
+#include "profiler.h"
 #include "keyboard.h"
 #include "coco3.h"
 #include "pakinterface.h"
@@ -191,6 +192,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	CloseHandle( hEvent ) ;	
 	CloseHandle( hEMUThread ) ;
 	timeEndPeriod(1);
+	profiler_deinit_hook ();
 	UnloadDll();
 	SoundDeInit();
 	WriteIniFile(); //Save Any changes to ini File
