@@ -405,7 +405,6 @@ void CaptureBit(unsigned char Sample)
 		}
 		Byte=0;
 	}
-	return;
 }
 
 int OpenPrintFile(char *FileName)
@@ -422,13 +421,11 @@ void ClosePrintFile(void)
 	hPrintFile=INVALID_HANDLE_VALUE;
 	FreeConsole();
 	hout=NULL;
-	return;
 }
 
 void SetSerialParams(unsigned char TextMode)
 {
 	AddLF=TextMode;
-	return;
 }
 
 void SetMonState(BOOL State)
@@ -439,8 +436,8 @@ void SetMonState(BOOL State)
 		hout=NULL;
 	}
 	MonState=State;
-	return;
 }
+
 void WritePrintMon(char *Data)
 {
 	unsigned long dummy;
