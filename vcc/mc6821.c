@@ -229,68 +229,59 @@ unsigned char VDG_Mode(void)
 }
 
 
-void irq_hs(int phase)	//63.5 uS
+void irq_hs(const int phase)	//63.5 uS
 {
+	switch (phase)
+	{        
+	    case FALLING:	//HS went High to low
+            // ignore IRQ on low to High transition
+            if ( (rega[1] & 2) ) return;	
+	        break;
+
+        
+	    case RISING:	//HS went Low to High
+            // ignore IRQ High to low transition
+            if ( !(rega[1] & 2) ) return;		
+	        break;
+
+	    case ANY: // Doesn't matter, either transition
+	        break;
+	}
+
+    // Notify emulator of the IRQ, if enabled
+    rega[1] = (rega[1] | 128);
+    if (rega[1] & 1)
+        CPUAssertInterupt(IRQ, 1);	
+}
+
+void irq_fs(const int phase)	//60HZ Vertical sync pulse 16.667 mS
+{
+    if ((CartInserted == 1) && (CartAutoStart == 1)) {
+        AssertCart();
+    }
 
 	switch (phase)
 	{
-	case FALLING:	//HS went High to low
-		if ( (rega[1] & 2) ) //IRQ on low to High transition
-			return;
-		rega[1]=(rega[1] | 128);
-		if (rega[1] & 1)
-			CPUAssertInterupt(IRQ,1);
-	break;
+	    case FALLING:	//FS went High to low
+            if ((rega[3] & 2) == 0) { //IRQ on High to low transition
+                rega[3] = (rega[3] | 128);
+            }
+	        break;
 
-	case RISING:	//HS went Low to High
-		if ( !(rega[1] & 2) ) //IRQ  High to low transition
-		return;
-		rega[1]=(rega[1] | 128);
-		if (rega[1] & 1)
-			CPUAssertInterupt(IRQ,1);
-	break;
+	    case RISING:	//FS went Low to High
+		    if ( (rega[3] & 2) ) { //IRQ  Low to High transition		    
+		        rega[3]=(rega[3] | 128);
+		    }		
+	        break;
+	}
 
-	case ANY:	
-		rega[1]=(rega[1] | 128);
-		if (rega[1] & 1)
-			CPUAssertInterupt(IRQ,1);
-	break;
-	} //END switch
-
-	return;
+    // Notify emulator of the IRQ, if enabled
+    if (rega[3] & 1)
+        CPUAssertInterupt(IRQ, 1);
 }
 
-void irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
-{
-	if ((CartInserted==1) & (CartAutoStart==1))
-		AssertCart();
-	switch (phase)
-	{
-	case 0:	//FS went High to low
-		if ( (rega[3] & 2)==0 ) //IRQ on High to low transition
-			rega[3]=(rega[3] | 128);
-		if (rega[3] & 1)
-			CPUAssertInterupt(IRQ,1);
 
-		return;
-	break;
-
-	case 1:	//FS went Low to High
-
-		if ( (rega[3] & 2) ) //IRQ  Low to High transition
-		{
-		rega[3]=(rega[3] | 128);
-		if (rega[3] & 1)
-			CPUAssertInterupt(IRQ,1);
-		}
-		return;
-	break;
-	} //END switch
-
-	return;
-}
-
-void AssertCart(void)
+void AssertCart()
 {
 	regb[3]=(regb[3] | 128);
 	if (regb[3] & 1)
