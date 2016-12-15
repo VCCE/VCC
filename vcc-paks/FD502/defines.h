@@ -17,8 +17,8 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+
 //Speed throttling
-#define FRAMEINTERVAL 120	//Number of frames to sum the framecounter over
 #define TARGETFRAMERATE 60	//Number of throttled Frames per second to render
 
 // Audio handling

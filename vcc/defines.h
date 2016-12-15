@@ -52,11 +52,11 @@ This file is part of VCC (Virtual Color Computer).
 
 
 //CPU 
-#define FRAMESPERSECORD (double)59.923	//The coco really runs at about 59.923 Frames per second
-#define LINESPERSCREEN (double)262
-#define PICOSECOND (double)1000000000
-#define COLORBURST (double)3579545 
-#define AUDIOBUFFERS 12
+constexpr double FRAMESPERSECORD = 59.923;	//The coco really runs at about 59.923 Frames per second
+constexpr double LINESPERSCREEN = 262;
+constexpr double PICOSECOND = 1000000000;
+constexpr double COLORBURST = 3579545; 
+constexpr int AUDIOBUFFERS = 12;
 
 //Misc
 #define QUERY 255
@@ -67,6 +67,16 @@ This file is part of VCC (Virtual Color Computer).
 #define IRQ		1
 #define FIRQ	2
 #define NMI		3
+
+// Common RAM sizes
+enum MemorySizes: uint8_t {
+    MEM_128K = 0,
+    MEM_512K,
+    MEM_1M,
+    MEM_2M
+};
+
+
 
 //
 // CPU plug-in API
