@@ -1,5 +1,4 @@
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
+#pragma once
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -20,7 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "defines.h"
 
-void LoadConfig(SystemState *);
+void LoadConfig(SystemState*);
 unsigned char WriteIniFile(void);
 unsigned char ReadIniFile(void);
 char * BasicRomName(void);
@@ -30,7 +29,7 @@ void UpdateSoundBar(unsigned short,unsigned short);
 void UpdateTapeCounter(unsigned int,unsigned char);
 LRESULT CALLBACK	Config			(HWND, UINT, WPARAM, LPARAM);
 
-typedef struct  {
+struct STRConfig {
 	unsigned char	CPUMultiplyer;
 	unsigned short	MaxOverclock;
 	unsigned char	FrameSkip;
@@ -52,7 +51,5 @@ typedef struct  {
 	char			ExternalBasicImage[MAX_PATH];
 	char			ModulePath[MAX_PATH];
 	char			PathtoExe[MAX_PATH];
-} STRConfig;
+};
 	
-#endif
-
