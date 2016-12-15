@@ -1,5 +1,4 @@
-#ifndef __THROTTLE_H__
-#define __THROTTLE_H__
+#pragma once
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -18,10 +17,10 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-void CalibrateThrottle(void);
-void StartRender(void);
-void EndRender(unsigned char);
-void FrameWait(void);
-float CalculateFPS(void);
+#include <stdint.h>
 
-#endif
+void CalibrateThrottle();
+void StartRender();
+void EndRender(const uint8_t skip);
+void FrameWait();
+float CalculateFPS();
