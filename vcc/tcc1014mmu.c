@@ -34,7 +34,7 @@ This file is part of VCC (Virtual Color Computer).
 //
 // system
 //
-#include <stdio.h>
+#include <cstdio>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>

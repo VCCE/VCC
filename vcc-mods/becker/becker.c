@@ -41,6 +41,8 @@
 // our Windows resource definitions
 #include "resource.h"
 
+#include <stdbool.h>
+
 /****************************************************************************/
 /*
 	Forward declarations
