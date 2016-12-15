@@ -40,19 +40,28 @@ inline int64_t getCurrentPerfCount() {
     return now.QuadPart;
 }
 
+/**
+Get the frequency in counts/sec of the performance counter
+*/
+inline int64_t getPerfCountFreq() {
+    LARGE_INTEGER masterClock;
+    QueryPerformanceFrequency(&masterClock);
+    return masterClock.QuadPart;
+}
+
+
 void CalibrateThrottle()
 {
     //Needed to get max resolution from the timer normally its 10Ms
 	timeBeginPeriod(1);	
 
     // Get the Master Clock resolution
-    LARGE_INTEGER masterClock;
-	QueryPerformanceFrequency(&masterClock); // Get CPS of Performance Clock
-	
+    int64_t clockFreq = getPerfCountFreq();
+		
     // Compute duration of various constants based on Master Clock
-    oneFrame = masterClock.QuadPart / TARGETFRAMERATE;
-	oneMs = masterClock.QuadPart / 1000;
-	fMasterClock = (float)masterClock.QuadPart;
+    oneFrame = clockFreq / TARGETFRAMERATE;
+	oneMs = clockFreq / 1000;
+	fMasterClock = (float)clockFreq;
 }
 
 void StartRender() 
