@@ -1,5 +1,4 @@
-#ifndef __DEFINES_H__
-#define __DEFINES_H__
+#pragma once
 
 /*
 Copyright 2015 by Joseph Forgione
@@ -45,18 +44,15 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdint.h>
 
 //Speed throttling
-#define FRAMEINTERVAL 120	//Number of frames to sum the framecounter over
+constexpr uint_t FRAMEINTERVAL = 120;	//Number of frames to sum the framecounter over
 #define TARGETFRAMERATE 60	//Number of throttled Frames per second to render
-#define SAMPLESPERFRAME 262
-
-
 
 //CPU 
 constexpr double FRAMESPERSECORD = 59.923;	//The coco really runs at about 59.923 Frames per second
-constexpr double LINESPERSCREEN = 262;
-constexpr double PICOSECOND = 1000000000;
-constexpr double COLORBURST = 3579545; 
-constexpr int AUDIOBUFFERS = 12;
+constexpr double LINESPERSCREEN  = 262;
+constexpr double PICOSECOND      = 1000000000;
+constexpr double COLORBURST      = 3579545; 
+constexpr int    AUDIOBUFFERS    = 12;
 
 //Misc
 #define QUERY 255
@@ -89,37 +85,35 @@ extern void (*CPUDeAssertInterupt)(unsigned char);
 extern void (*CPUForcePC)(unsigned short);
 
 
-typedef struct 
+struct SystemState
 {
-HWND			WindowHandle;
-HWND			ConfigDialog;
-HINSTANCE		WindowInstance;
-unsigned char	*RamBuffer;
-unsigned short	*WRamBuffer;
-unsigned char	RamSize;
-double			CPUCurrentSpeed;
-unsigned char	DoubleSpeedMultiplyer;
-unsigned char	DoubleSpeedFlag;
-unsigned char	TurboSpeedFlag;
-unsigned char	CpuType;
+    HWND			WindowHandle;
+    HWND			ConfigDialog;
+    HINSTANCE		WindowInstance;
+    unsigned char	*RamBuffer;
+    unsigned short	*WRamBuffer;
+    unsigned char	RamSize;
+    double			CPUCurrentSpeed;
+    unsigned char	DoubleSpeedMultiplyer;
+    unsigned char	DoubleSpeedFlag;
+    unsigned char	TurboSpeedFlag;
+    unsigned char	CpuType;
 
-int				FrameSkip;
-int				BitDepth;
-unsigned char	*PTRsurface8;
-unsigned short	*PTRsurface16;
-unsigned int	*PTRsurface32;
-long			SurfacePitch;
-int				LineCounter;
-int				ScanLines;
-//bool			InRender;
-//unsigned char	PauseEmuLoop;
-//unsigned char	Waiting;
-unsigned char	FullScreen;
+    int				FrameSkip;
+    int				BitDepth;
+    unsigned char	*PTRsurface8;
+    unsigned short	*PTRsurface16;
+    unsigned int	*PTRsurface32;
+    long			SurfacePitch;
+    int				LineCounter;
+    int				ScanLines;
+    //bool			InRender;
+    //unsigned char	PauseEmuLoop;
+    //unsigned char	Waiting;
+    unsigned char	FullScreen;
 
-int				EmulationRunning;
-int				ResetPending;
-POINT			WindowSize;
-char			StatusLine[256];
-} SystemState;
-
-#endif
+    int				EmulationRunning;
+    int				ResetPending;
+    POINT			WindowSize;
+    char			StatusLine[256];
+};
