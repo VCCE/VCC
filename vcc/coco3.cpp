@@ -20,7 +20,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "vccPak.h"
 #include "Vcc.h"
-//#include "defines.h"
 #include "tcc1014graphics.h"
 #include "tcc1014registers.h"
 #include "mc6821.h"
@@ -33,11 +32,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "logger.h"
 
 #include <windows.h>
-#include <stdio.h>
+#include <cstdio>
 #include <ddraw.h>
-#include <math.h>
-
-//int CPUExeca(int);
+#include <cmath>
 
 //****************************************
 	static double SoundInterupt=0;
@@ -70,19 +67,16 @@ static int SndEnable=1;
 static int OverClock=1;
 static unsigned char SoundOutputMode=0;	//Default to Speaker 1= Cassette
 
-// dupe from tcc1014graphics
-//static unsigned char LinesperScreen = 0;
-
-
-void AudioOut(void);
-void CassOut(void);
-void CassIn(void);
+void AudioOut();
+void CassOut();
+void CassIn();
 void (*AudioEvent)(void)=AudioOut;
-void SetMasterTickCounter(void);
+void SetMasterTickCounter();
 void (*DrawTopBoarder[4]) (SystemState *)={DrawTopBoarder8,DrawTopBoarder16,DrawTopBoarder24,DrawTopBoarder32};
 void (*DrawBottomBoarder[4]) (SystemState *)={DrawBottomBoarder8,DrawBottomBoarder16,DrawBottomBoarder24,DrawBottomBoarder32};
 void (*UpdateScreen[4]) (SystemState *)={UpdateScreen8,UpdateScreen16,UpdateScreen24,UpdateScreen32};
-_inline int CPUCycle(void);
+inline int CPUCycle();
+
 float RenderFrame (SystemState *RFState)
 {
 	static unsigned short FrameCounter=0;
@@ -150,19 +144,6 @@ float RenderFrame (SystemState *RFState)
 	}
 	AudioIndex=0;
 
-
-/*
-	//Debug Code
-	Frames++;
-	if (Frames==60)
-	{
-		Frames=0;
-		sprintf(Msga,"Total Cycles = %i Scan lines = %i LPS= %i\n",TotalCycles,Scans,LinesperScreen+TopBoarder+BottomBoarder+19);
-		WriteLog(Msga,0);
-		TotalCycles=0;
-		Scans=0;
-	}
-*/
 	return(CalculateFPS());
 }
 
@@ -174,26 +155,23 @@ void SetClockSpeed(unsigned short Cycles)
 
 void SetHorzInteruptState(unsigned char State)
 {
-	HorzInteruptEnabled= !!State;
-	return;
+	HorzInteruptEnabled= !!State;	
 }
 
 void SetVertInteruptState(unsigned char State)
 {
-	VertInteruptEnabled= !!State;
-	return;
+	VertInteruptEnabled= !!State;	
 }
 
-void SetLinesperScreen (unsigned char Lines)
+void setLinesperScreen(const std::uint8_t lines)
 {
-	Lines = (Lines & 3);
-	LinesperScreen=Lpf[Lines];
-	TopBoarder=VcenterTable[Lines];
-	BottomBoarder= 243 - (TopBoarder + LinesperScreen); //4 lines of top boarder are unrendered 244-4=240 rendered scanlines
-	return;
+	const std::uint8_t lines_idx = (lines & 3);
+	LinesperScreen=Lpf[lines_idx];
+	TopBoarder=VcenterTable[lines_idx];
+	BottomBoarder= 243 - (TopBoarder + LinesperScreen); //4 lines of top boarder are unrendered 244-4=240 rendered scanlines	
 }
 
-_inline int CPUCycle(void)	
+inline int CPUCycle()	
 {
 	if (HorzInteruptEnabled)
 	{

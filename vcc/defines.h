@@ -55,7 +55,7 @@ constexpr double COLORBURST      = 3579545;
 constexpr int    AUDIOBUFFERS    = 12;
 
 //Misc
-#define QUERY 255
+constexpr uint8_t QUERY = 255;
 #define INDEXTIME ((LINESPERSCREEN * TARGETFRAMERATE)/5)
 
 

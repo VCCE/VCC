@@ -1,5 +1,4 @@
-#ifndef __COCO3_H__
-#define __COCO3_H__
+#pragma once
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -19,10 +18,11 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include "defines.h"
+#include <cstdint>
 
-//unsigned short RenderFrame (unsigned char);
+void setLinesperScreen(const std::uint8_t lines);
+
 void SetClockSpeed(unsigned short Cycles);
-void SetLinesperScreen(unsigned char Lines);
 void SetHorzInteruptState(unsigned char);
 void SetVertInteruptState(unsigned char);
 unsigned char SetSndOutMode(unsigned char);
@@ -33,5 +33,3 @@ void SetTimerClockRate (unsigned char);
 void SetInteruptTimer(unsigned short);
 void MiscReset(void);
 unsigned short SetAudioRate (unsigned short);
-
-#endif

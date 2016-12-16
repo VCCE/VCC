@@ -46,9 +46,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "vccPak.h"
 #include "fileops.h"
-//#include "logger.h"
 
-//
 //
 //
 #include <objbase.h>
@@ -57,8 +55,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include <Mmsystem.h>
 #include <assert.h>
-
-//#include <windows.h>
 
 #include "resource.h"
 
@@ -78,8 +74,7 @@ BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	WndProc( HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam );
 
-void SoftReset(void);
-//void LoadIniFile(void);
+void SoftReset();
 
 unsigned __stdcall EmuLoop(void *);
 unsigned __stdcall CartLoad(void *);
@@ -139,7 +134,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	//
 	// TODO: handle this differently and allow launching command line to custom configurations
 	//
-	if ( strlen(lpCmdLine) !=0)
+	if ( strlen(lpCmdLine) != 0)
 	{
 		strcpy(QuickLoadFile,lpCmdLine);
 		strcpy(temp1,lpCmdLine);
@@ -176,7 +171,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	vccCoreGetINIFilePath = GetIniFilePath;
 	vccCoreLoadPack = LoadPack;
 
-	Cls(0,&EmuState);
+	Cls(0, &EmuState);
 
 	// we should not have to do this here, we are not loaded yet
 	vccPakRebuildMenu();
@@ -238,15 +233,13 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId;
-	//int wmEvent;
 	unsigned int x,y;
-	unsigned char kb_char; 
 	static unsigned char OEMscan=0;
 	static char ascii=0;
 	static RECT ClientSize;
 	static unsigned long Width,Height;
 
-	kb_char = (unsigned char)wParam;
+    unsigned char kb_char = (unsigned char)wParam;
 
 	switch (message)
 	{
@@ -494,43 +487,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
    }
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
-/*--------------------------------------------------------------------------
-// Command message handler
-void OnCommand(HWND hWnd, int iID, HWND hwndCtl, UINT uNotifyCode)
-{
-	//switch (iID)
-	//{
-	//case IDM_QUIT:
-	//	OnDestroy(hWnd);
-	//	break;
-	//}
-}
---------------------------------------------------------------------------*/
+
 // Handle WM_DESTROY
 void OnDestroy(HWND )
 {
 	BinaryRunning = false;
 	PostQuitMessage(0);
 }
-/*--------------------------------------------------------------------------*/
-// Window painting function
-#if 0
-void OnPaint(HWND hwnd)
-{
-	// Let Windows know we've redrawn the Window - since we've bypassed
-	// the GDI, Windows can't figure that out by itself.
-//	ValidateRect( hwnd, NULL );
-	
-	// Over here we could do some normal GDI drawing
-//	PAINTSTRUCT ps;
-//	HDC hdc;
-//	HDC hdc = BeginPaint(hwnd, &ps);
-//	if (hdc)
-//	{
-//	}
-//	EndPaint(hwnd, &ps);
-}
-#endif
+
 /*--------------------------------------------------------------------------*/
 
 void SetCPUMultiplyerFlag (unsigned char double_speed)
@@ -542,7 +506,6 @@ void SetCPUMultiplyerFlag (unsigned char double_speed)
 	EmuState.CPUCurrentSpeed= .894;
 	if (EmuState.DoubleSpeedFlag)
 		EmuState.CPUCurrentSpeed*=(EmuState.DoubleSpeedMultiplyer*EmuState.TurboSpeedFlag);
-	return;
 }
 
 void SetTurboMode(unsigned char data)
@@ -554,7 +517,6 @@ void SetTurboMode(unsigned char data)
 	EmuState.CPUCurrentSpeed= .894;
 	if (EmuState.DoubleSpeedFlag)
 		EmuState.CPUCurrentSpeed*=(EmuState.DoubleSpeedMultiplyer*EmuState.TurboSpeedFlag);
-	return;
 }
 
 unsigned char SetCPUMultiplyer(unsigned char Multiplyer)
@@ -606,7 +568,7 @@ void DoHardReset(SystemState* const HRState)
 	return;
 }
 
-void SoftReset(void)
+void SoftReset()
 {
 	mc6883_reset(); 
 	PiaReset();
@@ -638,11 +600,10 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-unsigned char SetRamSize(unsigned char Size)
+uint8_t SetRamSize(const uint8_t size)
 {
-	if (Size!=QUERY)
-		EmuState.RamSize=Size;
-	return(EmuState.RamSize);
+	if (size!=QUERY) EmuState.RamSize = size;
+	return EmuState.RamSize;
 }
 
 unsigned char SetSpeedThrottle(unsigned char throttle)
@@ -676,7 +637,7 @@ unsigned char SetCpuType( unsigned char Tmp)
 	return(EmuState.CpuType);
 }
 
-void DoReboot(void)
+void DoReboot()
 {
 	EmuState.ResetPending = VCC_RESET_PENDING_HARD;
 	return;
@@ -688,31 +649,6 @@ unsigned char SetAutoStart(unsigned char Tmp)
 		AutoStart=Tmp;
 	return(AutoStart);
 }
-
-/*
-void LoadIniFile(void)
-{
-	OPENFILENAME ofn ;	
-	char szFileName[MAX_PATH]="";
-
-	memset(&ofn,0,sizeof(ofn));
-	ofn.lStructSize       = sizeof(OPENFILENAME) ;
-	ofn.hwndOwner         = EmuState.WindowHandle;
-	ofn.lpstrFilter       =	"vcc\0*.vcc\0\0" ;			// filter string
-	ofn.nFilterIndex      = 1 ;							// current filter index
-	ofn.lpstrFile         = szFileName ;				// contains full path and filename on return
-	ofn.nMaxFile          = MAX_PATH;					// sizeof lpstrFile
-	ofn.lpstrFileTitle    = NULL;						// filename and extension only
-	ofn.nMaxFileTitle     = MAX_PATH ;					// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = NULL ;						// initial directory
-	ofn.lpstrTitle        = TEXT("Vcc Config File") ;	// title bar string
-	ofn.Flags             = OFN_HIDEREADONLY ;
-
-//	if ( GetOpenFileName (&ofn) )
-//		LoadConfig(szFileName);
-}
-*/
-
 
 unsigned __stdcall EmuLoop(void *Dummy)
 {

@@ -32,6 +32,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 #include <CommDlg.h>
+#include <cstdint>
 
 #include "resource.h"
 
@@ -434,12 +435,12 @@ void CastoWav(unsigned char *Buffer,unsigned int BytestoConvert,unsigned long *B
 }
 
 
-void WavtoCas(unsigned char *WaveBuffer,unsigned int Lenth)
+void WavtoCas(unsigned char *WaveBuffer, unsigned int Lenth)
 {
 	unsigned char Bit=0,Sample=0;
-	unsigned int Index=0,Width=0;
+	unsigned int Width=0;
 
-	for (Index=0;Index<Lenth;Index++)
+	for(unsigned int Index = 0; Index<Lenth; Index++)
 	{
 		Sample=WaveBuffer[Index];
 		if ( (LastSample <= 0x80) & (Sample>0x80))	//Low to High transition

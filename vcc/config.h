@@ -18,6 +18,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include "defines.h"
+#include <stdint.h>
 
 void LoadConfig(SystemState*);
 unsigned char WriteIniFile(void);
@@ -40,7 +41,7 @@ struct STRConfig {
 	unsigned char	ScanLines;
 	unsigned char	Resize;
 	unsigned char	Aspect;
-	unsigned char	RamSize;
+	uint8_t         RamSize;
 	unsigned char	AutoStart;
 	unsigned char	CartAutoStart;
 	unsigned char	RebootNow;

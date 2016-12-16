@@ -34,24 +34,23 @@ This file is part of VCC (Virtual Color Computer).
 #include <ddraw.h>
 #include <commctrl.h>	// Windows common controls
 
-void SetupDisplay(void); //This routine gets called every time a software video register get updated.
-void MakeRGBPalette (void);
-void MakeCMPpalette(void);
-bool  DDFailedCheck(HRESULT hr, char *szMessage);
-char *DDErrorString(HRESULT hr);
+void SetupDisplay(); //This routine gets called every time a software video register get updated.
+void MakeRGBPalette ();
+void MakeCMPpalette();
 
 //extern STRConfig CurrentConfig;
 static unsigned char ColorValues[4]={0,85,170,255};
 static unsigned char ColorTable16Bit[4]={0,10,21,31};	//Color brightness at 0 1 2 and 3 (2 bits)
 static unsigned char ColorTable32Bit[4]={0,85,170,255};	
 static unsigned short Afacts16[2][4]={0,0xF800,0x001F,0xFFFF,0,0x001F,0xF800,0xFFFF};
-//static unsigned char Afacts8[2][4]={0,164,137,191,0,137,164,191};
 static unsigned char Afacts8[2][4]={0,0xA4,0x89,0xBF,0,137,164,191};
 static unsigned int Afacts32[2][4]={0,0xFF0000,0xFF,0xFFFFFF,0,0xFF,0xFF0000,0xFFFFFF}; //FIX ME
-static unsigned char  Pallete[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};		//Coco 3 6 bit colors
-static unsigned char  Pallete8Bit[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-static unsigned short Pallete16Bit[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};	//Color values translated to 16bit 32BIT
-static unsigned int   Pallete32Bit[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};	//Color values translated to 24/32 bits
+
+constexpr int PALLETE_SIZE = 16;
+static unsigned char  Pallete[PALLETE_SIZE]      = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //Coco 3 6 bit colors
+static unsigned char  Pallete8Bit[PALLETE_SIZE]  = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+static unsigned short Pallete16Bit[PALLETE_SIZE] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //Color values translated to 16bit 32BIT
+static unsigned int   Pallete32Bit[PALLETE_SIZE] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //Color values translated to 24/32 bits
 
 static unsigned int VidMask=0x1FFFF;
 static unsigned char VresIndex=0;
@@ -98,12 +97,10 @@ void UpdateScreen8 (SystemState *US8State)
 	unsigned char TextPallete[2]={0,0};
 	unsigned short WidePixel=0;
 	char Pix=0,Bit=0,Sphase=0;
-	static char Carry1=0,Carry2=0;
+	static char Carry1=1,Carry2=0;
 	static char Pcolor=0;
 	unsigned char *buffer=US8State->RamBuffer;
-	Carry1=1;
-	Pcolor=0;
-	
+		
 	if ( (HorzCenter!=0) & (BoarderChange>0) )
 		for (unsigned short x=0;x<HorzCenter;x++)
 		{
@@ -6289,25 +6286,18 @@ void UpdateScreen24 (SystemState *USState24)
 void UpdateScreen32 (SystemState *USState32)
 {
 	register unsigned int YStride=0;
-//	unsigned int TextColor=0;
 	unsigned char Pixel=0;
-//	unsigned char StretchCount=0;
-//	unsigned char Mask=0,BitCount=0,Peek=0;
 	unsigned char Character=0,Attributes=0;
 	unsigned int TextPallete[2]={0,0};
 	unsigned short * WideBuffer=(unsigned short *)USState32->RamBuffer;
 	unsigned char *buffer=USState32->RamBuffer;
 	unsigned short WidePixel=0;
-//	unsigned short lColor=0;
-//	unsigned short Yindex[4]={316,308,300,292};
 	char Pix=0,Bit=0,Sphase=0;
-	static char Carry1=0,Carry2=0;
+	static char Carry1=1,Carry2=0;
 	static char Pcolor=0;
 	unsigned int *szSurface32=USState32->PTRsurface32;
 	unsigned short y=USState32->LineCounter;
 	long Xpitch=USState32->SurfacePitch;
-	Carry1=1;
-	Pcolor=0;
 	
 	if ( (HorzCenter!=0) & (BoarderChange>0) )
 		for (unsigned short x=0;x<HorzCenter;x++)
@@ -9387,12 +9377,10 @@ case 192+63: //Bpp=3 Sr=15
 // END of 32 Bit render loop *****************************************************************************************
 
 void DrawTopBoarder8(SystemState *DTState)
-{
-	unsigned short x;
-	if (BoarderChange==0)
-		return;
+{	 
+	if (BoarderChange==0) return;
 
-	for (x=0;x<DTState->WindowSize.x;x++)
+	for (unsigned short x=0;x<DTState->WindowSize.x;x++)
 	{
 		DTState->PTRsurface8[x +((DTState->LineCounter*2)*DTState->SurfacePitch)]=BoarderColor8|128;
 		if (!DTState->ScanLines)
@@ -9402,54 +9390,44 @@ void DrawTopBoarder8(SystemState *DTState)
 }
 
 void DrawTopBoarder16(SystemState *DTState)
-{
-	unsigned short x;
-	if (BoarderChange==0)
-		return;
+{	 
+	if (BoarderChange==0) return;
 
-	for (x=0;x<DTState->WindowSize.x;x++)
+	for (unsigned short x=0;x<DTState->WindowSize.x;x++)
 	{
 		DTState->PTRsurface16[x +((DTState->LineCounter*2)*DTState->SurfacePitch)]=BoarderColor16;
 		if (!DTState->ScanLines)
 			DTState->PTRsurface16[x +((DTState->LineCounter*2+1)*DTState->SurfacePitch)]=BoarderColor16;
-	}
-	return;
+	}	
 }
 
 void DrawTopBoarder24(SystemState *DTState)
 {
-
-	return;
+// Nothing here yet
 }
 
 void DrawTopBoarder32(SystemState *DTState)
-{
+{	
+	if (BoarderChange==0) return;
 
-	unsigned short x;
-	if (BoarderChange==0)
-		return;
-
-	for (x=0;x<DTState->WindowSize.x;x++)
+	for (unsigned short x=0;x<DTState->WindowSize.x;x++)
 	{
 		DTState->PTRsurface32[x +((DTState->LineCounter*2)*DTState->SurfacePitch)]=BoarderColor32;
 		if (!DTState->ScanLines)
 			DTState->PTRsurface32[x +((DTState->LineCounter*2+1)*DTState->SurfacePitch)]=BoarderColor32;
-	}
-	return;
+	}	
 }
 
 void DrawBottomBoarder8(SystemState *DTState)
 {
-	if (BoarderChange==0)
-		return;	
-	unsigned short x;
-	for (x=0;x<DTState->WindowSize.x;x++)
+	if (BoarderChange==0) return;
+	
+	for (unsigned short x=0;x<DTState->WindowSize.x;x++)
 	{
 		DTState->PTRsurface8[x + (2*(DTState->LineCounter+LinesperScreen+VertCenter) *DTState->SurfacePitch) ]=BoarderColor8|128;
 		if (!DTState->ScanLines)
 			DTState->PTRsurface8[x + DTState->SurfacePitch+(2*(DTState->LineCounter+LinesperScreen+VertCenter) *DTState->SurfacePitch) ]=BoarderColor8|128;
-	}
-	return;
+	}	
 }
 
 void DrawBottomBoarder16(SystemState *DTState)
@@ -9462,16 +9440,13 @@ void DrawBottomBoarder16(SystemState *DTState)
 		DTState->PTRsurface16[x + (2*(DTState->LineCounter+LinesperScreen+VertCenter) *DTState->SurfacePitch) ]=BoarderColor16;
 		if (!DTState->ScanLines)
 			DTState->PTRsurface16[x + DTState->SurfacePitch+(2*(DTState->LineCounter+LinesperScreen+VertCenter) *DTState->SurfacePitch) ]=BoarderColor16;
-	}
-	return;
+	}	
 }
 
 void DrawBottomBoarder24(SystemState *DTState)
 {
-
-	return;
+// Nothing here yet
 }
-
 
 void DrawBottomBoarder32(SystemState *DTState)
 {
@@ -9485,13 +9460,11 @@ void DrawBottomBoarder32(SystemState *DTState)
 		if (!DTState->ScanLines)
 			DTState->PTRsurface32[x + DTState->SurfacePitch+(2*(DTState->LineCounter+LinesperScreen+VertCenter) *DTState->SurfacePitch) ]=BoarderColor32;
 	}
-	return;
 }
 
 void SetBlinkState(unsigned char Tmp)
 {
-	BlinkState=Tmp;
-	return;
+	BlinkState=Tmp;	
 }
 
 // These grab the Video info for all COCO 2 modes
@@ -9501,8 +9474,7 @@ void SetGimeVdgOffset (unsigned char Offset)
 	{
 		CC2Offset=Offset;
 		SetupDisplay();
-	}
-	return;
+	}	
 }
 
 void SetGimeVdgMode (unsigned char VdgMode) //3 bits from SAM Registers
@@ -9512,8 +9484,7 @@ void SetGimeVdgMode (unsigned char VdgMode) //3 bits from SAM Registers
 		CC2VDGMode=VdgMode;
 		SetupDisplay();
 		BoarderChange=3;
-	}
-	return;
+	}	
 }
 
 void SetGimeVdgMode2 (unsigned char Vdgmode2) //5 bits from PIA Register
@@ -9523,8 +9494,7 @@ void SetGimeVdgMode2 (unsigned char Vdgmode2) //5 bits from PIA Register
 		CC2VDGPiaMode=Vdgmode2;
 		SetupDisplay();
 		BoarderChange=3;
-	}
-	return;
+	}	
 }
 
 //These grab the Video info for all COCO 3 modes
@@ -9536,8 +9506,7 @@ void SetVerticalOffsetRegister(unsigned short Register)
 		VerticalOffsetRegister=Register;
 
 		SetupDisplay();
-	}
-	return;
+	}	
 }
 
 void SetCompatMode( unsigned char Register)
@@ -9547,8 +9516,7 @@ void SetCompatMode( unsigned char Register)
 		CompatMode=Register;
 		SetupDisplay();
 		BoarderChange=3;
-	}
-	return;
+	}	
 }
 
 void SetGimePallet(unsigned char pallete,unsigned char color)
@@ -9558,8 +9526,7 @@ void SetGimePallet(unsigned char pallete,unsigned char color)
 	Pallete[pallete]=((color &63));
 	Pallete8Bit[pallete]= PalleteLookup8[MonType][color & 63]; 
 	Pallete16Bit[pallete]=PalleteLookup16[MonType][color & 63];
-	Pallete32Bit[pallete]=PalleteLookup32[MonType][color & 63];
-	return;
+	Pallete32Bit[pallete]=PalleteLookup32[MonType][color & 63];	
 }
 
 void SetGimeVmode(unsigned char vmode)
@@ -9569,9 +9536,7 @@ void SetGimeVmode(unsigned char vmode)
 		CC3Vmode=vmode;
 		SetupDisplay();
 		BoarderChange=3;
-
-	}
-	return;
+	}	
 }
 
 void SetGimeVres(unsigned char vres)
@@ -9581,8 +9546,7 @@ void SetGimeVres(unsigned char vres)
 		CC3Vres=vres;
 		SetupDisplay();
 		BoarderChange=3;
-	}
-	return;
+	}	
 }
 
 void SetGimeHorzOffset(unsigned char data)
@@ -9593,36 +9557,31 @@ void SetGimeHorzOffset(unsigned char data)
 		HorzOffsetReg=data;
 		SetupDisplay();
 	}
-	return;
 }
+
 void SetGimeBoarderColor(unsigned char data)
 {
-
 	if (CC3BoarderColor != (data & 63) )
 	{
 		CC3BoarderColor= data & 63;
 		SetupDisplay();
 		BoarderChange=3;
 	}
-	return;
 }
 
 void SetBoarderChange (unsigned char data)
 {
 	if (BoarderChange >0)
 		BoarderChange--;
-	
-	return;
 }
 
-void InvalidateBoarder(void)
+void InvalidateBoarder()
 {
-	BoarderChange=5;
-	return;
+	BoarderChange=5;	
 }
 
 
-void SetupDisplay(void)
+void SetupDisplay()
 {
 	static unsigned char CC2Bpp[8]={1,0,1,0,1,0,1,0};
 	static unsigned char CC2LinesperRow[8]={12,3,3,2,2,1,1,1};
@@ -9703,7 +9662,7 @@ void SetupDisplay(void)
 }
 	ColorInvert= (CC3Vmode & 32)>>5;
 	LinesperScreen=Lpf[VresIndex];
-	SetLinesperScreen(VresIndex);
+	setLinesperScreen(VresIndex);
 	VertCenter=VcenterTable[VresIndex]-4; //4 unrendered top lines
 	PixelsperLine= BytesperRow*CCPixelsperByte[Bpp];
 	PixelsperByte=CCPixelsperByte[Bpp];
@@ -9730,7 +9689,7 @@ void SetupDisplay(void)
 }
 
 
-void GimeInit(void)
+void GimeInit()
 {
 	//Nothing but good to have.
 	return;
@@ -9738,7 +9697,7 @@ void GimeInit(void)
 
 
 
-void GimeReset(void)
+void GimeReset()
 {
 	CC3Vmode=0;
 	CC3Vres=0;
@@ -9775,7 +9734,7 @@ void SetVideoBank(unsigned char data)
 }
 
 
-void MakeRGBPalette (void)
+void MakeRGBPalette ()
 {
 	unsigned char Index=0;
 	unsigned char r,g,b;
@@ -9792,16 +9751,12 @@ void MakeRGBPalette (void)
 		r= ColorTable32Bit [(Index & 32) >> 4 | (Index & 4) >> 2];	
 		g= ColorTable32Bit [(Index & 16) >> 3 | (Index & 2) >> 1];	
 		b= ColorTable32Bit [(Index & 8 ) >> 2 | (Index & 1) ];		
-		PalleteLookup32[1][Index]= (r* 65536) + (g* 256) + b;
-		
-		
-		
-	}
-	return;
+		PalleteLookup32[1][Index]= (r* 65536) + (g* 256) + b;	
+	}	
 }
 
 
-void MakeCMPpalette(void)	//Stolen from M.E.S.S.
+void MakeCMPpalette()	//Stolen from M.E.S.S.
 {
 	double saturation, brightness, contrast;
 	int offset;
@@ -9900,21 +9855,3 @@ unsigned char SetScanLines(unsigned char Lines)
 	}
 	return(0);
 }
-/*
-unsigned char SetArtifacts(unsigned char Tmp)
-{
-	if (Tmp!=QUERY)
-	Artifacts=Tmp;
-	return(Artifacts);
-}
-*/
-/*
-unsigned char SetColorInvert(unsigned char Tmp)
-{
-	if (Tmp!=QUERY)
-		ColorInvert=Tmp;
-	return(ColorInvert);
-}
-*/
-
-
