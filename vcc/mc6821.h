@@ -1,5 +1,4 @@
-#ifndef __MC6821_H__
-#define __MC6821_H__
+#pragma once
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -18,6 +17,17 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// Interrupt handling 
+
+enum IrqEdge {
+    FALLING = 0,
+    RISING,
+    ANY
+};
+
+void irq_hs(const int phase);
+void irq_fs(const int phase);
+
 unsigned char pia0_read(unsigned char port);
 void pia0_write(unsigned char data,unsigned char port);
 unsigned char pia1_read(unsigned char port);
@@ -28,9 +38,7 @@ void SetSerialParams(unsigned char);
 void SetMonState(int);
 unsigned char VDG_Mode(void);
 void kb_tap(unsigned int,unsigned int,unsigned int);
-void irq_hs(int);
-void irq_fs(int);
-void AssertCart(void);
+void AssertCart();
 void SetCart(unsigned char);
 unsigned char SetCartAutoStart(unsigned char);
 void PiaReset();
@@ -40,8 +48,3 @@ unsigned int GetDACSample(void);
 unsigned char GetCasSample(void);
 void SetCassetteSample(unsigned char);
 int OpenPrintFile(char *);
-#define FALLING 0
-#define RISING	1
-#define ANY		2
-
-#endif

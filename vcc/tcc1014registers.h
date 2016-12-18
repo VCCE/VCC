@@ -1,5 +1,4 @@
-#ifndef __TCC1014REGISTERS_H__
-#define __TCC1014REGISTERS_H__
+#pragma once
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -21,15 +20,13 @@ This file is part of VCC (Virtual Color Computer).
 
 void GimeWrite(unsigned char,unsigned char);
 unsigned char GimeRead(unsigned char);
-void GimeAssertKeyboardInterupt(void);
+void GimeAssertKeyboardInterupt();
 unsigned char GimeGetKeyboardInteruptState();
-void GimeAssertHorzInterupt(void);
-void GimeAssertVertInterupt(void);
-void GimeAssertTimerInterupt(void);
+void GimeAssertHorzInterupt();
+void GimeAssertVertInterupt();
+void GimeAssertTimerInterupt();
 unsigned char sam_read(unsigned char);
 void sam_write(unsigned char,unsigned char);
 void mc6883_reset();
-unsigned char VDG_Offset(void);
-unsigned char VDG_Modes(void);
-
-#endif
+unsigned char VDG_Offset();
+unsigned char VDG_Modes();

@@ -55,6 +55,8 @@ This file is part of VCC (Virtual Color Computer).
 //
 #include <commdlg.h>
 
+#include <stdbool.h>
+
 /****************************************************************************/
 
 /** the single loaded Pak object - ROM or plug-in DLL */

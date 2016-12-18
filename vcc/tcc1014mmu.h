@@ -1,5 +1,4 @@
-#ifndef __TCC1014MMU_H__
-#define __TCC1014MMU_H__
+#pragma once
 
 /*
 Copyright 2015 by Joseph Forgione
@@ -48,5 +47,3 @@ void SetCartMMU (unsigned char);
 #define _128K	0	
 #define _512K	1
 #define _2M		2
-
-#endif

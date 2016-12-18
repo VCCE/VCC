@@ -22,75 +22,103 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 #include "vcc.h"
 
-static _LARGE_INTEGER StartTime,EndTime,OneFrame,CurrentTime,SleepRes,TargetTime,OneMs;
-static _LARGE_INTEGER MasterClock,Now;
-static unsigned char FrameSkip=0;
-static float fMasterClock=0;
+static int64_t oneFrame;
+static int64_t oneMs;
+static int64_t startTime;
+static int64_t currentTime;
+static int64_t targetTime;
+static uint8_t frameSkip = 0;
+static float   fMasterClock=0;
 
-void CalibrateThrottle(void)
-{
-	timeBeginPeriod(1);	//Needed to get max resolution from the timer normally its 10Ms
-	QueryPerformanceFrequency(&MasterClock);
-	OneFrame.QuadPart=MasterClock.QuadPart/(TARGETFRAMERATE);
-	OneMs.QuadPart=MasterClock.QuadPart/1000;
-	fMasterClock=(float)MasterClock.QuadPart;
+/**
+Get the current moment from the performance counters as a
+64 bit signed int
+*/
+inline int64_t getCurrentPerfCount() {
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    return now.QuadPart;
+}
+
+/**
+Get the frequency in counts/sec of the performance counter
+*/
+inline int64_t getPerfCountFreq() {
+    LARGE_INTEGER masterClock;
+    QueryPerformanceFrequency(&masterClock);
+    return masterClock.QuadPart;
 }
 
 
-void StartRender(void)
+void CalibrateThrottle()
 {
-	QueryPerformanceCounter(&StartTime);
-	return;
+    //Needed to get max resolution from the timer normally its 10Ms
+	timeBeginPeriod(1);	
+
+    // Get the Master Clock resolution
+    int64_t clockFreq = getPerfCountFreq();
+		
+    // Compute duration of various constants based on Master Clock
+    oneFrame = clockFreq / TARGETFRAMERATE;
+	oneMs = clockFreq / 1000;
+	fMasterClock = (float)clockFreq;
 }
 
-void EndRender(unsigned char Skip)
+void StartRender() 
 {
-	FrameSkip=Skip;
-	TargetTime.QuadPart=( StartTime.QuadPart+(OneFrame.QuadPart*FrameSkip));
-	return;
+    startTime = getCurrentPerfCount();
 }
 
-void FrameWait(void)
+void EndRender(const uint8_t skip)
 {
-	QueryPerformanceCounter(&CurrentTime);
-	while ( (TargetTime.QuadPart-CurrentTime.QuadPart)> (OneMs.QuadPart*2))	//If we have more that 2Ms till the end of the frame
+	frameSkip = skip;
+    // Figure out when the frame should end
+	targetTime = (startTime + (oneFrame * frameSkip) ); 
+}
+
+// TODO: eliminate busy waiting
+void FrameWait()
+{
+    currentTime = getCurrentPerfCount();
+	while ( (targetTime - currentTime) > (oneMs*2))	//If we have more that 2Ms till the end of the frame
 	{
 		Sleep(1);	//Give about 1Ms back to the system
-		QueryPerformanceCounter(&CurrentTime);	//And check again
+        currentTime = getCurrentPerfCount(); //And check again
 	}
 
 	if (GetSoundStatus())	//Lean on the sound card a bit for timing
 	{
 		PurgeAuxBuffer();
-		if (FrameSkip==1)
+		if (frameSkip == 1)
 		{
-			if (GetFreeBlockCount()>AUDIOBUFFERS/2)		//Dont let the buffer get lest that half full
-				return;
-			while (GetFreeBlockCount() < 1);	// Dont let it fill up either
+			if (GetFreeBlockCount()>AUDIOBUFFERS/2)	return;	//Dont let the buffer get lest that half full				
+			while (GetFreeBlockCount() < 1);	// Dont let it fill up either 
 		}
-
 	}
-	while ( CurrentTime.QuadPart< TargetTime.QuadPart)	//Poll Untill frame end.
-		QueryPerformanceCounter(&CurrentTime);
 
-	return;
+    while (currentTime < targetTime) //Poll Until frame end.
+    {
+        currentTime = getCurrentPerfCount();
+    }
 }
 
-float CalculateFPS(void) //Done at end of render;
+float CalculateFPS() //Done at end of render;
 {
-
 	static unsigned short FrameCount=0;
-	static float fps=0,fNow=0,fLast=0;
+    static float fps = 0;
+    static float fLast = 0;
 
-	if (++FrameCount!=FRAMEINTERVAL)
-		return(fps);
+    // Do not recalculate until enough frames have passed
+	if (++FrameCount != FRAMEINTERVAL)
+		return fps;
 
-	QueryPerformanceCounter(&Now);
-	fNow=(float)Now.QuadPart;
-	fps=(fNow-fLast)/fMasterClock;
-	fLast=fNow;
-	FrameCount=0;
-	fps= FRAMEINTERVAL/fps;
-	return(fps);
+    // Get the current moment and extract the value   
+	static float fNow = (float)getCurrentPerfCount();
+	    
+    fps = (fNow - fLast) / fMasterClock;
+	fLast = fNow;
+	FrameCount = 0;
+	fps = FRAMEINTERVAL / fps;
+	return fps;
 }
 		

@@ -366,8 +366,8 @@ void DoCls(SystemState *CLStatus)
 {
 	unsigned short x=0,y=0;
 
-	if(LockScreen(CLStatus))
-		return;
+	if (LockScreen(CLStatus)) return;
+
 	switch (CLStatus->BitDepth)
 	{
 	case 0:

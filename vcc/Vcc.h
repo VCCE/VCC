@@ -1,5 +1,4 @@
-#ifndef __VCC_H__
-#define __VCC_H__
+#pragma once
 
 /****************************************************************************/
 /*
@@ -45,10 +44,12 @@ extern "C"
 
 	extern SystemState EmuState;
 
+    uint8_t	SetRamSize(const uint8_t size);
+
 	void			SetCPUMultiplyerFlag (unsigned char);
 	void			SetTurboMode(unsigned char);
 	unsigned char	SetCPUMultiplyer(unsigned char );
-	unsigned char	SetRamSize(unsigned char);
+	
 	unsigned char	SetSpeedThrottle(unsigned char);
 	unsigned char	SetFrameSkip(unsigned char);
 	unsigned char	SetCpuType( unsigned char);
@@ -65,7 +66,3 @@ extern "C"
 #endif
 
 /****************************************************************************/
-
-#endif // __VCC_H__
-
-

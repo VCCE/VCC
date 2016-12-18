@@ -21,10 +21,13 @@
 *.pch.*
 *.gch
 *.aps
+Vcc.VC.VC.opendb
+Vcc.VC.db
+
 
 Debug
 Release
 All
 
-_bin/coco3.rom
-_bin/disk11.rom
+coco3.rom
+disk11.rom

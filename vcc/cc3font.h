@@ -1,5 +1,4 @@
-#ifndef __CC3FONT_H__
-#define __CC3FONT_H__
+#pragma once
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -18,7 +17,9 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-static unsigned char cc3Fontdata8x12[] =
+#include <stdint.h>
+
+static const uint8_t cc3Fontdata8x12[] =
 {
 	/* Junk padding fix me */
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -285,5 +286,3 @@ static unsigned char cc3Fontdata8x12[] =
 	0x20,0x54,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x7C,0x00,0x00,0x00,0x00,0x00
 };
-
-#endif

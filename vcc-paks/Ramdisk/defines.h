@@ -1,6 +1,5 @@
 
 //Speed throttling
-#define FRAMEINTERVAL 120	//Number of frames to sum the framecounter over
 #define TARGETFRAMERATE 60	//Number of throttled Frames per second to render
 
 // Audio handling
