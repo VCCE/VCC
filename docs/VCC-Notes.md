@@ -5,24 +5,22 @@ Downloaded VS2018 at <https://www.visualstudio.com/>. Made sure to select MFC an
 
 Needed to add the following to becker.h:
 
-	```
-	#define bool int
-	#define true 1
-	#define false 0
-	```
+```
+#define bool int
+#define true 1
+#define false 0
+```
 
 # Planned updates
 
 
 # 6309
+(D) Direct (I) Inherent (R) Relative (M) Immediate (X) Indexed (E) extened
 
-Several instructions are not working as they are not implemented.
+hd6309.c, hd6309defs.h
 
-
-**hd6309.c**
-
-- Divide instructions are broken
-	- See hd6309.c:1979. No code implemented.
+See The_6309_Book.pdf for instructions information. 
+See [Socks 6309][sock6309] page for instructions, timings, and byte value.
 
 ## Unemulated
 
@@ -35,8 +33,9 @@ Several instructions are not working as they are not implemented.
 - BIEOR  UNEMULATED
 - BIOR   UNEMULATED
 - BOR    UNEMULATED
-- DIVQ_D UNEMULATED
-- DIVQ_M UNEMULATED
+- DIVQ_D UNEMULATED DIVQ_D	0x9E Direct
+- DIVQ_M UNEMULATED DIVQ_M	0x8E Immediate 	**needs to be signed**
+- DIVQ_X 									**needs to be signed**
 - LDBT   UNEMULATED
 - SBCD_D UNEMULATED
 - SBCD_E UNEMULATED
@@ -135,12 +134,91 @@ The following are new ideas I am thinking about adding to VCC.
 
 The debugger will allow you to run the emulator in it's normal window, but a second window (or a command like console would appear under the coco display). You will be able to step through code, inpect registers and memory, and change their values on the fly. Assuming assembler .lst files give enough information, the debugger could allow you to step through the original source of the program, so you can see your commented code, instead of just using the assembled code. I love using edtasm for testing my code, but it's slow, and hard to debug a graphical screen. Having the debugger seperate from the Coco's display will make this much easier.
 
-- New window that will allow user to step through instructions.
-- New window that will show registers for 6809, and when CPU is in 6309 mode, show the 6309 regs as well.
-	- Should indicate which regs are 6309
-- New window will allow memory dumps in byte, word, mnemonic modes.
+#### Souce code stepping
+New window that will allow user to step through instructions.
+
+#### Registers
+New window that will show registers for 6809, and when CPU is in 6309 mode, show the 6309 regs as well.
+
+*Should indicate which regs are 6309.*
 
 
-# Lee's notes
-- tc1014mmu.c:CopyRom() loads the coco3.rom 
-- Getting windows version <https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx>
+#### Memory dump
+New window will allow memory dumps in byte, word, mnemonic modes.
+
+#### Stack trace
+This may be possible by using a combination of tracking *jsr/rts* combinations, as well as *jsr/puls pc*.
+
+For example, the following would need to be tracked by looking at the *PULS PC* to know that it's returning from a *JSR* call. 
+
+```
+CHK309 PSHS  D     ;Save Reg-D
+       FDB   $1043 ;6309 COMD instruction (COMA on 6809) 
+       CMPB  1,S   ;not equal if 6309 
+       PULS  D,PC  ;exit, restoring D
+```
+
+# Disk controller issue
+Not correctly honoring the m bit at ff48
+
+$ff40 (drive #/motor/nmi control)
+$ff48 =status/command
+$ff49=track
+$ff4a=sector
+$ff4b=data
+
+if you FEED the command register ($ff48) a $90 (instead of $80), it should honour the M flag and autoincrement the sector register and continue reading and only raise an irq when it meets an invalid sector #
+
+iobus.c:port_read()
+ PackPortRead()
+  fd502.c:PackPortRead()
+   wd1793.c:disk_io_read() - status reg
+
+wd1793.c:DecodeControlReg() - Reading from $ff48-$ff4f clears bit 7 of DSKREG ($ff40)
+
+pakinterface.c:PakTimer()
+ fd502.cpp:HeartBeat()
+  wd1793.c:PingFdc()
+   wd1793.c:GetBytefromSector()
+    wd1793.c:ReadSector()
+
+## Read sector stack trace
+fd502.dll!ReadSector()						z:\desktop\vcc\vcc\fd502\wd1793.c(422)
+fd502.dll!GetBytefromSector()				z:\desktop\vcc\vcc\fd502\wd1793.c(1028)
+fd502.dll!disk_io_read(unsigned char port) 	z:\desktop\vcc\vcc\fd502\wd1793.c(146)
+fd502.dll!PackPortRead(unsigned char Port)	z:\desktop\vcc\vcc\fd502\fd502.cpp(186)
+mpi.dll!PackPortRead(unsigned char Port) 	z:\desktop\vcc\vcc\mpi\mpi.cpp(274)
+vcc.exe!PackPortRead(unsigned char port)	z:\desktop\vcc\vcc\pakinterface.c(132)
+vcc.exe!port_read(unsigned short addr) 		z:\desktop\vcc\vcc\iobus.c(164)
+vcc.exe!MemRead8(unsigned short address) 	z:\desktop\vcc\vcc\tcc1014mmu.c(216)
+vcc.exe!HD6309Exec(int CycleFor) 			z:\desktop\vcc\vcc\hd6309.c(4181)
+vcc.exe!CPUCycle()							z:\desktop\vcc\vcc\coco3.cpp(234)
+vcc.exe!RenderFrame(SystemState * RFState)	z:\desktop\vcc\vcc\coco3.cpp(89)
+vcc.exe!EmuLoop(void * Dummy) 				z:\desktop\vcc\vcc\vcc.c(731)
+
+I'm betting the error is in wd1793.c:GetBytefromSector(), 
+[sock6309]: http://users.axess.com/twilight/sock/cocofile/4mzcycle.html
+
+## DecodeControlReg stack trace
+fd502.dll!DecodeControlReg(uchar)			z:\desktop\vcc\vcc\fd502\wd1793.c(205)
+fd502.dll!disk_io_write(uchar, uchar) 		z:\desktop\vcc\vcc\fd502\wd1793.c(184)
+fd502.dll!PackPortWrite(uchar, uchar) 		z:\desktop\vcc\vcc\fd502\fd502.cpp(174)
+mpi.dll!PackPortWrite(uchar, uchar)			z:\desktop\vcc\vcc\mpi\mpi.cpp(246)
+vcc.exe!PackPortWrite(uchar, unsigned char)	z:\desktop\vcc\vcc\pakinterface.c(141)
+vcc.exe!port_write(uchar, ushort) 			z:\desktop\vcc\vcc\iobus.c(285)
+vcc.exe!MemWrite8() 						z:\desktop\vcc\vcc\tcc1014mmu.c(240)
+vcc.exe!HD6309Exec(int CycleFor) 			z:\desktop\vcc\vcc\hd6309.c(4190)
+vcc.exe!CPUCycle() 							z:\desktop\vcc\vcc\coco3.cpp(234)
+vcc.exe!RenderFrame(SystemState * RFState) 	z:\desktop\vcc\vcc\coco3.cpp(108)
+vcc.exe!EmuLoop(void * Dummy) 				z:\desktop\vcc\vcc\vcc.c(731)
+
+-		PakPortWriteCalls	0x551feb14 {0x00000000, 0x550831b0 {harddisk.dll!PackPortWrite(unsigned char, unsigned char)}, 0x00000000, ...}	void(*)(unsigned char, unsigned char)[0x00000004]
+		[0x00000000]	0x00000000	void(*)(unsigned char, unsigned char)
+		[0x00000001]	0x550831b0 {harddisk.dll!PackPortWrite(unsigned char, unsigned char)}	void(*)(unsigned char, unsigned char)
+		[0x00000002]	0x00000000	void(*)(unsigned char, unsigned char)
+		[0x00000003]	0x54f8179e {fd502.dll!_PackPortWrite}	void(*)(unsigned char, unsigned char)
+
+# Crash when screen resolution changes
+vcc.exe!LockScreen(SystemState * LSState) 	z:\desktop\vcc\vcc\directdrawinterface.cpp(266)
+vcc.exe!RenderFrame(SystemState * RFState) 	z:\desktop\vcc\vcc\coco3.cpp(95)
+vcc.exe!EmuLoop(void * Dummy)				z:\desktop\vcc\vcc\vcc.c(731)
