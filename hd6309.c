@@ -1984,7 +1984,7 @@ case	Page3:
 			if (performDivQ((short)IMMADDRESS(PC_REG)))
 			{
 				CycleCounter += 36;
-				PC_REG += 2;
+				PC_REG += 2;	//PC_REG+2 + 2 more for a total of 4
 			}
 			else
 			{
@@ -2221,10 +2221,9 @@ case	Page3:
 		break;
 
 		case DIVQ_X: //11AE 6309
-			if (performDivQ(MemRead16(INDADDRESS(PC_REG))))
+			if (performDivQ(MemRead16(INDADDRESS(PC_REG++))))
 			{
 				CycleCounter += 36;
-				PC_REG += 2;
 			}
 			else
 			{
