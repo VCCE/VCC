@@ -114,8 +114,14 @@ See [Socks 6309][sock6309] page for instructions, timings, and byte value.
 - DIVD_M: //118D 6309 NITRO
 - TIM_E: //7B 6309 NITRO
 
+## DIVQ Stack trace
+vcc.exe!HD6309Exec 		z:\desktop\vcc\vcc\hd6309.c(2224)
+vcc.exe!CPUCycle 		z:\desktop\vcc\vcc\coco3.cpp(234)
+vcc.exe!RenderFrame 	z:\desktop\vcc\vcc\coco3.cpp(108)
+vcc.exe!EmuLoop 		z:\desktop\vcc\vcc\vcc.c(731)
 
-## New updates
+
+# New ideas for VCC
 
 The following are new ideas I am thinking about adding to VCC.
 
