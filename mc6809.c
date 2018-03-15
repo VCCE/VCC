@@ -885,11 +885,18 @@ case TFR_M: //1F
 		case 6:
 		case 7:
 			*xfreg16[Dest]=0xFFFF;
-			if ( (Source==12) | (Source==13) )
-				*xfreg16[Dest]=0;
-			else
-				if (Source<=7)
-					*xfreg16[Dest]=*xfreg16[Source];
+			if ((Source == 12) | (Source == 13))
+			{
+				*xfreg16[Dest] = 0;
+			}
+			else if (Source <= 7)
+			{
+				//make sure the source is valud
+				if (xfreg16[Source])
+				{
+					*xfreg16[Dest] = *xfreg16[Source];
+				}	
+			}
 		break;
 
 		case 8:

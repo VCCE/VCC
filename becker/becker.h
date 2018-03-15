@@ -1,6 +1,10 @@
 #ifndef __BECKER_H__
 #define __BECKER_H__
 
+#define bool int
+#define true 1
+#define false 0
+
 // functions
 void MemWrite(unsigned char,unsigned short );
 unsigned char MemRead(unsigned short );

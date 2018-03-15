@@ -338,7 +338,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				case IDC_BROWSE:
 					memset(&ofn,0,sizeof(ofn));
 					ofn.lStructSize       = sizeof (OPENFILENAME) ;
-					ofn.hwndOwner         = GetTopWindow(NULL);
+					ofn.hwndOwner		  = NULL;
 					ofn.lpstrFilter		  = "Disk Rom Images\0*.rom;*.bin\0\0";	// filter ROM images
 					ofn.nFilterIndex      = 1 ;								// current filter index
 					ofn.lpstrFile         = TempRomFileName ;						// contains full path and filename on return
@@ -376,12 +376,13 @@ void Load_Disk(unsigned char disk)
 		return;
 	DialogOpen=1;
 	FileNotSelected=1;
+
 	while (FileNotSelected)
 	{
 		CreateFlag=1; 
 		memset(&ofn,0,sizeof(ofn));
 		ofn.lStructSize       = sizeof (OPENFILENAME) ;
-		ofn.hwndOwner         = GetTopWindow(NULL);
+		ofn.hwndOwner		  = NULL;
 		ofn.Flags             = OFN_HIDEREADONLY;
 		ofn.hInstance         = GetModuleHandle(0);
 		ofn.lpstrDefExt       = "dsk";
@@ -713,7 +714,6 @@ unsigned char LoadExtRom( unsigned char RomType,char *FilePath)	//Returns 1 on i
 //	ThisRom[0]=ExternalRom;
 //	ThisRom[1]=DiskRom;
 //	ThisRom[2]=RGBDiskRom;
-
 	rom_handle=fopen(FilePath,"rb");
 	if (rom_handle==NULL)
 		memset(ThisRom[RomType],0xFF,EXTROMSIZE);

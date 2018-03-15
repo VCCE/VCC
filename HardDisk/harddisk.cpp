@@ -225,7 +225,7 @@ void LoadHardDisk(void)
 	OPENFILENAME ofn ;	
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME) ;
-	ofn.hwndOwner         = GetTopWindow(NULL);
+	ofn.hwndOwner         = NULL;
 	ofn.lpstrFilter       =	"HardDisk Images\0*.vhd\0\0";	// filter VHD images
 	ofn.nFilterIndex      = 1 ;								// current filter index
 	ofn.lpstrFile         = FileName ;						// contains full path and filename on return

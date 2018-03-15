@@ -111,6 +111,8 @@ unsigned short temp16;
 static signed short stemp16;
 static signed char stemp8;
 static unsigned int  temp32;
+static int stemp32;
+static int stempW;
 static unsigned char temp8; 
 static unsigned char PendingInterupts=0;
 static unsigned char IRQWaiter=0;
@@ -137,6 +139,8 @@ static void cpu_nmi(void);
 unsigned int MemRead32(unsigned short);
 void MemWrite32(unsigned int,unsigned short);
 unsigned char GetSorceReg(unsigned char);
+int performDivQ(short divisor);
+
 //unsigned char GetDestReg(unsigned char);
 //END Fuction Prototypes-----------------------------------
 
@@ -1976,10 +1980,17 @@ case	Page3:
 			}
 		break;
 
-		case DIVQ_M: //118E 6309
-			WriteLog("Hitting UNEMULATED INS DIVQ_M",TOCONS);
-			CycleCounter+=36;
-		break;
+		case DIVQ_M: //118E 6309 
+			if (performDivQ((short)IMMADDRESS(PC_REG)))
+			{
+				CycleCounter += 36;
+				PC_REG += 2;	//PC_REG+2 + 2 more for a total of 4
+			}
+			else
+			{
+				CycleCounter += 17;
+			}
+			break;
 
 		case MULD_M: //118F Phase 5 6309
 			Q_REG=  D_REG * IMMADDRESS(PC_REG);
@@ -2091,8 +2102,15 @@ case	Page3:
 		break;
 
 		case DIVQ_D: //119E 6309
-			WriteLog("Hitting UNEMULATED INS DIVQ_D",TOCONS);
-			CycleCounter+=InsCycles[md[NATIVE6309]][M3635];
+			if (performDivQ(MemRead16(DPADDRESS(PC_REG))))
+			{
+				CycleCounter += 35;
+				PC_REG += 1;
+			}
+			else
+			{
+				CycleCounter += 17;
+			}
 		break;
 
 		case MULD_D: //119F 6309 02292008
@@ -2203,9 +2221,15 @@ case	Page3:
 		break;
 
 		case DIVQ_X: //11AE 6309
-			WriteLog("Hitting DIVQ_X",TOCONS);
-			CycleCounter+=36;
-		break;
+			if (performDivQ(MemRead16(INDADDRESS(PC_REG++))))
+			{
+				CycleCounter += 36;
+			}
+			else
+			{
+				CycleCounter += 17;
+			}
+			break;
 
 		case MULD_X: //11AF 6309 CHECK
 			Q_REG=  D_REG * MemRead16(INDADDRESS(PC_REG++));
@@ -2323,17 +2347,16 @@ case	Page3:
 		break;
 
 		case DIVQ_E: //11BE Phase 5 6309 CHECK
-			postword=MemRead16(IMMADDRESS(PC_REG));
-			temp32=Q_REG;
-			W_REG=temp32/(postword);
-			D_REG=temp32%(postword);
-			cc[N] = NTEST16(W_REG);
-			cc[Z] = ZTEST(W_REG);
-			cc[C] = W_REG&1;
-			cc[V] =1;
-			//NOT DONE
-			PC_REG+=2;
-			CycleCounter+=InsCycles[md[NATIVE6309]][M3726];
+			temp16 = IMMADDRESS(PC_REG);
+			if (performDivQ(MemRead16(temp16)))
+			{
+				CycleCounter += 37;
+				PC_REG += 2;
+			}
+			else
+			{
+				CycleCounter += 17;
+			}
 		break;
 
 		case MULD_E: //11BF 6309
@@ -5339,3 +5362,40 @@ unsigned short GetPC(void)
 }
 
 
+int performDivQ(short divisor)
+{
+	int divOkay = 1;	//true
+	if (divisor != 0)
+	{
+		stemp32 = Q_REG;
+		stempW = stemp32 / divisor;
+		if (stempW > 0xFFFF || stempW<SHRT_MIN)
+		{
+			//overflow, quotient is larger then can be stored in 16 bits
+			//registers remain untouched, set flags accordingly
+			cc[V] = 1;
+			cc[N] = 0;
+			cc[Z] = 0;
+			cc[C] = 0;
+		}
+		else
+		{
+			W_REG = stempW;
+			D_REG = stemp32 % divisor;
+			cc[N] = W_REG >> 15;	//set to bit 15
+			cc[Z] = ZTEST(W_REG);
+			cc[C] = W_REG & 1;
+
+			//check for overflow, quotient can't be represented by signed 16 bit value
+			cc[V] = stempW > SHRT_MAX;
+			if (cc[V])
+				cc[N] = 1;
+		}
+	}
+	else
+	{
+		divOkay = 0;
+		DivbyZero();
+	}
+	return divOkay;
+}

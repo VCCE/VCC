@@ -286,7 +286,7 @@ void Select_Disk(unsigned char Disk)
 
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME);
-	ofn.hwndOwner         = GetTopWindow(NULL);
+	ofn.hwndOwner         = NULL;
 	ofn.Flags             = OFN_HIDEREADONLY;
 	ofn.hInstance         = GetModuleHandle(0);
 	ofn.lpstrDefExt       ="IMG";
