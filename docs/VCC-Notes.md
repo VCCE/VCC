@@ -33,9 +33,10 @@ See [Socks 6309][sock6309] page for instructions, timings, and byte value.
 - BIEOR  UNEMULATED
 - BIOR   UNEMULATED
 - BOR    UNEMULATED
-- DIVQ_D UNEMULATED DIVQ_D	0x9E Direct
-- DIVQ_M UNEMULATED DIVQ_M	0x8E Immediate 	**needs to be signed**
-- DIVQ_X 									**needs to be signed**
+- DIVQ_D DONE
+- DIVQ_M DONE
+- DIVQ_X DONE
+- DIVQ_E DONE
 - LDBT   UNEMULATED
 - SBCD_D UNEMULATED
 - SBCD_E UNEMULATED
