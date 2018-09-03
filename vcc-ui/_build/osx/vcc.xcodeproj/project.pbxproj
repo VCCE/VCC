@@ -1,0 +1,971 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		130B25CD213D5A47002EFFB0 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 130B25C7213D59FA002EFFB0 /* SDL2.framework */; };
+		130B25CE213D5A47002EFFB0 /* SDL2.framework in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 130B25C7213D59FA002EFFB0 /* SDL2.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		131971891BCD73AB005E5779 /* VCCVMWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 131971881BCD73AB005E5779 /* VCCVMWindowController.m */; };
+		131E899E2132285000A492B9 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 131E899D2132284F00A492B9 /* Cocoa.framework */; };
+		131E89A02132285B00A492B9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 131E899F2132285B00A492B9 /* Foundation.framework */; };
+		131E89A22132286700A492B9 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 131E89A12132286700A492B9 /* CoreServices.framework */; };
+		131FA64620784B2D008D96D0 /* PreferencesMain.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 131FA64420784B2D008D96D0 /* PreferencesMain.storyboard */; };
+		131FA64C20784CBC008D96D0 /* PreferencesAddOns.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 131FA64A20784CBC008D96D0 /* PreferencesAddOns.storyboard */; };
+		131FA64F2078D9B8008D96D0 /* VCCVMPreferencesController.m in Sources */ = {isa = PBXBuildFile; fileRef = 131FA64D2078D9B8008D96D0 /* VCCVMPreferencesController.m */; };
+		1322A64C1BB58CE600C3CB5E /* VCCVMView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1322A64B1BB58CE600C3CB5E /* VCCVMView.m */; };
+		1332DC2B1BA7238800820B5F /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 1332DC2A1BA7238800820B5F /* AppDelegate.m */; };
+		1332DC2D1BA7238800820B5F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 1332DC2C1BA7238800820B5F /* main.m */; };
+		1332DC301BA7238800820B5F /* VCCVMViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1332DC2F1BA7238800820B5F /* VCCVMViewController.m */; };
+		1332DC331BA7238800820B5F /* VCCVMDocument.m in Sources */ = {isa = PBXBuildFile; fileRef = 1332DC321BA7238800820B5F /* VCCVMDocument.m */; };
+		1332DC361BA7238800820B5F /* Document.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 1332DC341BA7238800820B5F /* Document.xcdatamodeld */; };
+		1332DC381BA7238800820B5F /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1332DC371BA7238800820B5F /* Images.xcassets */; };
+		1332DC3B1BA7238800820B5F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1332DC391BA7238800820B5F /* Main.storyboard */; };
+		1332DC471BA7238800820B5F /* vccxTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1332DC461BA7238800820B5F /* vccxTests.m */; };
+		133E00B22059F81C00645A85 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 133E00B12059F81B00645A85 /* OpenGL.framework */; };
+		1381636921357C5300E31CB7 /* libvcc-cpu-hd6309.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 1381635821357BF900E31CB7 /* libvcc-cpu-hd6309.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		1381636A21357C5A00E31CB7 /* libvcc-cpu-mc6809.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 1381635221357BF300E31CB7 /* libvcc-cpu-mc6809.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		1382B84D21343DB40019D9B9 /* libvcc-core.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 1382B83421343D5A0019D9B9 /* libvcc-core.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		1382B85C21343DDF0019D9B9 /* libvcc-core.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1382B83421343D5A0019D9B9 /* libvcc-core.dylib */; };
+		1382B85E21343E290019D9B9 /* coco3.rom in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1382B85D21343E290019D9B9 /* coco3.rom */; };
+		13C625E12063316F00253B1A /* VCCVMWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 13C625E02063316F00253B1A /* VCCVMWindow.m */; };
+		13C625E22063316F00253B1A /* VCCVMWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 13C625E02063316F00253B1A /* VCCVMWindow.m */; };
+		13DD8BC22134C96200E8A6A9 /* libvcc-pak-orch90.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 13DD8BC12134C94B00E8A6A9 /* libvcc-pak-orch90.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		13E6ED882134C35100C8880E /* libvcc-pak-rampak.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 13E6ED872134C32400C8880E /* libvcc-pak-rampak.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		13E6ED8B2134C35A00C8880E /* libvcc-pak-fd502.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 1386E7D02134554E00083463 /* libvcc-pak-fd502.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		13E6ED8E2134C36000C8880E /* libvcc-pak-mpi.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 1386E7D62134555300083463 /* libvcc-pak-mpi.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		131D6D5221357E6C003552D5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 131D6D4C21357E6C003552D5 /* vcc-pak-superide.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 13B7FCB41BAF0B270041343C;
+			remoteInfo = "vcc-pak-superide";
+		};
+		1332DC411BA7238800820B5F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1332DC1C1BA7238800820B5F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1332DC231BA7238800820B5F;
+			remoteInfo = vccx;
+		};
+		1381635121357BF300E31CB7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1381634D21357BF200E31CB7 /* vcc-cpu-mc6809.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 13B7FCB41BAF0B270041343C;
+			remoteInfo = "vcc-cpu-mc6809";
+		};
+		1381635721357BF900E31CB7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1381635321357BF900E31CB7 /* vcc-cpu-hd6309.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 13B7FC911BAF0B080041343C;
+			remoteInfo = "vcc-cpu-hd6309";
+		};
+		1382B83321343D5A0019D9B9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1382B82F21343D5A0019D9B9 /* vcc-core.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 13D8C5DC1BAF056700D1EAD8;
+			remoteInfo = "vcc-core";
+		};
+		1382B84E21343DB40019D9B9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1382B82F21343D5A0019D9B9 /* vcc-core.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 13D8C5DB1BAF056700D1EAD8;
+			remoteInfo = "vcc-core";
+		};
+		1386E7CF2134554E00083463 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1386E7CB2134554E00083463 /* vcc-pak-fd502.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 13B7FCB41BAF0B270041343C;
+			remoteInfo = "vcc-pak-fd502";
+		};
+		1386E7D52134555300083463 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1386E7D12134555300083463 /* vcc-pak-mpi.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 13B7FCB41BAF0B270041343C;
+			remoteInfo = "vcc-pak-mpi";
+		};
+		13DD8BC02134C94B00E8A6A9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 13DD8BBC2134C94B00E8A6A9 /* vcc-pak-orch90.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 13B7FCB41BAF0B270041343C;
+			remoteInfo = "vcc-pak-orch90";
+		};
+		13DD8BC32134C96200E8A6A9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 13DD8BBC2134C94B00E8A6A9 /* vcc-pak-orch90.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 13B7FCB31BAF0B270041343C;
+			remoteInfo = "vcc-pak-orch90";
+		};
+		13E6ED862134C32400C8880E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 13E6ED802134C32400C8880E /* vcc-pak-rampak.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 13B7FCB41BAF0B270041343C;
+			remoteInfo = "vcc-pak-mpi";
+		};
+		13E6ED892134C35100C8880E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 13E6ED802134C32400C8880E /* vcc-pak-rampak.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 13B7FCB31BAF0B270041343C;
+			remoteInfo = "vcc-pak-mpi";
+		};
+		13E6ED8C2134C35A00C8880E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1386E7CB2134554E00083463 /* vcc-pak-fd502.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 13B7FCB31BAF0B270041343C;
+			remoteInfo = "vcc-pak-fd502";
+		};
+		13E6ED8F2134C36000C8880E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1386E7D12134555300083463 /* vcc-pak-mpi.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 13B7FCB31BAF0B270041343C;
+			remoteInfo = "vcc-pak-mpi";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		137259C42094AA6D00888EB0 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 7;
+			files = (
+				1382B85E21343E290019D9B9 /* coco3.rom in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		13A539B42047B361006DE5F3 /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				13DD8BC22134C96200E8A6A9 /* libvcc-pak-orch90.dylib in Embed Libraries */,
+				1382B84D21343DB40019D9B9 /* libvcc-core.dylib in Embed Libraries */,
+				13E6ED882134C35100C8880E /* libvcc-pak-rampak.dylib in Embed Libraries */,
+				13E6ED8E2134C36000C8880E /* libvcc-pak-mpi.dylib in Embed Libraries */,
+				13E6ED8B2134C35A00C8880E /* libvcc-pak-fd502.dylib in Embed Libraries */,
+				1381636A21357C5A00E31CB7 /* libvcc-cpu-mc6809.dylib in Embed Libraries */,
+				1381636921357C5300E31CB7 /* libvcc-cpu-hd6309.dylib in Embed Libraries */,
+				130B25CE213D5A47002EFFB0 /* SDL2.framework in Embed Libraries */,
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		130B25BF213D5605002EFFB0 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
+		130B25C7213D59FA002EFFB0 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = ../../../lib/osx/Frameworks/SDL2.framework; sourceTree = "<group>"; };
+		131971871BCD73AB005E5779 /* VCCVMWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VCCVMWindowController.h; sourceTree = "<group>"; };
+		131971881BCD73AB005E5779 /* VCCVMWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VCCVMWindowController.m; sourceTree = "<group>"; };
+		131D6D4C21357E6C003552D5 /* vcc-pak-superide.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-pak-superide.xcodeproj"; path = "../../../vcc-paks/vcc-pak-superide/_build/osx/vcc-pak-superide.xcodeproj"; sourceTree = "<group>"; };
+		131D6D5421357F38003552D5 /* vcc-notes.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = "vcc-notes.txt"; path = "../../../vcc-notes.txt"; sourceTree = "<group>"; };
+		131E899D2132284F00A492B9 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		131E899F2132285B00A492B9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		131E89A12132286700A492B9 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = System/Library/Frameworks/CoreServices.framework; sourceTree = SDKROOT; };
+		131FA64520784B2D008D96D0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/PreferencesMain.storyboard; sourceTree = "<group>"; };
+		131FA64B20784CBC008D96D0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/PreferencesAddOns.storyboard; sourceTree = "<group>"; };
+		131FA64D2078D9B8008D96D0 /* VCCVMPreferencesController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VCCVMPreferencesController.m; sourceTree = "<group>"; };
+		131FA64E2078D9B8008D96D0 /* VCCVMPreferencesController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VCCVMPreferencesController.h; sourceTree = "<group>"; };
+		1322A64A1BB58CE600C3CB5E /* VCCVMView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VCCVMView.h; sourceTree = "<group>"; };
+		1322A64B1BB58CE600C3CB5E /* VCCVMView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VCCVMView.m; sourceTree = "<group>"; };
+		1332DC241BA7238800820B5F /* vcc.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = vcc.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1332DC281BA7238800820B5F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1332DC291BA7238800820B5F /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		1332DC2A1BA7238800820B5F /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		1332DC2C1BA7238800820B5F /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		1332DC2E1BA7238800820B5F /* VCCVMViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VCCVMViewController.h; sourceTree = "<group>"; };
+		1332DC2F1BA7238800820B5F /* VCCVMViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VCCVMViewController.m; sourceTree = "<group>"; };
+		1332DC311BA7238800820B5F /* VCCVMDocument.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VCCVMDocument.h; sourceTree = "<group>"; };
+		1332DC321BA7238800820B5F /* VCCVMDocument.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VCCVMDocument.m; sourceTree = "<group>"; };
+		1332DC351BA7238800820B5F /* Document.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Document.xcdatamodel; sourceTree = "<group>"; };
+		1332DC371BA7238800820B5F /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		1332DC3A1BA7238800820B5F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		1332DC401BA7238800820B5F /* vccTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = vccTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1332DC461BA7238800820B5F /* vccxTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = vccxTests.m; sourceTree = "<group>"; };
+		133E00B12059F81B00645A85 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		13441C5120FF55740074B18D /* vcc.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = vcc.entitlements; sourceTree = "<group>"; };
+		135659F02042FB760019E6CE /* vcc-todo.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = "vcc-todo.txt"; path = "../../../vcc-todo.txt"; sourceTree = "<group>"; };
+		1381634D21357BF200E31CB7 /* vcc-cpu-mc6809.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-cpu-mc6809.xcodeproj"; path = "../../../vcc-cpu/vccx-cpu-mc6809/_build/osx/vcc-cpu-mc6809.xcodeproj"; sourceTree = "<group>"; };
+		1381635321357BF900E31CB7 /* vcc-cpu-hd6309.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-cpu-hd6309.xcodeproj"; path = "../../../vcc-cpu/vccx-cpu-hd6309/_build/osx/vcc-cpu-hd6309.xcodeproj"; sourceTree = "<group>"; };
+		1382B82F21343D5A0019D9B9 /* vcc-core.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-core.xcodeproj"; path = "../../../vcc-core/_build/osx/vccx-core/vcc-core.xcodeproj"; sourceTree = "<group>"; };
+		1382B85D21343E290019D9B9 /* coco3.rom */ = {isa = PBXFileReference; lastKnownFileType = file; name = coco3.rom; path = "../../../../vcc-core/res/rom/coco3.rom"; sourceTree = "<group>"; };
+		1386E7CB2134554E00083463 /* vcc-pak-fd502.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-pak-fd502.xcodeproj"; path = "../../../vcc-paks/vcc-pak-fd502/_build/osx/vcc-pak-fd502.xcodeproj"; sourceTree = "<group>"; };
+		1386E7D12134555300083463 /* vcc-pak-mpi.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-pak-mpi.xcodeproj"; path = "../../../vcc-paks/vcc-pak-mpi/_build/osx/vcc-pak-mpi.xcodeproj"; sourceTree = "<group>"; };
+		13C625E02063316F00253B1A /* VCCVMWindow.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VCCVMWindow.m; sourceTree = "<group>"; };
+		13C625E6206331BE00253B1A /* VCCVMWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VCCVMWindow.h; sourceTree = "<group>"; };
+		13DD8BBC2134C94B00E8A6A9 /* vcc-pak-orch90.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-pak-orch90.xcodeproj"; path = "../../../vcc-paks/vcc-pak-orch90/_build/osx/vcc-pak-orch90.xcodeproj"; sourceTree = "<group>"; };
+		13E6ED802134C32400C8880E /* vcc-pak-rampak.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-pak-rampak.xcodeproj"; path = "../../../vcc-paks/vcc-pak-ramdisk/_build/osx/vcc-pak-rampak.xcodeproj"; sourceTree = "<group>"; };
+		13F887F31BAEFD4300691C15 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1332DC211BA7238800820B5F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				131E89A22132286700A492B9 /* CoreServices.framework in Frameworks */,
+				131E89A02132285B00A492B9 /* Foundation.framework in Frameworks */,
+				131E899E2132285000A492B9 /* Cocoa.framework in Frameworks */,
+				130B25CD213D5A47002EFFB0 /* SDL2.framework in Frameworks */,
+				133E00B22059F81C00645A85 /* OpenGL.framework in Frameworks */,
+				1382B85C21343DDF0019D9B9 /* libvcc-core.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1332DC3D1BA7238800820B5F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1319718A1BCD747D005E5779 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				137259CE2094ABDC00888EB0 /* rom */,
+				1332DC341BA7238800820B5F /* Document.xcdatamodeld */,
+				1332DC371BA7238800820B5F /* Images.xcassets */,
+				1332DC391BA7238800820B5F /* Main.storyboard */,
+				131FA64420784B2D008D96D0 /* PreferencesMain.storyboard */,
+				131FA64A20784CBC008D96D0 /* PreferencesAddOns.storyboard */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		131D6D4D21357E6C003552D5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				131D6D5321357E6C003552D5 /* libvcc-pak-superide.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1332DC1B1BA7238800820B5F = {
+			isa = PBXGroup;
+			children = (
+				131D6D5421357F38003552D5 /* vcc-notes.txt */,
+				135659F02042FB760019E6CE /* vcc-todo.txt */,
+				1332DC261BA7238800820B5F /* vcc-ui */,
+				1332DC431BA7238800820B5F /* vccTests */,
+				139C604F1BA7B9700081BFDD /* vcc-libs */,
+				13BA30D31BA7C1E00000605D /* Frameworks */,
+				1332DC251BA7238800820B5F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		1332DC251BA7238800820B5F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1332DC241BA7238800820B5F /* vcc.app */,
+				1332DC401BA7238800820B5F /* vccTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1332DC261BA7238800820B5F /* vcc-ui */ = {
+			isa = PBXGroup;
+			children = (
+				1332DC291BA7238800820B5F /* AppDelegate.h */,
+				1332DC2A1BA7238800820B5F /* AppDelegate.m */,
+				13C625E6206331BE00253B1A /* VCCVMWindow.h */,
+				13C625E02063316F00253B1A /* VCCVMWindow.m */,
+				131971871BCD73AB005E5779 /* VCCVMWindowController.h */,
+				131971881BCD73AB005E5779 /* VCCVMWindowController.m */,
+				1332DC311BA7238800820B5F /* VCCVMDocument.h */,
+				1332DC321BA7238800820B5F /* VCCVMDocument.m */,
+				131FA64E2078D9B8008D96D0 /* VCCVMPreferencesController.h */,
+				131FA64D2078D9B8008D96D0 /* VCCVMPreferencesController.m */,
+				1332DC2E1BA7238800820B5F /* VCCVMViewController.h */,
+				1332DC2F1BA7238800820B5F /* VCCVMViewController.m */,
+				1322A64A1BB58CE600C3CB5E /* VCCVMView.h */,
+				1322A64B1BB58CE600C3CB5E /* VCCVMView.m */,
+				1319718A1BCD747D005E5779 /* Resources */,
+				1332DC271BA7238800820B5F /* Supporting Files */,
+			);
+			path = "vcc-ui";
+			sourceTree = "<group>";
+		};
+		1332DC271BA7238800820B5F /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				13441C5120FF55740074B18D /* vcc.entitlements */,
+				1332DC281BA7238800820B5F /* Info.plist */,
+				1332DC2C1BA7238800820B5F /* main.m */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		1332DC431BA7238800820B5F /* vccTests */ = {
+			isa = PBXGroup;
+			children = (
+				1332DC461BA7238800820B5F /* vccxTests.m */,
+				1332DC441BA7238800820B5F /* Supporting Files */,
+			);
+			path = vccTests;
+			sourceTree = "<group>";
+		};
+		1332DC441BA7238800820B5F /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				13F887F31BAEFD4300691C15 /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		137259CE2094ABDC00888EB0 /* rom */ = {
+			isa = PBXGroup;
+			children = (
+				1382B85D21343E290019D9B9 /* coco3.rom */,
+			);
+			name = rom;
+			sourceTree = "<group>";
+		};
+		1381634E21357BF200E31CB7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1381635221357BF300E31CB7 /* libvcc-cpu-mc6809.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1381635421357BF900E31CB7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1381635821357BF900E31CB7 /* libvcc-cpu-hd6309.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1382B83021343D5A0019D9B9 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1382B83421343D5A0019D9B9 /* libvcc-core.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1386E7CC2134554E00083463 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1386E7D02134554E00083463 /* libvcc-pak-fd502.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1386E7D22134555300083463 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1386E7D62134555300083463 /* libvcc-pak-mpi.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		139C604F1BA7B9700081BFDD /* vcc-libs */ = {
+			isa = PBXGroup;
+			children = (
+				1382B82F21343D5A0019D9B9 /* vcc-core.xcodeproj */,
+				1381634D21357BF200E31CB7 /* vcc-cpu-mc6809.xcodeproj */,
+				1381635321357BF900E31CB7 /* vcc-cpu-hd6309.xcodeproj */,
+				1386E7D12134555300083463 /* vcc-pak-mpi.xcodeproj */,
+				1386E7CB2134554E00083463 /* vcc-pak-fd502.xcodeproj */,
+				13DD8BBC2134C94B00E8A6A9 /* vcc-pak-orch90.xcodeproj */,
+				131D6D4C21357E6C003552D5 /* vcc-pak-superide.xcodeproj */,
+				13E6ED802134C32400C8880E /* vcc-pak-rampak.xcodeproj */,
+			);
+			name = "vcc-libs";
+			sourceTree = "<group>";
+		};
+		13BA30D31BA7C1E00000605D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				130B25C7213D59FA002EFFB0 /* SDL2.framework */,
+				130B25BF213D5605002EFFB0 /* OpenAL.framework */,
+				131E89A12132286700A492B9 /* CoreServices.framework */,
+				131E899F2132285B00A492B9 /* Foundation.framework */,
+				131E899D2132284F00A492B9 /* Cocoa.framework */,
+				133E00B12059F81B00645A85 /* OpenGL.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		13DD8BBD2134C94B00E8A6A9 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				13DD8BC12134C94B00E8A6A9 /* libvcc-pak-orch90.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		13E6ED812134C32400C8880E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				13E6ED872134C32400C8880E /* libvcc-pak-rampak.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1332DC231BA7238800820B5F /* vcc */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1332DC4A1BA7238800820B5F /* Build configuration list for PBXNativeTarget "vcc" */;
+			buildPhases = (
+				1332DC201BA7238800820B5F /* Sources */,
+				1332DC211BA7238800820B5F /* Frameworks */,
+				1332DC221BA7238800820B5F /* Resources */,
+				13A539B42047B361006DE5F3 /* Embed Libraries */,
+				137259C42094AA6D00888EB0 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1382B84F21343DB40019D9B9 /* PBXTargetDependency */,
+				13E6ED8A2134C35100C8880E /* PBXTargetDependency */,
+				13E6ED8D2134C35A00C8880E /* PBXTargetDependency */,
+				13E6ED902134C36000C8880E /* PBXTargetDependency */,
+				13DD8BC42134C96200E8A6A9 /* PBXTargetDependency */,
+			);
+			name = vcc;
+			productName = vccx;
+			productReference = 1332DC241BA7238800820B5F /* vcc.app */;
+			productType = "com.apple.product-type.application";
+		};
+		1332DC3F1BA7238800820B5F /* vccTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1332DC4D1BA7238800820B5F /* Build configuration list for PBXNativeTarget "vccTests" */;
+			buildPhases = (
+				1332DC3C1BA7238800820B5F /* Sources */,
+				1332DC3D1BA7238800820B5F /* Frameworks */,
+				1332DC3E1BA7238800820B5F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1332DC421BA7238800820B5F /* PBXTargetDependency */,
+			);
+			name = vccTests;
+			productName = vccxTests;
+			productReference = 1332DC401BA7238800820B5F /* vccTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1332DC1C1BA7238800820B5F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0930;
+				ORGANIZATIONNAME = CoCo3;
+				TargetAttributes = {
+					1332DC231BA7238800820B5F = {
+						CreatedOnToolsVersion = 6.4;
+						DevelopmentTeam = 7RGC29Y5KS;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.Sandbox = {
+								enabled = 0;
+							};
+						};
+					};
+					1332DC3F1BA7238800820B5F = {
+						CreatedOnToolsVersion = 6.4;
+						TestTargetID = 1332DC231BA7238800820B5F;
+					};
+				};
+			};
+			buildConfigurationList = 1332DC1F1BA7238800820B5F /* Build configuration list for PBXProject "vcc" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 1332DC1B1BA7238800820B5F;
+			productRefGroup = 1332DC251BA7238800820B5F /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 1382B83021343D5A0019D9B9 /* Products */;
+					ProjectRef = 1382B82F21343D5A0019D9B9 /* vcc-core.xcodeproj */;
+				},
+				{
+					ProductGroup = 1381635421357BF900E31CB7 /* Products */;
+					ProjectRef = 1381635321357BF900E31CB7 /* vcc-cpu-hd6309.xcodeproj */;
+				},
+				{
+					ProductGroup = 1381634E21357BF200E31CB7 /* Products */;
+					ProjectRef = 1381634D21357BF200E31CB7 /* vcc-cpu-mc6809.xcodeproj */;
+				},
+				{
+					ProductGroup = 1386E7CC2134554E00083463 /* Products */;
+					ProjectRef = 1386E7CB2134554E00083463 /* vcc-pak-fd502.xcodeproj */;
+				},
+				{
+					ProductGroup = 1386E7D22134555300083463 /* Products */;
+					ProjectRef = 1386E7D12134555300083463 /* vcc-pak-mpi.xcodeproj */;
+				},
+				{
+					ProductGroup = 13DD8BBD2134C94B00E8A6A9 /* Products */;
+					ProjectRef = 13DD8BBC2134C94B00E8A6A9 /* vcc-pak-orch90.xcodeproj */;
+				},
+				{
+					ProductGroup = 13E6ED812134C32400C8880E /* Products */;
+					ProjectRef = 13E6ED802134C32400C8880E /* vcc-pak-rampak.xcodeproj */;
+				},
+				{
+					ProductGroup = 131D6D4D21357E6C003552D5 /* Products */;
+					ProjectRef = 131D6D4C21357E6C003552D5 /* vcc-pak-superide.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				1332DC231BA7238800820B5F /* vcc */,
+				1332DC3F1BA7238800820B5F /* vccTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		131D6D5321357E6C003552D5 /* libvcc-pak-superide.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = "libvcc-pak-superide.dylib";
+			remoteRef = 131D6D5221357E6C003552D5 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		1381635221357BF300E31CB7 /* libvcc-cpu-mc6809.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = "libvcc-cpu-mc6809.dylib";
+			remoteRef = 1381635121357BF300E31CB7 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		1381635821357BF900E31CB7 /* libvcc-cpu-hd6309.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = "libvcc-cpu-hd6309.dylib";
+			remoteRef = 1381635721357BF900E31CB7 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		1382B83421343D5A0019D9B9 /* libvcc-core.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = "libvcc-core.dylib";
+			remoteRef = 1382B83321343D5A0019D9B9 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		1386E7D02134554E00083463 /* libvcc-pak-fd502.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = "libvcc-pak-fd502.dylib";
+			remoteRef = 1386E7CF2134554E00083463 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		1386E7D62134555300083463 /* libvcc-pak-mpi.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = "libvcc-pak-mpi.dylib";
+			remoteRef = 1386E7D52134555300083463 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		13DD8BC12134C94B00E8A6A9 /* libvcc-pak-orch90.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = "libvcc-pak-orch90.dylib";
+			remoteRef = 13DD8BC02134C94B00E8A6A9 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		13E6ED872134C32400C8880E /* libvcc-pak-rampak.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = "libvcc-pak-rampak.dylib";
+			remoteRef = 13E6ED862134C32400C8880E /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1332DC221BA7238800820B5F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				131FA64620784B2D008D96D0 /* PreferencesMain.storyboard in Resources */,
+				1332DC381BA7238800820B5F /* Images.xcassets in Resources */,
+				131FA64C20784CBC008D96D0 /* PreferencesAddOns.storyboard in Resources */,
+				1332DC3B1BA7238800820B5F /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1332DC3E1BA7238800820B5F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1332DC201BA7238800820B5F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				13C625E12063316F00253B1A /* VCCVMWindow.m in Sources */,
+				1332DC331BA7238800820B5F /* VCCVMDocument.m in Sources */,
+				1322A64C1BB58CE600C3CB5E /* VCCVMView.m in Sources */,
+				1332DC301BA7238800820B5F /* VCCVMViewController.m in Sources */,
+				131971891BCD73AB005E5779 /* VCCVMWindowController.m in Sources */,
+				1332DC2D1BA7238800820B5F /* main.m in Sources */,
+				1332DC361BA7238800820B5F /* Document.xcdatamodeld in Sources */,
+				1332DC2B1BA7238800820B5F /* AppDelegate.m in Sources */,
+				131FA64F2078D9B8008D96D0 /* VCCVMPreferencesController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1332DC3C1BA7238800820B5F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				13C625E22063316F00253B1A /* VCCVMWindow.m in Sources */,
+				1332DC471BA7238800820B5F /* vccxTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1332DC421BA7238800820B5F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1332DC231BA7238800820B5F /* vcc */;
+			targetProxy = 1332DC411BA7238800820B5F /* PBXContainerItemProxy */;
+		};
+		1382B84F21343DB40019D9B9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "vcc-core";
+			targetProxy = 1382B84E21343DB40019D9B9 /* PBXContainerItemProxy */;
+		};
+		13DD8BC42134C96200E8A6A9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "vcc-pak-orch90";
+			targetProxy = 13DD8BC32134C96200E8A6A9 /* PBXContainerItemProxy */;
+		};
+		13E6ED8A2134C35100C8880E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "vcc-pak-mpi";
+			targetProxy = 13E6ED892134C35100C8880E /* PBXContainerItemProxy */;
+		};
+		13E6ED8D2134C35A00C8880E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "vcc-pak-fd502";
+			targetProxy = 13E6ED8C2134C35A00C8880E /* PBXContainerItemProxy */;
+		};
+		13E6ED902134C36000C8880E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "vcc-pak-mpi";
+			targetProxy = 13E6ED8F2134C36000C8880E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		131FA64420784B2D008D96D0 /* PreferencesMain.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				131FA64520784B2D008D96D0 /* Base */,
+			);
+			name = PreferencesMain.storyboard;
+			sourceTree = "<group>";
+		};
+		131FA64A20784CBC008D96D0 /* PreferencesAddOns.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				131FA64B20784CBC008D96D0 /* Base */,
+			);
+			name = PreferencesAddOns.storyboard;
+			sourceTree = "<group>";
+		};
+		1332DC391BA7238800820B5F /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1332DC3A1BA7238800820B5F /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		1332DC481BA7238800820B5F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					/Library/Frameworks,
+					"$(SRCROOT)/../../../lib/osx/Frameworks",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		1332DC491BA7238800820B5F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					/Library/Frameworks,
+					"$(SRCROOT)/../../../lib/osx/Frameworks",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		1332DC4B1BA7238800820B5F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 7RGC29Y5KS;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"../../../vcc-core/inc",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+				);
+				INFOPLIST_FILE = "vcc-ui/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				PRODUCT_BUNDLE_IDENTIFIER = org.vcce.vcc;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = NO;
+				STRINGS_FILE_OUTPUT_ENCODING = "UTF-8";
+			};
+			name = Debug;
+		};
+		1332DC4C1BA7238800820B5F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 7RGC29Y5KS;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"../../../vcc-core/inc",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+				);
+				INFOPLIST_FILE = "vcc-ui/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				PRODUCT_BUNDLE_IDENTIFIER = org.vcce.vcc;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = NO;
+				STRINGS_FILE_OUTPUT_ENCODING = "UTF-8";
+			};
+			name = Release;
+		};
+		1332DC4E1BA7238800820B5F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = vccTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "org.coco3.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/vcc.app/Contents/MacOS/vcc";
+			};
+			name = Debug;
+		};
+		1332DC4F1BA7238800820B5F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = vccTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "org.coco3.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/vcc.app/Contents/MacOS/vcc";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1332DC1F1BA7238800820B5F /* Build configuration list for PBXProject "vcc" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1332DC481BA7238800820B5F /* Debug */,
+				1332DC491BA7238800820B5F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1332DC4A1BA7238800820B5F /* Build configuration list for PBXNativeTarget "vcc" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1332DC4B1BA7238800820B5F /* Debug */,
+				1332DC4C1BA7238800820B5F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1332DC4D1BA7238800820B5F /* Build configuration list for PBXNativeTarget "vccTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1332DC4E1BA7238800820B5F /* Debug */,
+				1332DC4F1BA7238800820B5F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		1332DC341BA7238800820B5F /* Document.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				1332DC351BA7238800820B5F /* Document.xcdatamodel */,
+			);
+			currentVersion = 1332DC351BA7238800820B5F /* Document.xcdatamodel */;
+			path = Document.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
+	};
+	rootObject = 1332DC1C1BA7238800820B5F /* Project object */;
+}

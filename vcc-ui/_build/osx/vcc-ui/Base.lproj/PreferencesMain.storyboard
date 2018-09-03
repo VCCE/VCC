@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="14113" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="vT6-Xq-emv">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Main Preferences View Controller-->
+        <scene sceneID="SSE-7i-lHQ">
+            <objects>
+                <viewController storyboardIdentifier="VCCVMMainPrefsViewController" id="vT6-Xq-emv" userLabel="Main Preferences View Controller" sceneMemberID="viewController">
+                    <view key="view" id="5ye-bi-fbZ">
+                        <rect key="frame" x="0.0" y="0.0" width="450" height="300"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </view>
+                </viewController>
+                <customObject id="P9f-qw-L6v" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="34" y="-127"/>
+        </scene>
+        <!--Audio Preferences View Controller-->
+        <scene sceneID="Jkr-t2-Thd">
+            <objects>
+                <viewController storyboardIdentifier="VCCVMAudioPrefsViewController" id="XGy-fO-fOT" userLabel="Audio Preferences View Controller" sceneMemberID="viewController">
+                    <view key="view" id="LgM-P1-KAj">
+                        <rect key="frame" x="0.0" y="0.0" width="450" height="300"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </view>
+                </viewController>
+                <customObject id="yhf-uv-V2l" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="38" y="249"/>
+        </scene>
+        <!--Cart Preferences View Controller-->
+        <scene sceneID="fDH-Tc-CGA">
+            <objects>
+                <viewController storyboardIdentifier="VCCVMCartPrefsViewController" id="ekO-gp-ayC" userLabel="Cart Preferences View Controller" sceneMemberID="viewController">
+                    <view key="view" id="ad6-BU-Fih">
+                        <rect key="frame" x="0.0" y="0.0" width="450" height="300"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </view>
+                </viewController>
+                <customObject id="Xsc-Ee-qAg" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="36" y="631"/>
+        </scene>
+        <!--CPU Preferences View Controller-->
+        <scene sceneID="dnB-Uk-YIA">
+            <objects>
+                <viewController storyboardIdentifier="VCCVMCPUPrefsViewController" id="D93-W1-CWN" userLabel="CPU Preferences View Controller" sceneMemberID="viewController">
+                    <view key="view" id="HXO-A1-Qcz">
+                        <rect key="frame" x="0.0" y="0.0" width="450" height="300"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </view>
+                </viewController>
+                <customObject id="wa9-aT-UxM" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="512" y="255"/>
+        </scene>
+        <!--Display Preferences View Controller-->
+        <scene sceneID="zoA-Zf-GrM">
+            <objects>
+                <viewController storyboardIdentifier="VCCVMDisplayPrefsViewController" id="KVu-sH-MHt" userLabel="Display Preferences View Controller" sceneMemberID="viewController">
+                    <view key="view" id="LEv-Dg-Sm7">
+                        <rect key="frame" x="0.0" y="0.0" width="450" height="300"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </view>
+                </viewController>
+                <customObject id="WPa-3L-WYE" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="36" y="1001"/>
+        </scene>
+        <!--Cassette Preferences View Controller-->
+        <scene sceneID="dIM-EE-N1B">
+            <objects>
+                <viewController storyboardIdentifier="VCCVMCassettePrefsViewController" id="xi9-5C-59b" userLabel="Cassette Preferences View Controller" sceneMemberID="viewController">
+                    <view key="view" id="OR5-rh-S69">
+                        <rect key="frame" x="0.0" y="0.0" width="450" height="300"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </view>
+                </viewController>
+                <customObject id="5if-jQ-hI4" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="512" y="631"/>
+        </scene>
+        <!--Joystick Preferences View Controller-->
+        <scene sceneID="NYX-ps-wbz">
+            <objects>
+                <viewController storyboardIdentifier="VCCVMJoystickPrefsViewController" id="fNK-xG-OvK" userLabel="Joystick Preferences View Controller" sceneMemberID="viewController">
+                    <view key="view" id="tIB-Y0-5nW">
+                        <rect key="frame" x="0.0" y="0.0" width="450" height="300"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </view>
+                </viewController>
+                <customObject id="Q2A-S4-yPJ" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="36" y="1362"/>
+        </scene>
+        <!--Bitbanger Preferences View Controller-->
+        <scene sceneID="5uI-Hk-8jL">
+            <objects>
+                <viewController storyboardIdentifier="VCCVMBitbangerPrefsViewController" id="60Z-Da-1Rv" userLabel="Bitbanger Preferences View Controller" sceneMemberID="viewController">
+                    <view key="view" id="P2k-ap-zW4">
+                        <rect key="frame" x="0.0" y="0.0" width="450" height="300"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </view>
+                </viewController>
+                <customObject id="s9G-uG-vxc" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="512" y="1001"/>
+        </scene>
+        <!--Keyboard Preferences View Controller-->
+        <scene sceneID="BZy-g9-PRZ">
+            <objects>
+                <viewController storyboardIdentifier="VCCVMKeyboardPrefsViewController" id="dCN-sR-VHB" userLabel="Keyboard Preferences View Controller" sceneMemberID="viewController">
+                    <view key="view" id="Mgp-t6-pBD">
+                        <rect key="frame" x="0.0" y="0.0" width="450" height="300"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </view>
+                </viewController>
+                <customObject id="PNc-YY-oWk" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="512" y="-127"/>
+        </scene>
+    </scenes>
+</document>

@@ -1,3 +1,21 @@
+/*
+ Copyright 2015 by Joseph Forgione
+ This file is part of VCC (Virtual Color Computer).
+ 
+ VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef _file_h_
 #define _file_h_
 
@@ -5,25 +23,52 @@
 
 #include "xTypes.h"
 
-/*****************************************************************************/
+/****************************************************************************/
+/*
+ Coco file types - ROM pak / plug-in / etc
+ 
+ See also: sysGetFileType
+ */
 
-#ifndef _DEBUG
-#	define sysPathTrace(x)
-#endif
+typedef enum filetype_e
+{
+    COCO_FILE_NONE = 0,
+    
+    COCO_PAK_ROM,
+    COCO_PAK_PLUGIN,
+    COCO_CPU_PLUGIN,
 
-#define MAX_PATH_LENGTH		256
+    COCO_CASSETTE_CAS,
+    COCO_CASSETTE_WAVE,
+    
+    COCO_ADDONMOD,
+    
+    COCO_VDISK_FLOPPY,
+    
+    IMAGE,
+    //VIDEO,
+    
+    //COCO_PERIPHERAL,
+    //COCO_VDISK_VHD_XXX,
+    //COCO_VDISK_ISO
+} filetype_e;
 
-/*****************************************************************************/
+typedef struct pair_t pair_t;
+struct pair_t
+{
+    size_t           offset;
+    unsigned char    value;
+};
 
-typedef struct filehandle_t * pfile_t;
-
-#define FILE_SEEK_BEGIN		0
-#define FILE_SEEK_CURRENT	1
-#define FILE_SEEK_END		2
-
-#define FILE_READ			1
-#define FILE_WRITE			2
-#define FILE_READWRITE		3
+typedef struct filetype_t filetype_t;
+struct filetype_t
+{
+    filetype_e      type;
+    const char *    pExt;
+	const char *    pDesc;
+	pair_t          sig[4];
+    
+} ;
 
 /*****************************************************************************/
 
@@ -31,27 +76,22 @@ typedef struct filehandle_t * pfile_t;
 extern "C"
 {
 #endif
-		
-	ppathname_t sysGetPathnameFromUser(void * pFileTypes, ppathname_t pStartPath);
-	result_t	sysGetPathString(const ppathname_t pPathname, char * pFilename, size_t szBufferSize);
-	ppathname_t	sysGetPathCopy(ppathname_t pPathname);
-	void		sysPathDestroy(ppathname_t pPathname);
-	int_t		sysGetFileType(ppathname_t pPathname);
-#ifndef sysPathTrace
-	void		sysPathTrace(ppathname_t pPathname);
-#endif
-	result_t	sysPathGetFilename(ppathname_t pPathname, char * pDst, size_t szDst);
 	
-	result_t	fileLoad(ppathname_t pPathname, void ** ppBuffer, size_t * pszBufferSize);
-	pfile_t		fileOpen(ppathname_t pPathname, int_t iMode);
-	result_t	fileRead(pfile_t pFile, void * pBuffer, size_t szReadBytes, size_t * pszBytesRead);
-	result_t	fileWrite(pfile_t pFile, void * pBuffer, size_t szWriteBytes, size_t * pszBytesWritten);
-	result_t	fileSeek(pfile_t pFile, int_t iOffset, int_t iRef);
-	result_t	filePos(pfile_t pFile, size_t * pszPos);
-	result_t	fileClose(pfile_t pFile);
-	
-	char *		abs2rel(const char * path, const char * base, char * result, const size_t size);
-	char *		rel2abs(const char * path, const char * base, char * result, const size_t size);
+    extern filetype_t g_filetypelist[];
+    
+	filetype_e 		sysGetFileType(const char * path);
+    const char *    sysGetFileTypeExtension(filetype_e fileType);
+
+    result_t        fileGetExtension(const char * path, char * pDst, size_t szDst);
+    result_t        fileGetFilename(const char * path, char * pDst, size_t szDst);
+    result_t        fileGetFilenameNoExtension(const char * path, char * pDst, size_t szDst);
+
+    result_t        fileTouch(const char * path);
+    result_t        fileLoad(const char * path, void ** ppBuffer, size_t * pszBufferSize);
+    
+	/** Open a dialog to select a file */
+	char *          sysGetPathnameFromUser(filetype_e * fileTypes, const char * pStartPath);
+	char *          sysGetSavePathnameFromUser(filetype_e * fileTypes, const char * pStartPath);
 
 #ifdef __cplusplus
 }

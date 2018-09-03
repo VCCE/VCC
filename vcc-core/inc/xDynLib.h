@@ -16,9 +16,9 @@ extern "C"
 {
 #endif
 	
-	VCCCORE_API result_t	VCCCORE_CALL xDynLibLoad(ppathname_t pPathname, pxdynlib_t * ppxdynlib);
-	VCCCORE_API result_t	VCCCORE_CALL xDynLibUnload(pxdynlib_t * ppxdynlib);
-	VCCCORE_API result_t	VCCCORE_CALL xDynLibGetSymbolAddress(pxdynlib_t pxdynlib, const char_t * pcszSymbol, void ** ppvSymbol);
+	XAPI result_t	XCALL xDynLibLoad(const char * pPathname, pxdynlib_t * ppxdynlib);
+	XAPI result_t	XCALL xDynLibUnload(pxdynlib_t * ppxdynlib);
+	XAPI result_t	XCALL xDynLibGetSymbolAddress(pxdynlib_t pxdynlib, const char * pcszSymbol, void ** ppvSymbol);
 	
 #ifdef __cplusplus
 }

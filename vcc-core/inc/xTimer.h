@@ -1,3 +1,21 @@
+/*
+ Copyright 2015 by Joseph Forgione
+ This file is part of VCC (Virtual Color Computer).
+ 
+ VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef _xTimer_h_
 #define _xTimer_h_
 
@@ -7,9 +25,7 @@
 
 /*****************************************************************************/
 
-typedef u64_t	xtime_t;
-
-typedef struct xtimer_t * pxtimer_t;
+typedef uint64_t	xtime_t;
 
 /*****************************************************************************/
 
@@ -18,8 +34,8 @@ extern "C"
 {
 #endif
 	
-	XAPI xtime_t		XCALL xTimeGetMilliseconds();
-	XAPI xtime_t		XCALL xTimeGetNanoseconds();
+    XAPI xtime_t		XCALL xTimeGetMilliseconds(void);
+    XAPI xtime_t		XCALL xTimeGetNanoseconds(void);
 
 #ifdef __cplusplus
 }

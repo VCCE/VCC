@@ -1,0 +1,656 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		130B25C4213D562C002EFFB0 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 130B25C3213D562C002EFFB0 /* OpenAL.framework */; };
+		130B25C6213D59E3002EFFB0 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 130B25C5213D59E3002EFFB0 /* SDL2.framework */; };
+		136C7143207EDB8E0066C4C7 /* OMenu.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C712F207EDB8C0066C4C7 /* OMenu.h */; };
+		136C7144207EDB8E0066C4C7 /* _keyboard.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C7130207EDB8C0066C4C7 /* _keyboard.c */; };
+		136C7146207EDB8E0066C4C7 /* OSystem.m in Sources */ = {isa = PBXBuildFile; fileRef = 136C7132207EDB8C0066C4C7 /* OSystem.m */; };
+		136C7147207EDB8E0066C4C7 /* OConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 136C7133207EDB8D0066C4C7 /* OConfig.m */; };
+		136C7148207EDB8E0066C4C7 /* OSystem.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7134207EDB8D0066C4C7 /* OSystem.h */; };
+		136C714B207EDB8E0066C4C7 /* _xDebug.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C7137207EDB8D0066C4C7 /* _xDebug.c */; };
+		136C714D207EDB8E0066C4C7 /* _main.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C7139207EDB8D0066C4C7 /* _main.c */; };
+		136C714E207EDB8E0066C4C7 /* _audio.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C713A207EDB8D0066C4C7 /* _audio.c */; };
+		136C714F207EDB8E0066C4C7 /* OFile.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C713B207EDB8D0066C4C7 /* OFile.h */; };
+		136C7150207EDB8E0066C4C7 /* _xDynLib.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C713C207EDB8D0066C4C7 /* _xDynLib.c */; };
+		136C7152207EDB8E0066C4C7 /* _xTimer.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C713E207EDB8D0066C4C7 /* _xTimer.c */; };
+		136C7153207EDB8E0066C4C7 /* OConfig.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C713F207EDB8D0066C4C7 /* OConfig.h */; };
+		136C7154207EDB8E0066C4C7 /* OMenu.m in Sources */ = {isa = PBXBuildFile; fileRef = 136C7140207EDB8D0066C4C7 /* OMenu.m */; };
+		136C7156207EDB8E0066C4C7 /* OFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 136C7142207EDB8D0066C4C7 /* OFile.m */; };
+		136C7179207EDBC30066C4C7 /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7157207EDBC20066C4C7 /* config.h */; };
+		136C717A207EDBC30066C4C7 /* machine.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7158207EDBC20066C4C7 /* machine.h */; };
+		136C717B207EDBC30066C4C7 /* tcc1014.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7159207EDBC20066C4C7 /* tcc1014.h */; };
+		136C717C207EDBC30066C4C7 /* event.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C715A207EDBC20066C4C7 /* event.h */; };
+		136C717E207EDBC30066C4C7 /* cpuplugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C715C207EDBC20066C4C7 /* cpuplugin.h */; };
+		136C717F207EDBC30066C4C7 /* emuDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C715D207EDBC20066C4C7 /* emuDevice.h */; };
+		136C7180207EDBC30066C4C7 /* cassette.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C715E207EDBC20066C4C7 /* cassette.h */; };
+		136C7181207EDBC30066C4C7 /* menu.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C715F207EDBC20066C4C7 /* menu.h */; };
+		136C7182207EDBC30066C4C7 /* screen.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7160207EDBC20066C4C7 /* screen.h */; };
+		136C7183207EDBC30066C4C7 /* throttle.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7161207EDBC20066C4C7 /* throttle.h */; };
+		136C7184207EDBC30066C4C7 /* xTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7162207EDBC20066C4C7 /* xTypes.h */; };
+		136C7185207EDBC30066C4C7 /* slinklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7163207EDBC20066C4C7 /* slinklist.h */; };
+		136C7186207EDBC30066C4C7 /* cpu.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7164207EDBC20066C4C7 /* cpu.h */; };
+		136C7187207EDBC30066C4C7 /* addons.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7165207EDBC20066C4C7 /* addons.h */; };
+		136C7188207EDBC30066C4C7 /* Vcc.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7166207EDBC20066C4C7 /* Vcc.h */; };
+		136C7189207EDBC30066C4C7 /* keyboard.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7167207EDBC20066C4C7 /* keyboard.h */; };
+		136C718A207EDBC30066C4C7 /* audio.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7168207EDBC30066C4C7 /* audio.h */; };
+		136C718B207EDBC30066C4C7 /* joystick.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7169207EDBC30066C4C7 /* joystick.h */; };
+		136C718C207EDBC30066C4C7 /* xDebug.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C716A207EDBC30066C4C7 /* xDebug.h */; };
+		136C718E207EDBC30066C4C7 /* coco3.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C716C207EDBC30066C4C7 /* coco3.h */; };
+		136C718F207EDBC30066C4C7 /* rom.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C716D207EDBC30066C4C7 /* rom.h */; };
+		136C7190207EDBC30066C4C7 /* tcc1014graphics.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C716E207EDBC30066C4C7 /* tcc1014graphics.h */; };
+		136C7191207EDBC30066C4C7 /* mc6821.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C716F207EDBC30066C4C7 /* mc6821.h */; };
+		136C7192207EDBC30066C4C7 /* file.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7170207EDBC30066C4C7 /* file.h */; };
+		136C7193207EDBC30066C4C7 /* xTimer.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7171207EDBC30066C4C7 /* xTimer.h */; };
+		136C7194207EDBC30066C4C7 /* xDynLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7172207EDBC30066C4C7 /* xDynLib.h */; };
+		136C7195207EDBC30066C4C7 /* xSystem.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7173207EDBC30066C4C7 /* xSystem.h */; };
+		136C7196207EDBC30066C4C7 /* tcc1014mmu.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7174207EDBC30066C4C7 /* tcc1014mmu.h */; };
+		136C7198207EDBC30066C4C7 /* pakinterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7176207EDBC30066C4C7 /* pakinterface.h */; };
+		136C7199207EDBC30066C4C7 /* peripherals.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7177207EDBC30066C4C7 /* peripherals.h */; };
+		136C719A207EDBC30066C4C7 /* tcc1014registers.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C7178207EDBC30066C4C7 /* tcc1014registers.h */; };
+		136C71BB207EDBDC0066C4C7 /* cpuplugin.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C719B207EDBD90066C4C7 /* cpuplugin.c */; };
+		136C71BF207EDBDC0066C4C7 /* cassette.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C719F207EDBDA0066C4C7 /* cassette.c */; };
+		136C71C1207EDBDC0066C4C7 /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71A1207EDBDA0066C4C7 /* cpu.c */; };
+		136C71C2207EDBDC0066C4C7 /* mc6821.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71A2207EDBDA0066C4C7 /* mc6821.c */; };
+		136C71C3207EDBDC0066C4C7 /* tcc1014.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71A3207EDBDA0066C4C7 /* tcc1014.c */; };
+		136C71C4207EDBDC0066C4C7 /* coco3.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71A4207EDBDA0066C4C7 /* coco3.c */; };
+		136C71C5207EDBDC0066C4C7 /* audio.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71A5207EDBDA0066C4C7 /* audio.c */; };
+		136C71C6207EDBDC0066C4C7 /* keyboard.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71A6207EDBDB0066C4C7 /* keyboard.c */; };
+		136C71C7207EDBDC0066C4C7 /* tcc1014graphics.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71A7207EDBDB0066C4C7 /* tcc1014graphics.c */; };
+		136C71C8207EDBDC0066C4C7 /* _xDynLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C71A8207EDBDB0066C4C7 /* _xDynLib.h */; };
+		136C71C9207EDBDC0066C4C7 /* screen.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71A9207EDBDB0066C4C7 /* screen.c */; };
+		136C71CA207EDBDC0066C4C7 /* cc3font.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71AA207EDBDB0066C4C7 /* cc3font.c */; };
+		136C71CB207EDBDC0066C4C7 /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71AB207EDBDB0066C4C7 /* file.c */; };
+		136C71CC207EDBDC0066C4C7 /* cc2font.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71AC207EDBDB0066C4C7 /* cc2font.c */; };
+		136C71CD207EDBDC0066C4C7 /* tcc1014mmu.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71AD207EDBDB0066C4C7 /* tcc1014mmu.c */; };
+		136C71CE207EDBDC0066C4C7 /* emuDevice.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71AE207EDBDB0066C4C7 /* emuDevice.c */; };
+		136C71CF207EDBDC0066C4C7 /* tcc1014registers.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71AF207EDBDB0066C4C7 /* tcc1014registers.c */; };
+		136C71D0207EDBDC0066C4C7 /* slinklist.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71B0207EDBDB0066C4C7 /* slinklist.c */; };
+		136C71D1207EDBDC0066C4C7 /* joystick.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71B1207EDBDB0066C4C7 /* joystick.c */; };
+		136C71D2207EDBDC0066C4C7 /* _audio.h in Headers */ = {isa = PBXBuildFile; fileRef = 136C71B2207EDBDB0066C4C7 /* _audio.h */; };
+		136C71D3207EDBDC0066C4C7 /* peripherals.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71B3207EDBDB0066C4C7 /* peripherals.c */; };
+		136C71D4207EDBDC0066C4C7 /* throttle.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71B4207EDBDB0066C4C7 /* throttle.c */; };
+		136C71D6207EDBDC0066C4C7 /* Vcc.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71B6207EDBDC0066C4C7 /* Vcc.c */; };
+		136C71D7207EDBDC0066C4C7 /* pakinterface.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71B7207EDBDC0066C4C7 /* pakinterface.c */; };
+		136C71D8207EDBDC0066C4C7 /* addons.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71B8207EDBDC0066C4C7 /* addons.c */; };
+		136C71D9207EDBDC0066C4C7 /* rom.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71B9207EDBDC0066C4C7 /* rom.c */; };
+		136C71DA207EDBDC0066C4C7 /* xDynLib.c in Sources */ = {isa = PBXBuildFile; fileRef = 136C71BA207EDBDC0066C4C7 /* xDynLib.c */; };
+		13AEFB6E1BBDADE400BE89A2 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 13AEFB6D1BBDADE400BE89A2 /* CoreServices.framework */; };
+		13AEFB701BBDAE7000BE89A2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 13AEFB6F1BBDAE7000BE89A2 /* Foundation.framework */; };
+		13E95BFF20914A0B0094C1FA /* config.c in Sources */ = {isa = PBXBuildFile; fileRef = 13E95BFE20914A0A0094C1FA /* config.c */; };
+		13E95C032091E54F0094C1FA /* path.c in Sources */ = {isa = PBXBuildFile; fileRef = 13E95C012091E54F0094C1FA /* path.c */; };
+		13E95C052091E5880094C1FA /* path.h in Headers */ = {isa = PBXBuildFile; fileRef = 13E95C042091E5880094C1FA /* path.h */; };
+		13E95C092092099A0094C1FA /* xstring.c in Sources */ = {isa = PBXBuildFile; fileRef = 13E95C072092099A0094C1FA /* xstring.c */; };
+		13E95C0B209209E60094C1FA /* xstring.h in Headers */ = {isa = PBXBuildFile; fileRef = 13E95C0A209209E60094C1FA /* xstring.h */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		130B25C3213D562C002EFFB0 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
+		130B25C5213D59E3002EFFB0 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = ../../../../lib/osx/Frameworks/SDL2.framework; sourceTree = "<group>"; };
+		136C712F207EDB8C0066C4C7 /* OMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OMenu.h; path = ../OMenu.h; sourceTree = "<group>"; };
+		136C7130207EDB8C0066C4C7 /* _keyboard.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = _keyboard.c; path = ../_keyboard.c; sourceTree = "<group>"; };
+		136C7132207EDB8C0066C4C7 /* OSystem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OSystem.m; path = ../OSystem.m; sourceTree = "<group>"; };
+		136C7133207EDB8D0066C4C7 /* OConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OConfig.m; path = ../OConfig.m; sourceTree = "<group>"; };
+		136C7134207EDB8D0066C4C7 /* OSystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OSystem.h; path = ../OSystem.h; sourceTree = "<group>"; };
+		136C7137207EDB8D0066C4C7 /* _xDebug.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = _xDebug.c; path = ../_xDebug.c; sourceTree = "<group>"; };
+		136C7139207EDB8D0066C4C7 /* _main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = _main.c; path = ../_main.c; sourceTree = "<group>"; };
+		136C713A207EDB8D0066C4C7 /* _audio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = _audio.c; path = ../_audio.c; sourceTree = "<group>"; };
+		136C713B207EDB8D0066C4C7 /* OFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OFile.h; path = ../OFile.h; sourceTree = "<group>"; };
+		136C713C207EDB8D0066C4C7 /* _xDynLib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = _xDynLib.c; path = ../_xDynLib.c; sourceTree = "<group>"; };
+		136C713E207EDB8D0066C4C7 /* _xTimer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = _xTimer.c; path = ../_xTimer.c; sourceTree = "<group>"; };
+		136C713F207EDB8D0066C4C7 /* OConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OConfig.h; path = ../OConfig.h; sourceTree = "<group>"; };
+		136C7140207EDB8D0066C4C7 /* OMenu.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OMenu.m; path = ../OMenu.m; sourceTree = "<group>"; };
+		136C7142207EDB8D0066C4C7 /* OFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OFile.m; path = ../OFile.m; sourceTree = "<group>"; };
+		136C7157207EDBC20066C4C7 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../../../inc/config.h; sourceTree = "<group>"; };
+		136C7158207EDBC20066C4C7 /* machine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = machine.h; path = ../../../inc/machine.h; sourceTree = "<group>"; };
+		136C7159207EDBC20066C4C7 /* tcc1014.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tcc1014.h; path = ../../../inc/tcc1014.h; sourceTree = "<group>"; };
+		136C715A207EDBC20066C4C7 /* event.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = event.h; path = ../../../inc/event.h; sourceTree = "<group>"; };
+		136C715C207EDBC20066C4C7 /* cpuplugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpuplugin.h; path = ../../../inc/cpuplugin.h; sourceTree = "<group>"; };
+		136C715D207EDBC20066C4C7 /* emuDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = emuDevice.h; path = ../../../inc/emuDevice.h; sourceTree = "<group>"; };
+		136C715E207EDBC20066C4C7 /* cassette.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cassette.h; path = ../../../inc/cassette.h; sourceTree = "<group>"; };
+		136C715F207EDBC20066C4C7 /* menu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = menu.h; path = ../../../inc/menu.h; sourceTree = "<group>"; };
+		136C7160207EDBC20066C4C7 /* screen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = screen.h; path = ../../../inc/screen.h; sourceTree = "<group>"; };
+		136C7161207EDBC20066C4C7 /* throttle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = throttle.h; path = ../../../inc/throttle.h; sourceTree = "<group>"; };
+		136C7162207EDBC20066C4C7 /* xTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xTypes.h; path = ../../../inc/xTypes.h; sourceTree = "<group>"; };
+		136C7163207EDBC20066C4C7 /* slinklist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = slinklist.h; path = ../../../inc/slinklist.h; sourceTree = "<group>"; };
+		136C7164207EDBC20066C4C7 /* cpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpu.h; path = ../../../inc/cpu.h; sourceTree = "<group>"; };
+		136C7165207EDBC20066C4C7 /* addons.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = addons.h; path = ../../../inc/addons.h; sourceTree = "<group>"; };
+		136C7166207EDBC20066C4C7 /* Vcc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Vcc.h; path = ../../../inc/Vcc.h; sourceTree = "<group>"; };
+		136C7167207EDBC20066C4C7 /* keyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = keyboard.h; path = ../../../inc/keyboard.h; sourceTree = "<group>"; };
+		136C7168207EDBC30066C4C7 /* audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audio.h; path = ../../../inc/audio.h; sourceTree = "<group>"; };
+		136C7169207EDBC30066C4C7 /* joystick.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = joystick.h; path = ../../../inc/joystick.h; sourceTree = "<group>"; };
+		136C716A207EDBC30066C4C7 /* xDebug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xDebug.h; path = ../../../inc/xDebug.h; sourceTree = "<group>"; };
+		136C716C207EDBC30066C4C7 /* coco3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = coco3.h; path = ../../../inc/coco3.h; sourceTree = "<group>"; };
+		136C716D207EDBC30066C4C7 /* rom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rom.h; path = ../../../inc/rom.h; sourceTree = "<group>"; };
+		136C716E207EDBC30066C4C7 /* tcc1014graphics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tcc1014graphics.h; path = ../../../inc/tcc1014graphics.h; sourceTree = "<group>"; };
+		136C716F207EDBC30066C4C7 /* mc6821.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mc6821.h; path = ../../../inc/mc6821.h; sourceTree = "<group>"; };
+		136C7170207EDBC30066C4C7 /* file.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = file.h; path = ../../../inc/file.h; sourceTree = "<group>"; };
+		136C7171207EDBC30066C4C7 /* xTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xTimer.h; path = ../../../inc/xTimer.h; sourceTree = "<group>"; };
+		136C7172207EDBC30066C4C7 /* xDynLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xDynLib.h; path = ../../../inc/xDynLib.h; sourceTree = "<group>"; };
+		136C7173207EDBC30066C4C7 /* xSystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xSystem.h; path = ../../../inc/xSystem.h; sourceTree = "<group>"; };
+		136C7174207EDBC30066C4C7 /* tcc1014mmu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tcc1014mmu.h; path = ../../../inc/tcc1014mmu.h; sourceTree = "<group>"; };
+		136C7176207EDBC30066C4C7 /* pakinterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pakinterface.h; path = ../../../inc/pakinterface.h; sourceTree = "<group>"; };
+		136C7177207EDBC30066C4C7 /* peripherals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = peripherals.h; path = ../../../inc/peripherals.h; sourceTree = "<group>"; };
+		136C7178207EDBC30066C4C7 /* tcc1014registers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tcc1014registers.h; path = ../../../inc/tcc1014registers.h; sourceTree = "<group>"; };
+		136C719B207EDBD90066C4C7 /* cpuplugin.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpuplugin.c; path = ../../../src/cpuplugin.c; sourceTree = "<group>"; };
+		136C719F207EDBDA0066C4C7 /* cassette.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cassette.c; path = ../../../src/cassette.c; sourceTree = "<group>"; };
+		136C71A1207EDBDA0066C4C7 /* cpu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpu.c; path = ../../../src/cpu.c; sourceTree = "<group>"; };
+		136C71A2207EDBDA0066C4C7 /* mc6821.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mc6821.c; path = ../../../src/mc6821.c; sourceTree = "<group>"; };
+		136C71A3207EDBDA0066C4C7 /* tcc1014.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tcc1014.c; path = ../../../src/tcc1014.c; sourceTree = "<group>"; };
+		136C71A4207EDBDA0066C4C7 /* coco3.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = coco3.c; path = ../../../src/coco3.c; sourceTree = "<group>"; };
+		136C71A5207EDBDA0066C4C7 /* audio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = audio.c; path = ../../../src/audio.c; sourceTree = "<group>"; };
+		136C71A6207EDBDB0066C4C7 /* keyboard.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = keyboard.c; path = ../../../src/keyboard.c; sourceTree = "<group>"; };
+		136C71A7207EDBDB0066C4C7 /* tcc1014graphics.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tcc1014graphics.c; path = ../../../src/tcc1014graphics.c; sourceTree = "<group>"; };
+		136C71A8207EDBDB0066C4C7 /* _xDynLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = _xDynLib.h; path = ../../../src/_xDynLib.h; sourceTree = "<group>"; };
+		136C71A9207EDBDB0066C4C7 /* screen.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = screen.c; path = ../../../src/screen.c; sourceTree = "<group>"; };
+		136C71AA207EDBDB0066C4C7 /* cc3font.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cc3font.c; path = ../../../src/cc3font.c; sourceTree = "<group>"; };
+		136C71AB207EDBDB0066C4C7 /* file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = file.c; path = ../../../src/file.c; sourceTree = "<group>"; };
+		136C71AC207EDBDB0066C4C7 /* cc2font.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cc2font.c; path = ../../../src/cc2font.c; sourceTree = "<group>"; };
+		136C71AD207EDBDB0066C4C7 /* tcc1014mmu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tcc1014mmu.c; path = ../../../src/tcc1014mmu.c; sourceTree = "<group>"; };
+		136C71AE207EDBDB0066C4C7 /* emuDevice.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = emuDevice.c; path = ../../../src/emuDevice.c; sourceTree = "<group>"; };
+		136C71AF207EDBDB0066C4C7 /* tcc1014registers.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tcc1014registers.c; path = ../../../src/tcc1014registers.c; sourceTree = "<group>"; };
+		136C71B0207EDBDB0066C4C7 /* slinklist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = slinklist.c; path = ../../../src/slinklist.c; sourceTree = "<group>"; };
+		136C71B1207EDBDB0066C4C7 /* joystick.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = joystick.c; path = ../../../src/joystick.c; sourceTree = "<group>"; };
+		136C71B2207EDBDB0066C4C7 /* _audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = _audio.h; path = ../../../src/_audio.h; sourceTree = "<group>"; };
+		136C71B3207EDBDB0066C4C7 /* peripherals.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = peripherals.c; path = ../../../src/peripherals.c; sourceTree = "<group>"; };
+		136C71B4207EDBDB0066C4C7 /* throttle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = throttle.c; path = ../../../src/throttle.c; sourceTree = "<group>"; };
+		136C71B6207EDBDC0066C4C7 /* Vcc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Vcc.c; path = ../../../src/Vcc.c; sourceTree = "<group>"; };
+		136C71B7207EDBDC0066C4C7 /* pakinterface.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pakinterface.c; path = ../../../src/pakinterface.c; sourceTree = "<group>"; };
+		136C71B8207EDBDC0066C4C7 /* addons.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = addons.c; path = ../../../src/addons.c; sourceTree = "<group>"; };
+		136C71B9207EDBDC0066C4C7 /* rom.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = rom.c; path = ../../../src/rom.c; sourceTree = "<group>"; };
+		136C71BA207EDBDC0066C4C7 /* xDynLib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = xDynLib.c; path = ../../../src/xDynLib.c; sourceTree = "<group>"; };
+		139C2DD321343EC10052DC00 /* coco3.rom */ = {isa = PBXFileReference; lastKnownFileType = file; name = coco3.rom; path = ../../../res/rom/coco3.rom; sourceTree = "<group>"; };
+		13AEFB6D1BBDADE400BE89A2 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = System/Library/Frameworks/CoreServices.framework; sourceTree = SDKROOT; };
+		13AEFB6F1BBDAE7000BE89A2 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		13AEFB711BBDAE9000BE89A2 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		13D8C5DC1BAF056700D1EAD8 /* libvcc-core.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = "libvcc-core.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
+		13E95BFD2091429F0094C1FA /* _config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = _config.h; path = ../../../src/_config.h; sourceTree = "<group>"; };
+		13E95BFE20914A0A0094C1FA /* config.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = config.c; path = ../../../src/config.c; sourceTree = "<group>"; };
+		13E95C012091E54F0094C1FA /* path.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = path.c; path = ../../../src/path.c; sourceTree = "<group>"; };
+		13E95C042091E5880094C1FA /* path.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = path.h; path = ../../../inc/path.h; sourceTree = "<group>"; };
+		13E95C072092099A0094C1FA /* xstring.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = xstring.c; path = ../../../src/xstring.c; sourceTree = "<group>"; };
+		13E95C0A209209E60094C1FA /* xstring.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xstring.h; path = ../../../inc/xstring.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		13D8C5D91BAF056700D1EAD8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				130B25C6213D59E3002EFFB0 /* SDL2.framework in Frameworks */,
+				130B25C4213D562C002EFFB0 /* OpenAL.framework in Frameworks */,
+				13AEFB701BBDAE7000BE89A2 /* Foundation.framework in Frameworks */,
+				13AEFB6E1BBDADE400BE89A2 /* CoreServices.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		136C712C207EDB5C0066C4C7 /* inc */ = {
+			isa = PBXGroup;
+			children = (
+				136C7165207EDBC20066C4C7 /* addons.h */,
+				136C7168207EDBC30066C4C7 /* audio.h */,
+				136C715E207EDBC20066C4C7 /* cassette.h */,
+				136C716C207EDBC30066C4C7 /* coco3.h */,
+				136C7157207EDBC20066C4C7 /* config.h */,
+				136C7164207EDBC20066C4C7 /* cpu.h */,
+				136C715C207EDBC20066C4C7 /* cpuplugin.h */,
+				136C715D207EDBC20066C4C7 /* emuDevice.h */,
+				136C715A207EDBC20066C4C7 /* event.h */,
+				136C7170207EDBC30066C4C7 /* file.h */,
+				136C7169207EDBC30066C4C7 /* joystick.h */,
+				136C7167207EDBC20066C4C7 /* keyboard.h */,
+				136C7158207EDBC20066C4C7 /* machine.h */,
+				136C716F207EDBC30066C4C7 /* mc6821.h */,
+				136C715F207EDBC20066C4C7 /* menu.h */,
+				136C7176207EDBC30066C4C7 /* pakinterface.h */,
+				13E95C042091E5880094C1FA /* path.h */,
+				136C7177207EDBC30066C4C7 /* peripherals.h */,
+				136C716D207EDBC30066C4C7 /* rom.h */,
+				136C7160207EDBC20066C4C7 /* screen.h */,
+				136C7163207EDBC20066C4C7 /* slinklist.h */,
+				136C7159207EDBC20066C4C7 /* tcc1014.h */,
+				136C716E207EDBC30066C4C7 /* tcc1014graphics.h */,
+				136C7174207EDBC30066C4C7 /* tcc1014mmu.h */,
+				136C7178207EDBC30066C4C7 /* tcc1014registers.h */,
+				136C7161207EDBC20066C4C7 /* throttle.h */,
+				136C7166207EDBC20066C4C7 /* Vcc.h */,
+				136C716A207EDBC30066C4C7 /* xDebug.h */,
+				136C7172207EDBC30066C4C7 /* xDynLib.h */,
+				13E95C0A209209E60094C1FA /* xstring.h */,
+				136C7173207EDBC30066C4C7 /* xSystem.h */,
+				136C7171207EDBC30066C4C7 /* xTimer.h */,
+				136C7162207EDBC20066C4C7 /* xTypes.h */,
+			);
+			name = inc;
+			sourceTree = "<group>";
+		};
+		136C712D207EDB660066C4C7 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				136C712E207EDB740066C4C7 /* osx */,
+				136C71B2207EDBDB0066C4C7 /* _audio.h */,
+				13E95BFD2091429F0094C1FA /* _config.h */,
+				136C71A8207EDBDB0066C4C7 /* _xDynLib.h */,
+				136C71B8207EDBDC0066C4C7 /* addons.c */,
+				136C71A5207EDBDA0066C4C7 /* audio.c */,
+				136C719F207EDBDA0066C4C7 /* cassette.c */,
+				136C71AC207EDBDB0066C4C7 /* cc2font.c */,
+				136C71AA207EDBDB0066C4C7 /* cc3font.c */,
+				136C71A4207EDBDA0066C4C7 /* coco3.c */,
+				13E95BFE20914A0A0094C1FA /* config.c */,
+				136C71A1207EDBDA0066C4C7 /* cpu.c */,
+				136C719B207EDBD90066C4C7 /* cpuplugin.c */,
+				136C71AE207EDBDB0066C4C7 /* emuDevice.c */,
+				136C71AB207EDBDB0066C4C7 /* file.c */,
+				136C71B1207EDBDB0066C4C7 /* joystick.c */,
+				136C71A6207EDBDB0066C4C7 /* keyboard.c */,
+				136C71A2207EDBDA0066C4C7 /* mc6821.c */,
+				136C71B7207EDBDC0066C4C7 /* pakinterface.c */,
+				13E95C012091E54F0094C1FA /* path.c */,
+				136C71B3207EDBDB0066C4C7 /* peripherals.c */,
+				136C71B9207EDBDC0066C4C7 /* rom.c */,
+				136C71A9207EDBDB0066C4C7 /* screen.c */,
+				136C71B0207EDBDB0066C4C7 /* slinklist.c */,
+				136C71A3207EDBDA0066C4C7 /* tcc1014.c */,
+				136C71A7207EDBDB0066C4C7 /* tcc1014graphics.c */,
+				136C71AD207EDBDB0066C4C7 /* tcc1014mmu.c */,
+				136C71AF207EDBDB0066C4C7 /* tcc1014registers.c */,
+				136C71B4207EDBDB0066C4C7 /* throttle.c */,
+				136C71B6207EDBDC0066C4C7 /* Vcc.c */,
+				136C71BA207EDBDC0066C4C7 /* xDynLib.c */,
+				13E95C072092099A0094C1FA /* xstring.c */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
+		136C712E207EDB740066C4C7 /* osx */ = {
+			isa = PBXGroup;
+			children = (
+				136C713A207EDB8D0066C4C7 /* _audio.c */,
+				136C7130207EDB8C0066C4C7 /* _keyboard.c */,
+				136C7139207EDB8D0066C4C7 /* _main.c */,
+				136C7137207EDB8D0066C4C7 /* _xDebug.c */,
+				136C713C207EDB8D0066C4C7 /* _xDynLib.c */,
+				136C713E207EDB8D0066C4C7 /* _xTimer.c */,
+				136C713F207EDB8D0066C4C7 /* OConfig.h */,
+				136C7133207EDB8D0066C4C7 /* OConfig.m */,
+				136C713B207EDB8D0066C4C7 /* OFile.h */,
+				136C7142207EDB8D0066C4C7 /* OFile.m */,
+				136C712F207EDB8C0066C4C7 /* OMenu.h */,
+				136C7140207EDB8D0066C4C7 /* OMenu.m */,
+				136C7134207EDB8D0066C4C7 /* OSystem.h */,
+				136C7132207EDB8C0066C4C7 /* OSystem.m */,
+			);
+			name = osx;
+			sourceTree = "<group>";
+		};
+		13956C141BAF4E7400046E5F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				130B25C5213D59E3002EFFB0 /* SDL2.framework */,
+				130B25C3213D562C002EFFB0 /* OpenAL.framework */,
+				13AEFB711BBDAE9000BE89A2 /* Cocoa.framework */,
+				13AEFB6F1BBDAE7000BE89A2 /* Foundation.framework */,
+				13AEFB6D1BBDADE400BE89A2 /* CoreServices.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		139C2DD121343E970052DC00 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				139C2DD221343EA00052DC00 /* rom */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		139C2DD221343EA00052DC00 /* rom */ = {
+			isa = PBXGroup;
+			children = (
+				139C2DD321343EC10052DC00 /* coco3.rom */,
+			);
+			name = rom;
+			sourceTree = "<group>";
+		};
+		13D8C5D31BAF056700D1EAD8 = {
+			isa = PBXGroup;
+			children = (
+				136C712C207EDB5C0066C4C7 /* inc */,
+				136C712D207EDB660066C4C7 /* src */,
+				139C2DD121343E970052DC00 /* Resources */,
+				13D8C5DD1BAF056700D1EAD8 /* Products */,
+				13956C141BAF4E7400046E5F /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		13D8C5DD1BAF056700D1EAD8 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				13D8C5DC1BAF056700D1EAD8 /* libvcc-core.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		13D8C5DA1BAF056700D1EAD8 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				136C718E207EDBC30066C4C7 /* coco3.h in Headers */,
+				136C7153207EDB8E0066C4C7 /* OConfig.h in Headers */,
+				136C717F207EDBC30066C4C7 /* emuDevice.h in Headers */,
+				136C7182207EDBC30066C4C7 /* screen.h in Headers */,
+				136C717E207EDBC30066C4C7 /* cpuplugin.h in Headers */,
+				136C7189207EDBC30066C4C7 /* keyboard.h in Headers */,
+				136C7186207EDBC30066C4C7 /* cpu.h in Headers */,
+				136C717A207EDBC30066C4C7 /* machine.h in Headers */,
+				136C718B207EDBC30066C4C7 /* joystick.h in Headers */,
+				136C7199207EDBC30066C4C7 /* peripherals.h in Headers */,
+				136C7196207EDBC30066C4C7 /* tcc1014mmu.h in Headers */,
+				136C718A207EDBC30066C4C7 /* audio.h in Headers */,
+				136C714F207EDB8E0066C4C7 /* OFile.h in Headers */,
+				136C7194207EDBC30066C4C7 /* xDynLib.h in Headers */,
+				136C7183207EDBC30066C4C7 /* throttle.h in Headers */,
+				136C7191207EDBC30066C4C7 /* mc6821.h in Headers */,
+				136C7184207EDBC30066C4C7 /* xTypes.h in Headers */,
+				136C7195207EDBC30066C4C7 /* xSystem.h in Headers */,
+				136C7185207EDBC30066C4C7 /* slinklist.h in Headers */,
+				13E95C0B209209E60094C1FA /* xstring.h in Headers */,
+				136C7187207EDBC30066C4C7 /* addons.h in Headers */,
+				136C7148207EDB8E0066C4C7 /* OSystem.h in Headers */,
+				136C7181207EDBC30066C4C7 /* menu.h in Headers */,
+				136C717C207EDBC30066C4C7 /* event.h in Headers */,
+				136C7179207EDBC30066C4C7 /* config.h in Headers */,
+				136C718C207EDBC30066C4C7 /* xDebug.h in Headers */,
+				136C7198207EDBC30066C4C7 /* pakinterface.h in Headers */,
+				136C7193207EDBC30066C4C7 /* xTimer.h in Headers */,
+				136C7192207EDBC30066C4C7 /* file.h in Headers */,
+				136C71C8207EDBDC0066C4C7 /* _xDynLib.h in Headers */,
+				136C718F207EDBC30066C4C7 /* rom.h in Headers */,
+				136C719A207EDBC30066C4C7 /* tcc1014registers.h in Headers */,
+				13E95C052091E5880094C1FA /* path.h in Headers */,
+				136C717B207EDBC30066C4C7 /* tcc1014.h in Headers */,
+				136C71D2207EDBDC0066C4C7 /* _audio.h in Headers */,
+				136C7190207EDBC30066C4C7 /* tcc1014graphics.h in Headers */,
+				136C7143207EDB8E0066C4C7 /* OMenu.h in Headers */,
+				136C7180207EDBC30066C4C7 /* cassette.h in Headers */,
+				136C7188207EDBC30066C4C7 /* Vcc.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		13D8C5DB1BAF056700D1EAD8 /* vcc-core */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 13D8C5F01BAF056700D1EAD8 /* Build configuration list for PBXNativeTarget "vcc-core" */;
+			buildPhases = (
+				13D8C5D81BAF056700D1EAD8 /* Sources */,
+				13D8C5D91BAF056700D1EAD8 /* Frameworks */,
+				13D8C5DA1BAF056700D1EAD8 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "vcc-core";
+			productName = "vccx-core";
+			productReference = 13D8C5DC1BAF056700D1EAD8 /* libvcc-core.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		13D8C5D41BAF056700D1EAD8 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0930;
+				ORGANIZATIONNAME = CoCo3;
+				TargetAttributes = {
+					13D8C5DB1BAF056700D1EAD8 = {
+						CreatedOnToolsVersion = 6.3.2;
+					};
+				};
+			};
+			buildConfigurationList = 13D8C5D71BAF056700D1EAD8 /* Build configuration list for PBXProject "vcc-core" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 13D8C5D31BAF056700D1EAD8;
+			productRefGroup = 13D8C5DD1BAF056700D1EAD8 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				13D8C5DB1BAF056700D1EAD8 /* vcc-core */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		13D8C5D81BAF056700D1EAD8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				136C71CA207EDBDC0066C4C7 /* cc3font.c in Sources */,
+				136C7147207EDB8E0066C4C7 /* OConfig.m in Sources */,
+				136C7156207EDB8E0066C4C7 /* OFile.m in Sources */,
+				136C7154207EDB8E0066C4C7 /* OMenu.m in Sources */,
+				136C71C5207EDBDC0066C4C7 /* audio.c in Sources */,
+				13E95C032091E54F0094C1FA /* path.c in Sources */,
+				136C71C1207EDBDC0066C4C7 /* cpu.c in Sources */,
+				136C7146207EDB8E0066C4C7 /* OSystem.m in Sources */,
+				136C71BF207EDBDC0066C4C7 /* cassette.c in Sources */,
+				136C71CC207EDBDC0066C4C7 /* cc2font.c in Sources */,
+				136C7150207EDB8E0066C4C7 /* _xDynLib.c in Sources */,
+				136C71CB207EDBDC0066C4C7 /* file.c in Sources */,
+				136C71C6207EDBDC0066C4C7 /* keyboard.c in Sources */,
+				136C71C2207EDBDC0066C4C7 /* mc6821.c in Sources */,
+				136C714B207EDB8E0066C4C7 /* _xDebug.c in Sources */,
+				136C714D207EDB8E0066C4C7 /* _main.c in Sources */,
+				136C71C3207EDBDC0066C4C7 /* tcc1014.c in Sources */,
+				136C71BB207EDBDC0066C4C7 /* cpuplugin.c in Sources */,
+				136C71D7207EDBDC0066C4C7 /* pakinterface.c in Sources */,
+				136C71D3207EDBDC0066C4C7 /* peripherals.c in Sources */,
+				136C71D4207EDBDC0066C4C7 /* throttle.c in Sources */,
+				136C71CE207EDBDC0066C4C7 /* emuDevice.c in Sources */,
+				136C7144207EDB8E0066C4C7 /* _keyboard.c in Sources */,
+				136C71C4207EDBDC0066C4C7 /* coco3.c in Sources */,
+				136C71D0207EDBDC0066C4C7 /* slinklist.c in Sources */,
+				136C71D1207EDBDC0066C4C7 /* joystick.c in Sources */,
+				136C71DA207EDBDC0066C4C7 /* xDynLib.c in Sources */,
+				136C71D6207EDBDC0066C4C7 /* Vcc.c in Sources */,
+				136C71CD207EDBDC0066C4C7 /* tcc1014mmu.c in Sources */,
+				136C7152207EDB8E0066C4C7 /* _xTimer.c in Sources */,
+				136C71CF207EDBDC0066C4C7 /* tcc1014registers.c in Sources */,
+				13E95C092092099A0094C1FA /* xstring.c in Sources */,
+				136C71C9207EDBDC0066C4C7 /* screen.c in Sources */,
+				136C71D8207EDBDC0066C4C7 /* addons.c in Sources */,
+				136C71D9207EDBDC0066C4C7 /* rom.c in Sources */,
+				136C714E207EDB8E0066C4C7 /* _audio.c in Sources */,
+				136C71C7207EDBDC0066C4C7 /* tcc1014graphics.c in Sources */,
+				13E95BFF20914A0B0094C1FA /* config.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		13D8C5EE1BAF056700D1EAD8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					/Library/Frameworks,
+					"$(SRCROOT)/../../../../lib/osx/Frameworks",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		13D8C5EF1BAF056700D1EAD8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					/Library/Frameworks,
+					"$(SRCROOT)/../../../../lib/osx/Frameworks",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		13D8C5F11BAF056700D1EAD8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		13D8C5F21BAF056700D1EAD8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		13D8C5D71BAF056700D1EAD8 /* Build configuration list for PBXProject "vcc-core" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				13D8C5EE1BAF056700D1EAD8 /* Debug */,
+				13D8C5EF1BAF056700D1EAD8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		13D8C5F01BAF056700D1EAD8 /* Build configuration list for PBXNativeTarget "vcc-core" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				13D8C5F11BAF056700D1EAD8 /* Debug */,
+				13D8C5F21BAF056700D1EAD8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 13D8C5D41BAF056700D1EAD8 /* Project object */;
+}

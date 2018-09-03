@@ -1,0 +1,336 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		131E8999213227A600A492B9 /* libvcc-core.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 131E8998213227A600A492B9 /* libvcc-core.dylib */; };
+		1381636321357C3000E31CB7 /* hd6309.h in Headers */ = {isa = PBXBuildFile; fileRef = 1381636121357C3000E31CB7 /* hd6309.h */; };
+		1381636421357C3000E31CB7 /* hd6309defs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1381636221357C3000E31CB7 /* hd6309defs.h */; };
+		1381636621357C3700E31CB7 /* hd6309.c in Sources */ = {isa = PBXBuildFile; fileRef = 1381636521357C3700E31CB7 /* hd6309.c */; };
+		1381636821357C4100E31CB7 /* _main.c in Sources */ = {isa = PBXBuildFile; fileRef = 1381636721357C4100E31CB7 /* _main.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		131E8998213227A600A492B9 /* libvcc-core.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; path = "libvcc-core.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1381636121357C3000E31CB7 /* hd6309.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hd6309.h; path = ../../inc/hd6309.h; sourceTree = "<group>"; };
+		1381636221357C3000E31CB7 /* hd6309defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hd6309defs.h; path = ../../inc/hd6309defs.h; sourceTree = "<group>"; };
+		1381636521357C3700E31CB7 /* hd6309.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hd6309.c; path = ../../src/hd6309.c; sourceTree = "<group>"; };
+		1381636721357C4100E31CB7 /* _main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = _main.c; sourceTree = "<group>"; };
+		13B7FC911BAF0B080041343C /* libvcc-cpu-hd6309.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = "libvcc-cpu-hd6309.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		13B7FC8E1BAF0B080041343C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				131E8999213227A600A492B9 /* libvcc-core.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1315B971204B5E9B00B5540A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				131E8998213227A600A492B9 /* libvcc-core.dylib */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		136C71DE207EDD4C0066C4C7 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				1381636521357C3700E31CB7 /* hd6309.c */,
+				136C71E0207EDD5B0066C4C7 /* osx */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
+		136C71DF207EDD530066C4C7 /* inc */ = {
+			isa = PBXGroup;
+			children = (
+				1381636121357C3000E31CB7 /* hd6309.h */,
+				1381636221357C3000E31CB7 /* hd6309defs.h */,
+			);
+			name = inc;
+			sourceTree = "<group>";
+		};
+		136C71E0207EDD5B0066C4C7 /* osx */ = {
+			isa = PBXGroup;
+			children = (
+				1381636721357C4100E31CB7 /* _main.c */,
+			);
+			name = osx;
+			sourceTree = "<group>";
+		};
+		13B7FC881BAF0B080041343C = {
+			isa = PBXGroup;
+			children = (
+				136C71DF207EDD530066C4C7 /* inc */,
+				136C71DE207EDD4C0066C4C7 /* src */,
+				13B7FC921BAF0B080041343C /* Products */,
+				1315B971204B5E9B00B5540A /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		13B7FC921BAF0B080041343C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				13B7FC911BAF0B080041343C /* libvcc-cpu-hd6309.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		13B7FC8F1BAF0B080041343C /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1381636321357C3000E31CB7 /* hd6309.h in Headers */,
+				1381636421357C3000E31CB7 /* hd6309defs.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		13B7FC901BAF0B080041343C /* vcc-cpu-hd6309 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 13B7FCA51BAF0B080041343C /* Build configuration list for PBXNativeTarget "vcc-cpu-hd6309" */;
+			buildPhases = (
+				13B7FC8D1BAF0B080041343C /* Sources */,
+				13B7FC8E1BAF0B080041343C /* Frameworks */,
+				13B7FC8F1BAF0B080041343C /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "vcc-cpu-hd6309";
+			productName = "vccx-cpu-hd6309";
+			productReference = 13B7FC911BAF0B080041343C /* libvcc-cpu-hd6309.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		13B7FC891BAF0B080041343C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0930;
+				ORGANIZATIONNAME = CoCo3;
+				TargetAttributes = {
+					13B7FC901BAF0B080041343C = {
+						CreatedOnToolsVersion = 6.3.2;
+					};
+				};
+			};
+			buildConfigurationList = 13B7FC8C1BAF0B080041343C /* Build configuration list for PBXProject "vcc-cpu-hd6309" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 13B7FC881BAF0B080041343C;
+			productRefGroup = 13B7FC921BAF0B080041343C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				13B7FC901BAF0B080041343C /* vcc-cpu-hd6309 */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		13B7FC8D1BAF0B080041343C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1381636821357C4100E31CB7 /* _main.c in Sources */,
+				1381636621357C3700E31CB7 /* hd6309.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		13B7FCA31BAF0B080041343C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"../../../../../vcc-core/inc",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		13B7FCA41BAF0B080041343C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"../../../../../vcc-core/inc",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		13B7FCA61BAF0B080041343C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/..",
+					"$(SRCROOT)/../../../../vcc-core/inc",
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+				);
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		13B7FCA71BAF0B080041343C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/..",
+					"$(SRCROOT)/../../../../vcc-core/inc",
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+				);
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		13B7FC8C1BAF0B080041343C /* Build configuration list for PBXProject "vcc-cpu-hd6309" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				13B7FCA31BAF0B080041343C /* Debug */,
+				13B7FCA41BAF0B080041343C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		13B7FCA51BAF0B080041343C /* Build configuration list for PBXNativeTarget "vcc-cpu-hd6309" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				13B7FCA61BAF0B080041343C /* Debug */,
+				13B7FCA71BAF0B080041343C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 13B7FC891BAF0B080041343C /* Project object */;
+}

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:/Users/wgale/Hobby/gitlab.lan/vcc-all/vcc/vcc-ui/_build/osx/vcc.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:/Users/wgale/Hobby/gitlab.lan/vcc-all/vcc/vcc-core/_build/osx/vccx-core/vcc-core.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:../../vcc-cpu/vccx-cpu-mc6809/_build/osx/vcc-cpu-mc6809.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:../../vcc-cpu/vccx-cpu-hd6309/_build/osx/vcc-cpu-hd6309.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:/Users/wgale/Hobby/gitlab.lan/vcc-all/vcc/vcc-paks/vcc-pak-mpi/_build/osx/vcc-pak-mpi.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:/Users/wgale/Hobby/gitlab.lan/vcc-all/vcc/vcc-paks/vcc-pak-fd502/_build/osx/vcc-pak-fd502.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:../../vcc-paks/vcc-pak-orch90/_build/osx/vcc-pak-orch90.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:../../vcc-paks/vcc-pak-superide/_build/osx/vcc-pak-superide.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:../../vcc-paks/vcc-pak-ramdisk/_build/osx/vcc-pak-rampak.xcodeproj">
+   </FileRef>
+</Workspace>

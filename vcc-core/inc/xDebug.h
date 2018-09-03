@@ -7,6 +7,17 @@
 
 /*****************************************************************************/
 
+#if (defined DEBUG)
+#   include <assert.h>
+#   ifndef _DEBUG
+#       define _DEBUG
+#   endif
+#else
+#ifndef assert
+#   define assert(x)
+#endif
+#endif
+
 /*
 	Debug trace macros
 */
@@ -16,6 +27,15 @@
 #	define XTRACE(x,...)
 #endif
 
+/*
+	Break to debugger macros
+*/
+#if (defined _DEBUG)
+#	define xDbgBreak()			_xDbgBreak()
+#else
+#	define xDbgBreak()
+#endif
+
 /*****************************************************************************/
 
 #ifdef __cplusplus
@@ -23,7 +43,11 @@ extern "C"
 {
 #endif
 	
-	VCCCORE_API void		VCCCORE_CALL _xDbgTrace(const void * pFile, const int iLine, const void * pFormat, ...);
+	void			XCALL _xDbgTrace(const void * pFile, const int iLine, const void * pFormat, ...);
+	
+#ifdef _DEBUG
+	void			XCALL _xDbgBreak(void);
+#endif
 	
 #ifdef __cplusplus
 }
