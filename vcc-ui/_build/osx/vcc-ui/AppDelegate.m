@@ -40,13 +40,112 @@
 
 @implementation AppDelegate
 
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    // Insert code here to initialize your application
-    
+/******************************************************************************************************/
+
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+{
+    [self processCommandLine];
 }
 
-- (void)applicationWillTerminate:(NSNotification *)aNotification {
+- (void)applicationWillTerminate:(NSNotification *)aNotification
+{
     // Insert code here to tear down your application
+}
+
+/******************************************************************************************************/
+
+// Notification of the application asking whether to open the initial untitled document
+- (BOOL)applicationShouldOpenUntitledFile:(NSApplication *)sender
+{
+    // block default behaviour of opening untitled document
+    return NO;
+}
+
+#if false
+// Notification of the application attempting to open the initial untitled document
+// called immediately after applicationShouldOpenUntitledFile if it returns YES
+- (BOOL)applicationOpenUntitledFile:(NSApplication *)sender
+{
+    return something;
+}
+#endif
+
+/******************************************************************************************************/
+/**
+     Command line arguments:
+ 
+     vcc <opts> [vcc document path] <opts>
+ 
+     opts:
+ 
+     -p[=]<path to pak>  Load pak
+ 
+     If no document path is specified an untitled document will be opened in cases like using the
+     -p option to laod a program pak
+ */
+-(void)processCommandLine
+{
+    //
+    // process command line
+    //
+    NSArray * args = [[NSProcessInfo processInfo] arguments];
+    bool launchDocument = false;
+    NSString * documentPath = NULL;
+//    NSString * pakPath = NULL;
+    
+    for (int i=1; i<[args count]; i++)
+    {
+        NSString * argument = [args objectAtIndex:i];
+        if ( [argument characterAtIndex:0] == '-' )
+        {
+            // skip automatically included arguments from Xcode
+            if ( [argument compare: @"-NSDocumentRevisionsDebugMode"] == NSOrderedSame )
+            {
+                i++;
+                continue;
+            }
+            else
+            {
+#if false
+                // process option
+                switch ( [argument characterAtIndex:1] )
+                {
+                    case 'p':
+                        if ( i + 1 < [args count] )
+                        {
+                            pakPath = [args objectAtIndex:i+1];
+                            i++;
+                            launchDocument = true;
+                        }
+                    break;
+                }
+#endif
+            }
+        }
+        else
+        {
+            // open document - there can be only one
+            if ( documentPath == nil )
+            {
+                documentPath = argument;
+                launchDocument = true;
+            }
+        }
+
+        //NSLog(@"Argument #%d=%@",i,argument);
+    }
+    
+    if ( launchDocument )
+    {
+        if ( documentPath == nil )
+        {
+            [self applicationOpenUntitledFile:[NSApplication sharedApplication]];
+        }
+        else
+        {
+            [self application:[NSApplication sharedApplication] openFile:documentPath];
+        }
+    }
 }
 
 /******************************************************************************************************/
