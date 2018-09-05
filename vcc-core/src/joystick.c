@@ -139,7 +139,7 @@ result_t jsEmuDevEventHandler(emudevice_t * pEmuDevice, event_t * event)
                 char temp[128];
                 sprintf(temp,"Joystick: key = %d (0x%04X) %c",keyEvent->ccvKey,keyEvent->ccvKey,keyEvent->ccvKey);
                 
-                emuDevLog(&pJoystick->device, temp);
+                emuDevLog(&pJoystick->device, "%s", temp);
             }
             break;
                 

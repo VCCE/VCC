@@ -488,9 +488,6 @@ result_t cc3EmuDevGetStatus(emudevice_t * pEmuDev, char * pszText, size_t szText
 
         snprintf(temp,sizeof(temp)-1,"%s-%0.2fMHz (R:%d/O:%d)",pCoco3->machine.pCPU->device.Name,cc3GetCurrentCpuFrequency(pCoco3),pCoco3->pGIME->CpuRate,pCoco3->confCpuOverClock);
         
-        //emuDevLog(pEmuDev,temp);
-        //emuDevLog(pEmuDev,pszText);
-
         strncat(pszText,temp,szText-strlen(pszText));
         
         return XERROR_NONE;
@@ -1370,7 +1367,7 @@ void cc3RenderFrame(coco3_t * pCoco3)
                         // not screw things up
                         //char temp[64];
                         //sprintf(temp,"Visible video line to render is out of range : %d (Max:%d)",lineToRender,pScreen->LinesperScreen);
-                        //emuDevLog(&pScreen->device, temp);
+                        //emuDevLog(&pScreen->device, "%s", temp);
                     }
                 }
             }

@@ -697,20 +697,36 @@ XAPI result_t emuDevGetAppPath(emudevice_t * pEmuDevice, char ** ppPath)
 
 /**
  */
-XAPI result_t emuDevLog(emudevice_t * pEmuDevice, const char * pMessage)
+result_t _emuDevLog(emurootdevice_t * pRoot, const char * format, va_list arglist)
+{
+    assert(pRoot->pfnLog != NULL);
+    
+    char temp[2048];
+    vsnprintf(temp,sizeof(temp)-1,format,arglist);
+    
+    return pRoot->pfnLog(&pRoot->device,temp);
+}
+
+/**
+ */
+XAPI result_t emuDevLog(emudevice_t * pEmuDevice, const char * format, ...)
 {
     result_t result = XERROR_GENERIC;
     
     emurootdevice_t * pRoot = emuDevGetRootDevice(pEmuDevice);
     
-    if ( pRoot != NULL && pRoot->pfnLog != NULL && pMessage != NULL)
+    if (    pRoot != NULL
+         && pRoot->pfnLog != NULL
+       )
     {
-        result = pRoot->pfnLog(&pRoot->device,pMessage);
+        va_list arglist;
+        va_start(arglist, format);
+        result = _emuDevLog(pRoot,format,arglist);
+        va_end(arglist);
     }
     
     return result;
 }
-
 
 /**
  */

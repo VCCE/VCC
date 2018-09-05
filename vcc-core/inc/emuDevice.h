@@ -29,6 +29,28 @@
 
 /*****************************************************************************/
 
+#include <stdarg.h>
+#include <stdio.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+#   define IS_PRINTF(IDXFMT,IDXARGS)       __attribute__ ((format (printf, IDXFMT, IDXARGS)))
+#   define IS_PRINTF_APPLE(IDXFMT,IDXARGS) __attribute__ ((format (__NSString__, IDXFMT, IDXARGS)))
+#else
+#   define IS_PRINTF(IDXFMT,IDXARGS)
+#   define IS_PRINTF_APPLE(IDXFMT,IDXARGS)
+#endif
+
+typedef enum loglevel_e
+{
+    all = 0,
+    prod,
+    qa,
+    dev,
+    verbose
+} loglevel_e;
+
+/*****************************************************************************/
+
 /* forward declaration - see machine.h for definition */
 typedef struct machine_t machine_t;
 typedef struct emudevice_t emudevice_t;
@@ -217,7 +239,6 @@ extern "C"
     
     XAPI result_t       emuDevGetDocumentPath(emudevice_t * pEmuDevice, char ** ppSavePath);
     XAPI result_t       emuDevGetAppPath(emudevice_t * pEmuDevice, char ** ppSavePath);
-    XAPI result_t       emuDevLog(emudevice_t * pEmuDevice, const char * pMessage);
     
     XAPI result_t       emuRootDevAddListener(emurootdevice_t * pRootDevice, emudevice_t * pEmuDevice, event_e type);
     
@@ -232,6 +253,11 @@ extern "C"
         Send an event up the device tree
      */
     XAPI result_t       emuDevSendEventUp(emudevice_t * pEmuDevice, event_t * event);
+    
+    /*
+        Logging
+     */
+    XAPI result_t       emuDevLog(emudevice_t * pEmuDevice, const char * format, ...) IS_PRINTF(2,3);
     
 #ifdef __cplusplus
 }
