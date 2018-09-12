@@ -34,17 +34,42 @@
 
 #import "VCCVMViewController.h"
 
-@interface AppDelegate ()
+/******************************************************************************************************/
 
+#pragma mark -
+#pragma mark --- AppDelegate ---
+
+@interface AppDelegate ()
+{
+    bool launched;      // app has launched
+    bool docOpened;     // a document has been opened
+}
 @end
 
 @implementation AppDelegate
 
-/******************************************************************************************************/
+/*
+ - (id)init
+ {
+ self = [super init];
+ VCCVMDocumentController *dc = [[VCCVMDocumentController alloc] init];
+ return self;
+ }
+ */
+
+-(void)applicationWillFinishLaunching:(NSNotification *)notification
+{
+    // TODO: detect if launched by file double click in Finder
+    
+    docOpened = false;
+    launched = false;
+    
+    [self processCommandLine];
+}
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-    [self processCommandLine];
+    launched = true;
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification
@@ -52,23 +77,84 @@
     // Insert code here to tear down your application
 }
 
-/******************************************************************************************************/
+// check whether the opening of a document should be skipped
+-(bool)shouldOpenDocument
+{
+    return launched || !docOpened;
+}
 
-// Notification of the application asking whether to open the initial untitled document
+- (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag
+{
+    return [self shouldOpenDocument];
+}
+
 - (BOOL)applicationShouldOpenUntitledFile:(NSApplication *)sender
 {
-    // block default behaviour of opening untitled document
+    if ( [self shouldOpenDocument] )
+    {
+        // Get the recent documents
+        NSDocumentController * controller = [NSDocumentController sharedDocumentController];
+        NSArray * documents = [controller recentDocumentURLs];
+        
+        // If there is a recent document, try to open it.
+        if ([documents count] > 0)
+        {
+            [controller openDocumentWithContentsOfURL:[documents objectAtIndex:0]
+                                              display:YES
+                                    completionHandler:^(NSDocument * _Nullable document, BOOL documentWasAlreadyOpen, NSError * _Nullable error)
+             {
+                 // document loading complete
+                 if ( error == nil )
+                 {
+                     NSLog(@"Document opened successfully : %@",[document displayName]);
+                 }
+                 else
+                 {
+                     NSLog(@"Document failed to load : %@",[document displayName]);
+                 }
+             }
+             ];
+            
+            return NO;
+        }
+        
+        return YES;
+    }
+    
     return NO;
 }
 
-#if false
-// Notification of the application attempting to open the initial untitled document
-// called immediately after applicationShouldOpenUntitledFile if it returns YES
-- (BOOL)applicationOpenUntitledFile:(NSApplication *)sender
+-(BOOL) application: (NSApplication*)sharedApplication openFile:(NSString*) fileName
 {
-    return something;
+    if ( [self shouldOpenDocument] )
+    {
+        NSLog(@"openFile=%@", fileName);
+        docOpened = true;
+        
+        NSDocumentController * controller = [NSDocumentController sharedDocumentController];
+        NSString * path = [@"file://" stringByAppendingString:fileName];
+        NSURL * url = [[NSURL alloc] initWithString: path];
+        [controller openDocumentWithContentsOfURL:url
+                                          display:YES
+                                completionHandler:^(NSDocument * _Nullable document, BOOL documentWasAlreadyOpen, NSError * _Nullable error)
+             {
+                 // document loading complete
+                 if ( error == nil )
+                 {
+                     NSLog(@"Document opened successfully : %@",[document displayName]);
+                 }
+                 else
+                 {
+                     NSLog(@"Document failed to load : %@",[document displayName]);
+                 }
+             }
+         ];
+        
+        return YES;
+    }
+    
+    return YES;
 }
-#endif
 
 /******************************************************************************************************/
 /**
@@ -91,7 +177,7 @@
     NSArray * args = [[NSProcessInfo processInfo] arguments];
     bool launchDocument = false;
     NSString * documentPath = NULL;
-//    NSString * pakPath = NULL;
+    NSString * pakPath = NULL;
     
     for (int i=1; i<[args count]; i++)
     {
@@ -106,7 +192,6 @@
             }
             else
             {
-#if false
                 // process option
                 switch ( [argument characterAtIndex:1] )
                 {
@@ -119,7 +204,6 @@
                         }
                     break;
                 }
-#endif
             }
         }
         else
@@ -147,6 +231,11 @@
         }
     }
 }
+
+/******************************************************************************************************/
+
+#pragma mark -
+#pragma mark --- Accessors ---
 
 /******************************************************************************************************/
 
