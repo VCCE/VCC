@@ -42,6 +42,20 @@
 #include <stdio.h>
 #include <assert.h>
 
+/*********************************************************************************/
+
+#define SYS_PREF_FD502_LAST_PATH "fd502LastDskPath"
+
+void fd502SetLastPath(fd502_t * pFD502, const char * pPathname)
+{
+    sysSetPreference(SYS_PREF_FD502_LAST_PATH, pPathname);
+}
+
+const char * fd502GetLastPath(fd502_t * pFD502)
+{
+    return sysGetPreference(SYS_PREF_FD502_LAST_PATH);
+}
+
 /*****************************************************************************/
 /**
  */
@@ -339,12 +353,6 @@ result_t fd502EmuDevDestroy(emudevice_t * pEmuDevice)
 		/* detach ourselves from our parent */
 		emuDevRemoveChild(pFD502->pak.device.pParent,&pFD502->pak.device);
 		
-        if (pFD502->confLastPath != NULL)
-        {
-            free(pFD502->confLastPath);
-            pFD502->confLastPath = NULL;
-        }
-        
         if (pFD502->confRomPath != NULL)
         {
             free(pFD502->confRomPath);
@@ -373,8 +381,7 @@ result_t fd502EmuDevConfSave(emudevice_t * pEmuDevice, config_t * config)
 	ASSERT_FD502(pFD502);
 	if ( pFD502 != NULL )
 	{
-        // FDC settingsd
-        /* errResult = */ confSetPath(config, FD502_CONF_SECTION, FD502_CONF_SETTING_LASTPATH, pFD502->confLastPath, config->absolutePaths);
+        // FDC settings
         /* errResult = */ confSetPath(config, FD502_CONF_SECTION, FD502_CONF_SETTING_ROMPATH, pFD502->confRomPath, config->absolutePaths);
         /* errResult = */ confSetInt(config, FD502_CONF_SECTION, FD502_CONF_SETTING_TURBODISK, pFD502->confTurboDisk);
 
@@ -403,9 +410,6 @@ result_t fd502EmuDevConfLoad(emudevice_t * pEmuDevice, config_t * config)
 	ASSERT_FD502(pFD502);
 	if ( pFD502 != NULL )
 	{	
-        // Last disk path path
-        /* errResult = */ confGetPath(config, FD502_CONF_SECTION, FD502_CONF_SETTING_LASTPATH, &pFD502->confLastPath,config->absolutePaths);
-        
         // Rom path
         /* errResult = */ confGetPath(config, FD502_CONF_SECTION, FD502_CONF_SETTING_ROMPATH, &pFD502->confRomPath,config->absolutePaths);
 
@@ -689,18 +693,14 @@ result_t fd502EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
             filetype_e types[] = { COCO_VDISK_FLOPPY, COCO_FILE_NONE };
             
 			// get pathname
-			pPathname = sysGetPathnameFromUser(&types[0],pFD502->confLastPath);
+			pPathname = sysGetPathnameFromUser(&types[0],fd502GetLastPath(pFD502));
 			if ( pPathname != NULL )
 			{
+                fd502SetLastPath(pFD502,pPathname);
+                
 				// attempt to mount the disk
 				wd1793MountDiskImage(&pFD502->wd1793, pPathname, iDrive);
                 
-                if (pFD502->confLastPath != NULL)
-                {
-                    free(pFD502->confLastPath);
-                    pFD502->confLastPath = NULL;
-                }
-                pFD502->confLastPath = strdup(pPathname);
                 updateUI = true;
 			}
 		}

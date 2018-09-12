@@ -74,18 +74,17 @@ int 	vccEmuLoop(void *);
 #pragma mark --- Configuration ---
 
 /*********************************************************************************/
-/**
- */
+
+#define SYS_PREF_VCC_LAST_PATH "vccLastPakPath"
+
 void vccSetLastPath(vccinstance_t * pInstance, const char * pPathname)
 {
-	/*
-		save last path
-	 */
-	if ( pInstance->pLastPath != NULL )
-	{
-		free(pInstance->pLastPath);
-	}
-	pInstance->pLastPath = strdup(pPathname);
+    sysSetPreference(SYS_PREF_VCC_LAST_PATH, pPathname);
+}
+
+const char * vccGetLastPath(vccinstance_t * pInstance)
+{
+    return sysGetPreference(SYS_PREF_VCC_LAST_PATH);
 }
 
 /*********************************************************************************/
@@ -734,8 +733,6 @@ result_t vccEmuDevConfSave(emudevice_t * pEmuDevice, config_t * config)
 	
     confSetPath(config, VCC_CONF_SECTION, VCC_CONF_SETTING_PAK, pInstance->pModulePath,config->absolutePaths);
 
-    confSetPath(config,VCC_CONF_SECTION ,VCC_CONF_SETTING_LASTPATH, pInstance->pLastPath, true);
-		
 	return errResult;
 }
 
@@ -756,11 +753,6 @@ result_t vccEmuDevConfLoad(emudevice_t * pEmuDevice, config_t * config)
 	pInstance = (vccinstance_t *)pEmuDevice;
 	
 	ASSERT_VCC(pInstance);
-	
-	/*
-		last path
-	 */
-	confGetPath(config,VCC_CONF_SECTION,VCC_CONF_SETTING_LASTPATH, &pInstance->pLastPath,true);
 	
 	/*
 	 Module
@@ -840,14 +832,6 @@ result_t vccEmuDevDestroy(emudevice_t * pEmuDevice)
         if ( pInstance->pCoco3 != NULL )
         {
             emuDevDestroy(&pInstance->pCoco3->machine.device);
-        }
-        
-		/*
-			destroy last-path object
-		 */
-        if ( pInstance->pLastPath != NULL )
-        {
-            free(pInstance->pLastPath);
         }
         
 		// no need to remove ourselves from the list, we are the parent device
@@ -1067,7 +1051,7 @@ result_t vccEmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
 			
             filetype_e types[] = { COCO_PAK_ROM, COCO_PAK_PLUGIN, COCO_FILE_NONE };
             
-			pPathname = sysGetPathnameFromUser(&types[0],pInstance->pLastPath);
+			pPathname = sysGetPathnameFromUser(&types[0],vccGetLastPath(pInstance));
 			if ( pPathname != NULL )
 			{
                 vccSetLastPath(pInstance,pPathname);

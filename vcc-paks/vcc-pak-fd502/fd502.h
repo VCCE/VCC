@@ -41,7 +41,6 @@
 #define FD502_CONF_SECTION              "FD502"
 
 #define FD502_CONF_SETTING_ROMPATH      "RomPath"
-#define FD502_CONF_SETTING_LASTPATH     "LastPath"
 #define FD502_CONF_SETTING_TURBODISK    "TurboDisk"
 
 #define FD502_CONF_DISTO_RTC_ENABLED    "DistoRTC"
@@ -101,7 +100,6 @@ struct fd502_t
 	cocopak_t *			pDistoRTC;
     
     char *              confRomPath;
-    char *              confLastPath;
     bool                confTurboDisk;
     bool                confDistoRTCEnabled;
     int                 confDistoRTCAddress;
