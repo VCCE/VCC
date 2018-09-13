@@ -111,6 +111,8 @@ typedef bool        (*emudevvalidatefn_t)(emudevice_t * pEmuDev, int iCommand, i
 
 typedef result_t    (*emudevenumcbfn_t)(emudevice_t * pEmuDev, void * pUser);
 
+typedef hmenu_t     (*emudevgetparentmenufn_t)(emudevice_t * pEmuDev);
+
 /*****************************************************************************/
 /**
  */
@@ -131,8 +133,6 @@ struct emudevice_t
     
 	int					    iCommandID;                 /**< This device's menu command id */
 	hmenu_t					hMenu;                      /**< Menu handle for this device */
-    // TODO: this will need to be a callback for the MPI
-    hmenu_t                 hChildHookMenu;             /**< Menu handle for this device */
 
 	char					Name[MODULE_NAME_LENGTH];	/**< device name */
 	
@@ -156,8 +156,11 @@ struct emudevice_t
 	emudevloadfn_t			pfnLoad;					/**< load config callback */
 	
 	emudevgetstatusfn_t		pfnGetStatus;				/**< get status text */
-	emudevcreatemenufn_t	pfnCreateMenu;				/**< create menu for device */
-	emudevvalidatefn_t		pfnValidate;				/**< validate command for device */
+
+    emudevcreatemenufn_t	pfnCreateMenu;				/**< create menu for device */
+    emudevgetparentmenufn_t pfnGetParentMenu;           /**< get menu from parent for child to add to */
+    
+    emudevvalidatefn_t		pfnValidate;				/**< validate command for device */
 	emudevcommandfn_t		pfnCommand;					/**< perform command */
 } ;
 
@@ -223,7 +226,7 @@ extern "C"
 
 	XAPI result_t		emuDevEnumerate(emudevice_t * pEmuDevice, emudevenumcbfn_t pfnEnumCB, void * pUser);
 
-    XAPI hmenu_t        emuDevGetMenuFromParent(emudevice_t * pEmuDevice);
+    XAPI hmenu_t        emuDevGetParentMenu(emudevice_t * pEmuDevice);
     
     //
     // root device functions

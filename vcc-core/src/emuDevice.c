@@ -461,6 +461,35 @@ result_t emuDevEnumerate(emudevice_t * pEmuDevice, emudevenumcbfn_t pfnEnumCB, v
 }
 
 /***********************************************************************************/
+
+XAPI hmenu_t emuDevGetParentMenu(emudevice_t * pEmuDevice)
+{
+    emudevice_t *    pParentDevice = NULL;
+
+    assert(pEmuDevice != NULL);
+    assert(pEmuDevice->id == EMU_DEVICE_ID);
+    
+    if ( pEmuDevice != NULL )
+    {
+        // walk up the device tree to the device that will provide a menu
+        pParentDevice = pEmuDevice->pParent;
+        while (    pParentDevice != NULL
+                && pParentDevice->pfnGetParentMenu == NULL
+               )
+        {
+            pParentDevice = pParentDevice->pParent;
+        }
+        
+        if ( pParentDevice != NULL )
+        {
+            return (*pParentDevice->pfnGetParentMenu)(pParentDevice);
+        }
+    }
+    
+    return NULL;
+}
+
+/***********************************************************************************/
 /**
 	Find a device by command id
  */
@@ -623,44 +652,6 @@ XAPI emurootdevice_t * emuDevGetRootDevice(emudevice_t * pEmuDevice)
     }
     
     return pRootDevice;
-}
-
-/**
-    Get the menu handle from the parent for the given device.
-*/
-XAPI hmenu_t emuDevGetMenuFromParent(emudevice_t * pEmuDevice)
-{
-    assert(pEmuDevice != NULL);
-    assert(pEmuDevice->pParent != NULL);
-    assert(pEmuDevice->pParent->hMenu != NULL);
-
-    if ( pEmuDevice != NULL )
-    {
-        if ( pEmuDevice->pParent != NULL )
-        {
-            // the parent has a specific menu to hook into
-            // there should be only one
-            // This menu will only be set available certain types of devices
-            // such as the CoCo cartridge slot or the MPI.
-            // TODO: set name of menu to child name?
-            return pEmuDevice->pParent->hChildHookMenu;
-        }
-        
-        // does the parent already have a menu for us?
-        hmenu_t hMenu = menuFind(pEmuDevice->pParent->hMenu, pEmuDevice->Name);
-        if ( hMenu != NULL )
-        {
-            return hMenu;
-        }
-        
-        // no menu
-        // create one
-        hMenu = menuCreate(pEmuDevice->Name);
-        menuAddSubMenu(pEmuDevice->pParent->hMenu, hMenu);
-        return hMenu;
-    }
-    
-    return NULL;
 }
 
 /**
