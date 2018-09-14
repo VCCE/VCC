@@ -222,8 +222,8 @@ result_t cc3EmuDevCreateMenu(emudevice_t * pEmuDev)
         menuAddItem(pCoco3->machine.device.hMenu,"Throttle",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_THROTTLE) );
 
         hmenu_t hCPUMenu = menuCreate("CPU");
-        menuAddItem(hCPUMenu,"MC6809",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_CPU) );
-        menuAddItem(hCPUMenu,"HD6309",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_CPU + 1) );
+        menuAddItem(hCPUMenu,"MC6809",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_CPU + eCPUType_MC6809) );
+        menuAddItem(hCPUMenu,"HD6309",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_CPU + eCPUType_HD6309) );
         menuAddItem(hCPUMenu,"Load CPU module",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_CPUPATH_SET) );
         menuAddItem(hCPUMenu,"Eject CPU module",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_CPUPATH_CLEAR) );
         menuAddSubMenu(pCoco3->machine.device.hMenu, hCPUMenu);
@@ -272,7 +272,6 @@ bool cc3EmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
                 {
                     *piState = (pCoco3->confFrameThrottle ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
                 }
-                //bValid = (pInstance->EmuThreadState == emuThreadRunning);
                 bValid = true;
                 break;
                 
@@ -290,9 +289,20 @@ bool cc3EmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
                 bValid = (pCoco3->confCpuPath != NULL);
                 break;
                 
-            case COCO3_COMMAND_CPU:         // built in 6809
-            case COCO3_COMMAND_CPU + 1:     // built in 6309
-                bValid = false;
+            case COCO3_COMMAND_CPU + eCPUType_MC6809:         // built in 6809
+                bValid = true;
+                if ( piState != NULL )
+                {
+                    *piState = (pCoco3->confCpuType == eCPUType_MC6809);
+                }
+                break;
+                
+            case COCO3_COMMAND_CPU + eCPUType_HD6309:     // built in 6309
+                bValid = true;
+                if ( piState != NULL )
+                {
+                    *piState = (pCoco3->confCpuType == eCPUType_HD6309);
+                }
                 break;
                 
             case COCO3_COMMAND_RAM:     // 128k
@@ -427,14 +437,17 @@ result_t cc3EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
             }
             break;
 
-            case COCO3_COMMAND_CPU:         // built in 6809
-            case COCO3_COMMAND_CPU + 1:     // built in 6309
+            case COCO3_COMMAND_CPU + eCPUType_MC6809:     // built in 6809
+            case COCO3_COMMAND_CPU + eCPUType_HD6309:     // built in 6309
                 pCoco3->confCpuType = (iCommand-COCO3_COMMAND_CPU);
                 vccSetCommandPending(pInstance, VCC_COMMAND_POWERCYCLE);
                 
                 updateUI = true;
                 break;
-                
+            case COCO3_COMMAND_CPU + eCPUType_Custom:
+                assert(false && "TODO: implement");
+                break;
+
             case COCO3_COMMAND_RAM:     // 128k
             case COCO3_COMMAND_RAM + 1: // 512k
             case COCO3_COMMAND_RAM + 2: // 1024k
@@ -587,11 +600,11 @@ coco3_t * cc3Create()
 		/*
 			config / persistence defaults
 		 */	
-		pCoco3->confCpuType				= 0;	// default: 6809
-		pCoco3->confCpuOverClock		= 1;	// Over clock multiplier (1-200)
-		pCoco3->confFrameThrottle		= true;	// default: throttle enabled
-		pCoco3->confRamSize				= Ram128k;	// default: 512k (0 = 128k, 1=512k, 2=1024k, 3=2048k, 4=8192k)
-		pCoco3->confExternalBasicROMPath = NULL;	// default: no external CoCo 3 ROM
+		pCoco3->confCpuType				= eCPUType_MC6809;	// default: 6809
+		pCoco3->confCpuOverClock		= 1;	            // Over clock multiplier (1-200)
+		pCoco3->confFrameThrottle		= true;	            // default: throttle enabled
+		pCoco3->confRamSize				= Ram128k;	        // default: 512k (0 = 128k, 1=512k, 2=1024k, 3=2048k, 4=8192k)
+		pCoco3->confExternalBasicROMPath = NULL;	        // default: no external CoCo 3 ROM
 		
         /*
          module initiallization
@@ -717,12 +730,16 @@ bool cc3InstallCPU(coco3_t * pCoco3)
             // TODO: hard coded names
             switch ( pCoco3->confCpuType )
             {
-                case 0:
+                case eCPUType_MC6809:
                     strcat(path,"/libvcc-cpu-mc6809");
                     break;
                     
-                case 1:
+                case eCPUType_HD6309:
                     strcat(path,"/libvcc-cpu-hd6309");
+                    break;
+                    
+                case eCPUType_Custom:
+                    assert(false && "TODO: implement");
                     break;
             }
         }
