@@ -29,6 +29,10 @@
 
 /*****************************************************************************/
 
+#define NUM_DRIVES    4
+
+/*****************************************************************************/
+
 #define IDLE 255
 #define NONE 254
 
@@ -170,7 +174,7 @@ struct wd1793_t
 	
     cpu_t *             pCPU;
     
-    DiskInfo			Drive[5];				// why 5?
+    DiskInfo			Drive[NUM_DRIVES];
 	
 	getbytefromdisk_t	GetBytefromDisk;
 	writebytetodisk_t	WriteBytetoDisk;

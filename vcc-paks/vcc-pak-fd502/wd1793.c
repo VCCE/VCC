@@ -64,10 +64,6 @@
 
 /*****************************************************************************/
 
-#define NUM_DRIVES	4
-
-/*****************************************************************************/
-
 const unsigned char		StepTimesMS[4]		= {6,12,20,30};
 const unsigned short	BytesperSector[4]	= {128,256,512,1024};
 const char				ImageFormat[5][4]	= {"JVC","VDK","DMK","OS9","RAW"};

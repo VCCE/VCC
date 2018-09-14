@@ -345,7 +345,7 @@
     
     tag = [pMenuItem tag];
     
-#if (defined _DEBUG)
+#if false // (defined _DEBUG)
     NSInteger           tagHigh;
     NSInteger           tagLow;
 

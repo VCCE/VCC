@@ -512,7 +512,7 @@ result_t fd502EmuDevCreateMenu(emudevice_t * pEmuDevice)
         menuAddItem(hRTCMenu,"RTC @ FF58", EMUDEV_UICOMMAND_CREATE(&pFD502->pak.device,FD502_COMMAND_DISTO_ADDRESS+1) );
         menuAddSubMenu(hMenu, hRTCMenu);
 
-        for (x=0; x<4; x++)
+        for (x=0; x<NUM_DRIVES; x++)
 		{
 			menuAddSeparator(hMenu);
 			
