@@ -91,8 +91,10 @@ struct portwriteentry_t
  */
 typedef enum montype_e
 {
-    CMP = 0,    // Composite
-    RGB = 1     // RGB
+    eMonType_CMP = 0,   // composite
+    eMonType_RGB,       // rgb
+    
+    eMonType_Count
 } montype_e;
 
 //

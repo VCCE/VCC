@@ -40,10 +40,10 @@ typedef void (*emudisplaycb_t)(void *);
 
 #define SCREEN_COMMAND_NONE			0
 #define SCREEN_COMMAND_NOP			0
-#define SCREEN_COMMAND_MONTYPE		1
 #define SCREEN_COMMAND_FULLSCREEN	2
 #define SCREEN_COMMAND_SCANLINES	3
 #define SCREEN_COMMAND_SCREEN_SHOT  4
+#define SCREEN_COMMAND_MONTYPE      5 // + monitor types
 
 /*****************************************************************************/
 
@@ -126,7 +126,7 @@ typedef struct screen_t
     // color look up for each monitor type - RGB=0, 1=CMP
     //unsigned char     PalleteLookup8[2][64];
     //unsigned short    PalleteLookup16[2][64];
-    uint32_t            PalleteLookup32[2][64];
+    uint32_t            PalleteLookup32[eMonType_Count][64];
     
     int                 GraphicsMode;       // unsigned char
     

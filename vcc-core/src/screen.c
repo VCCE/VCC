@@ -247,8 +247,12 @@ result_t screenEmuDevCreateMenu(emudevice_t * pEmuDev)
 		// create menu
 		pScreen->device.hMenu = menuCreate(pScreen->device.Name);
 		
-		menuAddItem(pScreen->device.hMenu,"Monitor Type",	(pScreen->device.iCommandID<<16) | SCREEN_COMMAND_MONTYPE);
-		menuAddItem(pScreen->device.hMenu,"Scan Lines",		(pScreen->device.iCommandID<<16) | SCREEN_COMMAND_SCANLINES);
+        hmenu_t hMonitorMenu = menuCreate("Monitor Type");
+		menuAddItem(hMonitorMenu,"Composite",	(pScreen->device.iCommandID<<16) | SCREEN_COMMAND_MONTYPE + eMonType_CMP);
+        menuAddItem(hMonitorMenu,"RGB",    (pScreen->device.iCommandID<<16) | SCREEN_COMMAND_MONTYPE + eMonType_RGB);
+        menuAddSubMenu(pScreen->device.hMenu, hMonitorMenu);
+
+        menuAddItem(pScreen->device.hMenu,"Scan Lines",		(pScreen->device.iCommandID<<16) | SCREEN_COMMAND_SCANLINES);
         if ( pScreen->pScreenFullScreenCallback != NULL )
         {
             menuAddItem(pScreen->device.hMenu,"Full Screen",    (pScreen->device.iCommandID<<16) | SCREEN_COMMAND_FULLSCREEN);
@@ -274,20 +278,28 @@ bool screenEmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
 	
 	switch ( iCommand )
 	{
-		case SCREEN_COMMAND_MONTYPE:
+		case SCREEN_COMMAND_MONTYPE + eMonType_CMP:
 			if ( piState != NULL )
 			{
-				*piState = (!pScreen->confMonitorType ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+				*piState = ((pScreen->confMonitorType == eMonType_CMP) ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
 			}
-			bValid = TRUE;
+			bValid = true;
 			break;
 			
+        case SCREEN_COMMAND_MONTYPE + eMonType_RGB:
+            if ( piState != NULL )
+            {
+                *piState = ((pScreen->confMonitorType == eMonType_RGB) ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+            }
+            bValid = true;
+            break;
+            
 		case SCREEN_COMMAND_SCANLINES:
 			if ( piState != NULL )
 			{
 				*piState = (pScreen->confScanLines ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
 			}
-			bValid = TRUE;
+			bValid = true;
 			break;
 			
 		case SCREEN_COMMAND_FULLSCREEN:
@@ -295,11 +307,11 @@ bool screenEmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
 			{
 				*piState = (pScreen->confFullScreen ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
 			}
-            bValid = TRUE;
+            bValid = true;
 			break;
 			
         case SCREEN_COMMAND_SCREEN_SHOT:
-            bValid = TRUE;
+            bValid = true;
             break;
 
         default:
@@ -330,9 +342,9 @@ result_t screenEmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
 	// do command
 	switch ( iCommand )
 	{
-		case SCREEN_COMMAND_MONTYPE:
-            // toggle monitor type
-			pScreen->confMonitorType = !GetMonitorType(pScreen);
+		case SCREEN_COMMAND_MONTYPE + eMonType_CMP:
+        case SCREEN_COMMAND_MONTYPE + eMonType_RGB:
+			pScreen->confMonitorType = (iCommand - SCREEN_COMMAND_MONTYPE);
 			SetMonitorType(pScreen, pScreen->confMonitorType);
 			break;
 			
@@ -398,7 +410,7 @@ screen_t * screenCreate()
 		/*
 			config defaults
 		 */
-		pScreen->confMonitorType	= RGB;
+		pScreen->confMonitorType	= eMonType_RGB;
 		pScreen->confScanLines		= false;
         pScreen->confFullScreen     = false;
         
@@ -577,7 +589,7 @@ void MakeRGBPalette(screen_t * pScreen)
         r = ColorTable32Bit[(Index & 32) >> 4 | (Index & 4) >> 2];
         g = ColorTable32Bit[(Index & 16) >> 3 | (Index & 2) >> 1];
         b = ColorTable32Bit[(Index & 8 ) >> 2 | (Index & 1) ];
-        pScreen->PalleteLookup32[RGB][Index] = rgba(r,g,b,255);
+        pScreen->PalleteLookup32[eMonType_RGB][Index] = rgba(r,g,b,255);
     }
 }
 
@@ -647,7 +659,7 @@ void MakeCMPpalette(screen_t * pScreen)
         gg = (unsigned char)g;
         bb = (unsigned char)b;
         
-        pScreen->PalleteLookup32[CMP][Index] = rgba(rr,gg,bb,255);
+        pScreen->PalleteLookup32[eMonType_CMP][Index] = rgba(rr,gg,bb,255);
         
         //rr = rr>>3;
         //gg = gg>>3;
@@ -2226,7 +2238,7 @@ void screenUpdate(screen_t * pScreen, int dstRow)
                 
                 switch ( pScreen->MonType )
                 {
-                    case RGB:
+                    case eMonType_RGB:
                     {
                         dstRowPtr[dstX+=1]=pScreen->Pallete32Bit[pScreen->PalleteIndex+( 1 & (WidePixel>>7))];
                         dstRowPtr[dstX+=1]=pScreen->Pallete32Bit[pScreen->PalleteIndex+( 1 & (WidePixel>>6))];
@@ -2247,7 +2259,7 @@ void screenUpdate(screen_t * pScreen, int dstRow)
                     }
                     break;
                       
-                    case CMP:
+                    case eMonType_CMP:
                     {
                         // swap bytes
                         WidePixel = ((WidePixel>>8)&0x00FF) | ((WidePixel<<8)&0xFF00);
@@ -2315,8 +2327,8 @@ void screenUpdate(screen_t * pScreen, int dstRow)
             for (int HorzBeam=0; HorzBeam<pScreen->BytesperRow; HorzBeam+=2) //1bbp Stretch=2
             {
                 WidePixel=WideBuffer[(pGIME->iVidMask & (Start+(unsigned char)(rowLatch->hOffset+HorzBeam) ))>>1];
-                //************************************************************************************
-                if (pScreen->MonType==CMP)
+
+                if (pScreen->MonType == eMonType_CMP)
                 {
                     // TODO: crashes during Mega bug attract mode
                     
