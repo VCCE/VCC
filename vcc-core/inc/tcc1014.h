@@ -31,7 +31,7 @@
 #pragma mark -
 #pragma mark --- constants ---
 
-#define COLORBURST 3579545
+#define COLORBURST ((double)3579545)
 #define CPU_DEFAULT_MHZ ((COLORBURST/4)/1000000)
 #define PICOSECOND 1000000000
 #define FRAMESPERSECOND (double)59.923
