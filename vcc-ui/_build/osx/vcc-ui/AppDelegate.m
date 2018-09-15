@@ -357,6 +357,8 @@
 #endif
     
     vccCommand(pInstance,(int32_t)tag);
+    
+    [[self currentDocument] updateDocumentDirtyStatus];
 }
 
 /******************************************************************************************************/

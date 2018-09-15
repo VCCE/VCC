@@ -34,7 +34,8 @@ typedef void (*emudisplaycb_t)(void *);
 
 #define CONF_SETTING_MONITORTYPE	"MonitorType"
 #define CONF_SETTING_SCANLINES		"ScanLines"
-//#define CONF_SETTING_FRAMESKIP		"FrameSkip"
+#define CONF_SETTING_FULLSCREEN     "FullScreen"
+#define CONF_SETTING_ARTIFACTS      "Artifacts"
 
 /*****************************************************************************/
 
@@ -87,6 +88,14 @@ typedef struct rowlatch_t
     int                 srcRow;
 } rowlatch_t;
 
+typedef struct screensettings_t
+{
+    bool                fullScreen;
+    montype_e           monitorType;    // type of monitor displaying to
+    bool                scanLines;      // scan lines effect (don't draw every other line
+    bool                artifacts;      // color artifact switch.  false = ???, true = ???
+} screensettings_t;
+
 typedef struct screen_t
 {
 	emudevice_t			device;
@@ -96,9 +105,8 @@ typedef struct screen_t
 	/*
 		config / persistence
 	 */
-	bool 				confFullScreen;
-    int 				confMonitorType;    // type of monitor displaying to
-	bool 				confScanLines;      // scan lines effect (don't draw every other line
+    screensettings_t    conf;
+    screensettings_t    run;
     
 	/*
 		ui callbacks
@@ -117,8 +125,6 @@ typedef struct screen_t
 
     surface_t           surface;        // screen buffer descriptor (video texture)
     
-    montype_e           MonType;        // Monitor type
-
     //uint8_t           Pallete8Bit[16];
     //uint16_t          Pallete16Bit[16];    // Color values translated to 16 bit
     uint32_t            Pallete32Bit[16];    // Color values translated to 32 bit
@@ -194,8 +200,8 @@ extern"C"
 
 	result_t		screenEmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam);
 
-    void SetMonitorType(screen_t * pScreen, montype_e monType);
-    int GetMonitorType(screen_t * pScreen);
+//    void SetMonitorType(screen_t * pScreen, montype_e monType);
+//    int GetMonitorType(screen_t * pScreen);
 
     void InitDisplay(screen_t * pScreen);
     void SetupDisplay(screen_t * pScreen);

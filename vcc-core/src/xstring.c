@@ -100,3 +100,54 @@ int strcasecmp(const char * s, const char * p)
 }
 #endif
 
+char * strdupsafe(const char * s)
+{
+    char * p = NULL;
+    
+    if ( s != NULL )
+    {
+        p = strdup(s);
+    }
+    
+    return p;
+}
+
+/**
+    Reallocate a string
+ 
+    @param s original string
+    @param r replacement string
+ */
+char * strreallocsafe(char * s, const char * r)
+{
+    char * p = NULL;
+    
+    // if the replacement string is the same
+    if (    s != NULL
+         && r != NULL
+         && strcmp(s,r) == 0
+        )
+    {
+        // keep original string
+        p = s;
+    }
+    
+    if ( p == NULL )
+    {
+        // free original string
+        strfreesafe(s);
+        // make a copy of the replacement string
+        p = strdupsafe(r);
+    }
+    
+    return p;
+}
+
+void strfreesafe(char * s)
+{
+    if ( s != NULL )
+    {
+        free(s);
+    }
+}
+

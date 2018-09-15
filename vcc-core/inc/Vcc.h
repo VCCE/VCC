@@ -57,6 +57,13 @@ typedef enum emuthreadstate_e
 #define CARTRIDGE_MENU				"Cartridge"
 
 /**************************************************/
+
+typedef struct vccsettings_t
+{
+    char *      pModulePath;      /**< Pathname to CART - should be in Coco3 */
+} vccsettings_t;
+
+/**************************************************/
 /*
 	Emulator commands for performing actions/commands
  */
@@ -104,9 +111,10 @@ struct vccinstance_t
         configuration / persistence
 	 */
 	config_t *			    config;
+
+    vccsettings_t           run;
+    vccsettings_t           conf;
     
-	char *  				pModulePath;    /**< Pathname to CART - should be in Coco3 */
-	
 	/* 
 		pointer to the main coco3 object
 		also in links in emudevice_t (device)

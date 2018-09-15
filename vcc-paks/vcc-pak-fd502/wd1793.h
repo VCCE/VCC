@@ -168,10 +168,17 @@ typedef unsigned char (*writebytetodisk_t)(wd1793_t * pWD11793, unsigned char);
 
 /*****************************************************************************/
 
+typedef struct wd1793settings_t
+{
+    char * disks[NUM_DRIVES];   // paths to all mounted disks
+} wd1793settings_t;
+
 struct wd1793_t
 {
 	emudevice_t			device;
 	
+    wd1793settings_t    conf;
+
     cpu_t *             pCPU;
     
     DiskInfo			Drive[NUM_DRIVES];
@@ -180,7 +187,7 @@ struct wd1793_t
 	writebytetodisk_t	WriteBytetoDisk;
 	
     // settings
-    bool                TurboMode;
+    bool                TurboMode;  // set from FD502
 
     // timings
     int INDEXTIME;
@@ -282,8 +289,6 @@ extern "C"
     uint32_t        GetDriverVersion(wd1793_t * pWD1793);
 #endif
     
-    //void            DiskStatus(wd1793_t * pWD1793, char *);
-
 #ifdef __cplusplus
 }
 #endif

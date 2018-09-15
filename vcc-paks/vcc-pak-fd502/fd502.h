@@ -89,20 +89,26 @@
 								assert(pFD502->pak.device.idModule == VCC_COCOPAK_ID && "Invalid module ID"); \
 								assert(pFD502->pak.device.idDevice == VCC_PAK_FD502_ID && "Invalid device ID")
 
-// TODO: move to private header
+// TODO: move these to private header
+
+typedef struct fd502settings_t
+{
+    char *              romPath;
+    bool                turboDisk;
+    bool                distoRTCEnabled;
+    int                 distoRTCAddress;
+} fd502settings_t;
+
 typedef struct fd502_t fd502_t;
 struct fd502_t
 {
 	cocopak_t			pak;				// base
 	
 	wd1793_t			wd1793;
-	
 	cocopak_t *			pDistoRTC;
     
-    char *              confRomPath;
-    bool                confTurboDisk;
-    bool                confDistoRTCEnabled;
-    int                 confDistoRTCAddress;
+    fd502settings_t     conf;
+    fd502settings_t     run;
 } ;
 
 /*****************************************************************************/

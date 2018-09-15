@@ -50,6 +50,8 @@
 //- (IBAction)showPreferences:(id)sender;
 //- (IBAction)toolbarAction:(id)sender;
 
+- (void) updateDocumentDirtyStatus;
+
 @end
 
 

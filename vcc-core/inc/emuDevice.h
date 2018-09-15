@@ -102,8 +102,11 @@ typedef result_t    (*emudeveventfn_t)(emudevice_t * pEmuDev, event_t * event);
 
 typedef result_t    (*emudevresetfn_t)(emudevice_t * pEmuDev);
 typedef result_t    (*emudevdestroyfn_t)(emudevice_t * pEmuDev);
+
 typedef result_t    (*emudevsavefn_t)(emudevice_t * pEmuDev, config_t * config);
 typedef result_t    (*emudevloadfn_t)(emudevice_t * pEmuDev, config_t * config);
+typedef bool        (*emudevconfdirtyfn_t)(emudevice_t * pEmuDev);
+
 typedef result_t    (*emudevgetstatusfn_t)(emudevice_t * pEmuDev, char * pszText, size_t szText);
 typedef result_t    (*emudevcreatemenufn_t)(emudevice_t * pEmuDev);
 typedef result_t    (*emudevcommandfn_t)(emudevice_t * pEmuDev, int iCommand, int iParam);
@@ -154,7 +157,8 @@ struct emudevice_t
     
 	emudevsavefn_t			pfnSave;					/**< save config callback */
 	emudevloadfn_t			pfnLoad;					/**< load config callback */
-	
+    emudevconfdirtyfn_t     pfnConfCheckDirty;          /**< check if config is dirty */
+    
 	emudevgetstatusfn_t		pfnGetStatus;				/**< get status text */
 
     emudevcreatemenufn_t	pfnCreateMenu;				/**< create menu for device */
@@ -215,7 +219,8 @@ extern "C"
 
 	XAPI result_t		emuDevConfSave(emudevice_t * pEmuDevice, config_t * config);
 	XAPI result_t		emuDevConfLoad(emudevice_t * pEmuDevice, config_t * config);
-
+    XAPI bool           emuDevConfCheckDirty(emudevice_t * pEmuDevice);
+    
     XAPI result_t       emuDevSendCommand(emudevice_t * pEmuDevice, int command, int state);
     XAPI result_t       emuDevSetCommandState(emudevice_t * pEmuDevice, int command, int state);
     XAPI result_t       emuDevGetCommandState(emudevice_t * pEmuDevice, int command, int * pstate);

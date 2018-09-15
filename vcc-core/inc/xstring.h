@@ -37,6 +37,9 @@ extern "C"
 #if (defined _WIN32)
     int strcasecmp(const char * s, const char * chrs);
 #endif
+    char * strdupsafe(const char * s);
+    char * strreallocsafe(char * s, const char * r);
+    void strfreesafe(char * s);
 
 #ifdef __cplusplus
 }
