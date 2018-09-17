@@ -53,6 +53,36 @@ int cc3GetCurrentCpuMultiplier(coco3_t * pCoco3);
 /********************************************************************************/
 
 #pragma mark -
+#pragma mark --- helpers ---
+
+/********************************************************************************/
+
+const char * cc3GetRamSizeAsString(coco3_t * pCoCo3)
+{
+    switch ( pCoCo3->run.ramSize )
+    {
+        case Ram128k:
+            return "128k";
+            break;
+        case Ram512k:
+            return "512k";
+            break;
+        case Ram1024k:
+            return "1M";
+            break;
+        case Ram2048k:
+            return "2M";
+            break;
+        case Ram8192k:
+            return "8M";
+            break;
+    }
+    return "Unknown";
+}
+
+/********************************************************************************/
+
+#pragma mark -
 #pragma mark --- settings helpers ---
 
 /********************************************************************************/
@@ -310,11 +340,11 @@ result_t cc3EmuDevCreateMenu(emudevice_t * pEmuDev)
         menuAddSubMenu(pCoco3->machine.device.hMenu, hCPUMenu);
         
         hmenu_t hRAMMenu = menuCreate("RAM");
-        menuAddItem(hRAMMenu,"128k",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_RAM + 0) );
-        menuAddItem(hRAMMenu,"512k",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_RAM + 1) );
-        menuAddItem(hRAMMenu,"1024k",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_RAM + 2) );
-        menuAddItem(hRAMMenu,"2048k",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_RAM + 3) );
-        menuAddItem(hRAMMenu,"8192k",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_RAM + 4) );
+        menuAddItem(hRAMMenu,"128k",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_RAM + Ram128k) );
+        menuAddItem(hRAMMenu,"512k",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_RAM + Ram512k) );
+        menuAddItem(hRAMMenu,"1024k",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_RAM + Ram1024k) );
+        menuAddItem(hRAMMenu,"2048k",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_RAM + Ram2048k) );
+        menuAddItem(hRAMMenu,"8192k",EMUDEV_UICOMMAND_CREATE(&pCoco3->machine.device,COCO3_COMMAND_RAM + Ram8192k) );
         menuAddSubMenu(pCoco3->machine.device.hMenu, hRAMMenu);
 
         char temp[64];
@@ -386,11 +416,11 @@ bool cc3EmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
                 }
                 break;
                 
-            case COCO3_COMMAND_RAM:     // 128k
-            case COCO3_COMMAND_RAM + 1: // 512k
-            case COCO3_COMMAND_RAM + 2: // 1024k
-            case COCO3_COMMAND_RAM + 3: // 2048k
-            case COCO3_COMMAND_RAM + 4: // 8192k
+            case COCO3_COMMAND_RAM + Ram128k:
+            case COCO3_COMMAND_RAM + Ram512k:
+            case COCO3_COMMAND_RAM + Ram1024k:
+            case COCO3_COMMAND_RAM + Ram2048k:
+            case COCO3_COMMAND_RAM + Ram8192k:
                 if ( piState != NULL )
                 {
                     *piState = ((iCommand-COCO3_COMMAND_RAM) == pCoco3->run.ramSize ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
@@ -529,11 +559,11 @@ result_t cc3EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
                 assert(false && "TODO: implement");
                 break;
 
-            case COCO3_COMMAND_RAM:     // 128k
-            case COCO3_COMMAND_RAM + 1: // 512k
-            case COCO3_COMMAND_RAM + 2: // 1024k
-            case COCO3_COMMAND_RAM + 3: // 2048k
-            case COCO3_COMMAND_RAM + 4: // 8192k
+            case COCO3_COMMAND_RAM + Ram128k:
+            case COCO3_COMMAND_RAM + Ram512k:
+            case COCO3_COMMAND_RAM + Ram1024k:
+            case COCO3_COMMAND_RAM + Ram2048k:
+            case COCO3_COMMAND_RAM + Ram8192k:
                 pCoco3->run.ramSize = (iCommand-COCO3_COMMAND_RAM);
                 vccSetCommandPending(pInstance, VCC_COMMAND_POWERCYCLE);
                 
@@ -580,8 +610,9 @@ result_t cc3EmuDevGetStatus(emudevice_t * pEmuDev, char * pszText, size_t szText
     {
         char temp[256];
         float rate = cc3GetCurrentCpuFrequency(pCoco3);
+        const char * ramSize = cc3GetRamSizeAsString(pCoco3);
         
-        snprintf(temp,sizeof(temp)-1,"%s-%0.2fMHz (R:%d/O:%d)",pCoco3->machine.pCPU->device.Name,rate,pCoco3->pGIME->CpuRate,pCoco3->run.cpuOverClock);
+        snprintf(temp,sizeof(temp)-1,"%s-%0.2fMHz (R:%d/O:%d) %s",pCoco3->machine.pCPU->device.Name,rate,pCoco3->pGIME->CpuRate,pCoco3->run.cpuOverClock,ramSize);
         
         strncat(pszText,temp,szText-strlen(pszText));
         
