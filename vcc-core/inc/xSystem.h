@@ -29,8 +29,8 @@ extern "C"
     void sysInit(void);
 	void sysTerm(void);
 
-    void sysSleep(uint32_t timeInMs);
-    
+    void sysNanoSleep(uint64_t nanoseconds);
+
 	void sysShowError(const char * pcszText);
 
 	char * sysGetPathResources(char * filename, char * pDst, size_t sizeDst);

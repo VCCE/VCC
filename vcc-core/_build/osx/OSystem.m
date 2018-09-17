@@ -31,9 +31,20 @@ void sysInit(void)
     
 }
 
+void sysNanoSleep(uint64_t nanoseconds)
+{
+    struct timespec spec;
+    struct timespec end;
+    spec.tv_sec = 0;
+    spec.tv_nsec = nanoseconds;
+    nanosleep(&spec,&end);
+}
+
+
 void sysSleep(uint32_t timeInMs)
 {
-    sleep(timeInMs);
+    uint64_t nanoseconds = timeInMs * 1000000;
+    sysNanoSleep(nanoseconds);
 }
 
 /*************************************************************************************/

@@ -212,6 +212,8 @@ result_t vccLog(emudevice_t * pEmuDev, const char * pMessage)
         /*
             Set up callbacks for giving info to sub modules
          */
+        
+        // Add ourselves (document) as the root object for this instance
         vccInstance->root.pRootObject = (__bridge void *)(self);
         
         vccInstance->root.pfnGetDocumentPath    = vccGetDocumentPath;

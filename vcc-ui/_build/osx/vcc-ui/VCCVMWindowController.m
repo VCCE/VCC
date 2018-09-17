@@ -69,11 +69,10 @@
         if ( vccInstance != NULL )
         {
             vccUpdateUI(vccInstance);
-            [[self document] updateDocumentDirtyStatus];
         }
     }
 }
-    
+
 - (void)awakeFromNib
 {
     // hide the tool bar initially

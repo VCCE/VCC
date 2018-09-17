@@ -90,11 +90,11 @@ void thrFrameWait(throttle_t * pThrottle)
 	//
     xtime_t targetTime = pThrottle->StartTime + dNSPerFrame;
     xtime_t currentTime = xTimeGetNanoseconds();
-	while ( currentTime < targetTime )
+	while ( targetTime > currentTime )
 	{
-        //int wait = (int)((targetTime-currentTime)/1000000);
+        uint64_t wait = (targetTime-currentTime);
         
-		sysSleep(0);
+		sysNanoSleep(wait/10);
         
         currentTime = xTimeGetNanoseconds();
 	}
