@@ -86,6 +86,7 @@
 {
     if ( [self shouldOpenDocument] )
     {
+#if false
         // Get the recent documents
         NSDocumentController * controller = [NSDocumentController sharedDocumentController];
         NSArray * documents = [controller recentDocumentURLs];
@@ -93,7 +94,7 @@
         // If there is a recent document, try to open it.
         if ([documents count] > 0)
         {
-            int documentIndex = (int)[documents count]-1;
+            int documentIndex = 0; //(int)[documents count]-1;
             [controller openDocumentWithContentsOfURL:[documents objectAtIndex:documentIndex]
                                               display:YES
                                     completionHandler:^(NSDocument * _Nullable document, BOOL documentWasAlreadyOpen, NSError * _Nullable error)
@@ -112,6 +113,7 @@
             
             return NO;
         }
+#endif
         
         return YES;
     }
@@ -137,6 +139,8 @@
                  if ( error == nil )
                  {
                      NSLog(@"Document opened successfully : %@",[document displayName]);
+                     
+                     [controller noteNewRecentDocument:document];
                  }
                  else
                  {
