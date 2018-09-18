@@ -138,7 +138,6 @@ typedef struct screen_t
     
     int                 VresIndex;          // unsigned char
     
-    int                 ColorInvert;
     int                 BlinkState;
     
     // TODO: put in frame latch struct (all?)
