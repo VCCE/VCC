@@ -171,10 +171,16 @@ result_t vccConfigApply(vccinstance_t * pInstance)
     }
     else
     {
-        emuDevLog(&pInstance->root.device, "Error loading pak: %s", pInstance->run.pModulePath);
+        if ( pInstance->run.pModulePath != NULL )
+        {
+            emuDevLog(&pInstance->root.device, "Error loading pak: %s", pInstance->run.pModulePath);
 
-        /* error loading, clear module path */
-        vccLoadPak(pInstance, NULL);
+            /* error loading, clear module path */
+            vccLoadPak(pInstance, NULL);
+        }
+        else{
+            errResult = XERROR_NONE;
+        }
     }
     
     return errResult;
@@ -319,8 +325,6 @@ result_t vccLoadPak(vccinstance_t * pInstance, const char * pPathname)
      */
 	if ( pInstance != NULL )
 	{
-        errResult = XERROR_NONE;
-        
 		// lock the Emu thread
 		vccEmuLock(pInstance);
 		
