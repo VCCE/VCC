@@ -35,6 +35,17 @@
 #include <string.h>
 
 /*************************************************************************************/
+
+#if false
+int isDirectory(const char *path) {
+    struct stat statbuf;
+    if (stat(path, &statbuf) != 0)
+        return 0;
+    return S_ISDIR(statbuf.st_mode);
+}
+#endif
+
+/*************************************************************************************/
 /**
     @param fileTypes Types array terminated with the type COCO_FILE_NONE
  */

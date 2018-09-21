@@ -834,7 +834,7 @@ bool cc3InstallCPU(coco3_t * pCoco3)
             
             strcpy(path,"");
             
-            if ( emuDevGetAppPath(&pCoco3->machine.device, &pAppPath) == XERROR_NONE )
+            if ( sysGetAppPath(&pAppPath) == XERROR_NONE )
             {
                 strcpy(path,pAppPath);
                 

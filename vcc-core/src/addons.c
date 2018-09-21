@@ -141,7 +141,7 @@ result_t aomEmuDevCreateMenu(emudevice_t * pEmuDevice)
 		// create menu
 		pAddOns->device.hMenu = menuCreate("Add-on 'Mod' devices");
 		
-		menuAddItem(pAddOns->device.hMenu,"Add",	(pAddOns->device.iCommandID<<16) | ADDONMGR_COMMAND_ADD);
+		menuAddItem(pAddOns->device.hMenu,"Add", EMUDEV_UICOMMAND_CREATE(&pAddOns->device,ADDONMGR_COMMAND_ADD));
 	}
 	
 	return errResult;

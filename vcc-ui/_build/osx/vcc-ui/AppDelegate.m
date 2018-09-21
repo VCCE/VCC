@@ -43,6 +43,9 @@
 {
     bool launched;      // app has launched
     bool docOpened;     // a document has been opened
+    
+    NSMutableArray *    embeddedPlugins;
+    //NSMutableArray *    embeddedRoms;
 }
 @end
 
@@ -186,11 +189,13 @@
     NSArray * args = [[NSProcessInfo processInfo] arguments];
     bool launchDocument = false;
     NSString * documentPath = NULL;
-    NSString * pakPath = NULL;
+//    NSString * pakPath = NULL;
     
     for (int i=1; i<[args count]; i++)
     {
         NSString * argument = [args objectAtIndex:i];
+        
+        // look for parameters
         if ( [argument characterAtIndex:0] == '-' )
         {
             // skip automatically included arguments from Xcode
@@ -199,6 +204,7 @@
                 i++;
                 continue;
             }
+#if false // for when we add any parameters...
             else
             {
                 // process option
@@ -214,6 +220,7 @@
                     break;
                 }
             }
+#endif
         }
         else
         {

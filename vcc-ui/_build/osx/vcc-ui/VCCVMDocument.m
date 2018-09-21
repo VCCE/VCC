@@ -143,28 +143,6 @@ result_t vccGetDocumentPath(emudevice_t * pEmuDev, char ** ppPath)
     return result;
 }
 
-/**
-    Get the path to the app for loading internal modules
- */
-result_t vccGetAppPath(emudevice_t * pEmuDev, char ** ppPath)
-{
-    result_t result = XERROR_GENERIC;
-    VCCVMDocument * document = (__bridge VCCVMDocument *)pEmuDev->pRoot->pRootObject;
-    
-    if (    pEmuDev != NULL
-        && ppPath != NULL
-        && document != NULL
-        )
-    {
-        NSString * str = [[NSBundle mainBundle].bundlePath stringByDeletingLastPathComponent];
-        const char * pstr = [str cStringUsingEncoding:NSUTF8StringEncoding];
-        *ppPath = strdup(pstr);
-        result = XERROR_NONE;
-    }
-    
-    return result;
-}
-
 result_t vccLog(emudevice_t * pEmuDev, const char * pMessage)
 {
     result_t result = XERROR_GENERIC;
@@ -217,7 +195,6 @@ result_t vccLog(emudevice_t * pEmuDev, const char * pMessage)
         vccInstance->root.pRootObject = (__bridge void *)(self);
         
         vccInstance->root.pfnGetDocumentPath    = vccGetDocumentPath;
-        vccInstance->root.pfnGetAppPath         = vccGetAppPath;
         vccInstance->root.pfnLog                = vccLog;
 
         return true;

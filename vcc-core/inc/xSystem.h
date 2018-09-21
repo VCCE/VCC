@@ -20,6 +20,36 @@
 #define xSystem_h
 
 #include "xTypes.h"
+#include "slinklist.h"
+
+typedef struct filelist_t filelist_t;
+
+/**
+ Folder directory list
+ */
+typedef struct fileentry_t
+{
+    slink_t link;
+    
+    char * name;
+    
+    filelist_t * parent;
+    bool isFolder;
+    filelist_t * contents;  // if a directory
+    
+    char * UserDesc;
+    int userType;
+} fileentry_t;
+
+/**
+ Linked list of fileentry_t
+ */
+typedef struct filelist_t
+{
+    slinklist_t list;
+    
+    char * path;
+} filelist_t;
 
 #ifdef __cplusplus
 extern "C"
@@ -33,7 +63,16 @@ extern "C"
 
 	void sysShowError(const char * pcszText);
 
-	char * sysGetPathResources(char * filename, char * pDst, size_t sizeDst);
+    result_t sysGetAppPath(char ** ppPath);
+    result_t sysGetResourcePath(char ** ppPath);
+    result_t sysGetPluginPath(char ** ppPath);
+	char * sysGetPathForResource(char * filename, char * pDst, size_t sizeDst);
+
+    filelist_t * sysFileListCreate(void);
+    filelist_t * sysFileListGetFolderContents(const char * path, bool includeSubFolders);
+    void sysFileListDestroy(filelist_t * fileList);
+    fileentry_t * sysFileListEntryCopy(fileentry_t * fileEntry);
+    void sysFileListEntryDestroy(fileentry_t * fileEntry);
 
     void sysSetPreference(const char * key, const char * value);
     const char * sysGetPreference(const char * key);
