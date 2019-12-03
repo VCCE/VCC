@@ -150,7 +150,7 @@ keytranslationentry_t keyTranslationsCoCo[] =
 
 	{ DIK_RETURN,     0,             64,     0,     0,    0 }, //   ENTER
 	{ DIK_NUMPAD7,    0,             64,     1,     0,    0 }, //   HOME (CLEAR)
-	{ DIK_NUMPAD1,    0,             64,     2,     0,    0 }, //   ESCAPE (BREAK)
+	{ DIK_NUMPAD1,     0,             64,     2,     0,    0 }, //   ESCAPE (BREAK)
 	{ DIK_F1,         0,             64,     5,     0,    0 }, //   F1
 	{ DIK_F2,         0,             64,     6,     0,    0 }, //   F2
 	{ DIK_BACK,       0,              8,     5,     0,    0 }, //   BACKSPACE -> CoCo left arrow
@@ -196,10 +196,10 @@ keytranslationentry_t keyTranslationsCoCo[] =
 	VCC OS-9 Keyboard
 
 	+---------------------------------------------------------------------------------+
-	| [  ][F1][F2][  ][  ][Rst][RGB][  ][Thr][Pwr][StB][FSc][  ]   [    ][   ][    ]  |
+	| [Esc][F1][F2][  ][  ][Rst][RGB][  ][Thr][Pwr][StB][FSc][  ]  [    ][   ][    ]  |
 	|                                                                                 |
-	| [`][1!][2@][3#][4$][5%][6^][7&][8*][9(][0]][-_][=+][BkSpc]   [    ][Clr][    ]  |
-	| [    ][Qq][Ww][Ee][Rr][Tt][Yy][Uu][Ii][Oo][Pp][[{][]}][\|]   [    ][Esc][    ]  |
+	| [`][1!][2@][3#][4$][5%][6^][7&][8*][9(][0]][-_][=+][BkSpc]   [INST][Clr][    ]  |
+	| [    ][Qq][Ww][Ee][Rr][Tt][Yy][Uu][Ii][Oo][Pp][[{][]}][\|]   [DEL ][EOL][    ]  |
 	| [ Caps][Aa][Ss][Dd][Ff][Gg][Hh][Jj][Kk][Ll][;:]['"][Enter]                      |
 	| [ Shift ][Zz][Xx][Cc][Vv][Bb][Nn][Mm][,<][.>][/?][ Shift ]         [UpA]        |
 	| [Cntl][   ][Alt][       Space       ][Alt][   ][   ][Cntl]   [LftA][DnA][RgtA]  |
@@ -284,7 +284,12 @@ keytranslationentry_t keyTranslationsNatural[] =
 
 	{ DIK_RETURN,     0,             64,     0,     0,    0 }, //   ENTER
 	{ DIK_NUMPAD7,    0,             64,     1,     0,    0 }, //   HOME (CLEAR)
-	{ DIK_NUMPAD1,    0,             64,     2,     0,    0 }, //   ESCAPE (BREAK)
+	{ DIK_ESCAPE,     0,             64,     2,     0,    0 }, //   ESCAPE (BREAK)
+	{ DIK_NUMPAD1,    0,             64,     7,     8,    6 }, //   END OF LINE (SHIFT)(RIGHT)
+	{ DIK_NUMPADPERIOD, 0,           64,     4,     8,    5 }, //   DELETE (CTRL)(LEFT)
+	{ DIK_NUMPAD0,    0,             64,     4,     8,    6 }, //   INSERT (CTRL)(RIGHT)
+	{ DIK_NUMPAD9,    0,             64,     7,     8,    3 }, //   PAGEUP (SHFT)(UP)
+	{ DIK_NUMPAD3,    0,             64,     7,     8,    4 }, //   PAGEDOWN (SHFT)(DOWN)
 	{ DIK_F1,         0,             64,     5,     0,    0 }, //   F1
 	{ DIK_F2,         0,             64,     6,     0,    0 }, //   F2
 	{ DIK_BACK,       0,              8,     5,     0,    0 }, //   BACKSPACE -> CoCo left arrow
