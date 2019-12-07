@@ -19,7 +19,7 @@
     <SccLocalPath />
     <ProjectGuid>{95713490-9812-4348-9E5E-818F736A271A}</ProjectGuid>
     <ProjectName>superide</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" Label="Configuration">

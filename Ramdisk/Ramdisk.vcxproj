@@ -15,7 +15,7 @@
     <SccLocalPath />
     <ProjectGuid>{23D3931C-364B-45E2-B58C-9B3FBC584C0F}</ProjectGuid>
     <ProjectName>ramdisk</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
