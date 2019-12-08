@@ -36,7 +36,6 @@
 void InvalidInsHandler(cpu_t * pCPU);
 void DivbyZero(cpu_t * pCPU);
 void ErrorVector(cpu_t * pCPU);
-int performDivQ(cpu_t * pCPU,short divisor);
 
 /********************************************************************************/
 
@@ -2539,16 +2538,9 @@ case	Page3:
 		break;
 
 		case DIVQ_M: //118E 6309
-            if (performDivQ(pCPU,(short)IMMADDRESS(p6309,p6309->PC_REG)))
-            {
-                p6309->cpu.CycleCounter+=36;
-                p6309->PC_REG += 2; //PC_REG+2 + 2 more for a total of 4
-            }
-            else
-            {
-                p6309->cpu.CycleCounter+=17;
-            }
-            break;
+				assert(0);
+			//WriteLog("Hitting UNEMULATED INS DIVQ_M",TOCONS);
+			p6309->cpu.CycleCounter+=36;
 		break;
 
 		case MULD_M: //118F Phase 5 6309
@@ -2661,15 +2653,9 @@ case	Page3:
 		break;
 
 		case DIVQ_D: //119E 6309
-            if (performDivQ(pCPU,cpuMemRead16(&p6309->cpu,DPADDRESS(p6309,p6309->PC_REG))))
-            {
-                p6309->cpu.CycleCounter += 35;
-                p6309->PC_REG += 1;
-            }
-            else
-            {
-                p6309->cpu.CycleCounter += 17;
-            }
+				assert(0);
+			//WriteLog("Hitting UNEMULATED INS DIVQ_D",TOCONS);
+			p6309->cpu.CycleCounter+=p6309->InsCycles[p6309->md[NATIVE6309]][M3635];
 		break;
 
 		case MULD_D: //119F 6309 02292008
@@ -2780,14 +2766,9 @@ case	Page3:
 		break;
 
 		case DIVQ_X: //11AE 6309
-            if (performDivQ(pCPU,cpuMemRead16(&p6309->cpu,cpuMemRead16(pCPU,p6309->PC_REG++))))
-            {
-                p6309->cpu.CycleCounter += 36;
-            }
-            else
-            {
-                p6309->cpu.CycleCounter += 17;
-            }
+				assert(0);
+			//WriteLog("Hitting DIVQ_X",TOCONS);
+			p6309->cpu.CycleCounter+=36;
 		break;
 
 		case MULD_X: //11AF 6309 CHECK
@@ -2906,16 +2887,17 @@ case	Page3:
 		break;
 
 		case DIVQ_E: //11BE Phase 5 6309 CHECK
-            temp16 = IMMADDRESS(p6309,p6309->PC_REG);
-            if (performDivQ(pCPU,cpuMemRead16(pCPU,temp16)))
-            {
-                p6309->cpu.CycleCounter += 37;
-                p6309->PC_REG += 2;
-            }
-            else
-            {
-                p6309->cpu.CycleCounter += 17;
-            }
+			postword=cpuMemRead16(&p6309->cpu,IMMADDRESS(p6309,p6309->PC_REG));
+			temp32=p6309->Q_REG;
+			p6309->W_REG=temp32/(postword);
+			p6309->D_REG=temp32%(postword);
+			p6309->cc[N] = NTEST16(p6309->W_REG);
+			p6309->cc[Z] = ZTEST(p6309->W_REG);
+			p6309->cc[C] = p6309->W_REG&1;
+			p6309->cc[V] =1;
+			//NOT DONE
+			p6309->PC_REG+=2;
+			p6309->cpu.CycleCounter+=p6309->InsCycles[p6309->md[NATIVE6309]][M3726];
 		break;
 
 		case MULD_E: //11BF 6309
@@ -5583,47 +5565,6 @@ XAPI cpu_t * vcccpuModuleCreate()
     }
     
     return NULL;
-}
-
-int performDivQ(cpu_t * pCPU,short divisor)
-{
-    cpu6309_t * p6309 = (cpu6309_t *)pCPU;
-    int divOkay = 1;    //true
-    if(divisor != 0)
-    {
-        int stemp32 = p6309->Q_REG;
-        int stempW = stemp32 / divisor;
-        if(stempW > 0xFFFF || stempW < SHRT_MIN)
-        {
-            //overflow, quotient is larger then can be stored in 16 bits
-            //registers remain untouched, set flags accordingly
-            p6309->cc[V] = 1;
-            p6309->cc[N] = 0;
-            p6309->cc[Z] = 0;
-            p6309->cc[C] = 0;
-        }
-        else
-        {
-            p6309->W_REG = stempW;
-            p6309->D_REG = stemp32 % divisor;
-            p6309->cc[N] = p6309->W_REG >> 15;    //set to bit 15
-            p6309->cc[Z] = ZTEST(p6309->W_REG);
-            p6309->cc[C] = p6309->W_REG & 1;
-            
-            //check for overflow, quotient can't be represented by signed 16 bit value
-            p6309->cc[V] = stempW > SHRT_MAX;
-            if(p6309->cc[V])
-            {
-                p6309->cc[N] = 1;
-            }
-        }
-    }
-    else
-    {
-        divOkay = 0;
-        DivbyZero(pCPU);
-    }
-    return divOkay;
 }
 
 /**************************************************************************/
