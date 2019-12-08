@@ -25,7 +25,7 @@ The VCC Developement Team.
 
 hd6309.c, hd6309defs.h
 
-See The_6309_Book.pdf or 6x09_Instruction_Sets.pdf for instructions information. 
+See The_6309_Book.pdf for instructions information. 
 See [Socks 6309][sock6309] page for instructions, timings, and byte value.
 
 | Instruction   | Status	    | Notes	                                            |
