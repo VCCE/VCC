@@ -485,9 +485,8 @@ result_t cc3EmuDevGetStatus(emudevice_t * pEmuDev, char * pszText, size_t szText
         )
     {
         char temp[256];
-        float rate = cc3GetCurrentCpuFrequency(pCoco3);
-        
-        snprintf(temp,sizeof(temp)-1,"%s-%0.2fMHz (R:%d/O:%d)",pCoco3->machine.pCPU->device.Name,rate,pCoco3->pGIME->CpuRate,pCoco3->confCpuOverClock);
+
+        snprintf(temp,sizeof(temp)-1,"%s-%0.2fMHz (R:%d/O:%d)",pCoco3->machine.pCPU->device.Name,cc3GetCurrentCpuFrequency(pCoco3),pCoco3->pGIME->CpuRate,pCoco3->confCpuOverClock);
         
         strncat(pszText,temp,szText-strlen(pszText));
         
