@@ -541,7 +541,7 @@ int vccEmuLoop(void * pParam)
 					/* copy current video buffer dimmed/gray */
 					//cc3CopyGrayFrame(pInstance->pCoco3);
 					
-					sysNanoSleep(1000000);
+					sysSleep(1);
 				break;
 					
                 // emulator is powered off
@@ -549,7 +549,7 @@ int vccEmuLoop(void * pParam)
 					/* off state - leaves video frame static */
 					screenStatic(pInstance->pCoco3->pScreen);
 					
-					sysNanoSleep(1000000);
+					sysSleep(1);
 				break;
 					
 				default:
@@ -623,8 +623,6 @@ bool vccCommandValidate(vccinstance_t * pInstance, int32_t iCommand, int32_t * p
 	}
 	else 
 	{
-        vccEmuLock(pInstance);
-        
 		iCmdID		= EMUDEV_UICOMMAND_GETDEVID(iCommand);		// device specific commands for menu items created
 		iCmdCommand	= EMUDEV_UICOMMAND_GETDEVCMD(iCommand);		// emulator commands as defined in Vcc.h
 		
@@ -647,8 +645,6 @@ bool vccCommandValidate(vccinstance_t * pInstance, int32_t iCommand, int32_t * p
         {
             emuDevLog(&pInstance->root.device, "vccCommandValidate - Unable to find device for command: %d (%d/%d)",iCommand,iCmdID,iCmdCommand);
         }
-        
-        vccEmuUnlock(pInstance);
 	}
 	
 	return bValid;
@@ -669,8 +665,6 @@ result_t vccCommand(vccinstance_t * pInstance, int32_t iCommand)
 	
 	if ( pInstance != NULL )
 	{
-        vccEmuLock(pInstance);
-        
 		iCmdID		= EMUDEV_UICOMMAND_GETDEVID(iCommand);		// device specific commands for menu items created
 		iCmdCommand	= EMUDEV_UICOMMAND_GETDEVCMD(iCommand);		// emulator commands as defined in Vcc.h
 		
@@ -694,8 +688,6 @@ result_t vccCommand(vccinstance_t * pInstance, int32_t iCommand)
 				errResult = (*pEmuDevice->pfnCommand)(pEmuDevice,iCmdCommand,0);
 			}
 		}
-        
-        vccEmuUnlock(pInstance);
 	}
 	
 	return errResult;
@@ -858,7 +850,7 @@ result_t vccEmuDevDestroy(emudevice_t * pEmuDevice)
                 && pInstance->EmuThreadState != emuThreadQuit
                )
 		{
-			sysNanoSleep(1000000);
+			sysSleep(1);
 		}
 		
 		/*

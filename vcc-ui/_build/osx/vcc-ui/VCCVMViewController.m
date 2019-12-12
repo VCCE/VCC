@@ -308,9 +308,6 @@ void updateInterfaceCB(vccinstance_t * pInstance)
         {
             menuDestroy(hMenu);
         }
-        
-        VCCVMDocument * document = (__bridge VCCVMDocument *)pInstance->root.pRootObject;
-        [document updateDocumentDirtyStatus];
     }
 }
 
