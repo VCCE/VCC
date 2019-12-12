@@ -293,7 +293,7 @@ bool cc3EmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
                 bValid = true;
                 if ( piState != NULL )
                 {
-                    *piState = ((pCoco3->confCpuType == eCPUType_MC6809) ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+                    *piState = (pCoco3->confCpuType == eCPUType_MC6809);
                 }
                 break;
                 
@@ -301,7 +301,7 @@ bool cc3EmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
                 bValid = true;
                 if ( piState != NULL )
                 {
-                    *piState = ((pCoco3->confCpuType == eCPUType_HD6309) ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+                    *piState = (pCoco3->confCpuType == eCPUType_HD6309);
                 }
                 break;
                 
