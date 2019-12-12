@@ -134,14 +134,16 @@ result_t confSetPath(config_t * config, const char * section, const char * key, 
     
     assert(config != NULL);
     
-    if ( config != NULL )
+    if ( pathname != NULL )
     {
         char * relPath = NULL;
-        const char * usePath = pathname;
+        const char * usePath = NULL;
         
-        if (    !absolute
-             && pathname != NULL
-            )
+        if ( absolute )
+        {
+            usePath = pathname;
+        }
+        else
         {
             pathGetRelativePath(config->documentDirectory, pathname, &relPath);
             usePath = relPath;

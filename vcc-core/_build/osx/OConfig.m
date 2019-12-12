@@ -244,40 +244,29 @@ result_t _confSetPath(confhandle_t hConf, const char * section, const char * key
     if (    hConf != NULL
          && section != NULL
          && key != NULL
-         //&& pathname != NULL
+         && pathname != NULL
         )
     {
         errResult    = XERROR_NONE;
         
         OConfig *				pConfig		= (__bridge OConfig *)hConf;
+        NSURL *                 url         = [NSURL URLWithString:[NSString stringWithUTF8String:pathname]];
         NSString *				pStrSection	= [NSString stringWithCString:section encoding:NSASCIIStringEncoding];
         NSString *				pStrKey		= [NSString stringWithCString:key encoding:NSASCIIStringEncoding];
-        NSURL *                 url         = nil;
-        NSString *				pStrValue	= nil;
+        NSString *				pStrValue	= [url path];
+        NSMutableDictionary *	section;
         
-        if ( pathname != nil )
+        if ( url == nil )
         {
-            url = [NSURL URLWithString:[NSString stringWithUTF8String:pathname]];
-            if ( url == nil )
-            {
-                pStrValue = [NSString stringWithUTF8String:pathname];
-            }
-            else
-            {
-                pStrValue    = [url path];
-            }
+            pStrValue = [NSString stringWithUTF8String:pathname];
         }
         
-        NSMutableDictionary * section = addSection(pConfig,pStrSection);
+        section = addSection(pConfig,pStrSection);
         assert(section != nil);
         
         if ( pStrValue != nil )
         {
             [section setObject:pStrValue forKey:pStrKey];
-        }
-        else
-        {
-            [section removeObjectForKey:pStrKey];
         }
     }
     
