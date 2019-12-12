@@ -285,8 +285,7 @@ result_t _confGetPath(confhandle_t hConf, const char * section, const char * key
 	NSString *				pStrValue;
 	NSMutableDictionary *	dict;
 	NSURL *					url		    = nil;
-    NSString *              path        = nil;
-    
+	
 	dict = getSection(pConfig,pStrSection);
 	if ( dict != nil )
 	{
@@ -303,18 +302,7 @@ result_t _confGetPath(confhandle_t hConf, const char * section, const char * key
 			 && url != nil
 			)
 		{
-            path = [url path];
-        }
-        else
-        {
-            path = pStrValue;
-        }
-        
-        if (   outPathname != nil
-            && path != nil
-            )
-        {
-            const char * s = [path cStringUsingEncoding:NSUTF8StringEncoding];
+            const char * s = [[url path] cStringUsingEncoding:NSUTF8StringEncoding];
 			(*outPathname) = strdup(s);
 		
 			errResult	= XERROR_NONE;

@@ -65,9 +65,7 @@ void cpuMemWrite16(cpu_t * pCPU, uint16_t data, int addr)
 {
     ASSERT_CPU(pCPU);
 
-#if (defined _DEBUG)
     assert(addr >= 0 && addr <= 0xFFFE);
-#endif
     
 	(*pCPU->mmu->pMemWrite8)(&pCPU->mmu->device, ((data >> 8) & 0xFF), addr);
 	(*pCPU->mmu->pMemWrite8)(&pCPU->mmu->device, ((data >> 0) & 0xFF), addr + 1);
