@@ -93,8 +93,7 @@
         // If there is a recent document, try to open it.
         if ([documents count] > 0)
         {
-            int documentIndex = (int)[documents count]-1;
-            [controller openDocumentWithContentsOfURL:[documents objectAtIndex:documentIndex]
+            [controller openDocumentWithContentsOfURL:[documents objectAtIndex:0]
                                               display:YES
                                     completionHandler:^(NSDocument * _Nullable document, BOOL documentWasAlreadyOpen, NSError * _Nullable error)
              {

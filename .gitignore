@@ -29,13 +29,6 @@ Debug
 Release
 All
 
+coco3.rom
+disk11.rom
 _build/osx/vcc.xcworkspace/xcuserdata
-vcc-cpu/vccx-cpu-hd6309/_build/osx/vcc-cpu-hd6309.xcodeproj/xcuserdata
-vcc-cpu/vccx-cpu-mc6809/_build/osx/vcc-cpu-mc6809.xcodeproj/xcuserdata
-vcc-paks/vcc-pak-mpi/_build/osx/vcc-pak-mpi.xcodeproj/xcuserdata
-vcc-paks/vcc-pak-fd502/_build/osx/vcc-pak-fd502.xcodeproj/xcuserdata
-vcc-ui/_build/osx/vcc.xcodeproj/xcuserdata
-vcc-paks/vcc-pak-orch90/_build/osx/vcc-pak-orch90.xcodeproj/xcuserdata
-vcc-core/_build/osx/vccx-core/vcc-core.xcodeproj/xcuserdata
-vcc-paks/vcc-pak-superide/_build/osx/vcc-pak-superide.xcodeproj/xcuserdata
-vcc-paks/vcc-pak-ramdisk/_build/osx/vcc-pak-rampak.xcodeproj/xcuserdata
