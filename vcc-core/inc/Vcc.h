@@ -52,6 +52,7 @@ typedef enum emuthreadstate_e
 */
 #define VCC_CONF_SECTION			"VCC"
 
+#define VCC_CONF_SETTING_LASTPATH	"LastPath"
 #define VCC_CONF_SETTING_PAK		"Pak"
 
 #define CARTRIDGE_MENU				"Cartridge"
@@ -105,6 +106,7 @@ struct vccinstance_t
 	 */
 	config_t *			    config;
     
+	char *			        pLastPath;      /**< last path used to open CART - move to Coco3? */
 	char *  				pModulePath;    /**< Pathname to CART - should be in Coco3 */
 	
 	/* 
@@ -161,6 +163,7 @@ extern "C"
 	XAPI result_t		vccSave(vccinstance_t * pInstance, const char * pathname, const char * refPath);
 	XAPI result_t		vccConfigApply(vccinstance_t * pInstance);
 	
+	XAPI void			vccSetLastPath(vccinstance_t * pInstance, const char * pPathname);
 	XAPI void			vccSetModulePath(vccinstance_t * pInstance, const char * pPathname);
 
 #ifdef __cplusplus

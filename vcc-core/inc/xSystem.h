@@ -35,9 +35,6 @@ extern "C"
 
 	char * sysGetPathResources(char * filename, char * pDst, size_t sizeDst);
 
-    void sysSetPreference(const char * key, const char * value);
-    const char * sysGetPreference(const char * key);
-    
 #ifdef __cplusplus
 }
 #endif

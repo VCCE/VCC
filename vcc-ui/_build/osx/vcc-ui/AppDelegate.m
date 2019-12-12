@@ -77,6 +77,12 @@
     // Insert code here to tear down your application
 }
 
+// check whether the opening of a document should be skipped
+-(bool)shouldOpenDocument
+{
+    return launched || !docOpened;
+}
+
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag
 {
     return [self shouldOpenDocument];
@@ -151,16 +157,6 @@
 }
 
 /******************************************************************************************************/
-
-#pragma mark -
-#pragma mark --- Internal ---
-
-// check whether the opening of a document should be skipped
--(bool)shouldOpenDocument
-{
-    return launched || !docOpened;
-}
-
 /**
      Command line arguments:
  

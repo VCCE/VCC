@@ -78,31 +78,5 @@ char * sysGetPathResources(char * filename, char * pDst, size_t sizeDst)
     return NULL;
 }
 
-void sysSetPreference(const char * key, const char * value)
-{
-    NSString * nsKey = [[NSString alloc] initWithUTF8String:key];
-    NSString * nsValue = [[NSString alloc] initWithUTF8String:value];
-
-    NSUserDefaults * defaults= [NSUserDefaults standardUserDefaults];
-    [defaults setValue:nsValue forKey:nsKey];
-}
-
-const char * sysGetPreference(const char * key)
-{
-    NSString * nsKey = [[NSString alloc] initWithUTF8String:key];
-    NSUserDefaults *defaults= [NSUserDefaults standardUserDefaults];
-    if ( [[[defaults dictionaryRepresentation] allKeys] containsObject:nsKey] )
-    {
-        NSString * nsValue = [NSUserDefaults valueForKey:nsKey];
-        if ( nsValue != NULL )
-        {
-            return [nsValue cStringUsingEncoding:NSUTF8StringEncoding];
-        }
-    }
-
-    return NULL;
-}
-
-
 /*************************************************************************************/
 
