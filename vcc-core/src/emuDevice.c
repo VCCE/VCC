@@ -702,6 +702,22 @@ XAPI result_t emuDevGetDocumentPath(emudevice_t * pEmuDevice, char ** ppPath)
 
 /**
  */
+XAPI result_t emuDevGetAppPath(emudevice_t * pEmuDevice, char ** ppPath)
+{
+    result_t result = XERROR_GENERIC;
+    
+    emurootdevice_t * pRoot = emuDevGetRootDevice(pEmuDevice);
+    
+    if ( pRoot && pRoot->pfnGetAppPath )
+    {
+        result = pRoot->pfnGetAppPath(&pRoot->device,ppPath);
+    }
+    
+    return result;
+}
+
+/**
+ */
 result_t _emuDevLog(emurootdevice_t * pRoot, const char * format, va_list arglist)
 {
     assert(pRoot->pfnLog != NULL);

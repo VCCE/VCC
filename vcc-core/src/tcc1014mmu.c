@@ -123,7 +123,7 @@ void mmuInit(gime_t * pGIME, ramconfig_e RamConfig, const char * pPathname)
     {
         // try from the app's resources folder
         char temp[PATH_MAX];
-        sysGetPathForResource("coco3.rom",temp,sizeof(temp));
+        sysGetPathResources("coco3.rom",temp,sizeof(temp));
         romLoadResult = romLoad(&pGIME->rom,temp);
     }
     if ( romLoadResult == XERROR_NONE )

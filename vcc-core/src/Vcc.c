@@ -960,7 +960,7 @@ result_t vccEmuDevCreateMenu(emudevice_t * pEmuDev)
 		menuAddSubMenu(pInstance->root.device.hMenu,hCartMenu);
         
 		// Load Pak menu item
-		menuAddItem(hCartMenu,"Load", EMUDEV_UICOMMAND_CREATE(&pInstance->root.device,VCC_COMMAND_LOADCART));
+		menuAddItem(hCartMenu,"Load", (pInstance->root.device.iCommandID<<16) | VCC_COMMAND_LOADCART);
 		
 		// set Eject menu item to have cart name
 		strcpy(Temp,"Eject:");
@@ -969,7 +969,7 @@ result_t vccEmuDevCreateMenu(emudevice_t * pEmuDev)
 			pathGetFilename(pInstance->run.pModulePath,Name,sizeof(Name));
 			sprintf(Temp,"Eject: %s",Name);
 		}
-		menuAddItem(hCartMenu, Temp, EMUDEV_UICOMMAND_CREATE(&pInstance->root.device,VCC_COMMAND_EJECTCART));
+		menuAddItem(hCartMenu, Temp, (pInstance->root.device.iCommandID<<16) | VCC_COMMAND_EJECTCART);
 	}
 	
 	return errResult;
@@ -1163,89 +1163,6 @@ result_t vccEmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
 #pragma mark --- Init / Termination ---
 
 /*********************************************************************************/
-
-/**
-    Scan the plug-in folder and set CPU, PAK, and MODS module lists
- */
-void vccGetPluginLists(vccinstance_t * pInstance)
-{
-    // get list of built in modules to choose from
-    char * path = NULL;
-    sysGetPluginPath(&path);
-    if ( path != NULL )
-    {
-        filelist_t * fileList = NULL;
-        
-        emuDevLog(&pInstance->root.device, "Scanning embedded plug-ins in folder: %s", path);
-        fileList = sysFileListGetFolderContents(path,false);
-        if ( fileList != NULL)
-        {
-            pInstance->cpuFileList = sysFileListCreate();
-            pInstance->pakFileList = sysFileListCreate();
-
-            slink_t * entry = fileList->list.head;
-            while (entry != NULL)
-            {
-                fileentry_t * file = (fileentry_t *)entry;
-                
-                if ( !file->isFolder )
-                {
-                    char * path = NULL;
-                    pathCombine(fileList->path, file->name, &path);
-                    filetype_e type = sysGetFileType(path);
-                    
-                    assert(false && "need need check instead of sysGetFileType");
-                    
-                    if ( type == COCO_CPU_PLUGIN )
-                    {
-                        fileentry_t * cpuEntry = sysFileListEntryCopy(file);
-                        slinklistAddToTail(&pInstance->cpuFileList->list, &cpuEntry->link);
-                    }
-                    else if ( type == COCO_PAK_PLUGIN )
-                    {
-                        fileentry_t * cpuEntry = sysFileListEntryCopy(file);
-                        slinklistAddToTail(&pInstance->pakFileList->list, &cpuEntry->link);
-                    }
-                    else if ( type == COCO_PAK_ROM )
-                    {
-                        // found a ROM
-                    }
-
-                    free(path);
-                }
-                
-                entry = entry->next;
-            }
-        }
-        
-        
-        slink_t * entry;
-        
-        entry = pInstance->cpuFileList->list.head;
-        while (entry != NULL)
-        {
-            fileentry_t * file = (fileentry_t *)entry;
-
-            emuDevLog(&pInstance->root.device, "Found CPU module : %s", file->name);
-            
-            entry++;
-        }
-        
-        entry = pInstance->pakFileList->list.head;
-        while (entry != NULL)
-        {
-            fileentry_t * file = (fileentry_t *)entry;
-            
-            emuDevLog(&pInstance->root.device, "Found Pak module : %s", file->name);
-            
-            entry++;
-        }
-
-        sysFileListDestroy(fileList);
-    }
-}
-
-/*********************************************************************************/
 /**
     Initialize / start VCC
 
@@ -1301,10 +1218,6 @@ vccinstance_t * vccCreate(const char * pcszName)
 
         vccSettingsCopy(&pInstance->conf, &pInstance->run);
 
-        // Get lists of embedded plugins
-        //vccGetPluginLists(pInstance);
-
-        // initialize all of the emulated devices
         // dummy while
         while ( true)
         {

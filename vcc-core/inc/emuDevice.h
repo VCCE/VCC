@@ -180,6 +180,7 @@ typedef struct emurootdevice_t
     
     void *                  pRootObject;                /**< root object (system specific - eg. NSDocument) */
     emudevgetpathfn_t       pfnGetDocumentPath;         /**< Return document save path (root device) */
+    emudevgetpathfn_t       pfnGetAppPath;              /**< Return internal app path (root device) */
     emudevlogfn_t           pfnLog;
     
     slinklist_t             llistEventListeners[eEventCount];
@@ -245,6 +246,7 @@ extern "C"
     XAPI emurootdevice_t *  emuDevGetRootDevice(emudevice_t * pEmuDevice);
     
     XAPI result_t       emuDevGetDocumentPath(emudevice_t * pEmuDevice, char ** ppSavePath);
+    XAPI result_t       emuDevGetAppPath(emudevice_t * pEmuDevice, char ** ppSavePath);
     
     XAPI result_t       emuRootDevAddListener(emurootdevice_t * pRootDevice, emudevice_t * pEmuDevice, event_e type);
     

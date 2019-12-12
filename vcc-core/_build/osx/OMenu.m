@@ -124,6 +124,7 @@ result_t menuAddSubMenu(hmenu_t hMenu, hmenu_t hSubMenu)
 	result_t		errResult	= XERROR_NONE;
 	NSMenu *		pMenu;
 	NSMenu *		pSubMenu;
+	//NSString *	pstrTitle;
 	NSMenuItem *	pSubMenuItem;
 	
 	pMenu = (__bridge NSMenu *)hMenu;

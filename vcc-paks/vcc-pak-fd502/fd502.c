@@ -351,7 +351,7 @@ void fd502Reset(cocopak_t * pPak)
         if ( romLoadResult != XERROR_NONE )
         {
             char temp[PATH_MAX];
-            sysGetPathForResource("disk11.rom",temp,sizeof(temp));
+            sysGetPathResources("disk11.rom",temp,sizeof(temp));
             romLoadResult = romLoad(&pFD502->pak.rom,temp);
             
             if ( romLoadResult != XERROR_NONE )

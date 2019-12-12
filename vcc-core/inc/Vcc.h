@@ -32,7 +32,6 @@
 #include "config.h"
 
 #include "xDebug.h"
-#include "xSystem.h"
 
 /**************************************************/
 /**
@@ -104,10 +103,6 @@ typedef void (*vcccallback_t)(vccinstance_t * pInstance);
 struct vccinstance_t
 {
 	emurootdevice_t			root;
-
-    filelist_t *            cpuFileList;
-    filelist_t *            pakFileList;
-    filelist_t *            romFileList;
 
 	vcccallback_t			pfnUIUpdate;				// Update UI callback
     vcccallback_t           pfnScreenShot;              // Save screen shot
