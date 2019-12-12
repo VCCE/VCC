@@ -31,7 +31,6 @@
 		1382B84D21343DB40019D9B9 /* libvcc-core.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 1382B83421343D5A0019D9B9 /* libvcc-core.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		1382B85C21343DDF0019D9B9 /* libvcc-core.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1382B83421343D5A0019D9B9 /* libvcc-core.dylib */; };
 		1382B85E21343E290019D9B9 /* coco3.rom in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1382B85D21343E290019D9B9 /* coco3.rom */; };
-		139E36AA213E162600FAD595 /* disk11.rom in CopyFiles */ = {isa = PBXBuildFile; fileRef = 139E36A9213E162600FAD595 /* disk11.rom */; };
 		13C625E12063316F00253B1A /* VCCVMWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 13C625E02063316F00253B1A /* VCCVMWindow.m */; };
 		13C625E22063316F00253B1A /* VCCVMWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 13C625E02063316F00253B1A /* VCCVMWindow.m */; };
 		13DD8BC22134C96200E8A6A9 /* libvcc-pak-orch90.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 13DD8BC12134C94B00E8A6A9 /* libvcc-pak-orch90.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
@@ -148,7 +147,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 7;
 			files = (
-				139E36AA213E162600FAD595 /* disk11.rom in CopyFiles */,
 				1382B85E21343E290019D9B9 /* coco3.rom in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -179,6 +177,7 @@
 		131971871BCD73AB005E5779 /* VCCVMWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VCCVMWindowController.h; sourceTree = "<group>"; };
 		131971881BCD73AB005E5779 /* VCCVMWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VCCVMWindowController.m; sourceTree = "<group>"; };
 		131D6D4C21357E6C003552D5 /* vcc-pak-superide.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-pak-superide.xcodeproj"; path = "../../../vcc-paks/vcc-pak-superide/_build/osx/vcc-pak-superide.xcodeproj"; sourceTree = "<group>"; };
+		131D6D5421357F38003552D5 /* vcc-notes.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = "vcc-notes.txt"; path = "../../../vcc-notes.txt"; sourceTree = "<group>"; };
 		131E899D2132284F00A492B9 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		131E899F2132285B00A492B9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		131E89A12132286700A492B9 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = System/Library/Frameworks/CoreServices.framework; sourceTree = SDKROOT; };
@@ -204,13 +203,13 @@
 		1332DC461BA7238800820B5F /* vccxTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = vccxTests.m; sourceTree = "<group>"; };
 		133E00B12059F81B00645A85 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		13441C5120FF55740074B18D /* vcc.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = vcc.entitlements; sourceTree = "<group>"; };
+		135659F02042FB760019E6CE /* vcc-todo.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = "vcc-todo.txt"; path = "../../../vcc-todo.txt"; sourceTree = "<group>"; };
 		1381634D21357BF200E31CB7 /* vcc-cpu-mc6809.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-cpu-mc6809.xcodeproj"; path = "../../../vcc-cpu/vccx-cpu-mc6809/_build/osx/vcc-cpu-mc6809.xcodeproj"; sourceTree = "<group>"; };
 		1381635321357BF900E31CB7 /* vcc-cpu-hd6309.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-cpu-hd6309.xcodeproj"; path = "../../../vcc-cpu/vccx-cpu-hd6309/_build/osx/vcc-cpu-hd6309.xcodeproj"; sourceTree = "<group>"; };
 		1382B82F21343D5A0019D9B9 /* vcc-core.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-core.xcodeproj"; path = "../../../vcc-core/_build/osx/vccx-core/vcc-core.xcodeproj"; sourceTree = "<group>"; };
 		1382B85D21343E290019D9B9 /* coco3.rom */ = {isa = PBXFileReference; lastKnownFileType = file; name = coco3.rom; path = "../../../../vcc-core/res/rom/coco3.rom"; sourceTree = "<group>"; };
 		1386E7CB2134554E00083463 /* vcc-pak-fd502.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-pak-fd502.xcodeproj"; path = "../../../vcc-paks/vcc-pak-fd502/_build/osx/vcc-pak-fd502.xcodeproj"; sourceTree = "<group>"; };
 		1386E7D12134555300083463 /* vcc-pak-mpi.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-pak-mpi.xcodeproj"; path = "../../../vcc-paks/vcc-pak-mpi/_build/osx/vcc-pak-mpi.xcodeproj"; sourceTree = "<group>"; };
-		139E36A9213E162600FAD595 /* disk11.rom */ = {isa = PBXFileReference; lastKnownFileType = file; name = disk11.rom; path = "../../../vcc-paks/vcc-pak-fd502/resources/rom/disk11.rom"; sourceTree = "<group>"; };
 		13C625E02063316F00253B1A /* VCCVMWindow.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VCCVMWindow.m; sourceTree = "<group>"; };
 		13C625E6206331BE00253B1A /* VCCVMWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VCCVMWindow.h; sourceTree = "<group>"; };
 		13DD8BBC2134C94B00E8A6A9 /* vcc-pak-orch90.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "vcc-pak-orch90.xcodeproj"; path = "../../../vcc-paks/vcc-pak-orch90/_build/osx/vcc-pak-orch90.xcodeproj"; sourceTree = "<group>"; };
@@ -266,10 +265,11 @@
 		1332DC1B1BA7238800820B5F = {
 			isa = PBXGroup;
 			children = (
+				131D6D5421357F38003552D5 /* vcc-notes.txt */,
+				135659F02042FB760019E6CE /* vcc-todo.txt */,
 				1332DC261BA7238800820B5F /* vcc-ui */,
 				1332DC431BA7238800820B5F /* vccTests */,
 				139C604F1BA7B9700081BFDD /* vcc-libs */,
-				139E36AB213E163300FAD595 /* res */,
 				13BA30D31BA7C1E00000605D /* Frameworks */,
 				1332DC251BA7238800820B5F /* Products */,
 			);
@@ -395,14 +395,6 @@
 				13E6ED802134C32400C8880E /* vcc-pak-rampak.xcodeproj */,
 			);
 			name = "vcc-libs";
-			sourceTree = "<group>";
-		};
-		139E36AB213E163300FAD595 /* res */ = {
-			isa = PBXGroup;
-			children = (
-				139E36A9213E162600FAD595 /* disk11.rom */,
-			);
-			name = res;
 			sourceTree = "<group>";
 		};
 		13BA30D31BA7C1E00000605D /* Frameworks */ = {
