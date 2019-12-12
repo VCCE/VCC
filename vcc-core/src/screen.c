@@ -822,6 +822,7 @@ void _SetupDisplay(screen_t * pScreen)
     
     gime_t * pGIME = _getGIME(pScreen);
     
+    pScreen->ColorInvert=1;
     pScreen->BlinkState=1;
 
     switch (pGIME->CompatMode)
@@ -910,7 +911,7 @@ void _SetupDisplay(screen_t * pScreen)
         break;
     }
     
-    pScreen->run.artifacts = (pGIME->CC3Vmode & 32)>>5;
+    pScreen->ColorInvert = (pGIME->CC3Vmode & 32)>>5;
     
     pScreen->LinesperScreen = Lpf[pScreen->VresIndex];
     
@@ -2338,16 +2339,16 @@ void screenUpdate(screen_t * pScreen, int dstRow)
                                 case 3:
                                     Pcolor=3;
                                     if ( dstX > 1 )
-                                        dstRowPtr[dstX-1] = Afacts32[pScreen->run.artifacts][3];
+                                        dstRowPtr[dstX-1] = Afacts32[pScreen->ColorInvert][3];
                                     if ( dstX > 0 )
-                                        dstRowPtr[dstX] = Afacts32[pScreen->run.artifacts][3];
+                                        dstRowPtr[dstX] = Afacts32[pScreen->ColorInvert][3];
                                     break;
                                 case 7:
                                     Pcolor=3;
                                     break;
                             } //END Switch
                             
-                            dstRowPtr[dstX+=1] = Afacts32[pScreen->run.artifacts][Pcolor];
+                            dstRowPtr[dstX+=1] = Afacts32[pScreen->ColorInvert][Pcolor];
                             Carry2 = Carry1;
                             Carry1 = Pix;
                         }
@@ -2382,8 +2383,6 @@ void screenUpdate(screen_t * pScreen, int dstRow)
 
                 if (pScreen->run.monitorType == eMonType_CMP)
                 {
-                    // Composite monitor - artifact colours
-                    
                     // TODO: crashes during Mega bug attract mode
                     
                     //Pcolor
@@ -2400,23 +2399,23 @@ void screenUpdate(screen_t * pScreen, int dstRow)
                                 break;
                             case 1:
                             case 5:
-                                Pcolor=(Bit&1)+1;
+                                Pcolor=(Bit &1)+1;
                                 break;
                             case 2:
-                                //Pcolor=(!(Bit &1))+1; Use last color
+                                //    Pcolor=(!(Bit &1))+1; Use last color
                                 break;
                             case 3:
                                 Pcolor=3;
-                                //dstRowPtr[dstX-1] = Afacts32[pScreen->ColorInvert][3];
-                                //dstRowPtr[dstX] = Afacts32[pScreen->ColorInvert][3];
+                                dstRowPtr[dstX-1] = Afacts32[pScreen->ColorInvert][3];
+                                dstRowPtr[dstX] = Afacts32[pScreen->ColorInvert][3];
                                 break;
                             case 7:
                                 Pcolor=3;
                                 break;
                         } //END Switch
                         
-                        dstRowPtr[dstX+=1] = Afacts32[pScreen->run.artifacts][Pcolor];
-                        dstRowPtr[dstX+=1] = Afacts32[pScreen->run.artifacts][Pcolor];
+                        dstRowPtr[dstX+=1] = Afacts32[pScreen->ColorInvert][Pcolor];
+                        dstRowPtr[dstX+=1] = Afacts32[pScreen->ColorInvert][Pcolor];
                         Carry2=Carry1;
                         Carry1=Pix;
                     }
@@ -2437,18 +2436,20 @@ void screenUpdate(screen_t * pScreen, int dstRow)
                                 Pcolor=(Bit &1)+1;
                                 break;
                             case 2:
-                                //Pcolor=(!(Bit &1))+1; Use last color
+                                //    Pcolor=(!(Bit &1))+1; Use last color
                                 break;
                             case 3:
                                 Pcolor=3;
+                                dstRowPtr[dstX-1]=Afacts32[pScreen->ColorInvert][3];
+                                dstRowPtr[dstX]=Afacts32[pScreen->ColorInvert][3];
                                 break;
                             case 7:
                                 Pcolor=3;
                                 break;
                         } //END Switch
                         
-                        dstRowPtr[dstX+=1]=Afacts32[pScreen->run.artifacts][Pcolor];
-                        dstRowPtr[dstX+=1]=Afacts32[pScreen->run.artifacts][Pcolor];
+                        dstRowPtr[dstX+=1]=Afacts32[pScreen->ColorInvert][Pcolor];
+                        dstRowPtr[dstX+=1]=Afacts32[pScreen->ColorInvert][Pcolor];
                         Carry2=Carry1;
                         Carry1=Pix;
                     }
