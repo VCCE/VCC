@@ -52,7 +52,6 @@
 
 #include "coco3.h"
 #include "file.h"
-#include "xstring.h"
 
 #include "xDebug.h"
 
@@ -1393,25 +1392,19 @@ void wd1793UnmountDiskImage(wd1793_t * pWD1793, unsigned char drive)
 #endif
 }
 
-/*********************************************************************/
-
-#pragma mark -
-#pragma mark --- Settings helpers ---
-
-void wd1793SettingsReleaseStorage(wd1793settings_t * settings)
-{
-    for (int x=0; x<NUM_DRIVES; x++)
-    {
-        strfreesafe(settings->disks[x]);
-    }
-}
-
 /********************************************************************************/
 
 #pragma mark -
 #pragma mark --- Config ---
 
 /**********************************************************/
+
+#if 0
+unsigned char wd1793GetTurboMode(wd1793_t * pWD1793)
+{
+    return pWD1793->TurboMode;
+}
+#endif
 
 void wd1793SetTurboMode(wd1793_t * pWD1793, bool enabled)
 {
@@ -1649,16 +1642,6 @@ void wd1793HeartBeat(wd1793_t * pWD1793)
 
 result_t wd1793EmuDevDestroy(emudevice_t * pEmuDevice)
 {
-    wd1793_t *    pWD1793        = (wd1793_t *)pEmuDevice;
-    
-    ASSERT_WD1793(pWD1793);
-    if ( pWD1793 != NULL )
-    {
-        assert(false && "other allocations");
-        
-        wd1793SettingsReleaseStorage(&pWD1793->conf);
-    }
-    
     return XERROR_NONE;
 }
 
@@ -1758,38 +1741,6 @@ void wd1793IOWrite(wd1793_t * pWD1793, unsigned char port, unsigned char data)
 #pragma mark --- emulator device config ---
 
 /********************************************************************************/
-
-bool wd1793EmuDevConfCheckDirty(emudevice_t * pEmuDevice)
-{
-    wd1793_t *    pWD1793   = (wd1793_t *)pEmuDevice;
-    bool          dirty     = false;
-    
-    ASSERT_WD1793(pWD1793);
-    if ( pWD1793 != NULL )
-    {
-        for (int x=0; x<NUM_DRIVES; x++)
-        {
-            const char * p1 = pWD1793->conf.disks[x];
-            const char * p2 = pWD1793->Drive[x].pPathname;
-            
-            // check for difference
-            if (   !(   (p1 == NULL && p2 == NULL)
-                    || (   p1 != NULL && p2 != NULL
-                        && strcmp(p1,p2) == 0
-                        )
-                    )
-                )
-            {
-                dirty = true;
-                break;
-            }
-        }
-    }
-    
-    return dirty;
-}
-
-/********************************************************************************/
 /**
  */
 result_t wd1793EmuDevConfSave(emudevice_t * pEmuDevice, config_t * config)
@@ -1799,19 +1750,15 @@ result_t wd1793EmuDevConfSave(emudevice_t * pEmuDevice, config_t * config)
 	int		    x;
 	char		Temp[256];
 	
-	ASSERT_WD1793(pWD1793);
+	//ASSERT_WD1793(pWD1793);
 	if ( pWD1793 != NULL )
 	{	
 		for (x=0; x<NUM_DRIVES; x++)
 		{
-            // save a copy of this disk's path
-            pWD1793->conf.disks[x] = strreallocsafe(pWD1793->conf.disks[x],pWD1793->Drive[x].pPathname);
-            
-            // save it to the config
-			if ( pWD1793->conf.disks[x] != NULL )
+			if ( pWD1793->Drive[x].pPathname != NULL )
 			{
 				sprintf(Temp,"Drive-%d",x);
-				confSetPath(config,"Disks" ,Temp, pWD1793->conf.disks[x], config->absolutePaths);
+				confSetPath(config,"Disks" ,Temp, pWD1793->Drive[x].pPathname,config->absolutePaths);
 			}
 		}
 
@@ -1829,21 +1776,22 @@ result_t wd1793EmuDevConfLoad(emudevice_t * pEmuDevice, config_t * config)
 	result_t	errResult	= XERROR_INVALID_PARAMETER;
 	wd1793_t *	pWD1793		= (wd1793_t *)pEmuDevice;
 	int		    x;
-	char		Temp[64];
+	char		Temp[256];
+	char *	    pPathname;
 	
 	ASSERT_WD1793(pWD1793);
 	if ( pWD1793 != NULL )
 	{	
 		for (x=0; x<NUM_DRIVES; x++)
 		{
-            // get path from config
+			pPathname = NULL;
 			sprintf(Temp,"Drive-%d",x);
-			confGetPath(config, "Disks", Temp, &pWD1793->conf.disks[x], config->absolutePaths);
-			
-            // mount it
-            if ( pWD1793->conf.disks[x] != NULL )
+			confGetPath(config, "Disks", Temp, &pPathname, config->absolutePaths);
+			if ( pPathname != NULL )
 			{
-				MountDisk(pWD1793, pWD1793->conf.disks[x], x);
+				MountDisk(pWD1793, pPathname, x);
+                
+                free(pPathname);
 			}
 		}
 		
@@ -1869,7 +1817,7 @@ void wd1793Reset(wd1793_t * pWD1793)
     pWD1793->STEPTIME = 15;    // 1 Millisecond = 15.78 Pings
     pWD1793->SETTLETIME = 10;    // CyclestoSettle
     pWD1793->INDEXTIME = (((int)(TOTAL_LINESPERSCREEN/2) * 60)/5);
-
+    
     // reset CPU reference in case it has changed
     pWD1793->pCPU = NULL;
     
@@ -1939,17 +1887,11 @@ void wd1793Init(wd1793_t * pWD1793)
 		pWD1793->device.idModule	= VCC_WD1793_ID;
 		strcpy(pWD1793->device.Name,"WD1793");
 		
-		pWD1793->device.pfnDestroy	        = wd1793EmuDevDestroy;
-		pWD1793->device.pfnSave		        = wd1793EmuDevConfSave;
-		pWD1793->device.pfnLoad		        = wd1793EmuDevConfLoad;
-        pWD1793->device.pfnConfCheckDirty   = wd1793EmuDevConfCheckDirty;
+		pWD1793->device.pfnDestroy	= wd1793EmuDevDestroy;
+		pWD1793->device.pfnSave		= wd1793EmuDevConfSave;
+		pWD1793->device.pfnLoad		= wd1793EmuDevConfLoad;
 
-        for (int x=0; x<NUM_DRIVES; x++)
-        {
-            pWD1793->conf.disks[x] = NULL;
-        }
-
-        wd1793Reset(pWD1793);
+		wd1793Reset(pWD1793);
 	}
 }
 

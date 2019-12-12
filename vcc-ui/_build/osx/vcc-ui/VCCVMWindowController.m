@@ -17,7 +17,7 @@
 */
 
 /*
-    VCC macos UI
+ VCC macos UI
 */
 
 //
@@ -54,6 +54,7 @@
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(aWindowBecameMain:)
                                                  name:NSWindowDidBecomeMainNotification object:nil];
+
 }
 
 // window switch
@@ -69,7 +70,6 @@
         if ( vccInstance != NULL )
         {
             vccUpdateUI(vccInstance);
-            [[self document] updateDocumentDirtyStatus];
         }
     }
 }

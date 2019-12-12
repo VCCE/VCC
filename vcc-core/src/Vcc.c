@@ -68,48 +68,6 @@
 
 int 	vccEmuLoop(void *);
 
-/********************************************************************************/
-
-void vccSettingsReleaseStorage(vccsettings_t * settings)
-{
-    if ( settings->pModulePath )
-    {
-        free(settings->pModulePath);
-        settings->pModulePath = NULL;
-    }
-}
-
-void vccSettingsCopy(const vccsettings_t * src, vccsettings_t * dst)
-{
-    if (src == NULL || dst == NULL) return;
-    
-    vccSettingsReleaseStorage(dst);
-    
-    //dst->cpuType = src->cpuType;
-    if ( src->pModulePath != NULL) dst->pModulePath = strdup(src->pModulePath);
-}
-
-/**
- @return 0 if the same, 1 if different
- */
-int vccSettingsCompare(const vccsettings_t * set1, const vccsettings_t * set2)
-{
-    if (set1 == NULL || set2 == NULL) return 0;
-    
-    if (   /* set1->cpuType == set2->cpuType
-        && */ (   (set1->pModulePath == NULL && set2->pModulePath == NULL)
-            || (   set1->pModulePath != NULL && set2->pModulePath != NULL
-                && strcmp(set1->pModulePath,set2->pModulePath) == 0
-                )
-            )
-        )
-    {
-        return 0;
-    }
-    
-    return 1;
-}
-
 /********************************************************************/
 
 #pragma mark -
@@ -134,22 +92,16 @@ const char * vccGetLastPath(vccinstance_t * pInstance)
  */
 void vccSetModulePath(vccinstance_t * pInstance, const char * pPathname)
 {
-	if ( pPathname != pInstance->run.pModulePath )
+	if ( pPathname != pInstance->pModulePath )
 	{
-		if ( pInstance->run.pModulePath != NULL )
+		if ( pInstance->pModulePath != NULL )
 		{
 			// NOTE: Do not reference pPathname after this in case it was the same as pInstance->CurrentConfig.pModulePath
-			free(pInstance->run.pModulePath);
-			pInstance->run.pModulePath = NULL;
+			free(pInstance->pModulePath);
+			pInstance->pModulePath = NULL;
 		}
 		
-        char * newPath = NULL;
-        if ( pPathname != NULL )
-        {
-            newPath = strdup(pPathname);
-        }
-        
-        pInstance->run.pModulePath = newPath;
+		pInstance->pModulePath = strdup(pPathname);
 	}
 }
 
@@ -178,9 +130,9 @@ result_t vccConfigApply(vccinstance_t * pInstance)
 	assert(pInstance->pCoco3 != NULL);
 	
 	/* TODO: move to Coco3 power cycle or have a 'hard reset' option for all devices? */
-	if ( pInstance->run.pModulePath != NULL )
+	if ( pInstance->pModulePath != NULL )
 	{
-		errResult = vccLoadPak(pInstance, pInstance->run.pModulePath);
+		errResult = vccLoadPak(pInstance, pInstance->pModulePath);
 		if ( errResult == XERROR_NONE )
 		{
 			/* 'load' / extract settings into pak device tree (multiple if it is an MPI with other paks) */
@@ -196,11 +148,11 @@ result_t vccConfigApply(vccinstance_t * pInstance)
 		}
 		else
 		{
-            emuDevLog(&pInstance->root.device, "Error loading pak: %s", pInstance->run.pModulePath);
+            emuDevLog(&pInstance->root.device, "Error loading pak: %s", pInstance->pModulePath);
 
             /* error loading, clear module path */
-			free(pInstance->run.pModulePath);
-			pInstance->run.pModulePath = NULL;
+			free(pInstance->pModulePath);
+			pInstance->pModulePath = NULL;
 		}
 	}
     
@@ -356,7 +308,8 @@ result_t vccLoadPak(vccinstance_t * pInstance, const char * pPathname)
 			errResult = emuDevDestroy(&pInstance->pCoco3->pPak->device);
 			pInstance->pCoco3->pPak = NULL;
 			
-            vccSetModulePath(pInstance,NULL);
+			free(pInstance->pModulePath);
+			pInstance->pModulePath = NULL;
 			
 			bDoReset = TRUE;
 		}
@@ -579,7 +532,7 @@ int vccEmuLoop(void * pParam)
 		SDL_UnlockMutex(pInstance->hEmuMutex);
 		
 		// if throttling is enabled, wait here until the theoretical time for this frame has elapsed
-		if ( pInstance->pCoco3->run.frameThrottle )
+		if ( pInstance->pCoco3->confFrameThrottle )
 		{
 			thrFrameWait(&pInstance->FrameThrottle);
 		}
@@ -762,21 +715,6 @@ result_t vccUpdateStatus(vccinstance_t * pInstance)
 #pragma mark -
 #pragma mark --- EmuDevice callbacks ---
 
-/********************************************************************************/
-
-bool vccEmuDevConfCheckDirty(emudevice_t * pEmuDevice)
-{
-    vccinstance_t * pInstance = (vccinstance_t *)pEmuDevice;
-
-    ASSERT_VCC(pInstance);
-    if ( pInstance != NULL )
-    {
-        return (vccSettingsCompare(&pInstance->run,&pInstance->conf) != 0);
-    }
-    
-    return false;
-}
-
 /********************************************************************/
 /**
 	EmuDev callback to save configuration
@@ -791,9 +729,9 @@ result_t vccEmuDevConfSave(emudevice_t * pEmuDevice, config_t * config)
 	
 	ASSERT_VCC(pInstance);
 	
-    vccSettingsCopy(&pInstance->run, &pInstance->conf);
-    
-    confSetPath(config, VCC_CONF_SECTION, VCC_CONF_SETTING_PAK, pInstance->conf.pModulePath, config->absolutePaths);
+	//pConfig = &pInstance->CurrentConfig;
+	
+    confSetPath(config, VCC_CONF_SECTION, VCC_CONF_SETTING_PAK, pInstance->pModulePath,config->absolutePaths);
 
 	return errResult;
 }
@@ -809,6 +747,7 @@ result_t vccEmuDevConfSave(emudevice_t * pEmuDevice, config_t * config)
 result_t vccEmuDevConfLoad(emudevice_t * pEmuDevice, config_t * config)
 {
 	result_t		errResult	= XERROR_INVALID_PARAMETER;
+	//vccconfig_t *	pConfig;
 	vccinstance_t * pInstance;
 	
 	pInstance = (vccinstance_t *)pEmuDevice;
@@ -818,10 +757,9 @@ result_t vccEmuDevConfLoad(emudevice_t * pEmuDevice, config_t * config)
 	/*
 	 Module
 	 */
-	confGetPath(config, VCC_CONF_SECTION, VCC_CONF_SETTING_PAK, &pInstance->conf.pModulePath,config->absolutePaths);
+	confGetPath(config, VCC_CONF_SECTION, VCC_CONF_SETTING_PAK, &pInstance->pModulePath,config->absolutePaths);
 	
-    vccSettingsCopy(&pInstance->conf, &pInstance->run);
-
+	
 	return errResult;
 }
 
@@ -976,9 +914,9 @@ result_t vccEmuDevCreateMenu(emudevice_t * pEmuDev)
 		
 		// set Eject menu item to have cart name
 		strcpy(Temp,"Eject:");
-		if ( pInstance->run.pModulePath != NULL )
+		if ( pInstance->pModulePath != NULL )
 		{
-			pathGetFilename(pInstance->run.pModulePath,Name,sizeof(Name));
+			pathGetFilename(pInstance->pModulePath,Name,sizeof(Name));
 			sprintf(Temp,"Eject: %s",Name);
 		}
 		menuAddItem(hCartMenu, Temp, (pInstance->root.device.iCommandID<<16) | VCC_COMMAND_EJECTCART);
@@ -1211,24 +1149,21 @@ vccinstance_t * vccCreate(const char * pcszName)
 		/*
             emulator device callbacks
 		 */
-		pInstance->root.device.pfnDestroy	        = vccEmuDevDestroy;
-		pInstance->root.device.pfnSave		        = vccEmuDevConfSave;
-		pInstance->root.device.pfnLoad		        = vccEmuDevConfLoad;
-        pInstance->root.device.pfnConfCheckDirty    = vccEmuDevConfCheckDirty;
-		pInstance->root.device.pfnGetStatus	        = vccEmuDevGetStatus;
-		pInstance->root.device.pfnCreateMenu        = vccEmuDevCreateMenu;
-        pInstance->root.device.pfnGetParentMenu     = vccEmuDevGetParentMenu;
-		pInstance->root.device.pfnValidate	        = vccEmuDevValidate;
-		pInstance->root.device.pfnCommand	        = vccEmuDevCommand;
-        
+		pInstance->root.device.pfnDestroy	    = vccEmuDevDestroy;
+		pInstance->root.device.pfnSave		    = vccEmuDevConfSave;
+		pInstance->root.device.pfnLoad		    = vccEmuDevConfLoad;
+		pInstance->root.device.pfnGetStatus	    = vccEmuDevGetStatus;
+		pInstance->root.device.pfnCreateMenu    = vccEmuDevCreateMenu;
+        pInstance->root.device.pfnGetParentMenu = vccEmuDevGetParentMenu;
+		pInstance->root.device.pfnValidate	    = vccEmuDevValidate;
+		pInstance->root.device.pfnCommand	    = vccEmuDevCommand;
+		
 		emuDevRegisterDevice(&pInstance->root.device);
 		
 		/*
             initialize with default configuration
 		 */
-		pInstance->run.pModulePath = NULL;
-
-        vccSettingsCopy(&pInstance->conf, &pInstance->run);
+		pInstance->pModulePath = NULL;	// Pak interface path
 
         // dummy while
         while ( true)

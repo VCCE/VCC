@@ -40,42 +40,6 @@
 void MakeRGBPalette(screen_t * pScreen);
 void MakeCMPpalette(screen_t * pScreen);
 
-/********************************************************************************/
-
-#pragma mark -
-#pragma mark --- settings helpers ---
-
-/********************************************************************************/
-
-void screenSettingsCopy(const screensettings_t * src, screensettings_t * dst)
-{
-    if (src == NULL || dst == NULL) return;
-    
-    dst->monitorType = src->monitorType;
-    dst->fullScreen = src->fullScreen;
-    dst->scanLines = src->scanLines;
-    dst->artifacts = src->artifacts;
-}
-
-/**
- @return 0 if the same, 1 if different
- */
-int screenSettingsCompare(const screensettings_t * set1, const screensettings_t * set2)
-{
-    if (set1 == NULL || set2 == NULL) return 0;
-    
-    if (   set1->monitorType == set2->monitorType
-        && set1->fullScreen == set2->fullScreen
-        && set1->scanLines == set2->scanLines
-        && set1->artifacts == set2->artifacts
-        )
-    {
-        return 0;
-    }
-    
-    return 1;
-}
-
 /********************************************************************/
 
 gime_t * _getGIME(screen_t * pScreen)
@@ -223,13 +187,9 @@ result_t screenEmuDevConfSave(emudevice_t * pEmuDevice, config_t * config)
 	
 	if ( pScreen != NULL )
 	{
-        screenSettingsCopy(&pScreen->run,&pScreen->conf);
-
-		confSetInt(config,CONF_SECTION_VIDEO, CONF_SETTING_MONITORTYPE, pScreen->conf.monitorType);
-		confSetInt(config,CONF_SECTION_VIDEO, CONF_SETTING_SCANLINES, pScreen->conf.scanLines);
-        confSetInt(config,CONF_SECTION_VIDEO, CONF_SETTING_FULLSCREEN, pScreen->conf.fullScreen);
-        confSetInt(config,CONF_SECTION_VIDEO, CONF_SETTING_ARTIFACTS, pScreen->conf.artifacts);
-
+		confSetInt(config,CONF_SECTION_VIDEO, CONF_SETTING_MONITORTYPE, pScreen->confMonitorType);
+		confSetInt(config,CONF_SECTION_VIDEO, CONF_SETTING_SCANLINES, pScreen->confScanLines);
+		
 		errResult = XERROR_NONE;
 	}
 	
@@ -256,43 +216,18 @@ result_t screenEmuDevConfLoad(emudevice_t * pEmuDevice, config_t * config)
 		 */
 		if ( confGetInt(config, CONF_SECTION_VIDEO, CONF_SETTING_MONITORTYPE, &iValue) == XERROR_NONE )
 		{
-			pScreen->conf.monitorType = iValue;
+			pScreen->confMonitorType = iValue;
 		}
 		
 		if ( confGetInt(config, CONF_SECTION_VIDEO, CONF_SETTING_SCANLINES, &iValue) == XERROR_NONE )
 		{
-			pScreen->conf.scanLines = iValue;
+			pScreen->confScanLines = iValue;
 		}
 		
-        if ( confGetInt(config, CONF_SECTION_VIDEO, CONF_SETTING_FULLSCREEN, &iValue) == XERROR_NONE )
-        {
-            pScreen->conf.fullScreen = iValue;
-        }
-        
-        if ( confGetInt(config, CONF_SECTION_VIDEO, CONF_SETTING_ARTIFACTS, &iValue) == XERROR_NONE )
-        {
-            pScreen->conf.artifacts = iValue;
-        }
-        
-        screenSettingsCopy(&pScreen->conf, &pScreen->run);
-        
 		errResult = XERROR_NONE;
 	}
 	
 	return errResult;
-}
-
-bool screenEmuDevConfCheckDirty(emudevice_t * pEmuDevice)
-{
-    screen_t *        pScreen    = (screen_t *)pEmuDevice;
-
-    ASSERT_SCREEN(pScreen);
-    if ( pScreen != NULL )
-    {
-        return (screenSettingsCompare(&pScreen->run,&pScreen->conf) != 0);
-    }
-    
-    return false;
 }
 
 /*********************************************************************************/
@@ -346,7 +281,7 @@ bool screenEmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
 		case SCREEN_COMMAND_MONTYPE + eMonType_CMP:
 			if ( piState != NULL )
 			{
-				*piState = ((pScreen->run.monitorType == eMonType_CMP) ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+				*piState = ((pScreen->confMonitorType == eMonType_CMP) ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
 			}
 			bValid = true;
 			break;
@@ -354,7 +289,7 @@ bool screenEmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
         case SCREEN_COMMAND_MONTYPE + eMonType_RGB:
             if ( piState != NULL )
             {
-                *piState = ((pScreen->run.monitorType == eMonType_RGB) ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+                *piState = ((pScreen->confMonitorType == eMonType_RGB) ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
             }
             bValid = true;
             break;
@@ -362,7 +297,7 @@ bool screenEmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
 		case SCREEN_COMMAND_SCANLINES:
 			if ( piState != NULL )
 			{
-				*piState = (pScreen->run.scanLines ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+				*piState = (pScreen->confScanLines ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
 			}
 			bValid = true;
 			break;
@@ -370,7 +305,7 @@ bool screenEmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
 		case SCREEN_COMMAND_FULLSCREEN:
 			if ( piState != NULL )
 			{
-				*piState = (pScreen->run.fullScreen ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+				*piState = (pScreen->confFullScreen ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
 			}
             bValid = true;
 			break;
@@ -409,18 +344,18 @@ result_t screenEmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
 	{
 		case SCREEN_COMMAND_MONTYPE + eMonType_CMP:
         case SCREEN_COMMAND_MONTYPE + eMonType_RGB:
-			pScreen->run.monitorType = (iCommand - SCREEN_COMMAND_MONTYPE);
-            screenUpdatePalette(pScreen);
+			pScreen->confMonitorType = (iCommand - SCREEN_COMMAND_MONTYPE);
+			SetMonitorType(pScreen, pScreen->confMonitorType);
 			break;
 			
 		case SCREEN_COMMAND_SCANLINES:
             // toggle scan lines
-			pScreen->run.scanLines = ! pScreen->run.scanLines;
+			pScreen->confScanLines = ! pScreen->confScanLines;
 			break;
 			
 		case SCREEN_COMMAND_FULLSCREEN:
             // toggle full screen
-            pScreen->run.fullScreen = ! pScreen->run.fullScreen;
+            pScreen->confFullScreen = ! pScreen->confFullScreen;
             if ( pScreen->pScreenFullScreenCallback != NULL )
             {
                 pScreen->pScreenFullScreenCallback(pScreen->pScreenCallbackParam);
@@ -463,25 +398,23 @@ screen_t * screenCreate()
         pScreen->device.idDevice    = VCC_SCREEN_ID;
 		strcpy(pScreen->device.Name,"Screen");
 		
-		pScreen->device.pfnDestroy		    = screenEmuDevDestroy;
-		pScreen->device.pfnSave			    = screenEmuDevConfSave;
-		pScreen->device.pfnLoad			    = screenEmuDevConfLoad;
-        pScreen->device.pfnConfCheckDirty   = screenEmuDevConfCheckDirty;
-		pScreen->device.pfnCreateMenu	    = screenEmuDevCreateMenu;
-		pScreen->device.pfnValidate		    = screenEmuDevValidate;
-		pScreen->device.pfnCommand		    = screenEmuDevCommand;
+		pScreen->device.pfnDestroy		= screenEmuDevDestroy;
+		pScreen->device.pfnSave			= screenEmuDevConfSave;
+		pScreen->device.pfnLoad			= screenEmuDevConfLoad;
+		pScreen->device.pfnCreateMenu	= screenEmuDevCreateMenu;
+		pScreen->device.pfnValidate		= screenEmuDevValidate;
+		pScreen->device.pfnCommand		= screenEmuDevCommand;
 		
 		emuDevRegisterDevice(&pScreen->device);
 		
 		/*
 			config defaults
 		 */
-		pScreen->conf.monitorType	= eMonType_RGB;
-		pScreen->conf.scanLines		= false;
-        pScreen->conf.fullScreen    = false;
-        pScreen->conf.artifacts     = false;
+		pScreen->confMonitorType	= eMonType_RGB;
+		pScreen->confScanLines		= false;
+        pScreen->confFullScreen     = false;
         
-        screenSettingsCopy(&pScreen->conf,&pScreen->run);
+        pScreen->MonType = pScreen->confMonitorType;
         
 		/*
             Create screen
@@ -749,10 +682,24 @@ void screenUpdatePalette(screen_t * pScreen)
     // update palette
     for (int PalNum=0; PalNum<16; PalNum++)
     {
-        //pScreen->Pallete8Bit[PalNum]   = pScreen->PalleteLookup8[pScreen->run.monitorType][pGIME->Pallete[PalNum]];
-        //pScreen->Pallete16Bit[PalNum]  = pScreen->PalleteLookup16[pScreen->run.monitorType][pGIME->Pallete[PalNum]];
-        pScreen->Pallete32Bit[PalNum]  = pScreen->PalleteLookup32[pScreen->run.monitorType][pGIME->Pallete[PalNum]];
+        //pScreen->Pallete8Bit[PalNum]   = pScreen->PalleteLookup8[pGIME->MonType][pGIME->Pallete[PalNum]];
+        //pScreen->Pallete16Bit[PalNum]  = pScreen->PalleteLookup16[pGIME->MonType][pGIME->Pallete[PalNum]];
+        pScreen->Pallete32Bit[PalNum]  = pScreen->PalleteLookup32[pScreen->MonType][pGIME->Pallete[PalNum]];
     }
+}
+
+void SetMonitorType(screen_t * pScreen, montype_e monType)
+{
+    ASSERT_SCREEN(pScreen);
+    
+    pScreen->MonType = (int)monType & 1;
+    
+    screenUpdatePalette(pScreen);
+}
+
+int GetMonitorType(screen_t * pScreen)
+{
+    return pScreen->MonType;
 }
 
 /*
@@ -808,7 +755,7 @@ void screenUpdateBorderColor(screen_t *pScreen)
         break;
     }
     
-    pScreen->rowLatch.borderColor = pScreen->PalleteLookup32[pScreen->run.monitorType][borderColor & 63];
+    pScreen->rowLatch.borderColor = pScreen->PalleteLookup32[pScreen->MonType][borderColor & 63];
 }
 
 void _SetupDisplay(screen_t * pScreen)
@@ -985,7 +932,7 @@ void _SetupDisplay(screen_t * pScreen)
 void SetupDisplay(screen_t * pScreen)
 {
     screenUpdatePalette(pScreen);
-    //screenUpdateBorderColor(pScreen);
+//screenUpdateBorderColor(pScreen);
 }
 
 void InitDisplay(screen_t * pScreen)
@@ -1007,7 +954,7 @@ void screenUpdateTopBorder(screen_t * pScreen, int borderLine)
     uint32_t * dstRowPtr = (uint32_t *)surfaceGetLinePtr(&pScreen->surface, borderLine);
     
     // if scan lines is enabled, skip odd lines
-    if (    pScreen->run.scanLines
+    if (    pScreen->confScanLines
         && (borderLine%2)==1
         )
     {
@@ -1031,7 +978,7 @@ void screenUpdateBottomBorder(screen_t * pScreen, int borderLine)
     //screenUpdateBorderColor(pScreen);
     
     // if scan lines is enabled, black out odd lines
-    if (    pScreen->run.scanLines
+    if (    pScreen->confScanLines
         && (borderLine%2)==1
         )
     {
@@ -2289,7 +2236,7 @@ void screenUpdate(screen_t * pScreen, int dstRow)
             {
                 WidePixel = WideBuffer[(pGIME->iVidMask & (Start+(unsigned char)(rowLatch->hOffset+HorzBeam) ))>>1];
                 
-                switch ( pScreen->run.monitorType )
+                switch ( pScreen->MonType )
                 {
                     case eMonType_RGB:
                     {
@@ -2381,7 +2328,7 @@ void screenUpdate(screen_t * pScreen, int dstRow)
             {
                 WidePixel=WideBuffer[(pGIME->iVidMask & (Start+(unsigned char)(rowLatch->hOffset+HorzBeam) ))>>1];
 
-                if (pScreen->run.monitorType == eMonType_CMP)
+                if (pScreen->MonType == eMonType_CMP)
                 {
                     // TODO: crashes during Mega bug attract mode
                     
@@ -3111,7 +3058,7 @@ void screenUpdate(screen_t * pScreen, int dstRow)
     
     // double up the line
     dstRowPtr -= rowLatch->horzCenter;
-    if ( pScreen->run.scanLines )
+    if ( pScreen->confScanLines )
     {
         // scan lines are one, just clear the line
         memset(dstRowPtr+pScreen->surface.width,0,pScreen->surface.linePitch);

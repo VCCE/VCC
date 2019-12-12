@@ -427,36 +427,6 @@ result_t emuDevConfLoad(emudevice_t * pEmuDevice, config_t * config)
 
 /***********************************************************************************/
 /**
-    Check if a device or its sibling/children config is dirty and needs to be saved
- */
-bool emuDevConfCheckDirty(emudevice_t * pEmuDevice)
-{
-    bool dirty = false;
-    
-    assert(pEmuDevice != NULL);
-    assert(pEmuDevice->id == EMU_DEVICE_ID);
-    
-    // do self first
-    if ( pEmuDevice->pfnConfCheckDirty != NULL )
-    {
-        dirty |= (*pEmuDevice->pfnConfCheckDirty)(pEmuDevice);
-    }
-    
-    if ( pEmuDevice->pChild != NULL )
-    {
-        dirty |= emuDevConfCheckDirty(pEmuDevice->pChild);
-    }
-    
-    if ( pEmuDevice->pSibling )
-    {
-        dirty |= emuDevConfCheckDirty(pEmuDevice->pSibling);
-    }
-    
-    return dirty;
-}
-
-/***********************************************************************************/
-/**
     Enumerate all objects in a device tree
  */
 result_t emuDevEnumerate(emudevice_t * pEmuDevice, emudevenumcbfn_t pfnEnumCB, void * pUser)

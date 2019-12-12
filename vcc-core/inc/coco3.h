@@ -120,26 +120,20 @@ typedef enum cputype_e
     eCPUType_Custom
 } cputype_e;
 
-typedef struct coco3settings_t
-{
-    // coco3/machine config settings
-    int                 cpuType;                /**< 6809 or 6309 - TODO: change to load plug-in CPU dlib */
-    int                 ramSize;                /**< RAM size (0 = 128k, 1=512k, 2=1024k, 3=2048k, 4=8192k) See: ramconfig_e */
-    int                 cpuOverClock;           /**< CPU Over clock rate - 1-n */
-    int                 frameThrottle;          /**< Frame rate throttle - 0 or 1 */
-    char *              cpuPath;                /**< Path to CPU dynamic library - defaults to internal CPU modules if not set */
-    char *              externalBasicROMPath;   /**< path to custom extended basic ROM */
-} coco3settings_t;
-
 /**
  */
 struct coco3_t
 {
     machine_t           machine;
     
-    coco3settings_t     conf;                   /**< Saved settings */
-    coco3settings_t     run;                    /**< Current run time settings */
-    
+    // coco3/machine config settings
+    int                 confCpuType;                /**< 6809 or 6309 - TODO: change to load plug-in CPU dlib */
+    int				    confRamSize;                /**< RAM size (0 = 128k, 1=512k, 2=1024k, 3=2048k, 4=8192k) See: ramconfig_e */
+    int                 confCpuOverClock;           /**< CPU Over clock rate - 1-n */
+    int                 confFrameThrottle;          /**< Frame rate throttle - 0 or 1 */
+    char *              confCpuPath;                /**< Path to CPU dynamic library - defaults to internal CPU modules if not set */
+    char *              confExternalBasicROMPath;   /**< path to custom extended basic ROM */
+
 	/*
 		handy direct pointers to required devices for quick reference
 		can also all be found via emudevice_t device tree

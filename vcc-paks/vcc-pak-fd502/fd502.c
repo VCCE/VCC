@@ -42,55 +42,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-/*********************************************************************/
-
-#pragma mark -
-#pragma mark --- Settings helpers ---
-
-void fd502SettingsReleaseStorage(fd502settings_t * settings)
-{
-    if ( settings->romPath )
-    {
-        free(settings->romPath);
-        settings->romPath = NULL;
-    }
-}
-
-void fd502SettingsCopy(const fd502settings_t * src, fd502settings_t * dst)
-{
-    if (src == NULL || dst == NULL) return;
-    
-    fd502SettingsReleaseStorage(dst);
-    
-    dst->turboDisk = src->turboDisk;
-    dst->distoRTCEnabled = src->distoRTCEnabled;
-    dst->distoRTCAddress = src->distoRTCAddress;
-    if ( src->romPath != NULL) dst->romPath = strdup(src->romPath);
-}
-
-/**
- @return 0 if the same, 1 if different
- */
-int fd502SettingsCompare(const fd502settings_t * set1, const fd502settings_t * set2)
-{
-    if (set1 == NULL || set2 == NULL) return 0;
-    
-    if (   set1->turboDisk == set2->turboDisk
-        && set1->distoRTCEnabled == set2->distoRTCEnabled
-        && set1->distoRTCAddress == set2->distoRTCAddress
-        && (   (set1->romPath == NULL && set2->romPath == NULL)
-            || (   set1->romPath != NULL && set2->romPath != NULL
-                && strcmp(set1->romPath,set2->romPath) == 0
-                )
-            )
-        )
-    {
-        return 0;
-    }
-    
-    return 1;
-}
-
 /*********************************************************************************/
 
 #define SYS_PREF_FD502_LAST_PATH "fd502LastDskPath"
@@ -104,12 +55,6 @@ const char * fd502GetLastPath(fd502_t * pFD502)
 {
     return sysGetPreference(SYS_PREF_FD502_LAST_PATH);
 }
-
-/*********************************************************************/
-/*********************************************************************/
-
-#pragma mark -
-#pragma mark --- Disk Utilities ---
 
 /*****************************************************************************/
 /**
@@ -236,7 +181,7 @@ void fd502PortWrite(emudevice_t * pEmuDevice, unsigned char port, unsigned char 
 		pFD502 = (fd502_t *)pEmuDevice;
 		ASSERT_FD502(pFD502);
 		
-        if ( pFD502->run.distoRTCEnabled )
+        if ( pFD502->confDistoRTCEnabled )
         {
             // check for access to RTC
             distortc_t *    pDistoRTC = (distortc_t *)pFD502->pDistoRTC;
@@ -273,7 +218,7 @@ unsigned char fd502PortRead(emudevice_t * pEmuDevice, unsigned char port)
 		pFD502 = (fd502_t *)pEmuDevice;
 		ASSERT_FD502(pFD502);
 		
-        if ( pFD502->run.distoRTCEnabled )
+        if ( pFD502->confDistoRTCEnabled )
         {
             distortc_t *    pDistoRTC = (distortc_t *)pFD502->pDistoRTC;
             ASSERT_DISTORTC(pDistoRTC);
@@ -338,10 +283,10 @@ void fd502Reset(cocopak_t * pPak)
         result_t romLoadResult = XERROR_GENERIC;
         
         // load ROM
-        if ( pFD502->run.romPath != NULL )
+        if ( pFD502->confRomPath != NULL )
         {
             // specific file from User
-            romLoadResult = romLoad(&pFD502->pak.rom,pFD502->run.romPath);
+            romLoadResult = romLoad(&pFD502->pak.rom,pFD502->confRomPath);
             
             if ( romLoadResult != XERROR_NONE )
             {
@@ -372,7 +317,7 @@ void fd502Reset(cocopak_t * pPak)
         wd1793Reset(&pFD502->wd1793);
         
         // apply settings
-        wd1793SetTurboMode(&pFD502->wd1793,pFD502->run.turboDisk);
+        wd1793SetTurboMode(&pFD502->wd1793,pFD502->confTurboDisk);
 
 		distoRTCReset(pFD502->pDistoRTC);
         
@@ -408,7 +353,11 @@ result_t fd502EmuDevDestroy(emudevice_t * pEmuDevice)
 		/* detach ourselves from our parent */
 		emuDevRemoveChild(pFD502->pak.device.pParent,&pFD502->pak.device);
 		
-        fd502SettingsReleaseStorage(&pFD502->conf);
+        if (pFD502->confRomPath != NULL)
+        {
+            free(pFD502->confRomPath);
+            pFD502->confRomPath = NULL;
+        }
 
         free(pEmuDevice);
 		
@@ -416,21 +365,6 @@ result_t fd502EmuDevDestroy(emudevice_t * pEmuDevice)
 	}
 	
 	return XERROR_INVALID_PARAMETER;
-}
-
-/********************************************************************************/
-
-bool fd502EmuDevConfCheckDirty(emudevice_t * pEmuDevice)
-{
-    fd502_t *    pFD502 = (fd502_t *)pEmuDevice;
-    
-    ASSERT_FD502(pFD502);
-    if ( pFD502 != NULL )
-    {
-        return (fd502SettingsCompare(&pFD502->run,&pFD502->conf) != 0);
-    }
-    
-    return false;
 }
 
 /********************************************************************************/
@@ -447,15 +381,13 @@ result_t fd502EmuDevConfSave(emudevice_t * pEmuDevice, config_t * config)
 	ASSERT_FD502(pFD502);
 	if ( pFD502 != NULL )
 	{
-        fd502SettingsCopy(&pFD502->run, &pFD502->conf);
-        
         // FDC settings
-        /* errResult = */ confSetPath(config, FD502_CONF_SECTION, FD502_CONF_SETTING_ROMPATH, pFD502->conf.romPath, config->absolutePaths);
-        /* errResult = */ confSetInt(config, FD502_CONF_SECTION, FD502_CONF_SETTING_TURBODISK, pFD502->conf.turboDisk);
+        /* errResult = */ confSetPath(config, FD502_CONF_SECTION, FD502_CONF_SETTING_ROMPATH, pFD502->confRomPath, config->absolutePaths);
+        /* errResult = */ confSetInt(config, FD502_CONF_SECTION, FD502_CONF_SETTING_TURBODISK, pFD502->confTurboDisk);
 
         // Disto RTC settings
-        /* errResult = */ confSetInt(config, FD502_CONF_SECTION, FD502_CONF_DISTO_RTC_ENABLED, pFD502->conf.distoRTCEnabled);
-        /* errResult = */ confSetInt(config, FD502_CONF_SECTION, FD502_CONF_DISTO_RTC_ADDRESS, pFD502->conf.distoRTCAddress);
+        /* errResult = */ confSetInt(config, FD502_CONF_SECTION, FD502_CONF_DISTO_RTC_ENABLED, pFD502->confDistoRTCEnabled);
+        /* errResult = */ confSetInt(config, FD502_CONF_SECTION, FD502_CONF_DISTO_RTC_ADDRESS, pFD502->confDistoRTCAddress);
 
         errResult = XERROR_NONE;
 	}
@@ -479,28 +411,26 @@ result_t fd502EmuDevConfLoad(emudevice_t * pEmuDevice, config_t * config)
 	if ( pFD502 != NULL )
 	{	
         // Rom path
-        /* errResult = */ confGetPath(config, FD502_CONF_SECTION, FD502_CONF_SETTING_ROMPATH, &pFD502->conf.romPath,config->absolutePaths);
+        /* errResult = */ confGetPath(config, FD502_CONF_SECTION, FD502_CONF_SETTING_ROMPATH, &pFD502->confRomPath,config->absolutePaths);
 
         // Turbo disk
         int value;
         if ( confGetInt(config,FD502_CONF_SECTION,FD502_CONF_SETTING_TURBODISK,&value) == XERROR_NONE )
         {
-            pFD502->conf.turboDisk = value;
+            pFD502->confTurboDisk = value;
         }
 
         // RTC Enable
         if ( confGetInt(config,FD502_CONF_SECTION,FD502_CONF_DISTO_RTC_ENABLED,&value) == XERROR_NONE )
         {
-            pFD502->conf.distoRTCEnabled = value;
+            pFD502->confDistoRTCEnabled = value;
         }
         // RTC address
         if ( confGetInt(config,FD502_CONF_SECTION,FD502_CONF_DISTO_RTC_ADDRESS,&value) == XERROR_NONE )
         {
-            pFD502->conf.distoRTCAddress = value;
+            pFD502->confDistoRTCAddress = value;
         }
 
-        fd502SettingsCopy(&pFD502->conf, &pFD502->run);
-        
         errResult = XERROR_NONE;
 	}
 	
@@ -632,7 +562,7 @@ bool fd502EmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
         case FD502_COMMAND_TURBO_DISK:
             if ( piState != NULL )
             {
-                *piState = (pFD502->run.turboDisk ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+                *piState = (pFD502->confTurboDisk ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
             }
             bValid = true;
         break;
@@ -657,7 +587,7 @@ bool fd502EmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
         case FD502_COMMAND_DISTO_ENABLE:
             if ( piState != NULL )
             {
-                *piState = (pFD502->run.distoRTCEnabled ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+                *piState = (pFD502->confDistoRTCEnabled ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
             }
             bValid = true;
             break;
@@ -670,10 +600,10 @@ bool fd502EmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
                 switch ( iCommand )
                 {
                     case FD502_COMMAND_DISTO_ADDRESS+0:
-                        *piState = (pFD502->run.distoRTCAddress == 0xFF50 ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+                        *piState = (pFD502->confDistoRTCAddress == 0xFF50 ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
                         break;
                     case FD502_COMMAND_DISTO_ADDRESS+1:
-                        *piState = (pFD502->run.distoRTCAddress == 0xFF58 ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+                        *piState = (pFD502->confDistoRTCAddress == 0xFF58 ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
                         break;
                 }
             }
@@ -714,8 +644,8 @@ result_t fd502EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
 			
         case FD502_COMMAND_TURBO_DISK:
             // toggle turbo disk
-            pFD502->run.turboDisk = !pFD502->run.turboDisk;
-            wd1793SetTurboMode(&pFD502->wd1793, pFD502->run.turboDisk);
+            pFD502->confTurboDisk = !pFD502->confTurboDisk;
+            wd1793SetTurboMode(&pFD502->wd1793, pFD502->confTurboDisk);
             updateUI = true;
         break;
             
@@ -726,15 +656,15 @@ result_t fd502EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
             filetype_e types[] = { COCO_PAK_ROM, COCO_FILE_NONE };
 
             // get pathname
-            pPathname = sysGetPathnameFromUser(&types[0],pFD502->run.romPath);
+            pPathname = sysGetPathnameFromUser(&types[0],pFD502->confRomPath);
             if ( pPathname != NULL )
             {
-                if (pFD502->run.romPath != NULL)
+                if (pFD502->confRomPath != NULL)
                 {
-                    free(pFD502->run.romPath);
-                    pFD502->run.romPath = NULL;
+                    free(pFD502->confRomPath);
+                    pFD502->confRomPath = NULL;
                 }
-                pFD502->run.romPath = strdup(pPathname);
+                pFD502->confRomPath = strdup(pPathname);
                 
                 // set pending power cycle
                 vccSetCommandPending(pInstance, VCC_COMMAND_POWERCYCLE);
@@ -784,18 +714,18 @@ result_t fd502EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
 		break;
 			
         case FD502_COMMAND_DISTO_ENABLE:
-            pFD502->run.distoRTCEnabled = !pFD502->run.distoRTCEnabled;
+            pFD502->confDistoRTCEnabled = !pFD502->confDistoRTCEnabled;
             updateUI = true;
             break;
             
         case FD502_COMMAND_DISTO_ADDRESS+0:
         case FD502_COMMAND_DISTO_ADDRESS+1:
         {
-            pFD502->run.distoRTCAddress = (iCommand-FD502_COMMAND_DISTO_ADDRESS == 0 ? 0xFF50 : 0xFF58);
+            pFD502->confDistoRTCAddress = (iCommand-FD502_COMMAND_DISTO_ADDRESS == 0 ? 0xFF50 : 0xFF58);
             
             distortc_t *    pDistoRTC = (distortc_t *)pFD502->pDistoRTC;
             ASSERT_DISTORTC(pDistoRTC);
-            pDistoRTC->baseAddress = pFD502->run.distoRTCAddress;
+            pDistoRTC->baseAddress = pFD502->confDistoRTCAddress;
             updateUI = true;
         }
         break;
@@ -834,15 +764,14 @@ XAPI_EXPORT cocopak_t * vccpakModuleCreate()
 		pFD502->pak.device.idModule	= VCC_COCOPAK_ID;
 		pFD502->pak.device.idDevice	= VCC_PAK_FD502_ID;
 		
-		pFD502->pak.device.pfnDestroy		    = fd502EmuDevDestroy;
-		pFD502->pak.device.pfnSave			    = fd502EmuDevConfSave;
-		pFD502->pak.device.pfnLoad			    = fd502EmuDevConfLoad;
-		pFD502->pak.device.pfnCreateMenu	    = fd502EmuDevCreateMenu;
-		pFD502->pak.device.pfnValidate		    = fd502EmuDevValidate;
-		pFD502->pak.device.pfnCommand		    = fd502EmuDevCommand;
-		pFD502->pak.device.pfnGetStatus		    = fd502EmuDevGetStatus;
-        pFD502->pak.device.pfnConfCheckDirty    = fd502EmuDevConfCheckDirty;
-
+		pFD502->pak.device.pfnDestroy		= fd502EmuDevDestroy;
+		pFD502->pak.device.pfnSave			= fd502EmuDevConfSave;
+		pFD502->pak.device.pfnLoad			= fd502EmuDevConfLoad;
+		pFD502->pak.device.pfnCreateMenu	= fd502EmuDevCreateMenu;
+		pFD502->pak.device.pfnValidate		= fd502EmuDevValidate;
+		pFD502->pak.device.pfnCommand		= fd502EmuDevCommand;
+		pFD502->pak.device.pfnGetStatus		= fd502EmuDevGetStatus;
+		
 		/*
 		 Initialize PAK API function pointers
 		 */
@@ -868,11 +797,9 @@ XAPI_EXPORT cocopak_t * vccpakModuleCreate()
 		emuDevAddChild(&pFD502->pak.device,&pFD502->wd1793.device);
 
         // Set default FDC settings
-        pFD502->conf.distoRTCEnabled = true;
-        pFD502->conf.distoRTCAddress = 0xFF50;
-
-        fd502SettingsCopy(&pFD502->conf, &pFD502->run);
-
+        pFD502->confDistoRTCEnabled = true;
+        pFD502->confDistoRTCAddress = 0xFF50;
+        
 		/*
 			create Disto RTC object
 		 */
@@ -882,7 +809,7 @@ XAPI_EXPORT cocopak_t * vccpakModuleCreate()
         // set default RTC settings
         distortc_t *    pDistoRTC = (distortc_t *)pFD502->pDistoRTC;
         ASSERT_DISTORTC(pDistoRTC);
-        pDistoRTC->baseAddress = pFD502->run.distoRTCAddress;
+        pDistoRTC->baseAddress = pFD502->confDistoRTCAddress;
         
 		return &pFD502->pak;
 	}

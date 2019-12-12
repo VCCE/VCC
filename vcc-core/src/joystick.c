@@ -180,7 +180,6 @@ result_t jsEmuDevConfSave(emudevice_t * pEmuDevice, config_t * config)
     
     if ( pJoystick != NULL )
     {
-#if false
         /*
          Joysticks
          TODO: move to joystick device/peripheral
@@ -202,7 +201,7 @@ result_t jsEmuDevConfSave(emudevice_t * pEmuDevice, config_t * config)
         confSetInt(config,"RightJoyStick","Fire1",pJoystick->Right.Fire1);
         confSetInt(config,"RightJoyStick","Fire2",pJoystick->Right.Fire2);
         confSetInt(config,"RightJoyStick","DiDevice",pJoystick->Right.DiDevice);
-#endif
+        
 
         errResult = XERROR_NONE;
     }
@@ -223,7 +222,6 @@ result_t jsEmuDevConfLoad(emudevice_t * pEmuDevice, config_t * config)
 
     if ( pJoystick != NULL )
     {
-#if false
         int             iValue;
 
         if ( confGetInt(config,"LeftJoyStick","UseMouse",&iValue) == XERROR_NONE )
@@ -291,8 +289,7 @@ result_t jsEmuDevConfLoad(emudevice_t * pEmuDevice, config_t * config)
         {
             pJoystick->Right.DiDevice    = (unsigned char)iValue;
         }
-#endif
-        
+
         errResult = XERROR_NONE;
     }
     

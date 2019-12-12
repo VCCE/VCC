@@ -53,87 +53,7 @@ int cc3GetCurrentCpuMultiplier(coco3_t * pCoco3);
 /********************************************************************************/
 
 #pragma mark -
-#pragma mark --- settings helpers ---
-
-/********************************************************************************/
-
-void cc3SettingsReleaseStorage(coco3settings_t * settings)
-{
-    if ( settings->cpuPath )
-    {
-        free(settings->cpuPath);
-        settings->cpuPath = NULL;
-    }
-    
-    if ( settings->externalBasicROMPath )
-    {
-        free(settings->externalBasicROMPath);
-        settings->externalBasicROMPath = NULL;
-    }
-}
-
-void cc3SettingsCopy(const coco3settings_t * src, coco3settings_t * dst)
-{
-    if (src == NULL || dst == NULL) return;
-    
-    cc3SettingsReleaseStorage(dst);
-    
-    dst->cpuType = src->cpuType;
-    dst->ramSize = src->ramSize;
-    dst->cpuOverClock = src->cpuOverClock;
-    dst->frameThrottle = src->frameThrottle;
-    if ( src->cpuPath != NULL) dst->cpuPath = strdup(src->cpuPath);
-    if ( src->externalBasicROMPath != NULL) dst->externalBasicROMPath = strdup(src->externalBasicROMPath);
-}
-
-/**
-    @return 0 if the same, 1 if different
- */
-int cc3SettingsCompare(const coco3settings_t * set1, const coco3settings_t * set2)
-{
-    if (set1 == NULL || set2 == NULL) return 0;
-    
-    if (   set1->cpuType == set2->cpuType
-        && set1->ramSize == set2->ramSize
-        && set1->cpuOverClock == set2->cpuOverClock
-        && set1->frameThrottle == set2->frameThrottle
-        && (   (set1->cpuPath == NULL && set2->cpuPath == NULL)
-            || (   set1->cpuPath != NULL && set2->cpuPath != NULL
-                && strcmp(set1->cpuPath,set2->cpuPath) == 0
-                )
-            )
-        && (   (set1->externalBasicROMPath == NULL && set2->externalBasicROMPath == NULL)
-            || (   set1->externalBasicROMPath != NULL && set2->externalBasicROMPath != NULL
-                && strcmp(set1->externalBasicROMPath,set2->externalBasicROMPath) == 0
-                )
-            )
-        )
-    {
-        return 0;
-    }
-
-    return 1;
-}
-
-/********************************************************************************/
-
-#pragma mark -
 #pragma mark --- emulator device callbacks ---
-
-/********************************************************************************/
-
-bool cc3EmuDevConfCheckDirty(emudevice_t * pEmuDevice)
-{
-    coco3_t *   pCoco3      = (coco3_t *)pEmuDevice;;
-    
-    ASSERT_CC3(pCoco3);
-    if ( pCoco3 != NULL )
-    {
-        return (cc3SettingsCompare(&pCoco3->run,&pCoco3->conf) != 0);
-    }
-    
-    return false;
-}
 
 /********************************************************************************/
 /**
@@ -183,8 +103,11 @@ result_t cc3EmuDevDestroy(emudevice_t * pEmuDevice)
 		 */
 		emuDevRemoveChild(pCoco3->machine.device.pParent,&pCoco3->machine.device);
 		
-        cc3SettingsReleaseStorage(&pCoco3->conf);
-        cc3SettingsReleaseStorage(&pCoco3->run);
+        if ( pCoco3->confCpuPath )
+        {
+            free(pCoco3->confCpuPath);
+            pCoco3->confCpuPath = NULL;
+        }
         
 		free(pCoco3);
 		
@@ -208,14 +131,12 @@ result_t cc3EmuDevConfSave(emudevice_t * pEmuDevice, config_t * config)
 	ASSERT_CC3(pCoco3);
 	if ( pCoco3 != NULL )
 	{
-        cc3SettingsCopy(&pCoco3->run,&pCoco3->conf);
-        
-		confSetInt(config,CONF_SECTION_SYSTEM, CONF_SETTING_CPU, pCoco3->conf.cpuType);
-        confSetPath(config,CONF_SECTION_SYSTEM,CONF_SETTING_CPUPATH,pCoco3->conf.cpuPath,config->absolutePaths);
-        confSetInt(config,CONF_SECTION_SYSTEM, CONF_SETTING_OVERCLOCK, pCoco3->conf.cpuOverClock);
-		confSetInt(config,CONF_SECTION_SYSTEM, CONF_SETTING_THROTTLE, pCoco3->conf.frameThrottle);
-		confSetInt(config,CONF_SECTION_SYSTEM,CONF_SETTING_RAM,pCoco3->conf.ramSize);
-		confSetPath(config,CONF_SECTION_SYSTEM,CONF_SETTING_ROMPATH,pCoco3->conf.externalBasicROMPath,config->absolutePaths);
+		confSetInt(config,CONF_SECTION_SYSTEM, CONF_SETTING_CPU, pCoco3->confCpuType);
+        confSetPath(config,CONF_SECTION_SYSTEM,CONF_SETTING_CPUPATH,pCoco3->confCpuPath,config->absolutePaths);
+        confSetInt(config,CONF_SECTION_SYSTEM, CONF_SETTING_OVERCLOCK, pCoco3->confCpuOverClock);
+		confSetInt(config,CONF_SECTION_SYSTEM, CONF_SETTING_THROTTLE, pCoco3->confFrameThrottle);
+		confSetInt(config,CONF_SECTION_SYSTEM,CONF_SETTING_RAM,pCoco3->confRamSize);
+		confSetPath(config,CONF_SECTION_SYSTEM,CONF_SETTING_ROMPATH,pCoco3->confExternalBasicROMPath,config->absolutePaths);
 
         // TODO: save path to Pak (when moved from VCC)
 		
@@ -243,21 +164,21 @@ result_t cc3EmuDevConfLoad(emudevice_t * pEmuDevice, config_t * config)
 	{
 		if ( confGetInt(config,CONF_SECTION_SYSTEM,CONF_SETTING_CPU,&iValue) == XERROR_NONE )
 		{
-			pCoco3->conf.cpuType = iValue;
+			pCoco3->confCpuType = iValue;
 		}
         
         // get CPU path
-        confGetPath(config,CONF_SECTION_SYSTEM,CONF_SETTING_CPUPATH,&pCoco3->conf.cpuPath,config->absolutePaths);
+        confGetPath(config,CONF_SECTION_SYSTEM,CONF_SETTING_CPUPATH,&pCoco3->confCpuPath,config->absolutePaths);
         
 
         if ( confGetInt(config,CONF_SECTION_SYSTEM,CONF_SETTING_OVERCLOCK,&iValue) == XERROR_NONE )
         {
-            pCoco3->conf.cpuOverClock = iValue;
+            pCoco3->confCpuOverClock = iValue;
         }
 		
 		if ( confGetInt(config,CONF_SECTION_SYSTEM,CONF_SETTING_THROTTLE,&iValue) == XERROR_NONE )
 		{
-			pCoco3->conf.frameThrottle = iValue;
+			pCoco3->confFrameThrottle = iValue;
 		}
 		
 		/*
@@ -265,14 +186,12 @@ result_t cc3EmuDevConfLoad(emudevice_t * pEmuDevice, config_t * config)
 		 */
 		if ( confGetInt(config,CONF_SECTION_SYSTEM,CONF_SETTING_RAM,&iValue) == XERROR_NONE )
 		{
-			pCoco3->conf.ramSize = iValue;
+			pCoco3->confRamSize = iValue;
 		}
 		
 		// external basic ROM image if desired
-		confGetPath(config,CONF_SECTION_SYSTEM,CONF_SETTING_ROMPATH,&pCoco3->conf.externalBasicROMPath,config->absolutePaths);
+		confGetPath(config,CONF_SECTION_SYSTEM,CONF_SETTING_ROMPATH,&pCoco3->confExternalBasicROMPath,config->absolutePaths);
 		
-        cc3SettingsCopy(&pCoco3->conf,&pCoco3->run);
-        
 		errResult = XERROR_NONE;
 	}
 	
@@ -351,7 +270,7 @@ bool cc3EmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
             case COCO3_COMMAND_THROTTLE:
                 if ( piState != NULL )
                 {
-                    *piState = (pCoco3->run.frameThrottle ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+                    *piState = (pCoco3->confFrameThrottle ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
                 }
                 bValid = true;
                 break;
@@ -360,21 +279,21 @@ bool cc3EmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
                 bValid = true;
                 break;
             case COCO3_COMMAND_ROMPATH_CLEAR:
-                bValid = (pCoco3->run.externalBasicROMPath != NULL);
+                bValid = (pCoco3->confExternalBasicROMPath != NULL);
                 break;
                 
             case COCO3_COMMAND_CPUPATH_SET:     // external CPU path
                 bValid = true;
                 break;
             case COCO3_COMMAND_CPUPATH_CLEAR:
-                bValid = (pCoco3->run.cpuPath != NULL);
+                bValid = (pCoco3->confCpuPath != NULL);
                 break;
                 
             case COCO3_COMMAND_CPU + eCPUType_MC6809:         // built in 6809
                 bValid = true;
                 if ( piState != NULL )
                 {
-                    *piState = ((pCoco3->run.cpuType == eCPUType_MC6809) ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+                    *piState = ((pCoco3->confCpuType == eCPUType_MC6809) ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
                 }
                 break;
                 
@@ -382,7 +301,7 @@ bool cc3EmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
                 bValid = true;
                 if ( piState != NULL )
                 {
-                    *piState = ((pCoco3->run.cpuType == eCPUType_HD6309) ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+                    *piState = ((pCoco3->confCpuType == eCPUType_HD6309) ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
                 }
                 break;
                 
@@ -393,7 +312,7 @@ bool cc3EmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
             case COCO3_COMMAND_RAM + 4: // 8192k
                 if ( piState != NULL )
                 {
-                    *piState = ((iCommand-COCO3_COMMAND_RAM) == pCoco3->run.ramSize ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+                    *piState = ((iCommand-COCO3_COMMAND_RAM) == pCoco3->confRamSize ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
                 }
                 bValid = true;
                 break;
@@ -405,7 +324,7 @@ bool cc3EmuDevValidate(emudevice_t * pEmuDev, int iCommand, int * piState)
                 {
                     if ( piState != NULL )
                     {
-                        *piState = ((iCommand-COCO3_COMMAND_OVERCLOCK) == pCoco3->run.cpuOverClock ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
+                        *piState = ((iCommand-COCO3_COMMAND_OVERCLOCK) == pCoco3->confCpuOverClock ? COMMAND_STATE_ON : COMMAND_STATE_OFF);
                     }
                     bValid = true;
                     break;
@@ -439,7 +358,7 @@ result_t cc3EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
         switch ( iCommand )
         {
             case COCO3_COMMAND_THROTTLE:
-                pCoco3->run.frameThrottle = ! pCoco3->run.frameThrottle;
+                pCoco3->confFrameThrottle = ! pCoco3->confFrameThrottle;
                 
                 updateUI = true;
             break;
@@ -451,15 +370,15 @@ result_t cc3EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
                 filetype_e types[] = { COCO_PAK_ROM, COCO_FILE_NONE };
                 
                 // get pathname
-                pPathname = sysGetPathnameFromUser(&types[0],pCoco3->run.externalBasicROMPath);
+                pPathname = sysGetPathnameFromUser(&types[0],pCoco3->confExternalBasicROMPath);
                 if ( pPathname != NULL )
                 {
-                    if (pCoco3->run.externalBasicROMPath != NULL)
+                    if (pCoco3->confExternalBasicROMPath != NULL)
                     {
-                        free(pCoco3->run.externalBasicROMPath);
-                        pCoco3->run.externalBasicROMPath = NULL;
+                        free(pCoco3->confExternalBasicROMPath);
+                        pCoco3->confExternalBasicROMPath = NULL;
                     }
-                    pCoco3->run.externalBasicROMPath = strdup(pPathname);
+                    pCoco3->confExternalBasicROMPath = strdup(pPathname);
                     
                     // set pending power cycle
                     vccSetCommandPending(pInstance, VCC_COMMAND_POWERCYCLE);
@@ -470,10 +389,10 @@ result_t cc3EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
             break;
             case COCO3_COMMAND_ROMPATH_CLEAR:
             {
-                if (pCoco3->run.externalBasicROMPath != NULL)
+                if (pCoco3->confExternalBasicROMPath != NULL)
                 {
-                    free(pCoco3->run.externalBasicROMPath);
-                    pCoco3->run.externalBasicROMPath = NULL;
+                    free(pCoco3->confExternalBasicROMPath);
+                    pCoco3->confExternalBasicROMPath = NULL;
                 }
                 vccSetCommandPending(pInstance, VCC_COMMAND_POWERCYCLE);
                 
@@ -488,15 +407,15 @@ result_t cc3EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
                 filetype_e types[] = { COCO_CPU_PLUGIN, COCO_FILE_NONE };
                 
                 // get pathname
-                pPathname = sysGetPathnameFromUser(&types[0],pCoco3->run.externalBasicROMPath);
+                pPathname = sysGetPathnameFromUser(&types[0],pCoco3->confExternalBasicROMPath);
                 if ( pPathname != NULL )
                 {
-                    if (pCoco3->run.cpuPath != NULL)
+                    if (pCoco3->confCpuPath != NULL)
                     {
-                        free(pCoco3->run.cpuPath);
-                        pCoco3->conf.cpuPath = NULL;
+                        free(pCoco3->confCpuPath);
+                        pCoco3->confCpuPath = NULL;
                     }
-                    pCoco3->run.cpuPath = strdup(pPathname);
+                    pCoco3->confCpuPath = strdup(pPathname);
                     
                     // set pending power cycle
                     vccSetCommandPending(pInstance, VCC_COMMAND_POWERCYCLE);
@@ -507,10 +426,10 @@ result_t cc3EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
             break;
             case COCO3_COMMAND_CPUPATH_CLEAR:
             {
-                if (pCoco3->run.cpuPath != NULL)
+                if (pCoco3->confCpuPath != NULL)
                 {
-                    free(pCoco3->conf.cpuPath);
-                    pCoco3->conf.cpuPath = NULL;
+                    free(pCoco3->confCpuPath);
+                    pCoco3->confCpuPath = NULL;
                 }
                 vccSetCommandPending(pInstance, VCC_COMMAND_POWERCYCLE);
                 
@@ -520,7 +439,7 @@ result_t cc3EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
 
             case COCO3_COMMAND_CPU + eCPUType_MC6809:     // built in 6809
             case COCO3_COMMAND_CPU + eCPUType_HD6309:     // built in 6309
-                pCoco3->run.cpuType = (iCommand-COCO3_COMMAND_CPU);
+                pCoco3->confCpuType = (iCommand-COCO3_COMMAND_CPU);
                 vccSetCommandPending(pInstance, VCC_COMMAND_POWERCYCLE);
                 
                 updateUI = true;
@@ -534,7 +453,7 @@ result_t cc3EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
             case COCO3_COMMAND_RAM + 2: // 1024k
             case COCO3_COMMAND_RAM + 3: // 2048k
             case COCO3_COMMAND_RAM + 4: // 8192k
-                pCoco3->run.ramSize = (iCommand-COCO3_COMMAND_RAM);
+                pCoco3->confRamSize = (iCommand-COCO3_COMMAND_RAM);
                 vccSetCommandPending(pInstance, VCC_COMMAND_POWERCYCLE);
                 
                 updateUI = true;
@@ -546,7 +465,7 @@ result_t cc3EmuDevCommand(emudevice_t * pEmuDev, int iCommand, int iParam)
                     && iCommand < COCO3_COMMAND_OVERCLOCK + OVERCLOCK_MAX
                     )
                 {
-                    pCoco3->run.cpuOverClock = (iCommand-COCO3_COMMAND_OVERCLOCK);
+                    pCoco3->confCpuOverClock = (iCommand-COCO3_COMMAND_OVERCLOCK);
                     vccSetCommandPending(pInstance, VCC_COMMAND_POWERCYCLE);
                     updateUI = true;
                     break;
@@ -581,7 +500,7 @@ result_t cc3EmuDevGetStatus(emudevice_t * pEmuDev, char * pszText, size_t szText
         char temp[256];
         float rate = cc3GetCurrentCpuFrequency(pCoco3);
         
-        snprintf(temp,sizeof(temp)-1,"%s-%0.2fMHz (R:%d/O:%d)",pCoco3->machine.pCPU->device.Name,rate,pCoco3->pGIME->CpuRate,pCoco3->run.cpuOverClock);
+        snprintf(temp,sizeof(temp)-1,"%s-%0.2fMHz (R:%d/O:%d)",pCoco3->machine.pCPU->device.Name,rate,pCoco3->pGIME->CpuRate,pCoco3->confCpuOverClock);
         
         strncat(pszText,temp,szText-strlen(pszText));
         
@@ -677,19 +596,16 @@ coco3_t * cc3Create()
 		pCoco3->machine.device.pfnCommand		= cc3EmuDevCommand;
         pCoco3->machine.device.pfnGetStatus     = cc3EmuDevGetStatus;
         pCoco3->machine.device.pfnEventHandler  = cc3EmuDevEventHandler;
-        pCoco3->machine.device.pfnConfCheckDirty= cc3EmuDevConfCheckDirty;
         
 		/*
 			config / persistence defaults
 		 */	
-		pCoco3->conf.cpuType			= eCPUType_MC6809;	// default: 6809
-		pCoco3->conf.cpuOverClock		= 1;	            // Over clock multiplier (1-200)
-		pCoco3->conf.frameThrottle		= true;	            // default: throttle enabled
-		pCoco3->conf.ramSize			= Ram128k;	        // default: 512k (0 = 128k, 1=512k, 2=1024k, 3=2048k, 4=8192k)
-		pCoco3->conf.externalBasicROMPath = NULL;	        // default: no external CoCo 3 ROM
+		pCoco3->confCpuType				= eCPUType_MC6809;	// default: 6809
+		pCoco3->confCpuOverClock		= 1;	            // Over clock multiplier (1-200)
+		pCoco3->confFrameThrottle		= true;	            // default: throttle enabled
+		pCoco3->confRamSize				= Ram128k;	        // default: 512k (0 = 128k, 1=512k, 2=1024k, 3=2048k, 4=8192k)
+		pCoco3->confExternalBasicROMPath = NULL;	        // default: no external CoCo 3 ROM
 		
-        cc3SettingsCopy(&pCoco3->conf,&pCoco3->run);
-        
         /*
          module initiallization
          */
@@ -788,11 +704,11 @@ bool cc3InstallCPU(coco3_t * pCoco3)
         strcpy(path,"");
         
         // copy path from config?
-        if (    pCoco3->run.cpuPath != NULL
-             && strlen(pCoco3->run.cpuPath) > 0
+        if (    pCoco3->confCpuPath != NULL
+             && strlen(pCoco3->confCpuPath) > 0
             )
         {
-            strcpy(path,pCoco3->run.cpuPath);
+            strcpy(path,pCoco3->confCpuPath);
         }
         
         // check if we should use one of the default CPUs
@@ -812,7 +728,7 @@ bool cc3InstallCPU(coco3_t * pCoco3)
             }
             
             // TODO: hard coded names
-            switch ( pCoco3->run.cpuType )
+            switch ( pCoco3->confCpuType )
             {
                 case eCPUType_MC6809:
                     strcat(path,"/libvcc-cpu-mc6809");
@@ -884,7 +800,7 @@ bool cc3PowerCycle(coco3_t * pCoco3)
             pCoco3->machine.pCPU->mmu = &pCoco3->pGIME->mmu;
 
             /* initialize GIME - this resets port read/write registration */
-            mmuInit(pCoco3->pGIME,pCoco3->run.ramSize,pCoco3->run.externalBasicROMPath);
+            mmuInit(pCoco3->pGIME,pCoco3->confRamSize,pCoco3->confExternalBasicROMPath);
             
             /*
                 move to mmuInit or mc6821?
@@ -960,6 +876,8 @@ bool cc3Reset(coco3_t * pCoco3)
         
         //audResetAudio(pCoco3->pAudio);
         
+        // this should be in Screen reset
+        SetMonitorType(pCoco3->pScreen,pCoco3->pScreen->confMonitorType);
         SetupDisplay(pCoco3->pScreen);
 
         pakReset(pCoco3->pPak);
@@ -987,7 +905,7 @@ int cc3GetCurrentCpuMultiplier(coco3_t * pCoco3)
     ASSERT_CC3(pCoco3);
     if ( pCoco3 != NULL )
     {
-        return ((1+pCoco3->pGIME->CpuRate)*pCoco3->run.cpuOverClock);
+        return ((1+pCoco3->pGIME->CpuRate)*pCoco3->confCpuOverClock);
     }
     
     return 1;
@@ -1018,7 +936,7 @@ int cc3ConfGetOverClock(coco3_t * pCoco3)
     ASSERT_CC3(pCoco3);
     if ( pCoco3 != NULL )
     {
-        return pCoco3->run.cpuOverClock;
+        return pCoco3->confCpuOverClock;
     }
     
     return 1;
@@ -1032,7 +950,7 @@ void cc3ConfSetOverClock(coco3_t * pCoco3, int multiplier)
     ASSERT_CC3(pCoco3);
     if ( pCoco3 != NULL )
     {
-        pCoco3->run.cpuOverClock = multiplier;
+        pCoco3->confCpuOverClock = multiplier;
     }
 }
 

@@ -252,6 +252,11 @@ result_t vccLog(emudevice_t * pEmuDev, const char * pMessage)
     [self addWindowController:[[NSStoryboard storyboardWithName:@"Main" bundle:nil] instantiateControllerWithIdentifier:@"Document Window Controller"]];
 }
 
+- (BOOL)hasUndoManager
+{
+    return NO;
+}
+
 /*************************************************************************/
 //
 // Save / load
@@ -281,6 +286,8 @@ result_t vccLog(emudevice_t * pEmuDev, const char * pMessage)
     
     if ( vccLoad(vccInstance,cstrPath) == XERROR_NONE )
     {
+        //[self startEmulation];
+        
         return YES;
     }
     
@@ -341,29 +348,6 @@ result_t vccLog(emudevice_t * pEmuDev, const char * pMessage)
     
     return (result == XERROR_NONE);
 }
-
-/**
-    Get the modified state of the instance and mark the document's edit status
- */
-- (void) updateDocumentDirtyStatus
-{
-    vccinstance_t * pInstance = [self vccInstance];
-    bool dirty = emuDevConfCheckDirty(&pInstance->root.device);
-    if ( dirty )
-    {
-        [self updateChangeCount: NSChangeDone];
-    }
-    else
-    {
-        [self updateChangeCount: NSChangeCleared];
-    }
-}
-
-//- (BOOL)hasUndoManager
-//{
-//    return NO;
-//}
-
 
 /*************************************************************************/
 
