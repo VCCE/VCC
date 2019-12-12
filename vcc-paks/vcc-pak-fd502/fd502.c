@@ -480,6 +480,7 @@ result_t fd502EmuDevCreateMenu(emudevice_t * pEmuDevice)
 	result_t		errResult	= XERROR_INVALID_PARAMETER;
 	fd502_t *		pFD502		= (fd502_t *)pEmuDevice;
 	hmenu_t			hMenu;
+	emudevice_t *	pEmuDevRoot;
 	int			    x;
 	char			Temp[256];
 	char			File[256];
@@ -489,9 +490,15 @@ result_t fd502EmuDevCreateMenu(emudevice_t * pEmuDevice)
 	{
 		assert(pFD502->pak.device.hMenu == NULL);
 		
-		// we will add to the 'pak' menu of our parent (coco or mpi)
-		hMenu = emuDevGetParentMenu(&pFD502->pak.device);
-		assert(hMenu != NULL);
+        // TODO: this should get the parent's menu, not a specific one
+        // Add a method into the pak interface to get the Pak's menu
+        
+		// we will add to the cart menu
+		// find root device
+		pEmuDevRoot = emuDevGetParentModuleByID(&pFD502->pak.device,VCC_CORE_ID);
+		assert(pEmuDevRoot != NULL);
+		// find cart menu
+		hMenu = menuFind(pEmuDevRoot->hMenu,CARTRIDGE_MENU);
 		
         menuAddSeparator(hMenu);
 

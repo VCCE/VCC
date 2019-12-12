@@ -908,7 +908,7 @@ result_t vccEmuDevCreateMenu(emudevice_t * pEmuDev)
 		// create Pak/CART menu
 		hCartMenu = menuCreate(CARTRIDGE_MENU);
 		menuAddSubMenu(pInstance->root.device.hMenu,hCartMenu);
-        
+		
 		// Load Pak menu item
 		menuAddItem(hCartMenu,"Load", (pInstance->root.device.iCommandID<<16) | VCC_COMMAND_LOADCART);
 		
@@ -923,25 +923,6 @@ result_t vccEmuDevCreateMenu(emudevice_t * pEmuDev)
 	}
 	
 	return errResult;
-}
-
-/**
- */
-hmenu_t vccEmuDevGetParentMenu(emudevice_t * pEmuDev)
-{
-    vccinstance_t * pInstance = (vccinstance_t *)pEmuDev;
-
-    ASSERT_VCC(pInstance);
-    if ( pInstance != NULL )
-    {
-        // find cart menu
-        hmenu_t hMenu = menuFind(pInstance->root.device.hMenu,CARTRIDGE_MENU);
-        assert(hMenu != NULL);
-        
-        return hMenu;
-    }
-    
-    return NULL;
 }
 
 /*********************************************************************************/
@@ -1149,14 +1130,13 @@ vccinstance_t * vccCreate(const char * pcszName)
 		/*
             emulator device callbacks
 		 */
-		pInstance->root.device.pfnDestroy	    = vccEmuDevDestroy;
-		pInstance->root.device.pfnSave		    = vccEmuDevConfSave;
-		pInstance->root.device.pfnLoad		    = vccEmuDevConfLoad;
-		pInstance->root.device.pfnGetStatus	    = vccEmuDevGetStatus;
-		pInstance->root.device.pfnCreateMenu    = vccEmuDevCreateMenu;
-        pInstance->root.device.pfnGetParentMenu = vccEmuDevGetParentMenu;
-		pInstance->root.device.pfnValidate	    = vccEmuDevValidate;
-		pInstance->root.device.pfnCommand	    = vccEmuDevCommand;
+		pInstance->root.device.pfnDestroy	= vccEmuDevDestroy;
+		pInstance->root.device.pfnSave		= vccEmuDevConfSave;
+		pInstance->root.device.pfnLoad		= vccEmuDevConfLoad;
+		pInstance->root.device.pfnGetStatus	= vccEmuDevGetStatus;
+		pInstance->root.device.pfnCreateMenu= vccEmuDevCreateMenu;
+		pInstance->root.device.pfnValidate	= vccEmuDevValidate;
+		pInstance->root.device.pfnCommand	= vccEmuDevCommand;
 		
 		emuDevRegisterDevice(&pInstance->root.device);
 		
