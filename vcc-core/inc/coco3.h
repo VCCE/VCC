@@ -113,13 +113,6 @@ typedef void (*audioeventfn_t)(coco3_t *);
 
 #define CAST_CC3(p)          (coco3_t *)p;
 
-typedef enum cputype_e
-{
-    eCPUType_MC6809 = 0,
-    eCPUType_HD6309,
-    eCPUType_Custom
-} cputype_e;
-
 /**
  */
 struct coco3_t
