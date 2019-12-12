@@ -61,14 +61,6 @@
     return self;
 }
 
-// override
-/*
- +(BOOL) usesUbiquitousStorage
-{
-    return NO;
-}
-*/
-
 /*************************************************************************/
 
 #pragma mark -
