@@ -149,7 +149,8 @@ result_t vccConfigApply(vccinstance_t * pInstance)
 		}
 		else
 		{
-            emuDevLog(&pInstance->root.device, "Error loading pak: %s", pInstance->pModulePath);
+            emuDevLog(&pInstance->root.device, "Error loading pak");
+            emuDevLog(&pInstance->root.device, pInstance->pModulePath);
 
             /* error loading, clear module path */
 			free(pInstance->pModulePath);
@@ -330,7 +331,8 @@ result_t vccLoadPak(vccinstance_t * pInstance, const char * pPathname)
 				emuDevAddChild(&pInstance->pCoco3->machine.device,&pInstance->pCoco3->pPak->device);
                 pInstance->pCoco3->pPak->device.pMachine = &pInstance->pCoco3->machine;
                 
-                emuDevLog(&pInstance->root.device,"Successfully loaded Pak: %s", pPathname);
+                emuDevLog(&pInstance->root.device,"Successfully loaded Pak");
+                emuDevLog(&pInstance->root.device,pPathname);
 
 				bDoReset = TRUE;
 				
@@ -338,7 +340,8 @@ result_t vccLoadPak(vccinstance_t * pInstance, const char * pPathname)
 			}
             else
             {
-                emuDevLog(&pInstance->root.device,"Error loading Pak: %s", pPathname);
+                emuDevLog(&pInstance->root.device,"Error loading Pak");
+                emuDevLog(&pInstance->root.device,pPathname);
             }
 		}
 	
@@ -597,7 +600,7 @@ bool vccCommandValidate(vccinstance_t * pInstance, int32_t iCommand, int32_t * p
 		}
         else
         {
-            emuDevLog(&pInstance->root.device, "vccCommandValidate - Unable to find device for command: %d (%d/%d)",iCommand,iCmdID,iCmdCommand);
+            emuDevLog(&pInstance->root.device, "vccCommandValidate - Unable to find device");
         }
 	}
 	
