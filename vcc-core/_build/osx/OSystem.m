@@ -91,11 +91,9 @@ const char * sysGetPreference(const char * key)
 {
     NSString * nsKey = [[NSString alloc] initWithUTF8String:key];
     NSUserDefaults *defaults= [NSUserDefaults standardUserDefaults];
-    NSDictionary * defaultsDictionary = [defaults dictionaryRepresentation];
-    
-    if ( [[defaultsDictionary allKeys] containsObject:nsKey] )
+    if ( [[[defaults dictionaryRepresentation] allKeys] containsObject:nsKey] )
     {
-        NSString * nsValue = [defaults valueForKey:nsKey];
+        NSString * nsValue = [NSUserDefaults valueForKey:nsKey];
         if ( nsValue != NULL )
         {
             return [nsValue cStringUsingEncoding:NSUTF8StringEncoding];
