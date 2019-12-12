@@ -453,3 +453,140 @@ keytranslationentry_t keyTranslationsCompact[] =
 };
 
 /*****************************************************************************/
+/*****************************************************************************/
+/**
+Original VCC key translation table for Custom layout
+
+PC Keyboard:
++---------------------------------------------------------------------------------+
+| [Esc]   [F1][F2][F3][F4][F5][F6][F7][F8][F9][F10][F11][F12]   [Prnt][Scr][Paus] |
+|                                                                                 |
+| [`~][1!][2@][3#][4$][5%][6^][7&][8*][9(][0]][-_][=+][BkSpc]   [Inst][Hom][PgUp] |
+| [  Tab][Qq][Ww][Ee][Rr][Tt][Yy][Uu][Ii][Oo][Pp][[{][]}][\|]   [Dlet][End][PgDn] |
+| [  Caps][Aa][Ss][Dd][Ff][Gg][Hh][Jj][Kk][Ll][;:]['"][Enter]                     |
+| [  Shift ][Zz][Xx][Cc][Vv][Bb][Nn][Mm][,<][.>][/?][ Shift ]         [UpA]       |
+| [Cntl][Win][Alt][        Space       ][Alt][Win][Prp][Cntl]   [LftA][DnA][RgtA] |
++---------------------------------------------------------------------------------+
+
+VCC Custom Keyboard
+
++---------------------------------------------------------------------------------+
+| [Esc][F1][F2][  ][  ][Rst][RGB][  ][Thr][Pwr][StB][FSc][  ]  [    ][   ][    ]  |
+|                                                                                 |
+| [`][1!][2@][3#][4$][5%][6^][7&][8*][9(][0]][-_][=+][BkSpc]   [INST][Clr][PgUp]  |
+| [    ][Qq][Ww][Ee][Rr][Tt][Yy][Uu][Ii][Oo][Pp][[{][]}][\|]   [DEL ][EOL][PgDn]  |
+| [ Caps][Aa][Ss][Dd][Ff][Gg][Hh][Jj][Kk][Ll][;:]['"][Enter]                      |
+| [ Shift ][Zz][Xx][Cc][Vv][Bb][Nn][Mm][,<][.>][/?][ Shift ]         [UpA]        |
+| [Cntl][   ][Alt][       Space       ][Alt][   ][   ][Cntl]   [LftA][DnA][RgtA]  |
++---------------------------------------------------------------------------------+
+*/
+keytranslationentry_t keyTranslationsCustom[] =
+{
+	// ScanCode1,     ScanCode2,      Row1,  Col1,  Row2, Col2    Char  
+	{ DIK_A,          0,              1,     1,     0,    0 }, //   A
+	{ DIK_B,          0,              1,     2,     0,    0 }, //   B
+	{ DIK_C,          0,              1,     3,     0,    0 }, //   C
+	{ DIK_D,          0,              1,     4,     0,    0 }, //   D
+	{ DIK_E,          0,              1,     5,     0,    0 }, //   E
+	{ DIK_F,          0,              1,     6,     0,    0 }, //   F
+	{ DIK_G,          0,              1,     7,     0,    0 }, //   G
+	{ DIK_H,          0,              2,     0,     0,    0 }, //   H
+	{ DIK_I,          0,              2,     1,     0,    0 }, //   I
+	{ DIK_J,          0,              2,     2,     0,    0 }, //   J
+	{ DIK_K,          0,              2,     3,     0,    0 }, //   K
+	{ DIK_L,          0,              2,     4,     0,    0 }, //   L
+	{ DIK_M,          0,              2,     5,     0,    0 }, //   M
+	{ DIK_N,          0,              2,     6,     0,    0 }, //   N
+	{ DIK_O,          0,              2,     7,     0,    0 }, //   O
+	{ DIK_P,          0,              4,     0,     0,    0 }, //   P
+	{ DIK_Q,          0,              4,     1,     0,    0 }, //   Q
+	{ DIK_R,          0,              4,     2,     0,    0 }, //   R
+	{ DIK_S,          0,              4,     3,     0,    0 }, //   S
+	{ DIK_T,          0,              4,     4,     0,    0 }, //   T
+	{ DIK_U,          0,              4,     5,     0,    0 }, //   U
+	{ DIK_V,          0,              4,     6,     0,    0 }, //   V
+	{ DIK_W,          0,              4,     7,     0,    0 }, //   W
+	{ DIK_X,          0,              8,     0,     0,    0 }, //   X
+	{ DIK_Y,          0,              8,     1,     0,    0 }, //   Y
+	{ DIK_Z,          0,              8,     2,     0,    0 }, //   Z
+	{ DIK_0,          0,             16,     0,     0,    0 }, //   0
+	{ DIK_1,          0,             16,     1,     0,    0 }, //   1
+	{ DIK_2,          0,             16,     2,     0,    0 }, //   2
+	{ DIK_3,          0,             16,     3,     0,    0 }, //   3
+	{ DIK_4,          0,             16,     4,     0,    0 }, //   4
+	{ DIK_5,          0,             16,     5,     0,    0 }, //   5
+	{ DIK_6,          0,             16,     6,     0,    0 }, //   6
+	{ DIK_7,          0,             16,     7,     0,    0 }, //   7
+	{ DIK_8,          0,             32,     0,     0,    0 }, //   8
+	{ DIK_9,          0,             32,     1,     0,    0 }, //   9
+	{ DIK_1,          DIK_LSHIFT,    16,     1,    64,    7 }, //   !
+	{ DIK_2,          DIK_LSHIFT,     1,     0,     0,    0 }, //   @
+	{ DIK_3,          DIK_LSHIFT,    16,     3,    64,    7 }, //   #
+	{ DIK_4,          DIK_LSHIFT,    16,     4,    64,    7 }, //   $
+	{ DIK_5,          DIK_LSHIFT,    16,     5,	   64,    7 }, //   %
+	{ DIK_6,          DIK_LSHIFT,    16,     7,    64,    4 }, //   ^ (CoCo CTRL 7)
+	{ DIK_7,          DIK_LSHIFT,    16,     6,    64,    7 }, //   &
+	{ DIK_8,          DIK_LSHIFT,    32,     2,    64,    7 }, //   *
+	{ DIK_9,          DIK_LSHIFT,    32,     0,    64,    7 }, //   (
+	{ DIK_0,          DIK_LSHIFT,    32,     1,    64,    7 }, //   )
+
+	{ DIK_SEMICOLON,  0,             32,     3,     0,    0 }, //   ;
+	{ DIK_SEMICOLON,  DIK_LSHIFT,    32,     2,     0,    0 }, //   :
+
+	{ DIK_APOSTROPHE, 0,             16,     7,    64,    7 }, //   '
+	{ DIK_APOSTROPHE, DIK_LSHIFT,    16,     2,    64,    7 }, //   "
+
+	{ DIK_COMMA,      0,             32,     4,     0,    0 }, //   ,
+	{ DIK_PERIOD,     0,             32,     6,     0,    0 }, //   .
+	{ DIK_SLASH,      DIK_LSHIFT,    32,     7,    64,    7 }, //   ?
+	{ DIK_SLASH,      0,             32,     7,     0,    0 }, //   /
+	{ DIK_EQUALS,     DIK_LSHIFT,    32,     3,    64,    7 }, //   +
+	{ DIK_EQUALS,     0,             32,     5,    64,    7 }, //   =
+	{ DIK_MINUS,      0,             32,     5,     0,    0 }, //   -
+	{ DIK_MINUS,      DIK_LSHIFT,    32,     5,    64,    4 }, //   _ (underscore) (CoCo CTRL -)
+
+															   // added
+	{ DIK_UPARROW,    0,              8,     3,     0,    0 }, //   UP
+	{ DIK_DOWNARROW,  0,              8,     4,     0,    0 }, //   DOWN
+	{ DIK_LEFTARROW,  0,              8,     5,     0,    0 }, //   LEFT
+	{ DIK_RIGHTARROW, 0,              8,     6,     0,    0 }, //   RIGHT
+
+	{ DIK_NUMPAD8,    0,              8,     3,     0,    0 }, //   UP
+	{ DIK_NUMPAD2,    0,              8,     4,     0,    0 }, //   DOWN
+	{ DIK_NUMPAD4,    0,              8,     5,     0,    0 }, //   LEFT
+	{ DIK_NUMPAD6,    0,              8,     6,     0,    0 }, //   RIGHT
+	{ DIK_SPACE,      0,              8,     7,     0,    0 }, //   SPACE
+
+	{ DIK_RETURN,     0,             64,     0,     0,    0 }, //   ENTER
+	{ DIK_NUMPAD7,    0,             64,     1,     0,    0 }, //   HOME (CLEAR)
+	{ DIK_ESCAPE,     0,             64,     2,     0,    0 }, //   ESCAPE (BREAK)
+	{ DIK_NUMPAD1,    0,             64,     7,     8,    6 }, //   END OF LINE (SHIFT)(RIGHT)
+	{ DIK_NUMPADPERIOD, 0,           64,     4,     8,    5 }, //   DELETE (CTRL)(LEFT)
+	{ DIK_NUMPAD0,    0,             64,     4,     8,    6 }, //   INSERT (CTRL)(RIGHT)
+	{ DIK_NUMPAD9,    0,             64,     7,     8,    3 }, //   PAGEUP (SHFT)(UP)
+	{ DIK_NUMPAD3,    0,             64,     7,     8,    4 }, //   PAGEDOWN (SHFT)(DOWN)
+	{ DIK_F1,         0,             64,     5,     0,    0 }, //   F1
+	{ DIK_F2,         0,             64,     6,     0,    0 }, //   F2
+	{ DIK_BACK,       0,              8,     5,     0,    0 }, //   BACKSPACE -> CoCo left arrow
+
+	{ DIK_LBRACKET,   0,             64,     4,    32,    0 }, //   [ (CoCo CTRL 8)
+	{ DIK_RBRACKET,   0,             64,     4,    32,    1 }, //   ] (CoCo CTRL 9)
+	{ DIK_LBRACKET,   DIK_LSHIFT,    64,     4,    32,    4 }, //   { (CoCo CTRL ,)
+	{ DIK_RBRACKET,   DIK_LSHIFT,    64,     4,    32,    6 }, //   } (CoCo CTRL .)
+
+	{ DIK_BACKSLASH,  0,             32,     7,    64,    4 }, //   '\' (Back slash) (CoCo CTRL /)
+	{ DIK_BACKSLASH,  DIK_LSHIFT,    16,     1,    64,    4 }, //   | (Pipe) (CoCo CTRL 1)
+	{ DIK_GRAVE,      DIK_LSHIFT,    16,     3,    64,    4 }, //   ~ (tilde) (CoCo CTRL 3)
+
+	{ DIK_CAPSLOCK,   0,             64,     4,    16,    0 }, //   CAPS LOCK (CoCo CTRL 0 for OS-9)
+															   //	{ DIK_CAPSLOCK,   0,             64,     7,    16,    0 }, //   CAPS LOCK (CoCo Shift 0 for DECB)
+
+															   //	{ DIK_SCROLL,     0,              1,     0,    64,    7 }, //   SCROLL (CoCo SHIFT @)
+
+	{ DIK_LALT,       0,             64,     3,     0,    0 }, //   ALT
+	{ DIK_LCONTROL,   0,             64,     4,     0,    0 }, //   CTRL
+	{ DIK_LSHIFT,     0,             64,     7,     0,    0 }, //   SHIFT (the code converts DIK_RSHIFT to DIK_LSHIFT)
+
+	{ 0,              0,              0,     0,     0,    0 }  // terminator
+};
+

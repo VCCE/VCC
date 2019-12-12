@@ -24,6 +24,13 @@ void HD6309Reset(void);
 void HD6309AssertInterupt(unsigned char,unsigned char);
 void HD6309DeAssertInterupt(unsigned char);// 4 nmi 2 firq 1 irq
 void HD6309ForcePC(unsigned short);
-unsigned short GetPC(void);
+//unsigned short GetPC(void);
+
+void HD6309Init_s(void);
+int  HD6309Exec_s( int);
+void HD6309Reset_s(void);
+void HD6309AssertInterupt_s(unsigned char,unsigned char);
+void HD6309DeAssertInterupt_s(unsigned char);// 4 nmi 2 firq 1 irq
+void HD6309ForcePC_s(unsigned short);
 
 #endif

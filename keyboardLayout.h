@@ -35,6 +35,7 @@ extern "C"
 	extern keytranslationentry_t keyTranslationsCoCo[];
 	extern keytranslationentry_t keyTranslationsNatural[];
 	extern keytranslationentry_t keyTranslationsCompact[];
+	extern keytranslationentry_t keyTranslationsCustom[];
 
 #ifdef __cplusplus
 }

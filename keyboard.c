@@ -477,9 +477,9 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
 			keyLayoutTable = keyTranslationsCompact;
 			break;
 
-		//case kKBLayoutCustom:
-		//	keyLayoutTable = keyTranslationsCustom;
-		//	break;
+		case kKBLayoutCustom:
+			keyLayoutTable = keyTranslationsCustom;
+			break;
 
 		default:
 			assert(0 && "unknown keyboard layout");

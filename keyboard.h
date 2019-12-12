@@ -37,7 +37,7 @@ typedef enum keyboardlayout_e
 	kKBLayoutCoCo = 0,
 	kKBLayoutNatural,
 	kKBLayoutCompact,
-//	kKBLayoutCustom,
+	kKBLayoutCustom,
 
 	kKBLayoutCount
 } keyboardlayout_e;
@@ -53,7 +53,7 @@ const char * const k_keyboardLayoutNames[] =
 	"CoCo (DECB)",
 	"Natural (OS-9)",
 	"Compact (OS-9)",
-//	"Custom"
+	"Custom"
 } ;
 
 /**
