@@ -551,8 +551,6 @@ void screenShotCB(vccinstance_t * pInstance)
         const char * path = [files[0] cStringUsingEncoding:NSUTF8StringEncoding];
         vccLoadPak(_vccInstance,path);
         
-        updateInterfaceCB(_vccInstance);
-        
         // Depending on the dragging source and modifier keys,
         // the file data may be copied or linked
         if (sourceDragMask & NSDragOperationLink) {

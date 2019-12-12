@@ -168,11 +168,13 @@ extern "C"
 	XAPI result_t		vccLoad(vccinstance_t * pInstance, const char * pcPathname);
 	XAPI result_t		vccSave(vccinstance_t * pInstance, const char * pathname, const char * refPath);
 	XAPI result_t		vccConfigApply(vccinstance_t * pInstance);
+	
+	XAPI void			vccSetModulePath(vccinstance_t * pInstance, const char * pPathname);
 
 #ifdef __cplusplus
 }
 #endif
-
+	
 /**************************************************/
 
 #endif

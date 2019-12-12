@@ -43,7 +43,6 @@
 #include "config.h"
 #include "file.h"
 #include "path.h"
-#include "xstring.h"
 
 #include "xDebug.h"
 #include "xSystem.h"
@@ -130,6 +129,30 @@ const char * vccGetLastPath(vccinstance_t * pInstance)
     return sysGetPreference(SYS_PREF_VCC_LAST_PATH);
 }
 
+/*********************************************************************************/
+/**
+ */
+void vccSetModulePath(vccinstance_t * pInstance, const char * pPathname)
+{
+	if ( pPathname != pInstance->run.pModulePath )
+	{
+		if ( pInstance->run.pModulePath != NULL )
+		{
+			// NOTE: Do not reference pPathname after this in case it was the same as pInstance->CurrentConfig.pModulePath
+			free(pInstance->run.pModulePath);
+			pInstance->run.pModulePath = NULL;
+		}
+		
+        char * newPath = NULL;
+        if ( pPathname != NULL )
+        {
+            newPath = strdup(pPathname);
+        }
+        
+        pInstance->run.pModulePath = newPath;
+	}
+}
+
 /********************************************************************/
 
 #pragma mark -
@@ -155,27 +178,31 @@ result_t vccConfigApply(vccinstance_t * pInstance)
 	assert(pInstance->pCoco3 != NULL);
 	
 	/* TODO: move to Coco3 power cycle or have a 'hard reset' option for all devices? */
-    errResult = vccLoadPak(pInstance, pInstance->run.pModulePath);
-    if ( errResult == XERROR_NONE )
-    {
-        /* 'load' / extract settings into pak device tree (multiple if it is an MPI with other paks) */
-        errResult = emuDevConfLoad(&pInstance->pCoco3->pPak->device,pInstance->config);
-        
-        if ( errResult == XERROR_NONE )
-        {
-            /*
-                power cycle the system
-             */
-            vccSetCommandPending(pInstance,VCC_COMMAND_POWERCYCLE);
-        }
-    }
-    else
-    {
-        emuDevLog(&pInstance->root.device, "Error loading pak: %s", pInstance->run.pModulePath);
+	if ( pInstance->run.pModulePath != NULL )
+	{
+		errResult = vccLoadPak(pInstance, pInstance->run.pModulePath);
+		if ( errResult == XERROR_NONE )
+		{
+			/* 'load' / extract settings into pak device tree (multiple if it is an MPI with other paks) */
+			errResult = emuDevConfLoad(&pInstance->pCoco3->pPak->device,pInstance->config);
+            
+            if ( errResult == XERROR_NONE )
+            {
+                /*
+                    power cycle the system
+                 */
+                vccSetCommandPending(pInstance,VCC_COMMAND_POWERCYCLE);
+            }
+		}
+		else
+		{
+            emuDevLog(&pInstance->root.device, "Error loading pak: %s", pInstance->run.pModulePath);
 
-        /* error loading, clear module path */
-        vccLoadPak(pInstance, NULL);
-    }
+            /* error loading, clear module path */
+			free(pInstance->run.pModulePath);
+			pInstance->run.pModulePath = NULL;
+		}
+	}
     
     return errResult;
 }
@@ -319,8 +346,6 @@ result_t vccLoadPak(vccinstance_t * pInstance, const char * pPathname)
      */
 	if ( pInstance != NULL )
 	{
-        errResult = XERROR_NONE;
-        
 		// lock the Emu thread
 		vccEmuLock(pInstance);
 		
@@ -330,6 +355,8 @@ result_t vccLoadPak(vccinstance_t * pInstance, const char * pPathname)
 			// destroy existing pak
 			errResult = emuDevDestroy(&pInstance->pCoco3->pPak->device);
 			pInstance->pCoco3->pPak = NULL;
+			
+            vccSetModulePath(pInstance,NULL);
 			
 			bDoReset = TRUE;
 		}
@@ -342,6 +369,8 @@ result_t vccLoadPak(vccinstance_t * pInstance, const char * pPathname)
 			if ( pakLoadPAK(pPathname,&pInstance->pCoco3->pPak) == LOADPAK_SUCCESS )
 			{
 				assert(pInstance->pCoco3->pPak != NULL);
+				
+				vccSetModulePath(pInstance,pPathname);
 				
 				// add to device tree
 				emuDevAddChild(&pInstance->pCoco3->machine.device,&pInstance->pCoco3->pPak->device);
@@ -356,15 +385,10 @@ result_t vccLoadPak(vccinstance_t * pInstance, const char * pPathname)
             else
             {
                 emuDevLog(&pInstance->root.device,"Error loading Pak: %s", pPathname);
-                
-                errResult = XERROR_NOT_FOUND;
             }
 		}
-
-        // update the run-time settings
-        pInstance->run.pModulePath = strreallocsafe(pInstance->run.pModulePath,pPathname);
-
-        if ( bDoReset )
+	
+		if ( bDoReset )
 		{
 			// hard reset after changing a cart
 			vccSetCommandPending(pInstance,VCC_COMMAND_POWERCYCLE);
