@@ -263,7 +263,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			OldPhysicalDriveA=PhysicalDriveA;
 			OldPhysicalDriveB=PhysicalDriveB;
 			strcpy(TempRomFileName,RomFileName);
-			SendDlgItemMessage(hDlg,IDC_KBLEDS,BM_SETCHECK,UseKeyboardLeds(QUERY),0);
+//			SendDlgItemMessage(hDlg,IDC_KBLEDS,BM_SETCHECK,UseKeyboardLeds(QUERY),0);
 			SendDlgItemMessage(hDlg,IDC_TURBO,BM_SETCHECK,SetTurboDisk(QUERY),0);
 			SendDlgItemMessage(hDlg,IDC_PERSIST,BM_SETCHECK,PersistDisks,0);
 			for (temp=0;temp<=3;temp++)
@@ -285,7 +285,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 				case IDOK:
 					ClockEnabled=(unsigned char)SendDlgItemMessage(hDlg,IDC_CLOCK,BM_GETCHECK,0,0);
-					UseKeyboardLeds((unsigned char)SendDlgItemMessage(hDlg,IDC_KBLEDS,BM_GETCHECK,0,0));
+//					UseKeyboardLeds((unsigned char)SendDlgItemMessage(hDlg,IDC_KBLEDS,BM_GETCHECK,0,0));
 					SetTurboDisk((unsigned char)SendDlgItemMessage(hDlg,IDC_TURBO,BM_GETCHECK,0,0));
 					PersistDisks=(unsigned char) SendDlgItemMessage(hDlg,IDC_PERSIST,BM_GETCHECK,0,0);
 					PhysicalDriveA=(unsigned char)SendDlgItemMessage(hDlg,IDC_DISKA,CB_GETCURSEL,0,0);

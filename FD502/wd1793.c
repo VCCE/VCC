@@ -65,8 +65,8 @@ long WriteTrack (unsigned char,unsigned char,unsigned char,unsigned char *);
 unsigned short ccitt_crc16(unsigned short crc, const unsigned char *, unsigned short );
 long GetSectorInfo (SectorInfo *,unsigned char *);
 void CommandDone(void);
-HANDLE OpenKeyboardDevice(int *ErrorNumber);
-int CloseKeyboardDevice(HANDLE);
+//HANDLE OpenKeyboardDevice(int *ErrorNumber);
+//int CloseKeyboardDevice(HANDLE);
 extern unsigned char PhysicalDriveA,PhysicalDriveB;
 bool FormatTrack (HANDLE , BYTE , BYTE,BYTE );
 bool CmdFormat (HANDLE , PFD_FORMAT_PARAMS , ULONG );
@@ -105,7 +105,7 @@ static long TransferBufferIndex=0;
 static long TransferBufferSize=0;
 static unsigned int IOWaiter=0;
 static short IndexCounter=0;
-static unsigned char UseLeds=0;
+//static unsigned char UseLeds=0;
 DWORD dwRet;
 HANDLE OpenFloppy (int );
 static PVOID RawReadBuf=NULL;
@@ -115,11 +115,11 @@ static FD_READ_WRITE_PARAMS rwp;
 static bool DirtyDisk=1;
 char ImageFormat[5][4]={"JVC","VDK","DMK","OS9","RAW"};
 //****************************************************************
-KEYBOARD_INDICATOR_PARAMETERS InputBuffer;	  // Input buffer for DeviceIoControl
-KEYBOARD_INDICATOR_PARAMETERS OutputBuffer;	  // Output buffer for DeviceIoControl
-ULONG				DataLength = sizeof(KEYBOARD_INDICATOR_PARAMETERS);
-ULONG				ReturnedLength; // Number of bytes returned in output buffer
-static 	HANDLE hKbdDev = INVALID_HANDLE_VALUE;
+//KEYBOARD_INDICATOR_PARAMETERS InputBuffer;	  // Input buffer for DeviceIoControl
+//KEYBOARD_INDICATOR_PARAMETERS OutputBuffer;	  // Output buffer for DeviceIoControl
+//ULONG				DataLength = sizeof(KEYBOARD_INDICATOR_PARAMETERS);
+//ULONG				ReturnedLength; // Number of bytes returned in output buffer
+//static 	HANDLE hKbdDev = INVALID_HANDLE_VALUE;
 /*************************************************************/
 unsigned char disk_io_read(unsigned char port)
 {
@@ -212,17 +212,17 @@ void DecodeControlReg(unsigned char Tmp)
 	if (Tmp & CTRL_DRIVE0)
 	{
 		CurrentDisk=0;
-		KBLeds|=KEYBOARD_NUM_LOCK_ON;
+//		KBLeds|=KEYBOARD_NUM_LOCK_ON;
 	}
 	if (Tmp & CTRL_DRIVE1)
 	{
 		CurrentDisk=1;
-		KBLeds|=KEYBOARD_CAPS_LOCK_ON;
+//		KBLeds|=KEYBOARD_CAPS_LOCK_ON;
 	}
 	if (Tmp & CTRL_DRIVE2)
 	{
 		CurrentDisk=2;
-		KBLeds|=KEYBOARD_SCROLL_LOCK_ON;
+//		KBLeds|=KEYBOARD_SCROLL_LOCK_ON;
 	}
 	if (Tmp & SIDESELECT)	//DRIVE3 Select in "all single sided" systems
 		Side=1;
@@ -248,13 +248,13 @@ void DecodeControlReg(unsigned char Tmp)
 		InteruptEnable=1;
 	if (Tmp & CTRL_HALT_FLAG)
 		HaltEnable=1;
-	InputBuffer.LedFlags=KBLeds ;
-	if (UseLeds)
-	{
-		if (hKbdDev== INVALID_HANDLE_VALUE)
-			hKbdDev=OpenKeyboardDevice(NULL);
-		DeviceIoControl(hKbdDev, IOCTL_KEYBOARD_SET_INDICATORS,&InputBuffer, DataLength,NULL,0,&ReturnedLength, NULL);
-	}
+//	InputBuffer.LedFlags=KBLeds ;
+//	if (UseLeds)
+//	{
+//		if (hKbdDev== INVALID_HANDLE_VALUE)
+//			hKbdDev=OpenKeyboardDevice(NULL);
+//		DeviceIoControl(hKbdDev, IOCTL_KEYBOARD_SET_INDICATORS,&InputBuffer, DataLength,NULL,0,&ReturnedLength, NULL);
+//	}
 	return;
 }
 
@@ -1296,59 +1296,59 @@ unsigned char SetTurboDisk( unsigned char Tmp)
 	return(TurboMode);
 }
 
-HANDLE OpenKeyboardDevice(int *ErrorNumber)
-{
-	HANDLE	hndKbdDev;
-	int		*LocalErrorNumber;
-	int		Dummy;
-
-	if (ErrorNumber == NULL)
-		LocalErrorNumber = &Dummy;
-	else
-		LocalErrorNumber = ErrorNumber;
-
-	*LocalErrorNumber = 0;
-	
-	if (!DefineDosDevice (DDD_RAW_TARGET_PATH, "Kbd", "\\Device\\KeyboardClass0"))
-	{
-		*LocalErrorNumber = GetLastError();
-		return INVALID_HANDLE_VALUE;
-	}
-
-	hndKbdDev = CreateFile("\\\\.\\Kbd", GENERIC_WRITE, 0, NULL,	OPEN_EXISTING,	0,	NULL);
-	
-	if (hndKbdDev == INVALID_HANDLE_VALUE)
-		*LocalErrorNumber = GetLastError();
-
-	return hndKbdDev;
-}
-
-
-int CloseKeyboardDevice()
-{
-	int e = 0;
-
-	if (!DefineDosDevice (DDD_REMOVE_DEFINITION, "Kbd", NULL))
-		e = GetLastError();
-
-	if (hKbdDev != INVALID_HANDLE_VALUE)
-		if (!CloseHandle(hKbdDev))
-			e = GetLastError();
-	hKbdDev= INVALID_HANDLE_VALUE;
-	return e;
-}
+//HANDLE OpenKeyboardDevice(int *ErrorNumber)
+//{
+//	HANDLE	hndKbdDev;
+//	int		*LocalErrorNumber;
+//	int		Dummy;
+//
+//	if (ErrorNumber == NULL)
+//		LocalErrorNumber = &Dummy;
+//	else
+//		LocalErrorNumber = ErrorNumber;
+//
+//	*LocalErrorNumber = 0;
+//	
+//	if (!DefineDosDevice (DDD_RAW_TARGET_PATH, "Kbd", "\\Device\\KeyboardClass0"))
+//	{
+//		*LocalErrorNumber = GetLastError();
+//		return INVALID_HANDLE_VALUE;
+//	}
+//
+//	hndKbdDev = CreateFile("\\\\.\\Kbd", GENERIC_WRITE, 0, NULL,	OPEN_EXISTING,	0,	NULL);
+//	
+//	if (hndKbdDev == INVALID_HANDLE_VALUE)
+//		*LocalErrorNumber = GetLastError();
+//
+//	return hndKbdDev;
+//}
 
 
-unsigned char UseKeyboardLeds(unsigned char Tmp)
-{
-	if (Tmp!=QUERY)
-	{
-		UseLeds=Tmp;
-		if (!UseLeds)
-			CloseKeyboardDevice();
-	}
-	return(UseLeds);
-}
+//int CloseKeyboardDevice()
+//{
+//	int e = 0;
+//
+//	if (!DefineDosDevice (DDD_REMOVE_DEFINITION, "Kbd", NULL))
+//		e = GetLastError();
+//
+//	if (hKbdDev != INVALID_HANDLE_VALUE)
+//		if (!CloseHandle(hKbdDev))
+//			e = GetLastError();
+//	hKbdDev= INVALID_HANDLE_VALUE;
+//	return e;
+//}
+
+
+//unsigned char UseKeyboardLeds(unsigned char Tmp)
+//{
+//	if (Tmp!=QUERY)
+//	{
+//		UseLeds=Tmp;
+//		if (!UseLeds)
+//			CloseKeyboardDevice();
+//	}
+//	return(UseLeds);
+//}
 
 long GetSectorInfo (SectorInfo *Sector,unsigned char *TempBuffer)
 {

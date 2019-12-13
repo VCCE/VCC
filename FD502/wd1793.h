@@ -25,7 +25,7 @@ void unmount_disk_image(unsigned char drive);
 void DiskStatus(char *);
 void PingFdc(void);
 unsigned char SetTurboDisk( unsigned char);
-unsigned char UseKeyboardLeds(unsigned char);
+//unsigned char UseKeyboardLeds(unsigned char);
 DWORD GetDriverVersion ();
 unsigned short InitController (void);
 //unsigned long UseRawDisk(unsigned char,unsigned char);
@@ -116,19 +116,19 @@ struct SectorInfo
 #define HEADERBUFFERSIZE	256
 
 
-#define IOCTL_KEYBOARD_SET_INDICATORS        CTL_CODE(FILE_DEVICE_KEYBOARD, 0x0002, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KEYBOARD_QUERY_TYPEMATIC       CTL_CODE(FILE_DEVICE_KEYBOARD, 0x0008, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KEYBOARD_QUERY_INDICATORS      CTL_CODE(FILE_DEVICE_KEYBOARD, 0x0010, METHOD_BUFFERED, FILE_ANY_ACCESS)
+//#define IOCTL_KEYBOARD_SET_INDICATORS        CTL_CODE(FILE_DEVICE_KEYBOARD, 0x0002, METHOD_BUFFERED, FILE_ANY_ACCESS)
+//#define IOCTL_KEYBOARD_QUERY_TYPEMATIC       CTL_CODE(FILE_DEVICE_KEYBOARD, 0x0008, METHOD_BUFFERED, FILE_ANY_ACCESS)
+//#define IOCTL_KEYBOARD_QUERY_INDICATORS      CTL_CODE(FILE_DEVICE_KEYBOARD, 0x0010, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
-typedef struct _KEYBOARD_INDICATOR_PARAMETERS {
-    USHORT UnitId;		// Unit identifier.
-    USHORT LedFlags;		// LED indicator state.
+//typedef struct _KEYBOARD_INDICATOR_PARAMETERS {
+//    USHORT UnitId;		// Unit identifier.
+//    USHORT LedFlags;		// LED indicator state.
+//
+//} KEYBOARD_INDICATOR_PARAMETERS, *PKEYBOARD_INDICATOR_PARAMETERS;
 
-} KEYBOARD_INDICATOR_PARAMETERS, *PKEYBOARD_INDICATOR_PARAMETERS;
-
-#define KEYBOARD_CAPS_LOCK_ON     4
-#define KEYBOARD_NUM_LOCK_ON      2
-#define KEYBOARD_SCROLL_LOCK_ON   1
+//#define KEYBOARD_CAPS_LOCK_ON     4
+//#define KEYBOARD_NUM_LOCK_ON      2
+//#define KEYBOARD_SCROLL_LOCK_ON   1
 
 
 //

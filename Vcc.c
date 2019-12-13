@@ -684,8 +684,8 @@ unsigned __stdcall EmuLoop(void *Dummy)
 	{
 		if (FlagEmuStop==TH_REQWAIT)
 		{
-			FlagEmuStop=TH_WAITING;	//Signal Main thread we are waiting
-			while(FlagEmuStop==TH_WAITING)
+			FlagEmuStop = TH_WAITING;
+			for (;;)
 				Sleep(1);
 		}
 		FPS=0;

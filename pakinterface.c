@@ -177,7 +177,7 @@ int LoadCart(void)
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME) ;
 	ofn.hwndOwner         = EmuState.WindowHandle;
-	ofn.lpstrFilter       =	"Program Packs\0*.ROM;*.DLL\0\0" ;			// filter string
+	ofn.lpstrFilter = "Program Packs\0*.ROM;*.ccc;*.DLL\0\0";			// filter string
 	ofn.nFilterIndex      = 1 ;							// current filter index
 	ofn.lpstrFile         = szFileName ;				// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;					// sizeof lpstrFile

@@ -22,7 +22,7 @@
 #define IDC_UNMOUNT                     1007
 #define IDC_CREATE                      1008
 #define IDC_TURBO                       1009
-#define IDC_KBLEDS                      1010
+//#define IDC_KBLEDS                      1010
 #define IDC_RGB                         1011
 #define IDC_DMK                         1012
 #define IDC_JVC                         1013
