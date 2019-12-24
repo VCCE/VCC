@@ -593,8 +593,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,0,1,4
- PRODUCTVERSION 2,0,1,4
+ FILEVERSION 2,0,1,5
+ PRODUCTVERSION 2,0,1,5
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x29L
@@ -612,7 +612,7 @@ BEGIN
             VALUE "Comments", "How bored are you that your reading this?"
             VALUE "CompanyName", "Not Radio Shack"
             VALUE "FileDescription", "Vcc"
-            VALUE "FileVersion", "2.0.1d"
+            VALUE "FileVersion", "2.0.1e"
             VALUE "InternalName", "Poco"
             VALUE "LegalCopyright", "Copyright © 2015 by BitRot Software"
             VALUE "LegalTrademarks", "BLAZEMONGER!"
@@ -710,7 +710,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_APP_TITLE           "VCC 2.0.1d"
+    IDS_APP_TITLE           "VCC 2.0.1e"
     IDS_CATNUMBER           "26-3334"
 END
 
