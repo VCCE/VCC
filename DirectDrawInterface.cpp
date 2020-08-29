@@ -110,28 +110,52 @@ bool CreateDDWindow(SystemState *CWState)
 	switch (CWState->FullScreen)
 	{
 	case 0: //Windowed Mode
-		AdjustWindowRect( &rc, WS_OVERLAPPEDWINDOW, TRUE );  //Add the height of the menu bar 
-		CWState->WindowHandle = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,CW_USEDEFAULT, 0, rc.right-rc.left, rc.bottom-rc.top, NULL, NULL, g_hInstance, NULL);
-		if (!CWState->WindowHandle)	//Can't creat window
+		
+		// Calculates the required size of the window rectangle, based on the desired client-rectangle size
+		// The window rectangle can then be passed to the CreateWindow function to create a window whose client area is the desired size.
+		::AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, TRUE); 
+		
+		// We create the Main window 
+		CWState->WindowHandle = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, 
+											 rc.right-rc.left, rc.bottom-rc.top, 
+											 NULL, NULL, g_hInstance, NULL);
+		if (!CWState->WindowHandle)	// Can't create window
 		   return FALSE;
-		hwndStatusBar =CreateStatusWindow (WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | CCS_BOTTOM , "Ready", CWState->WindowHandle, 2) ;
-		if (!hwndStatusBar) //Can't create Status bar
+		
+		// Create the Status Bar Window at the bottom
+		hwndStatusBar = ::CreateStatusWindow(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | CCS_BOTTOM , "Ready", CWState->WindowHandle, 2);
+		if (!hwndStatusBar) // Can't create Status bar
 		   return FALSE;
 
-		GetWindowRect(hwndStatusBar,&rStatBar); //Get the size of the Status bar
-		StatusBarHeight= rStatBar.bottom - rStatBar.top; //Calculate it height
-		GetWindowRect(CWState->WindowHandle,&rStatBar);		//Get the size of main window and add height of status bar then resize Main
-		MoveWindow(CWState->WindowHandle,rStatBar.left,rStatBar.top,rStatBar.right - rStatBar.left,(rStatBar.bottom+StatusBarHeight)-rStatBar.top,1); 
-		SendMessage(hwndStatusBar,WM_SIZE,0,0);	//Redraw Status bar in new position
-		GetWindowRect(CWState->WindowHandle,&WindowDefaultSize);	//And save the Final size of the Window 
-		ShowWindow(CWState->WindowHandle, g_nCmdShow);
-		UpdateWindow(CWState->WindowHandle);
-		hr = DirectDrawCreate( NULL, &g_pDD, NULL );			// Initialize DirectDraw
+		// Retrieves the dimensions of the bounding rectangle of the specified window
+		// The dimensions are given in screen coordinates that are relative to the upper-left corner of the screen.
+		::GetWindowRect(hwndStatusBar, &rStatBar); // Get the size of the Status bar
+		StatusBarHeight = rStatBar.bottom - rStatBar.top; // Calculate its height
+
+		// Get the size of main window and add height of status bar then resize Main
+		// re-using rStatBar RECT even though it's the main window
+		::GetWindowRect(CWState->WindowHandle, &rStatBar);  
+		::MoveWindow(CWState->WindowHandle, rStatBar.left, rStatBar.top, // using MoveWindow to resize 
+										  rStatBar.right - rStatBar.left, (rStatBar.bottom+StatusBarHeight) - rStatBar.top,
+										  1); 
+		::SendMessage(hwndStatusBar, WM_SIZE, 0, 0); // Redraw Status bar in new position
+
+		::GetWindowRect(CWState->WindowHandle, &WindowDefaultSize);	// And save the Final size of the Window 
+		::ShowWindow(CWState->WindowHandle, g_nCmdShow);
+		::UpdateWindow(CWState->WindowHandle);
+
+		// Create an instance of a DirectDraw object
+		hr = ::DirectDrawCreate(NULL, &g_pDD, NULL);
 		if (hr) return FALSE;
+		
+		// Initialize the DirectDraw object
 		hr = g_pDD->SetCooperativeLevel(CWState->WindowHandle, DDSCL_NORMAL);	// Set DDSCL_NORMAL to use windowed mode
 		if (hr) return FALSE;
+		
 		ddsd.dwFlags = DDSD_CAPS ; 
 		ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+		
+		// Create our Primary Surface
 		hr = g_pDD->CreateSurface(&ddsd, &g_pDDS, NULL);
 		if (hr) return FALSE;
 		ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS ;
@@ -233,22 +257,83 @@ void DisplayFlip(SystemState *DFState)	// Double buffering flip
 	else
 	{
 		p.x = 0; p.y = 0;
-		::ClientToScreen(DFState->WindowHandle, &p);	// find out where on the primary surface our window lives
+		
+		// The ClientToScreen function converts the client-area coordinates of a specified point to screen coordinates.
+		// in other word the client rectangle of the main windows 0, 0 (upper-left corner) 
+		// in a screen x,y coords which is put back into p  
+		::ClientToScreen(DFState->WindowHandle, &p);  // find out where on the primary surface our window lives
+
+		// get the actual client rectangle, which is always 0,0 - w,h
 		::GetClientRect(DFState->WindowHandle, &rcDest);
-		OffsetRect(&rcDest, p.x, p.y);
-		SetRect(&rcSrc, 0, 0, DFState->WindowSize.x, DFState->WindowSize.y);
+
+		// The OffsetRect function moves the specified rectangle by the specified offsets
+		// add the delta screen point we got above, which gives us the client rect in screen coordinates.
+		::OffsetRect(&rcDest, p.x, p.y);
+		
+		// our destination rectangle is going to be 
+		::SetRect(&rcSrc, 0, 0, DFState->WindowSize.x, DFState->WindowSize.y);
+		
 		if (Resizeable)
-			rcDest.bottom-=StatusBarHeight;
+		{
+			rcDest.bottom -= StatusBarHeight;
+
+			if (ForceAspect) // Adjust the Aspect Ratio if window is resized
+			{
+				float srcWidth = (float)DFState->WindowSize.x;
+				float srcHeight = (float)DFState->WindowSize.y;
+				float srcRatio = srcWidth / srcHeight;
+
+				// change this to use the existing rcDest and the calc, w = right-left & h = bottom-top, 
+				//                         because rcDest has already been converted to screen cords, right?   
+				static RECT rcClient;
+				::GetClientRect(DFState->WindowHandle, &rcClient);  // x,y is always 0,0 so right, bottom is w,h
+				rcClient.bottom -= StatusBarHeight;
+				
+				float clientWidth = (float)rcClient.right;
+				float clientHeight = (float)rcClient.bottom;
+				float clientRatio = clientWidth / clientHeight;
+
+				float dstWidth = 0, dstHeight = 0;
+
+				if (clientRatio > srcRatio)
+				{
+					dstWidth = srcWidth * clientHeight / srcHeight;
+					dstHeight = clientHeight;
+				}
+				else
+				{
+					dstWidth = clientWidth;
+					dstHeight = srcHeight * clientWidth / srcWidth;
+				}
+
+				float dstX = (clientWidth - dstWidth) / 2; 
+				float dstY = (clientHeight - dstHeight) / 2;
+
+				static POINT pDstLeftTop;
+				pDstLeftTop.x = (long)dstX; pDstLeftTop.y = (long)dstY;
+				::ClientToScreen(DFState->WindowHandle, &pDstLeftTop);
+
+				static POINT pDstRightBottom;
+				pDstRightBottom.x = (long)(dstX + dstWidth); pDstRightBottom.y = (long)(dstY + dstHeight);
+				::ClientToScreen(DFState->WindowHandle, &pDstRightBottom);
+
+				::SetRect(&rcDest, pDstLeftTop.x, pDstLeftTop.y, pDstRightBottom.x, pDstRightBottom.y);
+			}
+		}
 		else
 		{
-			rcDest.right=rcDest.left+DFState->WindowSize.x;
-			rcDest.bottom=rcDest.top+DFState->WindowSize.y;
-			GetWindowRect(DFState->WindowHandle,&Temp); 
-			MoveWindow(DFState->WindowHandle,Temp.left,Temp.top,WindowDefaultSize.right-WindowDefaultSize.left,WindowDefaultSize.bottom-WindowDefaultSize.top,1); 
+			// this does not seem ideal, it lets you begin to resize and immediately resizes it back ... causing a lot of flicker.
+			rcDest.right = rcDest.left + DFState->WindowSize.x;
+			rcDest.bottom = rcDest.top + DFState->WindowSize.y;
+			::GetWindowRect(DFState->WindowHandle, &Temp);
+			::MoveWindow(DFState->WindowHandle, Temp.left, Temp.top, WindowDefaultSize.right - WindowDefaultSize.left, WindowDefaultSize.bottom-WindowDefaultSize.top, 1);
 		}
+		
 		if (g_pDDSBack == NULL)
-			MessageBox(0,"Odd","Error",0);
-		hr = g_pDDS->Blt(&rcDest, g_pDDSBack, &rcSrc,DDBLT_WAIT , NULL); //DDBLT_WAIT
+			MessageBox(0, "Odd", "Error", 0); // yes, odd error indeed!! (??)
+		                                      // especially since we go ahead and use it below!
+	
+		hr = g_pDDS->Blt(&rcDest, g_pDDSBack, &rcSrc, DDBLT_WAIT , NULL); // DDBLT_WAIT
 	}
 	return;
 }
