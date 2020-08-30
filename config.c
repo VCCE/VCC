@@ -22,8 +22,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <commctrl.h>
 #include <stdio.h>
 #include <Richedit.h>
-#include <iostream>
-#include <cstdlib>
 
 #include "defines.h"
 #include "resource.h"
@@ -81,8 +79,6 @@ static char ExecDirectory[MAX_PATH]="";
 static char SerialCaptureFile[MAX_PATH]="";
 static char TextMode=1,PrtMon=0;;
 static unsigned char NumberofJoysticks=0;
-static unsigned char NumberofJoysticks=0;
-char* ENV_HOME = std::getenv("HOMEPATH");
 char OutBuffer[MAX_PATH]="";
 char AppName[MAX_LOADSTRING]="";
 STRConfig CurrentConfig;
@@ -169,13 +165,7 @@ void LoadConfig(SystemState *LCState)
 	GetModuleFileName(NULL,ExecDirectory,MAX_PATH);
 	PathRemoveFileSpec(ExecDirectory);
 	strcpy(CurrentConfig.PathtoExe,ExecDirectory);
-	
-	# Set the ini path to %HOMEPATH%\Documents\VCC
-	strcpy(HomePath, ENV_HOME);
-	strcat(HomePath, "\\Documents\\VCC");
-	if (_mkdir(HomePath) == 0) {/*VCC Directory created*/ } 
-	
-	strcpy(IniFilePath,HomePath);
+	strcpy(IniFilePath,ExecDirectory);
 	strcat(IniFilePath,"\\");
 	strcat(IniFilePath,IniFileName);
 	LCState->ScanLines=0;
