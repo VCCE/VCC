@@ -22,6 +22,9 @@ This file is part of VCC (Virtual Color Computer).
 #include <commctrl.h>
 #include <stdio.h>
 #include <Richedit.h>
+#include <iostream>
+
+#include <direct.h>
 
 #include "defines.h"
 #include "resource.h"
@@ -38,10 +41,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "keyboard.h"
 #include "fileops.h"
 #include "Cassette.h"
+#include "shlobj.h"
 
 //#include "logger.h"
 #include <assert.h>
-
+using namespace std;
 //
 // forward declarations
 //
@@ -62,6 +66,7 @@ LRESULT CALLBACK JoyStickConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK TapeConfig(HWND , UINT , WPARAM , LPARAM );
 LRESULT CALLBACK BitBanger(HWND , UINT , WPARAM , LPARAM );
 
+
 //
 //	global variables
 //
@@ -79,6 +84,9 @@ static char ExecDirectory[MAX_PATH]="";
 static char SerialCaptureFile[MAX_PATH]="";
 static char TextMode=1,PrtMon=0;;
 static unsigned char NumberofJoysticks=0;
+
+TCHAR AppDataPath[MAX_PATH];
+
 char OutBuffer[MAX_PATH]="";
 char AppName[MAX_LOADSTRING]="";
 STRConfig CurrentConfig;
@@ -95,6 +103,7 @@ static JoyStick TempLeft, TempRight;
 
 static SndCardList SoundCards[MAXCARDS];
 static HWND hDlgBar=NULL,hDlgTape=NULL;
+
 
 CHARFORMAT CounterText;
 CHARFORMAT ModeText;
@@ -164,10 +173,15 @@ void LoadConfig(SystemState *LCState)
 	LoadString(NULL, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
 	GetModuleFileName(NULL,ExecDirectory,MAX_PATH);
 	PathRemoveFileSpec(ExecDirectory);
+	if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, AppDataPath))) 
+		OutputDebugString(AppDataPath);
 	strcpy(CurrentConfig.PathtoExe,ExecDirectory);
-	strcpy(IniFilePath,ExecDirectory);
+	strcat(AppDataPath, "\\VCC");
+	if (_mkdir(AppDataPath) != 0) { OutputDebugString("Unable to create VCC config folder."); }
+	strcpy(IniFilePath, AppDataPath);
 	strcat(IniFilePath,"\\");
 	strcat(IniFilePath,IniFileName);
+	
 	LCState->ScanLines=0;
 	NumberOfSoundCards=GetSoundCardList(SoundCards);
 	ReadIniFile();
