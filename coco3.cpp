@@ -626,8 +626,6 @@ void PasteText() {
 		case ':': sc = 0x27; CSHIFT = TRUE;	break;
 		case '\"': sc = 0x28; CSHIFT = TRUE; break;
 		case '?': sc = 0x35; CSHIFT = TRUE; break;
-		case '<': sc = 0x33; CSHIFT = TRUE; break;
-		case '>': sc = 0x34; CSHIFT = TRUE; break;
 		default: sc = 0xFF;	break;
 
 		}
