@@ -9896,9 +9896,6 @@ unsigned char SetScanLines(unsigned char Lines)
 	}
 	return(0);
 }
-int GetBytesPerRow() {
-	return BytesperRow;
-}
 /*
 unsigned char SetArtifacts(unsigned char Tmp)
 {

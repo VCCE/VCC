@@ -1073,7 +1073,3 @@ int SelectFile(char *FileName)
 	strcpy(FileName,TempFileName);
 	return(1);
 }
-
-int GetKeyboardLayout() {
-	return(CurrentConfig.KeyMap);
-}

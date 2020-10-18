@@ -26,7 +26,6 @@ void GetIniFilePath( char *);
 void UpdateConfig (void);
 void UpdateSoundBar(unsigned short,unsigned short);
 void UpdateTapeCounter(unsigned int,unsigned char);
-int GetKeyboardLayout();
 LRESULT CALLBACK	Config			(HWND, UINT, WPARAM, LPARAM);
 
 typedef struct  {
