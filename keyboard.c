@@ -53,6 +53,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 char SetMouseStatus(char, unsigned char);
+bool pasting = false;  //Are the keyboard functions in the middle of a paste operation?
 
 /*****************************************************************************/
 /*
@@ -78,6 +79,7 @@ static unsigned char LeftButton2Status = 0;
 static unsigned char RightButton2Status = 0;
 static unsigned char LeftStickNumber = 0;
 static unsigned char RightStickNumber = 0;
+
 
 
 /*****************************************************************************/
@@ -279,6 +281,8 @@ void _vccKeyboardUpdateRolloverTable()
 void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e keyState)
 {
 	XTRACE("Key  : %c (%3d / 0x%02X)  Scan : %d / 0x%02X\n",key,key,key, ScanCode, ScanCode);
+	//If requested, abort pasting operation.
+	if (ScanCode == 0x01 || ScanCode == 0x43 || ScanCode == 0x3F) { pasting = false; OutputDebugString("ABORT PASTING!!!\n"); } 
 
 	// check for shift key
 	// Left and right shift generate different scan codes
@@ -316,8 +320,10 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e 
 
 			// track key is down
 			ScanTable[ScanCode] = KEY_DOWN;
+			
 
 			_vccKeyboardUpdateRolloverTable();
+
 
 			if ( GimeGetKeyboardInteruptState() )
 			{
@@ -865,4 +871,10 @@ unsigned char Btemp=0;
 
 /*****************************************************************************/
 
+bool GetPaste() {
+	return pasting;
+}
+void SetPaste(bool tmp) {
+	pasting = tmp;
+}
 
