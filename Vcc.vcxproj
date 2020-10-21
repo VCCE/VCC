@@ -194,7 +194,7 @@
     <ClCompile Include="_xDebug.c" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
+    <Text Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h" />
