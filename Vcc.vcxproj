@@ -194,6 +194,9 @@
     <ClCompile Include="_xDebug.c" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
     <ClInclude Include="audio.h" />
     <ClInclude Include="Cassette.h" />
     <ClInclude Include="cc2font.h" />
@@ -271,7 +274,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="README.md" />
     <None Include="resources\cursor1.cur" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
