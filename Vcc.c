@@ -299,6 +299,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					PasteBASIC();
 					break;
 
+				case ID_PASTE_BASIC_NEW:
+					PasteBASICWithNew();
+					break;
+
 				default:
 				   return DefWindowProc(hWnd, message, wParam, lParam);
 			}

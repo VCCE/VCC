@@ -74,7 +74,7 @@ static int SndEnable=1;
 static int OverClock=1;
 static unsigned char SoundOutputMode=0;	//Default to Speaker 1= Cassette
 static int clipcycle = 1, cyclewait=2000;
-bool codepaste = false;
+bool codepaste, PasteWithNew = false; 
 
 char tmpthrottle = 0;
 int CurrentKeyMap;
@@ -545,6 +545,7 @@ void PasteText() {
 	char sc;
 	char letter;
 	bool CSHIFT;
+	
 
 	SetPaste(true);
 	//This sets the keyboard to Natural, 
@@ -552,7 +553,10 @@ void PasteText() {
 	CurrentKeyMap = GetKeyboardLayout();
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)1);
 	cliptxt = GetClipboardText().c_str();
-	if (cliptxt.substr(cliptxt.length(), 1) != "\n") { cliptxt.append("\n"); }
+	
+	if (PasteWithNew) { cliptxt = "NEW\n" + cliptxt; }
+	
+	//if (cliptxt.substr(cliptxt.length(), 1) != "\n") { cliptxt.append("\n"); }
 
 	for (int t = 0; t < cliptxt.length(); t++) {
 		char tmp = cliptxt[t];
@@ -577,7 +581,7 @@ void PasteText() {
 			if(lines.length() >= 257 && codepaste==true) {
 				// Line is too long to handle. Truncate.
 				int b = lines.find(" ");
-				string linestr = "Line "+lines.substr(0, b)+" is too long for BASIC and will be truncated.";
+				string linestr = "Warning! Line "+lines.substr(0, b)+" is too long for BASIC and will be truncated.";
 				
 				MessageBox(0, linestr.c_str(), "Clipboard", 0);
 				lines = (lines.substr(0, 249));
@@ -858,6 +862,7 @@ void CopyText() {
 		//Put mem back the way we found it.
 		MemWrite8(oldpage, 0xFFA1);
 	}
+	if (BytesPerRow == 32) { out = out.substr(0, out.length() - 2); }
 	bool succ = SetClipboard(out);
 }
 void PasteBASIC() {
@@ -865,5 +870,13 @@ void PasteBASIC() {
 	PasteText();
 	codepaste = false;
 }
-
+void PasteBASICWithNew() {
+	int tmp=MessageBox(0, "Warning: This operation will erase the Coco's BASIC memory\nbefore pasting. Continue?", "Clipboard", MB_YESNO);
+	if (tmp != 6) { return; }
+	codepaste = true;
+	PasteWithNew = true;
+	PasteText();
+	codepaste = false;
+	PasteWithNew = false;
+}
 

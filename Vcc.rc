@@ -41,7 +41,8 @@ BEGIN
 	BEGIN
 		MENUITEM "Copy Text",					ID_COPY_TEXT
 		MENUITEM "Paste Text",					ID_PASTE_TEXT
-		MENUITEM "Paste BASIC Code",			ID_PASTE_BASIC
+		MENUITEM "Paste BASIC Code (Merge)",	ID_PASTE_BASIC
+		MENUITEM "Paste BASIC Code (with NEW)",	ID_PASTE_BASIC_NEW			
 	END
 	POPUP "Configuration"
     BEGIN
