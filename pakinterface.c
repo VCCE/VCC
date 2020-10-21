@@ -509,7 +509,7 @@ void RefreshDynamicMenu(void)
 	if ((hMenu==NULL) | (EmuState.WindowHandle != hOld))
 		hMenu=GetMenu(EmuState.WindowHandle);
 	else
-		DeleteMenu(hMenu,2,MF_BYPOSITION);
+		DeleteMenu(hMenu,3,MF_BYPOSITION);
 
 	hOld=EmuState.WindowHandle;
 	hSubMenu[SubMenuIndex]=CreatePopupMenu();
@@ -521,7 +521,7 @@ void RefreshDynamicMenu(void)
 	Mii.hSubMenu = hSubMenu[SubMenuIndex];
 	Mii.dwTypeData = MenuTitle;
 	Mii.cch=strlen(MenuTitle);
-	InsertMenuItem(hMenu,2,TRUE,&Mii);
+	InsertMenuItem(hMenu,3,TRUE,&Mii);
 	SubMenuIndex++;	
 	for (TempIndex=0;TempIndex<MenuIndex;TempIndex++)
 	{

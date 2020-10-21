@@ -34,6 +34,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "cassette.h"
 #include "DirectDrawInterface.h"
 #include "logger.h"
+#include "keyboard.h"
+#include <string>
+#include <iostream>
+#include "config.h"
+#include "tcc1014mmu.h"
 
 //int CPUExeca(int);
 
@@ -68,6 +73,11 @@ static int IntEnable=0;
 static int SndEnable=1;
 static int OverClock=1;
 static unsigned char SoundOutputMode=0;	//Default to Speaker 1= Cassette
+static int clipcycle = 1, cyclewait=2000;
+bool codepaste = false;
+
+char tmpthrottle = 0;
+int CurrentKeyMap;
 void AudioOut(void);
 void CassOut(void);
 void CassIn(void);
@@ -76,6 +86,13 @@ void SetMasterTickCounter(void);
 void (*DrawTopBoarder[4]) (SystemState *)={DrawTopBoarder8,DrawTopBoarder16,DrawTopBoarder24,DrawTopBoarder32};
 void (*DrawBottomBoarder[4]) (SystemState *)={DrawBottomBoarder8,DrawBottomBoarder16,DrawBottomBoarder24,DrawBottomBoarder32};
 void (*UpdateScreen[4]) (SystemState *)={UpdateScreen8,UpdateScreen16,UpdateScreen24,UpdateScreen32};
+std::string GetClipboardText();
+
+
+using namespace std;
+string clipboard;
+STRConfig ClipConfig;
+
 _inline int CPUCycle(void);
 float RenderFrame (SystemState *RFState)
 {
@@ -299,6 +316,63 @@ _inline int CPUCycle(void)
 			PicosToSoundSample=SoundInterupt;
 		}
 	}
+	if (!clipboard.empty()) {
+		char tmp[] = { 0x00 };
+		char kbstate = 2;
+		int z = 0;
+
+		//Remember the original throttle setting.
+		//Set it to off. We need speed for this!
+		if (tmpthrottle == 0) {
+			tmpthrottle = SetSpeedThrottle(QUERY);
+			if (tmpthrottle == 0) { tmpthrottle = 2; } // 2 = No throttle.
+		}
+		SetSpeedThrottle(0);
+
+		strcpy(tmp, clipboard.substr(0, 1).c_str());
+		if (clipcycle == 1) {
+			
+			if (tmp[z] == 0x36) {
+				vccKeyboardHandleKey(0x36, 0x36, kEventKeyDown);  //Press shift and...
+				clipboard = clipboard.substr(1, clipboard.length() - 1); // get the next key in the string
+				strcpy(tmp, clipboard.substr(0, 1).c_str());
+				vccKeyboardHandleKey(tmp[z], tmp[z], kEventKeyDown);
+				if (tmp[z] == 0x1c) {
+					cyclewait = 6000; 
+				}
+				else { cyclewait = 2000; }
+
+
+			}
+			else { vccKeyboardHandleKey(tmp[z], tmp[z], kEventKeyDown);
+			if (tmp[z] == 0x1c) { cyclewait = 6000; 
+			}
+				else { cyclewait = 2000; }
+			}
+
+			clipboard = clipboard.substr(1, clipboard.length() - 1);
+			if (clipboard.empty()) {
+				SetPaste(false);
+				//Done pasting. Reset throttle to original state
+				if (tmpthrottle == 2) { SetSpeedThrottle(0); }
+				else { SetSpeedThrottle(1); }
+				//...and reset the keymap to the original state
+				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentKeyMap);
+				tmpthrottle = 0;
+			}
+		}
+		else if (clipcycle == 500) {
+			vccKeyboardHandleKey(0x36, 0x36, kEventKeyUp);
+			vccKeyboardHandleKey(0x42, tmp[z], kEventKeyUp);
+			if (!GetPaste()) { 
+				clipboard.clear(); 
+				SetPaste(false); 
+				if (tmpthrottle == 2) { SetSpeedThrottle(0); }
+				else { SetSpeedThrottle(1); }
+			}
+		}
+		clipcycle++; if (clipcycle > cyclewait) { clipcycle = 1; }
+	}
 return(0);
 }
 
@@ -463,6 +537,333 @@ unsigned char SetSndOutMode(unsigned char Mode)  //0 = Speaker 1= Cassette Out 2
 	return(SoundOutputMode);
 }
 
+void PasteText() {
+	using namespace std;
 
+	std::string tmp;
+	string cliptxt, clipparse, lines, out, debugout;
+	char sc;
+	char letter;
+	bool CSHIFT;
+
+	SetPaste(true);
+	//This sets the keyboard to Natural, 
+	//but we need to read it first so we can set it back
+	CurrentKeyMap = GetKeyboardLayout();
+	vccKeyboardBuildRuntimeTable((keyboardlayout_e)1);
+	cliptxt = GetClipboardText().c_str();
+	if (cliptxt.substr(cliptxt.length(), 1) != "\n") { cliptxt.append("\n"); }
+
+	for (int t = 0; t < cliptxt.length(); t++) {
+		char tmp = cliptxt[t];
+
+		if ( tmp != (char)'\n') {
+			lines += tmp;
+		}
+		else  { //...the character is a <CR>
+			if (lines.length() > 249 && lines.length() < 257 && codepaste==true) {
+				int b = lines.find(" ");
+				string main = lines.substr(0, 249);
+				string extra = lines.substr(249, lines.length() - 249);
+				string spaces;
+				for (int p = 1; p < 249; p++) {
+					spaces.append(" ");
+				}
+				string linestr = lines.substr(0, b);
+				lines = main+"\n\nEDIT "+linestr+"\n"+spaces+"I"+extra+"\n";
+				clipparse += lines;
+				lines.clear();
+			}
+			if(lines.length() >= 257 && codepaste==true) {
+				// Line is too long to handle. Truncate.
+				int b = lines.find(" ");
+				string linestr = "Line "+lines.substr(0, b)+" is too long for BASIC and will be truncated.";
+				
+				MessageBox(0, linestr.c_str(), "Clipboard", 0);
+				lines = (lines.substr(0, 249));
+			}
+			if(lines.length() <= 249 || codepaste==false) { 
+				// Just a regular line.
+				clipparse += lines+"\n"; 
+				lines.clear();
+			}
+		}
+		if (t == cliptxt.length()-1) {
+			clipparse += lines;
+		}
+	}
+	cliptxt = clipparse; 
+
+	for (int pp = 0; pp <= cliptxt.size(); pp++) {
+		sc = 0;
+		CSHIFT = FALSE;
+		letter = cliptxt[pp];
+		switch (letter)
+		{
+		case '@': sc = 0x03; CSHIFT = TRUE; break;
+		case 'A': sc = 0x1E; CSHIFT = TRUE; break;
+		case 'B': sc = 0x30; CSHIFT = TRUE; break;
+		case 'C': sc = 0x2E; CSHIFT = TRUE; break;
+		case 'D': sc = 0x20; CSHIFT = TRUE; break;
+		case 'E': sc = 0x12; CSHIFT = TRUE; break;
+		case 'F': sc = 0x21; CSHIFT = TRUE; break;
+		case 'G': sc = 0x22; CSHIFT = TRUE; break;
+		case 'H': sc = 0x23; CSHIFT = TRUE; break;
+		case 'I': sc = 0x17; CSHIFT = TRUE; break;
+		case 'J': sc = 0x24; CSHIFT = TRUE; break;
+		case 'K': sc = 0x25; CSHIFT = TRUE; break;
+		case 'L': sc = 0x26; CSHIFT = TRUE; break;
+		case 'M': sc = 0x32; CSHIFT = TRUE; break;
+		case 'N': sc = 0x31; CSHIFT = TRUE; break;
+		case 'O': sc = 0x18; CSHIFT = TRUE; break;
+		case 'P': sc = 0x19; CSHIFT = TRUE; break;
+		case 'Q': sc = 0x10; CSHIFT = TRUE; break;
+		case 'R': sc = 0x13; CSHIFT = TRUE; break;
+		case 'S': sc = 0x1F; CSHIFT = TRUE; break;
+		case 'T': sc = 0x14; CSHIFT = TRUE; break;
+		case 'U': sc = 0x16; CSHIFT = TRUE; break;
+		case 'V': sc = 0x2F; CSHIFT = TRUE; break;
+		case 'W': sc = 0x11; CSHIFT = TRUE; break;
+		case 'X': sc = 0x2D; CSHIFT = TRUE; break;
+		case 'Y': sc = 0x15; CSHIFT = TRUE; break;
+		case 'Z': sc = 0x2C; CSHIFT = TRUE; break;
+		case ' ': sc = 0x39; break;
+		case 'a': sc = 0x1E; break;
+		case 'b': sc = 0x30; break;
+		case 'c': sc = 0x2E; break;
+		case 'd': sc = 0x20; break;
+		case 'e': sc = 0x12; break;
+		case 'f': sc = 0x21; break;
+		case 'g': sc = 0x22; break;
+		case 'h': sc = 0x23; break;
+		case 'i': sc = 0x17; break;
+		case 'j': sc = 0x24; break;
+		case 'k': sc = 0x25; break;
+		case 'l': sc = 0x26; break;
+		case 'm': sc = 0x32; break;
+		case 'n': sc = 0x31; break;
+		case 'o': sc = 0x18; break;
+		case 'p': sc = 0x19; break;
+		case 'q': sc = 0x10; break;
+		case 'r': sc = 0x13; break;
+		case 's': sc = 0x1F; break;
+		case 't': sc = 0x14; break;
+		case 'u': sc = 0x16; break;
+		case 'v': sc = 0x2F; break;
+		case 'w': sc = 0x11; break;
+		case 'x': sc = 0x2D; break;
+		case 'y': sc = 0x15; break;
+		case 'z': sc = 0x2C; break;
+		case '0': sc = 0x0B; break;
+		case '1': sc = 0x02; break;
+		case '2': sc = 0x03; break;
+		case '3': sc = 0x04; break;
+		case '4': sc = 0x05; break;
+		case '5': sc = 0x06; break;
+		case '6': sc = 0x07; break;
+		case '7': sc = 0x08; break;
+		case '8': sc = 0x09; break;
+		case '9': sc = 0x0A; break;
+		case '!': sc = 0x02; CSHIFT = TRUE; break;
+		case '#': sc = 0x04; CSHIFT = TRUE;	break;
+		case '$': sc = 0x05; CSHIFT = TRUE;	break;
+		case '%': sc = 0x06; CSHIFT = TRUE;	break;
+		case '^': sc = 0x07; CSHIFT = TRUE;	break;
+		case '&': sc = 0x08; CSHIFT = TRUE;	break;
+		case '*': sc = 0x09; CSHIFT = TRUE;	break;
+		case '(': sc = 0x0A; CSHIFT = TRUE;	break;
+		case ')': sc = 0x0B; CSHIFT = TRUE;	break;
+		case '-': sc = 0x0C; break;
+		case '=': sc = 0x0D; break;
+		case ';': sc = 0x27; break;
+		case '\'': sc = 0x28; break;
+		case '/': sc = 0x35; break;
+		case '.': sc = 0x34; break;
+		case ',': sc = 0x33; break;
+		case '\n': sc = 0x1C; break;
+		case '+': sc = 0x0D; CSHIFT = TRUE;	break;
+		case ':': sc = 0x27; CSHIFT = TRUE;	break;
+		case '\"': sc = 0x28; CSHIFT = TRUE; break;
+		case '?': sc = 0x35; CSHIFT = TRUE; break;
+		case '<': sc = 0x33; CSHIFT = TRUE; break;
+		case '>': sc = 0x34; CSHIFT = TRUE; break;
+		default: sc = 0xFF;	break;
+
+		}
+
+		if (CSHIFT) { out += 0x36; CSHIFT = FALSE; }
+		out += sc;
+		
+	}
+	clipboard = out;
+}
+
+std::string GetClipboardText()
+{
+	if (!OpenClipboard(nullptr)) { MessageBox(0, "Unable to open clipboard.", "Clipboard", 0); return(""); }
+
+	HANDLE hClip = GetClipboardData(CF_TEXT);
+	if (hClip == nullptr) { CloseClipboard(); MessageBox(0, "No text found in clipboard.", "Clipboard", 0); return(""); }
+
+	char* tmp = static_cast<char*>(GlobalLock(hClip));
+	if (tmp == nullptr) {
+		CloseClipboard();  MessageBox(0, "NULL Pointer", "Clipboard", 0); return("");
+	}
+
+	std::string out(tmp);
+	GlobalUnlock(hClip);
+	CloseClipboard();
+
+	return out;
+}
+
+bool SetClipboard(string sendout) {
+	const char* clipout = sendout.c_str();
+	const size_t len = strlen(clipout) + 1;
+
+	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
+
+	memcpy(GlobalLock(hMem), clipout, len);
+
+	GlobalUnlock(hMem);
+
+	OpenClipboard(0);
+	EmptyClipboard();
+	SetClipboardData(CF_TEXT, hMem);
+	CloseClipboard();
+	return TRUE;
+}
+
+void CopyText() {
+	int idx;
+	int tmp;
+	int BytesPerRow = GetBytesPerRow();
+	int lines;
+	int offset;
+	int newpage = 0x36; // Page 0x36 is the hi-res text screen
+	int lastchar;
+	string out;
+	string tmpline;
+
+	if (BytesPerRow == 32) { lines = 15; }
+	else { lines = 23; }
+
+	// Read the lo-res text screen...
+	if (BytesPerRow == 32) {
+		offset = 0;
+		char pcchars[] =
+		{
+			'@','a','b','c','d','e','f','g',
+			'h','i','j','k','l','m','n','o',
+			'p','q','r','s','t','u','v','w',
+			'x','y','z','[','\\',']',' ',' ',
+			' ','!','\"','#','$','%','&','\'',
+			'(',')','*','+',',','-','.','/',
+			'0','1','2','3','4','5','6','7',
+			'8','9',':',';','<','=','>','?',
+			'@','A','B','C','D','E','F','G',
+			'H','I','J','K','L','M','N','O',
+			'P','Q','R','S','T','U','V','W',
+			'X','Y','Z','[','\\',']',' ',' ',
+			' ','!','\"','#','$','%','&','\'',
+			'(',')','*','+',',','-','.','/',
+			'0','1','2','3','4','5','6','7',
+			'8','9',':',';','<','=','>','?',
+			'@','a','b','c','d','e','f','g',
+			'h','i','j','k','l','m','n','o',
+			'p','q','r','s','t','u','v','w',
+			'x','y','z','[','\\',']',' ',' ',
+			' ','!','\"','#','$','%','&','\'',
+			'(',')','*','+',',','-','.','/',
+			'0','1','2','3','4','5','6','7',
+			'8','9',':',';','<','=','>','?'
+		};
+
+
+		for (int y = 0; y <= lines; y++) {
+			lastchar = 0;
+			tmpline.clear();
+			tmp = 0;
+			for (idx = 0; idx < BytesPerRow; idx++) {
+
+				tmp = MemRead8(0x0400 + y * BytesPerRow + idx);
+				if (tmp == 32 || tmp == 64 || tmp == 96) { tmp = 30 + offset; } 
+				else { lastchar = idx + 1; }
+				tmpline += pcchars[tmp - offset]; 
+			}
+			tmpline = tmpline.substr(0, lastchar);
+
+			if (lastchar != 0) { out += tmpline; out += "\n"; }
+
+		}
+
+		if (out == "") { MessageBox(0, "No text found on screen.", "Clipboard", 0); }
+	}
+
+	else if (BytesPerRow == 40 || BytesPerRow == 80) {
+		int tmp2 = MemRead8(0x6C000);
+		int oldpage = MemRead8(0xFFA1) & 63; // Top two bits may be garbage.
+		offset = 32;
+		char pcchars[] =
+		{
+			' ','!','\"','#','$','%','&','\'',
+			'(',')','*','+',',','-','.','/',
+			'0','1','2','3','4','5','6','7',
+			'8','9',':',';','<','=','>','?',
+			'@','A','B','C','D','E','F','G',
+			'H','I','J','K','L','M','N','O',
+			'P','Q','R','S','T','U','V','W',
+			'X','Y','Z','[','\\',']',' ',' ',
+			'^','a','b','c','d','e','f','g',
+			'h','i','j','k','l','m','n','o',
+			'p','q','r','s','t','u','v','w',
+			'x','y','z','{','|','}','~','_',
+			'Ç','ü','é','â','ä','à','å','ç',
+			'ê','ë','è','ï','î','ß','Ä','Â',
+			'Ó','æ','Æ','ô','ö','ø','û','ù',
+			'Ø','Ö','Ü','§','£','±','º','ƒ',
+			' ',' ','!','\"','#','$','%','&',
+			'\'','(',')','*','+',',','-','.',
+			'/','0','1','2','3','4','5','6',
+			'7','8','9',':',';','<','=','>',
+			'?','@','A','B','C','D','E','F',
+			'G','H','I','J','K','L','M','N',
+			'O','P','Q','R','S','T','U','V',
+			'W','X','Y','Z','[','\\',']',' ',
+			' ','^','a','b','c','d','e','f',
+			'g','h','i','j','k','l','m','n',
+			'o','p','q','r','s','t','u','v',
+			'w','x','y','z','{','|','}','~','_'
+		};
+		//Move screen mem down from 0x6C000 to 0x2000 
+		// so we don't have to go digging into the GIME mem. 
+		MemWrite8(newpage, 0xFFA1);
+
+		for (int y = 0; y <= lines; y++) {
+			lastchar = 0;
+			tmpline.clear();
+			tmp = 0;
+			for (idx = 0; idx < BytesPerRow * 2; idx += 2) {
+
+				tmp = MemRead8(0x2000 + y * (BytesPerRow * 2) + idx);
+				if (tmp == 32 || tmp == 64 || tmp == 96) { tmp = offset; }
+				else { lastchar = idx / 2 + 1; }
+				tmpline += pcchars[tmp - offset];
+			}
+			tmpline = tmpline.substr(0, lastchar);
+
+			if (lastchar != 0) { out += tmpline; out += "\n"; }
+
+		}
+		//Put mem back the way we found it.
+		MemWrite8(oldpage, 0xFFA1);
+	}
+	bool succ = SetClipboard(out);
+}
+void PasteBASIC() {
+	codepaste = true;
+	PasteText();
+	codepaste = false;
+}
 
 

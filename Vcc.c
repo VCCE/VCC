@@ -287,6 +287,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					SetClockSpeed(1); //Default clock speed .89 MHZ	
 					break;
 
+				case ID_COPY_TEXT:
+					CopyText();
+					break;
+
+				case ID_PASTE_TEXT:
+					PasteText();
+					break;
+
+				case ID_PASTE_BASIC:
+					PasteBASIC();
+					break;
+
 				default:
 				   return DefWindowProc(hWnd, message, wParam, lParam);
 			}

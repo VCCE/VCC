@@ -21,8 +21,11 @@ This file is part of VCC (Virtual Color Computer).
 */
 /*****************************************************************************/
 
+
 /**
 */
+
+
 typedef enum keyevent_e
 {
 	kEventKeyUp		= 0,
@@ -107,3 +110,6 @@ extern "C"
 /*****************************************************************************/
 
 #endif // __KEYBOARD_H__
+
+bool GetPaste();
+void SetPaste(bool);

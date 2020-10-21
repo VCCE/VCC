@@ -463,6 +463,9 @@
 #define ID_CARTRIDGE_INSERT             40026
 #define ID_FILE_LOAD                    40028
 #define ID_CARTS_EJECT                  40030
+#define ID_PASTE_BASIC                  40035
+#define ID_PASTE_TEXT                   40036
+#define ID_COPY_TEXT                    40037
 #define ID_CONFIGURE_OPTIONS            65535
 
 // Next default values for new objects

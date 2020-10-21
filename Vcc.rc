@@ -37,7 +37,13 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Exit",                        ID_FILE_EXIT
     END
-    POPUP "Configuration"
+	POPUP "Edit"
+	BEGIN
+		MENUITEM "Copy Text",					ID_COPY_TEXT
+		MENUITEM "Paste Text",					ID_PASTE_TEXT
+		MENUITEM "Paste BASIC Code",			ID_PASTE_BASIC
+	END
+	POPUP "Configuration"
     BEGIN
         MENUITEM "Config",                      ID_CONFIGURE_OPTIONS
     END
