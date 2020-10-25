@@ -521,7 +521,7 @@ void RefreshDynamicMenu(void)
 	Mii.hSubMenu = hSubMenu[SubMenuIndex];
 	Mii.dwTypeData = MenuTitle;
 	Mii.cch=strlen(MenuTitle);
-	InsertMenuItem(hMenu,2,TRUE,&Mii);
+	InsertMenuItem(hMenu,3,TRUE,&Mii);
 	SubMenuIndex++;	
 	for (TempIndex=0;TempIndex<MenuIndex;TempIndex++)
 	{
