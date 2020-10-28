@@ -33,6 +33,7 @@ unsigned char SetSpeedThrottle(unsigned char);
 unsigned char SetFrameSkip(unsigned char);
 unsigned char SetCpuType( unsigned char);
 unsigned char SetAutoStart(unsigned char);
+void SetPaletteType(void);
 //void StartCart(char *);
 void DoReboot(void);
 void DoHardReset(SystemState *);
