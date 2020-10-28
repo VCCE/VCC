@@ -27,6 +27,8 @@ void UpdateConfig (void);
 void UpdateSoundBar(unsigned short,unsigned short);
 void UpdateTapeCounter(unsigned int,unsigned char);
 int GetKeyboardLayout();
+int GetPaletteType();
+
 LRESULT CALLBACK	Config			(HWND, UINT, WPARAM, LPARAM);
 
 typedef struct  {
@@ -37,6 +39,7 @@ typedef struct  {
 	unsigned char	CpuType;
 //	unsigned char	AudioMute;
 	unsigned char	MonitorType;
+	unsigned char   PaletteType;
 	unsigned char	ScanLines;
 	unsigned char	Resize;
 	unsigned char	Aspect;
