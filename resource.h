@@ -436,6 +436,8 @@
 #define IDC_BUTTON165                   1188
 #define IDC_BUTTON166                   1189
 #define IDC_BUTTON167                   1190
+#define IDC_ORG_PALETTE                 1191
+#define IDC_UPD_PALETTE                 1192
 #define ID_FILE_EXIT                    40002
 #define IDM_HELP_ABOUT                  40003
 #define ID_FILE_RUN                     40004
