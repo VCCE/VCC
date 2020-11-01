@@ -18,6 +18,7 @@ This file is part of VCC (Virtual Color Computer).
 // This is an expansion module for the Vcc Emulator. It simulated the functions of the TRS-80 Multi-Pak Interface
 
 #include <windows.h>
+#include <iostream>
 #include "stdio.h"
 #include "resource.h" 
 #include <commctrl.h>
@@ -40,6 +41,9 @@ static unsigned char *ExtRomPointers[MAXPAX]={NULL,NULL,NULL,NULL};
 static unsigned int BankedCartOffset[MAXPAX]={0,0,0,0};
 static unsigned char Temp,Temp2;
 static char IniFile[MAX_PATH]="";
+static char MPIPath[MAX_PATH];
+
+using namespace std;
 
 //**************************************************************
 //Array of fuction pointer for each Slot
@@ -629,12 +633,18 @@ void LoadCartDLL(unsigned char Slot,char *DllPath)
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;							// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH ;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = NULL;							// initial directory
+	ofn.lpstrInitialDir   = MPIPath;							// initial directory
 	ofn.lpstrTitle        = TEXT("Load Program Pack");	// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
 	if ( GetOpenFileName (&ofn) )
 	{
 		RetVal= MountModule( Slot,DllPath);
+		string tmp = ofn.lpstrFile;
+		int idx;
+		idx = tmp.find_last_of("\\");
+		tmp = tmp.substr(0, idx);
+		strcpy(MPIPath, tmp.c_str());
+
 
 	}
 	return;
@@ -645,6 +655,7 @@ void LoadConfig(void)
 {
 	char ModName[MAX_LOADSTRING]="";
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	GetPrivateProfileString("DefaultPaths", "MPIPath", "", MPIPath, MAX_PATH, IniFile);
 	SwitchSlot=GetPrivateProfileInt(ModName,"SWPOSITION",3,IniFile);
 	ChipSelectSlot=SwitchSlot;
 	SpareSelectSlot=SwitchSlot;
@@ -666,6 +677,7 @@ void LoadConfig(void)
 void WriteConfig(void)
 {
 	char ModName[MAX_LOADSTRING]="";
+	if (MPIPath != "") { WritePrivateProfileString("DefaultPaths", "MPIPath", MPIPath, IniFile); }
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	WritePrivateProfileInt(ModName,"SWPOSITION",SwitchSlot,IniFile);
 	ValidatePath(ModulePaths[0]);
@@ -676,6 +688,7 @@ void WriteConfig(void)
 	WritePrivateProfileString(ModName,"SLOT3",ModulePaths[2],IniFile);
 	ValidatePath(ModulePaths[3]);
 	WritePrivateProfileString(ModName,"SLOT4",ModulePaths[3],IniFile);
+
 	return;
 }
 

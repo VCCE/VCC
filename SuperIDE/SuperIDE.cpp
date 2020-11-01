@@ -18,6 +18,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 #include "stdio.h"
+#include <iostream>
 #include "resource.h" 
 #include "defines.h"
 #include "Superide.h"
@@ -28,7 +29,7 @@ This file is part of VCC (Virtual Color Computer).
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
-
+static char SuperIDEPath[MAX_PATH];
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
@@ -51,6 +52,7 @@ static unsigned char BaseAddr=1,ClockEnabled=1,ClockReadOnly=1;
 static unsigned char DataLatch=0;
 static HINSTANCE g_hinstDLL;
 
+using namespace std;
 
 BOOL WINAPI DllMain(
     HINSTANCE hinstDLL,  // handle to DLL module
@@ -280,28 +282,34 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 void Select_Disk(unsigned char Disk)
 {
-	OPENFILENAME ofn ;	
-	char Dummy[MAX_PATH]="";
-	char TempFileName[MAX_PATH]="";
+	OPENFILENAME ofn;
 
-	memset(&ofn,0,sizeof(ofn));
-	ofn.lStructSize       = sizeof (OPENFILENAME);
-	ofn.hwndOwner         = NULL;
-	ofn.Flags             = OFN_HIDEREADONLY;
-	ofn.hInstance         = GetModuleHandle(0);
-	ofn.lpstrDefExt       ="IMG";
+	char TempFileName[MAX_PATH] = "";
+
+	memset(&ofn, 0, sizeof(ofn));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = NULL;
+	ofn.Flags = OFN_HIDEREADONLY;
+	ofn.hInstance = GetModuleHandle(0);
+	ofn.lpstrDefExt = "IMG";
 	ofn.lpstrFilter = "Hard Disk Images\0*.img;*.vhd;*.os9\0All files\0*.*\0\0";	// filter string "Disks\0*.DSK\0\0";
-	ofn.nFilterIndex      = 0 ;								// current filter index
-	ofn.lpstrFile         = TempFileName;					// contains full path and filename on return
-	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
-	ofn.lpstrFileTitle    = NULL;							// filename and extension only
-	ofn.nMaxFileTitle     = MAX_PATH;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = Dummy;							// initial directory
-	ofn.lpstrTitle        = "Mount IDE hard Disk Image";	// title bar string
+	ofn.nFilterIndex = 0;								// current filter index
+	ofn.lpstrFile = TempFileName;					// contains full path and filename on return
+	ofn.nMaxFile = MAX_PATH;						// sizeof lpstrFile
+	ofn.lpstrFileTitle = NULL;							// filename and extension only
+	ofn.nMaxFileTitle = MAX_PATH;						// sizeof lpstrFileTitle
+	ofn.lpstrInitialDir = SuperIDEPath;							// initial directory
+	ofn.lpstrTitle = "Mount IDE hard Disk Image";	// title bar string
 
-	if ( GetOpenFileName(&ofn) )
-		if (!(MountDisk(TempFileName ,Disk)))
-			MessageBox(0,"Can't Open File","Can't open the Image specified.",0);
+	if (GetOpenFileName(&ofn)) {
+	if (!(MountDisk(TempFileName, Disk)))
+		MessageBox(0, "Can't Open File", "Can't open the Image specified.", 0);
+	string tmp = ofn.lpstrFile;
+	int idx;
+	idx = tmp.find_last_of("\\");
+	tmp = tmp.substr(0, idx);
+	strcpy(SuperIDEPath, tmp.c_str());
+	}
 	return;
 }
 
@@ -318,6 +326,8 @@ void SaveConfig(void)
 	WritePrivateProfileInt(ModName,"BaseAddr",BaseAddr ,IniFile);
 	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
 	WritePrivateProfileInt(ModName,"ClkRdOnly",ClockReadOnly ,IniFile);
+	if (SuperIDEPath != "") { WritePrivateProfileString("DefaultPaths", "SuperIDEPath", SuperIDEPath, IniFile); }
+
 	return;
 }
 
@@ -330,7 +340,7 @@ void LoadConfig(void)
 	unsigned int RetVal=0;
 	HANDLE hr=NULL;
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-
+	GetPrivateProfileString("DefaultPaths", "SuperIDEPath", "", SuperIDEPath, MAX_PATH, IniFile);
 	GetPrivateProfileString(ModName,"Master","",FileName,MAX_PATH,IniFile);
 	MountDisk(FileName ,MASTER);
 	GetPrivateProfileString(ModName,"Slave","",FileName,MAX_PATH,IniFile);
