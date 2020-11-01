@@ -172,7 +172,6 @@ void CopyRom(void)
 	GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "", COCO3ROMPath, MAX_PATH, IniFilePath);
 	unsigned short temp=0;
 	strcat(COCO3ROMPath, "\\coco3.rom");
-	OutputDebugString(COCO3ROMPath);
 	if (COCO3ROMPath != "") { temp = load_int_rom(COCO3ROMPath); } //Try loading from the user defined path first.
 	if (temp) { OutputDebugString(" Found coco3.rom in COCO3ROMPath\n"); }
 
