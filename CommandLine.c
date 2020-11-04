@@ -91,7 +91,6 @@ int CommandLineSettings(char *CmdString)
 
                 // Unknown option code returns an error
                 default:
-                    printf( "Unknown: %s\n", token); //msgbox? 
                     return 1;
             }
 
@@ -106,7 +105,6 @@ int CommandLineSettings(char *CmdString)
 
                 // Ignore extra positional arguments for now
                 default:
-                    printf( "Ignored: %s\n", token); //msgbox? 
                     break;
             }
         }
@@ -235,22 +233,3 @@ char * ParseCmdString(char *CmdString, const char *ValueWanted)
     return token;   // null, positional argument, or option with no value
 }
 
-///////////////////////////////////////////////////////////////////////////
-int main(int argc, char **argv)
-{
-    *QuickLoadFile='\0';
-    *IniFilePath='\0';
-
-    argv++;
-    if (*argv) {
-        printf ("\nParsing: %s\n",*argv);
-        int rc = CommandLineSettings(*argv); 
-        if (rc == 0) { 
-            printf ("\nQL:%s\nIF:%s\nCO:%d\n",
-                            QuickLoadFile,IniFilePath,ConsoleLogging);
-        } else {
-            printf("\nBad arguments\n");
-        }
-    }
-    return 0;
-}
