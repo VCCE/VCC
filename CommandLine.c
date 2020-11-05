@@ -215,22 +215,3 @@ char *NextToken (char **AddrStringPtr)
     return token;
 }
  
-///////////////////////////////////////////////////////////////////////////
-int main(int argc, char **argv)
-{
-    *QuickLoadFile='\0';
-    *IniFilePath='\0';
-
-    argv++;
-    if (*argv) {
-        printf ("\nParsing: %s\n",*argv);
-        int rc = CommandLineSettings(*argv); 
-        if (rc == 0) { 
-            printf ("\nQL:%s\nIF:%s\nCO:%d\n",
-                            QuickLoadFile,IniFilePath,ConsoleLogging);
-        } else {
-            printf("\nBad arguments\n");
-        }
-    }
-    return 0;
-}
