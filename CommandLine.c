@@ -44,6 +44,10 @@ This file is part of VCC (Virtual Color Computer).
 //   int CommandLineSettings
 
 #include "CommandLine.h"
+#define SEPMARK 3
+
+char *ParseCmdString(char *, const char *); 
+char *NextToken (char **);
 
 //-------------------------------------------------------------------
 // Parse the command string and set IniFilePath, QuickLoadFile, and 
@@ -52,21 +56,21 @@ This file is part of VCC (Virtual Color Computer).
 // vcc.exe [-d [level]] [-i IniFile] [QuickLoadFile] 
 //-------------------------------------------------------------------
 
-// Parser is private, defined here for readability
-char *ParseCmdString(char *, const char *); 
-
 int CommandLineSettings(char *CmdString) 
 {
     char *token;      // token pointer (to item in command string)
     int  argnum = 0;  // non-option argument number
 
-    // Options that want values need to be known by parser
+    // Options that require values need to be known by parser
     // Option codes for options that do not expect values
-    // should not be included in the ValueWanted string
-    static char * ValueWanted = "id";
+    // or have optional values should not be included in the 
+    // ValueRequired string.  If the option value is optional
+    // the value must not be seperated from the option code.
+
+    static char * ValueRequired = "i";
 
     // Get the first token from the command string
-    token = ParseCmdString(CmdString,ValueWanted);
+    token = ParseCmdString(CmdString,ValueRequired);
     while (token) {                         
 
         // Option?
@@ -78,7 +82,7 @@ int CommandLineSettings(char *CmdString)
                     strncpy(IniFilePath,token+2,MAX_PATH);
                     break;
 
-                // "-d" enables logging console and sets log level (default=1)
+                // "-d[level]" enables logging console and sets log level (default=1)
                 case 'd':
                     if (*(token+2)) {
                         ConsoleLogging = atoi(token+2);
@@ -110,71 +114,9 @@ int CommandLineSettings(char *CmdString)
         }
 
         // Get next token
-        token = ParseCmdString(NULL,ValueWanted);
+        token = ParseCmdString(NULL,ValueRequired);
     }            
     return 0;
-}
-   
-//-------------------------------------------------------------------
-// Replace blanks in quoted sections of a string with a marker.  This
-// permits parser to split command line items on spaces without damage 
-// to blanks enbedded in filenames.
-//-------------------------------------------------------------------
-
-void ReplaceBlanks(char *string, int marker) 
-{
-    int quoted = 0;
-    for( char * p = string; *p; p++) {
-        if (*p == '"') {
-            quoted = !quoted;
-        } else {
-            if (quoted && (*p == ' ')) *p = marker;
-        }
-    }
-}
-
-//-------------------------------------------------------------------
-// Return pointer to next space delimited token in string or NULL if 
-// there is no more. String pointer is advanced to beyond the token.
-//-------------------------------------------------------------------
-
-char *NextToken (char **AddrStringPtr)
-{
-
-    // Return NULL if no tokens
-    if (**AddrStringPtr == '\0') return NULL; 
-   
-    // Skip leading blanks
-    while(**AddrStringPtr == ' ') {
-        (*AddrStringPtr)++;
-        if (**AddrStringPtr == '\0') return NULL; 
-    }
-
-    // Save token pointer 
-    char *token = *AddrStringPtr;
-
-    // Advance to end of token
-    while (**AddrStringPtr != ' ') {
-        (*AddrStringPtr)++;
-        if (**AddrStringPtr == '\0') return token; 
-    }
-
-    // Terminate token
-    **AddrStringPtr = '\0';
-    
-    // Advance beyond token if anything is there
-    if (*((*AddrStringPtr)+1)) (*AddrStringPtr)++; 
-
-    return token;
-}
- 
-//-------------------------------------------------------------------
-// Restore marked blanks in string.
-//-------------------------------------------------------------------
-
-void RestoreBlanks(char *string, int marker)
-{
-    for ( char * p = string; *p; p++) if (*p == marker) *p = ' '; 
 }
 
 //-------------------------------------------------------------------
@@ -186,43 +128,52 @@ void RestoreBlanks(char *string, int marker)
 // When there are no more tokens a null pointer is returned.
 //
 // CmdString:   Command string; for example third arg to WinMain()
-// ValueWanted: String containing option codes that expect values.
+// ValueRequired: String containing option codes that expect values.
 //
 //-------------------------------------------------------------------
 
-char * ParseCmdString(char *CmdString, const char *ValueWanted) 
+char * ParseCmdString(char *CmdString, const char *ValueRequired) 
 {
     static char string[256];  // Copy of cmd string
     static char option[256];  // Used to append value to option
     static int marker=3;      // Marker (EOT) used to save quoted blanks
+    int quoted = 0;
     char *token;
 
-    // Make string pointer that can be modified.  This always
-    // points to the remainder of the string not processed
     static char *StringPtr;    
 
     // Initial call sets command string. Subsequent calls expect a NULL
     if (CmdString) {                   
-        strncpy(string,CmdString,256);  // Copy command string 
-        string[255]='\0';               // Be sure it is terminated
-        ReplaceBlanks(string,marker);   // Mark the embedded blanks
-        StringPtr = string;             // Set pointer to it
+
+        // skip leading blanks in command string (to start of a token)
+        while (*CmdString == ' ') CmdString++;
+
+        strncpy(string,CmdString,256);  // Make a copy of what is left
+        string[255]='\0';               // Be sure copy is terminated
+        StringPtr = string;             // Make a static pointer
+
+        // Change all unquoted blanks to separaters 
+        for( char * p = StringPtr; *p; p++) {
+            if (*p == '"') {
+                quoted = !quoted;
+            } else {
+                if (!quoted && (*p == ' ')) *p = SEPMARK;
+            }
+        }
     }
 
     if (token = NextToken(&StringPtr)) {      
-        RestoreBlanks(token,marker);    // Restore blanks in this token
 
         // Check if it is an option token.  If so check if a option value
         // is expected.  If there is one append it to a copy and return
         // a pointer to that. 
         if ((token[0] == '-') && (token[1] != '\0')) {
-            if (strchr(ValueWanted,token[1])) {     
+            if (strchr(ValueRequired,token[1])) {     
                 if ((token[2] == '\0') &&           
                     (*StringPtr != '\0') &&        
                     (*StringPtr != '-')) {          
                     strcpy(option,token);           
                     if (token = NextToken(&StringPtr)) {  
-                        RestoreBlanks(token,marker);
                         strcat(option,token);       
                     }
                     return option;                  
@@ -232,4 +183,54 @@ char * ParseCmdString(char *CmdString, const char *ValueWanted)
     }
     return token;   // null, positional argument, or option with no value
 }
+   
+//-------------------------------------------------------------------
+// Return pointer to next token in string or NULL if 
+// there is no more. String pointer is advanced to beyond the token.
+//-------------------------------------------------------------------
 
+char *NextToken (char **AddrStringPtr)
+{
+
+    // Return NULL if no tokens
+    if (**AddrStringPtr == '\0') return NULL; 
+
+    // Save token pointer 
+    char *token = *AddrStringPtr;
+
+    // Advance to end of token
+    while (**AddrStringPtr != SEPMARK) {
+        (*AddrStringPtr)++;
+        if (**AddrStringPtr == '\0') return token; 
+    }
+
+    // Terminate token
+    **AddrStringPtr = '\0';
+    
+    // If not at end of string advance to the next token
+    if (*((*AddrStringPtr)+1)) {
+        while(*(++(*AddrStringPtr)) == SEPMARK); 
+    }
+
+    return token;
+}
+ 
+///////////////////////////////////////////////////////////////////////////
+int main(int argc, char **argv)
+{
+    *QuickLoadFile='\0';
+    *IniFilePath='\0';
+
+    argv++;
+    if (*argv) {
+        printf ("\nParsing: %s\n",*argv);
+        int rc = CommandLineSettings(*argv); 
+        if (rc == 0) { 
+            printf ("\nQL:%s\nIF:%s\nCO:%d\n",
+                            QuickLoadFile,IniFilePath,ConsoleLogging);
+        } else {
+            printf("\nBad arguments\n");
+        }
+    }
+    return 0;
+}
