@@ -16,20 +16,56 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 //-------------------------------------------------------------------
-// Parse command arguments and update global settings 
+//
+// This code brings command line arguments and options to VCC for those who
+// like to start vcc from a cmd prompt or who want to produce shortcuts to 
+// start instances of VCC with differing settings.  
+//
+// Since VCC is a windows application traditional Unix command arguments (argc,argV) 
+// are not availiable. However the third argument to WinMain() does provide the 
+// command string less the program name.  Historically this argument is used
+// to supply the path of a Color Computer image file that is loaded into memory
+// after VCC starts. 
+//
+// This program permits the command string to supply other information to VCC when 
+// it starts up, most notable it allows the specification of a custom VCC init file. 
+//
+// When writing this I tried to make as flexible as possible as possible without
+// adding any new dependancies to VCC. By making simple changes to this file
+// and to the functions that use them it should be possible to add other things. 
+// It maybe. however, that the ability to specify a custom ini file and
+// possibly logging options will be sufficent for most. 
+//
+// Syntax:
 //
 // Items on command string are separated by blanks unless within quotes.
 //
 // Options are specified by a leading dash "-" followed by a single character 
 // option code.  This may be followed by an option value. 
-// Anything that is not an option is considered to be a positional argument
+//
+// Anything that is not an option is considered to be a positional argument.
+// It is intended that the legacy image file path name will remain the first
+// such argument so that existing usage is not affected.  If there is no longer
+// a need to specify an image file on the command line this could change.
+//
+// Examples:
+//
+// $ VCC -i C:\users\fred\my-vcc.ini
+//
+// Specifies the an init file fred wants to use.
+//
+// $ VCC "C:\barney's good image.ima"
+//
+// Loads the legacy image file.  Quotes all blanks in the file path.
 //
 // Caveauts:
+//
 // o Supports short (single char) option codes only. 
 // o Option codes may not be combined. Each must be preceeded by '-'
 // o Command string cannot be longer than 255 characters.
 // o Wide character or control character input is not supported.
 // o No provision to escape double quotes or other special characters.
+//
 //-------------------------------------------------------------------
 
 #include <stdlib.h>
