@@ -1,6 +1,10 @@
 #ifndef __COMMANDLINE_H__
 #define __COMMANDLINE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 Copyright 2015 by E J Jaquay
 This file is part of VCC (Virtual Color Computer).
@@ -26,9 +30,14 @@ This file is part of VCC (Virtual Color Computer).
 
 char QuickLoadFile[MAX_PATH];
 char IniFilePath[MAX_PATH];
-int  ConsoleLogging = 0;
+int  ConsoleLogging;
 
 // Get Settings from Command line string (lpCmdLine from WinMain)
 int  CommandLineSettings(char *);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif
+
