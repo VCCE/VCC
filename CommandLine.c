@@ -21,8 +21,7 @@ This file is part of VCC (Virtual Color Computer).
 // Items on command string are separated by blanks unless within quotes.
 //
 // Options are specified by a leading dash "-" followed by a single character 
-// option code.  This code may be followed by an option value. Blank space
-// is permitted but not required between the option code and option value.
+// option code.  This may be followed by an option value. 
 // Anything that is not an option is considered to be a positional argument
 //
 // Caveauts:
@@ -37,23 +36,21 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include <string.h>
 
-// Following are in CommandLine.h
-//   char QuickLoadFile[]
-//   char IniFilePath[]
-//   int ConsoleLogging
-//   int CommandLineSettings
-
 #include "CommandLine.h"
+
 #define SEPMARK 3
 
 char *ParseCmdString(char *, const char *); 
-char *NextToken (char **);
+char *GetNextToken ();
+static char *NxtTokenPtr;    
 
 //-------------------------------------------------------------------
-// Parse the command string and set IniFilePath, QuickLoadFile, and 
-// possibly other things.  Variables are globals defined in config.h
+// Parse the VCC command string and set IniFilePath, QuickLoadFile, and 
+// possibly other things.  These Variables are globals defined in config.h
 //
-// vcc.exe [-d [level]] [-i IniFile] [QuickLoadFile] 
+// vcc.exe [-d[level]] [-i IniFile] [QuickLoadFile] 
+//
+// CmdString:  The third arg to WinMain()
 //-------------------------------------------------------------------
 
 int CommandLineSettings(char *CmdString) 
@@ -61,11 +58,12 @@ int CommandLineSettings(char *CmdString)
     char *token;      // token pointer (to item in command string)
     int  argnum = 0;  // non-option argument number
 
-    // Options that require values need to be known by parser
-    // Option codes for options that do not expect values
-    // or have optional values should not be included in the 
-    // ValueRequired string.  If the option value is optional
-    // the value must not be seperated from the option code.
+    // Options that require values need to be known by the parser
+    // to allow seperation between option code and value.  
+    // OPtion codes for these should be placed in the ValueRequired
+    // String.  If the value is optional it can not be seperated from 
+    // the code.  These should not be included in the Valurequired
+    // string.
 
     static char * ValueRequired = "i";
 
@@ -78,11 +76,15 @@ int CommandLineSettings(char *CmdString)
             switch (*(token+1)) {
 
                 // "-i" specfies the Vcc init file to use.
+                // The value is required and will be found starting
+                // at the third character of the option string.
                 case 'i':
                     strncpy(IniFilePath,token+2,MAX_PATH);
                     break;
 
                 // "-d[level]" enables logging console and sets log level (default=1)
+                // level is optional. It defaults to 1 and is forced to be
+                // a positive integer 0 to 3.
                 case 'd':
                     if (*(token+2)) {
                         ConsoleLogging = atoi(token+2);
@@ -98,11 +100,12 @@ int CommandLineSettings(char *CmdString)
                     return 1;
             }
 
-        // Else non-option argument            
+        // else Positional argument            
+        // argnum indicates argument position starting at one. 
         } else { 
             switch (++argnum) {
 
-                // First (currently only) positional arg is Quickload filename 
+                // First (currently only) positional arg is Quickload filename.
                 case 1:
                     strncpy(QuickLoadFile,token,MAX_PATH);
                     break;
@@ -123,12 +126,11 @@ int CommandLineSettings(char *CmdString)
 // Command string parser.
 //
 // Input string is tokenized using one or more blanks as a separator, excepting 
-// blanks within quotes. If the input CmdString is not null a pointer to the 
+// blanks within quotes. If the input String is not null a pointer to the 
 // first token is returned.  Otherwise pointers to subsequent tokens are returned.  
 // When there are no more tokens a null pointer is returned.
 //
-// CmdString:   Command string; for example third arg to WinMain()
-// ValueRequired: String containing option codes that expect values.
+// ValueRequired: String containing option codes that require values.
 //
 //-------------------------------------------------------------------
 
@@ -136,82 +138,73 @@ char * ParseCmdString(char *CmdString, const char *ValueRequired)
 {
     static char string[256];  // Copy of cmd string
     static char option[256];  // Used to append value to option
-    static int marker=3;      // Marker (EOT) used to save quoted blanks
-    int quoted = 0;
+    int quoted;
     char *token;
-
-    static char *StringPtr;    
+    char *value;
 
     // Initial call sets command string. Subsequent calls expect a NULL
     if (CmdString) {                   
+        while (*CmdString == ' ') CmdString++;  // Skip leading blanks
+        strncpy(string,CmdString,256);          // Make a copy of what is left
+        string[255]='\0';                       // Be sure it is terminated
+        NxtTokenPtr = string;                   // Save it's location
 
-        // skip leading blanks in command string (to start of a token)
-        while (*CmdString == ' ') CmdString++;
-
-        strncpy(string,CmdString,256);  // Make a copy of what is left
-        string[255]='\0';               // Be sure copy is terminated
-        StringPtr = string;             // Make a static pointer
-
-        // Change all unquoted blanks to separaters 
-        for( char * p = StringPtr; *p; p++) {
+        // Mark unquoted blanks
+        quoted = 0;
+        for( char * p = NxtTokenPtr; *p; p++) {
             if (*p == '"') {
                 quoted = !quoted;
-            } else {
-                if (!quoted && (*p == ' ')) *p = SEPMARK;
+            } else if (!quoted) {
+                if (*p == ' ') *p = SEPMARK;
             }
         }
     }
 
-    if (token = NextToken(&StringPtr)) {      
-
-        // Check if it is an option token.  If so check if a option value
-        // is expected.  If there is one append it to a copy and return
-        // a pointer to that. 
-        if ((token[0] == '-') && (token[1] != '\0')) {
-            if (strchr(ValueRequired,token[1])) {     
-                if ((token[2] == '\0') &&           
-                    (*StringPtr != '\0') &&        
-                    (*StringPtr != '-')) {          
-                    strcpy(option,token);           
-                    if (token = NextToken(&StringPtr)) {  
-                        strcat(option,token);       
+    if (token = GetNextToken()) {      
+        // Check if it is an option token.  If a option value is
+        // required and value is seperated make a copy and append
+        // next token to it
+        if ((token[0] == '-') && (token[1] != '\0') && (token[2] == '\0')) {
+            if (strchr(ValueRequired,token[1])) {
+                if ((NxtTokenPtr[0] != '\0') && (NxtTokenPtr[0] != '-')) {
+                    if (value = GetNextToken()) {  
+                        strcpy(option,token);      
+                        strcat(option,value);       
+                        return option;
                     }
-                    return option;                  
                 }
-            }     
-        }
+            }
+        }     
     }
     return token;   // null, positional argument, or option with no value
 }
    
 //-------------------------------------------------------------------
-// Return pointer to next token in string or NULL if 
-// there is no more. String pointer is advanced to beyond the token.
+// Terminate token, find next token, return pointer to current 
 //-------------------------------------------------------------------
 
-char *NextToken (char **AddrStringPtr)
+char *GetNextToken ()
 {
-
     // Return NULL if no tokens
-    if (**AddrStringPtr == '\0') return NULL; 
+    if (*NxtTokenPtr == '\0') return NULL;
 
     // Save token pointer 
-    char *token = *AddrStringPtr;
+    char *token = NxtTokenPtr++;
 
     // Advance to end of token
-    while (**AddrStringPtr != SEPMARK) {
-        (*AddrStringPtr)++;
-        if (**AddrStringPtr == '\0') return token; 
-    }
+    while (*NxtTokenPtr != SEPMARK) NxtTokenPtr++; 
 
-    // Terminate token
-    **AddrStringPtr = '\0';
-    
-    // If not at end of string advance to the next token
-    if (*((*AddrStringPtr)+1)) {
-        while(*(++(*AddrStringPtr)) == SEPMARK); 
-    }
+    // If anything remains
+    if (*NxtTokenPtr != '\0') { 
 
+        // Terminate current token
+        *NxtTokenPtr++ = '\0';
+
+        // Skip past extra separaters to start of next
+        while (*NxtTokenPtr == SEPMARK) NxtTokenPtr++; 
+    }  
+
+    // Return address of current token
     return token;
 }
  
