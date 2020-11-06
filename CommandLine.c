@@ -46,7 +46,8 @@ static char *NxtTokenPtr;
 
 //-------------------------------------------------------------------
 // Parse the VCC command string and set IniFilePath, QuickLoadFile, and 
-// possibly other things.  These Variables are globals defined in config.h
+// possibly other things.  Variables set by this routine are global and 
+// are defined in CommandLine.h
 //
 // vcc.exe [-d[level]] [-i IniFile] [QuickLoadFile] 
 //
@@ -66,6 +67,11 @@ int CommandLineSettings(char *CmdString)
     // string.
 
     static char * ValueRequired = "i";
+
+    // Initialize the global variables set by this routine
+    *QuickLoadFile = '\0';
+    *IniFilePath = '\0';
+    ConsoleLogging = 0;
 
     // Get the first token from the command string
     token = ParseCmdString(CmdString,ValueRequired);
@@ -207,4 +213,3 @@ char *GetNextToken ()
     // Return address of current token
     return token;
 }
- 
