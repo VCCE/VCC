@@ -9958,6 +9958,12 @@ unsigned char SetScanLines(unsigned char Lines)
 int GetBytesPerRow() {
 	return BytesperRow;
 }
+unsigned int GetStartOfVidram() {
+	return StartofVidram;
+}
+int GetGraphicsMode() {
+	return(GraphicsMode);
+}
 /*
 unsigned char SetArtifacts(unsigned char Tmp)
 {

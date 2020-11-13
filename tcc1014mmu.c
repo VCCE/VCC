@@ -299,6 +299,9 @@ void MemWrite16(unsigned short data,unsigned short addr)
 unsigned short GetMem(long address) {
 	return(memory[address]);
 }
+void SetMem(long address, unsigned short data) {
+	memory[address] = data;
+}
 
 void SetDistoRamBank(unsigned char data)
 {

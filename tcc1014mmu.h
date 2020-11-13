@@ -29,6 +29,7 @@ unsigned char * MmuInit(unsigned char);
 unsigned char *	Getint_rom_pointer(void);
 unsigned char * Getext_rom_pointer(void);
 unsigned short GetMem(long);
+void SetMem(long, unsigned short);
 
 void __fastcall fMemWrite8(unsigned char,unsigned short );
 unsigned char __fastcall fMemRead8(short unsigned int);
