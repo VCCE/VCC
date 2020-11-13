@@ -27,6 +27,7 @@ void UpdateConfig (void);
 void UpdateSoundBar(unsigned short,unsigned short);
 void UpdateTapeCounter(unsigned int,unsigned char);
 int GetKeyboardLayout();
+
 int GetPaletteType();
 
 LRESULT CALLBACK	Config			(HWND, UINT, WPARAM, LPARAM);

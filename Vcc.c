@@ -303,7 +303,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					PasteBASICWithNew();
 					break;
 
-				default:
+        default:
 				   return DefWindowProc(hWnd, message, wParam, lParam);
 			}
 			break;

@@ -73,9 +73,9 @@ static int IntEnable=0;
 static int SndEnable=1;
 static int OverClock=1;
 static unsigned char SoundOutputMode=0;	//Default to Speaker 1= Cassette
+
 static int clipcycle = 1, cyclewait=2000;
 bool codepaste, PasteWithNew = false; 
-
 char tmpthrottle = 0;
 int CurrentKeyMap;
 void AudioOut(void);
@@ -87,7 +87,6 @@ void (*DrawTopBoarder[4]) (SystemState *)={DrawTopBoarder8,DrawTopBoarder16,Draw
 void (*DrawBottomBoarder[4]) (SystemState *)={DrawBottomBoarder8,DrawBottomBoarder16,DrawBottomBoarder24,DrawBottomBoarder32};
 void (*UpdateScreen[4]) (SystemState *)={UpdateScreen8,UpdateScreen16,UpdateScreen24,UpdateScreen32};
 std::string GetClipboardText();
-
 
 using namespace std;
 string clipboard;
@@ -331,7 +330,6 @@ _inline int CPUCycle(void)
 
 		strcpy(tmp, clipboard.substr(0, 1).c_str());
 		if (clipcycle == 1) {
-			
 			if (tmp[z] == 0x36) {
 				vccKeyboardHandleKey(0x36, 0x36, kEventKeyDown);  //Press shift and...
 				clipboard = clipboard.substr(1, clipboard.length() - 1); // get the next key in the string
@@ -357,6 +355,7 @@ _inline int CPUCycle(void)
 				if (tmpthrottle == 2) { SetSpeedThrottle(0); }
 				else { SetSpeedThrottle(1); }
 				//...and reset the keymap to the original state
+
 				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentKeyMap);
 				tmpthrottle = 0;
 			}
@@ -364,6 +363,7 @@ _inline int CPUCycle(void)
 		else if (clipcycle == 500) {
 			vccKeyboardHandleKey(0x36, 0x36, kEventKeyUp);
 			vccKeyboardHandleKey(0x42, tmp[z], kEventKeyUp);
+
 			if (!GetPaste()) { 
 				clipboard.clear(); 
 				SetPaste(false); 
@@ -372,6 +372,7 @@ _inline int CPUCycle(void)
 			}
 		}
 		clipcycle++; if (clipcycle > cyclewait) { clipcycle = 1; }
+
 	}
 return(0);
 }
@@ -551,6 +552,7 @@ void PasteText() {
 	}
 	SetPaste(true);
 
+
 	//This sets the keyboard to Natural, 
 	//but we need to read it first so we can set it back
 	CurrentKeyMap = GetKeyboardLayout();
@@ -595,6 +597,7 @@ void PasteText() {
 		}
 	}
 	cliptxt = clipparse; 
+
 	for (int pp = 0; pp <= cliptxt.size(); pp++) {
 		sc = 0;
 		CSHIFT = FALSE;
@@ -810,10 +813,10 @@ void CopyText() {
 			'h','i','j','k','l','m','n','o',
 			'p','q','r','s','t','u','v','w',
 			'x','y','z','{','|','}','~','_',
-			'Ç','ü','é','â','ä','à','å','ç',
-			'ê','ë','è','ï','î','ß','Ä','Â',
-			'Ó','æ','Æ','ô','ö','ø','û','ù',
-			'Ø','Ö','Ü','§','£','±','º','ƒ',
+			'Ã‡','Ã¼','Ã©','Ã¢','Ã¤','Ã ','Ã¥','Ã§',
+			'Ãª','Ã«','Ã¨','Ã¯','Ã®','ÃŸ','Ã„','Ã‚',
+			'Ã“','Ã¦','Ã†','Ã´','Ã¶','Ã¸','Ã»','Ã¹',
+			'Ã˜','Ã–','Ãœ','Â§','Â£','Â±','Âº','Âƒ',
 			' ',' ','!','\"','#','$','%','&',
 			'\'','(',')','*','+',',','-','.',
 			'/','0','1','2','3','4','5','6',

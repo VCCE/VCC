@@ -1131,6 +1131,8 @@ int SelectFile(char *FileName)
 int GetKeyboardLayout() {
 	return(CurrentConfig.KeyMap);
 }
+
 int GetPaletteType() {
 	return(CurrentConfig.PaletteType);
 }
+
