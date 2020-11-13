@@ -45,6 +45,7 @@ BEGIN
         MENUITEM "Paste BASIC Code (with NEW)", ID_PASTE_BASIC_NEW
     END
     POPUP "Configuration"
+
     BEGIN
         MENUITEM "Config",                      ID_CONFIGURE_OPTIONS
     END
@@ -631,7 +632,7 @@ BEGIN
             VALUE "FileDescription", "Vcc"
             VALUE "FileVersion", "2.0.1e"
             VALUE "InternalName", "Poco"
-            VALUE "LegalCopyright", "Copyright © 2015 by BitRot Software"
+            VALUE "LegalCopyright", "Copyright Â© 2015 by BitRot Software"
             VALUE "LegalTrademarks", "BLAZEMONGER!"
             VALUE "OriginalFilename", "Vcc.exe"
             VALUE "PrivateBuild", "For a good time call 867-5309 Jenny ;)"

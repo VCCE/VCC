@@ -73,9 +73,9 @@ static int IntEnable=0;
 static int SndEnable=1;
 static int OverClock=1;
 static unsigned char SoundOutputMode=0;	//Default to Speaker 1= Cassette
+
 static int clipcycle = 1, cyclewait=2000;
 bool codepaste, PasteWithNew = false; 
-
 char tmpthrottle = 0;
 int CurrentKeyMap;
 void AudioOut(void);
@@ -87,7 +87,6 @@ void (*DrawTopBoarder[4]) (SystemState *)={DrawTopBoarder8,DrawTopBoarder16,Draw
 void (*DrawBottomBoarder[4]) (SystemState *)={DrawBottomBoarder8,DrawBottomBoarder16,DrawBottomBoarder24,DrawBottomBoarder32};
 void (*UpdateScreen[4]) (SystemState *)={UpdateScreen8,UpdateScreen16,UpdateScreen24,UpdateScreen32};
 std::string GetClipboardText();
-
 
 using namespace std;
 string clipboard;
@@ -331,7 +330,6 @@ _inline int CPUCycle(void)
 
 		strcpy(tmp, clipboard.substr(0, 1).c_str());
 		if (clipcycle == 1) {
-			
 			if (tmp[z] == 0x36) {
 				vccKeyboardHandleKey(0x36, 0x36, kEventKeyDown);  //Press shift and...
 				clipboard = clipboard.substr(1, clipboard.length() - 1); // get the next key in the string
@@ -357,6 +355,7 @@ _inline int CPUCycle(void)
 				if (tmpthrottle == 2) { SetSpeedThrottle(0); }
 				else { SetSpeedThrottle(1); }
 				//...and reset the keymap to the original state
+
 				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentKeyMap);
 				tmpthrottle = 0;
 			}
@@ -364,6 +363,7 @@ _inline int CPUCycle(void)
 		else if (clipcycle == 500) {
 			vccKeyboardHandleKey(0x36, 0x36, kEventKeyUp);
 			vccKeyboardHandleKey(0x42, tmp[z], kEventKeyUp);
+
 			if (!GetPaste()) { 
 				clipboard.clear(); 
 				SetPaste(false); 
@@ -372,6 +372,7 @@ _inline int CPUCycle(void)
 			}
 		}
 		clipcycle++; if (clipcycle > cyclewait) { clipcycle = 1; }
+
 	}
 return(0);
 }
@@ -539,28 +540,27 @@ unsigned char SetSndOutMode(unsigned char Mode)  //0 = Speaker 1= Cassette Out 2
 
 void PasteText() {
 	using namespace std;
-
 	std::string tmp;
 	string cliptxt, clipparse, lines, out, debugout;
 	char sc;
 	char letter;
 	bool CSHIFT;
-	
-
+	int GraphicsMode = GetGraphicsMode();
+	if (GraphicsMode != 0) {
+		int tmp = MessageBox(0, "Warning: You are not in text mode. Continue Pasting?", "Clipboard", MB_YESNO);
+		if (tmp != 6) { return; }
+	}
 	SetPaste(true);
+
+
 	//This sets the keyboard to Natural, 
 	//but we need to read it first so we can set it back
 	CurrentKeyMap = GetKeyboardLayout();
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)1);
 	cliptxt = GetClipboardText().c_str();
-	
 	if (PasteWithNew) { cliptxt = "NEW\n" + cliptxt; }
-	
-	//if (cliptxt.substr(cliptxt.length(), 1) != "\n") { cliptxt.append("\n"); }
-
 	for (int t = 0; t < cliptxt.length(); t++) {
 		char tmp = cliptxt[t];
-
 		if ( tmp != (char)'\n') {
 			lines += tmp;
 		}
@@ -692,12 +692,9 @@ void PasteText() {
 		case '<': sc = 0x33; CSHIFT = TRUE; break;
 		case '>': sc = 0x34; CSHIFT = TRUE; break;
 		default: sc = 0xFF;	break;
-
 		}
-
 		if (CSHIFT) { out += 0x36; CSHIFT = FALSE; }
 		out += sc;
-		
 	}
 	clipboard = out;
 }
@@ -705,15 +702,12 @@ void PasteText() {
 std::string GetClipboardText()
 {
 	if (!OpenClipboard(nullptr)) { MessageBox(0, "Unable to open clipboard.", "Clipboard", 0); return(""); }
-
 	HANDLE hClip = GetClipboardData(CF_TEXT);
 	if (hClip == nullptr) { CloseClipboard(); MessageBox(0, "No text found in clipboard.", "Clipboard", 0); return(""); }
-
 	char* tmp = static_cast<char*>(GlobalLock(hClip));
 	if (tmp == nullptr) {
 		CloseClipboard();  MessageBox(0, "NULL Pointer", "Clipboard", 0); return("");
 	}
-
 	std::string out(tmp);
 	GlobalUnlock(hClip);
 	CloseClipboard();
@@ -724,13 +718,9 @@ std::string GetClipboardText()
 bool SetClipboard(string sendout) {
 	const char* clipout = sendout.c_str();
 	const size_t len = strlen(clipout) + 1;
-
 	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
-
 	memcpy(GlobalLock(hMem), clipout, len);
-
 	GlobalUnlock(hMem);
-
 	OpenClipboard(0);
 	EmptyClipboard();
 	SetClipboardData(CF_TEXT, hMem);
@@ -741,17 +731,25 @@ bool SetClipboard(string sendout) {
 void CopyText() {
 	int idx;
 	int tmp;
-	int BytesPerRow = GetBytesPerRow();
 	int lines;
 	int offset;
-	int newpage = 0x36; // Page 0x36 is the hi-res text screen
 	int lastchar;
+	bool os9;
+	int BytesPerRow = GetBytesPerRow();
+	int GraphicsMode = GetGraphicsMode();
+	unsigned int screenstart = GetStartOfVidram();
+	if (GraphicsMode != 0) { 
+		MessageBox(0, "You must be in text mode.", "Clipboard", 0); 
+		return;
+	}
 	string out;
 	string tmpline;
-
 	if (BytesPerRow == 32) { lines = 15; }
 	else { lines = 23; }
 
+	string dbug = "StartofVidram is: " + to_string(screenstart) + "\nGraphicsMode is: " + to_string(GraphicsMode)+"\n";
+	OutputDebugString(dbug.c_str());
+	
 	// Read the lo-res text screen...
 	if (BytesPerRow == 32) {
 		offset = 0;
@@ -783,30 +781,23 @@ void CopyText() {
 			'8','9',':',';','<','=','>','?'
 		};
 
-
 		for (int y = 0; y <= lines; y++) {
 			lastchar = 0;
 			tmpline.clear();
 			tmp = 0;
 			for (idx = 0; idx < BytesPerRow; idx++) {
-
 				tmp = MemRead8(0x0400 + y * BytesPerRow + idx);
 				if (tmp == 32 || tmp == 64 || tmp == 96) { tmp = 30 + offset; } 
 				else { lastchar = idx + 1; }
 				tmpline += pcchars[tmp - offset]; 
 			}
 			tmpline = tmpline.substr(0, lastchar);
-
 			if (lastchar != 0) { out += tmpline; out += "\n"; }
 
 		}
-
 		if (out == "") { MessageBox(0, "No text found on screen.", "Clipboard", 0); }
 	}
-
 	else if (BytesPerRow == 40 || BytesPerRow == 80) {
-		int tmp2 = MemRead8(0x6C000);
-		int oldpage = MemRead8(0xFFA1) & 63; // Top two bits may be garbage.
 		offset = 32;
 		char pcchars[] =
 		{
@@ -822,10 +813,10 @@ void CopyText() {
 			'h','i','j','k','l','m','n','o',
 			'p','q','r','s','t','u','v','w',
 			'x','y','z','{','|','}','~','_',
-			'Ç','ü','é','â','ä','à','å','ç',
-			'ê','ë','è','ï','î','ß','Ä','Â',
-			'Ó','æ','Æ','ô','ö','ø','û','ù',
-			'Ø','Ö','Ü','§','£','±','º','ƒ',
+			'Ã‡','Ã¼','Ã©','Ã¢','Ã¤','Ã ','Ã¥','Ã§',
+			'Ãª','Ã«','Ã¨','Ã¯','Ã®','ÃŸ','Ã„','Ã‚',
+			'Ã“','Ã¦','Ã†','Ã´','Ã¶','Ã¸','Ã»','Ã¹',
+			'Ã˜','Ã–','Ãœ','Â§','Â£','Â±','Âº','Âƒ',
 			' ',' ','!','\"','#','$','%','&',
 			'\'','(',')','*','+',',','-','.',
 			'/','0','1','2','3','4','5','6',
@@ -839,32 +830,26 @@ void CopyText() {
 			'o','p','q','r','s','t','u','v',
 			'w','x','y','z','{','|','}','~','_'
 		};
-		//Move screen mem down from 0x6C000 to 0x2000 
-		// so we don't have to go digging into the GIME mem. 
-		MemWrite8(newpage, 0xFFA1);
 
 		for (int y = 0; y <= lines; y++) {
 			lastchar = 0;
 			tmpline.clear();
 			tmp = 0;
 			for (idx = 0; idx < BytesPerRow * 2; idx += 2) {
-
-				tmp = MemRead8(0x2000 + y * (BytesPerRow * 2) + idx);
+				tmp = GetMem(screenstart + y * (BytesPerRow * 2) + idx);
 				if (tmp == 32 || tmp == 64 || tmp == 96) { tmp = offset; }
 				else { lastchar = idx / 2 + 1; }
 				tmpline += pcchars[tmp - offset];
 			}
 			tmpline = tmpline.substr(0, lastchar);
-
 			if (lastchar != 0) { out += tmpline; out += "\n"; }
-
 		}
-		//Put mem back the way we found it.
-		MemWrite8(oldpage, 0xFFA1);
 	}
-	if (BytesPerRow == 32) { out = out.substr(0, out.length() - 2); }
+	
+	//if (BytesPerRow == 32) { out = out.substr(0, out.length() - 2); }
 	bool succ = SetClipboard(out);
 }
+
 void PasteBASIC() {
 	codepaste = true;
 	PasteText();
