@@ -22,14 +22,19 @@ This file is part of VCC (Virtual Color Computer).
 *	Copyright 2006 (c) by Joseph Forgione 													*
 *********************************************************************************************/
 
+
 #include <windows.h>
 #include <stdio.h>
+#include <iostream>
 #include "resource.h" 
 #include "wd1793.h"
 #include "distortc.h"
 #include "fd502.h"
 #include "..\fileops.h"
 #define EXTROMSIZE 16384
+
+using namespace std;
+
 extern DiskInfo Drive[5];
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
@@ -39,6 +44,7 @@ typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 static unsigned char ExternalRom[EXTROMSIZE];
 static unsigned char DiskRom[EXTROMSIZE];
 static unsigned char RGBDiskRom[EXTROMSIZE];
+static char FloppyPath[MAX_PATH];
 static char RomFileName[MAX_PATH]="";
 static char TempRomFileName[MAX_PATH]="";
 static void (*AssertInt)(unsigned char,unsigned char)=NULL;
@@ -370,7 +376,6 @@ void Load_Disk(unsigned char disk)
 {
 	HANDLE hr=NULL;
 	OPENFILENAME ofn ;	
-	char Dummy[MAX_PATH]="";
 	unsigned char FileNotSelected=0;
 	if (DialogOpen ==1)	//Only allow 1 dialog open 
 		return;
@@ -392,7 +397,7 @@ void Load_Disk(unsigned char disk)
 		ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
 		ofn.lpstrFileTitle    = NULL;							// filename and extension only
 		ofn.nMaxFileTitle     = MAX_PATH ;						// sizeof lpstrFileTitle
-		ofn.lpstrInitialDir   = Dummy;							// initial directory
+		ofn.lpstrInitialDir   = FloppyPath;							// initial directory
 		ofn.lpstrTitle        = "Insert Disk Image" ;			// title bar string
 
 		if ( GetOpenFileName(&ofn) )
@@ -413,16 +418,21 @@ void Load_Disk(unsigned char disk)
 				else
 				{
 					FileNotSelected=0;
+					string tmp = ofn.lpstrFile;
+					int idx;
+					idx = tmp.find_last_of("\\");
+					tmp = tmp.substr(0, idx);
+					strcpy(FloppyPath, tmp.c_str());
+
 					SaveConfig();
 				}
 			}
-			
 		}
 		else
 			FileNotSelected=0;
 
-		DialogOpen=0;
 
+		DialogOpen=0;
 	}
 	return;
 }
@@ -646,6 +656,8 @@ void LoadConfig(void)
 	unsigned int RetVal=0;
 	HANDLE hr=NULL;
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	GetPrivateProfileString("DefaultPaths", "FloppyPath", "", FloppyPath, MAX_PATH, IniFile);
+	
 	SelectRom = GetPrivateProfileInt(ModName,"DiskRom",1,IniFile);  //0 External 1=TRSDOS 2=RGB Dos
 	GetPrivateProfileString(ModName,"RomPath","",RomFileName,MAX_PATH,IniFile);
 	PersistDisks=GetPrivateProfileInt(ModName,"Persist",1,IniFile);  
@@ -700,6 +712,7 @@ void SaveConfig(void)
 		}
 	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
 	WritePrivateProfileInt(ModName, "TurboDisk", SetTurboDisk(QUERY), IniFile);
+	if (FloppyPath != "") { WritePrivateProfileString("DefaultPaths", "FloppyPath", FloppyPath, IniFile); }
 	return;
 }
 

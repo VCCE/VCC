@@ -17,6 +17,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <windows.h>
+#include <iostream>
 #include "resource.h"
 #include "defines.h"
 #include "coco3.h"
@@ -29,6 +30,7 @@ static unsigned char MotorState=0,TapeMode=STOP,WriteProtect=0,Quiet=30;
 static HANDLE TapeHandle=NULL;
 static unsigned long TapeOffset=0,TotalSize=0;
 static char TapeFileName[MAX_PATH]="";
+static char CassPath[MAX_PATH];
 static unsigned char TempBuffer[8192];
 static unsigned char *CasBuffer=NULL;
 static char FileType=0;
@@ -261,9 +263,12 @@ void CloseTapeFile(void)
 
 unsigned int LoadTape(void)
 {
+	using namespace std;
 	HANDLE hr=NULL;
 	OPENFILENAME ofn;	
-	char Dummy[MAX_PATH]="";
+	char IniFilePath[MAX_PATH];
+	GetIniFilePath(IniFilePath);
+	GetPrivateProfileString("DefaultPaths", "CassPath", "", CassPath, MAX_PATH, IniFilePath);
 	static unsigned char DialogOpen=0;
 	unsigned int RetVal=0;
 	if (DialogOpen ==1)	//Only allow 1 dialog open 
@@ -281,15 +286,23 @@ unsigned int LoadTape(void)
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;							// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = Dummy;							// initial directory
+	ofn.lpstrInitialDir   = CassPath;				// initial directory
 	ofn.lpstrTitle        = "Insert Tape Image";			// title bar string
+	
 	RetVal=GetOpenFileName(&ofn);
 	if (RetVal)
 	{
 		if (MountTape(TapeFileName)==0)	
 			MessageBox(NULL,"Can't open file","Error",0);
 	}
+
 	DialogOpen=0;
+	string tmp = ofn.lpstrFile;
+	int idx;
+	idx = tmp.find_last_of("\\");
+	tmp = tmp.substr(0, idx);
+	strcpy(CassPath, tmp.c_str());
+	if(CassPath != ""){ WritePrivateProfileString("DefaultPaths", "CassPath", CassPath, IniFilePath); }
 	return(RetVal);
 }
 

@@ -65,7 +65,7 @@ LRESULT CALLBACK InputConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK JoyStickConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK TapeConfig(HWND , UINT , WPARAM , LPARAM );
 LRESULT CALLBACK BitBanger(HWND , UINT , WPARAM , LPARAM );
-
+LRESULT CALLBACK Paths(HWND, UINT, WPARAM, LPARAM);
 
 //
 //	global variables
@@ -200,6 +200,7 @@ void LoadConfig(SystemState *LCState)
 
 unsigned char WriteIniFile(void)
 {
+	
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ExternalBasicImage);
@@ -247,7 +248,7 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("RightJoyStick","Fire2",Right.Fire2,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick","DiDevice",Right.DiDevice,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick", "HiResDevice", Right.HiRes, IniFilePath);
-
+		
 	return(0);
 }
 
@@ -255,6 +256,7 @@ unsigned char ReadIniFile(void)
 {
 	HANDLE hr=NULL;
 	unsigned char Index=0;
+	LPTSTR tmp;
 
 	//Loads the config structure from the hard disk
 	CurrentConfig.CPUMultiplyer = GetPrivateProfileInt("CPU","DoubleSpeedClock",2,IniFilePath);
@@ -307,6 +309,10 @@ unsigned char ReadIniFile(void)
 	Right.DiDevice=GetPrivateProfileInt("RightJoyStick","DiDevice",0,IniFilePath);
 	Right.HiRes = GetPrivateProfileInt("RightJoyStick", "HiResDevice", 0, IniFilePath);
 
+	GetPrivateProfileString("DefaultPaths", "CassPath", "", CurrentConfig.CassPath, MAX_PATH, IniFilePath);
+	GetPrivateProfileString("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH, IniFilePath);
+	GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "", CurrentConfig.COCO3ROMPath, MAX_PATH, IniFilePath);
+
 	for (Index = 0; Index < NumberOfSoundCards; Index++)
 	{
 		if (!strcmp(SoundCards[Index].CardName, CurrentConfig.SoundCardName))
@@ -354,6 +360,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			g_hWndConfig[5]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_MISC),hWndTabDialog,(DLGPROC) MiscConfig);
 			g_hWndConfig[6]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_CASSETTE),hWndTabDialog,(DLGPROC) TapeConfig);
 			g_hWndConfig[7]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_BITBANGER),hWndTabDialog,(DLGPROC) BitBanger);
+	
 			//Set the title text for all tabs
 			for (TabCount=0;TabCount<TABS;TabCount++)
 			{
@@ -467,6 +474,7 @@ void UpdateConfig (void)
 	SetCpuType(CurrentConfig.CpuType);
 	SetMonitorType(CurrentConfig.MonitorType);
 	SetCartAutoStart(CurrentConfig.CartAutoStart);
+
 	if (CurrentConfig.RebootNow)
 		DoReboot();
 	CurrentConfig.RebootNow=0;
@@ -1099,12 +1107,18 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	}
 	return(0);
 }
+LRESULT CALLBACK Paths(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	return 1;
+
+}
 
 int SelectFile(char *FileName)
 {
 	OPENFILENAME ofn ;	
 	char Dummy[MAX_PATH]="";
 	char TempFileName[MAX_PATH]="";
+	char CapFilePath[MAX_PATH];
+	GetPrivateProfileString("DefaultPaths", "CapFilePath", "", CapFilePath, MAX_PATH, IniFilePath);
 
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME);
@@ -1118,13 +1132,26 @@ int SelectFile(char *FileName)
 	ofn.nMaxFile          = MAX_PATH;			// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;				// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH;			// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = Dummy;				// initial directory
+	ofn.lpstrInitialDir   = CapFilePath;				// initial directory
 	ofn.lpstrTitle        = "Open print capture file";		// title bar string
 
-	if ( GetOpenFileName(&ofn) )
-		if (!(OpenPrintFile(TempFileName)))
-			MessageBox(0,"Can't Open File","Can't open the file specified.",0);
+	if (GetOpenFileName(&ofn)) {
+		if (!(OpenPrintFile(TempFileName))) {
+			MessageBox(0, "Can't Open File", "Can't open the file specified.", 0);
+		}
+		string tmp = ofn.lpstrFile;
+		int idx;
+		idx = tmp.find_last_of("\\");
+		tmp = tmp.substr(0, idx);
+		strcpy(CapFilePath, tmp.c_str());
+		if (CapFilePath != "") {
+			WritePrivateProfileString("DefaultPaths", "CapFilePath", CapFilePath, IniFilePath);
+		}
+	}
 	strcpy(FileName,TempFileName);
+	
+	
+	
 	return(1);
 }
 

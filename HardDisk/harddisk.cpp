@@ -19,6 +19,7 @@ This file is part of VCC (Virtual Color Computer).
  
 #include <windows.h>
 #include <stdio.h>
+#include<iostream>
 #include "resource.h" 
 #include "cc3vhd.h"
 //#include "diskrom.h"
@@ -29,6 +30,7 @@ This file is part of VCC (Virtual Color Computer).
 constexpr size_t EXTROMSIZE = 8192;
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH] { 0 };
+static char HardDiskPath[MAX_PATH];
 
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
@@ -50,6 +52,8 @@ void SaveConfig(void);
 void BuildDynaMenu(void);
 unsigned char LoadExtRom( char *);
 static HINSTANCE g_hinstDLL;
+
+using namespace std;
 
 BOOL WINAPI DllMain(
     HINSTANCE hinstDLL,  // handle to DLL module
@@ -232,7 +236,7 @@ void LoadHardDisk(void)
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;							// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH ;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = NULL;							// initial directory
+	ofn.lpstrInitialDir   = HardDiskPath;							// initial directory
 	ofn.lpstrTitle        = TEXT("Load HardDisk Image") ;	// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
 	if ( GetOpenFileName (&ofn) )
@@ -240,6 +244,12 @@ void LoadHardDisk(void)
 		{
 			MessageBox(NULL,"Can't open file","Error",0);
 		}
+	string tmp = ofn.lpstrFile;
+	int idx;
+	idx = tmp.find_last_of("\\");
+	tmp = tmp.substr(0, idx);
+	strcpy(HardDiskPath, tmp.c_str());
+
 	return;
 }
 
@@ -249,7 +259,9 @@ void LoadConfig(void)
 	char DiskRomPath[MAX_PATH]; 
 	HANDLE hr=NULL;
 
+	GetPrivateProfileString("DefaultPaths", "HardDiskPath", "", HardDiskPath, MAX_PATH, IniFile);
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	
 	GetPrivateProfileString(ModName,"VHDImage","",FileName,MAX_PATH,IniFile);
 	CheckPath(FileName);
 	hr=CreateFile(FileName,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
@@ -276,6 +288,7 @@ void SaveConfig(void)
 	char ModName[MAX_LOADSTRING]="";
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	ValidatePath(FileName);
+	if (HardDiskPath != "") { WritePrivateProfileString("DefaultPaths", "HardDiskPath", HardDiskPath, IniFile); }
 	WritePrivateProfileString(ModName,"VHDImage",FileName ,IniFile);
 	return;
 }
