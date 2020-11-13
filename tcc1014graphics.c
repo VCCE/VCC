@@ -9796,63 +9796,114 @@ void MakeRGBPalette (void)
 }
 
 
-void MakeCMPpalette(void)	//Stolen from M.E.S.S.
+void MakeCMPpalette(void)	
 {
 	double saturation, brightness, contrast;
 	int offset;
 	double w;
 	double r,g,b;
+	
+	int PaletteType = GetPaletteType();
+
 	unsigned char rr,gg,bb;
 	unsigned char Index=0;
-	for (Index=0;Index<=63;Index++)
+
+	
+	int red[] = { 
+		0,14,12,21,51,86,108,118,
+		113,92,61,21,1,5,12,13,
+		50,29,49,86,119,158,179,192,
+		186,165,133,94,23,16,23,25,
+		116,74,102,142,179,219,243,252,
+		251,230,198,155,81,61,52,57,
+		253,137,161,189,215,240,253,253,
+		251,237,214,183,134,121,116,255
+	};
+	int green[] = { 
+		0,78,69,53,33,4,1,1,
+		12,24,31,35,37,51,67,77,
+		50,149,141,123,103,77,55,39,
+		35,43,53,63,100,119,137,148,
+		116,212,204,186,164,137,114,97,
+		88,89,96,109,156,179,199,211,
+		253,230,221,207,192,174,158,148,
+		143,144,150,162,196,212,225,255
+	};
+	int blue[] = {
+		0,20,18,14,10,10,12,19,
+		76,135,178,196,148,97,29,20,
+		50,38,36,32,28,25,24,78,
+		143,207,248,249,228,174,99,46,
+		116,58,52,48,44,41,68,132,
+		202,250,250,250,251,243,163,99,
+		254,104,83,77,82,105,142,188,
+		237,251,251,251,252,240,183,255
+	};
+
+	float gamma = 1.4;
+	if (PaletteType == 1) { OutputDebugString("Loading new CMP palette.\n"); }
+	else { OutputDebugString("Loading old CMP palette.\n"); }
+	for (Index = 0; Index <= 63; Index++)
 	{
-		switch(Index)
+		if (PaletteType == 1) 
 		{
-			case 0:
-				r = g = b = 0;
-				break;
+			if (Index > 39) { gamma = 1.1; }
+			if (Index > 55) { gamma = 1; }
 
-			case 16:
-				r = g = b = 47;
-				break;
+			//int tmp = 0;
 
-			case 32:
-				r = g = b = 120;
-				break;
-
-			case 48:
-			case 63:
-				r = g = b = 255;
-				break;
-
-			default:
-				w = .4195456981879*1.01;
-				contrast = 70;
-				saturation = 92;
-				brightness = -20;
-				brightness += ((Index / 16) + 1) * contrast;
-				offset = (Index % 16) - 1 + (Index / 16)*15;
-				r = cos(w*(offset +  9.2)) * saturation + brightness;
-				g = cos(w*(offset + 14.2)) * saturation + brightness;
-				b = cos(w*(offset + 19.2)) * saturation + brightness;
-
-				if (r < 0)
-					r = 0;
-				else if (r > 255)
-					r = 255;
-
-				if (g < 0)
-					g = 0;
-				else if (g > 255)
-					g = 255;
-
-				if (b < 0)
-					b = 0;
-				else if (b > 255)
-					b = 255;
-				break;
+			r = red[Index] * gamma; if (r > 255) { r = 255; }
+			g = green[Index] * gamma; if (g > 255) { g = 255; }
+			b = blue[Index] * gamma; if (b > 255) { b = 255; }
 		}
+		else {  //Old palette //Stolen from M.E.S.S.
+					switch(Index)
+					{
+						case 0:
+							r = g = b = 0;
+							break;
+						case 16:
+							r = g = b = 47;
+							break;
+			
+						case 32:
+							r = g = b = 120;
+							break;
+			
+						case 48:
+						case 63:
+							r = g = b = 255;
+							break;
+			
+						default:
+							w = .4195456981879*1.01;
+							contrast = 70;
+							saturation = 92;
+							brightness = -20;
+							brightness += ((Index / 16) + 1) * contrast;
+							offset = (Index % 16) - 1 + (Index / 16)*15;
+							r = cos(w*(offset +  9.2)) * saturation + brightness;
+							g = cos(w*(offset + 14.2)) * saturation + brightness;
+							b = cos(w*(offset + 19.2)) * saturation + brightness;
+			
+							if (r < 0)
+								r = 0;
+							else if (r > 255)
+								r = 255;
+			
+							if (g < 0)
+								g = 0;
+							else if (g > 255)
+								g = 255;
+			
+							if (b < 0)
+								b = 0;
+							else if (b > 255)
+								b = 255;
+							break;
 
+				}
+		}
 		rr= (unsigned char)r;
 		gg= (unsigned char)g;
 		bb= (unsigned char)b;
@@ -9871,6 +9922,7 @@ void MakeCMPpalette(void)	//Stolen from M.E.S.S.
 unsigned char SetMonitorType(unsigned char Type)
 {
 	unsigned char PalNum=0;
+	SetGimeBoarderColor(0);
 	if (Type != QUERY)
 	{
 		MonType=Type & 1;
@@ -9882,7 +9934,14 @@ unsigned char SetMonitorType(unsigned char Type)
 		}
 //		CurrentConfig.MonitorType=MonType;
 	}
+	SetGimeBoarderColor(18);
 	return(MonType);
+}
+void SetPaletteType() {
+	 
+	SetGimeBoarderColor(0);
+	MakeCMPpalette();
+	SetGimeBoarderColor(18);
 }
 
 unsigned char SetScanLines(unsigned char Lines)
@@ -9899,6 +9958,14 @@ unsigned char SetScanLines(unsigned char Lines)
 int GetBytesPerRow() {
 	return BytesperRow;
 }
+
+unsigned int GetStartOfVidram() {
+	return StartofVidram;
+}
+int GetGraphicsMode() {
+	return(GraphicsMode);
+}
+
 /*
 unsigned char SetArtifacts(unsigned char Tmp)
 {

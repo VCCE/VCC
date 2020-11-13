@@ -55,6 +55,10 @@ void SetVideoBank(unsigned char);
 unsigned char SetMonitorType(unsigned char );
 void SetBoarderChange (unsigned char);
 int GetBytesPerRow(void);
+
+unsigned int GetStartOfVidram();
+int GetGraphicsMode();
+
 //unsigned char SetArtifacts(unsigned char);
 //unsigned char SetColorInvert(unsigned char);
 

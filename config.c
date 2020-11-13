@@ -75,6 +75,7 @@ static unsigned  int	LeftJoystickEmulation[3] = { IDC_LEFTSTANDARD,IDC_LEFTTHIRE
 static unsigned int	RightJoystickEmulation[3] = { IDC_RIGHTSTANDARD,IDC_RIGHTTHRES,IDC_RIGHTCCMAX };
 static unsigned short int	Cpuchoice[2]={IDC_6809,IDC_6309};
 static unsigned short int	Monchoice[2]={IDC_COMPOSITE,IDC_RGB};
+static unsigned short int   PaletteChoice[2] = { IDC_ORG_PALETTE,IDC_UPD_PALETTE };
 static HICON CpuIcons[2],MonIcons[2],JoystickIcons[4];
 static unsigned char temp=0,temp2=0;
 static char IniFileName[]="Vcc.ini";
@@ -91,6 +92,7 @@ char OutBuffer[MAX_PATH]="";
 char AppName[MAX_LOADSTRING]="";
 STRConfig CurrentConfig;
 static STRConfig TempConfig;
+
 extern SystemState EmuState;
 extern char StickName[MAXSTICKS][STRLEN];
 
@@ -213,6 +215,7 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Audio","Rate",CurrentConfig.AudioRate,IniFilePath);
 
 	WritePrivateProfileInt("Video","MonitorType",CurrentConfig.MonitorType,IniFilePath);
+	WritePrivateProfileInt("Video","PaletteType",CurrentConfig.PaletteType, IniFilePath);
 	WritePrivateProfileInt("Video","ScanLines",CurrentConfig.ScanLines,IniFilePath);
 	WritePrivateProfileInt("Video","AllowResize",CurrentConfig.Resize,IniFilePath);
 	WritePrivateProfileInt("Video","ForceAspect",CurrentConfig.Aspect,IniFilePath);
@@ -264,6 +267,7 @@ unsigned char ReadIniFile(void)
 	GetPrivateProfileString("Audio","SndCard","",CurrentConfig.SoundCardName,63,IniFilePath);
 
 	CurrentConfig.MonitorType = GetPrivateProfileInt("Video","MonitorType",1,IniFilePath);
+	CurrentConfig.PaletteType = GetPrivateProfileInt("Video", "PaletteType",1,IniFilePath);
 	CurrentConfig.ScanLines = GetPrivateProfileInt("Video","ScanLines",0,IniFilePath);
 	CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);	
 	CurrentConfig.Aspect = GetPrivateProfileInt("Video","ForceAspect",0,IniFilePath);
@@ -451,6 +455,7 @@ void GetIniFilePath( char *Path)
 
 void UpdateConfig (void)
 {
+	SetPaletteType();
 	SetResize(CurrentConfig.Resize);
 	SetAspect(CurrentConfig.Aspect);
 	SetScanLines(CurrentConfig.ScanLines);
@@ -657,6 +662,7 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 
 LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	static bool isRGB;
 	switch (message)
 	{
 		case WM_INITDIALOG:
@@ -671,7 +677,18 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			SendDlgItemMessage(hDlg,IDC_FRAMEDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 			for (temp=0;temp<=1;temp++)
 				SendDlgItemMessage(hDlg,Monchoice[temp],BM_SETCHECK,(temp==TempConfig.MonitorType),0);
+			if (TempConfig.MonitorType == 1) { //If RGB monitor is chosen, gray out palette choice
+				isRGB = TRUE;
+				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0);
+				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
+				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETDONTCLICK, 1, 0);
+				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETDONTCLICK, 1, 0);
+			
+			}
 			SendDlgItemMessage(hDlg,IDC_MONTYPE,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[TempConfig.MonitorType]);
+			for (temp = 0; temp <= 1; temp++)
+				SendDlgItemMessage(hDlg, PaletteChoice[temp], BM_SETCHECK, (temp == TempConfig.PaletteType), 0);
+			
 		break;
 
 		case WM_HSCROLL:
@@ -688,16 +705,53 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			switch (LOWORD (wParam))
 			{
 				case IDC_COMPOSITE:
+					isRGB = FALSE;
+					for (temp = 0; temp <= 1; temp++) //This finds the current Monitor choice, then sets both buttons in the nested loop.
+					if (LOWORD(wParam) == Monchoice[temp])
+					{
+						for (temp2 = 0; temp2 <= 1; temp2++)
+							SendDlgItemMessage(hDlg, Monchoice[temp2], BM_SETCHECK, 0, 0);
+							SendDlgItemMessage(hDlg, Monchoice[temp], BM_SETCHECK, 1, 0);
+						TempConfig.MonitorType = temp;
+					}
+					SendDlgItemMessage(hDlg, IDC_MONTYPE, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)MonIcons[TempConfig.MonitorType]);
+					SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 0, 0);
+					SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 0, 0);
+					break;
 				case IDC_RGB:
-					for (temp=0;temp<=1;temp++)
+					isRGB = TRUE;
+					for (temp=0;temp<=1;temp++) //This finds the current Monitor choice, then sets both buttons in the nested loop.
 						if (LOWORD(wParam)==Monchoice[temp])
 						{
 							for (temp2=0;temp2<=1;temp2++)
 								SendDlgItemMessage(hDlg,Monchoice[temp2],BM_SETCHECK,0,0);
-							SendDlgItemMessage(hDlg,Monchoice[temp],BM_SETCHECK,1,0);
-							TempConfig.MonitorType=temp;
+								SendDlgItemMessage(hDlg,Monchoice[temp],BM_SETCHECK,1,0);
+								TempConfig.MonitorType=temp;
 						}
 					SendDlgItemMessage(hDlg,IDC_MONTYPE,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[TempConfig.MonitorType]);
+					//If RGB is chosen, disable palette buttons.
+					SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0);
+					SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
+					SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETDONTCLICK, 1, 0);
+					SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETDONTCLICK, 1, 0);
+					break;
+				case IDC_ORG_PALETTE: 
+					if (!isRGB) {
+						OutputDebugString("Original Palette!\n");
+						SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 1, 0);
+						SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 0, 0);
+						TempConfig.PaletteType = 0;
+					}
+					else { SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0); }
+					break;
+				case IDC_UPD_PALETTE:
+					if (!isRGB) {
+						OutputDebugString("New Palette!\n");
+						SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 1, 0);
+						SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 0, 0);
+						TempConfig.PaletteType = 1;
+					}
+					else { SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0); }
 				break;
 
 			}	//End switch LOWORD(wParam)
@@ -1077,3 +1131,8 @@ int SelectFile(char *FileName)
 int GetKeyboardLayout() {
 	return(CurrentConfig.KeyMap);
 }
+
+int GetPaletteType() {
+	return(CurrentConfig.PaletteType);
+}
+
