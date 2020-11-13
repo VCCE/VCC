@@ -470,6 +470,7 @@
 #define ID_PASTE_TEXT                   40035
 #define ID_PASTE_BASIC                  40036
 #define ID_PASTE_BASIC_NEW              40037
+#define ID_FLIP_ARTIFACTS               40038
 #define ID_CONFIGURE_OPTIONS            65535
 
 // Next default values for new objects

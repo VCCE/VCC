@@ -34,6 +34,7 @@ void PasteBASICWithNew();
 void PasteBASIC();
 void PasteText();
 void CopyText();
+void FlipArtifacts();
 unsigned short SetAudioRate (unsigned short);
 
 #endif
