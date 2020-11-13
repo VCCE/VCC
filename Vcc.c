@@ -303,6 +303,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					PasteBASICWithNew();
 					break;
 
+				case ID_FLIP_ARTIFACTS:
+					FlipArtifacts();
+					break;
+
         default:
 				   return DefWindowProc(hWnd, message, wParam, lParam);
 			}
