@@ -9965,7 +9965,10 @@ unsigned int GetStartOfVidram() {
 int GetGraphicsMode() {
 	return(GraphicsMode);
 }
-
+void FlipArtifacts() {
+	if (ColorInvert == 0) { ColorInvert = 1; }
+	else { ColorInvert = 0; }
+}
 /*
 unsigned char SetArtifacts(unsigned char Tmp)
 {

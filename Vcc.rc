@@ -47,7 +47,8 @@ BEGIN
     POPUP "Configuration"
 
     BEGIN
-        MENUITEM "Config",                      ID_CONFIGURE_OPTIONS
+		MENUITEM "Flip Artifact Colors",        ID_FLIP_ARTIFACTS
+		MENUITEM "Config",                      ID_CONFIGURE_OPTIONS
     END
     POPUP "Help", HELP
     BEGIN
