@@ -739,7 +739,7 @@ void CopyText() {
 	int GraphicsMode = GetGraphicsMode();
 	unsigned int screenstart = GetStartOfVidram();
 	if (GraphicsMode != 0) { 
-		MessageBox(0, "You must be in text mode.", "Clipboard", 0); 
+		MessageBox(0, "ERROR: Graphics screen can not be copied.\nCopy can ONLY use a hardware text screen.", "Clipboard", 0); 
 		return;
 	}
 	string out;

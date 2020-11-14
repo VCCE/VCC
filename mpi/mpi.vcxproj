@@ -160,6 +160,7 @@
   <ItemGroup>
     <ClInclude Include="..\fileops.h" />
     <ClInclude Include="mpi.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="mpi.rc" />
