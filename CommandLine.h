@@ -1,11 +1,7 @@
 #ifndef __COMMANDLINE_H__
 #define __COMMANDLINE_H__
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
+
 Copyright 2015 by E J Jaquay
 This file is part of VCC (Virtual Color Computer).
 
@@ -23,21 +19,20 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// Declare global variables defined by GetCmdLineArgs
+#define CL_MAX_PATH 256
+struct CmdLineArguments {
+	char QLoadFile[CL_MAX_PATH];
+	char IniFile[CL_MAX_PATH];
+	int  Logging;
+};
+extern struct CmdLineArguments CmdArg;
 
-#include <windows.h>  // For MAX_PATH
+// Get Settings from Command line string 
+int  GetCmdLineArgs(char * lpCmdLine);
 
-// Global variables defined by CommandLineSettings
+// Errors returned
+#define CL_ERR_UNKOPT 1  // Unknown option found
+#define CL_ERR_XTRARG 2  // Too many arguments
 
-char QuickLoadFile[MAX_PATH];
-char IniFilePath[MAX_PATH];
-int  ConsoleLogging;
-
-// Get Settings from Command line string (lpCmdLine from WinMain)
-int  CommandLineSettings(char *);
-
-#ifdef __cplusplus
-}
 #endif
-
-#endif
-

@@ -58,6 +58,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "quickload.h"
 #include "throttle.h"
 #include "DirectDrawInterface.h"
+
+#include "CommandLine.h" //EJJ
 //#include "logger.h"
 
 static HANDLE hout=NULL;
@@ -70,6 +72,7 @@ static unsigned char Qflag=0;
 static char CpuName[20]="CPUNAME";
 
 char QuickLoadFile[256];
+
 /***Forward declarations of functions included in this code module*****/
 BOOL				InitInstance	(HINSTANCE, int);
 LRESULT CALLBACK	About			(HWND, UINT, WPARAM, LPARAM);
@@ -120,10 +123,13 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
-	if ( strlen(lpCmdLine) !=0)
+	GetCmdLineArgs(lpCmdLine);                   //EJJ parse command line
+//	PrintLogC("VCC Startup\n");
+
+	if ( strlen(CmdArg.QLoadFile) !=0)           //EJJ was lpCmdLine
 	{
-		strcpy(QuickLoadFile,lpCmdLine);
-		strcpy(temp1,lpCmdLine);
+		strcpy(QuickLoadFile, CmdArg.QLoadFile); //EJJ was lpCmdLine
+		strcpy(temp1, CmdArg.QLoadFile);         //EJJ was lpCmdLine
 		PathStripPath(temp1);
 		_strlwr(temp1);
 		temp1[0]=toupper(temp1[0]);
@@ -131,6 +137,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		strcat(temp1,g_szAppName);
 		strcpy(g_szAppName,temp1);
 	}
+//	PrintLogC("QLoadfile: %s\n",QuickLoadFile);
+
 	EmuState.WindowSize.x=640;
 	EmuState.WindowSize.y=480;
 	InitInstance (hInstance, nCmdShow);
@@ -139,7 +147,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		MessageBox(0,"Can't create primary Window","Error",0);
 		exit(0);
 	}
-	
+
 	Cls(0,&EmuState);
 	DynamicMenuCallback( "",0, 0);
 	DynamicMenuCallback( "",1, 0);
