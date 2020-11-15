@@ -36,6 +36,7 @@ static char ModuleNames[MAXPAX][MAX_LOADSTRING]={"Empty","Empty","Empty","Empty"
 static char CatNumber[MAXPAX][MAX_LOADSTRING]={"","","",""};
 static char SlotLabel[MAXPAX][MAX_LOADSTRING*2]={"Empty","Empty","Empty","Empty"};
 //static 
+static unsigned char PersistPaks = 0;
 static char ModulePaths[MAXPAX][MAX_PATH]={"","","",""};
 static unsigned char *ExtRomPointers[MAXPAX]={NULL,NULL,NULL,NULL};
 static unsigned int BankedCartOffset[MAXPAX]={0,0,0,0};
@@ -427,6 +428,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			SendDlgItemMessage(hDlg,IDC_PAKSELECT,TBM_SETPOS,TRUE,SwitchSlot);
 			ReadModuleParms(SwitchSlot,ConfigText);
 			SendDlgItemMessage(hDlg,IDC_MODINFO,WM_SETTEXT,strlen(ConfigText),(LPARAM)(LPCSTR)ConfigText );
+			SendDlgItemMessage(hDlg, IDC_PAK, BM_SETCHECK, PersistPaks, 0);
 
 			return TRUE; 
 		break;
@@ -435,8 +437,9 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			switch (LOWORD(wParam))
 			{
 			case IDOK:
-				WriteConfig();
+				PersistPaks = (unsigned char)SendDlgItemMessage(hDlg, IDC_PAK, BM_GETCHECK, 0, 0);
 				EndDialog(hDlg, LOWORD(wParam));
+				WriteConfig();
 				return TRUE;
 			break;
 
@@ -655,6 +658,7 @@ void LoadConfig(void)
 {
 	char ModName[MAX_LOADSTRING]="";
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	PersistPaks=GetPrivateProfileInt(ModName, "PersistPaks", 1, IniFile);
 	GetPrivateProfileString("DefaultPaths", "MPIPath", "", MPIPath, MAX_PATH, IniFile);
 	SwitchSlot=GetPrivateProfileInt(ModName,"SWPOSITION",3,IniFile);
 	ChipSelectSlot=SwitchSlot;
@@ -680,6 +684,7 @@ void WriteConfig(void)
 	if (MPIPath != "") { WritePrivateProfileString("DefaultPaths", "MPIPath", MPIPath, IniFile); }
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	WritePrivateProfileInt(ModName,"SWPOSITION",SwitchSlot,IniFile);
+	WritePrivateProfileInt(ModName, "PesistPaks", PersistPaks, IniFile);
 	ValidatePath(ModulePaths[0]);
 	WritePrivateProfileString(ModName,"SLOT1",ModulePaths[0],IniFile);
 	ValidatePath(ModulePaths[1]);

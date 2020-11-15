@@ -58,11 +58,11 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,236,7,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,236,26,50,14
     CONTROL         "OverClock Disk Drive",IDC_TURBO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,58,87,10
-    RADIOBUTTON     "External Rom Image",IDC_EXTROM,7,13,79,10
-    RADIOBUTTON     "Disk Basic (disk11.rom file must be present in VCC folder)",IDC_TRSDOS,7,25,195,10
-    RADIOBUTTON     "RGB Dos (rgbdos.rom file must be present in VCC folder)",IDC_RGB,7,37,192,10
+    RADIOBUTTON     "External Rom Image",IDC_EXTROM,7,13,79,10,WS_TABSTOP
+    RADIOBUTTON     "Disk Basic (disk11.rom file must be present in VCC folder)",IDC_TRSDOS,7,25,195,10,WS_TABSTOP
+    RADIOBUTTON     "RGB Dos (rgbdos.rom file must be present in VCC folder)",IDC_RGB,7,37,192,10,WS_TABSTOP
     GROUPBOX        "Dos Image",IDC_STATIC,3,3,211,49,BS_CENTER
-    EDITTEXT        IDC_ROMPATH,9,147,228,14,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_ROMPATH,9,147,228,14,ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
     PUSHBUTTON      "Browse",IDC_BROWSE,248,150,31,14
     GROUPBOX        "External Disk ROM Image",IDC_STATIC,3,135,239,31,BS_CENTER
     CONTROL         "Persistent Disk Images",IDC_PERSIST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,68,105,10
@@ -70,7 +70,7 @@ BEGIN
     LTEXT           "A:",IDC_STATIC,10,102,8,8
     LTEXT           "B:",IDC_STATIC,10,121,8,8
     COMBOBOX        IDC_DISKA,19,100,59,49,CBS_DROPDOWN | WS_VSCROLL
-    COMBOBOX        IDC_DISKB,19,118,59,51,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_DISKB,19,118,59,51,CBS_DROPDOWN | WS_VSCROLL
     LTEXT           "Windows 2000 or higher and  FDRAWREAD driver are required for Physical Disk access",IDC_STATIC,85,107,141,22
     CONTROL         "Clock at 0xFF50-51",IDC_CLOCK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,79,77,10
 END
