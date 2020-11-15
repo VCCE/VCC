@@ -17,9 +17,7 @@ This file is part of VCC (Virtual Color Computer).
 
 //-------------------------------------------------------------------
 //
-// This code brings command line arguments and options to VCC for those who
-// like to start vcc from a cmd prompt or who want to produce shortcuts to 
-// start instances of VCC with differing settings.  
+// Command line arguments and options to VCC
 //
 // Since VCC is a windows application traditional Unix command arguments (argc,argV) 
 // are not availiable. However the third argument to WinMain() does provide the 
@@ -28,12 +26,12 @@ This file is part of VCC (Virtual Color Computer).
 // after VCC starts. 
 //
 // This program permits the command string to supply other information to VCC when 
-// it starts up, most notable it allows the specification of a custom VCC init file. 
+// it starts up. It allows the specification of differing VCC init files. 
 //
 // When writing this I tried to make as flexible as possible as possible without
 // adding any new dependancies to VCC. By making simple changes to this file
 // and to the functions that use them it should be possible to add other things. 
-// It maybe. however, that the ability to specify a custom ini file and
+// It maybe. however, that the ability to specify the vcc config file and
 // possibly logging options will be sufficent for most. 
 //
 // Syntax:
@@ -50,47 +48,56 @@ This file is part of VCC (Virtual Color Computer).
 //
 // Examples:
 //
+// Specify the config file fred wants to use:
 // $ VCC -i C:\users\fred\my-vcc.ini
 //
-// Specifies the an init file fred wants to use.
+// Inifile in VCC appdir:
+// $ VCC -i %APPDIR%/vcc/my-vcc.ini
 //
+// In current working directory:
+// $ VCC -i my-vcc.ini
+//
+// Quick load image file:
 // $ VCC "C:\barney's good image.ima"
 //
-// Loads the legacy image file.  Quotes all blanks in the file path.
+// Errors returned:
+//   CL_ERR_UNKOPT  Unknown option found
+//   CL_ERR_XTRARG  Too many arguments
 //
 // Caveauts:
 //
 // o Supports short (single char) option codes only. 
-// o Option codes may not be combined. Each must be preceeded by '-'
+// o Option codes may not be combined. Each must be preceeded by dash: '-'
 // o Command string cannot be longer than 255 characters.
 // o Wide character or control character input is not supported.
 // o No provision to escape double quotes or other special characters.
-//
 //-------------------------------------------------------------------
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
 #include "CommandLine.h"
 
-#define SEPMARK 3
+// Define global command line settings
+struct CmdLineArguments CmdArg;
+
+#define SEPMARK 3  //To mark spaces as separators
 
 char *ParseCmdString(char *, const char *); 
 char *GetNextToken ();
 static char *NxtTokenPtr;    
 
 //-------------------------------------------------------------------
-// Parse the VCC command string and set IniFilePath, QuickLoadFile, and 
+// Parse the VCC command string and set ConfigFile, QuickLoadFile, and 
 // possibly other things.  Variables set by this routine are global and 
 // are defined in CommandLine.h
 //
-// vcc.exe [-d[level]] [-i IniFile] [QuickLoadFile] 
+// vcc.exe [-d[level]] [-i ConfigFile] [QuickLoadFile] 
 //
 // CmdString:  The third arg to WinMain()
 //-------------------------------------------------------------------
 
-int CommandLineSettings(char *CmdString) 
+int GetCmdLineArgs(char *CmdString) 
 {
     char *token;      // token pointer (to item in command string)
     int  argnum = 0;  // non-option argument number
@@ -105,9 +112,9 @@ int CommandLineSettings(char *CmdString)
     static char * ValueRequired = "i";
 
     // Initialize the global variables set by this routine
-    *QuickLoadFile = '\0';
-    *IniFilePath = '\0';
-    ConsoleLogging = 0;
+	CmdArg.QLoadFile[0] = '\0';
+	CmdArg.IniFile[0] = '\0';
+	CmdArg.Logging = 0;
 
     // Get the first token from the command string
     token = ParseCmdString(CmdString,ValueRequired);
@@ -117,11 +124,12 @@ int CommandLineSettings(char *CmdString)
         if (*token == '-') {               
             switch (*(token+1)) {
 
-                // "-i" specfies the Vcc init file to use.
+                // "-i" specfies the Vcc configuration file to use.
                 // The value is required and will be found starting
                 // at the third character of the option string.
+				// Default config file is "vcc.ini"
                 case 'i':
-                    strncpy(IniFilePath,token+2,MAX_PATH);
+                    strncpy(CmdArg.IniFile,token+2,CL_MAX_PATH);
                     break;
 
                 // "-d[level]" enables logging console and sets log level (default=1)
@@ -129,17 +137,17 @@ int CommandLineSettings(char *CmdString)
                 // a positive integer 0 to 3.
                 case 'd':
                     if (*(token+2)) {
-                        ConsoleLogging = atoi(token+2);
-                        if (ConsoleLogging < 1) ConsoleLogging = 0;
-                        if (ConsoleLogging > 3) ConsoleLogging = 3;
+						CmdArg.Logging = atoi(token+2);
+                        if (CmdArg.Logging < 1) CmdArg.Logging = 0;
+                        if (CmdArg.Logging > 3) CmdArg.Logging = 3;
                     } else {
-                        ConsoleLogging = 1;
+						CmdArg.Logging = 1;
                     }
                     break;
 
                 // Unknown option code returns an error
                 default:
-                    return 1;
+                    return CL_ERR_UNKOPT;
             }
 
         // else Positional argument            
@@ -147,14 +155,14 @@ int CommandLineSettings(char *CmdString)
         } else { 
             switch (++argnum) {
 
-                // First (currently only) positional arg is Quickload filename.
+                // First (currently only) positional arg is Quick Load filename.
                 case 1:
-                    strncpy(QuickLoadFile,token,MAX_PATH);
+                    strncpy(CmdArg.QLoadFile,token,CL_MAX_PATH);
                     break;
 
-                // Ignore extra positional arguments for now
+                // Extra positional argument returns an error
                 default:
-                    break;
+					return CL_ERR_XTRARG;
             }
         }
 
@@ -245,6 +253,13 @@ char *GetNextToken ()
         // Skip past extra separaters to start of next
         while (*NxtTokenPtr == SEPMARK) NxtTokenPtr++; 
     }  
+
+	// Strip leading and trailing quotes from token
+	if (token[0] == '\"') {
+		token++;
+		int n = strlen(token);
+		if ((n > 0) && (token[n-1] == '\"')) token[n-1] = '\0';
+	}
 
     // Return address of current token
     return token;

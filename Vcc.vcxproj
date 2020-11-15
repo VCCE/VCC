@@ -173,6 +173,7 @@
     <ClCompile Include="Audio.c" />
     <ClCompile Include="Cassette.cpp" />
     <ClCompile Include="coco3.cpp" />
+    <ClCompile Include="CommandLine.c" />
     <ClCompile Include="config.c" />
     <ClCompile Include="DirectDrawInterface.cpp" />
     <ClCompile Include="Fileops.c" />
@@ -202,6 +203,7 @@
     <ClInclude Include="cc2font.h" />
     <ClInclude Include="cc3font.h" />
     <ClInclude Include="coco3.h" />
+    <ClInclude Include="CommandLine.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="DirectDrawInterface.h" />
