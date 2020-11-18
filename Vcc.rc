@@ -45,10 +45,9 @@ BEGIN
         MENUITEM "Paste BASIC Code (with NEW)", ID_PASTE_BASIC_NEW
     END
     POPUP "Configuration"
-
     BEGIN
-		MENUITEM "Flip Artifact Colors",        ID_FLIP_ARTIFACTS
-		MENUITEM "Config",                      ID_CONFIGURE_OPTIONS
+        MENUITEM "Flip Artifact Colors",        ID_FLIP_ARTIFACTS
+        MENUITEM "Config",                      ID_CONFIGURE_OPTIONS
     END
     POPUP "Help", HELP
     BEGIN
@@ -148,12 +147,12 @@ BEGIN
     CTEXT           "of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",IDC_STATIC,5,300,226,8
     CTEXT           "See the GNU General Public License for more details.",IDC_STATIC,31,311,174,8
     CTEXT           "You should have received a copy of the GNU General Public License",IDC_STATIC,5,326,219,8
-    CTEXT           "along with VCC (Virtual Color Computer). If not, see http://www.gnu.org/licenses/.",IDC_STATIC,31,337,174,18
     CTEXT           "Rebased to more ""modern"" compilers by Gary Coulbourne",IDC_STATIC,1,182,230,8
     CTEXT           "VCC Repository and Release Packages maintained by Bill Pierce",IDC_STATIC,9,173,206,8
     CTEXT           "H6309 CPU fixes by Walter Zambotti",IDC_STATIC,54,212,122,12,SS_CENTERIMAGE
     CTEXT           "Adapted to VS2015 and Minor Bug Fixes by Wes Gale",IDC_STATIC,23,183,178,10
-    CTEXT           "Bug fixes and Enhancements by Bill Pierce, Peter Westberg, && James Rye",IDC_STATIC,19,194,193,20
+    CTEXT           "Bug fixes and Enhancements by Bill Pierce, Peter Westberg, James Rye && EJ Jaquay",IDC_STATIC,19,194,193,20
+    CTEXT           "along with VCC (Virtual Color Computer). If not, see http://www.gnu.org/licenses/.",IDC_STATIC,31,337,174,18
 END
 
 IDD_TCONFIG DIALOGEX 0, 0, 397, 213
@@ -526,7 +525,7 @@ BEGIN
         LEFTMARGIN, 1
         RIGHTMARGIN, 231
         TOPMARGIN, 3
-        BOTTOMMARGIN, 337
+        BOTTOMMARGIN, 377
     END
 
     IDD_TCONFIG, DIALOG
