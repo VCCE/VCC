@@ -1,4 +1,4 @@
-// Microsoft Visual C++ generated resource script.
+﻿// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -29,8 +29,8 @@ BEGIN
     POPUP "File"
     BEGIN
         MENUITEM "Run",                         ID_FILE_RUN
-        MENUITEM "Save Config",                 ID_FILE_SAVE, GRAYED
-        MENUITEM "Load Config",                 ID_FILE_LOAD, GRAYED
+        MENUITEM "Save Config",                 ID_SAVE_CONFIG
+        MENUITEM "Load Config",                 ID_FILE_LOAD
         MENUITEM SEPARATOR
         MENUITEM "[F9] Hard Reset",             ID_FILE_RESET
         MENUITEM "[F5] Soft Reset",             ID_FILE_RESET_SFT

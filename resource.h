@@ -465,6 +465,7 @@
 #define ID_NMI                          40025
 #define ID_CARTRIDGE_INSERT             40026
 #define ID_FILE_LOAD                    40028
+#define ID_SAVE_CONFIG                  40029
 #define ID_CARTS_EJECT                  40030
 #define ID_COPY_TEXT                    40034
 #define ID_PASTE_TEXT                   40035

@@ -210,7 +210,8 @@ void LoadConfig(SystemState *LCState)
 
 unsigned char WriteIniFile(void)
 {
-	
+//  PrintLogC("WiteIniFile %s\n",IniFilePath);
+
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ExternalBasicImage);
@@ -258,6 +259,9 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("RightJoyStick","Fire2",Right.Fire2,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick","DiDevice",Right.DiDevice,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick", "HiResDevice", Right.HiRes, IniFilePath);
+
+//  EJJ flush inifile
+	WritePrivateProfileString(NULL,NULL,NULL,IniFilePath);
 		
 	return(0);
 }
@@ -469,6 +473,20 @@ void GetIniFilePath( char *Path)
 	strcpy(Path,IniFilePath);
 	return;
 }
+
+//<EJJ>
+void SetIniFilePath( char *Path)
+{
+    //  Path must be to an existing ini file
+    strcpy(IniFilePath,Path);
+}
+
+char * AppDirectory() 
+{
+    // This only works after LoadConfig has been called
+	return AppDataPath;
+}
+//<EJJ/>
 
 void UpdateConfig (void)
 {

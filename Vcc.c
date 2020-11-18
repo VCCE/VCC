@@ -80,6 +80,7 @@ LRESULT CALLBACK WndProc( HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam 
 
 void SoftReset(void);
 void LoadIniFile(void);
+void SaveConfig(void);
 unsigned __stdcall EmuLoop(void *);
 unsigned __stdcall CartLoad(void *);
 void (*CPUInit)(void)=NULL;
@@ -157,7 +158,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	SetClockSpeed(1);	//Default clock speed .89 MHZ	
 	BinaryRunning = true;
 	EmuState.EmulationRunning=AutoStart;
-	if (strlen(lpCmdLine)!=0)
+	if (strlen(CmdArg.QLoadFile)!=0)
 	{
 		Qflag=255;
 		EmuState.EmulationRunning=1;
@@ -294,6 +295,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					EmuState.ResetPending=2;
 					SetClockSpeed(1); //Default clock speed .89 MHZ	
 					break;
+
+                case ID_SAVE_CONFIG:
+                    SaveConfig();
+                    break;
 
 				case ID_COPY_TEXT:
 					CopyText();
@@ -677,27 +682,72 @@ unsigned char SetAutoStart(unsigned char Tmp)
 	return(AutoStart);
 }
 
+// LoadIniFile allows user to browse for an ini file and reloads the config from it.
 void LoadIniFile(void)
 {
-	OPENFILENAME ofn ;	
-	char szFileName[MAX_PATH]="";
-	memset(&ofn,0,sizeof(ofn));
-	ofn.lStructSize       = sizeof (OPENFILENAME) ;
-	ofn.hwndOwner         = EmuState.WindowHandle;
-	ofn.lpstrFilter       =	"INI\0*.ini\0\0" ;			// filter string
-	ofn.nFilterIndex      = 1 ;							// current filter index
-	ofn.lpstrFile         = szFileName ;				// contains full path and filename on return
-	ofn.nMaxFile          = MAX_PATH;					// sizeof lpstrFile
-	ofn.lpstrFileTitle    = NULL;						// filename and extension only
-	ofn.nMaxFileTitle     = MAX_PATH ;					// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = NULL ;						// initial directory
-	ofn.lpstrTitle        = TEXT("Vcc Config File") ;	// title bar string
-	ofn.Flags             = OFN_HIDEREADONLY ;
-//	if ( GetOpenFileName (&ofn) )
-//		LoadConfig(szFileName);
-	return;
+    OPENFILENAME ofn ;	
+    char szFileName[MAX_PATH]="";
+
+    GetIniFilePath(szFileName); // EJJ load current ini file path
+
+    memset(&ofn,0,sizeof(ofn));
+    ofn.lStructSize       = sizeof (OPENFILENAME);
+    ofn.hwndOwner         = EmuState.WindowHandle;
+    ofn.lpstrFilter       = "INI\0*.ini\0\0";
+    ofn.nFilterIndex      = 1;
+    ofn.lpstrFile         = szFileName;
+    ofn.nMaxFile          = MAX_PATH;
+    ofn.nMaxFileTitle     = MAX_PATH;
+    ofn.lpstrFileTitle    = NULL;
+    ofn.lpstrInitialDir   = AppDirectory() ;
+    ofn.lpstrTitle        = TEXT("Load Vcc Config File") ;
+    ofn.Flags             = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
+
+    if ( GetOpenFileName (&ofn) ) {
+        WriteIniFile();               // Flush current profile
+        SetIniFilePath(szFileName);   // Set new ini file path
+        ReadIniFile();                // Load it
+        UpdateConfig();
+    }
+    return;
 }
 
+// SaveIniFile copies the current config to a speficied ini file. The file is created
+// if it does not already exist.
+
+void SaveConfig(void) {
+    OPENFILENAME ofn ;
+    char curini[MAX_PATH];
+    char newini[MAX_PATH-4];  // Save room for '.ini' if needed
+
+    GetIniFilePath(curini);  // EJJ get current ini file path
+    strcpy(newini,curini);   // Let GetOpenFilename suggest it
+
+    memset(&ofn,0,sizeof(ofn));
+    ofn.lStructSize       = sizeof (OPENFILENAME) ;
+    ofn.hwndOwner         = EmuState.WindowHandle;
+    ofn.lpstrFilter       = "INI\0*.ini\0\0" ;        // filter string
+    ofn.nFilterIndex      = 1 ;                       // current filter index
+    ofn.lpstrFile         = newini;                   // contains full path on return
+    ofn.nMaxFile          = MAX_PATH;                 // sizeof lpstrFile
+    ofn.lpstrFileTitle    = NULL;                     // filename and extension only
+    ofn.nMaxFileTitle     = MAX_PATH ;                // sizeof lpstrFileTitle
+    ofn.lpstrInitialDir   = AppDirectory() ;          // EJJ initial directory
+    ofn.lpstrTitle        = TEXT("Save Vcc Config") ; // title bar string
+    ofn.Flags             = OFN_HIDEREADONLY |
+							OFN_PATHMUSTEXIST;
+
+    if ( GetOpenFileName (&ofn) ) {
+		if (ofn.nFileExtension == 0) strcat(newini, ".ini");  //Add extension if none
+        WriteIniFile();                                        // Flush current config
+        if (strcmp(curini,newini) != 0) {
+            if (! CopyFile(curini,newini,false) ) {            // Copy it to new file
+                MessageBox(0,"Config save failed","error",0);
+            }
+        }
+    }
+    return;
+}
 
 unsigned __stdcall EmuLoop(void *Dummy)
 {
