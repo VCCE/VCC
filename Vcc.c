@@ -292,8 +292,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case ID_FILE_LOAD:
 					LoadIniFile();
-					EmuState.ResetPending=2;
-					SetClockSpeed(1); //Default clock speed .89 MHZ	
 					break;
 
                 case ID_SAVE_CONFIG:
@@ -708,6 +706,8 @@ void LoadIniFile(void)
         SetIniFilePath(szFileName);   // Set new ini file path
         ReadIniFile();                // Load it
         UpdateConfig();
+        EmuState.ResetPending = 2;
+//      SetClockSpeed(1); //Default clock speed .89 MHZ
     }
     return;
 }
