@@ -42,8 +42,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "fileops.h"
 #include "Cassette.h"
 #include "shlobj.h"
-#include "CommandLine.h"  //EJJ
-
+#include "CommandLine.h"
 //#include "logger.h"
 #include <assert.h>
 using namespace std;
@@ -170,6 +169,7 @@ void buildTransDisp2ScanTable()
 void LoadConfig(SystemState *LCState)
 {
 	HANDLE hr=NULL;
+	int lasterror;
 
 	buildTransDisp2ScanTable();
 
@@ -183,7 +183,6 @@ void LoadConfig(SystemState *LCState)
 	strcat(AppDataPath, "\\VCC");
 	if (_mkdir(AppDataPath) != 0) { OutputDebugString("Unable to create VCC config folder."); }
 	
-	//EJJ 
 	if (*CmdArg.IniFile) {
 		GetFullPathNameA(CmdArg.IniFile,MAX_PATH,IniFilePath,0);
 	} else {
@@ -192,8 +191,6 @@ void LoadConfig(SystemState *LCState)
 		strcat(IniFilePath, IniFileName);
 	}
 
-//	PrintLogC("Ini: %s\n", IniFilePath);
-
 	LCState->ScanLines=0;
 	NumberOfSoundCards=GetSoundCardList(SoundCards);
 	ReadIniFile();
@@ -201,17 +198,23 @@ void LoadConfig(SystemState *LCState)
 	UpdateConfig();
 	RefreshJoystickStatus();
 	SoundInit(EmuState.WindowHandle,SoundCards[CurrentConfig.SndOutDev].Guid,CurrentConfig.AudioRate);
-	hr=CreateFile(IniFilePath,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-	if (hr==INVALID_HANDLE_VALUE) //No Ini File go create it
-		WriteIniFile();
-	else
+
+//  Try to open the config file.  Create it if necessary.  Abort if failure.
+	hr = CreateFile(IniFilePath,
+					GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ,
+					NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	lasterror = GetLastError();
+	if (hr==INVALID_HANDLE_VALUE) { // Fatal could not open ini file
+	    MessageBox(0,"Could not open ini file","Error",0);
+		exit(0);
+	} else {
 		CloseHandle(hr);
+		if (lasterror != ERROR_ALREADY_EXISTS) WriteIniFile();  //!=183
+	}
 }
 
 unsigned char WriteIniFile(void)
 {
-//  PrintLogC("WiteIniFile %s\n",IniFilePath);
-
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ExternalBasicImage);
@@ -260,9 +263,8 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("RightJoyStick","DiDevice",Right.DiDevice,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick", "HiResDevice", Right.HiRes, IniFilePath);
 
-//  EJJ flush inifile
+//  Flush inifile
 	WritePrivateProfileString(NULL,NULL,NULL,IniFilePath);
-		
 	return(0);
 }
 
@@ -270,7 +272,7 @@ unsigned char ReadIniFile(void)
 {
 	HANDLE hr=NULL;
 	unsigned char Index=0;
-	LPTSTR tmp;
+//	LPTSTR tmp;
 
 	//Loads the config structure from the hard disk
 	CurrentConfig.CPUMultiplyer = GetPrivateProfileInt("CPU","DoubleSpeedClock",2,IniFilePath);

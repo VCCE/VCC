@@ -59,7 +59,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "throttle.h"
 #include "DirectDrawInterface.h"
 
-#include "CommandLine.h" //EJJ
+#include "CommandLine.h"
 //#include "logger.h"
 
 static HANDLE hout=NULL;
@@ -124,13 +124,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
-	GetCmdLineArgs(lpCmdLine);                   //EJJ parse command line
-//	PrintLogC("VCC Startup\n");
+	GetCmdLineArgs(lpCmdLine);                   //Parse command line
 
-	if ( strlen(CmdArg.QLoadFile) !=0)           //EJJ was lpCmdLine
+	if ( strlen(CmdArg.QLoadFile) !=0)
 	{
-		strcpy(QuickLoadFile, CmdArg.QLoadFile); //EJJ was lpCmdLine
-		strcpy(temp1, CmdArg.QLoadFile);         //EJJ was lpCmdLine
+		strcpy(QuickLoadFile, CmdArg.QLoadFile);
+		strcpy(temp1, CmdArg.QLoadFile);
 		PathStripPath(temp1);
 		_strlwr(temp1);
 		temp1[0]=toupper(temp1[0]);
@@ -739,10 +738,10 @@ void SaveConfig(void) {
     if ( GetOpenFileName (&ofn) ) {
         if (ofn.nFileExtension == 0) strcat(newini, ".ini");  //Add extension if none
         WriteIniFile();                                       // Flush current config
-        if (strcmp(curini,newini) != 0) {
+        if (_stricmp(curini,newini) != 0) {
             if (! CopyFile(curini,newini,false) ) {           // Copy it to new file
-                MessageBox(0,"Config save failed","error",0);
-            }
+                MessageBox(0,"Copy config failed","error",0);
+			}
         }
     }
     return;

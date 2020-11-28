@@ -20,9 +20,8 @@ This file is part of VCC (Virtual Color Computer).
 
 void WriteLog(char *,unsigned char);
 void CpuDump(void);
-
-//EJJ added formatted print to console
 void PrintLogC(const void * fmt, ...);
+void OpenLogFile(char * filename);
 
 #define TOCONS	0
 #define TOFILE	1
