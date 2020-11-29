@@ -1,7 +1,8 @@
-#ifndef __LOGGER_H__
-#define __LOGGER_H__
+#ifndef __COMMANDLINE_H__
+#define __COMMANDLINE_H__
 /*
-Copyright 2015 by Joseph Forgione
+
+Copyright 2015 by E J Jaquay
 This file is part of VCC (Virtual Color Computer).
 
     VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
@@ -18,13 +19,20 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-void WriteLog(char *,unsigned char);
-void CpuDump(void);
+// Declare global variables defined by GetCmdLineArgs
+#define CL_MAX_PATH 256
+struct CmdLineArguments {
+	char QLoadFile[CL_MAX_PATH];
+	char IniFile[CL_MAX_PATH];
+	int  Logging;
+};
+extern struct CmdLineArguments CmdArg;
 
-//EJJ added formatted print to console
-void PrintLogC(const void * fmt, ...);
+// Get Settings from Command line string 
+int  GetCmdLineArgs(char * lpCmdLine);
 
-#define TOCONS	0
-#define TOFILE	1
+// Errors returned
+#define CL_ERR_UNKOPT 1  // Unknown option found
+#define CL_ERR_XTRARG 2  // Too many arguments
 
 #endif

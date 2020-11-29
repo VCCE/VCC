@@ -29,6 +29,9 @@ void UpdateSoundBar(unsigned short,unsigned short);
 void UpdateTapeCounter(unsigned int,unsigned char);
 int GetKeyboardLayout();
 
+void SetIniFilePath(char *); //EJJ
+char * AppDirectory();       //EJJ
+
 int GetPaletteType();
 void SetConfigPath(int, string);
 

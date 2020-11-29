@@ -42,6 +42,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "fileops.h"
 #include "Cassette.h"
 #include "shlobj.h"
+#include "CommandLine.h"  //EJJ
 
 //#include "logger.h"
 #include <assert.h>
@@ -178,12 +179,21 @@ void LoadConfig(SystemState *LCState)
 	if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, AppDataPath))) 
 		OutputDebugString(AppDataPath);
 	strcpy(CurrentConfig.PathtoExe,ExecDirectory);
+
 	strcat(AppDataPath, "\\VCC");
 	if (_mkdir(AppDataPath) != 0) { OutputDebugString("Unable to create VCC config folder."); }
-	strcpy(IniFilePath, AppDataPath);
-	strcat(IniFilePath,"\\");
-	strcat(IniFilePath,IniFileName);
 	
+	//EJJ 
+	if (*CmdArg.IniFile) {
+		GetFullPathNameA(CmdArg.IniFile,MAX_PATH,IniFilePath,0);
+	} else {
+		strcpy(IniFilePath, AppDataPath);
+		strcat(IniFilePath, "\\");
+		strcat(IniFilePath, IniFileName);
+	}
+
+//	PrintLogC("Ini: %s\n", IniFilePath);
+
 	LCState->ScanLines=0;
 	NumberOfSoundCards=GetSoundCardList(SoundCards);
 	ReadIniFile();
@@ -200,7 +210,8 @@ void LoadConfig(SystemState *LCState)
 
 unsigned char WriteIniFile(void)
 {
-	
+//  PrintLogC("WiteIniFile %s\n",IniFilePath);
+
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ExternalBasicImage);
@@ -248,6 +259,9 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("RightJoyStick","Fire2",Right.Fire2,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick","DiDevice",Right.DiDevice,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick", "HiResDevice", Right.HiRes, IniFilePath);
+
+//  EJJ flush inifile
+	WritePrivateProfileString(NULL,NULL,NULL,IniFilePath);
 		
 	return(0);
 }
@@ -459,6 +473,20 @@ void GetIniFilePath( char *Path)
 	strcpy(Path,IniFilePath);
 	return;
 }
+
+//<EJJ>
+void SetIniFilePath( char *Path)
+{
+    //  Path must be to an existing ini file
+    strcpy(IniFilePath,Path);
+}
+
+char * AppDirectory() 
+{
+    // This only works after LoadConfig has been called
+	return AppDataPath;
+}
+//<EJJ/>
 
 void UpdateConfig (void)
 {

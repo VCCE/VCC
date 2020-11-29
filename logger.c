@@ -20,6 +20,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>  // EJJ for PrintLogC
 #include "tcc1014mmu.h"	//Need memread for CpuDump
 #include "logger.h"
 
@@ -64,4 +65,13 @@ void CpuDump(void)
 	return;
 }
 
-
+//<EJJ> Added PrintLogC - Put formatted string to the console
+void PrintLogC(const void * fmt, ...)
+{
+	va_list args;
+	char str[512];
+	va_start(args, fmt);
+	vsnprintf(str, 512, (char *)fmt, args);
+	va_end(args);
+	WriteLog(str, TOCONS);
+}
