@@ -630,7 +630,7 @@ void LoadCartDLL(unsigned char Slot,char *DllPath)
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME) ;
 	ofn.hwndOwner		  = NULL;
-	ofn.lpstrFilter = "Program Packs\0*.ROM;*.ccc;*.DLL\0\0";			// filter string
+	ofn.lpstrFilter = "Program Packs\0*.ROM;*.ccc;*.DLL;*.pak\0\0";			// filter string
 	ofn.nFilterIndex      = 1 ;								// current filter index
 	ofn.lpstrFile         = DllPath;						// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
