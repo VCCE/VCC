@@ -58,7 +58,7 @@ unsigned char QuickLoad(char *BinFileName)
 	}
 	strcpy(Extension,PathFindExtension(BinFileName));
 	_strlwr(Extension);
-	if ( (strcmp(Extension,".rom")==0) | (strcmp(Extension,".ccc")==0))
+	if ( (strcmp(Extension,".rom")==0) | (strcmp(Extension,".ccc")==0) | (strcmp(Extension,"*.pak")==0))
 	{
 		InsertModule (BinFileName);
 		return(0);
