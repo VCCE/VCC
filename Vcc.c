@@ -329,6 +329,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 //			Set8BitPalette();
 //			break;
 
+        case WM_KILLFOCUS:
+            if (OEMscan) vccKeyboardHandleKey(kb_char,OEMscan,kEventKeyUp);
+            break;
+
 		case WM_CLOSE:
 			BinaryRunning=0;
 			break;
