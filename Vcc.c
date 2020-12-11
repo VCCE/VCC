@@ -60,7 +60,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "DirectDrawInterface.h"
 
 #include "CommandLine.h"
-//#include "logger.h"
+#include "logger.h"
 
 static HANDLE hout=NULL;
 
@@ -90,6 +90,8 @@ void (*CPUAssertInterupt)(unsigned char,unsigned char)=NULL;
 void (*CPUDeAssertInterupt)(unsigned char)=NULL;
 void (*CPUForcePC)(unsigned short)=NULL;
 void FullScreenToggle(void);
+void send_key_down(unsigned char kb_char, unsigned char OEMscan);
+void send_key_up(unsigned char kb_char, unsigned char OEMscan);
 
 // Message handlers
 //void OnDestroy(HWND hwnd);
@@ -137,7 +139,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		strcat(temp1,g_szAppName);
 		strcpy(g_szAppName,temp1);
 	}
-//	PrintLogC("QLoadfile: %s\n",QuickLoadFile);
 
 	EmuState.WindowSize.x=640;
 	EmuState.WindowSize.y=480;
@@ -202,7 +203,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	return Msg.wParam;
 }
 
-
 /*--------------------------------------------------------------------------*/
 // The Window Procedure
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -219,7 +219,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	switch (message)
 	{
+
+		case WM_SYSCOMMAND:
+			//-------------------------------------------------------------
+			// Control ATL key menu access.
+			// Here left ALT is hardcoded off and right ALT on
+			// TODO: Add config check boxes to control them
+			//-------------------------------------------------------------
+			if(wParam==SC_KEYMENU) {
+				if (GetKeyState(VK_LMENU) & 0x8000) return 0; // Left off
+			//	if (GetKeyState(VK_RMENU) & 0x8000) return 0; // Right off
+			}
+			// falls through to WM_COMMAND
+
 		case WM_COMMAND:
+			// Force all keys up to prevent key repeats
+			send_key_up(0,0);
 			wmId    = LOWORD(wParam); 
 			wmEvent = HIWORD(wParam); 
 			// Parse the menu selections:
@@ -317,7 +332,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					FlipArtifacts();
 					break;
 
-        default:
+				default:
 				   return DefWindowProc(hWnd, message, wParam, lParam);
 			}
 			break;
@@ -329,9 +344,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 //			Set8BitPalette();
 //			break;
 
-        case WM_KILLFOCUS:
-            if (OEMscan) vccKeyboardHandleKey(kb_char,OEMscan,kEventKeyUp);
-            break;
+		case WM_KILLFOCUS:
+			// Force keys up if main widow keyboard focus is lost.  Otherwise
+			// down keys will cause issues with OS-9 on return
+			send_key_up(0,0);
+			break;
 
 		case WM_CLOSE:
 			BinaryRunning=0;
@@ -346,44 +363,47 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return 0;
 			break;
 
+		case WM_SYSCHAR:
+			DefWindowProc(hWnd, message, wParam, lParam);
+			return 0;
+			break;
+
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
-			/*
-				lParam
-
-				Bits	Meaning
-				0-15	The repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. The repeat count is always 1 for a WM_KEYUP message.
-				16-23	The scan code. The value depends on the OEM.
-				24	Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-				25-28	Reserved; do not use.
-				29	The context code. The value is always 0 for a WM_KEYUP message.
-				30	The previous key state. The value is always 1 for a WM_KEYUP message.
-				31	The transition state. The value is always 1 for a WM_KEYUP message.
-			*/
-			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16);
 
 			// send emulator key up event to the emulator
 			// TODO: Key up checks whether the emulation is running, this does not
 
-			vccKeyboardHandleKey(kb_char,OEMscan, kEventKeyUp);
+			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16);
+			send_key_up(kb_char,OEMscan);
 			
 			return 0;
-		break;
+			break;
 
-		case WM_KEYDOWN: 
+//----------------------------------------------------------------------------------------
+//	lParam bits
+//	  0-15	The repeat count for the current message. The value is the number of times
+//			the keystroke is autorepeated as a result of the user holding down the key.
+//			If the keystroke is held long enough, multiple messages are sent. However,
+//			the repeat count is not cumulative.
+//	 16-23	The scan code. The value depends on the OEM.
+//	    24	Indicates whether the key is an extended key, such as the right-hand ALT and
+//			CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is
+//			one if it is an extended key; otherwise, it is zero.
+//	 25-28	Reserved; do not use.
+//	    29	The context code. The value is always zero for a WM_KEYDOWN message.
+//	    30	The previous key state. The value is one if the key is down before the
+//	   		message is sent, or it is zero if the key is up.
+//	    31	The transition state. The value is always zero for a WM_KEYDOWN message.
+//----------------------------------------------------------------------------------------
+
 		case WM_SYSKEYDOWN:
-			/*
-				lParam
 
-				Bits	Meaning
-				0-15	The repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.
-				16-23	The scan code. The value depends on the OEM.
-				24	Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-				25-28	Reserved; do not use.
-				29	The context code. The value is always 0 for a WM_KEYDOWN message.
-				30	The previous key state. The value is 1 if the key is down before the message is sent, or it is zero if the key is up.
-				31	The transition state. The value is always 0 for a WM_KEYDOWN message.
-			*/
+			// Ignore repeated system keys
+			if (lParam>>30) return 0;
+
+		case WM_KEYDOWN:
+
 			// get key scan code for emulator control keys
 			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16); // just get the scan code
 
@@ -445,11 +465,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 //				break;
 
 				default:
-					// send other keystroke to the emulator if it is active
+					// send other keystrokes to the emulator if it is active
 					if ( EmuState.EmulationRunning )
 					{
-						// send Key down event to the emulator
-						vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyDown);
+						send_key_down(kb_char,OEMscan);
 					}
 					break;
 			}
@@ -489,6 +508,63 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
    }
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
+
+//--------------------------------------------------------------------------
+// When the main window is about to lose keyboard focus there are often
+// keys down that must be brought back first.  These two routines track
+// keybord presses so the keys can be raised when needed.  Keys are
+// raised in the reverse order they arepressed. WndProc should only use
+// these routines to access the keyboard handler.
+//
+// TODO:  Move these to keyboard.c as part of code cleanup there.
+//--------------------------------------------------------------------------
+
+// Stack is sized at eight keystrokes but should not exceed two.
+static unsigned char OEM_stack[8];
+static unsigned char KB_stack[8];
+static int KB_sptr=0; // Points to next empty slot, zero means stack is empty
+
+// Send key down event to keyboard handler and stack key if not already on top
+void send_key_down(unsigned char kb_char, unsigned char OEMscan) {
+
+	// Zero scan code should never happen.  Ignore if it does so zero
+	// code can be used int send_key_up to signify all keys.
+	if (OEMscan == 0) return;
+
+	// Send key to the keyboard handler
+	vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyDown);
+
+	// If stack is full flush it (this should not happen!)
+	if (KB_sptr > 7) send_key_up(0,0);
+
+	// Don't stack key if it is already there
+	if ((KB_sptr > 1) && (OEM_stack[KB_sptr-1] == OEMscan)) return;
+
+	// Save key in stack for raising it later
+	KB_stack[KB_sptr] = kb_char;
+	OEM_stack[KB_sptr] = OEMscan;
+	KB_sptr++;
+	return;
+}
+
+// Send key up events to keyboard handler from stack until desired key is
+// raised or the stack is empty.  Force raise of all keys in the stack by
+// specifying zero for OEMscan.
+
+void send_key_up(unsigned char kb_char, unsigned char OEMscan) {
+
+	// Raise keys on stack until scan code match
+	while (KB_sptr > 0) {
+		KB_sptr--;
+		if (OEM_stack[KB_sptr] == OEMscan) {
+			vccKeyboardHandleKey(kb_char,OEMscan,kEventKeyUp);
+			break;
+		}
+		vccKeyboardHandleKey(KB_stack[KB_sptr],OEM_stack[KB_sptr],kEventKeyUp);
+	}
+	return;
+}
+
 /*--------------------------------------------------------------------------
 // Command message handler
 void OnCommand(HWND hWnd, int iID, HWND hwndCtl, UINT uNotifyCode)
