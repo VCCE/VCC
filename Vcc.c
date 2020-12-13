@@ -553,15 +553,15 @@ void send_key_down(unsigned char kb_char, unsigned char OEMscan) {
 
 void send_key_up(unsigned char kb_char, unsigned char OEMscan) {
 
-	// Raise keys on stack until scan code match
 	while (KB_sptr > 0) {
 		KB_sptr--;
-		if (OEM_stack[KB_sptr] == OEMscan) {
-			vccKeyboardHandleKey(kb_char,OEMscan,kEventKeyUp);
-			break;
-		}
+		if (OEM_stack[KB_sptr] == OEMscan) break;
 		vccKeyboardHandleKey(KB_stack[KB_sptr],OEM_stack[KB_sptr],kEventKeyUp);
 	}
+
+	// Key is raised even if not on the stack
+	if (OEMscan) vccKeyboardHandleKey(kb_char,OEMscan,kEventKeyUp);
+
 	return;
 }
 
