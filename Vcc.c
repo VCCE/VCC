@@ -90,7 +90,7 @@ void (*CPUAssertInterupt)(unsigned char,unsigned char)=NULL;
 void (*CPUDeAssertInterupt)(unsigned char)=NULL;
 void (*CPUForcePC)(unsigned short)=NULL;
 void FullScreenToggle(void);
-void send_key_down(unsigned char kb_char, unsigned char OEMscan);
+void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys(void);
 
 // Message handlers
@@ -468,7 +468,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					// send other keystrokes to the emulator if it is active
 					if ( EmuState.EmulationRunning )
 					{
-						send_key_down(kb_char,OEMscan);
+						vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyDown);
+						// Save key down in case focus is lost
+						save_key_down(kb_char,OEMscan);
 					}
 					break;
 			}
@@ -513,25 +515,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 // When the main window is about to lose keyboard focus there are one
 // or two keys down in the emulation that must be raised.  These routines
 // track the last two key down events so they can be raised when needed.
-//
-// TODO:  Move these to keyboard.c as part of code cleanup there.
 //--------------------------------------------------------------------------
 
-// Save last two scan and key codes
 static unsigned char SC_save1 = 0;
 static unsigned char SC_save2 = 0;
 static unsigned char KB_save1 = 0;
 static unsigned char KB_save2 = 0;
 static int KeySaveToggle=0;
 
-// Send key down event to keyboard handler while saving last two events.
-void send_key_down(unsigned char kb_char, unsigned char OEMscan) {
+// Save last two key down events
+void save_key_down(unsigned char kb_char, unsigned char OEMscan) {
 
 	// Ignore zero scan code
 	if (OEMscan == 0) return;
-
-	// Send key to the keyboard handler
-	vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyDown);
 
 	// Remember it
 	KeySaveToggle = !KeySaveToggle;
