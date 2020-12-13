@@ -91,7 +91,7 @@ void (*CPUDeAssertInterupt)(unsigned char)=NULL;
 void (*CPUForcePC)(unsigned short)=NULL;
 void FullScreenToggle(void);
 void send_key_down(unsigned char kb_char, unsigned char OEMscan);
-void send_key_up(unsigned char kb_char, unsigned char OEMscan);
+void raise_saved_keys(void);
 
 // Message handlers
 //void OnDestroy(HWND hwnd);
@@ -234,7 +234,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case WM_COMMAND:
 			// Force all keys up to prevent key repeats
-			send_key_up(0,0);
+			raise_saved_keys();
 			wmId    = LOWORD(wParam); 
 			wmEvent = HIWORD(wParam); 
 			// Parse the menu selections:
@@ -347,7 +347,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_KILLFOCUS:
 			// Force keys up if main widow keyboard focus is lost.  Otherwise
 			// down keys will cause issues with OS-9 on return
-			send_key_up(0,0);
+			raise_saved_keys();
 			break;
 
 		case WM_CLOSE:
@@ -375,7 +375,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			// TODO: Key up checks whether the emulation is running, this does not
 
 			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16);
-			send_key_up(kb_char,OEMscan);
+			vccKeyboardHandleKey(kb_char,OEMscan,kEventKeyUp);
 			
 			return 0;
 			break;
@@ -510,58 +510,47 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 //--------------------------------------------------------------------------
-// When the main window is about to lose keyboard focus there are often
-// keys down that must be brought back first.  These two routines track
-// keybord presses so the keys can be raised when needed.  Keys are
-// raised in the reverse order they arepressed. WndProc should only use
-// these routines to access the keyboard handler.
+// When the main window is about to lose keyboard focus there are one
+// or two keys down in the emulation that must be raised.  These routines
+// track the last two key down events so they can be raised when needed.
 //
 // TODO:  Move these to keyboard.c as part of code cleanup there.
 //--------------------------------------------------------------------------
 
-// Stack is sized at eight keystrokes but should not exceed two.
-static unsigned char OEM_stack[8];
-static unsigned char KB_stack[8];
-static int KB_sptr=0; // Points to next empty slot, zero means stack is empty
+// Save last two scan and key codes
+static unsigned char SC_save1 = 0;
+static unsigned char SC_save2 = 0;
+static unsigned char KB_save1 = 0;
+static unsigned char KB_save2 = 0;
+static int KeySaveToggle=0;
 
-// Send key down event to keyboard handler and stack key if not already on top
+// Send key down event to keyboard handler while saving last two events.
 void send_key_down(unsigned char kb_char, unsigned char OEMscan) {
 
-	// Zero scan code should never happen.  Ignore if it does so zero
-	// code can be used int send_key_up to signify all keys.
+	// Ignore zero scan code
 	if (OEMscan == 0) return;
 
 	// Send key to the keyboard handler
 	vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyDown);
 
-	// If stack is full flush it (this should not happen!)
-	if (KB_sptr > 7) send_key_up(0,0);
-
-	// Don't stack key if it is already there
-	if ((KB_sptr > 1) && (OEM_stack[KB_sptr-1] == OEMscan)) return;
-
-	// Save key in stack for raising it later
-	KB_stack[KB_sptr] = kb_char;
-	OEM_stack[KB_sptr] = OEMscan;
-	KB_sptr++;
+	// Remember it
+	KeySaveToggle = !KeySaveToggle;
+	if (KeySaveToggle) {
+		KB_save1 = kb_char;
+		SC_save1 = OEMscan;
+	} else {
+		KB_save2 = kb_char;
+		SC_save2 = OEMscan;
+	}
 	return;
 }
 
-// Send key up events to keyboard handler from stack until desired key is
-// raised or the stack is empty.  Force raise of all keys in the stack by
-// specifying zero for OEMscan.
-
-void send_key_up(unsigned char kb_char, unsigned char OEMscan) {
-
-	while (KB_sptr > 0) {
-		KB_sptr--;
-		if (OEM_stack[KB_sptr] == OEMscan) break;
-		vccKeyboardHandleKey(KB_stack[KB_sptr],OEM_stack[KB_sptr],kEventKeyUp);
-	}
-
-	// Key is raised even if not on the stack
-	if (OEMscan) vccKeyboardHandleKey(kb_char,OEMscan,kEventKeyUp);
-
+// Send key up events to keyboard handler for saved keys
+void raise_saved_keys() {
+	if (SC_save1) vccKeyboardHandleKey(KB_save1,SC_save1,kEventKeyUp);
+	if (SC_save2) vccKeyboardHandleKey(KB_save2,SC_save2,kEventKeyUp);
+	SC_save1 = 0;
+	SC_save2 = 0;
 	return;
 }
 
