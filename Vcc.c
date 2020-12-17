@@ -412,11 +412,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			switch ( OEMscan )
 			{
 				case DIK_F3:
-
+					DecreaseOverclockSpeed();
 				break;
 
 				case DIK_F4:
-
+					IncreaseOverclockSpeed();
 				break;
 
 				case DIK_F5:
