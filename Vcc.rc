@@ -130,10 +130,10 @@ BEGIN
     LTEXT           "Another classic computer canceled before it's time!",IDC_STATIC,12,115,81,19
     LTEXT           "F11 = Fullscreen Toggle",IDC_STATIC,108,134,77,8
     GROUPBOX        "Keyboard Special keys",IDC_STATIC,104,51,110,96,BS_CENTER
-    LTEXT           "F3 = NA",IDC_STATIC,108,62,27,8
+    LTEXT           "F3 = Decrease Overclock",IDC_STATIC,108,62,100,8
     LTEXT           "F10 = Fullscreen Status Toggle",IDC_STATIC,108,125,99,8
     LTEXT           "F9 = Hard Reset (Power Cycle)",IDC_STATIC,108,116,98,8
-    LTEXT           "F4 = NA",IDC_STATIC,108,71,27,8
+    LTEXT           "F4 = Increase Overclock",IDC_STATIC,108,71,100,8
     LTEXT           "F6 = RGB/Composite Toggle",IDC_STATIC,108,89,92,8
     LTEXT           "F5 = Soft Reset",IDC_STATIC,108,80,50,8
     LTEXT           "F7 = NA",IDC_STATIC,108,98,27,8
