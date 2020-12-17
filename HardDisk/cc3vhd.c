@@ -137,6 +137,11 @@ void UnmountHD(int drive)
     return;
 }
 
+// Clear drive select on reset
+void VhdReset(void) {
+    MemWrite(0,0xFF86);
+}
+
 void HDcommand(unsigned char Command) {
 
     unsigned short Temp=0;
