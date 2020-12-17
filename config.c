@@ -130,6 +130,10 @@ char * getKeyName(int x)
 unsigned char _TranslateDisp2Scan[SCAN_TRANS_COUNT];
 unsigned char _TranslateScan2Disp[SCAN_TRANS_COUNT] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,32,38,20,33,35,40,36,24,30,31,42,43,55,52,16,34,19,21,22,23,25,26,27,45,46,0,51,44,41,39,18,37,17,29,28,47,48,49,51,0,53,54,50,66,67,0,0,0,0,0,0,0,0,0,0,58,64,60,0,62,0,63,0,59,65,61,56,57 };
 
+
+#define TABS 8
+static HWND g_hWndConfig[TABS]; // Moved this outside the initialization function so that other functions could access the window handles when necessary.
+
 unsigned char TranslateDisp2Scan(int x)
 {
 	assert(x >= 0 && x < SCAN_TRANS_COUNT);
@@ -348,14 +352,11 @@ char * BasicRomName(void)
 	return(CurrentConfig.ExternalBasicImage); 
 }
 
-
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	#define TABS 8
 	static char TabTitles[TABS][10]={"Audio","CPU","Display","Keyboard","Joysticks","Misc","Tape","BitBanger"};
 	static unsigned char TabCount=0,SelectedTab=0;
 	static HWND hWndTabDialog;
-	static HWND g_hWndConfig[TABS];
 	TCITEM Tabs;
 	switch (message)
 	{
@@ -508,6 +509,59 @@ void UpdateConfig (void)
 	if (CurrentConfig.RebootNow)
 		DoReboot();
 	CurrentConfig.RebootNow=0;
+}
+
+/**
+ * Increase the overclock speed, as seen after a POKE 65497,0.
+ * Valid values are [2,100].
+ */
+void IncreaseOverclockSpeed()
+{
+	if (TempConfig.CPUMultiplyer >= CurrentConfig.MaxOverclock)
+	{
+		return;
+	}
+
+	TempConfig.CPUMultiplyer = (unsigned char)(TempConfig.CPUMultiplyer + 1);
+
+	// Send updates to the dialog if it's open.
+	if (EmuState.ConfigDialog != NULL)
+	{
+		HWND hDlg = g_hWndConfig[1];
+		SendDlgItemMessage(hDlg, IDC_CLOCKSPEED, TBM_SETPOS, TRUE, TempConfig.CPUMultiplyer);
+		sprintf(OutBuffer, "%2.3f Mhz", (float)TempConfig.CPUMultiplyer * 0.894);
+		SendDlgItemMessage(hDlg, IDC_CLOCKDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
+	}
+
+	CurrentConfig = TempConfig;
+	EmuState.ResetPending = 4; // Without this, changing the config does nothing.
+}
+
+/**
+ * Decrease the overclock speed, as seen after a POKE 65497,0.
+ *
+ * Setting this value to 0 will make the emulator pause.  Hence the minimum of 2.
+ */
+void DecreaseOverclockSpeed()
+{
+	if (TempConfig.CPUMultiplyer == 2)
+	{
+		return;
+	}
+
+	TempConfig.CPUMultiplyer = (unsigned char)(TempConfig.CPUMultiplyer - 1);
+
+	// Send updates to the dialog if it's open.
+	if (EmuState.ConfigDialog != NULL)
+	{
+		HWND hDlg = g_hWndConfig[1];
+		SendDlgItemMessage(hDlg, IDC_CLOCKSPEED, TBM_SETPOS, TRUE, TempConfig.CPUMultiplyer);
+		sprintf(OutBuffer, "%2.3f Mhz", (float)TempConfig.CPUMultiplyer * 0.894);
+		SendDlgItemMessage(hDlg, IDC_CLOCKDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
+	}
+
+	CurrentConfig = TempConfig;
+	EmuState.ResetPending = 4;
 }
 
 LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
