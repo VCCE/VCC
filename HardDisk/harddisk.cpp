@@ -28,7 +28,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "cloud9.h"
 #include "..\fileops.h"
 
-constexpr size_t EXTROMSIZE = 8192;
+// constexpr size_t EXTROMSIZE = 8192;
 
 static char VHDfile0[MAX_PATH] { 0 };
 static char VHDfile1[MAX_PATH] { 0 };
@@ -44,7 +44,7 @@ static void (*AssertInt)(unsigned char,unsigned char)=NULL;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
 static unsigned char *Memory=NULL;
-static unsigned char DiskRom[8192];
+/// static unsigned char DiskRom[8192];
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
@@ -54,7 +54,7 @@ void LoadHardDisk(int drive);
 void LoadConfig(void);
 void SaveConfig(void);
 void BuildDynaMenu(void);
-unsigned char LoadExtRom(char *);
+// unsigned char LoadExtRom(char *);
 static HINSTANCE g_hinstDLL;
 
 using namespace std;
@@ -207,7 +207,7 @@ extern "C"
 }
 
 // Hook to read disk rom
-extern "C"
+/* extern "C"
 {
     __declspec(dllexport) unsigned char
     PakMemRead8(unsigned short Address)
@@ -311,7 +311,7 @@ void LoadHardDisk(int drive)
 void LoadConfig(void)
 {
     char ModName[MAX_LOADSTRING]="";
-    char DiskRomPath[MAX_PATH];
+    // char DiskRomPath[MAX_PATH];
     HANDLE hr;
 
     GetPrivateProfileString("DefaultPaths", "HardDiskPath", "",
@@ -349,12 +349,12 @@ void LoadConfig(void)
     // Create config menu
     BuildDynaMenu();
 
-    // Load rgbdos rom for Hard Disk support
+    /* Load rgbdos rom for Hard Disk support
     GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
     PathRemoveFileSpec(DiskRomPath);
     strcat(DiskRomPath, "rgbdos.rom");
     LoadExtRom(DiskRomPath);
-
+	*/
     return;
 }
 
@@ -404,7 +404,7 @@ void BuildDynaMenu(void)
     DynamicMenuCallback("",1,0);
 }
 
-// Load the disk rom
+/* Load the disk rom
 unsigned char LoadExtRom( char *FilePath)
 {
     FILE *rom_handle=NULL;
@@ -422,4 +422,4 @@ unsigned char LoadExtRom( char *FilePath)
     }
     return(RetVal);
 }
-
+*/
