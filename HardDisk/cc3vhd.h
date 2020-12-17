@@ -26,6 +26,7 @@ int MountHD(char [256], int);
 unsigned char IdeRead(unsigned char);
 void IdeWrite (unsigned char, unsigned char);
 void DiskStatus(char *);
+void VhdReset(void);
 
 #define HEAD 0
 #define SLAVE 1

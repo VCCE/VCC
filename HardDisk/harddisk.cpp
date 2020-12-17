@@ -241,12 +241,22 @@ extern "C"
 // Set ini file path and load HD config settings
 extern "C"
 {
-    __declspec(dllexport)
-    void SetIniPath (char *IniFilePath)
+    __declspec(dllexport) void
+	SetIniPath (char *IniFilePath)
     {
         strcpy(IniFile,IniFilePath);
         LoadConfig();
         return;
+    }
+}
+
+extern "C"
+{
+    __declspec(dllexport) unsigned char
+    ModuleReset(void)
+    {
+        VhdReset();
+        return 0;
     }
 }
 
