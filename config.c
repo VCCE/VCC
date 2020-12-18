@@ -221,6 +221,7 @@ void LoadConfig(SystemState *LCState)
 unsigned char WriteIniFile(void)
 {
 	POINT tp = GetCurWindowSize();
+	CurrentConfig.Resize = 1;
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ExternalBasicImage);
@@ -352,7 +353,7 @@ unsigned char ReadIniFile(void)
 
 	TempConfig=CurrentConfig;
 	InsertModule (CurrentConfig.ModulePath);	// Should this be here?
-	
+	CurrentConfig.Resize = 1; //Checkbox removed. Remove this from the ini? 
 	return(0);
 }
 
@@ -514,12 +515,6 @@ void UpdateConfig (void)
 	SetCpuType(CurrentConfig.CpuType);
 	SetMonitorType(CurrentConfig.MonitorType);
 	SetCartAutoStart(CurrentConfig.CartAutoStart);
-	//EmuState.WindowSize.x = 960;
-	//EmuState.WindowSize.y = 720;
-	//POINT p;
-	//p.x = EmuState.WindowSize.x;
-	//p.y = EmuState.WindowSize.y;
-	//ResizeMainWindow(p);
 
 	if (CurrentConfig.RebootNow)
 		DoReboot();
@@ -806,25 +801,18 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 		break;
 		
 		case WM_COMMAND:
-			TempConfig.Resize = (unsigned char)SendDlgItemMessage(hDlg,IDC_RESIZE,BM_GETCHECK,0,0);
+			TempConfig.Resize = 1; //(unsigned char)SendDlgItemMessage(hDlg,IDC_RESIZE,BM_GETCHECK,0,0);
 			TempConfig.Aspect = (unsigned char)SendDlgItemMessage(hDlg,IDC_ASPECT,BM_GETCHECK,0,0);
 			TempConfig.ScanLines  = (unsigned char)SendDlgItemMessage(hDlg,IDC_SCANLINES,BM_GETCHECK,0,0);
 			TempConfig.SpeedThrottle = (unsigned char)SendDlgItemMessage(hDlg,IDC_THROTTLE,BM_GETCHECK,0,0);
 			TempConfig.RememberSize = (unsigned char)SendDlgItemMessage(hDlg, IDC_REMEMBER_SIZE, BM_GETCHECK, 0, 0);
-			POINT p = { 640,480 };
+			//POINT p = { 640,480 };
 			switch (LOWORD (wParam))
 			{
 				
 			case IDC_REMEMBER_SIZE:
 				TempConfig.Resize = 1;
 				SendDlgItemMessage(hDlg, IDC_RESIZE, BM_GETCHECK, 1, 0);
-				EmuState.WindowSize.x = 640;
-				EmuState.WindowSize.y = 480;
-				
-				ResizeMainWindow(p);
-				//DisplayFlip(&EmuState);
-				OutputDebugString("FLIP!\n");
-				
 				break;
 
 			case IDC_COMPOSITE:
@@ -1279,8 +1267,6 @@ int GetPaletteType() {
 }
 
 int GetRememberSize() {
-	string dbug = "Passed along: \n";
-	OutputDebugString(dbug.c_str());
 	return((int) CurrentConfig.RememberSize);
 	//return(1);
 }
@@ -1292,23 +1278,4 @@ POINT GetIniWindowSize() {
 	out.y = CurrentConfig.WindowSizeY;
 	return(out);
 }
-void ResizeMainWindow(POINT p) {
-	static RECT CurScreenRect;
-	SystemState *ptrEmuState = &EmuState;
-	HWND handle = ::FindWindow(NULL, ("VCC 2.1"));
-	//p.x += 16;
-	//p.y += 81;
-	 
-	//::SetWindowPos(handle, 0, 0, 0, p.x, p.y, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
-	::SetWindowPos(handle, 0, 0, 0, p.x, p.y, SWP_NOMOVE);
-	//::GetClientRect(ptrEmuState->WindowHandle, &CurScreenRect);
-	int clientWidth = (int)CurScreenRect.right;
-	int clientHeight = (int)CurScreenRect.bottom;
-	EmuState.WindowSize.x = p.x;
-	EmuState.WindowSize.y = p.y;
-	//ptrEmuState->WindowSize.x = p.x;
-	//ptrEmuState->WindowSize.y = p.y;
-	
-	
-	OutputDebugString("Resize didn't work.\n");
-}
+

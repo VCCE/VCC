@@ -176,8 +176,8 @@ BEGIN
 	  CONTROL         "Scan Lines",IDC_SCANLINES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,91,74,51,10
 	 
     CONTROL         "Force Aspect",IDC_ASPECT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,91,86,58,10
-    CONTROL         "Allow Resize",IDC_RESIZE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,153,74,56,10
-    CONTROL         "Remember Screen Size", IDC_REMEMBER_SIZE, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 153, 98, 94, 10
+    //CONTROL         "Allow Resize",IDC_RESIZE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,153,74,56,10
+    CONTROL         "Remember Screen Size", IDC_REMEMBER_SIZE, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 153, 74, 94, 10
 	
     GROUPBOX        "[F6] Monitor Type",IDC_STATIC,5,6,103,60,BS_CENTER
     ICON            "",IDC_MONTYPE,84,14,21,20
@@ -186,9 +186,9 @@ BEGIN
     RADIOBUTTON     "Updated Palette",IDC_UPD_PALETTE,19,37,70,11
     RADIOBUTTON     "Original Palette",IDC_ORG_PALETTE,19,46,70,11
     
-    CONTROL         "[F8] Throttle Speed",IDC_THROTTLE,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,140,87,77,10
-    CTEXT           "WARNING: Unchecking the ""Throttle Speed"" can greatly affect many functions of the VCC emulation including keyboard operation. Use with CAUTION! Please use ""Over-Clocking"" instead",IDC_STATIC,137,100,163,39,SS_SUNKEN,WS_EX_STATICEDGE
-END
+    CONTROL         "[F8] Throttle Speed",IDC_THROTTLE,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,153,87,77,10
+    CTEXT           "WARNING: Unchecking the ""Throttle Speed"" can greatly affect many functions of the VCC emulation including keyboard operation. Use with CAUTION! Please use ""Over-Clocking"" instead",IDC_STATIC,91,100,163,39,SS_SUNKEN,WS_EX_STATICEDGE
+END //IDC_STATIC,137,100,163,39,SS_SUNKEN,WS_EX_STATICEDGE
 
 IDD_CPU DIALOGEX 0, 0, 330, 172
 STYLE DS_SETFONT | WS_CHILD
