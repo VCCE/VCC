@@ -85,6 +85,7 @@ static char ExecDirectory[MAX_PATH]="";
 static char SerialCaptureFile[MAX_PATH]="";
 static char TextMode=1,PrtMon=0;;
 static unsigned char NumberofJoysticks=0;
+void ResizeMainWindow(POINT);
 
 TCHAR AppDataPath[MAX_PATH];
 
@@ -200,12 +201,12 @@ void LoadConfig(SystemState *LCState)
 
 unsigned char WriteIniFile(void)
 {
-	
+	POINT tp = GetCurWindowSize();
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ExternalBasicImage);
+	
 	WritePrivateProfileString("Version","Release",AppName,IniFilePath);
-
 	WritePrivateProfileInt("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer,IniFilePath);
 	WritePrivateProfileInt("CPU","FrameSkip",CurrentConfig.FrameSkip,IniFilePath);
 	WritePrivateProfileInt("CPU","Throttle",CurrentConfig.SpeedThrottle,IniFilePath);
@@ -220,6 +221,9 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Video","ScanLines",CurrentConfig.ScanLines,IniFilePath);
 	WritePrivateProfileInt("Video","AllowResize",CurrentConfig.Resize,IniFilePath);
 	WritePrivateProfileInt("Video","ForceAspect",CurrentConfig.Aspect,IniFilePath);
+	WritePrivateProfileInt("Video","RememberSize", CurrentConfig.RememberSize, IniFilePath);
+	WritePrivateProfileInt("Video", "WindowSizeX", tp.x, IniFilePath);
+	WritePrivateProfileInt("Video", "WindowSizeY", tp.y, IniFilePath);
 
 	WritePrivateProfileInt("Memory","RamSize",CurrentConfig.RamSize,IniFilePath);
 	WritePrivateProfileString("Memory", "ExternalBasicImage", CurrentConfig.ExternalBasicImage, IniFilePath);
@@ -273,9 +277,12 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.ScanLines = GetPrivateProfileInt("Video","ScanLines",0,IniFilePath);
 	CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);	
 	CurrentConfig.Aspect = GetPrivateProfileInt("Video","ForceAspect",0,IniFilePath);
-
+	CurrentConfig.RememberSize = GetPrivateProfileInt("Video","RememberSize",0,IniFilePath);
+	CurrentConfig.WindowSizeX= GetPrivateProfileInt("Video", "WindowSizeX", 640, IniFilePath);
+	CurrentConfig.WindowSizeY = GetPrivateProfileInt("Video", "WindowSizeY", 480, IniFilePath);
 	CurrentConfig.AutoStart = GetPrivateProfileInt("Misc","AutoStart",1,IniFilePath);
 	CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc","CartAutoStart",1,IniFilePath);
+
 
 	CurrentConfig.RamSize = GetPrivateProfileInt("Memory","RamSize",1,IniFilePath);
 	GetPrivateProfileString("Memory","ExternalBasicImage","",CurrentConfig.ExternalBasicImage,MAX_PATH,IniFilePath);
@@ -474,6 +481,12 @@ void UpdateConfig (void)
 	SetCpuType(CurrentConfig.CpuType);
 	SetMonitorType(CurrentConfig.MonitorType);
 	SetCartAutoStart(CurrentConfig.CartAutoStart);
+	//EmuState.WindowSize.x = 960;
+	//EmuState.WindowSize.y = 720;
+	//POINT p;
+	//p.x = EmuState.WindowSize.x;
+	//p.y = EmuState.WindowSize.y;
+	//ResizeMainWindow(p);
 
 	if (CurrentConfig.RebootNow)
 		DoReboot();
@@ -681,6 +694,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			SendDlgItemMessage(hDlg,IDC_FRAMESKIP,TBM_SETPOS,TRUE,TempConfig.FrameSkip);
 			SendDlgItemMessage(hDlg,IDC_RESIZE,BM_SETCHECK,TempConfig.Resize,0);
 			SendDlgItemMessage(hDlg,IDC_ASPECT,BM_SETCHECK,TempConfig.Aspect,0);
+			SendDlgItemMessage(hDlg, IDC_REMEMBER_SIZE, BM_SETCHECK, TempConfig.RememberSize, 0);
 			sprintf(OutBuffer,"%i",TempConfig.FrameSkip);
 			SendDlgItemMessage(hDlg,IDC_FRAMEDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 			for (temp=0;temp<=1;temp++)
@@ -710,9 +724,24 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			TempConfig.Aspect = (unsigned char)SendDlgItemMessage(hDlg,IDC_ASPECT,BM_GETCHECK,0,0);
 			TempConfig.ScanLines  = (unsigned char)SendDlgItemMessage(hDlg,IDC_SCANLINES,BM_GETCHECK,0,0);
 			TempConfig.SpeedThrottle = (unsigned char)SendDlgItemMessage(hDlg,IDC_THROTTLE,BM_GETCHECK,0,0);
+			TempConfig.RememberSize = (unsigned char)SendDlgItemMessage(hDlg, IDC_REMEMBER_SIZE, BM_GETCHECK, 0, 0);
+			POINT p = { 640,480 };
 			switch (LOWORD (wParam))
 			{
-				case IDC_COMPOSITE:
+				
+			case IDC_REMEMBER_SIZE:
+				TempConfig.Resize = 1;
+				SendDlgItemMessage(hDlg, IDC_RESIZE, BM_GETCHECK, 1, 0);
+				EmuState.WindowSize.x = 640;
+				EmuState.WindowSize.y = 480;
+				
+				ResizeMainWindow(p);
+				//DisplayFlip(&EmuState);
+				OutputDebugString("FLIP!\n");
+				
+				break;
+
+			case IDC_COMPOSITE:
 					isRGB = FALSE;
 					for (temp = 0; temp <= 1; temp++) //This finds the current Monitor choice, then sets both buttons in the nested loop.
 					if (LOWORD(wParam) == Monchoice[temp])
@@ -745,7 +774,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 					break;
 				case IDC_ORG_PALETTE: 
 					if (!isRGB) {
-						OutputDebugString("Original Palette!\n");
+						//Original Composite palette
 						SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 1, 0);
 						SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 0, 0);
 						TempConfig.PaletteType = 0;
@@ -754,7 +783,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 					break;
 				case IDC_UPD_PALETTE:
 					if (!isRGB) {
-						OutputDebugString("New Palette!\n");
+						//New Composite palette
 						SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 1, 0);
 						SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 0, 0);
 						TempConfig.PaletteType = 1;
@@ -1163,3 +1192,37 @@ int GetPaletteType() {
 	return(CurrentConfig.PaletteType);
 }
 
+int GetRememberSize() {
+	string dbug = "Passed along: \n";
+	OutputDebugString(dbug.c_str());
+	return((int) CurrentConfig.RememberSize);
+	//return(1);
+}
+
+POINT GetIniWindowSize() {
+	POINT out;
+	
+	out.x = CurrentConfig.WindowSizeX;
+	out.y = CurrentConfig.WindowSizeY;
+	return(out);
+}
+void ResizeMainWindow(POINT p) {
+	static RECT CurScreenRect;
+	SystemState *ptrEmuState = &EmuState;
+	HWND handle = ::FindWindow(NULL, ("VCC 2.1"));
+	//p.x += 16;
+	//p.y += 81;
+	 
+	//::SetWindowPos(handle, 0, 0, 0, p.x, p.y, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+	::SetWindowPos(handle, 0, 0, 0, p.x, p.y, SWP_NOMOVE);
+	//::GetClientRect(ptrEmuState->WindowHandle, &CurScreenRect);
+	int clientWidth = (int)CurScreenRect.right;
+	int clientHeight = (int)CurScreenRect.bottom;
+	EmuState.WindowSize.x = p.x;
+	EmuState.WindowSize.y = p.y;
+	//ptrEmuState->WindowSize.x = p.x;
+	//ptrEmuState->WindowSize.y = p.y;
+	
+	
+	OutputDebugString("Resize didn't work.\n");
+}

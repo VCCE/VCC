@@ -30,6 +30,8 @@ void UpdateTapeCounter(unsigned int,unsigned char);
 int GetKeyboardLayout();
 
 int GetPaletteType();
+POINT GetIniWindowSize();
+int GetRememberSize();
 void SetConfigPath(int, string);
 
 LRESULT CALLBACK	Config			(HWND, UINT, WPARAM, LPARAM);
@@ -46,6 +48,9 @@ typedef struct  {
 	unsigned char	ScanLines;
 	unsigned char	Resize;
 	unsigned char	Aspect;
+	unsigned short	RememberSize;
+	unsigned short	WindowSizeX;
+	unsigned short	WindowSizeY;
 	unsigned char	RamSize;
 	unsigned char	AutoStart;
 	unsigned char	CartAutoStart;

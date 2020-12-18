@@ -133,7 +133,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	}
 	EmuState.WindowSize.x=640;
 	EmuState.WindowSize.y=480;
-	InitInstance (hInstance, nCmdShow);
+	LoadConfig(&EmuState);
+	InitInstance(hInstance, nCmdShow);
 	if (!CreateDDWindow(&EmuState))
 	{
 		MessageBox(0,"Can't create primary Window","Error",0);
@@ -143,7 +144,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	Cls(0,&EmuState);
 	DynamicMenuCallback( "",0, 0);
 	DynamicMenuCallback( "",1, 0);
-
 	LoadConfig(&EmuState);			//Loads the default config file Vcc.ini from the exec directory
 	EmuState.ResetPending=2;
 	SetClockSpeed(1);	//Default clock speed .89 MHZ	
@@ -154,7 +154,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		Qflag=255;
 		EmuState.EmulationRunning=1;
 	}
-
 	hEvent = CreateEvent( NULL, FALSE, FALSE, NULL ) ;
 	if (hEvent==NULL)
 	{
@@ -167,7 +166,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		MessageBox(0,"Can't Start main Emulation Thread!","Ok",0);
 		return(0);
 	}
-	
 	WaitForSingleObject( hEvent, INFINITE );
 	SetThreadPriority(hEMUThread,THREAD_PRIORITY_NORMAL);
 
