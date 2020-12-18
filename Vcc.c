@@ -59,8 +59,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "throttle.h"
 #include "DirectDrawInterface.h"
 
-#include "CommandLine.h" //EJJ
-//#include "logger.h"
+#include "CommandLine.h"
+#include "logger.h"
 
 static HANDLE hout=NULL;
 
@@ -90,6 +90,8 @@ void (*CPUAssertInterupt)(unsigned char,unsigned char)=NULL;
 void (*CPUDeAssertInterupt)(unsigned char)=NULL;
 void (*CPUForcePC)(unsigned short)=NULL;
 void FullScreenToggle(void);
+void save_key_down(unsigned char kb_char, unsigned char OEMscan);
+void raise_saved_keys(void);
 
 // Message handlers
 //void OnDestroy(HWND hwnd);
@@ -124,13 +126,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
-	GetCmdLineArgs(lpCmdLine);                   //EJJ parse command line
-//	PrintLogC("VCC Startup\n");
+	GetCmdLineArgs(lpCmdLine);                   //Parse command line
 
-	if ( strlen(CmdArg.QLoadFile) !=0)           //EJJ was lpCmdLine
+	if ( strlen(CmdArg.QLoadFile) !=0)
 	{
-		strcpy(QuickLoadFile, CmdArg.QLoadFile); //EJJ was lpCmdLine
-		strcpy(temp1, CmdArg.QLoadFile);         //EJJ was lpCmdLine
+		strcpy(QuickLoadFile, CmdArg.QLoadFile);
+		strcpy(temp1, CmdArg.QLoadFile);
 		PathStripPath(temp1);
 		_strlwr(temp1);
 		temp1[0]=toupper(temp1[0]);
@@ -138,7 +139,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		strcat(temp1,g_szAppName);
 		strcpy(g_szAppName,temp1);
 	}
-//	PrintLogC("QLoadfile: %s\n",QuickLoadFile);
 
 	EmuState.WindowSize.x=640;
 	EmuState.WindowSize.y=480;
@@ -203,7 +203,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	return Msg.wParam;
 }
 
-
 /*--------------------------------------------------------------------------*/
 // The Window Procedure
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -220,7 +219,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	switch (message)
 	{
+
+		case WM_SYSCOMMAND:
+			//-------------------------------------------------------------
+			// Control ATL key menu access.
+			// Here left ALT is hardcoded off and right ALT on
+			// TODO: Add config check boxes to control them
+			//-------------------------------------------------------------
+			if(wParam==SC_KEYMENU) {
+				if (GetKeyState(VK_LMENU) & 0x8000) return 0; // Left off
+			//	if (GetKeyState(VK_RMENU) & 0x8000) return 0; // Right off
+			}
+			// falls through to WM_COMMAND
+
 		case WM_COMMAND:
+			// Force all keys up to prevent key repeats
+			raise_saved_keys();
 			wmId    = LOWORD(wParam); 
 			wmEvent = HIWORD(wParam); 
 			// Parse the menu selections:
@@ -318,7 +332,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					FlipArtifacts();
 					break;
 
-        default:
+				default:
 				   return DefWindowProc(hWnd, message, wParam, lParam);
 			}
 			break;
@@ -329,6 +343,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 //		case WM_SETFOCUS:
 //			Set8BitPalette();
 //			break;
+
+		case WM_KILLFOCUS:
+			// Force keys up if main widow keyboard focus is lost.  Otherwise
+			// down keys will cause issues with OS-9 on return
+			raise_saved_keys();
+			break;
 
 		case WM_CLOSE:
 			BinaryRunning=0;
@@ -343,44 +363,47 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return 0;
 			break;
 
+		case WM_SYSCHAR:
+			DefWindowProc(hWnd, message, wParam, lParam);
+			return 0;
+			break;
+
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
-			/*
-				lParam
-
-				Bits	Meaning
-				0-15	The repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. The repeat count is always 1 for a WM_KEYUP message.
-				16-23	The scan code. The value depends on the OEM.
-				24	Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-				25-28	Reserved; do not use.
-				29	The context code. The value is always 0 for a WM_KEYUP message.
-				30	The previous key state. The value is always 1 for a WM_KEYUP message.
-				31	The transition state. The value is always 1 for a WM_KEYUP message.
-			*/
-			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16);
 
 			// send emulator key up event to the emulator
 			// TODO: Key up checks whether the emulation is running, this does not
 
-			vccKeyboardHandleKey(kb_char,OEMscan, kEventKeyUp);
+			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16);
+			vccKeyboardHandleKey(kb_char,OEMscan,kEventKeyUp);
 			
 			return 0;
-		break;
+			break;
 
-		case WM_KEYDOWN: 
+//----------------------------------------------------------------------------------------
+//	lParam bits
+//	  0-15	The repeat count for the current message. The value is the number of times
+//			the keystroke is autorepeated as a result of the user holding down the key.
+//			If the keystroke is held long enough, multiple messages are sent. However,
+//			the repeat count is not cumulative.
+//	 16-23	The scan code. The value depends on the OEM.
+//	    24	Indicates whether the key is an extended key, such as the right-hand ALT and
+//			CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is
+//			one if it is an extended key; otherwise, it is zero.
+//	 25-28	Reserved; do not use.
+//	    29	The context code. The value is always zero for a WM_KEYDOWN message.
+//	    30	The previous key state. The value is one if the key is down before the
+//	   		message is sent, or it is zero if the key is up.
+//	    31	The transition state. The value is always zero for a WM_KEYDOWN message.
+//----------------------------------------------------------------------------------------
+
 		case WM_SYSKEYDOWN:
-			/*
-				lParam
 
-				Bits	Meaning
-				0-15	The repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.
-				16-23	The scan code. The value depends on the OEM.
-				24	Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-				25-28	Reserved; do not use.
-				29	The context code. The value is always 0 for a WM_KEYDOWN message.
-				30	The previous key state. The value is 1 if the key is down before the message is sent, or it is zero if the key is up.
-				31	The transition state. The value is always 0 for a WM_KEYDOWN message.
-			*/
+			// Ignore repeated system keys
+			if (lParam>>30) return 0;
+
+		case WM_KEYDOWN:
+
 			// get key scan code for emulator control keys
 			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16); // just get the scan code
 
@@ -389,11 +412,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			switch ( OEMscan )
 			{
 				case DIK_F3:
-
+					DecreaseOverclockSpeed();
 				break;
 
 				case DIK_F4:
-
+					IncreaseOverclockSpeed();
 				break;
 
 				case DIK_F5:
@@ -442,11 +465,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 //				break;
 
 				default:
-					// send other keystroke to the emulator if it is active
+					// send other keystrokes to the emulator if it is active
 					if ( EmuState.EmulationRunning )
 					{
-						// send Key down event to the emulator
 						vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyDown);
+						// Save key down in case focus is lost
+						save_key_down(kb_char,OEMscan);
 					}
 					break;
 			}
@@ -486,6 +510,46 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
    }
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
+
+//--------------------------------------------------------------------------
+// When the main window is about to lose keyboard focus there are one
+// or two keys down in the emulation that must be raised.  These routines
+// track the last two key down events so they can be raised when needed.
+//--------------------------------------------------------------------------
+
+static unsigned char SC_save1 = 0;
+static unsigned char SC_save2 = 0;
+static unsigned char KB_save1 = 0;
+static unsigned char KB_save2 = 0;
+static int KeySaveToggle=0;
+
+// Save last two key down events
+void save_key_down(unsigned char kb_char, unsigned char OEMscan) {
+
+	// Ignore zero scan code
+	if (OEMscan == 0) return;
+
+	// Remember it
+	KeySaveToggle = !KeySaveToggle;
+	if (KeySaveToggle) {
+		KB_save1 = kb_char;
+		SC_save1 = OEMscan;
+	} else {
+		KB_save2 = kb_char;
+		SC_save2 = OEMscan;
+	}
+	return;
+}
+
+// Send key up events to keyboard handler for saved keys
+void raise_saved_keys() {
+	if (SC_save1) vccKeyboardHandleKey(KB_save1,SC_save1,kEventKeyUp);
+	if (SC_save2) vccKeyboardHandleKey(KB_save2,SC_save2,kEventKeyUp);
+	SC_save1 = 0;
+	SC_save2 = 0;
+	return;
+}
+
 /*--------------------------------------------------------------------------
 // Command message handler
 void OnCommand(HWND hWnd, int iID, HWND hwndCtl, UINT uNotifyCode)
@@ -739,10 +803,10 @@ void SaveConfig(void) {
     if ( GetOpenFileName (&ofn) ) {
         if (ofn.nFileExtension == 0) strcat(newini, ".ini");  //Add extension if none
         WriteIniFile();                                       // Flush current config
-        if (strcmp(curini,newini) != 0) {
+        if (_stricmp(curini,newini) != 0) {
             if (! CopyFile(curini,newini,false) ) {           // Copy it to new file
-                MessageBox(0,"Config save failed","error",0);
-            }
+                MessageBox(0,"Copy config failed","error",0);
+			}
         }
     }
     return;

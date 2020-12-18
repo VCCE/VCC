@@ -9922,7 +9922,9 @@ void MakeCMPpalette(void)
 unsigned char SetMonitorType(unsigned char Type)
 {
 	unsigned char PalNum=0;
+	int tmp = CC3BoarderColor;
 	SetGimeBoarderColor(0);
+	
 	if (Type != QUERY)
 	{
 		MonType=Type & 1;
@@ -9934,14 +9936,15 @@ unsigned char SetMonitorType(unsigned char Type)
 		}
 //		CurrentConfig.MonitorType=MonType;
 	}
-	SetGimeBoarderColor(18);
+	SetGimeBoarderColor(tmp);
 	return(MonType);
 }
 void SetPaletteType() {
 	 
+	int tmp = CC3BoarderColor;
 	SetGimeBoarderColor(0);
 	MakeCMPpalette();
-	SetGimeBoarderColor(18);
+	SetGimeBoarderColor(tmp);
 }
 
 unsigned char SetScanLines(unsigned char Lines)

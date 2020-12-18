@@ -1,3 +1,4 @@
+
 #ifndef __CC3VHD_H__
 #define __CC3VHD_H__
 /*
@@ -14,31 +15,36 @@ This file is part of VCC (Virtual Color Computer).
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
-void UnmountHD(void);
-int MountHD(char [256]);
+
+// cc3vhd.h
+
+void UnmountHD(int);
+int MountHD(char [256], int);
 unsigned char IdeRead(unsigned char);
 void IdeWrite (unsigned char, unsigned char);
 void DiskStatus(char *);
-#define	HEAD 0
+void VhdReset(void);
+
+#define HEAD 0
 #define SLAVE 1
 #define STANDALONE 2
 
-
-#define DRIVESIZE 130	//in Mb
+//#define DRIVESIZE 130
+#define DRIVESIZE 512 // Mb
 #define MAX_SECTOR DRIVESIZE*1024*1024
 #define SECTORSIZE 256
 
-#define HD_OK		0
-#define HD_PWRUP	-1
-#define HD_INVLD	-2
-#define HD_NODSK	4
-#define HD_WP		5
+#define HD_OK        0
+#define HD_PWRUP    -1
+#define HD_INVLD    -2
+#define HD_NODSK     4
+#define HD_WP        5
 
-#define SECTOR_READ		0
-#define SECTOR_WRITE	1
-#define DISK_FLUSH		2
+#define SECTOR_READ     0
+#define SECTOR_WRITE    1
+#define DISK_FLUSH      2
 
 #endif

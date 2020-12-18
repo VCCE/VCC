@@ -64,5 +64,9 @@ typedef struct  {
 	char			CassPath[MAX_PATH];
 	char            COCO3ROMPath[MAX_PATH];
 } STRConfig;
+
+void DecreaseOverclockSpeed();
+void IncreaseOverclockSpeed();
+
 #endif
 
