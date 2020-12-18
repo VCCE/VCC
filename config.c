@@ -42,7 +42,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "fileops.h"
 #include "Cassette.h"
 #include "shlobj.h"
-
+#include "CommandLine.h"
 //#include "logger.h"
 #include <assert.h>
 using namespace std;
@@ -131,6 +131,10 @@ char * getKeyName(int x)
 unsigned char _TranslateDisp2Scan[SCAN_TRANS_COUNT];
 unsigned char _TranslateScan2Disp[SCAN_TRANS_COUNT] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,32,38,20,33,35,40,36,24,30,31,42,43,55,52,16,34,19,21,22,23,25,26,27,45,46,0,51,44,41,39,18,37,17,29,28,47,48,49,51,0,53,54,50,66,67,0,0,0,0,0,0,0,0,0,0,58,64,60,0,62,0,63,0,59,65,61,56,57 };
 
+
+#define TABS 8
+static HWND g_hWndConfig[TABS]; // Moved this outside the initialization function so that other functions could access the window handles when necessary.
+
 unsigned char TranslateDisp2Scan(int x)
 {
 	assert(x >= 0 && x < SCAN_TRANS_COUNT);
@@ -170,6 +174,7 @@ void buildTransDisp2ScanTable()
 void LoadConfig(SystemState *LCState)
 {
 	HANDLE hr=NULL;
+	int lasterror;
 
 	buildTransDisp2ScanTable();
 
@@ -179,12 +184,18 @@ void LoadConfig(SystemState *LCState)
 	if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, AppDataPath))) 
 		OutputDebugString(AppDataPath);
 	strcpy(CurrentConfig.PathtoExe,ExecDirectory);
+
 	strcat(AppDataPath, "\\VCC");
 	if (_mkdir(AppDataPath) != 0) { OutputDebugString("Unable to create VCC config folder."); }
-	strcpy(IniFilePath, AppDataPath);
-	strcat(IniFilePath,"\\");
-	strcat(IniFilePath,IniFileName);
 	
+	if (*CmdArg.IniFile) {
+		GetFullPathNameA(CmdArg.IniFile,MAX_PATH,IniFilePath,0);
+	} else {
+		strcpy(IniFilePath, AppDataPath);
+		strcat(IniFilePath, "\\");
+		strcat(IniFilePath, IniFileName);
+	}
+
 	LCState->ScanLines=0;
 	NumberOfSoundCards=GetSoundCardList(SoundCards);
 	ReadIniFile();
@@ -192,11 +203,19 @@ void LoadConfig(SystemState *LCState)
 	UpdateConfig();
 	RefreshJoystickStatus();
 	SoundInit(EmuState.WindowHandle,SoundCards[CurrentConfig.SndOutDev].Guid,CurrentConfig.AudioRate);
-	hr=CreateFile(IniFilePath,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-	if (hr==INVALID_HANDLE_VALUE) //No Ini File go create it
-		WriteIniFile();
-	else
+
+//  Try to open the config file.  Create it if necessary.  Abort if failure.
+	hr = CreateFile(IniFilePath,
+					GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ,
+					NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	lasterror = GetLastError();
+	if (hr==INVALID_HANDLE_VALUE) { // Fatal could not open ini file
+	    MessageBox(0,"Could not open ini file","Error",0);
+		exit(0);
+	} else {
 		CloseHandle(hr);
+		if (lasterror != ERROR_ALREADY_EXISTS) WriteIniFile();  //!=183
+	}
 }
 
 unsigned char WriteIniFile(void)
@@ -252,7 +271,9 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("RightJoyStick","Fire2",Right.Fire2,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick","DiDevice",Right.DiDevice,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick", "HiResDevice", Right.HiRes, IniFilePath);
-		
+
+//  Flush inifile
+	WritePrivateProfileString(NULL,NULL,NULL,IniFilePath);
 	return(0);
 }
 
@@ -260,14 +281,14 @@ unsigned char ReadIniFile(void)
 {
 	HANDLE hr=NULL;
 	unsigned char Index=0;
-	LPTSTR tmp;
+//	LPTSTR tmp;
 
 	//Loads the config structure from the hard disk
 	CurrentConfig.CPUMultiplyer = GetPrivateProfileInt("CPU","DoubleSpeedClock",2,IniFilePath);
 	CurrentConfig.FrameSkip = GetPrivateProfileInt("CPU","FrameSkip",1,IniFilePath);
 	CurrentConfig.SpeedThrottle = GetPrivateProfileInt("CPU","Throttle",1,IniFilePath);
 	CurrentConfig.CpuType = GetPrivateProfileInt("CPU","CpuType",0,IniFilePath);
-	CurrentConfig.MaxOverclock = GetPrivateProfileInt("CPU", "MaxOverClock",100, IniFilePath);
+	CurrentConfig.MaxOverclock = GetPrivateProfileInt("CPU", "MaxOverClock",227, IniFilePath);
 
 	CurrentConfig.AudioRate = GetPrivateProfileInt("Audio","Rate",3,IniFilePath);
 	GetPrivateProfileString("Audio","SndCard","",CurrentConfig.SoundCardName,63,IniFilePath);
@@ -275,6 +296,7 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.MonitorType = GetPrivateProfileInt("Video","MonitorType",1,IniFilePath);
 	CurrentConfig.PaletteType = GetPrivateProfileInt("Video", "PaletteType",1,IniFilePath);
 	CurrentConfig.ScanLines = GetPrivateProfileInt("Video","ScanLines",0,IniFilePath);
+
 	CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);	
 	CurrentConfig.Aspect = GetPrivateProfileInt("Video","ForceAspect",0,IniFilePath);
 	CurrentConfig.RememberSize = GetPrivateProfileInt("Video","RememberSize",0,IniFilePath);
@@ -339,14 +361,11 @@ char * BasicRomName(void)
 	return(CurrentConfig.ExternalBasicImage); 
 }
 
-
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	#define TABS 8
 	static char TabTitles[TABS][10]={"Audio","CPU","Display","Keyboard","Joysticks","Misc","Tape","BitBanger"};
 	static unsigned char TabCount=0,SelectedTab=0;
 	static HWND hWndTabDialog;
-	static HWND g_hWndConfig[TABS];
 	TCITEM Tabs;
 	switch (message)
 	{
@@ -467,6 +486,20 @@ void GetIniFilePath( char *Path)
 	return;
 }
 
+//<EJJ>
+void SetIniFilePath( char *Path)
+{
+    //  Path must be to an existing ini file
+    strcpy(IniFilePath,Path);
+}
+
+char * AppDirectory() 
+{
+    // This only works after LoadConfig has been called
+	return AppDataPath;
+}
+//<EJJ/>
+
 void UpdateConfig (void)
 {
 	SetPaletteType();
@@ -491,6 +524,59 @@ void UpdateConfig (void)
 	if (CurrentConfig.RebootNow)
 		DoReboot();
 	CurrentConfig.RebootNow=0;
+}
+
+/**
+ * Increase the overclock speed, as seen after a POKE 65497,0.
+ * Valid values are [2,100].
+ */
+void IncreaseOverclockSpeed()
+{
+	if (TempConfig.CPUMultiplyer >= CurrentConfig.MaxOverclock)
+	{
+		return;
+	}
+
+	TempConfig.CPUMultiplyer = (unsigned char)(TempConfig.CPUMultiplyer + 1);
+
+	// Send updates to the dialog if it's open.
+	if (EmuState.ConfigDialog != NULL)
+	{
+		HWND hDlg = g_hWndConfig[1];
+		SendDlgItemMessage(hDlg, IDC_CLOCKSPEED, TBM_SETPOS, TRUE, TempConfig.CPUMultiplyer);
+		sprintf(OutBuffer, "%2.3f Mhz", (float)TempConfig.CPUMultiplyer * 0.894);
+		SendDlgItemMessage(hDlg, IDC_CLOCKDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
+	}
+
+	CurrentConfig = TempConfig;
+	EmuState.ResetPending = 4; // Without this, changing the config does nothing.
+}
+
+/**
+ * Decrease the overclock speed, as seen after a POKE 65497,0.
+ *
+ * Setting this value to 0 will make the emulator pause.  Hence the minimum of 2.
+ */
+void DecreaseOverclockSpeed()
+{
+	if (TempConfig.CPUMultiplyer == 2)
+	{
+		return;
+	}
+
+	TempConfig.CPUMultiplyer = (unsigned char)(TempConfig.CPUMultiplyer - 1);
+
+	// Send updates to the dialog if it's open.
+	if (EmuState.ConfigDialog != NULL)
+	{
+		HWND hDlg = g_hWndConfig[1];
+		SendDlgItemMessage(hDlg, IDC_CLOCKSPEED, TBM_SETPOS, TRUE, TempConfig.CPUMultiplyer);
+		sprintf(OutBuffer, "%2.3f Mhz", (float)TempConfig.CPUMultiplyer * 0.894);
+		SendDlgItemMessage(hDlg, IDC_CLOCKDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
+	}
+
+	CurrentConfig = TempConfig;
+	EmuState.ResetPending = 4;
 }
 
 LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)

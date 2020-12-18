@@ -58,7 +58,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "quickload.h"
 #include "throttle.h"
 #include "DirectDrawInterface.h"
-//#include "logger.h"
+
+#include "CommandLine.h"
+#include "logger.h"
 
 static HANDLE hout=NULL;
 
@@ -70,6 +72,7 @@ static unsigned char Qflag=0;
 static char CpuName[20]="CPUNAME";
 
 char QuickLoadFile[256];
+
 /***Forward declarations of functions included in this code module*****/
 BOOL				InitInstance	(HINSTANCE, int);
 LRESULT CALLBACK	About			(HWND, UINT, WPARAM, LPARAM);
@@ -77,6 +80,7 @@ LRESULT CALLBACK WndProc( HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam 
 
 void SoftReset(void);
 void LoadIniFile(void);
+void SaveConfig(void);
 unsigned __stdcall EmuLoop(void *);
 unsigned __stdcall CartLoad(void *);
 void (*CPUInit)(void)=NULL;
@@ -86,6 +90,8 @@ void (*CPUAssertInterupt)(unsigned char,unsigned char)=NULL;
 void (*CPUDeAssertInterupt)(unsigned char)=NULL;
 void (*CPUForcePC)(unsigned short)=NULL;
 void FullScreenToggle(void);
+void save_key_down(unsigned char kb_char, unsigned char OEMscan);
+void raise_saved_keys(void);
 
 // Message handlers
 //void OnDestroy(HWND hwnd);
@@ -120,10 +126,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
-	if ( strlen(lpCmdLine) !=0)
+	GetCmdLineArgs(lpCmdLine);                   //Parse command line
+
+	if ( strlen(CmdArg.QLoadFile) !=0)
 	{
-		strcpy(QuickLoadFile,lpCmdLine);
-		strcpy(temp1,lpCmdLine);
+		strcpy(QuickLoadFile, CmdArg.QLoadFile);
+		strcpy(temp1, CmdArg.QLoadFile);
 		PathStripPath(temp1);
 		_strlwr(temp1);
 		temp1[0]=toupper(temp1[0]);
@@ -131,6 +139,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		strcat(temp1,g_szAppName);
 		strcpy(g_szAppName,temp1);
 	}
+
 	EmuState.WindowSize.x=640;
 	EmuState.WindowSize.y=480;
 	LoadConfig(&EmuState);
@@ -140,7 +149,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		MessageBox(0,"Can't create primary Window","Error",0);
 		exit(0);
 	}
-	
+
 	Cls(0,&EmuState);
 	DynamicMenuCallback( "",0, 0);
 	DynamicMenuCallback( "",1, 0);
@@ -149,7 +158,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	SetClockSpeed(1);	//Default clock speed .89 MHZ	
 	BinaryRunning = true;
 	EmuState.EmulationRunning=AutoStart;
-	if (strlen(lpCmdLine)!=0)
+	if (strlen(CmdArg.QLoadFile)!=0)
 	{
 		Qflag=255;
 		EmuState.EmulationRunning=1;
@@ -192,7 +201,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	return Msg.wParam;
 }
 
-
 /*--------------------------------------------------------------------------*/
 // The Window Procedure
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -209,7 +217,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	switch (message)
 	{
+
+		case WM_SYSCOMMAND:
+			//-------------------------------------------------------------
+			// Control ATL key menu access.
+			// Here left ALT is hardcoded off and right ALT on
+			// TODO: Add config check boxes to control them
+			//-------------------------------------------------------------
+			if(wParam==SC_KEYMENU) {
+				if (GetKeyState(VK_LMENU) & 0x8000) return 0; // Left off
+			//	if (GetKeyState(VK_RMENU) & 0x8000) return 0; // Right off
+			}
+			// falls through to WM_COMMAND
+
 		case WM_COMMAND:
+			// Force all keys up to prevent key repeats
+			raise_saved_keys();
 			wmId    = LOWORD(wParam); 
 			wmEvent = HIWORD(wParam); 
 			// Parse the menu selections:
@@ -281,9 +304,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case ID_FILE_LOAD:
 					LoadIniFile();
-					EmuState.ResetPending=2;
-					SetClockSpeed(1); //Default clock speed .89 MHZ	
 					break;
+
+                case ID_SAVE_CONFIG:
+                    SaveConfig();
+                    break;
 
 				case ID_COPY_TEXT:
 					CopyText();
@@ -305,7 +330,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					FlipArtifacts();
 					break;
 
-        default:
+				default:
 				   return DefWindowProc(hWnd, message, wParam, lParam);
 			}
 			break;
@@ -316,6 +341,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 //		case WM_SETFOCUS:
 //			Set8BitPalette();
 //			break;
+
+		case WM_KILLFOCUS:
+			// Force keys up if main widow keyboard focus is lost.  Otherwise
+			// down keys will cause issues with OS-9 on return
+			raise_saved_keys();
+			break;
 
 		case WM_CLOSE:
 			BinaryRunning=0;
@@ -330,44 +361,47 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return 0;
 			break;
 
+		case WM_SYSCHAR:
+			DefWindowProc(hWnd, message, wParam, lParam);
+			return 0;
+			break;
+
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
-			/*
-				lParam
-
-				Bits	Meaning
-				0-15	The repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. The repeat count is always 1 for a WM_KEYUP message.
-				16-23	The scan code. The value depends on the OEM.
-				24	Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-				25-28	Reserved; do not use.
-				29	The context code. The value is always 0 for a WM_KEYUP message.
-				30	The previous key state. The value is always 1 for a WM_KEYUP message.
-				31	The transition state. The value is always 1 for a WM_KEYUP message.
-			*/
-			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16);
 
 			// send emulator key up event to the emulator
 			// TODO: Key up checks whether the emulation is running, this does not
 
-			vccKeyboardHandleKey(kb_char,OEMscan, kEventKeyUp);
+			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16);
+			vccKeyboardHandleKey(kb_char,OEMscan,kEventKeyUp);
 			
 			return 0;
-		break;
+			break;
 
-		case WM_KEYDOWN: 
+//----------------------------------------------------------------------------------------
+//	lParam bits
+//	  0-15	The repeat count for the current message. The value is the number of times
+//			the keystroke is autorepeated as a result of the user holding down the key.
+//			If the keystroke is held long enough, multiple messages are sent. However,
+//			the repeat count is not cumulative.
+//	 16-23	The scan code. The value depends on the OEM.
+//	    24	Indicates whether the key is an extended key, such as the right-hand ALT and
+//			CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is
+//			one if it is an extended key; otherwise, it is zero.
+//	 25-28	Reserved; do not use.
+//	    29	The context code. The value is always zero for a WM_KEYDOWN message.
+//	    30	The previous key state. The value is one if the key is down before the
+//	   		message is sent, or it is zero if the key is up.
+//	    31	The transition state. The value is always zero for a WM_KEYDOWN message.
+//----------------------------------------------------------------------------------------
+
 		case WM_SYSKEYDOWN:
-			/*
-				lParam
 
-				Bits	Meaning
-				0-15	The repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.
-				16-23	The scan code. The value depends on the OEM.
-				24	Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-				25-28	Reserved; do not use.
-				29	The context code. The value is always 0 for a WM_KEYDOWN message.
-				30	The previous key state. The value is 1 if the key is down before the message is sent, or it is zero if the key is up.
-				31	The transition state. The value is always 0 for a WM_KEYDOWN message.
-			*/
+			// Ignore repeated system keys
+			if (lParam>>30) return 0;
+
+		case WM_KEYDOWN:
+
 			// get key scan code for emulator control keys
 			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16); // just get the scan code
 
@@ -376,11 +410,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			switch ( OEMscan )
 			{
 				case DIK_F3:
-
+					DecreaseOverclockSpeed();
 				break;
 
 				case DIK_F4:
-
+					IncreaseOverclockSpeed();
 				break;
 
 				case DIK_F5:
@@ -429,11 +463,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 //				break;
 
 				default:
-					// send other keystroke to the emulator if it is active
+					// send other keystrokes to the emulator if it is active
 					if ( EmuState.EmulationRunning )
 					{
-						// send Key down event to the emulator
 						vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyDown);
+						// Save key down in case focus is lost
+						save_key_down(kb_char,OEMscan);
 					}
 					break;
 			}
@@ -473,6 +508,46 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
    }
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
+
+//--------------------------------------------------------------------------
+// When the main window is about to lose keyboard focus there are one
+// or two keys down in the emulation that must be raised.  These routines
+// track the last two key down events so they can be raised when needed.
+//--------------------------------------------------------------------------
+
+static unsigned char SC_save1 = 0;
+static unsigned char SC_save2 = 0;
+static unsigned char KB_save1 = 0;
+static unsigned char KB_save2 = 0;
+static int KeySaveToggle=0;
+
+// Save last two key down events
+void save_key_down(unsigned char kb_char, unsigned char OEMscan) {
+
+	// Ignore zero scan code
+	if (OEMscan == 0) return;
+
+	// Remember it
+	KeySaveToggle = !KeySaveToggle;
+	if (KeySaveToggle) {
+		KB_save1 = kb_char;
+		SC_save1 = OEMscan;
+	} else {
+		KB_save2 = kb_char;
+		SC_save2 = OEMscan;
+	}
+	return;
+}
+
+// Send key up events to keyboard handler for saved keys
+void raise_saved_keys() {
+	if (SC_save1) vccKeyboardHandleKey(KB_save1,SC_save1,kEventKeyUp);
+	if (SC_save2) vccKeyboardHandleKey(KB_save2,SC_save2,kEventKeyUp);
+	SC_save1 = 0;
+	SC_save2 = 0;
+	return;
+}
+
 /*--------------------------------------------------------------------------
 // Command message handler
 void OnCommand(HWND hWnd, int iID, HWND hwndCtl, UINT uNotifyCode)
@@ -667,27 +742,73 @@ unsigned char SetAutoStart(unsigned char Tmp)
 	return(AutoStart);
 }
 
+// LoadIniFile allows user to browse for an ini file and reloads the config from it.
 void LoadIniFile(void)
 {
-	OPENFILENAME ofn ;	
-	char szFileName[MAX_PATH]="";
-	memset(&ofn,0,sizeof(ofn));
-	ofn.lStructSize       = sizeof (OPENFILENAME) ;
-	ofn.hwndOwner         = EmuState.WindowHandle;
-	ofn.lpstrFilter       =	"INI\0*.ini\0\0" ;			// filter string
-	ofn.nFilterIndex      = 1 ;							// current filter index
-	ofn.lpstrFile         = szFileName ;				// contains full path and filename on return
-	ofn.nMaxFile          = MAX_PATH;					// sizeof lpstrFile
-	ofn.lpstrFileTitle    = NULL;						// filename and extension only
-	ofn.nMaxFileTitle     = MAX_PATH ;					// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = NULL ;						// initial directory
-	ofn.lpstrTitle        = TEXT("Vcc Config File") ;	// title bar string
-	ofn.Flags             = OFN_HIDEREADONLY ;
-//	if ( GetOpenFileName (&ofn) )
-//		LoadConfig(szFileName);
-	return;
+    OPENFILENAME ofn ;	
+    char szFileName[MAX_PATH]="";
+
+    GetIniFilePath(szFileName); // EJJ load current ini file path
+
+    memset(&ofn,0,sizeof(ofn));
+    ofn.lStructSize       = sizeof (OPENFILENAME);
+    ofn.hwndOwner         = EmuState.WindowHandle;
+    ofn.lpstrFilter       = "INI\0*.ini\0\0";
+    ofn.nFilterIndex      = 1;
+    ofn.lpstrFile         = szFileName;
+    ofn.nMaxFile          = MAX_PATH;
+    ofn.nMaxFileTitle     = MAX_PATH;
+    ofn.lpstrFileTitle    = NULL;
+    ofn.lpstrInitialDir   = AppDirectory() ;
+    ofn.lpstrTitle        = TEXT("Load Vcc Config File") ;
+    ofn.Flags             = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
+
+    if ( GetOpenFileName (&ofn) ) {
+        WriteIniFile();               // Flush current profile
+        SetIniFilePath(szFileName);   // Set new ini file path
+        ReadIniFile();                // Load it
+        UpdateConfig();
+        EmuState.ResetPending = 2;
+//      SetClockSpeed(1); //Default clock speed .89 MHZ
+    }
+    return;
 }
 
+// SaveIniFile copies the current config to a speficied ini file. The file is created
+// if it does not already exist.
+
+void SaveConfig(void) {
+    OPENFILENAME ofn ;
+    char curini[MAX_PATH];
+    char newini[MAX_PATH+4];  // Save room for '.ini' if needed
+
+    GetIniFilePath(curini);  // EJJ get current ini file path
+    strcpy(newini,curini);   // Let GetOpenFilename suggest it
+
+    memset(&ofn,0,sizeof(ofn));
+    ofn.lStructSize       = sizeof (OPENFILENAME) ;
+    ofn.hwndOwner         = EmuState.WindowHandle;
+    ofn.lpstrFilter       = "INI\0*.ini\0\0" ;        // filter string
+    ofn.nFilterIndex      = 1 ;                       // current filter index
+    ofn.lpstrFile         = newini;                   // contains full path on return
+    ofn.nMaxFile          = MAX_PATH;                 // sizeof lpstrFile
+    ofn.lpstrFileTitle    = NULL;                     // filename and extension only
+    ofn.nMaxFileTitle     = MAX_PATH ;                // sizeof lpstrFileTitle
+    ofn.lpstrInitialDir   = AppDirectory() ;          // EJJ initial directory
+    ofn.lpstrTitle        = TEXT("Save Vcc Config") ; // title bar string
+    ofn.Flags             = OFN_HIDEREADONLY |OFN_PATHMUSTEXIST;
+
+    if ( GetOpenFileName (&ofn) ) {
+        if (ofn.nFileExtension == 0) strcat(newini, ".ini");  //Add extension if none
+        WriteIniFile();                                       // Flush current config
+        if (_stricmp(curini,newini) != 0) {
+            if (! CopyFile(curini,newini,false) ) {           // Copy it to new file
+                MessageBox(0,"Copy config failed","error",0);
+			}
+        }
+    }
+    return;
+}
 
 unsigned __stdcall EmuLoop(void *Dummy)
 {

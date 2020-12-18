@@ -20,37 +20,45 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "tcc1014mmu.h"	//Need memread for CpuDump
+#include <stdarg.h>		// For PrintLogC
+#include "tcc1014mmu.h"	// Need memread for CpuDump
 #include "logger.h"
+
+static FILE  *fLogOut=NULL;
+static HANDLE hLog_Out=NULL;
 
 void WriteLog(char *Message,unsigned char Type)
 {
-	static HANDLE hout=NULL;
-	static FILE  *disk_handle=NULL;
+	static int newconsole=0;
 	unsigned long dummy;
 	switch (Type)
 	{
 	case TOCONS:
-		if (hout==NULL)
-		{
-			AllocConsole();
-			hout=GetStdHandle(STD_OUTPUT_HANDLE);
-			SetConsoleTitle("Logging Window"); 
+		if (hLog_Out==NULL) {
+			// Write existing console. Create a new one if that fails
+			hLog_Out=GetStdHandle(STD_OUTPUT_HANDLE);
+			char heading[]="\n -- Vcc Log --\n";
+			if (!WriteFile(hLog_Out,heading,strlen(heading),&dummy,0)) {
+				AllocConsole();
+				hLog_Out=GetStdHandle(STD_OUTPUT_HANDLE);
+				SetConsoleTitle("Logging Window");
+				newconsole = 1;
+			}
 		}
-		WriteConsole(hout,Message,strlen(Message),&dummy,0);
+		if (newconsole) {
+			WriteConsole(hLog_Out,Message,strlen(Message),&dummy,0);
+		} else {
+			WriteFile(hLog_Out,Message,strlen(Message),&dummy,0);
+		}
 		break;
 
 	case TOFILE:
-	if (disk_handle ==NULL)
-		disk_handle=fopen("c:\\VccLog.txt","w");
-
-	fprintf(disk_handle,"%s\r\n",Message);
-	fflush(disk_handle);
-	break;
+		if (fLogOut ==NULL) fLogOut=fopen("c:\\VccLog.txt","w");
+		fprintf(fLogOut,"%s\r\n",Message);
+		fflush(fLogOut);
+		break;
 	}
-
 }
-
 
 void CpuDump(void)
 {
@@ -64,4 +72,20 @@ void CpuDump(void)
 	return;
 }
 
+// PrintLogC - Put formatted string to the console
+void PrintLogC(const void * fmt, ...)
+{
+	va_list args;
+	char str[512];
+	va_start(args, fmt);
+	vsnprintf(str, 512, (char *)fmt, args);
+	va_end(args);
+	WriteLog(str, TOCONS);
+}
 
+// OpenLogFile - open non-default file for logging
+void OpenLogFile(char * logfile)
+{
+	if (fLogOut == NULL) fclose(fLogOut);
+	fLogOut=fopen(logfile,"wb");
+}

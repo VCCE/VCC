@@ -29,8 +29,8 @@ BEGIN
     POPUP "File"
     BEGIN
         MENUITEM "Run",                         ID_FILE_RUN
-        MENUITEM "Save Config",                 ID_FILE_SAVE, GRAYED
-        MENUITEM "Load Config",                 ID_FILE_LOAD, GRAYED
+        MENUITEM "Save Config",                 ID_SAVE_CONFIG
+        MENUITEM "Load Config",                 ID_FILE_LOAD
         MENUITEM SEPARATOR
         MENUITEM "[F9] Hard Reset",             ID_FILE_RESET
         MENUITEM "[F5] Soft Reset",             ID_FILE_RESET_SFT
@@ -45,10 +45,9 @@ BEGIN
         MENUITEM "Paste BASIC Code (with NEW)", ID_PASTE_BASIC_NEW
     END
     POPUP "Configuration"
-
     BEGIN
-		MENUITEM "Flip Artifact Colors",        ID_FLIP_ARTIFACTS
-		MENUITEM "Config",                      ID_CONFIGURE_OPTIONS
+        MENUITEM "Flip Artifact Colors",        ID_FLIP_ARTIFACTS
+        MENUITEM "Config",                      ID_CONFIGURE_OPTIONS
     END
     POPUP "Help", HELP
     BEGIN
@@ -131,10 +130,10 @@ BEGIN
     LTEXT           "Another classic computer canceled before it's time!",IDC_STATIC,12,115,81,19
     LTEXT           "F11 = Fullscreen Toggle",IDC_STATIC,108,134,77,8
     GROUPBOX        "Keyboard Special keys",IDC_STATIC,104,51,110,96,BS_CENTER
-    LTEXT           "F3 = NA",IDC_STATIC,108,62,27,8
+    LTEXT           "F3 = Decrease Overclock",IDC_STATIC,108,62,100,8
     LTEXT           "F10 = Fullscreen Status Toggle",IDC_STATIC,108,125,99,8
     LTEXT           "F9 = Hard Reset (Power Cycle)",IDC_STATIC,108,116,98,8
-    LTEXT           "F4 = NA",IDC_STATIC,108,71,27,8
+    LTEXT           "F4 = Increase Overclock",IDC_STATIC,108,71,100,8
     LTEXT           "F6 = RGB/Composite Toggle",IDC_STATIC,108,89,92,8
     LTEXT           "F5 = Soft Reset",IDC_STATIC,108,80,50,8
     LTEXT           "F7 = NA",IDC_STATIC,108,98,27,8
@@ -148,12 +147,12 @@ BEGIN
     CTEXT           "of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",IDC_STATIC,5,300,226,8
     CTEXT           "See the GNU General Public License for more details.",IDC_STATIC,31,311,174,8
     CTEXT           "You should have received a copy of the GNU General Public License",IDC_STATIC,5,326,219,8
-    CTEXT           "along with VCC (Virtual Color Computer). If not, see http://www.gnu.org/licenses/.",IDC_STATIC,31,337,174,18
     CTEXT           "Rebased to more ""modern"" compilers by Gary Coulbourne",IDC_STATIC,1,182,230,8
     CTEXT           "VCC Repository and Release Packages maintained by Bill Pierce",IDC_STATIC,9,173,206,8
-    CTEXT           "H6309 CPU fixes by Walter Zambotti",IDC_STATIC,54,212,122,12,SS_CENTERIMAGE
+    CTEXT           "Some code from OVCC by Walter Zambotti",IDC_STATIC,28,212,175,12,SS_CENTERIMAGE
     CTEXT           "Adapted to VS2015 and Minor Bug Fixes by Wes Gale",IDC_STATIC,23,183,178,10
-    CTEXT           "Bug fixes and Enhancements by Bill Pierce, Peter Westberg, && James Rye",IDC_STATIC,19,194,193,20
+    CTEXT           "Bug fixes and Enhancements by Bill Pierce, James Ross, Peter Westberg, James Rye, EJ Jaquay, && Trey Tomes",IDC_STATIC,19,194,193,20
+    CTEXT           "along with VCC (Virtual Color Computer). If not, see http://www.gnu.org/licenses/.",IDC_STATIC,31,337,174,18
 END
 
 IDD_TCONFIG DIALOGEX 0, 0, 397, 213
@@ -171,15 +170,14 @@ IDD_DISPLAY DIALOGEX 0, 0, 322, 152
 STYLE DS_SETFONT | WS_CHILD
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-
     CONTROL         "Slider1",IDC_FRAMESKIP,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,120,18,151,15,WS_EX_CLIENTEDGE
     EDITTEXT        IDC_FRAMEDISPLAY,281,18,27,15,ES_AUTOHSCROLL | ES_READONLY
-	GROUPBOX        "Frame Skip", IDC_STATIC, 116, 6, 202, 35, BS_CENTER
-	CONTROL         "Scan Lines",IDC_SCANLINES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,91,74,51,10
-	CONTROL         "[F8] Throttle Speed", IDC_THROTTLE, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 153, 86, 77, 10
+    GROUPBOX        "Frame Skip", IDC_STATIC, 116, 6, 202, 35, BS_CENTER
+	  CONTROL         "Scan Lines",IDC_SCANLINES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,91,74,51,10
+	 
     CONTROL         "Force Aspect",IDC_ASPECT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,91,86,58,10
     CONTROL         "Allow Resize",IDC_RESIZE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,153,74,56,10
-	CONTROL         "Remember Screen Size", IDC_REMEMBER_SIZE, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 153, 98, 94, 10
+    CONTROL         "Remember Screen Size", IDC_REMEMBER_SIZE, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 153, 98, 94, 10
 	
     GROUPBOX        "[F6] Monitor Type",IDC_STATIC,5,6,103,60,BS_CENTER
     ICON            "",IDC_MONTYPE,84,14,21,20
@@ -187,24 +185,27 @@ BEGIN
     RADIOBUTTON     "Composite",IDC_COMPOSITE,9,28,49,10
     RADIOBUTTON     "Updated Palette",IDC_UPD_PALETTE,19,37,70,11
     RADIOBUTTON     "Original Palette",IDC_ORG_PALETTE,19,46,70,11
+    
+    CONTROL         "[F8] Throttle Speed",IDC_THROTTLE,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,140,87,77,10
+    CTEXT           "WARNING: Unchecking the ""Throttle Speed"" can greatly affect many functions of the VCC emulation including keyboard operation. Use with CAUTION! Please use ""Over-Clocking"" instead",IDC_STATIC,137,100,163,39,SS_SUNKEN,WS_EX_STATICEDGE
 END
 
-IDD_CPU DIALOGEX 0, 0, 330, 167
+IDD_CPU DIALOGEX 0, 0, 330, 172
 STYLE DS_SETFONT | WS_CHILD
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     CONTROL         "Slider1",IDC_CLOCKSPEED,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,50,27,176,15,WS_EX_CLIENTEDGE
     EDITTEXT        IDC_CLOCKDISPLAY,232,27,45,15,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "Over-Clocking",IDC_STATIC,48,16,234,34,BS_CENTER
-    ICON            "",IDC_CPUICON,246,102,21,20
-    RADIOBUTTON     "Motorola MC6809 CPU",IDC_6809,130,101,89,10
-    RADIOBUTTON     "Hitachi HD6309 CPU",IDC_6309,130,114,87,10,WS_TABSTOP
-    GROUPBOX        "Memory Size",IDC_STATIC,49,79,60,54,BS_CENTER
-    RADIOBUTTON     "128 K",IDC_128K,53,89,35,10
-    RADIOBUTTON     "512 K",IDC_512K,53,99,35,10
-    RADIOBUTTON     "2048 K",IDC_2M,53,110,39,10
-    RADIOBUTTON     "8192 K",IDC_8M,53,121,39,10
-    GROUPBOX        "CPU",IDC_STATIC,123,89,156,44,BS_CENTER
+    ICON            "",IDC_CPUICON,245,71,20,20
+    RADIOBUTTON     "Motorola MC6809 CPU",IDC_6809,129,70,89,10
+    RADIOBUTTON     "Hitachi HD6309 CPU",IDC_6309,129,83,87,10,WS_TABSTOP
+    GROUPBOX        "Memory Size",IDC_STATIC,48,55,60,54,BS_CENTER
+    RADIOBUTTON     "128 K",IDC_128K,57,65,35,10
+    RADIOBUTTON     "512 K",IDC_512K,57,75,35,10
+    RADIOBUTTON     "2048 K",IDC_2M,57,86,39,10
+    RADIOBUTTON     "8192 K",IDC_8M,57,97,39,10
+    GROUPBOX        "CPU",IDC_STATIC,119,54,156,44,BS_CENTER
 END
 
 IDD_AUDIO DIALOGEX 0, 0, 313, 160
@@ -529,7 +530,7 @@ BEGIN
         LEFTMARGIN, 1
         RIGHTMARGIN, 231
         TOPMARGIN, 3
-        BOTTOMMARGIN, 337
+        BOTTOMMARGIN, 377
     END
 
     IDD_TCONFIG, DIALOG
@@ -553,7 +554,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 323
         TOPMARGIN, 7
-        BOTTOMMARGIN, 160
+        BOTTOMMARGIN, 165
     END
 
     IDD_AUDIO, DIALOG
@@ -615,8 +616,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,1,0,2
- PRODUCTVERSION 2,1,0,2
+ FILEVERSION 2,1,0,3
+ PRODUCTVERSION 2,1,0,3
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x29L
@@ -634,9 +635,9 @@ BEGIN
             VALUE "Comments", "How bored are you that your reading this?"
             VALUE "CompanyName", "Not Radio Shack"
             VALUE "FileDescription", "Vcc"
-            VALUE "FileVersion", "2.0.1e"
+            VALUE "FileVersion", "2.1.0c"
             VALUE "InternalName", "Poco"
-            VALUE "LegalCopyright", "Copyright © 2015 by BitRot Software"
+            VALUE "LegalCopyright", "Copyright ? 2015 by BitRot Software"
             VALUE "LegalTrademarks", "BLAZEMONGER!"
             VALUE "OriginalFilename", "Vcc.exe"
             VALUE "PrivateBuild", "For a good time call 867-5309 Jenny ;)"
@@ -732,7 +733,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_APP_TITLE           "VCC 2.1"
+    IDS_APP_TITLE           "VCC 2.1.0c Tandy Color Computer 3 Emulator"
     IDS_CATNUMBER           "26-3334"
 END
 

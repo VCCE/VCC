@@ -29,6 +29,9 @@ void UpdateSoundBar(unsigned short,unsigned short);
 void UpdateTapeCounter(unsigned int,unsigned char);
 int GetKeyboardLayout();
 
+void SetIniFilePath(char *); //EJJ
+char * AppDirectory();       //EJJ
+
 int GetPaletteType();
 POINT GetIniWindowSize();
 int GetRememberSize();
@@ -66,5 +69,9 @@ typedef struct  {
 	char			CassPath[MAX_PATH];
 	char            COCO3ROMPath[MAX_PATH];
 } STRConfig;
+
+void DecreaseOverclockSpeed();
+void IncreaseOverclockSpeed();
+
 #endif
 
