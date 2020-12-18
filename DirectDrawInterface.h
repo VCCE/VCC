@@ -30,7 +30,8 @@ unsigned char SetInfoBand( unsigned char);
 unsigned char SetResize(unsigned char);
 unsigned char SetAspect (unsigned char);
 float Static(SystemState *);
-
+POINT GetCurWindowSize();
+void DisplayFlip(SystemState *);
 
 
 #define MAX_LOADSTRING 100
