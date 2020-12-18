@@ -149,9 +149,9 @@ BEGIN
     CTEXT           "You should have received a copy of the GNU General Public License",IDC_STATIC,5,326,219,8
     CTEXT           "Rebased to more ""modern"" compilers by Gary Coulbourne",IDC_STATIC,1,182,230,8
     CTEXT           "VCC Repository and Release Packages maintained by Bill Pierce",IDC_STATIC,9,173,206,8
-    CTEXT           "H6309 CPU fixes by Walter Zambotti",IDC_STATIC,54,212,122,12,SS_CENTERIMAGE
+    CTEXT           "Some code from OVCC by Walter Zambotti",IDC_STATIC,28,212,175,12,SS_CENTERIMAGE
     CTEXT           "Adapted to VS2015 and Minor Bug Fixes by Wes Gale",IDC_STATIC,23,183,178,10
-    CTEXT           "Bug fixes and Enhancements by Bill Pierce, Peter Westberg, James Rye && EJ Jaquay",IDC_STATIC,19,194,193,20
+    CTEXT           "Bug fixes and Enhancements by Bill Pierce, James Ross, Peter Westberg, James Rye, EJ Jaquay, && Trey Tomes",IDC_STATIC,19,194,193,20
     CTEXT           "along with VCC (Virtual Color Computer). If not, see http://www.gnu.org/licenses/.",IDC_STATIC,31,337,174,18
 END
 
@@ -612,8 +612,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,1,0,2
- PRODUCTVERSION 2,1,0,2
+ FILEVERSION 2,1,0,3
+ PRODUCTVERSION 2,1,0,3
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x29L
@@ -631,7 +631,7 @@ BEGIN
             VALUE "Comments", "How bored are you that your reading this?"
             VALUE "CompanyName", "Not Radio Shack"
             VALUE "FileDescription", "Vcc"
-            VALUE "FileVersion", "2.0.1e"
+            VALUE "FileVersion", "2.1.0c"
             VALUE "InternalName", "Poco"
             VALUE "LegalCopyright", "Copyright ? 2015 by BitRot Software"
             VALUE "LegalTrademarks", "BLAZEMONGER!"
@@ -729,7 +729,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_APP_TITLE           "VCC 2.1"
+    IDS_APP_TITLE           "VCC 2.1.0c Tandy Color Computer 3 Emulator"
     IDS_CATNUMBER           "26-3334"
 END
 

@@ -283,7 +283,7 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.FrameSkip = GetPrivateProfileInt("CPU","FrameSkip",1,IniFilePath);
 	CurrentConfig.SpeedThrottle = GetPrivateProfileInt("CPU","Throttle",1,IniFilePath);
 	CurrentConfig.CpuType = GetPrivateProfileInt("CPU","CpuType",0,IniFilePath);
-	CurrentConfig.MaxOverclock = GetPrivateProfileInt("CPU", "MaxOverClock",100, IniFilePath);
+	CurrentConfig.MaxOverclock = GetPrivateProfileInt("CPU", "MaxOverClock",300, IniFilePath);
 
 	CurrentConfig.AudioRate = GetPrivateProfileInt("Audio","Rate",3,IniFilePath);
 	GetPrivateProfileString("Audio","SndCard","",CurrentConfig.SoundCardName,63,IniFilePath);
@@ -291,8 +291,8 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.MonitorType = GetPrivateProfileInt("Video","MonitorType",1,IniFilePath);
 	CurrentConfig.PaletteType = GetPrivateProfileInt("Video", "PaletteType",1,IniFilePath);
 	CurrentConfig.ScanLines = GetPrivateProfileInt("Video","ScanLines",0,IniFilePath);
-	CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);	
-	CurrentConfig.Aspect = GetPrivateProfileInt("Video","ForceAspect",0,IniFilePath);
+	CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",1,IniFilePath);	
+	CurrentConfig.Aspect = GetPrivateProfileInt("Video","ForceAspect",1,IniFilePath);
 
 	CurrentConfig.AutoStart = GetPrivateProfileInt("Misc","AutoStart",1,IniFilePath);
 	CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc","CartAutoStart",1,IniFilePath);
