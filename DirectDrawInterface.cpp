@@ -149,8 +149,9 @@ bool CreateDDWindow(SystemState *CWState)
 		// re-using rStatBar RECT even though it's the main window
 		::GetWindowRect(CWState->WindowHandle, &rStatBar);  
 		::MoveWindow(CWState->WindowHandle, rStatBar.left, rStatBar.top, // using MoveWindow to resize 
-										  rStatBar.right - rStatBar.left, (rStatBar.bottom+StatusBarHeight) - rStatBar.top,
-										  1); 
+//											rStatBar.right - rStatBar.left, (rStatBar.bottom + StatusBarHeight) - rStatBar.top,
+											rStatBar.right - rStatBar.left, rStatBar.bottom - rStatBar.top,
+											1);
 		::SendMessage(hwndStatusBar, WM_SIZE, 0, 0); // Redraw Status bar in new position
 
 		::GetWindowRect(CWState->WindowHandle, &WindowDefaultSize);	// And save the Final size of the Window 
@@ -353,7 +354,7 @@ void DisplayFlip(SystemState *DFState)	// Double buffering flip
 
 	static RECT CurScreen;
 	::GetClientRect(DFState->WindowHandle, &CurScreen);
-	CurScreen.bottom -= StatusBarHeight;
+//	CurScreen.bottom -= StatusBarHeight;
 	int clientWidth = (int)CurScreen.right;
 	int clientHeight = (int)CurScreen.bottom;
 	RememberWinSize.x = clientWidth; // Used for saving new window size to the ini file.
