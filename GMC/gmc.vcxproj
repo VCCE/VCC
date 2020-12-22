@@ -102,7 +102,7 @@
       <SubSystem>Console</SubSystem>
       <OutputFile>$(OutDir)GMC.dll</OutputFile>
       <ImportLibrary>$(OutDir)GMC.lib</ImportLibrary>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;dinput8.lib;dxguid.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;dinput8.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -145,7 +145,7 @@
       <SubSystem>Console</SubSystem>
       <OutputFile>$(OutDir)GMC.dll</OutputFile>
       <ImportLibrary>$(OutDir)GMC.lib</ImportLibrary>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;dinput8.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">

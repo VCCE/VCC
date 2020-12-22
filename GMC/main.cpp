@@ -18,9 +18,9 @@ std::string ExtractFilename(std::string path)
 	return path;
 }
 
-std::optional<std::string> SelectROMFile()
+std::string SelectROMFile()
 {
-	std::optional<std::string> selectedPath;
+	std::string selectedPath;
 	OPENFILENAMEA ofn = { 0 };
 	char selectedPathBuffer[MAX_PATH] = { 0 };
 
@@ -35,9 +35,10 @@ std::optional<std::string> SelectROMFile()
 	ofn.lpstrInitialDir   = NULL;							// initial directory
 	ofn.lpstrTitle        = "Select ROM file";				// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
-	if (GetOpenFileNameA(&ofn))
-	{
+	if (GetOpenFileNameA(&ofn)) {
 		selectedPath = selectedPathBuffer;
+	} else {
+		selectedPath.clear();
 	}
 
 	return move(selectedPath);

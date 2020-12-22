@@ -50,7 +50,8 @@ void GMCCartridge::OnMenuItemSelected(unsigned char menuId)
 	if (menuId == MenuItems::SelectRom)
 	{
 		const auto selectedFile(SelectROMFile());
-		if (!selectedFile.has_value())
+//		if (!selectedFile.has_value())
+		if (selectedFile.empty())
 		{
 			return;
 		}
@@ -67,7 +68,7 @@ void GMCCartridge::OnMenuItemSelected(unsigned char menuId)
 			"ROM Selected",
 			MB_OK);
 
-		m_Configuration.SetActiveRom(*selectedFile);
+		m_Configuration.SetActiveRom(selectedFile.data());
 
 		AssetCartridgeLine(false);
 		AssetCartridgeLine(true);
