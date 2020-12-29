@@ -20,7 +20,7 @@ Cartridge::Cartridge(std::string name, std::string catalogId)
 {
 	if (m_Singleton)
 	{
-		throw std::runtime_error("Cartridge instance already created.");
+//		throw std::runtime_error("Cartridge instance already created.");
 	}
 
 	m_Singleton = this;

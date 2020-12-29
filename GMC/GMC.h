@@ -1,5 +1,4 @@
 #pragma once
-#include <optional>
 #include <string>
 
 #ifdef GMC_EXPORTS
@@ -12,6 +11,6 @@ typedef void(*SETCART)(unsigned char);
 typedef void(*SETCARTPOINTER)(SETCART);
 typedef void(*DYNAMICMENUCALLBACK)(const char *, int, int);
 
-std::optional<std::string> SelectROMFile();
+std::string SelectROMFile();
 std::string ExtractFilename(std::string path);
 
