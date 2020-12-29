@@ -28,6 +28,7 @@ void UpdateConfig (void);
 void UpdateSoundBar(unsigned short,unsigned short);
 void UpdateTapeCounter(unsigned int,unsigned char);
 int GetKeyboardLayout();
+void SetWindowSize(POINT);
 
 void SetIniFilePath(char *); //EJJ
 char * AppDirectory();       //EJJ

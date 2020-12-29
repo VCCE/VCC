@@ -85,8 +85,6 @@ static char ExecDirectory[MAX_PATH]="";
 static char SerialCaptureFile[MAX_PATH]="";
 static char TextMode=1,PrtMon=0;;
 static unsigned char NumberofJoysticks=0;
-void ResizeMainWindow(POINT);
-
 TCHAR AppDataPath[MAX_PATH];
 
 char OutBuffer[MAX_PATH]="";
@@ -282,6 +280,7 @@ unsigned char ReadIniFile(void)
 {
 	HANDLE hr=NULL;
 	unsigned char Index=0;
+	POINT p;
 //	LPTSTR tmp;
 
 	//Loads the config structure from the hard disk
@@ -354,6 +353,16 @@ unsigned char ReadIniFile(void)
 	TempConfig=CurrentConfig;
 	InsertModule (CurrentConfig.ModulePath);	// Should this be here?
 	CurrentConfig.Resize = 1; //Checkbox removed. Remove this from the ini? 
+	if (CurrentConfig.RememberSize) {
+		p.x = CurrentConfig.WindowSizeX;
+		p.y = CurrentConfig.WindowSizeY;
+		SetWindowSize(p);
+	}
+	else {
+		p.x = 640;
+		p.y = 480;
+		SetWindowSize(p);
+	}
 	return(0);
 }
 
@@ -515,7 +524,6 @@ void UpdateConfig (void)
 	SetCpuType(CurrentConfig.CpuType);
 	SetMonitorType(CurrentConfig.MonitorType);
 	SetCartAutoStart(CurrentConfig.CartAutoStart);
-
 	if (CurrentConfig.RebootNow)
 		DoReboot();
 	CurrentConfig.RebootNow=0;
@@ -1258,6 +1266,12 @@ int SelectFile(char *FileName)
 	return(1);
 }
 
+void SetWindowSize(POINT p) {
+	int width = p.x+16;
+	int height = p.y+81;
+	HWND handle = GetActiveWindow();
+	::SetWindowPos(handle, 0, 0, 0, width, height, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+}
 int GetKeyboardLayout() {
 	return(CurrentConfig.KeyMap);
 }
