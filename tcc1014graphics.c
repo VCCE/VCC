@@ -9659,7 +9659,11 @@ void SetupDisplay(void)
 
 		if (GraphicsMode)
 		{
-			CC3BoarderColor=63;
+			ColorSet = (CC2VDGPiaMode & 1);
+			if (ColorSet == 0)
+				CC3BoarderColor = 18; //18 Bright Green
+			else
+				CC3BoarderColor = 63; //63 White 
 			BoarderChange=3;
 			Bpp=CC2Bpp[ (CC2VDGPiaMode & 15) >>1 ];
 			BytesperRow=CC2BytesperRow[ (CC2VDGPiaMode & 15) >>1 ];
@@ -9940,7 +9944,6 @@ unsigned char SetMonitorType(unsigned char Type)
 	return(MonType);
 }
 void SetPaletteType() {
-	 
 	int tmp = CC3BoarderColor;
 	SetGimeBoarderColor(0);
 	MakeCMPpalette();
