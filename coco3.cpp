@@ -545,6 +545,7 @@ void PasteText() {
 	char sc;
 	char letter;
 	bool CSHIFT;
+	bool LCNTRL;
 	int GraphicsMode = GetGraphicsMode();
 	if (GraphicsMode != 0) {
 		int tmp = MessageBox(0, "Warning: You are not in text mode. Continue Pasting?", "Clipboard", MB_YESNO);
@@ -601,6 +602,7 @@ void PasteText() {
 	for (int pp = 0; pp <= cliptxt.size(); pp++) {
 		sc = 0;
 		CSHIFT = FALSE;
+		LCNTRL = FALSE;
 		letter = cliptxt[pp];
 		switch (letter)
 		{
@@ -691,10 +693,22 @@ void PasteText() {
 		case '?': sc = 0x35; CSHIFT = TRUE; break;
 		case '<': sc = 0x33; CSHIFT = TRUE; break;
 		case '>': sc = 0x34; CSHIFT = TRUE; break;
+		case '[': sc = 0x1A; LCNTRL = TRUE; break;
+		case ']': sc = 0x1B; LCNTRL = TRUE; break;
+		case '{': sc = 0x1A; CSHIFT = TRUE; break;
+		case '}': sc = 0x1B; CSHIFT = TRUE; break;
+		case '\\"': sc = 0x2B; LCNTRL = TRUE; break;
+		case '|': sc = 0x2B; CSHIFT = TRUE; break;
+		case '`': sc = 0x29; break;
+		case '~': sc = 0x29; CSHIFT = TRUE; break;
+		case '_': sc = 0x0C; CSHIFT = TRUE; break;
+		case 0x09: sc = 0x39; break; // TAB
 		default: sc = 0xFF;	break;
 		}
 		if (CSHIFT) { out += 0x36; CSHIFT = FALSE; }
+		if (LCNTRL) { out += 0x1D; LCNTRL = FALSE; }
 		out += sc;
+
 	}
 	clipboard = out;
 }
