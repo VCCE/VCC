@@ -15,6 +15,8 @@
 
 	You should have received a copy of the GNU General Public License
 	along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+*
+
 */
 /*****************************************************************************/
 /*
@@ -22,6 +24,20 @@
 
 	key translation tables used to convert keyboard oem scan codes / key 
 	combinations into CoCo keyboard row/col values
+
+*//*
+    The row values are bitmasks (1,2,4,8,16,32,64)
+    The column is a digit (0-7) as follows:
+           0     1      2      3     4     5     6     7
+          ---   ---   -----   ---   ---   ---   ---  -----
+     1:    @     A      B      C     D     E     F     G
+     2:    H     I      J      K     L     M     N     O
+     4:    P     Q      R      S     T     U     V     W
+     8:    X     Y      Z      UP   DWN   LFT   RGT  SPACE
+    16:    0     1!     2"     3#    4$    5%    6&    7'
+    32:   8(     9)     :*     ;+    ,<    -=    .>    /?
+    64:   ENT   CLR  BRK/ESC  ALT    CTL   F1    F2  SHIFT
+*//*
 
 	ScanCode1 and ScanCode2 are used to determine what actual
 	key presses are translated into a specific CoCo key
@@ -46,8 +62,6 @@
 	| [Cntl][Win][Alt][        Space       ][Alt][Win][Prp][Cntl]   [LftA][DnA][RgtA] |
 	+---------------------------------------------------------------------------------+
 
-
-	TODO: explain and add link or reference to CoCo 'scan codes' for each key
 */
 /*****************************************************************************/
 
