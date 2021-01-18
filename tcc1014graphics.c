@@ -6329,6 +6329,7 @@ void UpdateScreen32 (SystemState *USState32)
 		{
 			case 0: //Width 80
 				Attributes=0;
+				if (HorzOffsetReg & 128) { Start = StartofVidram + (TagY / LinesperRow)*(VPitch); } //Fix for Horizontal Offset Register in text mode.
 				for (HorzBeam=0;HorzBeam<BytesperRow*ExtendedText;HorzBeam+=ExtendedText)
 				{									
 					Character=buffer[Start+(unsigned char)(HorzBeam+Hoffset)];
