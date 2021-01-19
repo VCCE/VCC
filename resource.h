@@ -38,7 +38,7 @@
 #define IDD_CASSETTE                    157
 #define IDD_NEWTAPE                     158
 #define IDD_BITBANGER                   159
-#define IDD_DIALOG1                     164
+#define IDD_KEYMAPED                    164
 #define IDC_MUTE                        1003
 #define IDC_THROTTLE                    1004
 #define IDC_ARTIFACTS                   1005
