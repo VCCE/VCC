@@ -23,7 +23,6 @@ Author of this file: E J Jaquay 2021
 
 #include <windows.h>
 #include <windowsx.h>
-//#include <Richedit.h>
 #include <stdio.h>
 
 #include "logger.h"
@@ -286,6 +285,9 @@ int UserWarned = 0;
 BOOL CoCoKeySet;      // BtnId
 BOOL CoCoModSet;      // 0,1,2,3
 
+// Brush for text box background
+HBRUSH hbrBkgnd = NULL;
+
 // Forward references
 BOOL  InitKeymapDialog(HWND);
 BOOL  Process_CoCoKey(int);
@@ -296,6 +298,7 @@ void  ShowPCkey();
 void  DoKeyDown(WPARAM,LPARAM);
 void  ShowMapError(int, char *);
 int   scantable_lookup(char *);
+void  SetDialogFocus(HWND);
 
 struct PCScanCode * scantable_sclookup(int);
 int GetKeymapLine ( char*, keytranslationentry_t *, int);
@@ -521,13 +524,6 @@ int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
 /*                                                */
 /**************************************************/
 
-void SetDialogFocus(HWND hCtrl)
-{
-    SendMessage(hKeyMapDlg,WM_NEXTDLGCTL,(WPARAM)hCtrl,TRUE);
-}
-
-HBRUSH hbrBkgnd = NULL;
-
 BOOL CALLBACK KeyMapProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 //	PrintLogC("D: %04x %08x %08x\n",msg,wParam,lParam);
@@ -554,7 +550,6 @@ BOOL CALLBACK KeyMapProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case IDC_SAVE_KEYMAP:
 		case IDC_SET_CUST_KEYMAP:
 	        SetDialogFocus(hEdit_PC);
-//	    	SetFocus(hEdit_PC);
             return TRUE;
 		default:
 			return Process_CoCoKey(LOWORD(wParam));
@@ -597,10 +592,16 @@ BOOL InitKeymapDialog(HWND hWnd)
 	Edit_PCproc = (WNDPROC)GetWindowLongPtr(hEdit_PC, GWLP_WNDPROC);
 	SetWindowLongPtr(hEdit_PC, GWLP_WNDPROC, (LONG_PTR)SubEdit_PCproc);
 
-	//SetFocus(hEdit_PC);
 	SetDialogFocus(hEdit_PC);
 
 	return FALSE;
+}
+
+//-----------------------------------------------------
+// SetFocus for key map dialog
+//-----------------------------------------------------
+void SetDialogFocus(HWND hCtrl) {
+    SendMessage(hKeyMapDlg,WM_NEXTDLGCTL,(WPARAM)hCtrl,TRUE);
 }
 
 //-----------------------------------------------------
@@ -612,7 +613,6 @@ BOOL Process_CoCoKey(int BtnId)
 	if (BtnId < IDC_KEYBTN_FIRST) return FALSE;
 	if (BtnId > IDC_KEYBTN_LAST) return FALSE;
 
-//	SetFocus(hEdit_PC);
 	SetDialogFocus(hEdit_PC);
 	switch (BtnId) {
 	case IDC_KEYBTN_RSHIFT:
