@@ -39,12 +39,14 @@ This file is part of VCC (Virtual Color Computer).
 #include "DirectDrawInterface.h"
 #include "joystickinput.h"
 #include "keyboard.h"
+#include "keyboardEdit.h"
 #include "fileops.h"
 #include "Cassette.h"
 #include "shlobj.h"
 #include "CommandLine.h"
-//#include "logger.h"
+#include "logger.h"
 #include <assert.h>
+
 using namespace std;
 //
 // forward declarations
@@ -57,7 +59,6 @@ void RefreshJoystickStatus(void);
 
 #define MAXCARDS 12
 LRESULT CALLBACK CpuConfig(HWND, UINT, WPARAM, LPARAM);
-
 LRESULT CALLBACK AudioConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK MiscConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK DisplayConfig(HWND, UINT, WPARAM, LPARAM);
@@ -80,6 +81,8 @@ static HICON CpuIcons[2],MonIcons[2],JoystickIcons[4];
 static unsigned char temp=0,temp2=0;
 static char IniFileName[]="Vcc.ini";
 static char IniFilePath[MAX_PATH]="";
+static char KeyMapFileName[]="custom.keymap";
+static char KeyMapFilePath[MAX_PATH]="";
 static char TapeFileName[MAX_PATH]="";
 static char ExecDirectory[MAX_PATH]="";
 static char SerialCaptureFile[MAX_PATH]="";
@@ -193,6 +196,15 @@ void LoadConfig(SystemState *LCState)
 		strcat(IniFilePath, "\\");
 		strcat(IniFilePath, IniFileName);
 	}
+
+//  Find custom keymap file (custom.keymap)
+//	if (*CmdArg.KeyMapFile) {
+//		GetFullPathNameA(CmdArg.KeyMapFile,MAX_PATH,KeyMapFilePath,0);
+//	} else {
+		strcpy(KeyMapFilePath, AppDataPath);
+		strcat(KeyMapFilePath, "\\");
+		strcat(KeyMapFilePath, KeyMapFileName);
+//	}
 
 	LCState->ScanLines=0;
 	NumberOfSoundCards=GetSoundCardList(SoundCards);
@@ -314,6 +326,8 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.KeyMap = GetPrivateProfileInt("Misc","KeyMapIndex",0,IniFilePath);
 	if (CurrentConfig.KeyMap>3)
 		CurrentConfig.KeyMap=0;	//Default to DECB Mapping
+
+	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFilename());
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
 	CheckPath(CurrentConfig.ModulePath);
@@ -437,6 +451,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				
 				CurrentConfig=TempConfig;
 
+				if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFilename());
 				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
 				Right=TempRight;
@@ -464,6 +479,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 				CurrentConfig=TempConfig;
 
+	            if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFilename());
 				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
 				Right=TempRight;
@@ -496,19 +512,22 @@ void GetIniFilePath( char *Path)
 	return;
 }
 
-//<EJJ>
 void SetIniFilePath( char *Path)
 {
     //  Path must be to an existing ini file
     strcpy(IniFilePath,Path);
 }
 
+// The following two functions only work after LoadConfig has been called
 char * AppDirectory() 
 {
-    // This only works after LoadConfig has been called
 	return AppDataPath;
 }
-//<EJJ/>
+
+char * KeyMapFilename()
+{
+	return KeyMapFilePath;
+}
 
 void UpdateConfig (void)
 {
@@ -669,8 +688,6 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 	ModeText.dwMask = CFM_BOLD | CFM_COLOR ;
 	ModeText.dwEffects = CFE_BOLD;
 	ModeText.crTextColor=RGB(255,0,0);
-
-
 
 	switch (message)
 	{
@@ -881,25 +898,30 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 
 LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch (message)
-	{
-		case WM_INITDIALOG:
-			// copy keyboard layout names to the pull-down menu
-			for (int x = 0; x <kKBLayoutCount; x++)
-			{
-				SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_ADDSTRING,(WPARAM)0,(LPARAM)k_keyboardLayoutNames[x]);
-			}
-			// select the current layout
-			SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_SETCURSEL,(WPARAM)CurrentConfig.KeyMap,(LPARAM)0);
-		break;
+    switch (message)
+    {
+    case WM_INITDIALOG:
+        // copy keyboard layout names to the pull-down menu
+        for (int x = 0; x <kKBLayoutCount; x++) {
+            SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_ADDSTRING,
+            (WPARAM)0,(LPARAM)k_keyboardLayoutNames[x]);
+        }
+        // select the current layout
+        SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_SETCURSEL,
+                            (WPARAM)CurrentConfig.KeyMap,(LPARAM)0);
+        break;
 
-		case WM_COMMAND:
-			TempConfig.KeyMap = (unsigned char)SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_GETCURSEL,0,0);
-		break;
-
-	}
-
-	return(0);
+    case WM_COMMAND:
+        TempConfig.KeyMap = (unsigned char)
+        SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_GETCURSEL,0,0);
+        if (LOWORD(wParam)==IDC_KEYMAPED) {
+            // Custom keymap edit processing (KeyMapProc) is in keyboardEdit.c
+            DialogBox( EmuState.WindowInstance, (LPCTSTR) IDD_KEYMAPEDIT, hDlg,
+                       (DLGPROC) KeyMapProc );
+        }
+        break;
+    }
+    return(0);
 }
 
 LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -1287,7 +1309,6 @@ int GetRememberSize() {
 
 POINT GetIniWindowSize() {
 	POINT out;
-	
 	out.x = CurrentConfig.WindowSizeX;
 	out.y = CurrentConfig.WindowSizeY;
 	return(out);

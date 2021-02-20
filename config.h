@@ -30,8 +30,9 @@ void UpdateTapeCounter(unsigned int,unsigned char);
 int GetKeyboardLayout();
 void SetWindowSize(POINT);
 
-void SetIniFilePath(char *); //EJJ
-char * AppDirectory();       //EJJ
+void SetIniFilePath(char *);
+char * AppDirectory();
+char * KeyMapFilename();
 
 int GetPaletteType();
 POINT GetIniWindowSize();

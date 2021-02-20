@@ -494,7 +494,7 @@ VCC Custom Keyboard
 | [Cntl][   ][Alt][       Space       ][Alt][   ][   ][Cntl]   [LftA][DnA][RgtA]  |
 +---------------------------------------------------------------------------------+
 */
-keytranslationentry_t keyTranslationsCustom[] =
+keytranslationentry_t keyTranslationsCustom[MAX_CTRANSTBLSIZ] =
 {
 	// ScanCode1,     ScanCode2,      Row1,  Col1,  Row2, Col2    Char  
 	{ DIK_A,          0,              1,     1,     0,    0 }, //   A
