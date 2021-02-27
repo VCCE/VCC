@@ -310,18 +310,14 @@
 #define IDC_SAVE_KEYMAP                 1151
 #define IDC_KEYMAP_EXIT                 1152
 #define IDC_SET_CUST_KEYMAP             1153
-#define IDC_PCKEY_TXT                   1154
-#define IDC_CCKEY_TXT                   1155
-#define IDC_KEYMAP_FILE                 1156
-
-// Some relics to clean up
-//#define IDC_LOAD_CUST_KEYMAP            1150
-//#define IDC_SAVE_CUST_KEYMAP            1151
+#define IDC_CLR_CUST_KEYMAP             1154
+#define IDC_PCKEY_TXT                   1155
+#define IDC_CCKEY_TXT                   1156
+#define IDC_KEYMAP_FILE                 1157
 
 // End keymapedit
 
 #define IDC_ORG_PALETTE                 1191
-//#define ID_PCKEY                        1191
 #define IDC_UPD_PALETTE                 1192
 
 #define ID_FILE_EXIT                    40002

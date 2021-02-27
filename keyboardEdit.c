@@ -25,6 +25,9 @@ Author of this file: E J Jaquay 2021
 #include <windowsx.h>
 #include <stdio.h>
 
+#include "defines.h"
+#include "config.h"
+
 #include "logger.h"
 #include "keyboard.h"
 #include "keyboardLayout.h"
@@ -35,7 +38,7 @@ Author of this file: E J Jaquay 2021
  *
  * ScanCodes are from dinput.h
  *
- * This table must be sorted alphabetically by keyname!
+ * This table is sorted alphabetically by keyname.
  *
  * DIK_ is removed from keyname strings for brevity
  * If Key label strings are NULL the keyname is used as label
@@ -106,7 +109,6 @@ static struct PCScanCode sctable[] =
     {"J",              NULL,         DIK_J           },
     {"K",              NULL,         DIK_K           },
     {"L",              NULL,         DIK_L           },
-    {"LALT",           "Alt",        DIK_LALT        },
     {"LBRACKET",       "LBracket",   DIK_LBRACKET    },
     {"LCONTROL",       "Ctrl",       DIK_LCONTROL    },
     {"LEFT",           "Left",       DIK_LEFT        },
@@ -181,7 +183,9 @@ static struct PCScanCode sctable[] =
  * into CoCO keyboard row mask, and column numbers (rollover table)
  * There is an entry for each physical key on the coco keyboard
  *
- * This table must be sorted alphabetically by keyname!
+ * This table is sorted alphabetically by keyname.  If keyname changes
+ * result in change in the order then following index table must also
+ * be changed to match
  *
  * COCO_ is removed from keyname strings for brevity
  * If Key label strings are NULL the keyname is used
@@ -192,80 +196,99 @@ struct CoCoKey {
 	char* keyname;      // Keyname in custom keymap file
     char* label;        // Label for keymap editor display
 	int id;             // Button ID on key edit dialog
-	unsigned char row;  // bit mask for row select
+	unsigned char row;  // row 0-6  (bit num for trans table)
 	unsigned char col;  // col 0-7
 };
  
-static struct CoCoKey cctable[] =
+static struct CoCoKey cctable[57] = // each coco key + null terminator
 {
-     { "0",         NULL,      IDC_KEYBTN_0,      16,0 },   //  0
-     { "1",         NULL,      IDC_KEYBTN_1,      16,1 },   //  1      !
-     { "2",         NULL,      IDC_KEYBTN_2,      16,2 },   //  2      "
-     { "3",         NULL,      IDC_KEYBTN_3,      16,3 },   //  3      #
-     { "4",         NULL,      IDC_KEYBTN_4,      16,4 },   //  4      $
-     { "5",         NULL,      IDC_KEYBTN_5,      16,5 },   //  5      %
-     { "6",         NULL,      IDC_KEYBTN_6,      16,6 },   //  6      &
-     { "7",         NULL,      IDC_KEYBTN_7,      16,7 },   //  7      '
-     { "8",         NULL,      IDC_KEYBTN_8,      32,0 },   //  8      (
-     { "9",         NULL,      IDC_KEYBTN_9,      32,1 },   //  9      )
-     { "A",         NULL,      IDC_KEYBTN_A,       1,1 },   //  a      A
-     { "ALT",       NULL,      IDC_KEYBTN_ALT,    64,3 },
-     { "AT",        "@",       IDC_KEYBTN_AT,      1,0 },   //  @      
-     { "B",         NULL,      IDC_KEYBTN_B,       1,2 },   //  b      B
-     { "BREAK",     "Break",   IDC_KEYBTN_BRK,    64,2 },   //  BREAK  ESCAPE
-     { "C",         NULL,      IDC_KEYBTN_C,       1,3 },   //  c      C
-     { "CLEAR",     "Clear",   IDC_KEYBTN_CLR,    64,1 },   //  CLEAR
-     { "COLON",     "Colon",   IDC_KEYBTN_COLON,  32,2 },   //  :      *
-     { "COMMA",     "Comma",   IDC_KEYBTN_COMMA,  32,4 },   //  ,      <
-     { "CTRL",      NULL,      IDC_KEYBTN_CTRL,   64,4 },
-     { "D",         NULL,      IDC_KEYBTN_D,       1,4 },   //  d      D
-     { "DOWN",      "Down",    IDC_KEYBTN_DOWN,    8,4 },   //  DOWN
-     { "E",         NULL,      IDC_KEYBTN_E,       1,5 },   //  e      E
-     { "ENTER",     "Enter",   IDC_KEYBTN_ENTER,  64,0 },   //  ENTER
-     { "F",         NULL,      IDC_KEYBTN_F,       1,6 },   //  f      F
-     { "F1",        NULL,      IDC_KEYBTN_F1,     64,5 },   //  F1
-     { "F2",        NULL,      IDC_KEYBTN_F2,     64,6 },   //  F2
-     { "G",         NULL,      IDC_KEYBTN_G,       1,7 },   //  g      G
-     { "H",         NULL,      IDC_KEYBTN_H,       2,0 },   //  h      H
-     { "I",         NULL,      IDC_KEYBTN_I,       2,1 },   //  i      I
-     { "J",         NULL,      IDC_KEYBTN_J,       2,2 },   //  j      J
-     { "K",         NULL,      IDC_KEYBTN_K,       2,3 },   //  k      K
-     { "L",         NULL,      IDC_KEYBTN_L,       2,4 },   //  l      L
-     { "LEFT",      "Left",    IDC_KEYBTN_LEFT,    8,5 },   //  LEFT  
-     { "M",         NULL,      IDC_KEYBTN_M,       2,5 },   //  m      M
-     { "MINUS",     "Minus",   IDC_KEYBTN_MINUS,  32,5 },   //  -      =
-     { "N",         NULL,      IDC_KEYBTN_N,       2,6 },   //  n      N
-     { "O",         NULL,      IDC_KEYBTN_O,       2,7 },   //  o      O
-     { "P",         NULL,      IDC_KEYBTN_P,       4,0 },   //  p      P
-     { "PERIOD",    "Period",  IDC_KEYBTN_PERIOD, 32,6 },   //  .      >
-     { "Q",         NULL,      IDC_KEYBTN_Q,       4,1 },   //  q      Q
-     { "R",         NULL,      IDC_KEYBTN_R,       4,2 },   //  r      R
-     { "RIGHT",     "Right",   IDC_KEYBTN_RIGHT,   8,6 },   //  RIGHT
-     { "S",         NULL,      IDC_KEYBTN_S,       4,3 },   //  s      S
-     { "SEMICOLON", "Semicolon",IDC_KEYBTN_SEMI,  32,3 },   //  ;      +
-     { "SHIFT",     "Shift",   IDC_KEYBTN_LSHIFT, 64,7 },   //  also RSHIFT
-     { "SLASH",     "Slash",   IDC_KEYBTN_SLASH,  32,7 },   //  /      ?
-     { "SPACE",     "Space",   IDC_KEYBTN_SPACE,   8,7 },   //  SPACE
-     { "T",         NULL,      IDC_KEYBTN_T,       4,4 },   //  t      T
-     { "U",         NULL,      IDC_KEYBTN_U,       4,5 },   //  u      U
-     { "UP",        NULL,      IDC_KEYBTN_UP,      8,3 },   //  UP
-     { "V",         NULL,      IDC_KEYBTN_V,       4,6 },   //  v      V
-     { "W",         NULL,      IDC_KEYBTN_W,       4,7 },   //  w      W
-     { "X",         NULL,      IDC_KEYBTN_X,       8,0 },   //  x      X     
-     { "Y",         NULL,      IDC_KEYBTN_Y,       8,1 },   //  y      Y
-     { "Z",         NULL,      IDC_KEYBTN_Z,       8,2 },   //  z      Z
-     { NULL,        NULL,      NULL,               0,0 }    //  table ends
+     { "0",         NULL,       IDC_KEYBTN_0,       4,0 },   //  0
+     { "1",         NULL,       IDC_KEYBTN_1,       4,1 },   //  1
+     { "2",         NULL,       IDC_KEYBTN_2,       4,2 },   //  2
+     { "3",         NULL,       IDC_KEYBTN_3,       4,3 },   //  3
+     { "4",         NULL,       IDC_KEYBTN_4,       4,4 },   //  4
+     { "5",         NULL,       IDC_KEYBTN_5,       4,5 },   //  5
+     { "6",         NULL,       IDC_KEYBTN_6,       4,6 },   //  6
+     { "7",         NULL,       IDC_KEYBTN_7,       4,7 },   //  7
+     { "8",         NULL,       IDC_KEYBTN_8,       5,0 },   //  8
+     { "9",         NULL,       IDC_KEYBTN_9,       5,1 },   //  9
+     { "A",         NULL,       IDC_KEYBTN_A,       0,1 },   //  A
+     { "ALT",       NULL,       IDC_KEYBTN_ALT,     6,3 },   //  ALT 
+     { "AT",        "@",        IDC_KEYBTN_AT,      0,0 },   //  @      
+     { "B",         NULL,       IDC_KEYBTN_B,       0,2 },   //  B
+     { "BREAK",     "Break",    IDC_KEYBTN_BRK,     6,2 },   //  BREAK
+     { "C",         NULL,       IDC_KEYBTN_C,       0,3 },   //  C
+     { "CLEAR",     "Clear",    IDC_KEYBTN_CLR,     6,1 },   //  CLEAR
+     { "COLON",     "Colon",    IDC_KEYBTN_COLON,   5,2 },   //  :
+     { "COMMA",     "Comma",    IDC_KEYBTN_COMMA,   5,4 },   //  ,
+     { "CTRL",      NULL,       IDC_KEYBTN_CTRL,    6,4 },   //  CTRL
+     { "D",         NULL,       IDC_KEYBTN_D,       0,4 },   //  D
+     { "DOWN",      "Down",     IDC_KEYBTN_DOWN,    3,4 },   //  DOWN
+     { "E",         NULL,       IDC_KEYBTN_E,       0,5 },   //  E
+     { "ENTER",     "Enter",    IDC_KEYBTN_ENTER,   6,0 },   //  ENTER
+     { "F",         NULL,       IDC_KEYBTN_F,       0,6 },   //  F
+     { "F1",        NULL,       IDC_KEYBTN_F1,      6,5 },   //  F1
+     { "F2",        NULL,       IDC_KEYBTN_F2,      6,6 },   //  F2
+     { "G",         NULL,       IDC_KEYBTN_G,       0,7 },   //  G
+     { "H",         NULL,       IDC_KEYBTN_H,       1,0 },   //  H
+     { "I",         NULL,       IDC_KEYBTN_I,       1,1 },   //  I
+     { "J",         NULL,       IDC_KEYBTN_J,       1,2 },   //  J
+     { "K",         NULL,       IDC_KEYBTN_K,       1,3 },   //  K
+     { "L",         NULL,       IDC_KEYBTN_L,       1,4 },   //  L
+     { "LEFT",      "Left",     IDC_KEYBTN_LEFT,    3,5 },   //  LEFT  
+     { "M",         NULL,       IDC_KEYBTN_M,       1,5 },   //  M
+     { "MINUS",     "Minus",    IDC_KEYBTN_MINUS,   5,5 },   //  -
+     { "N",         NULL,       IDC_KEYBTN_N,       1,6 },   //  N
+     { "O",         NULL,       IDC_KEYBTN_O,       1,7 },   //  O
+     { "P",         NULL,       IDC_KEYBTN_P,       2,0 },   //  P
+     { "PERIOD",    "Period",   IDC_KEYBTN_PERIOD,  5,6 },   //  .
+     { "Q",         NULL,       IDC_KEYBTN_Q,       2,1 },   //  Q
+     { "R",         NULL,       IDC_KEYBTN_R,       2,2 },   //  R
+     { "RIGHT",     "Right",    IDC_KEYBTN_RIGHT,   3,6 },   //  RIGHT
+     { "S",         NULL,       IDC_KEYBTN_S,       2,3 },   //  S
+     { "SEMICOLON", "Semicolon",IDC_KEYBTN_SEMI,    5,3 },   //  ;
+     { "SHIFT",     "Shift",    IDC_KEYBTN_LSHIFT,  6,7 },   //  RSHIFT
+     { "SLASH",     "Slash",    IDC_KEYBTN_SLASH,   5,7 },   //  /
+     { "SPACE",     "Space",    IDC_KEYBTN_SPACE,   3,7 },   //  SPACE
+     { "T",         NULL,       IDC_KEYBTN_T,       2,4 },   //  T
+     { "U",         NULL,       IDC_KEYBTN_U,       2,5 },   //  U
+     { "UP",        NULL,       IDC_KEYBTN_UP,      3,3 },   //  UP
+     { "V",         NULL,       IDC_KEYBTN_V,       2,6 },   //  V
+     { "W",         NULL,       IDC_KEYBTN_W,       2,7 },   //  W
+     { "X",         NULL,       IDC_KEYBTN_X,       3,0 },   //  X     
+     { "Y",         NULL,       IDC_KEYBTN_Y,       3,1 },   //  Y
+     { "Z",         NULL,       IDC_KEYBTN_Z,       3,2 },   //  Z
+     { NULL,        NULL,       NULL,               0,0 }    //  table end
 };
+
+// Row and col index for above cctable
+static int cctable_ndx[56] = 
+      {12, 10, 13, 15, 20, 22, 24, 27,  // row  1 @,A,B,C,D,E,F,G      
+       28, 29, 30, 31, 32, 34, 36, 37,  // row  2 H,I,J,K,L,M,N,O
+	   38, 40, 41, 43, 48, 49, 51, 52,  // row  4 P,Q,R,S,T,U,V,W
+	   53, 54, 55, 50, 21, 33, 42, 47,  // row  8 X,Y,Z,UP,DOWN,LEFT,RIGHT,SPACE
+	    0,  1,  2,  3,  4,  5,  6,  7,  // row 16 0,1,2,3,4,5,6,7
+        8,  9, 17, 44, 18, 35, 39, 46,  // row 32 8,9,COLON,SEMI,COMMA,MINUS,PERIOD 
+       23, 16, 14, 11, 19, 25, 26, 45}; // row 64 ENTER,CLR,BRK,ALT,CTRL,F1,F1,SHIFT
+
+// Modifier Buttons
+static int ModBtnCode[4] = {0,IDC_KEYBTN_LSHIFT,IDC_KEYBTN_CTRL,IDC_KEYBTN_ALT}; 
+
+// Modifier ScanCodes 
+static int ModScanCode[4] = {0,DIK_LSHIFT,DIK_LCONTROL,DIK_LMENU};
+
+// Modifier Names
+static char *ModName[4] = {"","Shift","Ctrl","Alt"};
 
 // Windows handles
 HWND  hKeyMapDlg;     // Key map dialog
-HWND  hEdit_PC;       // Control to display PC Key.
-HWND  hEdit_CC;       // Control to display selected CoCo Keys
-HWND  hEdit_MapFile;  // Control to display current map file name
+HWND  hText_PC;       // Control to display PC Key.
+HWND  hText_CC;       // Control to display selected CoCo Keys
+HWND  hText_MapFile;  // Control to display current map file name
 
-// Subclassed Edit_PC control processing
-WNDPROC Edit_PCproc;
+// Shunt to subclass Edit_PC control processing
 LRESULT CALLBACK SubEdit_PCproc(HWND,UINT,WPARAM,LPARAM);
+WNDPROC Edit_PCproc;
 
 // CoCo and Host PC buttons and keys that are currently selected
 // Note Left and Right modifiers are tied together
@@ -273,40 +296,51 @@ int CC_KeySelected;  // BtnId
 int CC_ModSelected;  // 0,1,2,3
 int PC_KeySelected;  // ScanCode
 int PC_ModSelected;  // 0,1,2,3
- 
-// Modifier Names for edit box display
-static char *ModName[4] = {"","Shift","Ctrl","Alt"};
+
+// Pointer to selected keyboardLayout custom translation entry
+keytranslationentry_t * pKeyTran = NULL;
 
 // Flag to limit the number of popup error messages
 // when loading the custom keymap from a file
 int UserWarned = 0;
 
 // Current CoCo key button states (up/down)
+// Used to raise currently down buttons
 BOOL CoCoKeySet;      // BtnId
 BOOL CoCoModSet;      // 0,1,2,3
 
-// Brush for text box background
-HBRUSH hbrBkgnd = NULL;
+// Background and Font for text box
+HBRUSH hbrTextBox = NULL;
+HFONT  hfTextBox  = NULL;
 
 // Forward references
 BOOL  InitKeymapDialog(HWND);
 BOOL  Process_CoCoKey(int);
+BOOL  LoadCustKeymap();
+BOOL  SaveCustKeymap();
+BOOL  SetCustomKeymap();
+BOOL  ClrCustomKeymap();
+BOOL  SetControlFont(WPARAM,LPARAM);
 void  CoCoModifier(int);
 void  ShowCoCoKey();
 void  SetPCmod(int);
 void  ShowPCkey();
+void  SetCoCokey();
 void  DoKeyDown(WPARAM,LPARAM);
 void  ShowMapError(int, char *);
-int   scantable_lookup(char *);
 void  SetDialogFocus(HWND);
+int   GetKeymapLine ( char*, keytranslationentry_t *, int);
+int   CustKeyTransLen();
 
-struct PCScanCode * scantable_sclookup(int);
-int GetKeymapLine ( char*, keytranslationentry_t *, int);
+// Lookups on above tables
+static struct CoCoKey * cctable_rowcol_lookup(unsigned char, unsigned char);
+static struct CoCoKey * cctable_keyid_lookup(int);
+static struct CoCoKey * cocotable_keyname_lookup(char);
+static struct PCScanCode * scantable_scancode_lookup(int);
+static struct PCScanCode * scantable_keyname_lookup(char *);
 
 /**************************************************/
-/*                                                */
 /*          Load custom keymap from file          */
-/*                                                */
 /**************************************************/
 
 int LoadCustomKeyMap(char* keymapfile)
@@ -367,31 +401,34 @@ void ShowMapError(int lnum, char *msg)
 //-----------------------------------------------------
 // Keyname lookup on PC keynames table
 //-----------------------------------------------------
-int scantable_lookup(char * keyname)
+static struct 
+PCScanCode * scantable_keyname_lookup(char * keyname) 
 {
     int first = 0;
     int last = (sizeof(sctable)/sizeof(sctable[0]))-1;
     int mid = last / 2;
-    int cmp = strncmp(keyname,"DIK_",  4);
-    if (cmp != 0) return -1;
-    while (first < last) {
+
+	int cmp = strncmp(keyname,"DIK_",  4);
+	if (cmp != 0) return NULL;
+
+	while (first < last) {
         cmp = strcmp(keyname+4,sctable[mid].keyname);
-        if (cmp == 0) return mid;
-        if (cmp > 0) {
+		if (cmp == 0) return sctable + mid;
+		if (cmp > 0) {
             first = mid + 1;
         } else {
             last = mid;
         }
         mid = (first+last)/2;
     }
-    return -1;
+    return NULL;
 }
 
 //-----------------------------------------------------
 // ScanCode lookup on PC keynames table
 // Sequential scan is quick enough
 //-----------------------------------------------------
-struct PCScanCode * scantable_sclookup(int ScanCode)
+struct PCScanCode * scantable_scancode_lookup(int ScanCode)
 {
 	struct PCScanCode *p = sctable;
 	while (p->ScanCode > 0) {
@@ -404,24 +441,30 @@ struct PCScanCode * scantable_sclookup(int ScanCode)
 //-----------------------------------------------------
 // Do lookup on CoCo keynames table
 //-----------------------------------------------------
-int cocotable_lookup(char * keyname)
+//int cocotable_lookup(char * keyname)
+static struct 
+CoCoKey * cocotable_keyname_lookup(char * keyname)
 {
     int first = 0;
-    int last = (sizeof(cctable)/sizeof(cctable[0]))-1;
+
+	int last = (sizeof(cctable)/sizeof(cctable[0]))-1; // 56
     int mid = last / 2;
-    int cmp = strncmp(keyname,"COCO_",  5);
-    if (cmp != 0) return -1;
-    while (first < last) {
+
+	int cmp = strncmp(keyname,"COCO_",  5);
+   // if (cmp != 0) return -1;
+    if (cmp != 0) return NULL;
+
+	while (first < last) {
         cmp = strcmp(keyname+5,cctable[mid].keyname);
-        if (cmp == 0) return mid;
-        if (cmp > 0) {
+        if (cmp == 0) return cctable + mid;
+		if (cmp > 0) {
             first = mid + 1;
         } else {
             last = mid;
         }
         mid = (first+last)/2;
     }
-    return -1;
+    return NULL;
 }
 
 //-----------------------------------------------------
@@ -429,28 +472,30 @@ int cocotable_lookup(char * keyname)
 //-----------------------------------------------------
 int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
 {
-    char *p;
-    int n;
+    char *pStr;
+    static struct PCScanCode * pPCScanCode; 
+    static struct CoCoKey * pCoCoKey;
 
     // pc scancode -> ScanCode1
-    p = strtok(line, " \t\n\r");
-    if ((p == NULL) || (*p == '#')) return 1; // comment
+    pStr = strtok(line, " \t\n\r");
+    if ((pStr == NULL) || (*pStr == '#')) return 1; // comment
 
-    n = scantable_lookup(p);
-    if (n < 0) {
-        ShowMapError(lnum,"PC Scancode not recognized");
+	pPCScanCode = scantable_keyname_lookup(pStr);
+	if (pPCScanCode == NULL) {
+	    ShowMapError(lnum,"PC Scancode not recognized");
         return 2;
     }
-    trans->ScanCode1 = sctable[n].ScanCode;
+    trans->ScanCode1 = pPCScanCode->ScanCode;
 
     // pc modifier -> ScanCode2
-    p = strtok(NULL, " \t\n\r");
-    if (p == NULL) {
+    pStr = strtok(NULL, " \t\n\r");
+    if (pStr == NULL) {
         ShowMapError(lnum,"PC Scancode modifier missing");
         return 2;
     }
+	
     // Generate scancode for modifier 1=shift,2=ctrl,3=alt
-    switch(*p) {
+	switch(*pStr) {
     case '0':
         trans->ScanCode2 = 0;
         break;
@@ -461,7 +506,7 @@ int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
         trans->ScanCode2 = DIK_LCONTROL;
         break;
     case '3':
-        trans->ScanCode2 = DIK_LALT;
+        trans->ScanCode2 = DIK_LMENU;
         break;
     default:
         ShowMapError(lnum,"PC key modifier not recognized");
@@ -469,32 +514,32 @@ int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
     }
 
     // CoCo Key -> Row1, Col1
-    p = strtok(NULL, " \t\n\r");
-    if (p == NULL) {
+	// TODO Accept null map?
+	pStr = strtok(NULL, " \t\n\r");
+    if (pStr == NULL) {
         ShowMapError(lnum,"CoCo keyname missing");
         return 2;
     }
-
-    n = cocotable_lookup(p);
-    if (n < 0) {
-        ShowMapError(lnum,"CoCo keyname not recognized");
+    pCoCoKey = cocotable_keyname_lookup(pStr);
+	if (pCoCoKey == NULL) {
+		ShowMapError(lnum,"CoCo keyname not recognized");
         return 2;
     }
-    trans->Row1 = cctable[n].row;
-    trans->Col1 = cctable[n].col;
+	trans->Row1 = 1 << pCoCoKey->row;
+    trans->Col1 = pCoCoKey->col;
 
     // CoCo Key modifer -> Row2, Col2
-    p = strtok(NULL, " \t\n\r");
+    pStr = strtok(NULL, " \t\n\r");
 
     // If modifier missing accept input anyway
-    if (p == NULL) {
+    if (pStr == NULL) {
         trans->Row2 = 0;
         trans->Col2 = 0;
         return 0;
     }
 
     // Generate row and col for modifier 1=shift,2=ctrl,3=alt
-	switch(*p) {
+	switch(*pStr) {
     case '0':
         trans->Row2 = 0;
         trans->Col2 = 0;
@@ -519,43 +564,165 @@ int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
 }
 
 /**************************************************/
-/*                                                */
 /*              Keymap Edit Dialog                */
-/*                                                */
 /**************************************************/
 
 BOOL CALLBACK KeyMapProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-//	PrintLogC("D: %04x %08x %08x\n",msg,wParam,lParam);
+//	PrintLogC("%04x %08x %08x\n",msg,wParam,lParam);
 	switch (msg) {
 	case WM_INITDIALOG:
         return InitKeymapDialog(hWnd);
 	case WM_CLOSE:
 		return EndDialog(hWnd,wParam);
 	case WM_CTLCOLORSTATIC:
-		if ( (hEdit_PC == (HWND)lParam) |
-		     (hEdit_CC == (HWND)lParam) |
-		     (hEdit_MapFile == (HWND)lParam) ) {
-//   		SetTextColor((HDC)wParam,RGB(255,0,0));
-            return (INT_PTR)hbrBkgnd;
-		}
-
-	case WM_CHAR:
+		return SetControlFont(wParam,lParam);
 	case WM_COMMAND:
 		switch(LOWORD(wParam)) {
         case IDC_KEYMAP_EXIT:
 			return EndDialog(hWnd,wParam);
-// TODO finish load,save,and set 
 		case IDC_LOAD_KEYMAP:
+			return LoadCustKeymap();
 		case IDC_SAVE_KEYMAP:
+			return SaveCustKeymap();
 		case IDC_SET_CUST_KEYMAP:
-	        SetDialogFocus(hEdit_PC);
-            return TRUE;
+			return SetCustomKeymap();
+	    case IDC_CLR_CUST_KEYMAP:
+			return ClrCustomKeymap();
 		default:
 			return Process_CoCoKey(LOWORD(wParam));
 		}
 	}
     return FALSE; 
+}
+
+//-----------------------------------------------------
+// Set Control font 
+//-----------------------------------------------------
+BOOL SetControlFont(WPARAM wParam, LPARAM lParam) {
+	if (((HWND) lParam == hText_PC) |
+	    ((HWND) lParam == hText_CC) |
+	    ((HWND) lParam == hText_MapFile)) {
+	    SelectObject((HDC)wParam,hfTextBox); 
+        return (INT_PTR)hbrTextBox;
+	}	
+	return FALSE;
+}
+
+//-----------------------------------------------------
+// Load custom keymap file
+//-----------------------------------------------------
+// TODO finish load,save,and set 
+BOOL LoadCustKeymap() {
+	SetDialogFocus(hText_PC);
+	return TRUE;
+}
+
+//-----------------------------------------------------
+// Save custom keymap file
+//-----------------------------------------------------
+// TODO finish load,save,and set 
+BOOL SaveCustKeymap() {
+	SetDialogFocus(hText_PC);
+	return TRUE;
+}
+
+//-----------------------------------------------------
+// Set mapping for currently selected key
+//-----------------------------------------------------
+BOOL SetCustomKeymap() {
+
+	int ModCol;
+	int ModRow;
+	static struct CoCoKey *p;
+
+	if (pKeyTran == NULL) {
+
+		// If no entry and no coco key to map do nothing
+		if ( (CC_KeySelected + CC_ModSelected) == 0 ) return TRUE;
+
+		p = cctable_keyid_lookup(CC_KeySelected);
+		int len = 0;
+	    pKeyTran = keyTranslationsCustom;
+
+		while (pKeyTran->ScanCode1 > 0) {
+		    len++;
+		    pKeyTran++;
+	    }
+	    if (len >= MAX_CTRANSTBLSIZ) {
+			// table overflow!!
+			return TRUE;
+		}
+		pKeyTran->ScanCode1 = PC_KeySelected;
+		pKeyTran->ScanCode2 = ModScanCode[PC_ModSelected];
+	}
+
+    // Generate row and col for modifier
+	switch(CC_ModSelected) {
+    case 1:
+        ModCol = 7;
+		ModRow = 64;
+        break;
+    case 2:
+        ModCol = 4;
+		ModRow = 64;
+        break;
+    case 3:
+        ModCol = 3;
+		ModRow = 64;
+        break;
+	default:
+	    ModCol = 0;
+	    ModRow = 0;
+		break;
+	}
+
+	// Update custom translation table
+    if (CC_KeySelected != 0) {  // BtnId
+		p = cctable_keyid_lookup(CC_KeySelected);
+		if (p) {
+			pKeyTran->Row1 = 1<<(p->row);
+		    pKeyTran->Col1 = p->col;
+		} else {
+			// Internal error, invalid Map!
+			return TRUE;
+		}
+		pKeyTran->Row2 = ModRow;
+		pKeyTran->Col2 = ModCol;
+
+	} else if (CC_ModSelected != 0) {
+		pKeyTran->Row1 = ModRow;
+		pKeyTran->Col1 = ModCol;
+
+	} else {
+		// Remove PC key from translation table
+		//TODO: Warn user
+		while (pKeyTran->ScanCode1 > 0) {
+		    memcpy(pKeyTran,pKeyTran+1,sizeof(keytranslationentry_t));
+		    pKeyTran++;
+	    }
+	}
+
+    // Update runtime table
+	if (GetKeyboardLayout() == kKBLayoutCustom)
+			vccKeyboardBuildRuntimeTable((keyboardlayout_e) kKBLayoutCustom);
+
+	// Reset focus
+	SetDialogFocus(hText_PC);
+    return TRUE;
+}
+
+//-----------------------------------------------------
+// Clear current key selection
+//-----------------------------------------------------
+BOOL ClrCustomKeymap() {
+	PC_KeySelected = 0;
+	PC_ModSelected = 0;
+	ShowPCkey();
+	SetCoCokey();
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),FALSE);
+	SetDialogFocus(hText_PC);
+	return TRUE;
 }
 
 //-----------------------------------------------------
@@ -567,12 +734,18 @@ BOOL InitKeymapDialog(HWND hWnd)
 	hKeyMapDlg = hWnd;
 
 	// Save handles for data display controls as globals
-	hEdit_CC = GetDlgItem(hWnd,IDC_CCKEY_TXT);
-	hEdit_PC = GetDlgItem(hWnd,IDC_PCKEY_TXT);
-    hEdit_MapFile = GetDlgItem(hWnd,IDC_KEYMAP_FILE);
+	hText_CC = GetDlgItem(hWnd,IDC_CCKEY_TXT);
+	hText_PC = GetDlgItem(hWnd,IDC_PCKEY_TXT);
+    hText_MapFile = GetDlgItem(hWnd,IDC_KEYMAP_FILE);
 
-    if (hbrBkgnd == NULL)
-        hbrBkgnd = CreateSolidBrush(RGB(255,255,255));
+	if (hfTextBox == NULL) 
+		hfTextBox = CreateFont (14, 0, 0, 0, FW_MEDIUM, FALSE, 
+				FALSE, FALSE, ANSI_CHARSET, OUT_TT_PRECIS, 
+				CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, 
+				DEFAULT_PITCH | FF_DONTCARE, TEXT("Tahoma"));
+
+    if (hbrTextBox == NULL)
+        hbrTextBox = CreateSolidBrush(RGB(255,255,255));
 
 	// Initialize selected keys information
 	CC_KeySelected = 0;
@@ -581,20 +754,35 @@ BOOL InitKeymapDialog(HWND hWnd)
 	PC_ModSelected = 0;
     CoCoKeySet = 0;
 	CoCoModSet = 0;
+    
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),FALSE);
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),FALSE);
 
     // keymap filename
 	// TODO:  Make it real
 	char str[64];
 	sprintf(str, "Custom.keymap");
-	SendMessage(hEdit_MapFile, WM_SETTEXT, 0, (LPARAM)str);
+	SendMessage(hText_MapFile, WM_SETTEXT, 0, (LPARAM)str);
 
-	// Subclass hEdit_PC to handle PC keyboard
-	Edit_PCproc = (WNDPROC)GetWindowLongPtr(hEdit_PC, GWLP_WNDPROC);
-	SetWindowLongPtr(hEdit_PC, GWLP_WNDPROC, (LONG_PTR)SubEdit_PCproc);
+	// Subclass hText_PC to handle PC keyboard
+	Edit_PCproc = (WNDPROC)GetWindowLongPtr(hText_PC, GWLP_WNDPROC);
+	SetWindowLongPtr(hText_PC, GWLP_WNDPROC, (LONG_PTR)SubEdit_PCproc);
 
-	SetDialogFocus(hEdit_PC);
+	SetDialogFocus(hText_PC);
 
 	return FALSE;
+}
+
+//-----------------------------------------------------
+// Select or toggle coco shift, ctrl, or alt (1, 2, or 3)
+//-----------------------------------------------------
+void CoCoModifier(int Modifier)
+{
+	if (CC_ModSelected != Modifier) {
+		CC_ModSelected = Modifier;
+	} else {
+		CC_ModSelected = 0;
+	}
 }
 
 //-----------------------------------------------------
@@ -604,16 +792,9 @@ void SetDialogFocus(HWND hCtrl) {
     SendMessage(hKeyMapDlg,WM_NEXTDLGCTL,(WPARAM)hCtrl,TRUE);
 }
 
-//-----------------------------------------------------
-// Handle CoCo key button press
-//-----------------------------------------------------
-BOOL Process_CoCoKey(int BtnId)
+// Select coco key(s) as per button id
+void CoCoSelect(int BtnId) 
 {
-	// Return FALSE if not a CoCo key button 
-	if (BtnId < IDC_KEYBTN_FIRST) return FALSE;
-	if (BtnId > IDC_KEYBTN_LAST) return FALSE;
-
-	SetDialogFocus(hEdit_PC);
 	switch (BtnId) {
 	case IDC_KEYBTN_RSHIFT:
 	case IDC_KEYBTN_LSHIFT:
@@ -630,24 +811,28 @@ BOOL Process_CoCoKey(int BtnId)
 			CC_KeySelected = BtnId;
 		} else {
 			CC_KeySelected = 0;
-			CC_ModSelected = 0;
 		}
 	}
-	ShowCoCoKey();
-	return TRUE;
 }
 
 //-----------------------------------------------------
-// Select or toggle coco shift, ctrl, or alt (1, 2, or 3)
+// Handle CoCo key button press
 //-----------------------------------------------------
-void CoCoModifier(int Modifier)
+BOOL Process_CoCoKey(int BtnId)
 {
-	if (CC_ModSelected != Modifier) {
-		CC_ModSelected = Modifier;
+
+	// Return FALSE if not a CoCo key button 
+	if (BtnId < IDC_KEYBTN_FIRST) return FALSE;
+	if (BtnId > IDC_KEYBTN_LAST) return FALSE;
+	SetDialogFocus(hText_PC);
+    if ( (PC_KeySelected != 0 ) | ( PC_ModSelected !=0 ) ) {
+	    CoCoSelect(BtnId);
+	    ShowCoCoKey();
+	    EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),TRUE);
 	} else {
-		CC_ModSelected = 0;
-		CC_KeySelected = 0;
+		MessageBox(hKeyMapDlg,"Press key(s) on PC keyboard first","Error",0);
 	}
+	return TRUE;
 }
 
 //-----------------------------------------------------
@@ -666,6 +851,25 @@ void SetModKeyState (int mod, int state)
 	case 3:
 	    Button_SetState(GetDlgItem(hKeyMapDlg,IDC_KEYBTN_ALT),state);
     }
+}
+
+//-----------------------------------------------------
+// Lookup CoCo key by key button id
+//-----------------------------------------------------
+static struct CoCoKey * cctable_keyid_lookup(int id) 
+{
+	struct CoCoKey *p;
+	if (CC_KeySelected) {
+        p = cctable;
+		while (p->id > 0) { 
+			if (p->id == CC_KeySelected) {
+				return p;
+				break;
+			}
+			p++; 
+    	}
+	}
+	return NULL;
 }
 
 //-----------------------------------------------------
@@ -697,23 +901,18 @@ void ShowCoCoKey()
 
 	// Show coco keys names in editbox
 	if (CC_KeySelected) {
-//	    p = GetCoCoTable(); 
-        p = cctable;
-		while (p->id > 0) { 
-			if (p->id == CC_KeySelected) {
-		        if (p->label != NULL) {
-			        keytxt = p->label;
-		        } else {
-			        keytxt = p->keyname;   
-				}
-				break;
+        p = cctable_keyid_lookup(CC_KeySelected);
+		if (p != NULL) {
+			if (p->label != NULL) {
+			    keytxt = p->label;
+		    } else {
+			    keytxt = p->keyname;   
 			}
-			p++; 
-    	}
+	   	}
 	}
 
-	sprintf(str, " %s %s",ModName[CC_ModSelected],keytxt);
-	SendMessage(hEdit_CC, WM_SETTEXT, 0, (LPARAM)str);
+	sprintf(str,"%s %s",ModName[CC_ModSelected],keytxt);
+	SendMessage(hText_CC, WM_SETTEXT, 0, (LPARAM)str);
 }
 
 //-----------------------------------------------------
@@ -724,24 +923,23 @@ void ShowCoCoKey()
 LRESULT CALLBACK 
 SubEdit_PCproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-//	PrintLog("E: %04x %08x %08x",msg,wParam,lParam);
     int ScanCode;
     int Extended;
 	switch (msg) {
 	case WM_GETDLGCODE:
 		return DLGC_WANTALLKEYS;
-
 	case WM_SYSKEYUP:
 	case WM_KEYUP:
+	case WM_CHAR:
 		return 0;
-
 	case WM_SYSKEYDOWN:
 	case WM_KEYDOWN:
         ScanCode=(lParam >> 16) & 0xFF;
         Extended=(lParam >> 24) & 1;
-		if (Extended && (ScanCode>DIK_SCROLL)) ScanCode += 0x80;
-
+		if (Extended && (ScanCode!=DIK_NUMLOCK)) ScanCode += 0x80;
 	    switch (ScanCode) {
+		case DIK_LWIN:
+			return 0;
 	    case DIK_LSHIFT:
 	    case DIK_RSHIFT:
 			SetPCmod(1);
@@ -755,10 +953,15 @@ SubEdit_PCproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			SetPCmod(3);
 			break;
 	    default:
-		    PC_KeySelected = ScanCode;
+			if (PC_KeySelected == ScanCode) {
+				PC_KeySelected = 0;
+			} else {
+		       PC_KeySelected = ScanCode;
+			}
 			break;
 	    }
 		ShowPCkey();
+        SetCoCokey();
 		return 0;
 	}
 	// Stock control does everything else
@@ -771,7 +974,6 @@ SubEdit_PCproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 void SetPCmod(int ModNum)
 {
 	if (ModNum == PC_ModSelected) {
-		PC_KeySelected = 0;
 		PC_ModSelected = 0;
 	} else {
 		PC_ModSelected = ModNum;
@@ -788,7 +990,7 @@ void ShowPCkey()
 	char * modtxt = "";
     struct PCScanCode * entry;
 	if (PC_KeySelected>0) { 
-		entry = scantable_sclookup(PC_KeySelected);
+		entry = scantable_scancode_lookup(PC_KeySelected);
 		if (entry == NULL) {
 			keytxt = "";
 			PC_KeySelected=0;
@@ -797,10 +999,72 @@ void ShowPCkey()
 			if (keytxt == NULL) keytxt = entry->keyname;
 		}
 	}
-	sprintf(str, " %s %s",ModName[PC_ModSelected],keytxt);
-	SendMessage(hEdit_PC, WM_SETTEXT, 0, (LPARAM)str);
+	sprintf(str,"%s %s",ModName[PC_ModSelected],keytxt);
+	SendMessage(hText_PC, WM_SETTEXT, 0, (LPARAM)str);
+
+	if ( (PC_KeySelected > 0) | (PC_ModSelected > 0) ) {
+		EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),TRUE);
+	} else {
+		EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),FALSE);
+	}
 }
 
-//  TODO: Change CoCo key as per current map
-//	keytranslationentry_t * keyTranslationsCustom;
+//-----------------------------------------------------
+// Set CoCo key as per current map 
+//-----------------------------------------------------
+void SetCoCokey()
+{
+    static struct CoCoKey * pCoCoKey;
+
+	// Clear selected coco keys
+    CC_KeySelected = 0;
+	CC_ModSelected = 0;
+
+    // Scan Custom translation table for match on PC key(s) selected
+	int mod = ModScanCode[PC_ModSelected];
+	int s1 = PC_KeySelected + ( mod << 8 );
+	int s2 = ( PC_KeySelected << 8 ) + mod; 
+
+	pKeyTran = keyTranslationsCustom;
+	while (pKeyTran->ScanCode1 != 0) { 
+        int m = pKeyTran->ScanCode1 + (pKeyTran->ScanCode2 << 8);
+		if ( (m == s1) | (m == s2) ) break;
+		pKeyTran++;
+	}
+
+    // If match found select mapped coco keys (if any)
+	if (pKeyTran->ScanCode1 != 0) {
+		if (pKeyTran->Row1 != 0) {
+			pCoCoKey = cctable_rowcol_lookup(pKeyTran->Row1, pKeyTran->Col1);
+	        if (pCoCoKey) CoCoSelect(pCoCoKey->id);
+		}
+		if (pKeyTran->Row2 != 0) {
+	        pCoCoKey = cctable_rowcol_lookup(pKeyTran->Row2, pKeyTran->Col2);
+	        if (pCoCoKey) CoCoSelect(pCoCoKey->id);
+		}
+	} else {
+		pKeyTran = NULL; 
+	}
+
+	// Show results
+    ShowCoCoKey();
+}
+
+// Lookup cctable by row and col
+static struct CoCoKey *
+cctable_rowcol_lookup(unsigned char RowMask, unsigned char Col)
+{
+	int ndx = Col;
+	switch (RowMask) {
+    case 2:  ndx+=8; break;
+	case 4:  ndx+=16; break;
+	case 8:  ndx+=24; break;
+	case 16: ndx+=32; break;
+	case 32: ndx+=40; break;
+	case 64: ndx+=48; break;
+	}
+	if (ndx < 56) return cctable + (cctable_ndx[ndx]);
+	return NULL;
+}
+
 

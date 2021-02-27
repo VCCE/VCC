@@ -29,7 +29,7 @@ This file is part of VCC (Virtual Color Computer).
 /*****************************************************************************/
 
 #define DIRECTINPUT_VERSION 0x0800
-// this must be before defines.h as it contains Windows types and not Windows.h include
+// this must be before dinput.h as it contains Windows types and not Windows.h include
 #include <windows.h>
 #include <dinput.h>
 
