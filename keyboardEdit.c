@@ -331,8 +331,9 @@ void  SetCoCokey();
 void  DoKeyDown(WPARAM,LPARAM);
 void  ShowMapError(int, char *);
 void  SetDialogFocus(HWND);
-int   GetKeymapLine ( char*, keytranslationentry_t *, int);
+int   GetKeymapLine (char*, keytranslationentry_t *, int);
 int   CustKeyTransLen();
+char *CreateKeymapLine(keytranslationentry_t *);
 
 // Lookups on above tables
 static struct CoCoKey * cctable_rowcol_lookup(unsigned char, unsigned char);
@@ -348,7 +349,7 @@ static struct PCScanCode * scantable_keyname_lookup(char *);
 int LoadCustomKeyMap(char* keymapfile)
 {
     FILE *keymap;
-    char buf[512];
+    char buf[256];
     int  ndx  = 0;
     int  lnum = 0;
 
@@ -368,7 +369,7 @@ int LoadCustomKeyMap(char* keymapfile)
 			 sizeof(keytranslationentry_t)*MAX_CTRANSTBLSIZ);
 
     // load keymap from file.
-    while (fgets(buf,500,keymap)) {
+    while (fgets(buf,250,keymap)) {
         lnum++;
         if (GetKeymapLine(buf, &keyTranslationsCustom[ndx],lnum)==0) {
             ndx++;
@@ -478,6 +479,131 @@ int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
         return 2;
     }
     return 0;
+}
+
+//------------------------------------------------------
+// Save custom keymap to file 
+//-----------------------------------------------------
+int SaveCustomKeyMap(char* keymapfile) 
+{
+    keytranslationentry_t * pTran;
+	pTran = keyTranslationsCustom;
+    FILE *keymap;
+
+	char buf[256];
+
+	// Open keymap file, try to open existing first
+	if ((keymap = fopen(keymapfile,"r+")) != NULL) {
+        // If existing position to first non comment line
+        int position=0;
+        while (fgets(buf,250,keymap)) { 
+			if (*buf != '#') break;
+			position = ftell(keymap);
+		}
+		fseek(keymap,position,SEEK_SET);
+	} else {
+		// Try to create file if open existing failed
+		keymap = fopen(keymapfile,"w+");
+	    if (keymap == NULL) {
+            MessageBox(0,"Keymap file open failed","",0);
+		    return 0;
+	    }
+	}
+
+    // Append contents of custom key translation table
+	while (pTran->ScanCode1 != 0) {
+		sprintf(buf,"%s\n",CreateKeymapLine(pTran));
+		fputs(buf,keymap);
+		pTran++;
+	}
+
+	// Close
+    fclose(keymap);
+	return 0;
+}
+
+//------------------------------------------------------
+// Convert translation record to keymap file text format
+//-----------------------------------------------------
+char * CreateKeymapLine( keytranslationentry_t * pTran )
+{
+	static char txt[64];
+	static struct PCScanCode * pSC; 
+    static struct CoCoKey * pCC; 
+	int CCmod = 0;
+	int PCmod = 0;
+
+	// Determine PC key and modifier
+	if (pTran->ScanCode1 == 0) return NULL;
+	if (pTran->Row1 == 0) return NULL;
+
+    if (pTran->ScanCode2 != 0) {
+	    switch (pTran->ScanCode1) {
+	    case DIK_LSHIFT:   
+		    PCmod = 1;
+		    break;
+	    case DIK_LCONTROL: 
+		    PCmod = 2;
+		    break;
+	    case DIK_LMENU:
+		    PCmod = 3;
+		    break;
+		}
+    }
+
+    if ((pTran->ScanCode2 != 0) & (PCmod != 0)) {
+		pSC = scantable_scancode_lookup(pTran->ScanCode2);
+	} else {
+	    pSC = scantable_scancode_lookup(pTran->ScanCode1);
+	    switch (pTran->ScanCode2) {
+		case DIK_LSHIFT:   
+		    PCmod = 1;
+		    break;
+		case DIK_LCONTROL:
+		    PCmod = 2;
+		    break;
+		case DIK_LMENU:
+		    PCmod = 3;
+		    break;
+		}
+	}
+
+	 
+	if (pSC == NULL) return NULL;
+
+	// Determine CoCo key and modifier
+    if (pTran->Row2 != 0) {
+        if (pTran->Row1 == 64) {
+		    if (pTran->Col1 == 7) {         // shift
+			    CCmod = 1;
+		    } else if (pTran->Col1 == 4) {  // ctrl
+			    CCmod = 2;
+		    } else if (pTran->Col1 == 3) {  // alt
+			    CCmod = 3;
+		    }
+		}
+	}
+	
+    if ((pTran->Row2 != 0) & (CCmod != 0)) {
+		pCC = cctable_rowcol_lookup(pTran->Row2, pTran->Col2); 
+	} else {
+		pCC = cctable_rowcol_lookup(pTran->Row1, pTran->Col1); 
+        if (pTran->Row2 == 64) {
+		    if (pTran->Col2 == 7) {
+			    CCmod = 1;
+		    } else if (pTran->Col2 == 4) {
+			    CCmod = 2;
+		    } else if (pTran->Col2 == 3) {
+			    CCmod = 3;
+		    }
+	    }
+    }	
+	if (pCC == NULL) return NULL;
+
+	sprintf(txt,"  DIK_%-12s %d    COCO_%-10s %d",
+			pSC->keyname, PCmod, pCC->keyname, CCmod);
+
+	return txt;
 }
 
 //-----------------------------------------------------
@@ -710,6 +836,7 @@ BOOL LoadCustKeymap() {
 //-----------------------------------------------------
 // TODO finish
 BOOL SaveCustKeymap() {
+    SaveCustomKeyMap("foo.foo"); 
 	SetDialogFocus(hText_PC);
 	return TRUE;
 }
