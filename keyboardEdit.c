@@ -22,6 +22,7 @@ This file is part of VCC (Virtual Color Computer)
 
 #include <windows.h>
 #include <windowsx.h>
+#include <Shlwapi.h>
 #include <stdio.h>
 
 #include "defines.h"
@@ -488,37 +489,45 @@ int SaveCustomKeyMap(char* keymapfile)
 {
     keytranslationentry_t * pTran;
 	pTran = keyTranslationsCustom;
-    FILE *keymap;
 
-	char buf[256];
+    FILE *omap;
+	FILE *kmap;
 
-	// Open keymap file, try to open existing first
-	if ((keymap = fopen(keymapfile,"r+")) != NULL) {
-        // If existing position to first non comment line
-        int position=0;
-        while (fgets(buf,250,keymap)) { 
-			if (*buf != '#') break;
-			position = ftell(keymap);
+	char buf[512];
+
+	if (PathFileExists(keymapfile)) {
+
+	    // Rename existing file to a backup version (append '~')
+	    strncpy(buf,keymapfile,500);
+        strcat(buf,"~");
+	    DeleteFile(buf);
+	    MoveFile(keymapfile,buf);
+		kmap = fopen(keymapfile,"w");
+
+		// Copy comments from old file to new file
+	    omap = fopen(buf,"r");
+		while (fgets(buf,200,omap)) { 
+		   	if (*buf != '#') break;
+			fputs(buf,kmap);
 		}
-		fseek(keymap,position,SEEK_SET);
+        fclose(omap);
+
 	} else {
-		// Try to create file if open existing failed
-		keymap = fopen(keymapfile,"w+");
-	    if (keymap == NULL) {
-            MessageBox(0,"Keymap file open failed","",0);
-		    return 0;
-	    }
+		kmap = fopen(keymapfile,"w");
 	}
 
     // Append contents of custom key translation table
 	while (pTran->ScanCode1 != 0) {
 		sprintf(buf,"%s\n",CreateKeymapLine(pTran));
-		fputs(buf,keymap);
+		if( fputs(buf,kmap) < 0) {
+            MessageBox(0,"Keymap file write failed","",0);
+		    return 0;
+		}
 		pTran++;
 	}
 
 	// Close
-    fclose(keymap);
+    fclose(kmap);
 	return 0;
 }
 
@@ -836,7 +845,7 @@ BOOL LoadCustKeymap() {
 //-----------------------------------------------------
 // TODO finish
 BOOL SaveCustKeymap() {
-    SaveCustomKeyMap("foo.foo"); 
+    SaveCustomKeyMap(KeyMapFilename()); 
 	SetDialogFocus(hText_PC);
 	return TRUE;
 }
