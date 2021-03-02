@@ -316,11 +316,15 @@ BOOL CoCoModSet;      // 0,1,2,3
 HBRUSH hbrTextBox = NULL;
 HFONT  hfTextBox  = NULL;
 
+// Keymap data changed flag
+BOOL KeyMapChanged = FALSE;
+
 // Forward references
 BOOL  InitKeymapDialog(HWND);
 BOOL  Process_CoCoKey(int);
 BOOL  LoadCustKeymap();
 BOOL  SaveCustKeymap();
+BOOL  WriteKeymap(char*); 
 BOOL  SetCustomKeymap();
 BOOL  ClrCustomKeymap();
 BOOL  SetControlFont(WPARAM,LPARAM);
@@ -334,7 +338,7 @@ void  ShowMapError(int, char *);
 void  SetDialogFocus(HWND);
 int   GetKeymapLine (char*, keytranslationentry_t *, int);
 int   CustKeyTransLen();
-char *CreateKeymapLine(keytranslationentry_t *);
+char *GenKeymapLine(keytranslationentry_t *);
 
 // Lookups on above tables
 static struct CoCoKey * cctable_rowcol_lookup(unsigned char, unsigned char);
@@ -485,56 +489,76 @@ int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
 //------------------------------------------------------
 // Save custom keymap to file 
 //-----------------------------------------------------
-int SaveCustomKeyMap(char* keymapfile) 
+BOOL WriteKeymap(char* keymapfile) 
 {
     keytranslationentry_t * pTran;
 	pTran = keyTranslationsCustom;
 
     FILE *omap;
 	FILE *kmap;
+	char tmpfile[MAX_PATH];
+	char tmppath[MAX_PATH];
 
-	char buf[512];
+	char buf[256];
 
-	if (PathFileExists(keymapfile)) {
+    // Create a temporary file to hold the keymap
+	GetTempPath(MAX_PATH,tmppath);
+	GetTempFileName(tmppath,"KM_",0,tmpfile);
 
-	    // Rename existing file to a backup version (append '~')
-	    strncpy(buf,keymapfile,500);
-        strcat(buf,"~");
-	    DeleteFile(buf);
-	    MoveFile(keymapfile,buf);
-		kmap = fopen(keymapfile,"w");
-
-		// Copy comments from old file to new file
-	    omap = fopen(buf,"r");
-		while (fgets(buf,200,omap)) { 
-		   	if (*buf != '#') break;
-			fputs(buf,kmap);
-		}
-        fclose(omap);
-
-	} else {
-		kmap = fopen(keymapfile,"w");
+	// Open it for write
+	kmap = fopen(tmpfile,"w");
+	if (kmap == NULL) {
+        MessageBox(0,tmpfile,"open error",0);
+		return FALSE;
 	}
 
-    // Append contents of custom key translation table
+    // If there was already a file by name specified
+	if (PathFileExists(keymapfile)) {
+		// Open the existing file
+		omap = fopen(keymapfile,"r");
+	    if (omap == NULL) {
+            MessageBox(0,keymapfile,"open error",0);
+		    return FALSE;
+	    }
+		// Copy comments to temporary file
+		while (fgets(buf,256,omap)) { 
+		   	if (*buf != '#') break;
+		    if( fputs(buf,kmap) < 0) {
+                MessageBox(0,keymapfile,"read error",0);
+                fclose(kmap);
+		        return FALSE;
+		    }
+		}
+		// Close and delete it
+        fclose(omap);
+	    DeleteFile(keymapfile);
+	}
+
+    // Copy in contents of custom key translation table
 	while (pTran->ScanCode1 != 0) {
-		sprintf(buf,"%s\n",CreateKeymapLine(pTran));
-		if( fputs(buf,kmap) < 0) {
-            MessageBox(0,"Keymap file write failed","",0);
-		    return 0;
+//		sprintf(buf,"%s\n",GenKeymapLine(pTran));
+		if( fputs(GenKeymapLine(pTran),kmap) < 0) {
+            MessageBox(0,tmpfile,"write error",0);
+            fclose(kmap);
+		    return FALSE;
 		}
 		pTran++;
 	}
-
-	// Close
     fclose(kmap);
-	return 0;
+
+	// Rename temp file to keymapfile
+	if (!MoveFile(tmpfile,keymapfile)) {
+        MessageBox(0,tmpfile,"Rename error",0);
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 //------------------------------------------------------
-// Convert translation record to keymap file text format
+// Convert translation record to keymap file line
 //-----------------------------------------------------
-char * CreateKeymapLine( keytranslationentry_t * pTran )
+char * GenKeymapLine( keytranslationentry_t * pTran )
 {
 	static char txt[64];
 	static struct PCScanCode * pSC; 
@@ -609,7 +633,7 @@ char * CreateKeymapLine( keytranslationentry_t * pTran )
     }	
 	if (pCC == NULL) return NULL;
 
-	sprintf(txt,"  DIK_%-12s %d    COCO_%-10s %d",
+	sprintf(txt," DIK_%-12s %d COCO_%-10s %d\n",
 			pSC->keyname, PCmod, pCC->keyname, CCmod);
 
 	return txt;
@@ -800,6 +824,8 @@ BOOL InitKeymapDialog(HWND hWnd)
     CoCoKeySet = 0;
 	CoCoModSet = 0;
     
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),FALSE);
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_LOAD_KEYMAP),FALSE);
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),FALSE);
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),FALSE);
 
@@ -845,7 +871,8 @@ BOOL LoadCustKeymap() {
 //-----------------------------------------------------
 // TODO finish
 BOOL SaveCustKeymap() {
-    SaveCustomKeyMap(KeyMapFilename()); 
+    if (WriteKeymap(KeyMapFilename())) KeyMapChanged = FALSE;
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),FALSE);
 	SetDialogFocus(hText_PC);
 	return TRUE;
 }
@@ -935,7 +962,11 @@ BOOL SetCustomKeymap() {
 	// Disable set button
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),FALSE);
 
-	// Reset focus
+	// Set map changed flag
+    KeyMapChanged = TRUE;
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),TRUE);
+
+    // Reset focus
 	SetDialogFocus(hText_PC);
     return TRUE;
 }
