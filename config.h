@@ -32,7 +32,8 @@ void SetWindowSize(POINT);
 
 void SetIniFilePath(char *);
 char * AppDirectory();
-char * KeyMapFilename();
+char * KeyMapFile();
+char * KeyMapFiledir();
 
 int GetPaletteType();
 POINT GetIniWindowSize();

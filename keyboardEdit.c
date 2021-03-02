@@ -322,7 +322,7 @@ BOOL KeyMapChanged = FALSE;
 // Forward references
 BOOL  InitKeymapDialog(HWND);
 BOOL  Process_CoCoKey(int);
-BOOL  LoadCustKeymap();
+BOOL  SelectCustKeymapFile();
 BOOL  SaveCustKeymap();
 BOOL  WriteKeymap(char*); 
 BOOL  SetCustomKeymap();
@@ -780,7 +780,7 @@ BOOL CALLBACK KeyMapProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case IDC_KEYMAP_EXIT:
 			return EndDialog(hWnd,wParam);
 		case IDC_LOAD_KEYMAP:
-			return LoadCustKeymap();
+			return SelectCustKeymapFile();
 		case IDC_SAVE_KEYMAP:
 			return SaveCustKeymap();
 		case IDC_SET_CUST_KEYMAP:
@@ -825,15 +825,11 @@ BOOL InitKeymapDialog(HWND hWnd)
 	CoCoModSet = 0;
     
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),FALSE);
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_LOAD_KEYMAP),FALSE);
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),FALSE);
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),FALSE);
 
     // keymap filename
-	// TODO:  Make it real
-	char str[64];
-	sprintf(str, "Custom.keymap");
-	SendMessage(hText_MapFile, WM_SETTEXT, 0, (LPARAM)str);
+	SendMessage(hText_MapFile, WM_SETTEXT, 0, (LPARAM)KeyMapFile());
 
 	// Subclass hText_PC to handle PC keyboard
 	Text_PCproc = (WNDPROC)GetWindowLongPtr(hText_PC, GWLP_WNDPROC);
@@ -858,10 +854,49 @@ BOOL SetControlFont(WPARAM wParam, LPARAM lParam) {
 }
 
 //-----------------------------------------------------
-// Load custom keymap file
+// Select custom keymap file
 //-----------------------------------------------------
 // TODO finish
-BOOL LoadCustKeymap() {
+BOOL SelectCustKeymapFile() {
+
+    OPENFILENAME ofn ;
+    char FileSelected[MAX_PATH];
+	strncpy (FileSelected,KeyMapFile(),MAX_PATH);
+
+    // Prompt user for filename
+    memset(&ofn,0,sizeof(ofn));
+    ofn.lStructSize     = sizeof (OPENFILENAME) ;
+    ofn.hwndOwner       = hKeyMapDlg;
+    ofn.lpstrFilter     = "Keymap Files\0*.keymap\0\0";
+    ofn.nFilterIndex    = 1;
+    ofn.lpstrFile       = FileSelected;
+    ofn.nMaxFile        = MAX_PATH;
+    ofn.lpstrFileTitle  = NULL;
+    ofn.nMaxFileTitle   = MAX_PATH;
+    ofn.lpstrInitialDir = AppDirectory();
+    ofn.lpstrTitle      = TEXT("Select Keymap file");
+	ofn.Flags           = OFN_CREATEPROMPT
+                        | OFN_HIDEREADONLY
+						| OFN_PATHMUSTEXIST;
+
+    //ofn.nFileOffset = offset of name portion
+	//ofn.nFileExtension = location of extension (0=none)
+
+    if ( GetOpenFileName (&ofn)) {
+		// Load or create new keymap file
+	    if (ofn.nFileExtension==0) strcat(FileSelected,".keymap");
+	    if (PathFileExists(FileSelected)) {
+            LoadCustomKeyMap(FileSelected);
+		} else {
+			WriteKeymap(FileSelected);
+		}
+        // Set keymap filename TODO: Error check, save name to ini file
+		strncpy (KeyMapFile(),FileSelected,MAX_PATH);
+	    SendMessage(hText_MapFile, WM_SETTEXT, 0, (LPARAM)KeyMapFile());
+	} else {
+        MessageBox(0,"GetOpenFileName","error",0);
+	}
+	
 	SetDialogFocus(hText_PC);
 	return TRUE;
 }
@@ -871,7 +906,7 @@ BOOL LoadCustKeymap() {
 //-----------------------------------------------------
 // TODO finish
 BOOL SaveCustKeymap() {
-    if (WriteKeymap(KeyMapFilename())) KeyMapChanged = FALSE;
+    if (WriteKeymap(KeyMapFile())) KeyMapChanged = FALSE;
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),FALSE);
 	SetDialogFocus(hText_PC);
 	return TRUE;
