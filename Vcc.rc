@@ -330,13 +330,13 @@ FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     LTEXT  "CoCo Key",IDC_STATIC,22,152,38,8
     LTEXT  "Host Key ",IDC_STATIC,22,173,38,8
-    LTEXT  "Press keys on host keyboard to see their mapping",IDC_STATIC,186,146,180,10
+    LTEXT  "Toggle keys on host keyboard to see their mapping",IDC_STATIC,186,146,180,10
     LTEXT  "Click on keys above to change the mapping",IDC_STATIC,     186,156,180,10
-    LTEXT  "Optionally add a SHIFT, CTRL, or ALT modifier",IDC_STATIC, 186,166,180,10
+    LTEXT  "Optionally toggle SHIFT, CTRL, or ALT modifier key",IDC_STATIC, 186,166,180,10
     LTEXT  "Click 'Set' button to confirm each change",IDC_STATIC,     186,176,180,12
     LTEXT  "Click 'Save Keymap' to make changes permanent",IDC_STATIC, 186,186,180,12
 
-    RTEXT  "",IDC_KEYMAP_FILE,140,21,150,12,ES_READONLY|ES_AUTOHSCROLL,WS_EX_CLIENTEDGE 
+    RTEXT  "",IDC_KEYMAP_FILE,140,21,150,12,ES_READONLY|ES_AUTOHSCROLL,WS_EX_CLIENTEDGE
     LTEXT  "",IDC_CCKEY_TXT,56,151,75,12,ES_READONLY,WS_EX_CLIENTEDGE
     LTEXT  "",IDC_PCKEY_TXT,56,172,75,12,ES_READONLY,WS_EX_CLIENTEDGE
 

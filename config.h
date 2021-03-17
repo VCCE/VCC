@@ -31,8 +31,9 @@ int GetKeyboardLayout();
 void SetWindowSize(POINT);
 
 void SetIniFilePath(char *);
+void SetKeyMapFilePath(char *);
 char * AppDirectory();
-char * KeyMapFile();
+char * GetKeyMapFilePath();
 char * KeyMapFiledir();
 
 int GetPaletteType();

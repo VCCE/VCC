@@ -81,7 +81,6 @@ static HICON CpuIcons[2],MonIcons[2],JoystickIcons[4];
 static unsigned char temp=0,temp2=0;
 static char IniFileName[]="Vcc.ini";
 static char IniFilePath[MAX_PATH]="";
-static char KeyMapFileName[]="custom.keymap";
 static char KeyMapFilePath[MAX_PATH]="";
 static char TapeFileName[MAX_PATH]="";
 static char ExecDirectory[MAX_PATH]="";
@@ -196,15 +195,6 @@ void LoadConfig(SystemState *LCState)
 		strcat(IniFilePath, "\\");
 		strcat(IniFilePath, IniFileName);
 	}
-
-//  Find custom keymap file (custom.keymap)
-//	if (*CmdArg.KeyMapFile) {
-//		GetFullPathNameA(CmdArg.KeyMapFile,MAX_PATH,KeyMapFilePath,0);
-//	} else {
-		strcpy(KeyMapFilePath, AppDataPath);
-		strcat(KeyMapFilePath, "\\");
-		strcat(KeyMapFilePath, KeyMapFileName);
-//	}
 
 	LCState->ScanLines=0;
 	NumberOfSoundCards=GetSoundCardList(SoundCards);
@@ -327,7 +317,7 @@ unsigned char ReadIniFile(void)
 	if (CurrentConfig.KeyMap>3)
 		CurrentConfig.KeyMap=0;	//Default to DECB Mapping
 
-	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFile());
+	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(GetKeyMapFilePath());
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
 	CheckPath(CurrentConfig.ModulePath);
@@ -355,6 +345,15 @@ unsigned char ReadIniFile(void)
 	GetPrivateProfileString("DefaultPaths", "CassPath", "", CurrentConfig.CassPath, MAX_PATH, IniFilePath);
 	GetPrivateProfileString("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH, IniFilePath);
 	GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "", CurrentConfig.COCO3ROMPath, MAX_PATH, IniFilePath);
+
+//  Establish custom keymap file path
+	GetPrivateProfileString("Misc","CustomKeyMapFile","",KeyMapFilePath,MAX_PATH,IniFilePath);
+	if (*KeyMapFilePath == '\0') {
+	    strcpy(KeyMapFilePath, AppDataPath);
+		strcat(KeyMapFilePath, "\\");
+		strcat(KeyMapFilePath, "custom.keymap");
+	}
+
 
 	for (Index = 0; Index < NumberOfSoundCards; Index++)
 	{
@@ -451,7 +450,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				
 				CurrentConfig=TempConfig;
 
-				if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFile());
+				if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(GetKeyMapFilePath());
 				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
 				Right=TempRight;
@@ -479,7 +478,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 				CurrentConfig=TempConfig;
 
-	            if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFile());
+	            if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(GetKeyMapFilePath());
 				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
 				Right=TempRight;
@@ -524,9 +523,15 @@ char * AppDirectory()
 	return AppDataPath;
 }
 
-char * KeyMapFile()
+char * GetKeyMapFilePath()
 {
 	return KeyMapFilePath;
+}
+
+void SetKeyMapFilePath(char *Path)
+{
+    strcpy(KeyMapFilePath,Path);
+	WritePrivateProfileString("Misc","CustomKeyMapFile",KeyMapFilePath,IniFilePath);
 }
 
 void UpdateConfig (void)
@@ -1282,8 +1287,6 @@ int SelectFile(char *FileName)
 		}
 	}
 	strcpy(FileName,TempFileName);
-	
-	
 	
 	return(1);
 }

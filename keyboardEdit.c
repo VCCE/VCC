@@ -34,7 +34,7 @@ This file is part of VCC (Virtual Color Computer)
 #include "keyboardEdit.h"
 #include "keynames.h"
 
-// Modifier Buttons
+// Modifier Button id's
 static int ModBtnCode[4] = {0,IDC_KEYBTN_LSHIFT,IDC_KEYBTN_CTRL,IDC_KEYBTN_ALT}; 
 
 // Modifier ScanCodes 
@@ -44,12 +44,12 @@ static int ModScanCode[4] = {0,DIK_LSHIFT,DIK_LCONTROL,DIK_LMENU};
 static char *ModName[4] = {"","Shift","Ctrl","Alt"};
 
 // Windows handles
-HWND  hKeyMapDlg;     // Key map dialog
-HWND  hText_PC;       // Control to display PC Key.
-HWND  hText_CC;       // Control to display selected CoCo Keys
-HWND  hText_MapFile;  // Control to display current map file name
+HWND  hKeyMapDlg = NULL;     // Key map dialog
+HWND  hText_PC = NULL;       // Control to display PC Key.
+HWND  hText_CC = NULL;       // Control to display selected CoCo Keys
+HWND  hText_MapFile = NULL;  // Control to display current map file name
 
-// Shunt to subclass Text_PC control processing
+// Subclass Text_PC control processing to capture all PC keystrokes
 LRESULT CALLBACK SubText_PCproc(HWND,UINT,WPARAM,LPARAM);
 WNDPROC Text_PCproc;
 
@@ -60,19 +60,18 @@ int CC_ModSelected;  // 0,1,2,3
 int PC_KeySelected;  // ScanCode
 int PC_ModSelected;  // 0,1,2,3
 
-// Pointer to selected keyboardLayout custom translation entry
-keytranslationentry_t * pKeyTran = NULL;
-
-// Flag to limit the number of popup error messages
-// when loading the custom keymap from a file
-int UserWarned = 0;
-
 // Current CoCo key button states (up/down)
 // Used to raise currently down buttons
 BOOL CoCoKeySet;      // BtnId
 BOOL CoCoModSet;      // 0,1,2,3
 
-// Background and Font for text box
+// Pointer for selected translation entry
+keytranslationentry_t * pKeyTran = NULL;
+
+// Counter to limit the number of popup error messages
+int UserWarned = 0;
+
+// Background and Font for dynamic text boxes
 HBRUSH hbrTextBox = NULL;
 HFONT  hfTextBox  = NULL;
 
@@ -100,7 +99,7 @@ int   GetKeymapLine (char*, keytranslationentry_t *, int);
 int   CustKeyTransLen();
 char *GenKeymapLine(keytranslationentry_t *);
 
-// Lookups on above tables
+// Lookup functions for keyname tables
 static struct CoCoKey * cctable_rowcol_lookup(unsigned char, unsigned char);
 static struct CoCoKey * cctable_keyid_lookup(int);
 static struct CoCoKey * cocotable_keyname_lookup(char *);
@@ -118,12 +117,17 @@ int LoadCustomKeyMap(char* keymapfile)
     int  ndx  = 0;
     int  lnum = 0;
 
+	// Do nothing if keymap file path is empty
+	if (*keymapfile == '\0') return 1;
+
     // Open the keymap file. Abort operation if open fails.
     if ((keymap = fopen(keymapfile,"r")) == NULL) {
         if (! UserWarned) {
-            sprintf(buf,"Keymap %s open failed\n",  keymapfile);
-            MessageBox(0,buf,"Error",  0);
             UserWarned = 1;
+            sprintf(buf,"%s open failed. Using defaults",  keymapfile);
+//            MessageBox(hKeyMapDlg,buf,"Warning",0);
+            MessageBox(GetActiveWindow(),buf,"Warning",0);
+			// TODO: Clear keymap file path?
         }
         return 1;
     }
@@ -136,12 +140,15 @@ int LoadCustomKeyMap(char* keymapfile)
     // load keymap from file.
     while (fgets(buf,250,keymap)) {
         lnum++;
+		// Get line from file, save valid entries in table
         if (GetKeymapLine(buf, &keyTranslationsCustom[ndx],lnum)==0) {
             ndx++;
-            if (ndx > MAX_CTRANSTBLSIZ-1) { // save space for term
-                ShowMapError(lnum,"Translation table full!");
+            if (ndx > MAX_CTRANSTBLSIZ-1) { 
+				// Translation table overflow! (Can this actually happen?) 
+				// TODO: If it does correct condition and warn user
+				// ShowMapError(lnum,"Translation table full!");
                 fclose(keymap);
-                return 1;
+                return 2;
             }
         }
     }
@@ -151,7 +158,7 @@ int LoadCustomKeyMap(char* keymapfile)
 }
 
 //-----------------------------------------------------
-// Parse an line from keymap file and maybe load trans table entry
+// Parse a line from keymap file into trans table entry
 //-----------------------------------------------------
 int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
 {
@@ -161,7 +168,7 @@ int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
 
     // pc scancode -> ScanCode1
     pStr = strtok(line, " \t\n\r");
-    if ((pStr == NULL) || (*pStr == '#')) return 1; // comment
+    if ((pStr == NULL) || (*pStr == '#')) return 1; // A comment, skip it
 
 	pPCScanCode = scantable_keyname_lookup(pStr);
 	if (pPCScanCode == NULL) {
@@ -197,7 +204,6 @@ int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
     }
 
     // CoCo Key -> Row1, Col1
-	// TODO Accept null map?
 	pStr = strtok(NULL, " \t\n\r");
     if (pStr == NULL) {
         ShowMapError(lnum,"CoCo keyname missing");
@@ -268,7 +274,7 @@ BOOL WriteKeymap(char* keymapfile)
 	// Open it for write
 	kmap = fopen(tmpfile,"w");
 	if (kmap == NULL) {
-        MessageBox(0,tmpfile,"open error",0);
+        MessageBox(hKeyMapDlg,tmpfile,"open error",0);
 		return FALSE;
 	}
 
@@ -277,14 +283,14 @@ BOOL WriteKeymap(char* keymapfile)
 		// Open the existing file
 		omap = fopen(keymapfile,"r");
 	    if (omap == NULL) {
-            MessageBox(0,keymapfile,"open error",0);
+            MessageBox(hKeyMapDlg,keymapfile,"open error",0);
 		    return FALSE;
 	    }
 		// Copy comments to temporary file
 		while (fgets(buf,256,omap)) { 
 		   	if (*buf != '#') break;
 		    if( fputs(buf,kmap) < 0) {
-                MessageBox(0,keymapfile,"read error",0);
+                MessageBox(hKeyMapDlg,keymapfile,"read error",0);
                 fclose(kmap);
 		        return FALSE;
 		    }
@@ -296,9 +302,8 @@ BOOL WriteKeymap(char* keymapfile)
 
     // Copy in contents of custom key translation table
 	while (pTran->ScanCode1 != 0) {
-//		sprintf(buf,"%s\n",GenKeymapLine(pTran));
 		if( fputs(GenKeymapLine(pTran),kmap) < 0) {
-            MessageBox(0,tmpfile,"write error",0);
+            MessageBox(hKeyMapDlg,tmpfile,"write error",0);
             fclose(kmap);
 		    return FALSE;
 		}
@@ -308,7 +313,7 @@ BOOL WriteKeymap(char* keymapfile)
 
 	// Rename temp file to keymapfile
 	if (!MoveFile(tmpfile,keymapfile)) {
-        MessageBox(0,tmpfile,"Rename error",0);
+        MessageBox(hKeyMapDlg,tmpfile,"Rename error",0);
 		return FALSE;
 	}
 
@@ -316,7 +321,7 @@ BOOL WriteKeymap(char* keymapfile)
 }
 
 //------------------------------------------------------
-// Convert translation record to keymap file line
+// Convert translation record for keymap file
 //-----------------------------------------------------
 char * GenKeymapLine( keytranslationentry_t * pTran )
 {
@@ -408,15 +413,15 @@ void ShowMapError(int lnum, char *msg)
 	if (UserWarned < 8) {
         char fullmsg[128];
         sprintf(fullmsg,"Line %d %s",  lnum,msg);
-        MessageBox(0,fullmsg,"Error",  0);
+        MessageBox(hKeyMapDlg,fullmsg,"Error",  0);
 	} else if (UserWarned == 8) {
-        MessageBox(0,"Too many errors to show",  "Error",  0);
+        MessageBox(hKeyMapDlg,"Too many errors to show",  "Error",  0);
 	}
     UserWarned++;
 }
 
 //-----------------------------------------------------
-// Lookup PC Key by scan code name. Binary search.
+// Lookup sctable by scan code name. Binary search.
 //-----------------------------------------------------
 static struct 
 PCScanCode * scantable_keyname_lookup(char * keyname) 
@@ -430,7 +435,7 @@ PCScanCode * scantable_keyname_lookup(char * keyname)
 
 	while (first < last) {
         cmp = strcmp(keyname+4,sctable[mid].keyname);
-		if (cmp == 0) return sctable + mid;
+		if (cmp == 0) return &sctable[mid];
 		if (cmp > 0) {
             first = mid + 1;
         } else {
@@ -442,17 +447,30 @@ PCScanCode * scantable_keyname_lookup(char * keyname)
 }
 
 //-----------------------------------------------------
-// Lookup PC Key by numeric scancode. Binary search
+// Lookup sctable by numeric scancode.
 //-----------------------------------------------------
 static struct
 PCScanCode * scantable_scancode_lookup(int ScanCode)
 {
-	struct PCScanCode *p = sctable;
-	while (p->ScanCode > 0) {
-		if (p->ScanCode == ScanCode) return p;
-		p++;
+    int ndx;
+
+	// Build sctable_ndx on first call
+	if (*sctable_ndx == 0) {
+	    // Init sctable_ndx with unsupported entries
+		for (int sc=0; sc<256; sc++) sctable_ndx[sc] = -1;
+		// Populate valid sctable_ndx entries 
+	    ndx = 0;
+		while (sctable[ndx].ScanCode > 0) {
+			sctable_ndx[sctable[ndx].ScanCode] = ndx;
+			ndx++;
+		}
 	}
-    return NULL;
+
+	// Lookup using sctable_ndx
+	ScanCode = ScanCode & 0XFF;  // impose good scan code range 
+	ndx = sctable_ndx[ScanCode]; // get index
+	if (ndx < 0) return NULL;    // return NULL if unsupported
+	return &sctable[ndx];        // else return pointer to selected entry
 }
 
 //-----------------------------------------------------
@@ -471,7 +489,7 @@ CoCoKey * cocotable_keyname_lookup(char * keyname)
 
 	while (first < last) {
         cmp = strcmp(keyname+5,cctable[mid].keyname);
-        if (cmp == 0) return cctable + mid;
+        if (cmp == 0) return &cctable[mid];
 		if (cmp > 0) {
             first = mid + 1;
         } else {
@@ -503,21 +521,19 @@ CoCoKey * cctable_keyid_lookup(int id)
 }
 
 //-----------------------------------------------------
-// Lookup CoCo key by row mask and col.  Indexed.
+// Lookup CoCo key by row mask and col.
 //-----------------------------------------------------
 static struct 
 CoCoKey * cctable_rowcol_lookup(unsigned char RowMask, unsigned char Col)
 {
-	int ndx = Col;
-	switch (RowMask) {
-    case 2:  ndx+=8; break;
-	case 4:  ndx+=16; break;
-	case 8:  ndx+=24; break;
-	case 16: ndx+=32; break;
-	case 32: ndx+=40; break;
-	case 64: ndx+=48; break;
-	}
-	if (ndx < 56) return cctable + (cctable_ndx[ndx]);
+	// Convert RowMask and Col to rollover index
+	int ro_ndx = Col;
+	while(RowMask > 1) { ro_ndx += 8; RowMask = RowMask>>1; }
+
+	// Use cctable_ndx to access cctable entry
+	if (ro_ndx < 56) return &cctable[cctable_ndx[ro_ndx]];
+
+    // Return NULL if invalid rowmask and column
 	return NULL;
 }
 
@@ -589,7 +605,7 @@ BOOL InitKeymapDialog(HWND hWnd)
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),FALSE);
 
     // keymap filename
-	SendMessage(hText_MapFile, WM_SETTEXT, 0, (LPARAM)KeyMapFile());
+	SendMessage(hText_MapFile, WM_SETTEXT, 0, (LPARAM)GetKeyMapFilePath());
 
 	// Subclass hText_PC to handle PC keyboard
 	Text_PCproc = (WNDPROC)GetWindowLongPtr(hText_PC, GWLP_WNDPROC);
@@ -616,12 +632,11 @@ BOOL SetControlFont(WPARAM wParam, LPARAM lParam) {
 //-----------------------------------------------------
 // Select custom keymap file
 //-----------------------------------------------------
-// TODO finish
 BOOL SelectCustKeymapFile() {
 
     OPENFILENAME ofn ;
     char FileSelected[MAX_PATH];
-	strncpy (FileSelected,KeyMapFile(),MAX_PATH);
+	strncpy (FileSelected,GetKeyMapFilePath(),MAX_PATH);
 
     // Prompt user for filename
     memset(&ofn,0,sizeof(ofn));
@@ -635,12 +650,8 @@ BOOL SelectCustKeymapFile() {
     ofn.nMaxFileTitle   = MAX_PATH;
     ofn.lpstrInitialDir = AppDirectory();
     ofn.lpstrTitle      = TEXT("Select Keymap file");
-	ofn.Flags           = OFN_CREATEPROMPT
-                        | OFN_HIDEREADONLY
+    ofn.Flags           = OFN_HIDEREADONLY
 						| OFN_PATHMUSTEXIST;
-
-    //ofn.nFileOffset = offset of name portion
-	//ofn.nFileExtension = location of extension (0=none)
 
     if ( GetOpenFileName (&ofn)) {
 		// Load or create new keymap file
@@ -648,13 +659,16 @@ BOOL SelectCustKeymapFile() {
 	    if (PathFileExists(FileSelected)) {
             LoadCustomKeyMap(FileSelected);
 		} else {
-			WriteKeymap(FileSelected);
+			char txt[MAX_PATH+32];
+			strcpy (txt,FileSelected);
+			strcat (txt," does not exist. Create it?");
+		    if (MessageBox(hKeyMapDlg,txt,"Warning",MB_YESNO)==IDYES) 
+				WriteKeymap(FileSelected);
 		}
-        // Set keymap filename TODO: Error check, save name to ini file
-		strncpy (KeyMapFile(),FileSelected,MAX_PATH);
-	    SendMessage(hText_MapFile, WM_SETTEXT, 0, (LPARAM)KeyMapFile());
-	} else {
-        MessageBox(0,"GetOpenFileName","error",0);
+        SetKeyMapFilePath(FileSelected);
+
+		strncpy (GetKeyMapFilePath(),FileSelected,MAX_PATH);
+	    SendMessage(hText_MapFile, WM_SETTEXT, 0, (LPARAM)GetKeyMapFilePath());
 	}
 	
 	SetDialogFocus(hText_PC);
@@ -664,9 +678,8 @@ BOOL SelectCustKeymapFile() {
 //-----------------------------------------------------
 // Save custom keymap file
 //-----------------------------------------------------
-// TODO finish
 BOOL SaveCustKeymap() {
-    if (WriteKeymap(KeyMapFile())) KeyMapChanged = FALSE;
+    if (WriteKeymap(GetKeyMapFilePath())) KeyMapChanged = FALSE;
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),FALSE);
 	SetDialogFocus(hText_PC);
 	return TRUE;
