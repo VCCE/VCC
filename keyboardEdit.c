@@ -24,6 +24,7 @@ This file is part of VCC (Virtual Color Computer)
 #include <windowsx.h>
 #include <Shlwapi.h>
 #include <stdio.h>
+#include <intrin.h>
 
 #include "defines.h"
 #include "config.h"
@@ -526,15 +527,15 @@ CoCoKey * cctable_keyid_lookup(int id)
 static struct 
 CoCoKey * cctable_rowcol_lookup(unsigned char RowMask, unsigned char Col)
 {
-	// Convert RowMask and Col to rollover index
-	int ro_ndx = Col;
-	while(RowMask > 1) { ro_ndx += 8; RowMask = RowMask>>1; }
+	unsigned long Row = 0;
+	unsigned long Mask = RowMask;
+	int ndx;
 
-	// Use cctable_ndx to access cctable entry
-	if (ro_ndx < 56) return &cctable[cctable_ndx[ro_ndx]];
-
-    // Return NULL if invalid rowmask and column
-	return NULL;
+	// Convert RowMask, Col to index cctable_ndx
+	_BitScanForward(&Row,Mask);
+	ndx = Col + (Row<<3);
+	if (ndx > 55) return NULL;
+	return &cctable[cctable_ndx[ndx]];
 }
 
 /**************************************************/
