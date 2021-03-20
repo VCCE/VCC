@@ -126,9 +126,7 @@ int LoadCustomKeyMap(char* keymapfile)
         if (! UserWarned) {
             UserWarned = 1;
             sprintf(buf,"%s open failed. Using defaults",  keymapfile);
-//            MessageBox(hKeyMapDlg,buf,"Warning",0);
             MessageBox(GetActiveWindow(),buf,"Warning",0);
-			// TODO: Clear keymap file path?
         }
         return 1;
     }
@@ -601,7 +599,7 @@ BOOL InitKeymapDialog(HWND hWnd)
     CoCoKeySet = 0;
 	CoCoModSet = 0;
     
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),FALSE);
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),KeyMapChanged);
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),FALSE);
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),FALSE);
 
@@ -681,7 +679,7 @@ BOOL SelectCustKeymapFile() {
 //-----------------------------------------------------
 BOOL SaveCustKeymap() {
     if (WriteKeymap(GetKeyMapFilePath())) KeyMapChanged = FALSE;
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),FALSE);
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),KeyMapChanged);
 	SetDialogFocus(hText_PC);
 	return TRUE;
 }
@@ -757,7 +755,7 @@ BOOL SetCustomKeymap() {
 
 	} else {
 		// Remove PC key from translation table
-		//TODO: Warn user key is being unmapped
+		//TODO: Warn user key is being unmapped?
 		while (pKeyTran->ScanCode1 > 0) {
 		    memcpy(pKeyTran,pKeyTran+1,sizeof(keytranslationentry_t));
 		    pKeyTran++;
@@ -773,7 +771,7 @@ BOOL SetCustomKeymap() {
 
 	// Set map changed flag
     KeyMapChanged = TRUE;
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),TRUE);
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),KeyMapChanged);
 
     // Reset focus
 	SetDialogFocus(hText_PC);
