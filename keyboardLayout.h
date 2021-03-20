@@ -25,6 +25,8 @@
 
 #include "keyboard.h"
 
+#define MAX_CTRANSTBLSIZ 150
+
 /*****************************************************************************/
 
 #ifdef __cplusplus

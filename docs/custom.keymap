@@ -1,0 +1,137 @@
+#--------------------------------------------------------------
+# VCC custom keyboard map file.
+#
+# Used to covert PC key scancode + modifier to CoCo key + modifier.
+#
+# This file should be copied to %appdata%\Vcc for Vcc to use it.
+# It may be edited using Notepad or by using the built in Vcc keymapper.
+#
+# Each entry line contains four fields (two pairs) seperated by one
+# or more spaces or tabs.  Blank lines, those starting with #, or 
+# anything on a line beyond four fields are comments.   Entries 
+# containing invalid data are flagged when the keymap is loaded.
+#
+# First two fields are the PC key scancode and it's modifier.
+# Second two fields are the CoCo key and it's modifier.
+# 
+# Key modifiers are specified with one of these four digits:
+#
+#   0:none  1:shift  2:control  3:alt
+#
+# NOTES:
+# 
+#   Translation table has a 150 entry maximum which includes
+#   default entries.  Pretty much any physical key on a 
+#   PC keyboard can be mapped in combination with left alt, 
+#   left control, and shift modifiers. Some key and modifier 
+#   combinations do not work due to the way windows works.
+#   
+#   Normally all 48 CoCo keys are mapped to. Valid are AT, A-Z, 
+#   UP, DOWN, LEFT, RIGHT, SPACE, 0-9, COLON, SEMICOLON, COMA, 
+#   MINUS, PERIOD, SLASH, ENTER, CLEAR, BREAK, ALT, CTRL, F1, 
+#   F2, and SHIFT.  Keys other than the following modifiers can 
+#   be mapped in combination with ALT, CTRL, and SHIFT. Physical
+#   keys that are not mapped to are not sent.    
+#
+#   Right alt and right ctrl on pc are reserved for windows.
+#   Vcc maps the right shift key to left shift key. 
+#
+#   Shifted (uppercased) keys and satisfactory mappings done by
+#   OS9 or DECB do not need to be remapped here.
+#
+#   A list of valid DIK (Direct Input Key) scancodes
+#   and CoCo key names are in keynames.h in Vcc sources.
+#
+#   The initial entries in this file attempt to map DECB keys 
+#   with the same keys on US PC keyboard.  DECB either ignores 
+#   ALT and CTRL keys maps them to '@' and '=' (don't have real 
+#   coco running to check) In any case it makes no sense to use 
+#   them as modifiers.
+#
+#   When this file is updated by VCC it's contents starting with
+#   the first line not beginning with '#' are replaced with the
+#   current key mapping.
+#
+#--------------------------------------------------------------
+# scancode        mod  keyname        mod
+#--------------------------------------------------------------
+  DIK_A            0    COCO_A         0
+  DIK_B            0    COCO_B         0
+  DIK_C            0    COCO_C         0
+  DIK_D            0    COCO_D         0
+  DIK_E            0    COCO_E         0
+  DIK_F            0    COCO_F         0
+  DIK_G            0    COCO_G         0
+  DIK_H            0    COCO_H         0
+  DIK_I            0    COCO_I         0
+  DIK_J            0    COCO_J         0
+  DIK_K            0    COCO_K         0
+  DIK_L            0    COCO_L         0
+  DIK_M            0    COCO_M         0
+  DIK_N            0    COCO_N         0
+  DIK_O            0    COCO_O         0
+  DIK_P            0    COCO_P         0
+  DIK_Q            0    COCO_Q         0
+  DIK_R            0    COCO_R         0
+  DIK_S            0    COCO_S         0
+  DIK_T            0    COCO_T         0
+  DIK_U            0    COCO_U         0
+  DIK_V            0    COCO_V         0
+  DIK_W            0    COCO_W         0
+  DIK_X            0    COCO_X         0
+  DIK_Y            0    COCO_Y         0
+  DIK_Z            0    COCO_Z         0
+  DIK_0            0    COCO_0         0
+  DIK_1            0    COCO_1         0
+  DIK_2            0    COCO_2         0
+  DIK_3            0    COCO_3         0
+  DIK_4            0    COCO_4         0
+  DIK_5            0    COCO_5         0
+  DIK_6            0    COCO_6         0
+  DIK_7            0    COCO_7         0
+  DIK_8            0    COCO_8         0
+  DIK_9            0    COCO_9         0
+  DIK_1            1    COCO_1         1    !
+  DIK_2            1    COCO_AT        0    @
+  DIK_3            1    COCO_3         1    # 
+  DIK_4            1    COCO_4         1    $ 
+  DIK_5            1    COCO_5         1    %
+  DIK_6            1    COCO_7         2    ^
+  DIK_7            1    COCO_6         1    &
+  DIK_8            1    COCO_COLON     1    *
+  DIK_9            1    COCO_8         1    (
+  DIK_0            1    COCO_9         1    )
+  DIK_SEMICOLON    0    COCO_SEMICOLON 0    ;
+  DIK_SEMICOLON    1    COCO_COLON     0    :
+  DIK_APOSTROPHE   0    COCO_7         1    '
+  DIK_APOSTROPHE   1    COCO_2         1    "
+  DIK_COMMA        0    COCO_COMMA     0    ,
+  DIK_PERIOD       0    COCO_PERIOD    0    .
+  DIK_SLASH        1    COCO_SLASH     1    ?
+  DIK_SLASH        0    COCO_SLASH     0    /
+  DIK_EQUALS       1    COCO_SEMICOLON 1    plus
+  DIK_EQUALS       0    COCO_MINUS     1    equals
+  DIK_MINUS        0    COCO_MINUS     0    - 
+  DIK_UPARROW      0    COCO_UP        0
+  DIK_DOWNARROW    0    COCO_DOWN      0
+  DIK_LEFTARROW    0    COCO_LEFT      0
+  DIK_RIGHTARROW   0    COCO_RIGHT     0
+  DIK_NUMPAD8      0    COCO_UP        0
+  DIK_NUMPAD2      0    COCO_DOWN      0
+  DIK_NUMPAD4      0    COCO_LEFT      0
+  DIK_NUMPAD6      0    COCO_RIGHT     0
+  DIK_SPACE        0    COCO_SPACE     0
+  DIK_RETURN       0    COCO_ENTER     0
+  DIK_NUMPAD0      0    COCO_CLEAR     0
+  DIK_ESCAPE       0    COCO_BREAK     0
+  DIK_NUMPADPERIOD 0    COCO_BREAK     0
+  DIK_F1           0    COCO_F1        0     
+  DIK_F2           0    COCO_F2        0
+  DIK_BACK         0    COCO_LEFT      0
+  DIK_LBRACKET     0    COCO_DOWN      1    [
+  DIK_RBRACKET     0    COCO_RIGHT     1    ]
+  DIK_BACKSLASH    0    COCO_CLEAR     1    \
+  DIK_CAPSLOCK     0    COCO_0         1    DECB Toggle case 
+  DIK_LSHIFT       0    COCO_SHIFT     0    SHIFT 
+  DIK_LCONTROL     0    COCO_CTRL      0
+  DIK_LMENU        0    COCO_ALT       0    

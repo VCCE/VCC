@@ -209,6 +209,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	unsigned int x,y;
 	unsigned char kb_char; 
 	static unsigned char OEMscan=0;
+    int Extended;
 	static char ascii=0;
 	static RECT ClientSize;
 	static unsigned long Width,Height;
@@ -372,7 +373,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			// send emulator key up event to the emulator
 			// TODO: Key up checks whether the emulation is running, this does not
 
-			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16);
+			//OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16);
+	        OEMscan = (unsigned char) ((lParam >> 16) & 0xFF);
+            Extended=(lParam >> 24) & 1;
+		    if (Extended && (OEMscan!=DIK_NUMLOCK)) OEMscan += 0x80;
 			vccKeyboardHandleKey(kb_char,OEMscan,kEventKeyUp);
 			
 			return 0;
@@ -403,7 +407,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_KEYDOWN:
 
 			// get key scan code for emulator control keys
-			OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16); // just get the scan code
+			//OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16); // just get the scan code
+	        OEMscan = (unsigned char) ((lParam >> 16) & 0xFF);
+            Extended=(lParam >> 24) & 1;
+		    if (Extended && (OEMscan!=DIK_NUMLOCK)) OEMscan += 0x80;
 
 			// kb_char = Windows virtual key code
 

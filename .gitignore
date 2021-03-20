@@ -33,5 +33,6 @@ vcc/disk11.rom
 *.opendb
 *.db
 *.user
+*.swp
 *.*~
 *~
