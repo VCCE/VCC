@@ -919,12 +919,15 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
     case WM_COMMAND:
         TempConfig.KeyMap = (unsigned char)
         SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_GETCURSEL,0,0);
-        if (LOWORD(wParam)==IDC_KEYMAPED) {
-            // Custom keymap edit processing (KeyMapProc) is in keyboardEdit.c
+
+// Considered a check here for custom keyboard selected but the layout shown in the pull-down
+// is not the actual config until apply is clicked. Check would make things more confusing.
+		if (LOWORD(wParam)==IDC_KEYMAPED) {
             DialogBox( EmuState.WindowInstance, (LPCTSTR) IDD_KEYMAPEDIT, hDlg,
                        (DLGPROC) KeyMapProc );
         }
-        break;
+
+		break;
     }
     return(0);
 }
