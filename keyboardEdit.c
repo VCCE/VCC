@@ -24,6 +24,7 @@ This file is part of VCC (Virtual Color Computer)
 #include <windowsx.h>
 #include <Shlwapi.h>
 #include <stdio.h>
+#include <intrin.h>
 
 #include "defines.h"
 #include "config.h"
@@ -125,9 +126,7 @@ int LoadCustomKeyMap(char* keymapfile)
         if (! UserWarned) {
             UserWarned = 1;
             sprintf(buf,"%s open failed. Using defaults",  keymapfile);
-//            MessageBox(hKeyMapDlg,buf,"Warning",0);
             MessageBox(GetActiveWindow(),buf,"Warning",0);
-			// TODO: Clear keymap file path?
         }
         return 1;
     }
@@ -526,15 +525,15 @@ CoCoKey * cctable_keyid_lookup(int id)
 static struct 
 CoCoKey * cctable_rowcol_lookup(unsigned char RowMask, unsigned char Col)
 {
-	// Convert RowMask and Col to rollover index
-	int ro_ndx = Col;
-	while(RowMask > 1) { ro_ndx += 8; RowMask = RowMask>>1; }
+	unsigned long Row = 0;
+	unsigned long Mask = RowMask;
+	int ndx;
 
-	// Use cctable_ndx to access cctable entry
-	if (ro_ndx < 56) return &cctable[cctable_ndx[ro_ndx]];
-
-    // Return NULL if invalid rowmask and column
-	return NULL;
+	// Convert RowMask, Col to index cctable_ndx
+	_BitScanForward(&Row,Mask);
+	ndx = Col + (Row<<3);
+	if (ndx > 55) return NULL;
+	return &cctable[cctable_ndx[ndx]];
 }
 
 /**************************************************/
@@ -600,7 +599,7 @@ BOOL InitKeymapDialog(HWND hWnd)
     CoCoKeySet = 0;
 	CoCoModSet = 0;
     
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),FALSE);
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),KeyMapChanged);
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),FALSE);
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),FALSE);
 
@@ -680,7 +679,7 @@ BOOL SelectCustKeymapFile() {
 //-----------------------------------------------------
 BOOL SaveCustKeymap() {
     if (WriteKeymap(GetKeyMapFilePath())) KeyMapChanged = FALSE;
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),FALSE);
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),KeyMapChanged);
 	SetDialogFocus(hText_PC);
 	return TRUE;
 }
@@ -756,7 +755,7 @@ BOOL SetCustomKeymap() {
 
 	} else {
 		// Remove PC key from translation table
-		//TODO: Warn user key is being unmapped
+		//TODO: Warn user key is being unmapped?
 		while (pKeyTran->ScanCode1 > 0) {
 		    memcpy(pKeyTran,pKeyTran+1,sizeof(keytranslationentry_t));
 		    pKeyTran++;
@@ -772,7 +771,7 @@ BOOL SetCustomKeymap() {
 
 	// Set map changed flag
     KeyMapChanged = TRUE;
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),TRUE);
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),KeyMapChanged);
 
     // Reset focus
 	SetDialogFocus(hText_PC);
