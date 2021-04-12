@@ -848,7 +848,7 @@ BOOL Process_CoCoKey(int BtnId)
 	    ShowCoCoKey();
 	    EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),TRUE);
 	} else {
-		MessageBox(hKeyMapDlg,"Press key(s) on PC keyboard first","Error",0);
+		MessageBox(hKeyMapDlg,"Press PC key to map first","Error",0);
 	}
 	return TRUE;
 }

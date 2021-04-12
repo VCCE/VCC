@@ -30,7 +30,7 @@ follows:
 A list of valid PC and CoCo key names can be found in keynames.h 
 in Vcc sources.
 
-Here is an sample entry line:
+Here are some example entry lines:
 
 # PC key name   Mod   CoCo name  Mod
 # -----------   ---  ----------- ---
@@ -111,4 +111,4 @@ user to choose a different keymap file.  When a file is selected
 the current custom keymapping is automatically saved to it.  If
 the file selected does not exist the user is prompted if they 
 want to create it.
-  
+ 
