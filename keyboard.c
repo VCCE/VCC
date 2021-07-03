@@ -675,6 +675,9 @@ char SetMouseStatus(char ScanCode,unsigned char Phase)
 {
 	char ReturnValue=ScanCode;
 
+	// Allow extended keyboard arrow keys
+	ScanCode = ScanCode & 0x7F;
+
 	switch (Phase)
 	{
 	case 0:
