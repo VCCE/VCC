@@ -917,18 +917,19 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
         break;
 
     case WM_COMMAND:
-        TempConfig.KeyMap = (unsigned char)
-        SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_GETCURSEL,0,0);
         if (LOWORD(wParam)==IDC_KEYMAPED) {
-            // Notify user if custom keyboard if not selected but allow edit anyway.
+            // Insure custom keyboard is selected (unless canceled).
             if (CurrentConfig.KeyMap != 3) {
-                MessageBox(0, "The custom keyboard map is not currently applied. For edits "
-                               "to take effect select Custom mapping AND Apply when done.",
-                               "Notice", 0);
+                TempConfig.KeyMap = 3;
+			    SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_SETCURSEL,(WPARAM)TempConfig.KeyMap,0);
             }
-            DialogBox( EmuState.WindowInstance, (LPCTSTR) IDD_KEYMAPEDIT, hDlg,
+
+			DialogBox( EmuState.WindowInstance, (LPCTSTR) IDD_KEYMAPEDIT, hDlg,
                        (DLGPROC) KeyMapProc );
-        }
+        } else {
+			TempConfig.KeyMap = (unsigned char)
+								SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_GETCURSEL,0,0);
+		}
         break;
     }
     return(0);
