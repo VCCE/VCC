@@ -576,6 +576,7 @@ keytranslationentry_t keyTranslationsCustom[MAX_CTRANSTBLSIZ] =
 
 	{ DIK_RETURN,     0,             64,     0,     0,    0 }, //   ENTER
 	{ DIK_NUMPAD7,    0,             64,     1,     0,    0 }, //   HOME (CLEAR)
+	{ DIK_HOME,       0,             64,     1,     0,    0 }, //   HOME (CLEAR)
 	{ DIK_ESCAPE,     0,             64,     2,     0,    0 }, //   ESCAPE (BREAK)
 	{ DIK_NUMPAD1,    0,             64,     7,     8,    6 }, //   END OF LINE (SHIFT)(RIGHT)
 	{ DIK_NUMPADPERIOD, 0,           64,     4,     8,    5 }, //   DELETE (CTRL)(LEFT)
