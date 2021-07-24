@@ -47,12 +47,13 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "xDebug.h"
 
+
 /*****************************************************************************/
 /*
 	Forward declarations
 */
 
-char SetMouseStatus(char, unsigned char);
+unsigned char SetMouseStatus(unsigned char, unsigned char);
 bool pasting = false;  //Are the keyboard functions in the middle of a paste operation?
 
 /*****************************************************************************/
@@ -671,11 +672,13 @@ unsigned short get_pot_value(unsigned char pot)
 /*****************************************************************************/
 /**
 */
-char SetMouseStatus(char ScanCode,unsigned char Phase)
+unsigned char SetMouseStatus(unsigned char ScanCode,unsigned char Phase)
 {
 	char ReturnValue=ScanCode;
 
-	// Allow extended keyboard arrow keys
+	// Mask scan code high bit to accept keys from extended keyboard arrow
+	// keypad. A more elegant solution would be to use the virtual key code
+	// for joystick mappings but that would require changes to config.c as well.
 	ScanCode = ScanCode & 0x7F;
 
 	switch (Phase)

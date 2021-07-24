@@ -221,7 +221,14 @@ void LoadConfig(SystemState *LCState)
 unsigned char WriteIniFile(void)
 {
 	POINT tp = GetCurWindowSize();
-	CurrentConfig.Resize = 1;
+	CurrentConfig.Resize = 1;      // How to restore default window size?
+
+	// Prevent bad window size being written to the inifile
+	if ((tp.x < 20) || (tp.y < 20)) {
+		tp.x = 640;
+		tp.y = 480;
+	}
+
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ExternalBasicImage);
@@ -449,8 +456,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					SoundInit(EmuState.WindowHandle,SoundCards[TempConfig.SndOutDev].Guid,TempConfig.AudioRate);
 				
 				CurrentConfig=TempConfig;
-
-				if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(GetKeyMapFilePath());
 				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
 				Right=TempRight;
@@ -477,8 +482,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					SoundInit(EmuState.WindowHandle,SoundCards[TempConfig.SndOutDev].Guid,TempConfig.AudioRate);
 
 				CurrentConfig=TempConfig;
-
-	            if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(GetKeyMapFilePath());
 				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
 				Right=TempRight;
@@ -917,18 +920,23 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
         break;
 
     case WM_COMMAND:
-        TempConfig.KeyMap = (unsigned char)
-        SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_GETCURSEL,0,0);
-        if (LOWORD(wParam)==IDC_KEYMAPED) {
-            // Notify user if custom keyboard if not selected but allow edit anyway.
-            if (CurrentConfig.KeyMap != 3) {
-                MessageBox(0, "The custom keyboard map is not currently applied. For edits "
-                               "to take effect select Custom mapping AND Apply when done.",
-                               "Notice", 0);
-            }
-            DialogBox( EmuState.WindowInstance, (LPCTSTR) IDD_KEYMAPEDIT, hDlg,
+		// If Custom keymap button pushed
+		if (LOWORD(wParam)==IDC_KEYMAPED) {
+			// Insure custom keyboard is selected.
+			if (TempConfig.KeyMap != kKBLayoutCustom) {
+				TempConfig.KeyMap = kKBLayoutCustom;
+				SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_SETCURSEL,
+				       (WPARAM)TempConfig.KeyMap,0);
+			}
+			// Run the keymap editor
+			DialogBox( EmuState.WindowInstance, (LPCTSTR) IDD_KEYMAPEDIT, hDlg,
                        (DLGPROC) KeyMapProc );
-        }
+		} else {
+		    // Set temporary keymap to the one currently selected
+		    TempConfig.KeyMap = (unsigned char)
+			      SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_GETCURSEL,0,0);
+		}
+
         break;
     }
     return(0);
