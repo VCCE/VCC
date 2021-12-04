@@ -23,7 +23,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include <Richedit.h>
 #include <iostream>
-
 #include <direct.h>
 
 #include "defines.h"
@@ -113,7 +112,7 @@ CHARFORMAT ModeText;
 
 /*****************************************************************************/
 /*
-	for displaying key name
+	for displaying key name keyboard joystick
 */
 char * const keyNames[] = { "","ESC","1","2","3","4","5","6","7","8","9","0","-","=","BackSp","Tab","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","[","]","Bkslash",";","'","Comma",".","/","CapsLk","Shift","Ctrl","Alt","Space","Enter","Insert","Delete","Home","End","PgUp","PgDown","Left","Right","Up","Down","F1","F2" };
 
@@ -904,43 +903,119 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 	return(0);
 }
 
+//--------------------------
+//   Keyboard Config
+//--------------------------
+
+int SelectKeymapFile(HWND hdlg);
+int ShowKeymapStatus(HWND hDlg);
+
 LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    switch (message)
-    {
+    switch (message) {
     case WM_INITDIALOG:
-        // copy keyboard layout names to the pull-down menu
-        for (int x = 0; x <kKBLayoutCount; x++) {
-            SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_ADDSTRING,
-            (WPARAM)0,(LPARAM)k_keyboardLayoutNames[x]);
-        }
-        // select the current layout
-        SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_SETCURSEL,
-                            (WPARAM)CurrentConfig.KeyMap,(LPARAM)0);
+        ShowKeymapStatus(hDlg);
         break;
-
     case WM_COMMAND:
-		// If Custom keymap button pushed
-		if (LOWORD(wParam)==IDC_KEYMAPED) {
-			// Insure custom keyboard is selected.
-			if (TempConfig.KeyMap != kKBLayoutCustom) {
-				TempConfig.KeyMap = kKBLayoutCustom;
-				SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_SETCURSEL,
-				       (WPARAM)TempConfig.KeyMap,0);
-			}
-			// Run the keymap editor
-			DialogBox( EmuState.WindowInstance, (LPCTSTR) IDD_KEYMAPEDIT, hDlg,
-                       (DLGPROC) KeyMapProc );
-		} else {
-		    // Set temporary keymap to the one currently selected
-		    TempConfig.KeyMap = (unsigned char)
-			      SendDlgItemMessage(hDlg,IDC_KBCONFIG,CB_GETCURSEL,0,0);
-		}
-
+        switch(LOWORD(wParam)) {
+        case IDC_KEYMAP_COCO:
+            TempConfig.KeyMap = kKBLayoutCoCo;
+            break;
+        case IDC_KEYMAP_NATURAL:
+            TempConfig.KeyMap = kKBLayoutNatural;
+            break;
+        case IDC_KEYMAP_COMPACT:
+            TempConfig.KeyMap = kKBLayoutCompact;
+            break;
+        case IDC_KEYMAP_CUSTOM:
+            TempConfig.KeyMap = kKBLayoutCustom;
+            break;
+        case IDC_SELECT_KEYMAP:
+            SelectKeymapFile(hDlg);
+            break;
+        case IDC_KEYMAPED:
+            DialogBox( EmuState.WindowInstance,
+                       (LPCTSTR) IDD_KEYMAPEDIT,
+                       hDlg, (DLGPROC) KeyMapProc );
+            break;
+        }
+        // Force any changes to take immediate effect
+        CurrentConfig.KeyMap = TempConfig.KeyMap;
+        vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
+        ShowKeymapStatus(hDlg);
         break;
     }
     return(0);
 }
+
+int ShowKeymapStatus(HWND hDlg)
+{
+    int i;
+    int Btn[] = { IDC_KEYMAP_COCO,
+                  IDC_KEYMAP_NATURAL,
+                  IDC_KEYMAP_COMPACT,
+                  IDC_KEYMAP_CUSTOM };
+    for (i=0;i<4;i++) {
+        if ( CurrentConfig.KeyMap == i) {
+            SendDlgItemMessage(hDlg,Btn[i],BM_SETCHECK,1,0);
+        } else {
+            SendDlgItemMessage(hDlg,Btn[i],BM_SETCHECK,0,0);
+        }
+    }
+    SendDlgItemMessage(hDlg,IDC_KEYMAP_FILE,WM_SETTEXT,0,(LPARAM)KeyMapFilePath);
+    return(0);
+}
+
+BOOL SelectKeymapFile(HWND hDlg)
+{
+
+    OPENFILENAME ofn ;
+    char FileSelected[MAX_PATH];
+    strncpy (FileSelected,KeyMapFilePath,MAX_PATH);
+    DWORD attr;
+
+    // Prompt user for filename
+    memset(&ofn,0,sizeof(ofn));
+    ofn.lStructSize     = sizeof (OPENFILENAME);
+    ofn.hwndOwner       = hDlg;
+    ofn.lpstrFilter     = "Keymap Files\0*.keymap\0\0";
+    ofn.nFilterIndex    = 1;
+    ofn.lpstrFile       = FileSelected;
+    ofn.nMaxFile        = MAX_PATH;
+    ofn.lpstrFileTitle  = NULL;
+    ofn.nMaxFileTitle   = MAX_PATH;
+    ofn.lpstrInitialDir = AppDirectory();
+    ofn.lpstrTitle      = TEXT("Select Keymap file");
+    ofn.Flags           = OFN_HIDEREADONLY
+                        | OFN_PATHMUSTEXIST;
+
+    if ( GetOpenFileName (&ofn)) {
+    if (ofn.nFileExtension==0) strcat(FileSelected,".keymap");
+        // Load keymap if file exists
+        attr=GetFileAttributesA(FileSelected);
+        if ( (attr != INVALID_FILE_ATTRIBUTES) &&
+            !(attr & FILE_ATTRIBUTE_DIRECTORY) ) {
+            LoadCustomKeyMap(FileSelected);
+        // Else create new file from current selection
+        } else {
+            char txt[MAX_PATH+32];
+            strcpy (txt,"Create ");
+            strcat (txt,FileSelected);
+            strcat (txt,"?");
+            if (MessageBox(hDlg,txt,"Warning",MB_YESNO)==IDYES) {
+                CloneStandardKeymap(CurrentConfig.KeyMap);
+                SaveCustomKeyMap(FileSelected);
+            }
+        }
+        TempConfig.KeyMap = kKBLayoutCustom;
+        strncpy (KeyMapFilePath,FileSelected,MAX_PATH);
+        SetKeyMapFilePath(KeyMapFilePath); // Save filename in Vcc.config
+    }
+	return TRUE;
+}
+//--------------------------
+//  Joystick Config
+//--------------------------
 
 LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -1329,4 +1404,5 @@ POINT GetIniWindowSize() {
 	out.y = CurrentConfig.WindowSizeY;
 	return(out);
 }
+
 
