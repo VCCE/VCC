@@ -932,11 +932,13 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
             break;
         case IDC_SELECT_KEYMAP:
             SelectKeymapFile(hDlg);
+            TempConfig.KeyMap = kKBLayoutCustom;
             break;
         case IDC_KEYMAPED:
             DialogBox( EmuState.WindowInstance,
                        (LPCTSTR) IDD_KEYMAPEDIT,
                        hDlg, (DLGPROC) KeyMapProc );
+            TempConfig.KeyMap = kKBLayoutCustom;
             break;
         }
         // Force any changes to take immediate effect
@@ -1007,7 +1009,6 @@ BOOL SelectKeymapFile(HWND hDlg)
                 SaveCustomKeyMap(FileSelected);
             }
         }
-        TempConfig.KeyMap = kKBLayoutCustom;
         strncpy (KeyMapFilePath,FileSelected,MAX_PATH);
         SetKeyMapFilePath(KeyMapFilePath); // Save filename in Vcc.config
     }

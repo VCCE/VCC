@@ -221,23 +221,23 @@ IDD_INPUT DIALOGEX 0, 0, 328, 146
 STYLE DS_SETFONT | WS_CHILD
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Select Keyboard Mapping",IDC_STATIC,7,15,260,64,BS_CENTER
-    RADIOBUTTON     "CoCo:",   IDC_KEYMAP_COCO,   20,25,42,12
-    RADIOBUTTON     "Natural:",IDC_KEYMAP_NATURAL,20,37,42,12
-    RADIOBUTTON     "Compact:",IDC_KEYMAP_COMPACT,20,49,42,12
-    RADIOBUTTON     "Custom:", IDC_KEYMAP_CUSTOM, 20,61,42,12
-    LTEXT           "Layout resembles the Coco keyboard. (DECB)", IDC_STATIC,65,27,180,12
-    LTEXT           "Standard PC keyboard layout.(OS-9)",         IDC_STATIC,65,39,180,12
-    LTEXT           "Natural PC layout with no numberpad.",       IDC_STATIC,65,51,180,12
-    LTEXT           "User designed custom keyboard layout.",      IDC_STATIC,65,63,180,12
+    GROUPBOX        "Select Keyboard Mapping",IDC_STATIC,27,5,270,64,BS_CENTER
+    RADIOBUTTON     "CoCo:",   IDC_KEYMAP_COCO,   50,15,42,12
+    RADIOBUTTON     "Natural:",IDC_KEYMAP_NATURAL,50,27,42,12
+    RADIOBUTTON     "Compact:",IDC_KEYMAP_COMPACT,50,39,42,12
+    RADIOBUTTON     "Custom:", IDC_KEYMAP_CUSTOM, 50,51,42,12
+    LTEXT           "Layout resembles the Coco keyboard. (DECB)", IDC_STATIC,95,17,180,12
+    LTEXT           "Standard PC keyboard layout.(OS-9)",         IDC_STATIC,95,29,180,12
+    LTEXT           "Natural PC layout with no number pad.",      IDC_STATIC,95,41,180,12
+    LTEXT           "User designed custom keyboard layout.",      IDC_STATIC,95,53,180,12
 
-    GROUPBOX        "Configure Custom Keyboard",IDC_STATIC,7,86,260,60,BS_CENTER
-    PUSHBUTTON      "Select File",IDC_SELECT_KEYMAP,18,100,50,14,BS_MULTILINE
-    LTEXT           "",IDC_KEYMAP_FILE,73,101,185,12,SS_NOPREFIX | SS_REALSIZEIMAGE,WS_EX_CLIENTEDGE
-    PUSHBUTTON      "EDIT",IDC_KEYMAPED,18,123,50,14
+    GROUPBOX        "Configure Custom Keyboard",IDC_STATIC,27,78,270,68,BS_CENTER
+    PUSHBUTTON      "Choose File",IDC_SELECT_KEYMAP,40,95,50,16,BS_MULTILINE
+    LTEXT           "",IDC_KEYMAP_FILE,96,94,185,10,SS_NOPREFIX|SS_PATHELLIPSIS|SS_CENTER,WS_EX_STATICEDGE
+    PUSHBUTTON      "EDIT",IDC_KEYMAPED,40,121,50,14
 
-    LTEXT "Selecting new file clones current mapping to custom.",IDC_STATIC,73,121,185,10
-    LTEXT "Edit runs the custom keymap graphical editor.",       IDC_STATIC,73,131,185,10
+    LTEXT "Choosing a new file clones the previously selected mapping.",IDC_STATIC,96,106,195,10
+    LTEXT "Edit selects custom and runs the graphical keymap editor.",  IDC_STATIC,96,124,195,10
 END
 
 IDD_JOYSTICK DIALOGEX 0, 0, 395, 155
@@ -336,23 +336,22 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_NOIDLEMSG | DS_FIXEDSYS | WS_POPUP | WS_CA
 CAPTION "Edit Custom Key Map"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    PUSHBUTTON      "Set",    IDC_SET_CUST_KEYMAP,  50,115,50,14,NOT WS_TABSTOP
-    PUSHBUTTON      "Clear",  IDC_CLR_CUST_KEYMAP, 110,115,50,14,NOT WS_TABSTOP
-    PUSHBUTTON      "OK",     IDC_KEYMAP_OK,       220,115,50,14,NOT WS_TABSTOP
-    PUSHBUTTON      "Cancel", IDCANCEL,            280,115,50,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Apply",  IDC_SET_CUST_KEYMAP,  75,115,50,14,NOT WS_TABSTOP
+    PUSHBUTTON      "OK",     IDC_KEYMAP_OK,       145,115,50,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Cancel", IDCANCEL,            215,115,50,14,NOT WS_TABSTOP
 
     LTEXT           "Host Key: ",IDC_STATIC,22,140,38,8
-    LTEXT           "",IDC_PCKEY_TXT,      56,139,75,12,SS_REALSIZEIMAGE,WS_EX_CLIENTEDGE
+    LTEXT           "",IDC_PCKEY_TXT,      56,139,75,12,SS_REALSIZEIMAGE,WS_EX_STATICEDGE
 
     LTEXT           "CoCo Key:", IDC_STATIC,22,159,38,8
-    LTEXT           "",IDC_CCKEY_TXT,      56,158,75,12,SS_REALSIZEIMAGE,WS_EX_CLIENTEDGE
+    LTEXT           "",IDC_CCKEY_TXT,      56,158,75,12,SS_REALSIZEIMAGE,WS_EX_STATICEDGE
 
-    LTEXT           "Press a key on your keyboard to see it's mapping.",   IDC_STATIC,145,136,200,10
-    LTEXT           "Then click on CoCo key above to change the mapping.", IDC_STATIC,145,146,200,10
-    LTEXT           "Click 'Set' button to apply each key map change.",    IDC_STATIC,145,156,200,10
-    LTEXT           "Optionally toggle SHIFT, CTRL, or ALT modifier keys.",IDC_STATIC,145,166,200,10
+    LTEXT           "Toggle any key on your keyboard to see it's mapping.",   IDC_STATIC,145,136,200,10
+    LTEXT           "Use CoCo buttons above to change it. Apply each change.",IDC_STATIC,145,146,200,10
+    LTEXT           "Optionally toggle SHIFT, CTRL, or ALT modifiers.",       IDC_STATIC,145,156,200,10
+    LTEXT           "OK button saves changes. Cancel discards changes.",      IDC_STATIC,145,166,200,10
    
-    GROUPBOX        "",IDC_STATIC,              20,11,330,98
+    GROUPBOX        "CoCo 3 Keyboard",IDC_STATIC,20,6,330,104,BS_CENTER
     PUSHBUTTON      "1 !",  IDC_KEYBTN_1,       40,20,22,16,BS_PUSHLIKE | NOT WS_TABSTOP
     PUSHBUTTON      "2 """, IDC_KEYBTN_2,       62,20,22,16,BS_PUSHLIKE | NOT WS_TABSTOP
     PUSHBUTTON      "3 #",  IDC_KEYBTN_3,       84,20,22,16,BS_PUSHLIKE | NOT WS_TABSTOP

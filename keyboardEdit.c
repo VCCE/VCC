@@ -90,7 +90,6 @@ BOOL  InitKeymapDialog(HWND);
 BOOL  Process_CoCoKey(int);
 BOOL  SaveCustKeymap();
 BOOL  SetCustomKeymap();
-BOOL  ClrCustomKeymap();
 BOOL  SetControlFont(WPARAM,LPARAM);
 void  CoCoModifier(int);
 void  ShowCoCoKey();
@@ -588,8 +587,6 @@ BOOL CALLBACK KeyMapProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         switch(LOWORD(wParam)) {
         case IDC_SET_CUST_KEYMAP:
             return SetCustomKeymap();
-        case IDC_CLR_CUST_KEYMAP:
-            return ClrCustomKeymap();
         case IDC_KEYMAP_OK:
             SetCustomKeymap();
             if (KeyMapChanged) SaveCustomKeyMap(GetKeyMapFilePath());
@@ -636,7 +633,6 @@ BOOL InitKeymapDialog(HWND hWnd)
 	KeyMapChanged = FALSE;
 
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),FALSE);
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),FALSE);
 
 	// Subclass hText_PC to handle PC keyboard
 	Text_PCproc = (WNDPROC)GetWindowLongPtr(hText_PC, GWLP_WNDPROC);
@@ -750,19 +746,6 @@ BOOL SetCustomKeymap() {
     // Reset focus
 	SetDialogFocus(hText_PC);
     return TRUE;
-}
-
-//-----------------------------------------------------
-// Clear current key selection
-//-----------------------------------------------------
-BOOL ClrCustomKeymap() {
-	PC_KeySelected = 0;
-	PC_ModSelected = 0;
-	ShowPCkey();
-	SetCoCokey();
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),FALSE);
-	SetDialogFocus(hText_PC);
-	return TRUE;
 }
 
 //-----------------------------------------------------
@@ -974,12 +957,6 @@ void ShowPCkey()
 	}
 	sprintf(str,"%s %s",ModName[PC_ModSelected],keytxt);
 	SendMessage(hText_PC, WM_SETTEXT, 0, (LPARAM)str);
-
-	if ( (PC_KeySelected > 0) | (PC_ModSelected > 0) ) {
-		EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),TRUE);
-	} else {
-		EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),FALSE);
-	}
 }
 
 //-----------------------------------------------------

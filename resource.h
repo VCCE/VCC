@@ -309,7 +309,6 @@
 #define IDC_SELECT_KEYMAP               1150
 #define IDC_KEYMAP_OK                   1152
 #define IDC_SET_CUST_KEYMAP             1153
-#define IDC_CLR_CUST_KEYMAP             1154
 #define IDC_PCKEY_TXT                   1155
 #define IDC_CCKEY_TXT                   1156
 #define IDC_KEYMAP_FILE                 1157
