@@ -933,11 +933,8 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
             break;
         case IDC_SELECT_KEYMAP:
             SelectKeymapFile(hDlg);
-            // Set to custom after select. Create uses previous selection.
-            SetCurrentKeyMap(kKBLayoutCustom);
             break;
         case IDC_KEYMAPED:
-            // Set to custom first so user can test changes immediatly.
             SetCurrentKeyMap(kKBLayoutCustom);
             DialogBox( EmuState.WindowInstance,
                        (LPCTSTR) IDD_KEYMAPEDIT,

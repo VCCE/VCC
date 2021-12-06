@@ -88,7 +88,6 @@ BOOL KeyMapChanged = FALSE;
 // Forward references
 BOOL  InitKeymapDialog(HWND);
 BOOL  Process_CoCoKey(int);
-BOOL  SaveCustKeymap();
 BOOL  SetCustomKeymap();
 BOOL  SetControlFont(WPARAM,LPARAM);
 void  CoCoModifier(int);
