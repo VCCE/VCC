@@ -907,6 +907,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 //   Keyboard Config
 //--------------------------
 
+int SetCurrentKeyMap(int keymap);
 int SelectKeymapFile(HWND hdlg);
 int ShowKeymapStatus(HWND hDlg);
 
@@ -919,35 +920,44 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
     case WM_COMMAND:
         switch(LOWORD(wParam)) {
         case IDC_KEYMAP_COCO:
-            TempConfig.KeyMap = kKBLayoutCoCo;
+            SetCurrentKeyMap(kKBLayoutCoCo);
             break;
         case IDC_KEYMAP_NATURAL:
-            TempConfig.KeyMap = kKBLayoutNatural;
+            SetCurrentKeyMap(kKBLayoutNatural);
             break;
         case IDC_KEYMAP_COMPACT:
-            TempConfig.KeyMap = kKBLayoutCompact;
+            SetCurrentKeyMap(kKBLayoutCompact);
             break;
         case IDC_KEYMAP_CUSTOM:
-            TempConfig.KeyMap = kKBLayoutCustom;
+            SetCurrentKeyMap(kKBLayoutCustom);
             break;
         case IDC_SELECT_KEYMAP:
             SelectKeymapFile(hDlg);
-            TempConfig.KeyMap = kKBLayoutCustom;
+            // Set to custom after select. Create uses previous selection.
+            SetCurrentKeyMap(kKBLayoutCustom);
             break;
         case IDC_KEYMAPED:
+            // Set to custom first so user can test changes immediatly.
+            SetCurrentKeyMap(kKBLayoutCustom);
             DialogBox( EmuState.WindowInstance,
                        (LPCTSTR) IDD_KEYMAPEDIT,
                        hDlg, (DLGPROC) KeyMapProc );
-            TempConfig.KeyMap = kKBLayoutCustom;
             break;
         }
-        // Force any changes to take immediate effect
-        CurrentConfig.KeyMap = TempConfig.KeyMap;
-        vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
         ShowKeymapStatus(hDlg);
         break;
     }
     return(0);
+}
+
+int SetCurrentKeyMap(int keymap) {
+    // Force any changes to take immediate effect
+    if (keymap != CurrentConfig.KeyMap) {
+        vccKeyboardBuildRuntimeTable((keyboardlayout_e)keymap);
+    }
+    CurrentConfig.KeyMap = keymap;
+    TempConfig.KeyMap = keymap;
+    return keymap;
 }
 
 int ShowKeymapStatus(HWND hDlg)

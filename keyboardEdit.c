@@ -592,7 +592,10 @@ BOOL CALLBACK KeyMapProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (KeyMapChanged) SaveCustomKeyMap(GetKeyMapFilePath());
             return EndDialog(hWnd,wParam);
         case IDCANCEL:
-            if (KeyMapChanged) LoadCustomKeyMap(GetKeyMapFilePath());
+            if (KeyMapChanged) { 
+                LoadCustomKeyMap(GetKeyMapFilePath());
+                vccKeyboardBuildRuntimeTable((keyboardlayout_e) kKBLayoutCustom);
+             }
             return EndDialog(hWnd,wParam);
         default:
             return Process_CoCoKey(LOWORD(wParam));
