@@ -306,15 +306,17 @@
 #define IDC_KEYBTN_LAST                 1149
 
 // Other key map editor controls
-#define IDC_LOAD_KEYMAP                 1150
-#define IDC_SAVE_KEYMAP                 1151
-#define IDC_KEYMAP_EXIT                 1152
+#define IDC_SELECT_KEYMAP               1150
+#define IDC_KEYMAP_OK                   1152
 #define IDC_SET_CUST_KEYMAP             1153
-#define IDC_CLR_CUST_KEYMAP             1154
 #define IDC_PCKEY_TXT                   1155
 #define IDC_CCKEY_TXT                   1156
 #define IDC_KEYMAP_FILE                 1157
 
+#define IDC_KEYMAP_COCO                 1158
+#define IDC_KEYMAP_NATURAL              1159
+#define IDC_KEYMAP_COMPACT              1160
+#define IDC_KEYMAP_CUSTOM               1170
 // End keymapedit
 
 #define IDC_ORG_PALETTE                 1191

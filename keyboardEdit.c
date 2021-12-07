@@ -20,9 +20,16 @@ This file is part of VCC (Virtual Color Computer)
     Keyboard Edit author: E J Jaquay 2021
 */
 
+/*-------------------------------------------------------
+// Functions defined here that are called by config.c:
+      KeyMapProc
+      SaveCustomKeyMap
+      LoadCustomKeyMap
+      CloneStandardKeymap
+*/
+
 #include <windows.h>
 #include <windowsx.h>
-#include <Shlwapi.h>
 #include <stdio.h>
 #include <intrin.h>
 
@@ -48,7 +55,6 @@ static char *ModName[4] = {"","Shift","Ctrl","Alt"};
 HWND  hKeyMapDlg = NULL;     // Key map dialog
 HWND  hText_PC = NULL;       // Control to display PC Key.
 HWND  hText_CC = NULL;       // Control to display selected CoCo Keys
-HWND  hText_MapFile = NULL;  // Control to display current map file name
 
 // Subclass Text_PC control processing to capture all PC keystrokes
 LRESULT CALLBACK SubText_PCproc(HWND,UINT,WPARAM,LPARAM);
@@ -82,11 +88,7 @@ BOOL KeyMapChanged = FALSE;
 // Forward references
 BOOL  InitKeymapDialog(HWND);
 BOOL  Process_CoCoKey(int);
-BOOL  SelectCustKeymapFile();
-BOOL  SaveCustKeymap();
-BOOL  WriteKeymap(char*); 
 BOOL  SetCustomKeymap();
-BOOL  ClrCustomKeymap();
 BOOL  SetControlFont(WPARAM,LPARAM);
 void  CoCoModifier(int);
 void  ShowCoCoKey();
@@ -252,9 +254,38 @@ int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
 }
 
 //------------------------------------------------------
-// Save custom keymap to file 
+// Clone custom keymap from current standard keymap
+//------------------------------------------------------
+int CloneStandardKeymap(int keymap)
+{
+    int i = 0;
+    keytranslationentry_t * dst = keyTranslationsCustom;
+    keytranslationentry_t * src;
+    switch (keymap) {
+    case kKBLayoutCoCo:
+        src = keyTranslationsCoCo;
+        break;
+    case kKBLayoutNatural:
+        src = keyTranslationsNatural;
+        break;
+    case kKBLayoutCompact:
+        src = keyTranslationsCompact;
+        break;
+    default:
+        return(0);
+    }
+    while (src->ScanCode1 != 0) {
+        *dst++ = *src++;
+        if (i++ == MAX_CTRANSTBLSIZ) break;
+    }
+    dst->ScanCode1 = 0;
+    return 0;
+}
+
 //-----------------------------------------------------
-BOOL WriteKeymap(char* keymapfile) 
+// Save custom keymap to file
+//-----------------------------------------------------
+int SaveCustomKeyMap(char* keymapfile) 
 {
     keytranslationentry_t * pTran;
 	pTran = keyTranslationsCustom;
@@ -265,6 +296,7 @@ BOOL WriteKeymap(char* keymapfile)
 	char tmppath[MAX_PATH];
 
 	char buf[256];
+	DWORD attr;
 
     // Create a temporary file to hold the keymap
 	GetTempPath(MAX_PATH,tmppath);
@@ -274,16 +306,18 @@ BOOL WriteKeymap(char* keymapfile)
 	kmap = fopen(tmpfile,"w");
 	if (kmap == NULL) {
         MessageBox(hKeyMapDlg,tmpfile,"open error",0);
-		return FALSE;
+		return 1;
 	}
 
     // If there was already a file by name specified
-	if (PathFileExists(keymapfile)) {
+	attr=GetFileAttributesA(keymapfile);
+	if ( (attr != INVALID_FILE_ATTRIBUTES) &&
+		!(attr & FILE_ATTRIBUTE_DIRECTORY) ) {
 		// Open the existing file
 		omap = fopen(keymapfile,"r");
 	    if (omap == NULL) {
             MessageBox(hKeyMapDlg,keymapfile,"open error",0);
-		    return FALSE;
+		    return 1;
 	    }
 		// Copy comments to temporary file
 		while (fgets(buf,256,omap)) { 
@@ -291,7 +325,7 @@ BOOL WriteKeymap(char* keymapfile)
 		    if( fputs(buf,kmap) < 0) {
                 MessageBox(hKeyMapDlg,keymapfile,"read error",0);
                 fclose(kmap);
-		        return FALSE;
+		        return 2;
 		    }
 		}
 		// Close and delete it
@@ -304,7 +338,7 @@ BOOL WriteKeymap(char* keymapfile)
 		if( fputs(GenKeymapLine(pTran),kmap) < 0) {
             MessageBox(hKeyMapDlg,tmpfile,"write error",0);
             fclose(kmap);
-		    return FALSE;
+		    return 3;
 		}
 		pTran++;
 	}
@@ -313,10 +347,10 @@ BOOL WriteKeymap(char* keymapfile)
 	// Rename temp file to keymapfile
 	if (!MoveFile(tmpfile,keymapfile)) {
         MessageBox(hKeyMapDlg,tmpfile,"Rename error",0);
-		return FALSE;
+		return 4;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 //------------------------------------------------------
@@ -542,30 +576,30 @@ CoCoKey * cctable_rowcol_lookup(unsigned char RowMask, unsigned char Col)
 
 BOOL CALLBACK KeyMapProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-//	PrintLogC("%04x %08x %08x\n",msg,wParam,lParam);
-	switch (msg) {
-	case WM_INITDIALOG:
+//    PrintLogC("%04x %08x %08x\n",msg,wParam,lParam);
+    switch (msg) {
+    case WM_INITDIALOG:
         return InitKeymapDialog(hWnd);
-	case WM_CLOSE:
-		return EndDialog(hWnd,wParam);
-	case WM_CTLCOLORSTATIC:
-		return SetControlFont(wParam,lParam);
-	case WM_COMMAND:
-		switch(LOWORD(wParam)) {
-        case IDC_KEYMAP_EXIT:
-			return EndDialog(hWnd,wParam);
-		case IDC_LOAD_KEYMAP:
-			return SelectCustKeymapFile();
-		case IDC_SAVE_KEYMAP:
-			return SaveCustKeymap();
-		case IDC_SET_CUST_KEYMAP:
-			return SetCustomKeymap();
-	    case IDC_CLR_CUST_KEYMAP:
-			return ClrCustomKeymap();
-		default:
-			return Process_CoCoKey(LOWORD(wParam));
-		}
-	}
+    case WM_CTLCOLORSTATIC:
+        return SetControlFont(wParam,lParam);
+    case WM_COMMAND:
+        switch(LOWORD(wParam)) {
+        case IDC_SET_CUST_KEYMAP:
+            return SetCustomKeymap();
+        case IDC_KEYMAP_OK:
+            SetCustomKeymap();
+            if (KeyMapChanged) SaveCustomKeyMap(GetKeyMapFilePath());
+            return EndDialog(hWnd,wParam);
+        case IDCANCEL:
+            if (KeyMapChanged) { 
+                LoadCustomKeyMap(GetKeyMapFilePath());
+                vccKeyboardBuildRuntimeTable((keyboardlayout_e) kKBLayoutCustom);
+             }
+            return EndDialog(hWnd,wParam);
+        default:
+            return Process_CoCoKey(LOWORD(wParam));
+        }
+    }
     return FALSE; 
 }
 
@@ -580,7 +614,6 @@ BOOL InitKeymapDialog(HWND hWnd)
 	// Save handles for data display controls as globals
 	hText_CC = GetDlgItem(hWnd,IDC_CCKEY_TXT);
 	hText_PC = GetDlgItem(hWnd,IDC_PCKEY_TXT);
-    hText_MapFile = GetDlgItem(hWnd,IDC_KEYMAP_FILE);
 
 	if (hfTextBox == NULL) 
 		hfTextBox = CreateFont (14, 0, 0, 0, FW_MEDIUM, FALSE, 
@@ -599,12 +632,9 @@ BOOL InitKeymapDialog(HWND hWnd)
     CoCoKeySet = 0;
 	CoCoModSet = 0;
     
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),KeyMapChanged);
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),FALSE);
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),FALSE);
+	KeyMapChanged = FALSE;
 
-    // keymap filename
-	SendMessage(hText_MapFile, WM_SETTEXT, 0, (LPARAM)GetKeyMapFilePath());
+	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),FALSE);
 
 	// Subclass hText_PC to handle PC keyboard
 	Text_PCproc = (WNDPROC)GetWindowLongPtr(hText_PC, GWLP_WNDPROC);
@@ -620,8 +650,7 @@ BOOL InitKeymapDialog(HWND hWnd)
 //-----------------------------------------------------
 BOOL SetControlFont(WPARAM wParam, LPARAM lParam) {
 	if (((HWND) lParam == hText_PC) |
-	    ((HWND) lParam == hText_CC) |
-	    ((HWND) lParam == hText_MapFile)) {
+	    ((HWND) lParam == hText_CC)) {
 	    SelectObject((HDC)wParam,hfTextBox); 
         return (INT_PTR)hbrTextBox;
 	}	
@@ -629,63 +658,7 @@ BOOL SetControlFont(WPARAM wParam, LPARAM lParam) {
 }
 
 //-----------------------------------------------------
-// Select custom keymap file
-//-----------------------------------------------------
-BOOL SelectCustKeymapFile() {
-
-    OPENFILENAME ofn ;
-    char FileSelected[MAX_PATH];
-	strncpy (FileSelected,GetKeyMapFilePath(),MAX_PATH);
-
-    // Prompt user for filename
-    memset(&ofn,0,sizeof(ofn));
-    ofn.lStructSize     = sizeof (OPENFILENAME) ;
-    ofn.hwndOwner       = hKeyMapDlg;
-    ofn.lpstrFilter     = "Keymap Files\0*.keymap\0\0";
-    ofn.nFilterIndex    = 1;
-    ofn.lpstrFile       = FileSelected;
-    ofn.nMaxFile        = MAX_PATH;
-    ofn.lpstrFileTitle  = NULL;
-    ofn.nMaxFileTitle   = MAX_PATH;
-    ofn.lpstrInitialDir = AppDirectory();
-    ofn.lpstrTitle      = TEXT("Select Keymap file");
-    ofn.Flags           = OFN_HIDEREADONLY
-						| OFN_PATHMUSTEXIST;
-
-    if ( GetOpenFileName (&ofn)) {
-		// Load or create new keymap file
-	    if (ofn.nFileExtension==0) strcat(FileSelected,".keymap");
-	    if (PathFileExists(FileSelected)) {
-            LoadCustomKeyMap(FileSelected);
-		} else {
-			char txt[MAX_PATH+32];
-			strcpy (txt,FileSelected);
-			strcat (txt," does not exist. Create it?");
-		    if (MessageBox(hKeyMapDlg,txt,"Warning",MB_YESNO)==IDYES) 
-				WriteKeymap(FileSelected);
-		}
-        SetKeyMapFilePath(FileSelected);
-
-		strncpy (GetKeyMapFilePath(),FileSelected,MAX_PATH);
-	    SendMessage(hText_MapFile, WM_SETTEXT, 0, (LPARAM)GetKeyMapFilePath());
-	}
-	
-	SetDialogFocus(hText_PC);
-	return TRUE;
-}
-
-//-----------------------------------------------------
-// Save custom keymap file
-//-----------------------------------------------------
-BOOL SaveCustKeymap() {
-    if (WriteKeymap(GetKeyMapFilePath())) KeyMapChanged = FALSE;
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),KeyMapChanged);
-	SetDialogFocus(hText_PC);
-	return TRUE;
-}
-
-//-----------------------------------------------------
-// Set mapping for currently selected key
+// Set mapping for selected key
 //-----------------------------------------------------
 BOOL SetCustomKeymap() {
 
@@ -771,24 +744,10 @@ BOOL SetCustomKeymap() {
 
 	// Set map changed flag
     KeyMapChanged = TRUE;
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SAVE_KEYMAP),KeyMapChanged);
 
     // Reset focus
 	SetDialogFocus(hText_PC);
     return TRUE;
-}
-
-//-----------------------------------------------------
-// Clear current key selection
-//-----------------------------------------------------
-BOOL ClrCustomKeymap() {
-	PC_KeySelected = 0;
-	PC_ModSelected = 0;
-	ShowPCkey();
-	SetCoCokey();
-	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),FALSE);
-	SetDialogFocus(hText_PC);
-	return TRUE;
 }
 
 //-----------------------------------------------------
@@ -1000,12 +959,6 @@ void ShowPCkey()
 	}
 	sprintf(str,"%s %s",ModName[PC_ModSelected],keytxt);
 	SendMessage(hText_PC, WM_SETTEXT, 0, (LPARAM)str);
-
-	if ( (PC_KeySelected > 0) | (PC_ModSelected > 0) ) {
-		EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),TRUE);
-	} else {
-		EnableWindow(GetDlgItem(hKeyMapDlg,IDC_CLR_CUST_KEYMAP),FALSE);
-	}
 }
 
 //-----------------------------------------------------

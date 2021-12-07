@@ -35,7 +35,9 @@ extern "C"
 {
 #endif
 
+int SaveCustomKeyMap(char* keymapfile);
 int LoadCustomKeyMap(char* keymapfile);
+int CloneStandardKeymap(int keymap);
 BOOL CALLBACK KeyMapProc(HWND, UINT, WPARAM, LPARAM);
 
 #ifdef __cplusplus
