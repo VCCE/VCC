@@ -14,54 +14,45 @@ layouts. For these reasons VCC provides three built-in keyboard layouts
 The Coco (DECB) layout maps the PC’s keyboard in a layout similar to an
 actual Coco 3 keyboard.
 
-Natural (OS-9) maps the PC’s keyboard is to match the keycaps on a US
+Natural (OS-9) maps the PC’s keyboard to match the keycaps on a US
 QWERTY keyboard with the exception of a few special keys.
 
 Compact (OS-9) is simular to Natural, but with some keys altered to
 compensate for missing the number pad keys on smaller laptops.
 
-See the “VCC Keyboard Map” section for details of the build-in key
-mappings.
-
 The Custom layout is stored in a seperate file while the built-in layouts
 are hardcoded within the VCC executable.
 
-The current layout is selected in the Keyboard tab on the Configuration menu.
-From there click the radio button for the desired layout and click OK
-or Apply.
+The mapping is selected by a radio button on the VCC Config Keyboard tab.
 
-Also on the Configuration Keyboard tab there is a section that allows the
-Custom keyboard mapping to be configured.
+Also on the Config Keyboard tab there are two buttons in the Custom Keyboard
+section, as follows:
 
-Use the "Choose File" button to change the custom keymap file.  If the chosen
+The "Choose File" button changes the custom keymap file.  If the chosen
 file exists the keymap is loaded.  If the file does not exist a new file is
-created containing the previously selected keymapping.  This allows user to
-create a new file that contains a copy of either one of the built-in keymaps or
-the current custom map.
+created containing the selected keymapping.  This allows user to create a
+file that contains a copy of any of the built-in keymaps.
 
-Use the "EDIT" button to modify the current custom keymap using keymap editor.
-Changes made in the keymap editor take immediate effect and are automatically
-saved to the choosen keymap file. (Unless Cancel is selected within the Editor)
+The "EDIT" button modifies the Custom keymap.  Changes made in the editor
+take immediate effect and are automatically saved to the keymap file unless
+Cancel is selected within the Editor.  Using the keymap editor will cause the
+Custom keymap to be automatically selected.
 
-Using either the "Choose File" or the "EDIT" functions will cause the Custom
-keymap to be automatically selected.
-
-It is possible to modify keymap files using notepad or a text editor. This
-should only be done for keymap files not currently choosen while VCC is
-running.  Otherwise VCC will overwrite the changes.
+It is possible to modify custom keymap files using a text editor.  This should
+not be done while VCC is running.  Otherwise VCC might overwrite the changes.
 
 
 Custom Keyboard Map File
 ------------------------
 
 The keyboard map file is used to map host PC key codes into Color Computer 3
-keys. This file has the default name "custom.keymap" and resides in the user's
-Vcc appdata directory.  The file contains lines of text, each contains four
-fields (two pairs) seperated by one or more spaces or tabs.  Blank lines,
-lines starting with "#", or anything on a line beyond four fields are comments.
-All other lines are key definitions.  The first two fields of a key definition
-are the PC code and it's modifier.  The next two fields are the CoCo key and
-it's modifier.
+keys. This file has the default name "custom.keymap" and normally resides in
+the user's Vcc appdata directory.  The file contains lines of text, each
+contains four fields (two pairs) seperated by one or more spaces or tabs.
+Blank lines, lines starting with "#", or anything on a line beyond four fields
+are comments.  All other lines are key definitions.  The first two fields of
+a key definition are the PC code and it's modifier.  The next two fields are
+the CoCo key and it's modifier.
 
 PC keynames start with "DIK_" and CoCo key names start with "COCO_".
 Key modifiers are specified with a single digit as follows:
@@ -77,12 +68,12 @@ Here are some example entry lines:
   DIK_EQUALS     0   COCO_MINUS   1    # "=" Coco
   DIK_MINUS      1   COCO_MINUS   2    # "_" NitrOS-9
 
-This above example maps the '=' PC key to the 'Shift+' CoCo keys and  'Shift-'
-PC keys to 'Alt-' CoCo keys in Vcc.
+This above example maps PC '=' to 'Shift+' and PC 'Shift-' key to 'Control-'
+on the emulated CoCo.
 
 Any CoCo key that is not mapped in the keymap file will be dead in Vcc.
 However shifted letter keys do not need to be mapped to make them uppercase
-because both DECB and NitrOS-9 will handle this internally.
+because both DECB and OS-9 will handle this internally.
 
 It is important to note that some PC keys can not be mapped.  Specifically the
 F3-F11 keys can not be mapped, they are used for Vcc control.  Keys selected
