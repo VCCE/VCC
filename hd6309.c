@@ -2794,7 +2794,7 @@ void Divd_M(void)
 	}
 
 	A_REG = (unsigned char)((signed short)postword % (signed char)postbyte);
-	B_REG = stemp16;
+	B_REG = (unsigned char) stemp16;
 
 	if ((stemp16 > 127) || (stemp16 < -128)) 
 	{
@@ -2965,7 +2965,7 @@ void Divd_D(void)
 	}
 
 	A_REG = (unsigned char)((signed short)postword % (signed char)postbyte);
-	B_REG = stemp16;
+	B_REG = (unsigned char) stemp16;
 
 	if ((stemp16 > 127) || (stemp16 < -128)) 
 	{
@@ -3134,7 +3134,7 @@ void Divd_X(void)
   }
 
   A_REG = (unsigned char)((signed short)postword % (signed char)postbyte);
-  B_REG = stemp16;
+  B_REG = (unsigned char) stemp16;
 
   if ((stemp16 > 127) || (stemp16 < -128))
   {
@@ -3311,7 +3311,7 @@ void Divd_E(void)
   }
 
   A_REG = (unsigned char)((signed short)postword % (signed char)postbyte);
-  B_REG = stemp16;
+  B_REG = (unsigned char) stemp16;
 
   if ((stemp16 > 127) || (stemp16 < -128))
   {

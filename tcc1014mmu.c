@@ -309,7 +309,7 @@ unsigned short GetMem(long address) {
 	return(memory[address]);
 }
 void SetMem(long address, unsigned short data) {
-	memory[address] = data;
+	memory[address] = (unsigned char) data;
 }
 
 void SetDistoRamBank(unsigned char data)
