@@ -336,14 +336,14 @@ _inline int CPUCycle(void)
 				strcpy(tmp, clipboard.substr(0, 1).c_str());
 				vccKeyboardHandleKey(tmp[z], tmp[z], kEventKeyDown);
 				if (tmp[z] == 0x1c) {
-					cyclewait = 6000; 
+					cyclewait = 8000; 
 				}
 				else { cyclewait = 2000; }
 
 
 			}
 			else { vccKeyboardHandleKey(tmp[z], tmp[z], kEventKeyDown);
-			if (tmp[z] == 0x1c) { cyclewait = 6000; 
+			if (tmp[z] == 0x1c) { cyclewait = 8000; 
 			}
 				else { cyclewait = 2000; }
 			}
