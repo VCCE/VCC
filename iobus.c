@@ -26,6 +26,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014mmu.h"
 #include "logger.h"
 #include "config.h"
+
+#include "acia.c"  // EJJ temporary while testing
+
 unsigned char port_read(unsigned short addr)
 {
 	unsigned char port=0,temp=0;
@@ -52,8 +55,14 @@ if ( (port>=0x50) & (port <=0x5a))
 		case 0x21:
 		case 0x22:
 		case 0x23:
-
 			temp=pia1_read(port);	//MC6821 P.I.A	Sound and VDG Control 
+		break;
+
+		case 0x68:   // DataReg
+		case 0x69:   // StatReg
+		case 0x6A:   // CmdReg
+		case 0x6B:   // CtlReg
+			temp=acia_read(port); //EJJ
 		break;
 
 		case 0xC0:
@@ -194,6 +203,13 @@ void port_write(unsigned char data,unsigned short addr)
 		case 0x22:
 		case 0x23:
 			pia1_write(data,port);	//MC6821 P.I.A	Sound and VDG Control 
+		break;
+
+		case 0x68:
+		case 0x69:
+		case 0x6A:
+		case 0x6B: 
+			acia_write(data,port);  //EJJ
 		break;
 
 		case 0xC0:
