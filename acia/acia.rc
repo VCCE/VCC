@@ -1,4 +1,4 @@
-//Microsoft Developer Studio generated resource script.
+// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -27,22 +25,22 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE 
 BEGIN
-    "resource.h"
+    "resource.\0"
 END
 
-//2 TEXTINCLUDE DISCARDABLE 
-//BEGIN
-//    "#include ""afxres.h""\r\n"
-//    "\0"
-//END
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
 
-//3 TEXTINCLUDE DISCARDABLE 
-//BEGIN
-//    "\r\n"
-//    "\0"
-//END
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
 
 #endif    // APSTUDIO_INVOKED
 
@@ -52,15 +50,17 @@ END
 // Dialog
 //
 
-IDD_PROPPAGE DIALOG DISCARDABLE  0, 0, 192, 86
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+IDD_PROPPAGE DIALOGEX 0, 0, 192, 86
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION
 CAPTION "Acia Interface"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    RTEXT           "Com port:",IDC_STATIC,25,34,44,11
+    RTEXT           "Com port:",IDC_STATIC,23,32,44,11
     DEFPUSHBUTTON   "Ok",IDOK,73,59,48,19
     PUSHBUTTON      "Cancel",IDCANCEL,138,59,45,19
-//   EDITTEXT        IDC_TCPHOST,74,14,105,12,ES_AUTOHSCROLL
+    RTEXT           "Cosole Type",IDC_STATIC,8,16,61,10
+    EDITTEXT        IDC_TCPPORT,74,32,46,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_TCPHOST,74,14,105,12,ES_AUTOHSCROLL
 END
 
 
@@ -70,7 +70,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_PROPPAGE, DIALOG
     BEGIN
@@ -85,17 +85,28 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_PROPPAGE AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE
 BEGIN
     IDS_MODULE_NAME         "ACIA interface"
     IDS_VERSION             "1.00"
     IDS_CATNUMBER           "00-0000"
 END
 
-#endif    // English (U.S.) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
