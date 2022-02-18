@@ -1,5 +1,13 @@
+#define DIRECTINPUT_VERSION 0x0800
+
+#include <windows.h>
+#include "stdio.h"
+
 #include <conio.h>
 #include <dinput.h> // for scancodes (DIK_)
+#include "resource.h"
+
+#define IRQ 1
 
 //----------------------------------------------------------------
 // Function templates 
@@ -39,31 +47,104 @@ void console_background(int);
 void console_forground(int);
 
 //------------------------------------------------------------------------
+// DLL entry and exports 
+//------------------------------------------------------------------------
+
+#define MAX_LOADSTRING 200
+
+// vcc stuff
+
+typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
+typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
+
+static HINSTANCE g_hinstDLL=NULL;
+LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
+
+void (*AssertInt)(unsigned char,unsigned char)=NULL;
+void BuildDynaMenu(void);
+void LoadConfig(void);
+void SaveConfig(void);
+
+BOOL APIENTRY DllMain( HINSTANCE  hinstDLL,
+                       DWORD  reason,
+                       LPVOID lpReserved )
+{
+    switch (reason) {
+    case DLL_PROCESS_ATTACH:
+        acia_init();
+    case DLL_PROCESS_DETACH:
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+        break;
+    }
+    return TRUE;
+}
+
+__declspec(dllexport) void
+ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
+{
+	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
+	strcpy(ModName,"ACIA");
+	return ;
+}
+
+__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+{
+//		DialogBox(g_hinstDLL, (LPCTSTR)IDD_PROPPAGE, NULL, (DLGPROC)Config);
+//		BuildDynaMenu();
+		return;
+}
+
+// Export write to port
+__declspec(dllexport) void
+PackPortWrite(unsigned char Port,unsigned char Data)
+{
+    acia_write(Data,Port);
+    return;
+}
+
+// Export read from port
+__declspec(dllexport) unsigned char 
+PackPortRead(unsigned char Port)
+{
+    return acia_read(Port);
+}
+
+// This captures the transfer point for the CPU assert interupt 
+__declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
+{
+	AssertInt=Dummy;
+	return;
+}
+
+//------------------------------------------------------------------------
 // ACIA
 //------------------------------------------------------------------------
 
-// Status register bits
+//----------------------------------------------------------------
+// Acia Globals
+//----------------------------------------------------------------
+
+unsigned char StatReg = 0;
+// Status register bits.  
 // b0 parity error if true, self clearing 
 // b1 frame error if true, self clearing
 // b2 overrun error if true, self clearing
-// b3 Rcv Data register full if true  (generates IRQ)
-// b4 Snd Data register empty if true (generates IRQ)
-// b5 DCD Data carrier detect (change generates IRQ)
-// b6 DSR Data set ready      (chante generates IRQ)
-// b7 IRQ true = interrupt generated, cleared on read statreg
-
-#define StatPar  0x01
-#define StatFrm  0x02
-#define StatOvr  0x04
-#define StatDCD  0x20 
-#define StatDSR  0x40 
+// b3 Rcv Data register full if tru
+// b4 Snd Data register empty if true
+// b5 DCD Data carrier detect
+// b6 DSR Data set ready
+// b7 IRQ Interrupt generated
+// Only RxF, TxE, and IRQ are used here
 #define StatRxF  0x08
 #define StatTxE  0x10
 #define StatIRQ  0x80
 
-// Command register bits
-// b0 DTR 0=disable receiver and all interupts 1=enable receiver and interrupts
-// b1 Receiver IRQ enable, 0 = IRQ enabled per bit 3 of status reg.  1=disabled
+unsigned char CmdReg  = 0;
+// Command register bits.
+// b0 DTR 1 = enable receive and interupts
+// b1 Receiver IRQ enable.
 // b3 b2
 // 0  0 transmit IRQ disabled, RTS high, transmitter off
 // 0  1 transmit IRQ enabled,  RTS low,  transmitter on
@@ -76,35 +157,122 @@ void console_forground(int);
 // 0  1  1  Even parity receive and transmit
 // 1  0  1  Mark Parity transmitted, check disabled
 // 1  1  1  Space parity, check disabled
-
+// Only DTR is used here
 #define CmdDTR   0x01
-#define CmdRxI   0x02
-#define CmdTIRB  0x0C
-#define CmdEcho  0x10   
-#define CmdPar   0xE0
 
-//----------------------------------------------------------------
-// Acia Globals
-//----------------------------------------------------------------
+// CtrReg is not really used, it is just echoed back to CoCo
+unsigned char CtlReg  = 0;
 
-unsigned char StatReg = 0;    // Tells processor status of ACIA functions
-unsigned char CmdReg  = 0;    // Controls transmit receive functions
-unsigned char CtlReg  = 0;    // Selects  word length, stop bits, baud rate
-unsigned char RcvChr = 0;     // Receive data register, shared with input thread
+// Data register is loaded by input thread.
+unsigned char RcvChr = 0;
 
-HANDLE hWorker = NULL;        // Handle for input thread
-DWORD  ThreadId;              // Id for input thread
-HANDLE hEvents[2];            // Input thread Event handles 
-enum worker_event {
-    EVT_DAT_REG_READ,         // Data register has been read 
-    EVT_CMD_REG_WRITE         // Command register was written
+HANDLE hEvents[2];
+enum {
+    EVT_DAT_REG_READ,      // Data register has been read 
+    EVT_CMD_REG_WRITE      // Command register was written
 };
 
-int	worker_initialized = 0;
-int comtype = 0;               // Default 0 = console
+int comtype = 0;           // Default 0 = console
+int	acia_initialized = 0;
+
+//------------------------------------------------------------------------
+//  Initiallize acia 
+//------------------------------------------------------------------------
+
+void acia_init()
+{
+    DWORD id;
+	if (acia_initialized == 0) {
+	    acia_open_com();
+		CreateThread(NULL,0,acia_input_thread,NULL,0,&id);
+		hEvents[1] = CreateEvent (NULL,FALSE,FALSE,NULL);
+		hEvents[0] = CreateEvent (NULL,FALSE,FALSE,NULL);
+		acia_initialized = 1;
+	}
+}
+
+//------------------------------------------------------------------------
+// Input Thread.
+//------------------------------------------------------------------------
+
+// Reads hang. They are done in a seperate thread.
+DWORD WINAPI acia_input_thread(LPVOID param) 
+{ 
+	DWORD dw;
+	while(TRUE) {
+    	dw = WaitForMultipleObjects(2,hEvents,FALSE,250);
+		if (CmdReg & CmdDTR) {
+			if (!(StatReg & StatRxF)) { 
+				RcvChr = acia_read_com();    // Store char read
+				StatReg = StatReg | StatRxF; // mark RcvChr full
+			}
+		    Sleep(1); // Give Coco time to be ready for interrupt
+			StatReg = StatReg | StatIRQ; 
+			AssertInt(IRQ,0);
+		}
+	}
+}
+
+//------------------------------------------------------------------------
+// ACIA Port I/O
+//------------------------------------------------------------------------
+
+unsigned char acia_read(unsigned char port)
+{
+	unsigned char data;
+	switch (port) {
+		case 0x68:
+			data = RcvChr;
+			StatReg = StatReg & ~StatRxF;         // mark buffer empty
+			SetEvent(hEvents[EVT_DAT_REG_READ]);  // tell input worker
+			break;
+		case 0x69:
+			data = StatReg;
+    		StatReg = StatReg & ~StatIRQ;   // Stat read clears IRQ flag
+			break;
+		case 0x6A:
+			data = CmdReg;
+			break;
+		case 0x6B:
+			data = CtlReg;
+			break;
+    }
+	return data;
+}
+
+//------------------------------------------------------------------------
+// ACIA Port I/O
+//------------------------------------------------------------------------
+
+void acia_write(unsigned char data,unsigned short port)
+{
+//	acia_init(); // Until we have some other way to init
+
+	switch (port) {
+		case 0x68:
+			acia_write_com(data);
+			StatReg = StatReg | StatTxE;  // mark out buffer empty
+			break;
+		case 0x69:
+			StatReg = 0;
+			break;
+		case 0x6A:
+			CmdReg = data;
+		    if (CmdReg & CmdDTR) {
+			    StatReg = StatTxE;                     // mark i/o buffers empty
+				SetEvent(hEvents[EVT_CMD_REG_WRITE]);  // Tell input worker
+			} else {
+				StatReg = 0;
+			}
+			break;
+		case 0x6B:
+			CtlReg = data;  // Not used, just returned on read
+			break;
+    }
+}
 
 //----------------------------------------------------------------
-// Acia com hooks
+// Acia com hooks. These dispatch to communication type used
 //----------------------------------------------------------------
 
 // Open com
@@ -140,103 +308,6 @@ void acia_close_com() {
 	}
 }
 
-//------------------------------------------------------------------------
-//  Initiallize acia 
-//------------------------------------------------------------------------
-
-void acia_init()
-{
-	if (worker_initialized == 0) {
-	    acia_open_com();
-		hWorker= CreateThread(NULL,0,acia_input_thread,NULL,0,&ThreadId);
-		hEvents[1] = CreateEvent (NULL,FALSE,FALSE,NULL);
-		hEvents[0] = CreateEvent (NULL,FALSE,FALSE,NULL);
-		worker_initialized = 1;
-	}
-}
-
-//------------------------------------------------------------------------
-// Input Thread.
-//------------------------------------------------------------------------
-
-// Terminal reads hang. They are done in a thread so the acia can continue.
-DWORD WINAPI acia_input_thread(LPVOID param) 
-{ 
-	DWORD dw;
-	while(true) {
-    	dw = WaitForMultipleObjects(2,hEvents,FALSE,250);
-		if (CmdReg & CmdDTR) {
-			if (!(StatReg & StatRxF)) { 
-				RcvChr = acia_read_com();    // Store char read
-				StatReg = StatReg | StatRxF; // mark RcvChr full
-			}
-		    Sleep(1); // Give Coco time to be ready for interrupt
-			StatReg = StatReg | StatIRQ; 
-			CPUAssertInterupt(IRQ,0);
-		}
-	}
-}
-
-//------------------------------------------------------------------------
-// ACIA Port I/O
-//------------------------------------------------------------------------
-
-unsigned char acia_read(unsigned char port)
-{
-	unsigned char data;
-	switch (port) {
-		case 0x68:
-			data = RcvChr;
-			StatReg = StatReg & ~StatRxF;         // mark buffer empty
-			SetEvent(hEvents[EVT_DAT_REG_READ]);  // tell input worker
-			break;
-	
-		case 0x69:
-			data = StatReg;
-    		StatReg = StatReg & ~StatIRQ;   // Stat read clears IRQ flag
-			break;
-
-		case 0x6A:
-			data = CmdReg;
-			break;
-
-		case 0x6B:
-			data = CtlReg;
-			break;
-    }
-	return data;
-}
-
-void acia_write(unsigned char data,unsigned short port)
-{
-	acia_init(); // Until we have some other way to init
-
-	switch (port) {
-		case 0x68:
-			acia_write_com(data);
-			StatReg = StatReg | StatTxE;  // mark out buffer empty
-			break;
-
-		case 0x69:
-			StatReg = 0;
-			break;
-
-		case 0x6A:
-			CmdReg = data;
-		    if (CmdReg & CmdDTR) {
-			    StatReg = StatTxE;                     // mark i/o buffers empty
-				SetEvent(hEvents[EVT_CMD_REG_WRITE]);  // Tell input worker
-			} else {
-				StatReg = 0;
-			}
-			break;
-
-		case 0x6B:
-			CtlReg = data;
-			break;
-    }
-}
-
 //------------------------------------------------------------------
 // Console I/O and management
 //------------------------------------------------------------------
@@ -245,6 +316,8 @@ void acia_write(unsigned char data,unsigned short port)
 HANDLE hConIn;                    // Com input handle
 HANDLE hConOut;                   // Com output handle
 CONSOLE_SCREEN_BUFFER_INFO Csbi;  // Console buffer info
+
+void putdline(int x, char *str);  // Put debug text at top of console
 
 //  CONSOLE_SCREEN_BUFFER_INFO:
 //    COORD      dwSize              Size of screen buffer 
@@ -261,7 +334,7 @@ console_open() {
 	    SetConsoleMode(hConIn,0);
 		FlushConsoleInputBuffer(hConIn);
 		hConOut=GetStdHandle(STD_OUTPUT_HANDLE);
-        COORD bufsiz={80,240};
+        COORD bufsiz={80,250};
         SetConsoleScreenBufferSize(hConOut,bufsiz);
         SMALL_RECT winsiz = {0,0,80,24};
         SetConsoleWindowInfo(hConOut, TRUE, &winsiz);
@@ -271,19 +344,18 @@ console_open() {
 // Console output and control
 //----------------------------------------------------------------
 
-// Some terminal control sequence names for clairty 
-enum sequence {
+// Terminal control sequence names for clairty 
+enum {
     SEQ_NONE,
     SEQ_GOTOXY,   // Position cursor to X,Y
     SEQ_COMMAND,  // A command sequence
     SEQ_CONTROL,  // A control sequence
     SEQ_BCOLOR,   // Set background color
-    SEQ_BOLDSW,   // Set character attrib (ignored)
-    SEQ_BORDER,   // Set border color (ignored)
+    SEQ_BOLDSW,   // Set character attrib (TODO)
+    SEQ_BORDER,   // Set border color
     SEQ_FCOLOR,   // Set forground color
-    SEQ_CURSOR    // Cursor on/off (ignored)
+    SEQ_CURSOR    // Cursor on/off (TODO)
 };
- 
 int  SeqType = SEQ_NONE;
 int  SeqArgsNeeded = 0;
 int  SeqArgsCount = 0;
@@ -291,15 +363,17 @@ char SeqArgs[8];
 
 void console_write(unsigned char chr) {
 	DWORD tmp;
-	char cc[16]; // for logging
+	char cc[16];  // for logging
 
-	// Do we need one or more bytes to finish a command?
+	// Do we need to finish a command?
 	if (SeqArgsNeeded) {
-
+        // Save the the chr as command arg
 		SeqArgs[SeqArgsCount++] = chr;
+
+	    // If not done wait for more
 	   	if (SeqArgsCount < SeqArgsNeeded) return;
 
-		// Once here sequence is complete
+        // Sequence complete
 		SeqArgsNeeded = 0;
 	    SeqArgsCount = 0;
 

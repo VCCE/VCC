@@ -24,6 +24,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "becker", "becker\becker.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gmc", "GMC\gmc.vcxproj", "{BD7CA587-71D0-43D6-A730-582126B1C1F4}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "acia", "acia\acia.vcxproj", "{337BE96D-E8B6-4409-BBFD-0AD8C49AF94B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -79,12 +81,18 @@ Global
 		{C78D7242-DB92-49BC-AFF5-433E16C3C9D4}.Release|x86.Build.0 = Release|Win32
 		{C78D7242-DB92-49BC-AFF5-433E16C3C9D4}.Template|x86.ActiveCfg = Debug|Win32
 		{C78D7242-DB92-49BC-AFF5-433E16C3C9D4}.Template|x86.Build.0 = Debug|Win32
-		{BD7CA587-71D0-43D6-A730-582126B1C1F4}.Debug|x86.ActiveCfg = Debug|Win32
-		{BD7CA587-71D0-43D6-A730-582126B1C1F4}.Debug|x86.Build.0 = Debug|Win32
+		{BD7CA587-71D0-43D6-A730-582126B1C1F4}.Debug|x86.ActiveCfg = Release|Win32
+		{BD7CA587-71D0-43D6-A730-582126B1C1F4}.Debug|x86.Build.0 = Release|Win32
 		{BD7CA587-71D0-43D6-A730-582126B1C1F4}.Release|x86.ActiveCfg = Release|Win32
 		{BD7CA587-71D0-43D6-A730-582126B1C1F4}.Release|x86.Build.0 = Release|Win32
 		{BD7CA587-71D0-43D6-A730-582126B1C1F4}.Template|x86.ActiveCfg = Template|Win32
 		{BD7CA587-71D0-43D6-A730-582126B1C1F4}.Template|x86.Build.0 = Template|Win32
+		{337BE96D-E8B6-4409-BBFD-0AD8C49AF94B}.Debug|x86.ActiveCfg = Release|Win32
+		{337BE96D-E8B6-4409-BBFD-0AD8C49AF94B}.Debug|x86.Build.0 = Release|Win32
+		{337BE96D-E8B6-4409-BBFD-0AD8C49AF94B}.Release|x86.ActiveCfg = Release|Win32
+		{337BE96D-E8B6-4409-BBFD-0AD8C49AF94B}.Release|x86.Build.0 = Release|Win32
+		{337BE96D-E8B6-4409-BBFD-0AD8C49AF94B}.Template|x86.ActiveCfg = Release|Win32
+		{337BE96D-E8B6-4409-BBFD-0AD8C49AF94B}.Template|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
