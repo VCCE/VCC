@@ -1,11 +1,19 @@
 
+//------------------------------------------------------------------
+// Console I/O 
+//------------------------------------------------------------------
+
 #include "acia.h"
 
-//------------------------------------------------------------------
-// Console I/O and management
-//------------------------------------------------------------------
+// Macros for key state modifiers 
+#define modshift(state)  (state & SHIFT_PRESSED)
+#define modctrl(state)   (state & (RIGHT_CTRL_PRESSED | LEFT_CTRL_PRESSED))
+#define modalt(state)    (state & (RIGHT_ALT_PRESSED | LEFT_ALT_PRESSED))
+#define modextend(state) (state & ENHANCED_KEY)
 
+//------------------------------------------------------------------
 // private functions
+//------------------------------------------------------------------
 void console_scroll(int);
 void console_insertline();
 void console_deleteline();
@@ -23,36 +31,175 @@ int  console_trans_color(int);
 void console_background(int);
 void console_forground(int);
 
+//------------------------------------------------------------------
 // Globals
-HANDLE hConIn;                    // Com input handle
-HANDLE hConOut;                   // Com output handle
-CONSOLE_SCREEN_BUFFER_INFO Csbi;  // Console buffer info
+//------------------------------------------------------------------
+HANDLE hConIn;                      // Com input handle
+HANDLE hConOut;                     // Com output handle
+CONSOLE_SCREEN_BUFFER_INFO Csbi;    // Console buffer info
 
-void putdline(int x, char *str);  // Put debug text at top of console
+INPUT_RECORD KeyEvents[128];        // Buffer for keyboard records
+INPUT_RECORD *EventsPtr=KeyEvents;  // Buffer pointer 
+int Event_Cnt = 0;                  // Buffer count
 
-//  CONSOLE_SCREEN_BUFFER_INFO:
-//    COORD      dwSize              Size of screen buffer 
-//    COORD      dwCursorPosition    Location of cusor in buffer
-//    WORD       wAttributes         character attributes
-//    SMALL_RECT srWindow            coordinates of display window
-//    COORD      dwMaximumWindowSize maximum window size
+// Table to translate CoCo color to console color
+//  {white,blue,black,green,red,yellow.magenta,cyan}
+int color_tbl[8] = {0xF,0x1,0x0,0X2,0x4,0xE,0xD,0xB};
+
+//----------------------------------------------------------------
+// Open Console 
+//----------------------------------------------------------------
 
 void
 console_open() {
+        DWORD mode;
+
+//      Make sure console is closed first
+        if ( hConOut != NULL) console_close();
+        if ( hConIn != NULL) console_close();
 		AllocConsole();
+
+//      Disable the close button and "Close" context menu item of the
+//      Console window to prevent inadvertant exit of the emulator
+        HANDLE hwnd = GetConsoleWindow();
+        HANDLE hmenu = GetSystemMenu(hwnd, FALSE);
+        EnableMenuItem(hmenu, SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+
+//      Allow quick edit and echo when in line mode
 		hConIn=GetStdHandle(STD_INPUT_HANDLE);
-//      Disable as much standard input console processing as possible
-	    SetConsoleMode(hConIn,0);
+        mode = ENABLE_ECHO_INPUT |
+               ENABLE_LINE_INPUT |
+               ENABLE_QUICK_EDIT_MODE;
+	    SetConsoleMode(hConIn,mode);
 		FlushConsoleInputBuffer(hConIn);
-		hConOut=GetStdHandle(STD_OUTPUT_HANDLE);
-        COORD bufsiz={80,250};
-        SetConsoleScreenBufferSize(hConOut,bufsiz);
-        SMALL_RECT winsiz = {0,0,80,24};
-        SetConsoleWindowInfo(hConOut, TRUE, &winsiz);
+
+//      Default to raw mode.  
+        ConsoleLineInput = 0;
+
+        hConOut=GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleTitle("VCC Console");
+}
+
+//------------------------------------------------------------------
+// Close Console
+//------------------------------------------------------------------
+
+void console_close() {
+    FreeConsole();
+    hConOut = NULL;
+    hConIn = NULL;
 }
 
 //----------------------------------------------------------------
-// Console output and control
+// Read console.  Blocks until at least on char is read.
+//----------------------------------------------------------------
+int 
+console_read(char * buf, int len) {
+
+    int ascii; // Ascii char code (zero for control codes)
+    int scode; // windows scan code for key press
+    int state; // key state flags (modifiers, extended keys)
+
+    int keypress_cnt = 0;
+    unsigned char chr;
+
+    if (len < 1) return 0;
+
+    // If line mode return next line from keyboard buffer (blocks)
+    if (ConsoleLineInput) {
+        int cnt;
+        ReadConsole(hConIn,buf,len,&cnt,NULL);
+        return cnt;
+    }
+
+    // If not line mode loop until at least one key press is found
+    while (1) {
+
+        // If Event buffer is empty load it (blocks)
+        if (Event_Cnt < 1) {
+            EventsPtr = KeyEvents;
+            ReadConsoleInput(hConIn,EventsPtr,128,&Event_Cnt);
+            if (Event_Cnt < 1) return 0;
+        }
+
+        // Process events in buffer. Only care about key down events.
+        while (Event_Cnt--) {
+            if (EventsPtr->Event.KeyEvent.bKeyDown) {
+                ascii = EventsPtr->Event.KeyEvent.uChar.AsciiChar;
+                scode = EventsPtr->Event.KeyEvent.wVirtualScanCode;
+                state = EventsPtr->Event.KeyEvent.dwControlKeyState;
+
+                // Standard Ascii character
+                if (ascii) {
+                    chr = ascii;
+                    if (modalt(state)) {       // alt trans to graph chars
+                        chr += 128;
+                    } else if (chr == 0x1B) {  // Map escape to break (^E)
+                        chr = 0x05;
+                    } else if (chr == 0x1A) {  // Map ^Z to EOF (escape)
+                        chr = 0x1B;
+                    }
+                    *buf++ = chr;
+                    keypress_cnt++;
+
+                // Function key.  Process per scancode.
+                } else {
+
+                    // Set highbit of scan code if extended key
+                    if modextend(state) scode += 0x80;
+	                switch(scode) {
+                    case DIK_UP:
+	                case DIK_NUMPAD8:
+                        if (modshift(state))
+                            *buf++ = 0x1C;        // shift up
+                        else 
+                            *buf++ = 0x0C;        // up
+                        keypress_cnt++;
+                        break;
+                    case DIK_DOWN:
+	                case DIK_NUMPAD2:
+                        if (modshift(state))
+		                    *buf++ = 0x1A;        // shift down
+                        else
+		                    *buf++ = 0x0A;        // down
+                        keypress_cnt++;
+                        break;
+                    case DIK_LEFT:
+	                case DIK_NUMPAD4:
+                        if (modshift(state))
+		                    *buf++ = 0x18;        // shift left
+                        else if (modctrl(state))
+			                *buf++ = 0x10;        // control left
+                        else 
+			                *buf++ = 0x08;        // right
+                        keypress_cnt++;
+                        break;
+                    case DIK_RIGHT:
+	                case DIK_NUMPAD6:
+                        if (modshift(state))
+			                *buf++ = 0x19;        // shift right
+                        else if (modctrl(state))
+			                *buf++ = 0x11;        // control right 
+                        else 
+			                *buf++ = 0x09;        // right
+                        keypress_cnt++;
+                        break;
+                    }
+                }
+            }
+            // Done with event
+            EventsPtr++;
+            // Return if input buffer full
+            if (keypress_cnt == len) return keypress_cnt;
+        }
+        // Done processing events.  
+        // Return if at least one keystroke
+        if (keypress_cnt > 0) return keypress_cnt;
+    }
+}
+
+//----------------------------------------------------------------
+// Write to Console 
 //----------------------------------------------------------------
 
 // Terminal control sequence names for clairty 
@@ -72,17 +219,23 @@ int  SeqArgsNeeded = 0;
 int  SeqArgsCount = 0;
 char SeqArgs[8];
 
-void console_write(unsigned char chr) {
-	DWORD tmp;
-	char cc[16];  // for logging
+int console_write(char *buf, int len) {
+// assume len == one for initial test
+    int cnt = 1;
+    int chr = *buf;
 
-	// Do we need to finish a command?
+	DWORD tmp;
+	char cc[80];
+
+    if ( hConOut == NULL) return 0;
+
+    // Do we need to finish a command sequence?
 	if (SeqArgsNeeded) {
         // Save the the chr as command arg
 		SeqArgs[SeqArgsCount++] = chr;
 
 	    // If not done wait for more
-	   	if (SeqArgsCount < SeqArgsNeeded) return;
+	   	if (SeqArgsCount < SeqArgsNeeded) return cnt;
 
         // Sequence complete
 		SeqArgsNeeded = 0;
@@ -104,6 +257,14 @@ void console_write(unsigned char chr) {
                 break;
 			case 0x31: // Delete line
                 console_deleteline(); 
+				break;
+            case 0x40: // Line mode off
+                SetConsoleTitle("VCC Console");
+                ConsoleLineInput = 0;
+				break;
+            case 0x41: // Line mode on
+                SetConsoleTitle("VCC Console Line Mode");
+                ConsoleLineInput = 1;
 				break;
 			default:
 				sprintf(cc,"~1F%02X~",SeqArgs[0]);     // not handled
@@ -148,19 +309,19 @@ void console_write(unsigned char chr) {
 		case SEQ_BOLDSW:
 			break; 
 		}
-		return;
+		return cnt;
 	}
 
 	// write printable chr to console
 	if  (isprint(chr)) {
 		WriteConsole(hConOut,&chr,1,&tmp,NULL);
-		return;
+		return cnt;
 	}
 
     // write chars with high bit set to console (utf8)
     if (chr > 128) {
 		WriteConsole(hConOut,&chr,1,&tmp,NULL);
-		return;
+		return cnt;
     }
 
 	// process non printable
@@ -222,153 +383,14 @@ void console_write(unsigned char chr) {
 		sprintf(cc,"~%02X~",chr);
 		WriteConsole(hConOut,cc,4,&tmp,NULL);
 	}
-	return;
-}
-
-//----------------------------------------------------------------
-// Console Input
-//----------------------------------------------------------------
-
-// Structure for console keypress data
-typedef struct _KeyData {
-    int ascii; // Ascii char code (zero for control codes)
-    int scode; // windows scan code
-    int state; // RIGHT_ALT_PRESSED  0x0001
-               // LEFT_ALT_PRESSED   0x0002
-               // RIGHT_CTRL_PRESSED 0x0004
-               // LEFT_CTRL_PRESSED  0x0008
-               // SHIFT_PRESSED      0x0010
-               // NUMLOCK_ON         0x0040
-               // ENHANCED_KEY       0x0100 (not a numpad key)
-} KeyData;
-
-INPUT_RECORD ConsoleEvents[16]={0};           // Buffer for console event records
-INPUT_RECORD *ConsoleEventsPtr=ConsoleEvents; // Input record buffer pointer 
-
-// Get win events from console. Returns with keypress data
-// Data for each key press is returned in KeyData structure
-BOOL
-GetConsoleKeyPress(KeyData *kdat)
-{
-    DWORD cnt;
-    while(TRUE) {
-        ConsoleEventsPtr++;
-        switch (ConsoleEventsPtr->EventType) { 
-        case 0:
-            ReadConsoleInput(hConIn,ConsoleEvents,16,&cnt);
-            if (cnt == 0) return FALSE;
-            ConsoleEvents[cnt].EventType=0;
-            ConsoleEventsPtr = ConsoleEvents-1;
-            break;
-        case KEY_EVENT:
-            if (ConsoleEventsPtr->Event.KeyEvent.bKeyDown) {
-                kdat->ascii = ConsoleEventsPtr->Event.KeyEvent.uChar.AsciiChar;
-                kdat->scode = ConsoleEventsPtr->Event.KeyEvent.wVirtualScanCode;
-                kdat->state = ConsoleEventsPtr->Event.KeyEvent.dwControlKeyState;
-                return TRUE;
-            }
-            break;
-        case WINDOW_BUFFER_SIZE_EVENT:
-            break;
-            // TODO: handle resize event
-        }
-    }
-}
-
-//----------------------------------------------------------------
-// Read console key, map it to coco input character, and return it
-// Blocks until a valid input character is read from console
-//----------------------------------------------------------------
-
-#define modshift(state) (state & SHIFT_PRESSED)
-#define modctrl(state) (state & (RIGHT_CTRL_PRESSED | LEFT_CTRL_PRESSED))
-#define modalt(state) (state & (RIGHT_ALT_PRESSED | LEFT_ALT_PRESSED))
-#define modextend(state) (state & ENHANCED_KEY)
-
-unsigned char 
-console_read() {
-    KeyData key;
-
-    while (GetConsoleKeyPress(&key) ) {
-
-        // Non function keys
-        if (key.ascii) {
-            unsigned char chr = key.ascii;
-            if (modalt(key.state)) {   // alt trans to graph chars
-                chr += 128;
-            } else if (chr == 0x1B) {  // Map escape to break (^E)
-                chr = 0x05;
-            } else if (chr == 0x1A) {  // Map ^Z to EOF (escape)
-                chr = 0x1B;
-            }
-            return chr;
-        }
-
-        // Function keys have no ascii equivalent
-        int sc = key.scode;
-        if modextend(key.state) sc += 0x80;
-
-	    switch(sc) {
-        case DIK_UP:
-	    case DIK_NUMPAD8:
-            if (modshift(key.state))
-                return 0x1C;        // shift up
-            else 
-                return 0x0C;        // up
-        case DIK_DOWN:
-	    case DIK_NUMPAD2:
-            if (modshift(key.state))
-		        return 0x1A;        // shift down
-            else
-		        return 0x0A;        // down
-        case DIK_LEFT:
-	    case DIK_NUMPAD4:
-            if (modshift(key.state))
-		        return 0x18;        // shift left
-            else if (modctrl(key.state))
-			    return 0x10;        // control left
-            else 
-			    return 0x08;        // right
-        case DIK_RIGHT:
-	    case DIK_NUMPAD6:
-            if (modshift(key.state))
-			    return 0x19;        // shift right
-            else if (modctrl(key.state))
-			    return 0x11;        // control right 
-            else 
-			    return 0x09;        // right
-        }
-    }
-    return 0;  // not reached
-}
-
-//------------------------------------------------------------------
-// Close
-//------------------------------------------------------------------
-
-void console_close() {
-    PostMessage(hConOut, WM_CLOSE, 0, 0);
-    FreeConsole();
+	return cnt;
 }
 
 //------------------------------------------------------------------
 // Console control functions
 //------------------------------------------------------------------
 
-// Put debug string at specified column on top line of screen.
-void putdline(int x, char *str)
-{
-    DWORD tmp;
-    COORD pos={0,0};
-	GetConsoleScreenBufferInfo(hConOut, &Csbi);
-    pos.X = x;
-    pos.Y = Csbi.srWindow.Top;
-    SetConsoleCursorPosition(hConOut,pos);
-    WriteConsole(hConOut,str,strlen(str),&tmp,NULL);
-    SetConsoleCursorPosition(hConOut,Csbi.dwCursorPosition);
-}
-
-// Scroll the screen buffer. Deletes lines from top or bottom
+// Scroll the screen buffer. Delete lines from top or bottom
 // of the buffer depending on the sign of the lines parameter.
 // Negative number deletes lines from the top.
 void console_scroll(int lines) {
@@ -389,7 +411,7 @@ void console_scroll(int lines) {
 	ScrollConsoleScreenBuffer(hConOut,&rect,&clip,loc,&fill);
 }
 
-// Insert line where cursor is
+// Insert line at cursor
 void console_insertline() {
 	SMALL_RECT rect;
     COORD dest;
@@ -407,7 +429,7 @@ void console_insertline() {
     ScrollConsoleScreenBuffer(hConOut,&rect,NULL,dest,&fill);
 }
 
-// Delete line where cursor is
+// Delete line at cursor
 void console_deleteline() {
 	SMALL_RECT rect;
     COORD dest;
@@ -511,46 +533,42 @@ void console_cr() {
 	SetConsoleCursorPosition(hConOut, Csbi.dwCursorPosition);
 }
 
-// Erase entire line
+// Erase line
 void console_eraseline() {
 	console_cr();
 	console_cleol();
 }
 
-// Translate CoCo color to console color
-//  {white,blue,black,green,red,yellow.magenta,cyan}
-int console_trans_color(int os9_color) {
-	int tbl[8] = {0xF,0x1,0x0,0X2,0x4,0xE,0xD,0xB};
-	return tbl[os9_color];
-}
-
 // Set background color
-void console_background(int os9_color) {
+void console_background(int coco_color) {
     WORD color;
     WORD atrib;
 
     GetConsoleScreenBufferInfo(hConOut, &Csbi);
     atrib = Csbi.wAttributes & 0xFF0F; //mask out background
 
-    if (os9_color > 7) color = 0; // defaults to black
-    else color = console_trans_color(os9_color);
+    if (coco_color > 7) // Background defaults to black 
+        color = 0;
+    else 
+        color = color_tbl[coco_color];
 
     atrib |= ( color << 4 );
     SetConsoleTextAttribute ( hConOut, atrib );
 }
 
 // Set forground color
-void console_forground(int os9_color) {
+void console_forground(int coco_color) {
     WORD color;
     WORD atrib;
 
     GetConsoleScreenBufferInfo(hConOut, &Csbi);
 	atrib = Csbi.wAttributes & 0xFFF0;  //mask out foreground
 
-    if (os9_color > 7) color = 15; // defaults to white
-    else color = console_trans_color(os9_color);
+    if (coco_color > 7) // Background defaults to white
+        color = 15;
+    else
+        color = color_tbl[coco_color];
 
     atrib |= color;
     SetConsoleTextAttribute ( hConOut, atrib );
 }
-

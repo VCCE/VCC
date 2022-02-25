@@ -11,16 +11,24 @@
 
 unsigned char sc6551_read(unsigned char);
 void sc6551_write(unsigned char,unsigned short);
-void acia_open_com();
-void acia_write_com(unsigned char);
+void sc6551_open();
+void sc6551_close();
 
-unsigned char acia_read_com();
+void acia_open_com();
 void acia_close_com();
+int  acia_write_com(char*,int);
+int  acia_read_com(char*,int);
 
 void console_open();
 void console_close();
-unsigned char console_read();
-void console_write(unsigned char);
+int  console_read(char*,int);
+int  console_write(char*,int);
 
 void (*AssertInt)(unsigned char,unsigned char);
+
+// Console input mode.  Set to enable line mode
+int ConsoleLineInput;
+
+int	sc6551_initialized;
+
 

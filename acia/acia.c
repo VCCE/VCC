@@ -1,20 +1,16 @@
 
 #include "acia.h"
 
-static int ComType; // Communications type 0=console
+#define MAX_LOADSTRING 200
+
 
 //------------------------------------------------------------------------
 // DLL entry and exports 
 //------------------------------------------------------------------------
 
-#define MAX_LOADSTRING 200
-
-// vcc stuff
-
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 
-static HINSTANCE g_hinstDLL=NULL;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 
 void (*DynamicMenuCallback)( char *,int, int)=NULL;
@@ -22,20 +18,29 @@ void BuildDynaMenu(void);
 void LoadConfig(void);
 void SaveConfig(void);
 
+//------------------------------------------------------------------------
+// Globals private to acia.c 
+//------------------------------------------------------------------------
+
+static HINSTANCE g_hinstDLL=NULL;
+static int AciaComType; // Communications type 0=console
+
+//------------------------------------------------------------------------
+//  DLL Entry  
+//------------------------------------------------------------------------
+
 BOOL APIENTRY DllMain( HINSTANCE  hinstDLL,
                        DWORD  reason,
                        LPVOID lpReserved )
 {
-    switch (reason) {
-    case DLL_PROCESS_ATTACH:
-//        sc6551_init();
-    case DLL_PROCESS_DETACH:
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-        break;
-    }
+    if (reason == DLL_PROCESS_DETACH) sc6551_close();
+//    else sc6551_initialized = 0;
     return TRUE;
 }
+
+//-----------------------------------------------------------------------
+//  Setup menu and return module name
+//-----------------------------------------------------------------------
 
 __declspec(dllexport) void
 ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
@@ -49,14 +54,20 @@ ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
 	return ;
 }
 
+//-----------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------
 __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 {
-		DialogBox(g_hinstDLL, (LPCTSTR)IDD_PROPPAGE, NULL, (DLGPROC)Config);
-		BuildDynaMenu();
-		return;
+    DialogBox(g_hinstDLL, (LPCTSTR)IDD_PROPPAGE, NULL, (DLGPROC)Config);
+	BuildDynaMenu();
+	return;
 }
 
+//-----------------------------------------------------------------------
 // Export write to port
+//-----------------------------------------------------------------------
+
 __declspec(dllexport) void
 PackPortWrite(unsigned char Port,unsigned char Data)
 {
@@ -64,20 +75,55 @@ PackPortWrite(unsigned char Port,unsigned char Data)
     return;
 }
 
+//-----------------------------------------------------------------------
 // Export read from port
+//-----------------------------------------------------------------------
 __declspec(dllexport) unsigned char 
 PackPortRead(unsigned char Port)
 {
     return sc6551_read(Port);
 }
 
+//-----------------------------------------------------------------------
 // This captures the transfer point for the CPU assert interupt 
+//-----------------------------------------------------------------------
 __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
 {
 	AssertInt=Dummy;
 	return;
 }
 
+//-----------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------
+__declspec(dllexport) void ModuleStatus(char *status)
+{
+    if (sc6551_initialized) {
+        if (AciaComType == 0) {
+            if (ConsoleLineInput) strcpy(status,"LineMode");
+            else strcpy(status,"Console"); 
+        } else {
+            strcpy(status,"AciaUnknown");
+        }
+    } else {
+        strcpy(status,"Acia");
+    }
+    return;
+}
+
+//-----------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------
+__declspec(dllexport) void SetIniPath (char *IniFilePath)
+{
+//	strcpy(IniFile,IniFilePath);
+//	LoadConfig();
+	return;
+}
+
+//-----------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------
 void BuildDynaMenu(void)
 {
 	if (DynamicMenuCallback == NULL)
@@ -86,9 +132,11 @@ void BuildDynaMenu(void)
 	DynamicMenuCallback("",0,0);
 	DynamicMenuCallback("",0,0);
 	DynamicMenuCallback("",0,0);
-	
 }
 
+//-----------------------------------------------------------------------
+//  Config dialog. Allow user to select com; Console, TCP, etc
+//-----------------------------------------------------------------------
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	HWND hwndOwner; 
@@ -98,11 +146,11 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		case WM_INITDIALOG:
 
-			if ((hwndOwner = GetParent(hDlg)) == NULL) {
-				hwndOwner = GetDesktopWindow(); 
-			}
+            if ((hwndOwner = GetParent(hDlg)) == NULL) {
+                hwndOwner = GetDesktopWindow();
+            }
 
-			GetWindowRect(hwndOwner, &rcOwner); 
+            GetWindowRect(hwndOwner, &rcOwner); 
 			GetWindowRect(hDlg, &rcDlg); 
 			CopyRect(&rc, &rcOwner); 
 
@@ -144,39 +192,41 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 //----------------------------------------------------------------
-// Acia com hooks. These dispatch to communication type used
+// Dispatch I/0 to communication type used.
+// Hooks allow sc6551 to do communications to selected media
 //----------------------------------------------------------------
 
 // Open com
 void acia_open_com() {
-	switch (ComType) {
+	switch (AciaComType) {
 	case 0: // Legacy Console
         console_open();
 		break;
 	}
 }
 
-void acia_write_com(unsigned char chr) {
-	switch (ComType) {
-	case 0: // Legacy Console
-        console_write(chr);
-        break;
-    }
-}
-
-unsigned char acia_read_com() {
-	switch (ComType) {
-	case 0: // Legacy Console
-        return console_read();
-    }
-    return 0;
-}
-
 void acia_close_com() {
-	switch (ComType) {
+	switch (AciaComType) {
 	case 0: // Console
         console_close();
 		break;
 	}
+}
+
+int acia_write_com(char * buf,int len) { // returns bytes written
+	switch (AciaComType) {
+	case 0: // Legacy Console
+        return console_write(buf,len);
+        break;
+    }
+    return 0;
+}
+
+int acia_read_com(char * buf,int len) {  // returns bytes read
+	switch (AciaComType) {
+	case 0: // Legacy Console
+        return console_read(buf,len);
+    }
+    return 0;
 }
 
