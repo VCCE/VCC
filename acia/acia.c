@@ -23,7 +23,6 @@ void SaveConfig(void);
 //------------------------------------------------------------------------
 
 static HINSTANCE g_hinstDLL=NULL;
-static int AciaComType; // Communications type 0=console
 
 //------------------------------------------------------------------------
 //  DLL Entry  
@@ -33,21 +32,19 @@ BOOL APIENTRY DllMain( HINSTANCE  hinstDLL,
                        DWORD  reason,
                        LPVOID lpReserved )
 {
+    if (reason == DLL_PROCESS_ATTACH) g_hinstDLL = hinstDLL;
     if (reason == DLL_PROCESS_DETACH) sc6551_close();
-//    else sc6551_initialized = 0;
     return TRUE;
 }
 
 //-----------------------------------------------------------------------
-//  Setup menu and return module name
+//  Register the DLL
 //-----------------------------------------------------------------------
-
 __declspec(dllexport) void
 ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
 {
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
-	strcpy(ModName,"ACIA");
 	DynamicMenuCallback =Temp;
 	if (DynamicMenuCallback  != NULL)
 			BuildDynaMenu();
@@ -55,19 +52,8 @@ ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
 }
 
 //-----------------------------------------------------------------------
-//
-//-----------------------------------------------------------------------
-__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
-{
-    DialogBox(g_hinstDLL, (LPCTSTR)IDD_PROPPAGE, NULL, (DLGPROC)Config);
-	BuildDynaMenu();
-	return;
-}
-
-//-----------------------------------------------------------------------
 // Export write to port
 //-----------------------------------------------------------------------
-
 __declspec(dllexport) void
 PackPortWrite(unsigned char Port,unsigned char Data)
 {
@@ -114,6 +100,16 @@ __declspec(dllexport) void ModuleStatus(char *status)
 //-----------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------
+__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+{
+    DialogBox(g_hinstDLL, (LPCTSTR)IDD_PROPPAGE, NULL, (DLGPROC)Config);
+	BuildDynaMenu();
+	return;
+}
+
+//-----------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------
 __declspec(dllexport) void SetIniPath (char *IniFilePath)
 {
 //	strcpy(IniFile,IniFilePath);
@@ -122,16 +118,14 @@ __declspec(dllexport) void SetIniPath (char *IniFilePath)
 }
 
 //-----------------------------------------------------------------------
-//
+//  Add config option to Cartridge menu
 //-----------------------------------------------------------------------
 void BuildDynaMenu(void)
 {
-	if (DynamicMenuCallback == NULL)
-		MessageBox(0,"No good","Ok",0);
-	DynamicMenuCallback("",0,0);
-	DynamicMenuCallback("",0,0);
-	DynamicMenuCallback("",0,0);
-	DynamicMenuCallback("",0,0);
+	DynamicMenuCallback("",0,0);     // begin
+	DynamicMenuCallback("",6000,0);  // seperator
+	DynamicMenuCallback("ACIA Config",5016,STANDALONE); // Config
+	DynamicMenuCallback("",1,0);     // end
 }
 
 //-----------------------------------------------------------------------
@@ -164,7 +158,8 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
                  rcOwner.top + (rc.bottom / 2), 
                  0, 0,          // Ignores size arguments. 
                  SWP_NOSIZE); 
-// config stuff here
+// Send initial settings  here
+//               SendDlgItemMessage(hDlg,IDC_FOO,WM_SETTEXT,strlen(msg),msg);
 			return TRUE; 
 		break;
 
@@ -190,43 +185,5 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 	}
     return FALSE;
-}
-//----------------------------------------------------------------
-// Dispatch I/0 to communication type used.
-// Hooks allow sc6551 to do communications to selected media
-//----------------------------------------------------------------
-
-// Open com
-void acia_open_com() {
-	switch (AciaComType) {
-	case 0: // Legacy Console
-        console_open();
-		break;
-	}
-}
-
-void acia_close_com() {
-	switch (AciaComType) {
-	case 0: // Console
-        console_close();
-		break;
-	}
-}
-
-int acia_write_com(char * buf,int len) { // returns bytes written
-	switch (AciaComType) {
-	case 0: // Legacy Console
-        return console_write(buf,len);
-        break;
-    }
-    return 0;
-}
-
-int acia_read_com(char * buf,int len) {  // returns bytes read
-	switch (AciaComType) {
-	case 0: // Legacy Console
-        return console_read(buf,len);
-    }
-    return 0;
 }
 

@@ -6,8 +6,8 @@
 #define IDS_VERSION                     2
 #define IDS_CATNUMBER                   3
 #define IDD_PROPPAGE                    102
-#define IDC_TCPPORT                     1004
-#define IDC_TCPHOST                     1005
+#define IDC_PORT                        1004
+#define IDC_TYPE                        1005
 
 // Next default values for new objects
 // 

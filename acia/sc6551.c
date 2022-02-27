@@ -8,8 +8,14 @@
 // sc6551 private functions 
 
 DWORD WINAPI sc6551_input_thread(LPVOID);
-void sc6551_init();
-void sc6551_close();
+//void sc6551_init();
+//void sc6551_close();
+
+// Comunications hooks
+void com_open();
+void com_close();
+int  com_write(char*,int);
+int  com_read(char*,int);
 
 // Stat Reg is protected by a critical section
 // to prevent race conditions
@@ -54,11 +60,11 @@ CRITICAL_SECTION CritSect;
 void sc6551_init()
 {
     DWORD id;
-	if (sc6551_initialized == 0) {
+//	if (sc6551_initialized == 0) {
         // Make sure any previous instance is closed first
         sc6551_close();  
         // Open communications link
-        acia_open_com(); 
+        com_open(); 
         // Create a critical section for RxF bit
         InitializeCriticalSectionAndSpinCount(&CritSect,512);
         // Create input thread
@@ -66,7 +72,7 @@ void sc6551_init()
         // Create event for input thread
         hEventAciaRead = CreateEvent (NULL,FALSE,FALSE,NULL);
         sc6551_initialized = 1;
-	}
+//	}
 }
 
 //------------------------------------------------------------------------
@@ -79,28 +85,10 @@ void sc6551_close()
         WaitForSingleObject(hThread,2000);
     }
     hThread = NULL;
-	acia_close_com();
+	com_close();
     DeleteCriticalSection(&CritSect);
 	sc6551_initialized = 0;
 }
-
-/*
-//------------------------------------------------------------------------
-// The StatReg is modified by both main and thread
-// Locking is required to prevent race conditions
-//------------------------------------------------------------------------
-
-void sc6551_StatReg(BOOL op, int val) 
-{
-    EnterCriticalSection(&CritSect);
-    if (op) {
-        StatReg = StatReg | val;
-    } else {
-        StatReg = StatReg & ~val;
-    } 
-    LeaveCriticalSection(&CritSect);
-}
-*/
 
 //------------------------------------------------------------------------
 // Input Thread.
@@ -119,14 +107,8 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
     while(TRUE) {
         rc = WaitForSingleObject(hEventAciaRead,ms);
 		if (CmdReg & CmdDTR) {
-/*
-            if ((StatReg & StatRxF) == 0) {
-                acia_read_com(&RcvChr,1);
-                StatReg = StatReg | StatRxF;
-                ms = 2;
-*/
             if ( readcnt >= bufcnt ) {
-                bufcnt = acia_read_com(inbuf,120);
+                bufcnt = com_read(inbuf,120);
                 readcnt = 0;
                 StatReg = StatReg | StatRxF;
                 ms = 2;
@@ -172,7 +154,7 @@ void sc6551_write(unsigned char data,unsigned short port)
 {
 	switch (port) {
 		case 0x68:
-			acia_write_com(&data,1);
+			com_write(&data,1);
 			StatReg = StatReg | StatTxE;  // mark out buffer empty
 			break;
 		case 0x69:
@@ -182,7 +164,7 @@ void sc6551_write(unsigned char data,unsigned short port)
 			CmdReg = data;
             // If DTR set enable sc6551
 		    if (CmdReg & CmdDTR) {
-                sc6551_init();
+	            if (sc6551_initialized == 0) sc6551_init();
 			    StatReg = StatTxE;          
                 SetEvent(hEventAciaRead); // tell input worker
 			} else {
@@ -195,5 +177,44 @@ void sc6551_write(unsigned char data,unsigned short port)
 			CtlReg = data;  // Not used, just returned on read
 			break;
     }
+}
+
+//----------------------------------------------------------------
+// Dispatch I/0 to communication type used.
+// Hooks allow sc6551 to do communications to selected media
+//----------------------------------------------------------------
+
+// Open com
+void com_open() {
+	switch (AciaComType) {
+	case 0: // Legacy Console
+        console_open();
+		break;
+	}
+}
+
+void com_close() {
+	switch (AciaComType) {
+	case 0: // Console
+        console_close();
+		break;
+	}
+}
+
+int com_write(char * buf,int len) { // returns bytes written
+	switch (AciaComType) {
+	case 0: // Legacy Console
+        return console_write(buf,len);
+        break;
+    }
+    return 0;
+}
+
+int com_read(char * buf,int len) {  // returns bytes read
+	switch (AciaComType) {
+	case 0: // Legacy Console
+        return console_read(buf,len);
+    }
+    return 0;
 }
 
