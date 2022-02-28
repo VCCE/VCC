@@ -3,6 +3,7 @@
 
 #define IRQ 1
 #define DIRECTINPUT_VERSION 0x0800
+#define MAX_LOADSTRING 200
 
 #include <windows.h>
 #include <stdio.h>
@@ -36,9 +37,9 @@ int AciaTcpPort;
 // Console input mode: Normal: 0; Line mode: 1
 int ConsoleLineInput;
 
-//menu
-//#define HEAD 0
-//#define SLAVE 1
+//menu control
+#define HEAD 0
+#define SLAVE 1
 #define STANDALONE 2
 
 #endif

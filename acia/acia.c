@@ -1,53 +1,50 @@
 
 #include "acia.h"
 
-#define MAX_LOADSTRING 200
-
-
 //------------------------------------------------------------------------
-// DLL entry and exports 
+// Functions
 //------------------------------------------------------------------------
 
+// Transfer points for menu callback and cpu assert interrupt
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 
-LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
-
-void (*DynamicMenuCallback)( char *,int, int)=NULL;
+void (*DynamicMenuCallback)(char *,int,int)=NULL;
 void BuildDynaMenu(void);
+
+LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig(void);
 void SaveConfig(void);
 
 //------------------------------------------------------------------------
-// Globals private to acia.c 
+// Globals 
 //------------------------------------------------------------------------
-
-static HINSTANCE g_hinstDLL=NULL;
+static HINSTANCE g_hDLL = NULL;      // DLL handle
+static char IniFile[MAX_PATH];       // Ini file name
+static char IniSect[MAX_LOADSTRING]; // Ini file section
 
 //------------------------------------------------------------------------
 //  DLL Entry  
 //------------------------------------------------------------------------
-
-BOOL APIENTRY DllMain( HINSTANCE  hinstDLL,
-                       DWORD  reason,
-                       LPVOID lpReserved )
+BOOL APIENTRY 
+DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
-    if (reason == DLL_PROCESS_ATTACH) g_hinstDLL = hinstDLL;
-    if (reason == DLL_PROCESS_DETACH) sc6551_close();
+    if (reason == DLL_PROCESS_ATTACH) g_hDLL = hinst;
+    else if (reason == DLL_PROCESS_DETACH) sc6551_close();
     return TRUE;
 }
 
 //-----------------------------------------------------------------------
-//  Register the DLL
+//  Register the DLL and add entry to dynamic menu
 //-----------------------------------------------------------------------
 __declspec(dllexport) void
 ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
 {
-	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
-	DynamicMenuCallback =Temp;
-	if (DynamicMenuCallback  != NULL)
-			BuildDynaMenu();
+	LoadString(g_hDLL,IDS_MODULE_NAME,ModName,MAX_LOADSTRING);
+	LoadString(g_hDLL,IDS_CATNUMBER,CatNumber,MAX_LOADSTRING);		
+	DynamicMenuCallback = Temp;
+    strcpy(IniSect,ModName); // Use module name for ini file section
+	if (DynamicMenuCallback != NULL) BuildDynaMenu();
 	return ;
 }
 
@@ -71,7 +68,7 @@ PackPortRead(unsigned char Port)
 }
 
 //-----------------------------------------------------------------------
-// This captures the transfer point for the CPU assert interupt 
+// Capture the transfer point for CPU assert interrupt
 //-----------------------------------------------------------------------
 __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
 {
@@ -80,7 +77,7 @@ __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
 }
 
 //-----------------------------------------------------------------------
-//
+// Return acia status for VCC status line
 //-----------------------------------------------------------------------
 __declspec(dllexport) void ModuleStatus(char *status)
 {
@@ -98,28 +95,27 @@ __declspec(dllexport) void ModuleStatus(char *status)
 }
 
 //-----------------------------------------------------------------------
-//
+//  Start the config dialog 
 //-----------------------------------------------------------------------
 __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 {
-    DialogBox(g_hinstDLL, (LPCTSTR)IDD_PROPPAGE, NULL, (DLGPROC)Config);
-	BuildDynaMenu();
+    DialogBox(g_hDLL, (LPCTSTR) IDD_PROPPAGE, NULL, (DLGPROC) Config);
 	return;
 }
 
 //-----------------------------------------------------------------------
-//
+// Capture the VCC ini file path and load settings saved there
 //-----------------------------------------------------------------------
 __declspec(dllexport) void SetIniPath (char *IniFilePath)
 {
-//	strcpy(IniFile,IniFilePath);
-//	LoadConfig();
+	strcpy(IniFile,IniFilePath);
+    LoadConfig();
 	return;
 }
 
 //-----------------------------------------------------------------------
 //  Add config option to Cartridge menu
-//-----------------------------------------------------------------------
+//----------------------------------------------------------------------
 void BuildDynaMenu(void)
 {
 	DynamicMenuCallback("",0,0);     // begin
@@ -129,61 +125,104 @@ void BuildDynaMenu(void)
 }
 
 //-----------------------------------------------------------------------
-//  Config dialog. Allow user to select com; Console, TCP, etc
-//-----------------------------------------------------------------------
-LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+//  Load saved config from ini file
+//----------------------------------------------------------------------
+void LoadConfig(void)
 {
-	HWND hwndOwner; 
-	RECT rc, rcDlg, rcOwner; 
+    AciaComType = GetPrivateProfileInt(IniSect,"AciaComType",0,IniFile);
+    AciaTcpPort = GetPrivateProfileInt(IniSect,"AciaTcpPort",1024,IniFile);
+    AciaComPort = GetPrivateProfileInt(IniSect,"AciaComPort",1,IniFile);
+}
 
-	switch (message)
-	{
-		case WM_INITDIALOG:
+//-----------------------------------------------------------------------
+//  Save config to ini file
+//----------------------------------------------------------------------
+void SaveConfig(void)
+{
+    char txt[16];
+    sprintf(txt,"%d",AciaComType);
+    WritePrivateProfileString(IniSect,"AciaComType",txt,IniFile);
+    sprintf(txt,"%d",AciaTcpPort);
+    WritePrivateProfileString(IniSect,"AciaTcpPort",txt,IniFile);
+    sprintf(txt,"%d",AciaComPort);
+    WritePrivateProfileString(IniSect,"AciaComPort",txt,IniFile);
+}
 
-            if ((hwndOwner = GetParent(hDlg)) == NULL) {
-                hwndOwner = GetDesktopWindow();
+//-----------------------------------------------------------------------
+//  Config dialog. Allows user to select Console, TCP, COMx, port
+//-----------------------------------------------------------------------
+LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
+{
+	switch (msg) {
+
+	case WM_INITDIALOG:
+
+        // Center dialog on screen 
+	    RECT rDlg, rScr; 
+		GetWindowRect(hDlg, &rDlg); 
+        GetWindowRect(GetDesktopWindow(), &rScr); 
+        DWORD x = (rScr.right - rScr.left - rDlg.right + rDlg.left)/2;
+        DWORD y = (rScr.bottom - rScr.top - rDlg.bottom + rDlg.top)/2;
+        SetWindowPos(hDlg, HWND_TOP, x, y, 0, 0, SWP_NOSIZE);
+
+        // Fill in current values
+        SetDlgItemInt(hDlg,IDC_TYPE,AciaComType,FALSE);
+        switch (AciaComType) {
+        case 0: // console
+            SetDlgItemInt(hDlg,IDC_PORT,0,FALSE);
+            break;
+        case 1: // tcpip
+            SetDlgItemInt(hDlg,IDC_PORT,AciaTcpPort,FALSE);
+            break;
+        case 2: // COMx
+            SetDlgItemInt(hDlg,IDC_PORT,AciaComPort,FALSE);
+            break;
+        }
+		return TRUE; 
+		break;
+
+	case WM_COMMAND:
+	    switch (LOWORD(wParam)) {
+		case IDOK:
+            int type = GetDlgItemInt(hDlg,IDC_TYPE,NULL,FALSE);
+            int port = GetDlgItemInt(hDlg,IDC_PORT,NULL,FALSE);
+            switch (type) {
+            case 0: // console
+                break;
+            case 1: // tcpip
+                if ((port < 1024) || (port > 65536)) {
+                    MessageBox(hDlg,"TCP Port must be 1024 thru 65536","Error",
+                                MB_OK | MB_ICONEXCLAMATION);
+                    return TRUE;
+                }
+                AciaTcpPort = port;
+                break;
+            case 2: // COMx
+                if ((port < 1) || (port > 10)) {
+                    MessageBox(hDlg,"COM# must be 1 thru 10","Error",
+                                MB_OK | MB_ICONEXCLAMATION);
+                    return TRUE;
+                }
+                AciaComPort = port;
+                break;
+            default:
+                MessageBox(hDlg,"Type must be 0, 1, or 2","Error",
+                           MB_OK | MB_ICONEXCLAMATION);
+                return TRUE;
             }
+            AciaComType = type;
+            SaveConfig();
+			EndDialog(hDlg, LOWORD(wParam));
+			break;
 
-            GetWindowRect(hwndOwner, &rcOwner); 
-			GetWindowRect(hDlg, &rcDlg); 
-			CopyRect(&rc, &rcOwner); 
+	    case IDHELP:
+		    break;
 
-			OffsetRect(&rcDlg, -rcDlg.left, -rcDlg.top); 
-			OffsetRect(&rc, -rc.left, -rc.top); 
-			OffsetRect(&rc, -rcDlg.right, -rcDlg.bottom); 
-
-		    SetWindowPos(hDlg, 
-                 HWND_TOP, 
-                 rcOwner.left + (rc.right / 2), 
-                 rcOwner.top + (rc.bottom / 2), 
-                 0, 0,          // Ignores size arguments. 
-                 SWP_NOSIZE); 
-// Send initial settings  here
-//               SendDlgItemMessage(hDlg,IDC_FOO,WM_SETTEXT,strlen(msg),msg);
-			return TRUE; 
-		break;
-
-		case WM_COMMAND:
-			switch (LOWORD(wParam))
-			{
-				case IDOK:
-// config stuff here
-					EndDialog(hDlg, LOWORD(wParam));
-					return TRUE;
-				break;
-
-				case IDHELP:
-					return TRUE;
-				break;
-
-				case IDCANCEL:
-					EndDialog(hDlg, LOWORD(wParam));
-				break;
-			}
-			return TRUE;
-		break;
-
+	    case IDCANCEL:
+			EndDialog(hDlg, LOWORD(wParam));
+			break;
+	    }
+	    return TRUE;
 	}
     return FALSE;
 }
-

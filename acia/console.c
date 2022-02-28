@@ -43,8 +43,8 @@ INPUT_RECORD *EventsPtr=KeyEvents;  // Buffer pointer
 int Event_Cnt = 0;                  // Buffer count
 
 // Table to translate CoCo color to console color
-//  {white,blue,black,green,red,yellow.magenta,cyan}
-int color_tbl[8] = {0xF,0x1,0x0,0X2,0x4,0xE,0xD,0xB};
+//  {white,blue,black,green,red,yellow,magenta,cyan}
+int color_tbl[8] = {0xF,0x1,0x0,0X2,0xC,0xE,0xD,0xB};
 
 //----------------------------------------------------------------
 // Open Console 

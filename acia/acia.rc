@@ -103,7 +103,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MODULE_NAME         "ACIA interface"
+    IDS_MODULE_NAME         "ACIA Interface"
     IDS_VERSION             "1.00"
     IDS_CATNUMBER           "Beta"
 END

@@ -2,14 +2,12 @@
     DYNAMIC LINK LIBRARY : acia Project Overview
 ========================================================================
 
-
-
 Using /t2 on (Nitr)Os9
 
 Terminal settings for Windows console should be as follows:
 
 /t2
- -upc -bsb bsl echo lf null=0 -pause pag=32 bsp=08
+ -upc -bsb bsl echo lf null=0 pause pag=32 bsp=08
 del=18 eor=0D eof=1B reprint=09 dup=19 psc=17 abort=03
 quit=05 bse=08 bell=07 type=80 baud=06 xon=11 xoff=13
 
@@ -18,14 +16,16 @@ translates the control codes to the proper console functions.
 
 Colors default to white on black.  Only colors 0-7 are supported.
 
-The console handles scrolling fairly well. The windows system 
-automatically moves the screen within the screen buffer to keep
-the cursor visible. This causes text to appear to scroll as long
-as the cursor is within the boundaries of the buffer. The vertical
-scroll bar allows the user to scroll back into the buffer to see
-what was printed previously.
+To launch a shell simply do: shell i=/t2 and the console
+will come up. Typing "ex" in the console window causes the
+console to close.
 
-By default the windows scroll buffer is large but eventually it 
+The console handles scrolling fairly well. The windows system 
+automatically moves the console window within the screen buffer
+to keep the cursor visible. This causes text to appear to scroll 
+as long as the cursor is within the boundaries of the buffer.
+
+By default the windows screen buffer is large but eventually it 
 becomes full. To handle this acia.dll deletes lines from the top of
 the buffer when the cursor tries to move to a line below the bottom.
 This affects full screen editors.  They use cursor move sequences
@@ -48,8 +48,7 @@ Fix it to set the screen buffer to a reasonable size and use scred's
 but I don't use scred much). The size of the buffer can be changed
 from the console properties menu.
 
-I did a brief check of uemacs. It seems to work okay too except I
-find the lack of support of arrow keys too annoying and I am too 
-used to vi's idea use of hjkl for cursor position to adapt to emacs.
-
+I did a brief check of uemacs. It seems to work okay except I find
+the lack of support of arrow keys too annoying and I am too used 
+to vi's idea use of hjkl for cursor position to adapt to emacs.
 
