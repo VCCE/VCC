@@ -221,21 +221,27 @@ char SeqArgs[8];
 
 int console_write(char *buf, int len) {
 // assume len == one for initial test
-    int cnt = 1;
-    int chr = *buf;
+//    int cnt = 1;
+//    int chr = *buf;
+    int cnt = 0;
+    int chr;
 
 	DWORD tmp;
 	char cc[80];
 
     if ( hConOut == NULL) return 0;
 
+    while (cnt < len) { 
+        cnt ++;
+        chr = *buf++;
+
     // Do we need to finish a command sequence?
 	if (SeqArgsNeeded) {
         // Save the the chr as command arg
 		SeqArgs[SeqArgsCount++] = chr;
 
-	    // If not done wait for more
-	   	if (SeqArgsCount < SeqArgsNeeded) return cnt;
+	    // If not done get more
+	   	if (SeqArgsCount < SeqArgsNeeded) continue; // return cnt;
 
         // Sequence complete
 		SeqArgsNeeded = 0;
@@ -309,19 +315,22 @@ int console_write(char *buf, int len) {
 		case SEQ_BOLDSW:
 			break; 
 		}
-		return cnt;
+		//return cnt;
+        continue;
 	}
 
 	// write printable chr to console
 	if  (isprint(chr)) {
 		WriteConsole(hConOut,&chr,1,&tmp,NULL);
-		return cnt;
+		//return cnt;
+        continue;
 	}
 
     // write chars with high bit set to console (utf8)
     if (chr > 128) {
 		WriteConsole(hConOut,&chr,1,&tmp,NULL);
-		return cnt;
+        continue;
+		//return cnt;
     }
 
 	// process non printable
@@ -383,6 +392,8 @@ int console_write(char *buf, int len) {
 		sprintf(cc,"~%02X~",chr);
 		WriteConsole(hConOut,cc,4,&tmp,NULL);
 	}
+
+    }
 	return cnt;
 }
 

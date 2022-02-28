@@ -6,10 +6,9 @@
 //------------------------------------------------------------------------
 
 // sc6551 private functions 
-
 DWORD WINAPI sc6551_input_thread(LPVOID);
-//void sc6551_init();
-//void sc6551_close();
+DWORD WINAPI sc6551_output_thread(LPVOID);
+void sc6551_output(char);
 
 // Comunications hooks
 void com_open();
@@ -29,6 +28,7 @@ unsigned char StatReg = 0;
 // b6 DSR Data set ready
 // b7 IRQ Interrupt generated
 // Only RxF, TxE, and IRQ are used here
+#define StatOvr  0x04
 #define StatRxF  0x08
 #define StatTxE  0x10
 #define StatIRQ  0x80
@@ -46,80 +46,102 @@ unsigned char CmdReg  = 0;
 // CtrReg is not really used, it is just echoed back to CoCo
 unsigned char CtlReg  = 0;
 
-// Data register is loaded by input thread.
-unsigned char RcvChr = 0;
+HANDLE hEventRead;       // Event handle for read thread
+HANDLE hInputThread;
+HANDLE hOutputThread;
 
-HANDLE hEventAciaRead;       // Event handle for read thread
-HANDLE hThread;
-CRITICAL_SECTION CritSect;
+#define INBSIZ 256
+#define OUTBSIZ 1024 
+char InBuf[INBSIZ];
+int  InBufCnt=0;
+int  InReadCnt=0;
+char OutBuf[OUTBSIZ];
+int  OutBufCnt=0;
+HANDLE  WriteLock;
 
 //------------------------------------------------------------------------
-//  Initiallize sc6551 
+//  Initiallize sc6551. This gets called when DTR is set on
 //------------------------------------------------------------------------
 
 void sc6551_init()
 {
     DWORD id;
-//	if (sc6551_initialized == 0) {
-        // Make sure any previous instance is closed first
-        sc6551_close();  
-        // Open communications link
-        com_open(); 
-        // Create a critical section for RxF bit
-        InitializeCriticalSectionAndSpinCount(&CritSect,512);
-        // Create input thread
-		hThread=CreateThread(NULL,0,sc6551_input_thread,NULL,0,&id);
-        // Create event for input thread
-        hEventAciaRead = CreateEvent (NULL,FALSE,FALSE,NULL);
-        sc6551_initialized = 1;
-//	}
+
+    // Close any previous instance then open communications
+    sc6551_close();  
+    com_open();
+
+    // Create input thread and event to wake it 
+	hInputThread=CreateThread(NULL,0,sc6551_input_thread,NULL,0,&id);
+    hEventRead = CreateEvent (NULL,FALSE,FALSE,NULL);
+	hOutputThread=CreateThread(NULL,0,sc6551_output_thread,NULL,0,&id);
+    WriteLock = CreateMutex(NULL,FALSE,NULL);
+    sc6551_initialized = 1;
 }
 
 //------------------------------------------------------------------------
-//  Close sc6551 
+//  Close sc6551.  This gets called when DTR is set off 
 //------------------------------------------------------------------------
 void sc6551_close()
 {
-    if (hThread) {
-        TerminateThread(hThread,1);
-        WaitForSingleObject(hThread,2000);
+    if (hInputThread) {
+        TerminateThread(hInputThread,1);
+        WaitForSingleObject(hInputThread,2000);
     }
-    hThread = NULL;
+    if (hOutputThread) {
+        TerminateThread(hOutputThread,1);
+        WaitForSingleObject(hOutputThread,2000);
+    }
+    hInputThread = NULL;
+    hOutputThread = NULL;
 	com_close();
-    DeleteCriticalSection(&CritSect);
-	sc6551_initialized = 0;
+    sc6551_initialized = 0;
 }
 
 //------------------------------------------------------------------------
-// Input Thread.
+// Data input
+// Reads hang. They are done in a seperate thread.
 //------------------------------------------------------------------------
 
-    char inbuf[128];
-    int  bufcnt=0;
-    int  readcnt=0;
-
-// Reads hang. They are done in a seperate thread.
 DWORD WINAPI sc6551_input_thread(LPVOID param) 
 {
     DWORD rc;
     DWORD ms=100;
 
     while(TRUE) {
-        rc = WaitForSingleObject(hEventAciaRead,ms);
+        rc = WaitForSingleObject(hEventRead,ms);
 		if (CmdReg & CmdDTR) {
-            if ( readcnt >= bufcnt ) {
-                bufcnt = com_read(inbuf,120);
-                readcnt = 0;
+            if ( InReadCnt >= InBufCnt ) {
+                InBufCnt = com_read(InBuf,INBSIZ);
+                InReadCnt = 0;
                 StatReg = StatReg | StatRxF;
                 ms = 2;
             } else if (rc == WAIT_TIMEOUT) {
-                if ( readcnt < bufcnt ) StatReg = StatReg | StatRxF;
+                if ( InReadCnt < InBufCnt ) StatReg = StatReg | StatRxF;
                 StatReg = StatReg | StatIRQ;
                 AssertInt(IRQ,0);
                 ms = 100;
             }
 		}
 	}
+}
+
+//------------------------------------------------------------------------
+// Output is buffered for 50 ms
+//------------------------------------------------------------------------
+
+DWORD WINAPI sc6551_output_thread(LPVOID param) 
+{
+    while(TRUE) {
+        if (OutBufCnt) {
+            WaitForSingleObject(WriteLock,INFINITE);
+            com_write(OutBuf,OutBufCnt);
+            OutBufCnt = 0;
+		    StatReg = StatReg | StatTxE;
+            ReleaseMutex(WriteLock);
+        }
+        Sleep(50);
+    }
 }
 
 //------------------------------------------------------------------------
@@ -131,10 +153,10 @@ unsigned char sc6551_read(unsigned char port)
 	unsigned char data;
 	switch (port) {
 		case 0x68:
-            data = inbuf[readcnt];
-            readcnt++;
-            if (readcnt >= bufcnt) StatReg = StatReg &~ StatRxF;
-            SetEvent(hEventAciaRead);       // data was read
+            data = InBuf[InReadCnt];
+            InReadCnt++;
+            if (InReadCnt >= InBufCnt) StatReg = StatReg &~ StatRxF;
+            SetEvent(hEventRead);       // data was read
 			break;
 		case 0x69:
             data = StatReg;
@@ -153,10 +175,17 @@ unsigned char sc6551_read(unsigned char port)
 void sc6551_write(unsigned char data,unsigned short port)
 {
 	switch (port) {
-		case 0x68:
-			com_write(&data,1);
-			StatReg = StatReg | StatTxE;  // mark out buffer empty
-			break;
+        case 0x68:
+            //Wait for output thread to finish
+            WaitForSingleObject(WriteLock,2000);
+            OutBuf[OutBufCnt++] = data;
+            if (OutBufCnt < OUTBSIZ) {
+			    StatReg = StatReg | StatTxE;
+            } else {
+                StatReg = StatReg & ~StatTxE;
+            }
+            ReleaseMutex(WriteLock);
+            break;
 		case 0x69:
 			StatReg = 0;
 			break;
@@ -166,7 +195,7 @@ void sc6551_write(unsigned char data,unsigned short port)
 		    if (CmdReg & CmdDTR) {
 	            if (sc6551_initialized == 0) sc6551_init();
 			    StatReg = StatTxE;          
-                SetEvent(hEventAciaRead); // tell input worker
+                SetEvent(hEventRead); // tell input worker
 			} else {
             // Else disable sc6551
                 sc6551_close();

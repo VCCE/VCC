@@ -29,8 +29,12 @@ static char IniSect[MAX_LOADSTRING]; // Ini file section
 BOOL APIENTRY 
 DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
-    if (reason == DLL_PROCESS_ATTACH) g_hDLL = hinst;
-    else if (reason == DLL_PROCESS_DETACH) sc6551_close();
+    if (reason == DLL_PROCESS_ATTACH) {
+        g_hDLL = hinst;
+        sc6551_initialized = 0;
+    } else if (reason == DLL_PROCESS_DETACH) {
+        sc6551_close();
+    }
     return TRUE;
 }
 

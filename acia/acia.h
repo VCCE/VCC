@@ -24,7 +24,7 @@ int  console_write(char* buf,int siz);
 
 void (*AssertInt)(unsigned char,unsigned char);
 
-// sc6551 state
+// sc6551 initilization state
 int	sc6551_initialized;
 
 // Communications type: console 0; TCP port 1; COM port 2
