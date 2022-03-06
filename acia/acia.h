@@ -24,13 +24,21 @@ int  console_write(char* buf,int siz);
 
 void (*AssertInt)(unsigned char,unsigned char);
 
+void wincmd_open();
+void wincmd_close();
+int  wincmd_read(char* buf,int siz);
+int  wincmd_write(char* buf,int siz);
+
+// acia status 
+char AciaStat[32];
+
 // sc6551 initilization state
-int	sc6551_initialized;
+int sc6551_initialized;
 
 // Communications type: console 0; TCP port 1; COM port 2
-int AciaComType; 
+int AciaComType;
 
-// Port numbers: COM port 1-10; TCP port 1024-65536 
+// Port numbers: COM port 1-10; TCP port 1024-65536
 int AciaComPort;
 int AciaTcpPort;
 

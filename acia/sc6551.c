@@ -5,7 +5,7 @@
 // sc6551
 //------------------------------------------------------------------------
 
-// sc6551 private functions 
+// sc6551 private functions
 DWORD WINAPI sc6551_input_thread(LPVOID);
 DWORD WINAPI sc6551_output_thread(LPVOID);
 void sc6551_output(char);
@@ -20,7 +20,7 @@ int  com_read(char*,int);
 // to prevent race conditions
 unsigned char StatReg = 0;
 
-// Status register bits.  
+// Status register bits.
 // b0-B2  parity, frame, overrun error
 // b3 Rcv Data register full if tru
 // b4 Snd Data register empty if true
@@ -51,7 +51,7 @@ HANDLE hInputThread;
 HANDLE hOutputThread;
 
 #define INBSIZ 256
-#define OUTBSIZ 1024 
+#define OUTBSIZ 1024
 char InBuf[INBSIZ];
 int  InBufCnt=0;
 int  InReadCnt=0;
@@ -68,19 +68,19 @@ void sc6551_init()
     DWORD id;
 
     // Close any previous instance then open communications
-    sc6551_close();  
+    sc6551_close();
     com_open();
 
-    // Create input thread and event to wake it 
-	hInputThread=CreateThread(NULL,0,sc6551_input_thread,NULL,0,&id);
+    // Create input thread and event to wake it
+    hInputThread=CreateThread(NULL,0,sc6551_input_thread,NULL,0,&id);
     hEventRead = CreateEvent (NULL,FALSE,FALSE,NULL);
-	hOutputThread=CreateThread(NULL,0,sc6551_output_thread,NULL,0,&id);
+    hOutputThread=CreateThread(NULL,0,sc6551_output_thread,NULL,0,&id);
     WriteLock = CreateMutex(NULL,FALSE,NULL);
     sc6551_initialized = 1;
 }
 
 //------------------------------------------------------------------------
-//  Close sc6551.  This gets called when DTR is set off 
+//  Close sc6551.  This gets called when DTR is set off
 //------------------------------------------------------------------------
 void sc6551_close()
 {
@@ -94,7 +94,7 @@ void sc6551_close()
     }
     hInputThread = NULL;
     hOutputThread = NULL;
-	com_close();
+    com_close();
     sc6551_initialized = 0;
 }
 
@@ -103,14 +103,14 @@ void sc6551_close()
 // Reads hang. They are done in a seperate thread.
 //------------------------------------------------------------------------
 
-DWORD WINAPI sc6551_input_thread(LPVOID param) 
+DWORD WINAPI sc6551_input_thread(LPVOID param)
 {
     DWORD rc;
     DWORD ms=100;
 
     while(TRUE) {
         rc = WaitForSingleObject(hEventRead,ms);
-		if (CmdReg & CmdDTR) {
+        if (CmdReg & CmdDTR) {
             if ( InReadCnt >= InBufCnt ) {
                 InBufCnt = com_read(InBuf,INBSIZ);
                 InReadCnt = 0;
@@ -122,22 +122,22 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
                 AssertInt(IRQ,0);
                 ms = 100;
             }
-		}
-	}
+        }
+    }
 }
 
 //------------------------------------------------------------------------
 // Output is buffered for 50 ms
 //------------------------------------------------------------------------
 
-DWORD WINAPI sc6551_output_thread(LPVOID param) 
+DWORD WINAPI sc6551_output_thread(LPVOID param)
 {
     while(TRUE) {
         if (OutBufCnt) {
             WaitForSingleObject(WriteLock,INFINITE);
             com_write(OutBuf,OutBufCnt);
             OutBufCnt = 0;
-		    StatReg = StatReg | StatTxE;
+            StatReg = StatReg | StatTxE;
             ReleaseMutex(WriteLock);
         }
         Sleep(50);
@@ -150,61 +150,61 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 
 unsigned char sc6551_read(unsigned char port)
 {
-	unsigned char data;
-	switch (port) {
-		case 0x68:
+    unsigned char data;
+    switch (port) {
+        case 0x68:
             data = InBuf[InReadCnt];
             InReadCnt++;
             if (InReadCnt >= InBufCnt) StatReg = StatReg &~ StatRxF;
             SetEvent(hEventRead);       // data was read
-			break;
-		case 0x69:
+            break;
+        case 0x69:
             data = StatReg;
-    		StatReg = StatReg & ~StatIRQ;   // Stat read clears IRQ flag
-			break;
-		case 0x6A:
-			data = CmdReg;
-			break;
-		case 0x6B:
-			data = CtlReg;
-			break;
+            StatReg = StatReg & ~StatIRQ;   // Stat read clears IRQ flag
+            break;
+        case 0x6A:
+            data = CmdReg;
+            break;
+        case 0x6B:
+            data = CtlReg;
+            break;
     }
-	return data;
+    return data;
 }
 
 void sc6551_write(unsigned char data,unsigned short port)
 {
-	switch (port) {
+    switch (port) {
         case 0x68:
             //Wait for output thread to finish
             WaitForSingleObject(WriteLock,2000);
             OutBuf[OutBufCnt++] = data;
             if (OutBufCnt < OUTBSIZ) {
-			    StatReg = StatReg | StatTxE;
+                StatReg = StatReg | StatTxE;
             } else {
                 StatReg = StatReg & ~StatTxE;
             }
             ReleaseMutex(WriteLock);
             break;
-		case 0x69:
-			StatReg = 0;
-			break;
-		case 0x6A:
-			CmdReg = data;
+        case 0x69:
+            StatReg = 0;
+            break;
+        case 0x6A:
+            CmdReg = data;
             // If DTR set enable sc6551
-		    if (CmdReg & CmdDTR) {
-	            if (sc6551_initialized == 0) sc6551_init();
-			    StatReg = StatTxE;          
+            if (CmdReg & CmdDTR) {
+                if (sc6551_initialized == 0) sc6551_init();
+                StatReg = StatTxE;
                 SetEvent(hEventRead); // tell input worker
-			} else {
+            } else {
             // Else disable sc6551
                 sc6551_close();
-				StatReg = 0;
-			}
-			break;
-		case 0x6B:
-			CtlReg = data;  // Not used, just returned on read
-			break;
+                StatReg = 0;
+            }
+            break;
+        case 0x6B:
+            CtlReg = data;  // Not used, just returned on read
+            break;
     }
 }
 
@@ -213,36 +213,46 @@ void sc6551_write(unsigned char data,unsigned short port)
 // Hooks allow sc6551 to do communications to selected media
 //----------------------------------------------------------------
 
+
 // Open com
 void com_open() {
-	switch (AciaComType) {
-	case 0: // Legacy Console
+    switch (AciaComType) {
+    case 0: // Legacy Console
         console_open();
-		break;
-	}
+        break;
+    case 1: 
+        wincmd_open();
+        break;
+    }
 }
 
 void com_close() {
-	switch (AciaComType) {
-	case 0: // Console
+    switch (AciaComType) {
+    case 0: // Console
         console_close();
-		break;
-	}
+        break;
+    case 1: 
+        wincmd_close();
+        break;
+    }
 }
 
 int com_write(char * buf,int len) { // returns bytes written
-	switch (AciaComType) {
-	case 0: // Legacy Console
+    switch (AciaComType) {
+    case 0: // Legacy Console
         return console_write(buf,len);
-        break;
+    case 1: 
+        return wincmd_write(buf,len);
     }
     return 0;
 }
 
 int com_read(char * buf,int len) {  // returns bytes read
-	switch (AciaComType) {
-	case 0: // Legacy Console
+    switch (AciaComType) {
+    case 0: // Legacy Console
         return console_read(buf,len);
+    case 1: 
+        return wincmd_read(buf,len);
     }
     return 0;
 }
