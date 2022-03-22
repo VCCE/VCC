@@ -34,8 +34,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "resource.h"
 #include <cstdint>
 
-static unsigned char rega[4]={0,0,0,0};
-static unsigned char regb[4]={0,0,0,0};
+static unsigned char rega[4]={0,0,0,0};  //PIA0
+static unsigned char regb[4]={0,0,0,0};  //PIA1
 static unsigned char rega_dd[4]={0,0,0,0}; 
 static unsigned char regb_dd[4]={0,0,0,0};
 static unsigned char LeftChannel=0,RightChannel=0;
@@ -307,7 +307,7 @@ void PiaReset()
 	}
 }
 
-unsigned char GetMuxState(void)
+unsigned char GetMuxState(void)  // Analog i/o select
 {
 	return ( ((rega[1] & 8)>>3) + ((rega[3] & 8) >>2));
 }

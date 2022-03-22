@@ -19,11 +19,44 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <dinput.h>
+#include "mc6821.h"
 #define MAXSTICKS 10
 #define STRLEN 64
+
+typedef struct {
+	unsigned char UseMouse;
+	unsigned char Up;
+	unsigned char Down;
+	unsigned char Left;
+	unsigned char Right;
+	unsigned char Fire1;
+	unsigned char Fire2;
+	unsigned char DiDevice;
+	unsigned char HiRes;
+} JoyStick;
 
 HRESULT JoyStickPoll(DIJOYSTATE2 * ,unsigned char);
 int EnumerateJoysticks(void);
 bool InitJoyStick (unsigned char);
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+unsigned char vccJoystickGetScan(unsigned char);
+unsigned char SetMouseStatus(unsigned char,unsigned char);
+
+// globals referenced from config.c
+extern JoyStick	Left;
+extern JoyStick Right;
+
+void			joystick(short unsigned, short unsigned);
+unsigned short	get_pot_value(unsigned char pot);
+void			SetButtonStatus(unsigned char, unsigned char);
+void			SetStickNumbers(unsigned char, unsigned char);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
