@@ -73,9 +73,7 @@ static unsigned char RolloverTable[8];	// CoCo 'keys' for emulator
 static keytranslationentry_t KeyTransTable[KBTABLE_ENTRY_COUNT];
 
 /*****************************************************************************/
-//	Get CoCo 'scan' code
-//	Only called from MC6821.c to read the keyboard/joystick state
-//	should be a push instead of a pull?
+//	Get CoCo 'scan' code called from MC6821.c to read the keyboard/joystick state
 /*****************************************************************************/
 
 unsigned char
@@ -102,6 +100,7 @@ vccKeyboardGetScan(unsigned char Col)
 	}
 	ret_val = 127 - ret_val;
 
+    // Add joystick button and analog compare bits.
     unsigned char vccJoystickGetScan(unsigned char ret_val);
     ret_val = vccJoystickGetScan(ret_val);
 

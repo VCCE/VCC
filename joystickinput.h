@@ -23,6 +23,9 @@ This file is part of VCC (Virtual Color Computer).
 #define MAXSTICKS 10
 #define STRLEN 64
 
+
+
+// JoyStick structure is used to contain joystick configuration
 typedef struct {
 	unsigned char UseMouse;
 	unsigned char Up;
@@ -35,6 +38,11 @@ typedef struct {
 	unsigned char HiRes;
 } JoyStick;
 
+// Global joystick configuration from config.c  These were
+// renamed from Left and Right to preserve maintainer sanity.
+extern JoyStick	LeftJS;
+extern JoyStick RightJS;
+
 HRESULT JoyStickPoll(DIJOYSTATE2 * ,unsigned char);
 int EnumerateJoysticks(void);
 bool InitJoyStick (unsigned char);
@@ -43,14 +51,11 @@ bool InitJoyStick (unsigned char);
 extern "C"
 {
 #endif
+
 unsigned char vccJoystickGetScan(unsigned char);
 unsigned char SetMouseStatus(unsigned char,unsigned char);
 
-// globals referenced from config.c
-extern JoyStick	Left;
-extern JoyStick Right;
-
-void			joystick(short unsigned, short unsigned);
+void			joystick(unsigned int, unsigned int);
 unsigned short	get_pot_value(unsigned char pot);
 void			SetButtonStatus(unsigned char, unsigned char);
 void			SetStickNumbers(unsigned char, unsigned char);

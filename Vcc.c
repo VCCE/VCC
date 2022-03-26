@@ -206,7 +206,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
-	unsigned int x,y;
+	unsigned int x,y;  // joystick x,y values
 	unsigned char kb_char; 
 	static unsigned char OEMscan=0;
     int Extended;
@@ -504,10 +504,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				x = LOWORD( lParam ) ;
 				y = HIWORD( lParam ) ;
 				GetClientRect(EmuState.WindowHandle,&ClientSize);
-				x/=((ClientSize.right-ClientSize.left)>>6);
-				y/=(((ClientSize.bottom-ClientSize.top)-20)>>6);
-				joystick(x,y);
-			}
+//				x/=((ClientSize.right-ClientSize.left)>>6);
+//				y/=(((ClientSize.bottom-ClientSize.top)-20)>>6);
+                LONG jw = ClientSize.right-ClientSize.left;
+                LONG jh = ClientSize.bottom-ClientSize.top-20;
+                x = ((x<<14)/jw);
+                y = ((y<<14)/jh);
+                joystick(x,y);
+            }
+
 			return(0);
 			break;
 //		default:
