@@ -6937,8 +6937,8 @@ void(*JmpVec3[256])(void) = {
 
 int HD6309Exec(int CycleFor)
 {
-
-	//static unsigned char opcode = 0;
+    extern int DAC_Clock; 
+	int PrevCycleCount = 0;
 	CycleCounter = 0;
 	gCycleFor = CycleFor;
 	while (CycleCounter < CycleFor) {
@@ -6964,6 +6964,10 @@ int HD6309Exec(int CycleFor)
 			return(0); // WDZ - Experimental SyncWaiting should still return used cycles (and not zero) by breaking from loop
 
 		JmpVec1[MemRead8(PC_REG++)](); // Execute instruction pointed to by PC_REG
+		if (DAC_Clock < 0xFFFF) {
+			DAC_Clock += CycleCounter-PrevCycleCount;
+		}
+		PrevCycleCount = CycleCounter;
 	}//End While
 
 	return(CycleFor - CycleCounter);

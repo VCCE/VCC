@@ -206,7 +206,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
-	unsigned int x,y;  // joystick x,y values
+	unsigned int x,y;  // joystick x,y values 0-3fff (0-16383)
 	unsigned char kb_char; 
 	static unsigned char OEMscan=0;
     int Extended;
@@ -504,14 +504,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				x = LOWORD( lParam ) ;
 				y = HIWORD( lParam ) ;
 				GetClientRect(EmuState.WindowHandle,&ClientSize);
-//				x/=((ClientSize.right-ClientSize.left)>>6);
-//				y/=(((ClientSize.bottom-ClientSize.top)-20)>>6);
-                LONG jw = ClientSize.right-ClientSize.left;
-                LONG jh = ClientSize.bottom-ClientSize.top-20;
-                x = ((x<<14)/jw);
-                y = ((y<<14)/jh);
+//				Convert mouse coordinates to joystick x,y values with
+//				range 0-3fff (0-16383). Also joystick coordinates should
+//              move slightly faster than the mouse so edges can be 
+//              reached before the mouse leaves the window.
+				LONG scr_w = ClientSize.right-ClientSize.left-20;
+				LONG scr_h = ClientSize.bottom-ClientSize.top-30;
+				x = ((x<<14)/scr_w); if (x>65535) x=65535;
+				y = ((y<<14)/scr_h); if (y>65535) y=65536;
                 joystick(x,y);
-            }
+			}
 
 			return(0);
 			break;

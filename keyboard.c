@@ -101,7 +101,6 @@ vccKeyboardGetScan(unsigned char Col)
 	ret_val = 127 - ret_val;
 
     // Add joystick button and analog compare bits.
-    unsigned char vccJoystickGetScan(unsigned char ret_val);
     ret_val = vccJoystickGetScan(ret_val);
 
 #if 0 // no noticible change when this is disabled

@@ -116,7 +116,7 @@ CHARFORMAT ModeText;
 */
 char * const keyNames[] = { "","ESC","1","2","3","4","5","6","7","8","9","0","-","=","BackSp","Tab","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","[","]","Bkslash",";","'","Comma",".","/","CapsLk","Shift","Ctrl","Alt","Space","Enter","Insert","Delete","Home","End","PgUp","PgDown","Left","Right","Up","Down","F1","F2" };
 
-//					            0	1      2	3	4	5	6	7	8	9	10	11	12	13	14	    15    16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44        45  46  47      48  49   50       51     52     53    54      55      56       57       58     59    60     61       62     63      64   65     66   67	
+//					            0	1      2	3	4	5	6	7	8	9	10	11	12	13	14	    15    16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44        45  46  47      48  49   50       51     52     53    54      55      56       57       58     59    60     61       62     63      64   65     66   67
 //char * const cocoKeyNames[] = { "","@","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","Up","Down","Left","Right","Space","0","1","2","3","4","5","6","7","8","9",":",";","Comma","-",".","/","Enter","Clear","Break","Alt","Ctrl","F1","F2","Shift" };
 
 
@@ -186,7 +186,7 @@ void LoadConfig(SystemState *LCState)
 
 	strcat(AppDataPath, "\\VCC");
 	if (_mkdir(AppDataPath) != 0) { OutputDebugString("Unable to create VCC config folder."); }
-	
+
 	if (*CmdArg.IniFile) {
 		GetFullPathNameA(CmdArg.IniFile,MAX_PATH,IniFilePath,0);
 	} else {
@@ -231,7 +231,7 @@ unsigned char WriteIniFile(void)
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ExternalBasicImage);
-	
+
 	WritePrivateProfileString("Version","Release",AppName,IniFilePath);
 	WritePrivateProfileInt("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer,IniFilePath);
 	WritePrivateProfileInt("CPU","FrameSkip",CurrentConfig.FrameSkip,IniFilePath);
@@ -305,7 +305,7 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.PaletteType = GetPrivateProfileInt("Video", "PaletteType",1,IniFilePath);
 	CurrentConfig.ScanLines = GetPrivateProfileInt("Video","ScanLines",0,IniFilePath);
 
-	//CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);	
+	//CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);
 	CurrentConfig.Aspect = GetPrivateProfileInt("Video","ForceAspect",1,IniFilePath);
 	CurrentConfig.RememberSize = GetPrivateProfileInt("Video","RememberSize",1,IniFilePath);
 	CurrentConfig.WindowSizeX= GetPrivateProfileInt("Video", "WindowSizeX", 640, IniFilePath);
@@ -318,7 +318,7 @@ unsigned char ReadIniFile(void)
 	GetPrivateProfileString("Memory","ExternalBasicImage","",CurrentConfig.ExternalBasicImage,MAX_PATH,IniFilePath);
 
 	GetPrivateProfileString("Module","OnBoot","",CurrentConfig.ModulePath,MAX_PATH,IniFilePath);
-	
+
 	CurrentConfig.KeyMap = GetPrivateProfileInt("Misc","KeyMapIndex",0,IniFilePath);
 	if (CurrentConfig.KeyMap>3)
 		CurrentConfig.KeyMap=0;	//Default to DECB Mapping
@@ -415,7 +415,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			g_hWndConfig[5]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_MISC),hWndTabDialog,(DLGPROC) MiscConfig);
 			g_hWndConfig[6]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_CASSETTE),hWndTabDialog,(DLGPROC) TapeConfig);
 			g_hWndConfig[7]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_BITBANGER),hWndTabDialog,(DLGPROC) BitBanger);
-	
+
 			//Set the title text for all tabs
 			for (TabCount=0;TabCount<TABS;TabCount++)
 			{
@@ -424,7 +424,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				Tabs.pszText=TabTitles[TabCount];
 				TabCtrl_InsertItem(hWndTabDialog,TabCount,&Tabs);
 			}
-			
+
 			TabCtrl_SetCurSel(hWndTabDialog,0);	//Set Initial Tab to 0
 			for (TabCount=0;TabCount<TABS;TabCount++)	//Hide All the Sub Panels
 				ShowWindow(g_hWndConfig[TabCount],SW_HIDE);
@@ -438,7 +438,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				SelectedTab=TabCtrl_GetCurSel(hWndTabDialog);
 				for (TabCount=0;TabCount<TABS;TabCount++)
 					ShowWindow(g_hWndConfig[TabCount],SW_HIDE);
-				SetWindowPos(g_hWndConfig[SelectedTab],HWND_TOP,10,30,0,0,SWP_NOSIZE|SWP_SHOWWINDOW);		
+				SetWindowPos(g_hWndConfig[SelectedTab],HWND_TOP,10,30,0,0,SWP_NOSIZE|SWP_SHOWWINDOW);
 			}
 		break;
 
@@ -453,7 +453,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					EmuState.ResetPending=2;
 				if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) | (CurrentConfig.AudioRate != TempConfig.AudioRate))
 					SoundInit(EmuState.WindowHandle,SoundCards[TempConfig.SndOutDev].Guid,TempConfig.AudioRate);
-				
+
 				CurrentConfig=TempConfig;
 				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
@@ -474,7 +474,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 			case IDAPPLY:
-				EmuState.ResetPending=4;	
+				EmuState.ResetPending=4;
 				if ( (CurrentConfig.RamSize != TempConfig.RamSize) | (CurrentConfig.CpuType != TempConfig.CpuType) )
 					EmuState.ResetPending=2;
 				if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) | (CurrentConfig.AudioRate != TempConfig.AudioRate))
@@ -818,12 +818,12 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
 				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETDONTCLICK, 1, 0);
 				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETDONTCLICK, 1, 0);
-			
+
 			}
 			SendDlgItemMessage(hDlg,IDC_MONTYPE,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[TempConfig.MonitorType]);
 			for (temp = 0; temp <= 1; temp++)
 				SendDlgItemMessage(hDlg, PaletteChoice[temp], BM_SETCHECK, (temp == TempConfig.PaletteType), 0);
-			
+
 		break;
 
 		case WM_HSCROLL:
@@ -831,7 +831,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			sprintf(OutBuffer,"%i",TempConfig.FrameSkip);
 			SendDlgItemMessage(hDlg,IDC_FRAMEDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 		break;
-		
+
 		case WM_COMMAND:
 			TempConfig.Resize = 1; //(unsigned char)SendDlgItemMessage(hDlg,IDC_RESIZE,BM_GETCHECK,0,0);
 			TempConfig.Aspect = (unsigned char)SendDlgItemMessage(hDlg,IDC_ASPECT,BM_GETCHECK,0,0);
@@ -841,7 +841,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			//POINT p = { 640,480 };
 			switch (LOWORD (wParam))
 			{
-				
+
 			case IDC_REMEMBER_SIZE:
 				TempConfig.Resize = 1;
 				SendDlgItemMessage(hDlg, IDC_RESIZE, BM_GETCHECK, 1, 0);
@@ -1079,14 +1079,14 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 			SendDlgItemMessage(hDlg,IDC_LEFTJOYSTICKDEVICE,CB_SETCURSEL,(WPARAM)LeftJS.DiDevice,(LPARAM)0);
 
 			SendDlgItemMessage(hDlg,LeftJoyStick[0],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Left),(LPARAM)0);
-			SendDlgItemMessage(hDlg,LeftJoyStick[1],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Right),(LPARAM)0);	
+			SendDlgItemMessage(hDlg,LeftJoyStick[1],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Right),(LPARAM)0);
 			SendDlgItemMessage(hDlg,LeftJoyStick[2],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Up),(LPARAM)0);
-			SendDlgItemMessage(hDlg,LeftJoyStick[3],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Down),(LPARAM)0);	
-			SendDlgItemMessage(hDlg,LeftJoyStick[4],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Fire1),(LPARAM)0);	
-			SendDlgItemMessage(hDlg,LeftJoyStick[5],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Fire2),(LPARAM)0);	
+			SendDlgItemMessage(hDlg,LeftJoyStick[3],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Down),(LPARAM)0);
+			SendDlgItemMessage(hDlg,LeftJoyStick[4],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Fire1),(LPARAM)0);
+			SendDlgItemMessage(hDlg,LeftJoyStick[5],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Fire2),(LPARAM)0);
 			SendDlgItemMessage(hDlg,RightJoyStick[0],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(RightJS.Left),(LPARAM)0);
 			SendDlgItemMessage(hDlg,RightJoyStick[1],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(RightJS.Right),(LPARAM)0);
-			SendDlgItemMessage(hDlg,RightJoyStick[2],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(RightJS.Up),(LPARAM)0);	
+			SendDlgItemMessage(hDlg,RightJoyStick[2],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(RightJS.Up),(LPARAM)0);
 			SendDlgItemMessage(hDlg,RightJoyStick[3],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(RightJS.Down),(LPARAM)0);
 			SendDlgItemMessage(hDlg,RightJoyStick[4],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(RightJS.Fire1),(LPARAM)0);
 			SendDlgItemMessage(hDlg,RightJoyStick[5],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(RightJS.Fire2),(LPARAM)0);
@@ -1178,7 +1178,7 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 			TempRightJS.Down=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[3],CB_GETCURSEL,0,0));
 			TempRightJS.Fire1=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[4],CB_GETCURSEL,0,0));
 			TempRightJS.Fire2=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[5],CB_GETCURSEL,0,0));
-			
+
 			TempRightJS.DiDevice=(unsigned char)SendDlgItemMessage(hDlg,IDC_RIGHTJOYSTICKDEVICE,CB_GETCURSEL,0,0);
 			TempLeftJS.DiDevice=(unsigned char)SendDlgItemMessage(hDlg,IDC_LEFTJOYSTICKDEVICE,CB_GETCURSEL,0,0);	//Fix Me;
 
@@ -1336,7 +1336,7 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 				SetMonState(PrtMon);
 
 			}	//End switch wParam
-			
+
 			break;
 	}
 	return(0);
@@ -1348,7 +1348,7 @@ LRESULT CALLBACK Paths(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 
 int SelectFile(char *FileName)
 {
-	OPENFILENAME ofn ;	
+	OPENFILENAME ofn ;
 	char Dummy[MAX_PATH]="";
 	char TempFileName[MAX_PATH]="";
 	char CapFilePath[MAX_PATH];
@@ -1360,7 +1360,7 @@ int SelectFile(char *FileName)
 	ofn.Flags             = OFN_HIDEREADONLY;
 	ofn.hInstance         = GetModuleHandle(0);
 	ofn. lpstrDefExt      = "txt";
-	ofn.lpstrFilter       =	"Text File\0*.txt\0\0";	
+	ofn.lpstrFilter       =	"Text File\0*.txt\0\0";
 	ofn.nFilterIndex      = 0 ;					// current filter index
 	ofn.lpstrFile         = TempFileName;		// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;			// sizeof lpstrFile
@@ -1383,7 +1383,7 @@ int SelectFile(char *FileName)
 		}
 	}
 	strcpy(FileName,TempFileName);
-	
+
 	return(1);
 }
 

@@ -18,33 +18,55 @@ This file is part of VCC (Virtual Color Computer).
 
 #define DIRECTINPUT_VERSION 0x0800
 
+#include <windows.h>
+#include "defines.h"
 #include "joystickinput.h"
+#include "logger.h"
 
+// JoyStick configuration
 // These were renamed from Left and Right to preserve maintainer sanity
+//   JS.UseMouse:  0=keyboard,1=mouse,2=audio,3=joystick
+//   JS.HiRes:     0=lowres,1=software,2=tandy,3=ccmax
 JoyStick LeftJS;
 JoyStick RightJS;
 
 /*
-/ Stock coco joysticks only support 0-63 due to use of 6 bit DAC compare
-/ But highest possible rez for CoCo3 screen is 640x225.
+/ Coco joysticks had restricted resolution due to use of 6 bit DAC compare
+/ But a 640x225 screen resolution is possible for CoCo3 screen.
+/ As a result many programs desire a higher resolution pointing device
 /
-/ Originaly Vcc joystick values were 0-63 with midpoint 32  (6 bits)
-/ CocoMax cart used a ADC that retuned an 8 bit value.
-/ Windows HID joysticks have 16 bit resolution.
+/ Higher than 6 bit resolution can be obtained using 6 bit DAC with 
+/ special code that rapidly compares joystick values to the DAC voltage 
+/ as it changes also CocoMax cart used a ADC that retuned an 8 bit value.
 /
-/ Tandy Hirez joysticks used special code that timed how long it takes 
-/ joystick values to respond to voltage changes.
+/ Windows HID joysticks and mice have at least 16 bit resolution. So
+/ code has been added to support higher resolution using one of the
+/ two above methods.
 /
-/
+/ To allow for increased resolution stick values are stored in
+/ fourteen bits.  This means the second byte contains a 0-63
+/ value which makes initial DAC comparisons easier.
 */
 
-// Joystick values  (0-63)
-static unsigned short LeftStickX = 32;
-static unsigned short LeftStickY = 32;
-static unsigned short RightStickX = 32;
-static unsigned short RightStickY = 32;
+// Clock cycles since DAC written
+extern int DAC_Clock;
 
-static unsigned short StickValue = 0;
+// Hires status.  Affectes both sticks
+extern int SW_Hires;   // 0=off, 1=on
+extern int HW_Hires;   // 0=off, 1=Tandy, 2=CCmax
+
+// Hires ramp constants.
+#define TANDYRAMPMIN  1300
+#define TANDYRAMPMAX  9750 
+
+// Joystick values  (0-16383)
+#define STICKMAX 16383
+#define STICKMID 8191
+unsigned int LeftStickX = STICKMID;
+unsigned int LeftStickY = STICKMID;
+unsigned int RightStickX = STICKMID;
+unsigned int RightStickY = STICKMID;
+
 static unsigned char LeftStickNumber = 0;
 static unsigned char RightStickNumber = 0;
 
@@ -62,6 +84,8 @@ BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE* , VOID* );
 BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* , VOID* );
 static unsigned char CurrentStick;
 
+unsigned int get_pot_value(unsigned char);
+
 /*****************************************************************************/
 // Locate connected joysticks.  Called by config.c
 int EnumerateJoysticks(void)
@@ -70,11 +94,11 @@ int EnumerateJoysticks(void)
     JoyStickIndex=0;
     if (FAILED(hr = DirectInput8Create(GetModuleHandle(NULL),
                     DIRECTINPUT_VERSION,IID_IDirectInput8,(VOID**)&di,NULL)))
-        return(0);
+    return(0);
 
     if (FAILED(hr = di->EnumDevices(DI8DEVCLASS_GAMECTRL,
                     enumCallback,NULL,DIEDFL_ATTACHEDONLY)))
-        return(0);
+    return(0);
     return(JoyStickIndex);
 }
 
@@ -132,8 +156,8 @@ BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* con
 }
 
 /*****************************************************************************/
-// Called by get_pot_value to read connected joystick
-HRESULT 
+// Called by get_pot_value to read data from physical joystick
+HRESULT
 JoyStickPoll(DIJOYSTATE2 *js,unsigned char StickNumber)
 {
     HRESULT hr;
@@ -162,46 +186,67 @@ JoyStickPoll(DIJOYSTATE2 *js,unsigned char StickNumber)
 /*****************************************************************************/
 // Called by keyboard.c to add joystick bits to scancode
 unsigned char
-vccJoystickGetScan(unsigned char ret_val)
+vccJoystickGetScan(unsigned char data)
 {
-    StickValue = get_pot_value(GetMuxState());
-    if (StickValue != 0) {               // OS9 joyin routine needs this (koronis rift works now)
-        if (StickValue >= DACState()) {  // Set bit if stick >= DAC output $FF20 Bits 7-2
-            ret_val |= 0x80;
+    extern int JS_Ramp_On;
+    static int sticktarg=0;   // Target stick cycle count
+    unsigned char axis;       // 0 rx, 1 ry, 2 lx, 3 ly
+    unsigned int StickValue; 
+    extern SystemState EmuState; // for DoubleSpeedFlag
+
+    axis = GetMuxState();
+    StickValue = get_pot_value(axis);
+
+    if (StickValue != 0) { // OS9 joyin needs this (koronis rift works now)
+        if ((HW_Hires==1) && JS_Ramp_On) {  //Tandy
+            // if target is zero set it based on current stick value
+            if (sticktarg == 0) {
+                sticktarg = TANDYRAMPMIN + ((StickValue*33)>>6); 
+                if (sticktarg >TANDYRAMPMAX) sticktarg = RAMPMAX;
+                if (!EmuState.DoubleSpeedFlag) sticktarg = sticktarg/2;
+            }
+            // If clock exceeds target set compare bit
+            if (DAC_Clock>sticktarg) {
+                data |= 0x80;
+                JS_Ramp_On = 0;
+                sticktarg = 0;
+            }
+        } else { 
+            if (StickValue >= DACState()) {
+                data |= 0x80;
+            }
         }
     }
 
     if (LeftButton1Status == 1) {
         //Left Joystick Button 1 Down?
-        ret_val = ret_val & 0xFD;
+        data = data & 0xFD;
     }
 
     if (RightButton1Status == 1) {
         //Right Joystick Button 1 Down?
-        ret_val = ret_val & 0xFE;
+        data = data & 0xFE;
     }
 
     if (LeftButton2Status == 1) {
         //Left Joystick Button 2 Down?
-        ret_val = ret_val & 0xF7;
+        data = data & 0xF7;
     }
 
     if (RightButton2Status == 1) {
         //Right Joystick Button 2 Down?
-        ret_val = ret_val & 0xFB;
+        data = data & 0xFB;
     }
-    return ret_val;
+    return data;
 }
 
 /*****************************************************************************/
-// Called by vcc.c on mouse moves
+// Called by vcc.c on mouse moves. x and y range 0-3fff 
 
 void joystick(unsigned int x,unsigned int y)
 {
-
-/*
-    if (x>63) x=63;
-    if (y>63) y=63;
+    if (x>STICKMAX) x=STICKMAX;
+    if (y>STICKMAX) y=STICKMAX;
 
     if (LeftJS.UseMouse==1) {
         LeftStickX=x;
@@ -210,26 +255,6 @@ void joystick(unsigned int x,unsigned int y)
     if (RightJS.UseMouse==1) {
         RightStickX=x;
         RightStickY=y;
-    }
-    return;
-}
-*/
-
-    unsigned short xlo = LOBYTE(x);
-    unsigned short ylo = LOBYTE(y);
-    unsigned short xhi = HIBYTE(x);
-    unsigned short yhi = HIBYTE(y);
-
-    if (xhi>63) xhi=63;
-    if (yhi>63) yhi=63;
-
-    if (LeftJS.UseMouse==1) {
-        LeftStickX=xhi;
-        LeftStickY=yhi;
-    }
-    if (RightJS.UseMouse==1) {
-        RightStickX=xhi;
-        RightStickY=yhi;
     }
     return;
 }
@@ -244,24 +269,26 @@ SetStickNumbers(unsigned char Temp1,unsigned char Temp2)
 }
 
 /*****************************************************************************/
-// Called by vccJoystickGetScan
-unsigned short
+// called by pia0_read->vccKeyboardGetScan->vccJoystickGetScan
+unsigned int
 get_pot_value(unsigned char pot)
 {
     DIJOYSTATE2 Stick1;
 
+    // Poll left joystick if attached
     if (LeftJS.UseMouse==3) {
         JoyStickPoll(&Stick1,LeftStickNumber);
-        LeftStickX =(unsigned short)Stick1.lX>>10;
-        LeftStickY= (unsigned short)Stick1.lY>>10;
+        LeftStickX = (unsigned short)Stick1.lX>>2;    // Not tested
+        LeftStickY = (unsigned short)Stick1.lY>>2;    // Not tested
         LeftButton1Status= Stick1.rgbButtons[0]>>7;
         LeftButton2Status= Stick1.rgbButtons[1]>>7;
     }
 
+    // Poll right joystick if attached
     if (RightJS.UseMouse ==3) {
         JoyStickPoll(&Stick1,RightStickNumber);
-        RightStickX= (unsigned short)Stick1.lX>>10;
-        RightStickY= (unsigned short)Stick1.lY>>10;
+        RightStickX = (unsigned short)Stick1.lX>>2;   // Not tested
+        RightStickY = (unsigned short)Stick1.lY>>2;   // Not tested
         RightButton1Status= Stick1.rgbButtons[0]>>7;
         RightButton2Status= Stick1.rgbButtons[1]>>7;
     }
@@ -294,28 +321,27 @@ SetMouseStatus(unsigned char ScanCode,unsigned char Phase)
 {
     unsigned char ReturnValue=ScanCode;
 
-    // Mask scan code high bit to accept keys from extended keyboard arrow
-    // keypad. A more elegant solution would be to use the virtual key code
-    // for joystick mappings but that would require changes to config.c as well.
+    // Mask scan code high bit to accept extended keys.
     unsigned char TempCode = ScanCode & 0x7F;
 
     switch (Phase) {
     case 0:
         if (LeftJS.UseMouse==0) {
+
             if (TempCode==LeftJS.Left) {
-                LeftStickX=32;
+                LeftStickX=STICKMID;
                 ReturnValue=0;
             }
             if (TempCode==LeftJS.Right) {
-                LeftStickX=32;
+                LeftStickX=STICKMID;
                 ReturnValue=0;
             }
             if (TempCode==LeftJS.Up) {
-                LeftStickY=32;
+                LeftStickY=STICKMID;
                 ReturnValue=0;
             }
             if (TempCode==LeftJS.Down) {
-                LeftStickY=32;
+                LeftStickY=STICKMID;
                 ReturnValue=0;
             }
             if (TempCode==LeftJS.Fire1) {
@@ -330,19 +356,19 @@ SetMouseStatus(unsigned char ScanCode,unsigned char Phase)
 
         if (RightJS.UseMouse==0) {
             if (TempCode==RightJS.Left) {
-                RightStickX=32;
+                RightStickX=STICKMID;
                 ReturnValue=0;
             }
             if (TempCode==RightJS.Right) {
-                RightStickX=32;
+                RightStickX=STICKMID;
                 ReturnValue=0;
             }
             if (TempCode==RightJS.Up) {
-                RightStickY=32;
+                RightStickY=STICKMID;
                 ReturnValue=0;
             }
             if (TempCode==RightJS.Down) {
-                RightStickY=32;
+                RightStickY=STICKMID;
                 ReturnValue=0;
             }
             if (TempCode==RightJS.Fire1) {
@@ -363,7 +389,7 @@ SetMouseStatus(unsigned char ScanCode,unsigned char Phase)
                 ReturnValue=0;
             }
             if (TempCode==LeftJS.Right) {
-                LeftStickX=63;
+                LeftStickX=STICKMAX;
                 ReturnValue=0;
             }
             if (TempCode==LeftJS.Up) {
@@ -371,7 +397,7 @@ SetMouseStatus(unsigned char ScanCode,unsigned char Phase)
                 ReturnValue=0;
             }
             if (TempCode==LeftJS.Down) {
-                LeftStickY=63;
+                LeftStickY=STICKMAX;
                 ReturnValue=0;
             }
             if (TempCode==LeftJS.Fire1) {
@@ -390,7 +416,7 @@ SetMouseStatus(unsigned char ScanCode,unsigned char Phase)
                 RightStickX=0;
             }
             if (TempCode==RightJS.Right) {
-                RightStickX=63;
+                RightStickX=STICKMAX;
                 ReturnValue=0;
             }
             if (TempCode==RightJS.Up) {
@@ -398,7 +424,7 @@ SetMouseStatus(unsigned char ScanCode,unsigned char Phase)
                 ReturnValue=0;
             }
             if (TempCode==RightJS.Down) {
-                RightStickY=63;
+                RightStickY=STICKMAX;
                 ReturnValue=0;
             }
             if (TempCode==RightJS.Fire1) {

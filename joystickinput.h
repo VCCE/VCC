@@ -23,11 +23,9 @@ This file is part of VCC (Virtual Color Computer).
 #define MAXSTICKS 10
 #define STRLEN 64
 
-
-
 // JoyStick structure is used to contain joystick configuration
 typedef struct {
-	unsigned char UseMouse;
+	unsigned char UseMouse;  // 0=keyboard,1=mouse,2=audio,3=joystick
 	unsigned char Up;
 	unsigned char Down;
 	unsigned char Left;
@@ -35,7 +33,7 @@ typedef struct {
 	unsigned char Fire1;
 	unsigned char Fire2;
 	unsigned char DiDevice;
-	unsigned char HiRes;
+	unsigned char HiRes;     // 0=lowres,1=software,2=tandy,3=ccmax
 } JoyStick;
 
 // Global joystick configuration from config.c  These were
@@ -54,11 +52,9 @@ extern "C"
 
 unsigned char vccJoystickGetScan(unsigned char);
 unsigned char SetMouseStatus(unsigned char,unsigned char);
-
-void			joystick(unsigned int, unsigned int);
-unsigned short	get_pot_value(unsigned char pot);
-void			SetButtonStatus(unsigned char, unsigned char);
-void			SetStickNumbers(unsigned char, unsigned char);
+void joystick(unsigned int, unsigned int);
+void SetButtonStatus(unsigned char, unsigned char);
+void SetStickNumbers(unsigned char, unsigned char);
 
 #ifdef __cplusplus
 }
