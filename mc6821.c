@@ -18,84 +18,84 @@ This file is part of VCC (Virtual Color Computer).
 
 /*
 $FF00 (65280) PIA 0 side A data
-Bit 7 Joystick Comparison Input 
-Bit 6 Keyboard Row 7 
-Bit 5 Row 6 
-Bit 4 Row 5 
-Bit 3 Row 4 & Left Joystick Switch 2 
-Bit 2 Row 3 & Right Joystick Switch 2 
-Bit 1 Row 2 & Left Joystick Switch 1 
-Bit 0 Row 1 & Right Joystick Switch 1 
+Bit 7 Joystick Comparison Input
+Bit 6 Keyboard Row 7
+Bit 5 Row 6
+Bit 4 Row 5
+Bit 3 Row 4 & Left Joystick Switch 2
+Bit 2 Row 3 & Right Joystick Switch 2
+Bit 1 Row 2 & Left Joystick Switch 1
+Bit 0 Row 1 & Right Joystick Switch 1
 
 $FF01 (65281) PIA 0 side A control
-Bit 7 HSYNC Flag 
-Bit 6 Unused 
-Bit 5 1 
-Bit 4 1 
-Bit 3 Select Line LSB of MUX 
-Bit 2 DATA DIRECTION TOGGLE 0 sets data direction 1 = normal 
-Bit 1 IRQ POLARITY 0 = flag set on falling edge 1=set on rising edge 
-Bit 0 HSYNC IRQ 0 = disabled 1 = enabled 
+Bit 7 HSYNC Flag
+Bit 6 Unused
+Bit 5 1
+Bit 4 1
+Bit 3 Select Line LSB of MUX
+Bit 2 DATA DIRECTION TOGGLE 0 sets data direction 1 = normal
+Bit 1 IRQ POLARITY 0 = flag set on falling edge 1=set on rising edge
+Bit 0 HSYNC IRQ 0 = disabled 1 = enabled
 
 $FF02 (65282) PIA 0 side B data
-Bit 7 KEYBOARD COLUMN 8 
-Bit 6 7 / RAM SIZE OUTPUT 
-Bit 5 6 
+Bit 7 KEYBOARD COLUMN 8
+Bit 6 7 / RAM SIZE OUTPUT
+Bit 5 6
 Bit 4 5
-Bit 3 4 
-Bit 2 3 
-Bit 1 2 
-Bit 0 KEYBOARD COLUMN 1 
+Bit 3 4
+Bit 2 3
+Bit 1 2
+Bit 0 KEYBOARD COLUMN 1
 
 $FF03 (65283) PIA 0 side B control
-Bit 7 VSYNC FLAG 
-Bit 6 N/A 
-Bit 5 1 
-Bit 4 1 
-Bit 3 SELECT LINE MSB of MUX 
-Bit 2 data direction 1=normal 
-Bit 1 IRQ POLARITY 0=flag set on falling edge 1=set on rising edge 
-Bit 0 VSYNC IRQ 0=disabled 1=enabled 
+Bit 7 VSYNC FLAG
+Bit 6 N/A
+Bit 5 1
+Bit 4 1
+Bit 3 SELECT LINE MSB of MUX
+Bit 2 data direction 1=normal
+Bit 1 IRQ POLARITY 0=flag set on falling edge 1=set on rising edge
+Bit 0 VSYNC IRQ 0=disabled 1=enabled
 
 $FF20 (65312) PIA 1 side A data
-Bit 7 6 BIT DAC MSB 
-Bit 6 
-Bit 5 
-Bit 4 
-Bit 3 
-Bit 2 6 BIT DAC LSB 
-Bit 1 RS-232C DATA OUTPUT 
-Bit 0 CASSETTE DATA INPUT 
+Bit 7 6 BIT DAC MSB
+Bit 6
+Bit 5
+Bit 4
+Bit 3
+Bit 2 6 BIT DAC LSB
+Bit 1 RS-232C DATA OUTPUT
+Bit 0 CASSETTE DATA INPUT
 
 $FF21 (65313) PIA 1 side A control
-Bit 7 CD FIRQ FLAG 
-Bit 6 N/A 
-Bit 5 1 
-Bit 4 1 
-Bit 3 CASSETTE MOTOR CONTROL 0=OFF 1=ON 
-Bit 2 data direction 1=normal 
-Bit 1 FIRQ POLARITY 0=falling 1=rising 
-Bit 0 CD FIRQ (RS-232C) 0=FIRQ disabled 1=enabled 
+Bit 7 CD FIRQ FLAG
+Bit 6 N/A
+Bit 5 1
+Bit 4 1
+Bit 3 CASSETTE MOTOR CONTROL 0=OFF 1=ON
+Bit 2 data direction 1=normal
+Bit 1 FIRQ POLARITY 0=falling 1=rising
+Bit 0 CD FIRQ (RS-232C) 0=FIRQ disabled 1=enabled
 
 $FF22 (65314) PIA 1 side B data reg
-Bit 7 VDG CONTROL A/G Alphanum = 0, graphics =1 
-Bit 6 VDG CONTROL GM2 
-Bit 5 GM1 & invert 
-Bit 4 VDG CONTROL GM0 & shift toggle 
-Bit 3 RGB Monitor sensing (INPUT) CSS - Color Set Select 0,1 
-Bit 2 RAM SIZE INPUT 
-Bit 1 SINGLE BIT SOUND OUTPUT 
-Bit 0 RS-232C DATA INPUT 
+Bit 7 VDG CONTROL A/G Alphanum = 0, graphics =1
+Bit 6 VDG CONTROL GM2
+Bit 5 GM1 & invert
+Bit 4 VDG CONTROL GM0 & shift toggle
+Bit 3 RGB Monitor sensing (INPUT) CSS - Color Set Select 0,1
+Bit 2 RAM SIZE INPUT
+Bit 1 SINGLE BIT SOUND OUTPUT
+Bit 0 RS-232C DATA INPUT
 
 $FF23 (65315) PIA 1 side B control
-Bit 7 CART FIRQ FLAG 
-Bit 6 N/A 
-Bit 5 1 
-Bit 4 1 
-Bit 3 SOUND ENABLE 
-Bit 2 $FF22 data direction 1 = normal 
-Bit 1 FIRQ POLARITY 0 = falling 1 = rising 
-Bit 0 CART FIRQ 0 = FIRQ disabled 1 = enabled 
+Bit 7 CART FIRQ FLAG
+Bit 6 N/A
+Bit 5 1
+Bit 4 1
+Bit 3 SOUND ENABLE
+Bit 2 $FF22 data direction 1 = normal
+Bit 1 FIRQ POLARITY 0 = falling 1 = rising
+Bit 0 CART FIRQ 0 = FIRQ disabled 1 = enabled
 */
 
 #include <windows.h>
@@ -132,20 +132,9 @@ void WritePrintMon(char *);
 LRESULT CALLBACK PrintMon(HWND, UINT , WPARAM , LPARAM );
 static BOOL MonState=FALSE;
 
-// DAC clock contains cpu cycles since the last DAC output
-// It is used for high resolution joystick timing.
-extern int JS_Ramp_On=0;
-extern int DAC_Clock=0;
-extern int SW_Hires=1;   // 0=off, 1=on
-extern int HW_Hires=1;   // 0=off, 1=Tandy, 2=CCmax
-
-// DAC change is used for software high resolution joystick.
-// It is used to simulate the normal DAC comparator time delay.
-// Rising and falling values scaled from "deep scan" figure
-// in "HI-RES INTERFACE" by Kowalski, Gault, and Marentes.
-static int DAC_Change=0;
-static int DAC_Rising[10] ={256,256,181, 81, 49,26,11, 4, 0,0};
-static int DAC_Falling[10]={256,256,256,154,128,82,51,26,13,0};
+// DAC change is the change in value of DAC when written
+// It is used for software high resolution joystick timing.
+extern int DAC_Change=0;
 
 //static unsigned char CoutSample=0;
 //extern STRConfig CurrentConfig;
@@ -169,7 +158,7 @@ unsigned char pia0_read(unsigned char port)
 		case 0:  // cpu read FF00
 			if (dda)
 			{
-				rega[1]=(rega[1] & 63);  // disable HSYNC
+				rega[1]=(rega[1] & 63);
 				return (vccKeyboardGetScan(rega[2]|~rega_dd[2])); //Read
 			}
 			else
@@ -179,7 +168,7 @@ unsigned char pia0_read(unsigned char port)
 		case 2: // cpu read FF02
 			if (ddb)
 			{
-				rega[3]=(rega[3] & 63);  // disable VSYNC
+				rega[3]=(rega[3] & 63);
 				return(rega[port] & rega_dd[port]);
 			}
 			else
@@ -258,7 +247,7 @@ void pia0_write(unsigned char data,unsigned char port)
 	case 3:  // cpu write FF03
 		rega[port]= (data & 0x3F);
 		return;
-	break;	
+	break;
 	}
 	return;
 }
@@ -270,19 +259,14 @@ void pia1_write(unsigned char data,unsigned char port)
 	port-=0x20;
 
 	dda=(regb[1] & 4);
-	ddb=(regb[3] & 4);	
+	ddb=(regb[3] & 4);
 	switch (port)
 	{
 	case 0: // cpu write FF20
 		if (dda)
 		{
-            DAC_Change = (data>>2)-(regb[port]>>2);
-            JS_Ramp_On = (HW_Hires > 0) && 
-//                         (DAC_Change < -10) && 
-                         ((data|2) == 2) &&
-                         (DAC_Clock > 100);
-            DAC_Clock = 0;               // Reset the DAC timer
-
+            DAC_Change = (data>>2)-(regb[port]>>2); // For software hires
+            vccJoystickStartRamp(data);
             regb[port]=data;
 			CaptureBit((regb[0]&2)>>1);
 			if (GetMuxState()==0)
@@ -349,7 +333,7 @@ void irq_hs(int phase)	//63.5 uS
 			CPUAssertInterupt(IRQ,1);
 	break;
 
-	case ANY:	
+	case ANY:
 		rega[1]=(rega[1] | 128);
 		if (rega[1] & 1)
 			CPUAssertInterupt(IRQ,1);
@@ -399,7 +383,7 @@ void AssertCart(void)
 }
 
 void PiaReset()
-{	
+{
 	// Clear the PIA registers
 	for (uint8_t index=0; index<4; index++)
 	{
@@ -417,20 +401,10 @@ unsigned char GetMuxState(void)
 }
 
 // Return 14 bit value for DAC comparator. Coco DAC is six bits
-// but value is extended to allow more resolution. Analog compares
-// take a short time to react.  High resolution joystick software
-// uses the delay to add resolution when comparing stick values. 
-// The delay is simulated using cycle count since last DAC write.
+// but value is extended to allow more resolution.
 unsigned int DACState(void)
-{    
+{
     int hrval = regb[0]<<6;  // Copy six high bits to integer
-    if (SW_Hires && (DAC_Clock < 10)) {
-        if (DAC_Change > 0) {
-            hrval -= DAC_Rising[DAC_Clock]*DAC_Change;
-        } else if (DAC_Change < 0) {
-            hrval -= DAC_Falling[DAC_Clock]*DAC_Change;
-        }
-    }
     return hrval;
 }
 

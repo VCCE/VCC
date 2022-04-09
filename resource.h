@@ -240,6 +240,8 @@
 #define IDC_BUTTON55                    1078
 #define IDC_7                           1079
 #define IDC_BUTTON56                    1079
+#define IDC_RIGHTSHIRES                 1080
+#define IDC_LEFTSHIRES                  1081
 	
 #define IDC_KEYMAPED					1090
 // IDC_KEYBTN_FIRST must point to the lowest CoCo KEYBTN Id

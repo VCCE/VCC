@@ -71,8 +71,8 @@ LRESULT CALLBACK Paths(HWND, UINT, WPARAM, LPARAM);
 //	global variables
 //
 static unsigned short int	Ramchoice[4]={IDC_128K,IDC_512K,IDC_2M,IDC_8M};
-static unsigned  int	LeftJoystickEmulation[3] = { IDC_LEFTSTANDARD,IDC_LEFTTHIRES,IDC_LEFTCCMAX };
-static unsigned int	RightJoystickEmulation[3] = { IDC_RIGHTSTANDARD,IDC_RIGHTTHRES,IDC_RIGHTCCMAX };
+static unsigned int	LeftJoyEmu[4]={IDC_LEFTSTANDARD,IDC_LEFTSHIRES,IDC_LEFTTHIRES,IDC_LEFTCCMAX };
+static unsigned int	RightJoyEmu[4]={IDC_RIGHTSTANDARD,IDC_RIGHTSHIRES,IDC_RIGHTTHRES,IDC_RIGHTCCMAX };
 static unsigned short int	Cpuchoice[2]={IDC_6809,IDC_6309};
 static unsigned short int	Monchoice[2]={IDC_COMPOSITE,IDC_RGB};
 static unsigned short int   PaletteChoice[2] = { IDC_ORG_PALETTE,IDC_UPD_PALETTE };
@@ -1058,8 +1058,8 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 
 			for (temp=0;temp<=2;temp++)
 			{
-				SendDlgItemMessage(hDlg, LeftJoystickEmulation[temp], BM_SETCHECK, (temp == LeftJS.HiRes), 0);
-				SendDlgItemMessage(hDlg, RightJoystickEmulation[temp], BM_SETCHECK, (temp == RightJS.HiRes), 0);
+				SendDlgItemMessage(hDlg, LeftJoyEmu[temp], BM_SETCHECK, (temp == LeftJS.HiRes), 0);
+				SendDlgItemMessage(hDlg, RightJoyEmu[temp], BM_SETCHECK, (temp == RightJS.HiRes), 0);
 			}
 
 			EnableWindow( GetDlgItem(hDlg,IDC_LEFTAUDIODEVICE),(LeftJS.UseMouse==2));
@@ -1128,24 +1128,24 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 				}
 			}
 
-			for (temp = 0; temp <= 2; temp++)
+			for (temp = 0; temp <= 3; temp++)
 			{
-				if (LOWORD(wParam) == LeftJoystickEmulation[temp])
+				if (LOWORD(wParam) == LeftJoyEmu[temp])
 				{
-					for (temp2 = 0; temp2 <= 2; temp2++)
-						SendDlgItemMessage(hDlg, LeftJoystickEmulation[temp2], BM_SETCHECK, 0, 0);
-					SendDlgItemMessage(hDlg, LeftJoystickEmulation[temp], BM_SETCHECK, 1, 0);
+					for (temp2 = 0; temp2 <= 3; temp2++)
+						SendDlgItemMessage(hDlg, LeftJoyEmu[temp2], BM_SETCHECK, 0, 0);
+					SendDlgItemMessage(hDlg, LeftJoyEmu[temp], BM_SETCHECK, 1, 0);
 					TempLeftJS.HiRes = temp;
 				}
 			}
 
-			for (temp = 0; temp <= 2; temp++)
+			for (temp = 0; temp <= 3; temp++)
 			{
-				if (LOWORD(wParam) == RightJoystickEmulation[temp])
+				if (LOWORD(wParam) == RightJoyEmu[temp])
 				{
-					for (temp2 = 0; temp2 <= 2; temp2++)
-						SendDlgItemMessage(hDlg, RightJoystickEmulation[temp2], BM_SETCHECK, 0, 0);
-					SendDlgItemMessage(hDlg, RightJoystickEmulation[temp], BM_SETCHECK, 1, 0);
+					for (temp2 = 0; temp2 <= 3; temp2++)
+						SendDlgItemMessage(hDlg, RightJoyEmu[temp2], BM_SETCHECK, 0, 0);
+					SendDlgItemMessage(hDlg, RightJoyEmu[temp], BM_SETCHECK, 1, 0);
 					TempRightJS.HiRes = temp;
 				}
 			}

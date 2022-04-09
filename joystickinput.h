@@ -55,6 +55,7 @@ unsigned char SetMouseStatus(unsigned char,unsigned char);
 void joystick(unsigned int, unsigned int);
 void SetButtonStatus(unsigned char, unsigned char);
 void SetStickNumbers(unsigned char, unsigned char);
+void vccJoystickStartRamp(unsigned char);
 
 #ifdef __cplusplus
 }

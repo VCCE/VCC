@@ -35,8 +35,8 @@ JoyStick RightJS;
 / But a 640x225 screen resolution is possible for CoCo3 screen.
 / As a result many programs desire a higher resolution pointing device
 /
-/ Higher than 6 bit resolution can be obtained using 6 bit DAC with 
-/ special code that rapidly compares joystick values to the DAC voltage 
+/ Higher than 6 bit resolution can be obtained using 6 bit DAC with
+/ special code that rapidly compares joystick values to the DAC voltage
 / as it changes also CocoMax cart used a ADC that retuned an 8 bit value.
 /
 / Windows HID joysticks and mice have at least 16 bit resolution. So
@@ -49,15 +49,23 @@ JoyStick RightJS;
 */
 
 // Clock cycles since DAC written
-extern int DAC_Clock;
+extern int DAC_Clock=0;
 
-// Hires status.  Affectes both sticks
-extern int SW_Hires;   // 0=off, 1=on
-extern int HW_Hires;   // 0=off, 1=Tandy, 2=CCmax
+// Hires status
+extern int JS_Hires=0;  // 0=lowres,1=software,2=tandy,3=ccmax
+
+// DAC change is used for software high resolution joystick.
+// It is used to simulate the normal DAC comparator time delay.
+// Rising and falling values scaled from "deep scan" figure
+// in "HI-RES INTERFACE" by Kowalski, Gault, and Marentes.
+extern int DAC_Change;
+static int DAC_Rising[10] ={256,256,181, 81, 49,26,11, 4, 0,0};
+static int DAC_Falling[10]={256,256,256,154,128,82,51,26,13,0};
+static int JS_Ramp_On;
 
 // Hires ramp constants.
 #define TANDYRAMPMIN  1300
-#define TANDYRAMPMAX  9750 
+#define TANDYRAMPMAX  9750
 
 // Joystick values  (0-16383)
 #define STICKMAX 16383
@@ -183,65 +191,100 @@ JoyStickPoll(DIJOYSTATE2 *js,unsigned char StickNumber)
     return(S_OK);
 }
 
+extern SystemState EmuState; // for DoubleSpeedFlag
+static int sticktarg = 0;    // Target stick cycle count
+
+/*****************************************************************************/
+// Called by mc6821 when DAC is written to possibly start hardware joystick ramp
+void
+vccJoystickStartRamp(unsigned char data)
+{
+
+    // Determine if selected joystick is hardware high res
+    unsigned char axis = GetMuxState();       // 0 rx, 1 ry, 2 lx, 3 ly
+    axis = GetMuxState();       // 0 rx, 1 ry, 2 lx, 3 ly
+    if (axis < 2) {
+        JS_Hires = RightJS.HiRes;
+    } else {
+        JS_Hires = LeftJS.HiRes;              // 0=lowres,1=software,2=tandy,3=ccmax
+    }
+    if (JS_Hires == 2) {
+        JS_Ramp_On = ( (DAC_Clock > 100) && (data == 2));
+    } // else CCMax
+
+    sticktarg = 0;  // Reset the ramp target
+    DAC_Clock = 0;  // Reset the DAC timer
+}
+
 /*****************************************************************************/
 // Called by keyboard.c to add joystick bits to scancode
 unsigned char
-vccJoystickGetScan(unsigned char data)
+vccJoystickGetScan(unsigned char code)
 {
-    extern int JS_Ramp_On;
-    static int sticktarg=0;   // Target stick cycle count
-    unsigned char axis;       // 0 rx, 1 ry, 2 lx, 3 ly
-    unsigned int StickValue; 
-    extern SystemState EmuState; // for DoubleSpeedFlag
+    unsigned int StickValue;
+    unsigned int val;
+    unsigned char axis = GetMuxState(); // 0 rx, 1 ry, 2 lx, 3 ly
 
-    axis = GetMuxState();
     StickValue = get_pot_value(axis);
 
+    // TODO: Investigate koronis rift to verify zero check logic
     if (StickValue != 0) { // OS9 joyin needs this (koronis rift works now)
-        if ((HW_Hires==1) && JS_Ramp_On) {  //Tandy
-            // if target is zero set it based on current stick value
-            if (sticktarg == 0) {
-                sticktarg = TANDYRAMPMIN + ((StickValue*33)>>6); 
-                if (sticktarg >TANDYRAMPMAX) sticktarg = RAMPMAX;
-                if (!EmuState.DoubleSpeedFlag) sticktarg = sticktarg/2;
+        // If hires hardware joystick
+        if (JS_Hires > 1) {
+            if (JS_Ramp_On) {
+                // if target is zero set it based on current stick value
+                if (sticktarg == 0) {
+                    if (JS_Hires == 2) {
+                        sticktarg = TANDYRAMPMIN + ((StickValue*33)>>6);
+                    } // TODO: else if JS_Hires == 3 //ccmax
+                    if (!EmuState.DoubleSpeedFlag) sticktarg = sticktarg/2;
+                }
             }
-            // If clock exceeds target set compare bit
-            if (DAC_Clock>sticktarg) {
-                data |= 0x80;
+            // If clock exceeds target set compare bit and stop ramp
+            if (DAC_Clock > sticktarg) {
+                code |= 0x80;
                 JS_Ramp_On = 0;
-                sticktarg = 0;
             }
-        } else { 
-            if (StickValue >= DACState()) {
-                data |= 0x80;
+        // else standard or software hires
+        } else {
+            val = DACState();
+            if ((JS_Hires==1) && (DAC_Clock < 10)) {
+                if (DAC_Change > 0) {
+                    val -= DAC_Rising[DAC_Clock]*DAC_Change;
+                } else if (DAC_Change < 0) {
+                    val -= DAC_Falling[DAC_Clock]*DAC_Change;
+                }
+            }
+            if (StickValue >= val) {
+                code |= 0x80;
             }
         }
     }
 
     if (LeftButton1Status == 1) {
         //Left Joystick Button 1 Down?
-        data = data & 0xFD;
+        code = code & 0xFD;
     }
 
     if (RightButton1Status == 1) {
         //Right Joystick Button 1 Down?
-        data = data & 0xFE;
+        code = code & 0xFE;
     }
 
     if (LeftButton2Status == 1) {
         //Left Joystick Button 2 Down?
-        data = data & 0xF7;
+        code = code & 0xF7;
     }
 
     if (RightButton2Status == 1) {
         //Right Joystick Button 2 Down?
-        data = data & 0xFB;
+        code = code & 0xFB;
     }
-    return data;
+    return code;
 }
 
 /*****************************************************************************/
-// Called by vcc.c on mouse moves. x and y range 0-3fff 
+// Called by vcc.c on mouse moves. x and y range 0-3fff
 
 void joystick(unsigned int x,unsigned int y)
 {
