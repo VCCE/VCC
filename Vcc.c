@@ -341,7 +341,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			
 		case WM_SETCURSOR:
 			// Hide mouse cursor
-			if (LOWORD(lParam) == HTCLIENT) {
+            if ((EmuState.MousePointer != 1) && (LOWORD(lParam) == HTCLIENT)) {
 				SetCursor(NULL);
 				return TRUE;
 			}
@@ -512,12 +512,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				x = LOWORD( lParam ) ;
 				y = HIWORD( lParam ) ;
 				GetClientRect(EmuState.WindowHandle,&ClientSize);
-//				Convert mouse coordinates to joystick x,y values with
-//				range 0-3fff (0-16383). Also joystick coordinates should
-//              		move slightly faster than the mouse so edges can be
-//              		reached before the mouse leaves the window.
-				LONG scr_w = ClientSize.right-ClientSize.left-20;
-				LONG scr_h = ClientSize.bottom-ClientSize.top-30;
+                // Convert coordinates to x,y values with range 0-3fff (0-16383).
+				LONG scr_w = ClientSize.right-ClientSize.left;
+				LONG scr_h = ClientSize.bottom-ClientSize.top;
 				x = ((x<<14)/scr_w); if (x>65535) x=65535;
 				y = ((y<<14)/scr_h); if (y>65535) y=65536;
 				joystick(x,y);

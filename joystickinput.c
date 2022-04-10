@@ -51,21 +51,20 @@ JoyStick RightJS;
 // Clock cycles since DAC written
 extern int DAC_Clock=0;
 
-// Hires status
-extern int JS_Hires=0;  // 0=lowres,1=software,2=tandy,3=ccmax
-
 // DAC change is used for software high resolution joystick.
 // It is used to simulate the normal DAC comparator time delay.
+extern int DAC_Change;
+
 // Rising and falling values scaled from "deep scan" figure
 // in "HI-RES INTERFACE" by Kowalski, Gault, and Marentes.
-extern int DAC_Change;
 static int DAC_Rising[10] ={256,256,181, 81, 49,26,11, 4, 0,0};
 static int DAC_Falling[10]={256,256,256,154,128,82,51,26,13,0};
+static int JS_Hires=0;  // 0=lowres,1=software,2=tandy,3=ccmax
 static int JS_Ramp_On;
 
 // Hires ramp constants.
-#define TANDYRAMPMIN  1300
-#define TANDYRAMPMAX  9750
+#define TANDYRAMPMIN   1280
+#define TANDYRAMPMAX  10800
 
 // Joystick values  (0-16383)
 #define STICKMAX 16383
@@ -201,7 +200,7 @@ vccJoystickStartRamp(unsigned char data)
 {
 
     // Determine if selected joystick is hardware high res
-    unsigned char axis = GetMuxState();       // 0 rx, 1 ry, 2 lx, 3 ly
+    unsigned char axis;
     axis = GetMuxState();       // 0 rx, 1 ry, 2 lx, 3 ly
     if (axis < 2) {
         JS_Hires = RightJS.HiRes;
@@ -235,7 +234,9 @@ vccJoystickGetScan(unsigned char code)
                 // if target is zero set it based on current stick value
                 if (sticktarg == 0) {
                     if (JS_Hires == 2) {
-                        sticktarg = TANDYRAMPMIN + ((StickValue*33)>>6);
+                        sticktarg = TANDYRAMPMIN + ((StickValue*37)>>6);
+                        if(sticktarg>TANDYRAMPMAX) sticktarg=TANDYRAMPMAX;
+
                     } // TODO: else if JS_Hires == 3 //ccmax
                     if (!EmuState.DoubleSpeedFlag) sticktarg = sticktarg/2;
                 }

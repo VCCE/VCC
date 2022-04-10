@@ -242,6 +242,7 @@
 #define IDC_BUTTON56                    1079
 #define IDC_RIGHTSHIRES                 1080
 #define IDC_LEFTSHIRES                  1081
+#define IDC_SHOWMOUSE                   1082
 	
 #define IDC_KEYMAPED					1090
 // IDC_KEYBTN_FIRST must point to the lowest CoCo KEYBTN Id

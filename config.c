@@ -256,6 +256,7 @@ unsigned char WriteIniFile(void)
 
 	WritePrivateProfileInt("Misc","AutoStart",CurrentConfig.AutoStart,IniFilePath);
 	WritePrivateProfileInt("Misc","CartAutoStart",CurrentConfig.CartAutoStart,IniFilePath);
+	WritePrivateProfileInt("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer,IniFilePath);
 	WritePrivateProfileInt("Misc","KeyMapIndex",CurrentConfig.KeyMap,IniFilePath);
 
 	WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
@@ -312,7 +313,7 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.WindowSizeY = GetPrivateProfileInt("Video", "WindowSizeY", 480, IniFilePath);
 	CurrentConfig.AutoStart = GetPrivateProfileInt("Misc","AutoStart",1,IniFilePath);
 	CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc","CartAutoStart",1,IniFilePath);
-
+	CurrentConfig.ShowMousePointer = GetPrivateProfileInt("Misc","ShowMousePointer",1,IniFilePath);
 
 	CurrentConfig.RamSize = GetPrivateProfileInt("Memory","RamSize",1,IniFilePath);
 	GetPrivateProfileString("Memory","ExternalBasicImage","",CurrentConfig.ExternalBasicImage,MAX_PATH,IniFilePath);
@@ -553,6 +554,7 @@ void UpdateConfig (void)
 	if (CurrentConfig.RebootNow)
 		DoReboot();
 	CurrentConfig.RebootNow=0;
+	EmuState.MousePointer = CurrentConfig.ShowMousePointer;
 }
 
 /**
@@ -1031,6 +1033,8 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 	static int RightJoyStick[6]={IDC_RIGHT_LEFT,IDC_RIGHT_RIGHT,IDC_RIGHT_UP,IDC_RIGHT_DOWN,IDC_RIGHT_FIRE1,IDC_RIGHT_FIRE2};
 	static int LeftRadios[4]={IDC_LEFT_KEYBOARD,IDC_LEFT_USEMOUSE,IDC_LEFTAUDIO,IDC_LEFTJOYSTICK};
 	static int RightRadios[4]={IDC_RIGHT_KEYBOARD,IDC_RIGHT_USEMOUSE,IDC_RIGHTAUDIO,IDC_RIGHTJOYSTICK};
+    WPARAM showmouse = (EmuState.MousePointer == 0) ? BST_UNCHECKED : BST_CHECKED;
+
 	switch (message)
 	{
 		case WM_INITDIALOG:
@@ -1069,7 +1073,9 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 
 			EnableWindow( GetDlgItem(hDlg,IDC_LEFTJOYSTICK),(NumberofJoysticks>0));		//Grey the Joystick Radios if
 			EnableWindow( GetDlgItem(hDlg,IDC_RIGHTJOYSTICK),(NumberofJoysticks>0));	//No Joysticks are present
-			//populate joystick combo boxs
+            SendDlgItemMessage(hDlg,IDC_SHOWMOUSE,BM_SETCHECK,showmouse,(LPARAM(0)));
+
+            //populate joystick combo boxs
 			for(temp=0;temp<NumberofJoysticks;temp++)
 			{
 				SendDlgItemMessage(hDlg,IDC_RIGHTJOYSTICKDEVICE,CB_ADDSTRING,(WPARAM)0,(LPARAM)StickName[temp]);
@@ -1106,6 +1112,18 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 		break;
 
 		case WM_COMMAND:
+
+//	WritePrivateProfileInt("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer,IniFilePath);
+//static STRConfig TempConfig;
+
+            if (LOWORD(wParam) == IDC_SHOWMOUSE) {
+                if (HIWORD(wParam) == BN_CLICKED) {
+                    EmuState.MousePointer = SendDlgItemMessage(hDlg, IDC_SHOWMOUSE, BM_GETCHECK, 0, 0);
+					TempConfig.ShowMousePointer = EmuState.MousePointer;
+				} 
+                break;
+            }
+
 			for (temp = 0; temp <= 3; temp++)
 			{
 				if (LOWORD(wParam) == LeftRadios[temp])
