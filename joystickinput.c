@@ -62,9 +62,13 @@ static int DAC_Falling[10]={256,256,256,154,128,82,51,26,13,0};
 static int JS_Hires=0;  // 0=lowres,1=software,2=tandy,3=ccmax
 static int JS_Ramp_On;
 
-// Hires ramp constants.
-#define TANDYRAMPMIN   1280
-#define TANDYRAMPMAX  10800
+// Hires ramp constants. Determined durring testing
+#define TANDYRAMPMIN   1200
+#define TANDYRAMPMAX  10950
+#define TANDYRAMPMUL     37
+#define CCMAXRAMPMIN    200
+#define CCMAXRAMPMAX   8000
+#define CCMAXRAMPMUL     37
 
 // Joystick values  (0-16383)
 #define STICKMAX 16383
@@ -207,9 +211,12 @@ vccJoystickStartRamp(unsigned char data)
     } else {
         JS_Hires = LeftJS.HiRes;              // 0=lowres,1=software,2=tandy,3=ccmax
     }
-    if (JS_Hires == 2) {
+    // A few pains to reduce spurious ramping
+    if (JS_Hires == 2) {      // Tandy
         JS_Ramp_On = ( (DAC_Clock > 100) && (data == 2));
-    } // else CCMax
+    } else if (JS_Hires == 3) {  // CCMax
+        JS_Ramp_On = ( (DAC_Clock > 100) && (data == 0));
+    }
 
     sticktarg = 0;  // Reset the ramp target
     DAC_Clock = 0;  // Reset the DAC timer
@@ -226,39 +233,42 @@ vccJoystickGetScan(unsigned char code)
 
     StickValue = get_pot_value(axis);
 
-    // TODO: Investigate koronis rift to verify zero check logic
-    if (StickValue != 0) { // OS9 joyin needs this (koronis rift works now)
-        // If hires hardware joystick
-        if (JS_Hires > 1) {
-            if (JS_Ramp_On) {
-                // if target is zero set it based on current stick value
-                if (sticktarg == 0) {
-                    if (JS_Hires == 2) {
-                        sticktarg = TANDYRAMPMIN + ((StickValue*37)>>6);
-                        if(sticktarg>TANDYRAMPMAX) sticktarg=TANDYRAMPMAX;
+    // If hires hardware joystick
+    if (JS_Hires > 1) {
+        if (JS_Ramp_On) {
+            // if target is zero set it based on current stick value
+            if (sticktarg == 0) {
+                if (JS_Hires == 2) {
+                    sticktarg = TANDYRAMPMIN + ((StickValue*TANDYRAMPMUL)>>6);
+                    if(sticktarg>TANDYRAMPMAX) sticktarg=TANDYRAMPMAX;
 
-                    } // TODO: else if JS_Hires == 3 //ccmax
-                    if (!EmuState.DoubleSpeedFlag) sticktarg = sticktarg/2;
+                } else if (JS_Hires == 2) {  //ccmax
+                    sticktarg = CCMAXRAMPMIN + ((StickValue*CCMAXRAMPMUL)>>6);
+                    if(sticktarg>CCMAXRAMPMAX) sticktarg=CCMAXRAMPMAX;
                 }
+                // cut target in half if double speed (breaks some tests?)
+                if (!EmuState.DoubleSpeedFlag) sticktarg = sticktarg/2;
             }
-            // If clock exceeds target set compare bit and stop ramp
-            if (DAC_Clock > sticktarg) {
-                code |= 0x80;
-                JS_Ramp_On = 0;
+        }
+        // If clock exceeds target set compare bit and stop ramp
+        if (DAC_Clock > sticktarg) {
+            code |= 0x80;
+            JS_Ramp_On = 0;
+        }
+
+    // else standard or software hires
+    } else if (StickValue != 0) {  // OS9 joyin needs this for koronis rift
+        val = DACState();
+        if ((JS_Hires==1) && (DAC_Clock < 10)) {
+            // TODO: this needs work!
+            if (DAC_Change > 0) {
+                val -= DAC_Rising[DAC_Clock]*DAC_Change;
+            } else if (DAC_Change < 0) {
+                val -= DAC_Falling[DAC_Clock]*DAC_Change;
             }
-        // else standard or software hires
-        } else {
-            val = DACState();
-            if ((JS_Hires==1) && (DAC_Clock < 10)) {
-                if (DAC_Change > 0) {
-                    val -= DAC_Rising[DAC_Clock]*DAC_Change;
-                } else if (DAC_Change < 0) {
-                    val -= DAC_Falling[DAC_Clock]*DAC_Change;
-                }
-            }
-            if (StickValue >= val) {
-                code |= 0x80;
-            }
+        }
+        if (StickValue >= val) {
+            code |= 0x80;
         }
     }
 

@@ -1060,7 +1060,7 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 				EnableWindow(GetDlgItem(hDlg, RightJoyStick[temp]), (RightJS.UseMouse == 0));
 			}
 
-			for (temp=0;temp<=2;temp++)
+			for (temp=0;temp<=3;temp++)
 			{
 				SendDlgItemMessage(hDlg, LeftJoyEmu[temp], BM_SETCHECK, (temp == LeftJS.HiRes), 0);
 				SendDlgItemMessage(hDlg, RightJoyEmu[temp], BM_SETCHECK, (temp == RightJS.HiRes), 0);
