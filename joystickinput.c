@@ -66,9 +66,9 @@ static int JS_Ramp_On;
 #define TANDYRAMPMIN   1200
 #define TANDYRAMPMAX  10950
 #define TANDYRAMPMUL     37
-#define CCMAXRAMPMIN    200
-#define CCMAXRAMPMAX   8000
-#define CCMAXRAMPMUL     37
+#define CCMAXRAMPMIN    800
+#define CCMAXRAMPMAX  14000
+#define CCMAXRAMPMUL     21 
 
 // Joystick values  (0-16383)
 #define STICKMAX 16383
@@ -197,27 +197,46 @@ JoyStickPoll(DIJOYSTATE2 *js,unsigned char StickNumber)
 extern SystemState EmuState; // for DoubleSpeedFlag
 static int sticktarg = 0;    // Target stick cycle count
 
+
 /*****************************************************************************/
-// Called by mc6821 when DAC is written to possibly start hardware joystick ramp
+// Called by mc6821 when zero is written to $FF00 to start the CCMAX joystick ramp
 void
-vccJoystickStartRamp(unsigned char data)
+vccJoystickStartCCMax()
 {
+//    unsigned char axis;
+//    axis = GetMuxState();       // 0 rx, 1 ry, 2 lx, 3 ly
+//    if (GetMuxState() < 2) {
+//        JS_Hires = RightJS.HiRes;
+//    } else {
+//        JS_Hires = LeftJS.HiRes;              // 0=lowres,1=software,2=tandy,3=ccmax
+//    }
 
-    // Determine if selected joystick is hardware high res
-    unsigned char axis;
-    axis = GetMuxState();       // 0 rx, 1 ry, 2 lx, 3 ly
-    if (axis < 2) {
-        JS_Hires = RightJS.HiRes;
-    } else {
-        JS_Hires = LeftJS.HiRes;              // 0=lowres,1=software,2=tandy,3=ccmax
-    }
+    // Determine if selected joystick is CCMAX high res
+    JS_Hires = (GetMuxState()<2) ? RightJS.HiRes : LeftJS.HiRes;
+    if (JS_Hires != 3) return;
+    JS_Ramp_On = 1; // Set ramp on flag
+    sticktarg = 0;  // Reset the ramp target
+    DAC_Clock = 0;  // Reset the DAC timer
+}
+
+/*****************************************************************************/
+// Called by mc6821 when 0x02 is written to $FF20 to start the Tandy joystick ramp
+void
+vccJoystickStartTandy()
+{
+//    unsigned char axis;
+//    axis = GetMuxState();       // 0 rx, 1 ry, 2 lx, 3 ly
+//    if (GetMuxState() < 2) {
+//        JS_Hires = RightJS.HiRes;
+//    } else {
+//        JS_Hires = LeftJS.HiRes;              // 0=lowres,1=software,2=tandy,3=ccmax
+//    }
     // A few pains to reduce spurious ramping
-    if (JS_Hires == 2) {      // Tandy
-        JS_Ramp_On = ( (DAC_Clock > 100) && (data == 2));
-    } else if (JS_Hires == 3) {  // CCMax
-        JS_Ramp_On = ( (DAC_Clock > 100) && (data == 0));
-    }
 
+    // Determine if selected joystick is Tandy high res
+    JS_Hires = (GetMuxState()<2) ? RightJS.HiRes : LeftJS.HiRes;
+    if (JS_Hires != 2) return;
+    JS_Ramp_On = 1;
     sticktarg = 0;  // Reset the ramp target
     DAC_Clock = 0;  // Reset the DAC timer
 }
@@ -241,13 +260,13 @@ vccJoystickGetScan(unsigned char code)
                 if (JS_Hires == 2) {
                     sticktarg = TANDYRAMPMIN + ((StickValue*TANDYRAMPMUL)>>6);
                     if(sticktarg>TANDYRAMPMAX) sticktarg=TANDYRAMPMAX;
+                    // cut target in half if double speed
+                    if (!EmuState.DoubleSpeedFlag) sticktarg = sticktarg/2;
 
-                } else if (JS_Hires == 2) {  //ccmax
+                } else if (JS_Hires == 3) {  //ccmax
                     sticktarg = CCMAXRAMPMIN + ((StickValue*CCMAXRAMPMUL)>>6);
                     if(sticktarg>CCMAXRAMPMAX) sticktarg=CCMAXRAMPMAX;
                 }
-                // cut target in half if double speed (breaks some tests?)
-                if (!EmuState.DoubleSpeedFlag) sticktarg = sticktarg/2;
             }
         }
         // If clock exceeds target set compare bit and stop ramp
@@ -260,10 +279,9 @@ vccJoystickGetScan(unsigned char code)
     } else if (StickValue != 0) {  // OS9 joyin needs this for koronis rift
         val = DACState();
         if ((JS_Hires==1) && (DAC_Clock < 10)) {
-            // TODO: this needs work!
-            if (DAC_Change > 0) {
+            if (DAC_Change == 1) {
                 val -= DAC_Rising[DAC_Clock]*DAC_Change;
-            } else if (DAC_Change < 0) {
+            } else if (DAC_Change == -1) {
                 val -= DAC_Falling[DAC_Clock]*DAC_Change;
             }
         }

@@ -226,10 +226,12 @@ void pia0_write(unsigned char data,unsigned char port)
 	switch (port)
 	{
 	case 0:  // cpu write FF00
-		if (dda)
+		if (dda) {
+            if (data == 0) vccJoystickStartCCMax();
 			rega[port]=data;
-		else
+        } else {
 			rega_dd[port]=data;
+        }
 		return;
 	case 2:  // cpu write FF02
 		if (ddb)
@@ -266,7 +268,7 @@ void pia1_write(unsigned char data,unsigned char port)
 		if (dda)
 		{
             DAC_Change = (data>>2)-(regb[port]>>2); // For software hires
-            vccJoystickStartRamp(data);
+            if (data == 2) vccJoystickStartTandy();
             regb[port]=data;
 			CaptureBit((regb[0]&2)>>1);
 			if (GetMuxState()==0)
