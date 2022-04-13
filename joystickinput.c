@@ -212,9 +212,11 @@ vccJoystickStartTandy(unsigned char data, unsigned char next)
         JS_Ramp_Clock = 0;
         break;
     case 2:  // Tandy
-        JS_Ramp_On = 1;
-        sticktarg = 0;
-        JS_Ramp_Clock = 0;
+        if ( next == 2 ) {
+            JS_Ramp_On = 1;
+            sticktarg = 0;
+            JS_Ramp_Clock = 0;
+        }
         break;
     }
 }
