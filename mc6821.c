@@ -132,10 +132,6 @@ void WritePrintMon(char *);
 LRESULT CALLBACK PrintMon(HWND, UINT , WPARAM , LPARAM );
 static BOOL MonState=FALSE;
 
-// DAC change is the change in value of DAC when written
-// It is used for software high resolution joystick timing.
-extern int DAC_Change=0;
-
 //static unsigned char CoutSample=0;
 //extern STRConfig CurrentConfig;
 // Shift Row Col
@@ -267,8 +263,7 @@ void pia1_write(unsigned char data,unsigned char port)
 	case 0: // cpu write FF20
 		if (dda)
 		{
-            DAC_Change = (data>>2)-(regb[port]>>2); // For software hires
-            if (data == 2) vccJoystickStartTandy();
+            vccJoystickStartTandy(regb[port],data);
             regb[port]=data;
 			CaptureBit((regb[0]&2)>>1);
 			if (GetMuxState()==0)

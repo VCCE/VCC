@@ -123,7 +123,7 @@ int MC6809Exec( int CycleFor)
 {
 static unsigned char opcode=0;
 static unsigned char msn,lsn;
-extern int DAC_Clock;
+extern int JS_Ramp_Clock;
 int PrevCycleCount = 0;
 
 CycleCounter=0;
@@ -2992,8 +2992,8 @@ default:
 	break;
 	}//End Switch
 
-    if (DAC_Clock < 0xFFFF) {
-        DAC_Clock += CycleCounter-PrevCycleCount;
+    if (JS_Ramp_Clock < 0xFFFF) {
+        JS_Ramp_Clock += CycleCounter-PrevCycleCount;
     }
     PrevCycleCount = CycleCounter;
 

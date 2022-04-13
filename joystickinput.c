@@ -48,18 +48,22 @@ JoyStick RightJS;
 / value which makes initial DAC comparisons easier.
 */
 
-// Clock cycles since DAC written
-extern int DAC_Clock=0;
+// for DoubleSpeedFlag
+extern SystemState EmuState; 
+
+// Clock cycles since Joystick ramp started
+extern int JS_Ramp_Clock=0;
 
 // DAC change is used for software high resolution joystick.
 // It is used to simulate the normal DAC comparator time delay.
-extern int DAC_Change;
+static int DAC_Change;
 
 // Rising and falling values scaled from "deep scan" figure
 // in "HI-RES INTERFACE" by Kowalski, Gault, and Marentes.
 static int DAC_Rising[10] ={256,256,181, 81, 49,26,11, 4, 0,0};
 static int DAC_Falling[10]={256,256,256,154,128,82,51,26,13,0};
-static int JS_Hires=0;  // 0=lowres,1=software,2=tandy,3=ccmax
+
+// Hires ramp flag
 static int JS_Ramp_On;
 
 // Hires ramp constants. Determined durring testing
@@ -69,6 +73,8 @@ static int JS_Ramp_On;
 #define CCMAXRAMPMIN    800
 #define CCMAXRAMPMAX  14000
 #define CCMAXRAMPMUL     21 
+
+static int sticktarg = 0;    // Target stick cycle count
 
 // Joystick values  (0-16383)
 #define STICKMAX 16383
@@ -194,51 +200,35 @@ JoyStickPoll(DIJOYSTATE2 *js,unsigned char StickNumber)
     return(S_OK);
 }
 
-extern SystemState EmuState; // for DoubleSpeedFlag
-static int sticktarg = 0;    // Target stick cycle count
-
-
 /*****************************************************************************/
-// Called by mc6821 when zero is written to $FF00 to start the CCMAX joystick ramp
+// Called by mc6821 when $FF20 is written 
 void
-vccJoystickStartCCMax()
+vccJoystickStartTandy(unsigned char data, unsigned char next)
 {
-//    unsigned char axis;
-//    axis = GetMuxState();       // 0 rx, 1 ry, 2 lx, 3 ly
-//    if (GetMuxState() < 2) {
-//        JS_Hires = RightJS.HiRes;
-//    } else {
-//        JS_Hires = LeftJS.HiRes;              // 0=lowres,1=software,2=tandy,3=ccmax
-//    }
-
-    // Determine if selected joystick is CCMAX high res
-    JS_Hires = (GetMuxState()<2) ? RightJS.HiRes : LeftJS.HiRes;
-    if (JS_Hires != 3) return;
-    JS_Ramp_On = 1; // Set ramp on flag
-    sticktarg = 0;  // Reset the ramp target
-    DAC_Clock = 0;  // Reset the DAC timer
+    int JS_Hires = (GetMuxState()<2) ? RightJS.HiRes : LeftJS.HiRes;
+    switch (JS_Hires) {
+    case 1:  // Software
+        DAC_Change = (next>>2)-(data>>2); // For software hires
+        JS_Ramp_Clock = 0;
+        break;
+    case 2:  // Tandy
+        JS_Ramp_On = 1;
+        sticktarg = 0;
+        JS_Ramp_Clock = 0;
+        break;
+    }
 }
 
 /*****************************************************************************/
-// Called by mc6821 when 0x02 is written to $FF20 to start the Tandy joystick ramp
+// Called by mc6821 when zero is written to $FF00
 void
-vccJoystickStartTandy()
+vccJoystickStartCCMax()
 {
-//    unsigned char axis;
-//    axis = GetMuxState();       // 0 rx, 1 ry, 2 lx, 3 ly
-//    if (GetMuxState() < 2) {
-//        JS_Hires = RightJS.HiRes;
-//    } else {
-//        JS_Hires = LeftJS.HiRes;              // 0=lowres,1=software,2=tandy,3=ccmax
-//    }
-    // A few pains to reduce spurious ramping
-
-    // Determine if selected joystick is Tandy high res
-    JS_Hires = (GetMuxState()<2) ? RightJS.HiRes : LeftJS.HiRes;
-    if (JS_Hires != 2) return;
+    int JS_Hires = (GetMuxState()<2) ? RightJS.HiRes : LeftJS.HiRes;
+    if (JS_Hires != 3) return;
     JS_Ramp_On = 1;
-    sticktarg = 0;  // Reset the ramp target
-    DAC_Clock = 0;  // Reset the DAC timer
+    sticktarg = 0;
+    JS_Ramp_Clock = 0;
 }
 
 /*****************************************************************************/
@@ -250,6 +240,7 @@ vccJoystickGetScan(unsigned char code)
     unsigned int val;
     unsigned char axis = GetMuxState(); // 0 rx, 1 ry, 2 lx, 3 ly
 
+    int JS_Hires = (axis<2) ? RightJS.HiRes : LeftJS.HiRes;
     StickValue = get_pot_value(axis);
 
     // If hires hardware joystick
@@ -270,7 +261,7 @@ vccJoystickGetScan(unsigned char code)
             }
         }
         // If clock exceeds target set compare bit and stop ramp
-        if (DAC_Clock > sticktarg) {
+        if (JS_Ramp_Clock > sticktarg) {
             code |= 0x80;
             JS_Ramp_On = 0;
         }
@@ -278,11 +269,11 @@ vccJoystickGetScan(unsigned char code)
     // else standard or software hires
     } else if (StickValue != 0) {  // OS9 joyin needs this for koronis rift
         val = DACState();
-        if ((JS_Hires==1) && (DAC_Clock < 10)) {
+        if ((JS_Hires==1) && (JS_Ramp_Clock < 10)) {
             if (DAC_Change == 1) {
-                val -= DAC_Rising[DAC_Clock]*DAC_Change;
+                val -= DAC_Rising[JS_Ramp_Clock]*DAC_Change;
             } else if (DAC_Change == -1) {
-                val -= DAC_Falling[DAC_Clock]*DAC_Change;
+                val -= DAC_Falling[JS_Ramp_Clock]*DAC_Change;
             }
         }
         if (StickValue >= val) {
