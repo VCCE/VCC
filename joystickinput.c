@@ -60,8 +60,9 @@ static int DAC_Change;
 
 // Rising and falling values scaled from "deep scan" figure
 // in "HI-RES INTERFACE" by Kowalski, Gault, and Marentes.
-static int DAC_Rising[10] ={256,256,181, 81, 49,26,11, 4, 0,0};
-static int DAC_Falling[10]={256,256,256,154,128,82,51,26,13,0};
+// Best Vcc can do with is about 5x resolution over standard joystick
+static int DAC_Rising[10] ={256,256,256,256, 48, 32, 24, 20,  0,  0};
+static int DAC_Falling[10]={256,256,256,256,224,116, 64, 56, 48,  0};
 
 // Hires ramp flag
 static int JS_Ramp_On;
@@ -102,6 +103,7 @@ BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* , VOID* );
 static unsigned char CurrentStick;
 
 unsigned int get_pot_value(unsigned char);
+inline int vccJoystickType();
 
 /*****************************************************************************/
 // Locate connected joysticks.  Called by config.c
@@ -201,12 +203,17 @@ JoyStickPoll(DIJOYSTATE2 *js,unsigned char StickNumber)
 }
 
 /*****************************************************************************/
+// inline function returns joystick type
+inline int vccJoystickType() {
+    return (GetMuxState() & 2) ? LeftJS.HiRes : RightJS.HiRes;
+}
+
+/*****************************************************************************/
 // Called by mc6821 when $FF20 is written 
 void
 vccJoystickStartTandy(unsigned char data, unsigned char next)
 {
-    int JS_Hires = (GetMuxState()<2) ? RightJS.HiRes : LeftJS.HiRes;
-    switch (JS_Hires) {
+    switch(vccJoystickType()) {
     case 1:  // Software
         DAC_Change = (next>>2)-(data>>2); // For software hires
         JS_Ramp_Clock = 0;
@@ -226,8 +233,7 @@ vccJoystickStartTandy(unsigned char data, unsigned char next)
 void
 vccJoystickStartCCMax()
 {
-    int JS_Hires = (GetMuxState()<2) ? RightJS.HiRes : LeftJS.HiRes;
-    if (JS_Hires != 3) return;
+    if (vccJoystickType() != 3) return;
     JS_Ramp_On = 1;
     sticktarg = 0;
     JS_Ramp_Clock = 0;
@@ -239,24 +245,23 @@ unsigned char
 vccJoystickGetScan(unsigned char code)
 {
     unsigned int StickValue;
-    unsigned int val;
     unsigned char axis = GetMuxState(); // 0 rx, 1 ry, 2 lx, 3 ly
 
-    int JS_Hires = (axis<2) ? RightJS.HiRes : LeftJS.HiRes;
+    int JS_Type = vccJoystickType();
     StickValue = get_pot_value(axis);
 
     // If hires hardware joystick
-    if (JS_Hires > 1) {
+    if (JS_Type > 1) {
         if (JS_Ramp_On) {
             // if target is zero set it based on current stick value
             if (sticktarg == 0) {
-                if (JS_Hires == 2) {
+                if (JS_Type == 2) {
                     sticktarg = TANDYRAMPMIN + ((StickValue*TANDYRAMPMUL)>>6);
                     if(sticktarg>TANDYRAMPMAX) sticktarg=TANDYRAMPMAX;
                     // cut target in half if double speed
                     if (!EmuState.DoubleSpeedFlag) sticktarg = sticktarg/2;
 
-                } else if (JS_Hires == 3) {  //ccmax
+                } else if (JS_Type == 3) {  //ccmax
                     sticktarg = CCMAXRAMPMIN + ((StickValue*CCMAXRAMPMUL)>>6);
                     if(sticktarg>CCMAXRAMPMAX) sticktarg=CCMAXRAMPMAX;
                 }
@@ -270,12 +275,15 @@ vccJoystickGetScan(unsigned char code)
 
     // else standard or software hires
     } else if (StickValue != 0) {  // OS9 joyin needs this for koronis rift
-        val = DACState();
-        if ((JS_Hires==1) && (JS_Ramp_Clock < 10)) {
-            if (DAC_Change == 1) {
-                val -= DAC_Rising[JS_Ramp_Clock]*DAC_Change;
-            } else if (DAC_Change == -1) {
-                val -= DAC_Falling[JS_Ramp_Clock]*DAC_Change;
+        unsigned int val = DACState();
+        if ((JS_Type==1) && (JS_Ramp_Clock < 10)) {
+            switch (DAC_Change) {
+            case 1:
+                val -= DAC_Rising[JS_Ramp_Clock];
+                break;
+            case -1:
+                val += DAC_Falling[JS_Ramp_Clock];
+                break;
             }
         }
         if (StickValue >= val) {
