@@ -516,7 +516,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				LONG scr_w = ClientSize.right-ClientSize.left;
 				LONG scr_h = ClientSize.bottom-ClientSize.top;
 				x = ((x<<14)/scr_w); if (x>65535) x=65535;
-				y = ((y<<14)/scr_h); if (y>65535) y=65536;
+				y = ((y<<14)/scr_h); if (y>65535) y=65535;
 				joystick(x,y);
 			}
 

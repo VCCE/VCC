@@ -58,16 +58,24 @@ extern int JS_Ramp_Clock=0;
 // It is used to simulate the normal DAC comparator time delay.
 static int DAC_Change;
 
-// Rising and falling values scaled from "deep scan" figure
-// in "HI-RES INTERFACE" by Kowalski, Gault, and Marentes.
-// Best Vcc can do with is about 5x resolution over standard joystick
-static int DAC_Rising[10] ={256,256,256,256, 48, 32, 24, 20,  0,  0};
-static int DAC_Falling[10]={256,256,256,256,224,116, 64, 56, 48,  0};
+// The following rising and falling values per MPU cycle were scaled
+// from "deep scan" figure in "HI-RES INTERFACE" by Kowalski, Gault,
+// and Marentes.  Unfortunatly the magic program to make software high
+// resolution work uses the one cycle timing difference between LDB ,X 
+// (4 cycles) and LDB, $FF00 (5 cycles) to get 10x resolution. Because 
+// of the way the MPU is emulated Vcc does not know the addressing mode
+// at the time of the memory access and DAC compare. It therefore can
+// only supply 5 meaningful samples instead of 10. As a result the best
+// Vcc can do is 5x resolution.
+//static int DAC_Rising[10] ={256,256,256,256, 48, 32, 24, 20,  0,  0};
+//static int DAC_Falling[10]={256,256,256,256,224,116, 64, 56, 48,  0};
+  static int DAC_Rising[10] ={256,256,256,256, 40, 40, 22, 22,  0,  0};
+  static int DAC_Falling[10]={256,256,256,256,160,160, 60, 60, 24, 24};
 
 // Hires ramp flag
 static int JS_Ramp_On;
 
-// Hires ramp constants. Determined durring testing
+// Hires ramp constants. Determined during testing
 #define TANDYRAMPMIN   1200
 #define TANDYRAMPMAX  10950
 #define TANDYRAMPMUL     37
@@ -240,7 +248,7 @@ vccJoystickStartCCMax()
 }
 
 /*****************************************************************************/
-// Called by keyboard.c to add joystick bits to scancode
+// Called by keyboard.c when FF00 is read to add joystick bits to scancode
 unsigned char
 vccJoystickGetScan(unsigned char code)
 {
@@ -276,7 +284,7 @@ vccJoystickGetScan(unsigned char code)
     // else standard or software hires
     } else if (StickValue != 0) {  // OS9 joyin needs this for koronis rift
         unsigned int val = DACState();
-        if ((JS_Type==1) && (JS_Ramp_Clock < 10)) {
+        if ((JS_Type==1) && (JS_Ramp_Clock < 10)) { // software hires?
             switch (DAC_Change) {
             case 1:
                 val -= DAC_Rising[JS_Ramp_Clock];
