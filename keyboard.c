@@ -20,10 +20,9 @@ This file is part of VCC (Virtual Color Computer).
 /*
 	Keyboard handling / translation - system -> emulator
 
-	TODO: move joystick code out of here
-	TODO: any key(s) that results in a multi-key (eg. SHIFT/ALT/CTRL) 
-	        combination on the CoCo side is only sending one interrupt 
-			signal for both keys.  This seems to work in virtually all cases, 
+	TODO: any key(s) that results in a multi-key (eg. SHIFT/ALT/CTRL)
+	        combination on the CoCo side is only sending one interrupt
+			signal for both keys.  This seems to work in virtually all cases,
 			but is it an accurate emulation?
 */
 /*****************************************************************************/
@@ -47,7 +46,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "xDebug.h"
 
-
 /*****************************************************************************/
 /*
 	Forward declarations
@@ -57,62 +55,29 @@ unsigned char SetMouseStatus(unsigned char, unsigned char);
 bool pasting = false;  //Are the keyboard functions in the middle of a paste operation?
 
 /*****************************************************************************/
-/*
-	Global variables
-*/
-
-//
-// Joystick
-//
-
-static unsigned short StickValue = 0;
-
-JoyStick Left;
-JoyStick Right;
-
-static unsigned short LeftStickX = 32;
-static unsigned short LeftStickY = 32;
-static unsigned short RightStickX = 32;
-static unsigned short RightStickY = 32;
-static unsigned char LeftButton1Status = 0;
-static unsigned char RightButton1Status = 0;
-static unsigned char LeftButton2Status = 0;
-static unsigned char RightButton2Status = 0;
-static unsigned char LeftStickNumber = 0;
-static unsigned char RightStickNumber = 0;
-
-
-
+//	Global variables
 /*****************************************************************************/
-//
-// keyboard
-//
 
-#define KBTABLE_ENTRY_COUNT 100	///< key translation table maximum size, (arbitrary) most of the layouts are < 80 entries
+// key translation table maximum size, (arbitrary) most of the layouts are < 80 entries
+#define KBTABLE_ENTRY_COUNT 100
 #define KEY_DOWN	1
 #define KEY_UP		0
 
-/** track all keyboard scan codes state (up/down) */
+/* track all keyboard scan codes state (up/down) */
 static int ScanTable[256];
 
-/** run-time 'rollover' table to pass to the MC6821 when a key is pressed */
+/* run-time 'rollover' table to pass to the MC6821 when a key is pressed */
 static unsigned char RolloverTable[8];	// CoCo 'keys' for emulator
 
-/** run-time key translation table - convert key up/down messages to 'rollover' codes */
-static keytranslationentry_t KeyTransTable[KBTABLE_ENTRY_COUNT];	// run-time keyboard layout table (key(s) to keys(s) translation)
+// run-time keyboard layout table (key(s) to keys(s) translation)
+static keytranslationentry_t KeyTransTable[KBTABLE_ENTRY_COUNT];
 
 /*****************************************************************************/
+//	Get CoCo 'scan' code called from MC6821.c to read the keyboard/joystick state
 /*****************************************************************************/
 
-/*****************************************************************************/
-/**
-	Get CoCo 'scan' code
-
-	Only called from MC6821.c to read the keyboard/joystick state
-
-	should be a push instead of a pull?
-*/
-unsigned char vccKeyboardGetScan(unsigned char Col)
+unsigned char
+vccKeyboardGetScan(unsigned char Col)
 {
 	unsigned char temp;
 	unsigned char x;
@@ -135,39 +100,8 @@ unsigned char vccKeyboardGetScan(unsigned char Col)
 	}
 	ret_val = 127 - ret_val;
 
-//	MuxSelect=GetMuxState();	//Collect CA2 and CB2 from the PIA (1of4 Multiplexer)
-	StickValue = get_pot_value(GetMuxState());
-	if (StickValue != 0)		//OS9 joyin routine needs this (koronis rift works now)
-	{
-		if (StickValue >= DACState())		// Set bit of stick >= DAC output $FF20 Bits 7-2
-		{
-			ret_val |= 0x80;
-		}
-	}
-
-	if (LeftButton1Status == 1)
-	{
-		//Left Joystick Button 1 Down?
-		ret_val = ret_val & 0xFD;
-	}
-
-	if (RightButton1Status == 1)
-	{
-		//Right Joystick Button 1 Down?
-		ret_val = ret_val & 0xFE;	
-	}
-
-	if (LeftButton2Status == 1)
-	{
-		//Left Joystick Button 2 Down?
-		ret_val = ret_val & 0xF7;	
-	}
-
-	if (RightButton2Status == 1)
-	{
-		//Right Joystick Button 2 Down?
-		ret_val = ret_val & 0xFB;	
-	}
+    // Add joystick button and analog compare bits.
+    ret_val = vccJoystickGetScan(ret_val);
 
 #if 0 // no noticible change when this is disabled
 	// TODO: move to MC6821/GIME
@@ -193,8 +127,6 @@ unsigned char vccKeyboardGetScan(unsigned char Col)
 }
 
 /*****************************************************************************/
-/**
-*/
 void _vccKeyboardUpdateRolloverTable()
 {
 	int				Index;
@@ -216,10 +148,10 @@ void _vccKeyboardUpdateRolloverTable()
 		{
 			break;
 		}
-		
+	
 		if ( LockOut != KeyTransTable[Index].ScanCode1 )
 		{
-			// Single input key 
+			// Single input key
 			if (   (KeyTransTable[Index].ScanCode1 != 0)
 				&& (KeyTransTable[Index].ScanCode2 == 0)
 				)
@@ -228,11 +160,11 @@ void _vccKeyboardUpdateRolloverTable()
 				if (ScanTable[KeyTransTable[Index].ScanCode1] == KEY_DOWN)
 				{
 					int col;
-					
+				
 					col = KeyTransTable[Index].Col1;
 					assert(col >=0 && col <8);
 					RolloverTable[col] |= KeyTransTable[Index].Row1;
-					
+				
 					col = KeyTransTable[Index].Col2;
 					assert(col >= 0 && col <8);
 					RolloverTable[col] |= KeyTransTable[Index].Row2;
@@ -254,11 +186,11 @@ void _vccKeyboardUpdateRolloverTable()
 					col = KeyTransTable[Index].Col1;
 					assert(col >=0 && col <8);
 					RolloverTable[col] |= KeyTransTable[Index].Row1;
-					
+				
 					col = KeyTransTable[Index].Col2;
 					assert(col >= 0 && col <8);
 					RolloverTable[col] |= KeyTransTable[Index].Row2;
-					
+				
 					// always SHIFT
 					LockOut = KeyTransTable[Index].ScanCode1;
 
@@ -270,20 +202,20 @@ void _vccKeyboardUpdateRolloverTable()
 }
 
 /*****************************************************************************/
-/**
-	Dispatch keyboard event to the emulator.
+//	Dispatch keyboard event to the emulator.
+//
+//	Called from system. eg. WndProc : WM_KEYDOWN/WM_SYSKEYDOWN/WM_SYSKEYUP/WM_KEYUP
+//
+//	@param key Windows virtual key code (VK_XXXX - not used)
+//	@param ScanCode keyboard scan code (DIK_XXXX - DirectInput)
+//	@param Status Key status - kEventKeyDown/kEventKeyUp
+/*****************************************************************************/
 
-	Called from system. eg. WndProc : WM_KEYDOWN/WM_SYSKEYDOWN/WM_SYSKEYUP/WM_KEYUP
-
-	@param key Windows virtual key code (VK_XXXX - not used)
-	@param ScanCode keyboard scan code (DIK_XXXX - DirectInput)
-	@param Status Key status - kEventKeyDown/kEventKeyUp
-*/
 void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e keyState)
 {
 	XTRACE("Key  : %c (%3d / 0x%02X)  Scan : %d / 0x%02X\n",key,key,key, ScanCode, ScanCode);
 	//If requested, abort pasting operation.
-	if (ScanCode == 0x01 || ScanCode == 0x43 || ScanCode == 0x3F) { pasting = false; OutputDebugString("ABORT PASTING!!!\n"); } 
+	if (ScanCode == 0x01 || ScanCode == 0x43 || ScanCode == 0x3F) { pasting = false; OutputDebugString("ABORT PASTING!!!\n"); }
 
 	// check for shift key
 	// Left and right shift generate different scan codes
@@ -312,56 +244,39 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e 
 
 		// Key Down
 		case kEventKeyDown:
-			if (  (Left.UseMouse == 0)
-				| (Right.UseMouse == 0)
-				)
-			{
-				ScanCode = SetMouseStatus(ScanCode, 1);
-			}
+		    ScanCode = SetMouseStatus(ScanCode, 1); // In case keyboard joystick
 
 			// track key is down
 			ScanTable[ScanCode] = KEY_DOWN;
-			
-
 			_vccKeyboardUpdateRolloverTable();
 
-
-			if ( GimeGetKeyboardInteruptState() )
-			{
+			if ( GimeGetKeyboardInteruptState() ) {
 				GimeAssertKeyboardInterupt();
 			}
 		break;
 
 		// Key Up
 		case kEventKeyUp:
-			if (  (Left.UseMouse == 0)
-				| (Right.UseMouse == 0)
-				)
-			{
-				ScanCode = SetMouseStatus(ScanCode, 0);
-			}
+			ScanCode = SetMouseStatus(ScanCode, 0);
 
 			// reset key (released)
 			ScanTable[ScanCode] = KEY_UP;
 
 			// TODO: verify this is accurate emulation
 			// Clean out rollover table on shift release
-			if ( ScanCode == DIK_LSHIFT )
-			{
-				for (int Index = 0; Index < KBTABLE_ENTRY_COUNT; Index++)
-				{
+			if ( ScanCode == DIK_LSHIFT ) {
+				for (int Index = 0; Index < KBTABLE_ENTRY_COUNT; Index++) {
 					ScanTable[Index] = KEY_UP;
 				}
 			}
-
 			_vccKeyboardUpdateRolloverTable();
 		break;
 	}
 }
 
 /*****************************************************************************/
-/**
-	Key translation table compare function for sorting (with qsort)
+/*
+ *	Key translation table compare function for sorting (with qsort)
 */
 int keyTransCompare(const void * e1, const void * e2)
 {
@@ -455,11 +370,11 @@ int keyTransCompare(const void * e1, const void * e2)
 }
 
 /*****************************************************************************/
-/**
-	Rebuilds the run-time keyboard translation lookup table based on the
-	current keyboard layout.
-
-	The entries are sorted.  Any SHIFT + [char] entries need to be placed first
+/*
+ *	Rebuilds the run-time keyboard translation lookup table based on the
+ *	current keyboard layout.
+ *
+ * 	The entries are sorted.  Any SHIFT + [char] entries need to be placed first
 */
 void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
 {
@@ -547,7 +462,7 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
 	// Sort the key translation table
 	//
 	// Since the table is searched from beginning to end each
-	// time a key is pressed, we want them to be in the correct 
+	// time a key is pressed, we want them to be in the correct
 	// order.
 	//
 	qsort(KeyTransTable, KBTABLE_ENTRY_COUNT, sizeof(keytranslationentry_t), keyTransCompare);
@@ -568,7 +483,7 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
 		}
 
 		XTRACE("Key: %3d - 0x%02X (%3d) 0x%02X (%3d) - %2d %2d  %2d %2d\n",
-			Index1, 
+			Index1,
 			KeyTransTable[Index1].ScanCode1,
 			KeyTransTable[Index1].ScanCode1,
 			KeyTransTable[Index1].ScanCode2,
@@ -581,301 +496,6 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
 	}
 #endif
 }
-
-/*****************************************************************************/
-/*****************************************************************************/
-/*
-	Joystick related code
-*/
-
-/*****************************************************************************/
-/**
-*/
-void joystick(unsigned short x,unsigned short y)
-{
-
-	if (x>63)
-		x=63;
-	if (y>63)
-		y=63;
-
-	if (Left.UseMouse==1)
-	{
-		LeftStickX=x;
-		LeftStickY=y;
-	}
-	if (Right.UseMouse==1)
-	{
-		RightStickX=x;
-		RightStickY=y;
-	}
-
-	return;
-}
-
-/*****************************************************************************/
-/**
-*/
-void SetStickNumbers(unsigned char Temp1,unsigned char Temp2)
-{
-	LeftStickNumber=Temp1;
-	RightStickNumber=Temp2;
-	return;
-}
-
-/*****************************************************************************/
-/**
-*/
-unsigned short get_pot_value(unsigned char pot)
-{
-	DIJOYSTATE2 Stick1;
-	if (Left.UseMouse==3)
-	{
-		JoyStickPoll(&Stick1,LeftStickNumber);
-		LeftStickX =(unsigned short)Stick1.lX>>10;
-		LeftStickY= (unsigned short)Stick1.lY>>10;
-		LeftButton1Status= Stick1.rgbButtons[0]>>7;
-		LeftButton2Status= Stick1.rgbButtons[1]>>7;
-	}
-
-	if (Right.UseMouse ==3)
-	{
-		JoyStickPoll(&Stick1,RightStickNumber);
-		RightStickX= (unsigned short)Stick1.lX>>10;
-		RightStickY= (unsigned short)Stick1.lY>>10;
-		RightButton1Status= Stick1.rgbButtons[0]>>7;
-		RightButton2Status= Stick1.rgbButtons[1]>>7;
-	}
-
-	switch (pot)
-	{
-		case 0:
-			return(RightStickX);
-			break;
-
-		case 1:
-			return(RightStickY);
-			break;
-
-		case 2:
-			return(LeftStickX);
-			break;
-
-		case 3:
-			return(LeftStickY);
-			break;
-	}
-
-	return (0);
-}
-
-/*****************************************************************************/
-/**
-*/
-unsigned char SetMouseStatus(unsigned char ScanCode,unsigned char Phase)
-{
-	char ReturnValue=ScanCode;
-
-	// Mask scan code high bit to accept keys from extended keyboard arrow
-	// keypad. A more elegant solution would be to use the virtual key code
-	// for joystick mappings but that would require changes to config.c as well.
-	ScanCode = ScanCode & 0x7F;
-
-	switch (Phase)
-	{
-	case 0:
-		if (Left.UseMouse==0)
-		{
-			if (ScanCode==Left.Left)
-			{
-				LeftStickX=32;
-				ReturnValue=0;
-			}
-			if (ScanCode==Left.Right)
-			{
-				LeftStickX=32;
-				ReturnValue=0;
-			}
-			if (ScanCode==Left.Up)
-			{
-				LeftStickY=32;
-				ReturnValue=0;
-			}
-			if (ScanCode==Left.Down)
-			{
-				LeftStickY=32;
-				ReturnValue=0;
-			}
-			if (ScanCode==Left.Fire1)
-			{
-				LeftButton1Status=0;
-				ReturnValue=0;
-			}
-			if (ScanCode==Left.Fire2)
-			{
-				LeftButton2Status=0;
-				ReturnValue=0;
-			}
-		}
-
-		if (Right.UseMouse==0)
-		{
-			if (ScanCode==Right.Left)
-			{
-				RightStickX=32;
-				ReturnValue=0;
-			}
-			if (ScanCode==Right.Right)
-			{
-				RightStickX=32;
-				ReturnValue=0;
-			}
-			if (ScanCode==Right.Up)
-			{
-				RightStickY=32;
-				ReturnValue=0;
-			}
-			if (ScanCode==Right.Down)
-			{
-				RightStickY=32;
-				ReturnValue=0;
-			}
-			if (ScanCode==Right.Fire1)
-			{
-				RightButton1Status=0;
-				ReturnValue=0;
-			}
-			if (ScanCode==Right.Fire2)
-			{
-				RightButton2Status=0;
-				ReturnValue=0;
-			}
-		}
-	break;
-
-	case 1:
-		if (Left.UseMouse==0)
-		{
-			if (ScanCode==Left.Left)
-			{
-				LeftStickX=0;
-				ReturnValue=0;
-			}
-			if (ScanCode==Left.Right)
-			{
-				LeftStickX=63;
-				ReturnValue=0;
-			}
-			if (ScanCode==Left.Up)
-			{
-				LeftStickY=0;
-				ReturnValue=0;
-			}
-			if (ScanCode==Left.Down)
-			{
-				LeftStickY=63;
-				ReturnValue=0;
-			}
-			if (ScanCode==Left.Fire1)
-			{
-				LeftButton1Status=1;
-				ReturnValue=0;
-			}
-			if (ScanCode==Left.Fire2)
-			{
-				LeftButton2Status=1;
-				ReturnValue=0;
-			}
-		}
-
-		if (Right.UseMouse==0)
-		{
-			if (ScanCode==Right.Left)
-			{
-				ReturnValue=0;
-				RightStickX=0;
-			}
-			if (ScanCode==Right.Right)
-			{
-				RightStickX=63;
-				ReturnValue=0;
-			}
-			if (ScanCode==Right.Up)
-			{
-				RightStickY=0;
-				ReturnValue=0;
-			}
-			if (ScanCode==Right.Down)
-			{
-				RightStickY=63;
-				ReturnValue=0;
-			}
-			if (ScanCode==Right.Fire1)
-			{
-				RightButton1Status=1;
-				ReturnValue=0;
-			}
-			if (ScanCode==Right.Fire2)
-			{
-				RightButton2Status=1;
-				ReturnValue=0;
-			}
-		}
-	break;
-	}
-
-	return(ReturnValue);
-}
-
-/*****************************************************************************/
-/**
-*/
-void SetButtonStatus(unsigned char Side,unsigned char State) //Side=0 Left Button Side=1 Right Button State 1=Down
-{
-unsigned char Btemp=0;
-	Btemp= (Side<<1) | State;
-	if (Left.UseMouse==1)
-		switch (Btemp)
-		{
-		case 0:
-			LeftButton1Status=0;
-		break;
-
-		case 1:
-			LeftButton1Status=1;
-		break;
-
-		case 2:
-			LeftButton2Status=0;
-		break;
-
-		case 3:
-			LeftButton2Status=1;
-		break;
-		}
-
-	if (Right.UseMouse==1)
-		switch (Btemp)
-		{
-		case 0:
-			RightButton1Status=0;
-		break;
-
-		case 1:
-			RightButton1Status=1;
-		break;
-
-		case 2:
-			RightButton2Status=0;
-		break;
-
-		case 3:
-			RightButton2Status=1;
-		break;
-		}
-}
-
-/*****************************************************************************/
 
 bool GetPaste() {
 	return pasting;
