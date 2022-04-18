@@ -347,9 +347,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
-//		case WM_SETFOCUS:
+		case WM_SETFOCUS:
+			RECT scr;
+			GetWindowRect(EmuState.WindowHandle,&scr);
+			SetCursorPos(scr.left+20,scr.top+10);
 //			Set8BitPalette();
-//			break;
+			break;
 
 		case WM_KILLFOCUS:
 			// Force keys up if main widow keyboard focus is lost.  Otherwise

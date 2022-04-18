@@ -1118,7 +1118,7 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 
             if (LOWORD(wParam) == IDC_SHOWMOUSE) {
                 if (HIWORD(wParam) == BN_CLICKED) {
-                    EmuState.MousePointer = SendDlgItemMessage(hDlg, IDC_SHOWMOUSE, BM_GETCHECK, 0, 0);
+                    EmuState.MousePointer = (unsigned char) SendDlgItemMessage(hDlg, IDC_SHOWMOUSE, BM_GETCHECK, 0, 0);
 					TempConfig.ShowMousePointer = EmuState.MousePointer;
 				} 
                 break;
