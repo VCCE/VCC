@@ -349,8 +349,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case WM_SETFOCUS:
 			RECT scr;
+            POINT loc;
 			GetWindowRect(EmuState.WindowHandle,&scr);
-			SetCursorPos(scr.left+20,scr.top+10);
+            GetCursorPos(&loc);
+			if ((loc.x > scr.right) | (loc.x < scr.left) | 
+				(loc.y > scr.bottom) | ( loc.y < scr.top))
+				SetCursorPos(scr.left+20,scr.top+10);
 //			Set8BitPalette();
 			break;
 
