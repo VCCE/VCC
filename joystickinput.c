@@ -49,28 +49,28 @@ JoyStick RightJS;
 */
 
 // for DoubleSpeedFlag
-extern SystemState EmuState; 
+extern SystemState EmuState;
 
 // Clock cycles since Joystick ramp started
 extern int JS_Ramp_Clock=0;
 
+// Software high resolution disabled
 // DAC change is used for software high resolution joystick.
 // It is used to simulate the normal DAC comparator time delay.
-static int DAC_Change;
-
+// static int DAC_Change;
 // The following rising and falling values per MPU cycle were scaled
 // from "deep scan" figure in "HI-RES INTERFACE" by Kowalski, Gault,
 // and Marentes.  Unfortunatly the magic program to make software high
-// resolution work uses the one cycle timing difference between LDB ,X 
-// (4 cycles) and LDB, $FF00 (5 cycles) to get 10x resolution. Because 
+// resolution work uses the one cycle timing difference between LDB ,X
+// (4 cycles) and LDB, $FF00 (5 cycles) to get 10x resolution. Because
 // of the way the MPU is emulated Vcc does not know the addressing mode
 // at the time of the memory access and DAC compare. It therefore can
 // only supply 5 meaningful samples instead of 10. As a result the best
 // Vcc can do is 5x resolution.
 //static int DAC_Rising[10] ={256,256,256,256, 48, 32, 24, 20,  0,  0};
 //static int DAC_Falling[10]={256,256,256,256,224,116, 64, 56, 48,  0};
-  static int DAC_Rising[10] ={256,256,256,256, 40, 40, 22, 22,  0,  0};
-  static int DAC_Falling[10]={256,256,256,256,160,160, 60, 60, 24, 24};
+//  static int DAC_Rising[10] ={256,256,256,256, 40, 40, 22, 22,  0,  0};
+//  static int DAC_Falling[10]={256,256,256,256,160,160, 60, 60, 24, 24};
 
 // Hires ramp flag
 static int JS_Ramp_On;
@@ -81,7 +81,7 @@ static int JS_Ramp_On;
 #define TANDYRAMPMUL     37
 #define CCMAXRAMPMIN    800
 #define CCMAXRAMPMAX  14000
-#define CCMAXRAMPMUL     21 
+#define CCMAXRAMPMUL     21
 
 static int sticktarg = 0;    // Target stick cycle count
 
@@ -211,28 +211,30 @@ JoyStickPoll(DIJOYSTATE2 *js,unsigned char StickNumber)
 }
 
 /*****************************************************************************/
-// inline function returns joystick type
+// inline function returns joystick emulation type
 inline int vccJoystickType() {
     return (GetMuxState() & 2) ? LeftJS.HiRes : RightJS.HiRes;
 }
 
 /*****************************************************************************/
-// Called by mc6821 when $FF20 is written 
+// Called by mc6821 when $FF20 is written
 void
 vccJoystickStartTandy(unsigned char data, unsigned char next)
 {
-    switch(vccJoystickType()) {
-    case 1:  // Software
-        DAC_Change = (next>>2)-(data>>2); // For software hires
-        JS_Ramp_Clock = 0;
-        break;
-    case 2:  // Tandy
+// Disabled software joystick
+//    switch(vccJoystickType()) {
+//    case 1:  // Software
+//        DAC_Change = (next>>2)-(data>>2); // For software hires
+//        JS_Ramp_Clock = 0;
+//        break;
+//    case 2:  // Tandy
+	if (vccJoystickType() == 2) {
         if ( next == 2 ) {
             JS_Ramp_On = 1;
             sticktarg = 0;
             JS_Ramp_Clock = 0;
         }
-        break;
+//        break;
     }
 }
 
@@ -284,16 +286,17 @@ vccJoystickGetScan(unsigned char code)
     // else standard or software hires
     } else if (StickValue != 0) {  // OS9 joyin needs this for koronis rift
         unsigned int val = DACState();
-        if ((JS_Type==1) && (JS_Ramp_Clock < 10)) { // software hires?
-            switch (DAC_Change) {
-            case 1:
-                val -= DAC_Rising[JS_Ramp_Clock];
-                break;
-            case -1:
-                val += DAC_Falling[JS_Ramp_Clock];
-                break;
-            }
-        }
+// Disabled software joystick
+//        if ((JS_Type==1) && (JS_Ramp_Clock < 10)) { // software hires?
+//            switch (DAC_Change) {
+//            case 1:
+//                val -= DAC_Rising[JS_Ramp_Clock];
+//                break;
+//            case -1:
+//                val += DAC_Falling[JS_Ramp_Clock];
+//                break;
+//            }
+//        }
         if (StickValue >= val) {
             code |= 0x80;
         }
