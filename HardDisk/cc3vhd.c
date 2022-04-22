@@ -164,17 +164,16 @@ void HDcommand(unsigned char Command) {
         // Seek desired sector
         SetFilePointer(HardDrive[DriveSelect],SectorOffset.All,0,FILE_BEGIN);
 
-        // Read it
+        // Read it; zero fill if past end of file
         ReadFile(HardDrive[DriveSelect],SectorBuffer,SECTORSIZE,&BytesMoved,NULL);
-        if (BytesMoved != SECTORSIZE) {
-            Status = HD_NODSK;
-        } else {
-            // Copy block to Coco RAM
-            for (Temp=0; Temp < SECTORSIZE;Temp++) {
+        for (Temp=0; Temp < SECTORSIZE;Temp++) {
+            if (Temp > BytesMoved) {
+                MemWrite(0,Temp+DMAaddress.word);
+            } else {
                 MemWrite(SectorBuffer[Temp],Temp+DMAaddress.word);
             }
-            Status = HD_OK;
         }
+        Status = HD_OK;
 
         // Put disk status text
         sprintf(DStatus,"HD%d: Rd %000000.6X",DriveSelect,SectorOffset.All>>8);
