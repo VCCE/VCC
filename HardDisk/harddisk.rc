@@ -130,6 +130,20 @@ BEGIN
 END
 #endif    // APSTUDIO_INVOKED
 
+IDD_NEWDISK DIALOG 50, 50, 150, 80
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Create Hard Disk Image"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT "VHD file does not exist",IDC_STATIC,35,7,90,8
+    DEFPUSHBUTTON "Create New File",IDOK,14,21,70,14
+    PUSHBUTTON "Cancel",IDCANCEL,88,21,50,14
+    LTEXT "Initial Disk Size",IDC_STATIC,23,45,55,10
+    LTEXT "Kb",IDC_STATIC,107,45,10,10
+    EDITTEXT IDC_HDSIZE,74,44,32,10,ES_RIGHT
+    LTEXT "Kb = 1024 bytes",IDC_STATIC,70,60,55,10
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //

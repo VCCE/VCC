@@ -28,10 +28,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "cloud9.h"
 #include "..\fileops.h"
 
-// constexpr size_t EXTROMSIZE = 8192;
-
 static char VHDfile0[MAX_PATH] { 0 };
 static char VHDfile1[MAX_PATH] { 0 };
+static char *VHDfile; // Selected drive file name
 static char IniFile[MAX_PATH]  { 0 };
 static char HardDiskPath[MAX_PATH];
 
@@ -44,17 +43,17 @@ static void (*AssertInt)(unsigned char,unsigned char)=NULL;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
 static unsigned char *Memory=NULL;
-/// static unsigned char DiskRom[8192];
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
-LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 
 ///void Load_Disk(unsigned char);
 void LoadHardDisk(int drive);
 void LoadConfig(void);
 void SaveConfig(void);
 void BuildDynaMenu(void);
-// unsigned char LoadExtRom(char *);
+BOOL CreateDisk(int);
+
 static HINSTANCE g_hinstDLL;
 
 using namespace std;
@@ -242,7 +241,7 @@ extern "C"
 extern "C"
 {
     __declspec(dllexport) void
-	SetIniPath (char *IniFilePath)
+    SetIniPath (char *IniFilePath)
     {
         strcpy(IniFile,IniFilePath);
         LoadConfig();
@@ -272,15 +271,15 @@ void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
 void LoadHardDisk(int drive)
 {
     OPENFILENAME ofn ;
-    char * FileName;
+    char msg[300];
 
-    // Select drive
+    // Select VHD FileName buffer as per drive
     switch (drive) {
     case 0:
-        FileName = VHDfile0;
+        VHDfile = VHDfile0;
         break;
     case 1:
-        FileName = VHDfile1;
+        VHDfile = VHDfile1;
         break;
     default:
         return;
@@ -292,7 +291,7 @@ void LoadHardDisk(int drive)
     ofn.hwndOwner       = NULL;
     ofn.lpstrFilter     = "HardDisk Images\0*.vhd\0\0"; // filter VHD images
     ofn.nFilterIndex    = 1 ;                           // current filter index
-    ofn.lpstrFile       = FileName;                     // full filename on return
+    ofn.lpstrFile       = VHDfile;                      // full filename on return
     ofn.nMaxFile        = MAX_PATH;                     // sizeof lpstrFile
     ofn.lpstrFileTitle  = NULL;                         // filename only
     ofn.nMaxFileTitle   = MAX_PATH ;                    // sizeof lpstrFileTitle
@@ -300,20 +299,33 @@ void LoadHardDisk(int drive)
     ofn.lpstrTitle      = TEXT("Load HardDisk Image") ; // title bar string
     ofn.Flags           = OFN_HIDEREADONLY;
 
-    if ( GetOpenFileName (&ofn)) {
-        // MountHD is defined in cc3vhd
-        if (MountHD(FileName,drive)==0) {
-            MessageBox(NULL,"Can't open file","Error",0);
+    if (GetOpenFileName (&ofn)) {
+
+        // Append .vhd file type if type missing
+        if (ofn.nFileExtension==0) strncat(VHDfile,".vhd",MAX_PATH);
+
+        // Present new disk dialog if file does not exist
+        // Dialog box clears VHD file name if it is not created
+        if (GetFileAttributes(VHDfile) == INVALID_FILE_ATTRIBUTES) {
+            DialogBox( g_hinstDLL, (LPCTSTR)IDD_NEWDISK,
+                       GetActiveWindow(), (DLGPROC) NewDisk);
+            if (*VHDfile == '\0') return;
         }
+
+        // Actual file mount is done in cc3vhd
+        if (MountHD(VHDfile,drive)==0) {
+            snprintf(msg,300,"Can't open %s",VHDfile);
+            MessageBox(NULL,msg,"Error",0);
+        }
+
+        // Save vhd directory for config file
+        string tmp = ofn.lpstrFile;
+        int idx;
+        idx = tmp.find_last_of("\\");
+        tmp = tmp.substr(0, idx);
+        strcpy(HardDiskPath, tmp.c_str());
+        SaveConfig();
     }
-
-    //  Keep vhd directory for config file
-    string tmp = ofn.lpstrFile;
-    int idx;
-    idx = tmp.find_last_of("\\");
-    tmp = tmp.substr(0, idx);
-    strcpy(HardDiskPath, tmp.c_str());
-
     return;
 }
 
@@ -358,13 +370,6 @@ void LoadConfig(void)
 
     // Create config menu
     BuildDynaMenu();
-
-    /* Load rgbdos rom for Hard Disk support
-    GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
-    PathRemoveFileSpec(DiskRomPath);
-    strcat(DiskRomPath, "rgbdos.rom");
-    LoadExtRom(DiskRomPath);
-	*/
     return;
 }
 
@@ -375,6 +380,7 @@ void SaveConfig(void)
     LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 
     ValidatePath(VHDfile0);
+    ValidatePath(VHDfile1);
     if (HardDiskPath != "") {
         WritePrivateProfileString
             ("DefaultPaths", "HardDiskPath", HardDiskPath, IniFile);
@@ -410,26 +416,56 @@ void BuildDynaMenu(void)
     strcat(TempMsg,TempBuf);
     DynamicMenuCallback(TempMsg,5013,SLAVE);
 
-//  DynamicMenuCallback( "HD Config",5014,STANDALONE);
     DynamicMenuCallback("",1,0);
 }
 
-/* Load the disk rom
-unsigned char LoadExtRom( char *FilePath)
-{
-    FILE *rom_handle=NULL;
-    unsigned short index=0;
-    unsigned char RetVal=0;
 
-    rom_handle=fopen(FilePath,"rb");
-    if (rom_handle==NULL)
-        memset(DiskRom,0xFF,EXTROMSIZE);
-    else {
-        while ((feof(rom_handle)==0) & (index<EXTROMSIZE))
-            DiskRom[index++]=fgetc(rom_handle);
-        RetVal=1;
-        fclose(rom_handle);
+// Dialog for creating a new hard disk
+LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    unsigned int hdsize=0;
+
+    switch (message)
+    {
+        case WM_INITDIALOG:
+            SetDlgItemInt(hDlg,IDC_HDSIZE,hdsize,0);
+            return TRUE;
+        break;
+
+        case WM_COMMAND:
+            switch (LOWORD(wParam)) {
+            case IDOK:
+                hdsize=GetDlgItemInt(hDlg,IDC_HDSIZE,NULL,0);
+                EndDialog(hDlg, LOWORD(wParam));
+                return CreateDisk(hdsize);
+
+            case IDCANCEL:
+                // Clear file name so LoadHardDisk knows
+                strcpy(VHDfile,"");
+                EndDialog(hDlg, LOWORD(wParam));
+                return FALSE;
+            }
+            return TRUE;
+        break;
     }
-    return(RetVal);
+    return FALSE;
 }
-*/
+
+BOOL CreateDisk(int hdsize)
+{
+    HANDLE hr=CreateFile( VHDfile, GENERIC_READ | GENERIC_WRITE,
+                          0,0,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,0);
+    if (hr==INVALID_HANDLE_VALUE) {
+        strcpy(VHDfile,"");
+        MessageBox(0,"Can't create File","Error",0);
+        return(0);
+    }
+
+    if (hdsize>0) {
+        SetFilePointer(hr, hdsize * 1024, 0, FILE_BEGIN);
+        SetEndOfFile(hr);
+    }
+
+    CloseHandle(hr);
+    return(1);
+}
