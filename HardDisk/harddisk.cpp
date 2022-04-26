@@ -28,9 +28,12 @@ This file is part of VCC (Virtual Color Computer).
 #include "cloud9.h"
 #include "..\fileops.h"
 
+#define DEF_HD_SIZE 132480
+
 static char VHDfile0[MAX_PATH] { 0 };
 static char VHDfile1[MAX_PATH] { 0 };
 static char *VHDfile; // Selected drive file name
+static char NewVHDfile[MAX_PATH];
 static char IniFile[MAX_PATH]  { 0 };
 static char HardDiskPath[MAX_PATH];
 
@@ -52,7 +55,7 @@ void LoadHardDisk(int drive);
 void LoadConfig(void);
 void SaveConfig(void);
 void BuildDynaMenu(void);
-BOOL CreateDisk(int);
+int CreateDisk(HWND,int);
 
 static HINSTANCE g_hinstDLL;
 
@@ -285,13 +288,16 @@ void LoadHardDisk(int drive)
         return;
     }
 
+    strncpy(NewVHDfile,VHDfile,MAX_PATH);
+    HWND hWnd = GetActiveWindow();
+
     // Prompt user for vhd filename
     memset(&ofn,0,sizeof(ofn));
     ofn.lStructSize     = sizeof (OPENFILENAME) ;
-    ofn.hwndOwner       = NULL;
+    ofn.hwndOwner       = hWnd;
     ofn.lpstrFilter     = "HardDisk Images\0*.vhd\0\0"; // filter VHD images
     ofn.nFilterIndex    = 1 ;                           // current filter index
-    ofn.lpstrFile       = VHDfile;                      // full filename on return
+    ofn.lpstrFile       = NewVHDfile;                   // full filename on return
     ofn.nMaxFile        = MAX_PATH;                     // sizeof lpstrFile
     ofn.lpstrFileTitle  = NULL;                         // filename only
     ofn.nMaxFileTitle   = MAX_PATH ;                    // sizeof lpstrFileTitle
@@ -302,21 +308,24 @@ void LoadHardDisk(int drive)
     if (GetOpenFileName (&ofn)) {
 
         // Append .vhd file type if type missing
-        if (ofn.nFileExtension==0) strncat(VHDfile,".vhd",MAX_PATH);
+        if (ofn.nFileExtension==0) strncat(NewVHDfile,".vhd",MAX_PATH);
 
         // Present new disk dialog if file does not exist
-        // Dialog box clears VHD file name if it is not created
-        if (GetFileAttributes(VHDfile) == INVALID_FILE_ATTRIBUTES) {
-            DialogBox( g_hinstDLL, (LPCTSTR)IDD_NEWDISK,
-                       GetActiveWindow(), (DLGPROC) NewDisk);
-            if (*VHDfile == '\0') return;
+        if (GetFileAttributes(NewVHDfile) == INVALID_FILE_ATTRIBUTES) {
+            // Dialog box returns zero if file is not created
+            if (DialogBox(g_hinstDLL,(LPCTSTR)IDD_NEWDISK,hWnd,(DLGPROC)NewDisk)==0)
+                return;
         }
 
         // Actual file mount is done in cc3vhd
-        if (MountHD(VHDfile,drive)==0) {
-            snprintf(msg,300,"Can't open %s",VHDfile);
-            MessageBox(NULL,msg,"Error",0);
+        if (MountHD(NewVHDfile,drive)==0) {
+            snprintf(msg,300,"Can't mount %s",NewVHDfile);
+            MessageBox(hWnd,msg,"Error",0);
+            *VHDfile = '\0';
+            return;
         }
+
+        strncpy(VHDfile,NewVHDfile,MAX_PATH);
 
         // Save vhd directory for config file
         string tmp = ofn.lpstrFile;
@@ -423,42 +432,38 @@ void BuildDynaMenu(void)
 // Dialog for creating a new hard disk
 LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    unsigned int hdsize=0;
-
+    unsigned int hdsize=DEF_HD_SIZE;
     switch (message)
     {
         case WM_INITDIALOG:
-            SetDlgItemInt(hDlg,IDC_HDSIZE,hdsize,0);
+            SetDlgItemInt(hDlg,IDC_HDSIZE,DEF_HD_SIZE,0);
             return TRUE;
-        break;
 
         case WM_COMMAND:
             switch (LOWORD(wParam)) {
             case IDOK:
                 hdsize=GetDlgItemInt(hDlg,IDC_HDSIZE,NULL,0);
-                EndDialog(hDlg, LOWORD(wParam));
-                return CreateDisk(hdsize);
+                EndDialog(hDlg,CreateDisk(hDlg,hdsize));
+                break;
 
             case IDCANCEL:
-                // Clear file name so LoadHardDisk knows
-                strcpy(VHDfile,"");
-                EndDialog(hDlg, LOWORD(wParam));
-                return FALSE;
+                EndDialog(hDlg,0);
+                break;
             }
-            return TRUE;
         break;
     }
     return FALSE;
 }
 
-BOOL CreateDisk(int hdsize)
+// Create a new disk file, return 1 on success
+int CreateDisk(HWND hDlg, int hdsize)
 {
-    HANDLE hr=CreateFile( VHDfile, GENERIC_READ | GENERIC_WRITE,
+    HANDLE hr=CreateFile( NewVHDfile, GENERIC_READ | GENERIC_WRITE,
                           0,0,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,0);
     if (hr==INVALID_HANDLE_VALUE) {
-        strcpy(VHDfile,"");
-        MessageBox(0,"Can't create File","Error",0);
-        return(0);
+        *NewVHDfile='\0';
+        MessageBox(hDlg,"Can't create File","Error",0);
+        return 0;
     }
 
     if (hdsize>0) {
@@ -467,5 +472,5 @@ BOOL CreateDisk(int hdsize)
     }
 
     CloseHandle(hr);
-    return(1);
+    return 1;
 }
