@@ -24,6 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "hd6309defs.h"
 #include "tcc1014mmu.h"
 #include "logger.h"
+#include <string.h>
 
 #if defined(_WIN64)
 #define MSABI 
@@ -131,6 +132,9 @@ static signed char *spostbyte=(signed char *)&postbyte;
 static signed short *spostword=(signed short *)&postword;
 static char InInterupt=0;
 static int gCycleFor;
+static char CPUControlState = 'R';
+static unsigned char  CPUNumBreakpoints = 0;
+static unsigned short CPUBreakpoints[256] = { 0 };
 
 static unsigned char NatEmuCycles65 = 6;
 static unsigned char NatEmuCycles64 = 6;
@@ -308,6 +312,67 @@ void HD6309Init(void)
 	cc[I]=1;
 	cc[F]=1;
 	return;
+}
+
+void HD6309State(unsigned char* regs, unsigned char* mem, int ramsize)
+{
+	regs[0] = A_REG;
+	regs[1] = B_REG;
+	regs[2] = E_REG;
+	regs[3] = F_REG;
+	unsigned short reg = X_REG;
+	regs[4] = reg >> 8;
+	regs[5] = reg & 0xFF;
+	reg = Y_REG;
+	regs[6] = reg >> 8;
+	regs[7] = reg & 0xFF;
+	reg = S_REG;
+	regs[8] = reg >> 8;
+	regs[9] = reg & 0xFF;
+	reg = U_REG;
+	regs[10] = reg >> 8;
+	regs[11] = reg & 0xFF;
+	reg = PC_REG;
+	regs[12] = reg >> 8;
+	regs[13] = reg & 0xFF;
+	regs[14] = ccbits;
+	regs[15] = dp.Reg;
+	regs[16] = mdbits;
+	reg = V_REG;
+	regs[17] = reg >> 8;
+	regs[18] = reg & 0xFF;
+	regs[19] = CPUControlState;
+	for (int addr = 0; addr < ramsize; addr++)
+	{
+		mem[addr] = GetMem(addr);
+	}
+}
+
+char HD6309Control(unsigned char nBps, unsigned short* breakpoints, char cpuCmd)
+{
+	// Run -> Halt
+	if (CPUControlState == 'R' && cpuCmd == 'H')
+	{
+		CPUControlState = 'H';
+	}
+	// Halt -> Run
+	if (CPUControlState == 'H' && cpuCmd == 'R')
+	{
+		CPUControlState = 'R';
+	}
+	// Halt -> Step
+	if (CPUControlState == 'H' && cpuCmd == 'S')
+	{
+		CPUControlState = 'S';
+	}
+	// Update Breakpoints
+	if (cpuCmd == 'B')
+	{
+		CPUNumBreakpoints = nBps;
+		memset(CPUBreakpoints, 0, sizeof(CPUBreakpoints));
+		memcpy(CPUBreakpoints, breakpoints, CPUNumBreakpoints * sizeof(CPUBreakpoints[0]));
+	}
+	return CPUControlState;
 }
 
 
@@ -6963,7 +7028,35 @@ int HD6309Exec(int CycleFor)
 		if (SyncWaiting == 1)	//Abort the run nothing happens asyncronously from the CPU
 			return(0); // WDZ - Experimental SyncWaiting should still return used cycles (and not zero) by breaking from loop
 
+			// CPU is halted.
+		if (CPUControlState == 'H')
+		{
+			return(CycleFor - CycleCounter);
+		}
+
+		// ANy CPU Breakpoints set?
+		if (CPUControlState != 'S' && CPUNumBreakpoints)
+		{
+			for (int n = 0; n < CPUNumBreakpoints; n++)
+			{
+				// Are we about to read this memory address?
+				if (CPUBreakpoints[n] == pc.Reg)
+				{
+					CPUControlState = 'H';
+					return(CycleFor - CycleCounter);
+				}
+			}
+		}
+
 		JmpVec1[MemRead8(PC_REG++)](); // Execute instruction pointed to by PC_REG
+
+		// CPU is stepped.
+		if (CPUControlState == 'S')
+		{
+			CPUControlState = 'H';
+			break;
+		}
+
 	}//End While
 
 	return(CycleFor - CycleCounter);

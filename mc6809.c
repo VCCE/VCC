@@ -66,6 +66,9 @@ static short unsigned postword=0;
 static signed char *spostbyte=(signed char *)&postbyte;
 static signed short *spostword=(signed short *)&postword;
 static char InInterupt=0;
+static char CPUControlState = 'R';
+static unsigned char  CPUNumBreakpoints = 0;
+static unsigned short CPUBreakpoints[256] = { 0 };
 //END Global variables for CPU Emulation-------------------
 
 //Fuction Prototypes---------------------------------------
@@ -119,6 +122,67 @@ void MC6809Init(void)
 	return;
 }
 
+void MC6809State(unsigned char* regs, unsigned char* mem, int ramsize)
+{
+	regs[0] = A_REG;
+	regs[1] = B_REG;
+	regs[2] = 0;
+	regs[3] = 0;
+	unsigned short reg = X_REG;
+	regs[4] = reg >> 8;
+	regs[5] = reg & 0xFF;
+	reg = Y_REG;
+	regs[6] = reg >> 8;
+	regs[7] = reg & 0xFF;
+	reg = S_REG;
+	regs[8] = reg >> 8;
+	regs[9] = reg & 0xFF;
+	reg = U_REG;
+	regs[10] = reg >> 8;
+	regs[11] = reg & 0xFF;
+	reg = PC_REG;
+	regs[12] = reg >> 8;
+	regs[13] = reg & 0xFF;
+	regs[14] = ccbits;
+	regs[15] = dp.Reg;
+	regs[16] = 0;
+	regs[17] = 0;
+	regs[18] = 0;
+	regs[19] = CPUControlState;
+	for (int addr = 0; addr < ramsize; addr++)
+	{
+		mem[addr] = SafeMemRead8(addr);
+	}
+}
+
+char MC6809Control(unsigned char nBps, unsigned short* breakpoints, char cpuCmd)
+{
+	// Run -> Halt
+	if (CPUControlState == 'R' && cpuCmd == 'H')
+	{
+		CPUControlState = 'H';
+	}
+	// Halt -> Run
+	if (CPUControlState == 'H' && cpuCmd == 'R')
+	{
+		CPUControlState = 'R';
+	}
+	// Halt -> Step
+	if (CPUControlState == 'H' && cpuCmd == 'S')
+	{
+		CPUControlState = 'S';
+	}
+	// Update Breakpoints
+	if (cpuCmd == 'B')
+	{
+		CPUNumBreakpoints = nBps;
+		memset(CPUBreakpoints, 0, sizeof(CPUBreakpoints));
+		memcpy(CPUBreakpoints, breakpoints, CPUNumBreakpoints * sizeof(CPUBreakpoints[0]));
+	}
+	return CPUControlState;
+}
+
+
 int MC6809Exec( int CycleFor)
 {
 static unsigned char opcode=0;
@@ -146,6 +210,26 @@ while (CycleCounter<CycleFor) {
 
 	if (SyncWaiting==1)
 		return(0);
+
+	// CPU is halted.
+	if (CPUControlState == 'H')
+	{
+		return(CycleFor - CycleCounter);
+	}
+
+	// Any CPU Breakpoints set?
+	if (CPUControlState != 'S' && CPUNumBreakpoints)
+	{
+		for (int n = 0; n < CPUNumBreakpoints; n++)
+		{
+			// Are we about to read this memory address?
+			if (CPUBreakpoints[n] == pc.Reg)
+			{
+				CPUControlState = 'H';
+				return(CycleFor - CycleCounter);
+			}
+		}
+	}
 
 switch (MemRead8(pc.Reg++)){
 
@@ -2989,6 +3073,14 @@ default:
 //	MessageBox(0,"Unhandled Op","Ok",0);
 	break;
 	}//End Switch
+
+	// CPU is stepped.
+	if (CPUControlState == 'S')
+	{
+		CPUControlState = 'H';
+		break;
+	}
+
 }//End While
 
 return(CycleFor-CycleCounter);

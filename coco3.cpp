@@ -92,6 +92,8 @@ using namespace std;
 string clipboard;
 STRConfig ClipConfig;
 
+char CurrentCPUControl = ' ';
+
 _inline int CPUCycle(void);
 float RenderFrame (SystemState *RFState)
 {
@@ -99,7 +101,7 @@ float RenderFrame (SystemState *RFState)
 
 //********************************Start of frame Render*****************************************************
 	SetBlinkState(BlinkPhase);
-	irq_fs(0);				//FS low to High transition start of display Boink needs this
+	irq_fs(0);				//FS low to High transition start of display Blink needs this
 
 	for (RFState->LineCounter=0;RFState->LineCounter<13;RFState->LineCounter++)		//Vertical Blanking 13 H lines 
 		CPUCycle();
@@ -160,6 +162,14 @@ float RenderFrame (SystemState *RFState)
 	}
 	AudioIndex=0;
 
+	EnterCriticalSection(&RFState->WatchCriticalSection);
+	CPUState(RFState->WatchProcState, RFState->WatchRamBuffer, RFState->WatchRamSize);
+	if (RFState->CPUControl != ' ')
+	{
+		CurrentCPUControl = CPUControl(RFState->CPUNumBreakpoints, RFState->CPUBreakpoints, RFState->CPUControl);
+		RFState->CPUControl = ' ';
+	}
+	LeaveCriticalSection(&RFState->WatchCriticalSection);
 
 /*
 	//Debug Code
@@ -206,6 +216,13 @@ void SetLinesperScreen (unsigned char Lines)
 
 _inline int CPUCycle(void)	
 {
+	// CPU is in a halted state.
+	if (CurrentCPUControl == 'H')
+	{
+		return 0;
+	}
+
+	// CPU is running or stepped.
 	if (HorzInteruptEnabled)
 		GimeAssertHorzInterupt();
 	irq_hs(ANY);
