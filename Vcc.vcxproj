@@ -171,6 +171,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Audio.c" />
+    <ClCompile Include="Breakpoints.cpp" />
     <ClCompile Include="Cassette.cpp" />
     <ClCompile Include="coco3.cpp" />
     <ClCompile Include="CommandLine.c" />
@@ -186,7 +187,9 @@
     <ClCompile Include="logger.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
+    <ClCompile Include="MemoryMap.cpp" />
     <ClCompile Include="pakinterface.c" />
+    <ClCompile Include="ProcessorState.cpp" />
     <ClCompile Include="quickload.c" />
     <ClCompile Include="tcc1014graphics.c" />
     <ClCompile Include="tcc1014mmu.c" />
@@ -200,6 +203,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h" />
+    <ClInclude Include="Breakpoints.h" />
     <ClInclude Include="Cassette.h" />
     <ClInclude Include="cc2font.h" />
     <ClInclude Include="cc3font.h" />
@@ -220,7 +224,9 @@
     <ClInclude Include="mc6809.h" />
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6821.h" />
+    <ClInclude Include="MemoryMap.h" />
     <ClInclude Include="pakinterface.h" />
+    <ClInclude Include="ProcessorState.h" />
     <ClInclude Include="quickload.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="tcc1014graphics.h" />
@@ -284,3 +290,4 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
+

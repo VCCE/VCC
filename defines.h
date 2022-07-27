@@ -51,12 +51,18 @@ extern void (*CPUReset)(void);
 extern void (*CPUAssertInterupt)(unsigned char,unsigned char);
 extern void (*CPUDeAssertInterupt)(unsigned char);
 extern void (*CPUForcePC)(unsigned short);
+extern void (*CPUState)(unsigned char*, unsigned char*, int);
+extern char (*CPUControl)(unsigned char, unsigned short*, char);
 
 
 typedef struct 
 {
 HWND			WindowHandle;
 HWND			ConfigDialog;
+HWND            MemoryWindow;
+HWND            ProcessorWindow;
+HWND            BreakpointWindow;
+
 HINSTANCE		WindowInstance;
 unsigned char	*RamBuffer;
 unsigned short	*WRamBuffer;
@@ -83,6 +89,19 @@ POINT			WindowSize;
 unsigned char	FullScreen;
 unsigned char	MousePointer;
 char			StatusLine[256];
+
+// Debugger Package ------------------
+unsigned char*  WatchRamBuffer;
+unsigned int    WatchRamSize;
+unsigned char   WatchProcState[20];
+
+char            CPUControl = ' ';
+unsigned short* CPUBreakpoints = NULL;
+unsigned char   CPUNumBreakpoints = 0;
+
+CRITICAL_SECTION WatchCriticalSection;
+// Debugger Package ------------------
+
 } SystemState;
 
 static char RateList[4][7]={"Mute","11025","22050","44100"};

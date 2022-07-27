@@ -25,6 +25,7 @@ void MemWrite16(unsigned short,unsigned short );
 
 unsigned short MemRead16(short unsigned int);
 unsigned char MemRead8(short unsigned int);
+unsigned char SafeMemRead8(short unsigned int);
 unsigned char * MmuInit(unsigned char);
 unsigned char *	Getint_rom_pointer(void);
 unsigned char * Getext_rom_pointer(void);
