@@ -343,21 +343,10 @@ void HD6309State(unsigned char* regs, unsigned char* mem, int ramsize)
 	regs[17] = reg >> 8;
 	regs[18] = reg & 0xFF;
 	regs[19] = CPUControlState;
-	regs[10] = reg >> 8;
-	regs[11] = reg & 0xFF;
-	reg = PC_REG;
-	regs[12] = reg >> 8;
-	regs[13] = reg & 0xFF;
-	regs[14] = ccbits;
-	regs[15] = dp.Reg;
-	regs[16] = mdbits;
-	reg = V_REG;
-	regs[17] = reg >> 8;
-	regs[18] = reg & 0xFF;
-	regs[19] = CPUControlState;
 	for (int addr = 0; addr < ramsize; addr++)
 	{
-		mem[addr] = GetMem(addr);
+		mem[addr] = SafeMemRead8(addr);
+//		mem[addr] = GetMem(addr);
 	}
 }
 
