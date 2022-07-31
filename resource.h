@@ -44,6 +44,7 @@
 #define IDD_MEMORY_MAP                  170
 #define IDD_PROCESSOR_STATE             171
 #define IDD_BREAKPOINTS                 172
+#define IDD_MMU_MONITOR                 173
 #define IDC_MUTE                        1003
 #define IDC_THROTTLE                    1004
 #define IDC_ARTIFACTS                   1005
@@ -349,7 +350,7 @@
 #define IDC_BTN_CPU_STEP                2113
 #define IDC_EDIT_FIND_MEM               2114
 #define IDC_BTN_FIND_MEM                2115
-
+#define IDC_SELECT_MMU_PAGE             2116
 #define ID_FILE_EXIT                    40002
 #define IDM_HELP_ABOUT                  40003
 #define ID_FILE_RUN                     40004
@@ -387,15 +388,16 @@
 #define ID_MEMORY_DISPLAY               40040
 #define ID_PROCESSOR_STATE              40041
 #define ID_BREAKPOINTS                  40042
+#define ID_MMU_MONITOR                  40043
 #define ID_CONFIGURE_OPTIONS            65535
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        171
-#define _APS_NEXT_COMMAND_VALUE         40031
-#define _APS_NEXT_CONTROL_VALUE         2120
+#define _APS_NEXT_RESOURCE_VALUE        174
+#define _APS_NEXT_COMMAND_VALUE         40044
+#define _APS_NEXT_CONTROL_VALUE         2117
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

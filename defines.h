@@ -62,6 +62,7 @@ HWND			ConfigDialog;
 HWND            MemoryWindow;
 HWND            ProcessorWindow;
 HWND            BreakpointWindow;
+HWND			MMUMonitorWindow;
 
 HINSTANCE		WindowInstance;
 unsigned char	*RamBuffer;
@@ -94,10 +95,13 @@ char			StatusLine[256];
 unsigned char*  WatchRamBuffer;
 unsigned int    WatchRamSize;
 unsigned char   WatchProcState[20];
+unsigned char   WatchMMUState[20];
+unsigned char*  WatchMMUPage;
 
 char            CPUControl = ' ';
 unsigned short* CPUBreakpoints = NULL;
 unsigned char   CPUNumBreakpoints = 0;
+unsigned char   MMUPage = 0;
 
 CRITICAL_SECTION WatchCriticalSection;
 // Debugger Package ------------------

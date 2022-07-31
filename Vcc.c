@@ -65,6 +65,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "MemoryMap.h"
 #include "ProcessorState.h"
 #include "Breakpoints.h"
+#include "MMUMonitor.h"
 
 static HANDLE hout=NULL;
 
@@ -373,6 +374,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 							(DLGPROC)Breakpoints::Breakpoints
 						);
 						ShowWindow(EmuState.BreakpointWindow, SW_SHOWNORMAL);
+					}
+					break;
+
+				case ID_MMU_MONITOR:
+					if (EmuState.MMUMonitorWindow == NULL)
+					{
+						EmuState.MMUMonitorWindow = CreateDialog(
+							EmuState.WindowInstance, //NULL,
+							(LPCTSTR)IDD_MMU_MONITOR,
+							EmuState.WindowHandle,
+							(DLGPROC)MMUMonitor::MMUMonitor
+						);
+						ShowWindow(EmuState.MMUMonitorWindow, SW_SHOWNORMAL);
 					}
 					break;
 
@@ -701,6 +715,10 @@ void DoHardReset(SystemState* const HRState)
 		free(HRState->WatchRamBuffer);
 	HRState->WatchRamBuffer = (unsigned char*)malloc(64 * 1024);
 	HRState->WatchRamSize = 64 * 1024;
+	if (HRState->WatchMMUPage != NULL)
+		free(HRState->WatchMMUPage);
+	HRState->WatchMMUPage = (unsigned char*)malloc(8192);
+	HRState->MMUPage = 0;
 	// Debugger ---------------------
 
 	if (HRState->RamBuffer == NULL)

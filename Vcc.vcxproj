@@ -188,6 +188,7 @@
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
     <ClCompile Include="MemoryMap.cpp" />
+    <ClCompile Include="MMUMonitor.cpp" />
     <ClCompile Include="pakinterface.c" />
     <ClCompile Include="ProcessorState.cpp" />
     <ClCompile Include="quickload.c" />
@@ -225,6 +226,7 @@
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6821.h" />
     <ClInclude Include="MemoryMap.h" />
+    <ClInclude Include="MMUMonitor.h" />
     <ClInclude Include="pakinterface.h" />
     <ClInclude Include="ProcessorState.h" />
     <ClInclude Include="quickload.h" />
@@ -290,4 +292,3 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
-

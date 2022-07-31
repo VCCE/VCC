@@ -162,14 +162,19 @@ float RenderFrame (SystemState *RFState)
 	}
 	AudioIndex=0;
 
-	EnterCriticalSection(&RFState->WatchCriticalSection);
-	CPUState(RFState->WatchProcState, RFState->WatchRamBuffer, RFState->WatchRamSize);
-	if (RFState->CPUControl != ' ')
+	// Only affect frame rate if a debug window is open.
+	if (RFState->BreakpointWindow != NULL || RFState->MemoryWindow != NULL || RFState->MMUMonitorWindow != NULL || RFState->ProcessorWindow != NULL)
 	{
-		CurrentCPUControl = CPUControl(RFState->CPUNumBreakpoints, RFState->CPUBreakpoints, RFState->CPUControl);
-		RFState->CPUControl = ' ';
+		EnterCriticalSection(&RFState->WatchCriticalSection);
+		CPUState(RFState->WatchProcState, RFState->WatchRamBuffer, RFState->WatchRamSize);
+		if (RFState->CPUControl != ' ')
+		{
+			CurrentCPUControl = CPUControl(RFState->CPUNumBreakpoints, RFState->CPUBreakpoints, RFState->CPUControl);
+			RFState->CPUControl = ' ';
+		}
+		MMUState(RFState->WatchMMUState, RFState->MMUPage, RFState->WatchMMUPage);
+		LeaveCriticalSection(&RFState->WatchCriticalSection);
 	}
-	LeaveCriticalSection(&RFState->WatchCriticalSection);
 
 /*
 	//Debug Code
