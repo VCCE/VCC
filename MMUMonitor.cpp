@@ -301,29 +301,30 @@ namespace MMUMonitor
 		int nCol1 = 60;
 		int nCol2 = 135;
 
-		x += 115;
+		x = 0;
+		y += 40;
 
-		MoveToEx(hdc, x, rect.top, NULL);
-		LineTo(hdc, rect.right - 1, rect.top);
+		MoveToEx(hdc, x, y, NULL);
+		LineTo(hdc, rect.right - 1, y);
 		LineTo(hdc, rect.right - 1, rect.bottom - 1);
 		LineTo(hdc, x, rect.bottom - 1);
-		LineTo(hdc, x, rect.top);
+		LineTo(hdc, x, y);
 
 		// Draw our lines.
-		MoveToEx(hdc, x, rect.top + 20, NULL);
-		LineTo(hdc, rect.right, rect.top + 20);
+		MoveToEx(hdc, x, y + 20, NULL);
+		LineTo(hdc, rect.right, y + 20);
 
-		MoveToEx(hdc, x + nCol1, rect.top, NULL);
+		MoveToEx(hdc, x + nCol1, y, NULL);
 		LineTo(hdc, x + nCol1, rect.bottom);
 
-		MoveToEx(hdc, rect.right - nCol2, rect.top, NULL);
+		MoveToEx(hdc, rect.right - nCol2, y, NULL);
 		LineTo(hdc, rect.right - nCol2, rect.bottom);
 
 		// Memory Page
 		SetTextColor(hdc, RGB(138, 27, 255));
 		{
 			RECT rc;
-			SetRect(&rc, x, rect.top, x + nCol1, rect.top + 20);
+			SetRect(&rc, x, y, x + nCol1, y + 20);
 			DrawText(hdc, "Address", 7, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 			int mx = nCol1 + 5;
@@ -336,16 +337,16 @@ namespace MMUMonitor
 				CString s;
 				s.Format("%2X", n);
 				RECT rc;
-				SetRect(&rc, x + mx + (n * 18), rect.top, x + mx + (n * 18) + 20, rect.top + 20);
+				SetRect(&rc, x + mx + (n * 18), y, x + mx + (n * 18) + 20, y + 20);
 				DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_VCENTER | DT_SINGLELINE);
 			}
 
-			SetRect(&rc, rect.right - nCol2, rect.top, rect.right - 5, rect.top + 20);
+			SetRect(&rc, rect.right - nCol2, y, rect.right - 5, y + 20);
 			DrawText(hdc, "ASCII", 6, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 		}
 
 		// Draw the Address Lines.
-		y = rect.top + 20;
+		y += 20;
 		int h = 18;
 		int nRows = 16;
 		for (int addrLine = 0; addrLine < nRows; addrLine++)
@@ -464,6 +465,7 @@ namespace MMUMonitor
 			RECT Rect;
 			GetClientRect(hDlg, &Rect);
 
+			int ScrollBarTop = 315;
 			int ScrollBarWidth = 19;
 
 			hWndVScrollBar = CreateWindowEx(
@@ -472,9 +474,9 @@ namespace MMUMonitor
 				NULL,
 				WS_VISIBLE | WS_CHILD | SBS_VERT,
 				Rect.right - ScrollBarWidth,
-				0,
+				ScrollBarTop,
 				ScrollBarWidth,
-				Rect.bottom - 40,
+				Rect.bottom - 40 - ScrollBarTop,
 				hDlg,
 				(HMENU)IDC_MEM_VSCROLLBAR,
 				(HINSTANCE)GetWindowLong(hDlg, GWL_HINSTANCE),
