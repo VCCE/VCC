@@ -105,7 +105,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)Vcc.exe</OutputFile>
-      <AdditionalDependencies>nafxcw.lib;libcmt.lib;ddraw.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcmt.lib;ddraw.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>
       </AdditionalOptions>
       <IgnoreSpecificDefaultLibraries>nafxcw.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
@@ -149,7 +149,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)Vcc.exe</OutputFile>
-      <AdditionalDependencies>nafxcwd.lib;libcmtd.lib;ddraw.lib;dxguid.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcmtd.lib;ddraw.lib;dxguid.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <IgnoreSpecificDefaultLibraries>nafxcwd.lib;libcmtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -176,6 +176,7 @@
     <ClCompile Include="coco3.cpp" />
     <ClCompile Include="CommandLine.c" />
     <ClCompile Include="config.c" />
+    <ClCompile Include="DebuggerUtils.cpp" />
     <ClCompile Include="DirectDrawInterface.cpp" />
     <ClCompile Include="Fileops.c" />
     <ClCompile Include="hd6309.c" />
@@ -211,6 +212,7 @@
     <ClInclude Include="coco3.h" />
     <ClInclude Include="CommandLine.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="DebuggerUtils.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="DirectDrawInterface.h" />
     <ClInclude Include="fileops.h" />

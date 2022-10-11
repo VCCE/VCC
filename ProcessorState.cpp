@@ -18,11 +18,9 @@ This file is part of VCC (Virtual Color Computer).
 	Author: Mike Rojas
 */
 
-#include <afx.h>
 #include "defines.h"
+#include "DebuggerUtils.h"
 #include "resource.h"
-
-using namespace std;
 
 extern SystemState EmuState;
 
@@ -49,20 +47,22 @@ namespace ProcessorState
 		backBufferBMP = CreateCompatibleBitmap(hdc, backBufferCX, backBufferCY);
 		if (backBufferBMP == NULL)
 		{
-			printf("failed to create backBufferBMP");
+			OutputDebugString("failed to create backBufferBMP");
 			return false;
 		}
 
 		backDC = CreateCompatibleDC(hdc);
 		if (backDC == NULL)
 		{
-			printf("failed to create the backDC");
+			OutputDebugString("failed to create the backDC");
 			return false;
 		}
 
 		HBITMAP oldbmp = (HBITMAP)SelectObject(backDC, backBufferBMP);
 		DeleteObject(oldbmp);
 		ReleaseDC(hWnd, hdc);
+
+		return true;
 	}
 
 	void DrawProcessorState(HDC hdc, LPRECT clientRect)
@@ -237,19 +237,21 @@ namespace ProcessorState
 		x = rect.left;
 		y = rect.top;
 		int gap = 0;
-		CString s;
+		std::string s;
 		for (int n = 0; n < 14; n += 2)
 		{
 			if (n > 2)
 			{
 				gap = 15;
 			}
-			s.Format("%02X", regs[n]);
+			
+			s = ToHexString(regs[n], 2);
 			SetRect(&rc, x + 10 + gap, y + 20, x + 45, y + 40);
-			DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			s.Format("%02X", regs[n + 1]);
+			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+			
+			s = ToHexString(regs[n + 1], 2);
 			SetRect(&rc, x + 45, y + 20, x + 80 - gap, y + 40);
-			DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			x += 80;
 		}
 
@@ -257,38 +259,37 @@ namespace ProcessorState
 		y = rect.top + 70;
 		for (int n = 0; n < 8; n++)
 		{
-			CString s;
-			s = (regs[14] & 1 << n) ? "1" : "-";
+			const std::string s((regs[14] & 1 << n) ? "1" : "-");
 			SetRect(&rc, x, y, x + 25, y + 20);
-			DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			x += 25;
 		}
 
 		x = rect.left + 390;
 		y = rect.top + 70;
 		SetRect(&rc, x, y, x + 45, y + 20);
-		s.Format("%02X", regs[15]);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		s = ToHexString(regs[15], 2);
+		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 		x += 50;
-		s.Format("%02X", regs[16]);
+		s = ToHexString(regs[16], 2);
 		SetRect(&rc, x, y, x + 45, y + 20);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 		x += 40;
 		gap = 15;
-		s.Format("%02X", regs[17]);
+		s = ToHexString(regs[17], 2);
 		SetRect(&rc, x + 10 + gap, y, x + 45, y + 20);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		s.Format("%02X", regs[18]);
+		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		s = ToHexString(regs[18], 2);
 		SetRect(&rc, x + 45, y, x + 80 - gap, y + 20);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 		SetTextColor(hdc, RGB(138, 27, 255));
 		y = rect.top + 100;
-		s.Format("W, MD, V are 6309 CPU only");
+		s = "W, MD, V are 6309 CPU only";
 		SetRect(&rc, rect.right - 200, y, rect.right - 10, y + 20);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
+		DrawText(hdc, s.c_str(), s.size(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
 
 		// Cleanup.
 		DeleteObject(pen);

@@ -20,6 +20,8 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <cstdint>
+#include <windows.h>
+#include <string>
 
 //Speed throttling
 #define FRAMEINTERVAL 120	//Number of frames to sum the framecounter over

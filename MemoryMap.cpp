@@ -18,12 +18,10 @@ This file is part of VCC (Virtual Color Computer).
 	Author: Mike Rojas
 */
 
-#include <afx.h>
 #include "defines.h"
+#include "DebuggerUtils.h"
 #include "resource.h"
 #include <sstream>
-
-using namespace std;
 
 extern SystemState EmuState;
 
@@ -56,20 +54,22 @@ namespace MemoryMap
 		backBufferBMP = CreateCompatibleBitmap(hdc, backBufferCX, backBufferCY);
 		if (backBufferBMP == NULL)
 		{
-			printf("failed to create backBufferBMP");
+			OutputDebugString("failed to create backBufferBMP");
 			return false;
 		}
 
 		backDC = CreateCompatibleDC(hdc);
 		if (backDC == NULL)
 		{
-			printf("failed to create the backDC");
+			OutputDebugString("failed to create the backDC");
 			return false;
 		}
 
 		HBITMAP oldbmp = (HBITMAP)SelectObject(backDC, backBufferBMP);
 		DeleteObject(oldbmp);
 		ReleaseDC(hWnd, hdc);
+
+		return true;
 	}
 
 	void DrawMemoryState(HDC hdc, LPRECT clientRect)
@@ -121,11 +121,11 @@ namespace MemoryMap
 				{
 					x += 15;
 				}
-				CString s;
-				s.Format("%2X", n);
+
+				const std::string s(ToHexString(n, 2, false));
 				RECT rc;
 				SetRect(&rc, rect.left + x + (n * 18), rect.top, rect.left + x + (n * 18) + 20, rect.top + 20);
-				DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_VCENTER | DT_SINGLELINE);
+				DrawText(hdc, s.c_str(), s.size(), &rc, DT_VCENTER | DT_SINGLELINE);
 			}
 
 			SetRect(&rc, rect.right - nCol2, rect.top, rect.right - 5, rect.top + 20);
@@ -141,10 +141,10 @@ namespace MemoryMap
 			SetTextColor(hdc, RGB(138, 27, 255));
 			RECT rc;
 			{
-				CString s;
-				s.Format("%06X", addrLine * 16 + memoryOffset);
+				const std::string s(ToHexString(addrLine * 16 + memoryOffset, 6, true));
+
 				SetRect(&rc, rect.left, y, rect.left + nCol1, y + h);
-				DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
 
 			// Pull out 16 bytes from memory.  Do it quickly to keep the emulator frame rate high.
@@ -162,7 +162,7 @@ namespace MemoryMap
 			// Hex Line in Hex Bytes
 			SetTextColor(hdc, RGB(0, 0, 0));
 			int x = nCol1 + 5;
-			CString ascii;
+			std::string ascii;
 			for (int n = 0; n < 16; n++)
 			{
 				if (isprint(line[n]))
@@ -177,17 +177,17 @@ namespace MemoryMap
 				{
 					x += 15;
 				}
-				CString s;
-				s.Format("%02X", line[n]);
+
+				const std::string s(ToHexString(line[n], 2, true));
 				SetRect(&rc, rect.left + x + (n * 18), y, rect.left + x + (n * 18) + 20, y + h);
-				DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
 
 			// ASCII Line
 			x = rect.right - nCol2;
 			{
 				SetRect(&rc, x + 5, y, rect.right - 5, y + h);
-				DrawText(hdc, (LPCSTR)ascii, ascii.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				DrawText(hdc, ascii.c_str(), ascii.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
 
 			// Draw a separator.
@@ -232,13 +232,13 @@ namespace MemoryMap
 	void LocateMemory()
 	{
 		TCHAR buffer[100];
-		memset(buffer, 0, size(buffer));
+		memset(buffer, 0, sizeof(buffer));
 		SendDlgItemMessage(hWndMemory, IDC_EDIT_FIND_MEM, WM_GETTEXT, sizeof(buffer), (LPARAM)(LPCSTR)buffer);
 
 		unsigned int addrInt;
 		std::stringstream ss;
 		ss << buffer;
-		ss >> hex >> addrInt;
+		ss >> std::hex >> addrInt;
 
 		SCROLLINFO si;
 		si.cbSize = sizeof(si);
@@ -354,7 +354,7 @@ namespace MemoryMap
 			si.fMask = SIF_ALL;
 			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
 
-			CString s;
+			std::string s;
 			switch ((int)LOWORD(wParam))
 			{
 			case SB_PAGEUP:
