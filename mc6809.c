@@ -16,8 +16,9 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "windows.h"
-#include "stdio.h"
+#include <windows.h>
+#include <stdio.h>
+#include "defines.h"
 #include "mc6809.h"
 #include "mc6809defs.h"
 #include "tcc1014mmu.h"
@@ -66,9 +67,7 @@ static short unsigned postword=0;
 static signed char *spostbyte=(signed char *)&postbyte;
 static signed short *spostword=(signed short *)&postword;
 static char InInterupt=0;
-static char CPUControlState = 'R';
-static unsigned char  CPUNumBreakpoints = 0;
-static unsigned short CPUBreakpoints[256] = { 0 };
+static std::vector<unsigned short> CPUBreakpoints;
 //END Global variables for CPU Emulation-------------------
 
 //Fuction Prototypes---------------------------------------
@@ -123,65 +122,29 @@ void MC6809Init(void)
 }
 
 
-void MC6809State(unsigned char* regs, unsigned char* mem, int ramsize)
+VCC::CPUState MC6809GetState()
 {
-	regs[0] = A_REG;
-	regs[1] = B_REG;
-	regs[2] = 0;
-	regs[3] = 0;
-	unsigned short reg = X_REG;
-	regs[4] = reg >> 8;
-	regs[5] = reg & 0xFF;
-	reg = Y_REG;
-	regs[6] = reg >> 8;
-	regs[7] = reg & 0xFF;
-	reg = S_REG;
-	regs[8] = reg >> 8;
-	regs[9] = reg & 0xFF;
-	reg = U_REG;
-	regs[10] = reg >> 8;
-	regs[11] = reg & 0xFF;
-	reg = PC_REG;
-	regs[12] = reg >> 8;
-	regs[13] = reg & 0xFF;
-	regs[14] = ccbits;
-	regs[15] = dp.Reg;
-	regs[16] = 0;
-	regs[17] = 0;
-	regs[18] = 0;
-	regs[19] = CPUControlState;
-	for (int addr = 0; addr < ramsize; addr++)
-	{
-		mem[addr] = SafeMemRead8(addr);
-	}
+	VCC::CPUState regs;
+
+	regs.CC = ccbits;
+	regs.DP = dp.Reg;
+	regs.A = A_REG;
+	regs.B = B_REG;
+	regs.X = X_REG;
+	regs.Y = Y_REG;
+	regs.U = U_REG;
+	regs.S = S_REG;
+	regs.PC = PC_REG;
+
+	return regs;
 }
 
-char MC6809Control(unsigned char nBps, unsigned short* breakpoints, char cpuCmd)
+
+void MC6809SetBreakpoints(const std::vector<unsigned short>& breakpoints)
 {
-	// Run -> Halt
-	if (CPUControlState == 'R' && cpuCmd == 'H')
-	{
-		CPUControlState = 'H';
-	}
-	// Halt -> Run
-	if (CPUControlState == 'H' && cpuCmd == 'R')
-	{
-		CPUControlState = 'R';
-	}
-	// Halt -> Step
-	if (CPUControlState == 'H' && cpuCmd == 'S')
-	{
-		CPUControlState = 'S';
-	}
-	// Update Breakpoints
-	if (cpuCmd == 'B')
-	{
-		CPUNumBreakpoints = nBps;
-		memset(CPUBreakpoints, 0, sizeof(CPUBreakpoints));
-		memcpy(CPUBreakpoints, breakpoints, CPUNumBreakpoints * sizeof(CPUBreakpoints[0]));
-	}
-	return CPUControlState;
+	CPUBreakpoints = breakpoints;
 }
+
 
 int MC6809Exec( int CycleFor)
 {
@@ -214,22 +177,18 @@ while (CycleCounter<CycleFor) {
 		return(0);
 
 	// CPU is halted.
-	if (CPUControlState == 'H')
+	if (EmuState.Debugger.IsHalted())
 	{
 		return(CycleFor - CycleCounter);
 	}
 
 	// Any CPU Breakpoints set?
-	if (CPUControlState != 'S' && CPUNumBreakpoints)
+	if (!EmuState.Debugger.IsStepping() && !CPUBreakpoints.empty())
 	{
-		for (int n = 0; n < CPUNumBreakpoints; n++)
+		if (find(CPUBreakpoints.begin(), CPUBreakpoints.end(), pc.Reg) != CPUBreakpoints.end())
 		{
-			// Are we about to read this memory address?
-			if (CPUBreakpoints[n] == pc.Reg)
-			{
-				CPUControlState = 'H';
-				return(CycleFor - CycleCounter);
-			}
+			EmuState.Debugger.Halt();
+			return(CycleFor - CycleCounter);
 		}
 	}
 
@@ -3078,9 +3037,9 @@ default:
 	}//End Switch
 
 	// CPU is stepped.
-	if (CPUControlState == 'S')
+	if (EmuState.Debugger.IsStepping())
 	{
-		CPUControlState = 'H';
+		EmuState.Debugger.Halt();
 		break;
 	}
 

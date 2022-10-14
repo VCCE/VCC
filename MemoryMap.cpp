@@ -1,34 +1,35 @@
-/*
-This file is part of VCC (Virtual Color Computer).
-
-	VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-
-	Memory Map Display - Part of the Debugger package for VCC
-	Author: Mike Rojas
-*/
-
-#include <afx.h>
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//		VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
+//		it under the terms of the GNU General Public License as published by
+//		the Free Software Foundation, either version 3 of the License, or
+//		(at your option) any later version.
+//	
+//		VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+//		but WITHOUT ANY WARRANTY; without even the implied warranty of
+//		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//		GNU General Public License for more details.
+//	
+//		You should have received a copy of the GNU General Public License
+//		along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+//	
+//		Memory Map Display - Part of the Debugger package for VCC
+//		Authors: Mike Rojas, Chet Simpson
+#include "MemoryMap.h"
 #include "defines.h"
+#include "Debugger.h"
+#include "DebuggerUtils.h"
+#include "tcc1014mmu.h"
 #include "resource.h"
 #include <sstream>
 
-using namespace std;
 
-extern SystemState EmuState;
-
-namespace MemoryMap
+namespace VCC { namespace Debugger { namespace UI { namespace
 {
+	CriticalSection Section_;
+	std::array<unsigned char, 64 * 1024> RamBuffer_;
+
+	HWND MemoryMapWindow = NULL;
 	HWND hWndMemory;
 	HWND hWndVScrollBar;
 	WNDPROC oldEditProc;
@@ -56,21 +57,42 @@ namespace MemoryMap
 		backBufferBMP = CreateCompatibleBitmap(hdc, backBufferCX, backBufferCY);
 		if (backBufferBMP == NULL)
 		{
-			printf("failed to create backBufferBMP");
+			OutputDebugString("failed to create backBufferBMP");
 			return false;
 		}
 
 		backDC = CreateCompatibleDC(hdc);
 		if (backDC == NULL)
 		{
-			printf("failed to create the backDC");
+			OutputDebugString("failed to create the backDC");
 			return false;
 		}
 
 		HBITMAP oldbmp = (HBITMAP)SelectObject(backDC, backBufferBMP);
 		DeleteObject(oldbmp);
 		ReleaseDC(hWnd, hdc);
+
+		return true;
 	}
+
+
+	static void DebuggerUpdateHandler(HWND window)
+	{
+		VCC::SectionLocker lock(Section_);
+
+		for (auto addr = 0U; addr < RamBuffer_.size(); addr++)
+		{
+			RamBuffer_[addr] = SafeMemRead8(addr);
+		}
+	}
+
+	static void DebuggerResetHandler(HWND window)
+	{
+		SectionLocker lock(Section_);
+
+		std::fill(RamBuffer_.begin(), RamBuffer_.end(), 0);
+	}
+
 
 	void DrawMemoryState(HDC hdc, LPRECT clientRect)
 	{
@@ -121,11 +143,11 @@ namespace MemoryMap
 				{
 					x += 15;
 				}
-				CString s;
-				s.Format("%2X", n);
+
+				const std::string s(ToHexString(n, 2, false));
 				RECT rc;
 				SetRect(&rc, rect.left + x + (n * 18), rect.top, rect.left + x + (n * 18) + 20, rect.top + 20);
-				DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_VCENTER | DT_SINGLELINE);
+				DrawText(hdc, s.c_str(), s.size(), &rc, DT_VCENTER | DT_SINGLELINE);
 			}
 
 			SetRect(&rc, rect.right - nCol2, rect.top, rect.right - 5, rect.top + 20);
@@ -141,28 +163,29 @@ namespace MemoryMap
 			SetTextColor(hdc, RGB(138, 27, 255));
 			RECT rc;
 			{
-				CString s;
-				s.Format("%06X", addrLine * 16 + memoryOffset);
+				const std::string s(ToHexString(addrLine * 16 + memoryOffset, 6, true));
+
 				SetRect(&rc, rect.left, y, rect.left + nCol1, y + h);
-				DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
 
 			// Pull out 16 bytes from memory.  Do it quickly to keep the emulator frame rate high.
 			unsigned char line[16];
-			EnterCriticalSection(&EmuState.WatchCriticalSection);
-			for (int n = 0; n < 16; n++)
 			{
-				unsigned short addr = memoryOffset + (addrLine * 16) + n;
-				line[n] = EmuState.WatchRamBuffer[addr];
+				VCC::SectionLocker lock(Section_);
+				for (int n = 0; n < 16; n++)
+				{
+					unsigned short addr = memoryOffset + (addrLine * 16) + n;
+					line[n] = RamBuffer_[addr];
+				}
 			}
-			LeaveCriticalSection(&EmuState.WatchCriticalSection);
 
 			// Now use our copy of memory.
 
 			// Hex Line in Hex Bytes
 			SetTextColor(hdc, RGB(0, 0, 0));
 			int x = nCol1 + 5;
-			CString ascii;
+			std::string ascii;
 			for (int n = 0; n < 16; n++)
 			{
 				if (isprint(line[n]))
@@ -177,17 +200,17 @@ namespace MemoryMap
 				{
 					x += 15;
 				}
-				CString s;
-				s.Format("%02X", line[n]);
+
+				const std::string s(ToHexString(line[n], 2, true));
 				SetRect(&rc, rect.left + x + (n * 18), y, rect.left + x + (n * 18) + 20, y + h);
-				DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
 
 			// ASCII Line
 			x = rect.right - nCol2;
 			{
 				SetRect(&rc, x + 5, y, rect.right - 5, y + h);
-				DrawText(hdc, (LPCSTR)ascii, ascii.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				DrawText(hdc, ascii.c_str(), ascii.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
 
 			// Draw a separator.
@@ -232,13 +255,13 @@ namespace MemoryMap
 	void LocateMemory()
 	{
 		TCHAR buffer[100];
-		memset(buffer, 0, size(buffer));
+		memset(buffer, 0, sizeof(buffer));
 		SendDlgItemMessage(hWndMemory, IDC_EDIT_FIND_MEM, WM_GETTEXT, sizeof(buffer), (LPARAM)(LPCSTR)buffer);
 
 		unsigned int addrInt;
 		std::stringstream ss;
 		ss << buffer;
-		ss >> hex >> addrInt;
+		ss >> std::hex >> addrInt;
 
 		SCROLLINFO si;
 		si.cbSize = sizeof(si);
@@ -270,7 +293,7 @@ namespace MemoryMap
 		return 0;
 	}
 
-	LRESULT CALLBACK MemoryMap(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+	INT_PTR CALLBACK MemoryMapDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (message)
 		{
@@ -319,6 +342,8 @@ namespace MemoryMap
 
 			SetTimer(hDlg, IDT_MEM_TIMER, 64, (TIMERPROC)NULL);
 
+			EmuState.Debugger.RegisterClient(hDlg, DebuggerUpdateHandler, DebuggerResetHandler);
+
 			break;
 		}
 
@@ -354,7 +379,7 @@ namespace MemoryMap
 			si.fMask = SIF_ALL;
 			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
 
-			CString s;
+			std::string s;
 			switch ((int)LOWORD(wParam))
 			{
 			case SB_PAGEUP:
@@ -437,7 +462,8 @@ namespace MemoryMap
 				DestroyWindow(hDlg);
 				HWND hCtl = GetDlgItem(hDlg, IDC_EDIT_FIND_MEM);
 				(WNDPROC)SetWindowLongPtr(hCtl, GWLP_WNDPROC, (LONG_PTR)oldEditProc);
-				EmuState.MemoryWindow = NULL;
+				MemoryMapWindow = NULL;
+				EmuState.Debugger.RemoveClient(hDlg);
 				break;
 			}
 
@@ -445,5 +471,23 @@ namespace MemoryMap
 		}
 		return FALSE;
 	}
+
+} } } }
+
+
+void VCC::Debugger::UI::OpenMemoryMapWindow(HINSTANCE instance, HWND parent)
+{
+	if (MemoryMapWindow == NULL)
+	{
+		MemoryMapWindow = CreateDialog(
+			instance,
+			MAKEINTRESOURCE(IDD_MEMORY_MAP),
+			parent,
+			MemoryMapDlgProc);
+		ShowWindow(MemoryMapWindow, SW_SHOWNORMAL);
+	}
+
+	SetFocus(MemoryMapWindow);
 }
+
 

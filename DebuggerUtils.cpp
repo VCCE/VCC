@@ -14,15 +14,34 @@
 //		You should have received a copy of the GNU General Public License
 //		along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 //	
-//		MMU Monitor Display - Part of the Debugger package for VCC
-//		Authors: Mike Rojas, Chet Simpson
-#pragma once
-#include <Windows.h>
+//		Debugger Utilities - Part of the Debugger package for VCC
+//		Author: Chet Simpson
+#include "Debugger.h"
+#include <sstream>
+#include <iomanip>
 
 
-namespace VCC { namespace Debugger { namespace UI
+namespace VCC { namespace Debugger
 {
 
-	void OpenMMUMonitorWindow(HINSTANCE instance, HWND parent);
+	std::string ToHexString(long value, int length, bool leadingZeros)
+	{
+		std::ostringstream fmt;
 
-} } }
+		fmt << std::hex << std::setw(length) << std::setfill(leadingZeros ? '0' : ' ') << value;
+
+		return fmt.str();
+	}
+
+	std::string ToDecimalString(long value, int length, bool leadingZeros)
+	{
+		std::ostringstream fmt;
+
+		fmt << std::dec << std::setw(length) << std::setfill(leadingZeros ? '0' : ' ') << value;
+
+		return fmt.str();
+	}
+	
+} }
+
+

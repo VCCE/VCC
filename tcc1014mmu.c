@@ -114,33 +114,31 @@ void MmuReset(void)
 	return;
 }
 
-void MMUState(unsigned char* regs, unsigned char page, unsigned char* mem)
+VCC::MMUState GetMMUState()
 {
-	regs[0] = MmuTask;
-	regs[1] = MmuEnabled;
+	VCC::MMUState state;
 
-	regs[2] = MmuRegisters[0][0];
-	regs[3] = MmuRegisters[0][1];
-	regs[4] = MmuRegisters[0][2];
-	regs[5] = MmuRegisters[0][3];
-	regs[6] = MmuRegisters[0][4];
-	regs[7] = MmuRegisters[0][5];
-	regs[8] = MmuRegisters[0][6];
-	regs[9] = MmuRegisters[0][7];
+	state.ActiveTask = MmuTask;
+	state.Enabled = MmuEnabled;
 
-	regs[10] = MmuRegisters[1][0];
-	regs[11] = MmuRegisters[1][1];
-	regs[12] = MmuRegisters[1][2];
-	regs[13] = MmuRegisters[1][3];
-	regs[14] = MmuRegisters[1][4];
-	regs[15] = MmuRegisters[1][5];
-	regs[16] = MmuRegisters[1][6];
-	regs[17] = MmuRegisters[1][7];
+	for (auto i = 0U; i < state.Task0.size(); ++i)
+	{
+		state.Task0[i] = MmuRegisters[0][i];
+		state.Task1[i] = MmuRegisters[1][i];
+	}
 
-	regs[18] = RamVectors;
-	regs[19] = RomMap;
-	memcpy(mem, memory + page * 8192, 8192);
+	state.RamVectors = RamVectors;
+	state.RomMap = RomMap;
+
+	return state;
 }
+
+void GetMMUPage(size_t page, std::array<unsigned char, 8192>& outBuffer)
+{
+	auto offset = page * 8192;
+	std::copy(memory + offset, memory + offset + outBuffer.size(), outBuffer.begin());
+}
+
 
 void SetVectors(unsigned char data)
 {

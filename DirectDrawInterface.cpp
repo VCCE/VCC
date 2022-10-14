@@ -19,7 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 #define NO_WARN_MBCS_MFC_DEPRECATION
 #define _WIN32_WINNT 0x05010000 // I want to support XP
 
-#include <afxwin.h>
+#include <windows.h>
 #include <commctrl.h>	// Windows common controls
 #include "defines.h"
 #include "ddraw.h"
@@ -63,7 +63,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 	g_hInstance=hInstance;
 	g_nCmdShow=nCmdShow;
-	AfxInitRichEdit();
+	LoadLibrary("RICHED20.DLL");
 	LoadString(g_hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(g_hInstance, IDS_APP_TITLE, szWindowClass, MAX_LOADSTRING);
 	return TRUE;

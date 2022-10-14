@@ -1,39 +1,36 @@
-/*
-This file is part of VCC (Virtual Color Computer).
-
-	VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-
-	Processor State Display - Part of the Debugger package for VCC
-	Author: Mike Rojas
-*/
-
-#include <afx.h>
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//		VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
+//		it under the terms of the GNU General Public License as published by
+//		the Free Software Foundation, either version 3 of the License, or
+//		(at your option) any later version.
+//	
+//		VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+//		but WITHOUT ANY WARRANTY; without even the implied warranty of
+//		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//		GNU General Public License for more details.
+//	
+//		You should have received a copy of the GNU General Public License
+//		along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+//	
+//		Processor State Display - Part of the Debugger package for VCC
+//		Authors: Mike Rojas, Chet Simpson
+#include "ProcessorState.h"
 #include "defines.h"
+#include "Debugger.h"
+#include "DebuggerUtils.h"
 #include "resource.h"
 
-using namespace std;
 
-extern SystemState EmuState;
-
-namespace ProcessorState
+namespace VCC { namespace Debugger { namespace UI { namespace
 {
-
+	HWND	ProcessorStateWindow = NULL;
 	HDC		backDC;
 	HBITMAP backBufferBMP;
 	RECT    backRect;
 	int		backBufferCX;
 	int		backBufferCY;
+
 
 	bool InitBackBuffer(HWND hWnd)
 	{
@@ -49,20 +46,30 @@ namespace ProcessorState
 		backBufferBMP = CreateCompatibleBitmap(hdc, backBufferCX, backBufferCY);
 		if (backBufferBMP == NULL)
 		{
-			printf("failed to create backBufferBMP");
+			OutputDebugString("failed to create backBufferBMP");
 			return false;
 		}
 
 		backDC = CreateCompatibleDC(hdc);
 		if (backDC == NULL)
 		{
-			printf("failed to create the backDC");
+			OutputDebugString("failed to create the backDC");
 			return false;
 		}
 
 		HBITMAP oldbmp = (HBITMAP)SelectObject(backDC, backBufferBMP);
 		DeleteObject(oldbmp);
 		ReleaseDC(hWnd, hdc);
+
+		return true;
+	}
+
+	void DrawCenteredText(HDC hdc, int left, int top, int right, int bottom, const std::string& text)
+	{
+		RECT rc;
+
+		SetRect(&rc, left, top, right, bottom);
+		DrawText(hdc, text.c_str(), text.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 	}
 
 	void DrawProcessorState(HDC hdc, LPRECT clientRect)
@@ -228,95 +235,86 @@ namespace ProcessorState
 		SetTextColor(hdc, RGB(0, 0, 0));
 
 		// Pull out processor state.  Do it quickly to keep the emulator frame rate high.
-		unsigned char regs[19];
-		EnterCriticalSection(&EmuState.WatchCriticalSection);
-		memcpy(regs, EmuState.WatchProcState, sizeof(regs));
-		LeaveCriticalSection(&EmuState.WatchCriticalSection);
+		const auto& regs(EmuState.Debugger.GetProcessorStateCopy());
 
 		// Dump the registers.
 		x = rect.left;
 		y = rect.top;
 		int gap = 0;
-		CString s;
-		for (int n = 0; n < 14; n += 2)
+		std::string s;
+
+		
+		DrawCenteredText(hdc, x + 10, y + 20, x + 45, y + 40, ToHexString(regs.A, 2));	//	A
+		DrawCenteredText(hdc, x + 45, y + 20, x + 80, y + 40, ToHexString(regs.B, 2));	//	B
+		x += 80;
+		if (regs.E.has_value())
 		{
-			if (n > 2)
-			{
-				gap = 15;
-			}
-			s.Format("%02X", regs[n]);
-			SetRect(&rc, x + 10 + gap, y + 20, x + 45, y + 40);
-			DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			s.Format("%02X", regs[n + 1]);
-			SetRect(&rc, x + 45, y + 20, x + 80 - gap, y + 40);
-			DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			x += 80;
+			DrawCenteredText(hdc, x + 10, y + 20, x + 45, y + 40, ToHexString(regs.E.value(), 2));	//	E
 		}
+		if (regs.F.has_value())
+		{
+			DrawCenteredText(hdc, x + 45, y + 20, x + 80, y + 40, ToHexString(regs.F.value(), 2));	//	F
+		}
+		x += 80;
+
+		DrawCenteredText(hdc, x + 10, y + 20, x + 80, y + 40, ToHexString(regs.X, 4));	//	X
+		x += 80;
+		DrawCenteredText(hdc, x + 10, y + 20, x + 80, y + 40, ToHexString(regs.Y, 4));	//	Y
+		x += 80;
+		DrawCenteredText(hdc, x + 10, y + 20, x + 80, y + 40, ToHexString(regs.S, 4));	//	S
+		x += 80;
+		DrawCenteredText(hdc, x + 10, y + 20, x + 80, y + 40, ToHexString(regs.U, 4));	//	U
+		x += 80;
+		DrawCenteredText(hdc, x + 10, y + 20, x + 80, y + 40, ToHexString(regs.PC, 4));	//	V
+		x += 80;
+
 
 		x = rect.left + 90;
 		y = rect.top + 70;
 		for (int n = 0; n < 8; n++)
 		{
-			CString s;
-			s = (regs[14] & 1 << n) ? "1" : "-";
+			const std::string s((regs.CC & 1 << n) ? "1" : "-");
 			SetRect(&rc, x, y, x + 25, y + 20);
-			DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			x += 25;
 		}
 
 		x = rect.left + 390;
 		y = rect.top + 70;
 		SetRect(&rc, x, y, x + 45, y + 20);
-		s.Format("%02X", regs[15]);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		s = ToHexString(regs.DP, 2);
+		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 		x += 50;
-		s.Format("%02X", regs[16]);
-		SetRect(&rc, x, y, x + 45, y + 20);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		if (regs.MD.has_value())
+		{
+			s = ToHexString(regs.MD.value(), 2);
+			SetRect(&rc, x, y, x + 45, y + 20);
+			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		}
 
 		x += 40;
 		gap = 15;
-		s.Format("%02X", regs[17]);
-		SetRect(&rc, x + 10 + gap, y, x + 45, y + 20);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		s.Format("%02X", regs[18]);
-		SetRect(&rc, x + 45, y, x + 80 - gap, y + 20);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		if (regs.V.has_value())
+		{
+			s = ToHexString(regs.V.value(), 4);
+			SetRect(&rc, x + 10 + gap, y, x + 80 - gap, y + 20);
+			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		}
 
 		SetTextColor(hdc, RGB(138, 27, 255));
 		y = rect.top + 100;
-		s.Format("W, MD, V are 6309 CPU only");
+		s = "W, MD, V are 6309 CPU only";
 		SetRect(&rc, rect.right - 200, y, rect.right - 10, y + 20);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
+		DrawText(hdc, s.c_str(), s.size(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
 
 		// Cleanup.
 		DeleteObject(pen);
 		DeleteObject(hFont);
 	}
 
-	void HaltCPU()
-	{
-		EnterCriticalSection(&EmuState.WatchCriticalSection);
-		EmuState.CPUControl = 'H';
-		LeaveCriticalSection(&EmuState.WatchCriticalSection);
-	}
 
-	void RunCPU()
-	{
-		EnterCriticalSection(&EmuState.WatchCriticalSection);
-		EmuState.CPUControl = 'R';
-		LeaveCriticalSection(&EmuState.WatchCriticalSection);
-	}
-
-	void StepCPU()
-	{
-		EnterCriticalSection(&EmuState.WatchCriticalSection);
-		EmuState.CPUControl = 'S';
-		LeaveCriticalSection(&EmuState.WatchCriticalSection);
-	}
-
-	LRESULT CALLBACK ProcessorState(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+	INT_PTR CALLBACK ProcessorStateDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (message)
 		{
@@ -358,20 +356,20 @@ namespace ProcessorState
 			switch (LOWORD(wParam))
 			{
 			case IDC_BTN_CPU_HALT:
-				HaltCPU();
+				EmuState.Debugger.QueueHalt();
 				break;
 			case IDC_BTN_CPU_RUN:
-				RunCPU();
+				EmuState.Debugger.QueueRun();
 				break;
 			case IDC_BTN_CPU_STEP:
-				StepCPU();
+				EmuState.Debugger.QueueStep();
 				break;
 			case IDCLOSE:
 			case WM_DESTROY:
 				KillTimer(hDlg, IDT_PROC_TIMER);
 				DeleteDC(backDC);
 				DestroyWindow(hDlg);
-				EmuState.ProcessorWindow = NULL;
+				ProcessorStateWindow = NULL;
 				break;
 			}
 
@@ -379,4 +377,21 @@ namespace ProcessorState
 		}
 		return FALSE;
 	}
+
+} } } }
+
+
+void VCC::Debugger::UI::OpenProcessorStateWindow(HINSTANCE instance, HWND parent)
+{
+	if (ProcessorStateWindow == NULL)
+	{
+		ProcessorStateWindow = CreateDialog(
+			instance,
+			MAKEINTRESOURCE(IDD_PROCESSOR_STATE),
+			parent,
+			ProcessorStateDlgProc);
+		ShowWindow(ProcessorStateWindow, SW_SHOWNORMAL);
+	}
+
+	SetFocus(ProcessorStateWindow);
 }

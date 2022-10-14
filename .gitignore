@@ -14,7 +14,6 @@
 *.exe
 *.ncb
 *.vcproj.*
-*.vcxproj.filters
 *.suo
 *.sdf
 *.opensdf
@@ -36,3 +35,4 @@ vcc/disk11.rom
 *.swp
 *.*~
 *~
+/TestFiles

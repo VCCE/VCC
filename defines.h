@@ -19,7 +19,11 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "Debugger.h"
 #include <cstdint>
+#include <atomic>
+#include <windows.h>
+
 
 //Speed throttling
 #define FRAMEINTERVAL 120	//Number of frames to sum the framecounter over
@@ -45,68 +49,52 @@ This file is part of VCC (Virtual Color Computer).
 #define FIRQ	2
 #define NMI		3
 
+
 extern void (*CPUInit)(void);
 extern int  (*CPUExec)( int);
 extern void (*CPUReset)(void);
 extern void (*CPUAssertInterupt)(unsigned char,unsigned char);
 extern void (*CPUDeAssertInterupt)(unsigned char);
 extern void (*CPUForcePC)(unsigned short);
-extern void (*CPUState)(unsigned char*, unsigned char*, int);
-extern char (*CPUControl)(unsigned char, unsigned short*, char);
+extern void (*CPUSetBreakpoints)(const std::vector<unsigned short>&);
+extern VCC::CPUState (*CPUGetState)();
 
 
-typedef struct 
+struct SystemState
 {
-HWND			WindowHandle;
-HWND			ConfigDialog;
-HWND            MemoryWindow;
-HWND            ProcessorWindow;
-HWND            BreakpointWindow;
-HWND			MMUMonitorWindow;
+    HWND			WindowHandle;
+    HWND			ConfigDialog;
+	HWND            ProcessorWindow;
 
-HINSTANCE		WindowInstance;
-unsigned char	*RamBuffer;
-unsigned short	*WRamBuffer;
-unsigned char	RamSize;
-double			CPUCurrentSpeed;
-unsigned char	DoubleSpeedMultiplyer;
-unsigned char	DoubleSpeedFlag;
-unsigned char	TurboSpeedFlag;
-unsigned char	CpuType;
-unsigned char	FrameSkip;
-unsigned char	BitDepth;
-unsigned char	*PTRsurface8;
-unsigned short	*PTRsurface16;
-unsigned int	*PTRsurface32;
-long			SurfacePitch;
-unsigned short	LineCounter;
-unsigned char	ScanLines;
-//bool			InRender;
-//unsigned char	PauseEmuLoop;
-//unsigned char	Waiting;
-unsigned char	EmulationRunning;
-unsigned char	ResetPending;
-POINT			WindowSize;
-unsigned char	FullScreen;
-unsigned char	MousePointer;
-char			StatusLine[256];
+    HINSTANCE		WindowInstance;
+    unsigned char	*RamBuffer;
+    unsigned short	*WRamBuffer;
+    std::atomic<unsigned char>	RamSize;
+    double			CPUCurrentSpeed;
+    unsigned char	DoubleSpeedMultiplyer;
+    unsigned char	DoubleSpeedFlag;
+    unsigned char	TurboSpeedFlag;
+    unsigned char	CpuType;
+    unsigned char	FrameSkip;
+    unsigned char	BitDepth;
+    unsigned char	*PTRsurface8;
+    unsigned short	*PTRsurface16;
+    unsigned int	*PTRsurface32;
+    long			SurfacePitch;
+    unsigned short	LineCounter;
+    unsigned char	ScanLines;
+    unsigned char	EmulationRunning;
+    unsigned char	ResetPending;
+    POINT			WindowSize;
+    unsigned char	FullScreen;
+    unsigned char	MousePointer;
+    char			StatusLine[256];
 
-// Debugger Package ------------------
-unsigned char*  WatchRamBuffer;
-unsigned int    WatchRamSize;
-unsigned char   WatchProcState[20];
-unsigned char   WatchMMUState[20];
-unsigned char*  WatchMMUPage;
+	//	
+	VCC::Debugger::Debugger Debugger;
+};
 
-char            CPUControl = ' ';
-unsigned short* CPUBreakpoints = NULL;
-unsigned char   CPUNumBreakpoints = 0;
-unsigned char   MMUPage = 0;
-
-CRITICAL_SECTION WatchCriticalSection;
-// Debugger Package ------------------
-
-} SystemState;
+extern SystemState EmuState;
 
 static char RateList[4][7]={"Mute","11025","22050","44100"};
 static unsigned short iRateList[4]={0,11025,22050,44100};

@@ -19,7 +19,7 @@
     <SccLocalPath />
     <ProjectGuid>{822E50CF-A326-4B7A-A2CA-2A4C4055FC34}</ProjectGuid>
     <ProjectName>vcc</ProjectName>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" Label="Configuration">
@@ -28,13 +28,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v140_xp</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -85,6 +85,7 @@
       <ProgramDataBaseFileName>$(OutDir)</ProgramDataBaseFileName>
       <CompileAs>CompileAsCpp</CompileAs>
       <AdditionalOptions>/arch:SSE</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -105,7 +106,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)Vcc.exe</OutputFile>
-      <AdditionalDependencies>nafxcw.lib;libcmt.lib;ddraw.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcmt.lib;ddraw.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>
       </AdditionalOptions>
       <IgnoreSpecificDefaultLibraries>nafxcw.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
@@ -119,7 +120,6 @@
       <Optimization>Disabled</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level3</WarningLevel>
-      <MinimalRebuild>true</MinimalRebuild>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>$(OutDir)</AssemblerListingLocation>
@@ -128,6 +128,7 @@
       <ObjectFileName>$(OutDir)</ObjectFileName>
       <ProgramDataBaseFileName>$(OutDir)</ProgramDataBaseFileName>
       <CompileAs>CompileAsCpp</CompileAs>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -149,7 +150,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)Vcc.exe</OutputFile>
-      <AdditionalDependencies>nafxcwd.lib;libcmtd.lib;ddraw.lib;dxguid.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcmtd.lib;ddraw.lib;dxguid.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <IgnoreSpecificDefaultLibraries>nafxcwd.lib;libcmtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -167,6 +168,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
     <ClCompile>
       <ProgramDataBaseFileName>$(OutDir)</ProgramDataBaseFileName>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -176,6 +178,8 @@
     <ClCompile Include="coco3.cpp" />
     <ClCompile Include="CommandLine.c" />
     <ClCompile Include="config.c" />
+    <ClCompile Include="Debugger.cpp" />
+    <ClCompile Include="DebuggerUtils.cpp" />
     <ClCompile Include="DirectDrawInterface.cpp" />
     <ClCompile Include="Fileops.c" />
     <ClCompile Include="hd6309.c" />
@@ -211,6 +215,7 @@
     <ClInclude Include="coco3.h" />
     <ClInclude Include="CommandLine.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="Debugger.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="DirectDrawInterface.h" />
     <ClInclude Include="fileops.h" />
@@ -222,11 +227,13 @@
     <ClInclude Include="keyboardLayout.h" />
     <ClInclude Include="keyboardEdit.h" />
     <ClInclude Include="logger.h" />
+    <ClInclude Include="MachineDefs.h" />
     <ClInclude Include="mc6809.h" />
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6821.h" />
     <ClInclude Include="MemoryMap.h" />
     <ClInclude Include="MMUMonitor.h" />
+    <ClInclude Include="optional.hpp" />
     <ClInclude Include="pakinterface.h" />
     <ClInclude Include="ProcessorState.h" />
     <ClInclude Include="quickload.h" />
@@ -235,6 +242,7 @@
     <ClInclude Include="tcc1014mmu.h" />
     <ClInclude Include="tcc1014registers.h" />
     <ClInclude Include="throttle.h" />
+    <ClInclude Include="DebuggerUtils.h" />
     <ClInclude Include="Vcc.h" />
     <ClInclude Include="xDebug.h" />
   </ItemGroup>

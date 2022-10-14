@@ -1,0 +1,295 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Audio.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Cassette.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="coco3.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandLine.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="config.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectDrawInterface.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Fileops.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="hd6309.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="_xDebug.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="iobus.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="joystickinput.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="keyboard.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="keyboardEdit.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="keyboardLayout.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="logger.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="mc6809.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="mc6821.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="pakinterface.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="quickload.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="tcc1014registers.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="tcc1014mmu.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="tcc1014graphics.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="throttle.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Vcc.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger.cpp">
+      <Filter>Source\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="MMUMonitor.cpp">
+      <Filter>Source\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessorState.cpp">
+      <Filter>Source\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="Breakpoints.cpp">
+      <Filter>Source\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="MemoryMap.cpp">
+      <Filter>Source\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="DebuggerUtils.cpp">
+      <Filter>Source\Debugger</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="audio.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Cassette.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="cc2font.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="cc3font.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="coco3.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandLine.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="defines.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectDrawInterface.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="fileops.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="hd6309.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="hd6309defs.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="iobus.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="joystickinput.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="keyboard.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="keyboardEdit.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="keyboardLayout.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="logger.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="mc6809.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="mc6821.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="mc6809defs.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="pakinterface.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="quickload.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Vcc.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="throttle.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="tcc1014registers.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="tcc1014mmu.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="tcc1014graphics.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="xDebug.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Breakpoints.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryMap.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="MMUMonitor.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessorState.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="Debugger.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="DebuggerUtils.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="MachineDefs.h" />
+    <ClInclude Include="optional.hpp">
+      <Filter>Headers\tl</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\3guys.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\binfile.ico">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\composite.ico">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\hitachi.ico">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\ico00004.ico">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\icon1.ico">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\joystick.ico">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="joystick.ico">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\Keyboard.ico">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\speaker1.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\speaker2.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\vcc.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\speaker.ico">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\rgb.ico">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\progpack.ico">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\mouse.ico">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="resources\moto.ico">
+      <Filter>Resources</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{0635a928-6fc4-430f-b317-3d9c1a9887fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{f166829a-cdba-43c2-803a-9f917201abfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{d6184637-cbc4-403b-90e3-ba08f92b040f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Debugger">
+      <UniqueIdentifier>{b14bb076-40e2-4e8b-95e5-7646003a0078}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Debugger">
+      <UniqueIdentifier>{8e101e68-6057-477e-b4ea-0ae8d7d2fdc3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\tl">
+      <UniqueIdentifier>{5c1844b7-53e8-4522-b832-5794f9429be4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="resources\cursor1.cur">
+      <Filter>Resources</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Vcc.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

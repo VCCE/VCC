@@ -1,25 +1,25 @@
-/*
-This file is part of VCC (Virtual Color Computer).
-
-	VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-
-	Breakpoint Display - Part of the Debugger package for VCC
-	Author: Mike Rojas
-*/
-
-#include <afx.h>
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//		VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
+//		it under the terms of the GNU General Public License as published by
+//		the Free Software Foundation, either version 3 of the License, or
+//		(at your option) any later version.
+//	
+//		VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+//		but WITHOUT ANY WARRANTY; without even the implied warranty of
+//		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//		GNU General Public License for more details.
+//	
+//		You should have received a copy of the GNU General Public License
+//		along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+//	
+//		Breakpoint Display - Part of the Debugger package for VCC
+//		Authors: Mike Rojas, Chet Simpson
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING	//	FIXME-CHET: Temporary until codecvt deprecation can be addressed
+#include "Breakpoints.h"
 #include "defines.h"
+#include "Debugger.h"
+#include "DebuggerUtils.h"
 #include "resource.h"
 #include <commdlg.h>
 #include <map>
@@ -29,35 +29,36 @@ This file is part of VCC (Virtual Color Computer).
 #include <vector>
 #include <regex>
 #include <Richedit.h>
+#include <codecvt>
+#include <locale>
 
-using namespace std;
 
-extern SystemState EmuState;
-
-namespace Breakpoints
+namespace VCC { namespace Debugger { namespace UI { namespace
 {
+	HWND BreakpointsWindow = NULL;
 	HWND hWndBreakpoints;
 	WNDPROC oldEditProc;
 
 	bool BrowseDialogOpen = false;
 	unsigned short PriorCPUHaltAddress = 0;
 
-	typedef struct {
+	struct Breakpoint
+	{
 		int id;
 		int addr;
 		int line;
 		bool enabled;
-	} Breakpoint;
+	};
 
-	map<int, Breakpoint> mapBreakpoints;
-	map<int, int> mapLineAddr;
-	map<int, int> mapAddrLine;
+	std::map<int, Breakpoint> mapBreakpoints;
+	std::map<int, int> mapLineAddr;
+	std::map<int, int> mapAddrLine;
 
-	vector<string> split(const string& input, const string& rgx) 
+	std::vector<std::string> split(const std::string& input, const std::string& rgx) 
 	{
 		// passing -1 as the submatch index parameter performs splitting
-		regex re(rgx);
-		sregex_token_iterator
+		std::regex re(rgx);
+		std::sregex_token_iterator
 			first{ input.begin(), input.end(), re, -1 },
 			last;
 		return { first, last };
@@ -81,31 +82,30 @@ namespace Breakpoints
 		SendDlgItemMessage(hWndBreakpoints, IDC_EDIT_SOURCE, WM_SETTEXT, strlen(source), (LPARAM)(LPCSTR)source);
 
 		int nLines = 0;
-		CString loaded;
-		loaded.Format("%d lines loaded", nLines);
-		SendDlgItemMessage(hWndBreakpoints, IDC_LINES_LOADED, WM_SETTEXT, loaded.GetLength(), (LPARAM)(LPCSTR)loaded);
+		std::string loaded(std::to_string(nLines) + " lines loaded");
+		SendDlgItemMessage(hWndBreakpoints, IDC_LINES_LOADED, WM_SETTEXT, loaded.size(), (LPARAM)ToLPCSTR(loaded));
 
-		ifstream file(source);
+		std::ifstream file(source);
 		if (!file.is_open())
 		{
 			return false;
 		}
 
-		CString lines;
+		std::string lines;
 
-		for (string line; getline(file, line); )
+		for (std::string line; getline(file, line); )
 		{
-			string addr = line.length() >= 4 ? line.substr(0, 4): string(4, ' ');
-			string opcodes = line.length() >= 20 ? line.substr(5, 16) : string(16, ' ');
-			string sourceline = line.length() >= 45 ? line.substr(22, 25) : string(25, ' ');
-			string code = line.length() >= 60 ? line.substr(56) : "";
+			auto addr = line.length() >= 4 ? line.substr(0, 4): std::string(4, ' ');
+			auto opcodes = line.length() >= 20 ? line.substr(5, 16) : std::string(16, ' ');
+			auto sourceline = line.length() >= 45 ? line.substr(22, 25) : std::string(25, ' ');
+			auto code = line.length() >= 60 ? line.substr(56) : "";
 
-			if (addr != string(4, ' '))
+			if (addr != std::string(4, ' '))
 			{
 				unsigned int addrInt;
 				std::stringstream ss;
 				ss << addr;
-				ss >> hex >> addrInt;
+				ss >> std::hex >> addrInt;
 				mapLineAddr[nLines] = addrInt;		// Map address to listing line number.
 				mapAddrLine[addrInt] = nLines;		// Map listing line number to address.
 			}
@@ -119,11 +119,11 @@ namespace Breakpoints
 			nLines++;
 		}
 
-		loaded.Format("%d lines loaded", nLines);
+		loaded = std::to_string(nLines) + " lines loaded";
 		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_SETSEL, WPARAM(0), LPARAM(-1));
-		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_REPLACESEL, WPARAM(TRUE), (LPARAM)(LPCSTR)(lines));
+		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_REPLACESEL, WPARAM(TRUE), (LPARAM)ToLPCSTR(lines));
 		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_LINESCROLL, 0, (LPARAM)-nLines);
-		SendDlgItemMessage(hWndBreakpoints, IDC_LINES_LOADED, WM_SETTEXT, loaded.GetLength(), (LPARAM)(LPCSTR)loaded);
+		SendDlgItemMessage(hWndBreakpoints, IDC_LINES_LOADED, WM_SETTEXT, loaded.size(), (LPARAM)ToLPCSTR(loaded));
 		return true;
 	}
 
@@ -133,7 +133,7 @@ namespace Breakpoints
 		{
 			return false;
 		}
-		BrowseDialogOpen = false;
+		BrowseDialogOpen = true;
 
 		OPENFILENAME ofn;
 		char SourceFileName[MAX_PATH] = "";
@@ -208,13 +208,15 @@ namespace Breakpoints
 		SendMessage(hCtl, EM_SETSEL, currentCharStart + pos, currentCharEnd);
 	}
 
-	CString GetSelectedSourceText()
+	std::string GetSelectedSourceText()
 	{
 		WCHAR buf[1000];
 		memset(buf, 0, sizeof(buf));
 		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_GETSELTEXT, 0, (LPARAM)&buf);
-		CString start = buf;
-		return start;
+
+		//setup converter
+		using convert_type = std::codecvt_utf8<wchar_t>;
+		return std::wstring_convert<convert_type, wchar_t>().to_bytes( buf );
 	}
 
 	void SetLineColor(int line, int rgb)
@@ -231,10 +233,9 @@ namespace Breakpoints
 	void UpdateBreakpointUI(Breakpoint bp)
 	{
 		HWND hListCtl = GetDlgItem(hWndBreakpoints, IDC_LIST_BREAKPOINTS);
-		CString s;
-		CString enabled = bp.enabled ? "ON" : "off";
-		s.Format("Breakpoint #%d\t%s\taddr = %X", bp.id, (LPCSTR)enabled, bp.addr);
-		int pos = SendMessage(hListCtl, LB_ADDSTRING, 0, (LPARAM)(LPCSTR)s);
+		const std::string enabled = bp.enabled ? "On" : "Off";
+		std::string s = "Breakpoint #" + std::to_string(bp.id) + "\t" + enabled + "\taddr = " + ToHexString(bp.addr, 0, false);
+		int pos = SendMessage(hListCtl, LB_ADDSTRING, 0, (LPARAM)ToLPCSTR(s));
 		SendMessage(hListCtl, LB_SETITEMDATA, pos, (LPARAM)bp.id);
 		SendMessage(hListCtl, LB_SETCURSEL, pos, 0);
 
@@ -243,36 +244,28 @@ namespace Breakpoints
 		EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_OFF), true);
 		
 		SelectSourceText(bp.line, 4);
-		s.Format("%s%2d", bp.enabled ? "BK" : "--", bp.id);
-		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_REPLACESEL, WPARAM(FALSE), (LPARAM)(LPCSTR)s);
+		s = (bp.enabled ? "BK" : "--") + ToDecimalString(bp.id, 2, false);
+		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_REPLACESEL, WPARAM(FALSE), (LPARAM)ToLPCSTR(s));
 		SetLineColor(bp.line, RGB(255, 100, 100));
 	}
 
 	void UpdateCPUState()
 	{
-		EnterCriticalSection(&EmuState.WatchCriticalSection);
-
-		EmuState.CPUNumBreakpoints = mapBreakpoints.size();
-		if (EmuState.CPUBreakpoints != NULL)
-		{
-			free(EmuState.CPUBreakpoints);
-		}
-		EmuState.CPUBreakpoints = (unsigned short*)malloc(sizeof(unsigned short) * EmuState.CPUNumBreakpoints);
+		VCC::Debugger::Debugger::breakpointsbuffer_type breakpoints;
 
 		int n = 0;
-		map<int, Breakpoint>::iterator it = mapBreakpoints.begin();
+		std::map<int, Breakpoint>::iterator it = mapBreakpoints.begin();
 		while (it != mapBreakpoints.end())
 		{
 			Breakpoint bp = it->second;
 			if (bp.enabled)
 			{
-				EmuState.CPUBreakpoints[n++] = bp.addr;
+				breakpoints.push_back(bp.addr);
 			}
 			it++;
 		}
-		EmuState.CPUControl = 'B';
 
-		LeaveCriticalSection(&EmuState.WatchCriticalSection);
+		EmuState.Debugger.SetBreakpoints(move(breakpoints));	//	FIXME: Check if move is still needed or if this the xlvalue is ....
 	}
 
 	int AddBreakpoint(int line)
@@ -340,9 +333,8 @@ namespace Breakpoints
 				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_OFF), false);
 
 				SelectSourceText(bp.line, 4);
-				CString s;
-				s.Format("    ");
-				SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_REPLACESEL, WPARAM(FALSE), (LPARAM)(LPCSTR)s);
+				const std::string s("    ");
+				SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_REPLACESEL, WPARAM(FALSE), (LPARAM)ToLPCSTR(s));
 				SetLineColor(bp.line, RGB(255, 255, 255));
 				break;
 			}
@@ -359,8 +351,8 @@ namespace Breakpoints
 			return;
 		}
 		SelectSourceText(currentLine, 4);
-		CString start = GetSelectedSourceText();
-		if (start.Left(4) == "    ")
+		const std::string start = GetSelectedSourceText();
+		if (start.substr(0, 4) == "    ")
 		{
 			AddBreakpoint(currentLine);
 		}
@@ -426,11 +418,11 @@ namespace Breakpoints
 		}
 
 		SelectSourceText(line, 4);
-		CString start = GetSelectedSourceText();
-		if (start.Left(2) == "BK" || start.Left(2) == "--")
+		const std::string start(GetSelectedSourceText());
+		if (start.substr(0, 2) == "BK" || start.substr(0, 2) == "--")
 		{
-			CString nn = start.Mid(2, 2);
-			int id = atoi(nn);
+			const std::string nn = start.substr(2, 2);
+			int id = atoi(nn.c_str());
 			RemoveBreakpoint(id);
 		}
 		else
@@ -487,17 +479,17 @@ namespace Breakpoints
 		if (key == 'E' || key == 'e')
 		{
 			SelectSourceText(currentLine, 4);
-			CString start = GetSelectedSourceText();
-			if (start.Left(2) == "BK")
+			const std::string start = GetSelectedSourceText();
+			if (start.substr(0, 2) == "BK")
 			{
-				CString nn = start.Mid(2, 2);
-				int id = atoi(nn);
+				const std::string nn = start.substr(2, 2);
+				int id = atoi(nn.c_str());
 				EnableBreakpoint(id, false);
 			}
-			if (start.Left(2) == "--")
+			if (start.substr(0, 2) == "--")
 			{
-				CString nn = start.Mid(2, 2);
-				int id = atoi(nn);
+				const std::string nn = start.substr(2, 2);
+				int id = atoi(nn.c_str());
 				EnableBreakpoint(id, true);
 			}
 		}
@@ -521,16 +513,11 @@ namespace Breakpoints
 
 	void CheckCPUState()
 	{
-		char CPUState;
-		unsigned short PC;
-		EnterCriticalSection(&EmuState.WatchCriticalSection);
-		PC = (EmuState.WatchProcState[12] << 8) + EmuState.WatchProcState[13];
-		CPUState = EmuState.WatchProcState[19];
-		LeaveCriticalSection(&EmuState.WatchCriticalSection);
-		if (CPUState == 'H' && PriorCPUHaltAddress != PC)
+		tl::optional<unsigned short> currentPc;
+		if (EmuState.Debugger.IsHalted(currentPc) && PriorCPUHaltAddress != currentPc)
 		{
-			LocateBreakpoint(PC);
-			PriorCPUHaltAddress = PC;
+			LocateBreakpoint(currentPc.value());
+			PriorCPUHaltAddress = currentPc.value();
 		}
 	}
 
@@ -551,7 +538,7 @@ namespace Breakpoints
 		return 0;
 	}
 
-	LRESULT CALLBACK Breakpoints(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+	INT_PTR CALLBACK BreakpointsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (message)
 		{
@@ -633,7 +620,7 @@ namespace Breakpoints
 			case WM_DESTROY:
 				KillTimer(hDlg, IDT_BRKP_TIMER);
 				DestroyWindow(hDlg);
-				EmuState.BreakpointWindow = NULL;
+				BreakpointsWindow = NULL;
 				break;
 			}
 
@@ -641,4 +628,22 @@ namespace Breakpoints
 		}
 		return FALSE;
 	}
+
+} } } }
+
+
+void VCC::Debugger::UI::OpenBreakpointsWindow(HINSTANCE instance, HWND parent)
+{
+	if (BreakpointsWindow == NULL)
+	{
+		BreakpointsWindow = CreateDialog(
+			instance,
+			MAKEINTRESOURCE(IDD_BREAKPOINTS),
+			parent,
+			BreakpointsDlgProc);
+
+		ShowWindow(BreakpointsWindow, SW_SHOWNORMAL);
+	}
+
+	SetFocus(BreakpointsWindow);
 }

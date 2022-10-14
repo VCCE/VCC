@@ -1,5 +1,7 @@
 #ifndef __TCC1014MMU_H__
 #define __TCC1014MMU_H__
+#include <array>
+
 
 /*
 Copyright 2015 by Joseph Forgione
@@ -18,8 +20,10 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+#include "Debugger.h"
 
-void MMUState(unsigned char*, unsigned char, unsigned char*);
+VCC::MMUState GetMMUState();
+void GetMMUPage(size_t page, std::array<unsigned char, 8192>& outBuffer);
 
 void MemWrite8(unsigned char,unsigned short );
 void MemWrite16(unsigned short,unsigned short );

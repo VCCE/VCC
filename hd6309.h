@@ -24,8 +24,8 @@ void HD6309Reset(void);
 void HD6309AssertInterupt(unsigned char,unsigned char);
 void HD6309DeAssertInterupt(unsigned char);// 4 nmi 2 firq 1 irq
 void HD6309ForcePC(unsigned short);
-void HD6309State(unsigned char*, unsigned char*, int);
-char HD6309Control(unsigned char, unsigned short*, char);
+VCC::CPUState HD6309GetState();
+void HD6309SetBreakpoints(const std::vector<unsigned short>& breakpoints);
 //unsigned short GetPC(void);
 
 void HD6309Init_s(void);

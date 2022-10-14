@@ -20,6 +20,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "defines.h"
 #include "hd6309.h"
 #include "hd6309defs.h"
 #include "tcc1014mmu.h"
@@ -133,9 +134,7 @@ static signed short *spostword=(signed short *)&postword;
 static char InInterupt=0;
 static int gCycleFor;
 
-static char CPUControlState = 'R';
-static unsigned char  CPUNumBreakpoints = 0;
-static unsigned short CPUBreakpoints[256] = { 0 };
+static std::vector<unsigned short> CPUBreakpoints;
 
 static unsigned char NatEmuCycles65 = 6;
 static unsigned char NatEmuCycles64 = 6;
@@ -315,66 +314,40 @@ void HD6309Init(void)
 	return;
 }
 
-void HD6309State(unsigned char* regs, unsigned char* mem, int ramsize)
+VCC::CPUState HD6309GetState()
 {
-	regs[0] = A_REG;
-	regs[1] = B_REG;
-	regs[2] = E_REG;
-	regs[3] = F_REG;
-	unsigned short reg = X_REG;
-	regs[4] = reg >> 8;
-	regs[5] = reg & 0xFF;
-	reg = Y_REG;
-	regs[6] = reg >> 8;
-	regs[7] = reg & 0xFF;
-	reg = S_REG;
-	regs[8] = reg >> 8;
-	regs[9] = reg & 0xFF;
-	reg = U_REG;
-	regs[10] = reg >> 8;
-	regs[11] = reg & 0xFF;
-	reg = PC_REG;
-	regs[12] = reg >> 8;
-	regs[13] = reg & 0xFF;
-	regs[14] = ccbits;
-	regs[15] = dp.Reg;
-	regs[16] = mdbits;
-	reg = V_REG;
-	regs[17] = reg >> 8;
-	regs[18] = reg & 0xFF;
-	regs[19] = CPUControlState;
-	for (int addr = 0; addr < ramsize; addr++)
-	{
-		mem[addr] = SafeMemRead8(addr);
-//		mem[addr] = GetMem(addr);
-	}
+	VCC::CPUState regs;
+
+	regs.CC = ccbits;
+	regs.DP = dp.Reg;
+	regs.MD = mdbits;
+#pragma push_macro("E")
+#pragma push_macro("F")
+#pragma push_macro("V")
+#undef E
+#undef F
+#undef V
+	regs.A = A_REG;
+	regs.B = B_REG;
+	regs.E = E_REG;
+	regs.F = F_REG;
+	regs.X = X_REG;
+	regs.Y = Y_REG;
+	regs.U = U_REG;
+	regs.S = S_REG;
+	regs.V = V_REG;
+	regs.PC = PC_REG;
+#pragma pop_macro("E")
+#pragma pop_macro("F")
+#pragma pop_macro("V")
+
+	return regs;
 }
 
-char HD6309Control(unsigned char nBps, unsigned short* breakpoints, char cpuCmd)
+
+void HD6309SetBreakpoints(const std::vector<unsigned short>& breakpoints)
 {
-	// Run -> Halt
-	if (CPUControlState == 'R' && cpuCmd == 'H')
-	{
-		CPUControlState = 'H';
-	}
-	// Halt -> Run
-	if (CPUControlState == 'H' && cpuCmd == 'R')
-	{
-		CPUControlState = 'R';
-	}
-	// Halt -> Step
-	if (CPUControlState == 'H' && cpuCmd == 'S')
-	{
-		CPUControlState = 'S';
-	}
-	// Update Breakpoints
-	if (cpuCmd == 'B')
-	{
-		CPUNumBreakpoints = nBps;
-		memset(CPUBreakpoints, 0, sizeof(CPUBreakpoints));
-		memcpy(CPUBreakpoints, breakpoints, CPUNumBreakpoints * sizeof(CPUBreakpoints[0]));
-	}
-	return CPUControlState;
+	CPUBreakpoints = breakpoints;
 }
 
 
@@ -7032,31 +7005,27 @@ int HD6309Exec(int CycleFor)
 
 
 		// CPU is halted.
-		if (CPUControlState == 'H')
+		if (EmuState.Debugger.IsHalted())
 		{
 			return(CycleFor - CycleCounter);
 		}
 
 		// ANy CPU Breakpoints set?
-		if (CPUControlState != 'S' && CPUNumBreakpoints)
+		if (!EmuState.Debugger.IsStepping() && !CPUBreakpoints.empty())
 		{
-			for (int n = 0; n < CPUNumBreakpoints; n++)
+			if(find(CPUBreakpoints.begin(), CPUBreakpoints.end(), pc.Reg) != CPUBreakpoints.end())
 			{
-				// Are we about to read this memory address?
-				if (CPUBreakpoints[n] == pc.Reg)
-				{
-					CPUControlState = 'H';
-					return(CycleFor - CycleCounter);
-				}
+				EmuState.Debugger.Halt();
+				return(CycleFor - CycleCounter);
 			}
 		}
 
 		JmpVec1[MemRead8(PC_REG++)](); // Execute instruction pointed to by PC_REG
 
 		// CPU is stepped.
-		if (CPUControlState == 'S')
+		if (EmuState.Debugger.IsStepping())
 		{
-			CPUControlState = 'H';
+			EmuState.Debugger.Halt();
 			break;
 		}
 
