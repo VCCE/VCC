@@ -91,7 +91,7 @@ namespace VCC { namespace Debugger
 			unsigned short addr;
 			unsigned char value;
 			PendingWrite(unsigned short addr, unsigned char value) : addr(addr), value(value) {};
-			PendingWrite() {};
+			PendingWrite() : addr(0),value(0) {};
 		};
 
 		bool HasPendingWriteNoLock() const;
