@@ -575,8 +575,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,1,0,7
- PRODUCTVERSION 2,1,0,7
+ FILEVERSION 2,1,0,8
+ PRODUCTVERSION 2,1,0,8
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x29L
@@ -594,7 +594,7 @@ BEGIN
             VALUE "Comments", "How bored are you that your reading this?"
             VALUE "CompanyName", "Not Radio Shack"
             VALUE "FileDescription", "Vcc"
-            VALUE "FileVersion", "2.1.0.7"
+            VALUE "FileVersion", "2.1.0.8"
             VALUE "InternalName", "Poco"
             VALUE "LegalCopyright", "Copyright 2015 by BitRot Software"
             VALUE "LegalTrademarks", "BLAZEMONGER!"
@@ -702,7 +702,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_APP_TITLE           "VCC 2.1.0.7 Tandy Color Computer 3 Emulator"
+    IDS_APP_TITLE           "VCC 2.1.0.8 Tandy Color Computer 3 Emulator"
     IDS_CATNUMBER           "26-3334"
 END
 
