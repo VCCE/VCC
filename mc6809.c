@@ -127,7 +127,8 @@ VCC::CPUState MC6809GetState()
 	VCC::CPUState regs;
 
 	regs.CC = ccbits;
-	regs.DP = dp.Reg;
+	//	FIXME: We do a static_Cast here because it's better than relying on the undefined behavior caused by cpuregister.
+	regs.DP = static_cast<unsigned char>(dp.Reg);
 	regs.A = A_REG;
 	regs.B = B_REG;
 	regs.X = X_REG;

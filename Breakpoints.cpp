@@ -17,20 +17,20 @@
 //		Authors: Mike Rojas, Chet Simpson
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING	//	FIXME-CHET: Temporary until codecvt deprecation can be addressed
 #include "Breakpoints.h"
-#include "defines.h"
 #include "Debugger.h"
 #include "DebuggerUtils.h"
+#include "defines.h"
 #include "resource.h"
-#include <commdlg.h>
 #include <map>
 #include <fstream>
 #include <string>
 #include <sstream>
 #include <vector>
 #include <regex>
-#include <Richedit.h>
 #include <codecvt>
 #include <locale>
+#include <commdlg.h>
+#include <Richedit.h>
 
 
 namespace VCC { namespace Debugger { namespace UI { namespace
@@ -39,30 +39,19 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	HWND hWndBreakpoints;
 	WNDPROC oldEditProc;
 
-	bool BrowseDialogOpen = false;
 	unsigned short PriorCPUHaltAddress = 0;
 
 	struct Breakpoint
 	{
-		int id;
-		int addr;
-		int line;
+		unsigned int id;
+		unsigned int addr;
+		unsigned int line;
 		bool enabled;
 	};
 
 	std::map<int, Breakpoint> mapBreakpoints;
 	std::map<int, int> mapLineAddr;
 	std::map<int, int> mapAddrLine;
-
-	std::vector<std::string> split(const std::string& input, const std::string& rgx) 
-	{
-		// passing -1 as the submatch index parameter performs splitting
-		std::regex re(rgx);
-		std::sregex_token_iterator
-			first{ input.begin(), input.end(), re, -1 },
-			last;
-		return { first, last };
-	}
 
 	void ResizeWindow(int width, int height)
 	{
@@ -127,19 +116,13 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		return true;
 	}
 
-	bool SelectSourceListing()
+	void SelectSourceListing(HWND parentWindow)
 	{
-		if (BrowseDialogOpen)
-		{
-			return false;
-		}
-		BrowseDialogOpen = true;
-
 		OPENFILENAME ofn;
 		char SourceFileName[MAX_PATH] = "";
 		memset(&ofn, 0, sizeof(ofn));
 		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = NULL;
+		ofn.hwndOwner = parentWindow;
 		ofn.Flags = OFN_HIDEREADONLY;
 		ofn.hInstance = GetModuleHandle(0);
 		ofn.lpstrDefExt = "";
@@ -153,17 +136,11 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		ofn.lpstrTitle = "Load LWASM Source Listing";	// title bar string
 
 		int RetVal = GetOpenFileName(&ofn);
-		if (RetVal)
+		if (RetVal && !LoadSource(SourceFileName))
 		{
-			if (LoadSource(SourceFileName) == 0)
-			{
-				MessageBox(NULL, "Can't open source listing", "Error", 0);
-				return false;
-			}
+			MessageBox(NULL, "Can't open source listing", "Error", 0);
 		}
 
-		BrowseDialogOpen = false;
-		return true;
 	}
 
 	void SetupListingControl()
@@ -192,7 +169,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	int CurrentSourceLine()
 	{
 		HWND hCtl = GetDlgItem(hWndBreakpoints, IDC_SOURCE_LISTING);
-		int currentCharStart = SendMessage(hCtl, EM_LINEINDEX, -1, 0L);
+		int currentCharStart = SendMessage(hCtl, EM_LINEINDEX, WPARAM(-1), 0);
 		return SendMessage(hCtl, EM_LINEFROMCHAR, currentCharStart, 0);
 	}
 
@@ -251,16 +228,20 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	void UpdateCPUState()
 	{
-		VCC::Debugger::Debugger::breakpointsbuffer_type breakpoints;
+		Debugger::breakpointsbuffer_type breakpoints;
 
-		int n = 0;
 		std::map<int, Breakpoint>::iterator it = mapBreakpoints.begin();
 		while (it != mapBreakpoints.end())
 		{
 			Breakpoint bp = it->second;
 			if (bp.enabled)
 			{
-				breakpoints.push_back(bp.addr);
+				if (bp.addr > 0xffff)
+				{
+					throw std::out_of_range("Breakpoint address is too large");
+				}
+
+				breakpoints.push_back(static_cast<unsigned short>(bp.addr));
 			}
 			it++;
 		}
@@ -326,7 +307,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			if (itemId == id)
 			{
 				SendMessage(hListCtl, LB_DELETESTRING, n, 0);
-				SendMessage(hListCtl, LB_SETCURSEL, -1, 0);
+				SendMessage(hListCtl, LB_SETCURSEL, WPARAM(-1), 0);
 
 				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_DEL_BREAKPOINT), false);
 				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_ON), false);
@@ -513,11 +494,11 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	void CheckCPUState()
 	{
-		tl::optional<unsigned short> currentPc;
+		unsigned short currentPc;
 		if (EmuState.Debugger.IsHalted(currentPc) && PriorCPUHaltAddress != currentPc)
 		{
-			LocateBreakpoint(currentPc.value());
-			PriorCPUHaltAddress = currentPc.value();
+			LocateBreakpoint(currentPc);
+			PriorCPUHaltAddress = currentPc;
 		}
 	}
 
@@ -532,10 +513,9 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 				FindSourceLine();
 				return 0;
 			}
-		default:
-			return CallWindowProc(oldEditProc, wnd, msg, wParam, lParam);
 		}
-		return 0;
+
+		return CallWindowProc(oldEditProc, wnd, msg, wParam, lParam);
 	}
 
 	INT_PTR CALLBACK BreakpointsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -603,7 +583,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 				ListBoxSelection(HIWORD(wParam));
 				break;
 			case IDC_BTN_SOURCE_BROWSE:
-				SelectSourceListing();
+				SelectSourceListing(hDlg);
 				break;
 			case IDC_BTN_NEW_BREAKPOINT:
 				NewBreakPoint();

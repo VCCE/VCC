@@ -16,53 +16,18 @@
 //		Processor State Display - Part of the Debugger package for VCC
 //		Authors: Mike Rojas, Chet Simpson
 #include "ProcessorState.h"
-#include "defines.h"
 #include "Debugger.h"
 #include "DebuggerUtils.h"
+#include "defines.h"
 #include "resource.h"
+#include <stdexcept>
 
 
 namespace VCC { namespace Debugger { namespace UI { namespace
 {
 	HWND	ProcessorStateWindow = NULL;
-	HDC		backDC;
-	HBITMAP backBufferBMP;
-	RECT    backRect;
-	int		backBufferCX;
-	int		backBufferCY;
+	BackBufferInfo	BackBuffer_;
 
-
-	bool InitBackBuffer(HWND hWnd)
-	{
-		GetClientRect(hWnd, &backRect);
-
-		backRect.bottom -= 39;
-
-		backBufferCX = backRect.right - backRect.left;
-		backBufferCY = backRect.bottom - backRect.top;
-
-		HDC hdc = GetDC(hWnd);
-
-		backBufferBMP = CreateCompatibleBitmap(hdc, backBufferCX, backBufferCY);
-		if (backBufferBMP == NULL)
-		{
-			OutputDebugString("failed to create backBufferBMP");
-			return false;
-		}
-
-		backDC = CreateCompatibleDC(hdc);
-		if (backDC == NULL)
-		{
-			OutputDebugString("failed to create the backDC");
-			return false;
-		}
-
-		HBITMAP oldbmp = (HBITMAP)SelectObject(backDC, backBufferBMP);
-		DeleteObject(oldbmp);
-		ReleaseDC(hWnd, hdc);
-
-		return true;
-	}
 
 	void DrawCenteredText(HDC hdc, int left, int top, int right, int bottom, const std::string& text)
 	{
@@ -247,13 +212,10 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		DrawCenteredText(hdc, x + 10, y + 20, x + 45, y + 40, ToHexString(regs.A, 2));	//	A
 		DrawCenteredText(hdc, x + 45, y + 20, x + 80, y + 40, ToHexString(regs.B, 2));	//	B
 		x += 80;
-		if (regs.E.has_value())
+		if (EmuState.CpuType == 1)
 		{
-			DrawCenteredText(hdc, x + 10, y + 20, x + 45, y + 40, ToHexString(regs.E.value(), 2));	//	E
-		}
-		if (regs.F.has_value())
-		{
-			DrawCenteredText(hdc, x + 45, y + 20, x + 80, y + 40, ToHexString(regs.F.value(), 2));	//	F
+			DrawCenteredText(hdc, x + 10, y + 20, x + 45, y + 40, ToHexString(regs.E, 2));	//	E
+			DrawCenteredText(hdc, x + 45, y + 20, x + 80, y + 40, ToHexString(regs.F, 2));	//	F
 		}
 		x += 80;
 
@@ -273,7 +235,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		y = rect.top + 70;
 		for (int n = 0; n < 8; n++)
 		{
-			const std::string s((regs.CC & 1 << n) ? "1" : "-");
+			s = (regs.CC & 1 << n) ? "1" : "-";
 			SetRect(&rc, x, y, x + 25, y + 20);
 			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			x += 25;
@@ -286,18 +248,18 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 		x += 50;
-		if (regs.MD.has_value())
+		if (EmuState.CpuType == 1)
 		{
-			s = ToHexString(regs.MD.value(), 2);
+			s = ToHexString(regs.MD, 2);
 			SetRect(&rc, x, y, x + 45, y + 20);
 			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 		}
 
 		x += 40;
 		gap = 15;
-		if (regs.V.has_value())
+		if (EmuState.CpuType == 1)
 		{
-			s = ToHexString(regs.V.value(), 4);
+			s = ToHexString(regs.V, 4);
 			SetRect(&rc, x + 10 + gap, y, x + 80 - gap, y + 20);
 			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 		}
@@ -314,7 +276,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	}
 
 
-	INT_PTR CALLBACK ProcessorStateDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+	INT_PTR CALLBACK ProcessorStateDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 	{
 		switch (message)
 		{
@@ -323,7 +285,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			RECT Rect;
 			GetClientRect(hDlg, &Rect);
 
-			InitBackBuffer(hDlg);
+			BackBuffer_ = AttachBackBuffer(hDlg, 0, -39);
 
 			SetTimer(hDlg, IDT_PROC_TIMER, 64, (TIMERPROC)NULL);
 
@@ -335,8 +297,8 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hDlg, &ps);
 
-			DrawProcessorState(backDC, &backRect);
-			BitBlt(hdc, 0, 0, backBufferCX, backBufferCY, backDC, 0, 0, SRCCOPY);
+			DrawProcessorState(BackBuffer_.DeviceContext, &BackBuffer_.Rect);
+			BitBlt(hdc, 0, 0, BackBuffer_.Width, BackBuffer_.Height, BackBuffer_.DeviceContext, 0, 0, SRCCOPY);
 
 			EndPaint(hDlg, &ps);
 			break;
@@ -347,7 +309,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			switch (wParam)
 			{
 			case IDT_PROC_TIMER:
-				InvalidateRect(hDlg, &backRect, FALSE);
+				InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
 				return 0;
 			}
 			break;
@@ -367,7 +329,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			case IDCLOSE:
 			case WM_DESTROY:
 				KillTimer(hDlg, IDT_PROC_TIMER);
-				DeleteDC(backDC);
+				DeleteDC(BackBuffer_.DeviceContext);
 				DestroyWindow(hDlg);
 				ProcessorStateWindow = NULL;
 				break;

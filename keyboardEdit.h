@@ -26,7 +26,6 @@ Author of this file: E J Jaquay 2021
 #define _keyboardedit_h_
 /*****************************************************************************/
 
-#define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include "resource.h"
 

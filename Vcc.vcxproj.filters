@@ -201,9 +201,8 @@
     <ClInclude Include="DebuggerUtils.h">
       <Filter>Headers\Debugger</Filter>
     </ClInclude>
-    <ClInclude Include="MachineDefs.h" />
-    <ClInclude Include="optional.hpp">
-      <Filter>Headers\tl</Filter>
+    <ClInclude Include="MachineDefs.h">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -277,9 +276,6 @@
     </Filter>
     <Filter Include="Headers\Debugger">
       <UniqueIdentifier>{8e101e68-6057-477e-b4ea-0ae8d7d2fdc3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Headers\tl">
-      <UniqueIdentifier>{5c1844b7-53e8-4522-b832-5794f9429be4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

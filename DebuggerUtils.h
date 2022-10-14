@@ -104,3 +104,19 @@ namespace VCC { namespace Debugger
     std::string ToDecimalString(long value, int length, bool leadingZeros = true);
 
 } }
+
+namespace VCC { namespace Debugger { namespace UI
+{
+
+	struct BackBufferInfo
+	{
+		HDC		DeviceContext;
+		HBITMAP Bitmap;
+		RECT    Rect;
+		int		Width;
+		int		Height;
+	};
+
+	BackBufferInfo AttachBackBuffer(HWND hWnd, int widthAdjust, int heightAdjust);
+
+} } }

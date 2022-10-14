@@ -44,4 +44,42 @@ namespace VCC { namespace Debugger
 	
 } }
 
+namespace VCC { namespace Debugger { namespace UI
+{
+
+	BackBufferInfo AttachBackBuffer(HWND hWnd, int widthAdjust, int heightAdjust)
+	{
+		BackBufferInfo	backBuffer;
+
+		GetClientRect(hWnd, &backBuffer.Rect);
+
+		backBuffer.Rect.right += widthAdjust;
+		backBuffer.Rect.bottom += heightAdjust;
+
+		backBuffer.Width = backBuffer.Rect.right - backBuffer.Rect.left;
+		backBuffer.Height = backBuffer.Rect.bottom - backBuffer.Rect.top;
+
+		HDC hdc = GetDC(hWnd);
+
+		backBuffer.Bitmap = CreateCompatibleBitmap(hdc, backBuffer.Width, backBuffer.Height);
+		if (backBuffer.Bitmap == NULL)
+		{
+			throw std::runtime_error("failed to create backbuffer bitmap");
+		}
+
+		backBuffer.DeviceContext = CreateCompatibleDC(hdc);
+		if (backBuffer.DeviceContext == NULL)
+		{
+			throw std::runtime_error("failed to create the backbuffer device context");
+		}
+
+		HBITMAP oldbmp = (HBITMAP)SelectObject(backBuffer.DeviceContext, backBuffer.Bitmap);
+		DeleteObject(oldbmp);
+		ReleaseDC(hWnd, hdc);
+
+		return backBuffer;
+	}
+
+} } }
+
 

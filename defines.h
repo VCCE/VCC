@@ -19,6 +19,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "MachineDefs.h"
 #include "Debugger.h"
 #include <cstdint>
 #include <atomic>
@@ -44,27 +45,10 @@ This file is part of VCC (Virtual Color Computer).
 #define INDEXTIME ((LINESPERSCREEN * TARGETFRAMERATE)/5)
 
 
-//Common CPU defs
-#define IRQ		1
-#define FIRQ	2
-#define NMI		3
-
-
-extern void (*CPUInit)(void);
-extern int  (*CPUExec)( int);
-extern void (*CPUReset)(void);
-extern void (*CPUAssertInterupt)(unsigned char,unsigned char);
-extern void (*CPUDeAssertInterupt)(unsigned char);
-extern void (*CPUForcePC)(unsigned short);
-extern void (*CPUSetBreakpoints)(const std::vector<unsigned short>&);
-extern VCC::CPUState (*CPUGetState)();
-
-
 struct SystemState
 {
     HWND			WindowHandle;
     HWND			ConfigDialog;
-	HWND            ProcessorWindow;
 
     HINSTANCE		WindowInstance;
     unsigned char	*RamBuffer;
@@ -90,7 +74,7 @@ struct SystemState
     unsigned char	MousePointer;
     char			StatusLine[256];
 
-	//	
+	// Debugger Package	
 	VCC::Debugger::Debugger Debugger;
 };
 

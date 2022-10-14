@@ -86,7 +86,7 @@ static unsigned char BlinkState=1;
 // BEGIN of 8 Bit render loop *****************************************************************************************
 void UpdateScreen8 (SystemState *US8State)
 {
-	register unsigned int YStride=0;
+	unsigned int YStride=0;
 	unsigned char Pixel=0;
 	unsigned char Character=0,Attributes=0;
 	unsigned char TextPallete[2]={0,0};
@@ -3179,7 +3179,7 @@ case 192+63: //Bpp=3 Sr=15
 // BEGIN of 16 Bit render loop *****************************************************************************************
 void UpdateScreen16 (SystemState *USState16)
 {
-	register unsigned int YStride=0;
+	unsigned int YStride=0;
 	static unsigned int TextColor=0;
 	static unsigned char Pixel=0;
 	static unsigned char Character=0,Attributes=0;
@@ -6282,7 +6282,7 @@ void UpdateScreen24 (SystemState *USState24)
 // BEGIN of 32 Bit render loop *****************************************************************************************
 void UpdateScreen32 (SystemState *USState32)
 {
-	register unsigned int YStride=0;
+	unsigned int YStride=0;
 //	unsigned int TextColor=0;
 	unsigned char Pixel=0;
 //	unsigned char StretchCount=0;

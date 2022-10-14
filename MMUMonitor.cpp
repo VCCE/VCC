@@ -16,21 +16,21 @@
 //		Processor State Display - Part of the Debugger package for VCC
 //		Authors: Mike Rojas, Chet Simpson
 #include "MMUMonitor.h"
-#include "defines.h"
 #include "Debugger.h"
 #include "DebuggerUtils.h"
+#include "defines.h"
 #include "tcc1014mmu.h"
 #include "resource.h"
 #include <string>
+#include <stdexcept>
 
 
 namespace VCC { namespace Debugger { namespace UI { namespace
 {
-	static const size_t WatchMMUPageSize = 8192;
-	using mmupagebuffer_type = std::array<unsigned char, WatchMMUPageSize>;
+	using mmupagebuffer_type = std::array<unsigned char, 8192>;
 
 	CriticalSection Section_;
-	VCC::MMUState MMUState_;
+	MMUState MMUState_;
 	int MMUPage_ = 0;
 	mmupagebuffer_type MMUPageBuffer_;
 
@@ -40,60 +40,30 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	int memoryOffset = 0;
 	int maxPageNo = 0;
 
-	HDC		backDC;
-	HBITMAP backBufferBMP;
-	RECT    backRect;
-	int		backBufferCX;
-	int		backBufferCY;
+	BackBufferInfo	BackBuffer_;
 
-	bool InitBackBuffer(HWND hWnd)
+
+	class MMUMonitorDebugClient : public Client
 	{
-		GetClientRect(hWnd, &backRect);
+	public:
 
-		backRect.right -= 20;
-		backRect.bottom -= 39;
-
-		backBufferCX = backRect.right - backRect.left;
-		backBufferCY = backRect.bottom - backRect.top;
-
-		HDC hdc = GetDC(hWnd);
-
-		backBufferBMP = CreateCompatibleBitmap(hdc, backBufferCX, backBufferCY);
-		if (backBufferBMP == NULL)
+		void OnReset() override
 		{
-			OutputDebugString("failed to create backBufferBMP");
-			return false;
+			SectionLocker lock(Section_);
+
+			std::fill(MMUPageBuffer_.begin(), MMUPageBuffer_.end(), unsigned char(0));
+			MMUPage_ = 0;
 		}
 
-		backDC = CreateCompatibleDC(hdc);
-		if (backDC == NULL)
+		void OnUpdate() override
 		{
-			OutputDebugString("failed to create the backDC");
-			return false;
+			SectionLocker lock(Section_);
+
+			MMUState_ = GetMMUState();
+			GetMMUPage(MMUPage_, MMUPageBuffer_);
 		}
 
-		HBITMAP oldbmp = (HBITMAP)SelectObject(backDC, backBufferBMP);
-		DeleteObject(oldbmp);
-		ReleaseDC(hWnd, hdc);
-
-		return true;
-	}
-
-	static void DebuggerUpdateHandler(HWND window)
-	{
-		SectionLocker lock(Section_);
-
-		MMUState_ = GetMMUState();
-		GetMMUPage(MMUPage_, MMUPageBuffer_);
-	}
-
-	static void DebuggerResetHandler(HWND window)
-	{
-		SectionLocker lock(Section_);
-
-		std::fill(MMUPageBuffer_.begin(), MMUPageBuffer_.end(), 0);
-		MMUPage_ = 0;
-	}
+	};
 
 
 	void DrawMMUMonitor(HDC hdc, LPRECT clientRect)
@@ -350,7 +320,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		// Memory Page
 		SetTextColor(hdc, RGB(138, 27, 255));
 		{
-			RECT rc;
 			SetRect(&rc, x, y, x + nCol1, y + 20);
 			DrawText(hdc, "Address", 7, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
@@ -362,8 +331,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 					mx += 15;
 				}
 
-				const std::string s(ToHexString(n, 2, false));
-				RECT rc;
+				s = ToHexString(n, 2, false);
 				SetRect(&rc, x + mx + (n * 18), y, x + mx + (n * 18) + 20, y + 20);
 				DrawText(hdc, s.c_str(), s.size(), &rc, DT_VCENTER | DT_SINGLELINE);
 			}
@@ -379,9 +347,8 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		for (int addrLine = 0; addrLine < nRows; addrLine++)
 		{
 			SetTextColor(hdc, RGB(138, 27, 255));
-			RECT rc;
 			{
-				std::string s(ToHexString(addrLine * 16 + memoryOffset + pageNo * 8192, 6, true));
+				s = ToHexString(addrLine * 16 + memoryOffset + pageNo * 8192, 6, true);
 				SetRect(&rc, x, y, x + nCol1, y + h);
 				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
@@ -390,7 +357,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			unsigned char line[16];
 			for (int n = 0; n < 16; n++)
 			{
-				unsigned short addr = memoryOffset + (addrLine * 16) + n;
+				auto addr = memoryOffset + (addrLine * 16) + n;
 				line[n] = page[addr];
 			}
 
@@ -412,7 +379,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 				{
 					mx += 15;
 				}
-				const std::string s(ToHexString(line[n], 2, true));
+				s = ToHexString(line[n], 2, true);
 				SetRect(&rc, x + mx + (n * 18), y, x + mx + (n * 18) + 20, y + h);
 				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
@@ -477,7 +444,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		return numToRound + multiple - remainder;
 	}
 
-	INT_PTR CALLBACK MMUMonitorDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+	INT_PTR CALLBACK MMUMonitorDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 	{
 		switch (message)
 		{
@@ -520,7 +487,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			si.nPos = 0;
 			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
 
-			InitBackBuffer(hDlg);
+			BackBuffer_ = AttachBackBuffer(hDlg, -20, -39);
 
 			int max = GetMaximumPage();
 			for (int page = 0; page < max; page++)
@@ -533,7 +500,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 			SetTimer(hDlg, IDT_PROC_TIMER, 64, (TIMERPROC)NULL);
 
-			EmuState.Debugger.RegisterClient(hDlg, DebuggerUpdateHandler, DebuggerResetHandler);
+			EmuState.Debugger.RegisterClient(hDlg, std::make_unique<MMUMonitorDebugClient>());
 			break;
 		}
 
@@ -558,7 +525,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
 			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
 			memoryOffset = si.nPos;
-			InvalidateRect(hDlg, &backRect, FALSE);
+			InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
 			return 0;
 		}
 
@@ -613,7 +580,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
 			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
 			memoryOffset = si.nPos;
-			InvalidateRect(hDlg, &backRect, FALSE);
+			InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
 			return 0;
 		}
 
@@ -622,8 +589,8 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hDlg, &ps);
 
-			DrawMMUMonitor(backDC, &backRect);
-			BitBlt(hdc, 0, 0, backBufferCX, backBufferCY, backDC, 0, 0, SRCCOPY);
+			DrawMMUMonitor(BackBuffer_.DeviceContext, &BackBuffer_.Rect);
+			BitBlt(hdc, 0, 0, BackBuffer_.Width, BackBuffer_.Height, BackBuffer_.DeviceContext, 0, 0, SRCCOPY);
 
 			EndPaint(hDlg, &ps);
 			break;
@@ -634,7 +601,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			switch (wParam)
 			{
 			case IDT_PROC_TIMER:
-				InvalidateRect(hDlg, &backRect, FALSE);
+				InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
 				return 0;
 			}
 			break;
@@ -649,7 +616,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			case IDCLOSE:
 			case WM_DESTROY:
 				KillTimer(hDlg, IDT_PROC_TIMER);
-				DeleteDC(backDC);
+				DeleteDC(BackBuffer_.DeviceContext);
 				DestroyWindow(hDlg);
 				MMUMonitorWindow = NULL;
 				EmuState.Debugger.RemoveClient(hDlg);

@@ -319,7 +319,8 @@ VCC::CPUState HD6309GetState()
 	VCC::CPUState regs;
 
 	regs.CC = ccbits;
-	regs.DP = dp.Reg;
+	//	FIXME: We do a static_Cast here because it's better than relying on the undefined behavior caused by cpuregister.
+	regs.DP = static_cast<unsigned char>(dp.Reg);
 	regs.MD = mdbits;
 #pragma push_macro("E")
 #pragma push_macro("F")

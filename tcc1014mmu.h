@@ -22,6 +22,22 @@ This file is part of VCC (Virtual Color Computer).
 */
 #include "Debugger.h"
 
+namespace VCC
+{
+
+	struct MMUState
+	{
+		bool Enabled;
+		int ActiveTask;
+		int RamVectors;
+		int RomMap;
+
+		std::array<int, 8>    Task0;
+		std::array<int, 8>    Task1;
+	};
+
+}
+
 VCC::MMUState GetMMUState();
 void GetMMUPage(size_t page, std::array<unsigned char, 8192>& outBuffer);
 

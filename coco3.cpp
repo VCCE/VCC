@@ -569,7 +569,7 @@ void PasteText() {
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)1);
 	cliptxt = GetClipboardText().c_str();
 	if (PasteWithNew) { cliptxt = "NEW\n" + cliptxt; }
-	for (int t = 0; t < cliptxt.length(); t++) {
+	for (size_t t = 0; t < cliptxt.length(); t++) {
 		char tmp = cliptxt[t];
 		if ( tmp != (char)'\n') {
 			lines += tmp;
@@ -608,7 +608,7 @@ void PasteText() {
 	}
 	cliptxt = clipparse; 
 
-	for (int pp = 0; pp <= cliptxt.size(); pp++) {
+	for (size_t pp = 0; pp <= cliptxt.size(); pp++) {
 		sc = 0;
 		CSHIFT = FALSE;
 		LCNTRL = FALSE;
@@ -712,7 +712,7 @@ void PasteText() {
 		case '~': sc = 0x29; CSHIFT = TRUE; break;
 		case '_': sc = 0x0C; CSHIFT = TRUE; break;
 		case 0x09: sc = 0x39; break; // TAB
-		default: sc = 0xFF;	break;
+		default: sc = static_cast<char>(0xFF);	break;
 		}
 		if (CSHIFT) { out += 0x36; CSHIFT = FALSE; }
 		if (LCNTRL) { out += 0x1D; LCNTRL = FALSE; }
@@ -757,7 +757,6 @@ void CopyText() {
 	int lines;
 	int offset;
 	int lastchar;
-	bool os9;
 	int BytesPerRow = GetBytesPerRow();
 	int GraphicsMode = GetGraphicsMode();
 	unsigned int screenstart = GetStartOfVidram();
@@ -822,7 +821,7 @@ void CopyText() {
 	}
 	else if (BytesPerRow == 40 || BytesPerRow == 80) {
 		offset = 32;
-		char pcchars[] =
+		int pcchars[] =
 		{
 			' ','!','\"','#','$','%','&','\'',
 			'(',')','*','+',',','-','.','/',

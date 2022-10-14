@@ -18,9 +18,10 @@
 //		Author: Chet Simpson
 #include "Debugger.h"
 #include "DebuggerUtils.h"
-#include "defines.h"	//	FIXME: cross dependency as Debugger is member of SystemState defined in defines.h
+#include "MachineDefs.h"
 #include <sstream>
 #include <iomanip>
+#include "tcc1014mmu.h"	//  FIXME: May want this decoupled from Debugger for Memory Write
 
 
 namespace VCC { namespace Debugger
@@ -31,45 +32,33 @@ namespace VCC { namespace Debugger
 		SectionLocker lock(Section_);
 
 		ExecutionMode_ = ExecutionMode::Run;
-		PendingCommand.reset();
+		PendingCommand_ = ExecutionMode::Halt;
+		HasPendingCommand_ = false;
 		ProcessorState_ = CPUState();
 
-		for (const auto& callback : ResetCallbacks_)
+		for (const auto& callback : RegisteredClients_)
 		{
-			callback.second(callback.first);
+			callback.second->OnReset();
 		}
 	}
 
 
 
-	void Debugger::RegisterClient(HWND window, callback_type updateCallback, callback_type resetCallback)
+	void Debugger::RegisterClient(HWND window, std::unique_ptr<Client> client)
 	{
 		SectionLocker lock(Section_);
 
-		if (!updateCallback && !resetCallback)
+		if (!client)
 		{
-			throw std::invalid_argument("updateCallback and resetCallback cannot both be null");
+			throw std::invalid_argument("client cannot be null");
 		}
 
-		if (updateCallback)
+		if (RegisteredClients_.find(window) != RegisteredClients_.end())
 		{
-			if (UpdateCallbacks_.find(window) != UpdateCallbacks_.end())
-			{
-				throw std::invalid_argument("Udpate client is already registered with the debugger");
-			}
-
-			UpdateCallbacks_[window] = updateCallback;
+			throw std::invalid_argument("Udpate client is already registered with the debugger");
 		}
 
-		if (resetCallback)
-		{
-			if (ResetCallbacks_.find(window) != ResetCallbacks_.end())
-			{
-				throw std::invalid_argument("Reset client is already registered with the debugger");
-			}
-
-			ResetCallbacks_[window] = resetCallback;
-		}
+		RegisteredClients_[window] = move(client);
 	}
 	
 	
@@ -77,23 +66,12 @@ namespace VCC { namespace Debugger
 	{
 		SectionLocker lock(Section_);
 
-		bool removed(false);
-		if (UpdateCallbacks_.find(window) != UpdateCallbacks_.end())
-		{
-			UpdateCallbacks_.erase(window);
-			removed = true;
-		}
-
-		if (ResetCallbacks_.find(window) != ResetCallbacks_.end())
-		{
-			ResetCallbacks_.erase(window);
-			removed = true;
-		}
-
-		if (!removed)
+		if (RegisteredClients_.find(window) == RegisteredClients_.end())
 		{
 			throw std::invalid_argument("window is not registered with the debugger");
 		}
+
+		RegisteredClients_.erase(window);
 	}
 
 
@@ -113,13 +91,12 @@ namespace VCC { namespace Debugger
 	}
 
 
-	bool Debugger::IsHalted(tl::optional<unsigned short>& returnPc) const
+	bool Debugger::IsHalted(unsigned short& returnPc) const
 	{
 		SectionLocker lock(Section_);
 
 		if (ExecutionMode_ != ExecutionMode::Halt)
 		{
-			returnPc.reset();
 			return false;
 		}
 
@@ -147,22 +124,21 @@ namespace VCC { namespace Debugger
 	}
 
 
-	bool Debugger::HasPendingCommand() const
+	bool Debugger::HasPendingCommandNoLock() const
 	{
-		SectionLocker lock(Section_);
-
-		return PendingCommand.has_value();
+		return HasPendingCommand_;
 	}
 
 
-	Debugger::ExecutionMode Debugger::ConsumePendingCommand()
+	Debugger::ExecutionMode Debugger::ConsumePendingCommandNoLock()
 	{
-		SectionLocker lock(Section_);
+		if (!HasPendingCommandNoLock())
+		{
+			throw std::runtime_error("No pending command to consume");
+		}
 
-		auto value = PendingCommand.value();
-		PendingCommand.reset();
-
-		return value;
+		HasPendingCommand_ = false;
+		return PendingCommand_;
 	}
 
 
@@ -181,21 +157,24 @@ namespace VCC { namespace Debugger
 	{
 		SectionLocker lock(Section_);
 
-		PendingCommand = ExecutionMode::Run;
+		PendingCommand_ = ExecutionMode::Run;
+		HasPendingCommand_ = true;
 	}
 
 	void Debugger::QueueStep()
 	{
 		SectionLocker lock(Section_);
 
-		PendingCommand = ExecutionMode::Step;
+		PendingCommand_ = ExecutionMode::Step;
+		HasPendingCommand_ = true;
 	}
 
 	void Debugger::QueueHalt()
 	{
 		SectionLocker lock(Section_);
 
-		PendingCommand = ExecutionMode::Halt;
+		PendingCommand_ = ExecutionMode::Halt;
+		HasPendingCommand_ = true;
 	}
 
 
@@ -203,33 +182,38 @@ namespace VCC { namespace Debugger
 
 	void Debugger::Update()
 	{
-		SectionLocker lock(Section_);
-
-		ProcessorState_ = CPUGetState();
-
-		if (BreakpointsChanged_)
 		{
-			CPUSetBreakpoints(Breakpoints_);
-			BreakpointsChanged_ = false;
-		}
+			SectionLocker lock(Section_);
 
-		if (HasPendingCommand())
-		{
-			ExecutionMode_ = ProcessNewMode(ConsumePendingCommand());
-		}
+			ProcessorState_ = CPUGetState();
 
-		if (!UpdateCallbacks_.empty())
-		{
-			for (const auto& callback : UpdateCallbacks_)
+			if (BreakpointsChanged_)
 			{
-				callback.second(callback.first);
+				CPUSetBreakpoints(Breakpoints_);
+				BreakpointsChanged_ = false;
 			}
+
+			if (HasPendingCommandNoLock())
+			{
+				ExecutionMode_ = ProcessNewModeNoLock(ConsumePendingCommandNoLock());
+			}
+			
+			if (HasPendingWriteNoLock())
+			{
+				ProcessWrite(ConsumePendingWriteNoLock());
+			}
+
+		}
+
+		for (const auto& callback : RegisteredClients_)
+		{
+			callback.second->OnUpdate();
 		}
 
 	}
 
 
-	Debugger::ExecutionMode Debugger::ProcessNewMode(ExecutionMode cpuCmd)
+	Debugger::ExecutionMode Debugger::ProcessNewModeNoLock(ExecutionMode cpuCmd) const
 	{
 		// Run -> Halt
 		if (ExecutionMode_ == ExecutionMode::Run && cpuCmd == ExecutionMode::Halt)
@@ -248,6 +232,37 @@ namespace VCC { namespace Debugger
 		}
 
 		return ExecutionMode_;
+	}
+
+
+	void Debugger::QueueWrite(unsigned short addr, unsigned char value)
+	{
+		SectionLocker lock(Section_);
+
+		PendingWrite_ = PendingWrite(addr, value);
+		HasPendingWrite_ = true;
+	}
+
+
+	bool Debugger::HasPendingWriteNoLock() const
+	{
+		return HasPendingWrite_;
+	}
+
+	Debugger::PendingWrite Debugger::ConsumePendingWriteNoLock()
+	{
+		if (!HasPendingWriteNoLock())
+		{
+			throw std::runtime_error("No pending memory writes to consume");
+		}
+
+		HasPendingWrite_ = false;
+		return PendingWrite_;
+	}
+
+	void Debugger::ProcessWrite(PendingWrite memWrite)
+	{
+		MemWrite8(memWrite.value, memWrite.addr);
 	}
 
 

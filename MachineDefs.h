@@ -1,39 +1,43 @@
 #pragma once
 #include <array>
-#include "optional.hpp"
+#include <vector>
 
 
 namespace VCC
 {
-
-	struct MMUState
-	{
-		bool Enabled;
-		int ActiveTask;
-		int RamVectors;
-		int RomMap;
-
-		std::array<int, 8>    Task0;
-		std::array<int, 8>    Task1;
-	};
 
 	struct CPUState
 	{
 		//  
 		unsigned char DP;
 		unsigned char CC;
-		tl::optional<unsigned char> MD;
+		unsigned char MD;
 		//
 		unsigned char A;
 		unsigned char B;
-		tl::optional<unsigned char> E;
-		tl::optional<unsigned char> F;
+		unsigned char E;
+		unsigned char F;
 		unsigned short X;
 		unsigned short Y;
 		unsigned short U;
 		unsigned short S;
 		unsigned short PC;
-		tl::optional<unsigned short> V;
+		unsigned short V;
 	};
 
 }
+
+//Common CPU defs
+#define IRQ		1
+#define FIRQ	2
+#define NMI		3
+
+
+extern void (*CPUInit)(void);
+extern int  (*CPUExec)(int);
+extern void (*CPUReset)(void);
+extern void (*CPUAssertInterupt)(unsigned char, unsigned char);
+extern void (*CPUDeAssertInterupt)(unsigned char);
+extern void (*CPUForcePC)(unsigned short);
+extern void (*CPUSetBreakpoints)(const std::vector<unsigned short>&);
+extern VCC::CPUState(*CPUGetState)();

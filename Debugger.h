@@ -19,17 +19,25 @@
 #pragma once
 #include "DebuggerUtils.h"
 #include "MachineDefs.h"
-#include <Windows.h>
-#include <string>
-#include "optional.hpp"
 #include <string>
 #include <vector>
 #include <functional>
 #include <map>
+#include <memory>
+#include <Windows.h>
 
 
 namespace VCC { namespace Debugger
 {
+
+	struct Client
+	{
+		virtual ~Client() = default;
+
+		virtual void OnReset() = 0;
+		virtual void OnUpdate() = 0;
+	};
+
 
 	class Debugger
 	{
@@ -43,7 +51,7 @@ namespace VCC { namespace Debugger
 
 		void Reset();
 
-		void RegisterClient(HWND window, callback_type updateCallback, callback_type resetCallback);
+		void RegisterClient(HWND window, std::unique_ptr<Client> client);
 		void RemoveClient(HWND window);
 
 		void SetBreakpoints(breakpointsbuffer_type breakpoints);
@@ -51,7 +59,7 @@ namespace VCC { namespace Debugger
 		CPUState GetProcessorStateCopy() const;
 
 		bool IsHalted() const;
-		bool IsHalted(tl::optional<unsigned short>& pc) const;
+		bool IsHalted(unsigned short& pc) const;
 		bool IsStepping() const;
 		
 		void Halt();
@@ -59,6 +67,8 @@ namespace VCC { namespace Debugger
 		void QueueRun();
 		void QueueStep();
 		void QueueHalt();
+
+		void QueueWrite(unsigned short addr, unsigned char value);
 
 		void Update();
 
@@ -72,20 +82,33 @@ namespace VCC { namespace Debugger
 			Step
 		};
 
-		bool HasPendingCommand() const;
-		ExecutionMode ConsumePendingCommand();
-		ExecutionMode ProcessNewMode(ExecutionMode cpuCmd);
+		bool HasPendingCommandNoLock() const;
+		ExecutionMode ConsumePendingCommandNoLock();
+		ExecutionMode ProcessNewModeNoLock(ExecutionMode cpuCmd) const;
 
+		struct PendingWrite
+		{
+			unsigned short addr;
+			unsigned char value;
+			PendingWrite(unsigned short addr, unsigned char value) : addr(addr), value(value) {};
+			PendingWrite() {};
+		};
+
+		bool HasPendingWriteNoLock() const;
+		PendingWrite ConsumePendingWriteNoLock();
+		void ProcessWrite(PendingWrite memWrite);
 
 	private:
 
 		mutable CriticalSection			Section_;
-		tl::optional<ExecutionMode>	PendingCommand;
+		bool							HasPendingCommand_;
+		ExecutionMode					PendingCommand_;
 		breakpointsbuffer_type			Breakpoints_;
 		bool							BreakpointsChanged_ = false;
 		CPUState						ProcessorState_;
-		std::map<HWND, callback_type>	UpdateCallbacks_;
-		std::map<HWND, callback_type>	ResetCallbacks_;
+		std::map<HWND, std::unique_ptr<Client>>	RegisteredClients_;
 		ExecutionMode					ExecutionMode_ = ExecutionMode::Run;
+		bool							HasPendingWrite_ = false;
+		PendingWrite					PendingWrite_;
 	};
 } }
