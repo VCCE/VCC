@@ -5,25 +5,19 @@ using namespace std;
 
 bool ROM::Load(std::string filename)
 {
-
-//	std::ifstream input(filename, std::ifstream::binary);
 	ifstream input(filename,ios::binary);
 	if (!input.is_open())
     {
 		return false;
     }
 
-    int begin = input.tellg();
+    std::streamoff begin = input.tellg();
 	input.seekg(0,ios::end);
-	int end = input.tellg();
-	int fileLength=end-begin;
+	std::streamoff end = input.tellg();
+	std::streamoff fileLength = end - begin;
 	input.seekg(0,ios::beg);
 
-//	input.seekg(0, std::ifstream::ios_base::end);
-//    const auto fileLength(input.tellg().seekpos());
-//    input.seekg(0, std::ifstream::ios_base::beg);
-
-    std::vector<unsigned char> fileData(fileLength);
+    std::vector<unsigned char> fileData(static_cast<size_t>(fileLength));
     input.read(reinterpret_cast<char*>(&fileData[0]), fileData.size());
 
     if (fileLength != fileData.size())
@@ -36,9 +30,6 @@ bool ROM::Load(std::string filename)
 	m_BankOffset = 0;
 	m_Bank = 0;
 
-//	char msg[256];
-//	sprintf(msg,"%s loaded %d",&m_Filename[0],m_Data.size());
-//	MessageBoxA(nullptr, msg, "Rom loaded", MB_OK);
 	return true;
 }
 

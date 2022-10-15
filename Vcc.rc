@@ -7,7 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
+#include "winres.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -76,7 +76,7 @@ END
 
 2 TEXTINCLUDE 
 BEGIN
-    "#include ""afxres.h""\r\n"
+    "#include ""winres.h""\r\n"
     "\0"
 END
 
@@ -325,8 +325,8 @@ BEGIN
     LTEXT           "Counter",IDC_STATIC,76,81,26,8
     LTEXT           "Mode",IDC_STATIC,18,81,19,8
     PUSHBUTTON      "Eject",IDC_EJECT,122,43,35,18,0,WS_EX_DLGMODALFRAME
-    CONTROL         "",IDC_TCOUNT,"RICHEDIT",TCS_RAGGEDRIGHT | TCS_OWNERDRAWFIXED | WS_BORDER | WS_TABSTOP,53,65,77,15,WS_EX_CLIENTEDGE | WS_EX_RIGHT | WS_EX_STATICEDGE
-    CONTROL         "",IDC_MODE,"RICHEDIT",TCS_RAGGEDRIGHT | WS_BORDER | WS_TABSTOP,7,66,40,14,WS_EX_CLIENTEDGE | WS_EX_STATICEDGE
+    CONTROL         "",IDC_TCOUNT,"RichEdit20A",TCS_RAGGEDRIGHT | TCS_OWNERDRAWFIXED | WS_BORDER | WS_TABSTOP,53,65,77,15,WS_EX_CLIENTEDGE | WS_EX_RIGHT | WS_EX_STATICEDGE
+    CONTROL         "",IDC_MODE,"RichEdit20A",TCS_RAGGEDRIGHT | WS_BORDER | WS_TABSTOP,7,66,40,14,WS_EX_CLIENTEDGE | WS_EX_STATICEDGE
 END
 
 IDD_BITBANGER DIALOGEX 0, 0, 262, 229

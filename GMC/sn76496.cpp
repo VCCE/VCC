@@ -328,7 +328,7 @@ SN76489Device::stream_sample_t SN76489Device::sound_stream_update(stream_sample_
 		// if noisemode is 1, both taps are enabled
 		// if noisemode is 0, the lower tap, whitenoisetap2, is held at 0
 		// The != was a bit-XOR (^) before
-		if (((m_RNG & m_whitenoise_tap1)!=0) != (((m_RNG & m_whitenoise_tap2)!=(m_ncr_style_psg?m_whitenoise_tap2:0)) && in_noise_mode()))
+		if (((m_RNG & m_whitenoise_tap1)!=0) != (((static_cast<int32_t>(m_RNG) & m_whitenoise_tap2)!=(m_ncr_style_psg?m_whitenoise_tap2:0)) && in_noise_mode()))
 		{
 			m_RNG >>= 1;
 			m_RNG |= m_feedback_mask;
@@ -342,8 +342,8 @@ SN76489Device::stream_sample_t SN76489Device::sound_stream_update(stream_sample_
 		m_count[3] = static_cast<int32_t>(static_cast<float>(m_period[3]) / m_period_divider);
 	}
 
-	int16_t out;
-	int16_t out2 = 0;
+	int out;
+	int out2 = 0;
 
 	if (m_stereo)
 	{
@@ -371,8 +371,8 @@ SN76489Device::stream_sample_t SN76489Device::sound_stream_update(stream_sample_
 		out2 = -out2;
 	}
 
-	lbuffer = out;
-	rbuffer = out2;
+	lbuffer = static_cast<stream_sample_t>(out);
+	rbuffer = static_cast<stream_sample_t>(out2);
 
 	return lbuffer + rbuffer;
 }

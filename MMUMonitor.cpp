@@ -18,11 +18,10 @@ This file is part of VCC (Virtual Color Computer).
 	Author: Mike Rojas
 */
 
-#include <afx.h>
 #include "defines.h"
+#include "DebuggerUtils.h"
 #include "resource.h"
-
-using namespace std;
+#include <string>
 
 extern SystemState EmuState;
 
@@ -54,20 +53,22 @@ namespace MMUMonitor
 		backBufferBMP = CreateCompatibleBitmap(hdc, backBufferCX, backBufferCY);
 		if (backBufferBMP == NULL)
 		{
-			printf("failed to create backBufferBMP");
+			OutputDebugString("failed to create backBufferBMP");
 			return false;
 		}
 
 		backDC = CreateCompatibleDC(hdc);
 		if (backDC == NULL)
 		{
-			printf("failed to create the backDC");
+			OutputDebugString("failed to create the backDC");
 			return false;
 		}
 
 		HBITMAP oldbmp = (HBITMAP)SelectObject(backDC, backBufferBMP);
 		DeleteObject(oldbmp);
 		ReleaseDC(hWnd, hdc);
+
+		return true;
 	}
 
 	void DrawMMUMonitor(HDC hdc, LPRECT clientRect)
@@ -126,7 +127,7 @@ namespace MMUMonitor
 		pageNo = EmuState.MMUPage;
 		LeaveCriticalSection(&EmuState.WatchCriticalSection);
 
-		CString s;
+		std::string s;
 
 		// Registers
 		for (int n = 0; n < 8; n++)
@@ -142,8 +143,9 @@ namespace MMUMonitor
 			}
 			SetRect(&rc, x, y, x + 80, y + 20);
 			int base = regs[2 + n] * 8192;
-			s.Format("%05X-%05X", base, base + 8191);
-			DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
+
+			s = ToHexString(base, 5, true) + "-" + ToHexString(base + 8191, 5, true);
+			DrawText(hdc, s.c_str(), s.size(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
 			x += 100;
 			SelectObject(hdc, pen);
 			MoveToEx(hdc, x, y, NULL);
@@ -151,7 +153,7 @@ namespace MMUMonitor
 			LineTo(hdc, x + 30, y + 20);
 			LineTo(hdc, x, y + 20);
 			LineTo(hdc, x, y);
-			s.Format("%02X", regs[2+n]);
+			s = ToHexString(regs[2+n], 2, true);
 			if (regs[0] == 0)
 			{
 				SetTextColor(hdc, RGB(0, 0, 0));
@@ -161,7 +163,7 @@ namespace MMUMonitor
 				SetTextColor(hdc, RGB(150, 150, 150));
 			}
 			SetRect(&rc, x, y, x + 30, y + 20);
-			DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			x += 30;
 			if (regs[0] == 0)
 			{
@@ -172,8 +174,8 @@ namespace MMUMonitor
 			x += 50;
 			SetTextColor(hdc, RGB(138, 27, 255));
 			SetRect(&rc, x, y, x + 80, y + 20);
-			s.Format("%04X-%04X", n * 8192, ((n+1) * 8192) - 1);
-			DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+			s = ToHexString(n * 8192, 4, true) + "-" + ToHexString(((n + 1) * 8192) - 1, 4, true);
+			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			x += 80;
 			SelectObject(hdc, pen);
 			if (regs[0] == 1)
@@ -197,9 +199,9 @@ namespace MMUMonitor
 			{
 				SetTextColor(hdc, RGB(150, 150, 150));
 			}
-			s.Format("%02X", regs[10 + n]);
+			s = ToHexString(regs[10 + n], 2, true);
 			SetRect(&rc, x, y, x + 30, y + 20);
-			DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			x += 50;
 			if (regs[0] == 1)
 			{
@@ -211,8 +213,8 @@ namespace MMUMonitor
 			}
 			SetRect(&rc, x, y, x + 80, y + 20);
 			base = regs[10 + n] * 8192;
-			s.Format("%05X-%05X", base, base + 8191);
-			DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
+			s = ToHexString(base, 5, true) + "-" + ToHexString(base + 8191, 5, true);
+			DrawText(hdc, s.c_str(), s.size(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
 			y += 25;
 		}
 
@@ -228,10 +230,10 @@ namespace MMUMonitor
 		LineTo(hdc, x + 30, y + 20);
 		LineTo(hdc, x, y + 20);
 		LineTo(hdc, x, y);
-		s.Format("%d", regs[1]);
+		s = std::to_string(regs[1]);
 		SetTextColor(hdc, RGB(0, 0, 0));
 		SetRect(&rc, x, y, x + 30, y + 20);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 		x += 40;
 		SetTextColor(hdc, RGB(138, 27, 255));
 		SetRect(&rc, x, y, x + 100, y + 20);
@@ -248,10 +250,10 @@ namespace MMUMonitor
 		LineTo(hdc, x + 30, y + 20);
 		LineTo(hdc, x, y + 20);
 		LineTo(hdc, x, y);
-		s.Format("%d", regs[18]);
+		s = std::to_string(regs[18]);
 		SetTextColor(hdc, RGB(0, 0, 0));
 		SetRect(&rc, x, y, x + 30, y + 20);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 		x += 40;
 		SetTextColor(hdc, RGB(138, 27, 255));
 		SetRect(&rc, x, y, x + 100, y + 20);
@@ -269,10 +271,10 @@ namespace MMUMonitor
 		LineTo(hdc, x + 30, y + 20);
 		LineTo(hdc, x, y + 20);
 		LineTo(hdc, x, y);
-		s.Format("%d", regs[0]);
+		s = std::to_string(regs[0]);
 		SetTextColor(hdc, RGB(0, 0, 0));
 		SetRect(&rc, x, y, x + 30, y + 20);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 		x += 40;
 		SetTextColor(hdc, RGB(138, 27, 255));
 		SetRect(&rc, x, y, x + 100, y + 20);
@@ -289,10 +291,10 @@ namespace MMUMonitor
 		LineTo(hdc, x + 30, y + 20);
 		LineTo(hdc, x, y + 20);
 		LineTo(hdc, x, y);
-		s.Format("%d", regs[19]);
+		s = std::to_string(regs[19]);
 		SetTextColor(hdc, RGB(0, 0, 0));
 		SetRect(&rc, x, y, x + 30, y + 20);
-		DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 		x += 40;
 		SetTextColor(hdc, RGB(138, 27, 255));
 		SetRect(&rc, x, y, x + 100, y + 20);
@@ -334,11 +336,11 @@ namespace MMUMonitor
 				{
 					mx += 15;
 				}
-				CString s;
-				s.Format("%2X", n);
+
+				const std::string s(ToHexString(n, 2, false));
 				RECT rc;
 				SetRect(&rc, x + mx + (n * 18), y, x + mx + (n * 18) + 20, y + 20);
-				DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_VCENTER | DT_SINGLELINE);
+				DrawText(hdc, s.c_str(), s.size(), &rc, DT_VCENTER | DT_SINGLELINE);
 			}
 
 			SetRect(&rc, rect.right - nCol2, y, rect.right - 5, y + 20);
@@ -354,10 +356,9 @@ namespace MMUMonitor
 			SetTextColor(hdc, RGB(138, 27, 255));
 			RECT rc;
 			{
-				CString s;
-				s.Format("%06X", addrLine * 16 + memoryOffset + pageNo * 8192);
+				std::string s(ToHexString(addrLine * 16 + memoryOffset + pageNo * 8192, 6, true));
 				SetRect(&rc, x, y, x + nCol1, y + h);
-				DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
 
 			// Pull out 16 bytes from page memory.
@@ -371,7 +372,7 @@ namespace MMUMonitor
 			// Hex Line in Hex Bytes
 			SetTextColor(hdc, RGB(0, 0, 0));
 			int mx = nCol1 + 5;
-			CString ascii;
+			std::string ascii;
 			for (int n = 0; n < 16; n++)
 			{
 				if (isprint(line[n]))
@@ -386,17 +387,16 @@ namespace MMUMonitor
 				{
 					mx += 15;
 				}
-				CString s;
-				s.Format("%02X", line[n]);
+				const std::string s(ToHexString(line[n], 2, true));
 				SetRect(&rc, x + mx + (n * 18), y, x + mx + (n * 18) + 20, y + h);
-				DrawText(hdc, (LPCSTR)s, s.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
 
 			// ASCII Line
 			mx = rect.right - nCol2;
 			{
 				SetRect(&rc, mx + 5, y, rect.right - 5, y + h);
-				DrawText(hdc, (LPCSTR)ascii, ascii.GetLength(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				DrawText(hdc, ascii.c_str(), ascii.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
 
 			// Draw a separator.
@@ -502,10 +502,10 @@ namespace MMUMonitor
 			int max = GetMaximumPage();
 			for (int page = 0; page < max; page++)
 			{
-				CString s;
 				int base = page * 8192;
-				s.Format("%02X - %05X-%05X", page, base, base + 8191);
-				SendDlgItemMessage(hDlg, IDC_SELECT_MMU_PAGE, CB_ADDSTRING, (WPARAM)0, (LPARAM)(LPCSTR)s);
+
+				const std::string s(ToHexString(page, 2, true) + " - " + ToHexString(base, 5, true) + "-" + ToHexString(base + 8191, 5, true));
+				SendDlgItemMessage(hDlg, IDC_SELECT_MMU_PAGE, CB_ADDSTRING, (WPARAM)0, (LPARAM)ToLPCSTR(s));
 			}
 
 			SetTimer(hDlg, IDT_PROC_TIMER, 64, (TIMERPROC)NULL);
@@ -545,7 +545,7 @@ namespace MMUMonitor
 			si.fMask = SIF_ALL;
 			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
 
-			CString s;
+			std::string s;
 			switch ((int)LOWORD(wParam))
 			{
 			case SB_PAGEUP:
