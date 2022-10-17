@@ -123,8 +123,10 @@ int MC6809Exec( int CycleFor)
 {
 static unsigned char opcode=0;
 static unsigned char msn,lsn;
-CycleCounter=0; 
+extern int JS_Ramp_Clock;
+int PrevCycleCount = 0;
 
+CycleCounter=0;
 while (CycleCounter<CycleFor) {
 
 	if (PendingInterupts)
@@ -2989,6 +2991,12 @@ default:
 //	MessageBox(0,"Unhandled Op","Ok",0);
 	break;
 	}//End Switch
+
+    if (JS_Ramp_Clock < 0xFFFF) {
+        JS_Ramp_Clock += CycleCounter-PrevCycleCount;
+    }
+    PrevCycleCount = CycleCounter;
+
 }//End While
 
 return(CycleFor-CycleCounter);
@@ -3575,3 +3583,4 @@ static unsigned short CalculateEA(unsigned char postbyte)
 	}
 return(ea);
 }
+

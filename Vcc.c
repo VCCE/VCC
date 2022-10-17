@@ -25,9 +25,9 @@ This file is part of VCC (Virtual Color Computer).
 
 #define DIRECTINPUT_VERSION 0x0800
 #define _WIN32_WINNT 0x0500
-#ifndef ABOVE_NORMAL_PRIORITY_CLASS 
+#ifndef ABOVE_NORMAL_PRIORITY_CLASS
 //#define ABOVE_NORMAL_PRIORITY_CLASS  32768
-#endif 
+#endif
 
 #define TH_RUNNING	0
 #define TH_REQWAIT	1
@@ -180,7 +180,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 	//InitializeCriticalSection(&FrameRender);
 
-	while (BinaryRunning) 
+	while (BinaryRunning)
 	{
 		if (FlagEmuStop==TH_WAITING)		//Need to stop the EMU thread for screen mode change
 			{								//As it holds the Secondary screen buffer open while running
@@ -190,7 +190,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			GetMessage(&Msg,NULL,0,0);		//Seems if the main loop stops polling for Messages the child threads stall
 			TranslateMessage(&Msg);
 			DispatchMessage(&Msg) ;
-	} 
+	}
 
 	CloseHandle( hEvent ) ;	
 	CloseHandle( hEMUThread ) ;
@@ -206,8 +206,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
-	unsigned int x,y;
-	unsigned char kb_char; 
+	unsigned int x,y;  // joystick x,y values 0-3fff (0-16383)
+	unsigned char kb_char;
 	static unsigned char OEMscan=0;
     int Extended;
 	static char ascii=0;
@@ -234,8 +234,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_COMMAND:
 			// Force all keys up to prevent key repeats
 			raise_saved_keys();
-			wmId    = LOWORD(wParam); 
-			wmEvent = HIWORD(wParam); 
+			wmId    = LOWORD(wParam);
+			wmEvent = HIWORD(wParam);
 			// Parse the menu selections:
 			// Added for Dynamic menu system
 			if ( (wmId >=ID_SDYNAMENU) & (wmId <=ID_EDYNAMENU) )
@@ -247,9 +247,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			switch (wmId)
 			{	
 				case IDM_HELP_ABOUT:
-					DialogBox(EmuState.WindowInstance, 
-						(LPCTSTR)IDD_ABOUTBOX, 
-						hWnd, 
+					DialogBox(EmuState.WindowInstance,
+						(LPCTSTR)IDD_ABOUTBOX,
+						hWnd,
 						(DLGPROC)About);
 				    break;
 
@@ -337,11 +337,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 
 //		case WM_CREATE:
-//				
 //			break;
-//		case WM_SETFOCUS:
+			
+		case WM_SETCURSOR:
+			// Hide mouse cursor
+            if ((EmuState.MousePointer != 1) && (LOWORD(lParam) == HTCLIENT)) {
+				SetCursor(NULL);
+				return TRUE;
+			}
+			break;
+
+		case WM_SETFOCUS:
+			RECT scr;
+            POINT loc;
+			GetWindowRect(EmuState.WindowHandle,&scr);
+            GetCursorPos(&loc);
+			if ((loc.x > scr.right) | (loc.x < scr.left) | 
+				(loc.y > scr.bottom) | ( loc.y < scr.top))
+				SetCursorPos(scr.left+20,scr.top+10);
 //			Set8BitPalette();
-//			break;
+			break;
 
 		case WM_KILLFOCUS:
 			// Force keys up if main widow keyboard focus is lost.  Otherwise
@@ -408,9 +423,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			// get key scan code for emulator control keys
 			//OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16); // just get the scan code
-	        OEMscan = (unsigned char) ((lParam >> 16) & 0xFF);
-            Extended=(lParam >> 24) & 1;
-		    if (Extended && (OEMscan!=DIK_NUMLOCK)) OEMscan += 0x80;
+			OEMscan = (unsigned char) ((lParam >> 16) & 0xFF);
+			Extended=(lParam >> 24) & 1;
+			if (Extended && (OEMscan!=DIK_NUMLOCK)) OEMscan += 0x80;
 
 			// kb_char = Windows virtual key code
 
@@ -480,7 +495,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 			}
 			return 0;
-		break;
+			break;
 
 		case WM_LBUTTONDOWN:  //0 = Left 1=right
 			SetButtonStatus(0,1);
@@ -504,15 +519,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				x = LOWORD( lParam ) ;
 				y = HIWORD( lParam ) ;
 				GetClientRect(EmuState.WindowHandle,&ClientSize);
-				x/=((ClientSize.right-ClientSize.left)>>6);
-				y/=(((ClientSize.bottom-ClientSize.top)-20)>>6);
+                // Convert coordinates to x,y values with range 0-3fff (0-16383).
+				LONG scr_w = ClientSize.right-ClientSize.left;
+				LONG scr_h = ClientSize.bottom-ClientSize.top;
+				x = ((x<<14)/scr_w); if (x>65535) x=65535;
+				y = ((y<<14)/scr_h); if (y>65535) y=65535;
 				joystick(x,y);
 			}
+
 			return(0);
 			break;
 //		default:
 //			return DefWindowProc(hWnd, message, wParam, lParam);
-   }
+	}
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
@@ -594,7 +613,7 @@ void OnPaint(HWND hwnd)
 
 void SetCPUMultiplyerFlag (unsigned char double_speed)
 {
-	SetClockSpeed(1); 
+	SetClockSpeed(1);
 	EmuState.DoubleSpeedFlag=double_speed;
 	if (EmuState.DoubleSpeedFlag)
 		SetClockSpeed( EmuState.DoubleSpeedMultiplyer * EmuState.TurboSpeedFlag);
@@ -607,7 +626,7 @@ void SetCPUMultiplyerFlag (unsigned char double_speed)
 void SetTurboMode(unsigned char data)
 {
 	EmuState.TurboSpeedFlag=(data&1)+1;
-	SetClockSpeed(1); 
+	SetClockSpeed(1);
 	if (EmuState.DoubleSpeedFlag)
 		SetClockSpeed( EmuState.DoubleSpeedMultiplyer * EmuState.TurboSpeedFlag);
 	EmuState.CPUCurrentSpeed= .894;
@@ -667,7 +686,7 @@ void DoHardReset(SystemState* const HRState)
 
 void SoftReset(void)
 {
-	mc6883_reset(); 
+	mc6883_reset();
 	PiaReset();
 	CPUReset();
 	GimeReset();
@@ -685,7 +704,7 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		case WM_INITDIALOG:
 			SendDlgItemMessage(hDlg,IDC_TITLE,WM_SETTEXT,strlen(g_szAppName),(LPARAM)(LPCSTR)g_szAppName);		
-			return TRUE; 
+			return TRUE;
 
 		case WM_COMMAND:
 			if (LOWORD(wParam) == IDOK)
@@ -809,9 +828,9 @@ void SaveConfig(void) {
         if (ofn.nFileExtension == 0) strcat(newini, ".ini");  //Add extension if none
         WriteIniFile();                                       // Flush current config
         if (_stricmp(curini,newini) != 0) {
-            if (! CopyFile(curini,newini,false) ) {           // Copy it to new file
-                MessageBox(0,"Copy config failed","error",0);
-			}
+		if (! CopyFile(curini,newini,false) ) {       // Copy it to new file
+			MessageBox(0,"Copy config failed","error",0);
+		}
         }
     }
     return;
@@ -826,7 +845,7 @@ unsigned __stdcall EmuLoop(void *Dummy)
 	Sleep(30);
 	SetEvent(hEvent) ;
 
-	while (true) 
+	while (true)
 	{
 		if (FlagEmuStop==TH_REQWAIT)
 		{

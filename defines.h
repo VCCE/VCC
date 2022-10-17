@@ -81,6 +81,7 @@ unsigned char	EmulationRunning;
 unsigned char	ResetPending;
 POINT			WindowSize;
 unsigned char	FullScreen;
+unsigned char	MousePointer;
 char			StatusLine[256];
 } SystemState;
 

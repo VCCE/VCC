@@ -71,8 +71,8 @@ LRESULT CALLBACK Paths(HWND, UINT, WPARAM, LPARAM);
 //	global variables
 //
 static unsigned short int	Ramchoice[4]={IDC_128K,IDC_512K,IDC_2M,IDC_8M};
-static unsigned  int	LeftJoystickEmulation[3] = { IDC_LEFTSTANDARD,IDC_LEFTTHIRES,IDC_LEFTCCMAX };
-static unsigned int	RightJoystickEmulation[3] = { IDC_RIGHTSTANDARD,IDC_RIGHTTHRES,IDC_RIGHTCCMAX };
+static unsigned int	LeftJoyEmu[4]={IDC_LEFTSTANDARD,IDC_LEFTSHIRES,IDC_LEFTTHIRES,IDC_LEFTCCMAX };
+static unsigned int	RightJoyEmu[4]={IDC_RIGHTSTANDARD,IDC_RIGHTSHIRES,IDC_RIGHTTHRES,IDC_RIGHTCCMAX };
 static unsigned short int	Cpuchoice[2]={IDC_6809,IDC_6309};
 static unsigned short int	Monchoice[2]={IDC_COMPOSITE,IDC_RGB};
 static unsigned short int   PaletteChoice[2] = { IDC_ORG_PALETTE,IDC_UPD_PALETTE };
@@ -101,7 +101,7 @@ static unsigned char Tmode=STOP;
 char Tmodes[4][10]={"STOP","PLAY","REC","STOP"};
 static int NumberOfSoundCards=0;
 
-static JoyStick TempLeft, TempRight;
+static JoyStick TempLeftJS, TempRightJS;
 
 static SndCardList SoundCards[MAXCARDS];
 static HWND hDlgBar=NULL,hDlgTape=NULL;
@@ -116,7 +116,7 @@ CHARFORMAT ModeText;
 */
 char * const keyNames[] = { "","ESC","1","2","3","4","5","6","7","8","9","0","-","=","BackSp","Tab","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","[","]","Bkslash",";","'","Comma",".","/","CapsLk","Shift","Ctrl","Alt","Space","Enter","Insert","Delete","Home","End","PgUp","PgDown","Left","Right","Up","Down","F1","F2" };
 
-//					            0	1      2	3	4	5	6	7	8	9	10	11	12	13	14	    15    16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44        45  46  47      48  49   50       51     52     53    54      55      56       57       58     59    60     61       62     63      64   65     66   67	
+//					            0	1      2	3	4	5	6	7	8	9	10	11	12	13	14	    15    16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44        45  46  47      48  49   50       51     52     53    54      55      56       57       58     59    60     61       62     63      64   65     66   67
 //char * const cocoKeyNames[] = { "","@","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","Up","Down","Left","Right","Space","0","1","2","3","4","5","6","7","8","9",":",";","Comma","-",".","/","Enter","Clear","Break","Alt","Ctrl","F1","F2","Shift" };
 
 
@@ -186,7 +186,7 @@ void LoadConfig(SystemState *LCState)
 
 	strcat(AppDataPath, "\\VCC");
 	if (_mkdir(AppDataPath) != 0) { OutputDebugString("Unable to create VCC config folder."); }
-	
+
 	if (*CmdArg.IniFile) {
 		GetFullPathNameA(CmdArg.IniFile,MAX_PATH,IniFilePath,0);
 	} else {
@@ -231,7 +231,7 @@ unsigned char WriteIniFile(void)
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ExternalBasicImage);
-	
+
 	WritePrivateProfileString("Version","Release",AppName,IniFilePath);
 	WritePrivateProfileInt("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer,IniFilePath);
 	WritePrivateProfileInt("CPU","FrameSkip",CurrentConfig.FrameSkip,IniFilePath);
@@ -256,28 +256,29 @@ unsigned char WriteIniFile(void)
 
 	WritePrivateProfileInt("Misc","AutoStart",CurrentConfig.AutoStart,IniFilePath);
 	WritePrivateProfileInt("Misc","CartAutoStart",CurrentConfig.CartAutoStart,IniFilePath);
+	WritePrivateProfileInt("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer,IniFilePath);
 	WritePrivateProfileInt("Misc","KeyMapIndex",CurrentConfig.KeyMap,IniFilePath);
 
 	WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
 
-	WritePrivateProfileInt("LeftJoyStick","UseMouse",Left.UseMouse,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","Left",Left.Left,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","Right",Left.Right,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","Up",Left.Up,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","Down",Left.Down,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","Fire1",Left.Fire1,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","Fire2",Left.Fire2,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","DiDevice",Left.DiDevice,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick", "HiResDevice", Left.HiRes, IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","UseMouse",Right.UseMouse,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","Left",Right.Left,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","Right",Right.Right,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","Up",Right.Up,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","Down",Right.Down,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","Fire1",Right.Fire1,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","Fire2",Right.Fire2,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","DiDevice",Right.DiDevice,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick", "HiResDevice", Right.HiRes, IniFilePath);
+	WritePrivateProfileInt("LeftJoyStick","UseMouse",LeftJS.UseMouse,IniFilePath);
+	WritePrivateProfileInt("LeftJoyStick","Left",LeftJS.Left,IniFilePath);
+	WritePrivateProfileInt("LeftJoyStick","Right",LeftJS.Right,IniFilePath);
+	WritePrivateProfileInt("LeftJoyStick","Up",LeftJS.Up,IniFilePath);
+	WritePrivateProfileInt("LeftJoyStick","Down",LeftJS.Down,IniFilePath);
+	WritePrivateProfileInt("LeftJoyStick","Fire1",LeftJS.Fire1,IniFilePath);
+	WritePrivateProfileInt("LeftJoyStick","Fire2",LeftJS.Fire2,IniFilePath);
+	WritePrivateProfileInt("LeftJoyStick","DiDevice",LeftJS.DiDevice,IniFilePath);
+	WritePrivateProfileInt("LeftJoyStick", "HiResDevice", LeftJS.HiRes, IniFilePath);
+	WritePrivateProfileInt("RightJoyStick","UseMouse",RightJS.UseMouse,IniFilePath);
+	WritePrivateProfileInt("RightJoyStick","Left",RightJS.Left,IniFilePath);
+	WritePrivateProfileInt("RightJoyStick","Right",RightJS.Right,IniFilePath);
+	WritePrivateProfileInt("RightJoyStick","Up",RightJS.Up,IniFilePath);
+	WritePrivateProfileInt("RightJoyStick","Down",RightJS.Down,IniFilePath);
+	WritePrivateProfileInt("RightJoyStick","Fire1",RightJS.Fire1,IniFilePath);
+	WritePrivateProfileInt("RightJoyStick","Fire2",RightJS.Fire2,IniFilePath);
+	WritePrivateProfileInt("RightJoyStick","DiDevice",RightJS.DiDevice,IniFilePath);
+	WritePrivateProfileInt("RightJoyStick", "HiResDevice", RightJS.HiRes, IniFilePath);
 
 //  Flush inifile
 	WritePrivateProfileString(NULL,NULL,NULL,IniFilePath);
@@ -305,20 +306,20 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.PaletteType = GetPrivateProfileInt("Video", "PaletteType",1,IniFilePath);
 	CurrentConfig.ScanLines = GetPrivateProfileInt("Video","ScanLines",0,IniFilePath);
 
-	//CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);	
+	//CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);
 	CurrentConfig.Aspect = GetPrivateProfileInt("Video","ForceAspect",1,IniFilePath);
 	CurrentConfig.RememberSize = GetPrivateProfileInt("Video","RememberSize",1,IniFilePath);
 	CurrentConfig.WindowSizeX= GetPrivateProfileInt("Video", "WindowSizeX", 640, IniFilePath);
 	CurrentConfig.WindowSizeY = GetPrivateProfileInt("Video", "WindowSizeY", 480, IniFilePath);
 	CurrentConfig.AutoStart = GetPrivateProfileInt("Misc","AutoStart",1,IniFilePath);
 	CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc","CartAutoStart",1,IniFilePath);
-
+	CurrentConfig.ShowMousePointer = GetPrivateProfileInt("Misc","ShowMousePointer",1,IniFilePath);
 
 	CurrentConfig.RamSize = GetPrivateProfileInt("Memory","RamSize",1,IniFilePath);
 	GetPrivateProfileString("Memory","ExternalBasicImage","",CurrentConfig.ExternalBasicImage,MAX_PATH,IniFilePath);
 
 	GetPrivateProfileString("Module","OnBoot","",CurrentConfig.ModulePath,MAX_PATH,IniFilePath);
-	
+
 	CurrentConfig.KeyMap = GetPrivateProfileInt("Misc","KeyMapIndex",0,IniFilePath);
 	if (CurrentConfig.KeyMap>3)
 		CurrentConfig.KeyMap=0;	//Default to DECB Mapping
@@ -329,24 +330,24 @@ unsigned char ReadIniFile(void)
 	CheckPath(CurrentConfig.ModulePath);
 	CheckPath(CurrentConfig.ExternalBasicImage);
 
-	Left.UseMouse=GetPrivateProfileInt("LeftJoyStick","UseMouse",1,IniFilePath);
-	Left.Left=GetPrivateProfileInt("LeftJoyStick","Left",75,IniFilePath);
-	Left.Right=GetPrivateProfileInt("LeftJoyStick","Right",77,IniFilePath);
-	Left.Up=GetPrivateProfileInt("LeftJoyStick","Up",72,IniFilePath);
-	Left.Down=GetPrivateProfileInt("LeftJoyStick","Down",80,IniFilePath);
-	Left.Fire1=GetPrivateProfileInt("LeftJoyStick","Fire1",59,IniFilePath);
-	Left.Fire2=GetPrivateProfileInt("LeftJoyStick","Fire2",60,IniFilePath);
-	Left.DiDevice=GetPrivateProfileInt("LeftJoyStick","DiDevice",0,IniFilePath);
-	Left.HiRes= GetPrivateProfileInt("LeftJoyStick", "HiResDevice", 0, IniFilePath);
-	Right.UseMouse=GetPrivateProfileInt("RightJoyStick","UseMouse",1,IniFilePath);
-	Right.Left=GetPrivateProfileInt("RightJoyStick","Left",75,IniFilePath);
-	Right.Right=GetPrivateProfileInt("RightJoyStick","Right",77,IniFilePath);
-	Right.Up=GetPrivateProfileInt("RightJoyStick","Up",72,IniFilePath);
-	Right.Down=GetPrivateProfileInt("RightJoyStick","Down",80,IniFilePath);
-	Right.Fire1=GetPrivateProfileInt("RightJoyStick","Fire1",59,IniFilePath);
-	Right.Fire2=GetPrivateProfileInt("RightJoyStick","Fire2",60,IniFilePath);
-	Right.DiDevice=GetPrivateProfileInt("RightJoyStick","DiDevice",0,IniFilePath);
-	Right.HiRes = GetPrivateProfileInt("RightJoyStick", "HiResDevice", 0, IniFilePath);
+	LeftJS.UseMouse=GetPrivateProfileInt("LeftJoyStick","UseMouse",1,IniFilePath);
+	LeftJS.Left=GetPrivateProfileInt("LeftJoyStick","Left",75,IniFilePath);
+	LeftJS.Right=GetPrivateProfileInt("LeftJoyStick","Right",77,IniFilePath);
+	LeftJS.Up=GetPrivateProfileInt("LeftJoyStick","Up",72,IniFilePath);
+	LeftJS.Down=GetPrivateProfileInt("LeftJoyStick","Down",80,IniFilePath);
+	LeftJS.Fire1=GetPrivateProfileInt("LeftJoyStick","Fire1",59,IniFilePath);
+	LeftJS.Fire2=GetPrivateProfileInt("LeftJoyStick","Fire2",60,IniFilePath);
+	LeftJS.DiDevice=GetPrivateProfileInt("LeftJoyStick","DiDevice",0,IniFilePath);
+	LeftJS.HiRes= GetPrivateProfileInt("LeftJoyStick", "HiResDevice", 0, IniFilePath);
+	RightJS.UseMouse=GetPrivateProfileInt("RightJoyStick","UseMouse",1,IniFilePath);
+	RightJS.Left=GetPrivateProfileInt("RightJoyStick","Left",75,IniFilePath);
+	RightJS.Right=GetPrivateProfileInt("RightJoyStick","Right",77,IniFilePath);
+	RightJS.Up=GetPrivateProfileInt("RightJoyStick","Up",72,IniFilePath);
+	RightJS.Down=GetPrivateProfileInt("RightJoyStick","Down",80,IniFilePath);
+	RightJS.Fire1=GetPrivateProfileInt("RightJoyStick","Fire1",59,IniFilePath);
+	RightJS.Fire2=GetPrivateProfileInt("RightJoyStick","Fire2",60,IniFilePath);
+	RightJS.DiDevice=GetPrivateProfileInt("RightJoyStick","DiDevice",0,IniFilePath);
+	RightJS.HiRes = GetPrivateProfileInt("RightJoyStick", "HiResDevice", 0, IniFilePath);
 
 	GetPrivateProfileString("DefaultPaths", "CassPath", "", CurrentConfig.CassPath, MAX_PATH, IniFilePath);
 	GetPrivateProfileString("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH, IniFilePath);
@@ -415,7 +416,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			g_hWndConfig[5]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_MISC),hWndTabDialog,(DLGPROC) MiscConfig);
 			g_hWndConfig[6]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_CASSETTE),hWndTabDialog,(DLGPROC) TapeConfig);
 			g_hWndConfig[7]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_BITBANGER),hWndTabDialog,(DLGPROC) BitBanger);
-	
+
 			//Set the title text for all tabs
 			for (TabCount=0;TabCount<TABS;TabCount++)
 			{
@@ -424,7 +425,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				Tabs.pszText=TabTitles[TabCount];
 				TabCtrl_InsertItem(hWndTabDialog,TabCount,&Tabs);
 			}
-			
+
 			TabCtrl_SetCurSel(hWndTabDialog,0);	//Set Initial Tab to 0
 			for (TabCount=0;TabCount<TABS;TabCount++)	//Hide All the Sub Panels
 				ShowWindow(g_hWndConfig[TabCount],SW_HIDE);
@@ -438,7 +439,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				SelectedTab=TabCtrl_GetCurSel(hWndTabDialog);
 				for (TabCount=0;TabCount<TABS;TabCount++)
 					ShowWindow(g_hWndConfig[TabCount],SW_HIDE);
-				SetWindowPos(g_hWndConfig[SelectedTab],HWND_TOP,10,30,0,0,SWP_NOSIZE|SWP_SHOWWINDOW);		
+				SetWindowPos(g_hWndConfig[SelectedTab],HWND_TOP,10,30,0,0,SWP_NOSIZE|SWP_SHOWWINDOW);
 			}
 		break;
 
@@ -453,13 +454,13 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					EmuState.ResetPending=2;
 				if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) | (CurrentConfig.AudioRate != TempConfig.AudioRate))
 					SoundInit(EmuState.WindowHandle,SoundCards[TempConfig.SndOutDev].Guid,TempConfig.AudioRate);
-				
+
 				CurrentConfig=TempConfig;
 				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
-				Right=TempRight;
-				Left=TempLeft;
-				SetStickNumbers(Left.DiDevice,Right.DiDevice);
+				RightJS=TempRightJS;
+				LeftJS=TempLeftJS;
+				SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
 
 				for (temp = 0; temp < TABS; temp++)
 				{
@@ -474,7 +475,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 			case IDAPPLY:
-				EmuState.ResetPending=4;	
+				EmuState.ResetPending=4;
 				if ( (CurrentConfig.RamSize != TempConfig.RamSize) | (CurrentConfig.CpuType != TempConfig.CpuType) )
 					EmuState.ResetPending=2;
 				if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) | (CurrentConfig.AudioRate != TempConfig.AudioRate))
@@ -483,9 +484,9 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				CurrentConfig=TempConfig;
 				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
-				Right=TempRight;
-				Left=TempLeft;
-				SetStickNumbers(Left.DiDevice,Right.DiDevice);
+				RightJS=TempRightJS;
+				LeftJS=TempLeftJS;
+				SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
 			break;
 
 			case IDCANCEL:
@@ -553,6 +554,7 @@ void UpdateConfig (void)
 	if (CurrentConfig.RebootNow)
 		DoReboot();
 	CurrentConfig.RebootNow=0;
+	EmuState.MousePointer = CurrentConfig.ShowMousePointer;
 }
 
 /**
@@ -818,12 +820,12 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
 				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETDONTCLICK, 1, 0);
 				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETDONTCLICK, 1, 0);
-			
+
 			}
 			SendDlgItemMessage(hDlg,IDC_MONTYPE,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[TempConfig.MonitorType]);
 			for (temp = 0; temp <= 1; temp++)
 				SendDlgItemMessage(hDlg, PaletteChoice[temp], BM_SETCHECK, (temp == TempConfig.PaletteType), 0);
-			
+
 		break;
 
 		case WM_HSCROLL:
@@ -831,7 +833,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			sprintf(OutBuffer,"%i",TempConfig.FrameSkip);
 			SendDlgItemMessage(hDlg,IDC_FRAMEDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 		break;
-		
+
 		case WM_COMMAND:
 			TempConfig.Resize = 1; //(unsigned char)SendDlgItemMessage(hDlg,IDC_RESIZE,BM_GETCHECK,0,0);
 			TempConfig.Aspect = (unsigned char)SendDlgItemMessage(hDlg,IDC_ASPECT,BM_GETCHECK,0,0);
@@ -841,7 +843,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			//POINT p = { 640,480 };
 			switch (LOWORD (wParam))
 			{
-				
+
 			case IDC_REMEMBER_SIZE:
 				TempConfig.Resize = 1;
 				SendDlgItemMessage(hDlg, IDC_RESIZE, BM_GETCHECK, 1, 0);
@@ -1031,6 +1033,8 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 	static int RightJoyStick[6]={IDC_RIGHT_LEFT,IDC_RIGHT_RIGHT,IDC_RIGHT_UP,IDC_RIGHT_DOWN,IDC_RIGHT_FIRE1,IDC_RIGHT_FIRE2};
 	static int LeftRadios[4]={IDC_LEFT_KEYBOARD,IDC_LEFT_USEMOUSE,IDC_LEFTAUDIO,IDC_LEFTJOYSTICK};
 	static int RightRadios[4]={IDC_RIGHT_KEYBOARD,IDC_RIGHT_USEMOUSE,IDC_RIGHTAUDIO,IDC_RIGHTJOYSTICK};
+    WPARAM showmouse = (EmuState.MousePointer == 0) ? BST_UNCHECKED : BST_CHECKED;
+
 	switch (message)
 	{
 		case WM_INITDIALOG:
@@ -1049,63 +1053,77 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 
 			for (temp = 0; temp < 6; temp++)
 			{
-				EnableWindow(GetDlgItem(hDlg, LeftJoyStick[temp]), (Left.UseMouse == 0));
+				EnableWindow(GetDlgItem(hDlg, LeftJoyStick[temp]), (LeftJS.UseMouse == 0));
 			}
 			for (temp = 0; temp < 6; temp++)
 			{
-				EnableWindow(GetDlgItem(hDlg, RightJoyStick[temp]), (Right.UseMouse == 0));
+				EnableWindow(GetDlgItem(hDlg, RightJoyStick[temp]), (RightJS.UseMouse == 0));
 			}
 
-			for (temp=0;temp<=2;temp++)
+			for (temp=0;temp<=3;temp++)
 			{
-				SendDlgItemMessage(hDlg, LeftJoystickEmulation[temp], BM_SETCHECK, (temp == Left.HiRes), 0);
-				SendDlgItemMessage(hDlg, RightJoystickEmulation[temp], BM_SETCHECK, (temp == Right.HiRes), 0);
+				SendDlgItemMessage(hDlg, LeftJoyEmu[temp], BM_SETCHECK, (temp == LeftJS.HiRes), 0);
+				SendDlgItemMessage(hDlg, RightJoyEmu[temp], BM_SETCHECK, (temp == RightJS.HiRes), 0);
 			}
 
-			EnableWindow( GetDlgItem(hDlg,IDC_LEFTAUDIODEVICE),(Left.UseMouse==2));
-			EnableWindow( GetDlgItem(hDlg,IDC_RIGHTAUDIODEVICE),(Right.UseMouse==2));
-			EnableWindow( GetDlgItem(hDlg,IDC_LEFTJOYSTICKDEVICE),(Left.UseMouse==3));
-			EnableWindow( GetDlgItem(hDlg,IDC_RIGHTJOYSTICKDEVICE),(Right.UseMouse==3));
+			EnableWindow( GetDlgItem(hDlg,IDC_LEFTAUDIODEVICE),(LeftJS.UseMouse==2));
+			EnableWindow( GetDlgItem(hDlg,IDC_RIGHTAUDIODEVICE),(RightJS.UseMouse==2));
+			EnableWindow( GetDlgItem(hDlg,IDC_LEFTJOYSTICKDEVICE),(LeftJS.UseMouse==3));
+			EnableWindow( GetDlgItem(hDlg,IDC_RIGHTJOYSTICKDEVICE),(RightJS.UseMouse==3));
 
 			EnableWindow( GetDlgItem(hDlg,IDC_LEFTJOYSTICK),(NumberofJoysticks>0));		//Grey the Joystick Radios if
 			EnableWindow( GetDlgItem(hDlg,IDC_RIGHTJOYSTICK),(NumberofJoysticks>0));	//No Joysticks are present
-			//populate joystick combo boxs
+            SendDlgItemMessage(hDlg,IDC_SHOWMOUSE,BM_SETCHECK,showmouse,(LPARAM(0)));
+
+            //populate joystick combo boxs
 			for(temp=0;temp<NumberofJoysticks;temp++)
 			{
 				SendDlgItemMessage(hDlg,IDC_RIGHTJOYSTICKDEVICE,CB_ADDSTRING,(WPARAM)0,(LPARAM)StickName[temp]);
 				SendDlgItemMessage(hDlg,IDC_LEFTJOYSTICKDEVICE,CB_ADDSTRING,(WPARAM)0,(LPARAM)StickName[temp]);
 			}
-			SendDlgItemMessage(hDlg,IDC_RIGHTJOYSTICKDEVICE,CB_SETCURSEL,(WPARAM)Right.DiDevice,(LPARAM)0);
-			SendDlgItemMessage(hDlg,IDC_LEFTJOYSTICKDEVICE,CB_SETCURSEL,(WPARAM)Left.DiDevice,(LPARAM)0);
+			SendDlgItemMessage(hDlg,IDC_RIGHTJOYSTICKDEVICE,CB_SETCURSEL,(WPARAM)RightJS.DiDevice,(LPARAM)0);
+			SendDlgItemMessage(hDlg,IDC_LEFTJOYSTICKDEVICE,CB_SETCURSEL,(WPARAM)LeftJS.DiDevice,(LPARAM)0);
 
-			SendDlgItemMessage(hDlg,LeftJoyStick[0],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(Left.Left),(LPARAM)0);
-			SendDlgItemMessage(hDlg,LeftJoyStick[1],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(Left.Right),(LPARAM)0);	
-			SendDlgItemMessage(hDlg,LeftJoyStick[2],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(Left.Up),(LPARAM)0);
-			SendDlgItemMessage(hDlg,LeftJoyStick[3],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(Left.Down),(LPARAM)0);	
-			SendDlgItemMessage(hDlg,LeftJoyStick[4],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(Left.Fire1),(LPARAM)0);	
-			SendDlgItemMessage(hDlg,LeftJoyStick[5],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(Left.Fire2),(LPARAM)0);	
-			SendDlgItemMessage(hDlg,RightJoyStick[0],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(Right.Left),(LPARAM)0);
-			SendDlgItemMessage(hDlg,RightJoyStick[1],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(Right.Right),(LPARAM)0);
-			SendDlgItemMessage(hDlg,RightJoyStick[2],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(Right.Up),(LPARAM)0);	
-			SendDlgItemMessage(hDlg,RightJoyStick[3],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(Right.Down),(LPARAM)0);
-			SendDlgItemMessage(hDlg,RightJoyStick[4],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(Right.Fire1),(LPARAM)0);
-			SendDlgItemMessage(hDlg,RightJoyStick[5],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(Right.Fire2),(LPARAM)0);
+			SendDlgItemMessage(hDlg,LeftJoyStick[0],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Left),(LPARAM)0);
+			SendDlgItemMessage(hDlg,LeftJoyStick[1],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Right),(LPARAM)0);
+			SendDlgItemMessage(hDlg,LeftJoyStick[2],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Up),(LPARAM)0);
+			SendDlgItemMessage(hDlg,LeftJoyStick[3],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Down),(LPARAM)0);
+			SendDlgItemMessage(hDlg,LeftJoyStick[4],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Fire1),(LPARAM)0);
+			SendDlgItemMessage(hDlg,LeftJoyStick[5],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(LeftJS.Fire2),(LPARAM)0);
+			SendDlgItemMessage(hDlg,RightJoyStick[0],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(RightJS.Left),(LPARAM)0);
+			SendDlgItemMessage(hDlg,RightJoyStick[1],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(RightJS.Right),(LPARAM)0);
+			SendDlgItemMessage(hDlg,RightJoyStick[2],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(RightJS.Up),(LPARAM)0);
+			SendDlgItemMessage(hDlg,RightJoyStick[3],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(RightJS.Down),(LPARAM)0);
+			SendDlgItemMessage(hDlg,RightJoyStick[4],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(RightJS.Fire1),(LPARAM)0);
+			SendDlgItemMessage(hDlg,RightJoyStick[5],CB_SETCURSEL,(WPARAM)TranslateScan2Disp(RightJS.Fire2),(LPARAM)0);
 
 			for (temp = 0; temp <= 3; temp++)
 			{
-				SendDlgItemMessage(hDlg, LeftRadios[temp], BM_SETCHECK, temp == Left.UseMouse, 0);
+				SendDlgItemMessage(hDlg, LeftRadios[temp], BM_SETCHECK, temp == LeftJS.UseMouse, 0);
 			}
 			for (temp = 0; temp <= 3; temp++)
 			{
-				SendDlgItemMessage(hDlg, RightRadios[temp], BM_SETCHECK, temp == Right.UseMouse, 0);
+				SendDlgItemMessage(hDlg, RightRadios[temp], BM_SETCHECK, temp == RightJS.UseMouse, 0);
 			}
-			TempLeft = Left;
-			TempRight=Right;
-			SendDlgItemMessage(hDlg,IDC_LEFTICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)JoystickIcons[Left.UseMouse]);
-			SendDlgItemMessage(hDlg,IDC_RIGHTICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)JoystickIcons[Right.UseMouse]);
+			TempLeftJS = LeftJS;
+			TempRightJS=RightJS;
+			SendDlgItemMessage(hDlg,IDC_LEFTICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)JoystickIcons[LeftJS.UseMouse]);
+			SendDlgItemMessage(hDlg,IDC_RIGHTICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)JoystickIcons[RightJS.UseMouse]);
 		break;
 
 		case WM_COMMAND:
+
+//	WritePrivateProfileInt("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer,IniFilePath);
+//static STRConfig TempConfig;
+
+            if (LOWORD(wParam) == IDC_SHOWMOUSE) {
+                if (HIWORD(wParam) == BN_CLICKED) {
+                    EmuState.MousePointer = (unsigned char) SendDlgItemMessage(hDlg, IDC_SHOWMOUSE, BM_GETCHECK, 0, 0);
+					TempConfig.ShowMousePointer = EmuState.MousePointer;
+				} 
+                break;
+            }
+
 			for (temp = 0; temp <= 3; temp++)
 			{
 				if (LOWORD(wParam) == LeftRadios[temp])
@@ -1113,7 +1131,7 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 					for (temp2 = 0; temp2 <= 3; temp2++)
 						SendDlgItemMessage(hDlg, LeftRadios[temp2], BM_SETCHECK, 0, 0);
 					SendDlgItemMessage(hDlg, LeftRadios[temp], BM_SETCHECK, 1, 0);
-					TempLeft.UseMouse = temp;
+					TempLeftJS.UseMouse = temp;
 				}
 			}
 
@@ -1124,66 +1142,66 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 					for (temp2 = 0; temp2 <= 3; temp2++)
 						SendDlgItemMessage(hDlg, RightRadios[temp2], BM_SETCHECK, 0, 0);
 					SendDlgItemMessage(hDlg, RightRadios[temp], BM_SETCHECK, 1, 0);
-					TempRight.UseMouse = temp;
+					TempRightJS.UseMouse = temp;
 				}
 			}
 
-			for (temp = 0; temp <= 2; temp++)
+			for (temp = 0; temp <= 3; temp++)
 			{
-				if (LOWORD(wParam) == LeftJoystickEmulation[temp])
+				if (LOWORD(wParam) == LeftJoyEmu[temp])
 				{
-					for (temp2 = 0; temp2 <= 2; temp2++)
-						SendDlgItemMessage(hDlg, LeftJoystickEmulation[temp2], BM_SETCHECK, 0, 0);
-					SendDlgItemMessage(hDlg, LeftJoystickEmulation[temp], BM_SETCHECK, 1, 0);
-					TempLeft.HiRes = temp;
+					for (temp2 = 0; temp2 <= 3; temp2++)
+						SendDlgItemMessage(hDlg, LeftJoyEmu[temp2], BM_SETCHECK, 0, 0);
+					SendDlgItemMessage(hDlg, LeftJoyEmu[temp], BM_SETCHECK, 1, 0);
+					TempLeftJS.HiRes = temp;
 				}
 			}
 
-			for (temp = 0; temp <= 2; temp++)
+			for (temp = 0; temp <= 3; temp++)
 			{
-				if (LOWORD(wParam) == RightJoystickEmulation[temp])
+				if (LOWORD(wParam) == RightJoyEmu[temp])
 				{
-					for (temp2 = 0; temp2 <= 2; temp2++)
-						SendDlgItemMessage(hDlg, RightJoystickEmulation[temp2], BM_SETCHECK, 0, 0);
-					SendDlgItemMessage(hDlg, RightJoystickEmulation[temp], BM_SETCHECK, 1, 0);
-					TempRight.HiRes = temp;
+					for (temp2 = 0; temp2 <= 3; temp2++)
+						SendDlgItemMessage(hDlg, RightJoyEmu[temp2], BM_SETCHECK, 0, 0);
+					SendDlgItemMessage(hDlg, RightJoyEmu[temp], BM_SETCHECK, 1, 0);
+					TempRightJS.HiRes = temp;
 				}
 			}
 
 			for (temp = 0; temp < 6; temp++)
 			{
-				EnableWindow(GetDlgItem(hDlg, LeftJoyStick[temp]), (TempLeft.UseMouse == 0));
+				EnableWindow(GetDlgItem(hDlg, LeftJoyStick[temp]), (TempLeftJS.UseMouse == 0));
 			}
 
 			for (temp = 0; temp < 6; temp++)
 			{
-				EnableWindow(GetDlgItem(hDlg, RightJoyStick[temp]), (TempRight.UseMouse == 0));
+				EnableWindow(GetDlgItem(hDlg, RightJoyStick[temp]), (TempRightJS.UseMouse == 0));
 			}
 
-			EnableWindow( GetDlgItem(hDlg,IDC_LEFTAUDIODEVICE),(TempLeft.UseMouse==2));
-			EnableWindow( GetDlgItem(hDlg,IDC_RIGHTAUDIODEVICE),(TempRight.UseMouse==2));
-			EnableWindow( GetDlgItem(hDlg,IDC_LEFTJOYSTICKDEVICE),(TempLeft.UseMouse==3));
-			EnableWindow( GetDlgItem(hDlg,IDC_RIGHTJOYSTICKDEVICE),(TempRight.UseMouse==3));
+			EnableWindow( GetDlgItem(hDlg,IDC_LEFTAUDIODEVICE),(TempLeftJS.UseMouse==2));
+			EnableWindow( GetDlgItem(hDlg,IDC_RIGHTAUDIODEVICE),(TempRightJS.UseMouse==2));
+			EnableWindow( GetDlgItem(hDlg,IDC_LEFTJOYSTICKDEVICE),(TempLeftJS.UseMouse==3));
+			EnableWindow( GetDlgItem(hDlg,IDC_RIGHTJOYSTICKDEVICE),(TempRightJS.UseMouse==3));
 
-			TempLeft.Left=TranslateDisp2Scan(SendDlgItemMessage(hDlg,LeftJoyStick[0],CB_GETCURSEL,0,0));
-			TempLeft.Right=TranslateDisp2Scan(SendDlgItemMessage(hDlg,LeftJoyStick[1],CB_GETCURSEL,0,0));
-			TempLeft.Up=TranslateDisp2Scan(SendDlgItemMessage(hDlg,LeftJoyStick[2],CB_GETCURSEL,0,0));
-			TempLeft.Down=TranslateDisp2Scan(SendDlgItemMessage(hDlg,LeftJoyStick[3],CB_GETCURSEL,0,0));
-			TempLeft.Fire1=TranslateDisp2Scan(SendDlgItemMessage(hDlg,LeftJoyStick[4],CB_GETCURSEL,0,0));
-			TempLeft.Fire2=TranslateDisp2Scan(SendDlgItemMessage(hDlg,LeftJoyStick[5],CB_GETCURSEL,0,0));
+			TempLeftJS.Left=TranslateDisp2Scan(SendDlgItemMessage(hDlg,LeftJoyStick[0],CB_GETCURSEL,0,0));
+			TempLeftJS.Right=TranslateDisp2Scan(SendDlgItemMessage(hDlg,LeftJoyStick[1],CB_GETCURSEL,0,0));
+			TempLeftJS.Up=TranslateDisp2Scan(SendDlgItemMessage(hDlg,LeftJoyStick[2],CB_GETCURSEL,0,0));
+			TempLeftJS.Down=TranslateDisp2Scan(SendDlgItemMessage(hDlg,LeftJoyStick[3],CB_GETCURSEL,0,0));
+			TempLeftJS.Fire1=TranslateDisp2Scan(SendDlgItemMessage(hDlg,LeftJoyStick[4],CB_GETCURSEL,0,0));
+			TempLeftJS.Fire2=TranslateDisp2Scan(SendDlgItemMessage(hDlg,LeftJoyStick[5],CB_GETCURSEL,0,0));
 
-			TempRight.Left=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[0],CB_GETCURSEL,0,0));
-			TempRight.Right=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[1],CB_GETCURSEL,0,0));
-			TempRight.Up=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[2],CB_GETCURSEL,0,0));
-			TempRight.Down=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[3],CB_GETCURSEL,0,0));
-			TempRight.Fire1=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[4],CB_GETCURSEL,0,0));
-			TempRight.Fire2=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[5],CB_GETCURSEL,0,0));
-			
-			TempRight.DiDevice=(unsigned char)SendDlgItemMessage(hDlg,IDC_RIGHTJOYSTICKDEVICE,CB_GETCURSEL,0,0);
-			TempLeft.DiDevice=(unsigned char)SendDlgItemMessage(hDlg,IDC_LEFTJOYSTICKDEVICE,CB_GETCURSEL,0,0);	//Fix Me;
+			TempRightJS.Left=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[0],CB_GETCURSEL,0,0));
+			TempRightJS.Right=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[1],CB_GETCURSEL,0,0));
+			TempRightJS.Up=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[2],CB_GETCURSEL,0,0));
+			TempRightJS.Down=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[3],CB_GETCURSEL,0,0));
+			TempRightJS.Fire1=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[4],CB_GETCURSEL,0,0));
+			TempRightJS.Fire2=TranslateDisp2Scan(SendDlgItemMessage(hDlg,RightJoyStick[5],CB_GETCURSEL,0,0));
 
-			SendDlgItemMessage(hDlg,IDC_LEFTICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)JoystickIcons[TempLeft.UseMouse]);
-			SendDlgItemMessage(hDlg,IDC_RIGHTICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)JoystickIcons[TempRight.UseMouse]);
+			TempRightJS.DiDevice=(unsigned char)SendDlgItemMessage(hDlg,IDC_RIGHTJOYSTICKDEVICE,CB_GETCURSEL,0,0);
+			TempLeftJS.DiDevice=(unsigned char)SendDlgItemMessage(hDlg,IDC_LEFTJOYSTICKDEVICE,CB_GETCURSEL,0,0);	//Fix Me;
+
+			SendDlgItemMessage(hDlg,IDC_LEFTICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)JoystickIcons[TempLeftJS.UseMouse]);
+			SendDlgItemMessage(hDlg,IDC_RIGHTICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)JoystickIcons[TempRightJS.UseMouse]);
 		break;
 	} //END switch message
 	return(0);
@@ -1240,17 +1258,17 @@ void RefreshJoystickStatus(void)
 	for (Index=0;Index<NumberofJoysticks;Index++)
 		Temp=InitJoyStick (Index);
 
-	if (Right.DiDevice>(NumberofJoysticks-1))
-		Right.DiDevice=0;
-	if (Left.DiDevice>(NumberofJoysticks-1))
-		Left.DiDevice=0;
-	SetStickNumbers(Left.DiDevice,Right.DiDevice);
+	if (RightJS.DiDevice>(NumberofJoysticks-1))
+		RightJS.DiDevice=0;
+	if (LeftJS.DiDevice>(NumberofJoysticks-1))
+		LeftJS.DiDevice=0;
+	SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
 	if (NumberofJoysticks==0)	//Use Mouse input if no Joysticks present
 	{
-		if (Left.UseMouse==3)
-			Left.UseMouse=1;
-		if (Right.UseMouse==3)
-			Right.UseMouse=1;
+		if (LeftJS.UseMouse==3)
+			LeftJS.UseMouse=1;
+		if (RightJS.UseMouse==3)
+			RightJS.UseMouse=1;
 	}
 	return;
 }
@@ -1336,7 +1354,7 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 				SetMonState(PrtMon);
 
 			}	//End switch wParam
-			
+
 			break;
 	}
 	return(0);
@@ -1348,7 +1366,7 @@ LRESULT CALLBACK Paths(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 
 int SelectFile(char *FileName)
 {
-	OPENFILENAME ofn ;	
+	OPENFILENAME ofn ;
 	char Dummy[MAX_PATH]="";
 	char TempFileName[MAX_PATH]="";
 	char CapFilePath[MAX_PATH];
@@ -1360,7 +1378,7 @@ int SelectFile(char *FileName)
 	ofn.Flags             = OFN_HIDEREADONLY;
 	ofn.hInstance         = GetModuleHandle(0);
 	ofn. lpstrDefExt      = "txt";
-	ofn.lpstrFilter       =	"Text File\0*.txt\0\0";	
+	ofn.lpstrFilter       =	"Text File\0*.txt\0\0";
 	ofn.nFilterIndex      = 0 ;					// current filter index
 	ofn.lpstrFile         = TempFileName;		// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;			// sizeof lpstrFile
@@ -1383,7 +1401,7 @@ int SelectFile(char *FileName)
 		}
 	}
 	strcpy(FileName,TempFileName);
-	
+
 	return(1);
 }
 

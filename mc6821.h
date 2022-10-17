@@ -37,7 +37,7 @@ void SetCart(unsigned char);
 unsigned char SetCartAutoStart(unsigned char);
 void PiaReset();
 unsigned char GetMuxState(void);
-unsigned char DACState(void);
+unsigned int DACState(void);
 unsigned int GetDACSample(void);
 unsigned char GetCasSample(void);
 void SetCassetteSample(unsigned char);
@@ -45,5 +45,6 @@ int OpenPrintFile(char *);
 #define FALLING 0
 #define RISING	1
 #define ANY		2
+#define RAMPMAX 900
 
 #endif

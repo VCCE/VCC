@@ -71,7 +71,8 @@ typedef struct  {
 	char			PathtoExe[MAX_PATH];
 	char			FloppyPath[MAX_PATH];
 	char			CassPath[MAX_PATH];
-	char            COCO3ROMPath[MAX_PATH];
+    char            COCO3ROMPath[MAX_PATH];
+    unsigned char   ShowMousePointer;
 } STRConfig;
 
 void DecreaseOverclockSpeed();

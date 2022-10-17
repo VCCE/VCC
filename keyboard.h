@@ -21,11 +21,6 @@ This file is part of VCC (Virtual Color Computer).
 */
 /*****************************************************************************/
 
-
-/**
-*/
-
-
 typedef enum keyevent_e
 {
 	kEventKeyUp		= 0,
@@ -46,7 +41,7 @@ typedef enum keyboardlayout_e
 } keyboardlayout_e;
 
 /**
-	Keyboard layout names used to populate the 
+	Keyboard layout names used to populate the
 	layout selection pull-down in the config dialog
 
 	This of course must match keyboardlayout_e above
@@ -71,38 +66,15 @@ typedef struct keytranslationentry_t
 	unsigned char Col2;
 } keytranslationentry_t;
 
-typedef struct {
-	unsigned char UseMouse;
-	unsigned char Up;
-	unsigned char Down;
-	unsigned char Left;
-	unsigned char Right;
-	unsigned char Fire1;
-	unsigned char Fire2;
-	unsigned char DiDevice;
-	unsigned char HiRes;
-} JoyStick;
-
 /*****************************************************************************/
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-	
 	void			vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout);
 	void			vccKeyboardHandleKey(unsigned char, unsigned char, keyevent_e keyState);
 	unsigned char	vccKeyboardGetScan(unsigned char);
-
-	// globals referenced from config.c
-	extern JoyStick	Left;
-	extern JoyStick Right;
-
-	void			joystick(short unsigned, short unsigned);
-	unsigned short	get_pot_value(unsigned char pot);
-	void			SetButtonStatus(unsigned char, unsigned char);
-	void			SetStickNumbers(unsigned char, unsigned char);
-
 #ifdef __cplusplus
 }
 #endif
