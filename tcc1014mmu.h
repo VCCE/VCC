@@ -19,12 +19,14 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+void MMUState(unsigned char*, unsigned char, unsigned char*);
 
 void MemWrite8(unsigned char,unsigned short );
 void MemWrite16(unsigned short,unsigned short );
 
 unsigned short MemRead16(short unsigned int);
 unsigned char MemRead8(short unsigned int);
+unsigned char SafeMemRead8(short unsigned int);
 unsigned char * MmuInit(unsigned char);
 unsigned char *	Getint_rom_pointer(void);
 unsigned char * Getext_rom_pointer(void);

@@ -105,7 +105,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)Vcc.exe</OutputFile>
-      <AdditionalDependencies>nafxcw.lib;libcmt.lib;ddraw.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcmt.lib;ddraw.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>
       </AdditionalOptions>
       <IgnoreSpecificDefaultLibraries>nafxcw.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
@@ -149,7 +149,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)Vcc.exe</OutputFile>
-      <AdditionalDependencies>nafxcwd.lib;libcmtd.lib;ddraw.lib;dxguid.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcmtd.lib;ddraw.lib;dxguid.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <IgnoreSpecificDefaultLibraries>nafxcwd.lib;libcmtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -171,10 +171,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Audio.c" />
+    <ClCompile Include="Breakpoints.cpp" />
     <ClCompile Include="Cassette.cpp" />
     <ClCompile Include="coco3.cpp" />
     <ClCompile Include="CommandLine.c" />
     <ClCompile Include="config.c" />
+    <ClCompile Include="DebuggerUtils.cpp" />
     <ClCompile Include="DirectDrawInterface.cpp" />
     <ClCompile Include="Fileops.c" />
     <ClCompile Include="hd6309.c" />
@@ -186,7 +188,10 @@
     <ClCompile Include="logger.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
+    <ClCompile Include="MemoryMap.cpp" />
+    <ClCompile Include="MMUMonitor.cpp" />
     <ClCompile Include="pakinterface.c" />
+    <ClCompile Include="ProcessorState.cpp" />
     <ClCompile Include="quickload.c" />
     <ClCompile Include="tcc1014graphics.c" />
     <ClCompile Include="tcc1014mmu.c" />
@@ -200,12 +205,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h" />
+    <ClInclude Include="Breakpoints.h" />
     <ClInclude Include="Cassette.h" />
     <ClInclude Include="cc2font.h" />
     <ClInclude Include="cc3font.h" />
     <ClInclude Include="coco3.h" />
     <ClInclude Include="CommandLine.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="DebuggerUtils.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="DirectDrawInterface.h" />
     <ClInclude Include="fileops.h" />
@@ -220,7 +227,10 @@
     <ClInclude Include="mc6809.h" />
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6821.h" />
+    <ClInclude Include="MemoryMap.h" />
+    <ClInclude Include="MMUMonitor.h" />
     <ClInclude Include="pakinterface.h" />
+    <ClInclude Include="ProcessorState.h" />
     <ClInclude Include="quickload.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="tcc1014graphics.h" />

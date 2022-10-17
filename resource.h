@@ -41,6 +41,10 @@
 #define IDD_BITBANGER                   159
 #define IDD_KEYMAPEDIT                  164
 #define IDD_DIALOG1                     169
+#define IDD_MEMORY_MAP                  170
+#define IDD_PROCESSOR_STATE             171
+#define IDD_BREAKPOINTS                 172
+#define IDD_MMU_MONITOR                 173
 #define IDC_MUTE                        1003
 #define IDC_THROTTLE                    1004
 #define IDC_ARTIFACTS                   1005
@@ -325,6 +329,28 @@
 #define IDC_ORG_PALETTE                 1191
 #define IDC_UPD_PALETTE                 1192
 
+#define IDC_MEM_VSCROLLBAR              2001
+#define IDT_MEM_TIMER                   2002
+#define IDT_PROC_TIMER                  2003
+#define IDT_BRKP_TIMER                  2004
+
+#define IDC_EDIT_SOURCE                 2100
+#define IDC_BTN_SOURCE_BROWSE           2101
+#define IDC_LINES_LOADED                2102
+#define IDC_BTN_NEW_BREAKPOINT          2103
+#define IDC_LIST_BREAKPOINTS            2104
+#define IDC_BTN_DEL_BREAKPOINT          2105
+#define IDC_BTN_BREAKPOINT_ON           2106
+#define IDC_BTN_BREAKPOINT_OFF          2107
+#define IDC_SOURCE_LISTING              2108
+#define IDC_EDIT_FIND_SOURCE            2109
+#define IDC_BTN_FIND_SOURCE             2110
+#define IDC_BTN_CPU_HALT                2111
+#define IDC_BTN_CPU_RUN                 2112
+#define IDC_BTN_CPU_STEP                2113
+#define IDC_EDIT_FIND_MEM               2114
+#define IDC_BTN_FIND_MEM                2115
+#define IDC_SELECT_MMU_PAGE             2116
 #define ID_FILE_EXIT                    40002
 #define IDM_HELP_ABOUT                  40003
 #define ID_FILE_RUN                     40004
@@ -359,15 +385,19 @@
 #define ID_PASTE_BASIC_NEW              40037
 #define ID_FLIP_ARTIFACTS               40038
 #define IDC_REMEMBER_SIZE               40039
+#define ID_MEMORY_DISPLAY               40040
+#define ID_PROCESSOR_STATE              40041
+#define ID_BREAKPOINTS                  40042
+#define ID_MMU_MONITOR                  40043
 #define ID_CONFIGURE_OPTIONS            65535
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        171
-#define _APS_NEXT_COMMAND_VALUE         40031
-#define _APS_NEXT_CONTROL_VALUE         1255
+#define _APS_NEXT_RESOURCE_VALUE        174
+#define _APS_NEXT_COMMAND_VALUE         40044
+#define _APS_NEXT_CONTROL_VALUE         2117
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

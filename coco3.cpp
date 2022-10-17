@@ -92,6 +92,8 @@ using namespace std;
 string clipboard;
 STRConfig ClipConfig;
 
+char CurrentCPUControl = ' ';
+
 _inline int CPUCycle(void);
 float RenderFrame (SystemState *RFState)
 {
@@ -160,6 +162,19 @@ float RenderFrame (SystemState *RFState)
 	}
 	AudioIndex=0;
 
+	// Only affect frame rate if a debug window is open.
+	if (RFState->BreakpointWindow != NULL || RFState->MemoryWindow != NULL || RFState->MMUMonitorWindow != NULL || RFState->ProcessorWindow != NULL)
+	{
+		EnterCriticalSection(&RFState->WatchCriticalSection);
+		CPUState(RFState->WatchProcState, RFState->WatchRamBuffer, RFState->WatchRamSize);
+		if (RFState->CPUControl != ' ')
+		{
+			CurrentCPUControl = CPUControl(RFState->CPUNumBreakpoints, RFState->CPUBreakpoints, RFState->CPUControl);
+			RFState->CPUControl = ' ';
+		}
+		MMUState(RFState->WatchMMUState, RFState->MMUPage, RFState->WatchMMUPage);
+		LeaveCriticalSection(&RFState->WatchCriticalSection);
+	}
 
 /*
 	//Debug Code
@@ -206,6 +221,13 @@ void SetLinesperScreen (unsigned char Lines)
 
 _inline int CPUCycle(void)	
 {
+	// CPU is in a halted state.
+	if (CurrentCPUControl == 'H')
+	{
+		return 0;
+	}
+
+	// CPU is running or stepped.
 	if (HorzInteruptEnabled)
 		GimeAssertHorzInterupt();
 	irq_hs(ANY);

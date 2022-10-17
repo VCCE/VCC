@@ -7,7 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
+#include "winres.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -49,6 +49,13 @@ BEGIN
         MENUITEM "Flip Artifact Colors",        ID_FLIP_ARTIFACTS
         MENUITEM "Config",                      ID_CONFIGURE_OPTIONS
     END
+    POPUP "Debugger"
+    BEGIN
+        MENUITEM "Memory Display",              ID_MEMORY_DISPLAY
+        MENUITEM "Processor State",             ID_PROCESSOR_STATE
+        MENUITEM "Breakpoints",                 ID_BREAKPOINTS
+        MENUITEM "MMU Monitor",                 ID_MMU_MONITOR
+    END
     POPUP "Help", HELP
     BEGIN
         MENUITEM "About Vcc",                   IDM_HELP_ABOUT
@@ -69,7 +76,7 @@ END
 
 2 TEXTINCLUDE 
 BEGIN
-    "#include ""afxres.h""\r\n"
+    "#include ""winres.h""\r\n"
     "\0"
 END
 
@@ -318,8 +325,8 @@ BEGIN
     LTEXT           "Counter",IDC_STATIC,76,81,26,8
     LTEXT           "Mode",IDC_STATIC,18,81,19,8
     PUSHBUTTON      "Eject",IDC_EJECT,122,43,35,18,0,WS_EX_DLGMODALFRAME
-    CONTROL         "",IDC_TCOUNT,"RICHEDIT",TCS_RAGGEDRIGHT | TCS_OWNERDRAWFIXED | WS_BORDER | WS_TABSTOP,53,65,77,15,WS_EX_CLIENTEDGE | WS_EX_RIGHT | WS_EX_STATICEDGE
-    CONTROL         "",IDC_MODE,"RICHEDIT",TCS_RAGGEDRIGHT | WS_BORDER | WS_TABSTOP,7,66,40,14,WS_EX_CLIENTEDGE | WS_EX_STATICEDGE
+    CONTROL         "",IDC_TCOUNT,"RichEdit20A",TCS_RAGGEDRIGHT | TCS_OWNERDRAWFIXED | WS_BORDER | WS_TABSTOP,53,65,77,15,WS_EX_CLIENTEDGE | WS_EX_RIGHT | WS_EX_STATICEDGE
+    CONTROL         "",IDC_MODE,"RichEdit20A",TCS_RAGGEDRIGHT | WS_BORDER | WS_TABSTOP,7,66,40,14,WS_EX_CLIENTEDGE | WS_EX_STATICEDGE
 END
 
 IDD_BITBANGER DIALOGEX 0, 0, 262, 229
@@ -407,6 +414,61 @@ BEGIN
     PUSHBUTTON      "CTRL",IDC_KEYBTN_CTRL,28,52,22,16,BS_PUSHLIKE | NOT WS_TABSTOP
     PUSHBUTTON      "SHIFT",IDC_KEYBTN_LSHIFT,32,68,29,16,BS_PUSHLIKE | NOT WS_TABSTOP
     PUSHBUTTON      "SHIFT",IDC_KEYBTN_RSHIFT,280,68,29,16,BS_PUSHLIKE | NOT WS_TABSTOP
+END
+
+IDD_MEMORY_MAP DIALOGEX 430, -32, 360, 390
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Memory Window"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "Close", IDCLOSE, 6, 370, 36, 14
+    EDITTEXT        IDC_EDIT_FIND_MEM, 248, 370, 70, 14, ES_AUTOHSCROLL
+    PUSHBUTTON      "Find", IDC_BTN_FIND_MEM, 318, 370, 36, 14
+END
+
+IDD_PROCESSOR_STATE DIALOGEX 20, 320, 380, 100
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Processor Window"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "Close", IDCLOSE, 6, 80, 36, 14
+    PUSHBUTTON      "Halt", IDC_BTN_CPU_HALT, 258, 80, 36, 14
+    PUSHBUTTON      "Run", IDC_BTN_CPU_RUN, 298, 80, 36, 14
+    PUSHBUTTON      "Step", IDC_BTN_CPU_STEP, 338, 80, 36, 14
+END
+
+
+IDD_BREAKPOINTS DIALOGEX -355, -32, 340, 300
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Breakpoint Window"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "Load LWASM Source Listing for Symbolic Debugging", IDC_STATIC, 10, 6, 320, 58
+    LTEXT           "Source Listing", IDC_STATIC, 16, 23, 100, 8
+    EDITTEXT        IDC_EDIT_SOURCE, 16, 35, 240, 14, ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse", IDC_BTN_SOURCE_BROWSE, 260, 35, 50, 14
+    LTEXT           "Lines", IDC_STATIC, 20, 51, 17, 8
+    LTEXT           "0 lines loaded", IDC_LINES_LOADED, 45, 51, 100, 8
+    GROUPBOX        "Breakpoints", IDC_STATIC, 10, 70, 320, 83
+    LISTBOX         IDC_LIST_BREAKPOINTS, 18, 80, 202, 65, LBS_NOTIFY | LBS_SORT | LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "New Breakpoint", IDC_BTN_NEW_BREAKPOINT, 230, 80, 73, 14
+    PUSHBUTTON      "Remove Breakpoint", IDC_BTN_DEL_BREAKPOINT, 230, 95, 73, 14
+    PUSHBUTTON      "On", IDC_BTN_BREAKPOINT_ON, 230, 110, 35, 14
+    PUSHBUTTON      "Off", IDC_BTN_BREAKPOINT_OFF, 268, 110, 35, 14
+    CONTROL         "[Load source listing]", IDC_SOURCE_LISTING, "RichEdit20W", ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | ES_NOHIDESEL | WS_VSCROLL | WS_TABSTOP, 10, 155, 320, 120
+    DEFPUSHBUTTON   "Close", IDCLOSE, 6, 280, 36, 14
+    EDITTEXT        IDC_EDIT_FIND_SOURCE, 228, 280, 70, 14, ES_AUTOHSCROLL
+    PUSHBUTTON      "Find", IDC_BTN_FIND_SOURCE, 298, 280, 36, 14
+END
+
+IDD_MMU_MONITOR DIALOGEX 430, 390, 380, 408
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "MMU Monitor Window"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "Close",IDCLOSE,8,389,36,14
+    LTEXT           "Display Real Memory (8K Page)",IDC_STATIC,130,390,100,8
+	COMBOBOX        IDC_SELECT_MMU_PAGE, 236, 388, 135, 58, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 
@@ -513,8 +575,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,1,0,6
- PRODUCTVERSION 2,1,0,6
+ FILEVERSION 2,1,0,8
+ PRODUCTVERSION 2,1,0,8
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x29L
@@ -532,7 +594,7 @@ BEGIN
             VALUE "Comments", "How bored are you that your reading this?"
             VALUE "CompanyName", "Not Radio Shack"
             VALUE "FileDescription", "Vcc"
-            VALUE "FileVersion", "2.1.0.6"
+            VALUE "FileVersion", "2.1.0.8"
             VALUE "InternalName", "Poco"
             VALUE "LegalCopyright", "Copyright 2015 by BitRot Software"
             VALUE "LegalTrademarks", "BLAZEMONGER!"
@@ -640,7 +702,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_APP_TITLE           "VCC 2.1.0.6-beta Tandy Color Computer 3 Emulator"
+    IDS_APP_TITLE           "VCC 2.1.0.8 Tandy Color Computer 3 Emulator"
     IDS_CATNUMBER           "26-3334"
 END
 

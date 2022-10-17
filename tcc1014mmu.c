@@ -114,6 +114,34 @@ void MmuReset(void)
 	return;
 }
 
+void MMUState(unsigned char* regs, unsigned char page, unsigned char* mem)
+{
+	regs[0] = MmuTask;
+	regs[1] = MmuEnabled;
+
+	regs[2] = MmuRegisters[0][0];
+	regs[3] = MmuRegisters[0][1];
+	regs[4] = MmuRegisters[0][2];
+	regs[5] = MmuRegisters[0][3];
+	regs[6] = MmuRegisters[0][4];
+	regs[7] = MmuRegisters[0][5];
+	regs[8] = MmuRegisters[0][6];
+	regs[9] = MmuRegisters[0][7];
+
+	regs[10] = MmuRegisters[1][0];
+	regs[11] = MmuRegisters[1][1];
+	regs[12] = MmuRegisters[1][2];
+	regs[13] = MmuRegisters[1][3];
+	regs[14] = MmuRegisters[1][4];
+	regs[15] = MmuRegisters[1][5];
+	regs[16] = MmuRegisters[1][6];
+	regs[17] = MmuRegisters[1][7];
+
+	regs[18] = RamVectors;
+	regs[19] = RomMap;
+	memcpy(mem, memory + page * 8192, 8192);
+}
+
 void SetVectors(unsigned char data)
 {
 	RamVectors=!!data; //Bit 3 of $FF90 MC3
@@ -223,6 +251,36 @@ unsigned char MemRead8( unsigned short address)
 	if (MemPageOffsets[MmuRegisters[MmuState][address>>13]]==1)
 		return(MemPages[MmuRegisters[MmuState][address>>13]][address & 0x1FFF]);
 	return( PackMem8Read( MemPageOffsets[MmuRegisters[MmuState][address>>13]] + (address & 0x1FFF) ));
+}
+
+unsigned char SafeMemRead8(unsigned short address)
+{
+// Only read memory that doesn't change the state of the machine.
+// Ram is ok.
+// Sam registers are ok.
+// Gime registers are ok.
+// Carts are not ok - no idea what the external address will do.
+	if (address < 0xFE00)
+	{
+		if (MemPageOffsets[MmuRegisters[MmuState][address >> 13]] == 1)
+			return(MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF]);
+		return memory[address];
+	}
+	if (address > 0xFEFF)
+	{
+	// Ok to read SAM.
+	if (address >= 0xFFC0 && address <= 0xFFFF)
+		return (port_read(address));
+		// Ok to read GIME.
+	if (address >= 0xFF90 && address <= 0xFFBF)
+		return (port_read(address));
+	return memory[address];
+	}
+	if (RamVectors) //Address must be $FE00 - $FEFF
+		return(memory[(0x2000 * VectorMask[CurrentRamConfig]) | (address & 0x1FFF)]);
+	if (MemPageOffsets[MmuRegisters[MmuState][address >> 13]] == 1)
+			return(MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF]);
+	return memory[address];
 }
 
 void MemWrite8(unsigned char data,unsigned short address)

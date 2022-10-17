@@ -62,6 +62,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "CommandLine.h"
 #include "logger.h"
 
+#include "MemoryMap.h"
+#include "ProcessorState.h"
+#include "Breakpoints.h"
+#include "MMUMonitor.h"
+
 static HANDLE hout=NULL;
 
 SystemState EmuState;
@@ -86,6 +91,8 @@ unsigned __stdcall CartLoad(void *);
 void (*CPUInit)(void)=NULL;
 int  (*CPUExec)( int)=NULL;
 void (*CPUReset)(void)=NULL;
+void (*CPUState)(unsigned char*, unsigned char*, int) = NULL;
+char (*CPUControl)(unsigned char, unsigned short*, char) = NULL;
 void (*CPUAssertInterupt)(unsigned char,unsigned char)=NULL;
 void (*CPUDeAssertInterupt)(unsigned char)=NULL;
 void (*CPUForcePC)(unsigned short)=NULL;
@@ -331,6 +338,58 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					FlipArtifacts();
 					break;
 
+				case ID_MEMORY_DISPLAY:
+					if (EmuState.MemoryWindow == NULL)
+					{
+						EmuState.MemoryWindow = CreateDialog(
+							EmuState.WindowInstance, //NULL,
+							(LPCTSTR)IDD_MEMORY_MAP,
+							EmuState.WindowHandle,
+							(DLGPROC)MemoryMap::MemoryMap
+						);
+						ShowWindow(EmuState.MemoryWindow, SW_SHOWNORMAL);
+					}
+				    break;
+	
+				case ID_PROCESSOR_STATE:
+					if (EmuState.ProcessorWindow == NULL)
+					{
+						EmuState.ProcessorWindow = CreateDialog(
+							EmuState.WindowInstance, //NULL,
+							(LPCTSTR)IDD_PROCESSOR_STATE,
+							EmuState.WindowHandle,
+							(DLGPROC)ProcessorState::ProcessorState
+						);
+						ShowWindow(EmuState.ProcessorWindow, SW_SHOWNORMAL);
+					}
+					break;
+
+				case ID_BREAKPOINTS:
+					if (EmuState.BreakpointWindow == NULL)
+					{
+						EmuState.BreakpointWindow = CreateDialog(
+							EmuState.WindowInstance, //NULL,
+							(LPCTSTR)IDD_BREAKPOINTS,
+							EmuState.WindowHandle,
+							(DLGPROC)Breakpoints::Breakpoints
+						);
+						ShowWindow(EmuState.BreakpointWindow, SW_SHOWNORMAL);
+					}
+					break;
+
+				case ID_MMU_MONITOR:
+					if (EmuState.MMUMonitorWindow == NULL)
+					{
+						EmuState.MMUMonitorWindow = CreateDialog(
+							EmuState.WindowInstance, //NULL,
+							(LPCTSTR)IDD_MMU_MONITOR,
+							EmuState.WindowHandle,
+							(DLGPROC)MMUMonitor::MMUMonitor
+						);
+						ShowWindow(EmuState.MMUMonitorWindow, SW_SHOWNORMAL);
+					}
+					break;
+
 				default:
 				   return DefWindowProc(hWnd, message, wParam, lParam);
 			}
@@ -338,7 +397,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 //		case WM_CREATE:
 //			break;
-			
+
 		case WM_SETCURSOR:
 			// Hide mouse cursor
             if ((EmuState.MousePointer != 1) && (LOWORD(lParam) == HTCLIENT)) {
@@ -649,28 +708,45 @@ void DoHardReset(SystemState* const HRState)
 {	
 	HRState->RamBuffer=MmuInit(HRState->RamSize);	//Alocate RAM/ROM & copy ROM Images from source
 	HRState->WRamBuffer=(unsigned short *)HRState->RamBuffer;
+
+	// Debugger - watch memory.
+	// Only Processor Space (64K) is watched at the moment.
+	if (HRState->WatchRamBuffer != NULL)
+		free(HRState->WatchRamBuffer);
+	HRState->WatchRamBuffer = (unsigned char*)malloc(64 * 1024);
+	HRState->WatchRamSize = 64 * 1024;
+	if (HRState->WatchMMUPage != NULL)
+		free(HRState->WatchMMUPage);
+	HRState->WatchMMUPage = (unsigned char*)malloc(8192);
+	HRState->MMUPage = 0;
+	// Debugger ---------------------
+
 	if (HRState->RamBuffer == NULL)
 	{
 		MessageBox(NULL,"Can't allocate enough RAM, Out of memory","Error",0);
 		exit(0);
 	}
-	if (HRState->CpuType==1)
+	if (HRState->CpuType == 1)
 	{
-		CPUInit=HD6309Init;
-		CPUExec=HD6309Exec;
-		CPUReset=HD6309Reset;
-		CPUAssertInterupt=HD6309AssertInterupt;
-		CPUDeAssertInterupt=HD6309DeAssertInterupt;
-		CPUForcePC=HD6309ForcePC;
+		CPUInit = HD6309Init;
+		CPUExec = HD6309Exec;
+		CPUReset = HD6309Reset;
+		CPUAssertInterupt = HD6309AssertInterupt;
+		CPUDeAssertInterupt = HD6309DeAssertInterupt;
+		CPUForcePC = HD6309ForcePC;
+		CPUState = HD6309State;
+		CPUControl = HD6309Control;
 	}
 	else
 	{
-		CPUInit=MC6809Init;
-		CPUExec=MC6809Exec;
-		CPUReset=MC6809Reset;
-		CPUAssertInterupt=MC6809AssertInterupt;
-		CPUDeAssertInterupt=MC6809DeAssertInterupt;
-		CPUForcePC=MC6809ForcePC;
+		CPUInit = MC6809Init;
+		CPUExec = MC6809Exec;
+		CPUReset = MC6809Reset;
+		CPUAssertInterupt = MC6809AssertInterupt;
+		CPUDeAssertInterupt = MC6809DeAssertInterupt;
+		CPUForcePC = MC6809ForcePC;
+		CPUState = MC6809State;
+		CPUControl = MC6809Control;
 	}
 	PiaReset();
 	mc6883_reset();	//Captures interal rom pointer for CPU Interupt Vectors
@@ -845,6 +921,8 @@ unsigned __stdcall EmuLoop(void *Dummy)
 	Sleep(30);
 	SetEvent(hEvent) ;
 
+	InitializeCriticalSection(&EmuState.WatchCriticalSection);
+
 	while (true)
 	{
 		if (FlagEmuStop==TH_REQWAIT)
@@ -909,6 +987,9 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		if (Throttle )	//Do nothing untill the frame is over returning unused time to OS
 			FrameWait();
 	} //Still Emulating
+
+	DeleteCriticalSection(&EmuState.WatchCriticalSection);
+
 	return(NULL);
 }
 
