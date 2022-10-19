@@ -447,6 +447,12 @@ void SetStatusBarText( char *TextBuffer,SystemState *STState)
 	return;
 }
 
+int GetMainWindowStatusBarHeight()
+{
+	return StatusBarHeight;
+}
+
+
 void Cls(unsigned int ClsColor,SystemState *CLState)
 {
 	CLState->ResetPending=3; //Tell Main loop to hold Emu

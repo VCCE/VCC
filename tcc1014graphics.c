@@ -9966,6 +9966,16 @@ int GetBytesPerRow() {
 	return BytesperRow;
 }
 
+int GetHorizontalBorderSize()
+{
+	return HorzCenter / 2;
+}
+
+int GetDisplayedPixelsPerLine()
+{
+	return PixelsperLine;
+}
+
 unsigned int GetStartOfVidram() {
 	return StartofVidram;
 }

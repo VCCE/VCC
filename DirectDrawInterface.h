@@ -23,6 +23,7 @@ BOOL InitDrawSurface(bool );
 void UnlockScreen(SystemState *);
 unsigned char LockScreen(SystemState *);
 void SetStatusBarText( char *,SystemState *);
+int GetMainWindowStatusBarHeight();
 bool CreateDDWindow(SystemState *);
 void Cls(unsigned int,SystemState *);
 void DoCls(SystemState *);

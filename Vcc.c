@@ -67,6 +67,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "Breakpoints.h"
 #include "MMUMonitor.h"
 
+#undef min
+#undef max
+
+
 static HANDLE hout=NULL;
 
 SystemState EmuState;
@@ -213,12 +217,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
-	unsigned int x,y;  // joystick x,y values 0-3fff (0-16383)
 	unsigned char kb_char;
 	static unsigned char OEMscan=0;
     int Extended;
 	static char ascii=0;
-	static RECT ClientSize;
 	static unsigned long Width,Height;
 
 	kb_char = (unsigned char)wParam;
@@ -575,19 +577,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_MOUSEMOVE:
 			if (EmuState.EmulationRunning)
 			{
-				x = LOWORD( lParam ) ;
-				y = HIWORD( lParam ) ;
-				GetClientRect(EmuState.WindowHandle,&ClientSize);
-                // Convert coordinates to x,y values with range 0-3fff (0-16383).
-				LONG scr_w = ClientSize.right-ClientSize.left;
-				LONG scr_h = ClientSize.bottom-ClientSize.top;
-				x = ((x<<14)/scr_w); if (x>65535) x=65535;
-				y = ((y<<14)/scr_h); if (y>65535) y=65535;
-				joystick(x,y);
+				static const float MAX_AXIS_VALUE = 16384.0f;
+
+				//	Get the dimensions of the usable client area (i.e. sans status bar)
+				RECT clientRect;
+				GetClientRect(EmuState.WindowHandle, &clientRect);
+				clientRect.bottom -= GetMainWindowStatusBarHeight();
+
+				const auto displayDetails(GetDisplayDetails(clientRect.right, clientRect.bottom));
+				const int maxHorizontalPosition = clientRect.right - (displayDetails.leftBorderColumns + displayDetails.rightBorderColumns);
+				const int maxVerticalPosition = clientRect.bottom - (displayDetails.topBorderRows + displayDetails.bottomBorderRows);
+
+				int mouseXPosition = std::min(
+					std::max(0, LOWORD(lParam) - displayDetails.leftBorderColumns),
+					maxHorizontalPosition);
+				int mouseYPosition = std::min(
+					std::max(0, HIWORD(lParam) - displayDetails.topBorderRows),
+					maxVerticalPosition);
+				
+                // Convert coordinates to mouseXPosition,mouseYPosition values with range 0-3fff (0-16383).
+				mouseXPosition = static_cast<int>(mouseXPosition * (MAX_AXIS_VALUE / maxHorizontalPosition));
+				mouseYPosition = static_cast<int>(mouseYPosition * (MAX_AXIS_VALUE / maxVerticalPosition));
+
+				joystick(mouseXPosition, mouseYPosition);
 			}
 
-			return(0);
-			break;
+			return 0;
+
 //		default:
 //			return DefWindowProc(hWnd, message, wParam, lParam);
 	}

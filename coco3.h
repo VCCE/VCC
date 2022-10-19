@@ -18,9 +18,22 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+struct DisplayDetails
+{
+	int contentRows = 0;
+	int topBorderRows = 0;
+	int bottomBorderRows = 0;
+
+	int contentColumns = 0;
+	int leftBorderColumns = 0;
+	int rightBorderColumns = 0;
+};
+
+
 //unsigned short RenderFrame (unsigned char);
 void SetClockSpeed(unsigned short Cycles);
 void SetLinesperScreen(unsigned char Lines);
+DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight);
 void SetHorzInteruptState(unsigned char);
 void SetVertInteruptState(unsigned char);
 unsigned char SetSndOutMode(unsigned char);
