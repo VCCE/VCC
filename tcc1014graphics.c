@@ -9966,12 +9966,12 @@ int GetBytesPerRow() {
 	return BytesperRow;
 }
 
-int GetHorizontalBorderSize()
+unsigned char GetHorizontalBorderSize()
 {
 	return HorzCenter / 2;
 }
 
-int GetDisplayedPixelsPerLine()
+unsigned short GetDisplayedPixelsPerLine()
 {
 	return PixelsperLine;
 }

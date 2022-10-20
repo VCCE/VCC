@@ -55,8 +55,8 @@ void SetVideoBank(unsigned char);
 unsigned char SetMonitorType(unsigned char );
 void SetBoarderChange (unsigned char);
 int GetBytesPerRow(void);
-int GetHorizontalBorderSize();
-int GetDisplayedPixelsPerLine();
+unsigned char GetHorizontalBorderSize();
+unsigned short GetDisplayedPixelsPerLine();
 unsigned int GetStartOfVidram();
 int GetGraphicsMode();
 

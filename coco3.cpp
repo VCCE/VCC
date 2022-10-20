@@ -219,29 +219,25 @@ void SetLinesperScreen (unsigned char Lines)
 }
 
 
-
 DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
 {
-	static const float VIRTUAL_DISPLAY_HEIGHT = 250.0f;
-	//	FIXME: This is wrong. It should reflect the actual resolution scaled based on the clientWidth (will not be correct on 640x???)
-	//	and changes are the display width is going to match the value we load into pixelsPerLine so horizontal scaling may not be
-	//	necessary, at least in the end.
-	static const float VIRTUAL_DISPLAY_WIDTH = 320.f;
-	const int short pixelsPerLine = GetDisplayedPixelsPerLine();
-	const int horizontalBorderSize = GetHorizontalBorderSize();
+	const float pixelsPerLine = GetDisplayedPixelsPerLine();
+	const float horizontalBorderSize = GetHorizontalBorderSize();
+	const float activeLines = 250.0f;	//	FIXME: Needs a symbolic
 
 	DisplayDetails details;
 
-	const auto horizontalScale(clientWidth / VIRTUAL_DISPLAY_WIDTH);	
-	const auto verticalScale(clientHeight / VIRTUAL_DISPLAY_HEIGHT);
+	const auto horizontalScale(clientWidth / pixelsPerLine);	
+	const auto verticalScale(clientHeight / activeLines);
+	const auto extraBorderPadding = GetForcedAspectBorderPadding();
 	
 	details.contentRows = static_cast<int>(LinesperScreen * verticalScale);
-	details.topBorderRows = static_cast<int>(TopBoarder * verticalScale);
-	details.bottomBorderRows = static_cast<int>(BottomBoarder * verticalScale);
+	details.topBorderRows = static_cast<int>(TopBoarder * verticalScale) + extraBorderPadding.y;
+	details.bottomBorderRows = static_cast<int>(BottomBoarder * verticalScale) + extraBorderPadding.y;
 
 	details.contentColumns = static_cast<int>(pixelsPerLine * horizontalScale);
-	details.leftBorderColumns = static_cast<int>(horizontalBorderSize * horizontalScale);
-	details.rightBorderColumns = static_cast<int>(horizontalBorderSize * horizontalScale);
+	details.leftBorderColumns = static_cast<int>(horizontalBorderSize * horizontalScale) + extraBorderPadding.x;
+	details.rightBorderColumns = static_cast<int>(horizontalBorderSize * horizontalScale) + extraBorderPadding.x;
 	
 	return details;
 }

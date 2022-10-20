@@ -34,7 +34,7 @@ This file is part of VCC (Virtual Color Computer).
 #define TH_WAITING	2
 
 #include <objbase.h>
-#include <windows.h>
+#include <windowsx.h>
 #include <process.h>
 #include <commdlg.h>
 #include <stdio.h>
@@ -66,10 +66,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "ProcessorState.h"
 #include "Breakpoints.h"
 #include "MMUMonitor.h"
-
-#undef min
-#undef max
-
 
 static HANDLE hout=NULL;
 
@@ -408,17 +404,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
-		case WM_SETFOCUS:
-			RECT scr;
-            POINT loc;
-			GetWindowRect(EmuState.WindowHandle,&scr);
-            GetCursorPos(&loc);
-			if ((loc.x > scr.right) | (loc.x < scr.left) | 
-				(loc.y > scr.bottom) | ( loc.y < scr.top))
-				SetCursorPos(scr.left+20,scr.top+10);
-//			Set8BitPalette();
-			break;
-
 		case WM_KILLFOCUS:
 			// Force keys up if main widow keyboard focus is lost.  Otherwise
 			// down keys will cause issues with OS-9 on return
@@ -582,20 +567,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				//	Get the dimensions of the usable client area (i.e. sans status bar)
 				RECT clientRect;
 				GetClientRect(EmuState.WindowHandle, &clientRect);
-				clientRect.bottom -= GetMainWindowStatusBarHeight();
+				clientRect.bottom -= GetRenderWindowStatusBarHeight();
 
-				const auto displayDetails(GetDisplayDetails(clientRect.right, clientRect.bottom));
-				const int maxHorizontalPosition = clientRect.right - (displayDetails.leftBorderColumns + displayDetails.rightBorderColumns);
-				const int maxVerticalPosition = clientRect.bottom - (displayDetails.topBorderRows + displayDetails.bottomBorderRows);
+				int mouseXPosition = GET_X_LPARAM(lParam);
+				int mouseYPosition = GET_Y_LPARAM(lParam);
+				int maxHorizontalPosition = clientRect.right;
+				int maxVerticalPosition = clientRect.bottom;
 
-				int mouseXPosition = std::min(
-					std::max(0, LOWORD(lParam) - displayDetails.leftBorderColumns),
-					maxHorizontalPosition);
-				int mouseYPosition = std::min(
-					std::max(0, HIWORD(lParam) - displayDetails.topBorderRows),
-					maxVerticalPosition);
-				
-                // Convert coordinates to mouseXPosition,mouseYPosition values with range 0-3fff (0-16383).
+				if (!EmuState.FullScreen)
+				{
+					const DisplayDetails displayDetails(GetDisplayDetails(clientRect.right, clientRect.bottom));
+					
+					maxHorizontalPosition -= (displayDetails.leftBorderColumns + displayDetails.rightBorderColumns);
+					maxVerticalPosition -= (displayDetails.topBorderRows + displayDetails.bottomBorderRows);
+
+					mouseXPosition = min(
+						max(0, mouseXPosition - displayDetails.leftBorderColumns),
+						maxHorizontalPosition);
+					mouseYPosition = min(
+						max(0, mouseYPosition - displayDetails.topBorderRows),
+						maxVerticalPosition);
+				}
+
+				// Convert coordinates to mouseXPosition,mouseYPosition values with range 0-3fff (0-16383).
 				mouseXPosition = static_cast<int>(mouseXPosition * (MAX_AXIS_VALUE / maxHorizontalPosition));
 				mouseYPosition = static_cast<int>(mouseYPosition * (MAX_AXIS_VALUE / maxVerticalPosition));
 
