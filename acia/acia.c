@@ -24,7 +24,7 @@ static char IniFile[MAX_PATH];       // Ini file name
 static char IniSect[MAX_LOADSTRING]; // Ini file section
 
 //------------------------------------------------------------------------
-//  DLL Entry
+//  DLL Entry point
 //------------------------------------------------------------------------
 BOOL APIENTRY
 DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
@@ -40,7 +40,7 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 }
 
 //-----------------------------------------------------------------------
-//  Register the DLL and add entry to dynamic menu
+//  Dll export register the DLL and build entry on dynamic menu
 //-----------------------------------------------------------------------
 __declspec(dllexport) void
 ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
@@ -48,13 +48,13 @@ ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
     LoadString(g_hDLL,IDS_MODULE_NAME,ModName,MAX_LOADSTRING);
     LoadString(g_hDLL,IDS_CATNUMBER,CatNumber,MAX_LOADSTRING);
     DynamicMenuCallback = Temp;
-    strcpy(IniSect,ModName); // Use module name for ini file section
+    strcpy(IniSect,ModName);   // Use module name for ini file section
     if (DynamicMenuCallback != NULL) BuildDynaMenu();
     return ;
 }
 
 //-----------------------------------------------------------------------
-// Export write to port
+// Dll export write to port
 //-----------------------------------------------------------------------
 __declspec(dllexport) void
 PackPortWrite(unsigned char Port,unsigned char Data)
@@ -64,7 +64,7 @@ PackPortWrite(unsigned char Port,unsigned char Data)
 }
 
 //-----------------------------------------------------------------------
-// Export read from port
+// Dll export read from port
 //-----------------------------------------------------------------------
 __declspec(dllexport) unsigned char
 PackPortRead(unsigned char Port)
@@ -73,7 +73,7 @@ PackPortRead(unsigned char Port)
 }
 
 //-----------------------------------------------------------------------
-// Capture the transfer point for CPU assert interrupt
+// Dll export supply transfer point for interrupt
 //-----------------------------------------------------------------------
 __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
 {
@@ -82,27 +82,17 @@ __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
 }
 
 //-----------------------------------------------------------------------
-// Return acia status for VCC status line
+// Dll export return module status for VCC status line
 //-----------------------------------------------------------------------
 __declspec(dllexport) void ModuleStatus(char *status)
 {
     strncpy (status,AciaStat,16);
     status[16]='\n';
-//    if (sc6551_initialized) {
-//        if (AciaComType == 0) {
-//            if (ConsoleLineInput) strcpy(status,"LineMode");
-//            else strcpy(status,"Console");
-//        } else {
-//            strcpy(status,"AciaUnknown");
-//        }
-//    } else {
-//        strcpy(status,"Acia");
-//    }
     return;
 }
 
 //-----------------------------------------------------------------------
-//  Start the config dialog
+//  Dll export run config dialog
 //-----------------------------------------------------------------------
 __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 {
@@ -111,7 +101,7 @@ __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 }
 
 //-----------------------------------------------------------------------
-// Capture the VCC ini file path and load settings saved there
+// Dll export VCC ini file path and load settings
 //-----------------------------------------------------------------------
 __declspec(dllexport) void SetIniPath (char *IniFilePath)
 {

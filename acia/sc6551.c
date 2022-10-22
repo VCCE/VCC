@@ -100,7 +100,6 @@ void sc6551_close()
 
 //------------------------------------------------------------------------
 // Data input
-// Reads hang. They are done in a seperate thread.
 //------------------------------------------------------------------------
 
 DWORD WINAPI sc6551_input_thread(LPVOID param)
@@ -127,16 +126,16 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 }
 
 //------------------------------------------------------------------------
-// Output is buffered for 50 ms
+// Output is allowed to buffer for 50 ms to improve performance
 //------------------------------------------------------------------------
-
 DWORD WINAPI sc6551_output_thread(LPVOID param)
 {
     while(TRUE) {
         if (OutBufCnt) {
             WaitForSingleObject(WriteLock,INFINITE);
-            com_write(OutBuf,OutBufCnt);
-            OutBufCnt = 0;
+            int cnt = com_write(OutBuf,OutBufCnt);
+			if (cnt < OutBufCnt) StatReg = StatReg | StatOvr;
+            OutBufCnt = 0; 
             StatReg = StatReg | StatTxE;
             ReleaseMutex(WriteLock);
         }
@@ -147,7 +146,6 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 //------------------------------------------------------------------------
 // Port I/O
 //------------------------------------------------------------------------
-
 unsigned char sc6551_read(unsigned char port)
 {
     unsigned char data;
@@ -237,6 +235,7 @@ void com_close() {
     }
 }
 
+// Normally com_write should not return until all bytes written
 int com_write(char * buf,int len) { // returns bytes written
     switch (AciaComType) {
     case 0: // Legacy Console

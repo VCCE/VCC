@@ -1,6 +1,6 @@
 
 //------------------------------------------------------------------
-// Com with windows cmd line process
+// Communicat with windows cmd line process (buggy)
 //------------------------------------------------------------------
 
 #include "acia.h"

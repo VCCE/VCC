@@ -63,7 +63,7 @@ console_open() {
 //      Console window to prevent inadvertant exit of the emulator
         HANDLE hwnd = GetConsoleWindow();
         HANDLE hmenu = GetSystemMenu(hwnd, FALSE);
-        EnableMenuItem(hmenu, SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+        EnableMenuItem(hmenu, SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED); 
 
 //      Allow quick edit and echo when in line mode
         hConIn=GetStdHandle(STD_INPUT_HANDLE);
