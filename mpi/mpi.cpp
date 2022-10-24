@@ -200,7 +200,7 @@ extern "C"
 		if ( (MenuID>40) & (MenuID <=60) )
 			ConfigModuleCalls[1](MenuID-40);
 
-		if ( (MenuID>61) & (MenuID <=80) )
+		if ( (MenuID>60) & (MenuID <=80) )
 			ConfigModuleCalls[2](MenuID-60);
 
 		if ( (MenuID>80) & (MenuID <=100) )
