@@ -961,6 +961,12 @@ case TFR_M: //1F
 	postbyte=MemRead8(pc.Reg++);
 	Source= postbyte>>4;
 	Dest=postbyte & 15;
+	//	NOTE:
+	//
+	//	If an invalid register encoding is used for the source,
+	//  a constant value of $ff or $ffff is transferred to the
+	//  destination. If an invalid register encoding is used for
+	//  the destination, then the instruction will have no effect.
 	switch (Dest)
 	{
 		case 0:
@@ -969,38 +975,36 @@ case TFR_M: //1F
 		case 3:
 		case 4:
 		case 5:
-		case 6:
-		case 7:
-			*xfreg16[Dest]=0xFFFF;
-			if ((Source == 12) | (Source == 13))
+			if (Source < 6)
 			{
-				*xfreg16[Dest] = 0;
+				*xfreg16[Dest] = *xfreg16[Source];
 			}
-			else if (Source <= 7)
+			else
 			{
-				//make sure the source is valud
-				if (xfreg16[Source])
-				{
-					*xfreg16[Dest] = *xfreg16[Source];
-				}	
+				*xfreg16[Dest] = 0xFFFF;
 			}
-		break;
+			break;
 
 		case 8:
 		case 9:
 		case 10:
 		case 11:
-		case 14:
-		case 15:
-			ccbits=getcc();
-			*ureg8[Dest&7]=0xFF;
-			if ( (Source==12) | (Source==13) )
-				*ureg8[Dest&7]=0;
+			if (Source > 7 && Source < 12)
+			{
+				*ureg8[Dest & 7] = *ureg8[Source & 7];
+			}
 			else
-				if (Source>7)
-					*ureg8[Dest&7]=*ureg8[Source&7];
-			setcc(ccbits);
-		break;
+			{
+				*ureg8[Dest & 7] = 0xFF;
+			}
+
+			//	If and only if the destination register is CC we update the
+			//	internal simplified bits representation.
+			if (Dest == 10)
+			{
+				setcc(*ureg8[2]);
+			}
+			break;
 	}
 	CycleCounter+=6;
 	break;
