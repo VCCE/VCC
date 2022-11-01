@@ -34,7 +34,7 @@ This file is part of VCC (Virtual Color Computer).
 #define TH_WAITING	2
 
 #include <objbase.h>
-#include <windows.h>
+#include <windowsx.h>
 #include <process.h>
 #include <commdlg.h>
 #include <stdio.h>
@@ -213,12 +213,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
-	unsigned int x,y;  // joystick x,y values 0-3fff (0-16383)
 	unsigned char kb_char;
 	static unsigned char OEMscan=0;
     int Extended;
 	static char ascii=0;
-	static RECT ClientSize;
 	static unsigned long Width,Height;
 
 	kb_char = (unsigned char)wParam;
@@ -406,17 +404,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
-		case WM_SETFOCUS:
-			RECT scr;
-            POINT loc;
-			GetWindowRect(EmuState.WindowHandle,&scr);
-            GetCursorPos(&loc);
-			if ((loc.x > scr.right) | (loc.x < scr.left) | 
-				(loc.y > scr.bottom) | ( loc.y < scr.top))
-				SetCursorPos(scr.left+20,scr.top+10);
-//			Set8BitPalette();
-			break;
-
 		case WM_KILLFOCUS:
 			// Force keys up if main widow keyboard focus is lost.  Otherwise
 			// down keys will cause issues with OS-9 on return
@@ -575,19 +562,42 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_MOUSEMOVE:
 			if (EmuState.EmulationRunning)
 			{
-				x = LOWORD( lParam ) ;
-				y = HIWORD( lParam ) ;
-				GetClientRect(EmuState.WindowHandle,&ClientSize);
-                // Convert coordinates to x,y values with range 0-3fff (0-16383).
-				LONG scr_w = ClientSize.right-ClientSize.left;
-				LONG scr_h = ClientSize.bottom-ClientSize.top;
-				x = ((x<<14)/scr_w); if (x>65535) x=65535;
-				y = ((y<<14)/scr_h); if (y>65535) y=65535;
-				joystick(x,y);
+				static const float MAX_AXIS_VALUE = 16384.0f;
+
+				//	Get the dimensions of the usable client area (i.e. sans status bar)
+				RECT clientRect;
+				GetClientRect(EmuState.WindowHandle, &clientRect);
+				clientRect.bottom -= GetRenderWindowStatusBarHeight();
+
+				int mouseXPosition = GET_X_LPARAM(lParam);
+				int mouseYPosition = GET_Y_LPARAM(lParam);
+				int maxHorizontalPosition = clientRect.right;
+				int maxVerticalPosition = clientRect.bottom;
+
+				if (!EmuState.FullScreen)
+				{
+					const DisplayDetails displayDetails(GetDisplayDetails(clientRect.right, clientRect.bottom));
+					
+					maxHorizontalPosition -= (displayDetails.leftBorderColumns + displayDetails.rightBorderColumns);
+					maxVerticalPosition -= (displayDetails.topBorderRows + displayDetails.bottomBorderRows);
+
+					mouseXPosition = min(
+						max(0, mouseXPosition - displayDetails.leftBorderColumns),
+						maxHorizontalPosition);
+					mouseYPosition = min(
+						max(0, mouseYPosition - displayDetails.topBorderRows),
+						maxVerticalPosition);
+				}
+
+				// Convert coordinates to mouseXPosition,mouseYPosition values with range 0-3fff (0-16383).
+				mouseXPosition = static_cast<int>(mouseXPosition * (MAX_AXIS_VALUE / maxHorizontalPosition));
+				mouseYPosition = static_cast<int>(mouseYPosition * (MAX_AXIS_VALUE / maxVerticalPosition));
+
+				joystick(mouseXPosition, mouseYPosition);
 			}
 
-			return(0);
-			break;
+			return 0;
+
 //		default:
 //			return DefWindowProc(hWnd, message, wParam, lParam);
 	}
