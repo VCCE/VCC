@@ -26,7 +26,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014mmu.h"
 #include "logger.h"
 #include "config.h"
-
 unsigned char port_read(unsigned short addr)
 {
 	unsigned char port=0,temp=0;
@@ -53,6 +52,7 @@ if ( (port>=0x50) & (port <=0x5a))
 		case 0x21:
 		case 0x22:
 		case 0x23:
+
 			temp=pia1_read(port);	//MC6821 P.I.A	Sound and VDG Control 
 		break;
 
