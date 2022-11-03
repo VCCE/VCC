@@ -20,12 +20,12 @@ To launch a shell simply do: shell i=/t2 and the console
 will come up. Typing "ex" in the console window causes the
 console to close.
 
-The console handles scrolling fairly well. The windows system 
+The console handles scrolling fairly well. The windows system
 automatically moves the console window within the screen buffer
-to keep the cursor visible. This causes text to appear to scroll 
+to keep the cursor visible. This causes text to appear to scroll
 as long as the cursor is within the boundaries of the buffer.
 
-By default the windows screen buffer is large but eventually it 
+By default the windows screen buffer is large but eventually it
 becomes full. To handle this acia.dll deletes lines from the top of
 the buffer when the cursor tries to move to a line below the bottom.
 This affects full screen editors.  They use cursor move sequences
@@ -38,17 +38,17 @@ replaces the lines when scrolling up. Vim seems to be hardcoded to
 24 lines so the screen must be at least 24 lines long. (changing
 tspars or typing v to set the screen type does not work for me)
 
-Scred assumes the terminal will delete lines from the top of the 
+Scred assumes the terminal will delete lines from the top of the
 screen when the cursor is at the bottom of the screen. (emphasis on
 screen) This means screen length must match what scred thinks for
 it to work properly.  Since acia.dll console does the delete based
 on buffer size it actually is that size that scred must be aware of.
 Fix it to set the screen buffer to a reasonable size and use scred's
- -l=<screen buffer len> argument. (500 lines still seems to work 
+ -l=<screen buffer len> argument. (500 lines still seems to work
 but I don't use scred much). The size of the buffer can be changed
 from the console properties menu.
 
 I did a brief check of uemacs. It seems to work okay except I find
-the lack of support of arrow keys too annoying and I am too used 
-to vi's idea use of hjkl for cursor position to adapt to emacs.
+the lack of support of arrow keys annoying and I am too used to
+vi's use of hjkl for cursor position to adapt to emacs.
 

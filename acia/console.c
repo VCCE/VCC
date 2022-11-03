@@ -1,3 +1,19 @@
+/*
+Copyright E J Jaquay 2022
+This file is part of VCC (Virtual Color Computer).
+    VCC (Virtual Color Computer) is free software: you can redistribute it
+    and/or modify it under the terms of the GNU General Public License as
+    published by the Free Software Foundation, either version 3 of the License,
+    or (at your option) any later version.
+
+    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 //------------------------------------------------------------------
 // Console I/O
@@ -63,7 +79,7 @@ console_open() {
 //      Console window to prevent inadvertant exit of the emulator
         HANDLE hwnd = GetConsoleWindow();
         HANDLE hmenu = GetSystemMenu(hwnd, FALSE);
-        EnableMenuItem(hmenu, SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED); 
+        EnableMenuItem(hmenu, SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
 
 //      Allow quick edit and echo when in line mode
         hConIn=GetStdHandle(STD_INPUT_HANDLE);
@@ -91,7 +107,7 @@ void console_close() {
 }
 
 //----------------------------------------------------------------
-// Read console.  Blocks until at least on char is read.
+// Read console.  Blocks until at least one char is read.
 //----------------------------------------------------------------
 int
 console_read(char * buf, int len) {
