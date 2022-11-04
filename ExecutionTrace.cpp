@@ -330,7 +330,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			traceMark1 = marks[0].cycleTime;
 			traceMark2 = marks[1].cycleTime;
 			long cycles = abs(traceMark2 - traceMark1);
-			double hz = 897000.0;
+			double hz = EmuState.CPUCurrentSpeed * 1000000.0;
 			double elapsed = cycles / hz * 1000000.0;
 			std::stringstream ss;
 			ss << "T1 = " << traceMark1 << ", ";
