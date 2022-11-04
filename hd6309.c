@@ -7537,6 +7537,10 @@ void HD6309AssertInterupt(unsigned char Interupt,unsigned char waiter)// 4 nmi 2
 	SyncWaiting=0;
 	PendingInterupts=PendingInterupts | (1<<(Interupt-1));
 	IRQWaiter=waiter;
+	if (EmuState.Debugger.IsTracing())
+	{
+		EmuState.Debugger.TraceCaptureInterruptRequest(Interupt, CycleCounter, HD6309GetState());
+	}
 	return;
 }
 
