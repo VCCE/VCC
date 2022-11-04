@@ -25,6 +25,7 @@
 #include <map>
 #include <memory>
 #include <Windows.h>
+#include "OpDecoder.h"
 
 
 namespace VCC { namespace Debugger
@@ -38,14 +39,14 @@ namespace VCC { namespace Debugger
 		virtual void OnUpdate() = 0;
 	};
 
-
 	class Debugger
 	{
 	public:
 
 		using callback_type = std::function<void(HWND)>;
 		using breakpointsbuffer_type = std::vector<unsigned short>;
-
+		using triggerbuffer_type = std::vector<unsigned short>;
+		using tracebuffer_type = std::vector<CPUTrace>;
 
 	public:
 
@@ -70,8 +71,35 @@ namespace VCC { namespace Debugger
 
 		void QueueWrite(unsigned short addr, unsigned char value);
 
-		void Update();
+		bool IsTracing() const;
+		bool IsTracingEnabled() const;
 
+		void TraceStart();
+		void TraceStop();
+		void TraceCaptureBefore(long cycles, CPUState state);
+		void TraceCaptureAfter(long cycles, CPUState state);
+		void TraceCaptureInterruptRequest(unsigned char irq, long cycleTime, CPUState state);
+		void TraceCaptureInterruptMasked(unsigned char irq, long cycleTime, CPUState state);
+		void TraceCaptureInterruptServicing(unsigned char irq, long cycleTime, CPUState state);
+		void TraceCaptureInterruptExecuting(unsigned char irq, long cycleTime, CPUState state);
+		void TraceCaptureScreenEvent(TraceEvent evt, double cycles);
+		void TraceEmulatorCycle(TraceEvent evt, int state, double lineNS, double irqNS, double soundNS, double cycles, double drift);
+
+		void SetTraceEnable();
+		void SetTraceDisable();
+		void ResetTrace();
+		void SetTraceMaxSamples(long samples);
+		void SetTraceStartTriggers(triggerbuffer_type startTriggers);
+		void SetTraceStopTriggers(triggerbuffer_type stopTriggers);
+		void SetTraceOptions(bool screen, bool emulation);
+
+		long GetTraceSamples() const;
+		void GetTraceResult(tracebuffer_type &result, long start, int count) const;
+		void SetTraceMark(int mark, long sample);
+		void ClearTraceMarks();
+		void GetTraceMarkSamples(tracebuffer_type& result) const;
+
+		void Update();
 
 	protected:
 
@@ -98,6 +126,8 @@ namespace VCC { namespace Debugger
 		PendingWrite ConsumePendingWriteNoLock();
 		void ProcessWrite(PendingWrite memWrite);
 
+		void CheckStopTrace(CPUState state);
+
 	private:
 
 		mutable CriticalSection			Section_;
@@ -108,7 +138,21 @@ namespace VCC { namespace Debugger
 		CPUState						ProcessorState_;
 		std::map<HWND, std::unique_ptr<Client>>	RegisteredClients_;
 		ExecutionMode					ExecutionMode_ = ExecutionMode::Run;
+		//
 		bool							HasPendingWrite_ = false;
 		PendingWrite					PendingWrite_;
+		//
+		std::unique_ptr<OpDecoder>		Decoder_;
+		bool							TraceEnabled_ = false;
+		bool							TraceRunning_ = false;
+		size_t							TraceMaxSamples_ = 500000;
+		long							TraceSamplesCollected_ = 0;
+		bool							TraceEmulation_ = false;
+		bool							TraceScreen_ = false;
+		triggerbuffer_type				TraceStartTriggers_;
+		triggerbuffer_type				TraceStopTriggers_;
+		bool							TraceTriggerChanged_ = false;
+		tracebuffer_type				TraceCaptured_;
+		std::map<int, long>				TraceMarks_;
 	};
 } }

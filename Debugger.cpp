@@ -40,6 +40,11 @@ namespace VCC { namespace Debugger
 		{
 			callback.second->OnReset();
 		}
+
+		Decoder_ = std::make_unique<OpDecoder>();
+		TraceEnabled_ = false;
+		TraceRunning_ = false;
+		TraceMarks_.clear();
 	}
 
 
@@ -152,6 +157,225 @@ namespace VCC { namespace Debugger
 
 
 
+	bool Debugger::IsTracingEnabled() const
+	{
+		SectionLocker lock(Section_);
+
+		return TraceEnabled_;
+	}
+
+	bool Debugger::IsTracing() const
+	{
+		SectionLocker lock(Section_);
+
+		return TraceRunning_;
+	}
+
+	void Debugger::TraceCaptureInterruptRequest(unsigned char irq, long cycleTime, CPUState state)
+	{
+		Decoder_->CaptureInterrupt(TraceEvent::IRQRequested, Decoder_->ToIRQType(irq), cycleTime, state);
+		CheckStopTrace(state);
+	}
+
+	void Debugger::TraceCaptureInterruptMasked(unsigned char irq, long cycleTime, CPUState state)
+	{
+		Decoder_->CaptureInterrupt(TraceEvent::IRQMasked, Decoder_->ToIRQType(irq), cycleTime, state);
+		CheckStopTrace(state);
+	}
+
+	void Debugger::TraceCaptureInterruptServicing(unsigned char irq, long cycleTime, CPUState state)
+	{
+		Decoder_->CaptureInterrupt(TraceEvent::IRQServicing, Decoder_->ToIRQType(irq), cycleTime, state);
+		CheckStopTrace(state);
+	}
+
+	void Debugger::TraceCaptureInterruptExecuting(unsigned char irq, long cycleTime, CPUState state)
+	{
+		Decoder_->CaptureInterrupt(TraceEvent::IRQExecuting, Decoder_->ToIRQType(irq), cycleTime, state);
+		CheckStopTrace(state);
+	}
+
+	void Debugger::TraceCaptureBefore(long cycles, CPUState state)
+	{
+		Decoder_->CaptureBefore(cycles, state);
+		CheckStopTrace(state);
+	}
+
+	void Debugger::TraceCaptureAfter(long cycles, CPUState state)
+	{
+		Decoder_->CaptureAfter(cycles, state);
+		CheckStopTrace(state);
+	}
+
+	void Debugger::CheckStopTrace(CPUState state)
+	{
+		SectionLocker lock(Section_);
+
+		if (!TraceRunning_)
+		{
+			return;
+		}
+
+		// Max samples reached?
+		if (Decoder_->GetSampleCount() >= TraceMaxSamples_)
+		{
+			TraceRunning_ = false;
+			TraceEnabled_ = false;
+			TraceTriggerChanged_ = true;
+			return;
+		}
+
+		// Hit a Stop Address?
+		if (find(TraceStopTriggers_.begin(), TraceStopTriggers_.end(), state.PC) != TraceStopTriggers_.end())
+		{
+			TraceRunning_ = false;
+			TraceEnabled_ = false;
+			TraceTriggerChanged_ = true;
+			return;
+		}
+	}
+
+	void Debugger::TraceCaptureScreenEvent(TraceEvent evt, double cycles)
+	{
+		SectionLocker lock(Section_);
+
+		if (!TraceRunning_ || !TraceScreen_)
+		{
+			return;
+		}
+
+		Decoder_->CaptureScreenEvent(evt, cycles);
+	}
+
+	void Debugger::TraceEmulatorCycle(TraceEvent evt, int state, double lineNS, double irqNS, double soundNS, double cycles, double drift)
+	{
+		SectionLocker lock(Section_);
+
+		if (!TraceRunning_ || !TraceEmulation_)
+		{
+			return;
+		}
+
+		Decoder_->CaptureEmulatorCycle(evt, state, lineNS, irqNS, soundNS, cycles, drift);
+	}
+
+	void Debugger::SetTraceEnable()
+	{
+		SectionLocker lock(Section_);
+
+		TraceEnabled_ = true;
+	}
+
+	void Debugger::SetTraceDisable()
+	{
+		SectionLocker lock(Section_);
+
+		TraceEnabled_ = false;
+	}
+
+	void Debugger::TraceStart()
+	{
+		SectionLocker lock(Section_);
+
+		TraceRunning_ = true;
+	}
+
+	void Debugger::TraceStop()
+	{
+		SectionLocker lock(Section_);
+
+		TraceRunning_ = false;
+		TraceEnabled_ = false;
+	}
+
+	void Debugger::ResetTrace()
+	{
+		SectionLocker lock(Section_);
+
+		TraceEnabled_ = false;
+		TraceRunning_ = false;
+		Decoder_->Reset(TraceMaxSamples_);
+	}
+
+	void Debugger::SetTraceMaxSamples(long samples)
+	{
+		SectionLocker lock(Section_);
+
+		TraceMaxSamples_ = samples;
+		Decoder_->Reset(TraceMaxSamples_);
+	}
+
+	void Debugger::SetTraceStartTriggers(triggerbuffer_type startTriggers)
+	{
+		SectionLocker lock(Section_);
+
+		TraceStartTriggers_ = move(startTriggers);
+		TraceTriggerChanged_ = true;
+	}
+
+	void Debugger::SetTraceStopTriggers(triggerbuffer_type stopTriggers)
+	{
+		SectionLocker lock(Section_);
+
+		TraceStopTriggers_ = move(stopTriggers);
+		TraceTriggerChanged_ = true;
+	}
+
+	void Debugger::SetTraceOptions(bool screen, bool emulation)
+	{
+		SectionLocker lock(Section_);
+
+		TraceScreen_ = screen;
+		TraceEmulation_ = emulation;
+	}
+
+	long Debugger::GetTraceSamples() const
+	{
+		SectionLocker lock(Section_);
+
+		return Decoder_->GetSampleCount();
+	}
+
+	void Debugger::GetTraceResult(tracebuffer_type &result, long start, int count) const
+	{
+		SectionLocker lock(Section_);
+
+		Decoder_->GetTrace(result, start, count);
+	}
+
+	void Debugger::SetTraceMark(int mark, long sample)
+	{
+		SectionLocker lock(Section_);
+
+		TraceMarks_[mark] = sample;
+	}
+
+
+	void Debugger::ClearTraceMarks()
+	{
+		SectionLocker lock(Section_);
+
+		TraceMarks_.clear();
+	}
+
+	void Debugger::GetTraceMarkSamples(tracebuffer_type &result) const
+	{
+		SectionLocker lock(Section_);
+
+		result.clear();
+
+		for (const auto& kv: TraceMarks_)
+		{
+			tracebuffer_type mark;
+			Decoder_->GetTrace(mark, kv.second, 1);
+			if (mark.size() > 0)
+			{
+				result.push_back(mark[0]);
+			}
+		}
+	}
+
+
 
 	void Debugger::QueueRun()
 	{
@@ -191,6 +415,12 @@ namespace VCC { namespace Debugger
 			{
 				CPUSetBreakpoints(Breakpoints_);
 				BreakpointsChanged_ = false;
+			}
+
+			if (TraceTriggerChanged_)
+			{
+				CPUSetTraceTriggers(TraceStartTriggers_);
+				TraceTriggerChanged_ = false;
 			}
 
 			if (HasPendingCommandNoLock())

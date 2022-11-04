@@ -88,7 +88,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	};
 
 
-
 	void DrawMemoryState(HDC hdc, LPRECT clientRect)
 	{
 		RECT rect = *clientRect;
@@ -246,30 +245,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		DeleteObject(hFont);
 	}
 
-	int roundUp(int numToRound, int multiple)
-	{
-		if (multiple == 0)
-			return numToRound;
-
-		int remainder = numToRound % multiple;
-		if (remainder == 0)
-			return numToRound;
-
-		return numToRound + multiple - remainder;
-	}
-
-	int roundDn(int numToRound, int multiple)
-	{
-		if (multiple == 0)
-			return numToRound;
-
-		int remainder = numToRound % multiple;
-		if (remainder == 0)
-			return numToRound;
-
-		return numToRound - remainder;
-	}
-
 	void LocateMemory()
 	{
 		TCHAR buffer[100];
@@ -323,15 +298,18 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			if (wParam == VK_RETURN || wParam == VK_TAB)
 			{
 				HandleEdit(VK_RETURN);
+				wParam = 0;
 			}
 			if ((wParam >= 0x30 && wParam <= 0x39) ||
 				(wParam >= 0x41 && wParam <= 0x46))
 			{
 				HandleEdit(wParam);
+				wParam = 0;
 			}
 			if (wParam >= VK_NUMPAD0 && wParam <= VK_NUMPAD9)
 			{
 				HandleEdit(wParam - 0x30);
+				wParam = 0;
 			}
 		}
 

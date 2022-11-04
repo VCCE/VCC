@@ -91,6 +91,15 @@
     <ClCompile Include="DebuggerUtils.cpp">
       <Filter>Source\Debugger</Filter>
     </ClCompile>
+    <ClCompile Include="ExecutionTrace.cpp">
+      <Filter>Source\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="OpDecoder.cpp">
+      <Filter>Source\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="OpCodeTables.cpp">
+      <Filter>Source\Debugger</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h">
@@ -203,6 +212,15 @@
     </ClInclude>
     <ClInclude Include="MachineDefs.h">
       <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ExecutionTrace.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="OpDecoder.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="OpCodeTables.h">
+      <Filter>Headers\Debugger</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

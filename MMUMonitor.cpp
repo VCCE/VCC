@@ -432,18 +432,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		MMUPage_ = page;
 	}
 
-	int roundUp(int numToRound, int multiple)
-	{
-		if (multiple == 0)
-			return numToRound;
-
-		int remainder = numToRound % multiple;
-		if (remainder == 0)
-			return numToRound;
-
-		return numToRound + multiple - remainder;
-	}
-
 	INT_PTR CALLBACK MMUMonitorDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 	{
 		switch (message)
@@ -468,7 +456,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 				ScrollBarWidth,
 				Rect.bottom - 40 - ScrollBarTop,
 				hDlg,
-				(HMENU)IDC_MEM_VSCROLLBAR,
+				(HMENU)IDT_MMU_VSCROLLBAR,
 				(HINSTANCE)GetWindowLong(hDlg, GWL_HINSTANCE),
 				NULL);
 

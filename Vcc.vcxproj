@@ -194,6 +194,7 @@
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
     </ClCompile>
     <ClCompile Include="DirectDrawInterface.cpp" />
+    <ClCompile Include="ExecutionTrace.cpp" />
     <ClCompile Include="Fileops.c" />
     <ClCompile Include="hd6309.c" />
     <ClCompile Include="iobus.c" />
@@ -216,6 +217,8 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Level4</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
     </ClCompile>
+    <ClCompile Include="OpCodeTables.cpp" />
+    <ClCompile Include="OpDecoder.cpp" />
     <ClCompile Include="pakinterface.c" />
     <ClCompile Include="ProcessorState.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
@@ -246,6 +249,7 @@
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="DirectDrawInterface.h" />
+    <ClInclude Include="ExecutionTrace.h" />
     <ClInclude Include="fileops.h" />
     <ClInclude Include="hd6309.h" />
     <ClInclude Include="hd6309defs.h" />
@@ -261,6 +265,8 @@
     <ClInclude Include="mc6821.h" />
     <ClInclude Include="MemoryMap.h" />
     <ClInclude Include="MMUMonitor.h" />
+    <ClInclude Include="OpCodeTables.h" />
+    <ClInclude Include="OpDecoder.h" />
     <ClInclude Include="pakinterface.h" />
     <ClInclude Include="ProcessorState.h" />
     <ClInclude Include="quickload.h" />

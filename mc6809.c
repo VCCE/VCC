@@ -22,6 +22,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "mc6809.h"
 #include "mc6809defs.h"
 #include "tcc1014mmu.h"
+#include "OpDecoder.h"
 
 //Global variables for CPU Emulation-----------------------
 
@@ -68,6 +69,8 @@ static signed char *spostbyte=(signed char *)&postbyte;
 static signed short *spostword=(signed short *)&postword;
 static char InInterupt=0;
 static std::vector<unsigned short> CPUBreakpoints;
+static std::vector<unsigned short> CPUTraceTriggers;
+
 //END Global variables for CPU Emulation-------------------
 
 //Fuction Prototypes---------------------------------------
@@ -124,9 +127,9 @@ void MC6809Init(void)
 
 VCC::CPUState MC6809GetState()
 {
-	VCC::CPUState regs;
+	VCC::CPUState regs = { 0 };
 
-	regs.CC = ccbits;
+	regs.CC = getcc();
 	//	FIXME: We do a static_Cast here because it's better than relying on the undefined behavior caused by cpuregister.
 	regs.DP = static_cast<unsigned char>(dp.Reg);
 	regs.A = A_REG;
@@ -137,6 +140,8 @@ VCC::CPUState MC6809GetState()
 	regs.S = S_REG;
 	regs.PC = PC_REG;
 
+	regs.IsNative6309 = false;
+
 	return regs;
 }
 
@@ -146,6 +151,10 @@ void MC6809SetBreakpoints(const std::vector<unsigned short>& breakpoints)
 	CPUBreakpoints = breakpoints;
 }
 
+void MC6809SetTraceTriggers(const std::vector<unsigned short>& triggers)
+{
+	CPUTraceTriggers = triggers;
+}
 
 int MC6809Exec( int CycleFor)
 {
@@ -191,6 +200,30 @@ while (CycleCounter<CycleFor) {
 			EmuState.Debugger.Halt();
 			return(CycleFor - CycleCounter);
 		}
+	}
+
+	// Is the execution trace enabled - but currently not running?
+	if (EmuState.Debugger.IsTracingEnabled() && !EmuState.Debugger.IsTracing())
+	{
+		// Only Start Tracing when we hit a start trigger.
+		if (!CPUTraceTriggers.empty())
+		{
+			if (find(CPUTraceTriggers.begin(), CPUTraceTriggers.end(), pc.Reg) != CPUTraceTriggers.end())
+			{
+				EmuState.Debugger.TraceStart();
+			}
+		}
+		else
+		{
+			// Otherwise start right away.
+			EmuState.Debugger.TraceStart();
+		}
+	}
+
+	// Trace is running.
+	if (EmuState.Debugger.IsTracing())
+	{
+		EmuState.Debugger.TraceCaptureBefore(CycleCounter, MC6809GetState());
 	}
 
 
@@ -3037,6 +3070,11 @@ default:
 	break;
 	}//End Switch
 
+	if (EmuState.Debugger.IsTracing())
+	{
+		EmuState.Debugger.TraceCaptureAfter(CycleCounter, MC6809GetState());
+	}
+
 	// CPU is stepped.
 	if (EmuState.Debugger.IsStepping())
 	{
@@ -3057,9 +3095,14 @@ return(CycleFor-CycleCounter);
 
 void cpu_firq(void)
 {
-	
+
 	if (!cc[F])
 	{
+		if (EmuState.Debugger.IsTracing())
+		{
+			EmuState.Debugger.TraceCaptureInterruptServicing(FIRQ, CycleCounter, MC6809GetState());
+		}
+
 		InInterupt=1; //Flag to indicate FIRQ has been asserted
 		cc[E]=0; // Turn E flag off
 		MemWrite8( pc.B.lsb,--s.Reg);
@@ -3068,6 +3111,19 @@ void cpu_firq(void)
 		cc[I]=1;
 		cc[F]=1;
 		pc.Reg=MemRead16(VFIRQ);
+
+		if (EmuState.Debugger.IsTracing())
+		{
+			EmuState.Debugger.TraceCaptureInterruptExecuting(FIRQ, CycleCounter, MC6809GetState());
+		}
+
+	}
+	else
+	{
+		if (EmuState.Debugger.IsTracing())
+		{
+			EmuState.Debugger.TraceCaptureInterruptMasked(FIRQ, CycleCounter, MC6809GetState());
+		}
 	}
 	PendingInterupts=PendingInterupts & 253;
 	return;
@@ -3079,6 +3135,11 @@ void cpu_irq(void)
 		return;			
 	if ((!cc[I]) )
 	{
+		if (EmuState.Debugger.IsTracing())
+		{
+			EmuState.Debugger.TraceCaptureInterruptServicing(IRQ, CycleCounter, MC6809GetState());
+		}
+
 		cc[E]=1;
 		MemWrite8( pc.B.lsb,--s.Reg);
 		MemWrite8( pc.B.msb,--s.Reg);
@@ -3092,15 +3153,33 @@ void cpu_irq(void)
 		MemWrite8(B_REG,--s.Reg);
 		MemWrite8(A_REG,--s.Reg);
 		MemWrite8(getcc(),--s.Reg);
+
 		pc.Reg=MemRead16(VIRQ);
 		cc[I]=1; 
-	} //Fi I test
+
+		if (EmuState.Debugger.IsTracing())
+		{
+			EmuState.Debugger.TraceCaptureInterruptExecuting(IRQ, CycleCounter, MC6809GetState());
+		}
+	}
+	else
+	{
+		if (EmuState.Debugger.IsTracing())
+		{
+			EmuState.Debugger.TraceCaptureInterruptMasked(IRQ, CycleCounter, MC6809GetState());
+		}
+	}
 	PendingInterupts=PendingInterupts & 254;
 	return;
 }
 
 void cpu_nmi(void)
 {
+	if (EmuState.Debugger.IsTracing())
+	{
+		EmuState.Debugger.TraceCaptureInterruptServicing(NMI, CycleCounter, MC6809GetState());
+	}
+
 	cc[E]=1;
 	MemWrite8( pc.B.lsb,--s.Reg);
 	MemWrite8( pc.B.msb,--s.Reg);
@@ -3117,6 +3196,12 @@ void cpu_nmi(void)
 	cc[I]=1;
 	cc[F]=1;
 	pc.Reg=MemRead16(VNMI);
+
+	if (EmuState.Debugger.IsTracing())
+	{
+		EmuState.Debugger.TraceCaptureInterruptExecuting(NMI, CycleCounter, MC6809GetState());
+	}
+
 	PendingInterupts=PendingInterupts & 251;
 	return;
 }
@@ -3373,6 +3458,10 @@ void MC6809AssertInterupt(unsigned char Interupt,unsigned char waiter)// 4 nmi 2
 	SyncWaiting=0;
 	PendingInterupts=PendingInterupts | (1<<(Interupt-1));
 	IRQWaiter=waiter;
+	if (EmuState.Debugger.IsTracing())
+	{
+		EmuState.Debugger.TraceCaptureInterruptRequest(Interupt, CycleCounter, MC6809GetState());
+	}
 	return;
 }
 

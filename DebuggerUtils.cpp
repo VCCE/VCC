@@ -19,6 +19,8 @@
 #include "Debugger.h"
 #include <sstream>
 #include <iomanip>
+#include <stdarg.h>
+#include <memory>
 
 
 namespace VCC { namespace Debugger
@@ -28,7 +30,7 @@ namespace VCC { namespace Debugger
 	{
 		std::ostringstream fmt;
 
-		fmt << std::hex << std::setw(length) << std::setfill(leadingZeros ? '0' : ' ') << value;
+		fmt << std::hex << std::setw(length) << std::uppercase << std::setfill(leadingZeros ? '0' : ' ') << value;
 
 		return fmt.str();
 	}
@@ -40,6 +42,55 @@ namespace VCC { namespace Debugger
 		fmt << std::dec << std::setw(length) << std::setfill(leadingZeros ? '0' : ' ') << value;
 
 		return fmt.str();
+	}
+
+	std::string ToByteString(std::vector<unsigned char> bytes)
+	{
+		std::ostringstream fmt;
+
+		for (auto& b : bytes)
+		{
+			if (fmt.str().size() > 0)
+			{
+				fmt << " ";
+			}
+			fmt << ToHexString(b, 2, true);
+		}
+
+		return fmt.str();
+	}
+
+	bool replace(std::string& str, const std::string& from, const std::string& to) 
+	{
+		size_t start_pos = str.find(from);
+		if (start_pos == std::string::npos)
+			return false;
+		str.replace(start_pos, from.length(), to);
+		return true;
+	}
+
+	int roundUp(int numToRound, int multiple)
+	{
+		if (multiple == 0)
+			return numToRound;
+
+		int remainder = numToRound % multiple;
+		if (remainder == 0)
+			return numToRound;
+
+		return numToRound + multiple - remainder;
+	}
+
+	int roundDn(int numToRound, int multiple)
+	{
+		if (multiple == 0)
+			return numToRound;
+
+		int remainder = numToRound % multiple;
+		if (remainder == 0)
+			return numToRound;
+
+		return numToRound - remainder;
 	}
 	
 } }

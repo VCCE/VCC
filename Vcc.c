@@ -65,6 +65,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "ProcessorState.h"
 #include "Breakpoints.h"
 #include "MMUMonitor.h"
+#include "ExecutionTrace.h"
 
 static HANDLE hout=NULL;
 
@@ -91,6 +92,7 @@ void (*CPUInit)(void)=NULL;
 int  (*CPUExec)( int)=NULL;
 void (*CPUReset)(void)=NULL;
 void (*CPUSetBreakpoints)(const std::vector<unsigned short>&) = NULL;
+void (*CPUSetTraceTriggers)(const std::vector<unsigned short>&) = NULL;
 VCC::CPUState (*CPUGetState)() = NULL;
 void (*CPUAssertInterupt)(unsigned char,unsigned char)=NULL;
 void (*CPUDeAssertInterupt)(unsigned char)=NULL;
@@ -351,6 +353,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case ID_MMU_MONITOR:
 					VCC::Debugger::UI::OpenMMUMonitorWindow(EmuState.WindowInstance, EmuState.WindowHandle);
+					break;
+
+				case ID_EXEC_TRACE:
+					VCC::Debugger::UI::OpenExecutionTraceWindow(EmuState.WindowInstance, EmuState.WindowHandle);
 					break;
 
 				default:
@@ -681,6 +687,7 @@ void DoHardReset(SystemState* const HRState)
 		CPUForcePC = HD6309ForcePC;
 		CPUSetBreakpoints = HD6309SetBreakpoints;
 		CPUGetState = HD6309GetState;
+		CPUSetTraceTriggers = HD6309SetTraceTriggers;
 	}
 	else
 	{
@@ -692,6 +699,7 @@ void DoHardReset(SystemState* const HRState)
 		CPUForcePC = MC6809ForcePC;
 		CPUSetBreakpoints = MC6809SetBreakpoints;
 		CPUGetState = MC6809GetState;
+		CPUSetTraceTriggers = MC6809SetTraceTriggers;
 	}
 	PiaReset();
 	mc6883_reset();	//Captures interal rom pointer for CPU Interupt Vectors
