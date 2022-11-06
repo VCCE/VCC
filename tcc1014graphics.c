@@ -82,6 +82,7 @@ static unsigned char BoarderChange=3;
 static unsigned char MasterMode=0;
 static unsigned char ColorInvert=1;
 static unsigned char BlinkState=1;
+static bool UserFlipped = false;
 
 // BEGIN of 8 Bit render loop *****************************************************************************************
 void UpdateScreen8 (SystemState *US8State)
@@ -9701,7 +9702,7 @@ void SetupDisplay(void)
 		}
 		break;
 }
-	ColorInvert= (CC3Vmode & 32)>>5;
+	if(!UserFlipped) ColorInvert= (CC3Vmode & 32)>>5;
 	LinesperScreen=Lpf[VresIndex];
 	SetLinesperScreen(VresIndex);
 	VertCenter=VcenterTable[VresIndex]-4; //4 unrendered top lines
@@ -9985,6 +9986,7 @@ int GetGraphicsMode() {
 void FlipArtifacts() {
 	if (ColorInvert == 0) { ColorInvert = 1; }
 	else { ColorInvert = 0; }
+	UserFlipped = true;
 }
 /*
 unsigned char SetArtifacts(unsigned char Tmp)
