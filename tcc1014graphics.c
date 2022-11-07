@@ -82,6 +82,7 @@ static unsigned char BoarderChange=3;
 static unsigned char MasterMode=0;
 static unsigned char ColorInvert=1;
 static unsigned char BlinkState=1;
+static unsigned int last_mmode = 0;
 
 // BEGIN of 8 Bit render loop *****************************************************************************************
 void UpdateScreen8 (SystemState *US8State)
@@ -1972,7 +1973,7 @@ case 192+2:	//Bpp=0 Sr=2
 	{
 		WidePixel=US8State->WRamBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
 //************************************************************************************
-		if (!MonType)
+		if (!MonType && BoarderColor8 == 0xFF)
 		{ //Pcolor
 			for (Bit=7;Bit>=0;Bit--)
 			{
@@ -5064,7 +5065,7 @@ case 192+2:	//Bpp=0 Sr=2
 	{
 		WidePixel=USState16->WRamBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
 //************************************************************************************
-		if (!MonType)
+		if (!MonType && BoarderColor16 == 0xFFFF)
 		{ //Pcolor
 			for (Bit=7;Bit>=0;Bit--)
 			{
@@ -6280,29 +6281,35 @@ void UpdateScreen24 (SystemState *USState24)
 
 
 // BEGIN of 32 Bit render loop *****************************************************************************************
-void UpdateScreen32 (SystemState *USState32)
+void UpdateScreen32(SystemState *USState32)
 {
-	register unsigned int YStride=0;
-//	unsigned int TextColor=0;
-	unsigned char Pixel=0;
-//	unsigned char StretchCount=0;
-//	unsigned char Mask=0,BitCount=0,Peek=0;
-	unsigned char Character=0,Attributes=0;
-	unsigned int TextPallete[2]={0,0};
-	unsigned short * WideBuffer=(unsigned short *)USState32->RamBuffer;
-	unsigned char *buffer=USState32->RamBuffer;
-	unsigned short WidePixel=0;
-//	unsigned short lColor=0;
-//	unsigned short Yindex[4]={316,308,300,292};
-	char Pix=0,Bit=0,Sphase=0;
-	static char Carry1=0,Carry2=0;
-	static char Pcolor=0;
-	unsigned int *szSurface32=USState32->PTRsurface32;
-	unsigned short y=USState32->LineCounter;
-	long Xpitch=USState32->SurfacePitch;
-	Carry1=1;
-	Pcolor=0;
-	
+	register unsigned int YStride = 0;
+	//	unsigned int TextColor=0;
+	unsigned char Pixel = 0;
+	//	unsigned char StretchCount=0;
+	//	unsigned char Mask=0,BitCount=0,Peek=0;
+	unsigned char Character = 0, Attributes = 0;
+	unsigned int TextPallete[2] = { 0,0 };
+	unsigned short * WideBuffer = (unsigned short *)USState32->RamBuffer;
+	unsigned char *buffer = USState32->RamBuffer;
+	unsigned short WidePixel = 0;
+	//	unsigned short lColor=0;
+	//	unsigned short Yindex[4]={316,308,300,292};
+	char Pix = 0, Bit = 0, Sphase = 0;
+	static char Carry1 = 0, Carry2 = 0;
+	static char Pcolor = 0;
+	unsigned int *szSurface32 = USState32->PTRsurface32;
+	unsigned short y = USState32->LineCounter;
+	long Xpitch = USState32->SurfacePitch;
+	Carry1 = 1;
+	Pcolor = 0;
+	static string curr_gmode = "";
+	static string last_gmode = "";
+	if (curr_gmode != last_gmode) {
+		string tmpout = "Graphics mode switched to " + curr_gmode +"\n";
+		OutputDebugString(tmpout.c_str());
+		last_gmode = curr_gmode;
+	}
 	if ( (HorzCenter!=0) & (BoarderChange>0) )
 		for (unsigned short x=0;x<HorzCenter;x++)
 		{
@@ -6328,6 +6335,7 @@ void UpdateScreen32 (SystemState *USState32)
 	switch (MasterMode) // (GraphicsMode <<7) | (CompatMode<<6)  | ((Bpp & 3)<<4) | (Stretch & 15);
 		{
 			case 0: //Width 80
+				curr_gmode = "80 Col. Text";
 				Attributes=0;
 				if (HorzOffsetReg & 128) { Start = StartofVidram + (TagY / LinesperRow)*(VPitch); } //Fix for Horizontal Offset Register in text mode.
 				for (HorzBeam=0;HorzBeam<BytesperRow*ExtendedText;HorzBeam+=ExtendedText)
@@ -6372,6 +6380,7 @@ void UpdateScreen32 (SystemState *USState32)
 			break;
 			case 1:
 			case 2: //Width 40
+				curr_gmode = "40 Col. Text";
 				Attributes=0;
 				for (HorzBeam=0;HorzBeam<BytesperRow*ExtendedText;HorzBeam+=ExtendedText)
 				{									
@@ -6582,7 +6591,7 @@ void UpdateScreen32 (SystemState *USState32)
 			case 125:
 			case 126:
 			case 127:
-
+				curr_gmode = "32 Col. Text";
 				for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam++)
 				{										
 					Character=buffer[Start+(unsigned char)(HorzBeam+Hoffset)];
@@ -6657,7 +6666,7 @@ void UpdateScreen32 (SystemState *USState32)
 
 			break;
 case 128+0: //Bpp=0 Sr=0 1BPP Stretch=1
-
+	curr_gmode = "HSCREEN 3";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=1
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -6704,6 +6713,7 @@ break;
 //case 192+1:
 case 128+1: //Bpp=0 Sr=1 1BPP Stretch=2
 case 128+2:	//Bpp=0 Sr=2 
+	curr_gmode = "gmode5";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=2
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -6786,6 +6796,7 @@ case 128+3: //Bpp=0 Sr=3 1BPP Stretch=4
 case 128+4: //Bpp=0 Sr=4
 case 128+5: //Bpp=0 Sr=5
 case 128+6: //Bpp=0 Sr=6
+	curr_gmode = "gmode6";
 for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=4
 {
 	WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -6935,6 +6946,7 @@ case 128+11: //Bpp=0 Sr=11
 case 128+12: //Bpp=0 Sr=12
 case 128+13: //Bpp=0 Sr=13
 case 128+14: //Bpp=0 Sr=14
+	curr_gmode = "gmode7";
 for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=8
 {
 	WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -7206,6 +7218,7 @@ break;
 
 case 128+15: //Bpp=0 Sr=15 1BPP Stretch=16
 case 128+16: //BPP=1 Sr=0  2BPP Stretch=1
+	curr_gmode = "gmode8";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //2bbp Stretch=1
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -7236,6 +7249,7 @@ break;
 
 case 128+17: //Bpp=1 Sr=1  2BPP Stretch=2
 case 128+18: //Bpp=1 Sr=2
+	curr_gmode = "HSCREEN 1";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //2bbp Stretch=2
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -7285,6 +7299,7 @@ case 128+19: //Bpp=1 Sr=3  2BPP Stretch=4
 case 128+20: //Bpp=1 Sr=4
 case 128+21: //Bpp=1 Sr=5
 case 128+22: //Bpp=1 Sr=6
+	curr_gmode = "gmode10";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //2bbp Stretch=4
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -7370,6 +7385,7 @@ case 128+27: //Bpp=1 Sr=11
 case 128+28: //Bpp=1 Sr=12 
 case 128+29: //Bpp=1 Sr=13 
 case 128+30: //Bpp=1 Sr=14
+	curr_gmode = "gmode11";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //2bbp Stretch=8
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -7512,6 +7528,7 @@ case 128+30: //Bpp=1 Sr=14
 break;
 	
 case 128+31: //Bpp=1 Sr=15 2BPP Stretch=16 
+	curr_gmode = "gmode12";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //2bbp Stretch=16
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -7782,6 +7799,7 @@ case 128+31: //Bpp=1 Sr=15 2BPP Stretch=16
 break;
 
 case 128+32: //Bpp=2 Sr=0 4BPP Stretch=1
+	curr_gmode = "gmode13";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //4bbp Stretch=1
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -7804,6 +7822,7 @@ break;
 
 case 128+33: //Bpp=2 Sr=1 4BPP Stretch=2 
 case 128+34: //Bpp=2 Sr=2
+	curr_gmode = "HSCREEN 2";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //4bbp Stretch=2
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -7836,6 +7855,7 @@ case 128+35: //Bpp=2 Sr=3 4BPP Stretch=4
 case 128+36: //Bpp=2 Sr=4 
 case 128+37: //Bpp=2 Sr=5 
 case 128+38: //Bpp=2 Sr=6 
+	curr_gmode = "gmode15";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //4bbp Stretch=4
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -7888,7 +7908,8 @@ case 128+42: //Bpp=2 Sr=10
 case 128+43: //Bpp=2 Sr=11 
 case 128+44: //Bpp=2 Sr=12 
 case 128+45: //Bpp=2 Sr=13 
-case 128+46: //Bpp=2 Sr=14 
+case 128+46: //Bpp=2 Sr=14
+	curr_gmode = "gmode16";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //4bbp Stretch=8
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -7967,6 +7988,7 @@ case 128+46: //Bpp=2 Sr=14
 break;
 
 case 128+47: //Bpp=2 Sr=15 4BPP Stretch=16
+	curr_gmode = "gmode17";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //4bbp Stretch=16
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -8128,6 +8150,7 @@ case 128+63: //Bpp=3 Sr=15
 	break;
 //	XXXXXXXXXXXXXXXXXXXXXX;
 case 192+0: //Bpp=0 Sr=0 1BPP Stretch=1
+	curr_gmode = "gmode18";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=1
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -8174,11 +8197,12 @@ break;
 
 case 192+1: //Bpp=0 Sr=1 1BPP Stretch=2
 case 192+2:	//Bpp=0 Sr=2 
+	curr_gmode = "gmode19 (PMODE4)";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=2
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
 //************************************************************************************
-		if (!MonType)
+		if (!MonType && BoarderColor32 == 0xFFFFFF)
 		{ //Pcolor
 			for (Bit=7;Bit>=0;Bit--)
 			{
@@ -8342,10 +8366,11 @@ case 192+2:	//Bpp=0 Sr=2
 }
 	break;
 
-case 192+3: //Bpp=0 Sr=3 1BPP Stretch=4
+case 192+3: //Bpp=0 Sr=3 1BPP Stretch=4 PMODE 0
 case 192+4: //Bpp=0 Sr=4
 case 192+5: //Bpp=0 Sr=5
 case 192+6: //Bpp=0 Sr=6
+	curr_gmode = "gmode20 (PMODE0 / PMODE2)";
 for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=4
 {
 	WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -8495,7 +8520,8 @@ case 192+11: //Bpp=0 Sr=11
 case 192+12: //Bpp=0 Sr=12
 case 192+13: //Bpp=0 Sr=13
 case 192+14: //Bpp=0 Sr=14
-for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=8
+	curr_gmode = "gmode21";
+	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=8
 {
 	WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
 	szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>7))];
@@ -8766,6 +8792,7 @@ break;
 
 case 192+15: //Bpp=0 Sr=15 1BPP Stretch=16
 case 192+16: //BPP=1 Sr=0  2BPP Stretch=1
+	curr_gmode = "gmode22";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //2bbp Stretch=1
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -8796,6 +8823,7 @@ break;
 
 case 192+17: //Bpp=1 Sr=1  2BPP Stretch=2
 case 192+18: //Bpp=1 Sr=2
+	curr_gmode = "gmode23";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //2bbp Stretch=2
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -8845,6 +8873,7 @@ case 192+19: //Bpp=1 Sr=3  2BPP Stretch=4
 case 192+20: //Bpp=1 Sr=4
 case 192+21: //Bpp=1 Sr=5
 case 192+22: //Bpp=1 Sr=6
+	curr_gmode = "gmode24 (PMODE1 / PMODE3)";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //2bbp Stretch=4
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -8930,6 +8959,7 @@ case 192+27: //Bpp=1 Sr=11
 case 192+28: //Bpp=1 Sr=12 
 case 192+29: //Bpp=1 Sr=13 
 case 192+30: //Bpp=1 Sr=14
+	curr_gmode = "gmode25";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //2bbp Stretch=8
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -9072,6 +9102,7 @@ case 192+30: //Bpp=1 Sr=14
 break;
 	
 case 192+31: //Bpp=1 Sr=15 2BPP Stretch=16 
+	curr_gmode = "gmode26";
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //2bbp Stretch=16
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
