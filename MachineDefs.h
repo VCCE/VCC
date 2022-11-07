@@ -40,7 +40,8 @@ namespace VCC
 		ScreenStart,			// Beginning of Screen Traces
 		ScreenVSYNCLow,			// Screen vertical synchronization start
 		ScreenVSYNCHigh,		// Screen vertical synchronization end
-		ScreenHSYNC,			// Screen HSYNC synchronization
+		ScreenHSYNCLow,			// Screen HSYNC synchronization start
+		ScreenHSYNCHigh,		// Screen HSYNC syncrhonization end
 		ScreenTopBorder,		// Screen is drawing - top border
 		ScreenRender,			// Screen is drawing - active region
 		ScreenBottomBorder,		// Screen is drawing - bottom border,

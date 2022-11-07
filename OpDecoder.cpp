@@ -180,13 +180,6 @@ namespace VCC { namespace Debugger
 	{
 		switch (evt)
 		{
-		case TraceEvent::ScreenVSYNCLow:
-			screen = "[VSync Low ";
-			screen += std::to_string(CurrentFrame_++);
-			screen += "]";
-			CurrentLine_ = 0;
-			TotalCycles_ = 0;
-			break;
 		case TraceEvent::ScreenTopBorder:
 			screen = "[Top Border]";
 			break;
@@ -196,11 +189,25 @@ namespace VCC { namespace Debugger
 		case TraceEvent::ScreenBottomBorder:
 			screen = "[Bot Border]";
 			break;
-		case TraceEvent::ScreenVSYNCHigh:
-			screen = "[VSYNC High]";
+		case TraceEvent::ScreenVSYNCLow:
+			screen = "[VSync Low ";
+			screen += std::to_string(CurrentFrame_);
+			screen += "]";
+			CurrentLine_ = 0;
+			TotalCycles_ = 0;
 			break;
-		case TraceEvent::ScreenHSYNC:
-			screen = "[HSync ";
+		case TraceEvent::ScreenVSYNCHigh:
+			screen = "[VSync High ";
+			screen += std::to_string(CurrentFrame_++);
+			screen += "]";
+			break;
+		case TraceEvent::ScreenHSYNCLow:
+			screen = "[HSync Low ";
+			screen += std::to_string(CurrentLine_);
+			screen += "]";
+			break;
+		case TraceEvent::ScreenHSYNCHigh:
+			screen = "[HSync High ";
 			screen += std::to_string(CurrentLine_++);
 			screen += "]";
 			break;

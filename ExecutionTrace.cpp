@@ -80,7 +80,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		return fmt.str();
 	}
 
-	std::string ToStateChangeString(const CPUTrace trace, bool showPC = false)
+	std::string ToStateChangeString(const CPUTrace trace, bool showPC = true)
 	{
 		std::ostringstream fmt;
 
@@ -499,35 +499,38 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 				w = 1200;
 				SetRect(&rc, rect.left + x, y, rect.left + x + w, y + 15);
 				std::stringstream ss;
-				ss << "Emulation State ";
+				ss << "Emulation :: ";
 				switch (currentTrace[n].emulationState)
 				{
 				case 0:
-					ss << "[0] CPU Only           ";
+					ss << "  CPU Only         ";
 					break;
 				case 1:
-					ss << "[1] Timer IRQ          ";
+					ss << "  Timer IRQ        ";
 					break;
 				case 2:
-					ss << "[2] Audio Sample       ";
+					ss << "  Audio Sample     ";
 					break;
 				case 3:
-					ss << "[3] Both, 1st Audio    ";
+					ss << "  Both, 1st Audio  ";
 					break;
 				case 4:
-					ss << "[4] Both, 2nd Timer    ";
+					ss << "  Both, 2nd Timer  ";
 					break;
 				case 5:
-					ss << "[5] Both, 1st Timer    ";
+					ss << "  Both, 1st Timer  ";
 					break;
 				case 6:
-					ss << "[6] Both, 2nd Audio    ";
+					ss << "  Both, 2nd Audio  ";
 					break;
 				case 7:
-					ss << "[7] Both Timer/Audio   ";
+					ss << "  Both Timer/Audio ";
 					break;
-				case 8:
-					ss << "[8] Cycle End Totals   ";
+				case 10:
+					ss << "Cycle Start =======";
+					break;
+				case 20:
+					ss << "Cycle End ---------";
 					break;
 				}
 				ss << " : ";

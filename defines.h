@@ -36,7 +36,7 @@ This file is part of VCC (Virtual Color Computer).
 //CPU 
 #define FRAMESPERSECORD (double)59.923	//The coco really runs at about 59.923 Frames per second
 #define LINESPERSCREEN (double)262
-#define PICOSECOND (double)1000000000
+#define NANOSECOND (double)1000000000
 #define COLORBURST (double)3579545 
 #define AUDIOBUFFERS 12
 //Misc

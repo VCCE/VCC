@@ -176,10 +176,10 @@ while (CycleCounter<CycleFor) {
 
 		if (PendingInterupts & 1)
 		{
-			if (IRQWaiter==0)	// This is needed to fix a subtle timming problem
+//			if (IRQWaiter==0)	// This is needed to fix a subtle timming problem
 				cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
-			else				// The IRQ is asserted.
-				IRQWaiter-=1;
+//			else				// The IRQ is asserted.
+//				IRQWaiter-=1;
 		}
 	}
 
@@ -3112,6 +3112,8 @@ void cpu_firq(void)
 		cc[F]=1;
 		pc.Reg=MemRead16(VFIRQ);
 
+		CycleCounter += 15;			// 10 Cycles to respond, 5 cycles to stack and load PC.
+
 		if (EmuState.Debugger.IsTracing())
 		{
 			EmuState.Debugger.TraceCaptureInterruptExecuting(FIRQ, CycleCounter, MC6809GetState());
@@ -3157,6 +3159,8 @@ void cpu_irq(void)
 		pc.Reg=MemRead16(VIRQ);
 		cc[I]=1; 
 
+		CycleCounter += 24;			// 10 Cycles to respond, 14 cycles to stack and load PC.
+
 		if (EmuState.Debugger.IsTracing())
 		{
 			EmuState.Debugger.TraceCaptureInterruptExecuting(IRQ, CycleCounter, MC6809GetState());
@@ -3196,6 +3200,8 @@ void cpu_nmi(void)
 	cc[I]=1;
 	cc[F]=1;
 	pc.Reg=MemRead16(VNMI);
+
+	CycleCounter += 24;			// 10 Cycles to respond, 14 cycles to stack and load PC.
 
 	if (EmuState.Debugger.IsTracing())
 	{

@@ -44,10 +44,11 @@ This file is part of VCC (Virtual Color Computer).
 
 //****************************************
 	static double SoundInterupt=0;
-	static double PicosToSoundSample=SoundInterupt;
+	static double NanosToSoundSample=SoundInterupt;
 	static double CyclesPerSecord=(COLORBURST/4)*(TARGETFRAMERATE/FRAMESPERSECORD);
 	static double LinesPerSecond= TARGETFRAMERATE * LINESPERSCREEN;
-	static double PicosPerLine = PICOSECOND / LinesPerSecond;
+	static double NanosPerLine = NANOSECOND / LinesPerSecond;
+	static double HSYNCWidthInNanos = 5000;
 	static double CyclesPerLine = CyclesPerSecord / LinesPerSecond;
 	static double CycleDrift=0;
 	static double CyclesThisLine=0;
@@ -63,17 +64,19 @@ static int MasterTimer=0;
 static unsigned short TimerClockRate=0;
 static int TimerCycleCount=0;
 static double MasterTickCounter=0,UnxlatedTickCounter=0,OldMaster=0;
-static double PicosThisLine=0;
+static double NanosThisLine=0;
 static unsigned char BlinkPhase=1;
 static unsigned int AudioBuffer[16384];
 static unsigned char CassBuffer[8192];
 static unsigned short AudioIndex=0;
-double PicosToInterupt=0;
+double NanosToInterrupt=0;
 static int IntEnable=0;
 static int SndEnable=1;
 static int OverClock=1;
 static unsigned char SoundOutputMode=0;	//Default to Speaker 1= Cassette
 static double emulatedCycles;
+double TimeToHSYNCLow = 0;
+double TimeToHSYNCHigh = 0;
 
 static int clipcycle = 1, cyclewait=2000;
 bool codepaste, PasteWithNew = false; 
@@ -88,14 +91,16 @@ void (*DrawTopBoarder[4]) (SystemState *)={DrawTopBoarder8,DrawTopBoarder16,Draw
 void (*DrawBottomBoarder[4]) (SystemState *)={DrawBottomBoarder8,DrawBottomBoarder16,DrawBottomBoarder24,DrawBottomBoarder32};
 void (*UpdateScreen[4]) (SystemState *)={UpdateScreen8,UpdateScreen16,UpdateScreen24,UpdateScreen32};
 std::string GetClipboardText();
-void VSYNC(SystemState* RFState, unsigned char level);
-void HSYNC(SystemState* RFState, double cycles);
+void HLINE(void);
+void VSYNC(unsigned char level);
+void HSYNC(unsigned char level);
 
 using namespace std;
 string clipboard;
 STRConfig ClipConfig;
 
-_inline double CPUCycle(void);
+_inline void CPUCycle(double nanoseconds);
+
 float RenderFrame (SystemState *RFState)
 {
 	static unsigned short FrameCounter=0;
@@ -104,30 +109,27 @@ float RenderFrame (SystemState *RFState)
 	SetBlinkState(BlinkPhase);
 
 	// VSYNC goes Low
-	VSYNC(RFState, 0);
+	VSYNC(0);
 
 	// Four lines of blank during VSYNC low
 	for (RFState->LineCounter = 0; RFState->LineCounter < 4; RFState->LineCounter++)
 	{
-		emulatedCycles = CPUCycle();
-		HSYNC(RFState, emulatedCycles);
+		HLINE();
 	}
 
 	// VSYNC goes High
-	VSYNC(RFState, 1);
+	VSYNC(1);
 
 	// Three lines of blank after VSYNC goes high
 	for (RFState->LineCounter = 0; RFState->LineCounter < 3; RFState->LineCounter++)
 	{
-		emulatedCycles = CPUCycle();
-		HSYNC(RFState, emulatedCycles);
+		HLINE();
 	}
 
 	// Top Border actually begins here, but is offscreen
 	for (RFState->LineCounter = 0; RFState->LineCounter < TopOffScreen; RFState->LineCounter++)
 	{
-		emulatedCycles = CPUCycle();
-		HSYNC(RFState, emulatedCycles);
+		HLINE();
 	}
 
 	if (!(FrameCounter % RFState->FrameSkip))
@@ -140,30 +142,27 @@ float RenderFrame (SystemState *RFState)
 	RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenTopBorder, 0);
 	for (RFState->LineCounter = 0; RFState->LineCounter < TopBoarder - 4; RFState->LineCounter++)
 	{
-		emulatedCycles = CPUCycle();
+		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
 			DrawTopBoarder[RFState->BitDepth](RFState);
-		HSYNC(RFState, emulatedCycles);
 	}
 
 	// Main Screen begins here: LPF = 192, 200 (actually 199), 225
 	RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenRender, 0);
 	for (RFState->LineCounter = 0; RFState->LineCounter < LinesperScreen; RFState->LineCounter++)		
 	{
-		emulatedCycles = CPUCycle();
+		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
 			UpdateScreen[RFState->BitDepth](RFState);
-		HSYNC(RFState, emulatedCycles);
 	}
 
 	// Bottom Border begins here.
 	RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenBottomBorder, 0);
 	for (RFState->LineCounter=0;RFState->LineCounter < BottomBoarder ;RFState->LineCounter++)
 	{
-		emulatedCycles = CPUCycle();
+		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
 			DrawBottomBoarder[RFState->BitDepth](RFState);
-		HSYNC(RFState, emulatedCycles);
 	}
 
 	if (!(FrameCounter % RFState->FrameSkip))
@@ -175,13 +174,8 @@ float RenderFrame (SystemState *RFState)
 	// Bottom Border continues but is offscreen
 	for (RFState->LineCounter = 0; RFState->LineCounter < BottomOffScreen; RFState->LineCounter++)
 	{
-		emulatedCycles = CPUCycle();
-		HSYNC(RFState, emulatedCycles);
+		HLINE();
 	}
-
-	// One more blank line observed on scope on real machine before VSYNC
-	emulatedCycles = CPUCycle();
-	HSYNC(RFState, emulatedCycles);
 
 	switch (SoundOutputMode)
 	{
@@ -216,28 +210,36 @@ float RenderFrame (SystemState *RFState)
 	return(CalculateFPS());
 }
 
-void VSYNC(SystemState* RFState, unsigned char level)
+void VSYNC(unsigned char level)
 {
 	if (level == 0)
 	{
-		RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenVSYNCLow, 0);
+		EmuState.Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenVSYNCLow, 0);
 		irq_fs(0);
 		if (VertInteruptEnabled)
 			GimeAssertVertInterupt();
 	}
 	else
 	{
-		RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenVSYNCHigh, 0);
+		EmuState.Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenVSYNCHigh, 0);
 		irq_fs(1);
 	}
 }
 
-void HSYNC(SystemState* RFState, double cycles)
+void HSYNC(unsigned char level)
 {
-	RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenHSYNC, cycles);
-	if (HorzInteruptEnabled)
-		GimeAssertHorzInterupt();
-	irq_hs(ANY);
+	if (level == 0)
+	{
+		EmuState.Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenHSYNCLow, 0);
+		if (HorzInteruptEnabled)
+			GimeAssertHorzInterupt();
+		irq_hs(0);
+	}
+	else
+	{
+		EmuState.Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenHSYNCHigh, 0);
+		irq_hs(1);
+	}
 }
 
 void SetClockSpeed(unsigned short Cycles)
@@ -293,147 +295,162 @@ DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
 	return details;
 }
 
+_inline void HLINE(void)
+{
+	// First part of the line
+	CPUCycle(NanosPerLine - HSYNCWidthInNanos);
 
-_inline double CPUCycle(void)
+	// HSYNC going low.
+	HSYNC(0);
+	PakTimer();
+
+	// Run for a bit.
+	CPUCycle(HSYNCWidthInNanos);
+
+	// HSYNC goes high
+	HSYNC(1);
+}
+
+_inline void CPUCycle(double NanosToRun)
 {
 	// CPU is in a halted state.
 	if (EmuState.Debugger.IsHalted())
 	{
-		return 0;
+		return;
 	}
 
-	PakTimer();
-	PicosThisLine += PicosPerLine;
+	EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 10, NanosToRun, 0, 0, 0, 0);
+	NanosThisLine += NanosToRun;
 	double emulationCycles = 0, emulationDrift = 0;
-	while (PicosThisLine > 1)
+	while (NanosThisLine >= 1)
 	{
 		StateSwitch = 0;
-		if ((PicosToInterupt <= PicosThisLine) & IntEnable)	//Does this iteration need to Timer Interupt
+		if ((NanosToInterrupt <= NanosThisLine) & IntEnable)	//Does this iteration need to Timer Interupt
 			StateSwitch = 1;
-		if ((PicosToSoundSample <= PicosThisLine) & SndEnable)//Does it need to collect an Audio sample
+		if ((NanosToSoundSample <= NanosThisLine) & SndEnable)//Does it need to collect an Audio sample
 			StateSwitch += 2;
 		switch (StateSwitch)
 		{
 		case 0:		//No interupts this line
-			CyclesThisLine = CycleDrift + (PicosThisLine * CyclesPerLine * OverClock / PicosPerLine);
+			CyclesThisLine = CycleDrift + (NanosThisLine * CyclesPerLine * OverClock / NanosPerLine);
 			if (CyclesThisLine >= 1)	//Avoid un-needed CPU engine calls
 				CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
 			else
 				CycleDrift = CyclesThisLine;
-			EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, StateSwitch, PicosThisLine, PicosToInterupt, PicosToSoundSample, CyclesThisLine, CycleDrift);
+			EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, StateSwitch, NanosThisLine, NanosToInterrupt, NanosToSoundSample, CyclesThisLine, CycleDrift);
 			emulationCycles += CyclesThisLine;
 			emulationDrift += CycleDrift;
-			PicosToInterupt -= PicosThisLine;
-			PicosToSoundSample -= PicosThisLine;
-			PicosThisLine = 0;
+			NanosToInterrupt -= NanosThisLine;
+			NanosToSoundSample -= NanosThisLine;
+			NanosThisLine = 0;
 			break;
 
 		case 1:		//Only Interupting
-			PicosThisLine -= PicosToInterupt;
-			CyclesThisLine = CycleDrift + (PicosToInterupt * CyclesPerLine * OverClock / PicosPerLine);
+			NanosThisLine -= NanosToInterrupt;
+			CyclesThisLine = CycleDrift + (NanosToInterrupt * CyclesPerLine * OverClock / NanosPerLine);
 			if (CyclesThisLine >= 1)
 				CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
 			else
 				CycleDrift = CyclesThisLine;
-			EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, StateSwitch, PicosThisLine, PicosToInterupt, PicosToSoundSample, CyclesThisLine, CycleDrift);
+			EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, StateSwitch, NanosThisLine, NanosToInterrupt, NanosToSoundSample, CyclesThisLine, CycleDrift);
 			emulationCycles += CyclesThisLine;
 			emulationDrift += CycleDrift;
 			GimeAssertTimerInterupt();
-			PicosToSoundSample -= PicosToInterupt;
-			PicosToInterupt = MasterTickCounter;
+			NanosToSoundSample -= NanosToInterrupt;
+			NanosToInterrupt = MasterTickCounter;
 			break;
 
 		case 2:		//Only Sampling
-			PicosThisLine -= PicosToSoundSample;
-			CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
+			NanosThisLine -= NanosToSoundSample;
+			CyclesThisLine = CycleDrift + (NanosToSoundSample * CyclesPerLine * OverClock / NanosPerLine);
 			if (CyclesThisLine >= 1)
 				CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
 			else
 				CycleDrift = CyclesThisLine;
-			EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, StateSwitch, PicosThisLine, PicosToInterupt, PicosToSoundSample, CyclesThisLine, CycleDrift);
+			EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, StateSwitch, NanosThisLine, NanosToInterrupt, NanosToSoundSample, CyclesThisLine, CycleDrift);
 			emulationCycles += CyclesThisLine;
 			emulationDrift += CycleDrift;
 			AudioEvent();
-			PicosToInterupt -= PicosToSoundSample;
-			PicosToSoundSample = SoundInterupt;
+			NanosToInterrupt -= NanosToSoundSample;
+			NanosToSoundSample = SoundInterupt;
 			break;
 
 		case 3:		//Interupting and Sampling
-			if (PicosToSoundSample < PicosToInterupt)
+			if (NanosToSoundSample < NanosToInterrupt)
 			{
-				PicosThisLine -= PicosToSoundSample;
-				CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
+				NanosThisLine -= NanosToSoundSample;
+				CyclesThisLine = CycleDrift + (NanosToSoundSample * CyclesPerLine * OverClock / NanosPerLine);
 				if (CyclesThisLine >= 1)
 					CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
 				else
 					CycleDrift = CyclesThisLine;
-				EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 3, PicosThisLine, PicosToInterupt, PicosToSoundSample, CyclesThisLine, CycleDrift);
+				EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 3, NanosThisLine, NanosToInterrupt, NanosToSoundSample, CyclesThisLine, CycleDrift);
 				emulationCycles += CyclesThisLine;
 				emulationDrift += CycleDrift;
 				AudioEvent();
-				PicosToInterupt -= PicosToSoundSample;
-				PicosToSoundSample = SoundInterupt;
-				PicosThisLine -= PicosToInterupt;
+				NanosToInterrupt -= NanosToSoundSample;
+				NanosToSoundSample = SoundInterupt;
+				NanosThisLine -= NanosToInterrupt;
 
-				CyclesThisLine = CycleDrift + (PicosToInterupt * CyclesPerLine * OverClock / PicosPerLine);
+				CyclesThisLine = CycleDrift + (NanosToInterrupt * CyclesPerLine * OverClock / NanosPerLine);
 				if (CyclesThisLine >= 1)
 					CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
 				else
 					CycleDrift = CyclesThisLine;
-				EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 4, PicosThisLine, PicosToInterupt, PicosToSoundSample, CyclesThisLine, CycleDrift);
+				EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 4, NanosThisLine, NanosToInterrupt, NanosToSoundSample, CyclesThisLine, CycleDrift);
 				emulationCycles += CyclesThisLine;
 				emulationDrift += CycleDrift;
 				GimeAssertTimerInterupt();
-				PicosToSoundSample -= PicosToInterupt;
-				PicosToInterupt = MasterTickCounter;
+				NanosToSoundSample -= NanosToInterrupt;
+				NanosToInterrupt = MasterTickCounter;
 				break;
 			}
 
-			if (PicosToSoundSample > PicosToInterupt)
+			if (NanosToSoundSample > NanosToInterrupt)
 			{
-				PicosThisLine -= PicosToInterupt;
-				CyclesThisLine = CycleDrift + (PicosToInterupt * CyclesPerLine * OverClock / PicosPerLine);
+				NanosThisLine -= NanosToInterrupt;
+				CyclesThisLine = CycleDrift + (NanosToInterrupt * CyclesPerLine * OverClock / NanosPerLine);
 				if (CyclesThisLine >= 1)
 					CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
 				else
 					CycleDrift = CyclesThisLine;
-				EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 5, PicosThisLine, PicosToInterupt, PicosToSoundSample, CyclesThisLine, CycleDrift);
+				EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 5, NanosThisLine, NanosToInterrupt, NanosToSoundSample, CyclesThisLine, CycleDrift);
 				emulationCycles += CyclesThisLine;
 				emulationDrift += CycleDrift;
 				GimeAssertTimerInterupt();
-				PicosToSoundSample -= PicosToInterupt;
-				PicosToInterupt = MasterTickCounter;
-				PicosThisLine -= PicosToSoundSample;
-				CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
+				NanosToSoundSample -= NanosToInterrupt;
+				NanosToInterrupt = MasterTickCounter;
+				NanosThisLine -= NanosToSoundSample;
+				CyclesThisLine = CycleDrift + (NanosToSoundSample * CyclesPerLine * OverClock / NanosPerLine);
 				if (CyclesThisLine >= 1)
 					CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
 				else
 					CycleDrift = CyclesThisLine;
-				EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 6, PicosThisLine, PicosToInterupt, PicosToSoundSample, CyclesThisLine, CycleDrift);
+				EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 6, NanosThisLine, NanosToInterrupt, NanosToSoundSample, CyclesThisLine, CycleDrift);
 				emulationCycles += CyclesThisLine;
 				emulationDrift += CycleDrift;
 				AudioEvent();
-				PicosToInterupt -= PicosToSoundSample;
-				PicosToSoundSample = SoundInterupt;
+				NanosToInterrupt -= NanosToSoundSample;
+				NanosToSoundSample = SoundInterupt;
 				break;
 			}
 			//They are the same (rare)
-			PicosThisLine -= PicosToInterupt;
-			CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
+			NanosThisLine -= NanosToInterrupt;
+			CyclesThisLine = CycleDrift + (NanosToSoundSample * CyclesPerLine * OverClock / NanosPerLine);
 			if (CyclesThisLine > 1)
 				CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
 			else
 				CycleDrift = CyclesThisLine;
-			EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 7, PicosThisLine, PicosToInterupt, PicosToSoundSample, CyclesThisLine, CycleDrift);
+			EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 7, NanosThisLine, NanosToInterrupt, NanosToSoundSample, CyclesThisLine, CycleDrift);
 			emulationCycles += CyclesThisLine;
 			emulationDrift += CycleDrift;
 			GimeAssertTimerInterupt();
 			AudioEvent();
-			PicosToInterupt = MasterTickCounter;
-			PicosToSoundSample = SoundInterupt;
+			NanosToInterrupt = MasterTickCounter;
+			NanosToSoundSample = SoundInterupt;
 		}
 	}
-	EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 8, 0, 0, 0, emulationCycles, emulationDrift);
+	EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 20, 0, 0, 0, emulationCycles, emulationDrift);
 	if (!clipboard.empty()) {
 		char tmp[] = { 0x00 };
 		char kbstate = 2;
@@ -495,7 +512,6 @@ _inline double CPUCycle(void)
 		clipcycle++; if (clipcycle > cyclewait) { clipcycle = 1; }
 
 	}
-	return(emulationCycles);
 }
 
 void SetTimerInteruptState(unsigned char State)
@@ -522,7 +538,7 @@ void SetMasterTickCounter(void)
 {
 //	double Rate[2]={63613.2315,279.265};
 //	double Rate[2]={279.265*228,279.265};
-	double Rate[2]={PICOSECOND/(TARGETFRAMERATE*LINESPERSCREEN),PICOSECOND/COLORBURST};
+	double Rate[2]={NANOSECOND/(TARGETFRAMERATE*LINESPERSCREEN),NANOSECOND/COLORBURST};
 	if (UnxlatedTickCounter==0)
 		MasterTickCounter=0;
 	else
@@ -531,7 +547,7 @@ void SetMasterTickCounter(void)
 	if (MasterTickCounter != OldMaster)  
 	{
 		OldMaster=MasterTickCounter;
-		PicosToInterupt=MasterTickCounter;
+		NanosToInterrupt=MasterTickCounter;
 	}
 	if (MasterTickCounter!=0)
 		IntEnable=1;
@@ -552,10 +568,10 @@ void MiscReset(void)
 	OldMaster=0;
 //*************************
 	SoundInterupt=0;//PICOSECOND/44100;
-	PicosToSoundSample=SoundInterupt;
+	NanosToSoundSample=SoundInterupt;
 	CycleDrift=0;
 	CyclesThisLine=0;
-	PicosThisLine=0;
+	NanosThisLine=0;
 	IntEnable=0;
 	AudioIndex=0;
 	ResetAudio();
@@ -585,8 +601,8 @@ unsigned short SetAudioRate (unsigned short Rate)
 		SndEnable=0;
 	else
 	{
-		SoundInterupt=PICOSECOND/Rate;
-		PicosToSoundSample=SoundInterupt;
+		SoundInterupt=NANOSECOND/Rate;
+		NanosToSoundSample=SoundInterupt;
 	}
 	SoundRate=Rate;
 	return(0);
