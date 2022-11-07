@@ -1,21 +1,21 @@
 #include "ROM.h"
 #include <fstream>
 #include <windows.h>
-
+using namespace std;
 
 bool ROM::Load(std::string filename)
 {
-	std::ifstream input(filename, std::ios::binary);
+	ifstream input(filename,ios::binary);
 	if (!input.is_open())
     {
 		return false;
     }
 
     std::streamoff begin = input.tellg();
-	input.seekg(0, std::ios::end);
+	input.seekg(0,ios::end);
 	std::streamoff end = input.tellg();
 	std::streamoff fileLength = end - begin;
-	input.seekg(0, std::ios::beg);
+	input.seekg(0,ios::beg);
 
     std::vector<unsigned char> fileData(static_cast<size_t>(fileLength));
     input.read(reinterpret_cast<char*>(&fileData[0]), fileData.size());

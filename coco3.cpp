@@ -270,6 +270,30 @@ void SetLinesperScreen (unsigned char Lines)
 }
 
 
+DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
+{
+	const float pixelsPerLine = GetDisplayedPixelsPerLine();
+	const float horizontalBorderSize = GetHorizontalBorderSize();
+	const float activeLines = 250.0f;	//	FIXME: Needs a symbolic
+
+	DisplayDetails details;
+
+	const auto horizontalScale(clientWidth / pixelsPerLine);	
+	const auto verticalScale(clientHeight / activeLines);
+	const auto extraBorderPadding = GetForcedAspectBorderPadding();
+	
+	details.contentRows = static_cast<int>(LinesperScreen * verticalScale);
+	details.topBorderRows = static_cast<int>(TopBoarder * verticalScale) + extraBorderPadding.y;
+	details.bottomBorderRows = static_cast<int>(BottomBoarder * verticalScale) + extraBorderPadding.y;
+
+	details.contentColumns = static_cast<int>(pixelsPerLine * horizontalScale);
+	details.leftBorderColumns = static_cast<int>(horizontalBorderSize * horizontalScale) + extraBorderPadding.x;
+	details.rightBorderColumns = static_cast<int>(horizontalBorderSize * horizontalScale) + extraBorderPadding.x;
+	
+	return details;
+}
+
+
 _inline double CPUCycle(void)
 {
 	// CPU is in a halted state.

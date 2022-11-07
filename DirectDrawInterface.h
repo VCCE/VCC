@@ -23,6 +23,7 @@ BOOL InitDrawSurface(bool );
 void UnlockScreen(SystemState *);
 unsigned char LockScreen(SystemState *);
 void SetStatusBarText( char *,SystemState *);
+int GetRenderWindowStatusBarHeight();
 bool CreateDDWindow(SystemState *);
 void Cls(unsigned int,SystemState *);
 void DoCls(SystemState *);
@@ -32,6 +33,7 @@ unsigned char SetAspect (unsigned char);
 float Static(SystemState *);
 POINT GetCurWindowSize();
 void DisplayFlip(SystemState *);
+POINT GetForcedAspectBorderPadding();
 
 
 #define MAX_LOADSTRING 100

@@ -344,7 +344,7 @@ VCC::CPUState HD6309GetState()
 #pragma pop_macro("F")
 #pragma pop_macro("V")
 
-	regs.IsNative6309 = md[NATIVE6309];
+	regs.IsNative6309 = md[NATIVE6309] != 0;
 
 	return regs;
 }

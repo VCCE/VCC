@@ -53,6 +53,7 @@ static unsigned char ForceAspect=1;
 static char StatusText[255]="";
 static unsigned int Color=0;
 static POINT RememberWinSize;
+static POINT ForcedAspectBorderPadding;
 
 //Function Prototypes for this module
 extern LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); //Callback for the main window
@@ -268,8 +269,10 @@ void DisplayFlip(SystemState *DFState)	// Double buffering flip
 	static RECT	Temp;
 	static POINT   p;	
 
+	ForcedAspectBorderPadding = { 0,0 };
+
 	if (DFState->FullScreen)	// if we're windowed do the blit, else just Flip
-		hr = g_pDDS->Flip(NULL,DDFLIP_NOVSYNC |DDFLIP_DONOTWAIT ); //DDFLIP_WAIT
+		hr = g_pDDS->Flip(NULL, DDFLIP_NOVSYNC | DDFLIP_DONOTWAIT); //DDFLIP_WAIT
 	else
 	{
 		p.x = 0; p.y = 0;
@@ -327,6 +330,8 @@ void DisplayFlip(SystemState *DFState)	// Double buffering flip
 
 				static POINT pDstLeftTop;
 				pDstLeftTop.x = (long)dstX; pDstLeftTop.y = (long)dstY;
+				ForcedAspectBorderPadding = pDstLeftTop;
+
 				::ClientToScreen(DFState->WindowHandle, &pDstLeftTop);
 
 				static POINT pDstRightBottom;
@@ -593,4 +598,15 @@ float Static(SystemState *STState)
 }
 POINT GetCurWindowSize() {
 	return (RememberWinSize);
+}
+
+int GetRenderWindowStatusBarHeight()
+{
+	return StatusBarHeight;
+}
+
+
+POINT GetForcedAspectBorderPadding()
+{
+	return ForcedAspectBorderPadding;
 }

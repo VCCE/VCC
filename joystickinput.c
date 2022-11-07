@@ -16,6 +16,8 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define DIRECTINPUT_VERSION 0x0800
+
 #include <windows.h>
 #include "defines.h"
 #include "joystickinput.h"

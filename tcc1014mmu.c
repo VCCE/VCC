@@ -119,7 +119,7 @@ VCC::MMUState GetMMUState()
 	VCC::MMUState state;
 
 	state.ActiveTask = MmuTask;
-	state.Enabled = MmuEnabled;
+	state.Enabled = MmuEnabled != 0;
 
 	for (auto i = 0U; i < state.Task0.size(); ++i)
 	{
