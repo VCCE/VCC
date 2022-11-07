@@ -350,7 +350,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		}
 		else
 		{
-			std::string s = "Left/right click to set time marks on trace.";
+			std::string s = "Press 1 or 2 to set time marks on trace.";
 			HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_TIMING);
 			SetWindowText(hCtl, s.c_str());
 		}
