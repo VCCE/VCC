@@ -1406,10 +1406,12 @@ int SelectFile(char *FileName)
 }
 
 void SetWindowSize(POINT p) {
-	int width = p.x+16;
-	int height = p.y+81;
-	HWND handle = GetActiveWindow();
-	::SetWindowPos(handle, 0, 0, 0, width, height, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+	if (EmuState.WindowHandle != NULL)
+	{
+		int width = p.x + 16;
+		int height = p.y + 81;
+		SetWindowPos(EmuState.WindowHandle, 0, 0, 0, width, height, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+	}
 }
 int GetKeyboardLayout() {
 	return(CurrentConfig.KeyMap);
