@@ -25,8 +25,9 @@ void MC6809Reset(void);
 void MC6809AssertInterupt(unsigned char,unsigned char);
 void MC6809DeAssertInterupt(unsigned char);// 4 nmi 2 firq 1 irq
 void MC6809ForcePC(unsigned short);
-void MC6809State(unsigned char*, unsigned char*, int);
-char MC6809Control(unsigned char, unsigned short*, char);
+void MC6809SetBreakpoints(const std::vector<unsigned short>& breakpoints);
+void MC6809SetTraceTriggers(const std::vector<unsigned short>& triggers);
+VCC::CPUState MC6809GetState();
 
 
 #endif

@@ -171,13 +171,30 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Audio.c" />
-    <ClCompile Include="Breakpoints.cpp" />
+    <ClCompile Include="Breakpoints.cpp">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
+    </ClCompile>
     <ClCompile Include="Cassette.cpp" />
     <ClCompile Include="coco3.cpp" />
     <ClCompile Include="CommandLine.c" />
     <ClCompile Include="config.c" />
-    <ClCompile Include="DebuggerUtils.cpp" />
+    <ClCompile Include="Debugger.cpp">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
+    </ClCompile>
+    <ClCompile Include="DebuggerUtils.cpp">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
+    </ClCompile>
     <ClCompile Include="DirectDrawInterface.cpp" />
+    <ClCompile Include="ExecutionTrace.cpp" />
     <ClCompile Include="Fileops.c" />
     <ClCompile Include="hd6309.c" />
     <ClCompile Include="iobus.c" />
@@ -188,10 +205,27 @@
     <ClCompile Include="logger.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
-    <ClCompile Include="MemoryMap.cpp" />
-    <ClCompile Include="MMUMonitor.cpp" />
+    <ClCompile Include="MemoryMap.cpp">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
+    </ClCompile>
+    <ClCompile Include="MMUMonitor.cpp">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
+    </ClCompile>
+    <ClCompile Include="OpCodeTables.cpp" />
+    <ClCompile Include="OpDecoder.cpp" />
     <ClCompile Include="pakinterface.c" />
-    <ClCompile Include="ProcessorState.cpp" />
+    <ClCompile Include="ProcessorState.cpp">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
+    </ClCompile>
     <ClCompile Include="quickload.c" />
     <ClCompile Include="tcc1014graphics.c" />
     <ClCompile Include="tcc1014mmu.c" />
@@ -212,9 +246,10 @@
     <ClInclude Include="coco3.h" />
     <ClInclude Include="CommandLine.h" />
     <ClInclude Include="config.h" />
-    <ClInclude Include="DebuggerUtils.h" />
+    <ClInclude Include="Debugger.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="DirectDrawInterface.h" />
+    <ClInclude Include="ExecutionTrace.h" />
     <ClInclude Include="fileops.h" />
     <ClInclude Include="hd6309.h" />
     <ClInclude Include="hd6309defs.h" />
@@ -224,11 +259,14 @@
     <ClInclude Include="keyboardLayout.h" />
     <ClInclude Include="keyboardEdit.h" />
     <ClInclude Include="logger.h" />
+    <ClInclude Include="MachineDefs.h" />
     <ClInclude Include="mc6809.h" />
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6821.h" />
     <ClInclude Include="MemoryMap.h" />
     <ClInclude Include="MMUMonitor.h" />
+    <ClInclude Include="OpCodeTables.h" />
+    <ClInclude Include="OpDecoder.h" />
     <ClInclude Include="pakinterface.h" />
     <ClInclude Include="ProcessorState.h" />
     <ClInclude Include="quickload.h" />
@@ -237,6 +275,7 @@
     <ClInclude Include="tcc1014mmu.h" />
     <ClInclude Include="tcc1014registers.h" />
     <ClInclude Include="throttle.h" />
+    <ClInclude Include="DebuggerUtils.h" />
     <ClInclude Include="Vcc.h" />
     <ClInclude Include="xDebug.h" />
   </ItemGroup>
