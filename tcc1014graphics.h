@@ -68,6 +68,8 @@ unsigned char SetScanLines(unsigned char);
 void SetBlinkState(unsigned char);
 static unsigned char Lpf[4]={192,199,225,225}; // 2 is really undefined but I gotta put something here.
 static unsigned char VcenterTable[4]={29,23,12,12};
+static unsigned char TopOffScreenTable[4] = { 11,14,11,11 };
+static unsigned char BottomOffScreenTable[4] = { 5,1,5,5 };
 #define MRGB	1
 #define MCMP	0
 
