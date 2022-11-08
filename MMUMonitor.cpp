@@ -1,75 +1,68 @@
-/*
-This file is part of VCC (Virtual Color Computer).
-
-	VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-
-	Processor State Display - Part of the Debugger package for VCC
-	Author: Mike Rojas
-*/
-
-#include "defines.h"
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//		VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
+//		it under the terms of the GNU General Public License as published by
+//		the Free Software Foundation, either version 3 of the License, or
+//		(at your option) any later version.
+//	
+//		VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+//		but WITHOUT ANY WARRANTY; without even the implied warranty of
+//		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//		GNU General Public License for more details.
+//	
+//		You should have received a copy of the GNU General Public License
+//		along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+//	
+//		Processor State Display - Part of the Debugger package for VCC
+//		Authors: Mike Rojas, Chet Simpson
+#include "MMUMonitor.h"
+#include "Debugger.h"
 #include "DebuggerUtils.h"
+#include "defines.h"
+#include "tcc1014mmu.h"
 #include "resource.h"
 #include <string>
+#include <stdexcept>
 
-extern SystemState EmuState;
-
-namespace MMUMonitor
+namespace VCC { namespace Debugger { namespace UI { namespace
 {
+	using mmupagebuffer_type = std::array<unsigned char, 8192>;
+
+	CriticalSection Section_;
+	MMUState MMUState_;
+	int MMUPage_ = 0;
+	mmupagebuffer_type MMUPageBuffer_;
+
+	HWND MMUMonitorWindow = NULL;
 	HWND hWndMMUMonitor;
 	HWND hWndVScrollBar;
 	int memoryOffset = 0;
 	int maxPageNo = 0;
 
-	HDC		backDC;
-	HBITMAP backBufferBMP;
-	RECT    backRect;
-	int		backBufferCX;
-	int		backBufferCY;
+	BackBufferInfo	BackBuffer_;
 
-	bool InitBackBuffer(HWND hWnd)
+
+	class MMUMonitorDebugClient : public Client
 	{
-		GetClientRect(hWnd, &backRect);
+	public:
 
-		backRect.right -= 20;
-		backRect.bottom -= 39;
-
-		backBufferCX = backRect.right - backRect.left;
-		backBufferCY = backRect.bottom - backRect.top;
-
-		HDC hdc = GetDC(hWnd);
-
-		backBufferBMP = CreateCompatibleBitmap(hdc, backBufferCX, backBufferCY);
-		if (backBufferBMP == NULL)
+		void OnReset() override
 		{
-			OutputDebugString("failed to create backBufferBMP");
-			return false;
+			SectionLocker lock(Section_);
+
+			std::fill(MMUPageBuffer_.begin(), MMUPageBuffer_.end(), unsigned char(0));
+			MMUPage_ = 0;
 		}
 
-		backDC = CreateCompatibleDC(hdc);
-		if (backDC == NULL)
+		void OnUpdate() override
 		{
-			OutputDebugString("failed to create the backDC");
-			return false;
+			SectionLocker lock(Section_);
+
+			MMUState_ = GetMMUState();
+			GetMMUPage(MMUPage_, MMUPageBuffer_);
 		}
 
-		HBITMAP oldbmp = (HBITMAP)SelectObject(backDC, backBufferBMP);
-		DeleteObject(oldbmp);
-		ReleaseDC(hWnd, hdc);
-
-		return true;
-	}
+	};
 
 	void DrawMMUMonitor(HDC hdc, LPRECT clientRect)
 	{
@@ -117,15 +110,15 @@ namespace MMUMonitor
 		y += 25;
 
 		// Pull out MMU state.  Do it quickly to keep the emulator frame rate high.
-		unsigned char regs[20];
-		unsigned char page[8192];
-		unsigned char pageNo;
-
-		EnterCriticalSection(&EmuState.WatchCriticalSection);
-		memcpy(regs, EmuState.WatchMMUState, sizeof(regs));
-		memcpy(page, EmuState.WatchMMUPage, sizeof(page));
-		pageNo = EmuState.MMUPage;
-		LeaveCriticalSection(&EmuState.WatchCriticalSection);
+		MMUState regs;
+		int pageNo;
+		mmupagebuffer_type page;
+		{
+			SectionLocker lock(Section_);
+			regs = MMUState_;
+			pageNo = MMUPage_;
+			page = MMUPageBuffer_;
+		}
 
 		std::string s;
 
@@ -133,7 +126,7 @@ namespace MMUMonitor
 		for (int n = 0; n < 8; n++)
 		{
 			x = rect.left + 45;
-			if (regs[0] == 0)
+			if (regs.ActiveTask == 0)
 			{
 				SetTextColor(hdc, RGB(138, 27, 255));
 			}
@@ -142,7 +135,7 @@ namespace MMUMonitor
 				SetTextColor(hdc, RGB(150, 150, 150));
 			}
 			SetRect(&rc, x, y, x + 80, y + 20);
-			int base = regs[2 + n] * 8192;
+			int base = regs.Task0[n] * 8192;
 
 			s = ToHexString(base, 5, true) + "-" + ToHexString(base + 8191, 5, true);
 			DrawText(hdc, s.c_str(), s.size(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
@@ -153,8 +146,8 @@ namespace MMUMonitor
 			LineTo(hdc, x + 30, y + 20);
 			LineTo(hdc, x, y + 20);
 			LineTo(hdc, x, y);
-			s = ToHexString(regs[2+n], 2, true);
-			if (regs[0] == 0)
+			s = ToHexString(regs.Task0[n], 2, true);
+			if (regs.ActiveTask == 0)
 			{
 				SetTextColor(hdc, RGB(0, 0, 0));
 			}
@@ -165,7 +158,7 @@ namespace MMUMonitor
 			SetRect(&rc, x, y, x + 30, y + 20);
 			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			x += 30;
-			if (regs[0] == 0)
+			if (regs.ActiveTask == 0)
 			{
 				SelectObject(hdc, thickPen);
 				MoveToEx(hdc, x, y + 10, NULL);
@@ -178,7 +171,7 @@ namespace MMUMonitor
 			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			x += 80;
 			SelectObject(hdc, pen);
-			if (regs[0] == 1)
+			if (regs.ActiveTask == 1)
 			{
 				SelectObject(hdc, thickPen);
 				MoveToEx(hdc, x, y + 10, NULL);
@@ -191,7 +184,7 @@ namespace MMUMonitor
 			LineTo(hdc, x + 30, y + 20);
 			LineTo(hdc, x, y + 20);
 			LineTo(hdc, x, y);
-			if (regs[0] == 1)
+			if (regs.ActiveTask == 1)
 			{
 				SetTextColor(hdc, RGB(0, 0, 0));
 			}
@@ -199,11 +192,11 @@ namespace MMUMonitor
 			{
 				SetTextColor(hdc, RGB(150, 150, 150));
 			}
-			s = ToHexString(regs[10 + n], 2, true);
+			s = ToHexString(regs.Task1[n], 2, true);
 			SetRect(&rc, x, y, x + 30, y + 20);
 			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			x += 50;
-			if (regs[0] == 1)
+			if (regs.ActiveTask == 1)
 			{
 				SetTextColor(hdc, RGB(138, 27, 255));
 			}
@@ -212,7 +205,7 @@ namespace MMUMonitor
 				SetTextColor(hdc, RGB(150, 150, 150));
 			}
 			SetRect(&rc, x, y, x + 80, y + 20);
-			base = regs[10 + n] * 8192;
+			base = regs.Task1[n] * 8192;
 			s = ToHexString(base, 5, true) + "-" + ToHexString(base + 8191, 5, true);
 			DrawText(hdc, s.c_str(), s.size(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
 			y += 25;
@@ -230,7 +223,7 @@ namespace MMUMonitor
 		LineTo(hdc, x + 30, y + 20);
 		LineTo(hdc, x, y + 20);
 		LineTo(hdc, x, y);
-		s = std::to_string(regs[1]);
+		s = std::to_string(regs.Enabled);
 		SetTextColor(hdc, RGB(0, 0, 0));
 		SetRect(&rc, x, y, x + 30, y + 20);
 		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
@@ -250,7 +243,7 @@ namespace MMUMonitor
 		LineTo(hdc, x + 30, y + 20);
 		LineTo(hdc, x, y + 20);
 		LineTo(hdc, x, y);
-		s = std::to_string(regs[18]);
+		s = std::to_string(regs.RamVectors);
 		SetTextColor(hdc, RGB(0, 0, 0));
 		SetRect(&rc, x, y, x + 30, y + 20);
 		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
@@ -271,7 +264,7 @@ namespace MMUMonitor
 		LineTo(hdc, x + 30, y + 20);
 		LineTo(hdc, x, y + 20);
 		LineTo(hdc, x, y);
-		s = std::to_string(regs[0]);
+		s = std::to_string(regs.ActiveTask);
 		SetTextColor(hdc, RGB(0, 0, 0));
 		SetRect(&rc, x, y, x + 30, y + 20);
 		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
@@ -291,7 +284,7 @@ namespace MMUMonitor
 		LineTo(hdc, x + 30, y + 20);
 		LineTo(hdc, x, y + 20);
 		LineTo(hdc, x, y);
-		s = std::to_string(regs[19]);
+		s = std::to_string(regs.RomMap);
 		SetTextColor(hdc, RGB(0, 0, 0));
 		SetRect(&rc, x, y, x + 30, y + 20);
 		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
@@ -325,7 +318,6 @@ namespace MMUMonitor
 		// Memory Page
 		SetTextColor(hdc, RGB(138, 27, 255));
 		{
-			RECT rc;
 			SetRect(&rc, x, y, x + nCol1, y + 20);
 			DrawText(hdc, "Address", 7, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
@@ -337,8 +329,7 @@ namespace MMUMonitor
 					mx += 15;
 				}
 
-				const std::string s(ToHexString(n, 2, false));
-				RECT rc;
+				s = ToHexString(n, 2, false);
 				SetRect(&rc, x + mx + (n * 18), y, x + mx + (n * 18) + 20, y + 20);
 				DrawText(hdc, s.c_str(), s.size(), &rc, DT_VCENTER | DT_SINGLELINE);
 			}
@@ -354,9 +345,8 @@ namespace MMUMonitor
 		for (int addrLine = 0; addrLine < nRows; addrLine++)
 		{
 			SetTextColor(hdc, RGB(138, 27, 255));
-			RECT rc;
 			{
-				std::string s(ToHexString(addrLine * 16 + memoryOffset + pageNo * 8192, 6, true));
+				s = ToHexString(addrLine * 16 + memoryOffset + pageNo * 8192, 6, true);
 				SetRect(&rc, x, y, x + nCol1, y + h);
 				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
@@ -365,7 +355,7 @@ namespace MMUMonitor
 			unsigned char line[16];
 			for (int n = 0; n < 16; n++)
 			{
-				unsigned short addr = memoryOffset + (addrLine * 16) + n;
+				auto addr = memoryOffset + (addrLine * 16) + n;
 				line[n] = page[addr];
 			}
 
@@ -387,7 +377,7 @@ namespace MMUMonitor
 				{
 					mx += 15;
 				}
-				const std::string s(ToHexString(line[n], 2, true));
+				s = ToHexString(line[n], 2, true);
 				SetRect(&rc, x + mx + (n * 18), y, x + mx + (n * 18) + 20, y + h);
 				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
@@ -419,9 +409,7 @@ namespace MMUMonitor
 	{
 		unsigned int MemConfig[4] = { 0x20000,0x80000,0x200000,0x800000 };
 
-		EnterCriticalSection(&EmuState.WatchCriticalSection);
 		maxPageNo = MemConfig[EmuState.RamSize] / 8192;
-		LeaveCriticalSection(&EmuState.WatchCriticalSection);
 		return maxPageNo;
 	}
 
@@ -437,24 +425,12 @@ namespace MMUMonitor
 		{
 			page = 0;
 		}
-		EnterCriticalSection(&EmuState.WatchCriticalSection);
-		EmuState.MMUPage = (unsigned char)page;
-		LeaveCriticalSection(&EmuState.WatchCriticalSection);
+
+
+		MMUPage_ = page;
 	}
 
-	int roundUp(int numToRound, int multiple)
-	{
-		if (multiple == 0)
-			return numToRound;
-
-		int remainder = numToRound % multiple;
-		if (remainder == 0)
-			return numToRound;
-
-		return numToRound + multiple - remainder;
-	}
-
-	LRESULT CALLBACK MMUMonitor(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+	INT_PTR CALLBACK MMUMonitorDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 	{
 		switch (message)
 		{
@@ -478,7 +454,7 @@ namespace MMUMonitor
 				ScrollBarWidth,
 				Rect.bottom - 40 - ScrollBarTop,
 				hDlg,
-				(HMENU)IDC_MEM_VSCROLLBAR,
+				(HMENU)IDT_MMU_VSCROLLBAR,
 				(HINSTANCE)GetWindowLong(hDlg, GWL_HINSTANCE),
 				NULL);
 
@@ -497,7 +473,7 @@ namespace MMUMonitor
 			si.nPos = 0;
 			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
 
-			InitBackBuffer(hDlg);
+			BackBuffer_ = AttachBackBuffer(hDlg, -20, -39);
 
 			int max = GetMaximumPage();
 			for (int page = 0; page < max; page++)
@@ -510,6 +486,7 @@ namespace MMUMonitor
 
 			SetTimer(hDlg, IDT_PROC_TIMER, 64, (TIMERPROC)NULL);
 
+			EmuState.Debugger.RegisterClient(hDlg, std::make_unique<MMUMonitorDebugClient>());
 			break;
 		}
 
@@ -534,7 +511,7 @@ namespace MMUMonitor
 			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
 			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
 			memoryOffset = si.nPos;
-			InvalidateRect(hDlg, &backRect, FALSE);
+			InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
 			return 0;
 		}
 
@@ -589,7 +566,7 @@ namespace MMUMonitor
 			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
 			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
 			memoryOffset = si.nPos;
-			InvalidateRect(hDlg, &backRect, FALSE);
+			InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
 			return 0;
 		}
 
@@ -598,8 +575,8 @@ namespace MMUMonitor
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hDlg, &ps);
 
-			DrawMMUMonitor(backDC, &backRect);
-			BitBlt(hdc, 0, 0, backBufferCX, backBufferCY, backDC, 0, 0, SRCCOPY);
+			DrawMMUMonitor(BackBuffer_.DeviceContext, &BackBuffer_.Rect);
+			BitBlt(hdc, 0, 0, BackBuffer_.Width, BackBuffer_.Height, BackBuffer_.DeviceContext, 0, 0, SRCCOPY);
 
 			EndPaint(hDlg, &ps);
 			break;
@@ -610,7 +587,7 @@ namespace MMUMonitor
 			switch (wParam)
 			{
 			case IDT_PROC_TIMER:
-				InvalidateRect(hDlg, &backRect, FALSE);
+				InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
 				return 0;
 			}
 			break;
@@ -625,9 +602,10 @@ namespace MMUMonitor
 			case IDCLOSE:
 			case WM_DESTROY:
 				KillTimer(hDlg, IDT_PROC_TIMER);
-				DeleteDC(backDC);
+				DeleteDC(BackBuffer_.DeviceContext);
 				DestroyWindow(hDlg);
-				EmuState.MMUMonitorWindow = NULL;
+				MMUMonitorWindow = NULL;
+				EmuState.Debugger.RemoveClient(hDlg);
 				break;
 			}
 
@@ -635,4 +613,22 @@ namespace MMUMonitor
 		}
 		return FALSE;
 	}
+
+} } } }
+
+
+void VCC::Debugger::UI::OpenMMUMonitorWindow(HINSTANCE instance, HWND parent)
+{
+	if (MMUMonitorWindow == NULL)
+	{
+		MMUMonitorWindow = CreateDialog(
+			instance,
+			MAKEINTRESOURCE(IDD_MMU_MONITOR),
+			parent,
+			MMUMonitorDlgProc);
+
+		ShowWindow(MMUMonitorWindow, SW_SHOWNORMAL);
+	}
+
+	SetFocus(MMUMonitorWindow);
 }

@@ -20,11 +20,13 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "defines.h"
 #include "hd6309.h"
 #include "hd6309defs.h"
 #include "tcc1014mmu.h"
 #include "logger.h"
 #include "string.h"
+#include "OpDecoder.h"
 
 #if defined(_WIN64)
 #define MSABI 
@@ -133,9 +135,8 @@ static signed short *spostword=(signed short *)&postword;
 static char InInterupt=0;
 static int gCycleFor;
 
-static char CPUControlState = 'R';
-static unsigned char  CPUNumBreakpoints = 0;
-static unsigned short CPUBreakpoints[256] = { 0 };
+static std::vector<unsigned short> CPUBreakpoints;
+static std::vector<unsigned short> CPUTraceTriggers;
 
 static unsigned char NatEmuCycles65 = 6;
 static unsigned char NatEmuCycles64 = 6;
@@ -315,68 +316,49 @@ void HD6309Init(void)
 	return;
 }
 
-void HD6309State(unsigned char* regs, unsigned char* mem, int ramsize)
+VCC::CPUState HD6309GetState()
 {
-	regs[0] = A_REG;
-	regs[1] = B_REG;
-	regs[2] = E_REG;
-	regs[3] = F_REG;
-	unsigned short reg = X_REG;
-	regs[4] = reg >> 8;
-	regs[5] = reg & 0xFF;
-	reg = Y_REG;
-	regs[6] = reg >> 8;
-	regs[7] = reg & 0xFF;
-	reg = S_REG;
-	regs[8] = reg >> 8;
-	regs[9] = reg & 0xFF;
-	reg = U_REG;
-	regs[10] = reg >> 8;
-	regs[11] = reg & 0xFF;
-	reg = PC_REG;
-	regs[12] = reg >> 8;
-	regs[13] = reg & 0xFF;
-	regs[14] = ccbits;
-	regs[15] = dp.Reg;
-	regs[16] = mdbits;
-	reg = V_REG;
-	regs[17] = reg >> 8;
-	regs[18] = reg & 0xFF;
-	regs[19] = CPUControlState;
-	for (int addr = 0; addr < ramsize; addr++)
-	{
-		mem[addr] = SafeMemRead8(addr);
-//		mem[addr] = GetMem(addr);
-	}
+	VCC::CPUState regs = { 0 };
+
+	regs.CC = getcc();
+	//	FIXME: We do a static_Cast here because it's better than relying on the undefined behavior caused by cpuregister.
+	regs.DP = static_cast<unsigned char>(dp.Reg);
+	regs.MD = mdbits;
+#pragma push_macro("E")
+#pragma push_macro("F")
+#pragma push_macro("V")
+#undef E
+#undef F
+#undef V
+	regs.A = A_REG;
+	regs.B = B_REG;
+	regs.E = E_REG;
+	regs.F = F_REG;
+	regs.X = X_REG;
+	regs.Y = Y_REG;
+	regs.U = U_REG;
+	regs.S = S_REG;
+	regs.V = V_REG;
+	regs.PC = PC_REG;
+#pragma pop_macro("E")
+#pragma pop_macro("F")
+#pragma pop_macro("V")
+
+	regs.IsNative6309 = md[NATIVE6309] != 0;
+
+	return regs;
 }
 
-char HD6309Control(unsigned char nBps, unsigned short* breakpoints, char cpuCmd)
+
+void HD6309SetBreakpoints(const std::vector<unsigned short>& breakpoints)
 {
-	// Run -> Halt
-	if (CPUControlState == 'R' && cpuCmd == 'H')
-	{
-		CPUControlState = 'H';
-	}
-	// Halt -> Run
-	if (CPUControlState == 'H' && cpuCmd == 'R')
-	{
-		CPUControlState = 'R';
-	}
-	// Halt -> Step
-	if (CPUControlState == 'H' && cpuCmd == 'S')
-	{
-		CPUControlState = 'S';
-	}
-	// Update Breakpoints
-	if (cpuCmd == 'B')
-	{
-		CPUNumBreakpoints = nBps;
-		memset(CPUBreakpoints, 0, sizeof(CPUBreakpoints));
-		memcpy(CPUBreakpoints, breakpoints, CPUNumBreakpoints * sizeof(CPUBreakpoints[0]));
-	}
-	return CPUControlState;
+	CPUBreakpoints = breakpoints;
 }
 
+void HD6309SetTraceTriggers(const std::vector<unsigned short>& triggers)
+{
+	CPUTraceTriggers = triggers;
+}
 
 void Neg_D(void)
 { //0
@@ -7020,10 +7002,10 @@ int HD6309Exec(int CycleFor)
 
 			if (PendingInterupts & 1)
 			{
-				if (IRQWaiter == 0)	// This is needed to fix a subtle timming problem
+//				if (IRQWaiter == 0)	// This is needed to fix a subtle timming problem
 					cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
-				else				// The IRQ is asserted.
-					IRQWaiter -= 1;
+//				else				// The IRQ is asserted.
+//					IRQWaiter -= 1;
 			}
 		}
 
@@ -7032,31 +7014,56 @@ int HD6309Exec(int CycleFor)
 
 
 		// CPU is halted.
-		if (CPUControlState == 'H')
+		if (EmuState.Debugger.IsHalted())
 		{
 			return(CycleFor - CycleCounter);
 		}
 
 		// ANy CPU Breakpoints set?
-		if (CPUControlState != 'S' && CPUNumBreakpoints)
+		if (!EmuState.Debugger.IsStepping() && !CPUBreakpoints.empty())
 		{
-			for (int n = 0; n < CPUNumBreakpoints; n++)
+			if(find(CPUBreakpoints.begin(), CPUBreakpoints.end(), pc.Reg) != CPUBreakpoints.end())
 			{
-				// Are we about to read this memory address?
-				if (CPUBreakpoints[n] == pc.Reg)
+				EmuState.Debugger.Halt();
+				return(CycleFor - CycleCounter);
+			}
+		}
+
+		// Is the execution trace enabled - but currently not running?
+		if (EmuState.Debugger.IsTracingEnabled() && !EmuState.Debugger.IsTracing())
+		{
+			// Only Start Tracing when we hit a start trigger.
+			if (!CPUTraceTriggers.empty())
+			{
+				if (find(CPUTraceTriggers.begin(), CPUTraceTriggers.end(), pc.Reg) != CPUTraceTriggers.end())
 				{
-					CPUControlState = 'H';
-					return(CycleFor - CycleCounter);
+					EmuState.Debugger.TraceStart();
 				}
 			}
+			else
+			{
+				// Otherwise start right away.
+				EmuState.Debugger.TraceStart();
+			}
+		}
+
+		// Trace is running.
+		if (EmuState.Debugger.IsTracing())
+		{
+			EmuState.Debugger.TraceCaptureBefore(CycleCounter, HD6309GetState());
 		}
 
 		JmpVec1[MemRead8(PC_REG++)](); // Execute instruction pointed to by PC_REG
 
-		// CPU is stepped.
-		if (CPUControlState == 'S')
+		if (EmuState.Debugger.IsTracing())
 		{
-			CPUControlState = 'H';
+			EmuState.Debugger.TraceCaptureAfter(CycleCounter, HD6309GetState());
+		}
+
+		// CPU is stepped.
+		if (EmuState.Debugger.IsStepping())
+		{
+			EmuState.Debugger.Halt();
 			break;
 		}
 
@@ -7085,6 +7092,10 @@ void cpu_firq(void)
 	
 	if (!cc[F])
 	{
+		if (EmuState.Debugger.IsTracing())
+		{
+			EmuState.Debugger.TraceCaptureInterruptServicing(FIRQ, CycleCounter, HD6309GetState());
+		}
 		InInterupt=1; //Flag to indicate FIRQ has been asserted
 		switch (md[FIRQMODE])
 		{
@@ -7122,6 +7133,18 @@ void cpu_firq(void)
 			PC_REG=MemRead16(VFIRQ);
 		break;
 		}
+		if (EmuState.Debugger.IsTracing())
+		{
+			EmuState.Debugger.TraceCaptureInterruptExecuting(FIRQ, CycleCounter, HD6309GetState());
+		}
+
+	}
+	else
+	{
+		if (EmuState.Debugger.IsTracing())
+		{
+			EmuState.Debugger.TraceCaptureInterruptMasked(FIRQ, CycleCounter, HD6309GetState());
+		}
 	}
 	PendingInterupts=PendingInterupts & 253;
 	return;
@@ -7133,6 +7156,10 @@ void cpu_irq(void)
 		return;			
 	if ((!cc[I]) )
 	{
+		if (EmuState.Debugger.IsTracing())
+		{
+			EmuState.Debugger.TraceCaptureInterruptServicing(IRQ, CycleCounter, HD6309GetState());
+		}
 		cc[E]=1;
 		MemWrite8( pc.B.lsb,--S_REG);
 		MemWrite8( pc.B.msb,--S_REG);
@@ -7153,13 +7180,29 @@ void cpu_irq(void)
 		MemWrite8(getcc(),--S_REG);
 		PC_REG=MemRead16(VIRQ);
 		cc[I]=1; 
-	} //Fi I test
+		if (EmuState.Debugger.IsTracing())
+		{
+			EmuState.Debugger.TraceCaptureInterruptExecuting(IRQ, CycleCounter, HD6309GetState());
+		}
+	}
+	else
+	{
+		if (EmuState.Debugger.IsTracing())
+		{
+			EmuState.Debugger.TraceCaptureInterruptMasked(IRQ, CycleCounter, HD6309GetState());
+		}
+	}
 	PendingInterupts=PendingInterupts & 254;
 	return;
 }
 
 void cpu_nmi(void)
 {
+	if (EmuState.Debugger.IsTracing())
+	{
+		EmuState.Debugger.TraceCaptureInterruptServicing(NMI, CycleCounter, HD6309GetState());
+	}
+
 	cc[E]=1;
 	MemWrite8( pc.B.lsb,--S_REG);
 	MemWrite8( pc.B.msb,--S_REG);
@@ -7181,6 +7224,12 @@ void cpu_nmi(void)
 	cc[I]=1;
 	cc[F]=1;
 	PC_REG=MemRead16(VNMI);
+
+	if (EmuState.Debugger.IsTracing())
+	{
+		EmuState.Debugger.TraceCaptureInterruptExecuting(NMI, CycleCounter, HD6309GetState());
+	}
+
 	PendingInterupts=PendingInterupts & 251;
 	return;
 }
@@ -7488,6 +7537,10 @@ void HD6309AssertInterupt(unsigned char Interupt,unsigned char waiter)// 4 nmi 2
 	SyncWaiting=0;
 	PendingInterupts=PendingInterupts | (1<<(Interupt-1));
 	IRQWaiter=waiter;
+	if (EmuState.Debugger.IsTracing())
+	{
+		EmuState.Debugger.TraceCaptureInterruptRequest(Interupt, CycleCounter, HD6309GetState());
+	}
 	return;
 }
 

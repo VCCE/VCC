@@ -1,53 +1,56 @@
-/*
-This file is part of VCC (Virtual Color Computer).
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//		VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
+//		it under the terms of the GNU General Public License as published by
+//		the Free Software Foundation, either version 3 of the License, or
+//		(at your option) any later version.
+//	
+//		VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+//		but WITHOUT ANY WARRANTY; without even the implied warranty of
+//		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//		GNU General Public License for more details.
+//	
+//		You should have received a copy of the GNU General Public License
+//		along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+//	
+//		Breakpoint Display - Part of the Debugger package for VCC
+//		Authors: Mike Rojas, Chet Simpson
 
-	VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING	//	FIXME-CHET: Temporary until codecvt deprecation can be addressed
 
-	VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-
-	Breakpoint Display - Part of the Debugger package for VCC
-	Author: Mike Rojas
-*/
-
+#include "Breakpoints.h"
+#include "Debugger.h"
+#include "DebuggerUtils.h"
 #include "defines.h"
 #include "DebuggerUtils.h"
 #include "resource.h"
-#include <commdlg.h>
 #include <map>
 #include <fstream>
 #include <string>
 #include <sstream>
 #include <vector>
 #include <regex>
+#include <codecvt>
+#include <locale>
+#include <commdlg.h>
 #include <Richedit.h>
 #include <codecvt>
 #include <locale>
 
 
-extern SystemState EmuState;
-
-namespace Breakpoints
+namespace VCC { namespace Debugger { namespace UI { namespace
 {
+	HWND BreakpointsWindow = NULL;
 	HWND hWndBreakpoints;
 	WNDPROC oldEditProc;
 
-	bool BrowseDialogOpen = false;
 	unsigned short PriorCPUHaltAddress = 0;
 
 	struct Breakpoint
 	{
-		int id;
-		int addr;
-		int line;
+		unsigned int id;
+		unsigned int addr;
+		unsigned int line;
 		bool enabled;
 	};
 
@@ -128,19 +131,13 @@ namespace Breakpoints
 		return true;
 	}
 
-	bool SelectSourceListing()
+	void SelectSourceListing(HWND parentWindow)
 	{
-		if (BrowseDialogOpen)
-		{
-			return false;
-		}
-		BrowseDialogOpen = false;
-
 		OPENFILENAME ofn;
 		char SourceFileName[MAX_PATH] = "";
 		memset(&ofn, 0, sizeof(ofn));
 		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = NULL;
+		ofn.hwndOwner = parentWindow;
 		ofn.Flags = OFN_HIDEREADONLY;
 		ofn.hInstance = GetModuleHandle(0);
 		ofn.lpstrDefExt = "";
@@ -154,17 +151,11 @@ namespace Breakpoints
 		ofn.lpstrTitle = "Load LWASM Source Listing";	// title bar string
 
 		int RetVal = GetOpenFileName(&ofn);
-		if (RetVal)
+		if (RetVal && !LoadSource(SourceFileName))
 		{
-			if (LoadSource(SourceFileName) == 0)
-			{
-				MessageBox(NULL, "Can't open source listing", "Error", 0);
-				return false;
-			}
+			MessageBox(NULL, "Can't open source listing", "Error", 0);
 		}
 
-		BrowseDialogOpen = false;
-		return true;
 	}
 
 	void SetupListingControl()
@@ -193,7 +184,7 @@ namespace Breakpoints
 	int CurrentSourceLine()
 	{
 		HWND hCtl = GetDlgItem(hWndBreakpoints, IDC_SOURCE_LISTING);
-		int currentCharStart = SendMessage(hCtl, EM_LINEINDEX, -1, 0L);
+		int currentCharStart = SendMessage(hCtl, EM_LINEINDEX, WPARAM(-1), 0);
 		return SendMessage(hCtl, EM_LINEFROMCHAR, currentCharStart, 0);
 	}
 
@@ -252,29 +243,25 @@ namespace Breakpoints
 
 	void UpdateCPUState()
 	{
-		EnterCriticalSection(&EmuState.WatchCriticalSection);
+		Debugger::breakpointsbuffer_type breakpoints;
 
-		EmuState.CPUNumBreakpoints = mapBreakpoints.size();
-		if (EmuState.CPUBreakpoints != NULL)
-		{
-			free(EmuState.CPUBreakpoints);
-		}
-		EmuState.CPUBreakpoints = (unsigned short*)malloc(sizeof(unsigned short) * EmuState.CPUNumBreakpoints);
-
-		int n = 0;
 		std::map<int, Breakpoint>::iterator it = mapBreakpoints.begin();
 		while (it != mapBreakpoints.end())
 		{
 			Breakpoint bp = it->second;
 			if (bp.enabled)
 			{
-				EmuState.CPUBreakpoints[n++] = bp.addr;
+				if (bp.addr > 0xffff)
+				{
+					throw std::out_of_range("Breakpoint address is too large");
+				}
+
+				breakpoints.push_back(static_cast<unsigned short>(bp.addr));
 			}
 			it++;
 		}
-		EmuState.CPUControl = 'B';
 
-		LeaveCriticalSection(&EmuState.WatchCriticalSection);
+		EmuState.Debugger.SetBreakpoints(move(breakpoints));	//	FIXME: Check if move is still needed or if this the xlvalue is ....
 	}
 
 	int AddBreakpoint(int line)
@@ -335,7 +322,7 @@ namespace Breakpoints
 			if (itemId == id)
 			{
 				SendMessage(hListCtl, LB_DELETESTRING, n, 0);
-				SendMessage(hListCtl, LB_SETCURSEL, -1, 0);
+				SendMessage(hListCtl, LB_SETCURSEL, WPARAM(-1), 0);
 
 				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_DEL_BREAKPOINT), false);
 				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_ON), false);
@@ -522,16 +509,11 @@ namespace Breakpoints
 
 	void CheckCPUState()
 	{
-		char CPUState;
-		unsigned short PC;
-		EnterCriticalSection(&EmuState.WatchCriticalSection);
-		PC = (EmuState.WatchProcState[12] << 8) + EmuState.WatchProcState[13];
-		CPUState = EmuState.WatchProcState[19];
-		LeaveCriticalSection(&EmuState.WatchCriticalSection);
-		if (CPUState == 'H' && PriorCPUHaltAddress != PC)
+		unsigned short currentPc;
+		if (EmuState.Debugger.IsHalted(currentPc) && PriorCPUHaltAddress != currentPc)
 		{
-			LocateBreakpoint(PC);
-			PriorCPUHaltAddress = PC;
+			LocateBreakpoint(currentPc);
+			PriorCPUHaltAddress = currentPc;
 		}
 	}
 
@@ -546,13 +528,12 @@ namespace Breakpoints
 				FindSourceLine();
 				return 0;
 			}
-		default:
-			return CallWindowProc(oldEditProc, wnd, msg, wParam, lParam);
 		}
-		return 0;
+
+		return CallWindowProc(oldEditProc, wnd, msg, wParam, lParam);
 	}
 
-	LRESULT CALLBACK Breakpoints(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+	INT_PTR CALLBACK BreakpointsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (message)
 		{
@@ -617,7 +598,7 @@ namespace Breakpoints
 				ListBoxSelection(HIWORD(wParam));
 				break;
 			case IDC_BTN_SOURCE_BROWSE:
-				SelectSourceListing();
+				SelectSourceListing(hDlg);
 				break;
 			case IDC_BTN_NEW_BREAKPOINT:
 				NewBreakPoint();
@@ -634,7 +615,7 @@ namespace Breakpoints
 			case WM_DESTROY:
 				KillTimer(hDlg, IDT_BRKP_TIMER);
 				DestroyWindow(hDlg);
-				EmuState.BreakpointWindow = NULL;
+				BreakpointsWindow = NULL;
 				break;
 			}
 
@@ -642,4 +623,22 @@ namespace Breakpoints
 		}
 		return FALSE;
 	}
+
+} } } }
+
+
+void VCC::Debugger::UI::OpenBreakpointsWindow(HINSTANCE instance, HWND parent)
+{
+	if (BreakpointsWindow == NULL)
+	{
+		BreakpointsWindow = CreateDialog(
+			instance,
+			MAKEINTRESOURCE(IDD_BREAKPOINTS),
+			parent,
+			BreakpointsDlgProc);
+
+		ShowWindow(BreakpointsWindow, SW_SHOWNORMAL);
+	}
+
+	SetFocus(BreakpointsWindow);
 }

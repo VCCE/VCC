@@ -45,6 +45,7 @@
 #define IDD_PROCESSOR_STATE             171
 #define IDD_BREAKPOINTS                 172
 #define IDD_MMU_MONITOR                 173
+#define IDD_EXEC_TRACE                  174
 #define IDC_MUTE                        1003
 #define IDC_THROTTLE                    1004
 #define IDC_ARTIFACTS                   1005
@@ -333,6 +334,9 @@
 #define IDT_MEM_TIMER                   2002
 #define IDT_PROC_TIMER                  2003
 #define IDT_BRKP_TIMER                  2004
+#define IDT_TRC_VSCROLLBAR              2005
+#define IDT_MMU_VSCROLLBAR              2006
+#define IDT_TRC_HSCROLLBAR              2007
 
 #define IDC_EDIT_SOURCE                 2100
 #define IDC_BTN_SOURCE_BROWSE           2101
@@ -351,6 +355,21 @@
 #define IDC_EDIT_FIND_MEM               2114
 #define IDC_BTN_FIND_MEM                2115
 #define IDC_SELECT_MMU_PAGE             2116
+#define IDC_BTN_ENABLE_TRACE            2117
+#define IDC_BTN_STOP_TRACE              2118
+#define IDC_BTN_RESET_TRACE             2119
+#define IDC_BTN_ADD_START_TRACE         2120
+#define IDC_BTN_DEL_START_TRACE         2121
+#define IDC_BTN_ADD_STOP_TRACE          2122
+#define IDC_BTN_DEL_STOP_TRACE          2123
+#define IDC_EDIT_TRACE_ADDR             2124
+#define IDC_LIST_START_TRACE            2125
+#define IDC_LIST_STOP_TRACE             2126
+#define IDC_TRACE_STATUS                2127
+#define IDC_MAX_TRACE_SAMPLES           2128
+#define IDC_TRACE_TIMING                2129
+#define IDC_SHOW_EMU_TRACE              2130
+#define IDC_SHOW_SCN_TRACE              2131
 #define ID_FILE_EXIT                    40002
 #define IDM_HELP_ABOUT                  40003
 #define ID_FILE_RUN                     40004
@@ -389,15 +408,16 @@
 #define ID_PROCESSOR_STATE              40041
 #define ID_BREAKPOINTS                  40042
 #define ID_MMU_MONITOR                  40043
+#define ID_EXEC_TRACE                   40044
 #define ID_CONFIGURE_OPTIONS            65535
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        174
+#define _APS_NEXT_RESOURCE_VALUE        175
 #define _APS_NEXT_COMMAND_VALUE         40044
-#define _APS_NEXT_CONTROL_VALUE         2117
+#define _APS_NEXT_CONTROL_VALUE         2132
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
