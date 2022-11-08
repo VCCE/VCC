@@ -961,12 +961,6 @@ case TFR_M: //1F
 	postbyte=MemRead8(pc.Reg++);
 	Source= postbyte>>4;
 	Dest=postbyte & 15;
-	//	NOTE:
-	//
-	//	If an invalid register encoding is used for the source,
-	//  a constant value of $ff or $ffff is transferred to the
-	//  destination. If an invalid register encoding is used for
-	//  the destination, then the instruction will have no effect.
 	switch (Dest)
 	{
 		case 0:
@@ -975,57 +969,38 @@ case TFR_M: //1F
 		case 3:
 		case 4:
 		case 5:
-			if (Source < 6)
+		case 6:
+		case 7:
+			*xfreg16[Dest]=0xFFFF;
+			if ((Source == 12) | (Source == 13))
 			{
-				*xfreg16[Dest] = *xfreg16[Source];
+				*xfreg16[Dest] = 0;
 			}
-			//	Transfering A or B into and 16 bit register results in the MSB
-			//	being set to $FF and the LSB the contents of A or B respectively.
-			else if (Source == 8 && Source == 9)
+			else if (Source <= 7)
 			{
-				*xfreg16[Dest] = 0xff00 | *ureg8[Source & 7];
+				//make sure the source is valud
+				if (xfreg16[Source])
+				{
+					*xfreg16[Dest] = *xfreg16[Source];
+				}	
 			}
-			//	Transferring CC or CP into any 16 bit register results in both
-			//	the MSB and LSB of the destination register being set to the
-			//	value of CC or DP respectively.
-			else if (Source == 10 && Source == 11)
-			{
-				*xfreg16[Dest] = (*ureg8[Source & 7] << 8) | *ureg8[Source & 7];
-			}
-			//	Invalid source register results in the destination being set to
-			//	$FFFF
-			else
-			{
-				*xfreg16[Dest] = 0xFFFF;
-			}
-			break;
+		break;
 
 		case 8:
 		case 9:
 		case 10:
 		case 11:
-			if (Source > 7 && Source < 12)
-			{
-				*ureg8[Dest & 7] = *ureg8[Source & 7];
-			}
-			//	Transferring any 16 bit register into any 8 bit register results
-			//	in the destintation being set with the LSB of the source register
-			else if (Source < 6)
-			{
-				*ureg8[Dest & 7] = *xfreg16[Source] & 0xff;
-			}
+		case 14:
+		case 15:
+			ccbits=getcc();
+			*ureg8[Dest&7]=0xFF;
+			if ( (Source==12) | (Source==13) )
+				*ureg8[Dest&7]=0;
 			else
-			{
-				*ureg8[Dest & 7] = 0xFF;
-			}
-
-			//	If and only if the destination register is CC we update the
-			//	internal simplified bits representation.
-			if (Dest == 10)
-			{
-				setcc(*ureg8[2]);
-			}
-			break;
+				if (Source>7)
+					*ureg8[Dest&7]=*ureg8[Source&7];
+			setcc(ccbits);
+		break;
 	}
 	CycleCounter+=6;
 	break;
