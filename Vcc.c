@@ -108,6 +108,7 @@ void raise_saved_keys(void);
 //void OnPaint(HWND hwnd);
 // Globals
 static 	HANDLE hEMUThread ;
+static	HANDLE hEMUQuit;
 
 static char g_szAppName[MAX_LOADSTRING] = "";
 bool BinaryRunning;
@@ -178,6 +179,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		MessageBox(0,"Can't create Thread!!","Error",0);
 		return(0);
 	}
+	hEMUQuit = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (hEMUQuit == NULL)
+	{
+		MessageBox(0, "Can't create Thread Quit Event!!", "Error", 0);
+		return(0);
+	}
 	hEMUThread = (HANDLE)_beginthreadex( NULL, 0, &EmuLoop, hEvent, 0, &threadID );
 	if (hEMUThread==NULL)
 	{
@@ -201,7 +208,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			DispatchMessage(&Msg) ;
 	}
 
+	SetEvent(hEMUQuit);								// Signal emulation thread to finish up.
+	WaitForSingleObject(hEMUThread, INFINITE);		// Wait for emulation thread to terminate
 	CloseHandle( hEvent ) ;	
+	CloseHandle( hEMUQuit ) ;
 	CloseHandle( hEMUThread ) ;
 	timeEndPeriod(1);
 	UnloadDll();
@@ -898,6 +908,11 @@ unsigned __stdcall EmuLoop(void *Dummy)
 
 	while (true)
 	{
+		// Main Thread wants us to end?
+		if (WaitForSingleObject(hEMUQuit,0) == WAIT_OBJECT_0)
+		{
+			break;
+		}
 		if (FlagEmuStop==TH_REQWAIT)
 		{
 			FlagEmuStop = TH_WAITING; //Signal Main thread we are waiting
