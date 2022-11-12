@@ -72,7 +72,8 @@ bool GetNextScanInPasteQueue(unsigned char col);
 std::queue<unsigned char> PasteInputQueue;
 LARGE_INTEGER Frequency;
 LARGE_INTEGER LastAdvance;
-double PasteDelay = 0.005;
+double PasteDelay = 0.008;		// This is the interkey delay in seconds - it sets the time between KEYDOWN and KEYUP
+
 int CurrentThrottle = 0;
 
 enum PasteState
