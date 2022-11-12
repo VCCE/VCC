@@ -29,7 +29,7 @@ void sc6551_output(char);
 // Comunications hooks
 void com_open();
 void com_close();
-int  com_write(char);
+int  com_write(char*,int);
 int  com_read(char*,int);
 
 // Stat Reg is protected by a critical section to prevent 
@@ -64,14 +64,14 @@ unsigned char CmdReg  = 0;
 // CtrReg is not used (yet), it is just echoed back to CoCo
 unsigned char CtlReg = 0;
 
-HANDLE hEventRead;       // Event handle for read thread
-HANDLE hEventWrite;      // Event handle for write thread
+//HANDLE hEventRead;       // Event handle for read thread
+//HANDLE hEventWrite;      // Event handle for write thread
 
 HANDLE hInputThread;
 HANDLE hOutputThread;
 
 char InData;
-int  InDataRdy=0;
+//int  InDataRdy=0;
 char OutData;
 int  OutDataRdy=0;
 
@@ -83,42 +83,42 @@ int StatCritSecInit=0;
 
 
 void init_status_section() {
-	if (!StatCritSecInit) {
-		InitializeCriticalSection(&StatCritSec);
-		StatCritSecInit = 1;
-	}
+//	if (!StatCritSecInit) {
+//		InitializeCriticalSection(&StatCritSec);
+//		StatCritSecInit = 1;
+//	}
 }
 
 void destroy_status_section() {
-	if (StatCritSecInit) {
-		DeleteCriticalSection(&StatCritSec);
-		StatCritSecInit = 0;
-	}
+//	if (StatCritSecInit) {
+//		DeleteCriticalSection(&StatCritSec);
+//		StatCritSecInit = 0;
+//	}
 }
 
 int set_stat_flag(unsigned char flag) 
 {
-	if (!StatCritSecInit) {
-		InitializeCriticalSection(&StatCritSec);
-		StatCritSecInit = 1;
-	}
-    EnterCriticalSection(&StatCritSec);
+//	if (!StatCritSecInit) {
+//		InitializeCriticalSection(&StatCritSec);
+//		StatCritSecInit = 1;
+//	}
+//   EnterCriticalSection(&StatCritSec);
     int was_set = ( (StatReg & flag) != 0);
 	StatReg = StatReg | flag;
-    LeaveCriticalSection(&StatCritSec);
+//    LeaveCriticalSection(&StatCritSec);
 	return was_set;
 }
 
 int clr_stat_flag(unsigned char flag)
 {
-	if (!StatCritSecInit) {
-		InitializeCriticalSection(&StatCritSec);
-		StatCritSecInit = 1;
-	}
-    EnterCriticalSection(&StatCritSec);
+//	if (!StatCritSecInit) {
+//		InitializeCriticalSection(&StatCritSec);
+//		StatCritSecInit = 1;
+//	}
+ //   EnterCriticalSection(&StatCritSec);
     int was_clr = ( (StatReg & flag) == 0);
 	StatReg = StatReg & ~flag;
-    LeaveCriticalSection(&StatCritSec);
+//    LeaveCriticalSection(&StatCritSec);
 	return was_clr;
 }
 
@@ -129,23 +129,20 @@ void sc6551_init()
 {
     DWORD id;
 
+    if (sc6551_initialized ) return;
+
     // Close any previous instance then open communications
     sc6551_close();
     com_open();
 
     // Clear ready flags
-  	InDataRdy=0;
+  	//InDataRdy=0;
 	OutDataRdy=0;
 
-    // Create input thread and event to wake it
+    // Create threads 
     hInputThread=CreateThread(NULL,0,sc6551_input_thread,NULL,0,&id);
-    hEventRead = CreateEvent (NULL,FALSE,FALSE,NULL);
-
-    // Create output thread and event to wake it
     hOutputThread=CreateThread(NULL,0,sc6551_output_thread,NULL,0,&id);
-    hEventWrite = CreateEvent (NULL,FALSE,FALSE,NULL);
-
-//	InitializeCriticalSection(&StatCritSec);
+    
     init_status_section();
 
     sc6551_initialized = 1;
@@ -166,76 +163,72 @@ void sc6551_close()
     }
     hInputThread = NULL;
     hOutputThread = NULL;
-//	DeleteCriticalSection(&StatCritSec);
     destroy_status_section();
     com_close();
     sc6551_initialized = 0;
 }
 
 //------------------------------------------------------------------------
-// Output thread. Used to retry output (only if media is busy)
-//------------------------------------------------------------------------
-DWORD WINAPI sc6551_output_thread(LPVOID param)
-{
-	int tries;
-    while(TRUE) {
-		int ms = 5000; 
-        WaitForSingleObject(hEventWrite,ms);
-		tries = 0;
-        while (OutDataRdy) {
-			Sleep(50);
-    		int rc = com_write(OutData); // returns zero if media is busy
-            if (rc == 1) {
-				set_stat_flag(StatTxE);
-        		OutDataRdy = 0;
-			} else if ((rc < 0) || tries > 50) {
-        		OutDataRdy = 0;
-				set_stat_flag(StatTxE|StatOvr);
-			}
-			tries++;
-		}
-    }
-}
-
-//------------------------------------------------------------------------
-// Input thread 
+// Input thread loads the input buffer if it is empty
 //------------------------------------------------------------------------
 
-// Data is sent one char at a time but input is buffered 
 #define INBUFSIZ 128
-char InBuffer[128];
+char InBuffer[INBUFSIZ];
 char *InBufPtr = InBuffer;
 int InBufCnt=0;
 
 DWORD WINAPI sc6551_input_thread(LPVOID param)
 {
-    DWORD rc;
-	int ms = 2000;    // maximum loop wait 
+	int ms;   
     while(TRUE) {
-        rc = WaitForSingleObject(hEventRead,ms);
         if (CmdReg & CmdDTR) {
-			// Assert in a fairly tight loop until the driver reads the data.
-//            if ( InDataRdy ) {
-//			    ms = 1;
-
+			ms = 1;         // Read will block once buffer is cleared
 			if (InBufCnt<1) {
+                InBufCnt = com_read(InBuffer,INBUFSIZ);		
 				InBufPtr = InBuffer;
-                InBufCnt = com_read(InBuffer,INBUFSIZ);
-				ms = 3;				
-
-//                com_read(&InData,1);
-//                InDataRdy = 0;
-//				set_stat_flag(StatIRQ);  // not needed for os9
-//            } else if (rc == WAIT_TIMEOUT) {
-				// is IRQ even enabled? 
-                // if (CmdReg & CmdRxI) AssertInt(IRQ,0);
             } else {
-				set_stat_flag(StatIRQ);  // not needed for os9
-                AssertInt(IRQ,0);
-				if (ms < 2000) ms += 1;
+				set_stat_flag(StatIRQ);  // not really needed for os9
+                AssertInt(IRQ,0);        // Assert until buffer empty
             }
         } else {
 			ms = 2000;
+		}
+		Sleep(ms);
+    }
+}
+
+//------------------------------------------------------------------------
+// Output thread empties the output buffer 
+//------------------------------------------------------------------------
+#define OUTBUFSIZ 4000 
+char OutBuffer[OUTBUFSIZ];
+char *OutBufPtr = OutBuffer;
+
+DWORD WINAPI sc6551_output_thread(LPVOID param)
+{
+	char * ptr;
+	int towrite = 0;
+	int written = 0;
+
+    while(TRUE) {
+        if (CmdReg & CmdDTR) {
+			ptr = OutBuffer;
+			while (TRUE) {
+				towrite = OutBufPtr - ptr;
+				if (towrite < 1) break;
+				written = com_write(ptr,towrite);
+				if (written < 1) {
+					// deal with write error somehow
+					break;
+				} else {
+					ptr = ptr + written;
+				}
+				Sleep(5);
+			}
+			OutBufPtr = OutBuffer;
+			Sleep(50);
+		} else {
+			Sleep(1000);
 		}
     }
 }
@@ -243,6 +236,38 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 //------------------------------------------------------------------------
 // Port I/O
 //------------------------------------------------------------------------
+void sc6551_write(unsigned char data,unsigned short port)
+{
+    switch (port) {
+		// Write data
+        case 0x68:
+			if (OutBufPtr < (OutBuffer + OUTBUFSIZ + 1)) {
+				*OutBufPtr++ = data;
+			}
+            break;
+		// Clear status
+        case 0x69:
+            StatReg = 0;
+            break;
+		// Set Command register
+        case 0x6A:
+            CmdReg = data;
+            // If DTR set enable sc6551
+            if (CmdReg & CmdDTR) {
+                if (sc6551_initialized == 0) sc6551_init();
+            // Else disable sc6551
+            } else {
+                sc6551_close();
+                StatReg = 0;
+            }
+            break;
+        // Set Control register
+        case 0x6B:
+            CtlReg = data;  // Not used, just returned on read
+            break;
+    }
+}
+
 unsigned char sc6551_read(unsigned char port)
 {
     unsigned char data;
@@ -250,23 +275,25 @@ unsigned char sc6551_read(unsigned char port)
 		// Read data
         case 0x68:
             data = InData;
-            InDataRdy = 1;
 			clr_stat_flag(StatRxF);
-            SetEvent(hEventRead); 
             break;
 
 		// Read status register
         case 0x69:
-
-//            if (InDataRdy == 0) { 
-//				set_stat_flag(StatRxF);
-//			} 
-            if (InBufCnt > 0) {
-				set_stat_flag(StatRxF);
-				InData = *InBufPtr++;
-				InBufCnt--;
+            if (CmdReg & CmdDTR) {
+			    // Check for data in input data
+            	if (InBufCnt > 0) {
+					set_stat_flag(StatRxF);
+					InData = *InBufPtr++;
+					InBufCnt--;
+				}
+			    // Check for plenty of room in output buffer 
+				if (OutBufPtr < (OutBuffer + OUTBUFSIZ - OUTBUFSIZ/4 )) {
+					set_stat_flag(StatTxE);
+				} else {
+					clr_stat_flag(StatTxE);
+				}
 			}
-
             data = StatReg; 
 			clr_stat_flag(StatIRQ);
             break;
@@ -280,51 +307,6 @@ unsigned char sc6551_read(unsigned char port)
             break;
     }
     return data;
-}
-
-void sc6551_write(unsigned char data,unsigned short port)
-{
-    switch (port) {
-		// Write data
-        case 0x68:
-            // com_write returns 1=data read, 0=not blocked, -1=error
-			int rc = com_write(data);
-            if (rc == 1) {
-				set_stat_flag(StatTxE);
-			} else if (rc == 0) {
-				clr_stat_flag(StatTxE);
-				OutData = data;
-	  			OutDataRdy = 1;
-                SetEvent(hEventWrite);
-			} else {
-				set_stat_flag(StatTxE|StatOvr);
-			}
-            break;
-		// Clear status
-        case 0x69:
-            StatReg = 0;
-            break;
-		// Set Command register
-        case 0x6A:
-            CmdReg = data;
-            // If DTR set enable sc6551
-            if (CmdReg & CmdDTR) {
-                if (sc6551_initialized == 0) sc6551_init();
-  				InDataRdy=1;  			// Ready for some input
-				OutDataRdy=0; 			// Nothing to output yet 
-				set_stat_flag(StatTxE);
-                SetEvent(hEventRead);	// Waken input thread
-            // Else disable sc6551
-            } else {
-                sc6551_close();
-                StatReg = 0;
-            }
-            break;
-        // Set Control register
-        case 0x6B:
-            CtlReg = data;  // Not used, just returned on read
-            break;
-    }
 }
 
 //----------------------------------------------------------------
@@ -355,20 +337,18 @@ void com_close() {
     }
 }
 
-// com_write blocking depends on the media.
-// on success return 1, media busy 0; error -1
-int com_write(char data) {
+// com_write is assumed to block until some data is written
+int com_write(char * buf, int len) {
     switch (AciaComType) {
     case 0: // Legacy Console
-        return console_write(&data,1);
+        return console_write(buf,len);
     case 1:
-        return wincmd_write(&data,1);
+        return wincmd_write(buf,len);
     }
     return 0;
 }
 
-// com_read is assumed to block until data is available
-// on success return 1, error -1
+// com_read is assumed to block until some data is read
 int com_read(char * buf,int len) {  // returns bytes read
     switch (AciaComType) {
     case 0: // Legacy Console
