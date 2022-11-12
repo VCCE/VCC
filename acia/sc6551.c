@@ -34,14 +34,14 @@ int  com_read(char*,int);
 
 // Stat Reg is protected by a critical section to prevent 
 // race conditions with I/0 threads
-unsigned char StatReg = 0;
-CRITICAL_SECTION CritSec;
-int CritSecInit=0;
+unsigned char StatReg;
 
 // Status register bits.
-// b0-B2  parity, frame, overrun error
-// b3 Rcv Data register full if tru
-// b4 Snd Data register empty if true
+// b0 Par Rx parity eror
+// b1 Frm Rx framing error
+// B2 Ovr Rx data over run error
+// b3 RxF Rx Data register full
+// b4 TxE Tx Data register empty
 // b5 DCD Data carrier detect
 // b6 DSR Data set ready
 // b7 IRQ Interrupt generated
@@ -53,13 +53,13 @@ int CritSecInit=0;
 
 unsigned char CmdReg  = 0;
 // Command register bits.
-// b0 DTR 1 = enable receive and interupts
-// b1 Receiver IRQ enable.
-// b3 b2  Transmit IRQ control
-// B4 Echo mode. 0 = normal 1 = Echo (B2&B3 zero)
-// B7 B6 B4 parity control
-// Only DTR is used here
-#define CmdDTR   0x01
+// b0   DTR Enable receive and interupts
+// b1   RxI Receiver IRQ enable.
+// b2-3 TIRB Transmit IRQ control
+// B4   Echo Set=Activated
+// B5-7 Par  Parity control
+#define CmdDTR  0x01
+#define CmdRxI  0x02
 
 // CtrReg is not used (yet), it is just echoed back to CoCo
 unsigned char CtlReg = 0;
@@ -75,47 +75,51 @@ int  InDataRdy=0;
 char OutData;
 int  OutDataRdy=0;
 
-// Data is sent one char at a time but input is buffered 
-#define INBUFSIZ 128
-char InBuffer[128];
-char *InBufPtr = InBuffer;
-int InBufCnt=0;
+//------------------------------------------------------------------------
+//  Functions to manage status reg flags
+//------------------------------------------------------------------------
+CRITICAL_SECTION StatCritSec;
+int StatCritSecInit=0;
 
 
-//------------------------------------------------------------------------
-//  Functions to manage status reg
-//------------------------------------------------------------------------
-void init_stat_reg() {
-	if (!CritSecInit) {
-		InitializeCriticalSection(&CritSec);
-		CritSecInit = 1;
+void init_status_section() {
+	if (!StatCritSecInit) {
+		InitializeCriticalSection(&StatCritSec);
+		StatCritSecInit = 1;
 	}
-	StatReg = 0;
 }
 
-int get_stat_reg() {
-	int value;
-	if (!CritSecInit) init_stat_reg();
-    EnterCriticalSection(&CritSec);
-	value = StatReg;
-    LeaveCriticalSection(&CritSec);
-	return value;
+void destroy_status_section() {
+	if (StatCritSecInit) {
+		DeleteCriticalSection(&StatCritSec);
+		StatCritSecInit = 0;
+	}
 }
 
-void set_stat_flag(int flag) 
+int set_stat_flag(unsigned char flag) 
 {
-	if (!CritSecInit) init_stat_reg();
-    EnterCriticalSection(&CritSec);
-	StatReg |= flag;
-    LeaveCriticalSection(&CritSec);
+	if (!StatCritSecInit) {
+		InitializeCriticalSection(&StatCritSec);
+		StatCritSecInit = 1;
+	}
+    EnterCriticalSection(&StatCritSec);
+    int was_set = ( (StatReg & flag) != 0);
+	StatReg = StatReg | flag;
+    LeaveCriticalSection(&StatCritSec);
+	return was_set;
 }
 
-void clr_stat_flag(int flag)
+int clr_stat_flag(unsigned char flag)
 {
-	if (!CritSecInit) init_stat_reg();
-    EnterCriticalSection(&CritSec);
-	StatReg &= ~flag;
-    LeaveCriticalSection(&CritSec);
+	if (!StatCritSecInit) {
+		InitializeCriticalSection(&StatCritSec);
+		StatCritSecInit = 1;
+	}
+    EnterCriticalSection(&StatCritSec);
+    int was_clr = ( (StatReg & flag) == 0);
+	StatReg = StatReg & ~flag;
+    LeaveCriticalSection(&StatCritSec);
+	return was_clr;
 }
 
 //------------------------------------------------------------------------
@@ -141,6 +145,9 @@ void sc6551_init()
     hOutputThread=CreateThread(NULL,0,sc6551_output_thread,NULL,0,&id);
     hEventWrite = CreateEvent (NULL,FALSE,FALSE,NULL);
 
+//	InitializeCriticalSection(&StatCritSec);
+    init_status_section();
+
     sc6551_initialized = 1;
 }
 
@@ -159,43 +166,10 @@ void sc6551_close()
     }
     hInputThread = NULL;
     hOutputThread = NULL;
+//	DeleteCriticalSection(&StatCritSec);
+    destroy_status_section();
     com_close();
     sc6551_initialized = 0;
-}
-
-//------------------------------------------------------------------------
-// Input thread 
-//------------------------------------------------------------------------
-
-DWORD WINAPI sc6551_input_thread(LPVOID param)
-{
-    DWORD rc;
-    while(TRUE) {
-		int ms = 2000; // loop time out 
-        rc = WaitForSingleObject(hEventRead,ms);
-        if (CmdReg & CmdDTR) {
-			// If interrupt is asserted immediately after input data is
-			// ready it is likely the input driver will not be ready yet
-			// So assert in a loop until the driver reads the data.
-			ms = 2;
-            if ( InDataRdy ) {
-				if(InBufCnt==0) {
-                	InBufCnt = com_read(InBuffer,INBUFSIZ);
-					InBufPtr = InBuffer;
-				}
-				if (InBufCnt < 1) {ms=2000;continue;} //TODO: handle error
-				InData=*InBufPtr++;
-				InBufCnt--;
-                InDataRdy = 0;
-            } else if (rc == WAIT_TIMEOUT) {
-				// is IRQ even enabled? 
-				set_stat_flag(StatIRQ);
-                AssertInt(IRQ,0);
-            }
-        } else {
-			ms = 2000;
-		}
-    }
 }
 
 //------------------------------------------------------------------------
@@ -224,6 +198,49 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 }
 
 //------------------------------------------------------------------------
+// Input thread 
+//------------------------------------------------------------------------
+
+// Data is sent one char at a time but input is buffered 
+#define INBUFSIZ 128
+char InBuffer[128];
+char *InBufPtr = InBuffer;
+int InBufCnt=0;
+
+DWORD WINAPI sc6551_input_thread(LPVOID param)
+{
+    DWORD rc;
+	int ms = 2000;    // maximum loop wait 
+    while(TRUE) {
+        rc = WaitForSingleObject(hEventRead,ms);
+        if (CmdReg & CmdDTR) {
+			// Assert in a fairly tight loop until the driver reads the data.
+//            if ( InDataRdy ) {
+//			    ms = 1;
+
+			if (InBufCnt<1) {
+				InBufPtr = InBuffer;
+                InBufCnt = com_read(InBuffer,INBUFSIZ);
+				ms = 3;				
+
+//                com_read(&InData,1);
+//                InDataRdy = 0;
+//				set_stat_flag(StatIRQ);  // not needed for os9
+//            } else if (rc == WAIT_TIMEOUT) {
+				// is IRQ even enabled? 
+                // if (CmdReg & CmdRxI) AssertInt(IRQ,0);
+            } else {
+				set_stat_flag(StatIRQ);  // not needed for os9
+                AssertInt(IRQ,0);
+				if (ms < 2000) ms += 1;
+            }
+        } else {
+			ms = 2000;
+		}
+    }
+}
+
+//------------------------------------------------------------------------
 // Port I/O
 //------------------------------------------------------------------------
 unsigned char sc6551_read(unsigned char port)
@@ -237,10 +254,20 @@ unsigned char sc6551_read(unsigned char port)
 			clr_stat_flag(StatRxF);
             SetEvent(hEventRead); 
             break;
+
 		// Read status register
         case 0x69:
-            if (InDataRdy == 0) set_stat_flag(StatRxF); 
-            data = get_stat_reg();
+
+//            if (InDataRdy == 0) { 
+//				set_stat_flag(StatRxF);
+//			} 
+            if (InBufCnt > 0) {
+				set_stat_flag(StatRxF);
+				InData = *InBufPtr++;
+				InBufCnt--;
+			}
+
+            data = StatReg; 
 			clr_stat_flag(StatIRQ);
             break;
 		// Read command register
@@ -275,8 +302,7 @@ void sc6551_write(unsigned char data,unsigned short port)
             break;
 		// Clear status
         case 0x69:
-			init_stat_reg();
-            //StatReg = 0;
+            StatReg = 0;
             break;
 		// Set Command register
         case 0x6A:
@@ -291,7 +317,7 @@ void sc6551_write(unsigned char data,unsigned short port)
             // Else disable sc6551
             } else {
                 sc6551_close();
-                //StatReg = 0;
+                StatReg = 0;
             }
             break;
         // Set Control register
