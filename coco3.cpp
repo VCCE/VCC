@@ -80,8 +80,6 @@ double TimeToHSYNCHigh = 0;
 
 static int clipcycle = 1, cyclewait=2000;
 bool codepaste, PasteWithNew = false; 
-char tmpthrottle = 0;
-int CurrentKeyMap;
 void AudioOut(void);
 void CassOut(void);
 void CassIn(void);
@@ -96,8 +94,6 @@ void VSYNC(unsigned char level);
 void HSYNC(unsigned char level);
 
 using namespace std;
-string clipboard;
-STRConfig ClipConfig;
 
 _inline void CPUCycle(double nanoseconds);
 
@@ -451,67 +447,6 @@ _inline void CPUCycle(double NanosToRun)
 		}
 	}
 	EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 20, 0, 0, 0, emulationCycles, emulationDrift);
-	if (!clipboard.empty()) {
-		char tmp[] = { 0x00 };
-		char kbstate = 2;
-		int z = 0;
-
-		//Remember the original throttle setting.
-		//Set it to off. We need speed for this!
-		if (tmpthrottle == 0) {
-			tmpthrottle = SetSpeedThrottle(QUERY);
-			if (tmpthrottle == 0) { tmpthrottle = 2; } // 2 = No throttle.
-		}
-		SetSpeedThrottle(0);
-
-		strcpy(tmp, clipboard.substr(0, 1).c_str());
-		if (clipcycle == 1) {
-			if (tmp[z] == 0x36) {
-				vccKeyboardHandleKey(0x36, 0x36, kEventKeyDown);  //Press shift and...
-				clipboard = clipboard.substr(1, clipboard.length() - 1); // get the next key in the string
-				strcpy(tmp, clipboard.substr(0, 1).c_str());
-				vccKeyboardHandleKey(tmp[z], tmp[z], kEventKeyDown);
-				if (tmp[z] == 0x1c) {
-					cyclewait = 8000;
-				}
-				else { cyclewait = 2000; }
-
-
-			}
-			else {
-				vccKeyboardHandleKey(tmp[z], tmp[z], kEventKeyDown);
-				if (tmp[z] == 0x1c) {
-					cyclewait = 8000;
-				}
-				else { cyclewait = 2000; }
-			}
-
-			clipboard = clipboard.substr(1, clipboard.length() - 1);
-			if (clipboard.empty()) {
-				SetPaste(false);
-				//Done pasting. Reset throttle to original state
-				if (tmpthrottle == 2) { SetSpeedThrottle(0); }
-				else { SetSpeedThrottle(1); }
-				//...and reset the keymap to the original state
-
-				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentKeyMap);
-				tmpthrottle = 0;
-			}
-		}
-		else if (clipcycle == 500) {
-			vccKeyboardHandleKey(0x36, 0x36, kEventKeyUp);
-			vccKeyboardHandleKey(0x42, tmp[z], kEventKeyUp);
-
-			if (!GetPaste()) {
-				clipboard.clear();
-				SetPaste(false);
-				if (tmpthrottle == 2) { SetSpeedThrottle(0); }
-				else { SetSpeedThrottle(1); }
-			}
-		}
-		clipcycle++; if (clipcycle > cyclewait) { clipcycle = 1; }
-
-	}
 }
 
 void SetTimerInteruptState(unsigned char State)
@@ -688,13 +623,7 @@ void PasteText() {
 		int tmp = MessageBox(0, "Warning: You are not in text mode. Continue Pasting?", "Clipboard", MB_YESNO);
 		if (tmp != 6) { return; }
 	}
-	SetPaste(true);
 
-
-	//This sets the keyboard to Natural, 
-	//but we need to read it first so we can set it back
-	CurrentKeyMap = GetKeyboardLayout();
-	vccKeyboardBuildRuntimeTable((keyboardlayout_e)1);
 	cliptxt = GetClipboardText().c_str();
 	if (PasteWithNew) { cliptxt = "NEW\n" + cliptxt; }
 	for (size_t t = 0; t < cliptxt.length(); t++) {
@@ -847,7 +776,8 @@ void PasteText() {
 		out += sc;
 
 	}
-	clipboard = out;
+
+	PasteIntoQueue(out);
 }
 
 std::string GetClipboardText()

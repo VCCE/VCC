@@ -120,7 +120,7 @@ namespace VCC { namespace Debugger
 			}
 			trace.push_back(TraceCaptured_[n]);
 		}
-		return trace.size();;
+		return trace.size();
 	}
 
 	size_t OpDecoder::GetSampleCount() const
