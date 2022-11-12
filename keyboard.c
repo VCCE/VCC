@@ -43,6 +43,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "Vcc.h"
 #include "joystickinput.h"
 #include "keyboardLayout.h"
+#include "config.h"
+
+#include <queue>
 
 #include "xDebug.h"
 
@@ -53,6 +56,8 @@ This file is part of VCC (Virtual Color Computer).
 
 unsigned char SetMouseStatus(unsigned char, unsigned char);
 bool pasting = false;  //Are the keyboard functions in the middle of a paste operation?
+bool GetNextScanInPasteQueue(unsigned char col);
+
 
 /*****************************************************************************/
 //	Global variables
@@ -62,6 +67,23 @@ bool pasting = false;  //Are the keyboard functions in the middle of a paste ope
 #define KBTABLE_ENTRY_COUNT 100
 #define KEY_DOWN	1
 #define KEY_UP		0
+
+// Simulated Keypresses for Clipboard pasting.
+std::queue<unsigned char> PasteInputQueue;
+LARGE_INTEGER Frequency;
+LARGE_INTEGER LastAdvance;
+double PasteDelay = 0.005;
+int CurrentThrottle = 0;
+
+enum PasteState
+{
+	Idle,
+	KeyDown,
+	KeyUp,
+	CheckDone,
+};
+PasteState CurrentPasteState;
+
 
 /* track all keyboard scan codes state (up/down) */
 static int ScanTable[256];
@@ -85,6 +107,8 @@ vccKeyboardGetScan(unsigned char Col)
 	unsigned char ret_val;
 
 	ret_val = 0;
+
+	GetNextScanInPasteQueue(Col);
 
 	temp = ~Col; //Get colums
 	mask = 1;
@@ -213,7 +237,7 @@ void _vccKeyboardUpdateRolloverTable()
 
 void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e keyState)
 {
-	XTRACE("Key  : %c (%3d / 0x%02X)  Scan : %d / 0x%02X\n",key,key,key, ScanCode, ScanCode);
+	//XTRACE("Key  : %c (%3d / 0x%02X)  Scan : %d / 0x%02X\n",key,key,key, ScanCode, ScanCode);
 	//If requested, abort pasting operation.
 	if (ScanCode == 0x01 || ScanCode == 0x43 || ScanCode == 0x3F) { pasting = false; }
 
@@ -504,3 +528,90 @@ void SetPaste(bool tmp) {
 	pasting = tmp;
 }
 
+void PasteIntoQueue(std::string txt)
+{
+	vccKeyboardBuildRuntimeTable((keyboardlayout_e)1);
+
+	for (auto& c : txt)
+	{
+		PasteInputQueue.push(c);
+	}
+	QueryPerformanceFrequency(&Frequency);
+	QueryPerformanceCounter(&LastAdvance);
+	CurrentPasteState = PasteState::KeyDown;
+	CurrentThrottle = SetSpeedThrottle(QUERY);
+	SetSpeedThrottle(0);
+	SetPaste(true);
+}
+
+#include <sstream>
+
+bool GetNextScanInPasteQueue(unsigned char col)
+{
+	if (CurrentPasteState == PasteState::Idle)
+	{
+		return false;
+	}
+
+	// Get the Current Tick
+	LARGE_INTEGER now;
+	QueryPerformanceCounter(&now);
+
+	// Time to advance state?
+	float elapsed = (now.QuadPart - LastAdvance.QuadPart) / (float)Frequency.QuadPart;
+	if (elapsed < PasteDelay)
+	{
+		return false;
+	}
+
+	LastAdvance = now;
+
+	switch (CurrentPasteState)
+	{
+	case PasteState::KeyDown:
+	{
+		// Peek at next character.
+		unsigned char next = PasteInputQueue.front();
+		// Shift Key?
+		if (next == 0x36)
+		{
+			// Pop it and get the next key.
+			PasteInputQueue.pop();
+			vccKeyboardHandleKey(0x36, 0x36, kEventKeyDown);
+			next = PasteInputQueue.front();
+		}
+		vccKeyboardHandleKey(next, next, kEventKeyDown);
+		CurrentPasteState = KeyUp;
+		break;
+	}
+
+	case PasteState::KeyUp:
+	{
+		// Which key was down?
+		unsigned char last = PasteInputQueue.front();
+		vccKeyboardHandleKey(0x36, 0x36, kEventKeyUp);
+		vccKeyboardHandleKey(0x42, last, kEventKeyUp);
+		// Ok, done with that character.
+		PasteInputQueue.pop();
+		CurrentPasteState = CheckDone;
+		break;
+	}
+
+	case PasteState::CheckDone:
+	{
+		if (PasteInputQueue.size() == 0)
+		{
+			SetPaste(false);
+			vccKeyboardBuildRuntimeTable((keyboardlayout_e)GetKeyboardLayout());
+			SetSpeedThrottle(CurrentThrottle);
+			CurrentPasteState = PasteState::Idle;
+		}
+		else
+		{
+			CurrentPasteState = PasteState::KeyDown;
+		}
+		break;
+	}
+	}
+	return true;
+}

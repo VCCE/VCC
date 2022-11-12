@@ -82,30 +82,27 @@ namespace VCC { namespace Debugger
 
 	void Debugger::Halt()
 	{
-		SectionLocker lock(Section_);
-
 		ExecutionMode_ = ExecutionMode::Halt;
 	}
 
 
 	bool Debugger::IsHalted() const
 	{
-		SectionLocker lock(Section_);
-
 		return ExecutionMode_ == ExecutionMode::Halt;
 	}
 
 
 	bool Debugger::IsHalted(unsigned short& returnPc) const
 	{
-		SectionLocker lock(Section_);
-
 		if (ExecutionMode_ != ExecutionMode::Halt)
 		{
 			return false;
 		}
 
-		returnPc = ProcessorState_.PC;
+		{
+			SectionLocker lock(Section_);
+			returnPc = ProcessorState_.PC;
+		}
 
 		return true;
 	}
@@ -113,11 +110,8 @@ namespace VCC { namespace Debugger
 
 	bool Debugger::IsStepping() const
 	{
-		SectionLocker lock(Section_);
-
 		return ExecutionMode_ == ExecutionMode::Step;
 	}
-
 
 
 
@@ -159,15 +153,11 @@ namespace VCC { namespace Debugger
 
 	bool Debugger::IsTracingEnabled() const
 	{
-		SectionLocker lock(Section_);
-
 		return TraceEnabled_;
 	}
 
 	bool Debugger::IsTracing() const
 	{
-		SectionLocker lock(Section_);
-
 		return TraceRunning_;
 	}
 
@@ -209,8 +199,6 @@ namespace VCC { namespace Debugger
 
 	void Debugger::CheckStopTrace(CPUState state)
 	{
-		SectionLocker lock(Section_);
-
 		if (!TraceRunning_)
 		{
 			return;
@@ -237,8 +225,6 @@ namespace VCC { namespace Debugger
 
 	void Debugger::TraceCaptureScreenEvent(TraceEvent evt, double cycles)
 	{
-		SectionLocker lock(Section_);
-
 		if (!TraceRunning_ || !TraceScreen_)
 		{
 			return;
@@ -249,8 +235,6 @@ namespace VCC { namespace Debugger
 
 	void Debugger::TraceEmulatorCycle(TraceEvent evt, int state, double lineNS, double irqNS, double soundNS, double cycles, double drift)
 	{
-		SectionLocker lock(Section_);
-
 		if (!TraceRunning_ || !TraceEmulation_)
 		{
 			return;
@@ -261,40 +245,33 @@ namespace VCC { namespace Debugger
 
 	void Debugger::SetTraceEnable()
 	{
-		SectionLocker lock(Section_);
-
 		TraceEnabled_ = true;
 	}
 
 	void Debugger::SetTraceDisable()
 	{
-		SectionLocker lock(Section_);
-
 		TraceEnabled_ = false;
 	}
 
 	void Debugger::TraceStart()
 	{
-		SectionLocker lock(Section_);
-
 		TraceRunning_ = true;
 	}
 
 	void Debugger::TraceStop()
 	{
-		SectionLocker lock(Section_);
-
 		TraceRunning_ = false;
 		TraceEnabled_ = false;
 	}
 
 	void Debugger::ResetTrace()
 	{
-		SectionLocker lock(Section_);
-
 		TraceEnabled_ = false;
 		TraceRunning_ = false;
-		Decoder_->Reset(TraceMaxSamples_);
+		{
+			SectionLocker lock(Section_);
+			Decoder_->Reset(TraceMaxSamples_);
+		}
 	}
 
 	void Debugger::SetTraceMaxSamples(long samples)

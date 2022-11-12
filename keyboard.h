@@ -20,6 +20,8 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 /*****************************************************************************/
+#include <string>
+
 
 typedef enum keyevent_e
 {
@@ -85,3 +87,4 @@ extern "C"
 
 bool GetPaste();
 void SetPaste(bool);
+void PasteIntoQueue(std::string txt);
