@@ -1,18 +1,20 @@
 /*
 Copyright E J Jaquay 2022
+
 This file is part of VCC (Virtual Color Computer).
-    VCC (Virtual Color Computer) is free software: you can redistribute it
-    and/or modify it under the terms of the GNU General Public License as
-    published by the Free Software Foundation, either version 3 of the License,
-    or (at your option) any later version.
 
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+VCC (Virtual Color Computer) is free software: you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 3 of the License,
+or (at your option) any later version.
 
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "acia.h"
@@ -32,8 +34,6 @@ void com_close();
 int  com_write(char*,int);
 int  com_read(char*,int);
 
-// Stat Reg is protected by a critical section to prevent 
-// race conditions with I/0 threads
 unsigned char StatReg;
 
 // Status register bits.
@@ -64,63 +64,17 @@ unsigned char CmdReg  = 0;
 // CtrReg is not used (yet), it is just echoed back to CoCo
 unsigned char CtlReg = 0;
 
-//HANDLE hEventRead;       // Event handle for read thread
-//HANDLE hEventWrite;      // Event handle for write thread
-
 HANDLE hInputThread;
 HANDLE hOutputThread;
 
-char InData;
-//int  InDataRdy=0;
-char OutData;
-int  OutDataRdy=0;
+#define INBUFSIZ 256
+char InBuffer[INBUFSIZ];
+char *InBufPtr = InBuffer;
+int InBufCnt;
 
-//------------------------------------------------------------------------
-//  Functions to manage status reg flags
-//------------------------------------------------------------------------
-CRITICAL_SECTION StatCritSec;
-int StatCritSecInit=0;
-
-
-void init_status_section() {
-//	if (!StatCritSecInit) {
-//		InitializeCriticalSection(&StatCritSec);
-//		StatCritSecInit = 1;
-//	}
-}
-
-void destroy_status_section() {
-//	if (StatCritSecInit) {
-//		DeleteCriticalSection(&StatCritSec);
-//		StatCritSecInit = 0;
-//	}
-}
-
-int set_stat_flag(unsigned char flag) 
-{
-//	if (!StatCritSecInit) {
-//		InitializeCriticalSection(&StatCritSec);
-//		StatCritSecInit = 1;
-//	}
-//   EnterCriticalSection(&StatCritSec);
-    int was_set = ( (StatReg & flag) != 0);
-	StatReg = StatReg | flag;
-//    LeaveCriticalSection(&StatCritSec);
-	return was_set;
-}
-
-int clr_stat_flag(unsigned char flag)
-{
-//	if (!StatCritSecInit) {
-//		InitializeCriticalSection(&StatCritSec);
-//		StatCritSecInit = 1;
-//	}
- //   EnterCriticalSection(&StatCritSec);
-    int was_clr = ( (StatReg & flag) == 0);
-	StatReg = StatReg & ~flag;
-//    LeaveCriticalSection(&StatCritSec);
-	return was_clr;
-}
+#define OUTBUFSIZ 1024 
+char OutBuffer[OUTBUFSIZ];
+char *OutBufPtr = OutBuffer;
 
 //------------------------------------------------------------------------
 //  Initiallize sc6551. This gets called when DTR is set
@@ -135,15 +89,14 @@ void sc6551_init()
     sc6551_close();
     com_open();
 
-    // Clear ready flags
-  	//InDataRdy=0;
-	OutDataRdy=0;
+    // Create I/O threads 
+    hInputThread =  CreateThread(NULL,0,sc6551_input_thread, NULL,0,&id);
+    hOutputThread = CreateThread(NULL,0,sc6551_output_thread,NULL,0,&id);
 
-    // Create threads 
-    hInputThread=CreateThread(NULL,0,sc6551_input_thread,NULL,0,&id);
-    hOutputThread=CreateThread(NULL,0,sc6551_output_thread,NULL,0,&id);
-    
-    init_status_section();
+	// Clear status register and flush input buffer
+    StatReg = 0;
+	InBufCnt = 0;
+	InBufPtr = InBuffer;
 
     sc6551_initialized = 1;
 }
@@ -153,56 +106,45 @@ void sc6551_init()
 //------------------------------------------------------------------------
 void sc6551_close()
 {
+	// Terminate I/O threads
     if (hInputThread) {
         TerminateThread(hInputThread,1);
         WaitForSingleObject(hInputThread,2000);
+        hInputThread = NULL;
     }
     if (hOutputThread) {
 		TerminateThread(hOutputThread,1);
 		WaitForSingleObject(hOutputThread,2000);
+        hOutputThread = NULL;
     }
-    hInputThread = NULL;
-    hOutputThread = NULL;
-    destroy_status_section();
+    // Close communications
     com_close();
+
     sc6551_initialized = 0;
 }
 
 //------------------------------------------------------------------------
-// Input thread loads the input buffer if it is empty
+// Input thread loads the input buffer
 //------------------------------------------------------------------------
-
-#define INBUFSIZ 128
-char InBuffer[INBUFSIZ];
-char *InBufPtr = InBuffer;
-int InBufCnt=0;
 
 DWORD WINAPI sc6551_input_thread(LPVOID param)
 {
 	int ms;   
     while(TRUE) {
-        if (CmdReg & CmdDTR) {
-			ms = 1;         // Read will block once buffer is cleared
-			if (InBufCnt<1) {
-                InBufCnt = com_read(InBuffer,INBUFSIZ);		
-				InBufPtr = InBuffer;
-            } else {
-				set_stat_flag(StatIRQ);  // not really needed for os9
-                AssertInt(IRQ,0);        // Assert until buffer empty
-            }
-        } else {
-			ms = 2000;
-		}
-		Sleep(ms);
+		if (InBufCnt<1) {
+            InBufCnt = com_read(InBuffer,INBUFSIZ);		
+			InBufPtr = InBuffer;
+         } else {
+			StatReg |= StatIRQ;  // not really needed for os9
+            AssertInt(IRQ,0);    // Assert until buffer empty
+        }
+		Sleep(2);
     }
 }
 
 //------------------------------------------------------------------------
-// Output thread empties the output buffer 
+// Output thread writes the output buffer
 //------------------------------------------------------------------------
-#define OUTBUFSIZ 4000 
-char OutBuffer[OUTBUFSIZ];
-char *OutBufPtr = OutBuffer;
 
 DWORD WINAPI sc6551_output_thread(LPVOID param)
 {
@@ -211,102 +153,104 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 	int written = 0;
 
     while(TRUE) {
-        if (CmdReg & CmdDTR) {
-			ptr = OutBuffer;
-			while (TRUE) {
-				towrite = OutBufPtr - ptr;
-				if (towrite < 1) break;
-				written = com_write(ptr,towrite);
-				if (written < 1) {
-					// deal with write error somehow
-					break;
-				} else {
-					ptr = ptr + written;
-				}
-				Sleep(5);
+		ptr = OutBuffer;
+		while (TRUE) {
+			towrite = OutBufPtr - ptr;
+			if (towrite < 1) break;
+			written = com_write(ptr,towrite);
+			if (written < 1) {
+				break; // TODO deal with write error
+			} else {
+				ptr = ptr + written;
 			}
-			OutBufPtr = OutBuffer;
-			Sleep(50);
-		} else {
-			Sleep(1000);
+			Sleep(5);
 		}
+		OutBufPtr = OutBuffer;
+		Sleep(50);
     }
 }
 
 //------------------------------------------------------------------------
-// Port I/O
+// Port Read
 //------------------------------------------------------------------------
-void sc6551_write(unsigned char data,unsigned short port)
-{
-    switch (port) {
-		// Write data
-        case 0x68:
-			if (OutBufPtr < (OutBuffer + OUTBUFSIZ + 1)) {
-				*OutBufPtr++ = data;
-			}
-            break;
-		// Clear status
-        case 0x69:
-            StatReg = 0;
-            break;
-		// Set Command register
-        case 0x6A:
-            CmdReg = data;
-            // If DTR set enable sc6551
-            if (CmdReg & CmdDTR) {
-                if (sc6551_initialized == 0) sc6551_init();
-            // Else disable sc6551
-            } else {
-                sc6551_close();
-                StatReg = 0;
-            }
-            break;
-        // Set Control register
-        case 0x6B:
-            CtlReg = data;  // Not used, just returned on read
-            break;
-    }
-}
 
 unsigned char sc6551_read(unsigned char port)
 {
     unsigned char data;
     switch (port) {
-		// Read data
+
+		// Read data  TODO deal with race conditions
         case 0x68:
-            data = InData;
-			clr_stat_flag(StatRxF);
+			data = *InBufPtr++;
+			InBufCnt--;
+			StatReg &= ~StatRxF;
             break;
 
 		// Read status register
         case 0x69:
             if (CmdReg & CmdDTR) {
-			    // Check for data in input data
-            	if (InBufCnt > 0) {
-					set_stat_flag(StatRxF);
-					InData = *InBufPtr++;
-					InBufCnt--;
-				}
-			    // Check for plenty of room in output buffer 
-				if (OutBufPtr < (OutBuffer + OUTBUFSIZ - OUTBUFSIZ/4 )) {
-					set_stat_flag(StatTxE);
+			    // Check for data in input buffer
+            	if (InBufCnt > 0)  StatReg |= StatRxF;
+				
+			    // Check for space in output buffer 
+				if (OutBufPtr < (OutBuffer + OUTBUFSIZ - 4 )) {
+			        StatReg |= StatTxE;
 				} else {
-					clr_stat_flag(StatTxE);
+			        StatReg &= ~StatTxE;
 				}
 			}
             data = StatReg; 
-			clr_stat_flag(StatIRQ);
+			StatReg &= ~StatIRQ;
             break;
+
 		// Read command register
         case 0x6A:
             data = CmdReg;
             break;
+
 		// Read control register
         case 0x6B:
             data = CtlReg;
             break;
     }
     return data;
+}
+
+//------------------------------------------------------------------------
+// Port Write 
+//------------------------------------------------------------------------
+
+void sc6551_write(unsigned char data,unsigned short port)
+{
+    switch (port) {
+
+		// Write data  TODO deal with race conditions
+        case 0x68:
+			if (OutBufPtr < (OutBuffer + OUTBUFSIZ - 1)) {
+				*OutBufPtr++ = data;
+			}
+            break;
+
+		// Clear status
+        case 0x69:
+            StatReg = 0;
+            break;
+
+		// Set Command register
+        case 0x6A:
+            CmdReg = data;
+            if (CmdReg & CmdDTR) {
+                sc6551_init();
+            } else {
+                sc6551_close();
+            }
+            break;
+
+        // Set Control register
+        case 0x6B:
+            CtlReg = data;  // Not used, just returned on read
+            break;
+    }
 }
 
 //----------------------------------------------------------------
