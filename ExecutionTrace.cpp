@@ -49,6 +49,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	enum class TraceStatus
 	{
 		Empty,
+		Enabled,
 		Collecting,
 		LoadPage,
 		Loaded
@@ -189,7 +190,8 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_STATUS);
 		SetWindowText(hCtl, "Trace is running");
 
-		RECT rect = *clientRect;
+		RECT rect;
+		GetClientRect(hWndTrace, &rect);
 
 		HFONT hFont = CreateFont(24, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
 			CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FIXED_PITCH, TEXT("Consolas"));
@@ -224,8 +226,10 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		DeleteObject(hFont);
 	}
 
-	void DrawSamples(HDC hdc, LPRECT clientRect, long samples)
+	void DrawSamples(HDC hdc, LPRECT clientRect)
 	{
+		long samples = EmuState.Debugger.GetTraceSamples();
+
 		// Nothing collected yet?
 		if (samples == 0)
 		{
@@ -233,25 +237,20 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			return;
 		}
 
-		// Collection finished?
-		if (status == TraceStatus::Collecting || status == TraceStatus::Loaded)
-		{
-			status = TraceStatus::LoadPage;
+		// Indicate what we collected.
+		std::stringstream ss;
+		ss << samples << " collected";
 
-			std::stringstream ss;
-			ss << samples << " collected";
+		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_STATUS);
+		SetWindowText(hCtl, ss.str().c_str());
 
-			HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_STATUS);
-			SetWindowText(hCtl, ss.str().c_str());
-
-			// Adjust Vertical Scrollbar based on samples collected.
-			SCROLLINFO si;
-			si.cbSize = sizeof(si);
-			si.fMask = SIF_ALL;
-			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
-			si.nMax = samples;
-			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
-		}
+		// Adjust Vertical Scrollbar based on samples collected.
+		SCROLLINFO si;
+		si.cbSize = sizeof(si);
+		si.fMask = SIF_ALL;
+		GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
+		si.nMax = samples;
+		SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
 
 		// Draw the collection.
 		RECT rect = *clientRect;
@@ -264,7 +263,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		SelectObject(hdc, pen);
 
 		// Load page?
-		if (status == TraceStatus::LoadPage)
+		if (currentTrace.size() == 0 || status == TraceStatus::LoadPage)
 		{
 			EmuState.Debugger.GetTraceResult(currentTrace, traceOffset, tracePage);
 			status = TraceStatus::Loaded;
@@ -615,7 +614,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 		// Get tracing status.
 		bool tracing = EmuState.Debugger.IsTracing();
-		long samples = EmuState.Debugger.GetTraceSamples();
 
 		// Show tracing is in progress.
 		if (tracing)
@@ -624,7 +622,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			return;
 		}
 
-		DrawSamples(hdc, clientRect, samples);
+		DrawSamples(hdc, clientRect);
 	}
 
 	void ResizeWindow(int width, int height)
@@ -906,6 +904,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		EmuState.Debugger.SetTraceEnable();
 		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_STATUS);
 		SetWindowText(hCtl, "Trace is running");
+		status = TraceStatus::Enabled;
 	}
 
 	void StopTrace()

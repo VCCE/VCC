@@ -24,6 +24,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <atomic>
 #include <Windows.h>
 #include "OpDecoder.h"
 
@@ -137,14 +138,14 @@ namespace VCC { namespace Debugger
 		bool							BreakpointsChanged_ = false;
 		CPUState						ProcessorState_;
 		std::map<HWND, std::unique_ptr<Client>>	RegisteredClients_;
-		ExecutionMode					ExecutionMode_ = ExecutionMode::Run;
+		std::atomic<ExecutionMode>		ExecutionMode_ = ExecutionMode::Run;
 		//
 		bool							HasPendingWrite_ = false;
 		PendingWrite					PendingWrite_;
 		//
 		std::unique_ptr<OpDecoder>		Decoder_;
-		bool							TraceEnabled_ = false;
-		bool							TraceRunning_ = false;
+		std::atomic<bool>				TraceEnabled_ = false;
+		std::atomic<bool>				TraceRunning_ = false;
 		size_t							TraceMaxSamples_ = 500000;
 		long							TraceSamplesCollected_ = 0;
 		bool							TraceEmulation_ = false;
