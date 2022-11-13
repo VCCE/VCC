@@ -904,7 +904,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		EmuState.Debugger.SetTraceEnable();
 		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_STATUS);
 		SetWindowText(hCtl, "Trace is running");
-		status == TraceStatus::Enabled;
+		status = TraceStatus::Enabled;
 	}
 
 	void StopTrace()
