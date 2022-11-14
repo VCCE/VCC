@@ -176,7 +176,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 
 unsigned char sc6551_read(unsigned char port)
 {
-    unsigned char data;
+    unsigned char data = 0;
     switch (port) {
 
         // Read data
