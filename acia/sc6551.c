@@ -33,37 +33,6 @@ void com_close();
 int  com_write(char*,int);
 int  com_read(char*,int);
 
-unsigned char StatReg;
-
-// Status register bits.
-// b0 Par Rx parity error
-// b1 Frm Rx framing error
-// B2 Ovr Rx data over run error
-// b3 RxF Rx Data register full
-// b4 TxE Tx Data register empty
-// b5 DCD Data carrier detect
-// b6 DSR Data set ready
-// b7 IRQ Interrupt generated
-#define StatOvr  0x04
-#define StatRxF  0x08
-#define StatTxE  0x10
-#define StatDCD  0x20
-#define StatDSR  0x40
-#define StatIRQ  0x80
-
-unsigned char CmdReg  = 0;
-// Command register bits.
-// b0   DTR Enable receive and interupts
-// b1   RxI Receiver IRQ enable.
-// b2-3 TIRB Transmit IRQ control
-// B4   Echo Set=Activated
-// B5-7 Par  Parity control
-#define CmdDTR  0x01
-#define CmdRxI  0x02
-
-// CtrReg is not used (yet), it is just echoed back to CoCo
-unsigned char CtlReg = 0;
-
 HANDLE hInputThread;
 HANDLE hOutputThread;
 
@@ -131,14 +100,14 @@ void sc6551_close()
 DWORD WINAPI sc6551_input_thread(LPVOID param)
 {
     while(TRUE) {
-        if (InBufCnt<1) {
-            InBufCnt = com_read(InBuffer,INBUFSIZ); //Blocks
+		if (InBufCnt < 1) { 
+        	if (InBufCnt != 0) {
+				Sleep(1000);    //TODO Handle com read error
+			}
+            InBufCnt = com_read(InBuffer,INBUFSIZ);
             InBufPtr = InBuffer;
-         } else {
-            StatReg |= StatIRQ;  // not really needed for os9
-            AssertInt(IRQ,0);    // Assert IRQ's until buffer empty
         }
-        Sleep(3);
+		Sleep(3);
     }
 }
 
@@ -159,7 +128,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
             if (towrite < 1) break;
             written = com_write(ptr,towrite);
             if (written < 1) {
-                break; // TODO deal with write error
+                break;         // TODO handle com write error
             } else {
                 ptr = ptr + written;
             }
@@ -171,15 +140,25 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 }
 
 //------------------------------------------------------------------------
+// Use Heartbeat (HSYNC) to assert interrupts when input data is ready
+//------------------------------------------------------------------------
+void sc6551_ping()
+{
+	if (InBufCnt > 0) {
+        StatReg |= StatIRQ;
+		AssertInt(IRQ,0);
+	}
+}
+
+//------------------------------------------------------------------------
 // Port Read
 //------------------------------------------------------------------------
-
 unsigned char sc6551_read(unsigned char port)
 {
     unsigned char data = 0;
     switch (port) {
 
-        // Read data
+        // Get input data byte
         case 0x68:
             if (InBufCnt > 0) {
                 data = *InBufPtr++;
@@ -187,21 +166,18 @@ unsigned char sc6551_read(unsigned char port)
             }
             break;
 
-        // Read status register
+        // Get status register
         case 0x69:
             if (CmdReg & CmdDTR) {
-                // Status of input data
                 if (InBufCnt > 0) {
-                    StatReg |= StatRxF;
-                } else {
-                    StatReg &= ~StatRxF;
+					StatReg |= StatRxF;
+				} else {
+					StatReg &= ~StatRxF;
                 }
-
-                // Status of output buffer
-                if (OutBufPtr > OUTBUFLIM) {
-                    StatReg &= ~StatTxE;
+                if (OutBufPtr > OUTBUFLIM) { 
+					StatReg &= ~StatTxE;
                 } else {
-                    StatReg |= StatTxE;
+					StatReg |= StatTxE;
                 }
             } else {
                 StatReg = 0;
@@ -210,12 +186,12 @@ unsigned char sc6551_read(unsigned char port)
             StatReg &= ~StatIRQ;
             break;
 
-        // Read command register
+        // Get command register
         case 0x6A:
             data = CmdReg;
             break;
 
-        // Read control register
+        // Get control register
         case 0x6B:
             data = CtlReg;
             break;

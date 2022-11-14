@@ -262,6 +262,13 @@ int console_write(char *buf, int len) {
 
     if ( hConOut == NULL) return 0;
 
+//  Echo control not supported by OS9 sc6551 driver
+//	if(CmdReg & CmdEcho) {
+//		SetConsoleTitle("Console Echo");
+//	} else {
+//		SetConsoleTitle("Console No Echo");
+//	}
+
     while (cnt < len) {
         chr = *buf++;
         cnt++;

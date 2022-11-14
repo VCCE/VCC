@@ -89,6 +89,15 @@ PackPortRead(unsigned char Port)
 }
 
 //-----------------------------------------------------------------------
+// Dll export Heartbeat (Called right after HSYNC) 
+//-----------------------------------------------------------------------
+__declspec(dllexport) void HeartBeat(void)
+{
+    sc6551_ping();
+	return;
+}
+
+//-----------------------------------------------------------------------
 // Dll export supply transfer point for interrupt
 //-----------------------------------------------------------------------
 __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
