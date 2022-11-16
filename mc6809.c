@@ -176,10 +176,10 @@ while (CycleCounter<CycleFor) {
 
 		if (PendingInterupts & 1)
 		{
-//			if (IRQWaiter==0)	// This is needed to fix a subtle timming problem
+			if (IRQWaiter==0)	// This is needed to fix a subtle timming problem
 				cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
-//			else				// The IRQ is asserted.
-//				IRQWaiter-=1;
+			else				// The IRQ is asserted.
+				IRQWaiter-=1;
 		}
 	}
 
