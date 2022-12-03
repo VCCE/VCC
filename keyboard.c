@@ -57,7 +57,7 @@ This file is part of VCC (Virtual Color Computer).
 unsigned char SetMouseStatus(unsigned char, unsigned char);
 bool pasting = false;  //Are the keyboard functions in the middle of a paste operation?
 bool GetNextScanInPasteQueue(unsigned char col);
-
+bool IsShiftKeyDown();
 
 /*****************************************************************************/
 //	Global variables
@@ -75,6 +75,7 @@ LARGE_INTEGER LastAdvance;
 double PasteDelay = 0.008;		// This is the interkey delay in seconds - it sets the time between KEYDOWN and KEYUP
 
 int CurrentThrottle = 0;
+bool IsShift = false;
 
 enum PasteState
 {
@@ -273,6 +274,9 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e 
 
 			// track key is down
 			ScanTable[ScanCode] = KEY_DOWN;
+			if (ScanCode == DIK_LSHIFT) {
+				IsShift = true;
+			}
 			_vccKeyboardUpdateRolloverTable();
 
 			if ( GimeGetKeyboardInteruptState() ) {
@@ -290,6 +294,7 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e 
 			// TODO: verify this is accurate emulation
 			// Clean out rollover table on shift release
 			if ( ScanCode == DIK_LSHIFT ) {
+				IsShift = false; 
 				for (int Index = 0; Index < KBTABLE_ENTRY_COUNT; Index++) {
 					ScanTable[Index] = KEY_UP;
 				}
@@ -615,4 +620,7 @@ bool GetNextScanInPasteQueue(unsigned char col)
 	}
 	}
 	return true;
+}
+bool IsShiftKeyDown() {
+	return IsShift;
 }
