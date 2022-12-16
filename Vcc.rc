@@ -34,6 +34,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "[F9] Hard Reset",             ID_FILE_RESET
         MENUITEM "[F5] Soft Reset",             ID_FILE_RESET_SFT
+        MENUITEM "[SHIFT-F8] Pause",            ID_PAUSE_EMULATION
         MENUITEM SEPARATOR
         MENUITEM "Exit",                        ID_FILE_EXIT
     END
