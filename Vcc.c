@@ -154,7 +154,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 	EmuState.WindowSize.x=640;
 	EmuState.WindowSize.y=480;
-	LoadConfig(&EmuState);
+	//LoadConfig(&EmuState);
 	InitInstance(hInstance, nCmdShow);
 	if (!CreateDDWindow(&EmuState))
 	{
