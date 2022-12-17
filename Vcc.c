@@ -101,6 +101,7 @@ void (*CPUForcePC)(unsigned short)=NULL;
 void FullScreenToggle(void);
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys(void);
+void PauseUnPause_Emulation(void);
 
 // Message handlers
 //void OnDestroy(HWND hwnd);
@@ -111,6 +112,7 @@ static 	HANDLE hEMUThread ;
 static	HANDLE hEMUQuit;
 
 static char g_szAppName[MAX_LOADSTRING] = "";
+static bool emu_paused = false;
 bool BinaryRunning;
 static unsigned char FlagEmuStop=TH_RUNNING;
 //static CRITICAL_SECTION  FrameRender;
@@ -152,7 +154,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 	EmuState.WindowSize.x=640;
 	EmuState.WindowSize.y=480;
-	LoadConfig(&EmuState);
+	//LoadConfig(&EmuState);
 	InitInstance(hInstance, nCmdShow);
 	if (!CreateDDWindow(&EmuState))
 	{
@@ -348,6 +350,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					FlipArtifacts();
 					break;
 
+				case ID_PAUSE_EMULATION:
+					PauseUnPause_Emulation();
+					break;
 				case ID_MEMORY_DISPLAY:
 					VCC::Debugger::UI::OpenMemoryMapWindow(EmuState.WindowInstance, EmuState.WindowHandle);
 				    break;
@@ -481,7 +486,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 //				break;
 
 				case DIK_F8:
-					SetSpeedThrottle(!SetSpeedThrottle(QUERY));
+					if (!IsShiftKeyDown()) SetSpeedThrottle(!SetSpeedThrottle(QUERY));
+					else PauseUnPause_Emulation();
 				break;
 
 				case DIK_F9:
@@ -957,10 +963,9 @@ unsigned __stdcall EmuLoop(void *Dummy)
 				}
 				EmuState.ResetPending = 0;
 			}
-			
-			if (EmuState.EmulationRunning == 1) {
+			if (EmuState.EmulationRunning == 1 && !emu_paused) {
 				FPS += RenderFrame(&EmuState);
-			} else {
+			} else if(!emu_paused) {
 				FPS += Static(&EmuState);
 			}
 		}
@@ -970,7 +975,8 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		
 		char ttbuff[256];
 		snprintf(ttbuff,sizeof(ttbuff),"Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz | %s",EmuState.FrameSkip,FPS,CpuName,EmuState.CPUCurrentSpeed,EmuState.StatusLine);
-		SetStatusBarText(ttbuff,&EmuState);
+		if(!emu_paused) SetStatusBarText(ttbuff,&EmuState);
+		else SetStatusBarText("Emulation Paused. Press SHIFT-F8 to continue.", &EmuState);
 		
 		if (Throttle )	//Do nothing untill the frame is over returning unused time to OS
 			FrameWait();
@@ -1008,6 +1014,21 @@ void FullScreenToggle(void)
 	RefreshDynamicMenu();
 	EmuState.ConfigDialog=NULL;
 	PauseAudio(false);
+	return;
+}
+void PauseUnPause_Emulation() {
+	// User selected 'Pause' from the menu. Pause the emulation and 
+	// temporarily disable the sound in case it was paused during a sample.
+	if (!emu_paused) {
+		emu_paused = true;
+		PauseAudio(1);
+		OutputDebugString("Emulation paused\n");
+	}
+	else {
+		PauseAudio(0);
+		emu_paused = false;
+		OutputDebugString("Emulation unpaused\n");
+	}
 	return;
 }
 

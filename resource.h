@@ -409,6 +409,7 @@
 #define ID_BREAKPOINTS                  40042
 #define ID_MMU_MONITOR                  40043
 #define ID_EXEC_TRACE                   40044
+#define ID_PAUSE_EMULATION              40045
 #define ID_CONFIGURE_OPTIONS            65535
 
 // Next default values for new objects
