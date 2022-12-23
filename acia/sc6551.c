@@ -144,8 +144,10 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 //------------------------------------------------------------------------
 void sc6551_ping()
 {
-	if (InBufCnt > 0) {
-        StatReg |= StatIRQ;
+
+    // What about reciever interupt and break ? (CmdReg bits 1..3)
+	if ((CmdReg & CmdDTR) && (InBufCnt > 0)) {
+		StatReg |= StatIRQ;
 		AssertInt(IRQ,0);
 	}
 }

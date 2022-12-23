@@ -59,14 +59,15 @@ unsigned char StatReg;
 unsigned char CmdReg;
 // Command register bits.
 // b0   DTR Enable receive and interupts
-// b1   RxI Receiver IRQ enable.
+// b1   RxI Receiver IRQ control by Stat bit 3
 // b2-3 TIRB Transmit IRQ control
-// B4   Echo Set=Activated
-// B5-7 Par  Parity control
+//      00 trans disabled,01 enabled,10 disabled,11 break
+// b4   Echo Set=Activated
+// b5-7 Par  Parity control
 #define CmdDTR  0x01
 #define CmdRxI  0x02
 #define CmdEcho 0x10
-
+#define CmdTIRB 0x0C 
 unsigned char CtlReg;
 // b0-3 Baud rate 
 //		{ X,60,75,110,135,150,300,600,1200,
