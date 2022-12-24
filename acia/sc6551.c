@@ -17,35 +17,25 @@ VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "acia.h"
+#include "sc6551.h"
 
 //------------------------------------------------------------------------
-// sc6551
+// Handles and buffers for I/O threads
 //------------------------------------------------------------------------
 
-// sc6551 private functions
+#define IBUFSIZ 512
 DWORD WINAPI sc6551_input_thread(LPVOID);
-DWORD WINAPI sc6551_output_thread(LPVOID);
-void sc6551_output(char);
-
-// Comunications hooks
-void com_open();
-void com_close();
-int  com_write(char*,int);
-int  com_read(char*,int);
-
 HANDLE hInputThread;
-HANDLE hOutputThread;
-
-#define INBUFSIZ 256
-char InBuffer[INBUFSIZ];
-char *InBufPtr = InBuffer;
+char InBuf[IBUFSIZ];
+char *InBufPtr = InBuf;
 int InBufCnt = 0;
 
-#define OUTBUFSIZ 1024
-char OutBuffer[OUTBUFSIZ];
-char *OutBufPtr = OutBuffer;
-// Buffer limit to reduce possibility of missed writes
-#define OUTBUFLIM (OutBuffer + OUTBUFSIZ - 64)
+#define OBUFSIZ 512
+DWORD WINAPI sc6551_output_thread(LPVOID);
+HANDLE hOutputThread;
+char OutBuf[OBUFSIZ];
+char *OutBufPtr = OutBuf;
+int OutBufFree = 0;
 
 //------------------------------------------------------------------------
 //  Initiallize sc6551. This gets called when DTR is set
@@ -66,8 +56,9 @@ void sc6551_init()
 
     // Clear status register and flush input buffer
     InBufCnt = 0;
-    InBufPtr = InBuffer;
-    OutBufPtr = OutBuffer;
+    InBufPtr = InBuf;
+    OutBufFree = OBUFSIZ;
+    OutBufPtr = OutBuf;
     sc6551_initialized = 1;
 }
 
@@ -100,19 +91,20 @@ void sc6551_close()
 DWORD WINAPI sc6551_input_thread(LPVOID param)
 {
     while(TRUE) {
-		if (InBufCnt < 1) { 
-        	if (InBufCnt != 0) {
+		if (InBufCnt < 1) {     // Read if input buffer empty
+            InBufCnt = com_read(InBuf,IBUFSIZ);
+        	if (InBufCnt < 0) {
 				Sleep(1000);    //TODO Handle com read error
+				InBufCnt = 0;
 			}
-            InBufCnt = com_read(InBuffer,INBUFSIZ);
-            InBufPtr = InBuffer;
+            InBufPtr = InBuf;
         }
-		Sleep(3);
+		Sleep(50);              // Poll for buffer emptied
     }
 }
 
 //------------------------------------------------------------------------
-// Output thread writes the output buffer
+// Output thread sends the output buffer
 //------------------------------------------------------------------------
 
 DWORD WINAPI sc6551_output_thread(LPVOID param)
@@ -122,7 +114,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
     int written = 0;
 
     while(TRUE) {
-        ptr = OutBuffer;
+        ptr = OutBuf;
         while (TRUE) {
             towrite = OutBufPtr - ptr;
             if (towrite < 1) break;
@@ -132,20 +124,19 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
             } else {
                 ptr = ptr + written;
             }
-            Sleep(5);
         }
-        OutBufPtr = OutBuffer;
-        Sleep(50);
+        OutBufPtr = OutBuf;
+        OutBufFree = OBUFSIZ;
+        Sleep(50);              // Poll every 0.05 sec for output
     }
 }
 
 //------------------------------------------------------------------------
-// Use Heartbeat (HSYNC) to assert interrupts when input data is ready
+// Use Heartbeat (HSYNC) to assert interrupts when data is ready
 //------------------------------------------------------------------------
 void sc6551_ping()
 {
-
-    // What about reciever interupt and break ? (CmdReg bits 1..3)
+    // What about receiver interupt and break ? (CmdReg bits 1..3)
 	if ((CmdReg & CmdDTR) && (InBufCnt > 0)) {
 		StatReg |= StatIRQ;
 		AssertInt(IRQ,0);
@@ -160,26 +151,25 @@ unsigned char sc6551_read(unsigned char port)
     unsigned char data = 0;
     switch (port) {
 
-        // Get input data byte
+        // Read input data
         case 0x68:
-            if (InBufCnt > 0) {
-                data = *InBufPtr++;
-                InBufCnt--;
-            }
+            if (InBufCnt-- > 0) data = *InBufPtr++;
             break;
 
-        // Get status register
+        // Read status register
         case 0x69:
             if (CmdReg & CmdDTR) {
+				// StatRxF true if there is data in input buffer
                 if (InBufCnt > 0) {
 					StatReg |= StatRxF;
 				} else {
 					StatReg &= ~StatRxF;
                 }
-                if (OutBufPtr > OUTBUFLIM) { 
-					StatReg &= ~StatTxE;
-                } else {
+                // StatTxE true if space is left in output buffer
+                if (OutBufFree > 4) {
 					StatReg |= StatTxE;
+                } else {
+					StatReg &= ~StatTxE;
                 }
             } else {
                 StatReg = 0;
@@ -188,12 +178,12 @@ unsigned char sc6551_read(unsigned char port)
             StatReg &= ~StatIRQ;
             break;
 
-        // Get command register
+        // Read command register
         case 0x6A:
             data = CmdReg;
             break;
 
-        // Get control register
+        // Read control register
         case 0x6B:
             data = CtlReg;
             break;
@@ -211,9 +201,7 @@ void sc6551_write(unsigned char data,unsigned short port)
 
         // Write data
         case 0x68:
-            if (OutBufPtr < (OutBuffer + OUTBUFSIZ)) {
-                *OutBufPtr++ = data;
-            }
+            if (OutBufFree-- > 0) *OutBufPtr++ = data;
             break;
 
         // Clear status
@@ -221,71 +209,20 @@ void sc6551_write(unsigned char data,unsigned short port)
             StatReg = 0;
             break;
 
-        // Set Command register
+        // Write Command register
         case 0x6A:
             CmdReg = data;
             if (CmdReg & CmdDTR) {
                 sc6551_init();
-                StatReg = StatDCD | StatDSR;
             } else {
                 sc6551_close();
             }
             break;
 
-        // Set Control register
+        // Write Control register
         case 0x6B:
-            CtlReg = data;  // Contains baud rate
+            CtlReg = data;
             break;
     }
-}
-
-//----------------------------------------------------------------
-// Dispatch I/0 to communication type used.
-// Hooks allow sc6551 to do communications to selected media
-//----------------------------------------------------------------
-
-// Open com
-void com_open() {
-    switch (AciaComType) {
-    case 0: // Legacy Console
-        console_open();
-        break;
-    case 1:
-        wincmd_open();
-        break;
-    }
-}
-
-void com_close() {
-    switch (AciaComType) {
-    case 0: // Console
-        console_close();
-        break;
-    case 1:
-        wincmd_close();
-        break;
-    }
-}
-
-// com_write is assumed to block until some data is written
-int com_write(char * buf, int len) {
-    switch (AciaComType) {
-    case 0: // Legacy Console
-        return console_write(buf,len);
-    case 1:
-        return wincmd_write(buf,len);
-    }
-    return 0;
-}
-
-// com_read is assumed to block until some data is read
-int com_read(char * buf,int len) {  // returns bytes read
-    switch (AciaComType) {
-    case 0: // Legacy Console
-        return console_read(buf,len);
-    case 1:
-        return wincmd_read(buf,len);
-    }
-    return 0;
 }
 

@@ -16,6 +16,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include "acia.h"
+#include "sc6551.h"
 
 //------------------------------------------------------------------------
 // Functions
@@ -250,3 +251,53 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
     }
     return FALSE;
 }
+
+//----------------------------------------------------------------
+// Dispatch I/0 to communication type used.
+//----------------------------------------------------------------
+
+// Open com
+void com_open() {
+    switch (AciaComType) {
+    case 0: // Legacy Console
+        console_open();
+        break;
+    case 1:
+        wincmd_open();
+        break;
+    }
+}
+
+void com_close() {
+    switch (AciaComType) {
+    case 0: // Console
+        console_close();
+        break;
+    case 1:
+        wincmd_close();
+        break;
+    }
+}
+
+// com_write is assumed to block until some data is written
+int com_write(char * buf, int len) {
+    switch (AciaComType) {
+    case 0: // Legacy Console
+        return console_write(buf,len);
+    case 1:
+        return wincmd_write(buf,len);
+    }
+    return 0;
+}
+
+// com_read is assumed to block until some data is read
+int com_read(char * buf,int len) {  // returns bytes read
+    switch (AciaComType) {
+    case 0: // Legacy Console
+        return console_read(buf,len);
+    case 1:
+        return wincmd_read(buf,len);
+    }
+    return 0;
+}
+
