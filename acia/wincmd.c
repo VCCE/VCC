@@ -72,6 +72,9 @@ void wincmd_close()
     sprintf(AciaStat,"ACIA");
 }
 
+void wincmd_set(int item, int val) {
+}
+
 int wincmd_eof(char* buf, int siz) {
     int cnt = 0;
     if (siz > 1) { *buf++ = 0x0D; cnt++; }

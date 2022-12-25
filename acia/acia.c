@@ -279,6 +279,17 @@ void com_close() {
     }
 }
 
+void com_set(int item, int val) {
+    switch (AciaComType) {
+    case 0: // Console
+        console_set(item,val);
+        break;
+    case 1:
+        wincmd_set(item,val);
+        break;
+    }
+}
+
 // com_write is assumed to block until some data is written
 int com_write(char * buf, int len) {
     switch (AciaComType) {

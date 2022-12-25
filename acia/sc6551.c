@@ -217,6 +217,13 @@ void sc6551_write(unsigned char data,unsigned short port)
             } else {
                 sc6551_close();
             }
+
+            if (CmdReg & CmdEcho) {
+                com_set(LOCAL_ECHO,1);
+            } else {
+                com_set(LOCAL_ECHO,0);
+            }
+
             break;
 
         // Write Control register

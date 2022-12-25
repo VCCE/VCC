@@ -31,19 +31,28 @@ This file is part of VCC (Virtual Color Computer).
 // Comunications hooks
 void com_open();
 void com_close();
+void com_set(int,int);
 int  com_write(char*,int);
 int  com_read(char*,int);
+
+// Items for com_set
+enum set_item {
+    LOCAL_ECHO
+};
 
 // Console I/O
 void console_open();
 void console_close();
+void console_set(int,int);
 int  console_read(char* buf,int siz);
 int  console_write(char* buf,int siz);
+
 int  ConsoleLineInput;  // Console mode Normal: 0; Line mode: 1
 
 // cmd I/O
 void wincmd_open();
 void wincmd_close();
+void wincmd_set(int,int);
 int  wincmd_read(char* buf,int siz);
 int  wincmd_write(char* buf,int siz);
 

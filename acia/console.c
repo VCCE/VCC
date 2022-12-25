@@ -97,6 +97,25 @@ console_open() {
 }
 
 //------------------------------------------------------------------
+// Console settings
+//------------------------------------------------------------------
+
+void console_set(int item, int val) {
+
+    switch(item) {
+    case LOCAL_ECHO:
+        DWORD mode;
+        GetConsoleMode(hConIn, &mode);
+        if (val) {
+            SetConsoleMode(hConIn, mode | ENABLE_ECHO_INPUT);
+        } else {
+            SetConsoleMode(hConIn, mode & ~ENABLE_ECHO_INPUT);
+        }
+        break;
+    }
+}
+
+//------------------------------------------------------------------
 // Close Console
 //------------------------------------------------------------------
 
