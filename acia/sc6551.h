@@ -50,7 +50,7 @@ unsigned char StatReg;
 unsigned char CmdReg;
 // Command register bits.
 // b0   DTR Enable receive and interupts
-// b1   RxI Receiver IRQ control by Stat bit 3
+// b1   RxI Receiver IRQ control by StatRxF
 // b2-3 TIRB Transmit IRQ control
 //      00 trans disabled,01 enabled,10 disabled,11 break
 // b4   Echo Set=Activated
@@ -62,6 +62,11 @@ unsigned char CmdReg;
 #define CmdTIRB 0x0C
 #define CmdEcho 0x10
 #define CmdPAR  0xE0
+
+#define TIRB_Off  0x00
+#define TIRB_On   0x04
+#define TIRB_RTS  0x08
+#define TIRB_Brk  0x0C
 
 // Control Register
 unsigned char CtlReg;

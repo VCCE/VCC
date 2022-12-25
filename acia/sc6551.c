@@ -132,14 +132,18 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 }
 
 //------------------------------------------------------------------------
-// Use Heartbeat (HSYNC) to assert interrupts when data is ready
+// Use Heartbeat (HSYNC) to assert interrupts
 //------------------------------------------------------------------------
 void sc6551_ping()
 {
-    // What about receiver interupt and break ? (CmdReg bits 1..3)
-	if ((CmdReg & CmdDTR) && (InBufCnt > 0)) {
-		StatReg |= StatIRQ;
-		AssertInt(IRQ,0);
+    if (CmdReg & CmdDTR) {
+        int irupt = 0;
+        if ((InBufCnt > 0) && !(CmdReg & CmdRxI)) irupt = 1;
+        if ((OutBufFree > 4) && ((CmdReg & CmdTIRB) == TIRB_On)) irupt = 1;
+        if (irupt) {
+            AssertInt(IRQ,0);
+            StatReg |= StatIRQ;
+        }
 	}
 }
 
@@ -218,7 +222,7 @@ void sc6551_write(unsigned char data,unsigned short port)
                 sc6551_close();
             }
 
-            if (CmdReg & CmdEcho) {
+            if (CmdReg & CmdEcho) {    // not set by os9 t2 acia driver
                 com_set(LOCAL_ECHO,1);
             } else {
                 com_set(LOCAL_ECHO,0);

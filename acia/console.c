@@ -81,12 +81,14 @@ console_open() {
         HANDLE hmenu = GetSystemMenu(hwnd, FALSE);
         EnableMenuItem(hmenu, SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
 
-//      Allow quick edit and echo when in line mode
         hConIn=GetStdHandle(STD_INPUT_HANDLE);
+
+//      Allow quick edit and echo when in line mode
         mode = ENABLE_ECHO_INPUT |
                ENABLE_LINE_INPUT |
                ENABLE_QUICK_EDIT_MODE;
         SetConsoleMode(hConIn,mode);
+
         FlushConsoleInputBuffer(hConIn);
 
 //      Default to raw mode.
@@ -105,7 +107,7 @@ void console_set(int item, int val) {
     switch(item) {
     case LOCAL_ECHO:
         DWORD mode;
-        GetConsoleMode(hConIn, &mode);
+		GetConsoleMode(hConIn, &mode);
         if (val) {
             SetConsoleMode(hConIn, mode | ENABLE_ECHO_INPUT);
         } else {
