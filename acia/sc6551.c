@@ -35,16 +35,18 @@ char *PN[] = {"DAT","STA","CMD","CTL"};
 // Handles and buffers for I/O threads
 //------------------------------------------------------------------------
 
-#define IBUFSIZ 512
+#define IBUFSIZ 1024
 DWORD WINAPI sc6551_input_thread(LPVOID);
 HANDLE hInputThread;
+HANDLE hStopInput;
 char InBuf[IBUFSIZ];
 char *InBufPtr = InBuf;
 int InBufCnt = 0;
 
-#define OBUFSIZ 512
+#define OBUFSIZ 1024
 DWORD WINAPI sc6551_output_thread(LPVOID);
 HANDLE hOutputThread;
+HANDLE hStopOutput;
 char OutBuf[OBUFSIZ];
 char *OutBufPtr = OutBuf;
 int OutBufFree = 0;
@@ -62,6 +64,9 @@ void sc6551_init()
 
     // Open comunication
     com_open();
+
+    hStopInput = CreateEvent(NULL,TRUE,FALSE,NULL);
+    hStopOutput = CreateEvent(NULL,TRUE,FALSE,NULL);
 
     // Create I/O threads
     hInputThread =  CreateThread(NULL,0,sc6551_input_thread, NULL,0,&id);
@@ -85,17 +90,33 @@ void sc6551_init()
 //------------------------------------------------------------------------
 void sc6551_close()
 {
-    // Terminate I/O threads
+
+    // Terminate I/O threads.  Try to do it nicely
     if (hInputThread) {
-        TerminateThread(hInputThread,1);
-        WaitForSingleObject(hInputThread,2000);
+        SetEvent(hStopInput);
+        if (WaitForSingleObject(hInputThread,1000) == WAIT_TIMEOUT) {
+            TerminateThread(hInputThread,1);
+            WaitForSingleObject(hInputThread,2000);
+        }
+	    CloseHandle(hStopInput);
+        CloseHandle(hInputThread);
         hInputThread = NULL;
     }
+
     if (hOutputThread) {
-        TerminateThread(hOutputThread,1);
-        WaitForSingleObject(hOutputThread,2000);
+        SetEvent(hStopOutput);
+        if (WaitForSingleObject(hOutputThread,1000) == WAIT_TIMEOUT) {
+            TerminateThread(hOutputThread,1);
+            WaitForSingleObject(hOutputThread,2000);
+        }
+	    CloseHandle(hStopOutput);
+        CloseHandle(hOutputThread);
         hOutputThread = NULL;
     }
+
+    hInputThread = NULL;
+    hOutputThread = NULL;
+
     // Close communications
     com_close();
 
@@ -122,10 +143,11 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 
     while(TRUE) {
         if (SC6551_Mode == SC6551_NULREAD) {
-             *InBuf = 0; 
-             InBufPtr = InBuf+1;
-             InBufCnt = 1;
-			 Sleep(1000);
+            *InBuf = 0; 
+            InBufPtr = InBuf+1;
+            InBufCnt = 1;
+            if (WaitForSingleObject(hStopInput,1000) != WAIT_TIMEOUT)
+                ExitThread(0);
         } else {
 		    if (InBufCnt < 1) {     // Read if input buffer empty
                 InBufCnt = com_read(InBuf,IBUFSIZ);
@@ -135,7 +157,8 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 		    	}
                 InBufPtr = InBuf;
             }
-		    Sleep(50);              // Poll for buffer emptied
+            if (WaitForSingleObject(hStopInput,50) != WAIT_TIMEOUT)
+                ExitThread(0);
         }
     }
 }
@@ -150,15 +173,12 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
     int towrite = 0;
     int written = 0;
 
-#ifdef MYDBG
-    PrintLogF("sc6551 output thread %d\n",SC6551_Mode);
-#endif
-
     while(TRUE) {
         if (SC6551_Mode == SC6551_NULWRITE) {
             OutBufPtr = OutBuf;
             OutBufFree = OBUFSIZ;
-			Sleep(1000);
+            if (WaitForSingleObject(hStopOutput, 1000) != WAIT_TIMEOUT)
+                ExitThread(0);
         } else {
             ptr = OutBuf;
             while (TRUE) {
@@ -173,7 +193,10 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
             }
             OutBufPtr = OutBuf;
             OutBufFree = OBUFSIZ;
-            Sleep(50);              // Poll every 0.05 sec for output
+
+            if (WaitForSingleObject(hStopOutput, 50) != WAIT_TIMEOUT) {
+                if (OutBufFree == OBUFSIZ) ExitThread(0);
+            }
         }
     }
 }
@@ -221,7 +244,7 @@ unsigned char sc6551_read(unsigned char port)
 					StatReg &= ~StatRxF;
                 }
                 // StatTxE true if space is left in output buffer
-                if (OutBufFree > 4) {
+                if (OutBufFree > 8) {
 					StatReg |= StatTxE;
                 } else {
 					StatReg &= ~StatTxE;

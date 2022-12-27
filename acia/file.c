@@ -33,7 +33,8 @@ FILE * stream = NULL;
 
 int file_open()
 {
-    char * mode = "wt";   //TODO make user changeable
+PrintLogF("O %s\n",File_FilePath);
+    char * mode = "wb";   //TODO make user changeable
 
 	stream = fopen(File_FilePath,mode);
 	if (stream) {
@@ -45,6 +46,7 @@ int file_open()
 
 void file_close()
 {
+PrintLogF("C %s\n",File_FilePath);
     if(stream) fclose(stream); 
 	stream = NULL;
 }
@@ -61,16 +63,25 @@ int file_read(char* buf,int siz)
 }
 
 // Write file.  If text convert CR to CRLF
+// TODO make text/bin mode user changeable
+
 int  file_write(char* buf,int siz)
 {
-    int count;
+    int count = 0;
     if (stream) {
-        // if text convert CR to LF TODO make user changeable
-        for (int n=0; n<siz; n++) if (buf[n] == '\r') buf[n] = '\n';
-        count = fwrite(buf,1,siz,stream);
+        for (int n=0; n<siz; n++) {
+            count++;
+            fputc(buf[n],stream);
+            // if text convert CR to CRLF.
+            if (buf[n] == '\r') fputc('\n',stream);
+        }
+       // count = fwrite(buf,1,siz,stream);
     } else {
         count = 0;
     }
+
+PrintLogF("W %d %d\n",siz,count);
+
     return count;
 }
 
