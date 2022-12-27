@@ -18,6 +18,18 @@ VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 
 #include "acia.h"
 #include "sc6551.h"
+#include "logger.h"
+
+#undef MYDBG
+
+#ifdef MYDBG
+#define BP "%c%c%c%c%c%c%c%c"
+#define BB(i) (i & 0x80 ? '1' : '0'), (i & 0x40 ? '1' : '0'), \
+              (i & 0x20 ? '1' : '0'), (i & 0x10 ? '1' : '0'), \
+              (i & 0x08 ? '1' : '0'), (i & 0x04 ? '1' : '0'), \
+              (i & 0x02 ? '1' : '0'), (i & 0x01 ? '1' : '0')
+char *PN[] = {"DAT","STA","CMD","CTL"};
+#endif
 
 //------------------------------------------------------------------------
 // Handles and buffers for I/O threads
@@ -37,6 +49,8 @@ char OutBuf[OBUFSIZ];
 char *OutBufPtr = OutBuf;
 int OutBufFree = 0;
 
+int sc6551_initialized = 0;
+
 //------------------------------------------------------------------------
 //  Initiallize sc6551. This gets called when DTR is set
 //------------------------------------------------------------------------
@@ -46,8 +60,7 @@ void sc6551_init()
 
     if (sc6551_initialized ) return;
 
-    // Close any previous instance then open communications
-    sc6551_close();
+    // Open comunication
     com_open();
 
     // Create I/O threads
@@ -60,6 +73,11 @@ void sc6551_init()
     OutBufFree = OBUFSIZ;
     OutBufPtr = OutBuf;
     sc6551_initialized = 1;
+
+#ifdef MYDBG
+    PrintLogF("sc6551 initialized\n");
+#endif
+
 }
 
 //------------------------------------------------------------------------
@@ -82,24 +100,43 @@ void sc6551_close()
     com_close();
 
     sc6551_initialized = 0;
+#ifdef MYDBG
+    PrintLogF("sc6551 closed\n");
+#endif
 }
 
 //------------------------------------------------------------------------
 // Input thread loads the input buffer
 //------------------------------------------------------------------------
 
+// SC6551_Mode = SC6551_NULREAD;
+// SC6551_Mode = SC6551_NULWRITE;
+// SC6551_Mode = SC6551_DUPLEX;
+
 DWORD WINAPI sc6551_input_thread(LPVOID param)
 {
+
+#ifdef MYDBG
+    PrintLogF("sc6551 input thread %d\n",SC6551_Mode);
+#endif
+
     while(TRUE) {
-		if (InBufCnt < 1) {     // Read if input buffer empty
-            InBufCnt = com_read(InBuf,IBUFSIZ);
-        	if (InBufCnt < 0) {
-				Sleep(1000);    //TODO Handle com read error
-				InBufCnt = 0;
-			}
-            InBufPtr = InBuf;
+        if (SC6551_Mode == SC6551_NULREAD) {
+             *InBuf = 0; 
+             InBufPtr = InBuf+1;
+             InBufCnt = 1;
+			 Sleep(1000);
+        } else {
+		    if (InBufCnt < 1) {     // Read if input buffer empty
+                InBufCnt = com_read(InBuf,IBUFSIZ);
+        	    if (InBufCnt < 0) {
+				    Sleep(1000);    //TODO Handle com read error
+				    InBufCnt = 0;
+		    	}
+                InBufPtr = InBuf;
+            }
+		    Sleep(50);              // Poll for buffer emptied
         }
-		Sleep(50);              // Poll for buffer emptied
     }
 }
 
@@ -113,21 +150,31 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
     int towrite = 0;
     int written = 0;
 
+#ifdef MYDBG
+    PrintLogF("sc6551 output thread %d\n",SC6551_Mode);
+#endif
+
     while(TRUE) {
-        ptr = OutBuf;
-        while (TRUE) {
-            towrite = OutBufPtr - ptr;
-            if (towrite < 1) break;
-            written = com_write(ptr,towrite);
-            if (written < 1) {
-                break;         // TODO handle com write error
-            } else {
-                ptr = ptr + written;
+        if (SC6551_Mode == SC6551_NULWRITE) {
+            OutBufPtr = OutBuf;
+            OutBufFree = OBUFSIZ;
+			Sleep(1000);
+        } else {
+            ptr = OutBuf;
+            while (TRUE) {
+                towrite = OutBufPtr - ptr;
+                if (towrite < 1) break;
+                written = com_write(ptr,towrite);
+                if (written < 1) {
+                    break;         // TODO handle com write error
+                } else {
+                    ptr = ptr + written;
+                }
             }
+            OutBufPtr = OutBuf;
+            OutBufFree = OBUFSIZ;
+            Sleep(50);              // Poll every 0.05 sec for output
         }
-        OutBufPtr = OutBuf;
-        OutBufFree = OBUFSIZ;
-        Sleep(50);              // Poll every 0.05 sec for output
     }
 }
 
@@ -157,7 +204,11 @@ unsigned char sc6551_read(unsigned char port)
 
         // Read input data
         case 0x68:
-            if (InBufCnt-- > 0) data = *InBufPtr++;
+            data = *InBufPtr;
+            if (InBufCnt > 0) {
+                *InBufPtr++;
+				InBufCnt--;
+            }
             break;
 
         // Read status register
@@ -191,7 +242,18 @@ unsigned char sc6551_read(unsigned char port)
         case 0x6B:
             data = CtlReg;
             break;
+
+        default:
+            data = 0;
     }
+
+#ifdef MYDBG
+    if ((port > 0x67) && (port < 0x6C)) {
+        PrintLogF("r %s %02x " BP "\n",
+                    PN[port-0x68], data, BB(data));
+    }
+#endif
+
     return data;
 }
 
@@ -201,6 +263,15 @@ unsigned char sc6551_read(unsigned char port)
 
 void sc6551_write(unsigned char data,unsigned short port)
 {
+
+#ifdef MYDBG
+    if ((port > 0x67) && (port < 0x6C)) {
+        PrintLogF("w %s %02x " BP "\n",
+                    PN[port-0x68], data, BB(data));
+    }
+    
+#endif
+
     switch (port) {
 
         // Write data
@@ -236,4 +307,3 @@ void sc6551_write(unsigned char data,unsigned short port)
             break;
     }
 }
-

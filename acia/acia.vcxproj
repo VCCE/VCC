@@ -159,9 +159,11 @@
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeaderOutputFile>
     </ClCompile>
+    <ClCompile Include="logger.c" />
     <ClCompile Include="wincmd.c" />
     <ClCompile Include="console.c" />
     <ClCompile Include="sc6551.c" />
+    <ClCompile Include="file.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="acia.rc" />

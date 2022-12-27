@@ -17,6 +17,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "acia.h"
 #include "sc6551.h"
+#include "logger.h"
 
 //------------------------------------------------------------------------
 // Functions
@@ -48,10 +49,15 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
     if (reason == DLL_PROCESS_ATTACH) {
         g_hDLL = hinst;
-        sc6551_initialized = 0;
         AciaStat[0]='\0';
+#ifdef MYDBG
+        PrintLogF("Acia DLL attach\n");
+#endif
     } else if (reason == DLL_PROCESS_DETACH) {
         sc6551_close();
+#ifdef MYDBG
+        PrintLogF("Acia DLL attach\n");
+#endif
     }
     return TRUE;
 }
@@ -156,6 +162,22 @@ void LoadConfig(void)
     AciaTcpPort = GetPrivateProfileInt(IniSect,"AciaTcpPort",1024,IniFile);
     AciaComPort = GetPrivateProfileInt(IniSect,"AciaComPort",1,IniFile);
     sprintf(AciaStat,"Acia %d %d",AciaComType,AciaComPort);
+
+        switch (AciaComType) {
+        case COM_CONSOLE: // console
+            SC6551_Mode = SC6551_DUPLEX;
+            break;
+        case COM_FILE:
+            SC6551_Mode = SC6551_NULREAD;
+			strcpy(File_FilePath,"TestFile.txt");
+            break;
+        case COM_TCPIP: // tcpip
+            SC6551_Mode = SC6551_DUPLEX;
+            break;
+        case COM_WINCOM: // COMx
+            SC6551_Mode = SC6551_DUPLEX;
+            break;
+        }
 }
 
 //-----------------------------------------------------------------------
@@ -190,17 +212,30 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
         DWORD y = (rScr.bottom - rScr.top - rDlg.bottom + rDlg.top)/2;
         SetWindowPos(hDlg, HWND_TOP, x, y, 0, 0, SWP_NOSIZE);
 
+//    COM_CONSOLE,  //0
+//    COM_FILE,     //1
+//    COM_TCPIP,    //2
+//    COM_WINCOM,   //3
+//    COM_WINCMD    //4
+
         // Fill in current values
         SetDlgItemInt(hDlg,IDC_TYPE,AciaComType,FALSE);
         switch (AciaComType) {
-        case 0: // console
+        case COM_CONSOLE: // console
             SetDlgItemInt(hDlg,IDC_PORT,0,FALSE);
+            SC6551_Mode = SC6551_DUPLEX;
             break;
-        case 1: // tcpip
+        case COM_FILE:
+            SC6551_Mode = SC6551_NULREAD;
+			strcpy(File_FilePath,"TestFile.txt");
+            break;
+        case COM_TCPIP: // tcpip
             SetDlgItemInt(hDlg,IDC_PORT,AciaTcpPort,FALSE);
+            SC6551_Mode = SC6551_DUPLEX;
             break;
-        case 2: // COMx
+        case COM_WINCOM: // COMx
             SetDlgItemInt(hDlg,IDC_PORT,AciaComPort,FALSE);
+            SC6551_Mode = SC6551_DUPLEX;
             break;
         }
         return TRUE;
@@ -212,9 +247,12 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             int type = GetDlgItemInt(hDlg,IDC_TYPE,NULL,FALSE);
             int port = GetDlgItemInt(hDlg,IDC_PORT,NULL,FALSE);
             switch (type) {
-            case 0: // console
+            case COM_CONSOLE: // console
                 break;
-            case 1: // tcpip
+            case COM_FILE:
+                SC6551_Mode = SC6551_NULREAD;
+                break;
+            case COM_TCPIP: // tcpip
                 if ((port < 1024) || (port > 65536)) {
                     MessageBox(hDlg,"TCP Port must be 1024 thru 65536","Error",
                                 MB_OK | MB_ICONEXCLAMATION);
@@ -222,7 +260,7 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
                 }
                 AciaTcpPort = port;
                 break;
-            case 2: // COMx
+            case COM_WINCOM: // COMx
                 if ((port < 1) || (port > 10)) {
                     MessageBox(hDlg,"COM# must be 1 thru 10","Error",
                                 MB_OK | MB_ICONEXCLAMATION);
@@ -231,7 +269,7 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
                 AciaComPort = port;
                 break;
             default:
-                MessageBox(hDlg,"Type must be 0, 1, or 2","Error",
+                MessageBox(hDlg,"Invalid Type","Error",
                            MB_OK | MB_ICONEXCLAMATION);
                 return TRUE;
             }
@@ -256,24 +294,33 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
 // Dispatch I/0 to communication type used.
 //----------------------------------------------------------------
 
-// Open com
-void com_open() {
+//	COM_CONSOLE 0
+//	COM_FILE    1
+//	COM_TCPIP   2
+//	COM_WINCOM  3
+//	COM_WINCMD  4
+
+int com_open() {
     switch (AciaComType) {
-    case 0: // Legacy Console
-        console_open();
-        break;
-    case 1:
-        wincmd_open();
-        break;
+    case COM_CONSOLE:
+        return console_open();
+    case COM_FILE:
+        return file_open();
+    case COM_WINCMD:
+        return wincmd_open();
     }
+    return 0;
 }
 
 void com_close() {
     switch (AciaComType) {
-    case 0: // Console
+    case COM_CONSOLE:
         console_close();
         break;
-    case 1:
+    case COM_FILE:
+		file_close();
+        break;
+    case COM_WINCMD:
         wincmd_close();
         break;
     }
@@ -281,11 +328,8 @@ void com_close() {
 
 void com_set(int item, int val) {
     switch (AciaComType) {
-    case 0: // Console
+    case COM_CONSOLE: // Console
         console_set(item,val);
-        break;
-    case 1:
-        wincmd_set(item,val);
         break;
     }
 }
@@ -293,9 +337,11 @@ void com_set(int item, int val) {
 // com_write is assumed to block until some data is written
 int com_write(char * buf, int len) {
     switch (AciaComType) {
-    case 0: // Legacy Console
+    case COM_CONSOLE:
         return console_write(buf,len);
-    case 1:
+    case COM_FILE:
+        return file_write(buf,len);
+    case COM_WINCMD:
         return wincmd_write(buf,len);
     }
     return 0;
@@ -304,9 +350,11 @@ int com_write(char * buf, int len) {
 // com_read is assumed to block until some data is read
 int com_read(char * buf,int len) {  // returns bytes read
     switch (AciaComType) {
-    case 0: // Legacy Console
+    case COM_CONSOLE:
         return console_read(buf,len);
-    case 1:
+    case COM_FILE:
+        return file_read(buf,len);
+    case COM_WINCMD:
         return wincmd_read(buf,len);
     }
     return 0;

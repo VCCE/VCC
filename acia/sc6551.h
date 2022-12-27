@@ -24,9 +24,9 @@ void sc6551_write(unsigned char data, unsigned short port);
 void (*AssertInt)(unsigned char,unsigned char);
 
 // sc6551 status
-int sc6551_initialized; // initilization state
+////int sc6551_initialized; // initilization state
 
-// Status Register
+// Status Register (69)
 unsigned char StatReg;
 // Status register bits.
 // b0 Par Rx parity error
@@ -46,7 +46,7 @@ unsigned char StatReg;
 #define StatDSR  0x40
 #define StatIRQ  0x80
 
-// Command register
+// Command register (6A)
 unsigned char CmdReg;
 // Command register bits.
 // b0   DTR Enable receive and interupts
@@ -68,7 +68,7 @@ unsigned char CmdReg;
 #define TIRB_RTS  0x08
 #define TIRB_Brk  0x0C
 
-// Control Register
+// Control Register (6B)
 unsigned char CtlReg;
 // b0-3 Baud rate
 //		{ X,60,75,110,135,150,300,600,1200,

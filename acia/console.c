@@ -66,7 +66,7 @@ int color_tbl[8] = {0xF,0x1,0x0,0X2,0xC,0xE,0xD,0xB};
 // Open Console
 //----------------------------------------------------------------
 
-void
+int
 console_open() {
         DWORD mode;
 
@@ -96,6 +96,8 @@ console_open() {
 
         hConOut=GetStdHandle(STD_OUTPUT_HANDLE);
         SetConsoleTitle("VCC Console");
+
+        return 0;
 }
 
 //------------------------------------------------------------------

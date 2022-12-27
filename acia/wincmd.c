@@ -30,9 +30,9 @@ PROCESS_INFORMATION pi = {0};
 int CmdIsOpen=0;
 int ReadingCmdOut=0;
 
-void wincmd_open()
+int wincmd_open()
 {
-    if (CmdIsOpen) return;
+    if (CmdIsOpen) return 0;
 //  Create pipes for child
     STARTUPINFO si = {0};
     SECURITY_ATTRIBUTES saAttr;
@@ -54,12 +54,14 @@ void wincmd_open()
     si.dwFlags |= STARTF_USESTDHANDLES;
     int rc=CreateProcess( NULL,"cmd /q /d /a",NULL,NULL,
                           TRUE,CREATE_NO_WINDOW,NULL,NULL, &si, &pi);
-WaitForInputIdle(pi.hProcess,5000);
+
+    WaitForInputIdle(pi.hProcess,5000);
     CloseHandle(hChildOutW);
     CloseHandle(hChildInR);
     ReadingCmdOut=0;
     CmdIsOpen=1;
     sprintf(AciaStat,"WinCmd%d",rc);
+    return 0;
 }
 
 void wincmd_close()

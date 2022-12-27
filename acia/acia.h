@@ -29,11 +29,28 @@ This file is part of VCC (Virtual Color Computer).
 #include "resource.h"
 
 // Comunications hooks
-void com_open();
+int  com_open();
 void com_close();
 void com_set(int,int);
 int  com_write(char*,int);
 int  com_read(char*,int);
+
+// Communications types
+enum comtype {
+    COM_CONSOLE,  //0
+    COM_FILE,     //1
+    COM_TCPIP,    //2
+    COM_WINCOM,   //3
+    COM_WINCMD    //4
+};
+
+// acia I/O mode 
+enum sc6551_mode {
+    SC6551_DUPLEX,     
+    SC6551_NULREAD,  // Read always returns 0
+    SC6551_NULWRITE  // Writes go to NUL
+};
+int SC6551_Mode;
 
 // Items for com_set
 enum set_item {
@@ -41,7 +58,7 @@ enum set_item {
 };
 
 // Console I/O
-void console_open();
+int  console_open();
 void console_close();
 void console_set(int,int);
 int  console_read(char* buf,int siz);
@@ -49,8 +66,16 @@ int  console_write(char* buf,int siz);
 
 int  ConsoleLineInput;  // Console mode Normal: 0; Line mode: 1
 
+// File I/O
+int  file_open();
+void file_close();
+int  file_read(char* buf,int siz);
+int  file_write(char* buf,int siz);
+
+char File_FilePath[MAX_PATH];
+
 // cmd I/O
-void wincmd_open();
+int  wincmd_open();
 void wincmd_close();
 void wincmd_set(int,int);
 int  wincmd_read(char* buf,int siz);
