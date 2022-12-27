@@ -324,7 +324,13 @@ unsigned char ReadIniFile(void)
 	if (CurrentConfig.KeyMap>3)
 		CurrentConfig.KeyMap=0;	//Default to DECB Mapping
 
-	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(GetKeyMapFilePath());
+	GetPrivateProfileString("Misc","CustomKeyMapFile","",KeyMapFilePath,MAX_PATH,IniFilePath);
+	if (*KeyMapFilePath == '\0') {
+		strcpy(KeyMapFilePath, AppDataPath);
+		strcat(KeyMapFilePath, "\\");
+		strcat(KeyMapFilePath, "custom.keymap");
+	}
+	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFilePath);
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
 	CheckPath(CurrentConfig.ModulePath);
@@ -352,15 +358,6 @@ unsigned char ReadIniFile(void)
 	GetPrivateProfileString("DefaultPaths", "CassPath", "", CurrentConfig.CassPath, MAX_PATH, IniFilePath);
 	GetPrivateProfileString("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH, IniFilePath);
 	GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "", CurrentConfig.COCO3ROMPath, MAX_PATH, IniFilePath);
-
-//  Establish custom keymap file path
-	GetPrivateProfileString("Misc","CustomKeyMapFile","",KeyMapFilePath,MAX_PATH,IniFilePath);
-	if (*KeyMapFilePath == '\0') {
-	    strcpy(KeyMapFilePath, AppDataPath);
-		strcat(KeyMapFilePath, "\\");
-		strcat(KeyMapFilePath, "custom.keymap");
-	}
-
 
 	for (Index = 0; Index < NumberOfSoundCards; Index++)
 	{
