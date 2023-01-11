@@ -1,20 +1,22 @@
-/*
-Copyright E J Jaquay 2022
-This file is part of VCC (Virtual Color Computer).
-
-VCC (Virtual Color Computer) is free software: you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation, either version 3 of the License,
-or (at your option) any later version.
-
-VCC (Virtual Color Computer) is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with
-VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
+//------------------------------------------------------------------
+// Copyright E J Jaquay 2022
+//
+// This file is part of VCC (Virtual Color Computer).
+//
+// VCC (Virtual Color Computer) is free software: you can redistribute it
+// and/or modify it under the terms of the GNU General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will be
+// useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+// See the GNU General Public License for more details.  You should have
+// received a copy of the GNU General Public License  along with VCC 
+// (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
+//
+//------------------------------------------------------------------
 
 #include "acia.h"
 #include "sc6551.h"
@@ -35,7 +37,7 @@ char *PN[] = {"DAT","STA","CMD","CTL"};
 // Handles and buffers for I/O threads
 //------------------------------------------------------------------------
 
-#define IBUFSIZ 1024
+#define IBUFSIZ 512 //1024
 DWORD WINAPI sc6551_input_thread(LPVOID);
 HANDLE hInputThread;
 HANDLE hStopInput;
@@ -43,7 +45,7 @@ char InBuf[IBUFSIZ];
 char *InBufPtr = InBuf;
 int InBufCnt = 0;
 
-#define OBUFSIZ 1024
+#define OBUFSIZ 1032
 DWORD WINAPI sc6551_output_thread(LPVOID);
 HANDLE hOutputThread;
 HANDLE hStopOutput;
@@ -54,95 +56,78 @@ int OutBufFree = 0;
 int sc6551_initialized = 0;
 
 //------------------------------------------------------------------------
-//  Initiallize sc6551. This gets called when DTR is set
+//  Nicely terminate an I/O thread
+//------------------------------------------------------------------------
+void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop)
+{
+    if (hthread) {
+        // Tell thread to exit
+        SetEvent(hstop);
+        // If that fails terminate it
+        if (WaitForSingleObject(hthread,500) == WAIT_TIMEOUT) {
+            TerminateThread(hthread,1);
+            WaitForSingleObject(hthread,500);
+        }
+	    CloseHandle(hthread);
+        CloseHandle(hstop);
+        hthread = NULL;
+    }
+} 
+
+//------------------------------------------------------------------------
+//  Initiallize sc6551.  This gets called when DTR is raised. 
 //------------------------------------------------------------------------
 void sc6551_init()
 {
     DWORD id;
 
-    if (sc6551_initialized ) return;
-
+    if (sc6551_initialized==1) { PrintLogF("6551 already init\n"); return; } 
+PrintLogF("\n");
     // Open comunication
     com_open();
-
-    hStopInput = CreateEvent(NULL,TRUE,FALSE,NULL);
-    hStopOutput = CreateEvent(NULL,TRUE,FALSE,NULL);
 
     // Create I/O threads
     hInputThread =  CreateThread(NULL,0,sc6551_input_thread, NULL,0,&id);
     hOutputThread = CreateThread(NULL,0,sc6551_output_thread,NULL,0,&id);
 
-    // Clear status register and flush input buffer
+    // Create events to terminate them
+    hStopInput = CreateEvent(NULL,TRUE,FALSE,NULL);
+    hStopOutput = CreateEvent(NULL,TRUE,FALSE,NULL);
+
+    // Clear status register and mark buffers empty
     InBufCnt = 0;
     InBufPtr = InBuf;
     OutBufFree = OBUFSIZ;
     OutBufPtr = OutBuf;
     sc6551_initialized = 1;
 
-#ifdef MYDBG
-    PrintLogF("sc6551 initialized\n");
-#endif
-
+PrintLogF("6551 init type:%d iport:%d cport:%d iomode:%d file:%s\n",
+    AciaComType, AciaTcpPort, AciaComPort, AciaFileMode, AciaFilePath);
 }
 
 //------------------------------------------------------------------------
-//  Close sc6551.  This gets called when DTR is cleared
+//  Close sc6551. This gets called when DTR is cleared
 //------------------------------------------------------------------------
 void sc6551_close()
 {
-
-    // Terminate I/O threads.  Try to do it nicely
-    if (hInputThread) {
-        SetEvent(hStopInput);
-        if (WaitForSingleObject(hInputThread,1000) == WAIT_TIMEOUT) {
-            TerminateThread(hInputThread,1);
-            WaitForSingleObject(hInputThread,2000);
-        }
-	    CloseHandle(hStopInput);
-        CloseHandle(hInputThread);
-        hInputThread = NULL;
-    }
-
-    if (hOutputThread) {
-        SetEvent(hStopOutput);
-        if (WaitForSingleObject(hOutputThread,1000) == WAIT_TIMEOUT) {
-            TerminateThread(hOutputThread,1);
-            WaitForSingleObject(hOutputThread,2000);
-        }
-	    CloseHandle(hStopOutput);
-        CloseHandle(hOutputThread);
-        hOutputThread = NULL;
-    }
-
-    hInputThread = NULL;
-    hOutputThread = NULL;
-
-    // Close communications
+	sc6551_terminate_thread(hInputThread, hStopInput);
+	sc6551_terminate_thread(hOutputThread, hStopOutput);
     com_close();
-
     sc6551_initialized = 0;
-#ifdef MYDBG
-    PrintLogF("sc6551 closed\n");
-#endif
 }
 
 //------------------------------------------------------------------------
 // Input thread loads the input buffer
 //------------------------------------------------------------------------
 
-// SC6551_Mode = SC6551_NULREAD;
-// SC6551_Mode = SC6551_NULWRITE;
-// SC6551_Mode = SC6551_DUPLEX;
-
 DWORD WINAPI sc6551_input_thread(LPVOID param)
 {
 
-#ifdef MYDBG
-    PrintLogF("sc6551 input thread %d\n",SC6551_Mode);
-#endif
+PrintLogF("6551 input thread %d\n",AciaFileMode);
 
     while(TRUE) {
-        if (SC6551_Mode == SC6551_NULREAD) {
+        // If Write Mode reads return null characters
+        if (AciaFileMode == FILE_WRITE) {
             *InBuf = 0; 
             InBufPtr = InBuf+1;
             InBufCnt = 1;
@@ -152,6 +137,7 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 		    if (InBufCnt < 1) {     // Read if input buffer empty
                 InBufCnt = com_read(InBuf,IBUFSIZ);
         	    if (InBufCnt < 0) {
+PrintLogF("6551 Read ERROR");
 				    Sleep(1000);    //TODO Handle com read error
 				    InBufCnt = 0;
 		    	}
@@ -169,12 +155,16 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 
 DWORD WINAPI sc6551_output_thread(LPVOID param)
 {
+
+PrintLogF("6551 output thread %d\n",AciaFileMode);
+
     char * ptr;
     int towrite = 0;
     int written = 0;
 
     while(TRUE) {
-        if (SC6551_Mode == SC6551_NULWRITE) {
+        // If Read Mode writes go to the bit bucket 
+        if (AciaFileMode == FILE_READ) {
             OutBufPtr = OutBuf;
             OutBufFree = OBUFSIZ;
             if (WaitForSingleObject(hStopOutput, 1000) != WAIT_TIMEOUT)
@@ -186,6 +176,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
                 if (towrite < 1) break;
                 written = com_write(ptr,towrite);
                 if (written < 1) {
+PrintLogF("6551 Write ERROR");
                     break;         // TODO handle com write error
                 } else {
                     ptr = ptr + written;
@@ -232,6 +223,9 @@ unsigned char sc6551_read(unsigned char port)
                 *InBufPtr++;
 				InBufCnt--;
             }
+
+PrintLogF("%02x ",data);
+
             break;
 
         // Read status register
@@ -311,9 +305,9 @@ void sc6551_write(unsigned char data,unsigned short port)
         case 0x6A:
             CmdReg = data;
             if (CmdReg & CmdDTR) {
-                sc6551_init();
+                if (sc6551_initialized != 1) sc6551_init();
             } else {
-                sc6551_close();
+                if (sc6551_initialized == 1) sc6551_close();
             }
 
             if (CmdReg & CmdEcho) {    // not set by os9 t2 acia driver

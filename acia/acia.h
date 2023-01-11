@@ -1,19 +1,22 @@
-/*
-Copyright E J Jaquay 2022
-This file is part of VCC (Virtual Color Computer).
-    VCC (Virtual Color Computer) is free software: you can redistribute it
-    and/or modify it under the terms of the GNU General Public License as
-    published by the Free Software Foundation, either version 3 of the License,
-    or (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
+//------------------------------------------------------------------
+// Copyright E J Jaquay 2022
+//
+// This file is part of VCC (Virtual Color Computer).
+//
+// VCC (Virtual Color Computer) is free software: you can redistribute it
+// and/or modify it under the terms of the GNU General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will be
+// useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+// See the GNU General Public License for more details.  You should have
+// received a copy of the GNU General Public License  along with VCC 
+// (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
+//
+//------------------------------------------------------------------
 
 #ifndef __ACIA_H_
 #define __ACIA_H_
@@ -23,6 +26,7 @@ This file is part of VCC (Virtual Color Computer).
 #define MAX_LOADSTRING 200
 
 #include <windows.h>
+#include <windowsx.h> 
 #include <stdio.h>
 #include <conio.h>
 #include <dinput.h>
@@ -40,17 +44,18 @@ enum comtype {
     COM_CONSOLE,  //0
     COM_FILE,     //1
     COM_TCPIP,    //2
-    COM_WINCOM,   //3
-    COM_WINCMD    //4
+    COM_WINCOM    //3
 };
 
-// acia I/O mode 
-enum sc6551_mode {
-    SC6551_DUPLEX,     
-    SC6551_NULREAD,  // Read always returns 0
-    SC6551_NULWRITE  // Writes go to NUL
+// File mode
+enum file_mode {
+    FILE_NONE,   //0
+    FILE_READ,   //1
+    FILE_WRITE,  //2
 };
-int SC6551_Mode;
+int AciaFileMode;
+
+int AciaTextMode; // 0=binary I/O, 1=text I/O
 
 // Items for com_set
 enum set_item {
@@ -72,7 +77,7 @@ void file_close();
 int  file_read(char* buf,int siz);
 int  file_write(char* buf,int siz);
 
-char File_FilePath[MAX_PATH];
+char AciaFilePath[MAX_PATH];
 
 // cmd I/O
 int  wincmd_open();
