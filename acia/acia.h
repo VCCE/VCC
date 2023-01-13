@@ -35,7 +35,7 @@
 // Comunications hooks
 int  com_open();
 void com_close();
-void com_set(int,int);
+//void com_set(int,int);
 int  com_write(char*,int);
 int  com_read(char*,int);
 
@@ -47,25 +47,35 @@ enum comtype {
     COM_WINCOM    //3
 };
 
-// File mode
-enum file_mode {
-    FILE_NONE,   //0
-    FILE_READ,   //1
-    FILE_WRITE,  //2
+/*
+// Communications status
+enum comstate {
+	COM_STATE_NUL,
+	COM_STATE_RDY,
+	COM_STATE_ERR
 };
-int AciaFileMode;
+int AciaComState;
+*/
+
+// File mode
+enum com_mode {
+    COM_MODE_DUPLEX,
+    COM_MODE_READ,
+    COM_MODE_WRITE,
+};
+int AciaComMode;
 
 int AciaTextMode; // 0=binary I/O, 1=text I/O
 
 // Items for com_set
-enum set_item {
-    LOCAL_ECHO
-};
+//enum set_item {
+//    LOCAL_ECHO
+//};
 
 // Console I/O
 int  console_open();
 void console_close();
-void console_set(int,int);
+//void console_set(int,int);
 int  console_read(char* buf,int siz);
 int  console_write(char* buf,int siz);
 
@@ -82,7 +92,7 @@ char AciaFilePath[MAX_PATH];
 // cmd I/O
 int  wincmd_open();
 void wincmd_close();
-void wincmd_set(int,int);
+//void wincmd_set(int,int);
 int  wincmd_read(char* buf,int siz);
 int  wincmd_write(char* buf,int siz);
 

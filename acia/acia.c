@@ -68,7 +68,7 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 __declspec(dllexport) void
 ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
 {
-PrintLogF("Acia DLL register\n");
+//PrintLogF("Acia DLL register\n");
     LoadString(g_hDLL,IDS_MODULE_NAME,ModName,MAX_LOADSTRING);
     LoadString(g_hDLL,IDS_CATNUMBER,CatNumber,MAX_LOADSTRING);
     DynamicMenuCallback = Temp;
@@ -97,11 +97,11 @@ PackPortRead(unsigned char Port)
 }
 
 //-----------------------------------------------------------------------
-// Dll export Heartbeat (Called right after HSYNC) 
+// Dll export Heartbeat (HSYNC) 
 //-----------------------------------------------------------------------
 __declspec(dllexport) void HeartBeat(void)
 {
-    sc6551_ping();
+    sc6551_heartbeat();
 	return;
 }
 
@@ -138,7 +138,7 @@ __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 //-----------------------------------------------------------------------
 __declspec(dllexport) void SetIniPath (char *IniFilePath)
 {
-PrintLogF("Acia load config from %s\n",IniFilePath);
+//PrintLogF("Acia load config from %s\n",IniFilePath);
     strcpy(IniFile,IniFilePath);
     LoadConfig();
     return;
@@ -160,8 +160,10 @@ void BuildDynaMenu(void)
 //----------------------------------------------------------------------
 void LoadConfig(void)
 {
-    AciaComType=GetPrivateProfileInt("Acia","AciaComType",COM_CONSOLE,IniFile);
-    AciaFileMode=GetPrivateProfileInt("Acia","AciaFileMode",FILE_NONE,IniFile);
+    AciaComType=GetPrivateProfileInt("Acia","AciaComType",
+			                         COM_CONSOLE,IniFile);
+    AciaComMode=GetPrivateProfileInt("Acia","AciaComMode",
+			                         COM_MODE_DUPLEX,IniFile);
     AciaTcpPort=GetPrivateProfileInt("Acia","AciaTcpPort",1024,IniFile);
     AciaComPort=GetPrivateProfileInt("Acia","AciaComPort",1,IniFile);
     AciaTextMode=GetPrivateProfileInt("Acia","AciaTextMode",0,IniFile);
@@ -169,7 +171,8 @@ void LoadConfig(void)
 							AciaFilePath, MAX_PATH,IniFile);
 
     // String for Vcc status line
-    sprintf(AciaStat,"Acia %s %s",ComTypeTxt[AciaComType],IOModeTxt[AciaFileMode]);
+    sprintf(AciaStat,"Acia %s %s",
+			ComTypeTxt[AciaComType],IOModeTxt[AciaComMode]);
 }
 
 //-----------------------------------------------------------------------
@@ -178,15 +181,15 @@ void LoadConfig(void)
 void SaveConfig(void)
 {
 
-PrintLogF("SaveConfig ty:%d cp:%d tp:%d tm:%d fi:%s\n",
-			AciaComType,AciaComPort,AciaTcpPort,
-            AciaTextMode,AciaFilePath);
+//PrintLogF("SaveConfig ty:%d cp:%d tp:%d tm:%d fi:%s\n",
+//			AciaComType,AciaComPort,AciaTcpPort,
+//            AciaTextMode,AciaFilePath);
 
     char txt[16];
     sprintf(txt,"%d",AciaComType);
     WritePrivateProfileString("Acia","AciaComType",txt,IniFile);
-    sprintf(txt,"%d",AciaFileMode);
-    WritePrivateProfileString("Acia","AciaFileMode",txt,IniFile);
+    sprintf(txt,"%d",AciaComMode);
+    WritePrivateProfileString("Acia","AciaComMode",txt,IniFile);
     sprintf(txt,"%d",AciaTcpPort);
     WritePrivateProfileString("Acia","AciaTcpPort",txt,IniFile);
     sprintf(txt,"%d",AciaComPort);
@@ -226,11 +229,11 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
         switch (AciaComType) {
 
         case COM_FILE:
-            if (AciaFileMode == FILE_READ) {
+            if (AciaComMode == COM_MODE_READ) {
                 button = IDC_T_FILE_R;
             } else {
                 // If file mode default to write
-                AciaFileMode = FILE_WRITE;
+                AciaComMode = COM_MODE_WRITE;
                 button = IDC_T_FILE_W;
             }
             SetDlgItemText(hDlg,IDC_FILE,AciaFilePath);
@@ -265,11 +268,11 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
 
         // String for Vcc status line
         sprintf(AciaStat,"Acia %s %s",
-                         ComTypeTxt[AciaComType],IOModeTxt[AciaFileMode]);
+                         ComTypeTxt[AciaComType],IOModeTxt[AciaComMode]);
 
-PrintLogF("INITDIALOG ty:%d cp:%d tp:%d tm:%d fm:%d fi:%s\n",
-			AciaComType,AciaComPort,AciaTcpPort,
-            AciaTextMode,AciaFileMode,AciaFilePath);
+//PrintLogF("INITDIALOG ty:%d cp:%d tp:%d tm:%d fm:%d fi:%s\n",
+//			AciaComType,AciaComPort,AciaTcpPort,
+//            AciaTextMode,AciaComMode,AciaFilePath);
 
         return TRUE;
         break;
@@ -281,42 +284,41 @@ PrintLogF("INITDIALOG ty:%d cp:%d tp:%d tm:%d fm:%d fi:%s\n",
         switch (button) {
         case IDC_T_CONS:
             AciaComType  = COM_CONSOLE;
-            AciaFileMode = FILE_NONE;
+            AciaComMode = COM_MODE_DUPLEX;
             SetDlgItemText(hDlg,IDC_FILE,"");
             SetDlgItemText(hDlg,IDC_PORT,"");
             break;
 
         case IDC_T_FILE_R:
             AciaComType  = COM_FILE;
-            AciaFileMode = FILE_READ;
+            AciaComMode = COM_MODE_READ;
             SetDlgItemText(hDlg,IDC_FILE,AciaFilePath);
             SetDlgItemText(hDlg,IDC_PORT,"");
             break;
 
         case IDC_T_FILE_W:
             AciaComType  = COM_FILE;
-            AciaFileMode = FILE_WRITE;
+            AciaComMode = COM_MODE_WRITE;
             SetDlgItemText(hDlg,IDC_FILE,AciaFilePath);
             SetDlgItemText(hDlg,IDC_PORT,"");
             break;
 
         case IDC_T_TCP: // tcpip
             AciaComType = COM_TCPIP;
-            AciaFileMode = FILE_NONE;
+            AciaComMode = COM_MODE_DUPLEX;
             SetDlgItemText(hDlg,IDC_FILE,"");
             SetDlgItemInt(hDlg,IDC_PORT,AciaTcpPort,FALSE);
             break;
 
         case IDC_T_COM: // COMx
             AciaComType = COM_WINCOM;
-            AciaFileMode = FILE_NONE;
+            AciaComMode = COM_MODE_DUPLEX;
             SetDlgItemText(hDlg,IDC_FILE,"");
             SetDlgItemInt(hDlg,IDC_PORT,AciaComPort,FALSE);
             break;
 
         case IDOK:
         case IDAPPLY:
-            GetDlgItemText(hDlg,IDC_FILE,AciaFilePath,MAX_PATH);
 
             // Text mode check box
             hCtl = GetDlgItem(hDlg,IDC_TXTMODE);
@@ -325,7 +327,9 @@ PrintLogF("INITDIALOG ty:%d cp:%d tp:%d tm:%d fm:%d fi:%s\n",
             // Validate parameters
             switch (AciaComType) {
             case COM_CONSOLE:
+				break;
             case COM_FILE:
+                GetDlgItemText(hDlg,IDC_FILE,AciaFilePath,MAX_PATH);
                 break;
             case COM_TCPIP:
                 port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
@@ -348,7 +352,7 @@ PrintLogF("INITDIALOG ty:%d cp:%d tp:%d tm:%d fm:%d fi:%s\n",
             }
             // String for Vcc status line
             sprintf(AciaStat,"Acia %s %s",
-                              ComTypeTxt[AciaComType],IOModeTxt[AciaFileMode]);
+                    ComTypeTxt[AciaComType],IOModeTxt[AciaComMode]);
 
             SaveConfig();
 
@@ -395,13 +399,13 @@ void com_close() {
     }
 }
 
-void com_set(int item, int val) {
-    switch (AciaComType) {
-    case COM_CONSOLE: // Console
-        console_set(item,val);
-        break;
-    }
-}
+//void com_set(int item, int val) {
+//    switch (AciaComType) {
+//    case COM_CONSOLE: // Console
+//        console_set(item,val);
+//        break;
+//    }
+//}
 
 // com_write is assumed to block until some data is written
 int com_write(char * buf, int len) {

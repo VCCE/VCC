@@ -13,7 +13,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
 // See the GNU General Public License for more details.  You should have
-// received a copy of the GNU General Public License  along with VCC 
+// received a copy of the GNU General Public License along with VCC 
 // (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
 //
 //------------------------------------------------------------------
@@ -21,7 +21,7 @@
 // sc6551 calls
 void sc6551_init();
 void sc6551_close();
-void sc6551_ping();
+void sc6551_heartbeat();
 unsigned char sc6551_read(unsigned char data);
 void sc6551_write(unsigned char data, unsigned short port);
 void (*AssertInt)(unsigned char,unsigned char);
@@ -34,8 +34,8 @@ unsigned char StatReg;
 // B2 Ovr Rx data over run
 // b3 RxF Rx Data register full
 // b4 TxE Tx Data register empty
-// b5 DCD Data carrier detect
-// b6 DSR Data set ready
+// b5 DCD Data carrier (clear=active)
+// b6 DSR Data set ready (clear=active)
 // b7 IRQ Interrupt read status
 #define StatPar  0x01
 #define StatFrm  0x02
@@ -76,4 +76,3 @@ unsigned char CtlReg;
 // b4   Rcv Clock source 0=X 1=intenal
 // b5-6 Data len 00=8 01=7 10=6 11=5
 // b7   Stop bits 0=1, 1-2
-

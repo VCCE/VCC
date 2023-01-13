@@ -13,7 +13,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
 // See the GNU General Public License for more details.  You should have
-// received a copy of the GNU General Public License  along with VCC 
+// received a copy of the GNU General Public License along with VCC 
 // (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
 //
 //------------------------------------------------------------------
@@ -28,6 +28,9 @@
 #include "acia.h"
 #include "logger.h"
 
+// Character used to indicate end of file on text mode read
+#define EOFCHR 0x1B
+
 FILE * FileStream = NULL;
 
 int PrevChrCR=0; // True if last char read was a carriage return
@@ -40,11 +43,11 @@ int file_open()
     PrevChrCR = 0;
 
 	char * mode;
-    switch (AciaFileMode) {
-    case FILE_READ:
+    switch (AciaComMode) {
+    case COM_MODE_READ:
         mode = "rb";
         break;
-    case FILE_WRITE:
+    case COM_MODE_WRITE:
 	default:
         mode = "wb";
         break;
@@ -52,17 +55,17 @@ int file_open()
 
 	FileStream = fopen(AciaFilePath,mode);
 	if (FileStream) {
-PrintLogF("O %s\n",AciaFilePath,errno);
+//PrintLogF("O %s\n",AciaFilePath,errno);
         return 0;
     } else {
-PrintLogF("O %s error %d\n",AciaFilePath,errno);
+//PrintLogF("O %s error %d\n",AciaFilePath,errno);
         return errno;
 	}
 }
 
 void file_close()
 {
-if(FileStream)PrintLogF("C %s\n",AciaFilePath);
+//if(FileStream)PrintLogF("FileC %s\n",AciaFilePath);
     if(FileStream) fclose(FileStream); 
 	FileStream = NULL;
 }
@@ -70,23 +73,36 @@ if(FileStream)PrintLogF("C %s\n",AciaFilePath);
 // Read file.  If text remove LF characters
 int file_read(char* buf,int siz)
 {
-    int count = EOF;
-    if (FileStream) {
-        if (AciaTextMode) {
-            int chr;
-            while ( (count < siz) && ((chr = fgetc(FileStream)) != EOF)) {
-				if ( (chr != '\n') || !(PrevChrCR) ) buf[count++] = chr;
-				PrevChrCR = (chr == '\r') ? 1 : 0;
-			}
-        } else {
-            count = fread(buf,1,siz,FileStream);
-        }
+    if (FileStream == NULL) {
+//PrintLogF("FileR not open!\n");
+        return -1;
     }
-PrintLogF("R %d %d\n",siz,count);
+
+    int count;
+
+    if (AciaTextMode) {
+        count = 0;
+        int chr = 0;
+
+        while ((count < siz) && (chr != EOF)) {
+            chr = fgetc(FileStream);
+            if (chr == EOF) {
+                buf[count++] = EOFCHR;
+            } else {
+			    if ( (chr != '\n') || !(PrevChrCR) ) buf[count++] = chr;
+		        PrevChrCR = (chr == '\r') ? 1 : 0;
+            }
+		}
+    } else {
+        count = fread(buf,1,siz,FileStream);
+        if (count = 0) buf[count++] = EOFCHR;
+    }
+
+//PrintLogF("FileR %d %d\n",siz,count);
     return count;
 }
 
-// Write file.  If text convert CR to CRLF
+// Write file.  If text ignore LF and convert CR to CRLF
 int  file_write(char* buf,int siz)
 {
     int count = 0;
@@ -94,14 +110,15 @@ int  file_write(char* buf,int siz)
         if (AciaTextMode) {
             for (int n=0; n<siz; n++) {
                 count++;
-                fputc(buf[n],FileStream);
-                if (buf[n] == '\r') fputc('\n',FileStream);
+				char chr = buf[n];
+                if (chr != '\n') fputc(chr,FileStream);
+                if (chr == '\r') fputc('\n',FileStream);
             }
         } else {
             count = fwrite(buf,1,siz,FileStream);
         }
     }
-PrintLogF("W %d %d\n",siz,count);
+//PrintLogF("FileW %d %d\n",siz,count);
     return count;
 }
 

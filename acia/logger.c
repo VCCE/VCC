@@ -1,6 +1,4 @@
 //------------------------------------------------------------------
-// Copyright E J Jaquay 2022
-//
 // This file is part of VCC (Virtual Color Computer).
 //
 // VCC (Virtual Color Computer) is free software: you can redistribute it
@@ -13,11 +11,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
 // See the GNU General Public License for more details.  You should have
-// received a copy of the GNU General Public License  along with VCC 
+// received a copy of the GNU General Public License along with VCC 
 // (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
-//
 //------------------------------------------------------------------
-
 
 #include <windows.h>
 #include <stdio.h>
@@ -48,7 +44,6 @@ void PrintLogC(const void * fmt, ...)
 			SetConsoleTitle("Logging Window");
 		}
 	}
-
 	WriteFile(hLog_Out,msg,strlen(msg),&dummy,0);
 }
 
@@ -74,4 +69,3 @@ void OpenLogFile(char * logfile)
 	if (fLog_Out == NULL) fclose(fLog_Out);
 	fLog_Out = fopen(logfile,"wb");
 }
-
