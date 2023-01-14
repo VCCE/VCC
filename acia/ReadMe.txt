@@ -4,6 +4,9 @@
 
 Using /t2 on (Nitr)Os9
 
+
+				Console mode
+
 Terminal settings for Windows console should be as follows:
 
 /t2
@@ -51,4 +54,35 @@ from the console properties menu.
 I did a brief check of uemacs. It seems to work okay except I find
 the lack of support of arrow keys annoying and I am too used to
 vi's use of hjkl for cursor position to adapt to emacs.
+
+
+					File Mode
+
+File mode allows reading or writing to/from a windows file. 
+
+There are two file modes,  File Read and File Write.  When
+file read is set writes to acia are ignored.  When file write
+is set reads from acia always return null chars in binary mode
+and EOF characters in text mode.
+
+Text mode.  When text mode is checked end of line translations 
+(CR -> CRLF) are done and EOF characters are appended at the
+end of files.  This is recommended when using /t2 in os9 unless
+attempting to write binary files to windows.  Reading binary files
+is difficult under os9 because the sc6551 driver does not have a
+means of detecting end of file.  Therefore the SCF handler can
+only detect end of file by looking for a CR followed by ESC.
+In ascii mode file transfers would be aborted if that sequence
+is found in the stream.
+
+Sending command output to a file can be done with something
+like 'dir -e > /t2' This will mostly work but because of bufferning
+issues characters may occasionally be skipped.  If doing a long
+listing it is better to place the output in a os9 file and 
+copy that to /t2, for example:
+
+    cd /dd/CMDS
+	dir -e > cmds.list
+	copy cmds.list /t2
+
 

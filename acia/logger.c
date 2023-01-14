@@ -11,7 +11,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
 // See the GNU General Public License for more details.  You should have
-// received a copy of the GNU General Public License along with VCC 
+// received a copy of the GNU General Public License along with VCC
 // (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
 //------------------------------------------------------------------
 
@@ -29,43 +29,43 @@ DWORD dummy;
 // PrintLogC - Put formatted string to the console
 void PrintLogC(const void * fmt, ...)
 {
-	va_list args;
-	char msg[512];
-	va_start(args, fmt);
-	vsnprintf(msg, 512, (char *)fmt, args);
-	va_end(args);
+    va_list args;
+    char msg[512];
+    va_start(args, fmt);
+    vsnprintf(msg, 512, (char *)fmt, args);
+    va_end(args);
 
-	if (hLog_Out==NULL) {
-		hLog_Out = GetStdHandle(STD_OUTPUT_HANDLE);
-		char heading[]="\n -- Vcc Log --\n";
-		if (!WriteFile(hLog_Out,heading,strlen(heading),&dummy,0)) {
-			AllocConsole();
-			hLog_Out=GetStdHandle(STD_OUTPUT_HANDLE);
-			SetConsoleTitle("Logging Window");
-		}
-	}
-	WriteFile(hLog_Out,msg,strlen(msg),&dummy,0);
+    if (hLog_Out==NULL) {
+        hLog_Out = GetStdHandle(STD_OUTPUT_HANDLE);
+        char heading[]="\n -- Vcc Log --\n";
+        if (!WriteFile(hLog_Out,heading,strlen(heading),&dummy,0)) {
+            AllocConsole();
+            hLog_Out=GetStdHandle(STD_OUTPUT_HANDLE);
+            SetConsoleTitle("Logging Window");
+        }
+    }
+    WriteFile(hLog_Out,msg,strlen(msg),&dummy,0);
 }
 
 // PrintLogF - Put formatted string to the log file
 void PrintLogF(const void * fmt, ...)
 {
-	va_list args;
-	char msg[512];
-	va_start(args, fmt);
-	vsnprintf(msg, 512, (char *)fmt, args);
-	va_end(args);
+    va_list args;
+    char msg[512];
+    va_start(args, fmt);
+    vsnprintf(msg, 512, (char *)fmt, args);
+    va_end(args);
 
-	if (fLog_Out == NULL)
-		fLog_Out = fopen("VccLog.txt","w");
+    if (fLog_Out == NULL)
+        fLog_Out = fopen("VccLog.txt","w");
 
-	fprintf(fLog_Out,msg);
-	fflush(fLog_Out);
+    fprintf(fLog_Out,msg);
+    fflush(fLog_Out);
 }
 
 // OpenLogFile - open non-default file for logging
 void OpenLogFile(char * logfile)
 {
-	if (fLog_Out == NULL) fclose(fLog_Out);
-	fLog_Out = fopen(logfile,"wb");
+    if (fLog_Out == NULL) fclose(fLog_Out);
+    fLog_Out = fopen(logfile,"wb");
 }

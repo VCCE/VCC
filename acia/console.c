@@ -13,7 +13,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
 // See the GNU General Public License for more details.  You should have
-// received a copy of the GNU General Public License along with VCC 
+// received a copy of the GNU General Public License along with VCC
 // (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
 //
 //------------------------------------------------------------------
@@ -112,7 +112,7 @@ console_open() {
 //    switch(item) {
 //    case LOCAL_ECHO:
 //        DWORD mode;
-//		GetConsoleMode(hConIn, &mode);
+//        GetConsoleMode(hConIn, &mode);
 //        if (val) {
 //            SetConsoleMode(hConIn, mode | ENABLE_ECHO_INPUT);
 //        } else {
@@ -289,174 +289,174 @@ int console_write(char *buf, int len) {
     if ( hConOut == NULL) return 0;
 
 //  Echo control not supported by OS9 sc6551 driver
-//	if(CmdReg & CmdEcho) {
-//		SetConsoleTitle("Console Echo");
-//	} else {
-//		SetConsoleTitle("Console No Echo");
-//	}
+//    if(CmdReg & CmdEcho) {
+//        SetConsoleTitle("Console Echo");
+//    } else {
+//        SetConsoleTitle("Console No Echo");
+//    }
 
     while (cnt < len) {
         chr = *buf++;
         cnt++;
 
-    	// Do we need to finish a command sequence?
-    	if (SeqArgsNeeded) {
-        	// Save the the chr as command arg
-        	SeqArgs[SeqArgsCount++] = chr;
-	
-        	// If not done get more
-        	if (SeqArgsCount < SeqArgsNeeded) continue; // return cnt;
+        // Do we need to finish a command sequence?
+        if (SeqArgsNeeded) {
+            // Save the the chr as command arg
+            SeqArgs[SeqArgsCount++] = chr;
+    
+            // If not done get more
+            if (SeqArgsCount < SeqArgsNeeded) continue; // return cnt;
 
-        	// Sequence complete
-        	SeqArgsNeeded = 0;
-        	SeqArgsCount = 0;
+            // Sequence complete
+            SeqArgsNeeded = 0;
+            SeqArgsCount = 0;
 
-        	// Process the sequence
-        	switch (SeqType) {
-        	case SEQ_CONTROL:
-            	switch (SeqArgs[0]) {
-            	case 0x20: // Reverse video on
-            	case 0x21: // Reverse video off
-            	case 0x22: // Underline on
-            	case 0x23: // Underline off
-            	case 0x24: // Blinking on
-            	case 0x25: // Blinking off
-                	break;
-            	case 0x30: // Insert line
-                	console_insertline();
-                	break;
-            	case 0x31: // Delete line
-                	console_deleteline();
-                	break;
-            	case 0x40: // Line mode off
-                	SetConsoleTitle("VCC Console");
-                	ConsoleLineInput = 0;
-                	break;
-            	case 0x41: // Line mode on
-                	SetConsoleTitle("VCC Console Line Mode");
-                	ConsoleLineInput = 1;
-                	break;
-            	default:
-                	sprintf(cc,"~1F%02X~",SeqArgs[0]);     // not handled
-                	WriteConsole(hConOut,cc,6,&tmp,NULL);
-            	}
-            	break;
-        	case SEQ_GOTOXY:
-            	// row,col bias is 32
-            	console_move(SeqArgs[0]-32, SeqArgs[1]-32);
-            	break;
-        	case SEQ_COMMAND:
-            	// Arg is another sequence
-            	switch (SeqArgs[0]) {
-            	case 0x32:
-                	SeqType = SEQ_FCOLOR;
-                	SeqArgsNeeded = 1;
-                	break;
-            	case 0x33:
-                	SeqType = SEQ_BCOLOR;
-                	SeqArgsNeeded = 1;
-                	break;
-            	case 0x34:
-                	SeqType = SEQ_BORDER;
-                	SeqArgsNeeded = 1;
-                	break;
-            	case 0x3d:
-                	SeqType = SEQ_BOLDSW;
-                	SeqArgsNeeded = 1;
-                	break;
-            	default:
-                	sprintf(cc,"~1B%02X~",SeqArgs[0]);     // not handled
-                	WriteConsole(hConOut,cc,strlen(cc),&tmp,NULL);
-            	}
-            	break;
-        	case SEQ_FCOLOR:
-            	console_forground(chr);
-            	break;
-        	case SEQ_BCOLOR:
-            	console_background(chr);
-            	break;
-        	case SEQ_BORDER:
-        	case SEQ_BOLDSW:
-            	break;
-        	}
-        	//return cnt;
-        	continue;
-	    }
+            // Process the sequence
+            switch (SeqType) {
+            case SEQ_CONTROL:
+                switch (SeqArgs[0]) {
+                case 0x20: // Reverse video on
+                case 0x21: // Reverse video off
+                case 0x22: // Underline on
+                case 0x23: // Underline off
+                case 0x24: // Blinking on
+                case 0x25: // Blinking off
+                    break;
+                case 0x30: // Insert line
+                    console_insertline();
+                    break;
+                case 0x31: // Delete line
+                    console_deleteline();
+                    break;
+                case 0x40: // Line mode off
+                    SetConsoleTitle("VCC Console");
+                    ConsoleLineInput = 0;
+                    break;
+                case 0x41: // Line mode on
+                    SetConsoleTitle("VCC Console Line Mode");
+                    ConsoleLineInput = 1;
+                    break;
+                default:
+                    sprintf(cc,"~1F%02X~",SeqArgs[0]);     // not handled
+                    WriteConsole(hConOut,cc,6,&tmp,NULL);
+                }
+                break;
+            case SEQ_GOTOXY:
+                // row,col bias is 32
+                console_move(SeqArgs[0]-32, SeqArgs[1]-32);
+                break;
+            case SEQ_COMMAND:
+                // Arg is another sequence
+                switch (SeqArgs[0]) {
+                case 0x32:
+                    SeqType = SEQ_FCOLOR;
+                    SeqArgsNeeded = 1;
+                    break;
+                case 0x33:
+                    SeqType = SEQ_BCOLOR;
+                    SeqArgsNeeded = 1;
+                    break;
+                case 0x34:
+                    SeqType = SEQ_BORDER;
+                    SeqArgsNeeded = 1;
+                    break;
+                case 0x3d:
+                    SeqType = SEQ_BOLDSW;
+                    SeqArgsNeeded = 1;
+                    break;
+                default:
+                    sprintf(cc,"~1B%02X~",SeqArgs[0]);     // not handled
+                    WriteConsole(hConOut,cc,strlen(cc),&tmp,NULL);
+                }
+                break;
+            case SEQ_FCOLOR:
+                console_forground(chr);
+                break;
+            case SEQ_BCOLOR:
+                console_background(chr);
+                break;
+            case SEQ_BORDER:
+            case SEQ_BOLDSW:
+                break;
+            }
+            //return cnt;
+            continue;
+        }
 
-    	// write printable chr to console
-    	if  (isprint(chr)) {
-        	WriteConsole(hConOut,&chr,1,&tmp,NULL);
-        	//return cnt;
-        	continue;
-    	}
+        // write printable chr to console
+        if  (isprint(chr)) {
+            WriteConsole(hConOut,&chr,1,&tmp,NULL);
+            //return cnt;
+            continue;
+        }
 
-    	// write chars with high bit set to console (utf8)
-    	if (chr > 128) {
-        	WriteConsole(hConOut,&chr,1,&tmp,NULL);
-        	continue;
-        	//return cnt;
-    	}
+        // write chars with high bit set to console (utf8)
+        if (chr > 128) {
+            WriteConsole(hConOut,&chr,1,&tmp,NULL);
+            continue;
+            //return cnt;
+        }
 
-    	// process non printable
-    	switch (chr) {
-    	case 0x0:
-        	break;
-    	case 0x1:        // cursor home
-        	console_move(0,0);
-        	break;
-    	case 0x2:
-        	SeqType = SEQ_GOTOXY;
-        	SeqArgsNeeded = 2;
-        	break;
-    	case 0x3:        // clear line
-        	console_eraseline();
-        	break;
-    	case 0x4:        // clear to end of line
-        	console_cleol();
-        	break;
-    	case 0x5:
-        	SeqType = SEQ_CURSOR;
-        	SeqArgsNeeded = 1;
-        	break;
-    	case 0x6:        // vt
-        	console_right();
-        	break;
-    	case 0x7:        // bell
-        	WriteConsole(hConOut,&chr,1,&tmp,NULL);
-        	break;
-    	case 0x8:        // backspace
-        	console_left();
-        	break;
-    	case 0x9:        // up arrow
-        	console_up();
-        	break;
-    	case 0xA:        // line feed
-        	console_down();
-        	break;
-    	case 0xB:        // clear to end of screen
-        	console_cleob();
-        	break;
-    	case 0xC:        // clear screen
-        	console_cls();
-        	break;
-    	case 0xD:        // carriage return
-        	console_cr();
-        	break;
-    	case 0xE:        // Unknown code
-    	case 0x15:       // Unknown code
-        	break;
-    	case 0x1B:       // Screen command
-        	SeqType = SEQ_COMMAND;
-        	SeqArgsNeeded = 1;
-        	break;
-    	case 0x1F:       // Text control
-        	SeqType = SEQ_CONTROL;
-        	SeqArgsNeeded = 1;
-        	break;
-    	default:         // unhandled
-        	sprintf(cc,"~%02X~",chr);
-        	WriteConsole(hConOut,cc,4,&tmp,NULL);
-    	}
+        // process non printable
+        switch (chr) {
+        case 0x0:
+            break;
+        case 0x1:        // cursor home
+            console_move(0,0);
+            break;
+        case 0x2:
+            SeqType = SEQ_GOTOXY;
+            SeqArgsNeeded = 2;
+            break;
+        case 0x3:        // clear line
+            console_eraseline();
+            break;
+        case 0x4:        // clear to end of line
+            console_cleol();
+            break;
+        case 0x5:
+            SeqType = SEQ_CURSOR;
+            SeqArgsNeeded = 1;
+            break;
+        case 0x6:        // vt
+            console_right();
+            break;
+        case 0x7:        // bell
+            WriteConsole(hConOut,&chr,1,&tmp,NULL);
+            break;
+        case 0x8:        // backspace
+            console_left();
+            break;
+        case 0x9:        // up arrow
+            console_up();
+            break;
+        case 0xA:        // line feed
+            console_down();
+            break;
+        case 0xB:        // clear to end of screen
+            console_cleob();
+            break;
+        case 0xC:        // clear screen
+            console_cls();
+            break;
+        case 0xD:        // carriage return
+            console_cr();
+            break;
+        case 0xE:        // Unknown code
+        case 0x15:       // Unknown code
+            break;
+        case 0x1B:       // Screen command
+            SeqType = SEQ_COMMAND;
+            SeqArgsNeeded = 1;
+            break;
+        case 0x1F:       // Text control
+            SeqType = SEQ_CONTROL;
+            SeqArgsNeeded = 1;
+            break;
+        default:         // unhandled
+            sprintf(cc,"~%02X~",chr);
+            WriteConsole(hConOut,cc,4,&tmp,NULL);
+        }
     }
     return cnt;
 }

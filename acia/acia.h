@@ -99,6 +99,9 @@ int  wincmd_write(char* buf,int siz);
 // acia status 
 char AciaStat[32];
 
+// Character used to indicate end of file when text mode is used 
+#define EOFCHR 0x1B
+
 // Communications type: console 0; TCP port 1; COM port 2
 int AciaComType;
 

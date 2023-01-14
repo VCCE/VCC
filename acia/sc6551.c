@@ -13,7 +13,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
 // See the GNU General Public License for more details.  You should have
-// received a copy of the GNU General Public License along with VCC 
+// received a copy of the GNU General Public License along with VCC
 // (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
 //
 //------------------------------------------------------------------
@@ -37,8 +37,8 @@ char *PN[] = {"DAT","STA","CMD","CTL"};
 // Handles and buffers for I/O threads
 //------------------------------------------------------------------------
 
-// Input buffer kept small to avoid overflows in coco software 
-#define IBUFSIZ 16 
+// Input buffer kept small to avoid overflows in coco software
+#define IBUFSIZ 16
 DWORD WINAPI sc6551_input_thread(LPVOID);
 HANDLE hInputThread;
 HANDLE hStopInput;
@@ -46,8 +46,8 @@ char InBuf[IBUFSIZ];
 char *InBufPtr = InBuf;
 int InBufCnt = 0;
 
-// Larger output buffer improves write performance 
-#define OBUFSIZ 1024 
+// Larger output buffer improves write performance
+#define OBUFSIZ 1024
 DWORD WINAPI sc6551_output_thread(LPVOID);
 HANDLE hOutputThread;
 HANDLE hStopOutput;
@@ -70,20 +70,20 @@ void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop)
             TerminateThread(hthread,1);
             WaitForSingleObject(hthread,500);
         }
-	    CloseHandle(hthread);
+        CloseHandle(hthread);
         CloseHandle(hstop);
         hthread = NULL;
     }
-} 
+}
 
 //------------------------------------------------------------------------
-//  Initiallize sc6551.  This gets called when DTR is raised. 
+//  Initiallize sc6551.  This gets called when DTR is raised.
 //------------------------------------------------------------------------
 void sc6551_init()
 {
     DWORD id;
 
-    if (sc6551_initialized==1) return;  
+    if (sc6551_initialized==1) return;
 
     // Open comunication
     com_open();
@@ -102,9 +102,6 @@ void sc6551_init()
     OutBufFree = OBUFSIZ;
     OutBufPtr = OutBuf;
     sc6551_initialized = 1;
-
-//PrintLogF("6551 init type:%d iport:%d cport:%d iomode:%d file:%s\n",
-//    AciaComType, AciaTcpPort, AciaComPort, AciaComMode, AciaFilePath);
 }
 
 //------------------------------------------------------------------------
@@ -112,8 +109,8 @@ void sc6551_init()
 //------------------------------------------------------------------------
 void sc6551_close()
 {
-	sc6551_terminate_thread(hInputThread, hStopInput);
-	sc6551_terminate_thread(hOutputThread, hStopOutput);
+    sc6551_terminate_thread(hInputThread, hStopInput);
+    sc6551_terminate_thread(hOutputThread, hStopOutput);
     com_close();
     sc6551_initialized = 0;
 }
@@ -124,32 +121,35 @@ void sc6551_close()
 
 DWORD WINAPI sc6551_input_thread(LPVOID param)
 {
-
-PrintLogF("6551 input thread %d\n",AciaComMode);
-
     int delay=50;
 
     while(TRUE) {
-        // If Write mode just buffer a null char
+        // If Write mode buffer an EOF or null depending on Text mode
         if (AciaComMode == COM_MODE_WRITE) {
-            *InBuf = 0; 
-            InBufPtr = InBuf+1;
-            InBufCnt = 1;
-			delay = 1000;
-	    // Else load buffer if empty
+            if (AciaTextMode) {
+                InBuf[0] = '\r';
+                InBuf[1] = EOFCHR;
+                InBufCnt = 2;
+            } else {
+                InBuf[0] = 0;
+                InBufCnt = 1;
+            }
+            InBufPtr = InBuf;
+            delay = 1000;
+        // Else load buffer if empty
         } else {
-		    if (InBufCnt < 1) {
-				int count = com_read(InBuf,IBUFSIZ);
-        	    if (count > 0) {
+            if (InBufCnt < 1) {
+                int count = com_read(InBuf,IBUFSIZ);
+                if (count > 0) {
                     delay = 50;
-		    	} else {
-					StatReg |= StatDCD | StatDSR;
-					delay = 1000;
-				    count = 0;
-				}
-				InBufCnt = count;
+                } else {
+                    StatReg |= StatDCD | StatDSR;
+                    delay = 1000;
+                    count = 0;
+                }
+                InBufCnt = count;
                 InBufPtr = InBuf;
-			}
+            }
         }
         if (WaitForSingleObject(hStopInput,delay) != WAIT_TIMEOUT)
                 ExitThread(0);
@@ -162,41 +162,33 @@ PrintLogF("6551 input thread %d\n",AciaComMode);
 
 DWORD WINAPI sc6551_output_thread(LPVOID param)
 {
-//PrintLogF("6551 output thread %d\n",AciaComMode);
-
     char * bufptr;
     int delay=50;
 
     while(TRUE) {
-        // If Read Mode writes go to the bit bucket 
+        // If Read Mode writes go to the bit bucket
         if (AciaComMode == COM_MODE_READ) {
             OutBufPtr = OutBuf;
             OutBufFree = OBUFSIZ;
             delay = 1000;
         } else {
-			// Keep buffer ptr for check later
+            // Keep buffer ptr for check later
             bufptr = OutBufPtr;
-			// Write everything in buffer right now 
-			char *p = OutBuf;
-			int towrite = bufptr - p;
+            // Write everything in buffer right now
+            char *p = OutBuf;
+            int towrite = bufptr - p;
             int written = 0;
             while (towrite > 0) {
                 written = com_write(p,towrite);
                 if (written < 1) break;
-//                if (written < 1) {
-//					StatReg |= StatDCD | StatDSR;
-//                    delay = 1000;
-//                    break;
-//                } else {
-					towrite -= written;
-                    p += written;
-//                }
+                towrite -= written;
+                p += written;
             }
             // If nothing else was loaded to it reset the buffer
-			if (bufptr == OutBufPtr) {
-			    OutBufPtr = OutBuf;
+            if (bufptr == OutBufPtr) {
+                OutBufPtr = OutBuf;
                 OutBufFree = OBUFSIZ;
-			}
+            }
             delay = 50;
         }
         if (WaitForSingleObject(hStopOutput, delay) != WAIT_TIMEOUT)
@@ -209,7 +201,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 //------------------------------------------------------------------------
 void sc6551_heartbeat()
 {
-	// Assert interrupt if needed
+    // Assert interrupt if needed
     if (CmdReg & CmdDTR) {
         int irupt = 0;
         if ((InBufCnt > 0) && !(CmdReg & CmdRxI)) irupt = 1;
@@ -218,7 +210,7 @@ void sc6551_heartbeat()
             AssertInt(IRQ,0);
             StatReg |= StatIRQ;
         }
-	}
+    }
 }
 
 //------------------------------------------------------------------------
@@ -234,28 +226,26 @@ unsigned char sc6551_read(unsigned char port)
             data = *InBufPtr;
             if (InBufCnt > 0) {
                 *InBufPtr++;
-				InBufCnt--;
+                InBufCnt--;
             }
-//PrintLogF("%02x ",data);
             break;
 
         // Read status register
         case 0x69:
             if (CmdReg & CmdDTR) {
-				// StatRxF true if there is data in input buffer
+                // StatRxF true if there is data in input buffer
                 if (InBufCnt > 0) {
-					StatReg |= StatRxF;
-				} else {
-					StatReg &= ~StatRxF;
+                    StatReg |= StatRxF;
+                } else {
+                    StatReg &= ~StatRxF;
                 }
                 // StatTxE true if space is left in output buffer
                 if (OutBufFree > 64) {
-					StatReg |= StatTxE;
+                    StatReg |= StatTxE;
                 } else {
-					StatReg &= ~StatTxE;
+                    StatReg &= ~StatTxE;
                 }
-
-			} else {
+            } else {
                 StatReg = 0;
             }
             data = StatReg;

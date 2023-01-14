@@ -13,7 +13,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
 // See the GNU General Public License for more details.  You should have
-// received a copy of the GNU General Public License  along with VCC 
+// received a copy of the GNU General Public License  along with VCC
 // (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
 //
 //------------------------------------------------------------------
@@ -37,10 +37,13 @@ LRESULT CALLBACK ConfigDlg(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig(void);
 void SaveConfig(void);
 
+//EmuState.WindowInstance
+
 //------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------
 static HINSTANCE g_hDLL = NULL;      // DLL handle
+static HWND hConfigDlg = NULL;       // Config dialog
 static char IniFile[MAX_PATH];       // Ini file name
 static char IniSect[MAX_LOADSTRING]; // Ini file section
 char *IOModeTxt[] = {"RW","R","W"};
@@ -52,10 +55,10 @@ char *ComTypeTxt[] = {"CONS","FILE","TCP","COM"};
 BOOL APIENTRY
 DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
-
     if (reason == DLL_PROCESS_ATTACH) {
         g_hDLL = hinst;
     } else if (reason == DLL_PROCESS_DETACH) {
+        if (hConfigDlg) SendMessage(hConfigDlg,WM_CLOSE,6666,0);
         sc6551_close();
         AciaStat[0]='\0';
     }
@@ -68,7 +71,7 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 __declspec(dllexport) void
 ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
 {
-//PrintLogF("Acia DLL register\n");
+
     LoadString(g_hDLL,IDS_MODULE_NAME,ModName,MAX_LOADSTRING);
     LoadString(g_hDLL,IDS_CATNUMBER,CatNumber,MAX_LOADSTRING);
     DynamicMenuCallback = Temp;
@@ -97,12 +100,12 @@ PackPortRead(unsigned char Port)
 }
 
 //-----------------------------------------------------------------------
-// Dll export Heartbeat (HSYNC) 
+// Dll export Heartbeat (HSYNC)
 //-----------------------------------------------------------------------
 __declspec(dllexport) void HeartBeat(void)
 {
     sc6551_heartbeat();
-	return;
+    return;
 }
 
 //-----------------------------------------------------------------------
@@ -138,7 +141,6 @@ __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 //-----------------------------------------------------------------------
 __declspec(dllexport) void SetIniPath (char *IniFilePath)
 {
-//PrintLogF("Acia load config from %s\n",IniFilePath);
     strcpy(IniFile,IniFilePath);
     LoadConfig();
     return;
@@ -161,18 +163,18 @@ void BuildDynaMenu(void)
 void LoadConfig(void)
 {
     AciaComType=GetPrivateProfileInt("Acia","AciaComType",
-			                         COM_CONSOLE,IniFile);
+                                     COM_CONSOLE,IniFile);
     AciaComMode=GetPrivateProfileInt("Acia","AciaComMode",
-			                         COM_MODE_DUPLEX,IniFile);
+                                     COM_MODE_DUPLEX,IniFile);
     AciaTcpPort=GetPrivateProfileInt("Acia","AciaTcpPort",1024,IniFile);
     AciaComPort=GetPrivateProfileInt("Acia","AciaComPort",1,IniFile);
     AciaTextMode=GetPrivateProfileInt("Acia","AciaTextMode",0,IniFile);
     GetPrivateProfileString("Acia","AciaFilePath","AciaFile.txt",
-							AciaFilePath, MAX_PATH,IniFile);
+                            AciaFilePath, MAX_PATH,IniFile);
 
     // String for Vcc status line
     sprintf(AciaStat,"Acia %s %s",
-			ComTypeTxt[AciaComType],IOModeTxt[AciaComMode]);
+            ComTypeTxt[AciaComType],IOModeTxt[AciaComMode]);
 }
 
 //-----------------------------------------------------------------------
@@ -180,11 +182,6 @@ void LoadConfig(void)
 //----------------------------------------------------------------------
 void SaveConfig(void)
 {
-
-//PrintLogF("SaveConfig ty:%d cp:%d tp:%d tm:%d fi:%s\n",
-//			AciaComType,AciaComPort,AciaTcpPort,
-//            AciaTextMode,AciaFilePath);
-
     char txt[16];
     sprintf(txt,"%d",AciaComType);
     WritePrivateProfileString("Acia","AciaComType",txt,IniFile);
@@ -202,7 +199,7 @@ void SaveConfig(void)
 //-----------------------------------------------------------------------
 // Config dialog.
 // Radio Buttons: (I/O Type) :
-//   IDC_T_CONS    I/O is to windows console 
+//   IDC_T_CONS    I/O is to windows console
 //   IDC_T_FILE_R  Input from file (Output to bit bucket)
 //   IDC_T_FILE_W  Output to file, Input returns null
 //   IDC_T_TCP     I/O to TCPIP port
@@ -210,19 +207,28 @@ void SaveConfig(void)
 // Text Boxes
 //   IDC_PORT      Port for TCP and COM Number
 //   IDC_FILE      File name for FILE_R and FILE_W
-// Check Box 
+// Check Box
 //   IDC_TEXTMODE  Translate CR <> CRLF if checked
 //-----------------------------------------------------------------------
 
 LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
 {
     int button;
-
     HANDLE hCtl;
     switch (msg) {
 
+//  Vcc does not yet provide a hook to clean up modeless windows
+//  it exits. In the future a close message could be sent to close
+//  the dialog if it is still up when the Vcc main window closes
+
     case WM_INITDIALOG:
+
+        // Kill previous instance
+        if (hConfigDlg) EndDialog(hConfigDlg,0);
+        hConfigDlg = hDlg;
+
 //LoadConfig();
+
         SetWindowPos(hDlg, HWND_TOP, 10, 10, 0, 0, SWP_NOSIZE);
 
         // Set Radio Button as per com type
@@ -269,11 +275,6 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
         // String for Vcc status line
         sprintf(AciaStat,"Acia %s %s",
                          ComTypeTxt[AciaComType],IOModeTxt[AciaComMode]);
-
-//PrintLogF("INITDIALOG ty:%d cp:%d tp:%d tm:%d fm:%d fi:%s\n",
-//			AciaComType,AciaComPort,AciaTcpPort,
-//            AciaTextMode,AciaComMode,AciaFilePath);
-
         return TRUE;
         break;
 
@@ -327,7 +328,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             // Validate parameters
             switch (AciaComType) {
             case COM_CONSOLE:
-				break;
+                break;
             case COM_FILE:
                 GetDlgItemText(hDlg,IDC_FILE,AciaFilePath,MAX_PATH);
                 break;
@@ -338,7 +339,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
                                     "Error", MB_OK|MB_ICONEXCLAMATION);
                     return TRUE;
                 }
-			    AciaTcpPort = port;
+                AciaTcpPort = port;
                 break;
             case COM_WINCOM:
                 port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
@@ -348,7 +349,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
                     return TRUE;
                 }
                 break;
-			    AciaComPort = port;
+                AciaComPort = port;
             }
             // String for Vcc status line
             sprintf(AciaStat,"Acia %s %s",
@@ -373,10 +374,10 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
 
 //----------------------------------------------------------------
 // Dispatch I/0 to communication type used.
-//	 COM_CONSOLE 0
-//	 COM_FILE    1
-//	 COM_TCPIP   2
-//	 COM_WINCOM  3
+//     COM_CONSOLE 0
+//     COM_FILE    1
+//     COM_TCPIP   2
+//     COM_WINCOM  3
 //-----------------------------------------------------------------
 int com_open() {
     switch (AciaComType) {
@@ -394,20 +395,12 @@ void com_close() {
         console_close();
         break;
     case COM_FILE:
-		file_close();
+        file_close();
         break;
     }
 }
 
-//void com_set(int item, int val) {
-//    switch (AciaComType) {
-//    case COM_CONSOLE: // Console
-//        console_set(item,val);
-//        break;
-//    }
-//}
-
-// com_write is assumed to block until some data is written
+// com_write will block until some data is written or error
 int com_write(char * buf, int len) {
     switch (AciaComType) {
     case COM_CONSOLE:
@@ -418,7 +411,7 @@ int com_write(char * buf, int len) {
     return 0;
 }
 
-// com_read is assumed to block until some data is read
+// com_read will block until some data is read or error
 int com_read(char * buf,int len) {  // returns bytes read
     switch (AciaComType) {
     case COM_CONSOLE:
