@@ -104,25 +104,6 @@ console_open() {
 }
 
 //------------------------------------------------------------------
-// Console settings
-//------------------------------------------------------------------
-
-//void console_set(int item, int val) {
-//
-//    switch(item) {
-//    case LOCAL_ECHO:
-//        DWORD mode;
-//        GetConsoleMode(hConIn, &mode);
-//        if (val) {
-//            SetConsoleMode(hConIn, mode | ENABLE_ECHO_INPUT);
-//        } else {
-//            SetConsoleMode(hConIn, mode & ~ENABLE_ECHO_INPUT);
-///        }
-//        break;
-//    }
-//}
-
-//------------------------------------------------------------------
 // Close Console
 //------------------------------------------------------------------
 
@@ -147,9 +128,11 @@ console_read(char * buf, int len) {
     int keypress_cnt = 0;
     unsigned char chr;
 
+	// Abort if console not open or no space in buffer
+    if ( hConIn == NULL) return 0;
     if (len < 1) return 0;
 
-    // If line mode return next line from keyboard buffer (blocks)
+	// If line mode return next line from keyboard buffer (blocks)
     if (ConsoleLineInput) {
         int cnt;
         ReadConsole(hConIn,buf,len,&cnt,NULL);
@@ -261,7 +244,7 @@ console_read(char * buf, int len) {
 // Write to Console
 //----------------------------------------------------------------
 
-// Terminal control sequence names for clairty
+// Terminal control sequence names
 enum {
     SEQ_NONE,
     SEQ_GOTOXY,   // Position cursor to X,Y
@@ -286,14 +269,8 @@ int console_write(char *buf, int len) {
     DWORD tmp;
     char cc[80];
 
+	// Abort if console not open
     if ( hConOut == NULL) return 0;
-
-//  Echo control not supported by OS9 sc6551 driver
-//    if(CmdReg & CmdEcho) {
-//        SetConsoleTitle("Console Echo");
-//    } else {
-//        SetConsoleTitle("Console No Echo");
-//    }
 
     while (cnt < len) {
         chr = *buf++;

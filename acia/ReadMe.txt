@@ -2,8 +2,22 @@
     DYNAMIC LINK LIBRARY : acia Project Overview
 ========================================================================
 
-Using /t2 on (Nitr)Os9
+Issues
 
+1) Baud rate (for recv) delay table contains wild guesses
+2) Does not seem to work with RSDOS Deluxe cart rom
+3) TCP and COM not done yet
+4) Using file write mode to send text to a windows file
+   causes an extra blank line to be appended to the file.
+
+These notes are based on using /t2 on (Nitr)Os9
+
+The sc6551 driver used by /t2 does not seem to use xmode baud, 
+xon, or xoff values. Receive seems to be at about 9600 baud
+and transmit is not restricted. There seems to be no other
+flow control. Vcc on a modern computer can process data a
+lot faster than the emulation can. As a result transmits
+are considerably faster than receives.
 
 				Console mode
 
@@ -55,7 +69,6 @@ I did a brief check of uemacs. It seems to work okay except I find
 the lack of support of arrow keys annoying and I am too used to
 vi's use of hjkl for cursor position to adapt to emacs.
 
-
 					File Mode
 
 File mode allows reading or writing to/from a windows file. 
@@ -63,7 +76,8 @@ File mode allows reading or writing to/from a windows file.
 There are two file modes,  File Read and File Write.  When
 file read is set writes to acia are ignored.  When file write
 is set reads from acia always return null chars in binary mode
-and EOF characters in text mode.
+and EOF characters in text mode. It advised to not use binary
+mode with the os9 /t2.
 
 Text mode.  When text mode is checked end of line translations 
 (CR -> CRLF) are done and EOF characters are appended at the
@@ -76,13 +90,12 @@ In ascii mode file transfers would be aborted if that sequence
 is found in the stream.
 
 Sending command output to a file can be done with something
-like 'dir -e > /t2' This will mostly work but because of bufferning
-issues characters may occasionally be skipped.  If doing a long
-listing it is better to place the output in a os9 file and 
-copy that to /t2, for example:
+like 'dir -e > /t2' This will mostly work but because of 
+unresolved bufferning issues characters may occasionally be
+skipped.  If doing a long listing it is better to place the 
+output in a os9 file and copy that to /t2, for example:
 
     cd /dd/CMDS
 	dir -e > cmds.list
 	copy cmds.list /t2
-
 

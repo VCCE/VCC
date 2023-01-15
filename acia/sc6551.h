@@ -49,8 +49,8 @@ unsigned char StatReg;
 // Command register (6A)
 unsigned char CmdReg;
 // Command register bits.
-// b0   DTR Enable receive and interupts
-// b1   RxI Receiver IRQ control by StatRxF
+// b0   DTR Enable receive and interupts  (set=enabled)
+// b1   RxI Receiver IRQ control by StatRxF (set=disabled)
 // b2-3 TIRB Transmit IRQ control
 //      00 trans disabled,01 enabled,10 disabled,11 break
 // b4   Echo Set=Activated
@@ -62,7 +62,6 @@ unsigned char CmdReg;
 #define CmdTIRB 0x0C
 #define CmdEcho 0x10
 #define CmdPAR  0xE0
-
 #define TIRB_Off  0x00
 #define TIRB_On   0x04
 #define TIRB_RTS  0x08
@@ -76,3 +75,6 @@ unsigned char CtlReg;
 // b4   Rcv Clock source 0=X 1=intenal
 // b5-6 Data len 00=8 01=7 10=6 11=5
 // b7   Stop bits 0=1, 1-2
+
+#define CtlBaud 0x0F
+

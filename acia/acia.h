@@ -35,29 +35,20 @@
 // Comunications hooks
 int  com_open();
 void com_close();
-//void com_set(int,int);
 int  com_write(char*,int);
 int  com_read(char*,int);
 
-// Communications types
+// Communications media
 enum comtype {
-    COM_CONSOLE,  //0
-    COM_FILE,     //1
-    COM_TCPIP,    //2
-    COM_WINCOM    //3
+    COM_CONSOLE,
+    COM_FILE,
+    COM_TCPIP,
+    COM_WINCOM
 };
+int AciaComType;
 
-/*
-// Communications status
-enum comstate {
-	COM_STATE_NUL,
-	COM_STATE_RDY,
-	COM_STATE_ERR
-};
-int AciaComState;
-*/
 
-// File mode
+// Communications mode, duplex, read only, or write only
 enum com_mode {
     COM_MODE_DUPLEX,
     COM_MODE_READ,
@@ -65,45 +56,32 @@ enum com_mode {
 };
 int AciaComMode;
 
-int AciaTextMode; // 0=binary I/O, 1=text I/O
+// Line ending and EOF translations 0=none 1=text
+int AciaTextMode;
 
-// Items for com_set
-//enum set_item {
-//    LOCAL_ECHO
-//};
+// Character used to indicate end of file when text mode is used 
+#define EOFCHR 0x1B
+// Flow control character when text mode is used
+#define XOFCHR 0x0D
 
-// Console I/O
+// Console 
 int  console_open();
 void console_close();
-//void console_set(int,int);
 int  console_read(char* buf,int siz);
 int  console_write(char* buf,int siz);
+// Console mode toggle Normal: 0; Line mode: 1
+int  ConsoleLineInput;  
 
-int  ConsoleLineInput;  // Console mode Normal: 0; Line mode: 1
-
-// File I/O
+// File 
 int  file_open();
 void file_close();
 int  file_read(char* buf,int siz);
 int  file_write(char* buf,int siz);
-
+// Path for file I/O
 char AciaFilePath[MAX_PATH];
 
-// cmd I/O
-int  wincmd_open();
-void wincmd_close();
-//void wincmd_set(int,int);
-int  wincmd_read(char* buf,int siz);
-int  wincmd_write(char* buf,int siz);
-
-// acia status 
+// Status for Vcc status line
 char AciaStat[32];
-
-// Character used to indicate end of file when text mode is used 
-#define EOFCHR 0x1B
-
-// Communications type: console 0; TCP port 1; COM port 2
-int AciaComType;
 
 // Port numbers: COM port 1-10; TCP port 1024-65536
 int AciaComPort;

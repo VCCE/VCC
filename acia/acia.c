@@ -23,7 +23,7 @@
 #include "logger.h"
 
 //------------------------------------------------------------------------
-// Functions
+// Local Functions
 //------------------------------------------------------------------------
 
 // Transfer points for menu callback and cpu assert interrupt
@@ -37,8 +37,6 @@ LRESULT CALLBACK ConfigDlg(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig(void);
 void SaveConfig(void);
 
-//EmuState.WindowInstance
-
 //------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------
@@ -46,6 +44,8 @@ static HINSTANCE g_hDLL = NULL;      // DLL handle
 static HWND hConfigDlg = NULL;       // Config dialog
 static char IniFile[MAX_PATH];       // Ini file name
 static char IniSect[MAX_LOADSTRING]; // Ini file section
+
+// Some strings for config dialog
 char *IOModeTxt[] = {"RW","R","W"};
 char *ComTypeTxt[] = {"CONS","FILE","TCP","COM"};
 
@@ -218,7 +218,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
     switch (msg) {
 
 //  Vcc does not yet provide a hook to clean up modeless windows
-//  it exits. In the future a close message could be sent to close
+//  as it exits. In the future a close message could be sent to close
 //  the dialog if it is still up when the Vcc main window closes
 
     case WM_INITDIALOG:
@@ -374,11 +374,8 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
 
 //----------------------------------------------------------------
 // Dispatch I/0 to communication type used.
-//     COM_CONSOLE 0
-//     COM_FILE    1
-//     COM_TCPIP   2
-//     COM_WINCOM  3
 //-----------------------------------------------------------------
+
 int com_open() {
     switch (AciaComType) {
     case COM_CONSOLE:

@@ -94,7 +94,7 @@ int file_read(char* buf,int siz)
     return count;
 }
 
-// Write file.  If text ignore LF and convert CR to CRLF
+// Write file.  If text skip LF chars and convert CR to CRLF
 int  file_write(char* buf,int siz)
 {
     int count = 0;
