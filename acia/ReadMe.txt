@@ -15,9 +15,7 @@ These notes are based on using /t2 on (Nitr)Os9
 The sc6551 driver used by /t2 does not seem to use xmode baud, 
 xon, or xoff values. Receive seems to be at about 9600 baud
 and transmit is not restricted. There seems to be no other
-flow control. Vcc on a modern computer can process data a
-lot faster than the emulation can. As a result transmits
-are considerably faster than receives.
+flow control.
 
 				Console mode
 
@@ -73,6 +71,11 @@ vi's use of hjkl for cursor position to adapt to emacs.
 
 File mode allows reading or writing to/from a windows file. 
 
+Important.  You must turn off local echo to use File Mode with
+the os9 /t2 device before using is to move data to/from
+windows files. 'xmode /t2 -echo'  Failure to do so will result
+in I/O errors and possible hangs.
+
 There are two file modes,  File Read and File Write.  When
 file read is set writes to acia are ignored.  When file write
 is set reads from acia always return null chars in binary mode
@@ -89,13 +92,10 @@ only detect end of file by looking for a CR followed by ESC.
 In ascii mode file transfers would be aborted if that sequence
 is found in the stream.
 
-Sending command output to a file can be done with something
-like 'dir -e > /t2' This will mostly work but because of 
-unresolved bufferning issues characters may occasionally be
-skipped.  If doing a long listing it is better to place the 
+Sending command output to a file can be done with something like
+'dir -e > /t2' If doing a long listing it is better to place the 
 output in a os9 file and copy that to /t2, for example:
 
     cd /dd/CMDS
 	dir -e > cmds.list
 	copy cmds.list /t2
-
