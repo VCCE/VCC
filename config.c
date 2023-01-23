@@ -327,8 +327,7 @@ unsigned char ReadIniFile(void)
 	GetPrivateProfileString("Misc","CustomKeyMapFile","",KeyMapFilePath,MAX_PATH,IniFilePath);
 	if (*KeyMapFilePath == '\0') {
 		strcpy(KeyMapFilePath, AppDataPath);
-		strcat(KeyMapFilePath, "\\");
-		strcat(KeyMapFilePath, "custom.keymap");
+		strcat(KeyMapFilePath, "\\custom.keymap");
 	}
 	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFilePath);
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
