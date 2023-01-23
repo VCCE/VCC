@@ -96,6 +96,12 @@ Sending command output to a file can be done with something like
 'dir -e > /t2' If doing a long listing it is better to place the 
 output in a os9 file and copy that to /t2, for example:
 
-    cd /dd/CMDS
-	dir -e > cmds.list
+	dir -e -x > cmds.list
 	copy cmds.list /t2
+
+When moving data to os9 it is much faster to stream output to a 
+file than to copy it: 
+    list /t2 > file
+is much faster than 
+    copy /t2 file
+
