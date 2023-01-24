@@ -100,6 +100,19 @@ PackPortRead(unsigned char Port)
 }
 
 //-----------------------------------------------------------------------
+// Dll export module reset
+//-----------------------------------------------------------------------
+__declspec(dllexport) void ModuleReset(void)
+{
+    SendMessage(hConfigDlg, WM_CLOSE, 0, 0);
+    file_close();
+	console_close();
+//	tcpip_close();
+//	wincom_close();
+	sc6551_close();
+	return;
+}
+//-----------------------------------------------------------------------
 // Dll export Heartbeat (HSYNC)
 //-----------------------------------------------------------------------
 __declspec(dllexport) void HeartBeat(void)
@@ -217,9 +230,9 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
     HANDLE hCtl;
     switch (msg) {
 
-//  Vcc does not yet provide a hook to clean up modeless windows
-//  as it exits. In the future a close message could be sent to close
-//  the dialog if it is still up when the Vcc main window closes
+    case WM_CLOSE:
+		EndDialog(hDlg,0);
+		break;
 
     case WM_INITDIALOG:
 

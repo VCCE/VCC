@@ -49,8 +49,8 @@ int BaudRate = 0;  // External Xtal default is ~9600
 
 // Heartbeat counter used to pace recv
 int HBtimer = 0;
-
 // BaudDelay table is used to set HBtimer
+
 // TODO: Replace wags with good values
 int BaudDelay[16] = {0,2200,2000,1600,1200,600,300,150,
                      120,90,60,40,30,20,10,5};
@@ -122,7 +122,7 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
     while(TRUE) {
         if (avail > IBUFSIZ/4) {      // Avoid short reads
             if (AciaComMode == COM_MODE_WRITE) {
-				*InBuf = '\0';
+                *InBuf = '\0';
                 InWptr = InBuf+1;
                 delay = 2000;
             } else {
@@ -156,25 +156,25 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 DWORD WINAPI sc6551_output_thread(LPVOID param)
 {
     while(TRUE) {
-		// Disable transmit and give CoCo time to notice
-		StatReg &= ~StatTxE;
-		Sleep(10);
+        // Disable transmit and give CoCo time to notice
+        StatReg &= ~StatTxE;
+        Sleep(10);
 
-		// If not read mode write everything in the output buffer
+        // If not read mode write everything in the output buffer
         if (AciaComMode != COM_MODE_READ) {
-			int len = OutWptr-OutBuf;
+            int len = OutWptr-OutBuf;
             char *ptr = OutBuf;
             while (len > 0) {
                 int cnt = com_write(ptr,len);
                 if (cnt < 1) break;  //TODO Deal with write error
                 ptr += cnt;
-				len -= cnt;
+                len -= cnt;
             }
         }
-		OutWptr = OutBuf;
+        OutWptr = OutBuf;
 
-		// Enable transmit and give coco time to reload buffer
-		StatReg |= StatTxE;
+        // Enable transmit and give coco time to reload buffer
+        StatReg |= StatTxE;
         if (WaitForSingleObject(hStopOutput,20) != WAIT_TIMEOUT) {
             com_close();
             ExitThread(0);
@@ -211,13 +211,15 @@ unsigned char sc6551_read(unsigned char port)
     switch (port) {
         // Read input data
         case 0x68:
+            //PrintLogF("rd:%X ",data);
             if (InRptr < InWptr) data = *InRptr++;
             StatReg &= ~StatRxF;
             break;
         // Read status register
         case 0x69:
             data = StatReg;
-			StatReg &= ~StatIRQ;
+            StatReg &= ~StatIRQ;
+            //PrintLogF("rs:%X ",data);
             break;
         // Read command register
         case 0x6A:
@@ -239,10 +241,11 @@ void sc6551_write(unsigned char data,unsigned short port)
     switch (port) {
         // Data
         case 0x68:
+            //PrintLogF("wd:%X ",data);
             *OutWptr++ = data;
             // Clear TxE if output buffer full
-			unsigned int cnt = OutWptr - OutBuf;
-			if (cnt >= OBUFSIZ) StatReg &= ~StatTxE;
+            unsigned int cnt = OutWptr - OutBuf;
+            if (cnt >= OBUFSIZ) StatReg &= ~StatTxE;
             break;
         // Clear status
         case 0x69:
@@ -250,6 +253,7 @@ void sc6551_write(unsigned char data,unsigned short port)
             break;
         // Write Command register
         case 0x6A:
+            //PrintLogF("wc:%X ",data);
             CmdReg = data;
             if (CmdReg & CmdDTR) {
                 if (sc6551_initialized != 1) sc6551_init();
@@ -258,6 +262,7 @@ void sc6551_write(unsigned char data,unsigned short port)
             }
         // Write Control register
         case 0x6B:
+            //PrintLogF("wb:%X ",data);
             CtlReg = data;
             BaudRate = CtlReg & CtlBaud;
             break;
