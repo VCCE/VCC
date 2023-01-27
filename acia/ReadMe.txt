@@ -13,22 +13,22 @@ Issues
 5) /t2 connect failure sometimes requires reset to recover
 
 These notes are based on using /t2 on (Nitr)Os9 and the
-RS delux RS232 program pak 
+RS deluxe RS232 program pack 
 
                 General notes
 
 The color computer can do bit wise RS232 using the "big banger"
 port but this is very slow.  The RS232 program pack was used
-to overcome this shortcomming.  The pak contains a SC6551
+to overcome this shortcoming.  The pack contains a SC6551
 Asynchronous Communication Adapter (ACIA) which is a specialized
 UART for dealing with 6500/6800 series CPUs.  Acia.dll is
-a Vcc add on that attempts to emulate features of the pak.
+a Vcc add on that attempts to emulate features of the pack.
 
 Acia.dll does not deal with many of the details of communicating
 with RS232 devices.  Instead it establishes a byte stream connection
 with a the console, TCP socket, or file and leaves the
 details of how to communicate to the PC operating system.  This
-allows flexiblity but also means it does not behave exactly like
+allows flexibility but also means it does not behave exactly like
 a real RS232 interface.
 
                 Settings
@@ -43,14 +43,12 @@ data is input from a file.  Tcpip mode establishes a network connection
 with a network server and Comx mode (no done yet) is intended to 
 establishes a connection with a windows COM port, which may be 
 connected to a RS232 device such as a modem or Arduino using a 
-USB to UART converter.  Details of the varous mode follows.
-
-
+USB to UART converter.  Details of the various mode follows.
 
 				Console mode
 
 Console mode is most useful when using (Nitr)Os9 and the t2 device 
-and accociated sc6551 driver. t2 and sc6551 must both be loaded at 
+and associated sc6551 driver. t2 and sc6551 must both be loaded at 
 boot to work properly
 
 /t2 settings for Windows console should be as follows:
@@ -83,7 +81,7 @@ text when the cursor tries to move beyond the screen boundaries.
 
 Vim (fixed tsedit) works pretty well. It takes care of deleting lines
 from the top of the screen when the cursor nears the bottom and
-replaces the lines when scrolling up. Vim seems to be hardcoded to
+replaces the lines when scrolling up. Vim seems to be hard coded to
 24 lines so the screen must be at least 24 lines long. (changing
 tspars or typing v to set the screen type does not work for me)
 
@@ -104,8 +102,8 @@ vi's use of hjkl for cursor position to adapt to emacs.
 		      File Read and File Write Modes
 
 File modes allow reading or writing to/from a windows file. After
-selecting the appriate radio button in the Acia Interface config
-dialog the file name should be intered in the Name field. The
+selecting the appropriate radio button in the Acia Interface config
+dialog the file name should be entered in the Name field. The
 file name will be saved in the Vcc ini file.
 
 Important.  You must turn off local echo to use File Mode with
@@ -148,9 +146,9 @@ After selecting TCPIP radio button on the Acia config dialog the
 server hostname or IP address should be entered in the Name field
 (default is localhost) and the server port in the Port field.
 
-I have been testing tcpip mode by using netcat on linux as a server.
-On linux ' nc -l -p 48000'   48000 is the port number I am using.
-After launching a shell connected to /t2 on (Nitr)Os9 the linux
+I have been testing tcpip mode by using netcat on Linux as a server.
+On Linux ' nc -l -p 48000'   48000 is the port number I am using.
+After launching a shell connected to /t2 on (Nitr)Os9 the Linux
 session becomes a terminal connected to Os9. 
 
 (MORE TO COME LATER)
