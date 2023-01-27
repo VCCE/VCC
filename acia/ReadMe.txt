@@ -5,23 +5,57 @@
 Issues
 
 1) Baud rate (for recv) delay table contains wild guesses
-2) Does not seem to work with RSDOS Deluxe cart rom
-3) TCP and COM not done yet
-4) Using file write mode to send text to a windows file
+2) COM not done yet
+3) Using file write mode to send text to a windows file
    causes an extra blank line to be appended to the file.
+4) The sc6551 driver used by /t2 does not seem to use xmode baud, 
+   xon, or xoff values. 
+5) /t2 connect failure sometimes requires reset to recover
 
-These notes are based on using /t2 on (Nitr)Os9
+These notes are based on using /t2 on (Nitr)Os9 and the
+RS delux RS232 program pak 
 
-The sc6551 driver used by /t2 does not seem to use xmode baud, 
-xon, or xoff values. Receive seems to be at about 9600 baud
-and transmit is not restricted. There seems to be no other
-flow control.
+                General notes
+
+The color computer can do bit wise RS232 using the "big banger"
+port but this is very slow.  The RS232 program pack was used
+to overcome this shortcomming.  The pak contains a SC6551
+Asynchronous Communication Adapter (ACIA) which is a specialized
+UART for dealing with 6500/6800 series CPUs.  Acia.dll is
+a Vcc add on that attempts to emulate features of the pak.
+
+Acia.dll does not deal with many of the details of communicating
+with RS232 devices.  Instead it establishes a byte stream connection
+with a the console, TCP socket, or file and leaves the
+details of how to communicate to the PC operating system.  This
+allows flexiblity but also means it does not behave exactly like
+a real RS232 interface.
+
+                Settings
+
+Connection details are set using the Acia Interface config dialog
+which can be reached from the Vcc Cartridge menu when the DLL is 
+loaded.  The dialog has radio buttons for console, file read,
+file write, tcpip, and comx modes of operation.  When activated 
+Console mode brings up the Vcc console window.  File write mode causes
+all data output to go to a file.  File read mode does the reverse,
+data is input from a file.  Tcpip mode establishes a network connection
+with a network server and Comx mode (no done yet) is intended to 
+establishes a connection with a windows COM port, which may be 
+connected to a RS232 device such as a modem or Arduino using a 
+USB to UART converter.  Details of the varous mode follows.
+
+
 
 				Console mode
 
-Terminal settings for Windows console should be as follows:
+Console mode is most useful when using (Nitr)Os9 and the t2 device 
+and accociated sc6551 driver. t2 and sc6551 must both be loaded at 
+boot to work properly
 
-/t2
+/t2 settings for Windows console should be as follows:
+
+xmode /t2
  -upc -bsb bsl echo lf null=0 pause pag=32 bsp=08
 del=18 eor=0D eof=1B reprint=09 dup=19 psc=17 abort=03
 quit=05 bse=08 bell=07 type=80 baud=06 xon=11 xoff=13
@@ -67,13 +101,16 @@ I did a brief check of uemacs. It seems to work okay except I find
 the lack of support of arrow keys annoying and I am too used to
 vi's use of hjkl for cursor position to adapt to emacs.
 
-					File Mode
+		      File Read and File Write Modes
 
-File mode allows reading or writing to/from a windows file. 
+File modes allow reading or writing to/from a windows file. After
+selecting the appriate radio button in the Acia Interface config
+dialog the file name should be intered in the Name field. The
+file name will be saved in the Vcc ini file.
 
 Important.  You must turn off local echo to use File Mode with
 the os9 /t2 device before using is to move data to/from
-windows files. 'xmode /t2 -echo'  Failure to do so will result
+windows files. 'xmode /t2 -echo'  Failure to do so may result
 in I/O errors and possible hangs.
 
 There are two file modes,  File Read and File Write.  When
@@ -105,3 +142,15 @@ file than to copy it:
 is much faster than 
     copy /t2 file
 
+					Tcpip Mode
+
+After selecting TCPIP radio button on the Acia config dialog the 
+server hostname or IP address should be entered in the Name field
+(default is localhost) and the server port in the Port field.
+
+I have been testing tcpip mode by using netcat on linux as a server.
+On linux ' nc -l -p 48000'   48000 is the port number I am using.
+After launching a shell connected to /t2 on (Nitr)Os9 the linux
+session becomes a terminal connected to Os9. 
+
+(MORE TO COME LATER)
