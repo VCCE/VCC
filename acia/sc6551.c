@@ -55,9 +55,6 @@ int BaudRate = 0;  // External Xtal default is ~9600
 // Heartbeat counter used to pace recv
 int HBtimer = 0;
 
-// Thread keep alive timer
-int LastTickCount=0;
-
 // BaudDelay table is used to set HBtimer
 // TODO: Replace wags with good values
 int BaudDelay[16] = {0,2200,2000,1600,1200,600,300,150,
@@ -71,8 +68,9 @@ void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop)
     if (hthread) {
         // Tell thread to exit
         SetEvent(hstop);
-        // If that fails terminate it
+        // If that fails force it
         if (WaitForSingleObject(hthread,500) == WAIT_TIMEOUT) {
+//            PrintLogF("FORCE TERMINATE %d\n",hthread);
             TerminateThread(hthread,1);
             WaitForSingleObject(hthread,500);
         }
@@ -113,9 +111,9 @@ void sc6551_init()
 //------------------------------------------------------------------------
 void sc6551_close()
 {
+    com_close();
     sc6551_terminate_thread(hInputThread, hStopInput);
     sc6551_terminate_thread(hOutputThread, hStopOutput);
-    com_close();
     sc6551_initialized = 0;
 }
 
@@ -153,6 +151,7 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 
         if (WaitForSingleObject(hStopInput,delay) != WAIT_TIMEOUT) {
             if (InRptr < InWptr) Sleep(3000);
+//            PrintLogF("TERMINATE-IN\n");
             com_close();
             ExitThread(0);
         }
@@ -174,10 +173,9 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 
         // Poll for data to write
         while ((OutWptr-OutBuf) == 0) {
-            // If heart beats have stopped terminate
-            if ( (GetTickCount()-LastTickCount)>1000) sc6551_close();
             // Exit if a terminate signal
             if (WaitForSingleObject(hStopOutput,delay) != WAIT_TIMEOUT) {
+//                PrintLogF("TERMINATE-OUT\n");
                 com_close();
                 ExitThread(0);
             }
@@ -197,11 +195,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
             if (len > OBUFSIZ/2) delay = 5;
             while (len > 0) {
                 int cnt = com_write(ptr,len);
-                if (cnt < 1) {
-//                    OutWptr=OutBuf;
-//                    len = 0;
-                    break;  //TODO Deal with write error
-                }
+                if (cnt < 1) break; //TODO Deal with write error
                 ptr += cnt;
                 len -= cnt;
             }
@@ -228,9 +222,6 @@ void sc6551_heartbeat()
             }
         }
     }
-
-    // Thread keepalive counter
-    LastTickCount=GetTickCount();
 
     return;
 }
