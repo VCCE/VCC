@@ -26,8 +26,7 @@ unsigned char sc6551_read(unsigned char data);
 void sc6551_write(unsigned char data, unsigned short port);
 void (*AssertInt)(unsigned char,unsigned char);
 
-// Status Register (69)
-unsigned char StatReg;
+// Status Register defines
 // Status register bits.
 // b0 Par Rx parity error
 // b1 Frm Rx framing error
@@ -46,8 +45,7 @@ unsigned char StatReg;
 #define StatDSR  0x40
 #define StatIRQ  0x80
 
-// Command register (6A)
-unsigned char CmdReg;
+// Command register defines
 // Command register bits.
 // b0   DTR Enable receive and interupts  (set=enabled)
 // b1   RxI Receiver IRQ control by StatRxF (set=disabled)
@@ -67,8 +65,7 @@ unsigned char CmdReg;
 #define TIRB_RTS  0x08
 #define TIRB_Brk  0x0C
 
-// Control Register (6B)
-unsigned char CtlReg;
+// Control Register defines (6B)
 // b0-3 Baud rate
 //		{ X,60,75,110,135,150,300,600,1200,
 //		  1800,2400,3600,4800,7200,9600,19200 }

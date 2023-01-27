@@ -105,16 +105,14 @@ PackPortRead(unsigned char Port)
 __declspec(dllexport) void ModuleReset(void)
 {
     SendMessage(hConfigDlg, WM_CLOSE, 0, 0);
-    file_close();
-	console_close();
-//	tcpip_close();
-//	wincom_close();
-	sc6551_close();
-	return;
+    sc6551_close();
+    return;
 }
+
 //-----------------------------------------------------------------------
 // Dll export Heartbeat (HSYNC)
 //-----------------------------------------------------------------------
+
 __declspec(dllexport) void HeartBeat(void)
 {
     sc6551_heartbeat();
@@ -231,16 +229,14 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
     switch (msg) {
 
     case WM_CLOSE:
-		EndDialog(hDlg,0);
-		break;
+        EndDialog(hDlg,0);
+        break;
 
     case WM_INITDIALOG:
 
         // Kill previous instance
         if (hConfigDlg) EndDialog(hConfigDlg,0);
         hConfigDlg = hDlg;
-
-//LoadConfig();
 
         SetWindowPos(hDlg, HWND_TOP, 10, 10, 0, 0, SWP_NOSIZE);
 
@@ -294,9 +290,11 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
     case WM_COMMAND:
         int port;
 
+        // Close sc6551 before changing com type
         button = LOWORD(wParam);
         switch (button) {
         case IDC_T_CONS:
+            sc6551_close();
             AciaComType  = COM_CONSOLE;
             AciaComMode = COM_MODE_DUPLEX;
             SetDlgItemText(hDlg,IDC_FILE,"");
@@ -304,6 +302,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             break;
 
         case IDC_T_FILE_R:
+            sc6551_close();
             AciaComType  = COM_FILE;
             AciaComMode = COM_MODE_READ;
             SetDlgItemText(hDlg,IDC_FILE,AciaFilePath);
@@ -311,6 +310,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             break;
 
         case IDC_T_FILE_W:
+            sc6551_close();
             AciaComType  = COM_FILE;
             AciaComMode = COM_MODE_WRITE;
             SetDlgItemText(hDlg,IDC_FILE,AciaFilePath);
@@ -318,6 +318,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             break;
 
         case IDC_T_TCP: // tcpip
+            sc6551_close();
             AciaComType = COM_TCPIP;
             AciaComMode = COM_MODE_DUPLEX;
             SetDlgItemText(hDlg,IDC_FILE,"");
@@ -325,6 +326,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             break;
 
         case IDC_T_COM: // COMx
+            sc6551_close();
             AciaComType = COM_WINCOM;
             AciaComMode = COM_MODE_DUPLEX;
             SetDlgItemText(hDlg,IDC_FILE,"");
@@ -333,7 +335,6 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
 
         case IDOK:
         case IDAPPLY:
-
             // Text mode check box
             hCtl = GetDlgItem(hDlg,IDC_TXTMODE);
             AciaTextMode = SendMessage(hCtl,BM_GETCHECK,0,0);
@@ -395,6 +396,11 @@ int com_open() {
         return console_open();
     case COM_FILE:
         return file_open();
+    case COM_TCPIP:
+        return tcpip_open();
+    case COM_WINCOM:
+        ;
+//        return wincom_open();
     }
     return 0;
 }
@@ -407,6 +413,13 @@ void com_close() {
     case COM_FILE:
         file_close();
         break;
+    case COM_TCPIP:
+        tcpip_close();
+        break;
+    case COM_WINCOM:
+        ;
+//        wincom_close();
+        break;
     }
 }
 
@@ -417,6 +430,11 @@ int com_write(char * buf, int len) {
         return console_write(buf,len);
     case COM_FILE:
         return file_write(buf,len);
+    case COM_TCPIP:
+        return tcpip_write(buf,len);
+    case COM_WINCOM:
+        ;
+//        return wincom_write(buf,len);
     }
     return 0;
 }
@@ -428,6 +446,11 @@ int com_read(char * buf,int len) {  // returns bytes read
         return console_read(buf,len);
     case COM_FILE:
         return file_read(buf,len);
+    case COM_TCPIP:
+        return tcpip_read(buf,len);
+    case COM_WINCOM:
+        ;
+//        return wincom_read(buf,len);
     }
     return 0;
 }

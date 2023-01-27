@@ -13,7 +13,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
 // See the GNU General Public License for more details.  You should have
-// received a copy of the GNU General Public License  along with VCC 
+// received a copy of the GNU General Public License  along with VCC
 // (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
 //
 //------------------------------------------------------------------
@@ -26,7 +26,7 @@
 #define MAX_LOADSTRING 200
 
 #include <windows.h>
-#include <windowsx.h> 
+#include <windowsx.h>
 #include <stdio.h>
 #include <conio.h>
 #include <dinput.h>
@@ -47,7 +47,6 @@ enum comtype {
 };
 int AciaComType;
 
-
 // Communications mode, duplex, read only, or write only
 enum com_mode {
     COM_MODE_DUPLEX,
@@ -59,26 +58,35 @@ int AciaComMode;
 // Line ending and EOF translations 0=none 1=text
 int AciaTextMode;
 
-// Character used to indicate end of file when text mode is used 
+// Character used to indicate end of file when text mode is used
 #define EOFCHR 0x1B
 // Flow control character when text mode is used
 #define XOFCHR 0x0D
 
-// Console 
+// Console
 int  console_open();
 void console_close();
 int  console_read(char* buf,int siz);
 int  console_write(char* buf,int siz);
 // Console mode toggle Normal: 0; Line mode: 1
-int  ConsoleLineInput;  
+int  ConsoleLineInput;
 
-// File 
+// File
 int  file_open();
 void file_close();
 int  file_read(char* buf,int siz);
 int  file_write(char* buf,int siz);
 // Path for file I/O
 char AciaFilePath[MAX_PATH];
+
+// Tcpip
+int  tcpip_open();
+void tcpip_close();
+int  tcpip_read(char* buf, int siz);
+int  tcpip_write( char*buf, int siz);
+// hostname and port
+static char SrvAddress[MAX_PATH] = "localhost";
+static unsigned short SrvPort = 48000;
 
 // Status for Vcc status line
 char AciaStat[32];
