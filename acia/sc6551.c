@@ -223,7 +223,7 @@ void sc6551_heartbeat()
             StatReg |= StatRxF;
             if (!(CmdReg & CmdRxI)) {
                 StatReg |= StatIRQ;
-                AssertInt(IRQ,0);
+                AssertInt(1,0);
 //                PrintLogF("IRQ ");
             }
         }

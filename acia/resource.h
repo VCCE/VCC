@@ -8,7 +8,7 @@
 #define IDD_PROPPAGE                    102
 
 #define IDC_PORT                        1010
-#define IDC_FILE                        1011
+#define IDC_NAME                        1011
 #define IDC_TXTMODE                     1012
 #define IDAPPLY                         1013
 

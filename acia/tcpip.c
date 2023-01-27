@@ -28,7 +28,7 @@ int tcpip_open()
     }
 
     // resolve hostname
-    LPHOSTENT host = gethostbyname(SrvAddress);
+    LPHOSTENT host = gethostbyname(AciaTcpHost);
     if (host == NULL) {
         tcpip_close();
         return -1;
@@ -52,8 +52,7 @@ int tcpip_open()
     SOCKADDR_IN addr;
     addr.sin_family= AF_INET;
     addr.sin_addr= *((LPIN_ADDR)*host->h_addr_list);
-    addr.sin_port = htons(SrvPort);
-
+    addr.sin_port = htons(AciaTcpPort);
     int rc = connect(Socket,(LPSOCKADDR)&addr, sizeof(addr));
 
     if (rc==SOCKET_ERROR) {

@@ -21,7 +21,6 @@
 #ifndef __ACIA_H_
 #define __ACIA_H_
 
-#define IRQ 1
 #define DIRECTINPUT_VERSION 0x0800
 #define MAX_LOADSTRING 200
 
@@ -32,72 +31,62 @@
 #include <dinput.h>
 #include "resource.h"
 
+// Dynamic menu control
+#define HEAD 0
+#define SLAVE 1
+#define STANDALONE 2
+
+// Text mode EOF character
+#define EOFCHR 0x1B
+
+// Communications type and mode enumerations
+enum com_type {
+    COM_CONSOLE,
+    COM_FILE,
+    COM_TCPIP,
+    COM_WINCOM
+};
+enum com_mode {
+    COM_MODE_DUPLEX,
+    COM_MODE_READ,
+    COM_MODE_WRITE,
+};
+
+// Config globals
+int  AciaComType;            // Console,file,tcpip,wincom
+int  AciaComMode;            // Duplex,read,write
+int  AciaTextMode;           // CR and EOF translations 0=none 1=text
+int  AciaLineInput;          // Console line mode 0=Normal 1=Linemode
+int  AciaComPort;            // COM port 1-10
+int  AciaTcpPort;            // TCP port 1024-65536
+char AciaTcpHost[MAX_PATH];  // Tcpip hostname 
+char AciaFilePath[MAX_PATH]; // Path for file I/O
+
+// Status for Vcc status line
+char AciaStat[32];
+
 // Comunications hooks
 int  com_open();
 void com_close();
 int  com_write(char*,int);
 int  com_read(char*,int);
 
-// Communications media
-enum comtype {
-    COM_CONSOLE,
-    COM_FILE,
-    COM_TCPIP,
-    COM_WINCOM
-};
-int AciaComType;
-
-// Communications mode, duplex, read only, or write only
-enum com_mode {
-    COM_MODE_DUPLEX,
-    COM_MODE_READ,
-    COM_MODE_WRITE,
-};
-int AciaComMode;
-
-// Line ending and EOF translations 0=none 1=text
-int AciaTextMode;
-
-// Character used to indicate end of file when text mode is used
-#define EOFCHR 0x1B
-// Flow control character when text mode is used
-#define XOFCHR 0x0D
-
 // Console
 int  console_open();
 void console_close();
-int  console_read(char* buf,int siz);
-int  console_write(char* buf,int siz);
-// Console mode toggle Normal: 0; Line mode: 1
-int  ConsoleLineInput;
+int  console_read(char*,int);
+int  console_write(char*,int);
 
 // File
 int  file_open();
 void file_close();
-int  file_read(char* buf,int siz);
-int  file_write(char* buf,int siz);
-// Path for file I/O
-char AciaFilePath[MAX_PATH];
+int  file_read(char*,int);
+int  file_write(char*,int);
 
 // Tcpip
 int  tcpip_open();
 void tcpip_close();
-int  tcpip_read(char* buf, int siz);
-int  tcpip_write( char*buf, int siz);
-// hostname and port
-static char SrvAddress[MAX_PATH] = "localhost";
-static unsigned short SrvPort = 48000;
-
-// Status for Vcc status line
-char AciaStat[32];
-
-// Port numbers: COM port 1-10; TCP port 1024-65536
-int AciaComPort;
-int AciaTcpPort;
-
-//menu control
-#define HEAD 0
-#define SLAVE 1
-#define STANDALONE 2
+int  tcpip_read(char*,int);
+int  tcpip_write( char*,int);
 
 #endif

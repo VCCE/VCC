@@ -177,13 +177,14 @@ void LoadConfig(void)
                                      COM_CONSOLE,IniFile);
     AciaComMode=GetPrivateProfileInt("Acia","AciaComMode",
                                      COM_MODE_DUPLEX,IniFile);
-    AciaTcpPort=GetPrivateProfileInt("Acia","AciaTcpPort",1024,IniFile);
+    AciaTcpPort=GetPrivateProfileInt("Acia","AciaTcpPort",48000,IniFile);
     AciaComPort=GetPrivateProfileInt("Acia","AciaComPort",1,IniFile);
     AciaTextMode=GetPrivateProfileInt("Acia","AciaTextMode",0,IniFile);
     GetPrivateProfileString("Acia","AciaFilePath","AciaFile.txt",
                             AciaFilePath, MAX_PATH,IniFile);
-
-    // String for Vcc status line
+    GetPrivateProfileString("Acia","AciaTcpHost","localhost",
+                            AciaTcpHost, MAX_PATH,IniFile);
+	// String for Vcc status line
     sprintf(AciaStat,"Acia %s %s",
             ComTypeTxt[AciaComType],IOModeTxt[AciaComMode]);
 }
@@ -205,7 +206,9 @@ void SaveConfig(void)
     sprintf(txt,"%d",AciaTextMode);
     WritePrivateProfileString("Acia","AciaTextMode",txt,IniFile);
     WritePrivateProfileString("Acia","AciaFilePath",AciaFilePath,IniFile);
+    WritePrivateProfileString("Acia","AciaTcpHost", AciaTcpHost,IniFile);
 }
+
 
 //-----------------------------------------------------------------------
 // Config dialog.
@@ -217,7 +220,7 @@ void SaveConfig(void)
 //   IDC_T_COM     I/O to windows COM port
 // Text Boxes
 //   IDC_PORT      Port for TCP and COM Number
-//   IDC_FILE      File name for FILE_R and FILE_W
+//   IDC_NAME      File name for FILE_R and FILE_W Host name for TCPIP
 // Check Box
 //   IDC_TEXTMODE  Translate CR <> CRLF if checked
 //-----------------------------------------------------------------------
@@ -251,19 +254,19 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
                 AciaComMode = COM_MODE_WRITE;
                 button = IDC_T_FILE_W;
             }
-            SetDlgItemText(hDlg,IDC_FILE,AciaFilePath);
+            SetDlgItemText(hDlg,IDC_NAME,AciaFilePath);
             SetDlgItemText(hDlg,IDC_PORT,"");
             break;
 
         case COM_TCPIP:
             button = IDC_T_TCP;
-            SetDlgItemText(hDlg,IDC_FILE,"");
+            SetDlgItemText(hDlg,IDC_NAME,AciaTcpHost);
             SetDlgItemInt(hDlg,IDC_PORT,AciaTcpPort,FALSE);
             break;
 
         case COM_WINCOM:
             button = IDC_T_COM;
-            SetDlgItemText(hDlg,IDC_FILE,"");
+            SetDlgItemText(hDlg,IDC_NAME,"");
             SetDlgItemInt(hDlg,IDC_PORT,AciaComPort,FALSE);
             break;
 
@@ -271,7 +274,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
         default:
             button = IDC_T_CONS;
             AciaComType = COM_CONSOLE;
-            SetDlgItemText(hDlg,IDC_FILE,"");
+            SetDlgItemText(hDlg,IDC_NAME,"");
             SetDlgItemText(hDlg,IDC_PORT,"");
             break;
         }
@@ -297,7 +300,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             sc6551_close();
             AciaComType  = COM_CONSOLE;
             AciaComMode = COM_MODE_DUPLEX;
-            SetDlgItemText(hDlg,IDC_FILE,"");
+            SetDlgItemText(hDlg,IDC_NAME,"");
             SetDlgItemText(hDlg,IDC_PORT,"");
             break;
 
@@ -305,7 +308,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             sc6551_close();
             AciaComType  = COM_FILE;
             AciaComMode = COM_MODE_READ;
-            SetDlgItemText(hDlg,IDC_FILE,AciaFilePath);
+            SetDlgItemText(hDlg,IDC_NAME,AciaFilePath);
             SetDlgItemText(hDlg,IDC_PORT,"");
             break;
 
@@ -313,7 +316,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             sc6551_close();
             AciaComType  = COM_FILE;
             AciaComMode = COM_MODE_WRITE;
-            SetDlgItemText(hDlg,IDC_FILE,AciaFilePath);
+            SetDlgItemText(hDlg,IDC_NAME,AciaFilePath);
             SetDlgItemText(hDlg,IDC_PORT,"");
             break;
 
@@ -321,7 +324,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             sc6551_close();
             AciaComType = COM_TCPIP;
             AciaComMode = COM_MODE_DUPLEX;
-            SetDlgItemText(hDlg,IDC_FILE,"");
+            SetDlgItemText(hDlg,IDC_NAME,AciaTcpHost);
             SetDlgItemInt(hDlg,IDC_PORT,AciaTcpPort,FALSE);
             break;
 
@@ -329,7 +332,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             sc6551_close();
             AciaComType = COM_WINCOM;
             AciaComMode = COM_MODE_DUPLEX;
-            SetDlgItemText(hDlg,IDC_FILE,"");
+            SetDlgItemText(hDlg,IDC_NAME,"");
             SetDlgItemInt(hDlg,IDC_PORT,AciaComPort,FALSE);
             break;
 
@@ -344,9 +347,10 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             case COM_CONSOLE:
                 break;
             case COM_FILE:
-                GetDlgItemText(hDlg,IDC_FILE,AciaFilePath,MAX_PATH);
+                GetDlgItemText(hDlg,IDC_NAME,AciaFilePath,MAX_PATH);
                 break;
             case COM_TCPIP:
+                GetDlgItemText(hDlg,IDC_NAME,AciaTcpHost,MAX_PATH);
                 port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
                 if ((port < 1024) || (port > 65536)) {
                     MessageBox(hDlg,"TCP Port must be 1024 thru 65536",

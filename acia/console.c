@@ -95,7 +95,7 @@ console_open() {
         FlushConsoleInputBuffer(hConIn);
 
 //      Default to raw mode.
-        ConsoleLineInput = 0;
+        AciaLineInput = 0;
 
         hConOut=GetStdHandle(STD_OUTPUT_HANDLE);
         SetConsoleTitle("VCC Console");
@@ -133,7 +133,7 @@ console_read(char * buf, int len) {
     if (len < 1) return 0;
 
 	// If line mode return next line from keyboard buffer (blocks)
-    if (ConsoleLineInput) {
+    if (AciaLineInput) {
         int cnt;
         ReadConsole(hConIn,buf,len,&cnt,NULL);
         return cnt;
@@ -307,11 +307,11 @@ int console_write(char *buf, int len) {
                     break;
                 case 0x40: // Line mode off
                     SetConsoleTitle("VCC Console");
-                    ConsoleLineInput = 0;
+                    AciaLineInput = 0;
                     break;
                 case 0x41: // Line mode on
                     SetConsoleTitle("VCC Console Line Mode");
-                    ConsoleLineInput = 1;
+                    AciaLineInput = 1;
                     break;
                 default:
                     sprintf(cc,"~1F%02X~",SeqArgs[0]);     // not handled
