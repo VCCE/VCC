@@ -181,7 +181,7 @@ PrintLogF("Acia load settings\n");
     AciaComMode=GetPrivateProfileInt("Acia","AciaComMode",
                                      COM_MODE_DUPLEX,IniFile);
     AciaTcpPort=GetPrivateProfileInt("Acia","AciaTcpPort",48000,IniFile);
-    AciaComPort=GetPrivateProfileInt("Acia","AciaComPort",1,IniFile);
+    AciaComPort=GetPrivateProfileInt("Acia","AciaComPort",0,IniFile);
     AciaTextMode=GetPrivateProfileInt("Acia","AciaTextMode",0,IniFile);
     GetPrivateProfileString("Acia","AciaFilePath","AciaFile.txt",
                             AciaFilePath, MAX_PATH,IniFile);
@@ -363,13 +363,13 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
                 AciaTcpPort = port;
                 break;
             case COM_WINCOM:
-/*                port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
-                if ((port < 1) || (port > 10)) {
-                    MessageBox(hDlg,"COM number must be 1 thru 10",
+                port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
+                if ((port < 0) || (port > 99)) {
+                    MessageBox(hDlg,"COM port must be 0 thru 99",
                                     "Error", MB_OK|MB_ICONEXCLAMATION);
                     return TRUE;
                 }
-                AciaComPort = port; */
+                AciaComPort = port;
                 break;
             }
             // String for Vcc status line

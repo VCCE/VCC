@@ -63,7 +63,7 @@ int  AciaComType;            // Console,file,tcpip,wincom
 int  AciaComMode;            // Duplex,read,write
 int  AciaTextMode;           // CR and EOF translations 0=none 1=text
 int  AciaLineInput;          // Console line mode 0=Normal 1=Linemode
-int  AciaComPort;            // COM port 1-10
+int  AciaComPort;            // COM port 0-99
 int  AciaTcpPort;            // TCP port 1024-65536
 char AciaTcpHost[MAX_PATH];  // Tcpip hostname 
 char AciaFilePath[MAX_PATH]; // Path for file I/O

@@ -3,26 +3,42 @@
 ========================================================================
 
 Issues
+------
 
-1) Baud rate (for recv) delay table contains wild guesses
-2) COM not done yet
-3) Using file write mode to send text to a windows file
+1) Baud rate (for recv) delay table contains wild guesses.
+2) Using file write mode to send text to a windows file
    causes an extra blank line to be appended to the file.
-4) The sc6551 driver used by /t2 does not seem to use xmode baud, 
+3) The sc6551 driver used by /t2 does not seem to use xmode baud, 
    xon, or xoff values. 
-5) /t2 connect failure sometimes requires reset to recover
+4) /t2 connect failure sometimes requires reset to recover
+5) Pak rom protocols for dealing with dial ups and file transfers
+   are not supported in the DLL.  It should be possible to write
+   a server program on the PC to listen for a connection and 
+   support these functions.
 
-These notes are based on using /t2 on (Nitr)Os9 and the
-RS deluxe RS232 program pack 
+Todo
+----
+
+1) Load RS232 pak rom if present
+2) COMx baud rate fixed at 9600
+3) Use text 'COM20' to spec serial port instead of number '20'
+4) Much testing
+
+Would be nice
+------------
+
+1) Support for second sc6551 device
+
+These notes are based on using /t2 on (Nitr)Os9 and the rom from
+the Radio Shack RS232 program pack. 
 
                 General notes
 
-The color computer can do bit wise RS232 using the "big banger"
-port but this is very slow.  The RS232 program pack was used
-to overcome this shortcoming.  The pack contains a SC6551
+Acia.dll is a Vcc add on that attempts to emulate the SC6551 ACIA.
+
+The Color Computer RS232 program pack contains a SC6551
 Asynchronous Communication Adapter (ACIA) which is a specialized
-UART for dealing with 6500/6800 series CPUs.  Acia.dll is
-a Vcc add on that attempts to emulate features of the pack.
+UART for dealing with 6500/6800 series CPUs.  
 
 Acia.dll does not deal with many of the details of communicating
 with RS232 devices.  Instead it establishes a byte stream connection
@@ -122,10 +138,7 @@ Text mode.  When text mode is checked end of line translations
 end of files.  This is recommended when using /t2 in os9 unless
 attempting to write binary files to windows.  Reading binary files
 is difficult under os9 because the sc6551 driver does not have a
-means of detecting end of file.  Therefore the SCF handler can
-only detect end of file by looking for a CR followed by ESC.
-In ascii mode file transfers would be aborted if that sequence
-is found in the stream.
+means other than <ESC> char to detect end of file.  
 
 Sending command output to a file can be done with something like
 'dir -e > /t2' If doing a long listing it is better to place the 
@@ -133,12 +146,6 @@ output in a os9 file and copy that to /t2, for example:
 
 	dir -e -x > cmds.list
 	copy cmds.list /t2
-
-When moving data to os9 it is much faster to stream output to a 
-file than to copy it: 
-    list /t2 > file
-is much faster than 
-    copy /t2 file
 
 					Tcpip Mode
 
@@ -151,4 +158,16 @@ On Linux ' nc -l -p 48000'   48000 is the port number I am using.
 After launching a shell connected to /t2 on (Nitr)Os9 the Linux
 session becomes a terminal connected to Os9. 
 
-(MORE TO COME LATER)
+				  COM port mode (COMx)
+
+After selecting COMx radio button the COM port number should be
+entered in the Port field. (Future this may be changed to using
+the Name field to all specifying ports other than COMx) 
+
+I have been testing the COM port mode using a com0com port emulator
+in windows along with putty.  com0com was used to 'wire' two psuedo
+port COM20 and COM21 together. I used acia.dll to connect to COM20
+and PuTTy to connect to COM21.  This allowed me to simulate connecting
+with a terminal.
+
+
