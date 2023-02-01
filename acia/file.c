@@ -30,15 +30,12 @@
 
 FILE * FileStream = NULL;
 
-int PrevChrCR=0; // True if last char read was a carriage return
 
 // Open file. Binary mode so windows does not try to do line end LF
 // translations. (OS9 uses CR for line endings)
 
 int file_open()
 {
-    PrevChrCR = 0;
-
     char * mode;
     switch (AciaComMode) {
     case COM_MODE_READ:
@@ -67,7 +64,9 @@ void file_close()
 // Read file.  If text remove LF characters
 int file_read(char* buf,int siz)
 {
-    if (FileStream == NULL) {
+    int PrevChrCR=0; // True if last char read was a carriage return
+
+	if (FileStream == NULL) {
         return -1;
     }
 

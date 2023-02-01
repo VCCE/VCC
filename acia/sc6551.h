@@ -26,6 +26,9 @@ unsigned char sc6551_read(unsigned char data);
 void sc6551_write(unsigned char data, unsigned short port);
 void (*AssertInt)(unsigned char,unsigned char);
 
+// Thread control
+void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop);
+
 // Status Register defines
 // Status register bits.
 // b0 Par Rx parity error

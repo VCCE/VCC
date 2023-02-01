@@ -56,7 +56,8 @@ BOOL APIENTRY
 DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
     if (reason == DLL_PROCESS_ATTACH) {
-        g_hDLL = hinst;
+PrintLogF("Acia DLL Attach\n");
+		g_hDLL = hinst;
     } else if (reason == DLL_PROCESS_DETACH) {
         if (hConfigDlg) SendMessage(hConfigDlg,WM_CLOSE,6666,0);
         sc6551_close();
@@ -104,6 +105,7 @@ PackPortRead(unsigned char Port)
 //-----------------------------------------------------------------------
 __declspec(dllexport) void ModuleReset(void)
 {
+PrintLogF("Acia DLL Reset\n");
     SendMessage(hConfigDlg, WM_CLOSE, 0, 0);
     sc6551_close();
     return;
@@ -173,6 +175,7 @@ void BuildDynaMenu(void)
 //----------------------------------------------------------------------
 void LoadConfig(void)
 {
+PrintLogF("Acia load settings\n");
     AciaComType=GetPrivateProfileInt("Acia","AciaComType",
                                      COM_CONSOLE,IniFile);
     AciaComMode=GetPrivateProfileInt("Acia","AciaComMode",
@@ -360,14 +363,14 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
                 AciaTcpPort = port;
                 break;
             case COM_WINCOM:
-                port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
+/*                port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
                 if ((port < 1) || (port > 10)) {
                     MessageBox(hDlg,"COM number must be 1 thru 10",
                                     "Error", MB_OK|MB_ICONEXCLAMATION);
                     return TRUE;
                 }
+                AciaComPort = port; */
                 break;
-                AciaComPort = port;
             }
             // String for Vcc status line
             sprintf(AciaStat,"Acia %s %s",
@@ -403,8 +406,7 @@ int com_open() {
     case COM_TCPIP:
         return tcpip_open();
     case COM_WINCOM:
-        ;
-//        return wincom_open();
+        return wincom_open();
     }
     return 0;
 }
@@ -421,8 +423,7 @@ void com_close() {
         tcpip_close();
         break;
     case COM_WINCOM:
-        ;
-//        wincom_close();
+        wincom_close();
         break;
     }
 }
@@ -437,8 +438,7 @@ int com_write(char * buf, int len) {
     case COM_TCPIP:
         return tcpip_write(buf,len);
     case COM_WINCOM:
-        ;
-//        return wincom_write(buf,len);
+        return wincom_write(buf,len);
     }
     return 0;
 }
@@ -453,8 +453,7 @@ int com_read(char * buf,int len) {  // returns bytes read
     case COM_TCPIP:
         return tcpip_read(buf,len);
     case COM_WINCOM:
-        ;
-//        return wincom_read(buf,len);
+        return wincom_read(buf,len);
     }
     return 0;
 }

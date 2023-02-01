@@ -52,6 +52,12 @@ enum com_mode {
     COM_MODE_WRITE,
 };
 
+// Handles for I/O threads
+HANDLE hInputThread;
+HANDLE hOutputThread;
+HANDLE hStopInput;
+HANDLE hStopOutput;
+
 // Config globals
 int  AciaComType;            // Console,file,tcpip,wincom
 int  AciaComMode;            // Duplex,read,write
@@ -88,5 +94,11 @@ int  tcpip_open();
 void tcpip_close();
 int  tcpip_read(char*,int);
 int  tcpip_write( char*,int);
+
+// WinCom 
+int  wincom_open();
+void wincom_close();
+int  wincom_read(char*,int);
+int  wincom_write(char*,int);
 
 #endif

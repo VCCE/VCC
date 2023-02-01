@@ -34,8 +34,8 @@ unsigned char CtlReg;
 // Input buffer
 #define IBUFSIZ 1024
 DWORD WINAPI sc6551_input_thread(LPVOID);
-HANDLE hInputThread;
-HANDLE hStopInput;
+//HANDLE hInputThread;
+//HANDLE hStopInput;
 char InBuf[IBUFSIZ];
 char *InRptr = InBuf;  // Input buffer read pointer
 char *InWptr = InBuf;  // Input buffer write pointer
@@ -43,8 +43,8 @@ char *InWptr = InBuf;  // Input buffer write pointer
 // Output buffer
 #define OBUFSIZ 1024
 DWORD WINAPI sc6551_output_thread(LPVOID);
-HANDLE hOutputThread;
-HANDLE hStopOutput;
+//HANDLE hOutputThread;
+//HANDLE hStopOutput;
 char OutBuf[OBUFSIZ];
 char *OutWptr = OutBuf;
 
@@ -70,12 +70,11 @@ void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop)
         SetEvent(hstop);
         // If that fails force it
         if (WaitForSingleObject(hthread,500) == WAIT_TIMEOUT) {
-//            PrintLogF("FORCE TERMINATE %d\n",hthread);
+            //PrintLogF("FORCE TERMINATE %d\n",hthread);
             TerminateThread(hthread,1);
             WaitForSingleObject(hthread,500);
         }
         CloseHandle(hthread);
-        CloseHandle(hstop);
         hthread = NULL;
     }
 }
@@ -96,8 +95,8 @@ void sc6551_init()
     hInputThread =  CreateThread(NULL,0,sc6551_input_thread, NULL,0,&id);
     hOutputThread = CreateThread(NULL,0,sc6551_output_thread,NULL,0,&id);
 
-    // Create events to terminate them
-    hStopInput = CreateEvent(NULL,TRUE,FALSE,NULL);
+    // Create events to control them
+    hStopInput  = CreateEvent(NULL,TRUE,FALSE,NULL);
     hStopOutput = CreateEvent(NULL,TRUE,FALSE,NULL);
 
     // Clear status register and mark buffers empty
@@ -111,9 +110,12 @@ void sc6551_init()
 //------------------------------------------------------------------------
 void sc6551_close()
 {
-    com_close();
+//    com_close();
     sc6551_terminate_thread(hInputThread, hStopInput);
     sc6551_terminate_thread(hOutputThread, hStopOutput);
+    CloseHandle(hStopInput);
+    CloseHandle(hStopOutput);
+    com_close();
     sc6551_initialized = 0;
 }
 
@@ -125,6 +127,8 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
     int delay;
     int avail = IBUFSIZ;
 
+    //PrintLogF("START-IN %d\n",hInputThread);
+
     while(TRUE) {
         if (avail > IBUFSIZ/4) {      // Avoid short reads
             if (AciaComMode == COM_MODE_WRITE) {
@@ -133,7 +137,6 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
                 delay = 2000;
             } else {
                 int cnt = com_read((char *)InWptr,avail);
-//                PrintLogF("R%d ",cnt);
                 if (cnt > 0) {
                     InWptr += cnt;
                     avail -= cnt;
@@ -151,8 +154,7 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 
         if (WaitForSingleObject(hStopInput,delay) != WAIT_TIMEOUT) {
             if (InRptr < InWptr) Sleep(3000);
-//            PrintLogF("TERMINATE-IN\n");
-            com_close();
+            //PrintLogF("TERMINATE-IN\n");
             ExitThread(0);
         }
     }
@@ -164,19 +166,22 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 DWORD WINAPI sc6551_output_thread(LPVOID param)
 {
     int delay = 5;
+    //PrintLogF("START-OUT %d\n",hOutputThread);
 
     while(TRUE) {
 
         // Reset buffer and enable transmit
+		// Short wait for some activity
         OutWptr = OutBuf;
         StatReg |= StatTxE;
+        Sleep(10);
 
         // Poll for data to write
         while ((OutWptr-OutBuf) == 0) {
             // Exit if a terminate signal
-            if (WaitForSingleObject(hStopOutput,delay) != WAIT_TIMEOUT) {
-//                PrintLogF("TERMINATE-OUT\n");
-                com_close();
+			int rc = WaitForSingleObject(hStopOutput,delay);
+            if (rc != WAIT_TIMEOUT) {
+                //PrintLogF("TERMINATE-OUT\n");
                 ExitThread(0);
             }
             // Greater delay greater latency but better performance
@@ -191,7 +196,6 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
         if (AciaComMode != COM_MODE_READ) {
             char * ptr = OutBuf;
             int len = OutWptr - OutBuf;
-//            PrintLogF("W%d ",len);
             if (len > OBUFSIZ/2) delay = 5;
             while (len > 0) {
                 int cnt = com_write(ptr,len);
@@ -200,7 +204,6 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
                 len -= cnt;
             }
         }
-
     }
 }
 
@@ -218,11 +221,10 @@ void sc6551_heartbeat()
             if (!(CmdReg & CmdRxI)) {
                 StatReg |= StatIRQ;
                 AssertInt(1,0);
-//                PrintLogF("IRQ ");
+                //PrintLogF("IRQ ");
             }
         }
     }
-
     return;
 }
 
@@ -240,13 +242,11 @@ unsigned char sc6551_read(unsigned char port)
         case 0x68:
             if (InRptr < InWptr) data = *InRptr++;
             StatReg &= ~StatRxF;
-//            PrintLogF("r%02X ",data);
             break;
         // Read status register
         case 0x69:
             data = StatReg;
             StatReg &= ~StatIRQ;
-//            PrintLogF("s%02X ",data);
             break;
         // Read command register
         case 0x6A:
@@ -268,7 +268,6 @@ void sc6551_write(unsigned char data,unsigned short port)
     switch (port) {
         // Data
         case 0x68:
-//            PrintLogF("t%02X ",data);
             *OutWptr++ = data;
             // Clear TxE if output buffer full
             if ((OutWptr-OutBuf) >= OBUFSIZ) StatReg &= ~StatTxE;
@@ -279,7 +278,6 @@ void sc6551_write(unsigned char data,unsigned short port)
             break;
         // Write Command register
         case 0x6A:
-//            PrintLogF("c%02X ",data);
             CmdReg = data;
             if (CmdReg & CmdDTR) {
                 if (sc6551_initialized != 1) sc6551_init();
@@ -289,7 +287,6 @@ void sc6551_write(unsigned char data,unsigned short port)
             break;
         // Write Control register
         case 0x6B:
-//            PrintLogF("n%02X ",data);
             CtlReg = data;
             BaudRate = CtlReg & CtlBaud;
             break;
