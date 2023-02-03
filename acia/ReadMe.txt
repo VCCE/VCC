@@ -47,6 +47,14 @@ details of how to communicate to the PC operating system.  This
 allows flexibility but also means it does not behave exactly like
 a real RS232 interface.
 
+                RS232.ROM
+
+If the file "rs232.rom" is in the Vcc execution directory it will 
+be automatically loaded when acia.dll is selected. To use it 
+do "EXEC &HE010" from RSDOS command prompt.  The rom is a copy
+of the 4K rom from the Radio Shack Deluxe RS232 program Pak.
+If a different ROM is used it must be 4096 bytes long.
+
                 Settings
 
 Connection details are set using the Acia Interface config dialog
@@ -147,6 +155,11 @@ output in a os9 file and copy that to /t2, for example:
 	dir -e -x > cmds.list
 	copy cmds.list /t2
 
+Conversely when reading text from a file on Windows one first 
+must copy the file to NitrOs9 and then list it.  The command 
+'list /t2' will usually cause a buffer overflow because there
+is no flow control to tell the driver to stop reading.
+   
 					Tcpip Mode
 
 After selecting TCPIP radio button on the Acia config dialog the 

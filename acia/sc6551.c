@@ -23,6 +23,13 @@
 #include "logger.h"
 
 //------------------------------------------------------------------------
+// Inline interlock functions.  Used to coordinate writer thread.
+//------------------------------------------------------------------------
+
+#define SetIlock(l) (_InterlockedOr(&l,1) == 0)
+#define ClrIlock(l) (_InterlockedAnd(&l,0) == 1)
+
+//------------------------------------------------------------------------
 // Handles and buffers for I/O threads
 //------------------------------------------------------------------------
 
@@ -31,32 +38,30 @@ unsigned char StatReg;
 unsigned char CmdReg;
 unsigned char CtlReg;
 
-// Input buffer
+// Input 
 #define IBUFSIZ 1024
 DWORD WINAPI sc6551_input_thread(LPVOID);
-//HANDLE hInputThread;
-//HANDLE hStopInput;
 char InBuf[IBUFSIZ];
-char *InRptr = InBuf;  // Input buffer read pointer
-char *InWptr = InBuf;  // Input buffer write pointer
+char *InRptr = InBuf;
+int Icnt = 0;
 
-// Output buffer
+// Output 
 #define OBUFSIZ 1024
 DWORD WINAPI sc6551_output_thread(LPVOID);
-//HANDLE hOutputThread;
-//HANDLE hStopOutput;
 char OutBuf[OBUFSIZ];
 char *OutWptr = OutBuf;
+int Wcnt = 0;
+unsigned int volatile W_Ilock;
 
 int sc6551_initialized = 0;
 
-int BaudRate = 0;  // External Xtal default is ~9600
+int BaudRate = 0;
 
 // Heartbeat counter used to pace recv
 int HBtimer = 0;
 
 // BaudDelay table is used to set HBtimer
-// TODO: Replace wags with good values
+// TODO: Replace WAGS with good values
 int BaudDelay[16] = {0,2200,2000,1600,1200,600,300,150,
                      120,90,60,40,30,20,10,5};
 
@@ -100,7 +105,8 @@ void sc6551_init()
     hStopOutput = CreateEvent(NULL,TRUE,FALSE,NULL);
 
     // Clear status register and mark buffers empty
-    InRptr = InBuf; InWptr = InBuf;
+    //InRptr = InBuf; InWptr = InBuf;
+    InRptr = InBuf;
     OutWptr = OutBuf;
     sc6551_initialized = 1;
 }
@@ -110,7 +116,6 @@ void sc6551_init()
 //------------------------------------------------------------------------
 void sc6551_close()
 {
-//    com_close();
     sc6551_terminate_thread(hInputThread, hStopInput);
     sc6551_terminate_thread(hOutputThread, hStopOutput);
     CloseHandle(hStopInput);
@@ -118,42 +123,39 @@ void sc6551_close()
     com_close();
     sc6551_initialized = 0;
 }
-
 //------------------------------------------------------------------------
 // Input thread
 //------------------------------------------------------------------------
+
 DWORD WINAPI sc6551_input_thread(LPVOID param)
 {
-    int delay;
-    int avail = IBUFSIZ;
+    int delay = 20;
 
     //PrintLogF("START-IN %d\n",hInputThread);
 
+    Icnt = 0;
     while(TRUE) {
-        if (avail > IBUFSIZ/4) {      // Avoid short reads
+        if (Icnt == 0) {
+            InRptr = InBuf;
             if (AciaComMode == COM_MODE_WRITE) {
                 *InBuf = '\0';
-                InWptr = InBuf+1;
-                delay = 2000;
+                Icnt = 1;
+                delay = 100;
             } else {
-                int cnt = com_read((char *)InWptr,avail);
-                if (cnt > 0) {
-                    InWptr += cnt;
-                    avail -= cnt;
+                int cnt = com_read(InBuf,IBUFSIZ);
+                if (cnt < 1) {
+                    // EOF regardless TODO User config
+                    cnt = 2;
+                    InBuf[0] = '\r';
+                    InBuf[1] = EOFCHR;
                 }
-                delay = 0;
+                //PrintLogF("R %d\n",cnt);
+                Icnt = cnt;
+                delay = (Icnt == 0) ? 200 : 0;
             }
-        } else if (InRptr >= InWptr) { // If coco caught up
-            InWptr = InBuf;            //    Reset buffer
-            InRptr = InBuf;
-            avail = IBUFSIZ;
-            delay = 0;
-        } else {                       // Else nap until coco is done.
-            delay = 20;
         }
-
         if (WaitForSingleObject(hStopInput,delay) != WAIT_TIMEOUT) {
-            if (InRptr < InWptr) Sleep(3000);
+            if (Icnt > 0) Sleep(1000);
             //PrintLogF("TERMINATE-IN\n");
             ExitThread(0);
         }
@@ -161,48 +163,41 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 }
 
 //------------------------------------------------------------------------
-// Output thread.   Output buffering greatly improves performance
+// Output thread.   
 //------------------------------------------------------------------------
 DWORD WINAPI sc6551_output_thread(LPVOID param)
 {
-    int delay = 5;
+
+    Wcnt = 0;
+    OutWptr = OutBuf;
+
     //PrintLogF("START-OUT %d\n",hOutputThread);
 
     while(TRUE) {
-
-        // Reset buffer and enable transmit
-		// Short wait for some activity
-        OutWptr = OutBuf;
-        StatReg |= StatTxE;
-        Sleep(10);
-
-        // Poll for data to write
-        while ((OutWptr-OutBuf) == 0) {
-            // Exit if a terminate signal
-			int rc = WaitForSingleObject(hStopOutput,delay);
-            if (rc != WAIT_TIMEOUT) {
-                //PrintLogF("TERMINATE-OUT\n");
-                ExitThread(0);
+        if (Wcnt > 0) {
+            // Need interlock for TxE, OutWptr, and Wcnt
+            if (SetIlock(W_Ilock)) {
+                StatReg &= ~StatTxE;
+                if (AciaComMode != COM_MODE_READ) {
+                    char * ptr = OutBuf;
+                    while (Wcnt > 0) {
+                        int cnt = com_write(ptr,Wcnt);
+                        //PrintLogF("W %d\n",cnt);
+                        if (cnt < 1) break;  //TODO Deal with write error
+                        Wcnt -= cnt;
+                        ptr += cnt;
+                    }
+                }
+                Wcnt = 0;
+                OutWptr = OutBuf;
+                ClrIlock(W_Ilock);
             }
-            // Greater delay greater latency but better performance
-            if (delay<100) delay += 5;
         }
 
-        // Disable transmit then short wait to prevent race
-        StatReg &= ~StatTxE;
-        Sleep(10);
-
-        // If not write only mode flush the buffer
-        if (AciaComMode != COM_MODE_READ) {
-            char * ptr = OutBuf;
-            int len = OutWptr - OutBuf;
-            if (len > OBUFSIZ/2) delay = 5;
-            while (len > 0) {
-                int cnt = com_write(ptr,len);
-                if (cnt < 1) break; //TODO Deal with write error
-                ptr += cnt;
-                len -= cnt;
-            }
+        int rc = WaitForSingleObject(hStopOutput,100);
+        if (rc != WAIT_TIMEOUT) {
+            //PrintLogF("TERMINATE-OUT\n");
+            ExitThread(0);
         }
     }
 }
@@ -210,19 +205,27 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 //------------------------------------------------------------------------
 // Use Heartbeat (HSYNC) to time receives and interrupts
 //------------------------------------------------------------------------
+
 void sc6551_heartbeat()
 {
     // Countdown to receive next byte
     if (HBtimer-- < 1) {
         HBtimer = BaudDelay[BaudRate];
-        // Set RxF if there is data to receive
-        if (InRptr < InWptr) {
+
+        // Set RxF if there is data in buffer
+        if (Icnt) {
             StatReg |= StatRxF;
             if (!(CmdReg & CmdRxI)) {
                 StatReg |= StatIRQ;
                 AssertInt(1,0);
                 //PrintLogF("IRQ ");
             }
+        }
+
+        // Set TxE if write buffer not full (interlocked)
+        if (SetIlock(W_Ilock)) {
+            if (Wcnt < OBUFSIZ) StatReg |= StatTxE;
+            ClrIlock(W_Ilock);
         }
     }
     return;
@@ -240,7 +243,10 @@ unsigned char sc6551_read(unsigned char port)
     switch (port) {
         // Read input data
         case 0x68:
-            if (InRptr < InWptr) data = *InRptr++;
+            if (Icnt) {
+                data = *InRptr++,
+                Icnt--;
+            }
             StatReg &= ~StatRxF;
             break;
         // Read status register
@@ -268,9 +274,9 @@ void sc6551_write(unsigned char data,unsigned short port)
     switch (port) {
         // Data
         case 0x68:
+            StatReg &= ~StatTxE;
             *OutWptr++ = data;
-            // Clear TxE if output buffer full
-            if ((OutWptr-OutBuf) >= OBUFSIZ) StatReg &= ~StatTxE;
+            Wcnt++;
             break;
         // Clear status
         case 0x69:
@@ -289,6 +295,7 @@ void sc6551_write(unsigned char data,unsigned short port)
         case 0x6B:
             CtlReg = data;
             BaudRate = CtlReg & CtlBaud;
+            //PrintLogF("Baud rate: %d\n",BaudRate);
             break;
     }
 }

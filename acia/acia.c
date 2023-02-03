@@ -21,6 +21,7 @@
 #include "acia.h"
 #include "sc6551.h"
 #include "logger.h"
+//#include "..\fileops.h"
 
 //------------------------------------------------------------------------
 // Local Functions
@@ -48,6 +49,14 @@ static char IniSect[MAX_LOADSTRING]; // Ini file section
 // Some strings for config dialog
 char *IOModeTxt[] = {"RW","R","W"};
 char *ComTypeTxt[] = {"CONS","FILE","TCP","COM"};
+  
+static unsigned char Rom[8191];
+static void (*PakSetCart)(unsigned char)=NULL;
+unsigned char LoadExtRom(char *);
+
+typedef void (*SETCART)(unsigned char);
+typedef void (*SETCARTPOINTER)(SETCART);
+typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 
 //------------------------------------------------------------------------
 //  DLL Entry point
@@ -56,8 +65,7 @@ BOOL APIENTRY
 DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
     if (reason == DLL_PROCESS_ATTACH) {
-PrintLogF("Acia DLL Attach\n");
-		g_hDLL = hinst;
+        g_hDLL = hinst;
     } else if (reason == DLL_PROCESS_DETACH) {
         if (hConfigDlg) SendMessage(hConfigDlg,WM_CLOSE,6666,0);
         sc6551_close();
@@ -105,10 +113,37 @@ PackPortRead(unsigned char Port)
 //-----------------------------------------------------------------------
 __declspec(dllexport) void ModuleReset(void)
 {
-PrintLogF("Acia DLL Reset\n");
+    LoadExtRom("RS232.ROM");
     SendMessage(hConfigDlg, WM_CLOSE, 0, 0);
     sc6551_close();
     return;
+}
+
+//-----------------------------------------------------------------------
+__declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
+{
+    return(Rom[Address & 8191]);
+}
+
+//-----------------------------------------------------------------------
+// Load Rom. Returns 1 if loaded
+//-----------------------------------------------------------------------
+unsigned char LoadExtRom(char *FilePath)
+{
+    FILE *file;
+    int cnt = 0;
+    memset(Rom, 0xff, 8191);
+    file = fopen(FilePath, "rb");
+    if (file) {
+        char *p = Rom;
+        while (cnt++ < 4096) {
+            if (feof(file)) break;
+            *p++ = fgetc(file);
+        }
+        fclose(file);
+        return 1;
+    }
+    return 0;
 }
 
 //-----------------------------------------------------------------------
@@ -175,7 +210,6 @@ void BuildDynaMenu(void)
 //----------------------------------------------------------------------
 void LoadConfig(void)
 {
-PrintLogF("Acia load settings\n");
     AciaComType=GetPrivateProfileInt("Acia","AciaComType",
                                      COM_CONSOLE,IniFile);
     AciaComMode=GetPrivateProfileInt("Acia","AciaComMode",
@@ -187,7 +221,7 @@ PrintLogF("Acia load settings\n");
                             AciaFilePath, MAX_PATH,IniFile);
     GetPrivateProfileString("Acia","AciaTcpHost","localhost",
                             AciaTcpHost, MAX_PATH,IniFile);
-	// String for Vcc status line
+    // String for Vcc status line
     sprintf(AciaStat,"Acia %s %s",
             ComTypeTxt[AciaComType],IOModeTxt[AciaComMode]);
 }
@@ -211,7 +245,6 @@ void SaveConfig(void)
     WritePrivateProfileString("Acia","AciaFilePath",AciaFilePath,IniFile);
     WritePrivateProfileString("Acia","AciaTcpHost", AciaTcpHost,IniFile);
 }
-
 
 //-----------------------------------------------------------------------
 // Config dialog.
