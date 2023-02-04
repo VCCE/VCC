@@ -55,15 +55,17 @@ unsigned int volatile W_Ilock;
 
 int sc6551_initialized = 0;
 
+// BaudRate and Heartbeat counter used to pace I/O 
 int BaudRate = 0;
+int HBcounter = 0;
 
-// Heartbeat counter used to pace recv
-int HBtimer = 0;
+// BaudDelay table sets HBcounter.  These are approximate.
+// If accuracy becomes an issue could use audio sample timer.
+int BaudDelay[16] = { 0, 1000, 666, 454, 370, 333, 166,
+                      83, 41, 26, 20, 13, 10, 6, 5, 1 };
 
-// BaudDelay table is used to set HBtimer
-// TODO: Replace WAGS with good values
-int BaudDelay[16] = {0,2200,2000,1600,1200,600,300,150,
-                     120,90,60,40,30,20,10,5};
+// Baud rates: EXT, 50, 75, 110, 135, 150, 300, 600, 1200,
+//             1800, 2400, 3600, 4800, 7200, 9600, 19200 
 
 //------------------------------------------------------------------------
 //  Nicely terminate an I/O thread
@@ -204,13 +206,14 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 
 //------------------------------------------------------------------------
 // Use Heartbeat (HSYNC) to time receives and interrupts
+// If accuracy becomes an issue could use audio sample timer instead.
 //------------------------------------------------------------------------
 
 void sc6551_heartbeat()
 {
-    // Countdown to receive next byte
-    if (HBtimer-- < 1) {
-        HBtimer = BaudDelay[BaudRate];
+	// Countdown to receive next byte
+    if (HBcounter-- < 1) {
+        HBcounter = BaudDelay[BaudRate];
 
         // Set RxF if there is data in buffer
         if (Icnt) {

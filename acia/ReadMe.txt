@@ -9,9 +9,10 @@ Issues
 2) Using file write mode to send text to a windows file
    causes an extra blank line to be appended to the file.
 3) The sc6551 driver used by /t2 does not seem to use xmode baud, 
-   xon, or xoff values. 
-4) /t2 connect failure sometimes requires reset to recover
-5) Pak rom protocols for dealing with dial ups and file transfers
+   xon, or xoff values.
+4) No hardware flow control other than RxF and Txe signals
+5) /t2 connect failure sometimes requires reset to recover
+6) Pak rom protocols for dealing with dial ups and file transfers
    are not supported in the DLL.  It should be possible to write
    a server program on the PC to listen for a connection and 
    support these functions.
@@ -19,17 +20,22 @@ Issues
 Todo
 ----
 
-1) Load RS232 pak rom if present
-2) COMx baud rate fixed at 9600
+1) Improve simulation accuracy of baud rates
+2) Research pak rom protocols and adjust as required/possible 
 3) Use text 'COM20' to spec serial port instead of number '20'
-4) Much testing
+4) Proper detection of serial port "modem" events when reading:
+   Break, ring, CTS, DSR, RX and DX changes, etc.
+5) Implement DCD DSR flow control. 
+6) Dtermine how to tell /t2 driver (and pak) when EOF has occured
+   on binary file reads. 
+7) Much testing
 
 Would be nice
-------------
+-------------
 
 1) Support for second sc6551 device
 
-These notes are based on using /t2 on (Nitr)Os9 and the rom from
+These notes are based on using /t2 on (Nitr)Os9 and the ROM from
 the Radio Shack RS232 program pack. 
 
                 General notes
@@ -55,7 +61,7 @@ do "EXEC &HE010" from RSDOS command prompt.  The rom is a copy
 of the 4K rom from the Radio Shack Deluxe RS232 program Pak.
 If a different ROM is used it must be 4096 bytes long.
 
-                Settings
+                    Settings
 
 Connection details are set using the Acia Interface config dialog
 which can be reached from the Vcc Cartridge menu when the DLL is 
@@ -69,11 +75,16 @@ establishes a connection with a windows COM port, which may be
 connected to a RS232 device such as a modem or Arduino using a 
 USB to UART converter.  Details of the various mode follows.
 
-				Console mode
+				    Console mode
 
 Console mode is most useful when using (Nitr)Os9 and the t2 device 
 and associated sc6551 driver. t2 and sc6551 must both be loaded at 
-boot to work properly
+boot to work properly.  It can also be used for testing purposes,
+which is why it was originally created.
+
+Caution: There can only be one console associated with Vcc. Conflicts
+will occur is the console is used for other purposes, such as for
+debug logging.
 
 /t2 settings for Windows console should be as follows:
 
@@ -131,9 +142,10 @@ dialog the file name should be entered in the Name field. The
 file name will be saved in the Vcc ini file.
 
 Important.  You must turn off local echo to use File Mode with
-the os9 /t2 device before using is to move data to/from
+the os9 /t2 device before using it to move data to/from
 windows files. 'xmode /t2 -echo'  Failure to do so may result
-in I/O errors and possible hangs.
+in I/O errors and possible hangs.  Also make sure pause is off
+of overflows will occur.
 
 There are two file modes,  File Read and File Write.  When
 file read is set writes to acia are ignored.  When file write
@@ -146,7 +158,7 @@ Text mode.  When text mode is checked end of line translations
 end of files.  This is recommended when using /t2 in os9 unless
 attempting to write binary files to windows.  Reading binary files
 is difficult under os9 because the sc6551 driver does not have a
-means other than <ESC> char to detect end of file.  
+means other than <CR><ESC> sequence to detect the end of file.  
 
 Sending command output to a file can be done with something like
 'dir -e > /t2' If doing a long listing it is better to place the 
@@ -157,7 +169,7 @@ output in a os9 file and copy that to /t2, for example:
 
 Conversely when reading text from a file on Windows one first 
 must copy the file to NitrOs9 and then list it.  The command 
-'list /t2' will usually cause a buffer overflow because there
+'list /t2' will often cause a buffer overflow because there
 is no flow control to tell the driver to stop reading.
    
 					Tcpip Mode
