@@ -215,8 +215,9 @@ void LoadConfig(void)
     AciaComMode=GetPrivateProfileInt("Acia","AciaComMode",
                                      COM_MODE_DUPLEX,IniFile);
     AciaTcpPort=GetPrivateProfileInt("Acia","AciaTcpPort",48000,IniFile);
-    AciaComPort=GetPrivateProfileInt("Acia","AciaComPort",0,IniFile);
     AciaTextMode=GetPrivateProfileInt("Acia","AciaTextMode",0,IniFile);
+    GetPrivateProfileString("Acia","AciaComPort","COM3",
+                            AciaComPort,32,IniFile);
     GetPrivateProfileString("Acia","AciaFilePath","AciaFile.txt",
                             AciaFilePath, MAX_PATH,IniFile);
     GetPrivateProfileString("Acia","AciaTcpHost","localhost",
@@ -238,10 +239,10 @@ void SaveConfig(void)
     WritePrivateProfileString("Acia","AciaComMode",txt,IniFile);
     sprintf(txt,"%d",AciaTcpPort);
     WritePrivateProfileString("Acia","AciaTcpPort",txt,IniFile);
-    sprintf(txt,"%d",AciaComPort);
-    WritePrivateProfileString("Acia","AciaComPort",txt,IniFile);
-    sprintf(txt,"%d",AciaTextMode);
+	sprintf(txt,"%d",AciaTextMode);
+
     WritePrivateProfileString("Acia","AciaTextMode",txt,IniFile);
+    WritePrivateProfileString("Acia","AciaComPort",AciaComPort,IniFile);
     WritePrivateProfileString("Acia","AciaFilePath",AciaFilePath,IniFile);
     WritePrivateProfileString("Acia","AciaTcpHost", AciaTcpHost,IniFile);
 }
@@ -302,8 +303,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
 
         case COM_WINCOM:
             button = IDC_T_COM;
-            SetDlgItemText(hDlg,IDC_NAME,"");
-            SetDlgItemInt(hDlg,IDC_PORT,AciaComPort,FALSE);
+            SetDlgItemText(hDlg,IDC_NAME,AciaComPort);
             break;
 
         case COM_CONSOLE:
@@ -368,8 +368,8 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             sc6551_close();
             AciaComType = COM_WINCOM;
             AciaComMode = COM_MODE_DUPLEX;
-            SetDlgItemText(hDlg,IDC_NAME,"");
-            SetDlgItemInt(hDlg,IDC_PORT,AciaComPort,FALSE);
+            SetDlgItemText(hDlg,IDC_PORT,"");
+            SetDlgItemText(hDlg,IDC_NAME,AciaComPort);
             break;
 
         case IDOK:
@@ -396,13 +396,7 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
                 AciaTcpPort = port;
                 break;
             case COM_WINCOM:
-                port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
-                if ((port < 0) || (port > 99)) {
-                    MessageBox(hDlg,"COM port must be 0 thru 99",
-                                    "Error", MB_OK|MB_ICONEXCLAMATION);
-                    return TRUE;
-                }
-                AciaComPort = port;
+                GetDlgItemText(hDlg,IDC_NAME,AciaComPort,32);
                 break;
             }
             // String for Vcc status line

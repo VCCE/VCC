@@ -45,9 +45,9 @@ int wincom_open()
     hReadEvent  = CreateEvent(NULL,TRUE,FALSE,NULL);
     hWriteEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
 
-    char portname[16];
+    char portname[64];
     // comports are named '\\.\COMxx'
-    sprintf(portname,"\\\\.\\COM%d",AciaComPort);
+    sprintf(portname,"\\\\.\\%s",AciaComPort);
     hComPort = CreateFileA(portname,
                            GENERIC_READ | GENERIC_WRITE, 0, NULL,
                            OPEN_EXISTING, FILE_FLAG_OVERLAPPED,NULL);

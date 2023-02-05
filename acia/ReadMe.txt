@@ -4,76 +4,78 @@
 
 Issues
 ------
-
-1) Baud rate (for recv) delay table contains wild guesses.
+1) Baud rates are not very accurate.
 2) Using file write mode to send text to a windows file
    causes an extra blank line to be appended to the file.
 3) The sc6551 driver used by /t2 does not seem to use xmode baud, 
    xon, or xoff values.
-4) No hardware flow control other than RxF and Txe signals
+4) No hardware flow control other than RxF and TxE signals
 5) /t2 connect failure sometimes requires reset to recover
-6) Pak rom protocols for dealing with dial ups and file transfers
+6) COMx with pack rom looses characters if typed too fast.
+7) Pak rom protocols for dealing with dial ups and file transfers
    are not supported in the DLL.  It should be possible to write
    a server program on the PC to listen for a connection and 
    support these functions.
 
 Todo
 ----
-
-1) Improve simulation accuracy of baud rates
-2) Research pak rom protocols and adjust as required/possible 
-3) Use text 'COM20' to spec serial port instead of number '20'
-4) Proper detection of serial port "modem" events when reading:
+1) Fix rom pak dropping characters
+3) Research pak rom protocols and adjust as required/possible 
+2) Use text 'COM20' to spec serial port instead of number '20'
+3) Proper detection of serial port "modem" events when reading:
    Break, ring, CTS, DSR, RX and DX changes, etc.
-5) Implement DCD DSR flow control. 
-6) Dtermine how to tell /t2 driver (and pak) when EOF has occured
+4) Implement DCD DSR flow control. 
+5) Dtermine how to tell /t2 driver (and pak) when EOF has occured
    on binary file reads. 
-7) Much testing
+6) Much testing
 
 Would be nice
 -------------
-
 1) Support for second sc6551 device
+
 
 These notes are based on using /t2 on (Nitr)Os9 and the ROM from
 the Radio Shack RS232 program pack. 
 
                 General notes
 
-Acia.dll is a Vcc add on that attempts to emulate the SC6551 ACIA.
-
 The Color Computer RS232 program pack contains a SC6551
 Asynchronous Communication Adapter (ACIA) which is a specialized
 UART for dealing with 6500/6800 series CPUs.  
 
+Acia.dll is a Vcc add-on that attempts to emulate the SC6551 ACIA
+in the prograam pack. It allows connection to windows serial ports
+and a tcpip server. It also allows reading/writing windows files 
+and interaction with the Vcc console.
+
 Acia.dll does not deal with many of the details of communicating
 with RS232 devices.  Instead it establishes a byte stream connection
-with a the console, TCP socket, or file and leaves the
+with a the console, TCP socket, or file and leaves many of the
 details of how to communicate to the PC operating system.  This
 allows flexibility but also means it does not behave exactly like
 a real RS232 interface.
 
-                RS232.ROM
+                    rs232.rom
 
 If the file "rs232.rom" is in the Vcc execution directory it will 
-be automatically loaded when acia.dll is selected. To use it 
-do "EXEC &HE010" from RSDOS command prompt.  The rom is a copy
-of the 4K rom from the Radio Shack Deluxe RS232 program Pak.
-If a different ROM is used it must be 4096 bytes long.
+be automatically loaded when acia.dll is selected but not started. 
+To start it do "EXEC &HE010" from RSDOS command prompt. The rom
+is a copy of the 4K rom from the Radio Shack Deluxe RS232 program
+Pack.  If a different ROM is used it must be 4096 bytes long. Note
+that if acia.dll is in a MPI slot but not selected it can still be
+used but the pack rom will not be accessible.
 
                     Settings
 
 Connection details are set using the Acia Interface config dialog
 which can be reached from the Vcc Cartridge menu when the DLL is 
-loaded.  The dialog has radio buttons for console, file read,
-file write, tcpip, and comx modes of operation.  When activated 
-Console mode brings up the Vcc console window.  File write mode causes
-all data output to go to a file.  File read mode does the reverse,
-data is input from a file.  Tcpip mode establishes a network connection
-with a network server and Comx mode (no done yet) is intended to 
-establishes a connection with a windows COM port, which may be 
-connected to a RS232 device such as a modem or Arduino using a 
-USB to UART converter.  Details of the various mode follows.
+loaded.  The dialog has radio buttons for Console, File read,
+File write, TCPIP, and COMx modes of operation.  When activated 
+Console mode brings up the Vcc console window.  File write mode
+causes all data output to go to a file.  File read mode does the 
+reverse, data is input from a file.  TCPIP mode establishes a 
+connection with a network server and Comx mode establishes a
+connection with a windows serial port.
 
 				    Console mode
 
@@ -95,6 +97,8 @@ quit=05 bse=08 bell=07 type=80 baud=06 xon=11 xoff=13
 
 Basically the idea is to match CoCo window settings.  Acia.dll
 translates the control codes to the proper console functions.
+Some of these settings are not honored by the Os9 sc6551 driver.
+Xon, Xoff, and baud xmode settings seem to have no effect.
 
 Colors default to white on black.  Only colors 0-7 are supported.
 
@@ -185,12 +189,12 @@ session becomes a terminal connected to Os9.
 
 				  COM port mode (COMx)
 
-After selecting COMx radio button the COM port number should be
-entered in the Port field. (Future this may be changed to using
-the Name field to all specifying ports other than COMx) 
+After selecting COMx radio button the port name should be entered
+in the Name field, for example "COM3".  Leading blanks will not
+work, port name must be left justified.
 
 I have been testing the COM port mode using a com0com port emulator
-in windows along with putty.  com0com was used to 'wire' two psuedo
+in windows along with putty.  com0com is used to 'wire' two psuedo
 port COM20 and COM21 together. I used acia.dll to connect to COM20
 and PuTTy to connect to COM21.  This allowed me to simulate connecting
 with a terminal.
