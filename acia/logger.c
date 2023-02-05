@@ -20,11 +20,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <io.h>
+#include <fcntl.h>
+#include <sys\stat.h>
 #include "logger.h"
 
-static FILE  *fLog_Out=NULL;
+//static FILE  *fLog_Out=NULL;
 static HANDLE hLog_Out=NULL;
 DWORD dummy;
+
+char LogFileName[MAX_PATH]="VccLog.txt";
 
 // PrintLogC - Put formatted string to the console
 void PrintLogC(const void * fmt, ...)
@@ -56,16 +61,21 @@ void PrintLogF(const void * fmt, ...)
     vsnprintf(msg, 512, (char *)fmt, args);
     va_end(args);
 
-    if (fLog_Out == NULL)
-        fLog_Out = fopen("VccLog.txt","w");
-
-    fprintf(fLog_Out,msg);
-    fflush(fLog_Out);
+    int oflag = _O_CREAT | _O_APPEND | _O_RDWR;
+    int pmode = _S_IREAD | _S_IWRITE;
+    int flog = _open(LogFileName,oflag,pmode);
+    _write(flog, msg, strlen(msg));
+    _close(flog);
 }
 
-// OpenLogFile - open non-default file for logging
+// OpenLogFile - create new log file
 void OpenLogFile(char * logfile)
 {
-    if (fLog_Out == NULL) fclose(fLog_Out);
-    fLog_Out = fopen(logfile,"wb");
+	if (strlen(logfile) > MAX_PATH) return;
+	strcpy(LogFileName,logfile);
+    int oflag = _O_CREAT | _O_TRUNC | _O_RDWR;
+    int pmode = _S_IREAD | _S_IWRITE;
+    int fLog = _open(LogFileName,oflag,pmode);
+    _close(fLog);
 }
+

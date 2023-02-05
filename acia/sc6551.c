@@ -38,14 +38,14 @@ unsigned char StatReg;
 unsigned char CmdReg;
 unsigned char CtlReg;
 
-// Input 
+// Input
 #define IBUFSIZ 1024
 DWORD WINAPI sc6551_input_thread(LPVOID);
 char InBuf[IBUFSIZ];
 char *InRptr = InBuf;
 int Icnt = 0;
 
-// Output 
+// Output
 #define OBUFSIZ 1024
 DWORD WINAPI sc6551_output_thread(LPVOID);
 char OutBuf[OBUFSIZ];
@@ -55,7 +55,7 @@ unsigned int volatile W_Ilock;
 
 int sc6551_initialized = 0;
 
-// BaudRate and Heartbeat counter used to pace I/O 
+// BaudRate and Heartbeat counter used to pace I/O
 int BaudRate = 0;
 int HBcounter = 0;
 
@@ -65,7 +65,7 @@ int BaudDelay[16] = { 0, 1000, 666, 454, 370, 333, 166,
                       83, 41, 26, 20, 13, 10, 6, 5, 1 };
 
 // Baud rates: EXT, 50, 75, 110, 135, 150, 300, 600, 1200,
-//             1800, 2400, 3600, 4800, 7200, 9600, 19200 
+//             1800, 2400, 3600, 4800, 7200, 9600, 19200
 
 //------------------------------------------------------------------------
 //  Nicely terminate an I/O thread
@@ -110,6 +110,9 @@ void sc6551_init()
     //InRptr = InBuf; InWptr = InBuf;
     InRptr = InBuf;
     OutWptr = OutBuf;
+    Icnt = 0;
+    Wcnt = 0;
+
     sc6551_initialized = 1;
 }
 
@@ -123,6 +126,8 @@ void sc6551_close()
     CloseHandle(hStopInput);
     CloseHandle(hStopOutput);
     com_close();
+    Icnt = 0;
+    Wcnt = 0;
     sc6551_initialized = 0;
 }
 //------------------------------------------------------------------------
@@ -131,10 +136,8 @@ void sc6551_close()
 
 DWORD WINAPI sc6551_input_thread(LPVOID param)
 {
-    int delay = 20;
 
     //PrintLogF("START-IN %d\n",hInputThread);
-
     Icnt = 0;
     while(TRUE) {
         if (Icnt == 0) {
@@ -142,7 +145,6 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
             if (AciaComMode == COM_MODE_WRITE) {
                 *InBuf = '\0';
                 Icnt = 1;
-                delay = 100;
             } else {
                 int cnt = com_read(InBuf,IBUFSIZ);
                 if (cnt < 1) {
@@ -153,19 +155,19 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
                 }
                 //PrintLogF("R %d\n",cnt);
                 Icnt = cnt;
-                delay = (Icnt == 0) ? 200 : 0;
             }
-        }
-        if (WaitForSingleObject(hStopInput,delay) != WAIT_TIMEOUT) {
-            if (Icnt > 0) Sleep(1000);
-            //PrintLogF("TERMINATE-IN\n");
-            ExitThread(0);
+        } else {
+            if (WaitForSingleObject(hStopInput,100) != WAIT_TIMEOUT) {
+                if (Icnt > 0) Sleep(1000);
+                //PrintLogF("TERMINATE-IN\n");
+                ExitThread(0);
+            }
         }
     }
 }
 
 //------------------------------------------------------------------------
-// Output thread.   
+// Output thread.
 //------------------------------------------------------------------------
 DWORD WINAPI sc6551_output_thread(LPVOID param)
 {
@@ -207,17 +209,23 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 //------------------------------------------------------------------------
 // Use Heartbeat (HSYNC) to time receives and interrupts
 // If accuracy becomes an issue could use audio sample timer instead.
+//
+// StatRxF 0x08 Data ready to read;
+// StatTxE 0x10 Buffer ready to write;
+// StatDCD 0x20 Data Carier detected if clr
+// StatDSR 0x40 Data set Ready if clr
+// StatIRQ 0x80 IRQ set
 //------------------------------------------------------------------------
 
 void sc6551_heartbeat()
 {
-	// Countdown to receive next byte
+    // Countdown to receive next byte
     if (HBcounter-- < 1) {
         HBcounter = BaudDelay[BaudRate];
 
         // Set RxF if there is data in buffer
         if (Icnt) {
-            StatReg |= StatRxF;
+            StatReg |= StatRxF;  //0x08
             if (!(CmdReg & CmdRxI)) {
                 StatReg |= StatIRQ;
                 AssertInt(1,0);
@@ -227,7 +235,7 @@ void sc6551_heartbeat()
 
         // Set TxE if write buffer not full (interlocked)
         if (SetIlock(W_Ilock)) {
-            if (Wcnt < OBUFSIZ) StatReg |= StatTxE;
+            if (Wcnt < OBUFSIZ) StatReg |= StatTxE; //0x10
             ClrIlock(W_Ilock);
         }
     }
@@ -237,8 +245,7 @@ void sc6551_heartbeat()
 //------------------------------------------------------------------------
 // Port Read
 //    MPI calls port reads for each slot in sequence. The CPU gets the
-//    first non zero reply. This works as long as port reads default to
-//    zero for unmatched ports.
+//    first non zero reply if any.
 // -----------------------------------------------------------------------
 unsigned char sc6551_read(unsigned char port)
 {
@@ -246,16 +253,20 @@ unsigned char sc6551_read(unsigned char port)
     switch (port) {
         // Read input data
         case 0x68:
-            if (Icnt) {
-                data = *InRptr++,
+            //PrintLogF("r%02x.%02x ",data,StatReg);
+            // Ignore read if no data or RxF is not set
+            if (Icnt && (StatReg & StatRxF)) {
+                data = *InRptr++;
                 Icnt--;
+                // Clear RxF until timer resets it
+                StatReg &= ~StatRxF;  //0x08
             }
-            StatReg &= ~StatRxF;
             break;
         // Read status register
         case 0x69:
             data = StatReg;
-            StatReg &= ~StatIRQ;
+            StatReg &= ~StatIRQ;      //0x80
+            //if(data)PrintLogF("s%02x\n",data);
             break;
         // Read command register
         case 0x6A:
@@ -277,16 +288,19 @@ void sc6551_write(unsigned char data,unsigned short port)
     switch (port) {
         // Data
         case 0x68:
-            StatReg &= ~StatTxE;
+            //PrintLogF("t%02x.%d ",data,Wcnt);
+            StatReg &= ~StatTxE; //0x10
             *OutWptr++ = data;
             Wcnt++;
             break;
         // Clear status
         case 0x69:
+            //PrintLogF("Reset\n");
             StatReg = 0;
             break;
         // Write Command register
         case 0x6A:
+            //PrintLogF("c%02x\n",data);
             CmdReg = data;
             if (CmdReg & CmdDTR) {
                 if (sc6551_initialized != 1) sc6551_init();

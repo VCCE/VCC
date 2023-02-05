@@ -5,47 +5,42 @@
 Issues
 ------
 1) Baud rates are not very accurate.
-2) Using file write mode to send text to a windows file
-   causes an extra blank line to be appended to the file.
-3) The sc6551 driver used by /t2 does not seem to use xmode baud, 
+2) The sc6551 driver used by /t2 does not seem to use xmode baud,
    xon, or xoff values.
-4) No hardware flow control other than RxF and TxE signals
-5) /t2 connect failure sometimes requires reset to recover
-6) COMx with pack rom looses characters if typed too fast.
-7) Pak rom protocols for dealing with dial ups and file transfers
+3) No hardware flow control other than RxF and TxE signals
+4) Pak rom protocols for dealing with dial ups and file transfers
    are not supported in the DLL.  It should be possible to write
-   a server program on the PC to listen for a connection and 
+   a server program on the PC to listen for a connection and
    support these functions.
+5) Pak rom GO TO "BASIC" function not working properly.
 
 Todo
 ----
-1) Fix rom pak dropping characters
-3) Research pak rom protocols and adjust as required/possible 
-2) Use text 'COM20' to spec serial port instead of number '20'
-3) Proper detection of serial port "modem" events when reading:
+1) Proper detection of serial port "modem" events when reading:
    Break, ring, CTS, DSR, RX and DX changes, etc.
-4) Implement DCD DSR flow control. 
-5) Dtermine how to tell /t2 driver (and pak) when EOF has occured
-   on binary file reads. 
-6) Much testing
+2) Implement DCD DSR flow control.
+3) Dtermine how to tell /t2 driver (and pak) when EOF has occured
+   on binary file reads.
+4) Much testing
 
 Would be nice
 -------------
 1) Support for second sc6551 device
 
 
-These notes are based on using /t2 on (Nitr)Os9 and the ROM from
-the Radio Shack RS232 program pack. 
+These following notes are based on using /t2 on (Nitr)Os9 and the
+ROM from the Radio Shack RS232 program pack.
 
-                General notes
+General notes
+-------------
 
 The Color Computer RS232 program pack contains a SC6551
 Asynchronous Communication Adapter (ACIA) which is a specialized
-UART for dealing with 6500/6800 series CPUs.  
+UART for dealing with 6500/6800 series CPUs.
 
 Acia.dll is a Vcc add-on that attempts to emulate the SC6551 ACIA
 in the prograam pack. It allows connection to windows serial ports
-and a tcpip server. It also allows reading/writing windows files 
+and a tcpip server. It also allows reading/writing windows files
 and interaction with the Vcc console.
 
 Acia.dll does not deal with many of the details of communicating
@@ -55,40 +50,48 @@ details of how to communicate to the PC operating system.  This
 allows flexibility but also means it does not behave exactly like
 a real RS232 interface.
 
-                    rs232.rom
+RS232.ROM
+---------
 
-If the file "rs232.rom" is in the Vcc execution directory it will 
-be automatically loaded when acia.dll is selected but not started. 
+If the file "rs232.rom" is in the Vcc execution directory it will
+be automatically loaded when acia.dll is selected but not started.
 To start it do "EXEC &HE010" from RSDOS command prompt. The rom
 is a copy of the 4K rom from the Radio Shack Deluxe RS232 program
 Pack.  If a different ROM is used it must be 4096 bytes long. Note
 that if acia.dll is in a MPI slot but not selected it can still be
 used but the pack rom will not be accessible.
 
-                    Settings
+Settings
+--------
 
 Connection details are set using the Acia Interface config dialog
-which can be reached from the Vcc Cartridge menu when the DLL is 
+which can be reached from the Vcc Cartridge menu when the DLL is
 loaded.  The dialog has radio buttons for Console, File read,
-File write, TCPIP, and COMx modes of operation.  When activated 
+File write, TCPIP, and COMx modes of operation.  When activated
 Console mode brings up the Vcc console window.  File write mode
-causes all data output to go to a file.  File read mode does the 
-reverse, data is input from a file.  TCPIP mode establishes a 
+causes all data output to go to a file.  File read mode does the
+reverse; data is input from a file.  TCPIP mode establishes a
 connection with a network server and Comx mode establishes a
-connection with a windows serial port.
+connection with a windows serial port.  When File read or Write
+mode is selected the filename must be inserted into the Name
+field.  When COMx mode is selected the port name (eg: COM3) must
+be placed in the Name field with no leading blanks.  When TCPIP
+mode is selected the server address must be in the Name field and
+the port number in the Port field.
 
-				    Console mode
+Console mode
+------------
 
-Console mode is most useful when using (Nitr)Os9 and the t2 device 
-and associated sc6551 driver. t2 and sc6551 must both be loaded at 
-boot to work properly.  It can also be used for testing purposes,
-which is why it was originally created.
+Console mode can be useful when using (Nitr)Os9 and the t2 device
+and associated sc6551 driver. t2 and sc6551 must both be loaded at
+boot (in the boot track) to work properly. The t2 device can also
+be used for testing purposes, which is why it was originally created.
 
 Caution: There can only be one console associated with Vcc. Conflicts
 will occur is the console is used for other purposes, such as for
 debug logging.
 
-/t2 settings for Windows console should be as follows:
+/t2 settings for Windows conso1le should be as follows:
 
 xmode /t2
  -upc -bsb bsl echo lf null=0 pause pag=32 bsp=08
@@ -138,7 +141,8 @@ I did a brief check of uemacs. It seems to work okay except I find
 the lack of support of arrow keys annoying and I am too used to
 vi's use of hjkl for cursor position to adapt to emacs.
 
-		      File Read and File Write Modes
+File Read and File Write Modes
+------------------------------
 
 File modes allow reading or writing to/from a windows file. After
 selecting the appropriate radio button in the Acia Interface config
@@ -157,37 +161,40 @@ is set reads from acia always return null chars in binary mode
 and EOF characters in text mode. It advised to not use binary
 mode with the os9 /t2.
 
-Text mode.  When text mode is checked end of line translations 
+Text mode.  When text mode is checked end of line translations
 (CR -> CRLF) are done and EOF characters are appended at the
 end of files.  This is recommended when using /t2 in os9 unless
 attempting to write binary files to windows.  Reading binary files
 is difficult under os9 because the sc6551 driver does not have a
-means other than <CR><ESC> sequence to detect the end of file.  
+means other than <CR><ESC> sequence to detect the end of file.
 
 Sending command output to a file can be done with something like
-'dir -e > /t2' If doing a long listing it is better to place the 
+'dir -e > /t2' If doing a long listing it is better to place the
 output in a os9 file and copy that to /t2, for example:
 
 	dir -e -x > cmds.list
 	copy cmds.list /t2
 
-Conversely when reading text from a file on Windows one first 
-must copy the file to NitrOs9 and then list it.  The command 
+Conversely when reading text from a file on Windows one first
+must copy the file to NitrOs9 and then list it.  The command
 'list /t2' will often cause a buffer overflow because there
 is no flow control to tell the driver to stop reading.
-   
-					Tcpip Mode
 
-After selecting TCPIP radio button on the Acia config dialog the 
+TCPIP Mode
+----------
+
+After selecting TCPIP radio button on the Acia config dialog the
 server hostname or IP address should be entered in the Name field
 (default is localhost) and the server port in the Port field.
 
 I have been testing tcpip mode by using netcat on Linux as a server.
 On Linux ' nc -l -p 48000'   48000 is the port number I am using.
 After launching a shell connected to /t2 on (Nitr)Os9 the Linux
-session becomes a terminal connected to Os9. 
+session becomes a terminal connected to Os9.
 
-				  COM port mode (COMx)
+
+COMx Serial Port Mode
+----------------------
 
 After selecting COMx radio button the port name should be entered
 in the Name field, for example "COM3".  Leading blanks will not
