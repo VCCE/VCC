@@ -32,26 +32,23 @@ FILE * FileStream = NULL;
 
 
 // Open file. Binary mode so windows does not try to do line end LF
-// translations. (OS9 uses CR for line endings)
+// translations. (OS9 uses CR for line endings)  File path is
+// relative to %USERPROFILE%
 
 int file_open()
 {
-    char * mode;
+    char filepath[MAX_PATH];
+    strncpy(filepath,getenv("USERPROFILE"),MAX_PATH);
+    strncat(filepath,"\\",MAX_PATH);
     switch (AciaComMode) {
     case COM_MODE_READ:
-        mode = "rb";
+        strncat(filepath,AciaFileRdPath,MAX_PATH);
+        FileStream = fopen(filepath,"rb");
         break;
     case COM_MODE_WRITE:
-    default:
-        mode = "wb";
+        strcat(filepath,AciaFileWrPath);
+        FileStream = fopen(filepath,"wb");
         break;
-    }
-
-    FileStream = fopen(AciaFilePath,mode);
-    if (FileStream) {
-        return 0;
-    } else {
-        return errno;
     }
 }
 
@@ -66,7 +63,7 @@ int file_read(char* buf,int siz)
 {
     int PrevChrCR=0; // True if last char read was a carriage return
 
-	if (FileStream == NULL) {
+    if (FileStream == NULL) {
         return -1;
     }
 

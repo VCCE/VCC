@@ -5,28 +5,20 @@
 Issues
 ------
 1) Baud rates are not very accurate.
-2) The sc6551 driver used by /t2 does not seem to use xmode baud,
-   xon, or xoff values.
-3) No hardware flow control other than RxF and TxE signals
-4) Pak rom protocols for dealing with dial ups and file transfers
-   are not supported in the DLL.  It should be possible to write
-   a server program on the PC to listen for a connection and
-   support these functions.
-5) Pak rom GO TO "BASIC" function not working properly.
+2) No hardware flow control other than RxF and TxE signals
+3) File I/O is customized for Os9 which affects DECB usage
 
 Todo
 ----
-1) Proper detection of serial port "modem" events when reading:
-   Break, ring, CTS, DSR, RX and DX changes, etc.
-2) Implement DCD DSR flow control.
-3) Dtermine how to tell /t2 driver (and pak) when EOF has occured
-   on binary file reads.
-4) Much testing
+> Means to unload DLL when Vcc exits / crashes
+> Proper detection of serial port "modem" events when reading:
+  Break, ring, CTS, DSR, RX and DX changes, etc.
+> Implement DCD DSR flow control.
+> Much testing
 
 Would be nice
 -------------
 1) Support for second sc6551 device
-
 
 These following notes are based on using /t2 on (Nitr)Os9 and the
 ROM from the Radio Shack RS232 program pack.
@@ -73,11 +65,11 @@ causes all data output to go to a file.  File read mode does the
 reverse; data is input from a file.  TCPIP mode establishes a
 connection with a network server and Comx mode establishes a
 connection with a windows serial port.  When File read or Write
-mode is selected the filename must be inserted into the Name
-field.  When COMx mode is selected the port name (eg: COM3) must
-be placed in the Name field with no leading blanks.  When TCPIP
-mode is selected the server address must be in the Name field and
-the port number in the Port field.
+mode is selected the filename relative to user home directory
+must be inserted into the Name field.  When COMx mode is selected 
+the port name (eg: COM3) must be placed in the Name field with no 
+leading blanks.  When TCPIP mode is selected the server address 
+must be in the Name field and the port number in the Port field.
 
 Console mode
 ------------
@@ -146,27 +138,26 @@ File Read and File Write Modes
 
 File modes allow reading or writing to/from a windows file. After
 selecting the appropriate radio button in the Acia Interface config
-dialog the file name should be entered in the Name field. The
-file name will be saved in the Vcc ini file.
+dialog the file name relative to user home directory should be  
+entered in the Name field. For example: "test\myfile.txt" in the
+mae field refers to %USERPROFILE%\test\myfile.txt
 
-Important.  You must turn off local echo to use File Mode with
-the os9 /t2 device before using it to move data to/from
-windows files. 'xmode /t2 -echo'  Failure to do so may result
-in I/O errors and possible hangs.  Also make sure pause is off
-of overflows will occur.
+You should turn off local echo and pause on the os9 /t2 device
+to avoid I/O errors, eg: xmode /t2 -echo -pause
 
-There are two file modes,  File Read and File Write.  When
-file read is set writes to acia are ignored.  When file write
-is set reads from acia always return null chars in binary mode
-and EOF characters in text mode. It advised to not use binary
-mode with the os9 /t2.
+There are two file modes,  File Read and File Write. Read mode
+causes acia to receive characters from the file specified and
+write mode sends charactes.  Writes in read mode are ignored 
+and reads in write mode returns nulls.
 
 Text mode.  When text mode is checked end of line translations
 (CR -> CRLF) are done and EOF characters are appended at the
 end of files.  This is recommended when using /t2 in os9 unless
 attempting to write binary files to windows.  Reading binary files
-is difficult under os9 because the sc6551 driver does not have a
-means other than <CR><ESC> sequence to detect the end of file.
+is difficult under os9 because the sc6551 driver does not report
+end of file conditions. For this reason acia.dll to avoid hangs 
+appends a <CR><ESC> sequence when reading files regardless of text
+mode settings. 
 
 Sending command output to a file can be done with something like
 'dir -e > /t2' If doing a long listing it is better to place the

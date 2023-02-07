@@ -218,8 +218,10 @@ void LoadConfig(void)
     AciaTextMode=GetPrivateProfileInt("Acia","AciaTextMode",0,IniFile);
     GetPrivateProfileString("Acia","AciaComPort","COM3",
                             AciaComPort,32,IniFile);
-    GetPrivateProfileString("Acia","AciaFilePath","AciaFile.txt",
-                            AciaFilePath, MAX_PATH,IniFile);
+    GetPrivateProfileString("Acia","AciaFileRdPath","AciaFile.txt",
+                            AciaFileRdPath, MAX_PATH,IniFile);
+    GetPrivateProfileString("Acia","AciaFileWrPath","AciaFile.txt",
+                            AciaFileWrPath, MAX_PATH,IniFile);
     GetPrivateProfileString("Acia","AciaTcpHost","localhost",
                             AciaTcpHost, MAX_PATH,IniFile);
     // String for Vcc status line
@@ -243,8 +245,9 @@ void SaveConfig(void)
 
     WritePrivateProfileString("Acia","AciaTextMode",txt,IniFile);
     WritePrivateProfileString("Acia","AciaComPort",AciaComPort,IniFile);
-    WritePrivateProfileString("Acia","AciaFilePath",AciaFilePath,IniFile);
-    WritePrivateProfileString("Acia","AciaTcpHost", AciaTcpHost,IniFile);
+    WritePrivateProfileString("Acia","AciaFileRdPath",AciaFileRdPath,IniFile);
+    WritePrivateProfileString("Acia","AciaFileWrPath",AciaFileWrPath,IniFile);
+    WritePrivateProfileString("Acia","AciaTcpHost",AciaTcpHost,IniFile);
 }
 
 //-----------------------------------------------------------------------
@@ -284,30 +287,39 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
         switch (AciaComType) {
 
         case COM_FILE:
+            EnableWindow(GetDlgItem(hDlg,IDC_PORT),FALSE);
+            EnableWindow(GetDlgItem(hDlg,IDC_NAME),TRUE);
             if (AciaComMode == COM_MODE_READ) {
+                SetDlgItemText(hDlg,IDC_NAME,AciaFileRdPath);
                 button = IDC_T_FILE_R;
             } else {
                 // If file mode default to write
                 AciaComMode = COM_MODE_WRITE;
+                SetDlgItemText(hDlg,IDC_NAME,AciaFileWrPath);
                 button = IDC_T_FILE_W;
             }
-            SetDlgItemText(hDlg,IDC_NAME,AciaFilePath);
             SetDlgItemText(hDlg,IDC_PORT,"");
             break;
 
         case COM_TCPIP:
+            EnableWindow(GetDlgItem(hDlg,IDC_PORT),TRUE);
+            EnableWindow(GetDlgItem(hDlg,IDC_NAME),TRUE);
             button = IDC_T_TCP;
             SetDlgItemText(hDlg,IDC_NAME,AciaTcpHost);
             SetDlgItemInt(hDlg,IDC_PORT,AciaTcpPort,FALSE);
             break;
 
         case COM_WINCOM:
+            EnableWindow(GetDlgItem(hDlg,IDC_PORT),FALSE);
+            EnableWindow(GetDlgItem(hDlg,IDC_NAME),TRUE);
             button = IDC_T_COM;
             SetDlgItemText(hDlg,IDC_NAME,AciaComPort);
             break;
 
         case COM_CONSOLE:
         default:
+            EnableWindow(GetDlgItem(hDlg,IDC_PORT),FALSE);
+            EnableWindow(GetDlgItem(hDlg,IDC_NAME),FALSE);
             button = IDC_T_CONS;
             AciaComType = COM_CONSOLE;
             SetDlgItemText(hDlg,IDC_NAME,"");
@@ -327,12 +339,13 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
         break;
 
     case WM_COMMAND:
-        int port;
 
         // Close sc6551 before changing com type
         button = LOWORD(wParam);
         switch (button) {
         case IDC_T_CONS:
+            EnableWindow(GetDlgItem(hDlg,IDC_PORT),FALSE);
+            EnableWindow(GetDlgItem(hDlg,IDC_NAME),FALSE);
             sc6551_close();
             AciaComType  = COM_CONSOLE;
             AciaComMode = COM_MODE_DUPLEX;
@@ -341,22 +354,28 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             break;
 
         case IDC_T_FILE_R:
+            EnableWindow(GetDlgItem(hDlg,IDC_PORT),FALSE);
+            EnableWindow(GetDlgItem(hDlg,IDC_NAME),TRUE);
             sc6551_close();
             AciaComType  = COM_FILE;
             AciaComMode = COM_MODE_READ;
-            SetDlgItemText(hDlg,IDC_NAME,AciaFilePath);
+            SetDlgItemText(hDlg,IDC_NAME,AciaFileRdPath);
             SetDlgItemText(hDlg,IDC_PORT,"");
             break;
 
         case IDC_T_FILE_W:
+            EnableWindow(GetDlgItem(hDlg,IDC_PORT),FALSE);
+            EnableWindow(GetDlgItem(hDlg,IDC_NAME),TRUE);
             sc6551_close();
             AciaComType  = COM_FILE;
             AciaComMode = COM_MODE_WRITE;
-            SetDlgItemText(hDlg,IDC_NAME,AciaFilePath);
+            SetDlgItemText(hDlg,IDC_NAME,AciaFileWrPath);
             SetDlgItemText(hDlg,IDC_PORT,"");
             break;
 
         case IDC_T_TCP: // tcpip
+            EnableWindow(GetDlgItem(hDlg,IDC_PORT),TRUE);
+            EnableWindow(GetDlgItem(hDlg,IDC_NAME),TRUE);
             sc6551_close();
             AciaComType = COM_TCPIP;
             AciaComMode = COM_MODE_DUPLEX;
@@ -365,6 +384,8 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             break;
 
         case IDC_T_COM: // COMx
+            EnableWindow(GetDlgItem(hDlg,IDC_PORT),FALSE);
+            EnableWindow(GetDlgItem(hDlg,IDC_NAME),TRUE);
             sc6551_close();
             AciaComType = COM_WINCOM;
             AciaComMode = COM_MODE_DUPLEX;
@@ -383,11 +404,14 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             case COM_CONSOLE:
                 break;
             case COM_FILE:
-                GetDlgItemText(hDlg,IDC_NAME,AciaFilePath,MAX_PATH);
+                if (AciaComMode == COM_MODE_READ)
+                    GetDlgItemText(hDlg,IDC_NAME,AciaFileRdPath,MAX_PATH);
+                if (AciaComMode == COM_MODE_WRITE)
+                    GetDlgItemText(hDlg,IDC_NAME,AciaFileWrPath,MAX_PATH);
                 break;
             case COM_TCPIP:
                 GetDlgItemText(hDlg,IDC_NAME,AciaTcpHost,MAX_PATH);
-                port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
+                int port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
                 if ((port < 1024) || (port > 65536)) {
                     MessageBox(hDlg,"TCP Port must be 1024 thru 65536",
                                     "Error", MB_OK|MB_ICONEXCLAMATION);
