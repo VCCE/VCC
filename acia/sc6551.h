@@ -17,20 +17,9 @@
 // (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
 //
 //------------------------------------------------------------------
-
-// sc6551 calls
-void sc6551_init();
-void sc6551_close();
-void sc6551_heartbeat();
-unsigned char sc6551_read(unsigned char data);
-void sc6551_write(unsigned char data, unsigned short port);
-void (*AssertInt)(unsigned char,unsigned char);
-
-// Thread control
-void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop);
-
-// Status Register defines
-// Status register bits.
+// Defines
+//------------------------------------------------------------------
+// Status Register (69)
 // b0 Par Rx parity error
 // b1 Frm Rx framing error
 // B2 Ovr Rx data over run
@@ -48,8 +37,7 @@ void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop);
 #define StatDSR  0x40
 #define StatIRQ  0x80
 
-// Command register defines
-// Command register bits.
+// Command register (6A) 
 // b0   DTR Enable receive and interupts  (set=enabled)
 // b1   RxI Receiver IRQ control by StatRxF (set=disabled)
 // b2-3 TIRB Transmit IRQ control
@@ -57,18 +45,15 @@ void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop);
 // b4   Echo Set=Activated
 // b5-7 Par  Parity control
 //      xx0 none, 001 Odd, 011 Even, 101 mark, 111 space
-
 #define CmdDTR  0x01
 #define CmdRxI  0x02
 #define CmdTIRB 0x0C
-#define CmdEcho 0x10
-#define CmdPAR  0xE0
 #define TIRB_Off  0x00
 #define TIRB_On   0x04
 #define TIRB_RTS  0x08
 #define TIRB_Brk  0x0C
 
-// Control Register defines (6B)
+// Control Register (6B)
 // b0-3 Baud rate
 //		{ X,60,75,110,135,150,300,600,1200,
 //		  1800,2400,3600,4800,7200,9600,19200 }
@@ -76,5 +61,26 @@ void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop);
 // b5-6 Data len 00=8 01=7 10=6 11=5
 // b7   Stop bits 0=1, 1-2
 
-#define CtlBaud 0x0F
+//------------------------------------------------------------------
+// sc6551 calls from emulation
+//------------------------------------------------------------------
+void sc6551_init();
+void sc6551_close();
+void sc6551_heartbeat();
+unsigned char sc6551_read(unsigned char data);
+void sc6551_write(unsigned char data, unsigned short port);
+void (*AssertInt)(unsigned char,unsigned char);
 
+//------------------------------------------------------------------
+// Settings from command and control registers
+//------------------------------------------------------------------
+// Parity is index to [odd,even,mark,space]
+// BaudRate is index to [19200,50,75,110,135,150,300,600,1200,
+//                       1800,2400,3600,4800 7200,9600,19200]
+unsigned int IntClock;
+unsigned int DataLen;
+unsigned int StopBits;
+unsigned int EchoOn;
+unsigned int EnParity;
+unsigned int Parity;
+unsigned int BaudRate;

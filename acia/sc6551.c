@@ -53,19 +53,14 @@ char *OutWptr = OutBuf;
 int Wcnt = 0;
 unsigned int volatile W_Ilock;
 
-int sc6551_initialized = 0;
+int sc6551_opened = 0;
 
-// BaudRate and Heartbeat counter used to pace I/O
-int BaudRate = 0;
-int HBcounter = 0;
+unsigned int HBcounter = 0; // used to pace I/O
 
 // BaudDelay table sets HBcounter.  These are approximate.
 // If accuracy becomes an issue could use audio sample timer.
 int BaudDelay[16] = { 0, 1000, 666, 454, 370, 333, 166,
-                      83, 41, 26, 20, 13, 10, 6, 5, 1 };
-
-// Baud rates: EXT, 50, 75, 110, 135, 150, 300, 600, 1200,
-//             1800, 2400, 3600, 4800, 7200, 9600, 19200
+                      83, 41, 26, 20, 13, 10, 6, 5, 2 };
 
 //------------------------------------------------------------------------
 //  Nicely terminate an I/O thread
@@ -87,15 +82,29 @@ void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop)
 }
 
 //------------------------------------------------------------------------
-//  Initiallize sc6551.  This gets called when DTR is raised.
+//  Init sc6551.  This gets called when the DLL is loaded
 //------------------------------------------------------------------------
 void sc6551_init()
 {
+	IntClock = 0;
+    DataLen  = 0;
+    StopBits = 0;
+    EchoOn   = 0;
+    EnParity = 0;
+    Parity   = 0;
+    BaudRate = 0;
+}
+
+//------------------------------------------------------------------------
+//  Open sc6551.  This gets called when DTR is raised.
+//------------------------------------------------------------------------
+void sc6551_open()
+{
     DWORD id;
 
-    if (sc6551_initialized==1) return;
+    if (sc6551_opened == 1) return;
 
-    // Open comunication
+	// Open comunication
     com_open();
 
     // Create I/O threads
@@ -113,7 +122,7 @@ void sc6551_init()
     Icnt = 0;
     Wcnt = 0;
 
-    sc6551_initialized = 1;
+    sc6551_opened = 1;
 }
 
 //------------------------------------------------------------------------
@@ -121,22 +130,23 @@ void sc6551_init()
 //------------------------------------------------------------------------
 void sc6551_close()
 {
-    sc6551_terminate_thread(hInputThread, hStopInput);
-    sc6551_terminate_thread(hOutputThread, hStopOutput);
-    CloseHandle(hStopInput);
-    CloseHandle(hStopOutput);
-    com_close();
-    Icnt = 0;
-    Wcnt = 0;
-    sc6551_initialized = 0;
+    if (sc6551_opened) {
+        sc6551_terminate_thread(hInputThread, hStopInput);
+        sc6551_terminate_thread(hOutputThread, hStopOutput);
+        CloseHandle(hStopInput);
+        CloseHandle(hStopOutput);
+        com_close();
+        Icnt = 0;
+        Wcnt = 0;
+        sc6551_opened = 0;
+	}
 }
+
 //------------------------------------------------------------------------
 // Input thread
 //------------------------------------------------------------------------
-
 DWORD WINAPI sc6551_input_thread(LPVOID param)
 {
-
     //PrintLogF("START-IN %d\n",hInputThread);
     Icnt = 0;
     while(TRUE) {
@@ -171,7 +181,6 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 //------------------------------------------------------------------------
 DWORD WINAPI sc6551_output_thread(LPVOID param)
 {
-
     Wcnt = 0;
     OutWptr = OutBuf;
 
@@ -251,31 +260,31 @@ unsigned char sc6551_read(unsigned char port)
 {
     unsigned char data = 0; // Default zero
     switch (port) {
-        // Read input data
-        case 0x68:
-            //PrintLogF("r%02x.%02x ",data,StatReg);
-            // Ignore read if no data or RxF is not set
-            if (Icnt && (StatReg & StatRxF)) {
-                data = *InRptr++;
-                Icnt--;
-                // Clear RxF until timer resets it
-                StatReg &= ~StatRxF;  //0x08
-            }
-            break;
-        // Read status register
-        case 0x69:
-            data = StatReg;
-            StatReg &= ~StatIRQ;      //0x80
-            //if(data)PrintLogF("s%02x\n",data);
-            break;
-        // Read command register
-        case 0x6A:
-            data = CmdReg;
-            break;
-        // Read control register
-        case 0x6B:
-            data = CtlReg;
-            break;
+    // Read input data
+    case 0x68:
+        //PrintLogF("r%02x.%02x ",data,StatReg);
+        // Ignore read if no data or RxF is not set
+        if (Icnt && (StatReg & StatRxF)) {
+            data = *InRptr++;
+            Icnt--;
+            // Clear RxF until timer resets it
+            StatReg &= ~StatRxF;  //0x08
+        }
+        break;
+    // Read status register
+    case 0x69:
+        data = StatReg;
+        StatReg &= ~StatIRQ;      //0x80
+        //if(data)PrintLogF("s%02x\n",data);
+        break;
+    // Read command register
+    case 0x6A:
+        data = CmdReg;
+        break;
+    // Read control register
+    case 0x6B:
+        data = CtlReg;
+        break;
     }
     return data;
 }
@@ -286,33 +295,38 @@ unsigned char sc6551_read(unsigned char port)
 void sc6551_write(unsigned char data,unsigned short port)
 {
     switch (port) {
-        // Data
-        case 0x68:
-            //PrintLogF("t%02x.%d ",data,Wcnt);
-            StatReg &= ~StatTxE; //0x10
-            *OutWptr++ = data;
-            Wcnt++;
-            break;
-        // Clear status
-        case 0x69:
-            //PrintLogF("Reset\n");
-            StatReg = 0;
-            break;
-        // Write Command register
-        case 0x6A:
-            //PrintLogF("c%02x\n",data);
-            CmdReg = data;
-            if (CmdReg & CmdDTR) {
-                if (sc6551_initialized != 1) sc6551_init();
-            } else {
-                if (sc6551_initialized == 1) sc6551_close();
-            }
-            break;
-        // Write Control register
-        case 0x6B:
-            CtlReg = data;
-            BaudRate = CtlReg & CtlBaud;
-            //PrintLogF("Baud rate: %d\n",BaudRate);
-            break;
+    // Data
+    case 0x68:
+        StatReg &= ~StatTxE; //0x10
+        *OutWptr++ = data;
+        Wcnt++;
+        break;
+    // Write status does a reset
+    case 0x69:
+        //PrintLogF("Reset\n");
+        StatReg = 0;
+        break;
+    // Write Command register
+    case 0x6A:
+        //PrintLogF("c%02x\n",data);
+        CmdReg = data;
+        EchoOn = (CmdReg & 0x10) >> 4;
+        Parity = (CmdReg & 0xE0) >> 5;
+        EnParity = Parity & 1;
+        Parity = Parity >> 1;
+        if (CmdReg & CmdDTR) {
+            sc6551_open();
+        } else {
+            sc6551_close();
+        }
+        break;
+    // Write Control register
+    case 0x6B:
+        CtlReg = data;
+        BaudRate = CtlReg & 0x0F;
+        IntClock = (CtlReg & 0x10) >> 4;
+        DataLen  = 8 - ((CtlReg & 0x60) >> 5);
+        StopBits = (((CtlReg & 0x80) >> 7) == 0) ? 0 : 2;
+		break;
     }
 }

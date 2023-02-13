@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <string.h>
 #include "acia.h"
+#include "sc6551.h"
 #include "logger.h"
 
 HANDLE hReadEvent;
@@ -46,23 +47,22 @@ int wincom_open()
     hWriteEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
 
     char portname[64];
-    // comports are named '\\.\COMxx'
     sprintf(portname,"\\\\.\\%s",AciaComPort);
     hComPort = CreateFileA(portname,
                            GENERIC_READ | GENERIC_WRITE, 0, NULL,
                            OPEN_EXISTING, FILE_FLAG_OVERLAPPED,NULL);
     if (hComPort==INVALID_HANDLE_VALUE) return -1; // msgbox?
 
-    // Get settings
+    // Port settings
     SecureZeroMemory(&PortDCB,sizeof(PortDCB));
     PortDCB.DCBlength = sizeof(PortDCB);
     GetCommState(hComPort,&PortDCB);
-
-//PrintLogF("Open %s Baud %d, Bits %d \n", 
-//           portname,PortDCB.BaudRate,PortDCB.ByteSize);
-
-    //Change stuff here
-
+    PortDCB.BaudRate = (BaudRate == 0) ? 19200 : BaudRate;
+    PortDCB.fParity  = EnParity;
+    PortDCB.Parity   = Parity+1;
+    PortDCB.ByteSize = DataLen;
+    PortDCB.StopBits = (StopBits == 0) ? 1 : 2;
+    SetCommState(hComPort,&PortDCB);
     return 0;
 }
 

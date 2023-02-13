@@ -170,10 +170,8 @@
     <ResourceCompile Include="acia.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="acia.h" />
     <ClInclude Include="resource.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="resource." />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

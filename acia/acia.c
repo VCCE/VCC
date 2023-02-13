@@ -21,7 +21,6 @@
 #include "acia.h"
 #include "sc6551.h"
 #include "logger.h"
-//#include "..\fileops.h"
 
 //------------------------------------------------------------------------
 // Local Functions
@@ -66,6 +65,7 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
     if (reason == DLL_PROCESS_ATTACH) {
         g_hDLL = hinst;
+
     } else if (reason == DLL_PROCESS_DETACH) {
         if (hConfigDlg) SendMessage(hConfigDlg,WM_CLOSE,6666,0);
         sc6551_close();
@@ -80,13 +80,13 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 __declspec(dllexport) void
 ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
 {
-
     LoadString(g_hDLL,IDS_MODULE_NAME,ModName,MAX_LOADSTRING);
     LoadString(g_hDLL,IDS_CATNUMBER,CatNumber,MAX_LOADSTRING);
     DynamicMenuCallback = Temp;
     strcpy(IniSect,ModName);   // Use module name for ini file section
     if (DynamicMenuCallback != NULL) BuildDynaMenu();
-    return ;
+    sc6551_init();
+	return ;
 }
 
 //-----------------------------------------------------------------------
