@@ -128,11 +128,11 @@ console_read(char * buf, int len) {
     int keypress_cnt = 0;
     unsigned char chr;
 
-	// Abort if console not open or no space in buffer
+    // Abort if console not open or no space in buffer
     if ( hConIn == NULL) return 0;
     if (len < 1) return 0;
 
-	// If line mode return next line from keyboard buffer (blocks)
+    // If line mode return next line from keyboard buffer (blocks)
     if (AciaLineInput) {
         int cnt;
         ReadConsole(hConIn,buf,len,&cnt,NULL);
@@ -269,7 +269,7 @@ int console_write(char *buf, int len) {
     DWORD tmp;
     char cc[80];
 
-	// Abort if console not open
+    // Abort if console not open
     if ( hConOut == NULL) return 0;
 
     while (cnt < len) {

@@ -57,10 +57,13 @@ int sc6551_opened = 0;
 
 unsigned int HBcounter = 0; // used to pace I/O
 
-// BaudDelay table sets HBcounter.  These are approximate.
+// BaudDelay table for supported rates.  These are approximate.
 // If accuracy becomes an issue could use audio sample timer.
-int BaudDelay[16] = { 0, 1000, 666, 454, 370, 333, 166,
-                      83, 41, 26, 20, 13, 10, 6, 5, 2 };
+// Corresponds with { 9600, 110, 110, 110, 300, 300, 300,  600,
+//	                  1200,2400,2400,4800,4800,9600,9600,19200 };
+
+int BaudDelay[16] = {    7, 500, 500, 500, 250, 250, 250,  125,
+                        60,  30,  30,  15,  15,   7,   7,    3 };
 
 //------------------------------------------------------------------------
 //  Nicely terminate an I/O thread

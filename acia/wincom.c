@@ -42,6 +42,8 @@ int writeport(char *buf,int siz);
 int wincom_open()
 {
     DCB PortDCB;
+    static int bt[16]={9600, 110, 110, 110, 300, 300, 300,  600,
+                       1200,2400,2400,4800,4800,9600,9600,19200};
 
     hReadEvent  = CreateEvent(NULL,TRUE,FALSE,NULL);
     hWriteEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
@@ -57,12 +59,14 @@ int wincom_open()
     SecureZeroMemory(&PortDCB,sizeof(PortDCB));
     PortDCB.DCBlength = sizeof(PortDCB);
     GetCommState(hComPort,&PortDCB);
-    PortDCB.BaudRate = (BaudRate == 0) ? 19200 : BaudRate;
+    PortDCB.BaudRate = (BaudRate > 16) ? 9600 : bt[BaudRate];
     PortDCB.fParity  = EnParity;
-    PortDCB.Parity   = Parity+1;
+    PortDCB.Parity   = (EnParity) ? 0 : Parity;
     PortDCB.ByteSize = DataLen;
-    PortDCB.StopBits = (StopBits == 0) ? 1 : 2;
+    PortDCB.StopBits = (StopBits == 0) ? 0 : 2;
     SetCommState(hComPort,&PortDCB);
+    // PrintLogF("Baud:%d,Parity:%d,Data:%d,Stop:%d\n",
+    //           BaudRate,Parity,DataLen,StopBits);
     return 0;
 }
 

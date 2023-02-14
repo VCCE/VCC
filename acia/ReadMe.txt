@@ -2,6 +2,11 @@
     DYNAMIC LINK LIBRARY : acia Project Overview
 ========================================================================
 
+Acia.dll is a Vcc add-on that attempts to emulate the Deluxe RS232
+program pack. It allows connection to windows serial ports and a
+tcpip server. It also allows reading/writing windows files and
+interaction with the Vcc console.
+
 Issues
 ------
 1) Baud rates are not very accurate.
@@ -29,11 +34,6 @@ General notes
 The Color Computer RS232 program pack contains a SC6551
 Asynchronous Communication Adapter (ACIA) which is a specialized
 UART for dealing with 6500/6800 series CPUs.
-
-Acia.dll is a Vcc add-on that attempts to emulate the SC6551 ACIA
-in the prograam pack. It allows connection to windows serial ports
-and a tcpip server. It also allows reading/writing windows files
-and interaction with the Vcc console.
 
 Acia.dll does not deal with many of the details of communicating
 with RS232 devices.  Instead it establishes a byte stream connection
@@ -66,9 +66,9 @@ reverse; data is input from a file.  TCPIP mode establishes a
 connection with a network server and Comx mode establishes a
 connection with a windows serial port.  When File read or Write
 mode is selected the filename relative to user home directory
-must be inserted into the Name field.  When COMx mode is selected 
-the port name (eg: COM3) must be placed in the Name field with no 
-leading blanks.  When TCPIP mode is selected the server address 
+must be inserted into the Name field.  When COMx mode is selected
+the port name (eg: COM3) must be placed in the Name field with no
+leading blanks.  When TCPIP mode is selected the server address
 must be in the Name field and the port number in the Port field.
 
 Console mode
@@ -138,7 +138,7 @@ File Read and File Write Modes
 
 File modes allow reading or writing to/from a windows file. After
 selecting the appropriate radio button in the Acia Interface config
-dialog the file name relative to user home directory should be  
+dialog the file name relative to user home directory should be
 entered in the Name field. For example: "test\myfile.txt" in the
 mae field refers to %USERPROFILE%\test\myfile.txt
 
@@ -147,7 +147,7 @@ to avoid I/O errors, eg: xmode /t2 -echo -pause
 
 There are two file modes,  File Read and File Write. Read mode
 causes acia to receive characters from the file specified and
-write mode sends charactes.  Writes in read mode are ignored 
+write mode sends charactes.  Writes in read mode are ignored
 and reads in write mode returns nulls.
 
 Text mode.  When text mode is checked end of line translations
@@ -155,16 +155,16 @@ Text mode.  When text mode is checked end of line translations
 end of files.  This is recommended when using /t2 in os9 unless
 attempting to write binary files to windows.  Reading binary files
 is difficult under os9 because the sc6551 driver does not report
-end of file conditions. For this reason acia.dll to avoid hangs 
+end of file conditions. For this reason acia.dll to avoid hangs
 appends a <CR><ESC> sequence when reading files regardless of text
-mode settings. 
+mode settings.
 
 Sending command output to a file can be done with something like
 'dir -e > /t2' If doing a long listing it is better to place the
 output in a os9 file and copy that to /t2, for example:
 
-	dir -e -x > cmds.list
-	copy cmds.list /t2
+    dir -e -x > cmds.list
+    copy cmds.list /t2
 
 Conversely when reading text from a file on Windows one first
 must copy the file to NitrOs9 and then list it.  The command
@@ -178,7 +178,7 @@ After selecting TCPIP radio button on the Acia config dialog the
 server hostname or IP address should be entered in the Name field
 (default is localhost) and the server port in the Port field.
 
-I have been testing tcpip mode by using netcat on Linux as a server.
+Testing tcpip mode was done using netcat on Linux as a server.
 On Linux ' nc -l -p 48000'   48000 is the port number I am using.
 After launching a shell connected to /t2 on (Nitr)Os9 the Linux
 session becomes a terminal connected to Os9.
@@ -191,10 +191,14 @@ After selecting COMx radio button the port name should be entered
 in the Name field, for example "COM3".  Leading blanks will not
 work, port name must be left justified.
 
-I have been testing the COM port mode using a com0com port emulator
+Valid baud rates are 110,300,600,1200,2400,4800,9600,19200
+
+Testing of the COM port mode was done using a com0com port emulator
 in windows along with putty.  com0com is used to 'wire' two psuedo
 port COM20 and COM21 together. I used acia.dll to connect to COM20
 and PuTTy to connect to COM21.  This allowed me to simulate connecting
-with a terminal.
+with a terminal.  Also tested with a USRobics faxmodem via a Radio
+Shack USB to serial adapter and windows legacy USBSER driver
+(which was a pia to install) on COM3.
 
 
