@@ -79,7 +79,7 @@ static Address DMAaddress;
 static unsigned char SectorBuffer[SECTORSIZE];
 static unsigned char Mounted[2]={0,0};
 static unsigned char WpHD[2]={0,0};
-static unsigned short ScanCount=0;
+static unsigned short ScanCount=64;
 static unsigned long LastSectorNum=0;
 static char DStatus[128]="";
 static char Status = HD_PWRUP;

@@ -435,8 +435,8 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             case COM_TCPIP:
                 GetDlgItemText(hDlg,IDC_NAME,AciaTcpHost,MAX_PATH);
                 int port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
-                if ((port < 1024) || (port > 65536)) {
-                    MessageBox(hDlg,"TCP Port must be 1024 thru 65536",
+                if ((port < 1) || (port > 65536)) {
+                    MessageBox(hDlg,"TCP Port must be 1 thru 65536",
                                     "Error", MB_OK|MB_ICONEXCLAMATION);
                     return TRUE;
                 }

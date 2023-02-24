@@ -9465,53 +9465,49 @@ void DrawTopBoarder32(SystemState *DTState)
 	return;
 }
 
+//  Occasionaly the LinesPerScreen and VertCenter values are wrong when
+//  the DrawBottomBorder routines are called.  This sometimes causes an
+//  access violation crash which seems to happen most often while booting
+//  NitrOS9. As a stop gap the surface index calculated from these values
+//  is checked before being used to draw the lines at the border.
+
 void DrawBottomBoarder8(SystemState *DTState)
 {
-	if (BoarderChange==0)
-		return;	
-	unsigned short x;
-	for (x=0;x<DTState->WindowSize.x;x++)
-	{
-		DTState->PTRsurface8[x + (2*(DTState->LineCounter+LinesperScreen+VertCenter) *DTState->SurfacePitch) ]=BoarderColor8|128;
-		if (!DTState->ScanLines)
-			DTState->PTRsurface8[x + DTState->SurfacePitch+(2*(DTState->LineCounter+LinesperScreen+VertCenter) *DTState->SurfacePitch) ]=BoarderColor8|128;
-	}
-	return;
+	if (BoarderChange==0) return;
+	int ndx = 2 * (LinesperScreen + VertCenter + DTState->LineCounter);
+	if (ndx >= DTState->WindowSize.y) return;  // Range check
+	unsigned int cnt = DTState->WindowSize.x;
+	if (!DTState->ScanLines) cnt *= 2;
+	unsigned char *p = DTState->PTRsurface8 + DTState->SurfacePitch * ndx;
+	while(cnt--) *p++ = BoarderColor8|128;
 }
 
 void DrawBottomBoarder16(SystemState *DTState)
 {
-	if (BoarderChange==0)
-		return;	
-	unsigned short x;
-	for (x=0;x<DTState->WindowSize.x;x++)
-	{
-		DTState->PTRsurface16[x + (2*(DTState->LineCounter+LinesperScreen+VertCenter) *DTState->SurfacePitch) ]=BoarderColor16;
-		if (!DTState->ScanLines)
-			DTState->PTRsurface16[x + DTState->SurfacePitch+(2*(DTState->LineCounter+LinesperScreen+VertCenter) *DTState->SurfacePitch) ]=BoarderColor16;
-	}
+	if (BoarderChange==0) return;
+	int ndx = 2 * (LinesperScreen + VertCenter + DTState->LineCounter);
+	if (ndx >= DTState->WindowSize.y) return;  // Range check
+	unsigned int cnt = DTState->WindowSize.x;
+	if (!DTState->ScanLines) cnt *= 2;
+	unsigned short *p = DTState->PTRsurface16 + DTState->SurfacePitch * ndx;
+	while(cnt--) *p++ = BoarderColor16;
 	return;
 }
 
 void DrawBottomBoarder24(SystemState *DTState)
 {
-
 	return;
 }
 
-
 void DrawBottomBoarder32(SystemState *DTState)
 {
-	if (BoarderChange==0)
-		return;	
-	unsigned short x;
-
-	for (x=0;x<DTState->WindowSize.x;x++)
-	{
-		DTState->PTRsurface32[x + (2*(DTState->LineCounter+LinesperScreen+VertCenter) *DTState->SurfacePitch) ]=BoarderColor32;
-		if (!DTState->ScanLines)
-			DTState->PTRsurface32[x + DTState->SurfacePitch+(2*(DTState->LineCounter+LinesperScreen+VertCenter) *DTState->SurfacePitch) ]=BoarderColor32;
-	}
+	if (BoarderChange==0) return;
+	int ndx = 2 * (LinesperScreen + VertCenter + DTState->LineCounter);
+	if (ndx >= DTState->WindowSize.y) return;  // Range check
+	unsigned int cnt = DTState->WindowSize.x;
+	if (!DTState->ScanLines) cnt *= 2;
+	unsigned int *p = DTState->PTRsurface32 + DTState->SurfacePitch * ndx;
+	while(cnt--) *p++ = BoarderColor32;
 	return;
 }
 
