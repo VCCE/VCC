@@ -42,8 +42,8 @@ int writeport(char *buf,int siz);
 int wincom_open()
 {
     DCB PortDCB;
-    static int bt[16]={9600, 110, 110, 110, 300, 300, 300,  600,
-                       1200,2400,2400,4800,4800,9600,9600,19200};
+    static int bt[16]={38400, 110, 110, 110, 300, 300, 300,  600,
+                        1200,2400,2400,4800,4800,9600,9600,19200};
 
     hReadEvent  = CreateEvent(NULL,TRUE,FALSE,NULL);
     hWriteEvent = CreateEvent(NULL,TRUE,FALSE,NULL);

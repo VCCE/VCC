@@ -59,10 +59,10 @@ unsigned int HBcounter = 0; // used to pace I/O
 
 // BaudDelay table for supported rates.  These are approximate.
 // If accuracy becomes an issue could use audio sample timer.
-// Corresponds with { 9600, 110, 110, 110, 300, 300, 300,  600,
+// Corresponds with {    X,  75,  75, 110, 300, 300, 300,  600,
 //	                  1200,2400,2400,4800,4800,9600,9600,19200 };
 
-int BaudDelay[16] = {    7, 500, 500, 500, 250, 250, 250,  125,
+int BaudDelay[16] = {    0, 620, 620, 500, 250, 250, 250,  125,
                         60,  30,  30,  15,  15,   7,   7,    3 };
 
 //------------------------------------------------------------------------
@@ -330,6 +330,7 @@ void sc6551_write(unsigned char data,unsigned short port)
         IntClock = (CtlReg & 0x10) >> 4;
         DataLen  = 8 - ((CtlReg & 0x60) >> 5);
         StopBits = (((CtlReg & 0x80) >> 7) == 0) ? 0 : 2;
+		//PrintLogF("Baud:%d Len:%d Stops:%d\n",BaudRate,DataLen,StopBits);
 		break;
     }
 }
