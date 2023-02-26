@@ -11,7 +11,6 @@ Issues
 ------
 1) Baud rates are not very accurate.
 2) No hardware flow control other than RxF and TxE signals
-3) File I/O is customized for Os9 which affects DECB usage
 
 Todo
 ----
@@ -19,28 +18,84 @@ Todo
 > Proper detection of serial port "modem" events when reading:
   Break, ring, CTS, DSR, RX and DX changes, etc.
 > Implement DCD DSR flow control.
-> Much testing
 
 Would be nice
 -------------
 1) Support for second sc6551 device
 
-These following notes are based on using /t2 on (Nitr)Os9 and the
-ROM from the Radio Shack RS232 program pack.
-
-General notes
+The details
 -------------
 
-The Color Computer RS232 program pack contains a SC6551
-Asynchronous Communication Adapter (ACIA) which is a specialized
-UART for dealing with 6500/6800 series CPUs.
+The sc6551 emulation is controlled by four port addresses, 0xFF68 
+thru 0xFF6B.  The CPU controls the sc6551 by writing to these 
+addresses and gets status and data from the sc6551 by reading them.
 
-Acia.dll does not deal with many of the details of communicating
-with RS232 devices.  Instead it establishes a byte stream connection
-with a the console, TCP socket, or file and leaves many of the
-details of how to communicate to the PC operating system.  This
-allows flexibility but also means it does not behave exactly like
-a real RS232 interface.
+0xFF68 is the data register. A CPU write to the address will transmit
+a byte of data and a CPU read will receive a byte of data.
+
+0xFF69 is the status byte.  The CPU reads this port to determine
+the status of the sc6551.  Bits 0, 1, and 2 of the status byte are 
+unused error indicators.  Bit 3 indicates that a data byte is ready
+for read. Bit 4 indicates that the sc6551 is ready to transmit a byte.
+Bits 5 and 6 are modem and data set ready bits, and Bit 7 indicates the 
+sc6551 has asserted and IRQ.  Acia.dll does not set the error bits and
+bits 5 and 6 are always clear to indicate mode and data ready states.
+
+Data flow is controlled exclusivly by bit 3 (RxF) and bit 4 (TxE). When
+the CPU wants to send data it first must verify bit 4 (TxE) is set before 
+writing to the data register, and when it wants to recieve data it must 
+first check that bit 3 (RxF) is set before reading the data register.
+
+Acia.dll sets RxF when data is ready.  It also will assert an IRQ and
+set bit 7 when data becomes ready if Bit 1 of the command register is 
+clear.  Coco3 drivers can use to reduce input polling. Acia.dll alse sets
+TxE when is is ready to transmit another byte of data.  The Coco3 CPU
+must poll this bit when it has data to send.
+
+0xFF6A and 0xFF6B are the command and control registers.  The CPU writes
+these to control the sc6551.  Bit 0 of 0xFF6A has the most effect on
+acia.dll operation, if this bit is set by the CPU then communications 
+are active (open) and if it is cleared communications are inactive (closed)
+
+Baud rates, data length, and stop bits have little significance for
+most acia.dll operating modes, they are mostly used to allow the
+Coco CPU to set the parameters of PC com ports.  Bits 0-3 of 0xFF6B
+sets the baud rate according to the following table.
+
+       val   rate     val	rate  
+        0    9600      8    1200
+        1     110      9    2400
+        2     110     10    2400
+        3     110     11    4800
+        4     300     12    4899
+        5     300     13    9600
+        6     300     14    9600
+        7     600     15   19200
+
+Bits 5 and 6 of 0xFF6B set the data length and Bit 7 sets the number
+of stop bits. B5-6: 00=8 01=7 10=6 11=5 len.  B7 0=1, 1=2 stops.
+
+Basic programs can enable acia by poking 1 to &HFF6A and disable it by
+poking 0.  They can then peek &HFF69 and test the result for RxF by 
+anding 8 or test for TxE by anding 16. Then peek &HFF68 to read data
+and poke &HFF68 to write it. Here is a simple RSDOS Basic program that
+will read data from acia:
+
+  10 POKE &HFF6A,1
+  20 S=PEEK(&HFF69) AND 8
+  30 IF S=0 THEN 20
+  40 PRINT CHR$(PEEK(&HFF68));
+  50 GOTO20
+
+Set acia mode to read a file on the PC and when the program is run
+basic will print it's contents.  If you press break and then continue
+the program will resume printing where it left off.  If you poke 0 to 
+&HFF6A acia will close the file and when the program is run again it 
+will start from the beginning.  This simple program does not check
+for end of file so you have to use break to end it because acia.dll 
+will just endlessly send EOF and CR sequences as basic attempts to
+read past the end of file.  More detail on file read and write modes
+can be found later in this document.
 
 RS232.ROM
 ---------
@@ -53,10 +108,10 @@ Pack.  If a different ROM is used it must be 4096 bytes long. Note
 that if acia.dll is in a MPI slot but not selected it can still be
 used but the pack rom will not be accessible.
 
-Settings
---------
+Mode Settings
+-------------
 
-Connection details are set using the Acia Interface config dialog
+Communications modes are set using the Acia Interface config dialog
 which can be reached from the Vcc Cartridge menu when the DLL is
 loaded.  The dialog has radio buttons for Console, File read,
 File write, TCPIP, and COMx modes of operation.  When activated
@@ -70,6 +125,7 @@ must be inserted into the Name field.  When COMx mode is selected
 the port name (eg: COM3) must be placed in the Name field with no
 leading blanks.  When TCPIP mode is selected the server address
 must be in the Name field and the port number in the Port field.
+Additional detail of these modes follows.
 
 Console mode
 ------------
@@ -140,7 +196,7 @@ File modes allow reading or writing to/from a windows file. After
 selecting the appropriate radio button in the Acia Interface config
 dialog the file name relative to user home directory should be
 entered in the Name field. For example: "test\myfile.txt" in the
-mae field refers to %USERPROFILE%\test\myfile.txt
+name field refers to %USERPROFILE%\test\myfile.txt
 
 You should turn off local echo and pause on the os9 /t2 device
 to avoid I/O errors, eg: xmode /t2 -echo -pause
@@ -166,10 +222,10 @@ output in a os9 file and copy that to /t2, for example:
     dir -e -x > cmds.list
     copy cmds.list /t2
 
-Conversely when reading text from a file on Windows one first
-must copy the file to NitrOs9 and then list it.  The command
-'list /t2' will often cause a buffer overflow because there
-is no flow control to tell the driver to stop reading.
+When using other programs to read or write files it is important
+to note that setting DTR opens the file and clearing DTR closes
+it. The NitrOS9 driver takes care of this but many terminal
+programs do not. DTR is controlled by bit 0 in 0xFF6A.
 
 TCPIP Mode
 ----------
@@ -183,6 +239,9 @@ On Linux ' nc -l -p 48000'   48000 is the port number I am using.
 After launching a shell connected to /t2 on (Nitr)Os9 the Linux
 session becomes a terminal connected to Os9.
 
+Also Twilight Term (TWI-TERM.BIN) was used to test connection with
+a telnet BBS on the internet.  (Set the address on the BBS in the 
+acia interface config name field and 23 in the port field)
 
 COMx Serial Port Mode
 ----------------------
@@ -197,8 +256,7 @@ Testing of the COM port mode was done using a com0com port emulator
 in windows along with putty.  com0com is used to 'wire' two psuedo
 port COM20 and COM21 together. I used acia.dll to connect to COM20
 and PuTTy to connect to COM21.  This allowed me to simulate connecting
-with a terminal.  Also tested with a USRobics faxmodem via a Radio
+with a terminal.  Also tested with a USRobotics faxmodem via a Radio
 Shack USB to serial adapter and windows legacy USBSER driver
 (which was a pia to install) on COM3.
-
 
