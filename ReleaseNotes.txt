@@ -1,9 +1,10 @@
 
 Vcc v2.1.0.8 April/2023
+  o Increase VSYNC IRQ delay so MAX-10 sees keystrokes.
   o Added RS232 Pak emulation (acia.dll) - EJ Jaquay
   o Added pause function - James Rye
   o Added execution trace feature to Vcc Debugger - Mike Rojas
-  o Fixed PMODE 4 color - James Rye
+  o Fixed PMODE 4 color - James Rye, Mike Rojas
   o Improved windows mouse cursor position when shown - Chet Simpson  
   o Minor Bug fixes
   o Updated Manual
@@ -16,7 +17,7 @@ VCC 2.1.0.6  May/2022
   o Added "Show Windows Mouse Pointer checkbox" to the "Joystick" menu.
     When unchecked the Windows mouse pointer is hidden from the VCC screen
   o Several bug fixes in keymap editor
-  o Fixed a bug that could error copies from VHD 0 to VHD 1
+  o Fixed a bug that prevented formating empty VHD files.
   o Add RS & CocoMax3 Hirez interfaces (FINALLY!)
   o Added feature to Hard Drive Insert mode to create a new VHD
   o Fixed a keyboard bug which was affecting the play of Tetris.
