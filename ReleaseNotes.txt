@@ -1,6 +1,7 @@
 
 Vcc v2.1.0.8 April/2023
   o Increase VSYNC IRQ delay so MAX-10 sees keystrokes.
+  o Corrected some 6309 register instruction issues found by Wally Z.
   o Added RS232 Pak emulation (acia.dll) - EJ Jaquay
   o Added pause function - James Rye
   o Added execution trace feature to Vcc Debugger - Mike Rojas
