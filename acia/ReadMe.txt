@@ -131,6 +131,47 @@ poking 0.  They can then peek &HFF69 and test the result for RxF by
 anding 8 or test for TxE by anding 16. Then peek &HFF68 to read data
 and poke &HFF68 to write it.
 
+<<<<<<< Updated upstream
+=======
+To demonstrate here is a simple Basic program that will read data
+from the emulated acia:
+
+10 POKE &HFF6A,1
+20 S=PEEK(&HFF69) AND 8
+30 IF S=0 THEN 20
+40 PRINT CHR$(PEEK(&HFF68));
+50 GOTO20
+
+To test it set the Acia Config dialog to read a text file from the PC.
+(Filename is relative to user directory).  When the program is run
+Basic will print it's contents.  If you press break and then continue
+the program will resume printing where it left off. If you poke 0 to
+&HFF6A acia will close the file and when the program is run again it
+will reopen and start from the file's beginning.
+
+Since the baud rate has not been set acia defaults to 0 which is max
+speed. In this case the program's output is throttled by the PRINT
+rate. If F8 is toggled it runs much faster.
+
+This simple program does not check for end of file so you have to use
+break to end it because acia.dll will endlessly send EOF and CR
+sequences as basic attempts to read past the end of file.
+
+More detail on file read mode can be found later in this document.
+
+RS232.ROM
+---------
+
+If the file "rs232.rom" is in the Vcc execution directory it will
+be automatically loaded when acia.dll is selected but not started.
+(make sure Autostart Cart in Misc Config dialog is unchecked)
+To start it do "EXEC &HE010" from RSDOS command prompt. The rom
+is a copy of the 4K rom from the Radio Shack Deluxe RS232 program
+Pack.  If a different ROM is used it must be 4096 bytes long. Note
+that if acia.dll is in a MPI slot but not selected it can still be
+used but the pack rom will not be accessible.
+
+>>>>>>> Stashed changes
 Communications Modes
 --------------------
 
