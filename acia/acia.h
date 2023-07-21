@@ -39,6 +39,10 @@
 // Text mode EOF character
 #define EOFCHR 0x1B
 
+// Base Ports
+#define BASE_PORT_RS232 0x68
+#define BASE_PORT_MODEM 0x6C
+
 // Communications type and mode enumerations
 enum com_type {
     COM_CONSOLE,
@@ -59,6 +63,7 @@ HANDLE hStopInput;
 HANDLE hStopOutput;
 
 // Config globals
+int  AciaBasePort;             // Base port for sc6651 (0x68 or 0x6C)
 int  AciaComType;              // Console,file,tcpip,wincom
 int  AciaComMode;              // Duplex,read,write
 int  AciaTextMode;             // CR and EOF translations 0=none 1=text
