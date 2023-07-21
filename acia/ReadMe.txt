@@ -11,28 +11,68 @@ Issues
 ------
 1) Baud rates are not very accurate.
 2) No hardware flow control other than RxF and TxE signals
-
-Todo
-----
-> Means to unload DLL when Vcc exits / crashes
-> Proper detection of serial port "modem" events when reading:
-  Break, ring, CTS, DSR, RX and DX changes, etc.
-> Implement DCD DSR flow control.
+3) DLL does not exit if Vcc crashes. (Issue with all Vcc Dll's)
+4) No detection of serial port "modem" events when reading:
+   Break, ring, CTS, DSR, RX and DX changes, etc.
 
 Would be nice
 -------------
 1) Support for second sc6551 device
 
-Acia Quick tutorial
--------------------
+Acia Quick Start 
+----------------
+To use acia.dll insert it in the cartridge slot or a MPI slot.
+This will cause "Acia Config" to be added to the Cartridge menu.
+Clicking on this menu item allows selection of one of the acia 
+modes: Console, File read, File write, TCPIP (client), and COMx.
+The Name and Port fields are used to set parameters for modes
+that require them.  The text mode check box when checked causes
+acia.dll to do CR <-> CRLF translations when using the file 
+read and write modes. The default mode is CONSOLE. 
 
-To use acia.dll insert it in the cartridge slot or a MPI slot. This
-will cause "Acia Config" to be added to the Cartridge menu. Clicking
-on it allows selection of the acia communication modes: Console,
-File read, File write, TCPIP (client), and COMx (PC serial port). The
-Name and Port fields are used to set parameters for the modes.  A
-text mode check box when checked causes acia.dll to do CR <-> CRLF
-translations when in file modes.
+For a quick test leave the ACIA config mode set to console
+and enter and run the following basic program.  (You can cut
+and paste using Vcc Edit -> Paste Basic Code)
+
+10 POKE &HFF6A,1
+20 IF (PEEK(&HFF69) AND 8)=0 THEN 20
+30 PRINT CHR$(PEEK(&HFF68));
+40 GOTO20
+
+The Vcc console should come up. The console is a CMD type window 
+that is connected to the ACIA. Anything typed in the console 
+will be read and printed by the basic program.  To close the
+console POKE &FF6A,0 or press F5 from the Vcc window.
+
+The following program does the opposite, characters typed in the 
+Vcc window are written to the console and CR writes CRLF:
+
+10 POKE &HFF6A,1
+20 K$=INKEY$: IF K$="" THEN 20
+30 C=ASC(K$)
+40 IF (PEEK(&HFF69) AND 16)=0 THEN 40
+50 POKE &HFF68,C
+60 IF C<>13 THEN 20
+70 C=10: GOTO 40
+
+Console mode is most useful when using Os9 which is described later.
+
+Radio Shack Deluxe RS232 program Pak
+-------------------------------------
+ 
+If the file "rs232.rom" is in the Vcc execution directory it will
+be automatically loaded when acia.dll is selected but not started.
+To start it do "EXEC &HE010" from RSDOS command prompt. The rom
+is a copy of the 4K rom from the Radio Shack Deluxe RS232 program
+Pack.  If a different ROM is used it must be 4096 bytes long. Note
+that if acia.dll is in a MPI slot but not selected it can still be
+used but the pack rom will not be accessible.  To exec the rom
+type EXEC&HE010 at the basic prompt. Note that the pak currently
+has trouble with the "goto basic" function on Vcc which limits its
+usefulness. Suggestions for a solution would be appreciated.
+
+SC6551 Operation
+----------------
 
 The sc6551 emulation is controlled one of two blocks of port addresses,
 0xFF68-0xFF6B or 0xFF68-0xFF6F, the block used is selected by a Acia
@@ -46,9 +86,9 @@ a byte of data and a read will receive a byte of data.
 
 0xFF69 (0xFF6D) is the status byte.  The CPU reads this port to determine
 the status of the sc6551.  Bits 0, 1, and 2 of the status byte are
-unused error indicators.  Bit 3 indicates that a data byte is ready
-to read. Bit 4 indicates that the sc6551 is ready to transmit a byte.
-Bits 5 and 6 are modem and data set ready bits, and Bit 7 indicates the
+error indicators.  Bit 3 indicates that a data byte is ready to read. 
+Bit 4 indicates that the sc6551 is ready to transmit a byte. Bits 
+5 and 6 are modem and data set ready bits, and Bit 7 indicates the
 sc6551 has asserted and IRQ.  Acia.dll does not set the error bits and
 bits 5 and 6 are always clear to indicate mode and data ready states.
 
@@ -123,6 +163,7 @@ RS232.ROM
 
 If the file "rs232.rom" is in the Vcc execution directory it will
 be automatically loaded when acia.dll is selected but not started.
+(make sure Autostart Cart in Misc Config dialog is unchecked)
 To start it do "EXEC &HE010" from RSDOS command prompt. The rom
 is a copy of the 4K rom from the Radio Shack Deluxe RS232 program
 Pack. The RS232 rom is only usefull if FF68 (RS-232 Pak) is selected
@@ -172,10 +213,10 @@ quit=05 bse=08 bell=07 type=80 baud=06 xon=11 xoff=13
 Some of these settings are not honored by the sc6551 driver.
 Xon, Xoff, and baud xmode settings seem to have no effect.
 
-The basic idea is to match standard text window settings. Acia.dll
-will translate OS9 text screen control codes to the proper console
-functions.  Colors default to white on black.  Only colors 0-7 are
-supported.
+The console uses standard OS9 text window settings. Acia.dll
+will translate many OS9 text screen control codes to do the 
+proper console functions.  Colors default to white on black.
+Only colors 0-7 are supported.
 
 To launch a shell simply do: shell i=/t2 and the console
 will come up. Typing "ex" in the console window causes the
@@ -212,6 +253,7 @@ from the windows properties menu in the console title bar.
 I did a brief check of uemacs. It seems to work okay except I find
 the lack of support of arrow keys annoying and I am too used to
 vi's use of hjkl for cursor position to adapt to emacs.
+
 
 File Read and File Write Modes
 ------------------------------
