@@ -18,6 +18,9 @@
 #define IDC_T_TCP                       1023
 #define IDC_T_COM                       1024
 
+#define IDC_T_RS232                     1030
+#define IDC_T_MODEM                     1031
+
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED

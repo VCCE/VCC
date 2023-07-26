@@ -19,7 +19,7 @@
 //------------------------------------------------------------------
 // Defines
 //------------------------------------------------------------------
-// Status Register (69)
+// Status Register
 // b0 Par Rx parity error
 // b1 Frm Rx framing error
 // B2 Ovr Rx data over run
@@ -37,7 +37,7 @@
 #define StatDSR  0x40
 #define StatIRQ  0x80
 
-// Command register (6A) 
+// Command register
 // b0   DTR Enable receive and interupts  (set=enabled)
 // b1   RxI Receiver IRQ control by StatRxF (set=disabled)
 // b2-3 TIRB Transmit IRQ control
@@ -53,7 +53,7 @@
 #define TIRB_RTS  0x08
 #define TIRB_Brk  0x0C
 
-// Control Register (6B)
+// Control Register
 // b0-3 Baud rate
 //		{ X,60,75,110,
 //		 135,150,300,600,

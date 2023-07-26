@@ -261,10 +261,10 @@ void sc6551_heartbeat()
 // -----------------------------------------------------------------------
 unsigned char sc6551_read(unsigned char port)
 {
-    unsigned char data = 0; // Default zero
-    switch (port) {
+    unsigned char data = 0;      // Default zero
+    switch (port-AciaBasePort) {
     // Read input data
-    case 0x68:
+    case 0:
         //PrintLogF("r%02x.%02x ",data,StatReg);
         // Ignore read if no data or RxF is not set
         if (Icnt && (StatReg & StatRxF)) {
@@ -275,17 +275,17 @@ unsigned char sc6551_read(unsigned char port)
         }
         break;
     // Read status register
-    case 0x69:
+    case 1:
         data = StatReg;
         StatReg &= ~StatIRQ;      //0x80
         //if(data)PrintLogF("s%02x\n",data);
         break;
     // Read command register
-    case 0x6A:
+    case 2:
         data = CmdReg;
         break;
     // Read control register
-    case 0x6B:
+    case 3:
         data = CtlReg;
         break;
     }
@@ -297,20 +297,20 @@ unsigned char sc6551_read(unsigned char port)
 //------------------------------------------------------------------------
 void sc6551_write(unsigned char data,unsigned short port)
 {
-    switch (port) {
+    switch (port-AciaBasePort) {
     // Data
-    case 0x68:
+    case 0:
         StatReg &= ~StatTxE; //0x10
         *OutWptr++ = data;
         Wcnt++;
         break;
     // Write status does a reset
-    case 0x69:
+    case 1:
         //PrintLogF("Reset\n");
         StatReg = 0;
         break;
     // Write Command register
-    case 0x6A:
+    case 2:
         //PrintLogF("c%02x\n",data);
         CmdReg = data;
         EchoOn = (CmdReg & 0x10) >> 4;
@@ -324,7 +324,7 @@ void sc6551_write(unsigned char data,unsigned short port)
         }
         break;
     // Write Control register
-    case 0x6B:
+    case 3:
         CtlReg = data;
         BaudRate = CtlReg & 0x0F;
         IntClock = (CtlReg & 0x10) >> 4;

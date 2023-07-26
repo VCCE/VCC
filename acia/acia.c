@@ -48,7 +48,7 @@ static char IniSect[MAX_LOADSTRING]; // Ini file section
 // Some strings for config dialog
 char *IOModeTxt[] = {"RW","R","W"};
 char *ComTypeTxt[] = {"CONS","FILE","TCP","COM"};
-  
+
 static unsigned char Rom[8191];
 static void (*PakSetCart)(unsigned char)=NULL;
 unsigned char LoadExtRom(char *);
@@ -214,6 +214,8 @@ void LoadConfig(void)
                                      COM_CONSOLE,IniFile);
     AciaComMode=GetPrivateProfileInt("Acia","AciaComMode",
                                      COM_MODE_DUPLEX,IniFile);
+    AciaBasePort=GetPrivateProfileInt("Acia","AciaBasePort",
+                                     BASE_PORT_RS232,IniFile);
     AciaTcpPort=GetPrivateProfileInt("Acia","AciaTcpPort",48000,IniFile);
     AciaTextMode=GetPrivateProfileInt("Acia","AciaTextMode",0,IniFile);
     GetPrivateProfileString("Acia","AciaComPort","COM3",
@@ -252,6 +254,8 @@ void LoadConfig(void)
 void SaveConfig(void)
 {
     char txt[16];
+    sprintf(txt,"%d",AciaBasePort);
+    WritePrivateProfileString("Acia","AciaBasePort",txt,IniFile);
     sprintf(txt,"%d",AciaComType);
     WritePrivateProfileString("Acia","AciaComType",txt,IniFile);
     sprintf(txt,"%d",AciaComMode);
@@ -299,6 +303,23 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
         hConfigDlg = hDlg;
 
         SetWindowPos(hDlg, HWND_TOP, 10, 10, 0, 0, SWP_NOSIZE);
+
+        // Set Button as per Base Port
+        switch (AciaBasePort) {
+        case BASE_PORT_RS232:
+			CheckDlgButton(hDlg,IDC_T_RS232,BST_CHECKED);
+            CheckDlgButton(hDlg,IDC_T_MODEM,BST_UNCHECKED);
+            break;
+        case BASE_PORT_MODEM:
+			CheckDlgButton(hDlg,IDC_T_RS232,BST_UNCHECKED);
+            CheckDlgButton(hDlg,IDC_T_MODEM,BST_CHECKED);
+            break;
+        default:
+			CheckDlgButton(hDlg,IDC_T_RS232,BST_CHECKED);
+            CheckDlgButton(hDlg,IDC_T_MODEM,BST_UNCHECKED);
+            AciaBasePort = BASE_PORT_RS232;
+            break;
+        }
 
         // Set Radio Button as per com type
         switch (AciaComType) {
@@ -359,9 +380,21 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
 
     case WM_COMMAND:
 
-        // Close sc6551 before changing com type
+
         button = LOWORD(wParam);
         switch (button) {
+
+        // Close sc6551 before changing base port or com type
+        case IDC_T_RS232:
+            sc6551_close();
+            AciaBasePort = BASE_PORT_RS232;
+            break;
+
+        case IDC_T_MODEM:
+            sc6551_close();
+            AciaBasePort = BASE_PORT_MODEM;
+            break;
+
         case IDC_T_CONS:
             EnableWindow(GetDlgItem(hDlg,IDC_PORT),FALSE);
             EnableWindow(GetDlgItem(hDlg,IDC_NAME),FALSE);
