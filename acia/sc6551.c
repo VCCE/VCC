@@ -20,7 +20,7 @@
 
 #include "acia.h"
 #include "sc6551.h"
-#include "logger.h"
+#include "../logger.h"
 
 //------------------------------------------------------------------------
 // Inline interlock functions.  Used to coordinate writer thread.

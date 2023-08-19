@@ -305,6 +305,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case ID_FILE_EXIT:
 					BinaryRunning=0;
+					UnloadDll();
 					break;
 
 				case ID_FILE_RESET:
@@ -397,6 +398,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case WM_CLOSE:
 			BinaryRunning=0;
+			UnloadDll();
 			break;
 
 		case WM_CHAR:
@@ -645,6 +647,7 @@ void OnCommand(HWND hWnd, int iID, HWND hwndCtl, UINT uNotifyCode)
 void OnDestroy(HWND )
 {
 	BinaryRunning = false;
+	UnloadDll();
 	PostQuitMessage(0);
 }
 /*--------------------------------------------------------------------------*/

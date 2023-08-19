@@ -20,7 +20,7 @@
 
 #include "acia.h"
 #include "sc6551.h"
-#include "logger.h"
+#include "../logger.h"
 
 //------------------------------------------------------------------------
 // Local Functions
@@ -63,6 +63,7 @@ typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 BOOL APIENTRY
 DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
+PrintLogF("acia dll %d\n",reason);
     if (reason == DLL_PROCESS_ATTACH) {
         g_hDLL = hinst;
 

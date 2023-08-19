@@ -27,7 +27,7 @@
 #include <string.h>
 #include "acia.h"
 #include "sc6551.h"
-#include "logger.h"
+#include "../logger.h"
 
 HANDLE hReadEvent;
 HANDLE hWriteEvent;
