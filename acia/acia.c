@@ -63,7 +63,7 @@ typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 BOOL APIENTRY
 DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
-PrintLogF("acia dll %d\n",reason);
+//  PrintLogF("acia dll %d\n",reason);
     if (reason == DLL_PROCESS_ATTACH) {
         g_hDLL = hinst;
 
