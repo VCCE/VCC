@@ -389,6 +389,7 @@ int load_ext_rom(char filename[MAX_PATH])
 
 void UnloadDll(void)
 {
+	//ResetBus();
 	if ((DialogOpen==true) & (EmuState.EmulationRunning==1))
 	{
 		MessageBox(0,"Close Configuration Dialog before unloading","Ok",0);

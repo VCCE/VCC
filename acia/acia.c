@@ -66,6 +66,7 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 //  PrintLogF("acia dll %d\n",reason);
     if (reason == DLL_PROCESS_ATTACH) {
         g_hDLL = hinst;
+        LoadExtRom("RS232.ROM");
 
     } else if (reason == DLL_PROCESS_DETACH) {
         if (hConfigDlg) SendMessage(hConfigDlg,WM_CLOSE,6666,0);
@@ -114,7 +115,6 @@ PackPortRead(unsigned char Port)
 //-----------------------------------------------------------------------
 __declspec(dllexport) void ModuleReset(void)
 {
-    LoadExtRom("RS232.ROM");
     SendMessage(hConfigDlg, WM_CLOSE, 0, 0);
     sc6551_close();
     return;
