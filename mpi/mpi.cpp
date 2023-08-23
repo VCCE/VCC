@@ -90,6 +90,7 @@ static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 //***************************************************************
 static HINSTANCE hinstLib[4]={NULL,NULL,NULL,NULL};
 static unsigned char ChipSelectSlot=3,SpareSelectSlot=3,SwitchSlot=3,SlotRegister=255;
+HWND hConfDlg=NULL;
 
 //Function Prototypes for this module
 LRESULT CALLBACK Config(HWND,UINT,WPARAM,LPARAM);
@@ -112,6 +113,8 @@ BOOL WINAPI DllMain(
 		WriteConfig();
 		for(Temp=0;Temp<4;Temp++)
 			UnloadModule(Temp);
+		if (hConfDlg) DestroyWindow(hConfDlg);
+		hConfDlg = NULL;
 		return(1);
 	}
 	g_hinstDLL=hinstDLL;
@@ -186,7 +189,9 @@ extern "C"
 				BuildDynaMenu();
 				break;
 			case 18:
-				DialogBox(g_hinstDLL, (LPCTSTR)IDD_DIALOG1, NULL, (DLGPROC)Config);
+				CreateDialog(g_hinstDLL, (LPCTSTR)IDD_DIALOG1,
+							 GetActiveWindow(), (DLGPROC)Config);
+				ShowWindow(hConfDlg,1);
 				break;
 			case 19:
 
@@ -421,7 +426,12 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	unsigned char Temp=0;
 	switch (message)
 	{
+		case WM_CLOSE:
+			EndDialog(hDlg, LOWORD(wParam));
+
 		case WM_INITDIALOG:
+
+			hConfDlg=hDlg;
 			for (Temp=0;Temp<4;Temp++)
 				SendDlgItemMessage(hDlg,EDITBOXS[Temp],WM_SETTEXT,5,(LPARAM)(LPCSTR) SlotLabel[Temp] );
 			SendDlgItemMessage(hDlg,IDC_PAKSELECT,TBM_SETRANGE,TRUE,MAKELONG(0,3) );
@@ -910,3 +920,4 @@ void DynamicMenuCallback3( char *MenuName,int MenuId, int Type)
 	MenuIndex[3]++;
 	return;
 }
+

@@ -33,7 +33,7 @@ typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 void (*DynamicMenuCallback)(char *,int,int)=NULL;
 void BuildDynaMenu(void);
 
-LRESULT CALLBACK ConfigDlg(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig(void);
 void SaveConfig(void);
 
@@ -41,7 +41,7 @@ void SaveConfig(void);
 // Globals
 //------------------------------------------------------------------------
 static HINSTANCE g_hDLL = NULL;      // DLL handle
-static HWND hConfigDlg = NULL;       // Config dialog
+static HWND g_hDlg = NULL;           // Config dialog
 static char IniFile[MAX_PATH];       // Ini file name
 static char IniSect[MAX_LOADSTRING]; // Ini file section
 
@@ -69,7 +69,8 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
         LoadExtRom("RS232.ROM");
 
     } else if (reason == DLL_PROCESS_DETACH) {
-        if (hConfigDlg) SendMessage(hConfigDlg,WM_CLOSE,6666,0);
+        if (g_hDlg) DestroyWindow(g_hDlg);
+        g_hDlg = NULL;
         sc6551_close();
         AciaStat[0]='\0';
     }
@@ -115,7 +116,6 @@ PackPortRead(unsigned char Port)
 //-----------------------------------------------------------------------
 __declspec(dllexport) void ModuleReset(void)
 {
-    SendMessage(hConfigDlg, WM_CLOSE, 0, 0);
     sc6551_close();
     return;
 }
@@ -181,7 +181,9 @@ __declspec(dllexport) void ModuleStatus(char *status)
 //-----------------------------------------------------------------------
 __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 {
-    DialogBox(g_hDLL, (LPCTSTR) IDD_PROPPAGE, NULL, (DLGPROC) ConfigDlg);
+    HWND owner = GetActiveWindow();
+    CreateDialog(g_hDLL,(LPCTSTR)IDD_PROPPAGE,owner,Config);
+    ShowWindow(g_hDlg,1);
     return;
 }
 
@@ -287,7 +289,7 @@ void SaveConfig(void)
 //   IDC_TEXTMODE  Translate CR <> CRLF if checked
 //-----------------------------------------------------------------------
 
-LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
+LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
 {
     int button;
     HANDLE hCtl;
@@ -300,23 +302,23 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
     case WM_INITDIALOG:
 
         // Kill previous instance
-        if (hConfigDlg) EndDialog(hConfigDlg,0);
-        hConfigDlg = hDlg;
+        DestroyWindow(g_hDlg);
+        g_hDlg = hDlg;
 
         SetWindowPos(hDlg, HWND_TOP, 10, 10, 0, 0, SWP_NOSIZE);
 
         // Set Button as per Base Port
         switch (AciaBasePort) {
         case BASE_PORT_RS232:
-			CheckDlgButton(hDlg,IDC_T_RS232,BST_CHECKED);
+            CheckDlgButton(hDlg,IDC_T_RS232,BST_CHECKED);
             CheckDlgButton(hDlg,IDC_T_MODEM,BST_UNCHECKED);
             break;
         case BASE_PORT_MODEM:
-			CheckDlgButton(hDlg,IDC_T_RS232,BST_UNCHECKED);
+            CheckDlgButton(hDlg,IDC_T_RS232,BST_UNCHECKED);
             CheckDlgButton(hDlg,IDC_T_MODEM,BST_CHECKED);
             break;
         default:
-			CheckDlgButton(hDlg,IDC_T_RS232,BST_CHECKED);
+            CheckDlgButton(hDlg,IDC_T_RS232,BST_CHECKED);
             CheckDlgButton(hDlg,IDC_T_MODEM,BST_UNCHECKED);
             AciaBasePort = BASE_PORT_RS232;
             break;
@@ -380,7 +382,6 @@ LRESULT CALLBACK ConfigDlg(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
         break;
 
     case WM_COMMAND:
-
 
         button = LOWORD(wParam);
         switch (button) {
