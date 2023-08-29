@@ -138,7 +138,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
-	GetCmdLineArgs(lpCmdLine);                   //Parse command line
+	if (strlen(lpCmdLine)>0) GetCmdLineArgs(lpCmdLine);   //Parse command line
 
 	if ( strlen(CmdArg.QLoadFile) !=0)
 	{
