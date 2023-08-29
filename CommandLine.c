@@ -186,7 +186,7 @@ int GetCmdLineArgs(char *CmdString)
 
 char * ParseCmdString(char *CmdString, const char *ValueRequired) 
 {
-    static char string[256];  // Copy of cmd string
+    static char cmdline[512]; // Copy of cmd string
     static char option[256];  // Used to append value to option
     int quoted;
     char *token;
@@ -195,9 +195,10 @@ char * ParseCmdString(char *CmdString, const char *ValueRequired)
     // Initial call sets command string. Subsequent calls expect a NULL
     if (CmdString) {                   
         while (*CmdString == ' ') CmdString++;  // Skip leading blanks
-        strncpy(string,CmdString,256);          // Make a copy of what is left
-        string[255]='\0';                       // Be sure it is terminated
-        NxtTokenPtr = string;                   // Save it's location
+        strncpy(cmdline,CmdString,510);         // Make a copy of what is left
+        cmdline[511]='\0';                      // Be sure string is terminated
+        strcat(cmdline," ");                    // Be sure args are terminated
+        NxtTokenPtr = cmdline;                  // Save it's location
 
         // Mark unquoted blanks
         quoted = 0;
