@@ -23,6 +23,8 @@ static char IniFile[MAX_PATH]="";
 static unsigned char HDBRom[8192];
 static bool DWTCPEnabled = false;
 
+static HWND g_hConfigDlg;
+
 // are we retrying tcp conn
 static bool retry = false;
 
@@ -551,11 +553,11 @@ void BuildDynaMenu(void)
 	
 }
 
-
 	__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 	{
-
-		DialogBox(g_hinstDLL, (LPCTSTR)IDD_PROPPAGE, NULL, (DLGPROC)Config);
+		HWND h_own = GetActiveWindow();
+		CreateDialog(g_hinstDLL,(LPCTSTR)IDD_PROPPAGE,h_own,(DLGPROC)Config);
+		ShowWindow(g_hConfigDlg,1);
 		BuildDynaMenu();
 		return;
 	}
@@ -611,6 +613,8 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 				hwndOwner = GetDesktopWindow(); 
 			}
+
+			g_hConfigDlg=hDlg;
 
 			GetWindowRect(hwndOwner, &rcOwner); 
 			GetWindowRect(hDlg, &rcDlg); 

@@ -68,6 +68,7 @@ void SaveConfig(void);
 long CreateDiskHeader(char *,unsigned char,unsigned char,unsigned char);
 void Load_Disk(unsigned char);
 
+static HWND g_hConfDlg;
 static HINSTANCE g_hinstDLL;
 static unsigned long RealDisks=0;
 long CreateDisk (unsigned char);
@@ -109,6 +110,7 @@ extern "C"
 {          
 	__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 	{
+		HWND h_own = GetActiveWindow();
 		switch (MenuID)
 		{
 			case 10:
@@ -133,7 +135,8 @@ extern "C"
 				SaveConfig();
 				break;
 			case 16:
-				DialogBox(g_hinstDLL, (LPCTSTR)IDD_CONFIG, NULL, (DLGPROC)Config);
+				CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,h_own,(DLGPROC)Config);
+				ShowWindow(g_hConfDlg,1);
 				break;
 			case 17:
 				Load_Disk(3);
@@ -254,6 +257,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	char VirtualNames[5][16]={"None","Drive 0","Drive 1","Drive 2","Drive 3"};
 	OPENFILENAME ofn ;	
 
+    g_hConfDlg = hDlg;
 	switch (message)
 	{
 		case WM_INITDIALOG:
@@ -406,7 +410,8 @@ void Load_Disk(unsigned char disk)
 			if (hr==INVALID_HANDLE_VALUE) 
 			{
 				NewDiskNumber=disk;
-				DialogBox(g_hinstDLL, (LPCTSTR)IDD_NEWDISK, NULL, (DLGPROC)NewDisk);	//CreateFlag =0 on cancel
+				HWND h_own = GetActiveWindow();
+				DialogBox(g_hinstDLL, (LPCTSTR)IDD_NEWDISK, h_own, (DLGPROC)NewDisk);	//CreateFlag =0 on cancel
 			}
 			else
 				CloseHandle(hr);
@@ -491,7 +496,8 @@ void BuildDynaMenu(void)
 long CreateDisk (unsigned char Disk)
 {
 	NewDiskNumber=Disk;
-	DialogBox(g_hinstDLL, (LPCTSTR)IDD_NEWDISK, NULL, (DLGPROC)NewDisk);
+	HWND h_own = GetActiveWindow();
+	DialogBox(g_hinstDLL, (LPCTSTR)IDD_NEWDISK, h_own, (DLGPROC)NewDisk);
 	return(0);
 }
 
