@@ -130,6 +130,7 @@ int GetCmdLineArgs(char *CmdString)
 				// Default config file is "vcc.ini"
                 case 'i':
                     strncpy(CmdArg.IniFile,token+2,CL_MAX_PATH);
+                    CmdArg.IniFile[CL_MAX_PATH-1]=0;
                     break;
 
                 // "-d[level]" enables logging console and sets log level (default=1)
@@ -158,6 +159,7 @@ int GetCmdLineArgs(char *CmdString)
                 // First (currently only) positional arg is Quick Load filename.
                 case 1:
                     strncpy(CmdArg.QLoadFile,token,CL_MAX_PATH);
+                    CmdArg.QLoadFile[CL_MAX_PATH-1]=0;
                     break;
 
                 // Extra positional argument returns an error
