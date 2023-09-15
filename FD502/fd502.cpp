@@ -83,6 +83,7 @@ BOOL WINAPI DllMain(
 	{
 		for (unsigned char Drive=0;Drive<=3;Drive++)
 			unmount_disk_image(Drive);
+		if (g_hConfDlg) DestroyWindow(g_hConfDlg);
 	}
 	else
 	{
