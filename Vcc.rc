@@ -605,8 +605,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,1,0,8
- PRODUCTVERSION 2,1,0,8
+ FILEVERSION 2,1,8,1
+ PRODUCTVERSION 2,1,8,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x29L
@@ -624,7 +624,7 @@ BEGIN
             VALUE "Comments", "How bored are you that your reading this?"
             VALUE "CompanyName", "Not Radio Shack"
             VALUE "FileDescription", "Vcc"
-            VALUE "FileVersion", "2.1.0.8"
+            VALUE "FileVersion", "2.1.8.1"
             VALUE "InternalName", "Poco"
             VALUE "LegalCopyright", "Copyright 2015 by BitRot Software"
             VALUE "LegalTrademarks", "BLAZEMONGER!"
