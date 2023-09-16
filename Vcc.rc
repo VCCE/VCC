@@ -732,7 +732,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_APP_TITLE           "VCC 2.1.0.8 Tandy Color Computer 3 Emulator"
+    IDS_APP_TITLE           "VCC 2.1.8.1 Tandy Color Computer 3 Emulator"
     IDS_CATNUMBER           "26-3334"
 END
 

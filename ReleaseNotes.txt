@@ -1,6 +1,9 @@
+Vcc v2.1.8.1 Oct/2023 (2.1.8.0 bug fixes)
+  o Fix version numbering - EJJ
+  o Make dialogs stay on top and all DLL dialogs close when Vcc does. -EJJ
+  o Fix command line quick load bug - EJJ
 
-Vcc v2.1.8.0 August/2023
-  o Change version numbering
+Vcc v2.1.0.8 (v2.1.8.0) Aug/2023
   o Increase VSYNC IRQ delay so MAX-10 sees keystrokes.
   o Corrected some 6309 register instruction issues found by Wally Z.
   o Added RS232 Pak emulation (acia.dll) - EJ Jaquay
@@ -42,53 +45,53 @@ VCC v2.1.0d Jul/2021
   o Updated the Manual - Bill Pierce, EJ Jaquay
 
 VCC v2.1.0c Jan/2021
-  o Added 2nd Hard Drive – EJ Jaquay
-  o Fixed the ALT key problem – EJ Jaquay
-  o Added F3 & F4 for decreasing/increasing CPU speed – Trey Tomes
-  o Added “Remember Screen Size” to "Display" config. Saves screen size
-    in vcc config init file  – James Rye & Bill Pierce
-  o Added the “Game Master Cart” (GMC) by John Linville – Chet Simpson
-  o Fixed the border color bug – James Rye
-  o Updated Manual – Bill Pierce
+  o Added 2nd Hard Drive - EJ Jaquay
+  o Fixed the ALT key problem - EJ Jaquay
+  o Added F3 & F4 for decreasing/increasing CPU speed - Trey Tomes
+  o Added "Remember Screen Size" to "Display" config. Saves screen size
+    in vcc config init file  - James Rye & Bill Pierce
+  o Added the "Game Master Cart: (GMC) by John Linville - Chet Simpson
+  o Fixed the border color bug - James Rye
+  o Updated Manual - Bill Pierce
 
 VCC v2.1.0b Nov/2020
-  o Added “Copy/Paste” Edit menu items for copying text from VCC screen
+  o Added "Copy/Paste" Edit menu items for copying text from VCC screen
     and pasting text into VCC. - James Rye.
   o Improved Composite Palettes (not fixed, WIP). - James Rye.
-  o Fixed “file paths” so that each type of file; vhd, dsk, cas, rom, 
-    dll, etc. has it’s own pathlist” - James Rye.
-  o Added “Flip Artifact Colors” to the config menu. - James Rye.
-  o Fixed “Save Config” and “Load Config” to the “File” – EJ Jaquay.
-  o Added Vcc command line argument to load custom “*.ini” files - EJ Jaquay
-  o Updated manual – Bill Pierce
+  o Fixed "file paths" so that each type of file; vhd, dsk, cas, rom, 
+    dll, etc. has it's own pathlist - James Rye.
+  o Added "Flip Artifact Colors" to the config menu. - James Rye.
+  o Fixed "Save Config" and "Load Config" to the File menu - EJ Jaquay.
+  o Added Vcc command line argument to load custom "*.ini" files - EJ Jaquay
+  o Updated manual - Bill Pierce
 
 VCC v2.1.0a Oct/2020
-  o Fixed VCC “ini” file to save in “user/home/appdata” to avoid permissions
+  o Fixed VCC "ini" file to save in "user/home/appdata" to avoid permissions
     problem in Win7-10. - James Rye
-  o Fixed “Force Aspect” in all modes but full screen mode. - James Ross
+  o Fixed "Force Aspect" in all modes but full screen mode. - James Ross
   o Updated manual to reflect changes.- Bill Pierce
 
 VCC v2.0.1f Aug/2020
   o Improved PMODE artifact color scheme, - Peter Westburg
 
 VCC v2.0.1e Dec/2019
-  o Reverted “exit bug” fix as it caused VCC to hang in full screen mode
+  o Reverted "exit bug" fix as it caused VCC to hang in full screen mode
 
 VCC v2.0.1d Dec/2019
-  o Added “*.ccc” to the program pak extensions. 
-  o “Exit bug” fixed. 
-  o Several “cosmetic” changes – Bill Pierce.
+  o Added "*.ccc" to the program pak extensions. 
+  o "Exit bug" fixed. 
+  o Several cosmetic changes - Bill Pierce.
 
 VCC v.2.0.1c Dec/2019
-  o Completed 6309 opcodes that were missing or incorrect – Walter Zambotti.
-  o Updated manual – Bill Pierce
+  o Completed 6309 opcodes that were missing or incorrect - Walter Zambotti.
+  o Updated manual - Bill Pierce
 
 VCC v2.0.1b June/2016
-  o Several “Edited” releases under same versions. 
-  o Some “cosmetic” changes to dialogs.
+  o Several "Edited" releases under same versions. 
+  o Some cosmetic changes to dialogs.
 
 VCC v2.0.1b June/2016
-  o Minor syntax changes to achieve working build for VS2015 – Wes Gayle
+  o Minor syntax changes to achieve working build for VS2015 - Wes Gayle
 
 VCC v2.0.1a June/2016
-  o Moved code to “MS Visual Studio 2015 Community”  - Gary Coulborne
+  o Moved code to MS Visual Studio 2015 Community - Gary Coulborne
