@@ -10,7 +10,7 @@ Vcc v2.1.0.8 (v2.1.8.0) Aug/2023
   o Added pause function - James Rye
   o Added execution trace feature to Vcc Debugger - Mike Rojas
   o Fixed PMODE 4 color - James Rye, Mike Rojas
-  o Improved windows mouse cursor position when shown - Chet Simpson  
+  o Improved windows mouse cursor position when shown - Chet Simpson
   o Minor Bug fixes
   o Updated Manual
 
@@ -40,7 +40,7 @@ VCC v2.1.0d Jul/2021
   o Eliminated the "Allow Resize" checkbox - Bill Pierce
   o Reset a few "default" values that had gotten changed. - Bill Pierce
   o Add a "Custom KeyMap Editor" for making custom keymaps. - EJ Jaquay
-  o Mapped "BREAK" to "F12" (as well as "ESCAPE") to facilitate using 
+  o Mapped "BREAK" to "F12" (as well as "ESCAPE") to facilitate using
     used by some games/applications. - Bill Pierce
   o Updated the Manual - Bill Pierce, EJ Jaquay
 
@@ -58,7 +58,7 @@ VCC v2.1.0b Nov/2020
   o Added "Copy/Paste" Edit menu items for copying text from VCC screen
     and pasting text into VCC. - James Rye.
   o Improved Composite Palettes (not fixed, WIP). - James Rye.
-  o Fixed "file paths" so that each type of file; vhd, dsk, cas, rom, 
+  o Fixed "file paths" so that each type of file; vhd, dsk, cas, rom,
     dll, etc. has it's own pathlist - James Rye.
   o Added "Flip Artifact Colors" to the config menu. - James Rye.
   o Fixed "Save Config" and "Load Config" to the File menu - EJ Jaquay.
@@ -78,8 +78,8 @@ VCC v2.0.1e Dec/2019
   o Reverted "exit bug" fix as it caused VCC to hang in full screen mode
 
 VCC v2.0.1d Dec/2019
-  o Added "*.ccc" to the program pak extensions. 
-  o "Exit bug" fixed. 
+  o Added "*.ccc" to the program pak extensions.
+  o "Exit bug" fixed.
   o Several cosmetic changes - Bill Pierce.
 
 VCC v.2.0.1c Dec/2019
@@ -87,7 +87,7 @@ VCC v.2.0.1c Dec/2019
   o Updated manual - Bill Pierce
 
 VCC v2.0.1b June/2016
-  o Several "Edited" releases under same versions. 
+  o Several "Edited" releases under same versions.
   o Some cosmetic changes to dialogs.
 
 VCC v2.0.1b June/2016
