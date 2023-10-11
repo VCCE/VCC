@@ -100,8 +100,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,3,0,1
- PRODUCTVERSION 1,3,0,1
+ FILEVERSION 2,1,8,1
+ PRODUCTVERSION 2,1,8,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x21L
@@ -119,7 +119,7 @@ BEGIN
             VALUE "Comments", "Tandy Multi-Pak Interface"
             VALUE "CompanyName", "BitRot Software"
             VALUE "FileDescription", "mpi"
-            VALUE "FileVersion", "1.3.0.1"
+            VALUE "FileVersion", "2.1.8.1"
             VALUE "InternalName", "MultiPak Interface"
             VALUE "LegalCopyright", "Copyright © 2007"
             VALUE "OriginalFilename", "mpi.dll"

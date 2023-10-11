@@ -130,8 +130,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,0,3,0
- PRODUCTVERSION 2,0,3,0
+ FILEVERSION 2,1,8,1
+ PRODUCTVERSION 2,1,8,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x21L
@@ -149,7 +149,7 @@ BEGIN
             VALUE "Comments", "Tandy FD-502 with 4 Floppy Drives  & RAW support"
             VALUE "CompanyName", "Bitrot Software"
             VALUE "FileDescription", "DiskController"
-            VALUE "FileVersion", "2, 0, 3, 0"
+            VALUE "FileVersion", "2.1.8.1"
             VALUE "InternalName", "DiskController"
             VALUE "LegalCopyright", "Copyright © 2010"
             VALUE "OriginalFilename", "fd502.dll"
