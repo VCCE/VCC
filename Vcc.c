@@ -77,7 +77,7 @@ static unsigned char AutoStart=1;
 static unsigned char Qflag=0;
 static char CpuName[20]="CPUNAME";
 
-char QuickLoadFile[256];
+char QuickLoadFile[256];         // No real purpose
 
 /***Forward declarations of functions included in this code module*****/
 BOOL				InitInstance	(HINSTANCE, int);
@@ -138,11 +138,15 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
-	if (strlen(lpCmdLine)>0) GetCmdLineArgs(lpCmdLine);   //Parse command line
+	// Parse command line
+	memset(&CmdArg,0,sizeof(CmdArg));
+	if (strlen(lpCmdLine)>0) GetCmdLineArgs(lpCmdLine);
 
 	if ( strlen(CmdArg.QLoadFile) !=0)
 	{
-		strcpy(QuickLoadFile, CmdArg.QLoadFile);
+		strncpy(QuickLoadFile, CmdArg.QLoadFile, CL_MAX_PATH);
+		QuickLoadFile[CL_MAX_PATH-1]=0;
+		// Rest of this does not accomplish much
 		strcpy(temp1, CmdArg.QLoadFile);
 		PathStripPath(temp1);
 		_strlwr(temp1);
@@ -305,6 +309,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case ID_FILE_EXIT:
 					BinaryRunning=0;
+					UnloadDll();
 					break;
 
 				case ID_FILE_RESET:
@@ -397,6 +402,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case WM_CLOSE:
 			BinaryRunning=0;
+			UnloadDll();
 			break;
 
 		case WM_CHAR:
@@ -645,6 +651,7 @@ void OnCommand(HWND hWnd, int iID, HWND hwndCtl, UINT uNotifyCode)
 void OnDestroy(HWND )
 {
 	BinaryRunning = false;
+	UnloadDll();
 	PostQuitMessage(0);
 }
 /*--------------------------------------------------------------------------*/
@@ -929,7 +936,7 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		if ((Qflag==255) & (FrameCounter==30))
 		{
 			Qflag=0;
-			QuickLoad(QuickLoadFile);
+			QuickLoad(CmdArg.QLoadFile);
 		}
 
 		StartRender();
@@ -1017,7 +1024,7 @@ void FullScreenToggle(void)
 	return;
 }
 void PauseUnPause_Emulation() {
-	// User selected 'Pause' from the menu. Pause the emulation and 
+	// User selected 'Pause' from the menu. Pause the emulation and
 	// temporarily disable the sound in case it was paused during a sample.
 	if (!emu_paused) {
 		emu_paused = true;

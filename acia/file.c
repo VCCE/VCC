@@ -26,7 +26,7 @@
 #include <errno.h>
 #include <string.h>
 #include "acia.h"
-#include "logger.h"
+#include "../logger.h"
 
 FILE * FileStream = NULL;
 
