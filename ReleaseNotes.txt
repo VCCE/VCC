@@ -2,6 +2,7 @@ Vcc v2.1.8.1 Oct/2023 (2.1.8.0 bug fixes)
   o Fix version numbering - EJJ
   o Make dialogs stay on top and all DLL dialogs close when Vcc does. -EJJ
   o Fix command line quick load bug - EJJ
+  o Add special character fonts for Nitros9
 
 Vcc v2.1.0.8 (v2.1.8.0) Aug/2023
   o Increase VSYNC IRQ delay so MAX-10 sees keystrokes.
