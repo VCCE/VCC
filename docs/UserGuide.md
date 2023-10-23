@@ -24,7 +24,7 @@ stepped in to fill the void. New products were and are still being
 developed. Today you can buy 512k memory cards, IDE and SCSI
 hard disk interfaces and faster, more powerful CPUs in the HD63B09E.
 There is even a free user supported Multi-tasking Multi-User OS
-(NitrOS9) available for this three decade old 8 bit machine.
+(NitrOS9) available for this more than three decade old 8 bit machine.
 
 VCC is a Tandy Color Computer 3 emulator that runs on the Windows
 operating system (Windows XP or greater). It attempts to simulate the
@@ -46,6 +46,7 @@ There you will find the latest binary downloads as well as the
 sources for VCC.
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Copyrights</h2>
 
 VCC Copyright 2012 Joseph Forgeone
@@ -67,10 +68,9 @@ The code that comprises this emulator was written by Joseph Forgeone
 with the following exceptions:
 
 The RGB to composite color conversion algorithm, Floppy disk CRC
-algorithm and the 32x16 font set were stole.... umm borrowed! from
-M.E.S.S. The MESS source was also a valuable source of technical
-information, without which, this emulator would not be as good as it
-is today.
+algorithm and the 32x16 font set were borrowed from M.E.S.S. The
+MESS source was also a valuable source of technical information, 
+without which, this emulator would not be as good as it is today.
 
 The "Becker Port" implementation was patched by Aaron Wolfe and David
 Ladd, giving "VCC 1.4.3b" the ability to communicate to the host PC
@@ -98,54 +98,48 @@ ideas and we will determine if it fits the direction we are headed
 with the VCC project.
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Credits</h2>
 
-Bill Pierce wrote the following to thank those involved in this project:
+First and foremost, Joseph Forgeone, the original author of the VCC
+Color Computer 3 emulator. Without all his hard work, this wonderful
+emulator would have never come about.
+ 
+Robert Gault for his contribution of the "RGBDOS" implementation and
+all the testing and suggestions during Joseph's development of VCC.
+Robert has contributed more to the Coco Community than anyone could know.
+ 
+Aaron Wolfe and David Ladd for the addition of the "Becker Port"
+for using VCC with DriveWire4. This has allowed VCC to communicate to 
+the outside world and has opened many doors that were closed before.
+ 
+Gary Colbourn for his work in converting Joseph's Visual Studio 6 C++
+code to compile in Visual Studio 2015 Community Edition.
+ 
+Wes Gale for his bug hunting and squashing during the initial release 
+of VCC to open source.
+ 
+Walter Zambotti for his contribution in fixing the HD6309 CPU to 
+function properly and adding in the missing instructions. Also for 
+inspiring us to add a second hard drive.
+ 
+David Johnson for an extensive proofreading of the VCC manual and pointing
+out MANY typos for me.
+ 
+Mike Rojas for his great work on the VCC Debugger. This one has been a 
+long time coming and we hope it will get even better in the future.
 
- First and foremost, I would like to thank Joseph Forgeone, the
- original author of the VCC Color Computer 3 emulator. Without all his
- hard work, this wonderful emulator would have never come about.
+Especially James Ross, James Rye, Peter Westburg (R.I.P.), Ed Jaquay,
+and Trey Tomes for their endless work on the enhancements and bug fixes
+of the last couple of releases. Without them, we would not be making
+this release.
  
- I would like to thank Robert Gault for his contribution of the
- "RGBDOS" implementation and all the testing and suggestions during
- Joseph's development of VCC. Robert has contributed more to the Coco
- Community than anyone could know.
+Last but not least, everyone in the Coco Community as the help and 
+support of the Coco Community is what has kept the interest in the 
+Color Computer going strong and made VCC possible in the first place!
  
- I would like to thank Aaron Wolfe and David Ladd for the addition of
- the "Becker Port" for using VCC with DriveWire4. This has allowed VCC
- to communicate to the outside world and has opened many doors that
- were closed before.
- 
- I would like to thank Gary Colbourn for his work in converting
- Joseph's Visual Studio 6 C++ code to compile in Visual Studio 2015
- Community Edition.
- 
- I would like to thank Wes Gale for his bug hunting and squashing
- during the initial release of VCC to open source.
- 
- I would like to thank Walter Zambotti for his contribution in fixing
- the HD6309 CPU to function properly and adding in the missing
- instructions. Also for allowing us to use his "2nd Hard Drive" code.
- 
- I would like to thank David Johnson for an extensive proofreading of
- the VCC manual and pointing out MANY typos for me.
- 
- I would like to thank Mike Rojas for his great work on the VCC
- Debugger. This one has been a long time coming and I hope it will get
- even better in the future.
-
- I would especially like to thank James Ross, James Rye, Peter Westburg
- (R.I.P.), EJ, Jaquay, and Trey Tomes for their endless work on the
- enhancements and bug fixes of the last couple of releases. Without
- them, I would not be making this release.
- 
- Last but not least, I would like to thank everyone in the Coco
- Community as the help and support of the Coco Community is what has
- kept the interest in the Color Computer going strong and made VCC
- possible in the first place!
- 
- Let's make VCC the BEST Color Computer 3 emulator ever! (In my
- opinion, it already IS!)  - Bill Pierce
+Let's make VCC the BEST Color Computer 3 emulator ever! (In our
+opinion, it already IS!)
 
 VCC is maintained by the VCCE Open Source Project Team:
 
@@ -153,7 +147,7 @@ Administrators:
 
 - Joe Forgeone (absent)
 - Bill Pierce
-- EJ Jaquay
+- Ed Jaquay
 - Gary Coulborne (absent)
 - Wes Gale (absent)
 
@@ -163,20 +157,21 @@ Programming Contributors:
 - James Ross
 - Peter Westburg (R.I.P.)
 - James Rye
-- EJ Jaquay
+- Ed Jaquay
 - Trey Tomes
 - MIke Rojas
 
 VCC Manual, Repository Maintenance, Packaging & Distribution:
 
 - Bill Pierce
-- EJ Jaquay
+- Ed Jaquay
 
 Inspiration and Continued Support:
 
 - The Tandy Color Computer Community
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Forward</h2>
 
 VCC version 1.4.2 was originally written by Joseph Forgeone. In or
@@ -196,21 +191,21 @@ forums as he was a regular on some Coco forums. He seemed to have
 disappeared into thin air.
 
 As the events above describe, several of us ended up with sources to
-VCC. No, we could not release these sources without Joseph's
-permission. But in frustration of the situation, holders of the
-sources started "playing" with them as Joseph had suggested. The main
-goal being to add support for the Becker Port system developed by Gary
-Becker as well as to fix a few minor known bugs. Since Joseph could no
-longer be contacted, the decision was made to release some changes to
-VCC only in "binary" form in executable packages therefore keeping the
-sources from public view. Thus VCC 1.4.3b Beta w/Becker Port was born.
+VCC. We could not release these sources without Joseph's  permission.
+But in frustration of the situation, holders of the sources started 
+"playing" with them as Joseph had suggested. The main goal being to 
+add support for the Becker Port system developed by Gary Becker as well
+as to fix a few minor known bugs. Since Joseph could no longer be 
+contacted, the decision was made to release some changes to VCC only 
+in "binary" form in executable packages therefore keeping the sources
+from public view. Thus VCC 1.4.3b Beta w/Becker Port was born.
 
 As the "Becker Port" patch eventually started causing a few *internal*
 problems in VCC, the Becker Port developers decided to move the port
 to an external "cartridge port" as a "Rom Cart", therefore removing
-all *internal* influences of the Becker Port from VCC. So now, to use
+all influences of the Becker Port from VCC proper. So now, to use
 the Becker Port, you must load the "becker.dll" into either VCC's
-cartridge slot or a slot in VCC's MPI. I find this new implementation
+cartridge slot or a slot in VCC's MPI. We find this new implementation
 of the Becker Port to be much more stable than the original version.
 
 ### *ENTER JOESEPH FORGEONE...*
@@ -227,7 +222,7 @@ so with Joseph on board and contributing to the project. We have now
 moved the VCC sources from the old "MS Visual Studio 6" programming
 environment into the "MS Visual Studio 2015 Community" programming
 suite which is a free download from the Microsoft website. The VCC
-sources can now be compiled in Windows 7, 8, & 10.
+sources can now be compiled in Windows 7, 8, 10, & 11.
  
 Needless to say, we now have new development of "VCC" which should be
 much more compatible with modern versions of Windows. There are new
@@ -240,9 +235,9 @@ original manual as well as documentation of the new enhancements and
 bug fixes. Hopefully, it will cover a larger amount of information
 than Joseph's original document with more information on the operation
 of VCC. It is my goal to make VCC as easy to use as possible so that
-everyone can enjoy this package as much as I have, as I am an avid
+everyone can enjoy this package as much as we have, as we are  avid
 user of VCC as well as the "real" Color Computer 1, 2, & 3 hardware.
-As new developments are made on VCC, I hope to expand this manual as
+As new developments are made on VCC, we hope to expand this manual as
 needed.
 
 As one last note: VCC *will* *always* *be* in a BETA state and by no
@@ -255,10 +250,11 @@ involved and help this become the best Color Computer 3 emulator
 available!
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Introduction</h2>
 
 VCC is a move forward in the Color Computer 3 emulation. The emulator
-covers many aspects of the Color Computer 3 hardware. The author has
+covers many aspects of the Color Computer 3 hardware. The author
 tried to keep the "look and feel" of the real machine while
 maintaining a sense of a newer and better machine. There may be a few
 bugs lurking in the remnants of the old C code, but for the most part,
@@ -271,14 +267,14 @@ emulator available for most *modern* systems.
 *System Requirements*
 -----------------------
 
-VCC runs only under Microsoft Windows but has been successfully
+Currently VCC runs only under Microsoft Windows but has been successfully
 installed on Linux systems using the Wine Windows emulation package
 for Linux as well as "Winebottle" on Mac. We do not know much about 
 these installations, but are told they work well.
 
 The Windows requirements are:
 
-1. Microsoft Windows XP SP2 or greater (Windows Vista, 7, 8, & 10 are
+1. Microsoft Windows XP SP2 or greater (Windows Vista, 7, 8, 10, & 11 are
     supported).
 
 2. A Hard Drive large enough for the Windows OS and the VCC
@@ -290,49 +286,46 @@ The Windows requirements are:
     systems.
 
 3. On older Windows systems (XP), We suggest at least 512 meg of memory.
-    On newer systems (Vista and greater), We suggest at least 1 gigabyte
-    or memory, and 4 gigs for heavy users, especially if using
-    DriveWire4.
+   On newer systems (Vista and greater), We suggest at least 1 gigabyte
+   or memory, and 4 gigs for heavy users, especially if using
+   DriveWire4.
 
 4. DirectX 9 or greater. Most Windows PC graphics systems will work
-    well with VCC. (some newer versions of Windows may need the "DirectX
-    9 runtime" dll).
+   well with VCC. (some newer versions of Windows may need the "DirectX
+   9 runtime" dll).
 
 5. If you are using VCC with DriveWire4, an internet connection is also
-    desirable (but not mandatory). We'll get into this later.
+   desirable (but not mandatory). We'll get into this later.
 
-*VCC* *Installation*
---------------------
+<div style="page-break-after: always;"></div>
+---
+<h2 align="center">VCC Installation</h2>
 
 VCC is distributed in a self-installing executable package. Just
-"double click" the "VCC setup.exe" and follow the prompts. Windows
-will install all components and provide a Desktop icon for starting
-VCC.
+"double click" the "VCC setup.exe" and follow the prompts. Windows will
+install all components and provide a Desktop icon for starting VCC.
+If you want to install VCC in a different location than the default, 
+choose the "Custom" option when installing, otherwise, VCC will normally
+install to "C:\\Program Files (x86)\\VCC" on your hard drive.
 
-If you want to install VCC in a different location than the default,
-choose the "Custom" option when installing, otherwise, VCC will
-normally install to "C:\\Program Files (x86)\\VCC" on your hard drive.
-
-### *Settingup and Configuring VCC*
-
- VCC allows several setup configurations with RGB or Composite monitor
- emulation, 6809 or 6309 CPU, from 128k to 8 megabytes of memory, and
- many others. In these next sections I will try to step through each
- option and explain its function.
+VCC allows several setup configurations with RGB or Composite monitor
+emulation, 6809 or 6309 CPU, from 128k to 8 megabytes of memory, and
+many others. In these next sections we will try to step through each
+option and explain its function.
  
- NOTE: In previous versions of VCC running under Windows 7, 8, & 10,
- the user was forced to run VCC in "Administrator Mode" to allow VCC to
- maintain it's configuration file due to permissions changes in the
- newer versions of Windows. Hopefully we now have that problem solved
- and VCC will no longer need to be given administrator rights to work
- properly. Please let us know on the "Issues" page of our GitHub
- distribution site is there are any problems with this.
+NOTE: In previous versions of VCC running under Windows 7, 8, & 10,
+the user was forced to run VCC in "Administrator Mode" to allow VCC to
+maintain it's configuration file due to permissions changes in the
+newer versions of Windows. Hopefully we now have that problem solved
+and VCC will no longer need to be given administrator rights to work
+properly. Please let us know on the "Issues" page of our GitHub
+distribution site is there are any problems with this.
  
- In fixing the permissions problem, VCC now stores it's settings file
- under "%AppData%\\VCC\\vcc.ini", which allows VCC to update and keep
- settings without special permissions.  We now have the ability to 
- Load/Save "Custom" \*.ini files, so those with multiple VCC 
- installations can load different configurations.
+In fixing the permissions problem, VCC now stores it's settings file
+under "%AppData%\\VCC\\vcc.ini", which allows VCC to update and keep
+settings without special permissions.  We now have the ability to 
+Load/Save "Custom" \*.ini files, so those with multiple VCC 
+installations can load different configurations.
 
 ### *The VCC Installer*
 
@@ -409,9 +402,7 @@ The VCC Color Computer 3 installation is complete.
 
 Alternately, you can download the VCC 2.x.xx zip file and install VCC
 as you please. This file will unzip to your desired folder and you
-will have to manually copy files to any destination you choose. The
-VCC Development Team is not responsible for installations installed in
-this manner and you're on your own.
+will have to manually copy files to any destination you choose.
 
 ### *VCC Installation Package Contents*
 
@@ -449,28 +440,24 @@ The VCC installation package & VCC Zip Package contain these files:
 - Vcc 2.x.xx Color Computer 3 Manuals (Installed to the user's
  "Documents\\Coco Manuals" folder) 
 - Welcome to VCC 2.x.xx.pdf (VCC User's Manual)
-
+ 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">VCC Quick Start Guide</h2>
 
- To start the VCC emulator, just double click the VCC icon on your
- Windows Desktop or click the VCC menu item in your Windows Start Menu.
+In response to many user requests, we are including this Quick Start
+Guide to get you up and running as fast as possible.
  
- Alternately, VCC can be started from a Windows Command box by CDing to
- the VCC installation folder and typing: VCC.exe
+To start the VCC emulator, just double click the VCC icon on your
+Windows Desktop or click the VCC menu item in your Windows Start Menu.
+Alternately, VCC can be started from the windows command line by going
+to the VCC installation folder (using cd command) and typing: VCC
 
-#### *Installation Defaults*
- In response to many user requests, we am including this Quick Start
- Guide to get you up and running as fast as possible. Any description
- of components used in this guide can be found elsewhere in this
- manual. This guide is to get you started and *not* an explanation of
- it's components.
- 
- Unless you have a previous installation of VCC of the same name and
- location as this one, the VCC emulation will start as a Tandy Color
- Computer 3 just as you bought it from Radio Shack, which consists of:
- 
- Color Computer 3 (Installation Defaults)
+Unless you have a previous installation of VCC of the same name and
+location as this one, the VCC emulation will start as a Tandy Color
+Computer 3 just as you bought it from Radio Shack, which consists of:
+
+Color Computer 3 (Installation Defaults)
 
 - 128k memory
 - PC Keyboard remapped to match the Coco 3 layout
@@ -478,66 +465,217 @@ The VCC installation package & VCC Zip Package contain these files:
 - Bitbanger (RS232) Port for printing listings to a PC file of your
   choice.
  
- Through it's additional modules ("Cartridge" menu & DLL files) and
- configuration settings ("Configuration" menu), VCC can be set up to
- mimic a variety of custom Color Computer 3 setups. I'm sure you will
- find the settings to match your own desired configuration.
+Here are a few "Quick Start Configurations" of some standard Coco 3
+setups you can use to get you started.  Description of components used
+can be found elsewhere in this manual. This guide is to get you started
+and *not* an explanation of it's components. Settings shown here are
+found in the Configuration/Config and Cartridge menus.
+
+These are only basic setups. You will eventually tweak these settings to
+your preferred system.  After making changes press [F9] twice to restrt
+the emulation.
+
+### *Gaming VCC*
+A good setup for playing Coco 3 games under RSDOS.
+  
+  - **Audio:** Use defaults
+  - **CPU**
+    - **Overclocking:** Set to minimum
+    - **Memory Size:** 512k (unless game requires more)
+    - **CPU:** Some games will require the HD6309 (Nick Marantez's "GunStar" 
+      for example), but most run fine with MC6809
+  - **Display**
+    - **Monitor Type:** - Choice based on game requirements, most Coco 3 games
+      will use RGB but some do require CMP for colors (ie Zaxxon)
+    - **Frame Skip:** Default
+    - **Scan Lines:** - Unchecked unless you like the look of blanked 
+      odd scanlines
+    - **Force Aspect:** Checked  
+    - **Throttle Speed:** - Checked
+  - **Keyboard Mapping:** - Coco (DECB), unless you are more comfortable
+    with a PC keyboard setup, then use "Natural (OS-9)
+  - **Joysticks:** - Select the Joysticks of your choice
+  - **Misc**
+    - **AutoStart Emulation:** - Checked
+    - **AutoStart Cart:** - Checked
+    - **Tape:** - Default unless using a tape based game
+    - **BitBanger** - Defaults
+  - **Cartridge:** - Insert "mpi.dll"
+    - **MPI Slot 4:** - Insert "fd502.dll"
+    - **MPI Slot 1:** - If using a cartridge based game, insert cart here
+    - **MPI Config:** - If using a cart based game, move Slot selector slider 
+      to the slot in which the game is inserted, otherwise, set it to Slot 4
+      for the disk controller
+    - **FD-502 Drive 0:** - If using disk based game, insert game disk 
+      here unless otherwise instructed by the game. Some games use Drive 1 
+      as it's "game data" disk. 
+
+### *Orchestra90cc VCC*
+This setup is for using the Orchestra90cc Program Pak.
+
+  - **Audio** Use defaults
+  - **CPU**
+    - **Overclocking:** Set to minimum
+    - **Memory Size:** 512k
+    - **CPU:** MC6809
+  - **Display**
+    - **Monitor Type:** - RGB (doesn't really matter)
+    - **Frame Skip:** Default
+    - **Scan Lines:** -- Unchecked unless you like the look of blanked
+      odd scanlines
+    - **Force Aspect:** Checked
+    - **Throttle Speed:** - Checked
+  - **Keyboard Mapping:** - Coco (DECB), unless you are more comfortable
+    with a PC keyboard setup, then use "Natural (OS-9)
+  - **Joysticks:** - None
+  - **Misc**
+    - **AutoStart Emulation:** -- Checked
+    - **AutoStart Cart:** -- Checked
+    - **Tape:** - Default
+    - **BitBanger** -- Defaults
+  - **Cartridge:** - Insert "mpi.dll"
+    - **MPI Slot 4:** - Insert "fd502.dll"
+    - **Slot 1:** - Insert "orch90.dll"
+    - **MPI Config:** -- set it to Slot 1 for the Orchestra90cc Program Pak
+    - **FD-502 Drive 0:** - Insert music disks here
+
+<span style="color:red"> 
+(Orchestra90cc will only use Drive 0 for it's music disks. Disks must be formatted for RSDOS and ONLY used with Orchestra90)**
+</span>
+
+### *OS-9/NitrOS9 VCC*
+A basic VCC setup for using OS-9/NitrOS9 with a Hard Drive. We will not
+go into explaining making a bootdisk for this system, but they can be
+found on the internet or you can make your own. 
+
+  - **Audio** Use defaults
+  - **CPU**
+    - **Overclocking:** Set as desired. Can effect game play.
+    - **Memory Size:** 2048k
+    - **CPU:** MC6809 or MC6309, depending on OS9/NitrOS9 version.
+  - **Display**
+    - **Monitor Type:** - RGB
+    - **Frame Skip:** Default
+    - **Scan Lines:** - Unchecked
+    - **Force Aspect:** Checked
+    - **Throttle Speed:** - Checked
+  - **Keyboard Mapping:** - Natural (OS-9)
+  - **Joysticks:** - Tandy Hi-res
+  - **Misc**
+    - **AutoStart Emulation:** - Checked
+    - **AutoStart Cart:** - Unchecked
+    - **Tape:** - Default
+    - **BitBanger** - Defaults
+  - **Cartridge:** - Insert "mpi.dll"
+    - **MPI Slot 4** - Insert "fd502.dll"
+    - **MPI Slot 3:** - Insert "harddisk.dll"
+    - **MPI Config:** - Set to Slot 4
+    - **FD-502 Drive 0:** - Insert OS9/NitrOS9 boot disk (containing
+      emudsk module if using harddrive)
+    - **FD-502 Config:** - Leave Disk Basic checked unless you are using
+      Drivewire or HDBDOS.  Clock at 0dfF50-50 checked. 
+    - **Hard Drive 0** - Insert OS9/NitrOS9 system disk (.VHD)
+    - **Hard Drive 1** - Insert your data or backup drive.
+    - **DriveWire** - If using DriveWire4, set server address and
+      port.
+
+### *Game* *Master* *Cart* *(GMC)*
+
+ This setup is for using the GMC Program Pak.
+
+  - **Audio:** Use defaults
+  - **CPU**
+    - **Overclocking:** Set to minumum
+    - **Memory Size:** 512k
+    - **CPU:** MC6809
+  - **Display**
+    - **Monitor Type:** - RGB
+    - **Frame Skip:** Default
+    - **Scan Lines:** - Unchecked
+    - **Force Aspect:** Checked
+    - **Throttle Speed:** - Checked
+  - **Keyboard Mapping:** - Coco (DECB)
+  - **Joysticks:** - None
+  - **Misc**
+    - **AutoStart Emulation:** - Checked
+    - **AutoStart Cart:** - Unchecked
+    - **Tape:** - Default
+    - **BitBanger** - Defaults
+  - **Cartridge:** - Insert "GMC.dll"
+  - **Select GMC ROM** - Select the GMC compatible ROM to 
+  use with the GMC. Alone, the GMC does absolutely nothing.
+
+There are many more options to explore and many more
+combinations of setups that may suit your needs. All of these
+components and more are explained in more detail in the sections
+dedicated to those components.
  
- We will briefly step through the menus and show you your choices for
- configuring VCC to your own custom setup. Any changes you make are
- remembered and recalled each time you run VCC and any subsequent
- changes as well.
+Enjoy!
 
-#### *VCC's File Menu*
+<div style="page-break-after: always;"></div>
+---
+<h2 align="center">VCC's Menus </h2>
 
- There is *really* nothing in the *File* menu that is involved in a VCC
- setup unless you already have a Custom *Config File* saved. I will
- run through the *File* menu functions briefly
+Through it's additional modules ("Cartridge" menu & DLL files) and
+configuration settings ("Configuration" menu), VCC can be set up to
+mimic a variety of custom Color Computer 3 setups. Vcc supports a
+limited number of command line parameters but none are needed to fully
+configure Vcc.
+ 
+The VCC MenuBar resides across the top of the VCC window. Here you'll
+find menus and choices for configuring the various functions of the VCC
+emulator. All of VCC's options start here. Any changes you make are
+remembered and recalled each time you run VCC.
 
-  - **Run** - Turns on the VCC Color Computer 3's emulation.
-    If you have "Auto Start Emulation" check in the "Config/Misc" tab
-    below, the VCC will stat emulation on startup. Hitting F9 twice 
-    has the effect of turning the computer off, then on.
-  - **Save Config** - Saves you current configuration to the 
-    "VCC.ini" file or you can save a custom ini file of your own to 
-    recall at any time.
-  - **Load Config** - You can load any custom configuration file
-    you may have saved. As the default, "VCC.ini" is loaded automatically
-    on startup.
-  - **[F9] Hard Reset** - Like turning you Coco 3 on or off. This will
-    clear all memory when used.
-  - **[F5] Soft Reset** - The same as hitting the reset button on your
-    Coco 3.
-  - **[SHIFT-F8] Pause** - Pauses the emulation (toggles) 
+Following is a discussion of the menus and choices for configuring VCC.
 
-#### *VCC's Edit Menu*
+### VCC's File Menu
+
+- **Run** - Turns on the VCC Color Computer 3's emulation.
+  If you have "Auto Start Emulation" check in the "Config/Misc" tab
+  below, the VCC will stat emulation on startup. Hitting F9 twice 
+  has the effect of turning the computer off, then on.
+- **Save Config** - Saves you current configuration to the 
+  "VCC.ini" file or you can save a custom ini file of your own to 
+  recall at any time.
+- **Load Config** - You can load any custom configuration file
+  you may have saved. As the default, "VCC.ini" is loaded automatically
+  on startup.
+- **[F9] Hard Reset** - Like turning you Coco 3 on or off. This will
+  clear all memory when used.
+- **[F5] Soft Reset** - The same as hitting the reset button on your
+  Coco 3.
+- **[SHIFT-F8] Pause** - Pauses the emulation (toggles) 
+
+### VCC's Edit Menu
 
 The *Edit* menu contains probably the most requested feature for
 VCC\... **COPY & PASTE.
 
 <span style="color:red"> 
+
 **NOTE:** Copy and Paste **ONLY** work on the Coco 3's hardware text
 screens (both RSDOS and OS-9/NitrOS9). You **CANNOT** copy or paste
 from/to a Coco 3 graphics screen.
 </span>
 
-  - **Copy Text** -- Clicking this item immediately copies *ALL* text
-    on the VCC screen into your PC's clipboard for pasting into your 
-    PC text documents. (RSDOS & OS-9/NitrOS9)
-  - **Paste Text** -- Click this item will paste any ***raw*** data 
-    in your PC's clipboard onto your VCC's screen as if you typed it in.
-    Good for command line entries and works well in most text editor.
-    This function does not work well pasting BASIC listings, see below.
-    (RSDOS & OS-9/NitrOS9)
-  - **Paste BASIC Code (Merge)** -- Clicking this will paste a BASIC 
-    listing from your PC's clipboard onto VCC's screen just as if you 
-    typed it, merging your file with any file that may already be in 
-    memory. It works very similar to DECB's "MERGE" command. (RSDOS only)  
-  - **Paste BASIC Code (with NEW)** - Clicking this item will first issue
-    a **NEW** command, wiping any program in memory, the pasting the 
-    contents of your PC's clipboard. (RSDOS only)
+- **Copy Text** -- Clicking this item immediately copies *ALL* text
+  on the VCC screen into your PC's clipboard for pasting into your 
+  PC text documents. (RSDOS & OS-9/NitrOS9)
+- **Paste Text** -- Click this item will paste text from your PC's 
+  clipboard onto your VCC's screen as if you typed it in. Good for 
+  command line entries and works well in most text editors. This 
+  function does not work well pasting BASIC listings, see below.
+  (RSDOS & OS-9/NitrOS9)
+- **Paste BASIC Code (Merge)** -- Clicking this will paste a BASIC 
+  listing from your PC's clipboard onto VCC's screen just as if you 
+  typed it, merging your file with any file that may already be in 
+  memory. It works very similar to DECB's "MERGE" command. (RSDOS only)  
+- **Paste BASIC Code (with NEW)** - Clicking this item will first issue
+  a **NEW** command, wiping any program in memory, the pasting the 
+  contents of your PC's clipboard. (RSDOS only)
 
-#### *VCC's* *Configuration* *Menu*
+### VCC's Configuration Menu
 
 After installation when you start VCC, you will be greeted with the
 familiar "green screen" and Tandy/Microsoft/ Microware Extended BASIC
@@ -546,89 +684,85 @@ as it came out the box with 128k and *nothing* attached. From here you
 have *many* choices and they all start with the "Configuration" &
 "Cartridge" menus at the top of the VCC Window.
 
-First, you want to configure you Coco3 to the basic machine you
-desire, whether you run RSDOS or OS-9 or both, it really doesn't
-matter. Maybe you want to emulate your actual Coco3 setup, or maybe
-you want to setup that *Dream* System you never had. This starts with
-the "Configuration" menu:
+First, you want to configure you Coco3 to the basic machine you desire,
+whether you run RSDOS or OS-9 or both, it really doesn't matter. Maybe you
+want to emulate your actual Coco3 setup, or maybe you want to setup that
+*Dream* System you never had. This starts with the "Configuration" menu:
 
-- **Configuration:**
-  - **Flip Artifact Colors (New)**
-  - **Config Tabs**
-    - **Audio**
-    - **CPU**
-    - **Display**
-    - **Keyboard**
-    - **Joysticks**
-    - **Misc**
-    - **Tape**
-    - **Bitbanger**
+**Flip Artifact Colors **
 
- Each tab having it's own menu options and settings, which I will
- highlight below. Through these tabs, you'll configure your Coco3 just
- like *you* want it. These settings reflect the *internal*
- settings/expansions of the Coco3. The *external* *hardware* will be
- done through the "Cartridge" menu in the next section.
+This will toggle PMODE artifact colors to the alternate set. Handy
+for games.
+
+**Config**
+
+Config brings up the tabbed Vcc Options window. Each tab has it's own
+options and settings.  Using these tabs you can configure your Coco3 just
+like *you* want it. These settings reflect the *internal* settings of the
+Coco3. Eexternal hardware settings will be done through the "Cartridge"
+menu in the next section.
  
+- **Audio**
+- **CPU**
+- **Display**
+- **Keyboard**
+- **Joysticks**
+- **Misc**
+- **Tape**
+- **Bitbanger**
+
  NOTE:
  
- Clicking "Apply" immediately sets the current settings for any altered
- setting, but remains in the config menu. Clicking "OK" will also set
- any altered settings but will leave the menu and return to the
- emulation window.
+Clicking "Apply" immediately sets the current settings for any altered
+setting, but remains in the config menu. Clicking "OK" will also set
+any altered settings but will leave the menu and return to the
+emulation window.
  
- Any feature marked with an "\*" will (after one of the above actions)
- reset the Coco3 emulation to a newly started Coco3 (w/new settings)
- and all memory contents will be erased. All other functions will not
- disturb your current machine state.
-
-#### *Flip* *Artifact* *Colors* *(New):*
-
- This will "flip" the PMODE artifact colors to the alternate set. Handy
- for games and such.
-
-### CONFIG
+Any feature marked with an "\*" will (after one of the above actions)
+reset the Coco3 emulation to a newly started Coco3 (w/new settings)
+and all memory contents will be erased. All other functions will not
+disturb your current machine state.
 
 #### *Audio:*
 
- This tab can usually be left "as is" as it automatically recognizes
- your Windows computer defaults and should not have to be changed.
- However... there are those users who may have more than one audio
- output or card and may want to change these setting to suit their
- needs. Personally, as a musician & recording engineer, I have several
- sound options on my computer which makes this tab useful to me.
+This tab can usually be left "as is" as it automatically recognizes
+your Windows computer defaults and should not need to be changed.
+However there are those users who may have more than one audio output 
+or card and may want to change these setting to suit their needs. For 
+instance, a musician & recording engineer might have several sound 
+options on the computer which makes this tab useful to then.
 
-  - **Output Device** -- A drop down menu which shows your PC 
-    system's choices in sound output devices. Most will use the
-    "Primary Sound Drive" used by most Windows programs.
-  - **Sound Quality** -- Selects the available sound quality in 
-    kHz available for you selected device (above). Most will use
-    "44100" kHz.
+- **Output Device** -- A drop down menu which shows your PC 
+  system's choices in sound output devices. Most will use the
+  "Primary Sound Drive" used by most Windows programs.
+- **Sound Quality** -- Selects the available sound quality in 
+  kHz available for you selected device (above). Most will use
+  "44100" kHz.
 
 #### *CPU:*
 
- This tab allows you to select various Coco 3 system defaults such as
- memory, CPU type, and Overclocking.
+This tab allows you to select various Coco 3 system defaults such as
+memory, CPU type, and Overclocking.
 
-- **Over-Clocking** -- The slider will set the speed in which the CPU
+  - **Over-Clocking** -- The slider will set the speed in which the CPU
     operates. Minimum is .87mhz/1.778mhz", maximum is 202.938mhz. This 
     can also be accessed via the F3 & F4 keys.
-- **Memory Size** - Set the maximum amount of memory your Coco3
+  - **Memory Size** - Set the maximum amount of memory your Coco3
     will be allowed to use.
-  - **128k** - Emulates a stock Coco3 straight out of the box
-  - **512k** - Emulates the 512k upgrade available through Tandy
-    and many 3rd party vendors
-  - **2048k** - Emulates the "Disto" 2 meg upgrade
-  - **8192k** - Emulates Paul Barden's 8 meg board
-- **CPU**
-  - **Motorola MC6809 CPU** - Emulates the stock CPU installed in the Coco3.
-  - **Hitachi HD6309 CPU** - Emulates the aftermarket Hitachi 6309
-  instruction/speed enhanced CPU.
+    - **128k** - Emulates a stock Coco3 straight out of the box
+    - **512k** - Emulates the 512k upgrade available through Tandy
+     and many 3rd party vendors
+    - **2048k** - Emulates the "Disto" 2 meg upgrade
+    - **8192k** - Emulates Paul Barden's 8 meg board
+  - **CPU**
+    - **Motorola MC6809 CPU** - Emulates the stock CPU installed in the Coco3.
+    - **Hitachi HD6309 CPU** - Emulates the aftermarket Hitachi 6309
+     instruction/speed enhanced CPU.
 
 #### *Display:*
 
- Allows you to set your VCC windowed PC display to match your choice of
- standard Coco 3 display types
+Allows you to set your VCC windowed PC display to match your choice of
+standard Coco 3 display types
 
   - **\[F6\] Monitor Type:** - Allows you to choose your monitor type.
     - **RGB** -- Selects an RGB color monitor such as the Tandy CM-8.
@@ -651,23 +785,23 @@ the "Configuration" menu:
 
 #### *Keyboard*
 
- Allows you to remap your PC keyboard to different keymaps to emulate
- the layout of a real Coco 3 keyboard, or use it similar to an AT or
- PS/2 keyboard interface.
- Keyboard Mapping is selected by choosing one of the radio buttons.
+Allows you to remap your PC keyboard to different keymaps to emulate
+the layout of a real Coco 3 keyboard, or use it similar to an AT or
+PS/2 keyboard interface.
+Keyboard Mapping is selected by choosing one of the radio buttons.
 
- - **Coco (DECB)** - The PC keyboard is remapped to emulate 
-   the layout of an actual Coco 3 (as much as possible)
- - **Natural (OS-9)** - The PC keyboard is mapped "as is"
-   with the exception of a few special keys
- - **Compact (OS-9)** - Same as above but mapped with
-   consideration of laptop keyboards with compact key sets
- - **Custom** - Allows loading of custom keymaps (see "KeyMap Editor")
+  - **Coco (DECB)** - The PC keyboard is remapped to emulate 
+    the layout of an actual Coco 3 (as much as possible)
+  - **Natural (OS-9)** - The PC keyboard is mapped "as is"
+    with the exception of a few special keys
+  - **Compact (OS-9)** - Same as above but mapped with
+    consideration of laptop keyboards with compact key sets
+  - **Custom** - Allows loading of custom keymaps (see "KeyMap Editor")
 
  To edit the custom map one of the following buttons can be clicked:
 
- - **Choose File** - Load a Custom KeyMap file
- - **Edit** - Opens the Custom KeyMap Editor
+  - **Choose File** - Load a Custom KeyMap file
+  - **Edit** - Opens the Custom KeyMap Editor
 
 #### *Joysticks*
 
@@ -710,9 +844,8 @@ box is not checked and the cursor is not visible within the screen.
 
 #### *MISC*
 
- Not much here but Cartridge emulation settings
+Cartridge emulation settings
 
-- **Misc** -- Cartridge default settings
   - **AutoStart Emulation** -- Unchecked starts VCC in an "Off"
     state. You must press "F9" to turn the emulation on. Checked,
     VCC will start with the power "On".
@@ -731,37 +864,38 @@ box is not checked and the cursor is not visible within the screen.
  commands "MOTOR ON/OFF" and "AUDIO ON/OFF" do not affect the VCC tape
  recorder as on a real Coco.
 
-- **Browse** -- this button allows you to *browse* your PC for ".cas"
-  or ".wav" files of recorded cassette tape format programs. The 2
-  types differ in their formats as follows:
-  - **wav** - An 8 bit, 44.199 kHz audio recording of the actual
-    cassette file. The file MUST be 8 bit & 44.199 kHz (see below).
-  - **cas** - A specially encoded, digital representation of the program
-    data. This format is much more compact than wav and loads much
-    faster.>
-  - <span style="color:red"> WARNING: If you use ".wav" files, be warned!!
+  - **Browse** -- this button allows you to *browse* your PC for ".cas"
+    or ".wav" files of recorded cassette tape format programs. The 2
+    types differ in their formats as follows:
+    - **wav** - An 8 bit, 44.199 kHz audio recording of the actual
+      cassette file. The file MUST be 8 bit & 44.199 kHz (see below).
+    - **cas** - A specially encoded, digital representation of the program
+      data. This format is much more compact than wav and loads much
+      faster.>
+  - **Record** -- Sets the tape emulation to record. The tape will stay
+    on "pause" until you issue a "CSAVE" or "CSAVEM" command from basic.
+  - **Play** -- Sets the tape player to "play" and as above, stays on
+    pause until a "CLOAD" or "CLOADM" command is issued fro BASIC.
+  - **Stop** -- This will stop the recorder just as on a real tape deck.
+    It will not respond to any BASIC commands while stopped. The current
+    "cas" or "wav" file remains in the buffer.
+  - **Eject** -- This button closes then "unloads" the tape image from
+    VCC. You will no longer have access to this image until it's loaded
+    again.
+  - **Rewind** -- This will rewind the "tape" image to the beginning of
+    the tape.
+  - **Mode --** Displays the current mode of the tape recorder
+    (Play, Stop, Record Etc)
+  - **Counter** -- Displays the position of the tape file just as a real
+    tape counter would. Handy for tape images containing multiple programs
+
+<span style="color:red"> WARNING: If you use ".wav" files, be warned!!
     If the ".wav" file is NOT recorded in "44,100 kHz, 8-bit", VCC will
     mangle the file just by loading it, you don't even have to "play" it.
     Most "standard" wave files are in 16-bit, 44,199 kHz. These will not
     work in VCC and even if you just browse to them and select them into
     the tape interface, VCC will try to convert them to 8-bit and ruin
     the file. This issue is being looked into. You were warned <span>
-- **Record** -- Sets the tape emulation to record. The tape will stay
-    on "pause" until you issue a "CSAVE" or "CSAVEM" command from basic.
-- **Play** -- Sets the tape player to "play" and as above, stays on
-    pause until a "CLOAD" or "CLOADM" command is issued fro BASIC.
-- **Stop** -- This will stop the recorder just as on a real tape deck.
-    It will not respond to any BASIC commands while stopped. The current
-    "cas" or "wav" file remains in the buffer.
-- **Eject** -- This button closes then "unloads" the tape image from
-    VCC. You will no longer have access to this image until it's loaded
-    again.
-- **Rewind** -- This will rewind the "tape" image to the beginning of
-    the tape.
-- **Mode --** Displays the current mode of the tape recorder
-    (Play, Stop, Record Etc)
-- **Counter** -- Displays the position of the tape file just as a real tape counter would. Handy for tape images containing multiple
-    programs
 
 #### *BitBanger*
 
@@ -769,400 +903,206 @@ box is not checked and the cursor is not visible within the screen.
  files to PC text file. There is no form of conversion and all
  transfers are in raw ASCII text
 
-- **Open** -- This button "opens" a selected capture file. Any data
+  - **Open** -- This button "opens" a selected capture file. Any data
     sent to the serial port will be sent to this file in raw ASCII
     format.
-- **Close** -- This closes the serial capture file.
-- **Add LF to CR** -- Checking this item will cause VCC to
+  - **Close** -- This closes the serial capture file.
+  - **Add LF to CR** -- Checking this item will cause VCC to
     add a Line Feed character to every Carriage Return VCC encounters
     while sending data to the capture file. PC text files use CR/LF as a
     standard where the Coco uses CR alone.
-- **Print Monitor Window** -- Opens an extra window panel on
+  - **Print Monitor Window** -- Opens an extra window panel on
     your Windows desktop that will display any data sent to the
     bitbanger port
 
-#### *VCC's* *Cartridge* *Menu*
+### VCC's Cartridge Menu
 
- The "Cartridge" selection is an emulation of the Coco's cartridge slot
- in that here, you will
- 
- insert ROM images or special (included) cartridge dll files emulating
- various Coco controller carts, such as, the Multipak Interface,
- Orchestra 90, the FD-502 disk controller, several HD controllers, and
- the Becker Port cart. Each cart emulation may or may not add items to
- the "Cartridge" menu. I will try to list these additions below. The
- full description of each cart emulation can be found in the "Loadable
- Modules" section:
- 
- Inserting the mpi.dll module into the emulator cartridge slot results
- in the following menu:
+The "Cartridge" selection is an emulation of the Coco's cartridge slot
+in that here, you will insert cartridge .ROM or .DLL files that emulate
+various Coco controller carts, such as, the Multipak Interface, 
+Orchestra 90, the FD-502 disk controller, several HD controllers, 
+the Becker Port cart, and RS232 program paks. 
 
-- **mpi.dll** - Tandy Multipak Interface. Allows insertion of up to 4
-    cart dlls
-  - **MPI Config** - Configures the MPI settings
+Most Coco cartridges only contained read only memory (ROM) for a Coco 
+program that would run as soon as the cartridge was started. This is 
+typical for game cartridges. These are inserted into the Vcc cartidge 
+menu as .ROM image files. 
+
+Other cartridges, such as the Multipak interface, Disk controllers, 
+Orchestra 90, and others, also contained the add on hardware needed to 
+interface external devices.  These are inserted into the Vcc cartridge 
+menu as DLL files. The DLL file contains the Windows software that 
+emulates the add on hardware. If the DLL requires a .ROM file it will
+try to automatically install it.
+
+The Cartridge Menu is dynamic, as DLL cartridges are added the menu
+expands to include items for configuring the cartridge added.
+
+The DLL files included with Vcc that add to the Cartridge menu 
+are as follows:
+ 
+**mpi.dll**
+
+The Tandy Multipak Interface. Allows insertion of up to 4 additional 
+ROMS or DLL files. Inserting the mpi.dll module into the emulator
+cartridge slot add the following entries to the Cartridge menu:
+
   - **Slot 4** -- Browse Cart images to loaded into Slot 4
   - **Slot 3** -- Browse Cart images to loaded into Slot 3
   - **Slot 2** -- Browse Cart images to loaded into Slot 2
   - **Slot 1** -- Browse Cart images to loaded into Slot 1
-  - **Slot Select** -- Selects the Slot to become the *active*
-    Slot.  The active slot controls which module will load the rom
-    needed for the module to function using Coco Basic. This action may
-    reset the Coco 3 based cartridge settings in the Misc tab. There
-    is no advantage to selecting a module that does not require a rom.
-  - **Persistent Pak Images (New)** -- Allows VCC to *remember* what carts
-  you have selected and reload them each time you run VCC. This function
-  is still a little wonky, but works unless you remove and reinsert the MPI.
+  - **MPI Config** - Displays which Carts are inserted and configures
+      the MPI settings
+    - **Slot Select** -- Selects the Slot to become the *active*
+      Slot.  The active slot controls which module will load the rom
+      needed for the module to function using Coco Basic. This action may
+      reset the Coco 3 based cartridge settings in the Misc tab. There
+      is no advantage to selecting a module that does not require a rom.
+    - **Persistent Pak Images (New)** -- Allows VCC to *remember* which
+      carts you have selected and reloads them each time you run VCC. This 
+      function is still a little wonky, but works unless you remove and
+      reinsert the MPI.
 
- *Inserting these cart images into the MPI slots or the Cartridge
-  slot results in the following menu additions:*
+**fd502.dll**
 
-- **fd502.dll** - Tandy FD-502 Disk controller
-  - **FD-502 Drive 0** - Insert virtual disk images (.dsk) into the drive slots
-  - **FD-502 Drive 1 - "**
-  - **FD-502 Drive 2 - "**
-  - **FD-502 Drive 3 - "**
-  - **FD-502 Config** - Configuration utilities for the FD-502 controller
+Tandy FD-502 Disk controller. Inserting this adds entries to the cartrige
+that allow you to Insert virtual disk images (.DSK) into drive slots and 
+to configute the controller.
+
+  - **FD-502 Drive 0** - Browse virtual disk images (.dsk) into Slot 0
+  - **FD-502 Drive 1** - Browse virtual disk images (.dsk) into Slot 1
+  - **FD-502 Drive 2** - Browse virtual disk images (.dsk) into Slot 2
+  - **FD-502 Drive 3** - Browse virtual disk images (.dsk) into Slot 3
+  - **FD-502 Config** - Configure the FD-502 controller
     - **DOS Image -** Selects what DOS rom is to be used
-      - **External ROM Image** -- Loads an external DOS ROM (HDBDOS, RGBDOS, etc)
-      - **Disk BASIC** -- Use the DECB ROM
-      - **RGB DOS** -- Uses the included RGBDOS ROM for use with "harddisk.dll"
-    - **OverClock Disk Drive** -- Checked, allows VCC to use it;s virtual drives
-      at PC speeds. Unchecked, simulates normal Coco drive speeds. (default is ON)
-    - **Persistent Disk Images** -- Forces VCC to load the last disk used when
-      booting VCC (default is ON)
-    - **Clock at 0xFF50-51** -- Moves the RTC port to \$FF50-\$FF51 for use with
-      some Hard Drive controllers (default is On)
-    - **Physical Disks** -- Originally meant to use the old FDRAWREAD driver for 
-      Windows that allowed VCC to read/write to real Coco floppy disks. I doubt
-      any modern PC's can access these disks any longer due to a change in format
-      with the introduction of the High Density 1.44meg floppy disk.  This
-      function most likely be removed in the future.
+      - **External ROM Image** -- Loads an external DOS ROM (HDBDOS, 
+        RGBDOS, etc)
+      - **Disk BASIC** -- Use the DECB ROM (disk11.rom)
+      - **RGB DOS** -- Use the RGBDOS ROM for use with "harddisk.dll"
+    - **OverClock Disk Drive** -- Checked, allows VCC to use it's 
+      virtual drives at PC speeds. Unchecked, simulates normal Coco 
+      drive speeds. (default is ON)
+    - **Persistent Disk Images** -- Forces VCC to load the last disk used
+      when starting VCC (default is ON)
+    - **Clock at 0xFF50-51** -- Moves the RTC port to \$FF50-\$FF51 for
+      use with some Hard Drive controllers (default is On)
+    - **Physical Disks** -- Originally meant to use the FDRAWREAD driver
+      for Windows that allowed VCC to read/write to real Coco floppy disks.
+      I doubt any modern PC's can access these disks any longer due 
+      to a change in format with the introduction of the High Density 
+      1.44meg floppy disk.  This function most likely be removed in the
+      future.
       - **A** - Selects Physical Drive A
       - **B** - Selects Physical Drive B
-  - **External Disk ROM Image** - Selects the External Disk ROM image to use
+  - **External Disk ROM Image** - Browse for an external Disk ROM image to use
     as an alternative Disk Operating System.
-  - **Browse** - Browse to select the desired External Disk ROM Image to be used
 
-- **harddisk.dll** - Hard drive emulation
-    - **Hard Drive 0** - Insert hard drive images (.vhd) here.
-    - **Hard Drive 1 (New)** -- Insert hard drive images (.vhd) here.
+**harddisk.dll**
+This dll enables hard drive emulation. It requires fd502.dll to also be 
+installed to function properly
 
-- **SuperIDE.dll** - Glenside IDE / SuperIDE emulation for using CF card images
-    - **IDE Master** - Insert CF (master) card image here (.img)
-    - **IDE Slave -** Insert 2nd (slave) CF card image here
-    - **IDE Config -** IDE interface configuration settings
-      - **Base Address --** Base port address used by the controller. Must NOT
-        conflict with Clock address in FD502 Configuration 
-      - **Clock at 0xFF70** -- RTC port address. Must NOT conflict with clock 
-        address in FD502 Configuration.
-      - **Clock is Read-Only** -- Unchecked allow the clock to be set by the OS.
+  - **Hard Drive 0** - Insert hard drive images (.vhd) here.
+  - **Hard Drive 1 (New)** -- Insert hard drive images (.vhd) here.
 
-- **GMC.dll** -- Emulates John Linville's "Game Master Cart" (GMC) for custom 
-  game cart design with "Syd" type sound & music. **This Cart is still 
-  experimental, so please report any problems.**
-    - **Select GMC ROM** -- Select and insert the GMC compatible game/sound ROM.
+**SuperIDE.dll**
+Glenside IDE / SuperIDE emulation for using CF card images
 
-- **becker.dll** - Becker Port emulation for DriveWire4 and TCP communication
-    - **DriveWire Server** - Becker Port configuration for DW4
-      - **Server Address** -- DriveWire4 server address\#
-      - **Server Port** -- DriveWire4 server port\#
+  - **IDE Master** - Insert CF (master) card image here (.img) 
+  - **IDE Slave** - Insert 2nd (slave) CF card image here
+  - **IDE Config** - IDE interface configuration settings
+      - **Base Address** - Base port address used by the controller. 
+        Must NOT conflict with Clock address in FD502 Configuration 
+      - **Clock at 0xFF70** - RTC port address. Must NOT conflict with
+        clock address in FD502 Configuration.
+      - **Clock is Read-Only** - Unchecked allow the clock to be set 
+        by the OS.
 
-- **acia.dll** - Emulates the Tandy RS232 Pak
-    - **Type** - Select the data flow type needed
-      - Console
-      - File Read
-      - File Write
-      - TCPIP
-      - COMx
+**GMC.dll**
+The GMC DLL Emulates John Linville's "Game Master Cart" (GMC) for custom 
+game cart design with "Syd" type sound & music. **This Cart is still 
+experimental, so please report any problems.**
+
+  - **Select GMC ROM** -- Select and insert the GMC compatible game/sound ROM.
+
+**becker.dll**
+This DLL provide Becker Port emulation for DriveWire4 and TCP communication
+
+  - **DriveWire Server** Select DriveWire server address and port.
+
+**acia.dll**
+This DLL attempts to emulate the sc6551 Asyncronous Communication Interface
+Adapter found in the Tandy Deluxe RS232 and Direct Connect Modem Paks.
+(See ACIA section in this manual)
+
+  - **Acia Config**
+    - **Type** - Select operating mode; Console, File Read, File Write,
+      TCPIP, or Windows COM port.
     - **Acia Address** - Select the Coco port address to be used;
        $FF68 for RS-232 Pak, $FF6C for Modem Pak.
-    - **Name** - Used for selecting port modes (see ACIA section in this manual)
-    - **Port** - Used for selecting port modes (see ACIA section in this manual)
-    - **Text** - Turns on/off the sending of CR/CRLF in the Read/Write file modes.
-      (see ACIA section in this manual)
+    - **Name** - Used for selecting filename, PC port, or Server address.
+    - **Port** - Used for selecting port number
+    - **Text Mode** - Turns on/off the sending of CR/CRLF in the 
+      Read/Write file modes.
 
-#### *VCC's Debugger Menu*
-The VCC \"Debugger\" is one of the latest additions to VCC, and is probably one
+### VCC's Debugger Menu
+The VCC Debugger is one of the latest additions to VCC, and is probably one
 of the 2nd or 3rd most requested features. With the Debugger, you can view the
 inner workings of the Color Computer 3 as you run software. This is great for
 debugging your projects or just viewing how it all works. There are four options
 for the Debugger:
 
-- **Memory Display -** this displays the 64KB memory space that is
+  - **Memory Display -** this displays the 64KB memory space that is
     visible to the processor. Even though the Coco 3 has a minimum of
     128KB of RAM, only 64KB can be seen by the processor. The MMU is
     responsible for mapping the extra RAM into this 64KB workspace.
-- **Processor State** - this displays the current state of the
+  - **Processor State** - this displays the current state of the
     processor. Internal registers, Condition Code Register, stack/user
     pointers, and the program counter are updated in real time. In
     addition, you can halt, step, and run the processor at any time.
-- **Breakpoints** - this window allows you to load an LWASM assembler
+  - **Breakpoints** - this window allows you to load an LWASM assembler
     listing and set breakpoints. This provides a source level debugging
     capability for a loaded program.
-- **MMU Monitor** - this window will let you view all memory
+  - **MMU Monitor** - this window will let you view all memory
     available to the machine and how it is being mapped into the 64KB
     memory space visible to the processor. <br>
     <span style="color:red"> NOTE: Hopefully, the ability to edit memory
     contents will be added soon.<span>
 
-#### *VCC's* *Help* *Menu*
+### *VCC's* *Help* *Menu*
  This menu selection has only one choice;
 
-- **About** - Displays the VCC "About Box" which contains the
+  - **About** - Displays the VCC "About Box" which contains the
     "Function Key" list and Copyright information.
 
-### *Quick* *Start* *Configurations*
- Here are a few "Quick Start Configurations" of some standard Coco 3
- setups you can use to get you started
-
-#### *Gaming* *VCC*
- A good setup for playing Coco 3 games under RSDOS.
-  
-  - **Audio:** Use defaults
-  - **CPU**
-    - **Overclocking:** Set to minimum
-    - **Memory Size:** 512k (unless game requires more)
-    - **CPU:** Some games will require the HD6309 (Nick Marantez's "GunStar" 
-      for example), but most run fine with MC6809
-
-  - **Display**
-    - **Monitor Type:** - Choice based on game requirements, most Coco 3 games
-      will use RGB but some do require CMP for colors (ie Zaxxon)
-    - **Frame Skip:** Default
-    - **Scan Lines:** -- Unchecked unless you like the look of blanked odd scanlines
-    - **Force Aspect:** Checked  
-    - **Throttle Speed:** - Checked
-
-  - **Keyboard**
-    - **Keyboard Mapping:** - Coco (DECB), unless you are more comfortable
-      with a PC keyboard setup, then use "Natural (OS-9)
-    - **Joysticks:** - Select the Joysticks of your choice
-
-  - **Misc**
-    - **AutoStart Emulation:** -- Checked
-    - **AutoStart Cart:** -- Checked
-    - **Tape:** - Default unless using a tape based game
-    - **BitBanger** -- Defaults
-
-  - **Cartridge:** 
-    - Insert "mpi.dll"
-    - **MPI Slot 4:** - Insert "fd502.dll"
-    - **MPI Slot 1:** - If using a cartridge based game, insert cart here
-    - **MPI Config:** -- If using a cart based game, move Slot selector slider 
-      to the slot in which the game is inserted, otherwise, set it to Slot 4
-      for the disk controller
-
-  - **FD502**
-    - **FD-502 Drive 0:** - If using disk based game, insert game disk 
-      here unless otherwise instructed by the game. Some games use Drive 1 
-      as it's "game data" disk. 
-
-### *Orchestra90cc* *VCC*
- This setup is for using the Orchestra90cc Program Pak.
-
-- #### Configuration
-  - **Audio:** Use defaults
-
-- #### CPU
-  - **Overclocking:** Set to minimum
-  - **Memory Size:** 512k
-  - **CPU:** - MC6809
-
-- #### Display
-  - **Monitor Type:** - RGB (doesn't really matter)
-  - **Frame Skip:** Default
-  - **Scan Lines:** -- Unchecked unless you like the look of blanked odd scanlines
-  - **Force Aspect:** Checked
-  - **Throttle Speed:** - Checked
-
-- #### Keyboard
-  - **Keyboard Mapping:** - Coco (DECB), unless you are more comfortable with a
-    PC keyboard setup, then use "Natural (OS-9)
-  - **Joysticks:** - None
-
-- #### Misc
-  - **AutoStart Emulation:** -- Checked
-  - **AutoStart Cart:** -- Checked
-  - **Tape:** - Default
-  - **BitBanger** -- Defaults
-
-- **Cartridge:** - Insert "mpi.dll"
-
-- ##### MPI
-  - **Slot 4:** - Insert "fd502.dll"
-  - **Slot 1:** - Insert "orch90.dll"
-  - **MPI Config:** -- set it to Slot 1 for the Orchestra90cc Program Pak
-
-- ##### FD502
-  - **FD-502 Drive 0:** - Insert music disks here
-
-<span style="color:red"> 
-(Orchestra90cc will only use Drive 0 for it's music disks. Disks must be formatted for RSDOS and ONLY used with Orchestra90)**
-</span>
-
-**Press \[F9\] Twice to start emulation**
-
-#### *OS-9/NitrOS9* *VCC*
-
- A basic VCC setup for using OS-9/NitrOS9 with a Hard Drive. I will not
- go into explaining making a bootdisk for this system, but they can be
- found on the internet or you can make your own.
-
-- #### Configuration
-  
-  - **Audio:** Use defaults
-
-- #### CPU
-  - **Overclocking:** Set to minimum unless PC speed is desired (not good for games)
-  - **Memory Size:** 2048 (NitrOS9 can transparently use the 2 meg expansion)
-  - **CPU:** If using the HD6309, you will want to Use the NitrOS9 6309 boot system,
-    but if using the MC6809, you MUST use a 6809 NitrOS9/OS-9 boot system
-
-- #### Display
-  
-  - **Monitor Type:** - RGB
-  - **Frame Skip:** Default
-  - **Scan Lines:** -- Unchecked unless you like the look of blanked odd scanlines
-  - **Force Aspect:** Checked
-  - **Throttle Speed:** - Checked
-
-- #### Keyboard
-  - **Keyboard Mapping:** - use "Natural (OS-9) unless you like the old Coco 
-  key sequences used in OS-9.
-  - **Joysticks:** - Select the Joysticks of your choice
-
-- #### Misc
-  - **AutoStart Emulation:** -- Checked
-  - **AutoStart Cart:** -- Checked
-  - **Tape:** - Default
-  - **BitBanger** -- Defaults
-
-- **Cartridge:** - Insert "mpi.dll"
-
-- #### MPI
-  - **Slot 4:** - Insert "fd502.dll"
-  - S**lot 3:** - Insert "harddisk.dll"
-  - **MPI Config:** -- set it to Slot 4 for the disk controller
-
-- #### FD502
-  - **FD-502 Drive 0:** - Insert OS-9/NitrOS9 boot disk, unless you have a 
-    harddrive boot system or are using HDBDOS and DriveWire4. I will not be 
-    explaining the OS-9 booting methods as that is available on the internet 
-    in many places.  (See the "Links" section of this manual).
-
-- #### FD-502 Config
-   - **DOS Image**
-     - **External ROM Image** -- Use if you want a Custom ROM or if you want 
-     DriveWire4 booting, use HDBDOS (explained in the ROM section). Images are
-     loaded in the "Browse" box below.
-      
-     - **Disk Basic**- If you are not using DriveWire4, Disk Basic is probably
-     your best choice
-      
-     - **RGBDOS --** An alternate DOS which can be used to boot OS-9/NitrOS9
-      
-     - **OverClock Disk Drive** -- Checked (makes your floppy drives faster,
-     unchecked if you want the old Coco speed drives)
-      
-     - **Persistent Drive Images** -- (Checked)
-      
-     - **Clock at 0xFF50-51** -- Checked
-      
-     - **External Disk ROM Image** -- Use the "Browse" button for loading any
-     "Custom" ROM is "DOS Image" is set to "External ROM Image
-
-- #### Hard Drive
-     - **Hard Drive 0** -- If using a hard drive, mount your OS-9/NitrOS9 
-     hard drive image here.
-     - **Hard Drive 1** -- You can use this drive as your data or backup drive.
-     Or, anything you want.
-
-- #### DriveWire Server
-     - **Server Address --** If using DriveWire4, set your DW4 server address
-     here (See DriveWire4 section in this manual)
-      
-     - **Server Port** -- If using DriveWire4, set your DW4 port setting here
-     (See the DriveWire4 section in this manual.
-
- **Press \[F9\] Twice to start emulation Then type "DOS" to start OS-9/NitrOS9**
-
-#### *Game* *Master* *Cart* *(GMC)*
-
- This setup is for using the GMC Program Pak.
-
-- #### Configuration
-  - **Audio:** Use defaults
-
-- #### CPU
-  - **Overclocking:** Set to minimum
-  - **Memory Size:** 512k
-  - **CPU:** MC6809
-
-- #### Display
-  - **Monitor Type:** - RGB (doesn't really matter)
-  - **Frame Skip:** Default
-  - **Scan Lines:** -- Unchecked unless you like the look of blanked odd scanlines
-  - **Force Aspect:** Checked
-  - **Throttle Speed:** - Checked
-
-- #### Keyboard
-  - **Keyboard Mapping:** - Coco (DECB), unless you are more comfortable with a 
-  PC keyboard setup, then use "Natural (OS-9)
-  - **Joysticks:** - None
-
-- #### Misc
-  - **AutoStart Emulation:** -- Checked
-  - **AutoStart Cart:** -- Checked
-  - **Tape:** - Default
-  - **BitBanger** -- Defaults
-
-- **Cartridge:** - Insert "GMC.dll"
-  - **Select GMC ROM** -- Select the GMC compatible ROM to 
-  use with the GMC. Alone, the GMC does absolutely nothing.
-
-#### Press \[F9\] Twice to start emulation
-
- This about covers some of the basic VCC setups. These are only basic
- setups. You will eventually tweak these settings to your preferred
- system. There are many more options to explore and many more
- combinations of setups that may suit your needs. All of these
- components and more are explained in more detail in the sections
- dedicated to those components.
- 
- Next we will cover each component in VCC with detailed explanations of
- each function as best we can. These components and functions allow you
- to custom configure VCC into the Color Computer 3 system that you
- remember or maybe the Color Computer system you dreamed of having.
- 
- Enjoy!
+These components and functions allow you to custom configure VCC into
+the Color Computer 3 system that you remember or maybe the Color Computer
+system you dreamed of having.
 
 <div style="page-break-after: always;"></div>
-<h2 align="center">The MenuBar</h2>
+---
+<h2 align="center">A More Detailed Explainations of Vcc Options</h2>
 
- The MenuBar resides across the top of the VCC window. Here you'll find
- the various functions of the VCC emulator. All of VCC's options start
- here. No *command* *line* parameters are needed (or wanted).
- 
- The Menu choices and their options are: *File, Edit, Configuration, 
- Cartridge, Debugger, & Help*
-
-**File** These options are the basic operating functions of VCC
+The following pages contain screen shots and with detailed explainations
+of the various Vcc menus and functions.
 
 <p align=center><img src="images/ugima2.jpeg" alt="UG Image 2"></img></p>
+<h4 align=center>File Menu</h4>
 
-- **Run** -- If the "Configuration/Config/Misc/AutoStart Emulation"
+The **File Menu** controls basic operating functions of VCC
+
+- **Run** - If the "Configuration/Config/Misc/AutoStart Emulation"
     box is unchecked, this selection will start the Coco 3 emulation. If
     the box is checked, emulation will start when VCC starts and this
     selection does nothing. Consider it a "Power Button" of sorts. This
     is also invoked by the "F9" function key on the PC keyboard.
-- **Save Config (\*\*\*NEW\*\*\*)** -- Saves a "Custom INI"
+- **Save Config** - Saves a "Custom INI"
     file with the current VCC configuration that can be loaded with the
     command below, or with command line options, or custom Windows
     "Shortcut" configuration.
-- **Load Config (\*\*\*NEW\*\*\*)** -- Loads a "Custom INI"
+- **Load Config** - Loads a "Custom INI"
     file that was saved with the above feature or maybe even one you
     have manually edited and saved.
-- **[F9] Hard Reset** -- Hitting [F9] twice simulates
+- **[F9] Hard Reset** - Hitting [F9] twice simulates
     switching the power to the Coco "Off" then "On" again. You must hit
     [F9] two times to complete the cycle. Anything in memory will be
     lost.
@@ -1173,9 +1113,9 @@ for the Debugger:
     Any unsaved data and or programs will be lost as the program ends
     with no prompts and control returns to the Windows OS.
 
-*Edit** -- Editing options for VCC
-
 <p align=center><img src="images/ugima3.jpeg" alt="UG Image 3"></img></p>
+<h4 align=center>Edit Menu</h4>
+The **Edit Menu** enables text editing options for VCC
 
 - **Copy Text:** Copies all text on the VCC/Coco screen (40 & 80
     column modes are still being worked on)
@@ -1188,171 +1128,131 @@ for the Debugger:
     to the input buffer, but first executing a "NEW" command, clearing
     the Coco 3 memory of any loaded program.
 
-**Configuration** -- This menu tab contains only two items, but most
-    "configuration" items reside here.
+<p align=center><img width="200" height="55" 
+   src="images/ugima46.png" alt="UG Image 46"></img></p>
+<h4 align=center>Configuration Menu</h4>
+The **Configuration Menu** contains only two entries but most "configuration"
+items reside here.
+
   - **Flip Artifact Colors** -- Changes the PMODE artifact color
     set to the alternate color set without interrupting the emulation.
     Handy for Coco 2 games that come up in the wrong color set.
-  - **Config** -- This sub-menu contains a tabbed panel with most of the
+  - **Config** - This sub-menu contains a tabbed panel with most of the
     config items. On each of these panels, you must click "Apply" for
     your changes to take place. Clicking "OK" will also finalize your
     choices, but also exits the "Config" menu.
   
-**Audio** -- This controls VCC's audio emulation.
+<p align=center><img width="600" height="400"
+   src=images/ugima4.jpeg alt="UG Image 4"></img></p>
+<h4 align=center>Audio Tab</h4>
+**Audio** controls VCC's audio emulation.
 
-<p align=center><img src=images/ugima4.jpeg alt="UG Image 4"></img></p>
-
-- **Sound** -- VCC's sound controls
-  
-  - **Output Device** -- A pull down menu to select the Windows sound device 
+  - **Output Device** - A pull down menu to select the Windows sound device 
   for VCC to use for the Coco's 6-bit DAC and Orchestra 90 sound output.
-  
-  - **Sound Quality** -- Select the frequency resolution for your PC's soundcard
+  - **Sound Quality** - Select the frequency resolution for your PC's soundcard
   (normally 44100).
-  
-  - **VU Meters** (vertical bars to the right) -- These meters are a visual
+  - **VU Meters** - (vertical bars to the right) These meters are a visual
   representation of the sound volume in VCC
 
-- **CPU** -- This tab is where you select the CPU type used in VCC and the
+<p align=center><img width="400" height="450"
+   src=images/ugima5.jpeg alt="UG Image 5"></img></p>
+<h4 align=center>CPU Tab</h4>
+The CPU tab is where you select the CPU type used in VCC and the
   memory size of your Coco 3 emulation.
 
-<p align=center><img src=images/ugima5.jpeg alt="UG Image 5"></img></p>
+ - **Over-Clocking** - Set CPU clock speed. This can speed up text 
+   scrolling and graphics functions as well as some aspects of disk
+   access. The slider can be adjusted from 1.78 MHZ (normal Coco 3 speed)
+   to 202.938 MHZ which is ridiculously fast. <br> Over-clocking the CPU to 
+   extremely high speeds may not work well on older PCs. Use with caution.
+   This can be accessed using the F3 & F4 keys. F3 will decrease the speed,
+   and F4 will increase the speed.
+ - **Memory Size** - Select the memory size for your Coco 3
+    emulation  
+    - **128 K** - The stock Coco 3 memory size.
+    - **512 K** - Emulates a Coco with the 512k upgrade
+    - **2048 K** - Emulates Disto's 2 meg memory board
+    - **8192 K** - Emulates Paul T. Barton's 8 meg memory board
+  - **CPU** - This option allows CPU selection for your Coco 3
+    - **Motorola MC6809** - The standard Color Computer 6809 CPU
+    - **Hitachi HD6309** - Emulates use of Hitachi's HD68B09 CPU.  Faster
+      than the 6809 with an enhanced instruction set.  This CPU was a popular
+      mod for Coco users in the early 1990s.
 
- **Over-Clocking** -- Speeds up the CPU cycle speed but does not affect
- the internal clock speed. This can speed up text scrolling and
- graphics functions as well as some aspects of disk access. The slider
- can be adjusted from 1.78 MHZ (normal Coco 3 speed) to 202.938 MHZ
- which is ridiculously fast.
- 
- Over-clocking the CPU to extremely high speeds may not work well on
- older PCs. Use with caution. This can *now* be accessed using the F3 &
- F4 keys. F3 will decrease the speed, and F4 will increase the speed.
+<p align=center><img width="400" height="450"
+   src="images/ugima6.jpeg" alt="UG Image 6"></img></p>
+<h4 align=center>Display Tab</h4>
+**Display** is where you set the display type of your Coco 3 emulation.
 
-- **Memory Size** -- Select the memory size for your Coco 3
-    emulation
-  
-  - **128 K** -- The stock Coco 3 memory size.
-  - **512 K** -- Emulates a Coco with the 512k upgrade
-  - **2048 K** -- Emulates Disto's 2 meg memory board
-  - **8192 K** -- Emulates Paul T. Barton's 8 meg memory board
-
-- **CPU** -- This option allows CPU selection for your Coco 3
-  - **Motorola MC6809** -- The standard Color Computer 6809 CPU
-  - **Hitachi HD6309** -- Emulates use of Hitachi's HD68B09 CPU.  Faster
-  than the 6809 with an enhanced instruction set.  This CPU was a popular
-  mod for Coco users in the early 1990s.
-
-- **Display** -- Here you set the display type of your Coco 3
-    emulation.
-
-<p align=center><img src="images/ugima6.jpeg" alt="UG Image 6"></img></p>
-
-- **\[F6\] Monitor Type** -- Select the monitor type you want
-    to emulate.
-  
-  - **RGB** -- Emulates the use of the Tandy CM-8 RGB monitor
-  
-  - **Composite** -- Emulates the use of a composite monitor or TV.
-    
+  - **[F6] Monitor Type** - Select the monitor type you want to emulate.
+  - **RGB** - Emulates the use of the Tandy CM-8 RGB monitor
+  - **Composite** - Emulates the use of a composite monitor or TV.
         Mostly used when "artifact colors" are desired.
-
-- **Frame Skip** -- Selects how many frames to skip in the video
+  - **Frame Skip** - Selects how many frames to skip in the video
     scans. Mostly used for older, slower PCs with cheap graphics cards.
-
-- **Scan Lines** -- used to simulate the scan lines seen in a TV
+  - **Scan Lines** - used to simulate the scan lines seen in a TV
     display.
-
-- **Force Aspect** -- We've finally fixed this feature which will
-    maintain the Color Computer's screen aspect when stretched or
-    enlarged. As of this writing, the "Full Screen" mode will NOT retain
-    it's aspect and will stretch the full width of your computer screen.
-    Italso may affect other windows you may have open. We hope to have
-    this resolved soon.
-
-- **Remember Screen Size (New)** -- VCC will now remember
-    your current screen size from one run to the next. No more resizing
-    the screen each time you run VCC. Unchecking this box will force VCC
+  - **Force Aspect** - Maintain the Color Computer's screen aspect when
+    stretched or enlarged. The "Full Screen" mode might NOT retain it's
+    aspect and will stretch the full width of your computer screen.
+  - **Remember Screen Size** - VCC will remember your current screen 
+    size from one run to the next. Unchecking this box will force VCC
     to always start in the default 640x480 mode, but still allows The
     window to be resized as needed.
-
-- **\[F8\] Throttle Speed** -- Unchecking this box allows VCC
+  - **[F8] Throttle Speed** - Unchecking this box allows VCC
     to run at the full speed of the host PC. This is *not* desirable in
     most situations, but does have its uses. In most cases, Unchecking
     this will cause *double* & *triple* keystrokes.
 
+<p align=center><img width="400" height="450"
+   src="images/ugima7.jpeg" alt="UG Image 7"></img></p>
+<h4 align=center>Keyboard Tab</h4>
+**Keyboard** is used to Select Keyboard Mapping. *(See the "VCC Keyboard Map" 
+section for actual keymaps)*
 
-- **Keyboard** -- Only one selection resides in this tab
-
-<p align=center><img src="images/ugima7.jpeg" alt="UG Image 7"></img></p>
->
- **Select Keyboard Mapping** -- Here you select "Basic" or
- "OS-9" keyboard emulation. (*see* *the* *"VCC* *Keyboard* *Map"*
- *section* *for* *actual* *keymaps*)
-
-- **Coco** your PC's keyboard is mapped in a layout similar to an
+  - **Coco** your PC's keyboard is mapped in a layout similar to an
     actual Coco 3 keyboard (DECB).
-
-- **Natural** your PC's keyboard is in its "normal" state with the
+  - **Natural** your PC's keyboard is in its "normal" state with the
     exception of a few special keys (later).
+  - **Compact** same as above (PC), but with a few keys altered to
+    compensate for missing keys on laptops.
+  - **Custom** - Use a custom keymap (see "KeyMap Editor")
+  - **Choose File** Choose custom keymap file.  
+  - **Edit** - Edit or create a custom keymap. If this button is pushed
+    "Custom" keymap will be automaticall selected.
 
-- **Compact** same as above (PC), but with a few keys altered to
-    compensate for missing keys on laptops and hopefully in the
-    future\... IPads and Android devices.
+<p align=center><img width="400" height="450"
+   src="images/ugima8.jpeg" alt="UG Image 8"></img></p>
+<h4 align=center>Joysticks Tab</h4>
+**Joysticks** contains controls for using the mouse or keyboard
+as Coco joysticks. There are two panels for settings, one for the Left 
+Joystick and one for the Right Joystick as follows:. 
 
-- **Custom** -- Allows loading of \"NEW\" custom keymaps (see \"KeyMap
-    Editor\")
-  
-  - **Configure Custom Keyboard --** Allows the loading
-    of custom keymaps or editing/creating new keymaps
-    
-    - **Choose File -** Load and exsiting keymap file.
-    
-    - **Edit** - Edit or create a custom keymap file
-  
-  - **Joysticks** -- This tab contains controls for using the mouse
-    or keyboard as Coco joysticks.
-
-<p align=center><img src="images/ugima8.jpeg" alt="UG Image 8"></img></p>
-
- **Left Joystick Input** -- Set's the left joystick emulation.
-
-- Audio -- Disabled. In the future, this is hoped to be used as on the
-    real Color Computer 3 as an *audio* *input* for recording digital 6
-    bit audio just as on the real machine.
-
-- **Joystick** -- This option will only be available if you have a
+  - **Audio** - Disabled. In the future, this is hoped to be used as
+    on the real Color Computer 3 as an *audio* *input* for recording
+    digital 6 bit audio just as on the real machine.
+  - **Joystick** - This option will only be available if you have a
     real PC type joystick plugged into your PC. Your Joystick should
     available through the pull down menu.
-
-- **Mouse** -- Allows use of the PC's mouse as the left Coco 3
-    joystick.
-
-- **Keyboard** -- Allows the user to select custom keyboard keys as
-    the various joystick directional controls.
+  - **Mouse** - Allows use of the PC's mouse as the joystick.
+  - **Keyboard** - Allows the user to select custom keyboard keys as
+    the various joystick directional controls. Keys defined here
+    will not be available for typing.
+  - **Standard** - Standard Tandy joystick emulation
+  - **Tandy Hi-Res** - Tandy Hi-Res interface emulation
+  - **CC Maxx** - CocoMax3 interface emulation
+  - **Show Windows Mouse Pointer in VCC Screen** - If unchecked the windows
+    mouse pointer is hidden while in the Vcc screen. 
   
-  - **Left Emulation Type -** Selectable joystick emulation type
-    - **Standard** - Standard Tandy joystick emulation
-    - **Tandy Hi-Res -** Tandy Hi-Res interface emulation
-    - **CC Maxx -** CocoMax3 interface emulation
-  
-  - **Right Joystick Input** - Same as above but for the right Coco 3
-    joystick port.
-  
-  - **Right Emulation Type** - Same as above but for the right joystick
+<p align=center><img width="400" height="450"
+   src="images/ugima9.jpeg" alt="UG Image 9"></img></p>
+<h4 align=center>Misc Tab</h4>
+**Misc** Sets the cartridge emulation type.
 
-- **Show Windows Mouse Pointer in VCC Screen** - If unchecked the windows
-  mouse pointer is hidden while in the Vcc screen. 
-  
-  
-**Misc** -- Set the cartridge emulation type.
-
-<p align=center><img src="images/ugima9.jpeg" alt="UG Image 9"></img></p>
-
-- **AutoStart Emulation** -- Unchecked starts VCC in an "Off"
+  - **AutoStart Emulation** -- Unchecked starts VCC in an "Off"
     state. You must press "F9" to turn the emulation on. Checked, VCC
     will start with the power "On".
-
-- **AutoStart Cart** -- Unchecked, program paks will not
+  - **AutoStart Cart** -- Unchecked, program paks will not
     "autostart". This simulates "taping" the cartridge detect pin on a
     cart. This is useful for using the Orchestra90 cart emulation for
     stereo sound. I did this same thing on my real Coco to use Orch90
@@ -1361,66 +1261,59 @@ for the Debugger:
     will only autostart when the MPI slot switch is set to the slot in
     which the cart is inserted.
   
-**Tape** -- This tab is for the cassette tape emulation in VCC.  
+<p align=center><img width="400" height="450"
+   src="images/ugima10.jpeg" alt="UG Image 10"></img></p>
+<h4 align=center>Tape Tab</h4>
+**Tape** tab is for the cassette tape emulation in VCC.  
 
-As a note, the BASIC commands "MOTOR ON/OFF" and "AUDIO ON/OFF"
+Note: The BASIC commands "MOTOR ON/OFF" and "AUDIO ON/OFF"
 do not affect the VCC tape recorder as on a real Coco.
 
-<p align=center><img src="images/ugima10.jpeg" alt="UG Image 10"></img></p>
-
- **Browse** -- this button allows you to *browse* your PC for ".cas" or
- ".wav" files of recorded cassette tape format programs. The 2 types
- differ in their formats as follows:
-
-- **wav** - An 8 bit, 44.199 kHz audio recording of the actual cassette
- file. The file MUST be 8 bit & 44.199 kHz (see blow).
-
-- **cas** - A specially encoded, digital representation of the program
- data. This format is much more compact than wav and loads much faster.
-
- WARNING: If you use ".wav" files, be warned, if the ".wav" file is
- *not* recorded in "8-bit, 44,100 kHz", VCC may mangle the file just by
- loading it, you don't even have to "play" it. Most "standard" wave
- files are in 16-bit, 44,199 kHz. These will not work in VCC and even
- if you just browse to them and select them into the tape interface,
- VCC will try to convert them to 8-bit and ruin the file. This issue is
- being looked into. You were warned.
-
-- **Rec** -- Sets the tape emulation to record. The tape will stay
-    on "pause" until you issue a "CSAVE" or "CSAVEM" command from basic.
-
-- **Play** -- Sets the tape player to "play" and as above, stays on
-    pause until a "CLOAD" or "CLOADM" command is issued fro BASIC.
-
-- **Stop** -- This will stop the recorder just as on a real tape deck.
+  - **Browse** -- this button allows you to *browse* your PC for ".cas"
+    or ".wav" files of recorded cassette tape format programs. The 2 
+    types differ in their formats as follows:
+    - **wav** - An 8 bit, 44.199 kHz audio recording of the actual
+      cassette file. The file MUST be 8 bit & 44.199 kHz (see blow).
+    - **cas** - A specially encoded, digital representation of the 
+      program data. This format is much more compact than wav and loads
+      much faster.
+  - **Rec** -- Sets the tape emulation to record. The tape will stay
+     on "pause" until you issue a "CSAVE" or "CSAVEM" command from basic.
+  - **Play** -- Sets the tape player to "play" and as above, stays on
+    pause until a "CLOAD" or "CLOADM" command is issued from BASIC.
+  - **Stop** -- This will stop the recorder just as on a real tape deck.
     It will not respond to any BASIC commands while stopped. The current
     "cas" or "wav" file remains in the buffer.
-
-- **Eject** -- This button closes then "unloads" the tape file from
+  - **Eject** -- This button closes then "unloads" the tape file from
     VCC. You will no longer have access to this file until it's loaded
     again.
-
-- **Rewind** -- This will rewind the "tape" file to the beginning of
+  - **Rewind** -- This will rewind the "tape" file to the beginning of
     the tape.
 
+<span style="color:red"> 
+WARNING: If you use ".wav" files, be warned, if the ".wav" file is
+*not* recorded in "8-bit, 44,100 kHz", VCC may mangle the file just by
+loading it, you don't even have to "play" it. Most "standard" wave
+files are in 16-bit, 44,199 kHz. These will not work in VCC and even
+if you just browse to them and select them into the tape interface,
+VCC will try to convert them to 8-bit and ruin the file. This issue is
+being looked into. You were warned.
+</span>
 
-**BitBanger** -- This tab is the emulated "serial" port on the VCC
-    Coco 3.
+<p align=center><img width="400" height="450"
+   src="images/ugima11.jpeg" alt="UG Image 11"></img></p>
+<h4 align=center>BitBanger Tab</h4>
+**BitBanger** is the emulated "serial" port on the VCC Coco 3.
 
-<p align=center><img src="images/ugima11.jpeg" alt="UG Image 11"></img></p>
-
-- **Open** -- This button "opens" a selected capture file. Any data
+  - **Open** -- This button "opens" a selected capture file. Any data
     sent to the serial port will be sent to this file in raw ASCII
     format.
-
-- **Close** -- This closes the serial capture file.
-
-- **Add LF to CR** -- Checking this item will cause VCC to
+  - **Close** - This closes the serial capture file.
+  - **Add LF to CR** - Checking this item will cause VCC to
     add a Line Feed character to every Carriage Return VCC encounters
     while sending data to the capture file. PC text files use CR/LF as a
     standard where the Coco uses CR alone.
-
-- **Print Monitor Window** -- Opens an extra window panel on
+  - **Print Monitor Window** - Opens an extra window panel on
     your Windows desktop that will display any data sent to the
     bitbanger port.
 
@@ -1430,203 +1323,179 @@ do not affect the VCC tape recorder as on a real Coco.
  the Becker cart into the cartridge slot or a slot in the MPI (Multi
  Pak Interface).
 
-**Cartridge** - The "Cartridge" selection is an emulation of the
-    Coco's cartridge slot in that here, you will insert ROM images or
-    special (included) cartridge dll files emulating various Coco
-    controller carts, such as, the Multipak Interface, Orchestra 90, the
-    FD-502 disk controller, several HD controllers, and the Becker Port
-    cart. ***Each* *cart* *emulation* *may* *or***
-    ***may* *not* *add* *items* *to* *the***
-    ***"Cartridge"* *menu***. I will try to list these additions
-    below. The full description of each cart emulation can be found in
-    the "Loadable Modules" section:
-
 <p align=center><img src="images/ugima12.jpeg" alt="UG Image 12"></img></p>
+<h4 align=center>Cartridge Menu</h4>
 
- *Inserting* *the* *mpi.dll* *module* *into* *the* *emulator*
- *cartridge* *slot* *results* *in* *the* *following* *menu:*
-
-- **mpi.dll** - Tandy Multipak Interface. Allows insertion of up to 4
-    cart dlls
+**Cartridge** - The "Cartridge" selection is an emulation of the
+Coco's cartridge slot in that here, you will insert ROM images or
+special (included) cartridge dll files emulating various Coco
+controller carts, such as, the Multipak Interface, Orchestra 90, the
+FD-502 disk controller, several HD controllers, and the Becker Port
+cart. ***Each cart may add items to the "Cartridge" menu***. Most 
+of these additions are listed below. The full description of each
+cart emulation can be found in the "Loadable Modules" section:
 
 <p align=center><img src="images/ugima13.jpeg" alt="UG Image 13"></img></p>
+<h4 align=center>MPI</h4>
+**mpi.dll** - Tandy Multipak Interface.  *Inserting the mpi.dll module
+into the emulator cartridge slot results in the menu*  The Multipak
+Interface sllows insertion of up to 4 cart dlls
 
-- **MPI Slot 4** - Slot 4 of the MPI (duh!)
-- **MPI Slot 3** - Slot 3 of the MPI
-- **MPI Slot 2** - Slot 2 of the MPI
-- **MPI Slot 1** - Slot 1 of the MPI
-- **MPI Config** - Configures the MPI settings
+  - **MPI Slot 4** - Slot 4 of the MPI (duh!)
+  - **MPI Slot 3** - Slot 3 of the MPI
+  - **MPI Slot 2** - Slot 2 of the MPI
+  - **MPI Slot 1** - Slot 1 of the MPI
+  - **MPI Config** - Configures the MPI settings
 
 <p align=center><img src="images/ugima14.jpeg" alt="UG Image 14"></img></p>
+<h4 align=center>MPI Config</h4>
+**MPI Config** - Display MPI status. Loaded cartridges are shown in the
+"Slot" boxes.  To the right of that is a box that will show information about
+the selected slot.
 
-- **Slot 4** - Browse cart image to load into Slot 4
-- **Slot 3** - Browse cart image to load into Slot 3
-- **Slot 2** - Browse cart image to load into Slot 2
-- **Slot 1** - Browse cart image to load into Slot 1
-
-- **Slot Select** -- Selects the Slot \# to become the *active*
+  - **Slot Select** -- Selects the Slot to become the *active*
     Slot (this action may or may not reset the Coco 3 based on what cart
     is in the slot and your cartridge settings in the Misc tab)
 
-- **Persistent Pak Images (New)** -- Allows VCC to
+  - **Persistent Pak Images (New)** -- Allows VCC to
     *remember* what carts you have selected and reload them each time
     you run VCC. This function is still a little wonky, but works unless
     you remove the MPI and reinsert it.
 
-
-- *Inserting* *these* *cart* *images* *into* *the* *MPI* *slots* *or*
-    *the* *Cartridge* *slot* *results* *in* *the* *following* *menu*
-    *additions:*
-
-- **fd502.dll** - Tandy FD-502 Disk controller
-
 <p align=center><img src="images/ugima15.jpeg" alt="UG Image 15"></img></p>
+<h4 align=center>FD-502</h4>
+**FD-502 Drive 0, 1, 2, 3** This menu is added when fd502.dll is inserted
+into an MPI slot or the Cartridge slot.
 
-- **FD-502 Drive 0** - Manage virtual disk images (.dsk) in
-    the drive slots
-  
-  - **Insert -** Insert an a disk image from your PC\'s folders
-    - Optionally, typing a name into any Drive \"Insert\"
-      selection when there is no disk of that name in your folder,
-      will bring up the \"Disk Insert Image\" menu in which you
-      can create a new disk of that name.
+  - **Insert** Drings up a file browser where the disk image file
+    (.dsk) can be choosen by pushing the OPEN button. Typing a non 
+    existing image name into the File Name field
+    when will bring up the "Insert Disk Image" menu (next figure)
+    in which you can create a new disk of that name.
+  - **Eject** Eject the current disk image.
 
 <p align=center><img src="images/ugima16.jpeg" alt="UG Image 16"></img></p>
+<h4 align=center>New disk</h4>
+**New Disk Image** Here you can specify the image type and track count
+  for a new disk image and VCC will create the file for you
 
-- **Image Type** - Select the virtual disk image type
   - **DMK** - DMK virtual disk image type
   - **JVC** - JVC virtual disk imagetype (preferred)
   - **VDK** - VDK virtual disk image type
-
-- **Tracks** - Select the number of tracks on your virtual disk image
   - **35** - Creates a 35 track virtual disk image
   - **40** - Creates a 40 track virtual disk image
   - **80** - Creates an 80 track virtual disk image
+  - **Double Sided** - Checking this creates a double sided disk
 
-- **Double Sided** - Checking/unchecking this determines if your
-    virtual disk image is single or double sided
-
-
-- **Eject -** Eject the current disk image
-
-
-- **FD-502 Drive 1 -** "Same as above\"
-
-- **FD-502 Drive 2 -** \"Same as above\"
-
-- **FD-502 Drive 3 -** \"Same as above\"
-
-- **FD-502 Config** - Configuration of the FD-502 controller
+Push "Yes" to confirm your choices or "No" to cancel.  Vcc does not
+format the new disk for you - the disk must still be formatted using
+DECB (dskini) or OS9/NitrOS9 (format) commands.
 
 <p align=center><img src="images/ugima17.jpeg" alt="UG Image 17"></img></p>
+<h4 align=center>FD-502 Config</h4>
+**FD-502 Config** Configuration of the FD-502 controller.
 
-  - **DOS Image** -- Selects what DOS rom is to be used
-  
-  - **External ROM Image** -- Loads an external DOS ROM
-    (HDBDOS, RGBDOS, etc)
+The "Dos Image" section allows you to select the ROM image to access 
+the disk:
 
-  - **Disk BASIC** -- Use the DECB ROM
-
-  - **RGB DOS** -- Uses the included RGBDOS ROM for use with
+  - **External ROM Image** - Loads an external ROM
+  - **Disk BASIC** - Use the DECB (Disk Extended Color Basic) ROM.
+  - **RGB DOS** - Uses the included RGBDOS ROM for use with
     "harddisk.dll"
 
-  - **OverClock Disk Drive** -- Checked, allows VCC to use
+If "External ROM Image" is selected the "External Disk ROM Image"
+file name field and "Browse" button can be used to select the rom 
+file to use.
+
+  - **OverClock Disk Drive** - Checked, allows VCC to use
     it's virtual drives at PC speeds. Unchecked, simulates normal
     Coco drive speeds. (default is ON)
-
-  - **Persistent Disk Images** -- Forces VCC to load the
+  - **Persistent Disk Images** - Forces VCC to load the
     last disk used when booting VCC (default is ON)
-
-  - **Clock at 0xFF50-51** -- Moves the RTC port to
-    \$FF50-\$FF51 for use with some Hard Drive controllers (default
+  - **Clock at 0xFF50-51** - Moves the RTC port to
+    $FF50-$FF51 for use with some Hard Drive controllers (default
     is On)
 
-  - **Physical Disks** -- Originally meant to use the old
-    FDRAWREAD driver for Windows that allowed VCC to read/write to
-    real Coco floppy disks. I doubt any modern PC's can access these
-    disks any longer due to a change in format with the introduction
-    of the High Density 1.44meg floppy disk. This function most
-    likely be removed in the future.
-    - **A** -- Selects Physical Drive A
-    - **B** -- Selects Physical Drive B
+The "Physical Disks" section was meant to use the old FDRAWREAD 
+driver for Windows that allowed VCC to read/write to real Coco floppy
+disks. I doubt any modern PC's can access these disks any longer due
+to a change in format with the introduction of the High Density 1.44meg
+floppy disk. This function most likely be removed in the future.
 
-  - **External Disk ROM Image** -- Selects the External
-    Disk ROM image to use as an alternative Disk Operating System.
-
-  - **Browse** -- Browse to select the desired External Disk ROM
-    Image to be used
-
-- **harddisk.dll** - Hard drive emulation
+  - **A** -- Selects Physical Drive A
+  - **B** -- Selects Physical Drive B
 
 <p align=center><img src="images/ugima18.jpeg" alt="UG Image 18"></img></p>
+<h4 align=center>Hard Disk</h4>
+**Hard Disk**  Installing harddisk.dll enables hard disk emulation and 
+adds fields for selecting two harddrive files (.vhd)
 
-- **Hard Drive 0** - Manage hard drive images (.vhd) here
+- **Hard Drive 0, 1** - Manage hard drive images
   
   - **Insert** - Select a VHD image to mount
+  - **Eject** - Eject the current VHD image
 
 <p align=center><img src="images/ugima19.jpeg" alt="UG Image 19"></img></p>
+<h4 align=center>Create Hard Disk Image</h4>
 
-Optionally, typing a name into any VHD "Insert" selection when there is
-no disk of that name in your folder, will bring up the "Create Hard Disk
-Image" menu in which you can create a new VHD of that name.
+If a non existing file is typed into a VHD "Insert" selection Vcc will 
+bring up the "Create Hard Disk Image" menu in which you can create a new
+VHD of that name.
 
-- **Create New File** - Creates the specified VHD
+  - **Create New File** - Creates the specified VHD
      the specified size in the selected directory
-- **Cancel** - Cancels the operation
-- **Initial Disk Size** - Input the size (in Kilobytes) that you want
-  for your VHD. The default size is 132,480k, which is the standard
-  size for an HDBDOS HD with 256 RSDOS disks and a (aproximately) 
-  92meg OS-9 HD, with HDBDOS set at an offset of \$5A000. This size can
-  be changed to any size you want, but remember to set your OS-9 HD 
-  driver to accomidate your VHD size.
-- **Eject** - Eject the current VHD image
+  - **Cancel** - Cancels the operation
+  - **Initial Disk Size** - Input the size (in Kilobytes) that you want
+    for your VHD. The default size is 132,480k, which is the standard
+    size for an HDBDOS HD with 256 RSDOS disks and a (aproximately) 
+    92meg OS-9 HD, with HDBDOS set at an offset of \$5A000. This size can
+    be changed to any size you want, but remember to set your OS-9 HD 
+    driver to accomidate your VHD size.
 
-- **Hard Drive 1** - Same as above
-
-
-- **SuperIDE.dll** - Glenside IDE / SuperIDE emulation for using CF
-    card images
+When VHD files are created by Vcc they still need to be formatted using the
+appropriate utility in DECB or OS9/NitrOS9.
 
 <p align=center><img src="images/ugima20.jpeg" alt="UG Image 20"></img></p>
+<h4 align=center>SuperIDE</h4>
+**SuperIDE.dll** - Glenside IDE / SuperIDE emulation for using CF
+  card images
 
-- **IDE Master** - Insert CF (master) card image here (.img)
-- **IDE Slave** - Insert 2^nd^ (slave) CF card image here
+  - **IDE Master** - Insert CF (master) card image here (.img)
+  - **IDE Slave** - Insert 2^nd^ (slave) CF card image here
 
 <p align=center><img src="images/ugima21.jpeg" alt="UG Image 21"></img></p>
-
-- **IDE Config -** IDE interface configuration settings
-
-
-**orch90.dll** - Orchestra 90 Music cart.  (no options)
-
-**becker.dll** - Becker Port emulation for DriveWire4 and TCP
-    communication
+<h4 align=center>IDE Config</h4>
+**IDE Config** IDE interface configuration settings
 
 <p align=center><img src="images/ugima22.jpeg" alt="UG Image 22"></img></p>
-
-- DriveWire Server - Becker Port configuration for DW4
+<h4 align=center>Becker Port</h4>
+**becker.dll** - Becker Port emulation for DriveWire4 TCP communication
 
 <p align=center><img src="images/ugima23.jpeg" alt="UG Image 23"></img></p>
-
-**GMC.dll** -- Emulates John Linville's "Game Master Cart" (GMC) for
-    custom game cart design with "Syd" type sound & music. **This**
-    **Cart is still experimental, so please**
-    **report any problems.**
+<h4 align=center>DriveWire</h4>
+**DriveWire Server** Becker Port configuration for DW4
+Server address and port are specified here.  Defaults are 127.0.0.1 
+(localhost) and 65504.  The port number must match that used by the 
+Drivewire server to communicate with the Becker Port. This a different
+port than that used by other external applications to communicate with the 
+Server.
 
 <p align=center><img src="images/ugima24.jpeg" alt="UG Image 24"></img></p>
+<h4 align=center>GMC</h4>
+**GMC** - GMC.dll Emulates John Linville's "Game Master Cart" (GMC) for
+custom game cart design with "Syd" type sound & music.The "Select GMC ROM"
+itme is used to find and insert the GMC compatible game/sound ROM.
 
-- Select GMC ROM -- Select and insert the GMC compatible game/sound
-    ROM.
-
-- **acia.dll -** Emulates the Tandy RS-232 pak and Modem pak
-    (WIP). Inserting this cart will cause the \"Acia Config\" item to be
-    added to the menu
+**This Cart is still experimental, so please report any problems.**
 
 <p align=center><img src="images/ugima25.jpeg" alt="UG Image 25"></img></p>
-
-- **ACIA Config -** Opens the acia config dialog box
+<h4 align=center>ACIA</h4>
+- **ACIA** Acia.dll emulates the Tandy RS-232 pak and Modem pak (WIP). 
+Inserting this cart causes the "Acia Config" item to be added to the menu
 
 <p align=center><img src="images/ugima26.jpeg" alt="UG Image 26"></img></p>
+<h4 align=center>ACIA Config</h4>
+**ACIA Config** The acia config dialog box
 
   - Type: Select the data flow type needed
     - Console
@@ -1640,20 +1509,31 @@ Image" menu in which you can create a new VHD of that name.
     - $FF6C (Modem Pak)
 
   - Name - Used for selecting port modes (see ACIA section in this manual)
-
   - Port - Used for selecting port modes (see ACIA section in this manual)
-
   - Text - Turns on/off the sending of CR/CRLF in the Read/Write file
   modes.(see ACIA section in this manual)
 
+<div style="page-break-after: always;"></div>
+---
+<p align=center><img width="200" height="400"
+   src="images/ugima32.jpeg" alt="UG Image 32"></img></p>
+<h4 align=center>Help - About</h4>
+**Help - About** The help menu selection has only one choice; **About**.
+This displays the VCC "About Box" which contains the
+    "Function Key" list and Copyright information.
 
-**Debugger** - This menu selection opens the VCC Debugger which
-    allows you to view the internal memory contents of your Coco 3. All
-    Debugger windows are accessed through these menu options. Selecting
-    one of these options will open the corresponding window.
+**Debugger** is discussed in the next section.
 
+<div style="page-break-after: always;"></div>
+---
+<h2 align="center">VCC's Debugger</h2>
 <p align=center><img width="600" height="400"
    src="images/ugima27.png" alt="UG Image 27"></img></p>
+
+The Debugger menu allows selection of several debugger windows that allow
+you to view the internal state of your Coco 3. All Debugger windows
+are accessed through these menu options. Selecting one of these 
+options will open the corresponding window.
 
 **Note:** Interrogating the machine's internals and displaying the
 results in real time *may* impact the frame rate of the emulator. On
@@ -1743,19 +1623,8 @@ Processor State - Selecting the Processor State option will show the
  
  Thanks to Mike Rojas for the wonderful Debugger utility!!
 
-- **Help** - This menu selection has only one choice (I hope at some
-    point to add an actual help file):
-  
-  - **About -** Displays the VCC "About Box" which contains the
-    "Function Key" list and Copyright information.
-
-<p align=center><img width="200" height="400"
-   src="images/ugima32.jpeg" alt="UG Image 32"></img></p>
-
- This concludes the "MenuBar" selections and their uses. I hope my
- explanations are helpful to the new VCC user.
-
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Function Keys</h2>
 
 - **F1 & F2** - By default these are mapped to the F1 and F2 keys on
@@ -1812,6 +1681,7 @@ Processor State - Selecting the Processor State option will show the
  **Keyboard Layout**
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Vcc Keyboard Configuration and Key Mapping</h2>
 
  The default VCC keyboard layout tries to resemble the physical layout
@@ -1899,10 +1769,8 @@ DIK_MINUS      1  COCO_MINUS   2 # "-" NitrOS-9
  confined to the head of the file. Entry order may be changed by the
  Edit Custom Key Map dialog.
 
-### Edit Custom Key Map screen
-
 <p align=center><img src="images/ugima33.jpeg" alt="UG Image 33"></img></p>
-
+<h3 align=center>Edit Custom Key Map screen</h3>
  The Edit Custom Key Map screen is activated by clicking the "EDIT"
  button on the configuration menu Keyboard tab. The screen shows a
  virtual CoCo 3 keyboard, a "Host Key" text box, a "Coco Key" text box,
@@ -1937,6 +1805,7 @@ the keymap file when "OK" is pressed and are discarded if "Cancel"
 is.
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">VCC Default Keyboard Layouts</h2>
 
 When the keyboard layout is set to "Coco (DECB)", the PC keyboard is
@@ -1981,12 +1850,12 @@ Modifiers: 0=none, 1=shift, 2=control 3=alt
 <p align=center><img width="100%"
    src="images/ugima53.png" alt="UG Image 53"></img></p>
 
-#### The Status Line
-
- This is a view of the VCC screen showing the "status line".
-
+<div style="page-break-after: always;"></div>
+---
+### The Status Line
 <p align=center><img src="images/ugima34.jpeg" alt="UG Image 34"></img></p>
-
+<h3 align=center>The Status Line</h3>
+ This is a view of the VCC screen showing the "status line".
  The status line contains useful information about the status of the
  emulation.
 
@@ -2008,6 +1877,7 @@ Modifiers: 0=none, 1=shift, 2=control 3=alt
     - Acia status is displayed if the "acia.dll" is loaded
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Configuring VCC</h2>
 
  This section will try to explain the options to configure VCC for
@@ -2134,6 +2004,7 @@ Modifiers: 0=none, 1=shift, 2=control 3=alt
  use with emulators.
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Loadable Modules</h2>
 
  As stated before, the VCC emulator does not know anything about the
@@ -2183,7 +2054,7 @@ Modifiers: 0=none, 1=shift, 2=control 3=alt
  interfaces the currently selected module needs.
 
 <p align=center><img src="images/ugima37.png" alt="UG Image 37"></img></p>
-
+<h3 align=center>MPI</h3>
  This module will add an MPI item to the status line. Following this
  are two numbers. The first is the slot the Chip select signal is
  routed to, The second is the destination of the Spare Select line.
@@ -2305,6 +2176,7 @@ Modifiers: 0=none, 1=shift, 2=control 3=alt
  this distribution.
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">System ROMs</h2>
 
  This installation of VCC comes with the following ROM images
@@ -2386,6 +2258,7 @@ Modifiers: 0=none, 1=shift, 2=control 3=alt
  are the same as used by most Color Computer 3 emulations.
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">The VCC Command Line Options</h2>
 
  VCC allows a couple of command line options. One has been
@@ -2446,6 +2319,7 @@ Modifiers: 0=none, 1=shift, 2=control 3=alt
  will start with your custom config.
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Loading and Saving Custom VCC.ini Files</h2>
 
  Alternately, you can Load/Save custom ini files now from the "File"
@@ -2475,116 +2349,109 @@ Modifiers: 0=none, 1=shift, 2=control 3=alt
  manually or you may ruin your VCC configuration and have to redo it
  from inside VCC.
  
- The format is as follows:
+The following describes the ini file fields
  
- \[Version\]
- 
- Release=VCC x.x (x=version \#)
- 
- \[CPU\]
- 
- DoubleSpeedClock=x (x=speed value 0-255) FrameSkip=x (x=1-6)
- 
- Throttle=x (x=0-1, 0=off, 1=on)
- 
- CpuType=x (x=0-1, 0=MC6809, 1=HD6309)
- 
- MaxOverClock=x (1-256)
- 
- \[Audio\] SndCard=SndCardName
- 
- Rate=x (x=0-3, 0=none, 1=11,025khz, 2=22,050khz, 3=44,100khz)
- 
- \[Video\]
- 
- MonitorType=x (x=0-1, 0=RGB, 1=CMP) Scanlines=x (x=0-1, 0=off, 1=on)
- AllowResize=x (x=0-1, 0=off, 1=on) ForceAspect=x (x=0-1, 0=off, 1=on)
- PaletteType=0
- 
- RememberSize=1 WindowSizeX=1280 WindowSizeY=990
- 
- \[Memory\]
- 
- RamSize=x (0=128k, 1=512k, 2=2048k, 3=8192k)
- 
- ExternalBasicImage=FilePath\\FileName (not normally used)
- 
- \[Misc\] AutoStart=1 CartAutoStart=1 KeyMapIndex=3
- 
- CustomKeyMapFile=C:\\Users\\BPier\\AppData\\Roaming\\VCC\\OS9.keymap
- ShowMousePointer=0
- 
- \[Module\] OnBoot=FilePath\\ROM\\CCC\\DLL\\PAKFilename
- 
- \[LeftJoyStick\]
- 
- UseMouse=x (x=0-1, 0=off, 1=on) Left=x (x=keycode)
- 
- Right=x (x=keycode) Up=x (x=keycode) Down=x (x=keycode) Fire1=x
- (x=keycode) Fire2=x (x=keycode)
- 
- DiDevice=x (x=DeviceName)
- 
- HiRezDevise=x (0-2, 0=none, 1=RS HiRez, 2=CocoMax)
- 
- \[RightJoyStick\]
- 
- UseMouse=x (x=0-1, 0=off, 1=on) Left=x (x=keycode)
- 
- Right=x (x=keycode) Up=x (x=keycode) Down=x (x=keycode) Fire1=x
- (x=keycode) Fire2=x (x=keycode)
- 
- DiDevice=x (x=DeviceName)
- 
- HiRezDevise=x (0-2, 0=none, 1=RS HiRez, 2=CocoMax)
- 
- \[MPI\]
- 
- SWPosition=x (x=0-3 slot number) SLOT1=PakFilePath\\PakFileName
- SLOT2=PakFilePath\\PakFileName SLOT3=PakFilePath\\PakFileName
- SLOT4=PakFilePath\\PakFileName
- 
- \[Hard Drive\] VHDImage=VHDFilePath\\VHDFileName
- VHDImage1=VHDFilePath\\VHDFileName
- 
- \[FD-502\]
- 
- DiskRom=x (x=0-2, 0=ExternalRom, 1=RSDOSRom, 2=RGBDOSRom)
- RomPath=DiskRomPath
- 
- Persist=x (x=0-1, 0=off, 1=on) Disk\#0=DiskFileName1
- Disk\#1=DiskFileName2 Disk\#2=DiskFileName3 Disk\#3=DiskFileName4
- ClkEnable=x (x=0-1, 0=off, 1=on) TruboDisk=x (x=0-1, 0=off, 1=on)
- 
- \[DefaultPaths\] FloppyPath=FloppyPathName
- HardDiskPath=HardDiskPathName MPIPath=MPIPathName
- CassPath=CassPathName PakPath=PakPathName
- 
- SuperIDEPath=HardDrive Pathname
- 
- \[HDBDOS/DW/Becker\]
- 
- DWServerAddr=x.x.x.x (x=Server IP addresss i.e. 127.0.0.1)
- DWServerPort=x (x=server port \# i.e 65504)
- 
- \[Glenside-IDE /w Clock\] Master=IDEMasterImageName
- Slave=IDESlaveImageName
- 
- BaseAddr=x (x=0-3, 0=40, 1=50, 2=60, 3=70)
- 
- ClkEnable=x (x=0-1, 0=off, 1=on) ClkRdOnly= (x=0-1, 0=off, 1=on)
- 
- \[GMC-SN74689\]
- 
- ROM=ROM Image Path/Name
- 
- \[Acia\] AciaBasePort=104 AciaComType=0 AciaComMode=0
- AciaTcpPort=48000 AciaTextMode=0 AciaComPort=COM3
- 
- AciaFileRdPath=AciaFile.txt AciaFileWrPath=AciaFile.txt
- AciaTcpHost=localhost
+[Version]<br>
+Release=x (VCC version)<br>
+
+[CPU]<br>
+DoubleSpeedClock=x (speed value 0-255)<br>
+FrameSkip=x (1-6)<br>
+Throttle=x (x=0-1, 0=off, 1=on)<br>
+CpuType=x (x=0-1, 0=MC6809, 1=HD6309)<br>
+MaxOverClock=x (1-256)<br>
+
+[Audio] SndCard=x (SndCardName)<br>
+Rate=x (x=0-3, 0=none, 1=11,025khz, 2=22,050khz, 3=44,100khz)<br>
+
+[Video]<br>
+MonitorType=x (x=0-1, 0=RGB, 1=CMP) Scanlines=x (x=0-1, 0=off, 1=on)<br>
+AllowResize=x (x=0-1, 0=off, 1=on) ForceAspect=x (x=0-1, 0=off, 1=on)<br>
+PaletteType=0<br>
+RememberSize=1 WindowSizeX=1280 WindowSizeY=990<br>
+
+[Memory]<br>
+RamSize=x (0=128k, 1=512k, 2=2048k, 3=8192k)<br>
+ExternalBasicImage=x (FileDir\\FileName) (not normally used)<br>
+
+[Misc]<br>
+AutoStart=1<br>
+CartAutoStart=1<br>
+KeyMapIndex=3<br>
+CustomKeyMapFile=C:\\Users\\BPier\\AppData\\Roaming\\VCC\\OS9.keymap<br>
+ShowMousePointer=0<br>
+
+[Module] OnBoot=FilePath\\ROM\\CCC\\DLL\\PAKFilename<br>
+
+[LeftJoyStick]<br>
+UseMouse=x (x=0-1, 0=off, 1=on)<br>
+Left=x (x=keycode)<br>
+Right=x (x=keycode)<br>
+Up=x (x=keycode)<br>
+Down=x (x=keycode)<br>
+Fire1=x (x=keycode)<br>
+Fire2=x (x=keycode)<br>
+DiDevice=x (x=DeviceName)<br>
+HiRezDevise=x (0-2, 0=none, 1=RS HiRez, 2=CocoMax)<br>
+
+[RightJoyStick]<br>
+UseMouse=x (x=0-1, 0=off, 1=on) <br>
+Left=x (x=keycode)<br>
+Right=x (x=keycode)<br>
+Up=x (x=keycode)<br>
+Down=x (x=keycode)<br>
+Fire1=x (x=keycode)<br>
+Fire2=x (x=keycode)<br>
+DiDevice=x (x=DeviceName)<br>
+HiRezDevise=x (0-2, 0=none, 1=RS HiRez, 2=CocoMax)<br>
+
+[MPI]<br>
+SWPosition=x (x=0-3 slot number) SLOT1=PakFilePath\\PakFileName<br>
+SLOT2=PakFilePath\\PakFileName SLOT3=PakFilePath\\PakFileName<br>
+SLOT4=PakFilePath\\PakFileName<br>
+
+[Hard Drive] VHDImage=VHDFilePath\\VHDFileName<br>
+VHDImage1=VHDFilePath\\VHDFileName<br>
+
+[FD-502]<br>
+DiskRom=x (x=0-2, 0=ExternalRom, 1=RSDOSRom, 2=RGBDOSRom)<br>
+RomPath=DiskRomPath<br>
+Persist=x (x=0-1, 0=off, 1=on) <br>
+Disk#0=DiskFileName1<br>
+Disk#1=DiskFileName2<br>
+Disk#2=DiskFileName3<br>
+Disk#3=DiskFileName4<br>
+ClkEnable=x (x=0-1, 0=off, 1=on) TruboDisk=x (x=0-1, 0=off, 1=on)<br>
+[DefaultPaths] FloppyPath=FloppyPathName<br>
+HardDiskPath=HardDiskPathName MPIPath=MPIPathName<br>
+CassPath=CassPathName PakPath=PakPathName<br>
+SuperIDEPath=HardDrive Pathname<br>
+
+[HDBDOS/DW/Becker]<br>
+DWServerAddr=x.x.x.x (x=Server IP addresss i.e. 127.0.0.1)<br>
+DWServerPort=x (x=server port # i.e 65504)<br>
+
+[Glenside-IDE /w Clock] Master=IDEMasterImageName<br>
+Slave=IDESlaveImageName<br>
+BaseAddr=x (x=0-3, 0=40, 1=50, 2=60, 3=70)<br>
+ClkEnable=x (x=0-1, 0=off, 1=on) ClkRdOnly= (x=0-1, 0=off, 1=on)<br>
+
+[GMC-SN74689]<br>
+ROM=ROM Image Path/Name<br>
+
+[Acia]<br>
+AciaBasePort=104<br>
+AciaComType=0<br>
+AciaComMode=0<br>
+AciaComPort=COM3<br>
+AciaTcpPort=48000<br>
+AciaTcpHost=localhost<br>
+AciaTextMode=0<br>
+AciaFileRdPath=AciaFile.txt<br>
+AciaFileWrPath=AciaFile.txt<br>
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Disks</h2>
 
 ## Virtual Disks
@@ -2670,6 +2537,7 @@ The staus is interpreted as follows:
 ### The FD502 Configuration Dialog
 
 <p align=center><img src="images/ugima42.png" alt="UG Image 42"></img></p>
+<h3 align="center">FD502 Config</h3>
 
 #### Dos Image
 
@@ -2773,6 +2641,7 @@ Floppy from the menu.
  affect the time of the host computer.
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Becker Port</h2>
 
  DriveWire4 (DW4) has opened the doors to the outside world to the Coco
@@ -2814,6 +2683,7 @@ Floppy from the menu.
  to RGBDOS will also apply to HDBDOS (in most cases).
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Acia Guide</h2>
 
 ### Known Issues
@@ -2861,20 +2731,8 @@ Floppy from the menu.
    70 C=10: GOTO 40
  </pre>
  Console mode is most useful when using Os9 which is described later.
- Radio Shack Deluxe RS232 program Pak
  
- If the file "rs232.rom" is in the Vcc execution directory it will be
- automatically loaded when acia.dll is selected but not started.
- 
- To start it do "EXEC &HE010" from RSDOS command prompt. The rom is a
- copy of the 4K rom from the Radio Shack Deluxe RS232 program Pack. If
- a different ROM is used it must be 4096 bytes long. Note that if
- acia.dll is in a MPI slot but not selected it can still be used but
- the pack rom will not be accessible. To exec the rom type EXEC&HE010
- at the basic prompt. Note that the pak currently has trouble with the
- "goto basic" function which limits its usefulness.  Suggestions for 
- a solution would be appreciated.
- 
+
 ### SC6551 Operation
  
  The sc6551 emulation is controlled one of two blocks of port
@@ -2966,7 +2824,7 @@ Floppy from the menu.
  
  More detail on file read mode can be found later in this document.
 
-### RS232.ROM
+### RS232.ROM 
  
  If the file "rs232.rom" is in the Vcc execution directory it will be
  automatically loaded when acia.dll is selected but not started. (make
@@ -2999,17 +2857,17 @@ Floppy from the menu.
  Additional detail of these modes follows.
  
 #### Console mode
+
+Console mode was initially written to test the Vcc sc6551 interface. It
+turned out to be usefull so it was left in.  If can be very useful when
+using (Nitr)Os9 with the t2 device and associated sc6551 driver. t2 and
+sc6551 must both be loaded at boot (in the boot track) to work properly.
+
+Note that the stock t2 driver assumes the Acia address is FF68.
  
- Console mode can be useful when using (Nitr)Os9 with the t2 device and
- associated sc6551 driver. t2 and sc6551 must both be loaded at boot
- (in the boot track) to work properly. The t2 device and sc6551 driver
- can also be used for ACIA testing purposes, which is why console mode
- was originally created. Note that the stock t2 driver assumes the 
- Acia address is FF68.
- 
- Caution: There can only be one console associated with Vcc. Conflicts
- will occur is the console is used for other purposes, such as for
- debug logging.
+Caution: There can only be one console associated with Vcc. Conflicts
+will occur is the console is used for other purposes, such as for
+debug logging.
  
  /t2 settings for Windows conso1le should be as follows:
  
@@ -3135,6 +2993,7 @@ Floppy from the menu.
  USB to serial adapter and the legacy USBSER driver on windows.
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Known Bugs</h2>
 
  VCC definitely has a few bugs, but some are a little more "evasive"
@@ -3190,6 +3049,7 @@ Floppy from the menu.
     Zambotti.
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Addendum 1 Using wimgtool</h2>
 
  The *"wimgtool-os9.exe" & "wimgtool-rsdos.exe"* virtual disk utilities
@@ -3424,6 +3284,7 @@ Floppy from the menu.
         and the remaining free bytes on the disk image.
 
 <div style="page-break-after: always;"></div>
+---
 <h2 align="center">Addendum 2 Vcc Change Log</h2>
 
 - VCC v2.1.0.8 August/2023
