@@ -1,3 +1,7 @@
+Vcc v2.1.8.2 Nov/2023
+  o Fix File Exit bug (acia.dll i/o threads hang) - EJJ
+  o Convert user guide master (AKA "Welcome to VCC") to markdown - EJJ
+
 Vcc v2.1.8.1 Oct/2023 (2.1.8.0 bug fixes)
   o Fix version numbering - EJJ
   o Make dialogs stay on top and all DLL dialogs close when Vcc does. -EJJ

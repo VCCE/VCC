@@ -3228,6 +3228,16 @@ debug logging.
 ---
 <h2 align="center">Addendum 2 Vcc Change Log</h2>
 
+- VCC v2.1.8.2 Nov/2023
+    - Fix File Exit bug (acia.dll i/o threads hang) - EJJ
+    - Convert user guide master (AKA "Welcome to VCC") to markdown - EJJ
+
+- VCC v2.1.8.1 Oct/2023
+    - Fix version numbering - EJJ
+    - Make dialogs stay on top and all DLL dialogs close when Vcc does. - EJJ
+    - Fix command line quick load bug - EJJ
+    - Add special character fonts for Nitros9
+
 - VCC v2.1.0.8 August/2023
     - Increase VSYNC IRQ delay so MAX-10 sees keystrokes.
     - Corrected some 6309 register instruction issues found by Wally Z.
