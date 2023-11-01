@@ -349,7 +349,7 @@ Checking/Unchecking the boxes determines which components the
 installer will use. These choices are:
 
   - VCC 2.x.x.x Coco 3 Emulator
-     - Support File for the VCC 2.x.xx Coco 3 6809-6309 Emulator
+     - Support File for the VCC 2.x.x.x Coco 3 6809-6309 Emulator
   - Vcc 2.x.x.x Color Computer 3 Manuals
      - Welcome to VCC 2.x.x.x
      - Game Master Cart Info
@@ -393,9 +393,9 @@ Windows version) and installation will continue.
 
 The VCC Color Computer 3 installation is complete.
 
-### *VCC 2.x.xx Installation Zip File*
+### *VCC 2.x.x.x Installation Zip File*
 
-Alternately, you can download the VCC 2.x.xx zip file and install VCC
+Alternately, you can download the VCC 2.x.x.x zip file and install VCC
 as you please. This file will unzip to your desired folder and you
 will have to manually copy files to any destination you choose.
 
@@ -403,7 +403,7 @@ will have to manually copy files to any destination you choose.
 
 The VCC installation package & VCC Zip Package contain these files:
 
-- VCC 2.x.xx Coco 3 Emulator (Installed to the VCC program folder)
+- VCC 2.x.x.x Coco 3 Emulator (Installed to the VCC program folder)
 - Vcc.exe (The VCC emulator itself)
 - wimgtool-os9.exe (OS9 Disk Utility) wimgtool-rsdos.exe (RSDOS Disk
     Utility
@@ -431,10 +431,10 @@ The VCC installation package & VCC Zip Package contain these files:
 - rgbdos.rom (RGBDOS ROM for VCC's harddisk.dll)
 - cyd_gmc.rom (Optional demo rom for the GMC cart)
 - license.txt (License Agreement)
-- ReadMe-2.x.xx.txt (ReadMe file displayed in installation)
-- Vcc 2.x.xx Color Computer 3 Manuals (Installed to the user's
+- ReadMe-2.x.x.x.txt (ReadMe file displayed in installation)
+- Vcc 2.x.x.x Color Computer 3 Manuals (Installed to the user's
  "Documents\\Coco Manuals" folder)
-- Welcome to VCC 2.x.xx.pdf (VCC User's Manual)
+- Welcome to VCC 2.x.x.x.pdf (VCC User's Manual)
 
 <div style="page-break-after: always;"></div>
 <h2 align="center">VCC Quick Start Guide</h2>
@@ -1068,9 +1068,9 @@ the Color Computer 3 system that you remember or maybe the Color Computer
 system you dreamed of having.
 
 <div style="page-break-after: always;"></div>
-<h2 align="center">A More Detailed Explainations of Vcc Options</h2>
+<h2 align="center">A More Detailed Explaination of Vcc Options</h2>
 
-The following pages contain screen shots and with detailed explainations
+The following pages contain screen shots with detailed explainations
 of the various Vcc menus and functions.
 
 <p align=center><img src="images/ugima2.jpeg" alt="UG Image 2"></img></p>
@@ -1103,6 +1103,7 @@ The **File Menu** controls basic operating functions of VCC
 
 <p align=center><img src="images/ugima3.jpeg" alt="UG Image 3"></img></p>
 <h4 align=center>Edit Menu</h4>
+
 The **Edit Menu** enables text editing options for VCC
 
 - **Copy Text:** Copies all text on the VCC/Coco screen (40 & 80
@@ -1119,6 +1120,7 @@ The **Edit Menu** enables text editing options for VCC
 <p align=center><img width="200" height="55"
    src="images/ugima46.png" alt="UG Image 46"></img></p>
 <h4 align=center>Configuration Menu</h4>
+
 The **Configuration Menu** contains only two entries but most "configuration"
 items reside here.
 
@@ -1130,9 +1132,10 @@ items reside here.
     your changes to take place. Clicking "OK" will also finalize your
     choices, but also exits the "Config" menu.
 
-<p align=center><img width="600" height="400"
+<p align=center><img width="400" height="450"
    src=images/ugima4.jpeg alt="UG Image 4"></img></p>
 <h4 align=center>Audio Tab</h4>
+
 **Audio** controls VCC's audio emulation.
 
   - **Output Device** - A pull down menu to select the Windows sound device
@@ -1145,8 +1148,9 @@ items reside here.
 <p align=center><img width="400" height="450"
    src=images/ugima5.jpeg alt="UG Image 5"></img></p>
 <h4 align=center>CPU Tab</h4>
+
 The CPU tab is where you select the CPU type used in VCC and the
-  memory size of your Coco 3 emulation.
+memory size of your Coco 3 emulation.
 
  - **Over-Clocking** - Set CPU clock speed. This can speed up text
    scrolling and graphics functions as well as some aspects of disk
@@ -1170,6 +1174,7 @@ The CPU tab is where you select the CPU type used in VCC and the
 <p align=center><img width="400" height="450"
    src="images/ugima6.jpeg" alt="UG Image 6"></img></p>
 <h4 align=center>Display Tab</h4>
+
 **Display** is where you set the display type of your Coco 3 emulation.
 
   - **[F6] Monitor Type** - Select the monitor type you want to emulate.
@@ -1195,6 +1200,7 @@ The CPU tab is where you select the CPU type used in VCC and the
 <p align=center><img width="400" height="450"
    src="images/ugima7.jpeg" alt="UG Image 7"></img></p>
 <h4 align=center>Keyboard Tab</h4>
+
 **Keyboard** is used to Select Keyboard Mapping. *(See the "VCC Keyboard Map"
 section for actual keymaps)*
 
@@ -1212,6 +1218,7 @@ section for actual keymaps)*
 <p align=center><img width="400" height="450"
    src="images/ugima8.jpeg" alt="UG Image 8"></img></p>
 <h4 align=center>Joysticks Tab</h4>
+
 **Joysticks** contains controls for using the mouse or keyboard
 as Coco joysticks. There are two panels for settings, one for the Left
 Joystick and one for the Right Joystick as follows:
@@ -1235,6 +1242,7 @@ Joystick and one for the Right Joystick as follows:
 <p align=center><img width="400" height="450"
    src="images/ugima9.jpeg" alt="UG Image 9"></img></p>
 <h4 align=center>Misc Tab</h4>
+
 **Misc** Sets the cartridge emulation type.
 
   - **AutoStart Emulation** - Unchecked starts VCC in an "Off"
@@ -1249,6 +1257,7 @@ Joystick and one for the Right Joystick as follows:
 <p align=center><img width="400" height="450"
    src="images/ugima10.jpeg" alt="UG Image 10"></img></p>
 <h4 align=center>Tape Tab</h4>
+
 **Tape** tab is for the cassette tape emulation in VCC.
 
 Note: The BASIC commands "MOTOR ON/OFF" and "AUDIO ON/OFF"
@@ -1288,6 +1297,7 @@ being looked into. You were warned.
 <p align=center><img width="400" height="450"
    src="images/ugima11.jpeg" alt="UG Image 11"></img></p>
 <h4 align=center>BitBanger Tab</h4>
+
 **BitBanger** is the emulated "serial" port on the VCC Coco 3.
 
   - **Open** - This button "opens" a selected capture file. Any data
@@ -1322,6 +1332,7 @@ cart emulation can be found in the "Loadable Modules" section:
 
 <p align=center><img src="images/ugima13.jpeg" alt="UG Image 13"></img></p>
 <h4 align=center>MPI</h4>
+
 **mpi.dll** - Tandy Multipak Interface.  *Inserting the mpi.dll module
 into the emulator cartridge slot results in the menu*  The Multipak
 Interface sllows insertion of up to 4 cart dlls
@@ -1334,6 +1345,7 @@ Interface sllows insertion of up to 4 cart dlls
 
 <p align=center><img src="images/ugima14.jpeg" alt="UG Image 14"></img></p>
 <h4 align=center>MPI Config</h4>
+
 **MPI Config** - Display MPI status. Loaded cartridges are shown in the
 "Slot" boxes.  To the right of that is a box that will show information about
 the selected slot.
@@ -1349,6 +1361,7 @@ the selected slot.
 
 <p align=center><img src="images/ugima15.jpeg" alt="UG Image 15"></img></p>
 <h4 align=center>FD-502</h4>
+
 **FD-502 Drive 0, 1, 2, 3** This menu is added when fd502.dll is inserted
 into an MPI slot or the Cartridge slot.
 
@@ -1361,6 +1374,7 @@ into an MPI slot or the Cartridge slot.
 
 <p align=center><img src="images/ugima16.jpeg" alt="UG Image 16"></img></p>
 <h4 align=center>New disk</h4>
+
 **New Disk Image** Here you can specify the image type and track count
   for a new disk image and VCC will create the file for you
 
@@ -1378,6 +1392,7 @@ DECB (dskini) or OS9/NitrOS9 (format) commands.
 
 <p align=center><img src="images/ugima17.jpeg" alt="UG Image 17"></img></p>
 <h4 align=center>FD-502 Config</h4>
+
 **FD-502 Config** Configuration of the FD-502 controller.
 
 The "Dos Image" section allows you to select the ROM image to access
@@ -1410,6 +1425,7 @@ disks. This function most likely be removed in the future.
 
 <p align=center><img src="images/ugima18.jpeg" alt="UG Image 18"></img></p>
 <h4 align=center>Hard Disk</h4>
+
 **Hard Disk**  Installing harddisk.dll enables hard disk emulation and
 adds fields for selecting two harddrive files (.vhd)
 
@@ -1440,6 +1456,7 @@ appropriate utility in DECB or OS9/NitrOS9.
 
 <p align=center><img src="images/ugima20.jpeg" alt="UG Image 20"></img></p>
 <h4 align=center>SuperIDE</h4>
+
 **SuperIDE.dll** - Glenside IDE / SuperIDE emulation for using CF
   card images
 
@@ -1448,14 +1465,17 @@ appropriate utility in DECB or OS9/NitrOS9.
 
 <p align=center><img src="images/ugima21.jpeg" alt="UG Image 21"></img></p>
 <h4 align=center>IDE Config</h4>
-**IDE Config** IDE interface configuration settings
+
+**IDE Config** - IDE interface configuration settings
 
 <p align=center><img src="images/ugima22.jpeg" alt="UG Image 22"></img></p>
 <h4 align=center>Becker Port</h4>
+
 **becker.dll** - Becker Port emulation for DriveWire4 TCP communication
 
 <p align=center><img src="images/ugima23.jpeg" alt="UG Image 23"></img></p>
 <h4 align=center>DriveWire</h4>
+
 **DriveWire Server** Becker Port configuration for DW4
 Server address and port are specified here.  Defaults are 127.0.0.1
 (localhost) and 65504.  The port number must match that used by the
@@ -1465,6 +1485,7 @@ Server.
 
 <p align=center><img src="images/ugima24.jpeg" alt="UG Image 24"></img></p>
 <h4 align=center>GMC</h4>
+
 **GMC** - GMC.dll Emulates John Linville's "Game Master Cart" (GMC) for
 custom game cart design with "Syd" type sound & music.The "Select GMC ROM"
 itme is used to find and insert the GMC compatible game/sound ROM.
@@ -1473,11 +1494,13 @@ itme is used to find and insert the GMC compatible game/sound ROM.
 
 <p align=center><img src="images/ugima25.jpeg" alt="UG Image 25"></img></p>
 <h4 align=center>ACIA</h4>
-- **ACIA** Acia.dll emulates the Tandy RS-232 pak and Modem pak (WIP).
+
+**ACIA** Acia.dll emulates the Tandy RS-232 pak and Modem pak (WIP).
 Inserting this cart causes the "Acia Config" item to be added to the menu
 
 <p align=center><img src="images/ugima26.jpeg" alt="UG Image 26"></img></p>
 <h4 align=center>ACIA Config</h4>
+
 **ACIA Config** The acia config dialog box
 
   - Type: Select the data flow type needed
@@ -1500,6 +1523,7 @@ Inserting this cart causes the "Acia Config" item to be added to the menu
 <p align=center><img width="200" height="400"
    src="images/ugima32.jpeg" alt="UG Image 32"></img></p>
 <h4 align=center>Help - About</h4>
+
 **Help - About** The help menu selection has only one choice; **About**.
 This displays the VCC "About Box" which contains the
     "Function Key" list and Copyright information.
@@ -1750,7 +1774,8 @@ DIK_MINUS      1  COCO_MINUS   2 # "-" NitrOS-9
 
 <p align=center><img src="images/ugima33.jpeg" alt="UG Image 33"></img></p>
 <h3 align=center>Edit Custom Key Map screen</h3>
- The Edit Custom Key Map screen is activated by clicking the "EDIT"
+
+The Edit Custom Key Map screen is activated by clicking the "EDIT"
  button on the configuration menu Keyboard tab. The screen shows a
  virtual CoCo 3 keyboard, a "Host Key" text box, a "Coco Key" text box,
  and three buttons:
@@ -1829,12 +1854,15 @@ Modifiers: 0=none, 1=shift, 2=control 3=alt
    src="images/ugima53.png" alt="UG Image 53"></img></p>
 
 <div style="page-break-after: always;"></div>
+
 ### The Status Line
+
 <p align=center><img src="images/ugima34.jpeg" alt="UG Image 34"></img></p>
 <h3 align=center>The Status Line</h3>
- This is a view of the VCC screen showing the "status line".
- The status line contains useful information about the status of the
- emulation.
+
+This is a view of the VCC screen showing the "status line".
+The status line contains useful information about the status of the
+emulation.
 
  - Current frame skip setting. It means draw every nth frame. So 1 is
     every frame , 2 is every other frame etc.
@@ -2034,6 +2062,7 @@ Modifiers: 0=none, 1=shift, 2=control 3=alt
 
 <p align=center><img src="images/ugima37.png" alt="UG Image 37"></img></p>
 <h3 align=center>MPI</h3>
+
  This module will add an MPI item to the status line. Following this
  are two numbers. The first is the slot the Chip select signal is
  routed to, The second is the destination of the Spare Select line.
