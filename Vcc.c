@@ -302,14 +302,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
 				    break;
 
-
+				case ID_FILE_EXIT:
 				case IDOK:
 					SendMessage (hWnd, WM_CLOSE, 0, 0);
-					break;
-
-				case ID_FILE_EXIT:
-					BinaryRunning=0;
-					UnloadDll();
 					break;
 
 				case ID_FILE_RESET:
