@@ -1,7 +1,8 @@
-
 <h2 align="center">Vcc Change Log</h2>
 
 - VCC v2.1.8.2 Nov/2023
+    - Fixed 6309 TFM to inc/dec source register before write - James Rye
+    - Convert ReleaseNotes (this) to markdown - EJJ
     - Corrected Debugger DP register display - EJJ
     - Added "Set PC" button to Debugger Processor Window - EJJ
     - Fix File Exit bug (acia.dll i/o threads hang) - EJJ

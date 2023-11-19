@@ -1548,26 +1548,31 @@ the debugger windows closed until you need them. When the windows are
 closed, the emulator's framerate are not impacted.
 
 <p align=center><img src="images/ugima28.jpeg" alt="UG Image 28"></img></p>
-Memory Display - Selecting the memory display option will present the
+**Memory Display** - Selecting the memory display option will present the
 64KB processor space. All values in the memory display are updated in
 real time.
 
-Processor State - Selecting the Processor State option will show the
-    internals of the CPU. All values displayed are updated in real
-    time.Breakpoints - Selecting the breakpoints option will allow you
-    to load an LWASM source listing and set breakpoints.
+**Processor State** - Selecting the Processor State option will show the
+internals of the CPU. All values displayed are updated in real
+time. Use the "Halt", "Run", and "Step" buttons to control CPU state.
+The "SetPC" box and button can be used to change the program counter to 
+a specific hex address.  The CPU must be halted to change the PC. 
 
 <p align=center><img width="600" height="400"
    src="images/ugima30.jpeg" alt="UG Image 30"></img></p>
 
-**Source Listing** - The Source Debugger can only deal with certain
-    source listings. Currently the breakpoints window will only accept
-    *LWASM Source Listings*. To create such as listing, you must
-    specific this option on the LWASM command line.
+**Breakpoints** - Selecting the breakpoints option will allow you
+    to load an LWASM source listing and set breakpoints.
+
+The Source Debugger can only deal with certain source listings. Currently the 
+breakpoints window will only accept  *LWASM Source Listings*. To create such as 
+listing, you must specificy this option on the LWASM command line.
 
  Here is an example command line:
 
+<pre>
  lwasm \--format=decb \--list=sr3.lst \--output=sr3.bin sr3.asm
+</pre>
 
  This produces a listing file like this:
 
@@ -1605,10 +1610,10 @@ Processor State - Selecting the Processor State option will show the
  window will try its best to stay relevant to the area of the code
  being executed.
 
-- **MMU Monitor** - Selecting the MMU Monitor option will allow you to
-    see the current state of the Memory Management Unit (MMU). This
-    device handles the mapping of the machine's real memory (128KB or
-    512KB in most CoCo3s) to the CPU's 64KB memory space.
+**MMU Monitor** - Selecting the MMU Monitor option will allow you to
+see the current state of the Memory Management Unit (MMU). This
+device handles the mapping of the machine's real memory (128KB or
+512KB in most CoCo3s) to the CPU's 64KB memory space.
 
  On a CoCo3, the MMU has two sets of mappings of real memory to CPU
  memory: MAP 0 and MAP
