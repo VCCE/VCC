@@ -318,6 +318,23 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		case WM_COMMAND:
 			switch (LOWORD(wParam))
 			{
+			case IDC_BTN_SET_PC:
+				if (EmuState.Debugger.IsHalted())
+				{
+					char buf[16];
+					GetWindowText(GetDlgItem(hDlg, IDC_EDIT_PC_ADDR), buf, 8);
+					char *eptr;
+					long val = strtol(buf,&eptr,16);
+					if (*buf == '\0' || *eptr != '\0' || val < 0 || val > 65535)
+					{
+						MessageBox(hDlg,"Invalid hex address","Error",IDOK);
+					} else {
+						CPUForcePC(val & 0xFFFF);
+					}
+				} else {
+					MessageBox(hDlg,"CPU must be halted to change PC","Error",IDOK);
+				}
+				break;
 			case IDC_BTN_CPU_HALT:
 				EmuState.Debugger.QueueHalt();
 				break;

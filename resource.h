@@ -370,6 +370,8 @@
 #define IDC_TRACE_TIMING                2129
 #define IDC_SHOW_EMU_TRACE              2130
 #define IDC_SHOW_SCN_TRACE              2131
+#define IDC_BTN_SET_PC                  2132
+#define IDC_EDIT_PC_ADDR                2133
 #define ID_FILE_EXIT                    40002
 #define IDM_HELP_ABOUT                  40003
 #define ID_FILE_RUN                     40004
@@ -418,7 +420,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        175
 #define _APS_NEXT_COMMAND_VALUE         40044
-#define _APS_NEXT_CONTROL_VALUE         2132
+#define _APS_NEXT_CONTROL_VALUE         2140
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
