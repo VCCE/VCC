@@ -2523,11 +2523,11 @@ void Tfm1(void)
 		InvalidInsHandler();
 		return;
 	}
-
+  
   temp8 = MemRead8(*xfreg16[Source]);
+  (*xfreg16[Source])++;
   MemWrite8(temp8, *xfreg16[Dest]);
   (*xfreg16[Dest])++;
-  (*xfreg16[Source])++;
   W_REG--;
 	CycleCounter += 3;
 	PC_REG -= 2;
@@ -2553,9 +2553,10 @@ void Tfm2(void)
 	}
 
   temp8 = MemRead8(*xfreg16[Source]);
+  (*xfreg16[Source])--;
   MemWrite8(temp8, *xfreg16[Dest]);
   (*xfreg16[Dest])--;
-  (*xfreg16[Source])--;
+
   W_REG--;
 	CycleCounter+=3;
 	PC_REG-=2;
@@ -2581,8 +2582,9 @@ void Tfm3(void)
 	}
 
   temp8 = MemRead8(*xfreg16[Source]);
-  MemWrite8(temp8, *xfreg16[Dest]);
   (*xfreg16[Source])++;
+  MemWrite8(temp8, *xfreg16[Dest]);
+
   W_REG--;
 	PC_REG -= 2; //Hit the same instruction on the next loop if not done copying
 	CycleCounter += 3;
