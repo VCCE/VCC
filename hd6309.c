@@ -107,6 +107,8 @@ typedef union
 #define Q_REG	q.Reg
 #define V_REG	v.Reg
 #define O_REG	z.Reg
+#define DP_REG	dp.B.msb
+
 static char RegName[16][10]={"D","X","Y","U","S","PC","W","V","A","B","CC","DP","ZERO","ZERO","E","F"};
 
 static wideregister q;
@@ -321,8 +323,7 @@ VCC::CPUState HD6309GetState()
 	VCC::CPUState regs = { 0 };
 
 	regs.CC = getcc();
-	//	FIXME: We do a static_Cast here because it's better than relying on the undefined behavior caused by cpuregister.
-	regs.DP = static_cast<unsigned char>(dp.Reg);
+	regs.DP = DP_REG;
 	regs.MD = mdbits;
 #pragma push_macro("E")
 #pragma push_macro("F")

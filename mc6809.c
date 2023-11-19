@@ -49,6 +49,7 @@ typedef union
 #define S_REG	s.Reg
 #define A_REG	d.B.msb
 #define B_REG	d.B.lsb
+#define DP_REG	dp.B.msb
 
 static cpuregister pc,x,y,u,s,dp,d;
 static unsigned int cc[8];
@@ -130,8 +131,7 @@ VCC::CPUState MC6809GetState()
 	VCC::CPUState regs = { 0 };
 
 	regs.CC = getcc();
-	//	FIXME: We do a static_Cast here because it's better than relying on the undefined behavior caused by cpuregister.
-	regs.DP = static_cast<unsigned char>(dp.Reg);
+	regs.DP = DP_REG;
 	regs.A = A_REG;
 	regs.B = B_REG;
 	regs.X = X_REG;
