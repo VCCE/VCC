@@ -413,7 +413,7 @@ The VCC installation package & VCC Zip Package contain these files:
 - harddisk.dll (Generic Hard Drive Controller) mpi.dll
     (Tandy Multi-Pak Interface)
 - orch90.dll (Orchhestra90cc Program Pack)
-- Ramdisk.dll (256k External Ram Disk Cartridge)
+- Ramdisk.dll (512k External Ram Disk Cartridge)
 - SuperIDE.dll (Cloud9 IDE Hard Drive Controller)
 - GMC.dll (Game Master Cart by John Linville)
 - coco3.rom (the Coco 3 BASIC ROM, auto loaded)
@@ -2129,10 +2129,10 @@ emulation.
 
 ## Ramdisk Cart
 
- NOTE: At the moment, this cart does not seem to function properly. The
- issue is being investigated. The ramdisk worked before conversion to
- VS2015, so it's most likely a syntax problem in the VCC code and should
- be fixed soon
+ NOTE: This cart has port conflicts with fd502.  It will only work if
+ fd502.dll is NOT installed.  This limits it's usefullness.  If there
+ is any interest it could easily be changed to a port range that does 
+ not conflict.
 
  This cart image emulates a 512k. RAM cart. It's very simple to use and
  can give you 512k of extra data storage. To use the RamDisk cart, you
@@ -2154,7 +2154,9 @@ emulation.
  To write &H55 to the above address: (overwrites any existing data at
  that address) POKE &HFF43,&H55
 
- A NitrOS9 driver for this cart would be a very simple project.
+ The contents of the RAMDisk will be lost if VCC is restarted or reset.
+
+ A NitrOS9 driver for this cart would be a simple project.
 
 ## GMC.dll
 
