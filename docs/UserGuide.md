@@ -1,6 +1,15 @@
+
+&nbsp;  
+
+<div style="page-break-after: always;"></div>
+
+&nbsp;  
+
 <p align=center><img src="images/ugima1.jpeg" alt="UG Image 1"></img></p>
 <h2 align="center">Welcome to VCC</h2>
 <h3 align="center">(Virtual Color Computer)</h3>
+
+View documents online: <https://github.com/VCCE/VCC/wiki>
 
 The Color Computer 3 was the last of a line of micro-computers
 designed by, and distributed through Radio Shack stores, released in
@@ -3000,30 +3009,51 @@ debug logging.
  USB to serial adapter and the legacy USBSER driver on windows.
 
 <div style="page-break-after: always;"></div>
-<h2 align="center">Known Bugs</h2>
+<h2 align="center">VCC Bugs</h2>
 
- VCC definitely has a few bugs, but some are a little more "evasive"
- than others.
+VCC definitely has a few bugs, and some are more "evasive" than others.
 
-0. Composite & RGB colors are *not* exactly correct. This is being
-    worked on.
+The CPU is not exactly "cycle accurate". It's just a hair slightly faster 
+than a real CoCo 3 and there are a couple of things that this causes 
+problems with. For example "Popstar Pilot" has a screen flicker and a couple
+of SockMaster's demos will not work correctly. These programs count cycles 
+in the render process and VCC is slightly off in timing. 
 
-0. The CPU is not exactly "cycle accurate". It's just a hair slightly
-    faster than a real CoCo 3 and there are a couple of things that this
-    causes problems in. For example "Popstar Pilot" has a screen flicker
-    and a couple of SockMaster's demos will not work correctly. These
-    programs count cycles in the render process and VCC is slightly off
-    in timing. As soon as we find the timing issue, this will be fixed.
+When using VCC & DriveWire4, sometimes when doing a cold start (F9 twice),
+VCC & DW4 will lose sync, and VCC will have to be restarted.
 
-0. When using VCC & DriveWire4, sometimes when doing a cold start (F9
-    twice), VCC & DW4 will lose sync, and VCC will have to be restarted.
-    This is mostly DW4 related and we don't think VCC is the culprit.
+There's a problem in the disk drive emulation in which IRQs are not being 
+handled correctly. It doesn't bother "normal" use, but if you play around 
+with the drive commands directly via ML, it will show it's nasty head.
 
-0. There's a problem in the disk drive emulation in which IRQs are not
-    being handled correctly. It doesn't bother "normal" use, but if you
-    play around with the drive commands directly via ML, it will show
-    it's nasty head.
+If you know any other bugs in VCC, please report them to the "Issues" page 
+on the VCC GitHub site where you downloaded this installation package.
 
- If you know of any other bugs, please report them to the "Issues" page 
- on the VCC GitHub site where you downloaded this installation package.
+View documents online: <https://github.com/VCCE/VCC/wiki>
 
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
