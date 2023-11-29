@@ -20,31 +20,28 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include "memboard.h"
 
-
-
 union
 {
 	unsigned int Address;
-	struct
-	{
+	struct {
 		unsigned char lswlsb,lswmsb,mswlsb,mswmsb;
 	} Byte;
-} IndexAddress;//BufferAddress;
+} IndexAddress;  //BufferAddress;
 
 static unsigned char *RamBuffer=NULL;
 
 bool InitMemBoard(void)
 {
 	IndexAddress.Address=0;
-	if (RamBuffer!=NULL)
-		free(RamBuffer);
+
+	if (RamBuffer!=NULL) free(RamBuffer);      // Free existing RAM
 	RamBuffer=(unsigned char *)malloc(RAMSIZE);
-	if (RamBuffer==NULL)
-		return(true);
-	memset(RamBuffer,0,RAMSIZE);
-	return(false);
+	if (RamBuffer==NULL) return(true);         // Failed to allocate RAM
+	memset(RamBuffer,0,RAMSIZE);               // Clear the RAM
+	return(false);                             // Success
 }
 
+// Get I/O address
 bool WritePort(unsigned char Port,unsigned char Data)
 {
 	switch (Port)
@@ -72,6 +69,4 @@ unsigned char ReadArray(void)
 {
 	return(RamBuffer[IndexAddress.Address]);
 }
-
-
 

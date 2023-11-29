@@ -71,13 +71,14 @@ extern "C"
 	{
 		switch (Port)
 		{
+		    // Address of RAM disk to read/write 
 			case 0x40:
 			case 0x41:
 			case 0x42:
 				WritePort(Port,Data);
 				return;
 			break;
-
+            // Write to RAM disk
 			case 0x43:
 				WriteArray(Data);
 				return;
@@ -98,6 +99,7 @@ extern "C"
 	{
 		switch (Port)
 		{
+			// Read from RAM disk
 			case 0x43:
 				return(ReadArray());
 			break;
