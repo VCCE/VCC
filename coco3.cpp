@@ -42,6 +42,8 @@ This file is part of VCC (Virtual Color Computer).
 
 //int CPUExeca(int);
 
+#define RENDERS_PER_BLINK_TOGGLE 16
+
 //****************************************
 	static double SoundInterupt=0;
 	static double NanosToSoundSample=SoundInterupt;
@@ -102,7 +104,12 @@ float RenderFrame (SystemState *RFState)
 	static unsigned short FrameCounter=0;
 
 //********************************Start of frame Render*****************************************************
-	SetBlinkState(BlinkPhase);
+
+	// Blink state toggle
+	if (BlinkPhase++ > RENDERS_PER_BLINK_TOGGLE) {
+		TogBlinkState();
+		BlinkPhase = 0;
+	}
 
 	// VSYNC goes Low
 	VSYNC(0);
