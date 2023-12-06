@@ -9511,9 +9511,9 @@ void DrawBottomBoarder32(SystemState *DTState)
 	return;
 }
 
-void TogBlinkState()
+void SetBlinkState(unsigned char Tmp)
 {
-	BlinkState = BlinkState ^ 1;
+	BlinkState=Tmp;
 	return;
 }
 
