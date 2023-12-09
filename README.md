@@ -1,11 +1,11 @@
 # VCC - Virtual Color Computer
-# An emulation of tThe Tandy Color Computer 3 for Windows XP, Windows 7, Windows 8, & Windows 10
+# An emulation of The Tandy Color Computer 3 for Windows XP, Windows 7, Windows 8, & Windows 10
 
 VCC attempts to be an accurate emulation of a "stock" Tandy Color Computer 3 just 
 as you would have bought in a Radio Shack store or Tandy Computer Center in 1986-1992. 
 
 For VCC usage see the User Guide at <https://github.com/VCCE/VCC/wiki>  Also on the
-wiki are release notes and a guide for using legacy Wimgtools from MAME.
+wiki are release notes and a guide for using legacy Wimgtools.
 
 The Color Computer 3 (or the "Coco 3" as it was known by it's users) was the final 
 iteration of a series of computers starting with the "TRS-80 Color Computer" (also 
@@ -42,38 +42,34 @@ usable as possible. Sometimes progress is slow and it looks like nothing is goin
 (and it may not be), but usually, there's plenty going on behind the scenes and we have 
 not committed our current work. Progress is slow, but progress is being made.
 
-VCC version numbering in the past has been some what haphazard. In attempt to remedy this 
-we have decided to codify the Vcc version numbering scheme as follows: The Vcc version 
-number consists of "Vcc-" followed by 4 numbers seperated by dots, for example: 
-"Vcc-2.1.8.1". The first number represents the "fork." Fork one is considered to be 
-the original code from Joseph Forgeone. The current fork is "2". It promises to function
-on Windows XP and Windows 7 operating systems. We might want to add capabilitues that 
-will not work on these older systems. If we do that we will create a third "fork." This 
-will allow us to backport changes from fork 3 code back to fork 2. The second number 
-represents a major version. It will be used if very significant changes are made in the 
-way Vcc functions (not likely happen anytime soon). The third number represents normal 
-releases, typically done one or two times per year. The fourth number represents bug 
-fixes to the release. These are changes to VCC that correct errors and bugs in the 
-intended functionality of the release. Binaries containing these changes will be updated 
-in the affected release files.
+VCC version numbering has recently changed. The version number consists of "Vcc-" followed
+by 4 numbers seperated by dots, for example: "Vcc-2.1.8.2". The first number represents the 
+"fork." Fork one is considered to be the original code from Joseph Forgeone. The current
+fork is "2". It promises to function on Windows XP and Windows 7 operating systems. We 
+might want to add capabilitues that will not work on these older systems. If we do that we
+will create a third "fork." This will allow us to backport changes from fork 3 code back
+to fork 2. The second number represents a major version. It will be used if very significant
+changes are made in the way Vcc functions (not likely happen anytime soon). The third
+number represents normal releases, typically done one or two times per year. The fourth
+number represents bug fixes to the release. These are changes to VCC that correct errors
+and bugs in the intended functionality of the release. Binaries containing these changes
+will be updated in the affected release files.
 
 # Compiling the VCC Sources
-Build Environment - Currently, VCC is compiled in C/C++ using 
-"Microsoft Visual Studio 2015 Community", which is a free download from the MSDN downloads.
-Support Packages - Include "Win x86", & "XP" support packages ("DirectX 9" should be in one 
-of these packages, if not, you must include that as well).  Later versions of Visual Studio
-cannot be used due to the later versions using newer libraries. Later versions will 
-load and compile the VS2015 code fine, but the resulting code will render the sources 
-uncompilable on VS2015 which is what the VCC Development Team is using.
+Currently, VCC is compiled in C/C++ using "Microsoft Visual Studio 2015 Community".  This
+older Visual Studio version is used to maintain compatibility with Windows XP.  You must
+include "Win x86", & "XP" support packages ("DirectX 9" should be in one of these packages,
+if not, you must include that as well).  Later versions of Visual Studio will load and 
+compile the VS2015 code fine, but the resulting code will may not be compatible with what
+the VCC Development Team is using.  
 
 VS2015 requires Windows 7 or greater to install. Check the VS2015 "System Requirements" 
-before trying to install on your system.
+before trying to install on your system. Since Microsoft is no longer supplying a web based
+installer for VS2015 you will have to download an ISO image and install it from that.
 
-As of the current build, the only "extras" needed to compile VCC are the Win32 and WinXP 
-compatibility packages to ensure build compatibility with older versions of Windows. This 
-may change at any time as we are trying to eventually move the code to cross-compile 
-for cross-platform use, making VCC available for Mac and Linux users and not just the 
-Windows users.
+The only extra packages needed to compile VCC are the Win32 and WinXP compatibility packages
+to ensure build compatibility with older versions of Windows. This may change if we move
+the code to cross-compile for Mac and Linux users and not just the Windows users.
 
 Error free compiling any VCC sources other than the "Release" source set is not guaranteed.
 The source code that was used for official releases is available under "Assets" for each release. 
