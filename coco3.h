@@ -46,6 +46,7 @@ void MiscReset(void);
 void PasteBASICWithNew();
 void PasteBASIC();
 void PasteText();
+void QueueText(char *);
 void CopyText();
 void FlipArtifacts();
 unsigned short SetAudioRate (unsigned short);

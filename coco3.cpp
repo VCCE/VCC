@@ -94,6 +94,7 @@ std::string GetClipboardText();
 void HLINE(void);
 void VSYNC(unsigned char level);
 void HSYNC(unsigned char level);
+string CvtStrToSC(string);
 
 using namespace std;
 
@@ -620,11 +621,7 @@ unsigned char SetSndOutMode(unsigned char Mode)  //0 = Speaker 1= Cassette Out 2
 void PasteText() {
 	using namespace std;
 	std::string tmp;
-	string cliptxt, clipparse, lines, out, debugout;
-	char sc;
-	char letter;
-	bool CSHIFT;
-	bool LCNTRL;
+	string cliptxt, clipparse, lines, debugout;
 	int GraphicsMode = GetGraphicsMode();
 	if (GraphicsMode != 0) {
 		int tmp = MessageBox(0, "Warning: You are not in text mode. Continue Pasting?", "Clipboard", MB_YESNO);
@@ -670,8 +667,22 @@ void PasteText() {
 			clipparse += lines;
 		}
 	}
-	cliptxt = clipparse; 
+	PasteIntoQueue(CvtStrToSC(clipparse));
+}
 
+void QueueText(char * text) {
+	using namespace std;
+	std::string str(text);
+	PasteIntoQueue(CvtStrToSC(str));
+}
+
+std::string CvtStrToSC(string cliptxt)
+{
+	std::string out;
+	char sc;
+	char letter;
+	bool CSHIFT;
+	bool LCNTRL;
 	for (size_t pp = 0; pp <= cliptxt.size(); pp++) {
 		sc = 0;
 		CSHIFT = FALSE;
@@ -776,15 +787,13 @@ void PasteText() {
 		case '~': sc = 0x29; CSHIFT = TRUE; break;
 		case '_': sc = 0x0C; CSHIFT = TRUE; break;
 		case 0x09: sc = 0x39; break; // TAB
-		default: sc = static_cast<char>(0xFF);	break;
+		default: sc = -1; break;
 		}
 		if (CSHIFT) { out += 0x36; CSHIFT = FALSE; }
 		if (LCNTRL) { out += 0x1D; LCNTRL = FALSE; }
 		out += sc;
-
 	}
-
-	PasteIntoQueue(out);
+	return out;
 }
 
 std::string GetClipboardText()

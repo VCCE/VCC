@@ -41,7 +41,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "keyboardEdit.h"
 #include "fileops.h"
 #include "Cassette.h"
+#pragma warning(disable:4091)
 #include "shlobj.h"
+#pragma warning(default:4091)
 #include "CommandLine.h"
 #include "logger.h"
 #include <assert.h>

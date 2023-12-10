@@ -75,9 +75,8 @@ static bool DialogOpen=false;
 static unsigned char Throttle=0;
 static unsigned char AutoStart=1;
 static unsigned char Qflag=0;
+static unsigned char Pflag=0;
 static char CpuName[20]="CPUNAME";
-
-char QuickLoadFile[256];         // No real purpose
 
 /***Forward declarations of functions included in this code module*****/
 BOOL				InitInstance	(HINSTANCE, int);
@@ -142,20 +141,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	memset(&CmdArg,0,sizeof(CmdArg));
 	if (strlen(lpCmdLine)>0) GetCmdLineArgs(lpCmdLine);
 
-	if ( strlen(CmdArg.QLoadFile) !=0)
-	{
-		strncpy(QuickLoadFile, CmdArg.QLoadFile, CL_MAX_PATH);
-		QuickLoadFile[CL_MAX_PATH-1]=0;
-		// Rest of this does not accomplish much
-		strcpy(temp1, CmdArg.QLoadFile);
-		PathStripPath(temp1);
-		_strlwr(temp1);
-		temp1[0]=toupper(temp1[0]);
-		strcat (temp1,temp2);
-		strcat(temp1,g_szAppName);
-		strcpy(g_szAppName,temp1);
-	}
-
 	EmuState.WindowSize.x=640;
 	EmuState.WindowSize.y=480;
 	//LoadConfig(&EmuState);
@@ -174,6 +159,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	SetClockSpeed(1);	//Default clock speed .89 MHZ	
 	BinaryRunning = true;
 	EmuState.EmulationRunning=AutoStart;
+
+	if (strlen(CmdArg.PasteText)!=0) {
+		Pflag=255;
+	}
+
 	if (strlen(CmdArg.QLoadFile)!=0)
 	{
 		Qflag=255;
@@ -928,10 +918,16 @@ unsigned __stdcall EmuLoop(void *Dummy)
 				Sleep(1);
 		}
 		FPS=0;
-		if ((Qflag==255) & (FrameCounter==30))
+
+		if ((Qflag==255) && (FrameCounter==32))
 		{
 			Qflag=0;
 			QuickLoad(CmdArg.QLoadFile);
+		}
+
+		if ((Pflag==255) && (FrameCounter==32)) {
+			Pflag=0;
+			QueueText(CmdArg.PasteText);
 		}
 
 		StartRender();
