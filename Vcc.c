@@ -75,6 +75,7 @@ static bool DialogOpen=false;
 static unsigned char Throttle=0;
 static unsigned char AutoStart=1;
 static unsigned char Qflag=0;
+static unsigned char Pflag=0;
 static char CpuName[20]="CPUNAME";
 
 char QuickLoadFile[256];         // No real purpose
@@ -174,6 +175,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	SetClockSpeed(1);	//Default clock speed .89 MHZ	
 	BinaryRunning = true;
 	EmuState.EmulationRunning=AutoStart;
+
+	if (strlen(CmdArg.PasteText)!=0) {
+		Pflag=255;
+	}
+
 	if (strlen(CmdArg.QLoadFile)!=0)
 	{
 		Qflag=255;
@@ -928,10 +934,16 @@ unsigned __stdcall EmuLoop(void *Dummy)
 				Sleep(1);
 		}
 		FPS=0;
-		if ((Qflag==255) & (FrameCounter==30))
+
+		if ((Qflag==255) && (FrameCounter==32))
 		{
 			Qflag=0;
 			QuickLoad(CmdArg.QLoadFile);
+		}
+
+		if ((Pflag==255) && (FrameCounter==32)) {
+			Pflag=0;
+			QueueText(CmdArg.PasteText);
 		}
 
 		StartRender();

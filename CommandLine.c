@@ -60,6 +60,9 @@ This file is part of VCC (Virtual Color Computer).
 // Quick load image file:
 // $ VCC "C:\barney's good image.ima"
 //
+// Auto paste text:
+// $ VCC -p "drive 3: loadm "sigmon6": exec"
+//
 // Errors returned:
 //   CL_ERR_UNKOPT  Unknown option found
 //   CL_ERR_XTRARG  Too many arguments
@@ -77,6 +80,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include <string.h>
 #include "CommandLine.h"
+#include "logger.h"
 
 // Define global command line settings
 struct CmdLineArguments CmdArg;
@@ -92,7 +96,7 @@ static char *NxtTokenPtr;
 // possibly other things.  Variables set by this routine are global and 
 // are defined in CommandLine.h
 //
-// vcc.exe [-d[level]] [-i ConfigFile] [QuickLoadFile] 
+// vcc.exe [-d[level]] [-p text] [-i ConfigFile] [QuickLoadFile] 
 //
 // CmdString:  The third arg to WinMain()
 //-------------------------------------------------------------------
@@ -101,54 +105,59 @@ int GetCmdLineArgs(char *CmdString)
 {
     char *token;      // token pointer (to item in command string)
     int  argnum = 0;  // non-option argument number
+    int  len;         // len of a chr string
 
     // Options that require values need to be known by the parser
-    // to allow seperation between option code and value.  
-    // OPtion codes for these should be placed in the ValueRequired
-    // String.  If the value is optional it can not be seperated from 
-    // the code.  These should not be included in the Valurequired
-    // string.
-
-    static char * ValueRequired = "i";
+    // to allow seperation between option code and value.
+    // -i and -p both require options
+	static char * ValueRequired = "ip";
 
     // Initialize the global variables set by this routine
-	CmdArg.QLoadFile[0] = '\0';
-	CmdArg.IniFile[0] = '\0';
-	CmdArg.Logging = 0;
+    memset(&CmdArg,0,sizeof(CmdArg));
 
     // Get the first token from the command string
     token = ParseCmdString(CmdString,ValueRequired);
-    while (token) {                         
+    while (token) {
 
         // Option?
-        if (*token == '-') {               
+        if (*token == '-') {
             switch (*(token+1)) {
 
-                // "-i" specfies the Vcc configuration file to use.
-                // The value is required and will be found starting
-                // at the third character of the option string.
-				// Default config file is "vcc.ini"
-                case 'i':
-                    strncpy(CmdArg.IniFile,token+2,CL_MAX_PATH);
-                    CmdArg.IniFile[CL_MAX_PATH-1]=0;
-                    break;
+            // "-i" specfies the Vcc configuration file to use.
+            // The value is required and will be found starting
+            // at the third character of the option string.
+            // Default config file is "vcc.ini"
+            case 'i':
+                strncpy(CmdArg.IniFile,token+2,CL_MAX_PATH-1);
+                len = strlen(CmdArg.IniFile);
+                CmdArg.IniFile[len] = '\0';
+                break;
 
-                // "-d[level]" enables logging console and sets log level (default=1)
-                // level is optional. It defaults to 1 and is forced to be
-                // a positive integer 0 to 3.
-                case 'd':
-                    if (*(token+2)) {
-						CmdArg.Logging = atoi(token+2);
-                        if (CmdArg.Logging < 1) CmdArg.Logging = 0;
-                        if (CmdArg.Logging > 3) CmdArg.Logging = 3;
-                    } else {
-						CmdArg.Logging = 1;
-                    }
-                    break;
+            // "-d[level]" enables logging console and sets log level
+            // level is optional. It defaults to 1 and is forced to be
+            // a positive integer 0 to 3.
+            case 'd':
+                if (*(token+2)) {
+                    CmdArg.Logging = atoi(token+2);
+                    if (CmdArg.Logging < 1) CmdArg.Logging = 0;
+                    if (CmdArg.Logging > 3) CmdArg.Logging = 3;
+            } else {
+                CmdArg.Logging = 1;
+            }
+            break;
 
-                // Unknown option code returns an error
-                default:
-                    return CL_ERR_UNKOPT;
+            // "-p text" Auto paste text on startup. '\n' is appended
+            case 'p':
+                strncpy(CmdArg.PasteText,token+2,CL_MAX_PASTE-2);
+                len = strlen(CmdArg.PasteText);
+                CmdArg.PasteText[len] = '\n';
+                CmdArg.PasteText[len+1] = 0;
+                break;
+
+            // Unknown option code returns an error
+            default:
+                return CL_ERR_UNKOPT;
+                break;
             }
 
         // else Positional argument            
@@ -156,21 +165,22 @@ int GetCmdLineArgs(char *CmdString)
         } else { 
             switch (++argnum) {
 
-                // First (currently only) positional arg is Quick Load filename.
-                case 1:
-                    strncpy(CmdArg.QLoadFile,token,CL_MAX_PATH);
-                    CmdArg.QLoadFile[CL_MAX_PATH-1]=0;
-                    break;
+            // First (currently only) positional arg is Quick Load filename.
+            case 1:
+                strncpy(CmdArg.QLoadFile,token,CL_MAX_PATH);
+                CmdArg.QLoadFile[CL_MAX_PATH-1]=0;
+                break;
 
-                // Extra positional argument returns an error
-                default:
-					return CL_ERR_XTRARG;
-            }
+            // Extra positional argument returns an error
+            default:
+                return CL_ERR_XTRARG;
+                break;
+             }
         }
 
         // Get next token
         token = ParseCmdString(NULL,ValueRequired);
-    }            
+    }
     return 0;
 }
 
@@ -179,7 +189,7 @@ int GetCmdLineArgs(char *CmdString)
 //
 // Input string is tokenized using one or more blanks as a separator, excepting 
 // blanks within quotes. If the input String is not null a pointer to the 
-// first token is returned.  Otherwise pointers to subsequent tokens are returned.  
+// first token is returned.  Otherwise pointers to subsequent tokens are returned.
 // When there are no more tokens a null pointer is returned.
 //
 // ValueRequired: String containing option codes that require values.
@@ -213,7 +223,7 @@ char * ParseCmdString(char *CmdString, const char *ValueRequired)
         }
     }
 
-    if (token = GetNextToken()) {      
+    if (token = GetNextToken()) {
         // Check if it is an option token.  If a option value is
         // required and value is seperated make a copy and append
         // next token to it
@@ -221,17 +231,17 @@ char * ParseCmdString(char *CmdString, const char *ValueRequired)
             if (strchr(ValueRequired,token[1])) {
                 if ((NxtTokenPtr[0] != '\0') && (NxtTokenPtr[0] != '-')) {
                     if (value = GetNextToken()) {  
-                        strcpy(option,token);      
-                        strcat(option,value);       
+                        strcpy(option,token);
+                        strcat(option,value);
                         return option;
                     }
                 }
             }
-        }     
+        }
     }
     return token;   // null, positional argument, or option with no value
 }
-   
+
 //-------------------------------------------------------------------
 // Terminate token, find next token, return pointer to current 
 //-------------------------------------------------------------------
@@ -255,14 +265,14 @@ char *GetNextToken ()
 
         // Skip past extra separaters to start of next
         while (*NxtTokenPtr == SEPMARK) NxtTokenPtr++; 
-    }  
+    }
 
-	// Strip leading and trailing quotes from token
-	if (token[0] == '\"') {
-		token++;
-		int n = strlen(token);
-		if ((n > 0) && (token[n-1] == '\"')) token[n-1] = '\0';
-	}
+    //Strip leading and trailing quotes from token
+    if (token[0] == '"') {
+        token++;
+        int n = strlen(token);
+        if ((n > 0) && (token[n-1] == '"')) token[n-1] = '\0';
+    }
 
     // Return address of current token
     return token;
