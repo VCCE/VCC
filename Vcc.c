@@ -78,8 +78,6 @@ static unsigned char Qflag=0;
 static unsigned char Pflag=0;
 static char CpuName[20]="CPUNAME";
 
-char QuickLoadFile[256];         // No real purpose
-
 /***Forward declarations of functions included in this code module*****/
 BOOL				InitInstance	(HINSTANCE, int);
 LRESULT CALLBACK	About			(HWND, UINT, WPARAM, LPARAM);
@@ -142,20 +140,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	// Parse command line
 	memset(&CmdArg,0,sizeof(CmdArg));
 	if (strlen(lpCmdLine)>0) GetCmdLineArgs(lpCmdLine);
-
-	if ( strlen(CmdArg.QLoadFile) !=0)
-	{
-		strncpy(QuickLoadFile, CmdArg.QLoadFile, CL_MAX_PATH);
-		QuickLoadFile[CL_MAX_PATH-1]=0;
-		// Rest of this does not accomplish much
-		strcpy(temp1, CmdArg.QLoadFile);
-		PathStripPath(temp1);
-		_strlwr(temp1);
-		temp1[0]=toupper(temp1[0]);
-		strcat (temp1,temp2);
-		strcat(temp1,g_szAppName);
-		strcpy(g_szAppName,temp1);
-	}
 
 	EmuState.WindowSize.x=640;
 	EmuState.WindowSize.y=480;
