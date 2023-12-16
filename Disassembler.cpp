@@ -183,42 +183,45 @@ void Disassemble(unsigned short from, unsigned short to)
     VCC::CPUState state = {};
 
     std::string lines = {};
+    unsigned char opcd;
+
     unsigned short PC = from;
     while (PC < to) {
 
+        unsigned short addr = PC;
+        trace = {};
+        state.PC = addr;
+
         // Get information for opcode or extended opcode
-        OpInf = OpCdTbl->Page1OpCodes[MemRead8(PC)];
+        opcd = MemRead8(addr);
+        OpInf = OpCdTbl->Page1OpCodes[opcd];
+        trace.bytes.push_back(opcd);
         if (OpInf.mode == OpCodeTables::AddressingMode::OpPage2) {
-            OpInf = OpCdTbl->Page2OpCodes[MemRead8(PC+1)];
+            opcd = MemRead8(addr+1);
+            OpInf = OpCdTbl->Page2OpCodes[opcd];
+            trace.bytes.push_back(opcd);
         } else if (OpInf.mode == OpCodeTables::AddressingMode::OpPage3) {
-            OpInf = OpCdTbl->Page3OpCodes[MemRead8(PC+1)];
+            opcd = MemRead8(addr+1);
+            OpInf = OpCdTbl->Page3OpCodes[opcd];
+            trace.bytes.push_back(opcd);
         }
+        trace.instruction = OpInf.name;
 
         // Use ProcessHeuristics to decode operands.  Kludgey
         // but gets it done without creating new a new method
-        // in OpCodeTables
-        state.PC = PC;
-        trace = {};
-        trace.bytes.push_back(OpInf.opcode);
+        OpCdTbl->ProcessHeuristics(OpInf, state, trace);
 
-        if (!OpCdTbl->ProcessHeuristics(OpInf, state, trace)) {
-            OpInf.numbytes = 1;
-            OpInf.name = "???";
-            trace.operand = "";
-        }
+        unsigned short inslen = (OpInf.numbytes > 0) ? OpInf.numbytes : OpInf.oplen;
+
         // Use sprintf to format hex for dump
-        std::string HexDmp;
         char cstr[8];
-        sprintf(cstr,"%04X\t",PC);
+        std::string HexDmp = {};
+        sprintf(cstr,"%04X\t",addr);
         HexDmp.append(cstr);
-        sprintf(cstr,"%02X ",MemRead8(PC++));
-        HexDmp.append(cstr);
-        for (int i = 1; i < OpInf.numbytes; i++) {
-            sprintf(cstr,"%02X ",MemRead8(PC++));
+        for (int i = 0; i < inslen; i++) {
+            sprintf(cstr,"%02X ",MemRead8(addr++));
             HexDmp.append(cstr);
         }
-
-//PrintLogC("%s%s%s\n",HexDmp.c_str(),OpInf.name.c_str(),trace.operand.c_str());
 
         // Blank pad hex dump and instruction name
         if (HexDmp.length() < 25)
@@ -233,6 +236,8 @@ void Disassemble(unsigned short from, unsigned short to)
         lines += "\t";
         lines += trace.operand.c_str();
         lines += "\n";
+
+        PC += inslen;
     }
     HWND hTxt = GetDlgItem(hDismDlg,IDC_DISASSEMBLY_TEXT);
     SetWindowTextA(hTxt,ToLPCSTR(lines));

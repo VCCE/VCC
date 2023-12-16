@@ -228,7 +228,7 @@ namespace VCC { namespace Debugger
 			0x89,	"ADCA",		Immediate,		2,		2,		2,		1,	false,	Fixed,
 			0x8A,	"ORA",		Immediate,		2,		2,		2,		1,	false,	Fixed,
 			0x8B,	"ADDA",		Immediate,		2,		2,		2,		1,	false,	Fixed,
-			0x8C,	"CMPX",		Immediate,		4,		3,		2,		1,	false,	Fixed,
+			0x8C,	"CMPX",		Immediate,		4,		3,		3,		1,	false,	Fixed,
 			0x8D,	"BSR",		Relative,		7,		6,		2,		1,	false,	Fixed,
 			0x8E,	"LDX",		Immediate,		3,		3,		3,		1,	false,	Fixed,
 			0x8F,	"-",		Illegal,		0,		0,		0,		1,	false,	None,
