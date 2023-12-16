@@ -194,6 +194,7 @@
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
     </ClCompile>
     <ClCompile Include="DirectDrawInterface.cpp" />
+	<ClCompile Include="Disassembler.cpp" />
     <ClCompile Include="ExecutionTrace.cpp" />
     <ClCompile Include="Fileops.c" />
     <ClCompile Include="hd6309.c" />
@@ -249,6 +250,7 @@
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="DirectDrawInterface.h" />
+	<ClInclude Include="Disassembler.h" />
     <ClInclude Include="ExecutionTrace.h" />
     <ClInclude Include="fileops.h" />
     <ClInclude Include="hd6309.h" />

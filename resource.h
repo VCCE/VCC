@@ -46,6 +46,8 @@
 #define IDD_BREAKPOINTS                 172
 #define IDD_MMU_MONITOR                 173
 #define IDD_EXEC_TRACE                  174
+#define IDD_DISASSEMBLER                175
+
 #define IDC_MUTE                        1003
 #define IDC_THROTTLE                    1004
 #define IDC_ARTIFACTS                   1005
@@ -248,8 +250,8 @@
 #define IDC_RIGHTSHIRES                 1080
 #define IDC_LEFTSHIRES                  1081
 #define IDC_SHOWMOUSE                   1082
-	
-#define IDC_KEYMAPED					1090
+
+#define IDC_KEYMAPED                    1090
 // IDC_KEYBTN_FIRST must point to the lowest CoCo KEYBTN Id
 // IDC_KEYBTN_LAST must point to the highest CoCo KEYBTN Id
 #define IDC_KEYBTN_FIRST                1092
@@ -293,7 +295,7 @@
 #define IDC_KEYBTN_RIGHT                1130
 #define IDC_KEYBTN_Z                    1131
 #define IDC_KEYBTN_X                    1132
-#define IDC_KEYBTN_C        			1133
+#define IDC_KEYBTN_C                    1133
 #define IDC_KEYBTN_E                    1134
 #define IDC_KEYBTN_B                    1135
 #define IDC_KEYBTN_N                    1136
@@ -372,6 +374,9 @@
 #define IDC_SHOW_SCN_TRACE              2131
 #define IDC_BTN_SET_PC                  2132
 #define IDC_EDIT_PC_ADDR                2133
+#define IDC_EDIT_PC_LAST                2134
+#define IDC_DISASSEMBLY_TEXT            2135
+
 #define ID_FILE_EXIT                    40002
 #define IDM_HELP_ABOUT                  40003
 #define ID_FILE_RUN                     40004
@@ -412,14 +417,15 @@
 #define ID_MMU_MONITOR                  40043
 #define ID_EXEC_TRACE                   40044
 #define ID_PAUSE_EMULATION              40045
+#define ID_DISASSEMBLER                 40046
 #define ID_CONFIGURE_OPTIONS            65535
 
 // Next default values for new objects
-// 
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        175
-#define _APS_NEXT_COMMAND_VALUE         40044
+#define _APS_NEXT_RESOURCE_VALUE        176
+#define _APS_NEXT_COMMAND_VALUE         40047
 #define _APS_NEXT_CONTROL_VALUE         2140
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

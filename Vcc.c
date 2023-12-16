@@ -65,6 +65,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "MemoryMap.h"
 #include "ProcessorState.h"
 #include "Breakpoints.h"
+#include "Disassembler.h"
 #include "MMUMonitor.h"
 #include "ExecutionTrace.h"
 
@@ -361,6 +362,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case ID_EXEC_TRACE:
 					VCC::Debugger::UI::OpenExecutionTraceWindow(EmuState.WindowInstance, EmuState.WindowHandle);
+					break;
+
+				case ID_DISASSEMBLER:
+					VCC::Debugger::UI::OpenDisassemblerWindow(EmuState.WindowInstance, EmuState.WindowHandle);
 					break;
 
 				default:
