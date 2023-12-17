@@ -17,7 +17,7 @@
 //    <http://www.gnu.org/licenses/>.
 //
 //    Disassembly Display - Part of the Debugger package for VCC
-// Ed Jaquay
+//    Author: Ed Jaquay
 //============================================================================
 
 #include "Disassembler.h"
@@ -42,12 +42,13 @@ HWND hDismDlg = NULL;  // Set when dialog activated
 HWND hEdtAddr = NULL;  // From editbox
 HWND hEdtLast = NULL;  // To editbox
 HWND hEdtAPPY = NULL;  // Apply button
+HWND hDisText = NULL;  // Richedit20 box for output
 
-// Local references
+// local references
 INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
 void DisAsmFromTo();
-void Disassemble(unsigned short, unsigned short);
-unsigned short ConvertHexAddress(char *);
+void Disassemble(UINT16, UINT16);
+UINT16 ConvertHexAddress(char *);
 LRESULT CALLBACK SubAddrDlgProc(HWND,UINT,WPARAM,LPARAM);
 WNDPROC AddrDlgProc;
 LRESULT CALLBACK SubLastDlgProc(HWND,UINT,WPARAM,LPARAM);
@@ -84,6 +85,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
         hEdtAddr = GetDlgItem(hDismDlg, IDC_EDIT_PC_ADDR);
         hEdtLast = GetDlgItem(hDismDlg, IDC_EDIT_PC_LAST);
         hEdtAPPY = GetDlgItem(hDismDlg, IDAPPLY);
+        hDisText = GetDlgItem(hDismDlg, IDC_DISASSEMBLY_TEXT);
         // Modeless dialogs do not do tab or enter keys properly
         // Subclass the address dialogs to capture those keystrokes
         AddrDlgProc = (WNDPROC) GetWindowLongPtr(hEdtAddr, GWLP_WNDPROC);
@@ -124,32 +126,32 @@ void SetDialogFocus(HWND hCtrl) {
 /* Handle enter and tab keystrokes in edit dialogs */
 /***************************************************/
 
-// Sub class handler for start address box
+// Handler for start address box
 LRESULT CALLBACK SubAddrDlgProc
     (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
     TabDirection=0;
     return ProcEditDlg(AddrDlgProc,hDlg,msg,wPrm,lPrm);
 }
-// Sub class handler for end address box
+// Handler for end address box
 LRESULT CALLBACK SubLastDlgProc
     (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
     TabDirection=1;
     return ProcEditDlg(LastDlgProc,hDlg,msg,wPrm,lPrm);
 }
-// Either address box messages land here
+// Messages for either address box land here
 BOOL ProcEditDlg
-(WNDPROC DlgProc, HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
+    (WNDPROC DlgProc, HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
     switch (msg) {
     case WM_KEYDOWN:
         switch (wPrm) {
-        // Return key does the disassembly
+        // Enter key does the disassembly
         case VK_RETURN:
             SendMessage(hEdtAPPY,BM_CLICK,0,0);
             return TRUE;
-        // Tab key goes to the other address box
+        // Tab key toggles to the other address box
         case VK_TAB:
             SendMessage(hDismDlg,WM_NEXTDLGCTL,TabDirection,0);
             return TRUE;
@@ -165,40 +167,40 @@ BOOL ProcEditDlg
 void DisAsmFromTo()
 {
     char buf[16];
-    unsigned short from, to;
+    UINT16 FromAdr, ToAdr;
 
     // Start address
     GetWindowText(hEdtAddr, buf, 8);
-    from = ConvertHexAddress(buf);
-	if ((from < 0) || (from > 0xFF00)) {
+    FromAdr = ConvertHexAddress(buf);
+    if ((FromAdr < 0) || (FromAdr > 0xFF00)) {
         MessageBox(hDismDlg, "Invalid start address", "Error", 0);
         return;
     }
 
     // End Address
     GetWindowText(hEdtLast, buf, 8);
-    to = ConvertHexAddress(buf);
-	if ((to < 0) || (to > 0xFF00)) {
+    ToAdr = ConvertHexAddress(buf);
+    if ((ToAdr < 0) || (ToAdr > 0xFF00)) {
         MessageBox(hDismDlg, "Invalid end address", "Error", 0);
         return;
-	}
+    }
 
     // Validate range
-    int range = to - from;
+    int range = ToAdr - FromAdr;
     if ((range < 1) || (range > 0x1000)) {
         MessageBox(hDismDlg, "Invalid range", "Error", 0);
         return;
     }
 
     // Good range, disassemble
-    Disassemble(from,to);
+    Disassemble(FromAdr,ToAdr);
     return;
 }
 
 /**************************************************/
 /*  Disassemble Instructions in specified range   */
 /**************************************************/
-void Disassemble(unsigned short from, unsigned short to)
+void Disassemble(UINT16 FromAdr, UINT16 ToAdr)
 {
     std::unique_ptr<OpCodeTables> OpCdTbl;
     OpCdTbl = std::make_unique<OpCodeTables>();
@@ -209,43 +211,38 @@ void Disassemble(unsigned short from, unsigned short to)
     std::string lines = {};
     unsigned char opcd;
 
-    unsigned short PC = from;
-    while (PC < to) {
+    UINT16 PC = FromAdr;
+    while (PC < ToAdr) {
 
-        unsigned short addr = PC;
+        // Trace holds ins bytes and decoded operand
         trace = {};
-        state.PC = addr;
 
         // Get information for opcode or extended opcode
-        opcd = MemRead8(addr);
+        opcd = MemRead8(PC);
         OpInf = OpCdTbl->Page1OpCodes[opcd];
         trace.bytes.push_back(opcd);
         if (OpInf.mode == OpCodeTables::AddressingMode::OpPage2) {
-            opcd = MemRead8(addr+1);
+            opcd = MemRead8(PC+1);
             OpInf = OpCdTbl->Page2OpCodes[opcd];
             trace.bytes.push_back(opcd);
         } else if (OpInf.mode == OpCodeTables::AddressingMode::OpPage3) {
-            opcd = MemRead8(addr+1);
+            opcd = MemRead8(PC+1);
             OpInf = OpCdTbl->Page3OpCodes[opcd];
             trace.bytes.push_back(opcd);
         }
-        trace.instruction = OpInf.name;
 
-        // Use ProcessHeuristics to decode operands.  Kludgey
-        // but gets it done without creating new a new method
+        // Use ProcessHeuristics to decode operands. Overkill
+        // but gets it done without creating a new method.
+        state.PC = PC;
         OpCdTbl->ProcessHeuristics(OpInf, state, trace);
-
-        // Instuction length or num of opcode bytes if bad code
-        unsigned short
-            inslen = (OpInf.numbytes > 0) ? OpInf.numbytes : OpInf.oplen;
 
         // No std format so use sprintf to format hex for dump
         char cstr[8];
         std::string HexDmp = {};
-        sprintf(cstr,"%04X\t",addr);
+        sprintf(cstr,"%04X\t",PC);
         HexDmp.append(cstr);
-        for (int i = 0; i < inslen; i++) {
-            sprintf(cstr,"%02X ",MemRead8(addr++));
+        for (unsigned int i=0; i < trace.bytes.size(); i++) {
+            sprintf(cstr,"%02X ",trace.bytes[i]);
             HexDmp.append(cstr);
         }
 
@@ -255,33 +252,29 @@ void Disassemble(unsigned short from, unsigned short to)
         if (OpInf.name.length() < 8)
             OpInf.name.append(8 - OpInf.name.length(),' ');
 
-        // Put results
-        lines += HexDmp.c_str();
-        lines += "\t";
-        lines += OpInf.name.c_str();
-        lines += "\t";
-        lines += trace.operand.c_str();
-        lines += "\n";
+        // Append line for output
+        lines += HexDmp+"\t"+OpInf.name+"\t"+trace.operand+"\n";
 
         // Next instruction
-        PC += inslen;
+        PC += (UINT16) trace.bytes.size();
     }
-    HWND hTxt = GetDlgItem(hDismDlg,IDC_DISASSEMBLY_TEXT);
-    SetWindowTextA(hTxt,ToLPCSTR(lines));
+    // Put the complete disassembly
+    SetWindowTextA(hDisText,ToLPCSTR(lines));
 }
 
 /**************************************************/
 /*        Convert hex digits to Address           */
 /**************************************************/
-unsigned short ConvertHexAddress(char * buf)
-{   char *eptr;
-    long val = strtol(buf,&eptr,16);
-    // Address must be between 0 and 0xFF00  (65280)
-    if (*buf == '\0' || *eptr != '\0' || val < 0 || val > 65279) {
-        return -1;
-    } else {
-        return val & 0xFFFF;
-    }
+UINT16 ConvertHexAddress(char * buf)
+{
+    long val;
+    char *eptr;
+    if (*buf == '\0')  return -1;
+    val = strtol(buf,&eptr,16);
+    if (*eptr != '\0') return -1;
+    if (val < 0)       return -1;
+    if (val > 0xFFFF)  return -1;
+    return val & 0xFFFF;
 }
 
 // Namespace ends here
