@@ -79,16 +79,18 @@ INT_PTR CALLBACK DisassemblerDlgProc
 {
     switch (msg) {
     case WM_INITDIALOG:
-        // Modeless dialogs process tab or enter keys properly
-        // Subclass edit dialogs to capture those keystrokes
+        // Grab dialog and control handles
         hDismDlg = hDlg;
         hEdtAddr = GetDlgItem(hDismDlg, IDC_EDIT_PC_ADDR);
         hEdtLast = GetDlgItem(hDismDlg, IDC_EDIT_PC_LAST);
         hEdtAPPY = GetDlgItem(hDismDlg, IDAPPLY);
+        // Modeless dialogs do not do tab or enter keys properly
+        // Subclass the address dialogs to capture those keystrokes
         AddrDlgProc = (WNDPROC) GetWindowLongPtr(hEdtAddr, GWLP_WNDPROC);
         SetWindowLongPtr(hEdtAddr, GWLP_WNDPROC, (LONG_PTR) SubAddrDlgProc);
         LastDlgProc = (WNDPROC) GetWindowLongPtr(hEdtLast, GWLP_WNDPROC);
         SetWindowLongPtr(hEdtLast, GWLP_WNDPROC, (LONG_PTR) SubLastDlgProc);
+        // Set focus to start address box
         SetDialogFocus(hEdtAddr);
         break;
     case WM_COMMAND:
@@ -98,9 +100,11 @@ INT_PTR CALLBACK DisassemblerDlgProc
             DestroyWindow(hDlg);
             hDismWin = NULL;
             break;
+        // Try to keep focus on start address box
         case WM_ACTIVATE:
             SetDialogFocus(hEdtAddr);
             break;
+        // Apply button does the disassembly
         case IDAPPLY:
             DisAsmFromTo();
             SetDialogFocus(hEdtAddr);
@@ -108,6 +112,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
         }
     }   return FALSE;
 }
+
 /***************************************************/
 /*        SetFocus to a dialog control             */
 /***************************************************/
@@ -118,57 +123,76 @@ void SetDialogFocus(HWND hCtrl) {
 /***************************************************/
 /* Handle enter and tab keystrokes in edit dialogs */
 /***************************************************/
+
+// Sub class handler for start address box
 LRESULT CALLBACK SubAddrDlgProc
     (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
     TabDirection=0;
     return ProcEditDlg(AddrDlgProc,hDlg,msg,wPrm,lPrm);
 }
+// Sub class handler for end address box
 LRESULT CALLBACK SubLastDlgProc
     (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
     TabDirection=1;
     return ProcEditDlg(LastDlgProc,hDlg,msg,wPrm,lPrm);
 }
+// Either address box messages land here
 BOOL ProcEditDlg
 (WNDPROC DlgProc, HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
     switch (msg) {
     case WM_KEYDOWN:
         switch (wPrm) {
+        // Return key does the disassembly
         case VK_RETURN:
             SendMessage(hEdtAPPY,BM_CLICK,0,0);
             return TRUE;
+        // Tab key goes to the other address box
         case VK_TAB:
             SendMessage(hDismDlg,WM_NEXTDLGCTL,TabDirection,0);
             return TRUE;
         }
-    }   return CallWindowProc(DlgProc,hDlg,msg,wPrm,lPrm);
+    }
+    // Everything else handled by stock handler
+    return CallWindowProc(DlgProc,hDlg,msg,wPrm,lPrm);
 }
 
 /**************************************************/
-/*             Get disassembly range              */
+/*          Get range and disassemble             */
 /**************************************************/
 void DisAsmFromTo()
 {
     char buf[16];
     unsigned short from, to;
 
+    // Start address
     GetWindowText(hEdtAddr, buf, 8);
     from = ConvertHexAddress(buf);
-    if (from < 0) {
-        MessageBox(hDismDlg, "Invalid from address", "Error", 0);
-    } else {
-        GetWindowText(hEdtLast, buf, 8);
-        to = ConvertHexAddress(buf);
-        int range = to - from;
-        if ((range < 1) || (range > 0x1000)) {
-            MessageBox(hDismDlg,
-                  "Invalid to address or range error", "Error", 0);
-        } else {
-            Disassemble(from,to);
-        }
+	if ((from < 0) || (from > 0xFF00)) {
+        MessageBox(hDismDlg, "Invalid start address", "Error", 0);
+        return;
     }
+
+    // End Address
+    GetWindowText(hEdtLast, buf, 8);
+    to = ConvertHexAddress(buf);
+	if ((to < 0) || (to > 0xFF00)) {
+        MessageBox(hDismDlg, "Invalid end address", "Error", 0);
+        return;
+	}
+
+    // Validate range
+    int range = to - from;
+    if ((range < 1) || (range > 0x1000)) {
+        MessageBox(hDismDlg, "Invalid range", "Error", 0);
+        return;
+    }
+
+    // Good range, disassemble
+    Disassemble(from,to);
+    return;
 }
 
 /**************************************************/
@@ -211,9 +235,11 @@ void Disassemble(unsigned short from, unsigned short to)
         // but gets it done without creating new a new method
         OpCdTbl->ProcessHeuristics(OpInf, state, trace);
 
-        unsigned short inslen = (OpInf.numbytes > 0) ? OpInf.numbytes : OpInf.oplen;
+        // Instuction length or num of opcode bytes if bad code
+        unsigned short
+            inslen = (OpInf.numbytes > 0) ? OpInf.numbytes : OpInf.oplen;
 
-        // Use sprintf to format hex for dump
+        // No std format so use sprintf to format hex for dump
         char cstr[8];
         std::string HexDmp = {};
         sprintf(cstr,"%04X\t",addr);
@@ -223,7 +249,7 @@ void Disassemble(unsigned short from, unsigned short to)
             HexDmp.append(cstr);
         }
 
-        // Blank pad hex dump and instruction name
+        // Pad hex dump and instruction name
         if (HexDmp.length() < 25)
             HexDmp.append(25 - HexDmp.length(),' ');
         if (OpInf.name.length() < 8)
@@ -237,6 +263,7 @@ void Disassemble(unsigned short from, unsigned short to)
         lines += trace.operand.c_str();
         lines += "\n";
 
+        // Next instruction
         PC += inslen;
     }
     HWND hTxt = GetDlgItem(hDismDlg,IDC_DISASSEMBLY_TEXT);
