@@ -103,8 +103,8 @@ namespace VCC { namespace Debugger
 			0x13,	"SYNC",		Inherent,		4,		3,		1,		1,	false,	WaitForSYNCAdjust,
 			0x14,	"SEXW",		Inherent,		4,		4,		1,		1,	true,	Fixed,						// Illegal on 6809
 			0x15,	"-",		Illegal,		0,		0,		0,		1,	false,	None,
-			0x16,	"LBRA",		LongRelative,	5,		4,		3,		1,	false,	Fixed,
-			0x17,	"LBSR",		LongRelative,	9,		7,		3,		1,	false,	Fixed,
+			0x16,	"LBRA",		LongRelative,	5,		4,		3,		1,	false,	LongBranchAdjust,
+			0x17,	"LBSR",		LongRelative,	9,		7,		3,		1,	false,	LongBranchAdjust,
 			0x18,	"-",		Illegal,		0,		0,		0,		1,	false,	None,
 			0x19,	"DAA",		Inherent,		2,		1,		1,		1,	false,	Fixed,
 			0x1A,	"ORCC",		Immediate,		3,		3,		2,		1,	false,	Fixed,
