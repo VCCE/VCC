@@ -238,7 +238,11 @@ void Disassemble(UINT16 FromAdr, UINT16 ToAdr)
         // but gets it done without creating a new method.
         // The PC is expected in the state structure
         state.PC = PC;
-        OpCdTbl->ProcessHeuristics(OpInf, state, trace);
+
+        // If postbyte is invalid operand is questionable
+        if ( ! OpCdTbl->ProcessHeuristics(OpInf, state, trace)) {
+            trace.operand = "??";
+        }
 
         // Use sprintf to format hex for dump
         char cstr[8];
