@@ -87,7 +87,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
         hEdtAPPY = GetDlgItem(hDismDlg, IDAPPLY);
         hDisText = GetDlgItem(hDismDlg, IDC_DISASSEMBLY_TEXT);
         // Modeless dialogs do not do tab or enter keys properly
-        // Subclass the address dialogs to capture those keystrokes
+        // Hook the address dialogs to capture those keystrokes
         AddrDlgProc = (WNDPROC) GetWindowLongPtr(hEdtAddr, GWLP_WNDPROC);
         SetWindowLongPtr(hEdtAddr, GWLP_WNDPROC, (LONG_PTR) SubAddrDlgProc);
         LastDlgProc = (WNDPROC) GetWindowLongPtr(hEdtLast, GWLP_WNDPROC);
@@ -126,21 +126,21 @@ void SetDialogFocus(HWND hCtrl) {
 /* Handle enter and tab keystrokes in edit dialogs */
 /***************************************************/
 
-// Handler for start address box
+// Hook for start address box
 LRESULT CALLBACK SubAddrDlgProc
     (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
     TabDirection=0;
     return ProcEditDlg(AddrDlgProc,hDlg,msg,wPrm,lPrm);
 }
-// Handler for end address box
+// Hook for end address box
 LRESULT CALLBACK SubLastDlgProc
     (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
     TabDirection=1;
     return ProcEditDlg(LastDlgProc,hDlg,msg,wPrm,lPrm);
 }
-// Messages for either address box land here
+// Messages for either address box pass through here
 BOOL ProcEditDlg
     (WNDPROC DlgProc, HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
@@ -157,7 +157,7 @@ BOOL ProcEditDlg
             return TRUE;
         }
     }
-    // Everything else handled by stock handler
+    // Everything else passed through to the dialog handlers
     return CallWindowProc(DlgProc,hDlg,msg,wPrm,lPrm);
 }
 
