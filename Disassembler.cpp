@@ -54,6 +54,7 @@ WNDPROC AddrDlgProc;
 LRESULT CALLBACK SubLastDlgProc(HWND,UINT,WPARAM,LPARAM);
 WNDPROC LastDlgProc;
 BOOL ProcEditDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
+LONG_PTR SetControlHook(HWND hCtl,LONG_PTR Proc);
 void SetDialogFocus(HWND);
 WPARAM TabDirection=0;
 
@@ -86,13 +87,11 @@ INT_PTR CALLBACK DisassemblerDlgProc
         hEdtLast = GetDlgItem(hDismDlg, IDC_EDIT_PC_LAST);
         hEdtAPPY = GetDlgItem(hDismDlg, IDAPPLY);
         hDisText = GetDlgItem(hDismDlg, IDC_DISASSEMBLY_TEXT);
-        // Modeless dialogs do not do tab or enter keys properly
+        // Modeless dialogs do not support tab or enter keys
         // Hook the address dialogs to capture those keystrokes
-        AddrDlgProc = (WNDPROC) GetWindowLongPtr(hEdtAddr, GWLP_WNDPROC);
-        SetWindowLongPtr(hEdtAddr, GWLP_WNDPROC, (LONG_PTR) SubAddrDlgProc);
-        LastDlgProc = (WNDPROC) GetWindowLongPtr(hEdtLast, GWLP_WNDPROC);
-        SetWindowLongPtr(hEdtLast, GWLP_WNDPROC, (LONG_PTR) SubLastDlgProc);
-        // Set focus to start address box
+        AddrDlgProc = (WNDPROC) SetControlHook(hEdtAddr,(LONG_PTR) SubAddrDlgProc);
+        LastDlgProc = (WNDPROC) SetControlHook(hEdtLast,(LONG_PTR) SubLastDlgProc);
+        // Set focus to the first edit box
         SetDialogFocus(hEdtAddr);
         break;
     case WM_COMMAND:
@@ -102,11 +101,6 @@ INT_PTR CALLBACK DisassemblerDlgProc
             DestroyWindow(hDlg);
             hDismWin = NULL;
             break;
-        // Try to keep focus on start address box
-        case WM_ACTIVATE:
-            SetDialogFocus(hEdtAddr);
-            break;
-        // Apply button does the disassembly
         case IDAPPLY:
             DisAsmFromTo();
             SetDialogFocus(hEdtAddr);
@@ -116,16 +110,18 @@ INT_PTR CALLBACK DisassemblerDlgProc
 }
 
 /***************************************************/
-/*        SetFocus to a dialog control             */
+/*            set up control hook                  */
 /***************************************************/
-void SetDialogFocus(HWND hCtrl) {
-    SendMessage(hDismDlg,WM_NEXTDLGCTL,(WPARAM)hCtrl,TRUE);
+LONG_PTR SetControlHook(HWND hCtl,LONG_PTR HookProc)
+{
+    LONG_PTR OrigProc=GetWindowLongPtr(hCtl,GWLP_WNDPROC);
+    SetWindowLongPtr(hCtl,GWLP_WNDPROC,HookProc);
+    return OrigProc;
 }
 
 /***************************************************/
-/* Handle enter and tab keystrokes in edit dialogs */
+/* Grab enter and tab keystrokes from edit dialogs */
 /***************************************************/
-
 // Hook for start address box
 LRESULT CALLBACK SubAddrDlgProc
     (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
@@ -157,8 +153,15 @@ BOOL ProcEditDlg
             return TRUE;
         }
     }
-    // Everything else passed through to the dialog handlers
+    // Everything else sent to the original dialog proc.
     return CallWindowProc(DlgProc,hDlg,msg,wPrm,lPrm);
+}
+
+/***************************************************/
+/*        SetFocus to a dialog control             */
+/***************************************************/
+void SetDialogFocus(HWND hCtrl) {
+    SendMessage(hDismDlg,WM_NEXTDLGCTL,(WPARAM)hCtrl,TRUE);
 }
 
 /**************************************************/
@@ -214,7 +217,7 @@ void Disassemble(UINT16 FromAdr, UINT16 ToAdr)
     UINT16 PC = FromAdr;
     while (PC < ToAdr) {
 
-        // Trace holds ins bytes and decoded operand
+        // Trace struct holds instrucion bytes and decoded operand
         trace = {};
 
         // Get information for opcode or extended opcode
@@ -233,10 +236,11 @@ void Disassemble(UINT16 FromAdr, UINT16 ToAdr)
 
         // Use ProcessHeuristics to decode operands. Overkill
         // but gets it done without creating a new method.
+        // The PC is expected in the state structure
         state.PC = PC;
         OpCdTbl->ProcessHeuristics(OpInf, state, trace);
 
-        // No std format so use sprintf to format hex for dump
+        // Use sprintf to format hex for dump
         char cstr[8];
         std::string HexDmp = {};
         sprintf(cstr,"%04X\t",PC);
@@ -247,8 +251,8 @@ void Disassemble(UINT16 FromAdr, UINT16 ToAdr)
         }
 
         // Pad hex dump and instruction name
-        if (HexDmp.length() < 25)
-            HexDmp.append(25 - HexDmp.length(),' ');
+        if (HexDmp.length() < 24)
+            HexDmp.append(24 - HexDmp.length(),' ');
         if (OpInf.name.length() < 8)
             OpInf.name.append(8 - OpInf.name.length(),' ');
 
