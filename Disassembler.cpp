@@ -30,7 +30,8 @@
 #include <Richedit.h>
 #include "vcc.h"
 #include "logger.h"
-#include "OpCodeTables.h"
+//#include "OpCodeTables.h"
+#include "OpDecoder.h"
 #include "tcc1014mmu.h"
 
 // Namespace starts here
@@ -205,66 +206,38 @@ void DisAsmFromTo()
 /**************************************************/
 void Disassemble(UINT16 FromAdr, UINT16 ToAdr)
 {
-    std::unique_ptr<OpCodeTables> OpCdTbl;
-    OpCdTbl = std::make_unique<OpCodeTables>();
-    OpCodeTables::OpCodeInfo OpInf;
+    std::unique_ptr<OpDecoder> Decoder;
+    Decoder = std::make_unique<OpDecoder>();
     VCC::CPUTrace trace = {};
     VCC::CPUState state = {};
-
     std::string lines = {};
-    unsigned char opcd;
-
     UINT16 PC = FromAdr;
+
     while (PC < ToAdr) {
-
-        // Trace struct holds instrucion bytes and decoded operand
-        trace = {};
-
-        // Get information for opcode or extended opcode
-        opcd = MemRead8(PC);
-        OpInf = OpCdTbl->Page1OpCodes[opcd];
-        trace.bytes.push_back(opcd);
-        if (OpInf.mode == OpCodeTables::AddressingMode::OpPage2) {
-            opcd = MemRead8(PC+1);
-            OpInf = OpCdTbl->Page2OpCodes[opcd];
-            trace.bytes.push_back(opcd);
-        } else if (OpInf.mode == OpCodeTables::AddressingMode::OpPage3) {
-            opcd = MemRead8(PC+1);
-            OpInf = OpCdTbl->Page3OpCodes[opcd];
-            trace.bytes.push_back(opcd);
-        }
-
-        // Use ProcessHeuristics to decode operands. Overkill
-        // but gets it done without creating a new method.
-        // The PC is expected in the state structure
         state.PC = PC;
+        trace = {};
+        Decoder->DecodeInstruction(state,trace);
 
-        // If postbyte is invalid operand is questionable
-        if ( ! OpCdTbl->ProcessHeuristics(OpInf, state, trace)) {
-            trace.operand = "??";
-        }
-
-        // Use sprintf to format hex for dump
-        char cstr[8];
-        std::string HexDmp = {};
-        sprintf(cstr,"%04X\t",PC);
-        HexDmp.append(cstr);
+        // Create string containing PC and instruction bytes
+        std::string HexDmp = ToHexString(PC,4,TRUE)+"\t";
         for (unsigned int i=0; i < trace.bytes.size(); i++) {
-            sprintf(cstr,"%02X ",trace.bytes[i]);
-            HexDmp.append(cstr);
+            HexDmp += ToHexString(trace.bytes[i],2,TRUE)+" ";
         }
 
         // Pad hex dump and instruction name
         if (HexDmp.length() < 24)
             HexDmp.append(24 - HexDmp.length(),' ');
-        if (OpInf.name.length() < 8)
-            OpInf.name.append(8 - OpInf.name.length(),' ');
+        if (trace.instruction.length() < 8)
+            trace.instruction.append(8 - trace.instruction.length(),' ');
 
         // Append line for output
-        lines += HexDmp+"\t"+OpInf.name+"\t"+trace.operand+"\n";
+        lines += HexDmp+"\t"+trace.instruction+"\t"+trace.operand+"\n";
 
-        // Next instruction
-        PC += (UINT16) trace.bytes.size();
+        // Next instruction, prevent infinate loop
+        if (trace.bytes.size() > 0)
+            PC += (UINT16) trace.bytes.size();
+        else
+            PC += 1;
     }
     // Put the complete disassembly
     SetWindowTextA(hDisText,ToLPCSTR(lines));
