@@ -375,7 +375,8 @@
 #define IDC_BTN_SET_PC                  2132
 #define IDC_EDIT_PC_ADDR                2133
 #define IDC_EDIT_PC_LAST                2134
-#define IDC_DISASSEMBLY_TEXT            2135
+#define IDC_ERROR_TEXT                  2135
+#define IDC_DISASSEMBLY_TEXT            2136
 
 #define ID_FILE_EXIT                    40002
 #define IDM_HELP_ABOUT                  40003

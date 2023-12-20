@@ -92,6 +92,8 @@ INT_PTR CALLBACK DisassemblerDlgProc
         // Hook the address dialogs to capture those keystrokes
         AddrDlgProc = (WNDPROC) SetControlHook(hEdtAddr,(LONG_PTR) SubAddrDlgProc);
         LastDlgProc = (WNDPROC) SetControlHook(hEdtLast,(LONG_PTR) SubLastDlgProc);
+
+    SetWindowTextA(hDisText,"");
         // Set focus to the first edit box
         SetDialogFocus(hEdtAddr);
         break;
@@ -150,6 +152,7 @@ BOOL ProcEditDlg
             return TRUE;
         // Tab key toggles to the other address box
         case VK_TAB:
+            SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"");
             SendMessage(hDismDlg,WM_NEXTDLGCTL,TabDirection,0);
             return TRUE;
         }
@@ -177,7 +180,7 @@ void DisAsmFromTo()
     GetWindowText(hEdtAddr, buf, 8);
     FromAdr = ConvertHexAddress(buf);
     if ((FromAdr < 0) || (FromAdr > 0xFF00)) {
-        MessageBox(hDismDlg, "Invalid start address", "Error", 0);
+        SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"Invalid start address");
         return;
     }
 
@@ -185,18 +188,19 @@ void DisAsmFromTo()
     GetWindowText(hEdtLast, buf, 8);
     ToAdr = ConvertHexAddress(buf);
     if ((ToAdr < 0) || (ToAdr > 0xFF00)) {
-        MessageBox(hDismDlg, "Invalid end address", "Error", 0);
+        SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"Invalid end address");
         return;
     }
 
     // Validate range
     int range = ToAdr - FromAdr;
     if ((range < 1) || (range > 0x1000)) {
-        MessageBox(hDismDlg, "Invalid range", "Error", 0);
+        SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"Invalid address range");
         return;
     }
 
     // Good range, disassemble
+    SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"");
     Disassemble(FromAdr,ToAdr);
     return;
 }
