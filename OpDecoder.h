@@ -54,11 +54,12 @@ namespace VCC { namespace Debugger
 
 		IRQType ToIRQType(unsigned char irq);
 
+		bool DecodeInstruction(CPUState state, CPUTrace& trace);
+
 	protected:
 
 		bool DecodeInterrupt(TraceEvent evt, IRQType irq, std::string& interrupt);
 		bool DecodeScreen(TraceEvent evt, std::string& screen);
-		bool DecodeInstruction(CPUState state, CPUTrace& trace);
 		bool DecodePage2Instruction(unsigned short PC, CPUState state, CPUTrace& trace);
 		bool DecodePage3Instruction(unsigned short PC, CPUState state, CPUTrace& trace);
 
