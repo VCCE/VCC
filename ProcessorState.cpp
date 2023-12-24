@@ -1,20 +1,20 @@
-//	This file is part of VCC (Virtual Color Computer).
-//	
-//		VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-//		it under the terms of the GNU General Public License as published by
-//		the Free Software Foundation, either version 3 of the License, or
-//		(at your option) any later version.
-//	
-//		VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-//		but WITHOUT ANY WARRANTY; without even the implied warranty of
-//		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//		GNU General Public License for more details.
-//	
-//		You should have received a copy of the GNU General Public License
-//		along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-//	
-//		Processor State Display - Part of the Debugger package for VCC
-//		Authors: Mike Rojas, Chet Simpson
+//  This file is part of VCC (Virtual Color Computer).
+//
+//      VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
+//      it under the terms of the GNU General Public License as published by
+//      the Free Software Foundation, either version 3 of the License, or
+//      (at your option) any later version.
+//
+//      VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+//      but WITHOUT ANY WARRANTY; without even the implied warranty of
+//      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//      GNU General Public License for more details.
+//
+//      You should have received a copy of the GNU General Public License
+//      along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+//
+//      Processor State Display - Part of the Debugger package for VCC
+//      Authors: Mike Rojas, Chet Simpson
 #include "ProcessorState.h"
 #include "Debugger.h"
 #include "DebuggerUtils.h"
@@ -23,355 +23,249 @@
 #include "resource.h"
 #include <stdexcept>
 
+// Generate hex char string from int value
+#define HEXCHAR(v,l) (char *) ToHexString(v,l).c_str()
+
 extern SystemState EmuState;
 
 namespace VCC { namespace Debugger { namespace UI { namespace
 {
-	HWND	ProcessorStateWindow = NULL;
-	BackBufferInfo	BackBuffer_;
+    HWND    ProcessorStateWindow = NULL;
+    BackBufferInfo  BackBuf;
+    std::unique_ptr<OpDecoder> Decoder;
 
+    void DrawCntrTxt(HDC hdc, RECT r, char * str, int x, int y, int l, int h)
+    {
+        RECT rc;
+        SetRect(&rc, r.left + x, r.top + y, r.left + x + l, r.top + y + h);
+        DrawText(hdc, str, -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    }
 
-	void DrawCenteredText(HDC hdc, int left, int top, int right, int bottom, const std::string& text)
-	{
-		RECT rc;
+    void DrawTextBox(HDC hdc, RECT r, int x, int y, int l, int h)
+    {
+        int rx = r.left + x;
+        int ry = r.top + y;
+        MoveToEx(hdc, rx, ry, NULL);
+        LineTo(hdc, rx + l, ry);
+        LineTo(hdc, rx + l, ry + h);
+        LineTo(hdc, rx, ry + h);
+        LineTo(hdc, rx, ry);
+    }
 
-		SetRect(&rc, left, top, right, bottom);
-		DrawText(hdc, text.c_str(), text.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-	}
+    void DrawVrtLine(HDC hdc, RECT r, int x, int y, int h)
+    {
+        int rx = r.left + x;
+        int ry = r.top + y;
+        MoveToEx(hdc, rx, ry, NULL);
+        LineTo(hdc, rx, ry + h);
+    }
 
-	void DrawProcessorState(HDC hdc, LPRECT clientRect)
-	{
-		RECT rect = *clientRect;
+    void DrawProcessorState(HDC hdc, LPRECT clientRect)
+    {
+        RECT rect = *clientRect;
+        Decoder = std::make_unique<OpDecoder>();
 
-		// Clear our background.
-		HBRUSH brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
-		FillRect(hdc, &rect, brush);
+        // Clear our background.
+        HBRUSH brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+        FillRect(hdc, &rect, brush);
 
-		HPEN pen = (HPEN)CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
-		SelectObject(hdc, pen);
+        HPEN pen = (HPEN)CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
+        SelectObject(hdc, pen);
 
-		// Draw the border.
-		MoveToEx(hdc, rect.left, rect.top, NULL);
-		LineTo(hdc, rect.right - 1, rect.top);
-		LineTo(hdc, rect.right - 1, rect.bottom - 1);
-		LineTo(hdc, rect.left, rect.bottom - 1);
-		LineTo(hdc, rect.left, rect.top);
+        // Draw the border.
+        MoveToEx(hdc, rect.left, rect.top, NULL);
+        LineTo(hdc, rect.right - 1, rect.top);
+        LineTo(hdc, rect.right - 1, rect.bottom - 1);
+        LineTo(hdc, rect.left, rect.bottom - 1);
+        LineTo(hdc, rect.left, rect.top);
 
-		HFONT hFont = CreateFont(14, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-			CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FIXED_PITCH, TEXT("Consolas"));
+        HFONT hFont = CreateFont(14, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+                                DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,CLIP_DEFAULT_PRECIS,
+                                CLEARTYPE_QUALITY, FIXED_PITCH, TEXT("Consolas"));
 
-		SetTextColor(hdc, RGB(138, 27, 255));
-		RECT rc;
+        // Draw register boxes and lables
+        SelectObject(hdc, hFont);
+        SetTextColor(hdc, RGB(138, 27, 255));
+        // args     HDC RECT   X   Y   L   H
+        DrawTextBox(hdc,rect,  8, 18, 72, 18);   //D
+        DrawTextBox(hdc,rect, 88, 18, 72, 18);   //W
+        DrawTextBox(hdc,rect,168, 18, 72, 18);   //X
+        DrawTextBox(hdc,rect,248, 18, 72, 18);   //Y
+        DrawTextBox(hdc,rect,328, 18, 72, 18);   //S
+        DrawTextBox(hdc,rect,408, 18, 72, 18);   //U
+        DrawTextBox(hdc,rect,295, 60, 40, 18);   //DP
+        DrawTextBox(hdc,rect,350, 60, 40, 18);   //MD
+        DrawTextBox(hdc,rect,408, 60, 72, 18);   //V
+        DrawTextBox(hdc,rect, 35,102, 72, 18);   //PC
+        DrawVrtLine(hdc,rect, 45, 18, 18);       //A|B
+        DrawVrtLine(hdc,rect,125, 18, 18);       //E|F
 
-		// Draw our register boxes.
-		int x = rect.left;
-		int y = rect.top;
+        DrawCntrTxt(hdc,rect,"D",   8,  0, 72, 18); //D
+        DrawCntrTxt(hdc,rect,"W",  90,  0, 72, 18); //W
+        DrawCntrTxt(hdc,rect,"X", 168,  0, 72, 18); //X
+        DrawCntrTxt(hdc,rect,"Y", 248,  0, 72, 18); //Y
+        DrawCntrTxt(hdc,rect,"S", 328,  0, 72, 18); //S
+        DrawCntrTxt(hdc,rect,"U", 408,  0, 72, 18); //U
+        DrawCntrTxt(hdc,rect,"A",   8, 36, 36, 18); //A
+        DrawCntrTxt(hdc,rect,"B",  44, 36, 36, 18); //B
+        DrawCntrTxt(hdc,rect,"E",  90, 36, 36, 18); //E
+        DrawCntrTxt(hdc,rect,"F", 126, 36, 36, 18); //F
+        DrawCntrTxt(hdc,rect,"DP",295, 43, 45, 18); //DP
+        DrawCntrTxt(hdc,rect,"MD",350, 43, 45, 18); //MD
+        DrawCntrTxt(hdc,rect,"V", 408, 43, 72, 18); //V
+        DrawCntrTxt(hdc,rect,"PC",  8,102, 25, 18); //PC
 
-		// Registers
-		for (int n = 0; n < 8; n++)
-		{
-			MoveToEx(hdc, x + 10, y + 20, NULL);
-			LineTo(hdc, x + 80, y + 20);
-			LineTo(hdc, x + 80, y + 40);
-			LineTo(hdc, x + 10, y + 40);
-			LineTo(hdc, x + 10, y + 20);
-			if (n == 6)
-			{
-				y += 50;
-			}
-			else
-			{
-				x += 80;
-			}
-		}
-		x = rect.left;
-		y = rect.top;
-		MoveToEx(hdc, x + 45, y + 20, NULL);
-		LineTo(hdc, x + 45, y + 40);
-		x += 80;
-		MoveToEx(hdc, x + 45, y + 20, NULL);
-		LineTo(hdc, x + 45, y + 40);
+        // Draw CC Box with bit seperators and lables
+        DrawTextBox(hdc,rect,35,60,200,18);
+        for (int x = 60; x < 235 ; x+=25) DrawVrtLine(hdc,rect,x,60,18);
+        DrawCntrTxt(hdc,rect,"CC",  8,60,25,18);
+        DrawCntrTxt(hdc,rect,"E",  35,78,25,18);
+        DrawCntrTxt(hdc,rect,"F",  60,78,25,18);
+        DrawCntrTxt(hdc,rect,"H",  85,78,25,18);
+        DrawCntrTxt(hdc,rect,"I", 110,78,25,18);
+        DrawCntrTxt(hdc,rect,"N", 135,78,25,18);
+        DrawCntrTxt(hdc,rect,"Z", 160,78,25,18);
+        DrawCntrTxt(hdc,rect,"V", 185,78,25,18);
+        DrawCntrTxt(hdc,rect,"C", 210,78,25,18);
 
-		x = rect.left;
-		y = rect.top;
-		x += 90;
-		y += 50;
-		MoveToEx(hdc, x, y + 20, NULL);
-		LineTo(hdc, x + 200, y + 20);
-		LineTo(hdc, x + 200, y + 40);
-		LineTo(hdc, x, y + 40);
-		LineTo(hdc, x, y + 20);
+        // Instruction box
+        DrawTextBox(hdc,rect,120,102,120,18);
 
-		x += 25;
-		for (int n = 0; n < 7; n++)
-		{
-			MoveToEx(hdc, x, y + 20, NULL);
-			LineTo(hdc, x, y + 40);
-			x += 25;
-		}
+        // A message
+        DrawCntrTxt(hdc,rect,"W, MD, V are 6309 CPU only",260,108,250,18);
 
-		x = rect.left + 390;
-		MoveToEx(hdc, x, y + 20, NULL);
-		LineTo(hdc, x + 45, y + 20);
-		LineTo(hdc, x + 45, y + 40);
-		LineTo(hdc, x, y + 40);
-		LineTo(hdc, x, y + 20);
+        // Pull out processor state.  Do it quickly to keep the emulator frame rate high.
+        const auto& regs(EmuState.Debugger.GetProcessorStateCopy());
 
-		x += 50;
-		MoveToEx(hdc, x, y + 20, NULL);
-		LineTo(hdc, x + 45, y + 20);
-		LineTo(hdc, x + 45, y + 40);
-		LineTo(hdc, x, y + 40);
-		LineTo(hdc, x, y + 20);
+        SetTextColor(hdc, RGB(0, 0, 0));
 
-		SelectObject(hdc, hFont);
+        // Dump the registers.
+        DrawCntrTxt(hdc,rect,HEXCHAR(regs.A,2),  10, 18,36,18);    //A
+        DrawCntrTxt(hdc,rect,HEXCHAR(regs.B,2),  44, 18,36,18);    //B
+        DrawCntrTxt(hdc,rect,HEXCHAR(regs.X,4), 168, 18,72,18);    //X
+        DrawCntrTxt(hdc,rect,HEXCHAR(regs.Y,4), 248, 18,72,18);    //Y
+        DrawCntrTxt(hdc,rect,HEXCHAR(regs.S,4), 328, 18,72,18);    //S
+        DrawCntrTxt(hdc,rect,HEXCHAR(regs.U,4), 408, 18,72,18);    //U
+        DrawCntrTxt(hdc,rect,HEXCHAR(regs.PC,4), 35,102,72,18);    //PC
+        DrawCntrTxt(hdc,rect,HEXCHAR(regs.DP,2),295, 60,40,18);    //DP
+        if (EmuState.CpuType == 1) {
+            DrawCntrTxt(hdc,rect,HEXCHAR(regs.E,2),  90,18,36,18); //E
+            DrawCntrTxt(hdc,rect,HEXCHAR(regs.F,2), 126,18,36,18); //F
+            DrawCntrTxt(hdc,rect,HEXCHAR(regs.MD,2),350,60,40,18); //MD
+            DrawCntrTxt(hdc,rect,HEXCHAR(regs.V,4), 408,60,72,18); //V
+        }
+        // Condition Code bits
+        int x = 35;
+        for (int n = 0; n < 8; n++) {
+            if (regs.CC & 1 << n) {
+                DrawCntrTxt(hdc,rect,"1",x,60,25,18);
+            } else {
+                DrawCntrTxt(hdc,rect,"-",x,60,25,18);
+            }
+            x += 25;
+        }
+        // Instruction
+        VCC::CPUTrace trace = {};
+        Decoder->DecodeInstruction(regs,trace);
+        trace.instruction.append(6 - trace.instruction.length(),' ');
+        std::string ins = trace.instruction + trace.operand;
+        RECT rc;
+        SetRect(&rc,rect.left+130,rect.top+102,rect.left+250,rect.top+120);
+        DrawText(hdc, (char *) ins.c_str(), -1, &rc, DT_VCENTER | DT_SINGLELINE);
+        // Cleanup.
+        DeleteObject(pen);
+        DeleteObject(hFont);
+    }
 
-		x = rect.left;
-		y = rect.top;
-		SetRect(&rc, x + 10, y, x + 80, y + 20);
-		DrawText(hdc, "D", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		SetRect(&rc, x + 10, y + 40, x + 45, y + 60);
-		DrawText(hdc, "A", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		SetRect(&rc, x + 45, y + 40, x + 80, y + 60);
-		DrawText(hdc, "B", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    INT_PTR CALLBACK ProcessorStateDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
+    {
+        switch (message)
+        {
+        case WM_INITDIALOG:
+        {
+            RECT Rect;
+            GetClientRect(hDlg, &Rect);
+            BackBuf = AttachBackBuffer(hDlg, 0, -35);
+            SetTimer(hDlg, IDT_PROC_TIMER, 64, (TIMERPROC)NULL);
+            break;
+        }
 
-		x += 80;
-		SetRect(&rc, x + 10, y, x + 80, y + 20);
-		DrawText(hdc, "W", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		SetRect(&rc, x + 10, y + 40, x + 45, y + 60);
-		DrawText(hdc, "E", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		SetRect(&rc, x + 45, y + 40, x + 80, y + 60);
-		DrawText(hdc, "F", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hDlg, &ps);
 
-		x += 80;
-		SetRect(&rc, x + 10, y, x + 80, y + 20);
-		DrawText(hdc, "X", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 80;
-		SetRect(&rc, x + 10, y, x + 80, y + 20);
-		DrawText(hdc, "Y", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 80;
-		SetRect(&rc, x + 10, y, x + 80, y + 20);
-		DrawText(hdc, "S", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 80;
-		SetRect(&rc, x + 10, y, x + 80, y + 20);
-		DrawText(hdc, "U", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 80;
-		SetRect(&rc, x + 10, y, x + 80, y + 20);
-		DrawText(hdc, "PC", 2, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		y += 50;
-		SetRect(&rc, x + 10, y, x + 80, y + 20);
-		DrawText(hdc, "V", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+            DrawProcessorState(BackBuf.DeviceContext, &BackBuf.Rect);
+            BitBlt(hdc, 0, 0, BackBuf.Width, BackBuf.Height, BackBuf.DeviceContext, 0, 0, SRCCOPY);
 
-		x = rect.left + 90;
-		y = rect.top + 70;
-		SetRect(&rc, x - 40, y, x - 5, y + 20);
-		DrawText(hdc, "CC", 2, &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
-		y += 20;
-		SetRect(&rc, x, y, x + 25, y + 20);
-		DrawText(hdc, "E", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 25;
-		SetRect(&rc, x, y, x + 25, y + 20);
-		DrawText(hdc, "F", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 25;
-		SetRect(&rc, x, y, x + 25, y + 20);
-		DrawText(hdc, "H", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 25;
-		SetRect(&rc, x, y, x + 25, y + 20);
-		DrawText(hdc, "I", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 25;
-		SetRect(&rc, x, y, x + 25, y + 20);
-		DrawText(hdc, "N", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 25;
-		SetRect(&rc, x, y, x + 25, y + 20);
-		DrawText(hdc, "Z", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 25;
-		SetRect(&rc, x, y, x + 25, y + 20);
-		DrawText(hdc, "V", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 25;
-		SetRect(&rc, x, y, x + 25, y + 20);
-		DrawText(hdc, "C", 1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+            EndPaint(hDlg, &ps);
+            break;
+        }
 
-		x = rect.left + 390;
-		y = rect.top + 50;
-		SetRect(&rc, x, y, x + 45, y + 20);
-		DrawText(hdc, "DP", 2, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 50;
-		SetRect(&rc, x, y, x + 45, y + 20);
-		DrawText(hdc, "MD", 2, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        case WM_TIMER:
+            switch (wParam)
+            {
+            case IDT_PROC_TIMER:
+                InvalidateRect(hDlg, &BackBuf.Rect, FALSE);
+                return 0;
+            }
+            break;
 
-		SetTextColor(hdc, RGB(0, 0, 0));
-
-		// Pull out processor state.  Do it quickly to keep the emulator frame rate high.
-		const auto& regs(EmuState.Debugger.GetProcessorStateCopy());
-
-		// Dump the registers.
-		x = rect.left;
-		y = rect.top;
-		int gap = 0;
-		std::string s;
-		
-		DrawCenteredText(hdc, x + 10, y + 20, x + 45, y + 40, ToHexString(regs.A, 2));	//	A
-		DrawCenteredText(hdc, x + 45, y + 20, x + 80, y + 40, ToHexString(regs.B, 2));	//	B
-		x += 80;
-		if (EmuState.CpuType == 1)
-		{
-			DrawCenteredText(hdc, x + 10, y + 20, x + 45, y + 40, ToHexString(regs.E, 2));	//	E
-			DrawCenteredText(hdc, x + 45, y + 20, x + 80, y + 40, ToHexString(regs.F, 2));	//	F
-		}
-		x += 80;
-
-		DrawCenteredText(hdc, x + 10, y + 20, x + 80, y + 40, ToHexString(regs.X, 4));	//	X
-		x += 80;
-		DrawCenteredText(hdc, x + 10, y + 20, x + 80, y + 40, ToHexString(regs.Y, 4));	//	Y
-		x += 80;
-		DrawCenteredText(hdc, x + 10, y + 20, x + 80, y + 40, ToHexString(regs.S, 4));	//	S
-		x += 80;
-		DrawCenteredText(hdc, x + 10, y + 20, x + 80, y + 40, ToHexString(regs.U, 4));	//	U
-		x += 80;
-		DrawCenteredText(hdc, x + 10, y + 20, x + 80, y + 40, ToHexString(regs.PC, 4));	//	V
-		x += 80;
-
-
-		x = rect.left + 90;
-		y = rect.top + 70;
-		for (int n = 0; n < 8; n++)
-		{
-			s = (regs.CC & 1 << n) ? "1" : "-";
-			SetRect(&rc, x, y, x + 25, y + 20);
-			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			x += 25;
-		}
-
-		x = rect.left + 390;
-		y = rect.top + 70;
-		SetRect(&rc, x, y, x + 45, y + 20);
-		s = ToHexString(regs.DP, 2);
-		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-
-		x += 50;
-		if (EmuState.CpuType == 1)
-		{
-			s = ToHexString(regs.MD, 2);
-			SetRect(&rc, x, y, x + 45, y + 20);
-			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		}
-
-		x += 40;
-		gap = 15;
-		if (EmuState.CpuType == 1)
-		{
-			s = ToHexString(regs.V, 4);
-			SetRect(&rc, x + 10 + gap, y, x + 80 - gap, y + 20);
-			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		}
-
-		SetTextColor(hdc, RGB(138, 27, 255));
-		y = rect.top + 100;
-		s = "W, MD, V are 6309 CPU only";
-		SetRect(&rc, rect.right - 200, y, rect.right - 10, y + 20);
-		DrawText(hdc, s.c_str(), s.size(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
-
-		// Cleanup.
-		DeleteObject(pen);
-		DeleteObject(hFont);
-	}
-
-
-	INT_PTR CALLBACK ProcessorStateDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
-	{
-		switch (message)
-		{
-		case WM_INITDIALOG:
-		{
-			RECT Rect;
-			GetClientRect(hDlg, &Rect);
-
-			BackBuffer_ = AttachBackBuffer(hDlg, 0, -39);
-
-			SetTimer(hDlg, IDT_PROC_TIMER, 64, (TIMERPROC)NULL);
-
-			break;
-		}
-
-		case WM_PAINT:
-		{
-			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(hDlg, &ps);
-
-			DrawProcessorState(BackBuffer_.DeviceContext, &BackBuffer_.Rect);
-			BitBlt(hdc, 0, 0, BackBuffer_.Width, BackBuffer_.Height, BackBuffer_.DeviceContext, 0, 0, SRCCOPY);
-
-			EndPaint(hDlg, &ps);
-			break;
-		}
-
-		case WM_TIMER:
-
-			switch (wParam)
-			{
-			case IDT_PROC_TIMER:
-				InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
-				return 0;
-			}
-			break;
-
-		case WM_COMMAND:
-			switch (LOWORD(wParam))
-			{
-			case IDC_BTN_SET_PC:
-				if (EmuState.Debugger.IsHalted())
-				{
-					char buf[16];
-					GetWindowText(GetDlgItem(hDlg, IDC_EDIT_PC_ADDR), buf, 8);
-					char *eptr;
-					long val = strtol(buf,&eptr,16);
-					if (*buf == '\0' || *eptr != '\0' || val < 0 || val > 65535)
-					{
-						MessageBox(hDlg,"Invalid hex address","Error",IDOK);
-					} else {
-						CPUForcePC(val & 0xFFFF);
-					}
-				} else {
-					MessageBox(hDlg,"CPU must be halted to change PC","Error",IDOK);
-				}
-				break;
-			case IDC_BTN_CPU_HALT:
-				EmuState.Debugger.QueueHalt();
-				break;
-			case IDC_BTN_CPU_RUN:
-				EmuState.Debugger.QueueRun();
-				break;
-			case IDC_BTN_CPU_STEP:
-				EmuState.Debugger.QueueStep();
-				break;
-			case IDCLOSE:
-			case WM_DESTROY:
-				KillTimer(hDlg, IDT_PROC_TIMER);
-				DeleteDC(BackBuffer_.DeviceContext);
-				DestroyWindow(hDlg);
-				ProcessorStateWindow = NULL;
-				break;
-			}
-
-			break;
-		}
-		return FALSE;
-	}
+        case WM_COMMAND:
+            switch (LOWORD(wParam))
+            {
+            case IDC_BTN_SET_PC:
+                if (EmuState.Debugger.IsHalted())
+                {
+                    char buf[16];
+                    GetWindowText(GetDlgItem(hDlg, IDC_EDIT_PC_ADDR), buf, 8);
+                    char *eptr;
+                    long val = strtol(buf,&eptr,16);
+                    if (*buf == '\0' || *eptr != '\0' || val < 0 || val > 65535)
+                    {
+                        MessageBox(hDlg,"Invalid hex address","Error",IDOK);
+                    } else {
+                        CPUForcePC(val & 0xFFFF);
+                    }
+                } else {
+                    MessageBox(hDlg,"CPU must be halted to change PC","Error",IDOK);
+                }
+                break;
+            case IDC_BTN_CPU_HALT:
+                EmuState.Debugger.QueueHalt();
+                break;
+            case IDC_BTN_CPU_RUN:
+                EmuState.Debugger.QueueRun();
+                break;
+            case IDC_BTN_CPU_STEP:
+                EmuState.Debugger.QueueStep();
+                break;
+            case IDCLOSE:
+            case WM_DESTROY:
+                KillTimer(hDlg, IDT_PROC_TIMER);
+                DeleteDC(BackBuf.DeviceContext);
+                DestroyWindow(hDlg);
+                ProcessorStateWindow = NULL;
+                break;
+            }
+            break;
+        }
+        return FALSE;
+    }
 
 } } } }
 
 
 void VCC::Debugger::UI::OpenProcessorStateWindow(HINSTANCE instance, HWND parent)
 {
-	if (ProcessorStateWindow == NULL)
-	{
-		ProcessorStateWindow = CreateDialog(
-			instance,
-			MAKEINTRESOURCE(IDD_PROCESSOR_STATE),
-			parent,
-			ProcessorStateDlgProc);
-		ShowWindow(ProcessorStateWindow, SW_SHOWNORMAL);
-	}
-
-	SetFocus(ProcessorStateWindow);
+    if (ProcessorStateWindow == NULL)
+    {
+        ProcessorStateWindow = CreateDialog(
+            instance,
+            MAKEINTRESOURCE(IDD_PROCESSOR_STATE),
+            parent,
+            ProcessorStateDlgProc);
+        ShowWindow(ProcessorStateWindow, SW_SHOWNORMAL);
+    }
+    SetFocus(ProcessorStateWindow);
 }
