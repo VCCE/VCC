@@ -246,7 +246,7 @@ user of VCC as well as the "real" Color Computer 1, 2, & 3 hardware.
 As new developments are made on VCC, we hope to expand this manual as
 needed.
 
-As one last note: VCC *will* *always* *be* in a BETA state and by no
+As one last note: VCC is in a BETA state and by no
 means is a finished product. As of this release, quite a few things
 have been changed from the original. There are still many bugs to be
 worked out and enhancements to be added. It is this very reason the
@@ -264,10 +264,6 @@ tried to keep the "look and feel" of the real machine while
 maintaining a sense of a newer and better machine. There may be a few
 bugs lurking in the remnants of the old C code, but for the most part,
 the emulation is still one of the best Coco 3 emulations available.
-Currently, work is underway to convert VCC to *multi-platform*
-software, enabling VCC to be run on Windows, Mac, Linux and possibly
-even Mobile Devices. If this is accomplished, we will have a Coco 3
-emulator available for most *modern* systems.
 
 *System Requirements*
 -----------------------
@@ -405,8 +401,8 @@ The VCC Color Computer 3 installation is complete.
 ### *VCC 2.x.x.x Installation Zip File*
 
 Alternately, you can download the VCC 2.x.x.x zip file and install VCC
-as you please. This file will unzip to your desired folder and you
-will have to manually copy files to any destination you choose.
+as you please. This can be unzipped to your desired folder.  Newer
+versions of Windows may require you to mark the files as "safe."
 
 ### *VCC Installation Package Contents*
 
@@ -555,7 +551,7 @@ found on the internet or you can make your own.
   - **CPU**
     - **Overclocking:** Set as desired. Can effect game play.
     - **Memory Size:** 2048k
-    - **CPU:** MC6809 or MC6309, depending on OS9/NitrOS9 version.
+    - **CPU:** MC6809 or HD6309, depending on OS9/NitrOS9 version.
   - **Display**
     - **Monitor Type:** - RGB
     - **Frame Skip:** Default
@@ -956,10 +952,9 @@ cartridge slot add the following entries to the Cartridge menu:
       needed for the module to function using Coco Basic. This action may
       reset the Coco 3 based cartridge settings in the Misc tab. There
       is no advantage to selecting a module that does not require a rom.
-    - **Persistent Pak Images (New)** - Allows VCC to *remember* which
+    - **Persistent Pak Images** - Allows VCC to *remember* which
       carts you have selected and reloads them each time you run VCC. This
-      function is still a little wonky, but works unless you remove and
-      reinsert the MPI.
+      works unless you remove and reinsert the MPI.
 
 **fd502.dll**
 
@@ -1176,7 +1171,7 @@ memory size of your Coco 3 emulation.
     - **8192 K** - Emulates Paul T. Barton's 8 meg memory board
   - **CPU** - This option allows CPU selection for your Coco 3
     - **Motorola MC6809** - The standard Color Computer 6809 CPU
-    - **Hitachi HD6309** - Emulates use of Hitachi's HD68B09 CPU.  Faster
+    - **Hitachi HD6309** - Emulates use of Hitachi's HD6309 CPU.  Faster
       than the 6809 with an enhanced instruction set.  This CPU was a popular
       mod for Coco users in the early 1990s.
 
@@ -1561,17 +1556,23 @@ closed, the emulator's framerate are not impacted.
 64KB processor space. All values in the memory display are updated in
 real time.
 
+<p align=center><img src="images/ugima54.png" alt="UG Image 54"></img></p>
 **Processor State** - Selecting the Processor State option will show the
-internals of the CPU. All values displayed are updated in real
-time. Use the "Halt", "Run", and "Step" buttons to control CPU state.
-The "SetPC" box and button can be used to change the program counter to 
-a specific hex address.  The CPU must be halted to change the PC. 
+Processor Window which shows CPU registor values and the current instruction
+in real time.  Use the "Halt", "Run", and "Step" buttons to control
+instruction execution.  Use the "SetPC" box to change the program counter to 
+a specific hex address.  The CPU must be halted to change the PC.
 
-<p align=center><img width="600" height="400"
-   src="images/ugima30.jpeg" alt="UG Image 30"></img></p>
+<p align=center><img src="images/ugima55.png" alt="UG Image 55"></img></p>
+**Disassembly** - Selecting the Disassembly option will show the
+Disassembly Window.  If you enter a "From" and "To" address range and 
+press the "Apply" button the window will show you disassembled code for
+that range.  Addresses must be entered in hexidecimal and the maximum
+range is 4K butes (1000 hex).
 
+<p align=center><img src="images/ugima56.png" alt="UG Image 56"></img></p>
 **Breakpoints** - Selecting the breakpoints option will allow you
-    to load an LWASM source listing and set breakpoints.
+to load an LWASM source listing and set breakpoints.
 
 The Source Debugger can only deal with certain source listings. Currently the 
 breakpoints window will only accept  *LWASM Source Listings*. To create such as 
