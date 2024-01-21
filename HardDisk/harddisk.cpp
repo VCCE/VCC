@@ -295,7 +295,8 @@ void LoadHardDisk(int drive)
     memset(&ofn,0,sizeof(ofn));
     ofn.lStructSize     = sizeof (OPENFILENAME) ;
     ofn.hwndOwner       = hWnd;
-    ofn.lpstrFilter     = "HardDisk Images\0*.vhd\0\0"; // filter VHD images
+    // Allow hard disk images *.img;*.vhd;*.os9 or All Files
+    ofn.lpstrFilter     = "Hard Disk Images\0*.img;*.vhd;*.os9\0All files\0*.*\0\0";
     ofn.nFilterIndex    = 1 ;                           // current filter index
     ofn.lpstrFile       = NewVHDfile;                   // full filename on return
     ofn.nMaxFile        = MAX_PATH;                     // sizeof lpstrFile
