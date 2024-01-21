@@ -51,6 +51,7 @@ unsigned char BaseTable[4]={0x40,0x50,0x60,0x70};
 static unsigned char BaseAddr=1,ClockEnabled=1,ClockReadOnly=1;
 static unsigned char DataLatch=0;
 static HINSTANCE g_hinstDLL;
+static HWND hConfDlg = NULL;
 
 using namespace std;
 
@@ -61,7 +62,7 @@ BOOL WINAPI DllMain(
 {
 	if (fdwReason == DLL_PROCESS_DETACH ) //Clean Up 
 	{
-		return(1);
+		if (hConfDlg) DestroyWindow(hConfDlg);
 	}
 	g_hinstDLL=hinstDLL;
 	return(1);
@@ -176,7 +177,9 @@ extern "C"
 			break;
 
 		case 14:
-			DialogBox(g_hinstDLL, (LPCTSTR)IDD_CONFIG, NULL, (DLGPROC)Config);
+			CreateDialog( g_hinstDLL, (LPCTSTR) IDD_CONFIG,
+					GetActiveWindow(), (DLGPROC) Config );
+			ShowWindow(hConfDlg,1);
 			break;
 		}
 		return;
@@ -224,6 +227,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 		case WM_INITDIALOG:
+			hConfDlg=hDlg;
 			SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnabled,0);
 			SendDlgItemMessage(hDlg,IDC_READONLY,BM_SETCHECK,ClockReadOnly,0);
 			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_ADDSTRING, NULL,(LPARAM) "40");
