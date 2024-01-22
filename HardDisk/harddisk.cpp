@@ -23,7 +23,6 @@ This file is part of VCC (Virtual Color Computer).
 #include<iostream>
 #include "resource.h"
 #include "cc3vhd.h"
-//#include "diskrom.h"
 #include "defines.h"
 #include "cloud9.h"
 #include "..\fileops.h"
@@ -58,6 +57,8 @@ void BuildDynaMenu(void);
 int CreateDisk(HWND,int);
 
 static HINSTANCE g_hinstDLL;
+static HWND hConfDlg = NULL;
+LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 
 using namespace std;
 
@@ -68,6 +69,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL,  // handle to DLL module
     if (fdwReason == DLL_PROCESS_DETACH ) {
         UnmountHD(0);
         UnmountHD(1);
+        if (hConfDlg) DestroyWindow(hConfDlg);
     } else {
         g_hinstDLL=hinstDLL;
     }
@@ -129,15 +131,44 @@ extern "C"
             *VHDfile1 = '\0';
             break;
 
-//      case 14:
-//          DialogBox(g_hinstDLL, (LPCTSTR)IDD_CONFIG, NULL, (DLGPROC)Config);
-//          SaveConfig();
-//          break;
+        case 14:
+            CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,GetActiveWindow(),(DLGPROC)Config);
+            ShowWindow(hConfDlg,1);
+            return;
         }
         SaveConfig();
         BuildDynaMenu();
         return;
     }
+}
+
+LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_INITDIALOG:
+        hConfDlg=hDlg;
+        SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnabled,0);
+        SendDlgItemMessage(hDlg,IDC_READONLY,BM_SETCHECK,ClockReadOnly,0);
+        EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), TRUE);
+
+    case WM_COMMAND:
+        switch (LOWORD(wParam))
+        {
+        case IDOK:
+            ClockEnabled=(unsigned char)SendDlgItemMessage(hDlg,IDC_CLOCK,BM_GETCHECK,0,0);
+            ClockReadOnly=(unsigned char)SendDlgItemMessage(hDlg,IDC_READONLY,BM_GETCHECK,0,0);
+            SetClockWrite(!ClockReadOnly);
+            SaveConfig();
+            EndDialog(hDlg, LOWORD(wParam));
+            break;
+
+        case IDCANCEL:
+            EndDialog(hDlg, LOWORD(wParam));
+        break;
+        }
+    }
+    return(0);
 }
 
 /*
@@ -218,7 +249,6 @@ extern "C"
     }
 }
 
-/*
 extern "C"
 {
     __declspec(dllexport) void
@@ -378,6 +408,9 @@ void LoadConfig(void)
         MountHD(VHDfile1,1);
     }
 
+    ClockEnabled=GetPrivateProfileInt(ModName,"ClkEnable",1,IniFile);
+    ClockReadOnly=GetPrivateProfileInt(ModName,"ClkRdOnly",1,IniFile);
+
     // Create config menu
     BuildDynaMenu();
     return;
@@ -397,7 +430,8 @@ void SaveConfig(void)
     }
     WritePrivateProfileString(ModName,"VHDImage",VHDfile0 ,IniFile);
     WritePrivateProfileString(ModName,"VHDImage1",VHDfile1 ,IniFile);
-
+	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
+	WritePrivateProfileInt(ModName,"ClkRdOnly",ClockReadOnly ,IniFile);
     return;
 }
 
@@ -425,6 +459,8 @@ void BuildDynaMenu(void)
     PathStripPath(TempBuf);
     strcat(TempMsg,TempBuf);
     DynamicMenuCallback(TempMsg,5013,SLAVE);
+
+	DynamicMenuCallback( "HD Config",5014,STANDALONE);
 
     DynamicMenuCallback("",1,0);
 }
