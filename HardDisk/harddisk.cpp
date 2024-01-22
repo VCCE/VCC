@@ -144,7 +144,6 @@ extern "C"
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    unsigned char BTemp=0;
     switch (message)
     {
     case WM_INITDIALOG:
@@ -250,7 +249,6 @@ extern "C"
     }
 }
 
-/*
 extern "C"
 {
     __declspec(dllexport) void
