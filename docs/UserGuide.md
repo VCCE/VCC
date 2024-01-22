@@ -1044,7 +1044,7 @@ inner workings of the Color Computer 3 as you run software. This is great for
 debugging your projects or just viewing how it all works. There are four options
 for the Debugger:
 
-  - **Memory Display -** this displays the 64KB memory space that is
+  - **Memory Display** - this displays the 64KB memory space that is
     visible to the processor. Even though the Coco 3 has a minimum of
     128KB of RAM, only 64KB can be seen by the processor. The MMU is
     responsible for mapping the extra RAM into this 64KB workspace.
@@ -1052,6 +1052,10 @@ for the Debugger:
     processor. Internal registers, Condition Code Register, stack/user
     pointers, and the program counter are updated in real time. In
     addition, you can halt, step, and run the processor at any time.
+    When the processor is halted you can also change the PC register
+    and step or run from that point.
+  - **Disassembly** - this displays a disassembly of a selected range
+    of coco3 hexidecimal addresses
   - **Breakpoints** - this window allows you to load an LWASM assembler
     listing and set breakpoints. This provides a source level debugging
     capability for a loaded program.
@@ -2098,7 +2102,7 @@ emulation.
 
 ## harddisk.dll
 
- This module implements the used of emulator dosk files that are
+ This module implements the use of emulator disk files that are
  supported in many Coco emulators. It adds a dual menu item used to
  Insert/Eject up to two virtual hard disk images (VHD) as HD 0 and HD 1.
  It also contains an implementation of the Dallas DS1315 real time
@@ -2109,10 +2113,9 @@ emulation.
 
 ## SuperIDE.dll
 
- NOTE: At the moment, this cart does not seem to function properly. The
- issue is being investigated. The SuperIDE worked before conversion to
- VS2015, so it's most likely a syntax problem in the VCC code
- and should be fixed soon
+ This module emulates Glenside IDE disk images. It adds a menu to
+ insert / eject a master and a slave IDE.  It also contains
+ an implementation of the Dallas DS1315 real time clock.
 
  Usage details can be found in the Disks Section of this manual.
 
@@ -2284,9 +2287,8 @@ emulation.
 <div style="page-break-after: always;"></div>
 <h2 align="center">The VCC Command Line Options</h2>
 
-VCC allows a couple of command line options. One has been
-available since at least VCC 1.42, and the other is a new addition in
-a recent release. It is expected more options will be added at a later date
+VCC allows a few command line options. One has been available since 
+at least VCC 1.42.  It is expected more options will be added.
 
 *NOTE: Command line options are used in the Windows "Command Prompt".
 You must change directory to the location of the VCC installation
@@ -2318,6 +2320,18 @@ To use the quick file load function you can use the command line as follows:
  Caution that if you associated these file types with a previous version of
  Vcc you may have de-associate them first. Windows does not include full paths
  in program associations.
+
+ **Auto Paste Text** - You can specify a basic command that will be auto pasted
+ into DECB when VCC starts using the -p option followed by the command or
+ commands seperated by colons.  If there are spaces in the command string
+ it must be surrounded by double quotes. However double quotes are allowed
+ within the quoted string, as shown in the second example:
+ <pre>
+   To auto run the dos command:
+     C> vcc -pDOS
+   Auto load a bin file from disk and exec it:
+     C> vcc -p "drive 3: loadm "sig": exec"
+ </pre>
 
  **Custom VCC.ini Load ** - You can load a custom vcc.ini file
  from the command line in a Windows Command Prompt. You must first have
@@ -2631,23 +2645,32 @@ Floppy from the menu.
  card under VCC without any driver modifications. As such it is
  compatible the both HDB-DOS and the Super-Driver currently in the
  Toolshed and NitrOS9 repositories. It adds three menu items used to
- Insert/Eject backup images (.IMG files) created by my sideutil program
- and to set the base address of the virtual controller. Also note that
- currently the sideutil program only allows dumping of removable CF
+ Insert/Eject backup images (.IMG files) created by SideKick Utility
+ programs and to set the base address of the virtual controller. Note that
+ currently the SideKick utility only allows dumping of removable CF
  cards, Hard disks are not currently supported for safety reasons.
+ Sidekick and Sidekick Utilities for HDB-DOS can be found in the
+ Color Computer Archive.
 
 <p align=center><img src="images/ugima43.jpeg" alt="UG Image 43"></img></p>
 
- Base Address:This must be set to match the address of the real
- hardware the CF card image was taken from. FF40 Do not use this
- address with the FD-502 module loaded as it uses part of this range as
- does the becker.dll.
+#### Base Address
 
- FF50 Default base address. If selected verify the RTC in the FD-502
- module is disabled as it uses part of this range. FF60
+ The base address must be set to match the address of the real
+ hardware the CF card image was taken from.
 
- FF70 Also used by the Modules RTC, Selecting this base will disable
- the internal RTC.
+ Do not use 0xFF40 base address with the FD-502 module loaded as it 
+ uses part of this range as does the becker.dll. 
+ 
+ The default base address is 0xFF50. This address conficts with the
+ RTC in FD502 so uncheck the Clock at 0xFF50-52 box in FD-502 
+ Configuration if the default base address is used.
+ 
+ The 0xFF70 base address will conflict with the Cloud9 RTC used with
+ this module, so the clock will be disabled it this address is used.
+ 
+ Note: the Hard Drive module also uses the Cloud9 RTC clock and that
+ module currently has no menu to disble it.
 
 #### Clock at 0xFF70
 
