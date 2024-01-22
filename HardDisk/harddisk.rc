@@ -54,8 +54,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,1,8,1
- PRODUCTVERSION 2,1,8,1
+ FILEVERSION 2,1,8,3
+ PRODUCTVERSION 2,1,8,3
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x21L
@@ -73,14 +73,14 @@ BEGIN
             VALUE "Comments", "Emulator Hard Disk Controller with 130Mb drive\0"
             VALUE "CompanyName", "BitRot Software.\0"
             VALUE "FileDescription", "Hard Disk\0"
-            VALUE "FileVersion", "2.1.8.1\0"
+            VALUE "FileVersion", "2.1.8.3\0"
             VALUE "InternalName", "Hard Disk\0"
             VALUE "LegalCopyright", "Copyright © 2010\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "harddisk.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Vcc Module file\0"
-            VALUE "ProductVersion", "2.1.8.1\0"
+            VALUE "ProductVersion", "2.1.8.3\0"
             VALUE "SpecialBuild", "RGB Hard Disk Controller\0"
         END
     END
