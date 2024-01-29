@@ -260,6 +260,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			switch (wmId)
 			{	
+				case IDM_USER_WIKI:
+					ShellExecute(NULL, "open",
+								 "https://github.com/VCCE/VCC/wiki/UserGuide",
+								 NULL, NULL, SW_SHOWNORMAL);
+					break;
+
 				case IDM_HELP_ABOUT:
 					DialogBox(EmuState.WindowInstance,
 						(LPCTSTR)IDD_ABOUTBOX,
