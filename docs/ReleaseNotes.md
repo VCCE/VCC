@@ -1,6 +1,8 @@
 <h2 align="center">Vcc Change Log</h2>
 
 - VCC v2.1.8.3 Jan/2024
+    - Add web link in help menu to User Guide - EJJaquay 
+    - Correct hdblba.rom and instructions for SuperIDE - Bill Pierce
     - Add Hard Disk config for disabling RTC - EJJaquay
     - Add instruction decode to Debugger Processor Window - EJJ
     - Add Disassembler Window - EJJ
