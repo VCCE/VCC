@@ -62,6 +62,7 @@ BEGIN
     POPUP "Help", HELP
     BEGIN
         MENUITEM "About Vcc",                   IDM_HELP_ABOUT
+        MENUITEM "User Guide",                  IDM_USER_WIKI
     END
 END
 

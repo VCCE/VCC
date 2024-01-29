@@ -378,6 +378,7 @@
 #define IDC_ERROR_TEXT                  2135
 #define IDC_DISASSEMBLY_TEXT            2136
 
+#define IDM_USER_WIKI                   40001
 #define ID_FILE_EXIT                    40002
 #define IDM_HELP_ABOUT                  40003
 #define ID_FILE_RUN                     40004
