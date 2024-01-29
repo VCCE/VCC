@@ -32,14 +32,15 @@ Lack of support didn't seem to deter the fans. Third party vendors
 stepped in to fill the void. New products were and are still being
 developed. Today you can buy 512k memory cards, IDE and SCSI
 hard disk interfaces and faster, more powerful CPUs in the HD63B09E.
-There is even a free user supported Multi-tasking Multi-User OS
-(NitrOS9) available for this more than three decade old 8 bit machine.
+There is even a free user supported Realtime Multi-tasking Multi-User 
+operating system 'NitrOS9' available for this more than three 
+decade old 8 bit machine.
 
 VCC is a Tandy Color Computer 3 emulator that runs on the Windows
 operating system (Windows XP or greater). It attempts to simulate the
 hardware that comprised this system. As such it allows software
 written for this 30+ year old computer to run on modern hardware.
-Please take a moment to read this guide to discover some of the
+Please take the time to read this guide to discover some of the
 features and shortcomings of this emulator.
 
 If you have ever used an emulator before you should have no trouble
@@ -246,12 +247,12 @@ user of VCC as well as the "real" Color Computer 1, 2, & 3 hardware.
 As new developments are made on VCC, we hope to expand this manual as
 needed.
 
-As one last note: VCC *will* *always* *be* in a BETA state and by no
-means is a finished product. As of this release, quite a few things
-have been changed from the original. There are still many bugs to be
-worked out and enhancements to be added. It is this very reason the
-VCC Color Computer 3 emulator has been released as an open source
-project in hopes that outside contributors and/or programmers will get
+As one last note: VCC is continously in a BETA state and by no
+means is a finished product. Quite a few things have been changed
+from the original. There are still many bugs to be worked out and
+enhancements to be added. It is this very reason the VCC Color 
+Computer 3 emulator has been released as an open source project
+in hopes that outside contributors and/or programmers will get
 involved and help this become the best Color Computer 3 emulator
 available!
 
@@ -264,10 +265,6 @@ tried to keep the "look and feel" of the real machine while
 maintaining a sense of a newer and better machine. There may be a few
 bugs lurking in the remnants of the old C code, but for the most part,
 the emulation is still one of the best Coco 3 emulations available.
-Currently, work is underway to convert VCC to *multi-platform*
-software, enabling VCC to be run on Windows, Mac, Linux and possibly
-even Mobile Devices. If this is accomplished, we will have a Coco 3
-emulator available for most *modern* systems.
 
 *System Requirements*
 -----------------------
@@ -358,7 +355,7 @@ Checking/Unchecking the boxes determines which components the
 installer will use. These choices are:
 
   - VCC 2.x.x.x Coco 3 Emulator
-     - Support File for the VCC 2.x.x.x Coco 3 6809-6309 Emulator
+     - Support Files for the VCC 2.x.x.x Coco 3 6809-6309 Emulator
   - Vcc 2.x.x.x Color Computer 3 Manuals
      - Welcome to VCC 2.x.x.x
      - Game Master Cart Info
@@ -405,8 +402,8 @@ The VCC Color Computer 3 installation is complete.
 ### *VCC 2.x.x.x Installation Zip File*
 
 Alternately, you can download the VCC 2.x.x.x zip file and install VCC
-as you please. This file will unzip to your desired folder and you
-will have to manually copy files to any destination you choose.
+as you please. This can be unzipped to your desired folder.  Newer
+versions of Windows may require you to mark the files as "safe."
 
 ### *VCC Installation Package Contents*
 
@@ -438,12 +435,12 @@ The VCC installation package & VCC Zip Package contain these files:
     descriptions)
 - orch90.rom (Orchestra90 ROM used by Orc90.dll, auto loaded)
 - rgbdos.rom (RGBDOS ROM for VCC's harddisk.dll)
+- rs232.rom (Rom for Tandy RS232 program pak)
 - cyd_gmc.rom (Optional demo rom for the GMC cart)
 - license.txt (License Agreement)
-- ReadMe-2.x.x.x.txt (ReadMe file displayed in installation)
-- Vcc 2.x.x.x Color Computer 3 Manuals (Installed to the user's
- "Documents\\Coco Manuals" folder)
-- Welcome to VCC 2.x.x.x.pdf (VCC User's Manual)
+- ReadMe.txt (ReadMe file displayed in installation)
+- VCC-UserGuide (This document)
+- Release-Notes.txt (Brief listing of changes with each VCC version)
 
 <div style="page-break-after: always;"></div>
 <h2 align="center">VCC Quick Start Guide</h2>
@@ -555,7 +552,7 @@ found on the internet or you can make your own.
   - **CPU**
     - **Overclocking:** Set as desired. Can effect game play.
     - **Memory Size:** 2048k
-    - **CPU:** MC6809 or MC6309, depending on OS9/NitrOS9 version.
+    - **CPU:** MC6809 or HD6309, depending on OS9/NitrOS9 version.
   - **Display**
     - **Monitor Type:** - RGB
     - **Frame Skip:** Default
@@ -773,7 +770,7 @@ standard Coco 3 display types
   - **Force Aspect** - Forces VCC to keep the screen in the proper
     proportions when resized. The "Full Screen" mode will NOT retain
     it's aspect and will stretch.
-  - **Remember Screen Size (New)** Allows you to resize the VCC window and
+  - **Remember Screen Size** Allows you to resize the VCC window and
     exit, the VCC will remember your previous screen size and return to it
     the next time you run VCC.
   - **[F8] Throttle Speed** - Turns off all speed restraints
@@ -956,10 +953,9 @@ cartridge slot add the following entries to the Cartridge menu:
       needed for the module to function using Coco Basic. This action may
       reset the Coco 3 based cartridge settings in the Misc tab. There
       is no advantage to selecting a module that does not require a rom.
-    - **Persistent Pak Images (New)** - Allows VCC to *remember* which
+    - **Persistent Pak Images** - Allows VCC to *remember* which
       carts you have selected and reloads them each time you run VCC. This
-      function is still a little wonky, but works unless you remove and
-      reinsert the MPI.
+      works unless you remove and reinsert the MPI.
 
 **fd502.dll**
 
@@ -1049,7 +1045,7 @@ inner workings of the Color Computer 3 as you run software. This is great for
 debugging your projects or just viewing how it all works. There are four options
 for the Debugger:
 
-  - **Memory Display -** this displays the 64KB memory space that is
+  - **Memory Display** - this displays the 64KB memory space that is
     visible to the processor. Even though the Coco 3 has a minimum of
     128KB of RAM, only 64KB can be seen by the processor. The MMU is
     responsible for mapping the extra RAM into this 64KB workspace.
@@ -1057,6 +1053,10 @@ for the Debugger:
     processor. Internal registers, Condition Code Register, stack/user
     pointers, and the program counter are updated in real time. In
     addition, you can halt, step, and run the processor at any time.
+    When the processor is halted you can also change the PC register
+    and step or run from that point.
+  - **Disassembly** - this displays a disassembly of a selected range
+    of coco3 hexidecimal addresses
   - **Breakpoints** - this window allows you to load an LWASM assembler
     listing and set breakpoints. This provides a source level debugging
     capability for a loaded program.
@@ -1176,7 +1176,7 @@ memory size of your Coco 3 emulation.
     - **8192 K** - Emulates Paul T. Barton's 8 meg memory board
   - **CPU** - This option allows CPU selection for your Coco 3
     - **Motorola MC6809** - The standard Color Computer 6809 CPU
-    - **Hitachi HD6309** - Emulates use of Hitachi's HD68B09 CPU.  Faster
+    - **Hitachi HD6309** - Emulates use of Hitachi's HD6309 CPU.  Faster
       than the 6809 with an enhanced instruction set.  This CPU was a popular
       mod for Coco users in the early 1990s.
 
@@ -1293,7 +1293,6 @@ do not affect the VCC tape recorder as on a real Coco.
   - **Rewind** - This will rewind the "tape" file to the beginning of
     the tape.
 
-<span style="color:red">
 WARNING: If you use ".wav" files, be warned, if the ".wav" file is
 *not* recorded in "8-bit, 44,100 kHz", VCC may mangle the file just by
 loading it, you don't even have to "play" it. Most "standard" wave
@@ -1301,7 +1300,7 @@ files are in 16-bit, 44,199 kHz. These will not work in VCC and even
 if you just browse to them and select them into the tape interface,
 VCC will try to convert them to 8-bit and ruin the file. This issue is
 being looked into. You were warned.
-</span>
+
 
 <p align=center><img width="400" height="450"
    src="images/ugima11.jpeg" alt="UG Image 11"></img></p>
@@ -1363,7 +1362,7 @@ the selected slot.
     Slot (this action may or may not reset the Coco 3 based on what cart
     is in the slot and your cartridge settings in the Misc tab)
 
-  - **Persistent Pak Images (New)** - Allows VCC to
+  - **Persistent Pak Images** - Allows VCC to
     *remember* what carts you have selected and reload them each time
     you run VCC. This function is still a little wonky, but works unless
     you remove the MPI and reinsert it.
@@ -1375,17 +1374,18 @@ the selected slot.
 into an MPI slot or the Cartridge slot.
 
   - **Insert** Drings up a file browser where the disk image file
-    (.dsk) can be choosen by pushing the OPEN button. Typing a non
-    existing image name into the File Name field
-    when will bring up the "Insert Disk Image" menu (next figure)
-    in which you can create a new disk of that name.
+    (.dsk) can be choosen by pushing the OPEN button. Typing a 
+    non-existing image name into the File Name field when will bring
+    up the "Insert Disk Image" menu (next figure) in which you can 
+    create a new disk of that name.
   - **Eject** Eject the current disk image.
 
 <p align=center><img src="images/ugima16.jpeg" alt="UG Image 16"></img></p>
 <h4 align=center>New disk</h4>
 
-**New Disk Image** Here you can specify the image type and track count
-  for a new disk image and VCC will create the file for you
+**New Disk Image** This menu comes up when a non-existing filename is 
+entered. Here you can specify an image type and track count for a new
+disk image and VCC will create the file for you
 
   - **DMK** - DMK virtual disk image type
   - **JVC** - JVC virtual disk imagetype (preferred)
@@ -1395,7 +1395,7 @@ into an MPI slot or the Cartridge slot.
   - **80** - Creates an 80 track virtual disk image
   - **Double Sided** - Checking this creates a double sided disk
 
-Push "Yes" to confirm your choices or "No" to cancel.  Vcc does not
+Push "Yes" to confirm our choices or "No" to cancel.  Vcc does not
 format the new disk for you - the disk must still be formatted using
 DECB (dskini) or OS9/NitrOS9 (format) commands.
 
@@ -1446,12 +1446,11 @@ adds fields for selecting two harddrive files (.vhd)
 <p align=center><img src="images/ugima19.jpeg" alt="UG Image 19"></img></p>
 <h4 align=center>Create Hard Disk Image</h4>
 
-If a non existing file is typed into a VHD "Insert" selection Vcc will
+If a non-existing file is typed into a VHD "Insert" selection Vcc will
 bring up the "Create Hard Disk Image" menu in which you can create a new
 VHD of that name.
 
-  - **Create New File** - Creates the specified VHD
-     the specified size in the selected directory
+  - **Create New File** - Creates the VHD of the specified size.
   - **Cancel** - Cancels the operation
   - **Initial Disk Size** - Input the size (in Kilobytes) that you want
     for your VHD. The default size is 132,480k, which is the standard
@@ -1561,17 +1560,23 @@ closed, the emulator's framerate are not impacted.
 64KB processor space. All values in the memory display are updated in
 real time.
 
+<p align=center><img src="images/ugima54.png" alt="UG Image 54"></img></p>
 **Processor State** - Selecting the Processor State option will show the
-internals of the CPU. All values displayed are updated in real
-time. Use the "Halt", "Run", and "Step" buttons to control CPU state.
-The "SetPC" box and button can be used to change the program counter to 
-a specific hex address.  The CPU must be halted to change the PC. 
+Processor Window which shows CPU registor values and the current instruction
+in real time.  Use the "Halt", "Run", and "Step" buttons to control
+instruction execution.  Use the "SetPC" box to change the program counter to 
+a specific hex address.  The CPU must be halted to change the PC.
 
-<p align=center><img width="600" height="400"
-   src="images/ugima30.jpeg" alt="UG Image 30"></img></p>
+<p align=center><img src="images/ugima55.png" alt="UG Image 55"></img></p>
+**Disassembly** - Selecting the Disassembly option will show the
+Disassembly Window.  If you enter a "From" and "To" address range and 
+press the "Apply" button the window will show you disassembled code for
+that range.  Addresses must be entered in hexidecimal and the maximum
+range is 4K butes (1000 hex).
 
+<p align=center><img src="images/ugima56.png" alt="UG Image 56"></img></p>
 **Breakpoints** - Selecting the breakpoints option will allow you
-    to load an LWASM source listing and set breakpoints.
+to load an LWASM source listing and set breakpoints.
 
 The Source Debugger can only deal with certain source listings. Currently the 
 breakpoints window will only accept  *LWASM Source Listings*. To create such as 
@@ -1601,7 +1606,6 @@ listing, you must specificy this option on the LWASM command line.
  When the listing is loaded, it scans the file looking for the 4-byte
  address (6000 in the case of the first line). When it finds a line
  with an address it will make note of the listing line number. When a
-
  breakpoint address is sent to the CPU and the CPU's Program Counter
  (PC) matches the breakpoint address, the CPU will halt.
 
@@ -2097,7 +2101,7 @@ emulation.
 
 ## harddisk.dll
 
- This module implements the used of emulator dosk files that are
+ This module implements the use of emulator disk files that are
  supported in many Coco emulators. It adds a dual menu item used to
  Insert/Eject up to two virtual hard disk images (VHD) as HD 0 and HD 1.
  It also contains an implementation of the Dallas DS1315 real time
@@ -2108,10 +2112,9 @@ emulation.
 
 ## SuperIDE.dll
 
- NOTE: At the moment, this cart does not seem to function properly. The
- issue is being investigated. The SuperIDE worked before conversion to
- VS2015, so it's most likely a syntax problem in the VCC code
- and should be fixed soon
+ This module emulates Glenside IDE disk images. It adds a menu to
+ insert / eject a master and a slave IDE.  It also contains
+ an implementation of the Dallas DS1315 real time clock.
 
  Usage details can be found in the Disks Section of this manual.
 
@@ -2280,12 +2283,15 @@ emulation.
  be accurate to the original ROMs of the same name. These ROM images
  are the same as used by most Color Computer 3 emulations.
 
+ Also note that the "hdblba.rom" used for SuperIDE on DECB that was
+ distributed with some previous versions of VCC was found to be 
+ defective and has been replaced.  Be sure to use the latest version.  
+
 <div style="page-break-after: always;"></div>
 <h2 align="center">The VCC Command Line Options</h2>
 
-VCC allows a couple of command line options. One has been
-available since at least VCC 1.42, and the other is a new addition in
-a recent release. It is expected more options will be added at a later date
+VCC allows a few command line options. One has been available since 
+at least VCC 1.42.  It is expected more options will be added.
 
 *NOTE: Command line options are used in the Windows "Command Prompt".
 You must change directory to the location of the VCC installation
@@ -2318,6 +2324,18 @@ To use the quick file load function you can use the command line as follows:
  Vcc you may have de-associate them first. Windows does not include full paths
  in program associations.
 
+ **Auto Paste Text** - You can specify a basic command that will be auto pasted
+ into DECB when VCC starts using the -p option followed by the command or
+ commands seperated by colons.  If there are spaces in the command string
+ it must be surrounded by double quotes. However double quotes are allowed
+ within the quoted string, as shown in the second example:
+ <pre>
+   To auto run the dos command:
+     C> vcc -pDOS
+   Auto load a bin file from disk and exec it:
+     C> vcc -p "drive 3: loadm "sig": exec"
+ </pre>
+
  **Custom VCC.ini Load ** - You can load a custom vcc.ini file
  from the command line in a Windows Command Prompt. You must first have
  created such a file from manually editing a vcc.ini file and saving it
@@ -2339,6 +2357,11 @@ To use the quick file load function you can use the command line as follows:
  "%appdata%\\VCC\\Custom.ini" Now when you click your VCC shortcut, you
  will start with your custom config.
 
+ In addition to selecting the .ini file other command line options can
+ be added to a shortcut to autoload a binary or to paste a basic command
+ string. You can eve have one multiple click shortcuts for each of
+ your favorite VCC configurations.
+
 <div style="page-break-after: always;"></div>
 <h2 align="center">Loading and Saving Custom VCC.ini Files</h2>
 
@@ -2354,7 +2377,7 @@ To use the quick file load function you can use the command line as follows:
  NOTE: Before creating a "custom" version of VCC, We suggest you "Save"
  the current configuration under the new custom name first. This is
  because VCC writes many of the changes to an ini file as you go, so
- any changes you make will be saved under the current name. VCC starts
+ any change you make will be saved under the current name. VCC starts
  under the "vcc.ini" file, so we suggest leaving that file "plain",
  saving under a custom name, then make your changes. Most changes will
  be save to the "new" file, but don't forget to "Save Config" when
@@ -2496,8 +2519,9 @@ AciaFileWrPath=AciaFile.txt<br>
 
  Creating a new blank disk will be similar to inserting an existing
  image. Simple click Insert, and instead of picking an existing image
- type the name of the new disk image you wish to create (with the
- extension ".dsk").
+ type the non-existing name of a new disk image you wish to create
+ (with the extension ".dsk")
+ .
 <p><img src="images/ugima38.png" alt="UG Image 38"></img></p>
 <p align=center><img src="images/ugima39.png" alt="UG Image 39"></img></p>
 
@@ -2536,7 +2560,7 @@ The staus is interpreted as follows:
 #### *Creating A New VHD Image*
 
  Creating a new VHD image is much like creating a new floppy image above.
- In the "Insert" menu, type in a non-existant filename and the new
+ In the "Insert" menu, type in a non-existent filename and the new
  dialog will appear.
 
 <p align=center><img src="images/ugima41.jpeg" alt="UG Image 41"></img></p>
@@ -2630,23 +2654,32 @@ Floppy from the menu.
  card under VCC without any driver modifications. As such it is
  compatible the both HDB-DOS and the Super-Driver currently in the
  Toolshed and NitrOS9 repositories. It adds three menu items used to
- Insert/Eject backup images (.IMG files) created by my sideutil program
- and to set the base address of the virtual controller. Also note that
- currently the sideutil program only allows dumping of removable CF
+ Insert/Eject backup images (.IMG files) created by SideKick Utility
+ programs and to set the base address of the virtual controller. Note that
+ currently the SideKick utility only allows dumping of removable CF
  cards, Hard disks are not currently supported for safety reasons.
+ Sidekick and Sidekick Utilities for HDB-DOS can be found in the
+ Color Computer Archive.
 
 <p align=center><img src="images/ugima43.jpeg" alt="UG Image 43"></img></p>
 
- Base Address:This must be set to match the address of the real
- hardware the CF card image was taken from. FF40 Do not use this
- address with the FD-502 module loaded as it uses part of this range as
- does the becker.dll.
+#### Base Address
 
- FF50 Default base address. If selected verify the RTC in the FD-502
- module is disabled as it uses part of this range. FF60
+ The base address must be set to match the address of the real
+ hardware the CF card image was taken from.
 
- FF70 Also used by the Modules RTC, Selecting this base will disable
- the internal RTC.
+ Do not use 0xFF40 base address with the FD-502 module loaded as it 
+ uses part of this range as does the becker.dll. 
+ 
+ The default base address is 0xFF50. This address conficts with the
+ RTC in FD502 so uncheck the Clock at 0xFF50-52 box in FD-502 
+ Configuration if the default base address is used.
+ 
+ The 0xFF70 base address will conflict with the Cloud9 RTC used with
+ this module, so the clock will be disabled it this address is used.
+ 
+ Note: the Hard Drive module also uses the Cloud9 RTC clock and that
+ module currently has no menu to disble it.
 
 #### Clock at 0xFF70
 

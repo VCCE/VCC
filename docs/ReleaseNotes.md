@@ -1,5 +1,13 @@
 <h2 align="center">Vcc Change Log</h2>
 
+- VCC v2.1.8.3 Jan/2024
+    - Add Hard Disk config for disabling RTC - EJJaquay
+    - Add instruction decode to Debugger Processor Window - EJJ
+    - Add Disassembler Window - EJJ
+    - Add command line auto paste option - EJJ
+    - Fix blinking text in 40 and 80 col text mode - EJJ
+    - User Guide updates - EJJ
+
 - VCC v2.1.8.2 Nov/2023
     - Fixed 6309 TFM to inc/dec source register before write - James Rye
     - Convert ReleaseNotes (this) to markdown - EJJ
