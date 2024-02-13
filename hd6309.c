@@ -2448,7 +2448,7 @@ void Ldbt(void)
             break;
         case 1 : // A Reg
         case 2 : // B Reg
-            *ureg8[postbyte-1] |= ~(1 << Dest);
+            *ureg8[postbyte-1] |= (1 << Dest);
             break;
         }
     }
