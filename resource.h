@@ -377,6 +377,8 @@
 #define IDC_EDIT_PC_LAST                2134
 #define IDC_ERROR_TEXT                  2135
 #define IDC_DISASSEMBLY_TEXT            2136
+#define IDC_PHYS_MEM                    2137
+#define IDC_EDIT_BLOCK                  2138
 
 #define IDM_USER_WIKI                   40001
 #define ID_FILE_EXIT                    40002

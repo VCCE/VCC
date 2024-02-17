@@ -93,15 +93,11 @@ namespace VCC { namespace Debugger
 
 		return numToRound - remainder;
 	}
-    // Get memory for Decode, CPU address or Physical Block + Address	
-	unsigned char DbgRead8(bool phyAddr, unsigned char block,unsigned short PC) {
 
-//unsigned int NumBlocks[4] = {0x2,0x8,0x20,0x80};
-//maxblock = EmuState.RamSize / 0x2000;
-//unsigned short GetMem(long address) {
-
+	// Get memory for Decode, CPU address or Physical Block + Address
+	unsigned char DbgRead8(bool phyAddr, unsigned short block, unsigned short PC) {
 		if (phyAddr) {
-			long addr = PC + block * 0x2000;
+			unsigned long addr = PC + block * 0x2000;
 			return (unsigned char) GetMem(addr);
 		} else {
 			return MemRead8(PC);

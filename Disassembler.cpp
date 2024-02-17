@@ -48,7 +48,7 @@ HWND hDisText = NULL;  // Richedit20 box for output
 // local references
 INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
 void DisAsmFromTo();
-void Disassemble(UINT16, UINT16);
+void Disassemble(unsigned short, unsigned short, bool, unsigned short);
 UINT16 ConvertHexAddress(char *);
 LRESULT CALLBACK SubAddrDlgProc(HWND,UINT,WPARAM,LPARAM);
 WNDPROC AddrDlgProc;
@@ -174,12 +174,37 @@ void SetDialogFocus(HWND hCtrl) {
 void DisAsmFromTo()
 {
     char buf[16];
-    UINT16 FromAdr, ToAdr;
+    unsigned short FromAdr;
+    unsigned short ToAdr;
+    unsigned short MaxAdr;
+    bool UsePhyAdr;
+    unsigned short Block;
 
-    // Start address
+    // Physical address check box
+    unsigned int ret = IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM);
+    UsePhyAdr = (ret == BST_CHECKED) ? TRUE : FALSE;
+
+    // If not using physical addressing disallow access I/O ports
+    MaxAdr = UsePhyAdr? 0xFFFF: 0xFF00
+
+    GetWindowText(GetDlgItem(hDismDlg,IDC_EDIT_BLOCK), buf, 8);
+    int blk = ConvertHexAddress(buf);
+    if ((UsePhyAdr && ((blk < 0) || (blk > 0x3FF)))) {
+        SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"Invalid Block Number");
+        return;
+    }
+    Block = (unsigned short) blk;
+
+    // Ramsize bytes  0x20000 0x80000 0x200000 0x800000
+    //         kbytes     128     512     2048     8192
+    //         Blks        10      40      100      400
+    // Reads beyond physical mem will return 0xFF
+
+
+    // Start CPU address or block offset
     GetWindowText(hEdtAddr, buf, 8);
     FromAdr = ConvertHexAddress(buf);
-    if ((FromAdr < 0) || (FromAdr > 0xFF00)) {
+    if ((FromAdr < 0) || (FromAdr > MaxAdr)) {
         SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"Invalid start address");
         return;
     }
@@ -187,7 +212,7 @@ void DisAsmFromTo()
     // End Address
     GetWindowText(hEdtLast, buf, 8);
     ToAdr = ConvertHexAddress(buf);
-    if ((ToAdr < 0) || (ToAdr > 0xFF00)) {
+    if ((ToAdr < 0) || (ToAdr > MaxAdr)) {
         SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"Invalid end address");
         return;
     }
@@ -201,14 +226,25 @@ void DisAsmFromTo()
 
     // Good range, disassemble
     SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"");
-    Disassemble(FromAdr,ToAdr);
+    Disassemble(FromAdr,ToAdr,UsePhyAdr,Block);
+
     return;
 }
+
+// VCC startup executables mapping
+// Block  Phy address  CPU address Contents
+//  $3C  $78000-$79FFF $8000-$9FFF Extended Basic ROM
+//  $3D  $7A000-$7BFFF $A000-$BFFF Color Basic ROM
+//  $3E  $7C000-$7DFFF $C000-$DFFF Cartridge or Disk Basic ROM
+//  $3F  $7E000-$7FFFF $D000-$FFFF Super Basic, GIME regs, I/O, Interrupts
 
 /**************************************************/
 /*  Disassemble Instructions in specified range   */
 /**************************************************/
-void Disassemble(UINT16 FromAdr, UINT16 ToAdr)
+void Disassemble( unsigned short FromAdr,
+                  unsigned short ToAdr,
+                  bool UsePhyAddr,
+                  unsigned short Block)
 {
     std::unique_ptr<OpDecoder> Decoder;
     Decoder = std::make_unique<OpDecoder>();
@@ -217,11 +253,11 @@ void Disassemble(UINT16 FromAdr, UINT16 ToAdr)
     std::string lines = {};
     UINT16 PC = FromAdr;
 
+    state.phyAddr=UsePhyAddr; // Boolean decode using physical addressing
+    state.block=Block;        // Physical address = PC + block * 0x2000
 
     while (PC < ToAdr) {
         state.PC = PC;
-state.phyAddr=TRUE; // Decode using block relative addressing
-state.block=0x3E;   // Physical address = PC + block * 0x2000
         trace = {};
         Decoder->DecodeInstruction(state,trace);
 
