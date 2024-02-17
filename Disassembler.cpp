@@ -185,7 +185,7 @@ void DisAsmFromTo()
     UsePhyAdr = (ret == BST_CHECKED) ? TRUE : FALSE;
 
     // If not using physical addressing disallow access I/O ports
-    MaxAdr = UsePhyAdr? 0xFFFF: 0xFF00
+    MaxAdr = UsePhyAdr? 0xFFFF: 0xFF00;
 
     GetWindowText(GetDlgItem(hDismDlg,IDC_EDIT_BLOCK), buf, 8);
     int blk = ConvertHexAddress(buf);
