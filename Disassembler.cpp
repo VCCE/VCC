@@ -92,8 +92,8 @@ INT_PTR CALLBACK DisassemblerDlgProc
         // Hook the address dialogs to capture those keystrokes
         AddrDlgProc = (WNDPROC) SetControlHook(hEdtAddr,(LONG_PTR) SubAddrDlgProc);
         LastDlgProc = (WNDPROC) SetControlHook(hEdtLast,(LONG_PTR) SubLastDlgProc);
-
-    SetWindowTextA(hDisText,"");
+        // Clear the output text
+        SetWindowTextA(hDisText,"");
         // Set focus to the first edit box
         SetDialogFocus(hEdtAddr);
         break;
@@ -217,8 +217,11 @@ void Disassemble(UINT16 FromAdr, UINT16 ToAdr)
     std::string lines = {};
     UINT16 PC = FromAdr;
 
+
     while (PC < ToAdr) {
         state.PC = PC;
+state.phyAddr=TRUE; // Decode using block relative addressing
+state.block=0x3E;   // Physical address = PC + block * 0x2000
         trace = {};
         Decoder->DecodeInstruction(state,trace);
 

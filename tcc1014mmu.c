@@ -49,6 +49,7 @@ static unsigned char VectorMaska[4]={12,60,60,60};
 static unsigned int VidMask[4]={0x1FFFF,0x7FFFF,0x1FFFFF,0x7FFFFF};
 static unsigned char CurrentRamConfig=1;
 static unsigned short MmuPrefix=0;
+static unsigned int RamSize=0;
 
 void UpdateMmuArray(void);
 /*****************************************************************************************
@@ -58,7 +59,7 @@ void UpdateMmuArray(void);
 *****************************************************************************************/
 unsigned char * MmuInit(unsigned char RamConfig)
 {
-	unsigned int RamSize=0;
+//	unsigned int RamSize=0;
 	unsigned int Index1=0;
 	RamSize=MemConfig[RamConfig];
 	CurrentRamConfig=RamConfig;
@@ -66,8 +67,11 @@ unsigned char * MmuInit(unsigned char RamConfig)
 		free(memory);
 
 	memory=(unsigned char *)malloc(RamSize);
-	if (memory==NULL)
+	if (memory==NULL) {
+		RamSize = 0;
 		return(NULL);
+	}
+
 	for (Index1=0;Index1<RamSize;Index1++)
 	{
 		if (Index1 & 1)
@@ -361,11 +365,15 @@ void MemWrite16(unsigned short data,unsigned short addr)
 	return;
 }
 
-unsigned short GetMem(long address) {
-	return(memory[address]);
+unsigned short GetMem(unsigned long address) {
+	if (address < RamSize)
+		return(memory[address]);
+	else
+		return(0xFF);
 }
-void SetMem(long address, unsigned short data) {
-	memory[address] = (unsigned char) data;
+void SetMem(unsigned long address, unsigned short data) {
+	if (address < RamSize)
+		memory[address] = (unsigned char) data;
 }
 
 void SetDistoRamBank(unsigned char data)

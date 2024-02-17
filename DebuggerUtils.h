@@ -106,7 +106,7 @@ namespace VCC { namespace Debugger
 	bool replace(std::string& str, const std::string& from, const std::string& to);
 	int roundUp(int numToRound, int multiple);
 	int roundDn(int numToRound, int multiple);
-
+	unsigned char DbgRead8(bool phyAddr, unsigned char block, unsigned short PC);
 } }
 
 namespace VCC { namespace Debugger { namespace UI

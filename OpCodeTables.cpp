@@ -74,11 +74,13 @@ namespace VCC { namespace Debugger
 		// Skip past opcode bytes
 		PC += opcode.oplen;
 
+// DbgRead8(trace->phyAddr,trace->block,PC)
+
 		// Number of bytes for the operand.
 		int operandLen = opcode.numbytes - opcode.oplen;
 		for (int n = 0; n < operandLen; n++)
 		{
-			trace.bytes.push_back(MemRead8(PC++));
+			trace.bytes.push_back(DbgRead8(state.phyAddr,state.block,PC++));
 		}
 
 		int operand = 0;
@@ -140,7 +142,7 @@ namespace VCC { namespace Debugger
 		unsigned short PC = state.PC;
 
 		// Get the post byte.
-		unsigned char postbyte = MemRead8(++PC);
+		unsigned char postbyte = DbgRead8(state.phyAddr,state.block,++PC);
 		trace.bytes.push_back(postbyte);
 
 		// Determine various indexing modes.
@@ -154,7 +156,7 @@ namespace VCC { namespace Debugger
 		// One byte offset?
 		if (mode.numbytes == 1)
 		{
-			unsigned char b = MemRead8(++PC);
+			unsigned char b = DbgRead8(state.phyAddr,state.block,++PC);
 			trace.bytes.push_back(b);
 			std::int32_t offset = b;
 			offset = (offset << 24) >> 24;
@@ -164,9 +166,9 @@ namespace VCC { namespace Debugger
 		// Two byte offset?
 		if (mode.numbytes == 2)
 		{
-			unsigned char b1 = MemRead8(++PC);
+			unsigned char b1 = DbgRead8(state.phyAddr,state.block,++PC);
 			trace.bytes.push_back(b1);
-			unsigned char b2 = MemRead8(++PC);
+			unsigned char b2 = DbgRead8(state.phyAddr,state.block,++PC);
 			trace.bytes.push_back(b2);
 			std::int32_t offset = (b1 << 8) + b2;
 			// Extended Indirect?
@@ -255,7 +257,7 @@ namespace VCC { namespace Debugger
 		unsigned short PC = state.PC;
 
 		// Get the post byte.
-		unsigned char postbyte = MemRead8(++PC);
+		unsigned char postbyte = DbgRead8(state.phyAddr,state.block,++PC);
 		trace.bytes.push_back(postbyte);
 
 		// Count the number of registers set in post byte.
@@ -298,7 +300,7 @@ namespace VCC { namespace Debugger
 		int operandLen = opcode.numbytes - opcode.oplen;
 		for (int n = 0; n < operandLen; n++)
 		{
-			trace.bytes.push_back(MemRead8(PC++));
+			trace.bytes.push_back(DbgRead8(state.phyAddr,state.block,PC++));
 		}
 
 		// All long branches are relative.
@@ -378,7 +380,7 @@ namespace VCC { namespace Debugger
 		unsigned short PC = state.PC;
 
 		// Get the post byte.
-		unsigned char postbyte = MemRead8(++PC);
+		unsigned char postbyte = DbgRead8(state.phyAddr,state.block,++PC);
 		trace.bytes.push_back(postbyte);
 
 		// Get source and destination registers 
@@ -424,15 +426,15 @@ namespace VCC { namespace Debugger
 		int divisor;
 		if (wide)
 		{
-			unsigned char b1 = MemRead8(++PC);
+			unsigned char b1 = DbgRead8(state.phyAddr,state.block,++PC);
 			trace.bytes.push_back(b1);
-			unsigned char b2 = MemRead8(++PC);
+			unsigned char b2 = DbgRead8(state.phyAddr,state.block,++PC);
 			trace.bytes.push_back(b2);
 			divisor = (b1 << 8) + b2;
 		}
 		else
 		{
-			unsigned char b1 = MemRead8(++PC);
+			unsigned char b1 = DbgRead8(state.phyAddr,state.block,++PC);
 			trace.bytes.push_back(b1);
 			divisor = b1;
 		}
