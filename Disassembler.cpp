@@ -19,7 +19,7 @@
 //    Disassembly Display - Part of the Debugger package for VCC
 //    Author: Ed Jaquay
 //============================================================================
-
+#include <Windowsx.h>
 #include "Disassembler.h"
 #include "Debugger.h"
 #include "DebuggerUtils.h"
@@ -30,7 +30,6 @@
 #include <Richedit.h>
 #include "vcc.h"
 #include "logger.h"
-//#include "OpCodeTables.h"
 #include "OpDecoder.h"
 #include "tcc1014mmu.h"
 
@@ -42,6 +41,7 @@ HWND hDismWin = NULL;  // Set when window created
 HWND hDismDlg = NULL;  // Set when dialog activated
 HWND hEdtAddr = NULL;  // From editbox
 HWND hEdtLast = NULL;  // To editbox
+HWND hEdtBloc = NULL;  // Bock number editbox
 HWND hEdtAPPY = NULL;  // Apply button
 HWND hDisText = NULL;  // Richedit20 box for output
 
@@ -80,6 +80,7 @@ OpenDisassemblerWindow(HINSTANCE instance, HWND parent)
 INT_PTR CALLBACK DisassemblerDlgProc
     (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
+    int tstops[3]={37,106,138};  // address, opcode, parm
     switch (msg) {
     case WM_INITDIALOG:
         // Grab dialog and control handles
@@ -88,11 +89,17 @@ INT_PTR CALLBACK DisassemblerDlgProc
         hEdtLast = GetDlgItem(hDismDlg, IDC_EDIT_PC_LAST);
         hEdtAPPY = GetDlgItem(hDismDlg, IDAPPLY);
         hDisText = GetDlgItem(hDismDlg, IDC_DISASSEMBLY_TEXT);
+        hEdtBloc = GetDlgItem(hDismDlg, IDC_EDIT_BLOCK);
         // Modeless dialogs do not support tab or enter keys
         // Hook the address dialogs to capture those keystrokes
         AddrDlgProc = (WNDPROC) SetControlHook(hEdtAddr,(LONG_PTR) SubAddrDlgProc);
         LastDlgProc = (WNDPROC) SetControlHook(hEdtLast,(LONG_PTR) SubLastDlgProc);
-        // Clear the output text
+        // Set tab stops in ooutput edit box
+        Edit_SetTabStops(hDisText,3,tstops);
+        // Inital values in edit boxes
+        SetWindowText(hEdtBloc, "0");
+        SetWindowText(hEdtAddr, "0");
+        SetWindowText(hEdtLast, "1000");
         SetWindowTextA(hDisText,"");
         // Set focus to the first edit box
         SetDialogFocus(hEdtAddr);
@@ -174,11 +181,11 @@ void SetDialogFocus(HWND hCtrl) {
 void DisAsmFromTo()
 {
     char buf[16];
-    unsigned short FromAdr;
+    unsigned short FromAdr = 0;
     unsigned short ToAdr;
     unsigned short MaxAdr;
     bool UsePhyAdr;
-    unsigned short Block;
+    unsigned short Block = 0;
 
     // Physical address check box
     unsigned int ret = IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM);
@@ -187,19 +194,20 @@ void DisAsmFromTo()
     // If not using physical addressing disallow access I/O ports
     MaxAdr = UsePhyAdr? 0xFFFF: 0xFF00;
 
-    GetWindowText(GetDlgItem(hDismDlg,IDC_EDIT_BLOCK), buf, 8);
-    int blk = ConvertHexAddress(buf);
-    if ((UsePhyAdr && ((blk < 0) || (blk > 0x3FF)))) {
-        SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"Invalid Block Number");
-        return;
+    if (UsePhyAdr) {
+        GetWindowText(hEdtBloc, buf, 8);
+        int blk = ConvertHexAddress(buf);
+        if ((blk < 0) || (blk > 0x3FF)) {
+            SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"Invalid Block Number");
+            return;
+        }
+        Block = (unsigned short) blk;
     }
-    Block = (unsigned short) blk;
 
     // Ramsize bytes  0x20000 0x80000 0x200000 0x800000
     //         kbytes     128     512     2048     8192
     //         Blks        10      40      100      400
     // Reads beyond physical mem will return 0xFF
-
 
     // Start CPU address or block offset
     GetWindowText(hEdtAddr, buf, 8);
@@ -261,28 +269,34 @@ void Disassemble( unsigned short FromAdr,
         trace = {};
         Decoder->DecodeInstruction(state,trace);
 
-        // Create string containing PC and instruction bytes
-        std::string HexDmp = ToHexString(PC,4,TRUE)+"\t";
-        for (unsigned int i=0; i < trace.bytes.size(); i++) {
-            HexDmp += ToHexString(trace.bytes[i],2,TRUE)+" ";
+        std::string HexAddr;
+        std::string HexInst;
+
+        // Create string containing PC or physical address
+        if (UsePhyAddr) {
+            HexAddr = ToHexString(PC+Block*0x2000,6,TRUE);
+        } else {
+            HexAddr = ToHexString(PC,4,TRUE);
         }
 
-        // Pad hex dump and instruction name
-        if (HexDmp.length() < 24)
-            HexDmp.append(24 - HexDmp.length(),' ');
-        if (trace.instruction.length() < 8)
-            trace.instruction.append(8 - trace.instruction.length(),' ');
+        // Append instruction bytes
+        for (unsigned int i=0; i < trace.bytes.size(); i++) {
+            HexInst += ToHexString(trace.bytes[i],2,TRUE)+" ";
+        }
 
         // Append line for output
-        lines += HexDmp+"\t"+trace.instruction+"\t"+trace.operand+"\n";
+        lines += HexAddr + "\t" + HexInst + "\t"
+               + trace.instruction +"\t"
+               + trace.operand +"\n";
 
-        // Next instruction, prevent infinate loop
+        // Next instruction
         if (trace.bytes.size() > 0)
             PC += (UINT16) trace.bytes.size();
         else
             PC += 1;
     }
-    // Put the complete disassembly
+    // Put the completed disassembly
+    SetWindowTextA(hDisText,"");
     SetWindowTextA(hDisText,ToLPCSTR(lines));
 }
 
