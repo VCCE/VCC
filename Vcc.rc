@@ -509,17 +509,17 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Disassembly Window"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    LTEXT           "Addresses in hex. Max range 4k. (0x1000)" IDC_ERROR_TEXT, 12, 0, 180, 10
+    LTEXT           "" IDC_ERROR_TEXT,    12,  0,  180, 10
+    LTEXT           "From:", IDC_STATIC,  12,  13,  18,  9
+    EDITTEXT        IDC_EDIT_PC_ADDR,     32,  13,  24, 10, WS_TABSTOP
+    LTEXT           "Lines:", IDC_STATIC, 68,  13,  20,  9
+    EDITTEXT        IDC_EDIT_PC_LCNT,     90,  13,  24, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "Fetch", IDAPPLY,    134,  12,  36, 13
 
-    LTEXT           "From:", IDC_STATIC, 12,  13,  18,  9
-    EDITTEXT        IDC_EDIT_PC_ADDR,    32,  13,  30, 10, WS_TABSTOP
-    LTEXT           "To:", IDC_STATIC,   70,  13,  12,  9
-    EDITTEXT        IDC_EDIT_PC_LAST,    84,  13,  30, 10, WS_TABSTOP
-    DEFPUSHBUTTON   "Fetch", IDAPPLY,   128,  12,  36, 13
+    LTEXT           "Start block:",IDC_STATIC, 82, 29, 40, 9
+    EDITTEXT        IDC_EDIT_BLOCK,           120, 29, 20, 10, WS_TABSTOP
 
     CONTROL         "Physical Memory",IDC_PHYS_MEM,"Button",BS_AUTOCHECKBOX,12,28,70,10
-    LTEXT           "Start block:",IDC_STATIC, 82, 29, 40, 9
-    EDITTEXT        IDC_EDIT_BLOCK,     120, 29, 20, 10
 
     CONTROL         "", IDC_DISASSEMBLY_TEXT, "RichEdit20A", ES_MULTILINE | ES_READONLY | WS_VSCROLL , 5, 42, 192, 305
 END
