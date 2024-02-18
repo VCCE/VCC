@@ -222,7 +222,7 @@ namespace VCC { namespace Debugger
 		unsigned short PC = state.PC;
 
 		// Get the Op Code.
-		unsigned char Op1 = MemRead8(PC);
+		unsigned char Op1 = DbgRead8(state.phyAddr,state.block,PC);
 
 		// Save it.
 		trace.bytes.push_back(Op1);
@@ -254,7 +254,7 @@ namespace VCC { namespace Debugger
 	bool OpDecoder::DecodePage2Instruction(unsigned short PC, CPUState state, CPUTrace& trace)
 	{
 		// Get the extended Op Code.
-		unsigned char Op2 = MemRead8(PC);
+		unsigned char Op2 = DbgRead8(state.phyAddr,state.block,PC);
 
 		// Save it.
 		trace.bytes.push_back(Op2);
@@ -274,7 +274,7 @@ namespace VCC { namespace Debugger
 	bool OpDecoder::DecodePage3Instruction(unsigned short PC, CPUState state, CPUTrace& trace)
 	{
 		// Get the extended Op Code.
-		unsigned char Op3 = MemRead8(PC);
+		unsigned char Op3 = DbgRead8(state.phyAddr,state.block,PC);
 
 		// Save it.
 		trace.bytes.push_back(Op3);

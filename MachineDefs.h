@@ -25,6 +25,8 @@ namespace VCC
 		unsigned short V;
 		//
 		bool IsNative6309;
+		bool phyAddr;               // Decode using block relative addressing
+		unsigned short block;       // Physical address = PC + block * 0x2000
 	};
 
 	// Trace Events

@@ -17,11 +17,12 @@
 //		Debugger Utilities - Part of the Debugger package for VCC
 //		Author: Chet Simpson
 #include "Debugger.h"
+#include "tcc1014mmu.h"
 #include <sstream>
 #include <iomanip>
 #include <stdarg.h>
 #include <memory>
-
+#include "defines.h"
 
 namespace VCC { namespace Debugger
 {
@@ -91,6 +92,16 @@ namespace VCC { namespace Debugger
 			return numToRound;
 
 		return numToRound - remainder;
+	}
+
+	// Get memory for Decode, CPU address or Physical Block + Address
+	unsigned char DbgRead8(bool phyAddr, unsigned short block, unsigned short PC) {
+		if (phyAddr) {
+			unsigned long addr = PC + block * 0x2000;
+			return (unsigned char) GetMem(addr);
+		} else {
+			return MemRead8(PC);
+		}
 	}
 	
 } }

@@ -19,7 +19,7 @@
 //    Disassembly Display - Part of the Debugger package for VCC
 //    Author: Ed Jaquay
 //============================================================================
-
+#include <Windowsx.h>
 #include "Disassembler.h"
 #include "Debugger.h"
 #include "DebuggerUtils.h"
@@ -30,7 +30,6 @@
 #include <Richedit.h>
 #include "vcc.h"
 #include "logger.h"
-//#include "OpCodeTables.h"
 #include "OpDecoder.h"
 #include "tcc1014mmu.h"
 
@@ -41,23 +40,27 @@ namespace VCC { namespace Debugger { namespace UI {
 HWND hDismWin = NULL;  // Set when window created
 HWND hDismDlg = NULL;  // Set when dialog activated
 HWND hEdtAddr = NULL;  // From editbox
-HWND hEdtLast = NULL;  // To editbox
+HWND hEdtLcnt = NULL;  // To editbox
+HWND hEdtBloc = NULL;  // Bock number editbox
 HWND hEdtAPPY = NULL;  // Apply button
 HWND hDisText = NULL;  // Richedit20 box for output
+HWND hErrText = NULL;  // Error text box
 
 // local references
 INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
 void DisAsmFromTo();
-void Disassemble(UINT16, UINT16);
+void Disassemble(unsigned short, unsigned short, bool, unsigned short);
 UINT16 ConvertHexAddress(char *);
 LRESULT CALLBACK SubAddrDlgProc(HWND,UINT,WPARAM,LPARAM);
 WNDPROC AddrDlgProc;
-LRESULT CALLBACK SubLastDlgProc(HWND,UINT,WPARAM,LPARAM);
-WNDPROC LastDlgProc;
-BOOL ProcEditDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
+LRESULT CALLBACK SubBlocDlgProc(HWND,UINT,WPARAM,LPARAM);
+WNDPROC BlocDlgProc;
+LRESULT CALLBACK SubLcntDlgProc(HWND,UINT,WPARAM,LPARAM);
+WNDPROC LcntDlgProc;
+BOOL ProcEditDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM,int);
 LONG_PTR SetControlHook(HWND hCtl,LONG_PTR Proc);
 void SetDialogFocus(HWND);
-WPARAM TabDirection=0;
+char initTxt[] = "Address and block are hex.  Lines is decimal";
 
 /**************************************************/
 /*       Create Disassembler Dialog Window        */
@@ -80,20 +83,31 @@ OpenDisassemblerWindow(HINSTANCE instance, HWND parent)
 INT_PTR CALLBACK DisassemblerDlgProc
     (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
+    int tstops[3]={37,106,138};  // address, opcode, parm
     switch (msg) {
     case WM_INITDIALOG:
         // Grab dialog and control handles
         hDismDlg = hDlg;
         hEdtAddr = GetDlgItem(hDismDlg, IDC_EDIT_PC_ADDR);
-        hEdtLast = GetDlgItem(hDismDlg, IDC_EDIT_PC_LAST);
+        hEdtLcnt = GetDlgItem(hDismDlg, IDC_EDIT_PC_LCNT);
         hEdtAPPY = GetDlgItem(hDismDlg, IDAPPLY);
         hDisText = GetDlgItem(hDismDlg, IDC_DISASSEMBLY_TEXT);
-        // Modeless dialogs do not support tab or enter keys
-        // Hook the address dialogs to capture those keystrokes
-        AddrDlgProc = (WNDPROC) SetControlHook(hEdtAddr,(LONG_PTR) SubAddrDlgProc);
-        LastDlgProc = (WNDPROC) SetControlHook(hEdtLast,(LONG_PTR) SubLastDlgProc);
+        hEdtBloc = GetDlgItem(hDismDlg, IDC_EDIT_BLOCK);
+		hErrText = GetDlgItem(hDismDlg, IDC_ERROR_TEXT);
 
-    SetWindowTextA(hDisText,"");
+		// Modeless dialogs do not support tab or enter keys
+        // Hook the input dialogs to capture those keystrokes
+        AddrDlgProc = (WNDPROC) SetControlHook(hEdtAddr,(LONG_PTR) SubAddrDlgProc);
+        BlocDlgProc = (WNDPROC) SetControlHook(hEdtBloc,(LONG_PTR) SubBlocDlgProc);
+        LcntDlgProc = (WNDPROC) SetControlHook(hEdtLcnt,(LONG_PTR) SubLcntDlgProc);
+        // Set tab stops in ooutput edit box
+        Edit_SetTabStops(hDisText,3,tstops);
+        // Inital values in edit boxes
+        SetWindowText(hEdtBloc, "0");
+        SetWindowText(hEdtAddr, "0");
+        SetWindowText(hEdtLcnt, "1000");
+        SetWindowTextA(hDisText,"");
+        SetWindowTextA(hErrText,initTxt);
         // Set focus to the first edit box
         SetDialogFocus(hEdtAddr);
         break;
@@ -125,23 +139,17 @@ LONG_PTR SetControlHook(HWND hCtl,LONG_PTR HookProc)
 /***************************************************/
 /* Grab enter and tab keystrokes from edit dialogs */
 /***************************************************/
-// Hook for start address box
-LRESULT CALLBACK SubAddrDlgProc
-    (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{
-    TabDirection=0;
-    return ProcEditDlg(AddrDlgProc,hDlg,msg,wPrm,lPrm);
-}
-// Hook for end address box
-LRESULT CALLBACK SubLastDlgProc
-    (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{
-    TabDirection=1;
-    return ProcEditDlg(LastDlgProc,hDlg,msg,wPrm,lPrm);
-}
-// Messages for either address box pass through here
-BOOL ProcEditDlg
-    (WNDPROC DlgProc, HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
+
+// Subclass hooks for dialog edit boxes to establish tab order
+LRESULT CALLBACK SubAddrDlgProc(HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{ return ProcEditDlg(AddrDlgProc,hDlg,msg,wPrm,lPrm,1); }
+LRESULT CALLBACK SubLcntDlgProc(HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{ return ProcEditDlg(LcntDlgProc,hDlg,msg,wPrm,lPrm,2); }
+LRESULT CALLBACK SubBlocDlgProc(HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{ return ProcEditDlg(BlocDlgProc,hDlg,msg,wPrm,lPrm,0); }
+
+// All messages to dialog edit boxes go through ProcEditDlg
+BOOL ProcEditDlg (WNDPROC pDlg,HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm,int next)
 {
     switch (msg) {
     case WM_KEYDOWN:
@@ -150,15 +158,25 @@ BOOL ProcEditDlg
         case VK_RETURN:
             SendMessage(hEdtAPPY,BM_CLICK,0,0);
             return TRUE;
-        // Tab key toggles to the other address box
+        // Tab key sets focus to the next edit box
         case VK_TAB:
-            SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"");
-            SendMessage(hDismDlg,WM_NEXTDLGCTL,TabDirection,0);
+            SetWindowTextA(hErrText,initTxt);
+            switch (next) {
+            case 1:
+                SendMessage(hDismDlg,WM_NEXTDLGCTL,(WPARAM) hEdtLcnt,(LPARAM) TRUE);
+                break;
+            case 2:
+                SendMessage(hDismDlg,WM_NEXTDLGCTL,(WPARAM) hEdtBloc,(LPARAM) TRUE);
+                break;
+            default:
+                SendMessage(hDismDlg,WM_NEXTDLGCTL,(WPARAM) hEdtAddr,(LPARAM) TRUE);
+                break;
+            }
             return TRUE;
         }
     }
     // Everything else sent to the original dialog proc.
-    return CallWindowProc(DlgProc,hDlg,msg,wPrm,lPrm);
+    return CallWindowProc(pDlg,hDlg,msg,wPrm,lPrm);
 }
 
 /***************************************************/
@@ -174,77 +192,120 @@ void SetDialogFocus(HWND hCtrl) {
 void DisAsmFromTo()
 {
     char buf[16];
-    UINT16 FromAdr, ToAdr;
+    unsigned short FromAdr = 0;
+    unsigned short MaxLines;
+    bool UsePhyAdr;
+    unsigned short Block = 0;
 
-    // Start address
+    // Physical address check box
+    unsigned int ret = IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM);
+    UsePhyAdr = (ret == BST_CHECKED) ? TRUE : FALSE;
+
+    // If not using physical addressing disallow access I/O ports
+    unsigned short MaxAdr = UsePhyAdr? 0xFFFF: 0xFF00;
+
+    if (UsePhyAdr) {
+        GetWindowText(hEdtBloc, buf, 8);
+        int blk = ConvertHexAddress(buf);
+        if ((blk < 0) || (blk > 0x3FF)) {
+            SetWindowText(hErrText,"Invalid Block Number");
+            return;
+        }
+        Block = (unsigned short) blk;
+    }
+
+    // Ramsize bytes  0x20000 0x80000 0x200000 0x800000
+    //         kbytes     128     512     2048     8192
+    //         Blks        10      40      100      400
+    // Reads beyond physical mem will return 0xFF
+
+    // Start CPU address or block offset
     GetWindowText(hEdtAddr, buf, 8);
     FromAdr = ConvertHexAddress(buf);
-    if ((FromAdr < 0) || (FromAdr > 0xFF00)) {
-        SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"Invalid start address");
+    if ((FromAdr < 0) || (FromAdr >= MaxAdr)) {
+        SetWindowText(hErrText,"Invalid start address");
         return;
     }
 
-    // End Address
-    GetWindowText(hEdtLast, buf, 8);
-    ToAdr = ConvertHexAddress(buf);
-    if ((ToAdr < 0) || (ToAdr > 0xFF00)) {
-        SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"Invalid end address");
+    // Number of lines
+    GetWindowText(hEdtLcnt, buf, 8);
+    MaxLines = (unsigned short) strtol(buf,NULL,10);
+    if (MaxLines > 1000) {
+        SetWindowText(hErrText,"Invalid line count");
         return;
     }
 
-    // Validate range
-    int range = ToAdr - FromAdr;
-    if ((range < 1) || (range > 0x1000)) {
-        SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"Invalid address range");
-        return;
-    }
-
-    // Good range, disassemble
-    SetWindowText(GetDlgItem(hDismDlg,IDC_ERROR_TEXT),"");
-    Disassemble(FromAdr,ToAdr);
+    // Disassemble
+    Disassemble(FromAdr,MaxLines,UsePhyAdr,Block);
     return;
 }
+
+// VCC startup executables mapping
+// Block  Phy address  CPU address Contents
+//  $3C  $78000-$79FFF $8000-$9FFF Extended Basic ROM
+//  $3D  $7A000-$7BFFF $A000-$BFFF Color Basic ROM
+//  $3E  $7C000-$7DFFF $C000-$DFFF Cartridge or Disk Basic ROM
+//  $3F  $7E000-$7FFFF $D000-$FFFF Super Basic, GIME regs, I/O, Interrupts
 
 /**************************************************/
 /*  Disassemble Instructions in specified range   */
 /**************************************************/
-void Disassemble(UINT16 FromAdr, UINT16 ToAdr)
+void Disassemble( unsigned short FromAdr,
+                  unsigned short MaxLines,
+                  bool UsePhyAddr,
+                  unsigned short Block)
 {
     std::unique_ptr<OpDecoder> Decoder;
     Decoder = std::make_unique<OpDecoder>();
     VCC::CPUTrace trace = {};
     VCC::CPUState state = {};
     std::string lines = {};
-    UINT16 PC = FromAdr;
+    unsigned short PC = FromAdr;
+    int numlines = 0;
 
-    while (PC < ToAdr) {
+    state.phyAddr=UsePhyAddr; // Boolean decode using physical addressing
+    state.block=Block;        // Physical address = PC + block * 0x2000
+
+    unsigned short MaxAdr = UsePhyAddr? 0xFFFF: 0xFF00;
+    while ((numlines < MaxLines) && (PC < MaxAdr)) {
         state.PC = PC;
         trace = {};
         Decoder->DecodeInstruction(state,trace);
 
-        // Create string containing PC and instruction bytes
-        std::string HexDmp = ToHexString(PC,4,TRUE)+"\t";
-        for (unsigned int i=0; i < trace.bytes.size(); i++) {
-            HexDmp += ToHexString(trace.bytes[i],2,TRUE)+" ";
+        std::string HexAddr;
+        std::string HexInst;
+
+        // Create string containing instruction address
+        if (UsePhyAddr) {
+            HexAddr = ToHexString(PC+Block*0x2000,6,TRUE);
+        } else {
+            HexAddr = ToHexString(PC,4,TRUE);
         }
 
-        // Pad hex dump and instruction name
-        if (HexDmp.length() < 24)
-            HexDmp.append(24 - HexDmp.length(),' ');
-        if (trace.instruction.length() < 8)
-            trace.instruction.append(8 - trace.instruction.length(),' ');
+        // Create string of instruction bytes
+        for (unsigned int i=0; i < trace.bytes.size(); i++) {
+            HexInst += ToHexString(trace.bytes[i],2,TRUE)+" ";
+        }
 
-        // Append line for output
-        lines += HexDmp+"\t"+trace.instruction+"\t"+trace.operand+"\n";
+        // Append address, bytes, instruction, and operand to output
+        lines += HexAddr + "\t" + HexInst + "\t"
+               + trace.instruction +"\t"
+               + trace.operand +"\n";
+        numlines++;
 
-        // Next instruction, prevent infinate loop
+        // Next instruction
         if (trace.bytes.size() > 0)
             PC += (UINT16) trace.bytes.size();
         else
             PC += 1;
     }
-    // Put the complete disassembly
+    // Put the completed disassembly
+    SetWindowTextA(hDisText,"");
     SetWindowTextA(hDisText,ToLPCSTR(lines));
+    if (PC >= MaxAdr)
+        SetWindowText(hErrText,"Stopped at invalid address");
+    else
+        SetWindowTextA(hErrText,initTxt);
 }
 
 /**************************************************/
