@@ -38,6 +38,12 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	int memoryOffset = 0;
 
+	HWND hFindCtl = NULL;
+	HWND hEdtBloc = NULL;
+	BOOL phyAddr = false;
+	//int blockNum = 0;
+	int blockNum = 0x3E;
+
 	enum EditState 
 	{
 		None,
@@ -70,17 +76,20 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		void OnReset() override
 		{
 			SectionLocker lock(Section_);
-
 			std::fill(RamBuffer_.begin(), RamBuffer_.end(), unsigned char(0));
 		}
 
 		void OnUpdate() override
 		{
 			SectionLocker lock(Section_);
-
-			for (auto addr = 0U; addr < RamBuffer_.size(); addr++)
-			{
-				RamBuffer_[addr] = SafeMemRead8(static_cast<unsigned short>(addr));
+			if (phyAddr) {
+				for (auto addr = 0U; addr < RamBuffer_.size(); addr++) {
+					RamBuffer_[addr] = (unsigned char) GetMem(addr + blockNum * 0x2000);
+				}
+			} else {
+				for (auto addr = 0U; addr < RamBuffer_.size(); addr++) {
+					RamBuffer_[addr] = SafeMemRead8(static_cast<unsigned short>(addr));
+				}
 			}
 		}
 
@@ -154,8 +163,13 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			SetTextColor(hdc, RGB(138, 27, 255));
 			RECT rc;
 			{
-				const std::string s(ToHexString(addrLine * 16 + memoryOffset, 6, true));
-
+				// const std::string s(ToHexString(addrLine * 16 + memoryOffset, 6, true));
+				std::string s;
+				if (phyAddr) {
+					s = ToHexString(blockNum * 0x2000 + addrLine * 16 + memoryOffset, 6, true);
+				} else {
+					s = ToHexString(addrLine * 16 + memoryOffset, 6, true);
+				}
 				SetRect(&rc, rect.left, y, rect.left + nCol1, y + h);
 				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
@@ -164,10 +178,19 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			unsigned char line[16];
 			{
 				SectionLocker lock(Section_);
-				for (int n = 0; n < 16; n++)
-				{
-					auto addr = memoryOffset + (addrLine * 16) + n;
-					line[n] = RamBuffer_[addr];
+				if (phyAddr) {
+					char buf[8];
+					GetWindowText(hEdtBloc, buf, 4);
+					blockNum = strtol(buf,NULL,16) & 0x3FF;
+					for (int n = 0; n < 16; n++) {
+						auto addr = blockNum * 0x2000 + memoryOffset + (addrLine * 16) + n;
+						line[n] = (unsigned char) GetMem(addr);
+					}
+				} else {
+					for (int n = 0; n < 16; n++) {
+						auto addr = memoryOffset + (addrLine * 16) + n;
+						line[n] = RamBuffer_[addr];
+					}
 				}
 			}
 
@@ -270,13 +293,22 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	void WriteMemory(unsigned short addr, unsigned char value)
 	{
-		EmuState.Debugger.QueueWrite(addr,value);
+		if (phyAddr) {
+			SetMem(addr + blockNum * 0x2000,value);
+		} else {
+			EmuState.Debugger.QueueWrite(addr,value);
+		}
 	}
 
 	unsigned char ReadMemory(unsigned short addr)
 	{
-		VCC::SectionLocker lock(Section_);
-		unsigned char value = RamBuffer_[addr];
+		unsigned char value;
+		if (phyAddr) {
+			value = (unsigned char) GetMem(addr + blockNum * 0x2000);
+		} else {
+			VCC::SectionLocker lock(Section_);
+			value = RamBuffer_[addr];
+		}
 		return value;
 	}
 
@@ -358,6 +390,13 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	void HandleEdit(WPARAM key)
 	{
+	    HWND w = GetFocus();
+		if (w == hFindCtl || w == hEdtBloc) {
+			EditState_ = EditState::None;
+			ReleaseKeyboard();
+			return;
+		}
+
 		if (EditState_ == EditState::None)
 		{
 			ReleaseKeyboard();
@@ -480,8 +519,8 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			si.nPos = 0;
 			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
 
-			HWND hCtl = GetDlgItem(hDlg, IDC_EDIT_FIND_MEM);
-			oldEditProc = (WNDPROC)SetWindowLongPtr(hCtl, GWLP_WNDPROC, (LONG_PTR)subEditProc);
+			hFindCtl = GetDlgItem(hDlg, IDC_EDIT_FIND_MEM);
+			oldEditProc = (WNDPROC)SetWindowLongPtr(hFindCtl, GWLP_WNDPROC, (LONG_PTR)subEditProc);
 
 			BackBuffer_ = AttachBackBuffer(hDlg, -20, -39);
 
@@ -489,11 +528,16 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 			EmuState.Debugger.RegisterClient(hDlg, std::make_unique<MemoryMapDebugClient>());
 
+			// Disable Block text box until phys mem is checked
+			hEdtBloc = GetDlgItem(hDlg, IDC_EDIT_BLOCK);
+			SetWindowText(hEdtBloc, "0");
+			EnableWindow(hEdtBloc,FALSE);
 			break;
 		}
 
 		case WM_LBUTTONDBLCLK:
 		{
+			SetFocus(MemoryMapWindow);
 			int xPos = ((int)(short)LOWORD(lParam));
 			int yPos = ((int)(short)HIWORD(lParam));
 			StartEdit(xPos, yPos);
@@ -595,6 +639,17 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		case WM_COMMAND:
 			switch (LOWORD(wParam))
 			{
+			case IDC_PHYS_MEM:
+				hEdtBloc = GetDlgItem(hDlg, IDC_EDIT_BLOCK);
+				if (IsDlgButtonChecked(hDlg,IDC_PHYS_MEM)) {
+					EnableWindow(hEdtBloc,TRUE);
+					phyAddr = true;
+				} else {
+					EnableWindow(hEdtBloc,FALSE);
+					phyAddr = false;
+				}
+				InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
+				break;
 			case IDC_BTN_FIND_MEM:
 				LocateMemory();
 				break;
@@ -604,13 +659,12 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 				KillTimer(hDlg, IDT_MEM_TIMER);
 				DeleteDC(BackBuffer_.DeviceContext);
 				DestroyWindow(hDlg);
-				HWND hCtl = GetDlgItem(hDlg, IDC_EDIT_FIND_MEM);
-				(WNDPROC)SetWindowLongPtr(hCtl, GWLP_WNDPROC, (LONG_PTR)oldEditProc);
+				//HWND hFindCtl = GetDlgItem(hDlg, IDC_EDIT_FIND_MEM);
+				(WNDPROC)SetWindowLongPtr(hFindCtl, GWLP_WNDPROC, (LONG_PTR)oldEditProc);
 				MemoryMapWindow = NULL;
 				EmuState.Debugger.RemoveClient(hDlg);
 				break;
 			}
-
 			break;
 		}
 		return FALSE;
