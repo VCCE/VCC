@@ -22,7 +22,7 @@
 #include <sstream>
 #include <iomanip>
 #include "tcc1014mmu.h"	//  FIXME: May want this decoupled from Debugger for Memory Write
-
+#include "audio.h"
 
 namespace VCC { namespace Debugger
 {
@@ -46,8 +46,6 @@ namespace VCC { namespace Debugger
 		TraceRunning_ = false;
 		TraceMarks_.clear();
 	}
-
-
 
 	void Debugger::RegisterClient(HWND window, std::unique_ptr<Client> client)
 	{
@@ -148,7 +146,6 @@ namespace VCC { namespace Debugger
 		Breakpoints_ = move(breakpoints);
 		BreakpointsChanged_ = true;
 	}
-
 
 
 	bool Debugger::IsTracingEnabled() const
@@ -378,8 +375,16 @@ namespace VCC { namespace Debugger
 		HasPendingCommand_ = true;
 	}
 
-
-
+	void Debugger::ToggleRun() {
+		if (IsHalted()) {
+			QueueRun();
+			PauseAudio(0);
+		} else {
+			QueueHalt();
+			PauseAudio(1);
+		}
+		return;
+	}
 
 	void Debugger::Update()
 	{

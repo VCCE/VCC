@@ -110,7 +110,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
         AddrDlgProc = (WNDPROC) SetControlHook(hEdtAddr,(LONG_PTR) SubAddrDlgProc);
         BlocDlgProc = (WNDPROC) SetControlHook(hEdtBloc,(LONG_PTR) SubBlocDlgProc);
         LcntDlgProc = (WNDPROC) SetControlHook(hEdtLcnt,(LONG_PTR) SubLcntDlgProc);
-        // Set tab stops in ooutput edit box
+        // Set tab stops in output edit box
         Edit_SetTabStops(hDisText,4,tstops);
         // Inital values in edit boxes
         SetWindowText(hEdtBloc, "0");
