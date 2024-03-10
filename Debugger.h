@@ -69,6 +69,7 @@ namespace VCC { namespace Debugger
 		void QueueRun();
 		void QueueStep();
 		void QueueHalt();
+	    void ToggleRun();
 
 		void QueueWrite(unsigned short addr, unsigned char value);
 

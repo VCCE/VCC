@@ -179,6 +179,8 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
     INT_PTR CALLBACK ProcessorStateDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
     {
+     //   HWND GetDlgItem(hDlg,IDC_BTN_CPU_HALT) = NULL;
+
         switch (message)
         {
         case WM_INITDIALOG:
@@ -192,6 +194,18 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
         case WM_PAINT:
         {
+            if (EmuState.Debugger.IsHalted()) {
+                SetWindowTextA(hDlg,"Processor Window (Halted)");
+                SendMessageA(GetDlgItem(hDlg,IDC_BTN_CPU_HALT),WM_SETTEXT,0, (LPARAM) "Run");
+                EnableWindow(GetDlgItem(hDlg,IDC_BTN_CPU_STEP),true);
+                EnableWindow(GetDlgItem(hDlg,IDC_BTN_SET_PC),true);
+            } else {
+                SetWindowTextA(hDlg,"Processor Window");
+                SendMessageA(GetDlgItem(hDlg,IDC_BTN_CPU_HALT),WM_SETTEXT,0, (LPARAM) "Halt");
+                EnableWindow(GetDlgItem(hDlg,IDC_BTN_CPU_STEP),false);
+                EnableWindow(GetDlgItem(hDlg,IDC_BTN_SET_PC),false);
+            }
+
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hDlg, &ps);
 
@@ -214,29 +228,24 @@ namespace VCC { namespace Debugger { namespace UI { namespace
         case WM_COMMAND:
             switch (LOWORD(wParam))
             {
+            case IDC_BTN_CPU_HALT:
+                EmuState.Debugger.ToggleRun();
+                break;
             case IDC_BTN_SET_PC:
-                if (EmuState.Debugger.IsHalted())
+            {
+                char buf[16];
+                char *eptr;
+                long val;
+                GetWindowText(GetDlgItem(hDlg, IDC_EDIT_PC_ADDR), buf, 8);
+                val = strtol(buf,&eptr,16);
+                if (*buf == '\0' || *eptr != '\0' || val < 0 || val > 65535)
                 {
-                    char buf[16];
-                    GetWindowText(GetDlgItem(hDlg, IDC_EDIT_PC_ADDR), buf, 8);
-                    char *eptr;
-                    long val = strtol(buf,&eptr,16);
-                    if (*buf == '\0' || *eptr != '\0' || val < 0 || val > 65535)
-                    {
-                        MessageBox(hDlg,"Invalid hex address","Error",IDOK);
-                    } else {
-                        CPUForcePC(val & 0xFFFF);
-                    }
+                    MessageBox(hDlg,"Invalid hex address","Error",IDOK);
                 } else {
-                    MessageBox(hDlg,"CPU must be halted to change PC","Error",IDOK);
+                    CPUForcePC(val & 0xFFFF);
                 }
                 break;
-            case IDC_BTN_CPU_HALT:
-                EmuState.Debugger.QueueHalt();
-                break;
-            case IDC_BTN_CPU_RUN:
-                EmuState.Debugger.QueueRun();
-                break;
+            }
             case IDC_BTN_CPU_STEP:
                 EmuState.Debugger.QueueStep();
                 break;

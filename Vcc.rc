@@ -34,7 +34,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "[F9] Hard Reset",             ID_FILE_RESET
         MENUITEM "[F5] Soft Reset",             ID_FILE_RESET_SFT
-        MENUITEM "[SHIFT-F8] Pause",            ID_PAUSE_EMULATION
+        MENUITEM "[F7] Pause",                  ID_PAUSE_EMULATION
         MENUITEM SEPARATOR
         MENUITEM "Exit",                        ID_FILE_EXIT
     END
@@ -134,21 +134,21 @@ CAPTION "About"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,181,363,50,14
-    LTEXT           "Copyright 2015 By",IDC_STATIC,19,132,61,8
+    LTEXT           "Copyright 2015 By",IDC_STATIC,19,133,61,8
     LTEXT           "Joseph Forgione",IDC_STATIC,19,143,53,8
     CONTROL         IDB_VCC,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,4,3,217,45
     CONTROL         IDB_3GUYS,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE,12,53,77,57,WS_EX_DLGMODALFRAME
     LTEXT           "Another classic computer canceled before it's time!",IDC_STATIC,12,115,81,19
-    LTEXT           "F11 = Fullscreen Toggle",IDC_STATIC,108,134,77,8
     GROUPBOX        "Keyboard Special keys",IDC_STATIC,104,51,110,96,BS_CENTER
-    LTEXT           "F3 = Decrease Overclock",IDC_STATIC,108,62,100,8
-    LTEXT           "F10 = Fullscreen Status Toggle",IDC_STATIC,108,125,99,8
-    LTEXT           "F9 = Hard Reset (Power Cycle)",IDC_STATIC,108,116,98,8
-    LTEXT           "F4 = Increase Overclock",IDC_STATIC,108,71,100,8
-    LTEXT           "F6 = RGB/Composite Toggle",IDC_STATIC,108,89,92,8
-    LTEXT           "F5 = Soft Reset",IDC_STATIC,108,80,50,8
-    LTEXT           "F7 = NA",IDC_STATIC,108,98,27,8
-    LTEXT           "F8 = Throttle Toggle",IDC_STATIC,108,107,65,8
+    LTEXT           " F3 = Decrease Overclock",IDC_STATIC,      108, 62,100,8
+    LTEXT           " F4 = Increase Overclock",IDC_STATIC,      108, 71,100,8
+    LTEXT           " F5 = Soft Reset",IDC_STATIC,              108, 80,100,8
+    LTEXT           " F6 = RGB/Composite Toggle",IDC_STATIC,    108, 89,100,8
+    LTEXT           " F7 = Pause/Run Toggle",IDC_STATIC,        108, 98,100,8
+    LTEXT           " F8 = Throttle Toggle",IDC_STATIC,         108,107,100,8
+    LTEXT           " F9 = Hard Reset (Power Cycle)",IDC_STATIC,108,116,100,8
+    LTEXT           "F10 = Fullscreen Status Toggle",IDC_STATIC,108,125,100,8
+    LTEXT           "F11 = Fullscreen Toggle",IDC_STATIC,       108,134,100,8
     CTEXT           "VCC (Virtual Color Computer) is free software: you can redistribute",IDC_STATIC,7,232,209,11
     CTEXT           "it and/or modify it under the terms of the GNU General Public License",IDC_STATIC,7,243,224,11
     CTEXT           "as published by the Free Software Foundation, either version 3 of the",IDC_STATIC,7,254,223,8
@@ -439,11 +439,10 @@ CAPTION "Processor Window"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "Close", IDCLOSE, 6, 82, 36, 14
-    EDITTEXT        IDC_EDIT_PC_ADDR, 115, 82, 36, 14, ES_AUTOHSCROLL
-    PUSHBUTTON      "Set PC", IDC_BTN_SET_PC, 160, 82, 36, 14
-    PUSHBUTTON      "Halt", IDC_BTN_CPU_HALT, 200, 82, 36, 14
-    PUSHBUTTON      "Run", IDC_BTN_CPU_RUN, 240, 82, 36, 14
-    PUSHBUTTON      "Step", IDC_BTN_CPU_STEP, 280, 82, 36, 14
+    EDITTEXT        IDC_EDIT_PC_ADDR, 155, 82, 36, 14, ES_AUTOHSCROLL
+    PUSHBUTTON      "Set PC", IDC_BTN_SET_PC, 200, 82, 36, 14
+    PUSHBUTTON      "Step", IDC_BTN_CPU_STEP, 240, 82, 36, 14
+    PUSHBUTTON      "Halt", IDC_BTN_CPU_HALT, 280, 82, 36, 14
 END
 
 IDD_BREAKPOINTS DIALOGEX -355, -32, 340, 300
