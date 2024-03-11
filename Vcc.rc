@@ -515,7 +515,7 @@ BEGIN
     LTEXT           "Block:",IDC_STATIC,    70,  4,  20, 9
     EDITTEXT        IDC_EDIT_BLOCK,         92,  3,  20, 10, WS_TABSTOP
     DEFPUSHBUTTON   "Decode", IDAPPLY,     130,  6,  40, 16
-    LTEXT           "Address:", IDC_STATIC, 10, 17,  30,  9
+    LTEXT           "Address:", IDC_ADRTXT, 10, 17,  30,  9
     EDITTEXT        IDC_EDIT_PC_ADDR,       40, 17,  24, 10, WS_TABSTOP
     LTEXT           "Lines:", IDC_STATIC,   70, 17,  20,  9
     EDITTEXT        IDC_EDIT_PC_LCNT,       92, 17,  24, 10, WS_TABSTOP
