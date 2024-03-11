@@ -56,7 +56,7 @@ HWND hErrText = NULL;  // Error text box
 INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
 void DecodeRange();
 void Disassemble(unsigned short, unsigned short, bool, unsigned short);
-UINT16 ConvertHexAddress(char *);
+UINT16 HexToUint(char *);
 LRESULT CALLBACK SubAddrDlgProc(HWND,UINT,WPARAM,LPARAM);
 WNDPROC AddrDlgProc;
 LRESULT CALLBACK SubBlocDlgProc(HWND,UINT,WPARAM,LPARAM);
@@ -65,7 +65,6 @@ LRESULT CALLBACK SubLcntDlgProc(HWND,UINT,WPARAM,LPARAM);
 WNDPROC LcntDlgProc;
 BOOL ProcEditDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM,int);
 LONG_PTR SetControlHook(HWND hCtl,LONG_PTR Proc);
-void SetDialogFocus(HWND);
 char initTxt[] = "Address and Block are hex.  Lines decimal";
 std::string IntToHex(int,int);
 std::string OpFDB(int,std::string,std::string,std::string);
@@ -93,7 +92,6 @@ OpenDisassemblerWindow(HINSTANCE instance, HWND parent)
 INT_PTR CALLBACK DisassemblerDlgProc
     (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
-    int tstops[4]={37,106,138,180};  // address, opcode, parm, cmt
     switch (msg) {
     case WM_INITDIALOG:
         // Grab dialog and control handles
@@ -105,25 +103,33 @@ INT_PTR CALLBACK DisassemblerDlgProc
         hEdtBloc = GetDlgItem(hDismDlg, IDC_EDIT_BLOCK);
         hErrText = GetDlgItem(hDismDlg, IDC_ERROR_TEXT);
 
-        // Modeless dialogs do not support tab or enter keys
-        // Hook the input dialogs to capture those keystrokes
+        // Hook the input dialogs to capture keystrokes
         AddrDlgProc = (WNDPROC) SetControlHook(hEdtAddr,(LONG_PTR) SubAddrDlgProc);
         BlocDlgProc = (WNDPROC) SetControlHook(hEdtBloc,(LONG_PTR) SubBlocDlgProc);
         LcntDlgProc = (WNDPROC) SetControlHook(hEdtLcnt,(LONG_PTR) SubLcntDlgProc);
-        // Set tab stops in output edit box
-        Edit_SetTabStops(hDisText,4,tstops);
+
+        // Set Consolas font (fixed) in disassembly edit box
+        CHARFORMAT disfmt;
+        disfmt.cbSize = sizeof(disfmt);
+        SendMessage(hDisText,EM_GETCHARFORMAT,(WPARAM) SCF_DEFAULT,(LPARAM) &disfmt);
+        strcpy(disfmt.szFaceName,"Consolas");
+        disfmt.yHeight=180;
+        SendMessage(hDisText,EM_SETCHARFORMAT,(WPARAM) SCF_DEFAULT,(LPARAM) &disfmt);
+
         // Inital values in edit boxes
-        SetWindowText(hEdtBloc, "0");
-        SetWindowText(hEdtAddr, "0");
         SetWindowText(hEdtLcnt, "500");
         SetWindowTextA(hDisText,"");
         SetWindowTextA(hErrText,initTxt);
+
         // Disable Block text box until phys mem is checked
         EnableWindow(hEdtBloc,FALSE);
         break;
+
+    // An edit box must have focus to capture tab/enter/up/down etc
     case WM_PAINT:
-        SendMessage(hDlg,WM_NEXTDLGCTL,(WPARAM) hEdtAddr,(LPARAM) TRUE);
+        SetFocus(hEdtAddr);
         break;
+
     case WM_COMMAND:
         switch (LOWORD(wPrm)) {
         case IDCLOSE:
@@ -133,25 +139,25 @@ INT_PTR CALLBACK DisassemblerDlgProc
             break;
         case IDAPPLY:
             DecodeRange();
-            SetDialogFocus(hEdtAddr);
+            SetFocus(hEdtAddr);
             return TRUE;
         case IDC_PHYS_MEM:
             if (IsDlgButtonChecked(hDlg,IDC_PHYS_MEM)) {
                 EnableWindow(hEdtBloc,TRUE);
-                SendMessage(hDlg,WM_NEXTDLGCTL,(WPARAM) hEdtBloc,(LPARAM) TRUE);
+                SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"  Offset:");
+                SetFocus(hEdtBloc);
             } else {
                 EnableWindow(hEdtBloc,FALSE);
-                SendMessage(hDlg,WM_NEXTDLGCTL,(WPARAM) hEdtAddr,(LPARAM) TRUE);
+                SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"Address:");
+                SetFocus(hEdtAddr);
             }
-
-            EnableWindow(hEdtBloc,IsDlgButtonChecked(hDlg,IDC_PHYS_MEM));
             return TRUE;
         }
     }   return FALSE;
 }
 
 /***************************************************/
-/*            set up control hook                  */
+/*         Set up edit control hooks               */
 /***************************************************/
 LONG_PTR SetControlHook(HWND hCtl,LONG_PTR HookProc)
 {
@@ -159,55 +165,64 @@ LONG_PTR SetControlHook(HWND hCtl,LONG_PTR HookProc)
     SetWindowLongPtr(hCtl,GWLP_WNDPROC,HookProc);
     return OrigProc;
 }
-
-/***************************************************/
-/* Grab enter and tab keystrokes from edit dialogs */
-/***************************************************/
-
-// Subclass hooks for dialog edit boxes to establish tab order
+// Address edit control
 LRESULT CALLBACK SubAddrDlgProc(HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 { return ProcEditDlg(AddrDlgProc,hDlg,msg,wPrm,lPrm,1); }
+// Line count edit control
 LRESULT CALLBACK SubLcntDlgProc(HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 { return ProcEditDlg(LcntDlgProc,hDlg,msg,wPrm,lPrm,2); }
+// Block number edit control
 LRESULT CALLBACK SubBlocDlgProc(HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 { return ProcEditDlg(BlocDlgProc,hDlg,msg,wPrm,lPrm,0); }
 
-// All messages to dialog edit boxes go through ProcEditDlg
+/***************************************************/
+/*      Process edit control messages here         */
+/***************************************************/
 BOOL ProcEditDlg (WNDPROC pDlg,HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm,int next)
 {
     switch (msg) {
-    case WM_KEYDOWN:
+    case WM_CHAR:
         switch (wPrm) {
-        // Enter key does the disassembly
+        // Enter does the disassembly
         case VK_RETURN:
-            SendMessage(hEdtAPPY,BM_CLICK,0,0);
+            DecodeRange();
             return TRUE;
-		// Page Up/Down send to disassembly display
-        case VK_PRIOR:
-        case VK_NEXT:
-			SendMessage(hDisText,msg,wPrm,lPrm);
-            return TRUE;
-		// Tab key sets focus to the next edit box
+        // Tab moves between active edit boxes
         case VK_TAB:
             SetWindowTextA(hErrText,initTxt);
             switch (next) {
             case 1:
-                SendMessage(hDismDlg,WM_NEXTDLGCTL,(WPARAM) hEdtLcnt,(LPARAM) TRUE);
+                SetFocus(hEdtLcnt);
                 break;
             case 2:
                 if (IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM)) {
-                    SendMessage(hDismDlg,WM_NEXTDLGCTL,(WPARAM) hEdtBloc,(LPARAM) TRUE);
+                    SetFocus(hEdtBloc);
                     break;
                 }
-                // Falls through if button not checked
             default:
-                SendMessage(hDismDlg,WM_NEXTDLGCTL,(WPARAM) hEdtAddr,(LPARAM) TRUE);
+                SetFocus(hEdtAddr);
                 break;
             }
             return TRUE;
         }
+        break;
+    case WM_KEYDOWN:
+        switch (wPrm) {
+        // Up/Down scroll disassembly display
+        case VK_DOWN:
+            Edit_Scroll(hDisText,1,0);
+            return TRUE;
+        case VK_UP:
+            Edit_Scroll(hDisText,-1,0);
+            return TRUE;
+        // Page Up/Down send to disassembly display
+        case VK_PRIOR:
+        case VK_NEXT:
+            SendMessage(hDisText,msg,wPrm,lPrm);
+            return TRUE;
+        }
     }
-    // Everything else sent to the original dialog proc.
+    // Everything else sent to original dialog processing
     return CallWindowProc(pDlg,hDlg,msg,wPrm,lPrm);
 }
 
@@ -231,7 +246,7 @@ void DecodeRange()
 
     if (UsePhyAdr) {
         GetWindowText(hEdtBloc, buf, 8);
-        int blk = ConvertHexAddress(buf);
+        int blk = HexToUint(buf);
         if ((blk < 0) || (blk > 0x3FF)) {
             SetWindowText(hErrText,"Invalid Block Number");
             return;
@@ -241,7 +256,7 @@ void DecodeRange()
 
     // Start CPU address or block offset
     GetWindowText(hEdtAddr, buf, 8);
-    FromAdr = ConvertHexAddress(buf);
+    FromAdr = HexToUint(buf);
     if ((FromAdr < 0) || (FromAdr >= MaxAdr)) {
         SetWindowText(hErrText,"Invalid start address");
         return;
@@ -261,33 +276,49 @@ void DecodeRange()
 }
 
 /***************************************************/
-/*        SetFocus to a dialog control             */
+/*   Right pad string to fixed size                */
 /***************************************************/
-void SetDialogFocus(HWND hCtrl) {
-    SendMessage(hDismDlg,WM_NEXTDLGCTL,(WPARAM)hCtrl,TRUE);
+std::string PadRight(std::string const& s, size_t w)
+{
+    if (s.size() < w)
+        return s + std::string(w-s.size(),' ');
+    else
+        return s;
 }
 
 /***************************************************/
 /*    Convert integer to zero filled hex string    */
 /***************************************************/
-std::string IntToHex(int ival,int width) {
+std::string IntToHex(int i, int w)
+{
     std::ostringstream fmt;
-    fmt<<std::hex<<std::setw(width)<<std::uppercase<<std::setfill('0')<<ival;
+    fmt<<std::hex<<std::setw(w)<<std::uppercase<<std::setfill('0')<<i;
     return fmt.str();
+}
+
+/***************************************************/
+/*           Create Disassembly line               */
+/***************************************************/
+std::string DisLine(int adr,std::string ins,std::string opc,std::string opr)
+{
+    return IntToHex(adr,6) + " " + PadRight(ins,11) +
+           PadRight(opc,5) + PadRight(opr,6);
 }
 
 /***************************************************/
 /*        Create FDB line with comment             */
 /***************************************************/
-std::string OpFDB(int addr,std::string b1,std::string b2,std::string cmt) {
-    return IntToHex(addr,6)+"\t"+b1+" "+b2+"\tFDB\t$"+b1+b2+"\t"+cmt+"\n";
+std::string OpFDB(int adr,std::string b1,std::string b2,std::string cmt)
+{
+    return DisLine(adr,b1+b2,"FDB","$"+b1+b2) +cmt+"\n";
 }
 
 /***************************************************/
 /*        Create FCB line with comment             */
 /***************************************************/
-std::string OpFCB(int addr,std::string b,std::string cmt) {
-    return IntToHex(addr,6)+"\t"+b+"\tFCB\t$"+b+"\t"+cmt+"\n";
+std::string OpFCB(int adr,std::string b,std::string cmt)
+{
+    return DisLine(adr,b,"FCB","$"+b) +cmt+"\n";
 }
 
 /***************************************************/
@@ -310,12 +341,12 @@ int DecodeModHdr(unsigned long addr, std::string *hdr)
 
     // Generate header lines
     int cnt = 0;
-    *hdr =  OpFDB(addr+cnt++,hexb[0],hexb[1],"module"); cnt++;
-    *hdr += OpFDB(addr+cnt++,hexb[2],hexb[3],"modsiz"); cnt++;
-    *hdr += OpFDB(addr+cnt++,hexb[4],hexb[5],"offnam"); cnt++;
-    *hdr += OpFCB(addr+cnt++,hexb[6],"ty/lg");
-    *hdr += OpFCB(addr+cnt++,hexb[7],"at/rv");
-    *hdr += OpFCB(addr+cnt++,hexb[8],"parity");
+    *hdr =  OpFDB(addr+cnt++,hexb[0],hexb[1],"Module"); cnt++;
+    *hdr += OpFDB(addr+cnt++,hexb[2],hexb[3],"Mod Size"); cnt++;
+    *hdr += OpFDB(addr+cnt++,hexb[4],hexb[5],"Off Nam"); cnt++;
+    *hdr += OpFCB(addr+cnt++,hexb[6],"Ty/Lg");
+    *hdr += OpFCB(addr+cnt++,hexb[7],"At/Rv");
+    *hdr += OpFCB(addr+cnt++,hexb[8],"Parity");
     // Additional lines if executable
     char type = hexb[6][0];
     if ((type=='1')||(type=='E')) {
@@ -323,8 +354,8 @@ int DecodeModHdr(unsigned long addr, std::string *hdr)
             int ch = GetMem(cnt+n+addr);
             hexb[n+9] = IntToHex(ch,2);
         }
-        *hdr += OpFDB(addr+cnt++,hexb[9],hexb[10],"offexe"); cnt++;
-        *hdr += OpFDB(addr+cnt++,hexb[11],hexb[12],"datsiz"); cnt++;
+        *hdr += OpFDB(addr+cnt++,hexb[9],hexb[10],"Off Exe"); cnt++;
+        *hdr += OpFDB(addr+cnt++,hexb[11],hexb[12],"Dat Size"); cnt++;
     }
     return cnt;
 }
@@ -332,14 +363,6 @@ int DecodeModHdr(unsigned long addr, std::string *hdr)
 /**************************************************/
 /*  Disassemble Instructions in specified range   */
 /**************************************************/
-
-//     DECB startup executables mapping
-// Block  Phy addr   CPU addr     Contents
-//  $3C   $078000   $8000-$9FFF Extended Basic ROM
-//  $3D   $07A000   $A000-$BFFF Color Basic ROM
-//  $3E   $07C000   $C000-$DFFF Cartridge or Disk Basic ROM
-//  $3F   $07E000   $D000-$FFFF Super Basic, GIME regs, I/O
-
 void Disassemble( unsigned short FromAdr,
                   unsigned short MaxLines,
                   bool UsePhyAddr,
@@ -351,56 +374,59 @@ void Disassemble( unsigned short FromAdr,
     VCC::CPUState state = {};
     std::string lines = {};
 
-    unsigned short PC = FromAdr;
-    int numlines;
+    SetWindowTextA(hDisText,"");
 
-    int hdrcnt = 0;
-    if (UsePhyAddr) {
-        hdrcnt = DecodeModHdr(PC+Block*0x2000, &lines);
-        if (hdrcnt) {
-            PC += hdrcnt;
-            if (hdrcnt > 9)
-                numlines = 8;
-            else
-                numlines = 6;
-        }
-    }
+    unsigned short PC = FromAdr;
+    int numlines = 0;
+    int modhdr = 0;
 
     state.block = Block;
     state.phyAddr = UsePhyAddr;
     unsigned short MaxAdr = UsePhyAddr? 0xFFFF: 0xFF00;
     while ((numlines < MaxLines) && (PC < MaxAdr)) {
+
+        if (UsePhyAddr) {
+            // Check for module header
+            std::string hdr;
+            modhdr = DecodeModHdr(PC+Block*0x2000, &hdr);
+            if (modhdr) {
+                PC += modhdr;
+                if (modhdr > 9)
+                    numlines += 8;
+                else
+                    numlines += 6;
+            }
+            lines += hdr;
+        }
+
         state.PC = PC;
         trace = {};
         Decoder->DecodeInstruction(state,trace);
 
         // If a module convert SWI2 to OS9 with immediate operand
-        if (hdrcnt && (trace.instruction == "SWI2")) {
+        if (modhdr && (trace.instruction == "SWI2")) {
             unsigned short opadr = PC + (unsigned short) trace.bytes.size();
             unsigned char op = DbgRead8(UsePhyAddr, Block, opadr);
             trace.instruction = "OS9";
-            trace.operand = "#$"+ToHexString(op,2,TRUE);
+            trace.operand = "#$"+IntToHex(op,2);
             trace.bytes.push_back(op);
         }
 
-        // Create string containing instruction address
-        std::string HexAddr;
-        if (UsePhyAddr) {
-            HexAddr = ToHexString(PC+Block*0x2000,6,TRUE);
-        } else {
-            HexAddr = ToHexString(PC,4,TRUE);
-        }
+        // Instruction address
+        int iaddr;
+        if (UsePhyAddr)
+            iaddr = PC + Block * 0x2000;
+        else
+            iaddr = PC;
 
         // Create string of instruction bytes
         std::string HexInst;
         for (unsigned int i=0; i < trace.bytes.size(); i++) {
-            HexInst += ToHexString(trace.bytes[i],2,TRUE)+" ";
+            HexInst += IntToHex(trace.bytes[i],2);
         }
 
-        // Append address, bytes, instruction, and operand to output
-        lines += HexAddr + "\t" + HexInst + "\t"
-               + trace.instruction +"\t"
-               + trace.operand +"\n";
+        // append disassembled line for output
+        lines += DisLine(iaddr,HexInst,trace.instruction,trace.operand)+"\n";
         numlines++;
 
         // Next instruction
@@ -410,7 +436,6 @@ void Disassemble( unsigned short FromAdr,
             PC += 1;
     }
     // Put the completed disassembly
-    SetWindowTextA(hDisText,"");
     SetWindowTextA(hDisText,ToLPCSTR(lines));
     if (PC >= MaxAdr)
         SetWindowText(hErrText,"Stopped at invalid address");
@@ -421,11 +446,11 @@ void Disassemble( unsigned short FromAdr,
 /**************************************************/
 /*        Convert hex digits to Address           */
 /**************************************************/
-UINT16 ConvertHexAddress(char * buf)
+UINT16 HexToUint(char * buf)
 {
     long val;
     char *eptr;
-    if (*buf == '\0')  return -1;
+    if (*buf == '\0')  return 0;
     val = strtol(buf,&eptr,16);
     if (*eptr != '\0') return -1;
     if (val < 0)       return -1;

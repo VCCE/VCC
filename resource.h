@@ -379,6 +379,7 @@
 #define IDC_DISASSEMBLY_TEXT            2136
 #define IDC_PHYS_MEM                    2137
 #define IDC_EDIT_BLOCK                  2138
+#define IDC_ADRTXT                      2139
 
 #define IDM_USER_WIKI                   40001
 #define ID_FILE_EXIT                    40002
