@@ -506,7 +506,7 @@ BEGIN
     PUSHBUTTON      "Close", IDCLOSE, 6, 280, 36, 14
 END
 
-IDD_DISASSEMBLER DIALOGEX -50, -50, 200, 350
+IDD_DISASSEMBLER DIALOGEX -50, -50, 210, 390
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Disassembly Window"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
@@ -520,7 +520,7 @@ BEGIN
     LTEXT           "Lines:", IDC_STATIC,   70, 17,  20,  9
     EDITTEXT        IDC_EDIT_PC_LCNT,       92, 17,  24, 10, WS_TABSTOP
     LTEXT           "" IDC_ERROR_TEXT,      10, 30, 180, 10
-    CONTROL         "", IDC_DISASSEMBLY_TEXT, "RichEdit20A", ES_MULTILINE | ES_READONLY | WS_VSCROLL , 5, 42, 192, 305
+    CONTROL         "", IDC_DISASSEMBLY_TEXT, "RichEdit20A", ES_MULTILINE | ES_READONLY | WS_VSCROLL , 5, 42, 205, 345
 END
 
 /////////////////////////////////////////////////////////////////////////////

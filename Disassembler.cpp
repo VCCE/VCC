@@ -42,11 +42,11 @@
 // Namespace starts here
 namespace VCC { namespace Debugger { namespace UI {
 
-// Windows handles
+// Dialog and control handles
 HWND hDismWin = NULL;  // Set when window created
 HWND hDismDlg = NULL;  // Set when dialog activated
 HWND hEdtAddr = NULL;  // From editbox
-HWND hEdtLcnt = NULL;  // To editbox
+HWND hEdtLcnt = NULL;  // Number of lines
 HWND hEdtBloc = NULL;  // Bock number editbox
 HWND hEdtAPPY = NULL;  // Apply button
 HWND hDisText = NULL;  // Richedit20 box for output
@@ -56,20 +56,29 @@ HWND hErrText = NULL;  // Error text box
 INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
 void DecodeRange();
 void Disassemble(unsigned short, unsigned short, bool, unsigned short);
+
 UINT16 HexToUint(char *);
+
 LRESULT CALLBACK SubAddrDlgProc(HWND,UINT,WPARAM,LPARAM);
-WNDPROC AddrDlgProc;
 LRESULT CALLBACK SubBlocDlgProc(HWND,UINT,WPARAM,LPARAM);
-WNDPROC BlocDlgProc;
 LRESULT CALLBACK SubLcntDlgProc(HWND,UINT,WPARAM,LPARAM);
+
+WNDPROC AddrDlgProc;
+WNDPROC BlocDlgProc;
 WNDPROC LcntDlgProc;
+
 BOOL ProcEditDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM,int);
 LONG_PTR SetControlHook(HWND hCtl,LONG_PTR Proc);
-char initTxt[] = "Address and Block are hex.  Lines decimal";
+
+std::string PadRight(std::string const&,size_t);
 std::string IntToHex(int,int);
 std::string OpFDB(int,std::string,std::string,std::string);
 std::string OpFCB(int,std::string,std::string);
+std::string FmtLine(int,std::string,std::string,std::string,std::string);
+
 int DecodeModHdr(unsigned long, std::string *mhdr);
+
+char initTxt[] = "Address and Block are hex.  Lines decimal";
 
 /**************************************************/
 /*       Create Disassembler Dialog Window        */
@@ -280,8 +289,9 @@ void DecodeRange()
 /***************************************************/
 std::string PadRight(std::string const& s, size_t w)
 {
-    if (s.size() < w)
-        return s + std::string(w-s.size(),' ');
+    int pad = w - s.size();
+    if (pad > 0)
+        return s + std::string(pad,' ');
     else
         return s;
 }
@@ -297,12 +307,21 @@ std::string IntToHex(int i, int w)
 }
 
 /***************************************************/
-/*           Create Disassembly line               */
+/*           Format Disassembly line               */
 /***************************************************/
-std::string DisLine(int adr,std::string ins,std::string opc,std::string opr)
+std::string FmtLine(int adr,
+                    std::string ins,
+                    std::string opc,
+                    std::string opr,
+                    std::string cmt)
 {
-    return IntToHex(adr,6) + " " + PadRight(ins,11) +
-           PadRight(opc,5) + PadRight(opr,6);
+    std::string s;
+    s = IntToHex(adr,6) + " " + PadRight(ins,11) + PadRight(opc,5);
+    if (cmt.size() > 0)
+        s += PadRight(opr,10) + " " + cmt;
+    else
+        s += opr;
+    return s + "\n";
 }
 
 /***************************************************/
@@ -310,7 +329,7 @@ std::string DisLine(int adr,std::string ins,std::string opc,std::string opr)
 /***************************************************/
 std::string OpFDB(int adr,std::string b1,std::string b2,std::string cmt)
 {
-    return DisLine(adr,b1+b2,"FDB","$"+b1+b2) +cmt+"\n";
+    return FmtLine(adr,b1+b2,"FDB","$"+b1+b2,cmt);
 }
 
 /***************************************************/
@@ -318,7 +337,7 @@ std::string OpFDB(int adr,std::string b1,std::string b2,std::string cmt)
 /***************************************************/
 std::string OpFCB(int adr,std::string b,std::string cmt)
 {
-    return DisLine(adr,b,"FCB","$"+b) +cmt+"\n";
+    return FmtLine(adr,b,"FCB","$"+b,cmt);
 }
 
 /***************************************************/
@@ -335,14 +354,13 @@ int DecodeModHdr(unsigned long addr, std::string *hdr)
         if ((n == 1) && (ch != 0xCD)) break;
         hexb[n] = IntToHex(ch,2);
         cksum = cksum ^ ch;
-        //if (n < 9) cksum = cksum ^ ch;
     }
     if (cksum) return 0;
 
     // Generate header lines
     int cnt = 0;
     *hdr =  OpFDB(addr+cnt++,hexb[0],hexb[1],"Module"); cnt++;
-    *hdr += OpFDB(addr+cnt++,hexb[2],hexb[3],"Mod Size"); cnt++;
+    *hdr += OpFDB(addr+cnt++,hexb[2],hexb[3],"Mod Siz"); cnt++;
     *hdr += OpFDB(addr+cnt++,hexb[4],hexb[5],"Off Nam"); cnt++;
     *hdr += OpFCB(addr+cnt++,hexb[6],"Ty/Lg");
     *hdr += OpFCB(addr+cnt++,hexb[7],"At/Rv");
@@ -355,9 +373,9 @@ int DecodeModHdr(unsigned long addr, std::string *hdr)
             hexb[n+9] = IntToHex(ch,2);
         }
         *hdr += OpFDB(addr+cnt++,hexb[9],hexb[10],"Off Exe"); cnt++;
-        *hdr += OpFDB(addr+cnt++,hexb[11],hexb[12],"Dat Size"); cnt++;
+        *hdr += OpFDB(addr+cnt++,hexb[11],hexb[12],"Dat Siz"); cnt++;
     }
-    return cnt;
+    return cnt; // Header bytes
 }
 
 /**************************************************/
@@ -378,20 +396,21 @@ void Disassemble( unsigned short FromAdr,
 
     unsigned short PC = FromAdr;
     int numlines = 0;
-    int modhdr = 0;
+    bool modhdr = false;
 
     state.block = Block;
     state.phyAddr = UsePhyAddr;
-    unsigned short MaxAdr = UsePhyAddr? 0xFFFF: 0xFF00;
+    unsigned short MaxAdr = UsePhyAddr ? 0xFFFF: 0xFF00;
     while ((numlines < MaxLines) && (PC < MaxAdr)) {
 
         if (UsePhyAddr) {
             // Check for module header
             std::string hdr;
-            modhdr = DecodeModHdr(PC+Block*0x2000, &hdr);
-            if (modhdr) {
-                PC += modhdr;
-                if (modhdr > 9)
+            int hdrlen = DecodeModHdr(PC+Block*0x2000, &hdr);
+            if (hdrlen) {
+                modhdr = true;
+                PC += hdrlen;
+                if (hdrlen > 9)
                     numlines += 8;
                 else
                     numlines += 6;
@@ -425,9 +444,29 @@ void Disassemble( unsigned short FromAdr,
             HexInst += IntToHex(trace.bytes[i],2);
         }
 
+        // String of ascii instruction bytes
+        std::string comment;
+        for (unsigned int i=0; i < trace.bytes.size(); i++) {
+            char c = trace.bytes[i] & 0x7f;
+            if (c < 32 || c > 126) c = '.';
+            comment += c;
+        }
+
         // append disassembled line for output
-        lines += DisLine(iaddr,HexInst,trace.instruction,trace.operand)+"\n";
+        lines += FmtLine(iaddr,HexInst,trace.instruction,trace.operand,comment);
         numlines++;
+
+//        // Line break after unconditional branches
+//        if ((trace.instruction == "RTI")  ||
+//            (trace.instruction == "JMP")  ||
+//            (trace.instruction == "RTS")  ||
+//            (trace.instruction == "BRA")  ||
+//            (trace.instruction == "LBRA") ||
+//            ((trace.instruction == "PULS") &&
+//             (trace.operand.find("PC") != std::string::npos))) {
+//            numlines++;
+//            lines += "\n";
+//        }
 
         // Next instruction
         if (trace.bytes.size() > 0)
