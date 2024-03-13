@@ -297,13 +297,21 @@ std::string PadRight(std::string const& s, size_t w)
 }
 
 /***************************************************/
-/*    Convert integer to zero filled hex string    */
+/* Quick convert integer to zero filled hex string */
+/* Max width 15  Caution - this will truncate      */
 /***************************************************/
-std::string IntToHex(int i, int w)
+std::string IntToHex(int i,int w)
 {
-    std::ostringstream fmt;
-    fmt<<std::hex<<std::setw(w)<<std::uppercase<<std::setfill('0')<<i;
-    return fmt.str();
+    char *h = "0123456789ABCDEF";
+
+    w = w & 15;          // limit width
+    char c[16];          // C-string for hex bytes
+    c[w] = 0;            // terminate C-string
+    while (w--) {        // hexify nibbles
+        c[w] = h[i&15];
+        i = i >> 4;
+    }
+    return c;  // C-string converts to std::string
 }
 
 /***************************************************/
@@ -365,6 +373,7 @@ int DecodeModHdr(unsigned long addr, std::string *hdr)
     *hdr += OpFCB(addr+cnt++,hexb[6],"Ty/Lg");
     *hdr += OpFCB(addr+cnt++,hexb[7],"At/Rv");
     *hdr += OpFCB(addr+cnt++,hexb[8],"Parity");
+
     // Additional lines if executable
     char type = hexb[6][0];
     if ((type=='1')||(type=='E')) {
@@ -375,7 +384,7 @@ int DecodeModHdr(unsigned long addr, std::string *hdr)
         *hdr += OpFDB(addr+cnt++,hexb[9],hexb[10],"Off Exe"); cnt++;
         *hdr += OpFDB(addr+cnt++,hexb[11],hexb[12],"Dat Siz"); cnt++;
     }
-    return cnt; // Header bytes
+    return cnt; // Num bytes decoded
 }
 
 /**************************************************/
