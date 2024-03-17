@@ -142,7 +142,9 @@ namespace VCC { namespace Debugger
 		unsigned short PC = state.PC;
 
 		// Get the post byte.
-		unsigned char postbyte = DbgRead8(state.phyAddr,state.block,++PC);
+		PC += opcode.oplen;
+		unsigned char postbyte = DbgRead8(state.phyAddr,state.block,PC);
+
 		trace.bytes.push_back(postbyte);
 
 		// Determine various indexing modes.
