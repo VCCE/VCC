@@ -26,10 +26,9 @@
 
 namespace VCC { namespace Debugger { namespace UI { namespace
 {
-
 	// Color constants
 	const COLORREF rgbBlack  = RGB(  0,   0,   0);
-	const COLORREF rgbViolet = RGB(100,   0, 200);
+	const COLORREF rgbViolet = RGB(140,   0, 160);
 	const COLORREF rgbGray   = RGB(120, 120, 120);
 
 	CriticalSection Section_;
@@ -50,22 +49,31 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		}
 	};
 
-	// Make uppercase hex string
-	std::string HexUpc(int val,int width)
+	// Convert unsigned int to uppercase hex string
+	std::string HexUpc(unsigned int value,unsigned int width)
 	{
-		return ToHexString(val,width,true);
+		char *hdigits = "0123456789ABCDEF";
+		char c_str[32];
+		if (width > 31) width = 31;
+		c_str[width] = 0;
+		while (width--) {
+			c_str[width] = hdigits[value & 0xF];
+			value = value >> 4;
+		}
+		return c_str; // converts
 	}
 
-	// Draw some text
+	// Draw string centered in rectangle width w, height 20
+	// x,y set the top left corner of the centering box
 	void PutText(HDC hdc,int x,int y,int w,std::string s)
 	{
 		RECT rc;
-		SetRect( &rc, x, y, x+w, y+20);
+		SetRect( &rc, x, y, x + w, y + 20);
 		DrawText( hdc, s.c_str(), s.size(), &rc,
 				  DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 	}
 
-	// Draw a box
+	// Draw a visible box
 	void MakeBox(HDC hdc,HPEN pen,int x,int y,int w,int h)
 	{
 		SelectObject(hdc, pen);
@@ -90,7 +98,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	void DrawMMUMonitor(HDC hdc, LPRECT clientRect)
 	{
 		RECT rect = *clientRect;
-		//std::string s;
 
 		// Clear background.
 		HBRUSH brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
@@ -113,21 +120,22 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			regs = MMUState_;
 		}
 
-		// Display MMU registers
-		int x = rect.left;
-		int y = rect.top + 5;
+		// X,Y position for MMU registers
+		int x = rect.left + 4;
+		int y = rect.top + 4;
 
 		// Header
 		SetTextColor(hdc, rgbBlack);
 		PutText(hdc,x+4,  y,80,"Real");
-		PutText(hdc,x+75 ,y,40,"MAP 0");
-		PutText(hdc,x+125,y,80,"CPU Memory");
-		PutText(hdc,x+216,y,40,"MAP 1");
-		PutText(hdc,x+243,y,80,"Real");
+		PutText(hdc,x+71 ,y,40,"MAP 0");
+		PutText(hdc,x+121,y,80,"CPU Memory");
+		PutText(hdc,x+212,y,40,"MAP 1");
+		PutText(hdc,x+239,y,80,"Real");
 
 		// Rows
 		for (int n = 0; n < 8; n++)
 		{
+			// Y position for row
 			y += 20;
 
 			// Map 0 Real Memory
@@ -135,70 +143,64 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			PutText(hdc,x+14,y,60,HexUpc(regs.Task0[n]*8192,5));
 
 			// Map 0 Box
-			MakeBox(hdc,pen,x+80,y+1,30,16);
+			MakeBox(hdc,pen,x+76,y+1,30,16);
 			SetTaskColor(hdc,regs.ActiveTask,rgbBlack,rgbGray);
-			PutText(hdc,x+80,y,30,HexUpc(regs.Task0[n],2));
+			PutText(hdc,x+76,y,30,HexUpc(regs.Task0[n],2));
 
 			// CPU memory
 			SetTextColor(hdc, rgbViolet);
-			PutText(hdc,x+135,y,60,HexUpc(n * 8192,4));
+			PutText(hdc,x+131,y,60,HexUpc(n * 8192,4));
 
 			// Map 1 Box
-			MakeBox(hdc,pen,x+220,y+1,30,16);
+			MakeBox(hdc,pen,x+216,y+1,30,16);
 			SetTaskColor(hdc,regs.ActiveTask,rgbGray,rgbBlack);
-			PutText(hdc,x+220,y,30,HexUpc(regs.Task1[n],2));
+			PutText(hdc,x+216,y,30,HexUpc(regs.Task1[n],2));
 
 			// Map 1 Real Memory
 			SetTaskColor(hdc,regs.ActiveTask,rgbGray,rgbViolet);
-			PutText(hdc,x+252,y,60,HexUpc(regs.Task1[n]*8192,5));
+			PutText(hdc,x+248,y,60,HexUpc(regs.Task1[n]*8192,5));
 
 			// Active task indicator arrows
 			SelectObject(hdc, thickPen);
-			if (regs.ActiveTask == 0) {
-				PutText(hdc,x+119,y,5,"<");
-				MoveToEx(hdc,x+124,y+10, NULL);
-				LineTo(hdc,x+139,y+10);
-				PutText(hdc,x+141,y,5,">");
-			} else {
-				PutText(hdc,x+185,y,5,"<");
-				MoveToEx(hdc,x+190,y+10, NULL);
-				LineTo(hdc,x+206,y+10);
-				PutText(hdc,x+208,y,5,">");
-			}
+			int dx = (regs.ActiveTask == 0) ? x : x+66;
+			PutText(hdc,dx+115,y,5,"<");
+			MoveToEx(hdc,dx+120,y+10, NULL);
+			LineTo(hdc,dx+135,y+10);
+			PutText(hdc,dx+137,y,5,">");
 		}
 
-		// Display the Control bits
-		x = rect.left+4;
-		y = rect.top+192;
+		// Y position for the Control bits
+		y = rect.top + 191;
 
 		// MMU Enable bit
-		SetTextColor(hdc, rgbViolet);
+		SetTextColor(hdc,rgbViolet);
 		PutText(hdc,x,y,130,"FF90:b6 Enable  ");
 		MakeBox(hdc,pen,x+130,y+2,20,16);
-		SetTextColor(hdc, rgbBlack);
+		SetTextColor(hdc,rgbBlack);
 		PutText(hdc,x+130,y,20,std::to_string(regs.Enabled));
 
 		// MMU task bit
-		SetTextColor(hdc, rgbViolet);
+		SetTextColor(hdc,rgbViolet);
 		PutText(hdc,x,y+20,130,"FF91:b0 MMU Task");
 		MakeBox(hdc,pen,x+130,y+22,20,16);
-		SetTextColor(hdc, rgbBlack);
+		SetTextColor(hdc,rgbBlack);
 		PutText(hdc,x+130,y+20,20,std::to_string(regs.ActiveTask));
 
-		x += 162;
+		// X position for second column control bits
+		x = rect.left + 166;
 
 		// Ram Vectors
-		SetTextColor(hdc, rgbViolet);
+		SetTextColor(hdc,rgbViolet);
 		PutText(hdc,x,y,140,   "FF90:b3 RAM Vector");
 		MakeBox(hdc,pen,x+140,y+2,20,16);
-		SetTextColor(hdc, rgbBlack);
+		SetTextColor(hdc,rgbBlack);
 		PutText(hdc,x+140,y,20,std::to_string(regs.RamVectors));
 
 		// Rom Mapping
-		SetTextColor(hdc, rgbViolet);
+		SetTextColor(hdc,rgbViolet);
 		PutText(hdc,x,y+20,140,"FF90:b1-0 ROM Map ");
 		MakeBox(hdc,pen,x+140,y+22,20,16);
-		SetTextColor(hdc, rgbBlack);
+		SetTextColor(hdc,rgbBlack);
 		PutText(hdc,x+140,y+20,20,std::to_string(regs.RomMap));
 
 		// Cleanup.
