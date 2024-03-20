@@ -50,17 +50,9 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	};
 
 	// Convert unsigned int to uppercase hex string
-	std::string HexUpc(unsigned int value,unsigned int width)
+	std::string HexUpc(long value,unsigned int width)
 	{
-		char *hdigits = "0123456789ABCDEF";
-		char c_str[32];
-		if (width > 31) width = 31;
-		c_str[width] = 0;
-		while (width--) {
-			c_str[width] = hdigits[value & 0xF];
-			value = value >> 4;
-		}
-		return c_str; // converts
+		return ToHexString(value, width, true);
 	}
 
 	// Draw string centered in rectangle width w, height 20
@@ -105,7 +97,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 		HPEN pen = (HPEN)CreatePen(PS_SOLID, 1, rgbGray);
 		HPEN thickPen = (HPEN)CreatePen(PS_SOLID, 2, rgbGray);
-		SelectObject(hdc, pen);
 
 		HFONT hFont = CreateFont(14, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
 		                         DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
@@ -140,7 +131,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 			// Map 0 Real Memory
 			SetTaskColor(hdc,regs.ActiveTask,rgbViolet,rgbGray);
-			PutText(hdc,x+14,y,60,HexUpc(regs.Task0[n]*8192,5));
+			PutText(hdc,x+14,y,60,HexUpc(regs.Task0[n]*8192,6));
 
 			// Map 0 Box
 			MakeBox(hdc,pen,x+76,y+1,30,16);
@@ -158,7 +149,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 			// Map 1 Real Memory
 			SetTaskColor(hdc,regs.ActiveTask,rgbGray,rgbViolet);
-			PutText(hdc,x+248,y,60,HexUpc(regs.Task1[n]*8192,5));
+			PutText(hdc,x+248,y,60,HexUpc(regs.Task1[n]*8192,6));
 
 			// Active task indicator arrows
 			SelectObject(hdc, thickPen);
