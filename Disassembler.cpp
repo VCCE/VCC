@@ -55,7 +55,7 @@ HWND hErrText = NULL;  // Error text box
 // local references
 INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
 void DecodeRange();
-void Disassemble(unsigned short, unsigned short, bool, unsigned short);
+void Disassemble(unsigned short, unsigned short, unsigned short);
 
 UINT16 HexToUint(char *);
 
@@ -76,7 +76,10 @@ std::string OpFDB(int,std::string,std::string,std::string);
 std::string OpFCB(int,std::string,std::string);
 std::string FmtLine(int,std::string,std::string,std::string,std::string);
 
-int DecodeModHdr(unsigned long, std::string *mhdr);
+int DecodeModHdr(unsigned short, unsigned short, std::string *mhdr);
+
+bool UsePhyAdr = FALSE;
+bool Os9Decode = FALSE;
 
 char initTxt[] = "Address and Block are hex.  Lines decimal";
 
@@ -103,6 +106,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
 {
     switch (msg) {
     case WM_INITDIALOG:
+
         // Grab dialog and control handles
         hDismDlg = hDlg;
         hEdtAddr = GetDlgItem(hDismDlg, IDC_EDIT_PC_ADDR);
@@ -150,12 +154,19 @@ INT_PTR CALLBACK DisassemblerDlgProc
             DecodeRange();
             SetFocus(hEdtAddr);
             return TRUE;
+        case IDC_BTN_OS9:
+            if (IsDlgButtonChecked(hDismDlg,IDC_BTN_OS9))
+                Os9Decode = TRUE;
+            else
+                Os9Decode = FALSE;
         case IDC_PHYS_MEM:
             if (IsDlgButtonChecked(hDlg,IDC_PHYS_MEM)) {
+                UsePhyAdr = TRUE;
                 EnableWindow(hEdtBloc,TRUE);
                 SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"  Offset:");
                 SetFocus(hEdtBloc);
             } else {
+                UsePhyAdr = FALSE;
                 EnableWindow(hEdtBloc,FALSE);
                 SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"Address:");
                 SetFocus(hEdtAddr);
@@ -243,12 +254,7 @@ void DecodeRange()
     char buf[16];
     unsigned short FromAdr = 0;
     unsigned short MaxLines;
-    bool UsePhyAdr;
     unsigned short Block = 0;
-
-    // Physical address check box
-    unsigned int ret = IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM);
-    UsePhyAdr = (ret == BST_CHECKED) ? TRUE : FALSE;
 
     // If not using physical addressing disallow access I/O ports
     unsigned short MaxAdr = UsePhyAdr? 0xFFFF: 0xFF00;
@@ -280,7 +286,7 @@ void DecodeRange()
     }
 
     // Disassemble
-    Disassemble(FromAdr,MaxLines,UsePhyAdr,Block);
+    Disassemble(FromAdr,MaxLines,Block);
     return;
 }
 
@@ -349,15 +355,29 @@ std::string OpFCB(int adr,std::string b,std::string cmt)
 }
 
 /***************************************************/
+/*  Get byte from either real memory or cpu memory */
+/***************************************************/
+unsigned char GetCondMem(unsigned long addr) {
+	if (UsePhyAdr) {
+        return (unsigned char) GetMem(addr);
+    } else {
+        return SafeMemRead8((unsigned short) addr);
+	}
+}
+
+/***************************************************/
 /* Test for and conditionally decode module header */
 /***************************************************/
-int DecodeModHdr(unsigned long addr, std::string *hdr)
+int DecodeModHdr(unsigned short Block, unsigned short PC, std::string *hdr)
 {
+    unsigned long addr = PC;
+    if (UsePhyAdr) addr += Block * 0x2000;
+
     // Convert header bytes to hex with check
     std::string hexb[13];
     int cksum = 0xFF;
     for (int n=0; n<9; n++) {
-        int ch = GetMem(n+addr);
+        int ch = GetCondMem(n+addr);
         if ((n == 0) && (ch != 0x87)) break;
         if ((n == 1) && (ch != 0xCD)) break;
         hexb[n] = IntToHex(ch,2);
@@ -376,9 +396,9 @@ int DecodeModHdr(unsigned long addr, std::string *hdr)
 
     // Additional lines if executable
     char type = hexb[6][0];
-    if ((type=='1')||(type=='E')) {
+    if ((type=='1')||(type=='E')||(type=='C')) {
         for (int n=0; n<4; n++) {
-            int ch = GetMem(cnt+n+addr);
+            int ch = GetCondMem(cnt+n+addr);
             hexb[n+9] = IntToHex(ch,2);
         }
         *hdr += OpFDB(addr+cnt++,hexb[9],hexb[10],"Off Exe"); cnt++;
@@ -392,7 +412,6 @@ int DecodeModHdr(unsigned long addr, std::string *hdr)
 /**************************************************/
 void Disassemble( unsigned short FromAdr,
                   unsigned short MaxLines,
-                  bool UsePhyAddr,
                   unsigned short Block)
 {
     std::unique_ptr<OpDecoder> Decoder;
@@ -408,14 +427,15 @@ void Disassemble( unsigned short FromAdr,
     bool modhdr = false;
 
     state.block = Block;
-    state.phyAddr = UsePhyAddr;
-    unsigned short MaxAdr = UsePhyAddr ? 0xFFFF: 0xFF00;
-    while ((numlines < MaxLines) && (PC < MaxAdr)) {
+    state.phyAddr = UsePhyAdr;
+//    unsigned short MaxAdr = UsePhyAdr ? 0xFFFF: 0xFF00;
+//    while ((numlines < MaxLines) && (PC < MaxAdr)) {
+    while (numlines < MaxLines) {
 
-        if (UsePhyAddr) {
+        if (Os9Decode) {
             // Check for module header
             std::string hdr;
-            int hdrlen = DecodeModHdr(PC+Block*0x2000, &hdr);
+            int hdrlen = DecodeModHdr(Block, PC, &hdr);
             if (hdrlen) {
                 modhdr = true;
                 PC += hdrlen;
@@ -431,10 +451,10 @@ void Disassemble( unsigned short FromAdr,
         trace = {};
         Decoder->DecodeInstruction(state,trace);
 
-        // If a module convert SWI2 to OS9 with immediate operand
-        if (modhdr && (trace.instruction == "SWI2")) {
+        // If decoding for Os9 convert SWI2 to OS9 with immediate operand
+        if (Os9Decode && (trace.instruction == "SWI2")) {
             unsigned short opadr = PC + (unsigned short) trace.bytes.size();
-            unsigned char op = DbgRead8(UsePhyAddr, Block, opadr);
+            unsigned char op = DbgRead8(UsePhyAdr, Block, opadr);
             trace.instruction = "OS9";
             trace.operand = "#$"+IntToHex(op,2);
             trace.bytes.push_back(op);
@@ -442,7 +462,7 @@ void Disassemble( unsigned short FromAdr,
 
         // Instruction address
         int iaddr;
-        if (UsePhyAddr)
+        if (UsePhyAdr)
             iaddr = PC + Block * 0x2000;
         else
             iaddr = PC;
@@ -465,18 +485,6 @@ void Disassemble( unsigned short FromAdr,
         lines += FmtLine(iaddr,HexInst,trace.instruction,trace.operand,comment);
         numlines++;
 
-//        // Line break after unconditional branches
-//        if ((trace.instruction == "RTI")  ||
-//            (trace.instruction == "JMP")  ||
-//            (trace.instruction == "RTS")  ||
-//            (trace.instruction == "BRA")  ||
-//            (trace.instruction == "LBRA") ||
-//            ((trace.instruction == "PULS") &&
-//             (trace.operand.find("PC") != std::string::npos))) {
-//            numlines++;
-//            lines += "\n";
-//        }
-
         // Next instruction
         if (trace.bytes.size() > 0)
             PC += (UINT16) trace.bytes.size();
@@ -485,10 +493,10 @@ void Disassemble( unsigned short FromAdr,
     }
     // Put the completed disassembly
     SetWindowTextA(hDisText,ToLPCSTR(lines));
-    if (PC >= MaxAdr)
-        SetWindowText(hErrText,"Stopped at invalid address");
-    else
-        SetWindowTextA(hErrText,initTxt);
+    //if (PC >= MaxAdr)
+    //   SetWindowText(hErrText,"Stopped at invalid address");
+    //else
+    SetWindowTextA(hErrText,initTxt);
 }
 
 /**************************************************/
