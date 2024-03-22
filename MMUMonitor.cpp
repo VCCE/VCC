@@ -28,7 +28,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 {
 	// Color constants
 	const COLORREF rgbBlack  = RGB(  0,   0,   0);
-	const COLORREF rgbViolet = RGB(140,   0, 160);
+	const COLORREF rgbViolet = RGB(100,   0, 170);
 	const COLORREF rgbGray   = RGB(120, 120, 120);
 
 	CriticalSection Section_;
@@ -160,8 +160,9 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			PutText(hdc,dx+137,y,5,">");
 		}
 
-		// Y position for the Control bits
-		y = rect.top + 191;
+		// Position for the Control bits
+		x = rect.left + 3;
+		y = rect.top + 190;
 
 		// MMU Enable bit
 		SetTextColor(hdc,rgbViolet);
@@ -178,7 +179,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		PutText(hdc,x+130,y+20,20,std::to_string(regs.ActiveTask));
 
 		// X position for second column control bits
-		x = rect.left + 166;
+		x = rect.left + 164;
 
 		// Ram Vectors
 		SetTextColor(hdc,rgbViolet);
@@ -209,7 +210,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			hWndMMUMonitor = hDlg;
 			RECT Rect;
 			GetClientRect(hDlg, &Rect);
-			BackBuffer_ = AttachBackBuffer(hDlg, 0, -40);
+			BackBuffer_ = AttachBackBuffer(hDlg, 0, -36);
 			SetTimer(hDlg, IDT_PROC_TIMER, 64, (TIMERPROC)NULL);
 			EmuState.Debugger.RegisterClient(hDlg, std::make_unique<MMUMonitorDebugClient>());
 			break;

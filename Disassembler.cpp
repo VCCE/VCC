@@ -138,10 +138,10 @@ INT_PTR CALLBACK DisassemblerDlgProc
         EnableWindow(hEdtBloc,FALSE);
         break;
 
-    // An edit box must have focus to capture tab/enter/up/down etc
     case WM_PAINT:
+        // Give edit control focus to capture tab/enter/up/down etc
         SetFocus(hEdtAddr);
-        break;
+        return FALSE;
 
     case WM_COMMAND:
         switch (LOWORD(wPrm)) {
@@ -149,7 +149,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
         case WM_DESTROY:
             DestroyWindow(hDlg);
             hDismWin = NULL;
-            break;
+            return FALSE;
         case IDAPPLY:
             DecodeRange();
             SetFocus(hEdtAddr);
@@ -159,21 +159,23 @@ INT_PTR CALLBACK DisassemblerDlgProc
                 Os9Decode = TRUE;
             else
                 Os9Decode = FALSE;
+            SetFocus(hEdtAddr);
+            return TRUE;
         case IDC_PHYS_MEM:
             if (IsDlgButtonChecked(hDlg,IDC_PHYS_MEM)) {
                 UsePhyAdr = TRUE;
                 EnableWindow(hEdtBloc,TRUE);
                 SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"  Offset:");
-                SetFocus(hEdtBloc);
             } else {
                 UsePhyAdr = FALSE;
                 EnableWindow(hEdtBloc,FALSE);
                 SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"Address:");
-                SetFocus(hEdtAddr);
             }
+            SetFocus(hEdtAddr);
             return TRUE;
         }
-    }   return FALSE;
+    }
+    return FALSE;  // unhandled message
 }
 
 /***************************************************/
@@ -188,12 +190,12 @@ LONG_PTR SetControlHook(HWND hCtl,LONG_PTR HookProc)
 // Address edit control
 LRESULT CALLBACK SubAddrDlgProc(HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
 { return ProcEditDlg(AddrDlgProc,hDlg,msg,wPrm,lPrm,1); }
-// Line count edit control
-LRESULT CALLBACK SubLcntDlgProc(HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{ return ProcEditDlg(LcntDlgProc,hDlg,msg,wPrm,lPrm,2); }
 // Block number edit control
 LRESULT CALLBACK SubBlocDlgProc(HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{ return ProcEditDlg(BlocDlgProc,hDlg,msg,wPrm,lPrm,0); }
+{ return ProcEditDlg(BlocDlgProc,hDlg,msg,wPrm,lPrm,2); }
+// Line count edit control
+LRESULT CALLBACK SubLcntDlgProc(HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{ return ProcEditDlg(LcntDlgProc,hDlg,msg,wPrm,lPrm,3); }
 
 /***************************************************/
 /*      Process edit control messages here         */
@@ -211,15 +213,15 @@ BOOL ProcEditDlg (WNDPROC pDlg,HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm,int ne
         case VK_TAB:
             SetWindowTextA(hErrText,initTxt);
             switch (next) {
-            case 1:
-                SetFocus(hEdtLcnt);
-                break;
-            case 2:
+            case 1:  // From address edit control
                 if (IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM)) {
                     SetFocus(hEdtBloc);
                     break;
-                }
-            default:
+				}
+            case 2:  // From block edit control
+                SetFocus(hEdtLcnt);
+                break;
+            default: // From line count control
                 SetFocus(hEdtAddr);
                 break;
             }
