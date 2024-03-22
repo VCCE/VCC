@@ -1,18 +1,18 @@
 //	This file is part of VCC (Virtual Color Computer).
-//	
+//
 //		VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
 //		it under the terms of the GNU General Public License as published by
 //		the Free Software Foundation, either version 3 of the License, or
 //		(at your option) any later version.
-//	
+//
 //		VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
 //		but WITHOUT ANY WARRANTY; without even the implied warranty of
 //		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //		GNU General Public License for more details.
-//	
+//
 //		You should have received a copy of the GNU General Public License
 //		along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-//	
+//
 //		Processor State Display - Part of the Debugger package for VCC
 //		Authors: Mike Rojas, Chet Simpson
 #include "MMUMonitor.h"
@@ -26,408 +26,179 @@
 
 namespace VCC { namespace Debugger { namespace UI { namespace
 {
-	using mmupagebuffer_type = std::array<unsigned char, 8192>;
+	// Color constants
+	const COLORREF rgbBlack  = RGB(  0,   0,   0);
+	const COLORREF rgbViolet = RGB(100,   0, 170);
+	const COLORREF rgbGray   = RGB(120, 120, 120);
 
 	CriticalSection Section_;
 	MMUState MMUState_;
-	int MMUPage_ = 0;
-	mmupagebuffer_type MMUPageBuffer_;
 
 	HWND MMUMonitorWindow = NULL;
 	HWND hWndMMUMonitor;
-	HWND hWndVScrollBar;
-	int memoryOffset = 0;
-	int maxPageNo = 0;
-
 	BackBufferInfo	BackBuffer_;
-
 
 	class MMUMonitorDebugClient : public Client
 	{
 	public:
-
-		void OnReset() override
-		{
-			SectionLocker lock(Section_);
-
-			std::fill(MMUPageBuffer_.begin(), MMUPageBuffer_.end(), unsigned char(0));
-			MMUPage_ = 0;
+		void OnReset() override {
 		}
-
-		void OnUpdate() override
-		{
+		void OnUpdate() override {
 			SectionLocker lock(Section_);
-
 			MMUState_ = GetMMUState();
-			GetMMUPage(MMUPage_, MMUPageBuffer_);
 		}
-
 	};
 
+	// Convert unsigned int to uppercase hex string
+	std::string HexUpc(long value,unsigned int width)
+	{
+		return ToHexString(value, width, true);
+	}
+
+	// Draw string centered in rectangle width w, height 20
+	// x,y set the top left corner of the centering box
+	void PutText(HDC hdc,int x,int y,int w,std::string s)
+	{
+		RECT rc;
+		SetRect( &rc, x, y, x + w, y + 20);
+		DrawText( hdc, s.c_str(), s.size(), &rc,
+				  DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	}
+
+	// Draw a visible box
+	void MakeBox(HDC hdc,HPEN pen,int x,int y,int w,int h)
+	{
+		SelectObject(hdc, pen);
+		MoveToEx(hdc, x, y, NULL);
+		LineTo(hdc, x + w, y);
+		LineTo(hdc, x + w, y + h);
+		LineTo(hdc, x, y + h);
+		LineTo(hdc, x, y);
+	}
+
+	// Set draw color per task number
+	void SetTaskColor(HDC hdc,int Task,COLORREF Tsk0,COLORREF Tsk1)
+	{
+		if (Task==1) {
+			SetTextColor(hdc, Tsk1);
+		} else {
+			SetTextColor(hdc, Tsk0);
+		}
+	}
+
+	// Draw the Monitor Window
 	void DrawMMUMonitor(HDC hdc, LPRECT clientRect)
 	{
 		RECT rect = *clientRect;
 
-		// Clear our background.
+		// Clear background.
 		HBRUSH brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
 		FillRect(hdc, &rect, brush);
 
-		HPEN pen = (HPEN)CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
-		HPEN thickPen = (HPEN)CreatePen(PS_SOLID, 2, RGB(192, 192, 192));
-		SelectObject(hdc, pen);
+		HPEN pen = (HPEN)CreatePen(PS_SOLID, 1, rgbGray);
+		HPEN thickPen = (HPEN)CreatePen(PS_SOLID, 2, rgbGray);
 
-		// Draw the border.
-		MoveToEx(hdc, rect.left, rect.top, NULL);
-		LineTo(hdc, rect.right - 1, rect.top);
-		LineTo(hdc, rect.right - 1, rect.bottom - 1);
-		LineTo(hdc, rect.left, rect.bottom - 1);
-		LineTo(hdc, rect.left, rect.top);
-
-		HFONT hFont = CreateFont(14, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-			CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FIXED_PITCH, TEXT("Consolas"));
-
+		HFONT hFont = CreateFont(14, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+		                         DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+		                         CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
+		                         FIXED_PITCH, TEXT("Consolas"));
 		SelectObject(hdc, hFont);
 
-		RECT rc;
-		int x = rect.left + 45;
-		int y = rect.top + 10;
-
-		SetTextColor(hdc, RGB(0, 0, 0));
-		SetRect(&rc, x, y, x + 80, y + 20);
-		DrawText(hdc, "Real Memory", 11, &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
-		x += 100;
-		SetRect(&rc, x-5, y, x + 35, y + 20);
-		DrawText(hdc, "MAP 0", 5, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 80;
-		SetRect(&rc, x, y, x + 80, y + 20);
-		DrawText(hdc, "CPU Memory", 10, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 130;
-		SetRect(&rc, x-5, y, x + 35, y + 20);
-		DrawText(hdc, "MAP 1", 5, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 55;
-		SetRect(&rc, x, y, x + 80, y + 20);
-		DrawText(hdc, "Real Memory", 11, &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-		y += 25;
-
-		// Pull out MMU state.  Do it quickly to keep the emulator frame rate high.
+		// Quick pull out MMU state
 		MMUState regs;
-		int pageNo;
-		mmupagebuffer_type page;
 		{
 			SectionLocker lock(Section_);
 			regs = MMUState_;
-			pageNo = MMUPage_;
-			page = MMUPageBuffer_;
 		}
 
-		std::string s;
+		// X,Y position for MMU registers
+		int x = rect.left + 4;
+		int y = rect.top + 4;
 
-		// Registers
+		// Header
+		SetTextColor(hdc, rgbBlack);
+		PutText(hdc,x+4,  y,80,"Real");
+		PutText(hdc,x+71 ,y,40,"MAP 0");
+		PutText(hdc,x+121,y,80,"CPU Memory");
+		PutText(hdc,x+212,y,40,"MAP 1");
+		PutText(hdc,x+239,y,80,"Real");
+
+		// Rows
 		for (int n = 0; n < 8; n++)
 		{
-			x = rect.left + 45;
-			if (regs.ActiveTask == 0)
-			{
-				SetTextColor(hdc, RGB(138, 27, 255));
-			}
-			else
-			{
-				SetTextColor(hdc, RGB(150, 150, 150));
-			}
-			SetRect(&rc, x, y, x + 80, y + 20);
-			int base = regs.Task0[n] * 8192;
+			// Y position for row
+			y += 20;
 
-			s = ToHexString(base, 5, true) + "-" + ToHexString(base + 8191, 5, true);
-			DrawText(hdc, s.c_str(), s.size(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
-			x += 100;
-			SelectObject(hdc, pen);
-			MoveToEx(hdc, x, y, NULL);
-			LineTo(hdc, x + 30, y);
-			LineTo(hdc, x + 30, y + 20);
-			LineTo(hdc, x, y + 20);
-			LineTo(hdc, x, y);
-			s = ToHexString(regs.Task0[n], 2, true);
-			if (regs.ActiveTask == 0)
-			{
-				SetTextColor(hdc, RGB(0, 0, 0));
-			}
-			else
-			{
-				SetTextColor(hdc, RGB(150, 150, 150));
-			}
-			SetRect(&rc, x, y, x + 30, y + 20);
-			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			x += 30;
-			if (regs.ActiveTask == 0)
-			{
-				SelectObject(hdc, thickPen);
-				MoveToEx(hdc, x, y + 10, NULL);
-				LineTo(hdc, x + 50, y + 10);
-			}
-			x += 50;
-			SetTextColor(hdc, RGB(138, 27, 255));
-			SetRect(&rc, x, y, x + 80, y + 20);
-			s = ToHexString(n * 8192, 4, true) + "-" + ToHexString(((n + 1) * 8192) - 1, 4, true);
-			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			x += 80;
-			SelectObject(hdc, pen);
-			if (regs.ActiveTask == 1)
-			{
-				SelectObject(hdc, thickPen);
-				MoveToEx(hdc, x, y + 10, NULL);
-				LineTo(hdc, x + 50, y + 10);
-			}
-			x += 50;
-			SelectObject(hdc, pen);
-			MoveToEx(hdc, x, y, NULL);
-			LineTo(hdc, x + 30, y);
-			LineTo(hdc, x + 30, y + 20);
-			LineTo(hdc, x, y + 20);
-			LineTo(hdc, x, y);
-			if (regs.ActiveTask == 1)
-			{
-				SetTextColor(hdc, RGB(0, 0, 0));
-			}
-			else
-			{
-				SetTextColor(hdc, RGB(150, 150, 150));
-			}
-			s = ToHexString(regs.Task1[n], 2, true);
-			SetRect(&rc, x, y, x + 30, y + 20);
-			DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			x += 50;
-			if (regs.ActiveTask == 1)
-			{
-				SetTextColor(hdc, RGB(138, 27, 255));
-			}
-			else
-			{
-				SetTextColor(hdc, RGB(150, 150, 150));
-			}
-			SetRect(&rc, x, y, x + 80, y + 20);
-			base = regs.Task1[n] * 8192;
-			s = ToHexString(base, 5, true) + "-" + ToHexString(base + 8191, 5, true);
-			DrawText(hdc, s.c_str(), s.size(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
-			y += 25;
+			// Map 0 Real Memory
+			SetTaskColor(hdc,regs.ActiveTask,rgbViolet,rgbGray);
+			PutText(hdc,x+14,y,60,HexUpc(regs.Task0[n]*8192,6));
+
+			// Map 0 Box
+			MakeBox(hdc,pen,x+76,y+1,30,16);
+			SetTaskColor(hdc,regs.ActiveTask,rgbBlack,rgbGray);
+			PutText(hdc,x+76,y,30,HexUpc(regs.Task0[n],2));
+
+			// CPU memory
+			SetTextColor(hdc, rgbViolet);
+			PutText(hdc,x+131,y,60,HexUpc(n * 8192,4));
+
+			// Map 1 Box
+			MakeBox(hdc,pen,x+216,y+1,30,16);
+			SetTaskColor(hdc,regs.ActiveTask,rgbGray,rgbBlack);
+			PutText(hdc,x+216,y,30,HexUpc(regs.Task1[n],2));
+
+			// Map 1 Real Memory
+			SetTaskColor(hdc,regs.ActiveTask,rgbGray,rgbViolet);
+			PutText(hdc,x+248,y,60,HexUpc(regs.Task1[n]*8192,6));
+
+			// Active task indicator arrows
+			SelectObject(hdc, thickPen);
+			int dx = (regs.ActiveTask == 0) ? x : x+66;
+			PutText(hdc,dx+115,y,5,"<");
+			MoveToEx(hdc,dx+120,y+10, NULL);
+			LineTo(hdc,dx+135,y+10);
+			PutText(hdc,dx+137,y,5,">");
 		}
 
-		x = rect.left + 35;
-		y += 20;
-		SetTextColor(hdc, RGB(138, 27, 255));
-		SetRect(&rc, x, y, x + 100, y + 20);
-		DrawText(hdc, "MMU Enable Bit", 14, &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
-		x += 110;
-		SelectObject(hdc, pen);
-		MoveToEx(hdc, x, y, NULL);
-		LineTo(hdc, x + 30, y);
-		LineTo(hdc, x + 30, y + 20);
-		LineTo(hdc, x, y + 20);
-		LineTo(hdc, x, y);
-		s = std::to_string(regs.Enabled);
-		SetTextColor(hdc, RGB(0, 0, 0));
-		SetRect(&rc, x, y, x + 30, y + 20);
-		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 40;
-		SetTextColor(hdc, RGB(138, 27, 255));
-		SetRect(&rc, x, y, x + 100, y + 20);
-		DrawText(hdc, "$FF90 bit 6", 11, &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+		// Position for the Control bits
+		x = rect.left + 3;
+		y = rect.top + 190;
 
-		x += 100;
-		SetTextColor(hdc, RGB(138, 27, 255));
-		SetRect(&rc, x, y, x + 100, y + 20);
-		DrawText(hdc, "Ram Vectors", 11, &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
-		x += 110;
-		SelectObject(hdc, pen);
-		MoveToEx(hdc, x, y, NULL);
-		LineTo(hdc, x + 30, y);
-		LineTo(hdc, x + 30, y + 20);
-		LineTo(hdc, x, y + 20);
-		LineTo(hdc, x, y);
-		s = std::to_string(regs.RamVectors);
-		SetTextColor(hdc, RGB(0, 0, 0));
-		SetRect(&rc, x, y, x + 30, y + 20);
-		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 40;
-		SetTextColor(hdc, RGB(138, 27, 255));
-		SetRect(&rc, x, y, x + 100, y + 20);
-		DrawText(hdc, "$FF90 bit 3", 11, &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+		// MMU Enable bit
+		SetTextColor(hdc,rgbViolet);
+		PutText(hdc,x,y,130,"FF90:b6 Enable  ");
+		MakeBox(hdc,pen,x+130,y+2,20,16);
+		SetTextColor(hdc,rgbBlack);
+		PutText(hdc,x+130,y,20,std::to_string(regs.Enabled));
 
-		x = rect.left + 35;
-		y += 20;
-		SetTextColor(hdc, RGB(138, 27, 255));
-		SetRect(&rc, x, y, x + 100, y + 20);
-		DrawText(hdc, "MMU Task Bit", 12, &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
-		x += 110;
-		SelectObject(hdc, pen);
-		MoveToEx(hdc, x, y, NULL);
-		LineTo(hdc, x + 30, y);
-		LineTo(hdc, x + 30, y + 20);
-		LineTo(hdc, x, y + 20);
-		LineTo(hdc, x, y);
-		s = std::to_string(regs.ActiveTask);
-		SetTextColor(hdc, RGB(0, 0, 0));
-		SetRect(&rc, x, y, x + 30, y + 20);
-		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 40;
-		SetTextColor(hdc, RGB(138, 27, 255));
-		SetRect(&rc, x, y, x + 100, y + 20);
-		DrawText(hdc, "$FF91 bit 0", 11, &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+		// MMU task bit
+		SetTextColor(hdc,rgbViolet);
+		PutText(hdc,x,y+20,130,"FF91:b0 MMU Task");
+		MakeBox(hdc,pen,x+130,y+22,20,16);
+		SetTextColor(hdc,rgbBlack);
+		PutText(hdc,x+130,y+20,20,std::to_string(regs.ActiveTask));
 
-		x += 100;
-		SetTextColor(hdc, RGB(138, 27, 255));
-		SetRect(&rc, x, y, x + 100, y + 20);
-		DrawText(hdc, "Rom Mapping", 11, &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
-		x += 110;
-		SelectObject(hdc, pen);
-		MoveToEx(hdc, x, y, NULL);
-		LineTo(hdc, x + 30, y);
-		LineTo(hdc, x + 30, y + 20);
-		LineTo(hdc, x, y + 20);
-		LineTo(hdc, x, y);
-		s = std::to_string(regs.RomMap);
-		SetTextColor(hdc, RGB(0, 0, 0));
-		SetRect(&rc, x, y, x + 30, y + 20);
-		DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		x += 40;
-		SetTextColor(hdc, RGB(138, 27, 255));
-		SetRect(&rc, x, y, x + 100, y + 20);
-		DrawText(hdc, "$FF90 bit 1-0", 13, &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+		// X position for second column control bits
+		x = rect.left + 164;
 
-		int nCol1 = 60;
-		int nCol2 = 135;
+		// Ram Vectors
+		SetTextColor(hdc,rgbViolet);
+		PutText(hdc,x,y,140,   "FF90:b3 RAM Vector");
+		MakeBox(hdc,pen,x+140,y+2,20,16);
+		SetTextColor(hdc,rgbBlack);
+		PutText(hdc,x+140,y,20,std::to_string(regs.RamVectors));
 
-		x = 0;
-		y += 40;
-
-		MoveToEx(hdc, x, y, NULL);
-		LineTo(hdc, rect.right - 1, y);
-		LineTo(hdc, rect.right - 1, rect.bottom - 1);
-		LineTo(hdc, x, rect.bottom - 1);
-		LineTo(hdc, x, y);
-
-		// Draw our lines.
-		MoveToEx(hdc, x, y + 20, NULL);
-		LineTo(hdc, rect.right, y + 20);
-
-		MoveToEx(hdc, x + nCol1, y, NULL);
-		LineTo(hdc, x + nCol1, rect.bottom);
-
-		MoveToEx(hdc, rect.right - nCol2, y, NULL);
-		LineTo(hdc, rect.right - nCol2, rect.bottom);
-
-		// Memory Page
-		SetTextColor(hdc, RGB(138, 27, 255));
-		{
-			SetRect(&rc, x, y, x + nCol1, y + 20);
-			DrawText(hdc, "Address", 7, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-
-			int mx = nCol1 + 5;
-			for (int n = 0; n < 16; n++)
-			{
-				if (n == 8)
-				{
-					mx += 15;
-				}
-
-				s = ToHexString(n, 2, false);
-				SetRect(&rc, x + mx + (n * 18), y, x + mx + (n * 18) + 20, y + 20);
-				DrawText(hdc, s.c_str(), s.size(), &rc, DT_VCENTER | DT_SINGLELINE);
-			}
-
-			SetRect(&rc, rect.right - nCol2, y, rect.right - 5, y + 20);
-			DrawText(hdc, "ASCII", 6, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		}
-
-		// Draw the Address Lines.
-		y += 20;
-		int h = 18;
-		int nRows = 16;
-		for (int addrLine = 0; addrLine < nRows; addrLine++)
-		{
-			SetTextColor(hdc, RGB(138, 27, 255));
-			{
-				s = ToHexString(addrLine * 16 + memoryOffset + pageNo * 8192, 6, true);
-				SetRect(&rc, x, y, x + nCol1, y + h);
-				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			}
-
-			// Pull out 16 bytes from page memory.
-			unsigned char line[16];
-			for (int n = 0; n < 16; n++)
-			{
-				auto addr = memoryOffset + (addrLine * 16) + n;
-				line[n] = page[addr];
-			}
-
-			// Hex Line in Hex Bytes
-			SetTextColor(hdc, RGB(0, 0, 0));
-			int mx = nCol1 + 5;
-			std::string ascii;
-			for (int n = 0; n < 16; n++)
-			{
-				if (isprint(line[n]))
-				{
-					ascii += line[n];
-				}
-				else
-				{
-					ascii += ".";
-				}
-				if (n == 8)
-				{
-					mx += 15;
-				}
-				s = ToHexString(line[n], 2, true);
-				SetRect(&rc, x + mx + (n * 18), y, x + mx + (n * 18) + 20, y + h);
-				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			}
-
-			// ASCII Line
-			mx = rect.right - nCol2;
-			{
-				SetRect(&rc, mx + 5, y, rect.right - 5, y + h);
-				DrawText(hdc, ascii.c_str(), ascii.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			}
-
-			// Draw a separator.
-			if (addrLine % 4 == 3)
-			{
-				MoveToEx(hdc, x, y + h, NULL);
-				LineTo(hdc, rect.right, y + h);
-			}
-
-			y += h;
-		}
+		// Rom Mapping
+		SetTextColor(hdc,rgbViolet);
+		PutText(hdc,x,y+20,140,"FF90:b1-0 ROM Map ");
+		MakeBox(hdc,pen,x+140,y+22,20,16);
+		SetTextColor(hdc,rgbBlack);
+		PutText(hdc,x+140,y+20,20,std::to_string(regs.RomMap));
 
 		// Cleanup.
 		DeleteObject(pen);
 		DeleteObject(thickPen);
 		DeleteObject(hFont);
-	}
-
-	int GetMaximumPage()
-	{
-		unsigned int MemConfig[4] = { 0x20000,0x80000,0x200000,0x800000 };
-
-		maxPageNo = MemConfig[EmuState.RamSize] / 8192;
-		return maxPageNo;
-	}
-
-	void ChangeMemoryPage()
-	{
-		int page = SendDlgItemMessage(hWndMMUMonitor, IDC_SELECT_MMU_PAGE, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
-		if (page < 0)
-		{
-			return;
-		}
-		int max = GetMaximumPage();
-		if (page >= max)
-		{
-			page = 0;
-		}
-
-
-		MMUPage_ = page;
 	}
 
 	INT_PTR CALLBACK MMUMonitorDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
@@ -437,147 +208,20 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		case WM_INITDIALOG:
 		{
 			hWndMMUMonitor = hDlg;
-
 			RECT Rect;
 			GetClientRect(hDlg, &Rect);
-
-			int ScrollBarTop = 315;
-			int ScrollBarWidth = 19;
-
-			hWndVScrollBar = CreateWindowEx(
-				0,
-				"SCROLLBAR",
-				NULL,
-				WS_VISIBLE | WS_CHILD | SBS_VERT,
-				Rect.right - ScrollBarWidth,
-				ScrollBarTop,
-				ScrollBarWidth,
-				Rect.bottom - 40 - ScrollBarTop,
-				hDlg,
-				(HMENU)IDT_MMU_VSCROLLBAR,
-				(HINSTANCE)GetWindowLong(hDlg, GWL_HINSTANCE),
-				NULL);
-
-			if (!hWndVScrollBar)
-			{
-				MessageBox(NULL, "Vertical Scroll Bar Failed.", "Error", MB_OK | MB_ICONERROR);
-				return 0;
-			}
-
-			SCROLLINFO si;
-			si.cbSize = sizeof(si);
-			si.fMask = SIF_ALL;
-			si.nMin = 0x0000;
-			si.nMax = 0x1FFF;
-			si.nPage = 16 * 16;
-			si.nPos = 0;
-			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
-
-			BackBuffer_ = AttachBackBuffer(hDlg, -20, -39);
-
-			int max = GetMaximumPage();
-			for (int page = 0; page < max; page++)
-			{
-				int base = page * 8192;
-
-				const std::string s(ToHexString(page, 2, true) + " - " + ToHexString(base, 5, true) + "-" + ToHexString(base + 8191, 5, true));
-				SendDlgItemMessage(hDlg, IDC_SELECT_MMU_PAGE, CB_ADDSTRING, (WPARAM)0, (LPARAM)ToLPCSTR(s));
-			}
-
+			BackBuffer_ = AttachBackBuffer(hDlg, 0, -36);
 			SetTimer(hDlg, IDT_PROC_TIMER, 64, (TIMERPROC)NULL);
-
 			EmuState.Debugger.RegisterClient(hDlg, std::make_unique<MMUMonitorDebugClient>());
 			break;
-		}
-
-		case WM_MOUSEWHEEL:
-		{
-			SCROLLINFO si;
-			si.cbSize = sizeof(si);
-			si.fMask = SIF_ALL;
-			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
-
-			int delta = GET_WHEEL_DELTA_WPARAM(wParam);
-			if (delta < 0)
-			{
-				si.nPos += si.nPage / 2;
-			}
-			else
-			{
-				si.nPos -= si.nPage / 2;
-			}
-			si.nPos = roundUp(si.nPos, 16);
-			si.fMask = SIF_POS;
-			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
-			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
-			memoryOffset = si.nPos;
-			InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
-			return 0;
-		}
-
-		case WM_VSCROLL:
-		{
-			SCROLLINFO si;
-			si.cbSize = sizeof(si);
-			si.fMask = SIF_ALL;
-			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
-
-			std::string s;
-			switch ((int)LOWORD(wParam))
-			{
-			case SB_PAGEUP:
-				s = "SB_PAGEUP";
-				si.nPos -= si.nPage;
-				break;
-			case SB_PAGEDOWN:
-				s = "SB_PAGEDOWN";
-				si.nPos += si.nPage;
-				break;
-			case SB_THUMBPOSITION:
-				s = "SB_THUMBPOSITION";
-				si.nPos = si.nTrackPos;
-				break;
-			case SB_THUMBTRACK:
-				s = "SB_THUMBTRACK";
-				si.nPos = si.nTrackPos;
-				break;
-			case SB_TOP:
-				s = "SB_TOP";
-				si.nPos = 0;
-				break;
-			case SB_BOTTOM:
-				s = "SB_BOTTOM";
-				si.nPos = 0xFFFF;
-				break;
-			case SB_ENDSCROLL:
-				s = "SB_ENDSCROLL";
-				break;
-			case SB_LINEUP:
-				s = "SB_LINEUP";
-				si.nPos -= 16 * 8;
-				break;
-			case SB_LINEDOWN:
-				s = "SB_LINEDOWN";
-				si.nPos += 16 * 8;
-				break;
-			}
-			si.nPos = roundUp(si.nPos, 16);
-			si.fMask = SIF_POS;
-			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
-			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
-			memoryOffset = si.nPos;
-			InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
-			return 0;
 		}
 
 		case WM_PAINT:
 		{
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hDlg, &ps);
-
 			DrawMMUMonitor(BackBuffer_.DeviceContext, &BackBuffer_.Rect);
 			BitBlt(hdc, 0, 0, BackBuffer_.Width, BackBuffer_.Height, BackBuffer_.DeviceContext, 0, 0, SRCCOPY);
-
 			EndPaint(hDlg, &ps);
 			break;
 		}
@@ -595,9 +239,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		case WM_COMMAND:
 			switch (LOWORD(wParam))
 			{
-			case IDC_SELECT_MMU_PAGE:
-				ChangeMemoryPage();
-				break;
 
 			case IDCLOSE:
 			case WM_DESTROY:
