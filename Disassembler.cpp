@@ -56,6 +56,8 @@ HWND hErrText = NULL;  // Error text box
 INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
 void DecodeRange();
 void Disassemble(unsigned short, unsigned short, unsigned short);
+void MapAdrToReal();
+void MapRealToAdr();
 
 UINT16 HexToUint(char *);
 
@@ -163,19 +165,81 @@ INT_PTR CALLBACK DisassemblerDlgProc
             return TRUE;
         case IDC_PHYS_MEM:
             if (IsDlgButtonChecked(hDlg,IDC_PHYS_MEM)) {
-                UsePhyAdr = TRUE;
-                EnableWindow(hEdtBloc,TRUE);
-                SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"  Offset:");
+                MapAdrToReal();
             } else {
-                UsePhyAdr = FALSE;
-                EnableWindow(hEdtBloc,FALSE);
-                SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"Address:");
+                MapRealToAdr();
             }
             SetFocus(hEdtAddr);
             return TRUE;
         }
     }
     return FALSE;  // unhandled message
+}
+
+/***************************************************/
+/*         Change Address map real to CPU          */
+/***************************************************/
+void MapRealToAdr()
+{
+    char buf[16];
+    unsigned long address;
+    unsigned short block;
+    unsigned short offset;
+    MMUState MMUState_;
+    MMUState_ = GetMMUState();
+    MMUState regs = MMUState_;
+    GetWindowText(hEdtAddr, buf, 8);
+    offset = HexToUint(buf);
+    GetWindowText(hEdtBloc, buf, 8);
+    block = HexToUint(buf);
+    int i;
+    for (i=0; i<8; i++) {
+        if (regs.ActiveTask == 0) {
+            if (regs.Task0[i] == block) break;
+        } else {
+            if (regs.Task1[i] == block) break;
+        }
+    }
+    if (i < 8) {
+        address = i * 0x2000 + offset;
+        std::string s = IntToHex(address,4);
+        SetWindowText(hEdtAddr, s.c_str());
+    }
+    SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"Address:");
+    EnableWindow(hEdtBloc,FALSE);
+    UsePhyAdr = FALSE;
+}
+
+/***************************************************/
+/*         Change Address map CPU to real          */
+/***************************************************/
+void MapAdrToReal()
+{
+    char buf[16];
+    unsigned short address;
+    unsigned short block;
+    unsigned short offset;
+    MMUState MMUState_;
+    MMUState_ = GetMMUState();
+    MMUState regs = MMUState_;
+
+    GetWindowText(hEdtAddr, buf, 8);
+    address = HexToUint(buf);
+
+    offset = address & 0x1FFF;
+    std::string s = IntToHex(offset,4);
+    SetWindowText(hEdtAddr, s.c_str());
+
+    if (regs.ActiveTask == 0) {
+        block = regs.Task0[(address >> 13) & 7];
+    } else {
+        block = regs.Task1[(address >> 13) & 7];
+    }
+    s = IntToHex(block,2);
+    SetWindowText(hEdtBloc, s.c_str());
+    SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"  Offset:");
+    EnableWindow(hEdtBloc,TRUE);
+    UsePhyAdr = TRUE;
 }
 
 /***************************************************/
@@ -217,7 +281,7 @@ BOOL ProcEditDlg (WNDPROC pDlg,HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm,int ne
                 if (IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM)) {
                     SetFocus(hEdtBloc);
                     break;
-				}
+                }
             case 2:  // From block edit control
                 SetFocus(hEdtLcnt);
                 break;
@@ -360,11 +424,11 @@ std::string OpFCB(int adr,std::string b,std::string cmt)
 /*  Get byte from either real memory or cpu memory */
 /***************************************************/
 unsigned char GetCondMem(unsigned long addr) {
-	if (UsePhyAdr) {
+    if (UsePhyAdr) {
         return (unsigned char) GetMem(addr);
     } else {
         return SafeMemRead8((unsigned short) addr);
-	}
+    }
 }
 
 /***************************************************/
