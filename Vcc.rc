@@ -507,16 +507,16 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Disassembly Window"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    CONTROL         "Os9 code",IDC_BTN_OS9, "Button",BS_AUTOCHECKBOX,12,18,50,10
-    CONTROL         "Real Mem",IDC_PHYS_MEM,"Button",BS_AUTOCHECKBOX,72,18,50,10
+    CONTROL         "Real Mem",IDC_PHYS_MEM,"Button",BS_AUTOCHECKBOX,10,4,50,10
+    CONTROL         "Os9 decode",IDC_BTN_OS9, "Button",BS_AUTOCHECKBOX,66,4,50,10
     DEFPUSHBUTTON   "Decode",IDAPPLY,     166,10,36,20
-    LTEXT           "Address:",IDC_ADRTXT,  8,4,30,9
-    EDITTEXT        IDC_EDIT_PC_ADDR,      38,4,24,10
-    LTEXT           "Block:",IDC_STATIC,   67,4,20,9
-    EDITTEXT        IDC_EDIT_BLOCK,        90,4,18,10
-    LTEXT           "Lines:",IDC_STATIC,  113,4,20,9
-    EDITTEXT        IDC_EDIT_PC_LCNT,     134,4,24,10
-    LTEXT           "",IDC_ERROR_TEXT,     10,31,180,10
+    LTEXT           "Address:",IDC_ADRTXT,  8,18,30,9
+    EDITTEXT        IDC_EDIT_PC_ADDR,      38,18,24,10
+    LTEXT           "Block:",IDC_STATIC,   67,18,20,9
+    EDITTEXT        IDC_EDIT_BLOCK,        90,18,18,10
+    LTEXT           "Lines:",IDC_STATIC,  113,18,20,9
+    EDITTEXT        IDC_EDIT_PC_LCNT,     134,18,24,10
+    LTEXT           "",IDC_ERROR_TEXT,     8,31,180,10
     CONTROL         "",IDC_DISASSEMBLY_TEXT,"RichEdit20A",ES_MULTILINE|ES_READONLY|WS_VSCROLL,5,43,205,344
 END
 
