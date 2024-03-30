@@ -381,6 +381,8 @@
 #define IDC_EDIT_BLOCK                  2138
 #define IDC_ADRTXT                      2139
 #define IDC_BTN_OS9                     2140
+#define IDC_ENABLE_HALT                 2141
+#define IDC_ENABLE_BREAK                2142
 
 #define IDM_USER_WIKI                   40001
 #define ID_FILE_EXIT                    40002
@@ -432,7 +434,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        176
 #define _APS_NEXT_COMMAND_VALUE         40047
-#define _APS_NEXT_CONTROL_VALUE         2142
+#define _APS_NEXT_CONTROL_VALUE         2145
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

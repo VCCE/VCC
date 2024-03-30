@@ -49,6 +49,8 @@ typedef struct  {
 	unsigned char	FrameSkip;
 	unsigned char	SpeedThrottle;
 	unsigned char	CpuType;
+	unsigned char	HaltOpcEnabled;   // 0x15   halt enabled
+	unsigned char	BreakOpcEnabled;  // 0x113E halt enabled
 //	unsigned char	AudioMute;
 	unsigned char	MonitorType;
 	unsigned char   PaletteType;

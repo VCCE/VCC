@@ -54,6 +54,7 @@ This file is part of VCC (Virtual Color Computer).
 #define	Page3	0x11
 #define NOP_I	0x12
 #define SYNC_I	0x13
+#define HALT	0x15	// Vcc Halt_15
 #define LBRA_R	0x16
 #define LBSR_R	0x17
 #define DAA_I	0x19
@@ -320,6 +321,7 @@ This file is part of VCC (Virtual Color Computer).
 #define STS_E	0xFF
 
 //*******************Page 3 Codes*********************************
+#define BREAK	0x3E	// Vcc Halt_113E
 #define SWI3_I	0x3F
 #define CMPU_M	0x83
 #define CMPS_M	0x8C

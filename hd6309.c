@@ -6205,6 +6205,26 @@ void Stu_E(void)
 	CycleCounter+=NatEmuCycles65;
 }
 
+void Halt_15(void)
+{ //15
+	if (EmuState.Debugger.Halt_Enabled(0x15)) {
+		PC_REG += EmuState.Debugger.DoHalt(0x15,PC_REG);
+	} else {
+		PC_REG+=1;
+		CycleCounter+=NatEmuCycles21;
+	}
+}
+
+void Halt_113E(void)
+{ //113E
+	if (EmuState.Debugger.Halt_Enabled(0x113E)) {
+		PC_REG += EmuState.Debugger.DoHalt(0x113E,PC_REG);
+	} else {
+		PC_REG+=2;
+		CycleCounter+=NatEmuCycles21;
+	}
+}
+
 void(*JmpVec1[256])(void) = {
 	Neg_D,		// 00
 	Oim_D,		// 01
@@ -6227,7 +6247,7 @@ void(*JmpVec1[256])(void) = {
 	Nop_I,		// 12
 	Sync_I,		// 13
 	Sexw_I,		// 14
-	InvalidInsHandler,	// 15
+	Halt_15,    // 15
 	Lbra_R,		// 16
 	Lbsr_R,		// 17
 	InvalidInsHandler,	// 18
@@ -6786,7 +6806,7 @@ void(*JmpVec3[256])(void) = {
 	Tfm4,		// 3B
 	Bitmd_M,	// 3C
 	Ldmd_M,		// 3D
-	InvalidInsHandler,		// 3E
+	Halt_113E,  // 3E
 	Swi3_I,		// 3F
 	InvalidInsHandler,		// 40
 	InvalidInsHandler,		// 41

@@ -103,6 +103,22 @@ namespace VCC { namespace Debugger
 
 		void Update();
 
+		// VCC halt instuction status and enable.  Halt_0x113E is a "BREAK"
+		// instruction that can be compiled into code for debugging purposes.
+		// Halt_0x15 is a "HALT" instruction.  VCC could use "HALT" as a breakpoint
+		// mechanism. A breakpoint would be established by replacing an opcode by
+		// HALT and saving the replaced opcode in a table indexed by the program
+		// counter. When the halt is encountered the original opcode is restored
+		// and will execute next.  If the breakpoint is to be persistant the HALT
+		// will need to be replaced after the original instruction executes. NOTE:
+		// The current Debugger Breakpoints screen does not use this mechanism. It
+		// searches for a program counter match in a table before executing each
+		// instruction, which slows execution. A future TODO is to use this new
+		// mechanism instead for that screen.
+		bool Halt_Enabled(int);
+		void EnableHalt(int,bool);
+		int DoHalt(int,unsigned short);
+
 	protected:
 
 		enum class ExecutionMode
@@ -156,5 +172,7 @@ namespace VCC { namespace Debugger
 		bool							TraceTriggerChanged_ = false;
 		tracebuffer_type				TraceCaptured_;
 		std::map<int, long>				TraceMarks_;
+		bool							Halt_0x113E_TF = false;
+		bool							Halt_0x15_TF = false;
 	};
 } }

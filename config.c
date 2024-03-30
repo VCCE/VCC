@@ -240,6 +240,8 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("CPU","Throttle",CurrentConfig.SpeedThrottle,IniFilePath);
 	WritePrivateProfileInt("CPU","CpuType",CurrentConfig.CpuType,IniFilePath);
 	WritePrivateProfileInt("CPU", "MaxOverClock", CurrentConfig.MaxOverclock, IniFilePath);
+	WritePrivateProfileInt("CPU","HaltEnabled",CurrentConfig.HaltOpcEnabled,IniFilePath);
+	WritePrivateProfileInt("CPU","BreakEnabled",CurrentConfig.BreakOpcEnabled,IniFilePath);
 
 	WritePrivateProfileString("Audio","SndCard",CurrentConfig.SoundCardName,IniFilePath);
 	WritePrivateProfileInt("Audio","Rate",CurrentConfig.AudioRate,IniFilePath);
@@ -299,7 +301,9 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.FrameSkip = GetPrivateProfileInt("CPU","FrameSkip",1,IniFilePath);
 	CurrentConfig.SpeedThrottle = GetPrivateProfileInt("CPU","Throttle",1,IniFilePath);
 	CurrentConfig.CpuType = GetPrivateProfileInt("CPU","CpuType",0,IniFilePath);
-	CurrentConfig.MaxOverclock = GetPrivateProfileInt("CPU", "MaxOverClock",100, IniFilePath);
+	CurrentConfig.MaxOverclock = GetPrivateProfileInt("CPU","MaxOverClock",100,IniFilePath);
+	CurrentConfig.HaltOpcEnabled = GetPrivateProfileInt("CPU","HaltEnabled",0,IniFilePath);
+	CurrentConfig.BreakOpcEnabled = GetPrivateProfileInt("CPU","BreakEnabled",0,IniFilePath);
 
 	CurrentConfig.AudioRate = GetPrivateProfileInt("Audio","Rate",3,IniFilePath);
 	GetPrivateProfileString("Audio","SndCard","",CurrentConfig.SoundCardName,63,IniFilePath);
@@ -547,6 +551,18 @@ void UpdateConfig (void)
 	SetCPUMultiplyer(CurrentConfig.CPUMultiplyer);
 	SetRamSize(CurrentConfig.RamSize);
 	SetCpuType(CurrentConfig.CpuType);
+
+	if (CurrentConfig.HaltOpcEnabled) {
+		EmuState.Debugger.EnableHalt(0x15,true);
+	} else {
+		EmuState.Debugger.EnableHalt(0x15,false);
+	}
+	if (CurrentConfig.BreakOpcEnabled) {
+		EmuState.Debugger.EnableHalt(0x113E,true);
+	} else {
+		EmuState.Debugger.EnableHalt(0x113E,false);
+	}
+
 	SetMonitorType(CurrentConfig.MonitorType);
 	SetCartAutoStart(CurrentConfig.CartAutoStart);
 	if (CurrentConfig.RebootNow)
@@ -622,6 +638,8 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			for (temp=0;temp<=1;temp++)
 				SendDlgItemMessage(hDlg,Cpuchoice[temp],BM_SETCHECK,(temp==TempConfig.CpuType),0);
 			SendDlgItemMessage(hDlg,IDC_CPUICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)CpuIcons[TempConfig.CpuType]);
+			SendDlgItemMessage(hDlg,IDC_ENABLE_HALT,BM_SETCHECK,TempConfig.HaltOpcEnabled,0);
+			SendDlgItemMessage(hDlg,IDC_ENABLE_BREAK,BM_SETCHECK,TempConfig.BreakOpcEnabled,0);
 		break;
 
 		case WM_HSCROLL:
@@ -659,6 +677,15 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 							SendDlgItemMessage(hDlg,IDC_CPUICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)CpuIcons[TempConfig.CpuType]);
 						}
 				break;
+				case IDC_ENABLE_HALT:
+					TempConfig.HaltOpcEnabled = (unsigned char)
+						SendDlgItemMessage(hDlg,IDC_ENABLE_HALT,BM_GETCHECK,0,0);
+				break;
+				case IDC_ENABLE_BREAK:
+					TempConfig.BreakOpcEnabled = (unsigned char)
+						SendDlgItemMessage(hDlg,IDC_ENABLE_BREAK,BM_GETCHECK,0,0);
+				break;
+
 			}	//End switch LOWORD(wParam)
 		break;	//Break WM_COMMAND
 	}			//END switch (message)
@@ -707,9 +734,9 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 			SendDlgItemMessage(hDlg,IDC_TAPEFILE,WM_SETTEXT,strlen(TapeFileName),(LPARAM)(LPCSTR)TapeFileName);
 //			hCounter=GetDlgItem(hDlg,IDC_TCOUNT);
 //			SendMessage (hCounter, EM_SETBKGNDCOLOR, 0, (LPARAM)RGB(0,0,0));
-			SendDlgItemMessage(hDlg,IDC_TCOUNT,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0)); 
+			SendDlgItemMessage(hDlg,IDC_TCOUNT,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0));
 			SendDlgItemMessage(hDlg,IDC_TCOUNT,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&CounterText);
-			SendDlgItemMessage(hDlg,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0)); 
+			SendDlgItemMessage(hDlg,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0));
 			SendDlgItemMessage(hDlg,IDC_MODE,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&CounterText);
 //			SendDlgItemMessage(hDlg,IDC_MODE,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&ModeText);
 			hDlgTape=hDlg;
@@ -767,7 +794,7 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			SendDlgItemMessage(hDlg,IDC_PROGRESSRIGHT,PBM_SETRANGE32,0,0x7F);
 			SendDlgItemMessage(hDlg,IDC_PROGRESSLEFT,PBM_SETPOS,0,0);
 			SendDlgItemMessage(hDlg,IDC_PROGRESSLEFT,PBM_SETBARCOLOR,0,0xFFFF); //bgr 
-			SendDlgItemMessage(hDlg,IDC_PROGRESSRIGHT,PBM_SETBARCOLOR,0,0xFFFF); 
+			SendDlgItemMessage(hDlg,IDC_PROGRESSRIGHT,PBM_SETBARCOLOR,0,0xFFFF);
 			SendDlgItemMessage(hDlg,IDC_PROGRESSLEFT,PBM_SETBKCOLOR,0,0);
 			SendDlgItemMessage(hDlg,IDC_PROGRESSRIGHT,PBM_SETBKCOLOR,0,0);
 			for (Index=0;Index<NumberOfSoundCards;Index++)

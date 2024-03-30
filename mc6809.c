@@ -747,6 +747,16 @@ case	Page3:
 
 		switch (MemRead8(pc.Reg++))
 		{
+		case BREAK: //113E
+			if (EmuState.Debugger.Halt_Enabled(0x15)) {
+				if (EmuState.Debugger.DoHalt(0x15,PC_REG) == 0) {
+					pc.Reg = pc.Reg - 2;
+				}
+			} else {
+				CycleCounter+=4;
+			}
+			break;
+
 		case SWI3_I: //113F
 			cc[E]=1;
 			MemWrite8( pc.B.lsb,--s.Reg);
@@ -863,6 +873,16 @@ case NOP_I:	//12
 case SYNC_I: //13
 	CycleCounter=CycleFor;
 	SyncWaiting=1;
+	break;
+
+case HALT: //15
+	if (EmuState.Debugger.Halt_Enabled(0x15)) {
+		if (EmuState.Debugger.DoHalt(0x15,PC_REG) == 0) {
+			pc.Reg = pc.Reg - 1;
+		}
+	} else {
+		CycleCounter+=4;
+	}
 	break;
 
 case LBRA_R: //16

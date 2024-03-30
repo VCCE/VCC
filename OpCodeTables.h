@@ -102,7 +102,7 @@ namespace VCC { namespace Debugger
 			0x12,	"NOP",		Inherent,		2,		1,		1,		1,	false,	Fixed,
 			0x13,	"SYNC",		Inherent,		4,		3,		1,		1,	false,	WaitForSYNCAdjust,
 			0x14,	"SEXW",		Inherent,		4,		4,		1,		1,	true,	Fixed,						// Illegal on 6809
-			0x15,	"-",		Illegal,		0,		0,		0,		1,	false,	None,
+			0x15,	"HALT",		Inherent,		2,		1,		1,		1,	false,	Fixed,
 			0x16,	"LBRA",		LongRelative,	5,		4,		3,		1,	false,	LongBranchAdjust,
 			0x17,	"LBSR",		LongRelative,	9,		7,		3,		1,	false,	LongBranchAdjust,
 			0x18,	"-",		Illegal,		0,		0,		0,		1,	false,	None,
@@ -697,7 +697,7 @@ namespace VCC { namespace Debugger
 			0x3B,	"TFM",		Immediate,		6,		6,		3,		2,	true,	TFMAdjust,					// Illegal on 6809
 			0x3C,	"BITMD",	Immediate,		4,		4,		3,		2,	true,	Fixed,						// Illegal on 6809
 			0x3D,	"LDMD",		Immediate,		5,		5,		3,		2,	true,	Fixed,						// Illegal on 6809
-			0x3E,	"-",		Illegal,		0,		0,		0,		2,	false,	None,
+			0x3E,	"BREAK",	Inherent,		4,		2,		2,		2,	false,	Fixed,
 			0x3F,	"SWI3",		Inherent,		20,		22,		2,		2,	false,	Fixed,
 																				
 			0x40,	"-",		Illegal,		0,		0,		0,		2,	false,	None,

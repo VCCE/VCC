@@ -477,6 +477,47 @@ namespace VCC { namespace Debugger
 		MemWrite8(memWrite.value, memWrite.addr);
 	}
 
+	// Check of halt instruction is enabled
+	bool Debugger::Halt_Enabled(int Hinstr)
+	{
+		switch (Hinstr) {
+		case 0x15:
+			return Halt_0x15_TF;
+		case 0x113E:
+			return Halt_0x113E_TF;
+		default:
+			return false;
+		}
+	}
+
+	// DoHalt halts emulation and returns the number of opcodes
+	// used or zero if a breakpoint. A breakpoint will restore
+	// the original instruction which will execute next. The PC
+	// will be used as the key to the breakpoints list
+		int Debugger::DoHalt(int Hinstr,unsigned short /*PC*/) {
+		Debugger::Halt();
+		switch (Hinstr) {
+		case 0x15:		//Vcc HALT
+			return 1;
+		case 0x113E:	//Vcc BREAK
+			return 2;
+		default:
+			return 1;
+		}
+	}
+
+	// Enable / Disable halt instruction
+	void Debugger::EnableHalt(int Hinstr, bool enable)
+	{
+		switch (Hinstr) {
+		case 0x15:
+			Halt_0x15_TF = enable;
+			break;
+		case 0x113E:
+			Halt_0x113E_TF = enable;
+			break;
+		}
+	}
 
 } }
 
