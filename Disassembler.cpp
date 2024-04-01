@@ -39,6 +39,8 @@
 #include "OpDecoder.h"
 #include "Disassembler.h"
 
+#define HEXSTR(i,w) ToHexString(i,w,true)
+
 // Namespace starts here
 namespace VCC { namespace Debugger { namespace UI {
 
@@ -69,11 +71,10 @@ WNDPROC AddrDlgProc;
 WNDPROC BlocDlgProc;
 WNDPROC LcntDlgProc;
 
-BOOL ProcEditDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM,int);
+BOOL ProcEditDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
 LONG_PTR SetControlHook(HWND hCtl,LONG_PTR Proc);
 
 std::string PadRight(std::string const&,size_t);
-std::string IntToHex(int,int);
 std::string OpFDB(int,std::string,std::string,std::string);
 std::string OpFCB(int,std::string,std::string);
 std::string FmtLine(int,std::string,std::string,std::string,std::string);
@@ -112,10 +113,10 @@ INT_PTR CALLBACK DisassemblerDlgProc
         // Grab dialog and control handles
         hDismDlg = hDlg;
         hEdtAddr = GetDlgItem(hDismDlg, IDC_EDIT_PC_ADDR);
+        hEdtBloc = GetDlgItem(hDismDlg, IDC_EDIT_BLOCK);
         hEdtLcnt = GetDlgItem(hDismDlg, IDC_EDIT_PC_LCNT);
         hEdtAPPY = GetDlgItem(hDismDlg, IDAPPLY);
         hDisText = GetDlgItem(hDismDlg, IDC_DISASSEMBLY_TEXT);
-        hEdtBloc = GetDlgItem(hDismDlg, IDC_EDIT_BLOCK);
         hErrText = GetDlgItem(hDismDlg, IDC_ERROR_TEXT);
 
         // Hook the input dialogs to capture keystrokes
@@ -182,6 +183,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
 void MapRealToAdr()
 {
     char buf[16];
+    std::string s;
     unsigned long address;
     unsigned short block;
     unsigned short offset;
@@ -202,8 +204,7 @@ void MapRealToAdr()
     }
     if (i < 8) {
         address = i * 0x2000 + offset;
-        std::string s = IntToHex(address,4);
-        SetWindowText(hEdtAddr, s.c_str());
+        SetWindowText(hEdtAddr, HEXSTR(address,0).c_str());
     }
     SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"Address:");
     EnableWindow(hEdtBloc,FALSE);
@@ -227,16 +228,14 @@ void MapAdrToReal()
     address = HexToUint(buf);
 
     offset = address & 0x1FFF;
-    std::string s = IntToHex(offset,4);
-    SetWindowText(hEdtAddr, s.c_str());
+    SetWindowText(hEdtAddr, HEXSTR(offset,0).c_str());
 
     if (regs.ActiveTask == 0) {
         block = regs.Task0[(address >> 13) & 7];
     } else {
         block = regs.Task1[(address >> 13) & 7];
     }
-    s = IntToHex(block,2);
-    SetWindowText(hEdtBloc, s.c_str());
+    SetWindowText(hEdtBloc,HEXSTR(block,2).c_str());
     SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"  Offset:");
     EnableWindow(hEdtBloc,TRUE);
     UsePhyAdr = TRUE;
@@ -251,21 +250,19 @@ LONG_PTR SetControlHook(HWND hCtl,LONG_PTR HookProc)
     SetWindowLongPtr(hCtl,GWLP_WNDPROC,HookProc);
     return OrigProc;
 }
-// Address edit control
-LRESULT CALLBACK SubAddrDlgProc(HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{ return ProcEditDlg(AddrDlgProc,hDlg,msg,wPrm,lPrm,1); }
-// Block number edit control
-LRESULT CALLBACK SubBlocDlgProc(HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{ return ProcEditDlg(BlocDlgProc,hDlg,msg,wPrm,lPrm,2); }
-// Line count edit control
-LRESULT CALLBACK SubLcntDlgProc(HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{ return ProcEditDlg(LcntDlgProc,hDlg,msg,wPrm,lPrm,3); }
+LRESULT CALLBACK SubAddrDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{ return ProcEditDlg(AddrDlgProc,hCtl,msg,wPrm,lPrm); }
+LRESULT CALLBACK SubBlocDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{ return ProcEditDlg(BlocDlgProc,hCtl,msg,wPrm,lPrm); }
+LRESULT CALLBACK SubLcntDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{ return ProcEditDlg(LcntDlgProc,hCtl,msg,wPrm,lPrm); }
 
 /***************************************************/
 /*      Process edit control messages here         */
 /***************************************************/
-BOOL ProcEditDlg (WNDPROC pDlg,HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm,int next)
+BOOL ProcEditDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
+    HWND nxtctl;
     switch (msg) {
     case WM_CHAR:
         switch (wPrm) {
@@ -275,20 +272,20 @@ BOOL ProcEditDlg (WNDPROC pDlg,HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm,int ne
             return TRUE;
         // Tab moves between active edit boxes
         case VK_TAB:
-            SetWindowTextA(hErrText,initTxt);
-            switch (next) {
-            case 1:  // From address edit control
-                if (IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM)) {
-                    SetFocus(hEdtBloc);
-                    break;
+               SetWindowTextA(hErrText,initTxt);
+               if (hCtl == hEdtAddr) {
+                  if (IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM)) {
+                     nxtctl = hEdtBloc;
+                   } else {
+                       nxtctl = hEdtLcnt;
                 }
-            case 2:  // From block edit control
-                SetFocus(hEdtLcnt);
-                break;
-            default: // From line count control
-                SetFocus(hEdtAddr);
-                break;
+            } else if (hCtl == hEdtBloc) {
+                nxtctl = hEdtLcnt;
+            } else {
+                nxtctl = hEdtAddr;
             }
+            SetFocus(nxtctl);
+            SendMessage(nxtctl,EM_SETSEL,0,-1); //Select contents
             return TRUE;
         }
         break;
@@ -307,9 +304,10 @@ BOOL ProcEditDlg (WNDPROC pDlg,HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm,int ne
             SendMessage(hDisText,msg,wPrm,lPrm);
             return TRUE;
         }
+        break;
     }
-    // Everything else sent to original dialog processing
-    return CallWindowProc(pDlg,hDlg,msg,wPrm,lPrm);
+    // Everything else sent to original control processing
+    return CallWindowProc(pCtl,hCtl,msg,wPrm,lPrm);
 }
 
 /**************************************************/
@@ -369,24 +367,6 @@ std::string PadRight(std::string const& s, size_t w)
 }
 
 /***************************************************/
-/* Quick convert integer to zero filled hex string */
-/* Max width 15  Caution - this will truncate      */
-/***************************************************/
-std::string IntToHex(int i,int w)
-{
-    char *h = "0123456789ABCDEF";
-
-    w = w & 15;          // limit width
-    char c[16];          // C-string for hex bytes
-    c[w] = 0;            // terminate C-string
-    while (w--) {        // hexify nibbles
-        c[w] = h[i&15];
-        i = i >> 4;
-    }
-    return c;  // C-string converts to std::string
-}
-
-/***************************************************/
 /*           Format Disassembly line               */
 /***************************************************/
 std::string FmtLine(int adr,
@@ -396,7 +376,7 @@ std::string FmtLine(int adr,
                     std::string cmt)
 {
     std::string s;
-    s = IntToHex(adr,6) + " " + PadRight(ins,11) + PadRight(opc,5);
+    s = HEXSTR(adr,6) + " " + PadRight(ins,11) + PadRight(opc,5);
     if (cmt.size() > 0)
         s += PadRight(opr,10) + " " + cmt;
     else
@@ -446,7 +426,7 @@ int DecodeModHdr(unsigned short Block, unsigned short PC, std::string *hdr)
         int ch = GetCondMem(n+addr);
         if ((n == 0) && (ch != 0x87)) break;
         if ((n == 1) && (ch != 0xCD)) break;
-        hexb[n] = IntToHex(ch,2);
+        hexb[n] = HEXSTR(ch,2);
         cksum = cksum ^ ch;
     }
     if (cksum) return 0;
@@ -465,7 +445,7 @@ int DecodeModHdr(unsigned short Block, unsigned short PC, std::string *hdr)
     if ((type=='1')||(type=='E')||(type=='C')) {
         for (int n=0; n<4; n++) {
             int ch = GetCondMem(cnt+n+addr);
-            hexb[n+9] = IntToHex(ch,2);
+            hexb[n+9] = HEXSTR(ch,2);
         }
         *hdr += OpFDB(addr+cnt++,hexb[9],hexb[10],"Off Exe"); cnt++;
         *hdr += OpFDB(addr+cnt++,hexb[11],hexb[12],"Dat Siz"); cnt++;
@@ -522,7 +502,7 @@ void Disassemble( unsigned short FromAdr,
             unsigned short opadr = PC + (unsigned short) trace.bytes.size();
             unsigned char op = DbgRead8(UsePhyAdr, Block, opadr);
             trace.instruction = "OS9";
-            trace.operand = "#$"+IntToHex(op,2);
+            trace.operand = "#$"+HEXSTR(op,2);
             trace.bytes.push_back(op);
         }
 
@@ -536,7 +516,7 @@ void Disassemble( unsigned short FromAdr,
         // Create string of instruction bytes
         std::string HexInst;
         for (unsigned int i=0; i < trace.bytes.size(); i++) {
-            HexInst += IntToHex(trace.bytes[i],2);
+            HexInst += HEXSTR(trace.bytes[i],2);
         }
 
         // String of ascii instruction bytes
