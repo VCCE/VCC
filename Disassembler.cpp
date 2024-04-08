@@ -60,19 +60,7 @@ void DecodeRange();
 void Disassemble(unsigned short, unsigned short, unsigned short);
 void MapAdrToReal();
 void MapRealToAdr();
-
 UINT16 HexToUint(char *);
-
-LRESULT CALLBACK SubAddrDlgProc(HWND,UINT,WPARAM,LPARAM);
-LRESULT CALLBACK SubBlocDlgProc(HWND,UINT,WPARAM,LPARAM);
-LRESULT CALLBACK SubLcntDlgProc(HWND,UINT,WPARAM,LPARAM);
-
-WNDPROC AddrDlgProc;
-WNDPROC BlocDlgProc;
-WNDPROC LcntDlgProc;
-
-BOOL ProcEditDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
-LONG_PTR SetControlHook(HWND hCtl,LONG_PTR Proc);
 
 std::string PadRight(std::string const&,size_t);
 std::string OpFDB(int,std::string,std::string,std::string);
@@ -81,10 +69,32 @@ std::string FmtLine(int,std::string,std::string,std::string,std::string);
 
 int DecodeModHdr(unsigned short, unsigned short, std::string *mhdr);
 
+int  CurLinePos = -1;
+void GetLinePos(HWND);
+void ColorCurAddr(HWND,bool);
+
 bool UsePhyAdr = FALSE;
 bool Os9Decode = FALSE;
 
 char initTxt[] = "Address and Block are hex.  Lines decimal";
+
+// Disassembled code goes into string here
+std::string sDecoded = {};
+
+// Functions used to subclass controls
+LONG_PTR SetControlHook(HWND,LONG_PTR);
+LRESULT CALLBACK SubAddrDlgProc(HWND,UINT,WPARAM,LPARAM);
+LRESULT CALLBACK SubBlocDlgProc(HWND,UINT,WPARAM,LPARAM);
+LRESULT CALLBACK SubLcntDlgProc(HWND,UINT,WPARAM,LPARAM);
+LRESULT CALLBACK SubTextDlgProc(HWND,UINT,WPARAM,LPARAM);
+WNDPROC AddrDlgProc;
+WNDPROC BlocDlgProc;
+WNDPROC LcntDlgProc;
+WNDPROC TextDlgProc;
+// Handler for address and count edit boxes
+BOOL ProcEditDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
+// Handler for disassembly text richedit control
+BOOL ProcTextDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
 
 /**************************************************/
 /*       Create Disassembler Dialog Window        */
@@ -123,6 +133,8 @@ INT_PTR CALLBACK DisassemblerDlgProc
         AddrDlgProc = (WNDPROC) SetControlHook(hEdtAddr,(LONG_PTR) SubAddrDlgProc);
         BlocDlgProc = (WNDPROC) SetControlHook(hEdtBloc,(LONG_PTR) SubBlocDlgProc);
         LcntDlgProc = (WNDPROC) SetControlHook(hEdtLcnt,(LONG_PTR) SubLcntDlgProc);
+        // Hook the Disasembly text
+        TextDlgProc = (WNDPROC) SetControlHook(hDisText,(LONG_PTR) SubTextDlgProc);
 
         // Set Consolas font (fixed) in disassembly edit box
         CHARFORMAT disfmt;
@@ -175,6 +187,155 @@ INT_PTR CALLBACK DisassemblerDlgProc
         }
     }
     return FALSE;  // unhandled message
+}
+
+/***************************************************/
+/*              Set up control hooks               */
+/***************************************************/
+LONG_PTR SetControlHook(HWND hCtl,LONG_PTR HookProc)
+{
+    LONG_PTR OrigProc=GetWindowLongPtr(hCtl,GWLP_WNDPROC);
+    SetWindowLongPtr(hCtl,GWLP_WNDPROC,HookProc);
+    return OrigProc;
+}
+
+/***************************************************/
+/*     Process Disassembly text messages here      */
+/***************************************************/
+LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{ return ProcTextDlg(TextDlgProc,hCtl,msg,wPrm,lPrm); }
+
+BOOL ProcTextDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{
+    switch (msg) {
+    // Set or Clear Breakpoint at current line
+    case WM_CHAR:
+        switch (wPrm) {
+        case 'B':
+        case 'b':
+            ColorCurAddr(hCtl,true);
+            return TRUE;
+        case 'C':
+        case 'c':
+            ColorCurAddr(hCtl,false);
+            return TRUE;
+        }
+    // Get current line position
+    case WM_PAINT:
+    case WM_LBUTTONUP:
+        GetLinePos(hCtl);
+        break;
+    case WM_KEYUP:
+        switch (wPrm) {
+        case VK_PRIOR:
+        case VK_NEXT:
+        case VK_DOWN:
+        case VK_UP:
+            GetLinePos(hCtl);
+            break;
+        }
+    }
+
+    // Forward messages to original control
+    return CallWindowProc(pCtl,hCtl,msg,wPrm,lPrm);
+}
+
+/***************************************************/
+/*     Colorize address at Current Line            */
+/***************************************************/
+void ColorCurAddr(HWND hCtl, bool flag)
+{
+    if (CurLinePos<0) return;
+    CHARFORMATA fmt;
+    fmt.cbSize = sizeof(fmt);
+    SendMessage(hCtl,EM_SETSEL,CurLinePos,CurLinePos+6);
+    if (flag) {
+        fmt.crTextColor = RGB(255,0,0); // Red
+        fmt.dwEffects = CFE_BOLD;
+    } else {
+        fmt.crTextColor = RGB(0,0,0);
+        fmt.dwEffects = 0;
+    }
+    fmt.dwMask = CFM_COLOR | CFM_BOLD;
+    SendMessage(hCtl,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM) &fmt);
+    SendMessage(hCtl,EM_SETSEL,CurLinePos,CurLinePos);
+}
+
+/***************************************************/
+/*       Find current text line position           */
+/***************************************************/
+int pnum=0;
+void GetLinePos(HWND hCtl)
+{
+    CHARRANGE range;
+    SendMessage(hCtl,EM_EXGETSEL,0,(LPARAM) &range);
+    if (range.cpMin==range.cpMax) {
+        int i = SendMessage(hCtl,EM_LINEFROMCHAR,range.cpMin,0);
+        CurLinePos = SendMessage(hCtl,EM_LINEINDEX,i,0);
+        SendMessage(hCtl,EM_SETSEL,CurLinePos,CurLinePos);
+    } else {
+        CurLinePos = -1;
+    }
+}
+
+/***************************************************/
+/*      Process edit control messages here         */
+/***************************************************/
+LRESULT CALLBACK SubAddrDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{ return ProcEditDlg(AddrDlgProc,hCtl,msg,wPrm,lPrm); }
+LRESULT CALLBACK SubBlocDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{ return ProcEditDlg(BlocDlgProc,hCtl,msg,wPrm,lPrm); }
+LRESULT CALLBACK SubLcntDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{ return ProcEditDlg(LcntDlgProc,hCtl,msg,wPrm,lPrm); }
+
+BOOL ProcEditDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{
+    HWND nxtctl;
+    switch (msg) {
+    case WM_CHAR:
+        switch (wPrm) {
+        // Enter does the disassembly
+        case VK_RETURN:
+            DecodeRange();
+            return TRUE;
+        // Tab moves between active edit boxes
+        case VK_TAB:
+               SetWindowTextA(hErrText,initTxt);
+               if (hCtl == hEdtAddr) {
+                  if (IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM)) {
+                     nxtctl = hEdtBloc;
+                   } else {
+                       nxtctl = hEdtLcnt;
+                }
+            } else if (hCtl == hEdtBloc) {
+                nxtctl = hEdtLcnt;
+            } else {
+                nxtctl = hEdtAddr;
+            }
+            SetFocus(nxtctl);
+            SendMessage(nxtctl,EM_SETSEL,0,-1); //Select contents
+            return TRUE;
+        }
+        break;
+    case WM_KEYDOWN:
+        switch (wPrm) {
+        // Up/Down scroll disassembly display
+        case VK_DOWN:
+            Edit_Scroll(hDisText,1,0);
+            return TRUE;
+        case VK_UP:
+            Edit_Scroll(hDisText,-1,0);
+            return TRUE;
+        // Page Up/Down send to disassembly display
+        case VK_PRIOR:
+        case VK_NEXT:
+            SendMessage(hDisText,msg,wPrm,lPrm);
+            return TRUE;
+        }
+        break;
+    }
+    // Everything else sent to original control processing
+    return CallWindowProc(pCtl,hCtl,msg,wPrm,lPrm);
 }
 
 /***************************************************/
@@ -239,75 +400,6 @@ void MapAdrToReal()
     SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"  Offset:");
     EnableWindow(hEdtBloc,TRUE);
     UsePhyAdr = TRUE;
-}
-
-/***************************************************/
-/*         Set up edit control hooks               */
-/***************************************************/
-LONG_PTR SetControlHook(HWND hCtl,LONG_PTR HookProc)
-{
-    LONG_PTR OrigProc=GetWindowLongPtr(hCtl,GWLP_WNDPROC);
-    SetWindowLongPtr(hCtl,GWLP_WNDPROC,HookProc);
-    return OrigProc;
-}
-LRESULT CALLBACK SubAddrDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{ return ProcEditDlg(AddrDlgProc,hCtl,msg,wPrm,lPrm); }
-LRESULT CALLBACK SubBlocDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{ return ProcEditDlg(BlocDlgProc,hCtl,msg,wPrm,lPrm); }
-LRESULT CALLBACK SubLcntDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{ return ProcEditDlg(LcntDlgProc,hCtl,msg,wPrm,lPrm); }
-
-/***************************************************/
-/*      Process edit control messages here         */
-/***************************************************/
-BOOL ProcEditDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{
-    HWND nxtctl;
-    switch (msg) {
-    case WM_CHAR:
-        switch (wPrm) {
-        // Enter does the disassembly
-        case VK_RETURN:
-            DecodeRange();
-            return TRUE;
-        // Tab moves between active edit boxes
-        case VK_TAB:
-               SetWindowTextA(hErrText,initTxt);
-               if (hCtl == hEdtAddr) {
-                  if (IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM)) {
-                     nxtctl = hEdtBloc;
-                   } else {
-                       nxtctl = hEdtLcnt;
-                }
-            } else if (hCtl == hEdtBloc) {
-                nxtctl = hEdtLcnt;
-            } else {
-                nxtctl = hEdtAddr;
-            }
-            SetFocus(nxtctl);
-            SendMessage(nxtctl,EM_SETSEL,0,-1); //Select contents
-            return TRUE;
-        }
-        break;
-    case WM_KEYDOWN:
-        switch (wPrm) {
-        // Up/Down scroll disassembly display
-        case VK_DOWN:
-            Edit_Scroll(hDisText,1,0);
-            return TRUE;
-        case VK_UP:
-            Edit_Scroll(hDisText,-1,0);
-            return TRUE;
-        // Page Up/Down send to disassembly display
-        case VK_PRIOR:
-        case VK_NEXT:
-            SendMessage(hDisText,msg,wPrm,lPrm);
-            return TRUE;
-        }
-        break;
-    }
-    // Everything else sent to original control processing
-    return CallWindowProc(pCtl,hCtl,msg,wPrm,lPrm);
 }
 
 /**************************************************/
@@ -464,8 +556,8 @@ void Disassemble( unsigned short FromAdr,
     Decoder = std::make_unique<OpDecoder>();
     VCC::CPUTrace trace = {};
     VCC::CPUState state = {};
-    std::string lines = {};
 
+    sDecoded = {};
     SetWindowTextA(hDisText,"");
 
     unsigned short PC = FromAdr;
@@ -474,8 +566,6 @@ void Disassemble( unsigned short FromAdr,
 
     state.block = Block;
     state.phyAddr = UsePhyAdr;
-//    unsigned short MaxAdr = UsePhyAdr ? 0xFFFF: 0xFF00;
-//    while ((numlines < MaxLines) && (PC < MaxAdr)) {
     while (numlines < MaxLines) {
 
         if (Os9Decode) {
@@ -490,7 +580,7 @@ void Disassemble( unsigned short FromAdr,
                 else
                     numlines += 6;
             }
-            lines += hdr;
+            sDecoded += hdr;
         }
 
         state.PC = PC;
@@ -528,7 +618,7 @@ void Disassemble( unsigned short FromAdr,
         }
 
         // append disassembled line for output
-        lines += FmtLine(iaddr,HexInst,trace.instruction,trace.operand,comment);
+        sDecoded += FmtLine(iaddr,HexInst,trace.instruction,trace.operand,comment);
         numlines++;
 
         // Next instruction
@@ -538,10 +628,7 @@ void Disassemble( unsigned short FromAdr,
             PC += 1;
     }
     // Put the completed disassembly
-    SetWindowTextA(hDisText,ToLPCSTR(lines));
-    //if (PC >= MaxAdr)
-    //   SetWindowText(hErrText,"Stopped at invalid address");
-    //else
+    SetWindowTextA(hDisText,ToLPCSTR(sDecoded));
     SetWindowTextA(hErrText,initTxt);
 }
 
