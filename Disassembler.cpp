@@ -56,6 +56,8 @@ HWND hErrText = NULL;  // Error text box
 
 // local references
 INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
+int GetRealAddr(int);
+int GetRealBlock(int);
 void DecodeRange();
 void Disassemble(unsigned short, unsigned short, unsigned short);
 void MapAdrToReal();
@@ -69,17 +71,39 @@ std::string FmtLine(int,std::string,std::string,std::string,std::string);
 
 int DecodeModHdr(unsigned short, unsigned short, std::string *mhdr);
 
-int  CurLinePos = -1;
-void GetLinePos(HWND);
-void ColorCurAddr(HWND,bool);
+int GetLineNdx(HWND);
+void SetHaltPoint(HWND,bool);
+void ColorizeHotpoint(int,bool);
+void ValidateHaltPoints();
 
 bool UsePhyAdr = FALSE;
 bool Os9Decode = FALSE;
+bool SavPhyAdr = FALSE; // UsePhyAdr flag at last decode
+
+// MMUregs at start of last decode
+MMUState MMUregs;
 
 char initTxt[] = "Address and Block are hex.  Lines decimal";
 
 // Disassembled code goes into string here
 std::string sDecoded = {};
+
+// Haltpoints container.
+// A new style breakpoint is named 'Haltpoint' to avoid conflict
+// with the structure used by the source code debugger. The real
+// address and instruction at the breakpoint are saved. Haltpoints
+// are stored in Haltpoints std::map container. Haltpoints
+// are placed before the cpu enters run state and are removed
+// when the cpu is halted.
+//std::map<unsigned int,Haltpoint> Haltpoints;
+struct Haltpoint
+{
+    int realaddr;
+    unsigned char instr;
+    bool enabled;
+    bool placed;
+};
+std::map<int,Haltpoint> Haltpoints{};
 
 // Functions used to subclass controls
 LONG_PTR SetControlHook(HWND,LONG_PTR);
@@ -213,17 +237,30 @@ BOOL ProcTextDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
         switch (wPrm) {
         case 'B':
         case 'b':
-            ColorCurAddr(hCtl,true);
+            SetHaltPoint(hCtl,true);
             return TRUE;
         case 'C':
         case 'c':
-            ColorCurAddr(hCtl,false);
+            SetHaltPoint(hCtl,false);
             return TRUE;
+// Debug
+case 'd':
+  PrintLogC("Haltpoints: ");
+  std::map<int, Haltpoint>::iterator it = Haltpoints.begin();
+  while (it != Haltpoints.end())
+  {
+    Haltpoint hp = it->second;
+    PrintLogC("%04X,%02X ", hp.realaddr, hp.instr);
+    it++;
+  }
+  PrintLogC("\n");
+  return TRUE;
+
         }
-    // Get current line position
+    // Use GetLineNdx to position caret to start of current line
     case WM_PAINT:
     case WM_LBUTTONUP:
-        GetLinePos(hCtl);
+        GetLineNdx(hCtl);
         break;
     case WM_KEYUP:
         switch (wPrm) {
@@ -231,7 +268,7 @@ BOOL ProcTextDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
         case VK_NEXT:
         case VK_DOWN:
         case VK_UP:
-            GetLinePos(hCtl);
+            GetLineNdx(hCtl);
             break;
         }
     }
@@ -241,41 +278,114 @@ BOOL ProcTextDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 }
 
 /***************************************************/
-/*     Colorize address at Current Line            */
+/*       Set Halt Point at Current Line            */
 /***************************************************/
-void ColorCurAddr(HWND hCtl, bool flag)
+void SetHaltPoint(HWND hCtl, bool flag)
 {
-    if (CurLinePos<0) return;
+    std::string s;
+    Haltpoint hp;
+
+    // The line index is used as the key to
+    // the haltpoint in the map
+    int LineNdx = GetLineNdx(hCtl);
+    if (LineNdx<0) return;
+
+    if (flag) {
+        // Get the real address of the instruction
+        s = sDecoded.substr(LineNdx,6);
+        int addr = stoi(s,0,16);
+        if (SavPhyAdr)
+            hp.realaddr = addr;
+        else
+            hp.realaddr = GetRealAddr(addr);
+        // Convert instruction byte to unsigned char
+        s = sDecoded.substr(LineNdx+7,2);
+        hp.instr = stoi(s,0,16);
+        hp.enabled = true;
+        hp.placed = false;
+        Haltpoints[LineNdx] = hp;
+        ColorizeHotpoint(LineNdx,true);
+    } else {
+        // Remove haltpoint
+        Haltpoints.erase(LineNdx);
+        ColorizeHotpoint(LineNdx,false);
+    }
+}
+
+/*******************************************************/
+/*                Colorize Haltpoints                  */
+/*******************************************************/
+void ColorizeHotpoint(int LineNdx,bool flag)
+{
     CHARFORMATA fmt;
     fmt.cbSize = sizeof(fmt);
-    SendMessage(hCtl,EM_SETSEL,CurLinePos,CurLinePos+6);
     if (flag) {
+        // Address text bold red
         fmt.crTextColor = RGB(255,0,0); // Red
         fmt.dwEffects = CFE_BOLD;
     } else {
+        // Address text black
         fmt.crTextColor = RGB(0,0,0);
         fmt.dwEffects = 0;
     }
+    // Set color of address field
     fmt.dwMask = CFM_COLOR | CFM_BOLD;
-    SendMessage(hCtl,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM) &fmt);
-    SendMessage(hCtl,EM_SETSEL,CurLinePos,CurLinePos);
+    SendMessage(hDisText,EM_SETSEL,LineNdx,LineNdx+6);
+    SendMessage(hDisText,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM) &fmt);
+    SendMessage(hDisText,EM_SETSEL,LineNdx,LineNdx);
 }
 
-/***************************************************/
-/*       Find current text line position           */
-/***************************************************/
-int pnum=0;
-void GetLinePos(HWND hCtl)
+/*******************************************************/
+/*                Validate Haltpoints                  */
+/*******************************************************/
+void ValidateHaltPoints()
 {
+    std::string s;
+
+    std::map<int, Haltpoint>::iterator it = Haltpoints.begin();
+    while (it != Haltpoints.end())
+    {
+        int LineNdx = it->first;
+        Haltpoint hp = it->second;
+
+        s = sDecoded.substr(LineNdx,6);
+        int addr = stoi(s,0,16);
+        int realaddr;
+        if (SavPhyAdr)
+            realaddr = addr;
+        else
+            realaddr = GetRealAddr(addr);
+
+        if (hp.realaddr != realaddr) {
+            Haltpoints.erase(it++);
+        } else {
+            ColorizeHotpoint(LineNdx,true);
+            it++;
+        }
+    }
+}
+
+/*******************************************************/
+/* Find current line start index in disassambly string */
+/*******************************************************/
+int GetLineNdx(HWND hCtl)
+{
+    int lndx;
     CHARRANGE range;
     SendMessage(hCtl,EM_EXGETSEL,0,(LPARAM) &range);
+    // Return index if no text is selected
     if (range.cpMin==range.cpMax) {
-        int i = SendMessage(hCtl,EM_LINEFROMCHAR,range.cpMin,0);
-        CurLinePos = SendMessage(hCtl,EM_LINEINDEX,i,0);
-        SendMessage(hCtl,EM_SETSEL,CurLinePos,CurLinePos);
+        // Find line number
+        int lnum = SendMessage(hCtl,EM_LINEFROMCHAR,range.cpMin,0);
+        // Find line start index
+        lndx = SendMessage(hCtl,EM_LINEINDEX,lnum,0);
+        // Set caret to start of line
+        SendMessage(hCtl,EM_SETSEL,lndx,lndx);
+    // Return error
     } else {
-        CurLinePos = -1;
+        lndx = -1;
     }
+    return lndx;
 }
 
 /***************************************************/
@@ -339,6 +449,28 @@ BOOL ProcEditDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 }
 
 /***************************************************/
+/*       Get real address from CPU address         */
+/***************************************************/
+int GetRealAddr(int CpuAddr)
+{
+    int block = GetRealBlock(CpuAddr);
+    int offset = CpuAddr & 0x1FFF;
+    return offset + block * 0x2000;
+}
+
+/***************************************************/
+/*          Get block from CPU address             */
+/***************************************************/
+int GetRealBlock(int address)
+{
+    if (MMUregs.ActiveTask == 0) {
+        return MMUregs.Task0[(address >> 13) & 7];
+    } else {
+        return MMUregs.Task1[(address >> 13) & 7];
+    }
+}
+
+/***************************************************/
 /*         Change Address map real to CPU          */
 /***************************************************/
 void MapRealToAdr()
@@ -348,29 +480,34 @@ void MapRealToAdr()
     unsigned long address;
     unsigned short block;
     unsigned short offset;
-    MMUState MMUState_;
-    MMUState_ = GetMMUState();
-    MMUState regs = MMUState_;
+    //MMUState MMUState_;
+    //MMUState_ = GetMMUState();
+    //MMUState regs = MMUState_;
     GetWindowText(hEdtAddr, buf, 8);
     offset = HexToUint(buf);
     GetWindowText(hEdtBloc, buf, 8);
     block = HexToUint(buf);
     int i;
     for (i=0; i<8; i++) {
-        if (regs.ActiveTask == 0) {
-            if (regs.Task0[i] == block) break;
+        if (MMUregs.ActiveTask == 0) {
+            if (MMUregs.Task0[i] == block) break;
         } else {
-            if (regs.Task1[i] == block) break;
+            if (MMUregs.Task1[i] == block) break;
         }
     }
     if (i < 8) {
         address = i * 0x2000 + offset;
         SetWindowText(hEdtAddr, HEXSTR(address,0).c_str());
+    } else {
+        SetWindowText(hEdtAddr,"    ");
     }
+
+    SetWindowText(hEdtBloc,"  ");
     SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"Address:");
     EnableWindow(hEdtBloc,FALSE);
     UsePhyAdr = FALSE;
 }
+
 
 /***************************************************/
 /*         Change Address map CPU to real          */
@@ -381,21 +518,16 @@ void MapAdrToReal()
     unsigned short address;
     unsigned short block;
     unsigned short offset;
-    MMUState MMUState_;
-    MMUState_ = GetMMUState();
-    MMUState regs = MMUState_;
+    //MMUState MMUState_;
+    //MMUState_ = GetMMUState();
+    //MMUState regs = MMUState_;
 
     GetWindowText(hEdtAddr, buf, 8);
     address = HexToUint(buf);
 
     offset = address & 0x1FFF;
+    block = GetRealBlock(address);
     SetWindowText(hEdtAddr, HEXSTR(offset,0).c_str());
-
-    if (regs.ActiveTask == 0) {
-        block = regs.Task0[(address >> 13) & 7];
-    } else {
-        block = regs.Task1[(address >> 13) & 7];
-    }
     SetWindowText(hEdtBloc,HEXSTR(block,2).c_str());
     SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"  Offset:");
     EnableWindow(hEdtBloc,TRUE);
@@ -441,8 +573,17 @@ void DecodeRange()
         return;
     }
 
+    // Grab current MMUregs and save phy address flag
+    // at time of decode so haltpoints created are
+    // based on state when decode was actually done.
+    MMUregs = GetMMUState();
+    SavPhyAdr = UsePhyAdr;
+
     // Disassemble
     Disassemble(FromAdr,MaxLines,Block);
+
+    // Check haltpoints
+    ValidateHaltPoints();
     return;
 }
 
