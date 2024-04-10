@@ -27,6 +27,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "logger.h"
 #include "string.h"
 #include "OpDecoder.h"
+#include "Disassembler.h"
 
 #if defined(_WIN64)
 #define MSABI 
@@ -6205,22 +6206,24 @@ void Stu_E(void)
 	CycleCounter+=NatEmuCycles65;
 }
 
-void Halt_15(void)
-{ //15
-	if (EmuState.Debugger.Halt_Enabled(0x15)) {
-		PC_REG += EmuState.Debugger.DoHalt(0x15,PC_REG);
+void Halt(void)
+{
+	if (EmuState.Debugger.Halt_Enabled()) {
+		PendingInterupts = 0;
+		VCC::ApplyHaltpoints(0);
+		EmuState.Debugger.Halt();
+		PC_REG -= 1;
 	} else {
-		PC_REG+=1;
 		CycleCounter+=NatEmuCycles21;
 	}
 }
 
-void Halt_113E(void)
-{ //113E
-	if (EmuState.Debugger.Halt_Enabled(0x113E)) {
-		PC_REG += EmuState.Debugger.DoHalt(0x113E,PC_REG);
+void Break(void)
+{
+	if (EmuState.Debugger.Break_Enabled()) {
+		PendingInterupts = 0;
+		EmuState.Debugger.Halt();
 	} else {
-		PC_REG+=2;
 		CycleCounter+=NatEmuCycles21;
 	}
 }
@@ -6247,7 +6250,7 @@ void(*JmpVec1[256])(void) = {
 	Nop_I,		// 12
 	Sync_I,		// 13
 	Sexw_I,		// 14
-	Halt_15,    // 15
+	Halt,	    // 15
 	Lbra_R,		// 16
 	Lbsr_R,		// 17
 	InvalidInsHandler,	// 18
@@ -6806,7 +6809,7 @@ void(*JmpVec3[256])(void) = {
 	Tfm4,		// 3B
 	Bitmd_M,	// 3C
 	Ldmd_M,		// 3D
-	Halt_113E,  // 3E
+	Break,      // 3E
 	Swi3_I,		// 3F
 	InvalidInsHandler,		// 40
 	InvalidInsHandler,		// 41

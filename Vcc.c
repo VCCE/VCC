@@ -370,7 +370,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 
 				case ID_DISASSEMBLER:
-					VCC::Debugger::UI::OpenDisassemblerWindow(EmuState.WindowInstance, EmuState.WindowHandle);
+					//VCC::Debugger::UI::OpenDisassemblerWindow(EmuState.WindowInstance, EmuState.WindowHandle);
+					VCC::OpenDisassemblerWindow(EmuState.WindowInstance, EmuState.WindowHandle);
 					break;
 
 				default:

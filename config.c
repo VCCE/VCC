@@ -553,14 +553,14 @@ void UpdateConfig (void)
 	SetCpuType(CurrentConfig.CpuType);
 
 	if (CurrentConfig.HaltOpcEnabled) {
-		EmuState.Debugger.EnableHalt(0x15,true);
+		EmuState.Debugger.Enable_Halt(true);
 	} else {
-		EmuState.Debugger.EnableHalt(0x15,false);
+		EmuState.Debugger.Enable_Halt(false);
 	}
 	if (CurrentConfig.BreakOpcEnabled) {
-		EmuState.Debugger.EnableHalt(0x113E,true);
+		EmuState.Debugger.Enable_Break(true);
 	} else {
-		EmuState.Debugger.EnableHalt(0x113E,false);
+		EmuState.Debugger.Enable_Break(false);
 	}
 
 	SetMonitorType(CurrentConfig.MonitorType);

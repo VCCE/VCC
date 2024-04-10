@@ -21,15 +21,6 @@
 #include <Windows.h>
 
 namespace VCC {
-namespace Debugger {
-namespace UI {
-
-// Apply haltpoints, flag; TRUE:apply, FALSE:unapply
-void ApplyHaltpoints(bool flag);
-
-// Return applied status
-bool HaltpointsStatus();
-
 void OpenDisassemblerWindow(HINSTANCE instance, HWND parent);
-
-}}}
+void ApplyHaltpoints(bool flag);
+}

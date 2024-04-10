@@ -23,6 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "mc6809defs.h"
 #include "tcc1014mmu.h"
 #include "OpDecoder.h"
+#include "Disassembler.h"
 
 //Global variables for CPU Emulation-----------------------
 
@@ -743,15 +744,14 @@ case Page2:
 			break;
 	} //Page 2 switch END
 	break;
-case	Page3:
 
-		switch (MemRead8(pc.Reg++))
-		{
+	case Page3:
+		switch (MemRead8(pc.Reg++)) {
+
 		case BREAK: //113E
-			if (EmuState.Debugger.Halt_Enabled(0x15)) {
-				if (EmuState.Debugger.DoHalt(0x15,PC_REG) == 0) {
-					pc.Reg = pc.Reg - 2;
-				}
+			if (EmuState.Debugger.Break_Enabled()) {
+				PendingInterupts = 0;
+				EmuState.Debugger.Halt();
 			} else {
 				CycleCounter+=4;
 			}
@@ -876,12 +876,13 @@ case SYNC_I: //13
 	break;
 
 case HALT: //15
-	if (EmuState.Debugger.Halt_Enabled(0x15)) {
-		if (EmuState.Debugger.DoHalt(0x15,PC_REG) == 0) {
-			pc.Reg = pc.Reg - 1;
-		}
+	if (EmuState.Debugger.Halt_Enabled()) {
+		PendingInterupts = 0;
+		VCC::ApplyHaltpoints(0);
+		EmuState.Debugger.Halt();
+		PC_REG -= 1;
 	} else {
-		CycleCounter+=4;
+		CycleCounter+=2;
 	}
 	break;
 
@@ -892,7 +893,7 @@ case LBRA_R: //16
 	CycleCounter+=5;
 	break;
 
-case	LBSR_R: //17
+case LBSR_R: //17
 	*spostword=MemRead16(pc.Reg);
 	pc.Reg+=2;
 	s.Reg--;

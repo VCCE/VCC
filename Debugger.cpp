@@ -23,6 +23,7 @@
 #include <iomanip>
 #include "tcc1014mmu.h"	//  FIXME: May want this decoupled from Debugger for Memory Write
 #include "audio.h"
+#include "Disassembler.h"
 
 namespace VCC { namespace Debugger
 {
@@ -377,9 +378,11 @@ namespace VCC { namespace Debugger
 
 	void Debugger::ToggleRun() {
 		if (IsHalted()) {
+			//ApplyHaltpoints(1);
 			QueueRun();
 			PauseAudio(0);
 		} else {
+			ApplyHaltpoints(0); // Remove any haltpoints
 			QueueHalt();
 			PauseAudio(1);
 		}
@@ -477,46 +480,24 @@ namespace VCC { namespace Debugger
 		MemWrite8(memWrite.value, memWrite.addr);
 	}
 
-	// Check of halt instruction is enabled
-	bool Debugger::Halt_Enabled(int Hinstr)
+	bool Debugger::Halt_Enabled()
 	{
-		switch (Hinstr) {
-		case 0x15:
-			return Halt_0x15_TF;
-		case 0x113E:
-			return Halt_0x113E_TF;
-		default:
-			return false;
-		}
+		return Halt_Enabled_TF;
 	}
 
-	// DoHalt halts emulation and returns the number of opcodes
-	// used or zero if a breakpoint. A breakpoint will restore
-	// the original instruction which will execute next. The PC
-	// will be used as the key to the breakpoints list
-		int Debugger::DoHalt(int Hinstr,unsigned short /*PC*/) {
-		Debugger::Halt();
-		switch (Hinstr) {
-		case 0x15:		//Vcc HALT
-			return 1;
-		case 0x113E:	//Vcc BREAK
-			return 2;
-		default:
-			return 1;
-		}
+	void Debugger::Enable_Halt(bool flag)
+	{
+		Halt_Enabled_TF = flag;
 	}
 
-	// Enable / Disable halt instruction
-	void Debugger::EnableHalt(int Hinstr, bool enable)
+	bool Debugger::Break_Enabled()
 	{
-		switch (Hinstr) {
-		case 0x15:
-			Halt_0x15_TF = enable;
-			break;
-		case 0x113E:
-			Halt_0x113E_TF = enable;
-			break;
-		}
+		return Break_Enabled_TF;
+	}
+
+	void Debugger::Enable_Break(bool flag)
+	{
+		Break_Enabled_TF = flag;
 	}
 
 } }

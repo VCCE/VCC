@@ -39,10 +39,9 @@
 #include "OpDecoder.h"
 #include "Disassembler.h"
 
-#define HEXSTR(i,w) ToHexString(i,w,true)
+#define HEXSTR(i,w) Debugger::ToHexString(i,w,true)
 
-// Namespace starts here
-namespace VCC { namespace Debugger { namespace UI {
+namespace VCC {
 
 // Dialog and control handles
 HWND hDismWin = NULL;  // Set when window created
@@ -248,39 +247,46 @@ BOOL ProcTextDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
     // Set or Clear Breakpoint at current line
     case WM_CHAR:
         switch (wPrm) {
-        case 'B':
-        case 'b':
+        // Haltpoint
+        case 'H':
+        case 'h':
             SetHaltPoint(hCtl,true);
             return TRUE;
             break;
-        case 'C':
-        case 'c':
+        // Remove Haltpoint
+        case 'R':
+        case 'r':
             SetHaltPoint(hCtl,false);
             return TRUE;
             break;
+        //Status
+        case 'S':
+        case 's':
+            PrintLogC("Haltpoints: ");
+            it = Haltpoints.begin();
+            while (it != Haltpoints.end())
+            {
+                int LineNdx = it->first;
+                Haltpoint hp = it->second;
+    PrintLogC("%d %04X,%02X,%1X ", LineNdx, hp.realaddr, hp.instr, hp.placed);
+                it++;
+            }
+    PrintLogC("\n");
+            return TRUE;
+
 // Debug
 case 'P':
-  PrintLogC("Haltpoints: ");
-  it = Haltpoints.begin();
-  while (it != Haltpoints.end())
-  {
-    int LineNdx = it->first;
-    Haltpoint hp = it->second;
-    PrintLogC("%d %04X,%02X,%1X ", LineNdx, hp.realaddr, hp.instr, hp.placed);
-    it++;
-  }
-  PrintLogC("\n");
-  return TRUE;
-  break;
-case 'H':
+case 'p':
   ApplyHaltpoints(true);
   return TRUE;
   break;
 case 'U':
+case 'u':
   ApplyHaltpoints(false);
   return TRUE;
   break;
 // Debug ends
+
         }
         break;
     // Use GetLineNdx to position caret to start of current line
@@ -375,6 +381,8 @@ void ColorizeHotpoint(int LineNdx,bool flag)
 /*******************************************************/
 void ApplyHaltpoints(bool flag)
 {
+    unsigned char instr;
+
     // If applying verify they are valid
     if (flag) ValidateHaltPoints();
 
@@ -383,29 +391,30 @@ void ApplyHaltpoints(bool flag)
     while (it != Haltpoints.end()) {
         int LineNdx = it->first;
         Haltpoint hp = it->second;
-PrintLogC("Apply %06X,%02X.%d\n",hp.realaddr,hp.instr,hp.placed);
-        if (flag) {
-            hp.instr = (unsigned char) GetMem(hp.realaddr);
-            hp.placed = true;
-            Haltpoints[LineNdx] = hp;
-            SetMem(hp.realaddr, 0x15);
-        } else if (hp.placed) {
-            SetMem(hp.realaddr, hp.instr);
-            hp.placed = false;
-            Haltpoints[LineNdx] = hp;
+        if (flag != hp.placed) {
+            // Get instruction currently at haltpoint
+            instr = (unsigned char) GetMem(hp.realaddr);
+            if (flag) {
+                // Check that it is not already applied
+                if (instr != 0x15) {
+                    hp.instr = instr;
+                    hp.placed = true;
+                    Haltpoints[LineNdx] = hp;
+                    SetMem(hp.realaddr, 0x15);
+                }
+            } else {
+                // Check that it was actually applied
+                if (instr == 0x15) {
+                    SetMem(hp.realaddr, hp.instr);
+                    hp.placed = false;
+                    Haltpoints[LineNdx] = hp;
+                }
+            }
         }
         it++;
     }
     HaltpointsApplied = flag;
     return;
-}
-
-/*******************************************************/
-/*            Return haltpoints status                 */
-/*******************************************************/
-bool HaltpointsStatus()
-{
-    return HaltpointsApplied;
 }
 
 /*******************************************************/
@@ -477,6 +486,19 @@ BOOL ProcEditDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
     switch (msg) {
     case WM_CHAR:
         switch (wPrm) {
+        // Hot keys for manageing haltpoints
+        case 'h':
+        case 'H':
+        case 'p':
+        case 'P':
+        case 'u':
+        case 'U':
+        case 'r':
+        case 'R':
+        case 's':
+        case 'S':
+            SendMessage(hDisText,msg,wPrm,lPrm);
+            return TRUE;
         // Enter does the disassembly
         case VK_RETURN:
             DecodeRange();
@@ -766,8 +788,8 @@ void Disassemble( unsigned short FromAdr,
                   unsigned short MaxLines,
                   unsigned short Block)
 {
-    std::unique_ptr<OpDecoder> Decoder;
-    Decoder = std::make_unique<OpDecoder>();
+    std::unique_ptr<Debugger::OpDecoder> Decoder;
+    Decoder = std::make_unique<Debugger::OpDecoder>();
     VCC::CPUTrace trace = {};
     VCC::CPUState state = {};
 
@@ -804,7 +826,7 @@ void Disassemble( unsigned short FromAdr,
         // If decoding for Os9 convert SWI2 to OS9 with immediate operand
         if (Os9Decode && (trace.instruction == "SWI2")) {
             unsigned short opadr = PC + (unsigned short) trace.bytes.size();
-            unsigned char op = DbgRead8(UsePhyAdr, Block, opadr);
+            unsigned char op = Debugger::DbgRead8(UsePhyAdr, Block, opadr);
             trace.instruction = "OS9";
             trace.operand = "#$"+HEXSTR(op,2);
             trace.bytes.push_back(op);
@@ -842,7 +864,7 @@ void Disassemble( unsigned short FromAdr,
             PC += 1;
     }
     // Put the completed disassembly
-    SetWindowTextA(hDisText,ToLPCSTR(sDecoded));
+    SetWindowTextA(hDisText,Debugger::ToLPCSTR(sDecoded));
     SetWindowTextA(hErrText,initTxt);
 }
 
@@ -861,5 +883,4 @@ UINT16 HexToUint(char * buf)
     return val & 0xFFFF;
 }
 
-// Namespace ends here
-}}}
+}// Namespace ends
