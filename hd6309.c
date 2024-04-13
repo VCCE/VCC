@@ -194,6 +194,8 @@ static unsigned char *NatEmuCycles[] =
 	&NatEmuCycles53
 };
 
+int HaltedInsPending = 0;
+
 //END Global variables for CPU Emulation-------------------
 
 //Fuction Prototypes---------------------------------------
@@ -6209,7 +6211,7 @@ void Stu_E(void)
 void Halt(void)
 {
 	if (EmuState.Debugger.Halt_Enabled()) {
-		PendingInterupts = 0;
+		HaltedInsPending = 1;
 		VCC::ApplyHaltpoints(0);
 		EmuState.Debugger.Halt();
 		PC_REG -= 1;
@@ -7018,6 +7020,28 @@ int HD6309Exec(int CycleFor)
 	gCycleFor = CycleFor;
 	while (CycleCounter < CycleFor) {
 
+		// CPU is halted.
+		if (EmuState.Debugger.IsHalted())
+		{
+			return(CycleFor - CycleCounter);
+		}
+
+		// CPU is stepping.
+		if (EmuState.Debugger.IsStepping())
+		{
+			JmpVec1[MemRead8(PC_REG++)]();
+			EmuState.Debugger.Halt();
+			return(CycleFor - CycleCounter);
+		}
+
+		// Halted instruction maybe pending.
+		if (HaltedInsPending) {
+			JmpVec1[MemRead8(PC_REG++)]();
+			VCC::ApplyHaltpoints(1);
+			HaltedInsPending = 0;
+			return(CycleFor - CycleCounter);
+		}
+
 		if (PendingInterupts)
 		{
 			if (PendingInterupts & 4)
@@ -7038,12 +7062,6 @@ int HD6309Exec(int CycleFor)
 		if (SyncWaiting == 1)	//Abort the run nothing happens asyncronously from the CPU
 			return(0); // WDZ - Experimental SyncWaiting should still return used cycles (and not zero) by breaking from loop
 
-
-		// CPU is halted.
-		if (EmuState.Debugger.IsHalted())
-		{
-			return(CycleFor - CycleCounter);
-		}
 
 		// ANy CPU Breakpoints set?
 		if (!EmuState.Debugger.IsStepping() && !CPUBreakpoints.empty())
@@ -7084,13 +7102,6 @@ int HD6309Exec(int CycleFor)
 		if (EmuState.Debugger.IsTracing())
 		{
 			EmuState.Debugger.TraceCaptureAfter(CycleCounter, HD6309GetState());
-		}
-
-		// CPU is stepped.
-		if (EmuState.Debugger.IsStepping())
-		{
-			EmuState.Debugger.Halt();
-			break;
 		}
 
 		if (JS_Ramp_Clock < 0xFFFF) {

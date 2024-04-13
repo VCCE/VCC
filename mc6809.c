@@ -72,6 +72,7 @@ static signed short *spostword=(signed short *)&postword;
 static char InInterupt=0;
 static std::vector<unsigned short> CPUBreakpoints;
 static std::vector<unsigned short> CPUTraceTriggers;
+static int HaltedInsPending = 0;
 
 //END Global variables for CPU Emulation-------------------
 
@@ -82,6 +83,8 @@ static unsigned char getcc(void);
 static void cpu_firq(void);
 static void cpu_irq(void);
 static void cpu_nmi(void);
+static void Do_Opcode(int);
+
 //END Fuction Prototypes-----------------------------------
 
 void MC6809Reset(void)
@@ -157,76 +160,101 @@ void MC6809SetTraceTriggers(const std::vector<unsigned short>& triggers)
 	CPUTraceTriggers = triggers;
 }
 
-int MC6809Exec( int CycleFor)
+int MC6809Exec(int CycleFor)
 {
-static unsigned char opcode=0;
-static unsigned char msn,lsn;
-extern int JS_Ramp_Clock;
-int PrevCycleCount = 0;
+	static unsigned char opcode=0;
+	extern int JS_Ramp_Clock;
+	int PrevCycleCount = 0;
 
-CycleCounter=0;
-while (CycleCounter<CycleFor) {
+	CycleCounter=0;
+	while (CycleCounter<CycleFor) {
 
-	if (PendingInterupts)
-	{
-		if (PendingInterupts & 4)
-			cpu_nmi();
-
-		if (PendingInterupts & 2)
-			cpu_firq();
-
-		if (PendingInterupts & 1)
-		{
-			if (IRQWaiter==0)	// This is needed to fix a subtle timming problem
-				cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
-			else				// The IRQ is asserted.
-				IRQWaiter-=1;
+		// CPU is halted.
+		if (EmuState.Debugger.IsHalted()) {
+			return(CycleFor - CycleCounter);
 		}
-	}
-
-	if (SyncWaiting==1)
-		return(0);
-
-	// CPU is halted.
-	if (EmuState.Debugger.IsHalted())
-	{
-		return(CycleFor - CycleCounter);
-	}
-
-	// Any CPU Breakpoints set?
-	if (!EmuState.Debugger.IsStepping() && !CPUBreakpoints.empty())
-	{
-		if (find(CPUBreakpoints.begin(), CPUBreakpoints.end(), pc.Reg) != CPUBreakpoints.end())
-		{
+		// CPU is stepping.
+		if (EmuState.Debugger.IsStepping()) {
+			Do_Opcode(CycleFor);
 			EmuState.Debugger.Halt();
 			return(CycleFor - CycleCounter);
 		}
-	}
+		// Halted instruction maybe pending.
+		if (HaltedInsPending) {
+			Do_Opcode(CycleFor);
+			VCC::ApplyHaltpoints(1);
+			HaltedInsPending = 0;
+			return(CycleFor - CycleCounter);
+		}
+		if (PendingInterupts) {
+			if (PendingInterupts & 4)
+				cpu_nmi();
+			if (PendingInterupts & 2)
+				cpu_firq();
+			if (PendingInterupts & 1) {
+				if (IRQWaiter==0)	// This is needed to fix a timing problem
+					cpu_irq();		// It allows the CPU to see $FF03 bit 7 high
+				else				// before The IRQ is asserted.
+					IRQWaiter-=1;
+			}
+		}
+		if (SyncWaiting==1)
+			return(0);
 
-	// Is the execution trace enabled - but currently not running?
-	if (EmuState.Debugger.IsTracingEnabled() && !EmuState.Debugger.IsTracing())
-	{
-		// Only Start Tracing when we hit a start trigger.
-		if (!CPUTraceTriggers.empty())
-		{
-			if (find(CPUTraceTriggers.begin(), CPUTraceTriggers.end(), pc.Reg) != CPUTraceTriggers.end())
+		// Any CPU Breakpoints set?
+		if (!EmuState.Debugger.IsStepping() && !CPUBreakpoints.empty()) {
+			if (find(CPUBreakpoints.begin(), CPUBreakpoints.end(), pc.Reg) != CPUBreakpoints.end())
 			{
+				EmuState.Debugger.Halt();
+				return(CycleFor - CycleCounter);
+			}
+		}
+
+		// Is the execution trace enabled - but currently not running?
+		if (EmuState.Debugger.IsTracingEnabled() && !EmuState.Debugger.IsTracing())
+		{
+			// Only Start Tracing when we hit a start trigger.
+			if (!CPUTraceTriggers.empty())
+			{
+				if (find(CPUTraceTriggers.begin(), CPUTraceTriggers.end(), pc.Reg) != CPUTraceTriggers.end()) {
+					EmuState.Debugger.TraceStart();
+				}
+			} else {
+				// Otherwise start right away.
 				EmuState.Debugger.TraceStart();
 			}
 		}
-		else
-		{
-			// Otherwise start right away.
-			EmuState.Debugger.TraceStart();
+
+		// Trace is running.
+		if (EmuState.Debugger.IsTracing()) {
+			EmuState.Debugger.TraceCaptureBefore(CycleCounter, MC6809GetState());
 		}
-	}
 
-	// Trace is running.
-	if (EmuState.Debugger.IsTracing())
-	{
-		EmuState.Debugger.TraceCaptureBefore(CycleCounter, MC6809GetState());
-	}
+		// Do a single instruction
+		Do_Opcode(CycleFor);
 
+		if (EmuState.Debugger.IsTracing()) {
+			EmuState.Debugger.TraceCaptureAfter(CycleCounter, MC6809GetState());
+		}
+
+		if (JS_Ramp_Clock < 0xFFFF) {
+			JS_Ramp_Clock += CycleCounter-PrevCycleCount;
+		}
+
+		PrevCycleCount = CycleCounter;
+
+	} //End while (CycleCounter<CycleFor) {
+
+	return(CycleFor-CycleCounter);
+
+} // End MC6809Exec
+
+
+// Execute an instruction
+void Do_Opcode(int CycleFor)
+{
+
+static unsigned char msn,lsn;
 
 switch (MemRead8(pc.Reg++)){
 
@@ -877,7 +905,7 @@ case SYNC_I: //13
 
 case HALT: //15
 	if (EmuState.Debugger.Halt_Enabled()) {
-		PendingInterupts = 0;
+		HaltedInsPending = 1;
 		VCC::ApplyHaltpoints(0);
 		EmuState.Debugger.Halt();
 		PC_REG -= 1;
@@ -3091,28 +3119,7 @@ default:
 	break;
 	}//End Switch
 
-	if (EmuState.Debugger.IsTracing())
-	{
-		EmuState.Debugger.TraceCaptureAfter(CycleCounter, MC6809GetState());
-	}
-
-	// CPU is stepped.
-	if (EmuState.Debugger.IsStepping())
-	{
-		EmuState.Debugger.Halt();
-		break;
-	}
-
-    if (JS_Ramp_Clock < 0xFFFF) {
-        JS_Ramp_Clock += CycleCounter-PrevCycleCount;
-    }
-    PrevCycleCount = CycleCounter;
-
-}//End While
-
-return(CycleFor-CycleCounter);
-
-}
+} // Do_Opcode ENDS
 
 void cpu_firq(void)
 {

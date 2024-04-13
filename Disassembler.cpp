@@ -55,8 +55,9 @@ HWND hErrText = NULL;  // Error text box
 
 // local references
 INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
-int GetRealAddr(int);
-int GetRealBlock(int);
+int RealAddr(int);
+int RealBlock(int);
+int CpuAddr(int);
 void DecodeRange();
 void Disassemble(unsigned short, unsigned short, unsigned short);
 void MapAdrToReal();
@@ -71,13 +72,13 @@ std::string FmtLine(int,std::string,std::string,std::string,std::string);
 int DecodeModHdr(unsigned short, unsigned short, std::string *mhdr);
 
 int GetLineNdx(HWND);
-void SetHaltPoint(HWND,bool);
-void ColorizeHotpoint(int,bool);
-void ValidateHaltPoints();
+void SetHaltpoint(HWND,bool);
+void ColorizeHaltpoint(int,bool);
+void ColorizeAllHaltpoints();
 
 bool UsePhyAdr = FALSE;
 bool Os9Decode = FALSE;
-bool SavUsePhyAdr = FALSE;
+bool DisTxtRealAdr = FALSE;
 
 // MMUregs at start of last decode
 MMUState MMUregs;
@@ -87,32 +88,21 @@ char initTxt[] = "Address and Block are hex.  Lines decimal";
 // Disassembled code goes into string here
 std::string sDecoded = {};
 
-// Haltpoints container.
+// mHaltpoints container.
 // A new style breakpoint is named 'Haltpoint' to avoid conflict
 // with the structure used by the source code debugger. The real
 // address and instruction at the breakpoint are saved. Haltpoints
 // are stored in Haltpoints std::map container. Haltpoints
 // are placed before the cpu enters run state and are removed
 // when the cpu is halted.
-//std::map<unsigned int,Haltpoint> Haltpoints;
 struct Haltpoint
 {
-    // The location of the line in decode text
     int lndx;
-    // The physical address of the haltpoint
     int realaddr;
-    // The instruction at haltpoint before memory was modified
     unsigned char instr;
-    // Placed implies the instruction at the haltpoint has been
-    // modified it should only be true if the instruction has
-    // been saved and care must taken to retore the original
-    // instruction before removing (or losing) the haltpoint
     bool placed;
 };
-std::map<int,Haltpoint> Haltpoints{};
-
-// Haltpoints status, TRUE = haltpoints applied (placed into memory)
-bool HaltpointsApplied = false;
+std::map<int,Haltpoint> mHaltpoints{};
 
 // Functions used to subclass controls
 LONG_PTR SetControlHook(HWND,LONG_PTR);
@@ -240,8 +230,13 @@ LONG_PTR SetControlHook(HWND hCtl,LONG_PTR HookProc)
 LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 { return ProcTextDlg(TextDlgProc,hCtl,msg,wPrm,lPrm); }
 
+inline std::string HPSTR(bool b) {
+  return b ? "Placed" : "Not Placed";
+}
+
 BOOL ProcTextDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
+    std::string s;
     std::map<int, Haltpoint>::iterator it;
     switch (msg) {
     // Set or Clear Breakpoint at current line
@@ -250,28 +245,32 @@ BOOL ProcTextDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
         // Haltpoint
         case 'H':
         case 'h':
-            SetHaltPoint(hCtl,true);
+            SetHaltpoint(hCtl,true);
             return TRUE;
             break;
         // Remove Haltpoint
         case 'R':
         case 'r':
-            SetHaltPoint(hCtl,false);
+            SetHaltpoint(hCtl,false);
             return TRUE;
             break;
         //Status
         case 'S':
         case 's':
-            PrintLogC("Haltpoints: ");
-            it = Haltpoints.begin();
-            while (it != Haltpoints.end())
-            {
-                int LineNdx = it->first;
-                Haltpoint hp = it->second;
-    PrintLogC("%d %04X,%02X,%1X ", LineNdx, hp.realaddr, hp.instr, hp.placed);
-                it++;
+            if (mHaltpoints.size() > 0) {
+                s = "";
+                it = mHaltpoints.begin();
+                while (it != mHaltpoints.end())
+                {
+                    int realaddr = it->first;
+                    Haltpoint hp = it->second;
+                    s += HEXSTR(realaddr,4)+" "+HPSTR(hp.placed)+"\n";
+                    it++;
+                }
+                MessageBox(hDismWin,s.c_str(),"Haltpoints",0);
+            } else {
+                MessageBox(hDismWin,"No haltpoints","Haltpoints",0);
             }
-    PrintLogC("\n");
             return TRUE;
 
 // Debug
@@ -312,51 +311,48 @@ case 'u':
 /***************************************************/
 /*       Set Halt Point at Current Line            */
 /***************************************************/
-void SetHaltPoint(HWND hCtl, bool flag)
+void SetHaltpoint(HWND hCtl, bool flag)
 {
     std::string s;
     Haltpoint hp;
+    int realaddr;
 
-    // The line index is used as the key to
-    // the haltpoint in the map
+    // The line index is used to get the haltpoint address
     int LineNdx = GetLineNdx(hCtl);
     if (LineNdx<0) return;
 
+    // Get the real address of the instruction
+    s = sDecoded.substr(LineNdx,6);
+    int addr = stoi(s,0,16);
+    realaddr = RealAddr(addr);
+
     // Create a Haltpoint
     if (flag) {
-        // Get the real address of the instruction
-        s = sDecoded.substr(LineNdx,6);
-        int addr = stoi(s,0,16);
-        if (SavUsePhyAdr) {
-            hp.realaddr = addr;
-        } else {
-            hp.realaddr = GetRealAddr(addr);
-        }
         // Convert instruction byte to unsigned char
-        // Is this really required? - should be filled in when placed
         s = sDecoded.substr(LineNdx+7,2);
-        hp.lndx = LineNdx;
+        //hp.lndx = LineNdx;
+        hp.realaddr = realaddr;
         hp.instr = stoi(s,0,16);
         hp.placed = false;
-        Haltpoints[LineNdx] = hp;
-        ColorizeHotpoint(LineNdx,true);
+        mHaltpoints[realaddr] = hp;
+        ColorizeHaltpoint(LineNdx,true);
         return;
+    // Remove Haltpoint
+    } else {
+        hp = mHaltpoints[realaddr];
+        // If it is placed restore original opcode first
+        if (hp.placed) SetMem(realaddr, hp.instr);
+        // Remove haltpoint
+        mHaltpoints.erase(realaddr);
+        ColorizeHaltpoint(LineNdx,false);
     }
-
-    // Remove a Haltpoint
-    hp = Haltpoints[LineNdx];
-    // If it is placed restore original opcode first
-    if (hp.placed) SetMem(hp.realaddr, hp.instr);
-    // Remove haltpoint
-    Haltpoints.erase(LineNdx);
-    ColorizeHotpoint(LineNdx,false);
     return;
 }
 
 /*******************************************************/
-/*                Colorize Haltpoints                  */
+/*                Colorize Haltpoint                   */
 /*******************************************************/
-void ColorizeHotpoint(int LineNdx,bool flag)
+void ColorizeHaltpoint(int LineNdx,bool flag)
 {
     CHARFORMATA fmt;
     fmt.cbSize = sizeof(fmt);
@@ -377,74 +373,76 @@ void ColorizeHotpoint(int LineNdx,bool flag)
 }
 
 /*******************************************************/
+/*            Colorize All Haltpoints                  */
+/*******************************************************/
+// Called after redrawing the disassembly text
+void ColorizeAllHaltpoints() {
+    std::string s;
+    std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
+    while (it != mHaltpoints.end()) {
+        int adr = it->first;
+        if (!DisTxtRealAdr) adr = CpuAddr(adr);
+        if (adr != 0) {
+            Haltpoint hp = it->second;
+            s = HEXSTR(adr,6) + " " + HEXSTR(hp.instr,2);
+            int pos = sDecoded.find(s);
+            if (pos != std::string::npos) {
+                ColorizeHaltpoint(pos,true);
+            }
+        }
+        it++;
+    }
+}
+
+/*******************************************************/
 /*               Apply haltpoints                      */
 /*******************************************************/
 void ApplyHaltpoints(bool flag)
 {
     unsigned char instr;
 
-    // If applying verify they are valid
-    if (flag) ValidateHaltPoints();
+    if (flag) EmuState.Debugger.Enable_Halt(true);
 
     // Either install halt instruction or restore original opcode
-    std::map<int, Haltpoint>::iterator it = Haltpoints.begin();
-    while (it != Haltpoints.end()) {
-        int LineNdx = it->first;
+    std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
+
+    while (it != mHaltpoints.end()) {
+
+        int realaddr = it->first;
         Haltpoint hp = it->second;
-        if (flag != hp.placed) {
-            // Get instruction currently at haltpoint
-            instr = (unsigned char) GetMem(hp.realaddr);
-            if (flag) {
-                // Check that it is not already applied
+//PrintLogC("apply %x %d\n",realaddr,flag);
+
+        // Get instruction currently at haltpoint
+        instr = (unsigned char) GetMem(hp.realaddr);
+
+        if (flag) {
+            // Check that it is not already placed
+            if (!hp.placed) {
                 if (instr != 0x15) {
                     hp.instr = instr;
                     hp.placed = true;
-                    Haltpoints[LineNdx] = hp;
-                    SetMem(hp.realaddr, 0x15);
+                    mHaltpoints[realaddr] = hp;
+                    SetMem(realaddr, 0x15);
+                } else {
+                    MessageBox(hDismWin,"Breakpoints placement Failed!","Error",0);
+                    PrintLogC("place failed\n");
                 }
-            } else {
-                // Check that it was actually applied
+            } // else already placed
+        } else {
+            if (hp.placed) {
+                // Check that it was actually placed
                 if (instr == 0x15) {
-                    SetMem(hp.realaddr, hp.instr);
+                    SetMem(realaddr, hp.instr);
                     hp.placed = false;
-                    Haltpoints[LineNdx] = hp;
+                    mHaltpoints[realaddr] = hp;
+                } else {
+                    MessageBox(hDismWin,"Breakpoints removal Failed!","Error",0);
                 }
-            }
+            } // else was not placeed
         }
         it++;
     }
-    HaltpointsApplied = flag;
     return;
-}
-
-/*******************************************************/
-/*                Validate Haltpoints                  */
-/*******************************************************/
-void ValidateHaltPoints()
-{
-    std::string s;
-
-    std::map<int, Haltpoint>::iterator it = Haltpoints.begin();
-    while (it != Haltpoints.end()) {
-        int LineNdx = it->first;
-        Haltpoint hp = it->second;
-
-        s = sDecoded.substr(LineNdx,6);
-        int addr = stoi(s,0,16);
-        int realaddr;
-        if (SavUsePhyAdr) {
-            realaddr = addr;
-        } else {
-            realaddr = GetRealAddr(addr);
-        }
-        if (hp.realaddr != realaddr) {
-            if (hp.placed) SetMem(hp.realaddr, hp.instr);
-            Haltpoints.erase(it++);
-        } else {
-            ColorizeHotpoint(LineNdx,true);
-            it++;
-        }
-    }
 }
 
 /*******************************************************/
@@ -544,25 +542,53 @@ BOOL ProcEditDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 }
 
 /***************************************************/
-/*       Get real address from CPU address         */
+/*   Get real address from disassembly address     */
 /***************************************************/
-int GetRealAddr(int CpuAddr)
+int RealAddr(int addr)
 {
-    int block = GetRealBlock(CpuAddr);
-    int offset = CpuAddr & 0x1FFF;
-    return offset + block * 0x2000;
+    if (DisTxtRealAdr) {
+        return addr;
+    } else {
+        int block = RealBlock(addr);
+        int offset = addr & 0x1FFF;
+        return offset + block * 0x2000;
+    }
 }
 
 /***************************************************/
 /*          Get block from CPU address             */
 /***************************************************/
-int GetRealBlock(int address)
+int RealBlock(int address)
 {
     if (MMUregs.ActiveTask == 0) {
         return MMUregs.Task0[(address >> 13) & 7];
     } else {
         return MMUregs.Task1[(address >> 13) & 7];
     }
+}
+
+/***************************************************/
+/*        Get Cpu address from real address        */
+/***************************************************/
+int CpuAddr(int realaddr)
+{
+    int offset = realaddr & 0x1FFF;
+    int block = (unsigned) realaddr >> 13;
+    int cpuadr;
+    int i;
+    for (i=0; i<8; i++) {
+        if (MMUregs.ActiveTask == 0) {
+            if (MMUregs.Task0[i] == block) break;
+        } else {
+            if (MMUregs.Task1[i] == block) break;
+        }
+    }
+    if (i < 8) {
+        cpuadr = i * 0x2000 + offset;
+    } else {
+        cpuadr = 0;
+    }
+    return cpuadr;
 }
 
 /***************************************************/
@@ -575,9 +601,6 @@ void MapRealToAdr()
     unsigned long address;
     unsigned short block;
     unsigned short offset;
-    //MMUState MMUState_;
-    //MMUState_ = GetMMUState();
-    //MMUState regs = MMUState_;
     GetWindowText(hEdtAddr, buf, 8);
     offset = HexToUint(buf);
     GetWindowText(hEdtBloc, buf, 8);
@@ -621,7 +644,7 @@ void MapAdrToReal()
     address = HexToUint(buf);
 
     offset = address & 0x1FFF;
-    block = GetRealBlock(address);
+    block = RealBlock(address);
     SetWindowText(hEdtAddr, HEXSTR(offset,0).c_str());
     SetWindowText(hEdtBloc,HEXSTR(block,2).c_str());
     SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"  Offset:");
@@ -672,13 +695,12 @@ void DecodeRange()
     // at time of decode so haltpoints created are
     // based on state when decode was actually done.
     MMUregs = GetMMUState();
-    SavUsePhyAdr = UsePhyAdr;
+    DisTxtRealAdr = UsePhyAdr;
 
     // Disassemble
     Disassemble(FromAdr,MaxLines,Block);
-
-    // Check haltpoints
-    ValidateHaltPoints();
+ 
+    ColorizeAllHaltpoints();
     return;
 }
 

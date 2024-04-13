@@ -179,7 +179,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
     INT_PTR CALLBACK ProcessorStateDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
     {
-     //   HWND GetDlgItem(hDlg,IDC_BTN_CPU_HALT) = NULL;
 
         switch (message)
         {

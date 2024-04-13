@@ -378,11 +378,9 @@ namespace VCC { namespace Debugger
 
 	void Debugger::ToggleRun() {
 		if (IsHalted()) {
-			//ApplyHaltpoints(1);
-			QueueRun();
 			PauseAudio(0);
+			QueueRun();
 		} else {
-			ApplyHaltpoints(0); // Remove any haltpoints
 			QueueHalt();
 			PauseAudio(1);
 		}
