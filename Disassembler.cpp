@@ -42,13 +42,14 @@
 
 #define HEXSTR(i,w) Debugger::ToHexString(i,w,true)
 
+#define MAXLINES 400
+
 namespace VCC {
 
 // Dialog and control handles
 HWND hDismWin = NULL;  // Set when window created
 HWND hDismDlg = NULL;  // Set when dialog activated
 HWND hEdtAddr = NULL;  // From editbox
-HWND hEdtLcnt = NULL;  // Number of lines
 HWND hEdtBloc = NULL;  // Bock number editbox
 HWND hEdtAPPY = NULL;  // Apply button
 HWND hDisText = NULL;  // Richedit20 box for output
@@ -60,7 +61,8 @@ int RealBlock(int);
 int RealToCpu(int);
 int CpuToReal(int); 
 void DecodeRange();
-void Disassemble(unsigned short, unsigned short, unsigned short);
+//void Disassemble(unsigned short, unsigned short, unsigned short);
+void Disassemble(unsigned short, unsigned short);
 void MapAdrToReal();
 void MapRealToAdr();
 UINT16 HexToUint(char *);
@@ -89,7 +91,7 @@ int PClinePos = std::string::npos;
 // MMUregs at start of last decode
 MMUState MMUregs;
 
-char initTxt[] = "Address and Block are hex.  Lines decimal";
+char initTxt[] = "Address and Block are hexadecimal";
 
 // Disassembled code goes into string here
 std::string sDecoded = {};
@@ -155,7 +157,6 @@ INT_PTR CALLBACK DisassemblerDlgProc
         hDismDlg = hDlg;
         hEdtAddr = GetDlgItem(hDismDlg, IDC_EDIT_PC_ADDR);
         hEdtBloc = GetDlgItem(hDismDlg, IDC_EDIT_BLOCK);
-        hEdtLcnt = GetDlgItem(hDismDlg, IDC_EDIT_PC_LCNT);
         hEdtAPPY = GetDlgItem(hDismDlg, IDAPPLY);
         hDisText = GetDlgItem(hDismDlg, IDC_DISASSEMBLY_TEXT);
         hErrText = GetDlgItem(hDismDlg, IDC_ERROR_TEXT);
@@ -163,7 +164,6 @@ INT_PTR CALLBACK DisassemblerDlgProc
         // Hook the input dialogs to capture keystrokes
         AddrDlgProc = (WNDPROC) SetControlHook(hEdtAddr,(LONG_PTR) SubAddrDlgProc);
         BlocDlgProc = (WNDPROC) SetControlHook(hEdtBloc,(LONG_PTR) SubBlocDlgProc);
-        LcntDlgProc = (WNDPROC) SetControlHook(hEdtLcnt,(LONG_PTR) SubLcntDlgProc);
         // Hook the Disasembly text
         TextDlgProc = (WNDPROC) SetControlHook(hDisText,(LONG_PTR) SubTextDlgProc);
 
@@ -176,7 +176,6 @@ INT_PTR CALLBACK DisassemblerDlgProc
         SendMessage(hDisText,EM_SETCHARFORMAT,(WPARAM) SCF_DEFAULT,(LPARAM) &disfmt);
 
         // Inital values in edit boxes
-        SetWindowText(hEdtLcnt, "500");
         SetWindowTextA(hDisText,"");
         SetWindowTextA(hErrText,initTxt);
 
@@ -579,15 +578,11 @@ BOOL ProcEditDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
             return TRUE;
         // Tab moves between active edit boxes
         case VK_TAB:
-               SetWindowTextA(hErrText,initTxt);
-               if (hCtl == hEdtAddr) {
-                  if (IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM)) {
-                     nxtctl = hEdtBloc;
-                   } else {
-                       nxtctl = hEdtLcnt;
+            SetWindowTextA(hErrText,initTxt);
+            if (hCtl == hEdtAddr) {
+                if (IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM)) {
+                    nxtctl = hEdtBloc;
                 }
-            } else if (hCtl == hEdtBloc) {
-                nxtctl = hEdtLcnt;
             } else {
                 nxtctl = hEdtAddr;
             }
@@ -741,7 +736,6 @@ void DecodeRange()
 {
     char buf[16];
     unsigned short FromAdr = 0;
-    unsigned short MaxLines;
     unsigned short Block = 0;
 
     // If not using physical addressing disallow access I/O ports
@@ -765,14 +759,6 @@ void DecodeRange()
         return;
     }
 
-    // Number of lines
-    GetWindowText(hEdtLcnt, buf, 8);
-    MaxLines = (unsigned short) strtol(buf,NULL,10);
-    if (MaxLines > 2000) {
-        SetWindowText(hErrText,"Invalid line count");
-        return;
-    }
-
     // Grab current MMUregs and save phy address flag
     // at time of decode so haltpoints created are
     // based on state when decode was actually done.
@@ -780,7 +766,7 @@ void DecodeRange()
     DisTxtRealAdr = UsePhyAdr;
 
     // Disassemble
-    Disassemble(FromAdr,MaxLines,Block);
+    Disassemble(FromAdr,Block);
     HighlightHaltpoints();
     return;
 }
@@ -888,7 +874,6 @@ int DecodeModHdr(unsigned short Block, unsigned short PC, std::string *hdr)
 /*  Disassemble Instructions in specified range   */
 /**************************************************/
 void Disassemble( unsigned short FromAdr,
-                  unsigned short MaxLines,
                   unsigned short Block)
 {
     std::unique_ptr<Debugger::OpDecoder> Decoder;
@@ -905,7 +890,7 @@ void Disassemble( unsigned short FromAdr,
 
     state.block = Block;
     state.phyAddr = UsePhyAdr;
-    while (numlines < MaxLines) {
+    while (numlines < MAXLINES) {
 
         if (Os9Decode) {
             // Check for module header
