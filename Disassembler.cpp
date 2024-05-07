@@ -60,12 +60,12 @@ INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
 int RealBlock(int);
 int RealToCpu(int);
 int CpuToReal(int); 
-void DecodeRange();
-//void Disassemble(unsigned short, unsigned short, unsigned short);
+void DecodeAddr();
 void Disassemble(unsigned short, unsigned short);
-void MapAdrToReal();
-void MapRealToAdr();
-UINT16 HexToUint(char *);
+void MapCPUtoAddr();
+void MapRealToCPU();
+int HexToUint(char *);
+void EnableBlockEdit(bool);
 
 std::string PadRight(std::string const&,size_t);
 std::string OpFDB(int,std::string,std::string,std::string);
@@ -115,8 +115,6 @@ std::map<int,Haltpoint> mHaltpoints{};
 // Functions used to subclass controls
 LONG_PTR SetControlHook(HWND,LONG_PTR);
 LRESULT CALLBACK SubAddrDlgProc(HWND,UINT,WPARAM,LPARAM);
-LRESULT CALLBACK SubBlocDlgProc(HWND,UINT,WPARAM,LPARAM);
-LRESULT CALLBACK SubLcntDlgProc(HWND,UINT,WPARAM,LPARAM);
 LRESULT CALLBACK SubTextDlgProc(HWND,UINT,WPARAM,LPARAM);
 WNDPROC AddrDlgProc;
 WNDPROC BlocDlgProc;
@@ -128,6 +126,11 @@ BOOL ProcEditDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
 
 // Handler for disassembly text richedit control
 BOOL ProcTextDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
+
+// Text for haltpoints list
+inline std::string HPSTR(bool b) {
+  return b ? "Placed" : "Not Placed";
+}
 
 /**************************************************/
 /*       Create Disassembler Dialog Window        */
@@ -145,7 +148,7 @@ OpenDisassemblerWindow(HINSTANCE instance, HWND parent)
 }
 
 /**************************************************/
-/*       Disassembler Dialog Processing           */
+/*              Dialog Processing                 */
 /**************************************************/
 INT_PTR CALLBACK DisassemblerDlgProc
     (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
@@ -161,10 +164,9 @@ INT_PTR CALLBACK DisassemblerDlgProc
         hDisText = GetDlgItem(hDismDlg, IDC_DISASSEMBLY_TEXT);
         hErrText = GetDlgItem(hDismDlg, IDC_ERROR_TEXT);
 
-        // Hook the input dialogs to capture keystrokes
+        // Hook the input controls
         AddrDlgProc = (WNDPROC) SetControlHook(hEdtAddr,(LONG_PTR) SubAddrDlgProc);
-        BlocDlgProc = (WNDPROC) SetControlHook(hEdtBloc,(LONG_PTR) SubBlocDlgProc);
-        // Hook the Disasembly text
+        BlocDlgProc = (WNDPROC) SetControlHook(hEdtBloc,(LONG_PTR) SubAddrDlgProc);
         TextDlgProc = (WNDPROC) SetControlHook(hDisText,(LONG_PTR) SubTextDlgProc);
 
         // Set Consolas font (fixed) in disassembly edit box
@@ -177,6 +179,8 @@ INT_PTR CALLBACK DisassemblerDlgProc
 
         // Inital values in edit boxes
         SetWindowTextA(hDisText,"");
+        SetWindowTextA(hEdtAddr,"0");
+        SetWindowTextA(hEdtBloc,"0");
         SetWindowTextA(hErrText,initTxt);
 
         // Disable Block text box until phys mem is checked
@@ -190,6 +194,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
     case WM_PAINT:
         // Give edit control focus to capture tab/enter/up/down etc
         SetFocus(hEdtAddr);
+        SendMessage(hEdtAddr,EM_SETSEL,0,-1); //Select contents
         return FALSE;
 
     case WM_COMMAND:
@@ -202,23 +207,28 @@ INT_PTR CALLBACK DisassemblerDlgProc
             hDismWin = NULL;
             return FALSE;
         case IDAPPLY:
-            DecodeRange();
+            DecodeAddr();
             SetFocus(hEdtAddr);
             return TRUE;
         case IDC_BTN_OS9:
-            if (IsDlgButtonChecked(hDismDlg,IDC_BTN_OS9))
+            if (IsDlgButtonChecked(hDismDlg,IDC_BTN_OS9)) {
                 Os9Decode = TRUE;
-            else
+                EnableBlockEdit(UsePhyAdr);
+            } else {
                 Os9Decode = FALSE;
-            SetFocus(hEdtAddr);
+                EnableBlockEdit(FALSE);
+            }
             return TRUE;
         case IDC_PHYS_MEM:
             if (IsDlgButtonChecked(hDlg,IDC_PHYS_MEM)) {
-                MapAdrToReal();
+                //if (!UsePhyAdr) MapCPUtoAddr(); FIXME
+                UsePhyAdr = TRUE;
+                EnableBlockEdit(Os9Decode);
             } else {
-                MapRealToAdr();
+                //if (UsePhyAdr) MapRealToCPU(); FIXME
+                UsePhyAdr = FALSE;
+                EnableBlockEdit(FALSE);
             }
-            SetFocus(hEdtAddr);
             return TRUE;
         }
         break;
@@ -235,64 +245,6 @@ INT_PTR CALLBACK DisassemblerDlgProc
     return FALSE;  // unhandled message
 }
 
-/**************************************************/
-/*     Highlight the Current PC if CPU halted     */
-/**************************************************/
-void HighlightPC()
-{
-    // Disassembly has to have a least one line
-    if (sDecoded.find('\n') == std::string::npos) return;
-
-    // If CPU is not halted just decolorize previous PC
-    if (!EmuState.Debugger.IsHalted()) {
-        if (PClinePos != std::string::npos)
-            HighlightLine(PClinePos,RGB(0,0,0),false);
-        PClinePos = std::string::npos;
-        HilightdPC = 0xFFFFFF;
-        return;
-    }
-
-    int adr;
-    CPUState state = CPUGetState();
-    if (DisTxtRealAdr) {
-        adr = CpuToReal(state.PC);
-    } else {
-        adr = state.PC;
-    }
-
-    // If PC already highlighted just return
-    if (adr == HilightdPC) return;
-PrintLogC("%X ",adr);
-
-    // Remove hilight from previous PC line
-    if (PClinePos != std::string::npos) 
-        HighlightLine(PClinePos,RGB(0,0,0),false);
-
-    // Search for PC line in disassembly.
-    std::string sAdr = HEXSTR(adr,6);
-    PClinePos = sDecoded.find('\n'+ sAdr);
-    if (PClinePos != std::string::npos) {
-        PClinePos += 1;
-    } else if (sAdr.compare(sDecoded.substr(0,6)) == 0) {
-        PClinePos = 0;
-    } else {
-        PClinePos = std::string::npos;
-    }
-
-    if (PClinePos != std::string::npos) {
-        HighlightLine(PClinePos,RGB(0,0,255),true);
-
-        // Make visible in display
-        HWND f = GetFocus();
-        SetFocus(hDisText);
-        SendMessage(hDisText,EM_LINESCROLL,0,0);
-        if (f) SetFocus(f);
-
-        HilightdPC = adr;
-    } else {
-        HilightdPC = 0xFFFFFF;
-    }
-}
 
 /***************************************************/
 /*              Set up control hooks               */
@@ -308,13 +260,6 @@ LONG_PTR SetControlHook(HWND hCtl,LONG_PTR HookProc)
 /*     Process Disassembly text messages here      */
 /***************************************************/
 LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{ return ProcTextDlg(TextDlgProc,hCtl,msg,wPrm,lPrm); }
-
-inline std::string HPSTR(bool b) {
-  return b ? "Placed" : "Not Placed";
-}
-
-BOOL ProcTextDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
     std::string s;
     std::map<int, Haltpoint>::iterator it;
@@ -367,6 +312,10 @@ BOOL ProcTextDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
             EmuState.Debugger.QueueStep();
             return TRUE;
             break;
+        case VK_TAB:
+            SetFocus(hEdtAddr);
+            return TRUE;
+            break;
         }
         break;
 
@@ -388,7 +337,141 @@ BOOL ProcTextDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
     }
 
     // Forward messages to original control
-    return CallWindowProc(pCtl,hCtl,msg,wPrm,lPrm);
+    return CallWindowProc(TextDlgProc,hCtl,msg,wPrm,lPrm);
+}
+
+/***************************************************/
+/*      Process address control messages here      */
+/***************************************************/
+LRESULT CALLBACK SubAddrDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{
+    HWND nxtctl;
+    switch (msg) {
+    case WM_CHAR:
+        switch (toupper(wPrm)) {
+        // Hot keys for controlling CPU 
+        case 'G':  // Go
+        case 'P':  // Pause
+        case 'N':  // Next
+            SendMessage(hDisText,msg,wPrm,lPrm);
+            return TRUE;
+        // Enter does the disassembly
+        case VK_RETURN:
+            DecodeAddr();
+            return TRUE;
+        // Tab moves between active edit boxes
+        case VK_TAB:
+            SetWindowTextA(hErrText,initTxt);
+            if (hCtl==hEdtAddr && UsePhyAdr && Os9Decode) {
+                nxtctl = hEdtBloc;
+            } else {
+                nxtctl = hEdtAddr;
+            }
+            SetFocus(nxtctl);
+            SendMessage(nxtctl,EM_SETSEL,0,-1); //Select contents
+            return TRUE;
+        }
+        break;
+    case WM_KEYDOWN:
+        switch (wPrm) {
+        case VK_DOWN:
+        case VK_UP:
+            SetFocus(hDisText);
+            SendMessage(hDisText,msg,wPrm,lPrm);
+            return TRUE;
+        }
+        break;
+    case WM_KEYUP:
+        switch (wPrm) {
+        case VK_DOWN:
+        case VK_UP:
+            SetFocus(hDisText);
+            SendMessage(hDisText,msg,wPrm,lPrm);
+            return TRUE;
+        }
+        break;
+    }
+    // Everything else sent to original control processing
+    if (hCtl == hEdtAddr)
+        return CallWindowProc(AddrDlgProc,hCtl,msg,wPrm,lPrm);
+    if (hCtl == hEdtBloc)
+        return CallWindowProc(BlocDlgProc,hCtl,msg,wPrm,lPrm);
+    return TRUE;
+}
+
+/**************************************************/
+/*       Enable/Disable Block edit box            */
+/**************************************************/
+void EnableBlockEdit(bool flag) {
+    if (flag) {
+        EnableWindow(hEdtBloc,TRUE);
+        SetFocus(hEdtBloc);
+        SendMessage(hEdtBloc,EM_SETSEL,0,-1); //Select contents
+    } else {
+        EnableWindow(hEdtBloc,FALSE);
+        SetFocus(hEdtAddr);
+        SendMessage(hEdtAddr,EM_SETSEL,0,-1); //Select contents
+    }
+    return;
+}
+
+/**************************************************/
+/*     Highlight the Current PC if CPU halted     */
+/**************************************************/
+void HighlightPC()
+{
+    // Disassembly has to have a least one line
+    if (sDecoded.find('\n') == std::string::npos) return;
+
+    // If CPU is not halted just decolorize previous PC
+    if (!EmuState.Debugger.IsHalted()) {
+        if (PClinePos != std::string::npos)
+            HighlightLine(PClinePos,RGB(0,0,0),false);
+        PClinePos = std::string::npos;
+        HilightdPC = 0xFFFFFF;
+        return;
+    }
+
+    int adr;
+    CPUState state = CPUGetState();
+    if (DisTxtRealAdr) {
+        adr = CpuToReal(state.PC);
+    } else {
+        adr = state.PC;
+    }
+
+    // If PC already highlighted just return
+    if (adr == HilightdPC) return;
+//PrintLogC("%X ",adr);
+
+    // Remove hilight from previous PC line
+    if (PClinePos != std::string::npos) 
+        HighlightLine(PClinePos,RGB(0,0,0),false);
+
+    // Search for PC line in disassembly.
+    std::string sAdr = HEXSTR(adr,6);
+    PClinePos = sDecoded.find('\n'+ sAdr);
+    if (PClinePos != std::string::npos) {
+        PClinePos += 1;
+    } else if (sAdr.compare(sDecoded.substr(0,6)) == 0) {
+        PClinePos = 0;
+    } else {
+        PClinePos = std::string::npos;
+    }
+
+    if (PClinePos != std::string::npos) {
+        HighlightLine(PClinePos,RGB(0,0,255),true);
+
+        // Make visible in display
+        HWND f = GetFocus();
+        SetFocus(hDisText);
+        SendMessage(hDisText,EM_LINESCROLL,0,0);
+        if (f) SetFocus(f);
+
+        HilightdPC = adr;
+    } else {
+        HilightdPC = 0xFFFFFF;
+    }
 }
 
 /***************************************************/
@@ -547,80 +630,6 @@ int FindLineNdx(HWND hCtl)
     return lndx;
 }
 
-/***************************************************/
-/*      Process edit control messages here         */
-/***************************************************/
-LRESULT CALLBACK SubAddrDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{ return ProcEditDlg(AddrDlgProc,hCtl,msg,wPrm,lPrm); }
-LRESULT CALLBACK SubBlocDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{ return ProcEditDlg(BlocDlgProc,hCtl,msg,wPrm,lPrm); }
-LRESULT CALLBACK SubLcntDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{ return ProcEditDlg(LcntDlgProc,hCtl,msg,wPrm,lPrm); }
-
-BOOL ProcEditDlg (WNDPROC pCtl,HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
-{
-    HWND nxtctl;
-    switch (msg) {
-    case WM_CHAR:
-        switch (toupper(wPrm)) {
-        // Hot keys for managing haltpoints
-        case 'S':
-        case 'R':
-        case 'L':
-        case 'G':
-        case 'P':
-        case 'N':
-            SendMessage(hDisText,msg,wPrm,lPrm);
-            return TRUE;
-        // Enter does the disassembly
-        case VK_RETURN:
-            DecodeRange();
-            return TRUE;
-        // Tab moves between active edit boxes
-        case VK_TAB:
-            SetWindowTextA(hErrText,initTxt);
-            if (hCtl == hEdtAddr) {
-                if (IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM)) {
-                    nxtctl = hEdtBloc;
-                }
-            } else {
-                nxtctl = hEdtAddr;
-            }
-            SetFocus(nxtctl);
-            SendMessage(nxtctl,EM_SETSEL,0,-1); //Select contents
-            return TRUE;
-        }
-        break;
-    case WM_KEYDOWN:
-        switch (wPrm) {
-        // Up/Down scroll disassembly display
-        case VK_DOWN:
-            Edit_Scroll(hDisText,1,0);
-            return TRUE;
-        case VK_UP:
-            Edit_Scroll(hDisText,-1,0);
-            return TRUE;
-        // Page Up/Down send to disassembly display
-        case VK_PRIOR:
-        case VK_NEXT:
-            SendMessage(hDisText,msg,wPrm,lPrm);
-            return TRUE;
-        }
-        break;
-    case WM_KEYUP:
-        switch (wPrm) {
-        case VK_DOWN:
-        case VK_UP:
-        case VK_PRIOR:
-        case VK_NEXT:
-            SendMessage(hDisText,msg,wPrm,lPrm);
-            return TRUE;
-        }
-        break;
-    }
-    // Everything else sent to original control processing
-    return CallWindowProc(pCtl,hCtl,msg,wPrm,lPrm);
-}
 
 /***************************************************/
 /*      Convert Cpu address to real address        */
@@ -672,91 +681,109 @@ int RealToCpu(int realaddr)
 }
 
 /***************************************************/
-/*         Change Address map real to CPU          */
+/*      Change Address map from real to CPU        */
 /***************************************************/
-void MapRealToAdr()
+void MapRealToCPU()
 {
     char buf[16];
     std::string s;
-    unsigned long address;
+    int address;
     unsigned short block;
-    unsigned short offset;
+   // unsigned short offset;
     GetWindowText(hEdtAddr, buf, 8);
-    offset = HexToUint(buf);
-    GetWindowText(hEdtBloc, buf, 8);
-    block = HexToUint(buf);
-    int i;
-    for (i=0; i<8; i++) {
-        if (MMUregs.ActiveTask == 0) {
-            if (MMUregs.Task0[i] == block) break;
-        } else {
-            if (MMUregs.Task1[i] == block) break;
+    address = HexToUint(buf);
+
+    if (Os9Decode) {
+        GetWindowText(hEdtBloc, buf, 8);
+        block = (unsigned short) HexToUint(buf);
+        int i;
+        // FIXME What about OS9 Mode?
+        for (i=0; i<8; i++) {
+            if (MMUregs.ActiveTask == 0) {
+                if (MMUregs.Task0[i] == block) break;
+            } else {
+                if (MMUregs.Task1[i] == block) break;
+            }
         }
-    }
-    if (i < 8) {
-        address = i * 0x2000 + offset;
-        SetWindowText(hEdtAddr, HEXSTR(address,0).c_str());
+        if (i < 8) {
+            address = i * 0x2000 + address;
+            SetWindowText(hEdtAddr, HEXSTR(address,0).c_str());
+            SetWindowText(hEdtBloc,"  ");
+        } else {
+            SetWindowText(hEdtAddr,"    ");
+        }
     } else {
-        SetWindowText(hEdtAddr,"    ");
+// FIXME
     }
-    SetWindowText(hEdtBloc,"  ");
     SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"Address:");
 
-    EnableWindow(hEdtBloc,FALSE);
+    //EnableWindow(hEdtBloc,FALSE);
     UsePhyAdr = FALSE;
 }
-
 
 /***************************************************/
 /*         Change Address map CPU to real          */
 /***************************************************/
-void MapAdrToReal()
+void MapCPUtoAddr()
 {
     char buf[16];
     unsigned short address;
     unsigned short block;
     unsigned short offset;
-
     GetWindowText(hEdtAddr, buf, 8);
     address = HexToUint(buf);
-
     offset = address & 0x1FFF;
     block = RealBlock(address);
-    SetWindowText(hEdtAddr, HEXSTR(offset,0).c_str());
-    SetWindowText(hEdtBloc,HEXSTR(block,2).c_str());
-    SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"  Offset:");
-    EnableWindow(hEdtBloc,TRUE);
-    UsePhyAdr = TRUE;
+    if (Os9Decode) {
+        SetWindowText(hEdtAddr,HEXSTR(offset,0).c_str());
+        SetWindowText(hEdtBloc,HEXSTR(block,2).c_str());
+        SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"  Offset:");
+        //EnableWindow(hEdtBloc,TRUE);
+    } else {
+        address = offset + block * 0x2000;
+        SetWindowText(hEdtAddr,HEXSTR(address,0).c_str());
+        //EnableWindow(hEdtBloc,FALSE);
+        SetWindowText(GetDlgItem(hDismDlg,IDC_ADRTXT),"Address:");
+    }
 }
 
 /**************************************************/
-/*          Get range and disassemble             */
+/*  Get user specified address and disassemble    */
 /**************************************************/
-void DecodeRange()
+void DecodeAddr()
 {
     char buf[16];
     unsigned short FromAdr = 0;
     unsigned short Block = 0;
 
-    // If not using physical addressing disallow access I/O ports
-    unsigned short MaxAdr = UsePhyAdr? 0xFFFF: 0xFF00;
-
+    // Get user specified address and maybe block offset
+    GetWindowText(hEdtAddr, buf, 8);
+    int addr = HexToUint(buf);
+//PrintLogC("%X ",addr);
+    // OpDecoder uses a 16 bit PC so we have to use a Block number to
+    // offset to the real address. If OS9 mode the block number is
+    // input from the user, otherwise it is calculated.
     if (UsePhyAdr) {
-        GetWindowText(hEdtBloc, buf, 8);
-        int blk = HexToUint(buf);
-        if ((blk < 0) || (blk > 0x3FF)) {
-            SetWindowText(hErrText,"Invalid Block Number");
+        if (Os9Decode) {
+            GetWindowText(hEdtBloc, buf, 8);
+            int blk = HexToUint(buf);
+            if ((blk < 0) || (blk > 0x3FF)) {
+                SetWindowText(hErrText,"Invalid Block Number");
+                return;
+            }
+            Block = (unsigned short) blk;
+            FromAdr = addr;
+        } else {
+            Block = (unsigned) addr >> 13;
+            FromAdr = addr & 0x1FFF;
+        }
+    } else {
+        FromAdr = addr;
+        // If not using physical addressing disallow access I/O ports
+        if (FromAdr >= 0xFF00) { 
+            SetWindowText(hErrText,"Invalid start address");
             return;
         }
-        Block = (unsigned short) blk;
-    }
-
-    // Start CPU address or block offset
-    GetWindowText(hEdtAddr, buf, 8);
-    FromAdr = HexToUint(buf);
-    if ((FromAdr < 0) || (FromAdr >= MaxAdr)) {
-        SetWindowText(hErrText,"Invalid start address");
-        return;
     }
 
     // Grab current MMUregs and save phy address flag
@@ -765,7 +792,9 @@ void DecodeRange()
     MMUregs = GetMMUState();
     DisTxtRealAdr = UsePhyAdr;
 
-    // Disassemble
+//PrintLogC("%x %x %d\n",FromAdr,Block,UsePhyAdr);
+
+// Disassemble
     Disassemble(FromAdr,Block);
     HighlightHaltpoints();
     return;
@@ -959,7 +988,7 @@ void Disassemble( unsigned short FromAdr,
 /**************************************************/
 /*        Convert hex digits to Address           */
 /**************************************************/
-UINT16 HexToUint(char * buf)
+int HexToUint(char * buf)
 {
     long val;
     char *eptr;
@@ -967,8 +996,8 @@ UINT16 HexToUint(char * buf)
     val = strtol(buf,&eptr,16);
     if (*eptr != '\0') return -1;
     if (val < 0)       return -1;
-    if (val > 0xFFFF)  return -1;
-    return val & 0xFFFF;
+    if (val > 0xFFFFFF)  return -1;
+    return val & 0xFFFFFF;
 }
 
 }// Namespace ends
