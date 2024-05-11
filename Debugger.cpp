@@ -350,10 +350,9 @@ namespace VCC { namespace Debugger
 		}
 	}
 
-
-
 	void Debugger::QueueRun()
 	{
+		ApplyHaltpoints(true);
 		SectionLocker lock(Section_);
 
 		PendingCommand_ = ExecutionMode::Run;
@@ -370,6 +369,7 @@ namespace VCC { namespace Debugger
 
 	void Debugger::QueueHalt()
 	{
+		ApplyHaltpoints(false);
 		SectionLocker lock(Section_);
 
 		PendingCommand_ = ExecutionMode::Halt;

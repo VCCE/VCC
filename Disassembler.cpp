@@ -237,8 +237,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
 
     case WM_TIMER:
         if (wPrm == IDT_BRKP_TIMER) {
-            //if (EmuState.Debugger.IsHalted()) HighlightPC();
-            HighlightPC();
+            if (EmuState.Debugger.IsHalted()) HighlightPC();
             return TRUE;
         }
         break;
@@ -567,6 +566,18 @@ void HighlightPC()
 
         LastPC = adr;
     } else {
+
+        // Not found dissasemble from PC
+        int block;
+        int from;
+        if (RealAdrMode) {
+            block = (unsigned) adr >> 13;
+            from = adr & 0x1FFF;
+        } else {
+            from = adr;
+            block = 0;
+        }
+        Disassemble(from,block);
         LastPC = 0xFFFFFF;
     }
 }
@@ -691,9 +702,6 @@ void ListHaltpoints()
 /*******************************************************/
 void ApplyHaltpoints(bool flag)
 {
-
-//    if (flag) EmuState.Debugger.Enable_Halt(true);  //TODO: enable once?
-
     // Iterate over all defined haltpoints
     std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
     while (it != mHaltpoints.end()) {
@@ -741,12 +749,12 @@ void FindHaltpoints() {
             int pos = sDecoded.find("\n"+s);
             if (pos != std::string::npos) {
                 hp.lndx = pos+1;
-                mHaltpoints[adr] = hp;
+                mHaltpoints[it->first] = hp;
                 HighlightLine(pos+1,RGB(255,0,0),true);
             // Check first line
             } else if (s == sDecoded.substr(0,6)) {
                 hp.lndx = 0;
-                mHaltpoints[adr] = hp;
+                mHaltpoints[it->first] = hp;
                 HighlightLine(0,RGB(255,0,0),true);
             }
         }
