@@ -133,6 +133,22 @@ BOOL ProcEditDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
 // Handler for disassembly text richedit control
 BOOL ProcTextDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
 
+// Help text
+char DbgHelp[] =
+    "'Real Mem' checkbox selects Real vs CPU Addressing\n"
+    "'Os9 mode' checkbox selects special OS9 disassembly\n"
+    "'Address' is where address to disassemble is entered.\n"
+    "In Real Mem Os9 mode 'Address' is offset from 'Block'\n"
+    "'Decode' (or Enter key) decodes from the set address.\n"
+    "The following hot keys can be used:\n"
+    "  'P' (or F7) toggle pause / run\n"
+    "  'N' step to next instruction (while halted)\n"
+    "  'S' Set a breakpoint\n"
+    "  'R' Remove a breakpoint\n"
+    "  'L' List breakpoints\n"
+    "  'M' Redo disassembly after unchecking 'Real Mem'\n"
+    "  'I' Info. Shows Processor State window\n";
+
 /**************************************************/
 /*      Create Disassembler Dialog Window         */
 /**************************************************/
@@ -229,8 +245,9 @@ INT_PTR CALLBACK DisassemblerDlgProc
                 EnableBlockEdit(FALSE);
             }
             return TRUE;
-        case IDC_RESET:
-            ReCalcAddress();
+        case IDC_BTN_HELP:
+            MessageBox(hDismDlg,DbgHelp,"Usage",0);
+            SetFocus(hEdtAddr);
             return TRUE;
         }
         break;
@@ -262,6 +279,8 @@ LRESULT CALLBACK SubEditDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
         case 'S':  // Set haltpoint
         case 'R':  // Remove haltpoint
         case 'L':  // List haltpoints
+        case 'M':  // ReMap addressing to match Real Mem checkbox
+        case 'I':  // Bring up Processor State Window
             SendMessage(hDisText,msg,wPrm,lPrm);
             return TRUE;
         // Enter does the disassembly
@@ -309,7 +328,7 @@ LRESULT CALLBACK SubEditDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 }
 
 /***************************************************/
-/*    Process Disassembly text window messages     */
+/*       Process Disassembly window messages       */
 /***************************************************/
 LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
@@ -327,12 +346,23 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
             SetHaltpoint(hCtl,false);
             return TRUE;
             break;
+        // Show Procesor State Window
+        case 'I':
+            SendMessage(GetWindow(hDismDlg,GW_OWNER),
+                        WM_COMMAND,ID_PROCESSOR_STATE,0);
+            SetFocus(hEdtAddr);
+            return TRUE;
+            break;
         // List haltpoints
         case 'L':
             ListHaltpoints();
             return TRUE;
             break;
-        // Toggle pause
+        case 'M':
+            ReCalcAddress();
+            return TRUE;
+            break;
+        // Toggle pause or run
         case 'G':
         case 'P':
             if (EmuState.Debugger.IsHalted()) {
