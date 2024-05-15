@@ -23,6 +23,7 @@
 #include <iomanip>
 #include "tcc1014mmu.h"	//  FIXME: May want this decoupled from Debugger for Memory Write
 #include "audio.h"
+#include "Disassembler.h"
 
 namespace VCC { namespace Debugger
 {
@@ -349,10 +350,9 @@ namespace VCC { namespace Debugger
 		}
 	}
 
-
-
 	void Debugger::QueueRun()
 	{
+		ApplyHaltpoints(true);
 		SectionLocker lock(Section_);
 
 		PendingCommand_ = ExecutionMode::Run;
@@ -369,6 +369,7 @@ namespace VCC { namespace Debugger
 
 	void Debugger::QueueHalt()
 	{
+		ApplyHaltpoints(false);
 		SectionLocker lock(Section_);
 
 		PendingCommand_ = ExecutionMode::Halt;
@@ -377,8 +378,8 @@ namespace VCC { namespace Debugger
 
 	void Debugger::ToggleRun() {
 		if (IsHalted()) {
-			QueueRun();
 			PauseAudio(0);
+			QueueRun();
 		} else {
 			QueueHalt();
 			PauseAudio(1);
@@ -477,6 +478,25 @@ namespace VCC { namespace Debugger
 		MemWrite8(memWrite.value, memWrite.addr);
 	}
 
+	bool Debugger::Halt_Enabled()
+	{
+		return Halt_Enabled_TF;
+	}
+
+	void Debugger::Enable_Halt(bool flag)
+	{
+		Halt_Enabled_TF = flag;
+	}
+
+	bool Debugger::Break_Enabled()
+	{
+		return Break_Enabled_TF;
+	}
+
+	void Debugger::Enable_Break(bool flag)
+	{
+		Break_Enabled_TF = flag;
+	}
 
 } }
 

@@ -71,6 +71,7 @@ This file is part of VCC (Virtual Color Computer).
 #define NOP_I	0x12
 #define SYNC_I	0x13
 #define SEXW_I	0x14		//6309	
+#define HALT	0x15		//Vcc Halt_0x15
 #define LBRA_R	0x16
 #define LBSR_R	0x17
 #define DAA_I	0x19
@@ -438,6 +439,7 @@ This file is part of VCC (Virtual Color Computer).
 #define TFM4	0x3B	//6309
 #define	BITMD_M	0x3C	//6309
 #define LDMD_M	0x3D	//6309
+#define BREAK	0x3E    //VCC Halt_0x113e
 #define SWI3_I	0x3F
 #define COME_I	0x43	//6309
 #define DECE_I	0x4A	//6309

@@ -20,8 +20,7 @@
 #pragma once
 #include <Windows.h>
 
-namespace VCC { namespace Debugger { namespace UI {
-
+namespace VCC {
 void OpenDisassemblerWindow(HINSTANCE instance, HWND parent);
-
-}}}
+void ApplyHaltpoints(bool flag);
+}

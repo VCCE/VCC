@@ -103,6 +103,17 @@ namespace VCC { namespace Debugger
 
 		void Update();
 
+		// VCC HALT and BREAK instuctions status and enable. A BREAK instruction
+		// can be assembled into code using the lwasm assembler. The HALT
+		// instruction is used by Vcc as a breakpoint mechanism (called
+		// haltpoints to avoid conflict with the mechanism used by the source
+		// code debugger)  BREAK instruction is page two opcodes 0x113E and the
+		// HALT instruction is opcode 0x15.
+		bool Break_Enabled();
+		void Enable_Break(bool);
+		bool Halt_Enabled();
+		void Enable_Halt(bool);
+
 	protected:
 
 		enum class ExecutionMode
@@ -156,5 +167,7 @@ namespace VCC { namespace Debugger
 		bool							TraceTriggerChanged_ = false;
 		tracebuffer_type				TraceCaptured_;
 		std::map<int, long>				TraceMarks_;
+		bool							Break_Enabled_TF = false;
+		bool							Halt_Enabled_TF = false;
 	};
 } }

@@ -27,6 +27,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "logger.h"
 #include "string.h"
 #include "OpDecoder.h"
+#include "Disassembler.h"
 
 #if defined(_WIN64)
 #define MSABI 
@@ -192,6 +193,8 @@ static unsigned char *NatEmuCycles[] =
 	&NatEmuCycles42,
 	&NatEmuCycles53
 };
+
+int HaltedInsPending = 0;
 
 //END Global variables for CPU Emulation-------------------
 
@@ -6205,6 +6208,28 @@ void Stu_E(void)
 	CycleCounter+=NatEmuCycles65;
 }
 
+void Halt(void)
+{
+	if (EmuState.Debugger.Halt_Enabled()) {
+		HaltedInsPending = 1;
+		VCC::ApplyHaltpoints(0);
+		EmuState.Debugger.Halt();
+		PC_REG -= 1;
+	} else {
+		CycleCounter+=NatEmuCycles21;
+	}
+}
+
+void Break(void)
+{
+	if (EmuState.Debugger.Break_Enabled()) {
+		PendingInterupts = 0;
+		EmuState.Debugger.Halt();
+	} else {
+		CycleCounter+=NatEmuCycles21;
+	}
+}
+
 void(*JmpVec1[256])(void) = {
 	Neg_D,		// 00
 	Oim_D,		// 01
@@ -6227,7 +6252,7 @@ void(*JmpVec1[256])(void) = {
 	Nop_I,		// 12
 	Sync_I,		// 13
 	Sexw_I,		// 14
-	InvalidInsHandler,	// 15
+	Halt,	    // 15
 	Lbra_R,		// 16
 	Lbsr_R,		// 17
 	InvalidInsHandler,	// 18
@@ -6786,7 +6811,7 @@ void(*JmpVec3[256])(void) = {
 	Tfm4,		// 3B
 	Bitmd_M,	// 3C
 	Ldmd_M,		// 3D
-	InvalidInsHandler,		// 3E
+	Break,      // 3E
 	Swi3_I,		// 3F
 	InvalidInsHandler,		// 40
 	InvalidInsHandler,		// 41
@@ -6995,6 +7020,28 @@ int HD6309Exec(int CycleFor)
 	gCycleFor = CycleFor;
 	while (CycleCounter < CycleFor) {
 
+		// CPU is halted.
+		if (EmuState.Debugger.IsHalted())
+		{
+			return(CycleFor - CycleCounter);
+		}
+
+		// CPU is stepping.
+		if (EmuState.Debugger.IsStepping())
+		{
+			JmpVec1[MemRead8(PC_REG++)]();
+			EmuState.Debugger.Halt();
+			return(CycleFor - CycleCounter);
+		}
+
+		// Halted instruction maybe pending.
+		if (HaltedInsPending) {
+			JmpVec1[MemRead8(PC_REG++)]();
+			VCC::ApplyHaltpoints(1);
+			HaltedInsPending = 0;
+			return(CycleFor - CycleCounter);
+		}
+
 		if (PendingInterupts)
 		{
 			if (PendingInterupts & 4)
@@ -7015,12 +7062,6 @@ int HD6309Exec(int CycleFor)
 		if (SyncWaiting == 1)	//Abort the run nothing happens asyncronously from the CPU
 			return(0); // WDZ - Experimental SyncWaiting should still return used cycles (and not zero) by breaking from loop
 
-
-		// CPU is halted.
-		if (EmuState.Debugger.IsHalted())
-		{
-			return(CycleFor - CycleCounter);
-		}
 
 		// ANy CPU Breakpoints set?
 		if (!EmuState.Debugger.IsStepping() && !CPUBreakpoints.empty())
@@ -7061,13 +7102,6 @@ int HD6309Exec(int CycleFor)
 		if (EmuState.Debugger.IsTracing())
 		{
 			EmuState.Debugger.TraceCaptureAfter(CycleCounter, HD6309GetState());
-		}
-
-		// CPU is stepped.
-		if (EmuState.Debugger.IsStepping())
-		{
-			EmuState.Debugger.Halt();
-			break;
 		}
 
 		if (JS_Ramp_Clock < 0xFFFF) {
