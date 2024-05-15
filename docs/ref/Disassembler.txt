@@ -1,0 +1,44 @@
+
+The VCC Machine Language Disassembler
+
+The disassembler is accessed via the Debugger/Disassembly window
+
+Basic operation
+
+The disassembler works by examining the byte at the disassembly start address.  If it is a valid 6x09 opcode the required subsequent bytes are taken as operands and a string is produced containing the Address, the bytes used, the opcode, and the operands in assembler format. If the byte at the current address is not a valid opcode an FCB directive is emmitted instead of a opcode.  It then proceeds to the next instruction and repeats.
+`
+After disassembly approximately 400 instructions the result is displayed in the disassembly text area. If a user clicks in this area an instruction line is selected.  The currently selected line is indicated by a vertical bar cursor (called a caret) at the line's start. The user can scroll through the text using the arrows and page up/down keys.
+
+The disassembler does not know if the data is processes is valid machine code. When it mistakes operands or program data it can spew out garbage until it in sync with actual code.
+
+In addition to machine instructions the disassembler can also decode Os9 module headers. This is useful to find the execution offset for setting breakpoints or for resetting the disassembly start address.  The "Os9 mode" checkbox activates this feature. 
+
+Breakpoints
+
+Breakpoints are added using the Disassembly window.  A user selects an instruction line from the listing and presses the 'S' (Set) key.  The breakpoint can be removed by pressing the 'R' (Remove) key. When the breakpoint is set the address in the listing is highlighted by turning red.
+
+When a breakpoint is created the opcode at the address is saved and replaced by a "HALT" ($15) instruction. When the CPU encounters this code VCC is paused and the original opcode is restored. When the CPU is started the HALT instruction is placed back into memory after executing the original instruction.
+
+When the CPU is halted the PC address in the disassembly window is highlighted by turning blue. The listing is scrolled if necessary to bring the instruction into view and if the PC is not in the disassembly buffer the buffer is reloaded with the PC at the top.
+
+The MMU maps CPU memory to real memory and Os9 must change the mapping tables often to support multitasking. To deal with this breakpoints are stored using real physical addresses instead of CPU addresses.
+
+Other Hotkeys
+
+Besides S and R other hotkeys are provided: 'L' to list all breakpoints, 'P' or 'G' to toggle pause, 'N' (next) to step one instruction when paused, and 'M' to reMap the addressing mode.  Addressing mode is discussed in the next section. Lastly, the 'I' hotkey brings up the Processor Status (Info) screen which shows current values of 6x09 registors.
+
+Addressing Modes
+
+Here the term "Real Address" refer to the addressing used to directly access the simulated memory chips and "CPU Address" means the 16 bit address the CPU can access and that is translated by the MMU to find the real address.  The disassembler can use and show either. The addressing mode is selected using the "Real Mem" checkbox. The appropriate address is entered into the "Address" box for disassebly.
+
+A special case of Real addressing is Block-Offset.  This mode is active when both the "Real Mem" and "Os9 mode" checkboxes are checked.  The "Block entry box becomes active for user to enter the block number.  The offset is entered in the "Address" box. The OS9 "mdir -e" gives block and offset of all loaded program modules, these can be entered directly with block-offset addressing. 
+
+If a user presses the "M" key (reMap) after changing the addressing mode the disassembler will attempt to convert the last address entered to match the new mode. For example if the the disassembly was done in real address mode and the checkbox real mem was then unchecked and 'M' key pressed the disassembler will attempt to convert the disassembly from real to CPU addresses. If successfull only the addresses in the disassembly will change.
+
+Using real addressing for disassembly is not witout issues. When dealing with OS9 modules the conversion from real to CPU addressing will often fail.  OS9 is servicing interrupts and running shells waiting for user input.  The module being disassembled is unlikely to be currently mapped by MMU so there are no coresponding CPU addresses that match the real addresses in the disassembly. Another problem is OS9 Modules can cross 8K block boundaries the blocks might not be contigous. The disassembler ends up decoded the wrong block for the part of the module in the second block.  Another problem is extended addressing instruction operands are CPU address, not real addresses.
+
+CPU addressing has other issues. When running OS9 one can not easily set breakpoints using CPU addresses because module code is only mapped when the module is active and the CPU address is not known with out knowing the contents of the MMU registers when are often changing.
+
+To debug OS9 code one should start with setting at least one breakpoint near the start of the module and then execute the module to force the CPU to stop at the breakpoint.  The module will be mapped by the MMU so the "M" key will work to convert to CPU addressing.  Debugging can then proceed using CPU addesses.
+
+
