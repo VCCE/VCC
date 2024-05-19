@@ -105,10 +105,10 @@ std::string sDecoded = {};
 
 // mHaltpoints container.
 // A new style breakpoint is named 'Haltpoint' to avoid conflict
-// with the structure used by the source code debugger. The real
-// address and instruction at the breakpoint are saved. Haltpoints
-// are stored in Haltpoints std::map container. Haltpoints
-// are placed before the cpu enters run state and are removed
+// with the breakpoints structure used by the source code debugger.
+// The real address and instruction at the breakpoint are saved.
+// Haltpoints are stored in Haltpoints std::map container. Haltpoints
+// are active when the cpu is in run state and are inactive
 // when the cpu is halted.
 struct Haltpoint
 {
@@ -719,9 +719,9 @@ void ListHaltpoints()
                 s += "\n";
             it++;
         }
-        MessageBox(hDismDlg,s.c_str(),"Haltpoints",0);
+        MessageBox(hDismDlg,s.c_str(),"Breakpoints",0);
     } else {
-        MessageBox(hDismDlg,"No haltpoints","Haltpoints",0);
+        MessageBox(hDismDlg,"No breakpoints","Breakpoints",0);
     }
     return;
 }
