@@ -83,6 +83,7 @@ int DecodeModHdr(unsigned short, unsigned short, std::string *mhdr);
 int FindLineNdx(HWND);
 void SetHaltpoint(HWND,bool);
 void ListHaltpoints();
+void KillHaltpoints();
 void FindHaltpoints();
 void HighlightPC();
 void UnHighlightPC();
@@ -147,7 +148,8 @@ char DbgHelp[] =
     "  'R' Remove a breakpoint\n"
     "  'L' List breakpoints\n"
     "  'M' Redo disassembly after unchecking 'Real Mem'\n"
-    "  'I' Info. Shows Processor State window\n";
+    "  'I' Info. Shows Processor State window\n"
+    "  'K' Kill. Removes all breakpoints\n";
 
 /**************************************************/
 /*      Create Disassembler Dialog Window         */
@@ -281,6 +283,7 @@ LRESULT CALLBACK SubEditDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
         case 'L':  // List haltpoints
         case 'M':  // ReMap addressing to match Real Mem checkbox
         case 'I':  // Bring up Processor State Window
+        case 'K':  // Remove all breakpoints
             SendMessage(hDisText,msg,wPrm,lPrm);
             return TRUE;
         // Enter does the disassembly
@@ -351,6 +354,11 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
             SendMessage(GetWindow(hDismDlg,GW_OWNER),
                         WM_COMMAND,ID_PROCESSOR_STATE,0);
             SetFocus(hEdtAddr);
+            return TRUE;
+            break;
+        // Remove all haltpoints
+        case 'K':
+            KillHaltpoints();
             return TRUE;
             break;
         // List haltpoints
@@ -724,6 +732,21 @@ void ListHaltpoints()
         MessageBox(hDismDlg,"No breakpoints","Breakpoints",0);
     }
     return;
+}
+
+/*******************************************************/
+/*               Remove all haltpoints                 */
+/*******************************************************/
+void KillHaltpoints()
+{
+    std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
+    while (it != mHaltpoints.end()) {
+        int realaddr = it->first;
+        Haltpoint hp = it->second;
+        ApplyHaltPoint(hp,false);
+        mHaltpoints.erase(realaddr);
+        it++;
+    }
 }
 
 /*******************************************************/
