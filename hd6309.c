@@ -7023,9 +7023,8 @@ void(*JmpVec3[256])(void) = {
 
 // Stepping check for Tfm and step over it
 void StepIns() {
-	DoingTFM = false;
 	JmpVec1[MemRead8(PC_REG++)]();
-	while (DoingTFM && W_REG != 0)
+	while (DoingTFM)
 		JmpVec1[MemRead8(PC_REG++)]();
 }
 
