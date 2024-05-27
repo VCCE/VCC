@@ -370,7 +370,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 
 				case ID_DISASSEMBLER:
-					//VCC::Debugger::UI::OpenDisassemblerWindow(EmuState.WindowInstance, EmuState.WindowHandle);
 					VCC::OpenDisassemblerWindow(EmuState.WindowInstance, EmuState.WindowHandle);
 					break;
 
@@ -715,6 +714,9 @@ void DoHardReset(SystemState* const HRState)
 	// Only Processor Space (64K) is watched at the moment.
 	HRState->Debugger.Reset();
 	// Debugger ---------------------
+
+	// Remove all haltpoints
+	VCC::KillHaltpoints();
 
 	if (HRState->RamBuffer == NULL)
 	{

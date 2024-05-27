@@ -245,7 +245,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
         switch (LOWORD(wPrm)) {
         case IDCLOSE:
         case WM_DESTROY:
-            ApplyHaltpoints(false); // Remove haltpoints
+            KillHaltpoints(); // Remove haltpoints
             DestroyWindow(hDlg);
             hDismDlg = NULL;
             return FALSE;

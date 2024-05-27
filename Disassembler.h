@@ -23,4 +23,5 @@
 namespace VCC {
 void OpenDisassemblerWindow(HINSTANCE instance, HWND parent);
 void ApplyHaltpoints(bool flag);
+void KillHaltpoints();
 }
