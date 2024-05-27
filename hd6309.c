@@ -7050,8 +7050,9 @@ int HD6309Exec(int CycleFor)
 			return(CycleFor - CycleCounter);
 		}
 
-		// Halted instruction maybe pending.
+		// Halted instruction pending.
 		if (HaltedInsPending) {
+			VCC::ApplyHaltpoints(0);
 			StepIns();
 			VCC::ApplyHaltpoints(1);
 			HaltedInsPending = 0;
