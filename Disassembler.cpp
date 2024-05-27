@@ -56,20 +56,15 @@ HWND hEdtAPPY = NULL;  // Apply button
 HWND hDisText = NULL;  // Richedit20 box for output
 HWND hErrText = NULL;  // Error text box
 
-// Address mode of disassembly
-enum AddrMode { ADR_NULL, ADR_CPU, ADR_REAL, ADR_BLOCK };
-int PrevAdrMode = ADR_NULL;
-bool RealAdrMode = FALSE;
-
 // local references
 INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
 int RealBlock(int);
 int CpuBlock(int);
-int CpuToReal(int); 
-int RealToCpu(int); 
+void ToggleAddrMode();
+int CpuToReal(int);
+int RealToCpu(int);
 void DecodeAddr();
 void Disassemble(unsigned short, unsigned short);
-void ReCalcAddress();
 int HexToUint(char *);
 void EnableBlockEdit(bool);
 
@@ -80,29 +75,43 @@ std::string FmtLine(int,std::string,std::string,std::string,std::string);
 
 int DecodeModHdr(unsigned short, unsigned short, std::string *mhdr);
 
-int FindLineNdx(HWND);
+void SetCurrentLine();
 void SetHaltpoint(HWND,bool);
 void ListHaltpoints();
 void KillHaltpoints();
 void FindHaltpoints();
 void HighlightPC();
+void HighlightText();
 void UnHighlightPC();
 void HighlightLine(int,COLORREF,bool);
 
+void SetErrorText(const char *);
+void ClrErrorText();
+
 // Static local variables
-bool UsePhyAdr = FALSE;
+//bool RealAdrMode = FALSE;
+bool RealAdrMode = FALSE;
 bool Os9Decode = FALSE;
 
 int LastPC = 0xFFFFFF;
 int PCline = std::string::npos;
 
 // MMUregs at start of last decode
-//MMUState MMUregs;
+MMUState MMUregs;
 
 char initTxt[] = "Address and Block are hexadecimal";
 
+COLORREF ErrorTxtColor = RGB(0,0,0);
+HBRUSH hbrErrorTxt = NULL;
+
 // Disassembled code goes into string here
 std::string sDecoded = {};
+
+// Number of lines in disassembly;
+int NumDisLines = 0;
+int DisLineNdx[MAXLINES];
+int DisLineAdr[MAXLINES];
+int CurrentLineNum=-1;
 
 // mHaltpoints container.
 // A new style breakpoint is named 'Haltpoint' to avoid conflict
@@ -113,8 +122,8 @@ std::string sDecoded = {};
 // when the cpu is halted.
 struct Haltpoint
 {
-    int lndx;
-    int addr;
+    int addr;  // Real address
+    int lndx;  // Char index into text
     unsigned char instr;
     bool placed;
 };
@@ -142,12 +151,12 @@ char DbgHelp[] =
     "In Real Mem Os9 mode 'Address' is offset from 'Block'\n"
     "'Decode' (or Enter key) decodes from the set address.\n"
     "The following hot keys can be used:\n"
-    "  'P' (or F7) toggle pause / run\n"
-    "  'N' step to next instruction (while halted)\n"
-    "  'S' Set a breakpoint\n"
+    "  'P' or 'G' or F7) toggle pause / run\n"
+    "  'N' or 'S' step to next instruction while halted\n"
+    "  'B' Set a breakpoint\n"
     "  'R' Remove a breakpoint\n"
     "  'L' List breakpoints\n"
-    "  'M' Redo disassembly after unchecking 'Real Mem'\n"
+    "  'M' Toggle between Real and CPU address mode\n"
     "  'I' Info. Shows Processor State window\n"
     "  'K' Kill. Removes all breakpoints\n";
 
@@ -158,9 +167,9 @@ void
 OpenDisassemblerWindow(HINSTANCE hInstance, HWND hParent)
 {
     if (hDismDlg == NULL) {
-        hDismDlg = CreateDialog ( hInstance, 
+        hDismDlg = CreateDialog ( hInstance,
                                   MAKEINTRESOURCE(IDD_DISASSEMBLER),
-                                  hParent, 
+                                  hParent,
                                   DisassemblerDlgProc );
         ShowWindow(hDismDlg, SW_SHOWNORMAL);
     }
@@ -200,22 +209,37 @@ INT_PTR CALLBACK DisassemblerDlgProc
 
         // Inital values in text boxes
         SetWindowTextA(hDisText,"");
-        SetWindowTextA(hEdtAddr,"0");
-        SetWindowTextA(hEdtBloc,"0");
-        SetWindowTextA(hErrText,initTxt);
+        ClrErrorText();
 
-        // Disable Block text box until needed
+        // Disable Block edit box until needed
         EnableBlockEdit(FALSE);
 
+// Disable autoscroll of disassembly text
+//{
+// LRESULT prevOptions = SendMessage(hDisText, EM_GETOPTIONS, 0, 0);
+// SendMessage(hDisText, EM_SETOPTIONS, ECOOP_SET, prevOptions & ~ECO_AUTOVSCROLL);
+//}
+
         // Start a timer for showing current status
-		SetTimer(hDlg, IDT_BRKP_TIMER, 250, (TIMERPROC)NULL);
+        SetTimer(hDlg, IDT_BRKP_TIMER, 250, (TIMERPROC)NULL);
         break;
 
     case WM_PAINT:
-        // Give edit control focus 
+        // Give edit control focus
         SetFocus(hEdtAddr);
         SendMessage(hEdtAddr,EM_SETSEL,0,-1); //Select contents
         return FALSE;
+
+    case WM_CTLCOLORSTATIC:
+        if ((HWND)lPrm == hErrText) {
+            HDC hdc = (HDC) wPrm;
+            if (hbrErrorTxt==NULL)
+                hbrErrorTxt = CreateSolidBrush(GetSysColor(COLOR_3DFACE));
+            SetTextColor(hdc,ErrorTxtColor);
+            SetBkColor(hdc,GetSysColor(COLOR_3DFACE));
+            return (INT_PTR) hbrErrorTxt;
+        }
+        break;
 
     case WM_COMMAND:
         switch (LOWORD(wPrm)) {
@@ -232,7 +256,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
         case IDC_BTN_OS9:
             if (IsDlgButtonChecked(hDismDlg,IDC_BTN_OS9)==BST_CHECKED) {
                 Os9Decode = TRUE;
-                EnableBlockEdit(UsePhyAdr);
+                EnableBlockEdit(RealAdrMode);
             } else {
                 Os9Decode = FALSE;
                 EnableBlockEdit(FALSE);
@@ -240,10 +264,10 @@ INT_PTR CALLBACK DisassemblerDlgProc
             return TRUE;
         case IDC_PHYS_MEM:
             if (IsDlgButtonChecked(hDlg,IDC_PHYS_MEM)==BST_CHECKED) {
-                UsePhyAdr = TRUE;
+                RealAdrMode = TRUE;
                 EnableBlockEdit(Os9Decode);
             } else {
-                UsePhyAdr = FALSE;
+                RealAdrMode = FALSE;
                 EnableBlockEdit(FALSE);
             }
             return TRUE;
@@ -256,7 +280,12 @@ INT_PTR CALLBACK DisassemblerDlgProc
 
     case WM_TIMER:
         if (wPrm == IDT_BRKP_TIMER) {
-            if (EmuState.Debugger.IsHalted()) HighlightPC();
+            HighlightText();
+//            if (EmuState.Debugger.IsHalted()) {
+//                HighlightPC();
+//            } else {
+//                UnHighlightPC();
+//           }
             return TRUE;
         }
         break;
@@ -271,29 +300,30 @@ INT_PTR CALLBACK DisassemblerDlgProc
 LRESULT CALLBACK SubEditDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 {
     HWND nxtctl;
+    char ch;
     switch (msg) {
     case WM_CHAR:
-        switch (toupper(wPrm)) {
+        ch = toupper(wPrm);
+        // Hex digits handled by control
+        if (strchr("0123456789ABCDEF",ch)) {
+            wPrm = ch;
+            break;
+        }
         // Hot keys for disassembly text window
-        case 'G':  // Toggle run
-        case 'P':  // Toggle run
-        case 'N':  // Next
-        case 'S':  // Set haltpoint
-        case 'R':  // Remove haltpoint
-        case 'L':  // List haltpoints
-        case 'M':  // ReMap addressing to match Real Mem checkbox
-        case 'I':  // Bring up Processor State Window
-        case 'K':  // Remove all breakpoints
-            SendMessage(hDisText,msg,wPrm,lPrm);
+        if (strchr("GPNLMIK",ch)) {
+            SendMessage(hDisText,msg,ch,lPrm);
             return TRUE;
+        }
+        // Other characters
+        switch (ch) {
         // Enter does the disassembly
         case VK_RETURN:
             DecodeAddr();
             return TRUE;
         // Tab moves between active edit boxes
         case VK_TAB:
-            SetWindowTextA(hErrText,initTxt);
-            if (hCtl==hEdtAddr && UsePhyAdr && Os9Decode) {
+            ClrErrorText();
+            if (hCtl==hEdtAddr && RealAdrMode && Os9Decode) {
                 nxtctl = hEdtBloc;
             } else {
                 nxtctl = hEdtAddr;
@@ -301,8 +331,17 @@ LRESULT CALLBACK SubEditDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
             SetFocus(nxtctl);
             SendMessage(nxtctl,EM_SETSEL,0,-1); //Select contents
             return TRUE;
+        // keys used by edit control
+        case VK_BACK:
+        case VK_LEFT:
+        case VK_RIGHT:
+            break;
+        // ignore unmatched keys
+        default:
+            return TRUE;
         }
         break;
+
     case WM_KEYDOWN:
         switch (wPrm) {
         case VK_DOWN:
@@ -338,13 +377,14 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
     switch (msg) {
     case WM_CHAR:
         switch (toupper(wPrm)) {
-        // Create Haltpoint
-        case 'S':
+
+        // TODO Toggle Breakpoint
+        case 'B':
             EmuState.Debugger.Enable_Halt(true);  //TODO: enable just once?
             SetHaltpoint(hCtl,true);
             return TRUE;
             break;
-        // Remove Haltpoint
+        // Remove Breakpoint
         case 'R':
             SetHaltpoint(hCtl,false);
             return TRUE;
@@ -367,22 +407,23 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
             return TRUE;
             break;
         case 'M':
-            ReCalcAddress();
+            ToggleAddrMode();
             return TRUE;
             break;
         // Toggle pause or run
         case 'G':
         case 'P':
             if (EmuState.Debugger.IsHalted()) {
-			    PauseAudio(0);
-			    EmuState.Debugger.QueueRun();
+                PauseAudio(0);
+                EmuState.Debugger.QueueRun();
             } else {
-			    EmuState.Debugger.QueueHalt();
-			    PauseAudio(1);
+                EmuState.Debugger.QueueHalt();
+                PauseAudio(1);
             }
             return TRUE;
             break;
         // Step Next
+        case 'S':
         case 'N':
             EmuState.Debugger.QueueStep();
             return TRUE;
@@ -394,10 +435,8 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
         }
         break;
 
-    // Use FindLineNdx to position caret to start of current line
-    case WM_PAINT:
     case WM_LBUTTONUP:
-        FindLineNdx(hCtl);
+        SetCurrentLine();
         break;
     case WM_KEYUP:
         switch (wPrm) {
@@ -405,7 +444,7 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
         case VK_NEXT:
         case VK_DOWN:
         case VK_UP:
-            FindLineNdx(hCtl);
+            SetCurrentLine();
             break;
         }
         break;
@@ -413,6 +452,26 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 
     // Forward messages to original control
     return CallWindowProc(TextDlgProc,hCtl,msg,wPrm,lPrm);
+}
+
+/**************************************************/
+/*             Set Error text                     */
+/**************************************************/
+void SetErrorText(const char * txt) {
+    ErrorTxtColor = RGB(255,0,0);
+    SendMessage(hDismDlg,WM_CTLCOLORSTATIC,
+            (WPARAM) GetDC(hErrText),(LPARAM) hErrText);
+    SetWindowTextA(hErrText,txt);
+}
+
+/**************************************************/
+/*             Clr Error text                     */
+/**************************************************/
+void ClrErrorText() {
+    ErrorTxtColor = RGB(0,0,0);
+    SendMessage(hDismDlg,WM_CTLCOLORSTATIC,
+            (WPARAM) GetDC(hErrText),(LPARAM) hErrText);
+    SetWindowTextA(hErrText,initTxt);
 }
 
 /**************************************************/
@@ -432,84 +491,58 @@ void EnableBlockEdit(bool flag) {
 }
 
 /***************************************************/
-/*       Recalc Address from previous mode         */
+/*    Toggle address mode between CPU and Real     */
 /***************************************************/
-void ReCalcAddress()
+void ToggleAddrMode()
 {
-    // current address mode
-    int NewAdrMode;
-    if (!IsDlgButtonChecked(hDismDlg,IDC_PHYS_MEM)==BST_CHECKED)
-        NewAdrMode = ADR_CPU;
-    else if (IsDlgButtonChecked(hDismDlg,IDC_BTN_OS9)==BST_CHECKED)
-        NewAdrMode = ADR_BLOCK;
-    else
-        NewAdrMode = ADR_REAL;
-
-    // current address and block
     char buf[16];
-    GetWindowText(hEdtAddr, buf, 8);
-    int addr = HexToUint(buf);
-    GetWindowTextA(hEdtBloc,buf, 8);
-    int block = HexToUint(buf);
+    int addr;
+    int block;
     int tmpadr;
 
-    // Compare previous Address Modes
-    switch (PrevAdrMode) {
-    case ADR_CPU:
-        switch (NewAdrMode) {
-        case ADR_REAL:                  // Recalc CPU to Real
-            addr = CpuToReal(addr);
-            break;
-        case ADR_BLOCK:                 // Recalc CPU to Block
-            block = CpuBlock(addr);
-            addr = addr & 0x1FFF;
-            break;
-        }
-        break;
-    case ADR_REAL:
-        switch (NewAdrMode) {
-        case ADR_CPU:                   // Recalc Real to CPU
-            tmpadr = RealToCpu(addr);
-            if (tmpadr < 0) {
-                SetWindowTextA(hErrText,"Address not Mapped by MMU");
-                Button_SetCheck(GetDlgItem(hDismDlg,IDC_PHYS_MEM),BST_CHECKED);
-                UsePhyAdr = TRUE;
-                NewAdrMode = ADR_REAL;
-            } else {
-                addr = tmpadr;
-            }
-            break;
-        case ADR_BLOCK:                 // Recalc Real to Block
-            block = (addr >> 13);
-            addr = addr & 0x1FFF;
-            break;
-        }
-        break;
-    case ADR_BLOCK:
-        switch (NewAdrMode) {
-        case ADR_REAL:                  // Recalc Block to Real
+    // Get real or CPU address of top line
+    GetWindowText(hEdtAddr, buf, 8);
+    addr = HexToUint(buf);
+
+    // Map address to CPU if possible
+    if (RealAdrMode) {
+        // Adjust for block addressing
+        if (Os9Decode) {
+            GetWindowTextA(hEdtBloc,buf, 8);
+            block = HexToUint(buf);
             addr += block * 0x2000;
-            break;
-        case ADR_CPU:                   // Recalc Block to CPU
-            tmpadr = RealToCpu(addr+block*0x2000);
-            if (tmpadr < 0) {
-                SetWindowTextA(hErrText,"Address not Mapped by MMU");
-                Button_SetCheck(GetDlgItem(hDismDlg,IDC_PHYS_MEM),BST_CHECKED);
-                EnableWindow(hEdtBloc,TRUE);
-                UsePhyAdr = TRUE;
-                NewAdrMode = ADR_BLOCK;
-            } else {
-                addr = tmpadr;
-            }
-            break;
         }
-        break;
+        // Convert to CPU address
+        tmpadr = RealToCpu(addr);
+        if (tmpadr < 0) {
+            SetErrorText("Address not Mapped by MMU");
+            return;
+        }
+        addr = tmpadr;
+        RealAdrMode = false;
+        Button_SetCheck(GetDlgItem(hDismDlg,IDC_PHYS_MEM),BST_UNCHECKED);
+        EnableBlockEdit(FALSE);
+
+    // Map address to real
+    } else {
+        // Convert to Real address
+        tmpadr = CpuToReal(addr);
+        // Adjust for block addressing
+        if (Os9Decode) {
+            block = (tmpadr >> 13);
+            addr = tmpadr & 0x1FFF;
+            EnableBlockEdit(TRUE);
+        } else {
+            addr = tmpadr;
+            block = 0;
+        }
+        SetWindowText(hEdtBloc,HEXSTR(block,0).c_str());
+        RealAdrMode = true;
+        Button_SetCheck(GetDlgItem(hDismDlg,IDC_PHYS_MEM),BST_CHECKED);
     }
-    // Put updated address and block
+
     SetWindowText(hEdtAddr,HEXSTR(addr,0).c_str());
-    SetWindowTextA(hEdtBloc,HEXSTR(block,0).c_str());
-    if (PrevAdrMode != NewAdrMode) DecodeAddr();
-    return;
+    DecodeAddr();
 }
 
 /***************************************************/
@@ -526,11 +559,11 @@ int CpuToReal(int cpuadr) {
 /***************************************************/
 int CpuBlock(int cpuadr)
 {
-    MMUState regs = GetMMUState();
-    if (regs.ActiveTask == 0) {
-        return regs.Task0[(cpuadr >> 13) & 7];
+    int mmublk = (cpuadr>>13) & 7;
+    if (MMUregs.ActiveTask == 0) {
+        return MMUregs.Task0[mmublk];
     } else {
-        return regs.Task1[(cpuadr >> 13) & 7];
+        return MMUregs.Task1[mmublk];
     }
 }
 
@@ -544,12 +577,11 @@ int RealToCpu(int realaddr)
     int cpuadr;
     int i;
 
-    MMUState regs = GetMMUState();
     for (i=0; i<8; i++) {
-        if (regs.ActiveTask == 0) {
-            if (regs.Task0[i] == block) break;
+        if (MMUregs.ActiveTask == 0) {
+            if (MMUregs.Task0[i] == block) break;
         } else {
-            if (regs.Task1[i] == block) break;
+            if (MMUregs.Task1[i] == block) break;
         }
     }
     if (i < 8) {
@@ -560,33 +592,111 @@ int RealToCpu(int realaddr)
     return cpuadr;
 }
 
+/*******************************************************/
+/*   Highlight address field in disassembly line       */
+/*******************************************************/
+void HighlightLine(int LineNdx,COLORREF color,bool bold) {
+    CHARFORMATA fmt;
+    fmt.cbSize = sizeof(fmt);
+    fmt.crTextColor = color;
+    if (bold) {
+        fmt.dwEffects = CFE_BOLD;
+    } else {
+        fmt.dwEffects = 0;
+    }
+    fmt.dwMask = CFM_COLOR | CFM_BOLD;
+    SendMessage(hDisText,EM_SETSEL,LineNdx,LineNdx+6);
+    SendMessage(hDisText,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM) &fmt);
+    SendMessage(hDisText,EM_SETSEL,LineNdx,LineNdx);
+}
+
+/*******************************************************/
+/*    Highlight PC and breakpoints in disassembly      */
+/*******************************************************/
+void HighlightText() {
+
+    DWORD SelMin;
+    DWORD SelMax;
+
+    // Get current caret location and selection
+    SendMessage(hDisText,EM_GETSEL,(WPARAM) &SelMin,(LPARAM) &SelMax);
+
+    // Just return it if anything is currently selected
+    if (SelMin != SelMax) return;
+
+    if (EmuState.Debugger.IsHalted()) {
+        HighlightPC();
+    } else {
+        UnHighlightPC();
+    }
+    //FindHaltpoints();
+
+    // Restore original selection.
+    SendMessage(hDisText,EM_SETSEL,(WPARAM) SelMin,(LPARAM) SelMax);
+}
+
+/*******************************************************/
+/*       Find and highlight all haltpoints             */
+/*******************************************************/
+void FindHaltpoints() {
+    std::string s;
+    std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
+    while (it != mHaltpoints.end()) {
+        int adr = it->first;
+        if (!RealAdrMode) adr = RealToCpu(adr);
+        if (!(adr < 0)) {
+            Haltpoint hp = it->second;
+            s = HEXSTR(adr,6);
+            // Search newline followed by address
+            int pos = sDecoded.find("\n"+s);
+            if (pos != std::string::npos) {
+                hp.lndx = pos+1;
+                mHaltpoints[it->first] = hp;
+                HighlightLine(pos+1,RGB(255,0,0),true);
+            // Check first line
+            } else if (s == sDecoded.substr(0,6)) {
+                hp.lndx = 0;
+                mHaltpoints[it->first] = hp;
+                HighlightLine(0,RGB(255,0,0),true);
+            }
+        }
+        it++;
+    }
+}
+
 /**************************************************/
 /*          Highlight the Current PC              */
 /**************************************************/
 void HighlightPC()
 {
+    // TODO: Check if already highlighted.
+    // TODO: More efficient search for address matches
+
     // Disassembly has to have a least one line
     if (sDecoded.find('\n') == std::string::npos) return;
 
-    int adr;
     CPUState state = CPUGetState();
-    if (RealAdrMode) {
-        adr = CpuToReal(state.PC);
-    } else {
-        adr = state.PC;
-    }
+    int adr = state.PC;
 
     // If PC already highlighted just return
-    if (adr == LastPC) return;
+    if (LastPC == adr) return;
 
     // Remove highlight from previous PC line
     UnHighlightPC();
 
     // Search for PC line in disassembly.
-    std::string sAdr = HEXSTR(adr,6);
+    std::string sAdr;
+    if (RealAdrMode) {
+        sAdr = HEXSTR(CpuToReal(adr),6);
+    } else {
+        sAdr = HEXSTR(adr,6);
+    }
+
+    // Search for line starting with Search address
     PCline = sDecoded.find('\n'+ sAdr);
     if (PCline != std::string::npos) {
         PCline += 1;
+    // Failing that tru the first line
     } else if (sAdr.compare(sDecoded.substr(0,6)) == 0) {
         PCline = 0;
     } else {
@@ -603,19 +713,20 @@ void HighlightPC()
         if (f) SetFocus(f);
 
         LastPC = adr;
+
     } else {
 
-        // Not found dissasemble from PC
-        int block;
-        int from;
+        // Not found convert to CPU addressing and decode from PC
+        int from = adr;
         if (RealAdrMode) {
-            block = (unsigned) adr >> 13;
-            from = adr & 0x1FFF;
-        } else {
-            from = adr;
-            block = 0;
+            RealAdrMode = false;
+            Button_SetCheck(GetDlgItem(hDismDlg,IDC_PHYS_MEM),BST_UNCHECKED);
+            EnableBlockEdit(FALSE);
         }
-        Disassemble(from,block);
+        SetWindowText(hEdtAddr,HEXSTR(from,0).c_str());
+        DecodeAddr();
+
+        // PC should get painted on next timer event
         LastPC = 0xFFFFFF;
     }
 }
@@ -625,19 +736,22 @@ void HighlightPC()
 /**************************************************/
 void UnHighlightPC()
 {
-    if (PCline == std::string::npos) return;
-    std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
-    while (it != mHaltpoints.end()) {
-        Haltpoint hp = it->second;
+    if (PCline != std::string::npos) {
+        int pos = PCline;
+        PCline = std::string::npos;
+        std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
         // if was a breakpoint highlight it red
-        if (hp.lndx == PCline) {
-            HighlightLine(PCline,RGB(255,0,0),true);
-            return;
+        while (it != mHaltpoints.end()) {
+            Haltpoint hp = it->second;
+            if (hp.lndx == pos) {
+                HighlightLine(pos,RGB(255,0,0),true);
+                return;
+            }
+            it++;
         }
-        it++;
+        // Clear highlight
+        HighlightLine(pos,RGB(0,0,0),false);
     }
-    // Clear highlight
-    HighlightLine(PCline,RGB(0,0,0),false);
 }
 
 /***************************************************/
@@ -645,7 +759,7 @@ void UnHighlightPC()
 /***************************************************/
 void ApplyHaltPoint(Haltpoint &hp,bool flag)
 {
-	SectionLocker lock(Section_);
+    SectionLocker lock(Section_);
     if (flag) {
         if (!hp.placed) {
             // Be sure really not placed
@@ -673,15 +787,14 @@ void SetHaltpoint(HWND hCtl, bool flag)
     std::string s;
     Haltpoint hp;
     int realaddr;
-                                         
-    // The line index is used to get the haltpoint address
-    int LineNdx = FindLineNdx(hCtl);
-    if (LineNdx<0) return;
 
-    // Get the address of the instruction
-    s = sDecoded.substr(LineNdx,6);
-    int addr = stoi(s,0,16);
-    if (RealAdrMode) 
+    if ((CurrentLineNum < 0) || (CurrentLineNum >= MAXLINES))
+        return;
+
+    int lndx = DisLineNdx[CurrentLineNum];
+    int addr = DisLineAdr[CurrentLineNum];
+
+    if (RealAdrMode)
         realaddr = addr;
     else
         realaddr = CpuToReal(addr);
@@ -691,17 +804,17 @@ void SetHaltpoint(HWND hCtl, bool flag)
 
     // Update Haltpoint
     if (flag) {
-        hp.lndx = LineNdx;
+        hp.lndx = lndx;
         hp.addr = realaddr;
         ApplyHaltPoint(hp,true);
         mHaltpoints[realaddr] = hp;
-        HighlightLine(LineNdx,RGB(255,0,0),true);
+        HighlightLine(lndx,RGB(255,0,0),true);
 
     // Remove Haltpoint
     } else {
         ApplyHaltPoint(hp,false);
         mHaltpoints.erase(realaddr);
-        HighlightLine(LineNdx,RGB(0,0,0),false);
+        HighlightLine(lndx,RGB(0,0,0),false);
     }
 
     //PrintLogC("%X %X %s\n",hp.addr,hp.instr,hp.placed);
@@ -721,7 +834,7 @@ void ListHaltpoints()
             int realaddr = it->first;
             Haltpoint hp = it->second;
             s += HEXSTR(realaddr,4)+" "+HEXSTR(hp.instr,2);
-            if (hp.placed) 
+            if (hp.placed)
                 s += " p\n";
             else
                 s += "\n";
@@ -767,73 +880,32 @@ void ApplyHaltpoints(bool flag)
     return;
 }
 
-/*******************************************************/
-/*   Highlight address field in disassembly line       */
-/*******************************************************/
-void HighlightLine(int LineNdx,COLORREF color,bool bold) {
-    CHARFORMATA fmt;
-    fmt.cbSize = sizeof(fmt);
-    fmt.crTextColor = color;
-    if (bold) {
-        fmt.dwEffects = CFE_BOLD;
-    } else {
-        fmt.dwEffects = 0;
-    }
-    fmt.dwMask = CFM_COLOR | CFM_BOLD;
-    SendMessage(hDisText,EM_SETSEL,LineNdx,LineNdx+6);
-    SendMessage(hDisText,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM) &fmt);
-    SendMessage(hDisText,EM_SETSEL,LineNdx,LineNdx);
-}
-
-/*******************************************************/
-/*       Find and highlight all haltpoints             */
-/*******************************************************/
-// Called after redrawing the disassembly text
-void FindHaltpoints() {
-    std::string s;
-    std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
-    while (it != mHaltpoints.end()) {
-        int adr = it->first;
-        if (!RealAdrMode) adr = RealToCpu(adr);
-        if (!(adr < 0)) {
-            Haltpoint hp = it->second;
-            s = HEXSTR(adr,6);
-            // Search newline followed by address
-            int pos = sDecoded.find("\n"+s);
-            if (pos != std::string::npos) {
-                hp.lndx = pos+1;
-                mHaltpoints[it->first] = hp;
-                HighlightLine(pos+1,RGB(255,0,0),true);
-            // Check first line
-            } else if (s == sDecoded.substr(0,6)) {
-                hp.lndx = 0;
-                mHaltpoints[it->first] = hp;
-                HighlightLine(0,RGB(255,0,0),true);
-            }
-        }
-        it++;
-    }
-}
-
 /*********************************************************************/
-/* Find position of current line in disassambly string and set caret */
+/* Find position of current line in disassembly string and set caret */
 /*********************************************************************/
-int FindLineNdx(HWND hCtl)
+void SetCurrentLine()
 {
+    //TODO: This screws with scrolling
 
     // Ignore find if text is selected
     CHARRANGE range;
-    SendMessage(hCtl,EM_EXGETSEL,0,(LPARAM) &range);
-    if (range.cpMin!=range.cpMax) return -1;
-    
-    // Find line number and start position
-    int lnum = SendMessage(hCtl,EM_LINEFROMCHAR,range.cpMin,0);
-    int lndx = SendMessage(hCtl,EM_LINEINDEX,lnum,0);
+    SendMessage(hDisText,EM_EXGETSEL,0,(LPARAM) &range);
+    if (range.cpMin!=range.cpMax) return;
 
-    // Set caret to start of line
-    SendMessage(hCtl,EM_SETSEL,lndx,lndx);
+    // Find selected line number
+    int lnum = SendMessage(hDisText,EM_LINEFROMCHAR,range.cpMin,0);
+    int lndx = DisLineNdx[lnum];
 
-    return lndx;
+    // If line number has changed set caret to start of line
+    if (lnum != CurrentLineNum) {
+        CurrentLineNum = lnum;
+        SendMessage(hDisText,EM_SETSEL,lndx,lndx);
+    }
+
+//DEBUG
+//int topline = SendMessage(hCtl,EM_GETFIRSTVISIBLELINE,0,0);
+//PrintLogC("%d %d %X %d\n",lnum,DisLineAdr[lnum],lndx,topline);
+
 }
 
 /**************************************************/
@@ -845,45 +917,49 @@ void DecodeAddr()
     unsigned short FromAdr = 0;
     unsigned short Block = 0;
 
+    // Grab current MMUState
+    MMUregs = GetMMUState();
 
     // Get user specified address and maybe block offset
     GetWindowText(hEdtAddr, buf, 8);
     int addr = HexToUint(buf);
 
-    // OpDecoder uses a 16 bit PC so we have to use a Block number to
-    // offset to the real address. If OS9 mode the block number is
-    // input from the user, otherwise it is calculated.
-    if (UsePhyAdr) {
+    if (RealAdrMode) {
+        // OpDecoder uses 16 bit PC so we have to use a Block number to
+        // offset to the real address. If in OS9 mode the block number
+        // input from the user, otherwise it is calculated.
         if (Os9Decode) {
             GetWindowText(hEdtBloc, buf, 8);
             int blk = HexToUint(buf);
             if ((blk < 0) || (blk > 0x3FF)) {
-                SetWindowText(hErrText,"Invalid Block Number");
+                SetErrorText("Invalid Block Number");
+                return;
+            }
+            if (addr > 0xFFFF) {
+                SetErrorText("Invalid Address");
                 return;
             }
             Block = (unsigned short) blk;
             FromAdr = addr;
-            PrevAdrMode = ADR_BLOCK;
         } else {
             Block = (unsigned) addr >> 13;
+            if (Block > 0x3FF) {
+                SetErrorText("Invalid Address");
+                return;
+            }
             FromAdr = addr & 0x1FFF;
-            PrevAdrMode = ADR_REAL;
         }
     } else {
-        FromAdr = addr;
-        // If not using physical addressing disallow access I/O ports
-        if (FromAdr >= 0xFF00) { 
-            SetWindowText(hErrText,"Invalid start address");
+        // CPU addressing just check validity of address
+        if (addr > 0xFFFF) {
+            SetErrorText("Invalid Address");
             return;
         }
-        PrevAdrMode = ADR_CPU;
+        FromAdr = addr;
     }
 
-    //RealAdrMode controls Disassemble addressing
-    RealAdrMode = UsePhyAdr;
-
     Disassemble(FromAdr,Block);
-    FindHaltpoints();
+
     return;
 }
 
@@ -908,6 +984,7 @@ std::string FmtLine(int adr,
                     std::string opr,
                     std::string cmt)
 {
+    DisLineAdr[NumDisLines++] = adr;
     std::string s;
     s = HEXSTR(adr,6) + " " + PadRight(ins,11) + PadRight(opc,5);
     if (cmt.size() > 0)
@@ -1001,12 +1078,12 @@ void Disassemble( unsigned short FromAdr,
     SetWindowTextA(hDisText,"");
 
     unsigned short PC = FromAdr;
-    int numlines = 0;
+    NumDisLines = 0;
     bool modhdr = false;
 
     state.block = Block;
     state.phyAddr = RealAdrMode;
-    while (numlines < MAXLINES) {
+    while (NumDisLines < MAXLINES) {
 
         if (Os9Decode) {
             // Check for module header
@@ -1015,10 +1092,6 @@ void Disassemble( unsigned short FromAdr,
             if (hdrlen) {
                 modhdr = true;
                 PC += hdrlen;
-                if (hdrlen > 9)
-                    numlines += 8;
-                else
-                    numlines += 6;
             }
             sDecoded += hdr;
         }
@@ -1059,7 +1132,6 @@ void Disassemble( unsigned short FromAdr,
 
         // append disassembled line for output
         sDecoded += FmtLine(iaddr,HexInst,trace.instruction,trace.operand,comment);
-        numlines++;
 
         // Next instruction
         if (trace.bytes.size() > 0)
@@ -1069,7 +1141,19 @@ void Disassemble( unsigned short FromAdr,
     }
     // Put the completed disassembly
     SetWindowTextA(hDisText,Debugger::ToLPCSTR(sDecoded));
-    SetWindowTextA(hErrText,initTxt);
+
+    // Find line indexes
+    for (int lnum=0;lnum < NumDisLines;lnum++) {
+        DisLineNdx[lnum] = SendMessage(hDisText,EM_LINEINDEX,lnum,0);
+    }
+
+    // Highlight any haltpoints
+    FindHaltpoints();
+
+    // No line selected
+    CurrentLineNum = -1;
+
+    ClrErrorText();
 }
 
 /**************************************************/
