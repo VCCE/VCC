@@ -67,6 +67,8 @@ void DecodeAddr();
 void Disassemble(unsigned short, unsigned short);
 int HexToUint(char *);
 void EnableBlockEdit(bool);
+int FindAdrLine(int);
+bool BreakpointPC();
 
 std::string PadRight(std::string const&,size_t);
 std::string OpFDB(int,std::string,std::string,std::string);
@@ -78,25 +80,25 @@ int DecodeModHdr(unsigned short, unsigned short, std::string *mhdr);
 void SetCurrentLine();
 void SetHaltpoint(HWND,bool);
 void ListHaltpoints();
-void KillHaltpoints();
 void FindHaltpoints();
 void HighlightPC();
-void HighlightText();
 void UnHighlightPC();
-void HighlightLine(int,COLORREF,bool);
+void HighlightLine(int,COLORREF,int);
 
 void SetErrorText(const char *);
 void ClrErrorText();
 
-// Static local variables
-//bool RealAdrMode = FALSE;
+// RealAdrMode indicates what addressing is used for
+// sDecoded (disassembly text) and the DisLineAdr array.
 bool RealAdrMode = FALSE;
+
+// Os9Decode indicates block and offset used for start address
 bool Os9Decode = FALSE;
 
-int LastPC = 0xFFFFFF;
-int PCline = std::string::npos;
+int HighlightedPC = -1;
+int PClinePos = 0;
 
-// MMUregs at start of last decode
+// MMUregs at time of the last decode
 MMUState MMUregs;
 
 char initTxt[] = "Address and Block are hexadecimal";
@@ -104,14 +106,11 @@ char initTxt[] = "Address and Block are hexadecimal";
 COLORREF ErrorTxtColor = RGB(0,0,0);
 HBRUSH hbrErrorTxt = NULL;
 
-// Disassembled code goes into string here
-std::string sDecoded = {};
-
-// Number of lines in disassembly;
-int NumDisLines = 0;
-int DisLineNdx[MAXLINES];
-int DisLineAdr[MAXLINES];
-int CurrentLineNum=-1;
+std::string sDecoded = {}; // Disassembly string
+int NumDisLines = 0;       // Number of lines in disassembly;
+int DisLinePos[MAXLINES];  // Start positions of disassembly lines
+int DisLineAdr[MAXLINES];  // Instruction addresses of disassembly lines
+int CurrentLineNum=-1;     // CurrentLineNum selected. (-1 == none)
 
 // mHaltpoints container.
 // A new style breakpoint is named 'Haltpoint' to avoid conflict
@@ -123,7 +122,7 @@ int CurrentLineNum=-1;
 struct Haltpoint
 {
     int addr;  // Real address
-    int lndx;  // Char index into text
+    int lpos;  // Char index into text
     unsigned char instr;
     bool placed;
 };
@@ -153,8 +152,8 @@ char DbgHelp[] =
     "The following hot keys can be used:\n"
     "  'P' or 'G' or F7) toggle pause / run\n"
     "  'N' or 'S' step to next instruction while halted\n"
-    "  'B' Set a breakpoint\n"
-    "  'R' Remove a breakpoint\n"
+    "  'B' Set breakpoint at selected line\n"
+    "  'R' Remove breakpoint at selected line\n"
     "  'L' List breakpoints\n"
     "  'M' Toggle between Real and CPU address mode\n"
     "  'I' Info. Shows Processor State window\n"
@@ -280,12 +279,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
 
     case WM_TIMER:
         if (wPrm == IDT_BRKP_TIMER) {
-            HighlightText();
-//            if (EmuState.Debugger.IsHalted()) {
-//                HighlightPC();
-//            } else {
-//                UnHighlightPC();
-//           }
+            HighlightPC();
             return TRUE;
         }
         break;
@@ -426,6 +420,7 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
         case 'S':
         case 'N':
             EmuState.Debugger.QueueStep();
+            UnHighlightPC();
             return TRUE;
             break;
         case VK_TAB:
@@ -593,71 +588,88 @@ int RealToCpu(int realaddr)
 }
 
 /*******************************************************/
-/*   Highlight address field in disassembly line       */
+/*          Highlight a disassembly line               */
 /*******************************************************/
-void HighlightLine(int LineNdx,COLORREF color,bool bold) {
+void HighlightLine(int lpos, COLORREF color, int flags) {
+
+    // flags
+    // bit 0 set make bold
+    // bit 1 set make visible
+
+    // Get current caret location and selection
+    DWORD SelMin;
+    DWORD SelMax;
+    SendMessage(hDisText,EM_GETSEL,(WPARAM) &SelMin,(LPARAM) &SelMax);
+
     CHARFORMATA fmt;
     fmt.cbSize = sizeof(fmt);
     fmt.crTextColor = color;
-    if (bold) {
+
+    // Flags first bit make bold
+    if (flags & 1) {
         fmt.dwEffects = CFE_BOLD;
     } else {
         fmt.dwEffects = 0;
     }
     fmt.dwMask = CFM_COLOR | CFM_BOLD;
-    SendMessage(hDisText,EM_SETSEL,LineNdx,LineNdx+6);
+    SendMessage(hDisText,EM_SETSEL,lpos,lpos+6);
     SendMessage(hDisText,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM) &fmt);
-    SendMessage(hDisText,EM_SETSEL,LineNdx,LineNdx);
-}
 
-/*******************************************************/
-/*    Highlight PC and breakpoints in disassembly      */
-/*******************************************************/
-void HighlightText() {
-
-    DWORD SelMin;
-    DWORD SelMax;
-
-    // Get current caret location and selection
-    SendMessage(hDisText,EM_GETSEL,(WPARAM) &SelMin,(LPARAM) &SelMax);
-
-    // Just return it if anything is currently selected
-    if (SelMin != SelMax) return;
-
-    if (EmuState.Debugger.IsHalted()) {
-        HighlightPC();
-    } else {
-        UnHighlightPC();
+    // Flags second bit make visible
+    if (flags & 2) {
+        HWND f = GetFocus();
+        SetFocus(hDisText);
+        SendMessage(hDisText,EM_LINESCROLL,0,0);
+        if (f) SetFocus(f);
     }
-    //FindHaltpoints();
 
     // Restore original selection.
     SendMessage(hDisText,EM_SETSEL,(WPARAM) SelMin,(LPARAM) SelMax);
 }
 
 /*******************************************************/
+/*       Find address match in disassembly             */
+/*******************************************************/
+int FindAdrLine(int adr)
+{
+    // If someone is bored this could be a binary search
+    for (int line=0; line < NumDisLines; line++) {
+        if (DisLineAdr[line] == adr) return line;
+    }
+    return MAXLINES;  // Indicates failure
+}
+
+/*******************************************************/
+/*        Test for breakpoint at PC line               */
+/*******************************************************/
+bool BreakpointPC()
+{
+    std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
+    while (it != mHaltpoints.end()) {
+        Haltpoint hp = it->second;
+        if (hp.lpos == PClinePos) return true;
+        it++;
+    }
+    return false;
+}
+
+/*******************************************************/
 /*       Find and highlight all haltpoints             */
 /*******************************************************/
-void FindHaltpoints() {
-    std::string s;
+void FindHaltpoints()
+{
     std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
     while (it != mHaltpoints.end()) {
         int adr = it->first;
+        // If decoded with CPU addressing convert haltpoint to CPU address
         if (!RealAdrMode) adr = RealToCpu(adr);
-        if (!(adr < 0)) {
-            Haltpoint hp = it->second;
-            s = HEXSTR(adr,6);
-            // Search newline followed by address
-            int pos = sDecoded.find("\n"+s);
-            if (pos != std::string::npos) {
-                hp.lndx = pos+1;
-                mHaltpoints[it->first] = hp;
-                HighlightLine(pos+1,RGB(255,0,0),true);
-            // Check first line
-            } else if (s == sDecoded.substr(0,6)) {
-                hp.lndx = 0;
-                mHaltpoints[it->first] = hp;
-                HighlightLine(0,RGB(255,0,0),true);
+        if (adr >= 0) {
+            // Search for match in disassembly
+            int line = FindAdrLine(adr);
+            if (line < MAXLINES) {
+                Haltpoint hp = it->second;
+                hp.lpos = DisLinePos[line];
+                HighlightLine(hp.lpos,RGB(255,0,0),1);
             }
         }
         it++;
@@ -666,68 +678,52 @@ void FindHaltpoints() {
 
 /**************************************************/
 /*          Highlight the Current PC              */
+/*          This gets called on timer             */
 /**************************************************/
 void HighlightPC()
 {
-    // TODO: Check if already highlighted.
-    // TODO: More efficient search for address matches
-
     // Disassembly has to have a least one line
-    if (sDecoded.find('\n') == std::string::npos) return;
+    if (NumDisLines < 1) return;
 
+    // Skip if CPU not halted
+    if (! EmuState.Debugger.IsHalted()) {
+        UnHighlightPC();
+        return;
+    }
+
+    // Get the halted PC
     CPUState state = CPUGetState();
-    int adr = state.PC;
+    int CPUadr = state.PC;
 
     // If PC already highlighted just return
-    if (LastPC == adr) return;
+    if (HighlightedPC == CPUadr) return;
 
     // Remove highlight from previous PC line
     UnHighlightPC();
 
-    // Search for PC line in disassembly.
-    std::string sAdr;
-    if (RealAdrMode) {
-        sAdr = HEXSTR(CpuToReal(adr),6);
-    } else {
-        sAdr = HEXSTR(adr,6);
-    }
+    // If disassembly used real addresses convert PC to real
+    int adr = RealAdrMode ? CpuToReal(CPUadr) : CPUadr;
 
-    // Search for line starting with Search address
-    PCline = sDecoded.find('\n'+ sAdr);
-    if (PCline != std::string::npos) {
-        PCline += 1;
-    // Failing that tru the first line
-    } else if (sAdr.compare(sDecoded.substr(0,6)) == 0) {
-        PCline = 0;
-    } else {
-        PCline = std::string::npos;
-    }
-
-    if (PCline != std::string::npos) {
-        HighlightLine(PCline,RGB(0,0,255),true); // Blue
-
-        // Make visible in display
-        HWND f = GetFocus();
-        SetFocus(hDisText);
-        SendMessage(hDisText,EM_LINESCROLL,0,0);
-        if (f) SetFocus(f);
-
-        LastPC = adr;
-
-    } else {
-
-        // Not found convert to CPU addressing and decode from PC
-        int from = adr;
-        if (RealAdrMode) {
-            RealAdrMode = false;
-            Button_SetCheck(GetDlgItem(hDismDlg,IDC_PHYS_MEM),BST_UNCHECKED);
-            EnableBlockEdit(FALSE);
+    // Search for match in disassembly
+    int line = FindAdrLine(adr);
+    if (line < MAXLINES) {
+        HighlightedPC = CPUadr;
+        PClinePos = DisLinePos[line];
+        if (BreakpointPC()) {
+            HighlightLine(PClinePos,RGB(255,0,255),3); // Magneta
+        } else {
+            HighlightLine(PClinePos,RGB(0,0,255),3);   // Blue
         }
-        SetWindowText(hEdtAddr,HEXSTR(from,0).c_str());
-        DecodeAddr();
 
-        // PC should get painted on next timer event
-        LastPC = 0xFFFFFF;
+    // Not found disassemble using CPU mode starting from PC
+    // PC should get painted on next timer event
+    } else {
+        SetWindowText(hEdtAddr,HEXSTR(CPUadr,0).c_str());
+        RealAdrMode = false;
+        EnableBlockEdit(FALSE);
+        Button_SetCheck(GetDlgItem(hDismDlg,IDC_PHYS_MEM),BST_UNCHECKED);
+        DecodeAddr();
+        HighlightedPC = -1;
     }
 }
 
@@ -736,21 +732,13 @@ void HighlightPC()
 /**************************************************/
 void UnHighlightPC()
 {
-    if (PCline != std::string::npos) {
-        int pos = PCline;
-        PCline = std::string::npos;
-        std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
-        // if was a breakpoint highlight it red
-        while (it != mHaltpoints.end()) {
-            Haltpoint hp = it->second;
-            if (hp.lndx == pos) {
-                HighlightLine(pos,RGB(255,0,0),true);
-                return;
-            }
-            it++;
+    if (HighlightedPC >= 0) {
+        HighlightedPC = -1;
+        if (BreakpointPC()) {
+            HighlightLine(PClinePos,RGB(255,0,0),1);
+        } else {
+            HighlightLine(PClinePos,RGB(0,0,0),0);
         }
-        // Clear highlight
-        HighlightLine(pos,RGB(0,0,0),false);
     }
 }
 
@@ -791,7 +779,7 @@ void SetHaltpoint(HWND hCtl, bool flag)
     if ((CurrentLineNum < 0) || (CurrentLineNum >= MAXLINES))
         return;
 
-    int lndx = DisLineNdx[CurrentLineNum];
+    int lpos = DisLinePos[CurrentLineNum];
     int addr = DisLineAdr[CurrentLineNum];
 
     if (RealAdrMode)
@@ -804,18 +792,21 @@ void SetHaltpoint(HWND hCtl, bool flag)
 
     // Update Haltpoint
     if (flag) {
-        hp.lndx = lndx;
+        hp.lpos = lpos;
         hp.addr = realaddr;
         ApplyHaltPoint(hp,true);
         mHaltpoints[realaddr] = hp;
-        HighlightLine(lndx,RGB(255,0,0),true);
+        HighlightLine(lpos,RGB(255,0,0),1);
 
     // Remove Haltpoint
     } else {
         ApplyHaltPoint(hp,false);
         mHaltpoints.erase(realaddr);
-        HighlightLine(lndx,RGB(0,0,0),false);
+        HighlightLine(lpos,RGB(0,0,0),0);
     }
+
+    // Timer will apply PC highlight as required
+    if (PClinePos == hp.lpos) UnHighlightPC();
 
     //PrintLogC("%X %X %s\n",hp.addr,hp.instr,hp.placed);
     return;
@@ -848,7 +839,7 @@ void ListHaltpoints()
 }
 
 /*******************************************************/
-/*               Remove all haltpoints                 */
+/*          Remove all haltpoints (public)             */
 /*******************************************************/
 void KillHaltpoints()
 {
@@ -857,13 +848,15 @@ void KillHaltpoints()
         int realaddr = it->first;
         Haltpoint hp = it->second;
         ApplyHaltPoint(hp,false);
+        HighlightLine(hp.lpos,RGB(0,0,0),0);
         mHaltpoints.erase(realaddr);
         it++;
     }
+    UnHighlightPC();
 }
 
 /*******************************************************/
-/*           Apply haltpoints (exported)               */
+/*           Apply all haltpoints (public)             */
 /*     Install HALTs or restore original opcodes       */
 /*******************************************************/
 void ApplyHaltpoints(bool flag)
@@ -894,17 +887,17 @@ void SetCurrentLine()
 
     // Find selected line number
     int lnum = SendMessage(hDisText,EM_LINEFROMCHAR,range.cpMin,0);
-    int lndx = DisLineNdx[lnum];
+    int lpos = DisLinePos[lnum];
 
     // If line number has changed set caret to start of line
     if (lnum != CurrentLineNum) {
         CurrentLineNum = lnum;
-        SendMessage(hDisText,EM_SETSEL,lndx,lndx);
+        SendMessage(hDisText,EM_SETSEL,lpos,lpos);
     }
 
 //DEBUG
 //int topline = SendMessage(hCtl,EM_GETFIRSTVISIBLELINE,0,0);
-//PrintLogC("%d %d %X %d\n",lnum,DisLineAdr[lnum],lndx,topline);
+//PrintLogC("%d %d %X %d\n",lnum,DisLineAdr[lnum],lpos,topline);
 
 }
 
@@ -1142,9 +1135,9 @@ void Disassemble( unsigned short FromAdr,
     // Put the completed disassembly
     SetWindowTextA(hDisText,Debugger::ToLPCSTR(sDecoded));
 
-    // Find line indexes
+    // Find line positions
     for (int lnum=0;lnum < NumDisLines;lnum++) {
-        DisLineNdx[lnum] = SendMessage(hDisText,EM_LINEINDEX,lnum,0);
+        DisLinePos[lnum] = SendMessage(hDisText,EM_LINEINDEX,lnum,0);
     }
 
     // Highlight any haltpoints
@@ -1152,6 +1145,9 @@ void Disassemble( unsigned short FromAdr,
 
     // No line selected
     CurrentLineNum = -1;
+
+    // No PC highlighted
+    HighlightedPC = -1;
 
     ClrErrorText();
 }
