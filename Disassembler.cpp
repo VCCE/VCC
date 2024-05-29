@@ -244,7 +244,8 @@ INT_PTR CALLBACK DisassemblerDlgProc
         switch (LOWORD(wPrm)) {
         case IDCLOSE:
         case WM_DESTROY:
-            KillHaltpoints(); // Remove haltpoints
+            KillHaltpoints();
+            EmuState.Debugger.Enable_Halt(false);
             DestroyWindow(hDlg);
             hDismDlg = NULL;
             return FALSE;
@@ -374,7 +375,6 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 
         // TODO Toggle Breakpoint
         case 'B':
-            EmuState.Debugger.Enable_Halt(true);  //TODO: enable just once?
             SetHaltpoint(hCtl,true);
             return TRUE;
             break;
@@ -797,6 +797,7 @@ void SetHaltpoint(HWND hCtl, bool flag)
         ApplyHaltPoint(hp,true);
         mHaltpoints[realaddr] = hp;
         HighlightLine(lpos,RGB(255,0,0),1);
+        EmuState.Debugger.Enable_Halt(true);
 
     // Remove Haltpoint
     } else {
