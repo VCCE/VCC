@@ -48,8 +48,11 @@ namespace VCC {
 
 CriticalSection Section_;
 
+HINSTANCE hVccInst;
+
 // Dialog and control handles
 HWND hDismDlg = NULL;  // Disassembler Dialog
+HWND hBrkpDlg = NULL;  // Breakpoints Dialog
 HWND hEdtAddr = NULL;  // From editbox
 HWND hEdtBloc = NULL;  // Bock number editbox
 HWND hEdtAPPY = NULL;  // Apply button
@@ -58,6 +61,7 @@ HWND hErrText = NULL;  // Error text box
 
 // local references
 INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
+INT_PTR CALLBACK BreakpointsDlgProc(HWND,UINT,WPARAM,LPARAM);
 int RealBlock(int);
 int CpuBlock(int);
 void ToggleAddrMode();
@@ -78,7 +82,9 @@ std::string FmtLine(int,std::string,std::string,std::string,std::string);
 int DecodeModHdr(unsigned short, unsigned short, std::string *mhdr);
 
 void SetCurrentLine();
-void SetHaltpoint(HWND,bool);
+void RemoveHaltpoint(int);
+void SetHaltpoint(bool);
+void RefreshHPlist();
 void ListHaltpoints();
 void FindHaltpoints();
 void HighlightPC();
@@ -125,6 +131,7 @@ struct Haltpoint
     int lpos;  // Char index into text
     unsigned char instr;
     bool placed;
+    bool exists;
 };
 std::map<int,Haltpoint> mHaltpoints{};
 void ApplyHaltPoint(Haltpoint &,bool);
@@ -165,6 +172,7 @@ char DbgHelp[] =
 void
 OpenDisassemblerWindow(HINSTANCE hInstance, HWND hParent)
 {
+    hVccInst = hInstance;
     if (hDismDlg == NULL) {
         hDismDlg = CreateDialog ( hInstance,
                                   MAKEINTRESOURCE(IDD_DISASSEMBLER),
@@ -212,12 +220,6 @@ INT_PTR CALLBACK DisassemblerDlgProc
 
         // Disable Block edit box until needed
         EnableBlockEdit(FALSE);
-
-// Disable autoscroll of disassembly text
-//{
-// LRESULT prevOptions = SendMessage(hDisText, EM_GETOPTIONS, 0, 0);
-// SendMessage(hDisText, EM_SETOPTIONS, ECOOP_SET, prevOptions & ~ECO_AUTOVSCROLL);
-//}
 
         // Start a timer for showing current status
         SetTimer(hDlg, IDT_BRKP_TIMER, 250, (TIMERPROC)NULL);
@@ -372,15 +374,13 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
     switch (msg) {
     case WM_CHAR:
         switch (toupper(wPrm)) {
-
-        // TODO Toggle Breakpoint
         case 'B':
-            SetHaltpoint(hCtl,true);
+            SetHaltpoint(true);
             return TRUE;
             break;
         // Remove Breakpoint
         case 'R':
-            SetHaltpoint(hCtl,false);
+            SetHaltpoint(false);
             return TRUE;
             break;
         // Show Procesor State Window
@@ -447,6 +447,38 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 
     // Forward messages to original control
     return CallWindowProc(TextDlgProc,hCtl,msg,wPrm,lPrm);
+}
+
+/**************************************************/
+/*    Breakpoints list Dialog Processing          */
+/**************************************************/
+INT_PTR CALLBACK BreakpointsDlgProc
+    (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
+{
+    int sel;
+    HWND hList;
+    char buf[64];
+
+    switch (msg) {
+    case WM_COMMAND:
+        switch (LOWORD(wPrm)) {
+        case IDCLOSE:
+        case WM_DESTROY:
+            DestroyWindow(hDlg);
+            hBrkpDlg = NULL;
+            break;
+        case IDC_BTN_DEL_BREAKPOINT:
+            hList = GetDlgItem(hDlg,IDC_LIST_BREAKPOINTS);
+            sel = SendMessage(hList,LB_GETCURSEL,0,0);
+            SendMessage(hList,LB_GETTEXT, sel, (LPARAM) &buf);
+            buf[6]='\0';
+            RemoveHaltpoint(HexToUint(buf));
+            RefreshHPlist();
+            return true;
+            break;
+        }
+    }
+    return false;
 }
 
 /**************************************************/
@@ -768,10 +800,24 @@ void ApplyHaltPoint(Haltpoint &hp,bool flag)
 }
 
 /***************************************************/
+/*      Delete Halt Point at real address          */
+/***************************************************/
+void RemoveHaltpoint(int realaddr)
+{
+    Haltpoint hp = mHaltpoints[realaddr];
+    if (hp.exists) {
+        HighlightLine(hp.lpos,RGB(0,0,0),0);
+        ApplyHaltPoint(hp,false);
+    }
+    mHaltpoints.erase(realaddr);
+}
+
+/***************************************************/
 /*       Set Halt Point at Current Line            */
 /***************************************************/
-void SetHaltpoint(HWND hCtl, bool flag)
+void SetHaltpoint(bool flag)
 {
+HWND hDisText = NULL;  // Richedit20 box for output
     std::string s;
     Haltpoint hp;
     int realaddr;
@@ -793,6 +839,7 @@ void SetHaltpoint(HWND hCtl, bool flag)
     // Update Haltpoint
     if (flag) {
         hp.lpos = lpos;
+        hp.exists = true;
         hp.addr = realaddr;
         ApplyHaltPoint(hp,true);
         mHaltpoints[realaddr] = hp;
@@ -801,41 +848,52 @@ void SetHaltpoint(HWND hCtl, bool flag)
 
     // Remove Haltpoint
     } else {
-        ApplyHaltPoint(hp,false);
-        mHaltpoints.erase(realaddr);
-        HighlightLine(lpos,RGB(0,0,0),0);
+        RemoveHaltpoint(realaddr);
     }
+
+    // Refresh setpoints listbox
+    RefreshHPlist();
 
     // Timer will apply PC highlight as required
     if (PClinePos == hp.lpos) UnHighlightPC();
 
-    //PrintLogC("%X %X %s\n",hp.addr,hp.instr,hp.placed);
     return;
 }
 
 /*******************************************************/
-/*          List haltpoints in MessageBox              */
+/*          Refresh haltpoints in ListBox              */
 /*******************************************************/
-void ListHaltpoints()
+void RefreshHPlist()
 {
+    if (hBrkpDlg == NULL) return;
+    SendDlgItemMessage(hBrkpDlg,IDC_LIST_BREAKPOINTS,LB_RESETCONTENT,0,0);
     if (mHaltpoints.size() > 0) {
-        std::string s = "";
-        std::map<int, Haltpoint>::iterator it;
-        it = mHaltpoints.begin();
+        std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
         while (it != mHaltpoints.end()) {
             int realaddr = it->first;
             Haltpoint hp = it->second;
-            s += HEXSTR(realaddr,4)+" "+HEXSTR(hp.instr,2);
-            if (hp.placed)
-                s += " p\n";
-            else
-                s += "\n";
+            std::string s = HEXSTR(realaddr,6)+"\t "+HEXSTR(hp.instr,2);
+            SendDlgItemMessage(hBrkpDlg, IDC_LIST_BREAKPOINTS, 
+                            LB_ADDSTRING, 0, (LPARAM) s.c_str());
             it++;
         }
-        MessageBox(hDismDlg,s.c_str(),"Breakpoints",0);
-    } else {
-        MessageBox(hDismDlg,"No breakpoints","Breakpoints",0);
     }
+}
+
+/*******************************************************/
+/*          List haltpoints in DialogBox               */
+/*******************************************************/
+void ListHaltpoints()
+{
+    // Create breakpoints list dialog if required
+    if (hBrkpDlg == NULL) {
+        hBrkpDlg = CreateDialog ( hVccInst,
+                              MAKEINTRESOURCE(IDD_BPLISTDIALOG),
+                              hDismDlg, BreakpointsDlgProc );
+        ShowWindow(hBrkpDlg, SW_SHOWNORMAL);
+        SetFocus(hBrkpDlg);
+    }
+    RefreshHPlist();
     return;
 }
 
@@ -854,6 +912,7 @@ void KillHaltpoints()
         it++;
     }
     UnHighlightPC();
+    RefreshHPlist();
 }
 
 /*******************************************************/
