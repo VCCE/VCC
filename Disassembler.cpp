@@ -714,9 +714,6 @@ void FindHaltpoints()
 /**************************************************/
 void HighlightPC()
 {
-    // Disassembly has to have a least one line
-    if (NumDisLines < 1) return;
-
     // Skip if CPU not halted
     if (! EmuState.Debugger.IsHalted()) {
         UnHighlightPC();
