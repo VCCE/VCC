@@ -19,6 +19,7 @@
 //    Disassembly Display - Part of the Debugger package for VCC
 //    Author: Ed Jaquay
 //============================================================================
+
 #include <Windows.h>
 #include <Windowsx.h>
 #include <commdlg.h>
@@ -46,6 +47,71 @@
 
 namespace VCC {
 
+/**************************************************/
+/*        Local Function Templates                */
+/**************************************************/
+
+// Dialogs
+INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
+INT_PTR CALLBACK BreakpointsDlgProc(HWND,UINT,WPARAM,LPARAM);
+
+// Functions used to subclass controls
+LRESULT CALLBACK SubEditDlgProc(HWND,UINT,WPARAM,LPARAM);
+LRESULT CALLBACK SubTextDlgProc(HWND,UINT,WPARAM,LPARAM);
+WNDPROC AddrDlgProc;
+WNDPROC BlocDlgProc;
+WNDPROC TextDlgProc;
+
+// Handler for address and count edit boxes
+BOOL ProcEditDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
+
+// Handler for disassembly text richedit control
+BOOL ProcTextDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
+
+// Addressing mode and converters
+void ToggleAddrMode();
+void EnableBlockEdit(bool);
+int CpuBlock(int);
+int CpuToReal(int);
+int RealToCpu(int);
+int HexToUint(char *);
+
+// Disassembler and helpers
+void DecodeAddr();
+void Disassemble(unsigned short, unsigned short);
+int DecodeModHdr(unsigned short, unsigned short, std::string *mhdr);
+
+// Establish text line 
+int FindAdrLine(int);
+void SetCurrentLine();
+
+// Breakpoint control
+void RemoveHaltpoint(int);
+void SetHaltpoint(bool);
+void RefreshHPlist();
+void ListHaltpoints();
+void FindHaltpoints();
+bool BreakpointPC();
+
+// Highlighting
+void HighlightPC();
+void UnHighlightPC();
+void HighlightLine(int,COLORREF,int);
+
+// Information / Error line
+void SetErrorText(const char *);
+void ClrErrorText();
+
+// String functions used for decode
+std::string PadRight(std::string const&,size_t);
+std::string OpFDB(int,std::string,std::string,std::string);
+std::string OpFCB(int,std::string,std::string);
+std::string FmtLine(int,std::string,std::string,std::string,std::string);
+
+/**************************************************/
+/*            Static Variables                    */
+/**************************************************/
+
 CriticalSection Section_;
 
 HINSTANCE hVccInst;
@@ -59,59 +125,25 @@ HWND hEdtAPPY = NULL;  // Apply button
 HWND hDisText = NULL;  // Richedit20 box for output
 HWND hErrText = NULL;  // Error text box
 
-// local references
-INT_PTR CALLBACK DisassemblerDlgProc(HWND,UINT,WPARAM,LPARAM);
-INT_PTR CALLBACK BreakpointsDlgProc(HWND,UINT,WPARAM,LPARAM);
-int RealBlock(int);
-int CpuBlock(int);
-void ToggleAddrMode();
-int CpuToReal(int);
-int RealToCpu(int);
-void DecodeAddr();
-void Disassemble(unsigned short, unsigned short);
-int HexToUint(char *);
-void EnableBlockEdit(bool);
-int FindAdrLine(int);
-bool BreakpointPC();
-
-std::string PadRight(std::string const&,size_t);
-std::string OpFDB(int,std::string,std::string,std::string);
-std::string OpFCB(int,std::string,std::string);
-std::string FmtLine(int,std::string,std::string,std::string,std::string);
-
-int DecodeModHdr(unsigned short, unsigned short, std::string *mhdr);
-
-void SetCurrentLine();
-void RemoveHaltpoint(int);
-void SetHaltpoint(bool);
-void RefreshHPlist();
-void ListHaltpoints();
-void FindHaltpoints();
-void HighlightPC();
-void UnHighlightPC();
-void HighlightLine(int,COLORREF,int);
-
-void SetErrorText(const char *);
-void ClrErrorText();
-
-// RealAdrMode indicates what addressing is used for
-// sDecoded (disassembly text) and the DisLineAdr array.
+// RealAdrMode indicates what addressing was used for decode
 bool RealAdrMode = FALSE;
 
 // Os9Decode indicates block and offset used for start address
 bool Os9Decode = FALSE;
 
+// Line highlight status
 int HighlightedPC = -1;
 int PClinePos = 0;
 
 // MMUregs at time of the last decode
 MMUState MMUregs;
 
+// Default Info/Text line content, current brush and color
 char initTxt[] = "Address and Block are hexadecimal";
-
-COLORREF ErrorTxtColor = RGB(0,0,0);
 HBRUSH hbrErrorTxt = NULL;
+COLORREF ErrorTxtColor = RGB(0,0,0);
 
+// Decode data
 std::string sDecoded = {}; // Disassembly string
 int NumDisLines = 0;       // Number of lines in disassembly;
 int DisLinePos[MAXLINES];  // Start positions of disassembly lines
@@ -136,29 +168,16 @@ struct Haltpoint
 std::map<int,Haltpoint> mHaltpoints{};
 void ApplyHaltPoint(Haltpoint &,bool);
 
-// Functions used to subclass controls
-LRESULT CALLBACK SubEditDlgProc(HWND,UINT,WPARAM,LPARAM);
-LRESULT CALLBACK SubTextDlgProc(HWND,UINT,WPARAM,LPARAM);
-WNDPROC AddrDlgProc;
-WNDPROC BlocDlgProc;
-WNDPROC TextDlgProc;
-
-// Handler for address and count edit boxes
-BOOL ProcEditDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
-
-// Handler for disassembly text richedit control
-BOOL ProcTextDlg(WNDPROC,HWND,UINT,WPARAM,LPARAM);
-
 // Help text
 char DbgHelp[] =
     "'Real Mem' checkbox selects Real vs CPU Addressing\n"
     "'Os9 mode' checkbox selects special OS9 disassembly\n"
     "'Address' is where address to disassemble is entered.\n"
     "In Real Mem Os9 mode 'Address' is offset from 'Block'\n"
-    "'Decode' (or Enter key) decodes from the set address.\n"
+    "'Decode' (or Enter key) decodes from the set address.\n\n"
     "The following hot keys can be used:\n"
-    "  'P' or 'G' or F7) toggle pause / run\n"
-    "  'N' or 'S' step to next instruction while halted\n"
+    "  'P' toggle pause / run\n"
+    "  'S' step to next instruction while halted\n"
     "  'B' Set breakpoint at selected line\n"
     "  'R' Remove breakpoint at selected line\n"
     "  'L' List breakpoints\n"
@@ -288,7 +307,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
         break;
 
     }
-    return FALSE;  // unhandled message
+    return FALSE;
 }
 
 /***************************************************/
@@ -870,7 +889,7 @@ void RefreshHPlist()
             int realaddr = it->first;
             Haltpoint hp = it->second;
             std::string s = HEXSTR(realaddr,6)+"\t "+HEXSTR(hp.instr,2);
-            SendDlgItemMessage(hBrkpDlg, IDC_LIST_BREAKPOINTS, 
+            SendDlgItemMessage(hBrkpDlg, IDC_LIST_BREAKPOINTS,
                             LB_ADDSTRING, 0, (LPARAM) s.c_str());
             it++;
         }
