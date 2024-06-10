@@ -170,20 +170,22 @@ void ApplyHaltPoint(Haltpoint &,bool);
 
 // Help text
 char DbgHelp[] =
-    "'Real Mem' checkbox selects Real vs CPU Addressing\n"
-    "'Os9 mode' checkbox selects special OS9 disassembly\n"
+    "'Real Mem' checkbox selects Real vs CPU Addressing.\n"
+    "'Os9 mode' checkbox selects OS9 disassembly.\n"
     "'Address' is where address to disassemble is entered.\n"
-    "In Real Mem Os9 mode 'Address' is offset from 'Block'\n"
-    "'Decode' (or Enter key) decodes from the set address.\n\n"
-    "The following hot keys can be used:\n"
-    "  'P' toggle pause / run\n"
-    "  'S' step to next instruction while halted\n"
-    "  'B' Set breakpoint at selected line\n"
-    "  'R' Remove breakpoint at selected line\n"
-    "  'L' List breakpoints\n"
-    "  'M' Toggle between Real and CPU address mode\n"
-    "  'I' Info. Shows Processor State window\n"
-    "  'K' Kill. Removes all breakpoints\n";
+    "In Real Mem Os9 mode 'Address' is offset from 'Block'.\n"
+    "'Decode' (or Enter key) decodes from the set address.\n"
+    "Disassembly tracks the CPU PC register when paused.\n\n"
+    "The following hot keys can be used:\n\n"
+    "  'P'  Pause the CPU.\n"
+    "  'G'  Go - unpause the CPU.\n"
+    "  'S'  Step to next instruction while paused.\n"
+    "  'B'  Set breakpoint at selected line.\n"
+    "  'R'  Remove breakpoint at selected line.\n"
+    "  'L'  Start Breakpoints list window.\n"
+    "  'M'  Roggle between real and CPU address mode.\n"
+    "  'I'  Shows Processor State window.\n"
+    "  'K'  Removes (kills) all breakpoints.\n";
 
 /**************************************************/
 /*      Create Disassembler Dialog Window         */
@@ -320,13 +322,13 @@ LRESULT CALLBACK SubEditDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
     switch (msg) {
     case WM_CHAR:
         ch = toupper(wPrm);
-        // Hex digits handled by control
+        // Hex digits made uppercase in edit text
         if (strchr("0123456789ABCDEF",ch)) {
             wPrm = ch;
             break;
         }
-        // Hot keys for disassembly text window
-        if (strchr("GPNLMIK",ch)) {
+        // Hot keys sent to disassembly text window
+        if (strchr("GPSLMIK",ch)) {
             SendMessage(hDisText,msg,ch,lPrm);
             return TRUE;
         }
@@ -423,21 +425,23 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
             ToggleAddrMode();
             return TRUE;
             break;
-        // Toggle pause or run
+        // Toggle pause go
         case 'G':
-        case 'P':
             if (EmuState.Debugger.IsHalted()) {
                 PauseAudio(0);
                 EmuState.Debugger.QueueRun();
-            } else {
+            }
+            return TRUE;
+            break;
+       case 'P':
+            if (!EmuState.Debugger.IsHalted()) {
                 EmuState.Debugger.QueueHalt();
                 PauseAudio(1);
             }
             return TRUE;
             break;
-        // Step Next
+        // Step
         case 'S':
-        case 'N':
             EmuState.Debugger.QueueStep();
             UnHighlightPC();
             return TRUE;

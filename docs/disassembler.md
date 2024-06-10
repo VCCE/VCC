@@ -1,6 +1,6 @@
 ## Disassembler Window Tutorial
 
-This document was prepared by E.  J.  Jaquay to give the reader a quick overview of the new VCC Debugger Disassembler and how it might be used to study Color Computer machine language programs.  This tutorial demonstrates features available with VCC version 2.1.9.0 (June 2024) and thereafter.
+This document was prepared by E J Jaquay to give the reader a quick overview of the new VCC Debugger Disassembler and how it might be used to study Color Computer machine language programs.  This tutorial demonstrates features available with VCC version 2.1.9.0 (June 2024) and thereafter.
 
 The best way to use this tutorial is to fire up VCC and actually do the steps outlined in this tutorial but first some background.
 
@@ -40,17 +40,17 @@ Here while in real mode I changed the address from 7A000 to 9A000 and hit enter 
 
 ### Pausing and viewing code.
 
-Whenever the cpu is paused the Disassembler will switch to CPU addressing mode and then find and highlight the code at the current PC. This lets you see what the software was doing.  The Vcc "F7" key, "Pause" from the "File" menu, or the Disassembler 'P' key can be used to toggle CPU run mode.  
+Whenever the cpu is paused the Disassembler will switch to CPU addressing mode and then find and highlight the code at the current PC. This lets you see what the software was doing.  The Vcc "F7" key, "Pause" from the "File" menu, or the Disassembler 'P' key can be used to pause the CPU.
 
 ![fig dis02](images/dis02.png)
 
-In the screenshot the 'F7' key was pressed with the CPU running.  In the Disassembler the address starting at A7D3 has automatically been decoded. The blue highlight indicates the program counter address. If you toggle pause/run several times you will notice the highlight goes away when the CPU is running and sometimes the PC pauses at A7D5 instead of A7D3. 
+You can view the code that was executing at anytime by starting the Disassembler and pressing the 'P' key. The screenshot above shows the result if this is done while DECB is at the color prompt. In the Disassembler the address starting at A7D3 has automatically been decoded. The blue highlight indicates the program counter address. Pressing 'G' will unpause the CPU.  If you toggle pause several times you will notice the highlight goes away when the CPU is running and sometimes the PC pauses at A7D5 instead of A7D3. 
 
 <div style="page-break-after: always;"></div>
 
 ### The Processor State Window
 
-The "Processor State" window shows what the CPU is doing.  If you press "I" from the disassembler window the processor state window will be launched without using VCC's Debugger memu.
+The "Processor State" window shows the current CPU registor values.  If you press "I" from the disassembler window the processor state window will be launched without using VCC's Debugger memu.
 
 ![fig dis03](images/dis03.png)
 
@@ -64,7 +64,7 @@ With Vcc halted at the DECB promp set a breakpoint on the RTS instruction at A7D
 
 ![fig dis04](images/dis04.png)
 
-The "Breakpoints" listbox shows the breakpoint's real address and the original opcode.
+The "Breakpoints" listbox shows the breakpoint's real address and the original opcode.  A breakpoint can be removed by selecting it and pressing "Delete".
 
 <div style="page-break-after: always;"></div>
 
