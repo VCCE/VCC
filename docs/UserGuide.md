@@ -1,10 +1,4 @@
 
-&nbsp;  
-
-<div style="page-break-after: always;"></div>
-
-&nbsp;  
-
 <p align=center><img src="images/ugima1.jpeg" alt="UG Image 1"></img></p>
 <h2 align="center">Welcome to VCC</h2>
 <h3 align="center">(Virtual Color Computer)</h3>
@@ -649,14 +643,7 @@ Following is a discussion of the menus and choices for configuring VCC.
 ### VCC's Edit Menu
 
 The *Edit* menu contains probably the most requested feature for
-VCC\... **COPY & PASTE.
-
-<span style="color:red">
-
-**NOTE:** Copy and Paste **ONLY** work on the Coco 3's hardware text
-screens (both RSDOS and OS-9/NitrOS9). You **CANNOT** copy or paste
-from/to a Coco 3 graphics screen.
-</span>
+VCC - COPY & PASTE.
 
 - **Copy Text** - Clicking this item immediately copies *ALL* text
   on the VCC screen into your PC's clipboard for pasting into your
@@ -673,6 +660,12 @@ from/to a Coco 3 graphics screen.
 - **Paste BASIC Code (with NEW)** - Clicking this item will first issue
   a **NEW** command, wiping any program in memory, the pasting the
   contents of your PC's clipboard. (RSDOS only)
+
+<span style="color:red">
+NOTE: Copy and Paste **ONLY** work on the Coco 3's hardware text
+screens (both RSDOS and OS-9/NitrOS9). You **CANNOT** copy or paste
+from/to a Coco 3 graphics screen.
+</span>
 
 ### VCC's Configuration Menu
 
@@ -890,7 +883,7 @@ Cartridge emulation settings
     Most "standard" wave files are in 16-bit, 44,199 kHz. These will not
     work in VCC and even if you just browse to them and select them into
     the tape interface, VCC will try to convert them to 8-bit and ruin
-    the file. This issue is being looked into. You were warned <span>
+    the file. This issue is being looked into. You were warned </span>
 
 #### *BitBanger*
 
@@ -1063,8 +1056,6 @@ for the Debugger:
   - **MMU Monitor** - this window will let you view all memory
     available to the machine and how it is being mapped into the 64KB
     memory space visible to the processor. <br>
-    <span style="color:red"> NOTE: Hopefully, the ability to edit memory
-    contents will be added soon.<span>
 
 ### *VCC's* *Help* *Menu*
  This menu selection has only one choice;
@@ -3064,29 +3055,3 @@ on the VCC GitHub site where you downloaded this installation package.
 
 View documents online: <https://github.com/VCCE/VCC/wiki>
 
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
