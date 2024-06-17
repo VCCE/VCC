@@ -1,4 +1,8 @@
 <h2 align="center">Vcc Change Log</h2>
+- VCC v2.1.9.0 Jul/2024
+    - Disassembler window breakpoints and step code when paused - EJJ.
+    - Support for lwasm "BREAK" instruction (0x113E) - EJJ
+    - Disassembler documentation
 
 - VCC v2.1.8.3 Jan/2024
     - Add web link in help menu to User Guide - EJJaquay 
