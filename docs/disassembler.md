@@ -68,11 +68,11 @@ The "Breakpoints" listbox shows the breakpoint's real address and the original o
 
 <div style="page-break-after: always;"></div>
 
-With the breakpoint set at address A7D7 use the "P" or Run button to start the CPU. The CPU immediatly pauses and the RTS instruction highlight has changed color from red to magneta.  It is that color because the PC is at the breakpoint. Notice that pressing "P" again and again seems to do nothing but if hold the hold "P" down to auto repeat you should see the DECB cursor occasionally changing color.  What is happening is the CPU is stopping everytime it encounters the breakpoint at the RTS.
+With the breakpoint set at address A7D7 use the "G" or Run button to start the CPU. The CPU immediatly pauses and the RTS instruction highlight has changed color from red to magneta.  It is that color because the PC is at the breakpoint. Notice that pressing "G" again and again seems to do nothing but if hold the hold "G" down to auto repeat you should see the DECB cursor occasionally changing color.  What is happening is the CPU is stopping everytime it encounters the breakpoint at the RTS.
 
 ![fig dis05](images/dis05.png)
 
-You can step however. This will step one instruction which will execute the RTS to return to the caller and stop.
+You can step however. 'S' will step one instruction which will execute the RTS to return to the caller and stop.
 
 <div style="page-break-after: always;"></div>
 

@@ -183,7 +183,7 @@ char DbgHelp[] =
     "  'B'  Set breakpoint at selected line.\n"
     "  'R'  Remove breakpoint at selected line.\n"
     "  'L'  Start Breakpoints list window.\n"
-    "  'M'  Roggle between real and CPU address mode.\n"
+    "  'M'  Toggle between real and CPU address mode.\n"
     "  'I'  Shows Processor State window.\n"
     "  'K'  Removes (kills) all breakpoints.\n";
 
