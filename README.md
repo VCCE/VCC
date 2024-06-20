@@ -1,5 +1,5 @@
 # VCC - Virtual Color Computer
-# An emulation of The Tandy Color Computer 3 for Windows XP, Windows 7, Windows 8, & Windows 10
+# An emulation of The Tandy Color Computer 3 for Windows XP thru Windows 11 
 
 VCC attempts to be an accurate emulation of a "stock" Tandy Color Computer 3 just 
 as you would have bought in a Radio Shack store or Tandy Computer Center in 1986-1992. 
