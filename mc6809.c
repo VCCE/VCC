@@ -181,8 +181,9 @@ int MC6809Exec(int CycleFor)
 			EmuState.Debugger.Halt();
 			return(CycleFor - CycleCounter);
 		}
-		// Halted instruction maybe pending.
+		// Halted instruction pending.
 		if (HaltedInsPending) {
+			VCC::ApplyHaltpoints(0);
 			Do_Opcode(CycleFor);
 			VCC::ApplyHaltpoints(1);
 			HaltedInsPending = 0;

@@ -47,6 +47,7 @@
 #define IDD_MMU_MONITOR                 173
 #define IDD_EXEC_TRACE                  174
 #define IDD_DISASSEMBLER                175
+#define IDD_BPLISTDIALOG                176
 
 #define IDC_MUTE                        1003
 #define IDC_THROTTLE                    1004

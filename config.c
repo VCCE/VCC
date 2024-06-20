@@ -240,7 +240,6 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("CPU","Throttle",CurrentConfig.SpeedThrottle,IniFilePath);
 	WritePrivateProfileInt("CPU","CpuType",CurrentConfig.CpuType,IniFilePath);
 	WritePrivateProfileInt("CPU", "MaxOverClock", CurrentConfig.MaxOverclock, IniFilePath);
-	WritePrivateProfileInt("CPU","HaltEnabled",CurrentConfig.HaltOpcEnabled,IniFilePath);
 	WritePrivateProfileInt("CPU","BreakEnabled",CurrentConfig.BreakOpcEnabled,IniFilePath);
 
 	WritePrivateProfileString("Audio","SndCard",CurrentConfig.SoundCardName,IniFilePath);
@@ -302,7 +301,6 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.SpeedThrottle = GetPrivateProfileInt("CPU","Throttle",1,IniFilePath);
 	CurrentConfig.CpuType = GetPrivateProfileInt("CPU","CpuType",0,IniFilePath);
 	CurrentConfig.MaxOverclock = GetPrivateProfileInt("CPU","MaxOverClock",100,IniFilePath);
-	CurrentConfig.HaltOpcEnabled = GetPrivateProfileInt("CPU","HaltEnabled",0,IniFilePath);
 	CurrentConfig.BreakOpcEnabled = GetPrivateProfileInt("CPU","BreakEnabled",0,IniFilePath);
 
 	CurrentConfig.AudioRate = GetPrivateProfileInt("Audio","Rate",3,IniFilePath);
@@ -552,11 +550,6 @@ void UpdateConfig (void)
 	SetRamSize(CurrentConfig.RamSize);
 	SetCpuType(CurrentConfig.CpuType);
 
-	if (CurrentConfig.HaltOpcEnabled) {
-		EmuState.Debugger.Enable_Halt(true);
-	} else {
-		EmuState.Debugger.Enable_Halt(false);
-	}
 	if (CurrentConfig.BreakOpcEnabled) {
 		EmuState.Debugger.Enable_Break(true);
 	} else {
@@ -638,7 +631,6 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			for (temp=0;temp<=1;temp++)
 				SendDlgItemMessage(hDlg,Cpuchoice[temp],BM_SETCHECK,(temp==TempConfig.CpuType),0);
 			SendDlgItemMessage(hDlg,IDC_CPUICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)CpuIcons[TempConfig.CpuType]);
-			SendDlgItemMessage(hDlg,IDC_ENABLE_HALT,BM_SETCHECK,TempConfig.HaltOpcEnabled,0);
 			SendDlgItemMessage(hDlg,IDC_ENABLE_BREAK,BM_SETCHECK,TempConfig.BreakOpcEnabled,0);
 		break;
 
@@ -676,10 +668,6 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 							TempConfig.CpuType=temp;
 							SendDlgItemMessage(hDlg,IDC_CPUICON,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)CpuIcons[TempConfig.CpuType]);
 						}
-				break;
-				case IDC_ENABLE_HALT:
-					TempConfig.HaltOpcEnabled = (unsigned char)
-						SendDlgItemMessage(hDlg,IDC_ENABLE_HALT,BM_GETCHECK,0,0);
 				break;
 				case IDC_ENABLE_BREAK:
 					TempConfig.BreakOpcEnabled = (unsigned char)

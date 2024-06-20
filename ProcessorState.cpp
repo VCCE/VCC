@@ -194,12 +194,12 @@ namespace VCC { namespace Debugger { namespace UI { namespace
         case WM_PAINT:
         {
             if (EmuState.Debugger.IsHalted()) {
-                SetWindowTextA(hDlg,"Processor Window (Halted)");
+                SetWindowTextA(hDlg,"Processor State (Halted)");
                 SendMessageA(GetDlgItem(hDlg,IDC_BTN_CPU_HALT),WM_SETTEXT,0, (LPARAM) "Run");
                 EnableWindow(GetDlgItem(hDlg,IDC_BTN_CPU_STEP),true);
                 EnableWindow(GetDlgItem(hDlg,IDC_BTN_SET_PC),true);
             } else {
-                SetWindowTextA(hDlg,"Processor Window");
+                SetWindowTextA(hDlg,"Processor State");
                 SendMessageA(GetDlgItem(hDlg,IDC_BTN_CPU_HALT),WM_SETTEXT,0, (LPARAM) "Halt");
                 EnableWindow(GetDlgItem(hDlg,IDC_BTN_CPU_STEP),false);
                 EnableWindow(GetDlgItem(hDlg,IDC_BTN_SET_PC),false);

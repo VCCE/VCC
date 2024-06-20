@@ -195,6 +195,7 @@ static unsigned char *NatEmuCycles[] =
 };
 
 int HaltedInsPending = 0;
+BOOL DoingTFM = false;
 
 //END Global variables for CPU Emulation-------------------
 
@@ -2513,10 +2514,12 @@ void Tfm1(void)
 { //1138 TFM R+,R+ 6309
 	if (W_REG == 0)
 	{
-    CycleCounter += 6;
-    PC_REG++;
+		CycleCounter += 6;
+		PC_REG++;
+		DoingTFM = false;
 		return;
-  }
+	}
+	DoingTFM = true;
 
 	postbyte=MemRead8(PC_REG);
 	Source=postbyte>>4;
@@ -2543,8 +2546,10 @@ void Tfm2(void)
 	{
 		CycleCounter+=6;
 		PC_REG++;
+		DoingTFM = false;
 		return;
 	}			
+	DoingTFM = true;
 
 	postbyte=MemRead8(PC_REG);
 	Source=postbyte>>4;
@@ -2572,8 +2577,10 @@ void Tfm3(void)
 	{
 		CycleCounter+=6;
 		PC_REG++;
+		DoingTFM = false;
 		return;
 	}			
+	DoingTFM = true;
 
 	postbyte = MemRead8(PC_REG);
 	Source = postbyte >> 4;
@@ -2600,8 +2607,10 @@ void Tfm4(void)
 	{
 		CycleCounter+=6;
 		PC_REG++;
+		DoingTFM = false;
 		return;
 	}			
+	DoingTFM = true;
 
 	postbyte=MemRead8(PC_REG);
 	Source=postbyte>>4;
@@ -7012,6 +7021,13 @@ void(*JmpVec3[256])(void) = {
 // static unsigned short addrstack[16];
 // static short int stckidx = 0;
 
+// Stepping check for Tfm and step over it
+void StepIns() {
+	JmpVec1[MemRead8(PC_REG++)]();
+	while (DoingTFM)
+		JmpVec1[MemRead8(PC_REG++)]();
+}
+
 int HD6309Exec(int CycleFor)
 {
     extern int JS_Ramp_Clock;
@@ -7029,14 +7045,15 @@ int HD6309Exec(int CycleFor)
 		// CPU is stepping.
 		if (EmuState.Debugger.IsStepping())
 		{
-			JmpVec1[MemRead8(PC_REG++)]();
+			StepIns();
 			EmuState.Debugger.Halt();
 			return(CycleFor - CycleCounter);
 		}
 
-		// Halted instruction maybe pending.
+		// Halted instruction pending.
 		if (HaltedInsPending) {
-			JmpVec1[MemRead8(PC_REG++)]();
+			VCC::ApplyHaltpoints(0);
+			StepIns();
 			VCC::ApplyHaltpoints(1);
 			HaltedInsPending = 0;
 			return(CycleFor - CycleCounter);
