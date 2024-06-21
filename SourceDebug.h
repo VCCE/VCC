@@ -23,6 +23,6 @@
 namespace VCC { namespace Debugger { namespace UI
 {
 
-	void OpenBreakpointsWindow(HINSTANCE instance, HWND parent);
+	void OpenSourceDebugWindow(HINSTANCE instance, HWND parent);
 
 } } }

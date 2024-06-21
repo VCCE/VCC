@@ -40,8 +40,8 @@
 
 namespace VCC { namespace Debugger { namespace UI { namespace
 {
-	HWND BreakpointsWindow = NULL;
-	HWND hWndBreakpoints;
+	HWND SourceDebugWindow = NULL;
+	HWND hWndSourceDebug;
 	WNDPROC oldEditProc;
 
 	unsigned short PriorCPUHaltAddress = 0;
@@ -70,24 +70,24 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	void ResizeWindow(int width, int height)
 	{
-		HWND hCtl = GetDlgItem(hWndBreakpoints, IDC_SOURCE_LISTING);
+		HWND hCtl = GetDlgItem(hWndSourceDebug, IDC_SOURCE_LISTING);
 		MoveWindow(hCtl, 14, 255, width - 30, height - 298, TRUE);
 
-		hCtl = GetDlgItem(hWndBreakpoints, IDCLOSE);
+		hCtl = GetDlgItem(hWndSourceDebug, IDCLOSE);
 		SetWindowPos(hCtl, NULL, 10, height - 34, 0, 0, SWP_NOSIZE);
-		hCtl = GetDlgItem(hWndBreakpoints, IDC_BTN_FIND_SOURCE);
+		hCtl = GetDlgItem(hWndSourceDebug, IDC_BTN_FIND_SOURCE);
 		SetWindowPos(hCtl, NULL, width - 65, height - 34, 0, 0, SWP_NOSIZE);
-		hCtl = GetDlgItem(hWndBreakpoints, IDC_EDIT_FIND_SOURCE);
+		hCtl = GetDlgItem(hWndSourceDebug, IDC_EDIT_FIND_SOURCE);
 		SetWindowPos(hCtl, NULL, width - 172, height - 34, 0, 0, SWP_NOSIZE);
 	}
 
 	bool LoadSource(char* source)
 	{
-		SendDlgItemMessage(hWndBreakpoints, IDC_EDIT_SOURCE, WM_SETTEXT, strlen(source), (LPARAM)(LPCSTR)source);
+		SendDlgItemMessage(hWndSourceDebug, IDC_EDIT_SOURCE, WM_SETTEXT, strlen(source), (LPARAM)(LPCSTR)source);
 
 		int nLines = 0;
 		std::string loaded(std::to_string(nLines) + " lines loaded");
-		SendDlgItemMessage(hWndBreakpoints, IDC_LINES_LOADED, WM_SETTEXT, loaded.size(), (LPARAM)ToLPCSTR(loaded));
+		SendDlgItemMessage(hWndSourceDebug, IDC_LINES_LOADED, WM_SETTEXT, loaded.size(), (LPARAM)ToLPCSTR(loaded));
 
 		std::ifstream file(source);
 		if (!file.is_open())
@@ -124,10 +124,10 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		}
 
 		loaded = std::to_string(nLines) + " lines loaded";
-		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_SETSEL, WPARAM(0), LPARAM(-1));
-		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_REPLACESEL, WPARAM(TRUE), (LPARAM)ToLPCSTR(lines));
-		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_LINESCROLL, 0, (LPARAM)-nLines);
-		SendDlgItemMessage(hWndBreakpoints, IDC_LINES_LOADED, WM_SETTEXT, loaded.size(), (LPARAM)ToLPCSTR(loaded));
+		SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_SETSEL, WPARAM(0), LPARAM(-1));
+		SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_REPLACESEL, WPARAM(TRUE), (LPARAM)ToLPCSTR(lines));
+		SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_LINESCROLL, 0, (LPARAM)-nLines);
+		SendDlgItemMessage(hWndSourceDebug, IDC_LINES_LOADED, WM_SETTEXT, loaded.size(), (LPARAM)ToLPCSTR(loaded));
 		return true;
 	}
 
@@ -162,35 +162,35 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	{
 		CHARFORMAT fmt;
 		fmt.cbSize = sizeof(CHARFORMAT);
-		LRESULT lResult = SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM)&fmt);
+		LRESULT lResult = SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM)&fmt);
 		strcpy(fmt.szFaceName, "Courier New");
 		fmt.yHeight = 10 * 20;
 		fmt.dwEffects = CFE_BOLD;
 		fmt.dwMask = CFM_BOLD | CFM_FACE | CFM_SIZE | CFM_COLOR;
 		fmt.crTextColor = RGB(255, 255, 255);
-		lResult = SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_SETCHARFORMAT, SCF_ASSOCIATEFONT, (LPARAM)&fmt);
+		lResult = SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_SETCHARFORMAT, SCF_ASSOCIATEFONT, (LPARAM)&fmt);
 
-		HWND hCtl = GetDlgItem(hWndBreakpoints, IDC_SOURCE_LISTING);
+		HWND hCtl = GetDlgItem(hWndSourceDebug, IDC_SOURCE_LISTING);
 
 		DWORD msk = ENM_KEYEVENTS | ENM_MOUSEEVENTS; // | ENM_SCROLL | ENM_SCROLLEVENTS;
 		SendMessage(hCtl, EM_SETEVENTMASK, WPARAM(0), (LPARAM)msk);
 		SendMessage(hCtl, EM_SETBKGNDCOLOR, WPARAM(0), RGB(0, 0, 0));
 
-		EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_DEL_BREAKPOINT), false);
-		EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_ON), false);
-		EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_OFF), false);
+		EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_DEL_BREAKPOINT), false);
+		EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_BREAKPOINT_ON), false);
+		EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_BREAKPOINT_OFF), false);
 	}
 
 	int CurrentSourceLine()
 	{
-		HWND hCtl = GetDlgItem(hWndBreakpoints, IDC_SOURCE_LISTING);
+		HWND hCtl = GetDlgItem(hWndSourceDebug, IDC_SOURCE_LISTING);
 		int currentCharStart = SendMessage(hCtl, EM_LINEINDEX, WPARAM(-1), 0);
 		return SendMessage(hCtl, EM_LINEFROMCHAR, currentCharStart, 0);
 	}
 
 	void SelectSourceText(int line, int count, int pos = 0)
 	{
-		HWND hCtl = GetDlgItem(hWndBreakpoints, IDC_SOURCE_LISTING);
+		HWND hCtl = GetDlgItem(hWndSourceDebug, IDC_SOURCE_LISTING);
 		int currentCharStart = SendMessage(hCtl, EM_LINEINDEX, line, 0L);
 		int currentCharEnd = currentCharStart + count;
 		if (count == -1)
@@ -204,7 +204,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	{
 		WCHAR buf[1000];
 		memset(buf, 0, sizeof(buf));
-		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_GETSELTEXT, 0, (LPARAM)&buf);
+		SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_GETSELTEXT, 0, (LPARAM)&buf);
 
 		//setup converter
 		using convert_type = std::codecvt_utf8<wchar_t>;
@@ -216,28 +216,28 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		SelectSourceText(line, -1);
 		CHARFORMAT fmt;
 		fmt.cbSize = sizeof(CHARFORMAT);
-		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
+		SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
 		fmt.dwMask = CFM_COLOR;
 		fmt.crTextColor = rgb;
-		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
+		SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
 	}
 
 	void UpdateBreakpointUI(Breakpoint bp)
 	{
-		HWND hListCtl = GetDlgItem(hWndBreakpoints, IDC_LIST_BREAKPOINTS);
+		HWND hListCtl = GetDlgItem(hWndSourceDebug, IDC_LIST_BREAKPOINTS);
 		const std::string enabled = bp.enabled ? "On" : "Off";
 		std::string s = "Breakpoint #" + std::to_string(bp.id) + "\t" + enabled + "\taddr = " + ToHexString(bp.addr, 0, false);
 		int pos = SendMessage(hListCtl, LB_ADDSTRING, 0, (LPARAM)ToLPCSTR(s));
 		SendMessage(hListCtl, LB_SETITEMDATA, pos, (LPARAM)bp.id);
 		SendMessage(hListCtl, LB_SETCURSEL, pos, 0);
 
-		EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_DEL_BREAKPOINT), true);
-		EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_ON), true);
-		EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_OFF), true);
+		EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_DEL_BREAKPOINT), true);
+		EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_BREAKPOINT_ON), true);
+		EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_BREAKPOINT_OFF), true);
 		
 		SelectSourceText(bp.line, 4);
 		s = (bp.enabled ? "BK" : "--") + ToDecimalString(bp.id, 2, false);
-		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_REPLACESEL, WPARAM(FALSE), (LPARAM)ToLPCSTR(s));
+		SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_REPLACESEL, WPARAM(FALSE), (LPARAM)ToLPCSTR(s));
 		SetLineColor(bp.line, RGB(255, 100, 100));
 	}
 
@@ -285,7 +285,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	void EnableBreakpoint(int id, bool enable)
 	{
-		HWND hListCtl = GetDlgItem(hWndBreakpoints, IDC_LIST_BREAKPOINTS);
+		HWND hListCtl = GetDlgItem(hWndSourceDebug, IDC_LIST_BREAKPOINTS);
 
 		int cnt = SendMessage(hListCtl, LB_GETCOUNT, 0, 0);
 		for (int n = 0; n < cnt; n++)
@@ -314,7 +314,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 		UpdateCPUState();
 
-		HWND hListCtl = GetDlgItem(hWndBreakpoints, IDC_LIST_BREAKPOINTS);
+		HWND hListCtl = GetDlgItem(hWndSourceDebug, IDC_LIST_BREAKPOINTS);
 		int cnt = SendMessage(hListCtl, LB_GETCOUNT, 0, 0);
 		for (int n = 0; n < cnt; n++)
 		{
@@ -324,13 +324,13 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 				SendMessage(hListCtl, LB_DELETESTRING, n, 0);
 				SendMessage(hListCtl, LB_SETCURSEL, WPARAM(-1), 0);
 
-				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_DEL_BREAKPOINT), false);
-				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_ON), false);
-				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_OFF), false);
+				EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_DEL_BREAKPOINT), false);
+				EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_BREAKPOINT_ON), false);
+				EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_BREAKPOINT_OFF), false);
 
 				SelectSourceText(bp.line, 4);
 				const std::string s("    ");
-				SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_REPLACESEL, WPARAM(FALSE), (LPARAM)ToLPCSTR(s));
+				SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_REPLACESEL, WPARAM(FALSE), (LPARAM)ToLPCSTR(s));
 				SetLineColor(bp.line, RGB(255, 255, 255));
 				break;
 			}
@@ -356,7 +356,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	void ListBoxSelection(int action)
 	{
-		HWND hListCtl = GetDlgItem(hWndBreakpoints, IDC_LIST_BREAKPOINTS);
+		HWND hListCtl = GetDlgItem(hWndSourceDebug, IDC_LIST_BREAKPOINTS);
 		if (action == LBN_SELCHANGE)
 		{
 			int selected = SendMessage(hListCtl, LB_GETCURSEL, 0, 0);
@@ -365,26 +365,26 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 				int itemId = SendMessage(hListCtl, LB_GETITEMDATA, selected, 0);
 				Breakpoint bp = mapBreakpoints[itemId];
 
-				int topLine = SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_GETFIRSTVISIBLELINE, 0, 0);
+				int topLine = SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_GETFIRSTVISIBLELINE, 0, 0);
 				int scroll = bp.line - topLine;
-				SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_LINESCROLL, 0, (LPARAM)scroll);
+				SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_LINESCROLL, 0, (LPARAM)scroll);
 
-				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_DEL_BREAKPOINT), true);
-				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_ON), true);
-				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_OFF), true);
+				EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_DEL_BREAKPOINT), true);
+				EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_BREAKPOINT_ON), true);
+				EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_BREAKPOINT_OFF), true);
 			}
 			else
 			{
-				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_DEL_BREAKPOINT), false);
-				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_ON), false);
-				EnableWindow(GetDlgItem(hWndBreakpoints, IDC_BTN_BREAKPOINT_OFF), false);
+				EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_DEL_BREAKPOINT), false);
+				EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_BREAKPOINT_ON), false);
+				EnableWindow(GetDlgItem(hWndSourceDebug, IDC_BTN_BREAKPOINT_OFF), false);
 			}
 		}
 	}
 
 	void ListBoxAction(int action)
 	{
-		HWND hListCtl = GetDlgItem(hWndBreakpoints, IDC_LIST_BREAKPOINTS);
+		HWND hListCtl = GetDlgItem(hWndSourceDebug, IDC_LIST_BREAKPOINTS);
 		int selected = SendMessage(hListCtl, LB_GETCURSEL, 0, 0);
 		if (selected != LB_ERR)
 		{
@@ -431,7 +431,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	{
 		TCHAR buffer[100];
 		memset(buffer, 0, sizeof(buffer));
-		SendDlgItemMessage(hWndBreakpoints, IDC_EDIT_FIND_SOURCE, WM_GETTEXT, sizeof(buffer), (LPARAM)(LPCSTR)buffer);
+		SendDlgItemMessage(hWndSourceDebug, IDC_EDIT_FIND_SOURCE, WM_GETTEXT, sizeof(buffer), (LPARAM)(LPCSTR)buffer);
 
 		size_t newsize = strlen(buffer) + 1;
 		wchar_t* wcstring = new wchar_t[newsize];
@@ -440,7 +440,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		size_t convertedChars = 0;
 		mbstowcs_s(&convertedChars, wcstring, newsize, buffer, _TRUNCATE);
 
-		HWND hCtl = GetDlgItem(hWndBreakpoints, IDC_SOURCE_LISTING);
+		HWND hCtl = GetDlgItem(hWndSourceDebug, IDC_SOURCE_LISTING);
 
 		DWORD cPos = 0;
 		SendMessage(hCtl, EM_GETSEL, (WPARAM)&cPos, 0);
@@ -501,9 +501,9 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		}
 
 		int line = mapAddrLine[addr];
-		int topLine = SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_GETFIRSTVISIBLELINE, 0, 0);
+		int topLine = SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_GETFIRSTVISIBLELINE, 0, 0);
 		int scroll = line - topLine;
-		SendDlgItemMessage(hWndBreakpoints, IDC_SOURCE_LISTING, EM_LINESCROLL, 0, (LPARAM)scroll);
+		SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_LINESCROLL, 0, (LPARAM)scroll);
 		SelectSourceText(line, -1);
 	}
 
@@ -539,7 +539,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		{
 		case WM_INITDIALOG:
 		{
-			hWndBreakpoints = hDlg;
+			hWndSourceDebug = hDlg;
 			SetupListingControl();
 
 			HWND hCtl = GetDlgItem(hDlg, IDC_EDIT_FIND_SOURCE);
@@ -615,7 +615,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			case WM_DESTROY:
 				KillTimer(hDlg, IDT_BRKP_TIMER);
 				DestroyWindow(hDlg);
-				BreakpointsWindow = NULL;
+				SourceDebugWindow = NULL;
 				break;
 			}
 
@@ -627,18 +627,18 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 } } } }
 
 
-void VCC::Debugger::UI::OpenBreakpointsWindow(HINSTANCE instance, HWND parent)
+void VCC::Debugger::UI::OpenSourceDebugWindow(HINSTANCE instance, HWND parent)
 {
-	if (BreakpointsWindow == NULL)
+	if (SourceDebugWindow == NULL)
 	{
-		BreakpointsWindow = CreateDialog(
+		SourceDebugWindow = CreateDialog(
 			instance,
 			MAKEINTRESOURCE(IDD_BREAKPOINTS),
 			parent,
 			BreakpointsDlgProc);
 
-		ShowWindow(BreakpointsWindow, SW_SHOWNORMAL);
+		ShowWindow(SourceDebugWindow, SW_SHOWNORMAL);
 	}
 
-	SetFocus(BreakpointsWindow);
+	SetFocus(SourceDebugWindow);
 }
