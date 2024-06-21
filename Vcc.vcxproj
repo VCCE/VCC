@@ -171,7 +171,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Audio.c" />
-    <ClCompile Include="Breakpoints.cpp">
+    <ClCompile Include="SourceDebug.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Level4</WarningLevel>
@@ -240,7 +240,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h" />
-    <ClInclude Include="Breakpoints.h" />
+    <ClInclude Include="SourceDebug.h" />
     <ClInclude Include="Cassette.h" />
     <ClInclude Include="cc2font.h" />
     <ClInclude Include="cc3font.h" />

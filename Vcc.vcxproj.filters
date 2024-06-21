@@ -82,7 +82,7 @@
     <ClCompile Include="ProcessorState.cpp">
       <Filter>Source\Debugger</Filter>
     </ClCompile>
-    <ClCompile Include="Breakpoints.cpp">
+    <ClCompile Include="SourceDebug.cpp">
       <Filter>Source\Debugger</Filter>
     </ClCompile>
     <ClCompile Include="MemoryMap.cpp">
@@ -192,7 +192,7 @@
     <ClInclude Include="resource.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Breakpoints.h">
+    <ClInclude Include="SourceDebug.h">
       <Filter>Headers\Debugger</Filter>
     </ClInclude>
     <ClInclude Include="MemoryMap.h">

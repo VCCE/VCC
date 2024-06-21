@@ -18,7 +18,7 @@
 
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING	//	FIXME-CHET: Temporary until codecvt deprecation can be addressed
 
-#include "Breakpoints.h"
+#include "SourceDebug.h"
 #include "Debugger.h"
 #include "DebuggerUtils.h"
 #include "defines.h"
