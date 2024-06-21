@@ -358,7 +358,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 
 				case ID_BREAKPOINTS:
-					VCC::Debugger::UI::OpenBreakpointsWindow(EmuState.WindowInstance, EmuState.WindowHandle);
+					VCC::Debugger::UI::OpenSourceDebugWindow(EmuState.WindowInstance, EmuState.WindowHandle);
 					break;
 
 				case ID_MMU_MONITOR:
