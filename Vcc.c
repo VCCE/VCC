@@ -64,7 +64,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "MemoryMap.h"
 #include "ProcessorState.h"
-#include "Breakpoints.h"
+#include "SourceDebug.h"
 #include "Disassembler.h"
 #include "MMUMonitor.h"
 #include "ExecutionTrace.h"
