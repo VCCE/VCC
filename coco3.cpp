@@ -630,9 +630,21 @@ void PasteText() {
 
 	cliptxt = GetClipboardText().c_str();
 	if (PasteWithNew) { cliptxt = "NEW\n" + cliptxt; }
+	char prvchr = '\0';
 	for (size_t t = 0; t < cliptxt.length(); t++) {
 		char tmp = cliptxt[t];
-		if ( tmp != (char)'\n') {
+		bool eol;                   //EJJ CRLF,LFCR,CR,LF eol logic
+		if (tmp == '\x0A') {        //LF
+			if (prvchr == '\x0D') continue;
+			eol = TRUE;
+		} else if (tmp == '\x0D') { //CR
+			if (prvchr == '\x0A') continue;
+			eol = TRUE;
+		} else {
+			eol = FALSE;
+		}
+		prvchr = tmp;
+		if (! eol) {
 			lines += tmp;
 		}
 		else  { //...the character is a <CR>
