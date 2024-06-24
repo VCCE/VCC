@@ -533,7 +533,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		return CallWindowProc(oldEditProc, wnd, msg, wParam, lParam);
 	}
 
-	INT_PTR CALLBACK BreakpointsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+	INT_PTR CALLBACK SourceDebugDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (message)
 		{
@@ -635,7 +635,7 @@ void VCC::Debugger::UI::OpenSourceDebugWindow(HINSTANCE instance, HWND parent)
 			instance,
 			MAKEINTRESOURCE(IDD_BREAKPOINTS),
 			parent,
-			BreakpointsDlgProc);
+			SourceDebugDlgProc);
 
 		ShowWindow(SourceDebugWindow, SW_SHOWNORMAL);
 	}
