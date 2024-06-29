@@ -43,6 +43,15 @@ void SetConfigPath(int, string);
 
 LRESULT CALLBACK	Config			(HWND, UINT, WPARAM, LPARAM);
 
+void OpenAudioConfig();
+//void OpenCPUConfig();
+//void OpenMiscConfig();
+//void OpenDisplayConfig();
+//void OpenInputConfig();
+//void OpenJoystickConfig();
+//void OpenTapeConfig();
+//void OpenBitBangerConfig();
+
 typedef struct  {
 	unsigned char	CPUMultiplyer;
 	unsigned short	MaxOverclock;

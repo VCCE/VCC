@@ -391,6 +391,27 @@ char * BasicRomName(void)
 	return(CurrentConfig.ExternalBasicImage); 
 }
 
+//LRESULT CALLBACK AudioConfig(HWND, UINT, WPARAM, LPARAM);
+HWND hConfigAudioDlg = NULL;
+void OpenAudioConfig() {
+//			g_hWndConfig[0]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_AUDIO),EmuState.WindowHandle,(DLGPROC) AudioConfig);
+	if (hConfigAudioDlg==NULL) {
+		hConfigAudioDlg = CreateDialog(
+			EmuState.WindowInstance,
+			(LPCTSTR)IDD_AUDIO,
+			EmuState.WindowHandle,
+			(DLGPROC)AudioConfig);
+	}
+	ShowWindow(hConfigAudioDlg, SW_SHOWNORMAL) ;
+}
+//IDD_CPU       CpuConfig
+//IDD_MISC      MiscConfig
+//IDD_DISPLAY   DisplayConfig
+//IDD_INPUT     InputConfig
+//IDD_JOYSTICK  JoyStickConfig
+//IDD_CASSETTE  TapeConfig
+//IDD_BITBANGER BitBanger
+
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	static char TabTitles[TABS][10]={"Audio","CPU","Display","Keyboard","Joysticks","Misc","Tape","BitBanger"};

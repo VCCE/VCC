@@ -271,6 +271,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						(DLGPROC)About);
 				    break;
 
+				case ID_AUDIO_CONFIG:
+					OpenAudioConfig();
+				    break;
+				case ID_CPU_CONFIG:
+//					OpenCPUConfig();
+				    break;
+				case ID_DISPLAY_CONFIG:
+//					OpenDisplayConfig();
+				    break;
+				case ID_KEYBOARD_CONFIG:
+//					OpenInputConfig();
+				    break;
+				case ID_JOYSTICKS_CONFIG:
+//					OpenJoystickConfig();
+				    break;
+				case ID_MISC_CONFIG:
+//					OpenMiscConfig();
+				    break;
+				case ID_TAPE_CONFIG:
+//					OpenTapeConfig();
+				    break;
+				case ID_BITBANGER_CONFIG:
+//					OpenBitBangerConfig();
+				    break;
+
 				case ID_CONFIGURE_OPTIONS:				
 #ifdef CONFIG_DIALOG_MODAL
 					// open config dialog modally

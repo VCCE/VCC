@@ -428,6 +428,14 @@
 #define ID_EXEC_TRACE                   40044
 #define ID_PAUSE_EMULATION              40045
 #define ID_DISASSEMBLER                 40046
+#define ID_AUDIO_CONFIG                 40050
+#define ID_CPU_CONFIG                   40051
+#define ID_DISPLAY_CONFIG               40052
+#define ID_KEYBOARD_CONFIG              40053
+#define ID_JOYSTICKS_CONFIG             40054
+#define ID_MISC_CONFIG                  40055
+#define ID_TAPE_CONFIG                  40056
+#define ID_BITBANGER_CONFIG             40057
 #define ID_CONFIGURE_OPTIONS            65535
 
 // Next default values for new objects
@@ -435,7 +443,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        176
-#define _APS_NEXT_COMMAND_VALUE         40047
+#define _APS_NEXT_COMMAND_VALUE         40060
 #define _APS_NEXT_CONTROL_VALUE         2145
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
