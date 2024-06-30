@@ -41,16 +41,19 @@ POINT GetIniWindowSize();
 int GetRememberSize();
 void SetConfigPath(int, string);
 
-LRESULT CALLBACK	Config			(HWND, UINT, WPARAM, LPARAM);
+void DecreaseOverclockSpeed();
+void IncreaseOverclockSpeed();
 
 void OpenAudioConfig();
-//void OpenCPUConfig();
-//void OpenMiscConfig();
-//void OpenDisplayConfig();
-//void OpenInputConfig();
-//void OpenJoystickConfig();
-//void OpenTapeConfig();
-//void OpenBitBangerConfig();
+void OpenCpuConfig();
+void OpenMiscConfig();
+void OpenDisplayConfig();
+void OpenInputConfig();
+void OpenJoyStickConfig();
+void OpenTapeConfig();
+void OpenBitBangerConfig();
+
+//LRESULT CALLBACK	Config			(HWND, UINT, WPARAM, LPARAM);
 
 typedef struct  {
 	unsigned char	CPUMultiplyer;
@@ -85,9 +88,6 @@ typedef struct  {
     char            COCO3ROMPath[MAX_PATH];
     unsigned char   ShowMousePointer;
 } STRConfig;
-
-void DecreaseOverclockSpeed();
-void IncreaseOverclockSpeed();
 
 #endif
 

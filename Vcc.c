@@ -275,52 +275,52 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					OpenAudioConfig();
 				    break;
 				case ID_CPU_CONFIG:
-//					OpenCPUConfig();
+					OpenCpuConfig();
 				    break;
 				case ID_DISPLAY_CONFIG:
-//					OpenDisplayConfig();
+					OpenDisplayConfig();
 				    break;
 				case ID_KEYBOARD_CONFIG:
-//					OpenInputConfig();
+					OpenInputConfig();
 				    break;
 				case ID_JOYSTICKS_CONFIG:
-//					OpenJoystickConfig();
+					OpenJoyStickConfig();
 				    break;
 				case ID_MISC_CONFIG:
-//					OpenMiscConfig();
+					OpenMiscConfig();
 				    break;
 				case ID_TAPE_CONFIG:
-//					OpenTapeConfig();
+					OpenTapeConfig();
 				    break;
 				case ID_BITBANGER_CONFIG:
-//					OpenBitBangerConfig();
+					OpenBitBangerConfig();
 				    break;
 
-				case ID_CONFIGURE_OPTIONS:				
-#ifdef CONFIG_DIALOG_MODAL
-					// open config dialog modally
-					DialogBox(EmuState.WindowInstance,
-						(LPCTSTR)IDD_TCONFIG,
-						hWnd,
-						(DLGPROC)Config
-						);
-#else
-					// open config dialog if not already open
-					// opens modeless so you can control the cassette
-					// while emulator is still running (assumed)
-					if (EmuState.ConfigDialog==NULL)
-					{
-						EmuState.ConfigDialog = CreateDialog(
-							EmuState.WindowInstance, //NULL,
-							(LPCTSTR)IDD_TCONFIG,
-							EmuState.WindowHandle,
-							(DLGPROC)Config
-						) ;
-						// open modeless
-						ShowWindow(EmuState.ConfigDialog, SW_SHOWNORMAL) ;
-					}
-#endif
-				    break;
+//				case ID_CONFIGURE_OPTIONS:				
+//#ifdef CONFIG_DIALOG_MODAL
+//					// open config dialog modally
+//					DialogBox(EmuState.WindowInstance,
+//						(LPCTSTR)IDD_TCONFIG,
+//						hWnd,
+//						(DLGPROC)Config
+//						);
+//#else
+//					// open config dialog if not already open
+//					// opens modeless so you can control the cassette
+//					// while emulator is still running (assumed)
+//					if (EmuState.ConfigDialog==NULL)
+//					{
+//						EmuState.ConfigDialog = CreateDialog(
+//							EmuState.WindowInstance, //NULL,
+//							(LPCTSTR)IDD_TCONFIG,
+//							EmuState.WindowHandle,
+//							(DLGPROC)Config
+//						) ;
+//						// open modeless
+//						ShowWindow(EmuState.ConfigDialog, SW_SHOWNORMAL) ;
+//					}
+//#endif
+//				    break;
 
 				case ID_FILE_EXIT:
 				case IDOK:

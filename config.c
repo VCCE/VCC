@@ -391,143 +391,123 @@ char * BasicRomName(void)
 	return(CurrentConfig.ExternalBasicImage); 
 }
 
-//LRESULT CALLBACK AudioConfig(HWND, UINT, WPARAM, LPARAM);
-HWND hConfigAudioDlg = NULL;
-void OpenAudioConfig() {
-//			g_hWndConfig[0]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_AUDIO),EmuState.WindowHandle,(DLGPROC) AudioConfig);
-	if (hConfigAudioDlg==NULL) {
-		hConfigAudioDlg = CreateDialog(
-			EmuState.WindowInstance,
-			(LPCTSTR)IDD_AUDIO,
-			EmuState.WindowHandle,
-			(DLGPROC)AudioConfig);
-	}
-	ShowWindow(hConfigAudioDlg, SW_SHOWNORMAL) ;
-}
-//IDD_CPU       CpuConfig
-//IDD_MISC      MiscConfig
-//IDD_DISPLAY   DisplayConfig
-//IDD_INPUT     InputConfig
-//IDD_JOYSTICK  JoyStickConfig
-//IDD_CASSETTE  TapeConfig
-//IDD_BITBANGER BitBanger
 
-LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	static char TabTitles[TABS][10]={"Audio","CPU","Display","Keyboard","Joysticks","Misc","Tape","BitBanger"};
-	static unsigned char TabCount=0,SelectedTab=0;
-	static HWND hWndTabDialog;
-	TCITEM Tabs;
-	switch (message)
-	{
-		case WM_INITDIALOG:
-			InitCommonControls();
-			TempConfig=CurrentConfig;
-			CpuIcons[0]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_MOTO);
-			CpuIcons[1]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_HITACHI2);
-			MonIcons[0]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_COMPOSITE);
-			MonIcons[1]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_RGB);
-			hWndTabDialog= GetDlgItem(hDlg,IDC_CONFIGTAB); //get handle of Tabbed Dialog
+//LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+//{
+//	static char TabTitles[TABS][10]={"Audio","CPU","Display","Keyboard","Joysticks","Misc","Tape","BitBanger"};
+//	static unsigned char TabCount=0,SelectedTab=0;
+//	static HWND hWndTabDialog;
+//	TCITEM Tabs;
+//	switch (message)
+//	{
+//		case WM_INITDIALOG:
+//			InitCommonControls();
+//			TempConfig=CurrentConfig;
+//			CpuIcons[0]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_MOTO);
+//			CpuIcons[1]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_HITACHI2);
+//			MonIcons[0]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_COMPOSITE);
+//			MonIcons[1]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_RGB);
+//			hWndTabDialog= GetDlgItem(hDlg,IDC_CONFIGTAB); //get handle of Tabbed Dialog
 			//get handles to all the sub panels in the control
-			g_hWndConfig[0]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_AUDIO),hWndTabDialog,(DLGPROC) AudioConfig);
-			g_hWndConfig[1]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_CPU),hWndTabDialog,(DLGPROC) CpuConfig);
-			g_hWndConfig[2]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_DISPLAY),hWndTabDialog,(DLGPROC) DisplayConfig);
-			g_hWndConfig[3]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_INPUT),hWndTabDialog,(DLGPROC) InputConfig);
-			g_hWndConfig[4]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_JOYSTICK),hWndTabDialog,(DLGPROC) JoyStickConfig);
-			g_hWndConfig[5]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_MISC),hWndTabDialog,(DLGPROC) MiscConfig);
-			g_hWndConfig[6]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_CASSETTE),hWndTabDialog,(DLGPROC) TapeConfig);
-			g_hWndConfig[7]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_BITBANGER),hWndTabDialog,(DLGPROC) BitBanger);
+//			g_hWndConfig[0]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_AUDIO),hWndTabDialog,(DLGPROC) AudioConfig);
+//			g_hWndConfig[1]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_CPU),hWndTabDialog,(DLGPROC) CpuConfig);
+//			g_hWndConfig[2]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_DISPLAY),hWndTabDialog,(DLGPROC) DisplayConfig);
+//			g_hWndConfig[3]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_INPUT),hWndTabDialog,(DLGPROC) InputConfig);
+//			g_hWndConfig[4]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_JOYSTICK),hWndTabDialog,(DLGPROC) JoyStickConfig);
+//			g_hWndConfig[5]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_MISC),hWndTabDialog,(DLGPROC) MiscConfig);
+//			g_hWndConfig[6]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_CASSETTE),hWndTabDialog,(DLGPROC) TapeConfig);
+//			g_hWndConfig[7]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_BITBANGER),hWndTabDialog,(DLGPROC) BitBanger);
 
-			//Set the title text for all tabs
-			for (TabCount=0;TabCount<TABS;TabCount++)
-			{
-				Tabs.mask= TCIF_TEXT | TCIF_IMAGE;
-				Tabs.iImage=-1;
-				Tabs.pszText=TabTitles[TabCount];
-				TabCtrl_InsertItem(hWndTabDialog,TabCount,&Tabs);
-			}
-
-			TabCtrl_SetCurSel(hWndTabDialog,0);	//Set Initial Tab to 0
-			for (TabCount=0;TabCount<TABS;TabCount++)	//Hide All the Sub Panels
-				ShowWindow(g_hWndConfig[TabCount],SW_HIDE);
-			SetWindowPos(g_hWndConfig[0],HWND_TOP,10,30,0,0,SWP_NOSIZE|SWP_SHOWWINDOW);
-			RefreshJoystickStatus();
-		break;
-
-		case WM_NOTIFY:
-			if ((LOWORD(wParam))==IDC_CONFIGTAB)
-			{
-				SelectedTab=TabCtrl_GetCurSel(hWndTabDialog);
-				for (TabCount=0;TabCount<TABS;TabCount++)
-					ShowWindow(g_hWndConfig[TabCount],SW_HIDE);
-				SetWindowPos(g_hWndConfig[SelectedTab],HWND_TOP,10,30,0,0,SWP_NOSIZE|SWP_SHOWWINDOW);
-			}
-		break;
-
-		case WM_COMMAND:
-			switch (LOWORD(wParam))
-			{
-			case IDOK:
-				hDlgBar=NULL;
-				hDlgTape=NULL;
-				EmuState.ResetPending=4;
-				if ( (CurrentConfig.RamSize != TempConfig.RamSize) | (CurrentConfig.CpuType != TempConfig.CpuType) )
-					EmuState.ResetPending=2;
-				if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) | (CurrentConfig.AudioRate != TempConfig.AudioRate))
-					SoundInit(EmuState.WindowHandle,SoundCards[TempConfig.SndOutDev].Guid,TempConfig.AudioRate);
-
-				CurrentConfig=TempConfig;
-				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
-
-				RightJS=TempRightJS;
-				LeftJS=TempLeftJS;
-				SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
-
-				for (temp = 0; temp < TABS; temp++)
-				{
-					DestroyWindow(g_hWndConfig[temp]);
-				}
-#ifdef CONFIG_DIALOG_MODAL
-				EndDialog(hDlg, LOWORD(wParam));
-#else
-				DestroyWindow(hDlg);
-#endif
-				EmuState.ConfigDialog=NULL;
-				break;
-
-			case IDAPPLY:
-				EmuState.ResetPending=4;
-				if ( (CurrentConfig.RamSize != TempConfig.RamSize) | (CurrentConfig.CpuType != TempConfig.CpuType) )
-					EmuState.ResetPending=2;
-				if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) | (CurrentConfig.AudioRate != TempConfig.AudioRate))
-					SoundInit(EmuState.WindowHandle,SoundCards[TempConfig.SndOutDev].Guid,TempConfig.AudioRate);
-
-				CurrentConfig=TempConfig;
-				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
-
-				RightJS=TempRightJS;
-				LeftJS=TempLeftJS;
-				SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
-			break;
-
-			case IDCANCEL:
-				for (temp = 0; temp < TABS; temp++)
-				{
-					DestroyWindow(g_hWndConfig[temp]);
-				}
-#ifdef CONFIG_DIALOG_MODAL
-				EndDialog(hDlg, LOWORD(wParam));
-#else
-				DestroyWindow(hDlg);
-#endif
-				EmuState.ConfigDialog=NULL;
-				break;
-			}
-
-		break; //break WM_COMMAND
-	} //End Switch
-    return FALSE;
-}
+//			//Set the title text for all tabs
+//			for (TabCount=0;TabCount<TABS;TabCount++)
+//			{
+//				Tabs.mask= TCIF_TEXT | TCIF_IMAGE;
+//				Tabs.iImage=-1;
+//				Tabs.pszText=TabTitles[TabCount];
+//				TabCtrl_InsertItem(hWndTabDialog,TabCount,&Tabs);
+//			}
+//
+//			TabCtrl_SetCurSel(hWndTabDialog,0);	//Set Initial Tab to 0
+//			for (TabCount=0;TabCount<TABS;TabCount++)	//Hide All the Sub Panels
+//				ShowWindow(g_hWndConfig[TabCount],SW_HIDE);
+//			SetWindowPos(g_hWndConfig[0],HWND_TOP,10,30,0,0,SWP_NOSIZE|SWP_SHOWWINDOW);
+//			RefreshJoystickStatus();
+//		break;
+//
+//		case WM_NOTIFY:
+//			if ((LOWORD(wParam))==IDC_CONFIGTAB)
+//			{
+//				SelectedTab=TabCtrl_GetCurSel(hWndTabDialog);
+//				for (TabCount=0;TabCount<TABS;TabCount++)
+//					ShowWindow(g_hWndConfig[TabCount],SW_HIDE);
+//				SetWindowPos(g_hWndConfig[SelectedTab],HWND_TOP,10,30,0,0,SWP_NOSIZE|SWP_SHOWWINDOW);
+//			}
+//		break;
+//
+//		case WM_COMMAND:
+//			switch (LOWORD(wParam))
+//			{
+//			case IDOK:
+//				hDlgBar=NULL;
+//				hDlgTape=NULL;
+//				EmuState.ResetPending=4;
+//				if ( (CurrentConfig.RamSize != TempConfig.RamSize) | (CurrentConfig.CpuType != TempConfig.CpuType) )
+//					EmuState.ResetPending=2;
+//				if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) | (CurrentConfig.AudioRate != TempConfig.AudioRate))
+//					SoundInit(EmuState.WindowHandle,SoundCards[TempConfig.SndOutDev].Guid,TempConfig.AudioRate);
+//
+//				CurrentConfig=TempConfig;
+//				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
+//
+//				RightJS=TempRightJS;
+//				LeftJS=TempLeftJS;
+//				SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
+//
+//				for (temp = 0; temp < TABS; temp++)
+//				{
+//					DestroyWindow(g_hWndConfig[temp]);
+//				}
+//#//ifdef CONFIG_DIALOG_MODAL
+//				EndDialog(hDlg, LOWORD(wParam));
+//#//else
+//				DestroyWindow(hDlg);
+//#//endif
+//				EmuState.ConfigDialog=NULL;
+//				break;
+//
+//			case IDAPPLY:
+//				EmuState.ResetPending=4;
+//				if ( (CurrentConfig.RamSize != TempConfig.RamSize) | (CurrentConfig.CpuType != TempConfig.CpuType) )
+//					EmuState.ResetPending=2;
+//				if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) | (CurrentConfig.AudioRate != TempConfig.AudioRate))
+//					SoundInit(EmuState.WindowHandle,SoundCards[TempConfig.SndOutDev].Guid,TempConfig.AudioRate);
+//
+//				CurrentConfig=TempConfig;
+//				vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
+//
+//				RightJS=TempRightJS;
+//				LeftJS=TempLeftJS;
+//				SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
+//			break;
+//
+//			case IDCANCEL:
+//				for (temp = 0; temp < TABS; temp++)
+//				{
+//					DestroyWindow(g_hWndConfig[temp]);
+//				}
+//#//ifdef CONFIG_DIALOG_MODAL
+//				EndDialog(hDlg, LOWORD(wParam));
+//#//else
+//				DestroyWindow(hDlg);
+//#//endif
+//				EmuState.ConfigDialog=NULL;
+//				break;
+//			}
+//
+//		break; //break WM_COMMAND
+//	} //End Switch
+//   return FALSE;
+//}
 
 void GetIniFilePath( char *Path)
 {
@@ -638,6 +618,19 @@ void DecreaseOverclockSpeed()
 	EmuState.ResetPending = 4;
 }
 
+/********************************************/              
+/*				Cpu Config					*/
+/********************************************/              
+HWND hCpuDlg = NULL;
+void OpenCpuConfig() {
+	if (hCpuDlg==NULL) {
+		hCpuDlg = CreateDialog
+			( EmuState.WindowInstance, (LPCTSTR) IDD_CPU,
+			  EmuState.WindowHandle,   (DLGPROC) CpuConfig );
+	}
+	ShowWindow(hCpuDlg, SW_SHOWNORMAL) ;
+}
+
 LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
@@ -701,6 +694,19 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	return(0);
 }
 
+
+/********************************************/              
+/*				Misc Config					*/
+/********************************************/              
+HWND hMiscDlg = NULL;
+void OpenMiscConfig() {
+	if (hMiscDlg==NULL) {
+		hMiscDlg = CreateDialog
+			( EmuState.WindowInstance, (LPCTSTR) IDD_MISC,
+			  EmuState.WindowHandle,   (DLGPROC) MiscConfig );
+	}
+	ShowWindow(hMiscDlg, SW_SHOWNORMAL) ;
+}
 LRESULT CALLBACK MiscConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
@@ -718,6 +724,18 @@ LRESULT CALLBACK MiscConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 	return(0);
 }
 
+/********************************************/              
+/*				Tape Config					*/
+/********************************************/              
+HWND hTapeDlg = NULL;
+void OpenTapeConfig() {
+	if (hTapeDlg==NULL) {
+		hTapeDlg = CreateDialog
+			( EmuState.WindowInstance, (LPCTSTR) IDD_CASSETTE,
+			  EmuState.WindowHandle,   (DLGPROC) TapeConfig );
+	}
+	ShowWindow(hTapeDlg, SW_SHOWNORMAL) ;
+}
 LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 //	HWND hCounter=NULL;
@@ -789,6 +807,19 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 	return(0);
 }
 
+/********************************************/              
+/*				AudioConfig					*/
+/********************************************/              
+HWND hAudioDlg = NULL;
+void OpenAudioConfig() {
+	if (hAudioDlg==NULL) {
+		hAudioDlg = CreateDialog
+			( EmuState.WindowInstance, (LPCTSTR) IDD_AUDIO,
+			  EmuState.WindowHandle,   (DLGPROC) AudioConfig );
+	}
+	ShowWindow(hAudioDlg, SW_SHOWNORMAL) ;
+}
+
 LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	unsigned char Index=0;
@@ -830,6 +861,18 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 	return(0);
 }
 
+/********************************************/              
+/*			   Display Config				*/
+/********************************************/              
+HWND hDisplayDlg = NULL;
+void OpenDisplayConfig() {
+	if (hDisplayDlg==NULL) {
+		hDisplayDlg = CreateDialog
+			( EmuState.WindowInstance, (LPCTSTR) IDD_DISPLAY,
+			  EmuState.WindowHandle,   (DLGPROC) DisplayConfig );
+	}
+	ShowWindow(hDisplayDlg, SW_SHOWNORMAL) ;
+}
 LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	static bool isRGB;
@@ -939,14 +982,23 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 	return(0);
 }
 
-//--------------------------
-//   Keyboard Config
-//--------------------------
+/********************************************/              
+/*			  Keyboard Config				*/
+/********************************************/              
 
 int SetCurrentKeyMap(int keymap);
 int SelectKeymapFile(HWND hdlg);
 int ShowKeymapStatus(HWND hDlg);
 
+HWND hInputDlg = NULL;
+void OpenInputConfig() {
+	if (hInputDlg==NULL) {
+		hInputDlg = CreateDialog
+			( EmuState.WindowInstance, (LPCTSTR) IDD_INPUT,
+			  EmuState.WindowHandle,   (DLGPROC) InputConfig );
+	}
+	ShowWindow(hInputDlg, SW_SHOWNORMAL) ;
+}
 LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message) {
@@ -1057,10 +1109,20 @@ BOOL SelectKeymapFile(HWND hDlg)
     }
 	return TRUE;
 }
-//--------------------------
-//  Joystick Config
-//--------------------------
 
+/********************************************/              
+/*			  JoyStick Config				*/
+/********************************************/              
+//IDD_JOYSTICK  JoyStickConfig
+HWND hJoyStickDlg = NULL;
+void OpenJoyStickConfig() {
+	if (hJoyStickDlg==NULL) {
+		hJoyStickDlg = CreateDialog
+			( EmuState.WindowInstance, (LPCTSTR) IDD_JOYSTICK,
+			  EmuState.WindowHandle,   (DLGPROC) JoyStickConfig );
+	}
+	ShowWindow(hJoyStickDlg, SW_SHOWNORMAL) ;
+}
 LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	static int LeftJoyStick[6]={IDC_LEFT_LEFT,IDC_LEFT_RIGHT,IDC_LEFT_UP,IDC_LEFT_DOWN,IDC_LEFT_FIRE1,IDC_LEFT_FIRE2};
@@ -1347,7 +1409,18 @@ void UpdateTapeCounter(unsigned int Counter,unsigned char TapeMode)
 	return;
 }
 
-
+/********************************************/              
+/*			  BitBanger Config				*/
+/********************************************/              
+HWND hBitBangerDlg = NULL;
+void OpenBitBangerConfig() {
+	if (hBitBangerDlg==NULL) {
+		hBitBangerDlg = CreateDialog
+			( EmuState.WindowInstance, (LPCTSTR) IDD_BITBANGER,
+			  EmuState.WindowHandle,   (DLGPROC) BitBanger );
+	}
+	ShowWindow(hBitBangerDlg, SW_SHOWNORMAL) ;
+}
 LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
