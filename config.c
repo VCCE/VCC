@@ -70,6 +70,7 @@ LRESULT CALLBACK TapeConfig(HWND , UINT , WPARAM , LPARAM );
 LRESULT CALLBACK BitBanger(HWND , UINT , WPARAM , LPARAM );
 LRESULT CALLBACK Paths(HWND, UINT, WPARAM, LPARAM);
 
+void ApplyConfig(void);
 void ApplyCpuConfig(HWND);
 void ApplyAudioConfig(HWND);
 void ApplyJoyStickConfig(HWND);
@@ -124,7 +125,6 @@ static char KeyMapFilePath[MAX_PATH]="";
 static char TapeFileName[MAX_PATH]="";
 static char ExecDirectory[MAX_PATH]="";
 static char SerialCaptureFile[MAX_PATH]="";
-static char TextMode=1,PrtMon=0;;
 static unsigned char NumberofJoysticks=0;
 TCHAR AppDataPath[MAX_PATH];
 
@@ -143,7 +143,7 @@ static JoyStick TempLeftJS, TempRightJS;
 
 #define MAXSOUNDCARDS 12
 static SndCardList SoundCards[MAXSOUNDCARDS];
-static HWND hDlgTape=NULL;
+//static HWND hTapeDlg=NULL;
 
 CHARFORMAT CounterText;
 CHARFORMAT ModeText;
@@ -183,7 +183,10 @@ void LoadConfig(SystemState *LCState)
 	strcpy(CurrentConfig.PathtoExe,ExecDirectory);
 
 	strcat(AppDataPath, "\\VCC");
-	if (_mkdir(AppDataPath) != 0) { OutputDebugString("Unable to create VCC config folder."); }
+
+	if (_mkdir(AppDataPath) != 0) {
+		OutputDebugString("Unable to create VCC config folder.");
+	}
 
 	if (*CmdArg.IniFile) {
 		GetFullPathNameA(CmdArg.IniFile,MAX_PATH,IniFilePath,0);
@@ -199,12 +202,12 @@ void LoadConfig(SystemState *LCState)
 	CurrentConfig.RebootNow=0;
 	UpdateConfig();
 	RefreshJoystickStatus();
-	SoundInit(EmuState.WindowHandle,SoundCards[CurrentConfig.SndOutDev].Guid,CurrentConfig.AudioRate);
+	SoundInit(EmuState.WindowHandle,
+			SoundCards[CurrentConfig.SndOutDev].Guid,CurrentConfig.AudioRate);
 
 //  Try to open the config file.  Create it if necessary.  Abort if failure.
-	hr = CreateFile(IniFilePath,
-					GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ,
-					NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	hr = CreateFile(IniFilePath, GENERIC_READ | GENERIC_WRITE,
+			FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	lasterror = GetLastError();
 	if (hr==INVALID_HANDLE_VALUE) { // Fatal could not open ini file
 	    MessageBox(0,"Could not open ini file","Error",0);
@@ -387,6 +390,15 @@ unsigned char ReadIniFile(void)
 	return(0);
 }
 
+void SetWindowSize(POINT p) {
+	if (EmuState.WindowHandle != NULL)
+	{
+		int width = p.x + 16;
+		int height = p.y + 81;
+		SetWindowPos(EmuState.WindowHandle, 0, 0, 0, width, height, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+	}
+}
+
 /********************************************/
 /*          Config File paths               */
 /********************************************/
@@ -443,6 +455,15 @@ void UpdateConfig (void)
 		DoReboot();
 	CurrentConfig.RebootNow=0;
 	EmuState.MousePointer = CurrentConfig.ShowMousePointer;
+}
+
+/********************************************/
+/*     Commit Temp Config and apply          */
+/********************************************/
+void ApplyConfig(void)
+{
+	CurrentConfig = TempConfig;
+	UpdateConfig();
 }
 
 /********************************************/
@@ -521,7 +542,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		case IDC_6809:
 		case IDC_6309:
 			for (temp=0;temp<=1;temp++) {
-				if (LOWORD(wParam) == Cpuchoice[temp]) { 
+				if (LOWORD(wParam) == Cpuchoice[temp]) {
 					TempConfig.CpuType = temp;
 					SendDlgItemMessage(hDlg,Cpuchoice[temp],BM_SETCHECK,1,0);
 				} else {
@@ -542,14 +563,15 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 
 void ApplyCpuConfig(HWND hDlg)
 {
-//	EmuState.ResetPending = 4;       // Update config
-	if ( (CurrentConfig.RamSize != TempConfig.RamSize) | 
+	if ( (CurrentConfig.RamSize != TempConfig.RamSize) |
 		 (CurrentConfig.CpuType != TempConfig.CpuType) ) {
 		EmuState.ResetPending = 2;   // Hard reset
 	} else {
 		EmuState.ResetPending = 4;   // Update config
 	}
 	CurrentConfig = TempConfig;
+	// UpdateConfig() is not appropriate here.  ResetPending is used 
+	// to allow Vcc.c to do UpdateConfig otherwise CPU will not reset.
 }
 
 /* Increase the overclock speed (2..100), as seen after a POKE 65497,0. */
@@ -620,12 +642,12 @@ LRESULT CALLBACK MiscConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			CurrentConfig = TempConfig;
+			ApplyConfig();
 			hMiscDlg = NULL;
 			DestroyWindow(hDlg);
 			break;
 		case IDAPPLY:
-			CurrentConfig = TempConfig;
+			ApplyConfig();
 			break;
 		}
 		break;
@@ -654,7 +676,6 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 	CounterText.dwEffects = CFE_BOLD;
 	CounterText.crTextColor=RGB(255,255,255);
 
-
 	ModeText.cbSize = sizeof(CHARFORMAT);
 	ModeText.dwMask = CFM_BOLD | CFM_COLOR ;
 	ModeText.dwEffects = CFE_BOLD;
@@ -667,7 +688,7 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 		sprintf(OutBuffer,"%i",TapeCounter);
 		SendDlgItemMessage(hDlg,IDC_TCOUNT,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 		SendDlgItemMessage(hDlg,IDC_MODE,WM_SETTEXT,strlen(Tmodes[Tmode]),(LPARAM)(LPCSTR)Tmodes[Tmode]);
-		GetTapeName(TapeFileName);
+		GetTapeName(TapeFileName);  // Defined in Cassette.cpp
 		SendDlgItemMessage(hDlg,IDC_TAPEFILE,WM_SETTEXT,strlen(TapeFileName),(LPARAM)(LPCSTR)TapeFileName);
 //		hCounter=GetDlgItem(hDlg,IDC_TCOUNT);
 //		SendMessage (hCounter, EM_SETBKGNDCOLOR, 0, (LPARAM)RGB(0,0,0));
@@ -676,7 +697,7 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 		SendDlgItemMessage(hDlg,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0));
 		SendDlgItemMessage(hDlg,IDC_MODE,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&CounterText);
 //		SendDlgItemMessage(hDlg,IDC_MODE,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&ModeText);
-//		hDlgTape=hDlg;
+//		hTapeDlg=hDlg;
 		break;
 
 	case WM_COMMAND:
@@ -687,12 +708,12 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			CurrentConfig = TempConfig;
+			ApplyConfig();
 			hTapeDlg = NULL;
 			DestroyWindow(hDlg);
 			break;
 		case IDAPPLY:
-			CurrentConfig = TempConfig;
+			ApplyConfig();
 			break;
 		case IDC_PLAY:
 			Tmode=PLAY;
@@ -731,26 +752,27 @@ void UpdateTapeCounter(unsigned int Counter,unsigned char TapeMode)
 	TapeCounter=Counter;
 	Tmode=TapeMode;
 	sprintf(OutBuffer,"%i",TapeCounter);
-	SendDlgItemMessage(hDlgTape,IDC_TCOUNT,
+	SendDlgItemMessage(hTapeDlg,IDC_TCOUNT,
 			WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
-	SendDlgItemMessage(hDlgTape,IDC_MODE,
+	SendDlgItemMessage(hTapeDlg,IDC_MODE,
 			WM_SETTEXT,strlen(Tmodes[Tmode]),(LPARAM)(LPCSTR)Tmodes[Tmode]);
 	GetTapeName(TapeFileName);
 	PathStripPath (TapeFileName);
-	SendDlgItemMessage(hDlgTape,IDC_TAPEFILE,
+//	SendDlgItemMessage(hTapeDlg,IDC_TAPEFILE,
+	SendDlgItemMessage(hTapeDlg,IDC_TAPEFILE,
 			WM_SETTEXT,strlen(TapeFileName),(LPARAM)(LPCSTR)TapeFileName);
 
 	switch (Tmode) {
 	case REC:
-		SendDlgItemMessage(hDlgTape,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0xAF,0,0));
+		SendDlgItemMessage(hTapeDlg,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0xAF,0,0));
 		break;
 
 	case PLAY:
-		SendDlgItemMessage(hDlgTape,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0xAF,0));
+		SendDlgItemMessage(hTapeDlg,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0xAF,0));
 		break;
 
 	default:
-		SendDlgItemMessage(hDlgTape,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0));
+		SendDlgItemMessage(hTapeDlg,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0));
 		break;
 	}
 	return;
@@ -827,13 +849,13 @@ void ApplyAudioConfig(HWND hDlg)
 	TempConfig.AudioRate =
 		(unsigned char) SendDlgItemMessage(hDlg,IDC_RATE,CB_GETCURSEL,0,0);
 	strcpy(TempConfig.SoundCardName, SoundCards[TempConfig.SndOutDev].CardName);
-	if ( (CurrentConfig.SndOutDev != TempConfig.SndOutDev) | 
+	if ( (CurrentConfig.SndOutDev != TempConfig.SndOutDev) |
 	     (CurrentConfig.AudioRate != TempConfig.AudioRate)) {
 			SoundInit ( EmuState.WindowHandle,
 		            	SoundCards[TempConfig.SndOutDev].Guid,
 		            	TempConfig.AudioRate);
 	}
-	CurrentConfig=TempConfig;
+	ApplyConfig();
 }
 
 void UpdateSoundBar (unsigned short Left,unsigned short Right)
@@ -867,6 +889,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 		TempConfig = CurrentConfig;
 		MonIcons[0]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_COMPOSITE);
 		MonIcons[1]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_RGB);
+
 		SendDlgItemMessage(hDlg,IDC_FRAMESKIP,TBM_SETRANGE,TRUE,MAKELONG(1,6) );
 		SendDlgItemMessage(hDlg,IDC_SCANLINES,BM_SETCHECK,TempConfig.ScanLines,0);
 		SendDlgItemMessage(hDlg,IDC_THROTTLE,BM_SETCHECK,TempConfig.SpeedThrottle,0);
@@ -917,12 +940,12 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			CurrentConfig = TempConfig;
+			ApplyConfig();
 			hDisplayDlg = NULL;
 			DestroyWindow(hDlg);
 			break;
 		case IDAPPLY:
-			CurrentConfig = TempConfig;
+			ApplyConfig();
 			break;
 
 		case IDC_REMEMBER_SIZE:
@@ -973,7 +996,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 1, 0);
 				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 0, 0);
 				TempConfig.PaletteType = 0;
-			} else { 
+			} else {
 				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0);
 			}
 			break;
@@ -984,7 +1007,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 1, 0);
 				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 0, 0);
 				TempConfig.PaletteType = 1;
-			} else { 
+			} else {
 				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
 			}
 			break;
@@ -1029,13 +1052,13 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			break;
 		case IDOK:
 			vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
-			CurrentConfig = TempConfig;
+			ApplyConfig();
             hInputDlg = NULL;
 			DestroyWindow(hDlg);
 			break;
 		case IDAPPLY:
 			vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
-			CurrentConfig = TempConfig;
+			ApplyConfig();
 			break;
 		case IDC_KEYMAP_COCO:
             SetCurrentKeyMap(kKBLayoutCoCo);
@@ -1140,6 +1163,11 @@ BOOL SelectKeymapFile(HWND hDlg)
 	return TRUE;
 }
 
+// Called by Keyboard.c and KeyboardEdit.c
+int GetKeyboardLayout() {
+	return(CurrentConfig.KeyMap);
+}
+
 /********************************************/
 /*              JoyStick Config             */
 /********************************************/
@@ -1175,6 +1203,7 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 	switch (message)
 	{
 		case WM_INITDIALOG:
+			RefreshJoystickStatus();
 			TempConfig = CurrentConfig;
 			JoystickIcons[0]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_KEYBOARD);
 			JoystickIcons[1]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_MOUSE);
@@ -1382,7 +1411,7 @@ void ApplyJoyStickConfig(HWND hDlg)
 	RightJS=TempRightJS;
 	LeftJS=TempLeftJS;
 	SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
-	CurrentConfig = TempConfig;
+	ApplyConfig();
 }
 
 unsigned char TranslateDisp2Scan(int x)
@@ -1438,6 +1467,8 @@ void RefreshJoystickStatus(void)
 /********************************************/
 /*             BitBanger Config             */
 /********************************************/
+static char TextMode=1,PrtMon=0;;
+
 HWND hBitBangerDlg = NULL;
 void OpenBitBangerConfig() {
 	if (hBitBangerDlg==NULL) {
@@ -1459,6 +1490,8 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			WM_SETTEXT,strlen(SerialCaptureFile),(LPARAM)(LPCSTR)SerialCaptureFile);
 		SendDlgItemMessage(hDlg,IDC_LF,BM_SETCHECK,TextMode,0);
 		SendDlgItemMessage(hDlg,IDC_PRINTMON,BM_SETCHECK,PrtMon,0);
+		SetSerialParams(TextMode);
+		SetMonState(PrtMon);
 		break;
 
 	case WM_COMMAND:
@@ -1469,12 +1502,12 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			CurrentConfig = TempConfig;
+			ApplyConfig();
 			hBitBangerDlg = NULL;
 			DestroyWindow(hDlg);
 			break;
 		case IDAPPLY:
-			CurrentConfig = TempConfig;
+			ApplyConfig();
 			break;
 
 		case IDC_OPEN:
@@ -1561,36 +1594,29 @@ int SelectFile(char *FileName)
 }
 
 /**********************************/
-/*         Misc functions         */
+/*          Misc Exports          */
 /**********************************/
 
+// Called by tcc1014mmu.c
 char * BasicRomName(void)
 {
 	return(CurrentConfig.ExternalBasicImage);
 }
 
-void SetWindowSize(POINT p) {
-	if (EmuState.WindowHandle != NULL)
-	{
-		int width = p.x + 16;
-		int height = p.y + 81;
-		SetWindowPos(EmuState.WindowHandle, 0, 0, 0, width, height, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
-	}
-}
-
-int GetKeyboardLayout() {
-	return(CurrentConfig.KeyMap);
-}
-
-int GetPaletteType() {
+// tcc1014graphics.c
+int GetPaletteType()
+{
 	return(CurrentConfig.PaletteType);
 }
 
-int GetRememberSize() {
+// Called by DirectDrawInterface.cpp
+int GetRememberSize()
+{
 	return((int) CurrentConfig.RememberSize);
 	//return(1);
 }
 
+// Called by DirectDrawInterface.cpp
 POINT GetIniWindowSize()
 {
 	POINT out;
