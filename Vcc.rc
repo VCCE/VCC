@@ -245,29 +245,30 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,130,90,36,14
 END
 
-IDD_INPUT DIALOGEX 0, 0, 271, 240
+IDD_INPUT DIALOGEX 0, 0, 280, 210
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Keyboard Configuration"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Select Keyboard Mapping",IDC_STATIC,7,18,254,64,BS_CENTER
-    RADIOBUTTON     "CoCo:",IDC_KEYMAP_COCO,22,28,42,12
-    RADIOBUTTON     "Natural:",IDC_KEYMAP_NATURAL,22,40,42,12
-    RADIOBUTTON     "Compact:",IDC_KEYMAP_COMPACT,22,52,42,12
-    RADIOBUTTON     "Custom:",IDC_KEYMAP_CUSTOM,22,64,42,12
-    LTEXT           "Layout resembles the Coco keyboard. (DECB)",IDC_STATIC,67,30,180,12
-    LTEXT           "Standard PC keyboard layout.(OS-9)",IDC_STATIC,67,42,180,12
-    LTEXT           "Natural PC layout with no number pad.",IDC_STATIC,67,54,180,12
-    LTEXT           "User designed custom keyboard layout.",IDC_STATIC,67,66,180,12
-    GROUPBOX        "Configure Custom Keyboard",IDC_STATIC,7,122,255,68,BS_CENTER
-    PUSHBUTTON      "Choose File",IDC_SELECT_KEYMAP,13,138,50,16,BS_MULTILINE
-    CTEXT           "",IDC_KEYMAP_FILE,69,138,185,10,SS_NOPREFIX | SS_PATHELLIPSIS,WS_EX_STATICEDGE
-    PUSHBUTTON      "EDIT",IDC_KEYMAPED,13,165,50,14
-    LTEXT           "Choosing a new file clones the previously selected mapping.",IDC_STATIC,68,150,190,10
-    LTEXT           "Edit selects custom and runs the graphical keymap editor.",IDC_STATIC,68,168,190,10
-    DEFPUSHBUTTON   "OK",IDOK,130,220,36,14
-    PUSHBUTTON      "Apply",IDAPPLY,170,220,36,14
-    PUSHBUTTON      "Cancel",IDCANCEL,210,220,36,14
+    GROUPBOX        "Select Keyboard Mapping",IDC_STATIC,7,13,263,64,BS_CENTER
+    RADIOBUTTON     "CoCo:",IDC_KEYMAP_COCO,22,23,42,12
+    RADIOBUTTON     "Natural:",IDC_KEYMAP_NATURAL,22,35,42,12
+    RADIOBUTTON     "Compact:",IDC_KEYMAP_COMPACT,22,47,42,12
+    RADIOBUTTON     "Custom:",IDC_KEYMAP_CUSTOM,22,59,42,12
+    LTEXT           "Layout resembles the Coco keyboard. (DECB)",IDC_STATIC,67,24,180,12
+    LTEXT           "Standard PC keyboard layout.(OS-9)",IDC_STATIC,67,37,180,12
+    LTEXT           "Natural PC layout with no number pad.",IDC_STATIC,67,49,180,12
+    LTEXT           "User designed custom keyboard layout.",IDC_STATIC,67,61,180,12
+
+    GROUPBOX        "Configure Custom Keyboard",IDC_STATIC,7,90,263,68,BS_CENTER
+    PUSHBUTTON      "Choose File",IDC_SELECT_KEYMAP,13,103,50,16,BS_MULTILINE
+    CTEXT           "",IDC_KEYMAP_FILE,69,106,193,10,SS_NOPREFIX | SS_PATHELLIPSIS,WS_EX_STATICEDGE
+    PUSHBUTTON      "EDIT",IDC_KEYMAPED,13,130,50,14
+    LTEXT           "Choosing a new file clones the previously selected mapping.\nEdit selects custom and runs the graphical keymap editor.",IDC_STATIC,68,130,190,25
+
+    DEFPUSHBUTTON   "OK",IDOK,85,175,36,14
+    PUSHBUTTON      "Apply",IDAPPLY,125,175,36,14
+    PUSHBUTTON      "Cancel",IDCANCEL,165,175,36,14
 END
 
 IDD_JOYSTICK DIALOGEX 0, 0, 271, 265
@@ -330,17 +331,17 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,210,245,36,14
 END
 
-IDD_MISC DIALOGEX 0, 0, 222, 116
+IDD_MISC DIALOGEX 0, 0, 130, 80
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Misc Configuration"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Misc.",IDC_STATIC,66,29,88,38,BS_CENTER
-    CONTROL         "AutoStart Emulation",IDC_AUTOSTART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,72,37,78,10
-    CONTROL         "AutoStart Cart",IDC_AUTOCART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,72,51,60,10
-    DEFPUSHBUTTON   "OK",IDOK,110,90,36,14
-    PUSHBUTTON      "Apply",IDAPPLY,150,90,36,14
-    PUSHBUTTON      "Cancel",IDCANCEL,190,90,36,14
+    GROUPBOX        "Misc.",IDC_STATIC,12,8,105,38,BS_CENTER
+    CONTROL         "AutoStart Emulation",IDC_AUTOSTART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,20,78,10
+    CONTROL         "AutoStart Cart",IDC_AUTOCART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,31,60,10
+    DEFPUSHBUTTON   "OK",IDOK,7,58,36,14
+    PUSHBUTTON      "Apply",IDAPPLY,47,58,36,14
+    PUSHBUTTON      "Cancel",IDCANCEL,87,58,36,14
 END
 
 IDD_CASSETTE DIALOGEX 0, 0, 274, 160
