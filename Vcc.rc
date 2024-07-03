@@ -177,7 +177,7 @@ BEGIN
     CTEXT           "along with VCC (Virtual Color Computer). If not, see http://www.gnu.org/licenses/.",IDC_STATIC,31,337,174,18
 END
 
-IDD_DISPLAY DIALOGEX 0, 0, 254, 240
+IDD_DISPLAY DIALOGEX 0, 0, 254, 220
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Display Configuration"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
@@ -188,17 +188,17 @@ BEGIN
     CONTROL         "Scan Lines",IDC_SCANLINES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,128,51,10
     CONTROL         "Force Aspect",IDC_ASPECT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,141,58,10
     CONTROL         "Remember Screen Size",IDC_REMEMBER_SIZE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,77,128,94,10
-    GROUPBOX        "[F6] Monitor Type",IDC_STATIC,17,15,103,60,BS_CENTER
+    GROUPBOX        "[F6] Monitor Type",IDC_STATIC,14,12,112,63,BS_CENTER
     ICON            "",IDC_MONTYPE,96,23,21,20
     RADIOBUTTON     "RGB",IDC_RGB,21,23,31,10
     RADIOBUTTON     "Composite",IDC_COMPOSITE,21,37,49,10
     RADIOBUTTON     "Updated Palette",IDC_UPD_PALETTE,31,46,70,11
     RADIOBUTTON     "Original Palette",IDC_ORG_PALETTE,31,55,70,11
     CONTROL         "[F8] Throttle Speed",IDC_THROTTLE,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,77,141,77,10
-    CTEXT           "WARNING: Unchecking the ""Throttle Speed"" can greatly affect many functions of the VCC emulation including keyboard operation. Use with CAUTION! Please use ""Over-Clocking"" instead",IDC_STATIC,15,155,163,39,SS_SUNKEN,WS_EX_STATICEDGE
-    DEFPUSHBUTTON   "OK",IDOK,130,220,36,14
-    PUSHBUTTON      "Apply",IDAPPLY,170,220,36,14
-    PUSHBUTTON      "Cancel",IDCANCEL,210,220,36,14
+    CTEXT           "WARNING: Unchecking the ""Throttle Speed"" can greatly affect many functions of the VCC emulation including keyboard operation. Use with CAUTION! Please use ""Over-Clocking"" instead",IDC_STATIC,16,160,220,28,SS_SUNKEN,WS_EX_STATICEDGE
+    DEFPUSHBUTTON   "OK",IDOK,80,200,36,14
+    PUSHBUTTON      "Apply",IDAPPLY,120,200,36,14
+    PUSHBUTTON      "Cancel",IDCANCEL,160,200,36,14
 END
 
 IDD_CPU DIALOGEX 0, 0, 268, 190
