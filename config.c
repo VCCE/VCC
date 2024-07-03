@@ -104,7 +104,7 @@ typedef struct  {
 	unsigned char	SndOutDev;
 	unsigned char	KeyMap;
 	char			SoundCardName[64];
-	unsigned short	AudioRate;
+	unsigned short	AudioRate;	// 0 = Mute
 	char			ExternalBasicImage[MAX_PATH];
 	char			ModulePath[MAX_PATH];
 	char			PathtoExe[MAX_PATH];
@@ -570,7 +570,7 @@ void ApplyCpuConfig(HWND hDlg)
 		EmuState.ResetPending = 4;   // Update config
 	}
 	CurrentConfig = TempConfig;
-	// UpdateConfig() is not appropriate here.  ResetPending is used 
+	// UpdateConfig() is not appropriate here.  ResetPending is used
 	// to allow Vcc.c to do UpdateConfig otherwise CPU will not reset.
 }
 
@@ -794,9 +794,12 @@ void OpenAudioConfig() {
 LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int Index;
+	WPARAM bstate;
 	switch (message) {
 	case WM_INITDIALOG:
 		TempConfig = CurrentConfig;
+
+		// Sound level bars (L and R are equal)
 		SendDlgItemMessage(hDlg,IDC_PROGRESSLEFT,PBM_SETPOS,0,0);
 		SendDlgItemMessage(hDlg,IDC_PROGRESSLEFT,PBM_SETRANGE32,0,0x7F);
 		SendDlgItemMessage(hDlg,IDC_PROGRESSRIGHT,PBM_SETPOS,0,0);
@@ -806,14 +809,22 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 		SendDlgItemMessage(hDlg,IDC_PROGRESSRIGHT,PBM_SETBARCOLOR,0,0xFFFF);
 		SendDlgItemMessage(hDlg,IDC_PROGRESSLEFT,PBM_SETBKCOLOR,0,0);
 		SendDlgItemMessage(hDlg,IDC_PROGRESSRIGHT,PBM_SETBKCOLOR,0,0);
+
 		for (Index=0;Index<NumberOfSoundCards;Index++)
 			SendDlgItemMessage(hDlg,IDC_SOUNDCARD,CB_ADDSTRING,
 			                  (WPARAM)0,(LPARAM)SoundCards[Index].CardName);
-		for (Index=0;Index<4;Index++)
-			SendDlgItemMessage(hDlg,IDC_RATE,CB_ADDSTRING,
-			                   (WPARAM)0,(LPARAM)RateList[Index]);
-		SendDlgItemMessage(hDlg,IDC_RATE,CB_SETCURSEL,
-		                   (WPARAM)TempConfig.AudioRate,(LPARAM)0);
+
+//		In coco3.cpp audio rate is forced to 0 (mute) or 3 (44100)
+//		Rate dropdown has been replaced with a mute check box
+		bstate = (TempConfig.AudioRate==0) ? BST_CHECKED : BST_UNCHECKED;
+		SendDlgItemMessage(hDlg,IDC_MUTE,BM_SETCHECK,bstate,0);
+//		for (Index=0;Index<4;Index++)
+//			SendDlgItemMessage(hDlg,IDC_RATE,CB_ADDSTRING,
+//			                   (WPARAM)0,(LPARAM)RateList[Index]);
+//		SendDlgItemMessage(hDlg,IDC_RATE,CB_SETCURSEL,
+//		                   (WPARAM)TempConfig.AudioRate,(LPARAM)0);
+
+		// Sound device selection
 		TempConfig.SndOutDev=0;
 		for (Index=0;Index<NumberOfSoundCards;Index++)
 			if (!strcmp(SoundCards[Index].CardName,TempConfig.SoundCardName))
@@ -846,8 +857,11 @@ void ApplyAudioConfig(HWND hDlg)
 {
 	TempConfig.SndOutDev =
 		(unsigned char) SendDlgItemMessage(hDlg,IDC_SOUNDCARD,CB_GETCURSEL,0,0);
+
 	TempConfig.AudioRate =
-		(unsigned char) SendDlgItemMessage(hDlg,IDC_RATE,CB_GETCURSEL,0,0);
+		(SendDlgItemMessage(hDlg,IDC_MUTE,BM_GETCHECK,0,0) == BST_CHECKED)? 0:3;
+	//	(unsigned char) SendDlgItemMessage(hDlg,IDC_RATE,CB_GETCURSEL,0,0);
+
 	strcpy(TempConfig.SoundCardName, SoundCards[TempConfig.SndOutDev].CardName);
 	if ( (CurrentConfig.SndOutDev != TempConfig.SndOutDev) |
 	     (CurrentConfig.AudioRate != TempConfig.AudioRate)) {
