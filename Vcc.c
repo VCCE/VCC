@@ -296,32 +296,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					OpenBitBangerConfig();
 				    break;
 
-//				case ID_CONFIGURE_OPTIONS:				
-//#ifdef CONFIG_DIALOG_MODAL
-//					// open config dialog modally
-//					DialogBox(EmuState.WindowInstance,
-//						(LPCTSTR)IDD_TCONFIG,
-//						hWnd,
-//						(DLGPROC)Config
-//						);
-//#else
-//					// open config dialog if not already open
-//					// opens modeless so you can control the cassette
-//					// while emulator is still running (assumed)
-//					if (EmuState.ConfigDialog==NULL)
-//					{
-//						EmuState.ConfigDialog = CreateDialog(
-//							EmuState.WindowInstance, //NULL,
-//							(LPCTSTR)IDD_TCONFIG,
-//							EmuState.WindowHandle,
-//							(DLGPROC)Config
-//						) ;
-//						// open modeless
-//						ShowWindow(EmuState.ConfigDialog, SW_SHOWNORMAL) ;
-//					}
-//#endif
-//				    break;
-
 				case ID_FILE_EXIT:
 				case IDOK:
 					SendMessage (hWnd, WM_CLOSE, 0, 0);
@@ -369,6 +343,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				case ID_FLIP_ARTIFACTS:
 					FlipArtifacts();
 					break;
+
+				case ID_SWAP_JOYSTICKS:
+					SwapJoySticks();
+					break;
+
 
 				case ID_PAUSE_EMULATION:
 					EmuState.Debugger.ToggleRun();
@@ -538,7 +517,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						FlagEmuStop = TH_REQWAIT;
 						EmuState.FullScreen =! EmuState.FullScreen;
 					}
-		
 				break;
 
 //				case DIK_F12:

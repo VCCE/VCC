@@ -1428,6 +1428,16 @@ void ApplyJoyStickConfig(HWND hDlg)
 	ApplyConfig();
 }
 
+void SwapJoySticks() {
+	JoyStick tmpJS;
+	tmpJS = LeftJS;
+	LeftJS = RightJS;
+	RightJS = tmpJS;
+	SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
+	ApplyConfig();
+	if (hJoyStickDlg) SendMessage(hJoyStickDlg,WM_INITDIALOG,0,0);
+}
+
 unsigned char TranslateDisp2Scan(int x)
 {
 	assert(x >= 0 && x < SCAN_TRANS_COUNT);

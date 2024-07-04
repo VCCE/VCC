@@ -436,6 +436,7 @@
 #define ID_MISC_CONFIG                  40055
 #define ID_TAPE_CONFIG                  40056
 #define ID_BITBANGER_CONFIG             40057
+#define ID_SWAP_JOYSTICKS               40058
 #define ID_CONFIGURE_OPTIONS            65535
 
 // Next default values for new objects

@@ -40,6 +40,7 @@ int GetPaletteType();
 POINT GetIniWindowSize();
 int GetRememberSize();
 void SetConfigPath(int, string);
+void SwapJoySticks();
 
 void DecreaseOverclockSpeed();
 void IncreaseOverclockSpeed();

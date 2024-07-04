@@ -48,7 +48,7 @@ BEGIN
     POPUP "Configuration"
     BEGIN
         MENUITEM "Flip Artifact Colors",        ID_FLIP_ARTIFACTS
-//        MENUITEM "Config",                      ID_CONFIGURE_OPTIONS
+        MENUITEM "Swap Joysticks",              ID_SWAP_JOYSTICKS
 
         MENUITEM SEPARATOR
         MENUITEM "Audio",                       ID_AUDIO_CONFIG
@@ -245,12 +245,12 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,130,90,36,14
 END
 
-IDD_INPUT DIALOGEX 0, 0, 280, 210
+IDD_INPUT DIALOGEX 0, 0, 280, 195
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Keyboard Configuration"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Select Keyboard Mapping",IDC_STATIC,7,13,263,64,BS_CENTER
+    GROUPBOX        "Select Keyboard Mapping",IDC_STATIC,7,13,264,64,BS_CENTER
     RADIOBUTTON     "CoCo:",IDC_KEYMAP_COCO,22,23,42,12
     RADIOBUTTON     "Natural:",IDC_KEYMAP_NATURAL,22,35,42,12
     RADIOBUTTON     "Compact:",IDC_KEYMAP_COMPACT,22,47,42,12
@@ -260,18 +260,18 @@ BEGIN
     LTEXT           "Natural PC layout with no number pad.",IDC_STATIC,67,49,180,12
     LTEXT           "User designed custom keyboard layout.",IDC_STATIC,67,61,180,12
 
-    GROUPBOX        "Configure Custom Keyboard",IDC_STATIC,7,90,263,68,BS_CENTER
+    GROUPBOX        "Configure Custom Keyboard",IDC_STATIC,7,90,264,68,BS_CENTER
     PUSHBUTTON      "Choose File",IDC_SELECT_KEYMAP,13,103,50,16,BS_MULTILINE
     CTEXT           "",IDC_KEYMAP_FILE,69,106,193,10,SS_NOPREFIX | SS_PATHELLIPSIS,WS_EX_STATICEDGE
     PUSHBUTTON      "EDIT",IDC_KEYMAPED,13,130,50,14
     LTEXT           "Choosing a new file clones the previously selected mapping.\nEdit selects custom and runs the graphical keymap editor.",IDC_STATIC,68,130,190,25
 
-    DEFPUSHBUTTON   "OK",IDOK,85,175,36,14
-    PUSHBUTTON      "Apply",IDAPPLY,125,175,36,14
-    PUSHBUTTON      "Cancel",IDCANCEL,165,175,36,14
+    DEFPUSHBUTTON   "OK",IDOK,85,170,36,14
+    PUSHBUTTON      "Apply",IDAPPLY,125,170,36,14
+    PUSHBUTTON      "Cancel",IDCANCEL,165,170,36,14
 END
 
-IDD_JOYSTICK DIALOGEX 0, 0, 271, 265
+IDD_JOYSTICK DIALOGEX 0, 0, 268, 250
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Joystick Configuration"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
@@ -325,10 +325,10 @@ BEGIN
     RADIOBUTTON     "Tandy Hi-res",IDC_RIGHTTHRES,164,181,58,10
     RADIOBUTTON     "CC-MAX ",IDC_RIGHTCCMAX,164,195,58,10
     CONTROL         "Show Windows Mouse Pointer in VCC screen",IDC_SHOWMOUSE,
-                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,50,221,99,23
-    DEFPUSHBUTTON   "OK",IDOK,130,245,36,14
-    PUSHBUTTON      "Apply",IDAPPLY,170,245,36,14
-    PUSHBUTTON      "Cancel",IDCANCEL,210,245,36,14
+                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,10,220,99,23
+    DEFPUSHBUTTON   "OK",IDOK,135,227,36,14
+    PUSHBUTTON      "Apply",IDAPPLY,175,227,36,14
+    PUSHBUTTON      "Cancel",IDCANCEL,215,227,36,14
 END
 
 IDD_MISC DIALOGEX 0, 0, 130, 80
