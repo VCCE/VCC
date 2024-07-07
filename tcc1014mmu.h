@@ -52,6 +52,8 @@ unsigned char *	Getint_rom_pointer(void);
 unsigned char * Getext_rom_pointer(void);
 unsigned short GetMem(unsigned long);
 void SetMem(unsigned long, unsigned short);
+unsigned char DisMemRead8(short unsigned int);
+bool MemCheckWrite(unsigned short address);
 
 void __fastcall fMemWrite8(unsigned char,unsigned short );
 unsigned char __fastcall fMemRead8(short unsigned int);
