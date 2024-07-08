@@ -81,7 +81,7 @@ void DecodeAddr();
 void Disassemble(unsigned short, unsigned short);
 int DecodeModHdr(unsigned short, unsigned short, std::string *mhdr);
 
-// Establish text line 
+// Establish text line
 int FindAdrLine(int);
 void SetCurrentLine();
 
@@ -91,7 +91,7 @@ void SetHaltpoint(bool);
 void RefreshHPlist();
 void ListHaltpoints();
 void FindHaltpoints();
-bool BreakpointPC();
+bool IsBreakpoint(int);
 
 // Highlighting
 void HighlightPC();
@@ -695,17 +695,11 @@ int FindAdrLine(int adr)
 }
 
 /*******************************************************/
-/*        Test for breakpoint at PC line               */
+/*        Test for breakpoint at real address          */
 /*******************************************************/
-bool BreakpointPC()
+bool IsBreakpoint(int realaddr)
 {
-    std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
-    while (it != mHaltpoints.end()) {
-        Haltpoint hp = it->second;
-        if (hp.lpos == PClinePos) return true;
-        it++;
-    }
-    return false;
+    return (mHaltpoints.count(realaddr) == 1);
 }
 
 /*******************************************************/
@@ -717,7 +711,10 @@ void FindHaltpoints()
     while (it != mHaltpoints.end()) {
         int adr = it->first;
         // If decoded with CPU addressing convert haltpoint to CPU address
-        if (!RealAdrMode) adr = RealToCpu(adr);
+        if (!RealAdrMode) {
+            adr = RealToCpu(adr);
+            if (!MemCheckWrite(adr)) return;  // In case unwritable
+        }
         if (adr >= 0) {
             // Search for match in disassembly
             int line = FindAdrLine(adr);
@@ -753,15 +750,18 @@ void HighlightPC()
     // Remove highlight from previous PC line
     UnHighlightPC();
 
-    // If disassembly used real addresses convert PC to real
-    int adr = RealAdrMode ? CpuToReal(CPUadr) : CPUadr;
+    // Convert address to real
+    int RealAdr = CpuToReal(CPUadr);
+
+    // If disassembly used real addresses search for real address
+    int adr = RealAdrMode ? RealAdr : CPUadr;
 
     // Search for match in disassembly
     int line = FindAdrLine(adr);
     if (line < MAXLINES) {
         HighlightedPC = CPUadr;
         PClinePos = DisLinePos[line];
-        if (BreakpointPC()) {
+        if (IsBreakpoint(RealAdr)) {
             HighlightLine(PClinePos,RGB(255,0,255),3); // Magneta
         } else {
             HighlightLine(PClinePos,RGB(0,0,255),3);   // Blue
@@ -785,12 +785,12 @@ void HighlightPC()
 void UnHighlightPC()
 {
     if (HighlightedPC >= 0) {
-        HighlightedPC = -1;
-        if (BreakpointPC()) {
+        if (IsBreakpoint(CpuToReal(HighlightedPC))) {
             HighlightLine(PClinePos,RGB(255,0,0),1);
         } else {
             HighlightLine(PClinePos,RGB(0,0,0),0);
         }
+        HighlightedPC = -1;
     }
 }
 
@@ -848,10 +848,16 @@ HWND hDisText = NULL;  // Richedit20 box for output
     int lpos = DisLinePos[CurrentLineNum];
     int addr = DisLineAdr[CurrentLineNum];
 
-    if (RealAdrMode)
+    if (RealAdrMode) {
         realaddr = addr;
-    else
-        realaddr = CpuToReal(addr);
+    } else {
+        if (MemCheckWrite(addr)) {
+            realaddr = CpuToReal(addr);
+        } else {
+            SetErrorText("Can't set breakpoint here");
+            return;
+        }
+    }
 
     // Create or fetch existing haltpoint
     hp = mHaltpoints[realaddr];
@@ -1090,7 +1096,7 @@ unsigned char GetCondMem(unsigned long addr) {
     if (RealAdrMode) {
         return (unsigned char) GetMem(addr);
     } else {
-        return SafeMemRead8((unsigned short) addr);
+        return DisMemRead8((unsigned short) addr);
     }
 }
 

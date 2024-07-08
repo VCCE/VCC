@@ -312,6 +312,29 @@ void MemWrite8(unsigned char data,unsigned short address)
 	return;
 }
 
+unsigned char DisMemRead8( unsigned short address)
+// Disassembler mem read. Ram and carts okay. Ports return 0xFF.
+{
+	if (address<0xFE00) {
+		if (MemPageOffsets[MmuRegisters[MmuState][address>>13]]==1)
+			return(MemPages[MmuRegisters[MmuState][address>>13]][address & 0x1FFF]);
+		else
+			return( PackMem8Read( MemPageOffsets[MmuRegisters[MmuState][address>>13]] + (address & 0x1FFF) ));
+	}
+	return 0xFF;
+}
+
+// Returns TRUE if address is writable RAM (Not Cart, Not a Port)
+bool MemCheckWrite(unsigned short address)
+{
+	if (address<0xFE00)
+	{
+		if (MapType | (MmuRegisters[MmuState][address>>13] <VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address>>13] > VectorMask[CurrentRamConfig]))
+			return true;
+	}
+	return false;
+}
+
 unsigned char __fastcall fMemRead8( unsigned short address)
 {
 	if (address<0xFE00)
