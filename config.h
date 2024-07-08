@@ -40,45 +40,20 @@ int GetPaletteType();
 POINT GetIniWindowSize();
 int GetRememberSize();
 void SetConfigPath(int, string);
-
-LRESULT CALLBACK	Config			(HWND, UINT, WPARAM, LPARAM);
-
-typedef struct  {
-	unsigned char	CPUMultiplyer;
-	unsigned short	MaxOverclock;
-	unsigned char	FrameSkip;
-	unsigned char	SpeedThrottle;
-	unsigned char	CpuType;
-	unsigned char	HaltOpcEnabled;   // 0x15   halt enabled
-	unsigned char	BreakOpcEnabled;  // 0x113E halt enabled
-//	unsigned char	AudioMute;
-	unsigned char	MonitorType;
-	unsigned char   PaletteType;
-	unsigned char	ScanLines;
-	unsigned char	Resize;
-	unsigned char	Aspect;
-	unsigned short	RememberSize;
-	unsigned short	WindowSizeX;
-	unsigned short	WindowSizeY;
-	unsigned char	RamSize;
-	unsigned char	AutoStart;
-	unsigned char	CartAutoStart;
-	unsigned char	RebootNow;
-	unsigned char	SndOutDev;
-	unsigned char	KeyMap;
-	char			SoundCardName[64];
-	unsigned short	AudioRate;
-	char			ExternalBasicImage[MAX_PATH];
-	char			ModulePath[MAX_PATH];
-	char			PathtoExe[MAX_PATH];
-	char			FloppyPath[MAX_PATH];
-	char			CassPath[MAX_PATH];
-    char            COCO3ROMPath[MAX_PATH];
-    unsigned char   ShowMousePointer;
-} STRConfig;
+void SwapJoySticks();
 
 void DecreaseOverclockSpeed();
 void IncreaseOverclockSpeed();
+
+// Openers for config dialogs
+void OpenAudioConfig();
+void OpenCpuConfig();
+void OpenMiscConfig();
+void OpenDisplayConfig();
+void OpenInputConfig();
+void OpenJoyStickConfig();
+void OpenTapeConfig();
+void OpenBitBangerConfig();
 
 #endif
 
