@@ -23,6 +23,8 @@
 *.aps
 *.vscode
 
+__obj
+
 Debug
 Release
 All

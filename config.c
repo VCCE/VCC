@@ -73,7 +73,7 @@ LRESULT CALLBACK Paths(HWND, UINT, WPARAM, LPARAM);
 void ApplyConfig(void);
 void ApplyCpuConfig(HWND);
 void ApplyAudioConfig(HWND);
-void ApplyJoyStickConfig(HWND);
+void ApplyJoyStickConfig(void);
 
 /********************************************/
 /*            Local Globals                 */
@@ -1314,12 +1314,12 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			ApplyJoyStickConfig(hDlg);
+			ApplyJoyStickConfig();
 			hJoyStickDlg = NULL;
 			DestroyWindow(hDlg);
 			break;
 		case IDAPPLY:
-			ApplyJoyStickConfig(hDlg);
+			ApplyJoyStickConfig();
 			break;
 		case IDC_SHOWMOUSE:
 			if (HIWORD(wParam) == BN_CLICKED) {
@@ -1420,7 +1420,7 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 	return(0);
 }
 
-void ApplyJoyStickConfig(HWND hDlg)
+void ApplyJoyStickConfig()
 {
 	RightJS=TempRightJS;
 	LeftJS=TempLeftJS;
@@ -1428,13 +1428,12 @@ void ApplyJoyStickConfig(HWND hDlg)
 	ApplyConfig();
 }
 
-void SwapJoySticks() {
-	JoyStick tmpJS;
-	tmpJS = LeftJS;
-	LeftJS = RightJS;
-	RightJS = tmpJS;
-	SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
-	ApplyConfig();
+void SwapJoySticks()
+{
+	TempRightJS = LeftJS;
+	TempLeftJS = RightJS;
+	TempConfig = CurrentConfig;
+	ApplyJoyStickConfig();
 	if (hJoyStickDlg) SendMessage(hJoyStickDlg,WM_INITDIALOG,0,0);
 }
 
