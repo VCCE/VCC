@@ -59,24 +59,19 @@
     <PlatformToolset>v143</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
-</PropertyGroup>
-
+  </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
-
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
-
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Template|ARM'">
     <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -113,24 +108,20 @@
     <OutDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\$(ProjectName)\out\</OutDir>
     <IntDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\$(ProjectName)\int\</IntDir>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <OutDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\$(ProjectName)\out\</OutDir>
     <IntDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\$(ProjectName)\int\</IntDir>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <OutDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\$(ProjectName)\out\</OutDir>
     <IntDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\$(ProjectName)\int\</IntDir>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|ARM'">
     <OutDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\$(ProjectName)\out\</OutDir>
     <IntDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\$(ProjectName)\int\</IntDir>
-</PropertyGroup>
-
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
     <ClCompile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -140,7 +131,7 @@
       <Optimization>MaxSpeed</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;_LEGACY_VCC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>$(OutDir)</AssemblerListingLocation>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderOutputFile>$(OutDir)Vcc.pch</PrecompiledHeaderOutputFile>
@@ -174,7 +165,6 @@
       <IgnoreSpecificDefaultLibraries>nafxcw.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
-
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -218,7 +208,6 @@
       <IgnoreSpecificDefaultLibraries>nafxcw.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
-
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -261,7 +250,6 @@
       <IgnoreSpecificDefaultLibraries>nafxcwd.lib;libcmtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
-
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
     <ClCompile>
       <AssemblerListingLocation>$(OutDir)</AssemblerListingLocation>
@@ -277,27 +265,25 @@
       <ProgramDataBaseFileName>$(OutDir)</ProgramDataBaseFileName>
     </ClCompile>
   </ItemDefinitionGroup>
-
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <ClCompile>
       <CompileAs>CompileAsCpp</CompileAs>
-	  <!-- <AdditionalOptions>/arch:ARMv7VE</AdditionalOptions> -->
+      <!-- <AdditionalOptions>/arch:ARMv7VE</AdditionalOptions> -->
     </ClCompile>
-	<Link>
+    <Link>
       <AdditionalDependencies>ddraw.lib;comctl32.lib;Winmm.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <!-- <AdditionalDependencies>ddraw.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies> -->
       <IgnoreSpecificDefaultLibraries>nafxcwd.lib;libcmtd.lib</IgnoreSpecificDefaultLibraries>
-
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
-
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
       <CompileAs>CompileAsCpp</CompileAs>
+      <PreprocessorDefinitions>
+      </PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
-
   <ItemGroup>
     <ClCompile Include="Audio.c" />
     <ClCompile Include="SourceDebug.cpp">
@@ -320,8 +306,7 @@
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">true</TreatWarningAsError>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
     </ClCompile>
-
-	<ClCompile Include="DebuggerUtils.cpp">
+    <ClCompile Include="DebuggerUtils.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">Level4</WarningLevel>
@@ -329,8 +314,7 @@
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">true</TreatWarningAsError>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
     </ClCompile>
-
-	<ClCompile Include="DirectDrawInterface.cpp" />
+    <ClCompile Include="DirectDrawInterface.cpp" />
     <ClCompile Include="Disassembler.cpp" />
     <ClCompile Include="ExecutionTrace.cpp" />
     <ClCompile Include="Fileops.c" />
@@ -381,7 +365,6 @@
   <ItemGroup>
     <Text Include="README.md" />
   </ItemGroup>
-
   <ItemGroup>
     <ClInclude Include="audio.h" />
     <ClInclude Include="SourceDebug.h" />
@@ -447,8 +430,7 @@
   <ItemGroup>
     <ResourceCompile Include="Vcc.rc" />
   </ItemGroup>
-  
-<!--	  
+  <!--	  
   <ItemGroup>
     <ProjectReference Include="fd502\fd502.vcxproj">
       <Project>{f4dc9499-4ff1-4a56-83dd-6499062972aa}</Project>
@@ -475,7 +457,6 @@
     </ProjectReference>
   </ItemGroup>
 -->
-
   <ItemGroup>
     <None Include="resources\cursor1.cur" />
   </ItemGroup>
