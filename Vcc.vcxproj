@@ -272,7 +272,6 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>ddraw.lib;comctl32.lib;Winmm.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <!-- <AdditionalDependencies>ddraw.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies> -->
       <IgnoreSpecificDefaultLibraries>nafxcwd.lib;libcmtd.lib</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>

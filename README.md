@@ -3,11 +3,11 @@
 
 VCC attempts to be an accurate emulation of a "stock" Tandy Color Computer 3 just as you would have bought in a Radio Shack store or Tandy Computer Center in 1986-1992. 
 
-For VCC usage see the User Guide at <https://github.com/VCCE/VCC/wiki>  Also on the wiki are release notes and additional documantaion.
+For VCC usage see the User Guide at <https://github.com/VCCE/VCC/wiki>  Also in the wiki are release notes and additional documantaion.
 
 The Color Computer 3 (or the "Coco 3" as it was known by it's users) was the final iteration of a series of computers starting with the "TRS-80 Color Computer" (also known as the "Coco 1") in 1980 with it's 4k of RAM, Non-Extended Color BASIC, and expansion slot for Game & Software Cartridges. Programs could be run from cassette tape.  Eventually the memory was exapanded from 4k to 16k ( which allowed the use of "Extended Color BASIC"), then 32k, and finally 64k. Also relesed by Tandy was the Disk Drive unit for 5.25' Floppy disks, which along with 64k of memory, allowed it to run Microware's "OS-9 Level 1" for the 6809 processor. Several motherboard revisions were released with the Silver Coco 1, until Tandy upgraded to a new design with a smaller footprint and slightly more modern circuitry. This machine was the "Tandy Color Computer 2" or "Coco 2", which went through several revisions and came in 16k Color BASIC and 64k Extended Color BASIC models. Finally in 1986 Tandy release the final model, the "Tandy Color Computer 3" or "Coco 3" with 128k of memory (expandable to 512k), and "Super Extended Color BASIC" with expanded high resolution graphics with up to 16 colors from a palette of 64 colors.
 
-VCC directly models the "stock" 128k Coco 3 and is expandable to many levels that were available by Tandy and 3rd party vendors. These include:
+VCC emulates a "stock" 128k Coco 3 and is expandable to many levels that were available by Tandy and 3rd party vendors. These include:
 
 1. "Tandy MultiPak Interface" or "MPI" with 4 expansion slots.
 2. "Tandy FD-502 Disk Drive Controller" with "Disk Extended BASIC" and 4 configurable virtual disk drives
@@ -19,11 +19,15 @@ We welcome all bug reports and suggestions. Post any bug reports and/or suggesti
 
 VCC version numbering has recently changed. The version number consists of "Vcc-" followed by 4 numbers seperated by dots, for example: "Vcc-2.1.8.2". The first number represents the "fork." Fork one is considered to be the original code from Joseph Forgeone. The current fork is "2". It promises to function on Windows XP and Windows 7 operating systems. We might want to add capabilitues that will not work on these older systems. The second number represents a major version. It will be used if very significant changes are made in the way Vcc functions (not likely happen anytime soon). The third number represents normal releases, typically done one or two times per year. The fourth number represents bug fixes to the release. These are changes to VCC that correct errors and bugs in the intended functionality of the release. Binaries containing these changes will be updated in the affected release files.
 
-# Compiling the VCC Sources
+# Building VCC
 
-Vcc is written completely in C and C++. Currently the release binaries of VCC are compiled using "Microsoft Visual Studio 2015 Community".  This older Visual Studio version is used to maintain compatibility with Windows XP.  To do that we include "Win x86", & "XP" support packages. Later versions of Visual Studio will compile Vcc but you will have to change the release and debug targets to use newer libraries if you do not also have the XP support packages installed.
+Either Microsoft Visual Studio 2022 or 2015 can be used to build VCC.  VCC is written in C and C++ but all sources are compiled as C++. Visual Studio 2015 is used to build a legacy VCC version that will run on XP.
 
-Visual Studio 2015 requires Windows 7 or greater to install. Since Microsoft is no longer supplying a web based installer for VS2015 you will have to download an ISO image and install it from that.
+The easiest way to build VCC is to use the build.bat command file which uses the msbuild tool supplied with Visual Studio 2022. First run the "Developer Command Prompt" supplied with Visual Studio then in the command window that is started change to the directory containing VCC sources and type "build."  If you want to make changes or see how VCC works you can start the Visual Studio IDE and select "Build Project."
+
+Within Visual Studio the "Release" and "Debug" configurations build VCC binaries that will run on Windows 10 and 11. The "Legacy" configuration builds binaries that will run on Windows XP through Windows 8.  "Release" and "Debug" use the v143 build tools from VS2022 and "Legacy" uses vs140_xp build tools from VS2015.
+
+Since Windows versions before Windows 10 are considered out of service by Microsoft Visual Studio 2015 is no longer supplied as a web based installer.  To install VS2015 you have to download an ISO image and install it from that.  It is also possible to install VS2019 and to usethe vs141 build tools from that to build a VCC version that runs on Windows 7 but that will require retargeting the project files.
 
 We welcome patches or code that contribute to the VCC project that is consistant with our goals. Comment your code well and be sure to add your name and the date in your comments if you want credit for your work. Also if you feel you would like to join the VCC project please contact us.  The code repository is on github and all changes to the code base are made by github "Pull Requests"
 
