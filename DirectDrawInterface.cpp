@@ -183,7 +183,7 @@ bool CreateDDWindow(SystemState *CWState)
 			ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;			// Try to create back buffer in System RAM
 			hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, NULL);
 			if (hr)	return FALSE;								//Giving Up
-			MessageBox(0,"Creating Back Buffer in System Ram!\nThis will be slower","Performance Warning",0);
+			MessageBox(0,"Creating Back Buffer in System Ram\nFull Screen may not work","Performance Warning",0);
 		}
 
 		hr= g_pDD->GetDisplayMode(&ddsd);
@@ -395,7 +395,7 @@ unsigned char LockScreen(SystemState *LSState)
 			LSState->BitDepth=1;
 		break;
 		case 24:
-			MessageBox(0,"24 Bit color is currnetly unsupported","Ok",0);
+			MessageBox(0,"24 Bit color is currently unsupported","Ok",0);
 			exit(0);
 			LSState->SurfacePitch=ddsd.lPitch;
 			LSState->BitDepth=2;
