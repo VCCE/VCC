@@ -183,7 +183,7 @@ bool CreateDDWindow(SystemState *CWState)
 			ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;			// Try to create back buffer in System RAM
 			hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, NULL);
 			if (hr)	return FALSE;								//Giving Up
-			MessageBox(0,"Creating Back Buffer in System Ram\nFull Screen may not work","Performance Warning",0);
+			MessageBox(0,"Creating Back Buffer in System Ram\n","Performance Warning",0);
 		}
 
 		hr= g_pDD->GetDisplayMode(&ddsd);
