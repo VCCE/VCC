@@ -100,6 +100,7 @@
     <ClCompile Include="OpCodeTables.cpp">
       <Filter>Source\Debugger</Filter>
     </ClCompile>
+    <ClCompile Include="Disassembler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h">
@@ -222,6 +223,7 @@
     <ClInclude Include="OpCodeTables.h">
       <Filter>Headers\Debugger</Filter>
     </ClInclude>
+    <ClInclude Include="Disassembler.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\3guys.bmp">
