@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "coco3.h"
 #include "keyboard.h"
 #include "Vcc.h"
-#include "logger.h"
+
 
 static unsigned char VDG_Mode=0;
 static unsigned char Dis_Offset=0;
@@ -274,7 +274,6 @@ void SetTimerLSB(unsigned char data) //95
 	unsigned short Temp;
 	Temp=((GimeRegisters[0x94] <<8)+ GimeRegisters[0x95]) & 4095;
 	SetInteruptTimer(Temp);
-//PrintLogC("Timer Set %d\n",Temp);
 	return;
 }
 
@@ -328,45 +327,20 @@ void GimeAssertHorzInterupt(void)
 	return;
 }
 
+// Timer [F]IRQ bit gets set even if interrupt is not enabled.
+// TODO: What about other gime interrupts? Are they simular?
 void GimeAssertTimerInterupt(void)
 {
-//char msg[64];
-//msg[0] = '\0';
 	if ((GimeRegisters[0x93] & 32)!=0) {
-//strncat(msg,"Timer FIRQ",32);
-		LastFirq=LastFirq | 32;
-		if (EnhancedFIRQFlag==1) {
-			CPUAssertInterupt(FIRQ,0);
-//strncat(msg,"*",32);
-		}
-	} 
+		LastFirq = LastFirq | 32;
+		if (EnhancedFIRQFlag == 1) CPUAssertInterupt(FIRQ,0);
+	} else
 	if ((GimeRegisters[0x92] & 32)!=0) {
-//strncat(msg,"Timer IRQ",32);
-		LastIrq=LastIrq | 32;
-		if (EnhancedIRQFlag==1) {
-			CPUAssertInterupt(IRQ,0);
-//strncat(msg,"*",32);
-		}
+		LastIrq = LastIrq | 32;
+		if (EnhancedIRQFlag == 1) CPUAssertInterupt(IRQ,0);
 	}
-//if (msg[0]) PrintLogC("%s\n",msg);
 	return;
 }
-
-//void GimeAssertTimerInterupt(void)
-//{
-//	if (((GimeRegisters[0x93] & 32)!=0) & (EnhancedFIRQFlag==1))
-//	{
-//		CPUAssertInterupt(FIRQ,0);
-//		LastFirq=LastFirq | 32;
-//	}
-//	else
-//		if (((GimeRegisters[0x92] & 32)!=0) & (EnhancedIRQFlag==1))
-//		{
-//			CPUAssertInterupt(IRQ,0);
-//			LastIrq=LastIrq | 32;
-//		}
-//	return;
-//}
 
 unsigned char sam_read(unsigned char port) //SAM don't talk much :)
 {
