@@ -327,19 +327,18 @@ void GimeAssertHorzInterupt(void)
 	return;
 }
 
+// Timer [F]IRQ bit gets set even if interrupt is not enabled.
+// TODO: What about other gime interrupts? Are they simular?
 void GimeAssertTimerInterupt(void)
 {
-	if (((GimeRegisters[0x93] & 32)!=0) & (EnhancedFIRQFlag==1))
-	{
-		CPUAssertInterupt(FIRQ,0);
-		LastFirq=LastFirq | 32;
+	if ((GimeRegisters[0x93] & 32)!=0) {
+		LastFirq = LastFirq | 32;
+		if (EnhancedFIRQFlag == 1) CPUAssertInterupt(FIRQ,0);
+	} else
+	if ((GimeRegisters[0x92] & 32)!=0) {
+		LastIrq = LastIrq | 32;
+		if (EnhancedIRQFlag == 1) CPUAssertInterupt(IRQ,0);
 	}
-	else
-		if (((GimeRegisters[0x92] & 32)!=0) & (EnhancedIRQFlag==1))
-		{
-			CPUAssertInterupt(IRQ,0);
-			LastIrq=LastIrq | 32;
-		}
 	return;
 }
 
