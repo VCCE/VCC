@@ -467,6 +467,7 @@ void SetInteruptTimer(unsigned short Timer)
 {
 	UnxlatedTickCounter=(Timer & 0xFFF);
 	SetMasterTickCounter();
+	IntEnable = 1;  // Gime always sets timer flag when timer expires.  EJJ 25oct24
 	return;
 }
 
@@ -479,23 +480,16 @@ void SetTimerClockRate (unsigned char Tmp)	//1= 279.265nS (1/ColorBurst)
 
 void SetMasterTickCounter(void)
 {
-//	double Rate[2]={63613.2315,279.265};
-//	double Rate[2]={279.265*228,279.265};
+	// Rate = { 63613.2315, 279.265 };
 	double Rate[2]={NANOSECOND/(TARGETFRAMERATE*LINESPERSCREEN),NANOSECOND/COLORBURST};
-	if (UnxlatedTickCounter==0)
-		MasterTickCounter=0;
-	else
-		MasterTickCounter=(UnxlatedTickCounter+2)* Rate[TimerClockRate];
-
+	// When set master count must contain atleast one tick. EJJ 25oct24
+	UnxlatedTickCounter = (UnxlatedTickCounter==0) ? 1:UnxlatedTickCounter;
+	MasterTickCounter = UnxlatedTickCounter * Rate[TimerClockRate];
 	if (MasterTickCounter != OldMaster)  
 	{
 		OldMaster=MasterTickCounter;
 		NanosToInterrupt=MasterTickCounter;
 	}
-	if (MasterTickCounter!=0)
-		IntEnable=1;
-	else
-		IntEnable=0;
 	return;
 }
 
