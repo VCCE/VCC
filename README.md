@@ -1,7 +1,7 @@
 ## VCC - Virtual Color Computer
 ## An emulation of The Tandy Color Computer 3 for Microsoft Windows
 
-VCC attempts to be an accurate emulation Tandy Color Computer 3 as purchased from a Radio Shack store or Tandy Computer Center in 1986-1992.  For VCC usage see the User Guide at <https://github.com/VCCE/VCC/wiki>.  Also in the wiki are release notes and additional documents.  The most recent version of VCC is 2.1.9.0.  Online documentation may reflect some features not available on earlier versions.
+VCC attempts to be an easy to use and accurate emulation Tandy Color Computer 3 as purchased from a Radio Shack store or Tandy Computer Center in 1986-1992.  For VCC usage see the User Guide at <https://github.com/VCCE/VCC/wiki>.  Also in the wiki are release notes and additional documents. Online documentation may reflect some features not available on earlier versions or that are pre-release.
 
 The Color Computer 3 or the "Coco 3" was the final iteration of a series of computers starting with the "TRS-80 Color Computer" in 1980 with 4k of RAM, Color BASIC, and expansion slot for Game & Software Cartridges. Programs could be run from cassette tape.  Eventually the memory was expanded from 4k to 16k which allowed the use of Extended Color BASIC. Also released by Tandy was the Disk Drive unit for 5.25' Floppy disks, which allowed the use of Disk Exteneded Color Basic. This, along with 64k of memory, allowed it to run Microware's "OS-9 Level 1." Several motherboard revisions were released before Tandy upgraded to a new design with a smaller footprint and more modern circuitry. This machine was the "Tandy Color Computer 2" or "Coco 2". This went through several revisions and came in 16k Color BASIC and 64k Extended Color BASIC models. Finally in 1986 Tandy released the final model, the "Tandy Color Computer 3" or "Coco 3" with 128k of memory, expandable to 512k, and "Super Extended Color BASIC" with expanded high resolution graphics with up to 16 colors from a palette of 64 colors.
 
@@ -22,20 +22,20 @@ VCC version numbering has recently changed. The version number consists of "Vcc-
 
 ### Building VCC
 
-Microsoft Visual Studio 2022 and optionally Visual Studio 2015 are used to build VCC.  VCC is written in C and C++ but most sources are compiled as C++. Visual Studio 2015 must be used to build a "legacy" VCC version that will run on XP and Windows 7.  Visual Studio 2022 alone will build for current Windows versions.
+Microsoft Visual Studio 2022 is used to build VCC. Optionally Visual Studio 2015 can be used to build a "legacy" VCC version that will run on Windows XP.  VCC is written in C++ and C. 
 
-The quickest way to build VCC is to use the Build.bat or BuildClean.bat command file supplied with VCC sources. To use them first run the "Developer Command Prompt" supplied with Visual Studio 2022. This starts a command line window with the settings needed. From there use "cd" to change to the directory containing the VCC sources and type "build" or "buildclean". You can also build from the Visual Studio IDE if want to make changes or just to see how VCC works.
+To build VCC from the command line launch the VS 2020 Developer Command Prompt. From there cd to the directory containing the VCC sources and type "Build" or "BuildClean". 
 
-Within Visual Studio the "Release" and "Debug" configurations build VCC binaries that will run on Windows 10 and 11. The "Legacy" configuration builds binaries that will run on Windows XP through Windows 8.  "Release" and "Debug" use the v143 build tools from VS2022 and "Legacy" uses vs140_xp build tools from VS2015.
+Within Visual Studio the "Release" and "Debug" configurations build VCC binaries that will run on current Windows versions. The "Legacy" configuration builds binaries that will run on Windows XP. "Release" and "Debug" use build tools from VS2022 and "Legacy" uses build tools from VS2015. 
 
-Since Windows versions before Windows 10 are considered out of service by Microsoft Visual Studio 2015 is no longer supplied as a web based installer.  To install VS2015 find and download an ISO install image for VS2015.  It is also possible to install VS2019 and to use the vs141 build tools from that to build a VCC version that runs on Windows 7 but that will require retargeting the project files.
+Note that Windows versions before Windows 10 are considered out of service by Microsoft and Visual Studio 2015 is no longer supplied using a web based installer.  To install VS2015 you must find and download an ISO install image for VS2015.
 
-We welcome patches or code that contribute to the VCC project that are consistant with our goals. Comment your code well and be sure to add your name and the date in your comments if you want credit for your work. Also if you feel you would like to join the VCC project please contact us.  The code repository is on github and all changes to the code base are made by github "Pull Requests"
+We welcome patches or code that contribute to the VCC project that are consistant with our goals. Comment your code well and add your name if you want credit for your work. Also if you feel you would like to join the VCC project please contact us.  The code repository is on github and all changes to the code base are made by github "Pull Requests"
 
-The default git branch is "main."  To submit changes for VCC fork main to your own github account and download it to your development system.  Create a new branch for your changes. The branch name should suggest the purpose of the changes.  After your changes are tested push the new branch to your fork on github.  Then use github to create a "Pull Request" for the branch.  We will review your changes and merge them if satisfactory.  Do not include changes to .sln or .vcxproj files in your pull request; any changes to these will result in your request being rejected.  If you feel these project files need to be changed contact us with your thoughts and we will adjust the .vcxproj files as is appropriate.
+The default git branch is "main."  To submit changes fork VCC to your own github account and download it to your development system.  Create a new branch with a name that suggests the purpose of the change.  After your changes are tested push the new branch to your fork on github.  Then use github to create a "Pull Request" for the branch.  We will review your changes and merge them if satisfactory.  Do not include changes to .sln or .vcxproj files in your pull request; any changes to these will result in your request being rejected.  If you feel these project files need to be changed contact us with your thoughts and we will adjust the .vcxproj files as is appropriate.
 
 Thank You for using VCC
 
-We will continue to try to make VCC the best Color Computer Emulator available.
+We will continue to try to make VCC the best Color Computer 3 Emulator available.
 
 The VCC Developement Team.
