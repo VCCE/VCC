@@ -100,7 +100,7 @@ void HighlightLine(int,COLORREF,int);
 
 // Information / Error line
 void SetErrorText(const char *);
-void ClrErrorText();
+void SetInfoText(const char *);
 
 // String functions used for decode
 std::string PadRight(std::string const&,size_t);
@@ -134,6 +134,7 @@ bool Os9Decode = FALSE;
 // Line highlight status
 int HighlightedPC = -1;
 int PClinePos = 0;
+int TrackingDisabled = 0;
 
 // MMUregs at time of the last decode
 MMUState MMUregs;
@@ -171,11 +172,12 @@ void ApplyHaltPoint(Haltpoint &,bool);
 // Help text
 char DbgHelp[] =
     "'Real Mem' checkbox selects Real vs CPU Addressing.\n"
-    "'Os9 mode' checkbox selects OS9 disassembly.\n"
-    "'Address' is where address to disassemble is entered.\n"
-    "In Real Mem Os9 mode 'Address' is offset from 'Block'.\n"
-    "'Decode' (or Enter key) decodes from the set address.\n"
-    "Disassembly tracks the CPU PC register when paused.\n\n"
+    "'Os9 mode' checkbox selects OS9 module disassembly.\n"
+    "'Address' is where address or block offset is entered.\n"
+    "When Os9 and Real Mem both set use Offset and Block.\n"
+    "Decode (or Enter key) decodes from the set address.\n"
+    "CPU must be paused for tracking the PC register.\n"
+    "To enable/disable PC register tracking press 'T'.\n\n"
     "The following hot keys can be used:\n\n"
     "  'P'  Pause the CPU.\n"
     "  'G'  Go - unpause the CPU.\n"
@@ -184,6 +186,7 @@ char DbgHelp[] =
     "  'R'  Remove breakpoint at selected line.\n"
     "  'L'  Start Breakpoints list window.\n"
     "  'M'  Toggle between real and CPU address mode.\n"
+    "  'T'  Toggle CPU tracking ON/OFF.\n"
     "  'I'  Shows Processor State window.\n"
     "  'K'  Removes (kills) all breakpoints.\n";
 
@@ -237,11 +240,10 @@ INT_PTR CALLBACK DisassemblerDlgProc
 
         // Inital values in text boxes
         SetWindowTextA(hDisText,"");
-        ClrErrorText();
+        SetInfoText(initTxt);
 
         // Disable Block edit box until needed
         EnableBlockEdit(FALSE);
-
         // Start a timer for showing current status
         SetTimer(hDlg, IDT_BRKP_TIMER, 250, (TIMERPROC)NULL);
         break;
@@ -328,7 +330,7 @@ LRESULT CALLBACK SubEditDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
             break;
         }
         // Hot keys sent to disassembly text window
-        if (strchr("GPSLMIK",ch)) {
+        if (strchr("GPSLMIKT",ch)) {
             SendMessage(hDisText,msg,ch,lPrm);
             return TRUE;
         }
@@ -340,7 +342,7 @@ LRESULT CALLBACK SubEditDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
             return TRUE;
         // Tab moves between active edit boxes
         case VK_TAB:
-            ClrErrorText();
+            SetInfoText(initTxt);
             if (hCtl==hEdtAddr && RealAdrMode && Os9Decode) {
                 nxtctl = hEdtBloc;
             } else {
@@ -446,6 +448,12 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
             UnHighlightPC();
             return TRUE;
             break;
+
+        case 'T':
+            TrackingDisabled = (TrackingDisabled==1) ? 0:1;
+            return TRUE;
+            break;
+
         case VK_TAB:
             SetFocus(hEdtAddr);
             return TRUE;
@@ -515,13 +523,13 @@ void SetErrorText(const char * txt) {
 }
 
 /**************************************************/
-/*             Clr Error text                     */
+/*             Set Infomation text                */
 /**************************************************/
-void ClrErrorText() {
+void SetInfoText(const char * txt) {
     ErrorTxtColor = RGB(0,0,0);
     SendMessage(hDismDlg,WM_CTLCOLORSTATIC,
             (WPARAM) GetDC(hErrText),(LPARAM) hErrText);
-    SetWindowTextA(hErrText,initTxt);
+    SetWindowTextA(hErrText,txt);
 }
 
 /**************************************************/
@@ -734,11 +742,15 @@ void FindHaltpoints()
 /**************************************************/
 void HighlightPC()
 {
-    // Skip if CPU not halted
-    if (! EmuState.Debugger.IsHalted()) {
+
+    // Skip if Running or TrackingDisabled
+    if (!EmuState.Debugger.IsHalted() || TrackingDisabled) {
+        SetInfoText(initTxt);
         UnHighlightPC();
         return;
     }
+
+    SetInfoText("Disassembly is tracking the PC");
 
     // Get the halted PC
     CPUState state = CPUGetState();
@@ -1235,7 +1247,7 @@ void Disassemble( unsigned short FromAdr,
     // No PC highlighted
     HighlightedPC = -1;
 
-    ClrErrorText();
+    SetInfoText(initTxt);
 }
 
 /**************************************************/
