@@ -61,6 +61,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "CommandLine.h"
 #include "logger.h"
+#include "memdump.h"
 
 #include "MemoryMap.h"
 #include "ProcessorState.h"
@@ -473,11 +474,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			switch ( OEMscan )
 			{
 				case DIK_F3:
-					DecreaseOverclockSpeed();
+//					if (IsShiftKeyDown()) {
+//						SetDumpPath("VccDumpCpu");
+//						CpuDump();
+//					} else
+						DecreaseOverclockSpeed();
 				break;
 
 				case DIK_F4:
-					IncreaseOverclockSpeed();
+//					if (IsShiftKeyDown()) {
+//						SetDumpPath("VccDumpMem");
+//						MemDump();
+//					} else
+						IncreaseOverclockSpeed();
 				break;
 
 				case DIK_F5:
