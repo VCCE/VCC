@@ -70,6 +70,7 @@ void MmuReset(void);
 void SetDistoRamBank(unsigned char);
 void SetMmuPrefix(unsigned char);
 void SetCartMMU (unsigned char);
+unsigned char * Get_mem_pointer(void);
 
 #define _128K	0	
 #define _512K	1

@@ -399,6 +399,11 @@ void SetMem(unsigned long address, unsigned short data) {
 		memory[address] = (unsigned char) data;
 }
 
+unsigned char * Get_mem_pointer()
+{
+	return memory;
+}
+
 void SetDistoRamBank(unsigned char data)
 {
 
