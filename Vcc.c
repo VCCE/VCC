@@ -474,19 +474,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			switch ( OEMscan )
 			{
 				case DIK_F3:
-//					if (IsShiftKeyDown()) {
-//						SetDumpPath("VccDumpCpu");
-//						CpuDump();
-//					} else
-						DecreaseOverclockSpeed();
+					DecreaseOverclockSpeed();
 				break;
 
 				case DIK_F4:
-//					if (IsShiftKeyDown()) {
-//						SetDumpPath("VccDumpMem");
-//						MemDump();
-//					} else
-						IncreaseOverclockSpeed();
+					IncreaseOverclockSpeed();
 				break;
 
 				case DIK_F5:
@@ -533,9 +525,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					}
 				break;
 
-//				case DIK_F12:
-//					CpuDump();
-//				break;
+				case DIK_F12:
+					if (IsShiftKeyDown()) CpuDump();
+				break;
 
 				default:
 					// send other keystrokes to the emulator if it is active

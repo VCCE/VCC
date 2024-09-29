@@ -346,7 +346,7 @@ extern "C"
 			if (ModuleStatusCalls[Temp] != NULL)
 			{
 				ModuleStatusCalls[Temp](TempStatus);
-				strcat(MyStatus,"|");
+				strcat(MyStatus," | ");
 				strcat(MyStatus,TempStatus);
 			}
 		}
