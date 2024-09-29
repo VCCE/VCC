@@ -578,21 +578,21 @@ bool GetNextScanInPasteQueue(unsigned char col)
 	{
 	case PasteState::KeyDown:
 	{
-
 		// Peek at next character.
 		unsigned char next = PasteInputQueue.front();
 		// Shift Key?
 		if (next == 0x36)
 		{
-			// Pop it and get the next key.
+			// Lower Shift key and get the next.
 			PasteInputQueue.pop();
 			vccKeyboardHandleKey(0x36, 0x36, kEventKeyDown);
 			next = PasteInputQueue.front();
 			ShiftPaste = true;
 		}
+		// Control Key?
 		else if (next == 0x1D)
 		{
-			// Pop it and get the next key.
+			// Lower Control key and get the next.
 			PasteInputQueue.pop();
 			vccKeyboardHandleKey(0x1D, 0x1D, kEventKeyDown);
 			next = PasteInputQueue.front();
@@ -605,13 +605,13 @@ bool GetNextScanInPasteQueue(unsigned char col)
 
 	case PasteState::KeyUp:
 	{
-		// Which key was down?
+		// Raise key that was down.
 		unsigned char last = PasteInputQueue.front();
+		vccKeyboardHandleKey(last, last, kEventKeyUp);
+		// Raise shift or control if either were down
 		if (ShiftPaste) vccKeyboardHandleKey(0x36, 0x36, kEventKeyUp);
 		if (CtrlPaste)  vccKeyboardHandleKey(0x1D, 0x1D, kEventKeyUp);
 		ShiftPaste = CtrlPaste = false;
-		vccKeyboardHandleKey(0x42, last, kEventKeyUp);
-		// Ok, done with that character.
 		PasteInputQueue.pop();
 		CurrentPasteState = CheckDone;
 		break;
