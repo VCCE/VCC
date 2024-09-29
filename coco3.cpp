@@ -787,7 +787,7 @@ std::string CvtStrToSC(string cliptxt)
 		case ']': sc = 0x1B; LCNTRL = TRUE; break;
 		case '{': sc = 0x1A; CSHIFT = TRUE; break;
 		case '}': sc = 0x1B; CSHIFT = TRUE; break;
-		case '\\"': sc = 0x2B; LCNTRL = TRUE; break;
+		case '\\': sc = 0x2B; LCNTRL = TRUE; break;
 		case '|': sc = 0x2B; CSHIFT = TRUE; break;
 		case '`': sc = 0x29; break;
 		case '~': sc = 0x29; CSHIFT = TRUE; break;
