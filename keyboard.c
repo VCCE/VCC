@@ -86,6 +86,8 @@ enum PasteState
 };
 PasteState CurrentPasteState;
 
+bool ShiftPaste = false;
+bool CtrlPaste = false;
 
 /* track all keyboard scan codes state (up/down) */
 static int ScanTable[256];
@@ -536,7 +538,6 @@ void SetPaste(bool tmp) {
 
 void PasteIntoQueue(std::string txt)
 {
-//	TODO: use special layout for paste operations
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)1);
 
 	for (auto& c : txt)
@@ -577,6 +578,11 @@ bool GetNextScanInPasteQueue(unsigned char col)
 	{
 	case PasteState::KeyDown:
 	{
+
+//bool ShiftPaste = false;
+//bool CtrlPaste = false;
+
+
 		// Peek at next character.
 		unsigned char next = PasteInputQueue.front();
 		// Shift Key?
@@ -586,6 +592,15 @@ bool GetNextScanInPasteQueue(unsigned char col)
 			PasteInputQueue.pop();
 			vccKeyboardHandleKey(0x36, 0x36, kEventKeyDown);
 			next = PasteInputQueue.front();
+			ShiftPaste = true;
+		}
+		else if (next == 0x1D)
+		{
+			// Pop it and get the next key.
+			PasteInputQueue.pop();
+			vccKeyboardHandleKey(0x1D, 0x1D, kEventKeyDown);
+			next = PasteInputQueue.front();
+			CtrlPaste = true;
 		}
 		vccKeyboardHandleKey(next, next, kEventKeyDown);
 		CurrentPasteState = KeyUp;
@@ -596,7 +611,9 @@ bool GetNextScanInPasteQueue(unsigned char col)
 	{
 		// Which key was down?
 		unsigned char last = PasteInputQueue.front();
-		vccKeyboardHandleKey(0x36, 0x36, kEventKeyUp);
+		if (ShiftPaste) vccKeyboardHandleKey(0x36, 0x36, kEventKeyUp);
+		if (CtrlPaste)  vccKeyboardHandleKey(0x1D, 0x1D, kEventKeyUp);
+		ShiftPaste = CtrlPaste = false;
 		vccKeyboardHandleKey(0x42, last, kEventKeyUp);
 		// Ok, done with that character.
 		PasteInputQueue.pop();
