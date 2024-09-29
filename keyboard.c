@@ -579,10 +579,6 @@ bool GetNextScanInPasteQueue(unsigned char col)
 	case PasteState::KeyDown:
 	{
 
-//bool ShiftPaste = false;
-//bool CtrlPaste = false;
-
-
 		// Peek at next character.
 		unsigned char next = PasteInputQueue.front();
 		// Shift Key?
