@@ -339,7 +339,7 @@ extern "C"
 	__declspec(dllexport) void ModuleStatus(char *MyStatus)
 	{
 		char TempStatus[64]="";
-		sprintf(MyStatus,"MPI:%i,%i",ChipSelectSlot,SpareSelectSlot);
+		sprintf(MyStatus,"MPI:%i",SwitchSlot+1);
 		for (Temp=0;Temp<4;Temp++)
 		{
 			strcpy(TempStatus,"");
