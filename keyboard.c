@@ -536,6 +536,7 @@ void SetPaste(bool tmp) {
 
 void PasteIntoQueue(std::string txt)
 {
+//	TODO: use special layout for paste operations
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)1);
 
 	for (auto& c : txt)
