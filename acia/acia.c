@@ -234,19 +234,19 @@ void LoadConfig(void)
     switch (AciaComType) {
     case COM_FILE:
         if (AciaComMode == COM_MODE_READ)
-            sprintf(AciaStat,"Acia file R");
+            sprintf(AciaStat,"Acia R");
         else
-            sprintf(AciaStat,"Acia file W");
+            sprintf(AciaStat,"Acia W");
         break;
     case COM_TCPIP:
-        sprintf(AciaStat,"Acia tcpip");
+        sprintf(AciaStat,"Acia Net");
         break;
     case COM_WINCOM:
         sprintf(AciaStat,"Acia %s",AciaComPort);
         break;
     case COM_CONSOLE:
     default:
-        sprintf(AciaStat,"Acia Console");
+        sprintf(AciaStat,"Acia Cons");
         break;
     }
 }

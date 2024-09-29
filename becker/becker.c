@@ -515,11 +515,11 @@ void SetDWTCPConnectionEnable(unsigned int enable)
         {
                 if (retry)
                 {
-                        sprintf(DWStatus,"DW: Try %s", curaddress);
+                        sprintf(DWStatus,"DW %s?", curaddress);
                 }
                 else if (dwSocket == 0)
                 {
-                        sprintf(DWStatus,"DW: ConError");
+                        sprintf(DWStatus,"DW ConError");
                 }
                 else
                 {
@@ -528,7 +528,7 @@ void SetDWTCPConnectionEnable(unsigned int enable)
                                 buffersize = BUFFER_SIZE - InReadPos + InWritePos;
 
                         
-                        sprintf(DWStatus,"DW: ConOK  R:%04.1f W:%04.1f", ReadSpeed , WriteSpeed);
+                        sprintf(DWStatus,"DW OK R:%04.1f W:%04.1f", ReadSpeed , WriteSpeed);
 
                         
                 }
