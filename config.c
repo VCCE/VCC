@@ -577,38 +577,38 @@ void ApplyCpuConfig(HWND hDlg)
 /* Increase the overclock speed (2..100), as seen after a POKE 65497,0. */
 void IncreaseOverclockSpeed()
 {
-	if (TempConfig.CPUMultiplyer >= CurrentConfig.MaxOverclock) return;
+	if (CurrentConfig.CPUMultiplyer >= CurrentConfig.MaxOverclock) return;
 
-	TempConfig.CPUMultiplyer = (unsigned char)(TempConfig.CPUMultiplyer + 1);
+	CurrentConfig.CPUMultiplyer = (unsigned char)(CurrentConfig.CPUMultiplyer + 1);
 
 	// Send updates to the dialog if it's open.
     if (hCpuDlg != NULL) {
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKSPEED, TBM_SETPOS,
-						   TRUE, TempConfig.CPUMultiplyer);
-		sprintf(OutBuffer, "%2.3f Mhz", (float)TempConfig.CPUMultiplyer * 0.894);
+						   TRUE, CurrentConfig.CPUMultiplyer);
+		sprintf(OutBuffer, "%2.3f Mhz", (float)CurrentConfig.CPUMultiplyer * 0.894);
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKDISPLAY, WM_SETTEXT,
 						   strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
 	}
-	CurrentConfig = TempConfig;
+//	CurrentConfig = TempConfig;
 	EmuState.ResetPending = 4; // Without this, changing the config does nothing.
 }
 
 /* Decrease the overclock speed */
 void DecreaseOverclockSpeed()
 {
-	if (TempConfig.CPUMultiplyer == 2) return;
+	if (CurrentConfig.CPUMultiplyer == 2) return;
 
-	TempConfig.CPUMultiplyer = (unsigned char)(TempConfig.CPUMultiplyer - 1);
+	CurrentConfig.CPUMultiplyer = (unsigned char)(CurrentConfig.CPUMultiplyer - 1);
 
 	// Send updates to the dialog if it's open.
     if (hCpuDlg != NULL) {
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKSPEED, TBM_SETPOS,
-						   TRUE, TempConfig.CPUMultiplyer);
-		sprintf(OutBuffer, "%2.3f Mhz", (float)TempConfig.CPUMultiplyer * 0.894);
+						   TRUE, CurrentConfig.CPUMultiplyer);
+		sprintf(OutBuffer, "%2.3f Mhz", (float)CurrentConfig.CPUMultiplyer * 0.894);
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKDISPLAY, WM_SETTEXT,
 						   strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
 	}
-	CurrentConfig = TempConfig;
+//	CurrentConfig = TempConfig;
 	EmuState.ResetPending = 4;
 }
 
