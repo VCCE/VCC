@@ -908,7 +908,7 @@ void SaveConfig(void) {
     ofn.lpstrTitle        = TEXT("Save Vcc Config") ; // title bar string
     ofn.Flags             = OFN_HIDEREADONLY |OFN_PATHMUSTEXIST;
 
-    if ( GetOpenFileName (&ofn) ) {
+    if ( GetSaveFileName (&ofn) ) {
         if (ofn.nFileExtension == 0) strcat(newini, ".ini");  //Add extension if none
         WriteIniFile();                                       // Flush current config
         if (_stricmp(curini,newini) != 0) {
