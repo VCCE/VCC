@@ -70,9 +70,9 @@ LRESULT CALLBACK TapeConfig(HWND , UINT , WPARAM , LPARAM );
 LRESULT CALLBACK BitBanger(HWND , UINT , WPARAM , LPARAM );
 LRESULT CALLBACK Paths(HWND, UINT, WPARAM, LPARAM);
 
-void ApplyConfig(void);
 void ApplyCpuConfig(HWND);
 void ApplyAudioConfig(HWND);
+void ApplyDisplayConfig(HWND);
 void ApplyJoyStickConfig(void);
 
 /********************************************/
@@ -114,8 +114,13 @@ typedef struct  {
     unsigned char   ShowMousePointer;
 } STRConfig;
 
-static STRConfig CurrentConfig;   // Vcc configuration settings
-static STRConfig TempConfig;      // Pre-commit Vcc settings
+// Holder for some (but not all) Vcc settings
+static STRConfig CurrentConfig;
+
+// TempConfig holds dialog changes until OK or Apply is hit
+// It is a relic of the Tabbed config dialogs that were replaced
+// with version 2.1.9.0 Eventually it should be removed
+static STRConfig TempConfig;
 
 static HICON CpuIcons[2],MonIcons[2],JoystickIcons[4];
 static unsigned char temp=0,temp2=0;
@@ -458,15 +463,6 @@ void UpdateConfig (void)
 }
 
 /********************************************/
-/*     Commit Temp Config and apply          */
-/********************************************/
-void ApplyConfig(void)
-{
-	CurrentConfig = TempConfig;
-	UpdateConfig();
-}
-
-/********************************************/
 /*               Cpu Config                 */
 /********************************************/
 HWND hCpuDlg = NULL;
@@ -569,7 +565,13 @@ void ApplyCpuConfig(HWND hDlg)
 	} else {
 		EmuState.ResetPending = 4;   // Update config
 	}
-	CurrentConfig = TempConfig;
+	CurrentConfig.CPUMultiplyer   = TempConfig.CPUMultiplyer;
+	CurrentConfig.RamSize         = TempConfig.RamSize;
+	CurrentConfig.CpuType         = TempConfig.CpuType;
+	CurrentConfig.BreakOpcEnabled = TempConfig.BreakOpcEnabled;
+	SendDlgItemMessage (
+		hDlg,IDC_CPUICON,STM_SETIMAGE,(WPARAM)IMAGE_ICON,
+		(LPARAM)CpuIcons[CurrentConfig.CpuType] );
 	// UpdateConfig() is not appropriate here.  ResetPending is used
 	// to allow Vcc.c to do UpdateConfig otherwise CPU will not reset.
 }
@@ -589,7 +591,6 @@ void IncreaseOverclockSpeed()
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKDISPLAY, WM_SETTEXT,
 						   strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
 	}
-//	CurrentConfig = TempConfig;
 	EmuState.ResetPending = 4; // Without this, changing the config does nothing.
 }
 
@@ -608,7 +609,6 @@ void DecreaseOverclockSpeed()
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKDISPLAY, WM_SETTEXT,
 						   strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
 	}
-//	CurrentConfig = TempConfig;
 	EmuState.ResetPending = 4;
 }
 
@@ -642,12 +642,16 @@ LRESULT CALLBACK MiscConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			ApplyConfig();
+			CurrentConfig.AutoStart = TempConfig.AutoStart;
+			CurrentConfig.CartAutoStart = TempConfig.CartAutoStart;
+			UpdateConfig();
 			hMiscDlg = NULL;
 			DestroyWindow(hDlg);
 			break;
 		case IDAPPLY:
-			ApplyConfig();
+			CurrentConfig.AutoStart = TempConfig.AutoStart;
+			CurrentConfig.CartAutoStart = TempConfig.CartAutoStart;
+			UpdateConfig();
 			break;
 		}
 		break;
@@ -683,7 +687,6 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 
 	switch (message) {
 	case WM_INITDIALOG:
-		TempConfig = CurrentConfig;
 		TapeCounter=GetTapeCounter();
 		sprintf(OutBuffer,"%i",TapeCounter);
 		SendDlgItemMessage(hDlg,IDC_TCOUNT,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
@@ -708,12 +711,12 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			ApplyConfig();
+			UpdateConfig();
 			hTapeDlg = NULL;
 			DestroyWindow(hDlg);
 			break;
 		case IDAPPLY:
-			ApplyConfig();
+			UpdateConfig();
 			break;
 		case IDC_PLAY:
 			Tmode=PLAY;
@@ -862,14 +865,16 @@ void ApplyAudioConfig(HWND hDlg)
 		(SendDlgItemMessage(hDlg,IDC_MUTE,BM_GETCHECK,0,0) == BST_CHECKED)? 0:3;
 	//	(unsigned char) SendDlgItemMessage(hDlg,IDC_RATE,CB_GETCURSEL,0,0);
 
-	strcpy(TempConfig.SoundCardName, SoundCards[TempConfig.SndOutDev].CardName);
 	if ( (CurrentConfig.SndOutDev != TempConfig.SndOutDev) |
 	     (CurrentConfig.AudioRate != TempConfig.AudioRate)) {
 			SoundInit ( EmuState.WindowHandle,
 		            	SoundCards[TempConfig.SndOutDev].Guid,
 		            	TempConfig.AudioRate);
 	}
-	ApplyConfig();
+	CurrentConfig.AudioRate = TempConfig.AudioRate;
+	CurrentConfig.SndOutDev = TempConfig.SndOutDev;
+	strcpy(CurrentConfig.SoundCardName, SoundCards[CurrentConfig.SndOutDev].CardName);
+	UpdateConfig();
 }
 
 void UpdateSoundBar (unsigned short Left,unsigned short Right)
@@ -954,12 +959,12 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			ApplyConfig();
+			ApplyDisplayConfig(hDlg);
 			hDisplayDlg = NULL;
 			DestroyWindow(hDlg);
 			break;
 		case IDAPPLY:
-			ApplyConfig();
+			ApplyDisplayConfig(hDlg);
 			break;
 
 		case IDC_REMEMBER_SIZE:
@@ -1032,6 +1037,20 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 	return(0);
 }
 
+void ApplyDisplayConfig(HWND hdlg)
+{
+	CurrentConfig.FrameSkip     = TempConfig.FrameSkip;
+	CurrentConfig.Resize        = TempConfig.Resize;
+	CurrentConfig.Aspect        = TempConfig.Aspect;
+	CurrentConfig.ScanLines     = TempConfig.ScanLines;
+	CurrentConfig.SpeedThrottle = TempConfig.SpeedThrottle;
+	CurrentConfig.RememberSize  = TempConfig.RememberSize;
+	CurrentConfig.Resize        = TempConfig.Resize;
+	CurrentConfig.MonitorType   = TempConfig.MonitorType;
+	CurrentConfig.PaletteType   = TempConfig.PaletteType;
+	UpdateConfig();
+}
+
 /********************************************/
 /*             Keyboard Config              */
 /********************************************/
@@ -1054,7 +1073,6 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 {
     switch (message) {
     case WM_INITDIALOG:
-		TempConfig = CurrentConfig;
         ShowKeymapStatus(hDlg);
         break;
     case WM_COMMAND:
@@ -1066,13 +1084,13 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			break;
 		case IDOK:
 			vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
-			ApplyConfig();
+			UpdateConfig();
             hInputDlg = NULL;
 			DestroyWindow(hDlg);
 			break;
 		case IDAPPLY:
 			vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
-			ApplyConfig();
+			UpdateConfig();
 			break;
 		case IDC_KEYMAP_COCO:
             SetCurrentKeyMap(kKBLayoutCoCo);
@@ -1108,7 +1126,6 @@ int SetCurrentKeyMap(int keymap) {
         vccKeyboardBuildRuntimeTable((keyboardlayout_e)keymap);
     }
     CurrentConfig.KeyMap = keymap;
-    TempConfig.KeyMap = keymap;
     return keymap;
 }
 
@@ -1425,7 +1442,8 @@ void ApplyJoyStickConfig()
 	RightJS=TempRightJS;
 	LeftJS=TempLeftJS;
 	SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
-	ApplyConfig();
+	CurrentConfig.ShowMousePointer = TempConfig.ShowMousePointer;
+	UpdateConfig();
 }
 
 void SwapJoySticks()
@@ -1506,7 +1524,6 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 {
 	switch (message) {
 	case WM_INITDIALOG: //IDC_PRINTMON
-		TempConfig = CurrentConfig;
 		if (!strlen(SerialCaptureFile))
 			strcpy(SerialCaptureFile,"No Capture File");
 		SendDlgItemMessage(hDlg,IDC_SERIALFILE,
@@ -1525,12 +1542,12 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			ApplyConfig();
+			UpdateConfig();
 			hBitBangerDlg = NULL;
 			DestroyWindow(hDlg);
 			break;
 		case IDAPPLY:
-			ApplyConfig();
+			UpdateConfig();
 			break;
 
 		case IDC_OPEN:
