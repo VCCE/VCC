@@ -505,7 +505,7 @@ long CreateDisk (unsigned char Disk)
 LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	unsigned char temp=0,temp2=0;
-	static unsigned char NewDiskType=DMK,NewDiskTracks=2,DblSided=1;
+	static unsigned char NewDiskType=JVC,NewDiskTracks=2,DblSided=1;
 	char Dummy[MAX_PATH]="";
 	long DiskType[3]={IDC_JVC,IDC_VDK,IDC_DMK};
 	long DiskTracks[3]={IDC_TR35,IDC_TR40,IDC_TR80};
@@ -515,7 +515,7 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_INITDIALOG:
 			for (temp=0;temp<=2;temp++)
 				SendDlgItemMessage(hDlg,DiskType[temp],BM_SETCHECK,(temp==NewDiskType),0);
-			for (temp=0;temp<=3;temp++)
+			for (temp=0;temp<=2;temp++)
 				SendDlgItemMessage(hDlg,DiskTracks[temp],BM_SETCHECK,(temp==NewDiskTracks),0);
 			SendDlgItemMessage(hDlg,IDC_DBLSIDE,BM_SETCHECK,DblSided,0);
 			strcpy(Dummy,TempFileName);
