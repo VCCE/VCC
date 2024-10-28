@@ -70,16 +70,11 @@ LRESULT CALLBACK TapeConfig(HWND , UINT , WPARAM , LPARAM );
 LRESULT CALLBACK BitBanger(HWND , UINT , WPARAM , LPARAM );
 LRESULT CALLBACK Paths(HWND, UINT, WPARAM, LPARAM);
 
-void ApplyCpuConfig(HWND);
-void ApplyAudioConfig(HWND);
-void ApplyDisplayConfig(HWND);
-void ApplyJoyStickConfig(void);
-
 /********************************************/
 /*            Local Globals                 */
 /********************************************/
 
-// Configuration settings structure
+// Structure for some (but not all) Vcc settings
 typedef struct  {
 	unsigned char	CPUMultiplyer;
 	unsigned short	MaxOverclock;
@@ -113,14 +108,7 @@ typedef struct  {
     char            COCO3ROMPath[MAX_PATH];
     unsigned char   ShowMousePointer;
 } STRConfig;
-
-// Holder for some (but not all) Vcc settings
 static STRConfig CurrentConfig;
-
-// TempConfig holds dialog changes until OK or Apply is hit
-// It is a relic of the Tabbed config dialogs that were replaced
-// with version 2.1.9.0 Eventually it should be removed
-static STRConfig TempConfig;
 
 static HICON CpuIcons[2],MonIcons[2],JoystickIcons[4];
 static unsigned char temp=0,temp2=0;
@@ -144,11 +132,8 @@ static unsigned char Tmode=STOP;
 char Tmodes[4][10]={"STOP","PLAY","REC","STOP"};
 static int NumberOfSoundCards=0;
 
-static JoyStick TempLeftJS, TempRightJS;
-
 #define MAXSOUNDCARDS 12
 static SndCardList SoundCards[MAXSOUNDCARDS];
-//static HWND hTapeDlg=NULL;
 
 CHARFORMAT CounterText;
 CHARFORMAT ModeText;
@@ -178,7 +163,7 @@ void LoadConfig(SystemState *LCState)
 	HANDLE hr=NULL;
 	int lasterror;
 
-	buildTransDisp2ScanTable(); // Move to Joystick config???
+	buildTransDisp2ScanTable();
 
 	LoadString(NULL, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
 	GetModuleFileName(NULL,ExecDirectory,MAX_PATH);
@@ -379,7 +364,6 @@ unsigned char ReadIniFile(void)
 		}
 	}
 
-	TempConfig=CurrentConfig;
 	InsertModule (CurrentConfig.ModulePath);	// Should this be here?
 	CurrentConfig.Resize = 1; //Checkbox removed. Remove this from the ini?
 	if (CurrentConfig.RememberSize) {
@@ -432,9 +416,9 @@ void SetKeyMapFilePath(char *Path)
 	WritePrivateProfileString("Misc","CustomKeyMapFile",KeyMapFilePath,IniFilePath);
 }
 
-/********************************************/
-/*  Update VCC settings from CurrentConfig  */
-/********************************************/
+/*****************************************************/
+/*  Apply Current VCC settings. Also Called by Vcc.c */
+/*****************************************************/
 void UpdateConfig (void)
 {
 	SetPaletteType();
@@ -481,11 +465,12 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	short int Ramchoice[4] = {IDC_128K,IDC_512K,IDC_2M,IDC_8M};
 	short int Cpuchoice[2] = {IDC_6809,IDC_6309};
 	unsigned char temp;
+	static STRConfig tmpcfg;
 	HWND hClkSpd = GetDlgItem(hDlg,IDC_CLOCKSPEED);
 	HWND hClkDsp = GetDlgItem(hDlg,IDC_CLOCKDISPLAY);
 	switch (message) {
 	case WM_INITDIALOG:
-		TempConfig = CurrentConfig;
+		tmpcfg = CurrentConfig;
 		CpuIcons[0]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_MOTO);
 		CpuIcons[1]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_HITACHI2);
 		SendMessage(hClkSpd,TBM_SETRANGE,TRUE,MAKELONG(2,CurrentConfig.MaxOverclock));
@@ -502,8 +487,8 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		break;
 
 	case WM_HSCROLL:
-		TempConfig.CPUMultiplyer = (unsigned char) SendMessage (hClkSpd,TBM_GETPOS,0,0);
-		sprintf(OutBuffer,"%2.3f Mhz",(float)TempConfig.CPUMultiplyer*.894);
+		tmpcfg.CPUMultiplyer = (unsigned char) SendMessage (hClkSpd,TBM_GETPOS,0,0);
+		sprintf(OutBuffer,"%2.3f Mhz",(float)tmpcfg.CPUMultiplyer*.894);
 		SendDlgItemMessage(hDlg,IDC_CLOCKDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 		break;
 
@@ -515,12 +500,27 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			ApplyCpuConfig(hDlg);
-			hCpuDlg = NULL;
-			DestroyWindow(hDlg);
-			break;
 		case IDAPPLY:
-			ApplyCpuConfig(hDlg);
+			// ResetPending causes Vcc.c to call UpdateConfig().
+			if ( (CurrentConfig.RamSize != tmpcfg.RamSize) |
+			     (CurrentConfig.CpuType != tmpcfg.CpuType) ) {
+				EmuState.ResetPending = 2;   // Hard reset
+			} else {
+				EmuState.ResetPending = 4;   // Update config
+			}
+			// Commit any CPU modifications
+			CurrentConfig.RamSize         = tmpcfg.RamSize;
+			CurrentConfig.CpuType         = tmpcfg.CpuType;
+			CurrentConfig.BreakOpcEnabled = tmpcfg.BreakOpcEnabled;
+			CurrentConfig.CPUMultiplyer   = tmpcfg.CPUMultiplyer;
+			// Set CPU icon in dialog window
+			SendDlgItemMessage ( hDlg,IDC_CPUICON,STM_SETIMAGE,(WPARAM)IMAGE_ICON,
+			                     (LPARAM)CpuIcons[CurrentConfig.CpuType] );
+			// Exit dialog if IDOK
+			if (LOWORD(wParam)==IDOK) {
+				hCpuDlg = NULL;
+				DestroyWindow(hDlg);
+			}
 			break;
 		case IDC_128K:
 		case IDC_512K:
@@ -529,7 +529,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			for (temp=0;temp<=3;temp++) {
 				if (LOWORD(wParam) == Ramchoice[temp]) {
 					SendDlgItemMessage(hDlg,Ramchoice[temp],BM_SETCHECK,1,0);
-					TempConfig.RamSize=temp;
+					tmpcfg.RamSize=temp;
 				} else {
 					SendDlgItemMessage(hDlg,Ramchoice[temp],BM_SETCHECK,0,0);
 				}
@@ -539,7 +539,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		case IDC_6309:
 			for (temp=0;temp<=1;temp++) {
 				if (LOWORD(wParam) == Cpuchoice[temp]) {
-					TempConfig.CpuType = temp;
+					tmpcfg.CpuType = temp;
 					SendDlgItemMessage(hDlg,Cpuchoice[temp],BM_SETCHECK,1,0);
 				} else {
 					SendDlgItemMessage(hDlg,Cpuchoice[temp],BM_SETCHECK,0,0);
@@ -547,7 +547,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			}
 			break;
 		case IDC_ENABLE_BREAK:
-			TempConfig.BreakOpcEnabled = (unsigned char)
+			tmpcfg.BreakOpcEnabled = (unsigned char)
 						SendDlgItemMessage(hDlg,IDC_ENABLE_BREAK,BM_GETCHECK,0,0);
 			break;
 		
@@ -555,25 +555,6 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		break;	//Break WM_COMMAND
 	}			//END switch (message)
 	return(0);
-}
-
-void ApplyCpuConfig(HWND hDlg)
-{
-	if ( (CurrentConfig.RamSize != TempConfig.RamSize) |
-		 (CurrentConfig.CpuType != TempConfig.CpuType) ) {
-		EmuState.ResetPending = 2;   // Hard reset
-	} else {
-		EmuState.ResetPending = 4;   // Update config
-	}
-	CurrentConfig.CPUMultiplyer   = TempConfig.CPUMultiplyer;
-	CurrentConfig.RamSize         = TempConfig.RamSize;
-	CurrentConfig.CpuType         = TempConfig.CpuType;
-	CurrentConfig.BreakOpcEnabled = TempConfig.BreakOpcEnabled;
-	SendDlgItemMessage (
-		hDlg,IDC_CPUICON,STM_SETIMAGE,(WPARAM)IMAGE_ICON,
-		(LPARAM)CpuIcons[CurrentConfig.CpuType] );
-	// UpdateConfig() is not appropriate here.  ResetPending is used
-	// to allow Vcc.c to do UpdateConfig otherwise CPU will not reset.
 }
 
 /* Increase the overclock speed (2..100), as seen after a POKE 65497,0. */
@@ -626,15 +607,16 @@ void OpenMiscConfig() {
 }
 LRESULT CALLBACK MiscConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	static STRConfig tmpcfg;
 	switch (message) {
 	case WM_INITDIALOG:
-		TempConfig = CurrentConfig;
-		SendDlgItemMessage(hDlg,IDC_AUTOSTART,BM_SETCHECK,TempConfig.AutoStart,0);
-		SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_SETCHECK,TempConfig.CartAutoStart,0);
+		tmpcfg = CurrentConfig;
+		SendDlgItemMessage(hDlg,IDC_AUTOSTART,BM_SETCHECK,tmpcfg.AutoStart,0);
+		SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_SETCHECK,tmpcfg.CartAutoStart,0);
 		break;
 	case WM_COMMAND:
-		TempConfig.AutoStart=(unsigned char)SendDlgItemMessage(hDlg,IDC_AUTOSTART,BM_GETCHECK,0,0);
-		TempConfig.CartAutoStart=(unsigned char)SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_GETCHECK,0,0);
+		tmpcfg.AutoStart=(unsigned char)SendDlgItemMessage(hDlg,IDC_AUTOSTART,BM_GETCHECK,0,0);
+		tmpcfg.CartAutoStart=(unsigned char)SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_GETCHECK,0,0);
 		switch (LOWORD(wParam)) {
 		case IDCANCEL:
 		case IDCLOSE:
@@ -642,16 +624,15 @@ LRESULT CALLBACK MiscConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			CurrentConfig.AutoStart = TempConfig.AutoStart;
-			CurrentConfig.CartAutoStart = TempConfig.CartAutoStart;
-			UpdateConfig();
-			hMiscDlg = NULL;
-			DestroyWindow(hDlg);
-			break;
 		case IDAPPLY:
-			CurrentConfig.AutoStart = TempConfig.AutoStart;
-			CurrentConfig.CartAutoStart = TempConfig.CartAutoStart;
+			CurrentConfig.AutoStart = tmpcfg.AutoStart;
+			CurrentConfig.CartAutoStart = tmpcfg.CartAutoStart;
 			UpdateConfig();
+			// Exit dialog if IDOK
+			if (LOWORD(wParam)==IDOK) {
+				hMiscDlg = NULL;
+				DestroyWindow(hDlg);
+			}
 			break;
 		}
 		break;
@@ -711,12 +692,12 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			UpdateConfig();
-			hTapeDlg = NULL;
-			DestroyWindow(hDlg);
-			break;
 		case IDAPPLY:
 			UpdateConfig();
+			if (LOWORD(wParam)==IDOK) {
+				hTapeDlg = NULL;
+				DestroyWindow(hDlg);
+			}
 			break;
 		case IDC_PLAY:
 			Tmode=PLAY;
@@ -761,7 +742,6 @@ void UpdateTapeCounter(unsigned int Counter,unsigned char TapeMode)
 			WM_SETTEXT,strlen(Tmodes[Tmode]),(LPARAM)(LPCSTR)Tmodes[Tmode]);
 	GetTapeName(TapeFileName);
 	PathStripPath (TapeFileName);
-//	SendDlgItemMessage(hTapeDlg,IDC_TAPEFILE,
 	SendDlgItemMessage(hTapeDlg,IDC_TAPEFILE,
 			WM_SETTEXT,strlen(TapeFileName),(LPARAM)(LPCSTR)TapeFileName);
 
@@ -797,10 +777,11 @@ void OpenAudioConfig() {
 LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int Index;
+	static STRConfig tmpcfg;
 	WPARAM bstate;
 	switch (message) {
 	case WM_INITDIALOG:
-		TempConfig = CurrentConfig;
+		tmpcfg = CurrentConfig;
 
 		// Sound level bars (L and R are equal)
 		SendDlgItemMessage(hDlg,IDC_PROGRESSLEFT,PBM_SETPOS,0,0);
@@ -819,21 +800,21 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 
 //		In coco3.cpp audio rate is forced to 0 (mute) or 3 (44100)
 //		Rate dropdown has been replaced with a mute check box
-		bstate = (TempConfig.AudioRate==0) ? BST_CHECKED : BST_UNCHECKED;
+		bstate = (tmpcfg.AudioRate==0) ? BST_CHECKED : BST_UNCHECKED;
 		SendDlgItemMessage(hDlg,IDC_MUTE,BM_SETCHECK,bstate,0);
 //		for (Index=0;Index<4;Index++)
 //			SendDlgItemMessage(hDlg,IDC_RATE,CB_ADDSTRING,
 //			                   (WPARAM)0,(LPARAM)RateList[Index]);
 //		SendDlgItemMessage(hDlg,IDC_RATE,CB_SETCURSEL,
-//		                   (WPARAM)TempConfig.AudioRate,(LPARAM)0);
+//		                   (WPARAM)tmpcfg.AudioRate,(LPARAM)0);
 
 		// Sound device selection
-		TempConfig.SndOutDev=0;
+		tmpcfg.SndOutDev=0;
 		for (Index=0;Index<NumberOfSoundCards;Index++)
-			if (!strcmp(SoundCards[Index].CardName,TempConfig.SoundCardName))
-				TempConfig.SndOutDev=Index;
+			if (!strcmp(SoundCards[Index].CardName,tmpcfg.SoundCardName))
+				tmpcfg.SndOutDev=Index;
 		SendDlgItemMessage(hDlg,IDC_SOUNDCARD,CB_SETCURSEL,
-		                   (WPARAM)TempConfig.SndOutDev,(LPARAM)0);
+		                   (WPARAM)tmpcfg.SndOutDev,(LPARAM)0);
 		break;
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
@@ -843,38 +824,31 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			ApplyAudioConfig(hDlg);
-			hAudioDlg = NULL;
-			DestroyWindow(hDlg);
-			break;
 		case IDAPPLY:
-			ApplyAudioConfig(hDlg);
+			tmpcfg.SndOutDev =
+				(unsigned char) SendDlgItemMessage(hDlg,IDC_SOUNDCARD,CB_GETCURSEL,0,0);
+			tmpcfg.AudioRate =
+				(SendDlgItemMessage(hDlg,IDC_MUTE,BM_GETCHECK,0,0) == BST_CHECKED)? 0:3;
+
+			if ( (CurrentConfig.SndOutDev != tmpcfg.SndOutDev) |
+			     (CurrentConfig.AudioRate != tmpcfg.AudioRate)) {
+				SoundInit ( EmuState.WindowHandle,
+				            SoundCards[tmpcfg.SndOutDev].Guid,
+				            tmpcfg.AudioRate);
+			}
+			CurrentConfig.AudioRate = tmpcfg.AudioRate;
+			CurrentConfig.SndOutDev = tmpcfg.SndOutDev;
+			strcpy(CurrentConfig.SoundCardName, SoundCards[CurrentConfig.SndOutDev].CardName);
+			UpdateConfig();
+			if (LOWORD(wParam)==IDOK) {
+				hAudioDlg = NULL;
+				DestroyWindow(hDlg);
+			}
 			break;
 		}
 		break;
 	}
 	return(0);
-}
-
-void ApplyAudioConfig(HWND hDlg)
-{
-	TempConfig.SndOutDev =
-		(unsigned char) SendDlgItemMessage(hDlg,IDC_SOUNDCARD,CB_GETCURSEL,0,0);
-
-	TempConfig.AudioRate =
-		(SendDlgItemMessage(hDlg,IDC_MUTE,BM_GETCHECK,0,0) == BST_CHECKED)? 0:3;
-	//	(unsigned char) SendDlgItemMessage(hDlg,IDC_RATE,CB_GETCURSEL,0,0);
-
-	if ( (CurrentConfig.SndOutDev != TempConfig.SndOutDev) |
-	     (CurrentConfig.AudioRate != TempConfig.AudioRate)) {
-			SoundInit ( EmuState.WindowHandle,
-		            	SoundCards[TempConfig.SndOutDev].Guid,
-		            	TempConfig.AudioRate);
-	}
-	CurrentConfig.AudioRate = TempConfig.AudioRate;
-	CurrentConfig.SndOutDev = TempConfig.SndOutDev;
-	strcpy(CurrentConfig.SoundCardName, SoundCards[CurrentConfig.SndOutDev].CardName);
-	UpdateConfig();
 }
 
 void UpdateSoundBar (unsigned short Left,unsigned short Right)
@@ -903,25 +877,26 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 	static bool isRGB;
 	short int Monchoice[2] = { IDC_COMPOSITE, IDC_RGB };
     short int PaletteChoice[2] = { IDC_ORG_PALETTE, IDC_UPD_PALETTE };
+	static STRConfig tmpcfg;
 	switch (message) {
 	case WM_INITDIALOG:
-		TempConfig = CurrentConfig;
+		tmpcfg = CurrentConfig;
 		MonIcons[0]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_COMPOSITE);
 		MonIcons[1]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_RGB);
 
 		SendDlgItemMessage(hDlg,IDC_FRAMESKIP,TBM_SETRANGE,TRUE,MAKELONG(1,6) );
-		SendDlgItemMessage(hDlg,IDC_SCANLINES,BM_SETCHECK,TempConfig.ScanLines,0);
-		SendDlgItemMessage(hDlg,IDC_THROTTLE,BM_SETCHECK,TempConfig.SpeedThrottle,0);
-		SendDlgItemMessage(hDlg,IDC_FRAMESKIP,TBM_SETPOS,TRUE,TempConfig.FrameSkip);
-		SendDlgItemMessage(hDlg,IDC_RESIZE,BM_SETCHECK,TempConfig.Resize,0);
-		SendDlgItemMessage(hDlg,IDC_ASPECT,BM_SETCHECK,TempConfig.Aspect,0);
-		SendDlgItemMessage(hDlg, IDC_REMEMBER_SIZE, BM_SETCHECK, TempConfig.RememberSize, 0);
-		sprintf(OutBuffer,"%i",TempConfig.FrameSkip);
+		SendDlgItemMessage(hDlg,IDC_SCANLINES,BM_SETCHECK,tmpcfg.ScanLines,0);
+		SendDlgItemMessage(hDlg,IDC_THROTTLE,BM_SETCHECK,tmpcfg.SpeedThrottle,0);
+		SendDlgItemMessage(hDlg,IDC_FRAMESKIP,TBM_SETPOS,TRUE,tmpcfg.FrameSkip);
+		SendDlgItemMessage(hDlg,IDC_RESIZE,BM_SETCHECK,tmpcfg.Resize,0);
+		SendDlgItemMessage(hDlg,IDC_ASPECT,BM_SETCHECK,tmpcfg.Aspect,0);
+		SendDlgItemMessage(hDlg, IDC_REMEMBER_SIZE, BM_SETCHECK, tmpcfg.RememberSize, 0);
+		sprintf(OutBuffer,"%i",tmpcfg.FrameSkip);
 		SendDlgItemMessage(hDlg,IDC_FRAMEDISPLAY,
 				WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 		for (temp=0;temp<=1;temp++)
-			SendDlgItemMessage(hDlg,Monchoice[temp],BM_SETCHECK,(temp==TempConfig.MonitorType),0);
-		if (TempConfig.MonitorType == 1) { //If RGB monitor is chosen, gray out palette choice
+			SendDlgItemMessage(hDlg,Monchoice[temp],BM_SETCHECK,(temp==tmpcfg.MonitorType),0);
+		if (tmpcfg.MonitorType == 1) { //If RGB monitor is chosen, gray out palette choice
 			isRGB = TRUE;
 			SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0);
 			SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
@@ -929,26 +904,26 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETDONTCLICK, 1, 0);
 		}
 		SendDlgItemMessage(hDlg,IDC_MONTYPE,
-				STM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[TempConfig.MonitorType]);
+				STM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[tmpcfg.MonitorType]);
 		for (temp = 0; temp <= 1; temp++)
-			SendDlgItemMessage(hDlg,PaletteChoice[temp],BM_SETCHECK,(temp==TempConfig.PaletteType),0);
+			SendDlgItemMessage(hDlg,PaletteChoice[temp],BM_SETCHECK,(temp==tmpcfg.PaletteType),0);
 		break;
 
 	case WM_HSCROLL:
-		TempConfig.FrameSkip=(unsigned char)
+		tmpcfg.FrameSkip=(unsigned char)
 			SendDlgItemMessage(hDlg,IDC_FRAMESKIP,TBM_GETPOS,(WPARAM) 0, (WPARAM) 0);
-		sprintf(OutBuffer,"%i",TempConfig.FrameSkip);
+		sprintf(OutBuffer,"%i",tmpcfg.FrameSkip);
 		SendDlgItemMessage(hDlg,IDC_FRAMEDISPLAY,
 			WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 		break;
 
 	case WM_COMMAND:
-		TempConfig.Resize = 1;//(unsigned char)SendDlgItemMessage(hDlg,IDC_RESIZE,BM_GETCHECK,0,0);
-		TempConfig.Aspect = (unsigned char) SendDlgItemMessage(hDlg,IDC_ASPECT,BM_GETCHECK,0,0);
-		TempConfig.ScanLines = (unsigned char) SendDlgItemMessage(hDlg,IDC_SCANLINES,BM_GETCHECK,0,0);
-		TempConfig.SpeedThrottle = (unsigned char)
+		tmpcfg.Resize = 1;//(unsigned char)SendDlgItemMessage(hDlg,IDC_RESIZE,BM_GETCHECK,0,0);
+		tmpcfg.Aspect = (unsigned char) SendDlgItemMessage(hDlg,IDC_ASPECT,BM_GETCHECK,0,0);
+		tmpcfg.ScanLines = (unsigned char) SendDlgItemMessage(hDlg,IDC_SCANLINES,BM_GETCHECK,0,0);
+		tmpcfg.SpeedThrottle = (unsigned char)
 			SendDlgItemMessage(hDlg,IDC_THROTTLE,BM_GETCHECK,0,0);
-		TempConfig.RememberSize = (unsigned char)
+		tmpcfg.RememberSize = (unsigned char)
 			SendDlgItemMessage(hDlg,IDC_REMEMBER_SIZE,BM_GETCHECK,0,0);
 		//POINT p = { 640,480 };
 		switch (LOWORD (wParam)) {
@@ -959,16 +934,25 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			ApplyDisplayConfig(hDlg);
-			hDisplayDlg = NULL;
-			DestroyWindow(hDlg);
-			break;
 		case IDAPPLY:
-			ApplyDisplayConfig(hDlg);
+			CurrentConfig.FrameSkip     = tmpcfg.FrameSkip;
+			CurrentConfig.Resize        = tmpcfg.Resize;
+			CurrentConfig.Aspect        = tmpcfg.Aspect;
+			CurrentConfig.ScanLines     = tmpcfg.ScanLines;
+			CurrentConfig.SpeedThrottle = tmpcfg.SpeedThrottle;
+			CurrentConfig.RememberSize  = tmpcfg.RememberSize;
+			CurrentConfig.Resize        = tmpcfg.Resize;
+			CurrentConfig.MonitorType   = tmpcfg.MonitorType;
+			CurrentConfig.PaletteType   = tmpcfg.PaletteType;
+			UpdateConfig();
+			if (LOWORD(wParam)==IDOK) {
+				hDisplayDlg = NULL;
+				DestroyWindow(hDlg);
+			}
 			break;
 
 		case IDC_REMEMBER_SIZE:
-			TempConfig.Resize = 1;
+			tmpcfg.Resize = 1;
 			SendDlgItemMessage(hDlg, IDC_RESIZE, BM_GETCHECK, 1, 0);
 			break;
 
@@ -980,11 +964,11 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 					for (temp2 = 0; temp2 <= 1; temp2++)
 						SendDlgItemMessage(hDlg, Monchoice[temp2], BM_SETCHECK, 0, 0);
 					SendDlgItemMessage(hDlg, Monchoice[temp], BM_SETCHECK, 1, 0);
-					TempConfig.MonitorType = temp;
+					tmpcfg.MonitorType = temp;
 				}
 			}
 			SendDlgItemMessage(hDlg,IDC_MONTYPE,
-				STM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[TempConfig.MonitorType]);
+				STM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[tmpcfg.MonitorType]);
 			SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 0, 0);
 			SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 0, 0);
 			break;
@@ -997,11 +981,11 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 					for (temp2=0;temp2<=1;temp2++)
 						SendDlgItemMessage(hDlg,Monchoice[temp2],BM_SETCHECK,0,0);
 					SendDlgItemMessage(hDlg,Monchoice[temp],BM_SETCHECK,1,0);
-					TempConfig.MonitorType=temp;
+					tmpcfg.MonitorType=temp;
 				}
 			}
 			SendDlgItemMessage(hDlg,IDC_MONTYPE,
-				STM_SETIMAGE,(WPARAM) IMAGE_ICON,(LPARAM) MonIcons[TempConfig.MonitorType]);
+				STM_SETIMAGE,(WPARAM) IMAGE_ICON,(LPARAM) MonIcons[tmpcfg.MonitorType]);
 			//If RGB is chosen, disable palette buttons.
 			SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0);
 			SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
@@ -1014,7 +998,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 				//Original Composite palette
 				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 1, 0);
 				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 0, 0);
-				TempConfig.PaletteType = 0;
+				tmpcfg.PaletteType = 0;
 			} else {
 				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0);
 			}
@@ -1025,7 +1009,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 				//New Composite palette
 				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 1, 0);
 				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 0, 0);
-				TempConfig.PaletteType = 1;
+				tmpcfg.PaletteType = 1;
 			} else {
 				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
 			}
@@ -1035,20 +1019,6 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 		break;	//break WM_COMMAND
 	}			//END switch Message
 	return(0);
-}
-
-void ApplyDisplayConfig(HWND hdlg)
-{
-	CurrentConfig.FrameSkip     = TempConfig.FrameSkip;
-	CurrentConfig.Resize        = TempConfig.Resize;
-	CurrentConfig.Aspect        = TempConfig.Aspect;
-	CurrentConfig.ScanLines     = TempConfig.ScanLines;
-	CurrentConfig.SpeedThrottle = TempConfig.SpeedThrottle;
-	CurrentConfig.RememberSize  = TempConfig.RememberSize;
-	CurrentConfig.Resize        = TempConfig.Resize;
-	CurrentConfig.MonitorType   = TempConfig.MonitorType;
-	CurrentConfig.PaletteType   = TempConfig.PaletteType;
-	UpdateConfig();
 }
 
 /********************************************/
@@ -1083,14 +1053,13 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
-			UpdateConfig();
-            hInputDlg = NULL;
-			DestroyWindow(hDlg);
-			break;
 		case IDAPPLY:
 			vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 			UpdateConfig();
+			if (LOWORD(wParam)==IDOK) {
+				hInputDlg = NULL;
+				DestroyWindow(hDlg);
+			}
 			break;
 		case IDC_KEYMAP_COCO:
             SetCurrentKeyMap(kKBLayoutCoCo);
@@ -1216,6 +1185,8 @@ void OpenJoyStickConfig() {
 
 LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	static STRConfig tmpcfg;
+    static JoyStick TempLeftJS, TempRightJS;
 	static int LeftJoyStick[6] = { IDC_LEFT_LEFT,IDC_LEFT_RIGHT,IDC_LEFT_UP,
 		                           IDC_LEFT_DOWN,IDC_LEFT_FIRE1,IDC_LEFT_FIRE2 };
 	static int RightJoyStick[6] = { IDC_RIGHT_LEFT,IDC_RIGHT_RIGHT,IDC_RIGHT_UP,
@@ -1235,7 +1206,7 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 	{
 		case WM_INITDIALOG:
 			RefreshJoystickStatus();
-			TempConfig = CurrentConfig;
+			tmpcfg = CurrentConfig;
 			JoystickIcons[0]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_KEYBOARD);
 			JoystickIcons[1]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_MOUSE);
 			JoystickIcons[2]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_AUDIO);
@@ -1316,7 +1287,7 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 				SendDlgItemMessage(hDlg, RightRadios[temp], BM_SETCHECK, temp == RightJS.UseMouse, 0);
 			}
 			TempLeftJS = LeftJS;
-			TempRightJS=RightJS;
+			TempRightJS = RightJS;
 			SendDlgItemMessage(hDlg,IDC_LEFTICON,
 					STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)JoystickIcons[LeftJS.UseMouse]);
 			SendDlgItemMessage(hDlg,IDC_RIGHTICON,
@@ -1331,18 +1302,22 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			ApplyJoyStickConfig();
-			hJoyStickDlg = NULL;
-			DestroyWindow(hDlg);
-			break;
 		case IDAPPLY:
-			ApplyJoyStickConfig();
+			RightJS = TempRightJS;
+			LeftJS = TempLeftJS;
+			SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
+			CurrentConfig.ShowMousePointer = tmpcfg.ShowMousePointer;
+			UpdateConfig();
+			if (LOWORD(wParam)==IDOK) {
+				hJoyStickDlg = NULL;
+				DestroyWindow(hDlg);
+			}
 			break;
 		case IDC_SHOWMOUSE:
 			if (HIWORD(wParam) == BN_CLICKED) {
 				EmuState.MousePointer = (unsigned char) SendDlgItemMessage(hDlg, IDC_SHOWMOUSE,
 						BM_GETCHECK, 0, 0);
-				TempConfig.ShowMousePointer = EmuState.MousePointer;
+				tmpcfg.ShowMousePointer = EmuState.MousePointer;
 			}
 			break;
 		} // End switch WM_COMMAND wParam
@@ -1437,21 +1412,14 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 	return(0);
 }
 
-void ApplyJoyStickConfig()
-{
-	RightJS=TempRightJS;
-	LeftJS=TempLeftJS;
-	SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
-	CurrentConfig.ShowMousePointer = TempConfig.ShowMousePointer;
-	UpdateConfig();
-}
-
 void SwapJoySticks()
 {
-	TempRightJS = LeftJS;
-	TempLeftJS = RightJS;
-	TempConfig = CurrentConfig;
-	ApplyJoyStickConfig();
+	JoyStick TempJS;
+	TempJS = LeftJS;
+	LeftJS = RightJS;
+	RightJS = TempJS;
+	SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
+	UpdateConfig();
 	if (hJoyStickDlg) SendMessage(hJoyStickDlg,WM_INITDIALOG,0,0);
 }
 
@@ -1542,12 +1510,12 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
-			UpdateConfig();
-			hBitBangerDlg = NULL;
-			DestroyWindow(hDlg);
-			break;
 		case IDAPPLY:
 			UpdateConfig();
+			if (LOWORD(wParam)==IDOK) {
+				hBitBangerDlg = NULL;
+				DestroyWindow(hDlg);
+			}
 			break;
 
 		case IDC_OPEN:
