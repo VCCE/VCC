@@ -346,7 +346,7 @@ unsigned char sam_read(unsigned char port) //SAM don't talk much :)
 {
 	
 	if ( (port>=0xF0) & (port <=0xFF)) //IRQ vectors from rom
-		return( rom[0x3F00 + port]);
+		return( rom[0x7F00 + port]);
 
 	return(0);
 }
