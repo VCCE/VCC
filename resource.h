@@ -356,7 +356,7 @@
 #define IDC_BTN_CPU_HALT                2111
 #define IDC_BTN_CPU_RUN                 2112
 #define IDC_BTN_CPU_STEP                2113
-#define IDC_EDIT_FIND_MEM               2114
+#define IDC_EDIT_ADDRESS	            2114
 #define IDC_BTN_FIND_MEM                2115
 #define IDC_SELECT_MMU_PAGE             2116
 #define IDC_BTN_ENABLE_TRACE            2117
@@ -385,6 +385,8 @@
 #define IDC_BTN_OS9                     2140
 #define IDC_ENABLE_HALT                 2141
 #define IDC_ENABLE_BREAK                2142
+#define IDC_MEM_TYPE                    2143
+#define IDC_EDIT_VALUE                  2144
 
 #define IDM_USER_WIKI                   40001
 #define ID_FILE_EXIT                    40002
@@ -423,7 +425,7 @@
 #define IDC_REMEMBER_SIZE               40039
 #define ID_MEMORY_DISPLAY               40040
 #define ID_PROCESSOR_STATE              40041
-#define ID_BREAKPOINTS                  40042
+#define ID_BREAKPOINTS                  43332
 #define ID_MMU_MONITOR                  40043
 #define ID_EXEC_TRACE                   40044
 #define ID_PAUSE_EMULATION              40045
@@ -445,7 +447,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        176
 #define _APS_NEXT_COMMAND_VALUE         40060
-#define _APS_NEXT_CONTROL_VALUE         2145
+#define _APS_NEXT_CONTROL_VALUE         2150
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

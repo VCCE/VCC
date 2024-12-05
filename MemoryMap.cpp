@@ -1,691 +1,696 @@
-//	This file is part of VCC (Virtual Color Computer).
-//	
-//		VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-//		it under the terms of the GNU General Public License as published by
-//		the Free Software Foundation, either version 3 of the License, or
-//		(at your option) any later version.
-//	
-//		VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-//		but WITHOUT ANY WARRANTY; without even the implied warranty of
-//		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//		GNU General Public License for more details.
-//	
-//		You should have received a copy of the GNU General Public License
-//		along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-//	
-//		Memory Map Display - Part of the Debugger package for VCC
-//		Authors: Mike Rojas, Chet Simpson
+//------------------------------------------------------------------
+// Display VCC memory for debugging
+//
+// This file is part of VCC (Virtual Color Computer).
+// Copyright 2015 by Joseph Forgione
+//
+// VCC (Virtual Color Computer) is free software: you can redistribute
+// it and/or modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will
+// be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+// of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with VCC (Virtual Color Computer).  If not, see
+// <http://www.gnu.org/licenses/>.
+//
+// Memory Map Display - Part of the Debugger package for VCC
+// Authors: Mike Rojas, Chet Simpson
+//
+//------------------------------------------------------------------
+
 #include "MemoryMap.h"
 #include "Debugger.h"
 #include "DebuggerUtils.h"
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "resource.h"
+#include "pakinterface.h"
+#include "logger.h"
+
 #include <sstream>
 
-namespace VCC { namespace Debugger { namespace UI { namespace
+namespace VCC { namespace Debugger { namespace UI { namespace {
+
+HWND hDlgMem = NULL;
+HWND hScrollBar = NULL;
+HWND hEditAdr = NULL;
+HWND hEditVal = NULL;
+
+// Original edit controls
+//LRESULT CALLBACK SubEditValProc(HWND,UINT,WPARAM,LPARAM);
+WNDPROC EditValProc;
+
+//LRESULT CALLBACK SubEditAdrProc(HWND,UINT,WPARAM,LPARAM);
+WNDPROC EditAdrProc;
+
+enum AddrMode
 {
-	CriticalSection Section_;
-
-	BackBufferInfo	BackBuffer_;
-
-	std::array<unsigned char, 64 * 1024> RamBuffer_;
-
-	HWND MemoryMapWindow = NULL;
-	HWND hWndMemory;
-	HWND hWndVScrollBar;
-	WNDPROC oldEditProc;
-
-	int memoryOffset = 0;
-
-	HWND hFindCtl = NULL;
-	HWND hEdtBloc = NULL;
-	BOOL phyAddr = false;
-	//int blockNum = 0;
-	int blockNum = 0x3E;
-
-	enum EditState 
-	{
-		None,
-		Editing,
-		EditChar1,
-		EditChar2
-	};
-	EditState EditState_ = EditState::None;
-
-	unsigned char editKeys[2];
-	unsigned short editAddress = 0;
-
-	HHOOK hHookKeyboard = NULL;
-
-	void HandleEdit(WPARAM key);
-
-	unsigned char HexToInt(unsigned char c)
-	{
-		if (c <= 0x39)
-			return c - 0x30;
-		if (c <= 0x46)
-			return c - 0x41 + 10;
-		return 0;
-	}
-
-	class MemoryMapDebugClient : public Client
-	{
-	public:
-
-		void OnReset() override
-		{
-			SectionLocker lock(Section_);
-			std::fill(RamBuffer_.begin(), RamBuffer_.end(), unsigned char(0));
-		}
-
-		void OnUpdate() override
-		{
-			SectionLocker lock(Section_);
-			if (phyAddr) {
-				for (auto addr = 0U; addr < RamBuffer_.size(); addr++) {
-					RamBuffer_[addr] = (unsigned char) GetMem(addr + blockNum * 0x2000);
-				}
-			} else {
-				for (auto addr = 0U; addr < RamBuffer_.size(); addr++) {
-					RamBuffer_[addr] = SafeMemRead8(static_cast<unsigned short>(addr));
-				}
-			}
-		}
-
-	};
-
-	void DrawMemoryState(HDC hdc, LPRECT clientRect)
-	{
-		RECT rect = *clientRect;
-
-		// Clear our background.
-		HBRUSH brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
-		FillRect(hdc, &rect, brush);
-
-		HPEN pen = (HPEN)CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
-		SelectObject(hdc, pen);
-
-		// Draw the border.
-		MoveToEx(hdc, rect.left, rect.top, NULL);
-		LineTo(hdc, rect.right - 1, rect.top);
-		LineTo(hdc, rect.right - 1, rect.bottom - 1);
-		LineTo(hdc, rect.left, rect.bottom - 1);
-		LineTo(hdc, rect.left, rect.top);
-
-		int nCol1 = 60;
-		int nCol2 = 135;
-
-		// Draw our lines.
-		MoveToEx(hdc, rect.left, rect.top + 20, NULL);
-		LineTo(hdc, rect.right, rect.top + 20);
-
-		MoveToEx(hdc, rect.left + nCol1, rect.top, NULL);
-		LineTo(hdc, rect.left + nCol1, rect.bottom);
-
-		MoveToEx(hdc, rect.right - nCol2, rect.top, NULL);
-		LineTo(hdc, rect.right - nCol2, rect.bottom);
-
-		HFONT hFont = CreateFont(14, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-			CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FIXED_PITCH, TEXT("Consolas"));
-
-		// Draw our header line.
-		SelectObject(hdc, hFont);
-		SetTextColor(hdc, RGB(138, 27, 255));
-		{
-			RECT rc;
-			SetRect(&rc, rect.left, rect.top, rect.left + nCol1, rect.top + 20);
-			DrawText(hdc, "Address", 7, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-
-			int x = nCol1 + 5;
-			for (int n = 0; n < 16; n++)
-			{
-				if (n == 8)
-				{
-					x += 15;
-				}
-
-				const std::string s(ToHexString(n, 2, false));
-				SetRect(&rc, rect.left + x + (n * 18), rect.top, rect.left + x + (n * 18) + 20, rect.top + 20);
-				DrawText(hdc, s.c_str(), s.size(), &rc, DT_VCENTER | DT_SINGLELINE);
-			}
-
-			SetRect(&rc, rect.right - nCol2, rect.top, rect.right - 5, rect.top + 20);
-			DrawText(hdc, "ASCII", 6, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-		}
-
-		// Draw the Address Lines.
-		int y = rect.top + 20;
-		int h = 18;
-		int nRows = 32;
-		for (int addrLine = 0; addrLine < nRows; addrLine++)
-		{
-			SetTextColor(hdc, RGB(138, 27, 255));
-			RECT rc;
-			{
-				// const std::string s(ToHexString(addrLine * 16 + memoryOffset, 6, true));
-				std::string s;
-				if (phyAddr) {
-					s = ToHexString(blockNum * 0x2000 + addrLine * 16 + memoryOffset, 6, true);
-				} else {
-					s = ToHexString(addrLine * 16 + memoryOffset, 6, true);
-				}
-				SetRect(&rc, rect.left, y, rect.left + nCol1, y + h);
-				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			}
-
-			// Pull out 16 bytes from memory.  Do it quickly to keep the emulator frame rate high.
-			unsigned char line[16];
-			{
-				SectionLocker lock(Section_);
-				if (phyAddr) {
-					char buf[8];
-					GetWindowText(hEdtBloc, buf, 4);
-					blockNum = strtol(buf,NULL,16) & 0x3FF;
-					for (int n = 0; n < 16; n++) {
-						auto addr = blockNum * 0x2000 + memoryOffset + (addrLine * 16) + n;
-						line[n] = (unsigned char) GetMem(addr);
-					}
-				} else {
-					for (int n = 0; n < 16; n++) {
-						auto addr = memoryOffset + (addrLine * 16) + n;
-						line[n] = RamBuffer_[addr];
-					}
-				}
-			}
-
-			// Now use our copy of memory.
-
-			// Hex Line in Hex Bytes
-			SetTextColor(hdc, RGB(0, 0, 0));
-			int x = nCol1 + 5;
-			std::string ascii;
-			for (int n = 0; n < 16; n++)
-			{
-				if (isprint(line[n]))
-				{
-					ascii += line[n];
-				}
-				else
-				{
-					ascii += ".";
-				}
-				if (n == 8)
-				{
-					x += 15;
-				}
-
-				std::string s;
-
-				int v = line[n];
-
-				// Is this an Address we are editing?
-				if (EditState_ != EditState::None && editAddress == (addrLine * 16 + n + memoryOffset))
-				{
-					SetTextColor(hdc, RGB(255, 0, 0));		// Red indicates editing
-					switch (EditState_)
-					{
-					case EditState::Editing:
-						break;
-					case EditState::EditChar1:
-						v = HexToInt(editKeys[0]) * 16;
-						break;
-					case EditState::EditChar2:
-						v = HexToInt(editKeys[0]) * 16 + HexToInt(editKeys[1]);
-						break;
-					}
-				}
-				else
-				{
-					SetTextColor(hdc, RGB(0, 0, 0));
-				}
-				s = ToHexString(v, 2, true);
-				SetRect(&rc, rect.left + x + (n * 18), y, rect.left + x + (n * 18) + 20, y + h);
-				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			}
-
-			// ASCII Line
-			x = rect.right - nCol2;
-			{
-				SetRect(&rc, x + 5, y, rect.right - 5, y + h);
-				DrawText(hdc, ascii.c_str(), ascii.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			}
-
-			// Draw a separator.
-			if (addrLine % 4 == 3)
-			{
-				MoveToEx(hdc, rect.left, y + h, NULL);
-				LineTo(hdc, rect.right, y + h);
-			}
-
-			y += h;
-		}
-
-		// Cleanup.
-		DeleteObject(pen);
-		DeleteObject(hFont);
-	}
-
-	void LocateMemory()
-	{
-		TCHAR buffer[100];
-		memset(buffer, 0, sizeof(buffer));
-		SendDlgItemMessage(hWndMemory, IDC_EDIT_FIND_MEM, WM_GETTEXT, sizeof(buffer), (LPARAM)(LPCSTR)buffer);
-
-		unsigned int addrInt;
-		std::stringstream ss;
-		ss << buffer;
-		ss >> std::hex >> addrInt;
-
-		SCROLLINFO si;
-		si.cbSize = sizeof(si);
-		si.fMask = SIF_ALL;
-		GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
-
-		si.nPos = roundDn(addrInt, 16);
-		si.fMask = SIF_POS;
-		SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
-		GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
-		memoryOffset = si.nPos;
-		InvalidateRect(hWndMemory, &BackBuffer_.Rect, FALSE);
-		
-	}
-
-	void WriteMemory(unsigned short addr, unsigned char value)
-	{
-		if (phyAddr) {
-			SetMem(addr + blockNum * 0x2000,value);
-		} else {
-			EmuState.Debugger.QueueWrite(addr,value);
-		}
-	}
-
-	unsigned char ReadMemory(unsigned short addr)
-	{
-		unsigned char value;
-		if (phyAddr) {
-			value = (unsigned char) GetMem(addr + blockNum * 0x2000);
-		} else {
-			VCC::SectionLocker lock(Section_);
-			value = RamBuffer_[addr];
-		}
-		return value;
-	}
-
-	LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
-	{
-		static int c = 0;
-
-		if (nCode < 0)  // do not process message 
-			return CallNextHookEx(hHookKeyboard, nCode, wParam, lParam);
-
-		BOOL upFlag = (HIWORD(lParam) & KF_UP) == KF_UP;
-
-		// Only process Key Down events
-		if (!upFlag)
-		{
-			// Valid keypress - hex digits only: a-f, 0-9, and return
-			if (wParam == VK_RETURN || wParam == VK_TAB)
-			{
-				HandleEdit(VK_RETURN);
-				wParam = 0;
-			}
-			if ((wParam >= 0x30 && wParam <= 0x39) ||
-				(wParam >= 0x41 && wParam <= 0x46))
-			{
-				HandleEdit(wParam);
-				wParam = 0;
-			}
-			if (wParam >= VK_NUMPAD0 && wParam <= VK_NUMPAD9)
-			{
-				HandleEdit(wParam - 0x30);
-				wParam = 0;
-			}
-		}
-
-		return CallNextHookEx(hHookKeyboard, nCode, wParam, lParam);
-	}
-
-	void CaptureKeyboardEvents()
-	{
-		if (hHookKeyboard == NULL)
-		{
-			hHookKeyboard = SetWindowsHookEx(
-				WH_KEYBOARD,
-				KeyboardProc,
-				(HINSTANCE)NULL, GetCurrentThreadId());
-		}
-	}
-
-	void ReleaseKeyboard()
-	{
-		if (hHookKeyboard != NULL)
-		{
-			UnhookWindowsHookEx(hHookKeyboard);
-			hHookKeyboard = NULL;
-		}
-	}
-
-	void StartEdit(int xPos, int yPos)
-	{
-		int hLine = 18;
-		int xStart = 66;
-		int yStart = 20;
-		int leftDeadArea = xStart + (8 * 18);
-		int rightDeadArea = leftDeadArea + 15;
-		int maxXPos = rightDeadArea + (8 * 18);
-		if (yPos < yStart || xPos < xStart || (xPos >= leftDeadArea && xPos <= rightDeadArea) || xPos > maxXPos)
-		{
-			EditState_ = EditState::None;
-			ReleaseKeyboard();
-			return;
-		}
-		int addrLine = (yPos - yStart) / hLine;
-		int offset = (xPos < leftDeadArea) ? (xPos - xStart) / 18 : ((xPos - rightDeadArea) / 18) + 8;
-		auto addr = addrLine * 16 + memoryOffset + offset;
-		editAddress = static_cast<unsigned short>(addr);
-		EditState_ = EditState::Editing;
-		CaptureKeyboardEvents();
-	}
-
-	void HandleEdit(WPARAM key)
-	{
-	    HWND w = GetFocus();
-		if (w == hFindCtl || w == hEdtBloc) {
-			EditState_ = EditState::None;
-			ReleaseKeyboard();
-			return;
-		}
-
-		if (EditState_ == EditState::None)
-		{
-			ReleaseKeyboard();
-			return;
-		}
-		if (key == VK_RETURN)
-		{
-			// Commit current edit to memory.
-			unsigned char editValue = HexToInt(editKeys[0]) * 16 + HexToInt(editKeys[1]);
-			WriteMemory(editAddress, editValue);
-
-			// Remain in edit mode
-			EditState_ = EditState::Editing;
-
-			// Address to next memory location.
-			editAddress++;
-
-			// Wrap around if we reach the top of memory 
-			if (editAddress > 0xFFFF)
-			{
-				editAddress = 0;
-				EditState_ = EditState::None;
-				ReleaseKeyboard();
-				return;
-			}
-
-			// Load up next byte for editing.
-			unsigned char currentValue = ReadMemory(editAddress);
-			const std::string s(ToHexString(currentValue,1,true));
-			editKeys[0] = s[0];
-			editKeys[1] = s[1];
-
-			return;
-		}
-		// Not hex keys - ending editing 
-		if (key < 0x30 || key > 0x46)
-		{
-			ReleaseKeyboard();
-			EditState_ = EditState::None;
-			return;
-		}
-		// Keep capturing two keys until return is pressed
-		if (EditState_ == EditState::Editing)
-		{
-			editKeys[0] = (unsigned char)key;
-			editKeys[1] = '0';
-			EditState_ = EditState::EditChar1;
-			return;
-		}
-		if (EditState_ == EditState::EditChar1)
-		{
-			editKeys[1] = (unsigned char)key;
-			EditState_ = EditState::EditChar2;
-			return;
-		}
-		if (EditState_ == EditState::EditChar2)
-		{
-			editKeys[0] = (unsigned char)key;
-			editKeys[1] = '0';
-			EditState_ = EditState::EditChar1;
-			return;
-		}
-	}
-
-	LRESULT CALLBACK subEditProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
-	{
-		switch (msg)
-		{
-		case WM_KEYDOWN:
-			switch (wParam)
-			{
-			case VK_RETURN:
-				LocateMemory();
-				return 0;
-			}
-		}
-
-		return CallWindowProc(oldEditProc, wnd, msg, wParam, lParam);
-	}
-
-	INT_PTR CALLBACK MemoryMapDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-	{
-		switch (message)
-		{
-		case WM_INITDIALOG:
-		{
-			hWndMemory = hDlg;
-
-			int ScrollBarWidth = 19;
-
-			RECT Rect;
-			GetClientRect(hDlg, &Rect);
-
-			hWndVScrollBar = CreateWindowEx(
-				0,
-				"SCROLLBAR",
-				NULL,
-				WS_VISIBLE | WS_CHILD | SBS_VERT,
-				Rect.right - ScrollBarWidth,
-				0,
-				ScrollBarWidth,
-				Rect.bottom - 40,
-				hDlg,
-				(HMENU)IDC_MEM_VSCROLLBAR,
-				(HINSTANCE)GetWindowLong(hDlg, GWL_HINSTANCE),
-				NULL);
-
-			if (!hWndVScrollBar)
-			{
-				MessageBox(NULL, "Vertical Scroll Bar Failed.", "Error", MB_OK | MB_ICONERROR);
-				return 0;
-			}
-
-			SCROLLINFO si;
-			si.cbSize = sizeof(si);
-			si.fMask = SIF_ALL;
-			si.nMin = 0x0000;
-			si.nMax = 0xFFFF;
-			si.nPage = 32 * 16;
-			si.nPos = 0;
-			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
-
-			hFindCtl = GetDlgItem(hDlg, IDC_EDIT_FIND_MEM);
-			oldEditProc = (WNDPROC)SetWindowLongPtr(hFindCtl, GWLP_WNDPROC, (LONG_PTR)subEditProc);
-
-			BackBuffer_ = AttachBackBuffer(hDlg, -20, -39);
-
-			SetTimer(hDlg, IDT_MEM_TIMER, 64, (TIMERPROC)NULL);
-
-			EmuState.Debugger.RegisterClient(hDlg, std::make_unique<MemoryMapDebugClient>());
-
-			// Disable Block text box until phys mem is checked
-			hEdtBloc = GetDlgItem(hDlg, IDC_EDIT_BLOCK);
-			SetWindowText(hEdtBloc, "0");
-			EnableWindow(hEdtBloc,FALSE);
-			break;
-		}
-
-		case WM_LBUTTONDBLCLK:
-		{
-			SetFocus(MemoryMapWindow);
-			int xPos = ((int)(short)LOWORD(lParam));
-			int yPos = ((int)(short)HIWORD(lParam));
-			StartEdit(xPos, yPos);
-			break;
-		}
-
-		case WM_MOUSEWHEEL:
-		{
-			SCROLLINFO si;
-			si.cbSize = sizeof(si);
-			si.fMask = SIF_ALL;
-			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
-
-			int delta = GET_WHEEL_DELTA_WPARAM(wParam);
-			if (delta < 0)
-			{
-				si.nPos += si.nPage / 2;
-			}
-			else
-			{
-				si.nPos -= si.nPage / 2;
-			}
-			si.nPos = roundUp(si.nPos, 32);
-			si.fMask = SIF_POS;
-			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
-			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
-			memoryOffset = si.nPos;
-			InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
-			return 0;
-		}
-
-		case WM_VSCROLL:
-		{
-			SCROLLINFO si;
-			si.cbSize = sizeof(si);
-			si.fMask = SIF_ALL;
-			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
-
-			switch ((int)LOWORD(wParam))
-			{
-			case SB_PAGEUP:
-				si.nPos -= si.nPage;
-				break;
-			case SB_PAGEDOWN:
-				si.nPos += si.nPage;
-				break;
-			case SB_THUMBPOSITION:
-				si.nPos = si.nTrackPos;
-				break;
-			case SB_THUMBTRACK:
-				si.nPos = si.nTrackPos;
-				break;
-			case SB_TOP:
-				si.nPos = 0;
-				break;
-			case SB_BOTTOM:
-				si.nPos = 0xFFFF;
-				break;
-			case SB_ENDSCROLL:
-				break;
-			case SB_LINEUP:
-				si.nPos -= 32 * 8;
-				break;
-			case SB_LINEDOWN:
-				si.nPos += 32 * 8;
-				break;
-			}
-			si.nPos = roundUp(si.nPos, 32);
-			si.fMask = SIF_POS;
-			SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
-			GetScrollInfo(hWndVScrollBar, SB_CTL, &si);
-			memoryOffset = si.nPos;
-			InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
-			return 0;
-		}
-
-		case WM_PAINT:
-		{
-			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(hDlg, &ps);
-
-			DrawMemoryState(BackBuffer_.DeviceContext, &BackBuffer_.Rect);
-			BitBlt(hdc, 0, 0, BackBuffer_.Width, BackBuffer_.Height, BackBuffer_.DeviceContext, 0, 0, SRCCOPY);
-
-			EndPaint(hDlg, &ps);
-			break;
-		}
-
-		case WM_TIMER:
-
-			switch (wParam)
-			{
-			case IDT_MEM_TIMER:
-				InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
-				return 0;
-			}
-			break;
-
-		case WM_COMMAND:
-			switch (LOWORD(wParam))
-			{
-			case IDC_PHYS_MEM:
-				hEdtBloc = GetDlgItem(hDlg, IDC_EDIT_BLOCK);
-				if (IsDlgButtonChecked(hDlg,IDC_PHYS_MEM)) {
-					EnableWindow(hEdtBloc,TRUE);
-					phyAddr = true;
-				} else {
-					EnableWindow(hEdtBloc,FALSE);
-					phyAddr = false;
-				}
-				InvalidateRect(hDlg, &BackBuffer_.Rect, FALSE);
-				break;
-			case IDC_BTN_FIND_MEM:
-				LocateMemory();
-				break;
-			case IDCLOSE:
-			case WM_DESTROY:
-				ReleaseKeyboard();
-				KillTimer(hDlg, IDT_MEM_TIMER);
-				DeleteDC(BackBuffer_.DeviceContext);
-				DestroyWindow(hDlg);
-				//HWND hFindCtl = GetDlgItem(hDlg, IDC_EDIT_FIND_MEM);
-				(WNDPROC)SetWindowLongPtr(hFindCtl, GWLP_WNDPROC, (LONG_PTR)oldEditProc);
-				MemoryMapWindow = NULL;
-				EmuState.Debugger.RemoveClient(hDlg);
-				break;
-			}
-			break;
-		}
-		return FALSE;
-	}
-
-} } } }
-
-
-void VCC::Debugger::UI::OpenMemoryMapWindow(HINSTANCE instance, HWND parent)
+	Cpu,
+	Real,
+	ROM,
+	PAK,
+	NotSet
+};
+
+AddrMode AddrMode_ = AddrMode::NotSet;
+
+int MemSize = 0;
+int memoryOffset = 0;
+static unsigned char *Rom = NULL;
+
+bool Editing = false;
+int editAddress = 0;
+
+// Backing buffer used for painting memory data
+BackBufferInfo BackBuf;
+
+// Data cell X offsets relative to the backing buffer 
+// Cells are 18 pixels wide with a 15 pixel gap between 7 & 8
+const int Xoffset[16] =
+	{70,88,106,124,142,160,178,196, 229,247,265,283,301,319,337,355};
+
+//------------------------------------------------------------------
+// Read a byte from Coco Memory
+//------------------------------------------------------------------
+unsigned char ReadMemory(int addr)
 {
-	if (MemoryMapWindow == NULL)
-	{
-		MemoryMapWindow = CreateDialog(
-			instance,
-			MAKEINTRESOURCE(IDD_MEMORY_MAP),
-			parent,
-			MemoryMapDlgProc);
-		ShowWindow(MemoryMapWindow, SW_SHOWNORMAL);
-	}
+	switch (AddrMode_) {
 
-	SetFocus(MemoryMapWindow);
+	case AddrMode::Cpu:
+		return SafeMemRead8(addr & 0xFFFF);
+
+	case AddrMode::Real:
+		return (unsigned char) GetMem(addr);
+
+	case AddrMode::ROM:
+		if (Rom == NULL) Rom = Getint_rom_pointer();
+		return Rom[addr & 0x7FFF];
+
+	case AddrMode::PAK:
+		return PackMem8Read(addr & 0x7FFF);
+	}
+	return 0;
 }
 
+//------------------------------------------------------------------
+// Write a byte to Coco Memory
+//------------------------------------------------------------------
+void WriteMemory(int addr, unsigned char value)
+{
+	switch (AddrMode_) {
+
+	case AddrMode::Cpu:
+		EmuState.Debugger.QueueWrite(addr & 0xFFFF, value);
+		break;
+
+	case AddrMode::Real:
+		SetMem(addr,value);
+		break;
+
+	case AddrMode::ROM:
+		if (Rom == NULL) Rom = Getint_rom_pointer();
+		Rom[addr & 0x7FFF] = value;
+		break;
+
+	case AddrMode::PAK:   // FIXME not working
+		PackMem8Write(addr & 0x7FFF,value);
+		break;
+	}
+}
+
+//------------------------------------------------------------------
+// Setup back buffer for data display
+//------------------------------------------------------------------
+void SetBackBuffer(RECT rc)
+{
+	HDC hdc = GetDC(hDlgMem);
+	FillRect(hdc, &rc, (HBRUSH) (COLOR_WINDOW+1));
+
+	// Adjust backing buffer location on client
+	BackBuf.Rect.left   = rc.left;
+	BackBuf.Rect.right  = rc.right  - 22;
+	BackBuf.Rect.top    = rc.top    + 34;
+	BackBuf.Rect.bottom = rc.bottom + 34;
+
+	BackBuf.Width  = BackBuf.Rect.right  - BackBuf.Rect.left;
+	BackBuf.Height = BackBuf.Rect.bottom - BackBuf.Rect.top;
+
+	BackBuf.Bitmap = CreateCompatibleBitmap 
+				(hdc, BackBuf.Width, BackBuf.Height);
+	
+	BackBuf.DeviceContext = CreateCompatibleDC(hdc);
+	HBITMAP old = (HBITMAP) SelectObject
+				(BackBuf.DeviceContext, BackBuf.Bitmap);
+	DeleteObject(old);
+	ReleaseDC(hDlgMem, hdc);
+}
+
+//------------------------------------------------------------------
+// Create vertical scroll bar 
+//------------------------------------------------------------------
+void CreateScrollBar(RECT Rect)
+{
+		hScrollBar = CreateWindowEx(
+			0,
+			"SCROLLBAR",
+			NULL,
+			WS_VISIBLE | WS_CHILD | SBS_VERT,
+			Rect.right - 21,   //top x
+			38,                //top y
+			20,                //width
+			Rect.bottom - 42,  //height
+			hDlgMem,
+			(HMENU)IDC_MEM_VSCROLLBAR,
+			(HINSTANCE)GetWindowLong(hDlgMem, GWL_HINSTANCE),
+			NULL);
+
+		if (!hScrollBar) {
+			MessageBox(NULL, "Vertical Scroll Bar Failed.", "Error",
+				MB_OK | MB_ICONERROR);
+		}
+}
+
+//------------------------------------------------------------------
+// Draw display form with header and vert guide lines
+//------------------------------------------------------------------
+void DrawForm(HDC hdc,LPRECT clientRect)
+{
+	int top = clientRect->top;
+	int lft = clientRect->left;
+	int rgt = clientRect->right;
+	int bot = clientRect->bottom;
+	RECT rc;
+
+	// Clear background.
+	HBRUSH brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	FillRect(hdc, clientRect, brush);
+
+	// Format for text
+	UINT fmt = DT_CENTER | DT_VCENTER | DT_SINGLELINE;
+
+	// Draw seperator lines for border, address, and ascii
+	MoveToEx(hdc,lft,top,NULL);     LineTo(hdc,rgt,top);
+	MoveToEx(hdc,lft,top+20,NULL);  LineTo(hdc,rgt,top+20);
+	MoveToEx(hdc,lft+1,top,NULL);   LineTo(hdc,lft+1,bot-1);
+	MoveToEx(hdc,lft+60,top,NULL);  LineTo(hdc,lft+60,bot-1);
+	MoveToEx(hdc,rgt-135,top,NULL); LineTo(hdc,rgt-135,bot);
+	MoveToEx(hdc,rgt-1,top,NULL);   LineTo(hdc,rgt-1,bot);
+
+	// Horizontal seperators every four rows
+	int ltop = top + 20;
+	for (int lnum = 3; lnum < 32; lnum+=4) {
+		ltop += 18*4;
+		MoveToEx(hdc,lft,ltop,NULL); LineTo(hdc,rgt,ltop);
+	}
+
+	// Draw header line
+	SetTextColor(hdc, RGB(138,27,255));
+	SetRect(&rc,lft,top,lft+60,top+20);
+	DrawText(hdc, "Address", 7, &rc, fmt);
+	for (int n = 0; n < 16; n++) {
+		SetRect(&rc, lft+Xoffset[n], top, lft+Xoffset[n]+15, top+20);
+		const std::string s(ToHexString(n, 2, false));
+		DrawText(hdc, s.c_str(), 2, &rc, fmt);
+	}
+	SetRect(&rc, rgt - 135, top, rgt - 5, top + 20);
+	DrawText(hdc, "ASCII", 6, &rc, fmt);
+}
+
+//------------------------------------------------------------------
+// Fill memory to form
+//------------------------------------------------------------------
+void DrawMemory(HDC hdc, LPRECT clientRect)
+{
+	int top = clientRect->top;
+	int lft = clientRect->left;
+	int rgt = clientRect->right;
+	RECT rc;
+
+	bool hlfound = false;
+	std::string s;
+
+	UINT fmt = DT_CENTER | DT_VCENTER | DT_SINGLELINE;
+
+	int ltop = top + 20; // Back buff relative
+
+	for (int lnum = 0; lnum < 32; lnum++) {
+		
+		// Draw address of start of line
+		SetTextColor(hdc, RGB(138, 27, 255));
+		s = ToHexString(memoryOffset + lnum * 16, 6, true);
+		SetRect(&rc, lft, ltop, lft+64, ltop+18);
+		DrawText(hdc, s.c_str(), s.size(), &rc, fmt);
+
+		// Fill in data cells
+		SetTextColor(hdc, RGB(0, 0, 0));
+		int hilite = false;
+
+		std::string ascii;
+		for (int n = 0; n < 16; n++) {
+
+            // Get data 
+			int adr = lnum * 16 + n + memoryOffset;
+			unsigned char val = ReadMemory(adr);
+
+			// Get hex string to display.
+			s = ToHexString(val, 2, true);
+
+			// Highlight data if cell is being edited
+			if (Editing && editAddress == adr) {
+				SetTextColor(hdc, RGB(255, 0, 0));  // Red
+				hilite = true;
+			}
+
+			SetRect(&rc,lft+Xoffset[n],ltop,lft+Xoffset[n]+18,ltop+18);
+			DrawText(hdc, s.c_str(), 2, &rc, fmt);
+
+			// if highlight on turn it off
+			if (hilite) { 
+				SetTextColor(hdc, RGB(0, 0, 0));
+				hlfound = true;
+			}
+
+			// Append to ascii
+			if (isprint(val)) ascii += val; else ascii += ".";
+		}
+
+		// Draw the ascii string
+		SetRect(&rc, rgt-133, ltop, rgt-5, ltop+18);
+		DrawText(hdc, ascii.c_str(), ascii.size(), &rc, fmt);
+
+		ltop += 18;
+	}
+
+	// If no cell is highlighted then not edit mode
+    if (!hlfound) {
+		SetDlgItemText(hDlgMem, IDC_ADRTXT, "");
+		Editing = false;
+	}
+}
+
+//------------------------------------------------------------------
+//  Validate string to be hexidecimal between one and six chars
+//------------------------------------------------------------------
+bool CheckHex(char * buf) {
+	int n = strlen(buf);
+	if (n < 1 || n > 6) return false;
+	for (int i = 0; i < n; i++)
+		if (!isxdigit(buf[i])) return false; 
+	return true;
+}
+
+//------------------------------------------------------------------
+//  Determine byte to edit based on click location
+//------------------------------------------------------------------
+void SetEditPosition(int xPos, int yPos)
+{
+	int xStart = 70; // X Start of data cells
+	int yStart = 55; // Y Start of data cells (dialog relative)
+
+	// Cells are 18x18 with dead zone between col 7 and 8
+	int leftDeadArea  = xStart + (8 * 18);
+	int rightDeadArea = leftDeadArea + 15;
+	int xMax = rightDeadArea + (8 * 18);
+
+	// Stop edit if location is not in cell area
+	if ( yPos < yStart || xPos < xStart || xPos > xMax ||
+	     (xPos >= leftDeadArea && xPos <= rightDeadArea) ) {
+		Editing = false;
+		return;
+	}
+
+	// Determine address per cell row and column
+	int row, col;
+	row = (yPos - yStart) / 18;
+	if (xPos < leftDeadArea)
+		col = (xPos - xStart) / 18;
+	else
+		col = (xPos - rightDeadArea) / 18 + 8;
+	int addr = memoryOffset + row * 16 + col;
+
+	editAddress = addr;
+	std::string s = ToHexString(editAddress, 6, true);
+	SetDlgItemText(hDlgMem, IDC_ADRTXT, s.c_str());  
+	SetDlgItemText(hDlgMem, IDC_EDIT_VALUE, "");
+	SetFocus(hEditVal);
+	Editing = true;
+
+	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
+}
+
+//------------------------------------------------------------------
+// Determine byte to edit based on edit address box
+//------------------------------------------------------------------
+void LocateMemory()
+{
+	char buf[32] = {0};
+
+	SendDlgItemMessage(hDlgMem, IDC_EDIT_ADDRESS, WM_GETTEXT,
+			sizeof(buf), (LPARAM) buf);
+
+	SetDlgItemText(hDlgMem, IDC_EDIT_ADDRESS, "");
+
+	if (!CheckHex(buf)) {
+		Editing = false;
+		return;
+	}
+
+	int addr;
+	std::stringstream ss;
+	ss << buf;
+	ss >> std::hex >> addr;
+
+	SCROLLINFO si;
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_ALL;
+	GetScrollInfo(hScrollBar, SB_CTL, &si);
+
+	si.nPos = roundDn(addr, 16);
+	si.fMask = SIF_POS;
+	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
+	GetScrollInfo(hScrollBar, SB_CTL, &si);
+
+	memoryOffset = si.nPos;
+
+	// If addr is on screen set editing
+	if (addr >= memoryOffset && addr < memoryOffset + 16 * 32) {
+		editAddress = addr;
+		std::string s = ToHexString(editAddress, 6, true);
+		SetDlgItemText(hDlgMem, IDC_ADRTXT, s.c_str());  
+		SetDlgItemText(hDlgMem, IDC_EDIT_VALUE, "");
+		SetFocus(hEditVal);
+		Editing = true;
+	} else {
+		Editing = false;
+	}
+
+	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
+}
+
+//------------------------------------------------------------------
+//  Commit edit value to memory
+//------------------------------------------------------------------
+void CommitValue()
+{
+    if (! Editing) return;
+
+	Editing = false;  // Assume fail to advance to next cell
+
+	// Fetch then clear the data to commit
+	char buf[32] = {0};
+	SendDlgItemMessage(hDlgMem, IDC_EDIT_VALUE, WM_GETTEXT,
+			sizeof(buf), (LPARAM) buf);
+	SetDlgItemText(hDlgMem, IDC_EDIT_VALUE, "");
+	
+	if (!CheckHex(buf)) return;
+	
+	unsigned int val;
+	std::stringstream ss;
+	ss << buf;
+	ss >> std::hex >> val;
+
+	if (val > 256) return;
+
+	// Commit the value to memory
+	WriteMemory(editAddress, (unsigned char) val);
+	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
+
+	// Attempt to advance to next cell
+	editAddress += 1;
+	if (editAddress >= MemSize) {
+		editAddress = 0;
+		return;
+	}
+
+	Editing = true;   // Advance worked
+}
+
+//------------------------------------------------------------------
+//  Intercept value edit box key presses
+//------------------------------------------------------------------
+LRESULT CALLBACK subEditValProc(
+		HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg) {
+	case WM_KEYDOWN:
+		switch (wParam) {
+		case VK_RETURN:
+			CommitValue();
+			return 0;
+		}
+        break;
+	}
+	return CallWindowProc(EditValProc, wnd, msg, wParam, lParam);
+}
+
+//------------------------------------------------------------------
+//  Intercept address edit box key presses
+//------------------------------------------------------------------
+LRESULT CALLBACK subEditAdrProc(
+		HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg) {
+	case WM_KEYDOWN:
+		switch (wParam) {
+		case VK_RETURN:
+			LocateMemory();
+			return 0;
+		}
+		break;
+	}
+	return CallWindowProc(EditValProc, wnd, msg, wParam, lParam);
+}
+
+//------------------------------------------------------------------
+// Set memory type and size as per combobox index
+//------------------------------------------------------------------
+void SetMemType()
+{
+	int PhySiz[4]={0x20000,0x80000,0x200000,0x800000};
+
+	HWND hCtl = GetDlgItem(hDlgMem, IDC_MEM_TYPE);
+	AddrMode mode = (AddrMode) SendMessage(hCtl,CB_GETCURSEL,0,0);
+	if (AddrMode_ == mode) return;  // Not changed
+
+	memoryOffset = 0;
+
+	AddrMode_ = mode;
+	switch (AddrMode_) {
+	case AddrMode::Cpu:
+		MemSize = 0x10000;
+		break;
+	case AddrMode::Real:
+		MemSize = PhySiz[EmuState.RamSize];
+		break;
+	case AddrMode::ROM:
+		MemSize = 0x8000;
+		break;
+	case AddrMode::PAK:
+		MemSize = 0x8000;
+		break;
+	}
+
+	SCROLLINFO si;
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_RANGE | SIF_POS;
+	si.nMin = 0;
+	si.nPage = 32 * 16;  // 32 lines of 16 bytes
+	si.nMax = MemSize - si.nPage;
+	si.nPos = 0;
+	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
+
+	Editing = false;
+}
+
+//------------------------------------------------------------------
+// Memory Dialog initialization
+//------------------------------------------------------------------
+void InitializeDialog(HWND hDlg)
+{
+		hDlgMem = hDlg;
+
+		RECT Rect;
+		GetClientRect(hDlg, &Rect);
+
+		SetBackBuffer(Rect);
+		CreateScrollBar(Rect);
+
+		//Subclass edit boxes
+		hEditAdr = GetDlgItem(hDlg, IDC_EDIT_ADDRESS);
+		EditAdrProc = (WNDPROC) SetWindowLongPtr
+				(hEditAdr, GWLP_WNDPROC, (LONG_PTR) subEditAdrProc);
+
+		hEditVal = GetDlgItem(hDlg, IDC_EDIT_VALUE);
+		EditValProc = (WNDPROC) SetWindowLongPtr
+				(hEditVal, GWLP_WNDPROC, (LONG_PTR) subEditValProc);
+
+		SetTimer(hDlg, IDT_MEM_TIMER, 64, (TIMERPROC)NULL);
+
+		// Dropdown to select memory type displayed
+		HWND hCtl = GetDlgItem(hDlg, IDC_MEM_TYPE);
+		SendMessage(hCtl,CB_ADDSTRING,(WPARAM) 0, (LPARAM) "CPU");
+		SendMessage(hCtl,CB_ADDSTRING,(WPARAM) 0, (LPARAM) "REAL");
+		SendMessage(hCtl,CB_ADDSTRING,(WPARAM) 0, (LPARAM) "ROM");
+		SendMessage(hCtl,CB_ADDSTRING,(WPARAM) 0, (LPARAM) "PAK");
+		SendMessage(hCtl,CB_SETCURSEL,(WPARAM) 0, (LPARAM) 0);
+		SetMemType();
+
+		// Set display pen color
+		HPEN pen = (HPEN) CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
+		SelectObject(BackBuf.DeviceContext, pen);
+		DeleteObject(pen);
+
+		// Set display Font
+		HFONT hFont = CreateFont (14, 0, 0, 0, FW_BOLD, FALSE, FALSE,
+				FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+				CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FIXED_PITCH,
+				TEXT("Consolas"));
+		SelectObject(BackBuf.DeviceContext, hFont);
+		DeleteObject(hFont);
+
+        // Draw the form for memory data
+		DrawForm(BackBuf.DeviceContext, &BackBuf.Rect);
+}
+
+//------------------------------------------------------------------
+//  Scroll handler
+//------------------------------------------------------------------
+void DoScroll(WPARAM wParam)
+{
+	SCROLLINFO si;
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_ALL;
+	GetScrollInfo(hScrollBar, SB_CTL, &si);
+
+	switch ((int)LOWORD(wParam)) {
+	case SB_PAGEUP:
+		si.nPos -= si.nPage;
+		break;
+	case SB_PAGEDOWN:
+		si.nPos += si.nPage;
+		break;
+	case SB_THUMBPOSITION:
+		si.nPos = si.nTrackPos;
+		break;
+	case SB_THUMBTRACK:
+		si.nPos = si.nTrackPos;
+		break;
+	case SB_TOP:
+		si.nPos = 0;
+		break;
+	case SB_BOTTOM:
+		si.nPos = si.nMax;
+		break;
+	case SB_ENDSCROLL:
+		break;
+	case SB_LINEUP:
+		si.nPos -= 16;
+		break;
+	case SB_LINEDOWN:
+		si.nPos += 16;
+		break;
+	}
+
+	si.fMask = SIF_POS;
+	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
+	GetScrollInfo(hScrollBar, SB_CTL, &si);
+	memoryOffset = si.nPos;
+
+	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
+}
+
+//------------------------------------------------------------------
+//  Memory Dialog handler
+//------------------------------------------------------------------
+INT_PTR CALLBACK MemoryMapDlgProc(
+		HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message) {
+
+	case WM_INITDIALOG:
+		InitializeDialog(hDlg);
+		break;
+
+	case WM_LBUTTONDOWN:
+		SetEditPosition(LOWORD(lParam),HIWORD(lParam));
+		break;
+
+	case WM_VSCROLL:
+		DoScroll(wParam);
+		break;
+
+	case WM_MOUSEWHEEL:
+		if ( GET_WHEEL_DELTA_WPARAM(wParam) < 0) {
+			DoScroll( (WPARAM) SB_LINEUP);
+		} else {
+			DoScroll( (WPARAM) SB_LINEDOWN);
+		}
+		break;
+
+	case WM_PAINT: {
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hDlg, &ps);
+
+		DrawMemory(BackBuf.DeviceContext, &BackBuf.Rect);
+		BitBlt(hdc, 0, 0, BackBuf.Width, BackBuf.Height,
+				BackBuf.DeviceContext, 0, 0, SRCCOPY);
+
+		EndPaint(hDlg, &ps);
+		break;
+	}
+
+	case WM_TIMER:
+		switch (wParam) {
+		case IDT_MEM_TIMER:
+			if ( AddrMode_ == AddrMode::Cpu ||
+				 AddrMode_ == AddrMode::Real ) {
+				InvalidateRect(hDlg, &BackBuf.Rect, FALSE);
+			}
+		}
+		break;
+
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case IDC_MEM_TYPE:
+			SetMemType();
+			InvalidateRect(hDlg, &BackBuf.Rect, FALSE);
+			break;
+		case IDC_BTN_FIND_MEM:
+			LocateMemory();
+			break;
+		case IDCLOSE:
+		case WM_DESTROY:
+			KillTimer(hDlg, IDT_MEM_TIMER);
+			DeleteDC(BackBuf.DeviceContext);
+			DestroyWindow(hDlg);
+			hDlgMem = NULL;
+			break;
+		}
+		break;
+	}
+	return FALSE;
+
+} } } } }  // end namespace
+
+//------------------------------------------------------------------
+// Launch Memory Dialog 
+//------------------------------------------------------------------
+void VCC::Debugger::UI::OpenMemoryMapWindow(HINSTANCE hInst,HWND parent)
+{
+	if (hDlgMem == NULL) {
+		CreateDialog( hInst, MAKEINTRESOURCE(IDD_MEMORY_MAP), 
+		              parent, MemoryMapDlgProc );
+	}
+
+	if (hDlgMem == NULL)
+		MessageBox(NULL,"CreateDialog","Error",MB_OK|MB_ICONERROR);
+
+	ShowWindow(hDlgMem, SW_SHOWNORMAL);
+	SetFocus(hDlgMem);
+}
 
