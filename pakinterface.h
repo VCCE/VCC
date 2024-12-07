@@ -22,7 +22,7 @@ void PakTimer(void);
 unsigned char PackPortRead (unsigned char);
 void PackPortWrite(unsigned char,unsigned char);
 unsigned char PackMem8Read (unsigned short);
-void PackMem8Write(unsigned char,unsigned char);
+void PackMem8Write(unsigned short,unsigned char);
 void GetModuleStatus( SystemState *);
 int LoadCart(void);
 //void ConfigThisModule (void);
