@@ -20,7 +20,7 @@
 //
 // Memory Map Display - Part of the Debugger package for VCC
 // Authors: Mike Rojas, Chet Simpson
-//
+// Enhancements: EJJaquay
 //------------------------------------------------------------------
 
 #include "MemoryMap.h"
@@ -31,8 +31,6 @@
 #include "resource.h"
 #include "pakinterface.h"
 #include "logger.h"
-
-#include <sstream>
 
 namespace VCC { namespace Debugger { namespace UI { namespace {
 
@@ -50,7 +48,7 @@ void CommitValue();
 void SetMemType();
 void InitializeDialog(HWND);
 void DoScroll(WPARAM);
-long CStrToHex(const char *);
+int CStrToHex(const char *);
 
 LRESULT CALLBACK subEditValProc(HWND,UINT,WPARAM,LPARAM);
 LRESULT CALLBACK subEditAdrProc(HWND,UINT,WPARAM,LPARAM);
@@ -86,16 +84,16 @@ int editAddress = 0;
 // Backing buffer used for painting memory data
 BackBufferInfo BackBuf;
 
-// Data cell X offsets relative to the backing buffer 
-// Cells are 18 pixels wide with a 15 pixel gap between 7 & 8
+// Data cell X offsets relative to the backing buffer
+// Cells are 18 pixels square with a 15 pixel gap between 7 & 8
 const int Xoffset[16] =
-	{70,88,106,124,142,160,178,196, 229,247,265,283,301,319,337,355};
+	{70,88,106,124,142,160,178,196,229,247,265,283,301,319,337,355};
 
 //------------------------------------------------------------------
-//  Memory Dialog handler
+//  Display Memory Dialog
 //------------------------------------------------------------------
 INT_PTR CALLBACK MemoryMapDlgProc(
-		HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+		HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
 	switch (message) {
 
@@ -164,7 +162,7 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 }
 
 //------------------------------------------------------------------
-//  Subclass Edit Value Proc
+//  Subclassed Edit Value Proc
 //------------------------------------------------------------------
 LRESULT CALLBACK subEditValProc(
 		HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -186,14 +184,13 @@ LRESULT CALLBACK subEditValProc(
 		case VK_END:
 			FlashDialogWindow();
 			return 0;
-	}
-        break;
+		}
 	}
 	return CallWindowProc(EditValProc, wnd, msg, wParam, lParam);
 }
 
 //------------------------------------------------------------------
-//  Subclass Edit Address Proc
+//  Subclassed Edit Address Proc
 //------------------------------------------------------------------
 LRESULT CALLBACK subEditAdrProc(
 		HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -226,7 +223,6 @@ LRESULT CALLBACK subEditAdrProc(
 			DoScroll((WPARAM)SB_BOTTOM);
 			return 0;
 		}
-		break;
 	}
 	return CallWindowProc(EditValProc, wnd, msg, wParam, lParam);
 }
@@ -297,7 +293,7 @@ void SetBackBuffer(RECT rc)
 	BackBuf.Width  = BackBuf.Rect.right  - BackBuf.Rect.left;
 	BackBuf.Height = BackBuf.Rect.bottom - BackBuf.Rect.top;
 
-	BackBuf.Bitmap = CreateCompatibleBitmap 
+	BackBuf.Bitmap = CreateCompatibleBitmap
 				(hdc, BackBuf.Width, BackBuf.Height);
 	
 	BackBuf.DeviceContext = CreateCompatibleDC(hdc);
@@ -308,7 +304,7 @@ void SetBackBuffer(RECT rc)
 }
 
 //------------------------------------------------------------------
-// Create vertical scroll bar 
+// Create vertical scroll bar
 //------------------------------------------------------------------
 void CreateScrollBar(RECT Rect)
 {
@@ -410,7 +406,7 @@ void DrawMemory(HDC hdc, LPRECT clientRect)
 		std::string ascii;
 		for (int n = 0; n < 16; n++) {
 
-            // Get data 
+            // Get data
 			int adr = lnum * 16 + n + memoryOffset;
 			unsigned char val = ReadMemory(adr);
 
@@ -427,7 +423,7 @@ void DrawMemory(HDC hdc, LPRECT clientRect)
 			DrawText(hdc, s.c_str(), 2, &rc, fmt);
 
 			// if highlight on turn it off
-			if (hilite) { 
+			if (hilite) {
 				SetTextColor(hdc, RGB(0, 0, 0));
 				hlfound = true;
 			}
@@ -444,7 +440,7 @@ void DrawMemory(HDC hdc, LPRECT clientRect)
 	}
 
 	// Not editmode if no cell highlighted.
-    if (Editing && !hlfound) {
+	if (Editing && !hlfound) {
 		SetEditing(false);
 	}
 }
@@ -457,26 +453,28 @@ void SetEditPosition(int xPos, int yPos)
 	int xStart = 70; // X Start of data cells
 	int yStart = 55; // Y Start of data cells (dialog relative)
 
-	// Cells are 18x18 with dead zone between col 7 and 8
+	// Cells have a dead zone between col 7 and 8
 	int leftDeadArea  = xStart + (8 * 18);
 	int rightDeadArea = leftDeadArea + 15;
 	int xMax = rightDeadArea + (8 * 18);
 
 	// Stop edit if location is not in cell area
 	if ( yPos < yStart || xPos < xStart || xPos > xMax ||
-	     (xPos >= leftDeadArea && xPos <= rightDeadArea) ) {
+		(xPos >= leftDeadArea && xPos <= rightDeadArea) ) {
 		SetEditing(false);
 		return;
 	}
 
-	// Determine address per cell row and column
-	int row, col;
-	row = (yPos - yStart) / 18;
+	// Determine address per cell (18x18) row and column
+	int row = (yPos - yStart) / 18;
+
+	int col;
 	if (xPos < leftDeadArea)
 		col = (xPos - xStart) / 18;
 	else
 		col = (xPos - rightDeadArea) / 18 + 8;
-	int addr = memoryOffset + row * 16 + col;
+
+	int addr = memoryOffset + col + row * 16;
 
 	editAddress = addr;
 	SetEditing(true);
@@ -530,9 +528,9 @@ void LocateMemory()
 //------------------------------------------------------------------
 void CommitValue()
 {
-    if (!Editing) {
+	if (!Editing) {
 		FlashDialogWindow();
-	    SetDlgItemText(hDlgMem, IDC_EDIT_VALUE, "");
+		SetDlgItemText(hDlgMem, IDC_EDIT_VALUE, "");
 		return;
 	}
 
@@ -543,7 +541,7 @@ void CommitValue()
 	SetDlgItemText(hDlgMem, IDC_EDIT_VALUE, "");
 
 	int val = CStrToHex(buf);
-	if (val < 0 || val > 256) { 
+	if (val < 0 || val > 255) {
 		FlashDialogWindow();
 		return;
 	}
@@ -650,7 +648,7 @@ void InitializeDialog(HWND hDlg)
 		SelectObject(BackBuf.DeviceContext, hFont);
 		DeleteObject(hFont);
 
-        // Draw the form for memory data
+		// Draw the form for memory data
 		DrawForm(BackBuf.DeviceContext, &BackBuf.Rect);
 
 		// Not edit mode
@@ -668,14 +666,12 @@ void DoScroll(WPARAM wParam)
 	GetScrollInfo(hScrollBar, SB_CTL, &si);
 	switch ((int)LOWORD(wParam)) {
 	case SB_PAGEUP:
-		si.nPos -= 16*30;
+		si.nPos -= 16*32;
 		break;
 	case SB_PAGEDOWN:
-		si.nPos += 16*30;
+		si.nPos += 16*32;
 		break;
 	case SB_THUMBPOSITION:
-		si.nPos = si.nTrackPos;
-		break;
 	case SB_THUMBTRACK:
 		si.nPos = si.nTrackPos;
 		break;
@@ -704,15 +700,16 @@ void DoScroll(WPARAM wParam)
 }
 
 //------------------------------------------------------------------
-// Convert hexadecimal string to unsigned long.  Returns -1 on error
+// Convert hexadecimal string to a positive long. Return -1 on error
 //------------------------------------------------------------------
-long CStrToHex(const char * buf)
+int CStrToHex(const char * buf)
 {
-    char *p;
+	char *p;
 	if (*buf == 0) return -1;
-    long n = strtoul(buf, &p, 16);
-    if (*p != 0) return -1;
-    return n;
+	//long n = strtoul(buf, &p, 16);
+	int n = strtoul(buf, &p, 16);
+	if (*p != 0) return -1;
+	return n;
 }
 
 //------------------------------------------------------------------
@@ -723,12 +720,12 @@ void SetEditing(bool tf) {
 	if (Editing) {
 		std::string s = "Editing " + ToHexString(editAddress,6,true);
 		SetDlgItemText(hDlgMem, IDC_ADRTXT, s.c_str());
-		SetDlgItemText(hDlgMem, IDC_EDIT_VALUE, "");
 		SetFocus(hEditVal);
 	} else {
 		SetDlgItemText(hDlgMem, IDC_ADRTXT, "");
 		SetFocus(hEditAdr);
 	}
+	SetDlgItemText(hDlgMem, IDC_EDIT_VALUE, "");
 }
 
 //------------------------------------------------------------------
@@ -737,19 +734,19 @@ void SetEditing(bool tf) {
 void FlashDialogWindow()
 {
 	FlashWindow(hDlgMem,true);
-	Sleep(500);
+	Sleep(350);
 	FlashWindow(hDlgMem,false);
 }
 
 } } } }  // end namespace
 
 //------------------------------------------------------------------
-// Launch Memory Dialog 
+// Launch Memory Dialog
 //------------------------------------------------------------------
 void VCC::Debugger::UI::OpenMemoryMapWindow(HINSTANCE hInst,HWND parent)
 {
 	if (hDlgMem == NULL) {
-		CreateDialog( hInst, MAKEINTRESOURCE(IDD_MEMORY_MAP), 
+		CreateDialog( hInst, MAKEINTRESOURCE(IDD_MEMORY_MAP),
 		              parent, MemoryMapDlgProc );
 	}
 
@@ -758,6 +755,5 @@ void VCC::Debugger::UI::OpenMemoryMapWindow(HINSTANCE hInst,HWND parent)
 
 	ShowWindow(hDlgMem, SW_SHOWNORMAL);
 	SetFocus(hEditAdr);
-	//SetFocus(hDlgMem);
 }
 
