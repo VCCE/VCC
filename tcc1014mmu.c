@@ -50,8 +50,10 @@ static unsigned int VidMask[4]={0x1FFFF,0x7FFFF,0x1FFFFF,0x7FFFFF};
 static unsigned char CurrentRamConfig=1;
 static unsigned short MmuPrefix=0;
 static unsigned int RamSize=0;
+atomic_bool mem_initializing;
 
 void UpdateMmuArray(void);
+
 /*****************************************************************************************
 * MmuInit Initilize and allocate memory for RAM Internal and External ROM Images.        *
 * Copy Rom Images to buffer space and reset GIME MMU registers to 0                      *
@@ -59,6 +61,12 @@ void UpdateMmuArray(void);
 *****************************************************************************************/
 unsigned char * MmuInit(unsigned char RamConfig)
 {
+	// Simple flag to reduce possibility of conflict with SafeMemRead8()
+	// which debugger uses to access CPU ram. Without it the Memory Display
+	// window will occasionally crash VCC when MmuInit runs due to F9 toggle
+	// or MemSize config change. Issue does not seem to justify a section lock
+	mem_initializing = 1;
+
 //	unsigned int RamSize=0;
 	unsigned int Index1=0;
 	RamSize=MemConfig[RamConfig];
@@ -68,6 +76,7 @@ unsigned char * MmuInit(unsigned char RamConfig)
 
 	memory=(unsigned char *)malloc(RamSize);
 	if (memory==NULL) {
+		mem_initializing = 0;
 		RamSize = 0;
 		return(NULL);
 	}
@@ -85,12 +94,15 @@ unsigned char * MmuInit(unsigned char RamConfig)
 	InternalRomBuffer=NULL;
 	InternalRomBuffer=(unsigned char *)malloc(0x8000);
 
-	if (InternalRomBuffer == NULL)
+	if (InternalRomBuffer == NULL) {
+		mem_initializing = 0;
 		return(NULL);
+	}
 
 	memset(InternalRomBuffer,0xFF,0x8000);
 	CopyRom();
 	MmuReset();
+	mem_initializing = 0;
 	return(memory);
 }
 
@@ -262,6 +274,7 @@ unsigned char SafeMemRead8(unsigned short address)
 // Sam registers are ok.
 // Gime registers are ok.
 // Carts are not ok - no idea what the external address will do.
+	if (mem_initializing) return 0;  // To prevent access exceptions
 	if (address < 0xFE00)
 	{
 		if (MemPageOffsets[MmuRegisters[MmuState][address >> 13]] == 1)
