@@ -402,6 +402,7 @@ void MemWrite16(unsigned short data,unsigned short addr)
 }
 
 unsigned short GetMem(unsigned long address) {
+	if (mem_initializing) return 0;  // To prevent access exceptions
 	if (address < RamSize)
 		return(memory[address]);
 	else
