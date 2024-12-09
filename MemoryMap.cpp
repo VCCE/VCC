@@ -89,6 +89,21 @@ BackBufferInfo BackBuf;
 const int Xoffset[16] =
 	{70,88,106,124,142,160,178,196,229,247,265,283,301,319,337,355};
 
+// Help text
+char DbgHelp[] =
+	"The default memory type displayed is 'CPU'.\n"
+	"Dropdown will select 'REAL', 'ROM', or 'PAK'.\n"
+	"\n"
+	"In addition to the scroll bar the mouse wheel,\n"
+	"Home, End, PgUp, PgDn, Up, and Down keys\n"
+	"will scroll the display.\n"
+	"\n"
+	"Select memory to be edited by clicking on a\n"
+	"value or by entering the address in the Find\n"
+	"box.  The cell being edited will turn red and\n"
+	"the edit address will be displayed next to the\n"
+	"box.  Enter byte values in hexadecimal.\n";
+
 //------------------------------------------------------------------
 //  Display Memory Dialog
 //------------------------------------------------------------------
@@ -147,6 +162,10 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 			break;
 		case IDC_BTN_FIND_MEM:
 			LocateMemory();
+			break;
+		case IDC_BTN_HELP:
+			MessageBox(hDlg,DbgHelp,"Usage",0);
+			SetFocus(hEditAdr);
 			break;
 		case IDCLOSE:
 		case WM_DESTROY:
