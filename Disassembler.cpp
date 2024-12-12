@@ -1073,7 +1073,7 @@ unsigned char GetCondMem(unsigned long addr) {
     if (RealAdrMode) {
         return (unsigned char) GetMem(addr);
     } else {
-        return DisMemRead8((unsigned short) addr);
+        return SafeMemRead8((unsigned short) addr);
     }
 }
 
