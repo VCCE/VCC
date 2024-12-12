@@ -43,7 +43,7 @@
 
 #define HEXSTR(i,w) Debugger::ToHexString(i,w,true)
 
-#define MAXLINES 0x1000 //400
+#define MAXLINES 0x1000
 
 namespace VCC {
 
@@ -92,11 +92,12 @@ void FindHaltpoints();
 bool IsBreakpoint(int);
 
 void TrackPC();
-void HilitePC(bool);
+void UnHilitePC();
 void HiliteLine(int,int,int);
 
 // Information and error line
 void PutInfoText(const char *, int);
+int errDisplayTimer = 0;
 
 // String functions used for decode
 std::string PadRight(std::string const&,size_t);
@@ -169,12 +170,14 @@ void ApplyHaltPoint(Haltpoint &,bool);
 
 // Help text
 char DbgHelp[] =
-    "'Real Memory' checkbox selects Real vs CPU Addressing.\n"
-    "'Address' is where address and or block offset is entered.\n"
-    "Decode (or Enter key) decodes from the set address.\n"
+    "'Real Address' checkbox sets Real vs CPU Addressing.\n"
+    "'Address' edit box is where the address to decode is set.\n"
+    "'Decode' (or Enter key) decodes from the set address.\n"
     "'Os9 mode' checkbox selects OS9 module disassembly.\n"
-    "'Auto Track PC' checkbox selects PC tracking (default is set).\n\n"
-    "PC tracking is only active when VCC is paused.\n"
+    "'Auto Track PC' checkbox selects PC tracking (default is set).\n"
+    "PC tracking is only active when VCC is paused.\n\n"
+    "In Real mode Address can be a block num followed by offset\n"
+    "and they will be converted to an absolute real address\n\n"
     "The following hot keys can be used:\n\n"
     "  'P'  Pause the CPU.\n"
     "  'G'  Go - unpause the CPU.\n"
@@ -201,7 +204,7 @@ OpenDisassemblerWindow(HINSTANCE hInstance, HWND hParent)
                                   DisassemblerDlgProc );
         ShowWindow(hDismDlg, SW_SHOWNORMAL);
     }
-    SetFocus(hDismDlg);
+    SetFocus(hEdtAddr);
 }
 
 /**************************************************/
@@ -273,7 +276,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
             return FALSE;
         case IDAPPLY:
             DecodeAddr();
-            SetFocus(hEdtAddr);
+            SetFocus(hDisText);
             return TRUE;
         case IDC_BTN_OS9:
             if (IsDlgButtonChecked(hDismDlg,IDC_BTN_OS9)==BST_CHECKED) {
@@ -281,6 +284,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
             } else {
                 Os9Decode = FALSE;
             }
+            SetFocus(hEdtAddr);
             return TRUE;
         case IDC_BTN_REAL:
             if (IsDlgButtonChecked(hDlg,IDC_BTN_REAL) == BST_CHECKED)
@@ -290,6 +294,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
                     RealAdrMode = TRUE;
             else
                 RealAdrMode = FALSE;
+            SetFocus(hEdtAddr);
             return TRUE;
         case IDC_BTN_AUTO:
             if (IsDlgButtonChecked(hDlg,IDC_BTN_AUTO)==BST_CHECKED) {
@@ -297,6 +302,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
             } else {
                 TrackingEnabled = FALSE;
             }
+            SetFocus(hEdtAddr);
             return TRUE;
         case IDC_BTN_HELP:
             MessageBox(hDismDlg,DbgHelp,"Usage",0);
@@ -306,10 +312,16 @@ INT_PTR CALLBACK DisassemblerDlgProc
         break;
 
     case WM_TIMER:
+        if (errDisplayTimer > 0) {
+            errDisplayTimer--;
+            if (errDisplayTimer == 0)
+                PutInfoText(initTxt,0);
+        }
+
         if (EmuState.Debugger.IsHalted() && TrackingEnabled)
             TrackPC();
         else
-            HilitePC(false);
+            UnHilitePC();
         return TRUE;
 
     }
@@ -330,9 +342,10 @@ LRESULT CALLBACK SubEditDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
             wPrm = ch;
             break;
         }
-        // Hot keys sent to disassembly text window
+        // Hot keys are sent to disassembly text window
         if (strchr("GPSLMIKT",ch)) {
             SendMessage(hDisText,msg,ch,lPrm);
+            SetFocus(hDisText);
             return TRUE;
         }
         // Other characters
@@ -340,19 +353,15 @@ LRESULT CALLBACK SubEditDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
         // Enter does the disassembly
         case VK_RETURN:
             DecodeAddr();
-            return TRUE;
-        // Tab moves between active edit boxes
-        case VK_TAB:
-            PutInfoText(initTxt,0);
-            SetFocus(hEdtAddr);
-            SendMessage(hEdtAddr,EM_SETSEL,0,-1); //Select contents
+            SetFocus(hDisText);
+            SetCurrentLine();
             return TRUE;
         // keys used by edit control
+        case VK_DELETE:
         case VK_BACK:
         case VK_LEFT:
         case VK_RIGHT:
             break;
-        // ignore unmatched keys
         default:
             return TRUE;
         }
@@ -394,33 +403,27 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
         case 'B':
             SetHaltpoint(true);
             return TRUE;
-            break;
         // Remove Breakpoint
         case 'R':
             SetHaltpoint(false);
             return TRUE;
-            break;
         // Show Procesor State Window
         case 'I':
             SendMessage(GetWindow(hDismDlg,GW_OWNER),
                         WM_COMMAND,ID_PROCESSOR_STATE,0);
             SetFocus(hEdtAddr);
             return TRUE;
-            break;
         // Remove all haltpoints
         case 'K':
             KillHaltpoints();
             return TRUE;
-            break;
         // List haltpoints
         case 'L':
             ListHaltpoints();
             return TRUE;
-            break;
         case 'M':
             ToggleAddrMode();
             return TRUE;
-            break;
         // Toggle pause go
         case 'G':
             if (EmuState.Debugger.IsHalted()) {
@@ -428,20 +431,17 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
                 EmuState.Debugger.QueueRun();
             }
             return TRUE;
-            break;
        case 'P':
             if (!EmuState.Debugger.IsHalted()) {
                 EmuState.Debugger.QueueHalt();
                 PauseAudio(1);
             }
             return TRUE;
-            break;
         // Step
         case 'S':
             EmuState.Debugger.QueueStep();
-            HilitePC(false);
+            UnHilitePC();
             return TRUE;
-            break;
 
         case 'T':
             if (TrackingEnabled) {
@@ -452,12 +452,10 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
                 TrackingEnabled = true;
             }
             return TRUE;
-            break;
 
         case VK_TAB:
             SetFocus(hEdtAddr);
             return TRUE;
-            break;
         }
         break;
 
@@ -518,6 +516,7 @@ INT_PTR CALLBACK BreakpointsDlgProc
 void PutInfoText(const char * txt, int cnum) {
 
     InfoColorNum = cnum & 3;
+    if (InfoColorNum > 0) errDisplayTimer = 8;
     SendMessage(hDismDlg,WM_CTLCOLORSTATIC,
             (WPARAM) GetDC(hInfText),(LPARAM) hInfText);
     SetWindowTextA(hInfText,txt);
@@ -536,8 +535,6 @@ void ToggleAddrMode()
     GetWindowText(hEdtAddr, buf, 8);
     addr = HexToUint(buf);
 
-    // TODO check if addr invalid.
-
     // Map address to CPU if possible
     if (RealAdrMode) {
         // Convert to CPU address
@@ -553,7 +550,7 @@ void ToggleAddrMode()
     // Map address to real
     } else {
         // Convert to Real address
-        tmpadr = CpuToReal(addr);
+        addr = CpuToReal(addr);
         RealAdrMode = true;
         Button_SetCheck(GetDlgItem(hDismDlg,IDC_BTN_REAL),BST_CHECKED);
     }
@@ -715,7 +712,7 @@ void TrackPC()
     SetWindowText(hEdtAddr,HEXSTR(CPUadr,0).c_str());
 
     // Remove highlight from previous PC line
-    HilitePC(false);
+    UnHilitePC();
 
     // Convert address to real
     int RealAdr = CpuToReal(CPUadr);
@@ -746,23 +743,15 @@ void TrackPC()
 }
 
 /**************************************************/
-/*               PC highlite                      */
+/*            Remove PC highlite                  */
 /**************************************************/
-void HilitePC(bool tf)
+void UnHilitePC()
 {
     if (TrackedPC >= 0) {
-        if (tf) {
-            if (IsBreakpoint(CpuToReal(TrackedPC))) {
-                HiliteLine(PClinePos,3,1);
-            } else {
-                HiliteLine(PClinePos,2,0);
-            }
+        if (IsBreakpoint(CpuToReal(TrackedPC))) {
+            HiliteLine(PClinePos,1,1);
         } else {
-            if (IsBreakpoint(CpuToReal(TrackedPC))) {
-                HiliteLine(PClinePos,1,1);
-            } else {
-                HiliteLine(PClinePos,0,0);
-            }
+            HiliteLine(PClinePos,0,0);
         }
         TrackedPC = -1;
     }
@@ -855,7 +844,7 @@ HWND hDisText = NULL;  // Richedit20 box for output
     RefreshHPlist();
 
     // Timer will apply PC highlight as required
-    if (PClinePos == hp.lpos) HilitePC(false);
+    if (PClinePos == hp.lpos) UnHilitePC();
 
     return;
 }
@@ -911,7 +900,7 @@ void KillHaltpoints()
         mHaltpoints.erase(realaddr);
         it++;
     }
-    HilitePC(false);
+    UnHilitePC();
     RefreshHPlist();
 }
 
