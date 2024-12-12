@@ -379,7 +379,7 @@
 #define IDC_EDIT_PC_LCNT                2134
 #define IDC_ERROR_TEXT                  2135
 #define IDC_DISASSEMBLY_TEXT            2136
-#define IDC_PHYS_MEM                    2137
+#define IDC_BTN_REAL                    2137
 #define IDC_EDIT_BLOCK                  2138
 #define IDC_ADRTXT                      2139
 #define IDC_BTN_OS9                     2140
@@ -387,6 +387,7 @@
 #define IDC_ENABLE_BREAK                2142
 #define IDC_MEM_TYPE                    2143
 #define IDC_EDIT_VALUE                  2144
+#define IDC_BTN_AUTO                    2145
 
 #define IDM_USER_WIKI                   40001
 #define ID_FILE_EXIT                    40002

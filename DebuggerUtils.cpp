@@ -100,7 +100,7 @@ namespace VCC { namespace Debugger
 			unsigned long addr = PC + block * 0x2000;
 			return (unsigned char) GetMem(addr);
 		} else {
-			return DisMemRead8(PC);
+			return SafeMemRead8(PC);
 		}
 	}
 	
