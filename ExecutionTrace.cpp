@@ -27,10 +27,13 @@ This file is part of VCC (Virtual Color Computer).
 #include <sstream>
 #include <array>
 #include <windowsx.h>
+#include "fileops.h"
+#include "logger.h"
+
+static HINSTANCE g_hinstDLG;
 
 namespace VCC { namespace Debugger { namespace UI { namespace 
 {
-
 	HWND ExecutionTraceWindow = NULL;
 	HWND hWndExecutionTrace;
 	HWND hWndVScrollBar;
@@ -65,6 +68,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	BackBufferInfo	BackBuffer_;
 
+//-------------------------------------------------------------------------------
 	std::string ToCCString(const unsigned char CC)
 	{
 		std::ostringstream fmt;
@@ -81,6 +85,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		return fmt.str();
 	}
 
+//-------------------------------------------------------------------------------
 	std::string ToStateChangeString(const CPUTrace trace, bool showPC = true)
 	{
 		std::ostringstream fmt;
@@ -162,6 +167,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		return (fmt.str().size() > 0) ? fmt.str().substr(1) : fmt.str();
 	}
 
+//-------------------------------------------------------------------------------
 	void DrawBorder(HDC hdc, LPRECT clientRect)
 	{
 		RECT rect = *clientRect;
@@ -183,6 +189,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		DeleteObject(pen);
 	}
 
+//-------------------------------------------------------------------------------
 	void DrawSamplingInProgress(HDC hdc, LPRECT clientRect)
 	{
 		status = TraceStatus::Collecting;
@@ -206,6 +213,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		DeleteObject(hFont);
 	}
 
+//-------------------------------------------------------------------------------
 	void DrawNoSamplesCollected(HDC hdc, LPRECT clientRect)
 	{
 		status = TraceStatus::Empty;
@@ -220,12 +228,13 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FIXED_PITCH, TEXT("Consolas"));
 		SelectObject(hdc, hFont);
 
-		std::string s = "Press Enable Trace to start collection";
+		std::string s = "Press Enable to start collection";
 		DrawText(hdc, (LPCSTR)s.c_str(), s.size(), &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 		DeleteObject(hFont);
 	}
 
+//-------------------------------------------------------------------------------
 	void DrawSamples(HDC hdc, LPRECT clientRect)
 	{
 		long samples = EmuState.Debugger.GetTraceSamples();
@@ -607,6 +616,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		DeleteObject(hFont);
 	}
 
+//-------------------------------------------------------------------------------
 	void DrawExecutionTrace(HDC hdc, LPRECT clientRect)
 	{
 		// Draw the border.
@@ -625,6 +635,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		DrawSamples(hdc, clientRect);
 	}
 
+//-------------------------------------------------------------------------------
 	void ResizeWindow(int width, int height)
 	{
 		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDCLOSE);
@@ -672,6 +683,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		InvalidateRect(hWndTrace, &BackBuffer_.Rect, FALSE);
 	}
 
+//-------------------------------------------------------------------------------
 	LRESULT CALLBACK PanelProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (msg)
@@ -744,6 +756,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		return DefWindowProcW(hwnd, msg, wParam, lParam);
 	}
 
+//-------------------------------------------------------------------------------
 	void SetTraceSamples()
 	{
 		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_MAX_TRACE_SAMPLES);
@@ -764,6 +777,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
 	}
 
+//-------------------------------------------------------------------------------
 	void SetupControls(HWND hDlg)
 	{
 		RECT Rect;
@@ -857,6 +871,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		SetFocus(hWndTrace);
 	}
 
+//-------------------------------------------------------------------------------
 	void GetAddressList(int hListCtl, Debugger::triggerbuffer_type& list)
 	{
 		HWND hCtl = GetDlgItem(hWndExecutionTrace, hListCtl);
@@ -876,6 +891,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		}
 	}
 
+//-------------------------------------------------------------------------------
 	void UpdateTriggers(int hListCtl)
 	{
 		bool startTrigger = hListCtl == IDC_LIST_START_TRACE;
@@ -893,6 +909,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		}
 	}
 
+//-------------------------------------------------------------------------------
 	void EnableTrace()
 	{
 		currentTrace.clear();
@@ -907,6 +924,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		status = TraceStatus::Enabled;
 	}
 
+//-------------------------------------------------------------------------------
 	void StopTrace()
 	{
 		EmuState.Debugger.SetTraceDisable();
@@ -914,6 +932,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		SetWindowText(hCtl, "Trace is stopped");
 	}
 
+//-------------------------------------------------------------------------------
 	void ResetTrace()
 	{
 		currentTrace.clear();
@@ -923,6 +942,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		SetWindowText(hCtl, "Trace is disabled");
 	}
 
+//-------------------------------------------------------------------------------
 	void AddAddressTrace(int hListCtl)
 	{
 		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_EDIT_TRACE_ADDR);
@@ -946,6 +966,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		UpdateTriggers(hListCtl);
 	}
 
+//-------------------------------------------------------------------------------
 	void RemoveAddressTrace(int hListCtl)
 	{
 		HWND hCtl = GetDlgItem(hWndExecutionTrace, hListCtl);
@@ -958,6 +979,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		}
 	}
 
+//-------------------------------------------------------------------------------
 	void SetTraceConfiguration()
 	{
 		HWND hCtl;
@@ -974,6 +996,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		EmuState.Debugger.SetTraceOptions(captureScreenTraces, captureEmulationTraces);
 	}
 
+//-------------------------------------------------------------------------------
 	LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 	{
 		static int c = 0;
@@ -1051,6 +1074,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		return CallNextHookEx(hHookKeyboard, nCode, wParam, lParam);
 	}
 
+//-------------------------------------------------------------------------------
 	void CaptureKeyboardEvents()
 	{
 		if (hHookKeyboard == NULL)
@@ -1062,6 +1086,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		}
 	}
 
+//-------------------------------------------------------------------------------
 	void ReleaseKeyboard()
 	{
 		if (hHookKeyboard != NULL)
@@ -1071,6 +1096,144 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		}
 	}
 
+//-------------------------------------------------------------------------------
+// Export trace to open file
+//-------------------------------------------------------------------------------
+	void WriteTrace(HANDLE hf, unsigned int start, unsigned int nlines)
+	{
+		unsigned int offset = start > 1 ? start-1 : 0;
+		Debugger::tracebuffer_type _trace;
+		EmuState.Debugger.GetTraceResult(_trace, offset, nlines);
+		int count = min((unsigned int)_trace.size(), nlines);
+
+		//FilePrintf(hf,"offset:%d nlines:%d count%d _tsize:%d\n",
+		//	offset, nlines, count, _trace.size());
+
+		FilePrintf(hf,"   Line  Cycles  PC   Instr  Options       ");
+		if (EmuState.CpuType == 1)
+			FilePrintf(hf, "CC     D    W    X    Y    U    S   DP MD\n");
+		else
+			FilePrintf(hf, "CC     D    X    Y    U    S   DP\n");
+
+		for (int n = 0; n < count; n++) {
+			FilePrintf(hf,"%7d ",n + offset + 1);                     // Line
+			FilePrintf(hf,"%7d ",_trace[n].cycleTime);                // Cycles
+
+			// Instruction
+			if (_trace[n].event == TraceEvent::Instruction) {
+				FilePrintf(hf,"%4X  ",_trace[n].pc);                  // Address
+				FilePrintf(hf,"%-6s %-10s",                           // Instruction
+				    _trace[n].instruction.c_str(), 
+				    _trace[n].operand.c_str());
+				FilePrintf(hf," %8s",
+				    ToCCString(_trace[n].startState.CC).c_str()); // CC
+				FilePrintf(hf," %02X%02X",_trace[n].startState.A,     // D
+				    _trace[n].startState.B);
+				if (EmuState.CpuType == 1)
+				    FilePrintf(hf," %02X%02X",_trace[n].startState.E,
+				    _trace[n].startState.F);
+				FilePrintf(hf," %04X",_trace[n].startState.X);        // X
+				FilePrintf(hf," %04X",_trace[n].startState.Y);        // Y
+				FilePrintf(hf," %04X",_trace[n].startState.U);        // U
+				FilePrintf(hf," %04X",_trace[n].startState.S);        // S
+				FilePrintf(hf," %02X",_trace[n].startState.DP);       // DP
+				if (EmuState.CpuType == 1)
+				    FilePrintf(hf," %02X",_trace[n].startState.MD);   // MD
+				FilePrintf(hf,"\n");
+
+			// Emulator event
+			} else if (_trace[n].event == TraceEvent::EmulatorCycle) {
+
+				FilePrintf(hf,"[Emu] :: ");
+				switch (_trace[n].emulationState) {
+				case 0:
+					FilePrintf(hf,"CPUOnly\n");
+					break;
+				case 1:
+					FilePrintf(hf,"TimerIRQ\n");
+					break;
+				case 2:
+					FilePrintf(hf,"AudioSample\n");
+					break;
+				case 3:
+					FilePrintf(hf,"1stAudio\n");
+					break;
+				case 4:
+					FilePrintf(hf,"2ndTimer\n");
+					break;
+				case 5:
+					FilePrintf(hf,"1stTimer\n");
+					break;
+				case 6:
+					FilePrintf(hf,"2ndAudio\n");
+					break;
+				case 7:
+					FilePrintf(hf,"TimerAudio\n");
+					break;
+				case 10:
+					FilePrintf(hf,"CycleStart\n");
+					break;
+				case 20:
+					FilePrintf(hf,"CycleEnd\n");
+					break;
+				default:
+					FilePrintf(hf,"\n");
+				}
+
+			// Screen or IRQ event
+			} else if ((_trace[n].event > TraceEvent::ScreenStart &&
+			            _trace[n].event < TraceEvent::ScreenEnd ) ||
+			           (_trace[n].event > TraceEvent::IRQStart &&
+			            _trace[n].event < TraceEvent::IRQEnd ) ) {
+				FilePrintf(hf,"%s\n",_trace[n].instruction.c_str());
+			}
+		}
+		_trace.clear();
+	}
+
+//-------------------------------------------------------------------------------
+// Export to file dialog
+//-------------------------------------------------------------------------------
+	INT_PTR CALLBACK ExportTraceProc(HWND hDlg,UINT uMsg,WPARAM wPrm,LPARAM lPrm) {
+		switch (uMsg) {
+		case WM_INITDIALOG:
+			return TRUE;
+		case WM_COMMAND:
+			switch (LOWORD(wPrm)) {
+			case IDOK:
+			{
+				int start = GetDlgItemInt(hDlg,IDC_EDIT_START,NULL,FALSE);
+				int count = GetDlgItemInt(hDlg,IDC_EDIT_COUNT,NULL,FALSE);
+				char filePath[MAX_PATH];
+				GetDlgItemText(hDlg, IDC_EDIT_PATH, filePath, MAX_PATH);
+				HANDLE hFile = CreateFile(filePath, GENERIC_READ | GENERIC_WRITE,
+					0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+				if (hFile != INVALID_HANDLE_VALUE) {
+					WriteTrace(hFile,start,count);
+					CloseHandle(hFile);
+					EndDialog(hDlg, (INT_PTR) NULL);
+				} else {
+					MessageBox(hDlg, TEXT("Failed to open file."),
+						TEXT("Error"), MB_OK | MB_ICONERROR);
+					return FALSE;
+				}
+				return TRUE;
+			}
+			case IDCANCEL:
+				EndDialog(hDlg, (INT_PTR) NULL);
+				return TRUE;
+			}
+			break;
+		case WM_CLOSE:
+			EndDialog(hDlg, (INT_PTR) NULL);
+			return TRUE;
+		}
+		return FALSE;
+	}
+
+//-------------------------------------------------------------------------------
+// Trace window processing
+//-------------------------------------------------------------------------------
 	INT_PTR CALLBACK ExecutionTraceDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (message)
@@ -1214,8 +1377,8 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		case WM_GETMINMAXINFO:
 		{
 			LPMINMAXINFO lpMMI = (LPMINMAXINFO)lParam;
-			lpMMI->ptMinTrackSize.x = 525;
-			lpMMI->ptMinTrackSize.y = 400;
+			lpMMI->ptMinTrackSize.x = 475;
+			lpMMI->ptMinTrackSize.y = 570;
 			break;
 		}
 
@@ -1254,6 +1417,10 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			case IDC_BTN_RESET_TRACE:
 				ResetTrace();
 				break;
+			case IDC_BTN_EXPORT:
+				ReleaseKeyboard();
+				DialogBox(g_hinstDLG,(LPCTSTR) IDD_EXPORT,hDlg,(DLGPROC) ExportTraceProc);
+				break;
 			case IDC_BTN_ADD_START_TRACE:
 				AddAddressTrace(IDC_LIST_START_TRACE);
 				break;
@@ -1286,8 +1453,12 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 } } } }
 
 
+//-------------------------------------------------------------------------------
+// Open Trace Window
+//-------------------------------------------------------------------------------
 void VCC::Debugger::UI::OpenExecutionTraceWindow(HINSTANCE instance, HWND parent)
 {
+	g_hinstDLG = instance;
 	if (ExecutionTraceWindow == NULL)
 	{
 		ExecutionTraceWindow = CreateDialog(

@@ -48,6 +48,7 @@
 #define IDD_EXEC_TRACE                  174
 #define IDD_DISASSEMBLER                175
 #define IDD_BPLISTDIALOG                176
+#define IDD_EXPORT                      177
 
 #define IDC_MUTE                        1003
 #define IDC_THROTTLE                    1004
@@ -356,7 +357,7 @@
 #define IDC_BTN_CPU_HALT                2111
 #define IDC_BTN_CPU_RUN                 2112
 #define IDC_BTN_CPU_STEP                2113
-#define IDC_EDIT_ADDRESS	            2114
+#define IDC_EDIT_ADDRESS                2114
 #define IDC_BTN_FIND_MEM                2115
 #define IDC_SELECT_MMU_PAGE             2116
 #define IDC_BTN_ENABLE_TRACE            2117
@@ -388,6 +389,10 @@
 #define IDC_MEM_TYPE                    2143
 #define IDC_EDIT_VALUE                  2144
 #define IDC_BTN_AUTO                    2145
+#define IDC_BTN_EXPORT                  2146
+#define IDC_EDIT_PATH                   2147
+#define IDC_EDIT_START                  2148
+#define IDC_EDIT_COUNT                  2149
 
 #define IDM_USER_WIKI                   40001
 #define ID_FILE_EXIT                    40002
@@ -442,11 +447,12 @@
 #define ID_SWAP_JOYSTICKS               40058
 #define ID_CONFIGURE_OPTIONS            65535
 
+
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        176
+#define _APS_NEXT_RESOURCE_VALUE        178
 #define _APS_NEXT_COMMAND_VALUE         40060
 #define _APS_NEXT_CONTROL_VALUE         2150
 #define _APS_NEXT_SYMED_VALUE           101
