@@ -68,6 +68,10 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	BackBufferInfo	BackBuffer_;
 
+	int ExportStart=0;
+	int ExportStop=0;
+	char ExportPath[MAX_PATH]={};
+
 //-------------------------------------------------------------------------------
 	std::string ToCCString(const unsigned char CC)
 	{
@@ -1192,29 +1196,59 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	}
 
 //-------------------------------------------------------------------------------
+//  Select file using standard dialog
+//-------------------------------------------------------------------------------
+	BOOL ChooseTraceFile(HWND hOwn,char * filename,int namsiz)
+	{
+		BOOL rc;
+		OPENFILENAME ofn;
+		memset(&ofn,0,sizeof(ofn));
+		ofn.lStructSize     = sizeof (OPENFILENAME);
+		ofn.hwndOwner       = hOwn;
+		ofn.lpstrFilter     = "Text File\0*.txt;\0All files\0*.*\0\0";
+		ofn.nFilterIndex    = 1;
+		ofn.lpstrFile       = filename;
+		ofn.nMaxFile        = namsiz;
+		ofn.lpstrFileTitle  = NULL;
+		ofn.nMaxFileTitle   = MAX_PATH;
+		ofn.lpstrInitialDir = "";
+		ofn.lpstrTitle      = TEXT("Select Trace File");
+		ofn.Flags           = OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
+		rc = GetSaveFileName(&ofn);
+		return rc;
+	}
+
+//-------------------------------------------------------------------------------
 // Export to file dialog
 //-------------------------------------------------------------------------------
 	INT_PTR CALLBACK ExportTraceProc(HWND hDlg,UINT uMsg,WPARAM wPrm,LPARAM lPrm) {
 		switch (uMsg) {
 		case WM_INITDIALOG:
+			SetDlgItemInt(hDlg,IDC_EDIT_START,ExportStart,FALSE);
+			SetDlgItemInt(hDlg,IDC_EDIT_STOP,ExportStop,FALSE);
+			SetDlgItemText(hDlg,IDC_ERROR_TEXT,"");
 			return TRUE;
 		case WM_COMMAND:
 			switch (LOWORD(wPrm)) {
 			case IDOK:
 			{
-				int start = GetDlgItemInt(hDlg,IDC_EDIT_START,NULL,FALSE);
-				int count = GetDlgItemInt(hDlg,IDC_EDIT_COUNT,NULL,FALSE);
-				char filePath[MAX_PATH];
-				GetDlgItemText(hDlg, IDC_EDIT_PATH, filePath, MAX_PATH);
-				HANDLE hFile = CreateFile(filePath, GENERIC_READ | GENERIC_WRITE,
-					0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+				ExportStart = GetDlgItemInt(hDlg,IDC_EDIT_START,NULL,FALSE);
+				ExportStop = GetDlgItemInt(hDlg,IDC_EDIT_STOP,NULL,FALSE);
+				int count = ExportStop-ExportStart+1;
+				if ((count < 1) || (count > EmuState.Debugger.GetTraceSamples())) {
+					SetDlgItemText(hDlg,IDC_ERROR_TEXT,"Invalid Line Range");
+					return FALSE;
+				}
+
+				ChooseTraceFile(hDlg, ExportPath, MAX_PATH);
+				HANDLE hFile = CreateFile(ExportPath, GENERIC_READ | GENERIC_WRITE,
+				                0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 				if (hFile != INVALID_HANDLE_VALUE) {
-					WriteTrace(hFile,start,count);
+					WriteTrace(hFile,ExportStart,count);
 					CloseHandle(hFile);
 					EndDialog(hDlg, (INT_PTR) NULL);
 				} else {
-					MessageBox(hDlg, TEXT("Failed to open file."),
-						TEXT("Error"), MB_OK | MB_ICONERROR);
+					SetDlgItemText(hDlg,IDC_ERROR_TEXT,"File create failed!");
 					return FALSE;
 				}
 				return TRUE;

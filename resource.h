@@ -390,9 +390,8 @@
 #define IDC_EDIT_VALUE                  2144
 #define IDC_BTN_AUTO                    2145
 #define IDC_BTN_EXPORT                  2146
-#define IDC_EDIT_PATH                   2147
-#define IDC_EDIT_START                  2148
-#define IDC_EDIT_COUNT                  2149
+#define IDC_EDIT_START                  2147
+#define IDC_EDIT_STOP                   2148
 
 #define IDM_USER_WIKI                   40001
 #define ID_FILE_EXIT                    40002
