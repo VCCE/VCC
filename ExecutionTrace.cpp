@@ -1210,11 +1210,12 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		ofn.lpstrFile       = filename;
 		ofn.nMaxFile        = namsiz;
 		ofn.lpstrFileTitle  = NULL;
-		ofn.nMaxFileTitle   = MAX_PATH;
+		ofn.nMaxFileTitle   = MAX_PATH-4;
 		ofn.lpstrInitialDir = "";
 		ofn.lpstrTitle      = TEXT("Select Trace File");
 		ofn.Flags           = OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
 		rc = GetSaveFileName(&ofn);
+		if (rc && (ofn.nFileExtension == 0)) strcat(filename, ".txt");
 		return rc;
 	}
 
