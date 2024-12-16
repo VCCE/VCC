@@ -1113,7 +1113,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		//FilePrintf(hf,"offset:%d nlines:%d count%d _tsize:%d\n",
 		//	offset, nlines, count, _trace.size());
 
-		FilePrintf(hf,"   Line  Cycles  PC   Instr  Options       ");
+		FilePrintf(hf,"   Line  Cycles  PC     Instruction         ");
 		if (EmuState.CpuType == 1)
 			FilePrintf(hf, "CC     D    W    X    Y    U    S   DP MD\n");
 		else
@@ -1125,12 +1125,12 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 			// Instruction
 			if (_trace[n].event == TraceEvent::Instruction) {
-				FilePrintf(hf,"%4X  ",_trace[n].pc);                  // Address
-				FilePrintf(hf,"%-6s %-10s",                           // Instruction
-				    _trace[n].instruction.c_str(), 
-				    _trace[n].operand.c_str());
+				FilePrintf(hf,"%4X ",_trace[n].pc);                   // Address
+				std::string s = _trace[n].instruction + " "
+				              + _trace[n].operand;
+				FilePrintf(hf,"%-19s",s.c_str());                     // Instruction
 				FilePrintf(hf," %8s",
-				    ToCCString(_trace[n].startState.CC).c_str()); // CC
+				    ToCCString(_trace[n].startState.CC).c_str());     // CC
 				FilePrintf(hf," %02X%02X",_trace[n].startState.A,     // D
 				    _trace[n].startState.B);
 				if (EmuState.CpuType == 1)
