@@ -62,7 +62,7 @@ void buildTransDisp2ScanTable();
 
 LRESULT CALLBACK CpuConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK AudioConfig(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK MiscConfig(HWND, UINT, WPARAM, LPARAM);
+//LRESULT CALLBACK MiscConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK DisplayConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK InputConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK JoyStickConfig(HWND, UINT, WPARAM, LPARAM);
@@ -240,7 +240,6 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Video","MonitorType",CurrentConfig.MonitorType,IniFilePath);
 	WritePrivateProfileInt("Video","PaletteType",CurrentConfig.PaletteType, IniFilePath);
 	WritePrivateProfileInt("Video","ScanLines",CurrentConfig.ScanLines,IniFilePath);
-	//WritePrivateProfileInt("Video","AllowResize",CurrentConfig.Resize,IniFilePath);
 	WritePrivateProfileInt("Video","ForceAspect",CurrentConfig.Aspect,IniFilePath);
 	WritePrivateProfileInt("Video","RememberSize", CurrentConfig.RememberSize, IniFilePath);
 	WritePrivateProfileInt("Video", "WindowSizeX", tp.x, IniFilePath);
@@ -484,6 +483,8 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		SendDlgItemMessage
 			(hDlg,IDC_CPUICON,STM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)CpuIcons[CurrentConfig.CpuType]);
 		SendDlgItemMessage(hDlg,IDC_ENABLE_BREAK,BM_SETCHECK,CurrentConfig.BreakOpcEnabled,0);
+		SendDlgItemMessage(hDlg,IDC_AUTOSTART,BM_SETCHECK,tmpcfg.AutoStart,0);
+		SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_SETCHECK,tmpcfg.CartAutoStart,0);
 		break;
 
 	case WM_HSCROLL:
@@ -516,6 +517,8 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			// Set CPU icon in dialog window
 			SendDlgItemMessage ( hDlg,IDC_CPUICON,STM_SETIMAGE,(WPARAM)IMAGE_ICON,
 			                     (LPARAM)CpuIcons[CurrentConfig.CpuType] );
+			CurrentConfig.AutoStart = tmpcfg.AutoStart;
+			CurrentConfig.CartAutoStart = tmpcfg.CartAutoStart;
 			// Exit dialog if IDOK
 			if (LOWORD(wParam)==IDOK) {
 				hCpuDlg = NULL;
@@ -550,7 +553,15 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			tmpcfg.BreakOpcEnabled = (unsigned char)
 						SendDlgItemMessage(hDlg,IDC_ENABLE_BREAK,BM_GETCHECK,0,0);
 			break;
-		
+		case IDC_AUTOSTART:
+			tmpcfg.AutoStart = (unsigned char)
+						SendDlgItemMessage(hDlg,IDC_AUTOSTART,BM_GETCHECK,0,0);
+			break;
+		case IDC_AUTOCART:
+			tmpcfg.CartAutoStart = (unsigned char)
+						SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_GETCHECK,0,0);
+			break;
+
 		}		//End switch LOWORD(wParam)
 		break;	//Break WM_COMMAND
 	}			//END switch (message)
@@ -594,53 +605,6 @@ void DecreaseOverclockSpeed()
 }
 
 /********************************************/
-/*              Misc Config                 */
-/********************************************/
-HWND hMiscDlg = NULL;
-void OpenMiscConfig() {
-	if (hMiscDlg==NULL) {
-		hMiscDlg = CreateDialog
-			(EmuState.WindowInstance,(LPCTSTR) IDD_MISC, EmuState.WindowHandle,(DLGPROC) MiscConfig);
-	}
-	ShowWindow(hMiscDlg,SW_SHOWNORMAL);
-	SetFocus(hMiscDlg);
-}
-LRESULT CALLBACK MiscConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	static STRConfig tmpcfg;
-	switch (message) {
-	case WM_INITDIALOG:
-		tmpcfg = CurrentConfig;
-		SendDlgItemMessage(hDlg,IDC_AUTOSTART,BM_SETCHECK,tmpcfg.AutoStart,0);
-		SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_SETCHECK,tmpcfg.CartAutoStart,0);
-		break;
-	case WM_COMMAND:
-		tmpcfg.AutoStart=(unsigned char)SendDlgItemMessage(hDlg,IDC_AUTOSTART,BM_GETCHECK,0,0);
-		tmpcfg.CartAutoStart=(unsigned char)SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_GETCHECK,0,0);
-		switch (LOWORD(wParam)) {
-		case IDCANCEL:
-		case IDCLOSE:
-			hMiscDlg = NULL;
-			DestroyWindow(hDlg);
-			break;
-		case IDOK:
-		case IDAPPLY:
-			CurrentConfig.AutoStart = tmpcfg.AutoStart;
-			CurrentConfig.CartAutoStart = tmpcfg.CartAutoStart;
-			UpdateConfig();
-			// Exit dialog if IDOK
-			if (LOWORD(wParam)==IDOK) {
-				hMiscDlg = NULL;
-				DestroyWindow(hDlg);
-			}
-			break;
-		}
-		break;
-	}
-	return(0);
-}
-
-/********************************************/
 /*               Tape Config                */
 /********************************************/
 HWND hTapeDlg = NULL;
@@ -655,7 +619,6 @@ void OpenTapeConfig() {
 }
 LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-//	HWND hCounter=NULL;
 	CounterText.cbSize = sizeof(CHARFORMAT);
 	CounterText.dwMask = CFM_BOLD | CFM_COLOR ;
 	CounterText.dwEffects = CFE_BOLD;
@@ -674,14 +637,10 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 		SendDlgItemMessage(hDlg,IDC_MODE,WM_SETTEXT,strlen(Tmodes[Tmode]),(LPARAM)(LPCSTR)Tmodes[Tmode]);
 		GetTapeName(TapeFileName);  // Defined in Cassette.cpp
 		SendDlgItemMessage(hDlg,IDC_TAPEFILE,WM_SETTEXT,strlen(TapeFileName),(LPARAM)(LPCSTR)TapeFileName);
-//		hCounter=GetDlgItem(hDlg,IDC_TCOUNT);
-//		SendMessage (hCounter, EM_SETBKGNDCOLOR, 0, (LPARAM)RGB(0,0,0));
 		SendDlgItemMessage(hDlg,IDC_TCOUNT,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0));
 		SendDlgItemMessage(hDlg,IDC_TCOUNT,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&CounterText);
 		SendDlgItemMessage(hDlg,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0));
 		SendDlgItemMessage(hDlg,IDC_MODE,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&CounterText);
-//		SendDlgItemMessage(hDlg,IDC_MODE,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&ModeText);
-//		hTapeDlg=hDlg;
 		break;
 
 	case WM_COMMAND:
