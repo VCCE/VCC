@@ -287,9 +287,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				case ID_JOYSTICKS_CONFIG:
 					OpenJoyStickConfig();
 				    break;
-				case ID_MISC_CONFIG:
-					OpenMiscConfig();
-				    break;
 				case ID_TAPE_CONFIG:
 					OpenTapeConfig();
 				    break;
