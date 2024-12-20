@@ -1,5 +1,5 @@
 ## VCC - Virtual Color Computer
-##### An emulation of The Tandy Color Computer 3 for Microsoft Windows
+#### An emulation of The Tandy Color Computer 3 for Microsoft Windows
 
 VCC attempts to be an easy to use and accurate emulation Tandy Color Computer 3 as purchased from a Radio Shack store or Tandy Computer Center in 1986-1992.  For VCC usage see the User Guide at <https://github.com/VCCE/VCC/wiki>.  Also in the wiki are release notes and additional documents. Online documentation may reflect some features not available on earlier versions or that are pre-release.
 
@@ -14,7 +14,7 @@ In addition to emulating a stock 128k Coco 3 VCC is expandable to emulate additi
 1. Memory expansions up to 8192k.
 1. Replacement of the stock Motorolla 6809 cpu with an Hitachi 6309 with it's extended instruction set and additional cpu registers.
 
-##### Obtaining VCC
+#### Obtaining VCC
 
 Sources and binaries for VCC versions since v2.0.1 can be found at <https://github.com/VCCE/VCC/releases>. It is recommended that you use the "latest" release. 
 
@@ -22,7 +22,7 @@ VCC version numbering is somewhat irratic. Currently the version number consists
 
 Please be aware that the binaries provided with VCC releases, including the installers, do not contain verification certificates. It is likely you will be presented with windows security warnings when you first run them. Alternately you can build the version of your choice from the sources available with the release.
 
-##### Building VCC
+#### Building VCC
 
 VCC is written in C++ and C. Microsoft Visual Studio 2022 Community is used to build VCC and is available for free download from Microsoft.  Optionally components from Visual Studio 2015 can be used to build a "legacy" VCC version that will run on Windows XP.
 
@@ -30,7 +30,7 @@ To build VCC from the command line launch "Developer Command Prompt for VS 2022"
 
 Within Visual Studio the "Release" and "Debug" configurations build VCC binaries that will run on current Windows versions. The "Legacy" configuration builds binaries that will run on Windows XP. "Release" and "Debug" use build tools from VS2022 and "Legacy" uses build tools from VS2015.  Note that Windows versions before Windows 10 are considered out of service by Microsoft and Visual Studio 2015 is no longer supplied using a web based installer. For legacy builds you need to find and install the v140_xp toolset from VS2015.
 
-##### Contributing to VCC
+#### Contributing to VCC
 
 Patches or code that contribute to the VCC project that are consistant with our goals is welcome. Comment your code well and add your name if you want credit for your work. Also if you feel you would like to join the VCC project please contact us.  The code repository is on github and all changes to the code base are made by github "Pull Requests"
 
