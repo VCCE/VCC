@@ -267,35 +267,15 @@ unsigned char MemRead8( unsigned short address)
 	return( PackMem8Read( MemPageOffsets[MmuRegisters[MmuState][address>>13]] + (address & 0x1FFF) ));
 }
 
+// Debugger does not want to do port reads that change state
 unsigned char SafeMemRead8(unsigned short address)
 {
-// Only read memory that doesn't change the state of the machine.
-// Ram is ok.
-// Sam registers are ok.
-// Gime registers are ok.
-// Carts are not ok - no idea what the external address will do.
-	if (mem_initializing) return 0;  // To prevent access exceptions
-	if (address < 0xFE00)
-	{
-		if (MemPageOffsets[MmuRegisters[MmuState][address >> 13]] == 1)
-			return(MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF]);
-		return memory[address];
-	}
-	if (address > 0xFEFF)
-	{
-	// Ok to read SAM.
-	if (address >= 0xFFC0 && address <= 0xFFFF)
-		return (port_read(address));
-		// Ok to read GIME.
-	if (address >= 0xFF90 && address <= 0xFFBF)
-		return (port_read(address));
-	return memory[address];
-	}
-	if (RamVectors) //Address must be $FE00 - $FEFF
-		return(memory[(0x2000 * VectorMask[CurrentRamConfig]) | (address & 0x1FFF)]);
-	if (MemPageOffsets[MmuRegisters[MmuState][address >> 13]] == 1)
-			return(MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF]);
-	return memory[address];
+	// Do nothing if memory is in initializing state
+	if (mem_initializing) return 0;
+	// Filter port reads that are not GIME or SAM
+	if ((address > 0xFEFF) && (address < 0xFF90)) return memory[address];
+	// Otherwise use normal MMU MemRead8
+	return MemRead8(address);
 }
 
 void MemWrite8(unsigned char data,unsigned short address)
