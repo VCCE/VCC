@@ -96,7 +96,8 @@ void UnHilitePC();
 void HiliteLine(int,int,int);
 
 // Information and error line
-void PutInfoText(const char *, int);
+void PutStatTxt(const char *, int);
+void SetInfoStat();
 int errDisplayTimer = 0;
 
 // String functions used for decode
@@ -121,6 +122,7 @@ HWND hEdtAPPY = NULL;  // Apply button
 HWND hDisText = NULL;  // Richedit20 box for output
 HWND hInfText = NULL;  // Info and error text box
 HWND hRealBtn = NULL;
+
 // RealAdrMode indicates what addressing was used for decode
 bool RealAdrMode = FALSE;
 
@@ -139,7 +141,6 @@ MMUState MMUregs;
 COLORREF Colors[4] = {RGB(0,0,0),RGB(255,0,0),RGB(0,0,255),RGB(195,0,195)};
 
 // Default Info/Text line content, current brush and color
-char initTxt[] = "Enter Hex address";
 HBRUSH hInfoBrush = NULL;
 int InfoColorNum = 0;
 
@@ -238,10 +239,11 @@ INT_PTR CALLBACK DisassemblerDlgProc
 
         // Inital settings
         SetWindowTextA(hDisText,"");
-        PutInfoText(initTxt,0);
 
         TrackingEnabled = true;
         Button_SetCheck(GetDlgItem(hDlg,IDC_BTN_AUTO),BST_CHECKED);
+
+        SetInfoStat();
 
         // Start a timer for showing current status
         SetTimer(hDlg, IDT_BRKP_TIMER, 250, (TIMERPROC) NULL);
@@ -294,6 +296,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
                     RealAdrMode = TRUE;
             else
                 RealAdrMode = FALSE;
+            SetInfoStat();
             SetFocus(hEdtAddr);
             return TRUE;
         case IDC_BTN_AUTO:
@@ -302,6 +305,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
             } else {
                 TrackingEnabled = FALSE;
             }
+            SetInfoStat();
             SetFocus(hEdtAddr);
             return TRUE;
         case IDC_BTN_HELP:
@@ -315,7 +319,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
         if (errDisplayTimer > 0) {
             errDisplayTimer--;
             if (errDisplayTimer == 0)
-                PutInfoText(initTxt,0);
+                SetInfoStat();
         }
 
         if (EmuState.Debugger.IsHalted() && TrackingEnabled)
@@ -422,7 +426,8 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
             ListHaltpoints();
             return TRUE;
         case 'M':
-            ToggleAddrMode();
+            if (!(EmuState.Debugger.IsHalted() && TrackingEnabled))
+                ToggleAddrMode();
             return TRUE;
         // Toggle pause go
         case 'G':
@@ -439,7 +444,8 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
             return TRUE;
         // Step
         case 'S':
-            EmuState.Debugger.QueueStep();
+            if (EmuState.Debugger.IsHalted() && TrackingEnabled)
+                EmuState.Debugger.QueueStep();
             UnHilitePC();
             return TRUE;
 
@@ -511,15 +517,28 @@ INT_PTR CALLBACK BreakpointsDlgProc
 }
 
 /**************************************************/
-/*             Set Error text                     */
+/*             Put Info text                      */
 /**************************************************/
-void PutInfoText(const char * txt, int cnum) {
+void PutStatTxt(const char * txt, int cnum) {
 
     InfoColorNum = cnum & 3;
     if (InfoColorNum > 0) errDisplayTimer = 8;
     SendMessage(hDismDlg,WM_CTLCOLORSTATIC,
             (WPARAM) GetDC(hInfText),(LPARAM) hInfText);
     SetWindowTextA(hInfText,txt);
+}
+
+/**************************************************/
+/*             Set Info text                      */
+/**************************************************/
+void SetInfoStat() {
+    if (EmuState.Debugger.IsHalted() && TrackingEnabled) {
+        PutStatTxt("Disassembly is tracking the PC",0);
+    } else if (RealAdrMode) {
+        PutStatTxt("Enter address or block and offset",0);
+    } else {
+        PutStatTxt("Enter Hex address",0);
+    }
 }
 
 /***************************************************/
@@ -540,7 +559,7 @@ void ToggleAddrMode()
         // Convert to CPU address
         tmpadr = RealToCpu(addr);
         if (tmpadr < 0) {
-            PutInfoText("Address not Mapped by MMU",1);
+            PutStatTxt("Address not Mapped by MMU",1);
             return;
         }
         addr = tmpadr;
@@ -699,9 +718,6 @@ void FindHaltpoints()
 /**************************************************/
 void TrackPC()
 {
-
-    PutInfoText("Disassembly is tracking the PC",0);
-
     // Get the halted PC
     CPUState state = CPUGetState();
     int CPUadr = state.PC;
@@ -709,34 +725,31 @@ void TrackPC()
     // If PC already highlighted just return
     if (TrackedPC == CPUadr) return;
 
+    // Turn off Read addressing and set cpu address in address field
+    RealAdrMode = false;
+    Button_SetCheck(GetDlgItem(hDismDlg,IDC_BTN_REAL),BST_UNCHECKED);
     SetWindowText(hEdtAddr,HEXSTR(CPUadr,0).c_str());
 
     // Remove highlight from previous PC line
     UnHilitePC();
 
-    // Convert address to real
-    int RealAdr = CpuToReal(CPUadr);
-
-    // If disassembly used real addresses search for real address
-    int adr = RealAdrMode ? RealAdr : CPUadr;
-
     // Search for match in disassembly
-    int line = FindAdrLine(adr);
+    int line = FindAdrLine(CPUadr);
 
+    // If CPU found highlight it
     if (line < MAXLINES) {
         TrackedPC = CPUadr;
         PClinePos = DisLinePos[line];
-        if (IsBreakpoint(RealAdr)) {
+        // Landed on breakpoint?
+        if (IsBreakpoint(CpuToReal(CPUadr))) {
             HiliteLine(PClinePos,3,3); // Magneta
         } else {
             HiliteLine(PClinePos,2,3); // Blue
         }
 
-    // Not found disassemble using CPU mode starting from PC
+    // Not found disassemble starting from PC
     // PC should get painted on next timer event
     } else {
-        RealAdrMode = false;
-        Button_SetCheck(GetDlgItem(hDismDlg,IDC_BTN_REAL),BST_UNCHECKED);
         DecodeAddr();
         TrackedPC = -1;
     }
@@ -817,7 +830,7 @@ HWND hDisText = NULL;  // Richedit20 box for output
         if (MemCheckWrite(addr)) {
             realaddr = CpuToReal(addr);
         } else {
-            PutInfoText("Can't set breakpoint here",1);
+            PutStatTxt("Can't set breakpoint here",1);
             return;
         }
     }
@@ -971,13 +984,13 @@ void DecodeAddr()
     if (*p != 0) {
         // Check for valid address mode
         if (!RealAdrMode || (blk > 0x3FF)) {
-            PutInfoText("Invalid address mode",1);
+            PutStatTxt("Invalid address mode",1);
             return;
         }
         // Additional text should be offset
         int offset = strtoul(p, &p, 16);
         if (*p != 0) {
-            PutInfoText("Invalid Offset",1);
+            PutStatTxt("Invalid Offset",1);
             return;
         }
         // Calc real address and put converted address back to edit box
@@ -988,12 +1001,12 @@ void DecodeAddr()
     // Range check address
     if (RealAdrMode) {
         if (adr > 0x7FFFFF) {
-            PutInfoText("Real address too high",1);
+            PutStatTxt("Real address too high",1);
             return;
         }
     } else {
         if (adr > 0xFFFF) {
-            PutInfoText("CPU address too high",1);
+            PutStatTxt("CPU address too high",1);
             return;
         }
     }
@@ -1204,7 +1217,7 @@ void Disassemble( unsigned short FromAdr,
     // No PC highlighted
     TrackedPC = -1;
 
-    PutInfoText(initTxt,0);
+    SetInfoStat();
 }
 
 /**************************************************/
