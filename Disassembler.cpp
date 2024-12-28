@@ -660,7 +660,16 @@ void HiliteLine(int lpos, int cnum, int flags) {
     if (flags & 2) {
         SetFocus(hDisText);
         SendMessage(hDisText,EM_SETSEL,lpos,lpos);
-        SendMessage(hDisText,EM_SCROLLCARET,0,0);
+        // Move away from screen top or bottom if possible
+        int top = SendMessage(hDisText,EM_GETFIRSTVISIBLELINE,0,0);
+        int sel = SendMessage(hDisText,EM_LINEFROMCHAR,-1,0);
+        if (sel == (top + 32)) {
+            SendMessage(hDisText,EM_LINESCROLL,0,(LPARAM) 1);
+        } else if (sel > (top + 32)) {
+            SendMessage(hDisText,EM_LINESCROLL,0,(LPARAM) 4);
+        } else if ((sel < (top + 8)) & (top > 0)) {
+            SendMessage(hDisText,EM_LINESCROLL,0,(LPARAM) -4);
+        }
     } else {
         SendMessage(hDisText,EM_SETSEL,(WPARAM) SelMin,(LPARAM) SelMax);
     }
@@ -705,7 +714,7 @@ void FindHaltpoints()
             if (line < MAXLINES) {
                 Haltpoint hp = it->second;
                 hp.lpos = DisLinePos[line];
-                HiliteLine(hp.lpos,1,3);
+                HiliteLine(hp.lpos,1,1);
             }
         }
         it++;
@@ -725,7 +734,7 @@ void TrackPC()
     // If PC already highlighted just return
     if (TrackedPC == CPUadr) return;
 
-    // Turn off Read addressing and set cpu address in address field
+    // Turn off Real addressing and set cpu address in address field
     RealAdrMode = false;
     Button_SetCheck(GetDlgItem(hDismDlg,IDC_BTN_REAL),BST_UNCHECKED);
     SetWindowText(hEdtAddr,HEXSTR(CPUadr,0).c_str());
@@ -735,7 +744,6 @@ void TrackPC()
 
     // Search for match in disassembly
     int line = FindAdrLine(CPUadr);
-
     // If CPU found highlight it
     if (line < MAXLINES) {
         TrackedPC = CPUadr;
