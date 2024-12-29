@@ -245,6 +245,9 @@ INT_PTR CALLBACK DisassemblerDlgProc
 
         SetInfoStat();
 
+        // Number of lines in disassembly;
+        NumDisLines = 0;
+
         // Start a timer for showing current status
         SetTimer(hDlg, IDT_BRKP_TIMER, 250, (TIMERPROC) NULL);
 
