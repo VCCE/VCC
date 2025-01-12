@@ -92,17 +92,14 @@ const int Xoffset[16] =
 // Help text
 char DbgHelp[] =
 	"The default memory type displayed is 'CPU'.\n"
-	"Dropdown will select 'REAL', 'ROM', or 'PAK'.\n"
-	"\n"
+	"Dropdown will select 'REAL', 'ROM', or 'PAK'.\n\n"
 	"In addition to the scroll bar the mouse wheel,\n"
 	"Home, End, PgUp, PgDn, Up, and Down keys\n"
-	"will scroll the display.\n"
-	"\n"
+	"will scroll the display.\n\n"
 	"Select memory to be edited by clicking on a\n"
-	"value or by entering the address in the Find\n"
-	"box.  The cell being edited will turn red and\n"
-	"the edit address will be displayed next to the\n"
-	"box.  Enter byte values in hexadecimal.\n";
+	"cell. The cell will turn red and it's address\n"
+	"will be displayed next to the box. Enter byte\n"
+	"values in hexadecimal.\n";
 
 //------------------------------------------------------------------
 //  Display Memory Dialog
@@ -502,7 +499,7 @@ void SetEditPosition(int xPos, int yPos)
 }
 
 //------------------------------------------------------------------
-// Determine byte to edit based on edit address box
+// Determine data to display based on address box
 //------------------------------------------------------------------
 void LocateMemory()
 {
@@ -530,7 +527,7 @@ void LocateMemory()
 	GetScrollInfo(hScrollBar, SB_CTL, &si);
 
 	memoryOffset = si.nPos;
-
+/*
 	// If addr is on screen set editing
 	if (addr >= memoryOffset && addr < memoryOffset + 16 * 32) {
 		editAddress = addr;
@@ -538,7 +535,7 @@ void LocateMemory()
 	} else {
 		SetEditing(false);
 	}
-
+*/
 	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
 }
 
