@@ -114,7 +114,10 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 		break;
 
 	case WM_LBUTTONDOWN:
-		SetEditPosition(LOWORD(lParam),HIWORD(lParam));
+		if (AddrMode_ == AddrMode::PAK)
+			FlashDialogWindow();
+		else
+			SetEditPosition(LOWORD(lParam),HIWORD(lParam));
 		break;
 
 	case WM_VSCROLL:
@@ -286,9 +289,8 @@ void WriteMemory(int addr, unsigned char value)
 		Rom[addr & 0x7FFF] = value;
 		break;
 
-	case AddrMode::PAK:   // FIXME not working
-		PackMem8Write(addr & 0x7FFF,value);
-		break;
+	case AddrMode::PAK:
+		FlashDialogWindow();
 	}
 }
 
