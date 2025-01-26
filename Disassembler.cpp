@@ -1066,23 +1066,26 @@ std::string FmtLine(int adr,
 /***************************************************/
 /*        Create FDB line with comment             */
 /***************************************************/
-std::string OpFDB(int adr,std::string b1,std::string b2,std::string cmt)
+std::string OpFDB(int adr,int b1,int b2,std::string cmt)
 {
-    return FmtLine(adr,b1+b2,"FDB","$"+b1+b2,cmt);
+    std::string s=HEXSTR(b1*256+b2,4);
+    return FmtLine(adr,s,"FDB","$"+s,cmt);
 }
 
 /***************************************************/
 /*        Create FCB line with comment             */
 /***************************************************/
-std::string OpFCB(int adr,std::string b,std::string cmt)
+std::string OpFCB(int adr,int b,std::string cmt)
 {
-    return FmtLine(adr,b,"FCB","$"+b,cmt);
+    std::string s=HEXSTR(b,2);
+    return FmtLine(adr,s,"FCB","$"+s,cmt);
 }
 
 /***************************************************/
 /*  Get byte from either real memory or cpu memory */
 /***************************************************/
-unsigned char GetCondMem(unsigned long addr) {
+inline unsigned char GetCondMem(unsigned long addr)
+{
     if (RealAdrMode) {
         return (unsigned char) GetMem(addr);
     } else {
@@ -1095,39 +1098,37 @@ unsigned char GetCondMem(unsigned long addr) {
 /***************************************************/
 int DecodeModHdr(unsigned short Block, unsigned short PC, std::string *hdr)
 {
+    unsigned char hmem[16];
     unsigned long addr = PC;
     if (RealAdrMode) addr += Block * 0x2000;
 
-    // Convert header bytes to hex with check
-    std::string hexb[13];
-    int cksum = 0xFF;
-    for (int n=0; n<9; n++) {
-        int ch = GetCondMem(n+addr);
-        if ((n == 0) && (ch != 0x87)) break;
-        if ((n == 1) && (ch != 0xCD)) break;
-        hexb[n] = HEXSTR(ch,2);
-        cksum = cksum ^ ch;
+    // Test for header
+    if ((hmem[0] = GetCondMem(addr))   != 0x87) return 0;
+    if ((hmem[1] = GetCondMem(addr+1)) != 0xCD) return 0;
+    int cksum = 0xB5; // 0xFF^0x87^0xCD;
+    for (int n=2; n<9; n++) {
+        hmem[n] = GetCondMem(n+addr);
+        cksum = cksum^hmem[n];
     }
     if (cksum) return 0;
 
     // Generate header lines
     int cnt = 0;
-    *hdr =  OpFDB(addr+cnt++,hexb[0],hexb[1],"Module"); cnt++;
-    *hdr += OpFDB(addr+cnt++,hexb[2],hexb[3],"Mod Siz"); cnt++;
-    *hdr += OpFDB(addr+cnt++,hexb[4],hexb[5],"Off Nam"); cnt++;
-    *hdr += OpFCB(addr+cnt++,hexb[6],"Ty/Lg");
-    *hdr += OpFCB(addr+cnt++,hexb[7],"At/Rv");
-    *hdr += OpFCB(addr+cnt++,hexb[8],"Parity");
+    *hdr =  OpFDB(addr+cnt++,hmem[0],hmem[1],"Module"); cnt++;
+    *hdr += OpFDB(addr+cnt++,hmem[2],hmem[3],"Mod Siz"); cnt++;
+    *hdr += OpFDB(addr+cnt++,hmem[4],hmem[5],"Off Nam"); cnt++;
+    *hdr += OpFCB(addr+cnt++,hmem[6],"Ty/Lg");
+    *hdr += OpFCB(addr+cnt++,hmem[7],"At/Rv");
+    *hdr += OpFCB(addr+cnt++,hmem[8],"Parity");
 
     // Additional lines if executable
-    char type = hexb[6][0];
-    if ((type=='1')||(type=='E')||(type=='C')) {
-        for (int n=0; n<4; n++) {
-            int ch = GetCondMem(cnt+n+addr);
-            hexb[n+9] = HEXSTR(ch,2);
+    int type = hmem[6] & 0xF0;
+    if ((type==0x10)||(type==0xE0)||(type==0xC0)) {
+        for (int n=9; n<13; n++) {
+            hmem[n] = GetCondMem(n+addr);
         }
-        *hdr += OpFDB(addr+cnt++,hexb[9],hexb[10],"Off Exe"); cnt++;
-        *hdr += OpFDB(addr+cnt++,hexb[11],hexb[12],"Dat Siz"); cnt++;
+        *hdr += OpFDB(addr+cnt++,hmem[9],hmem[10],"Off Exe"); cnt++;
+        *hdr += OpFDB(addr+cnt++,hmem[11],hmem[12],"Dat Siz"); cnt++;
     }
     return cnt; // Num bytes decoded
 }
