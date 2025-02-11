@@ -2,7 +2,7 @@
 // This file is part of VCC (Virtual Color Computer).
 // Vcc is Copyright 2015 by Joseph Forgione
 //
-// VCC (Virtual Color Computer) is free software, you can redistribute it 
+// VCC (Virtual Color Computer) is free software, you can redistribute it
 // and/or modify it under the terms of the GNU General Public License as
 // published by the Free Software Foundation, either version 3 of the License,
 // or (at your option) any later version.
@@ -13,7 +13,7 @@
 // Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with VCC (Virtual Color Computer).  If not, see 
+// along with VCC (Virtual Color Computer).  If not, see
 // <http://www.gnu.org/licenses/>.
 //----------------------------------------------------------------------
 
@@ -58,20 +58,20 @@ void LoadExtRom(char *);
 using namespace std;
 
 //------------------------------------------------------------
-// DLL entry point 
+// DLL entry point
 //------------------------------------------------------------
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 {
     if (reason == DLL_PROCESS_ATTACH) {
         hinstDLL = hinst;
         LoadExtRom("SDC.ROM");
-		SDCInit();
+        SDCInit();
 
     } else if (reason == DLL_PROCESS_DETACH) {
-        if (hConfDlg) { 
-			DestroyWindow(hConfDlg);
-			hConfDlg = NULL;
-		}
+        if (hConfDlg) {
+            DestroyWindow(hConfDlg);
+            hConfDlg = NULL;
+        }
         hinstDLL = NULL;
         SDCReset();
     }
@@ -135,16 +135,16 @@ extern "C"
 //-----------------------------------------------------------------------
 extern "C"
 {
-	__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
-	{
-		if (hConfDlg == NULL) {
-    		CreateDialog (hinstDLL, (LPCTSTR) IDD_CONFIG,
-					       GetActiveWindow(),(DLGPROC)ConfigSDC);
-		}
-    	ShowWindow(hConfDlg,1);
-		SetFocus(hConfDlg);
-    	return;
-	}
+    __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+    {
+        if (hConfDlg == NULL) {
+            CreateDialog (hinstDLL, (LPCTSTR) IDD_CONFIG,
+                           GetActiveWindow(),(DLGPROC)ConfigSDC);
+        }
+        ShowWindow(hConfDlg,1);
+        SetFocus(hConfDlg);
+        return;
+    }
 }
 
 //------------------------------------------------------------
@@ -153,28 +153,28 @@ extern "C"
 LRESULT CALLBACK
 ConfigSDC(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch (message) {
+    switch (message) {
 
     case WM_CLOSE:
         EndDialog(hDlg,LOWORD(wParam));
 
-	case WM_INITDIALOG:
+    case WM_INITDIALOG:
         hConfDlg=hDlg;
-		break;
+        break;
 
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
 
-		case IDOK:
+        case IDOK:
             EndDialog(hDlg,LOWORD(wParam));
-			break;
+            break;
 
-		case IDCANCEL:
+        case IDCANCEL:
             EndDialog(hDlg,LOWORD(wParam));
-			break;
+            break;
 
-		default:
-        	break;
+        default:
+            break;
         }
     }
     return (INT_PTR) 0;
@@ -245,7 +245,7 @@ void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
 //------------------------------------------------------------
 void SetSDCardPath(void)
 {
-	// Prompt user for path
+    // Prompt user for path
     return;
 }
 
