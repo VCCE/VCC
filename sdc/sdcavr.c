@@ -91,8 +91,9 @@ void CloseDrive (int);
 void OpenDrive (int);
 void LoadReply(void *, int);
 unsigned char ReadByte();
-void WriteByte(unsigned char);
+void SendByte(unsigned char);
 char * LastErrorTxt();
+void CommandComplete();
 
 // Status Register values
 #define STA_FAIL  0x80
@@ -107,6 +108,7 @@ char * LastErrorTxt();
 
 bool SDC_Mode=false;
 unsigned char CmdSta = 0;
+unsigned char CmdCode = 0;
 unsigned char CmdRpy1 = 0;
 unsigned char CmdRpy2 = 0;
 unsigned char CmdRpy3 = 0;
@@ -114,23 +116,20 @@ unsigned char CmdPrm1 = 0;
 unsigned char CmdPrm2 = 0;
 unsigned char CmdPrm3 = 0;
 
-// Reply buffer. ReplyCount is the number of bytes remaining
-// in the buffer. Characters from the buffer are consumed as
-// ports 0xFF4A and 0xFF4B are read. Bytes are pre-swapped in
-// the buffer to match the order in which they are read.
+// Send buffer.
+char SendBuf[260];
+int SendCount = 0;
+char *SendPtr = SendBuf;
+
+// Reply buffer.
 char ReplyBuf[260];
 int ReplyCount = 0;
 char *ReplyPtr = ReplyBuf;
 
-// Receive buffer.
-char ReceiveBuf[260];
-int ReceiveCount = 0;
-char *ReceivePtr = ReceiveBuf;
-
 // Drive handles
 HANDLE hDrive[2] = {NULL,NULL};
 
-// SDC card contents directory
+// SDC card contents
 char SDCard[MAX_PATH] = {};
 
 // Drive info buffers
@@ -147,7 +146,36 @@ struct Drive_Info {
 struct Drive_Info DriveInfo[2];
 
 //======================================================================
-// Write SDC port
+// Init the controller
+//----------------------------------------------------------------------
+void SDCInit()
+{
+
+//PrintLogC("\nLoading test drives\n");
+SetCDRoot("C:\\Users\\ed\\vcc\\sets\\sdc-boot\\");
+LoadDrive(0,"63SDC", "VHD");
+LoadDrive(1,"BGAMES","DSK");
+
+    SetMode(0);
+    return;
+}
+
+//----------------------------------------------------------------------
+// Reset the controller
+//----------------------------------------------------------------------
+void SDCReset()
+{
+    PrintLogC("SDCREset Unloading Drives\n");
+    UnLoadDrive (0);
+    UnLoadDrive (1);
+    SetMode(0);
+    return;
+}
+
+//----------------------------------------------------------------------
+// Write SDC port.  If a command needs a data block to complete it
+// will put a count (256) in SendCount. The command will complete
+// when the SendBuf load is complete.
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port)
 {
@@ -164,14 +192,30 @@ void SDCWrite(unsigned char data,unsigned char port)
         break;
     case 0x4A:
         //PrintLogC("W2:%02X ",data);
-        if (ReceiveCount > 0) WriteByte(data); else CmdPrm2 = data;
+        if (SendCount > 0) SendByte(data); else CmdPrm2 = data;
         break;
     case 0x4B:
         //PrintLogC("W3:%02X ",data);
-        if (ReceiveCount > 0) WriteByte(data); else CmdPrm3 = data;
+        if (SendCount > 0) SendByte(data); else CmdPrm3 = data;
         break;
     }
     return;
+}
+
+//----------------------------------------------------------------------
+// Send byte to receive buffer.  Once all the bytes have been recieved
+// command complete must be executed.
+//----------------------------------------------------------------------
+void SendByte(unsigned char byte)
+{
+    SendCount--;
+    if (SendCount < 1) {
+        CommandComplete();
+        CmdSta = 0;
+    } else {
+        CmdSta |= STA_BUSY;
+    }
+    *SendPtr++ = byte;
 }
 
 //----------------------------------------------------------------------
@@ -201,32 +245,26 @@ unsigned char SDCRead(unsigned char port)
 }
 
 //----------------------------------------------------------------------
-// Init the controller
+// Get next byte from reply buffer.
 //----------------------------------------------------------------------
-void SDCInit()
+unsigned char ReadByte()
 {
-    SetMode(0);
-
-//PrintLogC("\nLoading test drives\n");
-SetCDPath("C:\\Users\\ed\\vcc\\sets\\sdc-boot\\");
-LoadDrive(0,"63SDC", "VHD");
-LoadDrive(1,"BGAMES","DSK");
-    return;
+    ReplyCount--;
+    if (ReplyCount < 1) {
+        CmdSta = 0;
+    } else {
+        CmdSta |= STA_BUSY;
+    }
+    return *ReplyPtr++;
 }
 
 //----------------------------------------------------------------------
-// Reset the controller
+// Command complete
 //----------------------------------------------------------------------
-void SDCReset()
+void CommandComplete()
 {
-PrintLogC("SDCREset Closing Drives\n");
-    CloseHandle(hDrive[0]);
-    CloseHandle(hDrive[1]);
-    hDrive[0] = NULL;
-    hDrive[1] = NULL;
-    SetMode(0);
-    return;
 }
+
 
 //----------------------------------------------------------------------
 // Set SDC controller mode
@@ -256,10 +294,16 @@ void SetMode(int data)
 //----------------------------------------------------------------------
 void SDCCommand(int code)
 {
+
     // The SDC uses the low nibble of the command code as an additional
     // argument so this gets passed to the command processor.
     int loNib = code & 0xF;
     int hiNib = code & 0xF0;
+
+    // Save code for completing commands that require extra data
+    // Commands AX and EX expect a block of data to be sent with the command
+    CmdCode = code;
+
     switch (hiNib) {
     case 0x80:
         ReadSector(loNib);
@@ -462,37 +506,9 @@ void LoadReply(void *data, int count)
 }
 
 //----------------------------------------------------------------------
-// Get next byte from reply buffer.
+// Set the CD path
 //----------------------------------------------------------------------
-unsigned char ReadByte()
-{
-    ReplyCount--;
-    if (ReplyCount < 1) {
-        CmdSta = 0;
-    } else {
-        CmdSta |= STA_BUSY;
-    }
-    return *ReplyPtr++;
-}
-
-//----------------------------------------------------------------------
-// Write byte to receive buffer.
-//----------------------------------------------------------------------
-void WriteByte(unsigned char byte)
-{
-    ReceiveCount--;
-    if (ReceiveCount < 1) {
-        CmdSta = 0;
-    } else {
-        CmdSta |= STA_BUSY;
-    }
-    *ReceivePtr++ = byte;
-}
-
-//----------------------------------------------------------------------
-// Set the CD path 
-//----------------------------------------------------------------------
-void SetCDPath(char * path)
+void SetCDRoot(char * path)
 {
     strncpy(SDCard,path,MAX_PATH);
     return;

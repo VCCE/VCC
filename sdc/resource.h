@@ -24,13 +24,9 @@
 #define IDS_CATNUMBER                   3
 
 #define IDD_CONFIG                      101
-//#define IDD_NEWDISK                     102
-//#define IDC_CLOCK                       1001
-//#define IDC_READONLY                    1002
-//#define IDC_HDSIZE                      1003
 
 // Next default values for new objects
- 
+
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        103

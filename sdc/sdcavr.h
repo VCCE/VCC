@@ -3,7 +3,7 @@
 // This file is part of VCC (Virtual Color Computer).
 // Vcc is Copyright 2015 by Joseph Forgione
 //
-// VCC (Virtual Color Computer) is free software, you can redistribute it 
+// VCC (Virtual Color Computer) is free software, you can redistribute it
 // and/or modify it under the terms of the GNU General Public License as
 // published by the Free Software Foundation, either version 3 of the License,
 // or (at your option) any later version.
@@ -14,11 +14,11 @@
 // Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with VCC (Virtual Color Computer).  If not, see 
+// along with VCC (Virtual Color Computer).  If not, see
 // <http://www.gnu.org/licenses/>.
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port);
 unsigned char SDCRead(unsigned char port);
 void SDCInit(void);
 void SDCReset(void);
-void SetCDPath(char *);
+void SetCDRoot(char *);
