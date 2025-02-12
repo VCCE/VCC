@@ -3,15 +3,15 @@
 // This file is part of VCC (Virtual Color Computer).
 // Vcc is Copyright 2015 by Joseph Forgione
 //
-// VCC (Virtual Color Computer) is free software, you can redistribute it
-// and/or modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation, either version 3 of the License,
-// or (at your option) any later version.
+// VCC (Virtual Color Computer) is free software, you can redistribute
+// it and/or modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
 //
-// VCC (Virtual Color Computer) is distributed in the hope that it will be
-// useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
-// Public License for more details.
+// VCC (Virtual Color Computer) is distributed in the hope that it will
+// be useful, but WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
+// the GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
 // along with VCC (Virtual Color Computer).  If not, see
@@ -90,10 +90,11 @@ void UnLoadDrive (int);
 void CloseDrive (int);
 void OpenDrive (int);
 void LoadReply(void *, int);
-unsigned char ReadByte();
-void SendByte(unsigned char);
+unsigned char PutByte();
+void GetByte(unsigned char);
 char * LastErrorTxt();
 void CommandComplete();
+void StartBlockRecv(int);
 
 // Status Register values
 #define STA_FAIL  0x80
@@ -116,12 +117,12 @@ unsigned char CmdPrm1 = 0;
 unsigned char CmdPrm2 = 0;
 unsigned char CmdPrm3 = 0;
 
-// Send buffer.
-char SendBuf[260];
-int SendCount = 0;
-char *SendPtr = SendBuf;
+// Command send buffer.
+char RecvBuf[260];
+int RecvCount = 0;
+char *RecvPtr = RecvBuf;
 
-// Reply buffer.
+// Command reply buffer.
 char ReplyBuf[260];
 int ReplyCount = 0;
 char *ReplyPtr = ReplyBuf;
@@ -129,8 +130,9 @@ char *ReplyPtr = ReplyBuf;
 // Drive handles
 HANDLE hDrive[2] = {NULL,NULL};
 
-// SDC card contents
+// SD card root and the directory within.
 char SDCard[MAX_PATH] = {};
+char SDCdir[MAX_PATH] = {};
 
 // Drive info buffers
 #pragma pack(1)
@@ -152,8 +154,10 @@ void SDCInit()
 {
 
 //PrintLogC("\nLoading test drives\n");
-SetCDRoot("C:\\Users\\ed\\vcc\\sets\\sdc-boot\\");
-LoadDrive(0,"63SDC", "VHD");
+*SDCdir = '\0';
+//strncpy(SDCdir,"foo",4);
+SetCDRoot("C:\\Users\\ed\\vcc\\sets\\sdc-boot");
+LoadDrive(0,"SDCEXP","DSK");
 LoadDrive(1,"BGAMES","DSK");
 
     SetMode(0);
@@ -174,8 +178,8 @@ void SDCReset()
 
 //----------------------------------------------------------------------
 // Write SDC port.  If a command needs a data block to complete it
-// will put a count (256) in SendCount. The command will complete
-// when the SendBuf load is complete.
+// will put a count (256) in RecvCount. The command will complete
+// when the RecvBuf load is complete.
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port)
 {
@@ -192,34 +196,33 @@ void SDCWrite(unsigned char data,unsigned char port)
         break;
     case 0x4A:
         //PrintLogC("W2:%02X ",data);
-        if (SendCount > 0) SendByte(data); else CmdPrm2 = data;
+        if (RecvCount > 0) GetByte(data); else CmdPrm2 = data;
         break;
     case 0x4B:
         //PrintLogC("W3:%02X ",data);
-        if (SendCount > 0) SendByte(data); else CmdPrm3 = data;
+        if (RecvCount > 0) GetByte(data); else CmdPrm3 = data;
         break;
     }
     return;
 }
 
 //----------------------------------------------------------------------
-// Send byte to receive buffer.  Once all the bytes have been recieved
-// command complete must be executed.
+// Get byte for receive buffer.
 //----------------------------------------------------------------------
-void SendByte(unsigned char byte)
+void GetByte(unsigned char byte)
 {
-    SendCount--;
-    if (SendCount < 1) {
+    RecvCount--;
+    if (RecvCount < 1) {
         CommandComplete();
         CmdSta = 0;
     } else {
         CmdSta |= STA_BUSY;
     }
-    *SendPtr++ = byte;
+    *RecvPtr++ = byte;
 }
 
 //----------------------------------------------------------------------
-// Read SDC port
+// Read SDC port. If there are bytes in the reply buffer return them.
 //----------------------------------------------------------------------
 unsigned char SDCRead(unsigned char port)
 {
@@ -232,10 +235,10 @@ unsigned char SDCRead(unsigned char port)
         rpy = CmdRpy1;
         break;
     case 0x4A:
-        rpy = (ReplyCount > 0) ? ReadByte() : CmdRpy2;
+        rpy = (ReplyCount > 0) ? PutByte() : CmdRpy2;
         break;
     case 0x4B:
-        rpy = (ReplyCount > 0) ? ReadByte() : CmdRpy3;
+        rpy = (ReplyCount > 0) ? PutByte() : CmdRpy3;
         break;
     default:
         rpy = 0;
@@ -245,9 +248,9 @@ unsigned char SDCRead(unsigned char port)
 }
 
 //----------------------------------------------------------------------
-// Get next byte from reply buffer.
+// Put byte from reply into buffer.
 //----------------------------------------------------------------------
-unsigned char ReadByte()
+unsigned char PutByte()
 {
     ReplyCount--;
     if (ReplyCount < 1) {
@@ -259,14 +262,6 @@ unsigned char ReadByte()
 }
 
 //----------------------------------------------------------------------
-// Command complete
-//----------------------------------------------------------------------
-void CommandComplete()
-{
-}
-
-
-//----------------------------------------------------------------------
 // Set SDC controller mode
 //----------------------------------------------------------------------
 void SetMode(int data)
@@ -275,17 +270,19 @@ void SetMode(int data)
 //if (data==0x43) PrintLogC("\n");
 //PrintLogC("M:%02X ",data);
 
-    // Wait for commands to finish here
     if (data == 0) {
         SDC_Mode = false;
-        CmdSta  = 0;
-        CmdRpy1 = 0;
-        CmdRpy2 = 0;
-        CmdRpy3 = 0;
+        CmdPrm3 = 0;
     } else if (data == 0x43) {
         SDC_Mode = true;
         CmdSta  = 0;
     }
+        CmdSta  = 0;
+        CmdRpy1 = 0;
+        CmdRpy2 = 0;
+        CmdRpy3 = 0;
+        CmdPrm1 = 0;
+        CmdPrm2 = 0;
     return;
 }
 
@@ -294,15 +291,18 @@ void SetMode(int data)
 //----------------------------------------------------------------------
 void SDCCommand(int code)
 {
+    // If a transfer is in progress abort it and return an error.
+    if ((ReplyCount > 0) || (RecvCount > 0)) {
+        PrintLogC("**Block Transfer Aborted**\n");
+        ReplyCount = 0;
+        RecvCount = 0;
+        CmdSta = STA_FAIL;
+    } 
 
     // The SDC uses the low nibble of the command code as an additional
     // argument so this gets passed to the command processor.
     int loNib = code & 0xF;
     int hiNib = code & 0xF0;
-
-    // Save code for completing commands that require extra data
-    // Commands AX and EX expect a block of data to be sent with the command
-    CmdCode = code;
 
     switch (hiNib) {
     case 0x80:
@@ -312,8 +312,7 @@ void SDCCommand(int code)
         StreamImage(loNib);
         break;
     case 0xA0:
-        WriteSector(loNib);
-        break;
+        StartBlockRecv(code);
         break;
     case 0xC0:
         GetDriveInfo(loNib);
@@ -322,10 +321,57 @@ void SDCCommand(int code)
         SDCControl(loNib);
         break;
     case 0xE0:
-        SetDrive(loNib);
+        StartBlockRecv(code);
         break;
     default:
         CmdSta = STA_FAIL;  // Fail
+        break;
+    }
+    return;
+}
+
+//----------------------------------------------------------------------
+// Command Ax or Ex block transfer start 
+//----------------------------------------------------------------------
+void StartBlockRecv(int code)
+{
+    code = CmdCode;
+    if (!SDC_Mode) {
+        PrintLogC("Not SDC mode send Ignored\n");
+        CmdSta = STA_FAIL;
+        return;
+    } else if ((code & 4) !=0 ) {
+        PrintLogC("8bit transfer not supported\n");
+        CmdSta = STA_FAIL;
+        return;
+    }
+
+    // Save code for CommandComplete
+    CmdCode = code;
+
+    // Set up the receive buffer
+    CmdSta = STA_READY;
+    RecvPtr = RecvBuf;
+    RecvCount = 256;
+}
+
+//----------------------------------------------------------------------
+// Command Ax or Ex block transfer complete
+//----------------------------------------------------------------------
+void CommandComplete()
+{
+    int loNib = CmdCode & 0xF;
+    int hiNib = CmdCode & 0xF0;
+
+    switch (hiNib) {
+    case 0xA0:
+        WriteSector(loNib);
+        break;
+    case 0xE0:
+        SetDrive(loNib);
+        break;
+    default:
+        CmdSta = STA_FAIL;
         break;
     }
     return;
@@ -402,7 +448,8 @@ void StreamImage(int loNib)
         PrintLogC("Stream Ignored\n");
         return;
     }
-    PrintLogC("\nStream %d %02X %02X %02X ",loNib,CmdPrm1,CmdPrm2,CmdPrm3);
+    PrintLogC("\nStream %d %02X %02X %02X ",
+                loNib,CmdPrm1,CmdPrm2,CmdPrm3);
     PrintLogC(" Not supported\n");
     CmdSta = STA_FAIL;  // Fail
 }
@@ -427,7 +474,6 @@ void WriteSector(int loNib)
 //----------------------------------------------------------------------
 void GetDriveInfo(int loNib)
 {
-
      if (!SDC_Mode) {
         PrintLogC("GetInfo Ignored\n");
          return;
@@ -439,9 +485,13 @@ void GetDriveInfo(int loNib)
         LoadReply( (void *) &DriveInfo[drive],64);
         break;
 
+    case 'e':
+        PrintLogC("WFT is $%0X supposed to do?\n",CmdPrm1);
+        LoadReply((void *) "What the fuck?",64);
+        break;
+
     default:
-        PrintLogC("\nGetInfo drive %d ",loNib,CmdPrm1,CmdPrm2,CmdPrm3);
-        PrintLogC("Not supported\n",loNib);
+        PrintLogC("GetInfo $%0X not supported\n",CmdPrm1);
         CmdSta = STA_FAIL;
         break;
     }
@@ -453,9 +503,11 @@ void GetDriveInfo(int loNib)
 //----------------------------------------------------------------------
 void SDCControl(int loNib)
 {
-PrintLogC("**AbortStream**\n");
-//  Why is CmdPrm1 being set to 0x5A ('Z') by SDC-DOS when it starts up?
+PrintLogC(".");
+//  Why is CmdPrm1 being set to $5A by SDC-DOS when it starts up?
 //  TODO abort stream here.
+    ReplyCount = 0;
+    RecvCount = 0;
     SetMode(0);
 }
 
@@ -465,7 +517,8 @@ PrintLogC("**AbortStream**\n");
 //----------------------------------------------------------------------
 void SetDrive(int loNib)
 {
-    PrintLogC("\nSetDrive %d %02X %02X %02X ",loNib,CmdPrm1,CmdPrm2,CmdPrm3);
+    PrintLogC("\nSetDrive %d %02X %02X %02X ",
+               loNib,CmdPrm1,CmdPrm2,CmdPrm3);
     if (!SDC_Mode) {
         PrintLogC("Ignored\n");
         return;
@@ -506,10 +559,16 @@ void LoadReply(void *data, int count)
 }
 
 //----------------------------------------------------------------------
-// Set the CD path
+// Set the CD root
 //----------------------------------------------------------------------
 void SetCDRoot(char * path)
 {
+    DWORD attr = GetFileAttributes(path);
+    if ( (attr == INVALID_FILE_ATTRIBUTES) || 
+         !(attr & FILE_ATTRIBUTE_DIRECTORY)) {
+        PrintLogC("\nInvalid CD root %X %s\n",attr,path);
+        return;
+    }
     strncpy(SDCard,path,MAX_PATH);
     return;
 }
@@ -533,6 +592,18 @@ void UnLoadDrive (int drive)
 }
 
 //----------------------------------------------------------------------
+// Check windows path
+//----------------------------------------------------------------------
+BOOL FileExists(LPCTSTR szPath)
+{
+  DWORD dwAttrib = GetFileAttributes(szPath);
+
+  return (dwAttrib != INVALID_FILE_ATTRIBUTES && 
+         !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+
+//----------------------------------------------------------------------
 // Open virtual disk
 //----------------------------------------------------------------------
 void OpenDrive (int drive)
@@ -544,32 +615,49 @@ void OpenDrive (int drive)
 
     char file[MAX_PATH];
     if (strlen(DriveInfo[drive].name) > 0) {
-        strncpy(file,SDCard,MAX_PATH);
-        strncat(file,DriveInfo[drive].name,MAX_PATH);
-        strncat(file,".",MAX_PATH);
-        strncat(file,DriveInfo[drive].type,MAX_PATH);
+        snprintf(file, MAX_PATH, "%s\\%s\\%s.%s", SDCard, SDCdir,
+                 DriveInfo[drive].name, DriveInfo[drive].type);
+        DWORD attr = GetFileAttributes(file);
+        if ((attr == -1) || (attr & FILE_ATTRIBUTE_DIRECTORY)) {
+            PrintLogC("\nFile not found %d\n",drive);
+            CmdSta = STA_FAIL;
+            return;
+        }
     } else {
-        PrintLogC("\nNo Drive to open in slot %d\n",drive);
+        PrintLogC("\nNo file to open in drive %d\n",drive);
         return;
     }
+
+    // TODO check for FILE_ATTRIBUTE_READONLY 0x1
 
     HANDLE hFile;
     hFile = CreateFile( file, GENERIC_READ, 0, NULL, OPEN_EXISTING,
                      FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == NULL) {
-        PrintLogC("Open %s drive %d file %s\n",drive,file,LastErrorTxt());
+        PrintLogC("Open %s drive %d file %s\n",
+                   drive,file,LastErrorTxt());
         CmdSta = STA_FAIL;
     }
     hDrive[drive] = hFile;
 
-//TODO: fill in rest of drive info
-//struct Drive_Info {
-//  char name[8];
-//  char type[3];
-//  char attrib;
-//  DWORD lo_size;
-//  DWORD hi_size;
-//  char bytes[240];
+    BY_HANDLE_FILE_INFORMATION fileinfo;
+    GetFileInformationByHandle(hFile,&fileinfo);
+    DriveInfo[drive].attrib = 0; // TODO set attrits
+    DriveInfo[drive].lo_size = fileinfo.nFileSizeLow;
+    DriveInfo[drive].hi_size = fileinfo.nFileSizeHigh;
+
+//typedef struct _BY_HANDLE_FILE_INFORMATION {
+//  DWORD    dwFileAttributes;
+//  FILETIME ftCreationTime;
+//  FILETIME ftLastAccessTime;
+//  FILETIME ftLastWriteTime;
+//  DWORD    dwVolumeSerialNumber;
+//  DWORD    nFileSizeHigh;
+//  DWORD    nFileSizeLow;
+//  DWORD    nNumberOfLinks;
+//  DWORD    nFileIndexHigh;
+//  DWORD    nFileIndexLow;
+//} *LPBY_HANDLE_FILE_INFORMATION;
 }
 
 //----------------------------------------------------------------------

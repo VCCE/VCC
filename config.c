@@ -1532,7 +1532,7 @@ int SelectFile(char *FileName)
 	ofn.hwndOwner = EmuState.WindowHandle; // GetTopWindow(NULL);
 	ofn.Flags             = OFN_HIDEREADONLY;
 	ofn.hInstance         = GetModuleHandle(0);
-	ofn. lpstrDefExt      = "txt";
+	ofn.lpstrDefExt       = "txt";
 	ofn.lpstrFilter       =	"Text File\0*.txt\0\0";
 	ofn.nFilterIndex      = 0 ;					// current filter index
 	ofn.lpstrFile         = TempFileName;		// contains full path and filename on return
