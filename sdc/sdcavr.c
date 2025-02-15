@@ -21,13 +21,16 @@
 //
 //----------------------------------------------------------------------
 //
-//  Address       Description
-//  -------       -----------
-//  FF40          Latch Register
-//  FF48          Status/Command
-//  FF49          Param 1
-//  FF4A          Param 2
-//  FF4B          Param 3
+//  CTRLATCH  $FF40 ; controller latch (write)
+//  FLSHDAT   $FF42 ; flash data register
+//  FLSHCTRL  $FF43 ; flash control register
+//  CMDREG    $FF48 ; command register (write)
+//  STATREG   $FF48 ; status register (read)
+//  PREG1     $FF49 ; param register 1
+//  PREG2     $FF4A ; param register 2
+//  PREG3     $FF4B ; param register 3
+//  DATREGA   PREG2 ; first data register
+//  DATREGB   PREG3 ; second data register
 //
 //  Note this interface shares ports with the FD502 floppy controller.
 //  A special value (0x43) hopefully not used by the floppy controller
@@ -39,6 +42,12 @@
 //  control. FF48 for status/command, FF49 for trk#, FF4A for Sec#,
 //  and FF4B for data transfer.  Writing zero to FF40 will turn off the
 //  drive motor.
+//
+//  Data written to the flash data port (0x42) can be read back.
+//  When the flash data port (0x43) is written the three low bits
+//  select the ROM from the corresponding flash bank (0-7). When
+//  read the flash control port returns the currently selected bank
+//  in the three low bits and the five bits from the Flash Data port.
 //
 //  Status bits:
 //  0   Busy
@@ -70,11 +79,10 @@
 #include <windows.h>
 #include <stdio.h>
 #include <ctype.h>
-
+#include "../defines.h"
+#include "../fileops.h"
+#include "../logger.h"
 #include "sdcavr.h"
-#include "defines.h"
-#include "..\fileops.h"
-#include "..\logger.h"
 
 void SetMode(int);
 void SDCCommand(int);
@@ -95,17 +103,24 @@ void GetByte(unsigned char);
 char * LastErrorTxt();
 void CommandComplete();
 void StartBlockRecv(int);
+void BankSelect(int);
 
 // Status Register values
-#define STA_FAIL  0x80
-#define STA_READY 0x02
-#define STA_BUSY  0X01
-
+#define STA_BUSY     0X01
+#define STA_READY    0x02
+#define STA_HWERROR  0x04
+#define STA_CRCERROR 0x08
+#define STA_NOTFOUND 0X10
+#define STA_DELETED  0X20
+#define STA_WPROTECT 0X40
+#define STA_FAIL     0x80
 // File Attribute values
 #define ATTR_DIR 0x10
 #define ATTR_SDF 0x04
 #define ATTR_HIDDEN 0x02
 #define ATTR_LOCKED 0x01
+
+#define CDOWN int n=9;while(n>0){PrintLogC("%d",n--);Sleep(1500);}PrintLogC("\n");
 
 bool SDC_Mode=false;
 unsigned char CmdSta = 0;
@@ -116,14 +131,20 @@ unsigned char CmdRpy3 = 0;
 unsigned char CmdPrm1 = 0;
 unsigned char CmdPrm2 = 0;
 unsigned char CmdPrm3 = 0;
+unsigned char FlshDat = 0;
 
-// Command send buffer.
-char RecvBuf[260];
+// Rom bank currently selected
+unsigned char CurrentBank = 0;
+
+// Command send buffer. Block data from Coco lands here. 
+// Buffer is sized to hold at least 256 bytes. (for sector writes)
+char RecvBuf[300];
 int RecvCount = 0;
 char *RecvPtr = RecvBuf;
 
-// Command reply buffer.
-char ReplyBuf[260];
+// Command reply buffer. Block data to Coco goes here.
+// Buffer is sized to hold at least 512 bytes (for streaming)
+char ReplyBuf[600];
 int ReplyCount = 0;
 char *ReplyPtr = ReplyBuf;
 
@@ -153,13 +174,19 @@ struct Drive_Info DriveInfo[2];
 void SDCInit()
 {
 
-//PrintLogC("\nLoading test drives\n");
-*SDCdir = '\0';
-//strncpy(SDCdir,"foo",4);
-SetCDRoot("C:\\Users\\ed\\vcc\\sets\\sdc-boot");
-LoadDrive(0,"SDCEXP","DSK");
-LoadDrive(1,"BGAMES","DSK");
+PrintLogC("\n");
+HANDLE hLog = GetStdHandle(STD_OUTPUT_HANDLE);
+SMALL_RECT r; r.Left=0; r.Top=0; r.Right=40; r.Bottom=50;
+SetConsoleWindowInfo(hLog,true,&r);
 
+// TODO look for startup.cfg, which typically contains
+//   0=/SDCEXP.DSK
+SetCDRoot("C:\\Users\\ed\\vcc\\sets\\SDC\\SDRoot");
+*SDCdir = '\0';
+LoadDrive(0,"SDCEXP","DSK");
+
+//LoadDrive(1,"BGAMES","DSK");
+    CurrentBank = 0;
     SetMode(0);
     return;
 }
@@ -178,14 +205,19 @@ void SDCReset()
 
 //----------------------------------------------------------------------
 // Write SDC port.  If a command needs a data block to complete it
-// will put a count (256) in RecvCount. The command will complete
-// when the RecvBuf load is complete.
+// will put a count (256 or 512) in RecvCount.
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port)
 {
     switch (port) {
     case 0x40:
         SetMode(data);
+        break;
+    case 0x42:
+        FlshDat = data;
+        break;
+    case 0x43:
+        BankSelect(data);
         break;
     case 0x48:
         SDCCommand(data);
@@ -228,6 +260,14 @@ unsigned char SDCRead(unsigned char port)
 {
     unsigned char rpy;
     switch (port) {
+    case 0x42:
+        rpy = FlshDat;
+        PrintLogC("FDataR %02x\n",rpy);
+        break;
+    case 0x43:
+        rpy = CurrentBank | (FlshDat & 0xF8);
+        PrintLogC("FControlR %02x\n",rpy);
+        break;
     case 0x48:
         rpy = CmdSta;
         break;
@@ -262,6 +302,15 @@ unsigned char PutByte()
 }
 
 //----------------------------------------------------------------------
+//----------------------------------------------------------------------
+void BankSelect(int data)
+{
+    PrintLogC("BankSelect %02x\n",data);
+    CurrentBank = data & 7;
+    //TODO: Load bank into rom;
+}
+
+//----------------------------------------------------------------------
 // Set SDC controller mode
 //----------------------------------------------------------------------
 void SetMode(int data)
@@ -272,10 +321,10 @@ void SetMode(int data)
 
     if (data == 0) {
         SDC_Mode = false;
-        CmdPrm3 = 0;
+//        CmdPrm3 = 0;
     } else if (data == 0x43) {
         SDC_Mode = true;
-        CmdSta  = 0;
+//        CmdSta  = 0;
     }
         CmdSta  = 0;
         CmdRpy1 = 0;
@@ -283,6 +332,7 @@ void SetMode(int data)
         CmdRpy3 = 0;
         CmdPrm1 = 0;
         CmdPrm2 = 0;
+        CmdPrm3 = 0;
     return;
 }
 
@@ -291,13 +341,7 @@ void SetMode(int data)
 //----------------------------------------------------------------------
 void SDCCommand(int code)
 {
-    // If a transfer is in progress abort it and return an error.
-    if ((ReplyCount > 0) || (RecvCount > 0)) {
-        PrintLogC("**Block Transfer Aborted**\n");
-        ReplyCount = 0;
-        RecvCount = 0;
-        CmdSta = STA_FAIL;
-    } 
+    // expect block data for Ax,Bx,Ex
 
     // The SDC uses the low nibble of the command code as an additional
     // argument so this gets passed to the command processor.
@@ -335,7 +379,6 @@ void SDCCommand(int code)
 //----------------------------------------------------------------------
 void StartBlockRecv(int code)
 {
-    code = CmdCode;
     if (!SDC_Mode) {
         PrintLogC("Not SDC mode send Ignored\n");
         CmdSta = STA_FAIL;
@@ -345,6 +388,8 @@ void StartBlockRecv(int code)
         CmdSta = STA_FAIL;
         return;
     }
+
+    PrintLogC("Block receive started %x\n",code);
 
     // Save code for CommandComplete
     CmdCode = code;
@@ -362,6 +407,8 @@ void CommandComplete()
 {
     int loNib = CmdCode & 0xF;
     int hiNib = CmdCode & 0xF0;
+
+    PrintLogC("Block receive complete %X %X\n",hiNib,loNib);
 
     switch (hiNib) {
     case 0xA0:
@@ -466,7 +513,7 @@ void WriteSector(int loNib)
     int lsn = CmdPrm1 * 256 * 256 + CmdPrm2 * 256 + CmdPrm3;
     PrintLogC("\nWriteSec %d lsn %d ",lsn);
     PrintLogC("Not supported\n");
-    CmdSta = STA_FAIL;  // Fail
+    CmdSta = STA_FAIL|STA_NOTFOUND;  // Fail
 }
 
 //----------------------------------------------------------------------
@@ -476,8 +523,10 @@ void GetDriveInfo(int loNib)
 {
      if (!SDC_Mode) {
         PrintLogC("GetInfo Ignored\n");
-         return;
+        return;
      }
+
+    PrintLogC("C:%x.%x\n",loNib,CmdPrm1);
 
     int drive = loNib & 1;
     switch (CmdPrm1) {
@@ -486,8 +535,9 @@ void GetDriveInfo(int loNib)
         break;
 
     case 'e':
-        PrintLogC("WFT is $%0X supposed to do?\n",CmdPrm1);
-        LoadReply((void *) "What the fuck?",64);
+        CmdSta = STA_FAIL;
+        PrintLogC("WTF is $%0X supposed to do?\n",CmdPrm1);
+        //LoadReply((void *) "",64);
         break;
 
     default:
@@ -499,16 +549,22 @@ void GetDriveInfo(int loNib)
 }
 
 //----------------------------------------------------------------------
-// Abort stream or mount disk in a set of disks?
+// Abort stream or mount disk in a set of disks.
 //----------------------------------------------------------------------
 void SDCControl(int loNib)
 {
-PrintLogC(".");
-//  Why is CmdPrm1 being set to $5A by SDC-DOS when it starts up?
-//  TODO abort stream here.
-    ReplyCount = 0;
-    RecvCount = 0;
-    SetMode(0);
+    // If a transfer is in progress abort it and return an error.
+    if ((ReplyCount > 0) || (RecvCount > 0)) {
+        PrintLogC("**Block Transfer Aborted**\n");
+        ReplyCount = 0;
+        RecvCount = 0;
+        CmdSta = 0;
+        return;
+    } 
+
+    // Todo Mount Disk in set 
+    PrintLogC("D:%d.%d\n",loNib,CmdPrm1);
+    CmdSta = STA_FAIL | STA_NOTFOUND | STA_HWERROR;
 }
 
 //----------------------------------------------------------------------
@@ -528,7 +584,7 @@ void SetDrive(int loNib)
 
 //----------------------------------------------------------------------
 // Load reply.  Buffer bytes are swapped within words so they
-// are read in the correct order.  Count is bytes, 256 max
+// are read in the correct order.  Count is bytes, 512 max
 //----------------------------------------------------------------------
 void LoadReply(void *data, int count)
 {
@@ -536,12 +592,13 @@ void LoadReply(void *data, int count)
         //PrintLogC("Load reply busy\n");
         CmdSta = STA_FAIL;
         return;
-    } else if ((count < 2) | (count > 256)) {
+    } else if ((count < 2) | (count > 512)) {
         //PrintLogC("Load reply bad count\n");
         CmdSta = STA_FAIL;
         return;
     }
 
+    // Copy data to the reply buffer with bytes swapped in words
     char *dp = (char *) data;
     char *bp = ReplyBuf;
     char tmp;
@@ -551,9 +608,15 @@ void LoadReply(void *data, int count)
         *bp++ = *dp++;
         *bp++ = tmp;
     }
+
     CmdSta = STA_READY;
     ReplyPtr = ReplyBuf;
-    ReplyCount = 256;
+    ReplyCount = count;
+
+    // If port reads exceed the count zeros will be returned
+    CmdPrm2 = 0;
+    CmdPrm3 = 0;
+
     //PrintLogC("Loaded %d reply bytes\n",count);
     return;
 }

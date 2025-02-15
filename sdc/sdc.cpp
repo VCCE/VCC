@@ -2,39 +2,27 @@
 // This file is part of VCC (Virtual Color Computer).
 // Vcc is Copyright 2015 by Joseph Forgione
 //
-// VCC (Virtual Color Computer) is free software, you can redistribute it
-// and/or modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation, either version 3 of the License,
-// or (at your option) any later version.
+// VCC (Virtual Color Computer) is free software, you can redistribute
+// and/or modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version.
 //
-// VCC (Virtual Color Computer) is distributed in the hope that it will be
-// useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
-// Public License for more details.
+// VCC (Virtual Color Computer) is distributed in the hope that it will
+// be useful, but WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
 // along with VCC (Virtual Color Computer).  If not, see
 // <http://www.gnu.org/licenses/>.
 //----------------------------------------------------------------------
 
-
-//#include <windows.h>
-//#include <windowsx.h>
-//#include <stdio.h>
-//#include <conio.h>
-//#include <dinput.h>
-//#include "resource.h"
-
-
 #include <windows.h>
-#include <windowsx.h>
-//#include <stdio.h>
-//#include <iostream>
-#include "defines.h"
+#include "../defines.h"
+#include "../fileops.h"
+#include "../logger.h"
 #include "resource.h"
 #include "sdcavr.h"
-#include "..\fileops.h"
-#include "..\logger.h"
 
 static char IniFile[MAX_PATH]={0};    // Ini file name from config
 static char SDCardPath[MAX_PATH]={0}; // Path to SD card contents
@@ -53,7 +41,8 @@ void LoadConfig(void);
 void SaveConfig(void);
 void BuildDynaMenu(void);
 void SetSDCardPath(void);
-void LoadExtRom(char *);
+bool LoadRom(char *);
+unsigned char PakRom[0x4000];
 
 using namespace std;
 
@@ -64,7 +53,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 {
     if (reason == DLL_PROCESS_ATTACH) {
         hinstDLL = hinst;
-        LoadExtRom("SDC.ROM");
+        LoadRom("SDC-DOS.ROM");
         SDCInit();
 
     } else if (reason == DLL_PROCESS_DETACH) {
@@ -130,9 +119,9 @@ extern "C"
     }
 }
 
-//-----------------------------------------------------------------------
+//-------------------------------------------------------------------
 //  Dll export run config dialog
-//-----------------------------------------------------------------------
+//-------------------------------------------------------------------
 extern "C"
 {
     __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
@@ -232,6 +221,21 @@ extern "C"
     }
 }
 
+//------------------------------------------------------------
+// Return a byte from the current PAK ROM
+//------------------------------------------------------------
+extern "C"
+{
+	__declspec(dllexport) unsigned char 
+    PakMemRead8(unsigned short adr)
+	{
+		return(PakRom[adr & 0x3ffff]);
+	}
+}
+
+//------------------------------------------------------------
+//   Assert Interupt
+//------------------------------------------------------------
 /*
 void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
 {
@@ -284,6 +288,30 @@ void BuildDynaMenu(void)
 //-------------------------------------------------------------
 // Load SDC rom
 //-------------------------------------------------------------
-void LoadExtRom(char * path) {
-}
 
+bool LoadRom(char *RomName)	//Returns true if loaded
+{
+
+    int ch;
+    int ctr = 0;
+	char RomPath[MAX_PATH];
+
+	GetModuleFileName(NULL, RomPath, MAX_PATH);
+	PathRemoveFileSpec(RomPath);
+	strncat(RomPath,RomName,MAX_PATH);
+
+PrintLogC("Loading %s\n",RomPath);
+
+	FILE *h = fopen(RomName, "rb");
+	memset(PakRom, 0xFF, 0x4000);
+	if (h == NULL) return false;
+
+    unsigned char *p = PakRom;
+    while (ctr++ < 0x4000) {
+        if ((ch = fgetc(h)) < 0) break;
+        *p++ = (unsigned char) ch;
+    }
+
+	fclose(h);
+	return true;
+}
