@@ -93,7 +93,7 @@ void UnusedCommand(int);
 void GetDriveInfo(int);
 void SDCControl(int);
 void SetDrive(int);
-void LoadDrive (int,char *,char *);
+void LoadDrive (int,char *);
 void UnLoadDrive (int);
 void CloseDrive (int);
 void OpenDrive (int);
@@ -136,7 +136,7 @@ unsigned char FlshDat = 0;
 // Rom bank currently selected
 unsigned char CurrentBank = 0;
 
-// Command send buffer. Block data from Coco lands here. 
+// Command send buffer. Block data from Coco lands here.
 // Buffer is sized to hold at least 256 bytes. (for sector writes)
 char RecvBuf[300];
 int RecvCount = 0;
@@ -148,14 +148,15 @@ char ReplyBuf[600];
 int ReplyCount = 0;
 char *ReplyPtr = ReplyBuf;
 
-// Drive handles
+// Drive filenames and handles
+char FileName0[MAX_PATH] = {};
+char FileName1[MAX_PATH] = {};
 HANDLE hDrive[2] = {NULL,NULL};
 
-// SD card root and the directory within.
+// SD card root and the directories within.
 char SDCard[MAX_PATH] = {};
-char SDCdir[MAX_PATH] = {};
 
-// Drive info buffers
+// Drive info buffers for SDC-ROM
 #pragma pack(1)
 struct Drive_Info {
     char name[8];
@@ -181,11 +182,11 @@ SetConsoleWindowInfo(hLog,true,&r);
 
 // TODO look for startup.cfg, which typically contains
 //   0=/SDCEXP.DSK
-SetCDRoot("C:\\Users\\ed\\vcc\\sets\\SDC\\SDRoot");
-*SDCdir = '\0';
-LoadDrive(0,"SDCEXP","DSK");
 
-//LoadDrive(1,"BGAMES","DSK");
+SetCDRoot("C:\\Users\\ed\\vcc\\sets\\SDC\\SDRoot");
+LoadDrive(0,"SDCEXP.DSK");
+LoadDrive(1,"PROG\\SIGMON6.DSK");
+
     CurrentBank = 0;
     SetMode(0);
     return;
@@ -266,7 +267,6 @@ unsigned char SDCRead(unsigned char port)
         break;
     case 0x43:
         rpy = CurrentBank | (FlshDat & 0xF8);
-        PrintLogC("FControlR %02x\n",rpy);
         break;
     case 0x48:
         rpy = CmdSta;
@@ -315,24 +315,18 @@ void BankSelect(int data)
 //----------------------------------------------------------------------
 void SetMode(int data)
 {
-
-//if (data==0x43) PrintLogC("\n");
-//PrintLogC("M:%02X ",data);
-
     if (data == 0) {
         SDC_Mode = false;
-//        CmdPrm3 = 0;
     } else if (data == 0x43) {
         SDC_Mode = true;
-//        CmdSta  = 0;
     }
-        CmdSta  = 0;
-        CmdRpy1 = 0;
-        CmdRpy2 = 0;
-        CmdRpy3 = 0;
-        CmdPrm1 = 0;
-        CmdPrm2 = 0;
-        CmdPrm3 = 0;
+    CmdSta  = 0;
+    CmdRpy1 = 0;
+    CmdRpy2 = 0;
+    CmdRpy3 = 0;
+    CmdPrm1 = 0;
+    CmdPrm2 = 0;
+    CmdPrm3 = 0;
     return;
 }
 
@@ -375,7 +369,7 @@ void SDCCommand(int code)
 }
 
 //----------------------------------------------------------------------
-// Command Ax or Ex block transfer start 
+// Command Ax or Ex block transfer start
 //----------------------------------------------------------------------
 void StartBlockRecv(int code)
 {
@@ -560,9 +554,9 @@ void SDCControl(int loNib)
         RecvCount = 0;
         CmdSta = 0;
         return;
-    } 
+    }
 
-    // Todo Mount Disk in set 
+    // Todo Mount Disk in set
     PrintLogC("D:%d.%d\n",loNib,CmdPrm1);
     CmdSta = STA_FAIL | STA_NOTFOUND | STA_HWERROR;
 }
@@ -627,7 +621,7 @@ void LoadReply(void *data, int count)
 void SetCDRoot(char * path)
 {
     DWORD attr = GetFileAttributes(path);
-    if ( (attr == INVALID_FILE_ATTRIBUTES) || 
+    if ( (attr == INVALID_FILE_ATTRIBUTES) ||
          !(attr & FILE_ATTRIBUTE_DIRECTORY)) {
         PrintLogC("\nInvalid CD root %X %s\n",attr,path);
         return;
@@ -639,10 +633,29 @@ void SetCDRoot(char * path)
 //----------------------------------------------------------------------
 // Load Drive
 //----------------------------------------------------------------------
-void LoadDrive (int drive, char * name, char * type)
+void LoadDrive (int drive, char * name)
 {
-    strncpy(DriveInfo[drive].name,name,8);
-    strncpy(DriveInfo[drive].type,type,3);
+    int i;
+    drive &= 1;
+    char *pPath = (drive == 0) ? FileName0 : FileName1;
+    strncpy(pPath, SDCard, MAX_PATH);
+    strncat(pPath, "\\", MAX_PATH);
+    strncat(pPath, name, MAX_PATH);
+
+    memset(DriveInfo[drive].name,' ',8);
+    memset(DriveInfo[drive].type,' ',8);
+
+    char * p = strrchr(pPath,'\\') + 1;
+    for (i=0;i<8;i++) {
+        char c = *p++;
+        if ((c == '.') || (c == 0)) break;
+        DriveInfo[drive].name[i] = c;
+    }
+    for (i=0;i<3;i++) {
+        char c = *p++;
+        if (c == 0) break;
+        DriveInfo[drive].type[i] = c;
+    }
 }
 
 //----------------------------------------------------------------------
@@ -652,6 +665,10 @@ void UnLoadDrive (int drive)
 {
     CloseDrive(drive);
     memset((void *) &DriveInfo[drive], 0, sizeof(Drive_Info));
+    if (drive == 0)
+        *FileName0 = '\0';
+    else
+        *FileName1 = '\0';
 }
 
 //----------------------------------------------------------------------
@@ -661,33 +678,25 @@ BOOL FileExists(LPCTSTR szPath)
 {
   DWORD dwAttrib = GetFileAttributes(szPath);
 
-  return (dwAttrib != INVALID_FILE_ATTRIBUTES && 
+  return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
          !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
-
 
 //----------------------------------------------------------------------
 // Open virtual disk
 //----------------------------------------------------------------------
 void OpenDrive (int drive)
 {
-    PrintLogC("Opening Drive %d\n",drive);
-
     drive &= 1;
     if (hDrive[drive]) CloseDrive(drive);
 
-    char file[MAX_PATH];
-    if (strlen(DriveInfo[drive].name) > 0) {
-        snprintf(file, MAX_PATH, "%s\\%s\\%s.%s", SDCard, SDCdir,
-                 DriveInfo[drive].name, DriveInfo[drive].type);
-        DWORD attr = GetFileAttributes(file);
-        if ((attr == -1) || (attr & FILE_ATTRIBUTE_DIRECTORY)) {
-            PrintLogC("\nFile not found %d\n",drive);
-            CmdSta = STA_FAIL;
-            return;
-        }
-    } else {
-        PrintLogC("\nNo file to open in drive %d\n",drive);
+    char *file = (drive==0) ? FileName0 : FileName1;
+
+    // Locate the file
+    DWORD attr = GetFileAttributes(file);
+    if ((attr == -1) || (attr & FILE_ATTRIBUTE_DIRECTORY)) {
+        PrintLogC("\nFile not found %d\n",drive);
+        CmdSta = STA_FAIL;
         return;
     }
 
