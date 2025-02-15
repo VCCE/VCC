@@ -86,13 +86,14 @@
 
 void SetMode(int);
 void SDCCommand(int);
+int  CalcSectorNum(int);
 void ReadSector(int);
 void StreamImage(int);
 void WriteSector(int);
 void UnusedCommand(int);
 void GetDriveInfo(int);
 void SDCControl(int);
-void SetDrive(int);
+void UpdateSD(int);
 void LoadDrive (int,char *);
 void UnLoadDrive (int);
 void CloseDrive (int);
@@ -104,6 +105,7 @@ char * LastErrorTxt();
 void CommandComplete();
 void StartBlockRecv(int);
 void BankSelect(int);
+void LoadDirPage();
 
 // Status Register values
 #define STA_BUSY     0X01
@@ -120,11 +122,15 @@ void BankSelect(int);
 #define ATTR_HIDDEN 0x02
 #define ATTR_LOCKED 0x01
 
-#define CDOWN int n=9;while(n>0){PrintLogC("%d",n--);Sleep(1500);}PrintLogC("\n");
-
+// SDC Latch flag
 bool SDC_Mode=false;
+
+// Current and previous command code
+unsigned char CurCmdCode = 0;
+unsigned char PrvCmdCode = 0;
+
+// Command status and parameters
 unsigned char CmdSta = 0;
-unsigned char CmdCode = 0;
 unsigned char CmdRpy1 = 0;
 unsigned char CmdRpy2 = 0;
 unsigned char CmdRpy3 = 0;
@@ -132,6 +138,14 @@ unsigned char CmdPrm1 = 0;
 unsigned char CmdPrm2 = 0;
 unsigned char CmdPrm3 = 0;
 unsigned char FlshDat = 0;
+
+// Last drive lsn read or write. -1 means none
+int LastDrive    = -1;
+int LastReadLSN  = -1;
+int LastWriteLSN = -1;
+
+// Last block read from disk
+char LastReadBlock[512];
 
 // Rom bank currently selected
 unsigned char CurrentBank = 0;
@@ -174,11 +188,12 @@ struct Drive_Info DriveInfo[2];
 //----------------------------------------------------------------------
 void SDCInit()
 {
-
-PrintLogC("\n");
-HANDLE hLog = GetStdHandle(STD_OUTPUT_HANDLE);
-SMALL_RECT r; r.Left=0; r.Top=0; r.Right=40; r.Bottom=50;
-SetConsoleWindowInfo(hLog,true,&r);
+#ifdef _DEBUG_
+    _DLOG("\n");
+    HANDLE hLog = GetStdHandle(STD_OUTPUT_HANDLE);
+    SMALL_RECT r; r.Left=0; r.Top=0; r.Right=40; r.Bottom=36;
+    SetConsoleWindowInfo(hLog,true,&r);
+#endif
 
 // TODO look for startup.cfg, which typically contains
 //   0=/SDCEXP.DSK
@@ -197,7 +212,7 @@ LoadDrive(1,"PROG\\SIGMON6.DSK");
 //----------------------------------------------------------------------
 void SDCReset()
 {
-    PrintLogC("SDCREset Unloading Drives\n");
+    _DLOG("SDCREset Unloading Drives\n");
     UnLoadDrive (0);
     UnLoadDrive (1);
     SetMode(0);
@@ -224,15 +239,12 @@ void SDCWrite(unsigned char data,unsigned char port)
         SDCCommand(data);
         break;
     case 0x49:
-        //PrintLogC("W1:%02X ",data);
         CmdPrm1 = data;
         break;
     case 0x4A:
-        //PrintLogC("W2:%02X ",data);
         if (RecvCount > 0) GetByte(data); else CmdPrm2 = data;
         break;
     case 0x4B:
-        //PrintLogC("W3:%02X ",data);
         if (RecvCount > 0) GetByte(data); else CmdPrm3 = data;
         break;
     }
@@ -263,7 +275,7 @@ unsigned char SDCRead(unsigned char port)
     switch (port) {
     case 0x42:
         rpy = FlshDat;
-        PrintLogC("FDataR %02x\n",rpy);
+        _DLOG("FDataR %02x\n",rpy);
         break;
     case 0x43:
         rpy = CurrentBank | (FlshDat & 0xF8);
@@ -305,7 +317,7 @@ unsigned char PutByte()
 //----------------------------------------------------------------------
 void BankSelect(int data)
 {
-    PrintLogC("BankSelect %02x\n",data);
+    _DLOG("BankSelect %02x\n",data);
     CurrentBank = data & 7;
     //TODO: Load bank into rom;
 }
@@ -335,6 +347,10 @@ void SetMode(int data)
 //----------------------------------------------------------------------
 void SDCCommand(int code)
 {
+    // Save code for CommandComplete
+    PrvCmdCode = CurCmdCode;
+    CurCmdCode = code;
+
     // expect block data for Ax,Bx,Ex
 
     // The SDC uses the low nibble of the command code as an additional
@@ -362,6 +378,7 @@ void SDCCommand(int code)
         StartBlockRecv(code);
         break;
     default:
+        _DLOG("SDC command %02X not supported\n",code);
         CmdSta = STA_FAIL;  // Fail
         break;
     }
@@ -374,19 +391,14 @@ void SDCCommand(int code)
 void StartBlockRecv(int code)
 {
     if (!SDC_Mode) {
-        PrintLogC("Not SDC mode send Ignored\n");
+        _DLOG("Not SDC mode block receive ignored %02X\n",code);
         CmdSta = STA_FAIL;
         return;
     } else if ((code & 4) !=0 ) {
-        PrintLogC("8bit transfer not supported\n");
+        _DLOG("8bit block receive not supported %02X\n",code);
         CmdSta = STA_FAIL;
         return;
     }
-
-    PrintLogC("Block receive started %x\n",code);
-
-    // Save code for CommandComplete
-    CmdCode = code;
 
     // Set up the receive buffer
     CmdSta = STA_READY;
@@ -399,17 +411,14 @@ void StartBlockRecv(int code)
 //----------------------------------------------------------------------
 void CommandComplete()
 {
-    int loNib = CmdCode & 0xF;
-    int hiNib = CmdCode & 0xF0;
-
-    PrintLogC("Block receive complete %X %X\n",hiNib,loNib);
-
+    int loNib = CurCmdCode & 0xF;
+    int hiNib = CurCmdCode & 0xF0;
     switch (hiNib) {
     case 0xA0:
         WriteSector(loNib);
         break;
     case 0xE0:
-        SetDrive(loNib);
+        UpdateSD(loNib);
         break;
     default:
         CmdSta = STA_FAIL;
@@ -433,23 +442,26 @@ char * LastErrorTxt() {
 }
 
 //----------------------------------------------------------------------
+// Calculate sector.  numsides == 2 if double sided
+//----------------------------------------------------------------------
+int CalcSectorNum(int numsides)
+{
+    if (numsides != 2) {_DLOG("Not double sided\n");}
+    return (CmdPrm1 << 16) + (CmdPrm2 << 8) + CmdPrm3;
+}
+
+
+//----------------------------------------------------------------------
 // Read logical sector
 //----------------------------------------------------------------------
 void ReadSector(int loNib)
 {
-
-// loNib:
-// b0 Drive Num
-// b1 single sided LSN
-// b2 8bit transfers flag
-// p1, p2, p3  LSN
-
     if (!SDC_Mode) {
-        PrintLogC("Not SDC mode Read Ignored\n");
+        _DLOG("Not SDC mode Read ignored\n");
         CmdSta = STA_FAIL;
         return;
     } else if ((loNib & 4) !=0 ) {
-        PrintLogC("8bit transfer not supported\n");
+        _DLOG("Read 8bit transfer not supported\n");
         CmdSta = STA_FAIL;
         return;
     }
@@ -462,21 +474,26 @@ void ReadSector(int loNib)
         return;
     }
 
-    int lsn = (CmdPrm1 << 16) + (CmdPrm2 << 8) + CmdPrm3;
-    PrintLogC("Read drive %d lsn %d\n",drive,lsn);
+    int lsn = CalcSectorNum(loNib&2);
+    _DLOG("Read drive %d lsn %d\n",drive,lsn);
 
-    char dsec[260];
     LARGE_INTEGER pos;
     pos.QuadPart = lsn * 256;
-    SetFilePointerEx(hDrive[drive],pos,NULL,FILE_BEGIN);
+    if (!SetFilePointerEx(hDrive[drive],pos,NULL,FILE_BEGIN)) {
+        _DLOG("Seek error %s\n",LastErrorTxt());
+        CmdSta = STA_FAIL;
+    }
+
     DWORD cnt;
     DWORD num = 256;
-    ReadFile(hDrive[drive],dsec,num,&cnt,NULL);
+    ReadFile(hDrive[drive],LastReadBlock,num,&cnt,NULL);
     if (cnt != num) {
-        PrintLogC("Read error %s\n",LastErrorTxt());
+        _DLOG("Read error %s\n",LastErrorTxt());
         CmdSta = STA_FAIL;
     } else {
-        LoadReply(dsec,256);
+        LastDrive = drive;
+        LastReadLSN = lsn;
+        LoadReply(LastReadBlock,256);
     }
 }
 
@@ -485,13 +502,7 @@ void ReadSector(int loNib)
 //----------------------------------------------------------------------
 void StreamImage(int loNib)
 {
-    if (!SDC_Mode) {
-        PrintLogC("Stream Ignored\n");
-        return;
-    }
-    PrintLogC("\nStream %d %02X %02X %02X ",
-                loNib,CmdPrm1,CmdPrm2,CmdPrm3);
-    PrintLogC(" Not supported\n");
+    _DLOG("\nStream not supported\n");
     CmdSta = STA_FAIL;  // Fail
 }
 
@@ -501,13 +512,45 @@ void StreamImage(int loNib)
 void WriteSector(int loNib)
 {
     if (!SDC_Mode) {
-        PrintLogC("\nWriteSec Ignored\n");
+        _DLOG("Not SDC mode Write ignored\n");
+        CmdSta = STA_FAIL;
+        return;
+    } else if ((loNib & 4) !=0 ) {
+        _DLOG("Read 8bit transfer not supported\n");
+        CmdSta = STA_FAIL;
         return;
     }
-    int lsn = CmdPrm1 * 256 * 256 + CmdPrm2 * 256 + CmdPrm3;
-    PrintLogC("\nWriteSec %d lsn %d ",lsn);
-    PrintLogC("Not supported\n");
-    CmdSta = STA_FAIL|STA_NOTFOUND;  // Fail
+
+    int drive = loNib & 1;
+
+    if (hDrive[drive] == NULL) OpenDrive(drive);
+    if (hDrive[drive] == NULL) {
+        CmdSta = STA_FAIL|STA_NOTFOUND;
+        return;
+    }
+
+    int lsn = CalcSectorNum(loNib&2);
+    _DLOG("Write drive %d lsn %d\n",drive,lsn);
+
+    LARGE_INTEGER pos;
+    pos.QuadPart = lsn * 256;
+    if (!SetFilePointerEx(hDrive[drive],pos,NULL,FILE_BEGIN)) {
+        _DLOG("Seek error %s\n",LastErrorTxt());
+        CmdSta = STA_FAIL|STA_NOTFOUND;
+    }
+
+    DWORD cnt;
+    DWORD num = 256;
+    WriteFile(hDrive[drive], RecvBuf, num,&cnt,NULL);
+    if (cnt != num) {
+        _DLOG("Write error %s\n",LastErrorTxt());
+        CmdSta = STA_FAIL;
+        CmdSta = STA_FAIL|STA_NOTFOUND;
+    } else {
+        LastDrive = drive;
+        LastWriteLSN = lsn;
+        CmdSta = 0;
+    }
 }
 
 //----------------------------------------------------------------------
@@ -516,64 +559,75 @@ void WriteSector(int loNib)
 void GetDriveInfo(int loNib)
 {
      if (!SDC_Mode) {
-        PrintLogC("GetInfo Ignored\n");
+        _DLOG("Not SDC mode GetInfo ignored\n");
         return;
      }
 
-    PrintLogC("C:%x.%x\n",loNib,CmdPrm1);
-
     int drive = loNib & 1;
     switch (CmdPrm1) {
-    case 'I':
+    case 0x49:
+        // I - return drive information in block
         LoadReply( (void *) &DriveInfo[drive],64);
         break;
-
-    case 'e':
+    case 0x43:
+        // C Return current directory in block
+        _DLOG("GetInfo $%0X not supported\n",CmdPrm1);
         CmdSta = STA_FAIL;
-        PrintLogC("WTF is $%0X supposed to do?\n",CmdPrm1);
-        //LoadReply((void *) "",64);
         break;
-
+    case 0x51:
+        // Q Return the size of disk image in p1,p2,p3
+        _DLOG("GetInfo $%0X not supported\n",CmdPrm1);
+        CmdSta = STA_FAIL;
+        break;
+    case 0x3E:
+        // > Return directory page in block. Each block contains
+        // 16 directory entries. Command may be repeated until
+        // all directory entries are returned
+        LoadDirPage();
+        break;
+    case 0x2B:
+        // + Mount next next disk in set.  Mounts disks with a
+        // digit suffix, starting with '1'. May repeat
+        _DLOG("GetInfo $%0X not supported\n",CmdPrm1);
+        CmdSta = STA_FAIL;
+        break;
+    case 0x56:
+        // V Get BCD firmware version number in p2, p3.
+        CmdRpy2 = 0x01;
+        CmdRpy3 = 0x13;
+        break;
+    case 0x65:
+        // e Want something that is undocumented
+        _DLOG("GetInfo $%0X (%c) unknown\n",CmdPrm1,CmdPrm1);
+        CmdRpy1 = 0;
+        CmdRpy2 = 0;
+        CmdRpy3 = 0;
+        break;
     default:
-        PrintLogC("GetInfo $%0X not supported\n",CmdPrm1);
+        _DLOG("GetInfo $%0X (%c) not supported\n",CmdPrm1,CmdPrm1);
         CmdSta = STA_FAIL;
         break;
     }
-    return;
 }
 
 //----------------------------------------------------------------------
 // Abort stream or mount disk in a set of disks.
+// CmdPrm1  0: Next disk 1-9: specific disk.
+// CmdPrm2 b0: Blink Enable
 //----------------------------------------------------------------------
 void SDCControl(int loNib)
 {
-    // If a transfer is in progress abort it and return an error.
+    // If a transfer is in progress abort it.
     if ((ReplyCount > 0) || (RecvCount > 0)) {
-        PrintLogC("**Block Transfer Aborted**\n");
+        _DLOG("**Block Transfer Aborted**\n");
         ReplyCount = 0;
         RecvCount = 0;
         CmdSta = 0;
-        return;
+    } else {
+        _DLOG("Mount disk in set not supported %d %d %d \n",
+                  loNib,CmdPrm1,CmdPrm2);
+        CmdSta = STA_FAIL | STA_NOTFOUND;
     }
-
-    // Todo Mount Disk in set
-    PrintLogC("D:%d.%d\n",loNib,CmdPrm1);
-    CmdSta = STA_FAIL | STA_NOTFOUND | STA_HWERROR;
-}
-
-//----------------------------------------------------------------------
-//  Mount or create image, set or create directory,
-//  list directory, delete file or directory
-//----------------------------------------------------------------------
-void SetDrive(int loNib)
-{
-    PrintLogC("\nSetDrive %d %02X %02X %02X ",
-               loNib,CmdPrm1,CmdPrm2,CmdPrm3);
-    if (!SDC_Mode) {
-        PrintLogC("Ignored\n");
-        return;
-    }
-    CmdSta = STA_FAIL;  // Fail
 }
 
 //----------------------------------------------------------------------
@@ -583,11 +637,11 @@ void SetDrive(int loNib)
 void LoadReply(void *data, int count)
 {
     if (CmdSta != 0) {
-        //PrintLogC("Load reply busy\n");
+        _DLOG("Load reply busy\n");
         CmdSta = STA_FAIL;
         return;
     } else if ((count < 2) | (count > 512)) {
-        //PrintLogC("Load reply bad count\n");
+        _DLOG("Load reply bad count\n");
         CmdSta = STA_FAIL;
         return;
     }
@@ -611,22 +665,7 @@ void LoadReply(void *data, int count)
     CmdPrm2 = 0;
     CmdPrm3 = 0;
 
-    //PrintLogC("Loaded %d reply bytes\n",count);
-    return;
-}
-
-//----------------------------------------------------------------------
-// Set the CD root
-//----------------------------------------------------------------------
-void SetCDRoot(char * path)
-{
-    DWORD attr = GetFileAttributes(path);
-    if ( (attr == INVALID_FILE_ATTRIBUTES) ||
-         !(attr & FILE_ATTRIBUTE_DIRECTORY)) {
-        PrintLogC("\nInvalid CD root %X %s\n",attr,path);
-        return;
-    }
-    strncpy(SDCard,path,MAX_PATH);
+    //_DLOG("Loaded %d reply bytes\n",count);
     return;
 }
 
@@ -695,7 +734,7 @@ void OpenDrive (int drive)
     // Locate the file
     DWORD attr = GetFileAttributes(file);
     if ((attr == -1) || (attr & FILE_ATTRIBUTE_DIRECTORY)) {
-        PrintLogC("\nFile not found %d\n",drive);
+        _DLOG("\nFile not found %d\n",drive);
         CmdSta = STA_FAIL;
         return;
     }
@@ -703,10 +742,11 @@ void OpenDrive (int drive)
     // TODO check for FILE_ATTRIBUTE_READONLY 0x1
 
     HANDLE hFile;
-    hFile = CreateFile( file, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                     FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile = CreateFile( file,
+            GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ,
+            NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == NULL) {
-        PrintLogC("Open %s drive %d file %s\n",
+        _DLOG("Open %s drive %d file %s\n",
                    drive,file,LastErrorTxt());
         CmdSta = STA_FAIL;
     }
@@ -714,7 +754,7 @@ void OpenDrive (int drive)
 
     BY_HANDLE_FILE_INFORMATION fileinfo;
     GetFileInformationByHandle(hFile,&fileinfo);
-    DriveInfo[drive].attrib = 0; // TODO set attrits
+    DriveInfo[drive].attrib = 0; // TODO set attribs
     DriveInfo[drive].lo_size = fileinfo.nFileSizeLow;
     DriveInfo[drive].hi_size = fileinfo.nFileSizeHigh;
 
@@ -739,9 +779,94 @@ void CloseDrive (int drive)
 {
     drive &= 1;
     if (hDrive[drive] != NULL) {
-        PrintLogC("\nClosing Drive %d\n",drive);
+        _DLOG("\nClosing Drive %d\n",drive);
         CloseHandle(hDrive[drive]);
         hDrive[drive] = NULL;
     }
 }
 
+//----------------------------------------------------------------------
+//  Update SD Commands
+//----------------------------------------------------------------------
+void UpdateSD(int loNib)
+{
+    _DLOG("UpdateSD %02X %02X %02X %02X %02X '%s'\n",
+        CmdPrm1,CmdPrm2,CmdPrm3,RecvBuf[0],RecvBuf[1],&RecvBuf[2]);
+
+    switch (RecvBuf[0]) {
+    case 0x4d: //M
+    case 0x6d:
+        _DLOG("Mount image not Supported\n");
+        CmdSta = STA_FAIL;
+        break;
+    case 0x4E: //N
+    case 0x6E:
+        //  $FF49 0 for DSK image, number of cylinders for SDF
+        //  $FF4A hiNib 0 for DSK image, number of sides for SDF image
+        //  $FF4B 0
+        _DLOG("Mount new image not Supported\n");
+        CmdSta = STA_FAIL;
+        break;
+    case 0x44: //D
+        _DLOG("Set Current directory not Supported\n");
+        CmdSta = STA_FAIL;
+        break;
+    case 0x4C: //L
+        _DLOG("Initiate directory not Supported\n");
+        CmdSta = STA_FAIL;
+        break;
+    case 0x4B: //K
+        _DLOG("Create new directory not Supported\n");
+        CmdSta = STA_FAIL;
+        break;
+    case 0x5B: //X
+        _DLOG("Delete file or directory not Supported\n");
+        CmdSta = STA_FAIL;
+        break;
+    default:
+        _DLOG("Not Supported\n");
+        CmdSta = STA_FAIL;
+        break;
+    }
+}
+
+//----------------------------------------------------------------------
+// Set the CD root
+//----------------------------------------------------------------------
+void SetCDRoot(char * path)
+{
+    DWORD attr = GetFileAttributes(path);
+    if ( (attr == INVALID_FILE_ATTRIBUTES) ||
+         !(attr & FILE_ATTRIBUTE_DIRECTORY)) {
+        _DLOG("\nInvalid CD root %X %s\n",attr,path);
+        return;
+    }
+    strncpy(SDCard,path,MAX_PATH);
+    return;
+}
+
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+//char CurrendDir[MAX_PATH];
+//void ResetCurrentDir()
+//{
+//    strncpy(CurrentDir,SDCard,MAX_PATH);
+//}
+
+//----------------------------------------------------------------------
+// Load directory page, return block containing an array of 16
+// directory records:
+//	0-7 File Name
+//	8-10 Extension
+//	11 Attribute Bits:
+//		$10 Directory
+//		$02 Hidden
+//		$01 Locked
+//		12-15 Size in bytes (MSB first)
+//----------------------------------------------------------------------
+void LoadDirPage()
+{
+_DLOG("\nLoad directory page\n");
+    CmdSta = STA_FAIL;  // Fail
+    return;
+}

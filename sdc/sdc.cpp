@@ -300,7 +300,7 @@ bool LoadRom(char *RomName)	//Returns true if loaded
 	PathRemoveFileSpec(RomPath);
 	strncat(RomPath,RomName,MAX_PATH);
 
-PrintLogC("Loading %s\n",RomPath);
+    _DLOG("Loading %s\n",RomPath);
 
 	FILE *h = fopen(RomName, "rb");
 	memset(PakRom, 0xFF, 0x4000);

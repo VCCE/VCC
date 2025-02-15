@@ -17,6 +17,14 @@
 // along with VCC (Virtual Color Computer).  If not, see
 // <http://www.gnu.org/licenses/>.
 //----------------------------------------------------------------------
+
+#define _DEBUG_
+#ifdef _DEBUG_
+#define _DLOG(...) PrintLogC(__VA_ARGS__)
+#else
+#define _DLOG(...)
+#endif
+
 void SDCWrite(unsigned char data,unsigned char port);
 unsigned char SDCRead(unsigned char port);
 void SDCInit(void);
