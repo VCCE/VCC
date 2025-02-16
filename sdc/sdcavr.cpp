@@ -79,6 +79,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <sys/stat.h>
 #include "../defines.h"
 #include "../fileops.h"
 #include "../logger.h"
@@ -94,7 +95,7 @@ void UnusedCommand(int);
 void GetDriveInfo(int);
 void SDCControl(int);
 void UpdateSD(int);
-void LoadDrive (int,char *);
+void LoadDrive (int,const char *);
 void UnLoadDrive (int);
 void CloseDrive (int);
 void OpenDrive (int);
@@ -106,6 +107,7 @@ void CommandComplete();
 void StartBlockRecv(int);
 void BankSelect(int);
 void LoadDirPage();
+bool InitiateDir(const char *);
 
 // Status Register values
 #define STA_BUSY     0X01
@@ -116,18 +118,12 @@ void LoadDirPage();
 #define STA_DELETED  0X20
 #define STA_WPROTECT 0X40
 #define STA_FAIL     0x80
-// File Attribute values
-#define ATTR_DIR 0x10
-#define ATTR_SDF 0x04
-#define ATTR_HIDDEN 0x02
-#define ATTR_LOCKED 0x01
 
 // SDC Latch flag
 bool SDC_Mode=false;
 
 // Current and previous command code
 unsigned char CurCmdCode = 0;
-unsigned char PrvCmdCode = 0;
 
 // Command status and parameters
 unsigned char CmdSta = 0;
@@ -138,11 +134,6 @@ unsigned char CmdPrm1 = 0;
 unsigned char CmdPrm2 = 0;
 unsigned char CmdPrm3 = 0;
 unsigned char FlshDat = 0;
-
-// Last drive lsn read or write. -1 means none
-int LastDrive    = -1;
-int LastReadLSN  = -1;
-int LastWriteLSN = -1;
 
 // Last block read from disk
 char LastReadBlock[512];
@@ -167,21 +158,33 @@ char FileName0[MAX_PATH] = {};
 char FileName1[MAX_PATH] = {};
 HANDLE hDrive[2] = {NULL,NULL};
 
-// SD card root and the directories within.
+// SD card root
 char SDCard[MAX_PATH] = {};
 
-// Drive info buffers for SDC-ROM
+// File record
+#define ATTR_NORM   0x00
+#define ATTR_RDONLY 0x01
+#define ATTR_HIDDEN 0x02
+#define ATTR_DIR    0x10
+#define ATTR_SDF    0x04
 #pragma pack(1)
-struct Drive_Info {
+struct FileRecord {
     char name[8];
     char type[3];
     char attrib;
-    DWORD lo_size;
-    DWORD hi_size;
-    char bytes[240];
+    char hihi_size;
+    char lohi_size;
+    char hilo_size;
+    char lolo_size;
 };
 #pragma pack()
-struct Drive_Info DriveInfo[2];
+
+// Drive file info
+struct FileRecord DriveFile[2];
+
+// Windows file lookup handle and data
+HANDLE hFind;
+WIN32_FIND_DATAA dFound;
 
 //======================================================================
 // Init the controller
@@ -198,9 +201,9 @@ void SDCInit()
 // TODO look for startup.cfg, which typically contains
 //   0=/SDCEXP.DSK
 
-SetCDRoot("C:\\Users\\ed\\vcc\\sets\\SDC\\SDRoot");
+SetCDRoot("C:/Users/ed/vcc/sets/SDC/SDRoot");
 LoadDrive(0,"SDCEXP.DSK");
-LoadDrive(1,"PROG\\SIGMON6.DSK");
+LoadDrive(1,"PROG/SIGMON6.DSK");
 
     CurrentBank = 0;
     SetMode(0);
@@ -339,6 +342,9 @@ void SetMode(int data)
     CmdPrm1 = 0;
     CmdPrm2 = 0;
     CmdPrm3 = 0;
+    RecvCount = 0;
+    ReplyCount = 0;
+    CurCmdCode = 0;
     return;
 }
 
@@ -347,8 +353,15 @@ void SetMode(int data)
 //----------------------------------------------------------------------
 void SDCCommand(int code)
 {
+    // If busy or tranfer in progress abort whatever
+    if ((CmdSta & STA_BUSY) || (RecvCount > 0) || (ReplyCount > 0)) {
+        _DLOG("*** ABORTING ***\n");
+        SetMode(0);
+        CmdSta = STA_FAIL;
+        return;
+    }
+
     // Save code for CommandComplete
-    PrvCmdCode = CurCmdCode;
     CurCmdCode = code;
 
     // expect block data for Ax,Bx,Ex
@@ -401,7 +414,7 @@ void StartBlockRecv(int code)
     }
 
     // Set up the receive buffer
-    CmdSta = STA_READY;
+    CmdSta = STA_READY | STA_BUSY;
     RecvPtr = RecvBuf;
     RecvCount = 256;
 }
@@ -450,7 +463,6 @@ int CalcSectorNum(int numsides)
     return (CmdPrm1 << 16) + (CmdPrm2 << 8) + CmdPrm3;
 }
 
-
 //----------------------------------------------------------------------
 // Read logical sector
 //----------------------------------------------------------------------
@@ -491,8 +503,6 @@ void ReadSector(int loNib)
         _DLOG("Read error %s\n",LastErrorTxt());
         CmdSta = STA_FAIL;
     } else {
-        LastDrive = drive;
-        LastReadLSN = lsn;
         LoadReply(LastReadBlock,256);
     }
 }
@@ -547,8 +557,6 @@ void WriteSector(int loNib)
         CmdSta = STA_FAIL;
         CmdSta = STA_FAIL|STA_NOTFOUND;
     } else {
-        LastDrive = drive;
-        LastWriteLSN = lsn;
         CmdSta = 0;
     }
 }
@@ -567,7 +575,7 @@ void GetDriveInfo(int loNib)
     switch (CmdPrm1) {
     case 0x49:
         // I - return drive information in block
-        LoadReply( (void *) &DriveInfo[drive],64);
+        LoadReply((void *) &DriveFile[drive],sizeof(FileRecord));
         break;
     case 0x43:
         // C Return current directory in block
@@ -580,9 +588,6 @@ void GetDriveInfo(int loNib)
         CmdSta = STA_FAIL;
         break;
     case 0x3E:
-        // > Return directory page in block. Each block contains
-        // 16 directory entries. Command may be repeated until
-        // all directory entries are returned
         LoadDirPage();
         break;
     case 0x2B:
@@ -646,6 +651,8 @@ void LoadReply(void *data, int count)
         return;
     }
 
+    //_DLOG("Load Reply %d\n",count);
+
     // Copy data to the reply buffer with bytes swapped in words
     char *dp = (char *) data;
     char *bp = ReplyBuf;
@@ -670,31 +677,67 @@ void LoadReply(void *data, int count)
 }
 
 //----------------------------------------------------------------------
-// Load Drive
+// Load file record
 //----------------------------------------------------------------------
-void LoadDrive (int drive, char * name)
+bool LoadFileRecord(char * file, FileRecord * rec)
 {
     int i;
+    char c;
+    memset(rec,0,sizeof(rec));
+
+    char * p = strrchr(file,'/');
+    if (p == NULL) {
+        _DLOG("Load file record no backslash\n");
+        return false;
+    }
+    p++;
+
+    memset(rec->name,' ',8);
+    for (i=0;i<8;i++) {
+        c = *p++;
+        if ((c == '.') || (c == 0)) break;
+        rec->name[i] = c;
+    }
+
+    memset(rec->type,' ',3);
+    if (c == '.') {
+        for (i=0;i<3;i++) {
+            c = *p++;
+            if (c == 0) break;
+            rec->type[i] = c;
+        }
+    }
+
+    struct _stat fs;
+    if (_stat(file,&fs) != 0) {
+        _DLOG("File not found %s\n",file);
+        return false;
+    }
+
+    //WIN32_FILE_ATTRIBUTE_DATA fdat;
+    //GetFileAttributesEx(file, GetFileExInfoStandard, &fdat);
+    //_DLOG("Load FR %s %d bytes\n",file,fdat.nFileSizeLow);
+
+    rec->lolo_size = (fs.st_size) & 0xff;
+    rec->hilo_size = (fs.st_size >> 8) & 0xff;
+    rec->lohi_size = (fs.st_size >> 16) & 0xff;
+    rec->hihi_size = (fs.st_size >> 24) & 0xff;
+
+    rec->attrib = (fs.st_mode & _S_IFDIR) ? ATTR_DIR : ATTR_NORM;
+    return true;
+}
+
+//----------------------------------------------------------------------
+// Load Drive
+//----------------------------------------------------------------------
+void LoadDrive (int drive, const char * name)
+{
     drive &= 1;
     char *pPath = (drive == 0) ? FileName0 : FileName1;
     strncpy(pPath, SDCard, MAX_PATH);
-    strncat(pPath, "\\", MAX_PATH);
+    strncat(pPath, "/", MAX_PATH);
     strncat(pPath, name, MAX_PATH);
-
-    memset(DriveInfo[drive].name,' ',8);
-    memset(DriveInfo[drive].type,' ',8);
-
-    char * p = strrchr(pPath,'\\') + 1;
-    for (i=0;i<8;i++) {
-        char c = *p++;
-        if ((c == '.') || (c == 0)) break;
-        DriveInfo[drive].name[i] = c;
-    }
-    for (i=0;i<3;i++) {
-        char c = *p++;
-        if (c == 0) break;
-        DriveInfo[drive].type[i] = c;
-    }
+    LoadFileRecord(pPath, &DriveFile[drive]);
 }
 
 //----------------------------------------------------------------------
@@ -703,7 +746,7 @@ void LoadDrive (int drive, char * name)
 void UnLoadDrive (int drive)
 {
     CloseDrive(drive);
-    memset((void *) &DriveInfo[drive], 0, sizeof(Drive_Info));
+    memset((void *) &DriveFile[drive], 0, sizeof(FileRecord));
     if (drive == 0)
         *FileName0 = '\0';
     else
@@ -726,20 +769,19 @@ BOOL FileExists(LPCTSTR szPath)
 //----------------------------------------------------------------------
 void OpenDrive (int drive)
 {
+
     drive &= 1;
     if (hDrive[drive]) CloseDrive(drive);
 
     char *file = (drive==0) ? FileName0 : FileName1;
 
-    // Locate the file
-    DWORD attr = GetFileAttributes(file);
-    if ((attr == -1) || (attr & FILE_ATTRIBUTE_DIRECTORY)) {
-        _DLOG("\nFile not found %d\n",drive);
+    _DLOG("Opening %s\n",file);
+
+    if (DriveFile[drive].attrib & ATTR_DIR) {
+        _DLOG("File is a directory\n");
         CmdSta = STA_FAIL;
         return;
     }
-
-    // TODO check for FILE_ATTRIBUTE_READONLY 0x1
 
     HANDLE hFile;
     hFile = CreateFile( file,
@@ -752,24 +794,6 @@ void OpenDrive (int drive)
     }
     hDrive[drive] = hFile;
 
-    BY_HANDLE_FILE_INFORMATION fileinfo;
-    GetFileInformationByHandle(hFile,&fileinfo);
-    DriveInfo[drive].attrib = 0; // TODO set attribs
-    DriveInfo[drive].lo_size = fileinfo.nFileSizeLow;
-    DriveInfo[drive].hi_size = fileinfo.nFileSizeHigh;
-
-//typedef struct _BY_HANDLE_FILE_INFORMATION {
-//  DWORD    dwFileAttributes;
-//  FILETIME ftCreationTime;
-//  FILETIME ftLastAccessTime;
-//  FILETIME ftLastWriteTime;
-//  DWORD    dwVolumeSerialNumber;
-//  DWORD    nFileSizeHigh;
-//  DWORD    nFileSizeLow;
-//  DWORD    nNumberOfLinks;
-//  DWORD    nFileIndexHigh;
-//  DWORD    nFileIndexLow;
-//} *LPBY_HANDLE_FILE_INFORMATION;
 }
 
 //----------------------------------------------------------------------
@@ -812,8 +836,7 @@ void UpdateSD(int loNib)
         CmdSta = STA_FAIL;
         break;
     case 0x4C: //L
-        _DLOG("Initiate directory not Supported\n");
-        CmdSta = STA_FAIL;
+        CmdSta = (InitiateDir(&RecvBuf[2])) ? 0 : STA_FAIL;
         break;
     case 0x4B: //K
         _DLOG("Create new directory not Supported\n");
@@ -846,27 +869,40 @@ void SetCDRoot(char * path)
 }
 
 //----------------------------------------------------------------------
+// Initialize Directory search
 //----------------------------------------------------------------------
-//char CurrendDir[MAX_PATH];
-//void ResetCurrentDir()
-//{
-//    strncpy(CurrentDir,SDCard,MAX_PATH);
-//}
+
+bool InitiateDir(const char * wildcard)
+{
+    char search[MAX_PATH];
+    strncpy(search,SDCard,MAX_PATH);
+    strncat(search,"/",MAX_PATH);
+    strncat(search,wildcard,MAX_PATH);
+    hFind = FindFirstFile(search, &dFound);
+    return (hFind != INVALID_HANDLE_VALUE);
+}
 
 //----------------------------------------------------------------------
-// Load directory page, return block containing an array of 16
-// directory records:
-//	0-7 File Name
-//	8-10 Extension
-//	11 Attribute Bits:
-//		$10 Directory
-//		$02 Hidden
-//		$01 Locked
-//		12-15 Size in bytes (MSB first)
+// Load directory page containing up to 16 file records:
 //----------------------------------------------------------------------
 void LoadDirPage()
 {
-_DLOG("\nLoad directory page\n");
-    CmdSta = STA_FAIL;  // Fail
+    struct FileRecord dpage[16];
+    memset(dpage,0,sizeof(dpage));
+    char fqn[MAX_PATH];
+    int cnt = 0;
+    while (cnt < 16) {
+        //_DLOG("%d %s\n",cnt,dFound.cFileName);
+        if (FindNextFile(hFind,&dFound) == 0) break;
+        if (*dFound.cFileName != '.') {
+            strncpy(fqn,SDCard,MAX_PATH);
+            strncat(fqn,"/",MAX_PATH);
+            strncat(fqn,dFound.cFileName,MAX_PATH);
+            LoadFileRecord(fqn,&dpage[cnt]);
+            cnt++;
+        }
+        if (cnt == 16) break;
+    }
+    LoadReply(dpage,256);
     return;
 }
