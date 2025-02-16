@@ -101,10 +101,10 @@ void CloseDrive (int);
 void OpenDrive (int);
 void LoadReply(void *, int);
 unsigned char PutByte();
-void GetByte(unsigned char);
+void ReceiveByte(unsigned char);
 char * LastErrorTxt();
-void CommandComplete();
-void StartBlockRecv(int);
+void CmdBlockRecvComplete();
+void CmdBlockRecvStart(int);
 void BankSelect(int);
 void LoadDirPage();
 bool InitiateDir(const char *);
@@ -122,8 +122,11 @@ bool InitiateDir(const char *);
 // SDC Latch flag
 bool SDC_Mode=false;
 
-// Current and previous command code
+// Current command code
 unsigned char CurCmdCode = 0;
+
+// Current sector for Disk I/O
+int CurSectorNum = -1;
 
 // Command status and parameters
 unsigned char CmdSta = 0;
@@ -245,10 +248,10 @@ void SDCWrite(unsigned char data,unsigned char port)
         CmdPrm1 = data;
         break;
     case 0x4A:
-        if (RecvCount > 0) GetByte(data); else CmdPrm2 = data;
+        if (RecvCount > 0) ReceiveByte(data); else CmdPrm2 = data;
         break;
     case 0x4B:
-        if (RecvCount > 0) GetByte(data); else CmdPrm3 = data;
+        if (RecvCount > 0) ReceiveByte(data); else CmdPrm3 = data;
         break;
     }
     return;
@@ -257,11 +260,11 @@ void SDCWrite(unsigned char data,unsigned char port)
 //----------------------------------------------------------------------
 // Get byte for receive buffer.
 //----------------------------------------------------------------------
-void GetByte(unsigned char byte)
+void ReceiveByte(unsigned char byte)
 {
     RecvCount--;
     if (RecvCount < 1) {
-        CommandComplete();
+        CmdBlockRecvComplete();
         CmdSta = 0;
     } else {
         CmdSta |= STA_BUSY;
@@ -361,10 +364,11 @@ void SDCCommand(int code)
         return;
     }
 
-    // Save code for CommandComplete
+    //Invalidate sector number for disk I/O.
+    //Set when disk I/O command is received.
+    CurSectorNum = -1;
+    // Save code for CmdBlockRecvComplete
     CurCmdCode = code;
-
-    // expect block data for Ax,Bx,Ex
 
     // The SDC uses the low nibble of the command code as an additional
     // argument so this gets passed to the command processor.
@@ -373,13 +377,16 @@ void SDCCommand(int code)
 
     switch (hiNib) {
     case 0x80:
+        CurSectorNum = CalcSectorNum(loNib);
         ReadSector(loNib);
         break;
     case 0x90:
+        CurSectorNum = CalcSectorNum(loNib);
         StreamImage(loNib);
         break;
     case 0xA0:
-        StartBlockRecv(code);
+        CurSectorNum = CalcSectorNum(loNib);
+        CmdBlockRecvStart(code);
         break;
     case 0xC0:
         GetDriveInfo(loNib);
@@ -388,7 +395,7 @@ void SDCCommand(int code)
         SDCControl(loNib);
         break;
     case 0xE0:
-        StartBlockRecv(code);
+        CmdBlockRecvStart(code);
         break;
     default:
         _DLOG("SDC command %02X not supported\n",code);
@@ -399,9 +406,18 @@ void SDCCommand(int code)
 }
 
 //----------------------------------------------------------------------
+// Calculate sector.  numsides == 2 if double sided
+//----------------------------------------------------------------------
+int CalcSectorNum(int loNib)
+{
+    if (!(loNib & 2)) {_DLOG("Not double sided\n");}
+    return (CmdPrm1 << 16) + (CmdPrm2 << 8) + CmdPrm3;
+}
+
+//----------------------------------------------------------------------
 // Command Ax or Ex block transfer start
 //----------------------------------------------------------------------
-void StartBlockRecv(int code)
+void CmdBlockRecvStart(int code)
 {
     if (!SDC_Mode) {
         _DLOG("Not SDC mode block receive ignored %02X\n",code);
@@ -422,7 +438,7 @@ void StartBlockRecv(int code)
 //----------------------------------------------------------------------
 // Command Ax or Ex block transfer complete
 //----------------------------------------------------------------------
-void CommandComplete()
+void CmdBlockRecvComplete()
 {
     int loNib = CurCmdCode & 0xF;
     int hiNib = CurCmdCode & 0xF0;
@@ -455,15 +471,6 @@ char * LastErrorTxt() {
 }
 
 //----------------------------------------------------------------------
-// Calculate sector.  numsides == 2 if double sided
-//----------------------------------------------------------------------
-int CalcSectorNum(int numsides)
-{
-    if (numsides != 2) {_DLOG("Not double sided\n");}
-    return (CmdPrm1 << 16) + (CmdPrm2 << 8) + CmdPrm3;
-}
-
-//----------------------------------------------------------------------
 // Read logical sector
 //----------------------------------------------------------------------
 void ReadSector(int loNib)
@@ -476,6 +483,10 @@ void ReadSector(int loNib)
         _DLOG("Read 8bit transfer not supported\n");
         CmdSta = STA_FAIL;
         return;
+    } else if (CurSectorNum < 0) {
+        _DLOG("Read invalid sector number\n");
+        CmdSta = STA_FAIL;
+        return;
     }
 
     int drive = loNib & 1;
@@ -486,8 +497,9 @@ void ReadSector(int loNib)
         return;
     }
 
-    int lsn = CalcSectorNum(loNib&2);
-    _DLOG("Read drive %d lsn %d\n",drive,lsn);
+    int lsn = CurSectorNum;
+
+    //_DLOG("Read drive %d lsn %d\n",drive,lsn);
 
     LARGE_INTEGER pos;
     pos.QuadPart = lsn * 256;
@@ -512,7 +524,13 @@ void ReadSector(int loNib)
 //----------------------------------------------------------------------
 void StreamImage(int loNib)
 {
-    _DLOG("\nStream not supported\n");
+    if (CurSectorNum < 0) {
+        _DLOG("Stream invalid sector number\n");
+        CmdSta = STA_FAIL;
+        return;
+    }
+
+    _DLOG("Stream not supported\n");
     CmdSta = STA_FAIL;  // Fail
 }
 
@@ -521,26 +539,21 @@ void StreamImage(int loNib)
 //----------------------------------------------------------------------
 void WriteSector(int loNib)
 {
-    if (!SDC_Mode) {
-        _DLOG("Not SDC mode Write ignored\n");
-        CmdSta = STA_FAIL;
-        return;
-    } else if ((loNib & 4) !=0 ) {
-        _DLOG("Read 8bit transfer not supported\n");
+    if (CurSectorNum < 0) {
+        _DLOG("Write invalid sector number\n");
         CmdSta = STA_FAIL;
         return;
     }
 
     int drive = loNib & 1;
-
     if (hDrive[drive] == NULL) OpenDrive(drive);
     if (hDrive[drive] == NULL) {
         CmdSta = STA_FAIL|STA_NOTFOUND;
         return;
     }
 
-    int lsn = CalcSectorNum(loNib&2);
-    _DLOG("Write drive %d lsn %d\n",drive,lsn);
+    int lsn = CurSectorNum;
+    _DLOG("Write drive %d sector %d\n",drive,lsn);
 
     LARGE_INTEGER pos;
     pos.QuadPart = lsn * 256;
