@@ -95,6 +95,8 @@ void UnusedCommand(int);
 void GetDriveInfo(int);
 void SDCControl(int);
 void UpdateSD(int);
+void AppendPathChar(char *, char c);
+char FileAttrByte(const char *);
 void LoadDrive (int,const char *);
 void UnLoadDrive (int);
 void CloseDrive (int);
@@ -108,6 +110,8 @@ void CmdBlockRecvStart(int);
 void BankSelect(int);
 void LoadDirPage();
 bool InitiateDir(const char *);
+bool FileExists(const char * path);
+bool IsDirectory(const char * path);
 
 // Status Register values
 #define STA_BUSY     0X01
@@ -156,20 +160,24 @@ char ReplyBuf[600];
 int ReplyCount = 0;
 char *ReplyPtr = ReplyBuf;
 
-// Drive filenames and handles
-char FileName0[MAX_PATH] = {};
-char FileName1[MAX_PATH] = {};
+// Drive image filenames and handles
+char DiskImageName[2][MAX_PATH] = {"",""};
 HANDLE hDrive[2] = {NULL,NULL};
 
-// SD card root
-char SDCard[MAX_PATH] = {};
+// Host paths for SDC
+char SDCard[MAX_PATH] = {}; // SD card root directory
+char CurDir[MAX_PATH] = {}; // SDC current directory
+char SeaDir[MAX_PATH] = {}; // Last directory searched
+
+// Single byte file attributes
+#define ATTR_NORM    0x00
+#define ATTR_RDONLY  0x01
+#define ATTR_HIDDEN  0x02
+#define ATTR_SDF     0x04
+#define ATTR_DIR     0x10
+#define ATTR_INVALID -1  //not 0xFF because byte is signed
 
 // File record
-#define ATTR_NORM   0x00
-#define ATTR_RDONLY 0x01
-#define ATTR_HIDDEN 0x02
-#define ATTR_DIR    0x10
-#define ATTR_SDF    0x04
 #pragma pack(1)
 struct FileRecord {
     char name[8];
@@ -183,7 +191,7 @@ struct FileRecord {
 #pragma pack()
 
 // Drive file info
-struct FileRecord DriveFile[2];
+struct FileRecord DriveFileRec[2];
 
 // Windows file lookup handle and data
 HANDLE hFind;
@@ -205,6 +213,7 @@ void SDCInit()
 //   0=/SDCEXP.DSK
 
 SetCDRoot("C:/Users/ed/vcc/sets/SDC/SDRoot");
+//*CurDir = '\0';
 LoadDrive(0,"SDCEXP.DSK");
 LoadDrive(1,"PROG/SIGMON6.DSK");
 
@@ -364,10 +373,9 @@ void SDCCommand(int code)
         return;
     }
 
-    //Invalidate sector number for disk I/O.
-    //Set when disk I/O command is received.
+    // Set valid sector number only when disk I/O command is received.
     CurSectorNum = -1;
-    // Save code for CmdBlockRecvComplete
+    // Set valid command code only for commands that recieve a data block
     CurCmdCode = code;
 
     // The SDC uses the low nibble of the command code as an additional
@@ -378,14 +386,18 @@ void SDCCommand(int code)
     switch (hiNib) {
     case 0x80:
         CurSectorNum = CalcSectorNum(loNib);
+        _DLOG("Read Sector %d\n",CurSectorNum);
         ReadSector(loNib);
         break;
     case 0x90:
         CurSectorNum = CalcSectorNum(loNib);
+        _DLOG("Stream Sector %d\n",CurSectorNum);
         StreamImage(loNib);
         break;
     case 0xA0:
+        CurCmdCode = code;
         CurSectorNum = CalcSectorNum(loNib);
+        _DLOG("Write Sector %d\n",CurSectorNum);
         CmdBlockRecvStart(code);
         break;
     case 0xC0:
@@ -395,6 +407,7 @@ void SDCCommand(int code)
         SDCControl(loNib);
         break;
     case 0xE0:
+        CurCmdCode = code;
         CmdBlockRecvStart(code);
         break;
     default:
@@ -588,7 +601,7 @@ void GetDriveInfo(int loNib)
     switch (CmdPrm1) {
     case 0x49:
         // I - return drive information in block
-        LoadReply((void *) &DriveFile[drive],sizeof(FileRecord));
+        LoadReply((void *) &DriveFileRec[drive],sizeof(FileRecord));
         break;
     case 0x43:
         // C Return current directory in block
@@ -629,7 +642,7 @@ void GetDriveInfo(int loNib)
 }
 
 //----------------------------------------------------------------------
-// Abort stream or mount disk in a set of disks.
+// $DO Abort stream or mount disk in a set of disks.
 // CmdPrm1  0: Next disk 1-9: specific disk.
 // CmdPrm2 b0: Blink Enable
 //----------------------------------------------------------------------
@@ -685,8 +698,21 @@ void LoadReply(void *data, int count)
     CmdPrm2 = 0;
     CmdPrm3 = 0;
 
-    //_DLOG("Loaded %d reply bytes\n",count);
     return;
+}
+//----------------------------------------------------------------------
+// Return file attribute bits
+//----------------------------------------------------------------------
+char FileAttrByte(const char * file)
+{
+    DWORD Attr = GetFileAttributes(file);
+    if (Attr == INVALID_FILE_ATTRIBUTES) return ATTR_INVALID;
+
+    char retval = 0;
+    if (Attr & FILE_ATTRIBUTE_READONLY)  retval |= ATTR_RDONLY;
+    if (Attr & FILE_ATTRIBUTE_DIRECTORY) retval |= ATTR_DIR;
+    if (Attr & FILE_ATTRIBUTE_HIDDEN)    retval |= ATTR_HIDDEN;
+    return retval;
 }
 
 //----------------------------------------------------------------------
@@ -698,6 +724,12 @@ bool LoadFileRecord(char * file, FileRecord * rec)
     char c;
     memset(rec,0,sizeof(rec));
 
+    rec->attrib = FileAttrByte(file);
+    if (rec->attrib == ATTR_INVALID) {
+        _DLOG("Load file attibutes unavailable\n");
+        return false;
+    }
+
     char * p = strrchr(file,'/');
     if (p == NULL) {
         _DLOG("Load file record no backslash\n");
@@ -708,7 +740,7 @@ bool LoadFileRecord(char * file, FileRecord * rec)
     memset(rec->name,' ',8);
     for (i=0;i<8;i++) {
         c = *p++;
-        if ((c == '.') || (c == 0)) break;
+        if ((c == '.') || (c == '\0')) break;
         rec->name[i] = c;
     }
 
@@ -722,35 +754,49 @@ bool LoadFileRecord(char * file, FileRecord * rec)
     }
 
     struct _stat fs;
-    if (_stat(file,&fs) != 0) {
-        _DLOG("File not found %s\n",file);
+    int r=_stat(file,&fs);
+    if (r != 0) {
+        _DLOG("Stat returned $d file %s\n",r,file);
         return false;
     }
-
-    //WIN32_FILE_ATTRIBUTE_DATA fdat;
-    //GetFileAttributesEx(file, GetFileExInfoStandard, &fdat);
-    //_DLOG("Load FR %s %d bytes\n",file,fdat.nFileSizeLow);
 
     rec->lolo_size = (fs.st_size) & 0xff;
     rec->hilo_size = (fs.st_size >> 8) & 0xff;
     rec->lohi_size = (fs.st_size >> 16) & 0xff;
     rec->hihi_size = (fs.st_size >> 24) & 0xff;
 
-    rec->attrib = (fs.st_mode & _S_IFDIR) ? ATTR_DIR : ATTR_NORM;
     return true;
 }
 
 //----------------------------------------------------------------------
-// Load Drive
+// Load Drive.  If image path starts with '/' load drive relative
+// to SDRoot, else load drive relative to the current directory.
 //----------------------------------------------------------------------
-void LoadDrive (int drive, const char * name)
+void LoadDrive (int drive, const char * path)
 {
+    char fqn[MAX_PATH]={};
+
     drive &= 1;
-    char *pPath = (drive == 0) ? FileName0 : FileName1;
-    strncpy(pPath, SDCard, MAX_PATH);
-    strncat(pPath, "/", MAX_PATH);
-    strncat(pPath, name, MAX_PATH);
-    LoadFileRecord(pPath, &DriveFile[drive]);
+
+    if (*path != '/')
+        strncat(fqn,CurDir,MAX_PATH);
+    else
+        strncpy(fqn,SDCard,MAX_PATH);
+
+    strncat(fqn,path,MAX_PATH);
+
+    _DLOG("LoadDrive %d path %s\n",drive,fqn);
+
+    // Make sure the file exists
+    if (!FileExists(fqn)) {
+        _DLOG("image does not exist\n");
+        return;
+    }
+
+    // Set the image name and load the file record;
+    strncpy(DiskImageName[drive],fqn,MAX_PATH);
+    LoadFileRecord(fqn,&DriveFileRec[drive]);
+
 }
 
 //----------------------------------------------------------------------
@@ -759,20 +805,16 @@ void LoadDrive (int drive, const char * name)
 void UnLoadDrive (int drive)
 {
     CloseDrive(drive);
-    memset((void *) &DriveFile[drive], 0, sizeof(FileRecord));
-    if (drive == 0)
-        *FileName0 = '\0';
-    else
-        *FileName1 = '\0';
+    memset((void *) &DriveFileRec[drive], 0, sizeof(FileRecord));
+    *DiskImageName[drive] = '\0';
 }
 
 //----------------------------------------------------------------------
-// Check windows path
+// Check windows file exists and is not a directory
 //----------------------------------------------------------------------
-BOOL FileExists(LPCTSTR szPath)
+bool FileExists(const char * path)
 {
-  DWORD dwAttrib = GetFileAttributes(szPath);
-
+  DWORD dwAttrib = GetFileAttributes(path);
   return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
          !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
@@ -784,14 +826,23 @@ void OpenDrive (int drive)
 {
 
     drive &= 1;
-    if (hDrive[drive]) CloseDrive(drive);
+    if (hDrive[drive]) {
+        _DLOG("Closing drive %d\n",drive);
+        CloseDrive(drive);
+    }
 
-    char *file = (drive==0) ? FileName0 : FileName1;
+    char *file = DiskImageName[drive];
 
-    _DLOG("Opening %s\n",file);
+    _DLOG("Opening drive %d file %s\n",drive,file);
 
-    if (DriveFile[drive].attrib & ATTR_DIR) {
-        _DLOG("File is a directory\n");
+    if (!FileExists(file)) {
+        _DLOG("Loaded image file does not exist\n");
+        CmdSta = STA_FAIL;
+        return;
+    }
+
+    if (DriveFileRec[drive].attrib & ATTR_DIR) {
+        _DLOG("File record says it is a directory\n");
         CmdSta = STA_FAIL;
         return;
     }
@@ -833,6 +884,7 @@ void UpdateSD(int loNib)
     switch (RecvBuf[0]) {
     case 0x4d: //M
     case 0x6d:
+        // Mount image per disk path eg: "GAMES/FOO.DSK"
         _DLOG("Mount image not Supported\n");
         CmdSta = STA_FAIL;
         break;
@@ -867,31 +919,94 @@ void UpdateSD(int loNib)
 }
 
 //----------------------------------------------------------------------
+// Append char to path if not there
+//----------------------------------------------------------------------
+void AppendPathChar(char * path, char c)
+{
+    int l = strlen(path);
+    if (l < MAX_PATH - 1 ) {
+        if (path[l-1] != c) {
+            path[l] = c;
+            path[l+1] = '\0';
+        }
+    }
+}
+
+//----------------------------------------------------------------------
+// Determine if path is a direcory
+//----------------------------------------------------------------------
+bool IsDirectory(char * path)
+{
+    char attr = FileAttrByte(path);
+    if (attr == ATTR_INVALID) return false;
+    if ((attr & ATTR_DIR) == 0) return false;
+    return true;
+}
+
+//----------------------------------------------------------------------
+// Set the Current Directory
+//----------------------------------------------------------------------
+void SetCurDir(char * path)
+{
+    // Make sure path is a directory
+    if (!IsDirectory(path)) {
+        _DLOG("SetCurDir Invalid Directory %s\n",path);
+        return;
+    }
+
+//TODO: curdir relative path logic
+
+    strncpy(CurDir,path,MAX_PATH);
+    AppendPathChar(CurDir,'/');
+
+    _DLOG("Cur Dir is %s\n",SDCard);
+
+    return;
+}
+//----------------------------------------------------------------------
 // Set the CD root
 //----------------------------------------------------------------------
 void SetCDRoot(char * path)
 {
-    DWORD attr = GetFileAttributes(path);
-    if ( (attr == INVALID_FILE_ATTRIBUTES) ||
-         !(attr & FILE_ATTRIBUTE_DIRECTORY)) {
-        _DLOG("\nInvalid CD root %X %s\n",attr,path);
+    // Make sure path is a directory
+    if (!IsDirectory(path)) {
+        _DLOG("Invalid CD root %s\n",path);
         return;
     }
+
     strncpy(SDCard,path,MAX_PATH);
+    AppendPathChar(SDCard,'/');
+    _DLOG("CD root is %s\n",SDCard);
+
+    // Set current directory to CD root
+    SetCurDir(SDCard);
     return;
 }
 
 //----------------------------------------------------------------------
-// Initialize Directory search
+// Initialize file search. Append "*.*" if pattern is a directory.
+// Save the directory portion of the pattern for prepending to results
 //----------------------------------------------------------------------
-
 bool InitiateDir(const char * wildcard)
 {
-    char search[MAX_PATH];
-    strncpy(search,SDCard,MAX_PATH);
-    strncat(search,"/",MAX_PATH);
-    strncat(search,wildcard,MAX_PATH);
-    hFind = FindFirstFile(search, &dFound);
+    char path[MAX_PATH];
+    strncpy(path,SDCard,MAX_PATH);
+    strncat(path,wildcard,MAX_PATH);
+
+    //Append '/*.*' if a directory
+    if (IsDirectory(path)) {
+        AppendPathChar(path,'/');
+        strncat(path,"*.*",MAX_PATH);
+    }
+
+    //_DLOG("Search path %s is %s\n",wildcard,path);
+    hFind = FindFirstFile(path, &dFound);
+
+    // Save directory portion of search path
+    char *p = strrchr(path,'/'); p++; *p='\0';
+    strcpy(SeaDir,path);
+    //_DLOG("SeaDir %s is %s\n",wildcard,path);
+
     return (hFind != INVALID_HANDLE_VALUE);
 }
 
@@ -902,20 +1017,26 @@ void LoadDirPage()
 {
     struct FileRecord dpage[16];
     memset(dpage,0,sizeof(dpage));
+
+    if(hFind == INVALID_HANDLE_VALUE){
+        _DLOG("Search failed\n");
+        LoadReply(dpage,16);
+        return;
+    }
+
     char fqn[MAX_PATH];
     int cnt = 0;
     while (cnt < 16) {
-        //_DLOG("%d %s\n",cnt,dFound.cFileName);
-        if (FindNextFile(hFind,&dFound) == 0) break;
-        if (*dFound.cFileName != '.') {
-            strncpy(fqn,SDCard,MAX_PATH);
-            strncat(fqn,"/",MAX_PATH);
+        if ( *dFound.cFileName != '.') {
+            strncpy(fqn,SeaDir,MAX_PATH);
             strncat(fqn,dFound.cFileName,MAX_PATH);
             LoadFileRecord(fqn,&dpage[cnt]);
             cnt++;
         }
-        if (cnt == 16) break;
+        if (FindNextFile(hFind,&dFound) == 0) break;
     }
+
+    _DLOG("Loading %d files\n",cnt);
     LoadReply(dpage,256);
     return;
 }
