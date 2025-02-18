@@ -85,6 +85,31 @@
 #include "../logger.h"
 #include "sdcavr.h"
 
+//======================================================================
+// Return values for status register
+//======================================================================
+
+#define STA_BUSY     0X01
+#define STA_READY    0x02
+#define STA_HWERROR  0x04
+#define STA_CRCERROR 0x08
+#define STA_NOTFOUND 0X10
+#define STA_DELETED  0X20
+#define STA_WPROTECT 0X40
+#define STA_FAIL     0x80
+
+// Single byte file attributes for File info records
+#define ATTR_NORM    0x00
+#define ATTR_RDONLY  0x01
+#define ATTR_HIDDEN  0x02
+#define ATTR_SDF     0x04
+#define ATTR_DIR     0x10
+#define ATTR_INVALID -1  //not 0xFF because byte is signed
+
+//======================================================================
+// Local function templates
+//======================================================================
+
 void SetMode(int);
 void SDCCommand(int);
 int  CalcSectorNum(int);
@@ -97,10 +122,10 @@ void SDCControl(int);
 void UpdateSD(int);
 void AppendPathChar(char *, char c);
 char FileAttrByte(const char *);
-void LoadDrive (int,const char *);
-void UnLoadDrive (int);
-void CloseDrive (int);
-void OpenDrive (int);
+bool MountDisk (int,const char *);
+void UnMountDisk (int);
+void CloseDrive(int);
+void OpenDrive(int);
 void LoadReply(void *, int);
 unsigned char PutByte();
 void ReceiveByte(unsigned char);
@@ -109,27 +134,21 @@ void CmdBlockRecvComplete();
 void CmdBlockRecvStart(int);
 void BankSelect(int);
 void LoadDirPage();
+bool SetCurDir(char * path);
 bool InitiateDir(const char *);
 bool FileExists(const char * path);
-bool IsDirectory(const char * path);
+bool IsDirectory(const char *path);
+void GetMountedImageRec(int);
 
-// Status Register values
-#define STA_BUSY     0X01
-#define STA_READY    0x02
-#define STA_HWERROR  0x04
-#define STA_CRCERROR 0x08
-#define STA_NOTFOUND 0X10
-#define STA_DELETED  0X20
-#define STA_WPROTECT 0X40
-#define STA_FAIL     0x80
+//======================================================================
+// Local globals
+//======================================================================
 
 // SDC Latch flag
 bool SDC_Mode=false;
 
-// Current command code
+// Current command code and sector for Disk I/O
 unsigned char CurCmdCode = 0;
-
-// Current sector for Disk I/O
 int CurSectorNum = -1;
 
 // Command status and parameters
@@ -169,14 +188,6 @@ char SDCard[MAX_PATH] = {}; // SD card root directory
 char CurDir[MAX_PATH] = {}; // SDC current directory
 char SeaDir[MAX_PATH] = {}; // Last directory searched
 
-// Single byte file attributes
-#define ATTR_NORM    0x00
-#define ATTR_RDONLY  0x01
-#define ATTR_HIDDEN  0x02
-#define ATTR_SDF     0x04
-#define ATTR_DIR     0x10
-#define ATTR_INVALID -1  //not 0xFF because byte is signed
-
 // File record
 #pragma pack(1)
 struct FileRecord {
@@ -191,17 +202,24 @@ struct FileRecord {
 #pragma pack()
 
 // Drive file info
-struct FileRecord DriveFileRec[2];
+struct FileRecord DriveFileRec[2] = {};
 
 // Windows file lookup handle and data
 HANDLE hFind;
 WIN32_FIND_DATAA dFound;
 
 //======================================================================
+// Public functions
+//======================================================================
+
+//----------------------------------------------------------------------
 // Init the controller
 //----------------------------------------------------------------------
 void SDCInit()
 {
+    memset((void *) &DriveFileRec,0,sizeof(DriveFileRec));
+    memset((void *) &DiskImageName,0,sizeof(DiskImageName));
+
 #ifdef _DEBUG_
     _DLOG("\n");
     HANDLE hLog = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -213,10 +231,10 @@ void SDCInit()
 //   0=/SDCEXP.DSK
 
 SetCDRoot("C:/Users/ed/vcc/sets/SDC/SDRoot");
-//*CurDir = '\0';
-LoadDrive(0,"SDCEXP.DSK");
-LoadDrive(1,"PROG/SIGMON6.DSK");
+MountDisk(0,"SDCEXP.DSK");
+//MountDisk(1,"PROG/SIGMON6.DSK");
 
+    SetCurDir("");
     CurrentBank = 0;
     SetMode(0);
     return;
@@ -228,8 +246,8 @@ LoadDrive(1,"PROG/SIGMON6.DSK");
 void SDCReset()
 {
     _DLOG("SDCREset Unloading Drives\n");
-    UnLoadDrive (0);
-    UnLoadDrive (1);
+    UnMountDisk (0);
+    UnMountDisk (1);
     SetMode(0);
     return;
 }
@@ -267,21 +285,6 @@ void SDCWrite(unsigned char data,unsigned char port)
 }
 
 //----------------------------------------------------------------------
-// Get byte for receive buffer.
-//----------------------------------------------------------------------
-void ReceiveByte(unsigned char byte)
-{
-    RecvCount--;
-    if (RecvCount < 1) {
-        CmdBlockRecvComplete();
-        CmdSta = 0;
-    } else {
-        CmdSta |= STA_BUSY;
-    }
-    *RecvPtr++ = byte;
-}
-
-//----------------------------------------------------------------------
 // Read SDC port. If there are bytes in the reply buffer return them.
 //----------------------------------------------------------------------
 unsigned char SDCRead(unsigned char port)
@@ -312,6 +315,25 @@ unsigned char SDCRead(unsigned char port)
         break;
     }
     return rpy;
+}
+
+//======================================================================
+// Private functions
+//======================================================================
+
+//----------------------------------------------------------------------
+// Get byte for receive buffer.
+//----------------------------------------------------------------------
+void ReceiveByte(unsigned char byte)
+{
+    RecvCount--;
+    if (RecvCount < 1) {
+        CmdBlockRecvComplete();
+        CmdSta = 0;
+    } else {
+        CmdSta |= STA_BUSY;
+    }
+    *RecvPtr++ = byte;
 }
 
 //----------------------------------------------------------------------
@@ -600,16 +622,16 @@ void GetDriveInfo(int loNib)
     int drive = loNib & 1;
     switch (CmdPrm1) {
     case 0x49:
-        // I - return drive information in block
-        LoadReply((void *) &DriveFileRec[drive],sizeof(FileRecord));
+        // 'I' - return drive information in block
+        GetMountedImageRec(drive);
         break;
     case 0x43:
-        // C Return current directory in block
+        // 'C' Return current directory in block
         _DLOG("GetInfo $%0X not supported\n",CmdPrm1);
         CmdSta = STA_FAIL;
         break;
     case 0x51:
-        // Q Return the size of disk image in p1,p2,p3
+        // 'Q' Return the size of disk image in p1,p2,p3
         _DLOG("GetInfo $%0X not supported\n",CmdPrm1);
         CmdSta = STA_FAIL;
         break;
@@ -617,18 +639,18 @@ void GetDriveInfo(int loNib)
         LoadDirPage();
         break;
     case 0x2B:
-        // + Mount next next disk in set.  Mounts disks with a
+        // '+' Mount next next disk in set.  Mounts disks with a
         // digit suffix, starting with '1'. May repeat
         _DLOG("GetInfo $%0X not supported\n",CmdPrm1);
         CmdSta = STA_FAIL;
         break;
     case 0x56:
-        // V Get BCD firmware version number in p2, p3.
+        // 'V' Get BCD firmware version number in p2, p3.
         CmdRpy2 = 0x01;
         CmdRpy3 = 0x13;
         break;
     case 0x65:
-        // e Want something that is undocumented
+        // 'e' Want something that is undocumented
         _DLOG("GetInfo $%0X (%c) unknown\n",CmdPrm1,CmdPrm1);
         CmdRpy1 = 0;
         CmdRpy2 = 0;
@@ -638,6 +660,19 @@ void GetDriveInfo(int loNib)
         _DLOG("GetInfo $%0X (%c) not supported\n",CmdPrm1,CmdPrm1);
         CmdSta = STA_FAIL;
         break;
+    }
+}
+
+//----------------------------------------------------------------------
+// Return file record for mounted disk image
+//----------------------------------------------------------------------
+void GetMountedImageRec(int drive)
+{
+    if (strlen(DiskImageName[drive]) == 0) {
+        _DLOG("GetMountedImageRec drive %d empty\n",drive);
+        CmdSta = STA_FAIL;
+    } else {
+        LoadReply((void *) &DriveFileRec[drive],sizeof(FileRecord));
     }
 }
 
@@ -655,7 +690,7 @@ void SDCControl(int loNib)
         RecvCount = 0;
         CmdSta = 0;
     } else {
-        _DLOG("Mount disk in set not supported %d %d %d \n",
+        _DLOG("Mount in set unsupported %d %d %d \n",
                   loNib,CmdPrm1,CmdPrm2);
         CmdSta = STA_FAIL | STA_NOTFOUND;
     }
@@ -772,37 +807,40 @@ bool LoadFileRecord(char * file, FileRecord * rec)
 // Load Drive.  If image path starts with '/' load drive relative
 // to SDRoot, else load drive relative to the current directory.
 //----------------------------------------------------------------------
-void LoadDrive (int drive, const char * path)
+bool MountDisk (int drive, const char * path)
 {
     char fqn[MAX_PATH]={};
 
     drive &= 1;
 
+    strncpy(fqn,SDCard,MAX_PATH);
     if (*path != '/')
         strncat(fqn,CurDir,MAX_PATH);
-    else
-        strncpy(fqn,SDCard,MAX_PATH);
-
     strncat(fqn,path,MAX_PATH);
 
-    _DLOG("LoadDrive %d path %s\n",drive,fqn);
+    _DLOG("MountDisk %d path %s\n",drive,fqn);
 
     // Make sure the file exists
     if (!FileExists(fqn)) {
         _DLOG("image does not exist\n");
-        return;
+        return false;
     }
+
+    // UnMount current disk in drive
+    UnMountDisk(drive);
 
     // Set the image name and load the file record;
     strncpy(DiskImageName[drive],fqn,MAX_PATH);
     LoadFileRecord(fqn,&DriveFileRec[drive]);
+
+    return true;
 
 }
 
 //----------------------------------------------------------------------
 // Unload drive
 //----------------------------------------------------------------------
-void UnLoadDrive (int drive)
+void UnMountDisk (int drive)
 {
     CloseDrive(drive);
     memset((void *) &DriveFileRec[drive], 0, sizeof(FileRecord));
@@ -874,7 +912,7 @@ void CloseDrive (int drive)
 }
 
 //----------------------------------------------------------------------
-//  Update SD Commands
+//  Update SD Commands.
 //----------------------------------------------------------------------
 void UpdateSD(int loNib)
 {
@@ -885,8 +923,9 @@ void UpdateSD(int loNib)
     case 0x4d: //M
     case 0x6d:
         // Mount image per disk path eg: "GAMES/FOO.DSK"
-        _DLOG("Mount image not Supported\n");
-        CmdSta = STA_FAIL;
+//        _DLOG("Mount image not Supported\n");
+        CmdSta = (MountDisk(loNib,&RecvBuf[2])) ? 0 : STA_FAIL;
+//        CmdSta = STA_FAIL;
         break;
     case 0x4E: //N
     case 0x6E:
@@ -897,8 +936,7 @@ void UpdateSD(int loNib)
         CmdSta = STA_FAIL;
         break;
     case 0x44: //D
-        _DLOG("Set Current directory not Supported\n");
-        CmdSta = STA_FAIL;
+        CmdSta = (SetCurDir(&RecvBuf[2])) ? 0 : STA_FAIL;
         break;
     case 0x4C: //L
         CmdSta = (InitiateDir(&RecvBuf[2])) ? 0 : STA_FAIL;
@@ -946,22 +984,31 @@ bool IsDirectory(char * path)
 //----------------------------------------------------------------------
 // Set the Current Directory
 //----------------------------------------------------------------------
-void SetCurDir(char * path)
+bool SetCurDir(char * path)
 {
-    // Make sure path is a directory
-    if (!IsDirectory(path)) {
-        _DLOG("SetCurDir Invalid Directory %s\n",path);
-        return;
+
+    char fqp[MAX_PATH];
+    //TODO: curdir relative path logic?
+
+    // If blank or '/' is passed clear the current dirctory
+    if ((*path == '\0') || (*path == '/' )) {
+        *CurDir = '\0';
+        _DLOG("SetCurDir cleared\n");
+        return true;
     }
 
-//TODO: curdir relative path logic
+    // Check for valid directory on SD
+    strncpy(fqp,SDCard,MAX_PATH);
+    if (!IsDirectory(fqp)) {
+        _DLOG("SetCurDir invalid %s\n",fqp);
+        return false;
+    }
 
     strncpy(CurDir,path,MAX_PATH);
     AppendPathChar(CurDir,'/');
+    _DLOG("SetCurdir %s\n",SDCard);
 
-    _DLOG("Cur Dir is %s\n",SDCard);
-
-    return;
+    return true;
 }
 //----------------------------------------------------------------------
 // Set the CD root
@@ -978,8 +1025,8 @@ void SetCDRoot(char * path)
     AppendPathChar(SDCard,'/');
     _DLOG("CD root is %s\n",SDCard);
 
-    // Set current directory to CD root
-    SetCurDir(SDCard);
+    // Clear the current directory
+    SetCurDir("");
     return;
 }
 
