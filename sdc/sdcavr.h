@@ -25,8 +25,9 @@
 #define _DLOG(...)
 #endif
 
+bool LoadRom(char *);
 void SDCWrite(unsigned char data,unsigned char port);
 unsigned char SDCRead(unsigned char port);
 void SDCInit(void);
 void SDCReset(void);
-void SetCDRoot(char *);
+void SetSDRoot(const char *);

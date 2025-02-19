@@ -18,16 +18,21 @@
 //----------------------------------------------------------------------
 
 #include <windows.h>
+#include <windowsx.h>
+#include <shlobj.h>
 #include "../defines.h"
 #include "../fileops.h"
 #include "../logger.h"
 #include "resource.h"
 #include "sdcavr.h"
 
-static char IniFile[MAX_PATH]={0};    // Ini file name from config
-static char SDCardPath[MAX_PATH]={0}; // Path to SD card contents
-static HINSTANCE hinstDLL;            // DLL handle
-static HWND hConfDlg = NULL;          // Config dialog
+#include <shlwapi.h>
+#pragma comment(lib,"shlwapi.lib")
+
+static char IniFile[MAX_PATH]={0};  // Ini file name from config
+static char SDCard[MAX_PATH]={0};   // Path to SD card contents
+static HINSTANCE hinstDLL;          // DLL handle
+static HWND hConfDlg = NULL;        // Config dialog
 
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
@@ -35,13 +40,12 @@ typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 static void (*AssertInt)(unsigned char,unsigned char)=NULL;
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 
-LRESULT CALLBACK ConfigSDC(HWND, UINT, WPARAM, LPARAM );
+LRESULT CALLBACK SDC_Config(HWND, UINT, WPARAM, LPARAM);
 
 void LoadConfig(void);
 void SaveConfig(void);
 void BuildDynaMenu(void);
-void SetSDCardPath(void);
-bool LoadRom(char *);
+void SDC_Load_Card(void);
 unsigned char PakRom[0x4000];
 
 using namespace std;
@@ -51,10 +55,9 @@ using namespace std;
 //------------------------------------------------------------
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 {
+
     if (reason == DLL_PROCESS_ATTACH) {
         hinstDLL = hinst;
-        LoadRom("SDC-DOS.ROM");
-        SDCInit();
 
     } else if (reason == DLL_PROCESS_DETACH) {
         if (hConfDlg) {
@@ -66,7 +69,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
     }
     return TRUE;
 }
-
 //------------------------------------------------------------
 // Register the DLL and build menu
 //------------------------------------------------------------
@@ -82,7 +84,6 @@ extern "C"
         return ;
     }
 }
-
 //------------------------------------------------------------
 // Write to port
 //------------------------------------------------------------
@@ -95,7 +96,6 @@ extern "C"
         return;
     }
 }
-
 //------------------------------------------------------------
 // Read from port
 //------------------------------------------------------------
@@ -106,7 +106,6 @@ extern "C"
         return(SDCRead(Port));
     }
 }
-
 //------------------------------------------------------------
 // Reset module
 //------------------------------------------------------------
@@ -118,7 +117,6 @@ extern "C"
         return 0;
     }
 }
-
 //-------------------------------------------------------------------
 //  Dll export run config dialog
 //-------------------------------------------------------------------
@@ -126,49 +124,47 @@ extern "C"
 {
     __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
     {
-        if (hConfDlg == NULL) {
-            CreateDialog (hinstDLL, (LPCTSTR) IDD_CONFIG,
-                           GetActiveWindow(),(DLGPROC)ConfigSDC);
+    switch (MenuID)
+        {
+        case 10:
+            SDC_Load_Card();
+            break;
+        case 20:
+            CreateDialog(hinstDLL, (LPCTSTR) IDD_CONFIG,
+                         GetActiveWindow(), (DLGPROC) SDC_Config);
+            ShowWindow(hConfDlg,1);
+            return;
         }
-        ShowWindow(hConfDlg,1);
-        SetFocus(hConfDlg);
+        BuildDynaMenu();
         return;
     }
 }
-
 //------------------------------------------------------------
 // Configure the SDC
 //------------------------------------------------------------
 LRESULT CALLBACK
-ConfigSDC(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message) {
-
     case WM_CLOSE:
         EndDialog(hDlg,LOWORD(wParam));
-
     case WM_INITDIALOG:
         hConfDlg=hDlg;
         break;
-
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
-
         case IDOK:
             EndDialog(hDlg,LOWORD(wParam));
             break;
-
         case IDCANCEL:
             EndDialog(hDlg,LOWORD(wParam));
             break;
-
         default:
             break;
         }
     }
     return (INT_PTR) 0;
 }
-
 //------------------------------------------------------------
 // Capture the Fuction transfer point for the CPU assert interupt
 //------------------------------------------------------------
@@ -182,19 +178,6 @@ extern "C"
     }
 }
 //------------------------------------------------------------
-//  Heart beat
-//------------------------------------------------------------
-/*
-extern "C"
-{
-    __declspec(dllexport) void HeartBeat(void)
-    {
-        return;
-    }
-}
-*/
-
-//------------------------------------------------------------
 // Return SDC status.
 //------------------------------------------------------------
 extern "C"
@@ -202,11 +185,10 @@ extern "C"
     __declspec(dllexport) void
     ModuleStatus(char *MyStatus)
     {
-        MyStatus = "SDC";
+        strcpy(MyStatus,"SDC");
         return ;
     }
 }
-
 //------------------------------------------------------------
 // Set ini file path and load HD config settings
 //------------------------------------------------------------
@@ -217,22 +199,21 @@ extern "C"
     {
         strcpy(IniFile,IniFilePath);
         LoadConfig();
+        SDCInit();
         return;
     }
 }
-
 //------------------------------------------------------------
 // Return a byte from the current PAK ROM
 //------------------------------------------------------------
 extern "C"
 {
-	__declspec(dllexport) unsigned char 
+	__declspec(dllexport) unsigned char
     PakMemRead8(unsigned short adr)
 	{
 		return(PakRom[adr & 0x3ffff]);
 	}
 }
-
 //------------------------------------------------------------
 //   Assert Interupt
 //------------------------------------------------------------
@@ -243,46 +224,69 @@ void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
     return;
 }
 */
+//-------------------------------------------------------------
+// Generate menu for configuring the SD
+//-------------------------------------------------------------
+void BuildDynaMenu(void)
+{
+    char label[MAX_PATH];
+    strncpy(label,"SD Card: ",40);
 
+    // Maybe better set/show card path in config.
+    char tmp[MAX_PATH];
+    PathCompactPathEx(tmp,SDCard,20,0);
+    strncat(label,tmp,MAX_PATH);
+
+    //Call back type 0=Head 1=Slave 2=StandAlone
+    DynamicMenuCallback("",0,0);
+    DynamicMenuCallback("",6000,0);
+    DynamicMenuCallback(label,5010,2);
+    DynamicMenuCallback("SDC Config",5020,2);
+    DynamicMenuCallback("",1,0);
+}
 //------------------------------------------------------------
 // Get SDC pathname from user
 //------------------------------------------------------------
-void SetSDCardPath(void)
+void SDC_Load_Card(void)
 {
     // Prompt user for path
+    BROWSEINFO bi = { 0 };
+    bi.hwndOwner = GetActiveWindow();
+    bi.lpszTitle = "Set the SD card path";
+    bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NONEWFOLDERBUTTON;
+    LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+    if (pidl != 0) {
+        SHGetPathFromIDList(pidl,SDCard);
+        CoTaskMemFree(pidl);
+    }
+    // Sanitize slashes
+    for(unsigned int i=0; i<strlen(SDCard); i++)
+        if (SDCard[i] == '\\') SDCard[i] = '/';
+
+    SetSDRoot(SDCard);
+    SaveConfig();
     return;
 }
-
 //------------------------------------------------------------
 // Get configuration items from ini file
 //------------------------------------------------------------
 void LoadConfig(void)
 {
     GetPrivateProfileString("SDC", "SDCardPath", "",
-                             SDCardPath, MAX_PATH, IniFile);
+                             SDCard, MAX_PATH, IniFile);
+    SetSDRoot(SDCard);
     // Create config menu
     BuildDynaMenu();
     return;
 }
 
 //------------------------------------------------------------
-// Save config saves the hard disk path and vhd file names
+// Save config to ini file
 //------------------------------------------------------------
 void SaveConfig(void)
 {
-    WritePrivateProfileString("SDC", "SDCardPath",SDCardPath,IniFile);
+    WritePrivateProfileString("SDC", "SDCardPath",SDCard,IniFile);
     return;
-}
-
-//-------------------------------------------------------------
-//  Build Cartridge menu
-//-------------------------------------------------------------
-void BuildDynaMenu(void)
-{
-    DynamicMenuCallback("",0,0);
-    DynamicMenuCallback("",6000,0);
-    DynamicMenuCallback("SDC Config",5016,2);
-    DynamicMenuCallback("",1,0);
 }
 
 //-------------------------------------------------------------
@@ -291,17 +295,8 @@ void BuildDynaMenu(void)
 
 bool LoadRom(char *RomName)	//Returns true if loaded
 {
-
     int ch;
     int ctr = 0;
-	char RomPath[MAX_PATH];
-
-	GetModuleFileName(NULL, RomPath, MAX_PATH);
-	PathRemoveFileSpec(RomPath);
-	strncat(RomPath,RomName,MAX_PATH);
-
-    _DLOG("Loading %s\n",RomPath);
-
 	FILE *h = fopen(RomName, "rb");
 	memset(PakRom, 0xFF, 0x4000);
 	if (h == NULL) return false;

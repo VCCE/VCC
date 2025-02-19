@@ -111,6 +111,7 @@
 //======================================================================
 
 void SetMode(int);
+void ParseStartup();
 void SDCCommand(int);
 int  CalcSectorNum(int);
 void ReadSector(int);
@@ -133,7 +134,7 @@ char * LastErrorTxt();
 void CmdBlockRecvComplete();
 void CmdBlockRecvStart(int);
 void BankSelect(int);
-void LoadDirPage();
+bool LoadDirPage();
 bool SetCurDir(char * path);
 bool InitiateDir(const char *);
 bool FileExists(const char * path);
@@ -213,30 +214,43 @@ WIN32_FIND_DATAA dFound;
 //======================================================================
 
 //----------------------------------------------------------------------
-// Init the controller
+// Set the CD root
+//----------------------------------------------------------------------
+void SetSDRoot(const char * path)
+{
+    // Make sure path is a directory
+    if (!IsDirectory(path)) {
+        _DLOG("Invalid CD root %s\n",path);
+        return;
+    }
+
+    strncpy(SDCard,path,MAX_PATH);
+    AppendPathChar(SDCard,'/');
+
+    // Clear the current directory
+    SetCurDir("");
+    return;
+}
+
+//----------------------------------------------------------------------
+// Init the controller.
 //----------------------------------------------------------------------
 void SDCInit()
 {
-    memset((void *) &DriveFileRec,0,sizeof(DriveFileRec));
-    memset((void *) &DiskImageName,0,sizeof(DiskImageName));
-
 #ifdef _DEBUG_
-    _DLOG("\n");
+    _DLOG("SDC Init\n");
     HANDLE hLog = GetStdHandle(STD_OUTPUT_HANDLE);
     SMALL_RECT r; r.Left=0; r.Top=0; r.Right=40; r.Bottom=36;
     SetConsoleWindowInfo(hLog,true,&r);
 #endif
-
-// TODO look for startup.cfg, which typically contains
-//   0=/SDCEXP.DSK
-
-SetCDRoot("C:/Users/ed/vcc/sets/SDC/SDRoot");
-MountDisk(0,"SDCEXP.DSK");
-//MountDisk(1,"PROG/SIGMON6.DSK");
-
+    memset((void *) &DriveFileRec,0,sizeof(DriveFileRec));
+    memset((void *) &DiskImageName,0,sizeof(DiskImageName));
+    ParseStartup();
     SetCurDir("");
     CurrentBank = 0;
     SetMode(0);
+    _DLOG("Loading SDC-DOS Rom\n");
+    LoadRom("SDC-DOS.ROM");
     return;
 }
 
@@ -320,6 +334,49 @@ unsigned char SDCRead(unsigned char port)
 //======================================================================
 // Private functions
 //======================================================================
+
+//----------------------------------------------------------------------
+// Parse the startup.cfg file
+//----------------------------------------------------------------------
+void ParseStartup()
+{
+    char buf[MAX_PATH+10];
+    if (!IsDirectory(SDCard)) {
+        _DLOG("Startup SDCard path invalid\n");
+        return;
+    }
+
+    strncpy(buf,SDCard,MAX_PATH);
+    strncat(buf,"startup.cfg",MAX_PATH);
+
+    FILE *su = fopen(buf,"r");
+    if (su == NULL) {
+        _DLOG("startup file not found,%s\n",buf);
+        return;
+    }
+
+    // Strict single digit followed by '=' then path
+    while (fgets(buf,sizeof(buf),su) > 0) {
+        //Chomp line ending
+        buf[strcspn(buf,"\r\n")] = 0;
+        // Skip line if less than 3 chars;
+        if (strlen(buf) < 3) continue;
+        // Skip line if second char is not '='
+        if (buf[1] != '=') continue;
+        // Grab drive num digit
+        char drv = buf[0];
+        // Attempt to mount drive
+        switch (drv) {
+        case '0':
+            MountDisk(0,&buf[2]);
+            break;
+        case '1':
+            MountDisk(1,&buf[2]);
+            break;
+        }
+    }
+    fclose(su);
+}
 
 //----------------------------------------------------------------------
 // Get byte for receive buffer.
@@ -814,9 +871,12 @@ bool MountDisk (int drive, const char * path)
     drive &= 1;
 
     strncpy(fqn,SDCard,MAX_PATH);
-    if (*path != '/')
+    if (*path == '/') {
+        strncat(fqn,path+1,MAX_PATH);
+    } else {
         strncat(fqn,CurDir,MAX_PATH);
-    strncat(fqn,path,MAX_PATH);
+        strncat(fqn,path,MAX_PATH);
+    }
 
     _DLOG("MountDisk %d path %s\n",drive,fqn);
 
@@ -834,7 +894,6 @@ bool MountDisk (int drive, const char * path)
     LoadFileRecord(fqn,&DriveFileRec[drive]);
 
     return true;
-
 }
 
 //----------------------------------------------------------------------
@@ -916,16 +975,13 @@ void CloseDrive (int drive)
 //----------------------------------------------------------------------
 void UpdateSD(int loNib)
 {
-    _DLOG("UpdateSD %02X %02X %02X %02X %02X '%s'\n",
-        CmdPrm1,CmdPrm2,CmdPrm3,RecvBuf[0],RecvBuf[1],&RecvBuf[2]);
+//    _DLOG("UpdateSD %02X %02X %02X %02X %02X '%s'\n",
+//        CmdPrm1,CmdPrm2,CmdPrm3,RecvBuf[0],RecvBuf[1],&RecvBuf[2]);
 
     switch (RecvBuf[0]) {
     case 0x4d: //M
     case 0x6d:
-        // Mount image per disk path eg: "GAMES/FOO.DSK"
-//        _DLOG("Mount image not Supported\n");
         CmdSta = (MountDisk(loNib,&RecvBuf[2])) ? 0 : STA_FAIL;
-//        CmdSta = STA_FAIL;
         break;
     case 0x4E: //N
     case 0x6E:
@@ -973,7 +1029,7 @@ void AppendPathChar(char * path, char c)
 //----------------------------------------------------------------------
 // Determine if path is a direcory
 //----------------------------------------------------------------------
-bool IsDirectory(char * path)
+bool IsDirectory(const char * path)
 {
     char attr = FileAttrByte(path);
     if (attr == ATTR_INVALID) return false;
@@ -986,14 +1042,12 @@ bool IsDirectory(char * path)
 //----------------------------------------------------------------------
 bool SetCurDir(char * path)
 {
-
     char fqp[MAX_PATH];
     //TODO: curdir relative path logic?
 
     // If blank or '/' is passed clear the current dirctory
     if ((*path == '\0') || (*path == '/' )) {
         *CurDir = '\0';
-        _DLOG("SetCurDir cleared\n");
         return true;
     }
 
@@ -1001,6 +1055,7 @@ bool SetCurDir(char * path)
     strncpy(fqp,SDCard,MAX_PATH);
     if (!IsDirectory(fqp)) {
         _DLOG("SetCurDir invalid %s\n",fqp);
+        CmdSta = STA_FAIL;
         return false;
     }
 
@@ -1010,25 +1065,6 @@ bool SetCurDir(char * path)
 
     return true;
 }
-//----------------------------------------------------------------------
-// Set the CD root
-//----------------------------------------------------------------------
-void SetCDRoot(char * path)
-{
-    // Make sure path is a directory
-    if (!IsDirectory(path)) {
-        _DLOG("Invalid CD root %s\n",path);
-        return;
-    }
-
-    strncpy(SDCard,path,MAX_PATH);
-    AppendPathChar(SDCard,'/');
-    _DLOG("CD root is %s\n",SDCard);
-
-    // Clear the current directory
-    SetCurDir("");
-    return;
-}
 
 //----------------------------------------------------------------------
 // Initialize file search. Append "*.*" if pattern is a directory.
@@ -1036,6 +1072,15 @@ void SetCDRoot(char * path)
 //----------------------------------------------------------------------
 bool InitiateDir(const char * wildcard)
 {
+
+    // Make sure SDCard is a valid directory so we
+    // don't get caught in a search loop
+    if (!IsDirectory(SDCard)) {
+        hFind = INVALID_HANDLE_VALUE;
+        _DLOG("InitiateDir SDCard path invalid\n");
+        return false;
+    }
+
     char path[MAX_PATH];
     strncpy(path,SDCard,MAX_PATH);
     strncat(path,wildcard,MAX_PATH);
@@ -1060,15 +1105,20 @@ bool InitiateDir(const char * wildcard)
 //----------------------------------------------------------------------
 // Load directory page containing up to 16 file records:
 //----------------------------------------------------------------------
-void LoadDirPage()
+bool LoadDirPage()
 {
     struct FileRecord dpage[16];
     memset(dpage,0,sizeof(dpage));
 
-    if(hFind == INVALID_HANDLE_VALUE){
-        _DLOG("Search failed\n");
+    if ( hFind == INVALID_HANDLE_VALUE) {
+        if (!IsDirectory(SDCard)) {
+            _DLOG("LoadDirPage SDCard path invalid\n");
+            CmdSta = STA_FAIL;
+            return false;
+        }
+         _DLOG("Search failed\n");
         LoadReply(dpage,16);
-        return;
+        return false;
     }
 
     char fqn[MAX_PATH];
@@ -1083,7 +1133,7 @@ void LoadDirPage()
         if (FindNextFile(hFind,&dFound) == 0) break;
     }
 
-    _DLOG("Loading %d files\n",cnt);
+//    _DLOG("Found %d files\n",cnt);
     LoadReply(dpage,256);
-    return;
+    return true;
 }
