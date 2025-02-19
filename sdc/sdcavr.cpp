@@ -870,6 +870,14 @@ bool MountDisk (int drive, const char * path)
 
     drive &= 1;
 
+    //_DLOG("MountDisk %d path '' %s\n",drive,path);
+
+    // Check for UNLOAD.  Path will be an empty string.
+    if (*path == '\0') {
+        UnMountDisk (drive);
+        return true;
+    }
+
     strncpy(fqn,SDCard,MAX_PATH);
     if (*path == '/') {
         strncat(fqn,path+1,MAX_PATH);
@@ -878,13 +886,17 @@ bool MountDisk (int drive, const char * path)
         strncat(fqn,path,MAX_PATH);
     }
 
-    _DLOG("MountDisk %d path %s\n",drive,fqn);
-
     // Make sure the file exists
     if (!FileExists(fqn)) {
-        _DLOG("image does not exist\n");
-        return false;
+        // Try appending ".DSK"
+        strncat(fqn,".DSK",MAX_PATH);
+        if (!FileExists(fqn)) {
+            _DLOG("image %s does not exist\n",fqn);
+            return false;
+        }
     }
+
+    _DLOG("MountDisk %d fqn %s\n",drive,fqn);
 
     // UnMount current disk in drive
     UnMountDisk(drive);
