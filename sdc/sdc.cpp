@@ -960,12 +960,12 @@ void GetDriveInfo(int loNib)
         break;
     case 0x43:
         // 'C' Return current directory in block
-        _DLOG("GetInfo $%0X not supported\n",CmdPrm1);
+        _DLOG("GetInfo $%0X (C) not supported\n",CmdPrm1);
         CmdSta = STA_FAIL;
         break;
     case 0x51:
         // 'Q' Return the size of disk image in p1,p2,p3
-        _DLOG("GetInfo $%0X not supported\n",CmdPrm1);
+        _DLOG("GetInfo $%0X (Q) not supported\n",CmdPrm1);
         CmdSta = STA_FAIL;
         break;
     case 0x3E:
@@ -974,20 +974,13 @@ void GetDriveInfo(int loNib)
     case 0x2B:
         // '+' Mount next next disk in set.  Mounts disks with a
         // digit suffix, starting with '1'. May repeat
-        _DLOG("GetInfo $%0X not supported\n",CmdPrm1);
+        _DLOG("GetInfo $%0X (+) not supported\n",CmdPrm1);
         CmdSta = STA_FAIL;
         break;
     case 0x56:
         // 'V' Get BCD firmware version number in p2, p3.
         CmdRpy2 = 0x01;
         CmdRpy3 = 0x13;
-        break;
-    case 0x65:
-        // 'e' Want something that is undocumented
-        _DLOG("GetInfo $%0X (%c) unknown\n",CmdPrm1,CmdPrm1);
-        CmdRpy1 = 0;
-        CmdRpy2 = 0;
-        CmdRpy3 = 0;
         break;
     default:
         _DLOG("GetInfo $%0X (%c) not supported\n",CmdPrm1,CmdPrm1);
@@ -1002,7 +995,7 @@ void GetDriveInfo(int loNib)
 void GetMountedImageRec(int drive)
 {
     if (strlen(DiskImageName[drive]) == 0) {
-        _DLOG("GetMountedImageRec drive %d empty\n",drive);
+        _DLOG("GetMountedImage drive %d empty\n",drive);
         CmdSta = STA_FAIL;
     } else {
         LoadReply((void *) &DriveFileRec[drive],sizeof(FileRecord));
@@ -1044,8 +1037,6 @@ void LoadReply(void *data, int count)
         CmdSta = STA_FAIL;
         return;
     }
-
-    //_DLOG("Load Reply %d\n",count);
 
     // Copy data to the reply buffer with bytes swapped in words
     char *dp = (char *) data;
@@ -1106,19 +1097,33 @@ bool LoadFileRecord(char * file, FileRecord * rec)
     p++;
 
     memset(rec->name,' ',8);
-    for (i=0;i<8;i++) {
-        c = *p++;
-        if ((c == '.') || (c == '\0')) break;
-        rec->name[i] = c;
+    memset(rec->type,' ',3);
+
+    // If a directory all we need is it's name
+    if (rec->attrib & ATTR_DIR) {
+        for (i=0;i<8;i++) {
+            char c = *p++;
+            if (c == '\0') break;
+            rec->name[i] = c;
+        }
+        _DLOG("Dir  %s\n", strrchr(file,'/'));
+        return true;
     }
 
-    memset(rec->type,' ',3);
-    if (c == '.') {
-        for (i=0;i<3;i++) {
-            c = *p++;
-            if (c == 0) break;
-            rec->type[i] = c;
-        }
+    i = 0;
+    while (c = *p++) {
+        if (c == '.') break;
+        rec->name[i++] = c;
+        if (i > 7) break;
+    }
+
+    // Advance to file type
+    while ((c != '\0') && (c != '.')) c = *p++;
+
+    i = 0;
+    while (c = *p++) {
+        rec->type[i++] = c;
+        if (i > 2) break;
     }
 
     struct _stat fs;
@@ -1127,6 +1132,8 @@ bool LoadFileRecord(char * file, FileRecord * rec)
         _DLOG("Stat returned $d file %s\n",r,file);
         return false;
     }
+
+    _DLOG("File %s %d\n", strrchr(file,'/'), fs.st_size);
 
     rec->lolo_size = (fs.st_size) & 0xff;
     rec->hilo_size = (fs.st_size >> 8) & 0xff;
@@ -1137,7 +1144,7 @@ bool LoadFileRecord(char * file, FileRecord * rec)
 }
 
 //----------------------------------------------------------------------
-// Load Drive.  If image path starts with '/' load drive relative
+// Mount Drive.  If image path starts with '/' load drive relative
 // to SDRoot, else load drive relative to the current directory.
 //----------------------------------------------------------------------
 bool MountDisk (int drive, const char * path)
@@ -1145,15 +1152,12 @@ bool MountDisk (int drive, const char * path)
     char fqn[MAX_PATH]={};
 
     drive &= 1;
-    //_DLOG("MountDisk %d path '' %s\n",drive,path);
-
-    // Close file
-    CloseDrive(drive);
 
     // Check for UNLOAD.  Path will be an empty string.
     if (*path == '\0') {
         memset((void *) &DriveFileRec[drive], 0, sizeof(FileRecord));
         *DiskImageName[drive] = '\0';
+        CloseDrive(drive);
         return true;
     }
 
@@ -1180,7 +1184,14 @@ bool MountDisk (int drive, const char * path)
     strncpy(DiskImageName[drive],fqn,MAX_PATH);
     LoadFileRecord(fqn,&DriveFileRec[drive]);
 
-    _DLOG("MountDisk %d fqn %s\n",drive,fqn);
+    // Establish image type (only headerless JVC is supported)
+    if (DriveFileRec[drive].lolo_size != 0) {
+        _DLOG("Mount %d invalid type %s\n",drive,fqn);
+        return false;
+    }
+
+    CloseDrive(drive);
+    _DLOG("Mount %d %s\n",drive,fqn);
 
     return true;
 }
@@ -1215,7 +1226,7 @@ void OpenDrive (int drive)
         return;
     }
 
-    _DLOG("Opening drive %d file %s\n",drive,file);
+    _DLOG("Open %d %s\n",drive,file);
 
     if (!FileExists(file)) {
         _DLOG("Loaded image file does not exist\n");
@@ -1409,12 +1420,12 @@ bool LoadDirPage()
     char fqn[MAX_PATH];
     int cnt = 0;
     while (cnt < 16) {
-        if ( *dFound.cFileName != '.') {
+//        if ( *dFound.cFileName != '.') {
             strncpy(fqn,SeaDir,MAX_PATH);
             strncat(fqn,dFound.cFileName,MAX_PATH);
             LoadFileRecord(fqn,&dpage[cnt]);
             cnt++;
-        }
+//        }
         if (FindNextFile(hFind,&dFound) == 0) break;
     }
 
