@@ -290,7 +290,6 @@
   <ItemGroup>
     <ClCompile Include="..\Fileops.c" />
     <ClCompile Include="..\logger.c" />
-    <ClCompile Include="sdcavr.cpp" />
     <ClCompile Include="sdc.cpp" />
   </ItemGroup>
   <ItemGroup>
