@@ -124,7 +124,6 @@ void UpdateSD(int);
 void AppendPathChar(char *, char c);
 char FileAttrByte(const char *);
 bool MountDisk (int,const char *);
-void UnMountDisk (int);
 void CloseDrive(int);
 void OpenDrive(int);
 void LoadReply(void *, int);
@@ -239,17 +238,16 @@ void SDCInit()
 {
 #ifdef _DEBUG_
     _DLOG("SDC Init\n");
-    HANDLE hLog = GetStdHandle(STD_OUTPUT_HANDLE);
-    SMALL_RECT r; r.Left=0; r.Top=0; r.Right=40; r.Bottom=36;
-    SetConsoleWindowInfo(hLog,true,&r);
+    MoveWindow(GetConsoleWindow(),0,0,300,800,TRUE);
 #endif
+
     memset((void *) &DriveFileRec,0,sizeof(DriveFileRec));
     memset((void *) &DiskImageName,0,sizeof(DiskImageName));
     ParseStartup();
     SetCurDir("");
     CurrentBank = 0;
     SetMode(0);
-    _DLOG("Loading SDC-DOS Rom\n");
+    //_DLOG("Loading SDC-DOS Rom\n");
     LoadRom("SDC-DOS.ROM");
     return;
 }
@@ -260,11 +258,14 @@ void SDCInit()
 void SDCReset()
 {
     _DLOG("SDCREset Unloading Drives\n");
-    UnMountDisk (0);
-    UnMountDisk (1);
+    MountDisk (0,"");
+    MountDisk (1,"");
     SetMode(0);
     return;
 }
+
+unsigned char mmi_control;
+unsigned char prev_write_port=0;
 
 //----------------------------------------------------------------------
 // Write SDC port.  If a command needs a data block to complete it
@@ -272,6 +273,7 @@ void SDCReset()
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port)
 {
+    prev_write_port=port;
     switch (port) {
     case 0x40:
         SetMode(data);
@@ -294,6 +296,10 @@ void SDCWrite(unsigned char data,unsigned char port)
     case 0x4B:
         if (RecvCount > 0) ReceiveByte(data); else CmdPrm3 = data;
         break;
+    case 0x7F:
+        _DLOG("MMI select %02X\n",data);
+        mmi_control = data;
+        break;
     }
     return;
 }
@@ -303,6 +309,9 @@ void SDCWrite(unsigned char data,unsigned char port)
 //----------------------------------------------------------------------
 unsigned char SDCRead(unsigned char port)
 {
+
+if (!SDC_Mode && port != 0x43) return 0;
+
     unsigned char rpy;
     switch (port) {
     case 0x42:
@@ -323,6 +332,9 @@ unsigned char SDCRead(unsigned char port)
         break;
     case 0x4B:
         rpy = (ReplyCount > 0) ? PutByte() : CmdRpy3;
+        break;
+    case 0x7F:
+        rpy = mmi_control;
         break;
     default:
         rpy = 0;
@@ -869,12 +881,15 @@ bool MountDisk (int drive, const char * path)
     char fqn[MAX_PATH]={};
 
     drive &= 1;
-
     //_DLOG("MountDisk %d path '' %s\n",drive,path);
+
+    // Close file
+    CloseDrive(drive);
 
     // Check for UNLOAD.  Path will be an empty string.
     if (*path == '\0') {
-        UnMountDisk (drive);
+        memset((void *) &DriveFileRec[drive], 0, sizeof(FileRecord));
+        *DiskImageName[drive] = '\0';
         return true;
     }
 
@@ -886,36 +901,24 @@ bool MountDisk (int drive, const char * path)
         strncat(fqn,path,MAX_PATH);
     }
 
-    // Make sure the file exists
+    // Append .DSK if no extension (assumes 8.3 naming)
+    if (fqn[strlen(fqn)-4] != '.') strncat(fqn,".DSK",MAX_PATH);
+
+    // Check if file exists
     if (!FileExists(fqn)) {
-        // Try appending ".DSK"
-        strncat(fqn,".DSK",MAX_PATH);
         if (!FileExists(fqn)) {
             _DLOG("image %s does not exist\n",fqn);
             return false;
         }
     }
 
-    _DLOG("MountDisk %d fqn %s\n",drive,fqn);
-
-    // UnMount current disk in drive
-    UnMountDisk(drive);
-
     // Set the image name and load the file record;
     strncpy(DiskImageName[drive],fqn,MAX_PATH);
     LoadFileRecord(fqn,&DriveFileRec[drive]);
 
-    return true;
-}
+    _DLOG("MountDisk %d fqn %s\n",drive,fqn);
 
-//----------------------------------------------------------------------
-// Unload drive
-//----------------------------------------------------------------------
-void UnMountDisk (int drive)
-{
-    CloseDrive(drive);
-    memset((void *) &DriveFileRec[drive], 0, sizeof(FileRecord));
-    *DiskImageName[drive] = '\0';
+    return true;
 }
 
 //----------------------------------------------------------------------
@@ -941,6 +944,12 @@ void OpenDrive (int drive)
     }
 
     char *file = DiskImageName[drive];
+
+    if (*file == '\0') {
+        _DLOG("No image mounted drive %d\n",drive);
+        CmdSta = STA_FAIL;
+        return;
+    }
 
     _DLOG("Opening drive %d file %s\n",drive,file);
 
@@ -992,11 +1001,11 @@ void UpdateSD(int loNib)
 
     switch (RecvBuf[0]) {
     case 0x4d: //M
-    case 0x6d:
+    case 0x6d: //m
         CmdSta = (MountDisk(loNib,&RecvBuf[2])) ? 0 : STA_FAIL;
         break;
     case 0x4E: //N
-    case 0x6E:
+    case 0x6E: //n
         //  $FF49 0 for DSK image, number of cylinders for SDF
         //  $FF4A hiNib 0 for DSK image, number of sides for SDF image
         //  $FF4B 0
@@ -1018,7 +1027,7 @@ void UpdateSD(int loNib)
         CmdSta = STA_FAIL;
         break;
     default:
-        _DLOG("Not Supported\n");
+        _DLOG("UpdateSD %02x not Supported\n",RecvBuf[0]);
         CmdSta = STA_FAIL;
         break;
     }

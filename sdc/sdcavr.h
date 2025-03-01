@@ -31,3 +31,7 @@ unsigned char SDCRead(unsigned char port);
 void SDCInit(void);
 void SDCReset(void);
 void SetSDRoot(const char *);
+
+void AssertInterupt(unsigned char,unsigned char);
+void MemWrite(unsigned char,unsigned short);
+unsigned char MemRead(unsigned short);

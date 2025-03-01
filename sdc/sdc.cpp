@@ -26,6 +26,7 @@
 #include "resource.h"
 #include "sdcavr.h"
 
+// Following needed for PathCompactPathEx
 #include <shlwapi.h>
 #pragma comment(lib,"shlwapi.lib")
 
@@ -36,9 +37,13 @@ static HWND hConfDlg = NULL;        // Config dialog
 
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
+typedef unsigned char (*MEMREAD8)(unsigned short);
+typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 
 static void (*AssertInt)(unsigned char,unsigned char)=NULL;
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
+static unsigned char (*MemRead8)(unsigned short)=NULL;
+static void (*MemWrite8)(unsigned char,unsigned short)=NULL;
 
 LRESULT CALLBACK SDC_Config(HWND, UINT, WPARAM, LPARAM);
 
@@ -214,16 +219,46 @@ extern "C"
 		return(PakRom[adr & 0x3ffff]);
 	}
 }
+
+//------------------------------------------------------------
+// Write Coco memory
+//------------------------------------------------------------
+void MemWrite(unsigned char Data,unsigned short Address)
+{
+    MemWrite8(Data,Address);
+    return;
+}
+
+//------------------------------------------------------------
+// Read Coco memory
+//------------------------------------------------------------
+unsigned char MemRead(unsigned short Address)
+{
+    return(MemRead8(Address));
+}
+
+//------------------------------------------------------------
+// Capture pointers for MemRead8 and MemWrite8 functions.
+//------------------------------------------------------------
+extern "C"
+{
+    __declspec(dllexport) void MemPointers(MEMREAD8 Temp1,MEMWRITE8 Temp2)
+    {
+        MemRead8=Temp1;
+        MemWrite8=Temp2;
+        return;
+    }
+}
+
 //------------------------------------------------------------
 //   Assert Interupt
 //------------------------------------------------------------
-/*
-void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
+void AssertInterupt(unsigned char Interupt,unsigned char Latencey)
 {
     AssertInt(Interupt,Latencey);
     return;
 }
-*/
+
 //-------------------------------------------------------------
 // Generate menu for configuring the SD
 //-------------------------------------------------------------
