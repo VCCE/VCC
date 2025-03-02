@@ -17,6 +17,9 @@ This file is part of VCC (Virtual Color Computer).
 */
 // This is an expansion module for the Vcc Emulator. It simulated the functions of the TRS-80 Multi-Pak Interface
 
+// Before VCC was moved to github the SCS cart offset was disabled. The following #define re-enables it.
+#define BANKED_CART_SELECT
+
 #include <windows.h>
 #include <iostream>
 #include "stdio.h"
@@ -244,13 +247,15 @@ extern "C"
 				PakSetCart(1);
 			return;
 		}
-//		if ( (Port>=0x40) & (Port<=0x5F))
-//		{
-//			BankedCartOffset[SpareSelectSlot]=(Data & 15)<<14;
-//			if ( PakPortWriteCalls[SpareSelectSlot] != NULL)
-//				PakPortWriteCalls[SpareSelectSlot](Port,Data);
-//		}
-//		else
+#ifdef BANKED_CART_SELECT
+		if ( (Port>=0x40) & (Port<=0x5F))
+		{
+			BankedCartOffset[SpareSelectSlot]=(Data & 15)<<14;
+			if ( PakPortWriteCalls[SpareSelectSlot] != NULL)
+				PakPortWriteCalls[SpareSelectSlot](Port,Data);
+		}
+		else
+#endif
 			for(unsigned char Temp=0;Temp<4;Temp++)
 				if (PakPortWriteCalls[Temp] != NULL)
 					PakPortWriteCalls[Temp](Port,Data);
@@ -269,13 +274,15 @@ extern "C"
 			return(SlotRegister);
 		}
 
-//		if ( (Port>=0x40) & (Port<=0x5F))
-//		{
-//			if ( PakPortReadCalls[SpareSelectSlot] != NULL)
-//				return(PakPortReadCalls[SpareSelectSlot](Port));
-//			else
-//				return(NULL);
-//		}
+#ifdef BANKED_CART_SELECT
+		if ( (Port>=0x40) & (Port<=0x5F))
+		{
+			if ( PakPortReadCalls[SpareSelectSlot] != NULL)
+				return(PakPortReadCalls[SpareSelectSlot](Port));
+			else
+				return(NULL);
+		}
+#endif
 		Temp2=0;
 		for (Temp=0;Temp<4;Temp++)
 		{

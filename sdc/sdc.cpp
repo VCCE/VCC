@@ -44,7 +44,28 @@
 //  read the flash control port returns the currently selected bank
 //  in the three low bits and the five bits from the Flash Data port.
 //
-//  Status bits:
+//  MPI control is accomplished by reading/writing $FF7F
+//  MPIREG   $FF7F  ; multi-pak slot selection (65407)
+//    bits 7-6 unused
+//    bits 5-4 Active CTS/CART slot
+//    bits 3-2 Unused
+//    bits 1-0 Active SCS slot
+//  Keeping CTS and SCS the same:
+//    Poke 0  for slot 1  0x00
+//    Poke 17 for slot 2  0x11
+//    Poke 34 for slot 3  0x22
+//    Poke 51 for slot 4  0x33
+//  SCS selects I/O ($FF40-$FF5F)
+//  CTS/CART selects ROM $C000-$DFFF
+//
+//  Long in the past the SCS cart select for floppy ports was disabled
+//  in mmi.cpp.  This must be re-enabled for SDC emulation to work. An
+//  added #define BANKED_CART_SELECT in mmi.cpp does that.
+//
+//  For SDC emulator to work with fd502.dll in slot 4 and SDC.dll in slot 3
+//  the SDC slot must be selected for both SCS and CTS. (POKE 65407,34)
+//
+//  File Status bits:
 //  0   Busy
 //  1   Ready
 //  2   Invalid path name
@@ -201,7 +222,7 @@ unsigned char CmdPrm3 = 0;
 unsigned char FlshDat = 0;
 
 // Last block read from disk
-char LastReadBlock[512];
+char FileReadBuf[512];
 
 // Rom bank currently selected
 unsigned char CurrentBank = 0;
@@ -214,9 +235,9 @@ char *RecvPtr = RecvBuf;
 
 // Command reply buffer. Block data to Coco goes here.
 // Buffer is sized to hold at least 512 bytes (for streaming)
-char ReplyBuf[600];
+unsigned char ReplyBuf[600];
 int ReplyCount = 0;
-char *ReplyPtr = ReplyBuf;
+unsigned char *ReplyPtr = ReplyBuf;
 
 // Drive image filenames and handles
 char DiskImageName[2][MAX_PATH] = {"",""};
@@ -528,16 +549,18 @@ void SDCReset()
     return;
 }
 
-unsigned char mmi_control;
-unsigned char prev_write_port=0;
-
 //----------------------------------------------------------------------
 // Write SDC port.  If a command needs a data block to complete it
 // will put a count (256 or 512) in RecvCount.
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port)
 {
-    prev_write_port=port;
+
+    if ((!SDC_Mode) && (port > 0x4A || port == 0x4B || port == 0x49)) {
+        //_DLOG("SDCWrite %02X %02X wrong mode\n",port,data);
+        return;
+    }
+
     switch (port) {
     case 0x40:
         SetMode(data);
@@ -560,9 +583,10 @@ void SDCWrite(unsigned char data,unsigned char port)
     case 0x4B:
         if (RecvCount > 0) ReceiveByte(data); else CmdPrm3 = data;
         break;
-    case 0x7F:
-        _DLOG("MMI select %02X\n",data);
-        mmi_control = data;
+    case 0xFC:  // NMI vect change?
+        return;
+    default:
+        _DLOG("SDCWrite %02X %02X?\n",port,data);
         break;
     }
     return;
@@ -574,7 +598,10 @@ void SDCWrite(unsigned char data,unsigned char port)
 unsigned char SDCRead(unsigned char port)
 {
 
-if (!SDC_Mode && port != 0x43) return 0;
+    if (!SDC_Mode && port != 0x43) {
+        _DLOG("SDCRead port %02X wrong mode\n",port);
+        return 0;
+    }
 
     unsigned char rpy;
     switch (port) {
@@ -597,19 +624,12 @@ if (!SDC_Mode && port != 0x43) return 0;
     case 0x4B:
         rpy = (ReplyCount > 0) ? PutByte() : CmdRpy3;
         break;
-    case 0x7F:
-        rpy = mmi_control;
-        break;
     default:
         rpy = 0;
         break;
     }
     return rpy;
 }
-
-//======================================================================
-// Private functions
-//======================================================================
 
 //----------------------------------------------------------------------
 // Parse the startup.cfg file
@@ -680,6 +700,8 @@ unsigned char PutByte()
     } else {
         CmdSta |= STA_BUSY;
     }
+    //_DLOG(".",ReplyCount,*ReplyPtr,ReplyPtr);
+    //_DLOG("PutByte %03d %02X %X\n",ReplyCount,*ReplyPtr,ReplyPtr);
     return *ReplyPtr++;
 }
 
@@ -697,11 +719,17 @@ void BankSelect(int data)
 //----------------------------------------------------------------------
 void SetMode(int data)
 {
-    if (data == 0) {
+    if (SDC_Mode && (data == 0)) {
         SDC_Mode = false;
-    } else if (data == 0x43) {
+        _DLOG("SetMode SDC to false\n");
+    } else if (!SDC_Mode && (data == 0x43)) {
         SDC_Mode = true;
+        _DLOG("SetMode SDC to true\n");
+    } else {
+    //_DLOG("SetMode already %d\n",(bool)SDC_Mode);
+        return;
     }
+    // If mode changed init block control variables
     CmdSta  = 0;
     CmdRpy1 = 0;
     CmdRpy2 = 0;
@@ -720,6 +748,13 @@ void SetMode(int data)
 //----------------------------------------------------------------------
 void SDCCommand(int code)
 {
+
+if (!SDC_Mode) {
+    _DLOG("SDCCommand %02X %02X %02x %02x wrong mode\n",
+            code,CmdPrm1,CmdPrm2,CmdPrm3);
+    return;
+}
+
     // If busy or tranfer in progress abort whatever
     if ((CmdSta & STA_BUSY) || (RecvCount > 0) || (ReplyCount > 0)) {
         _DLOG("*** ABORTING ***\n");
@@ -741,18 +776,18 @@ void SDCCommand(int code)
     switch (hiNib) {
     case 0x80:
         CurSectorNum = CalcSectorNum(loNib);
-        _DLOG("Read Sector %d\n",CurSectorNum);
+        _DLOG("ReadSector %d\n",CurSectorNum);
         ReadSector(loNib);
         break;
     case 0x90:
         CurSectorNum = CalcSectorNum(loNib);
-        _DLOG("Stream Sector %d\n",CurSectorNum);
+        _DLOG("StreamImage %d\n",CurSectorNum);
         StreamImage(loNib);
         break;
     case 0xA0:
         CurCmdCode = code;
         CurSectorNum = CalcSectorNum(loNib);
-        _DLOG("Write Sector %d\n",CurSectorNum);
+        _DLOG("WriteSector %d\n",CurSectorNum);
         CmdBlockRecvStart(code);
         break;
     case 0xC0:
@@ -844,15 +879,15 @@ char * LastErrorTxt() {
 void ReadSector(int loNib)
 {
     if (!SDC_Mode) {
-        _DLOG("Not SDC mode Read ignored\n");
+        _DLOG("ReadSector wrong mode ignored\n");
         CmdSta = STA_FAIL;
         return;
     } else if ((loNib & 4) !=0 ) {
-        _DLOG("Read 8bit transfer not supported\n");
+        _DLOG("ReadSector 8bit transfer not supported\n");
         CmdSta = STA_FAIL;
         return;
     } else if (CurSectorNum < 0) {
-        _DLOG("Read invalid sector number\n");
+        _DLOG("ReadSector invalid sector number\n");
         CmdSta = STA_FAIL;
         return;
     }
@@ -867,23 +902,23 @@ void ReadSector(int loNib)
 
     int lsn = CurSectorNum;
 
-    //_DLOG("Read drive %d lsn %d\n",drive,lsn);
-
     LARGE_INTEGER pos;
     pos.QuadPart = lsn * 256;
     if (!SetFilePointerEx(hDrive[drive],pos,NULL,FILE_BEGIN)) {
-        _DLOG("Seek error %s\n",LastErrorTxt());
+        _DLOG("ReadSector seek error %s\n",LastErrorTxt());
         CmdSta = STA_FAIL;
     }
 
     DWORD cnt;
     DWORD num = 256;
-    ReadFile(hDrive[drive],LastReadBlock,num,&cnt,NULL);
+    ReadFile(hDrive[drive],FileReadBuf,num,&cnt,NULL);
     if (cnt != num) {
-        _DLOG("Read error %s\n",LastErrorTxt());
+        _DLOG("ReadSector %d drive %d hfile %d error %s\n",
+                lsn,drive,hDrive[drive],LastErrorTxt());
         CmdSta = STA_FAIL;
     } else {
-        LoadReply(LastReadBlock,256);
+        _DLOG("ReadSector %d drive %d hfile %d\n",lsn,drive,hDrive[drive]);
+        LoadReply(FileReadBuf,256);
     }
 }
 
@@ -1028,20 +1063,17 @@ void SDCControl(int loNib)
 //----------------------------------------------------------------------
 void LoadReply(void *data, int count)
 {
-    if (CmdSta != 0) {
-        _DLOG("Load reply busy\n");
-        CmdSta = STA_FAIL;
-        return;
-    } else if ((count < 2) | (count > 512)) {
+
+    if ((count < 2) | (count > 512)) {
         _DLOG("Load reply bad count\n");
         CmdSta = STA_FAIL;
         return;
     }
 
     // Copy data to the reply buffer with bytes swapped in words
-    char *dp = (char *) data;
-    char *bp = ReplyBuf;
-    char tmp;
+    unsigned char *dp = (unsigned char *) data;
+    unsigned char *bp = ReplyBuf;
+    unsigned char tmp;
     int ctr = count/2;
     while (ctr--) {
         tmp = *dp++;
@@ -1106,7 +1138,7 @@ bool LoadFileRecord(char * file, FileRecord * rec)
             if (c == '\0') break;
             rec->name[i] = c;
         }
-        _DLOG("Dir  %s\n", strrchr(file,'/'));
+        //_DLOG("Dir  %s\n", strrchr(file,'/'));
         return true;
     }
 
@@ -1133,7 +1165,7 @@ bool LoadFileRecord(char * file, FileRecord * rec)
         return false;
     }
 
-    _DLOG("File %s %d\n", strrchr(file,'/'), fs.st_size);
+    //_DLOG("File %s %d\n", strrchr(file,'/'), fs.st_size);
 
     rec->lolo_size = (fs.st_size) & 0xff;
     rec->hilo_size = (fs.st_size >> 8) & 0xff;
@@ -1249,7 +1281,9 @@ void OpenDrive (int drive)
                    drive,file,LastErrorTxt());
         CmdSta = STA_FAIL;
     }
+
     hDrive[drive] = hFile;
+    _DLOG("OpenDrive %d hfile %d\n",drive,hDrive[drive]);
 
 }
 
@@ -1271,8 +1305,9 @@ void CloseDrive (int drive)
 //----------------------------------------------------------------------
 void UpdateSD(int loNib)
 {
-//    _DLOG("UpdateSD %02X %02X %02X %02X %02X '%s'\n",
-//        CmdPrm1,CmdPrm2,CmdPrm3,RecvBuf[0],RecvBuf[1],&RecvBuf[2]);
+
+    //_DLOG("UpdateSD %02X %02X %02X %02X %02X '%s'\n",
+    //  CmdPrm1,CmdPrm2,CmdPrm3,RecvBuf[0],RecvBuf[1],&RecvBuf[2]);
 
     switch (RecvBuf[0]) {
     case 0x4d: //M
@@ -1339,7 +1374,6 @@ bool IsDirectory(const char * path)
 bool SetCurDir(char * path)
 {
     char fqp[MAX_PATH];
-    //TODO: curdir relative path logic?
 
     // If blank or '/' is passed clear the current dirctory
     if ((*path == '\0') || (*path == '/' )) {
@@ -1420,16 +1454,13 @@ bool LoadDirPage()
     char fqn[MAX_PATH];
     int cnt = 0;
     while (cnt < 16) {
-//        if ( *dFound.cFileName != '.') {
-            strncpy(fqn,SeaDir,MAX_PATH);
-            strncat(fqn,dFound.cFileName,MAX_PATH);
-            LoadFileRecord(fqn,&dpage[cnt]);
-            cnt++;
-//        }
+        strncpy(fqn,SeaDir,MAX_PATH);
+        strncat(fqn,dFound.cFileName,MAX_PATH);
+        LoadFileRecord(fqn,&dpage[cnt]);
+        cnt++;
         if (FindNextFile(hFind,&dFound) == 0) break;
     }
 
-//    _DLOG("Found %d files\n",cnt);
     LoadReply(dpage,256);
     return true;
 }
