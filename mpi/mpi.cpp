@@ -17,9 +17,6 @@ This file is part of VCC (Virtual Color Computer).
 */
 // This is an expansion module for the Vcc Emulator. It simulated the functions of the TRS-80 Multi-Pak Interface
 
-// Before VCC was moved to github the SCS cart offset was disabled. The following #define re-enables it.
-#define BANKED_CART_SELECT
-
 #include <windows.h>
 #include <iostream>
 #include "stdio.h"
@@ -40,6 +37,7 @@ static char CatNumber[MAXPAX][MAX_LOADSTRING]={"","","",""};
 static char SlotLabel[MAXPAX][MAX_LOADSTRING*2]={"Empty","Empty","Empty","Empty"};
 //static 
 static unsigned char PersistPaks = 0;
+static unsigned char DisableSCS = 0;
 static char ModulePaths[MAXPAX][MAX_PATH]={"","","",""};
 static unsigned char *ExtRomPointers[MAXPAX]={NULL,NULL,NULL,NULL};
 static unsigned int BankedCartOffset[MAXPAX]={0,0,0,0};
@@ -247,15 +245,13 @@ extern "C"
 				PakSetCart(1);
 			return;
 		}
-#ifdef BANKED_CART_SELECT
-		if ( (Port>=0x40) & (Port<=0x5F))
+		if ((!DisableSCS) & (Port>=0x40) & (Port<=0x5F))
 		{
 			BankedCartOffset[SpareSelectSlot]=(Data & 15)<<14;
 			if ( PakPortWriteCalls[SpareSelectSlot] != NULL)
 				PakPortWriteCalls[SpareSelectSlot](Port,Data);
 		}
 		else
-#endif
 			for(unsigned char Temp=0;Temp<4;Temp++)
 				if (PakPortWriteCalls[Temp] != NULL)
 					PakPortWriteCalls[Temp](Port,Data);
@@ -274,15 +270,14 @@ extern "C"
 			return(SlotRegister);
 		}
 
-#ifdef BANKED_CART_SELECT
-		if ( (Port>=0x40) & (Port<=0x5F))
+		if ((!DisableSCS) & (Port>=0x40) & (Port<=0x5F))
 		{
 			if ( PakPortReadCalls[SpareSelectSlot] != NULL)
 				return(PakPortReadCalls[SpareSelectSlot](Port));
 			else
 				return(NULL);
 		}
-#endif
+
 		Temp2=0;
 		for (Temp=0;Temp<4;Temp++)
 		{
@@ -446,6 +441,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			ReadModuleParms(SwitchSlot,ConfigText);
 			SendDlgItemMessage(hDlg,IDC_MODINFO,WM_SETTEXT,strlen(ConfigText),(LPARAM)(LPCSTR)ConfigText );
 			SendDlgItemMessage(hDlg, IDC_PAK, BM_SETCHECK, PersistPaks, 0);
+			SendDlgItemMessage(hDlg, IDC_SCS_DISABLE, BM_SETCHECK, DisableSCS, 0);
 
 			return TRUE; 
 		break;
@@ -454,11 +450,23 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			switch (LOWORD(wParam))
 			{
 			case IDOK:
+				// PersistPaks does NOTHING
 				PersistPaks = (unsigned char)SendDlgItemMessage(hDlg, IDC_PAK, BM_GETCHECK, 0, 0);
+				DisableSCS = (unsigned char)SendDlgItemMessage(hDlg, IDC_SCS_DISABLE, BM_GETCHECK, 0, 0);
 				EndDialog(hDlg, LOWORD(wParam));
 				WriteConfig();
 				return TRUE;
 			break;
+
+			case IDC_SCS_DISABLE: {
+				// Toggle spare cart select
+				HWND hCheck = GetDlgItem(hDlg,IDC_SCS_DISABLE);
+				int state = SendMessage(hCheck,BM_GETCHECK,0,0);
+				if (state == BST_CHECKED)
+					SendMessage(hCheck,BM_SETCHECK,BST_UNCHECKED,0);
+				else
+					SendMessage(hCheck,BM_SETCHECK,BST_CHECKED,0);
+				return TRUE; }
 
 			} //End switch LOWORD
 
@@ -676,6 +684,7 @@ void LoadConfig(void)
 	char ModName[MAX_LOADSTRING]="";
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	PersistPaks=GetPrivateProfileInt(ModName, "PersistPaks", 1, IniFile);
+	DisableSCS=GetPrivateProfileInt(ModName,"DisableSCS", 0, IniFile);
 	GetPrivateProfileString("DefaultPaths", "MPIPath", "", MPIPath, MAX_PATH, IniFile);
 	SwitchSlot=GetPrivateProfileInt(ModName,"SWPOSITION",3,IniFile);
 	ChipSelectSlot=SwitchSlot;
@@ -702,6 +711,7 @@ void WriteConfig(void)
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	WritePrivateProfileInt(ModName,"SWPOSITION",SwitchSlot,IniFile);
 	WritePrivateProfileInt(ModName, "PesistPaks", PersistPaks, IniFile);
+	WritePrivateProfileInt(ModName, "DisableSCS", DisableSCS, IniFile);
 	ValidatePath(ModulePaths[0]);
 	WritePrivateProfileString(ModName,"SLOT1",ModulePaths[0],IniFile);
 	ValidatePath(ModulePaths[1]);
