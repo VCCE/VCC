@@ -62,9 +62,6 @@
 //  in mmi.cpp.  This must be re-enabled for SDC emulation to work. An
 //  added #define BANKED_CART_SELECT in mmi.cpp does that.
 //
-//  For SDC emulator to work with fd502.dll in slot 4 and SDC.dll in slot 3
-//  the SDC slot must be selected for both SCS and CTS. (POKE 65407,34)
-//
 //  File Status bits:
 //  0   Busy
 //  1   Ready
@@ -651,6 +648,7 @@ void ParseStartup()
         return;
     }
 
+    //TODO D=[Current directory]
     // Strict single digit followed by '=' then path
     while (fgets(buf,sizeof(buf),su) > 0) {
         //Chomp line ending
@@ -721,12 +719,12 @@ void SetMode(int data)
 {
     if (SDC_Mode && (data == 0)) {
         SDC_Mode = false;
-        _DLOG("SetMode SDC to false\n");
+        //_DLOG("SetMode SDC to false\n");
     } else if (!SDC_Mode && (data == 0x43)) {
         SDC_Mode = true;
-        _DLOG("SetMode SDC to true\n");
+        //_DLOG("SetMode SDC to true\n");
     } else {
-    //_DLOG("SetMode already %d\n",(bool)SDC_Mode);
+        //_DLOG("SetMode already %d\n",(bool)SDC_Mode);
         return;
     }
     // If mode changed init block control variables
@@ -776,7 +774,7 @@ if (!SDC_Mode) {
     switch (hiNib) {
     case 0x80:
         CurSectorNum = CalcSectorNum(loNib);
-        _DLOG("ReadSector %d\n",CurSectorNum);
+        //_DLOG("ReadSector %d\n",CurSectorNum);
         ReadSector(loNib);
         break;
     case 0x90:
@@ -917,7 +915,7 @@ void ReadSector(int loNib)
                 lsn,drive,hDrive[drive],LastErrorTxt());
         CmdSta = STA_FAIL;
     } else {
-        _DLOG("ReadSector %d drive %d hfile %d\n",lsn,drive,hDrive[drive]);
+        //_DLOG("ReadSector %d drive %d hfile %d\n",lsn,drive,hDrive[drive]);
         LoadReply(FileReadBuf,256);
     }
 }
@@ -1198,16 +1196,19 @@ bool MountDisk (int drive, const char * path)
         strncat(fqn,path+1,MAX_PATH);
     } else {
         strncat(fqn,CurDir,MAX_PATH);
+        AppendPathChar(fqn,'/');
         strncat(fqn,path,MAX_PATH);
     }
 
+    //TODO: Don't append .DSK if file opens without it
+    //TODO: Wildcard in file name.
     // Append .DSK if no extension (assumes 8.3 naming)
     if (fqn[strlen(fqn)-4] != '.') strncat(fqn,".DSK",MAX_PATH);
 
     // Check if file exists
     if (!FileExists(fqn)) {
         if (!FileExists(fqn)) {
-            _DLOG("image %s does not exist\n",fqn);
+            _DLOG("MountDisk %s does not exist\n",fqn);
             return false;
         }
     }
@@ -1373,26 +1374,37 @@ bool IsDirectory(const char * path)
 //----------------------------------------------------------------------
 bool SetCurDir(char * path)
 {
-    char fqp[MAX_PATH];
+    //_DLOG("SetCurdir %s\n",path);
+    //TODO: Wildcards
 
-    // If blank or '/' is passed clear the current dirctory
-    if ((*path == '\0') || (*path == '/' )) {
+    char fqp[MAX_PATH];
+    char tmp[MAX_PATH] = {};
+
+    // If blank is passed clear the current dirctory
+    if (*path == '\0') {
         *CurDir = '\0';
         return true;
     }
 
+    // If first char passed is not '/' append to previous
+    if (*path != '/') { 
+        strncpy(tmp,CurDir,MAX_PATH);
+        AppendPathChar(tmp,'/');
+    }
+    strncat(tmp,path,MAX_PATH);
+
     // Check for valid directory on SD
     strncpy(fqp,SDCard,MAX_PATH);
+    strncat(fqp,tmp,MAX_PATH);
+
     if (!IsDirectory(fqp)) {
         _DLOG("SetCurDir invalid %s\n",fqp);
         CmdSta = STA_FAIL;
         return false;
     }
 
-    strncpy(CurDir,path,MAX_PATH);
-    AppendPathChar(CurDir,'/');
-    _DLOG("SetCurdir %s\n",SDCard);
-
+    strncpy(CurDir,tmp,MAX_PATH);
+    _DLOG("SetCurdir %s\n",CurDir);
     return true;
 }
 
@@ -1402,7 +1414,6 @@ bool SetCurDir(char * path)
 //----------------------------------------------------------------------
 bool InitiateDir(const char * wildcard)
 {
-
     // Make sure SDCard is a valid directory so we
     // don't get caught in a search loop
     if (!IsDirectory(SDCard)) {
@@ -1413,6 +1424,9 @@ bool InitiateDir(const char * wildcard)
 
     char path[MAX_PATH];
     strncpy(path,SDCard,MAX_PATH);
+    AppendPathChar(path,'/');
+    strncat(path,CurDir,MAX_PATH);
+    AppendPathChar(path,'/');
     strncat(path,wildcard,MAX_PATH);
 
     //Append '/*.*' if a directory
@@ -1421,13 +1435,12 @@ bool InitiateDir(const char * wildcard)
         strncat(path,"*.*",MAX_PATH);
     }
 
-    //_DLOG("Search path %s is %s\n",wildcard,path);
     hFind = FindFirstFile(path, &dFound);
+    _DLOG("IntiateDir find %s\n",path);
 
     // Save directory portion of search path
     char *p = strrchr(path,'/'); p++; *p='\0';
     strcpy(SeaDir,path);
-    //_DLOG("SeaDir %s is %s\n",wildcard,path);
 
     return (hFind != INVALID_HANDLE_VALUE);
 }
@@ -1446,7 +1459,7 @@ bool LoadDirPage()
             CmdSta = STA_FAIL;
             return false;
         }
-         _DLOG("Search failed\n");
+         _DLOG("LoadDirPage Search failed\n");
         LoadReply(dpage,16);
         return false;
     }
@@ -1458,7 +1471,11 @@ bool LoadDirPage()
         strncat(fqn,dFound.cFileName,MAX_PATH);
         LoadFileRecord(fqn,&dpage[cnt]);
         cnt++;
-        if (FindNextFile(hFind,&dFound) == 0) break;
+        if (FindNextFile(hFind,&dFound) == 0) {
+            FindClose(hFind);
+            hFind = INVALID_HANDLE_VALUE;
+            break;
+        }
     }
 
     LoadReply(dpage,256);
