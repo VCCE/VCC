@@ -103,10 +103,6 @@
 #include <ctype.h>
 #include <sys/stat.h>
 
-// For PathCompactPathEx
-#include <shlwapi.h>
-#pragma comment(lib,"shlwapi.lib")
-
 #include "../defines.h"
 #include "resource.h"
 
@@ -120,13 +116,13 @@
 #endif
 
 // Return values for status register
-#define STA_BUSY     0X01
+#define STA_BUSY     0x01
 #define STA_READY    0x02
 #define STA_HWERROR  0x04
 #define STA_CRCERROR 0x08
-#define STA_NOTFOUND 0X10
-#define STA_DELETED  0X20
-#define STA_WPROTECT 0X40
+#define STA_NOTFOUND 0x10
+#define STA_DELETED  0x20
+#define STA_WPROTECT 0x40
 #define STA_FAIL     0x80
 
 // Single byte file attributes for File info records
@@ -145,16 +141,12 @@ bool LoadRom(char *);
 void SDCWrite(unsigned char data,unsigned char port);
 unsigned char SDCRead(unsigned char port);
 void SDCInit(void);
-void SDCReset(void);
-void SetSDRoot(const char *);
 
 void AssertInterupt(unsigned char,unsigned char);
 void MemWrite(unsigned char,unsigned short);
 unsigned char MemRead(unsigned short);
 
 static char IniFile[MAX_PATH]={0};  // Ini file name from config
-static HINSTANCE hinstDLL;          // DLL handle
-static HWND hConfDlg = NULL;        // Config dialog
 
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
@@ -171,8 +163,12 @@ LRESULT CALLBACK SDC_Config(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig(void);
 void SaveConfig(void);
 void BuildDynaMenu(void);
-void SDC_Load_Card(void);
-unsigned char PakRom[0x4000];
+
+void UpdateListBox(HWND);
+void UpdateCardBox(void);
+void UpdateFlashItem(void);
+void InitCardBox(void);
+void InitFlashBox(void);
 
 void SetMode(int);
 void ParseStartup();
@@ -228,6 +224,9 @@ unsigned char FlshDat = 0;
 // Last block read from disk
 char FileReadBuf[512];
 
+// Cartridge ROM
+unsigned char PakRom[0x4000];
+
 // Rom bank currently selected
 unsigned char CurrentBank = 0;
 
@@ -263,21 +262,28 @@ struct FileRecord {
 #pragma pack()
 
 // Mounted image data
-struct {
+struct _DiskImage {
     char name[MAX_PATH];
     HANDLE hFile;
     int sector;
 } DiskImage[2];
 
-//DiskImmage[drive].sector
-
-//char DiskImageName[2][MAX_PATH] = {"",""};
-// Drive file info
+//TODO: make the following local to GetMountedImageRec
 struct FileRecord DriveFileRec[2] = {};
 
+// Flash banks
+char FlashFile[8][MAX_PATH];
+
+// Dll handle
+static HINSTANCE hinstDLL;
 // Windows file lookup handle and data
 HANDLE hFind;
 WIN32_FIND_DATAA dFound;
+
+// config control handles
+static HWND hConfDlg = NULL;
+static HWND hFlashBox = NULL;
+static HWND hSDCardBox = NULL;
 
 //======================================================================
 // DLL exports
@@ -311,7 +317,8 @@ extern "C"
 
     // Reset module
     __declspec(dllexport) unsigned char ModuleReset(void)
-    {        //SDCReset();
+    {
+        SDCInit();
         return 0;
     }
 
@@ -320,9 +327,6 @@ extern "C"
     {
         switch (MenuID)
         {
-        case 10:
-            SDC_Load_Card();
-            break;
         case 20:
             CreateDialog(hinstDLL, (LPCTSTR) IDD_CONFIG,
                          GetActiveWindow(), (DLGPROC) SDC_Config);
@@ -347,20 +351,18 @@ extern "C"
         return ;
     }
 
-    // Set ini file path and load HD config settings
+    // Set ini file path and Initialize SDC
     __declspec(dllexport) void SetIniPath (char *IniFilePath)
     {
         strcpy(IniFile,IniFilePath);
-        LoadConfig();
-        SDCInit();
         return;
     }
 
     // Return a byte from the current PAK ROM
-	__declspec(dllexport) unsigned char PakMemRead8(unsigned short adr)
-	{
-		return(PakRom[adr & 0x3ffff]);
-	}
+    __declspec(dllexport) unsigned char PakMemRead8(unsigned short adr)
+    {
+        return(PakRom[adr & 0x3FFFF]);
+    }
 
     // Capture pointers for MemRead8 and MemWrite8 functions.
     __declspec(dllexport) void MemPointers(MEMREAD8 Temp1,MEMWRITE8 Temp2)
@@ -379,14 +381,11 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 {
     if (reason == DLL_PROCESS_ATTACH) {
         hinstDLL = hinst;
-
     } else if (reason == DLL_PROCESS_DETACH) {
         if (hConfDlg) {
             DestroyWindow(hConfDlg);
             hConfDlg = NULL;
         }
-        hinstDLL = NULL;
-        SDCReset();
     }
     return TRUE;
 }
@@ -396,18 +395,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 //-------------------------------------------------------------
 void BuildDynaMenu(void)
 {
-    char label[MAX_PATH];
-    strncpy(label,"SD Card: ",40);
-
-    // Maybe better set/show card path in config.
-    char tmp[MAX_PATH];
-    PathCompactPathEx(tmp,SDCard,20,0);
-    strncat(label,tmp,MAX_PATH);
-
-    //Call back type 0=Head 1=Slave 2=StandAlone
     DynamicMenuCallback("",0,0);
     DynamicMenuCallback("",6000,0);
-    DynamicMenuCallback(label,5010,2);
     DynamicMenuCallback("SDC Config",5020,2);
     DynamicMenuCallback("",1,0);
 }
@@ -421,46 +410,40 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message) {
     case WM_CLOSE:
         EndDialog(hDlg,LOWORD(wParam));
+        break;
     case WM_INITDIALOG:
         hConfDlg=hDlg;
+        InitFlashBox();
+        InitCardBox();
         break;
+    case WM_VKEYTOITEM:
+        switch (LOWORD(wParam)) {
+        case VK_RETURN:
+        case VK_SPACE:
+            UpdateListBox((HWND) lParam);
+            return -2; //no further processing
+        }
+        return -1;
     case WM_COMMAND:
+        switch (HIWORD(wParam)) {
+        case LBN_KILLFOCUS:
+            SendMessage((HWND)lParam, LB_SETCURSEL, -1, 0);
+            return 0;
+        case LBN_DBLCLK:
+            UpdateListBox((HWND) lParam);
+            return 0;
+        }
         switch (LOWORD(wParam)) {
         case IDOK:
+            SaveConfig();
             EndDialog(hDlg,LOWORD(wParam));
             break;
         case IDCANCEL:
             EndDialog(hDlg,LOWORD(wParam));
             break;
-        default:
-            break;
         }
     }
-    return (INT_PTR) 0;
-}
-
-//------------------------------------------------------------
-// Get SDC pathname from user
-//------------------------------------------------------------
-void SDC_Load_Card(void)
-{
-    // Prompt user for path
-    BROWSEINFO bi = { 0 };
-    bi.hwndOwner = GetActiveWindow();
-    bi.lpszTitle = "Set the SD card path";
-    bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NONEWFOLDERBUTTON;
-    LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
-    if (pidl != 0) {
-        SHGetPathFromIDList(pidl,SDCard);
-        CoTaskMemFree(pidl);
-    }
-    // Sanitize slashes
-    for(unsigned int i=0; i<strlen(SDCard); i++)
-        if (SDCard[i] == '\\') SDCard[i] = '/';
-
-    SetSDRoot(SDCard);
-    SaveConfig();
-    return;
+    return 0;
 }
 
 //------------------------------------------------------------
@@ -468,9 +451,20 @@ void SDC_Load_Card(void)
 //------------------------------------------------------------
 void LoadConfig(void)
 {
-    GetPrivateProfileString("SDC", "SDCardPath", "",
-                             SDCard, MAX_PATH, IniFile);
-    SetSDRoot(SDCard);
+    GetPrivateProfileString
+        ("SDC", "SDCardPath", "", SDCard, MAX_PATH, IniFile);
+    if (!IsDirectory(SDCard)) {
+        _DLOG("LoadConfig invalid SDCard path %s\n",SDCard);
+        return;
+    }
+
+    for (int i=0;i<8;i++) {
+        char txt[32];
+        sprintf(txt,"FlashFile_%d",i);
+        GetPrivateProfileString
+            ("SDC", txt, "", FlashFile[i], MAX_PATH, IniFile);
+    }
+
     // Create config menu
     BuildDynaMenu();
     return;
@@ -482,52 +476,17 @@ void LoadConfig(void)
 void SaveConfig(void)
 {
     WritePrivateProfileString("SDC", "SDCardPath",SDCard,IniFile);
-    return;
-}
-
-//-------------------------------------------------------------
-// Load SDC rom
-//-------------------------------------------------------------
-
-bool LoadRom(char *RomName)	//Returns true if loaded
-{
-    int ch;
-    int ctr = 0;
-	FILE *h = fopen(RomName, "rb");
-	memset(PakRom, 0xFF, 0x4000);
-	if (h == NULL) return false;
-
-    unsigned char *p = PakRom;
-    while (ctr++ < 0x4000) {
-        if ((ch = fgetc(h)) < 0) break;
-        *p++ = (unsigned char) ch;
+    for (int i=0;i<8;i++) {
+        char txt[32];
+        sprintf(txt,"FlashFile_%d",i);
+        WritePrivateProfileString("SDC",txt,FlashFile[i],IniFile);
     }
 
-	fclose(h);
-	return true;
-}
-
-//----------------------------------------------------------------------
-// Set the CD root
-//----------------------------------------------------------------------
-void SetSDRoot(const char * path)
-{
-    // Make sure path is a directory
-    if (!IsDirectory(path)) {
-        _DLOG("SetSDRoot invalid path %s\n",path);
-        return;
-    }
-
-    strncpy(SDCard,path,MAX_PATH);
-    AppendPathChar(SDCard,'/');
-
-    // Clear the current directory
-    SetCurDir("");
     return;
 }
 
 //----------------------------------------------------------------------
-// Init the controller.
+// Init the controller. This gets called by ModuleReset
 //----------------------------------------------------------------------
 void SDCInit()
 {
@@ -537,8 +496,13 @@ void SDCInit()
     MoveWindow(GetConsoleWindow(),0,0,300,800,TRUE);
 #endif
 
-    memset((void *) &DriveFileRec,0,sizeof(DriveFileRec));
-//  memset((void *) &DiskImageName,0,sizeof(DiskImageName));
+    // Make sure drives are unloaded
+    MountDisk (0,"");
+    MountDisk (1,"");
+
+    // Load SDC configuration from ini file
+    LoadConfig();
+
     memset((void *) &DiskImage,0,sizeof(DiskImage));
 
     ParseStartup();
@@ -553,13 +517,155 @@ void SDCInit()
 //----------------------------------------------------------------------
 // Reset the controller
 //----------------------------------------------------------------------
-void SDCReset()
+//void SDCReset()
+//{
+//    _DLOG("SDCReset Unloading Drives\n");
+//    MountDisk (0,"");
+//    MountDisk (1,"");
+//    SetMode(0);
+//    SDCInit();
+//    return;
+//}
+
+//------------------------------------------------------------
+// Init flash box
+//------------------------------------------------------------
+void InitFlashBox(void)
 {
-    _DLOG("SDCReset Unloading Drives\n");
-    MountDisk (0,"");
-    MountDisk (1,"");
-    SetMode(0);
-    return;
+    hFlashBox = GetDlgItem(hConfDlg,ID_FLASH_BOX);
+
+    // Set height of items in the listbox
+    SendMessage(hFlashBox, LB_SETITEMHEIGHT, 0, 18);
+
+    // Add items to the listbox
+    char text[64];
+    for (int index=0; index<8; index++) {
+        sprintf(text,"%d  %s",index,FlashFile[index]);
+        SendMessage(hFlashBox, LB_ADDSTRING, 0, (LPARAM)text);
+    }
+}
+
+//------------------------------------------------------------
+// Init SD card box
+//------------------------------------------------------------
+void InitCardBox(void)
+{
+    hSDCardBox = GetDlgItem(hConfDlg,ID_SD_BOX);
+    SendMessage(hSDCardBox, LB_SETITEMHEIGHT, 0, 18);
+    SendMessage(hSDCardBox, LB_ADDSTRING, 0, (LPARAM)SDCard);
+}
+
+//------------------------------------------------------------
+// Update flash box item
+//------------------------------------------------------------
+void UpdateFlashItem(void)
+{
+    char filename[MAX_PATH];
+
+    int index = SendMessage(hFlashBox, LB_GETCURSEL, 0, 0);
+    if ((index < 0) | (index > 7)) {
+        _DLOG("UpdateFlashItem invalid index %d\n",index);
+        return;
+    }
+
+    OPENFILENAME ofn ;
+
+    char TempFileName[MAX_PATH]="";
+    char CapFilePath[MAX_PATH]="C:/users";
+    sprintf(filename,"%d  -empty-",index);
+
+    memset(&ofn,0,sizeof(ofn));
+    ofn.lStructSize       = sizeof (OPENFILENAME);
+    ofn.hwndOwner         = hFlashBox;          // hConfigDlg?
+    ofn.Flags             = OFN_HIDEREADONLY;
+    ofn.lpstrDefExt       = ".rom";
+    ofn.lpstrFilter       = "Rom File\0*.rom\0All Files\0*.*\0\0";
+    ofn.nFilterIndex      = 0 ;
+    ofn.lpstrFile         = &filename[3];
+    ofn.nMaxFile          = MAX_PATH-3;
+    ofn.nMaxFileTitle     = MAX_PATH;
+    ofn.lpstrInitialDir   = CapFilePath;
+    ofn.lpstrTitle        = "Set Flash Rom file";
+
+    GetOpenFileName(&ofn);
+
+    for(unsigned int i=0; i<strlen(filename); i++) {
+        if (filename[i] == '\\') filename[i] = '/';
+    }
+
+    strncpy(FlashFile[index],&filename[3],MAX_PATH);
+
+    _DLOG("UdateFlashItem %d %s\n",index,FlashFile[index]);
+
+    // Delete prev string then add new string in it's place
+    SendMessage(hFlashBox, LB_DELETESTRING, index, 0);
+    SendMessage(hFlashBox, LB_INSERTSTRING, index, (LPARAM)filename);
+    SendMessage(hFlashBox, LB_SETCURSEL, index, 0);
+}
+
+//------------------------------------------------------------
+// Update SD card
+//------------------------------------------------------------
+void UpdateCardBox(void)
+{
+    // Prompt user for path
+    BROWSEINFO bi = { 0 };
+    bi.hwndOwner = GetActiveWindow();
+    bi.lpszTitle = "Set the SD card path";
+    bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NONEWFOLDERBUTTON;
+    LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+    if (pidl != 0) {
+        SHGetPathFromIDList(pidl,SDCard);
+        CoTaskMemFree(pidl);
+    }
+    // Sanitize slashes
+    for(unsigned int i=0; i<strlen(SDCard); i++) {
+        if (SDCard[i] == '\\') SDCard[i] = '/';
+    }
+    AppendPathChar(SDCard,'/');
+
+    // Make sure it  is a directory
+    if (!IsDirectory(SDCard)) {
+        _DLOG("UpdateCardBox invalid path %s\n",SDCard);
+        return;
+    }
+    // Display selection in listbox
+    SendMessage(hSDCardBox, LB_DELETESTRING, 0, 0);
+    SendMessage(hSDCardBox, LB_INSERTSTRING, 0, (LPARAM)SDCard);
+    SendMessage(hSDCardBox, LB_SETCURSEL, 0, 0);
+}
+
+//------------------------------------------------------------
+// Update a list box
+//------------------------------------------------------------
+void UpdateListBox(HWND hBox)
+{
+    if (hBox == hFlashBox)
+        UpdateFlashItem();
+    else if (hBox == hSDCardBox)
+        UpdateCardBox();
+}
+
+//-------------------------------------------------------------
+// Load SDC rom
+//-------------------------------------------------------------
+
+bool LoadRom(char *RomName) //Returns true if loaded
+{
+    int ch;
+    int ctr = 0;
+    FILE *h = fopen(RomName, "rb");
+    memset(PakRom, 0xFF, 0x4000);
+    if (h == NULL) return false;
+
+    unsigned char *p = PakRom;
+    while (ctr++ < 0x4000) {
+        if ((ch = fgetc(h)) < 0) break;
+        *p++ = (unsigned char) ch;
+    }
+
+    fclose(h);
+    return true;
 }
 
 //----------------------------------------------------------------------
@@ -662,7 +768,7 @@ void ParseStartup()
         return;
     }
 
-    //TODO D=[Current directory]
+    //TODO implement D=[Current directory]
     // Strict single digit followed by '=' then path
     while (fgets(buf,sizeof(buf),su) > 0) {
         //Chomp line ending
@@ -1007,12 +1113,12 @@ void GetDriveInfo(int loNib)
         break;
     case 0x43:
         // 'C' Return current directory in block
-        _DLOG("GetDriveInfo $%0X (C) not supported\n",CmdPrm1);
+        _DLOG("GetDriveInfo $%0x (C) not supported\n",CmdPrm1);
         CmdSta = STA_FAIL;
         break;
     case 0x51:
         // 'Q' Return the size of disk image in p1,p2,p3
-        _DLOG("GetDriveInfo $%0X (Q) not supported\n",CmdPrm1);
+        _DLOG("GetDriveInfo $%0x (Q) not supported\n",CmdPrm1);
         CmdSta = STA_FAIL;
         break;
     case 0x3E:
@@ -1021,7 +1127,7 @@ void GetDriveInfo(int loNib)
     case 0x2B:
         // '+' Mount next next disk in set.  Mounts disks with a
         // digit suffix, starting with '1'. May repeat
-        _DLOG("GetDriveInfo $%0X (+) not supported\n",CmdPrm1);
+        _DLOG("GetDriveInfo $%0x (+) not supported\n",CmdPrm1);
         CmdSta = STA_FAIL;
         break;
     case 0x56:
@@ -1030,7 +1136,7 @@ void GetDriveInfo(int loNib)
         CmdRpy3 = 0x13;
         break;
     default:
-        _DLOG("GetDriveInfo $%0X (%c) not supported\n",CmdPrm1,CmdPrm1);
+        _DLOG("GetDriveInfo $%0x (%c) not supported\n",CmdPrm1,CmdPrm1);
         CmdSta = STA_FAIL;
         break;
     }
@@ -1038,14 +1144,15 @@ void GetDriveInfo(int loNib)
 
 //----------------------------------------------------------------------
 // Return file record for mounted disk image
+// TODO: Do not use DriveFileRec[]
 //----------------------------------------------------------------------
 void GetMountedImageRec(int drive)
 {
-    //if (strlen(DiskImageName[drive]) == 0) {
     if (strlen(DiskImage[drive].name) == 0) {
         _DLOG("GetMountedImage drive %d empty\n",drive);
         CmdSta = STA_FAIL;
     } else {
+        //TODO: FileRecord should be local here. Data from DiskImage[]
         LoadReply((void *) &DriveFileRec[drive],sizeof(FileRecord));
     }
 }
@@ -1120,7 +1227,7 @@ char FileAttrByte(const char * file)
 }
 
 //----------------------------------------------------------------------
-// Load file record
+// Load file record.  TODO: Do not use for loaded drives
 //----------------------------------------------------------------------
 bool LoadFileRecord(char * file, FileRecord * rec)
 {
@@ -1180,17 +1287,18 @@ bool LoadFileRecord(char * file, FileRecord * rec)
 
     //_DLOG("LoadFileRecord %s %d\n", strrchr(file,'/'), fs.st_size);
 
-    rec->lolo_size = (fs.st_size) & 0xff;
-    rec->hilo_size = (fs.st_size >> 8) & 0xff;
-    rec->lohi_size = (fs.st_size >> 16) & 0xff;
-    rec->hihi_size = (fs.st_size >> 24) & 0xff;
+    rec->lolo_size = (fs.st_size) & 0xFF;
+    rec->hilo_size = (fs.st_size >> 8) & 0xFF;
+    rec->lohi_size = (fs.st_size >> 16) & 0xFF;
+    rec->hihi_size = (fs.st_size >> 24) & 0xFF;
 
     return true;
 }
 
 //----------------------------------------------------------------------
 // Mount Drive.  If image path starts with '/' load drive relative
-// to SDRoot, else load drive relative to the current directory.
+// to SDRoot, else load drive relative to the current directory
+//TODO: Don't load or DriveFileRecord[] here
 //----------------------------------------------------------------------
 bool MountDisk (int drive, const char * path)
 {
@@ -1200,10 +1308,10 @@ bool MountDisk (int drive, const char * path)
 
     // Check for UNLOAD.  Path will be an empty string.
     if (*path == '\0') {
-        memset((void *) &DriveFileRec[drive], 0, sizeof(FileRecord));
-        //*DiskImageName[drive] = '\0';
-        *DiskImage[drive].name = '\0';
         CloseDrive(drive);
+        //memset((void *) &DriveFileRec[drive], 0, sizeof(FileRecord));
+        memset((void *) &DiskImage[drive],0,sizeof(_DiskImage));
+        //*DiskImage[drive].name = '\0';
         return true;
     }
 
@@ -1230,11 +1338,11 @@ bool MountDisk (int drive, const char * path)
     }
 
     // Set the image name and load the file record;
-    //strncpy(DiskImageName[drive],fqn,MAX_PATH);
     strncpy(DiskImage[drive].name,fqn,MAX_PATH);
     LoadFileRecord(fqn,&DriveFileRec[drive]);
 
     // Establish image type (only headerless JVC is supported)
+    //TODO: Don't use DriveFileRecord[] here
     if (DriveFileRec[drive].lolo_size != 0) {
         _DLOG("MountDisk %d invalid type %s\n",drive,fqn);
         return false;
@@ -1257,7 +1365,7 @@ bool FileExists(const char * path)
 }
 
 //----------------------------------------------------------------------
-// Open virtual disk
+// Open virtual disk  TODO: Do not use DriveFileRec[]
 //----------------------------------------------------------------------
 void OpenDrive (int drive)
 {
@@ -1268,7 +1376,6 @@ void OpenDrive (int drive)
         CloseDrive(drive);
     }
 
-    //char *file = DiskImageName[drive];
     char *file = DiskImage[drive].name;
 
     if (*file == '\0') {
@@ -1329,8 +1436,8 @@ void UpdateSD(int loNib)
     //  CmdPrm1,CmdPrm2,CmdPrm3,RecvBuf[0],RecvBuf[1],&RecvBuf[2]);
 
     switch (RecvBuf[0]) {
-    case 0x4d: //M
-    case 0x6d: //m
+    case 0x4D: //M
+    case 0x6D: //m
         CmdSta = (MountDisk(loNib,&RecvBuf[2])) ? 0 : STA_FAIL;
         break;
     case 0x4E: //N
