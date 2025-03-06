@@ -181,8 +181,9 @@ void UnusedCommand(int);
 void GetDriveInfo(int);
 void SDCControl(int);
 void UpdateSD(int);
-void AppendPathChar(char *, char c);
-char FileAttrByte(const char *);
+void AppendPathChar(char *,char c);
+int FileAttrib(const char *,char *);
+bool LoadFileRecord(char *,struct FileRecord *);
 bool MountDisk (int,const char *);
 void CloseDrive(int);
 void OpenDrive(int);
@@ -199,6 +200,7 @@ bool InitiateDir(const char *);
 bool FileExists(const char * path);
 bool IsDirectory(const char *path);
 void GetMountedImageRec(int);
+void CvtName83(char *,char *,char *);
 
 //======================================================================
 // Globals
@@ -230,6 +232,11 @@ unsigned char PakRom[0x4000];
 // Rom bank currently selected
 unsigned char CurrentBank = 0;
 
+// Host paths for SDC
+char SDCard[MAX_PATH] = {}; // SD card root directory
+char CurDir[MAX_PATH] = {}; // SDC current directory
+char SeaDir[MAX_PATH] = {}; // Last directory searched
+
 // Command send buffer. Block data from Coco lands here.
 // Buffer is sized to hold at least 256 bytes. (for sector writes)
 char RecvBuf[300];
@@ -242,13 +249,7 @@ unsigned char ReplyBuf[600];
 int ReplyCount = 0;
 unsigned char *ReplyPtr = ReplyBuf;
 
-
-// Host paths for SDC
-char SDCard[MAX_PATH] = {}; // SD card root directory
-char CurDir[MAX_PATH] = {}; // SDC current directory
-char SeaDir[MAX_PATH] = {}; // Last directory searched
-
-// File record for sending to ROM utilitied
+// Packed file record for sending to CoCo
 #pragma pack(1)
 struct FileRecord {
     char name[8];
@@ -265,17 +266,17 @@ struct FileRecord {
 struct _DiskImage {
     char name[MAX_PATH];
     HANDLE hFile;
+    char attrib;
+    int size;
     int sector;
 } DiskImage[2];
-
-//TODO: make the following local to GetMountedImageRec
-struct FileRecord DriveFileRec[2] = {};
 
 // Flash banks
 char FlashFile[8][MAX_PATH];
 
 // Dll handle
 static HINSTANCE hinstDLL;
+
 // Windows file lookup handle and data
 HANDLE hFind;
 WIN32_FIND_DATAA dFound;
@@ -1144,16 +1145,16 @@ void GetDriveInfo(int loNib)
 
 //----------------------------------------------------------------------
 // Return file record for mounted disk image
-// TODO: Do not use DriveFileRec[]
 //----------------------------------------------------------------------
 void GetMountedImageRec(int drive)
 {
     if (strlen(DiskImage[drive].name) == 0) {
-        _DLOG("GetMountedImage drive %d empty\n",drive);
+        //_DLOG("GetMountedImage drive %d empty\n",drive);
         CmdSta = STA_FAIL;
     } else {
-        //TODO: FileRecord should be local here. Data from DiskImage[]
-        LoadReply((void *) &DriveFileRec[drive],sizeof(FileRecord));
+        struct FileRecord rec;
+        LoadFileRecord(DiskImage[drive].name, &rec);
+        LoadReply(&rec,sizeof(rec));
     }
 }
 
@@ -1211,94 +1212,83 @@ void LoadReply(void *data, int count)
 
     return;
 }
-//----------------------------------------------------------------------
-// Return file attribute bits
-//----------------------------------------------------------------------
-char FileAttrByte(const char * file)
-{
-    DWORD Attr = GetFileAttributes(file);
-    if (Attr == INVALID_FILE_ATTRIBUTES) return ATTR_INVALID;
 
-    char retval = 0;
-    if (Attr & FILE_ATTRIBUTE_READONLY)  retval |= ATTR_RDONLY;
-    if (Attr & FILE_ATTRIBUTE_DIRECTORY) retval |= ATTR_DIR;
-    if (Attr & FILE_ATTRIBUTE_HIDDEN)    retval |= ATTR_HIDDEN;
-    return retval;
+//----------------------------------------------------------------------
+// Convert name from path into 8.3 format to use in SDC file record
+//----------------------------------------------------------------------
+void CvtName83(char *fname8, char *ftype3, char *path) {
+
+    int i;
+    char c;
+    char *p;
+
+    // start with blanks
+    memset(fname8,' ',8);
+    memset(ftype3,' ',3);
+
+    // Copy eight chars after the last '/' to name field
+    i = 0;
+    p = strrchr(path,'/');
+    if (p == NULL) p = path; else p++;
+    while (c = *p++) {
+        if (c == '.') break;
+        fname8[i++] = c;
+        if (i > 7) break;
+    }
+
+    // Copy three chars after the last '.' to type field
+    i = 0;
+    p = strrchr(path,'.');
+    if (p == NULL) return; else p++;
+    while (c = *p++) {
+        ftype3[i++] = c;
+        if (i > 2) break;
+    }
+    return;
 }
 
 //----------------------------------------------------------------------
-// Load file record.  TODO: Do not use for loaded drives
+// Load a file record for SDC file commands.
 //----------------------------------------------------------------------
-bool LoadFileRecord(char * file, FileRecord * rec)
+bool LoadFileRecord(char * file, struct FileRecord * rec)
 {
-    int i;
-    char c;
     memset(rec,0,sizeof(rec));
-
-    rec->attrib = FileAttrByte(file);
+    int filesize = FileAttrib(file,&rec->attrib);
     if (rec->attrib == ATTR_INVALID) {
         _DLOG("LoadFileRecord attibutes unavailable\n");
         return false;
     }
-
-    char * p = strrchr(file,'/');
-    if (p == NULL) {
-        _DLOG("LoadFileRecord no backslash\n");
-        return false;
-    }
-    p++;
-
-    memset(rec->name,' ',8);
-    memset(rec->type,' ',3);
-
-    // If a directory all we need is it's name
-    if (rec->attrib & ATTR_DIR) {
-        for (i=0;i<8;i++) {
-            char c = *p++;
-            if (c == '\0') break;
-            rec->name[i] = c;
-        }
-        //_DLOG("LoadFileRecord %s\n", strrchr(file,'/'));
-        return true;
-    }
-
-    i = 0;
-    while (c = *p++) {
-        if (c == '.') break;
-        rec->name[i++] = c;
-        if (i > 7) break;
-    }
-
-    // Advance to file type
-    while ((c != '\0') && (c != '.')) c = *p++;
-
-    i = 0;
-    while (c = *p++) {
-        rec->type[i++] = c;
-        if (i > 2) break;
-    }
-
-    struct _stat fs;
-    int r=_stat(file,&fs);
-    if (r != 0) {
-        _DLOG("LoadFileRecord stat returned $d file %s\n",r,file);
-        return false;
-    }
-
-    //_DLOG("LoadFileRecord %s %d\n", strrchr(file,'/'), fs.st_size);
-
-    rec->lolo_size = (fs.st_size) & 0xFF;
-    rec->hilo_size = (fs.st_size >> 8) & 0xFF;
-    rec->lohi_size = (fs.st_size >> 16) & 0xFF;
-    rec->hihi_size = (fs.st_size >> 24) & 0xFF;
-
+    CvtName83(rec->name,rec->type,file);
+    rec->lolo_size = (filesize) & 0xFF;
+    rec->hilo_size = (filesize >> 8) & 0xFF;
+    rec->lohi_size = (filesize >> 16) & 0xFF;
+    rec->hihi_size = (filesize >> 24) & 0xFF;
     return true;
+}
+
+//----------------------------------------------------------------------
+// Get attributes for a file. Fills attributes byte and returns filesize
+//----------------------------------------------------------------------
+int FileAttrib(const char * path, char * attr)
+{
+    struct _stat file_stat;
+    int result =_stat(path,&file_stat);
+    if (result != 0) {
+        *attr = ATTR_INVALID;
+        return 0;
+    } else {
+        *attr = 0;
+        if ((file_stat.st_mode & _S_IFDIR) != 0)
+            *attr |= ATTR_DIR;
+        if ((file_stat.st_mode & _S_IWRITE) == 0)
+            *attr |=ATTR_RDONLY;
+        return file_stat.st_size;
+    }
 }
 
 //----------------------------------------------------------------------
 // Mount Drive.  If image path starts with '/' load drive relative
 // to SDRoot, else load drive relative to the current directory
-//TODO: Don't load or DriveFileRecord[] here
 //----------------------------------------------------------------------
 bool MountDisk (int drive, const char * path)
 {
@@ -1309,12 +1299,11 @@ bool MountDisk (int drive, const char * path)
     // Check for UNLOAD.  Path will be an empty string.
     if (*path == '\0') {
         CloseDrive(drive);
-        //memset((void *) &DriveFileRec[drive], 0, sizeof(FileRecord));
         memset((void *) &DiskImage[drive],0,sizeof(_DiskImage));
-        //*DiskImage[drive].name = '\0';
         return true;
     }
 
+    // Establish image filename
     strncpy(fqn,SDCard,MAX_PATH);
     if (*path == '/') {
         strncat(fqn,path+1,MAX_PATH);
@@ -1324,33 +1313,34 @@ bool MountDisk (int drive, const char * path)
         strncat(fqn,path,MAX_PATH);
     }
 
-    //TODO: Don't append .DSK if file opens without it
     //TODO: Wildcard in file name.
     // Append .DSK if no extension (assumes 8.3 naming)
+    //TODO: Don't append .DSK if file opens without it
     if (fqn[strlen(fqn)-4] != '.') strncat(fqn,".DSK",MAX_PATH);
 
-    // Check if file exists
-    if (!FileExists(fqn)) {
-        if (!FileExists(fqn)) {
-            _DLOG("MountDisk %s does not exist\n",fqn);
-            return false;
-        }
+    // Get file attributes.
+    char attrib;
+    int filesize = FileAttrib(fqn, &attrib);
+    if (attrib < 0) {
+        _DLOG("MountDisk %s does not exist\n",fqn);
+        return false;
     }
-
-    // Set the image name and load the file record;
-    strncpy(DiskImage[drive].name,fqn,MAX_PATH);
-    LoadFileRecord(fqn,&DriveFileRec[drive]);
-
-    // Establish image type (only headerless JVC is supported)
-    //TODO: Don't use DriveFileRecord[] here
-    if (DriveFileRec[drive].lolo_size != 0) {
-        _DLOG("MountDisk %d invalid type %s\n",drive,fqn);
+    if ((attrib & ATTR_DIR) != 0) {
+        _DLOG("MountDisk %s is a directory\n",fqn);
         return false;
     }
 
+    // Make sure drive is not open before updating image info
     CloseDrive(drive);
-    _DLOG("MountDisk %d %s\n",drive,fqn);
 
+    // Fill image info.
+    DiskImage[drive].hFile = NULL;
+    strncpy(DiskImage[drive].name,fqn,MAX_PATH);
+    DiskImage[drive].attrib = attrib;
+    DiskImage[drive].size = filesize;
+    DiskImage[drive].sector = -1;
+
+    _DLOG("MountDisk %d %s\n",drive,fqn);
     return true;
 }
 
@@ -1365,52 +1355,35 @@ bool FileExists(const char * path)
 }
 
 //----------------------------------------------------------------------
-// Open virtual disk  TODO: Do not use DriveFileRec[]
+// Open virtual disk
 //----------------------------------------------------------------------
 void OpenDrive (int drive)
 {
-
     drive &= 1;
-    if (DiskImage[drive].hFile) {
-        _DLOG("OpenDrive closing old handle %d\n",drive);
-        CloseDrive(drive);
+
+    if (DiskImage[drive].hFile != NULL) {
+        _DLOG("OpenDrive already open %d\n",drive);
+        return;
     }
 
-    char *file = DiskImage[drive].name;
-
-    if (*file == '\0') {
-        _DLOG("OpenDrive no image mounted drive %d\n",drive);
+    if (*DiskImage[drive].name == '\0') {
+        _DLOG("OpenDrive not mounted %d\n",drive);
         CmdSta = STA_FAIL;
         return;
     }
 
-    _DLOG("Open %d %s\n",drive,file);
+    DiskImage[drive].hFile = CreateFile(
+        DiskImage[drive].name, GENERIC_READ|GENERIC_WRITE,
+        FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
 
-    if (!FileExists(file)) {
-        _DLOG("OpenDrive loaded image file does not exist\n");
-        CmdSta = STA_FAIL;
-        return;
-    }
-
-    if (DriveFileRec[drive].attrib & ATTR_DIR) {
-        _DLOG("OpenDrive file record says it is a directory\n");
-        CmdSta = STA_FAIL;
-        return;
-    }
-
-    HANDLE hFile;
-    hFile = CreateFile( file,
-            GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ,
-            NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hFile == NULL) {
+    if (DiskImage[drive].hFile == NULL) {
         _DLOG("OpenDrive %s drive %d file %s\n",
-                   drive,file,LastErrorTxt());
+            drive,DiskImage[drive],LastErrorTxt());
         CmdSta = STA_FAIL;
     }
 
-    DiskImage[drive].hFile = hFile;
-    _DLOG("OpenDrive %d hfile %d\n",drive,DiskImage[drive].hFile);
-
+    _DLOG("OpenDrive %d %s %d\n",
+        drive, DiskImage[drive].name, DiskImage[drive].hFile);
 }
 
 //----------------------------------------------------------------------
@@ -1488,7 +1461,8 @@ void AppendPathChar(char * path, char c)
 //----------------------------------------------------------------------
 bool IsDirectory(const char * path)
 {
-    char attr = FileAttrByte(path);
+    char attr;
+    FileAttrib(path,&attr);
     if (attr == ATTR_INVALID) return false;
     if ((attr & ATTR_DIR) == 0) return false;
     return true;
