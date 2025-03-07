@@ -197,7 +197,6 @@ void BankSelect(int);
 bool LoadDirPage();
 bool SetCurDir(char * path);
 bool InitiateDir(const char *);
-bool FileExists(const char * path);
 bool IsDirectory(const char *path);
 void GetMountedImageRec(int);
 void CvtName83(char *,char *,char *);
@@ -514,19 +513,6 @@ void SDCInit()
     LoadRom("SDC-DOS.ROM");
     return;
 }
-
-//----------------------------------------------------------------------
-// Reset the controller
-//----------------------------------------------------------------------
-//void SDCReset()
-//{
-//    _DLOG("SDCReset Unloading Drives\n");
-//    MountDisk (0,"");
-//    MountDisk (1,"");
-//    SetMode(0);
-//    SDCInit();
-//    return;
-//}
 
 //------------------------------------------------------------
 // Init flash box
@@ -1137,7 +1123,8 @@ void GetDriveInfo(int loNib)
         CmdRpy3 = 0x13;
         break;
     default:
-        _DLOG("GetDriveInfo $%0x (%c) not supported\n",CmdPrm1,CmdPrm1);
+        _DLOG("GetDriveInfo %d $%0x (%c) not supported\n",
+                loNib, CmdPrm1,CmdPrm1);
         CmdSta = STA_FAIL;
         break;
     }
@@ -1252,6 +1239,7 @@ void CvtName83(char *fname8, char *ftype3, char *path) {
 //----------------------------------------------------------------------
 bool LoadFileRecord(char * file, struct FileRecord * rec)
 {
+
     memset(rec,0,sizeof(rec));
     int filesize = FileAttrib(file,&rec->attrib);
     if (rec->attrib == ATTR_INVALID) {
@@ -1263,6 +1251,8 @@ bool LoadFileRecord(char * file, struct FileRecord * rec)
     rec->hilo_size = (filesize >> 8) & 0xFF;
     rec->lohi_size = (filesize >> 16) & 0xFF;
     rec->hihi_size = (filesize >> 24) & 0xFF;
+
+    //_DLOG("LoadFileRecord %s %d %02x\n",file,filesize,rec->attrib);
     return true;
 }
 
@@ -1272,17 +1262,24 @@ bool LoadFileRecord(char * file, struct FileRecord * rec)
 int FileAttrib(const char * path, char * attr)
 {
     struct _stat file_stat;
-    int result =_stat(path,&file_stat);
+    int result = _stat(path,&file_stat);
+    int filesize;
     if (result != 0) {
         *attr = ATTR_INVALID;
+        _DLOG("FileAttrib %s %s\n",path,LastErrorTxt());
         return 0;
     } else {
         *attr = 0;
-        if ((file_stat.st_mode & _S_IFDIR) != 0)
+
+        if ((file_stat.st_mode & _S_IFDIR) != 0) {
             *attr |= ATTR_DIR;
+            filesize = 0;
+        } else {
+            filesize = file_stat.st_size;
+        }
         if ((file_stat.st_mode & _S_IWRITE) == 0)
-            *attr |=ATTR_RDONLY;
-        return file_stat.st_size;
+            *attr |= ATTR_RDONLY;
+        return filesize;
     }
 }
 
@@ -1345,16 +1342,6 @@ bool MountDisk (int drive, const char * path)
 }
 
 //----------------------------------------------------------------------
-// Check windows file exists and is not a directory
-//----------------------------------------------------------------------
-bool FileExists(const char * path)
-{
-  DWORD dwAttrib = GetFileAttributes(path);
-  return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
-         !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
-}
-
-//----------------------------------------------------------------------
 // Open virtual disk
 //----------------------------------------------------------------------
 void OpenDrive (int drive)
@@ -1405,8 +1392,8 @@ void CloseDrive (int drive)
 void UpdateSD(int loNib)
 {
 
-    //_DLOG("UpdateSD %02X %02X %02X %02X %02X '%s'\n",
-    //  CmdPrm1,CmdPrm2,CmdPrm3,RecvBuf[0],RecvBuf[1],&RecvBuf[2]);
+    _DLOG("UpdateSD %02X %02X %02X %02X %02X '%s'\n",
+         CmdPrm1,CmdPrm2,CmdPrm3,RecvBuf[0],RecvBuf[1],&RecvBuf[2]);
 
     switch (RecvBuf[0]) {
     case 0x4D: //M
@@ -1511,28 +1498,19 @@ bool SetCurDir(char * path)
 // Initialize file search. Append "*.*" if pattern is a directory.
 // Save the directory portion of the pattern for prepending to results
 //----------------------------------------------------------------------
-bool InitiateDir(const char * wildcard)
+bool InitiateDir(const char * pattern)
 {
-    // Make sure SDCard is a valid directory so we
-    // don't get caught in a search loop
-    if (!IsDirectory(SDCard)) {
-        hFind = INVALID_HANDLE_VALUE;
-        _DLOG("InitiateDir SDCard path invalid\n");
-        return false;
-    }
-
+    // Prepend current directory
     char path[MAX_PATH];
     strncpy(path,SDCard,MAX_PATH);
     AppendPathChar(path,'/');
     strncat(path,CurDir,MAX_PATH);
     AppendPathChar(path,'/');
-    strncat(path,wildcard,MAX_PATH);
+    strncat(path,pattern,MAX_PATH);
 
-    //Append '/*.*' if a directory
-    if (IsDirectory(path)) {
-        AppendPathChar(path,'/');
-        strncat(path,"*.*",MAX_PATH);
-    }
+    // Add *.* to search pattern if last char is '/'
+    int l = strlen(path);
+    if (path[l-1] == '/') strncat(path,"*.*",MAX_PATH);
 
     hFind = FindFirstFile(path, &dFound);
     _DLOG("IntiateDir find %s\n",path);
@@ -1577,6 +1555,7 @@ bool LoadDirPage()
         }
     }
 
+    _DLOG("LoadReply %d records\n",cnt);
     LoadReply(dpage,256);
     return true;
 }
