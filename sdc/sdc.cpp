@@ -200,6 +200,7 @@ bool InitiateDir(const char *);
 bool IsDirectory(const char *path);
 void GetMountedImageRec(int);
 void CvtName83(char *,char *,char *);
+void GetSectorCount(int);
 
 //======================================================================
 // Globals
@@ -1106,8 +1107,7 @@ void GetDriveInfo(int loNib)
         break;
     case 0x51:
         // 'Q' Return the size of disk image in p1,p2,p3
-        _DLOG("GetDriveInfo $%0x (Q) not supported\n",CmdPrm1);
-        CmdSta = STA_FAIL;
+        GetSectorCount(drive);
         break;
     case 0x3E:
         // '>' Get directory page
@@ -1130,6 +1130,21 @@ void GetDriveInfo(int loNib)
         CmdSta = STA_FAIL;
         break;
     }
+}
+
+//----------------------------------------------------------------------
+// Return sector count for mounted disk image
+//----------------------------------------------------------------------
+void  GetSectorCount(int drive) {
+
+    // For now assuming supported image type (not SDF)
+    unsigned int numsec = DiskImage[drive].size >> 8;
+    _DLOG("GetSectorCount %d %d\n",drive,numsec);
+    CmdRpy3 = numsec & 0xFF;
+    numsec = numsec >> 8;
+    CmdRpy2 = numsec & 0xFF;
+    numsec = numsec >> 8;
+    CmdRpy1 = numsec & 0xFF;
 }
 
 //----------------------------------------------------------------------
