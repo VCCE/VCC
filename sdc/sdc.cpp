@@ -1,4 +1,3 @@
-//----------------------------------------------------------------------
 // This file is part of VCC (Virtual Color Computer).
 // Vcc is Copyright 2015 by Joseph Forgione
 //
@@ -173,7 +172,6 @@ void InitFlashBox(void);
 void SetMode(int);
 void ParseStartup();
 void SDCCommand(int);
-void CalcSectorNum(int);
 void ReadSector(int);
 void StreamImage(int);
 void WriteSector(int);
@@ -211,7 +209,7 @@ bool SDC_Mode=false;
 
 // Current command code and sector for Disk I/O
 unsigned char BlockRecvCode = 0;
-//int CurSectorNum = -1;
+int CurSectorNum = -1;
 
 // Command status and parameters
 unsigned char CmdSta = 0;
@@ -273,6 +271,9 @@ char FlashFile[8][MAX_PATH];
 
 // Dll handle
 static HINSTANCE hinstDLL;
+
+// Transfer mode 0=words,1=bytes;
+static int TransferMode = 0;
 
 // Windows file lookup handle and data
 HANDLE hFind;
@@ -659,10 +660,8 @@ bool LoadRom(char *RomName) //Returns true if loaded
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port)
 {
-
-    if (port < 0x40 || port > 0x5f) return;
-
-    if (!SDC_Mode && port > 0x43) {
+    // Latch and flash registers can be used if not SDC_Mode
+    if ((!SDC_Mode) && (port > 0x43)) {
         //_DLOG("SDCWrite %02X %02X wrong mode\n",port,data);
         CmdSta = STA_FAIL;
         return;
@@ -685,13 +684,16 @@ void SDCWrite(unsigned char data,unsigned char port)
         CmdPrm1 = data;
         break;
     case 0x4A:
-        if (RecvCount > 0) GetByte(data); else CmdPrm2 = data;
+        if (RecvCount > 0)
+            GetByte(data);
+        else
+            CmdPrm2 = data;;
         break;
     case 0x4B:
-        if (RecvCount > 0) GetByte(data); else CmdPrm3 = data;
-        break;
-    default:
-        _DLOG("SDCWrite %02X %02X?\n",port,data);
+        if (RecvCount > 0)
+            GetByte(data);
+        else
+            CmdPrm3 = data;;
         break;
     }
     return;
@@ -703,10 +705,8 @@ void SDCWrite(unsigned char data,unsigned char port)
 unsigned char SDCRead(unsigned char port)
 {
 
-    if ((port < 0x40) || (port > 0x5f)) return 0;
-
-    if ((!SDC_Mode) && (port != 0x43)) {
-        _DLOG("SDCRead port %02X wrong mode\n",port);
+    // Latch and flash registers can be used if not SDC_Mode
+    if ((!SDC_Mode) && (port > 0x43)) {
         CmdSta = STA_FAIL;
         return 0;
     }
@@ -715,7 +715,6 @@ unsigned char SDCRead(unsigned char port)
     switch (port) {
     case 0x42:
         rpy = FlshDat;
-        _DLOG("SDCRead flash data %02x\n",rpy);
         break;
     case 0x43:
         rpy = CurrentBank | (FlshDat & 0xF8);
@@ -731,10 +730,18 @@ unsigned char SDCRead(unsigned char port)
         rpy = CmdRpy1;
         break;
     case 0x4A:
-        rpy = (ReplyCount > 0) ? PutByte() : CmdRpy2;
+        if (ReplyCount > 0) {
+            rpy = PutByte();
+        } else {
+            rpy = CmdRpy2;
+        }
         break;
     case 0x4B:
-        rpy = (ReplyCount > 0) ? PutByte() : CmdRpy3;
+        if (ReplyCount > 0) {
+            rpy = PutByte();
+        } else {
+            rpy = CmdRpy3;
+        }
         break;
     default:
         rpy = 0;
@@ -870,6 +877,9 @@ void SDCCommand(int code)
     // Invalidate command code for block recieves
     BlockRecvCode = 0;
 
+    // Assume two byte block transfer mode;
+    TransferMode = 0;
+
     // The SDC uses the low nibble of the command code as
     // added argument so this gets passed to the command.
     int loNib = code & 0xF;
@@ -877,15 +887,12 @@ void SDCCommand(int code)
 
     switch (hiNib) {
     case 0x80:
-        CalcSectorNum(code);
         ReadSector(loNib);
         break;
     case 0x90:
-        CalcSectorNum(code);
         StreamImage(loNib);
         break;
     case 0xA0:
-        CalcSectorNum(code);
         BlockRecvStart(code);
         break;
     case 0xC0:
@@ -899,20 +906,10 @@ void SDCCommand(int code)
         break;
     default:
         _DLOG("SDCCommand %02X not supported\n",code);
-        CmdSta = STA_FAIL;  // Fail
+        CmdSta = STA_FAIL;
         break;
     }
     return;
-}
-
-//----------------------------------------------------------------------
-// Calculate sector.  numsides == 2 if double sided
-//----------------------------------------------------------------------
-void CalcSectorNum(int code)
-{
-    int drive = code & 1;
-    //if (!(code & 2)) {_DLOG("CalcSectorNum Not double sided\n");}
-    DiskImage[drive].sector = (CmdPrm1 << 16) + (CmdPrm2 << 8) + CmdPrm3;
 }
 
 //----------------------------------------------------------------------
@@ -925,13 +922,11 @@ void BlockRecvStart(int code)
         BlockRecvCode = 0;
         CmdSta = STA_FAIL;
         return;
-    } else if ((code & 4) !=0 ) {
-        _DLOG("BlockRecvStart 8bit block not supported %02X\n",code);
-        BlockRecvCode = 0;
-        CmdSta = STA_FAIL;
-        return;
     }
+
+    // Save command code and sector number incase of write sector command
     BlockRecvCode = code;
+    CurSectorNum = (CmdPrm1 << 16) + (CmdPrm2 << 8) + CmdPrm3;
 
     // Set up the receive buffer
     CmdSta = STA_READY | STA_BUSY;
@@ -944,14 +939,13 @@ void BlockRecvStart(int code)
 //----------------------------------------------------------------------
 void BlockRecvComplete()
 {
-    int loNib = BlockRecvCode & 0xF;
     int hiNib = BlockRecvCode & 0xF0;
     switch (hiNib) {
     case 0xA0:
-        WriteSector(loNib);
+        WriteSector(BlockRecvCode);
         break;
     case 0xE0:
-        UpdateSD(loNib);
+        UpdateSD(BlockRecvCode);
         break;
     default:
         _DLOG("BlockRecvComplete invalid cmd %d\n",BlockRecvCode);
@@ -981,22 +975,17 @@ char * LastErrorTxt() {
 void ReadSector(int loNib)
 {
     int drive = loNib & 1;
-    int lsn = DiskImage[drive].sector;
+    int lsn = (CmdPrm1 << 16) + (CmdPrm2 << 8) + CmdPrm3;
 
-    if (!SDC_Mode) {
-        _DLOG("ReadSector wrong mode ignored\n");
-        CmdSta = STA_FAIL;
-        return;
-    } else if ((loNib & 4) !=0 ) {
-        _DLOG("ReadSector 8bit transfer not supported\n");
-        CmdSta = STA_FAIL;
-        return;
-    } else if (lsn < 0) {
+    if (lsn < 0) {
         _DLOG("ReadSector invalid sector number\n");
         CmdSta = STA_FAIL;
         return;
+    } else if ( lsn > (DiskImage[drive].size >> 8)) {
+        _DLOG("ReadSector overrun %d %d\n",lsn,DiskImage[drive].size >> 8);
+        CmdSta = STA_FAIL;
+        return;
     }
-    //_DLOG("ReadSector %d\n",lsn);
 
     if (DiskImage[drive].hFile == NULL) OpenDrive(drive);
     if (DiskImage[drive].hFile == NULL) {
@@ -1005,22 +994,33 @@ void ReadSector(int loNib)
     }
 
     LARGE_INTEGER pos;
-    pos.QuadPart = lsn * 256;
+    pos.LowPart = lsn * 256;
+    pos.HighPart = 0;
+
     if (!SetFilePointerEx(DiskImage[drive].hFile,pos,NULL,FILE_BEGIN)) {
         _DLOG("ReadSector seek error %s\n",LastErrorTxt());
         CmdSta = STA_FAIL;
     }
 
-    DWORD cnt;
+    DWORD cnt = 0;
     DWORD num = 256;
-    char buf[256];
-    ReadFile(DiskImage[drive].hFile,buf,num,&cnt,NULL);
-    if (cnt != num) {
+    char buf[260];
+    BOOL result = ReadFile(DiskImage[drive].hFile,buf,num,&cnt,NULL);
+
+    //_DLOG("ReadSector %d drive %d hfile %d got %d bytes\n",
+    //        lsn,drive,DiskImage[drive].hFile, cnt);
+
+    if (!result) {
         _DLOG("ReadSector %d drive %d hfile %d error %s\n",
                 lsn,drive,DiskImage[drive].hFile,LastErrorTxt());
         CmdSta = STA_FAIL;
+
+    } else if (cnt != num) {
+        _DLOG("ReadSector %d drive %d hfile %d short read %s\n",
+                lsn,drive,DiskImage[drive].hFile,LastErrorTxt());
+        CmdSta = STA_FAIL;
     } else {
-        //_DLOG("ReadSector %d drive %d hfile %d\n",lsn,drive,DiskImage[drive].hFile);
+        TransferMode = ((loNib & 4) == 0) ? 0 : 1;
         LoadReply(buf,256);
     }
 }
@@ -1030,8 +1030,10 @@ void ReadSector(int loNib)
 //----------------------------------------------------------------------
 void StreamImage(int loNib)
 {
+    //512 byte sectors
     int drive = loNib & 1;
-    int lsn = DiskImage[drive].sector;
+    int lsn = (CmdPrm1 << 16) + (CmdPrm2 << 8) + CmdPrm3;
+    //DiskImage[drive].sector = lsn;
 
     if (lsn < 0) {
         _DLOG("StreamImage invalid sector\n");
@@ -1046,11 +1048,17 @@ void StreamImage(int loNib)
 //----------------------------------------------------------------------
 // Write logical sector
 //----------------------------------------------------------------------
-void WriteSector(int loNib)
+void WriteSector(int code)
 {
-    int drive = loNib & 1;
-    int lsn = DiskImage[drive].sector;
+    int drive = code & 1;
 
+    if ((code & 8) !=0 ) {
+        _DLOG("WriteSector 8bit block\n");
+    }
+
+    TransferMode = ((code & 8) == 0)? 0 : 1;
+
+    int lsn = CurSectorNum;
     if (lsn < 0) {
         _DLOG("WriteSector invalid sector number\n");
         CmdSta = STA_FAIL;
@@ -1102,8 +1110,6 @@ void GetDriveInfo(int loNib)
         break;
     case 0x43:
         // 'C' Return current directory in block
-        //_DLOG("GetDriveInfo $%0x (C) not enabled\n",CmdPrm1);
-        //CmdSta = STA_FAIL;
         _DLOG("GetCurDir %s\n",CurDir);
         LoadReply(CurDir,strlen(CurDir)+1);
         break;
@@ -1139,14 +1145,19 @@ void GetDriveInfo(int loNib)
 //----------------------------------------------------------------------
 void  GetSectorCount(int drive) {
 
-    // For now assuming supported image type (not SDF)
+    // For now assuming a supported image type (not SDF)
+    if ((DiskImage[drive].size & 0xFF) != 0) {
+        _DLOG("GetSectorCount file size not mutiple of 256\n");
+        CmdSta = STA_FAIL;
+    }
+
     unsigned int numsec = DiskImage[drive].size >> 8;
-    _DLOG("GetSectorCount %d %d\n",drive,numsec);
     CmdRpy3 = numsec & 0xFF;
     numsec = numsec >> 8;
     CmdRpy2 = numsec & 0xFF;
     numsec = numsec >> 8;
     CmdRpy1 = numsec & 0xFF;
+    CmdSta = STA_READY;
 }
 
 //----------------------------------------------------------------------
@@ -1197,15 +1208,23 @@ void LoadReply(void *data, int count)
         return;
     }
 
-    // Copy data to the reply buffer with bytes swapped in words
     unsigned char *dp = (unsigned char *) data;
     unsigned char *bp = ReplyBuf;
     unsigned char tmp;
-    int ctr = count/2;
-    while (ctr--) {
-        tmp = *dp++;
-        *bp++ = *dp++;
-        *bp++ = tmp;
+
+    if (TransferMode == 1) {
+        int ctr = count;
+        while (ctr--) {
+            *bp++ = *dp++;
+        }
+    } else {
+        // Copy data to the reply buffer with bytes swapped in words
+        int ctr = count/2;
+        while (ctr--) {
+            tmp = *dp++;
+            *bp++ = *dp++;
+            *bp++ = tmp;
+        }
     }
 
     //CmdSta = STA_READY;
@@ -1310,8 +1329,6 @@ void Cvt83Path(char *path, const char *fpath8, unsigned int size)
     }
     name[namlen] = '\0';       // terminate name
     strncat(path,name,size);   // append it to directory
-
-    //_DLOG("Cvt83Path '%s' converted to '%s'\n",fpath8,path);
 }
 
 //----------------------------------------------------------------------
@@ -1424,7 +1441,7 @@ bool MountDisk (int drive, const char * path)
     strncpy(DiskImage[drive].name,fqn,MAX_PATH);
     DiskImage[drive].attrib = attrib;
     DiskImage[drive].size = filesize;
-    DiskImage[drive].sector = -1;
+    //DiskImage[drive].sector = -1;
 
     _DLOG("MountDisk %d %s\n",drive,fqn);
     return true;
@@ -1478,16 +1495,15 @@ void CloseDrive (int drive)
 //----------------------------------------------------------------------
 //  Update SD Commands.
 //----------------------------------------------------------------------
-void UpdateSD(int loNib)
+void UpdateSD(int code)
 {
-
     _DLOG("UpdateSD %02X %02X %02X %02X %02X '%s'\n",
          CmdPrm1,CmdPrm2,CmdPrm3,RecvBuf[0],RecvBuf[1],&RecvBuf[2]);
 
     switch (RecvBuf[0]) {
     case 0x4D: //M
     case 0x6D: //m
-        CmdSta = (MountDisk(loNib,&RecvBuf[2])) ? 0 : STA_FAIL;
+        CmdSta = (MountDisk(code&1,&RecvBuf[2])) ? 0 : STA_FAIL;
         break;
     case 0x4E: //N
     case 0x6E: //n
