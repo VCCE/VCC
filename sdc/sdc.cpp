@@ -660,6 +660,8 @@ bool LoadRom(char *RomName) //Returns true if loaded
 void SDCWrite(unsigned char data,unsigned char port)
 {
 
+    if (port < 0x40 || port > 0x5f) return;
+
     if (!SDC_Mode && port > 0x43) {
         //_DLOG("SDCWrite %02X %02X wrong mode\n",port,data);
         CmdSta = STA_FAIL;
@@ -701,7 +703,9 @@ void SDCWrite(unsigned char data,unsigned char port)
 unsigned char SDCRead(unsigned char port)
 {
 
-    if (!SDC_Mode && port != 0x43) {
+    if ((port < 0x40) || (port > 0x5f)) return 0;
+
+    if ((!SDC_Mode) && (port != 0x43)) {
         _DLOG("SDCRead port %02X wrong mode\n",port);
         CmdSta = STA_FAIL;
         return 0;
