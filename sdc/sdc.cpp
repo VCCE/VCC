@@ -189,7 +189,7 @@ void CloseDrive(int);
 void OpenDrive(int);
 void LoadReply(void *, int);
 unsigned char PutByte();
-void ReceiveByte(unsigned char);
+void GetByte(unsigned char);
 char * LastErrorTxt();
 void BlockRecvComplete();
 void BlockRecvStart(int);
@@ -657,13 +657,14 @@ bool LoadRom(char *RomName) //Returns true if loaded
 
 //----------------------------------------------------------------------
 // Write SDC port.  If a command needs a data block to complete it
-// will put a count (256 or 512) in RecvCount.
+// will put a count (256 or 512) in RecvCount.  WRITE PORT
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port)
 {
 
-    if ((!SDC_Mode) && (port > 0x4A || port == 0x4B || port == 0x49)) {
+    if (!SDC_Mode && port > 0x43) {
         //_DLOG("SDCWrite %02X %02X wrong mode\n",port,data);
+        CmdSta = STA_FAIL;
         return;
     }
 
@@ -684,10 +685,10 @@ void SDCWrite(unsigned char data,unsigned char port)
         CmdPrm1 = data;
         break;
     case 0x4A:
-        if (RecvCount > 0) ReceiveByte(data); else CmdPrm2 = data;
+        if (RecvCount > 0) GetByte(data); else CmdPrm2 = data;
         break;
     case 0x4B:
-        if (RecvCount > 0) ReceiveByte(data); else CmdPrm3 = data;
+        if (RecvCount > 0) GetByte(data); else CmdPrm3 = data;
         break;
     default:
         _DLOG("SDCWrite %02X %02X?\n",port,data);
@@ -704,6 +705,7 @@ unsigned char SDCRead(unsigned char port)
 
     if (!SDC_Mode && port != 0x43) {
         _DLOG("SDCRead port %02X wrong mode\n",port);
+        CmdSta = STA_FAIL;
         return 0;
     }
 
@@ -717,7 +719,11 @@ unsigned char SDCRead(unsigned char port)
         rpy = CurrentBank | (FlshDat & 0xF8);
         break;
     case 0x48:
-        rpy = CmdSta;
+        if ((ReplyCount > 0) || (RecvCount > 0)) {
+            rpy = STA_BUSY|STA_READY;
+        } else {
+            rpy = CmdSta;
+        }
         break;
     case 0x49:
         rpy = CmdRpy1;
@@ -780,33 +786,31 @@ void ParseStartup()
 }
 
 //----------------------------------------------------------------------
-// Buffer data received.
+// Buffer data received
 //----------------------------------------------------------------------
-void ReceiveByte(unsigned char byte)
+void GetByte(unsigned char byte)
 {
-    RecvCount--;
+    if (RecvCount > 0) {
+        RecvCount--;
+        *RecvPtr++ = byte;
+    }
+    // Done receiving block
     if (RecvCount < 1) {
         BlockRecvComplete();
-        CmdSta = 0;
-    } else {
-        CmdSta |= STA_BUSY;
     }
-    *RecvPtr++ = byte;
 }
 
 //----------------------------------------------------------------------
-// Unload data for reply.
+// Send reply from buffer
 //----------------------------------------------------------------------
 unsigned char PutByte()
 {
-    ReplyCount--;
-    if (ReplyCount < 1) {
-        CmdSta = 0;
+    if (ReplyCount > 0) {
+        ReplyCount--;
+        return *ReplyPtr++;
     } else {
-        CmdSta |= STA_BUSY;
+        return 0;
     }
-    //_DLOG("PutByte %03d %02X %X\n",ReplyCount,*ReplyPtr,ReplyPtr);
-    return *ReplyPtr++;
 }
 
 //----------------------------------------------------------------------
@@ -824,15 +828,10 @@ void BankSelect(int data)
 //----------------------------------------------------------------------
 void SetMode(int data)
 {
-    bool tmp;
-
-    if (data == 0x43)   tmp = true;
-    else if (data == 0) tmp = false;
-    else return;
-
-    if (SDC_Mode != tmp) {
-        SDC_Mode = tmp;
-        CmdSta  = 0;
+    if (data == 0x43) {
+        SDC_Mode = true;
+    } else if (data == 0) {
+        SDC_Mode = false;
         CmdRpy1 = 0;
         CmdRpy2 = 0;
         CmdRpy3 = 0;
@@ -841,8 +840,8 @@ void SetMode(int data)
         CmdPrm3 = 0;
         RecvCount = 0;
         ReplyCount = 0;
-        BlockRecvCode = 0;
     }
+    CmdSta  = 0;
     return;
 }
 
@@ -859,7 +858,7 @@ void SDCCommand(int code)
     }
 
     // If busy or tranfer in progress abort whatever
-    if ((CmdSta & STA_BUSY) || (RecvCount > 0) || (ReplyCount > 0)) {
+    if ((RecvCount > 0) || (ReplyCount > 0)) {
         _DLOG("SDCCommand ABORTING\n");
         SetMode(0);
         CmdSta = STA_FAIL;
@@ -910,7 +909,7 @@ void SDCCommand(int code)
 void CalcSectorNum(int code)
 {
     int drive = code & 1;
-    if (!(code & 2)) {_DLOG("CalcSectorNum Not double sided\n");}
+    //if (!(code & 2)) {_DLOG("CalcSectorNum Not double sided\n");}
     DiskImage[drive].sector = (CmdPrm1 << 16) + (CmdPrm2 << 8) + CmdPrm3;
 }
 
@@ -1100,8 +1099,10 @@ void GetDriveInfo(int loNib)
         break;
     case 0x43:
         // 'C' Return current directory in block
-        _DLOG("GetDriveInfo $%0x (C) not supported\n",CmdPrm1);
-        CmdSta = STA_FAIL;
+        //_DLOG("GetDriveInfo $%0x (C) not supported\n",CmdPrm1);
+        //CmdSta = STA_FAIL;
+        _DLOG("GetCurDir %s\n",CurDir);
+        LoadReply(CurDir,strlen(CurDir)+1);
         break;
     case 0x51:
         // 'Q' Return the size of disk image in p1,p2,p3
@@ -1109,6 +1110,7 @@ void GetDriveInfo(int loNib)
         CmdSta = STA_FAIL;
         break;
     case 0x3E:
+        // '>' Get directory page
         LoadDirPage();
         break;
     case 0x2B:
@@ -1141,6 +1143,7 @@ void GetMountedImageRec(int drive)
     } else {
         struct FileRecord rec;
         LoadFileRecord(DiskImage[drive].name, &rec);
+        //_DLOG("GetMountedImage drive %d\n",drive);
         LoadReply(&rec,sizeof(rec));
     }
 }
@@ -1189,7 +1192,7 @@ void LoadReply(void *data, int count)
         *bp++ = tmp;
     }
 
-    CmdSta = STA_READY;
+    //CmdSta = STA_READY;
     ReplyPtr = ReplyBuf;
     ReplyCount = count;
 
@@ -1197,11 +1200,13 @@ void LoadReply(void *data, int count)
     CmdPrm2 = 0;
     CmdPrm3 = 0;
 
+    //_DLOG("LoadReply %d\n",count);
+
     return;
 }
 
 //----------------------------------------------------------------------
-// Convert name from path into 8.3 format to use in SDC file record
+// Convert standard name from path into 8.3 format
 //----------------------------------------------------------------------
 void CvtName83(char *fname8, char *ftype3, char *path) {
 
@@ -1213,10 +1218,19 @@ void CvtName83(char *fname8, char *ftype3, char *path) {
     memset(fname8,' ',8);
     memset(ftype3,' ',3);
 
-    // Copy eight chars after the last '/' to name field
     i = 0;
     p = strrchr(path,'/');
     if (p == NULL) p = path; else p++;
+
+    // Special case for '.' or '..' names
+    if (p[0] == '.') {
+        fname8[0] = '.';
+        if (p[1] == '.')
+            fname8[1] = '.';
+        return;
+    }
+
+    // Copy eight chars after the last '/' to name field
     while (c = *p++) {
         if (c == '.') break;
         fname8[i++] = c;
@@ -1232,6 +1246,56 @@ void CvtName83(char *fname8, char *ftype3, char *path) {
         if (i > 2) break;
     }
     return;
+}
+
+//----------------------------------------------------------------------
+// Convert 8.3 format path into standard path for windows lookup
+// Warning: path buffer must be at least one byte larger than fpath8
+// string.
+//----------------------------------------------------------------------
+void Cvt83Path(char *path, const char *fpath8, unsigned int size)
+{
+    // Path buffer must be at least one byte larger than size
+    if (strlen(fpath8) > (size - 1)) {
+        _DLOG("Cvt83Path size violation\n");
+        return;
+    }
+
+    const char *pname8 = strrchr(fpath8,'/');
+    // Copy Directory portion
+    if (pname8 != NULL) {
+        pname8++;
+        memcpy(path,fpath8,pname8-fpath8);
+    } else {
+        pname8 = fpath8;
+    }
+    path[pname8-fpath8]='\0'; // terminate directory portion
+
+    // Copy Name portion
+    char c;
+    char name[16];
+    int  namlen=0;
+    while(c = *pname8++) {
+        if ((c == '.')||(c == ' ')) break;
+        name[namlen++] = c;
+        if (namlen > 7) break;
+    }
+
+    // Copy extension if any thing is left
+    if (c) {
+        name[namlen++] = '.';
+        int extlen=0;
+        while(c = *pname8++) {
+        if ((c == '.')||(c == ' ')) continue;
+            name[namlen++] = c;
+            extlen++;
+            if (extlen > 2) break;
+        }
+    }
+    name[namlen] = '\0';       // terminate name
+    strncat(path,name,size);   // append it to directory
+
+    //_DLOG("Cvt83Path '%s' converted to '%s'\n",fpath8,path);
 }
 
 //----------------------------------------------------------------------
@@ -1270,7 +1334,6 @@ int FileAttrib(const char * path, char * attr)
         return 0;
     } else {
         *attr = 0;
-
         if ((file_stat.st_mode & _S_IFDIR) != 0) {
             *attr |= ATTR_DIR;
             filesize = 0;
@@ -1284,11 +1347,21 @@ int FileAttrib(const char * path, char * attr)
 }
 
 //----------------------------------------------------------------------
-// Mount Drive.  If image path starts with '/' load drive relative
+// Mount Drive. If image path starts with '/' load drive relative
 // to SDRoot, else load drive relative to the current directory
+// path file portion is SDC 8.3 format (8 chars name, 3 chars ext)
+// Extension is delimited from name by blank,dot,or size
+// examples:
+//    "FOO     DSK" = FOO.DSK
+//    "FOO.DSK"     = FOO.DSK
+//    "ALONGFOODSK" = ALONGFOO.DSK
 //----------------------------------------------------------------------
 bool MountDisk (int drive, const char * path)
 {
+
+char cvtpath[64];
+Cvt83Path(cvtpath, path,64);
+
     char fqn[MAX_PATH]={};
 
     drive &= 1;
@@ -1303,11 +1376,11 @@ bool MountDisk (int drive, const char * path)
     // Establish image filename
     strncpy(fqn,SDCard,MAX_PATH);
     if (*path == '/') {
-        strncat(fqn,path+1,MAX_PATH);
+        strncat(fqn,cvtpath+1,MAX_PATH);
     } else {
         strncat(fqn,CurDir,MAX_PATH);
         AppendPathChar(fqn,'/');
-        strncat(fqn,path,MAX_PATH);
+        strncat(fqn,cvtpath,MAX_PATH);
     }
 
     //TODO: Wildcard in file name.
@@ -1412,7 +1485,7 @@ void UpdateSD(int loNib)
         CmdSta = (SetCurDir(&RecvBuf[2])) ? 0 : STA_FAIL;
         break;
     case 0x4C: //L
-        CmdSta = (InitiateDir(&RecvBuf[2])) ? 0 : STA_FAIL;
+        CmdSta = (InitiateDir(&RecvBuf[2])) ? STA_READY : STA_FAIL;
         break;
     case 0x4B: //K
         _DLOG("UpdateSD create new directory not Supported\n");
@@ -1460,7 +1533,6 @@ bool IsDirectory(const char * path)
 //----------------------------------------------------------------------
 bool SetCurDir(char * path)
 {
-    //_DLOG("SetCurdir %s\n",path);
     //TODO: Wildcards
 
     char fqp[MAX_PATH];
@@ -1469,26 +1541,40 @@ bool SetCurDir(char * path)
     // If blank is passed clear the current dirctory
     if (*path == '\0') {
         *CurDir = '\0';
+        _DLOG("SetCurdir null");
         return true;
     }
 
-    // If first char passed is not '/' append to previous
-    if (*path != '/') {
-        strncpy(tmp,CurDir,MAX_PATH);
-        AppendPathChar(tmp,'/');
+    // If path is ".." go back a directory
+    if (strcmp(path,"..") == 0) {
+        _DLOG("SetCurdir back a directory\n");
+        char *p = strrchr(CurDir,'/');
+        if (p != NULL) {
+            *p = '\0';
+        } else {
+            *CurDir = '\0';
+        }
+        _DLOG("SetCurdir null\n");
+        CmdSta = STA_READY;
+        return true;
     }
+
+    // Set new directory into a temp string
+    strncpy(tmp,CurDir,MAX_PATH);
+    AppendPathChar(tmp,'/');
     strncat(tmp,path,MAX_PATH);
 
-    // Check for valid directory on SD
+    // Check if a valid directory on SD
     strncpy(fqp,SDCard,MAX_PATH);
+    AppendPathChar(fqp,'/');
     strncat(fqp,tmp,MAX_PATH);
-
     if (!IsDirectory(fqp)) {
         _DLOG("SetCurDir invalid %s\n",fqp);
         CmdSta = STA_FAIL;
         return false;
     }
 
+    // Set new directory
     strncpy(CurDir,tmp,MAX_PATH);
     _DLOG("SetCurdir %s\n",CurDir);
     return true;
@@ -1555,7 +1641,7 @@ bool LoadDirPage()
         }
     }
 
-    _DLOG("LoadReply %d records\n",cnt);
+    //_DLOG("LoadDirPage LoadReply\n");
     LoadReply(dpage,256);
     return true;
 }
