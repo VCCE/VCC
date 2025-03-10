@@ -223,9 +223,6 @@ unsigned char CmdPrm2 = 0;
 unsigned char CmdPrm3 = 0;
 unsigned char FlshDat = 0;
 
-// Last block read from disk
-char FileReadBuf[512];
-
 // Cartridge ROM
 unsigned char PakRom[0x4000];
 
@@ -1012,14 +1009,15 @@ void ReadSector(int loNib)
 
     DWORD cnt;
     DWORD num = 256;
-    ReadFile(DiskImage[drive].hFile,FileReadBuf,num,&cnt,NULL);
+    char buf[256];
+    ReadFile(DiskImage[drive].hFile,buf,num,&cnt,NULL);
     if (cnt != num) {
         _DLOG("ReadSector %d drive %d hfile %d error %s\n",
                 lsn,drive,DiskImage[drive].hFile,LastErrorTxt());
         CmdSta = STA_FAIL;
     } else {
         //_DLOG("ReadSector %d drive %d hfile %d\n",lsn,drive,DiskImage[drive].hFile);
-        LoadReply(FileReadBuf,256);
+        LoadReply(buf,256);
     }
 }
 
