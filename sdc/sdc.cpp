@@ -788,7 +788,7 @@ void ParseStartup()
 }
 
 //----------------------------------------------------------------------
-// Buffer data received
+// Save byte to receive buffer
 //----------------------------------------------------------------------
 void GetByte(unsigned char byte)
 {
@@ -803,7 +803,7 @@ void GetByte(unsigned char byte)
 }
 
 //----------------------------------------------------------------------
-// Send reply from buffer
+// Return a byte from reply buffer
 //----------------------------------------------------------------------
 unsigned char PutByte()
 {
@@ -1102,7 +1102,7 @@ void GetDriveInfo(int loNib)
         break;
     case 0x43:
         // 'C' Return current directory in block
-        //_DLOG("GetDriveInfo $%0x (C) not supported\n",CmdPrm1);
+        //_DLOG("GetDriveInfo $%0x (C) not enabled\n",CmdPrm1);
         //CmdSta = STA_FAIL;
         _DLOG("GetCurDir %s\n",CurDir);
         LoadReply(CurDir,strlen(CurDir)+1);
@@ -1118,13 +1118,13 @@ void GetDriveInfo(int loNib)
     case 0x2B:
         // '+' Mount next next disk in set.  Mounts disks with a
         // digit suffix, starting with '1'. May repeat
-        _DLOG("GetDriveInfo $%0x (+) not supported\n",CmdPrm1);
+        _DLOG("GetDriveInfo $%0x (+) not enabled\n",CmdPrm1);
         CmdSta = STA_FAIL;
         break;
     case 0x56:
         // 'V' Get BCD firmware version number in p2, p3.
-        CmdRpy2 = 0x01;
-        CmdRpy3 = 0x13;
+        CmdRpy2 = 0x00;
+        CmdRpy3 = 0x01;
         break;
     default:
         _DLOG("GetDriveInfo %d $%0x (%c) not supported\n",
@@ -1191,7 +1191,6 @@ void SDCControl(int loNib)
 //----------------------------------------------------------------------
 void LoadReply(void *data, int count)
 {
-
     if ((count < 2) | (count > 512)) {
         _DLOG("LoadReply bad count\n");
         CmdSta = STA_FAIL;
@@ -1376,8 +1375,8 @@ int FileAttrib(const char * path, char * attr)
 bool MountDisk (int drive, const char * path)
 {
 
-char cvtpath[64];
-Cvt83Path(cvtpath, path,64);
+    char cvtpath[64];
+    Cvt83Path(cvtpath, path,64);
 
     char fqn[MAX_PATH]={};
 
@@ -1558,7 +1557,7 @@ bool SetCurDir(char * path)
     // If blank is passed clear the current dirctory
     if (*path == '\0') {
         *CurDir = '\0';
-        _DLOG("SetCurdir null");
+        _DLOG("SetCurdir null\n");
         return true;
     }
 
@@ -1571,7 +1570,7 @@ bool SetCurDir(char * path)
         } else {
             *CurDir = '\0';
         }
-        _DLOG("SetCurdir null\n");
+        _DLOG("SetCurdir back to root\n");
         CmdSta = STA_READY;
         return true;
     }
