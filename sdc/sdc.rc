@@ -96,7 +96,7 @@ END
 // Dialog
 //
 
-IDD_CONFIG DIALOGEX 0, 0, 185, 160
+IDD_CONFIG DIALOGEX 0, 0, 185, 175
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "SDC Config"
 FONT 8, "MS Sans Serif"
@@ -105,8 +105,9 @@ BEGIN
     LTEXT       "Flash Banks ",IDC_STATIC,  10,  35, 55, 14
     LISTBOX     ID_SD_BOX,    10, 15, 165,  25, LBS_NOTIFY | LBS_WANTKEYBOARDINPUT
     LISTBOX     ID_FLASH_BOX, 10, 45, 165, 110, LBS_NOTIFY | LBS_WANTKEYBOARDINPUT
-    PUSHBUTTON  "OK",IDOK,        100, 140, 55, 14
-//   PUSHBUTTON  "Cancel",IDCANCEL, 20, 140, 55, 14
+    CONTROL     "Enable clock at $FF70 (Cloud9)",IDC_CLOCK,"Button",BS_AUTOCHECKBOX,  10,141,160,10
+    PUSHBUTTON  "OK",IDOK,        10, 155, 55, 14
+//  PUSHBUTTON  "Cancel",IDCANCEL, 100, 155, 55, 14
 END
 
 /////////////////////////////////////////////////////////////////////////////

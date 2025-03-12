@@ -291,6 +291,7 @@
     <ClCompile Include="..\Fileops.c" />
     <ClCompile Include="..\logger.c" />
     <ClCompile Include="sdc.cpp" />
+    <ClCompile Include="cloud9.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defines.h" />

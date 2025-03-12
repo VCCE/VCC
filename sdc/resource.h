@@ -27,6 +27,7 @@
 
 #define ID_SD_BOX                       1000
 #define ID_FLASH_BOX                    1001
+#define IDC_CLOCK                       1002
 
 // Next default values for new objects
 

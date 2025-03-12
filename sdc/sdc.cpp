@@ -104,6 +104,7 @@
 
 #include "../defines.h"
 #include "resource.h"
+#include "cloud9.h"
 
 // Debug logging if _DEBUG_ is defined
 #define _DEBUG_
@@ -275,6 +276,9 @@ static HINSTANCE hinstDLL;
 // Transfer mode 0=words,1=bytes;
 static int TransferMode = 0;
 
+// Clock enable IDC_CLOCK
+int ClockEnable;
+
 // Windows file lookup handle and data
 HANDLE hFind;
 WIN32_FIND_DATAA dFound;
@@ -311,7 +315,11 @@ extern "C"
     // Read from port
     __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
     {
-        return(SDCRead(Port));
+        if (ClockEnable && ((Port==0x78) | (Port==0x79) | (Port==0x7C))) {
+            return ReadTime(Port);
+        } else {
+            return SDCRead(Port);
+        }
     }
 
     // Reset module
@@ -414,6 +422,7 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         hConfDlg=hDlg;
         InitFlashBox();
         InitCardBox();
+        SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnable,0);
         break;
     case WM_VKEYTOITEM:
         switch (LOWORD(wParam)) {
@@ -434,6 +443,8 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         }
         switch (LOWORD(wParam)) {
         case IDOK:
+            ClockEnable = (unsigned char)
+                SendDlgItemMessage(hDlg,IDC_CLOCK,BM_GETCHECK,0,0);
             SaveConfig();
             EndDialog(hDlg,LOWORD(wParam));
             break;
@@ -464,9 +475,7 @@ void LoadConfig(void)
             ("SDC", txt, "", FlashFile[i], MAX_PATH, IniFile);
     }
 
-    // Create config menu
-    BuildDynaMenu();
-    return;
+    ClockEnable = GetPrivateProfileInt("SDC","ClockEnable",1,IniFile);
 }
 
 //------------------------------------------------------------
@@ -480,7 +489,10 @@ void SaveConfig(void)
         sprintf(txt,"FlashFile_%d",i);
         WritePrivateProfileString("SDC",txt,FlashFile[i],IniFile);
     }
-
+    if (ClockEnable)
+        WritePrivateProfileString("SDC","ClockEnable","1",IniFile);
+    else
+        WritePrivateProfileString("SDC","ClockEnable","0",IniFile);
     return;
 }
 
