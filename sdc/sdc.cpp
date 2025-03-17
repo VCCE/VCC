@@ -181,12 +181,12 @@ int FileAttrib(const char *,char *);
 bool LoadFileRecord(char *,struct FileRecord *);
 bool MountDisk (int,const char *);
 void CloseDrive(int);
-void OpenDrive(int);
+bool OpenDrive(int);
 void LoadReply(void *, int, int);
 void BlockReceive(unsigned char);
 char * LastErrorTxt(void);
 void BankSelect(int);
-bool LoadDirPage(void);
+void LoadDirPage(void);
 bool SetCurDir(char * path);
 bool InitiateDir(const char *);
 bool IsDirectory(const char *path);
@@ -240,12 +240,16 @@ struct FileRecord {
 };
 #pragma pack()
 
+// last read page of directory records
+struct FileRecord DirPage[16];
+
 // Mounted image data
 struct _DiskImage {
     char name[MAX_PATH];
     HANDLE hFile;
     char attrib;
     int size;
+    int headersize;
 } DiskImage[2];
 
 // Flash banks
@@ -367,6 +371,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
     if (reason == DLL_PROCESS_ATTACH) {
         hinstDLL = hinst;
     } else if (reason == DLL_PROCESS_DETACH) {
+        CloseDrive(0);
+        CloseDrive(1);
         if (hConfDlg) {
             DestroyWindow(hConfDlg);
             hConfDlg = NULL;
@@ -481,7 +487,7 @@ void SDCInit(void)
 {
 
 #ifdef _DEBUG_
-    _DLOG("SDCInit\n");
+    _DLOG("\nSDCInit\n");
     MoveWindow(GetConsoleWindow(),0,0,300,800,TRUE);
 #endif
 
@@ -892,6 +898,7 @@ void GetDriveInfo(void)
     case 0x3E:
         // '>' Get directory page
         LoadDirPage();
+        LoadReply(DirPage,256,0);
         break;
     case 0x2B:
         // '+' Mount next next disk in set.  Mounts disks with a
@@ -917,7 +924,7 @@ void UpdateSD(void)
 //         IF.blkbuf[0], IF.recvbuf[1], &IF.recvbuf[2]);
 
     switch (IF.blkbuf[0]) {
-    // Mount dsk
+    // Mount disk
     case 0x4D: //M
     case 0x6D: //m
         if (MountDisk(IF.cmdcode&1,&IF.blkbuf[2]))
@@ -925,7 +932,7 @@ void UpdateSD(void)
         else
             IF.status = STA_FAIL;
         break;
-    // Create Dsk
+    // Create Disk
     case 0x4E: //N
     case 0x6E: //n
         //  $FF49 0 for DSK image, number of cylinders for SDF
@@ -1246,8 +1253,6 @@ void CvtName83(char *fname8, char *ftype3, char *path) {
 
 //----------------------------------------------------------------------
 // Convert 8.3 format path into standard path for windows lookup
-// Warning: path buffer must be at least one byte larger than fpath8
-// string.
 //----------------------------------------------------------------------
 void Cvt83Path(char *path, const char *fpath8, unsigned int size)
 {
@@ -1341,7 +1346,7 @@ int FileAttrib(const char * path, char * attr)
 }
 
 //----------------------------------------------------------------------
-// Mount Drive. If image path starts with '/' load drive relative
+// Mount Disk. If image path starts with '/' load drive relative
 // to SDRoot, else load drive relative to the current directory
 // path file portion is SDC 8.3 format (8 chars name, 3 chars ext)
 // Extension is delimited from name by blank,dot,or size
@@ -1377,67 +1382,81 @@ bool MountDisk (int drive, const char * path)
         strncat(fqn,cvtpath,MAX_PATH);
     }
 
-    //TODO: Wildcard in file name.
-    // Append .DSK if no extension (assumes 8.3 naming)
-    //TODO: Don't append .DSK if file opens without it
-    if (fqn[strlen(fqn)-4] != '.') strncat(fqn,".DSK",MAX_PATH);
-
     // Get file attributes.
     char attrib;
     int filesize = FileAttrib(fqn, &attrib);
     if (attrib < 0) {
+        // Try append DSK if no extension
+        if (strchr(path,'.') == NULL) {
+            AppendPathChar(fqn,'.');
+            strncat(fqn,"DSK",MAX_PATH);
+            filesize = FileAttrib(fqn, &attrib);
+        }
+    }
+    if (attrib < 0) {
         _DLOG("MountDisk %s does not exist\n",fqn);
         return false;
     }
+
     if ((attrib & ATTR_DIR) != 0) {
         _DLOG("MountDisk %s is a directory\n",fqn);
         return false;
     }
 
-    // Make sure drive is not open before updating image info
-    CloseDrive(drive);
+    // Extra file bytes are considered to be header bytes
+    int headersize = filesize & 256;
+    filesize -= headersize;
+
+    if (headersize) _DLOG("MountDisk header %d/n",headersize);
 
     // Fill image info.
-    DiskImage[drive].hFile = NULL;
     strncpy(DiskImage[drive].name,fqn,MAX_PATH);
     DiskImage[drive].attrib = attrib;
     DiskImage[drive].size = filesize;
-    //DiskImage[drive].sector = -1;
+    DiskImage[drive].headersize = headersize;
 
-    _DLOG("MountDisk %d %s\n",drive,fqn);
-    return true;
+    // Make sure drive can be opened
+    if (OpenDrive(drive)) {
+        _DLOG("MountDisk %d %s\n",drive,fqn);
+        return true;
+    } else {
+        memset((void *) &DiskImage[drive],0,sizeof(_DiskImage));
+        return false;
+    }
 }
 
 //----------------------------------------------------------------------
 // Open virtual disk
 //----------------------------------------------------------------------
-void OpenDrive (int drive)
+bool OpenDrive (int drive)
 {
     drive &= 1;
 
     if (DiskImage[drive].hFile != NULL) {
-        _DLOG("OpenDrive already open %d\n",drive);
-        return;
+        CloseHandle(DiskImage[drive].hFile);
+        DiskImage[drive].hFile = NULL;
     }
 
     if (*DiskImage[drive].name == '\0') {
         _DLOG("OpenDrive not mounted %d\n",drive);
         IF.status = STA_FAIL;
-        return;
+        return false;
     }
 
     DiskImage[drive].hFile = CreateFile(
         DiskImage[drive].name, GENERIC_READ|GENERIC_WRITE,
         FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
 
-    if (DiskImage[drive].hFile == NULL) {
-        _DLOG("OpenDrive %s drive %d file %s\n",
-            drive,DiskImage[drive],LastErrorTxt());
+    if (DiskImage[drive].hFile == INVALID_HANDLE_VALUE) {
+        _DLOG("OpenDrive %d file %s %s\n",
+            drive,DiskImage[drive].name,LastErrorTxt());
         IF.status = STA_FAIL;
+        return false;
     }
 
-    _DLOG("OpenDrive %d %s %d\n",
-        drive, DiskImage[drive].name, DiskImage[drive].hFile);
+    //_DLOG("OpenDrive %d %s %d\n",
+    //    drive, DiskImage[drive].name, DiskImage[drive].hFile);
+    return true;
 }
 
 //----------------------------------------------------------------------
@@ -1447,7 +1466,7 @@ void CloseDrive (int drive)
 {
     drive &= 1;
     if (DiskImage[drive].hFile != NULL) {
-        _DLOG("ClosingDrive %d\n",drive);
+        //_DLOG("ClosingDrive %d\n",drive);
         CloseHandle(DiskImage[drive].hFile);
         DiskImage[drive].hFile = NULL;
     }
@@ -1489,15 +1508,14 @@ bool SetCurDir(char * path)
     char fqp[MAX_PATH];
     char tmp[MAX_PATH] = {};
 
-    // If blank is passed clear the current dirctory
-    if (*path == '\0') {
+    // If path is null or "/" go to root
+    if (*path == '\0' || strcmp(path,"/") == 0) {
         *CurDir = '\0';
-        _DLOG("SetCurdir null\n");
+        _DLOG("SetCurdir root\n");
         return true;
-    }
 
     // If path is ".." go back a directory
-    if (strcmp(path,"..") == 0) {
+    } else if (strcmp(path,"..") == 0) {
         _DLOG("SetCurdir back a directory\n");
         char *p = strrchr(CurDir,'/');
         if (p != NULL) {
@@ -1560,22 +1578,17 @@ bool InitiateDir(const char * pattern)
 }
 
 //----------------------------------------------------------------------
-// Load directory page containing up to 16 file records:
+// Load directory page containing up to 16 file records that match
+// the pattern used in InitiateDir. Can be called multiple times until
+// there are no more matches
 //----------------------------------------------------------------------
-bool LoadDirPage(void)
+void LoadDirPage(void)
 {
-    struct FileRecord dpage[16];
-    memset(dpage,0,sizeof(dpage));
+    memset(DirPage,0,sizeof(DirPage));
 
-    if ( hFind == INVALID_HANDLE_VALUE) {
-        if (!IsDirectory(SDCard)) {
-            _DLOG("LoadDirPage SDCard path invalid\n");
-            IF.status = STA_FAIL;
-            return false;
-        }
-         _DLOG("LoadDirPage Search failed\n");
-        LoadReply(dpage,16,0);
-        return false;
+    if (hFind == INVALID_HANDLE_VALUE) {
+         _DLOG("LoadDirPage Search fail\n");
+        return;
     }
 
     char fqn[MAX_PATH];
@@ -1583,7 +1596,7 @@ bool LoadDirPage(void)
     while (cnt < 16) {
         strncpy(fqn,SeaDir,MAX_PATH);
         strncat(fqn,dFound.cFileName,MAX_PATH);
-        LoadFileRecord(fqn,&dpage[cnt]);
+        LoadFileRecord(fqn,&DirPage[cnt]);
         cnt++;
         if (FindNextFile(hFind,&dFound) == 0) {
             FindClose(hFind);
@@ -1592,7 +1605,4 @@ bool LoadDirPage(void)
         }
     }
 
-    //_DLOG("LoadDirPage LoadReply\n");
-    LoadReply(dpage,256,0);
-    return true;
 }
