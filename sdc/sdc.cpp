@@ -1,3 +1,6 @@
+//----------------------------------------------------------------------
+// SDC emulator DLL
+//
 // This file is part of VCC (Virtual Color Computer).
 // Vcc is Copyright 2015 by Joseph Forgione
 //
@@ -34,8 +37,14 @@
 //  cart signal) to direct the floppy ports ($FF40-$FF5F) to the
 //  selected cartridge slot. Sometime in the past the VCC cart select
 //  was disabled in mmi.cpp. This had to be be re-enabled for for sdc
-//  to co-exist with FD502. This means sdc.dll requires the new version
-//  of mmi.dll to work properly.
+//  to co-exist with FD502. Additionally the becker port (drivewire)
+//  uses port $FF41 for status and port $FF42 for data so these must be
+//  always alowed for becker.dll to work. This means sdc.dll requires the
+//  new version of mmi.dll to work properly.
+//
+//  NOTE: SDCDOS does not in any case support the becker ports, it expects
+//  drivewire to be on the bitbanger ports. RGBDOS does, however, and will
+//  still work with sdc.dll installed.
 //
 //  MPI control is accomplished by writing $FF7F (65407) multi-pak slot
 //  selection. $FF7F bits 1-0 set the SCS slot while bits 5-4 set the
@@ -761,11 +770,7 @@ unsigned char SDCRead(unsigned char port)
 
     unsigned char rpy;
     switch (port) {
-    // Flash data
-    case 0x42:
-        rpy = IF.flash;
-        break;
-    // Flash control
+    // Flash control read is used by SDCDOS to detect the SDC
     case 0x43:
         rpy = CurrentBank | (IF.flash & 0xF8);
         break;

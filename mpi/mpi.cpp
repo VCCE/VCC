@@ -245,7 +245,8 @@ extern "C"
 				PakSetCart(1);
 			return;
 		}
-		if ((!DisableSCS) & (Port>=0x40) & (Port<=0x5F))
+//		if ((!DisableSCS) & (Port>=0x40) & (Port<=0x5F))
+		if ((!DisableSCS) & (Port>=0x43) & (Port<=0x5F))
 		{
 			BankedCartOffset[SpareSelectSlot]=(Data & 15)<<14;
 			if ( PakPortWriteCalls[SpareSelectSlot] != NULL)
@@ -270,7 +271,8 @@ extern "C"
 			return(SlotRegister);
 		}
 
-		if ((!DisableSCS) & (Port>=0x40) & (Port<=0x5F))
+//		if ((!DisableSCS) & (Port>=0x40) & (Port<=0x5F))
+		if ((!DisableSCS) & (Port>=0x43) & (Port<=0x5F))
 		{
 			if ( PakPortReadCalls[SpareSelectSlot] != NULL)
 				return(PakPortReadCalls[SpareSelectSlot](Port));
