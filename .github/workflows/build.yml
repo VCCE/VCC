@@ -1,0 +1,42 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: MSBuild
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  # Path to the solution file relative to the root of the project.
+  SOLUTION_FILE_PATH: .
+
+  # Configuration type to build.
+  # You can convert this to a build matrix if you need coverage of multiple configuration types.
+  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  BUILD_CONFIGURATION: Release
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Setup Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@release/v1
+
+    - uses: actions/checkout@v4
+
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: BuildClean.bat
+
+    - name: Run
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: bin.ntx64\jam.exe -v
