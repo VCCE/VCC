@@ -1,5 +1,5 @@
 @echo off
-:: Build VCC 
+:: Build VCC
 
 set VCC_CONFIG=Release
 if exist "%VSINSTALLDIR%\MSBuild\Current\Bin\MSBuild.exe" (
@@ -11,3 +11,4 @@ if exist "%VSINSTALLDIR%\MSBuild\Current\Bin\MSBuild.exe" (
 ) else (
   echo Build must be run from Developer Command Prompt for VS 2022
 )
+
