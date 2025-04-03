@@ -450,7 +450,7 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 //------------------------------------------------------------
-// Get configuration items from ini file
+// Get SDC settings from ini file
 //------------------------------------------------------------
 void LoadConfig(void)
 {
@@ -504,13 +504,14 @@ void SDCInit(void)
     MountDisk (0,"");
     MountDisk (1,"");
 
-    // Load SDC configuration from ini file
+    // Load SDC settings
     LoadConfig();
+    SetCurDir(""); // May be changed by ParseStartup()
 
     memset((void *) &DiskImage,0,sizeof(DiskImage));
 
+    // Process the startup config file
     ParseStartup();
-    SetCurDir("");
     CurrentBank = 0;
 
     // init the interface
@@ -682,8 +683,7 @@ void ParseStartup(void)
         return;
     }
 
-    //TODO implement D=[Current directory]
-    // Strict single digit followed by '=' then path
+    // Strict single char followed by '=' then path
     while (fgets(buf,sizeof(buf),su) > 0) {
         //Chomp line ending
         buf[strcspn(buf,"\r\n")] = 0;
@@ -691,7 +691,7 @@ void ParseStartup(void)
         if (strlen(buf) < 3) continue;
         // Skip line if second char is not '='
         if (buf[1] != '=') continue;
-        // Grab drive num digit
+        // Grab drive num char
         char drv = buf[0];
         // Attempt to mount drive
         switch (drv) {
@@ -700,6 +700,11 @@ void ParseStartup(void)
             break;
         case '1':
             MountDisk(1,&buf[2]);
+            break;
+        case 'D':
+            if (!SetCurDir(&buf[2])) {
+                _DLOG("Config current dir %s failed\n",&buf[2]);
+            }
             break;
         }
     }
