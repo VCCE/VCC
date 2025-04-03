@@ -7,9 +7,10 @@ name: MSBuild
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - '*'
   pull_request:
-    branches: [ "main" ]
+      - '*'
 
 env:
   # Path to the solution file relative to the root of the project.
@@ -37,6 +38,3 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: BuildClean.bat
 
-    - name: Run
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: bin.ntx64\jam.exe -v
