@@ -39,5 +39,5 @@ jobs:
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: BuildClean.bat
+      run: cmd.exe /c BuildClean.bat
 
