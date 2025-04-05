@@ -139,6 +139,7 @@
       <ProgramDataBaseFileName>$(OutDir)</ProgramDataBaseFileName>
       <CompileAs>CompileAsCpp</CompileAs>
       <AdditionalOptions>/arch:SSE</AdditionalOptions>
+      <AdditionalIncludeDirectories>3rdparty</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -182,6 +183,7 @@
       <ProgramDataBaseFileName>$(OutDir)</ProgramDataBaseFileName>
       <CompileAs>CompileAsCpp</CompileAs>
       <AdditionalOptions>/arch:SSE</AdditionalOptions>
+      <AdditionalIncludeDirectories>3rdparty</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -224,6 +226,7 @@
       <ObjectFileName>$(OutDir)</ObjectFileName>
       <ProgramDataBaseFileName>$(OutDir)</ProgramDataBaseFileName>
       <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>3rdparty</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -263,6 +266,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
     <ClCompile>
       <ProgramDataBaseFileName>$(OutDir)</ProgramDataBaseFileName>
+      <AdditionalIncludeDirectories>3rdparty</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
@@ -285,6 +289,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Audio.c" />
+    <ClCompile Include="OpenGL.cpp" />
+    <ClCompile Include="OpenGLFontConsola.cpp" />
     <ClCompile Include="SourceDebug.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
@@ -367,6 +373,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h" />
+    <ClInclude Include="BuildConfig.h" />
+    <ClInclude Include="IDisplay.h" />
+    <ClInclude Include="IDisplayDebug.h" />
+    <ClInclude Include="OpenGL.h" />
+    <ClInclude Include="OpenGLFont.h" />
+    <ClInclude Include="OpenGLFontConsola.h" />
     <ClInclude Include="SourceDebug.h" />
     <ClInclude Include="Cassette.h" />
     <ClInclude Include="cc2font.h" />

@@ -723,6 +723,8 @@ IDB_VCC                 BITMAP                  "resources\\vcc.bmp"
 
 IDB_3GUYS               BITMAP                  "resources\\3guys.bmp"
 
+IDB_FONT_CONSOLA        BITMAP                  "resources\\consola.bmp"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //

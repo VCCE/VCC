@@ -49,6 +49,7 @@
 #define IDD_DISASSEMBLER                175
 #define IDD_BPLISTDIALOG                176
 #define IDD_EXPORT                      177
+#define IDB_FONT_CONSOLA                178
 
 #define IDC_MUTE                        1003
 #define IDC_THROTTLE                    1004
