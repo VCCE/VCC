@@ -101,6 +101,12 @@
       <Filter>Source\Debugger</Filter>
     </ClCompile>
     <ClCompile Include="Disassembler.cpp" />
+    <ClCompile Include="OpenGL.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGLFontConsola.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h">
@@ -224,6 +230,24 @@
       <Filter>Headers\Debugger</Filter>
     </ClInclude>
     <ClInclude Include="Disassembler.h" />
+    <ClInclude Include="OpenGL.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="IDisplay.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLFont.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLFontConsola.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="IDisplayDebug.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="BuildConfig.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\3guys.bmp">

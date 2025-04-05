@@ -60,6 +60,7 @@ struct SystemState
     unsigned char	CpuType;
     unsigned char	FrameSkip;
     unsigned char	BitDepth;
+    unsigned char	Throttle;
     unsigned char	*PTRsurface8;
     unsigned short	*PTRsurface16;
     unsigned int	*PTRsurface32;

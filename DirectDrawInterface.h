@@ -34,7 +34,7 @@ float Static(SystemState *);
 POINT GetCurWindowSize();
 void DisplayFlip(SystemState *);
 POINT GetForcedAspectBorderPadding();
-
+void CloseScreen();
 
 #define MAX_LOADSTRING 100
 

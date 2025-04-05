@@ -16,10 +16,15 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "BuildConfig.h"
 #include <windows.h>
 #include "defines.h"
 #include "joystickinput.h"
 #include "logger.h"
+
+#if USE_DEBUG_RAMP
+#include "IDisplayDebug.h"
+#endif // USE_DEBUG_RAMP
 
 // JoyStick configuration
 // These were renamed from Left and Right to preserve maintainer sanity
@@ -300,6 +305,14 @@ vccJoystickGetScan(unsigned char code)
                 }
             }
         }
+
+#if USE_DEBUG_RAMP
+        int x = JS_Ramp_Clock;
+        float xx = 600.0f * x / (TANDYRAMPMAX-TANDYRAMPMIN);
+        float yy = 20.0f * axis;
+        DebugDrawLine(xx, yy, xx, yy+18, VCC::ColorBlue);
+#endif // USE_DEBUG_RAMP
+
         // If clock exceeds target set compare bit and stop ramp
         if (JS_Ramp_Clock > sticktarg) {
             code |= 0x80;

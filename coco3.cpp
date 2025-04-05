@@ -162,7 +162,7 @@ float RenderFrame (SystemState *RFState)
 
 	// Bottom Border begins here.
 	RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenBottomBorder, 0);
-	for (RFState->LineCounter=0;RFState->LineCounter < BottomBoarder ;RFState->LineCounter++)
+	for (RFState->LineCounter=0;RFState->LineCounter < BottomBoarder;RFState->LineCounter++)
 	{
 		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
