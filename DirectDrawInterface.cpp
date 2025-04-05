@@ -31,6 +31,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include <iostream>
 #include <string>
+#include "OpenGL.h"
+
+using namespace VCC;
+
+static IDisplay* g_Display = nullptr;
 
 //Global Variables for Direct Draw funcions
 LPDIRECTDRAW        g_pDD		= NULL;  // The DirectDraw object
@@ -158,7 +163,8 @@ bool CreateDDWindow(SystemState *CWState)
 		::GetWindowRect(CWState->WindowHandle, &WindowDefaultSize);	// And save the Final size of the Window 
 		::ShowWindow(CWState->WindowHandle, g_nCmdShow);
 		::UpdateWindow(CWState->WindowHandle);
-
+		::GetWindowRect(CWState->WindowHandle, &WindowDefaultSize);	// And save the Final size of the Window 
+		/*
 		// Create an instance of a DirectDraw object
 		hr = ::DirectDrawCreate(NULL, &g_pDD, NULL);
 		if (hr) return FALSE;
@@ -198,6 +204,7 @@ bool CreateDDWindow(SystemState *CWState)
 		if (hr) return FALSE;
 		hr = g_pDDSBack->Unlock( NULL );						// Unlock surface
 		if (hr) return FALSE;
+		*/
 		break;
 
 
@@ -238,6 +245,15 @@ bool CreateDDWindow(SystemState *CWState)
 //**********************************END TEST***************************************
 	break;
 	}
+
+
+	if (!g_Display) g_Display = new OpenGL();
+	::GetClientRect(CWState->WindowHandle, &rStatBar);
+	int w = rStatBar.right - rStatBar.left;
+	int h = rStatBar.bottom - rStatBar.top - StatusBarHeight;
+	g_Display->Setup(CWState->WindowHandle, w, h, StatusBarHeight);
+
+
 	return TRUE;
 }
 
@@ -262,6 +278,9 @@ void CheckSurfaces()
 
 void DisplayFlip(SystemState *DFState)	// Double buffering flip
 {
+	g_Display->Render();
+	return;
+
 	using namespace std;
 	static HRESULT hr;
 	static RECT    rcSrc;  // source blit rectangle
@@ -369,7 +388,7 @@ void DisplayFlip(SystemState *DFState)	// Double buffering flip
 
 unsigned char LockScreen(SystemState *LSState)
 {
-
+	/*
 	HRESULT	hr;
 	DDSURFACEDESC ddsd;				// A structure to describe the surfaces we want
 	memset(&ddsd, 0, sizeof(ddsd));	// Clear all members of the structure to 0
@@ -414,11 +433,22 @@ unsigned char LockScreen(SystemState *LSState)
 	LSState->PTRsurface8=(unsigned char *)ddsd.lpSurface;
 	LSState->PTRsurface16=(unsigned short *)ddsd.lpSurface;
 	LSState->PTRsurface32=(unsigned int *)ddsd.lpSurface;
+	*/
+
+	void *buffer = g_Display->Surface();
+
+	LSState->PTRsurface8 = (unsigned char*)buffer;
+	LSState->PTRsurface16 = (unsigned short*)buffer;
+	LSState->PTRsurface32 = (unsigned int*)buffer;
+	LSState->SurfacePitch = 640;
+	LSState->BitDepth = 3;
+
 	return(0);
 }
 
 void UnlockScreen(SystemState *USState)
 {
+	/*
 	static HRESULT hr;
 	static size_t Index=0;
 	static HDC hdc;
@@ -436,6 +466,7 @@ void UnlockScreen(SystemState *USState)
 	}
 	hr = g_pDDSBack->Unlock( NULL );
 
+	*/
 	DisplayFlip(USState);
 	return;
 }
