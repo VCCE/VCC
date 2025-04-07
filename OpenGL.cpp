@@ -84,7 +84,7 @@ namespace VCC
 			height -= statusHeight;
 			this->width = width;
 			this->height = height;
-			if (hWnd) SetWindowPos(hWnd, NULL, 0, 0, width, height, SWP_NOMOVE);
+			if (hWnd) SetWindowPos(hWnd, NULL, 0, 0, width, height, SWP_NOCOPYBITS);
 		}
 
 		bool Setup(void* hwnd, int width, int height, int statusHeight)
@@ -279,11 +279,29 @@ namespace VCC
 			glBindTexture(GL_TEXTURE_2D, texId);
 			glEnable(GL_TEXTURE_2D);
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SurfaceWidth, SurfaceHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixelsRGBA);
+
+			// keep aspect ratio, ntsc = 50hz
+			bool isNTSC = true;
+			float ntsc = isNTSC ? 60.0f / 50.0f : 1.0f;
+			float dw = (float)SurfaceWidth;
+			float dh = (float)SurfaceHeight * ntsc;
+			float rx = w / dw;
+			float ry = h / dh;
+			float r = rx > ry ? ry : rx;
+
+			// scale to fit display
+			w = r * dw;
+			h = r * dh;
+
+			// center on display
+			float x = (width - w) / 2.0f;
+			float y = (height - h) / 2.0f;
+
 			glBegin(GL_QUADS);
-				glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
-				glTexCoord2f(1, 0); glVertex3f(w, 0, 0);
-				glTexCoord2f(1, 1); glVertex3f(w, h, 0);
-				glTexCoord2f(0, 1); glVertex3f(0, h, 0);
+				glTexCoord2f(0, 0); glVertex3f(x, y, 0);
+				glTexCoord2f(1, 0); glVertex3f(x+w, y, 0);
+				glTexCoord2f(1, 1); glVertex3f(x+w, y+h, 0);
+				glTexCoord2f(0, 1); glVertex3f(x, y+h, 0);
 			glEnd();
 
 			glFlush();
