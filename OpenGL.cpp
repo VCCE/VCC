@@ -297,11 +297,45 @@ namespace VCC
 			float x = (width - w) / 2.0f;
 			float y = (height - h) / 2.0f;
 
+			glColor3f(1, 1, 1);
 			glBegin(GL_QUADS);
 				glTexCoord2f(0, 0); glVertex3f(x, y, 0);
-				glTexCoord2f(1, 0); glVertex3f(x+w, y, 0);
-				glTexCoord2f(1, 1); glVertex3f(x+w, y+h, 0);
-				glTexCoord2f(0, 1); glVertex3f(x, y+h, 0);
+				glTexCoord2f(1, 0); glVertex3f(x + w, y, 0);
+				glTexCoord2f(1, 1); glVertex3f(x + w, y + h, 0);
+				glTexCoord2f(0, 1); glVertex3f(x, y + h, 0);
+			glEnd();
+
+			glDisable(GL_TEXTURE_2D);
+			// Switch to color for edges			
+			#define glTexCoord2f(a,b) glColor3f(0,0,0)
+			glBegin(GL_QUADS);
+			if (x > 0)
+			{
+				// fill left/right edge
+				glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
+				glTexCoord2f(0, 1); glVertex3f(x, 0, 0);
+				glTexCoord2f(0, 0); glVertex3f(x, h, 0);
+				glTexCoord2f(0, 1); glVertex3f(0, h, 0);
+
+				glTexCoord2f(1, 0); glVertex3f(x + w, y, 0);
+				glTexCoord2f(1, 0); glVertex3f(width, y, 0);
+				glTexCoord2f(1, 1); glVertex3f(width, y + h, 0);
+				glTexCoord2f(1, 1); glVertex3f(x + w, y + h, 0);
+			}
+			else if (y > 0)
+			{
+				// fill top/bottom edge
+				glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
+				glTexCoord2f(1, 0); glVertex3f(w, 0, 0);
+				glTexCoord2f(1, 0); glVertex3f(w, y, 0);
+				glTexCoord2f(0, 0); glVertex3f(0, y, 0);
+
+				glTexCoord2f(0, 1); glVertex3f(0, y + h, 0);
+				glTexCoord2f(1, 1); glVertex3f(w, y + h, 0);
+				glTexCoord2f(1, 1); glVertex3f(w, height, 0);
+				glTexCoord2f(0, 1); glVertex3f(0, height, 0);
+			}
+			#undef glTexCoord2f
 			glEnd();
 
 			glFlush();
