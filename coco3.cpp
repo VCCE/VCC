@@ -162,7 +162,7 @@ float RenderFrame (SystemState *RFState)
 
 	// Bottom Border begins here.
 	RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenBottomBorder, 0);
-	for (RFState->LineCounter=0;RFState->LineCounter < BottomBoarder ;RFState->LineCounter++)
+	for (RFState->LineCounter=0;RFState->LineCounter < BottomBoarder;RFState->LineCounter++)
 	{
 		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
@@ -269,7 +269,7 @@ void SetLinesperScreen (unsigned char Lines)
 	Lines = (Lines & 3);
 	LinesperScreen=Lpf[Lines];
 	TopBoarder=VcenterTable[Lines];
-	BottomBoarder= 243 - (TopBoarder + LinesperScreen); //4 lines of top boarder are unrendered 244-4=240 rendered scanlines
+	BottomBoarder= 244 - (TopBoarder + LinesperScreen); //4 lines of top boarder are unrendered 244-4=240 rendered scanlines
 	TopOffScreen = TopOffScreenTable[Lines];
 	BottomOffScreen = BottomOffScreenTable[Lines];
 	return;
