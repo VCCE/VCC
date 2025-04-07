@@ -1,0 +1,51 @@
+name: testrelease
+
+on:
+  push:
+    tags:
+      - 'tv*'
+
+jobs:
+  build:
+    name: Publish binaries
+    strategy:
+      matrix:
+        kind: ['windows']
+        include:
+          - kind: windows
+            os: windows-latest
+            target: win-x64
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Setup Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@release/v1
+
+    - uses: actions/checkout@v4
+
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: cmd.exe /c BuildClean.bat
+
+    - name: Package
+      shell: bash
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+          tag=$(git describe --tags --abbrev=0)
+          release_name="test-vcc-$tag-${{ matrix.target }}"
+
+          cp ./__obj/Win32/Release/vcc/out/vcc.exe test-vcc.exe
+
+          # Pack files
+          if [ "${{ matrix.target }}" == "win-x64" ]; then
+            7z a -tzip "${release_name}.zip" "./test-vcc.exe"
+          else
+            tar czvf "${release_name}.tar.gz" "./test-vcc.exe"
+          fi
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        files: "test-vcc-*"
