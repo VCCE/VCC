@@ -1017,13 +1017,12 @@ void ReadSector(void)
         return;
     }
 
+    // Only supporting images with contigous sector arrays
     LARGE_INTEGER pos;
-    pos.LowPart = lsn * 256;
-    pos.HighPart = 0;
-
+    pos.QuadPart = lsn * 256 + DiskImage[drive].headersize;
     if (!SetFilePointerEx(DiskImage[drive].hFile,pos,NULL,FILE_BEGIN)) {
         _DLOG("ReadSector seek error %s\n",LastErrorTxt());
-        IF.status = STA_FAIL;
+        IF.status = STA_FAIL|STA_NOTFOUND;
     }
 
     DWORD cnt = 0;
@@ -1082,10 +1081,11 @@ void WriteSector(void)
     }
 
     //_DLOG("WriteSector %d drive %d\n",lsn,drive);
-
     int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
+
+    // Only supporting images with contigous sector arrays
     LARGE_INTEGER pos;
-    pos.QuadPart = lsn * 256;
+    pos.QuadPart = lsn * 256 + DiskImage[drive].headersize;
     if (!SetFilePointerEx(DiskImage[drive].hFile,pos,NULL,FILE_BEGIN)) {
         _DLOG("WriteSector seek error %s\n",LastErrorTxt());
         IF.status = STA_FAIL|STA_NOTFOUND;
@@ -1404,7 +1404,7 @@ bool MountDisk (int drive, const char * path)
         }
     }
     if (attrib < 0) {
-        _DLOG("MountDisk %s does not exist\n",fqn);
+        _DLOG("MountDisk %s does not exist\n",path);
         return false;
     }
 
@@ -1414,10 +1414,9 @@ bool MountDisk (int drive, const char * path)
     }
 
     // Extra file bytes are considered to be header bytes
-    int headersize = filesize & 256;
+    int headersize = filesize & 255;
+    if (headersize != 0) _DLOG("MountDisk %s header %d/n",fqn,headersize);
     filesize -= headersize;
-
-    if (headersize) _DLOG("MountDisk header %d/n",headersize);
 
     // Fill image info.
     strncpy(DiskImage[drive].name,fqn,MAX_PATH);
