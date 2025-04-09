@@ -144,7 +144,7 @@ float RenderFrame (SystemState *RFState)
 
 	// Visible Top Border begins here. (Remove 4 lines for centering)
 	RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenTopBorder, 0);
-	for (RFState->LineCounter = 0; RFState->LineCounter < TopBoarder - 4; RFState->LineCounter++)
+	for (RFState->LineCounter = 0; RFState->LineCounter < TopBoarder; RFState->LineCounter++)
 	{
 		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
@@ -269,7 +269,7 @@ void SetLinesperScreen (unsigned char Lines)
 	Lines = (Lines & 3);
 	LinesperScreen=Lpf[Lines];
 	TopBoarder=VcenterTable[Lines];
-	BottomBoarder= 243 - (TopBoarder + LinesperScreen); //4 lines of top boarder are unrendered 244-4=240 rendered scanlines
+	BottomBoarder = 240 - (TopBoarder + LinesperScreen);
 	TopOffScreen = TopOffScreenTable[Lines];
 	BottomOffScreen = BottomOffScreenTable[Lines];
 	return;
@@ -280,14 +280,25 @@ DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
 {
 	const float pixelsPerLine = GetDisplayedPixelsPerLine();
 	const float horizontalBorderSize = GetHorizontalBorderSize();
-	const float activeLines = 250.0f;	//	FIXME: Needs a symbolic
+	const float activeLines = 192.0f;	//	FIXME: Needs a symbolic
 
 	DisplayDetails details;
 
-	const auto horizontalScale(clientWidth / pixelsPerLine);	
-	const auto verticalScale(clientHeight / activeLines);
 	const auto extraBorderPadding = GetForcedAspectBorderPadding();
-	
+
+	// calcuate the complete screen size including its borders in device coords
+	float deviceScreenWidth = (float)clientWidth - extraBorderPadding.x * 2;
+	float deviceScreenHeight = (float)clientHeight - extraBorderPadding.y * 2;
+
+	// calculate the content size including the borders in surface coords
+	float contentWidth = pixelsPerLine + horizontalBorderSize * 2;
+	float contentHeight = activeLines + TopBoarder + BottomBoarder;
+
+	// now get scale difference between both previous equivalent boxes
+	float horizontalScale = deviceScreenWidth / contentWidth;
+	float verticalScale = deviceScreenHeight / contentHeight;
+
+	// fill in details by scalling the coco screen into device coords
 	details.contentRows = static_cast<int>(LinesperScreen * verticalScale);
 	details.topBorderRows = static_cast<int>(TopBoarder * verticalScale) + extraBorderPadding.y;
 	details.bottomBorderRows = static_cast<int>(BottomBoarder * verticalScale) + extraBorderPadding.y;
