@@ -381,8 +381,13 @@ unsigned char ReadIniFile(void)
 void SetWindowSize(POINT p) {
 	if (EmuState.WindowHandle != NULL)
 	{
-		int width = p.x + 16;
-		int height = p.y + 81;
+		RECT ra = { 0,0,0,0 };
+
+		::AdjustWindowRect(&ra, WS_OVERLAPPEDWINDOW, TRUE);
+		int windowBorderWidth = ra.right - ra.left;
+		int windowBorderHeight = ra.bottom - ra.top;
+		int width = p.x + windowBorderWidth;
+		int height = p.y + windowBorderHeight + GetRenderWindowStatusBarHeight();
 		SetWindowPos(EmuState.WindowHandle, 0, 0, 0, width, height, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 	}
 }

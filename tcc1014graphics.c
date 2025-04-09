@@ -9796,7 +9796,7 @@ void SetupDisplay(void)
 	if(!UserFlipped) ColorInvert= (CC3Vmode & 32)>>5;
 	LinesperScreen=Lpf[VresIndex];
 	SetLinesperScreen(VresIndex);
-	VertCenter=VcenterTable[VresIndex]-4; //4 unrendered top lines
+	VertCenter = VcenterTable[VresIndex];
 	PixelsperLine= BytesperRow*CCPixelsperByte[Bpp];
 	PixelsperByte=CCPixelsperByte[Bpp];
 
