@@ -493,8 +493,9 @@ void SetMasterTickCounter(void)
 {
 	// Rate = { 63613.2315, 279.265 };
 	double Rate[2]={NANOSECOND/(TARGETFRAMERATE*LINESPERSCREEN),NANOSECOND/COLORBURST};
-	// Master count contains at least one tick. EJJ 10mar25
-	MasterTickCounter = (UnxlatedTickCounter+1) * Rate[TimerClockRate];
+	// When set master count must contain atleast one tick. EJJ 25oct24
+	UnxlatedTickCounter = (UnxlatedTickCounter==0) ? 1:UnxlatedTickCounter;
+	MasterTickCounter = UnxlatedTickCounter * Rate[TimerClockRate];
 	if (MasterTickCounter != OldMaster)  
 	{
 		OldMaster=MasterTickCounter;
@@ -502,6 +503,7 @@ void SetMasterTickCounter(void)
 	}
 	return;
 }
+
 
 void MiscReset(void)
 {
