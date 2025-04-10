@@ -8252,7 +8252,7 @@ case 192+1: //Bpp=0 Sr=1 1BPP Stretch=2
 case 192+2:	//Bpp=0 Sr=2 
 	curr_gmode = "gmode19 (PMODE4)";
 
-	if (!MonType && BoarderColor32 == 0xFFFFFF && GetPaletteType() == 2)
+	if (!MonType && BoarderColor32 == 0xFFFFFF && GetPaletteType() == PALETTE_NTSC)
 	{
 		// byte pointer to ram
 		unsigned char* cocoRam = (unsigned char*)WideBuffer;
@@ -9821,14 +9821,11 @@ void SetupDisplay(void)
 	return;
 }
 
-
 void GimeInit(void)
 {
 	//Nothing but good to have.
 	return;
 }
-
-
 
 void GimeReset(void)
 {
@@ -9885,26 +9882,21 @@ void MakeRGBPalette (void)
 		g= ColorTable32Bit [(Index & 16) >> 3 | (Index & 2) >> 1];	
 		b= ColorTable32Bit [(Index & 8 ) >> 2 | (Index & 1) ];		
 		PalleteLookup32[1][Index]= (r* 65536) + (g* 256) + b;
-		
-		
-		
 	}
 	return;
 }
 
-
 void MakeCMPpalette(void)	
 {
-	double saturation, brightness, contrast;
-	int offset;
-	double w;
+//	double saturation, brightness, contrast;
+//	int offset;
+//	double w;
 	double r,g,b;
 	
-	int PaletteType = GetPaletteType();
+//	int PaletteType = GetPaletteType();
 
 	unsigned char rr,gg,bb;
 	unsigned char Index=0;
-
 	
 	int red[] = { 
 		0,14,12,21,51,86,108,118,
@@ -9938,12 +9930,11 @@ void MakeCMPpalette(void)
 	};
 
 	float gamma = 1.4F;
-	if (PaletteType == 1) { OutputDebugString("Loading new CMP palette.\n"); }
-	else { OutputDebugString("Loading old CMP palette.\n"); }
+
 	for (Index = 0; Index <= 63; Index++)
 	{
-		if (PaletteType == 1) 
-		{
+//		if (PaletteType == 1)
+//		{
 			if (Index > 39) { gamma = 1.1F; }
 			if (Index > 55) { gamma = 1.0F; }
 
@@ -9952,6 +9943,8 @@ void MakeCMPpalette(void)
 			r = red[Index] * gamma; if (r > 255) { r = 255; }
 			g = green[Index] * gamma; if (g > 255) { g = 255; }
 			b = blue[Index] * gamma; if (b > 255) { b = 255; }
+
+/* Old palette stuff commented out TODO: remove these someday
 		}
 		else {  //Old palette //Stolen from M.E.S.S.
 					switch(Index)
@@ -10001,6 +9994,7 @@ void MakeCMPpalette(void)
 
 				}
 		}
+*/
 		rr= (unsigned char)r;
 		gg= (unsigned char)g;
 		bb= (unsigned char)b;
