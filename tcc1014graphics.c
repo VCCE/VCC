@@ -35,6 +35,8 @@ void MakeRGBPalette (void);
 void MakeCMPpalette(void);
 bool  DDFailedCheck(HRESULT hr, char *szMessage);
 char *DDErrorString(HRESULT hr);
+void RenderPMODE4NTSC(unsigned int* surfaceDest, int XpitchDest, const unsigned char* cocoSrc, char scanLines);
+
 //extern STRConfig CurrentConfig;
 static unsigned char ColorValues[4]={0,85,170,255};
 static unsigned char ColorTable16Bit[4]={0,10,21,31};	//Color brightness at 0 1 2 and 3 (2 bits)
@@ -47,6 +49,54 @@ static unsigned char  Pallete[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};		//Coco 3 6
 static unsigned char  Pallete8Bit[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 static unsigned short Pallete16Bit[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};	//Color values translated to 16bit 32BIT
 static unsigned int   Pallete32Bit[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};	//Color values translated to 24/32 bits
+
+static unsigned int ArtifactsNTSC[2][16] = {
+	//rrggbb - normal blue/red colors
+	0x000000, // black
+	0x004000, // dark green
+	0x300030, // dark purple
+	0xc0e0c0, // light green
+	0xeec8ee, // light purple
+	0x0020a0, // dark blue
+	0xc03c1e, // dark red
+	0x618cff, // light blue
+	0xff8f48, // light red
+	0xff7800, // red
+	0x0080ff, // blue
+	0x64f0ff, // cyan
+	0xfff0c8, // yellow
+	0x00003c, // dark dark blue
+	0x3c0000, // dark dark red
+	0xffffff,  // white
+	//rrggbb - alternate red/blue colors (but not green/purple - see To Preseve Quandric)
+	0x000000, // black
+	0x004000, // dark green
+	0x300030, // dark purple
+	0xc0e0c0, // light green
+	0xeec8ee, // light purple
+	0xc03c1e, // dark red
+	0x0020a0, // dark blue
+	0xff8f48, // light red
+	0x618cff, // light blue
+	0x0080ff, // blue
+	0xff7800, // red
+	0xfff0c8, // yellow
+	0x64f0ff, // cyan
+	0x3c0000, // dark dark red
+	0x00003c, // dark dark blue
+	0xffffff  // white
+};
+
+// mapping of bit pattern to palette color above
+// [---2bit---][---2bit---][---2bit---][-1-]
+// [prev pixel][curr pixel][next pixel][o/e]
+static unsigned char ArtifactsNTSCIndex[128] = {
+	0, 0, 0, 0, 0, 6, 0, 2, 5, 7, 5, 7, 1, 3, 1, 11, 8, 6, 8, 14, 8, 9, 8, 9, 4, 4, 4, 15, 12, 12,
+	12, 15, 5, 13, 5, 13, 13, 0, 13, 2, 10, 10, 10, 10, 10, 15, 10, 11, 3, 1, 3, 1, 15, 9, 15, 9,
+	11, 11, 11, 11, 15, 15, 15, 15, 14, 0, 14, 0, 14, 6, 14, 2, 0, 7, 0, 7, 1, 3, 1, 11, 9, 6, 9,
+	14, 9, 9, 9, 9, 15, 4, 15, 15, 12, 12, 12, 15, 2, 13, 2, 13, 2, 0, 2, 2, 10, 10, 10, 10, 10, 15,
+	10, 11, 12, 1, 12, 1, 12, 9, 12, 9, 15, 11, 15, 11, 15, 15, 15, 15
+};
 
 static unsigned int VidMask=0x1FFFF;
 static unsigned char VresIndex=0;
@@ -73,7 +123,6 @@ static unsigned char LowerCase=0,InvertAll=0,ExtendedText=1;
 static unsigned char HorzOffsetReg=0;
 static unsigned char Hoffset=0;
 static unsigned short TagY=0;
-static unsigned short HorzBeam=0;
 static unsigned int BoarderColor32=0;
 static unsigned short BoarderColor16=0;
 static unsigned char BoarderColor8=0;
@@ -88,6 +137,7 @@ static unsigned int last_mmode = 0;
 // BEGIN of 8 Bit render loop *****************************************************************************************
 void UpdateScreen8 (SystemState *US8State)
 {
+	unsigned short HorzBeam = 0;
 	register unsigned int YStride=0;
 	unsigned char Pixel=0;
 	unsigned char Character=0,Attributes=0;
@@ -3181,6 +3231,7 @@ case 192+63: //Bpp=3 Sr=15
 // BEGIN of 16 Bit render loop *****************************************************************************************
 void UpdateScreen16 (SystemState *USState16)
 {
+	unsigned short HorzBeam = 0;
 	register unsigned int YStride=0;
 	static unsigned int TextColor=0;
 	static unsigned char Pixel=0;
@@ -6284,6 +6335,7 @@ void UpdateScreen24 (SystemState *USState24)
 // BEGIN of 32 Bit render loop *****************************************************************************************
 void UpdateScreen32(SystemState *USState32)
 {
+	unsigned short HorzBeam = 0;
 	register unsigned int YStride = 0;
 	//	unsigned int TextColor=0;
 	unsigned char Pixel = 0;
@@ -8199,6 +8251,18 @@ break;
 case 192+1: //Bpp=0 Sr=1 1BPP Stretch=2
 case 192+2:	//Bpp=0 Sr=2 
 	curr_gmode = "gmode19 (PMODE4)";
+
+	if (!MonType && BoarderColor32 == 0xFFFFFF && GetPaletteType() == PALETTE_NTSC)
+	{
+		// byte pointer to ram
+		unsigned char* cocoRam = (unsigned char*)WideBuffer;
+		// destination screen (less 2 pixels for bleed)
+		unsigned int* surfaceDest = szSurface32 + (((y + VertCenter) * 2) * Xpitch) + HorzCenter - 2;
+		// source coco screens
+		unsigned char* cocoSrc = cocoRam + (VidMask & (Start + (unsigned char)Hoffset));
+		RenderPMODE4NTSC(surfaceDest, Xpitch, cocoSrc, USState32->ScanLines);
+	}
+	else
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=2
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
@@ -9757,14 +9821,11 @@ void SetupDisplay(void)
 	return;
 }
 
-
 void GimeInit(void)
 {
 	//Nothing but good to have.
 	return;
 }
-
-
 
 void GimeReset(void)
 {
@@ -9821,26 +9882,21 @@ void MakeRGBPalette (void)
 		g= ColorTable32Bit [(Index & 16) >> 3 | (Index & 2) >> 1];	
 		b= ColorTable32Bit [(Index & 8 ) >> 2 | (Index & 1) ];		
 		PalleteLookup32[1][Index]= (r* 65536) + (g* 256) + b;
-		
-		
-		
 	}
 	return;
 }
 
-
 void MakeCMPpalette(void)	
 {
-	double saturation, brightness, contrast;
-	int offset;
-	double w;
+//	double saturation, brightness, contrast;
+//	int offset;
+//	double w;
 	double r,g,b;
 	
-	int PaletteType = GetPaletteType();
+//	int PaletteType = GetPaletteType();
 
 	unsigned char rr,gg,bb;
 	unsigned char Index=0;
-
 	
 	int red[] = { 
 		0,14,12,21,51,86,108,118,
@@ -9874,12 +9930,11 @@ void MakeCMPpalette(void)
 	};
 
 	float gamma = 1.4F;
-	if (PaletteType == 1) { OutputDebugString("Loading new CMP palette.\n"); }
-	else { OutputDebugString("Loading old CMP palette.\n"); }
+
 	for (Index = 0; Index <= 63; Index++)
 	{
-		if (PaletteType == 1) 
-		{
+//		if (PaletteType == 1)
+//		{
 			if (Index > 39) { gamma = 1.1F; }
 			if (Index > 55) { gamma = 1.0F; }
 
@@ -9888,6 +9943,8 @@ void MakeCMPpalette(void)
 			r = red[Index] * gamma; if (r > 255) { r = 255; }
 			g = green[Index] * gamma; if (g > 255) { g = 255; }
 			b = blue[Index] * gamma; if (b > 255) { b = 255; }
+
+/* Old palette stuff commented out TODO: remove these someday
 		}
 		else {  //Old palette //Stolen from M.E.S.S.
 					switch(Index)
@@ -9937,6 +9994,7 @@ void MakeCMPpalette(void)
 
 				}
 		}
+*/
 		rr= (unsigned char)r;
 		gg= (unsigned char)g;
 		bb= (unsigned char)b;
@@ -10032,4 +10090,54 @@ unsigned char SetColorInvert(unsigned char Tmp)
 }
 */
 
+// Render even/odd 2x2 ntsc pixels
+void RenderNTSCPixel2x2(unsigned int* surfaceDest, int XpitchDest, char colorIndex, char scanLines)
+{
+	colorIndex <<= 1;
+	unsigned int colorEven = ArtifactsNTSC[ColorInvert][ArtifactsNTSCIndex[colorIndex]];
+	unsigned int colorOdd = ArtifactsNTSC[ColorInvert][ArtifactsNTSCIndex[colorIndex + 1]];
+	// render even pixel
+	*surfaceDest = colorEven;
+	*(surfaceDest + 1) = colorEven;
+	if (!scanLines) *(surfaceDest + XpitchDest) = colorEven;
+	if (!scanLines) *(surfaceDest + XpitchDest + 1) = colorEven;
+	surfaceDest += 2;
+	// render odd pixel
+	*surfaceDest = colorOdd;
+	*(surfaceDest + 1) = colorOdd;
+	if (scanLines) return;
+	*(surfaceDest + XpitchDest) = colorOdd;
+	*(surfaceDest + XpitchDest + 1) = colorOdd;
+}
 
+// Render one raster line to surface 1bbp Stretch=2
+void RenderPMODE4NTSC(unsigned int* surfaceDest, int XpitchDest, const unsigned char* cocoSrc, char scanLines)
+{
+	const char cocoBorderPixel = 3; // white
+
+	// left edge bleed
+	unsigned char bitPattern = (cocoBorderPixel << 2) + cocoBorderPixel;
+	unsigned short HorzBeam = 0;
+
+	// for each coco byte
+	for (; HorzBeam < BytesperRow; ++HorzBeam) 
+	{
+		unsigned char cocoByte = *cocoSrc++;
+		for (int i = 0; i < 4; ++i)
+		{
+			unsigned char nextCocoPixel = (cocoByte >> 6) & 0x3;
+			// roll in next pixel
+			bitPattern = ((bitPattern << 2) + nextCocoPixel) & 0x3F;
+			cocoByte <<= 2;
+			RenderNTSCPixel2x2(surfaceDest, XpitchDest, bitPattern, scanLines);
+			surfaceDest += 4;
+		}
+	}
+
+	// end of line pixels (ntsc bleed with border)
+	bitPattern = ((bitPattern << 2) + cocoBorderPixel) & 0x3F;
+	RenderNTSCPixel2x2(surfaceDest, XpitchDest, bitPattern, scanLines);
+	surfaceDest += 4;
+	bitPattern = ((bitPattern << 2) + cocoBorderPixel) & 0x3F;
+	RenderNTSCPixel2x2(surfaceDest, XpitchDest, bitPattern, scanLines);
+}
