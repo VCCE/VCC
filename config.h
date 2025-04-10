@@ -37,6 +37,8 @@ char * GetKeyMapFilePath();
 char * KeyMapFiledir();
 
 int GetPaletteType();
+enum PALETTETYPE {PALETTE_ORIG=0, PALETTE_UPD=1, PALETTE_NTSC=2};
+
 POINT GetIniWindowSize();
 int GetRememberSize();
 void SetConfigPath(int, string);

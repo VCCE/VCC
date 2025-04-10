@@ -300,7 +300,7 @@ unsigned char ReadIniFile(void)
 	GetPrivateProfileString("Audio","SndCard","",CurrentConfig.SoundCardName,63,IniFilePath);
 
 	CurrentConfig.MonitorType = GetPrivateProfileInt("Video","MonitorType",1,IniFilePath);
-	CurrentConfig.PaletteType = GetPrivateProfileInt("Video", "PaletteType",1,IniFilePath);
+	CurrentConfig.PaletteType = GetPrivateProfileInt("Video","PaletteType",PALETTE_NTSC,IniFilePath);
 	CurrentConfig.ScanLines = GetPrivateProfileInt("Video","ScanLines",0,IniFilePath);
 
 	//CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);
@@ -831,11 +831,9 @@ void OpenDisplayConfig() {
 	ShowWindow(hDisplayDlg,SW_SHOWNORMAL);
 	SetFocus(hDisplayDlg);
 }
+
 LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	static bool isRGB;
-	short int Monchoice[2] = { IDC_COMPOSITE, IDC_RGB };
-    short int PaletteChoice[3] = { IDC_ORG_PALETTE, IDC_UPD_PALETTE, IDC_NTSC5_PALETTE };
 	static STRConfig tmpcfg;
 	switch (message) {
 	case WM_INITDIALOG:
@@ -849,25 +847,26 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 		SendDlgItemMessage(hDlg,IDC_FRAMESKIP,TBM_SETPOS,TRUE,tmpcfg.FrameSkip);
 		SendDlgItemMessage(hDlg,IDC_RESIZE,BM_SETCHECK,tmpcfg.Resize,0);
 		SendDlgItemMessage(hDlg,IDC_ASPECT,BM_SETCHECK,tmpcfg.Aspect,0);
-		SendDlgItemMessage(hDlg, IDC_REMEMBER_SIZE, BM_SETCHECK, tmpcfg.RememberSize, 0);
+		SendDlgItemMessage(hDlg,IDC_REMEMBER_SIZE, BM_SETCHECK, tmpcfg.RememberSize, 0);
 		sprintf(OutBuffer,"%i",tmpcfg.FrameSkip);
 		SendDlgItemMessage(hDlg,IDC_FRAMEDISPLAY,
 				WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
-		for (temp=0;temp<=1;temp++)
-			SendDlgItemMessage(hDlg,Monchoice[temp],BM_SETCHECK,(temp==tmpcfg.MonitorType),0);
-		if (tmpcfg.MonitorType == 1) { //If RGB monitor is chosen, gray out palette choice
-			isRGB = TRUE;
-			SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0);
-			SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
-			SendDlgItemMessage(hDlg, IDC_NTSC5_PALETTE, BM_SETSTATE, 1, 0);
-			SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETDONTCLICK, 1, 0);
-			SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETDONTCLICK, 1, 0);
-			SendDlgItemMessage(hDlg, IDC_NTSC5_PALETTE, BM_SETDONTCLICK, 1, 0);
+		if (tmpcfg.MonitorType == 1) {
+			SendDlgItemMessage(hDlg,IDC_COMPOSITE,BM_SETCHECK,0,0);
+			SendDlgItemMessage(hDlg,IDC_RGB,BM_SETCHECK,1,0);
+		} else {
+			SendDlgItemMessage(hDlg,IDC_COMPOSITE,BM_SETCHECK,1,0);
+			SendDlgItemMessage(hDlg,IDC_RGB,BM_SETCHECK,0,0);
 		}
 		SendDlgItemMessage(hDlg,IDC_MONTYPE,
 				STM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[tmpcfg.MonitorType]);
-		for (temp = 0; temp < sizeof(PaletteChoice) / sizeof(*PaletteChoice); ++temp)
-			SendDlgItemMessage(hDlg,PaletteChoice[temp],BM_SETCHECK,(temp==tmpcfg.PaletteType),0);
+		if (tmpcfg.PaletteType == PALETTE_NTSC) {
+			SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 0, 0);
+			SendDlgItemMessage(hDlg, IDC_NTSC5_PALETTE, BM_SETCHECK, 1, 0);
+		} else {
+			SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 1, 0);
+			SendDlgItemMessage(hDlg, IDC_NTSC5_PALETTE, BM_SETCHECK, 0, 0);
+		}
 		break;
 
 	case WM_HSCROLL:
@@ -917,81 +916,34 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			SendDlgItemMessage(hDlg, IDC_RESIZE, BM_GETCHECK, 1, 0);
 			break;
 
-		case IDC_COMPOSITE:
-			isRGB = FALSE;
-			//This finds the current Monitor choice, then sets both buttons in the nested loop.
-			for (temp = 0; temp <= 1; temp++) {
-				if (LOWORD(wParam) == Monchoice[temp]) {
-					for (temp2 = 0; temp2 <= 1; temp2++)
-						SendDlgItemMessage(hDlg, Monchoice[temp2], BM_SETCHECK, 0, 0);
-					SendDlgItemMessage(hDlg, Monchoice[temp], BM_SETCHECK, 1, 0);
-					tmpcfg.MonitorType = temp;
-				}
-			}
-			SendDlgItemMessage(hDlg,IDC_MONTYPE,
-				STM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[tmpcfg.MonitorType]);
-			SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 0, 0);
-			SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 0, 0);
-			SendDlgItemMessage(hDlg, IDC_NTSC5_PALETTE, BM_SETSTATE, 0, 0);
-			break;
-
 		case IDC_RGB:
-			isRGB = TRUE;
-			//This finds the current Monitor choice, then sets both buttons in the nested loop.
-			for (temp=0;temp<=1;temp++) {
-				if (LOWORD(wParam)==Monchoice[temp]) {
-					for (temp2=0;temp2<=1;temp2++)
-						SendDlgItemMessage(hDlg,Monchoice[temp2],BM_SETCHECK,0,0);
-					SendDlgItemMessage(hDlg,Monchoice[temp],BM_SETCHECK,1,0);
-					tmpcfg.MonitorType=temp;
-				}
-			}
+			SendDlgItemMessage(hDlg, IDC_COMPOSITE, BM_SETCHECK, 0, 0);
+			SendDlgItemMessage(hDlg, IDC_RGB, BM_SETCHECK, 1, 0);
+			tmpcfg.MonitorType = 1;
 			SendDlgItemMessage(hDlg,IDC_MONTYPE,
-				STM_SETIMAGE,(WPARAM) IMAGE_ICON,(LPARAM) MonIcons[tmpcfg.MonitorType]);
-			//If RGB is chosen, disable palette buttons.
-			SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0);
-			SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
-			SendDlgItemMessage(hDlg, IDC_NTSC5_PALETTE, BM_SETSTATE, 1, 0);
-			SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETDONTCLICK, 1, 0);
-			SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETDONTCLICK, 1, 0);
-			SendDlgItemMessage(hDlg, IDC_NTSC5_PALETTE, BM_SETDONTCLICK, 1, 0);
+				STM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[1]);
 			break;
 
-		case IDC_ORG_PALETTE:
-			if (!isRGB) {
-				//Original Composite palette
-				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 0, 0);
-				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 1, 0);
-				SendDlgItemMessage(hDlg, IDC_NTSC5_PALETTE, BM_SETCHECK, 0, 0);
-				tmpcfg.PaletteType = 0;
-			} else {
-				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0);
-			}
+		case IDC_COMPOSITE:
+			SendDlgItemMessage(hDlg, IDC_COMPOSITE, BM_SETCHECK, 1, 0);
+			SendDlgItemMessage(hDlg, IDC_RGB, BM_SETCHECK, 0, 0);
+			tmpcfg.MonitorType = 0;
+			SendDlgItemMessage(hDlg,IDC_MONTYPE,
+				STM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[0]);
 			break;
 
 		case IDC_UPD_PALETTE:
-			if (!isRGB) {
-				//New Composite palette
-				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 1, 0);
-				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 0, 0);
-				SendDlgItemMessage(hDlg, IDC_NTSC5_PALETTE, BM_SETCHECK, 0, 0);
-				tmpcfg.PaletteType = 1;
-			} else {
-				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
-			}
+			SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 1, 0);
+			SendDlgItemMessage(hDlg, IDC_NTSC5_PALETTE, BM_SETCHECK, 0, 0);
+			tmpcfg.PaletteType = PALETTE_UPD;
+			SendMessage(hDlg,WM_COMMAND,IDC_COMPOSITE,0);
 			break;
 
 		case IDC_NTSC5_PALETTE:
-			if (!isRGB) {
-				//New Composite palette
-				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 0, 0);
-				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 0, 0);
-				SendDlgItemMessage(hDlg, IDC_NTSC5_PALETTE, BM_SETCHECK, 1, 0);
-				tmpcfg.PaletteType = 2;
-			}
-			else {
-				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
-			}
+			SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 0, 0);
+			SendDlgItemMessage(hDlg, IDC_NTSC5_PALETTE, BM_SETCHECK, 1, 0);
+			tmpcfg.PaletteType = PALETTE_NTSC;
+			SendMessage(hDlg,WM_COMMAND,IDC_COMPOSITE,0);
 			break;
 			
 		}	//End switch LOWORD(wParam)
