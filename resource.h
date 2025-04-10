@@ -334,6 +334,7 @@
 
 #define IDC_ORG_PALETTE                 1191
 #define IDC_UPD_PALETTE                 1192
+#define IDC_NTSC5_PALETTE               1193
 
 #define IDC_MEM_VSCROLLBAR              2001
 #define IDT_MEM_TIMER                   2002
