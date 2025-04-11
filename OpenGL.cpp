@@ -199,19 +199,23 @@ namespace VCC
 			memset(&pfd, 0, sizeof(pfd));
 			pfd.nSize = sizeof(pfd);
 			pfd.nVersion = 1;
-			pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+			pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW;
 			pfd.cColorBits = 24;
-			pfd.cDepthBits = 24;
 			pfd.iPixelType = PFD_TYPE_RGBA;
 			pfd.iLayerType = PFD_MAIN_PLANE;
 
-			
 			int iPF;
-			if ((!(iPF = ChoosePixelFormat(hTempDC, &pfd)) || !SetPixelFormat(hTempDC, iPF, &pfd)) ||
-				(!(hTempRC = wglCreateContext(hTempDC)) || !wglMakeCurrent(hTempDC, hTempRC)))
-			{
-				return Result(cleanupTempWindow(ERR_CREATECONTEXT));
-			}
+			if (!(iPF = ChoosePixelFormat(hTempDC, &pfd)))
+				return Result(cleanupTempWindow(ERR_TMPCHOOSEFORMAT));
+
+			if (!SetPixelFormat(hTempDC, iPF, &pfd))
+				return Result(cleanupTempWindow(ERR_TMPSETPIXELFORMAT));
+
+			if (!(hTempRC = wglCreateContext(hTempDC)))
+				return Result(cleanupTempWindow(ERR_TMPCREATECONTEXT));
+
+			if (!wglMakeCurrent(hTempDC, hTempRC))
+				return Result(cleanupTempWindow(ERR_TMPMAKECONTEXT));
 
 			// Function pointers returned by wglGetProcAddress are tied to the render context they were obtained with.
 			wglprocCreateContextAttribsARB wglCreateContextAttribsARB = (wglprocCreateContextAttribsARB)wglGetProcAddress("wglCreateContextAttribsARB");

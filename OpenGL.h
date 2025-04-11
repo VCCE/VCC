@@ -29,7 +29,7 @@ namespace VCC
 {
 	struct OpenGL : public IDisplay
 	{
-		enum // result codes
+		enum // result codes - NOTE: don't reorder this pls, only append.
 		{
 			OK,						// no error
 			ERR_INITIALIZED,		// already initialized
@@ -40,7 +40,7 @@ namespace VCC
 			ERR_REGISTERCLASS,		// unable to register gl class
 			ERR_CREATEWINDOW,		// unable to create gl window
 			ERR_GETDC,				// unable to get gl window device context
-			ERR_CREATECONTEXT,		// unable to create open gl context
+			ERR_TMPCREATECONTEXT,	// unable to create open gl context
 			ERR_SETPIXELFORMAT,		// unable to configure pixel format
 			ERR_MISSINGAPIS,		// unable to get open gl apis
 			ERR_GLVERSION,			// unable to get open gl version
@@ -49,6 +49,9 @@ namespace VCC
 			ERR_FONTDC,				// unable to create device context for font
 			ERR_FONTGETDIBITS,		// unable to get font bitmap bits
 			ERR_FONTTEXIMAGE2D,		// unable to upload font to texture
+			ERR_TMPCHOOSEFORMAT,	// unable to choose pixel format
+			ERR_TMPSETPIXELFORMAT,	// unable to set pixel format
+			ERR_TMPMAKECONTEXT,		// unable to set context
 		};
 
 		enum // flagOption
