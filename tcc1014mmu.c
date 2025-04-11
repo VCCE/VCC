@@ -100,7 +100,7 @@ unsigned char * MmuInit(unsigned char RamConfig)
 	}
 
 	memset(InternalRomBuffer,0xFF,0x8000);
-	CopyRom();
+	LoadRom();
 	MmuReset();
 	mem_initializing = 0;
 	return(memory);
@@ -204,49 +204,35 @@ unsigned char * Getint_rom_pointer(void)
 	return(InternalRomBuffer);
 }
 
-void CopyRom(void)
+// LoadRom() loads Coco3.rom. It is called by MmuInit() here
+// and by SoftReset() in Vcc.c. If LoadRom() fails VCC is aborted
+void LoadRom(void)
 {
-	char ExecPath[MAX_PATH];
-	char COCO3ROMPath[MAX_PATH];
-	char IniFilePath[MAX_PATH];
+	char RomPath[MAX_PATH];
+	char IniFile[MAX_PATH];
+	unsigned short index=0;
+	FILE *hFile;
 
-	GetIniFilePath(IniFilePath);
-	GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "", COCO3ROMPath, MAX_PATH, IniFilePath);
-	unsigned short temp=0;
-	strcat(COCO3ROMPath, "\\coco3.rom");
-	if (COCO3ROMPath != "") { temp = load_int_rom(COCO3ROMPath); } //Try loading from the user defined path first.
-	if (temp) { OutputDebugString(" Found coco3.rom in COCO3ROMPath\n"); }
-
-	if (temp == 0) { temp = load_int_rom(BasicRomName()); }		//Try to load the image
-	if (temp == 0)
-	{	// If we can't find it use default copy
-		GetModuleFileName(NULL, ExecPath, MAX_PATH);
-		PathRemoveFileSpec(ExecPath);
-		strcat(ExecPath, "coco3.rom");
-		temp = load_int_rom(ExecPath);
+	GetIniFilePath(IniFile);
+	GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "",
+			RomPath, MAX_PATH, IniFile);
+	if (*RomPath == '\0') {
+		GetModuleFileName(NULL, RomPath, MAX_PATH);
+		PathRemoveFileSpec(RomPath);
+		strncat(RomPath, "coco3.rom", MAX_PATH);
 	}
-	if (temp == 0)
-	{
+//	PrintLogC("Rom path: %s\n",RomPath);
+	if ((hFile = fopen(RomPath,"rb")) != NULL) {
+		while ((feof(hFile)==0) & (index<0x8000)) {
+			InternalRomBuffer[index++] = fgetc(hFile);
+		}
+		fclose(hFile);
+	}
+	if (index == 0) {
 		MessageBox(0, "Missing file coco3.rom", "Error", 0);
 		exit(0);
 	}
-//		for (temp=0;temp<=32767;temp++)
-//			InternalRomBuffer[temp]=CC3Rom[temp];
 	return;
-}
-
-int load_int_rom(TCHAR filename[MAX_PATH])
-{
-	unsigned short index=0;
-	FILE *rom_handle;
-	rom_handle=fopen(filename,"rb");
-	if (rom_handle==NULL)
-		return(0);
-	while ((feof(rom_handle)==0) & (index<0x8000))
-		InternalRomBuffer[index++]=fgetc(rom_handle);
-
-	fclose(rom_handle);
-	return(index);
 }
 
 // Coco3 MMU Code

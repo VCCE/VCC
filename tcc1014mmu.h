@@ -57,9 +57,8 @@ bool MemCheckWrite(unsigned short address);
 void __fastcall fMemWrite8(unsigned char,unsigned short );
 unsigned char __fastcall fMemRead8(short unsigned int);
 
-int load_int_rom(char * );
 void SetMapType(unsigned char);
-void CopyRom(void);
+void LoadRom(void);
 void Set_MmuTask(unsigned char);
 void SetMmuRegister(unsigned char,unsigned char);
 void Set_MmuEnabled (unsigned char );

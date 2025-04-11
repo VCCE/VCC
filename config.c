@@ -100,12 +100,10 @@ typedef struct  {
 	unsigned char	KeyMap;
 	char			SoundCardName[64];
 	unsigned short	AudioRate;	// 0 = Mute
-	char			ExternalBasicImage[MAX_PATH];
 	char			ModulePath[MAX_PATH];
 	char			PathtoExe[MAX_PATH];
 	char			FloppyPath[MAX_PATH];
 	char			CassPath[MAX_PATH];
-    char            COCO3ROMPath[MAX_PATH];
     unsigned char   ShowMousePointer;
 } STRConfig;
 static STRConfig CurrentConfig;
@@ -224,7 +222,6 @@ unsigned char WriteIniFile(void)
 
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
-	ValidatePath(CurrentConfig.ExternalBasicImage);
 
 	WritePrivateProfileString("Version","Release",AppName,IniFilePath);
 	WritePrivateProfileInt("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer,IniFilePath);
@@ -246,7 +243,6 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Video", "WindowSizeY", tp.y, IniFilePath);
 
 	WritePrivateProfileInt("Memory","RamSize",CurrentConfig.RamSize,IniFilePath);
-	WritePrivateProfileString("Memory", "ExternalBasicImage", CurrentConfig.ExternalBasicImage, IniFilePath);
 
 	WritePrivateProfileInt("Misc","AutoStart",CurrentConfig.AutoStart,IniFilePath);
 	WritePrivateProfileInt("Misc","CartAutoStart",CurrentConfig.CartAutoStart,IniFilePath);
@@ -313,7 +309,6 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.ShowMousePointer = GetPrivateProfileInt("Misc","ShowMousePointer",1,IniFilePath);
 
 	CurrentConfig.RamSize = GetPrivateProfileInt("Memory","RamSize",1,IniFilePath);
-	GetPrivateProfileString("Memory","ExternalBasicImage","",CurrentConfig.ExternalBasicImage,MAX_PATH,IniFilePath);
 
 	GetPrivateProfileString("Module","OnBoot","",CurrentConfig.ModulePath,MAX_PATH,IniFilePath);
 
@@ -330,7 +325,6 @@ unsigned char ReadIniFile(void)
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
 	CheckPath(CurrentConfig.ModulePath);
-	CheckPath(CurrentConfig.ExternalBasicImage);
 
 	LeftJS.UseMouse=GetPrivateProfileInt("LeftJoyStick","UseMouse",1,IniFilePath);
 	LeftJS.Left=GetPrivateProfileInt("LeftJoyStick","Left",75,IniFilePath);
@@ -353,7 +347,6 @@ unsigned char ReadIniFile(void)
 
 	GetPrivateProfileString("DefaultPaths", "CassPath", "", CurrentConfig.CassPath, MAX_PATH, IniFilePath);
 	GetPrivateProfileString("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH, IniFilePath);
-	GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "", CurrentConfig.COCO3ROMPath, MAX_PATH, IniFilePath);
 
 	for (Index = 0; Index < NumberOfSoundCards; Index++)
 	{
@@ -1544,12 +1537,6 @@ int SelectFile(char *FileName)
 /**********************************/
 /*          Misc Exports          */
 /**********************************/
-
-// Called by tcc1014mmu.c
-char * BasicRomName(void)
-{
-	return(CurrentConfig.ExternalBasicImage);
-}
 
 // tcc1014graphics.c
 int GetPaletteType()

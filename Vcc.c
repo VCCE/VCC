@@ -789,7 +789,7 @@ void SoftReset(void)
 	CPUReset();
 	GimeReset();
 	MmuReset();
-	CopyRom();
+	LoadRom();
 	ResetBus();
 	EmuState.TurboSpeedFlag=1;
 	return;
