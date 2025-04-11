@@ -20,9 +20,9 @@ This file is part of VCC (Virtual Color Computer).
 #include<iostream>
 using namespace std;
 void LoadConfig(SystemState *);
+void LoadModule();
 unsigned char WriteIniFile(void);
 unsigned char ReadIniFile(void);
-char * BasicRomName(void);
 void GetIniFilePath( char *);
 void UpdateConfig (void);
 void UpdateSoundBar(unsigned short,unsigned short);

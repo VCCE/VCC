@@ -33,6 +33,7 @@ This file is part of VCC (Virtual Color Computer).
 #define TH_REQWAIT	1
 #define TH_WAITING	2
 
+#include "BuildConfig.h"
 #include <objbase.h>
 #include <windowsx.h>
 #include <process.h>
@@ -70,11 +71,14 @@ This file is part of VCC (Virtual Color Computer).
 #include "MMUMonitor.h"
 #include "ExecutionTrace.h"
 
+#if USE_DEBUG_MOUSE
+#include "IDisplayDebug.h"
+#endif
+
 static HANDLE hout=NULL;
 
 SystemState EmuState;
 static bool DialogOpen=false;
-static unsigned char Throttle=0;
 static unsigned char AutoStart=1;
 static unsigned char Qflag=0;
 static unsigned char Pflag=0;
@@ -141,9 +145,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	memset(&CmdArg,0,sizeof(CmdArg));
 	if (strlen(lpCmdLine)>0) GetCmdLineArgs(lpCmdLine);
 
+	Cls(0,&EmuState);
+	EmuState.Throttle = 1;
 	EmuState.WindowSize.x=640;
 	EmuState.WindowSize.y=480;
-	//LoadConfig(&EmuState);
+	EmuState.ResetPending=2;
+	LoadConfig(&EmuState);
 	InitInstance(hInstance, nCmdShow);
 	if (!CreateDDWindow(&EmuState))
 	{
@@ -151,11 +158,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		exit(0);
 	}
 
-	Cls(0,&EmuState);
 	DynamicMenuCallback( "",0, 0);
 	DynamicMenuCallback( "",1, 0);
-	LoadConfig(&EmuState);			//Loads the default config file Vcc.ini from the exec directory
-	EmuState.ResetPending=2;
+	LoadModule();
 	SetClockSpeed(1);	//Default clock speed .89 MHZ	
 	BinaryRunning = true;
 	EmuState.EmulationRunning=AutoStart;
@@ -209,6 +214,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	CloseHandle( hEvent ) ;	
 	CloseHandle( hEMUQuit ) ;
 	CloseHandle( hEMUThread ) ;
+	CloseScreen();
 	timeEndPeriod(1);
 	UnloadDll();
 	SoundDeInit();
@@ -583,6 +589,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					mouseYPosition = min(
 						max(0, mouseYPosition - displayDetails.topBorderRows),
 						maxVerticalPosition);
+
+#if USE_DEBUG_MOUSE
+					// render mouse content area
+					DebugDrawBox(displayDetails.leftBorderColumns, displayDetails.topBorderRows, maxHorizontalPosition, maxVerticalPosition, VCC::ColorRed);
+
+					// render mouse crosshair
+					int mx = displayDetails.leftBorderColumns;
+					int my = displayDetails.topBorderRows;
+					DebugDrawLine(mouseXPosition + mx, mouseYPosition - 20 + my, mouseXPosition + mx, mouseYPosition + 20 + my, VCC::ColorRed);
+					DebugDrawLine(mouseXPosition - 20 + mx, mouseYPosition + my, mouseXPosition + 20 + mx, mouseYPosition + my, VCC::ColorRed);
+#endif
 				}
 
 				// Convert coordinates to mouseXPosition,mouseYPosition values with range 0-3fff (0-16383).
@@ -772,7 +789,7 @@ void SoftReset(void)
 	CPUReset();
 	GimeReset();
 	MmuReset();
-	CopyRom();
+	LoadRom();
 	ResetBus();
 	EmuState.TurboSpeedFlag=1;
 	return;
@@ -807,9 +824,11 @@ unsigned char SetRamSize(unsigned char Size)
 
 unsigned char SetSpeedThrottle(unsigned char throttle)
 {
-	if (throttle!=QUERY)
-		Throttle=throttle;
-	return(Throttle);
+	if (throttle != QUERY)
+	{
+		EmuState.Throttle = throttle;
+	}
+	return(EmuState.Throttle);
 }
 
 unsigned char SetFrameSkip(unsigned char Skip)
@@ -1003,7 +1022,7 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		}
 		SetStatusBarText(tstatus,&EmuState);
 
-		if (Throttle)	//Do nothing untill the frame is over returning unused time to OS
+		if (EmuState.Throttle)	//Do nothing untill the frame is over returning unused time to OS
 			FrameWait();
 	} //Still Emulating
 
