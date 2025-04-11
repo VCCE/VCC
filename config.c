@@ -363,7 +363,6 @@ unsigned char ReadIniFile(void)
 		}
 	}
 
-	InsertModule (CurrentConfig.ModulePath);	// Should this be here?
 	CurrentConfig.Resize = 1; //Checkbox removed. Remove this from the ini?
 	if (CurrentConfig.RememberSize) {
 		p.x = CurrentConfig.WindowSizeX;
@@ -376,6 +375,11 @@ unsigned char ReadIniFile(void)
 		SetWindowSize(p);
 	}
 	return(0);
+}
+
+void LoadModule()
+{
+	InsertModule(CurrentConfig.ModulePath);
 }
 
 void SetWindowSize(POINT p) {

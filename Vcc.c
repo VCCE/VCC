@@ -145,10 +145,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	memset(&CmdArg,0,sizeof(CmdArg));
 	if (strlen(lpCmdLine)>0) GetCmdLineArgs(lpCmdLine);
 
+	Cls(0,&EmuState);
 	EmuState.Throttle = 1;
 	EmuState.WindowSize.x=640;
 	EmuState.WindowSize.y=480;
-	//LoadConfig(&EmuState);
+	EmuState.ResetPending=2;
+	LoadConfig(&EmuState);
 	InitInstance(hInstance, nCmdShow);
 	if (!CreateDDWindow(&EmuState))
 	{
@@ -156,11 +158,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		exit(0);
 	}
 
-	Cls(0,&EmuState);
 	DynamicMenuCallback( "",0, 0);
 	DynamicMenuCallback( "",1, 0);
-	LoadConfig(&EmuState);			//Loads the default config file Vcc.ini from the exec directory
-	EmuState.ResetPending=2;
+	LoadModule();
 	SetClockSpeed(1);	//Default clock speed .89 MHZ	
 	BinaryRunning = true;
 	EmuState.EmulationRunning=AutoStart;

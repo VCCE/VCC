@@ -621,7 +621,8 @@ unsigned char SetAspect (unsigned char Tmp)
 	{
 		ForceAspect = Tmp;
 #if USE_OPENGL
-		g_Display->SetOption(OpenGL::OPT_FLAG_ASPECT, ForceAspect);
+		if (g_Display)
+			g_Display->SetOption(OpenGL::OPT_FLAG_ASPECT, ForceAspect);
 #endif // USE_OPENGL
 	}
 	return(ForceAspect);
