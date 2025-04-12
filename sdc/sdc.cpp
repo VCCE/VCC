@@ -146,7 +146,7 @@
 // Functions
 //======================================================================
 
-bool LoadRom(char *);
+bool LoadRom(void);
 void SDCWrite(unsigned char data,unsigned char port);
 unsigned char SDCRead(unsigned char port);
 void SDCInit(void);
@@ -228,9 +228,6 @@ Interface IF;
 // Cartridge ROM
 char PakRom[0x4000];
 
-// Rom bank currently selected
-char CurrentBank = 0;
-
 // Host paths for SDC
 char SDCard[MAX_PATH] = {}; // SD card root directory
 char CurDir[MAX_PATH] = {}; // SDC current directory
@@ -263,6 +260,7 @@ struct _DiskImage {
 
 // Flash banks
 char FlashFile[8][MAX_PATH];
+char CurrentBank = 0;
 
 // Dll handle
 static HINSTANCE hinstDLL;
@@ -316,6 +314,7 @@ extern "C"
     // Reset module
     __declspec(dllexport) unsigned char ModuleReset(void)
     {
+        CurrentBank = 0; // set rom bank to 0;
         SDCInit();
         return 0;
     }
@@ -512,13 +511,11 @@ void SDCInit(void)
 
     // Process the startup config file
     ParseStartup();
-    CurrentBank = 0;
 
     // init the interface
     memset(&IF,0,sizeof(IF));
 
-    //_DLOG("SDCInit loading SDC-DOS Rom\n");
-    LoadRom("SDC-DOS.ROM");
+    LoadRom();
     return;
 }
 
@@ -644,9 +641,16 @@ void UpdateListBox(HWND hBox)
 //-------------------------------------------------------------
 // Load SDC rom
 //-------------------------------------------------------------
-
-bool LoadRom(char *RomName) //Returns true if loaded
+bool LoadRom()
 {
+    char * RomName;
+    RomName = FlashFile[CurrentBank];
+    _DLOG("LoadRom bank %d file %s\n",CurrentBank,RomName);
+    if (*RomName == NULL) {
+        //_DLOG("LoadRom loading default SDC-DOS\n");
+        RomName = "SDC-DOS.ROM";
+    }
+
     int ch;
     int ctr = 0;
     FILE *h = fopen(RomName, "rb");
@@ -983,13 +987,13 @@ void UpdateSD(void)
 }
 
 //----------------------------------------------------------------------
-// Load ROM from bank.
+// Select bank.
 //----------------------------------------------------------------------
 void BankSelect(int data)
 {
     _DLOG("BankSelect %02x\n",data);
     CurrentBank = data & 7;
-    //TODO: Load bank into rom;
+    SDCInit();
 }
 
 //----------------------------------------------------------------------
