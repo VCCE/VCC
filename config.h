@@ -17,6 +17,7 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+#include "defines.h"
 #include<iostream>
 using namespace std;
 void LoadConfig(SystemState *);
@@ -28,7 +29,8 @@ void UpdateConfig (void);
 void UpdateSoundBar(unsigned short,unsigned short);
 void UpdateTapeCounter(unsigned int,unsigned char);
 int GetKeyboardLayout();
-void SetWindowSize(POINT);
+void SetWindowRect(const VCC::Rect&);
+void CaptureCurrentWindowRect();
 
 void SetIniFilePath(char *);
 void SetKeyMapFilePath(char *);
@@ -39,7 +41,7 @@ char * KeyMapFiledir();
 int GetPaletteType();
 enum PALETTETYPE {PALETTE_ORIG=0, PALETTE_UPD=1, PALETTE_NTSC=2};
 
-POINT GetIniWindowSize();
+const VCC::Rect& GetIniWindowRect();
 int GetRememberSize();
 void SetConfigPath(int, string);
 void SwapJoySticks();
