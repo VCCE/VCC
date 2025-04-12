@@ -50,7 +50,12 @@ namespace VCC
 	static int Result(int code)
 	{
 		if (code != OpenGL::OK)
-			PrintLogC("OpenGL Error: %d\n", code);
+		{
+			char message[256];
+			snprintf(message,64,"OpenGL error %d\nCheck OpenGL support",code);
+			MessageBox(0,message,"Error",0);
+			//PrintLogC("OpenGL Error: %d\n", code);
+		}
 		return code;
 	}
 
