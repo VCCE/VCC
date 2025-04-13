@@ -57,5 +57,8 @@ void OpenJoyStickConfig();
 void OpenTapeConfig();
 void OpenBitBangerConfig();
 
+// For tcc1014mmu to load coco3 rom
+void GetExtRomPath(char *);
+
 #endif
 
