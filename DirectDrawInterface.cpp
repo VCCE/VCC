@@ -664,7 +664,7 @@ void DisplaySignalLostMessage()
 		g_Display->GetRect(OpenGL::OPT_RECT_RENDER, &renderRect);
 		float x = (renderRect.w - messageWidth) / 2;
 		float y = (renderRect.h - fontSize) / 2;
-		//g_Display->RenderBox(x, y, messageWidth, fontSize, VCC::ColorBlack, true);
+		g_Display->RenderBox(x, y, messageWidth, fontSize, VCC::ColorBlack, true);
 		g_Display->RenderText(g_DisplayFont, x, y + baseLine, fontSize, message);
 	}
 }

@@ -487,9 +487,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 				case DIK_F5:
-					if ( EmuState.EmulationRunning )
-					{
-						EmuState.ResetPending = 1;
+					if ( EmuState.EmulationRunning ) {
+						EmuState.ResetPending = (IsShiftKeyDown()) ? 2 : 1;
 					}
 				break;
 
@@ -506,7 +505,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 				case DIK_F8:
-					SetSpeedThrottle(!SetSpeedThrottle(QUERY));
+					if (IsShiftKeyDown()) {
+						if (EmuState.DoubleSpeedFlag) {
+							SetCPUMultiplyerFlag (0);
+						} else {
+							SetCPUMultiplyerFlag (1);
+						}
+					} else {
+						SetSpeedThrottle(!SetSpeedThrottle(QUERY));
+					}
 				break;
 
 				case DIK_F9:
