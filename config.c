@@ -105,7 +105,10 @@ typedef struct  {
 	char			FloppyPath[MAX_PATH];
 	char			CassPath[MAX_PATH];
     unsigned char   ShowMousePointer;
+	unsigned char	UseExtCocoRom;
+	char        	ExtRomFile[MAX_PATH];
 } STRConfig;
+
 static STRConfig CurrentConfig;
 
 static HICON CpuIcons[2],MonIcons[2],JoystickIcons[4];
@@ -251,6 +254,8 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Misc","CartAutoStart",CurrentConfig.CartAutoStart,IniFilePath);
 	WritePrivateProfileInt("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer,IniFilePath);
 	WritePrivateProfileInt("Misc","KeyMapIndex",CurrentConfig.KeyMap,IniFilePath);
+	WritePrivateProfileInt("Misc", "UseExtCocoRom", CurrentConfig.UseExtCocoRom, IniFilePath);
+	WritePrivateProfileString("Misc", "ExternalBasicImage", CurrentConfig.ExtRomFile,IniFilePath);
 
 	WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
 
@@ -311,6 +316,8 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.AutoStart = GetPrivateProfileInt("Misc","AutoStart",1,IniFilePath);
 	CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc","CartAutoStart",1,IniFilePath);
 	CurrentConfig.ShowMousePointer = GetPrivateProfileInt("Misc","ShowMousePointer",1,IniFilePath);
+	CurrentConfig.UseExtCocoRom=GetPrivateProfileInt("Misc","UseExtCocoRom",0,IniFilePath);
+	GetPrivateProfileString("Misc","ExternalBasicImage","",CurrentConfig.ExtRomFile,MAX_PATH,IniFilePath);
 
 	CurrentConfig.RamSize = GetPrivateProfileInt("Memory","RamSize",1,IniFilePath);
 
@@ -363,10 +370,8 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.Resize = 1; //Checkbox removed. Remove this from the ini?
 
 	Rect rect = { CW_USEDEFAULT, CW_USEDEFAULT, DefaultWidth, DefaultHeight };
-	if (CurrentConfig.RememberSize) 
+	if (CurrentConfig.RememberSize)
 		rect = CurrentConfig.WindowRect;
-
-	SetWindowRect(rect);
 	return(0);
 }
 
@@ -472,6 +477,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	short int Cpuchoice[2] = {IDC_6809,IDC_6309};
 	unsigned char temp;
 	static STRConfig tmpcfg;
+	OPENFILENAME ofn;
 	HWND hClkSpd = GetDlgItem(hDlg,IDC_CLOCKSPEED);
 	HWND hClkDsp = GetDlgItem(hDlg,IDC_CLOCKDISPLAY);
 	switch (message) {
@@ -484,14 +490,18 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		SendMessage(hClkDsp,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 		SendMessage(hClkSpd,TBM_SETPOS,TRUE, CurrentConfig.CPUMultiplyer);
 		for (temp=0;temp<=3;temp++)
-			SendDlgItemMessage(hDlg,Ramchoice[temp],BM_SETCHECK,(temp==CurrentConfig.RamSize),0);
+			SendDlgItemMessage(hDlg,Ramchoice[temp],BM_SETCHECK,
+					(temp==CurrentConfig.RamSize),0);
 		for (temp=0;temp<=1;temp++)
-			SendDlgItemMessage(hDlg,Cpuchoice[temp],BM_SETCHECK,(temp==CurrentConfig.CpuType),0);
-		SendDlgItemMessage
-			(hDlg,IDC_CPUICON,STM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)CpuIcons[CurrentConfig.CpuType]);
+			SendDlgItemMessage(hDlg,Cpuchoice[temp],BM_SETCHECK,
+					(temp==CurrentConfig.CpuType),0);
+		SendDlgItemMessage (hDlg,IDC_CPUICON,STM_SETIMAGE,(WPARAM)IMAGE_ICON,
+			 (LPARAM)CpuIcons[CurrentConfig.CpuType]);
 		SendDlgItemMessage(hDlg,IDC_ENABLE_BREAK,BM_SETCHECK,CurrentConfig.BreakOpcEnabled,0);
 		SendDlgItemMessage(hDlg,IDC_AUTOSTART,BM_SETCHECK,tmpcfg.AutoStart,0);
 		SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_SETCHECK,tmpcfg.CartAutoStart,0);
+		SendDlgItemMessage(hDlg,IDC_USE_EXTROM,BM_SETCHECK,tmpcfg.UseExtCocoRom,0);
+		SetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile);
 		break;
 
 	case WM_HSCROLL:
@@ -509,9 +519,17 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			break;
 		case IDOK:
 		case IDAPPLY:
+
+			// Get coco3.rom path from dialog if external
+			if (tmpcfg.UseExtCocoRom) {
+				GetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile,MAX_PATH);
+			}
+
 			// ResetPending causes Vcc.c to call UpdateConfig().
 			if ( (CurrentConfig.RamSize != tmpcfg.RamSize) |
-			     (CurrentConfig.CpuType != tmpcfg.CpuType) ) {
+			     (CurrentConfig.CpuType != tmpcfg.CpuType) |
+			     (CurrentConfig.UseExtCocoRom != tmpcfg.UseExtCocoRom) |
+				 (strcmp(CurrentConfig.ExtRomFile,tmpcfg.ExtRomFile) != 0)) {
 				EmuState.ResetPending = 2;   // Hard reset
 			} else {
 				EmuState.ResetPending = 4;   // Update config
@@ -526,6 +544,8 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			                     (LPARAM)CpuIcons[CurrentConfig.CpuType] );
 			CurrentConfig.AutoStart = tmpcfg.AutoStart;
 			CurrentConfig.CartAutoStart = tmpcfg.CartAutoStart;
+			CurrentConfig.UseExtCocoRom = tmpcfg.UseExtCocoRom;
+			strncpy(CurrentConfig.ExtRomFile,tmpcfg.ExtRomFile,MAX_PATH);
 			// Exit dialog if IDOK
 			if (LOWORD(wParam)==IDOK) {
 				hCpuDlg = NULL;
@@ -567,6 +587,26 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		case IDC_AUTOCART:
 			tmpcfg.CartAutoStart = (unsigned char)
 						SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_GETCHECK,0,0);
+			break;
+		case IDC_USE_EXTROM:
+			tmpcfg.UseExtCocoRom = (unsigned char)
+						SendDlgItemMessage(hDlg,IDC_USE_EXTROM,BM_GETCHECK,0,0);
+			break;
+		case IDC_BROWSE:
+			memset(&ofn,0,sizeof(ofn));
+			ofn.lStructSize       = sizeof (OPENFILENAME) ;
+			ofn.hwndOwner		  = NULL;
+			ofn.lpstrFilter		  = "Rom Image\0*.rom\0\0";
+			ofn.nFilterIndex      = 1;
+			ofn.lpstrFile         = tmpcfg.ExtRomFile;
+			ofn.nMaxFile          = MAX_PATH;
+			ofn.lpstrFileTitle    = NULL;
+			ofn.nMaxFileTitle     = MAX_PATH;
+			ofn.lpstrInitialDir   = NULL;
+			ofn.lpstrTitle        = TEXT("Coco3 Rom Image");
+			ofn.Flags             = OFN_HIDEREADONLY;
+			GetOpenFileName (&ofn);
+			SetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile);
 			break;
 
 		}		//End switch LOWORD(wParam)
@@ -1564,4 +1604,13 @@ const Rect &GetIniWindowRect()
 void CaptureCurrentWindowRect()
 {
 	CurrentConfig.WindowRect = GetCurWindowSize();
+{
+
+//Called by tcc1014mmu:LoadRom
+void GetExtRomPath(char * RomPath)
+{
+	if (CurrentConfig.UseExtCocoRom)
+		strncpy(RomPath,CurrentConfig.ExtRomFile,MAX_PATH);
+	else
+		*RomPath = '\0';;
 }
