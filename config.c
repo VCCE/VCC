@@ -1604,7 +1604,7 @@ const Rect &GetIniWindowRect()
 void CaptureCurrentWindowRect()
 {
 	CurrentConfig.WindowRect = GetCurWindowSize();
-{
+}
 
 //Called by tcc1014mmu:LoadRom
 void GetExtRomPath(char * RomPath)
