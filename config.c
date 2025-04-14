@@ -49,6 +49,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <assert.h>
 
 using namespace std;
+using namespace VCC;
 
 /********************************************/
 /*        Local Function Templates          */
@@ -89,9 +90,8 @@ typedef struct  {
 	unsigned char	ScanLines;
 	unsigned char	Resize;
 	unsigned char	Aspect;
-	unsigned short	RememberSize;
-	unsigned short	WindowSizeX;
-	unsigned short	WindowSizeY;
+	unsigned char	RememberSize;
+	Rect			WindowRect;
 	unsigned char	RamSize;
 	unsigned char	AutoStart;
 	unsigned char	CartAutoStart;
@@ -214,13 +214,14 @@ void LoadConfig(SystemState *LCState)
 /***********************************************************/
 unsigned char WriteIniFile(void)
 {
-	POINT tp = GetCurWindowSize();
+	Rect winRect = GetCurWindowSize();
 	CurrentConfig.Resize = 1;      // How to restore default window size?
 
 	// Prevent bad window size being written to the inifile
-	if ((tp.x < 20) || (tp.y < 20)) {
-		tp.x = 640;
-		tp.y = 480;
+	if (winRect.w < 20 || winRect.h < 20) 
+	{
+		winRect.w = 640;
+		winRect.h = 480;
 	}
 
 	GetCurrentModule(CurrentConfig.ModulePath);
@@ -242,8 +243,10 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Video","ScanLines",CurrentConfig.ScanLines,IniFilePath);
 	WritePrivateProfileInt("Video","ForceAspect",CurrentConfig.Aspect,IniFilePath);
 	WritePrivateProfileInt("Video","RememberSize", CurrentConfig.RememberSize, IniFilePath);
-	WritePrivateProfileInt("Video", "WindowSizeX", tp.x, IniFilePath);
-	WritePrivateProfileInt("Video", "WindowSizeY", tp.y, IniFilePath);
+	WritePrivateProfileInt("Video", "WindowSizeX", winRect.w, IniFilePath);
+	WritePrivateProfileInt("Video", "WindowSizeY", winRect.h, IniFilePath);
+	WritePrivateProfileInt("Video", "WindowPosX", winRect.x, IniFilePath);
+	WritePrivateProfileInt("Video", "WindowPosY", winRect.y, IniFilePath);
 
 	WritePrivateProfileInt("Memory","RamSize",CurrentConfig.RamSize,IniFilePath);
 
@@ -287,7 +290,6 @@ unsigned char ReadIniFile(void)
 {
 	HANDLE hr=NULL;
 	unsigned char Index=0;
-	POINT p;
 
 	//Loads the config structure from the hard disk
 	CurrentConfig.CPUMultiplyer = GetPrivateProfileInt("CPU","DoubleSpeedClock",2,IniFilePath);
@@ -307,8 +309,10 @@ unsigned char ReadIniFile(void)
 	//CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);
 	CurrentConfig.Aspect = GetPrivateProfileInt("Video","ForceAspect",1,IniFilePath);
 	CurrentConfig.RememberSize = GetPrivateProfileInt("Video","RememberSize",1,IniFilePath);
-	CurrentConfig.WindowSizeX= GetPrivateProfileInt("Video", "WindowSizeX", 640, IniFilePath);
-	CurrentConfig.WindowSizeY = GetPrivateProfileInt("Video", "WindowSizeY", 480, IniFilePath);
+	CurrentConfig.WindowRect.w = GetPrivateProfileInt("Video", "WindowSizeX", 640, IniFilePath);
+	CurrentConfig.WindowRect.h = GetPrivateProfileInt("Video", "WindowSizeY", 480, IniFilePath);
+	CurrentConfig.WindowRect.x = GetPrivateProfileInt("Video", "WindowPosX", CW_USEDEFAULT, IniFilePath);
+	CurrentConfig.WindowRect.y = GetPrivateProfileInt("Video", "WindowPosY", CW_USEDEFAULT, IniFilePath);
 	CurrentConfig.AutoStart = GetPrivateProfileInt("Misc","AutoStart",1,IniFilePath);
 	CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc","CartAutoStart",1,IniFilePath);
 	CurrentConfig.ShowMousePointer = GetPrivateProfileInt("Misc","ShowMousePointer",1,IniFilePath);
@@ -364,17 +368,10 @@ unsigned char ReadIniFile(void)
 	}
 
 	CurrentConfig.Resize = 1; //Checkbox removed. Remove this from the ini?
-	if (CurrentConfig.RememberSize) {
-		p.x = CurrentConfig.WindowSizeX;
-		p.y = CurrentConfig.WindowSizeY;
-		SetWindowSize(p);
-	}
-	else {
-		p.x = 640;
-		p.y = 480;
-		SetWindowSize(p);
-	}
 
+	Rect rect = { CW_USEDEFAULT, CW_USEDEFAULT, DefaultWidth, DefaultHeight };
+	if (CurrentConfig.RememberSize)
+		rect = CurrentConfig.WindowRect;
 	return(0);
 }
 
@@ -383,17 +380,22 @@ void LoadModule()
 	InsertModule(CurrentConfig.ModulePath);
 }
 
-void SetWindowSize(POINT p) {
+void SetWindowRect(const Rect& rect) 
+{
 	if (EmuState.WindowHandle != NULL)
 	{
 		RECT ra = { 0,0,0,0 };
-
 		::AdjustWindowRect(&ra, WS_OVERLAPPEDWINDOW, TRUE);
 		int windowBorderWidth = ra.right - ra.left;
 		int windowBorderHeight = ra.bottom - ra.top;
-		int width = p.x + windowBorderWidth;
-		int height = p.y + windowBorderHeight + GetRenderWindowStatusBarHeight();
-		SetWindowPos(EmuState.WindowHandle, 0, 0, 0, width, height, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+		::GetWindowRect(EmuState.WindowHandle, &ra);
+
+		int width = rect.w + windowBorderWidth;
+		int height = rect.h + windowBorderHeight + GetRenderWindowStatusBarHeight();
+		int flags = SWP_NOOWNERZORDER | SWP_NOZORDER;
+		int x = rect.IsDefaultX() ? ra.left : rect.x;
+		int y = rect.IsDefaultY() ? ra.top : rect.y;
+		SetWindowPos(EmuState.WindowHandle, 0, x, y, width, height, flags);
 	}
 }
 
@@ -1590,18 +1592,19 @@ int GetPaletteType()
 // Called by DirectDrawInterface.cpp
 int GetRememberSize()
 {
-	return((int) CurrentConfig.RememberSize);
-	//return(1);
+	return CurrentConfig.RememberSize;
 }
 
 // Called by DirectDrawInterface.cpp
-POINT GetIniWindowSize()
+const Rect &GetIniWindowRect()
 {
-	POINT out;
-	out.x = CurrentConfig.WindowSizeX;
-	out.y = CurrentConfig.WindowSizeY;
-	return(out);
+	return CurrentConfig.WindowRect;
 }
+
+void CaptureCurrentWindowRect()
+{
+	CurrentConfig.WindowRect = GetCurWindowSize();
+{
 
 //Called by tcc1014mmu:LoadRom
 void GetExtRomPath(char * RomPath)

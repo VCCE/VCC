@@ -64,7 +64,7 @@ static unsigned char Resizeable=1;
 static unsigned char ForceAspect=1;
 static char StatusText[255]="";
 static unsigned int Color=0;
-static POINT RememberWinSize;
+static Rect RememberWin = { CW_USEDEFAULT, CW_USEDEFAULT, DefaultWidth, DefaultHeight };
 static POINT ForcedAspectBorderPadding;
 
 //Function Prototypes for this module
@@ -97,23 +97,31 @@ bool CreateDDWindow(SystemState *CWState)
 #endif // USE_DIRECTX
 	DDSURFACEDESC ddsd;				// A structure to describe the surfaces we want
 	RECT rStatBar;
-	RECT rc;
+	RECT rc = { 0, 0, DefaultWidth, DefaultHeight };
 	unsigned char ColorValues[4]={0,85,170,255};
 	memset(&ddsd, 0, sizeof(ddsd));	// Clear all members of the structure to 0
 	ddsd.dwSize = sizeof(ddsd);		// The first parameter of the structure must contain the size of the structure
-	rc.top=0;
-	rc.left=0;
-	//rc.right = CWState->WindowSize.x;
-	//rc.bottom = CWState->WindowSize.y;
 
-	if (GetRememberSize()) {
-		POINT pp = GetIniWindowSize();
-		rc.right = pp.x;
-		rc.bottom = pp.y;
+	bool isRememberSize = GetRememberSize();
+
+	if (isRememberSize)
+	{
+		auto& windowRect = GetIniWindowRect();
+		rc = windowRect.GetRect();
+
+		// if x or y undefined keep size but use default position
+		if (windowRect.IsDefaultX() || windowRect.IsDefaultY())
+			isRememberSize = false;
 	}
-	else {
-		rc.right = CWState->WindowSize.x;
-		rc.bottom = CWState->WindowSize.y;
+
+	int xPos = rc.left;
+	int yPos = rc.top;
+
+	// if not remembering window, use default positioning
+	if (!isRememberSize)
+	{
+		xPos = CW_USEDEFAULT;
+		yPos = 0;
 	}
 
 #if USE_OPENGL
@@ -158,10 +166,10 @@ bool CreateDDWindow(SystemState *CWState)
 		// Calculates the required size of the window rectangle, based on the desired client-rectangle size
 		// The window rectangle can then be passed to the CreateWindow function to create a window whose client area is the desired size.
 		::AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, TRUE); 
-		
+
 		// We create the Main window 
-		CWState->WindowHandle = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, 
-											 rc.right-rc.left, rc.bottom-rc.top, 
+		CWState->WindowHandle = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, xPos, yPos,
+											 rc.right - rc.left, rc.bottom - rc.top,
 											 NULL, NULL, g_hInstance, NULL);
 		if (!CWState->WindowHandle)	// Can't create window
 		   return FALSE;
@@ -234,6 +242,8 @@ bool CreateDDWindow(SystemState *CWState)
 
 
 	case 1:	//Full Screen Mode
+		CaptureCurrentWindowRect();
+
 #if USE_OPENGL
 		MONITORINFO mi = { sizeof(mi) };
 		if (!GetMonitorInfo(hmon, &mi)) 
@@ -444,13 +454,25 @@ void DisplayFlip(SystemState *DFState)	// Double buffering flip
 	}
 #endif // USE_DIRECTX
 
+	static RECT CurWindow;
+	::GetWindowRect(DFState->WindowHandle, &CurWindow);
 	static RECT CurScreen;
 	::GetClientRect(DFState->WindowHandle, &CurScreen);
-	//CurScreen.bottom -= StatusBarHeight;
 	int clientWidth = (int)CurScreen.right;
 	int clientHeight = (int)CurScreen.bottom;
-	RememberWinSize.x = clientWidth; // Used for saving new window size to the ini file.
-	RememberWinSize.y = clientHeight-StatusBarHeight;
+
+#if USE_DEFAULT_POSITIONING
+	// preserve default positioning (like older versions):
+	RememberWin.x = RememberWin.IsDefaultX() ? CW_USEDEFAULT : CurWindow.left;
+	RememberWin.y = RememberWin.IsDefaultY() ? CW_USEDEFAULT : CurWindow.top;
+#else // !USE_DEFAULT_POSITIONING
+	// remember positioning:
+	RememberWin.x = CurWindow.left;
+	RememberWin.y = CurWindow.top;
+#endif // !USE_DEFAULT_POSITIONING
+	// remember size:
+	RememberWin.w = clientWidth; // Used for saving new window size to the ini file.
+	RememberWin.h = clientHeight-StatusBarHeight;
 	return;
 }
 
@@ -510,7 +532,7 @@ unsigned char LockScreen(SystemState *LSState)
 		LSState->PTRsurface8 = (unsigned char*)pixels;
 		LSState->PTRsurface16 = (unsigned short*)pixels;
 		LSState->PTRsurface32 = (unsigned int*)pixels;
-		LSState->SurfacePitch = 640;
+		LSState->SurfacePitch = DefaultWidth;
 		LSState->BitDepth = 3;
 	}
 #endif // USE_OPENGL
@@ -642,7 +664,7 @@ void DisplaySignalLostMessage()
 		g_Display->GetRect(OpenGL::OPT_RECT_RENDER, &renderRect);
 		float x = (renderRect.w - messageWidth) / 2;
 		float y = (renderRect.h - fontSize) / 2;
-		g_Display->RenderBox(x, y, messageWidth, fontSize, VCC::ColorBlack, true);
+		//g_Display->RenderBox(x, y, messageWidth, fontSize, VCC::ColorBlack, true);
 		g_Display->RenderText(g_DisplayFont, x, y + baseLine, fontSize, message);
 	}
 }
@@ -739,8 +761,10 @@ float Static(SystemState *STState)
 	return(CalculateFPS());
 #endif // USE_DIRECTX
 }
-POINT GetCurWindowSize() {
-	return (RememberWinSize);
+
+const Rect& GetCurWindowSize() 
+{
+	return RememberWin;
 }
 
 int GetRenderWindowStatusBarHeight()

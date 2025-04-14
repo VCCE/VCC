@@ -75,6 +75,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "IDisplayDebug.h"
 #endif
 
+using namespace VCC;
+
 static HANDLE hout=NULL;
 
 SystemState EmuState;
@@ -147,8 +149,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 	Cls(0,&EmuState);
 	EmuState.Throttle = 1;
-	EmuState.WindowSize.x=640;
-	EmuState.WindowSize.y=480;
+	EmuState.WindowSize.x=DefaultWidth;
+	EmuState.WindowSize.y=DefaultHeight;
 	LoadConfig(&EmuState);
 	EmuState.ResetPending=2; // after LoadConfig pls
 	InitInstance(hInstance, nCmdShow);
