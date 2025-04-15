@@ -109,10 +109,6 @@ void FullScreenToggle(void);
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys(void);
 
-// Message handlers
-//void OnDestroy(HWND hwnd);
-//void OnCommand(HWND hWnd, int iID, HWND hwndCtl, UINT uNotifyCode);
-//void OnPaint(HWND hwnd);
 // Globals
 static 	HANDLE hEMUThread ;
 static	HANDLE hEMUQuit;
@@ -211,6 +207,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			DispatchMessage(&Msg) ;
 	}
 
+	PostThreadMessage(threadID, WM_QUIT, 0, 0);
 	SetEvent(hEMUQuit);								// Signal emulation thread to finish up.
 	WaitForSingleObject(hEMUThread, INFINITE);		// Wait for emulation thread to terminate
 	CloseHandle( hEvent ) ;	
@@ -664,44 +661,6 @@ void raise_saved_keys() {
 	SC_save2 = 0;
 	return;
 }
-
-/*--------------------------------------------------------------------------
-// Command message handler
-void OnCommand(HWND hWnd, int iID, HWND hwndCtl, UINT uNotifyCode)
-{
-	//switch (iID)
-	//{
-	//case IDM_QUIT:
-	//	OnDestroy(hWnd);
-	//	break;
-	//}
-}
---------------------------------------------------------------------------*/
-// Handle WM_DESTROY
-void OnDestroy(HWND )
-{
-	BinaryRunning = false;
-	UnloadDll();
-	PostQuitMessage(0);
-}
-/*--------------------------------------------------------------------------*/
-// Window painting function
-void OnPaint(HWND hwnd)
-{
-	// Let Windows know we've redrawn the Window - since we've bypassed
-	// the GDI, Windows can't figure that out by itself.
-//	ValidateRect( hwnd, NULL );
-	
-	// Over here we could do some normal GDI drawing
-//	PAINTSTRUCT ps;
-//	HDC hdc;
-//	HDC hdc = BeginPaint(hwnd, &ps);
-//	if (hdc)
-//	{
-//	}
-//	EndPaint(hwnd, &ps);
-}
-/*--------------------------------------------------------------------------*/
 
 void SetCPUMultiplyerFlag (unsigned char double_speed)
 {
