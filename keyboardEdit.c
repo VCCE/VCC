@@ -49,7 +49,7 @@ static int ModBtnCode[4] = {0,IDC_KEYBTN_LSHIFT,IDC_KEYBTN_CTRL,IDC_KEYBTN_ALT};
 static int ModScanCode[4] = {0,DIK_LSHIFT,DIK_LCONTROL,DIK_LMENU};
 
 // Modifier Names
-static char *ModName[4] = {"","Shift","Ctrl","Alt"};
+static const char *ModName[4] = {"","Shift","Ctrl","Alt"};
 
 // Windows handles
 HWND  hKeyMapDlg = NULL;     // Key map dialog
@@ -96,7 +96,7 @@ void  SetPCmod(int);
 void  ShowPCkey();
 void  SetCoCokey();
 void  DoKeyDown(WPARAM,LPARAM);
-void  ShowMapError(int, char *);
+void  ShowMapError(int, const char *);
 void  SetDialogFocus(HWND);
 int   GetKeymapLine (char*, keytranslationentry_t *, int);
 int   CustKeyTransLen();
@@ -441,7 +441,7 @@ char * GenKeymapLine( keytranslationentry_t * pTran )
 // Show message box for custom keymap load errors
 //-----------------------------------------------------
 
-void ShowMapError(int lnum, char *msg)
+void ShowMapError(int lnum, const char *msg)
 {
 	if (UserWarned < 8) {
         char fullmsg[128];
@@ -836,8 +836,8 @@ void SetModKeyState (int mod, int state)
 void ShowCoCoKey()
 {
 	char str[64];
-	char * keytxt = "";
-	char * modtxt = "";
+	const char * keytxt = "";
+	const char * modtxt = "";
 	struct CoCoKey *p;
 
 	// set coco keyboard buttons 
@@ -944,8 +944,8 @@ void SetPCmod(int ModNum)
 void ShowPCkey()
 {
 	char str[64];
-	char * keytxt = "";
-	char * modtxt = "";
+	const char * keytxt = "";
+	const char * modtxt = "";
     struct PCScanCode * entry;
 	if (PC_KeySelected>0) { 
 		entry = scantable_scancode_lookup(PC_KeySelected);

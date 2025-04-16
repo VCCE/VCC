@@ -34,7 +34,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
     BackBufferInfo  BackBuf;
     std::unique_ptr<OpDecoder> Decoder;
 
-    void DrawCntrTxt(HDC hdc, RECT r, char * str, int x, int y, int l, int h)
+    void DrawCntrTxt(HDC hdc, RECT r, const char * str, int x, int y, int l, int h)
     {
         RECT rc;
         SetRect(&rc, r.left + x, r.top + y, r.left + x + l, r.top + y + h);

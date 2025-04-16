@@ -38,7 +38,7 @@ void SetPaletteType(void);
 void DoReboot(void);
 void DoHardReset(SystemState *);
 void LoadPack (void);
-void DynamicMenuCallback( char *,int,int);
+void DynamicMenuCallback(const char *,int,int);
 //void RefreshWindow(void);
 
 //Type 0= HEAD TAG 1= Slave Tag 2=StandAlone
