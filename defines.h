@@ -50,7 +50,7 @@ namespace VCC
 
     struct Point
     {
-        int x, y;
+        int x{}, y{};
 
         Point() {}
         Point(int x, int y) :x(x), y(y) {}
@@ -58,7 +58,7 @@ namespace VCC
 
     struct Size
     {
-        int w, h;
+        int w{}, h{};
 
         Size() {}
         Size(int w, int h) :w(w), h(h) {}
