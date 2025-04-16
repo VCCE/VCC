@@ -709,7 +709,9 @@ void LoadConfig(void)
 void WriteConfig(void)
 {
 	char ModName[MAX_LOADSTRING]="";
-	if (MPIPath != "") { WritePrivateProfileString("DefaultPaths", "MPIPath", MPIPath, IniFile); }
+	if (strcmp(MPIPath, "") != 0) { 
+		WritePrivateProfileString("DefaultPaths", "MPIPath", MPIPath, IniFile); 
+	}
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	WritePrivateProfileInt(ModName,"SWPOSITION",SwitchSlot,IniFile);
 	WritePrivateProfileInt(ModName, "PesistPaks", PersistPaks, IniFile);

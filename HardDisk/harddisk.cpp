@@ -424,7 +424,7 @@ void SaveConfig(void)
 
     ValidatePath(VHDfile0);
     ValidatePath(VHDfile1);
-    if (HardDiskPath != "") {
+    if (strcmp(HardDiskPath, "") != 0) {
         WritePrivateProfileString
             ("DefaultPaths", "HardDiskPath", HardDiskPath, IniFile);
     }

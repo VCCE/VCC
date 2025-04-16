@@ -302,7 +302,9 @@ unsigned int LoadTape(void)
 	idx = tmp.find_last_of("\\");
 	tmp = tmp.substr(0, idx);
 	strcpy(CassPath, tmp.c_str());
-	if(CassPath != ""){ WritePrivateProfileString("DefaultPaths", "CassPath", CassPath, IniFilePath); }
+	if (strcmp(CassPath, "") != 0) {
+		WritePrivateProfileString("DefaultPaths", "CassPath", CassPath, IniFilePath); 
+	}
 	return(RetVal);
 }
 

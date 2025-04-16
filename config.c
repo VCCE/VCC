@@ -1570,7 +1570,7 @@ int SelectFile(char *FileName)
 		idx = tmp.find_last_of("\\");
 		tmp = tmp.substr(0, idx);
 		strcpy(CapFilePath, tmp.c_str());
-		if (CapFilePath != "") {
+		if (strcmp(CapFilePath, "") != 0) {
 			WritePrivateProfileString("DefaultPaths", "CapFilePath", CapFilePath, IniFilePath);
 		}
 	}

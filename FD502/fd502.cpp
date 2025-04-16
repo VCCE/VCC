@@ -719,7 +719,9 @@ void SaveConfig(void)
 		}
 	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
 	WritePrivateProfileInt(ModName, "TurboDisk", SetTurboDisk(QUERY), IniFile);
-	if (FloppyPath != "") { WritePrivateProfileString("DefaultPaths", "FloppyPath", FloppyPath, IniFile); }
+	if (strcmp(FloppyPath, "") != 0) { 
+		WritePrivateProfileString("DefaultPaths", "FloppyPath", FloppyPath, IniFile); 
+	}
 	return;
 }
 

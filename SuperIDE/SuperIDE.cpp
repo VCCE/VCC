@@ -330,7 +330,9 @@ void SaveConfig(void)
 	WritePrivateProfileInt(ModName,"BaseAddr",BaseAddr ,IniFile);
 	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
 	WritePrivateProfileInt(ModName,"ClkRdOnly",ClockReadOnly ,IniFile);
-	if (SuperIDEPath != "") { WritePrivateProfileString("DefaultPaths", "SuperIDEPath", SuperIDEPath, IniFile); }
+	if (strcmp(SuperIDEPath, "") != 0) { 
+		WritePrivateProfileString("DefaultPaths", "SuperIDEPath", SuperIDEPath, IniFile); 
+	}
 
 	return;
 }
