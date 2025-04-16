@@ -227,11 +227,12 @@ void LoadRom(void)
 		fclose(hFile);
 	}
 	if ((hFile == NULL) | (index == 0)) {
-		MessageBox(GetActiveWindow(),
+		//MessageBox(GetActiveWindow(),
+		MessageBox(0,
 				"coco3.rom load failed\n"
 				"Close this then\n"
 				"check ROM path.\n",
-				"Error", 0);
+				"Error", MB_TASKMODAL | MB_TOPMOST);
 	}
 	return;
 }
