@@ -108,10 +108,14 @@ void (*CPUForcePC)(unsigned short)=NULL;
 void FullScreenToggle(void);
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys(void);
+void ToggleOverClock(void);
 
 // Globals
 static 	HANDLE hEMUThread ;
 static	HANDLE hEMUQuit;
+
+// Function key overclocking flag
+unsigned char OverClock;
 
 static char g_szAppName[MAX_LOADSTRING] = "";
 bool BinaryRunning;
@@ -503,11 +507,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case DIK_F8:
 					if (IsShiftKeyDown()) {
-						if (EmuState.DoubleSpeedFlag) {
-							SetCPUMultiplyerFlag (0);
-						} else {
-							SetCPUMultiplyerFlag (1);
-						}
+						ToggleOverClock();
 					} else {
 						SetSpeedThrottle(!SetSpeedThrottle(QUERY));
 					}
@@ -664,6 +664,7 @@ void raise_saved_keys() {
 
 void SetCPUMultiplyerFlag (unsigned char double_speed)
 {
+	OverClock = double_speed;
 	SetClockSpeed(1);
 	EmuState.DoubleSpeedFlag=double_speed;
 	if (EmuState.DoubleSpeedFlag)
@@ -694,6 +695,22 @@ unsigned char SetCPUMultiplyer(unsigned char Multiplyer)
 		SetCPUMultiplyerFlag (EmuState.DoubleSpeedFlag);
 	}
 	return(EmuState.DoubleSpeedMultiplyer);
+}
+
+// Function key overclocking toggle
+void ToggleOverClock(void)
+{
+	if (OverClock) {
+		OverClock = 0;
+		if (EmuState.DoubleSpeedFlag)
+			EmuState.CPUCurrentSpeed = 1.788 * EmuState.TurboSpeedFlag;
+		else
+			EmuState.CPUCurrentSpeed = 0.894;
+	} else {
+		OverClock = 1;
+		EmuState.CPUCurrentSpeed =
+			.894 * EmuState.DoubleSpeedMultiplyer * EmuState.TurboSpeedFlag;
+	}
 }
 
 void DoHardReset(SystemState* const HRState)
