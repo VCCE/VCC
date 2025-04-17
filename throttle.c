@@ -50,27 +50,43 @@ void EndRender(unsigned char Skip)
 	return;
 }
 
+void CheckSound()
+{
+	// Lean on the sound card a bit for timing
+	if (GetSoundStatus())
+	{
+		PurgeAuxBuffer();
+		if (FrameSkip == 1)
+		{
+			// Dont let the buffer get lest that half full
+			if (GetFreeBlockCount() > AUDIOBUFFERS / 2)
+				return;
+
+			// Dont let it fill up either
+			while (GetFreeBlockCount() < 1)
+			{
+			}
+		}
+	}
+}
+
 void FrameWait(void)
 {
+	//If we have more that 2Ms till the end of the frame
 	QueryPerformanceCounter(&CurrentTime);
-	while ( (TargetTime.QuadPart-CurrentTime.QuadPart)> (OneMs.QuadPart*2))	//If we have more that 2Ms till the end of the frame
+	while ( (TargetTime.QuadPart-CurrentTime.QuadPart)> (OneMs.QuadPart*2))	
 	{
 		Sleep(1);	//Give about 1Ms back to the system
 		QueryPerformanceCounter(&CurrentTime);	//And check again
 	}
 
-	if (GetSoundStatus())	//Lean on the sound card a bit for timing
-	{
-		PurgeAuxBuffer();
-		if (FrameSkip==1)
-		{
-			if (GetFreeBlockCount()>AUDIOBUFFERS/2)		//Dont let the buffer get lest that half full
-				return;
-			while (GetFreeBlockCount() < 1);	// Dont let it fill up either
-		}
+	// Bug#281
+	// moved to its own function so that final poll until frame end is always performed,
+	// otherwise this sound check would exit early.
+	CheckSound();
 
-	}
-	while ( CurrentTime.QuadPart< TargetTime.QuadPart)	//Poll Untill frame end.
+	//Poll Untill frame end.
+	while ( CurrentTime.QuadPart< TargetTime.QuadPart)	
 		QueryPerformanceCounter(&CurrentTime);
 
 	return;
