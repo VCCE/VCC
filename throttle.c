@@ -92,21 +92,26 @@ void FrameWait(void)
 	return;
 }
 
-float CalculateFPS(void) //Done at end of render;
+//Done at end of render;
+float CalculateFPS(void) 
 {
+	const int frameUpdateRate = FRAMEINTERVAL;
+	static unsigned int frameCount=0;
+	static float fps=0;
+	static _LARGE_INTEGER lastNow;
 
-	static unsigned short FrameCount=0;
-	static float fps=0,fNow=0,fLast=0;
+	if (++frameCount != frameUpdateRate)
+		return fps;
 
-	if (++FrameCount!=FRAMEINTERVAL)
-		return(fps);
-
+	lastNow = Now;
 	QueryPerformanceCounter(&Now);
-	fNow=(float)Now.QuadPart;
-	fps=(fNow-fLast)/fMasterClock;
-	fLast=fNow;
-	FrameCount=0;
-	fps= FRAMEINTERVAL/fps;
-	return(fps);
+
+	// interval between FrameInterval frames in milliseconds as long long
+	auto intervalMS = (Now.QuadPart - lastNow.QuadPart) / OneMs.QuadPart;
+	auto intervalSeconds = (float)intervalMS / 1000.0f;
+	fps = (float)frameUpdateRate / intervalSeconds;
+
+	frameCount = 0;
+	return fps;
 }
 		
