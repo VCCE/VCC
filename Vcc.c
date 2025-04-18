@@ -108,15 +108,15 @@ void (*CPUForcePC)(unsigned short)=NULL;
 void FullScreenToggle(void);
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys(void);
-void ToggleOverClock(void);
 void FunctionHelpBox(void);
+void SetupClock(void);
 
 // Globals
 static 	HANDLE hEMUThread ;
 static	HANDLE hEMUQuit;
 
 // Function key overclocking flag
-unsigned char OverClock;
+//unsigned char OverclockFlag = 1;
 
 static char g_szAppName[MAX_LOADSTRING] = "";
 bool BinaryRunning;
@@ -514,7 +514,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case DIK_F8:
 					if (IsShiftKeyDown()) {
-						ToggleOverClock();
+						SetOverclock(!EmuState.OverclockFlag);
+						SetupClock();
 					} else {
 						SetSpeedThrottle(!SetSpeedThrottle(QUERY));
 					}
@@ -671,26 +672,15 @@ void raise_saved_keys() {
 
 void SetCPUMultiplyerFlag (unsigned char double_speed)
 {
-	OverClock = double_speed;
-	SetClockSpeed(1);
 	EmuState.DoubleSpeedFlag=double_speed;
-	if (EmuState.DoubleSpeedFlag)
-		SetClockSpeed( EmuState.DoubleSpeedMultiplyer * EmuState.TurboSpeedFlag);
-	EmuState.CPUCurrentSpeed= .894;
-	if (EmuState.DoubleSpeedFlag)
-		EmuState.CPUCurrentSpeed*=(EmuState.DoubleSpeedMultiplyer*EmuState.TurboSpeedFlag);
+	SetupClock();
 	return;
 }
 
 void SetTurboMode(unsigned char data)
 {
 	EmuState.TurboSpeedFlag=(data&1)+1;
-	SetClockSpeed(1);
-	if (EmuState.DoubleSpeedFlag)
-		SetClockSpeed( EmuState.DoubleSpeedMultiplyer * EmuState.TurboSpeedFlag);
-	EmuState.CPUCurrentSpeed= .894;
-	if (EmuState.DoubleSpeedFlag)
-		EmuState.CPUCurrentSpeed*=(EmuState.DoubleSpeedMultiplyer*EmuState.TurboSpeedFlag);
+	SetupClock();
 	return;
 }
 
@@ -704,20 +694,16 @@ unsigned char SetCPUMultiplyer(unsigned char Multiplyer)
 	return(EmuState.DoubleSpeedMultiplyer);
 }
 
-// Function key overclocking toggle
-void ToggleOverClock(void)
+void SetupClock(void)
 {
-	if (OverClock) {
-		OverClock = 0;
-		if (EmuState.DoubleSpeedFlag)
-			EmuState.CPUCurrentSpeed = 1.788 * EmuState.TurboSpeedFlag;
-		else
-			EmuState.CPUCurrentSpeed = 0.894;
-	} else {
-		OverClock = 1;
-		EmuState.CPUCurrentSpeed =
-			.894 * EmuState.DoubleSpeedMultiplyer * EmuState.TurboSpeedFlag;
-	}
+	int mult = (EmuState.OverclockFlag) ? EmuState.DoubleSpeedMultiplyer : 2;
+	SetClockSpeed(1);
+	if (EmuState.DoubleSpeedFlag)
+		SetClockSpeed( mult * EmuState.TurboSpeedFlag);
+	EmuState.CPUCurrentSpeed = .894;
+	if (EmuState.DoubleSpeedFlag)
+		EmuState.CPUCurrentSpeed*=(mult*EmuState.TurboSpeedFlag);
+	return;
 }
 
 void DoHardReset(SystemState* const HRState)
@@ -1005,12 +991,17 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		GetModuleStatus(&EmuState);
 		
 		char tstatus[128];
+		char tspeed[32];
+		snprintf(tspeed,sizeof(tspeed),"%2.2fMhz",EmuState.CPUCurrentSpeed);
+		// Append "+" to speed if overclocking is enabled
+		if (EmuState.OverclockFlag && (EmuState.DoubleSpeedMultiplyer>2))
+			strncat (tspeed,"+",sizeof(tspeed));
 		if (EmuState.Debugger.IsHalted()) {
-			snprintf(tstatus,sizeof(tstatus), " Paused - Hit F7 | %s @ %2.2fMhz | %s",
-				CpuName,EmuState.CPUCurrentSpeed,EmuState.StatusLine);
+			snprintf(tstatus,sizeof(tstatus), " Paused - Hit F7 | %s @ %s | %s",
+				CpuName,tspeed,EmuState.StatusLine);
 		} else {
-			snprintf(tstatus,sizeof(tstatus), "Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz | %s",
-				EmuState.FrameSkip,FPS,CpuName,EmuState.CPUCurrentSpeed,EmuState.StatusLine);
+			snprintf(tstatus,sizeof(tstatus),"Skip:%2.2i | FPS:%3.0f | %s @ %s | %s",
+				EmuState.FrameSkip,FPS,CpuName,tspeed,EmuState.StatusLine);
 		}
 		SetStatusBarText(tstatus,&EmuState);
 
