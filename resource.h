@@ -256,6 +256,7 @@
 #define IDC_BTN_HELP                    1083
 #define IDC_ROMPATH                     1084
 #define IDC_USE_EXTROM                  1085
+#define IDC_OVERCLOCK                   1086
 
 #define IDC_KEYMAPED                    1090
 // IDC_KEYBTN_FIRST must point to the lowest CoCo KEYBTN Id

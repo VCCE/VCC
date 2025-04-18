@@ -107,6 +107,7 @@ typedef struct  {
     unsigned char   ShowMousePointer;
 	unsigned char	UseExtCocoRom;
 	char        	ExtRomFile[MAX_PATH];
+	unsigned char   EnableOverclock;
 } STRConfig;
 
 static STRConfig CurrentConfig;
@@ -255,6 +256,7 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer,IniFilePath);
 	WritePrivateProfileInt("Misc","KeyMapIndex",CurrentConfig.KeyMap,IniFilePath);
 	WritePrivateProfileInt("Misc", "UseExtCocoRom", CurrentConfig.UseExtCocoRom, IniFilePath);
+	WritePrivateProfileInt("Misc", "Overclock", CurrentConfig.EnableOverclock, IniFilePath);
 	WritePrivateProfileString("Misc", "ExternalBasicImage", CurrentConfig.ExtRomFile,IniFilePath);
 
 	WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
@@ -317,6 +319,7 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc","CartAutoStart",1,IniFilePath);
 	CurrentConfig.ShowMousePointer = GetPrivateProfileInt("Misc","ShowMousePointer",1,IniFilePath);
 	CurrentConfig.UseExtCocoRom=GetPrivateProfileInt("Misc","UseExtCocoRom",0,IniFilePath);
+	CurrentConfig.EnableOverclock=GetPrivateProfileInt("Misc","Overclock",1,IniFilePath);
 	GetPrivateProfileString("Misc","ExternalBasicImage","",CurrentConfig.ExtRomFile,MAX_PATH,IniFilePath);
 
 	CurrentConfig.RamSize = GetPrivateProfileInt("Memory","RamSize",1,IniFilePath);
@@ -442,6 +445,7 @@ void UpdateConfig (void)
 	SetCPUMultiplyer(CurrentConfig.CPUMultiplyer);
 	SetRamSize(CurrentConfig.RamSize);
 	SetCpuType(CurrentConfig.CpuType);
+	SetOverclock(CurrentConfig.EnableOverclock);
 
 	if (CurrentConfig.BreakOpcEnabled) {
 		EmuState.Debugger.Enable_Break(true);
@@ -501,6 +505,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		SendDlgItemMessage(hDlg,IDC_AUTOSTART,BM_SETCHECK,tmpcfg.AutoStart,0);
 		SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_SETCHECK,tmpcfg.CartAutoStart,0);
 		SendDlgItemMessage(hDlg,IDC_USE_EXTROM,BM_SETCHECK,tmpcfg.UseExtCocoRom,0);
+		SendDlgItemMessage(hDlg,IDC_OVERCLOCK,BM_SETCHECK,tmpcfg.EnableOverclock,0);
 		SetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile);
 		break;
 
@@ -545,7 +550,9 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			CurrentConfig.AutoStart = tmpcfg.AutoStart;
 			CurrentConfig.CartAutoStart = tmpcfg.CartAutoStart;
 			CurrentConfig.UseExtCocoRom = tmpcfg.UseExtCocoRom;
+			CurrentConfig.EnableOverclock = tmpcfg.EnableOverclock;
 			strncpy(CurrentConfig.ExtRomFile,tmpcfg.ExtRomFile,MAX_PATH);
+			SetOverclock(CurrentConfig.EnableOverclock);
 			// Exit dialog if IDOK
 			if (LOWORD(wParam)==IDOK) {
 				hCpuDlg = NULL;
@@ -592,6 +599,10 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			tmpcfg.UseExtCocoRom = (unsigned char)
 						SendDlgItemMessage(hDlg,IDC_USE_EXTROM,BM_GETCHECK,0,0);
 			break;
+		case IDC_OVERCLOCK:
+			tmpcfg.EnableOverclock = (unsigned char)
+						SendDlgItemMessage(hDlg,IDC_OVERCLOCK,BM_GETCHECK,0,0);
+			break;
 		case IDC_BROWSE:
 			memset(&ofn,0,sizeof(ofn));
 			ofn.lStructSize       = sizeof (OPENFILENAME) ;
@@ -613,6 +624,14 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		break;	//Break WM_COMMAND
 	}			//END switch (message)
 	return(0);
+}
+
+/* Set overclocking */
+void SetOverclock(unsigned char flag)
+{
+	EmuState.OverclockFlag = flag;
+    if (hCpuDlg != NULL)
+		SendDlgItemMessage(hCpuDlg,IDC_OVERCLOCK,BM_SETCHECK,flag,0);
 }
 
 /* Increase the overclock speed (2..100), as seen after a POKE 65497,0. */

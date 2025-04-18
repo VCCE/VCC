@@ -48,6 +48,7 @@ void SwapJoySticks();
 
 void DecreaseOverclockSpeed();
 void IncreaseOverclockSpeed();
+void SetOverclock(unsigned char);
 
 // Openers for config dialogs
 void OpenAudioConfig();

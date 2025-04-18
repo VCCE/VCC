@@ -109,6 +109,7 @@ struct SystemState
     VCC::Rect		WindowSize;
     unsigned char	FullScreen;
     unsigned char	MousePointer;
+    unsigned char	OverclockFlag;
     char			StatusLine[256];
 
 	// Debugger Package	
