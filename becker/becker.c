@@ -681,8 +681,8 @@ void LoadConfig(void)
 	char DiskRomPath[MAX_PATH];
 
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	GetPrivateProfileString(ModName,"DWServerAddr","",saddr,MAX_PATH,IniFile);
-	GetPrivateProfileString(ModName,"DWServerPort","",sport,MAX_PATH,IniFile);
+	GetPrivateProfileString(ModName,"DWServerAddr","",saddr, MAX_LOADSTRING,IniFile);
+	GetPrivateProfileString(ModName,"DWServerPort","",sport, MAX_LOADSTRING,IniFile);
 	
 	if (strlen(saddr) > 0)
 		dw_setaddr(saddr);

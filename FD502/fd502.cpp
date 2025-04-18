@@ -277,7 +277,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 //			SendDlgItemMessage(hDlg,IDC_KBLEDS,BM_SETCHECK,UseKeyboardLeds(QUERY),0);
 			SendDlgItemMessage(hDlg,IDC_TURBO,BM_SETCHECK,SetTurboDisk(QUERY),0);
 			SendDlgItemMessage(hDlg,IDC_PERSIST,BM_SETCHECK,PersistDisks,0);
-			for (temp=0;temp<=3;temp++)
+			for (temp=0;temp<sizeof(ChipChoice) / sizeof(*ChipChoice);temp++)
 				SendDlgItemMessage(hDlg,ChipChoice[temp],BM_SETCHECK,(temp==TempSelectRom),0);
 			for (temp=0;temp<2;temp++)
 				for (temp2=0;temp2<5;temp2++)
@@ -336,10 +336,10 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				case IDC_EXTROM:
 				case IDC_TRSDOS:
 				case IDC_RGB:
-					for (temp=0;temp<=3;temp++)
+					for (temp=0;temp<sizeof(ChipChoice) / sizeof(*ChipChoice);temp++)
 						if (LOWORD(wParam)==ChipChoice[temp])
 						{
-							for (temp2=0;temp2<=3;temp2++)
+							for (temp2=0;temp2<sizeof(ChipChoice) / sizeof(*ChipChoice);temp2++)
 								SendDlgItemMessage(hDlg,ChipChoice[temp2],BM_SETCHECK,0,0);
 							SendDlgItemMessage(hDlg,ChipChoice[temp],BM_SETCHECK,1,0);
 							TempSelectRom=temp;
@@ -719,7 +719,9 @@ void SaveConfig(void)
 		}
 	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
 	WritePrivateProfileInt(ModName, "TurboDisk", SetTurboDisk(QUERY), IniFile);
-	if (FloppyPath != "") { WritePrivateProfileString("DefaultPaths", "FloppyPath", FloppyPath, IniFile); }
+	if (strcmp(FloppyPath, "") != 0) { 
+		WritePrivateProfileString("DefaultPaths", "FloppyPath", FloppyPath, IniFile); 
+	}
 	return;
 }
 

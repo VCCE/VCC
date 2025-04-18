@@ -43,6 +43,43 @@ This file is part of VCC (Virtual Color Computer).
 #define QUERY 255
 #define INDEXTIME ((LINESPERSCREEN * TARGETFRAMERATE)/5)
 
+namespace VCC
+{
+    const int DefaultWidth = 640;
+    const int DefaultHeight = 480;
+
+    struct Point
+    {
+        int x{}, y{};
+
+        Point() {}
+        Point(int x, int y) :x(x), y(y) {}
+    };
+
+    struct Size
+    {
+        int w{}, h{};
+
+        Size() {}
+        Size(int w, int h) :w(w), h(h) {}
+    };
+
+    struct Rect : Point, Size
+    {
+        Rect() {}
+        Rect(int x, int y, int w, int h) : Point(x, y), Size(w, h) {}
+        bool IsDefaultX() const { return x == CW_USEDEFAULT; }
+        bool IsDefaultY() const { return y == CW_USEDEFAULT; }
+        int Top() const { return IsDefaultY() ? 0 : y; }
+        int Left() const { return IsDefaultX() ? 0 : x; }
+        int Right() const { return Left() + w; }
+        int Bottom() const { return Top() + h; }
+        RECT GetRect() const
+        {
+            return { Left(), Top(), Right(), Bottom() };
+        }
+    };
+}
 
 struct SystemState
 {
@@ -69,9 +106,10 @@ struct SystemState
     unsigned char	ScanLines;
     unsigned char	EmulationRunning;
     unsigned char	ResetPending;
-    POINT			WindowSize;
+    VCC::Rect		WindowSize;
     unsigned char	FullScreen;
     unsigned char	MousePointer;
+    unsigned char	OverclockFlag;
     char			StatusLine[256];
 
 	// Debugger Package	

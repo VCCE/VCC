@@ -49,6 +49,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <assert.h>
 
 using namespace std;
+using namespace VCC;
 
 /********************************************/
 /*        Local Function Templates          */
@@ -89,9 +90,8 @@ typedef struct  {
 	unsigned char	ScanLines;
 	unsigned char	Resize;
 	unsigned char	Aspect;
-	unsigned short	RememberSize;
-	unsigned short	WindowSizeX;
-	unsigned short	WindowSizeY;
+	unsigned char	RememberSize;
+	Rect			WindowRect;
 	unsigned char	RamSize;
 	unsigned char	AutoStart;
 	unsigned char	CartAutoStart;
@@ -105,7 +105,11 @@ typedef struct  {
 	char			FloppyPath[MAX_PATH];
 	char			CassPath[MAX_PATH];
     unsigned char   ShowMousePointer;
+	unsigned char	UseExtCocoRom;
+	char        	ExtRomFile[MAX_PATH];
+	unsigned char   EnableOverclock;
 } STRConfig;
+
 static STRConfig CurrentConfig;
 
 static HICON CpuIcons[2],MonIcons[2],JoystickIcons[4];
@@ -211,13 +215,14 @@ void LoadConfig(SystemState *LCState)
 /***********************************************************/
 unsigned char WriteIniFile(void)
 {
-	POINT tp = GetCurWindowSize();
+	Rect winRect = GetCurWindowSize();
 	CurrentConfig.Resize = 1;      // How to restore default window size?
 
 	// Prevent bad window size being written to the inifile
-	if ((tp.x < 20) || (tp.y < 20)) {
-		tp.x = 640;
-		tp.y = 480;
+	if (winRect.w < 20 || winRect.h < 20) 
+	{
+		winRect.w = 640;
+		winRect.h = 480;
 	}
 
 	GetCurrentModule(CurrentConfig.ModulePath);
@@ -239,8 +244,10 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Video","ScanLines",CurrentConfig.ScanLines,IniFilePath);
 	WritePrivateProfileInt("Video","ForceAspect",CurrentConfig.Aspect,IniFilePath);
 	WritePrivateProfileInt("Video","RememberSize", CurrentConfig.RememberSize, IniFilePath);
-	WritePrivateProfileInt("Video", "WindowSizeX", tp.x, IniFilePath);
-	WritePrivateProfileInt("Video", "WindowSizeY", tp.y, IniFilePath);
+	WritePrivateProfileInt("Video", "WindowSizeX", winRect.w, IniFilePath);
+	WritePrivateProfileInt("Video", "WindowSizeY", winRect.h, IniFilePath);
+	WritePrivateProfileInt("Video", "WindowPosX", winRect.x, IniFilePath);
+	WritePrivateProfileInt("Video", "WindowPosY", winRect.y, IniFilePath);
 
 	WritePrivateProfileInt("Memory","RamSize",CurrentConfig.RamSize,IniFilePath);
 
@@ -248,6 +255,9 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Misc","CartAutoStart",CurrentConfig.CartAutoStart,IniFilePath);
 	WritePrivateProfileInt("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer,IniFilePath);
 	WritePrivateProfileInt("Misc","KeyMapIndex",CurrentConfig.KeyMap,IniFilePath);
+	WritePrivateProfileInt("Misc", "UseExtCocoRom", CurrentConfig.UseExtCocoRom, IniFilePath);
+	WritePrivateProfileInt("Misc", "Overclock", CurrentConfig.EnableOverclock, IniFilePath);
+	WritePrivateProfileString("Misc", "ExternalBasicImage", CurrentConfig.ExtRomFile,IniFilePath);
 
 	WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
 
@@ -282,7 +292,6 @@ unsigned char ReadIniFile(void)
 {
 	HANDLE hr=NULL;
 	unsigned char Index=0;
-	POINT p;
 
 	//Loads the config structure from the hard disk
 	CurrentConfig.CPUMultiplyer = GetPrivateProfileInt("CPU","DoubleSpeedClock",2,IniFilePath);
@@ -302,11 +311,16 @@ unsigned char ReadIniFile(void)
 	//CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);
 	CurrentConfig.Aspect = GetPrivateProfileInt("Video","ForceAspect",1,IniFilePath);
 	CurrentConfig.RememberSize = GetPrivateProfileInt("Video","RememberSize",1,IniFilePath);
-	CurrentConfig.WindowSizeX= GetPrivateProfileInt("Video", "WindowSizeX", 640, IniFilePath);
-	CurrentConfig.WindowSizeY = GetPrivateProfileInt("Video", "WindowSizeY", 480, IniFilePath);
+	CurrentConfig.WindowRect.w = GetPrivateProfileInt("Video", "WindowSizeX", 640, IniFilePath);
+	CurrentConfig.WindowRect.h = GetPrivateProfileInt("Video", "WindowSizeY", 480, IniFilePath);
+	CurrentConfig.WindowRect.x = GetPrivateProfileInt("Video", "WindowPosX", CW_USEDEFAULT, IniFilePath);
+	CurrentConfig.WindowRect.y = GetPrivateProfileInt("Video", "WindowPosY", CW_USEDEFAULT, IniFilePath);
 	CurrentConfig.AutoStart = GetPrivateProfileInt("Misc","AutoStart",1,IniFilePath);
 	CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc","CartAutoStart",1,IniFilePath);
 	CurrentConfig.ShowMousePointer = GetPrivateProfileInt("Misc","ShowMousePointer",1,IniFilePath);
+	CurrentConfig.UseExtCocoRom=GetPrivateProfileInt("Misc","UseExtCocoRom",0,IniFilePath);
+	CurrentConfig.EnableOverclock=GetPrivateProfileInt("Misc","Overclock",1,IniFilePath);
+	GetPrivateProfileString("Misc","ExternalBasicImage","",CurrentConfig.ExtRomFile,MAX_PATH,IniFilePath);
 
 	CurrentConfig.RamSize = GetPrivateProfileInt("Memory","RamSize",1,IniFilePath);
 
@@ -357,16 +371,10 @@ unsigned char ReadIniFile(void)
 	}
 
 	CurrentConfig.Resize = 1; //Checkbox removed. Remove this from the ini?
-	if (CurrentConfig.RememberSize) {
-		p.x = CurrentConfig.WindowSizeX;
-		p.y = CurrentConfig.WindowSizeY;
-		SetWindowSize(p);
-	}
-	else {
-		p.x = 640;
-		p.y = 480;
-		SetWindowSize(p);
-	}
+
+	Rect rect = { CW_USEDEFAULT, CW_USEDEFAULT, DefaultWidth, DefaultHeight };
+	if (CurrentConfig.RememberSize)
+		rect = CurrentConfig.WindowRect;
 	return(0);
 }
 
@@ -375,17 +383,22 @@ void LoadModule()
 	InsertModule(CurrentConfig.ModulePath);
 }
 
-void SetWindowSize(POINT p) {
+void SetWindowRect(const Rect& rect) 
+{
 	if (EmuState.WindowHandle != NULL)
 	{
 		RECT ra = { 0,0,0,0 };
-
 		::AdjustWindowRect(&ra, WS_OVERLAPPEDWINDOW, TRUE);
 		int windowBorderWidth = ra.right - ra.left;
 		int windowBorderHeight = ra.bottom - ra.top;
-		int width = p.x + windowBorderWidth;
-		int height = p.y + windowBorderHeight + GetRenderWindowStatusBarHeight();
-		SetWindowPos(EmuState.WindowHandle, 0, 0, 0, width, height, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+		::GetWindowRect(EmuState.WindowHandle, &ra);
+
+		int width = rect.w + windowBorderWidth;
+		int height = rect.h + windowBorderHeight + GetRenderWindowStatusBarHeight();
+		int flags = SWP_NOOWNERZORDER | SWP_NOZORDER;
+		int x = rect.IsDefaultX() ? ra.left : rect.x;
+		int y = rect.IsDefaultY() ? ra.top : rect.y;
+		SetWindowPos(EmuState.WindowHandle, 0, x, y, width, height, flags);
 	}
 }
 
@@ -432,6 +445,7 @@ void UpdateConfig (void)
 	SetCPUMultiplyer(CurrentConfig.CPUMultiplyer);
 	SetRamSize(CurrentConfig.RamSize);
 	SetCpuType(CurrentConfig.CpuType);
+	SetOverclock(CurrentConfig.EnableOverclock);
 
 	if (CurrentConfig.BreakOpcEnabled) {
 		EmuState.Debugger.Enable_Break(true);
@@ -467,6 +481,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	short int Cpuchoice[2] = {IDC_6809,IDC_6309};
 	unsigned char temp;
 	static STRConfig tmpcfg;
+	OPENFILENAME ofn;
 	HWND hClkSpd = GetDlgItem(hDlg,IDC_CLOCKSPEED);
 	HWND hClkDsp = GetDlgItem(hDlg,IDC_CLOCKDISPLAY);
 	switch (message) {
@@ -479,14 +494,19 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		SendMessage(hClkDsp,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 		SendMessage(hClkSpd,TBM_SETPOS,TRUE, CurrentConfig.CPUMultiplyer);
 		for (temp=0;temp<=3;temp++)
-			SendDlgItemMessage(hDlg,Ramchoice[temp],BM_SETCHECK,(temp==CurrentConfig.RamSize),0);
+			SendDlgItemMessage(hDlg,Ramchoice[temp],BM_SETCHECK,
+					(temp==CurrentConfig.RamSize),0);
 		for (temp=0;temp<=1;temp++)
-			SendDlgItemMessage(hDlg,Cpuchoice[temp],BM_SETCHECK,(temp==CurrentConfig.CpuType),0);
-		SendDlgItemMessage
-			(hDlg,IDC_CPUICON,STM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)CpuIcons[CurrentConfig.CpuType]);
+			SendDlgItemMessage(hDlg,Cpuchoice[temp],BM_SETCHECK,
+					(temp==CurrentConfig.CpuType),0);
+		SendDlgItemMessage (hDlg,IDC_CPUICON,STM_SETIMAGE,(WPARAM)IMAGE_ICON,
+			 (LPARAM)CpuIcons[CurrentConfig.CpuType]);
 		SendDlgItemMessage(hDlg,IDC_ENABLE_BREAK,BM_SETCHECK,CurrentConfig.BreakOpcEnabled,0);
 		SendDlgItemMessage(hDlg,IDC_AUTOSTART,BM_SETCHECK,tmpcfg.AutoStart,0);
 		SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_SETCHECK,tmpcfg.CartAutoStart,0);
+		SendDlgItemMessage(hDlg,IDC_USE_EXTROM,BM_SETCHECK,tmpcfg.UseExtCocoRom,0);
+		SendDlgItemMessage(hDlg,IDC_OVERCLOCK,BM_SETCHECK,tmpcfg.EnableOverclock,0);
+		SetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile);
 		break;
 
 	case WM_HSCROLL:
@@ -504,9 +524,17 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			break;
 		case IDOK:
 		case IDAPPLY:
+
+			// Get coco3.rom path from dialog if external
+			if (tmpcfg.UseExtCocoRom) {
+				GetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile,MAX_PATH);
+			}
+
 			// ResetPending causes Vcc.c to call UpdateConfig().
 			if ( (CurrentConfig.RamSize != tmpcfg.RamSize) |
-			     (CurrentConfig.CpuType != tmpcfg.CpuType) ) {
+			     (CurrentConfig.CpuType != tmpcfg.CpuType) |
+			     (CurrentConfig.UseExtCocoRom != tmpcfg.UseExtCocoRom) |
+				 (strcmp(CurrentConfig.ExtRomFile,tmpcfg.ExtRomFile) != 0)) {
 				EmuState.ResetPending = 2;   // Hard reset
 			} else {
 				EmuState.ResetPending = 4;   // Update config
@@ -521,6 +549,10 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			                     (LPARAM)CpuIcons[CurrentConfig.CpuType] );
 			CurrentConfig.AutoStart = tmpcfg.AutoStart;
 			CurrentConfig.CartAutoStart = tmpcfg.CartAutoStart;
+			CurrentConfig.UseExtCocoRom = tmpcfg.UseExtCocoRom;
+			CurrentConfig.EnableOverclock = tmpcfg.EnableOverclock;
+			strncpy(CurrentConfig.ExtRomFile,tmpcfg.ExtRomFile,MAX_PATH);
+			SetOverclock(CurrentConfig.EnableOverclock);
 			// Exit dialog if IDOK
 			if (LOWORD(wParam)==IDOK) {
 				hCpuDlg = NULL;
@@ -563,11 +595,43 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			tmpcfg.CartAutoStart = (unsigned char)
 						SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_GETCHECK,0,0);
 			break;
+		case IDC_USE_EXTROM:
+			tmpcfg.UseExtCocoRom = (unsigned char)
+						SendDlgItemMessage(hDlg,IDC_USE_EXTROM,BM_GETCHECK,0,0);
+			break;
+		case IDC_OVERCLOCK:
+			tmpcfg.EnableOverclock = (unsigned char)
+						SendDlgItemMessage(hDlg,IDC_OVERCLOCK,BM_GETCHECK,0,0);
+			break;
+		case IDC_BROWSE:
+			memset(&ofn,0,sizeof(ofn));
+			ofn.lStructSize       = sizeof (OPENFILENAME) ;
+			ofn.hwndOwner		  = NULL;
+			ofn.lpstrFilter		  = "Rom Image\0*.rom\0\0";
+			ofn.nFilterIndex      = 1;
+			ofn.lpstrFile         = tmpcfg.ExtRomFile;
+			ofn.nMaxFile          = MAX_PATH;
+			ofn.lpstrFileTitle    = NULL;
+			ofn.nMaxFileTitle     = MAX_PATH;
+			ofn.lpstrInitialDir   = NULL;
+			ofn.lpstrTitle        = TEXT("Coco3 Rom Image");
+			ofn.Flags             = OFN_HIDEREADONLY;
+			GetOpenFileName (&ofn);
+			SetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile);
+			break;
 
 		}		//End switch LOWORD(wParam)
 		break;	//Break WM_COMMAND
 	}			//END switch (message)
 	return(0);
+}
+
+/* Set overclocking */
+void SetOverclock(unsigned char flag)
+{
+	EmuState.OverclockFlag = flag;
+    if (hCpuDlg != NULL)
+		SendDlgItemMessage(hCpuDlg,IDC_OVERCLOCK,BM_SETCHECK,flag,0);
 }
 
 /* Increase the overclock speed (2..100), as seen after a POKE 65497,0. */
@@ -1525,7 +1589,7 @@ int SelectFile(char *FileName)
 		idx = tmp.find_last_of("\\");
 		tmp = tmp.substr(0, idx);
 		strcpy(CapFilePath, tmp.c_str());
-		if (CapFilePath != "") {
+		if (strcmp(CapFilePath, "") != 0) {
 			WritePrivateProfileString("DefaultPaths", "CapFilePath", CapFilePath, IniFilePath);
 		}
 	}
@@ -1547,16 +1611,25 @@ int GetPaletteType()
 // Called by DirectDrawInterface.cpp
 int GetRememberSize()
 {
-	return((int) CurrentConfig.RememberSize);
-	//return(1);
+	return CurrentConfig.RememberSize;
 }
 
 // Called by DirectDrawInterface.cpp
-POINT GetIniWindowSize()
+const Rect &GetIniWindowRect()
 {
-	POINT out;
-	out.x = CurrentConfig.WindowSizeX;
-	out.y = CurrentConfig.WindowSizeY;
-	return(out);
+	return CurrentConfig.WindowRect;
 }
 
+void CaptureCurrentWindowRect()
+{
+	CurrentConfig.WindowRect = GetCurWindowSize();
+}
+
+//Called by tcc1014mmu:LoadRom
+void GetExtRomPath(char * RomPath)
+{
+	if (CurrentConfig.UseExtCocoRom)
+		strncpy(RomPath,CurrentConfig.ExtRomFile,MAX_PATH);
+	else
+		*RomPath = '\0';;
+}

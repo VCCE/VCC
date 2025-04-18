@@ -66,6 +66,12 @@
 #define USE_DEBUG_MOUSE false
 #endif
 
+//
+// Enables the older opening window in default positing, otherwise remember position.
+//
+#ifndef USE_DEFAULT_POSITIONING
+#define USE_DEFAULT_POSITIONING false
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // 

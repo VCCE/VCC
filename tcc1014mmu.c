@@ -205,32 +205,34 @@ unsigned char * Getint_rom_pointer(void)
 }
 
 // LoadRom() loads Coco3.rom. It is called by MmuInit() here
-// and by SoftReset() in Vcc.c. If LoadRom() fails VCC is aborted
+// and by SoftReset() in Vcc.c. If LoadRom() fails VCC can not run.
 void LoadRom(void)
 {
-	char RomPath[MAX_PATH];
-	char IniFile[MAX_PATH];
+	char UseExtRom = 0;
+	char RomPath[MAX_PATH]={};
 	unsigned short index=0;
 	FILE *hFile;
 
-	GetIniFilePath(IniFile);
-	GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "",
-			RomPath, MAX_PATH, IniFile);
+	GetExtRomPath(RomPath);
 	if (*RomPath == '\0') {
 		GetModuleFileName(NULL, RomPath, MAX_PATH);
 		PathRemoveFileSpec(RomPath);
 		strncat(RomPath, "coco3.rom", MAX_PATH);
 	}
-//	PrintLogC("Rom path: %s\n",RomPath);
+
 	if ((hFile = fopen(RomPath,"rb")) != NULL) {
 		while ((feof(hFile)==0) & (index<0x8000)) {
 			InternalRomBuffer[index++] = fgetc(hFile);
 		}
 		fclose(hFile);
 	}
-	if (index == 0) {
-		MessageBox(0, "Missing file coco3.rom", "Error", 0);
-		exit(0);
+	if ((hFile == NULL) | (index == 0)) {
+		//MessageBox(GetActiveWindow(),
+		MessageBox(0,
+				"coco3.rom load failed\n"
+				"Close this then\n"
+				"check ROM path.\n",
+				"Error", MB_TASKMODAL | MB_TOPMOST);
 	}
 	return;
 }
@@ -339,6 +341,7 @@ void __fastcall fMemWrite8(unsigned char data,unsigned short address)
 		MemPages[MmuRegisters[MmuState][address>>13]][address & 0x1FFF]=data;
 	return;
 }
+
 /*****************************************************************
 * 16 bit memory handling routines                                *
 *****************************************************************/

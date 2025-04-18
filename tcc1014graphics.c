@@ -134,11 +134,20 @@ static unsigned char BlinkState=1;
 static bool UserFlipped = false;
 static unsigned int last_mmode = 0;
 
+//
+// FF98 bit 4 - monochrome on composite
+// 0 = composite
+// 1 = rgb
+int Pmode4MonType()
+{
+	return (CC3Vmode & 0x10) ? 1 : MonType;
+}
+
 // BEGIN of 8 Bit render loop *****************************************************************************************
 void UpdateScreen8 (SystemState *US8State)
 {
 	unsigned short HorzBeam = 0;
-	register unsigned int YStride=0;
+	unsigned int YStride=0;
 	unsigned char Pixel=0;
 	unsigned char Character=0,Attributes=0;
 	unsigned char TextPallete[2]={0,0};
@@ -163,7 +172,9 @@ void UpdateScreen8 (SystemState *US8State)
 
 	if (LinesperRow < 13)
 		TagY++;
-	
+
+	auto pmode4MonType = Pmode4MonType();
+
 	if (!US8State->LineCounter)
 	{
 		StartofVidram=NewStartofVidram;
@@ -2024,7 +2035,7 @@ case 192+2:	//Bpp=0 Sr=2
 	{
 		WidePixel=US8State->WRamBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
 //************************************************************************************
-		if (!MonType && BoarderColor8 == 0xFF)
+		if (!pmode4MonType && BoarderColor8 == 0xFF)
 		{ //Pcolor
 			for (Bit=7;Bit>=0;Bit--)
 			{
@@ -3232,7 +3243,7 @@ case 192+63: //Bpp=3 Sr=15
 void UpdateScreen16 (SystemState *USState16)
 {
 	unsigned short HorzBeam = 0;
-	register unsigned int YStride=0;
+	unsigned int YStride=0;
 	static unsigned int TextColor=0;
 	static unsigned char Pixel=0;
 	static unsigned char Character=0,Attributes=0;
@@ -3256,7 +3267,9 @@ void UpdateScreen16 (SystemState *USState16)
 
 	if (LinesperRow < 13)
 		TagY++;
-	
+
+	auto pmode4MonType = Pmode4MonType();
+
 	if (!USState16->LineCounter)
 	{
 		StartofVidram=NewStartofVidram;
@@ -5117,7 +5130,7 @@ case 192+2:	//Bpp=0 Sr=2
 	{
 		WidePixel=USState16->WRamBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
 //************************************************************************************
-		if (!MonType && BoarderColor16 == 0xFFFF)
+		if (!pmode4MonType && BoarderColor16 == 0xFFFF)
 		{ //Pcolor
 			for (Bit=7;Bit>=0;Bit--)
 			{
@@ -6336,7 +6349,7 @@ void UpdateScreen24 (SystemState *USState24)
 void UpdateScreen32(SystemState *USState32)
 {
 	unsigned short HorzBeam = 0;
-	register unsigned int YStride = 0;
+	unsigned int YStride = 0;
 	//	unsigned int TextColor=0;
 	unsigned char Pixel = 0;
 	//	unsigned char StretchCount=0;
@@ -6373,6 +6386,8 @@ void UpdateScreen32(SystemState *USState32)
 			if (!USState32->ScanLines)
 				szSurface32[x + (PixelsperLine * (Stretch+1))+HorzCenter+(((y+VertCenter)*2+1)*Xpitch)]=BoarderColor32;
 		}
+
+	auto pmode4MonType = Pmode4MonType();
 
 	if (LinesperRow < 13)
 		TagY++;
@@ -8252,7 +8267,7 @@ case 192+1: //Bpp=0 Sr=1 1BPP Stretch=2
 case 192+2:	//Bpp=0 Sr=2 
 	curr_gmode = "gmode19 (PMODE4)";
 
-	if (!MonType && BoarderColor32 == 0xFFFFFF && GetPaletteType() == PALETTE_NTSC)
+	if (!pmode4MonType && BoarderColor32 == 0xFFFFFF && GetPaletteType() == PALETTE_NTSC)
 	{
 		// byte pointer to ram
 		unsigned char* cocoRam = (unsigned char*)WideBuffer;
@@ -8267,7 +8282,7 @@ case 192+2:	//Bpp=0 Sr=2
 	{
 		WidePixel=WideBuffer[(VidMask & ( Start+(unsigned char)(Hoffset+HorzBeam) ))>>1];
 //************************************************************************************
-		if (!MonType && BoarderColor32 == 0xFFFFFF)
+		if (!pmode4MonType && BoarderColor32 == 0xFFFFFF)
 		{ //Pcolor
 			for (Bit=7;Bit>=0;Bit--)
 			{

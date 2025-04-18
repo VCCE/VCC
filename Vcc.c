@@ -75,6 +75,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "IDisplayDebug.h"
 #endif
 
+using namespace VCC;
+
 static HANDLE hout=NULL;
 
 SystemState EmuState;
@@ -106,14 +108,15 @@ void (*CPUForcePC)(unsigned short)=NULL;
 void FullScreenToggle(void);
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys(void);
+void FunctionHelpBox(void);
+void SetupClock(void);
 
-// Message handlers
-//void OnDestroy(HWND hwnd);
-//void OnCommand(HWND hWnd, int iID, HWND hwndCtl, UINT uNotifyCode);
-//void OnPaint(HWND hwnd);
 // Globals
 static 	HANDLE hEMUThread ;
 static	HANDLE hEMUQuit;
+
+// Function key overclocking flag
+//unsigned char OverclockFlag = 1;
 
 static char g_szAppName[MAX_LOADSTRING] = "";
 bool BinaryRunning;
@@ -147,10 +150,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 	Cls(0,&EmuState);
 	EmuState.Throttle = 1;
-	EmuState.WindowSize.x=640;
-	EmuState.WindowSize.y=480;
-	EmuState.ResetPending=2;
+	EmuState.WindowSize.x=DefaultWidth;
+	EmuState.WindowSize.y=DefaultHeight;
 	LoadConfig(&EmuState);
+	EmuState.ResetPending=2; // after LoadConfig pls
 	InitInstance(hInstance, nCmdShow);
 	if (!CreateDDWindow(&EmuState))
 	{
@@ -209,6 +212,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			DispatchMessage(&Msg) ;
 	}
 
+	PostThreadMessage(threadID, WM_QUIT, 0, 0);
 	SetEvent(hEMUQuit);								// Signal emulation thread to finish up.
 	WaitForSingleObject(hEMUThread, INFINITE);		// Wait for emulation thread to terminate
 	CloseHandle( hEvent ) ;	
@@ -476,6 +480,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			switch ( OEMscan )
 			{
+				case DIK_F1:
+					if (IsShiftKeyDown()) FunctionHelpBox();
+
+				case DIK_F2:
+					if (IsShiftKeyDown()) SwapJoySticks();
+
 				case DIK_F3:
 					DecreaseOverclockSpeed();
 				break;
@@ -485,9 +495,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 				case DIK_F5:
-					if ( EmuState.EmulationRunning )
-					{
-						EmuState.ResetPending = 1;
+					if ( EmuState.EmulationRunning ) {
+						EmuState.ResetPending = (IsShiftKeyDown()) ? 2 : 1;
 					}
 				break;
 
@@ -504,7 +513,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 				case DIK_F8:
-					SetSpeedThrottle(!SetSpeedThrottle(QUERY));
+					if (IsShiftKeyDown()) {
+						SetOverclock(!EmuState.OverclockFlag);
+						SetupClock();
+					} else {
+						SetSpeedThrottle(!SetSpeedThrottle(QUERY));
+					}
 				break;
 
 				case DIK_F9:
@@ -656,65 +670,17 @@ void raise_saved_keys() {
 	return;
 }
 
-/*--------------------------------------------------------------------------
-// Command message handler
-void OnCommand(HWND hWnd, int iID, HWND hwndCtl, UINT uNotifyCode)
-{
-	//switch (iID)
-	//{
-	//case IDM_QUIT:
-	//	OnDestroy(hWnd);
-	//	break;
-	//}
-}
---------------------------------------------------------------------------*/
-// Handle WM_DESTROY
-void OnDestroy(HWND )
-{
-	BinaryRunning = false;
-	UnloadDll();
-	PostQuitMessage(0);
-}
-/*--------------------------------------------------------------------------*/
-// Window painting function
-void OnPaint(HWND hwnd)
-{
-	// Let Windows know we've redrawn the Window - since we've bypassed
-	// the GDI, Windows can't figure that out by itself.
-//	ValidateRect( hwnd, NULL );
-	
-	// Over here we could do some normal GDI drawing
-//	PAINTSTRUCT ps;
-//	HDC hdc;
-//	HDC hdc = BeginPaint(hwnd, &ps);
-//	if (hdc)
-//	{
-//	}
-//	EndPaint(hwnd, &ps);
-}
-/*--------------------------------------------------------------------------*/
-
 void SetCPUMultiplyerFlag (unsigned char double_speed)
 {
-	SetClockSpeed(1);
 	EmuState.DoubleSpeedFlag=double_speed;
-	if (EmuState.DoubleSpeedFlag)
-		SetClockSpeed( EmuState.DoubleSpeedMultiplyer * EmuState.TurboSpeedFlag);
-	EmuState.CPUCurrentSpeed= .894;
-	if (EmuState.DoubleSpeedFlag)
-		EmuState.CPUCurrentSpeed*=(EmuState.DoubleSpeedMultiplyer*EmuState.TurboSpeedFlag);
+	SetupClock();
 	return;
 }
 
 void SetTurboMode(unsigned char data)
 {
 	EmuState.TurboSpeedFlag=(data&1)+1;
-	SetClockSpeed(1);
-	if (EmuState.DoubleSpeedFlag)
-		SetClockSpeed( EmuState.DoubleSpeedMultiplyer * EmuState.TurboSpeedFlag);
-	EmuState.CPUCurrentSpeed= .894;
-	if (EmuState.DoubleSpeedFlag)
-		EmuState.CPUCurrentSpeed*=(EmuState.DoubleSpeedMultiplyer*EmuState.TurboSpeedFlag);
+	SetupClock();
 	return;
 }
 
@@ -726,6 +692,18 @@ unsigned char SetCPUMultiplyer(unsigned char Multiplyer)
 		SetCPUMultiplyerFlag (EmuState.DoubleSpeedFlag);
 	}
 	return(EmuState.DoubleSpeedMultiplyer);
+}
+
+void SetupClock(void)
+{
+	int mult = (EmuState.OverclockFlag) ? EmuState.DoubleSpeedMultiplyer : 2;
+	SetClockSpeed(1);
+	if (EmuState.DoubleSpeedFlag)
+		SetClockSpeed( mult * EmuState.TurboSpeedFlag);
+	EmuState.CPUCurrentSpeed = .894;
+	if (EmuState.DoubleSpeedFlag)
+		EmuState.CPUCurrentSpeed*=(mult*EmuState.TurboSpeedFlag);
+	return;
 }
 
 void DoHardReset(SystemState* const HRState)
@@ -1013,12 +991,17 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		GetModuleStatus(&EmuState);
 		
 		char tstatus[128];
+		char tspeed[32];
+		snprintf(tspeed,sizeof(tspeed),"%2.2fMhz",EmuState.CPUCurrentSpeed);
+		// Append "+" to speed if overclocking is enabled
+		if (EmuState.OverclockFlag && (EmuState.DoubleSpeedMultiplyer>2))
+			strncat (tspeed,"+",sizeof(tspeed));
 		if (EmuState.Debugger.IsHalted()) {
-			snprintf(tstatus,sizeof(tstatus), " Paused - Hit F7 | %s @ %2.2fMhz | %s",
-				CpuName,EmuState.CPUCurrentSpeed,EmuState.StatusLine);
+			snprintf(tstatus,sizeof(tstatus), " Paused - Hit F7 | %s @ %s | %s",
+				CpuName,tspeed,EmuState.StatusLine);
 		} else {
-			snprintf(tstatus,sizeof(tstatus), "Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz | %s",
-				EmuState.FrameSkip,FPS,CpuName,EmuState.CPUCurrentSpeed,EmuState.StatusLine);
+			snprintf(tstatus,sizeof(tstatus),"Skip:%2.2i | FPS:%3.0f | %s @ %s | %s",
+				EmuState.FrameSkip,FPS,CpuName,tspeed,EmuState.StatusLine);
 		}
 		SetStatusBarText(tstatus,&EmuState);
 
@@ -1059,5 +1042,23 @@ void FullScreenToggle(void)
 	EmuState.ConfigDialog=NULL;
 	PauseAudio(false);
 	return;
+}
+
+void FunctionHelpBox(void)
+{
+	MessageBox(0,
+		"     normal\t\t   shifted\n"
+		"  F1  Coco F1\t\tFunction Key Help\n"
+		"  F2  Coco F2\t\tSwap Joysticks\n"
+		"  F3  Decrease Overclock\t  --\n"
+		"  F4  Increase Overclock\t  --\n"
+		"  F5  Soft Reset\t\tHard Reset\n"
+		"  F6  Flip Artifacts\t\tToggle RGB/Composite\n"
+		"  F7  Toggle Run\t\t  --\n"
+		"  F8  Toggle Throttle\tToggle Overclocking\n"
+		"  F9  Toggle Emulation\t  --\n"
+		" F10  Toggle FS Status\t  --\n"
+		" F11  Toggle FullScreen\t  --\n"
+		,"Function Keys",MB_TASKMODAL | MB_TOPMOST);
 }
 

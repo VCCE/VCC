@@ -49,7 +49,7 @@ static char IniSect[MAX_LOADSTRING]; // Ini file section
 char *IOModeTxt[] = {"RW","R","W"};
 char *ComTypeTxt[] = {"CONS","FILE","TCP","COM"};
 
-static unsigned char Rom[8191];
+static unsigned char Rom[8192];
 static void (*PakSetCart)(unsigned char)=NULL;
 unsigned char LoadExtRom(char *);
 
