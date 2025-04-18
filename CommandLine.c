@@ -110,7 +110,7 @@ int GetCmdLineArgs(char *CmdString)
     // Options that require values need to be known by the parser
     // to allow seperation between option code and value.
     // -i and -p both require options
-	static char * ValueRequired = "ip";
+	static const char * ValueRequired = "ip";
 
     // Initialize the global variables set by this routine
     memset(&CmdArg,0,sizeof(CmdArg));

@@ -564,7 +564,7 @@ void UnlockScreen(SystemState *USState)
 	return;
 }
 
-void SetStatusBarText( char *TextBuffer,SystemState *STState)
+void SetStatusBarText(const char *TextBuffer,SystemState *STState)
 {
 	if (!STState->FullScreen)
 	{

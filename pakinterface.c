@@ -175,6 +175,11 @@ unsigned short PackAudioSample(void)
 	return(NULL);
 }
 
+void DynamicMenuCallbackChar(char* MenuName, int MenuId, int Type)
+{
+	DynamicMenuCallback(MenuName, MenuId, Type);
+}
+
 int LoadCart(void)
 {
 	OPENFILENAME ofn ;	
@@ -270,7 +275,7 @@ int InsertModule (char *ModulePath)
 		if (SetInteruptCallPointer!=NULL)
 			SetInteruptCallPointer(CPUAssertInterupt);
 
-		GetModuleName(Modname,CatNumber,DynamicMenuCallback);  //Instanciate the menus from HERE!
+		GetModuleName(Modname,CatNumber,DynamicMenuCallbackChar);  //Instanciate the menus from HERE!
 		sprintf(Temp,"Configure %s",Modname);
 
 		strcat(String,"Module Name: ");
@@ -487,7 +492,7 @@ void DynamicMenuActivated(unsigned char MenuItem)
 	return;
 }
 
-void DynamicMenuCallback( char *MenuName,int MenuId, int Type)
+void DynamicMenuCallback(const char *MenuName,int MenuId, int Type)
 {
 	char Temp[256]="";
 	//MenuId=0 Flush Buffer MenuId=1 Done 
