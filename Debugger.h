@@ -96,7 +96,9 @@ namespace VCC { namespace Debugger
 		void SetTraceOptions(bool screen, bool emulation);
 
 		long GetTraceSamples() const;
-		void GetTraceResult(tracebuffer_type &result, long start, int count) const;
+		void LockTrace() const;
+		void UnlockTrace() const;
+		const tracebuffer_type& GetTraceResult() const;
 		void SetTraceMark(int mark, long sample);
 		void ClearTraceMarks();
 		void GetTraceMarkSamples(tracebuffer_type& result) const;
