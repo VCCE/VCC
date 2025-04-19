@@ -109,18 +109,9 @@ namespace VCC { namespace Debugger
 		TraceCaptured_.push_back(emulator);
 	}
 
-	long OpDecoder::GetTrace(std::vector<CPUTrace>& trace, long start, long count)
+	const std::vector<VCC::CPUTrace>& OpDecoder::GetTrace() const
 	{
-		trace.clear();
-		for (unsigned long n = start; n < TraceCaptured_.size(); n++)
-		{
-			if (trace.size() >= (unsigned)count)
-			{
-				break;
-			}
-			trace.push_back(TraceCaptured_[n]);
-		}
-		return trace.size();
+		return TraceCaptured_;
 	}
 
 	size_t OpDecoder::GetSampleCount() const

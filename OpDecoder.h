@@ -48,7 +48,7 @@ namespace VCC { namespace Debugger
 		void CaptureScreenEvent(TraceEvent evt, double cycles);
 		void CaptureEmulatorCycle(TraceEvent evt, int state, double lineNS, double irqNS, double soundNS, double cycles, double drift);
 
-		long GetTrace(std::vector<CPUTrace>& trace, long start, long count);
+		const std::vector<CPUTrace>& GetTrace() const;
 
 		size_t GetSampleCount() const;
 

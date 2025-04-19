@@ -241,6 +241,18 @@ namespace VCC { namespace Debugger
 		Decoder_->CaptureEmulatorCycle(evt, state, lineNS, irqNS, soundNS, cycles, drift);
 	}
 
+
+	void Debugger::LockTrace() const
+	{
+		Section_.Lock();
+	}
+	
+	void Debugger::UnlockTrace() const
+	{
+		Section_.Unlock();
+	}
+
+
 	void Debugger::SetTraceEnable()
 	{
 		TraceEnabled_ = true;
@@ -311,11 +323,9 @@ namespace VCC { namespace Debugger
 		return Decoder_->GetSampleCount();
 	}
 
-	void Debugger::GetTraceResult(tracebuffer_type &result, long start, int count) const
+	const Debugger::Debugger::tracebuffer_type& Debugger::GetTraceResult() const
 	{
-		SectionLocker lock(Section_);
-
-		Decoder_->GetTrace(result, start, count);
+		return Decoder_->GetTrace();
 	}
 
 	void Debugger::SetTraceMark(int mark, long sample)
@@ -339,14 +349,11 @@ namespace VCC { namespace Debugger
 
 		result.clear();
 
+		auto& trace = Decoder_->GetTrace();
+
 		for (const auto& kv: TraceMarks_)
 		{
-			tracebuffer_type mark;
-			Decoder_->GetTrace(mark, kv.second, 1);
-			if (mark.size() > 0)
-			{
-				result.push_back(mark[0]);
-			}
+			result.push_back(trace[kv.second]);
 		}
 	}
 
