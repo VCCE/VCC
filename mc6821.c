@@ -502,7 +502,8 @@ void CaptureBit(unsigned char Sample)
 
 int OpenPrintFile(char *FileName)
 {
-	hPrintFile=CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,0,0,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,0);
+	hPrintFile=CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,
+			FILE_SHARE_READ,0,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,0);
 	if (hPrintFile==INVALID_HANDLE_VALUE)
 		return(0);
 	return(1);
