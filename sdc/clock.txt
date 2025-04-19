@@ -1,0 +1,16 @@
+To enable cloud9 clock in EOU:
+
+ cd /dd/boots  
+
+ ezgen os9boot.sdc
+  l Clock2
+  d 
+  i /dd/modules/6309l2/modules/clocks/clock2_cloud9
+  q
+
+ swapboot
+  select <5> Boot for SDC
+
+  cd /dd
+
+  comment out or delete settime line in startup
