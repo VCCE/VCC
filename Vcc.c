@@ -1053,7 +1053,7 @@ void FunctionHelpBox(void)
 		"  F3  Decrease Overclock\t  --\n"
 		"  F4  Increase Overclock\t  --\n"
 		"  F5  Soft Reset\t\tHard Reset\n"
-		"  F6  Flip Artifacts\t\tToggle RGB/Composite\n"
+		"  F6  Toggle RGB/Composite\tFlip Artifacts\n"
 		"  F7  Toggle Run\t\t  --\n"
 		"  F8  Toggle Throttle\tToggle Overclocking\n"
 		"  F9  Toggle Emulation\t  --\n"
