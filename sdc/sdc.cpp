@@ -116,7 +116,7 @@
 #include "cloud9.h"
 
 // Debug logging if _DEBUG_ is defined
-#define _DEBUG_
+//#define _DEBUG_
 #ifdef _DEBUG_
 #include "../logger.h"
 #define _DLOG(...) PrintLogC(__VA_ARGS__)
