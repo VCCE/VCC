@@ -47,8 +47,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	int ScrollBarTop = 140;
 	int ScrollBarWidth = 19;
 
-	Debugger::tracebuffer_type currentTrace;
-
 	enum class TraceStatus
 	{
 		Empty,
@@ -275,10 +273,12 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		HPEN pen = (HPEN)CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
 		SelectObject(hdc, pen);
 
+		EmuState.Debugger.LockTrace();
+		auto& currentTrace = EmuState.Debugger.GetTraceResult();
+
 		// Load page?
 		if (currentTrace.size() == 0 || status == TraceStatus::LoadPage)
 		{
-			EmuState.Debugger.GetTraceResult(currentTrace, traceOffset, tracePage);
 			status = TraceStatus::Loaded;
 		}
 
@@ -371,16 +371,16 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		SetTextColor(hdc, RGB(0, 0, 0));
 		int y = rect.top + 20;
 		int lines = min((long)currentTrace.size(), tracePage);
-		for (int n = 0; n < lines; n++)
+		for (int i = 0; i < lines; i++)
 		{
 			std::string s;
 
 			RECT rc;
 			int x = 10;
 
-			long sampleNum = n + traceOffset;
+			long n = i + traceOffset;
 
-			if (sampleNum == traceCursor)
+			if (n == traceCursor)
 			{
 				SetRect(&rc, rect.left, y, rect.right, y + 14);
 				FillRect(hdc, &rc, hBrushCursor);
@@ -400,7 +400,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 			int w = columns[0];
 			SetRect(&rc, rect.left + x, y, rect.left + x + w, y + 15);
-			s = ToDecimalString(sampleNum + 1, 10, false);
+			s = ToDecimalString(n + 1, 10, false);
 			DrawText(hdc, s.c_str(), s.size(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
 
 			if (currentTrace[n].event == TraceEvent::Instruction)
@@ -618,6 +618,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		DeleteObject(hBrushMark2);
 		DeleteObject(pen);
 		DeleteObject(hFont);
+		EmuState.Debugger.UnlockTrace();
 	}
 
 //-------------------------------------------------------------------------------
@@ -916,7 +917,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 //-------------------------------------------------------------------------------
 	void EnableTrace()
 	{
-		currentTrace.clear();
 		traceOffset = 0;
 		EmuState.Debugger.ResetTrace();
 		SetTraceSamples();
@@ -939,7 +939,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 //-------------------------------------------------------------------------------
 	void ResetTrace()
 	{
-		currentTrace.clear();
 		traceOffset = 0;
 		EmuState.Debugger.ResetTrace();
 		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_STATUS);
@@ -1105,9 +1104,9 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 //-------------------------------------------------------------------------------
 	void WriteTrace(HANDLE hf, unsigned int start, unsigned int nlines)
 	{
+		EmuState.Debugger.LockTrace();
 		unsigned int offset = start > 1 ? start-1 : 0;
-		Debugger::tracebuffer_type _trace;
-		EmuState.Debugger.GetTraceResult(_trace, offset, nlines);
+		auto & _trace = EmuState.Debugger.GetTraceResult();
 		int count = min((unsigned int)_trace.size(), nlines);
 
 		//FilePrintf(hf,"offset:%d nlines:%d count%d _tsize:%d\n",
@@ -1192,7 +1191,8 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 				FilePrintf(hf,"%s\n",_trace[n].instruction.c_str());
 			}
 		}
-		_trace.clear();
+
+		EmuState.Debugger.UnlockTrace();
 	}
 
 //-------------------------------------------------------------------------------
