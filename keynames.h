@@ -37,8 +37,8 @@ It is included by keyboardEdit.c and is private to it.
 *************************************************************************/
 
 struct PCScanCode {
-    char* keyname;           // Keyname in keymap file less "DIK_"
-    char* label;             // Label for keymap editor display
+    const char* keyname;     // Keyname in keymap file less "DIK_"
+    const char* label;       // Label for keymap editor display
     unsigned char ScanCode;  // Scan code from windows kb event
 };
 
@@ -189,8 +189,8 @@ int sctable_ndx[256] = {0};
 ************************************************************************/
  
 struct CoCoKey {
-    char* keyname;      // Keyname in keymap file less "COCO_"
-    char* label;        // Label for keymap editor display
+    const char* keyname;// Keyname in keymap file less "COCO_"
+    const char* label;  // Label for keymap editor display
     int id;             // Button ID for key edit dialog
     unsigned char row;  // row 0-6 (bit num for trans table)
     unsigned char col;  // col 0-7

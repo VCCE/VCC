@@ -24,7 +24,7 @@ BOOL InitInstance(HINSTANCE,int);
 BOOL InitDrawSurface(bool );
 void UnlockScreen(SystemState *);
 unsigned char LockScreen(SystemState *);
-void SetStatusBarText( char *,SystemState *);
+void SetStatusBarText(const char *,SystemState *);
 int GetRenderWindowStatusBarHeight();
 bool CreateDDWindow(SystemState *);
 void Cls(unsigned int,SystemState *);
