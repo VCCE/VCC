@@ -107,6 +107,10 @@
     <ClCompile Include="OpenGLFontConsola.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="memdump.cpp" />
+    <ClCompile Include="Screenshot.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h">
@@ -247,6 +251,10 @@
     </ClInclude>
     <ClInclude Include="BuildConfig.h">
       <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="memdump.h" />
+    <ClInclude Include="Screenshot.h">
+      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

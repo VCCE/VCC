@@ -455,6 +455,7 @@ namespace VCC
 			{
 				case OPT_RECT_DISPLAY: GetDisplayArea(rect); break;
 				case OPT_RECT_RENDER: GetRenderArea(rect); break;
+				case OPT_RECT_SURFACE: GetSurfaceArea(rect); break;
 				default: return Result(ERR_BADOPTION);
 			}
 			return Result(OK);
@@ -672,6 +673,13 @@ namespace VCC
 			area->x = area->y = 0;
 			area->w = (float)width;
 			area->h = (float)height;
+		}
+
+		void GetSurfaceArea(Rect* area)
+		{
+			area->x = area->y = 0;
+			area->w = (float)SurfaceWidth;
+			area->h = (float)SurfaceHeight;
 		}
 	};
 

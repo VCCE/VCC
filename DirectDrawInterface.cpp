@@ -32,6 +32,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <iostream>
 #include <string>
 #include "IDisplay.h"
+#include "Screenshot.h"
 
 #if USE_OPENGL
 #include "OpenGL.h"
@@ -812,4 +813,11 @@ void DebugDrawBox(float x, float y, float w, float h, Pixel color)
 	if (g_Display)
 		g_Display->DebugDrawBox(x, y, w, h, color);
 #endif // USE_OPENGL
+}
+
+void DumpScreenshot()
+{
+#if USE_OPENGL
+	Screenshot(g_Display);
+#endif
 }

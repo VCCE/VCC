@@ -37,6 +37,7 @@ const VCC::Rect& GetCurWindowSize();
 void DisplayFlip(SystemState *);
 POINT GetForcedAspectBorderPadding();
 void CloseScreen();
+void DumpScreenshot();
 
 #define MAX_LOADSTRING 100
 

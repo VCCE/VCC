@@ -544,6 +544,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case DIK_F12:
 					if (IsShiftKeyDown()) CpuDump();
+					else DumpScreenshot();
 				break;
 
 				default:

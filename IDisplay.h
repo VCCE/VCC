@@ -34,13 +34,13 @@ namespace VCC
 	//
 	union Pixel
 	{
-		uint32_t pixel;
+		uint32_t pixel; // ARGB
 		struct
 		{
-			uint8_t a;
-			uint8_t r;
-			uint8_t g;
 			uint8_t b;
+			uint8_t g;
+			uint8_t r;
+			uint8_t a;
 		};
 
 		Pixel() {}
