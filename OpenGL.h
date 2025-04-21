@@ -64,6 +64,7 @@ namespace VCC
 		{
 			OPT_RECT_DISPLAY = 1,	// display surface rectangle
 			OPT_RECT_RENDER,		// entire render output rectangle
+			OPT_RECT_SURFACE,		// get rectangle of surface
 		};
 
 		OpenGL() : detail(nullptr) {}
