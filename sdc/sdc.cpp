@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-// SDC emulator DLL
+// SDC simulator DLL
 //
 // This file is part of VCC (Virtual Color Computer).
 // Vcc is Copyright 2015 by Joseph Forgione
@@ -42,7 +42,7 @@
 //  always alowed for becker.dll to work. This means sdc.dll requires the
 //  new version of mmi.dll to work properly.
 //
-//  NOTE: SDCDOS does not in any case support the becker ports, it expects
+//  NOTE: Stock SDCDOS does not in support the becker ports, it expects
 //  drivewire to be on the bitbanger ports. RGBDOS does, however, and will
 //  still work with sdc.dll installed.
 //
@@ -78,29 +78,23 @@
 //
 //  Flash data
 //  ----------
+//  There are eight 16K banks of programable flash memory. In this
+//  simulator the banks are set to files where the ROMs for the
+//  bank is stored. When a bank is selected the file is read into ROM.
+//  The SDC-DOS RUN@n command can be used to select a bank.
+//
+//  This simulator has no provision for writing to the banks or the
+//  associated files. These are easily managed using the host system.
+//
 //  Data written to the flash data port (0x42) can be read back.
 //  When the flash data port (0x43) is written the three low bits
 //  select the ROM from the corresponding flash bank (0-7). When
 //  read the flash control port returns the currently selected bank
 //  in the three low bits and the five bits from the Flash Data port.
 //
-//  There are eight 16K banks of programable flash memory. In this
-//  emulator SDC-DOS is typically in bank 0 and disk basic into bank 1.
-//  However these ROMS require their respective .DLL's to be installed
-//  to function, these are typically in MMI slot 4 and 3 respectively.
-//  The SDC RUN@n command will load an image from one of the 16K banks
-//  into the currently selected MMI slot then reset VCC, which will start
-//  the rom.
-//
-//  File Status bits:
-//  0   Busy
-//  1   Ready
-//  2   Invalid path name
-//  3   hardware error
-//  4   Path not found
-//  5   File in use
-//  6   not used
-//  7   Command failed
+//  SDC-DOS is typically in bank zero and disk basic in bank one. These
+//  ROMS require their respective .DLL's to be installed to function,
+//  these are typically in MMI slot 3 and 4 respectively.
 //
 //----------------------------------------------------------------------
 
@@ -232,7 +226,7 @@ typedef struct {
 } Interface;
 Interface IF;
 
-// Cartridge ROM
+// Cart ROM
 char PakRom[0x4000];
 
 // Host paths for SDC
@@ -240,7 +234,7 @@ char SDCard[MAX_PATH] = {}; // SD card root directory
 char CurDir[MAX_PATH] = {}; // SDC current directory
 char SeaDir[MAX_PATH] = {}; // Last directory searched
 
-// Packed file record for sending to CoCo
+// Packed file records directory commands
 #pragma pack(1)
 struct FileRecord {
     char name[8];
@@ -252,8 +246,6 @@ struct FileRecord {
     char lolo_size;
 };
 #pragma pack()
-
-// last read page of directory records
 struct FileRecord DirPage[16];
 
 // Mounted image data
@@ -814,9 +806,8 @@ unsigned char PickReplyByte(unsigned char port)
         }
     }
 
+    // Keep stream going until stopped
     if ((IF.bufcnt < 1) && (streaming)) StreamImage();
-
-    //if (port&1) _DLOG(",");
 
     return rpy;
 }
@@ -1042,7 +1033,7 @@ void BankSelect(int data)
 }
 
 //----------------------------------------------------------------------
-// Read sector from drive and load reply
+// Read a sector from drive image and load reply
 //----------------------------------------------------------------------
 bool ReadDrive(int drive, int lsn, int sector_size)
 {
@@ -1099,8 +1090,11 @@ void ReadSector(void)
 //----------------------------------------------------------------------
 void StreamImage(void)
 {
+    // If already streaming continue
     if (streaming) {
         stream_lsn++;
+
+    // Else start streaming
     } else {
         IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1;
         stream_drive = IF.cmdcode & 1;
@@ -1234,6 +1228,7 @@ void SDCControl(void)
         IF.status = STA_READY;
         IF.bufcnt = 0;
     } else {
+        // TODO: Mount in set
         _DLOG("SDCControl Mount in set unsupported %d %d %d \n",
                   IF.cmdcode,IF.param1,IF.param2);
         IF.status = STA_FAIL | STA_NOTFOUND;
@@ -1561,7 +1556,7 @@ bool IsDirectory(const char * path)
 //----------------------------------------------------------------------
 bool SetCurDir(char * path)
 {
-    //TODO: Wildcards
+    //TODO: Mount in set wildcard
 
     _DLOG("SetCurdir '%s'\n",path);
 
