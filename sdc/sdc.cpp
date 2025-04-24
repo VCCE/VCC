@@ -116,7 +116,7 @@
 #include "cloud9.h"
 
 // Debug logging if _DEBUG_ is defined
-//#define _DEBUG_
+#define _DEBUG_
 #ifdef _DEBUG_
 #include "../logger.h"
 #define _DLOG(...) PrintLogC(__VA_ARGS__)
@@ -191,7 +191,7 @@ bool LoadFileRecord(char *,struct FileRecord *);
 bool MountDisk (int,const char *);
 void CloseDrive(int);
 bool OpenDrive(int);
-void LoadReply(void *, int, int);
+void LoadReply(void *, int);
 void BlockReceive(unsigned char);
 char * LastErrorTxt(void);
 void BankSelect(int);
@@ -202,6 +202,8 @@ bool IsDirectory(const char *path);
 void GetMountedImageRec(void);
 void CvtName83(char *,char *,char *);
 void GetSectorCount(void);
+bool ReadDrive(int,int,int,int);
+unsigned char PickReplyByte(unsigned char);
 
 //======================================================================
 // Globals
@@ -214,11 +216,16 @@ typedef struct {
     unsigned char status;
     unsigned char reply1;
     unsigned char reply2;
+
     unsigned char reply3;
     unsigned char param1;
     unsigned char param2;
     unsigned char param3;
+
+    unsigned char reply_mode; // 0=words, 1=bytes
+    unsigned char half_sent;
     unsigned char flash;
+
     int bufcnt;
     char *bufptr;
     char blkbuf[600];
@@ -276,6 +283,13 @@ WIN32_FIND_DATAA dFound;
 static HWND hConfDlg = NULL;
 static HWND hFlashBox = NULL;
 static HWND hSDCardBox = NULL;
+
+// Streaming control
+int streaming;
+int stream_drive;
+int stream_lsn;
+int stream_mode;
+int stream_maxsec;
 
 //======================================================================
 // DLL exports
@@ -475,7 +489,7 @@ void LoadConfig(void)
 //------------------------------------------------------------
 void SaveConfig(void)
 {
-    WritePrivateProfileString("SDC", "SDCardPath",SDCard,IniFile);
+    WritePrivateProfileString("SDC","SDCardPath",SDCard,IniFile);
     for (int i=0;i<8;i++) {
         char txt[32];
         sprintf(txt,"FlashFile_%d",i);
@@ -770,6 +784,44 @@ void SDCWrite(unsigned char data,unsigned char port)
 }
 
 //----------------------------------------------------------------------
+// Can't reply with words, only bytes.  But the SDC interface design
+// has most replies in words and the order the word bytes are read can
+// vary so we play games to send the right ones
+//----------------------------------------------------------------------
+unsigned char PickReplyByte(unsigned char port)
+{
+    unsigned char rpy = 0;
+
+    // Byte mode bytes come on port 0x4B
+    if (IF.reply_mode == 1) {
+        if (IF.bufcnt > 0) {
+            rpy = *IF.bufptr++;
+            IF.bufcnt--;
+        }
+    // Word mode bytes come on port 0x4A and 0x4B
+    } else {
+        if (port == 0x4A) {
+            rpy = IF.bufptr[0];
+        } else {
+            rpy = IF.bufptr[1];
+        }
+        if (IF.half_sent) {
+            IF.bufcnt -= 2;
+            IF.bufptr += 2;
+            IF.half_sent = 0;
+        } else {
+            IF.half_sent = 1;
+        }
+    }
+
+    if ((IF.bufcnt < 1) && (streaming)) StreamImage();
+
+    //if (port&1) _DLOG(",");
+
+    return rpy;
+}
+
+//----------------------------------------------------------------------
 // Read port. If there are bytes in the reply buffer return them.
 //----------------------------------------------------------------------
 unsigned char SDCRead(unsigned char port)
@@ -798,8 +850,7 @@ unsigned char SDCRead(unsigned char port)
     // Reply data 2 or block reply
     case 0x4A:
         if (IF.bufcnt > 0) {
-            rpy = *IF.bufptr++;
-            IF.bufcnt--;
+            rpy = PickReplyByte(port);
         } else {
             rpy = IF.reply2;
         }
@@ -807,8 +858,7 @@ unsigned char SDCRead(unsigned char port)
     // Reply data 3 or block reply
     case 0x4B:
         if (IF.bufcnt > 0) {
-            rpy = *IF.bufptr++;
-            IF.bufcnt--;
+            rpy = PickReplyByte(port);
         } else {
             rpy = IF.reply3;
         }
@@ -826,20 +876,12 @@ unsigned char SDCRead(unsigned char port)
 void SDCCommand(void)
 {
 
-    // If transfer in progress abort whatever
-    if ((IF.bufcnt > 0) || (IF.bufcnt > 0)) {
-        _DLOG("SDCCommand transfer in progress ABORTING\n");
-        memset(&IF,0,sizeof(IF));
-        IF.status = STA_FAIL;
-        return;
-    }
-
     switch (IF.cmdcode & 0xF0) {
     // Read sector
     case 0x80:
         ReadSector();
         break;
-    // Stream sectors
+    // Stream 512 byte sectors
     case 0x90:
         StreamImage();
         break;
@@ -857,6 +899,7 @@ void SDCCommand(void)
         IF.status = STA_READY | STA_BUSY;
         IF.bufptr = IF.blkbuf;
         IF.bufcnt = 256;
+        IF.half_sent = 0;
         break;
     }
     return;
@@ -903,7 +946,8 @@ void GetDriveInfo(void)
     case 0x43:
         // 'C' Return current directory in block
         _DLOG("GetCurDir %s\n",CurDir);
-        LoadReply(CurDir,strlen(CurDir)+1,0);
+        IF.reply_mode=0;
+        LoadReply(CurDir,strlen(CurDir)+1);
         break;
     case 0x51:
         // 'Q' Return the size of disk image in p1,p2,p3
@@ -912,7 +956,8 @@ void GetDriveInfo(void)
     case 0x3E:
         // '>' Get directory page
         LoadDirPage();
-        LoadReply(DirPage,256,0);
+        IF.reply_mode=0;
+        LoadReply(DirPage,256);
         break;
     case 0x2B:
         // '+' Mount next next disk in set.  Mounts disks with a
@@ -997,59 +1042,56 @@ void BankSelect(int data)
 }
 
 //----------------------------------------------------------------------
+// Read sector from drive and load reply
+//----------------------------------------------------------------------
+bool ReadDrive(int drive, int lsn, int sector_size)
+{
+    // Seek to logical sector on drive. This only supports
+    // images with a contigous array of sectors.
+    LARGE_INTEGER pos;
+    pos.QuadPart = lsn * sector_size + DiskImage[drive].headersize;
+    if (!SetFilePointerEx(DiskImage[drive].hFile,pos,NULL,FILE_BEGIN)) {
+        _DLOG("ReadDrive seek error %s\n",LastErrorTxt());
+        return false;
+    }
+
+    // Read a sector
+    DWORD cnt = 0;
+    DWORD num = sector_size;
+    char buf[520];
+    BOOL result = ReadFile(DiskImage[drive].hFile,buf,num,&cnt,NULL);
+
+    if (!result) {
+        _DLOG("ReadDrive %d drive %d hfile %d error %s\n",
+                lsn,drive,DiskImage[drive].hFile,LastErrorTxt());
+        return false;
+
+    } else if (cnt != num) {
+        _DLOG("ReadDrive %d drive %d hfile %d short read %s\n",
+                lsn,drive,DiskImage[drive].hFile,LastErrorTxt());
+        return false;
+    } else {
+        LoadReply(buf,sector_size);
+        return true;
+    }
+}
+
+//----------------------------------------------------------------------
 // Read logical sector
 //----------------------------------------------------------------------
 void ReadSector(void)
 {
     int drive = IF.cmdcode & 1;
     int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
-    int dsksiz = DiskImage[drive].size >> 8;
+    int maxsec = DiskImage[drive].size >> 8;
 
-    if (dsksiz == 0) {
-        _DLOG("ReadSector empty drive %d\n",drive);
-        IF.status = STA_FAIL;
-        return;
-    } else if ( lsn > (DiskImage[drive].size >> 8)) {
-        _DLOG("ReadSector overrun %d %d\n",lsn,DiskImage[drive].size>>8);
+    if (lsn > maxsec) {
+        _DLOG("ReadSector overrun %d %d\n",lsn,maxsec);
         IF.status = STA_FAIL;
         return;
     }
-
-    if (DiskImage[drive].hFile == NULL) OpenDrive(drive);
-    if (DiskImage[drive].hFile == NULL) {
-        IF.status = STA_FAIL;
-        return;
-    }
-
-    // Only supporting images with contigous sector arrays
-    LARGE_INTEGER pos;
-    pos.QuadPart = lsn * 256 + DiskImage[drive].headersize;
-    if (!SetFilePointerEx(DiskImage[drive].hFile,pos,NULL,FILE_BEGIN)) {
-        _DLOG("ReadSector seek error %s\n",LastErrorTxt());
-        IF.status = STA_FAIL|STA_NOTFOUND;
-    }
-
-    DWORD cnt = 0;
-    DWORD num = 256;
-    char buf[260];
-    BOOL result = ReadFile(DiskImage[drive].hFile,buf,num,&cnt,NULL);
-
-    //_DLOG("ReadSector %d drive %d hfile %d got %d bytes\n",
-    //        lsn,drive,DiskImage[drive].hFile, cnt);
-
-    if (!result) {
-        _DLOG("ReadSector %d drive %d hfile %d error %s\n",
-                lsn,drive,DiskImage[drive].hFile,LastErrorTxt());
-        IF.status = STA_FAIL;
-
-    } else if (cnt != num) {
-        _DLOG("ReadSector %d drive %d hfile %d short read %s\n",
-                lsn,drive,DiskImage[drive].hFile,LastErrorTxt());
-        IF.status = STA_FAIL;
-    } else {
-        int mode = ((IF.cmdcode & 4) == 0) ? 0 : 1;
-        LoadReply(buf,256,mode);
-    }
+    IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1;
+    if (!ReadDrive(drive,lsn,256)) IF.status = STA_FAIL;
 }
 
 //----------------------------------------------------------------------
@@ -1057,18 +1099,35 @@ void ReadSector(void)
 //----------------------------------------------------------------------
 void StreamImage(void)
 {
-    //512 byte sectors
-    int drive = IF.cmdcode & 1;
-    int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
+    if (streaming) {
+        stream_lsn++;
+    } else {
+        IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1;
+        stream_drive = IF.cmdcode & 1;
+        stream_lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
+        stream_maxsec = DiskImage[stream_drive].size >> 9;
+        if (stream_lsn > stream_maxsec) {
+            _DLOG("StreamImage overrun %d %d\n",stream_lsn,stream_maxsec);
+            IF.status = STA_FAIL;
+            return;
+        }
+    }
+    _DLOG("StreamImage lsn %d\n",stream_lsn);
 
-    if (lsn < 0) {
-        _DLOG("StreamImage invalid sector\n");
-        IF.status = STA_FAIL;
+    if (stream_lsn > stream_maxsec) {
+        _DLOG("StreamImage done\n");
+        streaming = 0;
         return;
     }
 
-    _DLOG("StreamImage not supported\n");
-    IF.status = STA_FAIL;  // Fail
+    if (!ReadDrive(stream_drive,stream_lsn,512)) {
+        _DLOG("StreamImage read error %s\n",LastErrorTxt());
+        IF.status = STA_FAIL;
+        streaming = 0;
+        return;
+    }
+
+    streaming = 1;
 }
 
 //----------------------------------------------------------------------
@@ -1156,21 +1215,24 @@ void GetMountedImageRec()
         struct FileRecord rec;
         LoadFileRecord(DiskImage[drive].name, &rec);
         //_DLOG("GetMountedImage drive %d\n",drive);
-        LoadReply(&rec,sizeof(rec),0);
+        IF.reply_mode = 0;
+        LoadReply(&rec,sizeof(rec));
     }
 }
 
 //----------------------------------------------------------------------
-// $DO Abort stream or mount disk in a set of disks.
+// $DO Abort stream and mount disk in a set of disks.
 // IF.param1  0: Next disk 1-9: specific disk.
 // IF.param2 b0: Blink Enable
 //----------------------------------------------------------------------
 void SDCControl(void)
 {
-    // If a transfer is in progress abort it.
-    if (IF.bufcnt > 0) {
-        _DLOG("SDCControl Block Transfer Aborted\n");
-        memset(&IF,0,sizeof(IF));
+    // If streaming is in progress abort it.
+    if (streaming) {
+        _DLOG ("Streaming abort");
+        streaming = 0;
+        IF.status = STA_READY;
+        IF.bufcnt = 0;
     } else {
         _DLOG("SDCControl Mount in set unsupported %d %d %d \n",
                   IF.cmdcode,IF.param1,IF.param2);
@@ -1179,11 +1241,9 @@ void SDCControl(void)
 }
 
 //----------------------------------------------------------------------
-// Load reply. Count is bytes, 512 max. Reply Mode is 0 for words,
-// 1 for bytes.  If reply mode is words buffer bytes are swapped within
-// words so they are read in the correct order.
+// Load reply. Count is bytes, 512 max.
 //----------------------------------------------------------------------
-void LoadReply(void *data, int count, int mode)
+void LoadReply(void *data, int count)
 {
     if ((count < 2) | (count > 512)) {
         _DLOG("LoadReply bad count\n");
@@ -1191,27 +1251,11 @@ void LoadReply(void *data, int count, int mode)
         return;
     }
 
-    char *dp = (char *) data;
-    char *bp = IF.blkbuf;
-    char tmp;
-
-    if (mode == 1) {
-        int ctr = count;
-        while (ctr--) {
-            *bp++ = *dp++;
-        }
-    } else {
-        // Copy data to the reply buffer with bytes swapped in words
-        int ctr = count/2;
-        while (ctr--) {
-            tmp = *dp++;
-            *bp++ = *dp++;
-            *bp++ = tmp;
-        }
-    }
+    memcpy(IF.blkbuf,data,count);
 
     IF.bufptr = IF.blkbuf;
     IF.bufcnt = count;
+    IF.half_sent = 0;
 
     // If port reads exceed the count zeros will be returned
     IF.reply2 = 0;
@@ -1419,7 +1463,9 @@ bool MountDisk (int drive, const char * path)
 
     // Extra file bytes are considered to be header bytes
     int headersize = filesize & 255;
-    if (headersize != 0) _DLOG("MountDisk %s header %d/n",fqn,headersize);
+    if (headersize != 0) {
+        _DLOG("MountDisk %s header %d/n",fqn,headersize);
+    }
     filesize -= headersize;
 
     // Fill image info.
@@ -1491,12 +1537,11 @@ void CloseDrive (int drive)
 void AppendPathChar(char * path, char c)
 {
     int l = strlen(path);
-    if (l < MAX_PATH - 1 ) {
-        if (path[l-1] != c) {
-            path[l] = c;
-            path[l+1] = '\0';
-        }
-    }
+    if (l > (MAX_PATH-2)) return;
+    if (l > 0)
+        if (path[l-1] == c) return;
+    path[l] = c;
+    path[l+1] = '\0';
 }
 
 //----------------------------------------------------------------------
@@ -1517,6 +1562,8 @@ bool IsDirectory(const char * path)
 bool SetCurDir(char * path)
 {
     //TODO: Wildcards
+
+    _DLOG("SetCurdir '%s'\n",path);
 
     char fqp[MAX_PATH];
     char tmp[MAX_PATH] = {};
@@ -1541,10 +1588,18 @@ bool SetCurDir(char * path)
         return true;
     }
 
-    // Set new directory into a temp string
-    strncpy(tmp,CurDir,MAX_PATH);
-    AppendPathChar(tmp,'/');
-    strncat(tmp,path,MAX_PATH);
+    // If path relative add to current directory
+    if (*path != '/') {
+        strncpy(tmp,CurDir,MAX_PATH);
+        AppendPathChar(tmp,'/');
+    }
+
+    // Append trimed path
+    char *ptmp = tmp;
+    char c;
+    while (*ptmp) ptmp++;
+    while (c = *path++) if (c > ' ') *ptmp++ = c;
+    *ptmp = '\0';
 
     // Check if a valid directory on SD
     strncpy(fqp,SDCard,MAX_PATH);
@@ -1568,12 +1623,15 @@ bool SetCurDir(char * path)
 //----------------------------------------------------------------------
 bool InitiateDir(const char * pattern)
 {
+
     // Prepend current directory
     char path[MAX_PATH];
     strncpy(path,SDCard,MAX_PATH);
     AppendPathChar(path,'/');
+
     strncat(path,CurDir,MAX_PATH);
     AppendPathChar(path,'/');
+
     strncat(path,pattern,MAX_PATH);
 
     // Add *.* to search pattern if last char is '/'
