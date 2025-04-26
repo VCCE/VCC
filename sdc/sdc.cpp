@@ -180,8 +180,8 @@ void GetDriveInfo(void);
 void SDCControl(void);
 void UpdateSD(void);
 void AppendPathChar(char *,char c);
-int FileAttrib(const char *,char *);
-bool LoadFileRecord(char *,struct FileRecord *);
+void LoadFindRecord(struct FileRecord *);
+void FixSDCPath(char *,const char *);
 bool MountDisk (int,const char *);
 void CloseDrive(int);
 bool OpenDrive(int);
@@ -191,10 +191,10 @@ char * LastErrorTxt(void);
 void BankSelect(int);
 void LoadDirPage(void);
 bool SetCurDir(char * path);
+bool SearchFile(const char *);
 bool InitiateDir(const char *);
 bool IsDirectory(const char *path);
 void GetMountedImageRec(void);
-void CvtName83(char *,char *,char *);
 void GetSectorCount(void);
 bool ReadDrive(int,int,int,int);
 unsigned char PickReplyByte(unsigned char);
@@ -252,9 +252,9 @@ struct FileRecord DirPage[16];
 struct _DiskImage {
     char name[MAX_PATH];
     HANDLE hFile;
-    char attrib;
     int size;
     int headersize;
+    struct FileRecord filerec;
 } DiskImage[2];
 
 // Flash banks
@@ -969,9 +969,8 @@ void GetDriveInfo(void)
 //----------------------------------------------------------------------
 void UpdateSD(void)
 {
-//    _DLOG("UpdateSD %02X %02X %02X %02X %02X '%s'\n",
-//         IF.param1, IF.param2, IF.param3,
-//         IF.blkbuf[0], IF.recvbuf[1], &IF.recvbuf[2]);
+    _DLOG("UpdateSD %d %02X '%s'\n",
+            IF.cmdcode&1,IF.blkbuf[0],&IF.blkbuf[2]);
 
     switch (IF.blkbuf[0]) {
     // Mount disk
@@ -1001,7 +1000,7 @@ void UpdateSD(void)
     // Initiate directory list
     case 0x4C: //L
         if (InitiateDir(&IF.blkbuf[2]))
-            IF.status =  0;
+            IF.status = 0;
         else
             IF.status = STA_FAIL;
         break;
@@ -1077,7 +1076,7 @@ void ReadSector(void)
     int maxsec = DiskImage[drive].size >> 8;
 
     if (lsn > maxsec) {
-        _DLOG("ReadSector overrun %d %d\n",lsn,maxsec);
+        _DLOG("ReadSector overrun %d %d %d\n",drive,lsn,maxsec);
         IF.status = STA_FAIL;
         return;
     }
@@ -1106,7 +1105,7 @@ void StreamImage(void)
             return;
         }
     }
-    _DLOG("StreamImage lsn %d\n",stream_lsn);
+    //_DLOG("StreamImage lsn %d\n",stream_lsn);
 
     if (stream_lsn > stream_maxsec) {
         _DLOG("StreamImage done\n");
@@ -1202,15 +1201,12 @@ void  GetSectorCount() {
 void GetMountedImageRec()
 {
     int drive = IF.cmdcode & 1;
+    //_DLOG("GetMountedImageRec %d %s\n",drive,DiskImage[drive].name);
     if (strlen(DiskImage[drive].name) == 0) {
-        //_DLOG("GetMountedImage drive %d empty\n",drive);
         IF.status = STA_FAIL;
     } else {
-        struct FileRecord rec;
-        LoadFileRecord(DiskImage[drive].name, &rec);
-        //_DLOG("GetMountedImage drive %d\n",drive);
         IF.reply_mode = 0;
-        LoadReply(&rec,sizeof(rec));
+        LoadReply(&DiskImage[drive].filerec,sizeof(FileRecord));
     }
 }
 
@@ -1262,59 +1258,13 @@ void LoadReply(void *data, int count)
 }
 
 //----------------------------------------------------------------------
-// Convert standard name from path into 8.3 format
+// The name portion of SDC path may be in SDC format which does
+// not use a dot to seperate the extension examples:
+//    "FOO     DSK" = FOO.DSK
+//    "ALONGFOODSK" = ALONGFOO.DSK
 //----------------------------------------------------------------------
-void CvtName83(char *fname8, char *ftype3, char *path) {
-
-    int i;
-    char c;
-    char *p;
-
-    // start with blanks
-    memset(fname8,' ',8);
-    memset(ftype3,' ',3);
-
-    i = 0;
-    p = strrchr(path,'/');
-    if (p == NULL) p = path; else p++;
-
-    // Special case for '.' or '..' names
-    if (p[0] == '.') {
-        fname8[0] = '.';
-        if (p[1] == '.')
-            fname8[1] = '.';
-        return;
-    }
-
-    // Copy eight chars after the last '/' to name field
-    while (c = *p++) {
-        if (c == '.') break;
-        fname8[i++] = c;
-        if (i > 7) break;
-    }
-
-    // Copy three chars after the last '.' to type field
-    i = 0;
-    p = strrchr(path,'.');
-    if (p == NULL) return; else p++;
-    while (c = *p++) {
-        ftype3[i++] = c;
-        if (i > 2) break;
-    }
-    return;
-}
-
-//----------------------------------------------------------------------
-// Convert 8.3 format path into standard path for windows lookup
-//----------------------------------------------------------------------
-void Cvt83Path(char *path, const char *fpath8, unsigned int size)
+void FixSDCPath(char *path, const char *fpath8)
 {
-    // Path buffer must be at least one byte larger than size
-    if (strlen(fpath8) > (size - 1)) {
-        _DLOG("Cvt83Path size violation\n");
-        return;
-    }
-
     const char *pname8 = strrchr(fpath8,'/');
     // Copy Directory portion
     if (pname8 != NULL) {
@@ -1346,117 +1296,112 @@ void Cvt83Path(char *path, const char *fpath8, unsigned int size)
             if (extlen > 2) break;
         }
     }
-    name[namlen] = '\0';       // terminate name
-    strncat(path,name,size);   // append it to directory
+    name[namlen] = '\0';           // terminate name
+    strncat(path,name,MAX_PATH);   // append it to directory
 }
 
 //----------------------------------------------------------------------
-// Load a file record for SDC file commands.
+// Load a file record with the file found by Find File
 //----------------------------------------------------------------------
-bool LoadFileRecord(char * file, struct FileRecord * rec)
+void LoadFindRecord(struct FileRecord * rec)
 {
-
     memset(rec,0,sizeof(rec));
-    int filesize = FileAttrib(file,&rec->attrib);
-    if (rec->attrib == ATTR_INVALID) {
-        _DLOG("LoadFileRecord attibutes unavailable\n");
-        return false;
+    memset(rec->name,' ',8);
+    memset(rec->type,' ',3);
+
+    // Current or previous directory
+    if (dFound.cFileName[0] == '.') {
+        rec->name[0] = '.';
+        if (dFound.cFileName[1] == '.') rec->name[1] = '.';
+        rec->attrib |= ATTR_DIR;
+        return;
     }
-    CvtName83(rec->name,rec->type,file);
-    rec->lolo_size = (filesize) & 0xFF;
-    rec->hilo_size = (filesize >> 8) & 0xFF;
-    rec->lohi_size = (filesize >> 16) & 0xFF;
-    rec->hihi_size = (filesize >> 24) & 0xFF;
 
-    //_DLOG("LoadFileRecord %s %d %02x\n",file,filesize,rec->attrib);
-    return true;
-}
+    // Previous directory
+    if (strcmp(dFound.cFileName,"..") == 0) {
+        rec->attrib |= ATTR_DIR;
+        rec->name[0] = '.';
+        rec->name[1] = '.';
+        return;
+    }
 
-//----------------------------------------------------------------------
-// Get attributes for a file. Fills attributes byte and returns filesize
-//----------------------------------------------------------------------
-int FileAttrib(const char * path, char * attr)
-{
-    struct _stat file_stat;
-    int result = _stat(path,&file_stat);
-    int filesize;
-    if (result != 0) {
-        *attr = ATTR_INVALID;
-        _DLOG("FileAttrib %s %s\n",path,LastErrorTxt());
-        return 0;
-    } else {
-        *attr = 0;
-        if ((file_stat.st_mode & _S_IFDIR) != 0) {
-            *attr |= ATTR_DIR;
-            filesize = 0;
-        } else {
-            filesize = file_stat.st_size;
+    // File type
+    char * pdot = strrchr(dFound.cFileName,'.');
+    if (pdot) {
+        char * ptyp = pdot + 1;
+        for (int cnt = 0; cnt<3; cnt++) {
+           if (*ptyp == '\0') break;
+           rec->type[cnt] = *ptyp++;
         }
-        if ((file_stat.st_mode & _S_IWRITE) == 0)
-            *attr |= ATTR_RDONLY;
-        return filesize;
     }
+
+    // File name
+    char * pnam = dFound.cFileName;
+    for (int cnt = 0; cnt < 8; cnt++) {
+        if (*pnam == '\0') break;
+        if (pdot && (pnam == pdot)) break;
+        rec->name[cnt] = *pnam++;
+    }
+
+    // Attributes
+    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
+        rec->attrib |= ATTR_RDONLY;
+    }
+    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        rec->attrib |= ATTR_DIR;
+    }
+
+    // Filesize, sssume < 4G (dFound.nFileSizeHigh == 0)
+    rec->lolo_size = (dFound.nFileSizeLow) & 0xFF;
+    rec->hilo_size = (dFound.nFileSizeLow >> 8) & 0xFF;
+    rec->lohi_size = (dFound.nFileSizeLow >> 16) & 0xFF;
+    rec->hihi_size = (dFound.nFileSizeLow >> 24) & 0xFF;
 }
 
 //----------------------------------------------------------------------
 // Mount Disk. If image path starts with '/' load drive relative
-// to SDRoot, else load drive relative to the current directory
-// path file portion is SDC 8.3 format (8 chars name, 3 chars ext)
-// Extension is delimited from name by blank,dot,or size
-// examples:
-//    "FOO     DSK" = FOO.DSK
-//    "FOO.DSK"     = FOO.DSK
-//    "ALONGFOODSK" = ALONGFOO.DSK
+// to SDRoot, else load drive relative to the current directory.
 //----------------------------------------------------------------------
 bool MountDisk (int drive, const char * path)
 {
-
-    char cvtpath[64];
-    Cvt83Path(cvtpath, path,64);
-
-    char fqn[MAX_PATH]={};
-
-    drive &= 1;
-
     // Check for UNLOAD.  Path will be an empty string.
+    drive &= 1;
     if (*path == '\0') {
         CloseDrive(drive);
         memset((void *) &DiskImage[drive],0,sizeof(_DiskImage));
         return true;
     }
 
-    // Establish image filename
-    strncpy(fqn,SDCard,MAX_PATH);
-    if (*path == '/') {
-        strncat(fqn,cvtpath+1,MAX_PATH);
-    } else {
-        strncat(fqn,CurDir,MAX_PATH);
-        AppendPathChar(fqn,'/');
-        strncat(fqn,cvtpath,MAX_PATH);
-    }
-
-    // Get file attributes.
-    char attrib;
-    int filesize = FileAttrib(fqn, &attrib);
-    if (attrib < 0) {
-        // Try append DSK if no extension
-        if (strchr(path,'.') == NULL) {
-            AppendPathChar(fqn,'.');
-            strncat(fqn,"DSK",MAX_PATH);
-            filesize = FileAttrib(fqn, &attrib);
+    // Look for the file
+    char file[MAX_PATH];
+    char tmp[MAX_PATH];
+    FixSDCPath(file,path);              // Fixup SDC format
+    if (!SearchFile(file)) {
+        strncpy(tmp,file,MAX_PATH);     // try append ".DSK"
+        strncat(tmp,".DSK",MAX_PATH);
+        if (!SearchFile(tmp)) {
+            strncpy(tmp,file,MAX_PATH); // try wildcard
+            strncat(tmp,"*",MAX_PATH);
+            if (!SearchFile(tmp)) {
+                _DLOG("Mount %s not found\n",file);
+                return false;
+            }
         }
     }
-    if (attrib < 0) {
-        _DLOG("MountDisk %s does not exist\n",path);
-        return false;
-    }
+    _DLOG("Mount %s on %s\n",dFound.cFileName,SeaDir);
 
-    if ((attrib & ATTR_DIR) != 0) {
+    // Matched filename
+    char fqn[MAX_PATH]={};
+    strncpy(fqn,SeaDir,MAX_PATH);
+    strncat(fqn,dFound.cFileName,MAX_PATH);
+
+    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
         _DLOG("MountDisk %s is a directory\n",fqn);
         return false;
     }
 
     // Extra file bytes are considered to be header bytes
+    int filesize = dFound.nFileSizeLow;
     int headersize = filesize & 255;
     if (headersize != 0) {
         _DLOG("MountDisk %s header %d/n",fqn,headersize);
@@ -1465,9 +1410,9 @@ bool MountDisk (int drive, const char * path)
 
     // Fill image info.
     strncpy(DiskImage[drive].name,fqn,MAX_PATH);
-    DiskImage[drive].attrib = attrib;
     DiskImage[drive].size = filesize;
     DiskImage[drive].headersize = headersize;
+    LoadFindRecord(&DiskImage[drive].filerec);
 
     // Make sure drive can be opened
     if (OpenDrive(drive)) {
@@ -1532,9 +1477,8 @@ void CloseDrive (int drive)
 void AppendPathChar(char * path, char c)
 {
     int l = strlen(path);
+    if ((l > 0) && (path[l-1] == c)) return;
     if (l > (MAX_PATH-2)) return;
-    if (l > 0)
-        if (path[l-1] == c) return;
     path[l] = c;
     path[l+1] = '\0';
 }
@@ -1544,11 +1488,10 @@ void AppendPathChar(char * path, char c)
 //----------------------------------------------------------------------
 bool IsDirectory(const char * path)
 {
-    char attr;
-    FileAttrib(path,&attr);
-    if (attr == ATTR_INVALID) return false;
-    if ((attr & ATTR_DIR) == 0) return false;
-    return true;
+    struct _stat file_stat;
+    int result = _stat(path,&file_stat);
+    if (result != 0) return false;
+    return ((file_stat.st_mode & _S_IFDIR) != 0);
 }
 
 //----------------------------------------------------------------------
@@ -1613,39 +1556,60 @@ bool SetCurDir(char * path)
 }
 
 //----------------------------------------------------------------------
-// Initialize file search. Append "*.*" if pattern is a directory.
-// Save the directory portion of the pattern for prepending to results
+// File search
 //----------------------------------------------------------------------
-bool InitiateDir(const char * pattern)
+bool SearchFile(const char * pattern)
 {
-
-    // Prepend current directory
+    // Path always start with SDCard
     char path[MAX_PATH];
     strncpy(path,SDCard,MAX_PATH);
     AppendPathChar(path,'/');
 
-    strncat(path,CurDir,MAX_PATH);
-    AppendPathChar(path,'/');
+    // If pattern does not start with '/' append current dir
+    if (*pattern != '/') {
+        strncat(path,CurDir,MAX_PATH);
+        AppendPathChar(path,'/');
+    }
 
+    // Append pattern
     strncat(path,pattern,MAX_PATH);
 
-    // Add *.* to search pattern if last char is '/'
-    int l = strlen(path);
-    if (path[l-1] == '/') strncat(path,"*.*",MAX_PATH);
+    //_DLOG("SearchFile %s\n",path);
 
+    // Search
     hFind = FindFirstFile(path, &dFound);
-    _DLOG("IntiateDir find %s\n",path);
 
-    // Save directory portion of search path
-    char *p = strrchr(path,'/'); p++; *p='\0';
-    strcpy(SeaDir,path);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        *SeaDir = '\0';
+        return false;
+    } else {
+        // Save directory portion for prepending to results
+        char * pnam = strrchr(path,'/');
+        if (pnam != NULL) pnam[1] = '\0';
+        strcpy(SeaDir,path);
+        return true;
+    }
 
     return (hFind != INVALID_HANDLE_VALUE);
 }
 
 //----------------------------------------------------------------------
+// InitiateDir command
+//----------------------------------------------------------------------
+bool InitiateDir(const char * path)
+{
+    // Append "*" if last char in path was '/';
+    char tmp[128];
+    strncpy(tmp,path,127);
+    int l = strlen(tmp);
+    if (tmp[l-1] == '/') strcat(tmp,"*");
+
+    return SearchFile(tmp);
+}
+
+//----------------------------------------------------------------------
 // Load directory page containing up to 16 file records that match
-// the pattern used in InitiateDir. Can be called multiple times until
+// the pattern used in SearchFile. Can be called multiple times until
 // there are no more matches
 //----------------------------------------------------------------------
 void LoadDirPage(void)
@@ -1657,18 +1621,12 @@ void LoadDirPage(void)
         return;
     }
 
-    char fqn[MAX_PATH];
-    int cnt = 0;
-    while (cnt < 16) {
-        strncpy(fqn,SeaDir,MAX_PATH);
-        strncat(fqn,dFound.cFileName,MAX_PATH);
-        LoadFileRecord(fqn,&DirPage[cnt]);
-        cnt++;
+    for (int cnt = 0; cnt < 16; cnt++) {
+        LoadFindRecord(&DirPage[cnt]);
         if (FindNextFile(hFind,&dFound) == 0) {
             FindClose(hFind);
             hFind = INVALID_HANDLE_VALUE;
             break;
         }
     }
-
 }
