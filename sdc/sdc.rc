@@ -72,14 +72,14 @@ BEGIN
             VALUE "Comments", "Emulation of SDC floppy emulator\0"
             VALUE "CompanyName", "BitRot Software.\0"
             VALUE "FileDescription", "SDC controller\0"
-            VALUE "FileVersion", "2.1.9.1\0"
+            VALUE "FileVersion", "2.1.9.2\0"
             VALUE "InternalName", "SDC\0"
             VALUE "LegalCopyright", "Copyright © 2010\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "sdc.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Vcc Module file\0"
-            VALUE "ProductVersion", "2.1.8.3\0"
+            VALUE "ProductVersion", "2.1.9.2\0"
             VALUE "SpecialBuild", "SDC Controller\0"
         END
     END
@@ -106,7 +106,8 @@ BEGIN
     LISTBOX     ID_SD_BOX,    10, 15, 165,  25, LBS_NOTIFY | LBS_WANTKEYBOARDINPUT
     LISTBOX     ID_FLASH_BOX, 10, 45, 165, 110, LBS_NOTIFY | LBS_WANTKEYBOARDINPUT
     CONTROL     "Enable clock at $FF70 (Cloud9)",IDC_CLOCK,"Button",BS_AUTOCHECKBOX,  10,141,160,10
-    PUSHBUTTON  "OK",IDOK,        10, 155, 55, 14
+    DEFPUSHBUTTON  "Next Disk", ID_NEXT,  20, 155, 55, 14, BS_DEFPUSHBUTTON
+    PUSHBUTTON     "OK",IDOK,            100, 155, 55, 14
 //  PUSHBUTTON  "Cancel",IDCANCEL, 100, 155, 55, 14
 END
 
