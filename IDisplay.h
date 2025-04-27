@@ -24,8 +24,6 @@
 
 namespace VCC
 {
-	struct OpenGLFont;
-	struct OpenGLFontGlyph;
 	typedef std::uint32_t uint32_t;
 	typedef std::uint8_t uint8_t;
 
@@ -60,7 +58,6 @@ namespace VCC
 	static Pixel ColorYellow(255, 255, 0);
 	static Pixel ColorBlack(0, 0, 0);
 
-#if USE_OPENGL
 	//
 	// Interface for display output
 	//
@@ -70,9 +67,27 @@ namespace VCC
 	//
 	struct IDisplay
 	{
+		enum
+		{
+			OK,						// no error
+		};
+
 		struct Rect
 		{
 			float x, y, w, h;
+		};
+
+		enum // rectOption
+		{
+			OPT_RECT_DISPLAY = 1,	// display surface rectangle
+			OPT_RECT_RENDER,		// entire render output rectangle
+			OPT_RECT_SURFACE,		// get rectangle of surface
+		};
+
+		enum // flagOption
+		{
+			OPT_FLAG_ASPECT = 1,	// force aspect ratio (default) ELSE stretch display
+			OPT_FLAG_NTSC,			// use 50hz aspect ELSE 60hz aspect (default)
 		};
 
 		// setup display:
@@ -85,16 +100,6 @@ namespace VCC
 		// render the surface to the screen
 		//
 		virtual int Render() = 0;
-
-		//
-		// render a box on the screen
-		//
-		virtual int RenderBox(float x, float y, float w, float h, Pixel color, bool filled) = 0;
-
-		//
-		// render the text on screen for full screen
-		//
-		virtual int RenderText(const OpenGLFont* font, float x, float y, float size, const char* text) = 0;
 
 		//
 		// present buffer to the screen
@@ -122,16 +127,40 @@ namespace VCC
 		virtual int GetRect(int rectOption, Rect* area) = 0;
 
 		//
+		// draw line/box in surface coordinates
+		//
+		virtual void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color) = 0;
+		virtual void DebugDrawBox(float x, float y, float w, float h, Pixel color) = 0;
+
+		//
+		// for access to GetSurface
+		//
+		virtual int LockSurface() = 0;
+		virtual int UnlockSurface() = 0;
+	};
+
+	struct OpenGLFont;
+	struct OpenGLFontGlyph;
+
+	struct IDisplayOpenGL : IDisplay
+	{
+		//
+		// render a box on the screen
+		//
+		virtual int RenderBox(float x, float y, float w, float h, Pixel color, bool filled) = 0;
+
+		//
+		// render the text on screen for full screen
+		//
+		virtual int RenderText(const OpenGLFont* font, float x, float y, float size, const char* text) = 0;
+
+		//
 		// create a new font from bitmapRes window resource
 		// out: outFont or null
 		//
 		virtual int LoadFont(const OpenGLFont** outFont, int bitmapRes, const OpenGLFontGlyph* glyphs, int start, int end) = 0;
 
-		//
-		// draw line/box in surface coordinates
-		//
-		virtual void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color) = 0;
-		virtual void DebugDrawBox(float x, float y, float w, float h, Pixel color) = 0;
+		virtual int LockSurface() { return OK; }
+		virtual int UnlockSurface() { return OK; }
 	};
-#endif // USE_OPENGL
 }

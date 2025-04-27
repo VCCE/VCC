@@ -34,7 +34,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014mmu.h"
 #include "audio.h"
 #include "pakinterface.h"
-#include "vcc.h"
 #include "DirectDrawInterface.h"
 #include "joystickinput.h"
 #include "keyboard.h"
