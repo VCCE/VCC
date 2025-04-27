@@ -289,6 +289,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Audio.c" />
+    <ClCompile Include="DirectX.cpp" />
     <ClCompile Include="OpenGL.cpp" />
     <ClCompile Include="OpenGLFontConsola.cpp" />
     <ClCompile Include="Screenshot.cpp" />
@@ -375,6 +376,7 @@
   <ItemGroup>
     <ClInclude Include="audio.h" />
     <ClInclude Include="BuildConfig.h" />
+    <ClInclude Include="DirectX.h" />
     <ClInclude Include="IDisplay.h" />
     <ClInclude Include="IDisplayDebug.h" />
     <ClInclude Include="OpenGL.h" />

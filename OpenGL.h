@@ -23,16 +23,16 @@
 
 #if USE_OPENGL
 
+#include "defines.h"
 #include "OpenGLFont.h"
 
 namespace VCC
 {
-	struct OpenGL : public IDisplay
+	struct OpenGL : public IDisplayOpenGL
 	{
 		enum // result codes - NOTE: don't reorder this pls, only append.
 		{
-			OK,						// no error
-			ERR_INITIALIZED,		// already initialized
+			ERR_INITIALIZED = 100,	// already initialized
 			ERR_NOTINITIALIZED,		// not initialized
 			ERR_TMPREGISTERCLASS,	// unable to register temporary class
 			ERR_TMPCREATEWINDOW,	// unable to create temporary window
@@ -54,20 +54,7 @@ namespace VCC
 			ERR_TMPMAKECONTEXT,		// unable to set context
 		};
 
-		enum // flagOption
-		{
-			OPT_FLAG_ASPECT = 1,	// force aspect ratio (default) ELSE stretch display
-			OPT_FLAG_NTSC,			// use 50hz aspect ELSE 60hz aspect (default)
-		};
-
-		enum // rectOption
-		{
-			OPT_RECT_DISPLAY = 1,	// display surface rectangle
-			OPT_RECT_RENDER,		// entire render output rectangle
-			OPT_RECT_SURFACE,		// get rectangle of surface
-		};
-
-		OpenGL() : detail(nullptr) {}
+		OpenGL(SystemState*) : detail(nullptr) {}
 
 		int Setup(void* hwnd, int width, int height, int statusHeight) override;
 		int Render() override;

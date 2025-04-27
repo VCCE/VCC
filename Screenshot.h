@@ -19,4 +19,22 @@
 
 #include "IDisplay.h"
 
-void Screenshot(VCC::IDisplay* display);
+namespace Screenshot
+{
+    enum
+    {
+        OK,
+        ERR_NOUSERPROFILE,
+        ERR_PATHTOOLONG,
+        ERR_FILECLASH,
+        ERR_NOLOCK,
+        ERR_NOUNLOCK,
+        ERR_NOSURFACE,
+        ERR_NOAREA,
+        ERR_WRITEPNG,
+    };
+
+    int Snap(VCC::IDisplay* display);
+}
+
+

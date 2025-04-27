@@ -37,10 +37,18 @@ This file is part of VCC (Virtual Color Computer).
 #if USE_OPENGL
 #include "OpenGL.h"
 #include "OpenGLFontConsola.h"
-
-static VCC::IDisplay* g_Display = nullptr;
 static const VCC::OpenGLFont* g_DisplayFont = nullptr;
+typedef VCC::IDisplayOpenGL IDisplayPtr;
+typedef VCC::OpenGL Display;
 #endif // USE_OPENGL
+
+#if USE_DIRECTX
+#include "DirectX.h"
+typedef VCC::IDisplay IDisplayPtr;
+typedef VCC::DirectX Display;
+#endif // USE_DIRECTX
+
+static IDisplayPtr* g_Display = nullptr;
 
 using namespace VCC; // after all includes
 
@@ -103,7 +111,7 @@ bool CreateDDWindow(SystemState *CWState)
 	memset(&ddsd, 0, sizeof(ddsd));	// Clear all members of the structure to 0
 	ddsd.dwSize = sizeof(ddsd);		// The first parameter of the structure must contain the size of the structure
 
-	bool isRememberSize = GetRememberSize();
+	auto isRememberSize = GetRememberSize();
 
 	if (isRememberSize)
 	{
@@ -302,19 +310,17 @@ bool CreateDDWindow(SystemState *CWState)
 		break;
 	}
 
-#if USE_OPENGL
 	HWND windowHandle = CWState->WindowHandle;
 	if (windowHandle)
 	{
-		if (!g_Display) g_Display = new OpenGL();
+		if (!g_Display) g_Display = new Display(CWState);
 		::GetClientRect(windowHandle, &rStatBar);
 		int w = rStatBar.right - rStatBar.left;
 		int h = rStatBar.bottom - rStatBar.top - StatusBarHeight;
-		if (g_Display->Setup(CWState->WindowHandle, w, h, StatusBarHeight) != OpenGL::OK)
+		if (g_Display->Setup(CWState->WindowHandle, w, h, StatusBarHeight) != IDisplay::OK)
 			return FALSE;
 		SetAspect(ForceAspect);
 	}
-#endif // USE_OPENGL
 
 	return TRUE;
 }
@@ -789,35 +795,38 @@ POINT GetForcedAspectBorderPadding()
 
 void CloseScreen()
 {
-#if USE_OPENGL
 	if (g_Display)
 	{
 		g_Display->Cleanup();
 		g_Display = nullptr;
+#if USE_OPENGL
 		g_DisplayFont = nullptr;
-	}
 #endif // USE_OPENGL
+	}
 }
 
 void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color)
 {
-#if USE_OPENGL
 	if (g_Display)
 		g_Display->DebugDrawLine(x1, y1, x2, y2, color);
-#endif // USE_OPENGL
 }
 
 void DebugDrawBox(float x, float y, float w, float h, Pixel color)
 {
-#if USE_OPENGL
 	if (g_Display)
 		g_Display->DebugDrawBox(x, y, w, h, color);
-#endif // USE_OPENGL
 }
 
 void DumpScreenshot()
 {
-#if USE_OPENGL
-	Screenshot(g_Display);
-#endif
+	using namespace Screenshot;
+
+	auto result = Snap(g_Display);
+
+	if (result != OK)
+	{
+		char msg[128];
+		sprintf(msg, "Unable to take screenshot! (%d)", result);
+		MessageBox(0, msg, "Error", 0);
+	}
 }
