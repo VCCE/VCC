@@ -484,7 +484,7 @@ void SetInteruptTimer(unsigned short Timer)
 
 void SetTimerClockRate (unsigned char Tmp)	//1= 279.265nS (1/ColorBurst) 
 {											//0= 63.695uS  (1/60*262)  1 scanline time
-	TimerClockRate=(Tmp+1)&1;
+	TimerClockRate=!!Tmp;
 	SetMasterTickCounter();
 	return;
 }
