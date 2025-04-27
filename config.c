@@ -194,8 +194,8 @@ void LoadConfig(SystemState *LCState)
 	CurrentConfig.RebootNow=0;
 	UpdateConfig();
 	RefreshJoystickStatus();
-	SoundInit(EmuState.WindowHandle,
-			SoundCards[CurrentConfig.SndOutDev].Guid,CurrentConfig.AudioRate);
+	if (EmuState.WindowHandle != NULL)
+		InitSound();
 
 //  Try to open the config file.  Create it if necessary.  Abort if failure.
 	hr = CreateFile(IniFilePath, GENERIC_READ | GENERIC_WRITE,
@@ -208,6 +208,12 @@ void LoadConfig(SystemState *LCState)
 		CloseHandle(hr);
 		if (lasterror != ERROR_ALREADY_EXISTS) WriteIniFile();  //!=183
 	}
+}
+
+void InitSound()
+{
+	SoundInit(EmuState.WindowHandle,
+		SoundCards[CurrentConfig.SndOutDev].Guid, CurrentConfig.AudioRate);
 }
 
 /***********************************************************/

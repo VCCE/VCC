@@ -160,7 +160,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		MessageBox(0,"Can't create primary Window","Error",0);
 		exit(0);
 	}
-
+	InitSound();
 	DynamicMenuCallback( "",0, 0);
 	DynamicMenuCallback( "",1, 0);
 	LoadModule();
@@ -221,7 +221,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	CloseScreen();
 	timeEndPeriod(1);
 	UnloadDll();
-	SoundDeInit();
 	WriteIniFile(); //Save Any changes to ini File
 	return Msg.wParam;
 }
@@ -413,6 +412,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case WM_CLOSE:
+			SoundDeInit();
 			BinaryRunning=0;
 			UnloadDll();
 			break;
