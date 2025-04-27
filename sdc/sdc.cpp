@@ -1,5 +1,6 @@
 //----------------------------------------------------------------------
 // SDC simulator DLL
+// By E J Jaquay 2025
 //
 // This file is part of VCC (Virtual Color Computer).
 // Vcc is Copyright 2015 by Joseph Forgione
@@ -72,8 +73,8 @@
 //  containing the contents of the SDcard.
 //
 //  Extended commands are in the data block, example M:<path> mounts a
-//  disk the SDC User Guide for detailed command descriptions. It is
-//  likely that some commands mentioned there are not yet supported
+//  disk. See the SDC User Guide for detailed command descriptions. It
+//  is likely that some commands mentioned there are not yet supported
 //  by this interface.
 //
 //  Flash data
@@ -182,7 +183,8 @@ void UpdateSD(void);
 void AppendPathChar(char *,char c);
 void LoadFindRecord(struct FileRecord *);
 void FixSDCPath(char *,const char *);
-bool MountDisk (int,const char *);
+bool MountDisk(int,const char *);
+bool MountNext(int);
 void CloseDrive(int);
 bool OpenDrive(int);
 void LoadReply(void *, int);
@@ -210,16 +212,13 @@ typedef struct {
     unsigned char status;
     unsigned char reply1;
     unsigned char reply2;
-
     unsigned char reply3;
     unsigned char param1;
     unsigned char param2;
     unsigned char param3;
-
     unsigned char reply_mode; // 0=words, 1=bytes
     unsigned char half_sent;
     unsigned char flash;
-
     int bufcnt;
     char *bufptr;
     char blkbuf[600];
@@ -234,7 +233,7 @@ char SDCard[MAX_PATH] = {}; // SD card root directory
 char CurDir[MAX_PATH] = {}; // SDC current directory
 char SeaDir[MAX_PATH] = {}; // Last directory searched
 
-// Packed file records directory commands
+// Packed file records for SDC file commands
 #pragma pack(1)
 struct FileRecord {
     char name[8];
@@ -421,6 +420,7 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         InitFlashBox();
         InitCardBox();
         SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnable,0);
+        SetFocus(GetDlgItem(hDlg,ID_NEXT));
         break;
     case WM_VKEYTOITEM:
         switch (LOWORD(wParam)) {
@@ -428,7 +428,7 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         case VK_SPACE:
             UpdateListBox((HWND) lParam);
             return -2; //no further processing
-        }
+       }
         return -1;
     case WM_COMMAND:
         switch (HIWORD(wParam)) {
@@ -448,6 +448,10 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         case IDCANCEL:
             EndDialog(hDlg,LOWORD(wParam));
+            break;
+        case ID_NEXT:
+            MountNext (0);
+            SetFocus(GetParent(hDlg));
             break;
         }
     }
@@ -951,10 +955,8 @@ void GetDriveInfo(void)
         LoadReply(DirPage,256);
         break;
     case 0x2B:
-        // '+' Mount next next disk in set.  Mounts disks with a
-        // digit suffix, starting with '1'. May repeat
-        _DLOG("GetDriveInfo $%0x (+) not enabled\n",IF.param1);
-        IF.status = STA_FAIL;
+        // '+' Mount next next disk in set.
+        MountNext(drive);
         break;
     case 0x56:
         // 'V' Get BCD firmware version number in p2, p3.
@@ -1388,7 +1390,54 @@ bool MountDisk (int drive, const char * path)
             }
         }
     }
-    _DLOG("Mount %s on %s\n",dFound.cFileName,SeaDir);
+    _DLOG("MountDisk %s on %s\n",dFound.cFileName,SeaDir);
+
+    // Matched filename
+    char fqn[MAX_PATH]={};
+    strncpy(fqn,SeaDir,MAX_PATH);
+    strncat(fqn,dFound.cFileName,MAX_PATH);
+
+    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        _DLOG("MountDisk %s is a directory\n",fqn);
+        return false;
+    }
+
+    // Extra file bytes are considered to be header bytes
+    int filesize = dFound.nFileSizeLow;
+    int headersize = filesize & 255;
+    if (headersize != 0) {
+        _DLOG("MountDisk %s header %d/n",fqn,headersize);
+    }
+    filesize -= headersize;
+
+    // Fill image info.
+    strncpy(DiskImage[drive].name,fqn,MAX_PATH);
+    DiskImage[drive].size = filesize;
+    DiskImage[drive].headersize = headersize;
+    LoadFindRecord(&DiskImage[drive].filerec);
+
+    // Make sure drive can be opened
+    if (OpenDrive(drive)) {
+        _DLOG("MountDisk %d %s\n",drive,fqn);
+        return true;
+    } else {
+        memset((void *) &DiskImage[drive],0,sizeof(_DiskImage));
+        return false;
+    }
+}
+
+//----------------------------------------------------------------------
+// Mount Next Disk from MountDisk set
+//----------------------------------------------------------------------
+bool MountNext (int drive)
+{
+    if (FindNextFile(hFind,&dFound) == 0) {
+        FindClose(hFind);
+        hFind = INVALID_HANDLE_VALUE;
+        return false;
+    }
+
+    _DLOG("MountNext %s on %s\n",dFound.cFileName,SeaDir);
 
     // Matched filename
     char fqn[MAX_PATH]={};
@@ -1499,8 +1548,6 @@ bool IsDirectory(const char * path)
 //----------------------------------------------------------------------
 bool SetCurDir(char * path)
 {
-    //TODO: Mount in set wildcard
-
     _DLOG("SetCurdir '%s'\n",path);
 
     char fqp[MAX_PATH];
@@ -1575,6 +1622,12 @@ bool SearchFile(const char * pattern)
     strncat(path,pattern,MAX_PATH);
 
     //_DLOG("SearchFile %s\n",path);
+
+    // Close previous search
+    if (hFind != INVALID_HANDLE_VALUE) {
+        FindClose(hFind);
+        hFind = INVALID_HANDLE_VALUE;
+    }
 
     // Search
     hFind = FindFirstFile(path, &dFound);
