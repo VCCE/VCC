@@ -68,20 +68,9 @@ int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned short Rate)
 	CurrentRate=Rate;
 	if (InitPassed)
 	{
-		InitPassed=0;
-		lpdsbuffer1->Stop();
-
-		if (lpdsbuffer1 !=NULL)
-		{
-			hr=lpdsbuffer1->Release();
-			lpdsbuffer1=NULL;
-		}
-
-		if (lpds!=NULL)
-		{
-			hr=lpds->Release();
-			lpds=NULL;
-		}
+		PauseAudio(true);
+		ResetAudio();
+		SoundDeInit();
 	}
 	SndLenth1= 0;
 	SndLenth2= 0;
@@ -235,8 +224,17 @@ int SoundDeInit(void)
 	if (InitPassed)
 	{
 		InitPassed=0;
-		lpdsbuffer1->Stop();
-		lpds->Release();
+		if (lpdsbuffer1 != NULL)
+		{
+			hr = lpdsbuffer1->Release();
+			lpdsbuffer1 = NULL;
+		}
+
+		if (lpds != NULL)
+		{
+			hr = lpds->Release();
+			lpds = NULL;
+		}
 	}
 	return(0);
 }
