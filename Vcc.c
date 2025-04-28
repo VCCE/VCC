@@ -780,7 +780,7 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 		case WM_INITDIALOG:
-			SendDlgItemMessage(hDlg,IDC_TITLE,WM_SETTEXT,strlen(g_szAppName),(LPARAM)(LPCSTR)g_szAppName);		
+			SendDlgItemMessage(hDlg,IDC_TITLE,WM_SETTEXT,0,(LPARAM)(LPCSTR)g_szAppName);
 			return TRUE;
 
 		case WM_COMMAND:
