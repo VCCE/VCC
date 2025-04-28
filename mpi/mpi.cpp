@@ -437,11 +437,11 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 			hConfDlg=hDlg;
 			for (Temp=0;Temp<4;Temp++)
-				SendDlgItemMessage(hDlg,EDITBOXS[Temp],WM_SETTEXT,5,(LPARAM)(LPCSTR) SlotLabel[Temp] );
+				SendDlgItemMessage(hDlg,EDITBOXS[Temp],WM_SETTEXT,0,(LPARAM)(LPCSTR) SlotLabel[Temp] );
 			SendDlgItemMessage(hDlg,IDC_PAKSELECT,TBM_SETRANGE,TRUE,MAKELONG(0,3) );
 			SendDlgItemMessage(hDlg,IDC_PAKSELECT,TBM_SETPOS,TRUE,SwitchSlot);
 			ReadModuleParms(SwitchSlot,ConfigText);
-			SendDlgItemMessage(hDlg,IDC_MODINFO,WM_SETTEXT,strlen(ConfigText),(LPARAM)(LPCSTR)ConfigText );
+			SendDlgItemMessage(hDlg,IDC_MODINFO,WM_SETTEXT,0,(LPARAM)(LPCSTR)ConfigText );
 			SendDlgItemMessage(hDlg, IDC_PAK, BM_SETCHECK, PersistPaks, 0);
 			SendDlgItemMessage(hDlg, IDC_SCS_DISABLE, BM_SETCHECK, DisableSCS, 0);
 
@@ -478,7 +478,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					LoadCartDLL(Temp,ModulePaths[Temp]);
 					for (Temp=0;Temp<4;Temp++)
-						SendDlgItemMessage(hDlg,EDITBOXS[Temp],WM_SETTEXT,strlen(SlotLabel[Temp]),(LPARAM)(LPCSTR)SlotLabel[Temp] );
+						SendDlgItemMessage(hDlg,EDITBOXS[Temp],WM_SETTEXT,0,(LPARAM)(LPCSTR)SlotLabel[Temp] );
 				}
 			}
 
@@ -487,7 +487,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				if ( LOWORD(wParam) == REMOVEBTN[Temp] )
 				{
 					UnloadModule(Temp);	
-					SendDlgItemMessage(hDlg,EDITBOXS[Temp],WM_SETTEXT,strlen(SlotLabel[Temp]),(LPARAM)(LPCSTR)SlotLabel[Temp] );
+					SendDlgItemMessage(hDlg,EDITBOXS[Temp],WM_SETTEXT,0,(LPARAM)(LPCSTR)SlotLabel[Temp] );
 				}
 			}
 
@@ -507,7 +507,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			SpareSelectSlot= SwitchSlot;
 			ChipSelectSlot= SwitchSlot;
 			ReadModuleParms(SwitchSlot,ConfigText);
-			SendDlgItemMessage(hDlg,IDC_MODINFO,WM_SETTEXT,strlen(ConfigText),(LPARAM)(LPCSTR)ConfigText );
+			SendDlgItemMessage(hDlg,IDC_MODINFO,WM_SETTEXT,0,(LPARAM)(LPCSTR)ConfigText );
 			PakSetCart(0);
 			if (CartForSlot[SpareSelectSlot]==1)
 				PakSetCart(1);
