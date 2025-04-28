@@ -171,6 +171,7 @@ float RenderFrame (SystemState *RFState)
 
 	if (!(FrameCounter % RFState->FrameSkip))
 	{
+		DrawBottomBoarder[RFState->BitDepth](RFState);
 		UnlockScreen(RFState);
 		SetBoarderChange(0);
 	}
@@ -269,7 +270,7 @@ void SetLinesperScreen (unsigned char Lines)
 	Lines = (Lines & 3);
 	LinesperScreen=Lpf[Lines];
 	TopBoarder=VcenterTable[Lines];
-	BottomBoarder = 240 - (TopBoarder + LinesperScreen);
+	BottomBoarder = 239 - (TopBoarder + LinesperScreen);
 	TopOffScreen = TopOffScreenTable[Lines];
 	BottomOffScreen = BottomOffScreenTable[Lines];
 	return;

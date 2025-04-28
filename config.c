@@ -767,13 +767,13 @@ void UpdateTapeCounter(unsigned int Counter,unsigned char TapeMode)
 	Tmode=TapeMode;
 	sprintf(OutBuffer,"%i",TapeCounter);
 	SendDlgItemMessage(hTapeDlg,IDC_TCOUNT,
-			WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
+			WM_SETTEXT,0,(LPARAM)(LPCSTR)OutBuffer);
 	SendDlgItemMessage(hTapeDlg,IDC_MODE,
-			WM_SETTEXT,strlen(Tmodes[Tmode]),(LPARAM)(LPCSTR)Tmodes[Tmode]);
+			WM_SETTEXT,0,(LPARAM)(LPCSTR)Tmodes[Tmode]);
 	GetTapeName(TapeFileName);
 	PathStripPath (TapeFileName);
 	SendDlgItemMessage(hTapeDlg,IDC_TAPEFILE,
-			WM_SETTEXT,strlen(TapeFileName),(LPARAM)(LPCSTR)TapeFileName);
+			WM_SETTEXT,0,(LPARAM)(LPCSTR)TapeFileName);
 
 	switch (Tmode) {
 	case REC:

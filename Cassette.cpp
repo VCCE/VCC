@@ -242,6 +242,9 @@ int MountTape( char *FileName)	//Return 1 on sucess 0 on fail
 		if (CasBuffer!=NULL)
 			free(CasBuffer);
 
+		if (TotalSize > WRITEBUFFERSIZE)
+			TotalSize = WRITEBUFFERSIZE;
+
 		CasBuffer=(unsigned char *)malloc(WRITEBUFFERSIZE);
 		SetFilePointer(TapeHandle,0,0,FILE_BEGIN);
 		ReadFile(TapeHandle,CasBuffer,TotalSize,&BytesMoved,NULL);	//Read the whole file in for .CAS files
@@ -277,7 +280,7 @@ unsigned int LoadTape(void)
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME);
 	ofn.hwndOwner         = NULL;
-	ofn.Flags             = OFN_HIDEREADONLY ;
+	ofn.Flags             = OFN_HIDEREADONLY | OFN_NOTESTFILECREATE;
 	ofn.hInstance         = GetModuleHandle(0);
 	ofn.lpstrDefExt			="";
 	ofn.lpstrFilter       =	"Cassette Files (*.cas)\0*.cas\0Wave Files (*.wav)\0*.wav\0\0";
