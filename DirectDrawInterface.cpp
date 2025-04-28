@@ -575,7 +575,7 @@ void SetStatusBarText(const char *TextBuffer,SystemState *STState)
 {
 	if (!STState->FullScreen)
 	{
-		SendMessage(hwndStatusBar,WM_SETTEXT ,strlen(TextBuffer),(LPARAM)(LPCSTR)TextBuffer);
+		SendMessage(hwndStatusBar,WM_SETTEXT,0,(LPARAM)(LPCSTR)TextBuffer);
 		SendMessage(hwndStatusBar,WM_SIZE,0,0);
 	}
 	else

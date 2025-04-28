@@ -83,11 +83,11 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	bool LoadSource(char* source)
 	{
-		SendDlgItemMessage(hWndSourceDebug, IDC_EDIT_SOURCE, WM_SETTEXT, strlen(source), (LPARAM)(LPCSTR)source);
+		SendDlgItemMessage(hWndSourceDebug, IDC_EDIT_SOURCE, WM_SETTEXT, 0, (LPARAM)(LPCSTR)source);
 
 		int nLines = 0;
 		std::string loaded(std::to_string(nLines) + " lines loaded");
-		SendDlgItemMessage(hWndSourceDebug, IDC_LINES_LOADED, WM_SETTEXT, loaded.size(), (LPARAM)ToLPCSTR(loaded));
+		SendDlgItemMessage(hWndSourceDebug, IDC_LINES_LOADED, WM_SETTEXT, 0, (LPARAM)ToLPCSTR(loaded));
 
 		std::ifstream file(source);
 		if (!file.is_open())
@@ -127,7 +127,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_SETSEL, WPARAM(0), LPARAM(-1));
 		SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_REPLACESEL, WPARAM(TRUE), (LPARAM)ToLPCSTR(lines));
 		SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_LINESCROLL, 0, (LPARAM)-nLines);
-		SendDlgItemMessage(hWndSourceDebug, IDC_LINES_LOADED, WM_SETTEXT, loaded.size(), (LPARAM)ToLPCSTR(loaded));
+		SendDlgItemMessage(hWndSourceDebug, IDC_LINES_LOADED, WM_SETTEXT, 0, (LPARAM)ToLPCSTR(loaded));
 		return true;
 	}
 

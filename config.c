@@ -496,7 +496,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		CpuIcons[1]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_HITACHI2);
 		SendMessage(hClkSpd,TBM_SETRANGE,TRUE,MAKELONG(2,CurrentConfig.MaxOverclock));
 		sprintf(OutBuffer,"%2.3f Mhz",(float)CurrentConfig.CPUMultiplyer*.894);
-		SendMessage(hClkDsp,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
+		SendMessage(hClkDsp,WM_SETTEXT,0,(LPARAM)(LPCSTR)OutBuffer);
 		SendMessage(hClkSpd,TBM_SETPOS,TRUE, CurrentConfig.CPUMultiplyer);
 		for (temp=0;temp<=3;temp++)
 			SendDlgItemMessage(hDlg,Ramchoice[temp],BM_SETCHECK,
@@ -517,7 +517,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	case WM_HSCROLL:
 		tmpcfg.CPUMultiplyer = (unsigned char) SendMessage (hClkSpd,TBM_GETPOS,0,0);
 		sprintf(OutBuffer,"%2.3f Mhz",(float)tmpcfg.CPUMultiplyer*.894);
-		SendDlgItemMessage(hDlg,IDC_CLOCKDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
+		SendDlgItemMessage(hDlg,IDC_CLOCKDISPLAY,WM_SETTEXT,0,(LPARAM)(LPCSTR)OutBuffer);
 		break;
 
 	case WM_COMMAND:
@@ -652,7 +652,7 @@ void IncreaseOverclockSpeed()
 						   TRUE, CurrentConfig.CPUMultiplyer);
 		sprintf(OutBuffer, "%2.3f Mhz", (float)CurrentConfig.CPUMultiplyer * 0.894);
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKDISPLAY, WM_SETTEXT,
-						   strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
+						   0, (LPARAM)(LPCSTR)OutBuffer);
 	}
 	EmuState.ResetPending = 4; // Without this, changing the config does nothing.
 }
@@ -670,7 +670,7 @@ void DecreaseOverclockSpeed()
 						   TRUE, CurrentConfig.CPUMultiplyer);
 		sprintf(OutBuffer, "%2.3f Mhz", (float)CurrentConfig.CPUMultiplyer * 0.894);
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKDISPLAY, WM_SETTEXT,
-						   strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
+						   0, (LPARAM)(LPCSTR)OutBuffer);
 	}
 	EmuState.ResetPending = 4;
 }
@@ -704,10 +704,10 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 	case WM_INITDIALOG:
 		TapeCounter=GetTapeCounter();
 		sprintf(OutBuffer,"%i",TapeCounter);
-		SendDlgItemMessage(hDlg,IDC_TCOUNT,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
-		SendDlgItemMessage(hDlg,IDC_MODE,WM_SETTEXT,strlen(Tmodes[Tmode]),(LPARAM)(LPCSTR)Tmodes[Tmode]);
+		SendDlgItemMessage(hDlg,IDC_TCOUNT,WM_SETTEXT,0,(LPARAM)(LPCSTR)OutBuffer);
+		SendDlgItemMessage(hDlg,IDC_MODE,WM_SETTEXT,0,(LPARAM)(LPCSTR)Tmodes[Tmode]);
 		GetTapeName(TapeFileName);  // Defined in Cassette.cpp
-		SendDlgItemMessage(hDlg,IDC_TAPEFILE,WM_SETTEXT,strlen(TapeFileName),(LPARAM)(LPCSTR)TapeFileName);
+		SendDlgItemMessage(hDlg,IDC_TAPEFILE,WM_SETTEXT,0,(LPARAM)(LPCSTR)TapeFileName);
 		SendDlgItemMessage(hDlg,IDC_TCOUNT,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0));
 		SendDlgItemMessage(hDlg,IDC_TCOUNT,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&CounterText);
 		SendDlgItemMessage(hDlg,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0));
@@ -921,7 +921,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 		SendDlgItemMessage(hDlg,IDC_REMEMBER_SIZE, BM_SETCHECK, tmpcfg.RememberSize, 0);
 		sprintf(OutBuffer,"%i",tmpcfg.FrameSkip);
 		SendDlgItemMessage(hDlg,IDC_FRAMEDISPLAY,
-				WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
+				WM_SETTEXT,0,(LPARAM)(LPCSTR)OutBuffer);
 		if (tmpcfg.MonitorType == 1) {
 			SendDlgItemMessage(hDlg,IDC_COMPOSITE,BM_SETCHECK,0,0);
 			SendDlgItemMessage(hDlg,IDC_RGB,BM_SETCHECK,1,0);
@@ -945,7 +945,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			SendDlgItemMessage(hDlg,IDC_FRAMESKIP,TBM_GETPOS,(WPARAM) 0, (WPARAM) 0);
 		sprintf(OutBuffer,"%i",tmpcfg.FrameSkip);
 		SendDlgItemMessage(hDlg,IDC_FRAMEDISPLAY,
-			WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
+			WM_SETTEXT,0,(LPARAM)(LPCSTR)OutBuffer);
 		break;
 
 	case WM_COMMAND:
@@ -1497,7 +1497,7 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		if (!strlen(SerialCaptureFile))
 			strcpy(SerialCaptureFile,"No Capture File");
 		SendDlgItemMessage(hDlg,IDC_SERIALFILE,
-			WM_SETTEXT,strlen(SerialCaptureFile),(LPARAM)(LPCSTR)SerialCaptureFile);
+			WM_SETTEXT,0,(LPARAM)(LPCSTR)SerialCaptureFile);
 		SendDlgItemMessage(hDlg,IDC_LF,BM_SETCHECK,TextMode,0);
 		SendDlgItemMessage(hDlg,IDC_PRINTMON,BM_SETCHECK,PrtMon,0);
 		SetSerialParams(TextMode);
@@ -1523,14 +1523,14 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		case IDC_OPEN:
 			SelectFile(SerialCaptureFile);
 			SendDlgItemMessage(hDlg,IDC_SERIALFILE,
-					WM_SETTEXT,strlen(SerialCaptureFile),(LPARAM)(LPCSTR)SerialCaptureFile);
+					WM_SETTEXT,0,(LPARAM)(LPCSTR)SerialCaptureFile);
 			break;
 
 		case IDC_CLOSE:
 			ClosePrintFile();
 			strcpy(SerialCaptureFile,"No Capture File");
 			SendDlgItemMessage(hDlg,IDC_SERIALFILE,
-					WM_SETTEXT,strlen(SerialCaptureFile),(LPARAM)(LPCSTR)SerialCaptureFile);
+					WM_SETTEXT,0,(LPARAM)(LPCSTR)SerialCaptureFile);
 			PrtMon=FALSE;
 			SetMonState(PrtMon);
 			SendDlgItemMessage(hDlg,IDC_PRINTMON,BM_SETCHECK,PrtMon,0);
