@@ -287,7 +287,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 //			SendDlgItemMessage (hDlg, IDC_DISKA,WM_ENABLE  ,(WPARAM)0,(LPARAM)0);
 			SendDlgItemMessage (hDlg, IDC_DISKA,CB_SETCURSEL,(WPARAM)PhysicalDriveA,(LPARAM)0);
 			SendDlgItemMessage (hDlg, IDC_DISKB,CB_SETCURSEL,(WPARAM)PhysicalDriveB,(LPARAM)0);
-			SendDlgItemMessage (hDlg,IDC_ROMPATH,WM_SETTEXT,strlen(TempRomFileName),(LPARAM)(LPCSTR)TempRomFileName);
+			SendDlgItemMessage (hDlg,IDC_ROMPATH,WM_SETTEXT,0,(LPARAM)(LPCSTR)TempRomFileName);
 			return TRUE; 
 		break;
 
@@ -360,7 +360,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					ofn.lpstrTitle        = TEXT("Disk Rom Image") ;	// title bar string
 					ofn.Flags             = OFN_HIDEREADONLY;
 					GetOpenFileName (&ofn);
-						SendDlgItemMessage(hDlg,IDC_ROMPATH,WM_SETTEXT,strlen(TempRomFileName),(LPARAM)(LPCSTR)TempRomFileName);
+						SendDlgItemMessage(hDlg,IDC_ROMPATH,WM_SETTEXT,0,(LPARAM)(LPCSTR)TempRomFileName);
 				break;
 				case IDC_CLOCK:
 				case IDC_READONLY:
@@ -520,7 +520,7 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			SendDlgItemMessage(hDlg,IDC_DBLSIDE,BM_SETCHECK,DblSided,0);
 			strcpy(Dummy,TempFileName);
 			PathStripPath(Dummy);
-			SendDlgItemMessage(hDlg,IDC_TEXT1,WM_SETTEXT,strlen(Dummy),(LPARAM)(LPCSTR)Dummy);	
+			SendDlgItemMessage(hDlg,IDC_TEXT1,WM_SETTEXT,0,(LPARAM)(LPCSTR)Dummy);	
 			return TRUE; 
 		break;
 
