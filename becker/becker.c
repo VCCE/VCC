@@ -634,9 +634,9 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		
     
 
-			SendDlgItemMessage (hDlg,IDC_TCPHOST, WM_SETTEXT, strlen(dwaddress),(LPARAM)(LPCSTR)dwaddress);
+			SendDlgItemMessage (hDlg,IDC_TCPHOST, WM_SETTEXT, 0,(LPARAM)(LPCSTR)dwaddress);
 			sprintf(msg,"%d", dwsport);
-			SendDlgItemMessage (hDlg,IDC_TCPPORT, WM_SETTEXT, strlen(msg),(LPARAM)(LPCSTR)msg);
+			SendDlgItemMessage (hDlg,IDC_TCPPORT, WM_SETTEXT, 0,(LPARAM)(LPCSTR)msg);
 			
 			return TRUE; 
 		break;
