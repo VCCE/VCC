@@ -72,6 +72,7 @@ BEGIN
     POPUP "Help", HELP
     BEGIN
         MENUITEM "About Vcc",                   IDM_HELP_ABOUT
+        MENUITEM "Function Keys",               IDM_HELP_FUNKEY
         MENUITEM "User Guide",                  IDM_USER_WIKI
     END
 END
@@ -138,42 +139,58 @@ IDI_MOUSE               ICON                    "resources\\mouse.ico"
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 233, 379
-STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION
+IDD_ABOUTBOX DIALOGEX 0, 0, 232, 345
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,181,363,50,14
-    LTEXT           "Copyright 2015 By",IDC_STATIC,19,133,61,8
-    LTEXT           "Joseph Forgione",IDC_STATIC,19,143,53,8
-    CONTROL         IDB_VCC,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,4,3,217,45
-    CONTROL         IDB_3GUYS,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE,12,53,77,57,WS_EX_DLGMODALFRAME
-    LTEXT           "Another classic computer canceled before it's time!",IDC_STATIC,12,115,81,19
-    GROUPBOX        "Keyboard Special keys",IDC_STATIC,104,51,110,96,BS_CENTER
-    LTEXT           " F3 = Decrease Overclock",IDC_STATIC,108,62,100,8
-    LTEXT           " F4 = Increase Overclock",IDC_STATIC,108,71,100,8
-    LTEXT           " F5 = Soft Reset",IDC_STATIC,108,80,100,8
-    LTEXT           " F6 = RGB/Composite Toggle",IDC_STATIC,108,89,100,8
-    LTEXT           " F7 = Pause/Run Toggle",IDC_STATIC,108,98,100,8
-    LTEXT           " F8 = Throttle Toggle",IDC_STATIC,108,107,100,8
-    LTEXT           " F9 = Hard Reset (Power Cycle)",IDC_STATIC,108,116,100,8
-    LTEXT           "F10 = Fullscreen Status Toggle",IDC_STATIC,108,125,100,8
-    LTEXT           "F11 = Fullscreen Toggle",IDC_STATIC,108,134,100,8
-    CTEXT           "VCC (Virtual Color Computer) is free software: you can redistribute",IDC_STATIC,7,232,209,11
-    CTEXT           "it and/or modify it under the terms of the GNU General Public License",IDC_STATIC,7,243,224,11
-    CTEXT           "as published by the Free Software Foundation, either version 3 of the",IDC_STATIC,7,254,223,8
-    CTEXT           "License, or (at your option) any later version.",IDC_STATIC,37,265,159,8
-    CTEXT           "VCC (Virtual Color Computer) is distributed in the hope that it will ",IDC_STATIC,9,278,207,8
-    CTEXT           "be useful, but WITHOUT ANY WARRANTY; without even the implied warranty",IDC_STATIC,5,289,223,8
-    CTEXT           "of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",IDC_STATIC,5,300,226,8
-    CTEXT           "See the GNU General Public License for more details.",IDC_STATIC,31,311,174,8
-    CTEXT           "You should have received a copy of the GNU General Public License",IDC_STATIC,5,326,219,8
-    CTEXT           "Rebased to more ""modern"" compilers by Gary Coulbourne",IDC_STATIC,1,182,230,8
-    CTEXT           "VCC Repository and Release Packages maintained by Bill Pierce",IDC_STATIC,9,173,206,8
-    CTEXT           "Some code from OVCC by Walter Zambotti",IDC_STATIC,28,217,175,12,SS_CENTERIMAGE
-    CTEXT           "Adapted to VS2015 and Minor Bug Fixes by Wes Gale",IDC_STATIC,23,192,178,9
-    CTEXT           "Bug fixes and Enhancements by Bill Pierce, James Ross, Peter Westberg, James Rye, EJ Jaquay, Mike Rojas, && Trey Tomes",IDC_STATIC,1,201,230,16
-    CTEXT           "along with VCC (Virtual Color Computer). If not, see http://www.gnu.org/licenses/.",IDC_STATIC,31,337,174,18
+    CONTROL         IDB_VCC,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,8,5,217,45
+    CONTROL         IDB_3GUYS,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE,16,53,77,57,WS_EX_DLGMODALFRAME
+    LTEXT           "VCC Version 2.1.9.2",IDC_STATIC,114,65,85,10
+    LTEXT           "Another classic computer canceled before it's time!",IDC_STATIC,114,80,85,20
+    LTEXT           "Copyright 2015 By Joseph Forgione",IDC_STATIC,8,120,120,15
+    LTEXT           "VCC (Virtual Color Computer) is free software: you can redistribute and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.",IDC_STATIC,8,135,210,35
+    LTEXT           "VCC (Virtual Color Computer) is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",IDC_STATIC,8,172,210,35
+    LTEXT           "See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with VCC (Virtual Color Computer). If not, see http://www.gnu.org/licenses/.",IDC_STATIC,8,210,215,40
+    LTEXT           "VCC Repository and Release Packages maintained by Bill Pierce and Ed Jaquay.",IDC_STATIC,8,250,206,20
+    LTEXT           "Adapted to Visual Studio by Gary Coulbourne and Wes Gale. Hitachi 6309 port by Walter Zambotti.",IDC_STATIC,8,270,206,20
+    LTEXT           "Bug fixes and Enhancements by Bill Pierce, James Ross, Peter Westberg, James Rye, EJ Jaquay, Mike Rojas, Trey Tomes, && Craig Allsop.  ",IDC_STATIC,8,290,206,30
+    DEFPUSHBUTTON   "OK",IDOK,175,320,50,14
+END
+
+IDD_FUNCTION_KEYS DIALOGEX 0,0,180,165
+STYLE DS_CENTERMOUSE | DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Function Keys"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX "",IDC_STATIC,3,2,174,140,BS_CENTER
+    CTEXT "Normal",IDC_STATIC,10,8,50,10
+    LTEXT " F1   Coco F1",            IDC_STATIC,5,20,85,10
+    LTEXT " F2   Coco F2",            IDC_STATIC,5,30,85,10
+    LTEXT " F3   Decrease Overclock", IDC_STATIC,5,40,85,10
+    LTEXT " F4   Increase Overclock", IDC_STATIC,5,50,85,10
+    LTEXT " F5   Soft Reset",         IDC_STATIC,5,60,85,10
+    LTEXT " F6   Toggle RGB",         IDC_STATIC,5,70,85,10
+    LTEXT " F7   Pause/Run",          IDC_STATIC,5,80,85,10
+    LTEXT " F8   Toggle Throttle",    IDC_STATIC,5,90,85,10
+    LTEXT " F9   Stop/Start reset",   IDC_STATIC,5,100,85,10
+    LTEXT "F10  Toggle FS Status",    IDC_STATIC,5,110,85,10
+    LTEXT "F11  Toggle Fullscreen",   IDC_STATIC,5,120,85,10
+    LTEXT "F12  Take Screenshot",     IDC_STATIC,5,130,85,10
+    CTEXT "Shifted",IDC_STATIC,100,8,50,10
+    LTEXT "Function Key Help",  IDC_STATIC,100,20,65,10
+    LTEXT "Swap Joysticks",     IDC_STATIC,100,30,65,10
+    LTEXT "    ---",            IDC_STATIC,100,40,65,10
+    LTEXT "    ---",            IDC_STATIC,100,50,65,10
+    LTEXT "Hard Reset",         IDC_STATIC,100,60,65,10
+    LTEXT "Flip Artifacts",     IDC_STATIC,100,70,65,10
+    LTEXT "    ---",            IDC_STATIC,100,80,65,10
+    LTEXT "Toggle Overclock",   IDC_STATIC,100,90,65,10
+    LTEXT "    ---",            IDC_STATIC,100,100,65,10
+    LTEXT "    ---",            IDC_STATIC,100,110,65,10
+    LTEXT "    ---",            IDC_STATIC,100,120,65,10
+    LTEXT "Dump CPU Memory",    IDC_STATIC,100,130,65,10
+    DEFPUSHBUTTON "OK",IDOK,65,146,50,15
 END
 
 IDD_DISPLAY DIALOGEX 0, 0, 254, 220

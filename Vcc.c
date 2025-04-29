@@ -87,9 +87,10 @@ static unsigned char Pflag=0;
 static char CpuName[20]="CPUNAME";
 
 /***Forward declarations of functions included in this code module*****/
-BOOL				InitInstance	(HINSTANCE, int);
-LRESULT CALLBACK	About			(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK WndProc( HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam );
+BOOL InitInstance (HINSTANCE, int);
+BOOL CALLBACK About(HWND, UINT, WPARAM, LPARAM);
+BOOL CALLBACK FunctionKeys(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM);
 
 void SoftReset(void);
 void LoadIniFile(void);
@@ -273,14 +274,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 								 "https://github.com/VCCE/VCC/wiki/UserGuide",
 								 NULL, NULL, SW_SHOWNORMAL);
 					break;
-
 				case IDM_HELP_ABOUT:
-					DialogBox(EmuState.WindowInstance,
-						(LPCTSTR)IDD_ABOUTBOX,
-						hWnd,
-						(DLGPROC)About);
+					DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_ABOUTBOX,
+						hWnd, (DLGPROC)About);
 				    break;
-
+				case IDM_HELP_FUNKEY:
+					DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_FUNCTION_KEYS,
+						hWnd, (DLGPROC)FunctionKeys);
+				    break;
 				case ID_AUDIO_CONFIG:
 					OpenAudioConfig();
 				    break;
@@ -775,20 +776,40 @@ void SoftReset(void)
 }
 
 // Mesage handler for the About box.
-LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
 		case WM_INITDIALOG:
 			SendDlgItemMessage(hDlg,IDC_TITLE,WM_SETTEXT,0,(LPARAM)(LPCSTR)g_szAppName);
 			return TRUE;
-
+		case WM_CLOSE:
+			EndDialog(hDlg, LOWORD(wParam));
+			return TRUE;
 		case WM_COMMAND:
-			if (LOWORD(wParam) == IDOK)
-			{
-				EndDialog(hDlg, LOWORD(wParam));
-				return TRUE;
-			}
+			switch (LOWORD(wParam))
+			case IDOK:
+				SendMessage (hDlg, WM_CLOSE, 0, 0);
+			break;
+	}
+    return FALSE;
+}
+
+// Mesage handler for function key help.
+BOOL CALLBACK FunctionKeys(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+		case WM_INITDIALOG:
+			SendDlgItemMessage(hDlg,IDC_TITLE,WM_SETTEXT,0,(LPARAM)(LPCSTR)g_szAppName);
+			return TRUE;
+		case WM_CLOSE:
+			EndDialog(hDlg, LOWORD(wParam));
+			return TRUE;
+		case WM_COMMAND:
+			switch (LOWORD(wParam))
+			case IDOK:
+				SendMessage (hDlg, WM_CLOSE, 0, 0);
 			break;
 	}
     return FALSE;
@@ -1047,19 +1068,6 @@ void FullScreenToggle(void)
 
 void FunctionHelpBox(void)
 {
-	MessageBox(0,
-		"     normal\t\t   shifted\n"
-		"  F1  Coco F1\t\tFunction Key Help\n"
-		"  F2  Coco F2\t\tSwap Joysticks\n"
-		"  F3  Decrease Overclock\t  --\n"
-		"  F4  Increase Overclock\t  --\n"
-		"  F5  Soft Reset\t\tHard Reset\n"
-		"  F6  Toggle RGB/Composite\tFlip Artifacts\n"
-		"  F7  Toggle Run\t\t  --\n"
-		"  F8  Toggle Throttle\tToggle Overclocking\n"
-		"  F9  Toggle Emulation\t  --\n"
-		" F10  Toggle FS Status\t  --\n"
-		" F11  Toggle FullScreen\t  --\n"
-		,"Function Keys",MB_TASKMODAL | MB_TOPMOST);
+	DialogBox(EmuState.WindowInstance,
+			MAKEINTRESOURCE(IDD_FUNCTION_KEYS),NULL,FunctionKeys);
 }
-
