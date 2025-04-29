@@ -70,7 +70,9 @@ static double NanosThisLine=0;
 static unsigned char BlinkPhase=1;
 static unsigned int AudioBuffer[16384];
 static unsigned char CassBuffer[8192];
-static unsigned short AudioIndex=0;
+static unsigned int AudioIndex = 0;
+static unsigned int CassIndex = 0;
+static unsigned int CassBufferSize = 0;
 double NanosToInterrupt=0;
 static int IntEnable=0;
 static int SndEnable=1;
@@ -186,16 +188,12 @@ float RenderFrame (SystemState *RFState)
 	{
 	case 0:
 		FlushAudioBuffer(AudioBuffer,AudioIndex<<2);
+		AudioIndex = 0;
 		break;
 	case 1:
-		FlushCassetteBuffer(CassBuffer,AudioIndex);
-		break;
-	case 2:
-		LoadCassetteBuffer(CassBuffer);
-
+		FlushCassetteBuffer(CassBuffer,&CassIndex);
 		break;
 	}
-	AudioIndex=0;
 
 	// Only affect frame rate if a debug window is open.
 	RFState->Debugger.Update();
@@ -565,14 +563,43 @@ void AudioOut(void)
 
 void CassOut(void)
 {
-	CassBuffer[AudioIndex++]=GetCasSample();
+	CassBuffer[CassIndex++]=GetCasSample();
 	return;
 }
+
+//
+// Reads the next byte from cassette data stream until end of the tape
+// either fast mode, normal or wave data.
+//
+uint8_t CassInByteStream()
+{
+	if (CassIndex >= CassBufferSize)
+	{
+		LoadCassetteBuffer(CassBuffer, &CassBufferSize);
+		CassIndex = 0;
+	}
+	return CassBuffer[CassIndex++];
+}
+
+//
+// In fast load mode, byte stream is two samples per bit high & low,
+// the type of bit (0 or 1) depends on the period. based on this pass
+// the period to basic at address $83.
+//
+uint8_t CassInBitStream()
+{
+	uint8_t nextHalfBit = CassInByteStream();
+	// set counter time for one lo-hi cycle, basic checks for >18 (0bit) or <18 (1bit)
+	MemWrite8(nextHalfBit & 1 ? 10 : 20, 0x83);
+	return nextHalfBit >> 1;
+}
+
 
 void CassIn(void)
 {
 	AudioBuffer[AudioIndex]=GetDACSample();
-	SetCassetteSample(CassBuffer[AudioIndex++]);
+	if (!TapeFastLoad)
+		SetCassetteSample(CassInByteStream());
 	return;
 }
 
@@ -587,7 +614,7 @@ unsigned char SetSndOutMode(unsigned char Mode)  //0 = Speaker 1= Cassette Out 2
 	{
 	case 0:
 		if (LastMode==1)	//Send the last bits to be encoded
-			FlushCassetteBuffer(CassBuffer,AudioIndex);
+			FlushCassetteBuffer(CassBuffer,&CassIndex);
 
 		AudioEvent=AudioOut;
 		SetAudioRate (PrimarySoundRate);
