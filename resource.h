@@ -50,6 +50,7 @@
 #define IDD_BPLISTDIALOG                176
 #define IDD_EXPORT                      177
 #define IDB_FONT_CONSOLA                178
+#define IDD_FUNCTION_KEYS               179
 
 #define IDC_MUTE                        1003
 #define IDC_THROTTLE                    1004
@@ -449,6 +450,7 @@
 #define ID_TAPE_CONFIG                  40056
 #define ID_BITBANGER_CONFIG             40057
 #define ID_SWAP_JOYSTICKS               40058
+#define IDM_HELP_FUNKEY                 40059
 #define ID_CONFIGURE_OPTIONS            65535
 
 
@@ -456,7 +458,7 @@
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        178
+#define _APS_NEXT_RESOURCE_VALUE        180
 #define _APS_NEXT_COMMAND_VALUE         40060
 #define _APS_NEXT_CONTROL_VALUE         2150
 #define _APS_NEXT_SYMED_VALUE           101
