@@ -203,7 +203,10 @@ unsigned char pia1_read(unsigned char port)
 			if (dda)
 			{
 				regb[1]=(regb[1] & 63); //Cass In
-				Flag=regb[port] ;//& regb_dd[port];
+				if (TapeFastLoad)
+					Flag = (regb[port] & 0xFE) | CassInBitStream();
+				else
+					Flag = regb[port];//& regb_dd[port];
 				return(Flag);
 			}
 			else

@@ -59,6 +59,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "quickload.h"
 #include "throttle.h"
 #include "DirectDrawInterface.h"
+#include "Cassette.h"
 
 #include "CommandLine.h"
 #include "logger.h"
@@ -1025,6 +1026,8 @@ unsigned __stdcall EmuLoop(void *Dummy)
 			snprintf(tstatus,sizeof(tstatus),"Skip:%2.2i | FPS:%3.0f | %s @ %s | %s",
 				EmuState.FrameSkip,FPS,CpuName,tspeed,EmuState.StatusLine);
 		}
+		int len = strlen(tstatus);
+		UpdateTapeStatus(tstatus + len, sizeof(tstatus) - len);
 		SetStatusBarText(tstatus,&EmuState);
 
 		if (EmuState.Throttle)	//Do nothing untill the frame is over returning unused time to OS

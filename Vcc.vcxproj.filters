@@ -315,6 +315,7 @@
     <Image Include="resources\moto.ico">
       <Filter>Resources</Filter>
     </Image>
+    <Image Include="resources\consola.bmp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.md" />

@@ -398,7 +398,7 @@
 #define IDC_BTN_EXPORT                  2146
 #define IDC_EDIT_START                  2147
 #define IDC_EDIT_STOP                   2148
-
+#define IDC_FASTLOAD                    2151
 #define IDM_USER_WIKI                   40001
 #define ID_FILE_EXIT                    40002
 #define IDM_HELP_ABOUT                  40003
@@ -460,7 +460,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        180
 #define _APS_NEXT_COMMAND_VALUE         40060
-#define _APS_NEXT_CONTROL_VALUE         2150
+#define _APS_NEXT_CONTROL_VALUE         2152
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -427,6 +427,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\binfile.ico" />
+    <Image Include="resources\consola.bmp" />
     <Image Include="resources\hitachi.ico" />
     <Image Include="resources\ico00004.ico" />
     <Image Include="resources\icon1.ico" />
