@@ -186,14 +186,12 @@ float RenderFrame (SystemState *RFState)
 
 	switch (SoundOutputMode)
 	{
-	case 0:
-		FlushAudioBuffer(AudioBuffer,AudioIndex<<2);
-		AudioIndex = 0;
-		break;
 	case 1:
 		FlushCassetteBuffer(CassBuffer,&CassIndex);
 		break;
 	}
+	FlushAudioBuffer(AudioBuffer, AudioIndex << 2);
+	AudioIndex=0;
 
 	// Only affect frame rate if a debug window is open.
 	RFState->Debugger.Update();
@@ -597,10 +595,17 @@ uint8_t CassInBitStream()
 
 void CassIn(void)
 {
-	AudioBuffer[AudioIndex]=GetDACSample();
-	if (!TapeFastLoad)
-		SetCassetteSample(CassInByteStream());
-	return;
+	if (TapeFastLoad)
+	{
+		AudioBuffer[AudioIndex++] = GetMuxState() == PIA_MUX_CASSETTE ? 0 : GetDACSample();
+	}
+	else
+	{
+		auto mono8ToStereo16 = [](auto sample) { return (uint32_t)(sample << 20) + (sample << 4); };
+		auto cassette = CassInByteStream();
+		AudioBuffer[AudioIndex++] = GetMuxState() == PIA_MUX_CASSETTE ? mono8ToStereo16(cassette) : GetDACSample();
+		SetCassetteSample(cassette);
+	}
 }
 
 

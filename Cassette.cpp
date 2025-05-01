@@ -66,7 +66,7 @@ void Motor(unsigned char State)
 				break;
 
 				case PLAY:
-					Quiet = 1;
+					Quiet = 10;
 					TempIndex = 0;
 				break;
 

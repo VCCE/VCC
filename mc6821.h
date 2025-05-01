@@ -47,4 +47,9 @@ int OpenPrintFile(char *);
 #define ANY		2
 #define RAMPMAX 900
 
+const int PIA_MUX_DAC = 0;
+const int PIA_MUX_CASSETTE = 1;
+const int PIA_MUX_CARTRIDGE = 2;
+const int PIA_MUX_UNUSED = 3;
+
 #endif
