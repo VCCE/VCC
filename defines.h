@@ -24,6 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <cstdint>
 #include <atomic>
 #include <windows.h>
+#include <assert.h>
 
 //Speed throttling
 #define FRAMEINTERVAL 120	//Number of frames to sum the framecounter over
@@ -79,6 +80,81 @@ namespace VCC
             return { Left(), Top(), Right(), Bottom() };
         }
     };
+
+    //
+    // bounds checking array type
+    //
+    template <class T, size_t Size>
+    struct Array
+    {
+        void MemCpyFrom(const void* buffer, size_t bytes)
+        {
+            assert(bytes <= sizeof(data));
+            memcpy(&data[0], buffer, bytes);
+        }
+
+        void MemCpyTo(void* outBuffer, size_t bytes) 
+        {
+            MemCpyTo(0, outBuffer, bytes); 
+        }
+
+        void MemCpyTo(size_t startElement, void* outBuffer, size_t bytes)
+        {
+            assert(startElement*sizeof(T) + bytes <= sizeof(data));
+            memcpy(outBuffer, &data[startElement], bytes);
+        }
+
+        void MemSet(uint8_t fill, size_t bytes)
+        {
+            assert(bytes <= sizeof(data));
+            memset(data, fill, bytes);
+        }
+
+        T& operator[](size_t index) { return data[index]; }
+        const T& operator[](size_t index) const { return data[index]; }
+
+    private:
+        std::array<T, Size> data;
+    };
+
+
+    //
+    // protect T by verifying surrounding bytes
+    //
+#ifdef _DEBUG
+    template <class T, size_t Size = 256>
+    struct Protect
+    {
+        Protect()
+        {
+            for (int i = 0; i < Size; ++i)
+                before[i] = after[i] = 0xDEADBEEF;
+        }
+
+        void Check()
+        {
+            for (int i = 0; i < Size; ++i)
+            {
+                assert(before[Size-i-1] == 0xDEADBEEF);
+                assert(after[i] == 0xDEADBEEF);
+            }
+        }
+
+    private:
+        uint32_t before[Size];
+    public:
+        T Data;
+    private:
+        uint32_t after[Size];
+    };
+#else
+    template <class T>
+    struct Protect 
+    {
+        T Data; 
+        void Check() {}
+    };
+#endif
 }
 
 struct SystemState

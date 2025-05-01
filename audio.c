@@ -26,6 +26,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "audio.h"
 #include "logger.h"
 
+using AuxBufferType = VCC::Array<VCC::Array<uint32_t, 44100 / 60>, 6>;
+
 #define MAXCARDS	12
 //PlayBack
 static LPDIRECTSOUND	lpds;           // directsound interface pointer
@@ -36,7 +38,6 @@ static DSBCAPS			dsbcaps;        // directsound buffer caps
 static LPDIRECTSOUNDCAPTURE8	lpdsin;
 static DSCBUFFERDESC			dsbdin;           // directsound description
 
-
 HRESULT hr;
 static LPDIRECTSOUNDBUFFER	lpdsbuffer1=NULL;			//the sound buffers
 static LPDIRECTSOUNDCAPTUREBUFFER	lpdsbuffer2=NULL;	//the sound buffers for capture
@@ -46,7 +47,7 @@ static unsigned short BitRate=0;
 static DWORD SndLenth1= 0,SndLenth2= 0,SndBuffLenth = 0;
 static unsigned char InitPassed=0;
 static unsigned short BlockSize=0;
-static unsigned short AuxBuffer[6][44100/60]; //Biggest block size possible
+static AuxBufferType AuxBuffer;
 static DWORD WritePointer=0;
 static DWORD BuffOffset=0;
 static char AuxBufferPointer=0;
@@ -146,7 +147,7 @@ void FlushAudioBuffer(unsigned int *Abuffer,unsigned short Lenth)
 //	WriteLog(Msg,0);
 	if (GetFreeBlockCount()<=0)	//this should only kick in when frame skipping or unthrottled
 	{
-		memcpy(AuxBuffer[AuxBufferPointer],Abuffer2,Lenth);	//Saving buffer to aux stack
+		AuxBuffer[AuxBufferPointer].MemCpyTo(Abuffer2, Lenth);	//Saving buffer to aux stack
 		AuxBufferPointer++;		//and chase your own tail
 		AuxBufferPointer%=5;	//At this point we are so far behind we may as well drop the buffer
 		return;
@@ -193,9 +194,9 @@ int GetFreeBlockCount(void) //return 0 on full buffer
 		hr=lpdsbuffer1->Lock(BuffOffset,BlockSize,&SndPointer1,&SndLenth1,&SndPointer2,&SndLenth2,0);//DSBLOCK_FROMWRITECURSOR);
 		if (hr != DS_OK)
 			return;
-		memcpy(SndPointer1, AuxBuffer[AuxBufferPointer], SndLenth1);
-		if (SndPointer2 !=NULL)
-			memcpy(SndPointer2, (AuxBuffer[AuxBufferPointer]+(SndLenth1>>2)),SndLenth2);
+		AuxBuffer[AuxBufferPointer].MemCpyTo(SndPointer1, SndLenth1);
+		if (SndPointer2 != NULL)
+			AuxBuffer[AuxBufferPointer].MemCpyTo((SndLenth1 >> 2), SndPointer2, SndLenth2);
 		BuffOffset=(BuffOffset + BlockSize)% SndBuffLenth;
 		hr=lpdsbuffer1->Unlock(SndPointer1,SndLenth1,SndPointer2,SndLenth2);
 		AuxBufferPointer--;
