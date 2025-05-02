@@ -73,6 +73,13 @@
 #define USE_DEFAULT_POSITIONING false
 #endif
 
+//
+// Enable debugging display of audio and tape, mux and motor control, as well as output buffers.
+//
+#ifndef USE_DEBUG_AUDIOTAPE
+#define USE_DEBUG_AUDIOTAPE false
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // 
 // Edit options above rather than these:
@@ -84,3 +91,16 @@
 #if USE_OPENGL && USE_DIRECTX
 #error Enable either USE_OPENGL or USE_DIRECTX not both.
 #endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Options that are always off for release
+//
+#ifdef NDEBUG
+#undef USE_DEBUG_LINES 
+#define USE_DEBUG_LINES false	
+#undef USE_DEBUG_AUDIOTAPE
+#define USE_DEBUG_AUDIOTAPE false
+#undef USE_DEBUG_MOUSE
+#define USE_DEBUG_MOUSE false
+#endif
+

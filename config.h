@@ -28,7 +28,7 @@ unsigned char ReadIniFile(void);
 void GetIniFilePath( char *);
 void UpdateConfig (void);
 void UpdateSoundBar(unsigned short,unsigned short);
-void UpdateTapeCounter(unsigned int,unsigned char);
+void UpdateTapeCounter(unsigned int,unsigned char,bool force = false);
 int GetKeyboardLayout();
 void SetWindowRect(const VCC::Rect&);
 void CaptureCurrentWindowRect();

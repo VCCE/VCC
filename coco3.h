@@ -31,17 +31,17 @@ struct DisplayDetails
 
 
 //unsigned short RenderFrame (unsigned char);
-void SetClockSpeed(unsigned short Cycles);
+void SetClockSpeed(unsigned int Cycles);
 void SetLinesperScreen(unsigned char Lines);
 DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight);
 void SetHorzInteruptState(unsigned char);
 void SetVertInteruptState(unsigned char);
-unsigned char SetSndOutMode(unsigned char);
+void SetSndOutMode(unsigned char);
 float RenderFrame (SystemState *);
 
 void SetTimerInteruptState(unsigned char);
 void SetTimerClockRate (unsigned char);	
-void SetInteruptTimer(unsigned short);
+void SetInteruptTimer(unsigned int);
 void MiscReset(void);
 void PasteBASICWithNew();
 void PasteBASIC();
@@ -49,6 +49,6 @@ void PasteText();
 void QueueText(char *);
 void CopyText();
 void FlipArtifacts();
-unsigned short SetAudioRate (unsigned short);
+unsigned int SetAudioRate(unsigned int);
 
 #endif
