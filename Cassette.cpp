@@ -34,6 +34,7 @@ static char TapeFileName[MAX_PATH]="";
 static char CassPath[MAX_PATH];
 static unsigned char TempBuffer[8192];
 static unsigned char *CasBuffer=NULL;
+static char TapeWritten = 0;
 static char FileType=0;
 unsigned long BytesMoved=0;
 static unsigned int TempIndex=0;
@@ -168,6 +169,7 @@ void FlushCassetteBuffer(unsigned char *Buffer,unsigned int *Len)
 	unsigned int Length = *Len;
 	*Len = 0;
 
+	TapeWritten = true;
 	switch(FileType)
 	{
 	case WAV:
@@ -238,6 +240,7 @@ int MountTape( char *FileName)	//Return 1 on sucess 0 on fail
 		MessageBox(0,"Can't Mount","Error",0);
 		return(0);	//Give up
 	}
+	TapeWritten = false;
 	TotalSize=SetFilePointer(TapeHandle,0,0,FILE_END);
 	TapeOffset=0;
 	strcpy(Extension,&FileName[strlen(FileName)-3]);
@@ -321,6 +324,7 @@ unsigned int LoadTape(void)
 	if (strcmp(CassPath, "") != 0) {
 		WritePrivateProfileString("DefaultPaths", "CassPath", CassPath, IniFilePath); 
 	}
+	TapeWritten = false;
 	return(RetVal);
 }
 
@@ -332,6 +336,7 @@ void GetTapeName(char *Name)
 
 void SyncFileBuffer (void)
 {
+	if (!TapeWritten) return;
 	char Buffer[64]="";
 	unsigned long BytesMoved=0;
 	unsigned int FileSize=TotalSize+40-8;
