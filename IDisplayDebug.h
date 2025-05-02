@@ -27,6 +27,7 @@
 
 void DebugDrawBox(float x, float y, float w, float h, VCC::Pixel color);
 void DebugDrawLine(float x, float y, float x2, float y2, VCC::Pixel color);
+void DebugPrint(float x, float y, float size, const char* str);
 
 inline void DebugDrawBox(int x, int y, int w, int h, VCC::Pixel color) 
 {

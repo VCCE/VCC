@@ -195,7 +195,6 @@ struct SystemState
 extern SystemState EmuState;
 
 static char RateList[4][7]={"Mute","11025","22050","44100"};
-static unsigned short iRateList[4]={0,11025,22050,44100};
-#define TAPEAUDIORATE 44100
+static unsigned int iRateList[4]={0,11025,22050,44100};
 
 #endif

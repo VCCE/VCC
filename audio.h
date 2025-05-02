@@ -18,19 +18,21 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-int SoundInit (HWND,_GUID *,unsigned short);
+int SoundInit (HWND,_GUID *,unsigned int);
 int SoundDeInit(void);
-void FlushAudioBuffer ( unsigned int *,unsigned short);
+void FlushAudioBuffer ( unsigned int *,unsigned int);
 void ResetAudio (void);
 unsigned char PauseAudio(unsigned char Pause);
 int GetFreeBlockCount(void);
 int GetAuxBlockCount(void);
 void PurgeAuxBuffer(void);
-unsigned short GetSoundStatus(void);
+unsigned int GetSoundStatus(void);
 typedef struct CardList {
 	char CardName[64];
 	_GUID *Guid;
 } SndCardList;
+
+const int AUDIO_RATE = 44100;
 
 int GetSoundCardList (SndCardList *);
 

@@ -25,8 +25,14 @@ This file is part of VCC (Virtual Color Computer).
 #include "coco3.h"
 #include "audio.h"
 #include "logger.h"
+#include "BuildConfig.h"
+#include "Cassette.h"
 
-using AuxBufferType = VCC::Array<VCC::Array<uint32_t, 44100 / 60>, 6>;
+#if USE_DEBUG_AUDIOTAPE
+#include "IDisplayDebug.h"
+#endif
+
+using AuxBufferType = VCC::Array<VCC::Array<uint32_t, AUDIO_RATE / 60>, 6>;
 
 #define MAXCARDS	12
 //PlayBack
@@ -43,25 +49,38 @@ static LPDIRECTSOUNDBUFFER	lpdsbuffer1=NULL;			//the sound buffers
 static LPDIRECTSOUNDCAPTUREBUFFER	lpdsbuffer2=NULL;	//the sound buffers for capture
 static WAVEFORMATEX pcmwf;								//generic waveformat structure
 static void *SndPointer1 = NULL,*SndPointer2 = NULL;
-static unsigned short BitRate=0;
+static unsigned int BitRate=0;
 static DWORD SndLenth1= 0,SndLenth2= 0,SndBuffLenth = 0;
 static unsigned char InitPassed=0;
-static unsigned short BlockSize=0;
+static unsigned int BlockSize=0;
 static AuxBufferType AuxBuffer;
 static DWORD WritePointer=0;
 static DWORD BuffOffset=0;
 static char AuxBufferPointer=0;
 static int CardCount=0;
-static unsigned short CurrentRate=0;
+static unsigned int CurrentRate=0;
 static unsigned char AudioPause=0;
 static SndCardList *Cards=NULL;
 BOOL CALLBACK DSEnumCallback(LPGUID,LPCSTR,LPCSTR,LPVOID);
 
 
+#if USE_DEBUG_AUDIOTAPE
+static void* AudioBaseAddress=0;
+const int AudioHistorySize = 50;
+struct AudioBufferHistory
+{
+	void* aBuf;
+	unsigned int aSize;
+	void* bBuf;
+	unsigned int bSize;
+	unsigned int playPos;
+	unsigned int writePos;
+	unsigned int freeBlocks;
+};
+AudioBufferHistory gAudioBufferHistory[AudioHistorySize];
+#endif
 
-
-
-int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned short Rate)
+int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned int Rate)
 {
 	Rate=(Rate & 3);
 	if (Rate != 0)	//Force 44100 or Mute
@@ -115,6 +134,10 @@ int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned short Rate)
 		if (hr!=DS_OK)
 			return(1);
 
+#if USE_DEBUG_AUDIOTAPE
+		AudioBaseAddress = SndPointer1;
+		memset(gAudioBufferHistory, 0, sizeof(gAudioBufferHistory));
+#endif
 		memset (SndPointer1,0,SndBuffLenth);
 		hr=lpdsbuffer1->Unlock(SndPointer1,SndLenth1,SndPointer2,SndLenth2); 
 		if (hr!=DS_OK)
@@ -128,14 +151,13 @@ int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned short Rate)
 		InitPassed=1;
 		AudioPause=0;
 	}
-	SetAudioRate (iRateList[Rate]);
-//	SetAudioRate(44100);
+	SetAudioRate(AUDIO_RATE);
 	return(0);
 }
 
-void FlushAudioBuffer(unsigned int *Abuffer,unsigned short Lenth)
+void FlushAudioBuffer(unsigned int *Abuffer,unsigned int Lenth)
 {
-	unsigned short LeftAverage=0,RightAverage=0,Index=0;
+	unsigned int LeftAverage=0,RightAverage=0,Index=0;
 	unsigned char Flag=0;
 	unsigned char *Abuffer2=(unsigned char *)Abuffer;
 	LeftAverage=Abuffer[0]>>16;
@@ -145,23 +167,60 @@ void FlushAudioBuffer(unsigned int *Abuffer,unsigned short Lenth)
 		return;
 //	sprintf(Msg,"Lenth= %i Free Blocks= %i\n",Lenth,GetFreeBlockCount());
 //	WriteLog(Msg,0);
-	if (GetFreeBlockCount()<=0)	//this should only kick in when frame skipping or unthrottled
+	auto freeBlocks = GetFreeBlockCount();
+	if (freeBlocks<=0)	//this should only kick in when frame skipping or unthrottled
 	{
-		AuxBuffer[AuxBufferPointer].MemCpyTo(Abuffer2, Lenth);	//Saving buffer to aux stack
-		AuxBufferPointer++;		//and chase your own tail
-		AuxBufferPointer%=5;	//At this point we are so far behind we may as well drop the buffer
+		//AuxBuffer[AuxBufferPointer].MemCpyTo(Abuffer2, Lenth);	//Saving buffer to aux stack
+		//AuxBufferPointer++;		//and chase your own tail
+		//AuxBufferPointer%=5;	//At this point we are so far behind we may as well drop the buffer
 		return;
 	}
+
+#if USE_DEBUG_AUDIOTAPE
+	memcpy(&gAudioBufferHistory[0], &gAudioBufferHistory[1], sizeof(gAudioBufferHistory) - sizeof(*gAudioBufferHistory));
+	unsigned long WriteCursor = 0, PlayCursor = 0;
+	lpdsbuffer1->GetCurrentPosition(&PlayCursor, &WriteCursor);
+	auto& history = gAudioBufferHistory[AudioHistorySize - 1];
+	history.playPos = PlayCursor;
+	history.writePos = WriteCursor;
+	history.freeBlocks = freeBlocks;
+#endif
 
 	hr=lpdsbuffer1->Lock(BuffOffset,Lenth,&SndPointer1,&SndLenth1,&SndPointer2,&SndLenth2,0);
 	if (hr != DS_OK)
 		return;
-	
+
 	memcpy(SndPointer1, Abuffer2, SndLenth1);	// copy first section of circular buffer
-	if (SndPointer2 !=NULL)						// copy last section of circular buffer if wrapped
-		memcpy(SndPointer2, Abuffer2+SndLenth1,SndLenth2);
+	if (SndPointer2 != NULL)						// copy last section of circular buffer if wrapped
+		memcpy(SndPointer2, Abuffer2 + SndLenth1, SndLenth2);
 	hr=lpdsbuffer1->Unlock(SndPointer1,SndLenth1,SndPointer2,SndLenth2);// unlock the buffer
 	BuffOffset=(BuffOffset + Lenth)% SndBuffLenth;	//Where to write next
+
+#if USE_DEBUG_AUDIOTAPE
+	history.aBuf = SndPointer1;
+	history.aSize = SndLenth1;
+	history.bBuf = SndPointer2;
+	history.bSize = SndLenth2;
+	const int s = 75;
+	const int xp = 1000;
+	for (int i = 0; i < 50;++i)
+	{
+		auto& data = gAudioBufferHistory[i];
+		VCC::Pixel col(VCC::ColorYellow); col.a = 200;
+		int x = (char*)data.aBuf - (char*)AudioBaseAddress;
+		int y = 400 + i * 8;
+		DebugDrawBox(xp + x / s, y, data.aSize / s, 3, col);
+		if (data.bBuf)
+		{
+			VCC::Pixel col(VCC::ColorGreen); col.a = 200;
+			int x1 = (char*)data.bBuf - (char*)AudioBaseAddress;
+			DebugDrawBox(xp + x1 / s, y, data.bSize / s, 3, col);
+		}
+		DebugDrawLine(xp + data.playPos / s, y - 1, xp + data.playPos / s, y + 5, VCC::ColorGreen);
+		DebugDrawLine(xp + data.writePos / s, y - 1, xp + data.writePos / s, y + 5, VCC::ColorRed);
+		DebugDrawBox(xp - 20, y, data.freeBlocks, 3, col);
+	}
+#endif
 }
 
 
@@ -258,15 +317,14 @@ int SoundInInit (HWND main_window_handle,_GUID * Guid)
 	return(0);
 }
 
-unsigned short GetSoundStatus(void)
+unsigned int GetSoundStatus(void)
 {
 	return(CurrentRate);
 }
 
 void ResetAudio (void)
 {
-	SetAudioRate (iRateList[CurrentRate]);
-//	SetAudioRate(44100);
+	SetAudioRate(GetTapeRate());
 	if (InitPassed)
 		lpdsbuffer1->SetCurrentPosition(0);
 	BuffOffset=0;
