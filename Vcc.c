@@ -110,7 +110,7 @@ void (*CPUForcePC)(unsigned short)=NULL;
 void FullScreenToggle(void);
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys(void);
-void FunctionHelpBox(void);
+void FunctionHelpBox(HWND);
 void SetupClock(void);
 
 // Globals
@@ -482,12 +482,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			switch ( OEMscan )
 			{
-				case DIK_F1:
-					if (IsShiftKeyDown()) FunctionHelpBox();
-
-				case DIK_F2:
-					if (IsShiftKeyDown()) SwapJoySticks();
-
 				case DIK_F3:
 					DecreaseOverclockSpeed();
 				break;
@@ -503,15 +497,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 				case DIK_F6:
-					if (IsShiftKeyDown()) {
+					if (IsShiftKeyDown())
 						FlipArtifacts();
-					} else {
+					else
 						SetMonitorType(!SetMonitorType(QUERY));
-					}
 				break;
 
 				case DIK_F7:
-					EmuState.Debugger.ToggleRun();
+					if (IsShiftKeyDown())
+						SwapJoySticks();
+					else
+						EmuState.Debugger.ToggleRun();
 				break;
 
 				case DIK_F8:
@@ -532,21 +528,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 				case DIK_F10:
-					SetInfoBand(!SetInfoBand(QUERY));
-					InvalidateBoarder();
 				break;
 				
 				case DIK_F11:
-					if (FlagEmuStop == TH_RUNNING)
-					{
-						FlagEmuStop = TH_REQWAIT;
-						EmuState.FullScreen =! EmuState.FullScreen;
+					if (FlagEmuStop == TH_RUNNING) {
+						if (IsShiftKeyDown()) {
+							SetInfoBand(!SetInfoBand(QUERY));
+							InvalidateBoarder();
+						} else {
+							FlagEmuStop = TH_REQWAIT;
+							EmuState.FullScreen =! EmuState.FullScreen;
+						}
 					}
 				break;
 
 				case DIK_F12:
-					if (IsShiftKeyDown()) CpuDump();
-					else DumpScreenshot();
+					if (IsShiftKeyDown())
+						DumpScreenshot();
+					else
+						// If help dialog is modeless it prevents full screen
+						FunctionHelpBox(hWnd);
 				break;
 
 				default:
@@ -1069,8 +1070,8 @@ void FullScreenToggle(void)
 	return;
 }
 
-void FunctionHelpBox(void)
+void FunctionHelpBox(HWND hWnd)
 {
 	DialogBox(EmuState.WindowInstance,
-			MAKEINTRESOURCE(IDD_FUNCTION_KEYS),NULL,FunctionKeys);
+			MAKEINTRESOURCE(IDD_FUNCTION_KEYS),hWnd,FunctionKeys);
 }
