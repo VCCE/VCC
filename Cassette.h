@@ -24,12 +24,15 @@ This file is part of VCC (Virtual Color Computer).
 #define EJECT	3
 #define CAS	1
 #define WAV 0
-#define CAS_WRITEBUFFERSIZE	0x40000
-#define CAS_TAPEREADAHEAD 1000 // decoded batch size
+
+const int CAS_WRITEBUFFERSIZE = 0x40000;
+const int CAS_TAPEREADAHEAD = 1000; // decoded batch size
+const int CAS_SILENCE = 128;
+const int CAS_TAPEAUDIORATE = 44100;
 
 unsigned int GetTapeCounter(void);
 unsigned int LoadTape(void);
-void SetTapeCounter(unsigned int);
+void SetTapeCounter(unsigned int, bool force = false);
 void SetTapeMode(unsigned char);
 void Motor(unsigned char);
 void LoadCassetteBuffer(unsigned char *, unsigned int* CassBufferSize);
@@ -39,5 +42,7 @@ void UpdateTapeStatus(char* status, int max);
 uint8_t CassInBitStream();
 
 extern unsigned char TapeFastLoad;
+unsigned int GetTapeRate();
+unsigned char GetMotorState();
 
 #endif

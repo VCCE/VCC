@@ -21,6 +21,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "ddraw.h"
 #include <math.h>
 #include "defines.h"
+#include "BuildConfig.h"
 #include "tcc1014graphics.h"
 #include "tcc1014registers.h"
 #include "mc6821.h"
@@ -40,6 +41,21 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include "tcc1014mmu.h"
 
+
+#if USE_DEBUG_AUDIOTAPE
+#include "IDisplayDebug.h"
+const int AudioHistorySize = 900;
+struct AudioHistory
+{
+	char motorState;
+	char audioState;
+	int inputMin;
+	int inputMax;
+};
+AudioHistory gAudioHistory[AudioHistorySize];
+int gAudioHistoryCount = 0;
+#endif
+
 //int CPUExeca(int);
 
 #define RENDERS_PER_BLINK_TOGGLE 16
@@ -47,6 +63,7 @@ This file is part of VCC (Virtual Color Computer).
 //****************************************
 	static double SoundInterupt=0;
 	static double NanosToSoundSample=SoundInterupt;
+	static double NanosToAudioSample = SoundInterupt;
 	static double CyclesPerSecord=(COLORBURST/4)*(TARGETFRAMERATE/FRAMESPERSECORD);
 	static double LinesPerSecond= TARGETFRAMERATE * LINESPERSCREEN;
 	static double NanosPerLine = NANOSECOND / LinesPerSecond;
@@ -55,7 +72,7 @@ This file is part of VCC (Virtual Color Computer).
 	static double CycleDrift=0;
 	static double CyclesThisLine=0;
 	static unsigned int StateSwitch=0;
-	unsigned short SoundRate=0;
+	unsigned int SoundRate=0;
 //*****************************************************
 
 static unsigned char HorzInteruptEnabled=0,VertInteruptEnabled=0;
@@ -63,7 +80,7 @@ static unsigned char TopBoarder=0,BottomBoarder=0,TopOffScreen=0,BottomOffScreen
 static unsigned char LinesperScreen;
 static unsigned char TimerInteruptEnabled=0;
 static int MasterTimer=0; 
-static unsigned short TimerClockRate=0;
+static unsigned int TimerClockRate=0;
 static int TimerCycleCount=0;
 static double MasterTickCounter=0,UnxlatedTickCounter=0,OldMaster=0;
 static double NanosThisLine=0;
@@ -81,6 +98,8 @@ static unsigned char SoundOutputMode=0;	//Default to Speaker 1= Cassette
 static double emulatedCycles;
 double TimeToHSYNCLow = 0;
 double TimeToHSYNCHigh = 0;
+static unsigned char LastMotorState;
+static int AudioFreeBlockCount;
 
 static int clipcycle = 1, cyclewait=2000;
 bool codepaste, PasteWithNew = false; 
@@ -102,9 +121,84 @@ using namespace std;
 
 _inline void CPUCycle(double nanoseconds);
 
+void UpdateAudio()
+{
+#if USE_DEBUG_AUDIOTAPE
+	if (CassIndex < CassBufferSize)
+	{
+		uint8_t sample = LastMotorState ? CassBuffer[CassIndex] : CAS_SILENCE;
+		auto& data = gAudioHistory[AudioHistorySize - 1];
+		if (gAudioHistoryCount == 0)
+		{
+			data.inputMin = 0;
+			data.inputMax = 0;
+		}
+		if (gAudioHistoryCount < 5)
+		{
+			data.inputMin += sample;
+			data.inputMax += sample;
+		}
+		else if (gAudioHistoryCount == 5)
+		{
+			// begin with average sample (last 6)
+			data.inputMin += sample;
+			data.inputMax += sample;
+			data.inputMin /= 6;
+			data.inputMax /= 6;
+		}
+		else
+		{
+			// now, keep track of peak to peak volume
+			if (sample > data.inputMax) data.inputMax = sample;
+			if (sample < data.inputMin) data.inputMin = sample;
+		}
+		++gAudioHistoryCount;
+	}
+#endif // USE_DEBUG_AUDIOTAPE
+
+	// keep audio system full by tiny expansion of sound
+	if (AudioFreeBlockCount > 1 && (AudioIndex & 63) == 1)
+	{
+		unsigned int last = AudioBuffer[AudioIndex - 1];
+		AudioBuffer[AudioIndex++] = last;
+	}
+}
+
+void DebugDrawAudio()
+{
+#if USE_DEBUG_AUDIOTAPE
+	static VCC::Pixel col(255, 255, 255);
+	col.a = 240;
+	for (int i = 0; i < 734; ++i)
+	{
+		DebugDrawLine(i, 256 - ((AudioBuffer[i] & 0xFFFF) >> 7), i + 1, 256 - ((AudioBuffer[i + 1] & 0xFFFF) >> 7), col);
+		DebugDrawLine(750+i, 256 - ((AudioBuffer[i] & 0xFFFF0000) >> 23), 750+i + 1, 256 - ((AudioBuffer[i + 1] & 0xFFFF00000) >> 23), col);
+	}
+
+	auto& history = gAudioHistory[AudioHistorySize - 1];
+	history.motorState = LastMotorState;
+	history.audioState = GetMuxState() == PIA_MUX_CASSETTE;
+	gAudioHistoryCount = 0;
+	for (int i = 0; i < AudioHistorySize - 1; ++i)
+	{
+		auto& a = gAudioHistory[i];
+		auto& b = gAudioHistory[i + 1];
+		DebugDrawLine(i, 500 - a.inputMin, i + 1, 500 - a.inputMax, col);
+		DebugDrawLine(i, 520 - 20 * a.motorState, i + 1, 520 - 20 * b.motorState, col);
+		DebugDrawLine(i, 550 - 20 * a.audioState, i + 1, 550 - 20 * b.audioState, col);
+	}
+	memcpy(&gAudioHistory[0], &gAudioHistory[1], sizeof(gAudioHistory) - sizeof(*gAudioHistory));
+#endif // USE_DEBUG_AUDIOTAPE
+}
+
+
 float RenderFrame (SystemState *RFState)
 {
-	static unsigned short FrameCounter=0;
+	static unsigned int FrameCounter=0;
+
+	// once per frame
+	LastMotorState = GetMotorState();
+	AudioFreeBlockCount = GetFreeBlockCount();
 
 //********************************Start of frame Render*****************************************************
 
@@ -193,6 +287,8 @@ float RenderFrame (SystemState *RFState)
 	FlushAudioBuffer(AudioBuffer, AudioIndex << 2);
 	AudioIndex=0;
 
+	DebugDrawAudio();
+
 	// Only affect frame rate if a debug window is open.
 	RFState->Debugger.Update();
 
@@ -243,7 +339,7 @@ void HSYNC(unsigned char level)
 	}
 }
 
-void SetClockSpeed(unsigned short Cycles)
+void SetClockSpeed(unsigned int Cycles)
 {
 	OverClock=Cycles;
 	return;
@@ -309,6 +405,8 @@ DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
 
 _inline void HLINE(void)
 {
+	UpdateAudio();
+
 	// First part of the line
 	CPUCycle(NanosPerLine - HSYNCWidthInNanos);
 
@@ -471,7 +569,7 @@ void SetTimerInteruptState(unsigned char State)
 	return;
 }
 
-void SetInteruptTimer(unsigned short Timer)
+void SetInteruptTimer(unsigned int Timer)
 {
 	UnxlatedTickCounter=(Timer & 0xFFF);
 	SetMasterTickCounter();
@@ -513,6 +611,7 @@ void MiscReset(void)
 //*************************
 	SoundInterupt=0;//PICOSECOND/44100;
 	NanosToSoundSample=SoundInterupt;
+	NanosToAudioSample = SoundInterupt;
 	CycleDrift=0;
 	CyclesThisLine=0;
 	NanosThisLine=0;
@@ -531,15 +630,12 @@ int CPUExeca(int Loops)
 	return(RetVal);
 }
 */
-unsigned short SetAudioRate (unsigned short Rate)
+unsigned int SetAudioRate (unsigned int Rate)
 {
 
 	SndEnable=1;
 	SoundInterupt=0;
 	CycleDrift=0;
-	AudioIndex=0;
-	if (Rate != 0)	//Force Mute or 44100Hz
-		Rate = 44100;
 
 	if (Rate==0)
 		SndEnable=0;
@@ -547,6 +643,7 @@ unsigned short SetAudioRate (unsigned short Rate)
 	{
 		SoundInterupt=NANOSECOND/Rate;
 		NanosToSoundSample=SoundInterupt;
+		NanosToAudioSample = NANOSECOND/AUDIO_RATE;
 	}
 	SoundRate=Rate;
 	return(0);
@@ -561,7 +658,8 @@ void AudioOut(void)
 
 void CassOut(void)
 {
-	CassBuffer[CassIndex++]=GetCasSample();
+	if (LastMotorState && CassIndex < sizeof(CassBuffer)/sizeof(*CassBuffer))
+		CassBuffer[CassIndex++]=GetCasSample();
 	return;
 }
 
@@ -576,7 +674,7 @@ uint8_t CassInByteStream()
 		LoadCassetteBuffer(CassBuffer, &CassBufferSize);
 		CassIndex = 0;
 	}
-	return CassBuffer[CassIndex++];
+	return LastMotorState ? CassBuffer[CassIndex++] : CAS_SILENCE;
 }
 
 //
@@ -592,28 +690,65 @@ uint8_t CassInBitStream()
 	return nextHalfBit >> 1;
 }
 
-
 void CassIn(void)
 {
+	// fade ramp state
+	static unsigned int fadeTo = 0;
+	static unsigned int fade = 0;
+
+	// extract left channel
+	auto getLeft = [](auto sample) { return (unsigned long)(sample & 0xFFFF); };
+	// extract right channel
+	auto getRight = [](auto sample) { return (unsigned long)((sample >> 16) & 0xFFFF); };
+	// convert 8 bit to 16 bit stereo (like dac)
+	auto monoToStereo = [](uint8_t sample) { return ((uint32_t)sample << 23) | ((uint32_t)sample << 7); };
+
 	if (TapeFastLoad)
 	{
-		AudioBuffer[AudioIndex++] = GetMuxState() == PIA_MUX_CASSETTE ? 0 : GetDACSample();
+		AudioBuffer[AudioIndex++] = GetMuxState() == PIA_MUX_CASSETTE ? monoToStereo(CAS_SILENCE) : GetDACSample();
 	}
 	else
 	{
-		auto mono8ToStereo16 = [](auto sample) { return (uint32_t)(sample << 20) + (sample << 4); };
-		auto cassette = CassInByteStream();
-		AudioBuffer[AudioIndex++] = GetMuxState() == PIA_MUX_CASSETTE ? mono8ToStereo16(cassette) : GetDACSample();
-		SetCassetteSample(cassette);
+		// read next sample or same as last if motor is off
+		auto casSample =  CassInByteStream();
+		SetCassetteSample(casSample);
+
+		// mix two channels dependant on mux (2 x 16bit)
+		auto casChannel = monoToStereo(casSample);
+		auto dacChannel = GetDACSample();
+
+		// fade time of 125ms, note: this is slow enough to eliminate switching pop but
+		// it must be quick too because some games have a nasty habit of toggling the 
+		// mux on and off, such as Tuts Tomb.
+		const int FADE_TIME = SoundRate / 8;
+
+		// update ramp, always moving towards correct channel  
+		fade = fade < fadeTo ? fade + 1 : fade > fadeTo ? fade - 1 : fade;
+
+		// if mux changed, start transition
+		fadeTo = FADE_TIME * (GetMuxState() == PIA_MUX_CASSETTE ? 1 : 0);
+
+		// mix audio level between device channels
+		auto left = (getLeft(casChannel) * fade + getLeft(dacChannel) * (FADE_TIME - fade)) / FADE_TIME;
+		auto right = (getRight(casChannel) * fade + getRight(dacChannel) * (FADE_TIME - fade)) / FADE_TIME;
+		auto sample = (unsigned int)(left + (right << 16));
+
+		while (NanosToAudioSample > 0)
+		{
+			AudioBuffer[AudioIndex++] = sample;
+			NanosToAudioSample -= NANOSECOND / AUDIO_RATE;
+		}
+		NanosToAudioSample += SoundInterupt;
 	}
 }
 
 
 
-unsigned char SetSndOutMode(unsigned char Mode)  //0 = Speaker 1= Cassette Out 2=Cassette In
+void SetSndOutMode(unsigned char Mode)  //0 = Speaker 1= Cassette Out 2=Cassette In
 {
 	static unsigned char LastMode=0;
-	static unsigned short PrimarySoundRate=SoundRate;
+
+	if (Mode == LastMode) return;
 
 	switch (Mode)
 	{
@@ -622,37 +757,22 @@ unsigned char SetSndOutMode(unsigned char Mode)  //0 = Speaker 1= Cassette Out 2
 			FlushCassetteBuffer(CassBuffer,&CassIndex);
 
 		AudioEvent=AudioOut;
-		SetAudioRate (PrimarySoundRate);
-//		SetAudioRate(44100);
+		SetAudioRate(SoundRate);
 		break;
 
 	case 1:
 		AudioEvent=CassOut;
-		PrimarySoundRate=SoundRate;
-		SetAudioRate (TAPEAUDIORATE);
+		SetAudioRate(GetTapeRate());
 		break;
 
 	case 2:
 		AudioEvent=CassIn;
-		PrimarySoundRate=SoundRate;;
-		SetAudioRate (TAPEAUDIORATE);
-		break;
-
-	default:	//QUERY
-		return(SoundOutputMode);
+		SetAudioRate(GetTapeRate());
 		break;
 	}
 
-	if (Mode != LastMode)
-	{
-
-//		if (LastMode==1)
-//			FlushCassetteBuffer(CassBuffer,AudioIndex);	//get the last few bytes
-		AudioIndex=0;	//Reset Buffer on true mode switch
-		LastMode=Mode;
-	}
+	LastMode=Mode;
 	SoundOutputMode=Mode;
-	return(SoundOutputMode);
 }
 
 void PasteText() {

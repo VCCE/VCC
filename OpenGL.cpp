@@ -397,19 +397,22 @@ namespace VCC
 			if (debugLines.size())
 			{
 				Pixel lastColor(debugLines[0].color);
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				glBegin(GL_LINES);
-				glColor3ub(lastColor.r, lastColor.g, lastColor.b);
+				glColor4ub(lastColor.r, lastColor.g, lastColor.b, lastColor.a);
 				for (size_t i = 0; i < debugLines.size(); ++i)
 				{
 					if (lastColor != debugLines[i].color)
 					{
 						lastColor = debugLines[i].color;
-						glColor3ub(lastColor.r, lastColor.g, lastColor.b);
+						glColor4ub(lastColor.r, lastColor.g, lastColor.b, lastColor.a);
 					}
 					glVertex3f(debugLines[i].x1, debugLines[i].y1, 0);
 					glVertex3f(debugLines[i].x2, debugLines[i].y2, 0);
 				}
 				glEnd();
+				glDisable(GL_BLEND);
 				debugLines.clear();
 			}
 			#endif // USE_DEBUG_LINES

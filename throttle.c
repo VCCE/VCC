@@ -63,8 +63,11 @@ void CheckSound()
 				return;
 
 			// Dont let it fill up either
-			while (GetFreeBlockCount() < 1)
+			int count = 100; // loop limit
+			while (GetFreeBlockCount() < 1 && count > 0)
 			{
+Sleep(1);
+				--count;
 			}
 		}
 	}

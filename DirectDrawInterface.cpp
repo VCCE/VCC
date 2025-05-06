@@ -31,6 +31,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include <iostream>
 #include <string>
+#include "BuildConfig.h"
 #include "IDisplay.h"
 #include "Screenshot.h"
 
@@ -47,6 +48,11 @@ typedef VCC::OpenGL Display;
 typedef VCC::IDisplay IDisplayPtr;
 typedef VCC::DirectX Display;
 #endif // USE_DIRECTX
+
+#if USE_DEBUG_AUDIOTAPE
+#include "IDisplayDebug.h"
+#endif // USE_DEBUG_AUDIOTAPE
+
 
 static IDisplayPtr* g_Display = nullptr;
 
@@ -360,6 +366,15 @@ void DisplayFlip(SystemState *DFState)	// Double buffering flip
 				g_Display->RenderText(g_DisplayFont, 10, 18, 20, StatusText);
 			}
 		}
+
+#if USE_DEBUG_AUDIOTAPE
+		// put these here for now as it needs to be on top
+		DebugPrint(10, 250, 20, "Audio Out");
+		DebugPrint(10, 400, 20, "Audio In");
+		DebugPrint(10, 515, 20, "Motor");
+		DebugPrint(10, 545, 20, "MUX");
+#endif // USE_DEBUG_AUDIOTAPE
+
 		g_Display->Present();
 	}
 #endif // USE_OPENGL
@@ -815,6 +830,14 @@ void DebugDrawBox(float x, float y, float w, float h, Pixel color)
 {
 	if (g_Display)
 		g_Display->DebugDrawBox(x, y, w, h, color);
+}
+
+void DebugPrint(float x, float y, float size, const char* str)
+{
+#if USE_OPENGL && USE_DEBUG_LINES
+	if (g_Display && LoadOpenGLFont())
+		g_Display->RenderText(g_DisplayFont, x, y, size, str);
+#endif
 }
 
 void DumpScreenshot()

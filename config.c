@@ -98,7 +98,7 @@ typedef struct  {
 	unsigned char	SndOutDev;
 	unsigned char	KeyMap;
 	char			SoundCardName[64];
-	unsigned short	AudioRate;	// 0 = Mute
+	unsigned int	AudioRate;	// 0 = Mute
 	char			ModulePath[MAX_PATH];
 	char			PathtoExe[MAX_PATH];
 	char			FloppyPath[MAX_PATH];
@@ -732,29 +732,25 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 			}
 			break;
 		case IDC_PLAY:
-			Tmode=PLAY;
-			SetTapeMode(Tmode);
+			SetTapeMode(PLAY);
 			break;
 		case IDC_REC:
-			Tmode=REC;
-			SetTapeMode(Tmode);
+			SetTapeMode(REC);
 			break;
 		case IDC_STOP:
-			Tmode=STOP;
-			SetTapeMode(Tmode);
+			SetTapeMode(STOP);
 			break;
 		case IDC_EJECT:
-			Tmode=EJECT;
-			SetTapeMode(Tmode);
+			SetTapeMode(EJECT);
 			break;
 		case IDC_RESET:
-			TapeCounter=0;
-			SetTapeCounter(TapeCounter);
+			SetTapeCounter(0);
+			SetTapeMode(STOP);
 			break;
 		case IDC_TBROWSE:
 			LoadTape();
-			TapeCounter=0;
-			SetTapeCounter(TapeCounter);
+			SendDlgItemMessage(hDlg, IDC_FASTLOAD, BM_SETCHECK, TapeFastLoad, 0);
+			SetTapeCounter(0, true);
 			break;
 		case IDC_FASTLOAD:
 			TapeFastLoad = (unsigned char)SendDlgItemMessage(hDlg, IDC_FASTLOAD, BM_GETCHECK, 0, 0);
@@ -765,35 +761,42 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 	return(0);
 }
 
-void UpdateTapeCounter(unsigned int Counter,unsigned char TapeMode)
+void UpdateTapeCounter(unsigned int Counter,unsigned char TapeMode, bool forced)
 {
 	if (hTapeDlg==NULL) return;
-	TapeCounter=Counter;
-	Tmode=TapeMode;
-	sprintf(OutBuffer,"%i",TapeCounter);
-	SendDlgItemMessage(hTapeDlg,IDC_TCOUNT,
-			WM_SETTEXT,0,(LPARAM)(LPCSTR)OutBuffer);
-	SendDlgItemMessage(hTapeDlg,IDC_MODE,
-			WM_SETTEXT,0,(LPARAM)(LPCSTR)Tmodes[Tmode]);
-	GetTapeName(TapeFileName);
-	PathStripPath (TapeFileName);
-	SendDlgItemMessage(hTapeDlg,IDC_TAPEFILE,
-			WM_SETTEXT,0,(LPARAM)(LPCSTR)TapeFileName);
 
-	switch (Tmode) {
-	case REC:
-		SendDlgItemMessage(hTapeDlg,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0xAF,0,0));
-		break;
-
-	case PLAY:
-		SendDlgItemMessage(hTapeDlg,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0xAF,0));
-		break;
-
-	default:
-		SendDlgItemMessage(hTapeDlg,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0));
-		break;
+	if (Counter != TapeCounter || forced)
+	{
+		TapeCounter = Counter;
+		sprintf(OutBuffer, "%i", TapeCounter);
+		SendDlgItemMessage(hTapeDlg, IDC_TCOUNT,
+			WM_SETTEXT, 0, (LPARAM)(LPCSTR)OutBuffer);
 	}
-	return;
+
+	if (Tmode != TapeMode || forced)
+	{
+		Tmode = TapeMode;
+		SendDlgItemMessage(hTapeDlg, IDC_MODE,
+			WM_SETTEXT, 0, (LPARAM)(LPCSTR)Tmodes[Tmode]);
+		GetTapeName(TapeFileName);
+		PathStripPath(TapeFileName);
+		SendDlgItemMessage(hTapeDlg, IDC_TAPEFILE,
+			WM_SETTEXT, 0, (LPARAM)(LPCSTR)TapeFileName);
+
+		switch (Tmode) {
+			case REC:
+				SendDlgItemMessage(hTapeDlg, IDC_MODE, EM_SETBKGNDCOLOR, 0, (LPARAM)RGB(0xAF, 0, 0));
+				break;
+
+			case PLAY:
+				SendDlgItemMessage(hTapeDlg, IDC_MODE, EM_SETBKGNDCOLOR, 0, (LPARAM)RGB(0, 0xAF, 0));
+				break;
+
+			default:
+				SendDlgItemMessage(hTapeDlg, IDC_MODE, EM_SETBKGNDCOLOR, 0, (LPARAM)RGB(0, 0, 0));
+				break;
+		}
+	}
 }
 
 /********************************************/
