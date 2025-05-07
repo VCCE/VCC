@@ -111,7 +111,7 @@
 #include "cloud9.h"
 
 // Debug logging if _DEBUG_ is defined
-//#define _DEBUG_
+#define _DEBUG_
 #ifdef _DEBUG_
 #include "../logger.h"
 #define _DLOG(...) PrintLogC(__VA_ARGS__)
@@ -248,13 +248,14 @@ struct FileRecord {
 struct FileRecord DirPage[16];
 
 // Mounted image data
-struct _DiskImage {
-    char name[MAX_PATH];
+struct _Disk {
     HANDLE hFile;
-    int size;
-    int headersize;
+    unsigned int size;
+    unsigned int headersize;
+    char doublesided;
+    char name[MAX_PATH];
     struct FileRecord filerec;
-} DiskImage[2];
+} Disk[2];
 
 // Flash banks
 char FlashFile[8][MAX_PATH];
@@ -517,7 +518,7 @@ void SDCInit(void)
     LoadConfig();
     SetCurDir(""); // May be changed by ParseStartup()
 
-    memset((void *) &DiskImage,0,sizeof(DiskImage));
+    memset((void *) &Disk,0,sizeof(Disk));
 
     // Process the startup config file
     ParseStartup();
@@ -1041,8 +1042,8 @@ bool ReadDrive(int drive, int lsn, int sector_size)
     // Seek to logical sector on drive. This only supports
     // images with a contigous array of sectors.
     LARGE_INTEGER pos;
-    pos.QuadPart = lsn * sector_size + DiskImage[drive].headersize;
-    if (!SetFilePointerEx(DiskImage[drive].hFile,pos,NULL,FILE_BEGIN)) {
+    pos.QuadPart = lsn * sector_size + Disk[drive].headersize;
+    if (!SetFilePointerEx(Disk[drive].hFile,pos,NULL,FILE_BEGIN)) {
         _DLOG("ReadDrive seek error %s\n",LastErrorTxt());
         return false;
     }
@@ -1051,16 +1052,16 @@ bool ReadDrive(int drive, int lsn, int sector_size)
     DWORD cnt = 0;
     DWORD num = sector_size;
     char buf[520];
-    BOOL result = ReadFile(DiskImage[drive].hFile,buf,num,&cnt,NULL);
+    BOOL result = ReadFile(Disk[drive].hFile,buf,num,&cnt,NULL);
 
     if (!result) {
         _DLOG("ReadDrive %d drive %d hfile %d error %s\n",
-                lsn,drive,DiskImage[drive].hFile,LastErrorTxt());
+                lsn,drive,Disk[drive].hFile,LastErrorTxt());
         return false;
 
     } else if (cnt != num) {
         _DLOG("ReadDrive %d drive %d hfile %d short read %s\n",
-                lsn,drive,DiskImage[drive].hFile,LastErrorTxt());
+                lsn,drive,Disk[drive].hFile,LastErrorTxt());
         return false;
     } else {
         LoadReply(buf,sector_size);
@@ -1070,18 +1071,32 @@ bool ReadDrive(int drive, int lsn, int sector_size)
 
 //----------------------------------------------------------------------
 // Read logical sector
+//  IF.cmdcode:
+//    b0 drive number
+//    b1 single sided flag
+//    b2 eight bit transfer flag
+
 //----------------------------------------------------------------------
 void ReadSector(void)
 {
     int drive = IF.cmdcode & 1;
     int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
-    int maxsec = DiskImage[drive].size >> 8;
+    int maxsec = Disk[drive].size >> 8;
+
+    // Adjust for read of one side of a doublesided disk.
+    if ((Disk[drive].doublesided) && (IF.cmdcode & 2)) {
+        int trk = lsn / 18;
+        int sec = lsn % 18;
+        lsn = 36 * trk + sec;
+    }
 
     if (lsn > maxsec) {
         _DLOG("ReadSector overrun %d %d %d\n",drive,lsn,maxsec);
         IF.status = STA_FAIL;
         return;
     }
+
+    // reply_mode 0=words, 1=bytes
     IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1;
     if (!ReadDrive(drive,lsn,256)) IF.status = STA_FAIL;
 }
@@ -1100,7 +1115,7 @@ void StreamImage(void)
         IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1;
         stream_drive = IF.cmdcode & 1;
         stream_lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
-        stream_maxsec = DiskImage[stream_drive].size >> 9;
+        stream_maxsec = Disk[stream_drive].size >> 9;
         if (stream_lsn > stream_maxsec) {
             _DLOG("StreamImage overrun %d %d\n",stream_lsn,stream_maxsec);
             IF.status = STA_FAIL;
@@ -1132,8 +1147,8 @@ void WriteSector(void)
 {
     int drive = IF.cmdcode & 1;
 
-    if (DiskImage[drive].hFile == NULL) OpenDrive(drive);
-    if (DiskImage[drive].hFile == NULL) {
+    if (Disk[drive].hFile == NULL) OpenDrive(drive);
+    if (Disk[drive].hFile == NULL) {
         IF.status = STA_FAIL|STA_NOTFOUND;
         return;
     }
@@ -1141,17 +1156,25 @@ void WriteSector(void)
     //_DLOG("WriteSector %d drive %d\n",lsn,drive);
     int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
 
+    // Adjust for write of one side of a doublesided disk.
+    if ((Disk[drive].doublesided) && (IF.cmdcode & 2)) {
+        int trk = lsn / 18;
+        int sec = lsn % 18;
+        lsn = 36 * trk + sec;
+        //_DLOG("One side I/O trk %d sec %d lsn %d\n", trk, sec, lsn);
+    }
+
     // Only supporting images with contigous sector arrays
     LARGE_INTEGER pos;
-    pos.QuadPart = lsn * 256 + DiskImage[drive].headersize;
-    if (!SetFilePointerEx(DiskImage[drive].hFile,pos,NULL,FILE_BEGIN)) {
+    pos.QuadPart = lsn * 256 + Disk[drive].headersize;
+    if (!SetFilePointerEx(Disk[drive].hFile,pos,NULL,FILE_BEGIN)) {
         _DLOG("WriteSector seek error %s\n",LastErrorTxt());
         IF.status = STA_FAIL|STA_NOTFOUND;
     }
 
     DWORD cnt;
     DWORD num = 256;
-    WriteFile(DiskImage[drive].hFile, IF.blkbuf, num,&cnt,NULL);
+    WriteFile(Disk[drive].hFile, IF.blkbuf, num,&cnt,NULL);
     if (cnt != num) {
         _DLOG("WriteSector write error %s\n",LastErrorTxt());
         IF.status = STA_FAIL;
@@ -1183,12 +1206,12 @@ void  GetSectorCount() {
     int drive = IF.cmdcode & 1;
 
     // For now assuming a supported image type (not SDF)
-    if ((DiskImage[drive].size & 0xFF) != 0) {
+    if ((Disk[drive].size & 0xFF) != 0) {
         _DLOG("GetSectorCount file size not mutiple of 256\n");
         IF.status = STA_FAIL;
     }
 
-    unsigned int numsec = DiskImage[drive].size >> 8;
+    unsigned int numsec = Disk[drive].size >> 8;
     IF.reply3 = numsec & 0xFF;
     numsec = numsec >> 8;
     IF.reply2 = numsec & 0xFF;
@@ -1203,12 +1226,12 @@ void  GetSectorCount() {
 void GetMountedImageRec()
 {
     int drive = IF.cmdcode & 1;
-    //_DLOG("GetMountedImageRec %d %s\n",drive,DiskImage[drive].name);
-    if (strlen(DiskImage[drive].name) == 0) {
+    //_DLOG("GetMountedImageRec %d %s\n",drive,Disk[drive].name);
+    if (strlen(Disk[drive].name) == 0) {
         IF.status = STA_FAIL;
     } else {
         IF.reply_mode = 0;
-        LoadReply(&DiskImage[drive].filerec,sizeof(FileRecord));
+        LoadReply(&Disk[drive].filerec,sizeof(FileRecord));
     }
 }
 
@@ -1370,8 +1393,13 @@ bool MountDisk (int drive, const char * path)
     drive &= 1;
     if (*path == '\0') {
         CloseDrive(drive);
-        memset((void *) &DiskImage[drive],0,sizeof(_DiskImage));
+        memset((void *) &Disk[drive],0,sizeof(_Disk));
         return true;
+    }
+
+    if (Disk[drive].hFile != NULL) {
+        CloseHandle(Disk[drive].hFile);
+        memset((void *) &Disk[drive],0,sizeof(_Disk));
     }
 
     // Look for the file
@@ -1390,12 +1418,15 @@ bool MountDisk (int drive, const char * path)
             }
         }
     }
-    _DLOG("MountDisk %s on %s\n",dFound.cFileName,SeaDir);
 
-    // Matched filename
+    FindClose(hFind);
+
+    // Build fully qualified filename
     char fqn[MAX_PATH]={};
     strncpy(fqn,SeaDir,MAX_PATH);
     strncat(fqn,dFound.cFileName,MAX_PATH);
+
+    _DLOG("MountDisk %s\n",fqn);
 
     if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
         _DLOG("MountDisk %s is a directory\n",fqn);
@@ -1405,25 +1436,28 @@ bool MountDisk (int drive, const char * path)
     // Extra file bytes are considered to be header bytes
     int filesize = dFound.nFileSizeLow;
     int headersize = filesize & 255;
-    if (headersize != 0) {
-        _DLOG("MountDisk %s header %d/n",fqn,headersize);
-    }
     filesize -= headersize;
 
-    // Fill image info.
-    strncpy(DiskImage[drive].name,fqn,MAX_PATH);
-    DiskImage[drive].size = filesize;
-    DiskImage[drive].headersize = headersize;
-    LoadFindRecord(&DiskImage[drive].filerec);
+   _DLOG("MountDisk %s %d %d '%s'\n",Disk[drive].name,
+            Disk[drive].size,Disk[drive].headersize,
+            Disk[drive].filerec.name);
+
+    strncpy(Disk[drive].name,fqn,MAX_PATH);
+    Disk[drive].size = filesize;
+    Disk[drive].headersize = headersize;
 
     // Make sure drive can be opened
-    if (OpenDrive(drive)) {
-        _DLOG("MountDisk %d %s\n",drive,fqn);
-        return true;
-    } else {
-        memset((void *) &DiskImage[drive],0,sizeof(_DiskImage));
+    if (!OpenDrive(drive)) {
+        _DLOG("MountDisk %s open failed\n",fqn);
+        memset((void *) &Disk[drive],0,sizeof(_Disk));
         return false;
     }
+
+    // Fill image info.
+    LoadFindRecord(&Disk[drive].filerec);
+
+    _DLOG("MountDisk %s mounted\n",fqn);
+    return true;
 }
 
 //----------------------------------------------------------------------
@@ -1458,17 +1492,17 @@ bool MountNext (int drive)
     filesize -= headersize;
 
     // Fill image info.
-    strncpy(DiskImage[drive].name,fqn,MAX_PATH);
-    DiskImage[drive].size = filesize;
-    DiskImage[drive].headersize = headersize;
-    LoadFindRecord(&DiskImage[drive].filerec);
+    strncpy(Disk[drive].name,fqn,MAX_PATH);
+    Disk[drive].size = filesize;
+    Disk[drive].headersize = headersize;
+    LoadFindRecord(&Disk[drive].filerec);
 
     // Make sure drive can be opened
     if (OpenDrive(drive)) {
         _DLOG("MountDisk %d %s\n",drive,fqn);
         return true;
     } else {
-        memset((void *) &DiskImage[drive],0,sizeof(_DiskImage));
+        memset((void *) &Disk[drive],0,sizeof(_Disk));
         return false;
     }
 }
@@ -1480,30 +1514,54 @@ bool OpenDrive (int drive)
 {
     drive &= 1;
 
-    if (DiskImage[drive].hFile != NULL) {
-        CloseHandle(DiskImage[drive].hFile);
-        DiskImage[drive].hFile = NULL;
+    if (Disk[drive].hFile != NULL) {
+        _DLOG("OpenDrive close previous %d\n",Disk[drive].hFile);
+        CloseHandle(Disk[drive].hFile);
+        Disk[drive].hFile = NULL;
     }
 
-    if (*DiskImage[drive].name == '\0') {
+    if (*Disk[drive].name == '\0') {
         _DLOG("OpenDrive not mounted %d\n",drive);
         IF.status = STA_FAIL;
         return false;
     }
 
-    DiskImage[drive].hFile = CreateFile(
-        DiskImage[drive].name, GENERIC_READ|GENERIC_WRITE,
+    _DLOG("OpenDrive try %d %s %d\n",
+        drive, Disk[drive].name, Disk[drive].hFile);
+
+    Disk[drive].hFile = CreateFile(
+        Disk[drive].name, GENERIC_READ|GENERIC_WRITE,
         FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
 
-    if (DiskImage[drive].hFile == INVALID_HANDLE_VALUE) {
-        _DLOG("OpenDrive %d file %s %s\n",
-            drive,DiskImage[drive].name,LastErrorTxt());
+    if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
+        _DLOG("OpenDrive fail %d file %s\n",drive,Disk[drive].name);
+        _DLOG("... %s\n",LastErrorTxt());
         IF.status = STA_FAIL;
         return false;
     }
 
-    //_DLOG("OpenDrive %d %s %d\n",
-    //    drive, DiskImage[drive].name, DiskImage[drive].hFile);
+    // Determine if it is a doublesided disk.
+    unsigned int numsec;
+    unsigned char header[16];
+    switch (Disk[drive].headersize) {
+    case 4: // First Sector     = header[3]   1 assumed
+    case 3: // Sector Size code = header[2] 256 assumed {128,256,512,1024}
+    case 2: // Number of sides  = header[1]   1 or 2
+    case 1: // Sectors per trk  = header[0]  18 assumed
+        ReadFile(Disk[drive].hFile,header,16,NULL,NULL);
+        Disk[drive].doublesided = (header[1] == 2);
+        break;
+    case 0: // if no header sides is per sector count
+        numsec = Disk[drive].size >> 8;
+        Disk[drive].doublesided = ((numsec > 720) && (numsec <= 2880));
+    default: // More than 4 byte header is not supported
+        _DLOG("OpenDrive unsuported image type %d %d\n",
+              drive, Disk[drive].headersize);
+        break;
+    }
+
+    _DLOG("OpenDrive success %d %s %d %d\n", drive, Disk[drive].name,
+            Disk[drive].doublesided, Disk[drive].hFile);
     return true;
 }
 
@@ -1513,10 +1571,10 @@ bool OpenDrive (int drive)
 void CloseDrive (int drive)
 {
     drive &= 1;
-    if (DiskImage[drive].hFile != NULL) {
+    if (Disk[drive].hFile != NULL) {
         //_DLOG("ClosingDrive %d\n",drive);
-        CloseHandle(DiskImage[drive].hFile);
-        DiskImage[drive].hFile = NULL;
+        CloseHandle(Disk[drive].hFile);
+        Disk[drive].hFile = NULL;
     }
 }
 
