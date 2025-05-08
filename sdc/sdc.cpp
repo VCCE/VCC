@@ -177,6 +177,10 @@ void SDCCommand(void);
 void ReadSector(void);
 void StreamImage(void);
 void WriteSector(void);
+//bool SeekSector(int,unsigned int);
+//bool ReadDrive(int,unsigned int);
+bool SeekSector(unsigned char,unsigned int);
+bool ReadDrive(unsigned char,unsigned int);
 void GetDriveInfo(void);
 void SDCControl(void);
 void UpdateSD(void);
@@ -198,7 +202,6 @@ bool InitiateDir(const char *);
 bool IsDirectory(const char *path);
 void GetMountedImageRec(void);
 void GetSectorCount(void);
-bool ReadDrive(int,int,int,int);
 unsigned char PickReplyByte(unsigned char);
 
 //======================================================================
@@ -252,6 +255,8 @@ struct _Disk {
     HANDLE hFile;
     unsigned int size;
     unsigned int headersize;
+    DWORD sectorsize;
+    DWORD tracksectors;
     char doublesided;
     char name[MAX_PATH];
     struct FileRecord filerec;
@@ -278,10 +283,8 @@ static HWND hSDCardBox = NULL;
 
 // Streaming control
 int streaming;
-int stream_drive;
-int stream_lsn;
-int stream_mode;
-int stream_maxsec;
+unsigned char stream_cmdcode;
+unsigned int stream_lsn;
 
 //======================================================================
 // DLL exports
@@ -1035,70 +1038,80 @@ void BankSelect(int data)
 }
 
 //----------------------------------------------------------------------
+// Seek sector in drive image
+//  cmdcode:
+//    b0 drive number
+//    b1 single sided flag
+//    b2 eight bit transfer flag
+//----------------------------------------------------------------------
+bool SeekSector(unsigned char cmdcode, unsigned int lsn)
+{
+    // Adjust for read of one side of a doublesided disk.
+    int drive = cmdcode & 1;
+    if ((Disk[drive].doublesided) && (cmdcode & 2)) {
+        int trk = lsn / Disk[drive].tracksectors;
+        int sec = lsn % Disk[drive].tracksectors;
+        lsn = 2 * Disk[drive].tracksectors * trk + sec;
+    }
+
+    if (lsn > (Disk[drive].size / Disk[drive].sectorsize)) {
+        _DLOG("SeekSector overrun %d %d\n",drive,lsn);
+        IF.status = STA_FAIL;
+        return false;
+    }
+
+    // Seek to logical sector on drive.
+    LARGE_INTEGER pos;
+    pos.QuadPart = lsn * Disk[drive].sectorsize + Disk[drive].headersize;
+    if (!SetFilePointerEx(Disk[drive].hFile,pos,NULL,FILE_BEGIN)) {
+        _DLOG("SeekSector error %s\n",LastErrorTxt());
+        IF.status = STA_FAIL;
+        return false;
+    }
+    return true;
+}
+
+//----------------------------------------------------------------------
 // Read a sector from drive image and load reply
 //----------------------------------------------------------------------
-bool ReadDrive(int drive, int lsn, int sector_size)
+bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
 {
-    // Seek to logical sector on drive. This only supports
-    // images with a contigous array of sectors.
-    LARGE_INTEGER pos;
-    pos.QuadPart = lsn * sector_size + Disk[drive].headersize;
-    if (!SetFilePointerEx(Disk[drive].hFile,pos,NULL,FILE_BEGIN)) {
-        _DLOG("ReadDrive seek error %s\n",LastErrorTxt());
-        return false;
-    }
-
-    // Read a sector
-    DWORD cnt = 0;
-    DWORD num = sector_size;
     char buf[520];
-    BOOL result = ReadFile(Disk[drive].hFile,buf,num,&cnt,NULL);
+    DWORD cnt = 0;
 
-    if (!result) {
-        _DLOG("ReadDrive %d drive %d hfile %d error %s\n",
-                lsn,drive,Disk[drive].hFile,LastErrorTxt());
+    // Should cmdcode be passed as arg?
+    // Should drive come from cmdcode?
+    if (!SeekSector(cmdcode,lsn)) {
         return false;
-
-    } else if (cnt != num) {
-        _DLOG("ReadDrive %d drive %d hfile %d short read %s\n",
-                lsn,drive,Disk[drive].hFile,LastErrorTxt());
-        return false;
-    } else {
-        LoadReply(buf,sector_size);
-        return true;
     }
+
+    int drive = cmdcode & 1;
+    if (!ReadFile(Disk[drive].hFile,buf,Disk[drive].sectorsize,&cnt,NULL)) {
+        _DLOG("ReadDrive %d %s\n",drive,LastErrorTxt());
+        return false;
+    }
+
+    if (cnt != Disk[drive].sectorsize) {
+        _DLOG("ReadDrive %d short read\n",drive);
+        return false;
+    }
+
+    LoadReply(buf,cnt);
+    return true;
 }
 
 //----------------------------------------------------------------------
 // Read logical sector
-//  IF.cmdcode:
+// cmdcode:
 //    b0 drive number
 //    b1 single sided flag
 //    b2 eight bit transfer flag
-
 //----------------------------------------------------------------------
 void ReadSector(void)
 {
-    int drive = IF.cmdcode & 1;
-    int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
-    int maxsec = Disk[drive].size >> 8;
-
-    // Adjust for read of one side of a doublesided disk.
-    if ((Disk[drive].doublesided) && (IF.cmdcode & 2)) {
-        int trk = lsn / 18;
-        int sec = lsn % 18;
-        lsn = 36 * trk + sec;
-    }
-
-    if (lsn > maxsec) {
-        _DLOG("ReadSector overrun %d %d %d\n",drive,lsn,maxsec);
-        IF.status = STA_FAIL;
-        return;
-    }
-
-    // reply_mode 0=words, 1=bytes
-    IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1;
-    if (!ReadDrive(drive,lsn,256)) IF.status = STA_FAIL;
+    unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
+    IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1; // words : bytes
+    if (!ReadDrive(IF.cmdcode,lsn)) IF.status = STA_FAIL;
 }
 
 //----------------------------------------------------------------------
@@ -1109,79 +1122,65 @@ void StreamImage(void)
     // If already streaming continue
     if (streaming) {
         stream_lsn++;
-
     // Else start streaming
     } else {
+        stream_cmdcode = IF.cmdcode;
         IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1;
-        stream_drive = IF.cmdcode & 1;
         stream_lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
-        stream_maxsec = Disk[stream_drive].size >> 9;
-        if (stream_lsn > stream_maxsec) {
-            _DLOG("StreamImage overrun %d %d\n",stream_lsn,stream_maxsec);
-            IF.status = STA_FAIL;
-            return;
-        }
+        _DLOG("StreamImage lsn %d\n",stream_lsn);
     }
-    //_DLOG("StreamImage lsn %d\n",stream_lsn);
 
-    if (stream_lsn > stream_maxsec) {
+    // For now can only stream 512 byte sectors
+    int drive = stream_cmdcode & 1;
+    Disk[drive].sectorsize = 512;
+    Disk[drive].tracksectors = 9;
+
+    if (stream_lsn > (Disk[drive].size/Disk[drive].sectorsize)) {
         _DLOG("StreamImage done\n");
         streaming = 0;
         return;
     }
 
-    if (!ReadDrive(stream_drive,stream_lsn,512)) {
+    if (!ReadDrive(stream_cmdcode,stream_lsn)) {
         _DLOG("StreamImage read error %s\n",LastErrorTxt());
         IF.status = STA_FAIL;
         streaming = 0;
         return;
     }
-
     streaming = 1;
 }
 
 //----------------------------------------------------------------------
 // Write logical sector
+//  IF.cmdcode:
+//    b0 drive number
+//    b1 single sided flag
+//    b2 eight bit transfer flag
 //----------------------------------------------------------------------
 void WriteSector(void)
 {
+    DWORD cnt = 0;
     int drive = IF.cmdcode & 1;
+    unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
+    //_DLOG("WriteSector %d drive %d\n",lsn,drive);
 
-    if (Disk[drive].hFile == NULL) OpenDrive(drive);
-    if (Disk[drive].hFile == NULL) {
-        IF.status = STA_FAIL|STA_NOTFOUND;
+    if (!SeekSector(drive,lsn)) {
+        IF.status = STA_FAIL;
         return;
     }
-
-    //_DLOG("WriteSector %d drive %d\n",lsn,drive);
-    int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
-
-    // Adjust for write of one side of a doublesided disk.
-    if ((Disk[drive].doublesided) && (IF.cmdcode & 2)) {
-        int trk = lsn / 18;
-        int sec = lsn % 18;
-        lsn = 36 * trk + sec;
-        //_DLOG("One side I/O trk %d sec %d lsn %d\n", trk, sec, lsn);
-    }
-
-    // Only supporting images with contigous sector arrays
-    LARGE_INTEGER pos;
-    pos.QuadPart = lsn * 256 + Disk[drive].headersize;
-    if (!SetFilePointerEx(Disk[drive].hFile,pos,NULL,FILE_BEGIN)) {
-        _DLOG("WriteSector seek error %s\n",LastErrorTxt());
-        IF.status = STA_FAIL|STA_NOTFOUND;
-    }
-
-    DWORD cnt;
-    DWORD num = 256;
-    WriteFile(Disk[drive].hFile, IF.blkbuf, num,&cnt,NULL);
-    if (cnt != num) {
-        _DLOG("WriteSector write error %s\n",LastErrorTxt());
+    if (!WriteFile(Disk[drive].hFile,IF.blkbuf,
+                   Disk[drive].sectorsize,&cnt,NULL)) {
+        _DLOG("WriteSector %d %s\n",drive,LastErrorTxt());
         IF.status = STA_FAIL;
-        IF.status = STA_FAIL|STA_NOTFOUND;
-    } else {
-        IF.status = 0;
+        return;
     }
+    if (cnt != Disk[drive].sectorsize) {
+        _DLOG("WriteSector %d short write\n",drive);
+        IF.status = STA_FAIL;
+        return;
+    }
+    IF.status = 0;
+    return;
 }
 
 //----------------------------------------------------------------------
@@ -1204,14 +1203,7 @@ char * LastErrorTxt(void) {
 void  GetSectorCount() {
 
     int drive = IF.cmdcode & 1;
-
-    // For now assuming a supported image type (not SDF)
-    if ((Disk[drive].size & 0xFF) != 0) {
-        _DLOG("GetSectorCount file size not mutiple of 256\n");
-        IF.status = STA_FAIL;
-    }
-
-    unsigned int numsec = Disk[drive].size >> 8;
+    unsigned int numsec = Disk[drive].size/Disk[drive].sectorsize;
     IF.reply3 = numsec & 0xFF;
     numsec = numsec >> 8;
     IF.reply2 = numsec & 0xFF;
@@ -1540,6 +1532,9 @@ bool OpenDrive (int drive)
         return false;
     }
 
+    // Default sectorsize and sectors per track
+    Disk[drive].sectorsize = 256;
+    Disk[drive].tracksectors = 18;
     // Determine if it is a doublesided disk.
     unsigned int numsec;
     unsigned char header[16];
@@ -1554,9 +1549,11 @@ bool OpenDrive (int drive)
     case 0: // if no header sides is per sector count
         numsec = Disk[drive].size >> 8;
         Disk[drive].doublesided = ((numsec > 720) && (numsec <= 2880));
+        break;
     default: // More than 4 byte header is not supported
         _DLOG("OpenDrive unsuported image type %d %d\n",
               drive, Disk[drive].headersize);
+        return false;
         break;
     }
 
