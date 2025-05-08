@@ -31,4 +31,14 @@ void PrintLogC(const void * fmt, ...);
 void PrintLogF(const void * fmt, ...);
 void OpenLogFile(char * filename);
 
+// Debug logging if USE_LOGGING is defined
+
+#ifdef USE_LOGGING
+#define _DLOG(...) PrintLogC(__VA_ARGS__)
+#define _LOGF(...) PrintLogF(__VA_ARGS__)
+#else
+#define _DLOG(...)
+#define _LOGF(...)
+#endif
+
 #endif

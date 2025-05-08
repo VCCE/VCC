@@ -99,6 +99,8 @@
 //
 //----------------------------------------------------------------------
 
+//#define USE_LOGGING
+
 #include <windows.h>
 #include <windowsx.h>
 #include <shlobj.h>
@@ -107,17 +109,10 @@
 #include <sys/stat.h>
 
 #include "../defines.h"
+#include "../logger.h"
+
 #include "resource.h"
 #include "cloud9.h"
-
-// Debug logging if _DEBUG_ is defined
-#define _DEBUG_
-#ifdef _DEBUG_
-#include "../logger.h"
-#define _DLOG(...) PrintLogC(__VA_ARGS__)
-#else
-#define _DLOG(...)
-#endif
 
 // Return values for status register
 #define STA_BUSY     0x01
@@ -508,7 +503,7 @@ void SaveConfig(void)
 void SDCInit(void)
 {
 
-#ifdef _DEBUG_
+#ifdef USE_LOGGING
     _DLOG("\nSDCInit\n");
     MoveWindow(GetConsoleWindow(),0,0,300,800,TRUE);
 #endif
