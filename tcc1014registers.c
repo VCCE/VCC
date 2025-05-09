@@ -380,11 +380,24 @@ void sam_write(unsigned char data ,unsigned char port)
 	if ( (port==0xDE) | (port ==0xDF))
 		SetMapType(port&1);
 
-	if ( (port==0xD7) | (port==0xD9) )
-		SetCPUMultiplyerFlag (1);
+	// RAM high speed poke
+	if (port==0xD9)
+		SetCPUMultiplyerFlag(1);
 
-	if ( (port==0xD6) | (port==0xD8) )
-		SetCPUMultiplyerFlag (0);
+	if (port==0xD8)
+		SetCPUMultiplyerFlag(0);
+
+//
+// todo: ROM high speed poke, currently unsupported by vcc
+// should only be fast in rom not ram so can't just use
+// SetCPUMultiplyerFlag. 
+//
+//	if (port==0xD7)
+//		SetCPUMultiplyerFlag (1);
+//
+//	if (port==0xD6)
+//		SetCPUMultiplyerFlag (0);
+
 
 	return;
 }
