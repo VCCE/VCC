@@ -69,9 +69,9 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "Emulation of SDC floppy emulator\0"
+            VALUE "Comments", "Simulation of SDC floppy emulator\0"
             VALUE "CompanyName", "BitRot Software.\0"
-            VALUE "FileDescription", "SDC controller\0"
+            VALUE "FileDescription", "SDC Simulator\0"
             VALUE "FileVersion", "2.1.9.2\0"
             VALUE "InternalName", "SDC\0"
             VALUE "LegalCopyright", "Copyright © 2010\0"
@@ -80,7 +80,7 @@ BEGIN
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Vcc Module file\0"
             VALUE "ProductVersion", "2.1.9.2\0"
-            VALUE "SpecialBuild", "SDC Controller\0"
+            VALUE "SpecialBuild", "SDC Simulator\0"
         END
     END
     BLOCK "VarFileInfo"
