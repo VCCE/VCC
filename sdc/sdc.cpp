@@ -1407,6 +1407,7 @@ bool MountNext (int drive)
 bool OpenFound (int drive)
 {
     drive &= 1;
+    int writeprotect = 0;
 
     _DLOG("OpenFound enter %d %s %d\n",
         drive, Disk[drive].name, Disk[drive].hFile);
@@ -1423,9 +1424,10 @@ bool OpenFound (int drive)
     strncat(fqn,dFound.cFileName,MAX_PATH);
     strncpy(Disk[drive].name,fqn,MAX_PATH);
 
+    // Open file for read
     Disk[drive].hFile = CreateFile(
-        Disk[drive].name, GENERIC_READ|GENERIC_WRITE,
-        FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+        Disk[drive].name, GENERIC_READ, FILE_SHARE_READ,
+        NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
     if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
         _DLOG("OpenFound fail %d file %s\n",drive,Disk[drive].name);
         _DLOG("... %s\n",LastErrorTxt());
@@ -1447,17 +1449,25 @@ bool OpenFound (int drive)
     unsigned int numsec;
     unsigned char header[16];
     switch (Disk[drive].headersize) {
+    // JVC optional header bytes
     case 4: // First Sector     = header[3]   1 assumed
     case 3: // Sector Size code = header[2] 256 assumed {128,256,512,1024}
     case 2: // Number of sides  = header[1]   1 or 2
     case 1: // Sectors per trk  = header[0]  18 assumed
-        ReadFile(Disk[drive].hFile,header,16,NULL,NULL);
+        ReadFile(Disk[drive].hFile,header,4,NULL,NULL);
         Disk[drive].doublesided = (header[1] == 2);
         break;
-    case 0: // if no header nunber of sides is based on sector count
+    // No header JVC or OS9 disk if no header, side count per file size
+    case 0:
         numsec = Disk[drive].size >> 8;
         Disk[drive].doublesided = ((numsec > 720) && (numsec <= 2880));
         break;
+    // VDK
+    case 12:
+        ReadFile(Disk[drive].hFile,header,12,NULL,NULL);
+        Disk[drive].doublesided = (header[8] == 2);
+        writeprotect = header[9] & 1;
+    // Unknown or unsupported
     default: // More than 4 byte header is not supported
         _DLOG("OpenFound unsuported image type %d %d\n",
               drive, Disk[drive].headersize);
@@ -1467,6 +1477,27 @@ bool OpenFound (int drive)
 
     // Fill in image info.
     LoadFindRecord(&Disk[drive].filerec);
+
+    // Check write protect per find status or VDK header
+    if ((Disk[drive].filerec.attrib & ATTR_RDONLY) != 0) {
+        writeprotect = 1;
+    } else if (writeprotect) {
+        Disk[drive].filerec.attrib |= ATTR_RDONLY;
+    }
+
+    // If file is writeable reopen read/write
+    if (!writeprotect) {
+        CloseHandle(Disk[drive].hFile);
+        Disk[drive].hFile = CreateFile(
+            Disk[drive].name, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
+            NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+        if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
+            _DLOG("OpenFound reopen fail %d\n",drive);
+            _DLOG("... %s\n",LastErrorTxt());
+            IF.status = STA_FAIL;
+            return false;
+        }
+    }
 
     _DLOG("OpenFound success %d %s %d %d\n", drive, Disk[drive].name,
             Disk[drive].doublesided, Disk[drive].hFile);
