@@ -564,10 +564,10 @@ void UpdateFlashItem(void)
     ofn.lpstrInitialDir   = CapFilePath;
     ofn.lpstrTitle        = "Set Flash Rom file";
 
-    GetOpenFileName(&ofn);
-
-    for(unsigned int i=0; i<strlen(filename); i++) {
-        if (filename[i] == '\\') filename[i] = '/';
+    if (GetOpenFileName(&ofn)) {
+        for(unsigned int i=0; i<strlen(filename); i++) {
+            if (filename[i] == '\\') filename[i] = '/';
+        }
     }
 
     strncpy(FlashFile[index],&filename[3],MAX_PATH);
@@ -630,10 +630,11 @@ bool LoadRom()
 {
     char * RomName;
     RomName = FlashFile[CurrentBank];
-    _DLOG("LoadRom bank %d file %s\n",CurrentBank,RomName);
-    if (*RomName == NULL) {
-        //_DLOG("LoadRom loading default SDC-DOS\n");
+    _DLOG("LoadRom bank %d file '%s'\n",CurrentBank,RomName);
+    if ((CurrentBank == 0) && (strcmp(RomName,"-empty-") == 0)) {
+        _DLOG("LoadRom loading default SDC-DOS\n");
         RomName = "SDC-DOS.ROM";
+        strncpy(FlashFile[CurrentBank],RomName,MAX_PATH);
     }
 
     int ch;
