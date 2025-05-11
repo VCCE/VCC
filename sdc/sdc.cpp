@@ -1,5 +1,6 @@
 //----------------------------------------------------------------------
 // SDC simulator DLL
+//
 // By E J Jaquay 2025
 //
 // This file is part of VCC (Virtual Color Computer).
@@ -99,8 +100,6 @@
 //
 //----------------------------------------------------------------------
 
-//#define USE_LOGGING
-
 #include <windows.h>
 #include <windowsx.h>
 #include <shlobj.h>
@@ -108,29 +107,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 
-#include "../defines.h"
-#include "../logger.h"
-
-#include "resource.h"
-#include "cloud9.h"
-
-// Return values for status register
-#define STA_BUSY     0x01
-#define STA_READY    0x02
-#define STA_HWERROR  0x04
-#define STA_CRCERROR 0x08
-#define STA_NOTFOUND 0x10
-#define STA_DELETED  0x20
-#define STA_WPROTECT 0x40
-#define STA_FAIL     0x80
-
-// Single byte file attributes for File info records
-#define ATTR_NORM    0x00
-#define ATTR_RDONLY  0x01
-#define ATTR_HIDDEN  0x02
-#define ATTR_SDF     0x04
-#define ATTR_DIR     0x10
-#define ATTR_INVALID -1  //not 0xFF because byte is signed
+#include "sdc.h"
 
 //======================================================================
 // Functions
@@ -172,20 +149,19 @@ void SDCCommand(void);
 void ReadSector(void);
 void StreamImage(void);
 void WriteSector(void);
-//bool SeekSector(int,unsigned int);
-//bool ReadDrive(int,unsigned int);
 bool SeekSector(unsigned char,unsigned int);
 bool ReadDrive(unsigned char,unsigned int);
 void GetDriveInfo(void);
 void SDCControl(void);
 void UpdateSD(void);
 void AppendPathChar(char *,char c);
-void LoadFindRecord(struct FileRecord *);
+bool LoadFindRecord(struct FileRecord *);
+bool LoadDotRecord(struct FileRecord *);
 void FixSDCPath(char *,const char *);
 bool MountDisk(int,const char *);
 bool MountNext(int);
 void CloseDrive(int);
-bool OpenDrive(int);
+bool OpenFound(int);
 void LoadReply(void *, int);
 void BlockReceive(unsigned char);
 char * LastErrorTxt(void);
@@ -1074,13 +1050,15 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
     char buf[520];
     DWORD cnt = 0;
 
-    // Should cmdcode be passed as arg?
-    // Should drive come from cmdcode?
+    int drive = cmdcode & 1;
+    if (Disk[drive].hFile == NULL) {
+        return false;
+    }
+
     if (!SeekSector(cmdcode,lsn)) {
         return false;
     }
 
-    int drive = cmdcode & 1;
     if (!ReadFile(Disk[drive].hFile,buf,Disk[drive].sectorsize,&cnt,NULL)) {
         _DLOG("ReadDrive %d %s\n",drive,LastErrorTxt());
         return false;
@@ -1147,10 +1125,6 @@ void StreamImage(void)
 
 //----------------------------------------------------------------------
 // Write logical sector
-//  IF.cmdcode:
-//    b0 drive number
-//    b1 single sided flag
-//    b2 eight bit transfer flag
 //----------------------------------------------------------------------
 void WriteSector(void)
 {
@@ -1158,6 +1132,11 @@ void WriteSector(void)
     int drive = IF.cmdcode & 1;
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
     //_DLOG("WriteSector %d drive %d\n",lsn,drive);
+
+    if (Disk[drive].hFile == NULL) {
+        IF.status = STA_FAIL;
+        return;
+    }
 
     if (!SeekSector(drive,lsn)) {
         IF.status = STA_FAIL;
@@ -1315,27 +1294,11 @@ void FixSDCPath(char *path, const char *fpath8)
 //----------------------------------------------------------------------
 // Load a file record with the file found by Find File
 //----------------------------------------------------------------------
-void LoadFindRecord(struct FileRecord * rec)
+bool LoadFindRecord(struct FileRecord * rec)
 {
     memset(rec,0,sizeof(rec));
     memset(rec->name,' ',8);
     memset(rec->type,' ',3);
-
-    // Current or previous directory
-    if (dFound.cFileName[0] == '.') {
-        rec->name[0] = '.';
-        if (dFound.cFileName[1] == '.') rec->name[1] = '.';
-        rec->attrib |= ATTR_DIR;
-        return;
-    }
-
-    // Previous directory
-    if (strcmp(dFound.cFileName,"..") == 0) {
-        rec->attrib |= ATTR_DIR;
-        rec->name[0] = '.';
-        rec->name[1] = '.';
-        return;
-    }
 
     // File type
     char * pdot = strrchr(dFound.cFileName,'.');
@@ -1368,6 +1331,8 @@ void LoadFindRecord(struct FileRecord * rec)
     rec->hilo_size = (dFound.nFileSizeLow >> 8) & 0xFF;
     rec->lohi_size = (dFound.nFileSizeLow >> 16) & 0xFF;
     rec->hihi_size = (dFound.nFileSizeLow >> 24) & 0xFF;
+
+    return true;
 }
 
 //----------------------------------------------------------------------
@@ -1376,18 +1341,16 @@ void LoadFindRecord(struct FileRecord * rec)
 //----------------------------------------------------------------------
 bool MountDisk (int drive, const char * path)
 {
-    // Check for UNLOAD.  Path will be an empty string.
-    drive &= 1;
-    if (*path == '\0') {
-        CloseDrive(drive);
-        memset((void *) &Disk[drive],0,sizeof(_Disk));
-        return true;
-    }
+_DLOG("MountDisk entry %d %s\n",drive,path);
 
-    if (Disk[drive].hFile != NULL) {
-        CloseHandle(Disk[drive].hFile);
-        memset((void *) &Disk[drive],0,sizeof(_Disk));
-    }
+    drive &= 1;
+
+    // Close and clear previous entry
+    CloseDrive(drive);
+    memset((void *) &Disk[drive],0,sizeof(_Disk));
+
+    // Check for UNLOAD.  Path will be an empty string.
+    if (*path == '\0') return true;
 
     // Look for the file
     char file[MAX_PATH];
@@ -1406,44 +1369,14 @@ bool MountDisk (int drive, const char * path)
         }
     }
 
-    FindClose(hFind);
-
-    // Build fully qualified filename
-    char fqn[MAX_PATH]={};
-    strncpy(fqn,SeaDir,MAX_PATH);
-    strncat(fqn,dFound.cFileName,MAX_PATH);
-
-    _DLOG("MountDisk %s\n",fqn);
-
-    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        _DLOG("MountDisk %s is a directory\n",fqn);
-        return false;
-    }
-
-    // Extra file bytes are considered to be header bytes
-    int filesize = dFound.nFileSizeLow;
-    int headersize = filesize & 255;
-    filesize -= headersize;
-
-   _DLOG("MountDisk %s %d %d '%s'\n",Disk[drive].name,
-            Disk[drive].size,Disk[drive].headersize,
-            Disk[drive].filerec.name);
-
-    strncpy(Disk[drive].name,fqn,MAX_PATH);
-    Disk[drive].size = filesize;
-    Disk[drive].headersize = headersize;
-
-    // Make sure drive can be opened
-    if (!OpenDrive(drive)) {
-        _DLOG("MountDisk %s open failed\n",fqn);
+    // Open first image found on the drive
+    if (!OpenFound(drive)) {
+        _DLOG("MountDisk failed %s\n",path);
         memset((void *) &Disk[drive],0,sizeof(_Disk));
         return false;
     }
 
-    // Fill image info.
-    LoadFindRecord(&Disk[drive].filerec);
-
-    _DLOG("MountDisk %s mounted\n",fqn);
+    _DLOG("MountDisk %s mounted\n",path);
     return true;
 }
 
@@ -1458,70 +1391,43 @@ bool MountNext (int drive)
         return false;
     }
 
-    _DLOG("MountNext %s on %s\n",dFound.cFileName,SeaDir);
-
-    // Matched filename
-    char fqn[MAX_PATH]={};
-    strncpy(fqn,SeaDir,MAX_PATH);
-    strncat(fqn,dFound.cFileName,MAX_PATH);
-
-    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        _DLOG("MountDisk %s is a directory\n",fqn);
-        return false;
-    }
-
-    // Extra file bytes are considered to be header bytes
-    int filesize = dFound.nFileSizeLow;
-    int headersize = filesize & 255;
-    if (headersize != 0) {
-        _DLOG("MountDisk %s header %d/n",fqn,headersize);
-    }
-    filesize -= headersize;
-
-    // Fill image info.
-    strncpy(Disk[drive].name,fqn,MAX_PATH);
-    Disk[drive].size = filesize;
-    Disk[drive].headersize = headersize;
-    LoadFindRecord(&Disk[drive].filerec);
-
-    // Make sure drive can be opened
-    if (OpenDrive(drive)) {
-        _DLOG("MountDisk %d %s\n",drive,fqn);
-        return true;
-    } else {
+    // Open next image found on the drive
+    if (!OpenFound(drive)) {
         memset((void *) &Disk[drive],0,sizeof(_Disk));
         return false;
     }
+
+    _DLOG("MountNext %s on %s\n",dFound.cFileName,SeaDir);
+    return true;
 }
 
 //----------------------------------------------------------------------
-// Open virtual disk
+// Open disk image found
 //----------------------------------------------------------------------
-bool OpenDrive (int drive)
+bool OpenFound (int drive)
 {
     drive &= 1;
 
-    if (Disk[drive].hFile != NULL) {
-        _DLOG("OpenDrive close previous %d\n",Disk[drive].hFile);
-        CloseHandle(Disk[drive].hFile);
-        Disk[drive].hFile = NULL;
-    }
+    _DLOG("OpenFound enter %d %s %d\n",
+        drive, Disk[drive].name, Disk[drive].hFile);
 
-    if (*Disk[drive].name == '\0') {
-        _DLOG("OpenDrive not mounted %d\n",drive);
-        IF.status = STA_FAIL;
+    // Verify not trying to mount a directory
+    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        _DLOG("OpenFound %s is a directory\n",dFound.cFileName);
         return false;
     }
 
-    _DLOG("OpenDrive try %d %s %d\n",
-        drive, Disk[drive].name, Disk[drive].hFile);
+    // Fully qualify name of found file and try to open it
+    char fqn[MAX_PATH]={};
+    strncpy(fqn,SeaDir,MAX_PATH);
+    strncat(fqn,dFound.cFileName,MAX_PATH);
+    strncpy(Disk[drive].name,fqn,MAX_PATH);
 
     Disk[drive].hFile = CreateFile(
         Disk[drive].name, GENERIC_READ|GENERIC_WRITE,
         FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-
     if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
-        _DLOG("OpenDrive fail %d file %s\n",drive,Disk[drive].name);
+        _DLOG("OpenFound fail %d file %s\n",drive,Disk[drive].name);
         _DLOG("... %s\n",LastErrorTxt());
         IF.status = STA_FAIL;
         return false;
@@ -1530,7 +1436,14 @@ bool OpenDrive (int drive)
     // Default sectorsize and sectors per track
     Disk[drive].sectorsize = 256;
     Disk[drive].tracksectors = 18;
+
+    // Grab filesize from found record
+    Disk[drive].size = dFound.nFileSizeLow;
+
     // Determine if it is a doublesided disk.
+    // Header size also used to offset sector seeks
+    Disk[drive].headersize = Disk[drive].size & 255;
+
     unsigned int numsec;
     unsigned char header[16];
     switch (Disk[drive].headersize) {
@@ -1541,18 +1454,21 @@ bool OpenDrive (int drive)
         ReadFile(Disk[drive].hFile,header,16,NULL,NULL);
         Disk[drive].doublesided = (header[1] == 2);
         break;
-    case 0: // if no header sides is per sector count
+    case 0: // if no header nunber of sides is based on sector count
         numsec = Disk[drive].size >> 8;
         Disk[drive].doublesided = ((numsec > 720) && (numsec <= 2880));
         break;
     default: // More than 4 byte header is not supported
-        _DLOG("OpenDrive unsuported image type %d %d\n",
+        _DLOG("OpenFound unsuported image type %d %d\n",
               drive, Disk[drive].headersize);
         return false;
         break;
     }
 
-    _DLOG("OpenDrive success %d %s %d %d\n", drive, Disk[drive].name,
+    // Fill in image info.
+    LoadFindRecord(&Disk[drive].filerec);
+
+    _DLOG("OpenFound success %d %s %d %d\n", drive, Disk[drive].name,
             Disk[drive].doublesided, Disk[drive].hFile);
     return true;
 }
@@ -1564,7 +1480,6 @@ void CloseDrive (int drive)
 {
     drive &= 1;
     if (Disk[drive].hFile != NULL) {
-        //_DLOG("ClosingDrive %d\n",drive);
         CloseHandle(Disk[drive].hFile);
         Disk[drive].hFile = NULL;
     }
@@ -1653,11 +1568,11 @@ bool SetCurDir(char * path)
 }
 
 //----------------------------------------------------------------------
-// File search
+//  Start File search
 //----------------------------------------------------------------------
 bool SearchFile(const char * pattern)
 {
-    // Path always start with SDCard
+    // Path always starts with SDCard
     char path[MAX_PATH];
     strncpy(path,SDCard,MAX_PATH);
     AppendPathChar(path,'/');
@@ -1713,7 +1628,7 @@ bool InitiateDir(const char * path)
 //----------------------------------------------------------------------
 // Load directory page containing up to 16 file records that match
 // the pattern used in SearchFile. Can be called multiple times until
-// there are no more matches
+// there are no more matches.
 //----------------------------------------------------------------------
 void LoadDirPage(void)
 {
@@ -1724,8 +1639,15 @@ void LoadDirPage(void)
         return;
     }
 
-    for (int cnt = 0; cnt < 16; cnt++) {
-        LoadFindRecord(&DirPage[cnt]);
+    int cnt = 0;
+    while (cnt < 16) {
+        if (dFound.cFileName[0] == '.') {
+            // Special cases "." or ".." directory or hidden file
+            if (LoadDotRecord(&DirPage[cnt])) cnt++;
+        } else {
+            if (LoadFindRecord(&DirPage[cnt])) cnt++;
+        }
+        // Get next match
         if (FindNextFile(hFind,&dFound) == 0) {
             FindClose(hFind);
             hFind = INVALID_HANDLE_VALUE;
@@ -1733,3 +1655,21 @@ void LoadDirPage(void)
         }
     }
 }
+
+//----------------------------------------------------------------------
+// Found a file that starts with a dot, load it if it is "." or ".."
+// Other files that start with '.' are skipped (hidden).
+//----------------------------------------------------------------------
+bool LoadDotRecord(struct FileRecord * rec)
+{
+    memset(rec->name,' ',8);
+    memset(rec->type,' ',3);
+    rec->name[0] = '.';
+    rec->attrib = ATTR_DIR;
+    if (dFound.cFileName[1] == '\0') return true;
+    if (dFound.cFileName[1] == '.' ) rec->name[1] = '.';
+    if (dFound.cFileName[2] == '\0') return true;
+    // A hidden file - ignore it
+    return false;
+}
+
