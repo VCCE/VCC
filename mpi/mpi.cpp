@@ -44,6 +44,7 @@ static unsigned int BankedCartOffset[MAXPAX]={0,0,0,0};
 static unsigned char Temp,Temp2;
 static char IniFile[MAX_PATH]="";
 static char MPIPath[MAX_PATH];
+void CenterDialog(HWND);
 
 using namespace std;
 
@@ -419,6 +420,16 @@ extern "C"
 	}
 }
 
+void CenterDialog(HWND hDlg)
+{
+    RECT rPar, rDlg;
+    GetWindowRect(GetParent(hDlg), &rPar);
+    GetWindowRect(hDlg, &rDlg);
+    int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
+    int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
+    SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+}
+
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	unsigned short EDITBOXS[4]={IDC_EDIT1,IDC_EDIT2,IDC_EDIT3,IDC_EDIT4};
@@ -434,7 +445,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			EndDialog(hDlg, LOWORD(wParam));
 
 		case WM_INITDIALOG:
-
+			CenterDialog(hDlg);
 			hConfDlg=hDlg;
 			for (Temp=0;Temp<4;Temp++)
 				SendDlgItemMessage(hDlg,EDITBOXS[Temp],WM_SETTEXT,0,(LPARAM)(LPCSTR) SlotLabel[Temp] );

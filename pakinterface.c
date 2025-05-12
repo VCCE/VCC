@@ -521,7 +521,7 @@ void DynamicMenuCallback(const char *MenuName,int MenuId, int Type)
 	return;
 }
 
-void RefreshDynamicMenu(void)
+HMENU RefreshDynamicMenu(void)
 {
 	MENUITEMINFO	Mii;
 	char MenuTitle[32]="Cartridge";
@@ -613,6 +613,6 @@ void RefreshDynamicMenu(void)
 		}
 	}
 	DrawMenuBar(EmuState.WindowHandle);
-	return;
+	return hSubMenu[0];
 }
 
