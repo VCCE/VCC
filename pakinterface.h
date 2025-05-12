@@ -35,7 +35,7 @@ void UpdateBusPointer(void);
 void UnloadDll(void);
 void UnloadPack(void);
 void DynamicMenuActivated(unsigned char );
-void RefreshDynamicMenu(void);
+HMENU RefreshDynamicMenu(void);
 #define ID_SDYNAMENU 5000	//Defines the start and end IDs for the dynamic menus
 #define ID_EDYNAMENU 5100
 #define NOMODULE	1

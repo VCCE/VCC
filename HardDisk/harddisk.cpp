@@ -55,6 +55,7 @@ void LoadConfig(void);
 void SaveConfig(void);
 void BuildDynaMenu(void);
 int CreateDisk(HWND,int);
+void CenterDialog(HWND hDlg);
 
 static HINSTANCE g_hinstDLL;
 static HWND hConfDlg = NULL;
@@ -142,12 +143,23 @@ extern "C"
     }
 }
 
+void CenterDialog(HWND hDlg)
+{
+    RECT rPar, rDlg;
+    GetWindowRect(GetParent(hDlg), &rPar);
+    GetWindowRect(hDlg, &rDlg);
+    int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
+    int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
+    SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+}
+
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
     case WM_INITDIALOG:
         hConfDlg=hDlg;
+		CenterDialog(hDlg);
         SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnabled,0);
         SendDlgItemMessage(hDlg,IDC_READONLY,BM_SETCHECK,ClockReadOnly,0);
         EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), TRUE);

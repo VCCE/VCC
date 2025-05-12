@@ -67,6 +67,7 @@ void LoadConfig(void);
 void SaveConfig(void);
 long CreateDiskHeader(char *,unsigned char,unsigned char,unsigned char);
 void Load_Disk(unsigned char);
+void CenterDialog(HWND hDlg);
 
 static HWND g_hConfDlg;
 static HINSTANCE g_hinstDLL;
@@ -249,6 +250,15 @@ void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
 	return;
 }
 
+void CenterDialog(HWND hDlg)
+{
+    RECT rPar, rDlg;
+    GetWindowRect(GetParent(hDlg), &rPar);
+    GetWindowRect(hDlg, &rDlg);
+    int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
+    int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
+    SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+}
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -262,6 +272,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 		case WM_INITDIALOG:
+			CenterDialog(hDlg);
 			TempSelectRom=SelectRom;
 			if (!RealDisks)
 			{

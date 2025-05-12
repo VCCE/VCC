@@ -140,6 +140,7 @@ void LoadConfig(void);
 void SaveConfig(void);
 void BuildDynaMenu(void);
 void UpdateListBox(HWND);
+void CenterDialog(HWND);
 void UpdateCardBox(void);
 void UpdateFlashItem(void);
 void InitCardBox(void);
@@ -381,6 +382,19 @@ void BuildDynaMenu(void)
 }
 
 //------------------------------------------------------------
+// Center a dialog box in parent window
+//------------------------------------------------------------
+void CenterDialog(HWND hDlg)
+{
+    RECT rPar, rDlg;
+    GetWindowRect(GetParent(hDlg), &rPar);
+    GetWindowRect(hDlg, &rDlg);
+    int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
+    int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
+    SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+}
+
+//------------------------------------------------------------
 // Configure the SDC
 //------------------------------------------------------------
 LRESULT CALLBACK
@@ -391,6 +405,7 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         EndDialog(hDlg,LOWORD(wParam));
         break;
     case WM_INITDIALOG:
+        CenterDialog(hDlg);
         hConfDlg=hDlg;
         InitFlashBox();
         InitCardBox();

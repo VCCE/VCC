@@ -172,7 +172,7 @@ BEGIN
     LTEXT " F7   Pause Toggle"        IDC_STATIC,5,60,85,10
     LTEXT " F8   Toggle Throttle",    IDC_STATIC,5,70,85,10
     LTEXT " F9   Stop/Start reset",   IDC_STATIC,5,80,85,10
-    LTEXT "F10  \t---",               IDC_STATIC,5,90,85,10
+    LTEXT "F10  Cartridge Menu",      IDC_STATIC,5,90,85,10
     LTEXT "F11  Toggle Fullscreen",   IDC_STATIC,5,100,85,10
     LTEXT "F12  Function Keys",       IDC_STATIC,5,110,85,10
     LTEXT "Shifted",          IDC_STATIC,110,8,50,10

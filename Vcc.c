@@ -528,6 +528,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 				case DIK_F10:
+					if (!IsShiftKeyDown() && EmuState.FullScreen) {
+						RECT r;
+						HMENU hMenu=RefreshDynamicMenu();
+						GetClientRect(hWnd,&r);
+						TrackPopupMenu(hMenu, TPM_CENTERALIGN|TPM_VCENTERALIGN,
+							r.right/2, r.bottom/2, 0, hWnd, NULL);
+					}
 				break;
 				
 				case DIK_F11:
