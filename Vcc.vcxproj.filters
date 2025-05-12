@@ -265,6 +265,9 @@
     <ClInclude Include="CpuCommon.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="DisplayNull.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\3guys.bmp">
