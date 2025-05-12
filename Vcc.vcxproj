@@ -378,8 +378,10 @@
     <ClInclude Include="BuildConfig.h" />
     <ClInclude Include="CpuCommon.h" />
     <ClInclude Include="DirectX.h" />
+    <ClInclude Include="DisplayNull.h" />
     <ClInclude Include="IDisplay.h" />
     <ClInclude Include="IDisplayDebug.h" />
+    <ClInclude Include="interrupts.h" />
     <ClInclude Include="OpenGL.h" />
     <ClInclude Include="OpenGLFont.h" />
     <ClInclude Include="OpenGLFontConsola.h" />
