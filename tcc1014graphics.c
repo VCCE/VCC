@@ -9508,7 +9508,7 @@ void DrawTopBoarder8(SystemState *DTState)
 	if (BoarderChange==0)
 		return;
 
-	for (x=0;x<DTState->WindowSize.x;x++)
+	for (x=0;x<DTState->WindowSize.w;x++)
 	{
 		DTState->PTRsurface8[x +((DTState->LineCounter*2)*DTState->SurfacePitch)]=BoarderColor8|128;
 		if (!DTState->ScanLines)
@@ -9523,7 +9523,7 @@ void DrawTopBoarder16(SystemState *DTState)
 	if (BoarderChange==0)
 		return;
 
-	for (x=0;x<DTState->WindowSize.x;x++)
+	for (x=0;x<DTState->WindowSize.w;x++)
 	{
 		DTState->PTRsurface16[x +((DTState->LineCounter*2)*DTState->SurfacePitch)]=BoarderColor16;
 		if (!DTState->ScanLines)
@@ -9545,7 +9545,7 @@ void DrawTopBoarder32(SystemState *DTState)
 	if (BoarderChange==0)
 		return;
 
-	for (x=0;x<DTState->WindowSize.x;x++)
+	for (x=0;x<DTState->WindowSize.w;x++)
 	{
 		DTState->PTRsurface32[x +((DTState->LineCounter*2)*DTState->SurfacePitch)]=BoarderColor32;
 		if (!DTState->ScanLines)
@@ -9564,8 +9564,8 @@ void DrawBottomBoarder8(SystemState *DTState)
 {
 	if (BoarderChange==0) return;
 	int ndx = 2 * (LinesperScreen + VertCenter + DTState->LineCounter);
-	if (ndx >= DTState->WindowSize.y) return;  // Range check
-	unsigned int cnt = DTState->WindowSize.x;
+	if (ndx >= DTState->WindowSize.h) return;  // Range check
+	unsigned int cnt = DTState->WindowSize.w;
 	if (!DTState->ScanLines) cnt *= 2;
 	unsigned char *p = DTState->PTRsurface8 + DTState->SurfacePitch * ndx;
 	while(cnt--) *p++ = BoarderColor8|128;
@@ -9575,8 +9575,8 @@ void DrawBottomBoarder16(SystemState *DTState)
 {
 	if (BoarderChange==0) return;
 	int ndx = 2 * (LinesperScreen + VertCenter + DTState->LineCounter);
-	if (ndx >= DTState->WindowSize.y) return;  // Range check
-	unsigned int cnt = DTState->WindowSize.x;
+	if (ndx >= DTState->WindowSize.h) return;  // Range check
+	unsigned int cnt = DTState->WindowSize.w;
 	if (!DTState->ScanLines) cnt *= 2;
 	unsigned short *p = DTState->PTRsurface16 + DTState->SurfacePitch * ndx;
 	while(cnt--) *p++ = BoarderColor16;
@@ -9592,8 +9592,8 @@ void DrawBottomBoarder32(SystemState *DTState)
 {
 	if (BoarderChange==0) return;
 	int ndx = 2 * (LinesperScreen + VertCenter + DTState->LineCounter);
-	if (ndx >= DTState->WindowSize.y) return;  // Range check
-	unsigned int cnt = DTState->WindowSize.x;
+	if (ndx >= DTState->WindowSize.h) return;  // Range check
+	unsigned int cnt = DTState->WindowSize.w;
 	if (!DTState->ScanLines) cnt *= 2;
 	unsigned int *p = DTState->PTRsurface32 + DTState->SurfacePitch * ndx;
 	while(cnt--) *p++ = BoarderColor32;

@@ -2,10 +2,10 @@
 #include <array>
 #include <vector>
 #include <string>
-#include "../interrupts.h"
+#include "interrupts.h"
+
 namespace VCC
 {
-
 	struct CPUState
 	{
 		//  
