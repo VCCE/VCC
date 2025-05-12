@@ -31,6 +31,7 @@ This file is part of VCC (Virtual Color Computer).
 #define TARGETFRAMERATE 60	//Number of throttled Frames per second to render
 #define SAMPLESPERFRAME 262
 
+#pragma warning(disable: 4100)
 
 
 //CPU 
@@ -44,10 +45,14 @@ This file is part of VCC (Virtual Color Computer).
 #define QUERY 255
 #define INDEXTIME ((LINESPERSCREEN * TARGETFRAMERATE)/5)
 
+struct SystemState;
+
 namespace VCC
 {
     const int DefaultWidth = 640;
     const int DefaultHeight = 480;
+
+    union Pixel;
 
     struct Point
     {
@@ -155,9 +160,20 @@ namespace VCC
         void Check() {}
     };
 #endif
+
+    //
+    // abstract interface for system state
+    //
+    struct ISystemState
+    {
+        enum { OK };
+        virtual int GetWindowHandle(void** handle) = 0;
+        virtual int GetRect(int rectOption, Rect* rect) = 0;
+        virtual void SetSurface(void* ptr, uint8_t bitDepth, long stride) = 0;
+    };
 }
 
-struct SystemState
+struct SystemState 
 {
     HWND			WindowHandle;
     HWND			ConfigDialog;
@@ -182,7 +198,7 @@ struct SystemState
     unsigned char	ScanLines;
     unsigned char	EmulationRunning;
     unsigned char	ResetPending;
-    VCC::Rect		WindowSize;
+    VCC::Size		WindowSize;
     unsigned char	FullScreen;
     unsigned char	MousePointer;
     unsigned char	OverclockFlag;
@@ -190,6 +206,36 @@ struct SystemState
 
 	// Debugger Package	
 	VCC::Debugger::Debugger Debugger;
+};
+
+
+//
+// Abstract interface over SystemState that the display classes use
+//
+struct SystemStatePtr : VCC::ISystemState
+{
+    SystemStatePtr(SystemState* state) : state(state) {}
+    int GetWindowHandle(void** handle) override 
+    { 
+        *handle = state->WindowHandle; 
+        return OK; 
+    }
+    int GetRect(int rectOption, VCC::Rect* rect) override 
+    {
+        rect->x = 0; rect->y = 0; rect->w = state->WindowSize.w; rect->h = state->WindowSize.h; 
+        return OK; 
+    }
+    void SetSurface(void* ptr, uint8_t bitDepth, long stride) override
+    {
+        state->PTRsurface8 = (unsigned char*)ptr;
+        state->PTRsurface16 = (unsigned short*)ptr;
+        state->PTRsurface32 = (unsigned int*)ptr;
+        state->BitDepth = bitDepth;
+        state->SurfacePitch = stride;
+    }
+
+private:
+    SystemState* state;
 };
 
 extern SystemState EmuState;

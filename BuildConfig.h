@@ -27,12 +27,19 @@
 
 
 //
-// Enable the use of OpenGL display driver, otherwise use DirectX.
+// Enable the use of OpenGL display driver
 //
 #ifndef _LEGACY_VCC
 #ifndef USE_OPENGL
 #define USE_OPENGL true
 #endif
+#endif
+
+//
+// Enable the use of DirectX display driver
+//
+#ifndef USE_DIRECTX
+#define USE_DIRECTX true
 #endif
 
 //
@@ -84,13 +91,6 @@
 // 
 // Edit options above rather than these:
 //
-#if !USE_OPENGL
-#define USE_DIRECTX true
-#endif
-
-#if USE_OPENGL && USE_DIRECTX
-#error Enable either USE_OPENGL or USE_DIRECTX not both.
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Options that are always off for release
