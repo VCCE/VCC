@@ -6379,12 +6379,20 @@ void UpdateScreen32(SystemState *USState32)
 	if ( (HorzCenter!=0) & (BoarderChange>0) )
 		for (unsigned short x=0;x<HorzCenter;x++)
 		{
-			szSurface32[x +(((y+VertCenter)*2)*Xpitch)]=BoarderColor32;
-			if (!USState32->ScanLines)
-				szSurface32[x +(((y+VertCenter)*2+1)*Xpitch)]=BoarderColor32;
-			szSurface32[x + (PixelsperLine * (Stretch+1)) +HorzCenter+(((y+VertCenter)*2)*Xpitch)]=BoarderColor32;
-			if (!USState32->ScanLines)
-				szSurface32[x + (PixelsperLine * (Stretch+1))+HorzCenter+(((y+VertCenter)*2+1)*Xpitch)]=BoarderColor32;
+			auto idx = x + (((y + VertCenter) * 2) * Xpitch);
+			if (idx < 640 * 480) // wtf?
+			{
+				szSurface32[idx] = BoarderColor32;
+				if (!USState32->ScanLines)
+					szSurface32[x + (((y + VertCenter) * 2 + 1) * Xpitch)] = BoarderColor32;
+			}
+			idx = x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((y + VertCenter) * 2) * Xpitch);
+			if (idx < 640 * 480) // wtf?
+			{
+				szSurface32[idx] = BoarderColor32;
+				if (!USState32->ScanLines)
+					szSurface32[x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((y + VertCenter) * 2 + 1) * Xpitch)] = BoarderColor32;
+			}
 		}
 
 	auto pmode4MonType = Pmode4MonType();
@@ -9812,6 +9820,7 @@ void SetupDisplay(void)
 	LinesperScreen=Lpf[VresIndex];
 	SetLinesperScreen(VresIndex);
 	VertCenter = VcenterTable[VresIndex];
+	assert(Bpp >= 0 && Bpp < sizeof(CCPixelsperByte));
 	PixelsperLine= BytesperRow*CCPixelsperByte[Bpp];
 	PixelsperByte=CCPixelsperByte[Bpp];
 

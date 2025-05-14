@@ -123,11 +123,11 @@ namespace VCC { namespace Debugger
 	{
 		switch (irq)
 		{
-		case IRQ:
+		case INT_IRQ:
 			return IRQType::InterruptRequest;
-		case FIRQ:
+		case INT_FIRQ:
 			return IRQType::FastInterruptRequest;
-		case NMI:
+		case INT_NMI:
 			return IRQType::NonMaskableInterrupt;
 		}
 		return IRQType();

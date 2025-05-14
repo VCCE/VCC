@@ -22,8 +22,8 @@ This file is part of VCC (Virtual Color Computer).
 void MC6809Init(void);
 int  MC6809Exec( int);
 void MC6809Reset(void);
-void MC6809AssertInterupt(unsigned char,unsigned char);
-void MC6809DeAssertInterupt(unsigned char);// 4 nmi 2 firq 1 irq
+void MC6809AssertInterupt(InterruptSource, Interrupt);
+void MC6809DeAssertInterupt(InterruptSource, Interrupt);
 void MC6809ForcePC(unsigned short);
 void MC6809SetBreakpoints(const std::vector<unsigned short>& breakpoints);
 void MC6809SetTraceTriggers(const std::vector<unsigned short>& triggers);

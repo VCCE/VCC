@@ -25,7 +25,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "cc3vhd.h"
 #include "defines.h"
 #include "cloud9.h"
-#include "..\fileops.h"
+#include "../fileops.h"
+#include "../MachineDefs.h"
 
 #define DEF_HD_SIZE 132480
 
@@ -38,10 +39,10 @@ static char HardDiskPath[MAX_PATH];
 
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
+typedef void (*ASSERTINTERUPT)(InterruptSource, Interrupt);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
-static void (*AssertInt)(unsigned char,unsigned char)=NULL;
+static void (*AssertInt)(InterruptSource, Interrupt)=NULL;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
 static unsigned char *Memory=NULL;

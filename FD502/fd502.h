@@ -17,7 +17,10 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
-void CPUAssertInterupt(unsigned char,unsigned char);
+
+#include "../MachineDefs.h"
+
+extern "C" void (*AssertInt)(InterruptSource, Interrupt);
 void BuildDynaMenu(void);
 #define	HEAD 0
 #define SLAVE 1

@@ -62,8 +62,8 @@ static unsigned int SyncWaiting=0;
 static unsigned int temp32;
 static unsigned short temp16;
 static unsigned char temp8;
-static unsigned char PendingInterupts=0;
-static unsigned char IRQWaiter=0;
+static unsigned char InterruptLine[IS_MAX] = { 0 };
+static VCC::DFF InterruptLatch;
 static unsigned char Source=0,Dest=0;
 static unsigned char postbyte=0;
 static short unsigned postword=0;
@@ -85,6 +85,8 @@ static void cpu_nmi(void);
 static void Do_Opcode(int);
 static void P2_Opcode(void);
 static void P3_Opcode(void);
+
+#include "CpuCommon.h"
 
 //END Fuction Prototypes-----------------------------------
 
@@ -188,19 +190,16 @@ int MC6809Exec(int CycleFor)
 			HaltedInsPending = 0;
 			return(CycleFor - CycleCounter);
 		}
-		// Do interrupts
-		if (PendingInterupts) {
-			if (PendingInterupts & 4)
-				cpu_nmi();
-			else if (PendingInterupts & 2)
-				cpu_firq();
-			else if (PendingInterupts & 1) {
-				if (IRQWaiter==0)	// This is needed to fix timing problems
-					cpu_irq();
-				else
-					IRQWaiter-=1;
-			}
-		}
+
+		LatchInterrupts();
+
+		if (NMI())
+			cpu_nmi();
+		else if (FIRQ() && !CC(F))
+			cpu_firq();
+		else if (IRQ() && !CC(I))
+			cpu_irq();
+
 		// Wait for Sync
 		if (SyncWaiting==1)	// Note: Assert interrupt clears sync waiting
 			return(0);
@@ -3016,7 +3015,6 @@ void P3_Opcode(void)
 
 	case BREAK: //113E
 		if (EmuState.Debugger.Break_Enabled()) {
-			PendingInterupts = 0;
 			EmuState.Debugger.Halt();
 		} else {
 			CycleCounter+=4;
@@ -3134,118 +3132,79 @@ void P3_Opcode(void)
 
 void cpu_firq(void)
 {
+	if (EmuState.Debugger.IsTracing())
+		EmuState.Debugger.TraceCaptureInterruptServicing(INT_FIRQ, CycleCounter, MC6809GetState());
 
-	if (!cc[F])
-	{
-		if (EmuState.Debugger.IsTracing())
-		{
-			EmuState.Debugger.TraceCaptureInterruptServicing(FIRQ, CycleCounter, MC6809GetState());
-		}
+	cc[E] = 0; // Turn E flag off
+	MemWrite8(pc.B.lsb, --s.Reg);
+	MemWrite8(pc.B.msb, --s.Reg);
+	MemWrite8(getcc(), --s.Reg);
+	cc[I] = 1;
+	cc[F] = 1;
+	pc.Reg = MemRead16(VFIRQ);
 
-		cc[E]=0; // Turn E flag off
-		MemWrite8( pc.B.lsb,--s.Reg);
-		MemWrite8( pc.B.msb,--s.Reg);
-		MemWrite8(getcc(),--s.Reg);
-		cc[I]=1;
-		cc[F]=1;
-		pc.Reg=MemRead16(VFIRQ);
+	CycleCounter += 15;			// 10 Cycles to respond, 5 cycles to stack and load PC.
 
-		CycleCounter += 15;			// 10 Cycles to respond, 5 cycles to stack and load PC.
-
-		if (EmuState.Debugger.IsTracing())
-		{
-			EmuState.Debugger.TraceCaptureInterruptExecuting(FIRQ, CycleCounter, MC6809GetState());
-		}
-
-	}
-	else
-	{
-		if (EmuState.Debugger.IsTracing())
-		{
-			EmuState.Debugger.TraceCaptureInterruptMasked(FIRQ, CycleCounter, MC6809GetState());
-		}
-	}
-	PendingInterupts=PendingInterupts & 253;
-	return;
+	if (EmuState.Debugger.IsTracing())
+		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_FIRQ, CycleCounter, MC6809GetState());
 }
 
 void cpu_irq(void)
 {
-	if (!cc[I])
-	{
-		if (EmuState.Debugger.IsTracing())
-		{
-			EmuState.Debugger.TraceCaptureInterruptServicing(IRQ, CycleCounter, MC6809GetState());
-		}
+	if (EmuState.Debugger.IsTracing())
+		EmuState.Debugger.TraceCaptureInterruptServicing(INT_IRQ, CycleCounter, MC6809GetState());
 
-		cc[E]=1;
-		MemWrite8( pc.B.lsb,--s.Reg);
-		MemWrite8( pc.B.msb,--s.Reg);
-		MemWrite8( u.B.lsb,--s.Reg);
-		MemWrite8( u.B.msb,--s.Reg);
-		MemWrite8( y.B.lsb,--s.Reg);
-		MemWrite8( y.B.msb,--s.Reg);
-		MemWrite8( x.B.lsb,--s.Reg);
-		MemWrite8( x.B.msb,--s.Reg);
-		MemWrite8( dp.B.msb,--s.Reg);
-		MemWrite8(B_REG,--s.Reg);
-		MemWrite8(A_REG,--s.Reg);
-		MemWrite8(getcc(),--s.Reg);
+	cc[E] = 1;
+	MemWrite8(pc.B.lsb, --s.Reg);
+	MemWrite8(pc.B.msb, --s.Reg);
+	MemWrite8(u.B.lsb, --s.Reg);
+	MemWrite8(u.B.msb, --s.Reg);
+	MemWrite8(y.B.lsb, --s.Reg);
+	MemWrite8(y.B.msb, --s.Reg);
+	MemWrite8(x.B.lsb, --s.Reg);
+	MemWrite8(x.B.msb, --s.Reg);
+	MemWrite8(dp.B.msb, --s.Reg);
+	MemWrite8(B_REG, --s.Reg);
+	MemWrite8(A_REG, --s.Reg);
+	MemWrite8(getcc(), --s.Reg);
 
-		pc.Reg=MemRead16(VIRQ);
-		cc[I]=1;
+	pc.Reg = MemRead16(VIRQ);
+	cc[I] = 1;
 
-		CycleCounter += 24;			// 10 Cycles to respond, 14 cycles to stack and load PC.
+	CycleCounter += 24;			// 10 Cycles to respond, 14 cycles to stack and load PC.
 
-		if (EmuState.Debugger.IsTracing())
-		{
-			EmuState.Debugger.TraceCaptureInterruptExecuting(IRQ, CycleCounter, MC6809GetState());
-		}
-	}
-	else
-	{
-		if (EmuState.Debugger.IsTracing())
-		{
-			EmuState.Debugger.TraceCaptureInterruptMasked(IRQ, CycleCounter, MC6809GetState());
-		}
-	}
-	PendingInterupts=PendingInterupts & 254;
-	return;
+	if (EmuState.Debugger.IsTracing())
+		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_IRQ, CycleCounter, MC6809GetState());
 }
 
 void cpu_nmi(void)
 {
 	if (EmuState.Debugger.IsTracing())
-	{
-		EmuState.Debugger.TraceCaptureInterruptServicing(NMI, CycleCounter, MC6809GetState());
-	}
+		EmuState.Debugger.TraceCaptureInterruptServicing(INT_NMI, CycleCounter, MC6809GetState());
 
-	cc[E]=1;
-	MemWrite8( pc.B.lsb,--s.Reg);
-	MemWrite8( pc.B.msb,--s.Reg);
-	MemWrite8( u.B.lsb,--s.Reg);
-	MemWrite8( u.B.msb,--s.Reg);
-	MemWrite8( y.B.lsb,--s.Reg);
-	MemWrite8( y.B.msb,--s.Reg);
-	MemWrite8( x.B.lsb,--s.Reg);
-	MemWrite8( x.B.msb,--s.Reg);
-	MemWrite8( dp.B.msb,--s.Reg);
-	MemWrite8(B_REG,--s.Reg);
-	MemWrite8(A_REG,--s.Reg);
-	MemWrite8(getcc(),--s.Reg);
-	cc[I]=1;
-	cc[F]=1;
-	pc.Reg=MemRead16(VNMI);
+	cc[E] = 1;
+	MemWrite8(pc.B.lsb, --s.Reg);
+	MemWrite8(pc.B.msb, --s.Reg);
+	MemWrite8(u.B.lsb, --s.Reg);
+	MemWrite8(u.B.msb, --s.Reg);
+	MemWrite8(y.B.lsb, --s.Reg);
+	MemWrite8(y.B.msb, --s.Reg);
+	MemWrite8(x.B.lsb, --s.Reg);
+	MemWrite8(x.B.msb, --s.Reg);
+	MemWrite8(dp.B.msb, --s.Reg);
+	MemWrite8(B_REG, --s.Reg);
+	MemWrite8(A_REG, --s.Reg);
+	MemWrite8(getcc(), --s.Reg);
+	cc[I] = 1;
+	cc[F] = 1;
+	pc.Reg = MemRead16(VNMI);
 
 	CycleCounter += 24;			// 10 Cycles to respond, 14 cycles to stack and load PC.
 
 	if (EmuState.Debugger.IsTracing())
-	{
-		EmuState.Debugger.TraceCaptureInterruptExecuting(NMI, CycleCounter, MC6809GetState());
-	}
+		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_NMI, CycleCounter, MC6809GetState());
 
-	PendingInterupts=PendingInterupts & 251;
-	return;
+	ClearNMI();
 }
 
 void setcc (unsigned char bincc)
@@ -3265,28 +3224,32 @@ unsigned char getcc(void)
 		return(bincc);
 }
 
-void MC6809AssertInterupt(unsigned char Interupt,unsigned char waiter)// 4 nmi 2 firq 1 irq
+void MC6809AssertInterupt(InterruptSource src, Interrupt interrupt)
 {
-	SyncWaiting=0;
-	PendingInterupts=PendingInterupts | (1<<(Interupt-1));
-	IRQWaiter=waiter;
+	assert(src >= IS_NMI && src < IS_MAX);
+	assert(interrupt >= INT_IRQ && interrupt <= INT_NMI);
+
+	InterruptLine[src] |= Bit(interrupt);
+	if (SyncWaiting)
+		LatchInterrupts();
+	SyncWaiting = 0;
+
 	if (EmuState.Debugger.IsTracing())
-	{
-		EmuState.Debugger.TraceCaptureInterruptRequest(Interupt, CycleCounter, MC6809GetState());
-	}
-	return;
+		EmuState.Debugger.TraceCaptureInterruptRequest(interrupt, CycleCounter, MC6809GetState());
 }
 
-void MC6809DeAssertInterupt(unsigned char Interupt)// 4 nmi 2 firq 1 irq
+void MC6809DeAssertInterupt(InterruptSource src, Interrupt interrupt)
 {
-	PendingInterupts=PendingInterupts & ~(1<<(Interupt-1));
-	return;
+	assert(src >= IS_NMI && src < IS_MAX);
+	assert(interrupt >= INT_IRQ && interrupt <= INT_NMI);
+
+	InterruptLine[src] &= BitMask(interrupt);
 }
 
 void MC6809ForcePC(unsigned short NewPC)
 {
+	ClearInterrupts();
 	pc.Reg=NewPC;
-	PendingInterupts=0;
 	SyncWaiting=0;
 	return;
 }
