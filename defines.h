@@ -155,6 +155,24 @@ namespace VCC
         void Check() {}
     };
 #endif
+
+    // d type flip flop
+    struct DFF 
+    {
+        uint8_t D{}; // d input
+        uint8_t Q{}; // q output
+
+        void Reset()
+        {
+            D = Q = 0;
+        }
+
+        void Clock(uint8_t d)
+        {
+            Q = D;
+            D = d;
+        }
+    };
 }
 
 struct SystemState

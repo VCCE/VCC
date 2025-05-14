@@ -27,8 +27,8 @@
 //------------------------------------------------------------------------
 
 // Transfer points for menu callback and cpu assert interrupt
-typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
-typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
+typedef void (*DYNAMICMENUCALLBACK)(char * ,int, int);
+typedef void (*ASSERTINTERUPT)(InterruptSource, Interrupt);
 
 void (*DynamicMenuCallback)(char *,int,int)=NULL;
 void BuildDynaMenu(void);

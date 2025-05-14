@@ -17,14 +17,12 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#include "../MachineDefs.h"
+
 //Misc
 #define MAX_LOADSTRING 100
 #define QUERY 255
-
-//Common CPU defs
-#define IRQ		1
-#define FIRQ	2
-#define NMI		3
 
 #define	HEAD 0
 #define SLAVE 1
@@ -36,7 +34,7 @@ typedef void (*CONFIGIT)(unsigned char);
 typedef void (*HEARTBEAT) (void);
 typedef unsigned char (*PACKPORTREAD)(unsigned char);
 typedef void (*PACKPORTWRITE)(unsigned char,unsigned char);
-typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
+typedef void (*ASSERTINTERUPT)(InterruptSource, Interrupt);
 
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*SETCART)(unsigned char);

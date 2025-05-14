@@ -30,7 +30,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "wd1793.h"
 #include "distortc.h"
 #include "fd502.h"
-#include "..\fileops.h"
+#include "../fileops.h"
+#include "../MachineDefs.h"
 #define EXTROMSIZE 16384
 
 using namespace std;
@@ -38,7 +39,7 @@ using namespace std;
 extern DiskInfo Drive[5];
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
+typedef void (*ASSERTINTERUPT)(InterruptSource, Interrupt);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 static unsigned char ExternalRom[EXTROMSIZE];
@@ -47,7 +48,7 @@ static unsigned char RGBDiskRom[EXTROMSIZE];
 static char FloppyPath[MAX_PATH];
 static char RomFileName[MAX_PATH]="";
 static char TempRomFileName[MAX_PATH]="";
-static void (*AssertInt)(unsigned char,unsigned char)=NULL;
+void (*AssertInt)(InterruptSource,Interrupt)=NULL;
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
@@ -244,11 +245,7 @@ extern "C"
 	}
 }
 
-void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
-{
-	AssertInt(Interupt,Latencey);
-	return;
-}
+
 
 void CenterDialog(HWND hDlg)
 {

@@ -23,10 +23,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "resource.h" 
 #include <commctrl.h>
 #include "mpi.h"
-#include "..\fileops.h"
+#include "../fileops.h"
+#include "../MachineDefs.h"
 
 #define MAXPAX 4
-static void (*AssertInt)(unsigned char,unsigned char)=NULL;
+static void (*AssertInt)(InterruptSource, Interrupt)=NULL;
 static unsigned char (*MemRead8)(unsigned short)=NULL;
 static void (*MemWrite8)(unsigned char,unsigned short)=NULL;
 
@@ -404,10 +405,9 @@ extern "C"
 }
 
 
-void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
+void AssertInterupt(Interrupt interrupt)
 {
-	AssertInt(Interupt,Latencey);
-	return;
+	AssertInt(IS_PIA1_CART, interrupt);
 }
 
 extern "C"

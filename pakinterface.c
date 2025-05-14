@@ -59,7 +59,7 @@ typedef void (*CONFIGIT)(unsigned char);
 typedef void (*HEARTBEAT) (void);
 typedef unsigned char (*PACKPORTREAD)(unsigned char);
 typedef void (*PACKPORTWRITE)(unsigned char,unsigned char);
-typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
+typedef void (*ASSERTINTERUPT)(InterruptSource, Interrupt);
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*SETCART)(unsigned char);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
@@ -73,7 +73,7 @@ typedef void (*SETINIPATH)(char *);
 
 static void (*GetModuleName)(char *,char *,DYNAMICMENUCALLBACK)=NULL;
 static void (*ConfigModule)(unsigned char)=NULL;
-static void (*SetInteruptCallPointer) ( ASSERTINTERUPT)=NULL;
+static void (*SetInteruptCallPointer)(ASSERTINTERUPT)=NULL;
 static void (*DmaMemPointer) (MEMREAD8,MEMWRITE8)=NULL;
 static void (*HeartBeat)(void)=NULL;
 static void (*PakPortWrite)(unsigned char,unsigned char)=NULL;
