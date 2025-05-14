@@ -112,6 +112,7 @@ void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys(void);
 void FunctionHelpBox(HWND);
 void SetupClock(void);
+HMENU GetConfMenu();
 
 // Globals
 static 	HANDLE hEMUThread ;
@@ -123,6 +124,9 @@ static	HANDLE hEMUQuit;
 static char g_szAppName[MAX_LOADSTRING] = "";
 bool BinaryRunning;
 static unsigned char FlagEmuStop=TH_RUNNING;
+
+bool IsShiftKeyDown(void);
+
 //static CRITICAL_SECTION  FrameRender;
 /*--------------------------------------------------------------------------*/
 int APIENTRY WinMain(HINSTANCE hInstance,
@@ -528,13 +532,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 				case DIK_F10:
-					if (!IsShiftKeyDown() && EmuState.FullScreen) {
-						RECT r;
-						HMENU hMenu=RefreshDynamicMenu();
-						GetClientRect(hWnd,&r);
-						TrackPopupMenu(hMenu, TPM_CENTERALIGN|TPM_VCENTERALIGN,
-							r.right/2, r.bottom/2, 0, hWnd, NULL);
+				{
+					HMENU hMenu = NULL;
+					if ( IsShiftKeyDown() ) {
+						hMenu = GetConfMenu();
+					} else {
+						hMenu = RefreshDynamicMenu();
 					}
+					if (hMenu && EmuState.FullScreen) {
+						RECT r;
+						GetClientRect(hWnd,&r);
+						TrackPopupMenu(hMenu,TPM_CENTERALIGN|TPM_VCENTERALIGN,
+							r.right/2,r.bottom/2,0,hWnd,NULL);
+					}
+				}
 				break;
 				
 				case DIK_F11:
@@ -558,7 +569,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 				default:
-					// send other keystrokes to the emulator if it is active
+					// send shift and other keystrokes to the emulator if it is active
 					if ( EmuState.EmulationRunning )
 					{
 						vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyDown);
@@ -567,6 +578,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					}
 					break;
 			}
+
 			return 0;
 			break;
 
@@ -813,13 +825,9 @@ BOOL CALLBACK FunctionKeys(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			SendDlgItemMessage(hDlg,IDC_TITLE,WM_SETTEXT,0,(LPARAM)(LPCSTR)g_szAppName);
 			return TRUE;
 		case WM_CLOSE:
-			EndDialog(hDlg, LOWORD(wParam));
-			return TRUE;
 		case WM_COMMAND:
-			switch (LOWORD(wParam))
-			case IDOK:
-				SendMessage (hDlg, WM_CLOSE, 0, 0);
-			break;
+			EndDialog(hDlg, wParam);
+			return TRUE;
 	}
     return FALSE;
 }
@@ -1082,3 +1090,25 @@ void FunctionHelpBox(HWND hWnd)
 	DialogBox(EmuState.WindowInstance,
 			MAKEINTRESOURCE(IDD_FUNCTION_KEYS),hWnd,FunctionKeys);
 }
+
+HMENU GetConfMenu()
+{
+	static HMENU hMenu = NULL;
+	if (hMenu == NULL) {
+		hMenu = CreatePopupMenu();
+		AppendMenu(hMenu,MF_STRING,ID_AUDIO_CONFIG,"Audio");
+		AppendMenu(hMenu,MF_STRING,ID_CPU_CONFIG,"Cpu");
+		AppendMenu(hMenu,MF_STRING,ID_DISPLAY_CONFIG,"Display");
+		AppendMenu(hMenu,MF_STRING,ID_KEYBOARD_CONFIG,"Keyboard");
+		AppendMenu(hMenu,MF_STRING,ID_JOYSTICKS_CONFIG,"Joysticks");
+		AppendMenu(hMenu,MF_STRING,ID_TAPE_CONFIG,"Tape");
+		AppendMenu(hMenu,MF_STRING,ID_BITBANGER_CONFIG,"BitBanger");
+	}
+	return hMenu;
+}
+
+bool IsShiftKeyDown()
+{
+  return (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+}
+

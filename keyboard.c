@@ -57,7 +57,6 @@ This file is part of VCC (Virtual Color Computer).
 unsigned char SetMouseStatus(unsigned char, unsigned char);
 bool pasting = false;  //Are the keyboard functions in the middle of a paste operation?
 bool GetNextScanInPasteQueue(unsigned char col);
-bool IsShiftKeyDown();
 
 /*****************************************************************************/
 //	Global variables
@@ -634,7 +633,4 @@ bool GetNextScanInPasteQueue(unsigned char col)
 	}
 	}
 	return true;
-}
-bool IsShiftKeyDown() {
-	return IsShift;
 }
