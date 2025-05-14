@@ -36,11 +36,5 @@ This file is part of VCC (Virtual Color Computer).
 #define QUERY 255
 #define INDEXTIME ((LINESPERFIELD * TARGETFRAMERATE)/5)
 
-
-//Common CPU defs
-#define IRQ		1
-#define FIRQ	2
-#define NMI		3
-
 #endif
 

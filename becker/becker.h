@@ -22,11 +22,6 @@ extern const unsigned char Rom[8192];
 #define MAX_LOADSTRING 100
 #define QUERY 255
 
-//Common CPU defs
-#define IRQ		1
-#define FIRQ	2
-#define NMI		3
-
 //menu 
 #define	HEAD 0
 #define SLAVE 1

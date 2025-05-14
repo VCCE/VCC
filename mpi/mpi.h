@@ -21,11 +21,6 @@ This file is part of VCC (Virtual Color Computer).
 #define MAX_LOADSTRING 100
 #define QUERY 255
 
-//Common CPU defs
-#define IRQ		1
-#define FIRQ	2
-#define NMI		3
-
 #define	HEAD 0
 #define SLAVE 1
 #define STANDALONE 2
