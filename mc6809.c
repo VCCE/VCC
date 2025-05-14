@@ -190,11 +190,11 @@ int MC6809Exec(int CycleFor)
 		}
 		// Do interrupts
 		if (PendingInterupts) {
-			if (PendingInterupts & 4)
+			if (PendingInterupts & Bit(NMI))
 				cpu_nmi();
-			else if (PendingInterupts & 2)
+			else if (PendingInterupts & Bit(FIRQ))
 				cpu_firq();
-			else if (PendingInterupts & 1) {
+			else if (PendingInterupts & Bit(IRQ)) {
 				if (IRQWaiter==0)	// This is needed to fix timing problems
 					cpu_irq();
 				else
@@ -3156,17 +3156,8 @@ void cpu_firq(void)
 		{
 			EmuState.Debugger.TraceCaptureInterruptExecuting(FIRQ, CycleCounter, MC6809GetState());
 		}
-
+		PendingInterupts = PendingInterupts & BitMask(FIRQ);
 	}
-	else
-	{
-		if (EmuState.Debugger.IsTracing())
-		{
-			EmuState.Debugger.TraceCaptureInterruptMasked(FIRQ, CycleCounter, MC6809GetState());
-		}
-	}
-	PendingInterupts=PendingInterupts & 253;
-	return;
 }
 
 void cpu_irq(void)
@@ -3201,16 +3192,8 @@ void cpu_irq(void)
 		{
 			EmuState.Debugger.TraceCaptureInterruptExecuting(IRQ, CycleCounter, MC6809GetState());
 		}
+		PendingInterupts = PendingInterupts & BitMask(IRQ);
 	}
-	else
-	{
-		if (EmuState.Debugger.IsTracing())
-		{
-			EmuState.Debugger.TraceCaptureInterruptMasked(IRQ, CycleCounter, MC6809GetState());
-		}
-	}
-	PendingInterupts=PendingInterupts & 254;
-	return;
 }
 
 void cpu_nmi(void)
@@ -3244,8 +3227,7 @@ void cpu_nmi(void)
 		EmuState.Debugger.TraceCaptureInterruptExecuting(NMI, CycleCounter, MC6809GetState());
 	}
 
-	PendingInterupts=PendingInterupts & 251;
-	return;
+	PendingInterupts=PendingInterupts & BitMask(NMI);
 }
 
 void setcc (unsigned char bincc)
@@ -3265,22 +3247,21 @@ unsigned char getcc(void)
 		return(bincc);
 }
 
-void MC6809AssertInterupt(unsigned char Interupt,unsigned char waiter)// 4 nmi 2 firq 1 irq
+void MC6809AssertInterupt(unsigned char interrupt,unsigned char waiter)
 {
+	assert(interrupt >= IRQ && interrupt <= NMI);
 	SyncWaiting=0;
-	PendingInterupts=PendingInterupts | (1<<(Interupt-1));
+	PendingInterupts=PendingInterupts | Bit(interrupt);
 	IRQWaiter=waiter;
 	if (EmuState.Debugger.IsTracing())
 	{
-		EmuState.Debugger.TraceCaptureInterruptRequest(Interupt, CycleCounter, MC6809GetState());
+		EmuState.Debugger.TraceCaptureInterruptRequest(interrupt, CycleCounter, MC6809GetState());
 	}
-	return;
 }
 
-void MC6809DeAssertInterupt(unsigned char Interupt)// 4 nmi 2 firq 1 irq
+void MC6809DeAssertInterupt(unsigned char interrupt)
 {
-	PendingInterupts=PendingInterupts & ~(1<<(Interupt-1));
-	return;
+	PendingInterupts=PendingInterupts & BitMask(interrupt);
 }
 
 void MC6809ForcePC(unsigned short NewPC)

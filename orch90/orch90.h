@@ -26,9 +26,4 @@ void CPUAssertInterupt(unsigned char,unsigned char);
 #define MAX_LOADSTRING 100
 #define QUERY 255
 
-//Common CPU defs
-#define IRQ		1
-#define FIRQ	2
-#define NMI		3
-
 #endif

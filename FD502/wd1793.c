@@ -36,6 +36,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdlib.h>
 #include <winioctl.h>
 #include "defines.h"
+#include "../MachineDefs.h"
 #include "wd1793.h"
 #include "fd502.h"
 #include "fdrawcmd.h"	// http://simonowen.com/fdrawcmd/
@@ -990,7 +991,7 @@ void DispatchCommand(unsigned char Tmp)
 			StatusReg=READY;
 			ExecTimeWaiter=1;
 			if ((Tmp & 15) != 0)
-				CPUAssertInterupt(NMI,0);
+				AssertInt(NMI,0);
 //			WriteLog("FORCEINTERUPT",0);
 			break;
 
@@ -1393,7 +1394,7 @@ long GetSectorInfo (SectorInfo *Sector,unsigned char *TempBuffer)
 void CommandDone(void)
 {
 	if (InteruptEnable)
-		CPUAssertInterupt(NMI,0);
+		AssertInt(NMI,0);
 		TransferBufferSize=0;
 		CurrentCommand=IDLE;
 }

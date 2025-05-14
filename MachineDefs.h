@@ -72,11 +72,14 @@ namespace VCC
 
 }
 
-// Common CPU defs
-#define IRQ		1
-#define FIRQ	2
-#define NMI		3
+// Common CPU defs (counting from 1 because legacy)
+enum { IRQ = 1, FIRQ, NMI };
 
+// make nth bit 0-7
+inline constexpr uint8_t Bit(uint8_t n) { return 1 << n; }
+
+// make mask of nth bit 0-7
+inline constexpr uint8_t BitMask(uint8_t n) { return ~Bit(n); }
 
 extern void (*CPUInit)(void);
 extern int  (*CPUExec)(int);

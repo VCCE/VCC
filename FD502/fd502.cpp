@@ -47,7 +47,7 @@ static unsigned char RGBDiskRom[EXTROMSIZE];
 static char FloppyPath[MAX_PATH];
 static char RomFileName[MAX_PATH]="";
 static char TempRomFileName[MAX_PATH]="";
-static void (*AssertInt)(unsigned char,unsigned char)=NULL;
+void (*AssertInt)(unsigned char,unsigned char)=NULL;
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
@@ -244,11 +244,7 @@ extern "C"
 	}
 }
 
-void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
-{
-	AssertInt(Interupt,Latencey);
-	return;
-}
+
 
 void CenterDialog(HWND hDlg)
 {
