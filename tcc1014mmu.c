@@ -232,7 +232,7 @@ void LoadRom(void)
 				"coco3.rom load failed\n"
 				"Close this then\n"
 				"check ROM path.\n",
-				"Error", MB_TASKMODAL | MB_TOPMOST);
+				"Error", MB_TASKMODAL | MB_TOPMOST | MB_SETFOREGROUND);
 	}
 	return;
 }
