@@ -54,9 +54,9 @@ namespace VCC
 			ERR_TMPMAKECONTEXT,		// unable to set context
 		};
 
-		OpenGL(SystemState*) : detail(nullptr) {}
+		OpenGL(ISystemState* state) : detail(nullptr), state(state) {}
 
-		int Setup(void* hwnd, int width, int height, int statusHeight) override;
+		int Setup(void* hwnd, int width, int height, int statusHeight, bool fullscreen) override;
 		int Render() override;
 		int RenderBox(float x, float y, float w, float h, Pixel color, bool filled) override;
 		int RenderText(const OpenGLFont* font, float x, float y, float size, const char* text) override;
@@ -67,6 +67,7 @@ namespace VCC
 		int GetSurface(Pixel** pixels) override;
 		int GetRect(int rectOption, Rect* area) override;
 		int LoadFont(const OpenGLFont** outFont, int bitmapRes, const OpenGLFontGlyph* glyphs, int start, int end) override;
+		int LockSurface() override;
 
 		void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color) override;
 		void DebugDrawBox(float x, float y, float w, float h, Pixel color) override;
@@ -74,6 +75,7 @@ namespace VCC
 	private:
 		struct Detail;
 		Detail* detail;
+		ISystemState* state;
 	};
 }
 
