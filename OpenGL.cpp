@@ -87,17 +87,15 @@ namespace VCC
 		GLuint texId; // OpenGL texture on gpu
 		wglprocSwapIntervalEXT wglSwapIntervalEXT;
 
-		ISystemState* state;
-
 		#if USE_DEBUG_LINES
 		struct Line { float x1; float y1; float x2; float y2; Pixel color; };
 		std::vector<Line> debugLines;
 		#endif // USE_DEBUG_LINES
 
-		OpenGL::Detail(ISystemState *state)
+		OpenGL::Detail()
 			: isInitialized(false), hWnd(NULL), hDC(NULL), hRC(NULL)
 			, width(0), height(0), statusHeight(0), aspect(true), ntsc(false)
-			, pixels(nullptr), texId(0), wglSwapIntervalEXT(nullptr), state(state)
+			, pixels(nullptr), texId(0), wglSwapIntervalEXT(nullptr)
 		{
 		}
 
@@ -448,7 +446,6 @@ namespace VCC
 			{
 				case OPT_FLAG_ASPECT: aspect = enabled; break;
 				case OPT_FLAG_NTSC: ntsc = enabled; break;
-				case OPT_FLAG_RESIZEABLE: break;
 				default: return Result(ERR_BADOPTION);
 			}
 			return Result(OK);
@@ -646,13 +643,6 @@ namespace VCC
 			return Result(OK);
 		}
 
-		int LockSurface()
-		{
-			if (!isInitialized) return Result(ERR_NOTINITIALIZED);
-			state->SetSurface(pixels, 3, DefaultWidth);
-			return Result(OK);
-		}
-
 	private:
 
 		// returns the box where display should be rendered
@@ -708,9 +698,9 @@ namespace VCC
 		return Result(ERR_NOTINITIALIZED);
 	}
 
-	int OpenGL::Setup(void* hwnd, int width, int height, int statusHeight, bool fullscreen)
+	int OpenGL::Setup(void* hwnd, int width, int height, int statusHeight)
 	{
-		detail = new Detail(state);
+		detail = new Detail();
 		return detail->Setup(hwnd, width, height, statusHeight);
 	}
 
@@ -772,13 +762,6 @@ namespace VCC
 	{
 		if (detail)
 			return detail->LoadFont(outFont, bitmapRes, glyphs, start, end);
-		return Result(ERR_NOTINITIALIZED);
-	}
-
-	int OpenGL::LockSurface()
-	{
-		if (detail)
-			return detail->LockSurface();
 		return Result(ERR_NOTINITIALIZED);
 	}
 

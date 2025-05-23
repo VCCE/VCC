@@ -26,17 +26,16 @@
 
 namespace VCC
 {
-    struct DirectX : public IDisplayDirectX
+    struct DirectX : public IDisplay
     {
         enum
         {
             ERR_UNSUPPORTED = 100,          // unsupported command
             ERR_BADOPTION,                  // invalid option being set
-            ERR_UNKNOWN
         };
 
-        DirectX(ISystemState* state);
-        int Setup(void* hwnd, int width, int height, int statusHeight, bool fullscreen) override;
+        DirectX(SystemState* state);
+        int Setup(void* hwnd, int width, int height, int statusHeight) override;
         int Render() override;
         int Present() override;
         int Cleanup() override;
@@ -47,16 +46,12 @@ namespace VCC
         int UnlockSurface() override;
         void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color) {};
         void DebugDrawBox(float x, float y, float w, float h, Pixel color) {};
-        int RenderSignalLostMessage() override;
-        int RenderStatusLine(char* statusText) override;
 
     private:
 
-        ISystemState* state;
+        SystemState* state;
 
-        void GetDisplayArea(Rect* rect);
         void GetSurfaceArea(Rect* rect);
-        void CheckSurfaces();
     };
 }
 

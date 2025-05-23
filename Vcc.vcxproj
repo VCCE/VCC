@@ -377,7 +377,6 @@
     <ClInclude Include="audio.h" />
     <ClInclude Include="BuildConfig.h" />
     <ClInclude Include="DirectX.h" />
-    <ClInclude Include="DisplayNull.h" />
     <ClInclude Include="IDisplay.h" />
     <ClInclude Include="IDisplayDebug.h" />
     <ClInclude Include="OpenGL.h" />

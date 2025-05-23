@@ -262,9 +262,6 @@
     <ClInclude Include="DirectX.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="DisplayNull.h">
-      <Filter>Source</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\3guys.bmp">

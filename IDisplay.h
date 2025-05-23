@@ -88,14 +88,13 @@ namespace VCC
 		{
 			OPT_FLAG_ASPECT = 1,	// force aspect ratio (default) ELSE stretch display
 			OPT_FLAG_NTSC,			// use 50hz aspect ELSE 60hz aspect (default)
-			OPT_FLAG_RESIZEABLE,
 		};
 
 		// setup display:
 		//	width = full window width
 		//	height = full window height not including status bar
 		//  statusHeight = height to leave for status bar
-		virtual int Setup(void* hwnd, int width, int height, int statusHeight, bool fullscreen) = 0;
+		virtual int Setup(void* hwnd, int width, int height, int statusHeight) = 0;
 
 		//
 		// render the surface to the screen
@@ -161,19 +160,7 @@ namespace VCC
 		//
 		virtual int LoadFont(const OpenGLFont** outFont, int bitmapRes, const OpenGLFontGlyph* glyphs, int start, int end) = 0;
 
+		virtual int LockSurface() { return OK; }
 		virtual int UnlockSurface() { return OK; }
-	};
-
-	struct IDisplayDirectX : IDisplay
-	{
-		//
-		// render the signal lost message for directx
-		//
-		virtual int RenderSignalLostMessage() = 0;
-
-		//
-		// render the status line on screen for directx
-		//
-		virtual int RenderStatusLine(char* statusText) = 0;
 	};
 }
