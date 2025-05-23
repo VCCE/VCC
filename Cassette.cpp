@@ -444,8 +444,8 @@ unsigned int LoadTape(void)
 	ofn.hwndOwner         = NULL;
 	ofn.Flags             = OFN_HIDEREADONLY | OFN_NOTESTFILECREATE;
 	ofn.hInstance         = GetModuleHandle(0);
-	ofn.lpstrDefExt			="";
-	ofn.lpstrFilter       =	"Cassette Files (*.cas)\0*.cas\0Wave Files (*.wav)\0*.wav\0\0";
+	ofn.lpstrDefExt       = "";
+	ofn.lpstrFilter       = "Cassette Files (.cas,.wav)\0*.cas;*.wav\0\0";
 	ofn.nFilterIndex      = 0 ;								// current filter index
 	ofn.lpstrFile         = TapeFileName;					// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
