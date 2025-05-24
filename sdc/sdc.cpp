@@ -295,6 +295,7 @@ extern "C"
     // Reset module
     __declspec(dllexport) unsigned char ModuleReset(void)
     {
+        _DLOG("ModuleReset\n");
         CurrentBank = 0; // set rom bank to 0;
         SDCInit();
         return 0;
@@ -456,7 +457,7 @@ void LoadConfig(void)
     GetPrivateProfileString
         ("SDC", "SDCardPath", "", SDCard, MAX_PATH, IniFile);
     if (!IsDirectory(SDCard)) {
-        _DLOG("LoadConfig invalid SDCard path %s\n",SDCard);
+        MessageBox(0,"Invalid SDCard Path\nCheck SDC Config","Ok",0);
         return;
     }
 
@@ -464,7 +465,7 @@ void LoadConfig(void)
         char txt[32];
         sprintf(txt,"FlashFile_%d",i);
         GetPrivateProfileString
-            ("SDC", txt, "", FlashFile[i], MAX_PATH, IniFile);
+            ("SDC", txt, "-empty-", FlashFile[i], MAX_PATH, IniFile);
     }
 
     ClockEnable = GetPrivateProfileInt("SDC","ClockEnable",1,IniFile);
@@ -639,24 +640,31 @@ void UpdateListBox(HWND hBox)
 }
 
 //-------------------------------------------------------------
-// Load SDC rom
+// Load rom from bank slot
 //-------------------------------------------------------------
 bool LoadRom()
 {
     char * RomName;
     RomName = FlashFile[CurrentBank];
-    _DLOG("LoadRom bank %d file '%s'\n",CurrentBank,RomName);
-    if ((CurrentBank == 0) && (strcmp(RomName,"-empty-") == 0)) {
-        _DLOG("LoadRom loading default SDC-DOS\n");
-        RomName = "SDC-DOS.ROM";
-        strncpy(FlashFile[CurrentBank],RomName,MAX_PATH);
+    if ((*RomName == '\0') || (strcmp(RomName,"-empty-") == 0)) {
+        _DLOG("LoadRom bank %d is empty\n",CurrentBank);
+        if (CurrentBank == 0) {
+            _DLOG("LoadRom loading default SDC-DOS\n");
+            RomName = "SDC-DOS.ROM";
+            strncpy(FlashFile[CurrentBank],RomName,MAX_PATH);
+        }
+    } else {
+        _DLOG("LoadRom bank %d file '%s'\n",CurrentBank,RomName);
     }
 
     int ch;
     int ctr = 0;
     FILE *h = fopen(RomName, "rb");
     memset(PakRom, 0xFF, 0x4000);
-    if (h == NULL) return false;
+    if (h == NULL) {
+        _DLOG("LoadRom '%s' failed\n",RomName);
+        return false;
+    }
 
     char *p = PakRom;
     while (ctr++ < 0x4000) {
@@ -1019,9 +1027,10 @@ void UpdateSD(void)
 //----------------------------------------------------------------------
 void BankSelect(int data)
 {
+    bool init = (CurrentBank != (data & 7));
     _DLOG("BankSelect %02x\n",data);
     CurrentBank = data & 7;
-    SDCInit();
+    if (init) SDCInit();
 }
 
 //----------------------------------------------------------------------
