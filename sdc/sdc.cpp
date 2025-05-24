@@ -1443,6 +1443,8 @@ bool OpenFound (int drive)
         return false;
     }
 
+    CloseDrive(drive);
+
     // Fully qualify name of found file and try to open it
     char fqn[MAX_PATH]={};
     strncpy(fqn,SeaDir,MAX_PATH);
@@ -1537,7 +1539,7 @@ void CloseDrive (int drive)
     drive &= 1;
     if (Disk[drive].hFile != NULL) {
         CloseHandle(Disk[drive].hFile);
-        Disk[drive].hFile = NULL;
+        Disk[drive].hFile = INVALID_HANDLE_VALUE;
     }
 }
 
@@ -1577,35 +1579,36 @@ bool SetCurDir(char * path)
     // If path is null or "/" go to root
     if (*path == '\0' || strcmp(path,"/") == 0) {
         *CurDir = '\0';
-        _DLOG("SetCurdir root\n");
         return true;
 
     // If path is ".." go back a directory
     } else if (strcmp(path,"..") == 0) {
-        _DLOG("SetCurdir back a directory\n");
         char *p = strrchr(CurDir,'/');
         if (p != NULL) {
             *p = '\0';
         } else {
             *CurDir = '\0';
         }
-        _DLOG("SetCurdir back to root\n");
-        IF.status = STA_READY;
         return true;
     }
 
-    // If path relative add to current directory
+    // If path relative append to current directory
     if (*path != '/') {
-        strncpy(tmp,CurDir,MAX_PATH);
-        AppendPathChar(tmp,'/');
+        if (*CurDir != '\0') {
+            strncpy(tmp,CurDir,MAX_PATH);
+            AppendPathChar(tmp,'/');
+            strncat(tmp,path,MAX_PATH);
+        } else {
+            strncpy(tmp,path,MAX_PATH);
+        }
+    } else {
+        strncpy(tmp,&path[1],MAX_PATH);
     }
 
-    // Append trimed path
-    char *ptmp = tmp;
-    char c;
-    while (*ptmp) ptmp++;
-    while (c = *path++) if (c > ' ') *ptmp++ = c;
-    *ptmp = '\0';
+    // Trim trailing blanks
+    char *end = tmp + strlen(tmp) - 1;
+    while (end > tmp && *end == ' ') end--;
+    *(end + 1) = '\0';
 
     // Check if a valid directory on SD
     strncpy(fqp,SDCard,MAX_PATH);
@@ -1619,7 +1622,6 @@ bool SetCurDir(char * path)
 
     // Set new directory
     strncpy(CurDir,tmp,MAX_PATH);
-    _DLOG("SetCurdir %s\n",CurDir);
     return true;
 }
 
@@ -1633,16 +1635,15 @@ bool SearchFile(const char * pattern)
     strncpy(path,SDCard,MAX_PATH);
     AppendPathChar(path,'/');
 
-    // If pattern does not start with '/' append current dir
-    if (*pattern != '/') {
+    if (*pattern == '/') {
+        strncat(path,&pattern[1],MAX_PATH);
+    } else {
         strncat(path,CurDir,MAX_PATH);
         AppendPathChar(path,'/');
+        strncat(path,pattern,MAX_PATH);
     }
 
-    // Append pattern
-    strncat(path,pattern,MAX_PATH);
-
-    //_DLOG("SearchFile %s\n",path);
+    _DLOG("SearchFile %s\n",path);
 
     // Close previous search
     if (hFind != INVALID_HANDLE_VALUE) {
@@ -1668,17 +1669,20 @@ bool SearchFile(const char * pattern)
 }
 
 //----------------------------------------------------------------------
-// InitiateDir command
+// InitiateDir command.
 //----------------------------------------------------------------------
 bool InitiateDir(const char * path)
 {
-    // Append "*" if last char in path was '/';
-    char tmp[128];
-    strncpy(tmp,path,127);
-    int l = strlen(tmp);
-    if (tmp[l-1] == '/') strcat(tmp,"*");
-
-    return SearchFile(tmp);
+    // Append "*.*" if last char in path was '/';
+    int l = strlen(path);
+    if (path[l-1] == '/') {
+        char tmp[MAX_PATH];
+        strncpy(tmp,path,MAX_PATH);
+        strncat(tmp,"*.*",MAX_PATH);
+        return SearchFile(tmp);
+    } else {
+        return SearchFile(path);
+    }
 }
 
 //----------------------------------------------------------------------
