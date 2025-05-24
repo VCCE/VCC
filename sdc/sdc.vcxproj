@@ -163,6 +163,7 @@
       <OutputFile>$(OutDir)sdc.dll</OutputFile>
       <ImportLibrary>$(OutDir)sdc.lib</ImportLibrary>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
@@ -204,6 +205,7 @@
       <SubSystem>Console</SubSystem>
       <OutputFile>$(OutDir)sdc.dll</OutputFile>
       <ImportLibrary>$(OutDir)sdc.lib</ImportLibrary>
+      <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -245,6 +247,7 @@
       <SubSystem>Console</SubSystem>
       <OutputFile>$(OutDir)sdc.dll</OutputFile>
       <ImportLibrary>$(OutDir)sdc.lib</ImportLibrary>
+      <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
@@ -285,6 +288,7 @@
       <SubSystem>Console</SubSystem>
       <OutputFile>$(OutDir)sdc.dll</OutputFile>
       <ImportLibrary>$(OutDir)sdc.lib</ImportLibrary>
+      <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

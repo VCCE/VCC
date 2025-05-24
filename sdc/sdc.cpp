@@ -102,6 +102,7 @@
 
 #include <windows.h>
 #include <windowsx.h>
+#include <shlwapi.h>
 #include <shlobj.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -137,12 +138,12 @@ static void (*MemWrite8)(unsigned char,unsigned short)=NULL;
 LRESULT CALLBACK SDC_Config(HWND, UINT, WPARAM, LPARAM);
 
 void LoadConfig(void);
-void SaveConfig(void);
+bool SaveConfig(HWND);
 void BuildDynaMenu(void);
-void UpdateListBox(HWND);
 void CenterDialog(HWND);
-void UpdateCardBox(void);
+void SelectCardBox(void);
 void UpdateFlashItem(void);
+void DeleteFlashItem(void);
 void InitCardBox(void);
 void InitFlashBox(void);
 void ParseStartup(void);
@@ -408,6 +409,7 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_INITDIALOG:
         CenterDialog(hDlg);
         hConfDlg=hDlg;
+        LoadConfig();
         InitFlashBox();
         InitCardBox();
         SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnable,0);
@@ -417,9 +419,13 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         switch (LOWORD(wParam)) {
         case VK_RETURN:
         case VK_SPACE:
-            UpdateListBox((HWND) lParam);
+            UpdateFlashItem();
             return -2; //no further processing
-       }
+        case VK_BACK:
+        case VK_DELETE:
+            DeleteFlashItem();
+            return -2;
+        }
         return -1;
     case WM_COMMAND:
         switch (HIWORD(wParam)) {
@@ -427,15 +433,20 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             SendMessage((HWND)lParam, LB_SETCURSEL, -1, 0);
             return 0;
         case LBN_DBLCLK:
-            UpdateListBox((HWND) lParam);
+            UpdateFlashItem();
             return 0;
         }
         switch (LOWORD(wParam)) {
+        case ID_SD_SELECT:
+            SelectCardBox();
+            break;
+        case ID_SD_BOX:
+            if (HIWORD(wParam) == EN_CHANGE)
+                GetWindowText(hSDCardBox,SDCard,MAX_PATH);
+            break;
         case IDOK:
-            ClockEnable = (unsigned char)
-                SendDlgItemMessage(hDlg,IDC_CLOCK,BM_GETCHECK,0,0);
-            SaveConfig();
-            EndDialog(hDlg,LOWORD(wParam));
+            if (SaveConfig(hDlg))
+                EndDialog(hDlg,LOWORD(wParam));
             break;
         case IDCANCEL:
             EndDialog(hDlg,LOWORD(wParam));
@@ -457,7 +468,8 @@ void LoadConfig(void)
     GetPrivateProfileString
         ("SDC", "SDCardPath", "", SDCard, MAX_PATH, IniFile);
     if (!IsDirectory(SDCard)) {
-        MessageBox(0,"Invalid SDCard Path\nCheck SDC Config","Ok",0);
+        MessageBox
+            (0,"Invalid or missing SDCard Path in VCC init","Error",0);
         return;
     }
 
@@ -465,7 +477,7 @@ void LoadConfig(void)
         char txt[32];
         sprintf(txt,"FlashFile_%d",i);
         GetPrivateProfileString
-            ("SDC", txt, "-empty-", FlashFile[i], MAX_PATH, IniFile);
+            ("SDC", txt, "", FlashFile[i], MAX_PATH, IniFile);
     }
 
     ClockEnable = GetPrivateProfileInt("SDC","ClockEnable",1,IniFile);
@@ -474,19 +486,26 @@ void LoadConfig(void)
 //------------------------------------------------------------
 // Save config to ini file
 //------------------------------------------------------------
-void SaveConfig(void)
+bool SaveConfig(HWND hDlg)
 {
+    if (!IsDirectory(SDCard)) {
+        MessageBox(0,"Invalid SDCard Path\n","Error",0);
+        return false;
+    }
     WritePrivateProfileString("SDC","SDCardPath",SDCard,IniFile);
+
     for (int i=0;i<8;i++) {
         char txt[32];
         sprintf(txt,"FlashFile_%d",i);
         WritePrivateProfileString("SDC",txt,FlashFile[i],IniFile);
     }
-    if (ClockEnable)
+
+    if (SendDlgItemMessage(hDlg,IDC_CLOCK,BM_GETCHECK,0,0)) {
         WritePrivateProfileString("SDC","ClockEnable","1",IniFile);
-    else
+    } else {
         WritePrivateProfileString("SDC","ClockEnable","0",IniFile);
-    return;
+    }
+    return true;
 }
 
 //----------------------------------------------------------------------
@@ -525,17 +544,27 @@ void SDCInit(void)
 //------------------------------------------------------------
 void InitFlashBox(void)
 {
+    char path[MAX_PATH];
+    char text[MAX_PATH];
     hFlashBox = GetDlgItem(hConfDlg,ID_FLASH_BOX);
 
-    // Set height of items in the listbox
+    // Set height of items and initialize the listbox
+    SendMessage(hFlashBox,LB_SETHORIZONTALEXTENT,0,200);
     SendMessage(hFlashBox, LB_SETITEMHEIGHT, 0, 18);
+    SendMessage(hFlashBox,LB_RESETCONTENT,0,0);
+
+    HDC hdc = GetDC(hConfDlg);
 
     // Add items to the listbox
-    char text[64];
     for (int index=0; index<8; index++) {
-        sprintf(text,"%d  %s",index,FlashFile[index]);
+        // Compact the path to fit in flash box. 385 is width pixels
+        strcpy(path,FlashFile[index]);
+        PathCompactPath(hdc,path,385);
+        sprintf(text,"%d %s",index,path);
         SendMessage(hFlashBox, LB_ADDSTRING, 0, (LPARAM)text);
     }
+
+    ReleaseDC(hFlashBox,hdc);
 }
 
 //------------------------------------------------------------
@@ -544,8 +573,17 @@ void InitFlashBox(void)
 void InitCardBox(void)
 {
     hSDCardBox = GetDlgItem(hConfDlg,ID_SD_BOX);
-    SendMessage(hSDCardBox, LB_SETITEMHEIGHT, 0, 18);
-    SendMessage(hSDCardBox, LB_ADDSTRING, 0, (LPARAM)SDCard);
+    SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM)SDCard);
+}
+//------------------------------------------------------------
+// Delete flash box item
+//------------------------------------------------------------
+void DeleteFlashItem(void)
+{
+    int index = SendMessage(hFlashBox, LB_GETCURSEL, 0, 0);
+    if ((index < 0) | (index > 7)) return;
+    *FlashFile[index] = '\0';
+    InitFlashBox();
 }
 
 //------------------------------------------------------------
@@ -553,19 +591,20 @@ void InitCardBox(void)
 //------------------------------------------------------------
 void UpdateFlashItem(void)
 {
-    char filename[MAX_PATH];
+    char filename[MAX_PATH]={};
 
     int index = SendMessage(hFlashBox, LB_GETCURSEL, 0, 0);
-    if ((index < 0) | (index > 7)) {
-        _DLOG("UpdateFlashItem invalid index %d\n",index);
-        return;
-    }
+    if ((index < 0) | (index > 7)) return;
+
+    char title[64];
+    snprintf(title,64,"Update Flash Bank %d",index);
 
     OPENFILENAME ofn ;
-
-    char TempFileName[MAX_PATH]="";
-    char CapFilePath[MAX_PATH]="C:/users";
-    sprintf(filename,"%d  -empty-",index);
+    strncpy(filename,FlashFile[index],MAX_PATH);
+    // DeDanitize
+    for(unsigned int i=0; i<strlen(filename); i++) {
+        if (filename[i] == '/') filename[i] = '\\';
+    }
 
     memset(&ofn,0,sizeof(ofn));
     ofn.lStructSize       = sizeof (OPENFILENAME);
@@ -574,69 +613,51 @@ void UpdateFlashItem(void)
     ofn.lpstrDefExt       = ".rom";
     ofn.lpstrFilter       = "Rom File\0*.rom\0All Files\0*.*\0\0";
     ofn.nFilterIndex      = 0 ;
-    ofn.lpstrFile         = &filename[3];
-    ofn.nMaxFile          = MAX_PATH-3;
+    ofn.lpstrFile         = filename;
+    ofn.nMaxFile          = MAX_PATH;
     ofn.nMaxFileTitle     = MAX_PATH;
-    ofn.lpstrInitialDir   = CapFilePath;
-    ofn.lpstrTitle        = "Set Flash Rom file";
+    ofn.lpstrTitle        = title;
 
+    // Sanitize
     if (GetOpenFileName(&ofn)) {
         for(unsigned int i=0; i<strlen(filename); i++) {
             if (filename[i] == '\\') filename[i] = '/';
         }
+        strncpy(FlashFile[index],filename,MAX_PATH);
     }
-
-    strncpy(FlashFile[index],&filename[3],MAX_PATH);
 
     _DLOG("UdateFlashItem %d %s\n",index,FlashFile[index]);
 
-    // Delete prev string then add new string in it's place
-    SendMessage(hFlashBox, LB_DELETESTRING, index, 0);
-    SendMessage(hFlashBox, LB_INSERTSTRING, index, (LPARAM)filename);
-    SendMessage(hFlashBox, LB_SETCURSEL, index, 0);
+    InitFlashBox();
 }
 
 //------------------------------------------------------------
-// Update SD card
+// Dialog to select SD card path in user home directory
 //------------------------------------------------------------
-void UpdateCardBox(void)
+void SelectCardBox(void)
 {
     // Prompt user for path
     BROWSEINFO bi = { 0 };
     bi.hwndOwner = GetActiveWindow();
     bi.lpszTitle = "Set the SD card path";
     bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NONEWFOLDERBUTTON;
+
+    // Start from user home diretory
+    SHGetSpecialFolderLocation
+        (NULL,CSIDL_PROFILE,(LPITEMIDLIST *) &bi.pidlRoot);
+
     LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
     if (pidl != 0) {
         SHGetPathFromIDList(pidl,SDCard);
         CoTaskMemFree(pidl);
     }
+
     // Sanitize slashes
     for(unsigned int i=0; i<strlen(SDCard); i++) {
         if (SDCard[i] == '\\') SDCard[i] = '/';
     }
-    AppendPathChar(SDCard,'/');
 
-    // Make sure it  is a directory
-    if (!IsDirectory(SDCard)) {
-        _DLOG("UpdateCardBox invalid path %s\n",SDCard);
-        return;
-    }
-    // Display selection in listbox
-    SendMessage(hSDCardBox, LB_DELETESTRING, 0, 0);
-    SendMessage(hSDCardBox, LB_INSERTSTRING, 0, (LPARAM)SDCard);
-    SendMessage(hSDCardBox, LB_SETCURSEL, 0, 0);
-}
-
-//------------------------------------------------------------
-// Update a list box
-//------------------------------------------------------------
-void UpdateListBox(HWND hBox)
-{
-    if (hBox == hFlashBox)
-        UpdateFlashItem();
-    else if (hBox == hSDCardBox)
-        UpdateCardBox();
+    SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM)SDCard);
 }
 
 //-------------------------------------------------------------
@@ -688,6 +709,7 @@ void ParseStartup(void)
     }
 
     strncpy(buf,SDCard,MAX_PATH);
+    AppendPathChar(buf,'/');
     strncat(buf,"startup.cfg",MAX_PATH);
 
     FILE *su = fopen(buf,"r");
