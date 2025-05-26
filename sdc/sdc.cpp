@@ -175,6 +175,7 @@ bool InitiateDir(const char *);
 bool IsDirectory(const char *path);
 void GetMountedImageRec(void);
 void GetSectorCount(void);
+void GetDirectoryLeaf(void);
 unsigned char PickReplyByte(unsigned char);
 
 //======================================================================
@@ -192,7 +193,8 @@ typedef struct {
     unsigned char param1;
     unsigned char param2;
     unsigned char param3;
-    unsigned char reply_mode; // 0=words, 1=bytes
+    unsigned char reply_mode;  // 0=words, 1=bytes
+    unsigned char reply_status;
     unsigned char half_sent;
     unsigned char flash;
     int bufcnt;
@@ -206,7 +208,7 @@ char PakRom[0x4000];
 
 // Host paths for SDC
 char SDCard[MAX_PATH] = {}; // SD card root directory
-char CurDir[MAX_PATH] = {}; // SDC current directory
+char CurDir[256]      = {}; // SDC current directory
 char SeaDir[MAX_PATH] = {}; // Last directory searched
 
 // Packed file records for SDC file commands
@@ -258,6 +260,8 @@ static HWND hSDCardBox = NULL;
 int streaming;
 unsigned char stream_cmdcode;
 unsigned int stream_lsn;
+
+FILE *f_ROM = NULL;
 
 //======================================================================
 // DLL exports
@@ -678,22 +682,24 @@ bool LoadRom()
         _DLOG("LoadRom bank %d file '%s'\n",CurrentBank,RomName);
     }
 
+    if (f_ROM) fclose(f_ROM);
+
     int ch;
     int ctr = 0;
-    FILE *h = fopen(RomName, "rb");
-    memset(PakRom, 0xFF, 0x4000);
-    if (h == NULL) {
+    f_ROM = fopen(RomName, "rb");
+    if (f_ROM == NULL) {
         _DLOG("LoadRom '%s' failed\n",RomName);
         return false;
     }
 
+    memset(PakRom, 0xFF, 0x4000);
     char *p = PakRom;
     while (ctr++ < 0x4000) {
-        if ((ch = fgetc(h)) < 0) break;
+        if ((ch = fgetc(f_ROM)) < 0) break;
         *p++ = (char) ch;
     }
 
-    fclose(h);
+    fclose(f_ROM);
     return true;
 }
 
@@ -752,18 +758,13 @@ void ParseStartup(void)
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port)
 {
-    if ((!IF.sdclatch) && (port > 0x43)) return;
+    if ((!IF.sdclatch) && (port > 0x42)) return;
 
     switch (port) {
     // Control Latch
     case 0x40:
-        if (data == 0x43) {
-            IF.sdclatch = true;
-            IF.status = 0;
-        } else {
-            // init the interface
-            memset(&IF,0,sizeof(IF));
-        }
+        if (IF.sdclatch) memset(&IF,0,sizeof(IF));
+        if (data == 0x43) IF.sdclatch = true;
         break;
     // Flash Data
     case 0x42:
@@ -854,7 +855,7 @@ unsigned char SDCRead(unsigned char port)
     // Interface status
     case 0x48:
         if (IF.bufcnt > 0) {
-            rpy = STA_BUSY|STA_READY;
+            rpy = (IF.reply_status != 0) ? IF.reply_status : STA_BUSY | STA_READY;
         } else {
             rpy = IF.status;
         }
@@ -960,10 +961,8 @@ void GetDriveInfo(void)
         GetMountedImageRec();
         break;
     case 0x43:
-        // 'C' Return current directory in block
-        _DLOG("GetCurDir %s\n",CurDir);
-        IF.reply_mode=0;
-        LoadReply(CurDir,strlen(CurDir)+1);
+        // 'C' Return current directory leaf in block
+        GetDirectoryLeaf();
         break;
     case 0x51:
         // 'Q' Return the size of disk image in p1,p2,p3
@@ -985,6 +984,50 @@ void GetDriveInfo(void)
         IF.reply3 = 0x01;
         break;
     }
+}
+
+//----------------------------------------------------------------------
+// Get directory leaf.  This is the leaf name of the current directory,
+// not it's full path.  SDCEXP uses this with the set directory '..'
+// command to learn the full path when restore last session is active.
+// The full path is saved in SDCX.CFG for the next session.
+//----------------------------------------------------------------------
+void GetDirectoryLeaf(void)
+{
+    _DLOG("GetDirectoryLeaf CurDir '%s'\n",CurDir);
+
+    char leaf[32];
+    memset(leaf,0,32);
+
+    // Strip trailing '/' from current directory. There should not
+    // be one there but the slash is so bothersome best to check.
+    int n = strlen(CurDir);
+    if (n > 0) {
+        n -= 1;
+        if (CurDir[n] == '/') CurDir[n] = '\0';
+    }
+
+    // If at least one leaf find the last one
+    if (n > 0) {
+        char *p = strrchr(CurDir,'/');
+        if (p == NULL) {
+            p = CurDir;
+        } else {
+            p += 1;
+        }
+        // Build reply
+        memset(leaf,32,12);
+        strncpy(leaf,p,12);
+        n = strlen(p);
+        // SDC filenames are fixed 8 chars so blank any terminator
+        if (n < 12) leaf[n] = ' ';
+    // If current directory is SDCard root reply with zeros and status
+    } else {
+        IF.reply_status = STA_FAIL | STA_NOTFOUND;
+    }
+
+    IF.reply_mode=0;
+    LoadReply(leaf,32);
 }
 
 //----------------------------------------------------------------------
@@ -1099,6 +1142,7 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
 
     int drive = cmdcode & 1;
     if (Disk[drive].hFile == NULL) {
+        _DLOG("ReadDrive %d not open\n");
         return false;
     }
 
@@ -1116,6 +1160,7 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
         return false;
     }
 
+    //_DLOG("ReadDrive %d sec %d\n",drive,lsn);
     LoadReply(buf,cnt);
     return true;
 }
@@ -1178,7 +1223,7 @@ void WriteSector(void)
     DWORD cnt = 0;
     int drive = IF.cmdcode & 1;
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
-    //_DLOG("WriteSector %d drive %d\n",lsn,drive);
+    _DLOG("WriteSector drive %d sec %d\n",drive,lsn);
 
     if (Disk[drive].hFile == NULL) {
         IF.status = STA_FAIL;
@@ -1275,8 +1320,7 @@ void SDCControl(void)
 void LoadReply(void *data, int count)
 {
     if ((count < 2) | (count > 512)) {
-        _DLOG("LoadReply bad count\n");
-        IF.status = STA_FAIL;
+        _DLOG("LoadReply bad count %d\n",count);
         return;
     }
 
@@ -1289,8 +1333,6 @@ void LoadReply(void *data, int count)
     // If port reads exceed the count zeros will be returned
     IF.reply2 = 0;
     IF.reply3 = 0;
-
-    //_DLOG("LoadReply %d\n",count);
 
     return;
 }
@@ -1388,7 +1430,7 @@ bool LoadFindRecord(struct FileRecord * rec)
 //----------------------------------------------------------------------
 bool MountDisk (int drive, const char * path)
 {
-_DLOG("MountDisk entry %d %s\n",drive,path);
+    _DLOG("MountDisk entry %d %s\n",drive,path);
 
     drive &= 1;
 
@@ -1589,61 +1631,79 @@ bool IsDirectory(const char * path)
 }
 
 //----------------------------------------------------------------------
-// Set the Current Directory
+// Set the Current Directory relative to previous current or to SDRoot
 //----------------------------------------------------------------------
 bool SetCurDir(char * path)
 {
-    _DLOG("SetCurdir '%s'\n",path);
+    //_DLOG("SetCurdir enter '%s' '%s'\n",path,CurDir);
 
-    char fqp[MAX_PATH];
-    char tmp[MAX_PATH] = {};
-
-    // If path is null or "/" go to root
-    if (*path == '\0' || strcmp(path,"/") == 0) {
+    // If path is "/" set CurDir to root
+    if (strcmp(path,"/") == 0) {
         *CurDir = '\0';
         return true;
+    }
 
     // If path is ".." go back a directory
-    } else if (strcmp(path,"..") == 0) {
-        char *p = strrchr(CurDir,'/');
-        if (p != NULL) {
-            *p = '\0';
-        } else {
-            *CurDir = '\0';
+    if (strcmp(path,"..") == 0) {
+        int n = strlen(CurDir);
+        if (n > 0) {
+            if (CurDir[n-1] == '/') CurDir[n-1] = '\0';
+            char *p = strrchr(CurDir,'/');
+            if (p != NULL) {
+                *p = '\0';
+                return true;
+            }
         }
+        *CurDir = '\0';
         return true;
     }
 
-    // If path relative append to current directory
-    if (*path != '/') {
-        if (*CurDir != '\0') {
-            strncpy(tmp,CurDir,MAX_PATH);
-            AppendPathChar(tmp,'/');
-            strncat(tmp,path,MAX_PATH);
-        } else {
-            strncpy(tmp,path,MAX_PATH);
-        }
-    } else {
-        strncpy(tmp,&path[1],MAX_PATH);
+    char cleanpath[MAX_PATH];
+
+    // Find trailing blanks or trailing '/'
+    strncpy(cleanpath,path,MAX_PATH);
+    int n = strlen(cleanpath)-1;
+    while (n >= 0) {
+       if (cleanpath[n] != ' ') break;
+       n--;
     }
 
-    // Trim trailing blanks
-    char *end = tmp + strlen(tmp) - 1;
-    while (end > tmp && *end == ' ') end--;
-    *(end + 1) = '\0';
+    // if path empty nothing changes
+    if (n < 0) {
+        _DLOG("SetCurdir '%s'\n",CurDir);
+        return true;
+    }
 
-    // Check if a valid directory on SD
-    strncpy(fqp,SDCard,MAX_PATH);
-    AppendPathChar(fqp,'/');
-    strncat(fqp,tmp,MAX_PATH);
-    if (!IsDirectory(fqp)) {
-        _DLOG("SetCurDir invalid %s\n",fqp);
-        IF.status = STA_FAIL;
+    // Get rid of trailing spaces and trailing '/'
+    if (cleanpath[n] == '/')
+        cleanpath[n] = '\0';
+    else
+        cleanpath[n+1] = '\0';
+
+    char testpath[MAX_PATH];
+    if (*cleanpath == '/') {
+        strncpy(testpath,&cleanpath[1],MAX_PATH);
+    } else if (*CurDir == '\0') {
+        strncpy(testpath,cleanpath,MAX_PATH);
+    } else {
+        strncpy(testpath,CurDir,MAX_PATH);
+        AppendPathChar(testpath,'/');
+        strncat(testpath,cleanpath,MAX_PATH);
+    }
+
+    // Test new directory
+    char fullpath[MAX_PATH];
+    strncpy(fullpath,SDCard,MAX_PATH);
+    AppendPathChar(fullpath,'/');
+    strncat(fullpath,testpath,MAX_PATH);
+    if (!IsDirectory(fullpath)) {
+        _DLOG("SetCurDir '%s' invalid %s\n",path);
         return false;
     }
 
     // Set new directory
-    strncpy(CurDir,tmp,MAX_PATH);
+    strncpy(CurDir,testpath,256);
+    _DLOG("SetCurdir '%s'\n",CurDir);
     return true;
 }
 
