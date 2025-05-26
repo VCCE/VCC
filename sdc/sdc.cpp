@@ -240,6 +240,7 @@ struct _Disk {
 // Flash banks
 char FlashFile[8][MAX_PATH];
 char CurrentBank = 0;
+char StartupBank = 0;
 
 // Dll handle
 static HINSTANCE hinstDLL;
@@ -255,6 +256,7 @@ WIN32_FIND_DATAA dFound;
 static HWND hConfDlg = NULL;
 static HWND hFlashBox = NULL;
 static HWND hSDCardBox = NULL;
+static HWND hStartupBank = NULL;
 
 // Streaming control
 int streaming;
@@ -301,7 +303,6 @@ extern "C"
     __declspec(dllexport) unsigned char ModuleReset(void)
     {
         _DLOG("ModuleReset\n");
-        CurrentBank = 0; // set rom bank to 0;
         SDCInit();
         return 0;
     }
@@ -418,6 +419,10 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         InitCardBox();
         SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnable,0);
         SetFocus(GetDlgItem(hDlg,ID_NEXT));
+        hStartupBank = GetDlgItem(hDlg,ID_STARTUP_BANK);
+        char tmp[4];
+        snprintf(tmp,4,"%d",(StartupBank & 7));
+        SetWindowText(hStartupBank,tmp);
         break;
     case WM_VKEYTOITEM:
         switch (LOWORD(wParam)) {
@@ -447,6 +452,15 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         case ID_SD_BOX:
             if (HIWORD(wParam) == EN_CHANGE)
                 GetWindowText(hSDCardBox,SDCard,MAX_PATH);
+            break;
+        case ID_STARTUP_BANK:
+            if (HIWORD(wParam) == EN_CHANGE) {
+                char tmp[4];
+                GetWindowText(hStartupBank,tmp,4);
+                StartupBank = atoi(tmp);
+                if (StartupBank > 7) StartupBank &= 7;
+                _DLOG("Startup Bank %d",StartupBank);
+            }
             break;
         case IDOK:
             if (SaveConfig(hDlg))
@@ -485,6 +499,7 @@ void LoadConfig(void)
     }
 
     ClockEnable = GetPrivateProfileInt("SDC","ClockEnable",1,IniFile);
+    StartupBank = GetPrivateProfileInt("SDC","StarupBank",0,IniFile);
 }
 
 //------------------------------------------------------------
@@ -509,6 +524,9 @@ bool SaveConfig(HWND hDlg)
     } else {
         WritePrivateProfileString("SDC","ClockEnable","0",IniFile);
     }
+    char tmp[4];
+    snprintf(tmp,4,"%d",(StartupBank & 7));
+    WritePrivateProfileString("SDC","StarupBank",tmp,IniFile);
     return true;
 }
 
@@ -529,6 +547,7 @@ void SDCInit(void)
 
     // Load SDC settings
     LoadConfig();
+    CurrentBank = StartupBank;
     SetCurDir(""); // May be changed by ParseStartup()
 
     memset((void *) &Disk,0,sizeof(Disk));
