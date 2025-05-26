@@ -30,6 +30,7 @@
 #define IDC_CLOCK                       1002
 #define ID_NEXT                         1003
 #define ID_SD_SELECT                    1004
+#define ID_STARTUP_BANK                 1005
 
 // Next default values for new objects
 
