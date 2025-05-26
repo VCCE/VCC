@@ -1427,6 +1427,9 @@ bool LoadFindRecord(struct FileRecord * rec)
 //----------------------------------------------------------------------
 // Mount Disk. If image path starts with '/' load drive relative
 // to SDRoot, else load drive relative to the current directory.
+// If there is no '.' in the path first appending '.DSK' will be
+// tried then wildcard. If wildcarded the set will be available for
+// the 'Next Disk' function. TODO: Sets of type SOMEAPPn.DSK
 //----------------------------------------------------------------------
 bool MountDisk (int drive, const char * path)
 {
@@ -1441,24 +1444,34 @@ bool MountDisk (int drive, const char * path)
     // Check for UNLOAD.  Path will be an empty string.
     if (*path == '\0') return true;
 
-    // Look for the file
     char file[MAX_PATH];
     char tmp[MAX_PATH];
-    FixSDCPath(file,path);              // Fixup SDC format
-    if (!SearchFile(file)) {
-        strncpy(tmp,file,MAX_PATH);     // try append ".DSK"
+
+    // Convert from SDC format
+    FixSDCPath(file,path);
+
+    // Look for the file
+    bool found = SearchFile(file);
+
+    // if no '.' in the name try appending .DSK  or wildcard
+    if (!found && (strchr(file,'.') == NULL)) {
+        strncpy(tmp,file,MAX_PATH);
         strncat(tmp,".DSK",MAX_PATH);
-        if (!SearchFile(tmp)) {
-            strncpy(tmp,file,MAX_PATH); // try wildcard
-            strncat(tmp,"*",MAX_PATH);
-            if (!SearchFile(tmp)) {
-                _DLOG("Mount %s not found\n",file);
-                return false;
-            }
+        found = SearchFile(tmp);
+        if(!found) {
+            strncpy(tmp,file,MAX_PATH);
+            strncat(tmp,"*.*",MAX_PATH);
+            found = SearchFile(tmp);
         }
     }
 
-    // Open first image found on the drive
+    // Give up
+    if (!found) {
+        _DLOG("Mount %s not found\n",file);
+        return false;
+    }
+
+    // Mount first image found
     if (!OpenFound(drive)) {
         _DLOG("MountDisk failed %s\n",path);
         memset((void *) &Disk[drive],0,sizeof(_Disk));
@@ -1470,7 +1483,7 @@ bool MountDisk (int drive, const char * path)
 }
 
 //----------------------------------------------------------------------
-// Mount Next Disk from MountDisk set
+// Mount Next Disk from found set
 //----------------------------------------------------------------------
 bool MountNext (int drive)
 {
@@ -1708,7 +1721,7 @@ bool SetCurDir(char * path)
 }
 
 //----------------------------------------------------------------------
-//  Start File search
+//  Start File search.  Searches start from the root of the SDCard.
 //----------------------------------------------------------------------
 bool SearchFile(const char * pattern)
 {
