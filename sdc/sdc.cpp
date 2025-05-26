@@ -692,7 +692,7 @@ bool LoadRom()
     RomName = FlashFile[CurrentBank];
     if ((*RomName == '\0') || (strcmp(RomName,"-empty-") == 0)) {
         _DLOG("LoadRom bank %d is empty\n",CurrentBank);
-        if (CurrentBank == 0) {
+        if (CurrentBank == StartupBank) {
             _DLOG("LoadRom loading default SDC-DOS\n");
             RomName = "SDC-DOS.ROM";
             strncpy(FlashFile[CurrentBank],RomName,MAX_PATH);
