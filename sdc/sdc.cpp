@@ -107,8 +107,8 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <sys/stat.h>
-
 #include "sdc.h"
+
 
 //======================================================================
 // Functions
@@ -118,23 +118,17 @@ bool LoadRom(void);
 void SDCWrite(unsigned char data,unsigned char port);
 unsigned char SDCRead(unsigned char port);
 void SDCInit(void);
-
 void AssertInterupt(unsigned char,unsigned char);
 void MemWrite(unsigned char,unsigned short);
 unsigned char MemRead(unsigned short);
-
-static char IniFile[MAX_PATH]={0};  // Ini file name from config
-
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-
 static void (*AssertInt)(unsigned char,unsigned char)=NULL;
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 static unsigned char (*MemRead8)(unsigned short)=NULL;
 static void (*MemWrite8)(unsigned char,unsigned short)=NULL;
-
 LRESULT CALLBACK SDC_Config(HWND, UINT, WPARAM, LPARAM);
 
 void LoadConfig(void);
@@ -207,9 +201,10 @@ Interface IF;
 char PakRom[0x4000];
 
 // Host paths for SDC
-char SDCard[MAX_PATH] = {}; // SD card root directory
-char CurDir[256]      = {}; // SDC current directory
-char SeaDir[MAX_PATH] = {}; // Last directory searched
+char IniFile[MAX_PATH] = {};  // Vcc ini file name
+char SDCard[MAX_PATH]  = {};  // SD card root directory
+char CurDir[256]       = {};  // SDC current directory
+char SeaDir[MAX_PATH]  = {};  // Last directory searched
 
 // Packed file records for SDC file commands
 #pragma pack(1)
@@ -264,6 +259,9 @@ unsigned char stream_cmdcode;
 unsigned int stream_lsn;
 
 FILE *f_ROM = NULL;
+
+char Status[16] = {};
+bool StartupComplete = false;
 
 //======================================================================
 // DLL exports
@@ -322,24 +320,31 @@ extern "C"
         return;
     }
 
-    // Capture the Fuction transfer point for the CPU assert interupt
+    // Capture the Function transfer point for the CPU assert interupt
     __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
     {
         AssertInt=Dummy;
         return;
     }
 
+    static int idle_ctr = 0;
     // Return SDC status.
     __declspec(dllexport) void ModuleStatus(char *MyStatus)
     {
-        strcpy(MyStatus,"SDC");
+        strncpy(MyStatus,Status,12);
+        if (idle_ctr < 100) {
+            idle_ctr++;
+        } else {
+            idle_ctr = 0;
+            strncpy(Status,"SDC:Idle",12);
+        }
         return ;
     }
 
     // Set ini file path and Initialize SDC
     __declspec(dllexport) void SetIniPath (char *IniFilePath)
     {
-        strcpy(IniFile,IniFilePath);
+        strncpy(IniFile,IniFilePath,MAX_PATH);
         return;
     }
 
@@ -366,6 +371,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 {
     if (reason == DLL_PROCESS_ATTACH) {
         hinstDLL = hinst;
+        StartupComplete = false;
+
     } else if (reason == DLL_PROCESS_DETACH) {
         CloseDrive(0);
         CloseDrive(1);
@@ -374,6 +381,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
             hConfDlg = NULL;
         }
     }
+
     return TRUE;
 }
 
@@ -450,8 +458,11 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             SelectCardBox();
             break;
         case ID_SD_BOX:
-            if (HIWORD(wParam) == EN_CHANGE)
-                GetWindowText(hSDCardBox,SDCard,MAX_PATH);
+            if (HIWORD(wParam) == EN_CHANGE) {
+                char tmp[MAX_PATH];
+                GetWindowText(hSDCardBox,tmp,MAX_PATH);
+                if (*tmp != '\0') strncpy(SDCard,tmp,MAX_PATH);
+            }
             break;
         case ID_STARTUP_BANK:
             if (HIWORD(wParam) == EN_CHANGE) {
@@ -459,7 +470,6 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
                 GetWindowText(hStartupBank,tmp,4);
                 StartupBank = atoi(tmp);
                 if (StartupBank > 7) StartupBank &= 7;
-                _DLOG("Startup Bank %d",StartupBank);
             }
             break;
         case IDOK:
@@ -485,15 +495,14 @@ void LoadConfig(void)
 {
     GetPrivateProfileString
         ("SDC", "SDCardPath", "", SDCard, MAX_PATH, IniFile);
+
     if (!IsDirectory(SDCard)) {
-        MessageBox
-            (0,"Invalid or missing SDCard Path in VCC init","Error",0);
-        return;
+        MessageBox (0,"Invalid SDCard Path in VCC init","Error",0);
     }
 
     for (int i=0;i<8;i++) {
         char txt[32];
-        sprintf(txt,"FlashFile_%d",i);
+        snprintf(txt,MAX_PATH,"FlashFile_%d",i);
         GetPrivateProfileString
             ("SDC", txt, "", FlashFile[i], MAX_PATH, IniFile);
     }
@@ -547,7 +556,15 @@ void SDCInit(void)
 
     // Load SDC settings
     LoadConfig();
-    CurrentBank = StartupBank;
+    if (!StartupComplete){
+        CurrentBank = StartupBank;
+        StartupComplete = true;
+    } else if (CurrentBank != StartupBank) {
+        StartupComplete = false;
+    }
+
+    LoadRom();
+
     SetCurDir(""); // May be changed by ParseStartup()
 
     memset((void *) &Disk,0,sizeof(Disk));
@@ -558,7 +575,6 @@ void SDCInit(void)
     // init the interface
     memset(&IF,0,sizeof(IF));
 
-    LoadRom();
     return;
 }
 
@@ -581,18 +597,18 @@ void InitFlashBox(void)
     // Add items to the listbox
     for (int index=0; index<8; index++) {
         // Compact the path to fit in flash box. 385 is width pixels
-        strcpy(path,FlashFile[index]);
+        strncpy(path,FlashFile[index],MAX_PATH);
         PathCompactPath(hdc,path,385);
         sprintf(text,"%d %s",index,path);
         SendMessage(hFlashBox, LB_ADDSTRING, 0, (LPARAM)text);
     }
-
     ReleaseDC(hFlashBox,hdc);
 }
 
 //------------------------------------------------------------
 // Init SD card box
 //------------------------------------------------------------
+
 void InitCardBox(void)
 {
     hSDCardBox = GetDlgItem(hConfDlg,ID_SD_BOX);
@@ -690,6 +706,7 @@ bool LoadRom()
 {
     char * RomName;
     RomName = FlashFile[CurrentBank];
+
     if ((*RomName == '\0') || (strcmp(RomName,"-empty-") == 0)) {
         _DLOG("LoadRom bank %d is empty\n",CurrentBank);
         if (CurrentBank == StartupBank) {
@@ -707,7 +724,7 @@ bool LoadRom()
     int ctr = 0;
     f_ROM = fopen(RomName, "rb");
     if (f_ROM == NULL) {
-        _DLOG("LoadRom '%s' failed\n",RomName);
+        _DLOG("LoadRom '%s' failed errno %d \n",RomName,errno);
         return false;
     }
 
@@ -777,7 +794,7 @@ void ParseStartup(void)
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port)
 {
-    if ((!IF.sdclatch) && (port > 0x42)) return;
+    if ((!IF.sdclatch) && (port > 0x43)) return;
 
     switch (port) {
     // Control Latch
@@ -1111,8 +1128,8 @@ void UpdateSD(void)
 //----------------------------------------------------------------------
 void BankSelect(int data)
 {
-    bool init = (CurrentBank != (data & 7));
-    _DLOG("BankSelect %02x\n",data);
+    bool init = ((CurrentBank & 7) != (data & 7));
+    _DLOG(">>>> BankSelect %02x\n",data);
     CurrentBank = data & 7;
     if (init) SDCInit();
 }
@@ -1179,7 +1196,7 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
         return false;
     }
 
-    //_DLOG("ReadDrive %d sec %d\n",drive,lsn);
+    sprintf(Status,"SDC:Rd %d, %d",drive,lsn);
     LoadReply(buf,cnt);
     return true;
 }
@@ -1242,7 +1259,7 @@ void WriteSector(void)
     DWORD cnt = 0;
     int drive = IF.cmdcode & 1;
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
-    _DLOG("WriteSector drive %d sec %d\n",drive,lsn);
+    sprintf(Status,"SDC:Wr %d, %d",drive,lsn);
 
     if (Disk[drive].hFile == NULL) {
         IF.status = STA_FAIL;
@@ -1775,7 +1792,7 @@ bool SearchFile(const char * pattern)
         // Save directory portion for prepending to results
         char * pnam = strrchr(path,'/');
         if (pnam != NULL) pnam[1] = '\0';
-        strcpy(SeaDir,path);
+        strncpy(SeaDir,path,MAX_PATH);
         return true;
     }
 
