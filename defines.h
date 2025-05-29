@@ -119,6 +119,32 @@ namespace VCC
 
 
     //
+    // bounds checking on existing array 
+    // NOTE: only for video surface, out-of-bounds wraps
+    //
+    template <class T, size_t Size>
+    struct VideoArray
+    {    
+        VideoArray(T* p) : data(p) {}
+
+        T& operator[](size_t index) 
+        {
+            assert(index < Size);
+            return data[index % Size];
+        }
+        
+        const T& operator[](size_t index) const 
+        { 
+            assert(index < Size);
+            return data[index % Size]; 
+        }
+
+    private:
+        T* data;
+    };
+
+
+    //
     // protect T by verifying surrounding bytes
     //
 #ifdef _DEBUG
