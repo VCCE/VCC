@@ -30,12 +30,14 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include <commctrl.h>	// Windows common controls
 
+using Surface32 = VCC::VideoArray<unsigned int, 640 * 480>;
+
 void SetupDisplay(void); //This routine gets called every time a software video register get updated.
 void MakeRGBPalette (void);
 void MakeCMPpalette(void);
 bool  DDFailedCheck(HRESULT hr, char *szMessage);
 char *DDErrorString(HRESULT hr);
-void RenderPMODE4NTSC(unsigned int* surfaceDest, int XpitchDest, const unsigned char* cocoSrc, char scanLines);
+void RenderPMODE4NTSC(Surface32 surface32, size_t surfaceDest, int XpitchDest, const unsigned char* cocoSrc, char scanLines);
 
 //extern STRConfig CurrentConfig;
 static unsigned char ColorValues[4]={0,85,170,255};
@@ -6364,7 +6366,7 @@ void UpdateScreen32(SystemState *USState32)
 	char Pix = 0, Bit = 0, Sphase = 0;
 	static char Carry1 = 0, Carry2 = 0;
 	static char Pcolor = 0;
-	unsigned int *szSurface32 = USState32->PTRsurface32;
+	Surface32 szSurface32(USState32->PTRsurface32);
 	unsigned short y = USState32->LineCounter;
 	long Xpitch = USState32->SurfacePitch;
 	Carry1 = 1;
@@ -8280,10 +8282,10 @@ case 192+2:	//Bpp=0 Sr=2
 		// byte pointer to ram
 		unsigned char* cocoRam = (unsigned char*)WideBuffer;
 		// destination screen (less 2 pixels for bleed)
-		unsigned int* surfaceDest = szSurface32 + (((y + VertCenter) * 2) * Xpitch) + HorzCenter - 2;
+		size_t surfaceDest = (((y + VertCenter) * 2) * Xpitch) + HorzCenter - 2;
 		// source coco screens
 		unsigned char* cocoSrc = cocoRam + (VidMask & (Start + (unsigned char)Hoffset));
-		RenderPMODE4NTSC(surfaceDest, Xpitch, cocoSrc, USState32->ScanLines);
+		RenderPMODE4NTSC(szSurface32, surfaceDest, Xpitch, cocoSrc, USState32->ScanLines);
 	}
 	else
 	for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=2
@@ -10115,27 +10117,27 @@ unsigned char SetColorInvert(unsigned char Tmp)
 */
 
 // Render even/odd 2x2 ntsc pixels
-void RenderNTSCPixel2x2(unsigned int* surfaceDest, int XpitchDest, char colorIndex, char scanLines)
+void RenderNTSCPixel2x2(Surface32 surface32, size_t surfaceDest, int XpitchDest, char colorIndex, char scanLines)
 {
 	colorIndex <<= 1;
 	unsigned int colorEven = ArtifactsNTSC[ColorInvert][ArtifactsNTSCIndex[colorIndex]];
 	unsigned int colorOdd = ArtifactsNTSC[ColorInvert][ArtifactsNTSCIndex[colorIndex + 1]];
 	// render even pixel
-	*surfaceDest = colorEven;
-	*(surfaceDest + 1) = colorEven;
-	if (!scanLines) *(surfaceDest + XpitchDest) = colorEven;
-	if (!scanLines) *(surfaceDest + XpitchDest + 1) = colorEven;
+	surface32[surfaceDest] = colorEven;
+	surface32[surfaceDest + 1] = colorEven;
+	if (!scanLines) surface32[surfaceDest + XpitchDest] = colorEven;
+	if (!scanLines) surface32[surfaceDest + XpitchDest + 1] = colorEven;
 	surfaceDest += 2;
 	// render odd pixel
-	*surfaceDest = colorOdd;
-	*(surfaceDest + 1) = colorOdd;
+	surface32[surfaceDest] = colorOdd;
+	surface32[surfaceDest + 1] = colorOdd;
 	if (scanLines) return;
-	*(surfaceDest + XpitchDest) = colorOdd;
-	*(surfaceDest + XpitchDest + 1) = colorOdd;
+	surface32[surfaceDest + XpitchDest] = colorOdd;
+	surface32[surfaceDest + XpitchDest + 1] = colorOdd;
 }
 
 // Render one raster line to surface 1bbp Stretch=2
-void RenderPMODE4NTSC(unsigned int* surfaceDest, int XpitchDest, const unsigned char* cocoSrc, char scanLines)
+void RenderPMODE4NTSC(Surface32 surface32, size_t surfaceDest, int XpitchDest, const unsigned char* cocoSrc, char scanLines)
 {
 	const char cocoBorderPixel = 3; // white
 
@@ -10153,15 +10155,15 @@ void RenderPMODE4NTSC(unsigned int* surfaceDest, int XpitchDest, const unsigned 
 			// roll in next pixel
 			bitPattern = ((bitPattern << 2) + nextCocoPixel) & 0x3F;
 			cocoByte <<= 2;
-			RenderNTSCPixel2x2(surfaceDest, XpitchDest, bitPattern, scanLines);
+			RenderNTSCPixel2x2(surface32, surfaceDest, XpitchDest, bitPattern, scanLines);
 			surfaceDest += 4;
 		}
 	}
 
 	// end of line pixels (ntsc bleed with border)
 	bitPattern = ((bitPattern << 2) + cocoBorderPixel) & 0x3F;
-	RenderNTSCPixel2x2(surfaceDest, XpitchDest, bitPattern, scanLines);
+	RenderNTSCPixel2x2(surface32, surfaceDest, XpitchDest, bitPattern, scanLines);
 	surfaceDest += 4;
 	bitPattern = ((bitPattern << 2) + cocoBorderPixel) & 0x3F;
-	RenderNTSCPixel2x2(surfaceDest, XpitchDest, bitPattern, scanLines);
+	RenderNTSCPixel2x2(surface32, surfaceDest, XpitchDest, bitPattern, scanLines);
 }
