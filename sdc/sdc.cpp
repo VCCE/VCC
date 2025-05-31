@@ -190,12 +190,13 @@ typedef struct {
     unsigned char reply_mode;  // 0=words, 1=bytes
     unsigned char reply_status;
     unsigned char half_sent;
-    unsigned char flash;
     int bufcnt;
     char *bufptr;
     char blkbuf[600];
 } Interface;
 Interface IF;
+
+unsigned char IF_flash;
 
 // Cart ROM
 char PakRom[0x4000];
@@ -331,12 +332,12 @@ extern "C"
     // Return SDC status.
     __declspec(dllexport) void ModuleStatus(char *MyStatus)
     {
-        strncpy(MyStatus,Status,12);
+        strncpy(MyStatus,Status,16);
         if (idle_ctr < 100) {
             idle_ctr++;
         } else {
             idle_ctr = 0;
-            strncpy(Status,"SDC:Idle",12);
+            snprintf(Status,16,"SDC:%d idle",CurrentBank);
         }
         return ;
     }
@@ -556,13 +557,7 @@ void SDCInit(void)
 
     // Load SDC settings
     LoadConfig();
-    if (!StartupComplete){
-        CurrentBank = StartupBank;
-        StartupComplete = true;
-    } else if (CurrentBank != StartupBank) {
-        StartupComplete = false;
-    }
-
+    CurrentBank = StartupBank;
     LoadRom();
 
     SetCurDir(""); // May be changed by ParseStartup()
@@ -724,7 +719,7 @@ bool LoadRom()
     int ctr = 0;
     f_ROM = fopen(RomName, "rb");
     if (f_ROM == NULL) {
-        _DLOG("LoadRom '%s' failed errno %d \n",RomName,errno);
+        _DLOG("LoadRom '%s' failed %s \n",RomName,LastErrorTxt());
         return false;
     }
 
@@ -804,7 +799,7 @@ void SDCWrite(unsigned char data,unsigned char port)
         break;
     // Flash Data
     case 0x42:
-        IF.flash = data;
+        IF_flash = data;
         break;
     // Flash Control
     case 0x43:
@@ -886,7 +881,7 @@ unsigned char SDCRead(unsigned char port)
     switch (port) {
     // Flash control read is used by SDCDOS to detect the SDC
     case 0x43:
-        rpy = CurrentBank | (IF.flash & 0xF8);
+        rpy = CurrentBank | (IF_flash & 0xF8);
         break;
     // Interface status
     case 0x48:
@@ -1128,10 +1123,9 @@ void UpdateSD(void)
 //----------------------------------------------------------------------
 void BankSelect(int data)
 {
-    bool init = ((CurrentBank & 7) != (data & 7));
-    _DLOG(">>>> BankSelect %02x\n",data);
+    _DLOG("BankSelect %d,%X\n",data,IF_flash);
     CurrentBank = data & 7;
-    if (init) SDCInit();
+    LoadRom();
 }
 
 //----------------------------------------------------------------------
@@ -1196,7 +1190,7 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
         return false;
     }
 
-    sprintf(Status,"SDC:Rd %d, %d",drive,lsn);
+    snprintf(Status,16,"SDC:%d Rd %d,%d",CurrentBank,drive,lsn);
     LoadReply(buf,cnt);
     return true;
 }
@@ -1259,7 +1253,7 @@ void WriteSector(void)
     DWORD cnt = 0;
     int drive = IF.cmdcode & 1;
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
-    sprintf(Status,"SDC:Wr %d, %d",drive,lsn);
+    snprintf(Status,16,"SDC:%d Wr %d,%d",CurrentBank,drive,lsn);
 
     if (Disk[drive].hFile == NULL) {
         IF.status = STA_FAIL;
@@ -1524,6 +1518,7 @@ bool MountDisk (int drive, const char * path)
 bool MountNext (int drive)
 {
     if (FindNextFile(hFind,&dFound) == 0) {
+        _DLOG("MountNext no more\n");
         FindClose(hFind);
         hFind = INVALID_HANDLE_VALUE;
         return false;
@@ -1532,6 +1527,7 @@ bool MountNext (int drive)
     // Open next image found on the drive
     if (!OpenFound(drive)) {
         memset((void *) &Disk[drive],0,sizeof(_Disk));
+        _DLOG("MountNext can't open next\n");
         return false;
     }
 

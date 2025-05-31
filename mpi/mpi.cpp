@@ -239,8 +239,8 @@ extern "C"
 	{
 		if (Port == 0x7F) //Addressing the Multi-Pak
 		{ 
-			SpareSelectSlot= (Data & 3);
-			ChipSelectSlot= ( (Data & 0x30)>>4);
+			SpareSelectSlot= (Data & 3);          //SCS
+			ChipSelectSlot= ( (Data & 0x30)>>4);  //CTS
 			SlotRegister=Data;
 			PakSetCart(0);
 			if (CartForSlot[SpareSelectSlot]==1)
@@ -345,7 +345,7 @@ extern "C"
 	__declspec(dllexport) void ModuleStatus(char *MyStatus)
 	{
 		char TempStatus[64]="";
-		sprintf(MyStatus,"MPI:%i",SwitchSlot+1);
+		sprintf(MyStatus,"MPI:%d,%d",ChipSelectSlot+1,SpareSelectSlot+1);
 		for (Temp=0;Temp<4;Temp++)
 		{
 			strcpy(TempStatus,"");
