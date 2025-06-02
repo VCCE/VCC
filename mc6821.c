@@ -421,39 +421,16 @@ void SetCart(unsigned char cart)
 
 unsigned int GetDACSample(void)
 {
-	static unsigned int RetVal=0;
-	static unsigned short SampleLeft=0,SampleRight=0,PakSample=0;
-	static unsigned short OutLeft=0,OutRight=0;
-	static unsigned short LastLeft=0,LastRight=0;
-	PakSample=PackAudioSample();
-	SampleLeft=(PakSample>>8)+Asample+Ssample;
-	SampleRight=(PakSample & 0xFF)+Asample+Ssample; //9 Bits each
-	SampleLeft=SampleLeft<<6;	//Conver to 16 bit values
-	SampleRight=SampleRight<<6;	//For Max volume
-	if (SampleLeft==LastLeft)	//Simulate a slow high pass filter
-	{
-		if (OutLeft)
-			OutLeft--;
-	}
-	else
-	{
-		OutLeft=SampleLeft;
-		LastLeft=SampleLeft;
-	}
-
-	if (SampleRight==LastRight)
-	{
-		if (OutRight)
-			OutRight--;
-	}
-	else
-	{
-		OutRight=SampleRight;
-		LastRight=SampleRight;
-	}
-
-	RetVal=(OutLeft<<16)+(OutRight);
-	return(RetVal);
+	auto pakSample = PackAudioSample();
+	auto pakLeft = pakSample >> 8;
+	auto pakRight = pakSample & 0xFF;
+	auto dacSample = Asample;
+	auto bitSample = Ssample;
+	auto left = (pakLeft + dacSample + bitSample) << 7;
+	auto right = (pakRight + dacSample + bitSample) << 7;
+	// removed previous "slow high pass filter" that 
+	// destroys daggorath's proper heartbeat sound -ca 2025-06-02
+	return (left << 16) | (right & 0xFFFF);
 }
 
 unsigned char SetCartAutoStart(unsigned char Tmp)
