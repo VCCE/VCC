@@ -66,25 +66,24 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	BackBufferInfo	BackBuffer_;
 
-	int ExportStart=0;
+	int ExportStart=1;
 	int ExportStop=0;
 	char ExportPath[MAX_PATH]={};
 
 //-------------------------------------------------------------------------------
+	const char *ToCCStringCStr(const unsigned char CC)
+	{
+		static const char* flags = "EFHINZVC";
+		static char buffer[9];
+		for (int i = 0, mask = 0x80; i < 8; ++i, mask >>= 1)
+			buffer[i] = CC & mask ? flags[i] : '.';
+		buffer[8] = 0;
+		return buffer;
+	}
+	
 	std::string ToCCString(const unsigned char CC)
 	{
-		std::ostringstream fmt;
-
-		fmt << ((CC & 0b10000000) ? "E" : ".")
-			<< ((CC & 0b01000000) ? "F" : ".")
-			<< ((CC & 0b00100000) ? "H" : ".")
-			<< ((CC & 0b00010000) ? "I" : ".")
-			<< ((CC & 0b00001000) ? "N" : ".")
-			<< ((CC & 0b00000100) ? "Z" : ".")
-			<< ((CC & 0b00000010) ? "V" : ".")
-			<< ((CC & 0b00000001) ? "C" : ".");
-
-		return fmt.str();
+		return std::string(ToCCStringCStr(CC));
 	}
 
 //-------------------------------------------------------------------------------
@@ -771,6 +770,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		std::string samples = buf;
 		int maxSamples = std::stoi(samples);
 		EmuState.Debugger.SetTraceMaxSamples(maxSamples);
+		ExportStop = maxSamples;
 
 		SCROLLINFO si;
 		si.cbSize = sizeof(si);
@@ -1108,79 +1108,102 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		unsigned int offset = start > 1 ? start-1 : 0;
 		auto & _trace = EmuState.Debugger.GetTraceResult();
 		int count = min((unsigned int)_trace.size(), nlines);
+		const size_t lineSize = 65536;
+		char *line = new char[lineSize];
 
 		//FilePrintf(hf,"offset:%d nlines:%d count%d _tsize:%d\n",
 		//	offset, nlines, count, _trace.size());
 
-		FilePrintf(hf,"   Line  Cycles  PC     Instruction         ");
+		char* pos = line;
+		char* end = pos + lineSize;
+		DWORD dummy;
+
+		auto Flush = [&]()
+		{
+			WriteFile(hf, line, pos - line, &dummy, 0);
+			pos = line;
+		};
+
+		auto Write = [&](const char* fmt, ...)
+		{
+			va_list args;
+			va_start(args, fmt);
+			auto remaining = end - pos;
+			auto count = vsnprintf(pos, remaining, fmt, args);
+			va_end(args);
+			pos += count;
+			if (end - pos < 100)
+				Flush();
+		};
+
+		Write("   Line  Cycles  PC     Instruction         ");
 		if (EmuState.CpuType == 1)
-			FilePrintf(hf, "CC     D    W    X    Y    U    S   DP MD\n");
+			Write("CC     D    W    X    Y    U    S   DP MD\n");
 		else
-			FilePrintf(hf, "CC     D    X    Y    U    S   DP\n");
+			Write("CC     D    X    Y    U    S   DP\n");
 
 		for (int n = 0; n < count; n++) {
-			FilePrintf(hf,"%7d ",n + offset + 1);                     // Line
-			FilePrintf(hf,"%7d ",_trace[n].cycleTime);                // Cycles
+			Write("%7d ",n + offset + 1);                     // Line
+			Write("%7d ",_trace[n].cycleTime);                // Cycles
 
 			// Instruction
 			if (_trace[n].event == TraceEvent::Instruction) {
-				FilePrintf(hf,"%4X ",_trace[n].pc);                   // Address
+				Write("%4X ",_trace[n].pc);                   // Address
 				std::string s = _trace[n].instruction + " "
 				              + _trace[n].operand;
-				FilePrintf(hf,"%-19s",s.c_str());                     // Instruction
-				FilePrintf(hf," %8s",
-				    ToCCString(_trace[n].startState.CC).c_str());     // CC
-				FilePrintf(hf," %02X%02X",_trace[n].startState.A,     // D
+				Write("%-19s ",s.c_str());                     // Instruction
+				Write(ToCCStringCStr(_trace[n].startState.CC));     // CC
+				Write(" %02X%02X",_trace[n].startState.A,     // D
 				    _trace[n].startState.B);
 				if (EmuState.CpuType == 1)
-				    FilePrintf(hf," %02X%02X",_trace[n].startState.E,
+					Write(" %02X%02X",_trace[n].startState.E,
 				    _trace[n].startState.F);
-				FilePrintf(hf," %04X",_trace[n].startState.X);        // X
-				FilePrintf(hf," %04X",_trace[n].startState.Y);        // Y
-				FilePrintf(hf," %04X",_trace[n].startState.U);        // U
-				FilePrintf(hf," %04X",_trace[n].startState.S);        // S
-				FilePrintf(hf," %02X",_trace[n].startState.DP);       // DP
+				Write(" %04X",_trace[n].startState.X);        // X
+				Write(" %04X",_trace[n].startState.Y);        // Y
+				Write(" %04X",_trace[n].startState.U);        // U
+				Write(" %04X",_trace[n].startState.S);        // S
+				Write(" %02X",_trace[n].startState.DP);       // DP
 				if (EmuState.CpuType == 1)
-				    FilePrintf(hf," %02X",_trace[n].startState.MD);   // MD
-				FilePrintf(hf,"\n");
+					Write(" %02X",_trace[n].startState.MD);   // MD
+				Write("\n");
 
 			// Emulator event
 			} else if (_trace[n].event == TraceEvent::EmulatorCycle) {
 
-				FilePrintf(hf,"[Emu] :: ");
+				Write("[Emu] :: ");
 				switch (_trace[n].emulationState) {
 				case 0:
-					FilePrintf(hf,"CPUOnly\n");
+					Write("CPUOnly\n");
 					break;
 				case 1:
-					FilePrintf(hf,"TimerIRQ\n");
+					Write("TimerIRQ\n");
 					break;
 				case 2:
-					FilePrintf(hf,"AudioSample\n");
+					Write("AudioSample\n");
 					break;
 				case 3:
-					FilePrintf(hf,"1stAudio\n");
+					Write("1stAudio\n");
 					break;
 				case 4:
-					FilePrintf(hf,"2ndTimer\n");
+					Write("2ndTimer\n");
 					break;
 				case 5:
-					FilePrintf(hf,"1stTimer\n");
+					Write("1stTimer\n");
 					break;
 				case 6:
-					FilePrintf(hf,"2ndAudio\n");
+					Write("2ndAudio\n");
 					break;
 				case 7:
-					FilePrintf(hf,"TimerAudio\n");
+					Write("TimerAudio\n");
 					break;
 				case 10:
-					FilePrintf(hf,"CycleStart\n");
+					Write("CycleStart\n");
 					break;
 				case 20:
-					FilePrintf(hf,"CycleEnd\n");
+					Write("CycleEnd\n");
 					break;
 				default:
-					FilePrintf(hf,"\n");
+					Write("\n");
 				}
 
 			// Screen or IRQ event
@@ -1188,9 +1211,13 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			            _trace[n].event < TraceEvent::ScreenEnd ) ||
 			           (_trace[n].event > TraceEvent::IRQStart &&
 			            _trace[n].event < TraceEvent::IRQEnd ) ) {
-				FilePrintf(hf,"%s\n",_trace[n].instruction.c_str());
+				Write(_trace[n].instruction.c_str());
+				Write("\n");
 			}
 		}
+
+		Flush();
+		delete[] line;
 
 		EmuState.Debugger.UnlockTrace();
 	}
