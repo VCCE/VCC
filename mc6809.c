@@ -117,6 +117,8 @@ void MC6809Init(void)
 	xfreg16[3]=&U_REG;
 	xfreg16[4]=&S_REG;
 	xfreg16[5]=&PC_REG;
+	xfreg16[6] = 0;
+	xfreg16[7] = 0;
 
 	ureg8[0]=(unsigned char*)&A_REG;
 	ureg8[1]=(unsigned char*)&B_REG;
@@ -490,9 +492,15 @@ void Do_Opcode(int CycleFor)
 			}
 			else // 16 bit EXG
 			{
-				temp16=(*xfreg16[((postbyte & 0x70) >> 4)]);
-				(*xfreg16[((postbyte & 0x70) >> 4)])=(*xfreg16[postbyte & 0x07]);
-				(*xfreg16[postbyte & 0x07])=temp16;
+				uint16_t* src = xfreg16[((postbyte & 0x70) >> 4)];
+				uint16_t* dest = xfreg16[postbyte & 0x07];
+				// todo: find out which program triggers it
+				assert(src); 
+				assert(dest);
+				uint16_t srcValue = src ? *src : 0xFFFF;
+				uint16_t destValue = dest ? *dest : 0xFFFF;
+				if (src) *src = destValue;
+				if (dest) *dest = srcValue;
 			}
 		}
 		setcc(ccbits);
