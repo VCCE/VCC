@@ -160,11 +160,38 @@ void FlushAudioBuffer(unsigned int *Abuffer,unsigned int Lenth)
 	unsigned int LeftAverage=0,RightAverage=0,Index=0;
 	unsigned char Flag=0;
 	unsigned char *Abuffer2=(unsigned char *)Abuffer;
-	LeftAverage=Abuffer[0]>>16;
-	RightAverage=Abuffer[0]& 0xFFFF;
-	UpdateSoundBar(LeftAverage,RightAverage);
-	if ((!InitPassed) | (AudioPause))
+
+	if (!InitPassed || AudioPause || !Abuffer)
 		return;
+	int lvalue = Abuffer[0] >> 16;
+	int rvalue = Abuffer[0] & 0xFFFF;
+	// get peak to peak
+	int lMin = lvalue;
+	int lMax = lvalue;
+	int rMin = rvalue;
+	int rMax = rvalue;
+	for (size_t i = 1; i < min(Lenth,100); ++i)
+	{
+		int lvalue = Abuffer[i] >> 16;
+		int rvalue = Abuffer[i] & 0xFFFF;
+		if (lvalue > lMax) lMax = lvalue;
+		if (lvalue < lMin) lMin = lvalue;
+		if (rvalue > rMax) rMax = rvalue;
+		if (rvalue < rMin) rMin = rvalue;
+	}
+	int leftMid = lMax - lMin;
+	int rightMid = rMax - rMin;
+	static int lastLeft = 0;
+	static int lastRight = 0;
+	// immediate response
+	if (leftMid > lastLeft) lastLeft = leftMid;
+	if (rightMid > lastRight) lastRight = rightMid;
+	// smoothing
+	LeftAverage = (lastLeft * 3 + leftMid) >> 2;
+	RightAverage = (lastRight * 3 + rightMid) >> 2;
+	lastLeft = LeftAverage;
+	lastRight = RightAverage;
+	UpdateSoundBar(LeftAverage/180,RightAverage/180);
 //	sprintf(Msg,"Lenth= %i Free Blocks= %i\n",Lenth,GetFreeBlockCount());
 //	WriteLog(Msg,0);
 	auto freeBlocks = GetFreeBlockCount();
