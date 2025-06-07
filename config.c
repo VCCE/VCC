@@ -889,11 +889,11 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 	return(0);
 }
 
-void UpdateSoundBar (unsigned short Left,unsigned short Right)
+void UpdateSoundBar(int Left, int Right)
 {
 	if (hAudioDlg==NULL) return;
-	SendDlgItemMessage(hAudioDlg,IDC_PROGRESSLEFT,PBM_SETPOS,Left>>8,0);
-	SendDlgItemMessage(hAudioDlg,IDC_PROGRESSRIGHT,PBM_SETPOS,Right>>8,0);
+	SendDlgItemMessage(hAudioDlg,IDC_PROGRESSLEFT,PBM_SETPOS,Left,0);
+	SendDlgItemMessage(hAudioDlg,IDC_PROGRESSRIGHT,PBM_SETPOS,Right,0);
 	return;
 }
 
