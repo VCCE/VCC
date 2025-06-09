@@ -157,51 +157,18 @@ int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned int Rate)
 
 void FlushAudioBuffer(unsigned int *Abuffer,unsigned int Lenth)
 {
-	unsigned int LeftAverage=0,RightAverage=0,Index=0;
 	unsigned char Flag=0;
 	unsigned char *Abuffer2=(unsigned char *)Abuffer;
 
 	if (!InitPassed || AudioPause || !Abuffer)
 		return;
-	int lvalue = Abuffer[0] >> 16;
-	int rvalue = Abuffer[0] & 0xFFFF;
-	// get peak to peak
-	int lMin = lvalue;
-	int lMax = lvalue;
-	int rMin = rvalue;
-	int rMax = rvalue;
-	for (size_t i = 1; i < min(Lenth,100); ++i)
-	{
-		int lvalue = Abuffer[i] >> 16;
-		int rvalue = Abuffer[i] & 0xFFFF;
-		if (lvalue > lMax) lMax = lvalue;
-		if (lvalue < lMin) lMin = lvalue;
-		if (rvalue > rMax) rMax = rvalue;
-		if (rvalue < rMin) rMin = rvalue;
-	}
-	int leftMid = lMax - lMin;
-	int rightMid = rMax - rMin;
-	static int lastLeft = 0;
-	static int lastRight = 0;
-	// immediate response
-	if (leftMid > lastLeft) lastLeft = leftMid;
-	if (rightMid > lastRight) lastRight = rightMid;
-	// smoothing
-	LeftAverage = (lastLeft * 3 + leftMid) >> 2;
-	RightAverage = (lastRight * 3 + rightMid) >> 2;
-	lastLeft = LeftAverage;
-	lastRight = RightAverage;
-	UpdateSoundBar(LeftAverage/180,RightAverage/180);
-//	sprintf(Msg,"Lenth= %i Free Blocks= %i\n",Lenth,GetFreeBlockCount());
-//	WriteLog(Msg,0);
+
 	auto freeBlocks = GetFreeBlockCount();
-	if (freeBlocks<=0)	//this should only kick in when frame skipping or unthrottled
-	{
-		//AuxBuffer[AuxBufferPointer].MemCpyTo(Abuffer2, Lenth);	//Saving buffer to aux stack
-		//AuxBufferPointer++;		//and chase your own tail
-		//AuxBufferPointer%=5;	//At this point we are so far behind we may as well drop the buffer
+	if (freeBlocks<=0) // should only happen when frame skipping or unthrottled
 		return;
-	}
+
+	// Levels calculated in config.c if Audio config dialog is running
+	UpdateSoundBar(Abuffer,Lenth);
 
 #if USE_DEBUG_AUDIOTAPE
 	memcpy(&gAudioBufferHistory[0], &gAudioBufferHistory[1], sizeof(gAudioBufferHistory) - sizeof(*gAudioBufferHistory));
@@ -217,11 +184,11 @@ void FlushAudioBuffer(unsigned int *Abuffer,unsigned int Lenth)
 	if (hr != DS_OK)
 		return;
 
-	memcpy(SndPointer1, Abuffer2, SndLenth1);	// copy first section of circular buffer
-	if (SndPointer2 != NULL)						// copy last section of circular buffer if wrapped
+	memcpy(SndPointer1, Abuffer2, SndLenth1);       // copy first section of circular buffer
+	if (SndPointer2 != NULL)                        // copy last section if wrapped
 		memcpy(SndPointer2, Abuffer2 + SndLenth1, SndLenth2);
 	hr=lpdsbuffer1->Unlock(SndPointer1,SndLenth1,SndPointer2,SndLenth2);// unlock the buffer
-	BuffOffset=(BuffOffset + Lenth)% SndBuffLenth;	//Where to write next
+	BuffOffset=(BuffOffset + Lenth)% SndBuffLenth;  //Where to write next
 
 #if USE_DEBUG_AUDIOTAPE
 	history.aBuf = SndPointer1;
@@ -371,3 +338,4 @@ unsigned char PauseAudio(unsigned char Pause)
 	}
 	return(AudioPause);
 }
+
