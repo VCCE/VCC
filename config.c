@@ -889,11 +889,42 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 	return(0);
 }
 
-void UpdateSoundBar(int Left, int Right)
+void UpdateSoundBar(unsigned int * audioBuf,unsigned int bufLen)
 {
-	if (hAudioDlg==NULL) return;
-	SendDlgItemMessage(hAudioDlg,IDC_PROGRESSLEFT,PBM_SETPOS,Left,0);
-	SendDlgItemMessage(hAudioDlg,IDC_PROGRESSRIGHT,PBM_SETPOS,Right,0);
+	if (hAudioDlg == NULL) return;  // Do nothing if dialog is not running
+
+	// Craig's method moved from audio.c with liberties taken for variable naming
+	// Get mid level for 100 samples, left and right
+	int lval = audioBuf[0] >> 16;
+	int rval = audioBuf[0] & 0xFFFF;
+	int lMin = lval;
+	int lMax = lval;
+	int rMin = rval;
+	int rMax = rval;
+	for (size_t i = 1; i < min(bufLen,100); ++i) {
+		int lval = audioBuf[i] >> 16;
+		int rval = audioBuf[i] & 0xFFFF;
+		if (lval > lMax) lMax = lval;
+		if (lval < lMin) lMin = lval;
+		if (rval > rMax) rMax = rval;
+		if (rval < rMin) rMin = rval;
+	}
+	int midLeft = lMax - lMin;
+	int midRight = rMax - rMin;
+
+	// Smoothing
+	static int lastLeft = 0;
+	static int lastRight = 0;
+	if (midLeft > lastLeft) lastLeft = midLeft;
+	if (midRight > lastRight) lastRight = midRight;
+	int Left = (lastLeft * 3 + midLeft) >> 2;
+	int Right = (lastRight * 3 + midRight) >> 2;
+	lastLeft = Left;
+	lastRight = Right;
+
+	SendDlgItemMessage(hAudioDlg,IDC_PROGRESSLEFT,PBM_SETPOS,Left/180,0);
+	SendDlgItemMessage(hAudioDlg,IDC_PROGRESSRIGHT,PBM_SETPOS,Right/180,0);
+
 	return;
 }
 
