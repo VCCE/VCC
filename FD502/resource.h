@@ -41,6 +41,10 @@
 #define IDC_DISKB                       1030
 #define IDC_CLOCK                       1031
 #define IDC_READONLY                    1032
+#define IDC_BECKER_ENAB                 1033
+#define IDC_BECKER_HOST                 1034
+#define IDC_BECKER_PORT                 1035
+
 
 // Next default values for new objects
 // 
@@ -48,7 +52,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        105
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1033
+#define _APS_NEXT_CONTROL_VALUE         1036
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
