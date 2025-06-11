@@ -162,6 +162,7 @@
       <SubSystem>Console</SubSystem>
       <OutputFile>$(OutDir)fd502.dll</OutputFile>
       <ImportLibrary>$(OutDir)fd502.lib</ImportLibrary>
+      <AdditionalDependencies>WS2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -204,6 +205,7 @@
       <SubSystem>Console</SubSystem>
       <OutputFile>$(OutDir)fd502.dll</OutputFile>
       <ImportLibrary>$(OutDir)fd502.lib</ImportLibrary>
+      <AdditionalDependencies>WS2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -245,6 +247,7 @@
       <SubSystem>Console</SubSystem>
       <OutputFile>$(OutDir)fd502.dll</OutputFile>
       <ImportLibrary>$(OutDir)fd502.lib</ImportLibrary>
+      <AdditionalDependencies>WS2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
@@ -285,13 +288,16 @@
       <SubSystem>Console</SubSystem>
       <OutputFile>$(OutDir)fd502.dll</OutputFile>
       <ImportLibrary>$(OutDir)fd502.lib</ImportLibrary>
+      <AdditionalDependencies>WS2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\fileops.c" />
+    <ClCompile Include="..\logger.c" />
     <ClCompile Include="distortc.c" />
     <ClCompile Include="fd502.cpp" />
     <ClCompile Include="wd1793.c" />
+    <ClCompile Include="becker.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\fileops.h" />
