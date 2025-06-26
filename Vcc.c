@@ -779,6 +779,7 @@ void DoHardReset(SystemState* const HRState)
 	UpdateBusPointer();
 	EmuState.TurboSpeedFlag=1;
 	ResetBus();
+	SetCPUMultiplyerFlag(0);
 	SetClockSpeed(1);
 	return;
 }
@@ -792,6 +793,7 @@ void SoftReset(void)
 	MmuReset();
 	LoadRom();
 	ResetBus();
+	SetCPUMultiplyerFlag(0);
 	EmuState.TurboSpeedFlag=1;
 	return;
 }
