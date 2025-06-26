@@ -29,11 +29,14 @@ This file is part of VCC (Virtual Color Computer).
 #include "resource.h"
 #include "wd1793.h"
 #include "distortc.h"
-#include "becker.h"
 #include "fd502.h"
 #include "../fileops.h"
-#include "../MachineDefs.h"
-#include "../debugger.h"
+
+//include becker code if COMBINE_BECKER is defined in fd502.h
+#ifdef COMBINE_BECKER
+#include "becker.h"
+#endif
+
 #define EXTROMSIZE 16384
 
 using namespace std;
@@ -186,12 +189,16 @@ extern "C"
 {
 	__declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
 	{
-		if (Port == 0x42)         // Enabled?
+#ifdef COMBINE_BECKER
+		if ((BeckerEnabled) && (Port == 0x42)) {
 			becker_write(Data,Port);
-		else if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled)
+		} else //if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
+#endif
+		if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
 			write_time(Data,Port);
-		else
+		} else {
 			disk_io_write(Data,Port);
+		}
 		return;
 	}
 }
@@ -200,8 +207,10 @@ extern "C"
 {
 	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
 	{
-		if ((Port == 0x41) | (Port== 0x42 )) // Enabled?
+#ifdef COMBINE_BECKER
+		if ((BeckerEnabled) && ((Port == 0x41) | (Port== 0x42 )))
 			return(becker_read(Port));
+#endif
 		if ( ((Port == 0x50) | (Port== 0x51 )) & ClockEnabled)
 			return(read_time(Port));
 		return(disk_io_read(Port));
@@ -230,12 +239,16 @@ extern "C"
 	__declspec(dllexport) void ModuleStatus(char *MyStatus)
 	{
 		char diskstat[64];
-		char beckerstat[64];
 		DiskStatus(diskstat);
 		strcpy(MyStatus,diskstat);
-		becker_status(beckerstat);   // enabled?
-		strcat(MyStatus," | ");
-		strcat(MyStatus,beckerstat);
+#ifdef COMBINE_BECKER
+		char beckerstat[64];
+		if(BeckerEnabled) {
+			becker_status(beckerstat);
+			strcat(MyStatus," | ");
+			strcat(MyStatus,beckerstat);
+		}
+#endif
 		return ;
 	}
 }
@@ -331,13 +344,13 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					strcpy(RomFileName,TempRomFileName );
 					CheckPath(RomFileName);
 					LoadExtRom(External,RomFileName); //JF
-
+#ifdef COMBINE_BECKER
 					GetDlgItemText(hDlg,IDC_BECKER_HOST,BeckerAddr,MAX_PATH);
 					GetDlgItemText(hDlg,IDC_BECKER_PORT,BeckerPort,32);
 					becker_sethost(BeckerAddr,BeckerPort);
 					BeckerEnabled = SendDlgItemMessage (hDlg,IDC_BECKER_ENAB,BM_GETCHECK,0,0);
 					becker_enable(BeckerEnabled);
-
+#endif
 					SaveConfig();
 					return TRUE;
 				break;
@@ -672,12 +685,16 @@ void LoadConfig(void)  // Called on SetIniPath
 	unsigned int RetVal=0;
 	HANDLE hr=NULL;
 
+#ifdef COMBINE_BECKER
 	strcpy(ModName,"HDBDOS/DW/Becker");
 	BeckerEnabled=GetPrivateProfileInt(ModName,"DWEnable", 0, IniFile);
 	GetPrivateProfileString(ModName,"DWServerAddr","127.0.0.1",BeckerAddr,MAX_PATH,IniFile);
 	GetPrivateProfileString(ModName,"DWServerPort","65504",BeckerPort,32,IniFile);
+	if(*BeckerAddr == '\0') strcpy(BeckerAddr,"127.0.0.1");
+	if(*BeckerPort == '\0') strcpy(BeckerPort,"65504");
 	becker_sethost(BeckerAddr,BeckerPort);
 	becker_enable(BeckerEnabled);
+#endif
 
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	GetPrivateProfileString("DefaultPaths", "FloppyPath", "", FloppyPath, MAX_PATH, IniFile);
@@ -740,12 +757,12 @@ void SaveConfig(void)
 	if (strcmp(FloppyPath, "") != 0) {
 		WritePrivateProfileString("DefaultPaths", "FloppyPath", FloppyPath, IniFile);
 	}
-
+#ifdef COMBINE_BECKER
     strcpy(ModName,"HDBDOS/DW/Becker");
 	WritePrivateProfileInt(ModName,"DWEnable", BeckerEnabled, IniFile);
 	WritePrivateProfileString(ModName,"DWServerAddr", BeckerAddr, IniFile);
 	WritePrivateProfileString(ModName,"DWServerPort", BeckerPort, IniFile);	
-
+#endif
 	return;
 }
 

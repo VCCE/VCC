@@ -307,6 +307,7 @@
     <ClInclude Include="fdrawcmd.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="wd1793.h" />
+    <ClInclude Include="becker.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="fd502.rc" />

@@ -18,6 +18,9 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// Comment next line to exclude becker code
+#define COMBINE_BECKER
+
 #include "../MachineDefs.h"
 
 extern "C" void (*AssertInt)(InterruptSource, Interrupt);
@@ -25,7 +28,6 @@ void BuildDynaMenu(void);
 #define	HEAD 0
 #define SLAVE 1
 #define STANDALONE 2
-
 
 #define External 0
 #define TandyDisk 1
