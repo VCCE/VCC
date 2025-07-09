@@ -27,7 +27,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "../MachineDefs.h"
 
 #define MAXPAX 4
-static void (*AssertInt)(InterruptSource, Interrupt)=NULL;
+static void (*AssertInt)(unsigned char, unsigned char)=NULL;
 static unsigned char (*MemRead8)(unsigned short)=NULL;
 static void (*MemWrite8)(unsigned char,unsigned short)=NULL;
 
@@ -36,7 +36,6 @@ static HINSTANCE g_hinstDLL=NULL;
 static char ModuleNames[MAXPAX][MAX_LOADSTRING]={"Empty","Empty","Empty","Empty"};	
 static char CatNumber[MAXPAX][MAX_LOADSTRING]={"","","",""};
 static char SlotLabel[MAXPAX][MAX_LOADSTRING*2]={"Empty","Empty","Empty","Empty"};
-//static 
 static unsigned char PersistPaks = 0;
 static unsigned char DisableSCS = 0;
 static char ModulePaths[MAXPAX][MAX_PATH]={"","","",""};
@@ -62,7 +61,7 @@ static void (*ModuleStatusCalls[MAXPAX])(char *)={NULL,NULL,NULL,NULL};
 static unsigned short (*ModuleAudioSampleCalls[MAXPAX])(void)={NULL,NULL,NULL,NULL};
 static void (*ModuleResetCalls[MAXPAX]) (void)={NULL,NULL,NULL,NULL};
 //Set callbacks for the DLL to call
-static void (*SetInteruptCallPointerCalls[MAXPAX]) ( ASSERTINTERUPT)={NULL,NULL,NULL,NULL};
+static void (*SetInteruptCallPointerCalls[MAXPAX]) ( PAKINTERUPT)={NULL,NULL,NULL,NULL};
 static void (*DmaMemPointerCalls[MAXPAX]) (MEMREAD8,MEMWRITE8)={NULL,NULL,NULL,NULL};
 //MenuName,int MenuId, int Type)
 
@@ -221,7 +220,7 @@ extern "C"
 // This captures the Function transfer point for the CPU assert interupt 
 extern "C" 
 {
-	__declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
+	__declspec(dllexport) void AssertInterupt(PAKINTERUPT Dummy)
 	{
 		AssertInt=Dummy;
 		for (Temp=0;Temp<4;Temp++)
@@ -402,12 +401,6 @@ extern "C"
 		LoadConfig();
 		return;
 	}
-}
-
-
-void AssertInterupt(Interrupt interrupt)
-{
-	AssertInt(IS_PIA1_CART, interrupt);
 }
 
 extern "C"

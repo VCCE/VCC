@@ -44,7 +44,7 @@ using namespace std;
 extern DiskInfo Drive[5];
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-typedef void (*ASSERTINTERUPT)(InterruptSource, Interrupt);
+typedef void (*PAKINTERUPT)(unsigned char, unsigned char);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 static unsigned char ExternalRom[EXTROMSIZE];
@@ -53,7 +53,7 @@ static unsigned char RGBDiskRom[EXTROMSIZE];
 static char FloppyPath[MAX_PATH];
 static char RomFileName[MAX_PATH]="";
 static char TempRomFileName[MAX_PATH]="";
-void (*AssertInt)(InterruptSource,Interrupt)=NULL;
+void (*AssertInt)(unsigned char,unsigned char)=NULL;
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
@@ -178,7 +178,7 @@ extern "C"
 // This captures the Fuction transfer point for the CPU assert interupt
 extern "C"
 {
-	__declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
+	__declspec(dllexport) void AssertInterupt(PAKINTERUPT Dummy)
 	{
 		AssertInt=Dummy;
 		return;

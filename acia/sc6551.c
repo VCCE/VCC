@@ -20,6 +20,7 @@
 
 #include "acia.h"
 #include "sc6551.h"
+#include "../interrupts.h"
 #include "../logger.h"
 
 //------------------------------------------------------------------------
@@ -240,7 +241,7 @@ void sc6551_heartbeat()
             StatReg |= StatRxF;  //0x08
             if (!(CmdReg & CmdRxI)) {
                 StatReg |= StatIRQ;
-                AssertInt(1,0);
+                AssertInt(INT_IRQ,IS_GIME);
                 //PrintLogF("IRQ ");
             }
         }
