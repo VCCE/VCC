@@ -1,6 +1,6 @@
 /*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
+    Copyright 2015 by Joseph Forgione
+    This file is part of VCC (Virtual Color Computer).
 
     VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,6 +15,24 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+
+/***********************************************************************************
+ *
+ * NOTICE to maintainers
+ *
+ * As of VCC 2.1.9.2 the CPUAssertInterrupt args are changed from unsigned chars
+ * to integer enums and their meanings are changed. The first argument is now the
+ * Interrupt source and the second the interrupt number.  Previously the first
+ * argument was interrupt number and the second was a latency value.  This change
+ * corrects long standing issues with VCC interrupt handling. In order to maintain
+ * DLL compatibility (fd502) with previous VCC versions the Pack assert argument
+ * types remain unchanged and the first arg is the interrupt and the second is the
+ * interrupt source, which is now reversed from the CPU assert interrupt function:
+ *
+ *  CPUAssertInterupt(InterruptSource, Interrupt)  // integer enums
+ *  PakAssertInterupt(interrupt, interruptsource)  // unsigned chars
+ *
+ ************************************************************************************/
 
 #include <windows.h>
 #include <windowsx.h>
@@ -59,21 +77,21 @@ typedef void (*CONFIGIT)(unsigned char);
 typedef void (*HEARTBEAT) (void);
 typedef unsigned char (*PACKPORTREAD)(unsigned char);
 typedef void (*PACKPORTWRITE)(unsigned char,unsigned char);
-typedef void (*ASSERTINTERUPT)(InterruptSource, Interrupt);
+typedef void (*PAKINTERRUPT)(unsigned char, unsigned char);
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*SETCART)(unsigned char);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*MODULESTATUS)(char *);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*SETCARTPOINTER)(SETCART);
-typedef void (*SETINTERUPTCALLPOINTER) (ASSERTINTERUPT);
+typedef void (*SETINTERUPTCALLPOINTER) (PAKINTERRUPT);
 typedef unsigned short (*MODULEAUDIOSAMPLE)(void);
 typedef void (*MODULERESET)(void);
 typedef void (*SETINIPATH)(char *);
 
 static void (*GetModuleName)(char *,char *,DYNAMICMENUCALLBACK)=NULL;
 static void (*ConfigModule)(unsigned char)=NULL;
-static void (*SetInteruptCallPointer)(ASSERTINTERUPT)=NULL;
+static void (*SetInteruptCallPointer)(PAKINTERRUPT)=NULL;
 static void (*DmaMemPointer) (MEMREAD8,MEMWRITE8)=NULL;
 static void (*HeartBeat)(void)=NULL;
 static void (*PakPortWrite)(unsigned char,unsigned char)=NULL;
@@ -166,6 +184,14 @@ void PackMem8Write(unsigned short Address,unsigned char Value)
 	if (ExternalRomBuffer!=NULL)
 		ExternalRomBuffer[(Address & 32767)+BankedCartOffset] = Value;;
 	return;
+}
+
+// Shunt to convert PAK assert to CPU assert
+// Pack assert interrupt interface is two unsigned chars
+// CPU assert interrupt is two integers in different order
+void (PakAssertInterupt)(unsigned char interrupt, unsigned char source)
+{
+	CPUAssertInterupt( (InterruptSource) source, (Interrupt) interrupt);
 }
 
 unsigned short PackAudioSample(void)
@@ -273,8 +299,7 @@ int InsertModule (char *ModulePath)
 		if (DmaMemPointer!=NULL)
 			DmaMemPointer(MemRead8,MemWrite8);
 		if (SetInteruptCallPointer!=NULL)
-			SetInteruptCallPointer(CPUAssertInterupt);
-
+			SetInteruptCallPointer(PakAssertInterupt);
 		GetModuleName(Modname,CatNumber,DynamicMenuCallbackChar);  //Instanciate the menus from HERE!
 		sprintf(Temp,"Configure %s",Modname);
 
@@ -434,7 +459,7 @@ void GetCurrentModule(char *DefaultModule)
 void UpdateBusPointer(void)
 {
 	if (SetInteruptCallPointer!=NULL)
-		SetInteruptCallPointer(CPUAssertInterupt);
+		SetInteruptCallPointer(PakAssertInterupt);
 	return;
 }
 

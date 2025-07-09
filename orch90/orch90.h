@@ -19,7 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 void MemWrite(unsigned char,unsigned short );
 unsigned char MemRead(unsigned short );
-void CPUAssertInterupt(unsigned char,unsigned char);
+//void CPUAssertInterupt(unsigned char,unsigned char);
 
 
 //Misc

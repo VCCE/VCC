@@ -118,14 +118,12 @@ bool LoadRom(void);
 void SDCWrite(unsigned char data,unsigned char port);
 unsigned char SDCRead(unsigned char port);
 void SDCInit(void);
-void AssertInterupt(unsigned char,unsigned char);
 void MemWrite(unsigned char,unsigned short);
 unsigned char MemRead(unsigned short);
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-static void (*AssertInt)(unsigned char,unsigned char)=NULL;
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 static unsigned char (*MemRead8)(unsigned short)=NULL;
 static void (*MemWrite8)(unsigned char,unsigned short)=NULL;
@@ -321,12 +319,14 @@ extern "C"
         return;
     }
 
+/*
     // Capture the Function transfer point for the CPU assert interupt
     __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
     {
         AssertInt=Dummy;
         return;
     }
+*/
 
     static int idle_ctr = 0;
     // Return SDC status.

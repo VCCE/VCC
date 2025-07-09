@@ -2,7 +2,7 @@
 #include <array>
 #include <vector>
 #include <string>
-
+#include "../interrupts.h"
 namespace VCC
 {
 
@@ -71,12 +71,6 @@ namespace VCC
 	};
 
 }
-
-// Common CPU defs (counting from 1 because legacy)
-enum Interrupt { INT_IRQ = 1, INT_FIRQ, INT_NMI };
-
-// Interrupt sources keep track of their own state, NMI is its own source and always uses this.
-enum InterruptSource { IS_NMI, IS_PIA0_HSYNC, IS_PIA0_VSYNC, IS_PIA1_CD, IS_PIA1_CART, IS_GIME, IS_MAX };
 
 // make nth bit 0-7
 inline constexpr uint8_t Bit(uint8_t n) { return 1 << n; }

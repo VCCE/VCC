@@ -71,7 +71,7 @@ void sc6551_close();
 void sc6551_heartbeat();
 unsigned char sc6551_read(unsigned char data);
 void sc6551_write(unsigned char data, unsigned short port);
-void (*AssertInt)(InterruptSource, Interrupt);
+void (*AssertInt)(unsigned char, unsigned char);
 
 //------------------------------------------------------------------
 // Settings from command and control registers

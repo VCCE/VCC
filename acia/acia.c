@@ -16,6 +16,9 @@
 // received a copy of the GNU General Public License  along with VCC
 // (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
 //
+// NOTE: Due to changes in interupt handling this version will not work
+// properly before VCC 2.1.9.2 (Console mode Nitros9 using /t2 broken)
+//
 //------------------------------------------------------------------
 
 #include "acia.h"
@@ -28,7 +31,7 @@
 
 // Transfer points for menu callback and cpu assert interrupt
 typedef void (*DYNAMICMENUCALLBACK)(char * ,int, int);
-typedef void (*ASSERTINTERUPT)(InterruptSource, Interrupt);
+typedef void (*ASSERTINTERUPT)(unsigned char, unsigned char);
 
 void (*DynamicMenuCallback)(char *,int,int)=NULL;
 void BuildDynaMenu(void);

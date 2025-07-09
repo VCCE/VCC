@@ -39,10 +39,10 @@ static char HardDiskPath[MAX_PATH];
 
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-typedef void (*ASSERTINTERUPT)(InterruptSource, Interrupt);
+//typedef void (*ASSERTINTERUPT)(InterruptSource, Interrupt);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
-static void (*AssertInt)(InterruptSource, Interrupt)=NULL;
+//static void (*AssertInt)(InterruptSource, Interrupt)=NULL;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
 static unsigned char *Memory=NULL;

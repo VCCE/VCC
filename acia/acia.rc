@@ -131,7 +131,7 @@ BEGIN
             VALUE "Comments", "Tandy Delux RS232 Pak"
             VALUE "CompanyName", "BitRot Software"
             VALUE "FileDescription", "acia"
-            VALUE "FileVersion", "2.1.8.1"
+            VALUE "FileVersion", "2.1.9.2"
             VALUE "InternalName", "SC6551 Interface"
             VALUE "LegalCopyright", "Copyright © 2023"
             VALUE "OriginalFilename", "acia.dll"

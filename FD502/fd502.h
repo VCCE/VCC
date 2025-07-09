@@ -23,7 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "../MachineDefs.h"
 
-extern "C" void (*AssertInt)(InterruptSource, Interrupt);
+extern "C" void (*AssertInt)(unsigned char,unsigned char);
 void BuildDynaMenu(void);
 #define	HEAD 0
 #define SLAVE 1
