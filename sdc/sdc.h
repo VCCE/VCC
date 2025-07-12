@@ -1,5 +1,5 @@
 // Uncomment to get console logging
-//#define USE_LOGGING
+#define USE_LOGGING
 
 #include "../defines.h"
 #include "../logger.h"
