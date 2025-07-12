@@ -1,4 +1,3 @@
-//----------------------------------------------------------------------
 // SDC simulator DLL
 //
 // By E J Jaquay 2025
@@ -114,8 +113,8 @@
 // Functions
 //======================================================================
 
-bool LoadRom(void);
-void SDCWrite(unsigned char data,unsigned char port);
+void LoadRom(unsigned char);
+void SDCWrite(unsigned char,unsigned char);
 unsigned char SDCRead(unsigned char port);
 void SDCInit(void);
 void MemWrite(unsigned char,unsigned short);
@@ -159,7 +158,7 @@ bool OpenFound(int);
 void LoadReply(void *, int);
 void BlockReceive(unsigned char);
 char * LastErrorTxt(void);
-void BankSelect(int);
+void FlashControl(unsigned char);
 void LoadDirPage(void);
 bool SetCurDir(char * path);
 bool SearchFile(const char *);
@@ -169,10 +168,14 @@ void GetMountedImageRec(void);
 void GetSectorCount(void);
 void GetDirectoryLeaf(void);
 unsigned char PickReplyByte(unsigned char);
+unsigned char WriteFlashBank(unsigned short);
 
 //======================================================================
 // Globals
 //======================================================================
+
+// Idle Status counter
+int idle_ctr = 0;
 
 // SDC CoCo Interface
 typedef struct {
@@ -193,8 +196,6 @@ typedef struct {
     char blkbuf[600];
 } Interface;
 Interface IF;
-
-unsigned char IF_flash;
 
 // Cart ROM
 char PakRom[0x4000];
@@ -233,8 +234,14 @@ struct _Disk {
 
 // Flash banks
 char FlashFile[8][MAX_PATH];
-char CurrentBank = 0;
-char StartupBank = 0;
+FILE *h_RomFile = NULL;
+unsigned char StartupBank = 0;
+unsigned char CurrentBank = 0xff;
+unsigned char EnableBankWrite = 0;
+unsigned char BankWriteNum = 0;
+unsigned char BankWriteState = 0;
+unsigned char BankDirty = 0;
+unsigned char BankData = 0;
 
 // Dll handle
 static HINSTANCE hinstDLL;
@@ -256,8 +263,6 @@ static HWND hStartupBank = NULL;
 int streaming;
 unsigned char stream_cmdcode;
 unsigned int stream_lsn;
-
-FILE *f_ROM = NULL;
 
 char Status[16] = {};
 bool StartupComplete = false;
@@ -319,16 +324,6 @@ extern "C"
         return;
     }
 
-/*
-    // Capture the Function transfer point for the CPU assert interupt
-    __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
-    {
-        AssertInt=Dummy;
-        return;
-    }
-*/
-
-    static int idle_ctr = 0;
     // Return SDC status.
     __declspec(dllexport) void ModuleStatus(char *MyStatus)
     {
@@ -352,7 +347,13 @@ extern "C"
     // Return a byte from the current PAK ROM
     __declspec(dllexport) unsigned char PakMemRead8(unsigned short adr)
     {
-        return(PakRom[adr & 0x3FFFF]);
+        adr &= 0x3FFF;
+        if (EnableBankWrite) {
+            return WriteFlashBank(adr);
+        } else {
+            BankWriteState = 0;  // Any read resets write state
+            return(PakRom[adr]);
+        }
     }
 
     // Capture pointers for MemRead8 and MemWrite8 functions.
@@ -557,8 +558,7 @@ void SDCInit(void)
 
     // Load SDC settings
     LoadConfig();
-    CurrentBank = StartupBank;
-    LoadRom();
+    LoadRom(StartupBank);
 
     SetCurDir(""); // May be changed by ParseStartup()
 
@@ -615,6 +615,7 @@ void InitCardBox(void)
 void DeleteFlashItem(void)
 {
     int index = SendMessage(hFlashBox, LB_GETCURSEL, 0, 0);
+    _DLOG("DeleteFlashItem %d\n",index);
     if ((index < 0) | (index > 7)) return;
     *FlashFile[index] = '\0';
     InitFlashBox();
@@ -660,7 +661,7 @@ void UpdateFlashItem(void)
         strncpy(FlashFile[index],filename,MAX_PATH);
     }
 
-    _DLOG("UdateFlashItem %d %s\n",index,FlashFile[index]);
+    _DLOG("UpdateFlashItem %d %s\n",index,FlashFile[index]);
 
     InitFlashBox();
 }
@@ -695,43 +696,74 @@ void SelectCardBox(void)
 }
 
 //-------------------------------------------------------------
-// Load rom from bank slot
+// Load rom from flash bank
 //-------------------------------------------------------------
-bool LoadRom()
+void LoadRom(unsigned char bank)
 {
-    char * RomName;
-    RomName = FlashFile[CurrentBank];
 
-    if ((*RomName == '\0') || (strcmp(RomName,"-empty-") == 0)) {
+    unsigned char ch;
+    int ctr = 0;
+    char *p_rom;
+    char *RomFile;
+
+    if (bank == CurrentBank) return;
+
+    // Make sure flash file is closed
+    if (h_RomFile) {
+        fclose(h_RomFile);
+        h_RomFile = NULL;
+    }
+
+    if (BankDirty) {
+        RomFile = FlashFile[CurrentBank];
+        _DLOG("LoadRom switching out dirty bank %d %s\n",CurrentBank,RomFile);
+        h_RomFile = fopen(RomFile,"wb");
+        if (h_RomFile == NULL) {
+            _DLOG("LoadRom failed to open bank file%d\n",bank);
+        } else {
+            ctr = 0;
+            p_rom = PakRom;
+            while (ctr++ < 0x4000) fputc(*p_rom++, h_RomFile);
+            fclose(h_RomFile);
+            h_RomFile = NULL;
+        }
+        BankDirty = 0;
+    }
+
+    _DLOG("LoadRom load flash bank %d\n",bank);
+    RomFile = FlashFile[bank];
+    CurrentBank = bank;
+
+    // If bank is empty and is the StartupBank load SDC-DOS
+    if (*FlashFile[CurrentBank] == '\0') {
         _DLOG("LoadRom bank %d is empty\n",CurrentBank);
         if (CurrentBank == StartupBank) {
             _DLOG("LoadRom loading default SDC-DOS\n");
-            RomName = "SDC-DOS.ROM";
-            strncpy(FlashFile[CurrentBank],RomName,MAX_PATH);
+            strncpy(RomFile,"SDC-DOS.ROM",MAX_PATH);
         }
-    } else {
-        _DLOG("LoadRom bank %d file '%s'\n",CurrentBank,RomName);
     }
 
-    if (f_ROM) fclose(f_ROM);
-
-    int ch;
-    int ctr = 0;
-    f_ROM = fopen(RomName, "rb");
-    if (f_ROM == NULL) {
-        _DLOG("LoadRom '%s' failed %s \n",RomName,LastErrorTxt());
-        return false;
+    // Open romfile for read or write if not startup bank
+    h_RomFile = fopen(RomFile,"rb");
+    if (h_RomFile == NULL) {
+        if (CurrentBank != StartupBank) h_RomFile = fopen(RomFile,"wb");
+    }
+    if (h_RomFile == NULL) {
+        _DLOG("LoadRom '%s' failed %s \n",RomFile,LastErrorTxt());
+        return;
     }
 
+    // Load rom from flash
     memset(PakRom, 0xFF, 0x4000);
-    char *p = PakRom;
+    ctr = 0;
+    p_rom = PakRom;
     while (ctr++ < 0x4000) {
-        if ((ch = fgetc(f_ROM)) < 0) break;
-        *p++ = (char) ch;
+        if ((ch = fgetc(h_RomFile)) < 0) break;
+        *p_rom++ = (char) ch;
     }
 
-    fclose(f_ROM);
-    return true;
+    fclose(h_RomFile);
+    return;
 }
 
 //----------------------------------------------------------------------
@@ -799,11 +831,12 @@ void SDCWrite(unsigned char data,unsigned char port)
         break;
     // Flash Data
     case 0x42:
-        IF_flash = data;
+        //_DLOG("IF data: %02X\n",data);
+        BankData = data;
         break;
     // Flash Control
     case 0x43:
-        BankSelect(data);
+        FlashControl(data);
         break;
     // Command registor
     case 0x48:
@@ -881,7 +914,7 @@ unsigned char SDCRead(unsigned char port)
     switch (port) {
     // Flash control read is used by SDCDOS to detect the SDC
     case 0x43:
-        rpy = CurrentBank | (IF_flash & 0xF8);
+        rpy = CurrentBank | (BankData & 0xF8);
         break;
     // Interface status
     case 0x48:
@@ -1119,13 +1152,88 @@ void UpdateSD(void)
 }
 
 //----------------------------------------------------------------------
-// Select bank.
+// Flash control
 //----------------------------------------------------------------------
-void BankSelect(int data)
+void FlashControl(unsigned char data)
 {
-    _DLOG("BankSelect %d,%X\n",data,IF_flash);
-    CurrentBank = data & 7;
-    LoadRom();
+    unsigned char bank = data & 7;
+    EnableBankWrite = data & 0x80;
+    if (EnableBankWrite) {
+        BankWriteNum = bank;
+    } else if (CurrentBank != bank) {
+        LoadRom(bank);
+    }
+}
+
+//----------------------------------------------------------------------
+// Write or kill flash bank
+//
+// To write a byte a sequence of four writes is used. The first three
+// writes prepare the SST39S flash. The last writes the byte.
+//
+//    state 0 write bank 1 adr $1555 val $AA
+//    state 1 write bank 0 adr $2AAA val $55
+//    state 2 write bank 1 adr $1555 val $A0
+//    state 3 write bank # adr [adr] val write val to adr in bank #
+//
+// Kill bank sector is a sequence of six writes. All six are required
+// to kill the bank sector.
+//
+//    state 0 write bank 1 adr 1555 val AA
+//    state 1 write bank 0 adr 2AAA val 55
+//    state 2 write bank 1 adr 1555 val 80
+//    state 4 write bank 1 adr 1555 val AA
+//    state 5 write bank 0 adr 2AAA val 55
+//    state 6 write bank # adr sect val 30 kill bank # sect (adr & 0x3000)
+//
+//----------------------------------------------------------------------
+unsigned char WriteFlashBank(unsigned short adr)
+{
+    _DLOG("WriteFlashBank %d %d %04X %02X\n",
+            BankWriteState,BankWriteNum,adr,BankData);
+
+    // BankWriteState controls the write or kill
+    switch (BankWriteState) {
+    case 0:
+        if ((BankWriteNum == 1) && (adr == 0x1555))
+            if (BankData == 0xAA) BankWriteState = 1;
+        break;
+    case 1:
+        if ((BankWriteNum == 0) && (adr == 0x2AAA))
+            if (BankData == 0x55) BankWriteState = 2;
+        break;
+    case 2:
+        if ((BankWriteNum == 1) && (adr == 0x1555)) {
+            if (BankData == 0xA0) BankWriteState = 3;
+            else if (BankData == 0x80) BankWriteState = 4;
+        }
+        break;
+    // State three writes data
+    case 3:
+        if (BankWriteNum != CurrentBank) LoadRom(BankWriteNum);
+        PakRom[adr] = BankData;
+        BankDirty = 1;
+        break;
+    // State four continues kill sequence
+    case 4:
+        if ((BankWriteNum == 1) && (adr == 0x1555))
+            if (BankData == 0xAA) BankWriteState = 5;
+        break;
+    case 5:
+        if ((BankWriteNum == 0) && (adr == 0x2AAA))
+            if (BankData == 0x55) BankWriteState = 6;
+        break;
+    // State six kills (fills with 0xFF) bank sector
+    case 6:
+        if (BankData == 0x30) {
+            if (BankWriteNum != CurrentBank) LoadRom(BankWriteNum);
+            memset(PakRom + (adr & 0x3000), 0xFF, 0x1000);
+            BankDirty = 1;
+        }
+        break;
+    }
+    EnableBankWrite = 0;
+    return BankData;
 }
 
 //----------------------------------------------------------------------
