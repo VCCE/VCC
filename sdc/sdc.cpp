@@ -108,7 +108,6 @@
 #include <sys/stat.h>
 #include "sdc.h"
 
-
 //======================================================================
 // Functions
 //======================================================================
@@ -151,24 +150,27 @@ void AppendPathChar(char *,char c);
 bool LoadFindRecord(struct FileRecord *);
 bool LoadDotRecord(struct FileRecord *);
 void FixSDCPath(char *,const char *);
-bool MountDisk(int,const char *);
+void MountDisk(int,const char *,MountFlags);
+void MountNewDisk(int,const char *,MountFlags);
 bool MountNext(int);
+void OpenNew(int,const char *,MountFlags);
 void CloseDrive(int);
-bool OpenFound(int);
+void OpenFound(int);
 void LoadReply(void *, int);
 void BlockReceive(unsigned char);
 char * LastErrorTxt(void);
 void FlashControl(unsigned char);
 void LoadDirPage(void);
-bool SetCurDir(char * path);
+void SetCurDir(char * path);
 bool SearchFile(const char *);
-bool InitiateDir(const char *);
+void InitiateDir(const char *);
 bool IsDirectory(const char *path);
 void GetMountedImageRec(void);
 void GetSectorCount(void);
 void GetDirectoryLeaf(void);
 unsigned char PickReplyByte(unsigned char);
 unsigned char WriteFlashBank(unsigned short);
+
 
 //======================================================================
 // Globals
@@ -553,8 +555,8 @@ void SDCInit(void)
 #endif
 
     // Make sure drives are unloaded
-    MountDisk (0,"");
-    MountDisk (1,"");
+    MountDisk (0,"",MOUNT_NORM);
+    MountDisk (1,"",MOUNT_NORM);
 
     // Load SDC settings
     LoadConfig();
@@ -800,15 +802,13 @@ void ParseStartup(void)
         // Attempt to mount drive
         switch (drv) {
         case '0':
-            MountDisk(0,&buf[2]);
+            MountDisk(0,&buf[2],MOUNT_NORM);
             break;
         case '1':
-            MountDisk(1,&buf[2]);
+            MountDisk(1,&buf[2],MOUNT_NORM);
             break;
         case 'D':
-            if (!SetCurDir(&buf[2])) {
-                _DLOG("Config current dir %s failed\n",&buf[2]);
-            }
+            SetCurDir(&buf[2]);
             break;
         }
     }
@@ -1099,40 +1099,32 @@ void GetDirectoryLeaf(void)
 //----------------------------------------------------------------------
 void UpdateSD(void)
 {
-    _DLOG("UpdateSD %d %02X '%s'\n",
-            IF.cmdcode&1,IF.blkbuf[0],&IF.blkbuf[2]);
+    _DLOG("UpdateSD %d %02X '%s' %d %d %d\n",
+            IF.cmdcode&1,IF.blkbuf[0],&IF.blkbuf[2],
+            IF.param1, IF.param2, IF.param3);
 
     switch (IF.blkbuf[0]) {
     // Mount disk
     case 0x4D: //M
+        MountDisk(IF.cmdcode&1,&IF.blkbuf[2],MOUNT_NORM);
+        break;
     case 0x6D: //m
-        if (MountDisk(IF.cmdcode&1,&IF.blkbuf[2]))
-            IF.status =  0;
-        else
-            IF.status = STA_FAIL;
+        MountDisk(IF.cmdcode&1,&IF.blkbuf[2],MOUNT_RAW);
         break;
     // Create Disk
     case 0x4E: //N
+        MountNewDisk(IF.cmdcode&1,&IF.blkbuf[2],MOUNT_NORM);
+        break;
     case 0x6E: //n
-        //  $FF49 0 for DSK image, number of cylinders for SDF
-        //  $FF4A 0 for DSK image, number of sides for SDF image
-        //  $FF4B 0
-        _DLOG("UpdateSD mount new image not Supported\n");
-        IF.status = STA_FAIL;
+        MountNewDisk(IF.cmdcode&1,&IF.blkbuf[2],MOUNT_RAW);
         break;
     // Set directory
     case 0x44: //D
-        if (SetCurDir(&IF.blkbuf[2]))
-            IF.status =  0;
-        else
-            IF.status = STA_FAIL;
+        SetCurDir(&IF.blkbuf[2]);
         break;
     // Initiate directory list
     case 0x4C: //L
-        if (InitiateDir(&IF.blkbuf[2]))
-            IF.status = 0;
-        else
-            IF.status = STA_FAIL;
+        InitiateDir(&IF.blkbuf[2]);
         break;
     // Create directory
     case 0x4B: //K
@@ -1253,9 +1245,9 @@ bool SeekSector(unsigned char cmdcode, unsigned int lsn)
         lsn = 2 * Disk[drive].tracksectors * trk + sec;
     }
 
-    if (lsn > (Disk[drive].size / Disk[drive].sectorsize)) {
-        _DLOG("SeekSector overrun %d %d\n",drive,lsn);
-        IF.status = STA_FAIL;
+    // Allow seek to expand a writable file to a resonable limit
+    if (lsn > MAX_DSK_SECTORS) {
+        _DLOG("SeekSector exceed max image %d %d\n",drive,lsn);
         return false;
     }
 
@@ -1264,7 +1256,6 @@ bool SeekSector(unsigned char cmdcode, unsigned int lsn)
     pos.QuadPart = lsn * Disk[drive].sectorsize + Disk[drive].headersize;
     if (!SetFilePointerEx(Disk[drive].hFile,pos,NULL,FILE_BEGIN)) {
         _DLOG("SeekSector error %s\n",LastErrorTxt());
-        IF.status = STA_FAIL;
         return false;
     }
     return true;
@@ -1563,15 +1554,52 @@ bool LoadFindRecord(struct FileRecord * rec)
 }
 
 //----------------------------------------------------------------------
+// Create and mount a new disk image
+//  MOUNT_NORM Create dsk file populated with zero filled sectors
+//  MOUNT_RAW  Create empty file (seeks will expand to size)
+//  IF.param1 == 0 create 161280 byte JVC file
+//  IF.param1 SDF image number of cylinders
+//  IF.param2 SDC image number of sides
+//----------------------------------------------------------------------
+void MountNewDisk (int drive, const char * path, MountFlags flags)
+{
+    //_DLOG("MountNewDisk %d %s %d\n",drive,path,flags);
+
+    // limit drive to 0 or 1
+    drive &= 1;
+
+    // Close and clear previous entry
+    CloseDrive(drive);
+    memset((void *) &Disk[drive],0,sizeof(_Disk));
+
+    // Convert from SDC format
+    char file[MAX_PATH];
+    FixSDCPath(file,path);
+
+    // Look for pre-existing file
+    if (SearchFile(file)) {
+        OpenFound(drive);
+        return;
+    }
+
+    OpenNew(drive,path,flags);
+    return;
+}
+
+//----------------------------------------------------------------------
 // Mount Disk. If image path starts with '/' load drive relative
 // to SDRoot, else load drive relative to the current directory.
 // If there is no '.' in the path first appending '.DSK' will be
 // tried then wildcard. If wildcarded the set will be available for
-// the 'Next Disk' function. TODO: Sets of type SOMEAPPn.DSK
+// the 'Next Disk' function.
+// flags:
+//   MOUNT_NORM determine and validate image type
+//   MOUNT_RAW  do no checks on size or type
+// TODO: Sets of type SOMEAPPn.DSK
 //----------------------------------------------------------------------
-bool MountDisk (int drive, const char * path)
+void MountDisk (int drive, const char * path, MountFlags flags)
 {
-    _DLOG("MountDisk entry %d %s\n",drive,path);
+    _DLOG("MountDisk %d %s %d\n",drive,path,flags);
 
     drive &= 1;
 
@@ -1580,7 +1608,11 @@ bool MountDisk (int drive, const char * path)
     memset((void *) &Disk[drive],0,sizeof(_Disk));
 
     // Check for UNLOAD.  Path will be an empty string.
-    if (*path == '\0') return true;
+    if (*path == '\0') {
+        _DLOG("MountDisk unload %d %s\n",drive,path);
+        IF.status = STA_NORMAL;
+        return;
+    }
 
     char file[MAX_PATH];
     char tmp[MAX_PATH];
@@ -1605,19 +1637,13 @@ bool MountDisk (int drive, const char * path)
 
     // Give up
     if (!found) {
-        _DLOG("Mount %s not found\n",file);
-        return false;
+        IF.status = STA_FAIL | STA_NOTFOUND;
+        return;
     }
 
     // Mount first image found
-    if (!OpenFound(drive)) {
-        _DLOG("MountDisk failed %s\n",path);
-        memset((void *) &Disk[drive],0,sizeof(_Disk));
-        return false;
-    }
-
-    _DLOG("MountDisk %s mounted\n",path);
-    return true;
+    OpenFound(drive);
+    return;
 }
 
 //----------------------------------------------------------------------
@@ -1633,34 +1659,125 @@ bool MountNext (int drive)
     }
 
     // Open next image found on the drive
-    if (!OpenFound(drive)) {
-        memset((void *) &Disk[drive],0,sizeof(_Disk));
-        _DLOG("MountNext can't open next\n");
-        return false;
-    }
-
-    _DLOG("MountNext %s on %s\n",dFound.cFileName,SeaDir);
+    OpenFound(drive);
     return true;
 }
 
 //----------------------------------------------------------------------
+// Open new disk image
+//
+//  IF.Param1: $FF49 B   number of cylinders for SDF
+//  IF.Param2: $FF4A X.H number of sides for SDF image
+//
+//  OpenNew 0 'A.DSK' 0 40 0 NEW
+//  OpenNew 0 'B.DSK' 0 40 1 NEW++ one side
+//  OpenNew 0 'C.DSK' 0 40 2 NEW++ two sides
+//
+//  Currently new JVC files are 35 cylinders, one sided
+//  Possibly future num cylinders could specify 40 or more
+//  cylinders with num cyl controlling num sides
+//
+//----------------------------------------------------------------------
+void OpenNew( int drive, const char * path, MountFlags flags)
+{
+    _DLOG("OpenNew %d '%s' %d %d %d\n",
+          drive,path,flags,IF.param1,IF.param2);
+
+    // Number of sides controls file type
+    switch (IF.param2) {
+    case 0:    //NEW
+        // create JVC DSK file
+        break;
+    case 1:    //NEW+
+    case 2:    //NEW++
+        _DLOG("OpenNew SDF file not supported\n");
+        IF.status = STA_FAIL | STA_INVALID;
+        return;
+    }
+
+    // Contruct fully qualified file name
+    char fqn[MAX_PATH]={};
+    strncpy(fqn,SDCard,MAX_PATH);
+    AppendPathChar(fqn,'/');
+    strncat(fqn,CurDir,MAX_PATH);
+    AppendPathChar(fqn,'/');
+    strncat(fqn,path,MAX_PATH);
+
+    // Verify not trying to mount a directory
+    if (IsDirectory(fqn)) {
+        _DLOG("OpenNew %s is a directory\n",fqn);
+        IF.status = STA_FAIL | STA_INVALID;
+        return;
+    }
+
+    // Try to create file
+    CloseDrive(drive);
+    strncpy(Disk[drive].name,fqn,MAX_PATH);
+
+    // Open file for write
+    Disk[drive].hFile = CreateFile(
+        Disk[drive].name, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
+        NULL,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,NULL);
+
+    if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
+        _DLOG("OpenNew fail %d file %s\n",drive,Disk[drive].name);
+        _DLOG("... %s\n",LastErrorTxt());
+        IF.status = STA_FAIL | STA_WIN_ERROR;
+        return;
+    }
+
+    // Sectorsize and sectors per track
+    Disk[drive].sectorsize = 256;
+    Disk[drive].tracksectors = 18;
+
+    IF.status = STA_FAIL;
+    if (flags == MOUNT_NORM) {
+        // Create headerless 35 track JVC file
+        Disk[drive].doublesided = 0;
+        Disk[drive].headersize = 0;
+        Disk[drive].size = 35 
+                         * Disk[drive].sectorsize
+                         * Disk[drive].tracksectors
+                         + Disk[drive].headersize;
+        // Extend file to size
+        LARGE_INTEGER l_siz;
+        l_siz.QuadPart = Disk[drive].size;
+        if (SetFilePointerEx(Disk[drive].hFile,l_siz,NULL,FILE_BEGIN)) {
+            if (SetEndOfFile(Disk[drive].hFile)) {
+                IF.status = STA_NORMAL;
+            } else {
+                IF.status = STA_FAIL | STA_WIN_ERROR;
+            }
+        }
+    } else {
+        // Raw file is empty - can be any format
+        IF.status = STA_NORMAL;
+        Disk[drive].doublesided = 0;
+        Disk[drive].headersize = 0;
+        Disk[drive].size = 0;
+    }
+    return;
+ }
+
+//----------------------------------------------------------------------
 // Open disk image found
 //----------------------------------------------------------------------
-bool OpenFound (int drive)
+void OpenFound (int drive)
 {
     drive &= 1;
     int writeprotect = 0;
 
-    _DLOG("OpenFound enter %d %s %d\n",
+    _DLOG("OpenFound %d %s %d\n",
         drive, Disk[drive].name, Disk[drive].hFile);
+
+    CloseDrive(drive);
 
     // Verify not trying to mount a directory
     if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
         _DLOG("OpenFound %s is a directory\n",dFound.cFileName);
-        return false;
+        IF.status = STA_FAIL | STA_INVALID;
+        return;
     }
-
-    CloseDrive(drive);
 
     // Fully qualify name of found file and try to open it
     char fqn[MAX_PATH]={};
@@ -1675,8 +1792,13 @@ bool OpenFound (int drive)
     if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
         _DLOG("OpenFound fail %d file %s\n",drive,Disk[drive].name);
         _DLOG("... %s\n",LastErrorTxt());
-        IF.status = STA_FAIL;
-        return false;
+        int ecode = GetLastError();
+        if (ecode == ERROR_SHARING_VIOLATION) {
+            IF.status = STA_FAIL | STA_INUSE;
+        } else {
+            IF.status = STA_FAIL | STA_WIN_ERROR;
+        }
+        return;
     }
 
     // Default sectorsize and sectors per track
@@ -1711,11 +1833,13 @@ bool OpenFound (int drive)
         ReadFile(Disk[drive].hFile,header,12,NULL,NULL);
         Disk[drive].doublesided = (header[8] == 2);
         writeprotect = header[9] & 1;
+        break;
     // Unknown or unsupported
     default: // More than 4 byte header is not supported
         _DLOG("OpenFound unsuported image type %d %d\n",
               drive, Disk[drive].headersize);
-        return false;
+        IF.status = STA_FAIL | STA_INVALID;
+        return;
         break;
     }
 
@@ -1738,14 +1862,13 @@ bool OpenFound (int drive)
         if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
             _DLOG("OpenFound reopen fail %d\n",drive);
             _DLOG("... %s\n",LastErrorTxt());
-            IF.status = STA_FAIL;
-            return false;
+            IF.status = STA_FAIL | STA_WIN_ERROR;
+            return;
         }
     }
 
-    _DLOG("OpenFound success %d %s %d %d\n", drive, Disk[drive].name,
-            Disk[drive].doublesided, Disk[drive].hFile);
-    return true;
+    IF.status = STA_NORMAL;
+    return;
 }
 
 //----------------------------------------------------------------------
@@ -1786,14 +1909,15 @@ bool IsDirectory(const char * path)
 //----------------------------------------------------------------------
 // Set the Current Directory relative to previous current or to SDRoot
 //----------------------------------------------------------------------
-bool SetCurDir(char * path)
+void SetCurDir(char * path)
 {
     //_DLOG("SetCurdir enter '%s' '%s'\n",path,CurDir);
 
     // If path is "/" set CurDir to root
     if (strcmp(path,"/") == 0) {
         *CurDir = '\0';
-        return true;
+        IF.status = STA_NORMAL;
+        return;
     }
 
     // If path is ".." go back a directory
@@ -1804,11 +1928,13 @@ bool SetCurDir(char * path)
             char *p = strrchr(CurDir,'/');
             if (p != NULL) {
                 *p = '\0';
-                return true;
+                IF.status = STA_NORMAL;
+                return;
             }
         }
         *CurDir = '\0';
-        return true;
+        IF.status = STA_NORMAL;
+        return;
     }
 
     char cleanpath[MAX_PATH];
@@ -1824,7 +1950,8 @@ bool SetCurDir(char * path)
     // if path empty nothing changes
     if (n < 0) {
         _DLOG("SetCurdir '%s'\n",CurDir);
-        return true;
+        IF.status = STA_NORMAL;
+        return;
     }
 
     // Get rid of trailing spaces and trailing '/'
@@ -1851,13 +1978,15 @@ bool SetCurDir(char * path)
     strncat(fullpath,testpath,MAX_PATH);
     if (!IsDirectory(fullpath)) {
         _DLOG("SetCurDir '%s' invalid %s\n",path);
-        return false;
+        IF.status = STA_FAIL;
+        return;
     }
 
     // Set new directory
     strncpy(CurDir,testpath,256);
     _DLOG("SetCurdir '%s'\n",CurDir);
-    return true;
+    IF.status = STA_NORMAL;
+    return;
 }
 
 //----------------------------------------------------------------------
@@ -1878,7 +2007,7 @@ bool SearchFile(const char * pattern)
         strncat(path,pattern,MAX_PATH);
     }
 
-    _DLOG("SearchFile %s\n",path);
+    //_DLOG("SearchFile %s\n",path);
 
     // Close previous search
     if (hFind != INVALID_HANDLE_VALUE) {
@@ -1906,18 +2035,24 @@ bool SearchFile(const char * pattern)
 //----------------------------------------------------------------------
 // InitiateDir command.
 //----------------------------------------------------------------------
-bool InitiateDir(const char * path)
+void InitiateDir(const char * path)
 {
+    bool rc;
     // Append "*.*" if last char in path was '/';
     int l = strlen(path);
     if (path[l-1] == '/') {
         char tmp[MAX_PATH];
         strncpy(tmp,path,MAX_PATH);
         strncat(tmp,"*.*",MAX_PATH);
-        return SearchFile(tmp);
+        rc = SearchFile(tmp);
     } else {
-        return SearchFile(path);
+        rc = SearchFile(path);
     }
+    if (rc)
+        IF.status = STA_NORMAL;
+    else
+        IF.status = STA_FAIL;
+    return;
 }
 
 //----------------------------------------------------------------------
