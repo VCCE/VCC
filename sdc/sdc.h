@@ -1,4 +1,4 @@
-// Uncomment to get console logging
+// For console logging set USER_PP_DEF=USE_LOGGING or uncomment the following line
 //#define USE_LOGGING
 
 #include "../defines.h"
