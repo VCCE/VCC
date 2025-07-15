@@ -99,6 +99,10 @@
 //
 //----------------------------------------------------------------------
 
+#include <iostream>
+#include <cstdio>
+#include <cerrno>
+#include <cstring>
 #include <windows.h>
 #include <windowsx.h>
 #include <shlwapi.h>
@@ -164,7 +168,8 @@ void LoadDirPage(void);
 void SetCurDir(char * path);
 bool SearchFile(const char *);
 void InitiateDir(const char *);
-bool IsDirectory(const char *path);
+void RenameFile(const char *);
+bool IsDirectory(const char *);
 void GetMountedImageRec(void);
 void GetSectorCount(void);
 void GetDirectoryLeaf(void);
@@ -1131,6 +1136,10 @@ void UpdateSD(void)
         _DLOG("UpdateSD create new directory not Supported\n");
         IF.status = STA_FAIL;
         break;
+    // Rename file or directory
+    case 0x52: //R
+        RenameFile(&IF.blkbuf[2]);
+        break;
     // Delete file or directory
     case 0x5B: //X
         _DLOG("UpdateSD delete file or directory not Supported\n");
@@ -1873,6 +1882,43 @@ void OpenFound (int drive,int raw)
     return;
 }
 
+//----------------------------------------------------------------------
+// Rename disk or directory
+//   names contains two consecutive null terminated name strings
+//   first is file or directory to rename, second is target name
+//----------------------------------------------------------------------
+void RenameFile(const char *names)
+{
+    char from[MAX_PATH];
+    char target[MAX_PATH];
+    char fixed[MAX_PATH];
+
+    // convert from name from SDC format and prepend current dir.
+    FixSDCPath(fixed,names);
+    strncpy(from,SDCard,MAX_PATH);
+    AppendPathChar(from,'/');
+    strncat(from,CurDir,MAX_PATH);
+    AppendPathChar(from,'/');
+    strncat(from,fixed,MAX_PATH);
+
+    // convert to name from SDC format and prepend current dir.
+    FixSDCPath(fixed,1+strchr(names,'\0'));
+    strncpy(target,SDCard,MAX_PATH);
+    AppendPathChar(target,'/');
+    strncat(target,CurDir,MAX_PATH);
+    AppendPathChar(target,'/');
+    strncat(target,fixed,MAX_PATH);
+
+    _DLOG("UpdateSD rename %s %s\n",from,target);
+
+    if (std::rename(from,target)) {
+        _DLOG("%s\n", strerror(errno));
+        IF.status = STA_FAIL | STA_WIN_ERROR;
+    } else {
+        IF.status = STA_NORMAL;
+    }
+    return;
+}
 //----------------------------------------------------------------------
 // Close virtual disk
 //----------------------------------------------------------------------
