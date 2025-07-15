@@ -150,12 +150,12 @@ void AppendPathChar(char *,char c);
 bool LoadFindRecord(struct FileRecord *);
 bool LoadDotRecord(struct FileRecord *);
 void FixSDCPath(char *,const char *);
-void MountDisk(int,const char *,MountFlags);
-void MountNewDisk(int,const char *,MountFlags);
+void MountDisk(int,const char *,int);
+void MountNewDisk(int,const char *,int);
 bool MountNext(int);
-void OpenNew(int,const char *,MountFlags);
+void OpenNew(int,const char *,int);
 void CloseDrive(int);
-void OpenFound(int);
+void OpenFound(int,int);
 void LoadReply(void *, int);
 void BlockReceive(unsigned char);
 char * LastErrorTxt(void);
@@ -555,8 +555,8 @@ void SDCInit(void)
 #endif
 
     // Make sure drives are unloaded
-    MountDisk (0,"",MOUNT_NORM);
-    MountDisk (1,"",MOUNT_NORM);
+    MountDisk (0,"",0);
+    MountDisk (1,"",0);
 
     // Load SDC settings
     LoadConfig();
@@ -802,10 +802,10 @@ void ParseStartup(void)
         // Attempt to mount drive
         switch (drv) {
         case '0':
-            MountDisk(0,&buf[2],MOUNT_NORM);
+            MountDisk(0,&buf[2],0);
             break;
         case '1':
-            MountDisk(1,&buf[2],MOUNT_NORM);
+            MountDisk(1,&buf[2],0);
             break;
         case 'D':
             SetCurDir(&buf[2]);
@@ -1106,17 +1106,17 @@ void UpdateSD(void)
     switch (IF.blkbuf[0]) {
     // Mount disk
     case 0x4D: //M
-        MountDisk(IF.cmdcode&1,&IF.blkbuf[2],MOUNT_NORM);
+        MountDisk(IF.cmdcode&1,&IF.blkbuf[2],0);
         break;
     case 0x6D: //m
-        MountDisk(IF.cmdcode&1,&IF.blkbuf[2],MOUNT_RAW);
+        MountDisk(IF.cmdcode&1,&IF.blkbuf[2],1);
         break;
     // Create Disk
     case 0x4E: //N
-        MountNewDisk(IF.cmdcode&1,&IF.blkbuf[2],MOUNT_NORM);
+        MountNewDisk(IF.cmdcode&1,&IF.blkbuf[2],0);
         break;
     case 0x6E: //n
-        MountNewDisk(IF.cmdcode&1,&IF.blkbuf[2],MOUNT_RAW);
+        MountNewDisk(IF.cmdcode&1,&IF.blkbuf[2],1);
         break;
     // Set directory
     case 0x44: //D
@@ -1555,15 +1555,13 @@ bool LoadFindRecord(struct FileRecord * rec)
 
 //----------------------------------------------------------------------
 // Create and mount a new disk image
-//  MOUNT_NORM Create dsk file populated with zero filled sectors
-//  MOUNT_RAW  Create empty file (seeks will expand to size)
 //  IF.param1 == 0 create 161280 byte JVC file
 //  IF.param1 SDF image number of cylinders
 //  IF.param2 SDC image number of sides
 //----------------------------------------------------------------------
-void MountNewDisk (int drive, const char * path, MountFlags flags)
+void MountNewDisk (int drive, const char * path, int raw)
 {
-    //_DLOG("MountNewDisk %d %s %d\n",drive,path,flags);
+    //_DLOG("MountNewDisk %d %s %d\n",drive,path,raw);
 
     // limit drive to 0 or 1
     drive &= 1;
@@ -1578,11 +1576,11 @@ void MountNewDisk (int drive, const char * path, MountFlags flags)
 
     // Look for pre-existing file
     if (SearchFile(file)) {
-        OpenFound(drive);
+        OpenFound(drive,raw);
         return;
     }
 
-    OpenNew(drive,path,flags);
+    OpenNew(drive,path,raw);
     return;
 }
 
@@ -1592,14 +1590,11 @@ void MountNewDisk (int drive, const char * path, MountFlags flags)
 // If there is no '.' in the path first appending '.DSK' will be
 // tried then wildcard. If wildcarded the set will be available for
 // the 'Next Disk' function.
-// flags:
-//   MOUNT_NORM determine and validate image type
-//   MOUNT_RAW  do no checks on size or type
 // TODO: Sets of type SOMEAPPn.DSK
 //----------------------------------------------------------------------
-void MountDisk (int drive, const char * path, MountFlags flags)
+void MountDisk (int drive, const char * path, int raw)
 {
-    _DLOG("MountDisk %d %s %d\n",drive,path,flags);
+    _DLOG("MountDisk %d %s %d\n",drive,path,raw);
 
     drive &= 1;
 
@@ -1642,7 +1637,7 @@ void MountDisk (int drive, const char * path, MountFlags flags)
     }
 
     // Mount first image found
-    OpenFound(drive);
+    OpenFound(drive,raw);
     return;
 }
 
@@ -1659,7 +1654,7 @@ bool MountNext (int drive)
     }
 
     // Open next image found on the drive
-    OpenFound(drive);
+    OpenFound(drive,0);
     return true;
 }
 
@@ -1678,10 +1673,10 @@ bool MountNext (int drive)
 //  cylinders with num cyl controlling num sides
 //
 //----------------------------------------------------------------------
-void OpenNew( int drive, const char * path, MountFlags flags)
+void OpenNew( int drive, const char * path, int raw)
 {
     _DLOG("OpenNew %d '%s' %d %d %d\n",
-          drive,path,flags,IF.param1,IF.param2);
+          drive,path,raw,IF.param1,IF.param2);
 
     // Number of sides controls file type
     switch (IF.param2) {
@@ -1731,7 +1726,14 @@ void OpenNew( int drive, const char * path, MountFlags flags)
     Disk[drive].tracksectors = 18;
 
     IF.status = STA_FAIL;
-    if (flags == MOUNT_NORM) {
+    if (raw) {
+        // New raw file is empty - can be any format
+        IF.status = STA_NORMAL;
+        Disk[drive].doublesided = 0;
+        Disk[drive].headersize = 0;
+        Disk[drive].size = 0;
+    } else {
+        // TODO: handle SDF
         // Create headerless 35 track JVC file
         Disk[drive].doublesided = 0;
         Disk[drive].headersize = 0;
@@ -1749,20 +1751,14 @@ void OpenNew( int drive, const char * path, MountFlags flags)
                 IF.status = STA_FAIL | STA_WIN_ERROR;
             }
         }
-    } else {
-        // Raw file is empty - can be any format
-        IF.status = STA_NORMAL;
-        Disk[drive].doublesided = 0;
-        Disk[drive].headersize = 0;
-        Disk[drive].size = 0;
     }
     return;
  }
 
 //----------------------------------------------------------------------
-// Open disk image found
+// Open disk image found.  Raw flag skips file type checks
 //----------------------------------------------------------------------
-void OpenFound (int drive)
+void OpenFound (int drive,int raw)
 {
     drive &= 1;
     int writeprotect = 0;
@@ -1808,45 +1804,51 @@ void OpenFound (int drive)
     // Grab filesize from found record
     Disk[drive].size = dFound.nFileSizeLow;
 
-    // Determine if it is a doublesided disk.
-    // Header size also used to offset sector seeks
-    Disk[drive].headersize = Disk[drive].size & 255;
+    if (raw) {
+        writeprotect = 0;
+        Disk[drive].headersize = 0;
+        Disk[drive].doublesided = 0;
+    } else {
+        // Determine if it is a doublesided disk.
+        // Header size also used to offset sector seeks
+        Disk[drive].headersize = Disk[drive].size & 255;
 
-    unsigned int numsec;
-    unsigned char header[16];
-    switch (Disk[drive].headersize) {
-    // JVC optional header bytes
-    case 4: // First Sector     = header[3]   1 assumed
-    case 3: // Sector Size code = header[2] 256 assumed {128,256,512,1024}
-    case 2: // Number of sides  = header[1]   1 or 2
-    case 1: // Sectors per trk  = header[0]  18 assumed
-        ReadFile(Disk[drive].hFile,header,4,NULL,NULL);
-        Disk[drive].doublesided = (header[1] == 2);
-        break;
-    // No header JVC or OS9 disk if no header, side count per file size
-    case 0:
-        numsec = Disk[drive].size >> 8;
-        Disk[drive].doublesided = ((numsec > 720) && (numsec <= 2880));
-        break;
-    // VDK
-    case 12:
-        ReadFile(Disk[drive].hFile,header,12,NULL,NULL);
-        Disk[drive].doublesided = (header[8] == 2);
-        writeprotect = header[9] & 1;
-        break;
-    // Unknown or unsupported
-    default: // More than 4 byte header is not supported
-        _DLOG("OpenFound unsuported image type %d %d\n",
-              drive, Disk[drive].headersize);
-        IF.status = STA_FAIL | STA_INVALID;
-        return;
-        break;
+        unsigned int numsec;
+        unsigned char header[16];
+        switch (Disk[drive].headersize) {
+        // JVC optional header bytes
+        case 4: // First Sector     = header[3]   1 assumed
+        case 3: // Sector Size code = header[2] 256 assumed {128,256,512,1024}
+        case 2: // Number of sides  = header[1]   1 or 2
+        case 1: // Sectors per trk  = header[0]  18 assumed
+            ReadFile(Disk[drive].hFile,header,4,NULL,NULL);
+            Disk[drive].doublesided = (header[1] == 2);
+            break;
+        // No header JVC or OS9 disk if no header, side count per file size
+        case 0:
+            numsec = Disk[drive].size >> 8;
+            Disk[drive].doublesided = ((numsec > 720) && (numsec <= 2880));
+            break;
+        // VDK
+        case 12:
+            ReadFile(Disk[drive].hFile,header,12,NULL,NULL);
+            Disk[drive].doublesided = (header[8] == 2);
+            writeprotect = header[9] & 1;
+            break;
+        // Unknown or unsupported
+        default: // More than 4 byte header is not supported
+            _DLOG("OpenFound unsuported image type %d %d\n",
+                drive, Disk[drive].headersize);
+            IF.status = STA_FAIL | STA_INVALID;
+            return;
+            break;
+        }
     }
 
     // Fill in image info.
     LoadFindRecord(&Disk[drive].filerec);
 
-    // Check write protect per find status or VDK header
+    // Set readonly attrib per find status or file header
     if ((Disk[drive].filerec.attrib & ATTR_RDONLY) != 0) {
         writeprotect = 1;
     } else if (writeprotect) {
