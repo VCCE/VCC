@@ -29,16 +29,7 @@
 #define ATTR_HIDDEN   0x02
 #define ATTR_SDF      0x04
 #define ATTR_DIR      0x10
-#define ATTR_INVALID   -1   //not 0xFF because byte is signed
 
 // Self imposed limit on maximum dsk file size.
 #define MAX_DSK_SECTORS 2097152
-
-// Mount disk flags
-enum MountFlags
-{
-    MOUNT_NORM = 0,
-    MOUNT_RAW = 1 << 0
-};
-DEFINE_ENUM_FLAG_OPERATORS(MountFlags)
 
