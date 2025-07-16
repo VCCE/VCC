@@ -151,8 +151,7 @@ void GetDriveInfo(void);
 void SDCControl(void);
 void UpdateSD(void);
 void AppendPathChar(char *,char c);
-bool LoadFindRecord(struct FileRecord *);
-bool LoadDotRecord(struct FileRecord *);
+bool LoadFoundFile(struct FileRecord *);
 void FixSDCPath(char *,const char *);
 void MountDisk(int,const char *,int);
 void MountNewDisk(int,const char *,int);
@@ -175,7 +174,6 @@ void GetSectorCount(void);
 void GetDirectoryLeaf(void);
 unsigned char PickReplyByte(unsigned char);
 unsigned char WriteFlashBank(unsigned short);
-
 
 //======================================================================
 // Globals
@@ -1521,11 +1519,25 @@ void FixSDCPath(char *path, const char *fpath8)
 //----------------------------------------------------------------------
 // Load a file record with the file found by Find File
 //----------------------------------------------------------------------
-bool LoadFindRecord(struct FileRecord * rec)
+bool LoadFoundFile(struct FileRecord * rec)
 {
     memset(rec,0,sizeof(rec));
     memset(rec->name,' ',8);
     memset(rec->type,' ',3);
+
+    // Special case filename starts with a dot
+    if (dFound.cFileName[0] == '.' ) {
+        // Don't load if current directory is SD root,
+        // is only one dot, or if more than two chars
+        if ((*CurDir=='\0') |
+            (dFound.cFileName[1] != '.' ) |
+            (dFound.cFileName[2] != '\0'))
+            return false;
+        rec->name[0]='.';
+        rec->name[1]='.';
+        rec->attrib = ATTR_DIR;
+        return true;
+    }
 
     // File type
     char * pdot = strrchr(dFound.cFileName,'.');
@@ -1746,7 +1758,7 @@ void OpenNew( int drive, const char * path, int raw)
         // Create headerless 35 track JVC file
         Disk[drive].doublesided = 0;
         Disk[drive].headersize = 0;
-        Disk[drive].size = 35 
+        Disk[drive].size = 35
                          * Disk[drive].sectorsize
                          * Disk[drive].tracksectors
                          + Disk[drive].headersize;
@@ -1855,7 +1867,7 @@ void OpenFound (int drive,int raw)
     }
 
     // Fill in image info.
-    LoadFindRecord(&Disk[drive].filerec);
+    LoadFoundFile(&Disk[drive].filerec);
 
     // Set readonly attrib per find status or file header
     if ((Disk[drive].filerec.attrib & ATTR_RDONLY) != 0) {
@@ -2119,13 +2131,7 @@ void LoadDirPage(void)
 
     int cnt = 0;
     while (cnt < 16) {
-        if (dFound.cFileName[0] == '.') {
-            // Special cases "." or ".." directory or hidden file
-            if (LoadDotRecord(&DirPage[cnt])) cnt++;
-        } else {
-            if (LoadFindRecord(&DirPage[cnt])) cnt++;
-        }
-        // Get next match
+        if (LoadFoundFile(&DirPage[cnt])) cnt++;
         if (FindNextFile(hFind,&dFound) == 0) {
             FindClose(hFind);
             hFind = INVALID_HANDLE_VALUE;
@@ -2133,21 +2139,3 @@ void LoadDirPage(void)
         }
     }
 }
-
-//----------------------------------------------------------------------
-// Found a file that starts with a dot, load it if it is "." or ".."
-// Other files that start with '.' are skipped (hidden).
-//----------------------------------------------------------------------
-bool LoadDotRecord(struct FileRecord * rec)
-{
-    memset(rec->name,' ',8);
-    memset(rec->type,' ',3);
-    rec->name[0] = '.';
-    rec->attrib = ATTR_DIR;
-    if (dFound.cFileName[1] == '\0') return true;
-    if (dFound.cFileName[1] == '.' ) rec->name[1] = '.';
-    if (dFound.cFileName[2] == '\0') return true;
-    // A hidden file - ignore it
-    return false;
-}
-
