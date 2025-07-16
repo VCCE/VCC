@@ -167,7 +167,9 @@ void LoadDirPage(void);
 void SetCurDir(char * path);
 bool SearchFile(const char *);
 void InitiateDir(const char *);
+void PrependCurDir(char *,const char *);
 void RenameFile(const char *);
+void KillFile(const char *);
 bool IsDirectory(const char *);
 void GetMountedImageRec(void);
 void GetSectorCount(void);
@@ -1139,9 +1141,8 @@ void UpdateSD(void)
         RenameFile(&IF.blkbuf[2]);
         break;
     // Delete file or directory
-    case 0x5B: //X
-        _DLOG("UpdateSD delete file or directory not Supported\n");
-        IF.status = STA_FAIL;
+    case 0x58: //X
+        KillFile(&IF.blkbuf[2]);
         break;
     default:
         _DLOG("UpdateSD %02x not Supported\n",IF.blkbuf[0]);
@@ -1895,6 +1896,19 @@ void OpenFound (int drive,int raw)
 }
 
 //----------------------------------------------------------------------
+// Convert file name from SDC format and prepend current dir.
+//----------------------------------------------------------------------
+void PrependCurDir(char * path, const char * file) {
+    char tmp[MAX_PATH];
+    strncpy(path,SDCard,MAX_PATH);
+    AppendPathChar(path,'/');
+    strncat(path,CurDir,MAX_PATH);
+    AppendPathChar(path,'/');
+    FixSDCPath(tmp,file);
+    strncat(path,tmp,MAX_PATH);
+}
+
+//----------------------------------------------------------------------
 // Rename disk or directory
 //   names contains two consecutive null terminated name strings
 //   first is file or directory to rename, second is target name
@@ -1903,34 +1917,52 @@ void RenameFile(const char *names)
 {
     char from[MAX_PATH];
     char target[MAX_PATH];
-    char fixed[MAX_PATH];
 
-    // convert from name from SDC format and prepend current dir.
-    FixSDCPath(fixed,names);
-    strncpy(from,SDCard,MAX_PATH);
-    AppendPathChar(from,'/');
-    strncat(from,CurDir,MAX_PATH);
-    AppendPathChar(from,'/');
-    strncat(from,fixed,MAX_PATH);
-
-    // convert to name from SDC format and prepend current dir.
-    FixSDCPath(fixed,1+strchr(names,'\0'));
-    strncpy(target,SDCard,MAX_PATH);
-    AppendPathChar(target,'/');
-    strncat(target,CurDir,MAX_PATH);
-    AppendPathChar(target,'/');
-    strncat(target,fixed,MAX_PATH);
+    PrependCurDir(from,names);
+    PrependCurDir(target,1+strchr(names,'\0'));
 
     _DLOG("UpdateSD rename %s %s\n",from,target);
 
     if (std::rename(from,target)) {
-        _DLOG("%s\n", strerror(errno));
+        _DLOG("RenameFile %s\n", strerror(errno));
         IF.status = STA_FAIL | STA_WIN_ERROR;
     } else {
         IF.status = STA_NORMAL;
     }
     return;
 }
+
+
+//----------------------------------------------------------------------
+// Delete disk or directory
+//----------------------------------------------------------------------
+void KillFile(const char *file)
+{
+    char path[MAX_PATH];
+    PrependCurDir(path,file);
+    _DLOG("KillFile delete %s\n",path);
+
+    if (IsDirectory(path)) {
+        if (PathIsDirectoryEmpty(path)) {
+            if (RemoveDirectory(path)) {
+                IF.status = STA_NORMAL;
+            } else {
+                _DLOG("Deletefile %s\n", strerror(errno));
+                IF.status = STA_FAIL | STA_WIN_ERROR;
+            }
+        } else {
+            IF.status = STA_FAIL | STA_NOTEMPTY;
+        }
+    } else {
+        if (DeleteFile(path))
+            IF.status = STA_NORMAL;
+        else
+            _DLOG("Deletefile %s\n", strerror(errno));
+            IF.status = STA_FAIL | STA_WIN_ERROR;
+    }
+    return;
+}
+
 //----------------------------------------------------------------------
 // Close virtual disk
 //----------------------------------------------------------------------
