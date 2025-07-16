@@ -1,5 +1,24 @@
-// For console logging set USER_PP_DEF=USE_LOGGING or uncomment the following line
-//#define USE_LOGGING
+// SDC simulator DLL
+//
+// By E J Jaquay 2025
+//
+// This file is part of VCC (Virtual Color Computer).
+// Vcc is Copyright 2015 by Joseph Forgione
+//
+// VCC (Virtual Color Computer) is free software, you can redistribute
+// and/or modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will
+// be useful, but WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with VCC (Virtual Color Computer).  If not, see
+// <http://www.gnu.org/licenses/>.
+//
 
 #include "../defines.h"
 #include "../logger.h"
@@ -16,7 +35,7 @@
 #define STA_INITERROR 0x08   // Directory not initiated
 #define STA_CRCERROR  0x08   // Read error
 #define STA_BAD_LSN   0x10   // LSN or no image error
-#define STA_NOTFOUND  0x10   // file not found
+#define STA_NOTFOUND  0x10   // file (directory) not found
 #define STA_DELETED   0x20   // Sector deleted mark
 #define STA_INUSE     0x20   // image already in use
 #define STA_NOTEMPTY  0x20   // Delete directory error

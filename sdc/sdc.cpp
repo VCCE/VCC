@@ -116,19 +116,20 @@
 // Functions
 //======================================================================
 
-void LoadRom(unsigned char);
-void SDCWrite(unsigned char,unsigned char);
-unsigned char SDCRead(unsigned char port);
-void SDCInit(void);
-void MemWrite(unsigned char,unsigned short);
-unsigned char MemRead(unsigned short);
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
-static unsigned char (*MemRead8)(unsigned short)=NULL;
-static void (*MemWrite8)(unsigned char,unsigned short)=NULL;
+
+void SDCInit(void);
+void LoadRom(unsigned char);
+void (*MemWrite8)(unsigned char,unsigned short)=NULL;
+void SDCWrite(unsigned char,unsigned char);
+void MemWrite(unsigned char,unsigned short);
+unsigned char (*MemRead8)(unsigned short)=NULL;
+unsigned char SDCRead(unsigned char port);
+unsigned char MemRead(unsigned short);
 LRESULT CALLBACK SDC_Config(HWND, UINT, WPARAM, LPARAM);
 
 void LoadConfig(void);
@@ -164,12 +165,13 @@ void BlockReceive(unsigned char);
 char * LastErrorTxt(void);
 void FlashControl(unsigned char);
 void LoadDirPage(void);
-void SetCurDir(char * path);
+void SetCurDir(const char *);
 bool SearchFile(const char *);
 void InitiateDir(const char *);
-void PrependCurDir(char *,const char *);
+void GetFullPath(char *,const char *);
 void RenameFile(const char *);
 void KillFile(const char *);
+void MakeDirectory(const char *);
 bool IsDirectory(const char *);
 void GetMountedImageRec(void);
 void GetSectorCount(void);
@@ -213,7 +215,7 @@ char SDCard[MAX_PATH]  = {};  // SD card root directory
 char CurDir[256]       = {};  // SDC current directory
 char SeaDir[MAX_PATH]  = {};  // Last directory searched
 
-// Packed file records for SDC file commands
+// Packed file records for interface
 #pragma pack(1)
 struct FileRecord {
     char name[8];
@@ -1104,43 +1106,31 @@ void GetDirectoryLeaf(void)
 //----------------------------------------------------------------------
 void UpdateSD(void)
 {
-    _DLOG("UpdateSD %d %02X '%s' %d %d %d\n",
-            IF.cmdcode&1,IF.blkbuf[0],&IF.blkbuf[2],
-            IF.param1, IF.param2, IF.param3);
-
     switch (IF.blkbuf[0]) {
-    // Mount disk
     case 0x4D: //M
         MountDisk(IF.cmdcode&1,&IF.blkbuf[2],0);
         break;
     case 0x6D: //m
         MountDisk(IF.cmdcode&1,&IF.blkbuf[2],1);
         break;
-    // Create Disk
     case 0x4E: //N
         MountNewDisk(IF.cmdcode&1,&IF.blkbuf[2],0);
         break;
     case 0x6E: //n
         MountNewDisk(IF.cmdcode&1,&IF.blkbuf[2],1);
         break;
-    // Set directory
     case 0x44: //D
         SetCurDir(&IF.blkbuf[2]);
         break;
-    // Initiate directory list
     case 0x4C: //L
         InitiateDir(&IF.blkbuf[2]);
         break;
-    // Create directory
     case 0x4B: //K
-        _DLOG("UpdateSD create new directory not Supported\n");
-        IF.status = STA_FAIL;
+        MakeDirectory(&IF.blkbuf[2]);
         break;
-    // Rename file or directory
     case 0x52: //R
         RenameFile(&IF.blkbuf[2]);
         break;
-    // Delete file or directory
     case 0x58: //X
         KillFile(&IF.blkbuf[2]);
         break;
@@ -1654,6 +1644,7 @@ void MountDisk (int drive, const char * path, int raw)
 
     // Give up
     if (!found) {
+        _DLOG("MountDisk not found '%s'\n",file);
         IF.status = STA_FAIL | STA_NOTFOUND;
         return;
     }
@@ -1786,7 +1777,7 @@ void OpenFound (int drive,int raw)
     int writeprotect = 0;
 
     _DLOG("OpenFound %d %s %d\n",
-        drive, Disk[drive].name, Disk[drive].hFile);
+        drive, dFound.cFileName, Disk[drive].hFile);
 
     CloseDrive(drive);
 
@@ -1831,29 +1822,44 @@ void OpenFound (int drive,int raw)
         Disk[drive].headersize = 0;
         Disk[drive].doublesided = 0;
     } else {
-        // Determine if it is a doublesided disk.
-        // Header size also used to offset sector seeks
-        Disk[drive].headersize = Disk[drive].size & 255;
+
+        // Read a few bytes of the file to determine it's type
+        unsigned char header[16];
+        if (ReadFile(Disk[drive].hFile,header,12,NULL,NULL) == 0) {
+            _DLOG("OpenFound header read error\n");
+            IF.status = STA_FAIL | STA_INVALID;
+            return;
+        }
+
+        // Check for SDF file. SDF file has a 512 byte header and each
+        // track record is 6250 bytes. Assume at least 35 tracks so
+        // minimum size of a SDF file is 219262 bytes. The first four
+        // bytes of the header contains "SDF1"
+        if ((Disk[drive].size >= 219262) &&
+            (strncmp("SDF1",(const char *) header,4) == 0)) {
+            _DLOG("OpenFound SDF file unsupported\n");
+            IF.status = STA_FAIL | STA_INVALID;
+            return;
+        }
 
         unsigned int numsec;
-        unsigned char header[16];
+        Disk[drive].headersize = Disk[drive].size & 255;
         switch (Disk[drive].headersize) {
         // JVC optional header bytes
         case 4: // First Sector     = header[3]   1 assumed
         case 3: // Sector Size code = header[2] 256 assumed {128,256,512,1024}
         case 2: // Number of sides  = header[1]   1 or 2
         case 1: // Sectors per trk  = header[0]  18 assumed
-            ReadFile(Disk[drive].hFile,header,4,NULL,NULL);
             Disk[drive].doublesided = (header[1] == 2);
             break;
-        // No header JVC or OS9 disk if no header, side count per file size
+        // No apparant header
+        // JVC or OS9 disk if no header, side count per file size
         case 0:
             numsec = Disk[drive].size >> 8;
             Disk[drive].doublesided = ((numsec > 720) && (numsec <= 2880));
             break;
         // VDK
         case 12:
-            ReadFile(Disk[drive].hFile,header,12,NULL,NULL);
             Disk[drive].doublesided = (header[8] == 2);
             writeprotect = header[9] & 1;
             break;
@@ -1898,7 +1904,7 @@ void OpenFound (int drive,int raw)
 //----------------------------------------------------------------------
 // Convert file name from SDC format and prepend current dir.
 //----------------------------------------------------------------------
-void PrependCurDir(char * path, const char * file) {
+void GetFullPath(char * path, const char * file) {
     char tmp[MAX_PATH];
     strncpy(path,SDCard,MAX_PATH);
     AppendPathChar(path,'/');
@@ -1918,8 +1924,8 @@ void RenameFile(const char *names)
     char from[MAX_PATH];
     char target[MAX_PATH];
 
-    PrependCurDir(from,names);
-    PrependCurDir(target,1+strchr(names,'\0'));
+    GetFullPath(from,names);
+    GetFullPath(target,1+strchr(names,'\0'));
 
     _DLOG("UpdateSD rename %s %s\n",from,target);
 
@@ -1932,14 +1938,13 @@ void RenameFile(const char *names)
     return;
 }
 
-
 //----------------------------------------------------------------------
 // Delete disk or directory
 //----------------------------------------------------------------------
 void KillFile(const char *file)
 {
     char path[MAX_PATH];
-    PrependCurDir(path,file);
+    GetFullPath(path,file);
     _DLOG("KillFile delete %s\n",path);
 
     if (IsDirectory(path)) {
@@ -1948,7 +1953,7 @@ void KillFile(const char *file)
                 IF.status = STA_NORMAL;
             } else {
                 _DLOG("Deletefile %s\n", strerror(errno));
-                IF.status = STA_FAIL | STA_WIN_ERROR;
+                IF.status = STA_FAIL | STA_NOTFOUND;
             }
         } else {
             IF.status = STA_FAIL | STA_NOTEMPTY;
@@ -1958,7 +1963,33 @@ void KillFile(const char *file)
             IF.status = STA_NORMAL;
         else
             _DLOG("Deletefile %s\n", strerror(errno));
-            IF.status = STA_FAIL | STA_WIN_ERROR;
+            IF.status = STA_FAIL | STA_NOTFOUND;
+    }
+    return;
+}
+
+//----------------------------------------------------------------------
+// Create directory
+//----------------------------------------------------------------------
+void MakeDirectory(const char *name)
+{
+    char path[MAX_PATH];
+    GetFullPath(path,name);
+    _DLOG("MakeDirectory %s\n",path);
+
+    // Make sure directory is not in use
+    struct _stat file_stat;
+    int result = _stat(path,&file_stat);
+    if (result == 0) {
+        IF.status = STA_FAIL | STA_INVALID;
+        return;
+    }
+
+    if (CreateDirectory(path,NULL)) {
+        IF.status = STA_NORMAL;
+    } else {
+        _DLOG("MakeDirectory %s\n", strerror(errno));
+        IF.status = STA_FAIL | STA_WIN_ERROR;
     }
     return;
 }
@@ -2000,83 +2031,82 @@ bool IsDirectory(const char * path)
 
 //----------------------------------------------------------------------
 // Set the Current Directory relative to previous current or to SDRoot
+// This is complicated by the many ways a user can change the directory
 //----------------------------------------------------------------------
-void SetCurDir(char * path)
+void SetCurDir(const char * branch)
 {
-    //_DLOG("SetCurdir enter '%s' '%s'\n",path,CurDir);
+    _DLOG("SetCurdir '%s'\n",branch);
 
-    // If path is "/" set CurDir to root
-    if (strcmp(path,"/") == 0) {
+    // If branch is "." or "" do nothing
+    if ((*branch == '\0') || (strcmp(branch,".") == 0)) {
+        _DLOG("SetCurdir no change\n");
+        IF.status = STA_NORMAL;
+        return;
+    }
+
+    // If branch is "/" set CurDir to root
+    if (strcmp(branch,"/") == 0) {
+        _DLOG("SetCurdir to root\n");
         *CurDir = '\0';
         IF.status = STA_NORMAL;
         return;
     }
 
-    // If path is ".." go back a directory
-    if (strcmp(path,"..") == 0) {
-        int n = strlen(CurDir);
-        if (n > 0) {
-            if (CurDir[n-1] == '/') CurDir[n-1] = '\0';
-            char *p = strrchr(CurDir,'/');
-            if (p != NULL) {
-                *p = '\0';
-                IF.status = STA_NORMAL;
-                return;
-            }
+    // If branch is ".." go back a directory
+    if (strcmp(branch,"..") == 0) {
+        char *p = strrchr(CurDir,'/');
+        if (p != NULL) {
+            *p = '\0';
+        } else {
+            *CurDir = '\0';
         }
-        *CurDir = '\0';
+        _DLOG("SetCurdir back %s\n",CurDir);
         IF.status = STA_NORMAL;
         return;
     }
 
-    char cleanpath[MAX_PATH];
-
-    // Find trailing blanks or trailing '/'
-    strncpy(cleanpath,path,MAX_PATH);
-    int n = strlen(cleanpath)-1;
-    while (n >= 0) {
-       if (cleanpath[n] != ' ') break;
-       n--;
-    }
-
-    // if path empty nothing changes
-    if (n < 0) {
-        _DLOG("SetCurdir '%s'\n",CurDir);
-        IF.status = STA_NORMAL;
+    // Disallow branch start with "//"
+    if (strncmp(branch,"//",2) == 0) {
+        _DLOG("SetCurdir // invalid\n");
+        IF.status = STA_FAIL | STA_INVALID;
         return;
     }
 
-    // Get rid of trailing spaces and trailing '/'
-    if (cleanpath[n] == '/')
-        cleanpath[n] = '\0';
-    else
-        cleanpath[n+1] = '\0';
+    // Test for CurDir relative branch
+    int relative = (*branch != '/');
 
-    char testpath[MAX_PATH];
-    if (*cleanpath == '/') {
-        strncpy(testpath,&cleanpath[1],MAX_PATH);
-    } else if (*CurDir == '\0') {
-        strncpy(testpath,cleanpath,MAX_PATH);
+    // Test the full directory path
+    char test[MAX_PATH];
+    strncpy(test,SDCard,MAX_PATH);
+    AppendPathChar(test,'/');
+    if (relative) {
+        strncat(test,CurDir,MAX_PATH);
+        AppendPathChar(test,'/');
+        strncat(test,branch,MAX_PATH);
     } else {
-        strncpy(testpath,CurDir,MAX_PATH);
-        AppendPathChar(testpath,'/');
-        strncat(testpath,cleanpath,MAX_PATH);
+        strncat(test,branch+1,MAX_PATH);
     }
-
-    // Test new directory
-    char fullpath[MAX_PATH];
-    strncpy(fullpath,SDCard,MAX_PATH);
-    AppendPathChar(fullpath,'/');
-    strncat(fullpath,testpath,MAX_PATH);
-    if (!IsDirectory(fullpath)) {
-        _DLOG("SetCurDir '%s' invalid %s\n",path);
-        IF.status = STA_FAIL;
+    if (!IsDirectory(test)) {
+        _DLOG("SetCurdir not a directory %s\n",test);
+        IF.status = STA_FAIL | STA_NOTFOUND;
         return;
     }
 
-    // Set new directory
-    strncpy(CurDir,testpath,256);
-    _DLOG("SetCurdir '%s'\n",CurDir);
+    // Set current directory
+    if (relative) {
+        if (*CurDir != '\0') AppendPathChar(CurDir,'/');
+        strncat(CurDir,branch,MAX_PATH);
+    } else {
+        strncpy(CurDir,branch+1,MAX_PATH);
+    }
+
+    // Trim trailing '/'
+    int l = strlen(CurDir);
+    while (l > 0 && CurDir[l-1] == '/') l--;
+    CurDir[l] = '\0';
+
+    _DLOG("SetCurdir set to '%s'\n",CurDir);
+
     IF.status = STA_NORMAL;
     return;
 }
