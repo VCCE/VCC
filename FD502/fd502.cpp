@@ -581,15 +581,23 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 				case IDOK:
+				{
 					EndDialog(hDlg, LOWORD(wParam));
-					PathRemoveExtension(TempFileName);
-					strcat(TempFileName,".dsk");
-					if( CreateDiskHeader(TempFileName,NewDiskType,NewDiskTracks,DblSided))
+					const char *ext = TempFileName + strlen(TempFileName) - 4;
+					if (ext < TempFileName) ext = TempFileName;
+					// if it doesn't end with .dsk, append it
+					if (_stricmp(ext, ".dsk") != 0)
 					{
-						strcpy(TempFileName,"");
-						MessageBox(0,"Can't create File","Error",0);
+						PathRemoveExtension(TempFileName);
+						strcat(TempFileName, ".dsk");
+					}
+					if (CreateDiskHeader(TempFileName, NewDiskType, NewDiskTracks, DblSided))
+					{
+						strcpy(TempFileName, "");
+						MessageBox(0, "Can't create File", "Error", 0);
 					}
 					return TRUE;
+				}
 				break;
 
 				case IDCANCEL:
