@@ -146,7 +146,7 @@ FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     CONTROL         IDB_VCC,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,8,5,217,45
     CONTROL         IDB_3GUYS,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE,16,53,77,57,WS_EX_DLGMODALFRAME
-    LTEXT           "VCC Version 2.1.9.2",IDC_STATIC,114,65,85,10
+    LTEXT           "VCC Version 2.1.9.3-pre1",IDC_STATIC,114,65,85,10
     LTEXT           "Another classic computer canceled before it's time!",IDC_STATIC,114,80,85,20
     LTEXT           "Copyright 2015 By Joseph Forgione",IDC_STATIC,8,120,120,15
     LTEXT           "VCC (Virtual Color Computer) is free software: you can redistribute and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.",IDC_STATIC,8,135,210,35
@@ -154,7 +154,7 @@ BEGIN
     LTEXT           "See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with VCC (Virtual Color Computer). If not, see http://www.gnu.org/licenses/.",IDC_STATIC,8,210,215,40
     LTEXT           "VCC Repository and Release Packages maintained by Bill Pierce and Ed Jaquay.",IDC_STATIC,8,250,206,20
     LTEXT           "Adapted to Visual Studio by Gary Coulbourne and Wes Gale. Hitachi 6309 port by Walter Zambotti.",IDC_STATIC,8,270,206,20
-    LTEXT           "Bug fixes and Enhancements by Bill Pierce, James Ross, Peter Westberg, James Rye, EJ Jaquay, Mike Rojas, Trey Tomes, && Craig Allsop.  ",IDC_STATIC,8,290,206,30
+    LTEXT           "Bug fixes and Enhancements by Bill Pierce, James Ross, Peter Westberg, James Rye, EJ Jaquay, Mike Rojas, Trey Tomes and Craig Allsop.  ",IDC_STATIC,8,290,206,30
     DEFPUSHBUTTON   "OK",IDOK,175,320,50,14
 END
 
@@ -715,7 +715,7 @@ BEGIN
             VALUE "Comments", "How bored are you that your reading this?"
             VALUE "CompanyName", "Not Radio Shack"
             VALUE "FileDescription", "Vcc"
-            VALUE "FileVersion", "2.1.9.2"
+            VALUE "FileVersion", "2.1.9.3"
             VALUE "InternalName", "Poco"
             VALUE "LegalCopyright", "Copyright 2015 by BitRot Software"
             VALUE "LegalTrademarks", "BLAZEMONGER!"
@@ -825,7 +825,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_APP_TITLE           "VCC 2.1.9.2 Tandy Color Computer 3 Emulator"
+    IDS_APP_TITLE           "VCC 2.1.9.3-pre1 Tandy Color Computer 3 Emulator"
     IDS_CATNUMBER           "26-3334"
 END
 
