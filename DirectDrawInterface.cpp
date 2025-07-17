@@ -248,6 +248,19 @@ bool CreateDDWindow(SystemState *CWState)
 	return TRUE;
 }
 
+/*--------------------------------------------------------------------------*/
+
+
+bool IsMaximized(SystemState* DFState)
+{
+	WINDOWPLACEMENT wp;
+	memset(&wp, 0, sizeof(wp));
+	wp.length = sizeof(wp);
+	GetWindowPlacement(DFState->WindowHandle, &wp);
+	return wp.showCmd == SW_MAXIMIZE;
+}
+
+
 void DisplayFlip(SystemState *DFState)	// Double buffering flip
 {
 	if (g_Display)
@@ -284,18 +297,22 @@ void DisplayFlip(SystemState *DFState)	// Double buffering flip
 	int clientWidth = (int)CurScreen.right;
 	int clientHeight = (int)CurScreen.bottom;
 
+	if (!IsMaximized(DFState) && !DFState->FullScreen && !DFState->Exiting)
+	{
 #if USE_DEFAULT_POSITIONING
-	// preserve default positioning (like older versions):
-	RememberWin.x = RememberWin.IsDefaultX() ? CW_USEDEFAULT : CurWindow.left;
-	RememberWin.y = RememberWin.IsDefaultY() ? CW_USEDEFAULT : CurWindow.top;
+		// preserve default positioning (like older versions):
+		RememberWin.x = RememberWin.IsDefaultX() ? CW_USEDEFAULT : CurWindow.left;
+		RememberWin.y = RememberWin.IsDefaultY() ? CW_USEDEFAULT : CurWindow.top;
 #else // !USE_DEFAULT_POSITIONING
-	// remember positioning:
-	RememberWin.x = CurWindow.left;
-	RememberWin.y = CurWindow.top;
+		// remember positioning:
+		RememberWin.x = CurWindow.left;
+		RememberWin.y = CurWindow.top;
 #endif // !USE_DEFAULT_POSITIONING
-	// remember size:
-	RememberWin.w = clientWidth; // Used for saving new window size to the ini file.
-	RememberWin.h = clientHeight-StatusBarHeight;
+	
+		// remember size:
+		RememberWin.w = clientWidth; // Used for saving new window size to the ini file.
+		RememberWin.h = clientHeight - StatusBarHeight;
+	}
 	return;
 }
 
