@@ -244,6 +244,7 @@ struct SystemState
     unsigned char	ResetPending;
     VCC::Size		WindowSize;
     unsigned char	FullScreen;
+    bool        	Exiting;
     unsigned char	MousePointer;
     unsigned char	OverclockFlag;
     char			StatusLine[256];

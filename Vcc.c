@@ -158,6 +158,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	EmuState.Throttle = 1;
 	EmuState.WindowSize.w=DefaultWidth;
 	EmuState.WindowSize.h=DefaultHeight;
+	EmuState.Exiting = false;
 	LoadConfig(&EmuState);
 	EmuState.ResetPending=2; // after LoadConfig pls
 	InitInstance(hInstance, nCmdShow);
@@ -217,6 +218,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			TranslateMessage(&Msg);
 			DispatchMessage(&Msg) ;
 	}
+	EmuState.Exiting = true;
 
 	PostThreadMessage(threadID, WM_QUIT, 0, 0);
 	SetEvent(hEMUQuit);								// Signal emulation thread to finish up.
