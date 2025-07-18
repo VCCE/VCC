@@ -122,6 +122,9 @@ typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 
+typedef void (*ASSERTINTERUPT)(unsigned char, unsigned char);
+void (*AssertInt)(unsigned char, unsigned char);
+
 void SDCInit(void);
 void LoadRom(unsigned char);
 void (*MemWrite8)(unsigned char,unsigned short)=NULL;
@@ -176,6 +179,7 @@ bool IsDirectory(const char *);
 void GetMountedImageRec(void);
 void GetSectorCount(void);
 void GetDirectoryLeaf(void);
+void CommandDone(void);
 unsigned char PickReplyByte(unsigned char);
 unsigned char WriteFlashBank(unsigned short);
 
@@ -370,6 +374,13 @@ extern "C"
     {
         MemRead8=Temp1;
         MemWrite8=Temp2;
+        return;
+    }
+
+    // Supply transfer point for interrupt
+    __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
+    {
+        AssertInt=Dummy;
         return;
     }
 }
@@ -823,12 +834,23 @@ void ParseStartup(void)
 }
 
 //----------------------------------------------------------------------
+//  Command done interrupt;
+//----------------------------------------------------------------------
+void CommandDone(void)
+{
+    _DLOG("*");
+	AssertInt(INT_NMI,IS_NMI);
+}
+
+//----------------------------------------------------------------------
 // Write port.  If a command needs a data block to complete it
 // will put a count (256 or 512) in IF.bufcnt.
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port)
 {
-    if ((!IF.sdclatch) && (port > 0x43)) return;
+    if ((!IF.sdclatch) && (port > 0x43)) {
+        return;
+    }
 
     switch (port) {
     // Control Latch
@@ -915,7 +937,9 @@ unsigned char PickReplyByte(unsigned char port)
 unsigned char SDCRead(unsigned char port)
 {
 
-    if ((!IF.sdclatch) && (port > 0x43)) return 0;
+    if ((!IF.sdclatch) && (port > 0x43)) { 
+        return 0;
+    }
 
     unsigned char rpy;
     switch (port) {
@@ -1266,7 +1290,6 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
 {
     char buf[520];
     DWORD cnt = 0;
-
     int drive = cmdcode & 1;
     if (Disk[drive].hFile == NULL) {
         _DLOG("ReadDrive %d not open\n");
@@ -1303,7 +1326,10 @@ void ReadSector(void)
 {
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
     IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1; // words : bytes
-    if (!ReadDrive(IF.cmdcode,lsn)) IF.status = STA_FAIL;
+    if (!ReadDrive(IF.cmdcode,lsn))
+        IF.status = STA_FAIL | STA_READERROR;
+    else
+        IF.status = STA_NORMAL;
 }
 
 //----------------------------------------------------------------------
@@ -1711,7 +1737,8 @@ void OpenNew( int drive, const char * path, int raw)
     AppendPathChar(fqn,'/');
     strncat(fqn,path,MAX_PATH);
 
-    // Verify not trying to mount a directory
+    // Trying to mount a directory. Find .DSK files in the ending
+    // with a digit and mount the first one.
     if (IsDirectory(fqn)) {
         _DLOG("OpenNew %s is a directory\n",fqn);
         IF.status = STA_FAIL | STA_INVALID;
@@ -1781,10 +1808,15 @@ void OpenFound (int drive,int raw)
 
     CloseDrive(drive);
 
-    // Verify not trying to mount a directory
+    // Open a directory of containing DSK files
     if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
         _DLOG("OpenFound %s is a directory\n",dFound.cFileName);
-        IF.status = STA_FAIL | STA_INVALID;
+        char path[MAX_PATH];
+        strncpy(path,dFound.cFileName,MAX_PATH);
+        AppendPathChar(path,'/');
+        strncat(path,"*.DSK",MAX_PATH);
+        InitiateDir(path);
+        OpenFound(drive,0);
         return;
     }
 
@@ -2129,7 +2161,7 @@ bool SearchFile(const char * pattern)
         strncat(path,pattern,MAX_PATH);
     }
 
-    //_DLOG("SearchFile %s\n",path);
+    _DLOG("SearchFile %s\n",path);
 
     // Close previous search
     if (hFind != INVALID_HANDLE_VALUE) {
@@ -2173,7 +2205,7 @@ void InitiateDir(const char * path)
     if (rc)
         IF.status = STA_NORMAL;
     else
-        IF.status = STA_FAIL;
+        IF.status = STA_FAIL | STA_INVALID;
     return;
 }
 
