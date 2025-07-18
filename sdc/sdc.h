@@ -33,7 +33,7 @@
 #define STA_INVALID   0x04   // file or dir path is invalid
 #define STA_WIN_ERROR 0x08   // Misc windows error
 #define STA_INITERROR 0x08   // Directory not initiated
-#define STA_CRCERROR  0x08   // Read error
+#define STA_READERROR 0x08   // Read error
 #define STA_BAD_LSN   0x10   // LSN or no image error
 #define STA_NOTFOUND  0x10   // file (directory) not found
 #define STA_DELETED   0x20   // Sector deleted mark
