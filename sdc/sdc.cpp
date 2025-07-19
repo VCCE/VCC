@@ -25,23 +25,54 @@
 //  -------------------------
 //  The SDC interface shares ports with the FD502 floppy controller.
 //
-//  CTRLATCH  $FF40 ; controller latch (write)
-//  FLSHDAT   $FF42 ; flash data register
-//  FLSHCTRL  $FF43 ; flash control register
-//  CMDREG    $FF48 ; command register (write)
-//  STATREG   $FF48 ; status register (read)
-//  PREG1     $FF49 ; param register 1
-//  PREG2     $FF4A ; param register 2
-//  PREG3     $FF4B ; param register 3
+//  $FF40 ; controller latch (write)
+//  $FF42 ; flash data register
+//  $FF43 ; flash control register
+//  $FF48 ; command register (write)
+//  $FF48 ; status register (read)
+//  $FF49 ; param register 1
+//  $FF4A ; param register 2
+//  $FF4B ; param register 3
+//
+//  The FD502 interface uses following ports;
+//
+//  $FF40 ; Control register (write)
+//      Coco uses this for drive select, density, precomp, enable, and motor on
+//  $FF48 ; Command register (write)
+//      high order nibble; low order nibble type; command
+//      0x0 ;   I ; Restore
+//      0x1 ;   I ; Seek
+//      0x2 ;   I ; Step
+//      0x4 ;   I ; Step in
+//      0x5 ;   I ; Step out
+//      0x8 ;  II ; Read sector
+//      0x9 ;  II ; Read sector multiple
+//      0xA ;  II ; write sector
+//      0xB ;  II ; write sector multiple
+//      0xC ; III ; read address
+//      0xD ; III ; force interrupt
+//      0xE ; III ; read track
+//      0xF ;  IV ; write track
+//      low order nibble
+//      type ; meanings
+//        I ; b3 head loaded, b2 track verify , b1-b0 step rate
+//       II ; b3 side compare enable, b2 delay, b1 side, b0 0
+//      III ; b2 delay others 0
+//       IV ; interrupt control b3 immediate, b2 index pulse, b1 notready, b0 ready
+//  $FF48 ; Status register (read)
+//  $FF49 ; Track register (read/write)
+//  $FF4A ; Sector register (read/write)
+//  $FF4B ; Data register (read/write)
 //
 //  Port conflicts are resolved in the MPI by using the SCS (select
 //  cart signal) to direct the floppy ports ($FF40-$FF5F) to the
-//  selected cartridge slot. Sometime in the past the VCC cart select
-//  was disabled in mmi.cpp. This had to be be re-enabled for for sdc
-//  to co-exist with FD502. Additionally the becker port (drivewire)
-//  uses port $FF41 for status and port $FF42 for data so these must be
-//  always alowed for becker.dll to work. This means sdc.dll requires the
-//  new version of mmi.dll to work properly.
+//  selected cartridge slot, either SDC or FD502.
+//
+//  Sometime in the past the VCC cart select was disabled in mmi.cpp. This
+//  had to be be re-enabled for for sdc to co-exist with FD502. Additionally
+//  the becker port (drivewire) uses port $FF41 for status and port $FF42
+//  for data so these must be always alowed for becker.dll to work. This
+//  means sdc.dll requires the new version of mmi.dll to work properly.
 //
 //  NOTE: Stock SDCDOS does not in support the becker ports, it expects
 //  drivewire to be on the bitbanger ports. RGBDOS does, however, and will
@@ -121,10 +152,8 @@ typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
-
 typedef void (*ASSERTINTERUPT)(unsigned char, unsigned char);
 void (*AssertInt)(unsigned char, unsigned char);
-
 void SDCInit(void);
 void LoadRom(unsigned char);
 void (*MemWrite8)(unsigned char,unsigned short)=NULL;
@@ -182,6 +211,17 @@ void GetDirectoryLeaf(void);
 void CommandDone(void);
 unsigned char PickReplyByte(unsigned char);
 unsigned char WriteFlashBank(unsigned short);
+
+void FloppyCommand(unsigned char,unsigned char);
+void FloppyRestore(unsigned char,unsigned char);
+void FloppySeek(unsigned char,unsigned char);
+void FloppyReadDisk(unsigned char,unsigned char);
+void FloppyWriteDisk(unsigned char,unsigned char);
+void FloppyTrack(unsigned char,unsigned char);
+void FloppySector(unsigned char,unsigned char);
+void FloppyWriteData(unsigned char,unsigned char);
+unsigned char FloppyStatus(unsigned char);
+unsigned char FloppyReadData(unsigned char);
 
 //======================================================================
 // Globals
@@ -280,6 +320,16 @@ unsigned int stream_lsn;
 char Status[16] = {};
 bool StartupComplete = false;
 
+// Floppy I/O
+char FlopDrive = 0;
+char FlopTrack = 0;
+char FlopSector = 0;
+char FlopStatus = 0;
+DWORD FlopWrCnt = 0;
+DWORD FlopRdCnt = 0;
+char FlopWrBuf[256];
+char FlopRdBuf[256];
+
 //======================================================================
 // DLL exports
 //======================================================================
@@ -297,8 +347,7 @@ extern "C"
     }
 
     // Write to port
-    __declspec(dllexport) void PackPortWrite
-        (unsigned char Port,unsigned char Data)
+    __declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
     {
         SDCWrite(Data,Port);
         return;
@@ -309,8 +358,10 @@ extern "C"
     {
         if (ClockEnable && ((Port==0x78) | (Port==0x79) | (Port==0x7C))) {
             return ReadTime(Port);
-        } else {
+        } else if ((Port > 0x3F) & (Port < 0x60)) {
             return SDCRead(Port);
+        } else {
+            return 0;
         }
     }
 
@@ -848,50 +899,276 @@ void CommandDone(void)
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port)
 {
-    if ((!IF.sdclatch) && (port > 0x43)) {
-        return;
-    }
+    if (port < 0x40 || port > 0x4F) return;
 
-    switch (port) {
-    // Control Latch
-    case 0x40:
-        if (IF.sdclatch) memset(&IF,0,sizeof(IF));
-        if (data == 0x43) IF.sdclatch = true;
-        break;
-    // Flash Data
-    case 0x42:
-        //_DLOG("IF data: %02X\n",data);
-        BankData = data;
-        break;
-    // Flash Control
-    case 0x43:
-        FlashControl(data);
-        break;
-    // Command registor
-    case 0x48:
-        IF.cmdcode = data;
-        SDCCommand();
-        break;
-    // Command param #1
-    case 0x49:
-        IF.param1 = data;
-        break;
-    // Command param #2 or block data receive
-    case 0x4A:
-        if (IF.bufcnt > 0)
-            BlockReceive(data);
-        else
-            IF.param2 = data;;
-        break;
-    // Command param #3 or block data receive
-    case 0x4B:
-        if (IF.bufcnt > 0)
-            BlockReceive(data);
-        else
-            IF.param3 = data;;
-        break;
+    if (IF.sdclatch) {
+        switch (port) {
+        // Control Latch
+        case 0x40:
+            if (IF.sdclatch) memset(&IF,0,sizeof(IF));
+            break;
+        // Command registor
+        case 0x48:
+            IF.cmdcode = data;
+            SDCCommand();
+            break;
+        // Command param #1
+        case 0x49:
+            IF.param1 = data;
+            break;
+        // Command param #2 or block data receive
+        case 0x4A:
+            if (IF.bufcnt > 0)
+                BlockReceive(data);
+            else
+                IF.param2 = data;;
+            break;
+        // Command param #3 or block data receive
+        case 0x4B:
+            if (IF.bufcnt > 0)
+                BlockReceive(data);
+            else
+                IF.param3 = data;;
+            break;
+        // Unhandled
+        default:
+            _DLOG("SDCWrite L %02x %02x\n",port,data);
+            break;
+        }
+    } else {
+        switch (port) {
+        // Command latch and floppy drive select
+        case 0x40:
+            if (data == 0x43) {
+                IF.sdclatch = true;
+            } else {
+                int tmp = data & 0x47;
+                if (tmp == 1) {
+                    FlopDrive = 0;
+                } else if (tmp == 2) {
+                    FlopDrive = 1;
+                }
+            }
+            break;
+         // Flash Data
+        case 0x42:
+            BankData = data;
+            break;
+        // Flash Control
+        case 0x43:
+            FlashControl(data);
+            break;
+        // floppy command
+        case 0x48:
+            FloppyCommand(port,data);
+            break;
+        // floppy set track
+        case 0x49:
+            FloppyTrack(port,data);
+            break;
+        // floppy set sector
+        case 0x4A:
+            FloppySector(port,data);
+            break;
+        // floppy write data
+        case 0x4B:
+            FloppyWriteData(port,data);
+            break;
+        // Unhandled
+        default:
+            _DLOG("SDCWrite U %02x %02x\n",port,data);
+            break;
+        }
     }
     return;
+}
+
+//----------------------------------------------------------------------
+// Read port. If there are bytes in the reply buffer return them.
+//----------------------------------------------------------------------
+unsigned char SDCRead(unsigned char port)
+{
+    unsigned char rpy = 0;
+
+    if (IF.sdclatch) {
+        switch (port) {
+        case 0x48:
+            if (IF.bufcnt > 0) {
+                rpy = (IF.reply_status != 0) ? IF.reply_status:STA_BUSY|STA_READY;
+            } else {
+                rpy = IF.status;
+            }
+            break;
+        // Reply data 1
+        case 0x49:
+            rpy = IF.reply1;
+            break;
+        // Reply data 2 or block reply
+        case 0x4A:
+            if (IF.bufcnt > 0) {
+                rpy = PickReplyByte(port);
+            } else {
+                rpy = IF.reply2;
+            }
+            break;
+        // Reply data 3 or block reply
+        case 0x4B:
+            if (IF.bufcnt > 0) {
+                rpy = PickReplyByte(port);
+            } else {
+                rpy = IF.reply3;
+            }
+            break;
+        default:
+            _DLOG("SDCRead L %02x\n",port);
+            rpy = 0;
+            break;
+        }
+    } else {
+        switch (port) {
+        // Flash control read is used by SDCDOS to detect the SDC
+        case 0x43:
+            rpy = CurrentBank | (BankData & 0xF8);
+            break;
+        // Floppy read status
+        case 0x48:
+            rpy = FloppyStatus(port);
+            break;
+        // Floppy read data
+        case 0x4B:
+            rpy = FloppyReadData(port);
+            break;
+        default:
+            _DLOG("SDCRead U %02x\n",port);
+            rpy = 0;
+            break;
+        }
+    }
+    return rpy;
+}
+
+//----------------------------------------------------------------------
+// Floppy I/O
+//----------------------------------------------------------------------
+void FloppyCommand(unsigned char port,unsigned char data)
+{
+    switch (data >> 4) {
+    // floppy restore
+    case 0x0:
+        FloppyRestore(port,data);
+        break;
+    case 0x1:
+        FloppySeek(port,data);
+        break;
+    // floppy read sector
+    case 0x8:
+        FloppyReadDisk(port,data);
+        break;
+    // floppy write sector
+    case 0xA:
+        FloppyWriteDisk(port,data);
+        break;
+    }
+}
+
+// floppy restore
+void FloppyRestore(unsigned char port,unsigned char data)
+{
+    _DLOG("FloppyRestore %02x %02x\n",port,data);
+    FlopTrack = 0;
+    FlopSector = 0;
+    FlopStatus = FLP_NORMAL;
+    FlopWrCnt = 0;
+    FlopRdCnt = 0;
+    CommandDone();
+}
+
+// floppy seek
+void FloppySeek(unsigned char port,unsigned char data)
+{
+    _DLOG("FloppySeek %02x %02x\n",port,data);
+}
+
+// floppy read sector
+void FloppyReadDisk(unsigned char port,unsigned char data)
+{
+    int lsn = FlopTrack * 18 + FlopSector - 1;
+    snprintf(Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
+    if (SeekSector(FlopDrive,lsn)) {
+        if (ReadFile(Disk[FlopDrive].hFile,FlopRdBuf,256,&FlopRdCnt,NULL)) {
+            _DLOG("FloppyReadDisk %d %d\n",FlopDrive,lsn);
+            FlopStatus = FLP_DATAREQ;
+        } else {
+            _DLOG("FloppyReadDisk read error %d %d\n",FlopDrive,lsn);
+            FlopStatus = FLP_READERR;
+        }
+    } else {
+        _DLOG("FloppyReadDisk seek error %d %d\n",FlopDrive,lsn);
+        FlopStatus = FLP_SEEKERR;
+    }
+}
+
+// floppy write sector
+void FloppyWriteDisk(unsigned char port,unsigned char data)
+{
+    int lsn = FlopTrack * 18 + FlopSector - 1;
+    // write not implemented yet
+    _DLOG("FloppyWriteDisk %d %d not implmented\n",FlopDrive,lsn);
+    FlopStatus = FLP_READONLY;
+}
+
+// floppy set track
+void FloppyTrack(unsigned char port,unsigned char data)
+{
+    _DLOG("FloppyTrack %d\n",data);
+    FlopTrack = data;
+}
+
+// floppy set sector
+void FloppySector(unsigned char port,unsigned char data)
+{
+    FlopSector = data;  // (1-18)
+
+    int lsn = FlopTrack * 18 + FlopSector - 1;
+    _DLOG("FloppySector %d lsn %d\n",FlopSector,lsn);
+    FlopStatus = FLP_NORMAL;
+}
+
+// floppy write data
+void FloppyWriteData(unsigned char port,unsigned char data)
+{
+    _DLOG("FloppyWriteData %02x %02x\n",port,data);
+    if (FlopWrCnt<256)  {
+        FlopWrCnt++;
+        FlopWrBuf[FlopWrCnt] = data;
+        FlopStatus |= FLP_DATAREQ;
+    } else {
+        FlopStatus = FLP_NORMAL;
+    }
+}
+
+// floppy get status
+unsigned char FloppyStatus(unsigned char port)
+{
+    _DLOG("FloppyStatus %02x\n",FlopStatus);
+    return FlopStatus;
+}
+
+// floppy read data
+unsigned char FloppyReadData(unsigned char port)
+{
+    unsigned char rpy;
+    if (FlopRdCnt>0)  {
+        rpy = FlopRdBuf[256-FlopRdCnt];
+        FlopRdCnt--;
+        FlopStatus |= FLP_DATAREQ;
+    } else {
+        FlopStatus = FLP_NORMAL;
+        CommandDone();
+        rpy = 0;
+    }
+    _DLOG("FloppyReadData %03d %02x\n",256-FlopRdCnt,rpy);
+    return rpy;
 }
 
 //----------------------------------------------------------------------
@@ -928,57 +1205,6 @@ unsigned char PickReplyByte(unsigned char port)
     // Keep stream going until stopped
     if ((IF.bufcnt < 1) && (streaming)) StreamImage();
 
-    return rpy;
-}
-
-//----------------------------------------------------------------------
-// Read port. If there are bytes in the reply buffer return them.
-//----------------------------------------------------------------------
-unsigned char SDCRead(unsigned char port)
-{
-
-    if ((!IF.sdclatch) && (port > 0x43)) { 
-        return 0;
-    }
-
-    unsigned char rpy;
-    switch (port) {
-    // Flash control read is used by SDCDOS to detect the SDC
-    case 0x43:
-        rpy = CurrentBank | (BankData & 0xF8);
-        break;
-    // Interface status
-    case 0x48:
-        if (IF.bufcnt > 0) {
-            rpy = (IF.reply_status != 0) ? IF.reply_status : STA_BUSY | STA_READY;
-        } else {
-            rpy = IF.status;
-        }
-        break;
-    // Reply data 1
-    case 0x49:
-        rpy = IF.reply1;
-        break;
-    // Reply data 2 or block reply
-    case 0x4A:
-        if (IF.bufcnt > 0) {
-            rpy = PickReplyByte(port);
-        } else {
-            rpy = IF.reply2;
-        }
-        break;
-    // Reply data 3 or block reply
-    case 0x4B:
-        if (IF.bufcnt > 0) {
-            rpy = PickReplyByte(port);
-        } else {
-            rpy = IF.reply3;
-        }
-        break;
-    default:
-        rpy = 0;
-        break;
-    }
     return rpy;
 }
 
@@ -1325,6 +1551,9 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
 void ReadSector(void)
 {
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
+
+    _DLOG("R%d\n",lsn);
+
     IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1; // words : bytes
     if (!ReadDrive(IF.cmdcode,lsn))
         IF.status = STA_FAIL | STA_READERROR;
