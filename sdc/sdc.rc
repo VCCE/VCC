@@ -72,14 +72,14 @@ BEGIN
             VALUE "Comments", "Simulation of SDC floppy emulator\0"
             VALUE "CompanyName", "BitRot Software.\0"
             VALUE "FileDescription", "SDC Simulator\0"
-            VALUE "FileVersion", "2.1.9.2\0"
+            VALUE "FileVersion", "2.1.9.3\0"
             VALUE "InternalName", "SDC\0"
             VALUE "LegalCopyright", "Copyright © 2010\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "sdc.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Vcc Module file\0"
-            VALUE "ProductVersion", "2.1.9.2\0"
+            VALUE "ProductVersion", "2.1.9.3\0"
             VALUE "SpecialBuild", "SDC Simulator\0"
         END
     END
@@ -96,14 +96,13 @@ END
 // Dialogs
 //
 
-IDD_CONTROL DIALOGEX 0, 0, 100, 50
+IDD_CONTROL DIALOGEX 0, 0, 95, 40
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "SDC Disk Control"
+CAPTION "SDC Disk 0"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT         "Disk 0",IDC_STATIC, 10, 2, 50, 14
-    EDITTEXT      ID_DISK0, 10,12,80,14,ES_AUTOHSCROLL,ES_READONLY
-    DEFPUSHBUTTON "Next Disk", ID_NEXT,25,30,50,14,BS_DEFPUSHBUTTON
+    EDITTEXT      ID_DISK0, 8,3,80,14,ES_AUTOHSCROLL,ES_READONLY
+    DEFPUSHBUTTON "Next Disk", ID_NEXT,22,21,50,14,BS_DEFPUSHBUTTON
 END
 
 IDD_CONFIG DIALOGEX 0, 0, 185, 180
