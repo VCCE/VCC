@@ -143,6 +143,11 @@
 #include <sys/stat.h>
 #include "sdc.h"
 
+// from ../pakinterface.h
+#define	HEAD 0
+#define SLAVE 1
+#define STANDALONE 2
+
 //======================================================================
 // Functions
 //======================================================================
@@ -162,13 +167,15 @@ void MemWrite(unsigned char,unsigned short);
 unsigned char (*MemRead8)(unsigned short)=NULL;
 unsigned char SDCRead(unsigned char port);
 unsigned char MemRead(unsigned short);
-LRESULT CALLBACK SDC_Config(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK SDC_Control(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
 
 void LoadConfig(void);
 bool SaveConfig(HWND);
 void BuildDynaMenu(void);
 void CenterDialog(HWND);
 void SelectCardBox(void);
+void update_disk0_box(void);
 void UpdateFlashItem(void);
 void DeleteFlashItem(void);
 void InitCardBox(void);
@@ -282,6 +289,7 @@ struct _Disk {
     DWORD tracksectors;
     char doublesided;
     char name[MAX_PATH];
+    char fullpath[MAX_PATH];
     struct FileRecord filerec;
 } Disk[2];
 
@@ -307,7 +315,8 @@ HANDLE hFind;
 WIN32_FIND_DATAA dFound;
 
 // config control handles
-static HWND hConfDlg = NULL;
+static HWND hControlDlg = NULL;
+static HWND hConfigureDlg = NULL;
 static HWND hFlashBox = NULL;
 static HWND hSDCardBox = NULL;
 static HWND hStartupBank = NULL;
@@ -378,11 +387,16 @@ extern "C"
     {
         switch (MenuID)
         {
-        case 20:
+        case 10:
             CreateDialog(hinstDLL, (LPCTSTR) IDD_CONFIG,
-                         GetActiveWindow(), (DLGPROC) SDC_Config);
-            ShowWindow(hConfDlg,1);
-            return;
+                         GetActiveWindow(), (DLGPROC) SDC_Configure);
+            ShowWindow(hConfigureDlg,1);
+            break;
+        case 11:
+            CreateDialog(hinstDLL, (LPCTSTR) IDD_CONTROL,
+                         GetActiveWindow(), (DLGPROC) SDC_Control);
+            ShowWindow(hControlDlg,1);
+            break;
         }
         BuildDynaMenu();
         return;
@@ -449,9 +463,9 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
     } else if (reason == DLL_PROCESS_DETACH) {
         CloseDrive(0);
         CloseDrive(1);
-        if (hConfDlg) {
-            DestroyWindow(hConfDlg);
-            hConfDlg = NULL;
+        if (hControlDlg) {
+            DestroyWindow(hControlDlg);
+            hControlDlg = NULL;
         }
     }
 
@@ -465,7 +479,8 @@ void BuildDynaMenu(void)
 {
     DynamicMenuCallback("",0,0);
     DynamicMenuCallback("",6000,0);
-    DynamicMenuCallback("SDC Config",5020,2);
+    DynamicMenuCallback("SDC Config",5010,STANDALONE);
+    DynamicMenuCallback("SDC Control",5011,STANDALONE);
     DynamicMenuCallback("",1,0);
 }
 
@@ -483,10 +498,38 @@ void CenterDialog(HWND hDlg)
 }
 
 //------------------------------------------------------------
+// Control SDC multi floppy
+//------------------------------------------------------------
+LRESULT CALLBACK
+SDC_Control(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message) {
+    case WM_CLOSE:
+        EndDialog(hDlg,LOWORD(wParam));
+        hControlDlg=NULL;
+        break;
+    case WM_INITDIALOG:
+        CenterDialog(hDlg);
+        hControlDlg=hDlg;
+        update_disk0_box();
+        SetFocus(GetDlgItem(hDlg,ID_NEXT));
+        break;
+    case WM_COMMAND:
+        switch (LOWORD(wParam)) {
+        case ID_NEXT:
+            MountNext (0);
+            SetFocus(GetParent(hDlg));
+            break;
+        }
+    }
+    return 0;
+}
+
+//------------------------------------------------------------
 // Configure the SDC
 //------------------------------------------------------------
 LRESULT CALLBACK
-SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message) {
     case WM_CLOSE:
@@ -494,12 +537,11 @@ SDC_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_INITDIALOG:
         CenterDialog(hDlg);
-        hConfDlg=hDlg;
+        hConfigureDlg=hDlg;
         LoadConfig();
         InitFlashBox();
         InitCardBox();
         SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnable,0);
-        SetFocus(GetDlgItem(hDlg,ID_NEXT));
         hStartupBank = GetDlgItem(hDlg,ID_STARTUP_BANK);
         char tmp[4];
         snprintf(tmp,4,"%d",(StartupBank & 7));
@@ -651,14 +693,14 @@ void InitFlashBox(void)
 {
     char path[MAX_PATH];
     char text[MAX_PATH];
-    hFlashBox = GetDlgItem(hConfDlg,ID_FLASH_BOX);
+    hFlashBox = GetDlgItem(hConfigureDlg,ID_FLASH_BOX);
 
     // Set height of items and initialize the listbox
     SendMessage(hFlashBox,LB_SETHORIZONTALEXTENT,0,200);
     SendMessage(hFlashBox, LB_SETITEMHEIGHT, 0, 18);
     SendMessage(hFlashBox,LB_RESETCONTENT,0,0);
 
-    HDC hdc = GetDC(hConfDlg);
+    HDC hdc = GetDC(hControlDlg);
 
     // Add items to the listbox
     for (int index=0; index<8; index++) {
@@ -671,13 +713,25 @@ void InitFlashBox(void)
     ReleaseDC(hFlashBox,hdc);
 }
 
+//----------------------------------------------------------------------
+// Put disk 0 name to config dialog
+//----------------------------------------------------------------------
+void update_disk0_box()
+{ 
+    if (hControlDlg != NULL) {
+        HWND h = GetDlgItem(hControlDlg,ID_DISK0);
+        SendMessage(h, WM_SETTEXT, 0, (LPARAM) Disk[0].name );
+        //SetWindowText(h,Disk[0].name);
+    }
+}
+
 //------------------------------------------------------------
 // Init SD card box
 //------------------------------------------------------------
 
 void InitCardBox(void)
 {
-    hSDCardBox = GetDlgItem(hConfDlg,ID_SD_BOX);
+    hSDCardBox = GetDlgItem(hConfigureDlg,ID_SD_BOX);
     SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM)SDCard);
 }
 //------------------------------------------------------------
@@ -1666,8 +1720,8 @@ void  GetSectorCount() {
 void GetMountedImageRec()
 {
     int drive = IF.cmdcode & 1;
-    //_DLOG("GetMountedImageRec %d %s\n",drive,Disk[drive].name);
-    if (strlen(Disk[drive].name) == 0) {
+    //_DLOG("GetMountedImageRec %d %s\n",drive,Disk[drive].fullpath);
+    if (strlen(Disk[drive].fullpath) == 0) {
         IF.status = STA_FAIL;
     } else {
         IF.reply_mode = 0;
@@ -1976,15 +2030,15 @@ void OpenNew( int drive, const char * path, int raw)
 
     // Try to create file
     CloseDrive(drive);
-    strncpy(Disk[drive].name,fqn,MAX_PATH);
+    strncpy(Disk[drive].fullpath,fqn,MAX_PATH);
 
     // Open file for write
     Disk[drive].hFile = CreateFile(
-        Disk[drive].name, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
+        Disk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
         NULL,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,NULL);
 
     if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
-        _DLOG("OpenNew fail %d file %s\n",drive,Disk[drive].name);
+        _DLOG("OpenNew fail %d file %s\n",drive,Disk[drive].fullpath);
         _DLOG("... %s\n",LastErrorTxt());
         IF.status = STA_FAIL | STA_WIN_ERROR;
         return;
@@ -2036,6 +2090,7 @@ void OpenFound (int drive,int raw)
         drive, dFound.cFileName, Disk[drive].hFile);
 
     CloseDrive(drive);
+    *Disk[drive].name = '\0';
 
     // Open a directory of containing DSK files
     if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -2053,14 +2108,13 @@ void OpenFound (int drive,int raw)
     char fqn[MAX_PATH]={};
     strncpy(fqn,SeaDir,MAX_PATH);
     strncat(fqn,dFound.cFileName,MAX_PATH);
-    strncpy(Disk[drive].name,fqn,MAX_PATH);
 
     // Open file for read
     Disk[drive].hFile = CreateFile(
-        Disk[drive].name, GENERIC_READ, FILE_SHARE_READ,
+        fqn, GENERIC_READ, FILE_SHARE_READ,
         NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
     if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
-        _DLOG("OpenFound fail %d file %s\n",drive,Disk[drive].name);
+        _DLOG("OpenFound fail %d file %s\n",drive,fqn);
         _DLOG("... %s\n",LastErrorTxt());
         int ecode = GetLastError();
         if (ecode == ERROR_SHARING_VIOLATION) {
@@ -2070,6 +2124,9 @@ void OpenFound (int drive,int raw)
         }
         return;
     }
+
+    strncpy(Disk[drive].fullpath,fqn,MAX_PATH);
+    strncpy(Disk[drive].name,dFound.cFileName,MAX_PATH);
 
     // Default sectorsize and sectors per track
     Disk[drive].sectorsize = 256;
@@ -2148,7 +2205,7 @@ void OpenFound (int drive,int raw)
     if (!writeprotect) {
         CloseHandle(Disk[drive].hFile);
         Disk[drive].hFile = CreateFile(
-            Disk[drive].name, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
+            Disk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
             NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
         if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
             _DLOG("OpenFound reopen fail %d\n",drive);
@@ -2157,6 +2214,8 @@ void OpenFound (int drive,int raw)
             return;
         }
     }
+
+    if (drive == 0) update_disk0_box();
 
     IF.status = STA_NORMAL;
     return;
