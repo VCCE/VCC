@@ -23,7 +23,8 @@
 #define IDS_VERSION                     2
 #define IDS_CATNUMBER                   3
 
-#define IDD_CONFIG                      101
+#define IDD_CONTROL                     101
+#define IDD_CONFIG                      102
 
 #define ID_SD_BOX                       1000
 #define ID_FLASH_BOX                    1001
@@ -31,6 +32,9 @@
 #define ID_NEXT                         1003
 #define ID_SD_SELECT                    1004
 #define ID_STARTUP_BANK                 1005
+#define ID_DISK0                        1006
+#define ID_DISK1                        1007
+#define ID_CONFIGURE                    1008
 
 // Next default values for new objects
 

@@ -93,26 +93,36 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Dialog
+// Dialogs
 //
+
+IDD_CONTROL DIALOGEX 0, 0, 100, 50
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "SDC Disk Control"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT         "Disk 0",IDC_STATIC, 10, 2, 50, 14
+    EDITTEXT      ID_DISK0, 10,12,80,14,ES_AUTOHSCROLL,ES_READONLY
+    DEFPUSHBUTTON "Next Disk", ID_NEXT,25,30,50,14,BS_DEFPUSHBUTTON
+END
 
 IDD_CONFIG DIALOGEX 0, 0, 185, 180
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "SDC Config"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT       "SD Card Path (Directory)",IDC_STATIC,  10, 4, 155, 14
-    EDITTEXT    ID_SD_BOX, 10,16,155,14,ES_AUTOHSCROLL
-    PUSHBUTTON  ">",ID_SD_SELECT,168,16,10,10
+    LTEXT         "SD Card Path (Directory)",IDC_STATIC,  10, 4, 155, 14
+    EDITTEXT      ID_SD_BOX, 10,16,155,14,ES_AUTOHSCROLL
+    PUSHBUTTON    ">",ID_SD_SELECT,168,16,10,10
     LTEXT       "Flash Banks",IDC_STATIC, 10, 36, 60, 14
     LTEXT       "Startup Bank:",IDC_STATIC, 110, 36, 60, 14
     EDITTEXT    ID_STARTUP_BANK, 155, 36, 9, 9, ES_NUMBER
     LISTBOX     ID_FLASH_BOX, 10, 48, 165, 110, LBS_NOTIFY | LBS_WANTKEYBOARDINPUT
-    CONTROL     "Enable clock at $FF70 (Cloud9)",IDC_CLOCK,"Button",BS_AUTOCHECKBOX,  10,145,160,10
-    DEFPUSHBUTTON  "Next Disk", ID_NEXT,  20, 160, 55, 14, BS_DEFPUSHBUTTON
+    CONTROL  "Enable Cloud9 clock ($FF70)",IDC_CLOCK,"Button",BS_AUTOCHECKBOX, 10,140,140,10
+
     PUSHBUTTON     "OK",IDOK,            100, 160, 55, 14
-//  PUSHBUTTON  "Cancel",IDCANCEL, 100, 155, 55, 14
 END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
