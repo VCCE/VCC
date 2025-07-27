@@ -4,6 +4,11 @@
 #define IDS_CATNUMBER                   2
 #define IDS_VERISON                     3
 
+#define ID_CONFIG1                      11
+#define ID_CONFIG2                      12
+#define ID_CONFIG3                      13
+#define ID_CONFIG4                      14
+
 #define IDD_DIALOG1                     101
 
 #define IDC_PAKSELECT                   1000
@@ -22,16 +27,6 @@
 #define IDC_INSERT2                     1022
 #define IDC_INSERT3                     1023
 #define IDC_INSERT4                     1024
-
-#define IDC_REMOVE1                     1031
-#define IDC_REMOVE2                     1032
-#define IDC_REMOVE3                     1033
-#define IDC_REMOVE4                     1034
-
-#define IDC_CONFIG1                     1041
-#define IDC_CONFIG2                     1042
-#define IDC_CONFIG3                     1043
-#define IDC_CONFIG4                     1044
 
 #define IDC_MODINFO                     1100
 #define IDC_PERSIST_PAK                 1101
