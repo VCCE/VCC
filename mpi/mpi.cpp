@@ -25,28 +25,28 @@ Copyright 2015 by Joseph Forgione
 #include "mpi.h"
 #include "../fileops.h"
 #include "../MachineDefs.h"
+#include "../logger.h"
 
 #define MAXPAX 4
+
+using namespace std;
 static void (*AssertInt)(unsigned char, unsigned char)=NULL;
 static unsigned char (*MemRead8)(unsigned short)=NULL;
 static void (*MemWrite8)(unsigned char,unsigned short)=NULL;
 
 static void (*PakSetCart)(unsigned char)=NULL;
 static HINSTANCE g_hinstDLL=NULL;
-static char ModuleNames[MAXPAX][MAX_LOADSTRING]={"Empty","Empty","Empty","Empty"};
 static char CatNumber[MAXPAX][MAX_LOADSTRING]={"","","",""};
 static char SlotLabel[MAXPAX][MAX_LOADSTRING*2]={"Empty","Empty","Empty","Empty"};
 //static unsigned char PersistPaks = 0;
 //static unsigned char DisableSCS = 0;
 static char ModulePaths[MAXPAX][MAX_PATH]={"","","",""};
+static char ModuleNames[MAXPAX][MAX_LOADSTRING]={"Empty","Empty","Empty","Empty"};
 static unsigned char *ExtRomPointers[MAXPAX]={NULL,NULL,NULL,NULL};
 static unsigned int BankedCartOffset[MAXPAX]={0,0,0,0};
-static unsigned char Temp,Temp2;
 static char IniFile[MAX_PATH]="";
 static char MPIPath[MAX_PATH];
-void CenterDialog(HWND);
 
-using namespace std;
 
 //**************************************************************
 //Array of fuction pointer for each Slot
@@ -68,11 +68,9 @@ static void (*DmaMemPointerCalls[MAXPAX]) (MEMREAD8,MEMWRITE8)={NULL,NULL,NULL,N
 static char MenuName0[64][512],MenuName1[64][512],MenuName2[64][512],MenuName3[64][512];
 static int MenuId0[64],MenuId1[64],MenuId2[64],MenuId3[64];
 static int Type0[64],Type1[64],Type2[64],Type3[64];
-//static int MenuIndex0=0,MenuIndex1=0,MenuIndex2=0,MenuIndex3=0;
+static int MenuCount[MAXPAX]={0};
 
-static int MenuIndex[4]={0,0,0,0};
-
-
+void CenterDialog(HWND);
 void SetCartSlot0(unsigned char);
 void SetCartSlot1(unsigned char);
 void SetCartSlot2(unsigned char);
@@ -82,28 +80,28 @@ void DynamicMenuCallback0(char *,int, int);
 void DynamicMenuCallback1(char *,int, int);
 void DynamicMenuCallback2(char *,int, int);
 void DynamicMenuCallback3(char *,int, int);
-static unsigned char CartForSlot[MAXPAX]={0,0,0,0};
+static unsigned char CartForSlot[MAXPAX]={0};
 static void (*SetCarts[MAXPAX])(unsigned char)={SetCartSlot0,SetCartSlot1,SetCartSlot2,SetCartSlot3};
 static void (*DynamicMenuCallbackCalls[MAXPAX])(char *,int, int)={DynamicMenuCallback0,DynamicMenuCallback1,DynamicMenuCallback2,DynamicMenuCallback3};
-static void (*SetCartCalls[MAXPAX])(SETCART)={NULL,NULL,NULL,NULL};
+static void (*SetCartCalls[MAXPAX])(SETCART)={NULL};
 
-static void (*SetIniPathCalls[MAXPAX]) (char *)={NULL,NULL,NULL,NULL};
+static void (*SetIniPathCalls[MAXPAX]) (char *)={NULL};
 static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 //***************************************************************
-static HINSTANCE hinstLib[4]={NULL,NULL,NULL,NULL};
+static HINSTANCE hinstLib[MAXPAX]={NULL};
 static unsigned char ChipSelectSlot=3,SpareSelectSlot=3,SwitchSlot=3,SlotRegister=255;
 HWND hConfDlg=NULL;
 
 //Function Prototypes for this module
-LRESULT CALLBACK Config(HWND,UINT,WPARAM,LPARAM);
+LRESULT CALLBACK MpiConfigDlg(HWND,UINT,WPARAM,LPARAM);
 
-unsigned char MountModule(unsigned char,char *);
+unsigned char MountModule(unsigned char,const char *);
 void UnloadModule(unsigned char);
 void LoadCartDLL(unsigned char,char *);
 void LoadConfig(void);
 void WriteConfig(void);
 void ReadModuleParms(unsigned char,char *);
-int FileID(char *);
+int FileID(const char *);
 
 BOOL WINAPI DllMain(
     HINSTANCE hinstDLL,  // handle to DLL module
@@ -113,9 +111,9 @@ BOOL WINAPI DllMain(
 	if (fdwReason == DLL_PROCESS_DETACH ) //Clean Up
 	{
 		WriteConfig();
-		for(Temp=0;Temp<4;Temp++)
-			UnloadModule(Temp);
-		if (hConfDlg) DestroyWindow(hConfDlg);
+		for (int slot=0;slot<MAXPAX;slot++) UnloadModule(slot);
+		if (hConfDlg)
+			DestroyWindow(hConfDlg);
 		hConfDlg = NULL;
 		return(1);
 	}
@@ -134,7 +132,6 @@ unsigned char MemRead(unsigned short Address)
 	return(MemRead8(Address));
 }
 
-
 extern "C"
 {
 	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
@@ -148,13 +145,16 @@ extern "C"
 
 extern "C"
 {
+	// MenuID is 1 thru 100
 	__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 	{
-		// MPI config
-		if (MenuID == 18) {
-			if (hConfDlg==NULL)
-				CreateDialog(g_hinstDLL, (LPCTSTR)IDD_DIALOG1,
-							 GetActiveWindow(), (DLGPROC)Config);
+		// Vcc subtracts 5000 from the MenuId to get MenuID
+		// MPI config MenuId is 5019 so 19 is used here.
+		if (MenuID == 19) {
+			if (hConfDlg)
+				DestroyWindow(hConfDlg);
+			CreateDialog(g_hinstDLL, (LPCTSTR)IDD_DIALOG1,
+						GetActiveWindow(), (DLGPROC)MpiConfigDlg);
 			ShowWindow(hConfDlg,1);
 		}
 
@@ -181,10 +181,9 @@ extern "C"
 	__declspec(dllexport) void AssertInterupt(PAKINTERUPT Dummy)
 	{
 		AssertInt=Dummy;
-		for (Temp=0;Temp<4;Temp++)
-		{
-			if(SetInteruptCallPointerCalls[Temp] !=NULL)
-				SetInteruptCallPointerCalls[Temp](AssertInt);
+		for (int slot=0;slot<MAXPAX;slot++) {
+			if(SetInteruptCallPointerCalls[slot] !=NULL)
+				SetInteruptCallPointerCalls[slot](AssertInt);
 		}
 		return;
 	}
@@ -214,9 +213,9 @@ extern "C"
 				PakPortWriteCalls[SpareSelectSlot](Port,Data);
 		}
 		else
-			for(unsigned char Temp=0;Temp<4;Temp++)
-				if (PakPortWriteCalls[Temp] != NULL)
-					PakPortWriteCalls[Temp](Port,Data);
+			for (int slot=0;slot<MAXPAX;slot++)
+				if (PakPortWriteCalls[slot] != NULL)
+					PakPortWriteCalls[slot](Port,Data);
 		return;
 	}
 }
@@ -225,8 +224,7 @@ extern "C"
 {
 	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
 	{
-		if (Port == 0x7F)  // Self
-		{
+		if (Port == 0x7F) { // Self
 			SlotRegister&=0xCC;
 			SlotRegister|=(SpareSelectSlot | (ChipSelectSlot<<4));
 			return(SlotRegister);
@@ -234,22 +232,19 @@ extern "C"
 
 		// Skip disk read ports 0x40 - 0x5F unless SCS is set
 		bool DiskPort = (Port > 0x3F) && (Port < 0x60);
-		if (DiskPort)
-		{
+		if (DiskPort) {
 			if ( PakPortReadCalls[SpareSelectSlot] != NULL)
 				return(PakPortReadCalls[SpareSelectSlot](Port));
 			else
 				return(0);
 		}
 
-		Temp2=0;
-		for (Temp=0;Temp<4;Temp++)
-		{
-			if ( PakPortReadCalls[Temp] !=NULL)
-			{
-				Temp2=PakPortReadCalls[Temp](Port); //Find a Module that return a value
-				if (Temp2!= 0)
-					return(Temp2);
+		for (int slot=0;slot<MAXPAX;slot++) {
+			if ( PakPortReadCalls[slot] !=NULL) {
+				//Return value from first module that returns non zero
+				unsigned char data=PakPortReadCalls[slot](Port);
+				if (data != 0)
+					return(data);
 			}
 		}
 		return(0);
@@ -260,9 +255,9 @@ extern "C"
 {
 	__declspec(dllexport) void HeartBeat(void)
 	{
-		for (Temp=0;Temp<4;Temp++)
-			if (HeartBeatCalls[Temp] != NULL)
-				HeartBeatCalls[Temp]();
+		for (int slot=0;slot<MAXPAX;slot++)
+			if (HeartBeatCalls[slot] != NULL)
+				HeartBeatCalls[slot]();
 		return;
 	}
 }
@@ -306,12 +301,12 @@ extern "C"
 	{
 		char TempStatus[64]="";
 		sprintf(MyStatus,"MPI:%d,%d",ChipSelectSlot+1,SpareSelectSlot+1);
-		for (Temp=0;Temp<4;Temp++)
+		for (int slot=0;slot<MAXPAX;slot++)
 		{
 			strcpy(TempStatus,"");
-			if (ModuleStatusCalls[Temp] != NULL)
+			if (ModuleStatusCalls[slot] != NULL)
 			{
-				ModuleStatusCalls[Temp](TempStatus);
+				ModuleStatusCalls[slot](TempStatus);
 				strcat(MyStatus," | ");
 				strcat(MyStatus,TempStatus);
 			}
@@ -326,9 +321,9 @@ extern "C"
 	__declspec(dllexport) unsigned short ModuleAudioSample(void)
 	{
 		unsigned short TempSample=0;
-		for (Temp=0;Temp<4;Temp++)
-			if (ModuleAudioSampleCalls[Temp] != NULL)
-				TempSample+=ModuleAudioSampleCalls[Temp]();
+		for (int slot=0;slot<MAXPAX;slot++)
+			if (ModuleAudioSampleCalls[slot] != NULL)
+				TempSample+=ModuleAudioSampleCalls[slot]();
 
 		return(TempSample) ;
 	}
@@ -340,12 +335,12 @@ extern "C"
 	{
 		ChipSelectSlot=SwitchSlot;
 		SpareSelectSlot=SwitchSlot;
-		for (Temp=0;Temp<4;Temp++)
+		for (int slot=0;slot<MAXPAX;slot++)
 		{
-			BankedCartOffset[Temp]=0; //Do I need to keep independant selects?
+			BankedCartOffset[slot]=0; //Do I need to keep independant selects?
 
-			if (ModuleResetCalls[Temp] !=NULL)
-				ModuleResetCalls[Temp]();
+			if (ModuleResetCalls[slot] !=NULL)
+				ModuleResetCalls[slot]();
 		}
 		PakSetCart(0);
 		if (CartForSlot[SpareSelectSlot]==1)
@@ -366,7 +361,7 @@ extern "C"
 
 //void AssertInterupt(Interrupt interrupt)
 //{
-//	AssertInt(IS_PIA1_CART, interrupt);
+//     AssertInt(IS_PIA1_CART, interrupt);
 //}
 
 extern "C"
@@ -381,43 +376,46 @@ extern "C"
 
 void CenterDialog(HWND hDlg)
 {
-    RECT rPar, rDlg;
-    GetWindowRect(GetParent(hDlg), &rPar);
-    GetWindowRect(hDlg, &rDlg);
-    int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
-    int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
-    SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	RECT rPar, rDlg;
+	GetWindowRect(GetParent(hDlg), &rPar);
+	GetWindowRect(hDlg, &rDlg);
+	int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
+	int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
+	SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
-LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	char ConfigText[1024]="";
 	unsigned short EDITBOXS[4]={IDC_EDIT1,IDC_EDIT2,IDC_EDIT3,IDC_EDIT4};
 	unsigned short RADIOBTN[4]={IDC_SELECT1,IDC_SELECT2,IDC_SELECT3,IDC_SELECT4};
 	unsigned short INSERTBTN[4]={IDC_INSERT1,IDC_INSERT2,IDC_INSERT3,IDC_INSERT4};
+	unsigned short CONFIGBTN[4]={ID_CONFIG1,ID_CONFIG2,ID_CONFIG3,ID_CONFIG4};
+
+	char ConfigText[1024]="";
 
 	switch (message) {
 	case WM_CLOSE:
+//		WriteConfig();
 		EndDialog(hDlg, LOWORD(wParam));
+		hConfDlg=NULL;
 //		PersistPaks = (unsigned char)SendDlgItemMessage(hDlg,IDC_PERSIST_PAK,BM_GETCHECK,0,0);
 //		DisableSCS = (unsigned char)SendDlgItemMessage(hDlg,IDC_SCS_DISABLE,BM_GETCHECK,0,0);
-		WriteConfig();
-		hConfDlg=NULL;
 		return TRUE;
 		break;
 	case WM_INITDIALOG:
+//LoadConfig();
 		CenterDialog(hDlg);
 		hConfDlg=hDlg;
-		for (int i=0; i<4; i++) {
-			SendDlgItemMessage(hDlg,EDITBOXS[i],WM_SETTEXT,0,(LPARAM)SlotLabel[i]);
+		for (int slot=0;slot<MAXPAX;slot++) {
+			SendDlgItemMessage(hDlg,EDITBOXS[slot],WM_SETTEXT,0,(LPARAM)SlotLabel[slot]);
 		}
 		ReadModuleParms(SwitchSlot,ConfigText);
 		SendDlgItemMessage(hDlg,IDC_MODINFO,WM_SETTEXT,0,(LPARAM)ConfigText);
-		for (int i=0; i<4; i++) {
-			if (SwitchSlot==i)
-				SendDlgItemMessage(hDlg, RADIOBTN[i], BM_SETCHECK, 1, 0);
+		for (int slot=0;slot<MAXPAX;slot++) {
+			if (SwitchSlot==slot)
+				SendDlgItemMessage(hDlg, RADIOBTN[slot], BM_SETCHECK, 1, 0);
 			else
-				SendDlgItemMessage(hDlg, RADIOBTN[i], BM_SETCHECK, 0, 0);
+				SendDlgItemMessage(hDlg, RADIOBTN[slot], BM_SETCHECK, 0, 0);
 		}
 		return TRUE;
 		break;
@@ -427,13 +425,13 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDC_SELECT2:
 		case IDC_SELECT3:
 		case IDC_SELECT4:
-			for (int i=0; i<4; i++) {
-				if (RADIOBTN[i] == LOWORD(wParam)) {
-					SwitchSlot = i;
-					SendDlgItemMessage(hDlg, RADIOBTN[i], BM_SETCHECK, 1, 0);
+			for (int slot=0;slot<MAXPAX;slot++) {
+				if (RADIOBTN[slot] == LOWORD(wParam)) {
+					SwitchSlot = slot;
+					SendDlgItemMessage(hDlg, RADIOBTN[slot], BM_SETCHECK, 1, 0);
 				} else {
-					SendDlgItemMessage(hDlg, RADIOBTN[i], BM_SETCHECK, 0, 0);
-			    }
+					SendDlgItemMessage(hDlg, RADIOBTN[slot], BM_SETCHECK, 0, 0);
+				}
 			}
 			SpareSelectSlot = SwitchSlot;
 			ChipSelectSlot = SwitchSlot;
@@ -442,36 +440,45 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			PakSetCart(0);
 			if (CartForSlot[SpareSelectSlot]==1)
 				PakSetCart(1);
+			return TRUE;
 			break;
-		case IDC_INSERT1:
-		case IDC_INSERT2:
-		case IDC_INSERT3:
-		case IDC_INSERT4:
-			for (int i=0; i<4; i++) {
-				if (INSERTBTN[i] == LOWORD(wParam)) {
-					LoadCartDLL(i,ModulePaths[i]);
-					SendDlgItemMessage(hDlg,EDITBOXS[i],WM_SETTEXT,0,(LPARAM)SlotLabel[i] );
-			    }
-			}
-			BuildDynaMenu();
-			break;
-
 		} //End switch LOWORD
+
+		for (int slot=0;slot<MAXPAX;slot++) {
+			if ( LOWORD(wParam) == INSERTBTN[slot] ) {
+				LoadCartDLL(slot,ModulePaths[slot]);
+				for (int slot=0;slot<MAXPAX;slot++)
+					SendDlgItemMessage(hDlg,EDITBOXS[slot],WM_SETTEXT,0,(LPARAM)(LPCSTR)SlotLabel[slot]);
+			}
+		}
+
+		for (int slot=0;slot<MAXPAX;slot++) {
+			if ( LOWORD(wParam) == CONFIGBTN[slot] ) {
+				if (ConfigModuleCalls[slot] != NULL)
+					ConfigModuleCalls[slot](NULL);
+			}
+		}
+		return TRUE;
 		break;
 	}
     return FALSE;
 }
 
-unsigned char MountModule(unsigned char Slot,char *ModName)
+unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 {
-	unsigned char ModuleType=0;
-	char ModuleName[MAX_PATH]="";
+	PrintLogC("MountModule slot %d '%s'\n",Slot, ModuleName);
+
 	unsigned int index=0;
-	strcpy(ModuleName,ModName);
 	FILE *rom_handle;
 	if (Slot>3)
 		return(0);
-	ModuleType=FileID(ModuleName);
+
+	// Copy ModuleName otherwise UnloadModule() will change it.
+	char MountName[MAX_PATH]="";
+	strcpy(MountName,ModuleName);
+
+	unsigned char ModuleType = FileID(MountName);
+
 	switch (ModuleType)
 	{
 	case 0: //File doesn't exist
@@ -486,7 +493,7 @@ unsigned char MountModule(unsigned char Slot,char *ModName)
 			MessageBox(0,"Rom pointer is NULL","Error",0);
 			return(0); //Can Allocate RAM
 		}
-		rom_handle=fopen(ModuleName,"rb");
+		rom_handle=fopen(MountName,"rb");
 		if (rom_handle==NULL)
 		{
 			MessageBox(0,"File handle is NULL","Error",0);
@@ -495,13 +502,13 @@ unsigned char MountModule(unsigned char Slot,char *ModName)
 		while ((feof(rom_handle)==0) & (index<0x40000))
 			ExtRomPointers[Slot][index++]=fgetc(rom_handle);
 		fclose(rom_handle);
-		strcpy(ModulePaths[Slot],ModuleName);
-		PathStripPath(ModuleName);
-//		PathRemovePath(ModuleName);
-		PathRemoveExtension(ModuleName);
-		strcpy(ModuleNames[Slot],ModuleName);
-		strcpy(SlotLabel[Slot],ModuleName); //JF
+		strcpy(ModulePaths[Slot],MountName);
+		PathStripPath(MountName);
+		PathRemoveExtension(MountName);
+		strcpy(ModuleNames[Slot],MountName);
+		strcpy(SlotLabel[Slot],MountName); //JF
 		CartForSlot[Slot]=1;
+
 //		if (CartForSlot[SpareSelectSlot]==1)
 //			PakSetCart(1);
 		return(1);
@@ -509,11 +516,10 @@ unsigned char MountModule(unsigned char Slot,char *ModName)
 
 	case 1:	//DLL File
 		UnloadModule(Slot);
-		strcpy(ModulePaths[Slot],ModuleName);
-		hinstLib[Slot] = LoadLibrary(ModuleName);
-		if (hinstLib[Slot] ==NULL)
+		strcpy(ModulePaths[Slot],MountName);
+		hinstLib[Slot] = LoadLibrary(MountName);
+		if (hinstLib[Slot]==NULL)
 			return(0);	//Error Can't open File
-
 		GetModuleNameCalls[Slot]=(GETNAME)GetProcAddress(hinstLib[Slot], "ModuleName");
 		ConfigModuleCalls[Slot]=(CONFIGIT)GetProcAddress(hinstLib[Slot], "ModuleConfig");
 		PakPortWriteCalls[Slot]=(PACKPORTWRITE) GetProcAddress(hinstLib[Slot], "PackPortWrite");
@@ -530,7 +536,6 @@ unsigned char MountModule(unsigned char Slot,char *ModName)
 		ModuleAudioSampleCalls[Slot]=(MODULEAUDIOSAMPLE) GetProcAddress(hinstLib[Slot], "ModuleAudioSample");
 		ModuleResetCalls[Slot]=(MODULERESET) GetProcAddress(hinstLib[Slot], "ModuleReset");
 		SetIniPathCalls[Slot]=(SETINIPATH) GetProcAddress(hinstLib[Slot], "SetIniPath");
-
 
 		if (GetModuleNameCalls[Slot] == NULL)
 		{
@@ -589,7 +594,7 @@ void UnloadModule(unsigned char Slot)
 	hinstLib[Slot]=NULL;
 	ExtRomPointers[Slot]=NULL;
 	CartForSlot[Slot]=0;
-	MenuIndex[Slot]=0;
+	MenuCount[Slot]=0;
 	return;
 }
 
@@ -601,15 +606,15 @@ void LoadCartDLL(unsigned char Slot,char *DllPath)
 	UnloadModule(Slot);
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME) ;
-	ofn.hwndOwner		  = NULL;
-	ofn.lpstrFilter = "Cartridges\0*.ROM;*.ccc;*.DLL\0\0";	// filter string
-	ofn.nFilterIndex      = 1;								// current filter index
-	ofn.lpstrFile         = DllPath;						// contains full path on return
-	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
-	ofn.lpstrFileTitle    = NULL;							// filename and extension only
-	ofn.nMaxFileTitle     = MAX_PATH ;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = MPIPath;						// initial directory
-	ofn.lpstrTitle        = TEXT("Choose Cartridge");		// title bar string
+	ofn.hwndOwner         = NULL;
+	ofn.lpstrFilter       = "Cartridges\0*.ROM;*.ccc;*.DLL\0\0"; // filter string
+	ofn.nFilterIndex      = 1;                        // current filter index
+	ofn.lpstrFile         = DllPath;                  // contains full path on return
+	ofn.nMaxFile          = MAX_PATH;                 // sizeof lpstrFile
+	ofn.lpstrFileTitle    = NULL;                     // filename and extension only
+	ofn.nMaxFileTitle     = MAX_PATH;                 // sizeof lpstrFileTitle
+	ofn.lpstrInitialDir   = MPIPath;                  // initial directory
+	ofn.lpstrTitle        = TEXT("Choose Cartridge"); // title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
 	if ( GetOpenFileName (&ofn) ) {
 		MountModule(Slot,DllPath);
@@ -624,14 +629,22 @@ void LoadCartDLL(unsigned char Slot,char *DllPath)
 
 void LoadConfig(void)
 {
+	// Get the module name from this DLL (MPI)
 	char ModName[MAX_LOADSTRING]="";
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-//	PersistPaks=GetPrivateProfileInt(ModName, "PersistPaks", 1, IniFile);
-//	DisableSCS=GetPrivateProfileInt(ModName,"DisableSCS", 0, IniFile);
+
+	//PersistPaks=GetPrivateProfileInt(ModName, "PersistPaks", 1, IniFile);
+	//DisableSCS=GetPrivateProfileInt(ModName,"DisableSCS", 0, IniFile);
+
+	// Get default paths for modules
 	GetPrivateProfileString("DefaultPaths", "MPIPath", "", MPIPath, MAX_PATH, IniFile);
+
+	// Get the startup slot and set Chip select and SCS slots from ini file
 	SwitchSlot=GetPrivateProfileInt(ModName,"SWPOSITION",3,IniFile);
 	ChipSelectSlot=SwitchSlot;
 	SpareSelectSlot=SwitchSlot;
+
+	// Get saved path names for modules loaded in slots from ini file
 	GetPrivateProfileString(ModName,"SLOT1","",ModulePaths[0],MAX_PATH,IniFile);
 	CheckPath(ModulePaths[0]);
 	GetPrivateProfileString(ModName,"SLOT2","",ModulePaths[1],MAX_PATH,IniFile);
@@ -640,9 +653,13 @@ void LoadConfig(void)
 	CheckPath(ModulePaths[2]);
 	GetPrivateProfileString(ModName,"SLOT4","",ModulePaths[3],MAX_PATH,IniFile);
 	CheckPath(ModulePaths[3]);
-	for (Temp=0;Temp<4;Temp++)
-		if (strlen(ModulePaths[Temp]) !=0)
-			MountModule(Temp,ModulePaths[Temp]);
+
+	// Mount them
+	for (int slot=0;slot<MAXPAX;slot++)
+		if (*ModulePaths[slot] != '\0')
+			MountModule(slot,ModulePaths[slot]);
+
+	// Build the dynamic menu
 	BuildDynaMenu();
 	return;
 }
@@ -720,7 +737,7 @@ void ReadModuleParms(unsigned char Slot,char *String)
 // The e_magic field in the MS-DOS header) of a PE file contains the ASCII
 // characters "MZ". If file is a PE file then assume it is a DLL.
 // This could break in some future windows version.
-int FileID(char *Filename)
+int FileID(const char *Filename)
 {
 	FILE *DummyHandle=NULL;
 	char Temp[3]="";
@@ -758,36 +775,45 @@ void SetCartSlot3(unsigned char Tmp)
 	return;
 }
 
-void BuildDynaMenu(void)	//STUB
+void BuildDynaMenu(void)
 {
-	unsigned char TempIndex=0;
-//	char TempMsg[512]="";
-	if (DynamicMenuCallback ==NULL)
-		MessageBox(0,"No good","Ok",0);
-	DynamicMenuCallback( "",0,0);
-	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "MPI Config",5018,STANDALONE);
+	// DynamicMenuCallback() resides in VCC pakinterface. Make sure we have it's address
+	if (DynamicMenuCallback == NULL) {
+		MessageBox(0,"MPI internal menu error","Ok",0);
+		return;
+	}
 
-	for (TempIndex=0;TempIndex<MenuIndex[3];TempIndex++)
-		DynamicMenuCallback(MenuName3[TempIndex],MenuId3[TempIndex]+80,Type3[TempIndex]);
+	// Init the dynamic menus, then add a header line and then MPI config menu item
+	DynamicMenuCallback("",0,0);
+	DynamicMenuCallback("",6000,0);
 
-	for (TempIndex=0;TempIndex<MenuIndex[2];TempIndex++)
-		DynamicMenuCallback(MenuName2[TempIndex],MenuId2[TempIndex]+60,Type2[TempIndex]);
+	// MenuID is an unsigned char 0 thru 99; 0 is used for reset and 1 for Config
+	// The MMI DLL uses 2 - 19 for itself and allocates 20 for each slot's DLL.
+	DynamicMenuCallback("MPI Config",5019,STANDALONE);
 
-	for (TempIndex=0;TempIndex<MenuIndex[1];TempIndex++)
-		DynamicMenuCallback(MenuName1[TempIndex],MenuId1[TempIndex]+40,Type1[TempIndex]);
+	// Build the rest of the menu for slots 4 thru 1
+	for (int ndx=0;ndx<MenuCount[3];ndx++)
+		DynamicMenuCallback(MenuName3[ndx],MenuId3[ndx]+80,Type3[ndx]);
 
-	for (TempIndex=0;TempIndex<MenuIndex[0];TempIndex++)
-		DynamicMenuCallback(MenuName0[TempIndex],MenuId0[TempIndex]+20,Type0[TempIndex]);
+	for (int ndx=0;ndx<MenuCount[2];ndx++)
+		DynamicMenuCallback(MenuName2[ndx],MenuId2[ndx]+60,Type2[ndx]);
+
+	for (int ndx=0;ndx<MenuCount[1];ndx++)
+		DynamicMenuCallback(MenuName1[ndx],MenuId1[ndx]+40,Type1[ndx]);
+
+	for (int ndx=0;ndx<MenuCount[0];ndx++)
+		DynamicMenuCallback(MenuName0[ndx],MenuId0[ndx]+20,Type0[ndx]);
 
 	DynamicMenuCallback( "",1,0);
 }
 
+// Callback for slot 1
 void DynamicMenuCallback0( char *MenuName,int MenuId, int Type)
 {
+	PrintLogC("DynamicMenuCallback0 %4d %d '%s'\n",MenuId,Type,MenuName);
 	if (MenuId==0)
 	{
-		MenuIndex[0]=0;
+		MenuCount[0]=0;
 		return;
 	}
 
@@ -797,18 +823,20 @@ void DynamicMenuCallback0( char *MenuName,int MenuId, int Type)
 		return;
 	}
 
-	strcpy(MenuName0[MenuIndex[0]],MenuName);
-	MenuId0[MenuIndex[0]]=MenuId;
-	Type0[MenuIndex[0]]=Type;
-	MenuIndex[0]++;
+	strcpy(MenuName0[MenuCount[0]],MenuName);
+	MenuId0[MenuCount[0]]=MenuId;
+	Type0[MenuCount[0]]=Type;
+	MenuCount[0]++;
 	return;
 }
 
+// Callback for Slot 2
 void DynamicMenuCallback1( char *MenuName,int MenuId, int Type)
 {
+	PrintLogC("DynamicMenuCallback1 %4d %d '%s'\n",MenuId,Type,MenuName);
 	if (MenuId==0)
 	{
-		MenuIndex[1]=0;
+		MenuCount[1]=0;
 		return;
 	}
 
@@ -817,18 +845,20 @@ void DynamicMenuCallback1( char *MenuName,int MenuId, int Type)
 		BuildDynaMenu();
 		return;
 	}
-	strcpy(MenuName1[MenuIndex[1]],MenuName);
-	MenuId1[MenuIndex[1]]=MenuId;
-	Type1[MenuIndex[1]]=Type;
-	MenuIndex[1]++;
+	strcpy(MenuName1[MenuCount[1]],MenuName);
+	MenuId1[MenuCount[1]]=MenuId;
+	Type1[MenuCount[1]]=Type;
+	MenuCount[1]++;
 	return;
 }
 
+// Callback for Slot 3
 void DynamicMenuCallback2( char *MenuName,int MenuId, int Type)
 {
+	PrintLogC("DynamicMenuCallback2 %4d %d '%s'\n",MenuId,Type,MenuName);
 	if (MenuId==0)
 	{
-		MenuIndex[2]=0;
+		MenuCount[2]=0;
 		return;
 	}
 
@@ -837,18 +867,20 @@ void DynamicMenuCallback2( char *MenuName,int MenuId, int Type)
 		BuildDynaMenu();
 		return;
 	}
-	strcpy(MenuName2[MenuIndex[2]],MenuName);
-	MenuId2[MenuIndex[2]]=MenuId;
-	Type2[MenuIndex[2]]=Type;
-	MenuIndex[2]++;
+	strcpy(MenuName2[MenuCount[2]],MenuName);
+	MenuId2[MenuCount[2]]=MenuId;
+	Type2[MenuCount[2]]=Type;
+	MenuCount[2]++;
 	return;
 }
 
+// Callback for Slot 4
 void DynamicMenuCallback3( char *MenuName,int MenuId, int Type)
 {
+	PrintLogC("DynamicMenuCallback3 %4d %d '%s'\n",MenuId,Type,MenuName);
 	if (MenuId==0)
 	{
-		MenuIndex[3]=0;
+		MenuCount[3]=0;
 		return;
 	}
 
@@ -857,10 +889,10 @@ void DynamicMenuCallback3( char *MenuName,int MenuId, int Type)
 		BuildDynaMenu();
 		return;
 	}
-	strcpy(MenuName3[MenuIndex[3]],MenuName);
-	MenuId3[MenuIndex[3]]=MenuId;
-	Type3[MenuIndex[3]]=Type;
-	MenuIndex[3]++;
+	strcpy(MenuName3[MenuCount[3]],MenuName);
+	MenuId3[MenuCount[3]]=MenuId;
+	Type3[MenuCount[3]]=Type;
+	MenuCount[3]++;
 	return;
 }
 
