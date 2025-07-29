@@ -64,12 +64,16 @@ static void (*ModuleResetCalls[MAXPAX]) (void)={NULL,NULL,NULL,NULL};
 static void (*SetInteruptCallPointerCalls[MAXPAX]) ( PAKINTERUPT)={NULL,NULL,NULL,NULL};
 static void (*DmaMemPointerCalls[MAXPAX]) (MEMREAD8,MEMWRITE8)={NULL,NULL,NULL,NULL};
 //MenuName,int MenuId, int Type)
-
 static char MenuName0[64][512],MenuName1[64][512],MenuName2[64][512],MenuName3[64][512];
 static int MenuId0[64],MenuId1[64],MenuId2[64],MenuId3[64];
 static int Type0[64],Type1[64],Type2[64],Type3[64];
 static int MenuCount[MAXPAX]={0};
+static unsigned short EDITBOXS[4]={IDC_EDIT1,IDC_EDIT2,IDC_EDIT3,IDC_EDIT4};
+static unsigned short RADIOBTN[4]={IDC_SELECT1,IDC_SELECT2,IDC_SELECT3,IDC_SELECT4};
 
+void UpdateSlotContent(int);
+void UpdateSlotConfig(int);
+void UpdateSlotSelect(int);
 void CenterDialog(HWND);
 void SetCartSlot0(unsigned char);
 void SetCartSlot1(unsigned char);
@@ -110,6 +114,7 @@ BOOL WINAPI DllMain(
 {
 	if (fdwReason == DLL_PROCESS_DETACH ) //Clean Up
 	{
+		//PrintLogC("MPI detach\n");
 		WriteConfig();
 		for (int slot=0;slot<MAXPAX;slot++) UnloadModule(slot);
 		if (hConfDlg)
@@ -148,8 +153,8 @@ extern "C"
 	// MenuID is 1 thru 100
 	__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 	{
-		// Vcc subtracts 5000 from the MenuId to get MenuID
-		// MPI config MenuId is 5019 so 19 is used here.
+		// Vcc subtracts 5000 from the wmId to get MenuID
+		// MPI config wmId is 5019 so 19 is used here.
 		if (MenuID == 19) {
 			if (hConfDlg)
 				DestroyWindow(hConfDlg);
@@ -386,87 +391,102 @@ void CenterDialog(HWND hDlg)
 
 LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	unsigned short EDITBOXS[4]={IDC_EDIT1,IDC_EDIT2,IDC_EDIT3,IDC_EDIT4};
-	unsigned short RADIOBTN[4]={IDC_SELECT1,IDC_SELECT2,IDC_SELECT3,IDC_SELECT4};
-	unsigned short INSERTBTN[4]={IDC_INSERT1,IDC_INSERT2,IDC_INSERT3,IDC_INSERT4};
-	unsigned short CONFIGBTN[4]={ID_CONFIG1,ID_CONFIG2,ID_CONFIG3,ID_CONFIG4};
-
-	char ConfigText[1024]="";
-
 	switch (message) {
 	case WM_CLOSE:
-//		WriteConfig();
 		EndDialog(hDlg, LOWORD(wParam));
 		hConfDlg=NULL;
-//		PersistPaks = (unsigned char)SendDlgItemMessage(hDlg,IDC_PERSIST_PAK,BM_GETCHECK,0,0);
-//		DisableSCS = (unsigned char)SendDlgItemMessage(hDlg,IDC_SCS_DISABLE,BM_GETCHECK,0,0);
 		return TRUE;
-		break;
 	case WM_INITDIALOG:
-//LoadConfig();
 		CenterDialog(hDlg);
 		hConfDlg=hDlg;
 		for (int slot=0;slot<MAXPAX;slot++) {
 			SendDlgItemMessage(hDlg,EDITBOXS[slot],WM_SETTEXT,0,(LPARAM)SlotLabel[slot]);
 		}
-		ReadModuleParms(SwitchSlot,ConfigText);
-		SendDlgItemMessage(hDlg,IDC_MODINFO,WM_SETTEXT,0,(LPARAM)ConfigText);
-		for (int slot=0;slot<MAXPAX;slot++) {
-			if (SwitchSlot==slot)
-				SendDlgItemMessage(hDlg, RADIOBTN[slot], BM_SETCHECK, 1, 0);
-			else
-				SendDlgItemMessage(hDlg, RADIOBTN[slot], BM_SETCHECK, 0, 0);
-		}
+		UpdateSlotSelect(SwitchSlot);
 		return TRUE;
-		break;
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDC_SELECT1:
-		case IDC_SELECT2:
-		case IDC_SELECT3:
-		case IDC_SELECT4:
-			for (int slot=0;slot<MAXPAX;slot++) {
-				if (RADIOBTN[slot] == LOWORD(wParam)) {
-					SwitchSlot = slot;
-					SendDlgItemMessage(hDlg, RADIOBTN[slot], BM_SETCHECK, 1, 0);
-				} else {
-					SendDlgItemMessage(hDlg, RADIOBTN[slot], BM_SETCHECK, 0, 0);
-				}
-			}
-			SpareSelectSlot = SwitchSlot;
-			ChipSelectSlot = SwitchSlot;
-			ReadModuleParms(SwitchSlot,ConfigText);
-			SendDlgItemMessage(hDlg,IDC_MODINFO,WM_SETTEXT,0,(LPARAM)(LPCSTR)ConfigText);
-			PakSetCart(0);
-			if (CartForSlot[SpareSelectSlot]==1)
-				PakSetCart(1);
+			UpdateSlotSelect(0);
 			return TRUE;
-			break;
-		} //End switch LOWORD
-
-		for (int slot=0;slot<MAXPAX;slot++) {
-			if ( LOWORD(wParam) == INSERTBTN[slot] ) {
-				LoadCartDLL(slot,ModulePaths[slot]);
-				for (int slot=0;slot<MAXPAX;slot++)
-					SendDlgItemMessage(hDlg,EDITBOXS[slot],WM_SETTEXT,0,(LPARAM)(LPCSTR)SlotLabel[slot]);
-			}
-		}
-
-		for (int slot=0;slot<MAXPAX;slot++) {
-			if ( LOWORD(wParam) == CONFIGBTN[slot] ) {
-				if (ConfigModuleCalls[slot] != NULL)
-					ConfigModuleCalls[slot](NULL);
-			}
-		}
-		return TRUE;
-		break;
-	}
+		case IDC_SELECT2:
+			UpdateSlotSelect(1);
+			return TRUE;
+		case IDC_SELECT3:
+			UpdateSlotSelect(2);
+			return TRUE;
+		case IDC_SELECT4:
+			UpdateSlotSelect(3);
+			return TRUE;
+		case IDC_INSERT1:
+			UpdateSlotContent(0);
+			return TRUE;
+		case IDC_INSERT2:
+			UpdateSlotContent(1);
+			return TRUE;
+		case IDC_INSERT3:
+			UpdateSlotContent(2);
+			return TRUE;
+		case IDC_INSERT4:
+			UpdateSlotContent(3);
+			return TRUE;
+		case ID_CONFIG1:
+			UpdateSlotConfig(0);
+			return TRUE;
+		case ID_CONFIG2:
+			UpdateSlotConfig(1);
+			return TRUE;
+		case ID_CONFIG3:
+			UpdateSlotConfig(2);
+			return TRUE;
+		case ID_CONFIG4:
+			UpdateSlotConfig(3);
+			return TRUE;
+		} // End switch LOWORD
+	} // End switch message
     return FALSE;
+}
+
+void UpdateSlotSelect(int slot)
+{
+	char ConfigText[1024]="";
+	ReadModuleParms(slot,ConfigText);
+	SendDlgItemMessage(hConfDlg,IDC_MODINFO,WM_SETTEXT,0,(LPARAM)(LPCSTR)ConfigText);
+
+	for (int ndx=0;ndx<4;ndx++) {
+		if (ndx==slot) {
+			SendDlgItemMessage(hConfDlg, RADIOBTN[ndx], BM_SETCHECK, 1, 0);
+		} else {
+			SendDlgItemMessage(hConfDlg, RADIOBTN[ndx], BM_SETCHECK, 0, 0);
+		}
+	}
+	SwitchSlot = slot;
+	SpareSelectSlot = slot;
+	ChipSelectSlot = slot;
+	if (CartForSlot[slot]==1)
+		PakSetCart(1);
+	else
+		PakSetCart(0);
+}
+
+void UpdateSlotContent(int slot)
+{
+	LoadCartDLL(slot,ModulePaths[slot]);
+	SendDlgItemMessage(hConfDlg,EDITBOXS[slot],WM_SETTEXT,0,(LPARAM)SlotLabel[slot]);
+	BuildDynaMenu();
+	return;
+}
+
+void UpdateSlotConfig(int slot)
+{
+	if (ConfigModuleCalls[3] != NULL)
+		ConfigModuleCalls[3](NULL);
+	return;
 }
 
 unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 {
-	PrintLogC("MountModule slot %d '%s'\n",Slot, ModuleName);
+//	PrintLogC("MountModule slot %d '%s'\n",Slot, ModuleName);
 
 	unsigned int index=0;
 	FILE *rom_handle;
@@ -775,6 +795,7 @@ void SetCartSlot3(unsigned char Tmp)
 	return;
 }
 
+// This gets called on mpi startup and each time a module is inserted or deleted
 void BuildDynaMenu(void)
 {
 	// DynamicMenuCallback() resides in VCC pakinterface. Make sure we have it's address
@@ -787,8 +808,7 @@ void BuildDynaMenu(void)
 	DynamicMenuCallback("",0,0);
 	DynamicMenuCallback("",6000,0);
 
-	// MenuID is an unsigned char 0 thru 99; 0 is used for reset and 1 for Config
-	// The MMI DLL uses 2 - 19 for itself and allocates 20 for each slot's DLL.
+	// The second argument to DynamicMenuCallback establishes the wmID for mpithe config.
 	DynamicMenuCallback("MPI Config",5019,STANDALONE);
 
 	// Build the rest of the menu for slots 4 thru 1
@@ -810,7 +830,6 @@ void BuildDynaMenu(void)
 // Callback for slot 1
 void DynamicMenuCallback0( char *MenuName,int MenuId, int Type)
 {
-	PrintLogC("DynamicMenuCallback0 %4d %d '%s'\n",MenuId,Type,MenuName);
 	if (MenuId==0)
 	{
 		MenuCount[0]=0;
@@ -833,7 +852,6 @@ void DynamicMenuCallback0( char *MenuName,int MenuId, int Type)
 // Callback for Slot 2
 void DynamicMenuCallback1( char *MenuName,int MenuId, int Type)
 {
-	PrintLogC("DynamicMenuCallback1 %4d %d '%s'\n",MenuId,Type,MenuName);
 	if (MenuId==0)
 	{
 		MenuCount[1]=0;
@@ -855,7 +873,6 @@ void DynamicMenuCallback1( char *MenuName,int MenuId, int Type)
 // Callback for Slot 3
 void DynamicMenuCallback2( char *MenuName,int MenuId, int Type)
 {
-	PrintLogC("DynamicMenuCallback2 %4d %d '%s'\n",MenuId,Type,MenuName);
 	if (MenuId==0)
 	{
 		MenuCount[2]=0;
@@ -877,7 +894,6 @@ void DynamicMenuCallback2( char *MenuName,int MenuId, int Type)
 // Callback for Slot 4
 void DynamicMenuCallback3( char *MenuName,int MenuId, int Type)
 {
-	PrintLogC("DynamicMenuCallback3 %4d %d '%s'\n",MenuId,Type,MenuName);
 	if (MenuId==0)
 	{
 		MenuCount[3]=0;

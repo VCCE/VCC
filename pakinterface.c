@@ -70,7 +70,7 @@ static unsigned int BankedCartOffset=0;
 static char DllPath[256]="";
 static unsigned short ModualParms=0;
 static HINSTANCE hinstLib;
-static bool DialogOpen=false;
+//static bool DialogOpen=false;
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 typedef void (*GETNAME)(char *,char *,DYNAMICMENUCALLBACK);
 typedef void (*CONFIGIT)(unsigned char);
@@ -114,10 +114,10 @@ typedef struct {
 } Dmenu;
 
 static Dmenu MenuItem[100];
-static unsigned char MenuIndex=0;
+static unsigned char MenuCount=0;
 
 static HMENU hVccMenu = NULL;
-static HMENU hSubMenu[64] = {NULL};
+//static HMENU hSubMenu[64] = {NULL};
 static bool CartMenuCreated = false;
 
 static 	char Modname[MAX_PATH]="Blank";
@@ -237,14 +237,14 @@ int LoadCart(void)
 			WritePrivateProfileString("DefaultPaths", "PakPath", PakPath, temp);
 			return(0);
 		}
-
 	return(1);
 }
 
+// Insert Module returns 0 on success
 int InsertModule (char *ModulePath)
 {
 
-//	char Modname[MAX_LOADSTRING]="Blank";
+	//	char Modname[MAX_LOADSTRING]="Blank";
 	char CatNumber[MAX_LOADSTRING]="";
 	char Temp[MAX_LOADSTRING]="";
 	char String[1024]="";
@@ -252,7 +252,6 @@ int InsertModule (char *ModulePath)
 	unsigned char FileType=0;
 
 	FileType=FileID(ModulePath);
-	PrintLogC("InsertModule type %d '%s'\n",FileType, ModulePath);
 
 	switch (FileType)
 	{
@@ -275,8 +274,7 @@ int InsertModule (char *ModulePath)
 	break;
 
 	case 1:		//File is a DLL
-		PrintLogC("InsertModule DLL '%s' %d\n",ModulePath,hinstLib);
-		if (hinstLib != NULL)
+//		if (hinstLib != NULL)
 			UnloadDll();
 		hinstLib = LoadLibrary(ModulePath);
 		if (hinstLib == NULL)
@@ -382,6 +380,8 @@ int InsertModule (char *ModulePath)
 		}
 		strcpy(DllPath,ModulePath);
 		EmuState.ResetPending=2;
+
+		//PrintLogC("InsertModule '%s' %d %06x\n",Modname,hinstLib,ConfigModule);
 		return(0);
 		break;
 	}
@@ -431,12 +431,7 @@ int load_ext_rom(char filename[MAX_PATH])
 
 void UnloadDll(void)
 {
-	//ResetBus();
-	if ((DialogOpen==true) & (EmuState.EmulationRunning==1))
-	{
-		MessageBox(0,"Close Configuration Dialog before unloading","Ok",0);
-		return;
-	}
+	//PrintLogC("UnloadDLL %d\n",hinstLib);
 	GetModuleName=NULL;
 	ConfigModule=NULL;
 	PakPortWrite=NULL;
@@ -449,8 +444,7 @@ void UnloadDll(void)
 	ModuleStatus=NULL;
 	ModuleAudioSample=NULL;
 	ModuleReset=NULL;
-	if (hinstLib !=NULL)
-		FreeLibrary(hinstLib);
+	FreeLibrary(hinstLib);
 	hinstLib=NULL;
 	DynamicMenuCallback( "",0, 0); //Refresh Menus
 	DynamicMenuCallback( "",1, 0);
@@ -507,11 +501,17 @@ int FileID(char *Filename)
 	return(2);		//Rom Image
 }
 
-
-//  5000 is subtracted from MenuId to get the MenuItem
-void DynamicMenuActivated(unsigned char MenuItem)
+// DynamicMenuActivated is called from VCC main when a dynamic menu item is clicked. 
+// The wmId for dynamic menu items is in the range 5000 thru 5100 which was choosen
+// to be outside the range for normal resource identifiers.  Vcc manin subtractes 5000
+// from the wmId to get the MenuID.
+//
+// There is a unknown condition that often causes a Vcc crash if the mpi.dll is replaced
+// with another module and then a dynamic menu item is clicked.
+//
+void DynamicMenuActivated(unsigned char MenuID)
 {
-	switch (MenuItem)
+	switch (MenuID)
 	{
 	case 1:
 		LoadPack();
@@ -520,8 +520,9 @@ void DynamicMenuActivated(unsigned char MenuItem)
 		UnloadPack();
 		break;
 	default:
-		if (ConfigModule !=NULL)
-			ConfigModule(MenuItem);
+		if (ConfigModule !=NULL) {
+			ConfigModule(MenuID);
+		}
 		break;
 	}
 	return;
@@ -531,17 +532,15 @@ void DynamicMenuActivated(unsigned char MenuItem)
 // MenuItem is an array of 100 menu items.
 // 	0 is the initial item (Cartridge)
 // 	1 is used to indicate refresh
-//  Vcc subtractes 5000 from MenuId to get the MenuItemNumber
+// 	Other than 0 and 1 MenuId is in range 5000 - 5099 for config items
 
 void DynamicMenuCallback(const char *MenuName, int MenuId, int Type)
 {
-	PrintLogC("DynamicMenuCallback  %4d %d '%s'\n",MenuId,Type,MenuName);
-
 	switch (MenuId) {
 
 		// Menu 0 load or eject cart
 		case 0: {
-			MenuIndex=0;
+			MenuCount=0;
 			DynamicMenuCallback( "Cartridge",6000,HEAD);
 			DynamicMenuCallback( "Load Cart",5001,SLAVE);
 			char Temp[256];
@@ -558,10 +557,10 @@ void DynamicMenuCallback(const char *MenuName, int MenuId, int Type)
 
 		// All others are stacked in MenuItem[]
 		default:
-			strcpy(MenuItem[MenuIndex].MenuName,MenuName);
-			MenuItem[MenuIndex].MenuId=MenuId;
-			MenuItem[MenuIndex].Type=Type;
-			MenuIndex++;
+			strcpy(MenuItem[MenuCount].MenuName,MenuName);
+			MenuItem[MenuCount].MenuId=MenuId;
+			MenuItem[MenuCount].Type=Type;
+			MenuCount++;
 		break;
 	}
 	return;
@@ -570,10 +569,7 @@ void DynamicMenuCallback(const char *MenuName, int MenuId, int Type)
 // Create dynamic menu items. This gets called by DynamicMenuCallback for each menuitem
 HMENU RefreshDynamicMenu(void)
 {
-	MENUITEMINFO	Mii;
-	unsigned char TempIndex=0;
-	unsigned char Index=0;
-	int SubMenuIndex=0;
+	HMENU hMenu0, hMenu;
 
 	// Only create main window popup once
 	static HWND hOld;
@@ -584,90 +580,69 @@ HMENU RefreshDynamicMenu(void)
 	hOld = EmuState.WindowHandle;
 
 	// Create first sub menu item
-	hSubMenu[SubMenuIndex] = CreatePopupMenu();
+	hMenu = CreatePopupMenu();
+	hMenu0 = hMenu;
+
+	MENUITEMINFO Mii;
+	memset(&Mii,0,sizeof(MENUITEMINFO));
 
 	// Set title menu item id. "Cartridge" is 4999
 	char MenuTitle[32]="Cartridge";
-	memset(&Mii,0,sizeof(MENUITEMINFO));
+
 	Mii.cbSize= sizeof(MENUITEMINFO);
 	Mii.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;  // setting the submenu id
 	Mii.fType = MFT_STRING;                          // Type is a string
 	Mii.wID = 4999;
-	Mii.hSubMenu = hSubMenu[SubMenuIndex];
+	Mii.hSubMenu = hMenu;
 	Mii.dwTypeData = MenuTitle;
-	Mii.cch=strlen(MenuTitle);
+	Mii.cch = strlen(MenuTitle);
 	InsertMenuItem(hVccMenu,3,TRUE,&Mii);
 
 	// Next menu item
-	SubMenuIndex++;
-	for (TempIndex=0;TempIndex<MenuIndex;TempIndex++)
-	{
-		if (strlen(MenuItem[TempIndex].MenuName) ==0)
-			MenuItem[TempIndex].Type=STANDALONE;
+	for (int ndx=0;ndx<MenuCount;ndx++) {
+		if (strlen(MenuItem[ndx].MenuName) == 0)
+			MenuItem[ndx].Type=STANDALONE;
 
 		//Create Menu item in title bar if no exist already
-		switch (MenuItem[TempIndex].Type)
+		switch (MenuItem[ndx].Type)
 		{
 		case HEAD:
-				SubMenuIndex++;
-				hSubMenu[SubMenuIndex]=CreatePopupMenu();
-				memset(&Mii,0,sizeof(MENUITEMINFO));
-				Mii.cbSize= sizeof(MENUITEMINFO);
-				Mii.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;
-				Mii.fType = MFT_STRING;
-				Mii.wID = MenuItem[TempIndex].MenuId;
-				Mii.hSubMenu =hSubMenu[SubMenuIndex];
-				Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-				Mii.cch=strlen(MenuItem[TempIndex].MenuName);
-				InsertMenuItem(hSubMenu[0],0,FALSE,&Mii);
-
+			hMenu = CreatePopupMenu();
+			Mii.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;
+			Mii.fType = MFT_STRING;
+			Mii.wID = MenuItem[ndx].MenuId;
+			Mii.hSubMenu = hMenu;
+			Mii.dwTypeData = MenuItem[ndx].MenuName;
+			Mii.cch=strlen(MenuItem[ndx].MenuName);
+			InsertMenuItem(hMenu0,0,FALSE,&Mii);
 			break;
-
 		case SLAVE:
-				memset(&Mii,0,sizeof(MENUITEMINFO));
-				Mii.cbSize= sizeof(MENUITEMINFO);
-				Mii.fMask = MIIM_TYPE |  MIIM_ID;
-				Mii.fType = MFT_STRING;
-				Mii.wID = MenuItem[TempIndex].MenuId;
-				Mii.hSubMenu = hSubMenu[SubMenuIndex];
-				Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-				Mii.cch=strlen(MenuItem[TempIndex].MenuName);
-				InsertMenuItem(hSubMenu[SubMenuIndex],0,FALSE,&Mii);
-		break;
-
+			Mii.fMask = MIIM_TYPE |  MIIM_ID;
+			Mii.fType = MFT_STRING;
+			Mii.wID = MenuItem[ndx].MenuId;
+			Mii.hSubMenu = hMenu;
+			Mii.dwTypeData = MenuItem[ndx].MenuName;
+			Mii.cch=strlen(MenuItem[ndx].MenuName);
+			InsertMenuItem(hMenu,0,FALSE,&Mii);
+			break;
 		case STANDALONE:
-			if (strlen(MenuItem[TempIndex].MenuName) == 0)
-			{
-				memset(&Mii,0,sizeof(MENUITEMINFO));
-				Mii.cbSize= sizeof(MENUITEMINFO);
-				Mii.fMask = MIIM_TYPE |  MIIM_ID;
+			Mii.fMask = MIIM_TYPE |  MIIM_ID;
+			Mii.wID = MenuItem[ndx].MenuId;
+			Mii.hSubMenu = hVccMenu;
+			Mii.dwTypeData = MenuItem[ndx].MenuName;
+			Mii.cch=strlen(MenuItem[ndx].MenuName);
+			if (strlen(MenuItem[ndx].MenuName) == 0) {
 				Mii.fType = MF_SEPARATOR;
-			//	Mii.fType = MF_MENUBARBREAK;
-			//	Mii.fType = MFT_STRING;
-				Mii.wID = MenuItem[TempIndex].MenuId;
-				Mii.hSubMenu = hVccMenu;
-				Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-				Mii.cch=strlen(MenuItem[TempIndex].MenuName);
-				InsertMenuItem(hSubMenu[0],0,FALSE,&Mii);
-			}
-			else
-			{
-				memset(&Mii,0,sizeof(MENUITEMINFO));
-				Mii.cbSize= sizeof(MENUITEMINFO);
-				Mii.fMask = MIIM_TYPE |  MIIM_ID;
+			} else {
 				Mii.fType = MFT_STRING;
-				Mii.wID = MenuItem[TempIndex].MenuId;
-				Mii.hSubMenu = hVccMenu;
-				Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-				Mii.cch=strlen(MenuItem[TempIndex].MenuName);
-				InsertMenuItem(hSubMenu[0],0,FALSE,&Mii);
 			}
-		break;
+			InsertMenuItem(hMenu0,0,FALSE,&Mii);
+			break;
 		}
 	}
 
 	// Redraw VCC main menu
 	DrawMenuBar(EmuState.WindowHandle);
-	return hSubMenu[0];
+	return hMenu0;
 }
 
