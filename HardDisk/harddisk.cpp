@@ -69,9 +69,9 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL,  // handle to DLL module
                      LPVOID lpReserved )  // reserved
 {
     if (fdwReason == DLL_PROCESS_DETACH ) {
+        SendMessage(hConfDlg,WM_CLOSE,0,0);
         UnmountHD(0);
         UnmountHD(1);
-        if (hConfDlg) DestroyWindow(hConfDlg);
     } else {
         g_hinstDLL=hinstDLL;
     }
@@ -158,12 +158,26 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_CLOSE:
+        EndDialog(hDlg,LOWORD(wParam));
+        DestroyWindow(hDlg);
+        return TRUE;
+        break;
+
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        hConfDlg=NULL;
+        return TRUE;
+        break;
+
     case WM_INITDIALOG:
         hConfDlg=hDlg;
-		CenterDialog(hDlg);
+        CenterDialog(hDlg);
         SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnabled,0);
         SendDlgItemMessage(hDlg,IDC_READONLY,BM_SETCHECK,ClockReadOnly,0);
         EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), TRUE);
+        return TRUE;
+        break;
 
     case WM_COMMAND:
         switch (LOWORD(wParam))
@@ -186,12 +200,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 /*
 // This captures the Fuction transfer point for the CPU assert interupt
-//
-// NOTE: Vcc currently is not doing interupts after DMA transfers!
-//       This only works because it is single threaded which causes 6x09
-//       emulation to halt until transfers complete. Real hardware differs.
-//
-// TODO: Asyncronous Disk I/O
+// NOTE: Vcc does not do interupts after DMA transfers
 //
 
 extern "C"
@@ -248,6 +257,7 @@ extern "C"
     {
         MemRead8  = Temp1;
         MemWrite8 = Temp2;
+        VhdReset(); // Selects drive zero
         return;
     }
 }
@@ -295,15 +305,15 @@ extern "C"
     }
 }
 
-extern "C"
-{
-    __declspec(dllexport) unsigned char
-    ModuleReset(void)
-    {
-        VhdReset();
-        return 0;
-    }
-}
+//extern "C"
+//{
+//    __declspec(dllexport) unsigned char
+//    ModuleReset(void)
+//    {
+//        VhdReset();
+//        return 0;
+//    }
+//}
 
 /*
 void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
@@ -443,8 +453,8 @@ void SaveConfig(void)
     }
     WritePrivateProfileString(ModName,"VHDImage",VHDfile0 ,IniFile);
     WritePrivateProfileString(ModName,"VHDImage1",VHDfile1 ,IniFile);
-	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
-	WritePrivateProfileInt(ModName,"ClkRdOnly",ClockReadOnly ,IniFile);
+    WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
+    WritePrivateProfileInt(ModName,"ClkRdOnly",ClockReadOnly ,IniFile);
     return;
 }
 
@@ -473,7 +483,7 @@ void BuildDynaMenu(void)
     strcat(TempMsg,TempBuf);
     DynamicMenuCallback(TempMsg,5013,SLAVE);
 
-	DynamicMenuCallback( "HD Config",5014,STANDALONE);
+    DynamicMenuCallback( "HD Config",5014,STANDALONE);
 
     DynamicMenuCallback("",1,0);
 }

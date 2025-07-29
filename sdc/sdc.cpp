@@ -311,7 +311,7 @@ static HINSTANCE hinstDLL;
 static int ClockEnable;
 
 // Windows file lookup handle and data
-static HANDLE hFind = NULL;
+static HANDLE hFind = INVALID_HANDLE_VALUE;
 static WIN32_FIND_DATAA dFound;
 
 // config control handles
@@ -459,14 +459,11 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
         hinstDLL = hinst;
 
     } else if (reason == DLL_PROCESS_DETACH) {
+		if (hControlDlg) SendMessage(hControlDlg,WM_CLOSE,0,0);
+        if (hConfigureDlg) SendMessage(hConfigureDlg,WM_CLOSE,0,0);
         CloseDrive(0);
         CloseDrive(1);
-        if (hControlDlg) {
-            DestroyWindow(hControlDlg);
-            hControlDlg = NULL;
-        }
     }
-
     return TRUE;
 }
 
@@ -503,24 +500,31 @@ SDC_Control(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message) {
     case WM_CLOSE:
-        EndDialog(hDlg,LOWORD(wParam));
-        hControlDlg=NULL;
+		DestroyWindow(hDlg);
+		return TRUE;
         break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		hControlDlg=NULL;
+		return TRUE;
+		break;
     case WM_INITDIALOG:
         CenterDialog(hDlg);
         hControlDlg=hDlg;
         update_disk0_box();
         SetFocus(GetDlgItem(hDlg,ID_NEXT));
+		return TRUE;
         break;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case ID_NEXT:
             MountNext (0);
             SetFocus(GetParent(hDlg));
+		    return TRUE;
             break;
         }
     }
-    return 0;
+    return FALSE;
 }
 
 //------------------------------------------------------------
@@ -531,8 +535,14 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message) {
     case WM_CLOSE:
-        EndDialog(hDlg,LOWORD(wParam));
+		DestroyWindow(hDlg);
+		return TRUE;
         break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		hConfigureDlg=NULL;
+		return TRUE;
+		break;
     case WM_INITDIALOG:
         CenterDialog(hDlg);
         hConfigureDlg=hDlg;
@@ -664,7 +674,7 @@ void SDCInit(void)
 #endif
 
     // Init the hFind handle (otherwise could crash on dll load)
-    hFind = NULL;
+    hFind = INVALID_HANDLE_VALUE;
 
     // Make sure drives are unloaded
     MountDisk (0,"",0);
