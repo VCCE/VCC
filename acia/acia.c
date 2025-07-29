@@ -39,6 +39,7 @@ void BuildDynaMenu(void);
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig(void);
 void SaveConfig(void);
+void CenterDialog(HWND);
 
 //------------------------------------------------------------------------
 // Globals
@@ -72,8 +73,7 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
         LoadExtRom("RS232.ROM");
 
     } else if (reason == DLL_PROCESS_DETACH) {
-        if (g_hDlg) DestroyWindow(g_hDlg);
-        g_hDlg = NULL;
+        if (g_hDlg) SendMessage(g_hDlg,WM_CLOSE,0,0);
         sc6551_close();
         AciaStat[0]='\0';
     }
@@ -299,7 +299,14 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
     switch (msg) {
 
     case WM_CLOSE:
-        EndDialog(hDlg,0);
+        DestroyWindow(hDlg);
+        return TRUE;
+        break;
+
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        g_hDlg = NULL;
+        return TRUE;
         break;
 
     case WM_INITDIALOG:
@@ -308,7 +315,7 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
         DestroyWindow(g_hDlg);
         g_hDlg = hDlg;
 
-        SetWindowPos(hDlg, HWND_TOP, 10, 10, 0, 0, SWP_NOSIZE);
+        CenterDialog(hDlg);
 
         // Set Button as per Base Port
         switch (AciaBasePort) {
@@ -502,6 +509,19 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
         return TRUE;
     }
     return FALSE;
+}
+
+//------------------------------------------------------------
+// Center a dialog box in parent window
+//------------------------------------------------------------
+void CenterDialog(HWND hDlg)
+{
+    RECT rPar, rDlg;
+    GetWindowRect(GetParent(hDlg), &rPar);
+    GetWindowRect(hDlg, &rDlg);
+    int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
+    int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
+    SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 //----------------------------------------------------------------

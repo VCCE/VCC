@@ -69,7 +69,7 @@ extern SystemState EmuState;
 static unsigned int BankedCartOffset=0;
 static char DllPath[256]="";
 static unsigned short ModualParms=0;
-static HINSTANCE hinstLib;
+static HINSTANCE hinstLib = NULL;
 //static bool DialogOpen=false;
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 typedef void (*GETNAME)(char *,char *,DYNAMICMENUCALLBACK);
@@ -274,9 +274,10 @@ int InsertModule (char *ModulePath)
 	break;
 
 	case 1:		//File is a DLL
-//		if (hinstLib != NULL)
-			UnloadDll();
+		UnloadDll();
+		hinstLib=0;
 		hinstLib = LoadLibrary(ModulePath);
+		//PrintLogC("pak:LoadLibrary %s %d\n",ModulePath,hinstLib);
 		if (hinstLib == NULL)
 			return(NOMODULE);
 		SetCart(0);
@@ -296,7 +297,8 @@ int InsertModule (char *ModulePath)
 		PakSetCart=(SETCARTPOINTER) GetProcAddress(hinstLib,"SetCart");
 		if (GetModuleName == NULL)
 		{
-			FreeLibrary(hinstLib);
+			int rc = FreeLibrary(hinstLib);
+			//PrintLogC("pak:err FreeLibrary %d %d\n",hinstLib,rc);
 			hinstLib=NULL;
 			return(NOTVCC);
 		}
@@ -381,7 +383,6 @@ int InsertModule (char *ModulePath)
 		strcpy(DllPath,ModulePath);
 		EmuState.ResetPending=2;
 
-		//PrintLogC("InsertModule '%s' %d %06x\n",Modname,hinstLib,ConfigModule);
 		return(0);
 		break;
 	}
@@ -431,7 +432,6 @@ int load_ext_rom(char filename[MAX_PATH])
 
 void UnloadDll(void)
 {
-	//PrintLogC("UnloadDLL %d\n",hinstLib);
 	GetModuleName=NULL;
 	ConfigModule=NULL;
 	PakPortWrite=NULL;
@@ -444,11 +444,11 @@ void UnloadDll(void)
 	ModuleStatus=NULL;
 	ModuleAudioSample=NULL;
 	ModuleReset=NULL;
-	FreeLibrary(hinstLib);
+	int rc = FreeLibrary(hinstLib);
+	//PrintLogC("pak:UnloadDll FreeLibrary %d %d\n",hinstLib,rc);
 	hinstLib=NULL;
 	DynamicMenuCallback( "",0, 0); //Refresh Menus
 	DynamicMenuCallback( "",1, 0);
-//	DynamicMenuCallback("",0,0);
 	return;
 }
 
@@ -506,9 +506,6 @@ int FileID(char *Filename)
 // to be outside the range for normal resource identifiers.  Vcc manin subtractes 5000
 // from the wmId to get the MenuID.
 //
-// There is a unknown condition that often causes a Vcc crash if the mpi.dll is replaced
-// with another module and then a dynamic menu item is clicked.
-//
 void DynamicMenuActivated(unsigned char MenuID)
 {
 	switch (MenuID)
@@ -538,29 +535,33 @@ void DynamicMenuCallback(const char *MenuName, int MenuId, int Type)
 {
 	switch (MenuId) {
 
-		// Menu 0 load or eject cart
-		case 0: {
+	// Menu 0 load or eject cart. Force eject before load.
+	case 0:
+		{
 			MenuCount=0;
 			DynamicMenuCallback( "Cartridge",6000,HEAD);
-			DynamicMenuCallback( "Load Cart",5001,SLAVE);
-			char Temp[256];
-			sprintf(Temp,"Eject Cart: ");
-			strcat(Temp,Modname);
-			DynamicMenuCallback(Temp,5002,SLAVE);
+			if (hinstLib) {
+				char Temp[256];
+				sprintf(Temp,"Eject ");
+				strcat(Temp, Modname);
+				DynamicMenuCallback(Temp,5002,SLAVE);
+			} else {
+				DynamicMenuCallback("Load Cart",5001,SLAVE);
+			}
 		}
 		break;
 
-		// Menu 1 refresh - Recreate all menu items
-		case 1:
-			RefreshDynamicMenu();
+	// Menu 1 refresh - Recreate all menu items
+	case 1:
+		RefreshDynamicMenu();
 		break;
 
-		// All others are stacked in MenuItem[]
-		default:
-			strcpy(MenuItem[MenuCount].MenuName,MenuName);
-			MenuItem[MenuCount].MenuId=MenuId;
-			MenuItem[MenuCount].Type=Type;
-			MenuCount++;
+	// All others are stacked in MenuItem[]
+	default:
+		strcpy(MenuItem[MenuCount].MenuName,MenuName);
+		MenuItem[MenuCount].MenuId=MenuId;
+		MenuItem[MenuCount].Type=Type;
+		MenuCount++;
 		break;
 	}
 	return;
