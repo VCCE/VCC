@@ -249,6 +249,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Fileops.c" />
+    <ClCompile Include="..\logger.c" />
     <ClCompile Include="mpi.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -255,16 +255,16 @@ typedef struct {
     char *bufptr;
     char blkbuf[600];
 } Interface;
-Interface IF;
+static Interface IF;
 
 // Cart ROM
 char PakRom[0x4000];
 
 // Host paths for SDC
-char IniFile[MAX_PATH] = {};  // Vcc ini file name
-char SDCard[MAX_PATH]  = {};  // SD card root directory
-char CurDir[256]       = {};  // SDC current directory
-char SeaDir[MAX_PATH]  = {};  // Last directory searched
+static char IniFile[MAX_PATH] = {};  // Vcc ini file name
+static char SDCard[MAX_PATH]  = {};  // SD card root directory
+static char CurDir[256]       = {};  // SDC current directory
+static char SeaDir[MAX_PATH]  = {};  // Last directory searched
 
 // Packed file records for interface
 #pragma pack(1)
@@ -278,7 +278,7 @@ struct FileRecord {
     char lolo_size;
 };
 #pragma pack()
-struct FileRecord DirPage[16];
+static struct FileRecord DirPage[16];
 
 // Mounted image data
 struct _Disk {
@@ -294,25 +294,25 @@ struct _Disk {
 } Disk[2];
 
 // Flash banks
-char FlashFile[8][MAX_PATH];
-FILE *h_RomFile = NULL;
-unsigned char StartupBank = 0;
-unsigned char CurrentBank = 0xff;
-unsigned char EnableBankWrite = 0;
-unsigned char BankWriteNum = 0;
-unsigned char BankWriteState = 0;
-unsigned char BankDirty = 0;
-unsigned char BankData = 0;
+static char FlashFile[8][MAX_PATH];
+static FILE *h_RomFile = NULL;
+static unsigned char StartupBank = 0;
+static unsigned char CurrentBank = 0xff;
+static unsigned char EnableBankWrite = 0;
+static unsigned char BankWriteNum = 0;
+static unsigned char BankWriteState = 0;
+static unsigned char BankDirty = 0;
+static unsigned char BankData = 0;
 
 // Dll handle
 static HINSTANCE hinstDLL;
 
 // Clock enable IDC_CLOCK
-int ClockEnable;
+static int ClockEnable;
 
 // Windows file lookup handle and data
-HANDLE hFind;
-WIN32_FIND_DATAA dFound;
+static HANDLE hFind = INVALID_HANDLE_VALUE;
+static WIN32_FIND_DATAA dFound;
 
 // config control handles
 static HWND hControlDlg = NULL;
@@ -322,22 +322,21 @@ static HWND hSDCardBox = NULL;
 static HWND hStartupBank = NULL;
 
 // Streaming control
-int streaming;
-unsigned char stream_cmdcode;
-unsigned int stream_lsn;
+static int streaming;
+static unsigned char stream_cmdcode;
+static unsigned int stream_lsn;
 
-char Status[16] = {};
-bool StartupComplete = false;
+static char Status[16] = {};
 
 // Floppy I/O
-char FlopDrive = 0;
-char FlopTrack = 0;
-char FlopSector = 0;
-char FlopStatus = 0;
-DWORD FlopWrCnt = 0;
-DWORD FlopRdCnt = 0;
-char FlopWrBuf[256];
-char FlopRdBuf[256];
+static char FlopDrive = 0;
+static char FlopTrack = 0;
+static char FlopSector = 0;
+static char FlopStatus = 0;
+static DWORD FlopWrCnt = 0;
+static DWORD FlopRdCnt = 0;
+static char FlopWrBuf[256];
+static char FlopRdBuf[256];
 
 //======================================================================
 // DLL exports
@@ -458,17 +457,13 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 {
     if (reason == DLL_PROCESS_ATTACH) {
         hinstDLL = hinst;
-        StartupComplete = false;
 
     } else if (reason == DLL_PROCESS_DETACH) {
+		if (hControlDlg) SendMessage(hControlDlg,WM_CLOSE,0,0);
+        if (hConfigureDlg) SendMessage(hConfigureDlg,WM_CLOSE,0,0);
         CloseDrive(0);
         CloseDrive(1);
-        if (hControlDlg) {
-            DestroyWindow(hControlDlg);
-            hControlDlg = NULL;
-        }
     }
-
     return TRUE;
 }
 
@@ -505,24 +500,31 @@ SDC_Control(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message) {
     case WM_CLOSE:
-        EndDialog(hDlg,LOWORD(wParam));
-        hControlDlg=NULL;
+		DestroyWindow(hDlg);
+		return TRUE;
         break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		hControlDlg=NULL;
+		return TRUE;
+		break;
     case WM_INITDIALOG:
         CenterDialog(hDlg);
         hControlDlg=hDlg;
         update_disk0_box();
         SetFocus(GetDlgItem(hDlg,ID_NEXT));
+		return TRUE;
         break;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case ID_NEXT:
             MountNext (0);
             SetFocus(GetParent(hDlg));
+		    return TRUE;
             break;
         }
     }
-    return 0;
+    return FALSE;
 }
 
 //------------------------------------------------------------
@@ -533,8 +535,14 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message) {
     case WM_CLOSE:
-        EndDialog(hDlg,LOWORD(wParam));
+		DestroyWindow(hDlg);
+		return TRUE;
         break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		hConfigureDlg=NULL;
+		return TRUE;
+		break;
     case WM_INITDIALOG:
         CenterDialog(hDlg);
         hConfigureDlg=hDlg;
@@ -664,6 +672,9 @@ void SDCInit(void)
     _DLOG("\nSDCInit\n");
     MoveWindow(GetConsoleWindow(),0,0,300,800,TRUE);
 #endif
+
+    // Init the hFind handle (otherwise could crash on dll load)
+    hFind = INVALID_HANDLE_VALUE;
 
     // Make sure drives are unloaded
     MountDisk (0,"",0);

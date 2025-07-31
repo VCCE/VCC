@@ -94,9 +94,9 @@ BOOL WINAPI DllMain(
 {
 	if (fdwReason == DLL_PROCESS_DETACH ) //Clean Up
 	{
+		SendMessage(g_hConfDlg,WM_CLOSE,0,0);
 		for (unsigned char Drive=0;Drive<=3;Drive++)
 			unmount_disk_image(Drive);
-		if (g_hConfDlg) DestroyWindow(g_hConfDlg);
 	}
 	else
 	{
@@ -149,7 +149,8 @@ extern "C"
 				SaveConfig();
 				break;
 			case 16:
-				CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,h_own,(DLGPROC)Config);
+				if (g_hConfDlg == NULL)
+					CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,h_own,(DLGPROC)Config);
 				ShowWindow(g_hConfDlg,1);
 				break;
 			case 17:
@@ -271,10 +272,21 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	char VirtualNames[5][16]={"None","Drive 0","Drive 1","Drive 2","Drive 3"};
 	OPENFILENAME ofn ;	
 
-    g_hConfDlg = hDlg;
 	switch (message)
 	{
+		case WM_CLOSE:
+			DestroyWindow(hDlg);
+			return TRUE;
+			break;
+
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			g_hConfDlg = NULL;
+			return TRUE;
+			break;
+
 		case WM_INITDIALOG:
+			g_hConfDlg = hDlg;
 			CenterDialog(hDlg);
 			TempSelectRom=SelectRom;
 			if (!RealDisks)
