@@ -163,6 +163,121 @@ void MC6809SetTraceTriggers(const std::vector<unsigned short>& triggers)
 	CPUTraceTriggers = triggers;
 }
 
+
+// This function performs a read from a register index specified in a
+// TFR or EXG instruction. This function only returns the correct value
+// for EXG instructions when the first register in the exchange (MSN) is
+// an 8 bit register. The value is returned as a 16 bit value for all
+// registers based on the behavior of the 6809 CPU as follows:
+//
+//	* All 16 bit registers return their respective values.
+//	* ACCA and ACCB return their values with the MSB set to 0xFF.
+//	* Condition Code (CC) and Data Pointer (DP) return their values in
+//    both the MSG and LSB.
+//  * Invalid register encodings return a constant value of 0xFFFF.
+//
+static uint16_t MC6809ReadTfrExgRegister(uint8_t reg)
+{
+	uint16_t result;
+
+	switch (reg & 0x0F)
+	{
+	case  0:	// D
+	case  1:	// X
+	case  2:	// Y
+	case  3:	// U
+	case  4:	// S
+	case  5:	// PC
+		result = *xfreg16[reg];
+		break;
+
+	case  8:	// A
+	case  9:	// B
+		result = 0xff00 | *ureg8[reg & 7];
+		break;
+
+	case 10:	// CC
+	case 11:	// DP
+		result = ((uint16_t)*ureg8[reg & 7]) << 8 | *ureg8[reg & 7];
+		break;  
+
+	default:
+		result = 0xffff;
+		break;
+	}
+
+	return result;
+}
+
+// This function performs a read from a register index specified in an
+// EXG instruction when the first register in the exchange (MSN) is
+// a 16 bit register. The value is returned as a 16 bit value for all
+// registers based on the behavior of the 6809 CPU as follows:
+//
+//	* All 16 bit registers return their respective values.
+//	* All 8 bit registers return respective value with the MSB set to 0xFF.
+//  * Invalid register encodings return a constant value of 0xFFFF.
+//
+static uint16_t MC6809ReadExgRegister(uint8_t reg)
+{
+	uint16_t result;
+
+	switch (reg & 0x0F)
+	{
+	case  0:	// D
+	case  1:	// X
+	case  2:	// Y
+	case  3:	// U
+	case  4:	// S
+	case  5:	// PC
+		result = *xfreg16[reg];
+		break;
+
+	case  8:	// A
+	case  9:	// B
+	case 10:	// CC
+	case 11:	// DP
+		result = 0xff00 | *ureg8[reg & 7];
+		break;
+
+	default:
+		result = 0xffff;
+		break;
+	}
+
+	return result;
+}
+
+// This function performs a write to a register index specified in a
+// TFR or EXG instruction.
+static void MC6809WriteTfrExgRegister(uint8_t reg, uint16_t value)
+{
+	switch(reg & 0x0F)
+	{
+	case  0:	// D
+	case  1:	// X
+	case  2:	// Y
+	case  3:	// U
+	case  4:	// S
+	case  5:	// PC
+		*xfreg16[reg] = value;
+		break;
+
+	case  8:	// A
+	case  9:	// B
+	case 10:	// CC
+	case 11:	// DP
+		*ureg8[reg & 7] = value & 0xff;
+		break;
+
+	default:
+		// Invalid register encoding, do nothing
+		break;
+	}
+}
+
+
+
 // Do instructions for CycleFor cycles. Return number cycles over.
 int MC6809Exec(int CycleFor)
 {
@@ -480,79 +595,65 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case EXG_M: //1E
-		postbyte=MemRead8(pc.Reg++);
-		ccbits=getcc();
-		if ( ((postbyte & 0x80)>>4)==(postbyte & 0x08)) //Verify like size registers
+		postbyte=MemRead8(pc.Reg);
+		++pc.Reg;
 		{
-			if (postbyte & 0x08) //8 bit EXG
+			ccbits=getcc();
+
+			// Get the indexes of the first and second registers.
+			const unsigned char first_register = postbyte >> 4;
+			const unsigned char second_register = postbyte & 0x0f;
+
+			// Exchange differs if 16 bit register or 8 bit register is first
+			uint16_t first_value;
+			uint16_t second_value;
+			if ((postbyte & 0x80) != 0)
 			{
-				temp8= (*ureg8[((postbyte & 0x70) >> 4)]);
-				(*ureg8[((postbyte & 0x70) >> 4)]) = (*ureg8[postbyte & 0x07]);
-				(*ureg8[postbyte & 0x07])=temp8;
+				// The first register is an 8 bit register which enables
+				// TFR/EXG behavior when reading 8 bit registers.
+				first_value = MC6809ReadTfrExgRegister(first_register);
+				second_value = MC6809ReadTfrExgRegister(second_register);
 			}
-			else // 16 bit EXG
+			else
 			{
-				uint16_t* src = xfreg16[((postbyte & 0x70) >> 4)];
-				uint16_t* dest = xfreg16[postbyte & 0x07];
-				// todo: find out which program triggers it
-				assert(src); 
-				assert(dest);
-				uint16_t srcValue = src ? *src : 0xFFFF;
-				uint16_t destValue = dest ? *dest : 0xFFFF;
-				if (src) *src = destValue;
-				if (dest) *dest = srcValue;
+				// The first register is a 16 bit register which has unique
+				// behavior when reading 8 bit registers.
+				first_value = MC6809ReadExgRegister(first_register);
+				second_value = MC6809ReadExgRegister(second_register);
 			}
+
+			MC6809WriteTfrExgRegister(second_register, first_value);
+			MC6809WriteTfrExgRegister(first_register, second_value);
+
+			setcc(ccbits);
 		}
-		setcc(ccbits);
+
 		CycleCounter+=8;
 		break;
 
 	case TFR_M: //1F
-		postbyte=MemRead8(pc.Reg++);
-		Source= postbyte>>4;
-		Dest=postbyte & 15;
-		switch (Dest)
+		postbyte = MemRead8(pc.Reg);
+		++pc.Reg;
 		{
-			case 0:
-			case 1:
-			case 2:
-			case 3:
-			case 4:
-			case 5:
-			case 6:
-			case 7:
-				*xfreg16[Dest]=0xFFFF;
-				if ((Source == 12) | (Source == 13))
-				{
-					*xfreg16[Dest] = 0;
-				}
-				else if (Source <= 7)
-				{
-					//make sure the source is valud
-					if (xfreg16[Source])
-					{
-						*xfreg16[Dest] = *xfreg16[Source];
-					}
-				}
-				break;
+			Source = postbyte >> 4; // Source register
+			Dest = postbyte & 15; // Destination register
 
-			case 8:
-			case 9:
-			case 10:
-			case 11:
-			case 14:
-			case 15:
-				ccbits=getcc();
-				*ureg8[Dest&7]=0xFF;
-				if ( (Source==12) | (Source==13) )
-					*ureg8[Dest&7]=0;
-				else
-					if (Source>7)
-						*ureg8[Dest&7]=*ureg8[Source&7];
-				setcc(ccbits);
+			// Refresh the CC register with the bits representation. This *MUST*
+			// be done before reading the source register as the bits are changed
+			// without updating the CC register itself.
+			ccbits = getcc();
+
+			// Move the register value from the source to the destination.
+			const uint16_t value = MC6809ReadTfrExgRegister(Source);
+			MC6809WriteTfrExgRegister(Dest, value);
+
+			// Update the CC register bits representation.
+			setcc(ccbits);
+
 			break;
 		}
-		CycleCounter+=6;
+
+		CycleCounter += 6;
 		break;
 
 	case BRA_R: //20
