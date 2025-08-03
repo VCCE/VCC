@@ -51,7 +51,6 @@ static unsigned int BankedCartOffset[NUMSLOTS]={0,0,0,0};
 static char IniFile[MAX_PATH]="";
 static char MPIPath[MAX_PATH];
 
-
 //**************************************************************
 //Array of fuction pointer for each Slot
 static void (*GetModuleNameCalls[NUMSLOTS])(char *,char *,DYNAMICMENUCALLBACK)={NULL,NULL,NULL,NULL};
@@ -404,12 +403,12 @@ LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 	case WM_INITDIALOG:
 		hConfDlg=hDlg;
 		CenterDialog(hDlg);
-		for (int slot=0;slot<NUMSLOTS;slot++) {
-			SendDlgItemMessage(hDlg,EDITBOXS[slot],WM_SETTEXT,0,(LPARAM)SlotLabel[slot]);
-			if (hinstLib[slot])
-				SendDlgItemMessage(hDlg,INSBOXS[slot],WM_SETTEXT,0,(LPARAM)"X");
+		for (int Slot=0;Slot<NUMSLOTS;Slot++) {
+			SendDlgItemMessage(hDlg,EDITBOXS[Slot],WM_SETTEXT,0,(LPARAM)SlotLabel[Slot]);
+			if ((strcmp(ModuleNames[Slot],"Empty") != 0) || hinstLib[Slot])
+				SendDlgItemMessage(hDlg,INSBOXS[Slot],WM_SETTEXT,0,(LPARAM)"X");
 			else
-				SendDlgItemMessage(hDlg,INSBOXS[slot],WM_SETTEXT,0,(LPARAM)">");
+				SendDlgItemMessage(hDlg,INSBOXS[Slot],WM_SETTEXT,0,(LPARAM)">");
 		}
 		UpdateSlotSelect(SwitchSlot);
 		return TRUE;
@@ -481,14 +480,14 @@ void UpdateSlotSelect(int slot)
 		PakSetCart(0);
 }
 
-void UpdateSlotContent(int slot)
+void UpdateSlotContent(int Slot)
 {
-	UpdateCartDLL(slot,ModulePaths[slot]);
-	SendDlgItemMessage(hConfDlg,EDITBOXS[slot],WM_SETTEXT,0,(LPARAM)SlotLabel[slot]);
-	if (hinstLib[slot])
-		SendDlgItemMessage(hConfDlg,INSBOXS[slot],WM_SETTEXT,0,(LPARAM)"X");
+	UpdateCartDLL(Slot,ModulePaths[Slot]);
+	SendDlgItemMessage(hConfDlg,EDITBOXS[Slot],WM_SETTEXT,0,(LPARAM)SlotLabel[Slot]);
+	if ((strcmp(ModuleNames[Slot],"Empty") != 0) || hinstLib[Slot])
+		SendDlgItemMessage(hConfDlg,INSBOXS[Slot],WM_SETTEXT,0,(LPARAM)"X");
 	else
-		SendDlgItemMessage(hConfDlg,INSBOXS[slot],WM_SETTEXT,0,(LPARAM)">");
+		SendDlgItemMessage(hConfDlg,INSBOXS[Slot],WM_SETTEXT,0,(LPARAM)">");
 	BuildDynaMenu();
 	return;
 }
@@ -641,7 +640,7 @@ void UpdateCartDLL(unsigned char Slot,char *DllPath)
 	OPENFILENAME ofn ;
 	unsigned char RetVal=0;
 
-	if (hinstLib[Slot] !=NULL) {
+	if ((strcmp(ModuleNames[Slot],"Empty") != 0) || hinstLib[Slot]) {
 		UnloadModule(Slot);
 	} else {
 		memset(&ofn,0,sizeof(ofn));

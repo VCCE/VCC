@@ -772,7 +772,7 @@ void UpdateFlashItem(void)
 
     OPENFILENAME ofn ;
     strncpy(filename,FlashFile[index],MAX_PATH);
-    // DeDanitize
+    // DeSanitize
     for(unsigned int i=0; i<strlen(filename); i++) {
         if (filename[i] == '/') filename[i] = '\\';
     }
