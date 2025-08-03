@@ -685,7 +685,6 @@ void Do_Opcode(int CycleFor)
 			// Move the register value from the source to the destination.
 			const uint16_t value = MC6809ReadTfrExgRegister(Source);
 			MC6809WriteTfrExgRegister(Dest, value);
-
 			break;
 		}
 
