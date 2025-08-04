@@ -52,7 +52,7 @@ END
 
 IDD_DIALOG1 DIALOGEX 0, 0, 300, 145
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Multi-Pak Interface 2.1.9.2"
+CAPTION "Multi-Pak Interface 2.1.9.3"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
 	GROUPBOX        "Slot 4",IDC_STATIC,  5, 0 +4,165,28, BS_CENTER
@@ -112,8 +112,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,1,8,2
- PRODUCTVERSION 2,1,8,2
+ FILEVERSION 2,1,8,3
+ PRODUCTVERSION 2,1,8,3
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x21L
@@ -131,12 +131,12 @@ BEGIN
             VALUE "Comments", "Tandy Multi-Pak Interface"
             VALUE "CompanyName", "BitRot Software"
             VALUE "FileDescription", "mpi"
-            VALUE "FileVersion", "2.1.8.2"
+            VALUE "FileVersion", "2.1.8.3"
             VALUE "InternalName", "MultiPak Interface"
             VALUE "LegalCopyright", "Copyright © 2007"
             VALUE "OriginalFilename", "mpi.dll"
             VALUE "ProductName", "mpi"
-            VALUE "ProductVersion", "2.1.8.2"
+            VALUE "ProductVersion", "2.1.8.3"
             VALUE "SpecialBuild", "Tandy Multi-Pak Interface"
         END
     END
