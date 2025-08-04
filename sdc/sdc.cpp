@@ -176,10 +176,10 @@ void BuildDynaMenu(void);
 void CenterDialog(HWND);
 void SelectCardBox(void);
 void update_disk0_box(void);
-void UpdateFlashItem(void);
-void DeleteFlashItem(void);
+void UpdateFlashItem(int);
+void ModifyFlashItem(int);
 void InitCardBox(void);
-void InitFlashBox(void);
+void InitEditBoxes(void);
 void ParseStartup(void);
 void SDCCommand(void);
 void ReadSector(void);
@@ -317,7 +317,7 @@ static WIN32_FIND_DATAA dFound;
 // config control handles
 static HWND hControlDlg = NULL;
 static HWND hConfigureDlg = NULL;
-static HWND hFlashBox = NULL;
+//static HWND hFlashBox = NULL;
 static HWND hSDCardBox = NULL;
 static HWND hStartupBank = NULL;
 
@@ -338,6 +338,10 @@ static DWORD FlopRdCnt = 0;
 static char FlopWrBuf[256];
 static char FlopRdBuf[256];
 
+static int EDBOXES[8] = {ID_TEXT0,ID_TEXT1,ID_TEXT2,ID_TEXT3,
+                         ID_TEXT4,ID_TEXT5,ID_TEXT6,ID_TEXT7};
+static int UPDBTNS[8] = {ID_UPDATE0,ID_UPDATE1,ID_UPDATE2,ID_UPDATE3,
+                         ID_UPDATE4,ID_UPDATE5,ID_UPDATE6,ID_UPDATE7};
 //======================================================================
 // DLL exports
 //======================================================================
@@ -547,7 +551,7 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         CenterDialog(hDlg);
         hConfigureDlg=hDlg;
         LoadConfig();
-        InitFlashBox();
+        InitEditBoxes();
         InitCardBox();
         SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnable,0);
         hStartupBank = GetDlgItem(hDlg,ID_STARTUP_BANK);
@@ -555,27 +559,7 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         snprintf(tmp,4,"%d",(StartupBank & 7));
         SetWindowText(hStartupBank,tmp);
         break;
-    case WM_VKEYTOITEM:
-        switch (LOWORD(wParam)) {
-        case VK_RETURN:
-        case VK_SPACE:
-            UpdateFlashItem();
-            return -2; //no further processing
-        case VK_BACK:
-        case VK_DELETE:
-            DeleteFlashItem();
-            return -2;
-        }
-        return -1;
     case WM_COMMAND:
-        switch (HIWORD(wParam)) {
-        case LBN_KILLFOCUS:
-            SendMessage((HWND)lParam, LB_SETCURSEL, -1, 0);
-            return 0;
-        case LBN_DBLCLK:
-            UpdateFlashItem();
-            return 0;
-        }
         switch (LOWORD(wParam)) {
         case ID_SD_SELECT:
             SelectCardBox();
@@ -586,26 +570,79 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
                 GetWindowText(hSDCardBox,tmp,MAX_PATH);
                 if (*tmp != '\0') strncpy(SDCard,tmp,MAX_PATH);
             }
-            break;
+            return TRUE;
+        case ID_UPDATE0:
+            UpdateFlashItem(0);
+            return TRUE;
+        case ID_UPDATE1:
+            UpdateFlashItem(1);
+            return TRUE;
+        case ID_UPDATE2:
+            UpdateFlashItem(2);
+            return TRUE;
+        case ID_UPDATE3:
+            UpdateFlashItem(3);
+            return TRUE;
+        case ID_UPDATE4:
+            UpdateFlashItem(4);
+            return TRUE;
+        case ID_UPDATE5:
+            UpdateFlashItem(5);
+            return TRUE;
+        case ID_UPDATE6:
+            UpdateFlashItem(6);
+            return TRUE;
+        case ID_UPDATE7:
+            UpdateFlashItem(7);
+            return TRUE;
+        case ID_TEXT0:
+            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(0);
+            return TRUE;
+        case ID_TEXT1:
+            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(1);
+            return FALSE;
+        case ID_TEXT2:
+            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(2);
+            return FALSE;
+        case ID_TEXT3:
+            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(3);
+            return FALSE;
+        case ID_TEXT4:
+            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(4);
+            return FALSE;
+        case ID_TEXT5:
+            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(5);
+            return FALSE;
+        case ID_TEXT6:
+            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(6);
+            return FALSE;
+        case ID_TEXT7:
+            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(7);
+            return FALSE;
         case ID_STARTUP_BANK:
             if (HIWORD(wParam) == EN_CHANGE) {
                 char tmp[4];
                 GetWindowText(hStartupBank,tmp,4);
-                StartupBank = atoi(tmp);
-                if (StartupBank > 7) StartupBank &= 7;
+                StartupBank = atoi(tmp);// & 7;
+                if (StartupBank > 7) {
+                    StartupBank &= 7;
+                    char tmp[4];
+                    snprintf(tmp,4,"%d",StartupBank);
+                    SetWindowText(hStartupBank,tmp);
+                }
             }
             break;
         case IDOK:
             if (SaveConfig(hDlg))
                 EndDialog(hDlg,LOWORD(wParam));
             break;
-        case IDCANCEL:
-            EndDialog(hDlg,LOWORD(wParam));
-            break;
-        case ID_NEXT:
-            MountNext (0);
-            SetFocus(GetParent(hDlg));
-            break;
+//        case IDCANCEL:
+//            EndDialog(hDlg,LOWORD(wParam));
+//            break;
+//        case ID_NEXT:
+//            MountNext (0);
+//            SetFocus(GetParent(hDlg));
+//            break;
         }
     }
     return 0;
@@ -700,39 +737,29 @@ void SDCInit(void)
 //------------------------------------------------------------
 // Init flash box
 //------------------------------------------------------------
-void InitFlashBox(void)
+void InitEditBoxes(void)
 {
-    char path[MAX_PATH];
-    char text[MAX_PATH];
-    hFlashBox = GetDlgItem(hConfigureDlg,ID_FLASH_BOX);
-
-    // Set height of items and initialize the listbox
-    SendMessage(hFlashBox,LB_SETHORIZONTALEXTENT,0,200);
-    SendMessage(hFlashBox, LB_SETITEMHEIGHT, 0, 18);
-    SendMessage(hFlashBox,LB_RESETCONTENT,0,0);
-
-    HDC hdc = GetDC(hControlDlg);
-
-    // Add items to the listbox
     for (int index=0; index<8; index++) {
-        // Compact the path to fit in flash box. 385 is width pixels
-        strncpy(path,FlashFile[index],MAX_PATH);
-        PathCompactPath(hdc,path,385);
-        sprintf(text,"%d %s",index,path);
-        SendMessage(hFlashBox, LB_ADDSTRING, 0, (LPARAM)text);
+        HWND h;
+        h = GetDlgItem(hConfigureDlg,EDBOXES[index]);
+        SetWindowText(h,FlashFile[index]);
+        h = GetDlgItem(hConfigureDlg,UPDBTNS[index]);
+        if (*FlashFile[index] == '\0') {
+            SetWindowText(h,">");
+        } else {
+            SetWindowText(h,"X");
+        }
     }
-    ReleaseDC(hFlashBox,hdc);
 }
 
 //----------------------------------------------------------------------
-// Put disk 0 name to config dialog
+// Put disk 0 name to control dialog
 //----------------------------------------------------------------------
 void update_disk0_box()
 { 
     if (hControlDlg != NULL) {
         HWND h = GetDlgItem(hControlDlg,ID_DISK0);
         SendMessage(h, WM_SETTEXT, 0, (LPARAM) Disk[0].name );
-        //SetWindowText(h,Disk[0].name);
     }
 }
 
@@ -745,61 +772,58 @@ void InitCardBox(void)
     hSDCardBox = GetDlgItem(hConfigureDlg,ID_SD_BOX);
     SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM)SDCard);
 }
-//------------------------------------------------------------
-// Delete flash box item
-//------------------------------------------------------------
-void DeleteFlashItem(void)
-{
-    int index = SendMessage(hFlashBox, LB_GETCURSEL, 0, 0);
-    _DLOG("DeleteFlashItem %d\n",index);
-    if ((index < 0) | (index > 7)) return;
-    *FlashFile[index] = '\0';
-    InitFlashBox();
-}
 
 //------------------------------------------------------------
-// Update flash box item
+// Modify and or Update flash box item
 //------------------------------------------------------------
-void UpdateFlashItem(void)
+void ModifyFlashItem(int index)
+{
+    if ((index < 0) | (index > 7)) return;
+    HWND h = GetDlgItem(hConfigureDlg,EDBOXES[index]);
+    GetWindowText(h, FlashFile[index], MAX_PATH);
+//    UpdateFlashItem(index);
+}
+
+void UpdateFlashItem(int index)
 {
     char filename[MAX_PATH]={};
 
-    int index = SendMessage(hFlashBox, LB_GETCURSEL, 0, 0);
     if ((index < 0) | (index > 7)) return;
 
-    char title[64];
-    snprintf(title,64,"Update Flash Bank %d",index);
+    if (*FlashFile[index] != '\0') {
+        *FlashFile[index] = '\0';
+    } else {
+        char title[64];
+        snprintf(title,64,"Update Flash Bank %d",index);
 
-    OPENFILENAME ofn ;
-    strncpy(filename,FlashFile[index],MAX_PATH);
-    // DeSanitize
-    for(unsigned int i=0; i<strlen(filename); i++) {
-        if (filename[i] == '/') filename[i] = '\\';
-    }
-
-    memset(&ofn,0,sizeof(ofn));
-    ofn.lStructSize       = sizeof (OPENFILENAME);
-    ofn.hwndOwner         = hFlashBox;          // hConfigDlg?
-    ofn.Flags             = OFN_HIDEREADONLY;
-    ofn.lpstrDefExt       = ".rom";
-    ofn.lpstrFilter       = "Rom File\0*.rom\0All Files\0*.*\0\0";
-    ofn.nFilterIndex      = 0 ;
-    ofn.lpstrFile         = filename;
-    ofn.nMaxFile          = MAX_PATH;
-    ofn.nMaxFileTitle     = MAX_PATH;
-    ofn.lpstrTitle        = title;
-
-    // Sanitize
-    if (GetOpenFileName(&ofn)) {
+        OPENFILENAME ofn ;
+        strncpy(filename,FlashFile[index],MAX_PATH);
+        // DeSanitize
         for(unsigned int i=0; i<strlen(filename); i++) {
-            if (filename[i] == '\\') filename[i] = '/';
+            if (filename[i] == '/') filename[i] = '\\';
         }
-        strncpy(FlashFile[index],filename,MAX_PATH);
+
+        memset(&ofn,0,sizeof(ofn));
+        ofn.lStructSize       = sizeof (OPENFILENAME);
+        ofn.hwndOwner         = hConfigureDlg;
+        ofn.Flags             = OFN_HIDEREADONLY;
+        ofn.lpstrDefExt       = ".rom";
+        ofn.lpstrFilter       = "Rom File\0*.rom\0All Files\0*.*\0\0";
+        ofn.nFilterIndex      = 0 ;
+        ofn.lpstrFile         = filename;
+        ofn.nMaxFile          = MAX_PATH;
+        ofn.nMaxFileTitle     = MAX_PATH;
+        ofn.lpstrTitle        = title;
+
+        // Sanitize
+        if (GetOpenFileName(&ofn)) {
+            for(unsigned int i=0; i<strlen(filename); i++) {
+                if (filename[i] == '\\') filename[i] = '/';
+            }
+            strncpy(FlashFile[index],filename,MAX_PATH);
+        }
     }
-
-    _DLOG("UpdateFlashItem %d %s\n",index,FlashFile[index]);
-
-    InitFlashBox();
+    InitEditBoxes();
 }
 
 //------------------------------------------------------------

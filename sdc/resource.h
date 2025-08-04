@@ -19,22 +19,40 @@
 // <http://www.gnu.org/licenses/>.
 //----------------------------------------------------------------------
 
-#define IDS_MODULE_NAME                 1
-#define IDS_VERSION                     2
-#define IDS_CATNUMBER                   3
+#define IDS_MODULE_NAME      1
+#define IDS_VERSION          2
+#define IDS_CATNUMBER        3
 
-#define IDD_CONTROL                     101
-#define IDD_CONFIG                      102
+#define IDD_CONTROL          101
+#define IDD_CONFIG           102
 
-#define ID_SD_BOX                       1000
-#define ID_FLASH_BOX                    1001
-#define IDC_CLOCK                       1002
-#define ID_NEXT                         1003
-#define ID_SD_SELECT                    1004
-#define ID_STARTUP_BANK                 1005
-#define ID_DISK0                        1006
-#define ID_DISK1                        1007
-#define ID_CONFIGURE                    1008
+#define ID_SD_BOX            1000
+#define IDC_CLOCK            1002
+#define ID_NEXT              1003
+#define ID_SD_SELECT         1004
+#define ID_STARTUP_BANK      1005
+#define ID_DISK0             1006
+#define ID_DISK1             1007
+#define ID_CONFIGURE         1008
+
+#define ID_TEXT0             1010
+#define ID_TEXT1             1011
+#define ID_TEXT2             1012
+#define ID_TEXT3             1013
+#define ID_TEXT4             1014
+#define ID_TEXT5             1015
+#define ID_TEXT6             1016
+#define ID_TEXT7             1017
+
+#define ID_UPDATE0           1020
+#define ID_UPDATE1           1021
+#define ID_UPDATE2           1022
+#define ID_UPDATE3           1023
+#define ID_UPDATE4           1024
+#define ID_UPDATE5           1025
+#define ID_UPDATE6           1026
+#define ID_UPDATE7           1027
+
 
 // Next default values for new objects
 
