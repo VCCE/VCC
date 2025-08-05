@@ -43,7 +43,7 @@ void SetTimerLSB(unsigned char);
 unsigned char GetInit0(unsigned char port);
 static unsigned char IRQStearing[8]={0,0,0,0,0,0,0,0};
 static unsigned char FIRQStearing[8]={0,0,0,0,0,0,0,0};
-static unsigned char LastIrq=0,LastFirq=0,Temp=0;
+static unsigned char LastIrq = 0, LastFirq = 0;
 
 static unsigned char KeyboardInteruptEnabled = 0;
 
@@ -164,30 +164,30 @@ void GimeWrite(unsigned char port,unsigned char data)
 
 unsigned char GimeRead(unsigned char port)
 {
-	switch (port)
+	// read irq status register $FF92
+	if (port == 0x92)
 	{
-	case 0x92:
-		Temp=LastIrq;
-		LastIrq=0;
+		auto irqStatus = LastIrq;
+		LastIrq = 0;
 		CPUDeAssertInterupt(IS_GIME, INT_IRQ);
-		return(Temp);
-		break;
-
-	case 0x93:
-		Temp=LastFirq;
-		LastFirq=0;
-		CPUDeAssertInterupt(IS_GIME, INT_FIRQ);
-		return(Temp);
-		break;
-
-	case 0x94:
-	case 0x95:
-		return(126);
-		break;
-
-	default:
-		return(GimeRegisters[port]);
+		return irqStatus;
 	}
+	// read firq status register $FF93
+	else if (port == 0x93)
+	{
+		auto irqStatus = LastFirq;
+		LastFirq = 0;
+		CPUDeAssertInterupt(IS_GIME, INT_FIRQ);
+		return irqStatus;
+	}
+	// read mmu register $FFAx
+	else if ((port & 0xF0) == 0xA0)
+	{
+		return GimeRegisters[port];
+	}
+
+	// everything else is NC
+	return 0x1b;
 }
 
 void SetInit0(unsigned char data)
