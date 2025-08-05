@@ -303,6 +303,7 @@
       </PrecompiledHeaderOutputFile>
     </ClCompile>
     <ClCompile Include="..\logger.c" />
+    <ClCompile Include="..\DialogOps.c" />
     <ClCompile Include="console.c" />
     <ClCompile Include="sc6551.c" />
     <ClCompile Include="file.c" />

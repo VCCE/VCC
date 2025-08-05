@@ -141,6 +141,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include "../DialogOps.h"
 #include "sdc.h"
 
 // from ../pakinterface.h
@@ -463,10 +464,10 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
         hinstDLL = hinst;
 
     } else if (reason == DLL_PROCESS_DETACH) {
-		if (hControlDlg) SendMessage(hControlDlg,WM_CLOSE,0,0);
-        if (hConfigureDlg) SendMessage(hConfigureDlg,WM_CLOSE,0,0);
         CloseDrive(0);
         CloseDrive(1);
+        CloseCartDialog(hControlDlg);
+        CloseCartDialog(hConfigureDlg);
     }
     return TRUE;
 }
@@ -504,27 +505,27 @@ SDC_Control(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message) {
     case WM_CLOSE:
-		DestroyWindow(hDlg);
-		return TRUE;
+        DestroyWindow(hDlg);
+        return TRUE;
         break;
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		hControlDlg=NULL;
-		return TRUE;
-		break;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        hControlDlg=NULL;
+        return TRUE;
+        break;
     case WM_INITDIALOG:
         CenterDialog(hDlg);
         hControlDlg=hDlg;
         update_disk0_box();
         SetFocus(GetDlgItem(hDlg,ID_NEXT));
-		return TRUE;
+        return TRUE;
         break;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case ID_NEXT:
             MountNext (0);
             SetFocus(GetParent(hDlg));
-		    return TRUE;
+            return TRUE;
             break;
         }
     }
@@ -539,14 +540,14 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message) {
     case WM_CLOSE:
-		DestroyWindow(hDlg);
-		return TRUE;
+        DestroyWindow(hDlg);
+        return TRUE;
         break;
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		hConfigureDlg=NULL;
-		return TRUE;
-		break;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        hConfigureDlg=NULL;
+        return TRUE;
+        break;
     case WM_INITDIALOG:
         CenterDialog(hDlg);
         hConfigureDlg=hDlg;

@@ -24,6 +24,7 @@ Copyright 2015 by Joseph Forgione
 #include <commctrl.h>
 #include "mpi.h"
 #include "../fileops.h"
+#include "../DialogOps.h"
 #include "../MachineDefs.h"
 #include "../logger.h"
 
@@ -100,6 +101,7 @@ static void (*DynamicMenuCallback)( char *,int, int)=NULL;
 static HINSTANCE hinstLib[NUMSLOTS]={NULL};
 static unsigned char ChipSelectSlot=3,SpareSelectSlot=3,SwitchSlot=3,SlotRegister=255;
 static HWND hConfDlg=NULL;
+static HWND hParentWindow=NULL;
 
 //Function Prototypes for this module
 LRESULT CALLBACK MpiConfigDlg(HWND,UINT,WPARAM,LPARAM);
@@ -120,8 +122,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD  Reason, LPVOID Reserved)
 		g_hinstDLL = hinstDLL;
 		break;
 	case DLL_PROCESS_DETACH:
-		//PrintLogC("MPI:process detach %d\n",hinstDLL);
-		if (hConfDlg) SendMessage(hConfDlg,WM_CLOSE,0,0);
+		// Close dialog before unloading modules so config is saved
+		CloseCartDialog(hConfDlg);  // defined in DialogOps
 		for (int slot=0;slot<NUMSLOTS;slot++) UnloadModule(slot);
 		break;
 	}
@@ -389,6 +391,7 @@ void CenterDialog(HWND hDlg)
 
 LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+
 	switch (message) {
 	case WM_CLOSE:
 		WriteConfig();
@@ -402,6 +405,7 @@ LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		break;
 	case WM_INITDIALOG:
 		hConfDlg=hDlg;
+		hParentWindow = GetParent(hDlg);
 		CenterDialog(hDlg);
 		for (int Slot=0;Slot<NUMSLOTS;Slot++) {
 			SendDlgItemMessage(hDlg,EDITBOXS[Slot],WM_SETTEXT,0,(LPARAM)SlotLabel[Slot]);
@@ -482,6 +486,14 @@ void UpdateSlotSelect(int slot)
 
 void UpdateSlotContent(int Slot)
 {
+	// Disable Slot changes if parent is disabled.  This prevents user using the
+	// config dialog to eject a cartridge while VCC main is using a modal dialog
+	// Otherwise user can crash VCC by unloading a disk cart while inserting a disk
+	if (!IsWindowEnabled(hParentWindow)) {
+		MessageBox(hConfDlg,"Cannot change slot content with dialog open","ERROR",MB_ICONERROR);
+		return;
+	}
+
 	UpdateCartDLL(Slot,ModulePaths[Slot]);
 	SendDlgItemMessage(hConfDlg,EDITBOXS[Slot],WM_SETTEXT,0,(LPARAM)SlotLabel[Slot]);
 	if ((strcmp(ModuleNames[Slot],"Empty") != 0) || hinstLib[Slot])
@@ -645,7 +657,7 @@ void UpdateCartDLL(unsigned char Slot,char *DllPath)
 	} else {
 		memset(&ofn,0,sizeof(ofn));
 		ofn.lStructSize       = sizeof (OPENFILENAME) ;
-		ofn.hwndOwner         = NULL;
+		ofn.hwndOwner         = hConfDlg;
 		ofn.lpstrFilter       = "Cartridges\0*.ROM;*.ccc;*.DLL\0\0"; // filter string
 		ofn.nFilterIndex      = 1;                        // current filter index
 		ofn.lpstrFile         = DllPath;                  // contains full path on return
