@@ -464,10 +464,10 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
         hinstDLL = hinst;
 
     } else if (reason == DLL_PROCESS_DETACH) {
-        CloseDrive(0);
-        CloseDrive(1);
         CloseCartDialog(hControlDlg);
         CloseCartDialog(hConfigureDlg);
+        CloseDrive(0);
+        CloseDrive(1);
     }
     return TRUE;
 }
