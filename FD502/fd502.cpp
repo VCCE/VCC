@@ -31,6 +31,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "distortc.h"
 #include "fd502.h"
 #include "../fileops.h"
+#include "../DialogOps.h"
 
 //include becker code if COMBINE_BECKER is defined in fd502.h
 #ifdef COMBINE_BECKER
@@ -75,7 +76,7 @@ long CreateDiskHeader(char *,unsigned char,unsigned char,unsigned char);
 void Load_Disk(unsigned char);
 void CenterDialog(HWND hDlg);
 
-static HWND g_hConfDlg;
+static HWND g_hConfDlg = NULL;
 static HINSTANCE g_hinstDLL;
 static unsigned long RealDisks=0;
 long CreateDisk (unsigned char);
@@ -94,7 +95,7 @@ BOOL WINAPI DllMain(
 {
 	if (fdwReason == DLL_PROCESS_DETACH ) //Clean Up
 	{
-		SendMessage(g_hConfDlg,WM_CLOSE,0,0);
+        CloseCartDialog(g_hConfDlg);
 		for (unsigned char Drive=0;Drive<=3;Drive++)
 			unmount_disk_image(Drive);
 	}
@@ -275,13 +276,13 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 		case WM_CLOSE:
-			DestroyWindow(hDlg);
+			DestroyWindow(hDlg);   //Non modal window uses Destroy
+			g_hConfDlg = NULL;     //And nulls the global handle
 			return TRUE;
 			break;
 
 		case WM_DESTROY:
 			PostQuitMessage(0);
-			g_hConfDlg = NULL;
 			return TRUE;
 			break;
 
@@ -383,7 +384,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				case IDC_BROWSE:
 					memset(&ofn,0,sizeof(ofn));
 					ofn.lStructSize       = sizeof (OPENFILENAME) ;
-					ofn.hwndOwner		  = NULL;
+					ofn.hwndOwner		  = g_hConfDlg;
 					ofn.lpstrFilter		  = "Disk Rom Images\0*.rom;*.bin\0\0";
 					ofn.nFilterIndex      = 1;
 					ofn.lpstrFile         = TempRomFileName;
@@ -426,7 +427,7 @@ void Load_Disk(unsigned char disk)
 		CreateFlag=1;
 		memset(&ofn,0,sizeof(ofn));
 		ofn.lStructSize       = sizeof (OPENFILENAME);
-		ofn.hwndOwner		  = NULL;
+		ofn.hwndOwner		  = GetActiveWindow();  // Called from dynamic window (Vcc main)
 		ofn.Flags             = OFN_HIDEREADONLY;
 		ofn.hInstance         = GetModuleHandle(0);
 		ofn.lpstrDefExt       = "dsk";
@@ -454,7 +455,7 @@ void Load_Disk(unsigned char disk)
 			if (CreateFlag==1)
 			{
 				if (mount_disk_image(TempFileName,disk)==0)	
-					MessageBox(NULL,"Can't open file","Error",0);
+					MessageBox(g_hConfDlg,"Can't open file","Error",0);
 				else
 				{
 					FileNotSelected=0;
@@ -489,7 +490,7 @@ void BuildDynaMenu(void)
 	char TempMsg[64]="";
 	char TempBuf[MAX_PATH]="";
 	if (DynamicMenuCallback ==NULL)
-		MessageBox(0,"No good","Ok",0);
+		MessageBox(g_hConfDlg,"No good","Ok",0);
 	DynamicMenuCallback("",0,0);
 	DynamicMenuCallback( "",6000,0);
 	DynamicMenuCallback( "FD-502 Drive 0",6000,HEAD);
@@ -546,6 +547,11 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 	switch (message)
 	{
+		case WM_CLOSE:
+			EndDialog(hDlg,LOWORD(wParam));  //Modal dialog
+			return TRUE;
+			break;
+
 		case WM_INITDIALOG:
 			for (temp=0;temp<=2;temp++)
 				SendDlgItemMessage(hDlg,DiskType[temp],BM_SETCHECK,(temp==NewDiskType),0);
@@ -606,7 +612,7 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					if (CreateDiskHeader(TempFileName, NewDiskType, NewDiskTracks, DblSided))
 					{
 						strcpy(TempFileName, "");
-						MessageBox(0, "Can't create File", "Error", 0);
+						MessageBox(g_hConfDlg, "Can't create File", "Error", 0);
 					}
 					return TRUE;
 				}

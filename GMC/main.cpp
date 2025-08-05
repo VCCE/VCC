@@ -25,7 +25,7 @@ std::string SelectROMFile()
 	char selectedPathBuffer[MAX_PATH] = { 0 };
 
 	ofn.lStructSize		  = sizeof(ofn);
-	ofn.hwndOwner		  = NULL;
+	ofn.hwndOwner		  = GetActiveWindow();
 	ofn.lpstrFilter       =	"ROM Files\0*.ROM\0\0";			// filter string
 	ofn.nFilterIndex      = 1 ;								// current filter index
 	ofn.lpstrFile         = selectedPathBuffer;				// contains full path and filename on return

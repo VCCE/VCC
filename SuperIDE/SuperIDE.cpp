@@ -292,7 +292,7 @@ void Select_Disk(unsigned char Disk)
 
 	memset(&ofn, 0, sizeof(ofn));
 	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = NULL;
+	ofn.hwndOwner = GetActiveWindow();
 	ofn.Flags = OFN_HIDEREADONLY;
 	ofn.hInstance = GetModuleHandle(0);
 	ofn.lpstrDefExt = "IMG";
@@ -307,7 +307,7 @@ void Select_Disk(unsigned char Disk)
 
 	if (GetOpenFileName(&ofn)) {
 	if (!(MountDisk(TempFileName, Disk)))
-		MessageBox(0, "Can't Open File", "Can't open the Image specified.", 0);
+		MessageBox(GetActiveWindow(), "Can't Open File", "Can't open the Image specified.", 0);
 	string tmp = ofn.lpstrFile;
 	int idx;
 	idx = tmp.find_last_of("\\");

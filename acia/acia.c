@@ -23,6 +23,7 @@
 
 #include "acia.h"
 #include "sc6551.h"
+#include "../DialogOps.h"
 #include "../logger.h"
 
 //------------------------------------------------------------------------
@@ -67,15 +68,14 @@ typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 BOOL APIENTRY
 DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
-//  PrintLogF("acia dll %d\n",reason);
     if (reason == DLL_PROCESS_ATTACH) {
         g_hDLL = hinst;
         LoadExtRom("RS232.ROM");
 
     } else if (reason == DLL_PROCESS_DETACH) {
-        if (g_hDlg) SendMessage(g_hDlg,WM_CLOSE,0,0);
         sc6551_close();
         AciaStat[0]='\0';
+        CloseCartDialog(g_hDlg);
     }
     return TRUE;
 }

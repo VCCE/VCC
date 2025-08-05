@@ -26,6 +26,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 #include "cloud9.h"
 #include "../fileops.h"
+#include "../DialogOps.h"
 #include "../MachineDefs.h"
 
 #define DEF_HD_SIZE 132480
@@ -69,7 +70,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL,  // handle to DLL module
                      LPVOID lpReserved )  // reserved
 {
     if (fdwReason == DLL_PROCESS_DETACH ) {
-        SendMessage(hConfDlg,WM_CLOSE,0,0);
+        CloseCartDialog(hConfDlg);
         UnmountHD(0);
         UnmountHD(1);
     } else {
@@ -134,7 +135,7 @@ extern "C"
             break;
 
         case 14:
-            CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,GetActiveWindow(),(DLGPROC)Config);
+            if (hConfDlg == NULL) CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,GetActiveWindow(),(DLGPROC)Config);
             ShowWindow(hConfDlg,1);
             return;
         }
@@ -159,7 +160,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_CLOSE:
-        EndDialog(hDlg,LOWORD(wParam));
         DestroyWindow(hDlg);
         return TRUE;
         break;
@@ -495,6 +495,10 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     unsigned int hdsize=DEF_HD_SIZE;
     switch (message)
     {
+        case WM_CLOSE:
+            EndDialog(hDlg,LOWORD(wParam));  //Modal dialog
+            return TRUE;
+
         case WM_INITDIALOG:
             SetDlgItemInt(hDlg,IDC_HDSIZE,DEF_HD_SIZE,0);
             return TRUE;
