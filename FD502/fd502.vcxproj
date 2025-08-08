@@ -293,7 +293,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\fileops.c" />
-    <ClCompile Include="..\DialogOps.c" />
+	<ClCompile Include="..\DialogOps.cpp"/>
     <ClCompile Include="..\logger.c" />
     <ClCompile Include="distortc.c" />
     <ClCompile Include="fd502.cpp" />
