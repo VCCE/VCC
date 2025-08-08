@@ -292,8 +292,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Fileops.c" />
-    <ClCompile Include="..\logger.c" />
+    <ClCompile Include="..\Fileops.cpp" />
+    <ClCompile Include="..\logger.cpp" />
     <ClCompile Include="..\DialogOps.cpp"/>
     <ClCompile Include="sdc.cpp" />
     <ClCompile Include="cloud9.cpp" />

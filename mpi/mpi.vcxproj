@@ -248,9 +248,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Fileops.c" />
+    <ClCompile Include="..\Fileops.cpp" />
 	<ClCompile Include="..\DialogOps.cpp"/>
-    <ClCompile Include="..\logger.c" />
+    <ClCompile Include="..\logger.cpp" />
     <ClCompile Include="mpi.cpp" />
   </ItemGroup>
   <ItemGroup>

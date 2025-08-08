@@ -245,7 +245,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Fileops.c" />
+    <ClCompile Include="..\Fileops.cpp" />
     <ClCompile Include="orch90.cpp" />
   </ItemGroup>
   <ItemGroup>
