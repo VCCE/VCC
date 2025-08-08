@@ -294,7 +294,7 @@
   <ItemGroup>
     <ClCompile Include="..\Fileops.c" />
     <ClCompile Include="..\logger.c" />
-    <ClCompile Include="..\DialogOps.c" />
+    <ClCompile Include="..\DialogOps.cpp"/>
     <ClCompile Include="sdc.cpp" />
     <ClCompile Include="cloud9.cpp" />
   </ItemGroup>
