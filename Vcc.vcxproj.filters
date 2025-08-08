@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Audio.c">
+    <ClCompile Include="Audio.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Cassette.cpp">
@@ -10,67 +10,67 @@
     <ClCompile Include="coco3.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="CommandLine.c">
+    <ClCompile Include="CommandLine.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="config.c">
+    <ClCompile Include="config.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="DirectDrawInterface.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Fileops.c">
+    <ClCompile Include="Fileops.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="hd6309.c">
+    <ClCompile Include="hd6309.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="_xDebug.c">
+    <ClCompile Include="_xDebug.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="iobus.c">
+    <ClCompile Include="iobus.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="joystickinput.c">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="keyboard.c">
+    <ClCompile Include="keyboard.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="keyboardEdit.c">
+    <ClCompile Include="keyboardEdit.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="keyboardLayout.c">
+    <ClCompile Include="keyboardLayout.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="logger.c">
+    <ClCompile Include="logger.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="mc6809.c">
+    <ClCompile Include="mc6809.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="mc6821.c">
+    <ClCompile Include="mc6821.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="pakinterface.c">
+    <ClCompile Include="pakinterface.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="quickload.c">
+    <ClCompile Include="quickload.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="tcc1014registers.c">
+    <ClCompile Include="tcc1014registers.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="tcc1014mmu.c">
+    <ClCompile Include="tcc1014mmu.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="tcc1014graphics.c">
+    <ClCompile Include="tcc1014graphics.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="throttle.c">
+    <ClCompile Include="throttle.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Vcc.c">
+    <ClCompile Include="Vcc.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Debugger.cpp">

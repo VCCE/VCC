@@ -302,7 +302,7 @@
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeaderOutputFile>
     </ClCompile>
-    <ClCompile Include="..\logger.c" />
+    <ClCompile Include="..\logger.cpp" />
     <ClCompile Include="..\DialogOps.cpp">
        <CompileAs>CompileAsC</CompileAs>
     </ClCompile>

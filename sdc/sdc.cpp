@@ -137,7 +137,10 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <shlwapi.h>
+#pragma warning(push)
+#pragma warning(disable:4091)
 #include <shlobj.h>
+#pragma warning(pop)
 #include <stdio.h>
 #include <ctype.h>
 #include <sys/stat.h>

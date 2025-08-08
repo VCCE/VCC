@@ -24,6 +24,12 @@ This file is part of VCC (Virtual Color Computer).
 #include <Richedit.h>
 #include <iostream>
 #include <direct.h>
+#include <assert.h>
+
+#pragma warning(push)
+#pragma warning(disable:4091)
+#include <shlobj.h>
+#pragma warning(pop)
 
 #include "defines.h"
 #include "resource.h"
@@ -40,12 +46,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "keyboardEdit.h"
 #include "fileops.h"
 #include "Cassette.h"
-#pragma warning(disable:4091)
-#include "shlobj.h"
-#pragma warning(default:4091)
 #include "CommandLine.h"
 #include "logger.h"
-#include <assert.h>
 
 using namespace std;
 using namespace VCC;

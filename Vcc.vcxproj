@@ -288,7 +288,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Audio.c" />
+    <ClCompile Include="Audio.cpp" />
     <ClCompile Include="DirectX.cpp" />
     <ClCompile Include="OpenGL.cpp" />
     <ClCompile Include="OpenGLFontConsola.cpp" />
@@ -303,8 +303,8 @@
     </ClCompile>
     <ClCompile Include="Cassette.cpp" />
     <ClCompile Include="coco3.cpp" />
-    <ClCompile Include="CommandLine.c" />
-    <ClCompile Include="config.c" />
+    <ClCompile Include="CommandLine.cpp" />
+    <ClCompile Include="config.cpp" />
     <ClCompile Include="Debugger.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
@@ -324,17 +324,17 @@
     <ClCompile Include="DirectDrawInterface.cpp" />
     <ClCompile Include="Disassembler.cpp" />
     <ClCompile Include="ExecutionTrace.cpp" />
-    <ClCompile Include="Fileops.c" />
-    <ClCompile Include="hd6309.c" />
-    <ClCompile Include="iobus.c" />
-    <ClCompile Include="joystickinput.c" />
-    <ClCompile Include="keyboard.c" />
-    <ClCompile Include="keyboardLayout.c" />
-    <ClCompile Include="keyboardEdit.c" />
-    <ClCompile Include="logger.c" />
+    <ClCompile Include="Fileops.cpp" />
+    <ClCompile Include="hd6309.cpp" />
+    <ClCompile Include="iobus.cpp" />
+    <ClCompile Include="joystickinput.cpp" />
+    <ClCompile Include="keyboard.cpp" />
+    <ClCompile Include="keyboardLayout.cpp" />
+    <ClCompile Include="keyboardEdit.cpp" />
+    <ClCompile Include="logger.cpp" />
     <ClCompile Include="memdump.cpp" />
-    <ClCompile Include="mc6809.c" />
-    <ClCompile Include="mc6821.c" />
+    <ClCompile Include="mc6809.cpp" />
+    <ClCompile Include="mc6821.cpp" />
     <ClCompile Include="MemoryMap.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
@@ -353,7 +353,7 @@
     </ClCompile>
     <ClCompile Include="OpCodeTables.cpp" />
     <ClCompile Include="OpDecoder.cpp" />
-    <ClCompile Include="pakinterface.c" />
+    <ClCompile Include="pakinterface.cpp" />
     <ClCompile Include="ProcessorState.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
@@ -362,13 +362,13 @@
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">true</TreatWarningAsError>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
     </ClCompile>
-    <ClCompile Include="quickload.c" />
-    <ClCompile Include="tcc1014graphics.c" />
-    <ClCompile Include="tcc1014mmu.c" />
-    <ClCompile Include="tcc1014registers.c" />
-    <ClCompile Include="throttle.c" />
-    <ClCompile Include="Vcc.c" />
-    <ClCompile Include="_xDebug.c" />
+    <ClCompile Include="quickload.cpp" />
+	<ClCompile Include="tcc1014graphics.cpp" />
+    <ClCompile Include="tcc1014mmu.cpp" />
+    <ClCompile Include="tcc1014registers.cpp" />
+    <ClCompile Include="throttle.cpp" />
+    <ClCompile Include="Vcc.cpp" />
+    <ClCompile Include="_xDebug.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.md" />

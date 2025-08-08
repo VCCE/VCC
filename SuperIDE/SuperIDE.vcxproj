@@ -260,7 +260,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\fileops.c" />
+    <ClCompile Include="..\Fileops.cpp" />
     <ClCompile Include="cloud9.cpp" />
     <ClCompile Include="IdeBus.cpp" />
     <ClCompile Include="logger.cpp" />

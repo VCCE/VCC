@@ -288,9 +288,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Fileops.c" />
+    <ClCompile Include="..\Fileops.cpp" />
 	<ClCompile Include="..\DialogOps.cpp"/>
-    <ClCompile Include="cc3vhd.c" />
+    <ClCompile Include="cc3vhd.cpp" />
     <ClCompile Include="cloud9.cpp" />
     <ClCompile Include="harddisk.cpp" />
   </ItemGroup>

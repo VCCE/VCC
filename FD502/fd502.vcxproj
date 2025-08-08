@@ -292,13 +292,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\fileops.c" />
+    <ClCompile Include="..\Fileops.cpp" />
 	<ClCompile Include="..\DialogOps.cpp"/>
-    <ClCompile Include="..\logger.c" />
-    <ClCompile Include="distortc.c" />
+    <ClCompile Include="..\logger.cpp" />
+    <ClCompile Include="distortc.cpp" />
     <ClCompile Include="fd502.cpp" />
-    <ClCompile Include="wd1793.c" />
-    <ClCompile Include="becker.c" />
+    <ClCompile Include="wd1793.cpp" />
+    <ClCompile Include="becker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\fileops.h" />

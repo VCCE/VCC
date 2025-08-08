@@ -21,6 +21,7 @@ This file is part of VCC (Virtual Color Computer).
 *	This Module will emulate a Tandy Floppy Disk Model FD-502 With 3 DSDD drives attached	*
 *	Copyright 2006 (c) by Joseph Forgione 													*
 *********************************************************************************************/
+#pragma warning( disable : 4800 ) // For legacy builds
 
 //#define USE_LOGGING
 #include <windows.h>
