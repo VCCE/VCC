@@ -17,7 +17,7 @@ enum InterruptSource {
 	IS_PIA1_CD,
 	IS_PIA1_CART,
 	IS_GIME,
-	IS_IRQ,
+	IS_PAK_IRQ,
 	IS_MAX
 };
 

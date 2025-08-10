@@ -254,8 +254,8 @@ void sc6551_heartbeat()
 			// Interrupt enabled?
             if (!(CmdReg & CmdRxI)) {
                 StatReg |= StatIRQ;
-				// Use IS_IRQ which is self clearing
-                AssertInt(INT_IRQ,IS_IRQ);
+				// Self clearing for now
+                AssertInt(INT_IRQ,IS_PAK_IRQ);
             }
         }
 
