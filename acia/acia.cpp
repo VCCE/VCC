@@ -22,7 +22,6 @@
 //------------------------------------------------------------------
 
 #include "acia.h"
-#include "sc6551.h"
 #include "../DialogOps.h"
 #include "../logger.h"
 
@@ -50,17 +49,28 @@ static HWND g_hDlg = NULL;           // Config dialog
 static char IniFile[MAX_PATH];       // Ini file name
 static char IniSect[MAX_LOADSTRING]; // Ini file section
 
+// Status for Vcc status line
+char AciaStat[32];
+
 // Some strings for config dialog
 char *IOModeTxt[] = {"RW","R","W"};
 char *ComTypeTxt[] = {"CONS","FILE","TCP","COM"};
 
+int  AciaBasePort;             // Base port for sc6651 (0x68 or 0x6C)
+int  AciaComType;              // Console,file,tcpip,wincom
+int  AciaComMode;              // Duplex,read,write
+int  AciaTextMode;             // CR and EOF translations 0=none 1=text
+int  AciaLineInput;            // Console line mode 0=Normal 1=Linemode
+int  AciaTcpPort;              // TCP port 1024-65536
+char AciaComPort[32];          // Windows Serial port eg COM20
+char AciaTcpHost[MAX_PATH];    // Tcpip hostname
+char AciaFileRdPath[MAX_PATH]; // Path for file reads
+char AciaFileWrPath[MAX_PATH]; // Path for file writes
+
 static unsigned char Rom[8192];
 static void (*PakSetCart)(unsigned char)=NULL;
+void (*AssertInt)(unsigned char, unsigned char);
 unsigned char LoadExtRom(char *);
-
-typedef void (*SETCART)(unsigned char);
-typedef void (*SETCARTPOINTER)(SETCART);
-typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 
 //------------------------------------------------------------------------
 //  DLL Entry point
@@ -83,6 +93,7 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 //-----------------------------------------------------------------------
 //  Dll export register the DLL and build entry on dynamic menu
 //-----------------------------------------------------------------------
+extern "C"
 __declspec(dllexport) void
 ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
 {
@@ -98,6 +109,7 @@ ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
 //-----------------------------------------------------------------------
 // Dll export write to port
 //-----------------------------------------------------------------------
+extern "C"
 __declspec(dllexport) void
 PackPortWrite(unsigned char Port,unsigned char Data)
 {
@@ -108,6 +120,7 @@ PackPortWrite(unsigned char Port,unsigned char Data)
 //-----------------------------------------------------------------------
 // Dll export read from port
 //-----------------------------------------------------------------------
+extern "C"
 __declspec(dllexport) unsigned char
 PackPortRead(unsigned char Port)
 {
@@ -117,6 +130,7 @@ PackPortRead(unsigned char Port)
 //-----------------------------------------------------------------------
 // Dll export module reset
 //-----------------------------------------------------------------------
+extern "C"
 __declspec(dllexport) void ModuleReset(void)
 {
     sc6551_close();
@@ -124,6 +138,9 @@ __declspec(dllexport) void ModuleReset(void)
 }
 
 //-----------------------------------------------------------------------
+// Dll export pak rom read
+//-----------------------------------------------------------------------
+extern "C"
 __declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
 {
     return(Rom[Address & 8191]);
@@ -139,7 +156,7 @@ unsigned char LoadExtRom(char *FilePath)
     memset(Rom, 0xff, 8191);
     file = fopen(FilePath, "rb");
     if (file) {
-        char *p = Rom;
+        unsigned char *p = Rom;
         while (cnt++ < 4096) {
             if (feof(file)) break;
             *p++ = fgetc(file);
@@ -153,7 +170,7 @@ unsigned char LoadExtRom(char *FilePath)
 //-----------------------------------------------------------------------
 // Dll export Heartbeat (HSYNC)
 //-----------------------------------------------------------------------
-
+extern "C"
 __declspec(dllexport) void HeartBeat(void)
 {
     sc6551_heartbeat();
@@ -163,6 +180,7 @@ __declspec(dllexport) void HeartBeat(void)
 //-----------------------------------------------------------------------
 // Dll export supply transfer point for interrupt
 //-----------------------------------------------------------------------
+extern "C"
 __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
 {
     AssertInt=Dummy;
@@ -172,6 +190,7 @@ __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
 //-----------------------------------------------------------------------
 // Dll export return module status for VCC status line
 //-----------------------------------------------------------------------
+extern "C"
 __declspec(dllexport) void ModuleStatus(char *status)
 {
     strncpy (status,AciaStat,16);
@@ -182,10 +201,11 @@ __declspec(dllexport) void ModuleStatus(char *status)
 //-----------------------------------------------------------------------
 //  Dll export run config dialog
 //-----------------------------------------------------------------------
+extern "C"
 __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 {
     HWND owner = GetActiveWindow();
-    CreateDialog(g_hDLL,(LPCTSTR)IDD_PROPPAGE,owner,Config);
+    CreateDialog(g_hDLL,(LPCTSTR)IDD_PROPPAGE,owner,(DLGPROC)Config);
     ShowWindow(g_hDlg,1);
     return;
 }
@@ -193,6 +213,7 @@ __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 //-----------------------------------------------------------------------
 // Dll export VCC ini file path and load settings
 //-----------------------------------------------------------------------
+extern "C"
 __declspec(dllexport) void SetIniPath (char *IniFilePath)
 {
     strcpy(IniFile,IniFilePath);
@@ -295,7 +316,8 @@ void SaveConfig(void)
 LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
 {
     int button;
-    HANDLE hCtl;
+    HWND hCtl;
+    int port;
     switch (msg) {
 
     case WM_CLOSE:
@@ -479,7 +501,7 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
                 break;
             case COM_TCPIP:
                 GetDlgItemText(hDlg,IDC_NAME,AciaTcpHost,MAX_PATH);
-                int port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
+                port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
                 if ((port < 1) || (port > 65536)) {
                     MessageBox(hDlg,"TCP Port must be 1 thru 65536",
                                     "Error", MB_OK|MB_ICONEXCLAMATION);

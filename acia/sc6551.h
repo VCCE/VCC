@@ -62,27 +62,6 @@
 // b4   Rcv Clock source 0=X 1=intenal
 // b5-6 Data len 00=8 01=7 10=6 11=5
 // b7   Stop bits 0=1, 1-2
-
-//------------------------------------------------------------------
-// sc6551 calls from emulation
-//------------------------------------------------------------------
-void sc6551_init();
-void sc6551_close();
-void sc6551_heartbeat();
-unsigned char sc6551_read(unsigned char data);
-void sc6551_write(unsigned char data, unsigned short port);
-void (*AssertInt)(unsigned char, unsigned char);
-
-//------------------------------------------------------------------
-// Settings from command and control registers
-//------------------------------------------------------------------
 // Parity is index to [odd,even,mark,space]
 // BaudRate is index to [19200,50,75,110,135,150,300,600,1200,
 //                       1800,2400,3600,4800 7200,9600,19200]
-unsigned int IntClock;
-unsigned int DataLen;
-unsigned int StopBits;
-unsigned int EchoOn;
-unsigned int EnParity;
-unsigned int Parity;
-unsigned int BaudRate;

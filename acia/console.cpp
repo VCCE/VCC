@@ -53,8 +53,8 @@ void console_forground(int);
 //------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------
-HANDLE hConIn;                      // Com input handle
-HANDLE hConOut;                     // Com output handle
+HANDLE hConIn = NULL;               // Com input handle
+HANDLE hConOut = NULL;              // Com output handle
 CONSOLE_SCREEN_BUFFER_INFO Csbi;    // Console buffer info
 
 INPUT_RECORD KeyEvents[128];        // Buffer for keyboard records
@@ -80,8 +80,8 @@ console_open() {
 
 //      Disable the close button and "Close" context menu item of the
 //      Console window to prevent inadvertant exit of the emulator
-        HANDLE hwnd = GetConsoleWindow();
-        HANDLE hmenu = GetSystemMenu(hwnd, FALSE);
+        HWND hwnd = GetConsoleWindow();
+        HMENU hmenu = GetSystemMenu(hwnd, FALSE);
         EnableMenuItem(hmenu, SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
 
         hConIn=GetStdHandle(STD_INPUT_HANDLE);
@@ -116,8 +116,7 @@ void console_close() {
 //----------------------------------------------------------------
 // Read console.  Blocks until at least one char is read.
 //----------------------------------------------------------------
-int
-console_read(char * buf, int len) {
+int console_read(char * buf, int len) {
 
     char txt[64];  // For debug messages to win title
 
@@ -134,7 +133,7 @@ console_read(char * buf, int len) {
 
     // If line mode return next line from keyboard buffer (blocks)
     if (AciaLineInput) {
-        int cnt;
+        DWORD cnt = 0;
         ReadConsole(hConIn,buf,len,&cnt,NULL);
         return cnt;
     }
@@ -145,7 +144,9 @@ console_read(char * buf, int len) {
         // If Event buffer is empty load it (blocks)
         if (Event_Cnt < 1) {
             EventsPtr = KeyEvents;
-            ReadConsoleInput(hConIn,EventsPtr,128,&Event_Cnt);
+            DWORD cnt = 0;
+            ReadConsoleInput(hConIn,KeyEvents,128,&cnt);
+            Event_Cnt = cnt;
             if (Event_Cnt < 1) return 0;
         }
 

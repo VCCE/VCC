@@ -27,12 +27,17 @@
 // Inline interlock functions.  Used to coordinate writer thread.
 //------------------------------------------------------------------------
 
-#define SetIlock(l) (_InterlockedOr(&l,1) == 0)
-#define ClrIlock(l) (_InterlockedAnd(&l,0) == 1)
+#define SetIlock(l) (_InterlockedOr((long volatile *) &l,(long) 1) == 0)
+#define ClrIlock(l) (_InterlockedAnd((long volatile *) &l,(long) 0) == 1)
 
 //------------------------------------------------------------------------
 // Handles and buffers for I/O threads
 //------------------------------------------------------------------------
+
+HANDLE hInputThread;
+HANDLE hOutputThread;
+HANDLE hStopInput;
+HANDLE hStopOutput;
 
 // sc6551 registers
 unsigned char StatReg;
@@ -58,13 +63,21 @@ int sc6551_opened = 0;
 
 unsigned int HBcounter = 0; // used to pace I/O
 
+unsigned int IntClock;
+static unsigned int DataLen;
+static unsigned int StopBits;
+static unsigned int EchoOn;
+static unsigned int EnParity;
+static unsigned int Parity;
+static unsigned int BaudRate;
+
 // BaudDelay table for supported rates.  These are approximate.
 // If accuracy becomes an issue could use audio sample timer.
 // Corresponds with {    X,  75,  75, 110, 300, 300, 300,  600,
 //	                  1200,2400,2400,4800,4800,9600,9600,19200 };
 
-int BaudDelay[16] = {    0, 620, 620, 500, 250, 250, 250,  125,
-                        60,  30,  30,  15,  15,   7,   7,    3 };
+int BaudDelay[16] = {   0, 620, 620, 500, 250, 250, 250,  125,
+                       60,  30,  30,  15,  15,   7,   7,    3 };
 
 //------------------------------------------------------------------------
 //  Nicely terminate an I/O thread
@@ -235,14 +248,15 @@ void sc6551_heartbeat()
     // Countdown to receive next byte
     if (HBcounter-- < 1) {
         HBcounter = BaudDelay[BaudRate];
-
         // Set RxF if there is data in buffer
         if (Icnt) {
-            StatReg |= StatRxF;  //0x08
+            StatReg |= StatRxF; 
+			// Interrupt enabled?
             if (!(CmdReg & CmdRxI)) {
                 StatReg |= StatIRQ;
-                AssertInt(INT_IRQ,IS_GIME);
-                //PrintLogF("IRQ ");
+				AssertInt(INT_IRQ,IS_GIME);  //Fix me
+				// Use IS_IRQ which is self clearing
+                //AssertInt(INT_IRQ,IS_IRQ);
             }
         }
 
