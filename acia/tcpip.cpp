@@ -112,7 +112,7 @@ int tcpip_read(char* buf, int siz)
 //Write
 int tcpip_write(char* buf, int siz)
 {
-    char CRLF[2]="\r\n";
+    char CRLF[3]="\r\n";
 
     int cnt = 0;
     int rc;

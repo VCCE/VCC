@@ -26,7 +26,7 @@
 #include <errno.h>
 #include <string.h>
 #include "acia.h"
-#include "sc6551.h"
+//#include "sc6551.h"
 #include "../logger.h"
 
 HANDLE hReadEvent;
@@ -34,6 +34,12 @@ HANDLE hWriteEvent;
 HANDLE hComPort=INVALID_HANDLE_VALUE;
 
 int writeport(char *buf,int siz);
+
+static unsigned int BaudRate;
+static unsigned int EnParity;
+static unsigned int Parity;
+static unsigned int DataLen;
+static unsigned int StopBits;
 
 //=====================================================
 // Open COM port. Port I/O must be asyncronous (overlapped)
@@ -86,7 +92,7 @@ void wincom_close()
 int wincom_read(char* buf,int siz)
 {
     int rc;
-    int cnt = 0;
+    DWORD cnt = 0;
     if (hComPort == INVALID_HANDLE_VALUE) return -1;
 
     OVERLAPPED read_ovl = {0};
@@ -104,7 +110,7 @@ int wincom_read(char* buf,int siz)
     }
     // If text mode convert every LF to CR
     if (AciaTextMode) {
-        for (int i=0;i<cnt;i++) if (buf[i]==10) buf[i]=13;
+        for (unsigned int i=0;i<cnt;i++) if (buf[i]==10) buf[i]=13;
     }
     return cnt;
 }
@@ -158,7 +164,7 @@ int  wincom_write(char* buf,int siz)
 int writeport(char *buf,int siz) {
     OVERLAPPED ovl = {0};
     ovl.hEvent = hWriteEvent;
-    int cnt;
+    DWORD cnt;
     int rc;
     rc = WriteFile(hComPort,buf,siz,&cnt,&ovl);
     if (rc == 0) {

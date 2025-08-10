@@ -27,44 +27,57 @@
 // Inline interlock functions.  Used to coordinate writer thread.
 //------------------------------------------------------------------------
 
-#define SetIlock(l) (_InterlockedOr(&l,1) == 0)
-#define ClrIlock(l) (_InterlockedAnd(&l,0) == 1)
+#define SetIlock(l) (_InterlockedOr((long volatile *) &l,(long) 1) == 0)
+#define ClrIlock(l) (_InterlockedAnd((long volatile *) &l,(long) 0) == 1)
 
 //------------------------------------------------------------------------
 // Handles and buffers for I/O threads
 //------------------------------------------------------------------------
 
+static HANDLE hInputThread;
+static HANDLE hOutputThread;
+static HANDLE hStopInput;
+static HANDLE hStopOutput;
+
 // sc6551 registers
-unsigned char StatReg;
-unsigned char CmdReg;
-unsigned char CtlReg;
+static unsigned char StatReg;
+static unsigned char CmdReg;
+static unsigned char CtlReg;
 
 // Input
 #define IBUFSIZ 1024
-DWORD WINAPI sc6551_input_thread(LPVOID);
-char InBuf[IBUFSIZ];
-char *InRptr = InBuf;
-int Icnt = 0;
+static DWORD WINAPI sc6551_input_thread(LPVOID);
+static char InBuf[IBUFSIZ];
+static char *InRptr = InBuf;
+static int Icnt = 0;
 
 // Output
 #define OBUFSIZ 1024
-DWORD WINAPI sc6551_output_thread(LPVOID);
-char OutBuf[OBUFSIZ];
-char *OutWptr = OutBuf;
-int Wcnt = 0;
-unsigned int volatile W_Ilock;
+static DWORD WINAPI sc6551_output_thread(LPVOID);
+static char OutBuf[OBUFSIZ];
+static char *OutWptr = OutBuf;
+static int Wcnt = 0;
+static unsigned int volatile W_Ilock;
 
-int sc6551_opened = 0;
+static int sc6551_opened = 0;
 
-unsigned int HBcounter = 0; // used to pace I/O
+static unsigned int HBcounter = 0; // used to pace I/O
+
+unsigned int IntClock;
+unsigned int DataLen;
+unsigned int StopBits;
+unsigned int EchoOn;
+unsigned int EnParity;
+unsigned int Parity;
+unsigned int BaudRate;
 
 // BaudDelay table for supported rates.  These are approximate.
 // If accuracy becomes an issue could use audio sample timer.
 // Corresponds with {    X,  75,  75, 110, 300, 300, 300,  600,
 //	                  1200,2400,2400,4800,4800,9600,9600,19200 };
 
-int BaudDelay[16] = {    0, 620, 620, 500, 250, 250, 250,  125,
-                        60,  30,  30,  15,  15,   7,   7,    3 };
+static int BaudDelay[16] = { 0, 620, 620, 500, 250, 250, 250,  125,
+                            60,  30,  30,  15,  15,   7,   7,    3 };
 
 //------------------------------------------------------------------------
 //  Nicely terminate an I/O thread

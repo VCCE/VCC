@@ -57,54 +57,52 @@ enum com_mode {
 };
 
 // Handles for I/O threads
-HANDLE hInputThread;
-HANDLE hOutputThread;
-HANDLE hStopInput;
-HANDLE hStopOutput;
+extern HANDLE hInputThread;
+extern HANDLE hOutputThread;
+extern HANDLE hStopInput;
+extern HANDLE hStopOutput;
 
-// Config globals
-int  AciaBasePort;             // Base port for sc6651 (0x68 or 0x6C)
-int  AciaComType;              // Console,file,tcpip,wincom
-int  AciaComMode;              // Duplex,read,write
-int  AciaTextMode;             // CR and EOF translations 0=none 1=text
-int  AciaLineInput;            // Console line mode 0=Normal 1=Linemode
-int  AciaTcpPort;              // TCP port 1024-65536
-char AciaComPort[32];          // Windows Serial port eg COM20
-char AciaTcpHost[MAX_PATH];    // Tcpip hostname 
-char AciaFileRdPath[MAX_PATH]; // Path for file reads
-char AciaFileWrPath[MAX_PATH]; // Path for file writes
+extern int  AciaBasePort;             // Base port for sc6651 (0x68 or 0x6C)
+extern int  AciaComType;              // Console,file,tcpip,wincom
+extern int  AciaComMode;              // Duplex,read,write
+extern int  AciaTextMode;             // CR and EOF translations 0=none 1=text
+extern int  AciaLineInput;            // Console line mode 0=Normal 1=Linemode
+extern int  AciaTcpPort;              // TCP port 1024-65536
+extern char AciaComPort[32];          // Windows Serial port eg COM20
+extern char AciaTcpHost[MAX_PATH];    // Tcpip hostname
+extern char AciaFileRdPath[MAX_PATH]; // Path for file reads
+extern char AciaFileWrPath[MAX_PATH]; // Path for file writes
 
-// Status for Vcc status line
-char AciaStat[32];
+extern void (*AssertInt)(unsigned char, unsigned char);
 
 // Comunications hooks
-int  com_open();
-void com_close();
-int  com_write(char*,int);
-int  com_read(char*,int);
+extern int  com_open();
+extern void com_close();
+extern int  com_write(char*,int);
+extern int  com_read(char*,int);
 
 // Console
-int  console_open();
-void console_close();
-int  console_read(char*,int);
-int  console_write(char*,int);
+extern int  console_open();
+extern void console_close();
+extern int  console_read(char*,int);
+extern int  console_write(char*,int);
 
 // File
-int  file_open();
-void file_close();
-int  file_read(char*,int);
-int  file_write(char*,int);
+extern int  file_open();
+extern void file_close();
+extern int  file_read(char*,int);
+extern int  file_write(char*,int);
 
 // Tcpip
-int  tcpip_open();
-void tcpip_close();
-int  tcpip_read(char*,int);
-int  tcpip_write( char*,int);
+extern int  tcpip_open();
+extern void tcpip_close();
+extern int  tcpip_read(char*,int);
+extern int  tcpip_write( char*,int);
 
 // WinCom 
-int  wincom_open();
-void wincom_close();
-int  wincom_read(char*,int);
-int  wincom_write(char*,int);
+extern int  wincom_open();
+extern void wincom_close();
+extern int  wincom_read(char*,int);
+extern int  wincom_write(char*,int);
 
 #endif

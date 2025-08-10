@@ -285,7 +285,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="acia.c">
+    <ClCompile Include="acia.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -303,14 +303,12 @@
       </PrecompiledHeaderOutputFile>
     </ClCompile>
     <ClCompile Include="..\logger.cpp" />
-    <ClCompile Include="..\DialogOps.cpp">
-       <CompileAs>CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="console.c" />
-    <ClCompile Include="sc6551.c" />
-    <ClCompile Include="file.c" />
-    <ClCompile Include="tcpip.c" />
-    <ClCompile Include="wincom.c" />
+	<ClCompile Include="..\DialogOps.cpp"/>
+    <ClCompile Include="console.cpp" />
+    <ClCompile Include="sc6551.cpp" />
+    <ClCompile Include="file.cpp" />
+    <ClCompile Include="tcpip.cpp" />
+    <ClCompile Include="wincom.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="acia.rc" />

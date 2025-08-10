@@ -66,12 +66,11 @@
 //------------------------------------------------------------------
 // sc6551 calls from emulation
 //------------------------------------------------------------------
-void sc6551_init();
-void sc6551_close();
-void sc6551_heartbeat();
-unsigned char sc6551_read(unsigned char data);
-void sc6551_write(unsigned char data, unsigned short port);
-void (*AssertInt)(unsigned char, unsigned char);
+extern void sc6551_init();
+extern void sc6551_close();
+extern void sc6551_heartbeat();
+extern unsigned char sc6551_read(unsigned char data);
+extern void sc6551_write(unsigned char data, unsigned short port);
 
 //------------------------------------------------------------------
 // Settings from command and control registers
@@ -79,10 +78,10 @@ void (*AssertInt)(unsigned char, unsigned char);
 // Parity is index to [odd,even,mark,space]
 // BaudRate is index to [19200,50,75,110,135,150,300,600,1200,
 //                       1800,2400,3600,4800 7200,9600,19200]
-unsigned int IntClock;
-unsigned int DataLen;
-unsigned int StopBits;
-unsigned int EchoOn;
-unsigned int EnParity;
-unsigned int Parity;
-unsigned int BaudRate;
+extern unsigned int IntClock;
+extern unsigned int DataLen;
+extern unsigned int StopBits;
+extern unsigned int EchoOn;
+extern unsigned int EnParity;
+extern unsigned int Parity;
+extern unsigned int BaudRate;

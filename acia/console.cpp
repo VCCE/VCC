@@ -53,8 +53,8 @@ void console_forground(int);
 //------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------
-HANDLE hConIn;                      // Com input handle
-HANDLE hConOut;                     // Com output handle
+HANDLE hConIn = INVALID_HANDLE_VALUE;  // Com input handle
+HANDLE hConOut = INVALID_HANDLE_VALUE; // Com output handle
 CONSOLE_SCREEN_BUFFER_INFO Csbi;    // Console buffer info
 
 INPUT_RECORD KeyEvents[128];        // Buffer for keyboard records
@@ -74,14 +74,14 @@ console_open() {
         DWORD mode;
 
 //      Make sure console is closed first
-        if ( hConOut != NULL) console_close();
-        if ( hConIn != NULL) console_close();
+        if ( hConOut != INVALID_HANDLE_VALUE) console_close();
+        if ( hConIn != INVALID_HANDLE_VALUE) console_close();
         AllocConsole();
 
 //      Disable the close button and "Close" context menu item of the
 //      Console window to prevent inadvertant exit of the emulator
-        HANDLE hwnd = GetConsoleWindow();
-        HANDLE hmenu = GetSystemMenu(hwnd, FALSE);
+        HWND hwnd = GetConsoleWindow();
+        HMENU hmenu = GetSystemMenu(hwnd, FALSE);
         EnableMenuItem(hmenu, SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
 
         hConIn=GetStdHandle(STD_INPUT_HANDLE);
@@ -109,8 +109,8 @@ console_open() {
 
 void console_close() {
     FreeConsole();
-    hConOut = NULL;
-    hConIn = NULL;
+    hConOut = INVALID_HANDLE_VALUE;
+    hConIn = INVALID_HANDLE_VALUE;
 }
 
 //----------------------------------------------------------------
@@ -134,7 +134,7 @@ console_read(char * buf, int len) {
 
     // If line mode return next line from keyboard buffer (blocks)
     if (AciaLineInput) {
-        int cnt;
+        DWORD cnt = 0;
         ReadConsole(hConIn,buf,len,&cnt,NULL);
         return cnt;
     }
@@ -145,7 +145,9 @@ console_read(char * buf, int len) {
         // If Event buffer is empty load it (blocks)
         if (Event_Cnt < 1) {
             EventsPtr = KeyEvents;
-            ReadConsoleInput(hConIn,EventsPtr,128,&Event_Cnt);
+            DWORD cnt = 0;
+            ReadConsoleInput(hConIn,KeyEvents,128,&cnt);
+            Event_Cnt = cnt;
             if (Event_Cnt < 1) return 0;
         }
 
