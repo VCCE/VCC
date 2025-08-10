@@ -3320,6 +3320,8 @@ void cpu_irq(void)
 
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_IRQ, CycleCounter, MC6809GetState());
+
+	ClearIRQ();
 }
 
 void cpu_nmi(void)

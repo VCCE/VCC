@@ -60,6 +60,15 @@ static inline void ClearNMI()
 }
 
 //
+// Clear the irq interrupt if source IS_IRQ
+//
+static inline void ClearIRQ()
+{
+	InterruptLine[IS_IRQ] &= BitMask(INT_IRQ);
+	LatchInterrupts();
+}
+
+//
 // Clear state of all interrupt lines
 //
 static inline void ClearInterrupts()
