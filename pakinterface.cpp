@@ -187,12 +187,17 @@ void PackMem8Write(unsigned short Address,unsigned char Value)
 	return;
 }
 
-// Shunt to convert PAK assert to CPU assert
-// Pack assert interrupt interface is two unsigned chars
-// CPU assert interrupt is two integers in different order
+// Convert PAK assert to CPUAssert or CPUDeAssert
+// PAK assert is unsigned chars in reversed order
 void (PakAssertInterupt)(unsigned char interrupt, unsigned char source)
 {
-	CPUAssertInterupt( (InterruptSource) source, (Interrupt) interrupt);
+	if ((Interrupt) interrupt == INT_NONE) {
+		if ((InterruptSource) source == IS_PAK_IRQ) {
+			CPUDeAssertInterupt(IS_PAK_IRQ, INT_IRQ);
+		}
+	} else {
+		CPUAssertInterupt((InterruptSource) source, (Interrupt) interrupt);
+	}
 }
 
 unsigned short PackAudioSample(void)

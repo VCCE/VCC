@@ -7207,7 +7207,6 @@ void cpu_irq(void)
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_IRQ, CycleCounter, HD6309GetState());
 
-	ClearPakIRQ();
 }
 
 void cpu_nmi(void)

@@ -248,17 +248,15 @@ void sc6551_heartbeat()
     // Countdown to receive next byte
     if (HBcounter-- < 1) {
         HBcounter = BaudDelay[BaudRate];
-        // Set RxF if there is data in buffer
+        // Set RxF if there is data buffered
         if (Icnt) {
-            StatReg |= StatRxF; 
-			// Interrupt enabled?
-            if (!(CmdReg & CmdRxI)) {
-                StatReg |= StatIRQ;
-				// Self clearing for now
+            StatReg |= StatRxF;
+            // If not disabled or already done assert IRQ
+            if (!((CmdReg & CmdRxI) || (StatReg & StatIRQ))) {
                 AssertInt(INT_IRQ,IS_PAK_IRQ);
+                StatReg |= StatIRQ;
             }
         }
-
         // Set TxE if write buffer not full (interlocked)
         if (SetIlock(W_Ilock)) {
             if (Wcnt < OBUFSIZ) StatReg |= StatTxE; //0x10
@@ -273,26 +271,27 @@ void sc6551_heartbeat()
 //    MPI calls port reads for each slot in sequence. The CPU gets the
 //    first non zero reply if any.
 // -----------------------------------------------------------------------
+
 unsigned char sc6551_read(unsigned char port)
 {
     unsigned char data = 0;      // Default zero
     switch (port-AciaBasePort) {
-    // Read input data
+    // Read data
     case 0:
-        //PrintLogF("r%02x.%02x ",data,StatReg);
-        // Ignore read if no data or RxF is not set
-        if (Icnt && (StatReg & StatRxF)) {
+        // If data avail and RxF is set return the data
+        if ((Icnt > 0) && (StatReg & StatRxF)) {
             data = *InRptr++;
             Icnt--;
-            // Clear RxF until timer resets it
-            StatReg &= ~StatRxF;  //0x08
         }
+        // If interupt was set DeAssert the IRQ
+        if (!(StatReg & StatIRQ)) AssertInt(INT_NONE,IS_PAK_IRQ);
+        // Clear RxF until timer resets it
+        StatReg &= ~StatRxF;  //0x08
         break;
     // Read status register
     case 1:
         data = StatReg;
-        StatReg &= ~StatIRQ;      //0x80
-        //if(data)PrintLogF("s%02x\n",data);
+        StatReg &= ~StatIRQ;
         break;
     // Read command register
     case 2:
@@ -325,7 +324,6 @@ void sc6551_write(unsigned char data,unsigned short port)
         break;
     // Write Command register
     case 2:
-        //PrintLogF("c%02x\n",data);
         CmdReg = data;
         EchoOn = (CmdReg & 0x10) >> 4;
         Parity = (CmdReg & 0xE0) >> 5;
@@ -344,7 +342,6 @@ void sc6551_write(unsigned char data,unsigned short port)
         IntClock = (CtlReg & 0x10) >> 4;
         DataLen  = 8 - ((CtlReg & 0x60) >> 5);
         StopBits = (((CtlReg & 0x80) >> 7) == 0) ? 0 : 2;
-		//PrintLogF("Baud:%d Len:%d Stops:%d\n",BaudRate,DataLen,StopBits);
-		break;
+        break;
     }
 }
