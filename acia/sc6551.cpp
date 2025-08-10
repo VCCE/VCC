@@ -34,50 +34,50 @@
 // Handles and buffers for I/O threads
 //------------------------------------------------------------------------
 
-static HANDLE hInputThread;
-static HANDLE hOutputThread;
-static HANDLE hStopInput;
-static HANDLE hStopOutput;
+HANDLE hInputThread;
+HANDLE hOutputThread;
+HANDLE hStopInput;
+HANDLE hStopOutput;
 
 // sc6551 registers
-static unsigned char StatReg;
-static unsigned char CmdReg;
-static unsigned char CtlReg;
+unsigned char StatReg;
+unsigned char CmdReg;
+unsigned char CtlReg;
 
 // Input
 #define IBUFSIZ 1024
-static DWORD WINAPI sc6551_input_thread(LPVOID);
-static char InBuf[IBUFSIZ];
-static char *InRptr = InBuf;
-static int Icnt = 0;
+DWORD WINAPI sc6551_input_thread(LPVOID);
+char InBuf[IBUFSIZ];
+char *InRptr = InBuf;
+int Icnt = 0;
 
 // Output
 #define OBUFSIZ 1024
-static DWORD WINAPI sc6551_output_thread(LPVOID);
-static char OutBuf[OBUFSIZ];
-static char *OutWptr = OutBuf;
-static int Wcnt = 0;
-static unsigned int volatile W_Ilock;
+DWORD WINAPI sc6551_output_thread(LPVOID);
+char OutBuf[OBUFSIZ];
+char *OutWptr = OutBuf;
+int Wcnt = 0;
+unsigned int volatile W_Ilock;
 
-static int sc6551_opened = 0;
+int sc6551_opened = 0;
 
-static unsigned int HBcounter = 0; // used to pace I/O
+unsigned int HBcounter = 0; // used to pace I/O
 
 unsigned int IntClock;
-unsigned int DataLen;
-unsigned int StopBits;
-unsigned int EchoOn;
-unsigned int EnParity;
-unsigned int Parity;
-unsigned int BaudRate;
+static unsigned int DataLen;
+static unsigned int StopBits;
+static unsigned int EchoOn;
+static unsigned int EnParity;
+static unsigned int Parity;
+static unsigned int BaudRate;
 
 // BaudDelay table for supported rates.  These are approximate.
 // If accuracy becomes an issue could use audio sample timer.
 // Corresponds with {    X,  75,  75, 110, 300, 300, 300,  600,
 //	                  1200,2400,2400,4800,4800,9600,9600,19200 };
 
-static int BaudDelay[16] = { 0, 620, 620, 500, 250, 250, 250,  125,
-                            60,  30,  30,  15,  15,   7,   7,    3 };
+int BaudDelay[16] = {   0, 620, 620, 500, 250, 250, 250,  125,
+                       60,  30,  30,  15,  15,   7,   7,    3 };
 
 //------------------------------------------------------------------------
 //  Nicely terminate an I/O thread
@@ -248,14 +248,15 @@ void sc6551_heartbeat()
     // Countdown to receive next byte
     if (HBcounter-- < 1) {
         HBcounter = BaudDelay[BaudRate];
-
         // Set RxF if there is data in buffer
         if (Icnt) {
-            StatReg |= StatRxF;  //0x08
+            StatReg |= StatRxF; 
+			// Interrupt enabled?
             if (!(CmdReg & CmdRxI)) {
                 StatReg |= StatIRQ;
-                AssertInt(INT_IRQ,IS_GIME);
-                //PrintLogF("IRQ ");
+				AssertInt(INT_IRQ,IS_GIME);  //Fix me
+				// Use IS_IRQ which is self clearing
+                //AssertInt(INT_IRQ,IS_IRQ);
             }
         }
 

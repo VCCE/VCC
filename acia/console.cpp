@@ -53,8 +53,8 @@ void console_forground(int);
 //------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------
-HANDLE hConIn = INVALID_HANDLE_VALUE;  // Com input handle
-HANDLE hConOut = INVALID_HANDLE_VALUE; // Com output handle
+HANDLE hConIn = NULL;               // Com input handle
+HANDLE hConOut = NULL;              // Com output handle
 CONSOLE_SCREEN_BUFFER_INFO Csbi;    // Console buffer info
 
 INPUT_RECORD KeyEvents[128];        // Buffer for keyboard records
@@ -74,8 +74,8 @@ console_open() {
         DWORD mode;
 
 //      Make sure console is closed first
-        if ( hConOut != INVALID_HANDLE_VALUE) console_close();
-        if ( hConIn != INVALID_HANDLE_VALUE) console_close();
+        if ( hConOut != NULL) console_close();
+        if ( hConIn != NULL) console_close();
         AllocConsole();
 
 //      Disable the close button and "Close" context menu item of the
@@ -109,15 +109,14 @@ console_open() {
 
 void console_close() {
     FreeConsole();
-    hConOut = INVALID_HANDLE_VALUE;
-    hConIn = INVALID_HANDLE_VALUE;
+    hConOut = NULL;
+    hConIn = NULL;
 }
 
 //----------------------------------------------------------------
 // Read console.  Blocks until at least one char is read.
 //----------------------------------------------------------------
-int
-console_read(char * buf, int len) {
+int console_read(char * buf, int len) {
 
     char txt[64];  // For debug messages to win title
 

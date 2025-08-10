@@ -75,6 +75,13 @@ extern char AciaFileWrPath[MAX_PATH]; // Path for file writes
 
 extern void (*AssertInt)(unsigned char, unsigned char);
 
+// Device
+extern void sc6551_init();
+extern void sc6551_close();
+extern void sc6551_heartbeat();
+extern unsigned char sc6551_read(unsigned char data);
+extern void sc6551_write(unsigned char data, unsigned short port);
+
 // Comunications hooks
 extern int  com_open();
 extern void com_close();
