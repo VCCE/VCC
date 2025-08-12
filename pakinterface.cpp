@@ -191,10 +191,8 @@ void PackMem8Write(unsigned short Address,unsigned char Value)
 // PAK assert is unsigned chars in reversed order
 void (PakAssertInterupt)(unsigned char interrupt, unsigned char source)
 {
-	if ((Interrupt) interrupt == INT_NONE) {
-		if ((InterruptSource) source == IS_PAK_IRQ) {
-			CPUDeAssertInterupt(IS_PAK_IRQ, INT_IRQ);
-		}
+	if (interrupt == INT_NONE) {
+		CPUDeAssertInterupt((InterruptSource) source, INT_IRQ);
 	} else {
 		CPUAssertInterupt((InterruptSource) source, (Interrupt) interrupt);
 	}

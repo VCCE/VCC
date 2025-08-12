@@ -253,7 +253,7 @@ void sc6551_heartbeat()
             StatReg |= StatRxF;
             // If not disabled or already done assert IRQ
             if (!((CmdReg & CmdRxI) || (StatReg & StatIRQ))) {
-                AssertInt(INT_IRQ,IS_PAK_IRQ);
+                AssertInt(INT_IRQ,IS_PIA1_CART);
                 StatReg |= StatIRQ;
             }
         }
@@ -283,14 +283,14 @@ unsigned char sc6551_read(unsigned char port)
             data = *InRptr++;
             Icnt--;
         }
-        // If interupt was set DeAssert the IRQ
-        if (!(StatReg & StatIRQ)) AssertInt(INT_NONE,IS_PAK_IRQ);
         // Clear RxF until timer resets it
         StatReg &= ~StatRxF;  //0x08
         break;
     // Read status register
     case 1:
         data = StatReg;
+        // If IRQ was set DeAssert the IRQ
+        if (!(StatReg & StatIRQ)) AssertInt(INT_NONE,IS_PIA1_CART);
         StatReg &= ~StatIRQ;
         break;
     // Read command register
