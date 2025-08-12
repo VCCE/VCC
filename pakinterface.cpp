@@ -189,6 +189,12 @@ void PackMem8Write(unsigned short Address,unsigned char Value)
 
 // Convert PAK assert to CPUAssert or CPUDeAssert
 // PAK assert is unsigned chars in reversed order
+//
+// FIXME: This is not correct. The gime should be converting the CART
+// line to IRQ or FIRQ per bit zero of $FF92 or $FF93. This means
+// the cartridge does not know which is generated as is assumed here.
+// GimeIRQ and FIRQ Stearing should be fixed and also code here.
+//
 void (PakAssertInterupt)(unsigned char interrupt, unsigned char source)
 {
 	if (interrupt == INT_NONE) {

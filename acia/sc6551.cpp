@@ -237,6 +237,11 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 // StatDCD 0x20 Data Carier detected if clr
 // StatDSR 0x40 Data set Ready if clr
 // StatIRQ 0x80 IRQ set
+//
+// FIXME: The assumption that CART generates IRQ is not always correct.
+// The gime should convert the CART line to IRQ or FIRQ per bit zero
+// of $FF92 or $FF93. Carts should not assume which is generated.
+
 //------------------------------------------------------------------------
 
 void sc6551_heartbeat()
