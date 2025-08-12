@@ -22,13 +22,7 @@
 #include "sc6551.h"
 #include "../interrupts.h"
 #include "../logger.h"
-
-//------------------------------------------------------------------------
-// Inline interlock functions.  Used to coordinate writer thread.
-//------------------------------------------------------------------------
-
-#define SetIlock(l) (_InterlockedOr((long volatile *) &l,(long) 1) == 0)
-#define ClrIlock(l) (_InterlockedAnd((long volatile *) &l,(long) 0) == 1)
+#include <atomic>
 
 //------------------------------------------------------------------------
 // Handles and buffers for I/O threads
@@ -57,7 +51,9 @@ DWORD WINAPI sc6551_output_thread(LPVOID);
 char OutBuf[OBUFSIZ];
 char *OutWptr = OutBuf;
 int Wcnt = 0;
-unsigned int volatile W_Ilock;
+
+// Atomic flag for interlock
+std::atomic_flag Ilock{};
 
 int sc6551_opened = 0;
 
@@ -206,7 +202,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
     while(TRUE) {
         if (Wcnt > 0) {
             // Need interlock for TxE, OutWptr, and Wcnt
-            if (SetIlock(W_Ilock)) {
+            if (!Ilock.test_and_set()) {
                 StatReg &= ~StatTxE;
                 if (AciaComMode != COM_MODE_READ) {
                     char * ptr = OutBuf;
@@ -220,7 +216,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
                 }
                 Wcnt = 0;
                 OutWptr = OutBuf;
-                ClrIlock(W_Ilock);
+                Ilock.clear();
             }
         }
 
@@ -258,9 +254,9 @@ void sc6551_heartbeat()
             }
         }
         // Set TxE if write buffer not full (interlocked)
-        if (SetIlock(W_Ilock)) {
+        if (!Ilock.test_and_set()) {
             if (Wcnt < OBUFSIZ) StatReg |= StatTxE; //0x10
-            ClrIlock(W_Ilock);
+            Ilock.clear();
         }
     }
     return;
