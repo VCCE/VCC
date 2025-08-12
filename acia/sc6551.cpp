@@ -22,13 +22,7 @@
 #include "sc6551.h"
 #include "../interrupts.h"
 #include "../logger.h"
-
-//------------------------------------------------------------------------
-// Inline interlock functions.  Used to coordinate writer thread.
-//------------------------------------------------------------------------
-
-#define SetIlock(l) (_InterlockedOr((long volatile *) &l,(long) 1) == 0)
-#define ClrIlock(l) (_InterlockedAnd((long volatile *) &l,(long) 0) == 1)
+#include <atomic>
 
 //------------------------------------------------------------------------
 // Handles and buffers for I/O threads
@@ -57,7 +51,9 @@ DWORD WINAPI sc6551_output_thread(LPVOID);
 char OutBuf[OBUFSIZ];
 char *OutWptr = OutBuf;
 int Wcnt = 0;
-unsigned int volatile W_Ilock;
+
+// Atomic flag for interlock
+std::atomic_flag Ilock{};
 
 int sc6551_opened = 0;
 
@@ -206,7 +202,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
     while(TRUE) {
         if (Wcnt > 0) {
             // Need interlock for TxE, OutWptr, and Wcnt
-            if (SetIlock(W_Ilock)) {
+            if (!Ilock.test_and_set()) {
                 StatReg &= ~StatTxE;
                 if (AciaComMode != COM_MODE_READ) {
                     char * ptr = OutBuf;
@@ -220,7 +216,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
                 }
                 Wcnt = 0;
                 OutWptr = OutBuf;
-                ClrIlock(W_Ilock);
+                Ilock.clear();
             }
         }
 
@@ -241,6 +237,11 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 // StatDCD 0x20 Data Carier detected if clr
 // StatDSR 0x40 Data set Ready if clr
 // StatIRQ 0x80 IRQ set
+//
+// FIXME: The assumption that CART generates IRQ is not always correct.
+// The gime should convert the CART line to IRQ or FIRQ per bit zero
+// of $FF92 or $FF93. Carts should not assume which is generated.
+
 //------------------------------------------------------------------------
 
 void sc6551_heartbeat()
@@ -248,22 +249,19 @@ void sc6551_heartbeat()
     // Countdown to receive next byte
     if (HBcounter-- < 1) {
         HBcounter = BaudDelay[BaudRate];
-        // Set RxF if there is data in buffer
+        // Set RxF if there is data buffered
         if (Icnt) {
-            StatReg |= StatRxF; 
-			// Interrupt enabled?
-            if (!(CmdReg & CmdRxI)) {
+            StatReg |= StatRxF;
+            // If not disabled or already done assert IRQ
+            if (!((CmdReg & CmdRxI) || (StatReg & StatIRQ))) {
+                AssertInt(INT_IRQ,IS_PIA1_CART);
                 StatReg |= StatIRQ;
-				AssertInt(INT_IRQ,IS_GIME);  //Fix me
-				// Use IS_IRQ which is self clearing
-                //AssertInt(INT_IRQ,IS_IRQ);
             }
         }
-
         // Set TxE if write buffer not full (interlocked)
-        if (SetIlock(W_Ilock)) {
+        if (!Ilock.test_and_set()) {
             if (Wcnt < OBUFSIZ) StatReg |= StatTxE; //0x10
-            ClrIlock(W_Ilock);
+            Ilock.clear();
         }
     }
     return;
@@ -274,26 +272,27 @@ void sc6551_heartbeat()
 //    MPI calls port reads for each slot in sequence. The CPU gets the
 //    first non zero reply if any.
 // -----------------------------------------------------------------------
+
 unsigned char sc6551_read(unsigned char port)
 {
     unsigned char data = 0;      // Default zero
     switch (port-AciaBasePort) {
-    // Read input data
+    // Read data
     case 0:
-        //PrintLogF("r%02x.%02x ",data,StatReg);
-        // Ignore read if no data or RxF is not set
-        if (Icnt && (StatReg & StatRxF)) {
+        // If data avail and RxF is set return the data
+        if ((Icnt > 0) && (StatReg & StatRxF)) {
             data = *InRptr++;
             Icnt--;
-            // Clear RxF until timer resets it
-            StatReg &= ~StatRxF;  //0x08
         }
+        // Clear RxF until timer resets it
+        StatReg &= ~StatRxF;  //0x08
         break;
     // Read status register
     case 1:
         data = StatReg;
-        StatReg &= ~StatIRQ;      //0x80
-        //if(data)PrintLogF("s%02x\n",data);
+        // If IRQ was set DeAssert the IRQ
+        if (!(StatReg & StatIRQ)) AssertInt(INT_NONE,IS_PIA1_CART);
+        StatReg &= ~StatIRQ;
         break;
     // Read command register
     case 2:
@@ -326,7 +325,6 @@ void sc6551_write(unsigned char data,unsigned short port)
         break;
     // Write Command register
     case 2:
-        //PrintLogF("c%02x\n",data);
         CmdReg = data;
         EchoOn = (CmdReg & 0x10) >> 4;
         Parity = (CmdReg & 0xE0) >> 5;
@@ -345,7 +343,6 @@ void sc6551_write(unsigned char data,unsigned short port)
         IntClock = (CtlReg & 0x10) >> 4;
         DataLen  = 8 - ((CtlReg & 0x60) >> 5);
         StopBits = (((CtlReg & 0x80) >> 7) == 0) ? 0 : 2;
-		//PrintLogF("Baud:%d Len:%d Stops:%d\n",BaudRate,DataLen,StopBits);
-		break;
+        break;
     }
 }
