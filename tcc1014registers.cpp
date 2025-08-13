@@ -23,6 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014graphics.h"
 #include "coco3.h"
 #include "keyboard.h"
+#include "pakinterface.h"
 #include "Vcc.h"
 
 
@@ -214,9 +215,18 @@ unsigned char GetInit0(unsigned char port)
 	return(data);
 }
 
+static unsigned char PakInterrupt = 0;
+
 void SetGimeIRQStearing(unsigned char data) //92
 {
-	// FIXME: GimeIRQStearing for CART (bit 0)
+	// Packs Assert or DeAssert interrupts as required,
+	// they only need to know if interrupt is IRQ or FIRQ
+	if (data & 1) {
+		if (PakInterrupt != INT_IRQ) {
+			SetPakInterrupt(INT_IRQ);
+			PakInterrupt = INT_IRQ;
+		}
+	}
 
 	if ( (GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2) )
 		GimeSetKeyboardInteruptState(1);
@@ -242,7 +252,12 @@ void SetGimeIRQStearing(unsigned char data) //92
 
 void SetGimeFIRQStearing(unsigned char data) //93
 {
-	// FIXME: GimeFIRQStearing for CART (bit 0)
+	if (data & 1) {
+		if (PakInterrupt != INT_FIRQ) {
+			SetPakInterrupt(INT_FIRQ);
+			PakInterrupt = INT_FIRQ;
+		}
+	}
 
 	if ( (GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2) )
 		GimeSetKeyboardInteruptState(1);
