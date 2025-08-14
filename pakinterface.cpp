@@ -188,15 +188,6 @@ void PackMem8Write(unsigned short Address,unsigned char Value)
 	return;
 }
 
-// The gime steers the CART line to IRQ or FIRQ per bit zero of
-// $FF92 or $FF93. When the gime sees the CART interrupt has changed
-// it notifies the pack interface by calling SetPakInterrupt()
-static unsigned char PakInterrupt = 0;
-void SetPakInterrupt(unsigned char interrupt)
-{
-	PakInterrupt = interrupt;
-}
-
 // Convert PAK assert to CPUAssert or CPUDeAssert.
 void (PakAssertInterupt) (unsigned char interrupt, unsigned char source)
 {

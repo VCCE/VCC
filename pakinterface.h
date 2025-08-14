@@ -18,7 +18,6 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-void SetPakInterrupt(unsigned char);
 void PakTimer(void);
 unsigned char PackPortRead (unsigned char);
 void PackPortWrite(unsigned char,unsigned char);
