@@ -188,13 +188,12 @@ void PackMem8Write(unsigned short Address,unsigned char Value)
 	return;
 }
 
-// Convert PAK assert to CPUAssert or CPUDeAssert.
+// Convert PAK interrupt assert to CPU assert or Gime assert.
 void (PakAssertInterupt) (unsigned char interrupt, unsigned char source)
 {
 	(void) source; // not used
 	switch (interrupt) {
-	case INT_IRQ:
-	case INT_FIRQ:
+	case INT_CART:
 		GimeAssertCartInterupt();
 		break;
 	case INT_NMI:

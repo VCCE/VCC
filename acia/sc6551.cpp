@@ -248,9 +248,9 @@ void sc6551_heartbeat()
         // Set RxF if there is data buffered
         if (Icnt) {
             StatReg |= StatRxF;
-            // If not disabled or already done assert IRQ
+            // Assert CART if interrupts not disabled or already asserted.
             if (!((CmdReg & CmdRxI) || (StatReg & StatIRQ))) {
-                AssertInt(INT_IRQ,NULL);
+                AssertInt(INT_CART,NULL);
                 StatReg |= StatIRQ;
             }
         }
