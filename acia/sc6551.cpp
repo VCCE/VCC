@@ -238,9 +238,6 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 // StatDSR 0x40 Data set Ready if clr
 // StatIRQ 0x80 IRQ set
 //
-// FIXME: The assumption that CART generates IRQ is not always correct.
-// The gime should convert the CART line to IRQ or FIRQ per bit zero
-// of $FF92 or $FF93. Carts should not assume which is generated.
 
 //------------------------------------------------------------------------
 
@@ -254,7 +251,7 @@ void sc6551_heartbeat()
             StatReg |= StatRxF;
             // If not disabled or already done assert IRQ
             if (!((CmdReg & CmdRxI) || (StatReg & StatIRQ))) {
-                AssertInt(INT_IRQ,IS_PIA1_CART);
+                AssertInt(INT_IRQ,NULL);
                 StatReg |= StatIRQ;
             }
         }
@@ -290,8 +287,6 @@ unsigned char sc6551_read(unsigned char port)
     // Read status register
     case 1:
         data = StatReg;
-        // If IRQ was set DeAssert the IRQ
-        if (!(StatReg & StatIRQ)) AssertInt(INT_NONE,IS_PIA1_CART);
         StatReg &= ~StatIRQ;
         break;
     // Read command register

@@ -23,7 +23,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014graphics.h"
 #include "coco3.h"
 #include "keyboard.h"
-#include "pakinterface.h"
 #include "Vcc.h"
 
 
@@ -215,19 +214,8 @@ unsigned char GetInit0(unsigned char port)
 	return(data);
 }
 
-static unsigned char PakInterrupt = 0;
-
 void SetGimeIRQStearing(unsigned char data) //92
 {
-	// Packs Assert or DeAssert interrupts as required,
-	// they only need to know if interrupt is IRQ or FIRQ
-	if (data & 1) {
-		if (PakInterrupt != INT_IRQ) {
-			SetPakInterrupt(INT_IRQ);
-			PakInterrupt = INT_IRQ;
-		}
-	}
-
 	if ( (GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2) )
 		GimeSetKeyboardInteruptState(1);
 	else
@@ -252,13 +240,6 @@ void SetGimeIRQStearing(unsigned char data) //92
 
 void SetGimeFIRQStearing(unsigned char data) //93
 {
-	if (data & 1) {
-		if (PakInterrupt != INT_FIRQ) {
-			SetPakInterrupt(INT_FIRQ);
-			PakInterrupt = INT_FIRQ;
-		}
-	}
-
 	if ( (GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2) )
 		GimeSetKeyboardInteruptState(1);
 	else
@@ -357,6 +338,23 @@ void GimeAssertTimerInterupt(void)
 			CPUAssertInterupt(IS_GIME, INT_IRQ);
 	}
 	return;
+}
+
+// CART
+void GimeAssertCartInterupt(void)
+{
+	if (GimeRegisters[0x93] & 1)
+	{
+		LastFirq = LastFirq | 1;
+		if (EnhancedFIRQFlag == 1)
+			CPUAssertInterupt(IS_GIME, INT_FIRQ);
+	}
+	else if (GimeRegisters[0x92] & 1)
+	{
+		LastIrq = LastIrq | 1;
+		if (EnhancedIRQFlag == 1)
+			CPUAssertInterupt(IS_GIME, INT_IRQ);
+	}
 }
 
 unsigned char sam_read(unsigned char port) //SAM don't talk much :)

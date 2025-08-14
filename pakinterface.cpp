@@ -41,6 +41,7 @@
 #include <process.h>
 #include "defines.h"
 #include "tcc1014mmu.h"
+#include "tcc1014registers.h"
 #include "pakinterface.h"
 #include "config.h"
 #include "Vcc.h"
@@ -199,18 +200,15 @@ void SetPakInterrupt(unsigned char interrupt)
 // Convert PAK assert to CPUAssert or CPUDeAssert.
 void (PakAssertInterupt) (unsigned char interrupt, unsigned char source)
 {
-	(void) source; // We know it is either PIA1_CART or is NMI
+	(void) source; // not used
 	switch (interrupt) {
 	case INT_IRQ:
 	case INT_FIRQ:
-		CPUAssertInterupt(IS_PIA1_CART, (Interrupt) PakInterrupt);
+		GimeAssertCartInterupt();
 		break;
 	case INT_NMI:
 		CPUAssertInterupt(IS_NMI, INT_NMI);
 		break;
-	case INT_NONE:
-	default:
-		CPUDeAssertInterupt(IS_PIA1_CART, (Interrupt) PakInterrupt);
 	}
 }
 

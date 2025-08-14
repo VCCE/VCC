@@ -26,6 +26,7 @@ unsigned char GimeGetKeyboardInteruptState();
 void GimeAssertHorzInterupt(void);
 void GimeAssertVertInterupt(void);
 void GimeAssertTimerInterupt(void);
+void GimeAssertCartInterupt(void);
 unsigned char sam_read(unsigned char);
 void sam_write(unsigned char,unsigned char);
 void mc6883_reset();
