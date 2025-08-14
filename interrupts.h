@@ -3,10 +3,10 @@
 // CPU interrupts (counting from 1 because legacy)
 // Pakinterface uses INT_NONE to clear cart IRQ
 enum Interrupt {
-	INT_NONE = 0,
 	INT_IRQ = 1,
 	INT_FIRQ,
-	INT_NMI
+	INT_NMI,
+	INT_CART
 };
 
 // Interrupt sources keep track of their own state.
