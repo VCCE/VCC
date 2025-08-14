@@ -216,6 +216,8 @@ unsigned char GetInit0(unsigned char port)
 
 void SetGimeIRQStearing(unsigned char data) //92
 {
+	// FIXME: GimeIRQStearing for CART (bit 0)
+
 	if ( (GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2) )
 		GimeSetKeyboardInteruptState(1);
 	else
@@ -240,6 +242,8 @@ void SetGimeIRQStearing(unsigned char data) //92
 
 void SetGimeFIRQStearing(unsigned char data) //93
 {
+	// FIXME: GimeFIRQStearing for CART (bit 0)
+
 	if ( (GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2) )
 		GimeSetKeyboardInteruptState(1);
 	else

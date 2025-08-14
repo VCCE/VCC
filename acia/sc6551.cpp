@@ -238,7 +238,6 @@ DWORD WINAPI sc6551_output_thread(LPVOID param)
 // StatDSR 0x40 Data set Ready if clr
 // StatIRQ 0x80 IRQ set
 //
-
 //------------------------------------------------------------------------
 
 void sc6551_heartbeat()
