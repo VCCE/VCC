@@ -41,6 +41,7 @@
 #include <process.h>
 #include "defines.h"
 #include "tcc1014mmu.h"
+#include "tcc1014registers.h"
 #include "pakinterface.h"
 #include "config.h"
 #include "Vcc.h"
@@ -187,20 +188,18 @@ void PackMem8Write(unsigned short Address,unsigned char Value)
 	return;
 }
 
-// Convert PAK assert to CPUAssert or CPUDeAssert
-// PAK assert is unsigned chars in reversed order
-//
-// FIXME: This is not correct. The gime should be converting the CART
-// line to IRQ or FIRQ per bit zero of $FF92 or $FF93. This means
-// the cartridge does not know which is generated as is assumed here.
-// GimeIRQ and FIRQ Stearing should be fixed and also code here.
-//
-void (PakAssertInterupt)(unsigned char interrupt, unsigned char source)
+// Convert PAK assert to CPUAssert or CPUDeAssert.
+void (PakAssertInterupt) (unsigned char interrupt, unsigned char source)
 {
-	if (interrupt == INT_NONE) {
-		CPUDeAssertInterupt((InterruptSource) source, INT_IRQ);
-	} else {
-		CPUAssertInterupt((InterruptSource) source, (Interrupt) interrupt);
+	(void) source; // not used
+	switch (interrupt) {
+	case INT_IRQ:
+	case INT_FIRQ:
+		GimeAssertCartInterupt();
+		break;
+	case INT_NMI:
+		CPUAssertInterupt(IS_NMI, INT_NMI);
+		break;
 	}
 }
 
@@ -510,7 +509,7 @@ int FileID(char *Filename)
 	return(2);		//Rom Image
 }
 
-// DynamicMenuActivated is called from VCC main when a dynamic menu item is clicked. 
+// DynamicMenuActivated is called from VCC main when a dynamic menu item is clicked.
 // The wmId for dynamic menu items is in the range 5000 thru 5100 which was choosen
 // to be outside the range for normal resource identifiers.  Vcc manin subtractes 5000
 // from the wmId to get the MenuID.

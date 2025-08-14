@@ -344,6 +344,23 @@ void GimeAssertTimerInterupt(void)
 	return;
 }
 
+// CART
+void GimeAssertCartInterupt(void)
+{
+	if (GimeRegisters[0x93] & 1)
+	{
+		LastFirq = LastFirq | 1;
+		if (EnhancedFIRQFlag == 1)
+			CPUAssertInterupt(IS_GIME, INT_FIRQ);
+	}
+	else if (GimeRegisters[0x92] & 1)
+	{
+		LastIrq = LastIrq | 1;
+		if (EnhancedIRQFlag == 1)
+			CPUAssertInterupt(IS_GIME, INT_IRQ);
+	}
+}
+
 unsigned char sam_read(unsigned char port) //SAM don't talk much :)
 {
 	
