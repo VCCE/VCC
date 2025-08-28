@@ -308,11 +308,14 @@ void Select_Disk(unsigned char Disk)
 	if (GetOpenFileName(&ofn)) {
 	if (!(MountDisk(TempFileName, Disk)))
 		MessageBox(GetActiveWindow(), "Can't Open File", "Can't open the Image specified.", 0);
-	string tmp = ofn.lpstrFile;
-	int idx;
-	idx = tmp.find_last_of("\\");
-	tmp = tmp.substr(0, idx);
-	strcpy(SuperIDEPath, tmp.c_str());
+//  next five lines were causing a BitDefender false Positive Gen:Variant:Lazy.667300
+//	string tmp = ofn.lpstrFile;
+//	int idx;
+//	idx = tmp.find_last_of("\\");
+//	tmp = tmp.substr(0, idx);
+//	strcpy(SuperIDEPath, tmp.c_str());
+		char * tmp = strrchr(ofn.lpstrFile,'\\');
+		if (tmp) strcpy(SuperIDEPath,tmp);
 	}
 	return;
 }
