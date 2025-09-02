@@ -28,7 +28,7 @@
 #include <windows.h>
 #include "DialogOps.h"
 
-// FileDialog shows a dialog for user to select a file. It wraps GetOpenFilename().
+// FileDialog shows a dialog for user to select a file for open or save.
 FileDialog::FileDialog() {
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lpstrTitle = "Choose File";
@@ -42,15 +42,24 @@ FileDialog::FileDialog() {
 FileDialog::~FileDialog() { }
 
 // FileDialog::show calls GetOpenFileName()
-bool FileDialog::show(HWND owner) {
+bool FileDialog::show(BOOL Save, HWND Owner) {
+
+	// instance is that of the current module
+	ofn.hInstance = GetModuleHandle(0);
+
 	// use active window if owner is null
-	if (owner != NULL) {
-		ofn.hwndOwner = owner;
+	if (Owner != NULL) {
+		ofn.hwndOwner = Owner;
 	} else {
 		ofn.hwndOwner = GetActiveWindow();
 	}
-	ofn.hInstance = GetModuleHandle(0);
-	return GetOpenFileName(&ofn);
+
+	// Call Save or Open per boolean
+	if (Save) {
+		return GetSaveFileName(&ofn) == 1;
+	} else {
+		return GetOpenFileName(&ofn) == 1;
+	}
 }
 
 // FileDialog::getdir() returns the directory portion of the path found
@@ -58,6 +67,7 @@ void FileDialog::getdir(char * Dir, int maxsize) {
 	strncpy(Dir,Path,maxsize);
 	if (char * p = strrchr(Dir,'\\')) *p = '\0';
 }
+
 
 // CloseCartDialog should be called by cartridge DLL's when they are unloaded.
 void CloseCartDialog(HWND hDlg)

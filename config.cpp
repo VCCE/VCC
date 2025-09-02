@@ -45,6 +45,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "keyboard.h"
 #include "keyboardEdit.h"
 #include "fileops.h"
+#include "dialogops.h"
 #include "Cassette.h"
 #include "CommandLine.h"
 #include "logger.h"
@@ -489,7 +490,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	short int Cpuchoice[2] = {IDC_6809,IDC_6309};
 	unsigned char temp;
 	static STRConfig tmpcfg;
-	OPENFILENAME ofn;
+
 	HWND hClkSpd = GetDlgItem(hDlg,IDC_CLOCKSPEED);
 	HWND hClkDsp = GetDlgItem(hDlg,IDC_CLOCKDISPLAY);
 	switch (message) {
@@ -611,23 +612,18 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			tmpcfg.EnableOverclock = (unsigned char)
 						SendDlgItemMessage(hDlg,IDC_OVERCLOCK,BM_GETCHECK,0,0);
 			break;
-		case IDC_BROWSE:
-			memset(&ofn,0,sizeof(ofn));
-			ofn.lStructSize       = sizeof (OPENFILENAME) ;
-			ofn.hwndOwner		  = NULL;
-			ofn.lpstrFilter		  = "Rom Image\0*.rom\0\0";
-			ofn.nFilterIndex      = 1;
-			ofn.lpstrFile         = tmpcfg.ExtRomFile;
-			ofn.nMaxFile          = MAX_PATH;
-			ofn.lpstrFileTitle    = NULL;
-			ofn.nMaxFileTitle     = MAX_PATH;
-			ofn.lpstrInitialDir   = NULL;
-			ofn.lpstrTitle        = TEXT("Coco3 Rom Image");
-			ofn.Flags             = OFN_HIDEREADONLY;
-			GetOpenFileName (&ofn);
-			SetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile);
+		case IDC_BROWSE: {
+				FileDialog dlg;
+				dlg.ofn.lpstrInitialDir = ExecDirectory;
+				dlg.ofn.lpstrFilter = "Rom Image\0*.rom\0\0";
+				dlg.ofn.lpstrTitle  = "Coco3 Rom Image";
+				dlg.ofn.Flags       |= OFN_FILEMUSTEXIST;
+				if (dlg.show()) {
+					SetDlgItemText(hDlg,IDC_ROMPATH,dlg.Path);
+					strncpy(tmpcfg.ExtRomFile,dlg.Path,MAX_PATH);
+				}
+			}
 			break;
-
 		}		//End switch LOWORD(wParam)
 		break;	//Break WM_COMMAND
 	}			//END switch (message)
@@ -1161,48 +1157,32 @@ int ShowKeymapStatus(HWND hDlg)
 
 BOOL SelectKeymapFile(HWND hDlg)
 {
-
-    OPENFILENAME ofn ;
-    char FileSelected[MAX_PATH];
-    strncpy (FileSelected,KeyMapFilePath,MAX_PATH);
-    DWORD attr;
-
-    // Prompt user for filename
-    memset(&ofn,0,sizeof(ofn));
-    ofn.lStructSize     = sizeof (OPENFILENAME);
-    ofn.hwndOwner       = hDlg;
-    ofn.lpstrFilter     = "Keymap Files\0*.keymap\0\0";
-    ofn.nFilterIndex    = 1;
-    ofn.lpstrFile       = FileSelected;
-    ofn.nMaxFile        = MAX_PATH;
-    ofn.lpstrFileTitle  = NULL;
-    ofn.nMaxFileTitle   = MAX_PATH;
-    ofn.lpstrInitialDir = AppDirectory();
-    ofn.lpstrTitle      = TEXT("Select Keymap file");
-    ofn.Flags           = OFN_HIDEREADONLY
-                        | OFN_PATHMUSTEXIST;
-
-    if ( GetOpenFileName (&ofn)) {
-    if (ofn.nFileExtension==0) strcat(FileSelected,".keymap");
-        // Load keymap if file exists
-        attr=GetFileAttributesA(FileSelected);
-        if ( (attr != INVALID_FILE_ATTRIBUTES) &&
-            !(attr & FILE_ATTRIBUTE_DIRECTORY) ) {
-            LoadCustomKeyMap(FileSelected);
-        // Else create new file from current selection
-        } else {
-            char txt[MAX_PATH+32];
-            strcpy (txt,"Create ");
-            strcat (txt,FileSelected);
-            strcat (txt,"?");
-            if (MessageBox(hDlg,txt,"Warning",MB_YESNO)==IDYES) {
-                CloneStandardKeymap(CurrentConfig.KeyMap);
-                SaveCustomKeyMap(FileSelected);
-            }
-        }
-        strncpy (KeyMapFilePath,FileSelected,MAX_PATH);
-        SetKeyMapFilePath(KeyMapFilePath); // Save filename in Vcc.config
-    }
+	FileDialog dlg;
+	dlg.ofn.lpstrFilter     = "Keymap Files\0*.keymap\0\0";
+	dlg.ofn.lpstrInitialDir = AppDirectory();
+	dlg.ofn.lpstrTitle      = TEXT("Select Keymap file");
+	dlg.ofn.Flags          |= OFN_PATHMUSTEXIST;
+	dlg.ofn.lpstrDefExt     = ".keymap";
+	if ( dlg.show() ) {
+		// Load keymap if file exists
+		DWORD attr = GetFileAttributesA(dlg.Path);
+		if ( (attr != INVALID_FILE_ATTRIBUTES) &&
+				!(attr & FILE_ATTRIBUTE_DIRECTORY) ) {
+			LoadCustomKeyMap(dlg.Path);
+		// Else create new file from current selection
+		} else {
+			char txt[MAX_PATH+32];
+			strcpy (txt,"Create ");
+			strcat (txt,dlg.Path);
+			strcat (txt,"?");
+			if (MessageBox(hDlg,txt,"Warning",MB_YESNO)==IDYES) {
+				CloneStandardKeymap(CurrentConfig.KeyMap);
+				SaveCustomKeyMap(dlg.Path);
+			}
+		}
+		strncpy (KeyMapFilePath,dlg.Path,MAX_PATH);
+		SetKeyMapFilePath(KeyMapFilePath); // Save filename in Vcc.config
+	}
 	return TRUE;
 }
 
@@ -1601,46 +1581,34 @@ LRESULT CALLBACK Paths(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 /********************************************/
-/*             Select Config File           */
+/*             Select Capture File          */
 /********************************************/
 int SelectFile(char *FileName)
 {
-	OPENFILENAME ofn ;
-	char Dummy[MAX_PATH]="";
-	char TempFileName[MAX_PATH]="";
 	char CapFilePath[MAX_PATH];
-	GetPrivateProfileString("DefaultPaths", "CapFilePath", "", CapFilePath, MAX_PATH, IniFilePath);
+	GetPrivateProfileString
+		("DefaultPaths", "CapFilePath", "", CapFilePath, MAX_PATH, IniFilePath);
 
-	memset(&ofn,0,sizeof(ofn));
-	ofn.lStructSize       = sizeof (OPENFILENAME);
-	ofn.hwndOwner = EmuState.WindowHandle; // GetTopWindow(NULL);
-	ofn.Flags             = OFN_HIDEREADONLY;
-	ofn.hInstance         = GetModuleHandle(0);
-	ofn.lpstrDefExt       = "txt";
-	ofn.lpstrFilter       =	"Text File\0*.txt\0\0";
-	ofn.nFilterIndex      = 0 ;					// current filter index
-	ofn.lpstrFile         = TempFileName;		// contains full path and filename on return
-	ofn.nMaxFile          = MAX_PATH;			// sizeof lpstrFile
-	ofn.lpstrFileTitle    = NULL;				// filename and extension only
-	ofn.nMaxFileTitle     = MAX_PATH;			// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = CapFilePath;				// initial directory
-	ofn.lpstrTitle        = "Open print capture file";		// title bar string
+	FileDialog dlg;
+	dlg.ofn.lpstrTitle      = "Open print capture file";
+	dlg.ofn.lpstrFilter     = "Text File\0*.txt\0\0";
+	dlg.ofn.lpstrInitialDir = CapFilePath;
+	dlg.ofn.lpstrDefExt     = "txt";
+	dlg.ofn.Flags           |= OFN_OVERWRITEPROMPT;
 
-	if (GetOpenFileName(&ofn)) {
-		if (!(OpenPrintFile(TempFileName))) {
-			MessageBox(0, "Can't Open File", "Can't open the file specified.", 0);
-		}
-		string tmp = ofn.lpstrFile;
-		int idx;
-		idx = tmp.find_last_of("\\");
-		tmp = tmp.substr(0, idx);
-		strcpy(CapFilePath, tmp.c_str());
-		if (strcmp(CapFilePath, "") != 0) {
-			WritePrivateProfileString("DefaultPaths", "CapFilePath", CapFilePath, IniFilePath);
+	if (dlg.show(1)) {     // use save dialog
+		ClosePrintFile();
+		if (OpenPrintFile(dlg.Path)) {
+			dlg.getdir(CapFilePath);
+			if (strcmp(CapFilePath,"") != 0) {
+				WritePrivateProfileString
+					("DefaultPaths", "CapFilePath", CapFilePath, IniFilePath);
+			}
+		} else {
+			MessageBox(EmuState.WindowHandle,"Can't open file.","Error",0);
 		}
 	}
-	strcpy(FileName,TempFileName);
-
+	strcpy(FileName,dlg.Path);
 	return(1);
 }
 
