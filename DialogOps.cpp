@@ -53,6 +53,12 @@ bool FileDialog::show(HWND owner) {
 	return GetOpenFileName(&ofn);
 }
 
+// FileDialog::getdir() returns the directory portion of the path found
+void FileDialog::getdir(char * Dir, int maxsize) {
+	strncpy(Dir,Path,maxsize);
+	if (char * p = strrchr(Dir,'\\')) *p = '\0';
+}
+
 // CloseCartDialog should be called by cartridge DLL's when they are unloaded.
 void CloseCartDialog(HWND hDlg)
 {

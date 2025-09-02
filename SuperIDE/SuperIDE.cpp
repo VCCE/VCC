@@ -294,8 +294,7 @@ void Select_Disk(unsigned char Disk)
 	dlg.ofn.lpstrInitialDir = SuperIDEPath;
 	if (dlg.show()) {
 		if (MountDisk(dlg.Path,Disk)) {
-			strcpy(SuperIDEPath,dlg.Path);
-			if (char * p = strrchr(SuperIDEPath,'\\')) *p = '\0';
+			dlg.getdir(SuperIDEPath);
 		} else {
 			MessageBox(GetActiveWindow(),"Can't Open Image","Error",0);
 		}
