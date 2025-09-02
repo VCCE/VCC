@@ -649,31 +649,17 @@ void UnloadModule(unsigned char Slot)
 
 void UpdateCartDLL(unsigned char Slot,char *DllPath)
 {
-	OPENFILENAME ofn ;
-	unsigned char RetVal=0;
-
 	if ((strcmp(ModuleNames[Slot],"Empty") != 0) || hinstLib[Slot]) {
 		UnloadModule(Slot);
 	} else {
-		memset(&ofn,0,sizeof(ofn));
-		ofn.lStructSize       = sizeof (OPENFILENAME) ;
-		ofn.hwndOwner         = hConfDlg;
-		ofn.lpstrFilter       = "Cartridges\0*.ROM;*.ccc;*.DLL\0\0"; // filter string
-		ofn.nFilterIndex      = 1;                        // current filter index
-		ofn.lpstrFile         = DllPath;                  // contains full path on return
-		ofn.nMaxFile          = MAX_PATH;                 // sizeof lpstrFile
-		ofn.lpstrFileTitle    = NULL;                     // filename and extension only
-		ofn.nMaxFileTitle     = MAX_PATH;                 // sizeof lpstrFileTitle
-		ofn.lpstrInitialDir   = MPIPath;                  // initial directory
-		ofn.lpstrTitle        = TEXT("Choose Cartridge"); // title bar string
-		ofn.Flags             = OFN_HIDEREADONLY;
-		if ( GetOpenFileName (&ofn) ) {
-			MountModule(Slot,DllPath);
-			string tmp = ofn.lpstrFile;
-			int idx;
-			idx = tmp.find_last_of("\\");
-			tmp = tmp.substr(0, idx);
-			strcpy(MPIPath, tmp.c_str());
+		FileDialog dlg;
+		dlg.ofn.lpstrTitle      = "Load Program Pack";
+		dlg.ofn.lpstrInitialDir = MPIPath;
+		dlg.ofn.lpstrFilter     = "DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0";
+		dlg.ofn.Flags          |= OFN_FILEMUSTEXIST;
+		if (dlg.show(0,hConfDlg)) {
+			MountModule(Slot,dlg.Path);
+			dlg.getdir(MPIPath);
 		}
 	}
 	return;

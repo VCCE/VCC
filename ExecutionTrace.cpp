@@ -28,6 +28,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <array>
 #include <windowsx.h>
 #include "fileops.h"
+#include "dialogops.h"
 #include "logger.h"
 
 static HINSTANCE g_hinstDLG;
@@ -1227,23 +1228,17 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 //-------------------------------------------------------------------------------
 	BOOL ChooseTraceFile(HWND hOwn,char * filename,int namsiz)
 	{
-		BOOL rc;
-		OPENFILENAME ofn;
-		memset(&ofn,0,sizeof(ofn));
-		ofn.lStructSize     = sizeof (OPENFILENAME);
-		ofn.hwndOwner       = hOwn;
-		ofn.lpstrFilter     = "Text File\0*.txt;\0All files\0*.*\0\0";
-		ofn.nFilterIndex    = 1;
-		ofn.lpstrFile       = filename;
-		ofn.nMaxFile        = namsiz;
-		ofn.lpstrFileTitle  = NULL;
-		ofn.nMaxFileTitle   = MAX_PATH-4;
-		ofn.lpstrInitialDir = "";
-		ofn.lpstrTitle      = TEXT("Select Trace File");
-		ofn.Flags           = OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
-		rc = GetSaveFileName(&ofn);
-		if (rc && (ofn.nFileExtension == 0)) strcat(filename, ".txt");
-		return rc;
+		FileDialog dlg;
+		dlg.ofn.lpstrFilter      = "Text File\0*.txt;\0All files\0*.*\0\0";
+		dlg.ofn.lpstrDefExt      = "txt";
+		dlg.ofn.lpstrTitle       = "Select Trace File";
+		dlg.ofn.Flags           |= OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+		if ( dlg.show(1,hOwn) ) {
+			strncpy(filename,dlg.Path,namsiz);
+			return TRUE;
+		} else {
+			return FALSE;
+		}
 	}
 
 //-------------------------------------------------------------------------------

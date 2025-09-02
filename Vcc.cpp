@@ -41,6 +41,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include <Mmsystem.h>
 #include "fileops.h"
+#include "dialogops.h"
 #include "defines.h"
 #include "resource.h"
 #include "joystickinput.h"
@@ -892,69 +893,55 @@ unsigned char SetAutoStart(unsigned char Tmp)
 // LoadIniFile allows user to browse for an ini file and reloads the config from it.
 void LoadIniFile(void)
 {
-    OPENFILENAME ofn ;	
-    char szFileName[MAX_PATH]="";
+	FileDialog dlg;
+	dlg.ofn.lpstrFilter      = "INI\0*.ini\0\0";
+	dlg.ofn.lpstrDefExt      = "ini";
+	dlg.ofn.lpstrInitialDir  = AppDirectory() ;
+	dlg.ofn.lpstrTitle       = TEXT("Load Vcc Config File") ;
+	dlg.ofn.Flags           |= OFN_FILEMUSTEXIST;
 
-    GetIniFilePath(szFileName); // EJJ load current ini file path
+	// Send current ini file path to dialog
+	char curini[MAX_PATH]="";
+	GetIniFilePath(curini);
+	dlg.setpath(curini);
 
-    memset(&ofn,0,sizeof(ofn));
-    ofn.lStructSize       = sizeof (OPENFILENAME);
-    ofn.hwndOwner         = EmuState.WindowHandle;
-    ofn.lpstrFilter       = "INI\0*.ini\0\0";
-    ofn.nFilterIndex      = 1;
-    ofn.lpstrFile         = szFileName;
-    ofn.nMaxFile          = MAX_PATH;
-    ofn.nMaxFileTitle     = MAX_PATH;
-    ofn.lpstrFileTitle    = NULL;
-    ofn.lpstrInitialDir   = AppDirectory() ;
-    ofn.lpstrTitle        = TEXT("Load Vcc Config File") ;
-    ofn.Flags             = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
-
-    if ( GetOpenFileName (&ofn) ) {
-        WriteIniFile();               // Flush current profile
-        SetIniFilePath(szFileName);   // Set new ini file path
-        ReadIniFile();                // Load it
-        UpdateConfig();
-        EmuState.ResetPending = 2;
+	if ( dlg.show() ) {
+		WriteIniFile();             // Flush current profile
+		SetIniFilePath(dlg.Path);   // Set new ini file path
+		ReadIniFile();              // Load it
+		UpdateConfig();
+		EmuState.ResetPending = 2;
 //      SetClockSpeed(1); //Default clock speed .89 MHZ
-    }
-    return;
+	}
+	return;
 }
 
-// SaveIniFile copies the current config to a speficied ini file. The file is created
-// if it does not already exist.
-
+// SaveConfig copies the current ini file to a choosen ini file.
 void SaveConfig(void) {
-    OPENFILENAME ofn ;
-    char curini[MAX_PATH];
-    char newini[MAX_PATH+4];  // Save room for '.ini' if needed
 
-    GetIniFilePath(curini);  // EJJ get current ini file path
-    strcpy(newini,curini);   // Let GetOpenFilename suggest it
+	FileDialog dlg;
+	dlg.ofn.lpstrFilter      = "INI\0*.ini\0\0";
+	dlg.ofn.lpstrDefExt      = "ini";
+	dlg.ofn.lpstrInitialDir  = AppDirectory() ;
+	dlg.ofn.lpstrTitle       = TEXT("Save Vcc Config File") ;
+	dlg.ofn.Flags           |= OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 
-    memset(&ofn,0,sizeof(ofn));
-    ofn.lStructSize       = sizeof (OPENFILENAME) ;
-    ofn.hwndOwner         = EmuState.WindowHandle;
-    ofn.lpstrFilter       = "INI\0*.ini\0\0" ;        // filter string
-    ofn.nFilterIndex      = 1 ;                       // current filter index
-    ofn.lpstrFile         = newini;                   // contains full path on return
-    ofn.nMaxFile          = MAX_PATH;                 // sizeof lpstrFile
-    ofn.lpstrFileTitle    = NULL;                     // filename and extension only
-    ofn.nMaxFileTitle     = MAX_PATH ;                // sizeof lpstrFileTitle
-    ofn.lpstrInitialDir   = AppDirectory() ;          // EJJ initial directory
-    ofn.lpstrTitle        = TEXT("Save Vcc Config") ; // title bar string
-    ofn.Flags             = OFN_HIDEREADONLY |OFN_PATHMUSTEXIST;
+	// Send current ini file path to dialog
+	char curini[MAX_PATH]="";
+	GetIniFilePath(curini);
+	dlg.setpath(curini);
 
-    if ( GetSaveFileName (&ofn) ) {
-        if (ofn.nFileExtension == 0) strcat(newini, ".ini");  //Add extension if none
-        WriteIniFile();                                       // Flush current config
-        if (_stricmp(curini,newini) != 0) {
-		if (! CopyFile(curini,newini,false) ) {       // Copy it to new file
-			MessageBox(0,"Copy config failed","error",0);
+	if ( dlg.show(1) ) {
+		SetIniFilePath(dlg.Path);   // Set new ini file path
+		WriteIniFile();             // Flush current profile
+		// If ini file has changed
+		if (_stricmp(curini,dlg.Path) != 0) {
+			// Copy current ini to new ini
+			if (! CopyFile(curini,dlg.Path,false) )
+				MessageBox(0,"Copy config failed","error",0);
 		}
-        }
-    }
-    return;
+	}
+	return;
 }
 
 unsigned __stdcall EmuLoop(void *Dummy)

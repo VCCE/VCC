@@ -31,17 +31,15 @@
 // FileDialog shows a dialog for user to select a file for open or save.
 FileDialog::FileDialog() {
 	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
 	ofn.lpstrTitle = "Choose File";
 	ofn.Flags |= OFN_HIDEREADONLY;
-	ofn.lStructSize = sizeof(ofn);
-	ofn.lpstrFile = Path;
-	ofn.nMaxFile = sizeof(Path);
 }
 
 // FileDialog destructor does nothing
 FileDialog::~FileDialog() { }
 
-// FileDialog::show calls GetOpenFileName()
+// FileDialog::show calls GetOpenFileName() or GetSaveFileName()
 bool FileDialog::show(BOOL Save, HWND Owner) {
 
 	// instance is that of the current module
@@ -54,12 +52,20 @@ bool FileDialog::show(BOOL Save, HWND Owner) {
 		ofn.hwndOwner = GetActiveWindow();
 	}
 
+	ofn.nMaxFile = sizeof(Path);
+	ofn.lpstrFile = Path;
+
 	// Call Save or Open per boolean
 	if (Save) {
 		return GetSaveFileName(&ofn) == 1;
 	} else {
 		return GetOpenFileName(&ofn) == 1;
 	}
+}
+
+// Overwrite what is currently in Path
+void FileDialog::setpath(const char * newPath, int maxsize) {
+	strncpy(Path,newPath,maxsize);
 }
 
 // FileDialog::getdir() returns the directory portion of the path found
@@ -73,8 +79,8 @@ void FileDialog::getdir(char * Dir, int maxsize) {
 void CloseCartDialog(HWND hDlg)
 {
 	// Send a close message to a cart configuration dialog if it is Enabled. If the dialog
-	// is disabled it is assumed that VCC must be terminated to avoid a crash. A common reason
-	// a configuration dialog is disabled is it has a modal dialog window open.
+	// is disabled it is assumed that VCC must be terminated to avoid a crash. A common
+	// reason a configuration dialog is disabled is it has a modal dialog window open.
 	if (hDlg) {
 		if (IsWindowEnabled(hDlg)) {
 			SendMessage(hDlg,WM_CLOSE,0,0);

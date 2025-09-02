@@ -22,6 +22,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 #include "coco3.h"
 #include "config.h"
+#include "dialogops.h"
 #include "cassette.h"
 #include "stdio.h"
 #include "logger.h"
@@ -435,54 +436,29 @@ void CloseTapeFile(void)
 
 unsigned int LoadTape(void)
 {
-	using namespace std;
-	HANDLE hr=NULL;
-	OPENFILENAME ofn;	
+	FileDialog dlg;
 	char IniFilePath[MAX_PATH];
 	GetIniFilePath(IniFilePath);
-	GetPrivateProfileString("DefaultPaths", "CassPath", "", CassPath, MAX_PATH, IniFilePath);
-	static unsigned char DialogOpen=0;
-	unsigned int RetVal=0;
-	if (DialogOpen ==1)	//Only allow 1 dialog open 
-		return(0);
-	DialogOpen=1;
-	memset(&ofn,0,sizeof(ofn));
-	ofn.lStructSize       = sizeof (OPENFILENAME);
-	ofn.hwndOwner         = NULL;
-	ofn.Flags             = OFN_HIDEREADONLY | OFN_NOTESTFILECREATE;
-	ofn.hInstance         = GetModuleHandle(0);
-	ofn.lpstrDefExt       = "";
-	ofn.lpstrFilter       = "Cassette Files (.cas,.wav)\0*.cas;*.wav\0\0";
-	ofn.nFilterIndex      = 0 ;								// current filter index
-	ofn.lpstrFile         = TapeFileName;					// contains full path and filename on return
-	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
-	ofn.lpstrFileTitle    = NULL;							// filename and extension only
-	ofn.nMaxFileTitle     = MAX_PATH;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = CassPath;				// initial directory
-	ofn.lpstrTitle        = "Insert Tape Image";			// title bar string
-	
-	RetVal=GetOpenFileName(&ofn);
-	if (RetVal)
-	{
-		if (MountTape(TapeFileName)==0)	
+	GetPrivateProfileString("DefaultPaths","CassPath","",CassPath,MAX_PATH,IniFilePath);
+	dlg.ofn.lpstrInitialDir = CassPath;
+	dlg.ofn.lpstrFilter = "Cassette Files (.cas,.wav)\0*.cas;*.wav\0\0";
+	dlg.ofn.lpstrTitle  = "Insert Tape Image";
+	dlg.ofn.lpstrTitle  = "Coco3 Rom Image";
+	dlg.ofn.Flags      |= OFN_NOTESTFILECREATE;
+	if (dlg.show()) {
+		strncpy(TapeFileName,dlg.Path,MAX_PATH);
+		if (MountTape(TapeFileName)==0)	{
 			MessageBox(NULL,"Can't open file","Error",0);
+			return(0);
+		}
 	}
-
-	DialogOpen=0;
-	string tmp = ofn.lpstrFile;
-	int idx;
-	idx = tmp.find_last_of("\\");
-	tmp = tmp.substr(0, idx);
-	strcpy(CassPath, tmp.c_str());
-	if (strcmp(CassPath, "") != 0) {
-		WritePrivateProfileString("DefaultPaths", "CassPath", CassPath, IniFilePath); 
-	}
-	char* ext = strrchr(TapeFileName,'.');
+	dlg.getdir(CassPath);
+	if (strcmp(CassPath, "") != 0)
+		WritePrivateProfileString("DefaultPaths","CassPath",CassPath,IniFilePath);
 	// turn off fast load for wav files
-	if (FileType == WAV)
-		TapeFastLoad = false;
+	if (FileType == WAV) TapeFastLoad = false;
 	TapeWritten = false;
-	return(RetVal);
+	return(1);
 }
 
 void GetTapeName(char *Name)

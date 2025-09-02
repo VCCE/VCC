@@ -48,6 +48,7 @@
 #include "mc6821.h"
 #include "logger.h"
 #include "fileops.h"
+#include "dialogops.h"
 #define HASCONFIG		1
 #define HASIOWRITE		2
 #define HASIOREAD		4
@@ -217,33 +218,21 @@ void DynamicMenuCallbackChar(char* MenuName, int MenuId, int Type)
 
 int LoadCart(void)
 {
-	OPENFILENAME ofn ;
-	char szFileName[MAX_PATH]="";
-	char temp[MAX_PATH];
-	GetIniFilePath(temp);
-	GetPrivateProfileString("DefaultPaths", "PakPath", "", PakPath, MAX_PATH, temp);
-	memset(&ofn,0,sizeof(ofn));
-	ofn.lStructSize       = sizeof (OPENFILENAME) ;
-	ofn.hwndOwner         = EmuState.WindowHandle;
-	ofn.lpstrFilter = "Program Packs\0*.ROM;*.ccc;*.DLL;*.pak\0\0";			// filter string
-	ofn.nFilterIndex      = 1 ;							// current filter index
-	ofn.lpstrFile         = szFileName ;				// contains full path and filename on return
-	ofn.nMaxFile          = MAX_PATH;					// sizeof lpstrFile
-	ofn.lpstrFileTitle    = NULL;						// filename and extension only
-	ofn.nMaxFileTitle     = MAX_PATH ;					// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = PakPath;						// initial directory
-	ofn.lpstrTitle        = TEXT("Load Program Pack") ;	// title bar string
-	ofn.Flags             = OFN_HIDEREADONLY;
-	if ( GetOpenFileName (&ofn))
-		if (!InsertModule(szFileName)) {
-			string tmp = ofn.lpstrFile;
-			int idx;
-			idx = tmp.find_last_of("\\");
-			tmp=tmp.substr(0, idx);
-			strcpy(PakPath, tmp.c_str());
-			WritePrivateProfileString("DefaultPaths", "PakPath", PakPath, temp);
+	char inifile[MAX_PATH];
+	GetIniFilePath(inifile);
+	GetPrivateProfileString("DefaultPaths", "PakPath", "", PakPath, MAX_PATH, inifile);
+	FileDialog dlg;
+	dlg.ofn.lpstrTitle      = TEXT("Load Program Pack");
+	dlg.ofn.lpstrInitialDir = PakPath;
+	dlg.ofn.lpstrFilter     = "DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0";
+	dlg.ofn.Flags          |= OFN_FILEMUSTEXIST;
+	if (dlg.show()) {
+		if (InsertModule(dlg.Path) == 0) {
+			dlg.getdir(PakPath);
+			WritePrivateProfileString("DefaultPaths", "PakPath", PakPath, inifile);
 			return(0);
 		}
+	}
 	return(1);
 }
 
