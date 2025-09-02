@@ -32,6 +32,7 @@ public:
 	FileDialog();
 	~FileDialog();
 	bool show(HWND owner = NULL);
+	void getdir(char * Dir, int maxsize = MAX_PATH);
 	OPENFILENAME ofn;
 	char Path[MAX_PATH] = {};
 };
