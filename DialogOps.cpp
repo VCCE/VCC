@@ -28,6 +28,31 @@
 #include <windows.h>
 #include "DialogOps.h"
 
+// FileDialog shows a dialog for user to select a file. It wraps GetOpenFilename().
+FileDialog::FileDialog() {
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lpstrTitle = "Choose File";
+	ofn.Flags |= OFN_HIDEREADONLY;
+	ofn.lStructSize = sizeof(ofn);
+	ofn.lpstrFile = Path;
+	ofn.nMaxFile = sizeof(Path);
+}
+
+// FileDialog destructor does nothing
+FileDialog::~FileDialog() { }
+
+// FileDialog::show calls GetOpenFileName()
+bool FileDialog::show(HWND owner) {
+	// use active window if owner is null
+	if (owner != NULL) {
+		ofn.hwndOwner = owner;
+	} else {
+		ofn.hwndOwner = GetActiveWindow();
+	}
+	ofn.hInstance = GetModuleHandle(0);
+	return GetOpenFileName(&ofn);
+}
+
 // CloseCartDialog should be called by cartridge DLL's when they are unloaded.
 void CloseCartDialog(HWND hDlg)
 {

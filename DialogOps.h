@@ -22,14 +22,17 @@
 //-------------------------------------------------------------------------------------------
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// CloseCartDialog should be called by cartridge DLL's when they are unloaded.
+// CloseCartDialog closes a cartridge dialog or asserts that it can not be.
+// It should be called by cartridge DLL's when they are unloaded.
 void CloseCartDialog(HWND hDlg);
 
-#ifdef __cplusplus
-	}
-#endif
+// FileDialog shows a dialog for user to select a file. It wraps GetOpenFilename().
+class FileDialog {
+public:
+	FileDialog();
+	~FileDialog();
+	bool show(HWND owner = NULL);
+	OPENFILENAME ofn;
+	char Path[MAX_PATH] = {};
+};
 
