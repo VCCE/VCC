@@ -24,6 +24,7 @@
 #include "defines.h"
 #include "DebuggerUtils.h"
 #include "resource.h"
+#include "dialogops.h"
 #include <map>
 #include <fstream>
 #include <string>
@@ -133,29 +134,17 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	void SelectSourceListing(HWND parentWindow)
 	{
-		OPENFILENAME ofn;
-		char SourceFileName[MAX_PATH] = "";
-		memset(&ofn, 0, sizeof(ofn));
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = parentWindow;
-		ofn.Flags = OFN_HIDEREADONLY;
-		ofn.hInstance = GetModuleHandle(0);
-		ofn.lpstrDefExt = "";
-		ofn.lpstrFilter = "LWASM Source Listings (*.lst)\0*.lst\0Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0\0";
-		ofn.nFilterIndex = 0;							// current filter index
-		ofn.lpstrFile = SourceFileName;					// contains full path and filename on return
-		ofn.nMaxFile = MAX_PATH;						// sizeof lpstrFile
-		ofn.lpstrFileTitle = NULL;						// filename and extension only
-		ofn.nMaxFileTitle = MAX_PATH;					// sizeof lpstrFileTitle
-		ofn.lpstrInitialDir = NULL;					// initial directory
-		ofn.lpstrTitle = "Load LWASM Source Listing";	// title bar string
-
-		int RetVal = GetOpenFileName(&ofn);
-		if (RetVal && !LoadSource(SourceFileName))
-		{
-			MessageBox(NULL, "Can't open source listing", "Error", 0);
+		FileDialog dlg;
+		dlg.ofn.lpstrFilter = 
+			"LWASM listing file (*.lst)\0*.lst\0"
+			"Text Files (*.txt)\0*.txt\0"
+			"All Files (*.*)\0*.*\0\0";
+		dlg.ofn.Flags  |= OFN_FILEMUSTEXIST;
+		dlg.ofn.lpstrTitle = "Load LWASM Source Listing";
+		if ( dlg.show(0,parentWindow) ) {
+			if (!LoadSource(dlg.Path))
+				MessageBox(parentWindow,"Can't open source listing","Error",0);
 		}
-
 	}
 
 	void SetupListingControl()

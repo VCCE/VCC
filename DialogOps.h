@@ -22,18 +22,31 @@
 //-------------------------------------------------------------------------------------------
 #pragma once
 
-// CloseCartDialog closes a cartridge dialog or asserts that it can not be.
+// CloseCartDialog closes DLL dialog or asserts that it can not be.
 // It should be called by cartridge DLL's when they are unloaded.
 void CloseCartDialog(HWND hDlg);
 
-// FileDialog shows a dialog for user to select a file. It wraps GetOpenFilename()
-// or GetSaveFilename() depending on the value of the optional 'save' boolean.
+// FileDialog defines a dialog for users to select a file.
+//
+// "show" displays the dialog. If Save is TRUE the save dialog is shown 
+// otherwise the open dialog is shown. If "Owner" is NULL GetActiveWindow() is used.
+// The selected filename is placed in "Path" 
+//
+// "getdir" returns the directory portion of the choosen path
+//
+// "setpath" modifies "Path".
+// 
+// Most ofn (type OPENFILENAME) members can be set before running "show"
+// "ofn.hwndOwner", "ofn.lpstrFile", and "ofn.nMaxFile" are overwitten 
+// by "show" and setting them will have no effect.
+//
 class FileDialog {
 public:
 	FileDialog();
 	~FileDialog();
-	bool show(BOOL Save = 0, HWND Owner = NULL);
+	bool show(BOOL Save = FALSE, HWND Owner = NULL);
 	void getdir(char * Dir, int maxsize = MAX_PATH);
+	void setpath(const char * Path, int maxsize = MAX_PATH);
 	OPENFILENAME ofn;
 	char Path[MAX_PATH] = {};
 };
