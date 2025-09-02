@@ -26,6 +26,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "cloud9.h"
 #include "logger.h"
 #include "../fileops.h"
+#include "../dialogops.h"
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
@@ -286,40 +287,21 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 void Select_Disk(unsigned char Disk)
 {
-	OPENFILENAME ofn;
-
-	char TempFileName[MAX_PATH] = "";
-
-	memset(&ofn, 0, sizeof(ofn));
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = GetActiveWindow();
-	ofn.Flags = OFN_HIDEREADONLY;
-	ofn.hInstance = GetModuleHandle(0);
-	ofn.lpstrDefExt = "IMG";
-	ofn.lpstrFilter = "Hard Disk Images\0*.img;*.vhd;*.os9\0All files\0*.*\0\0";	// filter string "Disks\0*.DSK\0\0";
-	ofn.nFilterIndex = 0;								// current filter index
-	ofn.lpstrFile = TempFileName;					// contains full path and filename on return
-	ofn.nMaxFile = MAX_PATH;						// sizeof lpstrFile
-	ofn.lpstrFileTitle = NULL;							// filename and extension only
-	ofn.nMaxFileTitle = MAX_PATH;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir = SuperIDEPath;							// initial directory
-	ofn.lpstrTitle = "Mount IDE hard Disk Image";	// title bar string
-
-	if (GetOpenFileName(&ofn)) {
-	if (!(MountDisk(TempFileName, Disk)))
-		MessageBox(GetActiveWindow(), "Can't Open File", "Can't open the Image specified.", 0);
-//  next five lines were causing a BitDefender false Positive Gen:Variant:Lazy.667300
-//	string tmp = ofn.lpstrFile;
-//	int idx;
-//	idx = tmp.find_last_of("\\");
-//	tmp = tmp.substr(0, idx);
-//	strcpy(SuperIDEPath, tmp.c_str());
-		char * tmp = strrchr(ofn.lpstrFile,'\\');
-		if (tmp) strcpy(SuperIDEPath,tmp);
+	FileDialog dlg;
+	dlg.ofn.lpstrDefExt = "IMG";
+	dlg.ofn.lpstrTitle  = "Mount IDE hard Disk Image";
+	dlg.ofn.lpstrFilter = "Hard Disk Images\0*.img;*.vhd;*.os9\0All files\0*.*\0\0";
+	dlg.ofn.lpstrInitialDir = SuperIDEPath;
+	if (dlg.show()) {
+		if (MountDisk(dlg.Path,Disk)) {
+			strcpy(SuperIDEPath,dlg.Path);
+			if (char * p = strrchr(SuperIDEPath,'\\')) *p = '\0';
+		} else {
+			MessageBox(GetActiveWindow(),"Can't Open Image","Error",0);
+		}
 	}
 	return;
 }
-
 
 void SaveConfig(void)
 {
