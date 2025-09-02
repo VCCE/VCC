@@ -26,12 +26,13 @@
 // It should be called by cartridge DLL's when they are unloaded.
 void CloseCartDialog(HWND hDlg);
 
-// FileDialog shows a dialog for user to select a file. It wraps GetOpenFilename().
+// FileDialog shows a dialog for user to select a file. It wraps GetOpenFilename()
+// or GetSaveFilename() depending on the value of the optional 'save' boolean.
 class FileDialog {
 public:
 	FileDialog();
 	~FileDialog();
-	bool show(HWND owner = NULL);
+	bool show(BOOL Save = 0, HWND Owner = NULL);
 	void getdir(char * Dir, int maxsize = MAX_PATH);
 	OPENFILENAME ofn;
 	char Path[MAX_PATH] = {};
