@@ -440,11 +440,10 @@ unsigned int LoadTape(void)
 	char IniFilePath[MAX_PATH];
 	GetIniFilePath(IniFilePath);
 	GetPrivateProfileString("DefaultPaths","CassPath","",CassPath,MAX_PATH,IniFilePath);
-	dlg.ofn.lpstrInitialDir = CassPath;
-	dlg.ofn.lpstrFilter = "Cassette Files (.cas,.wav)\0*.cas;*.wav\0\0";
-	dlg.ofn.lpstrTitle  = "Insert Tape Image";
-	dlg.ofn.lpstrTitle  = "Coco3 Rom Image";
-	dlg.ofn.Flags      |= OFN_NOTESTFILECREATE;
+	dlg.setInitialDir(CassPath);
+	dlg.setFilter("Cassette Files (.cas,.wav)\0*.cas;*.wav\0\0");
+	dlg.setTitle("Insert Tape Image");
+	dlg.setFlags(OFN_NOTESTFILECREATE);
 	if (dlg.show()) {
 		dlg.getpath(TapeFileName,MAX_PATH);
 		if (MountTape(TapeFileName)==0)	{

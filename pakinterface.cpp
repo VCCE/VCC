@@ -222,10 +222,10 @@ int LoadCart(void)
 	GetIniFilePath(inifile);
 	GetPrivateProfileString("DefaultPaths", "PakPath", "", PakPath, MAX_PATH, inifile);
 	FileDialog dlg;
-	dlg.ofn.lpstrTitle      = TEXT("Load Program Pack");
-	dlg.ofn.lpstrInitialDir = PakPath;
-	dlg.ofn.lpstrFilter     = "DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0";
-	dlg.ofn.Flags          |= OFN_FILEMUSTEXIST;
+	dlg.setTitle(TEXT("Load Program Pack"));
+	dlg.setInitialDir(PakPath);
+	dlg.setFilter("DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0");
+	dlg.setFlags(OFN_FILEMUSTEXIST);
 	if (dlg.show()) {
 		if (InsertModule(dlg.path()) == 0) {
 			dlg.getdir(PakPath);

@@ -1229,10 +1229,10 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	BOOL ChooseTraceFile(HWND hOwn,char * filename,int namsiz)
 	{
 		FileDialog dlg;
-		dlg.ofn.lpstrFilter      = "Text File\0*.txt;\0All files\0*.*\0\0";
-		dlg.ofn.lpstrDefExt      = "txt";
-		dlg.ofn.lpstrTitle       = "Select Trace File";
-		dlg.ofn.Flags           |= OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+		dlg.setFilter("Text File\0*.txt;\0All files\0*.*\0\0");
+		dlg.setDefExt("txt");
+		dlg.setTitle("Select Trace File");
+		dlg.setFlags(OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT);
 		if ( dlg.show(1,hOwn) ) {
 			dlg.getpath(filename,namsiz);
 			return TRUE;

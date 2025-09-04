@@ -135,12 +135,9 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	void SelectSourceListing(HWND parentWindow)
 	{
 		FileDialog dlg;
-		dlg.ofn.lpstrFilter = 
-			"LWASM listing file (*.lst)\0*.lst\0"
-			"Text Files (*.txt)\0*.txt\0"
-			"All Files (*.*)\0*.*\0\0";
-		dlg.ofn.Flags  |= OFN_FILEMUSTEXIST;
-		dlg.ofn.lpstrTitle = "Load LWASM Source Listing";
+		dlg.setFilter("LWASM listing file (*.lst)\0*.lst\0Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0\0");
+		dlg.setFlags(OFN_FILEMUSTEXIST);
+		dlg.setTitle("Load LWASM Source Listing");
 		if ( dlg.show(0,parentWindow) ) {
 			if (!LoadSource(dlg.path()))
 				MessageBox(parentWindow,"Can't open source listing","Error",0);

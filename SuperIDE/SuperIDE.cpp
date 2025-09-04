@@ -288,10 +288,10 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 void Select_Disk(unsigned char Disk)
 {
 	FileDialog dlg;
-	dlg.ofn.lpstrDefExt = "IMG";
-	dlg.ofn.lpstrTitle  = "Mount IDE hard Disk Image";
-	dlg.ofn.lpstrFilter = "Hard Disk Images\0*.img;*.vhd;*.os9\0All files\0*.*\0\0";
-	dlg.ofn.lpstrInitialDir = SuperIDEPath;
+	dlg.setDefExt("IMG");
+	dlg.setTitle("Mount IDE hard Disk Image");
+	dlg.setFilter("Hard Disk Images\0*.img;*.vhd;*.os9\0All files\0*.*\0\0");
+	dlg.setInitialDir(SuperIDEPath);
 	if (dlg.show()) {
 		if (MountDisk(dlg.path(),Disk)) {
 			dlg.getdir(SuperIDEPath);
