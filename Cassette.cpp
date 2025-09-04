@@ -446,7 +446,7 @@ unsigned int LoadTape(void)
 	dlg.ofn.lpstrTitle  = "Coco3 Rom Image";
 	dlg.ofn.Flags      |= OFN_NOTESTFILECREATE;
 	if (dlg.show()) {
-		strncpy(TapeFileName,dlg.Path,MAX_PATH);
+		dlg.getpath(TapeFileName,MAX_PATH);
 		if (MountTape(TapeFileName)==0)	{
 			MessageBox(NULL,"Can't open file","Error",0);
 			return(0);

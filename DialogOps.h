@@ -35,6 +35,10 @@ void CloseCartDialog(HWND hDlg);
 // "getdir" returns the directory portion of the choosen path
 //
 // "setpath" modifies "Path".
+//
+// "getpath" gets a copy of "Path".
+// 
+// "getupath" gets a copy of "Path" with all '\' chars replaced by '/'
 // 
 // Most ofn (type OPENFILENAME) members can be set before running "show"
 // "ofn.hwndOwner", "ofn.lpstrFile", and "ofn.nMaxFile" are overwitten 
@@ -45,9 +49,13 @@ public:
 	FileDialog();
 	~FileDialog();
 	bool show(BOOL Save = FALSE, HWND Owner = NULL);
+	void setpath(const char * Path);
 	void getdir(char * Dir, int maxsize = MAX_PATH);
-	void setpath(const char * Path, int maxsize = MAX_PATH);
+	void getpath(char * Path, int maxsize = MAX_PATH);
+	void getupath(char * Path, int maxsize = MAX_PATH);
+	char * path();
 	OPENFILENAME ofn;
+private:
 	char Path[MAX_PATH] = {};
 };
 

@@ -1234,7 +1234,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		dlg.ofn.lpstrTitle       = "Select Trace File";
 		dlg.ofn.Flags           |= OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 		if ( dlg.show(1,hOwn) ) {
-			strncpy(filename,dlg.Path,namsiz);
+			dlg.getpath(filename,namsiz);
 			return TRUE;
 		} else {
 			return FALSE;

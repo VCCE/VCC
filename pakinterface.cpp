@@ -227,7 +227,7 @@ int LoadCart(void)
 	dlg.ofn.lpstrFilter     = "DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0";
 	dlg.ofn.Flags          |= OFN_FILEMUSTEXIST;
 	if (dlg.show()) {
-		if (InsertModule(dlg.Path) == 0) {
+		if (InsertModule(dlg.path()) == 0) {
 			dlg.getdir(PakPath);
 			WritePrivateProfileString("DefaultPaths", "PakPath", PakPath, inifile);
 			return(0);

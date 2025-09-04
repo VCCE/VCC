@@ -142,7 +142,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		dlg.ofn.Flags  |= OFN_FILEMUSTEXIST;
 		dlg.ofn.lpstrTitle = "Load LWASM Source Listing";
 		if ( dlg.show(0,parentWindow) ) {
-			if (!LoadSource(dlg.Path))
+			if (!LoadSource(dlg.path()))
 				MessageBox(parentWindow,"Can't open source listing","Error",0);
 		}
 	}

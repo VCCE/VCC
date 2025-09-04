@@ -33,6 +33,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "fd502.h"
 #include "../fileops.h"
 #include "../DialogOps.h"
+#include "../logger.h"
 
 //include becker code if COMBINE_BECKER is defined in fd502.h
 #ifdef COMBINE_BECKER
@@ -114,7 +115,7 @@ extern "C"
 	{
 		int ErrorNumber=0;
 		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);	
+		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
 		DynamicMenuCallback =Temp;
 		if (DynamicMenuCallback  != NULL)
 			BuildDynaMenu();
@@ -272,7 +273,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	long ChipChoice[3]={IDC_EXTROM,IDC_TRSDOS,IDC_RGB};
 	long VirtualDrive[2]={IDC_DISKA,IDC_DISKB};
 	char VirtualNames[5][16]={"None","Drive 0","Drive 1","Drive 2","Drive 3"};
-	OPENFILENAME ofn ;	
 
 	switch (message)
 	{
@@ -339,19 +339,19 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					else
 					{
 						if (PhysicalDriveA != OldPhysicalDriveA)	//Drive changed
-						{					
+						{
 							if (OldPhysicalDriveA!=0)
 								unmount_disk_image(OldPhysicalDriveA-1);
 							if (PhysicalDriveA!=0)
 								mount_disk_image("*Floppy A:",PhysicalDriveA-1);
 						}
 						if (PhysicalDriveB != OldPhysicalDriveB)	//Drive changed
-						{					
+						{
 							if (OldPhysicalDriveB!=0)
 								unmount_disk_image(OldPhysicalDriveB-1);
 							if (PhysicalDriveB!=0)
 								mount_disk_image("*Floppy B:",PhysicalDriveB-1);
-						}	
+						}
 					}
 					EndDialog(hDlg, LOWORD(wParam));
 					SelectRom=TempSelectRom;
@@ -367,7 +367,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
 					SaveConfig();
 					return TRUE;
-				break;
+					break;
 
 				case IDC_EXTROM:
 				case IDC_TRSDOS:
@@ -380,31 +380,31 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 							SendDlgItemMessage(hDlg,ChipChoice[temp],BM_SETCHECK,1,0);
 							TempSelectRom=temp;
 						}
-				break;
-
+					break;
 				case IDC_BROWSE:
-					memset(&ofn,0,sizeof(ofn));
-					ofn.lStructSize       = sizeof (OPENFILENAME) ;
-					ofn.hwndOwner		  = g_hConfDlg;
-					ofn.lpstrFilter		  = "Disk Rom Images\0*.rom;*.bin\0\0";
-					ofn.nFilterIndex      = 1;
-					ofn.lpstrFile         = TempRomFileName;
-					ofn.nMaxFile          = MAX_PATH;
-					ofn.lpstrFileTitle    = NULL;
-					ofn.nMaxFileTitle     = MAX_PATH;
-					ofn.lpstrInitialDir   = NULL;
-					ofn.lpstrTitle        = TEXT("Disk Rom Image");
-					ofn.Flags             = OFN_HIDEREADONLY;
-					GetOpenFileName (&ofn);
-					SendDlgItemMessage(hDlg,IDC_ROMPATH,WM_SETTEXT,0,(LPARAM)(LPCSTR)TempRomFileName);
-				break;
+					{
+						char dir[MAX_PATH];
+						strncpy(dir,TempRomFileName,MAX_PATH);
+						if (char * p = strrchr(dir,'\\')) *p = '\0';
+
+						FileDialog dlg;
+						dlg.ofn.lpstrFilter = "Disk Rom Images\0*.rom;\0All files\0*.*\0\0";
+						dlg.ofn.lpstrTitle  = "Select Disk Rom Image";
+						dlg.ofn.lpstrInitialDir = dir;
+						if (dlg.show(0,g_hConfDlg)) {
+							dlg.getpath(TempRomFileName,MAX_PATH);
+							SendDlgItemMessage
+								(hDlg,IDC_ROMPATH,WM_SETTEXT,0,(LPARAM)dlg.path());
+						}
+					}
+					break;
 				case IDC_CLOCK:
 				case IDC_READONLY:
 					break;
 
 				case IDCANCEL:
 					EndDialog(hDlg, LOWORD(wParam));
-				break;
+					break;
 			}
 			return TRUE;
 		break;
@@ -415,66 +415,37 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 void Load_Disk(unsigned char disk)
 {
-	HANDLE hr=NULL;
-	OPENFILENAME ofn ;	
-	unsigned char FileNotSelected=0;
-	if (DialogOpen ==1)	//Only allow 1 dialog open
-		return;
-	DialogOpen=1;
-	FileNotSelected=1;
-
-	while (FileNotSelected)
-	{
-		CreateFlag=1;
-		memset(&ofn,0,sizeof(ofn));
-		ofn.lStructSize       = sizeof (OPENFILENAME);
-		ofn.hwndOwner		  = GetActiveWindow();  // Called from dynamic window (Vcc main)
-		ofn.Flags             = OFN_HIDEREADONLY;
-		ofn.hInstance         = GetModuleHandle(0);
-		ofn.lpstrDefExt       = "dsk";
-		ofn.lpstrFilter       =	"Disk Images\0*.dsk;*.os9\0\0";
-		ofn.nFilterIndex      = 0;
-		ofn.lpstrFile         = TempFileName;
-		ofn.nMaxFile          = MAX_PATH;
-		ofn.lpstrFileTitle    = NULL;
-		ofn.nMaxFileTitle     = MAX_PATH;
-		ofn.lpstrInitialDir   = FloppyPath;
-		ofn.lpstrTitle        = "Insert Disk Image";
-
-		if ( GetOpenFileName(&ofn) )
-		{
-			hr=CreateFile(TempFileName,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-			if (hr==INVALID_HANDLE_VALUE)
-			{
-				NewDiskNumber=disk;
-				HWND h_own = GetActiveWindow();
-				DialogBox(g_hinstDLL, (LPCTSTR)IDD_NEWDISK, h_own, (DLGPROC)NewDisk);//CreateFlag =0 on cancel
-			}
-			else
-				CloseHandle(hr);
-
-			if (CreateFlag==1)
-			{
-				if (mount_disk_image(TempFileName,disk)==0)	
-					MessageBox(g_hConfDlg,"Can't open file","Error",0);
-				else
-				{
-					FileNotSelected=0;
-					string tmp = ofn.lpstrFile;
-					int idx;
-					idx = tmp.find_last_of("\\");
-					tmp = tmp.substr(0, idx);
-					strcpy(FloppyPath, tmp.c_str());
-
-					SaveConfig();
-				}
+	HWND h_own = GetActiveWindow();
+	FileDialog dlg;
+	dlg.ofn.lpstrInitialDir = FloppyPath;
+	dlg.ofn.lpstrFilter = "Disk Images\0*.dsk;*.os9\0\0";
+	dlg.ofn.lpstrDefExt = "dsk";
+	dlg.ofn.lpstrTitle  = "Insert Disk Image";
+	dlg.ofn.Flags      |= OFN_PATHMUSTEXIST;
+	if (dlg.show(0,h_own)) {
+		CreateFlag = 1;
+		HANDLE hr = NULL;
+		dlg.getpath(TempFileName,MAX_PATH);
+		// Verify file exists
+		hr = CreateFile
+			(TempFileName,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+		// Create new disk file if it does not
+		if (hr == INVALID_HANDLE_VALUE) {
+			NewDiskNumber = disk;
+			//DialogBox will set CreateFlag = 0 on cancel
+			DialogBox(g_hinstDLL, (LPCTSTR)IDD_NEWDISK, h_own, (DLGPROC)NewDisk);
+		} else {
+			CloseHandle(hr);
+		}
+		// Attempt mount if file existed or file create was not canceled
+		if (CreateFlag==1) {
+			if (mount_disk_image(TempFileName,disk)==0) {
+				MessageBox(g_hConfDlg,"Can't open file","Error",0);
+			} else {
+				dlg.getdir(FloppyPath);
+				SaveConfig();
 			}
 		}
-		else
-			FileNotSelected=0;
-
-
-		DialogOpen=0;
 	}
 	return;
 }
@@ -561,7 +532,7 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			SendDlgItemMessage(hDlg,IDC_DBLSIDE,BM_SETCHECK,DblSided,0);
 			strcpy(Dummy,TempFileName);
 			PathStripPath(Dummy);
-			SendDlgItemMessage(hDlg,IDC_TEXT1,WM_SETTEXT,0,(LPARAM)(LPCSTR)Dummy);	
+			SendDlgItemMessage(hDlg,IDC_TEXT1,WM_SETTEXT,0,(LPARAM)(LPCSTR)Dummy);
 			return TRUE;
 		break;
 
@@ -672,7 +643,7 @@ long CreateDiskHeader(char *FileName,unsigned char Type,unsigned char Tracks,uns
 			}
 		break;
 
-		case VDK:	
+		case VDK:
 			HeaderBuffer[9]=DblSided+1;
 			HeaderSize=12;
 			FileSize = ( 18 * 0x100 * TrackTable[Tracks] * (DblSided+1));
@@ -725,7 +696,7 @@ void LoadConfig(void)  // Called on SetIniPath
 
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	GetPrivateProfileString("DefaultPaths", "FloppyPath", "", FloppyPath, MAX_PATH, IniFile);
-	
+
 	SelectRom = GetPrivateProfileInt(ModName,"DiskRom",1,IniFile);  //0 External 1=TRSDOS 2=RGB Dos
 	GetPrivateProfileString(ModName,"RomPath","",RomFileName,MAX_PATH,IniFile);
 	PersistDisks=GetPrivateProfileInt(ModName,"Persist",1,IniFile);
@@ -775,7 +746,7 @@ void SaveConfig(void)
 	WritePrivateProfileInt(ModName,"Persist",PersistDisks ,IniFile);
 	if (PersistDisks)
 		for (Index=0;Index<4;Index++)
-		{	
+		{
 			sprintf(Temp,"Disk#%i",Index);
 			WritePrivateProfileString(ModName,Temp,Drive[Index].ImageName,IniFile);
 		}
@@ -788,7 +759,7 @@ void SaveConfig(void)
     strcpy(ModName,"HDBDOS/DW/Becker");
 	WritePrivateProfileInt(ModName,"DWEnable", BeckerEnabled, IniFile);
 	WritePrivateProfileString(ModName,"DWServerAddr", BeckerAddr, IniFile);
-	WritePrivateProfileString(ModName,"DWServerPort", BeckerPort, IniFile);	
+	WritePrivateProfileString(ModName,"DWServerPort", BeckerPort, IniFile);
 #endif
 	return;
 }
@@ -800,7 +771,7 @@ unsigned char LoadExtRom( unsigned char RomType,char *FilePath)	//Returns 1 on i
 	unsigned short index=0;
 	unsigned char RetVal=0;
 	unsigned char *ThisRom[3]={ExternalRom,DiskRom,RGBDiskRom};
-	
+
 //	ThisRom[0]=ExternalRom;
 //	ThisRom[1]=DiskRom;
 //	ThisRom[2]=RGBDiskRom;
