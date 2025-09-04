@@ -346,6 +346,9 @@ static int EDBOXES[8] = {ID_TEXT0,ID_TEXT1,ID_TEXT2,ID_TEXT3,
                          ID_TEXT4,ID_TEXT5,ID_TEXT6,ID_TEXT7};
 static int UPDBTNS[8] = {ID_UPDATE0,ID_UPDATE1,ID_UPDATE2,ID_UPDATE3,
                          ID_UPDATE4,ID_UPDATE5,ID_UPDATE6,ID_UPDATE7};
+
+static char MPIPath[MAX_PATH];
+
 //======================================================================
 // DLL exports
 //======================================================================
@@ -658,6 +661,8 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 void LoadConfig(void)
 {
     GetPrivateProfileString
+        ("DefaultPaths", "MPIPath", "", MPIPath, MAX_PATH, IniFile);
+    GetPrivateProfileString
         ("SDC", "SDCardPath", "", SDCard, MAX_PATH, IniFile);
 
     if (!IsDirectory(SDCard)) {
@@ -798,32 +803,14 @@ void UpdateFlashItem(int index)
         *FlashFile[index] = '\0';
     } else {
         char title[64];
-        snprintf(title,64,"Update Flash Bank %d",index);
-
-        OPENFILENAME ofn ;
-        strncpy(filename,FlashFile[index],MAX_PATH);
-        // DeSanitize
-        for(unsigned int i=0; i<strlen(filename); i++) {
-            if (filename[i] == '/') filename[i] = '\\';
-        }
-
-        memset(&ofn,0,sizeof(ofn));
-        ofn.lStructSize       = sizeof (OPENFILENAME);
-        ofn.hwndOwner         = hConfigureDlg;
-        ofn.Flags             = OFN_HIDEREADONLY;
-        ofn.lpstrDefExt       = ".rom";
-        ofn.lpstrFilter       = "Rom File\0*.rom\0All Files\0*.*\0\0";
-        ofn.nFilterIndex      = 0 ;
-        ofn.lpstrFile         = filename;
-        ofn.nMaxFile          = MAX_PATH;
-        ofn.nMaxFileTitle     = MAX_PATH;
-        ofn.lpstrTitle        = title;
-
-        // Sanitize
-        if (GetOpenFileName(&ofn)) {
-            for(unsigned int i=0; i<strlen(filename); i++) {
-                if (filename[i] == '\\') filename[i] = '/';
-            }
+        snprintf(title,64,"Load Flash Bank %d",index);
+        FileDialog dlg;
+        dlg.ofn.lpstrDefExt     = ".rom";
+        dlg.ofn.lpstrFilter     = "Rom File\0*.rom\0All Files\0*.*\0\0";
+        dlg.ofn.lpstrTitle      = title;
+        dlg.ofn.lpstrInitialDir = MPIPath;   // FIXME someday
+        if (dlg.show(0,hConfigureDlg)) {
+            dlg.getupath(filename,MAX_PATH); // cvt to unix style
             strncpy(FlashFile[index],filename,MAX_PATH);
         }
     }

@@ -907,7 +907,7 @@ void LoadIniFile(void)
 
 	if ( dlg.show() ) {
 		WriteIniFile();             // Flush current profile
-		SetIniFilePath(dlg.Path);   // Set new ini file path
+		SetIniFilePath(dlg.path());   // Set new ini file path
 		ReadIniFile();              // Load it
 		UpdateConfig();
 		EmuState.ResetPending = 2;
@@ -932,12 +932,12 @@ void SaveConfig(void) {
 	dlg.setpath(curini);
 
 	if ( dlg.show(1) ) {
-		SetIniFilePath(dlg.Path);   // Set new ini file path
+		SetIniFilePath(dlg.path());   // Set new ini file path
 		WriteIniFile();             // Flush current profile
 		// If ini file has changed
-		if (_stricmp(curini,dlg.Path) != 0) {
+		if (_stricmp(curini,dlg.path()) != 0) {
 			// Copy current ini to new ini
-			if (! CopyFile(curini,dlg.Path,false) )
+			if (! CopyFile(curini,dlg.path(),false) )
 				MessageBox(0,"Copy config failed","error",0);
 		}
 	}

@@ -91,7 +91,7 @@ END
 
 IDD_NEWDISK DIALOG 0, 0, 186, 70
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Insert Disk Image"
+CAPTION "Create Disk Image"
 FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "Yes",IDOK,106,52,32,14
@@ -105,9 +105,9 @@ BEGIN
     RADIOBUTTON     "40",IDC_TR40,62,30,24,10
     RADIOBUTTON     "80",IDC_TR80,62,40,24,10
     CONTROL         "Double Sided",IDC_DBLSIDE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,3,57,61,10
-    LTEXT           "xxxxxxxxx",IDC_TEXT1,110,8,68,8
-    LTEXT           "This file does not exist",IDC_STATIC,108,18,70,8
-    LTEXT           "Create the file?",IDC_STATIC,109,33,48,8
+    LTEXT           "",IDC_TEXT1,105,12,68,8
+    LTEXT           "File does not exist.",IDC_STATIC,105,25,70,8
+    LTEXT           "Create the file?",IDC_STATIC,105,35,48,8
 END
 
 

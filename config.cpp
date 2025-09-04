@@ -619,8 +619,8 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 				dlg.ofn.lpstrTitle  = "Coco3 Rom Image";
 				dlg.ofn.Flags       |= OFN_FILEMUSTEXIST;
 				if (dlg.show()) {
-					SetDlgItemText(hDlg,IDC_ROMPATH,dlg.Path);
-					strncpy(tmpcfg.ExtRomFile,dlg.Path,MAX_PATH);
+					dlg.getpath(tmpcfg.ExtRomFile,MAX_PATH);
+					SetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile);
 				}
 			}
 			break;
@@ -1165,22 +1165,22 @@ BOOL SelectKeymapFile(HWND hDlg)
 	dlg.ofn.lpstrDefExt     = ".keymap";
 	if ( dlg.show() ) {
 		// Load keymap if file exists
-		DWORD attr = GetFileAttributesA(dlg.Path);
+		DWORD attr = GetFileAttributesA(dlg.path());
 		if ( (attr != INVALID_FILE_ATTRIBUTES) &&
 				!(attr & FILE_ATTRIBUTE_DIRECTORY) ) {
-			LoadCustomKeyMap(dlg.Path);
+			LoadCustomKeyMap(dlg.path());
 		// Else create new file from current selection
 		} else {
 			char txt[MAX_PATH+32];
 			strcpy (txt,"Create ");
-			strcat (txt,dlg.Path);
+			strcat (txt,dlg.path());
 			strcat (txt,"?");
 			if (MessageBox(hDlg,txt,"Warning",MB_YESNO)==IDYES) {
 				CloneStandardKeymap(CurrentConfig.KeyMap);
-				SaveCustomKeyMap(dlg.Path);
+				SaveCustomKeyMap(dlg.path());
 			}
 		}
-		strncpy (KeyMapFilePath,dlg.Path,MAX_PATH);
+		dlg.getpath(KeyMapFilePath,MAX_PATH);
 		SetKeyMapFilePath(KeyMapFilePath); // Save filename in Vcc.config
 	}
 	return TRUE;
@@ -1598,7 +1598,7 @@ int SelectFile(char *FileName)
 
 	if (dlg.show(1)) {     // use save dialog
 		ClosePrintFile();
-		if (OpenPrintFile(dlg.Path)) {
+		if (OpenPrintFile(dlg.path())) {
 			dlg.getdir(CapFilePath);
 			if (strcmp(CapFilePath,"") != 0) {
 				WritePrivateProfileString
@@ -1608,7 +1608,7 @@ int SelectFile(char *FileName)
 			MessageBox(EmuState.WindowHandle,"Can't open file.","Error",0);
 		}
 	}
-	strcpy(FileName,dlg.Path);
+	dlg.getpath(FileName);
 	return(1);
 }
 

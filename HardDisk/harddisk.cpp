@@ -326,7 +326,7 @@ void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
 // Get filename from user and mount harddrive
 void LoadHardDisk(int drive)
 {
-    OPENFILENAME ofn ;
+//    OPENFILENAME ofn ;
     char msg[300];
 
     // Select VHD FileName buffer as per drive
@@ -341,28 +341,16 @@ void LoadHardDisk(int drive)
         return;
     }
 
-    strncpy(NewVHDfile,VHDfile,MAX_PATH);
     HWND hWnd = GetActiveWindow();
-
-    // Prompt user for vhd filename
-    memset(&ofn,0,sizeof(ofn));
-    ofn.lStructSize     = sizeof (OPENFILENAME) ;
-    ofn.hwndOwner       = hWnd;
-    // Allow hard disk images *.img;*.vhd;*.os9 or All Files
-    ofn.lpstrFilter     = "Hard Disk Images\0*.img;*.vhd;*.os9\0All files\0*.*\0\0";
-    ofn.nFilterIndex    = 1 ;                           // current filter index
-    ofn.lpstrFile       = NewVHDfile;                   // full filename on return
-    ofn.nMaxFile        = MAX_PATH;                     // sizeof lpstrFile
-    ofn.lpstrFileTitle  = NULL;                         // filename only
-    ofn.nMaxFileTitle   = MAX_PATH ;                    // sizeof lpstrFileTitle
-    ofn.lpstrInitialDir = HardDiskPath;                 // vhd directory
-    ofn.lpstrTitle      = TEXT("Load HardDisk Image") ; // title bar string
-    ofn.Flags           = OFN_HIDEREADONLY;
-
-    if (GetOpenFileName (&ofn)) {
-
-        // Append .vhd file type if type missing
-        if (ofn.nFileExtension==0) strncat(NewVHDfile,".vhd",MAX_PATH);
+    FileDialog dlg;
+    dlg.setpath(VHDfile);
+    dlg.ofn.lpstrFilter     = "Hard Disk Images\0*.vhd;*.os9;*.img\0All files\0*.*\0\0";
+    dlg.ofn.lpstrDefExt     = "vhd";
+    dlg.ofn.lpstrTitle      = TEXT("Load HardDisk Image") ;
+    dlg.ofn.lpstrInitialDir = HardDiskPath;
+    dlg.ofn.Flags          |= OFN_PATHMUSTEXIST;
+    if (dlg.show(0,hWnd)) {
+        dlg.getpath(NewVHDfile,MAX_PATH);
 
         // Present new disk dialog if file does not exist
         if (GetFileAttributes(NewVHDfile) == INVALID_FILE_ATTRIBUTES) {
@@ -382,11 +370,7 @@ void LoadHardDisk(int drive)
         strncpy(VHDfile,NewVHDfile,MAX_PATH);
 
         // Save vhd directory for config file
-        string tmp = ofn.lpstrFile;
-        int idx;
-        idx = tmp.find_last_of("\\");
-        tmp = tmp.substr(0, idx);
-        strcpy(HardDiskPath, tmp.c_str());
+        dlg.getdir(HardDiskPath);
         SaveConfig();
     }
     return;

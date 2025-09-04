@@ -293,7 +293,7 @@ void Select_Disk(unsigned char Disk)
 	dlg.ofn.lpstrFilter = "Hard Disk Images\0*.img;*.vhd;*.os9\0All files\0*.*\0\0";
 	dlg.ofn.lpstrInitialDir = SuperIDEPath;
 	if (dlg.show()) {
-		if (MountDisk(dlg.Path,Disk)) {
+		if (MountDisk(dlg.path(),Disk)) {
 			dlg.getdir(SuperIDEPath);
 		} else {
 			MessageBox(GetActiveWindow(),"Can't Open Image","Error",0);

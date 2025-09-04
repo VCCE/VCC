@@ -2,7 +2,7 @@
 //
 //  DialogOps.c
 //
-//    Functions common to VCC DLL configuration dialogs should go here.
+//    Functions common to VCC configuration dialogs should go here.
 //
 //    This function can be compiled as C++.  It's file extension is .c to avoid confusing
 //    the C compiler when compiling it for modules not written for C++. Maybe Someday 
@@ -28,12 +28,15 @@
 #include <windows.h>
 #include "DialogOps.h"
 
-// FileDialog shows a dialog for user to select a file for open or save.
+//-------------------------------------------------------------------------------------------
+// FileDialog class shows a dialog for user to select a file for open or save.
+//-------------------------------------------------------------------------------------------
+
+// FileDialog constructor initializes open file name structure.
 FileDialog::FileDialog() {
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
-	ofn.lpstrTitle = "Choose File";
-	ofn.Flags |= OFN_HIDEREADONLY;
+	ofn.Flags = OFN_HIDEREADONLY;
 }
 
 // FileDialog destructor does nothing
@@ -56,26 +59,57 @@ bool FileDialog::show(BOOL Save, HWND Owner) {
 	ofn.lpstrFile = Path;
 
 	// Call Save or Open per boolean
+	int rc;
 	if (Save) {
-		return GetSaveFileName(&ofn) == 1;
+		rc = GetSaveFileName(&ofn);
 	} else {
-		return GetOpenFileName(&ofn) == 1;
+		rc = GetOpenFileName(&ofn) ;
 	}
+	return ((rc == 1) && (*Path != '\0'));
 }
 
 // Overwrite what is currently in Path
-void FileDialog::setpath(const char * newPath, int maxsize) {
-	strncpy(Path,newPath,maxsize);
+void FileDialog::setpath(const char * NewPath) {
+    if (NewPath == NULL) return;
+	strncpy(Path,NewPath,MAX_PATH);
 }
 
-// FileDialog::getdir() returns the directory portion of the path found
+// Get a copy of the selected file path
+void FileDialog::getpath(char * PathCopy, int maxsize) {
+    if (PathCopy == NULL || Path == NULL || maxsize < 1) return;
+	strncpy(PathCopy,Path,maxsize);
+}
+
+// Get a copy of the selected file path with unix dir delimiters
+void FileDialog::getupath(char * PathCopy, int maxsize) {
+    if (PathCopy == NULL || Path == NULL || maxsize < 1) return;
+    int i = 0;
+    while (Path[i] != '\0' && i < maxsize - 1) {
+        if (Path[i] == '\\') {
+            PathCopy[i] = '/';
+        } else {
+            PathCopy[i] = Path[i];
+        }
+        i++;
+    }
+    PathCopy[i] = '\0';
+}
+
+// Get a pointer to the selected file path
+char * FileDialog::path() {
+	return Path;
+}
+
+// FileDialog::getdir() returns the directory portion of the file path
 void FileDialog::getdir(char * Dir, int maxsize) {
+    if (Dir == NULL || Path == NULL || maxsize < 1) return;
 	strncpy(Dir,Path,maxsize);
 	if (char * p = strrchr(Dir,'\\')) *p = '\0';
 }
 
-
+//-------------------------------------------------------------------------------------------
 // CloseCartDialog should be called by cartridge DLL's when they are unloaded.
+//-------------------------------------------------------------------------------------------
 void CloseCartDialog(HWND hDlg)
 {
 	// Send a close message to a cart configuration dialog if it is Enabled. If the dialog
