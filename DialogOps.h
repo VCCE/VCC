@@ -22,40 +22,47 @@
 //-------------------------------------------------------------------------------------------
 #pragma once
 
-// CloseCartDialog closes DLL dialog or asserts that it can not be.
+//-------------------------------------------------------------------------------------------
+// CloseCartDialog closes DLL dialog or force exits Vcc if it can not be.
 // It should be called by cartridge DLL's when they are unloaded.
+//-------------------------------------------------------------------------------------------
 void CloseCartDialog(HWND hDlg);
 
-// FileDialog defines a dialog for users to select a file.
+//-------------------------------------------------------------------------------------------
+// FileDialog wraps dialogs for users to select files.
 //
-// "show" displays the dialog. If Save is TRUE the save dialog is shown 
+// show() displays the dialog. If Save is TRUE the save dialog is shown 
 // otherwise the open dialog is shown. If "Owner" is NULL GetActiveWindow() is used.
 // The selected filename is placed in "Path" 
 //
-// "getdir" returns the directory portion of the choosen path
+// setpath() sets "Path" before calling show().
 //
-// "setpath" modifies "Path".
+// setDefExt(), setInitialDir(), setFilter(), setFlags(), and setTitle() set the
+// elements in the OPENFILENAME structure that is used by get save/open file()
 //
-// "getpath" gets a copy of "Path".
-// 
-// "getupath" gets a copy of "Path" with all '\' chars replaced by '/'
-// 
-// Most ofn (type OPENFILENAME) members can be set before running "show"
-// "ofn.hwndOwner", "ofn.lpstrFile", and "ofn.nMaxFile" are overwitten 
-// by "show" and setting them will have no effect.
+// path() returns a pointer to Path.
+// getpath gets a copy of "Path".
+// getdir() returns a copy of the directory portion of "Path"
+// getupath() gets a copy of "Path" with all '\' chars replaced by '/'
 //
+//-------------------------------------------------------------------------------------------
 class FileDialog {
 public:
 	FileDialog();
 	~FileDialog();
 	bool show(BOOL Save = FALSE, HWND Owner = NULL);
 	void setpath(const char * Path);
+	void setDefExt(const char * DefExt);
+	void setInitialDir(const char * InitialDir);
+	void setFilter(const char * Filter);
+	void setFlags(unsigned int Flags);
+	void setTitle(const char * Title);
 	void getdir(char * Dir, int maxsize = MAX_PATH);
 	void getpath(char * Path, int maxsize = MAX_PATH);
 	void getupath(char * Path, int maxsize = MAX_PATH);
 	char * path();
-	OPENFILENAME ofn;
 private:
+	OPENFILENAME ofn;
 	char Path[MAX_PATH] = {};
 };
 

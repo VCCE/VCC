@@ -614,10 +614,10 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			break;
 		case IDC_BROWSE: {
 				FileDialog dlg;
-				dlg.ofn.lpstrInitialDir = ExecDirectory;
-				dlg.ofn.lpstrFilter = "Rom Image\0*.rom\0\0";
-				dlg.ofn.lpstrTitle  = "Coco3 Rom Image";
-				dlg.ofn.Flags       |= OFN_FILEMUSTEXIST;
+				dlg.setInitialDir(ExecDirectory);
+				dlg.setFilter("Rom Image\0*.rom\0\0");
+				dlg.setTitle("Coco3 Rom Image");
+				dlg.setFlags(OFN_FILEMUSTEXIST);
 				if (dlg.show()) {
 					dlg.getpath(tmpcfg.ExtRomFile,MAX_PATH);
 					SetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile);
@@ -1158,11 +1158,11 @@ int ShowKeymapStatus(HWND hDlg)
 BOOL SelectKeymapFile(HWND hDlg)
 {
 	FileDialog dlg;
-	dlg.ofn.lpstrFilter     = "Keymap Files\0*.keymap\0\0";
-	dlg.ofn.lpstrInitialDir = AppDirectory();
-	dlg.ofn.lpstrTitle      = TEXT("Select Keymap file");
-	dlg.ofn.Flags          |= OFN_PATHMUSTEXIST;
-	dlg.ofn.lpstrDefExt     = ".keymap";
+	dlg.setFilter("Keymap Files\0*.keymap\0\0");
+	dlg.setInitialDir(AppDirectory());
+	dlg.setTitle(TEXT("Select Keymap file"));
+	dlg.setFlags(OFN_PATHMUSTEXIST);
+	dlg.setDefExt(".keymap");
 	if ( dlg.show() ) {
 		// Load keymap if file exists
 		DWORD attr = GetFileAttributesA(dlg.path());
@@ -1590,11 +1590,11 @@ int SelectFile(char *FileName)
 		("DefaultPaths", "CapFilePath", "", CapFilePath, MAX_PATH, IniFilePath);
 
 	FileDialog dlg;
-	dlg.ofn.lpstrTitle      = "Open print capture file";
-	dlg.ofn.lpstrFilter     = "Text File\0*.txt\0\0";
-	dlg.ofn.lpstrInitialDir = CapFilePath;
-	dlg.ofn.lpstrDefExt     = "txt";
-	dlg.ofn.Flags           |= OFN_OVERWRITEPROMPT;
+	dlg.setTitle("Open print capture file");
+	dlg.setFilter("Text File\0*.txt\0\0");
+	dlg.setInitialDir(CapFilePath);
+	dlg.setDefExt("txt");
+	dlg.setFlags(OFN_OVERWRITEPROMPT);
 
 	if (dlg.show(1)) {     // use save dialog
 		ClosePrintFile();

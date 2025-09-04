@@ -68,6 +68,26 @@ bool FileDialog::show(BOOL Save, HWND Owner) {
 	return ((rc == 1) && (*Path != '\0'));
 }
 
+void FileDialog::setDefExt(const char * DefExt) {
+	ofn.lpstrDefExt = DefExt;
+}
+
+void FileDialog::setInitialDir(const char * InitialDir) {
+	ofn.lpstrInitialDir = InitialDir;
+}
+
+void FileDialog::setFilter(const char * Filter) {
+	ofn.lpstrFilter = Filter;
+}
+
+void FileDialog::setFlags(unsigned int Flags) {
+	ofn.Flags |= Flags;
+}
+
+void FileDialog::setTitle(const char * Title) {
+	ofn.lpstrTitle = Title;
+}
+
 // Overwrite what is currently in Path
 void FileDialog::setpath(const char * NewPath) {
     if (NewPath == NULL) return;

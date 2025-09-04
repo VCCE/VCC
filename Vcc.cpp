@@ -894,11 +894,11 @@ unsigned char SetAutoStart(unsigned char Tmp)
 void LoadIniFile(void)
 {
 	FileDialog dlg;
-	dlg.ofn.lpstrFilter      = "INI\0*.ini\0\0";
-	dlg.ofn.lpstrDefExt      = "ini";
-	dlg.ofn.lpstrInitialDir  = AppDirectory() ;
-	dlg.ofn.lpstrTitle       = TEXT("Load Vcc Config File") ;
-	dlg.ofn.Flags           |= OFN_FILEMUSTEXIST;
+	dlg.setFilter("INI\0*.ini\0\0");
+	dlg.setDefExt("ini");
+	dlg.setInitialDir(AppDirectory() );
+	dlg.setTitle(TEXT("Load Vcc Config File") );
+	dlg.setFlags(OFN_FILEMUSTEXIST);
 
 	// Send current ini file path to dialog
 	char curini[MAX_PATH]="";
@@ -920,11 +920,11 @@ void LoadIniFile(void)
 void SaveConfig(void) {
 
 	FileDialog dlg;
-	dlg.ofn.lpstrFilter      = "INI\0*.ini\0\0";
-	dlg.ofn.lpstrDefExt      = "ini";
-	dlg.ofn.lpstrInitialDir  = AppDirectory() ;
-	dlg.ofn.lpstrTitle       = TEXT("Save Vcc Config File") ;
-	dlg.ofn.Flags           |= OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+	dlg.setFilter("INI\0*.ini\0\0");
+	dlg.setDefExt("ini");
+	dlg.setInitialDir(AppDirectory() );
+	dlg.setTitle(TEXT("Save Vcc Config File") );
+	dlg.setFlags(OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT);
 
 	// Send current ini file path to dialog
 	char curini[MAX_PATH]="";

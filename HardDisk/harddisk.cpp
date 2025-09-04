@@ -344,11 +344,11 @@ void LoadHardDisk(int drive)
     HWND hWnd = GetActiveWindow();
     FileDialog dlg;
     dlg.setpath(VHDfile);
-    dlg.ofn.lpstrFilter     = "Hard Disk Images\0*.vhd;*.os9;*.img\0All files\0*.*\0\0";
-    dlg.ofn.lpstrDefExt     = "vhd";
-    dlg.ofn.lpstrTitle      = TEXT("Load HardDisk Image") ;
-    dlg.ofn.lpstrInitialDir = HardDiskPath;
-    dlg.ofn.Flags          |= OFN_PATHMUSTEXIST;
+    dlg.setFilter("Hard Disk Images\0*.vhd;*.os9;*.img\0All files\0*.*\0\0");
+    dlg.setDefExt("vhd");
+    dlg.setTitle(TEXT("Load HardDisk Image") );
+    dlg.setInitialDir(HardDiskPath);
+    dlg.setFlags(OFN_PATHMUSTEXIST);
     if (dlg.show(0,hWnd)) {
         dlg.getpath(NewVHDfile,MAX_PATH);
 

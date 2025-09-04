@@ -653,10 +653,10 @@ void UpdateCartDLL(unsigned char Slot,char *DllPath)
 		UnloadModule(Slot);
 	} else {
 		FileDialog dlg;
-		dlg.ofn.lpstrTitle      = "Load Program Pack";
-		dlg.ofn.lpstrInitialDir = MPIPath;
-		dlg.ofn.lpstrFilter     = "DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0";
-		dlg.ofn.Flags          |= OFN_FILEMUSTEXIST;
+		dlg.setTitle("Load Program Pack");
+		dlg.setInitialDir(MPIPath);
+		dlg.setFilter("DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0");
+		dlg.setFlags(OFN_FILEMUSTEXIST);
 		if (dlg.show(0,hConfDlg)) {
 			MountModule(Slot,dlg.path());
 			dlg.getdir(MPIPath);

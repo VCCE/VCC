@@ -805,10 +805,10 @@ void UpdateFlashItem(int index)
         char title[64];
         snprintf(title,64,"Load Flash Bank %d",index);
         FileDialog dlg;
-        dlg.ofn.lpstrDefExt     = ".rom";
-        dlg.ofn.lpstrFilter     = "Rom File\0*.rom\0All Files\0*.*\0\0";
-        dlg.ofn.lpstrTitle      = title;
-        dlg.ofn.lpstrInitialDir = MPIPath;   // FIXME someday
+        dlg.setDefExt("rom");
+        dlg.setFilter("Rom File\0*.rom\0All Files\0*.*\0\0");
+        dlg.setTitle(title);
+        dlg.setInitialDir(MPIPath);   // FIXME someday
         if (dlg.show(0,hConfigureDlg)) {
             dlg.getupath(filename,MAX_PATH); // cvt to unix style
             strncpy(FlashFile[index],filename,MAX_PATH);

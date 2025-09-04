@@ -388,9 +388,9 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 						if (char * p = strrchr(dir,'\\')) *p = '\0';
 
 						FileDialog dlg;
-						dlg.ofn.lpstrFilter = "Disk Rom Images\0*.rom;\0All files\0*.*\0\0";
-						dlg.ofn.lpstrTitle  = "Select Disk Rom Image";
-						dlg.ofn.lpstrInitialDir = dir;
+						dlg.setFilter("Disk Rom Images\0*.rom;\0All files\0*.*\0\0");
+						dlg.setTitle("Select Disk Rom Image");
+						dlg.setInitialDir(dir);
 						if (dlg.show(0,g_hConfDlg)) {
 							dlg.getpath(TempRomFileName,MAX_PATH);
 							SendDlgItemMessage
@@ -417,11 +417,11 @@ void Load_Disk(unsigned char disk)
 {
 	HWND h_own = GetActiveWindow();
 	FileDialog dlg;
-	dlg.ofn.lpstrInitialDir = FloppyPath;
-	dlg.ofn.lpstrFilter = "Disk Images\0*.dsk;*.os9\0\0";
-	dlg.ofn.lpstrDefExt = "dsk";
-	dlg.ofn.lpstrTitle  = "Insert Disk Image";
-	dlg.ofn.Flags      |= OFN_PATHMUSTEXIST;
+	dlg.setInitialDir(FloppyPath);
+	dlg.setFilter("Disk Images\0*.dsk;*.os9\0\0");
+	dlg.setDefExt("dsk");
+	dlg.setTitle("Insert Disk Image");
+	dlg.setFlags(OFN_PATHMUSTEXIST);
 	if (dlg.show(0,h_own)) {
 		CreateFlag = 1;
 		HANDLE hr = NULL;
