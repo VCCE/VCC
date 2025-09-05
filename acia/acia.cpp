@@ -322,11 +322,6 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
 
     case WM_CLOSE:
         DestroyWindow(hDlg);
-        return TRUE;
-        break;
-
-    case WM_DESTROY:
-        PostQuitMessage(0);
         g_hDlg = NULL;
         return TRUE;
         break;
@@ -516,16 +511,20 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
                 break;
             }
 
-            SaveConfig();
-
-            if (button==IDOK) EndDialog(hDlg,button);
+            // Okay exits the dialog
+            if (button==IDOK) {
+                SaveConfig();       // Should APPLY also save the config?
+                DestroyWindow(hDlg);
+                g_hDlg = NULL;
+            }
             break;
 
         case IDHELP:
             break;
 
         case IDCANCEL:
-            EndDialog(hDlg, button);
+            DestroyWindow(hDlg);
+            g_hDlg = NULL;
             break;
         }
         return TRUE;

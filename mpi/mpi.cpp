@@ -161,7 +161,7 @@ extern "C"
 		// MPI config wmId is 5019 so 19 is used here.
 		if (MenuID == 19) {
 			if (!hConfDlg)
-				CreateDialog(g_hinstDLL, (LPCTSTR)IDD_DIALOG1,
+				hConfDlg = CreateDialog(g_hinstDLL, (LPCTSTR)IDD_DIALOG1,
 						GetActiveWindow(), (DLGPROC)MpiConfigDlg);
 			ShowWindow(hConfDlg,1);
 		}
@@ -396,15 +396,10 @@ LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 	case WM_CLOSE:
 		WriteConfig();
 		DestroyWindow(hDlg);
-		return TRUE;
-		break;
-	case WM_DESTROY:
-		PostQuitMessage(0);
 		hConfDlg=NULL;
 		return TRUE;
 		break;
 	case WM_INITDIALOG:
-		hConfDlg=hDlg;
 		hParentWindow = GetParent(hDlg);
 		CenterDialog(hDlg);
 		for (int Slot=0;Slot<NUMSLOTS;Slot++) {

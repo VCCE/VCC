@@ -135,7 +135,8 @@ extern "C"
             break;
 
         case 14:
-            if (hConfDlg == NULL) CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,GetActiveWindow(),(DLGPROC)Config);
+            if (hConfDlg == NULL)
+                hConfDlg = CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,GetActiveWindow(),(DLGPROC)Config);
             ShowWindow(hConfDlg,1);
             return;
         }
@@ -161,17 +162,11 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CLOSE:
         DestroyWindow(hDlg);
-        return TRUE;
-        break;
-
-    case WM_DESTROY:
-        PostQuitMessage(0);
         hConfDlg=NULL;
         return TRUE;
         break;
 
     case WM_INITDIALOG:
-        hConfDlg=hDlg;
         CenterDialog(hDlg);
         SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnabled,0);
         SendDlgItemMessage(hDlg,IDC_READONLY,BM_SETCHECK,ClockReadOnly,0);
@@ -187,11 +182,14 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             ClockReadOnly=(unsigned char)SendDlgItemMessage(hDlg,IDC_READONLY,BM_GETCHECK,0,0);
             SetClockWrite(!ClockReadOnly);
             SaveConfig();
-            EndDialog(hDlg, LOWORD(wParam));
+            DestroyWindow(hDlg);
+            hConfDlg=NULL;
             break;
 
         case IDCANCEL:
             EndDialog(hDlg, LOWORD(wParam));
+            DestroyWindow(hDlg);
+            hConfDlg=NULL;
         break;
         }
     }
