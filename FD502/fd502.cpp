@@ -153,7 +153,7 @@ extern "C"
 				break;
 			case 16:
 				if (g_hConfDlg == NULL)
-					CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,h_own,(DLGPROC)Config);
+					g_hConfDlg = CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,h_own,(DLGPROC)Config);
 				ShowWindow(g_hConfDlg,1);
 				break;
 			case 17:
@@ -277,18 +277,12 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 		case WM_CLOSE:
-			DestroyWindow(hDlg);   //Non modal window uses Destroy
-			g_hConfDlg = NULL;     //And nulls the global handle
-			return TRUE;
-			break;
-
-		case WM_DESTROY:
-			PostQuitMessage(0);
+			DestroyWindow(hDlg);
+			g_hConfDlg = NULL;
 			return TRUE;
 			break;
 
 		case WM_INITDIALOG:
-			g_hConfDlg = hDlg;
 			CenterDialog(hDlg);
 			TempSelectRom=SelectRom;
 			if (!RealDisks)
@@ -353,7 +347,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 								mount_disk_image("*Floppy B:",PhysicalDriveB-1);
 						}
 					}
-					EndDialog(hDlg, LOWORD(wParam));
 					SelectRom=TempSelectRom;
 					strcpy(RomFileName,TempRomFileName );
 					CheckPath(RomFileName);
@@ -366,6 +359,8 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					becker_enable(BeckerEnabled);
 #endif
 					SaveConfig();
+					DestroyWindow(hDlg);
+					g_hConfDlg = NULL;
 					return TRUE;
 					break;
 
@@ -403,7 +398,8 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 
 				case IDCANCEL:
-					EndDialog(hDlg, LOWORD(wParam));
+					DestroyWindow(hDlg);
+					g_hConfDlg = NULL;
 					break;
 			}
 			return TRUE;

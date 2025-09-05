@@ -210,20 +210,20 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 	while (BinaryRunning)
 	{
-		if (FlagEmuStop==TH_WAITING)		//Need to stop the EMU thread for screen mode change
-			{								//As it holds the Secondary screen buffer open while running
-				FullScreenToggle();
-				FlagEmuStop=TH_RUNNING;
-			}
-			GetMessage(&Msg,NULL,0,0);		//Seems if the main loop stops polling for Messages the child threads stall
-			TranslateMessage(&Msg);
-			DispatchMessage(&Msg) ;
+		if (FlagEmuStop==TH_WAITING)	//Need to stop the EMU thread for screen mode change
+		{								//As it holds the Secondary screen buffer open while running
+			FullScreenToggle();
+			FlagEmuStop=TH_RUNNING;
+		}
+		GetMessage(&Msg,NULL,0,0);		//Seems if the main loop stops polling the child threads stall
+		TranslateMessage(&Msg);
+		DispatchMessage(&Msg) ;
 	}
 	EmuState.Exiting = true;
 
 	PostThreadMessage(threadID, WM_QUIT, 0, 0);
-	SetEvent(hEMUQuit);								// Signal emulation thread to finish up.
-	WaitForSingleObject(hEMUThread, INFINITE);		// Wait for emulation thread to terminate
+	SetEvent(hEMUQuit);							// Signal emulation thread to finish up.
+	WaitForSingleObject(hEMUThread, INFINITE);	// Wait for emulation thread to terminate
 	CloseHandle( hEvent ) ;	
 	CloseHandle( hEMUQuit ) ;
 	CloseHandle( hEMUThread ) ;
@@ -249,7 +249,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	switch (message)
 	{
-
 		case WM_SYSCOMMAND:
 			//-------------------------------------------------------------
 			// Control ATL key menu access.
@@ -801,7 +800,7 @@ void SoftReset(void)
 	return;
 }
 
-// Mesage handler for the About box.
+// Message handler for the About box.
 BOOL CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
@@ -821,7 +820,7 @@ BOOL CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-// Mesage handler for function key help.
+// Message handler for function key help.
 BOOL CALLBACK FunctionKeys(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)

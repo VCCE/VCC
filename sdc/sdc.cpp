@@ -398,12 +398,14 @@ extern "C"
         switch (MenuID)
         {
         case 10:
-            CreateDialog(hinstDLL, (LPCTSTR) IDD_CONFIG,
+            if (hConfigureDlg == NULL)  // Only create dialog once
+                hConfigureDlg = CreateDialog(hinstDLL, (LPCTSTR) IDD_CONFIG,
                          GetActiveWindow(), (DLGPROC) SDC_Configure);
             ShowWindow(hConfigureDlg,1);
             break;
         case 11:
-            CreateDialog(hinstDLL, (LPCTSTR) IDD_CONTROL,
+            if (hControlDlg == NULL)
+                hControlDlg = CreateDialog(hinstDLL, (LPCTSTR) IDD_CONTROL,
                          GetActiveWindow(), (DLGPROC) SDC_Control);
             ShowWindow(hControlDlg,1);
             break;
@@ -472,6 +474,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
     } else if (reason == DLL_PROCESS_DETACH) {
         CloseCartDialog(hControlDlg);
         CloseCartDialog(hConfigureDlg);
+        hControlDlg = NULL;
+        hConfigureDlg = NULL;
         CloseDrive(0);
         CloseDrive(1);
     }
@@ -512,16 +516,11 @@ SDC_Control(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message) {
     case WM_CLOSE:
         DestroyWindow(hDlg);
-        return TRUE;
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
         hControlDlg=NULL;
         return TRUE;
         break;
     case WM_INITDIALOG:
         CenterDialog(hDlg);
-        hControlDlg=hDlg;
         update_disk0_box();
         SetFocus(GetDlgItem(hDlg,ID_NEXT));
         return TRUE;
@@ -547,16 +546,12 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message) {
     case WM_CLOSE:
         DestroyWindow(hDlg);
-        return TRUE;
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
         hConfigureDlg=NULL;
         return TRUE;
         break;
     case WM_INITDIALOG:
+        hConfigureDlg=hDlg;  // needed for LoadConfig() and Init..()
         CenterDialog(hDlg);
-        hConfigureDlg=hDlg;
         LoadConfig();
         InitEditBoxes();
         InitCardBox();
@@ -640,16 +635,10 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             }
             break;
         case IDOK:
-            if (SaveConfig(hDlg))
-                EndDialog(hDlg,LOWORD(wParam));
+            SaveConfig(hDlg);
+            DestroyWindow(hDlg);
+            hConfigureDlg=NULL;
             break;
-//        case IDCANCEL:
-//            EndDialog(hDlg,LOWORD(wParam));
-//            break;
-//        case ID_NEXT:
-//            MountNext (0);
-//            SetFocus(GetParent(hDlg));
-//            break;
         }
     }
     return 0;
