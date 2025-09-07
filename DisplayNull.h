@@ -37,12 +37,12 @@ namespace VCC
 		int GetRect(int rectOption, Rect* rect) override { return OK; }
 		int LockSurface() override { return OK; }
 		int UnlockSurface() override { return OK; }
-		void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color) {}
-		void DebugDrawBox(float x, float y, float w, float h, Pixel color) {}
+		void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color) override {}
+		void DebugDrawBox(float x, float y, float w, float h, Pixel color) override {}
 		int RenderSignalLostMessage() override { return OK; }
 		int RenderBox(float x, float y, float w, float h, Pixel color, bool filled) override { return OK; }
 		int RenderText(const OpenGLFont* font, float x, float y, float size, const char* text) override { return OK; }
 		int LoadFont(const OpenGLFont** outFont, int bitmapRes, const OpenGLFontGlyph* glyphs, int start, int end) override { return OK; }
-		int RenderStatusLine(char* statusText) { return OK; }
+		int RenderStatusLine(char* statusText) override { return OK; }
 	};
 }

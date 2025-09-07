@@ -46,8 +46,8 @@ namespace VCC
         int GetRect(int rectOption, Rect* rect) override;
         int LockSurface() override;
         int UnlockSurface() override;
-        void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color) {};
-        void DebugDrawBox(float x, float y, float w, float h, Pixel color) {};
+        void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color) override {};
+        void DebugDrawBox(float x, float y, float w, float h, Pixel color) override {};
         int RenderSignalLostMessage() override;
         int RenderStatusLine(char* statusText) override;
 
