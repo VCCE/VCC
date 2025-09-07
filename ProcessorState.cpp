@@ -171,7 +171,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
         std::string ins = trace.instruction + trace.operand;
         RECT rc;
         SetRect(&rc,rect.left+130,rect.top+102,rect.left+250,rect.top+120);
-        DrawText(hdc, (char *) ins.c_str(), -1, &rc, DT_VCENTER | DT_SINGLELINE);
+        DrawText(hdc, ins.c_str(), -1, &rc, DT_VCENTER | DT_SINGLELINE);
         // Cleanup.
         DeleteObject(pen);
         DeleteObject(hFont);
