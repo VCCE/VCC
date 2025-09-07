@@ -68,7 +68,7 @@ using ClassDirectX = DirectX;
 using ClassDirectX = DisplayNull;
 #endif
 
-static HWND hwndStatusBar=NULL;
+static HWND hwndStatusBar=nullptr;
 static unsigned int StatusBarHeight=0;
 static TCHAR szTitle[MAX_LOADSTRING];			// The title bar text
 static TCHAR szWindowClass[MAX_LOADSTRING];	// The title bar text
@@ -148,7 +148,7 @@ bool CreateDDWindow(SystemState *CWState)
 
 	HMONITOR hmon;
 
-	if (CWState->WindowHandle != NULL) //If its go a value it must be a mode switch
+	if (CWState->WindowHandle != nullptr) //If its go a value it must be a mode switch
 	{
 		hmon = MonitorFromWindow(CWState->WindowHandle,	MONITOR_DEFAULTTONEAREST);
 		CloseScreen();
@@ -162,14 +162,14 @@ bool CreateDDWindow(SystemState *CWState)
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= g_hInstance;
 	wcex.hIcon			= LoadIcon(g_hInstance, (LPCTSTR)IDI_COCO3);
-	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
+	wcex.hCursor		= LoadCursor(nullptr, IDC_ARROW);
 	wcex.hbrBackground	= (HBRUSH)GetStockObject(BLACK_BRUSH); 
 	wcex.lpszMenuName	= (LPCSTR)IDR_MENU;
 	wcex.lpszClassName	= szWindowClass;
 	wcex.hIconSm		= LoadIcon(wcex.hInstance, (LPCTSTR)IDI_COCO3);
 	if (CWState->FullScreen)
 	{
-		wcex.lpszMenuName	=NULL;	//Fullscreen has no Menu Bar and no Mouse pointer
+		wcex.lpszMenuName	=nullptr;	//Fullscreen has no Menu Bar and no Mouse pointer
 		wcex.hCursor		= LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_NONE));
 	}
 	if (!RegisterClassEx(&wcex))
@@ -185,7 +185,7 @@ bool CreateDDWindow(SystemState *CWState)
 		// We create the Main window 
 		CWState->WindowHandle = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, xPos, yPos,
 											 rc.right - rc.left, rc.bottom - rc.top,
-											 NULL, NULL, g_hInstance, NULL);
+											 nullptr, nullptr, g_hInstance, nullptr);
 		if (!CWState->WindowHandle)	// Can't create window
 		   return FALSE;
 		
@@ -214,16 +214,17 @@ bool CreateDDWindow(SystemState *CWState)
 
 		MONITORINFO mi = { sizeof(mi) };
 		if (!GetMonitorInfo(hmon, &mi))
-			return NULL;
+			return nullptr;
 
-		CWState->WindowHandle = CreateWindow(szWindowClass,
-			NULL,
+		CWState->WindowHandle = CreateWindow(
+			szWindowClass,
+			nullptr,
 			WS_POPUP | WS_VISIBLE,
 			mi.rcMonitor.left,
 			mi.rcMonitor.top,
 			mi.rcMonitor.right - mi.rcMonitor.left,
 			mi.rcMonitor.bottom - mi.rcMonitor.top,
-			NULL, NULL, g_hInstance, 0);
+											 nullptr, nullptr, g_hInstance, 0);
 	}
 
 	ShowWindow(CWState->WindowHandle, g_nCmdShow);

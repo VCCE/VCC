@@ -90,7 +90,7 @@ void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop)
             WaitForSingleObject(hthread,500);
         }
         CloseHandle(hthread);
-        hthread = NULL;
+        hthread = nullptr;
     }
 }
 
@@ -121,12 +121,12 @@ void sc6551_open()
     com_open();
 
     // Create I/O threads
-    hInputThread =  CreateThread(NULL,0,sc6551_input_thread, NULL,0,&id);
-    hOutputThread = CreateThread(NULL,0,sc6551_output_thread,NULL,0,&id);
+    hInputThread =  CreateThread(nullptr,0,sc6551_input_thread, nullptr,0,&id);
+    hOutputThread = CreateThread(nullptr,0,sc6551_output_thread,nullptr,0,&id);
 
     // Create events to control them
-    hStopInput  = CreateEvent(NULL,TRUE,FALSE,NULL);
-    hStopOutput = CreateEvent(NULL,TRUE,FALSE,NULL);
+    hStopInput  = CreateEvent(nullptr,TRUE,FALSE,nullptr);
+    hStopOutput = CreateEvent(nullptr,TRUE,FALSE,nullptr);
 
     // Clear status register and mark buffers empty
     //InRptr = InBuf; InWptr = InBuf;
@@ -250,7 +250,7 @@ void sc6551_heartbeat()
             StatReg |= StatRxF;
             // Assert CART if interrupts not disabled or already asserted.
             if (!((CmdReg & CmdRxI) || (StatReg & StatIRQ))) {
-                AssertInt(INT_CART,NULL);
+                AssertInt(INT_CART, 0);	//	FIXME-CHET: This should probably be IS_IRQ and not 0 (was NULL)
                 StatReg |= StatIRQ;
             }
         }

@@ -26,13 +26,13 @@ typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 //typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
-//static void (*AssertInt)(unsigned char,unsigned char)=NULL;
+//static void (*AssertInt)(unsigned char,unsigned char)=nullptr;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
-static unsigned char *Memory=NULL;
+static unsigned char *Memory=nullptr;
 static char FileName[MAX_PATH]="";
 static char IniFile[MAX_PATH]="";
-static void (*DynamicMenuCallback)( char *,int, int)=NULL;
+static void (*DynamicMenuCallback)( char *,int, int)=nullptr;
 
 
 static HINSTANCE g_hinstDLL;
@@ -58,7 +58,7 @@ extern "C"
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
 		InitMemBoard();
 		DynamicMenuCallback =Temp;
-//		if (DynamicMenuCallback  != NULL)
+//		if (DynamicMenuCallback  != nullptr)
 //			BuildDynaMenu();		
 		return ;
 	}

@@ -30,7 +30,7 @@ extern SystemState EmuState;
 
 namespace VCC { namespace Debugger { namespace UI { namespace
 {
-    HWND    ProcessorStateWindow = NULL;
+    HWND    ProcessorStateWindow = nullptr;
     BackBufferInfo  BackBuf;
     std::unique_ptr<OpDecoder> Decoder;
 
@@ -45,7 +45,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
     {
         int rx = r.left + x;
         int ry = r.top + y;
-        MoveToEx(hdc, rx, ry, NULL);
+        MoveToEx(hdc, rx, ry, nullptr);
         LineTo(hdc, rx + l, ry);
         LineTo(hdc, rx + l, ry + h);
         LineTo(hdc, rx, ry + h);
@@ -56,7 +56,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
     {
         int rx = r.left + x;
         int ry = r.top + y;
-        MoveToEx(hdc, rx, ry, NULL);
+        MoveToEx(hdc, rx, ry, nullptr);
         LineTo(hdc, rx, ry + h);
     }
 
@@ -73,7 +73,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
         SelectObject(hdc, pen);
 
         // Draw the border.
-        MoveToEx(hdc, rect.left, rect.top, NULL);
+        MoveToEx(hdc, rect.left, rect.top, nullptr);
         LineTo(hdc, rect.right - 1, rect.top);
         LineTo(hdc, rect.right - 1, rect.bottom - 1);
         LineTo(hdc, rect.left, rect.bottom - 1);
@@ -187,7 +187,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
             RECT Rect;
             GetClientRect(hDlg, &Rect);
             BackBuf = AttachBackBuffer(hDlg, 0, -35);
-            SetTimer(hDlg, IDT_PROC_TIMER, 64, (TIMERPROC)NULL);
+            SetTimer(hDlg, IDT_PROC_TIMER, 64, nullptr);
             break;
         }
 
@@ -253,7 +253,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
                 KillTimer(hDlg, IDT_PROC_TIMER);
                 DeleteDC(BackBuf.DeviceContext);
                 DestroyWindow(hDlg);
-                ProcessorStateWindow = NULL;
+                ProcessorStateWindow = nullptr;
                 break;
             }
             break;
@@ -266,7 +266,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 void VCC::Debugger::UI::OpenProcessorStateWindow(HINSTANCE instance, HWND parent)
 {
-    if (ProcessorStateWindow == NULL)
+    if (ProcessorStateWindow == nullptr)
     {
         ProcessorStateWindow = CreateDialog(
             instance,

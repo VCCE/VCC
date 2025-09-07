@@ -26,7 +26,7 @@ void ValidatePath(char *Path)
 	char FullExePath[MAX_PATH]="";
 	char TempPath[MAX_PATH]="";
 
-	GetModuleFileName(NULL,FullExePath,MAX_PATH);
+	GetModuleFileName(nullptr,FullExePath,MAX_PATH);
 	PathRemoveFileSpec(FullExePath);	//Get path to executable
 	strcpy(TempPath,Path);			
 	PathRemoveFileSpec(TempPath);		//Get path to Incomming file
@@ -38,20 +38,20 @@ void ValidatePath(char *Path)
 int CheckPath( char *Path)	//Return 1 on Error
 {
 	char TempPath[MAX_PATH]="";
-	HANDLE hr=NULL;
+	HANDLE hr=nullptr;
 
 	if ((strlen(Path)==0) | (strlen(Path) > MAX_PATH))
 		return(1);
-	hr=CreateFile(Path,0,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+	hr=CreateFile(Path,0,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 	if (hr==INVALID_HANDLE_VALUE) //File Doesn't exist
 	{
-		GetModuleFileName(NULL,TempPath,MAX_PATH);
+		GetModuleFileName(nullptr,TempPath,MAX_PATH);
 		PathRemoveFileSpec(TempPath);
 		if ( (strlen(TempPath)) + (strlen(Path)) > MAX_PATH)	//Resulting path is to large Bail.
 			return(1);
 
 		strcat(TempPath,Path);
-		hr=CreateFile(TempPath,0,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);			
+		hr=CreateFile(TempPath,0,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);			
 		if (hr ==INVALID_HANDLE_VALUE)
 			return(1);
 		strcpy(Path,TempPath);

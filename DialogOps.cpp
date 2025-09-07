@@ -49,7 +49,7 @@ bool FileDialog::show(BOOL Save, HWND Owner) {
 	ofn.hInstance = GetModuleHandle(0);
 
 	// use active window if owner is null
-	if (Owner != NULL) {
+	if (Owner != nullptr) {
 		ofn.hwndOwner = Owner;
 	} else {
 		ofn.hwndOwner = GetActiveWindow();
@@ -90,19 +90,19 @@ void FileDialog::setTitle(const char * Title) {
 
 // Overwrite what is currently in Path
 void FileDialog::setpath(const char * NewPath) {
-    if (NewPath == NULL) return;
+    if (NewPath == nullptr) return;
 	strncpy(Path,NewPath,MAX_PATH);
 }
 
 // Get a copy of the selected file path
 void FileDialog::getpath(char * PathCopy, int maxsize) {
-    if (PathCopy == NULL || Path == NULL || maxsize < 1) return;
+    if (PathCopy == nullptr || Path == nullptr || maxsize < 1) return;
 	strncpy(PathCopy,Path,maxsize);
 }
 
 // Get a copy of the selected file path with unix dir delimiters
 void FileDialog::getupath(char * PathCopy, int maxsize) {
-    if (PathCopy == NULL || Path == NULL || maxsize < 1) return;
+    if (PathCopy == nullptr || Path == nullptr || maxsize < 1) return;
     int i = 0;
     while (Path[i] != '\0' && i < maxsize - 1) {
         if (Path[i] == '\\') {
@@ -122,7 +122,7 @@ char * FileDialog::path() {
 
 // FileDialog::getdir() returns the directory portion of the file path
 void FileDialog::getdir(char * Dir, int maxsize) {
-    if (Dir == NULL || Path == NULL || maxsize < 1) return;
+    if (Dir == nullptr || Path == nullptr || maxsize < 1) return;
 	strncpy(Dir,Path,maxsize);
 	if (char * p = strrchr(Dir,'\\')) *p = '\0';
 }

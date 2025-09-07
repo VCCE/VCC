@@ -79,7 +79,7 @@ This file is part of VCC (Virtual Color Computer).
 
 using namespace VCC;
 
-static HANDLE hout=NULL;
+static HANDLE hout=nullptr;
 
 SystemState EmuState;
 static bool DialogOpen=false;
@@ -99,15 +99,15 @@ void LoadIniFile(void);
 void SaveConfig(void);
 unsigned __stdcall EmuLoop(void *);
 unsigned __stdcall CartLoad(void *);
-void (*CPUInit)(void)=NULL;
-int  (*CPUExec)( int)=NULL;
-void (*CPUReset)(void)=NULL;
-void (*CPUSetBreakpoints)(const std::vector<unsigned short>&) = NULL;
-void (*CPUSetTraceTriggers)(const std::vector<unsigned short>&) = NULL;
-VCC::CPUState (*CPUGetState)() = NULL;
-void (*CPUAssertInterupt)(InterruptSource, Interrupt)=NULL;
-void (*CPUDeAssertInterupt)(InterruptSource, Interrupt)=NULL;
-void (*CPUForcePC)(unsigned short)=NULL;
+void (*CPUInit)(void)=nullptr;
+int  (*CPUExec)( int)=nullptr;
+void (*CPUReset)(void)=nullptr;
+void (*CPUSetBreakpoints)(const std::vector<unsigned short>&) = nullptr;
+void (*CPUSetTraceTriggers)(const std::vector<unsigned short>&) = nullptr;
+VCC::CPUState (*CPUGetState)() = nullptr;
+void (*CPUAssertInterupt)(InterruptSource, Interrupt)=nullptr;
+void (*CPUDeAssertInterupt)(InterruptSource, Interrupt)=nullptr;
+void (*CPUForcePC)(unsigned short)=nullptr;
 void FullScreenToggle(void);
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys(void);
@@ -145,10 +145,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 //	SetPriorityClass(GetCurrentProcess(),ABOVE_NORMAL_PRIORITY_CLASS );
 //	SetThreadPriority(GetCurrentThread(),THREAD_PRIORITY_ABOVE_NORMAL);
-//	CoInitializeEx(NULL,COINIT_MULTITHREADED);
-//	CoInitialize(NULL);
+//	CoInitializeEx(nullptr,COINIT_MULTITHREADED);
+//	CoInitialize(nullptr);
 //	InitializeCriticalSection();
-	OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
+	OleInitialize(nullptr); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
 	// Parse command line
@@ -185,20 +185,20 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		Qflag=255;
 		EmuState.EmulationRunning=1;
 	}
-	hEvent = CreateEvent( NULL, FALSE, FALSE, NULL ) ;
-	if (hEvent==NULL)
+	hEvent = CreateEvent( nullptr, FALSE, FALSE, nullptr ) ;
+	if (hEvent==nullptr)
 	{
 		MessageBox(0,"Can't create Thread!!","Error",0);
 		return(0);
 	}
-	hEMUQuit = CreateEvent(NULL, FALSE, FALSE, NULL);
-	if (hEMUQuit == NULL)
+	hEMUQuit = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	if (hEMUQuit == nullptr)
 	{
 		MessageBox(0, "Can't create Thread Quit Event!!", "Error", 0);
 		return(0);
 	}
-	hEMUThread = (HANDLE)_beginthreadex( NULL, 0, &EmuLoop, hEvent, 0, &threadID );
-	if (hEMUThread==NULL)
+	hEMUThread = (HANDLE)_beginthreadex( nullptr, 0, &EmuLoop, hEvent, 0, &threadID );
+	if (hEMUThread==nullptr)
 	{
 		MessageBox(0,"Can't Start main Emulation Thread!","Ok",0);
 		return(0);
@@ -215,7 +215,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			FullScreenToggle();
 			FlagEmuStop=TH_RUNNING;
 		}
-		GetMessage(&Msg,NULL,0,0);		//Seems if the main loop stops polling the child threads stall
+		GetMessage(&Msg,nullptr,0,0);		//Seems if the main loop stops polling the child threads stall
 		TranslateMessage(&Msg);
 		DispatchMessage(&Msg) ;
 	}
@@ -277,9 +277,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			switch (wmId)
 			{	
 				case IDM_USER_WIKI:
-					ShellExecute(NULL, "open",
+					ShellExecute(nullptr, "open",
 								 "https://github.com/VCCE/VCC/wiki/UserGuide",
-								 NULL, NULL, SW_SHOWNORMAL);
+								 nullptr, nullptr, SW_SHOWNORMAL);
 					break;
 				case IDM_HELP_ABOUT:
 					DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_ABOUTBOX,
@@ -408,7 +408,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_SETCURSOR:
 			// Hide mouse cursor
             if ((EmuState.MousePointer != 1) && (LOWORD(lParam) == HTCLIENT)) {
-				SetCursor(NULL);
+				SetCursor(nullptr);
 				return TRUE;
 			}
 			break;
@@ -535,7 +535,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case DIK_F10:
 				{
-					HMENU hMenu = NULL;
+					HMENU hMenu = nullptr;
 					if ( IsShiftKeyDown() ) {
 						hMenu = GetConfMenu();
 					} else {
@@ -545,7 +545,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						RECT r;
 						GetClientRect(hWnd,&r);
 						TrackPopupMenu(hMenu,TPM_CENTERALIGN|TPM_VCENTERALIGN,
-							r.right/2,r.bottom/2,0,hWnd,NULL);
+							r.right/2,r.bottom/2,0,hWnd,nullptr);
 					}
 				}
 				break;
@@ -744,9 +744,9 @@ void DoHardReset(SystemState* const HRState)
 	// Remove all haltpoints
 	VCC::KillHaltpoints();
 
-	if (HRState->RamBuffer == NULL)
+	if (HRState->RamBuffer == nullptr)
 	{
-		MessageBox(NULL,"Can't allocate enough RAM, Out of memory","Error",0);
+		MessageBox(nullptr,"Can't allocate enough RAM, Out of memory","Error",0);
 		exit(0);
 	}
 	if (HRState->CpuType == 1)
@@ -1040,7 +1040,7 @@ unsigned __stdcall EmuLoop(void *Dummy)
 			FrameWait();
 	} //Still Emulating
 
-	return(NULL);
+	return 0;
 }
 
 void LoadPack(void)
@@ -1049,7 +1049,7 @@ void LoadPack(void)
 	if (DialogOpen)
 		return;
 	DialogOpen=true;
-	_beginthreadex( NULL, 0, &CartLoad, CreateEvent( NULL, FALSE, FALSE, NULL ), 0, &threadID );
+	_beginthreadex( nullptr, 0, &CartLoad, CreateEvent( nullptr, FALSE, FALSE, nullptr ), 0, &threadID );
 }
 
 unsigned __stdcall CartLoad(void *Dummy)
@@ -1057,7 +1057,8 @@ unsigned __stdcall CartLoad(void *Dummy)
 	LoadCart();
 	EmuState.EmulationRunning=TRUE;
 	DialogOpen=false;
-	return(NULL);
+
+	return 0;
 }
 
 void FullScreenToggle(void)
@@ -1070,7 +1071,7 @@ void FullScreenToggle(void)
 	}
 	InvalidateBoarder();
 	RefreshDynamicMenu();
-	EmuState.ConfigDialog=NULL;
+	EmuState.ConfigDialog=nullptr;
 	PauseAudio(false);
 	return;
 }
@@ -1083,8 +1084,8 @@ void FunctionHelpBox(HWND hWnd)
 
 HMENU GetConfMenu()
 {
-	static HMENU hMenu = NULL;
-	if (hMenu == NULL) {
+	static HMENU hMenu = nullptr;
+	if (hMenu == nullptr) {
 		hMenu = CreatePopupMenu();
 		AppendMenu(hMenu,MF_STRING,ID_AUDIO_CONFIG,"Audio");
 		AppendMenu(hMenu,MF_STRING,ID_CPU_CONFIG,"Cpu");

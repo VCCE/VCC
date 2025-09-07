@@ -95,7 +95,7 @@ namespace VCC
 		#endif // USE_DEBUG_LINES
 
 		OpenGL::Detail(ISystemState *state)
-			: isInitialized(false), hWnd(NULL), hDC(NULL), hRC(NULL)
+			: isInitialized(false), hWnd(nullptr), hDC(nullptr), hRC(nullptr)
 			, width(0), height(0), statusHeight(0), aspect(true), ntsc(false)
 			, pixels(nullptr), texId(0), wglSwapIntervalEXT(nullptr), state(state)
 		{
@@ -149,7 +149,7 @@ namespace VCC
 			height -= statusHeight;
 			this->width = width;
 			this->height = height;
-			if (hWnd) SetWindowPos(hWnd, NULL, 0, 0, width, height, SWP_NOCOPYBITS);
+			if (hWnd) SetWindowPos(hWnd, nullptr, 0, 0, width, height, SWP_NOCOPYBITS);
 		}
 
 		int Setup(void* hwnd, int width, int height, int statusHeight)
@@ -157,15 +157,15 @@ namespace VCC
 			if (isInitialized)
 				return Result(ERR_INITIALIZED);
 
-			HWND hTempWnd = NULL;
-			HDC hTempDC = NULL;
-			HGLRC hTempRC = NULL;
+			HWND hTempWnd = nullptr;
+			HDC hTempDC = nullptr;
+			HGLRC hTempRC = nullptr;
 
-			auto hInstance = GetModuleHandle(NULL);
+			auto hInstance = GetModuleHandle(nullptr);
 
 			auto cleanupTempWindow = [&](int err)
 			{
-				if (hTempRC) { wglMakeCurrent(NULL, NULL); wglDeleteContext(hTempRC); }
+				if (hTempRC) { wglMakeCurrent(nullptr, nullptr); wglDeleteContext(hTempRC); }
 				if (hTempDC) ReleaseDC(hTempWnd, hTempDC);
 				if (hTempWnd) DestroyWindow(hTempWnd);
 				UnregisterClass(ViewClass, hInstance);
@@ -186,14 +186,14 @@ namespace VCC
 			memset(&wc, 0, sizeof(wc));
 			wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 			wc.lpfnWndProc = DefWindowProc;
-			wc.hInstance = GetModuleHandle(NULL);
+			wc.hInstance = GetModuleHandle(nullptr);
 			wc.lpszClassName = ViewClass;
 			if (!RegisterClass(&wc))
 				return ERR_TMPREGISTERCLASS;
 
 			// Create a temporary context to get address of wgl extensions.
 			hTempWnd = CreateWindowEx(WS_EX_APPWINDOW, ViewClass, "Simple", WS_VISIBLE | WS_POPUP | WS_MAXIMIZE,
-											0, 0, 0, 0, NULL, NULL, hInstance, NULL);
+											0, 0, 0, 0, nullptr, nullptr, hInstance, nullptr);
 
 			if (!hTempWnd) 
 				return Result(ERR_TMPCREATEWINDOW);
@@ -234,7 +234,7 @@ namespace VCC
 				WNDCLASS wc = { 0 };
 				wc.lpfnWndProc = DefWindowProc;
 				wc.hInstance = hInstance;
-				wc.hbrBackground = NULL;
+				wc.hbrBackground = nullptr;
 				wc.lpszClassName = OpenGLClass;
 				wc.style = CS_OWNDC;
 
@@ -243,7 +243,7 @@ namespace VCC
 
 				SetWindowSubclass((HWND)hwnd, &SubclassProc, SubClassId, (DWORD_PTR)this);
 
-				hWnd = CreateWindowEx(0, OpenGLClass, NULL, WS_VISIBLE | WS_CHILD, 0, 0,
+				hWnd = CreateWindowEx(0, OpenGLClass, nullptr, WS_VISIBLE | WS_CHILD, 0, 0,
 										width, height, (HWND)hwnd, 0, hInstance, this);
 
 				if (!hWnd)
@@ -274,7 +274,7 @@ namespace VCC
 				};
 
 				UINT numFormats;
-				BOOL success = wglChoosePixelFormatARB(hDC, attribs, NULL, 1, &iPF, &numFormats);
+				BOOL success = wglChoosePixelFormatARB(hDC, attribs, nullptr, 1, &iPF, &numFormats);
 				DescribePixelFormat(hDC, iPF, sizeof(pfd), &pfd);
 
 				if (!(success && numFormats >= 1 && SetPixelFormat(hDC, iPF, &pfd)))
@@ -288,7 +288,7 @@ namespace VCC
 					0, 0
 				};
 
-				hRC = wglCreateContextAttribsARB(hDC, NULL, contextAttribs);
+				hRC = wglCreateContextAttribsARB(hDC, nullptr, contextAttribs);
 				if (!hRC)
 					return Result(cleanupWindow(ERR_GLVERSION));
 
@@ -312,7 +312,7 @@ namespace VCC
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SurfaceWidth, SurfaceHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
-			wglMakeCurrent(NULL, NULL);
+			wglMakeCurrent(nullptr, nullptr);
 			isInitialized = true;
 			return Result(OK);
 		}
@@ -419,7 +419,7 @@ namespace VCC
 			}
 			#endif // USE_DEBUG_LINES
 
-			wglMakeCurrent(NULL, NULL);
+			wglMakeCurrent(nullptr, nullptr);
 			return Result(OK);
 		}
 
@@ -429,7 +429,7 @@ namespace VCC
 			if (pixels) delete pixels;
 			if (hDC) ReleaseDC(hWnd, hDC);
 			if (hWnd) DestroyWindow(hWnd);
-			UnregisterClass(OpenGLClass, GetModuleHandle(NULL));
+			UnregisterClass(OpenGLClass, GetModuleHandle(nullptr));
 			isInitialized = false;
 			return Result(OK);
 		}
@@ -507,7 +507,7 @@ namespace VCC
 				x += glyph->advance * size;
 			}
 			glEnd();
-			wglMakeCurrent(NULL, NULL);
+			wglMakeCurrent(nullptr, nullptr);
 
 			return Result(OK);
 		}
@@ -522,7 +522,7 @@ namespace VCC
 			// running at 60 still, refresh is controlled in throttle.
 			wglSwapIntervalEXT(0);
 			SwapBuffers(hDC);
-			wglMakeCurrent(NULL, NULL);
+			wglMakeCurrent(nullptr, nullptr);
 			return Result(OK);
 		}
 
@@ -531,23 +531,23 @@ namespace VCC
 			*outFont = nullptr;
 			if (!isInitialized) return Result(ERR_NOTINITIALIZED);
 
-			HBITMAP hBitmap = NULL;
-			HDC dcBitmap = NULL;
-			COLORREF* bitmapPixels = NULL;
+			HBITMAP hBitmap = nullptr;
+			HDC dcBitmap = nullptr;
+			COLORREF* bitmapPixels = nullptr;
 
 			auto cleanup = [&](int code)
 			{
 				if (hBitmap) DeleteObject(hBitmap);
-				if (dcBitmap) ReleaseDC(NULL, dcBitmap);
+				if (dcBitmap) ReleaseDC(nullptr, dcBitmap);
 				if (bitmapPixels) delete bitmapPixels;
 				return code;
 			};
 
 			// load bitmap resource
-			auto hInstance = GetModuleHandle(NULL);
+			auto hInstance = GetModuleHandle(nullptr);
 			hBitmap = LoadBitmap(hInstance, MAKEINTRESOURCE(bitmapRes));
 			if (!hBitmap) return Result(cleanup(ERR_FONTHBITMAP));
-			dcBitmap = CreateCompatibleDC(NULL);
+			dcBitmap = CreateCompatibleDC(nullptr);
 			if (!dcBitmap) return Result(cleanup(ERR_FONTDC));
 			SelectObject(dcBitmap, hBitmap);
 
@@ -581,7 +581,7 @@ namespace VCC
 			glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bm.bmWidth, bm.bmHeight, 0, GL_BGR, GL_UNSIGNED_BYTE, bitmapPixels);
 			if (glGetError()) return Result(cleanup(ERR_FONTTEXIMAGE2D));
-			wglMakeCurrent(NULL, NULL);
+			wglMakeCurrent(nullptr, nullptr);
 
 			// allocate font
 			OpenGLFont* font = new OpenGLFont();
@@ -642,7 +642,7 @@ namespace VCC
 					glVertex3f(x, y, 0);
 				glEnd();
 			}
-			wglMakeCurrent(NULL, NULL);
+			wglMakeCurrent(nullptr, nullptr);
 			return Result(OK);
 		}
 

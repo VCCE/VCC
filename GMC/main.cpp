@@ -30,9 +30,9 @@ std::string SelectROMFile()
 	ofn.nFilterIndex      = 1 ;								// current filter index
 	ofn.lpstrFile         = selectedPathBuffer;				// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
-	ofn.lpstrFileTitle    = NULL;							// filename and extension only
+	ofn.lpstrFileTitle    = nullptr;						// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH ;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = NULL;							// initial directory
+	ofn.lpstrInitialDir   = nullptr;						// initial directory
 	ofn.lpstrTitle        = "Select ROM file";				// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
 	if (GetOpenFileNameA(&ofn)) {

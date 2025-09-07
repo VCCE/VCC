@@ -24,9 +24,9 @@ This file is part of VCC (Virtual Color Computer).
 typedef void (*SETCART)(unsigned char);
 typedef void (*SETCARTPOINTER)(SETCART);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
-static HINSTANCE g_hinstDLL=NULL;
+static HINSTANCE g_hinstDLL=nullptr;
 static unsigned char LeftChannel=0,RightChannel=0;
-static void (*PakSetCart)(unsigned char)=NULL;
+static void (*PakSetCart)(unsigned char)=nullptr;
 unsigned char LoadExtRom(char *);
 static unsigned char Rom[8192];
 BOOL WINAPI DllMain(
@@ -78,7 +78,7 @@ extern "C"
 {
 	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
 	{
-		return(NULL);
+		return 0;
 	}
 }
 
@@ -89,13 +89,14 @@ extern "C"
 		char RomPath[MAX_PATH];
 
 		memset(Rom, 0xff, 8192);
-		GetModuleFileName(NULL, RomPath, MAX_PATH);
+		GetModuleFileName(nullptr, RomPath, MAX_PATH);
 		PathRemoveFileSpec(RomPath);
 		strcpy(RomPath, "ORCH90.ROM");
 		
-		if ((PakSetCart!=NULL) & LoadExtRom(RomPath))	//If we can load the rom them assert cart 
+		if ((PakSetCart!=nullptr) & LoadExtRom(RomPath))	//If we can load the rom them assert cart 
 			PakSetCart(1);
-		return(NULL);
+
+		return 0;
 	}
 }
 
@@ -103,9 +104,9 @@ extern "C"
 {
 	__declspec(dllexport) unsigned char SetCart(SETCART Pointer)
 	{
-		
 		PakSetCart=Pointer;
-		return(NULL);
+
+		return 0;
 	}
 }
 
@@ -135,12 +136,12 @@ extern "C"
 unsigned char LoadExtRom(char *FilePath)	//Returns 1 on if loaded
 {
 
-	FILE *rom_handle = NULL;
+	FILE *rom_handle = nullptr;
 	unsigned short index = 0;
 	unsigned char RetVal = 0;
 
 	rom_handle = fopen(FilePath, "rb");
-	if (rom_handle == NULL)
+	if (rom_handle == nullptr)
 		memset(Rom, 0xFF, 8192);
 	else
 	{

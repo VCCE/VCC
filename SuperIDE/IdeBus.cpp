@@ -25,7 +25,7 @@ static unsigned int Lba=0,LastLba;
 char Message[256]="";	//DEBUG
 static unsigned char XferBuffer[512]="";
 
-static char *BigBuffer=NULL;
+static char *BigBuffer=nullptr;
 static unsigned int BufferIndex=0;
 static unsigned int BufferLenth=0;
 static unsigned char CurrentCommand=0;
@@ -84,7 +84,7 @@ void IdeRegWrite(unsigned char Reg,unsigned short Data)
 				if ((CurrentCommand==0x30) | (CurrentCommand==0x31))
 				{
 					SetFilePointer(hDiskFile[DiskSelect],Lba*512,0,FILE_BEGIN);
-					WriteFile(hDiskFile[DiskSelect],XferBuffer,512,&BytesMoved,NULL);
+					WriteFile(hDiskFile[DiskSelect],XferBuffer,512,&BytesMoved,nullptr);
 				}
 				BufferIndex=0;
 				BufferLenth=0;
@@ -218,7 +218,7 @@ void ExecuteCommand(void)
 			Registers.Status[DiskSelect]=DRQ|RDY;
 			SetFilePointer(hDiskFile[DiskSelect],Lba*512,0,FILE_BEGIN);
 			memset(XferBuffer,0,512);
-			ReadFile(hDiskFile[DiskSelect],XferBuffer,512,&BytesMoved,NULL);
+			ReadFile(hDiskFile[DiskSelect],XferBuffer,512,&BytesMoved,nullptr);
 			LastLba=Lba;
 
 			break;
@@ -263,7 +263,7 @@ void ByteSwap (char *String)
 	int Index=0,Index2=0;
 	int Lenth=strlen(String);
 	char *NewString=(char*)malloc(Lenth+1);
-	memset(NewString,NULL,Lenth+1);
+	memset(NewString, 0, Lenth + 1);
 
 	for (Index=0;Index<(Lenth+1);Index++)
 		if (String[Index^1])
@@ -275,7 +275,7 @@ void ByteSwap (char *String)
 
 HANDLE OpenDisk(char *ImageFile,unsigned char DiskNum)
 {
-	HANDLE hTemp=NULL;
+	HANDLE hTemp=nullptr;
 	unsigned long FileSize=0;
 	unsigned long LbaSectors=0;
 	char Model[41]="VCC VIRTUAL IDE DISK";

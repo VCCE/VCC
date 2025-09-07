@@ -107,7 +107,7 @@ static unsigned char RightButton2Status = 0;
 
 // FIXME Direct input not working for ARM - disable joysticks for arm builds
 #ifdef _M_ARM
-unsigned int Joysticks[MAXSTICKS] = {NULL};
+unsigned int Joysticks[MAXSTICKS] = {nullptr};
 #else
 static LPDIRECTINPUTDEVICE8 Joysticks[MAXSTICKS];
 #endif
@@ -136,12 +136,12 @@ int EnumerateJoysticks(void)
 #else
     HRESULT hr;
     JoyStickIndex=0;
-    if (FAILED(hr = DirectInput8Create(GetModuleHandle(NULL),
-                    DIRECTINPUT_VERSION,IID_IDirectInput8,(VOID**)&di,NULL)))
+    if (FAILED(hr = DirectInput8Create(GetModuleHandle(nullptr),
+                    DIRECTINPUT_VERSION,IID_IDirectInput8,(VOID**)&di,nullptr)))
         return(0);
 
     if (FAILED(hr = di->EnumDevices(DI8DEVCLASS_GAMECTRL,
-                    enumCallback,NULL,DIEDFL_ATTACHEDONLY)))
+                    enumCallback,nullptr,DIEDFL_ATTACHEDONLY)))
         return(0);
 
     return(JoyStickIndex);
@@ -153,7 +153,7 @@ int EnumerateJoysticks(void)
 BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE* instance, VOID* context)
 {
     HRESULT hr;
-    hr = di->CreateDevice(instance->guidInstance, &Joysticks[JoyStickIndex],NULL);
+    hr = di->CreateDevice(instance->guidInstance, &Joysticks[JoyStickIndex],nullptr);
     strncpy(StickName[JoyStickIndex],instance->tszProductName,STRLEN);
     JoyStickIndex++;
     return(JoyStickIndex<MAXSTICKS);
@@ -168,20 +168,20 @@ bool InitJoyStick (unsigned char StickNumber)
 //  DIDEVCAPS capabilities;
     HRESULT hr;
     CurrentStick=StickNumber;
-    if (Joysticks[StickNumber]==NULL)
+    if (Joysticks[StickNumber]==nullptr)
         return(0);
 
     if (FAILED(hr= Joysticks[StickNumber]->SetDataFormat(&c_dfDIJoystick2)))
         return(0);
 
-//  if (FAILED(hr= Joysticks[StickNumber]->SetCooperativeLevel(NULL, DISCL_EXCLUSIVE )))
+//  if (FAILED(hr= Joysticks[StickNumber]->SetCooperativeLevel(nullptr, DISCL_EXCLUSIVE )))
 //      return(0);
 
     //Fails for some reason Investigate this
 //  if (FAILED(hr= Joysticks[StickNumber]->GetCapabilities(&capabilities)))
 //      return(0);
 
-    if (FAILED(hr= Joysticks[StickNumber]->EnumObjects(enumAxesCallback,NULL,DIDFT_AXIS)))
+    if (FAILED(hr= Joysticks[StickNumber]->EnumObjects(enumAxesCallback,nullptr,DIDFT_AXIS)))
         return(0);
     return(1); //return true on success
 #else
@@ -216,7 +216,7 @@ HRESULT
 JoyStickPoll(DIJOYSTATE2 *js,unsigned char StickNumber)
 {
     HRESULT hr;
-    if (Joysticks[StickNumber] ==NULL)
+    if (Joysticks[StickNumber] ==nullptr)
         return (S_OK);
 
     hr=Joysticks[StickNumber]->Poll();

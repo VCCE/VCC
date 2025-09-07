@@ -54,7 +54,7 @@ int tcpip_open()
 
     // resolve hostname
     LPHOSTENT host = gethostbyname(AciaTcpHost);
-    if (host == NULL) {
+    if (host == nullptr) {
         tcpip_close();
         return -1;
     }

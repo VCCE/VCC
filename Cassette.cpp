@@ -29,12 +29,12 @@ This file is part of VCC (Virtual Color Computer).
 #include <functional>
 
 unsigned char MotorState=0,TapeMode=STOP,WriteProtect=0,Quiet=30;
-static HANDLE TapeHandle=NULL;
+static HANDLE TapeHandle=nullptr;
 static unsigned long TapeOffset=0,TotalSize=0;
 static char TapeFileName[MAX_PATH]="";
 static char CassPath[MAX_PATH];
 static unsigned char TempBuffer[8192];
-static unsigned char *CasBuffer=NULL;
+static unsigned char *CasBuffer=nullptr;
 static char TapeWritten = 0;
 static char FileType=0;
 unsigned long BytesMoved=0;
@@ -232,7 +232,7 @@ void SetTapeMode(unsigned char Mode)	//Handles button pressed from Dialog
 		break;
 
 		case PLAY:
-			if (TapeHandle==NULL)
+			if (TapeHandle==nullptr)
 				if (!LoadTape())
 					TapeMode=STOP;
 				else
@@ -243,7 +243,7 @@ void SetTapeMode(unsigned char Mode)	//Handles button pressed from Dialog
 		break;
 
 		case REC:
-			if (TapeHandle==NULL)
+			if (TapeHandle==nullptr)
 				if (!LoadTape())
 					TapeMode=STOP;
 				else
@@ -272,7 +272,7 @@ void FlushCassetteBuffer(unsigned char *Buffer,unsigned int *Len)
 	{
 	case WAV:
 		SetFilePointer(TapeHandle,TapeOffset+44,0,FILE_BEGIN);
-		WriteFile(TapeHandle,Buffer,Length,&BytesMoved,NULL);
+		WriteFile(TapeHandle,Buffer,Length,&BytesMoved,nullptr);
 		if (Length!=BytesMoved)
 			return;
 		TapeOffset+=Length;
@@ -306,7 +306,7 @@ void LoadCassetteBuffer(unsigned char *CassBuffer, unsigned int* CassBufferSize)
 			if (TapeHandle)
 			{
 				SetFilePointer(TapeHandle, TapeOffset + 44, 0, FILE_BEGIN);
-				ReadFile(TapeHandle, TempBuffer, TapeSampleSize * TapeRate / 60, &BytesMoved, NULL);
+				ReadFile(TapeHandle, TempBuffer, TapeSampleSize * TapeRate / 60, &BytesMoved, nullptr);
 				if (BytesMoved > 0)
 				{
 					unsigned int samples = BytesMoved / TapeSampleSize;
@@ -336,7 +336,7 @@ int MountTape( char *FileName)	//Return 1 on sucess 0 on fail
 {
 	char Extension[4]="";
 	unsigned char Index=0;
-	if (TapeHandle!=NULL)
+	if (TapeHandle!=nullptr)
 	{
 		TapeMode=STOP;
 		CloseTapeFile();
@@ -378,8 +378,8 @@ int MountTape( char *FileName)	//Return 1 on sucess 0 on fail
 
 		WavHeader header;
 		WavFmtBlock formatBlock;
-		ReadFile(TapeHandle, &header, sizeof(header), &BytesMoved, NULL);
-		ReadFile(TapeHandle, &formatBlock, sizeof(formatBlock), &BytesMoved, NULL);
+		ReadFile(TapeHandle, &header, sizeof(header), &BytesMoved, nullptr);
+		ReadFile(TapeHandle, &formatBlock, sizeof(formatBlock), &BytesMoved, nullptr);
 		Conversion = nullptr;
 		if (formatBlock.waveType == 1)
 		{
@@ -413,7 +413,7 @@ int MountTape( char *FileName)	//Return 1 on sucess 0 on fail
 			TotalSize = CAS_WRITEBUFFERSIZE;
 
 		CasBuffer=(unsigned char *)malloc(CAS_WRITEBUFFERSIZE);
-		ReadFile(TapeHandle,CasBuffer,TotalSize,&BytesMoved,NULL);	//Read the whole file in for .CAS files
+		ReadFile(TapeHandle,CasBuffer,TotalSize,&BytesMoved,nullptr);	//Read the whole file in for .CAS files
 		if (BytesMoved!=TotalSize)
 			return(0);
 	}
@@ -425,11 +425,11 @@ int MountTape( char *FileName)	//Return 1 on sucess 0 on fail
 
 void CloseTapeFile(void)
 {
-	if (TapeHandle==NULL)
+	if (TapeHandle==nullptr)
 		return;
 	SyncFileBuffer();
 	CloseHandle(TapeHandle);
-	TapeHandle=NULL;
+	TapeHandle=nullptr;
 	TapeRate = CAS_TAPEAUDIORATE;
 	TotalSize=0;
 }
@@ -447,7 +447,7 @@ unsigned int LoadTape(void)
 	if (dlg.show()) {
 		dlg.getpath(TapeFileName,MAX_PATH);
 		if (MountTape(TapeFileName)==0)	{
-			MessageBox(NULL,"Can't open file","Error",0);
+			MessageBox(nullptr,"Can't open file","Error",0);
 			return(0);
 		}
 	}
@@ -491,27 +491,27 @@ void SyncFileBuffer (void)
 		Byte=0;	
 		LastSample=0;
 		TempIndex=0;
-		WriteFile(TapeHandle,CasBuffer,TapeOffset,&BytesMoved,NULL);
+		WriteFile(TapeHandle,CasBuffer,TapeOffset,&BytesMoved,nullptr);
 	break;
 
 	case WAV:
 		sprintf(Buffer,"RIFF");
-		WriteFile(TapeHandle,Buffer,4,&BytesMoved,NULL);
-		WriteFile(TapeHandle,&FileSize,4,&BytesMoved,NULL);
+		WriteFile(TapeHandle,Buffer,4,&BytesMoved,nullptr);
+		WriteFile(TapeHandle,&FileSize,4,&BytesMoved,nullptr);
 		sprintf(Buffer,"WAVE");
-		WriteFile(TapeHandle,Buffer,4,&BytesMoved,NULL);
+		WriteFile(TapeHandle,Buffer,4,&BytesMoved,nullptr);
 		sprintf(Buffer,"fmt ");
-		WriteFile(TapeHandle,Buffer,4,&BytesMoved,NULL);
-		WriteFile(TapeHandle,&FormatSize,4,&BytesMoved,NULL);
-		WriteFile(TapeHandle,&WaveType,2,&BytesMoved,NULL);
-		WriteFile(TapeHandle,&Channels,2,&BytesMoved,NULL);
-		WriteFile(TapeHandle,&BitRate,4,&BytesMoved,NULL);
-		WriteFile(TapeHandle,&BytesperSec,4,&BytesMoved,NULL);
-		WriteFile(TapeHandle,&BlockAlign,2,&BytesMoved,NULL);
-		WriteFile(TapeHandle,&BitsperSample,2,&BytesMoved,NULL);
+		WriteFile(TapeHandle,Buffer,4,&BytesMoved,nullptr);
+		WriteFile(TapeHandle,&FormatSize,4,&BytesMoved,nullptr);
+		WriteFile(TapeHandle,&WaveType,2,&BytesMoved,nullptr);
+		WriteFile(TapeHandle,&Channels,2,&BytesMoved,nullptr);
+		WriteFile(TapeHandle,&BitRate,4,&BytesMoved,nullptr);
+		WriteFile(TapeHandle,&BytesperSec,4,&BytesMoved,nullptr);
+		WriteFile(TapeHandle,&BlockAlign,2,&BytesMoved,nullptr);
+		WriteFile(TapeHandle,&BitsperSample,2,&BytesMoved,nullptr);
 		sprintf(Buffer,"data");
-		WriteFile(TapeHandle,Buffer,4,&BytesMoved,NULL);
-		WriteFile(TapeHandle,&ChunkSize,4,&BytesMoved,NULL);
+		WriteFile(TapeHandle,Buffer,4,&BytesMoved,nullptr);
+		WriteFile(TapeHandle,&ChunkSize,4,&BytesMoved,nullptr);
 	break;
 	}
 	FlushFileBuffers(TapeHandle);

@@ -105,18 +105,18 @@ void becker_enable(bool enable)
                 
 			unsigned threadID;
 
-			hEvent = CreateEvent( NULL, FALSE, FALSE, NULL ) ;
+			hEvent = CreateEvent( nullptr, FALSE, FALSE, nullptr ) ;
                 
-			if (hEvent==NULL) {
+			if (hEvent==nullptr) {
 				_DLOG("Cannot create DWTCPConnection thread!\n");
 				return;
 			}
 
 			// start it up...
 			hDWTCPThread = (HANDLE)_beginthreadex
-				( NULL, 0, &dw_thread, hEvent, 0, &threadID );
+				( nullptr, 0, &dw_thread, hEvent, 0, &threadID );
 
-			if (hDWTCPThread==NULL) {
+			if (hDWTCPThread==nullptr) {
 				_DLOG("Cannot start DWTCPConnection thread!\n");
 				return;
 			}
@@ -240,7 +240,7 @@ void dw_close(void)
 	dwSocket = 0;
 	InReadPos = 0;
 	InWritePos = 0;
-	hDWTCPThread = NULL;
+	hDWTCPThread = nullptr;
 }
 
 // try to connect with DW server
@@ -258,7 +258,7 @@ void dw_open( void )
 	// resolve hostname
 	LPHOSTENT dwSrvHost= gethostbyname(dwaddress);
         
-	if (dwSrvHost == NULL) {
+	if (dwSrvHost == nullptr) {
 	// invalid hostname/no dns
 		retry = false;
 		_DLOG("dw_open failed to resolve hostname\n");

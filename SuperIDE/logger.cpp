@@ -23,14 +23,14 @@ This file is part of VCC (Virtual Color Computer).
 void WriteLog(char *Message,unsigned char Type)
 {
 	static unsigned int Counter=1;
-	static HANDLE hout=NULL;
-	static FILE  *disk_handle=NULL;
+	static HANDLE hout=nullptr;
+	static FILE  *disk_handle=nullptr;
 	unsigned long dummy;
 	char cTemp[512]="";
 	switch (Type)
 	{
 	case TOCONS:
-		if (hout==NULL)
+		if (hout==nullptr)
 		{
 			AllocConsole();
 			hout=GetStdHandle(STD_OUTPUT_HANDLE);
@@ -42,7 +42,7 @@ void WriteLog(char *Message,unsigned char Type)
 		break;
 
 	case TOFILE:
-	if (disk_handle ==NULL)
+	if (disk_handle ==nullptr)
 		disk_handle=fopen("c:\\VccLog.txt","w");
 
 	fprintf(disk_handle,"%s\r\n",Message);

@@ -115,13 +115,13 @@ CriticalSection Section_;
 HINSTANCE hVccInst;
 
 // Dialog and control handles
-HWND hDismDlg = NULL;  // Disassembler Dialog
-HWND hBrkpDlg = NULL;  // Breakpoints Dialog
-HWND hEdtAddr = NULL;  // From editbox
-HWND hEdtAPPY = NULL;  // Apply button
-HWND hDisText = NULL;  // Richedit20 box for output
-HWND hInfText = NULL;  // Info and error text box
-HWND hRealBtn = NULL;
+HWND hDismDlg = nullptr;  // Disassembler Dialog
+HWND hBrkpDlg = nullptr;  // Breakpoints Dialog
+HWND hEdtAddr = nullptr;  // From editbox
+HWND hEdtAPPY = nullptr;  // Apply button
+HWND hDisText = nullptr;  // Richedit20 box for output
+HWND hInfText = nullptr;  // Info and error text box
+HWND hRealBtn = nullptr;
 
 // RealAdrMode indicates what addressing was used for decode
 bool RealAdrMode = FALSE;
@@ -141,7 +141,7 @@ MMUState MMUregs;
 COLORREF Colors[4] = {RGB(0,0,0),RGB(255,0,0),RGB(0,0,255),RGB(195,0,195)};
 
 // Default Info/Text line content, current brush and color
-HBRUSH hInfoBrush = NULL;
+HBRUSH hInfoBrush = nullptr;
 int InfoColorNum = 0;
 
 // Decode data
@@ -198,7 +198,7 @@ void
 OpenDisassemblerWindow(HINSTANCE hInstance, HWND hParent)
 {
     hVccInst = hInstance;
-    if (hDismDlg == NULL) {
+    if (hDismDlg == nullptr) {
         hDismDlg = CreateDialog ( hInstance,
                                   MAKEINTRESOURCE(IDD_DISASSEMBLER),
                                   hParent,
@@ -249,7 +249,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
         NumDisLines = 0;
 
         // Start a timer for showing current status
-        SetTimer(hDlg, IDT_BRKP_TIMER, 250, (TIMERPROC) NULL);
+        SetTimer(hDlg, IDT_BRKP_TIMER, 250, nullptr);
 
         break;
 
@@ -262,7 +262,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
     case WM_CTLCOLORSTATIC:
         if ((HWND)lPrm == hInfText) {
             HDC hdc = (HDC) wPrm;
-            if (hInfoBrush==NULL)
+            if (hInfoBrush==nullptr)
                 hInfoBrush = CreateSolidBrush(GetSysColor(COLOR_3DFACE));
             SetTextColor(hdc,Colors[InfoColorNum]);
             SetBkColor(hdc,GetSysColor(COLOR_3DFACE));
@@ -277,7 +277,7 @@ INT_PTR CALLBACK DisassemblerDlgProc
             KillHaltpoints();
             EmuState.Debugger.Enable_Halt(false);
             DestroyWindow(hDlg);
-            hDismDlg = NULL;
+            hDismDlg = nullptr;
             return FALSE;
         case IDAPPLY:
             DecodeAddr();
@@ -503,7 +503,7 @@ INT_PTR CALLBACK BreakpointsDlgProc
         case IDCLOSE:
         case WM_DESTROY:
             DestroyWindow(hDlg);
-            hBrkpDlg = NULL;
+            hBrkpDlg = nullptr;
             break;
         case IDC_BTN_DEL_BREAKPOINT:
             hList = GetDlgItem(hDlg,IDC_LIST_BREAKPOINTS);
@@ -824,7 +824,7 @@ void RemoveHaltpoint(int realaddr)
 /***************************************************/
 void SetHaltpoint(bool flag)
 {
-HWND hDisText = NULL;  // Richedit20 box for output
+	HWND hDisText = nullptr;  // Richedit20 box for output
     std::string s;
     Haltpoint hp;
     int realaddr;
@@ -878,7 +878,7 @@ HWND hDisText = NULL;  // Richedit20 box for output
 /*******************************************************/
 void RefreshHPlist()
 {
-    if (hBrkpDlg == NULL) return;
+    if (hBrkpDlg == nullptr) return;
     SendDlgItemMessage(hBrkpDlg,IDC_LIST_BREAKPOINTS,LB_RESETCONTENT,0,0);
     if (mHaltpoints.size() > 0) {
         std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
@@ -899,7 +899,7 @@ void RefreshHPlist()
 void ListHaltpoints()
 {
     // Create breakpoints list dialog if required
-    if (hBrkpDlg == NULL) {
+    if (hBrkpDlg == nullptr) {
         hBrkpDlg = CreateDialog ( hVccInst,
                               MAKEINTRESOURCE(IDD_BPLISTDIALOG),
                               hDismDlg, BreakpointsDlgProc );

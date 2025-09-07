@@ -127,7 +127,7 @@ static unsigned char CartInserted=0,CartAutoStart=1;
 static unsigned char AddLF=0;
 static HANDLE hPrintFile=INVALID_HANDLE_VALUE;
 void CaptureBit(unsigned char);
-static HANDLE hout=NULL;
+static HANDLE hout=nullptr;
 void WritePrintMon(char *);
 LRESULT CALLBACK PrintMon(HWND, UINT , WPARAM , LPARAM );
 static BOOL MonState=FALSE;
@@ -473,13 +473,13 @@ void CaptureBit(unsigned char Sample)
 	{
 		BitMask=1;
 		StartWait=1;
-		WriteFile(hPrintFile,&Byte,1,&BytesMoved,NULL);
+		WriteFile(hPrintFile,&Byte,1,&BytesMoved,nullptr);
 		if (MonState)
 			WritePrintMon(&Byte);
 		if ((Byte==0x0D) & AddLF)
 		{
 			Byte=0x0A;
-			WriteFile(hPrintFile,&Byte,1,&BytesMoved,NULL);
+			WriteFile(hPrintFile,&Byte,1,&BytesMoved,nullptr);
 		}
 		Byte=0;
 	}
@@ -500,7 +500,7 @@ void ClosePrintFile(void)
 	CloseHandle(hPrintFile);
 	hPrintFile=INVALID_HANDLE_VALUE;
 	FreeConsole();
-	hout=NULL;
+	hout=nullptr;
 	return;
 }
 
@@ -515,7 +515,7 @@ void SetMonState(BOOL State)
 	if (MonState & !State)
 	{
 		FreeConsole();
-		hout=NULL;
+		hout=nullptr;
 	}
 	MonState=State;
 	return;
@@ -523,7 +523,7 @@ void SetMonState(BOOL State)
 void WritePrintMon(char *Data)
 {
 	unsigned long dummy;
-	if (hout==NULL)
+	if (hout==nullptr)
 	{
 		AllocConsole();
 		hout=GetStdHandle(STD_OUTPUT_HANDLE);

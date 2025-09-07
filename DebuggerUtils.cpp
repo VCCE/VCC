@@ -124,13 +124,13 @@ namespace VCC { namespace Debugger { namespace UI
 		HDC hdc = GetDC(hWnd);
 
 		backBuffer.Bitmap = CreateCompatibleBitmap(hdc, backBuffer.Width, backBuffer.Height);
-		if (backBuffer.Bitmap == NULL)
+		if (backBuffer.Bitmap == nullptr)
 		{
 			throw std::runtime_error("failed to create backbuffer bitmap");
 		}
 
 		backBuffer.DeviceContext = CreateCompatibleDC(hdc);
-		if (backBuffer.DeviceContext == NULL)
+		if (backBuffer.DeviceContext == nullptr)
 		{
 			throw std::runtime_error("failed to create the backbuffer device context");
 		}

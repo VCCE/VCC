@@ -52,9 +52,9 @@ static int ModScanCode[4] = {0,DIK_LSHIFT,DIK_LCONTROL,DIK_LMENU};
 static const char *ModName[4] = {"","Shift","Ctrl","Alt"};
 
 // Windows handles
-HWND  hKeyMapDlg = NULL;     // Key map dialog
-HWND  hText_PC = NULL;       // Control to display PC Key.
-HWND  hText_CC = NULL;       // Control to display selected CoCo Keys
+HWND  hKeyMapDlg = nullptr;     // Key map dialog
+HWND  hText_PC = nullptr;       // Control to display PC Key.
+HWND  hText_CC = nullptr;       // Control to display selected CoCo Keys
 
 // Subclass Text_PC control processing to capture all PC keystrokes
 LRESULT CALLBACK SubText_PCproc(HWND,UINT,WPARAM,LPARAM);
@@ -73,14 +73,14 @@ BOOL CoCoKeySet;      // BtnId
 BOOL CoCoModSet;      // 0,1,2,3
 
 // Pointer for selected translation entry
-keytranslationentry_t * pKeyTran = NULL;
+keytranslationentry_t * pKeyTran = nullptr;
 
 // Counter to limit the number of popup error messages
 int UserWarned = 0;
 
 // Background and Font for dynamic text boxes
-HBRUSH hbrTextBox = NULL;
-HFONT  hfTextBox  = NULL;
+HBRUSH hbrTextBox = nullptr;
+HFONT  hfTextBox  = nullptr;
 
 // Keymap data changed flag
 BOOL KeyMapChanged = FALSE;
@@ -124,7 +124,7 @@ int LoadCustomKeyMap(char* keymapfile)
 	if (*keymapfile == '\0') return 1;
 
     // Open the keymap file. Abort operation if open fails.
-    if ((keymap = fopen(keymapfile,"r")) == NULL) {
+    if ((keymap = fopen(keymapfile,"r")) == nullptr) {
         if (! UserWarned) {
             UserWarned = 1;
             sprintf(buf,"%s open failed. Using defaults",  keymapfile);
@@ -169,18 +169,18 @@ int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
 
     // pc scancode -> ScanCode1
     pStr = strtok(line, " \t\n\r");
-    if ((pStr == NULL) || (*pStr == '#')) return 1; // A comment, skip it
+    if ((pStr == nullptr) || (*pStr == '#')) return 1; // A comment, skip it
 
 	pPCScanCode = scantable_keyname_lookup(pStr);
-	if (pPCScanCode == NULL) {
+	if (pPCScanCode == nullptr) {
 	    ShowMapError(lnum,"PC Scancode not recognized");
         return 2;
     }
     trans->ScanCode1 = pPCScanCode->ScanCode;
 
     // pc modifier -> ScanCode2
-    pStr = strtok(NULL, " \t\n\r");
-    if (pStr == NULL) {
+    pStr = strtok(nullptr, " \t\n\r");
+    if (pStr == nullptr) {
         ShowMapError(lnum,"PC Scancode modifier missing");
         return 2;
     }
@@ -205,13 +205,13 @@ int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
     }
 
     // CoCo Key -> Row1, Col1
-	pStr = strtok(NULL, " \t\n\r");
-    if (pStr == NULL) {
+	pStr = strtok(nullptr, " \t\n\r");
+    if (pStr == nullptr) {
         ShowMapError(lnum,"CoCo keyname missing");
         return 2;
     }
     pCoCoKey = cocotable_keyname_lookup(pStr);
-	if (pCoCoKey == NULL) {
+	if (pCoCoKey == nullptr) {
 		ShowMapError(lnum,"CoCo keyname not recognized");
         return 2;
     }
@@ -219,10 +219,10 @@ int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
     trans->Col1 = pCoCoKey->col;
 
     // CoCo Key modifer -> Row2, Col2
-    pStr = strtok(NULL, " \t\n\r");
+    pStr = strtok(nullptr, " \t\n\r");
 
     // If modifier missing accept input anyway
-    if (pStr == NULL) {
+    if (pStr == nullptr) {
         trans->Row2 = 0;
         trans->Col2 = 0;
         return 0;
@@ -304,7 +304,7 @@ int SaveCustomKeyMap(char* keymapfile)
 
 	// Open it for write
 	kmap = fopen(tmpfile,"w");
-	if (kmap == NULL) {
+	if (kmap == nullptr) {
         MessageBox(hKeyMapDlg,tmpfile,"open error",0);
 		return 1;
 	}
@@ -315,7 +315,7 @@ int SaveCustomKeyMap(char* keymapfile)
 		!(attr & FILE_ATTRIBUTE_DIRECTORY) ) {
 		// Open the existing file
 		omap = fopen(keymapfile,"r");
-	    if (omap == NULL) {
+	    if (omap == nullptr) {
             MessageBox(hKeyMapDlg,keymapfile,"open error",0);
 		    return 1;
 	    }
@@ -365,8 +365,8 @@ char * GenKeymapLine( keytranslationentry_t * pTran )
 	int PCmod = 0;
 
 	// Determine PC key and modifier
-	if (pTran->ScanCode1 == 0) return NULL;
-	if (pTran->Row1 == 0) return NULL;
+	if (pTran->ScanCode1 == 0) return nullptr;
+	if (pTran->Row1 == 0) return nullptr;
 
     if (pTran->ScanCode2 != 0) {
 	    switch (pTran->ScanCode1) {
@@ -400,7 +400,7 @@ char * GenKeymapLine( keytranslationentry_t * pTran )
 	}
 
 	 
-	if (pSC == NULL) return NULL;
+	if (pSC == nullptr) return nullptr;
 
 	// Determine CoCo key and modifier
     if (pTran->Row2 != 0) {
@@ -429,7 +429,7 @@ char * GenKeymapLine( keytranslationentry_t * pTran )
 		    }
 	    }
     }	
-	if (pCC == NULL) return NULL;
+	if (pCC == nullptr) return nullptr;
 
 	sprintf(txt," DIK_%-12s %d COCO_%-10s %d\n",
 			pSC->keyname, PCmod, pCC->keyname, CCmod);
@@ -464,7 +464,7 @@ PCScanCode * scantable_keyname_lookup(char * keyname)
     int mid = last / 2;
 
 	int cmp = strncmp(keyname,"DIK_",  4);
-	if (cmp != 0) return NULL;
+	if (cmp != 0) return nullptr;
 
 	while (first < last) {
         cmp = strcmp(keyname+4,sctable[mid].keyname);
@@ -476,7 +476,7 @@ PCScanCode * scantable_keyname_lookup(char * keyname)
         }
         mid = (first+last)/2;
     }
-    return NULL;
+    return nullptr;
 }
 
 //-----------------------------------------------------
@@ -502,7 +502,7 @@ PCScanCode * scantable_scancode_lookup(int ScanCode)
 	// Lookup using sctable_ndx
 	ScanCode = ScanCode & 0XFF;  // impose good scan code range 
 	ndx = sctable_ndx[ScanCode]; // get index
-	if (ndx < 0) return NULL;    // return NULL if unsupported
+	if (ndx < 0) return nullptr;    // return NULL if unsupported
 	return &sctable[ndx];        // else return pointer to selected entry
 }
 
@@ -518,7 +518,7 @@ CoCoKey * cocotable_keyname_lookup(char * keyname)
     int mid = last / 2;
 
 	int cmp = strncmp(keyname,"COCO_",  5);
-    if (cmp != 0) return NULL;
+    if (cmp != 0) return nullptr;
 
 	while (first < last) {
         cmp = strcmp(keyname+5,cctable[mid].keyname);
@@ -530,7 +530,7 @@ CoCoKey * cocotable_keyname_lookup(char * keyname)
         }
         mid = (first+last)/2;
     }
-    return NULL;
+    return nullptr;
 }
 
 //-----------------------------------------------------
@@ -550,7 +550,7 @@ CoCoKey * cctable_keyid_lookup(int id)
 			p++; 
     	}
 	}
-	return NULL;
+	return nullptr;
 }
 
 //-----------------------------------------------------
@@ -566,7 +566,7 @@ CoCoKey * cctable_rowcol_lookup(unsigned char RowMask, unsigned char Col)
 	// Convert RowMask, Col to index cctable_ndx
 	_BitScanForward(&Row,Mask);
 	ndx = Col + (Row<<3);
-	if (ndx > 55) return NULL;
+	if (ndx > 55) return nullptr;
 	return &cctable[cctable_ndx[ndx]];
 }
 
@@ -615,13 +615,13 @@ BOOL InitKeymapDialog(HWND hWnd)
 	hText_CC = GetDlgItem(hWnd,IDC_CCKEY_TXT);
 	hText_PC = GetDlgItem(hWnd,IDC_PCKEY_TXT);
 
-	if (hfTextBox == NULL) 
+	if (hfTextBox == nullptr) 
 		hfTextBox = CreateFont (14, 0, 0, 0, FW_MEDIUM, FALSE, 
 				FALSE, FALSE, ANSI_CHARSET, OUT_TT_PRECIS, 
 				CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, 
 				DEFAULT_PITCH | FF_DONTCARE, TEXT("Tahoma"));
 
-    if (hbrTextBox == NULL)
+    if (hbrTextBox == nullptr)
         hbrTextBox = CreateSolidBrush(RGB(255,255,255));
 
 	// Initialize selected keys information
@@ -666,7 +666,7 @@ BOOL SetCustomKeymap() {
 	int ModRow;
 	static struct CoCoKey *p;
 
-	if (pKeyTran == NULL) {
+	if (pKeyTran == nullptr) {
 
 		// If no entry and no coco key to map do nothing
 		if ( (CC_KeySelected + CC_ModSelected) == 0 ) return TRUE;
@@ -860,8 +860,8 @@ void ShowCoCoKey()
 	// Show coco keys names in editbox
 	if (CC_KeySelected) {
         p = cctable_keyid_lookup(CC_KeySelected);
-		if (p != NULL) {
-			if (p->label != NULL) {
+		if (p != nullptr) {
+			if (p->label != nullptr) {
 			    keytxt = p->label;
 		    } else {
 			    keytxt = p->keyname;   
@@ -949,12 +949,12 @@ void ShowPCkey()
     struct PCScanCode * entry;
 	if (PC_KeySelected>0) { 
 		entry = scantable_scancode_lookup(PC_KeySelected);
-		if (entry == NULL) {
+		if (entry == nullptr) {
 			keytxt = "";
 			PC_KeySelected=0;
 		} else {
 			keytxt = entry->label;
-			if (keytxt == NULL) keytxt = entry->keyname;
+			if (keytxt == nullptr) keytxt = entry->keyname;
 		}
 	}
 	sprintf(str,"%s %s",ModName[PC_ModSelected],keytxt);
@@ -995,7 +995,7 @@ void SetCoCokey()
 	        if (pCoCoKey) CoCoSelect(pCoCoKey->id);
 		}
 	} else {
-		pKeyTran = NULL; 
+		pKeyTran = nullptr; 
 	}
 
     // Disable set button
