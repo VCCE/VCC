@@ -35,7 +35,8 @@ namespace VCC
             ERR_UNKNOWN
         };
 
-        DirectX(ISystemState* state);
+		explicit DirectX(ISystemState* state);
+
         int Setup(void* hwnd, int width, int height, int statusHeight, bool fullscreen) override;
         int Render() override;
         int Present() override;

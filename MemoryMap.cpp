@@ -769,7 +769,10 @@ void VCC::Debugger::UI::OpenMemoryMapWindow(HINSTANCE hInst,HWND parent)
 	}
 
 	if (hDlgMem == nullptr)
-		MessageBox(nullptr,"CreateDialog","Error",MB_OK|MB_ICONERROR);
+	{
+		MessageBox(nullptr, "CreateDialog", "Error", MB_OK | MB_ICONERROR);
+		return;
+	}
 
 	ShowWindow(hDlgMem, SW_SHOWNORMAL);
 	SetFocus(hEditAdr);

@@ -54,7 +54,7 @@ namespace VCC
 			ERR_TMPMAKECONTEXT,		// unable to set context
 		};
 
-		OpenGL(ISystemState* state) : detail(nullptr), state(state) {}
+		explicit OpenGL(ISystemState* state) : detail(nullptr), state(state) {}
 
 		int Setup(void* hwnd, int width, int height, int statusHeight, bool fullscreen) override;
 		int Render() override;
