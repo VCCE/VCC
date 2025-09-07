@@ -19,7 +19,6 @@
 #include "Debugger.h"
 #include "DebuggerUtils.h"
 #include "defines.h"
-#include "DebuggerUtils.h"
 #include "resource.h"
 #include <stdexcept>
 

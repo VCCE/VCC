@@ -22,7 +22,6 @@
 #include "Debugger.h"
 #include "DebuggerUtils.h"
 #include "defines.h"
-#include "DebuggerUtils.h"
 #include "resource.h"
 #include "DialogOps.h"
 #include <map>
@@ -35,8 +34,6 @@
 #include <locale>
 #include <commdlg.h>
 #include <Richedit.h>
-#include <codecvt>
-#include <locale>
 
 
 namespace VCC { namespace Debugger { namespace UI { namespace
