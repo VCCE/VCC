@@ -163,7 +163,7 @@ namespace VCC
 		//
 		virtual int LoadFont(const OpenGLFont** outFont, int bitmapRes, const OpenGLFontGlyph* glyphs, int start, int end) = 0;
 
-		virtual int UnlockSurface() { return OK; }
+		int UnlockSurface() override { return OK; }
 	};
 
 	struct IDisplayDirectX : IDisplay
