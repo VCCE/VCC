@@ -173,7 +173,7 @@ unsigned char pia0_read(unsigned char port)
 				return(rega_dd[port]);
 		break;
 	}
-	return(0);
+	return 0;
 }
 
 unsigned char pia1_read(unsigned char port)
@@ -211,13 +211,13 @@ unsigned char pia1_read(unsigned char port)
 					Flag = (regb[port] & 0xFE) | CassInBitStream();
 				else
 					Flag = regb[port];//& regb_dd[port];
-				return(Flag);
+				return Flag;
 			}
 			else
 				return(regb_dd[port]);
 		break;
 	}
-	return(0);
+	return 0;
 }
 
 void pia0_write(unsigned char data,unsigned char port)
@@ -328,7 +328,7 @@ void irq_hs(int phase)	//63.5 uS
 	switch (phase)
 	{
 	case FALLING:	//HS went High to low
-		if ( (rega[1] & 2) ) //IRQ on low to High transition
+		if (rega[1] & 2) //IRQ on low to High transition
 			return;
 		rega[1]=(rega[1] | 128);
 		if (rega[1] & 1)
@@ -371,7 +371,7 @@ void irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
 
 		case 1:	//FS went Low to High
 
-			if ((rega[3] & 2)) //IRQ  Low to High transition
+			if (rega[3] & 2) //IRQ  Low to High transition
 			{
 				rega[3] = (rega[3] | 128);
 				if (rega[3] & 1)
@@ -443,12 +443,12 @@ unsigned char SetCartAutoStart(unsigned char Tmp)
 {
 	if (Tmp !=QUERY)
 		CartAutoStart=Tmp;
-	return(CartAutoStart);
+	return CartAutoStart;
 }
 
 unsigned char GetCasSample(void)
 {
-	return(Csample);
+	return Csample;
 }
 
 void SetCassetteSample(unsigned char Sample)
@@ -497,8 +497,8 @@ int OpenPrintFile(char *FileName)
 	hPrintFile=CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,
 			FILE_SHARE_READ,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
 	if (hPrintFile==INVALID_HANDLE_VALUE)
-		return(0);
-	return(1);
+		return 0;
+	return 1;
 }
 
 void ClosePrintFile(void)

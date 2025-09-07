@@ -163,7 +163,7 @@ if ( (port>=0x50) & (port <=0x5a))
 		default:
 			temp=PackPortRead (port);
 		}
-	return(temp);
+	return temp;
 }
 
 

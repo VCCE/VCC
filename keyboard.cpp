@@ -118,7 +118,7 @@ vccKeyboardGetScan(unsigned char Col)
 
 	for (x=0; x<8; x++)
 	{
-		if ( (temp & mask) ) // Found an active column scan
+		if ( temp & mask ) // Found an active column scan
 		{
 			ret_val |= RolloverTable[x];
 		}
@@ -150,7 +150,7 @@ vccKeyboardGetScan(unsigned char Col)
 	}
 #endif
 
-	return (ret_val);
+	return  ret_val;
 }
 
 /*****************************************************************************/

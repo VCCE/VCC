@@ -43,25 +43,25 @@ unsigned char QuickLoad(char *BinFileName)
 
 	hr=CreateFile(BinFileName,0,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 	if (hr==INVALID_HANDLE_VALUE)
-		return(1);				//File Not Found
+		return 1;				//File Not Found
 
 	CloseHandle(hr);
 	BinImage=fopen(BinFileName,"rb");
 	if (BinImage==nullptr)
-		return(2);				//Can't Open File
+		return 2;				//Can't Open File
 			
 	MemImage=(unsigned char *)malloc(65535);
 	if (MemImage==nullptr)
 	{
 		MessageBox(nullptr,"Can't alocate ram","Error",0);
-		return(3);				//Not enough memory
+		return 3;				//Not enough memory
 	}
 	strcpy(Extension,PathFindExtension(BinFileName));
 	_strlwr(Extension);
 	if ( (strcmp(Extension,".rom")==0) | (strcmp(Extension,".ccc")==0) | (strcmp(Extension,"*.pak")==0))
 	{
 		InsertModule (BinFileName);
-		return(0);
+		return 0;
 	}
 	if ( strcmp(Extension,".bin")==0)
 	{
@@ -84,26 +84,26 @@ unsigned char QuickLoad(char *BinFileName)
 				if ( (XferAddress==0) | (XferAddress >32767) |(FileLenth != 0) )
 				{
 					MessageBox(nullptr,".Bin file is corrupt or invalid Transfer Address","Error",0);
-					return(3);
+					return 3;
 				}
 				fclose(BinImage);
 				free(MemImage);
 				CPUForcePC(XferAddress);
-				return(0);				
+				return 0;				
 				break;
 			default:
 				MessageBox(nullptr,".Bin file is corrupt or invalid","Error",0);
 				fclose(BinImage);
 				free(MemImage);
-				return(3);
+				return 3;
 				break;
 			} //End Switch
 		} //End While
 	} // End if
-	return(255); //Invalid File type
+	return 255; //Invalid File type
 } //End Proc
 
 unsigned short GetXferAddr(void)
 {
-	return(XferAddress);
+	return XferAddress;
 }

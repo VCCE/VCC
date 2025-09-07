@@ -370,7 +370,7 @@ int MC6809Exec(int CycleFor)
 
 		// Wait for Sync
 		if (SyncWaiting==1)	// Note: Assert interrupt clears sync waiting
-			return(0);
+			return 0;
 
 		// Any CPU Breakpoints set?
 		if (!EmuState.Debugger.IsStepping() && !CPUBreakpoints.empty()) {
@@ -541,7 +541,7 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case JMP_D: //E
-		pc.Reg= ((dp.Reg |MemRead8(pc.Reg)));
+		pc.Reg = dp.Reg | MemRead8(pc.Reg);
 		CycleCounter+=3;
 		break;
 
@@ -3340,7 +3340,7 @@ unsigned char get_cc_flags(void)
 	for (bit=0;bit<=7;bit++)
 		if (cc[bit])
 			bincc=bincc | (1<<bit);
-		return(bincc);
+		return bincc;
 }
 
 void MC6809AssertInterupt(InterruptSource src, Interrupt interrupt)
@@ -3604,6 +3604,6 @@ static unsigned short CalculateEA(unsigned char postbyte)
 		ea= *indexableRegisters[Register]+byte; //Was signed
 		CycleCounter+=1;
 	}
-return(ea);
+return ea;
 }
 

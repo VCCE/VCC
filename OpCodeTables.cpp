@@ -372,7 +372,7 @@ namespace VCC { namespace Debugger
 		}
 
 		// Additional cycle if branch is taken.
-		trace.decodeCycles = AdjustCycles(opcode, (willBranch) ? 1 : 0, 0, state.IsNative6309);
+		trace.decodeCycles = AdjustCycles(opcode, willBranch ? 1 : 0, 0, state.IsNative6309);
 		return true;
 	}
 
@@ -450,7 +450,7 @@ namespace VCC { namespace Debugger
 		if (!wide && ((quotient > 255) || (quotient < -256)) || 
 			(wide && ((quotient > 65535) || (quotient < -65536))))
 		{
-			additionalCycles = (wide) ? -21: -13;
+			additionalCycles = wide ? -21: -13;
 		}
 		// 2-complement Overflow?
 		else if (!wide && ((quotient > 127) || (quotient < -128)) ||

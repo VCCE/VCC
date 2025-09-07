@@ -272,7 +272,7 @@ int CloneStandardKeymap(int keymap)
         src = keyTranslationsCompact;
         break;
     default:
-        return(0);
+        return 0;
     }
     while (src->ScanCode1 != 0) {
         *dst++ = *src++;
