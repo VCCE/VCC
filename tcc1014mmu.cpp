@@ -65,7 +65,7 @@ unsigned char * MmuInit(unsigned char RamConfig)
 	// which debugger uses to access CPU ram. Without it the Memory Display
 	// window will occasionally crash VCC when MmuInit runs due to F9 toggle
 	// or MemSize config change. Issue does not seem to justify a section lock
-	mem_initializing = 1;
+	mem_initializing = true;
 
 //	unsigned int RamSize=0;
 	unsigned int Index1=0;
@@ -76,7 +76,7 @@ unsigned char * MmuInit(unsigned char RamConfig)
 
 	memory=(unsigned char *)malloc(RamSize);
 	if (memory==nullptr) {
-		mem_initializing = 0;
+		mem_initializing = false;
 		RamSize = 0;
 		return(nullptr);
 	}
@@ -95,14 +95,14 @@ unsigned char * MmuInit(unsigned char RamConfig)
 	InternalRomBuffer=(unsigned char *)malloc(0x8000);
 
 	if (InternalRomBuffer == nullptr) {
-		mem_initializing = 0;
+		mem_initializing = false;
 		return(nullptr);
 	}
 
 	memset(InternalRomBuffer,0xFF,0x8000);
 	LoadRom();
 	MmuReset();
-	mem_initializing = 0;
+	mem_initializing = false;
 	return(memory);
 }
 

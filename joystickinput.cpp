@@ -169,10 +169,10 @@ bool InitJoyStick (unsigned char StickNumber)
     HRESULT hr;
     CurrentStick=StickNumber;
     if (Joysticks[StickNumber]==nullptr)
-        return(0);
+        return(false);
 
     if (FAILED(hr= Joysticks[StickNumber]->SetDataFormat(&c_dfDIJoystick2)))
-        return(0);
+        return(false);
 
 //  if (FAILED(hr= Joysticks[StickNumber]->SetCooperativeLevel(nullptr, DISCL_EXCLUSIVE )))
 //      return(0);
@@ -182,8 +182,8 @@ bool InitJoyStick (unsigned char StickNumber)
 //      return(0);
 
     if (FAILED(hr= Joysticks[StickNumber]->EnumObjects(enumAxesCallback,nullptr,DIDFT_AXIS)))
-        return(0);
-    return(1); //return true on success
+        return(false);
+    return(true); //return true on success
 #else
 	return(1);
 #endif
