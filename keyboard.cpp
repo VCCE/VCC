@@ -311,8 +311,8 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e 
 */
 int keyTransCompare(const void * e1, const void * e2)
 {
-	keytranslationentry_t *	entry1 = (keytranslationentry_t *)e1;
-	keytranslationentry_t *	entry2 = (keytranslationentry_t *)e2;
+	auto entry1 = static_cast<const keytranslationentry_t *>(e1);
+	auto entry2 = static_cast<const keytranslationentry_t *>(e2);
 	int						result = 0;
 
 	// ascending
