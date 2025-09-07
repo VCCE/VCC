@@ -102,7 +102,7 @@ namespace VCC
 
         // Create an instance of a DirectDraw object
         hr = ::DirectDrawCreate(nullptr, &g_pDD, nullptr);
-        if (hr) return Result(ERR_UNKNOWN);
+        if (FAILED(hr)) return Result(ERR_UNKNOWN);
 
         VCC::Rect windowRect = { 0, 0, 640, 480 };
 
@@ -111,20 +111,20 @@ namespace VCC
             ddsd.lPitch = 0;
             ddsd.ddpfPixelFormat.dwRGBBitCount = 0;
             hr = DirectDrawCreate(nullptr, &g_pDD, nullptr);		// Initialize DirectDraw
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
             hr = g_pDD->SetCooperativeLevel((HWND)hwnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES);
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
             hr = g_pDD->SetDisplayMode(windowRect.w, windowRect.h, 32);	// Set 640x480x32 Bit full-screen mode
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
             ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
             ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
             ddsd.dwBackBufferCount = 1;
             hr = g_pDD->CreateSurface(&ddsd, &g_pDDS, nullptr);
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
             ddsd.ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
             g_pDDS->GetAttachedSurface(&ddsd.ddsCaps, &g_pDDSBack);
             hr = g_pDD->GetDisplayMode(&ddsd);
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
             //***********************************TEST*****************************************
             for (unsigned short i = 0;i <= 63;i++)
             {
@@ -141,39 +141,39 @@ namespace VCC
         {
             // Initialize the DirectDraw object
             hr = g_pDD->SetCooperativeLevel((HWND)hwnd, DDSCL_NORMAL);	// Set DDSCL_NORMAL to use windowed mode
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
 
             ddsd.dwFlags = DDSD_CAPS;
             ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
 
             // Create our Primary Surface
             hr = g_pDD->CreateSurface(&ddsd, &g_pDDS, nullptr);
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
             ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
             ddsd.dwWidth = windowRect.w;								// Make our off-screen surface 
             ddsd.dwHeight = windowRect.h;
             ddsd.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY;				// Try to create back buffer in video RAM
             hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, nullptr);
-            if (hr)													// If not enough Video Ram 			
+            if (FAILED(hr))													// If not enough Video Ram 			
             {
                 ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;			// Try to create back buffer in System RAM
                 hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, nullptr);
-                if (hr)	return Result(ERR_UNKNOWN);								//Giving Up
+                if (FAILED(hr))	return Result(ERR_UNKNOWN);								//Giving Up
                 MessageBox(nullptr, "Creating Back Buffer in System Ram\n", "Performance Warning", 0);
             }
 
             hr = g_pDD->GetDisplayMode(&ddsd);
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
             hr = g_pDD->CreateClipper(0, &g_pClipper, nullptr);		// Create the clipper using the DirectDraw object
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
             hr = g_pClipper->SetHWnd(0, (HWND)hwnd);				// Assign your window's HWND to the clipper
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
             hr = g_pDDS->SetClipper(g_pClipper);					// Attach the clipper to the primary surface
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
             hr = g_pDDSBack->Lock(nullptr, &ddsd, DDLOCK_WAIT, nullptr);
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
             hr = g_pDDSBack->Unlock(nullptr);						// Unlock surface
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
         }
 
         return Result(OK);
@@ -283,7 +283,7 @@ namespace VCC
                 return Result(ERR_UNKNOWN);
 
             hr = g_pDDS->Blt(&rcDest, g_pDDSBack, &rcSrc, DDBLT_WAIT, nullptr); // DDBLT_WAIT
-            if (hr) return Result(ERR_UNKNOWN);
+            if (FAILED(hr)) return Result(ERR_UNKNOWN);
         }
 
         return Result(OK);
@@ -353,7 +353,7 @@ namespace VCC
 
         // Lock entire surface, wait if it is busy, return surface memory pointer
         hr = g_pDDSBack->Lock(nullptr, &ddsd, DDLOCK_WAIT | DDLOCK_SURFACEMEMORYPTR, nullptr);
-        if (hr)
+        if (FAILED(hr))
         {
             //		MessageBox(0,"Can't Lock surface","Error",0);
             return Result(ERR_UNKNOWN);
@@ -401,7 +401,7 @@ namespace VCC
         HRESULT hr;
         hr = g_pDDSBack->Unlock(nullptr);
         surface = nullptr;
-        if (hr) return Result(ERR_UNKNOWN);
+        if (FAILED(hr)) return Result(ERR_UNKNOWN);
 
         return Result(OK);
     }
