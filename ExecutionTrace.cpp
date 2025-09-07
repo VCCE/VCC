@@ -796,7 +796,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		rwc.hbrBackground = GetSysColorBrush(COLOR_BTNFACE);
 		rwc.style = CS_HREDRAW;
 		rwc.lpfnWndProc = PanelProc;
-		rwc.hCursor = LoadCursor(0, IDC_ARROW);
+		rwc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		RegisterClassW(&rwc);
 
 		hWndTrace = CreateWindowExW(WS_EX_STATICEDGE, L"TraceWindow", nullptr,
@@ -1121,7 +1121,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 		auto Flush = [&]()
 		{
-			WriteFile(hf, line, pos - line, &dummy, 0);
+			WriteFile(hf, line, pos - line, &dummy, nullptr);
 			pos = line;
 		};
 

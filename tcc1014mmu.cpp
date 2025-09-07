@@ -228,7 +228,7 @@ void LoadRom(void)
 	}
 	if ((hFile == nullptr) | (index == 0)) {
 		//MessageBox(GetActiveWindow(),
-		MessageBox(0,
+		MessageBox(nullptr,
 				"coco3.rom load failed\n"
 				"Close this then\n"
 				"check ROM path.\n",

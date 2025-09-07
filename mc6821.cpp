@@ -489,7 +489,7 @@ void CaptureBit(unsigned char Sample)
 int OpenPrintFile(char *FileName)
 {
 	hPrintFile=CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,
-			FILE_SHARE_READ,0,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,0);
+			FILE_SHARE_READ,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
 	if (hPrintFile==INVALID_HANDLE_VALUE)
 		return(0);
 	return(1);
@@ -529,11 +529,11 @@ void WritePrintMon(char *Data)
 		hout=GetStdHandle(STD_OUTPUT_HANDLE);
 		SetConsoleTitle("Printer Monitor");
 	}
-	WriteConsole(hout,Data,1,&dummy,0);
+	WriteConsole(hout,Data,1,&dummy,nullptr);
 	if (Data[0]==0x0D)
 	{
 		Data[0]=0x0A;
-		WriteConsole(hout,Data,1,&dummy,0);
+		WriteConsole(hout,Data,1,&dummy,nullptr);
 	}
 }
 

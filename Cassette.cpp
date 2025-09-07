@@ -271,7 +271,7 @@ void FlushCassetteBuffer(unsigned char *Buffer,unsigned int *Len)
 	switch(FileType)
 	{
 	case WAV:
-		SetFilePointer(TapeHandle,TapeOffset+44,0,FILE_BEGIN);
+		SetFilePointer(TapeHandle,TapeOffset+44,nullptr,FILE_BEGIN);
 		WriteFile(TapeHandle,Buffer,Length,&BytesMoved,nullptr);
 		if (Length!=BytesMoved)
 			return;
@@ -305,7 +305,7 @@ void LoadCassetteBuffer(unsigned char *CassBuffer, unsigned int* CassBufferSize)
 		{
 			if (TapeHandle)
 			{
-				SetFilePointer(TapeHandle, TapeOffset + 44, 0, FILE_BEGIN);
+				SetFilePointer(TapeHandle, TapeOffset + 44, nullptr, FILE_BEGIN);
 				ReadFile(TapeHandle, TempBuffer, TapeSampleSize * TapeRate / 60, &BytesMoved, nullptr);
 				if (BytesMoved > 0)
 				{
@@ -344,23 +344,23 @@ int MountTape( char *FileName)	//Return 1 on sucess 0 on fail
 
 	WriteProtect=0;
 	FileType=0;	//0=wav 1=cas
-	TapeHandle = CreateFile(FileName,GENERIC_READ | GENERIC_WRITE,0,0,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,0); //CREATE_NEW OPEN_ALWAYS
+	TapeHandle = CreateFile(FileName,GENERIC_READ | GENERIC_WRITE,0,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr); //CREATE_NEW OPEN_ALWAYS
 	if (TapeHandle == INVALID_HANDLE_VALUE)	//Can't open read/write. try read only
 	{
-		TapeHandle = CreateFile(FileName,GENERIC_READ,0,0,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,0);
+		TapeHandle = CreateFile(FileName,GENERIC_READ,0,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
 		WriteProtect=1;
 	}
 	if (TapeHandle==INVALID_HANDLE_VALUE)
 	{
-		MessageBox(0,"Can't Mount","Error",0);
+		MessageBox(nullptr,"Can't Mount","Error",0);
 		return(0);	//Give up
 	}
 	TapeWritten = false;
-	TotalSize=SetFilePointer(TapeHandle,0,0,FILE_END);
+	TotalSize=SetFilePointer(TapeHandle,0,nullptr,FILE_END);
 	TapeOffset=0;
 	TapeRate = CAS_TAPEAUDIORATE;
 	TapeSampleSize = 1;
-	SetFilePointer(TapeHandle, 0, 0, FILE_BEGIN);
+	SetFilePointer(TapeHandle, 0, nullptr, FILE_BEGIN);
 	strcpy(Extension,&FileName[strlen(FileName)-3]);
 	for (Index=0;Index<strlen(Extension);Index++)
 		Extension[Index]=toupper(Extension[Index]);
@@ -481,7 +481,7 @@ void SyncFileBuffer (void)
 	unsigned short BlockAlign=(BitsperSample * Channels)/8;		//Block alignment
 	unsigned int ChunkSize=FileSize;
 
-	SetFilePointer(TapeHandle,0,0,FILE_BEGIN);
+	SetFilePointer(TapeHandle,0,nullptr,FILE_BEGIN);
 	switch (FileType)
 	{
 	case CAS:

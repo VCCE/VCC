@@ -46,7 +46,7 @@ FileDialog::~FileDialog() { }
 bool FileDialog::show(BOOL Save, HWND Owner) {
 
 	// instance is that of the current module
-	ofn.hInstance = GetModuleHandle(0);
+	ofn.hInstance = GetModuleHandle(nullptr);
 
 	// use active window if owner is null
 	if (Owner != nullptr) {
@@ -139,7 +139,7 @@ void CloseCartDialog(HWND hDlg)
 		if (IsWindowEnabled(hDlg)) {
 			SendMessage(hDlg,WM_CLOSE,0,0);
 		} else {
-			MessageBox(0,"A system dialog was left open. VCC will close",
+			MessageBox(nullptr,"A system dialog was left open. VCC will close",
 				"Unload Cartridge Error",MB_ICONEXCLAMATION);
 			DWORD pid = GetCurrentProcessId();
 			HANDLE h = OpenProcess(PROCESS_TERMINATE,FALSE,pid);

@@ -781,7 +781,7 @@ void PasteText() {
 	string cliptxt, clipparse, lines, debugout;
 	int GraphicsMode = GetGraphicsMode();
 	if (GraphicsMode != 0) {
-		int tmp = MessageBox(0, "Warning: You are not in text mode. Continue Pasting?", "Clipboard", MB_YESNO);
+		int tmp = MessageBox(nullptr, "Warning: You are not in text mode. Continue Pasting?", "Clipboard", MB_YESNO);
 		if (tmp != 6) { return; }
 	}
 
@@ -823,7 +823,7 @@ void PasteText() {
 				int b = lines.find(" ");
 				string linestr = "Warning! Line "+lines.substr(0, b)+" is too long for BASIC and will be truncated.";
 				
-				MessageBox(0, linestr.c_str(), "Clipboard", 0);
+				MessageBox(nullptr, linestr.c_str(), "Clipboard", 0);
 				lines = (lines.substr(0, 249));
 			}
 			if(lines.length() <= 249 || codepaste==false) { 
@@ -967,12 +967,12 @@ std::string CvtStrToSC(string cliptxt)
 
 std::string GetClipboardText()
 {
-	if (!OpenClipboard(nullptr)) { MessageBox(0, "Unable to open clipboard.", "Clipboard", 0); return(""); }
+	if (!OpenClipboard(nullptr)) { MessageBox(nullptr, "Unable to open clipboard.", "Clipboard", 0); return(""); }
 	HANDLE hClip = GetClipboardData(CF_TEXT);
-	if (hClip == nullptr) { CloseClipboard(); MessageBox(0, "No text found in clipboard.", "Clipboard", 0); return(""); }
+	if (hClip == nullptr) { CloseClipboard(); MessageBox(nullptr, "No text found in clipboard.", "Clipboard", 0); return(""); }
 	char* tmp = static_cast<char*>(GlobalLock(hClip));
 	if (tmp == nullptr) {
-		CloseClipboard();  MessageBox(0, "NULL Pointer", "Clipboard", 0); return("");
+		CloseClipboard();  MessageBox(nullptr, "NULL Pointer", "Clipboard", 0); return("");
 	}
 	std::string out(tmp);
 	GlobalUnlock(hClip);
@@ -987,7 +987,7 @@ bool SetClipboard(string sendout) {
 	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
 	memcpy(GlobalLock(hMem), clipout, len);
 	GlobalUnlock(hMem);
-	OpenClipboard(0);
+	OpenClipboard(nullptr);
 	EmptyClipboard();
 	SetClipboardData(CF_TEXT, hMem);
 	CloseClipboard();
@@ -1004,7 +1004,7 @@ void CopyText() {
 	int GraphicsMode = GetGraphicsMode();
 	unsigned int screenstart = GetStartOfVidram();
 	if (GraphicsMode != 0) { 
-		MessageBox(0, "ERROR: Graphics screen can not be copied.\nCopy can ONLY use a hardware text screen.", "Clipboard", 0); 
+		MessageBox(nullptr, "ERROR: Graphics screen can not be copied.\nCopy can ONLY use a hardware text screen.", "Clipboard", 0); 
 		return;
 	}
 	string out;
@@ -1060,7 +1060,7 @@ void CopyText() {
 			if (lastchar != 0) { out += tmpline; out += "\n"; }
 
 		}
-		if (out == "") { MessageBox(0, "No text found on screen.", "Clipboard", 0); }
+		if (out == "") { MessageBox(nullptr, "No text found on screen.", "Clipboard", 0); }
 	}
 	else if (BytesPerRow == 40 || BytesPerRow == 80) {
 		offset = 32;
@@ -1121,7 +1121,7 @@ void PasteBASIC() {
 	codepaste = false;
 }
 void PasteBASICWithNew() {
-	int tmp=MessageBox(0, "Warning: This operation will erase the Coco's BASIC memory\nbefore pasting. Continue?", "Clipboard", MB_YESNO);
+	int tmp=MessageBox(nullptr, "Warning: This operation will erase the Coco's BASIC memory\nbefore pasting. Continue?", "Clipboard", MB_YESNO);
 	if (tmp != 6) { return; }
 	codepaste = true;
 	PasteWithNew = true;

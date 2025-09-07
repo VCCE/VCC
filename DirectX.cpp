@@ -35,7 +35,7 @@ namespace VCC
         {
             char message[256];
             snprintf(message, 64, "DirectX error %d\nCheck DirectX support", code);
-            MessageBox(0, message, "Error", 0);
+            MessageBox(nullptr, message, "Error", 0);
             //PrintLogC("OpenGL Error: %d\n", code);
         }
         return code;
@@ -159,7 +159,7 @@ namespace VCC
                 ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;			// Try to create back buffer in System RAM
                 hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, nullptr);
                 if (hr)	return Result(ERR_UNKNOWN);								//Giving Up
-                MessageBox(0, "Creating Back Buffer in System Ram\n", "Performance Warning", 0);
+                MessageBox(nullptr, "Creating Back Buffer in System Ram\n", "Performance Warning", 0);
             }
 
             hr = g_pDD->GetDisplayMode(&ddsd);
@@ -371,7 +371,7 @@ namespace VCC
                 bitDepth = 1;
                 break;
             case 24:
-                MessageBox(0, "24 Bit color is currently unsupported", "Ok", 0);
+                MessageBox(nullptr, "24 Bit color is currently unsupported", "Ok", 0);
                 exit(0);
                 surfacePitch = ddsd.lPitch;
                 bitDepth = 2;
@@ -381,12 +381,12 @@ namespace VCC
                 bitDepth = 3;
                 break;
             default:
-                MessageBox(0, "Unsupported Color Depth!", "Error", 0);
+                MessageBox(nullptr, "Unsupported Color Depth!", "Error", 0);
                 return 1;
                 break;
         }
         if (ddsd.lpSurface == nullptr)
-            MessageBox(0, "Returning NULL!!", "ok", 0);
+            MessageBox(nullptr, "Returning NULL!!", "ok", 0);
 
         surface = ddsd.lpSurface;
         state->SetSurface(surface, bitDepth, surfacePitch);

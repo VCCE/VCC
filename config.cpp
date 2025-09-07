@@ -184,7 +184,7 @@ void LoadConfig(SystemState *LCState)
 	}
 
 	if (*CmdArg.IniFile) {
-		GetFullPathNameA(CmdArg.IniFile,MAX_PATH,IniFilePath,0);
+		GetFullPathNameA(CmdArg.IniFile,MAX_PATH,IniFilePath,nullptr);
 	} else {
 		strcpy(IniFilePath, AppDataPath);
 		strcat(IniFilePath, "\\");
@@ -205,7 +205,7 @@ void LoadConfig(SystemState *LCState)
 			FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 	lasterror = GetLastError();
 	if (hr==INVALID_HANDLE_VALUE) { // Fatal could not open ini file
-	    MessageBox(0,"Could not open ini file","Error",0);
+	    MessageBox(nullptr,"Could not open ini file","Error",0);
 		exit(0);
 	} else {
 		CloseHandle(hr);
@@ -407,7 +407,7 @@ void SetWindowRect(const Rect& rect)
 		int flags = SWP_NOOWNERZORDER | SWP_NOZORDER;
 		int x = rect.IsDefaultX() ? ra.left : rect.x;
 		int y = rect.IsDefaultY() ? ra.top : rect.y;
-		SetWindowPos(EmuState.WindowHandle, 0, x, y, width, height, flags);
+		SetWindowPos(EmuState.WindowHandle, nullptr, x, y, width, height, flags);
 	}
 }
 
