@@ -20,8 +20,8 @@
 #include "OpenGL.h"
 #include "BuildConfig.h"
 #include <Windows.h>
-#include <commctrl.h>
-#include <GL/GL.h>
+#include <CommCtrl.h>
+#include <gl/GL.h>
 #include "GL/glext.h"
 #include "GL/wglext.h"
 #include "logger.h"

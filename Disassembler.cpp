@@ -21,7 +21,7 @@
 //============================================================================
 
 #include <Windows.h>
-#include <Windowsx.h>
+#include <windowsx.h>
 #include <commdlg.h>
 #include <Richedit.h>
 
@@ -31,7 +31,7 @@
 #include <iomanip>
 
 #include "defines.h"
-#include "vcc.h"
+#include "Vcc.h"
 #include "resource.h"
 #include "logger.h"
 #include "tcc1014mmu.h"
@@ -39,7 +39,7 @@
 #include "DebuggerUtils.h"
 #include "OpDecoder.h"
 #include "Disassembler.h"
-#include "Audio.h"
+#include "audio.h"
 
 #define HEXSTR(i,w) Debugger::ToHexString(i,w,true)
 

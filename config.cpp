@@ -18,8 +18,8 @@ This file is part of VCC (Virtual Color Computer).
 
 #define DIRECTINPUT_VERSION 0x0800
 
-#include <windows.h>
-#include <commctrl.h>
+#include <Windows.h>
+#include <CommCtrl.h>
 #include <stdio.h>
 #include <Richedit.h>
 #include <iostream>
@@ -28,7 +28,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #pragma warning(push)
 #pragma warning(disable:4091)
-#include <shlobj.h>
+#include <ShlObj.h>
 #pragma warning(pop)
 
 #include "defines.h"
@@ -45,7 +45,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "keyboard.h"
 #include "keyboardEdit.h"
 #include "fileops.h"
-#include "dialogops.h"
+#include "DialogOps.h"
 #include "Cassette.h"
 #include "CommandLine.h"
 #include "logger.h"

@@ -16,7 +16,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "windows.h"
+#include "Windows.h"
 #include "stdio.h"
 #include "ddraw.h"
 #include <math.h>
@@ -32,7 +32,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "coco3.h"
 #include "throttle.h"
 #include "Vcc.h"
-#include "cassette.h"
+#include "Cassette.h"
 #include "DirectDrawInterface.h"
 #include "logger.h"
 #include "keyboard.h"

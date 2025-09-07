@@ -16,11 +16,11 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
+#include <Windows.h>
 #include "throttle.h"
 #include "audio.h"
 #include "defines.h"
-#include "vcc.h"
+#include "Vcc.h"
 
 static _LARGE_INTEGER StartTime,EndTime,OneFrame,CurrentTime,SleepRes,TargetTime,OneMs;
 static _LARGE_INTEGER MasterClock,Now;

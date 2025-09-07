@@ -28,7 +28,7 @@ This file is part of VCC (Virtual Color Computer)
       CloneStandardKeymap
 */
 
-#include <windows.h>
+#include <Windows.h>
 #include <windowsx.h>
 #include <stdio.h>
 #include <intrin.h>

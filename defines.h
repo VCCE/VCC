@@ -23,7 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "Debugger.h"
 #include <cstdint>
 #include <atomic>
-#include <windows.h>
+#include <Windows.h>
 #include <assert.h>
 
 //Speed throttling
