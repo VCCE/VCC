@@ -232,22 +232,36 @@ void SetTapeMode(unsigned char Mode)	//Handles button pressed from Dialog
 		break;
 
 		case PLAY:
-			if (TapeHandle==nullptr)
+			if (TapeHandle == nullptr)
+			{
 				if (!LoadTape())
-					TapeMode=STOP;
+				{
+					TapeMode = STOP;
+				}
 				else
-					TapeMode=Mode;
+				{
+					TapeMode = Mode;
+				}
+			}
 
 			if (MotorState)
+			{
 				Motor(1);
+			}
 		break;
 
 		case REC:
-			if (TapeHandle==nullptr)
+			if (TapeHandle == nullptr)
+			{
 				if (!LoadTape())
-					TapeMode=STOP;
+				{
+					TapeMode = STOP;
+				}
 				else
-					TapeMode=Mode;
+				{
+					TapeMode = Mode;
+				}
+			}
 		break;
 
 		case EJECT:

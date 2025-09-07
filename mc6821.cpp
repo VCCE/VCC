@@ -273,11 +273,17 @@ void pia1_write(unsigned char data,unsigned char port)
             vccJoystickStartTandy(regb[port],data);
             regb[port]=data;
 			CaptureBit((regb[0]&2)>>1);
-			if (GetMuxState()==0)
-				if ((regb[3] & 8)!=0)//==0 for cassette writes
-					Asample	= (regb[0] & 0xFC)>>1; //0 to 127
+			if (GetMuxState() == 0)
+			{
+				if ((regb[3] & 8) != 0)//==0 for cassette writes
+				{
+					Asample = (regb[0] & 0xFC) >> 1; //0 to 127
+				}
 				else
+				{
 					Csample = (regb[0] & 0xFC);
+				}
+			}
 		}
 		else
 			regb_dd[port]=data;
