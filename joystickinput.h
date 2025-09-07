@@ -25,7 +25,8 @@ This file is part of VCC (Virtual Color Computer).
 #define STRLEN 64
 
 // JoyStick structure is used to contain joystick configuration
-typedef struct {
+struct JoyStick
+{
 	unsigned char UseMouse;  // 0=keyboard,1=mouse,2=audio,3=joystick
 	unsigned char Up;
 	unsigned char Down;
@@ -35,7 +36,7 @@ typedef struct {
 	unsigned char Fire2;
 	unsigned char DiDevice;
 	unsigned char HiRes;     // 0=lowres,1=software,2=tandy,3=ccmax
-} JoyStick;
+};
 
 // Global joystick configuration from config.c  These were
 // renamed from Left and Right to preserve maintainer sanity.

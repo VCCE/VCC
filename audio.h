@@ -27,10 +27,11 @@ int GetFreeBlockCount(void);
 int GetAuxBlockCount(void);
 void PurgeAuxBuffer(void);
 unsigned int GetSoundStatus(void);
-typedef struct CardList {
+struct SndCardList
+{
 	char CardName[64];
 	_GUID *Guid;
-} SndCardList;
+};
 
 const int AUDIO_RATE = 44100;
 

@@ -109,11 +109,12 @@ static char PakPath[MAX_PATH];
 
 static char Did=0;
 int FileID(char *);
-typedef struct {
+struct Dmenu
+{
 	char MenuName[512];
 	int MenuId;
 	int Type;
-} Dmenu;
+};
 
 static Dmenu MenuItem[100];
 static unsigned char MenuCount=0;
