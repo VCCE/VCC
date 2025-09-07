@@ -113,7 +113,7 @@ static PVOID RawReadBuf=nullptr;
 
 bool SetDataRate (HANDLE , BYTE );
 static FD_READ_WRITE_PARAMS rwp;
-static bool DirtyDisk=1;
+static bool DirtyDisk=true;
 char ImageFormat[5][4]={"JVC","VDK","DMK","OS9","RAW"};
 //****************************************************************
 //KEYBOARD_INDICATOR_PARAMETERS InputBuffer;	  // Input buffer for DeviceIoControl
@@ -243,7 +243,7 @@ void DecodeControlReg(unsigned char Tmp)
 		DirtyDisk=1;
 
 	if (LastDisk != CurrentDisk)	//If we switch from reading one Physical disk to another we need to invalidate the cache
-		DirtyDisk=1;
+		DirtyDisk=true;
 	LastDisk=CurrentDisk;
 	if (Tmp & CTRL_DENSITY)	//Strange, Density and Interupt enable flag
 		InteruptEnable=1;
@@ -274,7 +274,7 @@ void unmount_disk_image(unsigned char drive)
 	Drive[drive].FileHandle=nullptr;
 	Drive[drive].ImageType=0;
 	strcpy(Drive[drive].ImageName,"");
-	DirtyDisk=1;
+	DirtyDisk=true;
 	if (drive==(PhysicalDriveA-1))
 		PhysicalDriveA=0;
 	if (drive==(PhysicalDriveB-1))
@@ -485,7 +485,7 @@ long ReadSector (unsigned char Side,	//0 or 1
 				Ret=DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_READ_DATA, &rwp, sizeof(rwp), RawReadBuf,4608, &dwRet, nullptr);
 				if (dwRet != 4608)
 					return(0);
-				DirtyDisk=0;
+				DirtyDisk=false;
 			}
 			memcpy(ReturnBuffer,&pva[(Sector-1)*256],256);
 			return(256);
@@ -522,7 +522,7 @@ long WriteSector (	unsigned char Side,		//0 or 1
 		case VDK:
 		case OS9:
 			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize) + (BytesperSector[Drive[CurrentDisk].SectorSize] * (Sector - Drive[CurrentDisk].FirstSector) ) ) ;
-			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,0,FILE_BEGIN);
+			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			WriteFile(Drive[CurrentDisk].FileHandle,WriteBuffer,BytesperSector[Drive[CurrentDisk].SectorSize],&BytesWritten,nullptr);
 			return(BytesWritten);
 		break;
@@ -550,7 +550,7 @@ long WriteSector (	unsigned char Side,		//0 or 1
 		break;
 
 		case RAW:
-			DirtyDisk=1;
+			DirtyDisk=true;
 			pva=(unsigned char *) RawReadBuf;
 			rwp.flags = FD_OPTION_MFM;
 			rwp.phead = Side;
@@ -668,7 +668,7 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 
 
 		case RAW:
-			DirtyDisk=1;
+			DirtyDisk=true;
 			DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &Track, sizeof(Track), nullptr, 0, &dwRet, nullptr);
 			return(FormatTrack (Drive[CurrentDisk].FileHandle , Track , Side, WriteBuffer[100] )); //KLUDGE!
 
