@@ -600,7 +600,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case DAA_I: //19
-	//	MessageBox(0,"DAA","Ok",0);
 		msn=(A_REG & 0xF0) ;
 		lsn=(A_REG & 0xF);
 		temp8=0;
@@ -638,7 +637,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case SEX_I: //1D
-//		A_REG = ((signed char)B_REG < 0) ? 0xff : 0x00;
 		A_REG= 0-(B_REG>>7);
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
@@ -1093,7 +1091,7 @@ void Do_Opcode(int CycleFor)
 	case NEGA_I: //40
 		temp8= 0-A_REG;
 		cc[C]= temp8>0;
-		cc[V]= A_REG==0x80; //cc[C] ^ ((A_REG^temp8)>>7);
+		cc[V]= A_REG==0x80;
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		A_REG= temp8;
@@ -2195,7 +2193,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case ANDB_M: //C4
-//		postbyte=MemRead8(pc.Reg++);
 		B_REG = B_REG & MemRead8(pc.Reg++);
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
@@ -2220,7 +2217,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case EORB_M: //C8
-//		postbyte=MemRead8(pc.Reg++);
 		B_REG = B_REG ^ MemRead8(pc.Reg++);
 		cc[N]=NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
@@ -2241,7 +2237,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case ORB_M: //CA
-//		postbyte=MemRead8(pc.Reg++);
 		B_REG = B_REG | MemRead8(pc.Reg++);
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
@@ -2323,7 +2318,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case ANDB_D: //D4
-//		postbyte=MemRead8((dp.Reg |MemRead8(pc.Reg++)));
 		B_REG = B_REG & MemRead8((dp.Reg |MemRead8(pc.Reg++)));
 		cc[N]=NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
@@ -2356,7 +2350,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case EORB_D: //D8
-//		postbyte=MemRead8((dp.Reg | MemRead8(pc.Reg++)));
 		B_REG = B_REG ^ MemRead8((dp.Reg | MemRead8(pc.Reg++)));
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
@@ -2377,7 +2370,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case ORB_D: //DA
-//		postbyte=MemRead8((dp.Reg | MemRead8(pc.Reg++)));
 		B_REG = B_REG | MemRead8((dp.Reg | MemRead8(pc.Reg++)));
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
@@ -2473,7 +2465,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case ANDB_X: //E4
-//		postbyte=MemRead8(CalculateEA(MemRead8(pc.Reg++)));
 		B_REG = B_REG & MemRead8(CalculateEA(MemRead8(pc.Reg++)));
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
@@ -2498,7 +2489,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case STB_X: //E7
-//		postbyte=MemRead8(pc.Reg++);
 		MemWrite8(B_REG,CalculateEA(MemRead8(pc.Reg++)));
 		cc[Z]= ZTEST(B_REG);
 		cc[N]= NTEST8(B_REG);
@@ -2507,8 +2497,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case EORB_X: //E8
-//		postbyte=MemRead8(pc.Reg++);
-//		temp16=CalculateEA(MemRead8(pc.Reg++));
 		temp8=MemRead8(CalculateEA(MemRead8(pc.Reg++)));
 		B_REG= B_REG ^ temp8;
 		cc[N]= NTEST8(B_REG);
@@ -2530,7 +2518,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case ORB_X: //EA
-//		postbyte=MemRead8(CalculateEA(MemRead8(pc.Reg++)));
 		B_REG = B_REG | MemRead8(CalculateEA(MemRead8(pc.Reg++)));
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
@@ -2551,7 +2538,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case LDD_X: //EC
-//		postbyte=MemRead8(pc.Reg++);
 		temp16=CalculateEA(MemRead8(pc.Reg++));
 		D_REG=MemRead16(temp16);
 		cc[Z]= ZTEST(D_REG);
@@ -2561,8 +2547,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case STD_X: //ED
-//		postbyte=MemRead8(pc.Reg++);
-//		temp16=CalculateEA(MemRead8(pc.Reg++));
 		MemWrite16(D_REG,CalculateEA(MemRead8(pc.Reg++)));
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
@@ -2579,8 +2563,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case STU_X: //EF
-//		postbyte=MemRead8(pc.Reg++);
-//		temp16=CalculateEA(MemRead8(pc.Reg++));
 		MemWrite16(u.Reg,CalculateEA(MemRead8(pc.Reg++)));
 		cc[Z] = ZTEST(u.Reg);
 		cc[N]=NTEST16(u.Reg);
@@ -2636,7 +2618,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case ANDB_E:  //F4
-//		postbyte=MemRead8(MemRead16(pc.Reg));
 		B_REG = B_REG & MemRead8(MemRead16(pc.Reg));
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
@@ -2673,7 +2654,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case EORB_E: //F8
-//		postbyte=MemRead8(MemRead16(pc.Reg));
 		B_REG = B_REG ^ MemRead8(MemRead16(pc.Reg));
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
@@ -2696,7 +2676,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case ORB_E: //FA
-//		postbyte=MemRead8(MemRead16(pc.Reg));
 		B_REG = B_REG | MemRead8(MemRead16(pc.Reg));
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
@@ -2737,7 +2716,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case LDU_E: //FE
-//		postword=MemRead16(pc.Reg);
 		u.Reg=MemRead16(MemRead16(pc.Reg));
 		cc[Z] = ZTEST(u.Reg);
 		cc[N]= NTEST16(u.Reg);
@@ -2756,7 +2734,6 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	default:
-//		MessageBox(0,"Unhandled Op","Ok",0);
 		break;
 	}//End Switch
 
@@ -2948,7 +2925,7 @@ void P2_Opcode(void)
 		postword=MemRead16(pc.Reg);
 		temp16 = D_REG-postword;
 		cc[C]= temp16 > D_REG;
-		cc[V]= OTEST16(cc[C],postword,temp16,D_REG);//cc[C]^((postword^temp16^D_REG)>>15);
+		cc[V]= OTEST16(cc[C],postword,temp16,D_REG);
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		pc.Reg+=2;
@@ -2959,7 +2936,7 @@ void P2_Opcode(void)
 		postword=MemRead16(pc.Reg);
 		temp16 = y.Reg-postword;
 		cc[C]= temp16 > y.Reg;
-		cc[V]= OTEST16(cc[C],postword,temp16,y.Reg);//cc[C]^((postword^temp16^y.Reg)>>15);
+		cc[V]= OTEST16(cc[C],postword,temp16,y.Reg);
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		pc.Reg+=2;
@@ -2979,7 +2956,7 @@ void P2_Opcode(void)
 		postword=MemRead16((dp.Reg |MemRead8(pc.Reg++)));
 		temp16= D_REG - postword ;
 		cc[C]= temp16 > D_REG;
-		cc[V]= OTEST16(cc[C],postword,temp16,D_REG); //cc[C]^((postword^temp16^D_REG)>>15);
+		cc[V]= OTEST16(cc[C],postword,temp16,D_REG);
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		CycleCounter+=7;
@@ -2989,7 +2966,7 @@ void P2_Opcode(void)
 		postword=MemRead16((dp.Reg |MemRead8(pc.Reg++)));
 		temp16= y.Reg - postword ;
 		cc[C]= temp16 > y.Reg;
-		cc[V]= OTEST16(cc[C],postword,temp16,y.Reg);//cc[C]^((postword^temp16^y.Reg)>>15);
+		cc[V]= OTEST16(cc[C],postword,temp16,y.Reg);
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		CycleCounter+=7;
@@ -3015,7 +2992,7 @@ void P2_Opcode(void)
 		postword=MemRead16(CalculateEA(MemRead8(pc.Reg++)));
 		temp16= D_REG - postword ;
 		cc[C]= temp16 > D_REG;
-		cc[V]= OTEST16(cc[C],postword,temp16,D_REG);//cc[C]^((postword^temp16^D_REG)>>15);
+		cc[V]= OTEST16(cc[C],postword,temp16,D_REG);
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		CycleCounter+=7;
@@ -3147,7 +3124,6 @@ void P2_Opcode(void)
 		break;
 
 	default:
-//		MessageBox(0,"Unhandled Op","Ok",0);
 		break;
 	}
 } // P2_Opcode ends
@@ -3268,7 +3244,6 @@ void P3_Opcode(void)
 		break;
 
 	default:
-//		MessageBox(0,"Unhandled Op","Ok",0);
 		break;
 	}
 
@@ -3457,7 +3432,6 @@ static unsigned short CalculateEA(unsigned char postbyte)
 			break;
 
 		case 7:
-//			ea=(*indexableRegisters[Register])+((signed char)E_REG);
 			CycleCounter+=1;
 			break;
 
@@ -3473,7 +3447,6 @@ static unsigned short CalculateEA(unsigned char postbyte)
 			break;
 
 		case 10:
-//			ea=(*indexableRegisters[Register])+((signed char)F_REG);
 			CycleCounter+=1;
 			break;
 
@@ -3495,7 +3468,6 @@ static unsigned short CalculateEA(unsigned char postbyte)
 			break;
 
 		case 14:
-//			ea=(*indexableRegisters[Register])+W_REG;
 			CycleCounter+=4;
 			break;
 
@@ -3504,19 +3476,13 @@ static unsigned short CalculateEA(unsigned char postbyte)
 			switch (byte)
 			{
 			case 0:
-//				ea=W_REG;
 				break;
 			case 1:
-//				ea=W_REG+MemRead16(pc.Reg);
 				pc.Reg+=2;
 				break;
 			case 2:
-//				ea=W_REG;
-//				W_REG+=2;
 				break;
 			case 3:
-//				W_REG-=2;
-//				ea=W_REG;
 				break;
 			}
 		break;
@@ -3526,19 +3492,13 @@ static unsigned short CalculateEA(unsigned char postbyte)
 			switch (byte)
 			{
 			case 0:
-//				ea=MemRead16(W_REG);
 				break;
 			case 1:
-//				ea=MemRead16(W_REG+MemRead16(pc.Reg));
 				pc.Reg+=2;
 				break;
 			case 2:
-//				ea=MemRead16(W_REG);
-//				W_REG+=2;
 				break;
 			case 3:
-//				W_REG-=2;
-//				ea=MemRead16(W_REG);
 				break;
 			}
 		break;
@@ -3552,7 +3512,6 @@ static unsigned short CalculateEA(unsigned char postbyte)
 			break;
 
 		case 18: //10010
-//			MessageBox(0,"Hitting undecoded 18","Ok",0);
 			CycleCounter+=6;
 			break;
 
@@ -3582,7 +3541,6 @@ static unsigned short CalculateEA(unsigned char postbyte)
 			break;
 
 		case 23: //10111
-//			ea=(*indexableRegisters[Register])+((signed char)E_REG);
 			ea=MemRead16(ea);
 			CycleCounter+=4;
 			break;
@@ -3600,7 +3558,6 @@ static unsigned short CalculateEA(unsigned char postbyte)
 			pc.Reg+=2;
 			break;
 		case 26: //11010
-//			ea=(*indexableRegisters[Register])+((signed char)F_REG);
 			ea=MemRead16(ea);
 			CycleCounter+=4;
 			break;
@@ -3626,7 +3583,6 @@ static unsigned short CalculateEA(unsigned char postbyte)
 			break;
 
 		case 30: //11110
-//			ea=(*indexableRegisters[Register])+W_REG;
 			ea=MemRead16(ea);
 			CycleCounter+=7;
 			break;
