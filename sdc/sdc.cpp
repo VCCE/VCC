@@ -242,7 +242,8 @@ unsigned char FloppyReadData(unsigned char);
 int idle_ctr = 0;
 
 // SDC CoCo Interface
-typedef struct {
+struct Interface
+{
     int sdclatch;
     unsigned char cmdcode;
     unsigned char status;
@@ -258,7 +259,7 @@ typedef struct {
     int bufcnt;
     char *bufptr;
     char blkbuf[600];
-} Interface;
+};
 static Interface IF;
 
 // Cart ROM
@@ -655,7 +656,7 @@ void LoadConfig(void)
         ("SDC", "SDCardPath", "", SDCard, MAX_PATH, IniFile);
 
     if (!IsDirectory(SDCard)) {
-        MessageBox (0,"Invalid SDCard Path in VCC init","Error",0);
+        MessageBox (nullptr,"Invalid SDCard Path in VCC init","Error",0);
     }
 
     for (int i=0;i<8;i++) {
@@ -675,7 +676,7 @@ void LoadConfig(void)
 bool SaveConfig(HWND hDlg)
 {
     if (!IsDirectory(SDCard)) {
-        MessageBox(0,"Invalid SDCard Path\n","Error",0);
+        MessageBox(nullptr,"Invalid SDCard Path\n","Error",0);
         return false;
     }
     WritePrivateProfileString("SDC","SDCardPath",SDCard,IniFile);
@@ -822,7 +823,7 @@ void SelectCardBox(void)
         (nullptr,CSIDL_PROFILE,(LPITEMIDLIST *) &bi.pidlRoot);
 
     LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
-    if (pidl != 0) {
+    if (pidl != nullptr) {
         SHGetPathFromIDList(pidl,SDCard);
         CoTaskMemFree(pidl);
     }

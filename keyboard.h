@@ -58,7 +58,7 @@ const char * const k_keyboardLayoutNames[] =
 
 /**
 */
-typedef struct keytranslationentry_t
+struct keytranslationentry_t
 {
 	unsigned char ScanCode1;
 	unsigned char ScanCode2;
@@ -66,7 +66,7 @@ typedef struct keytranslationentry_t
 	unsigned char Col1;
 	unsigned char Row2;
 	unsigned char Col2;
-} keytranslationentry_t;
+};
 
 /*****************************************************************************/
 

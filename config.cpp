@@ -78,7 +78,8 @@ LRESULT CALLBACK Paths(HWND, UINT, WPARAM, LPARAM);
 /********************************************/
 
 // Structure for some (but not all) Vcc settings
-typedef struct  {
+struct STRConfig
+{
 	unsigned char	CPUMultiplyer;
 	unsigned short	MaxOverclock;
 	unsigned char	FrameSkip;
@@ -110,7 +111,7 @@ typedef struct  {
 	unsigned char	UseExtCocoRom;
 	char        	ExtRomFile[MAX_PATH];
 	unsigned char   EnableOverclock;
-} STRConfig;
+};
 
 static STRConfig CurrentConfig;
 
