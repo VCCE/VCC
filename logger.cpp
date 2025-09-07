@@ -64,7 +64,7 @@ void PrintLogC(const void * fmt, ...)
         hLog_Out = GetStdHandle(STD_OUTPUT_HANDLE);
         SetConsoleTitle("Logging Window");
     }
-    WriteFile(hLog_Out,msg,strlen(msg),&dummy,0);
+    WriteFile(hLog_Out,msg,strlen(msg),&dummy,nullptr);
 }
 
 // PrintLogF - Put formatted string to the log file

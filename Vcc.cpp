@@ -165,7 +165,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	InitInstance(hInstance, nCmdShow);
 	if (!CreateDDWindow(&EmuState))
 	{
-		MessageBox(0,"Can't create primary Window","Error",0);
+		MessageBox(nullptr,"Can't create primary Window","Error",0);
 		exit(0);
 	}
 	InitSound();
@@ -188,19 +188,19 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	hEvent = CreateEvent( nullptr, FALSE, FALSE, nullptr ) ;
 	if (hEvent==nullptr)
 	{
-		MessageBox(0,"Can't create Thread!!","Error",0);
+		MessageBox(nullptr,"Can't create Thread!!","Error",0);
 		return(0);
 	}
 	hEMUQuit = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (hEMUQuit == nullptr)
 	{
-		MessageBox(0, "Can't create Thread Quit Event!!", "Error", 0);
+		MessageBox(nullptr, "Can't create Thread Quit Event!!", "Error", 0);
 		return(0);
 	}
 	hEMUThread = (HANDLE)_beginthreadex( nullptr, 0, &EmuLoop, hEvent, 0, &threadID );
 	if (hEMUThread==nullptr)
 	{
-		MessageBox(0,"Can't Start main Emulation Thread!","Ok",0);
+		MessageBox(nullptr,"Can't Start main Emulation Thread!","Ok",0);
 		return(0);
 	}
 	WaitForSingleObject( hEvent, INFINITE );
@@ -937,7 +937,7 @@ void SaveConfig(void) {
 		if (_stricmp(curini,dlg.path()) != 0) {
 			// Copy current ini to new ini
 			if (! CopyFile(curini,dlg.path(),false) )
-				MessageBox(0,"Copy config failed","error",0);
+				MessageBox(nullptr,"Copy config failed","error",0);
 		}
 	}
 	return;
@@ -1066,7 +1066,7 @@ void FullScreenToggle(void)
 	PauseAudio(true);
 	if (!CreateDDWindow(&EmuState))
 	{
-		MessageBox(0,"Can't rebuild primary Window","Error",0);
+		MessageBox(nullptr,"Can't rebuild primary Window","Error",0);
 		exit(0);
 	}
 	InvalidateBoarder();

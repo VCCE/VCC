@@ -272,7 +272,7 @@ int InsertModule (char *ModulePath)
 
 	case 1:		//File is a DLL
 		UnloadDll();
-		hinstLib=0;
+		hinstLib=nullptr;
 		hinstLib = LoadLibrary(ModulePath);
 		//PrintLogC("pak:LoadLibrary %s %d\n",ModulePath,hinstLib);
 		if (hinstLib == nullptr)
@@ -404,7 +404,7 @@ int load_ext_rom(char filename[MAX_PATH])
 
 	// If memory was unable to be allocated, fail
 	if (ExternalRomBuffer == nullptr) {
-		MessageBox(0, "cant allocate ram", "Ok", 0);
+		MessageBox(nullptr, "cant allocate ram", "Ok", 0);
 		return 0;
 	}
 

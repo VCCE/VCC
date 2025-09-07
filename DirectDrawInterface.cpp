@@ -590,6 +590,6 @@ void DumpScreenshot()
 	{
 		char msg[128];
 		sprintf(msg, "Unable to take screenshot! (%d)", result);
-		MessageBox(0, msg, "Error", 0);
+		MessageBox(nullptr, msg, "Error", 0);
 	}
 }

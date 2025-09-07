@@ -327,7 +327,7 @@ unsigned char MountDisk(char *FileName,unsigned char disk)
 		strcpy(Drive[disk].ImageName,FileName);
 		Drive[disk].FileSize= GetFileSize(Drive[disk].FileHandle,nullptr);
 		Drive[disk].HeaderSize = Drive[disk].FileSize % 256;
-		SetFilePointer(Drive[disk].FileHandle,0,0,FILE_BEGIN);
+		SetFilePointer(Drive[disk].FileHandle,0,nullptr,FILE_BEGIN);
 		ReadFile(Drive[disk].FileHandle,HeaderBlock,HEADERBUFFERSIZE,&BytesRead,nullptr);
 	}
 	else
@@ -436,7 +436,7 @@ long ReadSector (unsigned char Side,	//0 or 1
 				return(0);
 
 			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize) + (BytesperSector[Drive[CurrentDisk].SectorSize] * (Sector - Drive[CurrentDisk].FirstSector) ) ) ;
-			SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,0,FILE_BEGIN);
+			SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			ReadFile(Drive[CurrentDisk].FileHandle,ReturnBuffer,BytesperSector[Drive[CurrentDisk].SectorSize],&BytesRead,nullptr);
 			if (BytesRead != BytesperSector[Drive[CurrentDisk].SectorSize]) //Fake the read for short images
 			{
@@ -448,7 +448,7 @@ long ReadSector (unsigned char Side,	//0 or 1
 
 		case DMK:	
 			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize));
-			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,0,FILE_BEGIN);
+			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 
 			//Need to read the entire track due to the emulation of interleave on these images
 			ReadFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesRead,nullptr);
@@ -529,7 +529,7 @@ long WriteSector (	unsigned char Side,		//0 or 1
 
 		case DMK:	//DMK 
 			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize));
-			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,0,FILE_BEGIN);
+			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			//Need to read the entire track due to the emulation of interleave on these images			
 			ReadFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesRead,nullptr);
 			if (BytesRead!=Drive[CurrentDisk].TrackSize)
@@ -544,7 +544,7 @@ long WriteSector (	unsigned char Side,		//0 or 1
 			TempBuffer[CurrentSector.DAM + CurrentSector.Lenth  ] =Crc>>8;
 			TempBuffer[CurrentSector.DAM + CurrentSector.Lenth +1 ] =(Crc & 0xFF);
 			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize));
-			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,0,FILE_BEGIN);
+			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			WriteFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesWritten,nullptr);
 			return(CurrentSector.Lenth);
 		break;
@@ -611,7 +611,7 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 				{
 					BufferIndex++;
 					FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize) + (BytesperSector[Drive[CurrentDisk].SectorSize] * (xSector - 1) ) ) ;
-					Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,0,FILE_BEGIN);
+					Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 					WriteFile(Drive[CurrentDisk].FileHandle,&WriteBuffer[BufferIndex],BytesperSector[Drive[CurrentDisk].SectorSize],&BytesWritten,nullptr);				
 					BufferIndex+=BytesperSector[Drive[CurrentDisk].SectorSize];
 				}
@@ -661,7 +661,7 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 			}
 
 			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize)  ) ;
-			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,0,FILE_BEGIN);
+			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			WriteFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesWritten,nullptr);				
 			free(TempBuffer);
 		break;
@@ -704,7 +704,7 @@ long ReadTrack (	unsigned char Side,		//0 or 1
 
 		case DMK:	
 			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize)+128);
-			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,0,FILE_BEGIN);
+			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			ReadFile(Drive[CurrentDisk].FileHandle,WriteBuffer,(Drive[CurrentDisk].TrackSize-128),&BytesRead,nullptr);
 			if (BytesRead != ((unsigned)Drive[CurrentDisk].TrackSize-128) )
 				return (0);
@@ -754,7 +754,7 @@ void PingFdc(void)
 				Drive[CurrentDisk].HeadPosition-=1;
 				ExecTimeWaiter=(CyclesperStep * StepTimeMS);
 				if (Drive[CurrentDisk].ImageType==RAW)
-					DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, 0, 1, nullptr, 0, &dwRet, nullptr);
+					DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, nullptr, 1, nullptr, 0, &dwRet, nullptr);
 			}
 			else
 			{
@@ -1186,7 +1186,7 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 
 			case DMK:
 				FileOffset= Drive[CurrentDisk].HeaderSize + ( (Drive[CurrentDisk].HeadPosition * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize));
-				Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,0,FILE_BEGIN);
+				Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 				ReadFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesRead,nullptr);
 				CurrentSector.Sector=SectorReg;
 				GetSectorInfo(&CurrentSector,TempBuffer);
@@ -1476,7 +1476,7 @@ HANDLE OpenFloppy (int nDrive_)
 	if (h == INVALID_HANDLE_VALUE)
 	{
 		sprintf(szTemp,"Unable to open RAW device %s",szDevice);
-		MessageBox(0,szTemp,"Ok",0);
+		MessageBox(nullptr,szTemp,"Ok",0);
 	}
     return (h != INVALID_HANDLE_VALUE && SetDataRate(h, DISK_DATARATE)) ? h : nullptr;
 }

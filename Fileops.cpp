@@ -130,6 +130,6 @@ BOOL FilePrintf(HANDLE hFile, const void * fmt, ...)
 	va_start(args, fmt);
 	vsnprintf(msg, 512, (char *)fmt, args);
 	va_end(args);
-	return WriteFile(hFile,msg,strlen(msg),&dummy,0);
+	return WriteFile(hFile,msg,strlen(msg),&dummy,nullptr);
 }
 
