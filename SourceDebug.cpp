@@ -24,7 +24,7 @@
 #include "defines.h"
 #include "DebuggerUtils.h"
 #include "resource.h"
-#include "dialogops.h"
+#include "DialogOps.h"
 #include <map>
 #include <fstream>
 #include <string>

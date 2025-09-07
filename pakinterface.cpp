@@ -34,7 +34,7 @@
  *
  ************************************************************************************/
 
-#include <windows.h>
+#include <Windows.h>
 #include <windowsx.h>
 #include "commdlg.h"
 #include <stdio.h>
@@ -48,7 +48,7 @@
 #include "mc6821.h"
 #include "logger.h"
 #include "fileops.h"
-#include "dialogops.h"
+#include "DialogOps.h"
 #define HASCONFIG		1
 #define HASIOWRITE		2
 #define HASIOREAD		4

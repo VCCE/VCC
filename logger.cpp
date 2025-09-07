@@ -16,7 +16,7 @@
 // (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
 //------------------------------------------------------------------
 
-#include <windows.h>
+#include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -98,7 +98,7 @@ Bit 1 FIRQ POLARITY 0 = falling 1 = rising
 Bit 0 CART FIRQ 0 = FIRQ disabled 1 = enabled
 */
 
-#include <windows.h>
+#include <Windows.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -112,7 +112,7 @@ Bit 0 CART FIRQ 0 = FIRQ disabled 1 = enabled
 #include "joystickinput.h"
 #include "coco3.h"
 #include "pakinterface.h"
-#include "cassette.h"
+#include "Cassette.h"
 #include "logger.h"
 #include "resource.h"
 #include <cstdint>

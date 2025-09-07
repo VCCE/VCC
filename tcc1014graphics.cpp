@@ -16,7 +16,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
+#include <Windows.h>
 #include "defines.h"
 #include "tcc1014graphics.h"
 #include "ddraw.h"
@@ -28,7 +28,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "logger.h"
 #include "math.h"
 #include <stdio.h>
-#include <commctrl.h>	// Windows common controls
+#include <CommCtrl.h>	// Windows common controls
 
 using Surface32 = VCC::VideoArray<unsigned int, 640 * 480>;
 

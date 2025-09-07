@@ -68,7 +68,7 @@
 #include "keyboardLayout.h"
 
 #define DIRECTINPUT_VERSION 0x0800
-#include <windows.h>
+#include <Windows.h>
 #include <dinput.h>
 
 
