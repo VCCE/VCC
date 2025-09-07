@@ -157,7 +157,6 @@ int GetCmdLineArgs(char *CmdString)
             // Unknown option code returns an error
             default:
                 return CL_ERR_UNKOPT;
-                break;
             }
 
         // else Positional argument            
@@ -174,7 +173,6 @@ int GetCmdLineArgs(char *CmdString)
             // Extra positional argument returns an error
             default:
                 return CL_ERR_XTRARG;
-                break;
              }
         }
 
