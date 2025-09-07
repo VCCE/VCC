@@ -55,10 +55,10 @@ LRESULT CALLBACK subEditAdrProc(HWND,UINT,WPARAM,LPARAM);
 INT_PTR CALLBACK MemoryMapDlgProc(HWND,UINT,WPARAM,LPARAM);
 
 // Global handles
-HWND hDlgMem = NULL;
-HWND hScrollBar = NULL;
-HWND hEditAdr = NULL;
-HWND hEditVal = NULL;
+HWND hDlgMem = nullptr;
+HWND hScrollBar = nullptr;
+HWND hEditAdr = nullptr;
+HWND hEditVal = nullptr;
 
 // Original controls
 WNDPROC EditValProc;
@@ -77,7 +77,7 @@ AddrMode AddrMode_ = AddrMode::NotSet;
 
 int MemSize = 0;
 int memoryOffset = 0;
-static unsigned char *Rom = NULL;
+static unsigned char *Rom = nullptr;
 bool Editing = false;
 int editAddress = 0;
 
@@ -172,7 +172,7 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 			KillTimer(hDlg, IDT_MEM_TIMER);
 			DeleteDC(BackBuf.DeviceContext);
 			DestroyWindow(hDlg);
-			hDlgMem = NULL;
+			hDlgMem = nullptr;
 			break;
 		}
 		break;
@@ -260,7 +260,7 @@ unsigned char ReadMemory(int addr)
 		return (unsigned char) GetMem(addr);
 
 	case AddrMode::ROM:
-		if (Rom == NULL) Rom = Getint_rom_pointer();
+		if (Rom == nullptr) Rom = Getint_rom_pointer();
 		return Rom[addr & 0x7FFF];
 
 	case AddrMode::PAK:
@@ -285,7 +285,7 @@ void WriteMemory(int addr, unsigned char value)
 		break;
 
 	case AddrMode::ROM:
-		if (Rom == NULL) Rom = Getint_rom_pointer();
+		if (Rom == nullptr) Rom = Getint_rom_pointer();
 		Rom[addr & 0x7FFF] = value;
 		break;
 
@@ -329,7 +329,7 @@ void CreateScrollBar(RECT Rect)
 		hScrollBar = CreateWindowEx(
 			0,
 			"SCROLLBAR",
-			NULL,
+			nullptr,
 			WS_VISIBLE | WS_CHILD | SBS_VERT,
 			Rect.right - 21,   //top x
 			38,                //top y
@@ -338,10 +338,10 @@ void CreateScrollBar(RECT Rect)
 			hDlgMem,
 			(HMENU)IDC_MEM_VSCROLLBAR,
 			(HINSTANCE)GetWindowLong(hDlgMem, GWL_HINSTANCE),
-			NULL);
+			nullptr);
 
 		if (!hScrollBar) {
-			MessageBox(NULL, "Vertical Scroll Bar Failed.", "Error",
+			MessageBox(nullptr, "Vertical Scroll Bar Failed.", "Error",
 				MB_OK | MB_ICONERROR);
 		}
 }
@@ -365,18 +365,18 @@ void DrawForm(HDC hdc,LPRECT clientRect)
 	UINT fmt = DT_CENTER | DT_VCENTER | DT_SINGLELINE;
 
 	// Draw separator lines for border, address, and ascii
-	MoveToEx(hdc,lft,top,NULL);     LineTo(hdc,rgt,top);
-	MoveToEx(hdc,lft,top+20,NULL);  LineTo(hdc,rgt,top+20);
-	MoveToEx(hdc,lft+1,top,NULL);   LineTo(hdc,lft+1,bot-1);
-	MoveToEx(hdc,lft+60,top,NULL);  LineTo(hdc,lft+60,bot-1);
-	MoveToEx(hdc,rgt-135,top,NULL); LineTo(hdc,rgt-135,bot);
-	MoveToEx(hdc,rgt-1,top,NULL);   LineTo(hdc,rgt-1,bot);
+	MoveToEx(hdc,lft,top,nullptr);     LineTo(hdc,rgt,top);
+	MoveToEx(hdc,lft,top+20,nullptr);  LineTo(hdc,rgt,top+20);
+	MoveToEx(hdc,lft+1,top,nullptr);   LineTo(hdc,lft+1,bot-1);
+	MoveToEx(hdc,lft+60,top,nullptr);  LineTo(hdc,lft+60,bot-1);
+	MoveToEx(hdc,rgt-135,top,nullptr); LineTo(hdc,rgt-135,bot);
+	MoveToEx(hdc,rgt-1,top,nullptr);   LineTo(hdc,rgt-1,bot);
 
 	// Horizontal separators every four rows
 	int ltop = top + 20;
 	for (int lnum = 3; lnum < 32; lnum+=4) {
 		ltop += 18*4;
-		MoveToEx(hdc,lft,ltop,NULL); LineTo(hdc,rgt,ltop);
+		MoveToEx(hdc,lft,ltop,nullptr); LineTo(hdc,rgt,ltop);
 	}
 
 	// Draw header
@@ -642,7 +642,7 @@ void InitializeDialog(HWND hDlg)
 		EditValProc = (WNDPROC) SetWindowLongPtr
 				(hEditVal, GWLP_WNDPROC, (LONG_PTR) subEditValProc);
 
-		SetTimer(hDlg, IDT_MEM_TIMER, 64, (TIMERPROC)NULL);
+		SetTimer(hDlg, IDT_MEM_TIMER, 64, nullptr);
 
 		// Dropdown to select memory type displayed
 		HWND hCtl = GetDlgItem(hDlg, IDC_MEM_TYPE);
@@ -763,13 +763,13 @@ void FlashDialogWindow()
 //------------------------------------------------------------------
 void VCC::Debugger::UI::OpenMemoryMapWindow(HINSTANCE hInst,HWND parent)
 {
-	if (hDlgMem == NULL) {
+	if (hDlgMem == nullptr) {
 		CreateDialog( hInst, MAKEINTRESOURCE(IDD_MEMORY_MAP),
 		              parent, MemoryMapDlgProc );
 	}
 
-	if (hDlgMem == NULL)
-		MessageBox(NULL,"CreateDialog","Error",MB_OK|MB_ICONERROR);
+	if (hDlgMem == nullptr)
+		MessageBox(nullptr,"CreateDialog","Error",MB_OK|MB_ICONERROR);
 
 	ShowWindow(hDlgMem, SW_SHOWNORMAL);
 	SetFocus(hEditAdr);

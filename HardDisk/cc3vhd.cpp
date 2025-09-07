@@ -165,7 +165,7 @@ void HDcommand(unsigned char Command) {
         SetFilePointer(HardDrive[DriveSelect],SectorOffset.All,0,FILE_BEGIN);
 
         // Read it; zero fill if past end of file
-        ReadFile(HardDrive[DriveSelect],SectorBuffer,SECTORSIZE,&BytesMoved,NULL);
+        ReadFile(HardDrive[DriveSelect],SectorBuffer,SECTORSIZE,&BytesMoved,nullptr);
         for (Temp=0; Temp < SECTORSIZE;Temp++) {
             if (Temp > BytesMoved) {
                 MemWrite(0,Temp+DMAaddress.word);
@@ -202,7 +202,7 @@ void HDcommand(unsigned char Command) {
         SetFilePointer(HardDrive[DriveSelect],SectorOffset.All,0,FILE_BEGIN);
 
         // Write it
-        WriteFile(HardDrive[DriveSelect],SectorBuffer,SECTORSIZE,&BytesMoved,NULL);
+        WriteFile(HardDrive[DriveSelect],SectorBuffer,SECTORSIZE,&BytesMoved,nullptr);
         if (BytesMoved != SECTORSIZE) {
             Status = HD_NODSK;
         } else {

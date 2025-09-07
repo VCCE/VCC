@@ -34,7 +34,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	CriticalSection Section_;
 	MMUState MMUState_;
 
-	HWND MMUMonitorWindow = NULL;
+	HWND MMUMonitorWindow = nullptr;
 	HWND hWndMMUMonitor;
 	BackBufferInfo	BackBuffer_;
 
@@ -69,7 +69,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	void MakeBox(HDC hdc,HPEN pen,int x,int y,int w,int h)
 	{
 		SelectObject(hdc, pen);
-		MoveToEx(hdc, x, y, NULL);
+		MoveToEx(hdc, x, y, nullptr);
 		LineTo(hdc, x + w, y);
 		LineTo(hdc, x + w, y + h);
 		LineTo(hdc, x, y + h);
@@ -155,7 +155,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			SelectObject(hdc, thickPen);
 			int dx = (regs.ActiveTask == 0) ? x : x+66;
 			PutText(hdc,dx+115,y,5,"<");
-			MoveToEx(hdc,dx+120,y+10, NULL);
+			MoveToEx(hdc,dx+120,y+10, nullptr);
 			LineTo(hdc,dx+135,y+10);
 			PutText(hdc,dx+137,y,5,">");
 		}
@@ -211,7 +211,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			RECT Rect;
 			GetClientRect(hDlg, &Rect);
 			BackBuffer_ = AttachBackBuffer(hDlg, 0, -36);
-			SetTimer(hDlg, IDT_PROC_TIMER, 64, (TIMERPROC)NULL);
+			SetTimer(hDlg, IDT_PROC_TIMER, 64, nullptr);
 			EmuState.Debugger.RegisterClient(hDlg, std::make_unique<MMUMonitorDebugClient>());
 			break;
 		}
@@ -245,7 +245,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 				KillTimer(hDlg, IDT_PROC_TIMER);
 				DeleteDC(BackBuffer_.DeviceContext);
 				DestroyWindow(hDlg);
-				MMUMonitorWindow = NULL;
+				MMUMonitorWindow = nullptr;
 				EmuState.Debugger.RemoveClient(hDlg);
 				break;
 			}
@@ -260,7 +260,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 void VCC::Debugger::UI::OpenMMUMonitorWindow(HINSTANCE instance, HWND parent)
 {
-	if (MMUMonitorWindow == NULL)
+	if (MMUMonitorWindow == nullptr)
 	{
 		MMUMonitorWindow = CreateDialog(
 			instance,

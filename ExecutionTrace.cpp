@@ -35,13 +35,13 @@ static HINSTANCE g_hinstDLG;
 
 namespace VCC { namespace Debugger { namespace UI { namespace 
 {
-	HWND ExecutionTraceWindow = NULL;
+	HWND ExecutionTraceWindow = nullptr;
 	HWND hWndExecutionTrace;
 	HWND hWndVScrollBar;
 	HWND hWndHScrollBar;
 	HWND hWndTrace;
 
-	HHOOK hHookKeyboard = NULL;
+	HHOOK hHookKeyboard = nullptr;
 	void CaptureKeyboardEvents();
 	void ReleaseKeyboard();
 
@@ -182,7 +182,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		SelectObject(hdc, pen);
 
 		// Draw the border.
-		MoveToEx(hdc, rect.left, rect.top, NULL);
+		MoveToEx(hdc, rect.left, rect.top, nullptr);
 		LineTo(hdc, rect.right - 1, rect.top);
 		LineTo(hdc, rect.right - 1, rect.bottom - 1);
 		LineTo(hdc, rect.left, rect.bottom - 1);
@@ -315,7 +315,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			SetRect(&rc, rect.left + x, rect.top, rect.left + x + w, rect.top + 20);
 
 			// Draw the border.
-			MoveToEx(hdc, rc.left, rc.top, NULL);
+			MoveToEx(hdc, rc.left, rc.top, nullptr);
 			LineTo(hdc, rc.right - 1, rc.top);
 			LineTo(hdc, rc.right - 1, rc.bottom - 1);
 			LineTo(hdc, rc.left, rc.bottom - 1);
@@ -644,10 +644,10 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	void ResizeWindow(int width, int height)
 	{
 		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDCLOSE);
-		SetWindowPos(hCtl, NULL, 9, height - 33, 0, 0, SWP_NOSIZE);
+		SetWindowPos(hCtl, nullptr, 9, height - 33, 0, 0, SWP_NOSIZE);
 
 		hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_TIMING);
-		SetWindowPos(hCtl, NULL, 100, height - 28, 0, 0, SWP_NOSIZE);
+		SetWindowPos(hCtl, nullptr, 100, height - 28, 0, 0, SWP_NOSIZE);
 
 		SCROLLINFO si;
 		RECT Rect;
@@ -661,7 +661,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 		if (showHScrollBar)
 		{
-			SetWindowPos(hWndHScrollBar, NULL, 0, Rect.bottom - 39 - ScrollBarWidth, Rect.right - ScrollBarWidth, ScrollBarWidth, 0);
+			SetWindowPos(hWndHScrollBar, nullptr, 0, Rect.bottom - 39 - ScrollBarWidth, Rect.right - ScrollBarWidth, ScrollBarWidth, 0);
 
 			si.cbSize = sizeof(si);
 			si.fMask = SIF_ALL;
@@ -670,8 +670,8 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			SetScrollInfo(hWndHScrollBar, SB_CTL, &si, TRUE);
 		}
 
-		SetWindowPos(hWndVScrollBar, NULL, Rect.right - ScrollBarWidth, ScrollBarTop, ScrollBarWidth, Rect.bottom - 60 - ScrollBarTop - bottomOffset, 0);
-		SetWindowPos(hWndTrace, NULL, 0, 140, width - ScrollBarWidth, Rect.bottom - 197 - bottomOffset, NULL);
+		SetWindowPos(hWndVScrollBar, nullptr, Rect.right - ScrollBarWidth, ScrollBarTop, ScrollBarWidth, Rect.bottom - 60 - ScrollBarTop - bottomOffset, 0);
+		SetWindowPos(hWndTrace, nullptr, 0, 140, width - ScrollBarWidth, Rect.bottom - 197 - bottomOffset, 0);
 		tracePage = (Rect.bottom - 218 - bottomOffset) / 15;
 
 		si.cbSize = sizeof(si);
@@ -735,7 +735,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			{
 				int mark = ((y - 20) / 15) + traceOffset;
 				traceCursor = mark;
-				InvalidateRect(hwnd, NULL, FALSE);
+				InvalidateRect(hwnd, nullptr, FALSE);
 			}
 			break;
 		}
@@ -799,8 +799,8 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		rwc.hCursor = LoadCursor(0, IDC_ARROW);
 		RegisterClassW(&rwc);
 
-		hWndTrace = CreateWindowExW(WS_EX_STATICEDGE, L"TraceWindow", NULL,
-			WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0, 140, Rect.right - ScrollBarWidth, Rect.bottom - 197, hDlg, (HMENU)1, NULL, NULL);
+		hWndTrace = CreateWindowExW(WS_EX_STATICEDGE, L"TraceWindow", nullptr,
+			WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0, 140, Rect.right - ScrollBarWidth, Rect.bottom - 197, hDlg, (HMENU)1, nullptr, nullptr);
 		tracePage = (Rect.bottom - 218) / 15;
 
 		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_MAX_TRACE_SAMPLES);
@@ -816,7 +816,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		hWndVScrollBar = CreateWindowEx(
 			0,
 			"SCROLLBAR",
-			NULL,
+			nullptr,
 			WS_VISIBLE | WS_CHILD | SBS_VERT,
 			Rect.right - ScrollBarWidth,
 			ScrollBarTop,
@@ -825,11 +825,11 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			hDlg,
 			(HMENU)IDT_TRC_VSCROLLBAR,
 			(HINSTANCE)GetWindowLong(hDlg, GWL_HINSTANCE),
-			NULL);
+			nullptr);
 
 		if (!hWndVScrollBar)
 		{
-			MessageBox(NULL, "Vertical Scroll Bar Failed.", "Error", MB_OK | MB_ICONERROR);
+			MessageBox(nullptr, "Vertical Scroll Bar Failed.", "Error", MB_OK | MB_ICONERROR);
 			return;
 		}
 
@@ -845,7 +845,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		hWndHScrollBar = CreateWindowEx(
 			0,
 			"SCROLLBAR",
-			NULL,
+			nullptr,
 			WS_VISIBLE | WS_CHILD | SBS_HORZ,
 			0,
 			Rect.bottom - 39 - ScrollBarWidth,
@@ -854,11 +854,11 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			hDlg,
 			(HMENU)IDT_TRC_HSCROLLBAR,
 			(HINSTANCE)GetWindowLong(hDlg, GWL_HINSTANCE),
-			NULL);
+			nullptr);
 
 		if (!hWndVScrollBar)
 		{
-			MessageBox(NULL, "Vertical Scroll Bar Failed.", "Error", MB_OK | MB_ICONERROR);
+			MessageBox(nullptr, "Vertical Scroll Bar Failed.", "Error", MB_OK | MB_ICONERROR);
 			return;
 		}
 
@@ -1036,7 +1036,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 					si.fMask = SIF_POS;
 					SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
 				}
-				InvalidateRect(hWndTrace, NULL, FALSE);
+				InvalidateRect(hWndTrace, nullptr, FALSE);
 			}
 			if (wParam == VK_DOWN)
 			{
@@ -1061,17 +1061,17 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 					si.fMask = SIF_POS;
 					SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
 				}
-				InvalidateRect(hWndTrace, NULL, FALSE);
+				InvalidateRect(hWndTrace, nullptr, FALSE);
 			}
 			if (wParam == '1')
 			{
 				EmuState.Debugger.SetTraceMark(1, traceCursor);
-				InvalidateRect(hWndTrace, NULL, FALSE);
+				InvalidateRect(hWndTrace, nullptr, FALSE);
 			}
 			if (wParam == '2')
 			{
 				EmuState.Debugger.SetTraceMark(2, traceCursor);
-				InvalidateRect(hWndTrace, NULL, FALSE);
+				InvalidateRect(hWndTrace, nullptr, FALSE);
 			}
 		}
 
@@ -1081,22 +1081,22 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 //-------------------------------------------------------------------------------
 	void CaptureKeyboardEvents()
 	{
-		if (hHookKeyboard == NULL)
+		if (hHookKeyboard == nullptr)
 		{
 			hHookKeyboard = SetWindowsHookEx(
 				WH_KEYBOARD,
 				KeyboardProc,
-				(HINSTANCE)NULL, GetCurrentThreadId());
+				nullptr, GetCurrentThreadId());
 		}
 	}
 
 //-------------------------------------------------------------------------------
 	void ReleaseKeyboard()
 	{
-		if (hHookKeyboard != NULL)
+		if (hHookKeyboard != nullptr)
 		{
 			UnhookWindowsHookEx(hHookKeyboard);
-			hHookKeyboard = NULL;
+			hHookKeyboard = nullptr;
 		}
 	}
 
@@ -1255,8 +1255,8 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			switch (LOWORD(wPrm)) {
 			case IDOK:
 			{
-				ExportStart = GetDlgItemInt(hDlg,IDC_EDIT_START,NULL,FALSE);
-				ExportStop = GetDlgItemInt(hDlg,IDC_EDIT_STOP,NULL,FALSE);
+				ExportStart = GetDlgItemInt(hDlg,IDC_EDIT_START,nullptr,FALSE);
+				ExportStop = GetDlgItemInt(hDlg,IDC_EDIT_STOP,nullptr,FALSE);
 				int count = ExportStop-ExportStart+1;
 				if ((count < 1) || (count > EmuState.Debugger.GetTraceSamples())) {
 					SetDlgItemText(hDlg,IDC_ERROR_TEXT,"Invalid Line Range");
@@ -1265,11 +1265,11 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 				ChooseTraceFile(hDlg, ExportPath, MAX_PATH);
 				HANDLE hFile = CreateFile(ExportPath, GENERIC_READ | GENERIC_WRITE,
-				                0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+				                0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 				if (hFile != INVALID_HANDLE_VALUE) {
 					WriteTrace(hFile,ExportStart,count);
 					CloseHandle(hFile);
-					EndDialog(hDlg, (INT_PTR) NULL);
+					EndDialog(hDlg, (INT_PTR) nullptr);
 				} else {
 					SetDlgItemText(hDlg,IDC_ERROR_TEXT,"File create failed!");
 					return FALSE;
@@ -1277,12 +1277,12 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 				return TRUE;
 			}
 			case IDCANCEL:
-				EndDialog(hDlg, (INT_PTR) NULL);
+				EndDialog(hDlg, (INT_PTR) nullptr);
 				return TRUE;
 			}
 			break;
 		case WM_CLOSE:
-			EndDialog(hDlg, (INT_PTR) NULL);
+			EndDialog(hDlg, (INT_PTR) nullptr);
 			return TRUE;
 		}
 		return FALSE;
@@ -1304,7 +1304,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 			SetupControls(hDlg);
 
-			SetTimer(hDlg, IDT_PROC_TIMER, 64, (TIMERPROC)NULL);
+			SetTimer(hDlg, IDT_PROC_TIMER, 64, nullptr);
 
 			break;
 		}
@@ -1498,7 +1498,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			case WM_DESTROY:
 				KillTimer(hDlg, IDT_PROC_TIMER);
 				DestroyWindow(hDlg);
-				ExecutionTraceWindow = NULL;
+				ExecutionTraceWindow = nullptr;
 				break;
 			}
 
@@ -1516,7 +1516,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 void VCC::Debugger::UI::OpenExecutionTraceWindow(HINSTANCE instance, HWND parent)
 {
 	g_hinstDLG = instance;
-	if (ExecutionTraceWindow == NULL)
+	if (ExecutionTraceWindow == nullptr)
 	{
 		ExecutionTraceWindow = CreateDialog(
 			instance,

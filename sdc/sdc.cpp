@@ -160,15 +160,15 @@ typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-static void (*DynamicMenuCallback)( char *,int, int)=NULL;
+static void (*DynamicMenuCallback)( char *,int, int)=nullptr;
 typedef void (*ASSERTINTERUPT)(unsigned char, unsigned char);
 void (*AssertInt)(unsigned char, unsigned char);
 void SDCInit(void);
 void LoadRom(unsigned char);
-void (*MemWrite8)(unsigned char,unsigned short)=NULL;
+void (*MemWrite8)(unsigned char,unsigned short)=nullptr;
 void SDCWrite(unsigned char,unsigned char);
 void MemWrite(unsigned char,unsigned short);
-unsigned char (*MemRead8)(unsigned short)=NULL;
+unsigned char (*MemRead8)(unsigned short)=nullptr;
 unsigned char SDCRead(unsigned char port);
 unsigned char MemRead(unsigned short);
 LRESULT CALLBACK SDC_Control(HWND, UINT, WPARAM, LPARAM);
@@ -299,7 +299,7 @@ struct _Disk {
 
 // Flash banks
 static char FlashFile[8][MAX_PATH];
-static FILE *h_RomFile = NULL;
+static FILE *h_RomFile = nullptr;
 static unsigned char StartupBank = 0;
 static unsigned char CurrentBank = 0xff;
 static unsigned char EnableBankWrite = 0;
@@ -319,11 +319,11 @@ static HANDLE hFind = INVALID_HANDLE_VALUE;
 static WIN32_FIND_DATAA dFound;
 
 // config control handles
-static HWND hControlDlg = NULL;
-static HWND hConfigureDlg = NULL;
-//static HWND hFlashBox = NULL;
-static HWND hSDCardBox = NULL;
-static HWND hStartupBank = NULL;
+static HWND hControlDlg = nullptr;
+static HWND hConfigureDlg = nullptr;
+//static HWND hFlashBox = nullptr;
+static HWND hSDCardBox = nullptr;
+static HWND hStartupBank = nullptr;
 
 // Streaming control
 static int streaming;
@@ -361,7 +361,7 @@ extern "C"
         LoadString(hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
         LoadString(hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
         DynamicMenuCallback = Temp;
-        if (DynamicMenuCallback != NULL) BuildDynaMenu();
+        if (DynamicMenuCallback != nullptr) BuildDynaMenu();
         return;
     }
 
@@ -398,13 +398,13 @@ extern "C"
         switch (MenuID)
         {
         case 10:
-            if (hConfigureDlg == NULL)  // Only create dialog once
+            if (hConfigureDlg == nullptr)  // Only create dialog once
                 hConfigureDlg = CreateDialog(hinstDLL, (LPCTSTR) IDD_CONFIG,
                          GetActiveWindow(), (DLGPROC) SDC_Configure);
             ShowWindow(hConfigureDlg,1);
             break;
         case 11:
-            if (hControlDlg == NULL)
+            if (hControlDlg == nullptr)
                 hControlDlg = CreateDialog(hinstDLL, (LPCTSTR) IDD_CONTROL,
                          GetActiveWindow(), (DLGPROC) SDC_Control);
             ShowWindow(hControlDlg,1);
@@ -474,8 +474,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
     } else if (reason == DLL_PROCESS_DETACH) {
         CloseCartDialog(hControlDlg);
         CloseCartDialog(hConfigureDlg);
-        hControlDlg = NULL;
-        hConfigureDlg = NULL;
+        hControlDlg = nullptr;
+        hConfigureDlg = nullptr;
         CloseDrive(0);
         CloseDrive(1);
     }
@@ -504,7 +504,7 @@ void CenterDialog(HWND hDlg)
     GetWindowRect(hDlg, &rDlg);
     int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
     int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
-    SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 //------------------------------------------------------------
@@ -516,7 +516,7 @@ SDC_Control(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message) {
     case WM_CLOSE:
         DestroyWindow(hDlg);
-        hControlDlg=NULL;
+        hControlDlg=nullptr;
         return TRUE;
         break;
     case WM_INITDIALOG:
@@ -546,7 +546,7 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message) {
     case WM_CLOSE:
         DestroyWindow(hDlg);
-        hConfigureDlg=NULL;
+        hConfigureDlg=nullptr;
         return TRUE;
         break;
     case WM_INITDIALOG:
@@ -637,7 +637,7 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         case IDOK:
             SaveConfig(hDlg);
             DestroyWindow(hDlg);
-            hConfigureDlg=NULL;
+            hConfigureDlg=nullptr;
             break;
         }
     }
@@ -755,7 +755,7 @@ void InitEditBoxes(void)
 //----------------------------------------------------------------------
 void update_disk0_box()
 { 
-    if (hControlDlg != NULL) {
+    if (hControlDlg != nullptr) {
         HWND h = GetDlgItem(hControlDlg,ID_DISK0);
         SendMessage(h, WM_SETTEXT, 0, (LPARAM) Disk[0].name );
     }
@@ -819,7 +819,7 @@ void SelectCardBox(void)
 
     // Start from user home diretory
     SHGetSpecialFolderLocation
-        (NULL,CSIDL_PROFILE,(LPITEMIDLIST *) &bi.pidlRoot);
+        (nullptr,CSIDL_PROFILE,(LPITEMIDLIST *) &bi.pidlRoot);
 
     LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
     if (pidl != 0) {
@@ -851,21 +851,21 @@ void LoadRom(unsigned char bank)
     // Make sure flash file is closed
     if (h_RomFile) {
         fclose(h_RomFile);
-        h_RomFile = NULL;
+        h_RomFile = nullptr;
     }
 
     if (BankDirty) {
         RomFile = FlashFile[CurrentBank];
         _DLOG("LoadRom switching out dirty bank %d %s\n",CurrentBank,RomFile);
         h_RomFile = fopen(RomFile,"wb");
-        if (h_RomFile == NULL) {
+        if (h_RomFile == nullptr) {
             _DLOG("LoadRom failed to open bank file%d\n",bank);
         } else {
             ctr = 0;
             p_rom = PakRom;
             while (ctr++ < 0x4000) fputc(*p_rom++, h_RomFile);
             fclose(h_RomFile);
-            h_RomFile = NULL;
+            h_RomFile = nullptr;
         }
         BankDirty = 0;
     }
@@ -885,10 +885,10 @@ void LoadRom(unsigned char bank)
 
     // Open romfile for read or write if not startup bank
     h_RomFile = fopen(RomFile,"rb");
-    if (h_RomFile == NULL) {
+    if (h_RomFile == nullptr) {
         if (CurrentBank != StartupBank) h_RomFile = fopen(RomFile,"wb");
     }
-    if (h_RomFile == NULL) {
+    if (h_RomFile == nullptr) {
         _DLOG("LoadRom '%s' failed %s \n",RomFile,LastErrorTxt());
         return;
     }
@@ -922,7 +922,7 @@ void ParseStartup(void)
     strncat(buf,"startup.cfg",MAX_PATH);
 
     FILE *su = fopen(buf,"r");
-    if (su == NULL) {
+    if (su == nullptr) {
         _DLOG("ParseStartup file not found,%s\n",buf);
         return;
     }
@@ -1164,7 +1164,7 @@ void FloppyReadDisk(unsigned char port,unsigned char data)
     int lsn = FlopTrack * 18 + FlopSector - 1;
     snprintf(Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
     if (SeekSector(FlopDrive,lsn)) {
-        if (ReadFile(Disk[FlopDrive].hFile,FlopRdBuf,256,&FlopRdCnt,NULL)) {
+        if (ReadFile(Disk[FlopDrive].hFile,FlopRdBuf,256,&FlopRdCnt,nullptr)) {
             _DLOG("FloppyReadDisk %d %d\n",FlopDrive,lsn);
             FlopStatus = FLP_DATAREQ;
         } else {
@@ -1400,7 +1400,7 @@ void GetDirectoryLeaf(void)
     // If at least one leaf find the last one
     if (n > 0) {
         char *p = strrchr(CurDir,'/');
-        if (p == NULL) {
+        if (p == nullptr) {
             p = CurDir;
         } else {
             p += 1;
@@ -1571,7 +1571,7 @@ bool SeekSector(unsigned char cmdcode, unsigned int lsn)
     // Seek to logical sector on drive.
     LARGE_INTEGER pos;
     pos.QuadPart = lsn * Disk[drive].sectorsize + Disk[drive].headersize;
-    if (!SetFilePointerEx(Disk[drive].hFile,pos,NULL,FILE_BEGIN)) {
+    if (!SetFilePointerEx(Disk[drive].hFile,pos,nullptr,FILE_BEGIN)) {
         _DLOG("SeekSector error %s\n",LastErrorTxt());
         return false;
     }
@@ -1586,7 +1586,7 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
     char buf[520];
     DWORD cnt = 0;
     int drive = cmdcode & 1;
-    if (Disk[drive].hFile == NULL) {
+    if (Disk[drive].hFile == nullptr) {
         _DLOG("ReadDrive %d not open\n");
         return false;
     }
@@ -1595,7 +1595,7 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
         return false;
     }
 
-    if (!ReadFile(Disk[drive].hFile,buf,Disk[drive].sectorsize,&cnt,NULL)) {
+    if (!ReadFile(Disk[drive].hFile,buf,Disk[drive].sectorsize,&cnt,nullptr)) {
         _DLOG("ReadDrive %d %s\n",drive,LastErrorTxt());
         return false;
     }
@@ -1676,7 +1676,7 @@ void WriteSector(void)
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
     snprintf(Status,16,"SDC:%d Wr %d,%d",CurrentBank,drive,lsn);
 
-    if (Disk[drive].hFile == NULL) {
+    if (Disk[drive].hFile == nullptr) {
         IF.status = STA_FAIL;
         return;
     }
@@ -1686,7 +1686,7 @@ void WriteSector(void)
         return;
     }
     if (!WriteFile(Disk[drive].hFile,IF.blkbuf,
-                   Disk[drive].sectorsize,&cnt,NULL)) {
+                   Disk[drive].sectorsize,&cnt,nullptr)) {
         _DLOG("WriteSector %d %s\n",drive,LastErrorTxt());
         IF.status = STA_FAIL;
         return;
@@ -1798,7 +1798,7 @@ void FixSDCPath(char *path, const char *fpath8)
 {
     const char *pname8 = strrchr(fpath8,'/');
     // Copy Directory portion
-    if (pname8 != NULL) {
+    if (pname8 != nullptr) {
         pname8++;
         memcpy(path,fpath8,pname8-fpath8);
     } else {
@@ -1955,7 +1955,7 @@ void MountDisk (int drive, const char * path, int raw)
     bool found = SearchFile(file);
 
     // if no '.' in the name try appending .DSK  or wildcard
-    if (!found && (strchr(file,'.') == NULL)) {
+    if (!found && (strchr(file,'.') == nullptr)) {
         strncpy(tmp,file,MAX_PATH);
         strncat(tmp,".DSK",MAX_PATH);
         found = SearchFile(tmp);
@@ -2050,7 +2050,7 @@ void OpenNew( int drive, const char * path, int raw)
     // Open file for write
     Disk[drive].hFile = CreateFile(
         Disk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
-        NULL,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,NULL);
+		nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
 
     if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
         _DLOG("OpenNew fail %d file %s\n",drive,Disk[drive].fullpath);
@@ -2082,7 +2082,7 @@ void OpenNew( int drive, const char * path, int raw)
         // Extend file to size
         LARGE_INTEGER l_siz;
         l_siz.QuadPart = Disk[drive].size;
-        if (SetFilePointerEx(Disk[drive].hFile,l_siz,NULL,FILE_BEGIN)) {
+        if (SetFilePointerEx(Disk[drive].hFile,l_siz,nullptr,FILE_BEGIN)) {
             if (SetEndOfFile(Disk[drive].hFile)) {
                 IF.status = STA_NORMAL;
             } else {
@@ -2127,7 +2127,7 @@ void OpenFound (int drive,int raw)
     // Open file for read
     Disk[drive].hFile = CreateFile(
         fqn, GENERIC_READ, FILE_SHARE_READ,
-        NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+		nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
     if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
         _DLOG("OpenFound fail %d file %s\n",drive,fqn);
         _DLOG("... %s\n",LastErrorTxt());
@@ -2158,7 +2158,7 @@ void OpenFound (int drive,int raw)
 
         // Read a few bytes of the file to determine it's type
         unsigned char header[16];
-        if (ReadFile(Disk[drive].hFile,header,12,NULL,NULL) == 0) {
+        if (ReadFile(Disk[drive].hFile,header,12,nullptr,nullptr) == 0) {
             _DLOG("OpenFound header read error\n");
             IF.status = STA_FAIL | STA_INVALID;
             return;
@@ -2221,7 +2221,7 @@ void OpenFound (int drive,int raw)
         CloseHandle(Disk[drive].hFile);
         Disk[drive].hFile = CreateFile(
             Disk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
-            NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+			nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
         if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
             _DLOG("OpenFound reopen fail %d\n",drive);
             _DLOG("... %s\n",LastErrorTxt());
@@ -2320,7 +2320,7 @@ void MakeDirectory(const char *name)
         return;
     }
 
-    if (CreateDirectory(path,NULL)) {
+    if (CreateDirectory(path,nullptr)) {
         IF.status = STA_NORMAL;
     } else {
         _DLOG("MakeDirectory %s\n", strerror(errno));
@@ -2335,7 +2335,7 @@ void MakeDirectory(const char *name)
 void CloseDrive (int drive)
 {
     drive &= 1;
-    if (Disk[drive].hFile != NULL) {
+    if (Disk[drive].hFile != nullptr) {
         CloseHandle(Disk[drive].hFile);
         Disk[drive].hFile = INVALID_HANDLE_VALUE;
     }
@@ -2390,7 +2390,7 @@ void SetCurDir(const char * branch)
     // If branch is ".." go back a directory
     if (strcmp(branch,"..") == 0) {
         char *p = strrchr(CurDir,'/');
-        if (p != NULL) {
+        if (p != nullptr) {
             *p = '\0';
         } else {
             *CurDir = '\0';
@@ -2481,7 +2481,7 @@ bool SearchFile(const char * pattern)
     } else {
         // Save directory portion for prepending to results
         char * pnam = strrchr(path,'/');
-        if (pnam != NULL) pnam[1] = '\0';
+        if (pnam != nullptr) pnam[1] = '\0';
         strncpy(SeaDir,path,MAX_PATH);
         return true;
     }

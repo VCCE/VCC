@@ -33,7 +33,7 @@
 typedef void (*DYNAMICMENUCALLBACK)(char * ,int, int);
 typedef void (*ASSERTINTERUPT)(unsigned char, unsigned char);
 
-void (*DynamicMenuCallback)(char *,int,int)=NULL;
+void (*DynamicMenuCallback)(char *,int,int)=nullptr;
 void BuildDynaMenu(void);
 
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
@@ -44,8 +44,8 @@ void CenterDialog(HWND);
 //------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------
-static HINSTANCE g_hDLL = NULL;      // DLL handle
-static HWND g_hDlg = NULL;           // Config dialog
+static HINSTANCE g_hDLL = nullptr;      // DLL handle
+static HWND g_hDlg = nullptr;           // Config dialog
 static char IniFile[MAX_PATH];       // Ini file name
 static char IniSect[MAX_LOADSTRING]; // Ini file section
 
@@ -68,7 +68,7 @@ char AciaFileRdPath[MAX_PATH]; // Path for file reads
 char AciaFileWrPath[MAX_PATH]; // Path for file writes
 
 static unsigned char Rom[8192];
-static void (*PakSetCart)(unsigned char)=NULL;
+static void (*PakSetCart)(unsigned char)=nullptr;
 void (*AssertInt)(unsigned char, unsigned char);
 unsigned char LoadExtRom(char *);
 
@@ -101,7 +101,7 @@ ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
     LoadString(g_hDLL,IDS_CATNUMBER,CatNumber,MAX_LOADSTRING);
     DynamicMenuCallback = Temp;
     strcpy(IniSect,ModName);   // Use module name for ini file section
-    if (DynamicMenuCallback != NULL) BuildDynaMenu();
+    if (DynamicMenuCallback != nullptr) BuildDynaMenu();
     sc6551_init();
     return ;
 }
@@ -322,7 +322,7 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
 
     case WM_CLOSE:
         DestroyWindow(hDlg);
-        g_hDlg = NULL;
+        g_hDlg = nullptr;
         return TRUE;
         break;
 
@@ -496,7 +496,7 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
                 break;
             case COM_TCPIP:
                 GetDlgItemText(hDlg,IDC_NAME,AciaTcpHost,MAX_PATH);
-                port = GetDlgItemInt(hDlg,IDC_PORT,NULL,0);
+                port = GetDlgItemInt(hDlg,IDC_PORT,nullptr,0);
                 if ((port < 1) || (port > 65536)) {
                     MessageBox(hDlg,"TCP Port must be 1 thru 65536",
                                     "Error", MB_OK|MB_ICONEXCLAMATION);
@@ -515,7 +515,7 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
             if (button==IDOK) {
                 SaveConfig();       // Should APPLY also save the config?
                 DestroyWindow(hDlg);
-                g_hDlg = NULL;
+                g_hDlg = nullptr;
             }
             break;
 
@@ -524,7 +524,7 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
 
         case IDCANCEL:
             DestroyWindow(hDlg);
-            g_hDlg = NULL;
+            g_hDlg = nullptr;
             break;
         }
         return TRUE;
@@ -542,7 +542,7 @@ void CenterDialog(HWND hDlg)
     GetWindowRect(hDlg, &rDlg);
     int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
     int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
-    SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 //----------------------------------------------------------------

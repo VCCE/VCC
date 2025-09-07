@@ -28,15 +28,15 @@ union
 	} Byte;
 } IndexAddress;  //BufferAddress;
 
-static unsigned char *RamBuffer=NULL;
+static unsigned char *RamBuffer=nullptr;
 
 bool InitMemBoard(void)
 {
 	IndexAddress.Address=0;
 
-	if (RamBuffer!=NULL) free(RamBuffer);      // Free existing RAM
+	if (RamBuffer!=nullptr) free(RamBuffer);      // Free existing RAM
 	RamBuffer=(unsigned char *)malloc(RAMSIZE);
-	if (RamBuffer==NULL) return(true);         // Failed to allocate RAM
+	if (RamBuffer==nullptr) return(true);         // Failed to allocate RAM
 	memset(RamBuffer,0,RAMSIZE);               // Clear the RAM
 	return(false);                             // Success
 }

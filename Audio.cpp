@@ -45,10 +45,10 @@ static LPDIRECTSOUNDCAPTURE8	lpdsin;
 static DSCBUFFERDESC			dsbdin;           // directsound description
 
 HRESULT hr;
-static LPDIRECTSOUNDBUFFER	lpdsbuffer1=NULL;			//the sound buffers
-static LPDIRECTSOUNDCAPTUREBUFFER	lpdsbuffer2=NULL;	//the sound buffers for capture
+static LPDIRECTSOUNDBUFFER	lpdsbuffer1=nullptr;			//the sound buffers
+static LPDIRECTSOUNDCAPTUREBUFFER	lpdsbuffer2=nullptr;	//the sound buffers for capture
 static WAVEFORMATEX pcmwf;								//generic waveformat structure
-static void *SndPointer1 = NULL,*SndPointer2 = NULL;
+static void *SndPointer1 = nullptr,*SndPointer2 = nullptr;
 static unsigned int BitRate=0;
 static DWORD SndLenth1= 0,SndLenth2= 0,SndBuffLenth = 0;
 static unsigned char InitPassed=0;
@@ -60,7 +60,7 @@ static char AuxBufferPointer=0;
 static int CardCount=0;
 static unsigned int CurrentRate=0;
 static unsigned char AudioPause=0;
-static SndCardList *Cards=NULL;
+static SndCardList *Cards=nullptr;
 BOOL CALLBACK DSEnumCallback(LPGUID,LPCSTR,LPCSTR,LPVOID);
 
 
@@ -101,7 +101,7 @@ int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned int Rate)
 	SndBuffLenth = (BlockSize*AUDIOBUFFERS);
 	if (Rate)
 	{
-		hr=DirectSoundCreate(Guid, &lpds, NULL);	// create a directsound object
+		hr=DirectSoundCreate(Guid, &lpds, nullptr);	// create a directsound object
 		if (hr!=DS_OK)
 			return(1);
 
@@ -125,7 +125,7 @@ int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned int Rate)
 		dsbd.dwBufferBytes	= SndBuffLenth;
 		dsbd.lpwfxFormat	= &pcmwf;
 
-		hr=lpds->CreateSoundBuffer(&dsbd,&lpdsbuffer1,NULL);
+		hr=lpds->CreateSoundBuffer(&dsbd,&lpdsbuffer1,nullptr);
 		if (hr!=DS_OK)
 			return(1);
 
@@ -185,7 +185,7 @@ void FlushAudioBuffer(unsigned int *Abuffer,unsigned int Lenth)
 		return;
 
 	memcpy(SndPointer1, Abuffer2, SndLenth1);       // copy first section of circular buffer
-	if (SndPointer2 != NULL)                        // copy last section if wrapped
+	if (SndPointer2 != nullptr)                        // copy last section if wrapped
 		memcpy(SndPointer2, Abuffer2 + SndLenth1, SndLenth2);
 	hr=lpdsbuffer1->Unlock(SndPointer1,SndLenth1,SndPointer2,SndLenth2);// unlock the buffer
 	BuffOffset=(BuffOffset + Lenth)% SndBuffLenth;  //Where to write next
@@ -248,7 +248,7 @@ int GetFreeBlockCount(void) //return 0 on full buffer
 		if (hr != DS_OK)
 			return;
 		AuxBuffer[AuxBufferPointer].MemCpyTo(SndPointer1, SndLenth1);
-		if (SndPointer2 != NULL)
+		if (SndPointer2 != nullptr)
 			AuxBuffer[AuxBufferPointer].MemCpyTo((SndLenth1 >> 2), SndPointer2, SndLenth2);
 		BuffOffset=(BuffOffset + BlockSize)% SndBuffLenth;
 		hr=lpdsbuffer1->Unlock(SndPointer1,SndLenth1,SndPointer2,SndLenth2);
@@ -262,7 +262,7 @@ int GetSoundCardList (SndCardList *List)
 {
 	CardCount=0;
 	Cards=List;
-	DirectSoundEnumerate(DSEnumCallback, NULL); 
+	DirectSoundEnumerate(DSEnumCallback, nullptr); 
 	return(CardCount);
 }
 
@@ -278,16 +278,16 @@ int SoundDeInit(void)
 	if (InitPassed)
 	{
 		InitPassed=0;
-		if (lpdsbuffer1 != NULL)
+		if (lpdsbuffer1 != nullptr)
 		{
 			hr = lpdsbuffer1->Release();
-			lpdsbuffer1 = NULL;
+			lpdsbuffer1 = nullptr;
 		}
 
-		if (lpds != NULL)
+		if (lpds != nullptr)
 		{
 			hr = lpds->Release();
-			lpds = NULL;
+			lpds = nullptr;
 		}
 	}
 	return(0);
@@ -295,7 +295,7 @@ int SoundDeInit(void)
 
 int SoundInInit (HWND main_window_handle,_GUID * Guid)
 {
-	hr=DirectSoundCaptureCreate(Guid, &lpdsin, NULL);
+	hr=DirectSoundCaptureCreate(Guid, &lpdsin, nullptr);
 	if (hr!=DS_OK)
 		return(1);
 	dsbdin.dwSize=sizeof(DSCBUFFERDESC); // Size of the structure
@@ -303,7 +303,7 @@ int SoundInInit (HWND main_window_handle,_GUID * Guid)
 	dsbdin.dwReserved=0;
 	dsbdin.lpwfxFormat=&pcmwf; //fix
 	dsbdin.dwBufferBytes=SndBuffLenth;
-	hr=lpdsin->CreateCaptureBuffer(&dsbdin, &lpdsbuffer2, NULL);
+	hr=lpdsin->CreateCaptureBuffer(&dsbdin, &lpdsbuffer2, nullptr);
 	if (hr!=DS_OK)
 		return(1);
 //	lpdsbuffer2->Initialize(lpdsin,&dsbdin);

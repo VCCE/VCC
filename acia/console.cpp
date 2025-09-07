@@ -53,8 +53,8 @@ void console_forground(int);
 //------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------
-HANDLE hConIn = NULL;               // Com input handle
-HANDLE hConOut = NULL;              // Com output handle
+HANDLE hConIn = nullptr;               // Com input handle
+HANDLE hConOut = nullptr;              // Com output handle
 CONSOLE_SCREEN_BUFFER_INFO Csbi;    // Console buffer info
 
 INPUT_RECORD KeyEvents[128];        // Buffer for keyboard records
@@ -74,8 +74,8 @@ console_open() {
         DWORD mode;
 
 //      Make sure console is closed first
-        if ( hConOut != NULL) console_close();
-        if ( hConIn != NULL) console_close();
+        if ( hConOut != nullptr) console_close();
+        if ( hConIn != nullptr) console_close();
         AllocConsole();
 
 //      Disable the close button and "Close" context menu item of the
@@ -109,8 +109,8 @@ console_open() {
 
 void console_close() {
     FreeConsole();
-    hConOut = NULL;
-    hConIn = NULL;
+    hConOut = nullptr;
+    hConIn = nullptr;
 }
 
 //----------------------------------------------------------------
@@ -128,13 +128,13 @@ int console_read(char * buf, int len) {
     unsigned char chr;
 
     // Abort if console not open or no space in buffer
-    if ( hConIn == NULL) return 0;
+    if ( hConIn == nullptr) return 0;
     if (len < 1) return 0;
 
     // If line mode return next line from keyboard buffer (blocks)
     if (AciaLineInput) {
         DWORD cnt = 0;
-        ReadConsole(hConIn,buf,len,&cnt,NULL);
+        ReadConsole(hConIn,buf,len,&cnt,nullptr);
         return cnt;
     }
 
@@ -271,7 +271,7 @@ int console_write(char *buf, int len) {
     char cc[80];
 
     // Abort if console not open
-    if ( hConOut == NULL) return 0;
+    if ( hConOut == nullptr) return 0;
 
     while (cnt < len) {
         chr = *buf++;
@@ -316,7 +316,7 @@ int console_write(char *buf, int len) {
                     break;
                 default:
                     sprintf(cc,"~1F%02X~",SeqArgs[0]);     // not handled
-                    WriteConsole(hConOut,cc,6,&tmp,NULL);
+                    WriteConsole(hConOut,cc,6,&tmp,nullptr);
                 }
                 break;
             case SEQ_GOTOXY:
@@ -344,7 +344,7 @@ int console_write(char *buf, int len) {
                     break;
                 default:
                     sprintf(cc,"~1B%02X~",SeqArgs[0]);     // not handled
-                    WriteConsole(hConOut,cc,strlen(cc),&tmp,NULL);
+                    WriteConsole(hConOut,cc,strlen(cc),&tmp,nullptr);
                 }
                 break;
             case SEQ_FCOLOR:
@@ -363,14 +363,14 @@ int console_write(char *buf, int len) {
 
         // write printable chr to console
         if  (isprint(chr)) {
-            WriteConsole(hConOut,&chr,1,&tmp,NULL);
+            WriteConsole(hConOut,&chr,1,&tmp,nullptr);
             //return cnt;
             continue;
         }
 
         // write chars with high bit set to console (utf8)
         if (chr > 128) {
-            WriteConsole(hConOut,&chr,1,&tmp,NULL);
+            WriteConsole(hConOut,&chr,1,&tmp,nullptr);
             continue;
             //return cnt;
         }
@@ -400,7 +400,7 @@ int console_write(char *buf, int len) {
             console_right();
             break;
         case 0x7:        // bell
-            WriteConsole(hConOut,&chr,1,&tmp,NULL);
+            WriteConsole(hConOut,&chr,1,&tmp,nullptr);
             break;
         case 0x8:        // backspace
             console_left();
@@ -433,7 +433,7 @@ int console_write(char *buf, int len) {
             break;
         default:         // unhandled
             sprintf(cc,"~%02X~",chr);
-            WriteConsole(hConOut,cc,4,&tmp,NULL);
+            WriteConsole(hConOut,cc,4,&tmp,nullptr);
         }
     }
     return cnt;
@@ -479,7 +479,7 @@ void console_insertline() {
     rect.Top = Csbi.dwCursorPosition.Y;
     rect.Bottom = Csbi.dwSize.Y-1;
     dest.Y = Csbi.dwCursorPosition.Y+1;
-    ScrollConsoleScreenBuffer(hConOut,&rect,NULL,dest,&fill);
+    ScrollConsoleScreenBuffer(hConOut,&rect,nullptr,dest,&fill);
 }
 
 // Delete line at cursor
@@ -498,7 +498,7 @@ void console_deleteline() {
     rect.Top = Csbi.dwCursorPosition.Y+1;
     rect.Bottom = Csbi.dwSize.Y;
     dest.Y = Csbi.dwCursorPosition.Y;
-    ScrollConsoleScreenBuffer(hConOut,&rect,NULL,dest,&fill);
+    ScrollConsoleScreenBuffer(hConOut,&rect,nullptr,dest,&fill);
 }
 
 // Move cursor to x, y location

@@ -29,7 +29,7 @@
 #define TOCONS 0
 #define TOFILE 1
 
-static HANDLE hLog_Out = NULL;
+static HANDLE hLog_Out = nullptr;
 DWORD dummy;
 
 char LogFileName[MAX_PATH]="VccLog.txt";
@@ -59,7 +59,7 @@ void PrintLogC(const void * fmt, ...)
     vsnprintf(msg, 512, (char *)fmt, args);
     va_end(args);
 
-    if (hLog_Out == NULL) {
+    if (hLog_Out == nullptr) {
         AllocConsole();
         hLog_Out = GetStdHandle(STD_OUTPUT_HANDLE);
         SetConsoleTitle("Logging Window");

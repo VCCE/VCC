@@ -411,7 +411,7 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
 {
 	int Index1 = 0;
 	int Index2 = 0;
-	keytranslationentry_t *		keyLayoutTable = NULL;
+	keytranslationentry_t *		keyLayoutTable = nullptr;
 	keytranslationentry_t		keyTransEntry;
 
 	assert(keyBoardLayout >= 0 && keyBoardLayout < kKBLayoutCount);

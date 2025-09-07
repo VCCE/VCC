@@ -56,11 +56,11 @@ static unsigned char RGBDiskRom[EXTROMSIZE];
 static char FloppyPath[MAX_PATH];
 static char RomFileName[MAX_PATH]="";
 static char TempRomFileName[MAX_PATH]="";
-void (*AssertInt)(unsigned char,unsigned char)=NULL;
-static void (*DynamicMenuCallback)( char *,int, int)=NULL;
+void (*AssertInt)(unsigned char,unsigned char)=nullptr;
+static void (*DynamicMenuCallback)( char *,int, int)=nullptr;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
-static unsigned char *Memory=NULL;
+static unsigned char *Memory=nullptr;
 unsigned char PhysicalDriveA=0,PhysicalDriveB=0,OldPhysicalDriveA=0,OldPhysicalDriveB=0;
 static unsigned char *RomPointer[3]={ExternalRom,DiskRom,RGBDiskRom};
 static unsigned char SelectRom=0;
@@ -78,7 +78,7 @@ long CreateDiskHeader(char *,unsigned char,unsigned char,unsigned char);
 void Load_Disk(unsigned char);
 void CenterDialog(HWND hDlg);
 
-static HWND g_hConfDlg = NULL;
+static HWND g_hConfDlg = nullptr;
 static HINSTANCE g_hinstDLL;
 static unsigned long RealDisks=0;
 long CreateDisk (unsigned char);
@@ -117,7 +117,7 @@ extern "C"
 		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
 		DynamicMenuCallback =Temp;
-		if (DynamicMenuCallback  != NULL)
+		if (DynamicMenuCallback  != nullptr)
 			BuildDynaMenu();
 		return ;
 	}
@@ -152,7 +152,7 @@ extern "C"
 				SaveConfig();
 				break;
 			case 16:
-				if (g_hConfDlg == NULL)
+				if (g_hConfDlg == nullptr)
 					g_hConfDlg = CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,h_own,(DLGPROC)Config);
 				ShowWindow(g_hConfDlg,1);
 				break;
@@ -264,7 +264,7 @@ void CenterDialog(HWND hDlg)
     GetWindowRect(hDlg, &rDlg);
     int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
     int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
-    SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -278,7 +278,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		case WM_CLOSE:
 			DestroyWindow(hDlg);
-			g_hConfDlg = NULL;
+			g_hConfDlg = nullptr;
 			return TRUE;
 			break;
 
@@ -302,7 +302,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				SendDlgItemMessage(hDlg,ChipChoice[temp],BM_SETCHECK,(temp==TempSelectRom),0);
 			for (temp=0;temp<2;temp++)
 				for (temp2=0;temp2<5;temp2++)
-						SendDlgItemMessage (hDlg,VirtualDrive[temp], CB_ADDSTRING, NULL,(LPARAM) VirtualNames[temp2]);
+						SendDlgItemMessage (hDlg,VirtualDrive[temp], CB_ADDSTRING, 0, (LPARAM) VirtualNames[temp2]);
 
 			SendDlgItemMessage (hDlg, IDC_DISKA,CB_SETCURSEL,(WPARAM)PhysicalDriveA,(LPARAM)0);
 			SendDlgItemMessage (hDlg, IDC_DISKB,CB_SETCURSEL,(WPARAM)PhysicalDriveB,(LPARAM)0);
@@ -360,7 +360,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
 					SaveConfig();
 					DestroyWindow(hDlg);
-					g_hConfDlg = NULL;
+					g_hConfDlg = nullptr;
 					return TRUE;
 					break;
 
@@ -399,7 +399,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case IDCANCEL:
 					DestroyWindow(hDlg);
-					g_hConfDlg = NULL;
+					g_hConfDlg = nullptr;
 					break;
 			}
 			return TRUE;
@@ -420,11 +420,11 @@ void Load_Disk(unsigned char disk)
 	dlg.setFlags(OFN_PATHMUSTEXIST);
 	if (dlg.show(0,h_own)) {
 		CreateFlag = 1;
-		HANDLE hr = NULL;
+		HANDLE hr = nullptr;
 		dlg.getpath(TempFileName,MAX_PATH);
 		// Verify file exists
 		hr = CreateFile
-			(TempFileName,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+			(TempFileName,0,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 		// Create new disk file if it does not
 		if (hr == INVALID_HANDLE_VALUE) {
 			NewDiskNumber = disk;
@@ -457,7 +457,7 @@ void BuildDynaMenu(void)
 {
 	char TempMsg[64]="";
 	char TempBuf[MAX_PATH]="";
-	if (DynamicMenuCallback ==NULL)
+	if (DynamicMenuCallback ==nullptr)
 		MessageBox(g_hConfDlg,"No good","Ok",0);
 	DynamicMenuCallback("",0,0);
 	DynamicMenuCallback( "",6000,0);
@@ -600,7 +600,7 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 long CreateDiskHeader(char *FileName,unsigned char Type,unsigned char Tracks,unsigned char DblSided)
 {
-	HANDLE hr=NULL;
+	HANDLE hr=nullptr;
 	unsigned char Dummy=0;
 	unsigned char HeaderBuffer[16]="";
 	unsigned char TrackTable[3]={35,40,80};
@@ -662,9 +662,9 @@ long CreateDiskHeader(char *FileName,unsigned char Type,unsigned char Tracks,uns
 
 	}
 	SetFilePointer(hr,0,0,FILE_BEGIN);
-	WriteFile(hr,HeaderBuffer,HeaderSize,&BytesWritten,NULL);
+	WriteFile(hr,HeaderBuffer,HeaderSize,&BytesWritten,nullptr);
 	SetFilePointer(hr,FileSize-1,0,FILE_BEGIN);
-	WriteFile(hr,&Dummy,1,&BytesWritten,NULL);
+	WriteFile(hr,&Dummy,1,&BytesWritten,nullptr);
 	CloseHandle(hr);
 	return(0);
 }
@@ -677,7 +677,7 @@ void LoadConfig(void)  // Called on SetIniPath
 	char DiskRomPath[MAX_PATH], RGBRomPath[MAX_PATH];
 	char DiskName[MAX_PATH]="";
 	unsigned int RetVal=0;
-	HANDLE hr=NULL;
+	HANDLE hr=nullptr;
 
 #ifdef COMBINE_BECKER
 	strcpy(ModName,"HDBDOS/DW/Becker");
@@ -698,7 +698,7 @@ void LoadConfig(void)  // Called on SetIniPath
 	PersistDisks=GetPrivateProfileInt(ModName,"Persist",1,IniFile);
 	CheckPath(RomFileName);
 	LoadExtRom(External,RomFileName); //JF
-	GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
+	GetModuleFileName(nullptr, DiskRomPath, MAX_PATH);
 	PathRemoveFileSpec(DiskRomPath);
 	strcpy(RGBRomPath, DiskRomPath);
 	strcat(DiskRomPath, "disk11.rom"); //Failing silent, Maybe we should throw a warning?
@@ -763,7 +763,7 @@ void SaveConfig(void)
 unsigned char LoadExtRom( unsigned char RomType,char *FilePath)	//Returns 1 on if loaded
 {
 
-	FILE *rom_handle=NULL;
+	FILE *rom_handle=nullptr;
 	unsigned short index=0;
 	unsigned char RetVal=0;
 	unsigned char *ThisRom[3]={ExternalRom,DiskRom,RGBDiskRom};
@@ -772,7 +772,7 @@ unsigned char LoadExtRom( unsigned char RomType,char *FilePath)	//Returns 1 on i
 //	ThisRom[1]=DiskRom;
 //	ThisRom[2]=RGBDiskRom;
 	rom_handle=fopen(FilePath,"rb");
-	if (rom_handle==NULL)
+	if (rom_handle==nullptr)
 		memset(ThisRom[RomType],0xFF,EXTROMSIZE);
 	else
 	{

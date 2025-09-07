@@ -36,11 +36,11 @@ typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 //typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
-//static void (*AssertInt)(unsigned char,unsigned char)=NULL;
+//static void (*AssertInt)(unsigned char,unsigned char)=nullptr;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
-static unsigned char *Memory=NULL;
-static void (*DynamicMenuCallback)( char *,int, int)=NULL;
+static unsigned char *Memory=nullptr;
+static void (*DynamicMenuCallback)( char *,int, int)=nullptr;
 static unsigned char BaseAddress=0x50;
 void BuildDynaMenu(void);
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
@@ -52,7 +52,7 @@ unsigned char BaseTable[4]={0x40,0x50,0x60,0x70};
 static unsigned char BaseAddr=1,ClockEnabled=1,ClockReadOnly=1;
 static unsigned char DataLatch=0;
 static HINSTANCE g_hinstDLL;
-static HWND hConfDlg = NULL;
+static HWND hConfDlg = nullptr;
 
 using namespace std;
 
@@ -77,7 +77,7 @@ extern "C"
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
 		DynamicMenuCallback =Temp;
 		IdeInit();
-		if (DynamicMenuCallback  != NULL)
+		if (DynamicMenuCallback  != nullptr)
 			BuildDynaMenu();		
 		return ;
 	}
@@ -231,11 +231,11 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			hConfDlg=hDlg;
 			SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnabled,0);
 			SendDlgItemMessage(hDlg,IDC_READONLY,BM_SETCHECK,ClockReadOnly,0);
-			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_ADDSTRING, NULL,(LPARAM) "40");
-			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_ADDSTRING, NULL,(LPARAM) "50");
-			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_ADDSTRING, NULL,(LPARAM) "60");
-			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_ADDSTRING, NULL,(LPARAM) "70");
-			SendDlgItemMessage (hDlg,IDC_BASEADDR, CB_SETCURSEL,BaseAddr,(LPARAM)0);
+			SendDlgItemMessage(hDlg,IDC_BASEADDR, CB_ADDSTRING, 0, (LPARAM) "40");
+			SendDlgItemMessage(hDlg,IDC_BASEADDR, CB_ADDSTRING, 0, (LPARAM) "50");
+			SendDlgItemMessage(hDlg,IDC_BASEADDR, CB_ADDSTRING, 0, (LPARAM) "60");
+			SendDlgItemMessage(hDlg,IDC_BASEADDR, CB_ADDSTRING, 0, (LPARAM) "70");
+			SendDlgItemMessage(hDlg,IDC_BASEADDR, CB_SETCURSEL,BaseAddr,(LPARAM)0);
 			EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), TRUE);
 			if (BaseAddr==3)
 			{
@@ -328,7 +328,7 @@ void LoadConfig(void)
 	char Temp[16]="";
 	char DiskName[MAX_PATH]="";
 	unsigned int RetVal=0;
-	HANDLE hr=NULL;
+	HANDLE hr=nullptr;
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	GetPrivateProfileString("DefaultPaths", "SuperIDEPath", "", SuperIDEPath, MAX_PATH, IniFile);
 	GetPrivateProfileString(ModName,"Master","",FileName,MAX_PATH,IniFile);

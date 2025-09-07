@@ -43,11 +43,11 @@ typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 //typedef void (*ASSERTINTERUPT)(InterruptSource, Interrupt);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
-//static void (*AssertInt)(InterruptSource, Interrupt)=NULL;
+//static void (*AssertInt)(InterruptSource, Interrupt)=nullptr;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
-static unsigned char *Memory=NULL;
-static void (*DynamicMenuCallback)( char *,int, int)=NULL;
+static unsigned char *Memory=nullptr;
+static void (*DynamicMenuCallback)( char *,int, int)=nullptr;
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 
@@ -60,7 +60,7 @@ int CreateDisk(HWND,int);
 void CenterDialog(HWND hDlg);
 
 static HINSTANCE g_hinstDLL;
-static HWND hConfDlg = NULL;
+static HWND hConfDlg = nullptr;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 
 using namespace std;
@@ -100,7 +100,7 @@ extern "C"
         LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
         DynamicMenuCallback =Temp;
         SetClockWrite(!ClockReadOnly);
-        if (DynamicMenuCallback  != NULL)
+        if (DynamicMenuCallback  != nullptr)
             BuildDynaMenu();
         return ;
     }
@@ -135,7 +135,7 @@ extern "C"
             break;
 
         case 14:
-            if (hConfDlg == NULL)
+            if (hConfDlg == nullptr)
                 hConfDlg = CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,GetActiveWindow(),(DLGPROC)Config);
             ShowWindow(hConfDlg,1);
             return;
@@ -153,7 +153,7 @@ void CenterDialog(HWND hDlg)
     GetWindowRect(hDlg, &rDlg);
     int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
     int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
-    SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -162,7 +162,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CLOSE:
         DestroyWindow(hDlg);
-        hConfDlg=NULL;
+        hConfDlg=nullptr;
         return TRUE;
         break;
 
@@ -183,13 +183,13 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             SetClockWrite(!ClockReadOnly);
             SaveConfig();
             DestroyWindow(hDlg);
-            hConfDlg=NULL;
+            hConfDlg=nullptr;
             break;
 
         case IDCANCEL:
             EndDialog(hDlg, LOWORD(wParam));
             DestroyWindow(hDlg);
-            hConfDlg=NULL;
+            hConfDlg=nullptr;
         break;
         }
     }
@@ -390,8 +390,8 @@ void LoadConfig(void)
     // Verify HD0 image file exists and mount it.
     GetPrivateProfileString(ModName,"VHDImage" ,"",VHDfile0,MAX_PATH,IniFile);
     CheckPath(VHDfile0);
-    hr = CreateFile (VHDfile0,NULL,FILE_SHARE_READ,NULL,
-                     OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+    hr = CreateFile (VHDfile0,0,FILE_SHARE_READ,nullptr,
+                     OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
     if (hr==INVALID_HANDLE_VALUE) {
         strcpy(VHDfile0,"");
         WritePrivateProfileString(ModName,"VHDImage","",IniFile);
@@ -403,8 +403,8 @@ void LoadConfig(void)
     // Verify HD1 image file exists and mount it.
     GetPrivateProfileString(ModName,"VHDImage1","",VHDfile1,MAX_PATH,IniFile);
     CheckPath(VHDfile1);
-    hr = CreateFile (VHDfile1,NULL,FILE_SHARE_READ,NULL,
-                     OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+    hr = CreateFile (VHDfile1,0,FILE_SHARE_READ,nullptr,
+                     OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
     if (hr==INVALID_HANDLE_VALUE) {
         strcpy(VHDfile1,"");
         WritePrivateProfileString(ModName,"VHDImage1","",IniFile);
@@ -488,7 +488,7 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_COMMAND:
             switch (LOWORD(wParam)) {
             case IDOK:
-                hdsize=GetDlgItemInt(hDlg,IDC_HDSIZE,NULL,0);
+                hdsize=GetDlgItemInt(hDlg,IDC_HDSIZE,nullptr,0);
                 EndDialog(hDlg,CreateDisk(hDlg,hdsize));
                 break;
 

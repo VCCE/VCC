@@ -30,8 +30,8 @@ static unsigned char FileType=0;
 static unsigned short FileLenth=0;
 static  short StartAddress=0;
 static unsigned short XferAddress=0;
-static unsigned char *MemImage=NULL;
-FILE *BinImage=NULL;
+static unsigned char *MemImage=nullptr;
+FILE *BinImage=nullptr;
 HANDLE hr;
 static unsigned char Flag=1;
 static int temp=255;
@@ -41,19 +41,19 @@ unsigned char QuickLoad(char *BinFileName)
 {
 	unsigned int MemIndex=0;
 
-	hr=CreateFile(BinFileName,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+	hr=CreateFile(BinFileName,0,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 	if (hr==INVALID_HANDLE_VALUE)
 		return(1);				//File Not Found
 
 	CloseHandle(hr);
 	BinImage=fopen(BinFileName,"rb");
-	if (BinImage==NULL)
+	if (BinImage==nullptr)
 		return(2);				//Can't Open File
 			
 	MemImage=(unsigned char *)malloc(65535);
-	if (MemImage==NULL)
+	if (MemImage==nullptr)
 	{
-		MessageBox(NULL,"Can't alocate ram","Error",0);
+		MessageBox(nullptr,"Can't alocate ram","Error",0);
 		return(3);				//Not enough memory
 	}
 	strcpy(Extension,PathFindExtension(BinFileName));
@@ -83,7 +83,7 @@ unsigned char QuickLoad(char *BinFileName)
 				XferAddress=StartAddress;
 				if ( (XferAddress==0) | (XferAddress >32767) |(FileLenth != 0) )
 				{
-					MessageBox(NULL,".Bin file is corrupt or invalid Transfer Address","Error",0);
+					MessageBox(nullptr,".Bin file is corrupt or invalid Transfer Address","Error",0);
 					return(3);
 				}
 				fclose(BinImage);
@@ -92,7 +92,7 @@ unsigned char QuickLoad(char *BinFileName)
 				return(0);				
 				break;
 			default:
-				MessageBox(NULL,".Bin file is corrupt or invalid","Error",0);
+				MessageBox(nullptr,".Bin file is corrupt or invalid","Error",0);
 				fclose(BinImage);
 				free(MemImage);
 				return(3);

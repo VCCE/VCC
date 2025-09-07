@@ -165,15 +165,15 @@ unsigned char _TranslateScan2Disp[SCAN_TRANS_COUNT] = {
 /***********************************************************/
 void LoadConfig(SystemState *LCState)
 {
-	HANDLE hr=NULL;
+	HANDLE hr=nullptr;
 	int lasterror;
 
 	buildTransDisp2ScanTable();
 
-	LoadString(NULL, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
-	GetModuleFileName(NULL,ExecDirectory,MAX_PATH);
+	LoadString(nullptr, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
+	GetModuleFileName(nullptr,ExecDirectory,MAX_PATH);
 	PathRemoveFileSpec(ExecDirectory);
-	if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, AppDataPath)))
+	if (SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_APPDATA, nullptr, 0, AppDataPath)))
 		OutputDebugString(AppDataPath);
 	strcpy(CurrentConfig.PathtoExe,ExecDirectory);
 
@@ -197,12 +197,12 @@ void LoadConfig(SystemState *LCState)
 	CurrentConfig.RebootNow=0;
 	UpdateConfig();
 	RefreshJoystickStatus();
-	if (EmuState.WindowHandle != NULL)
+	if (EmuState.WindowHandle != nullptr)
 		InitSound();
 
 //  Try to open the config file.  Create it if necessary.  Abort if failure.
 	hr = CreateFile(IniFilePath, GENERIC_READ | GENERIC_WRITE,
-			FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+			FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 	lasterror = GetLastError();
 	if (hr==INVALID_HANDLE_VALUE) { // Fatal could not open ini file
 	    MessageBox(0,"Could not open ini file","Error",0);
@@ -290,7 +290,7 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("RightJoyStick", "HiResDevice", RightJS.HiRes, IniFilePath);
 
     // Force flush inifile
-	WritePrivateProfileString(NULL,NULL,NULL,IniFilePath);
+	WritePrivateProfileString(nullptr,nullptr,nullptr,IniFilePath);
 	return(0);
 }
 
@@ -299,7 +299,7 @@ unsigned char WriteIniFile(void)
 /***********************************************************/
 unsigned char ReadIniFile(void)
 {
-	HANDLE hr=NULL;
+	HANDLE hr=nullptr;
 	unsigned char Index=0;
 
 	//Loads the config structure from the hard disk
@@ -394,7 +394,7 @@ void LoadModule()
 
 void SetWindowRect(const Rect& rect) 
 {
-	if (EmuState.WindowHandle != NULL)
+	if (EmuState.WindowHandle != nullptr)
 	{
 		RECT ra = { 0,0,0,0 };
 		::AdjustWindowRect(&ra, WS_OVERLAPPEDWINDOW, TRUE);
@@ -473,10 +473,10 @@ void UpdateConfig (void)
 /********************************************/
 /*               Cpu Config                 */
 /********************************************/
-HWND hCpuDlg = NULL;
+HWND hCpuDlg = nullptr;
 
 void OpenCpuConfig() {
-	if (hCpuDlg==NULL) {
+	if (hCpuDlg==nullptr) {
 		hCpuDlg = CreateDialog
 			(EmuState.WindowInstance,(LPCTSTR) IDD_CPU,EmuState.WindowHandle,(DLGPROC) CpuConfig);
 	}
@@ -528,7 +528,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		switch (LOWORD(wParam)) {
 		case IDCANCEL:
 		case IDCLOSE:
-			hCpuDlg = NULL;
+			hCpuDlg = nullptr;
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
@@ -564,7 +564,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			SetOverclock(CurrentConfig.EnableOverclock);
 			// Exit dialog if IDOK
 			if (LOWORD(wParam)==IDOK) {
-				hCpuDlg = NULL;
+				hCpuDlg = nullptr;
 				DestroyWindow(hDlg);
 			}
 			break;
@@ -634,7 +634,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 void SetOverclock(unsigned char flag)
 {
 	EmuState.OverclockFlag = flag;
-    if (hCpuDlg != NULL)
+    if (hCpuDlg != nullptr)
 		SendDlgItemMessage(hCpuDlg,IDC_OVERCLOCK,BM_SETCHECK,flag,0);
 }
 
@@ -646,7 +646,7 @@ void IncreaseOverclockSpeed()
 	CurrentConfig.CPUMultiplyer = (unsigned char)(CurrentConfig.CPUMultiplyer + 1);
 
 	// Send updates to the dialog if it's open.
-    if (hCpuDlg != NULL) {
+    if (hCpuDlg != nullptr) {
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKSPEED, TBM_SETPOS,
 						   TRUE, CurrentConfig.CPUMultiplyer);
 		sprintf(OutBuffer, "%2.3f Mhz", (float)CurrentConfig.CPUMultiplyer * 0.894);
@@ -664,7 +664,7 @@ void DecreaseOverclockSpeed()
 	CurrentConfig.CPUMultiplyer = (unsigned char)(CurrentConfig.CPUMultiplyer - 1);
 
 	// Send updates to the dialog if it's open.
-    if (hCpuDlg != NULL) {
+    if (hCpuDlg != nullptr) {
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKSPEED, TBM_SETPOS,
 						   TRUE, CurrentConfig.CPUMultiplyer);
 		sprintf(OutBuffer, "%2.3f Mhz", (float)CurrentConfig.CPUMultiplyer * 0.894);
@@ -677,9 +677,9 @@ void DecreaseOverclockSpeed()
 /********************************************/
 /*               Tape Config                */
 /********************************************/
-HWND hTapeDlg = NULL;
+HWND hTapeDlg = nullptr;
 void OpenTapeConfig() {
-	if (hTapeDlg==NULL) {
+	if (hTapeDlg==nullptr) {
 		hTapeDlg = CreateDialog
 			( EmuState.WindowInstance, (LPCTSTR) IDD_CASSETTE,
 			  EmuState.WindowHandle,   (DLGPROC) TapeConfig );
@@ -718,14 +718,14 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 		switch (LOWORD (wParam)) {
 		case IDCANCEL:
 		case IDCLOSE:
-			hTapeDlg = NULL;
+			hTapeDlg = nullptr;
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
 		case IDAPPLY:
 			UpdateConfig();
 			if (LOWORD(wParam)==IDOK) {
-				hTapeDlg = NULL;
+				hTapeDlg = nullptr;
 				DestroyWindow(hDlg);
 			}
 			break;
@@ -761,7 +761,7 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 
 void UpdateTapeCounter(unsigned int Counter,unsigned char TapeMode, bool forced)
 {
-	if (hTapeDlg==NULL) return;
+	if (hTapeDlg==nullptr) return;
 
 	if (Counter != TapeCounter || forced)
 	{
@@ -800,9 +800,9 @@ void UpdateTapeCounter(unsigned int Counter,unsigned char TapeMode, bool forced)
 /********************************************/
 /*              Audio Config                */
 /********************************************/
-HWND hAudioDlg = NULL;
+HWND hAudioDlg = nullptr;
 void OpenAudioConfig() {
-	if (hAudioDlg==NULL) {
+	if (hAudioDlg==nullptr) {
 		hAudioDlg = CreateDialog
 			(EmuState.WindowInstance,(LPCTSTR) IDD_AUDIO,EmuState.WindowHandle,(DLGPROC) AudioConfig);
 	}
@@ -856,7 +856,7 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 		switch (LOWORD(wParam)) {
 		case IDCANCEL:
 		case IDCLOSE:
-			hAudioDlg = NULL;
+			hAudioDlg = nullptr;
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
@@ -877,7 +877,7 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			strcpy(CurrentConfig.SoundCardName, SoundCards[CurrentConfig.SndOutDev].CardName);
 			UpdateConfig();
 			if (LOWORD(wParam)==IDOK) {
-				hAudioDlg = NULL;
+				hAudioDlg = nullptr;
 				DestroyWindow(hDlg);
 			}
 			break;
@@ -889,7 +889,7 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 
 void UpdateSoundBar(unsigned int * audioBuf,unsigned int bufLen)
 {
-	if (hAudioDlg == NULL) return;  // Do nothing if dialog is not running
+	if (hAudioDlg == nullptr) return;  // Do nothing if dialog is not running
 
 	// Craig's method moved from audio.c with liberties taken for variable naming
 	// Get mid level for 100 samples, left and right
@@ -929,9 +929,9 @@ void UpdateSoundBar(unsigned int * audioBuf,unsigned int bufLen)
 /********************************************/
 /*              Display Config              */
 /********************************************/
-HWND hDisplayDlg = NULL;
+HWND hDisplayDlg = nullptr;
 void OpenDisplayConfig() {
-	if (hDisplayDlg == NULL) {
+	if (hDisplayDlg == nullptr) {
 		hDisplayDlg = CreateDialog
 			(EmuState.WindowInstance,(LPCTSTR) IDD_DISPLAY,
 			 EmuState.WindowHandle,(DLGPROC) DisplayConfig);
@@ -998,7 +998,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 
 		case IDCANCEL:
 		case IDCLOSE:
-			hDisplayDlg = NULL;
+			hDisplayDlg = nullptr;
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
@@ -1014,7 +1014,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			CurrentConfig.PaletteType   = tmpcfg.PaletteType;
 			UpdateConfig();
 			if (LOWORD(wParam)==IDOK) {
-				hDisplayDlg = NULL;
+				hDisplayDlg = nullptr;
 				DestroyWindow(hDlg);
 			}
 			break;
@@ -1068,9 +1068,9 @@ int SetCurrentKeyMap(int keymap);
 int SelectKeymapFile(HWND hdlg);
 int ShowKeymapStatus(HWND hDlg);
 
-HWND hInputDlg = NULL;
+HWND hInputDlg = nullptr;
 void OpenInputConfig() {
-	if (hInputDlg==NULL) {
+	if (hInputDlg==nullptr) {
 		hInputDlg = CreateDialog
 			( EmuState.WindowInstance, (LPCTSTR) IDD_INPUT,
 			  EmuState.WindowHandle,   (DLGPROC) InputConfig );
@@ -1088,7 +1088,7 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
         switch(LOWORD(wParam)) {
 		case IDCANCEL:
 		case IDCLOSE:
-            hInputDlg = NULL;
+            hInputDlg = nullptr;
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
@@ -1096,7 +1096,7 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 			UpdateConfig();
 			if (LOWORD(wParam)==IDOK) {
-				hInputDlg = NULL;
+				hInputDlg = nullptr;
 				DestroyWindow(hDlg);
 			}
 			break;
@@ -1194,10 +1194,10 @@ int GetKeyboardLayout() {
 /********************************************/
 /*              JoyStick Config             */
 /********************************************/
-HWND hJoyStickDlg = NULL;
+HWND hJoyStickDlg = nullptr;
 
 void OpenJoyStickConfig() {
-	if (hJoyStickDlg==NULL) {
+	if (hJoyStickDlg==nullptr) {
 		hJoyStickDlg = CreateDialog
 			( EmuState.WindowInstance, (LPCTSTR) IDD_JOYSTICK,
 			  EmuState.WindowHandle,   (DLGPROC) JoyStickConfig );
@@ -1321,7 +1321,7 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 		switch(LOWORD(wParam)) {
 		case IDCANCEL:
 		case IDCLOSE:
-			hJoyStickDlg = NULL;
+			hJoyStickDlg = nullptr;
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
@@ -1332,7 +1332,7 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 			CurrentConfig.ShowMousePointer = tmpcfg.ShowMousePointer;
 			UpdateConfig();
 			if (LOWORD(wParam)==IDOK) {
-				hJoyStickDlg = NULL;
+				hJoyStickDlg = nullptr;
 				DestroyWindow(hDlg);
 			}
 			break;
@@ -1501,9 +1501,9 @@ void RefreshJoystickStatus(void)
 /********************************************/
 static char TextMode=1,PrtMon=0;;
 
-HWND hBitBangerDlg = NULL;
+HWND hBitBangerDlg = nullptr;
 void OpenBitBangerConfig() {
-	if (hBitBangerDlg==NULL) {
+	if (hBitBangerDlg==nullptr) {
 		hBitBangerDlg = CreateDialog
 			( EmuState.WindowInstance, (LPCTSTR) IDD_BITBANGER,
 			  EmuState.WindowHandle,   (DLGPROC) BitBanger );
@@ -1529,14 +1529,14 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		switch(LOWORD(wParam)) {
 		case IDCANCEL:
 		case IDCLOSE:
-			hBitBangerDlg = NULL;
+			hBitBangerDlg = nullptr;
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:
 		case IDAPPLY:
 			UpdateConfig();
 			if (LOWORD(wParam)==IDOK) {
-				hBitBangerDlg = NULL;
+				hBitBangerDlg = nullptr;
 				DestroyWindow(hDlg);
 			}
 			break;

@@ -41,7 +41,7 @@
 
 namespace VCC { namespace Debugger { namespace UI { namespace
 {
-	HWND SourceDebugWindow = NULL;
+	HWND SourceDebugWindow = nullptr;
 	HWND hWndSourceDebug;
 	WNDPROC oldEditProc;
 
@@ -75,11 +75,11 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		MoveWindow(hCtl, 14, 255, width - 30, height - 298, TRUE);
 
 		hCtl = GetDlgItem(hWndSourceDebug, IDCLOSE);
-		SetWindowPos(hCtl, NULL, 10, height - 34, 0, 0, SWP_NOSIZE);
+		SetWindowPos(hCtl, nullptr, 10, height - 34, 0, 0, SWP_NOSIZE);
 		hCtl = GetDlgItem(hWndSourceDebug, IDC_BTN_FIND_SOURCE);
-		SetWindowPos(hCtl, NULL, width - 65, height - 34, 0, 0, SWP_NOSIZE);
+		SetWindowPos(hCtl, nullptr, width - 65, height - 34, 0, 0, SWP_NOSIZE);
 		hCtl = GetDlgItem(hWndSourceDebug, IDC_EDIT_FIND_SOURCE);
-		SetWindowPos(hCtl, NULL, width - 172, height - 34, 0, 0, SWP_NOSIZE);
+		SetWindowPos(hCtl, nullptr, width - 172, height - 34, 0, 0, SWP_NOSIZE);
 	}
 
 	bool LoadSource(char* source)
@@ -531,7 +531,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			HWND hCtl = GetDlgItem(hDlg, IDC_EDIT_FIND_SOURCE);
 			oldEditProc = (WNDPROC)SetWindowLongPtr(hCtl, GWLP_WNDPROC, (LONG_PTR)subEditProc);
 
-			SetTimer(hDlg, IDT_BRKP_TIMER, 250, (TIMERPROC)NULL);
+			SetTimer(hDlg, IDT_BRKP_TIMER, 250, nullptr);
 
 			break;
 		}
@@ -601,7 +601,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			case WM_DESTROY:
 				KillTimer(hDlg, IDT_BRKP_TIMER);
 				DestroyWindow(hDlg);
-				SourceDebugWindow = NULL;
+				SourceDebugWindow = nullptr;
 				break;
 			}
 
@@ -615,7 +615,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 void VCC::Debugger::UI::OpenSourceDebugWindow(HINSTANCE instance, HWND parent)
 {
-	if (SourceDebugWindow == NULL)
+	if (SourceDebugWindow == nullptr)
 	{
 		SourceDebugWindow = CreateDialog(
 			instance,

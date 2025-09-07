@@ -37,7 +37,7 @@ namespace Screenshot
 
         // create filename
         char path[_MAX_PATH];
-        time_t now = time(NULL);
+        time_t now = time(nullptr);
         auto tm = *localtime(&now);
         auto len = snprintf(path, _MAX_PATH, "%s\\Pictures\\vcc-%04d%02d%02d-%02d%02d%02d-0.png", userProfile, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
         if (len < 0 || len >= _MAX_PATH) return ERR_PATHTOOLONG;

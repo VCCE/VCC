@@ -51,14 +51,14 @@ int wincom_open()
     static int bt[16]={38400, 110, 110, 110, 300, 300, 300,  600,
                         1200,2400,2400,4800,4800,9600,9600,19200};
 
-    hReadEvent  = CreateEvent(NULL,TRUE,FALSE,NULL);
-    hWriteEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
+    hReadEvent  = CreateEvent(nullptr,TRUE,FALSE,nullptr);
+    hWriteEvent = CreateEvent(nullptr,TRUE,FALSE,nullptr);
 
     char portname[64];
     sprintf(portname,"\\\\.\\%s",AciaComPort);
     hComPort = CreateFileA(portname,
-                           GENERIC_READ | GENERIC_WRITE, 0, NULL,
-                           OPEN_EXISTING, FILE_FLAG_OVERLAPPED,NULL);
+                           GENERIC_READ | GENERIC_WRITE, 0, nullptr,
+                           OPEN_EXISTING, FILE_FLAG_OVERLAPPED,nullptr);
     if (hComPort==INVALID_HANDLE_VALUE) return -1; // msgbox?
 
     // Port settings

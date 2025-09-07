@@ -179,7 +179,7 @@ int GetCmdLineArgs(char *CmdString)
         }
 
         // Get next token
-        token = ParseCmdString(NULL,ValueRequired);
+        token = ParseCmdString(nullptr,ValueRequired);
     }
     return 0;
 }
@@ -249,7 +249,7 @@ char * ParseCmdString(char *CmdString, const char *ValueRequired)
 char *GetNextToken ()
 {
     // Return NULL if no tokens
-    if (*NxtTokenPtr == '\0') return NULL;
+    if (*NxtTokenPtr == '\0') return nullptr;
 
     // Save token pointer 
     char *token = NxtTokenPtr++;

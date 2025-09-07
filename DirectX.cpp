@@ -101,7 +101,7 @@ namespace VCC
         ddsd.dwSize = sizeof(ddsd);		// The first parameter of the structure must contain the size of the structure
 
         // Create an instance of a DirectDraw object
-        hr = ::DirectDrawCreate(NULL, &g_pDD, NULL);
+        hr = ::DirectDrawCreate(nullptr, &g_pDD, nullptr);
         if (hr) return Result(ERR_UNKNOWN);
 
         VCC::Rect windowRect = { 0, 0, 640, 480 };
@@ -110,7 +110,7 @@ namespace VCC
         {
             ddsd.lPitch = 0;
             ddsd.ddpfPixelFormat.dwRGBBitCount = 0;
-            hr = DirectDrawCreate(NULL, &g_pDD, NULL);		// Initialize DirectDraw
+            hr = DirectDrawCreate(nullptr, &g_pDD, nullptr);		// Initialize DirectDraw
             if (hr) return Result(ERR_UNKNOWN);
             hr = g_pDD->SetCooperativeLevel((HWND)hwnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES);
             if (hr) return Result(ERR_UNKNOWN);
@@ -119,7 +119,7 @@ namespace VCC
             ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
             ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
             ddsd.dwBackBufferCount = 1;
-            hr = g_pDD->CreateSurface(&ddsd, &g_pDDS, NULL);
+            hr = g_pDD->CreateSurface(&ddsd, &g_pDDS, nullptr);
             if (hr) return Result(ERR_UNKNOWN);
             ddsd.ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
             g_pDDS->GetAttachedSurface(&ddsd.ddsCaps, &g_pDDSBack);
@@ -133,7 +133,7 @@ namespace VCC
                 pal[i + 128].peRed = ColorValues[(i & 32) >> 4 | (i & 4) >> 2];
                 pal[i + 128].peFlags = PC_RESERVED | PC_NOCOLLAPSE;
             }
-            g_pDD->CreatePalette(DDPCAPS_8BIT | DDPCAPS_ALLOW256, pal, &ddpal, NULL);
+            g_pDD->CreatePalette(DDPCAPS_8BIT | DDPCAPS_ALLOW256, pal, &ddpal, nullptr);
             g_pDDS->SetPalette(ddpal); // Set pallete for Primary surface
             //**********************************END TEST***************************************
         }
@@ -147,32 +147,32 @@ namespace VCC
             ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
 
             // Create our Primary Surface
-            hr = g_pDD->CreateSurface(&ddsd, &g_pDDS, NULL);
+            hr = g_pDD->CreateSurface(&ddsd, &g_pDDS, nullptr);
             if (hr) return Result(ERR_UNKNOWN);
             ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
             ddsd.dwWidth = windowRect.w;								// Make our off-screen surface 
             ddsd.dwHeight = windowRect.h;
             ddsd.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY;				// Try to create back buffer in video RAM
-            hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, NULL);
+            hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, nullptr);
             if (hr)													// If not enough Video Ram 			
             {
                 ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;			// Try to create back buffer in System RAM
-                hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, NULL);
+                hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, nullptr);
                 if (hr)	return Result(ERR_UNKNOWN);								//Giving Up
                 MessageBox(0, "Creating Back Buffer in System Ram\n", "Performance Warning", 0);
             }
 
             hr = g_pDD->GetDisplayMode(&ddsd);
             if (hr) return Result(ERR_UNKNOWN);
-            hr = g_pDD->CreateClipper(0, &g_pClipper, NULL);		// Create the clipper using the DirectDraw object
+            hr = g_pDD->CreateClipper(0, &g_pClipper, nullptr);		// Create the clipper using the DirectDraw object
             if (hr) return Result(ERR_UNKNOWN);
-            hr = g_pClipper->SetHWnd(0, (HWND)hwnd);						// Assign your window's HWND to the clipper
+            hr = g_pClipper->SetHWnd(0, (HWND)hwnd);				// Assign your window's HWND to the clipper
             if (hr) return Result(ERR_UNKNOWN);
             hr = g_pDDS->SetClipper(g_pClipper);					// Attach the clipper to the primary surface
             if (hr) return Result(ERR_UNKNOWN);
-            hr = g_pDDSBack->Lock(NULL, &ddsd, DDLOCK_WAIT, NULL);
+            hr = g_pDDSBack->Lock(nullptr, &ddsd, DDLOCK_WAIT, nullptr);
             if (hr) return Result(ERR_UNKNOWN);
-            hr = g_pDDSBack->Unlock(NULL);						// Unlock surface
+            hr = g_pDDSBack->Unlock(nullptr);						// Unlock surface
             if (hr) return Result(ERR_UNKNOWN);
         }
 
@@ -201,7 +201,7 @@ namespace VCC
         ForcedAspectBorderPadding = { 0,0 };
 
         if (isFullscreen)	// if we're windowed do the blit, else just Flip
-            hr = g_pDDS->Flip(NULL, DDFLIP_NOVSYNC | DDFLIP_DONOTWAIT); //DDFLIP_WAIT
+            hr = g_pDDS->Flip(nullptr, DDFLIP_NOVSYNC | DDFLIP_DONOTWAIT); //DDFLIP_WAIT
         else
         {
             p.x = 0; p.y = 0;
@@ -279,10 +279,10 @@ namespace VCC
                 ::MoveWindow(hwnd, Temp.left, Temp.top, WindowDefaultSize.right - WindowDefaultSize.left, WindowDefaultSize.bottom - WindowDefaultSize.top, 1);
             }
 
-            if (g_pDDSBack == NULL)
+            if (g_pDDSBack == nullptr)
                 return Result(ERR_UNKNOWN);
 
-            hr = g_pDDS->Blt(&rcDest, g_pDDSBack, &rcSrc, DDBLT_WAIT, NULL); // DDBLT_WAIT
+            hr = g_pDDS->Blt(&rcDest, g_pDDSBack, &rcSrc, DDBLT_WAIT, nullptr); // DDBLT_WAIT
             if (hr) return Result(ERR_UNKNOWN);
         }
 
@@ -297,7 +297,7 @@ namespace VCC
     int DirectX::Cleanup()
     {
         using namespace Detail;
-        if (g_pDD != NULL)
+        if (g_pDD != nullptr)
             g_pDD->Release();	//Destroy the current Window
 
         return Result(OK);
@@ -352,7 +352,7 @@ namespace VCC
         ddsd.dwSize = sizeof(ddsd);		// The first parameter of the structure must contain the size of the structure
 
         // Lock entire surface, wait if it is busy, return surface memory pointer
-        hr = g_pDDSBack->Lock(NULL, &ddsd, DDLOCK_WAIT | DDLOCK_SURFACEMEMORYPTR, NULL);
+        hr = g_pDDSBack->Lock(nullptr, &ddsd, DDLOCK_WAIT | DDLOCK_SURFACEMEMORYPTR, nullptr);
         if (hr)
         {
             //		MessageBox(0,"Can't Lock surface","Error",0);
@@ -385,7 +385,7 @@ namespace VCC
                 return 1;
                 break;
         }
-        if (ddsd.lpSurface == NULL)
+        if (ddsd.lpSurface == nullptr)
             MessageBox(0, "Returning NULL!!", "ok", 0);
 
         surface = ddsd.lpSurface;
@@ -399,7 +399,7 @@ namespace VCC
         using namespace Detail;
 
         HRESULT hr;
-        hr = g_pDDSBack->Unlock(NULL);
+        hr = g_pDDSBack->Unlock(nullptr);
         surface = nullptr;
         if (hr) return Result(ERR_UNKNOWN);
 

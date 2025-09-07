@@ -32,8 +32,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "fileops.h"
 static unsigned char *MemPages[1024];
 static unsigned short MemPageOffsets[1024];
-static unsigned char *memory=NULL;	//Emulated RAM
-static unsigned char *InternalRomBuffer=NULL;
+static unsigned char *memory=nullptr;	//Emulated RAM
+static unsigned char *InternalRomBuffer=nullptr;
 static unsigned char MmuTask=0;		// $FF91 bit 0
 static unsigned char MmuEnabled=0;	// $FF90 bit 6
 static unsigned char RamVectors=0;	// $FF90 bit 3
@@ -57,7 +57,7 @@ void UpdateMmuArray(void);
 /*****************************************************************************************
 * MmuInit Initilize and allocate memory for RAM Internal and External ROM Images.        *
 * Copy Rom Images to buffer space and reset GIME MMU registers to 0                      *
-* Returns NULL if any of the above fail.                                                 *
+* Returns nullptr if any of the above fail.                                                 *
 *****************************************************************************************/
 unsigned char * MmuInit(unsigned char RamConfig)
 {
@@ -71,14 +71,14 @@ unsigned char * MmuInit(unsigned char RamConfig)
 	unsigned int Index1=0;
 	RamSize=MemConfig[RamConfig];
 	CurrentRamConfig=RamConfig;
-	if (memory != NULL)
+	if (memory != nullptr)
 		free(memory);
 
 	memory=(unsigned char *)malloc(RamSize);
-	if (memory==NULL) {
+	if (memory==nullptr) {
 		mem_initializing = 0;
 		RamSize = 0;
-		return(NULL);
+		return(nullptr);
 	}
 
 	for (Index1=0;Index1<RamSize;Index1++)
@@ -89,14 +89,14 @@ unsigned char * MmuInit(unsigned char RamConfig)
 			memory[Index1]=0xFF;
 	}
 	SetVidMask(VidMask[CurrentRamConfig]);
-	if (InternalRomBuffer != NULL)
+	if (InternalRomBuffer != nullptr)
 		free(InternalRomBuffer);
-	InternalRomBuffer=NULL;
+	InternalRomBuffer=nullptr;
 	InternalRomBuffer=(unsigned char *)malloc(0x8000);
 
-	if (InternalRomBuffer == NULL) {
+	if (InternalRomBuffer == nullptr) {
 		mem_initializing = 0;
-		return(NULL);
+		return(nullptr);
 	}
 
 	memset(InternalRomBuffer,0xFF,0x8000);
@@ -215,18 +215,18 @@ void LoadRom(void)
 
 	GetExtRomPath(RomPath);
 	if (*RomPath == '\0') {
-		GetModuleFileName(NULL, RomPath, MAX_PATH);
+		GetModuleFileName(nullptr, RomPath, MAX_PATH);
 		PathRemoveFileSpec(RomPath);
 		strncat(RomPath, "coco3.rom", MAX_PATH);
 	}
 
-	if ((hFile = fopen(RomPath,"rb")) != NULL) {
+	if ((hFile = fopen(RomPath,"rb")) != nullptr) {
 		while ((feof(hFile)==0) & (index<0x8000)) {
 			InternalRomBuffer[index++] = fgetc(hFile);
 		}
 		fclose(hFile);
 	}
-	if ((hFile == NULL) | (index == 0)) {
+	if ((hFile == nullptr) | (index == 0)) {
 		//MessageBox(GetActiveWindow(),
 		MessageBox(0,
 				"coco3.rom load failed\n"
@@ -427,8 +427,8 @@ void UpdateMmuArray(void)
 	case 1:	//16K Internal 16K External
 		MemPages[VectorMask[CurrentRamConfig]-3]=InternalRomBuffer;
 		MemPages[VectorMask[CurrentRamConfig]-2]=InternalRomBuffer+0x2000;
-		MemPages[VectorMask[CurrentRamConfig]-1]=NULL;
-		MemPages[VectorMask[CurrentRamConfig]]=NULL;
+		MemPages[VectorMask[CurrentRamConfig]-1]=nullptr;
+		MemPages[VectorMask[CurrentRamConfig]]=nullptr;
 
 		MemPageOffsets[VectorMask[CurrentRamConfig]-3]=1;
 		MemPageOffsets[VectorMask[CurrentRamConfig]-2]=1;
@@ -451,10 +451,10 @@ void UpdateMmuArray(void)
 	break;
 
 	case 3:	//32K External
-		MemPages[VectorMask[CurrentRamConfig]-1]=NULL;
-		MemPages[VectorMask[CurrentRamConfig]]=NULL;
-		MemPages[VectorMask[CurrentRamConfig]-3]=NULL;
-		MemPages[VectorMask[CurrentRamConfig]-2]=NULL;
+		MemPages[VectorMask[CurrentRamConfig]-1]=nullptr;
+		MemPages[VectorMask[CurrentRamConfig]]=nullptr;
+		MemPages[VectorMask[CurrentRamConfig]-3]=nullptr;
+		MemPages[VectorMask[CurrentRamConfig]-2]=nullptr;
 
 		MemPageOffsets[VectorMask[CurrentRamConfig]-1]=0;
 		MemPageOffsets[VectorMask[CurrentRamConfig]]=0x2000;

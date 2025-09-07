@@ -28,7 +28,7 @@
 #include "acia.h"
 #include "../logger.h"
 
-FILE * FileStream = NULL;
+FILE * FileStream = nullptr;
 
 // Open file. Binary mode so windows does not try to do line end LF
 // translations. (OS9 uses CR for line endings)  File path is
@@ -58,7 +58,7 @@ void file_close()
 {
     //PrintLogF("Close %d\n",FileStream);
     if(FileStream) fclose(FileStream);
-    FileStream = NULL;
+    FileStream = nullptr;
 }
 
 // Read file.  If text remove LF characters
@@ -67,7 +67,7 @@ int file_read(char* buf,int siz)
     //PrintLogF("Read %d %d\n",FileStream, siz);
     int PrevChrCR=0; // True if last char read was a carriage return
 
-    if (FileStream == NULL) {
+    if (FileStream == nullptr) {
         return -1;
     }
 
