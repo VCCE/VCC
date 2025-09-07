@@ -26,7 +26,8 @@ namespace VCC
 {
 	struct DisplayNull : IDisplayDirectX, IDisplayOpenGL
 	{
-		DisplayNull(ISystemState*) {}
+		explicit DisplayNull(ISystemState*) {}
+
 		int Setup(void* hwnd, int width, int height, int statusHeight, bool fullscreen) override { return !OK; }
 		int Render() override { return OK; }
 		int Present() override { return OK; }

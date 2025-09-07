@@ -42,7 +42,7 @@ namespace VCC
 		};
 
 		Pixel() {}
-		Pixel(uint32_t p) : pixel(p) {}
+		explicit Pixel(uint32_t p) : pixel(p) {}
 		Pixel(uint8_t r, uint8_t g, uint8_t b) : a(255), r(r), g(g), b(b) {}
 		bool operator==(const Pixel& o) const { return o.pixel == pixel; }
 		bool operator!=(const Pixel& o) const { return !operator==(o); }
@@ -90,6 +90,8 @@ namespace VCC
 			OPT_FLAG_NTSC,			// use 50hz aspect ELSE 60hz aspect (default)
 			OPT_FLAG_RESIZEABLE,
 		};
+
+		virtual ~IDisplay() = default;
 
 		// setup display:
 		//	width = full window width

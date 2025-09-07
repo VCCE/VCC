@@ -130,7 +130,7 @@ namespace VCC
     template <class T, size_t Size>
     struct VideoArray
     {    
-        VideoArray(T* p) : data(p) {}
+		explicit VideoArray(T* p) : data(p) {}
 
         T& operator[](size_t index) 
         {
@@ -211,6 +211,8 @@ namespace VCC
     struct ISystemState
     {
         enum { OK };
+		virtual ~ISystemState() = default;
+
         virtual int GetWindowHandle(void** handle) = 0;
         virtual int GetRect(int rectOption, Rect* rect) = 0;
         virtual void SetSurface(void* ptr, uint8_t bitDepth, long stride) = 0;
@@ -259,7 +261,8 @@ struct SystemState
 //
 struct SystemStatePtr : VCC::ISystemState
 {
-    SystemStatePtr(SystemState* state) : state(state) {}
+	explicit SystemStatePtr(SystemState* state) : state(state) {}
+
     int GetWindowHandle(void** handle) override 
     { 
         *handle = state->WindowHandle; 

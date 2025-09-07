@@ -58,7 +58,7 @@ namespace VCC
 	class SectionLocker
 	{
 	public:
-		SectionLocker(CriticalSection& section)
+		explicit SectionLocker(CriticalSection& section)
 			: Section_(section)
 		{
 			Section_.Lock();
