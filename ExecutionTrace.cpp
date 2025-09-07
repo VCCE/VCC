@@ -657,7 +657,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		showHScrollBar = Rect.right - ScrollBarWidth < horizontalWidth;
 		ShowWindow(hWndHScrollBar, showHScrollBar ? SW_SHOW : SW_HIDE);
 
-		int bottomOffset = (showHScrollBar) ? 0 : -ScrollBarWidth;
+		int bottomOffset = showHScrollBar ? 0 : -ScrollBarWidth;
 
 		if (showHScrollBar)
 		{

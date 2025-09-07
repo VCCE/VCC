@@ -291,7 +291,7 @@ unsigned char WriteIniFile(void)
 
     // Force flush inifile
 	WritePrivateProfileString(nullptr,nullptr,nullptr,IniFilePath);
-	return(0);
+	return 0;
 }
 
 /***********************************************************/
@@ -384,7 +384,7 @@ unsigned char ReadIniFile(void)
 	Rect rect = { CW_USEDEFAULT, CW_USEDEFAULT, DefaultWidth, DefaultHeight };
 	if (CurrentConfig.RememberSize)
 		rect = CurrentConfig.WindowRect;
-	return(0);
+	return 0;
 }
 
 void LoadModule()
@@ -627,7 +627,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		}		//End switch LOWORD(wParam)
 		break;	//Break WM_COMMAND
 	}			//END switch (message)
-	return(0);
+	return 0;
 }
 
 /* Set overclocking */
@@ -756,7 +756,7 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 		}
 		break;	//End WM_COMMAND
 	}
-	return(0);
+	return 0;
 }
 
 void UpdateTapeCounter(unsigned int Counter,unsigned char TapeMode, bool forced)
@@ -884,7 +884,7 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 		}
 		break;
 	}
-	return(0);
+	return 0;
 }
 
 void UpdateSoundBar(unsigned int * audioBuf,unsigned int bufLen)
@@ -1057,7 +1057,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 		}	//End switch LOWORD(wParam)
 		break;	//break WM_COMMAND
 	}			//END switch Message
-	return(0);
+	return 0;
 }
 
 /********************************************/
@@ -1125,7 +1125,7 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
         ShowKeymapStatus(hDlg);
         break;
     }
-    return(0);
+    return 0;
 }
 
 int SetCurrentKeyMap(int keymap) {
@@ -1152,7 +1152,7 @@ int ShowKeymapStatus(HWND hDlg)
         }
     }
     SendDlgItemMessage(hDlg,IDC_KEYMAP_FILE,WM_SETTEXT,0,(LPARAM)KeyMapFilePath);
-    return(0);
+    return 0;
 }
 
 BOOL SelectKeymapFile(HWND hDlg)
@@ -1432,7 +1432,7 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 		break; // Break WM_COMMAND
 
 	} //END switch message
-	return(0);
+	return 0;
 }
 
 void SwapJoySticks()
@@ -1569,7 +1569,7 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		}	   //End switch wParam
 		break; //End WM_COMMAND
 	}  //End switch message
-	return(0);
+	return 0;
 }
 
 /********************************************/
@@ -1609,7 +1609,7 @@ int SelectFile(char *FileName)
 		}
 	}
 	dlg.getpath(FileName);
-	return(1);
+	return 1;
 }
 
 /**********************************/

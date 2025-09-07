@@ -138,13 +138,13 @@ int EnumerateJoysticks(void)
     JoyStickIndex=0;
     if (FAILED(hr = DirectInput8Create(GetModuleHandle(nullptr),
                     DIRECTINPUT_VERSION,IID_IDirectInput8,(VOID**)&di,nullptr)))
-        return(0);
+        return 0;
 
     if (FAILED(hr = di->EnumDevices(DI8DEVCLASS_GAMECTRL,
                     enumCallback,nullptr,DIEDFL_ATTACHEDONLY)))
-        return(0);
+        return 0;
 
-    return(JoyStickIndex);
+    return JoyStickIndex;
 #endif
 }
 
@@ -169,10 +169,10 @@ bool InitJoyStick (unsigned char StickNumber)
     HRESULT hr;
     CurrentStick=StickNumber;
     if (Joysticks[StickNumber]==nullptr)
-        return(false);
+        return false;
 
     if (FAILED(hr= Joysticks[StickNumber]->SetDataFormat(&c_dfDIJoystick2)))
-        return(false);
+        return false;
 
 //  if (FAILED(hr= Joysticks[StickNumber]->SetCooperativeLevel(nullptr, DISCL_EXCLUSIVE )))
 //      return(0);
@@ -182,8 +182,9 @@ bool InitJoyStick (unsigned char StickNumber)
 //      return(0);
 
     if (FAILED(hr= Joysticks[StickNumber]->EnumObjects(enumAxesCallback,nullptr,DIDFT_AXIS)))
-        return(false);
-    return(true); //return true on success
+        return false;
+
+	return true; //return true on success
 #else
 	return(1);
 #endif
@@ -203,9 +204,9 @@ BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* con
     propRange.lMax=0xFFFF;
 
     if (FAILED(Joysticks[CurrentStick]->SetProperty(DIPROP_RANGE, &propRange.diph)))
-        return(DIENUM_STOP);
+        return DIENUM_STOP;
 
-    return(DIENUM_CONTINUE);
+    return DIENUM_CONTINUE;
 }
 #endif
 
@@ -233,7 +234,7 @@ JoyStickPoll(DIJOYSTATE2 *js,unsigned char StickNumber)
     }
 
     if (FAILED(hr= Joysticks[StickNumber]->GetDeviceState(sizeof(DIJOYSTATE2), js)))
-        return(hr);
+        return hr;
     return(S_OK);
 }
 #endif
@@ -417,22 +418,22 @@ get_pot_value(unsigned char pot)
 
     switch (pot) {
     case 0:
-        return(RightStickX);
+        return RightStickX;
         break;
 
     case 1:
-        return(RightStickY);
+        return RightStickY;
         break;
 
     case 2:
-        return(LeftStickX);
+        return LeftStickX;
         break;
 
     case 3:
-        return(LeftStickY);
+        return LeftStickY;
         break;
     }
-    return (0);
+    return 0;
 }
 
 /*****************************************************************************/
@@ -560,7 +561,7 @@ SetMouseStatus(unsigned char ScanCode,unsigned char Phase)
         }
         break;
     }
-    return(ReturnValue);
+    return ReturnValue;
 }
 
 /****************************************************************************/

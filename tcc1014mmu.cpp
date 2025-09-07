@@ -78,7 +78,7 @@ unsigned char * MmuInit(unsigned char RamConfig)
 	if (memory==nullptr) {
 		mem_initializing = false;
 		RamSize = 0;
-		return(nullptr);
+		return nullptr;
 	}
 
 	for (Index1=0;Index1<RamSize;Index1++)
@@ -96,14 +96,14 @@ unsigned char * MmuInit(unsigned char RamConfig)
 
 	if (InternalRomBuffer == nullptr) {
 		mem_initializing = false;
-		return(nullptr);
+		return nullptr;
 	}
 
 	memset(InternalRomBuffer,0xFF,0x8000);
 	LoadRom();
 	MmuReset();
 	mem_initializing = false;
-	return(memory);
+	return memory;
 }
 
 void MmuReset(void)
@@ -201,7 +201,7 @@ void Set_MmuEnabled (unsigned char usingmmu)
  
 unsigned char * Getint_rom_pointer(void)
 {
-	return(InternalRomBuffer);
+	return InternalRomBuffer;
 }
 
 // LoadRom() loads Coco3.rom. It is called by MmuInit() here
@@ -363,7 +363,7 @@ unsigned short GetMem(unsigned long address) {
 	if (address < RamSize)
 		return(memory[address]);
 	else
-		return(0xFF);
+		return 0xFF;
 }
 void SetMem(unsigned long address, unsigned short data) {
 	if (address < RamSize)

@@ -41,23 +41,23 @@ int CheckPath( char *Path)	//Return 1 on Error
 	HANDLE hr=nullptr;
 
 	if ((strlen(Path)==0) | (strlen(Path) > MAX_PATH))
-		return(1);
+		return 1;
 	hr=CreateFile(Path,0,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 	if (hr==INVALID_HANDLE_VALUE) //File Doesn't exist
 	{
 		GetModuleFileName(nullptr,TempPath,MAX_PATH);
 		PathRemoveFileSpec(TempPath);
 		if ( (strlen(TempPath)) + (strlen(Path)) > MAX_PATH)	//Resulting path is to large Bail.
-			return(1);
+			return 1;
 
 		strcat(TempPath,Path);
 		hr=CreateFile(TempPath,0,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);			
 		if (hr ==INVALID_HANDLE_VALUE)
-			return(1);
+			return 1;
 		strcpy(Path,TempPath);
 	}
 	CloseHandle(hr);
-	return(0);
+	return 0;
 }
 
 // These are here to remove dependance on shlwapi.dll. ASCII only
@@ -83,14 +83,14 @@ BOOL PathRemoveFileSpec(char *Path)
 {
 	size_t Index=strlen(Path),Lenth=Index;
 	if ( (Index==0) | (Index > MAX_PATH))
-		return(false);
+		return false;
 	
 	while ( (Index>0) & (Path[Index] != '\\') )
 		Index--;
 	while ( (Index>0) & (Path[Index] == '\\') )
 		Index--;
 	if (Index==0)
-		return(false);
+		return false;
 	Path[Index+2]=0;
 	return( !(strlen(Path) == Lenth));
 }		
@@ -99,7 +99,7 @@ BOOL PathRemoveExtension(char *Path)
 {
 	size_t Index=strlen(Path),Lenth=Index;
 	if ( (Index==0) | (Index > MAX_PATH))
-		return(false);
+		return false;
 	
 	while ( (Index>0) & (Path[Index--] != '.') );
 	Path[Index+1]=0;

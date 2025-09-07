@@ -189,19 +189,19 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	if (hEvent==nullptr)
 	{
 		MessageBox(nullptr,"Can't create Thread!!","Error",0);
-		return(0);
+		return 0;
 	}
 	hEMUQuit = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (hEMUQuit == nullptr)
 	{
 		MessageBox(nullptr, "Can't create Thread Quit Event!!", "Error", 0);
-		return(0);
+		return 0;
 	}
 	hEMUThread = (HANDLE)_beginthreadex( nullptr, 0, &EmuLoop, hEvent, 0, &threadID );
 	if (hEMUThread==nullptr)
 	{
 		MessageBox(nullptr,"Can't Start main Emulation Thread!","Ok",0);
-		return(0);
+		return 0;
 	}
 	WaitForSingleObject( hEvent, INFINITE );
 	SetThreadPriority(hEMUThread,THREAD_PRIORITY_NORMAL);
@@ -886,7 +886,7 @@ unsigned char SetAutoStart(unsigned char Tmp)
 {
 	if (Tmp != QUERY)
 		AutoStart=Tmp;
-	return(AutoStart);
+	return AutoStart;
 }
 
 // LoadIniFile allows user to browse for an ini file and reloads the config from it.

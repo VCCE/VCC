@@ -31,7 +31,7 @@ void CalibrateThrottle(void)
 {
 	timeBeginPeriod(1);	//Needed to get max resolution from the timer normally its 10Ms
 	QueryPerformanceFrequency(&MasterClock);
-	OneFrame.QuadPart=MasterClock.QuadPart/(TARGETFRAMERATE);
+	OneFrame.QuadPart = MasterClock.QuadPart / TARGETFRAMERATE;
 	OneMs.QuadPart=MasterClock.QuadPart/1000;
 	fMasterClock=(float)MasterClock.QuadPart;
 }

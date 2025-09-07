@@ -198,7 +198,7 @@ void Motor(unsigned char State)
 
 unsigned int GetTapeCounter(void)
 {
-	return(TapeOffset);
+	return TapeOffset;
 }
 
 void SetTapeCounter(unsigned int Count, bool forced)
@@ -367,7 +367,7 @@ int MountTape( char *FileName)	//Return 1 on sucess 0 on fail
 	if (TapeHandle==INVALID_HANDLE_VALUE)
 	{
 		MessageBox(nullptr,"Can't Mount","Error",0);
-		return(0);	//Give up
+		return 0;	//Give up
 	}
 	TapeWritten = false;
 	TotalSize=SetFilePointer(TapeHandle,0,nullptr,FILE_END);
@@ -429,12 +429,12 @@ int MountTape( char *FileName)	//Return 1 on sucess 0 on fail
 		CasBuffer=(unsigned char *)malloc(CAS_WRITEBUFFERSIZE);
 		ReadFile(TapeHandle,CasBuffer,TotalSize,&BytesMoved,nullptr);	//Read the whole file in for .CAS files
 		if (BytesMoved!=TotalSize)
-			return(0);
+			return 0;
 	}
 
 	SetSndOutMode(2);
 
-	return(1);
+	return 1;
 }
 
 void CloseTapeFile(void)
@@ -462,7 +462,7 @@ unsigned int LoadTape(void)
 		dlg.getpath(TapeFileName,MAX_PATH);
 		if (MountTape(TapeFileName)==0)	{
 			MessageBox(nullptr,"Can't open file","Error",0);
-			return(0);
+			return 0;
 		}
 	}
 	dlg.getdir(CassPath);
@@ -471,7 +471,7 @@ unsigned int LoadTape(void)
 	// turn off fast load for wav files
 	if (FileType == WAV) TapeFastLoad = false;
 	TapeWritten = false;
-	return(1);
+	return 1;
 }
 
 void GetTapeName(char *Name)

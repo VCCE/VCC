@@ -177,7 +177,7 @@ unsigned char PackMem8Read (unsigned short Address)
 		return(PakMemRead8(Address&32767));
 	if (ExternalRomBuffer!=nullptr)
 		return(ExternalRomBuffer[(Address & 32767)+BankedCartOffset]);
-	return(0);
+	return 0;
 }
 
 void PackMem8Write(unsigned short Address,unsigned char Value)
@@ -231,10 +231,10 @@ int LoadCart(void)
 		if (InsertModule(dlg.path()) == 0) {
 			dlg.getdir(PakPath);
 			WritePrivateProfileString("DefaultPaths", "PakPath", PakPath, inifile);
-			return(0);
+			return 0;
 		}
 	}
-	return(1);
+	return 1;
 }
 
 // Insert Module returns 0 on success
@@ -253,7 +253,7 @@ int InsertModule (char *ModulePath)
 	switch (FileType)
 	{
 	case 0:		//File doesn't exist
-		return(NOMODULE);
+		return NOMODULE;
 		break;
 
 	case 2:		//File is a ROM image
@@ -267,7 +267,7 @@ int InsertModule (char *ModulePath)
 		// Reset if enabled
 		EmuState.ResetPending = 2;
 		SetCart(1);
-		return(NOMODULE);
+		return NOMODULE;
 	break;
 
 	case 1:		//File is a DLL
@@ -276,7 +276,7 @@ int InsertModule (char *ModulePath)
 		hinstLib = LoadLibrary(ModulePath);
 		//PrintLogC("pak:LoadLibrary %s %d\n",ModulePath,hinstLib);
 		if (hinstLib == nullptr)
-			return(NOMODULE);
+			return NOMODULE;
 		SetCart(0);
 		GetModuleName=(GETNAME)GetProcAddress(hinstLib, "ModuleName");
 		ConfigModule=(CONFIGIT)GetProcAddress(hinstLib, "ModuleConfig");
@@ -297,7 +297,7 @@ int InsertModule (char *ModulePath)
 			int rc = FreeLibrary(hinstLib);
 			//PrintLogC("pak:err FreeLibrary %d %d\n",hinstLib,rc);
 			hinstLib=nullptr;
-			return(NOTVCC);
+			return NOTVCC;
 		}
 		BankedCartOffset=0;
 		if (DmaMemPointer!=nullptr)
@@ -380,10 +380,10 @@ int InsertModule (char *ModulePath)
 		strcpy(DllPath,ModulePath);
 		EmuState.ResetPending=2;
 
-		return(0);
+		return 0;
 		break;
 	}
-	return(NOMODULE);
+	return NOMODULE;
 }
 
 /**
@@ -487,15 +487,15 @@ int FileID(char *Filename)
 	char Temp[3]="";
 	DummyHandle=fopen(Filename,"rb");
 	if (DummyHandle==nullptr)
-		return(0);	//File Doesn't exist
+		return 0;	//File Doesn't exist
 
 	Temp[0]=fgetc(DummyHandle);
 	Temp[1]=fgetc(DummyHandle);
 	Temp[2]=0;
 	fclose(DummyHandle);
 	if (strcmp(Temp,"MZ")==0)
-		return(1);	//DLL File
-	return(2);		//Rom Image
+		return 1;	//DLL File
+	return 2;		//Rom Image
 }
 
 // DynamicMenuActivated is called from VCC main when a dynamic menu item is clicked.

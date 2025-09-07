@@ -536,7 +536,7 @@ void Tst_D(void)
 
 void Jmp_D(void)
 {	//E
-	PC_REG= ((dp.Reg |MemRead8(PC_REG)));
+	PC_REG = dp.Reg | MemRead8(PC_REG);
 	CycleCounter+=NatEmuCycles32;
 }
 
@@ -2251,7 +2251,7 @@ void Band(void)
 	postbyte = MemRead8(PC_REG++);
 	temp8 = MemRead8(DPADDRESS(PC_REG++));
 	Source = (postbyte >> 3) & 7;
-	Dest = (postbyte) & 7;
+	Dest = postbyte & 7;
 	postbyte >>= 6;
 	
 	if (postbyte == 3)
@@ -2282,7 +2282,7 @@ void Biand(void)
 	postbyte = MemRead8(PC_REG++);
 	temp8 = MemRead8(DPADDRESS(PC_REG++));
 	Source = (postbyte >> 3) & 7;
-	Dest = (postbyte) & 7;
+	Dest = postbyte & 7;
 	postbyte >>= 6;
 
 	if (postbyte == 3)
@@ -2313,7 +2313,7 @@ void Bor(void)
 	postbyte = MemRead8(PC_REG++);
 	temp8 = MemRead8(DPADDRESS(PC_REG++));
 	Source = (postbyte >> 3) & 7;
-	Dest = (postbyte) & 7;
+	Dest = postbyte & 7;
 	postbyte >>= 6;
 
 	if (postbyte == 3)
@@ -2344,7 +2344,7 @@ void Bior(void)
 	postbyte = MemRead8(PC_REG++);
 	temp8 = MemRead8(DPADDRESS(PC_REG++));
 	Source = (postbyte >> 3) & 7;
-	Dest = (postbyte) & 7;
+	Dest = postbyte & 7;
 	postbyte >>= 6;
 
 	if (postbyte == 3)
@@ -2375,7 +2375,7 @@ void Beor(void)
 	postbyte = MemRead8(PC_REG++);
 	temp8 = MemRead8(DPADDRESS(PC_REG++));
 	Source = (postbyte >> 3) & 7;
-	Dest = (postbyte) & 7;
+	Dest = postbyte & 7;
 	postbyte >>= 6;
 
 	if (postbyte == 3)
@@ -2405,7 +2405,7 @@ void Bieor(void)
 	postbyte = MemRead8(PC_REG++);
 	temp8 = MemRead8(DPADDRESS(PC_REG++));
 	Source = (postbyte >> 3) & 7;
-	Dest = (postbyte) & 7;
+	Dest = postbyte & 7;
 	postbyte >>= 6;
 
 	if (postbyte == 3)
@@ -2435,7 +2435,7 @@ void Ldbt(void)
 	postbyte = MemRead8(PC_REG++);
 	temp8 = MemRead8(DPADDRESS(PC_REG++));
 	Source = (postbyte >> 3) & 7;
-	Dest = (postbyte) & 7;
+	Dest = postbyte & 7;
 	postbyte >>= 6;
 
 	if (postbyte == 3)
@@ -2479,7 +2479,7 @@ void Stbt(void)
 	temp16 = DPADDRESS(PC_REG++);
 	temp8 = MemRead8(temp16);
 	Source = (postbyte >> 3) & 7;
-	Dest = (postbyte) & 7;
+	Dest = postbyte & 7;
 	postbyte >>= 6;
 
 	if (postbyte == 3)
@@ -7068,7 +7068,7 @@ int HD6309Exec(int CycleFor)
 			cpu_irq();
 
 		if (SyncWaiting == 1)	//Abort the run nothing happens asyncronously from the CPU
-			return(0); // WDZ - Experimental SyncWaiting should still return used cycles (and not zero) by breaking from loop
+			return 0; // WDZ - Experimental SyncWaiting should still return used cycles (and not zero) by breaking from loop
 
 
 		// ANy CPU Breakpoints set?
@@ -7489,7 +7489,7 @@ static unsigned short CalculateEA(unsigned char postbyte)
 		ea = *xfreg16[Register] + byte; //Was signed
 		CycleCounter += 1;
 	}
-	return(ea);
+	return ea;
 }
 
 void setcc (unsigned char bincc)
@@ -7507,7 +7507,7 @@ unsigned char getcc(void)
 	for (bit=0;bit<=7;bit++)
 		if (cc[bit])
 			bincc=bincc | (1<<bit);
-		return(bincc);
+		return bincc;
 }
 
 void setmd (unsigned char binmd)
@@ -7536,7 +7536,7 @@ unsigned char getmd(void)
 	for (bit=6;bit<=7;bit++)
 		if (md[bit])
 			binmd=binmd | (1<<bit);
-		return(binmd);
+		return binmd;
 }
 	
 void HD6309AssertInterupt(InterruptSource src, Interrupt interrupt)
@@ -7617,8 +7617,8 @@ unsigned char GetSorceReg(unsigned char Tmp)
 	unsigned char Dest= Tmp & 15;
 	unsigned char Translate[]={0,0};
 	if ( (Source & 8) == (Dest & 8) ) //like size registers
-		return(Source );
-return(0);
+		return Source;
+return 0;
 }
 
 void HD6309ForcePC(unsigned short NewPC)

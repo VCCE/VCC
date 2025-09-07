@@ -211,7 +211,7 @@ void SetInit1(unsigned char data)
 unsigned char GetInit0(unsigned char port)
 {
 	unsigned char data=0;
-	return(data);
+	return data;
 }
 
 void SetGimeIRQStearing(unsigned char data) //92
@@ -329,13 +329,13 @@ void GimeAssertHorzInterupt(void)
 // TODO: What about other gime interrupts? Are they simular?
 void GimeAssertTimerInterupt(void)
 {
-	if ((GimeRegisters[0x93] & 32)) 
+	if (GimeRegisters[0x93] & 32) 
 	{
 		LastFirq = LastFirq | 32;
 		if (EnhancedFIRQFlag == 1) 
 			CPUAssertInterupt(IS_GIME, INT_FIRQ);
 	}
-	else if ((GimeRegisters[0x92] & 32)) 
+	else if (GimeRegisters[0x92] & 32) 
 	{
 		LastIrq = LastIrq | 32;
 		if (EnhancedIRQFlag == 1) 
@@ -367,7 +367,7 @@ unsigned char sam_read(unsigned char port) //SAM don't talk much :)
 	if ( (port>=0xF0) & (port <=0xFF)) //IRQ vectors from rom
 		return( rom[0x7F00 + port]);
 
-	return(0);
+	return 0;
 }
 void sam_write(unsigned char data ,unsigned char port)
 {
@@ -433,11 +433,11 @@ void mc6883_reset()
 
 unsigned char VDG_Offset(void)
 {
-	return(Dis_Offset);
+	return Dis_Offset;
 }
 
 unsigned char VDG_Modes(void)
 {
-	return(VDG_Mode);
+	return VDG_Mode;
 }
 

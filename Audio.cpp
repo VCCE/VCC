@@ -103,11 +103,11 @@ int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned int Rate)
 	{
 		hr=DirectSoundCreate(Guid, &lpds, nullptr);	// create a directsound object
 		if (hr!=DS_OK)
-			return(1);
+			return 1;
 
 		hr=lpds->SetCooperativeLevel(main_window_handle,DSSCL_NORMAL);//DSSCL_NORMAL);// set cooperation level normal DSSCL_EXCLUSIVE
 		if (hr!=DS_OK)
-			return(1);
+			return 1;
 		// set up the format data structure
 		memset(&pcmwf, 0, sizeof(WAVEFORMATEX));
 		pcmwf.wFormatTag	  = WAVE_FORMAT_PCM;
@@ -127,12 +127,12 @@ int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned int Rate)
 
 		hr=lpds->CreateSoundBuffer(&dsbd,&lpdsbuffer1,nullptr);
 		if (hr!=DS_OK)
-			return(1);
+			return 1;
 
 		// Clear out sound buffers
 		hr= lpdsbuffer1->Lock(0,SndBuffLenth,&SndPointer1,&SndLenth1,&SndPointer2,&SndLenth2,DSBLOCK_ENTIREBUFFER );
 		if (hr!=DS_OK)
-			return(1);
+			return 1;
 
 #if USE_DEBUG_AUDIOTAPE
 		AudioBaseAddress = SndPointer1;
@@ -141,18 +141,18 @@ int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned int Rate)
 		memset (SndPointer1,0,SndBuffLenth);
 		hr=lpdsbuffer1->Unlock(SndPointer1,SndLenth1,SndPointer2,SndLenth2); 
 		if (hr!=DS_OK)
-			return(1);
+			return 1;
 
 		
 		lpdsbuffer1->SetCurrentPosition(0);
 		hr=lpdsbuffer1->Play(0,0,DSBPLAY_LOOPING );	// play the sound in looping mode
 		if (hr!=DS_OK)
-			return(1);
+			return 1;
 		InitPassed=1;
 		AudioPause=0;
 	}
 	SetAudioRate(AUDIO_RATE);
-	return(0);
+	return 0;
 }
 
 void FlushAudioBuffer(unsigned int *Abuffer,unsigned int Lenth)
@@ -222,8 +222,8 @@ int GetFreeBlockCount(void) //return 0 on full buffer
  {
 	unsigned long WriteCursor=0,PlayCursor=0;
 	long RetVal=0,MaxSize=0;
-	if ((!InitPassed) | (AudioPause))
-		return(AUDIOBUFFERS);
+	if ((!InitPassed) | AudioPause)
+		return AUDIOBUFFERS;
 	RetVal=lpdsbuffer1->GetCurrentPosition(&PlayCursor,&WriteCursor);
 	if (BuffOffset <=PlayCursor)
 		MaxSize= PlayCursor - BuffOffset;
@@ -235,13 +235,13 @@ int GetFreeBlockCount(void) //return 0 on full buffer
 
  void PurgeAuxBuffer(void)
  {
-	if ((!InitPassed) | (AudioPause))
+	if ((!InitPassed) | AudioPause)
 		return;
 	return;
 	AuxBufferPointer--;			//Normally points to next free block Point to last used block
 	if (AuxBufferPointer>=0)	//zero is a valid data block
 	{
-		while ((GetFreeBlockCount()<=0));
+		while (GetFreeBlockCount() <= 0);
 
 
 		hr=lpdsbuffer1->Lock(BuffOffset,BlockSize,&SndPointer1,&SndLenth1,&SndPointer2,&SndLenth2,0);//DSBLOCK_FROMWRITECURSOR);
@@ -263,7 +263,7 @@ int GetSoundCardList (SndCardList *List)
 	CardCount=0;
 	Cards=List;
 	DirectSoundEnumerate(DSEnumCallback, nullptr); 
-	return(CardCount);
+	return CardCount;
 }
 
 BOOL CALLBACK DSEnumCallback(LPGUID lpGuid,LPCSTR lpcstrDescription,LPCSTR lpcstrModule,LPVOID lpContext)          
@@ -290,14 +290,14 @@ int SoundDeInit(void)
 			lpds = nullptr;
 		}
 	}
-	return(0);
+	return 0;
 }
 
 int SoundInInit (HWND main_window_handle,_GUID * Guid)
 {
 	hr=DirectSoundCaptureCreate(Guid, &lpdsin, nullptr);
 	if (hr!=DS_OK)
-		return(1);
+		return 1;
 	dsbdin.dwSize=sizeof(DSCBUFFERDESC); // Size of the structure
 	dsbdin.dwFlags=0;
 	dsbdin.dwReserved=0;
@@ -305,15 +305,15 @@ int SoundInInit (HWND main_window_handle,_GUID * Guid)
 	dsbdin.dwBufferBytes=SndBuffLenth;
 	hr=lpdsin->CreateCaptureBuffer(&dsbdin, &lpdsbuffer2, nullptr);
 	if (hr!=DS_OK)
-		return(1);
+		return 1;
 //	lpdsbuffer2->Initialize(lpdsin,&dsbdin);
 	lpdsbuffer2->Start(hr);
-	return(0);
+	return 0;
 }
 
 unsigned int GetSoundStatus(void)
 {
-	return(CurrentRate);
+	return CurrentRate;
 }
 
 void ResetAudio (void)
@@ -336,6 +336,6 @@ unsigned char PauseAudio(unsigned char Pause)
 		else
 			hr=lpdsbuffer1->Play(0,0,DSBPLAY_LOOPING);
 	}
-	return(AudioPause);
+	return AudioPause;
 }
 

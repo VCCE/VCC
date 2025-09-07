@@ -235,7 +235,7 @@ float RenderFrame (SystemState *RFState)
 	if (!(FrameCounter % RFState->FrameSkip))
 	{
 		if (LockScreen(RFState))
-			return(0);
+			return 0;
 	}
 
 	// Visible Top Border begins here. (Remove 4 lines for centering)
@@ -646,7 +646,7 @@ unsigned int SetAudioRate (unsigned int Rate)
 		NanosToAudioSample = NANOSECOND/AUDIO_RATE;
 	}
 	SoundRate=Rate;
-	return(0);
+	return 0;
 }
 
 void AudioOut(void)
@@ -967,12 +967,12 @@ std::string CvtStrToSC(string cliptxt)
 
 std::string GetClipboardText()
 {
-	if (!OpenClipboard(nullptr)) { MessageBox(nullptr, "Unable to open clipboard.", "Clipboard", 0); return(""); }
+	if (!OpenClipboard(nullptr)) { MessageBox(nullptr, "Unable to open clipboard.", "Clipboard", 0); return {}; }
 	HANDLE hClip = GetClipboardData(CF_TEXT);
-	if (hClip == nullptr) { CloseClipboard(); MessageBox(nullptr, "No text found in clipboard.", "Clipboard", 0); return(""); }
+	if (hClip == nullptr) { CloseClipboard(); MessageBox(nullptr, "No text found in clipboard.", "Clipboard", 0); return {}; }
 	char* tmp = static_cast<char*>(GlobalLock(hClip));
 	if (tmp == nullptr) {
-		CloseClipboard();  MessageBox(nullptr, "NULL Pointer", "Clipboard", 0); return("");
+		CloseClipboard();  MessageBox(nullptr, "NULL Pointer", "Clipboard", 0); return {};
 	}
 	std::string out(tmp);
 	GlobalUnlock(hClip);

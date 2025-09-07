@@ -329,7 +329,7 @@ unsigned char LockScreen(SystemState *LSState)
 	if (g_Display->LockSurface() != IDisplay::OK)
 		return 1;
 
-	return(0);
+	return 0;
 }
 
 void UnlockScreen(SystemState *USState)
@@ -407,7 +407,7 @@ unsigned char SetInfoBand( unsigned char Tmp)
 {
 	if (Tmp!=QUERY)
 		InfoBand=Tmp;
-	return(InfoBand);
+	return InfoBand;
 }
 
 unsigned char SetResize(unsigned char Tmp)
@@ -418,7 +418,7 @@ unsigned char SetResize(unsigned char Tmp)
 		if (g_Display)
 			g_Display->SetOption(IDisplay::OPT_FLAG_RESIZEABLE, Resizeable);
 	}
-	return(Resizeable);
+	return Resizeable;
 }
 
 unsigned char SetAspect (unsigned char Tmp)
@@ -429,7 +429,7 @@ unsigned char SetAspect (unsigned char Tmp)
 		if (g_Display)
 			g_Display->SetOption(IDisplay::OPT_FLAG_ASPECT, ForceAspect);
 	}
-	return(ForceAspect);
+	return ForceAspect;
 }
 
 void DisplaySignalLostMessage()
@@ -506,7 +506,7 @@ float Static(SystemState *STState)
 			}
 			break;
 	default:
-		return(0);
+		return 0;
 	}
 
 	// need to do during lock
