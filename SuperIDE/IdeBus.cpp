@@ -79,7 +79,7 @@ void IdeRegWrite(unsigned char Reg,unsigned short Data)
 			XferBuffer[BufferIndex]= Registers.Data & 0xFF;
 			XferBuffer[BufferIndex+1]=(Registers.Data>>8)&0xFF;
 			BufferIndex+=2;
-			if (BufferIndex>=(BufferLenth))
+			if (BufferIndex>=BufferLenth)
 			{
 				if ((CurrentCommand==0x30) | (CurrentCommand==0x31))
 				{
@@ -133,7 +133,7 @@ unsigned short IdeRegRead(unsigned char Reg)
 	{
 		case 0x0:
 			if (!CurrentCommand)
-				return(0);
+				return 0;
 			Registers.Data=XferBuffer[BufferIndex] + (XferBuffer[BufferIndex+1]<<8);
 			BufferIndex+=2;
 			if (BufferIndex>=BufferLenth)
@@ -168,7 +168,7 @@ unsigned short IdeRegRead(unsigned char Reg)
 			if (BusyCounter)
 			{
 				BusyCounter--;
-				return(BUSY);
+				return BUSY;
 			}
 			RetVal=Registers.Status[DiskSelect];
 			break;
@@ -177,7 +177,7 @@ unsigned short IdeRegRead(unsigned char Reg)
 			RetVal=0;
 			break;
 		}	//End port switch
-	return(RetVal);
+	return RetVal;
 }
 
 void ExecuteCommand(void)
@@ -286,7 +286,7 @@ HANDLE OpenDisk(char *ImageFile,unsigned char DiskNum)
 
 	hTemp=CreateFile( ImageFile,GENERIC_READ | GENERIC_WRITE,0,0,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
 	if (hTemp==INVALID_HANDLE_VALUE)
-		return(hTemp);
+		return hTemp;
 
 	Registers.Status[DiskNum]=RDY;
 	Registers.Error[DiskNum]=0;
@@ -313,7 +313,7 @@ HANDLE OpenDisk(char *ImageFile,unsigned char DiskNum)
 	IDBlock[DiskNum][56]=0x0100;	//Sectors per Track
 	IDBlock[DiskNum][61]=(unsigned short)(LbaSectors>>16);		//LBA Sectors
 	IDBlock[DiskNum][60]=(unsigned short)(LbaSectors & 0xFFFF);
-	return(hTemp);
+	return hTemp;
 }
 
 void DiskStatus(char *Temp)
@@ -338,13 +338,13 @@ void DiskStatus(char *Temp)
 unsigned char MountDisk(char *FileName,unsigned char DiskNumber)
 {
 	if (DiskNumber>1)
-		return(FALSE);
+		return FALSE;
 	hDiskFile[DiskNumber]=OpenDisk( FileName, DiskNumber);
 	if (hDiskFile[DiskNumber]==INVALID_HANDLE_VALUE)
-		return(FALSE);
+		return FALSE;
 	strcpy(FileNames[DiskNumber],FileName);
 	Mounted=1;
-	return(TRUE);
+	return TRUE;
 }
 
 unsigned char DropDisk(unsigned char DiskNumber)
@@ -353,7 +353,7 @@ unsigned char DropDisk(unsigned char DiskNumber)
 	hDiskFile[DiskNumber]=INVALID_HANDLE_VALUE;
 	strcpy(FileNames[DiskNumber],"");
 	Mounted=0;
-	return(TRUE);
+	return TRUE;
 }
 
 void QueryDisk(unsigned char DiskNumber,char *Name)

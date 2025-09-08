@@ -1272,7 +1272,7 @@ unsigned char PickReplyByte(unsigned char port)
     }
 
     // Keep stream going until stopped
-    if ((IF.bufcnt < 1) && (streaming)) StreamImage();
+    if ((IF.bufcnt < 1) && streaming) StreamImage();
 
     return rpy;
 }

@@ -6214,7 +6214,7 @@ void Halt(void)
 {
 	if (EmuState.Debugger.Halt_Enabled()) {
 		HaltedInsPending = 1;
-		VCC::ApplyHaltpoints(0);
+		VCC::ApplyHaltpoints(false);
 		EmuState.Debugger.Halt();
 		PC_REG -= 1;
 	} else {

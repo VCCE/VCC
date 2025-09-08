@@ -106,7 +106,7 @@ BOOL WINAPI DllMain(
 		g_hinstDLL=hinstDLL;
 		RealDisks=InitController();
 	}
-	return(1);
+	return 1;
 }
 
 extern "C"
@@ -194,7 +194,7 @@ extern "C"
 	__declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
 	{
 #ifdef COMBINE_BECKER
-		if ((BeckerEnabled) && (Port == 0x42)) {
+		if (BeckerEnabled && (Port == 0x42)) {
 			becker_write(Data,Port);
 		} else //if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
 #endif
@@ -212,7 +212,7 @@ extern "C"
 	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
 	{
 #ifdef COMBINE_BECKER
-		if ((BeckerEnabled) && ((Port == 0x41) | (Port== 0x42 )))
+		if (BeckerEnabled && ((Port == 0x41) | (Port== 0x42 )))
 			return(becker_read(Port));
 #endif
 		if ( ((Port == 0x50) | (Port== 0x51 )) & ClockEnabled)
@@ -450,7 +450,7 @@ unsigned char SetChip(unsigned char Tmp)
 {
 	if (Tmp!=QUERY)
 		SelectRom=Tmp;
-	return(SelectRom);
+	return SelectRom;
 }
 
 void BuildDynaMenu(void)
@@ -502,7 +502,7 @@ long CreateDisk (unsigned char Disk)
 	NewDiskNumber=Disk;
 	HWND h_own = GetActiveWindow();
 	DialogBox(g_hinstDLL, (LPCTSTR)IDD_NEWDISK, h_own, (DLGPROC)NewDisk);
-	return(0);
+	return 0;
 }
 
 LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -609,7 +609,7 @@ long CreateDiskHeader(char *FileName,unsigned char Type,unsigned char Tracks,uns
 	unsigned long BytesWritten=0,FileSize=0;
 	hr=CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,0,0,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,0);
 	if (hr==INVALID_HANDLE_VALUE)
-		return(1); //Failed to create File
+		return 1; //Failed to create File
 
 	switch (Type)
 	{
@@ -666,7 +666,7 @@ long CreateDiskHeader(char *FileName,unsigned char Type,unsigned char Tracks,uns
 	SetFilePointer(hr,FileSize-1,0,FILE_BEGIN);
 	WriteFile(hr,&Dummy,1,&BytesWritten,nullptr);
 	CloseHandle(hr);
-	return(0);
+	return 0;
 }
 
 void LoadConfig(void)  // Called on SetIniPath
@@ -716,9 +716,9 @@ void LoadConfig(void)  // Called on SetIniPath
 				//MessageBox(0, "Disk load attempt", "OK", 0);
 				if (RetVal)
 				{
-					if ( (!strcmp(DiskName,"*Floppy A:")) )	//RealDisks
+					if (!strcmp(DiskName,"*Floppy A:"))	//RealDisks
 						PhysicalDriveA=Index+1;
-					if ( (!strcmp(DiskName,"*Floppy B:")) )
+					if (!strcmp(DiskName,"*Floppy B:"))
 						PhysicalDriveB=Index+1;
 				}
 			}
@@ -778,5 +778,6 @@ unsigned char LoadExtRom( unsigned char RomType,char *FilePath)	//Returns 1 on i
 		RetVal=1;
 		fclose(rom_handle);
 	}
-	return(RetVal);
+
+	return RetVal;
 }

@@ -119,9 +119,9 @@ int MountHD(char FileName[MAX_PATH], int drive)
         WpHD[drive]=0;
         Mounted[drive]=0;
         Status = HD_NODSK;
-        return(0);
+        return 0;
     }
-    return(1);
+    return 1;
 }
 
 void UnmountHD(int drive)
@@ -290,7 +290,7 @@ unsigned char IdeRead(unsigned char port)
         return(SectorOffset.Byte.lswmsb);
         break;
     case 3:
-        return(Status);
+        return Status;
         break;
     case 4:
         return(DMAaddress.Byte.msb);
@@ -302,5 +302,5 @@ unsigned char IdeRead(unsigned char port)
         return DriveSelect;
         break;
     }
-    return(0);
+    return 0;
 }

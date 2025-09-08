@@ -36,9 +36,9 @@ bool InitMemBoard(void)
 
 	if (RamBuffer!=nullptr) free(RamBuffer);      // Free existing RAM
 	RamBuffer=(unsigned char *)malloc(RAMSIZE);
-	if (RamBuffer==nullptr) return(true);         // Failed to allocate RAM
+	if (RamBuffer==nullptr) return true;         // Failed to allocate RAM
 	memset(RamBuffer,0,RAMSIZE);               // Clear the RAM
-	return(false);                             // Success
+	return false;                             // Success
 }
 
 // Get I/O address
@@ -56,13 +56,13 @@ bool WritePort(unsigned char Port,unsigned char Data)
 		IndexAddress.Byte.mswlsb=(Data & 0x7);
 		break;
 	}
-	return(false);
+	return false;
 }
 
 bool WriteArray(unsigned char Data)
 {
 	RamBuffer[IndexAddress.Address]=Data;
-	return(false);
+	return false;
 }
 
 unsigned char ReadArray(void)

@@ -74,7 +74,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL,  // handle to DLL module
     } else {
         g_hinstDLL=hinstDLL;
     }
-    return(1);
+    return 1;
 }
 
 void MemWrite(unsigned char Data,unsigned short Address)
@@ -191,7 +191,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
         }
     }
-    return(0);
+    return 0;
 }
 
 // Export write to HD control port
