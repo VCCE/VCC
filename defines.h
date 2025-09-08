@@ -58,7 +58,7 @@ namespace VCC
     {
         int x{}, y{};
 
-        Point() {}
+        Point() = default;
         Point(int x, int y) :x(x), y(y) {}
     };
 
@@ -66,13 +66,13 @@ namespace VCC
     {
         int w{}, h{};
 
-        Size() {}
+        Size() = default;
         Size(int w, int h) :w(w), h(h) {}
     };
 
     struct Rect : Point, Size
     {
-        Rect() {}
+        Rect() = default;
         Rect(int x, int y, int w, int h) : Point(x, y), Size(w, h) {}
         bool IsDefaultX() const { return x == CW_USEDEFAULT; }
         bool IsDefaultY() const { return y == CW_USEDEFAULT; }
