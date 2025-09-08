@@ -78,12 +78,12 @@ namespace VCC { namespace Debugger
 
 		void TraceStart();
 		void TraceStop();
-		void TraceCaptureBefore(long cycles, CPUState state);
-		void TraceCaptureAfter(long cycles, CPUState state);
-		void TraceCaptureInterruptRequest(unsigned char irq, long cycleTime, CPUState state);
-		void TraceCaptureInterruptMasked(unsigned char irq, long cycleTime, CPUState state);
-		void TraceCaptureInterruptServicing(unsigned char irq, long cycleTime, CPUState state);
-		void TraceCaptureInterruptExecuting(unsigned char irq, long cycleTime, CPUState state);
+		void TraceCaptureBefore(long cycles, const CPUState& state);
+		void TraceCaptureAfter(long cycles, const CPUState& state);
+		void TraceCaptureInterruptRequest(unsigned char irq, long cycleTime, const CPUState& state);
+		void TraceCaptureInterruptMasked(unsigned char irq, long cycleTime, const CPUState& state);
+		void TraceCaptureInterruptServicing(unsigned char irq, long cycleTime, const CPUState& state);
+		void TraceCaptureInterruptExecuting(unsigned char irq, long cycleTime, const CPUState& state);
 		void TraceCaptureScreenEvent(TraceEvent evt, double cycles);
 		void TraceEmulatorCycle(TraceEvent evt, int state, double lineNS, double irqNS, double soundNS, double cycles, double drift);
 
