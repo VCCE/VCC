@@ -70,8 +70,8 @@ void SetMmuPrefix(unsigned char);
 void SetCartMMU (unsigned char);
 unsigned char * Get_mem_pointer(void);
 
-#define _128K	0	
-#define _512K	1
-#define _2M		2
+constexpr auto _128K	= 0u;
+constexpr auto _512K	= 1u;
+constexpr auto _2M		= 2u;
 
 #endif

@@ -21,8 +21,10 @@
 #ifndef __ACIA_H_
 #define __ACIA_H_
 
+// FIXME-CHET: This should be defined on the command line
 #define DIRECTINPUT_VERSION 0x0800
-#define MAX_LOADSTRING 200
+
+constexpr auto MAX_LOADSTRING = 200u;
 
 #include <windows.h>
 #include <windowsx.h>
@@ -32,16 +34,16 @@
 #include "resource.h"
 
 // Dynamic menu control
-#define HEAD 0
-#define SLAVE 1
-#define STANDALONE 2
+constexpr auto HEAD = 0u;
+constexpr auto SLAVE = 1u;
+constexpr auto STANDALONE = 2u;
 
 // Text mode EOF character
-#define EOFCHR 0x1B
+constexpr auto EOFCHR = 0x1Bu;
 
 // Base Ports
-#define BASE_PORT_RS232 0x68
-#define BASE_PORT_MODEM 0x6C
+constexpr auto BASE_PORT_RS232 = 0x68u;
+constexpr auto BASE_PORT_MODEM = 0x6Cu;
 
 // Communications type and mode enumerations
 enum com_type {

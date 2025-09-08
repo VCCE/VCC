@@ -28,14 +28,14 @@
 // b5 DCD Data carrier (clear=active)
 // b6 DSR Data set ready (clear=active)
 // b7 IRQ Interrupt read status
-#define StatPar  0x01
-#define StatFrm  0x02
-#define StatOvr  0x04
-#define StatRxF  0x08
-#define StatTxE  0x10
-#define StatDCD  0x20
-#define StatDSR  0x40
-#define StatIRQ  0x80
+constexpr auto StatPar  = 0x01u;
+constexpr auto StatFrm  = 0x02u;
+constexpr auto StatOvr  = 0x04u;
+constexpr auto StatRxF  = 0x08u;
+constexpr auto StatTxE  = 0x10u;
+constexpr auto StatDCD  = 0x20u;
+constexpr auto StatDSR  = 0x40u;
+constexpr auto StatIRQ  = 0x80u;
 
 // Command register
 // b0   DTR Enable receive and interupts  (set=enabled)
@@ -45,13 +45,13 @@
 // b4   Echo Set=Activated
 // b5-7 Par  Parity control
 //      xx0 none, 001 Odd, 011 Even, 101 mark, 111 space
-#define CmdDTR  0x01
-#define CmdRxI  0x02
-#define CmdTIRB 0x0C
-#define TIRB_Off  0x00
-#define TIRB_On   0x04
-#define TIRB_RTS  0x08
-#define TIRB_Brk  0x0C
+constexpr auto CmdDTR		= 0x01u;
+constexpr auto CmdRxI		= 0x02u;
+constexpr auto CmdTIRB		= 0x0Cu;
+constexpr auto TIRB_Off		= 0x00u;
+constexpr auto TIRB_On		= 0x04u;
+constexpr auto TIRB_RTS		= 0x08u;
+constexpr auto TIRB_Brk		= 0x0Cu;
 
 // Control Register
 // b0-3 Baud rate

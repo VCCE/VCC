@@ -21,8 +21,9 @@ This file is part of VCC (Virtual Color Computer).
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include "mc6821.h"
-#define MAXSTICKS 10
-#define STRLEN 64
+
+constexpr auto MAXSTICKS = 10u;
+constexpr auto STRLEN = 64u;
 
 // JoyStick structure is used to contain joystick configuration
 struct JoyStick

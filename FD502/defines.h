@@ -18,23 +18,23 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 //Speed throttling
-#define FRAMEINTERVAL 120	//Number of frames to sum the framecounter over
-#define TARGETFRAMERATE 60	//Number of throttled Frames per second to render
-
-// Audio handling
-#define BITRATE (LINESPERFIELD*TARGETFRAMERATE)
-#define BLOCK_SIZE  LINESPERFIELD*2
-#define BLOCK_COUNT 6
+constexpr auto FRAMEINTERVAL = 120u;	//Number of frames to sum the framecounter over
+constexpr auto TARGETFRAMERATE = 60u;	//Number of throttled Frames per second to render
 
 //CPU 
-#define _894KHZ	57
-#define JIFFIESPERLINE  (_894KHZ*4)
-#define LINESPERFIELD 262
+constexpr auto _894KHZ = 57u;
+constexpr auto JIFFIESPERLINE = _894KHZ * 4;
+constexpr auto LINESPERFIELD = 262u;
+
+// Audio handling
+constexpr auto BITRATE = LINESPERFIELD * TARGETFRAMERATE;
+constexpr auto BLOCK_SIZE = LINESPERFIELD * 2;
+constexpr auto BLOCK_COUNT = 6u;
 
 //Misc
-#define MAX_LOADSTRING 100
-#define QUERY 255
-#define INDEXTIME ((LINESPERFIELD * TARGETFRAMERATE)/5)
+constexpr auto MAX_LOADSTRING = 100u;
+constexpr auto QUERY = 255u;
+constexpr auto INDEXTIME = LINESPERFIELD * TARGETFRAMERATE / 5;
 
 #endif
 
