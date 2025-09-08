@@ -143,7 +143,6 @@ unsigned short IdeRegRead(unsigned char Reg)
 				CurrentCommand=0;
 				Registers.Status[DiskSelect]=RDY;
 				Registers.Error[DiskSelect]=0;
-			//	strcpy(CurrStatus,"IDE:Idle ");
 			}
 			RetVal=Registers.Data;
 			break;

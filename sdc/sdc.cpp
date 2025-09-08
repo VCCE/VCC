@@ -780,7 +780,6 @@ void ModifyFlashItem(int index)
     if ((index < 0) | (index > 7)) return;
     HWND h = GetDlgItem(hConfigureDlg,EDBOXES[index]);
     GetWindowText(h, FlashFile[index], MAX_PATH);
-//    UpdateFlashItem(index);
 }
 
 void UpdateFlashItem(int index)

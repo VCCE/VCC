@@ -23,7 +23,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "string.h"
 #include "tcc1014mmu.h"
 #include "iobus.h"
-//#include "cc3rom.h"
 #include "config.h"
 #include "tcc1014graphics.h"
 #include "pakinterface.h"
@@ -67,7 +66,6 @@ unsigned char * MmuInit(unsigned char RamConfig)
 	// or MemSize config change. Issue does not seem to justify a section lock
 	mem_initializing = true;
 
-//	unsigned int RamSize=0;
 	unsigned int Index1=0;
 	RamSize=MemConfig[RamConfig];
 	CurrentRamConfig=RamConfig;
@@ -227,7 +225,6 @@ void LoadRom(void)
 		fclose(hFile);
 	}
 	if ((hFile == nullptr) | (index == 0)) {
-		//MessageBox(GetActiveWindow(),
 		MessageBox(nullptr,
 				"coco3.rom load failed\n"
 				"Close this then\n"
@@ -268,12 +265,6 @@ unsigned char SafeMemRead8(unsigned short address)
 
 void MemWrite8(unsigned char data,unsigned short address)
 {
-//	char Message[256]="";
-//	if ((address>=0xC000) & (address<=0xE000))
-//	{
-//		sprintf(Message,"Writing %i to ROM Address %x\n",data,address);
-//		WriteLog(Message,TOCONS);
-//	}
 	if (address<0xFE00)
 	{
 		if (MapType | (MmuRegisters[MmuState][address>>13] <VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address>>13] > VectorMask[CurrentRamConfig]))

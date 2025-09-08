@@ -1112,9 +1112,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		const size_t lineSize = 65536;
 		char *line = new char[lineSize];
 
-		//FilePrintf(hf,"offset:%d nlines:%d count%d _tsize:%d\n",
-		//	offset, nlines, count, _trace.size());
-
 		char* pos = line;
 		char* end = pos + lineSize;
 		DWORD dummy;

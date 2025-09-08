@@ -54,7 +54,6 @@ namespace VCC
 			char message[256];
 			snprintf(message,64,"OpenGL error %d\nCheck OpenGL support",code);
 			MessageBox(nullptr,message,"Error",0);
-			//PrintLogC("OpenGL Error: %d\n", code);
 		}
 		return code;
 	}

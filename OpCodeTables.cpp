@@ -74,8 +74,6 @@ namespace VCC { namespace Debugger
 		// Skip past opcode bytes
 		PC += opcode.oplen;
 
-// DbgRead8(trace->phyAddr,trace->block,PC)
-
 		// Number of bytes for the operand.
 		int operandLen = opcode.numbytes - opcode.oplen;
 		for (int n = 0; n < operandLen; n++)

@@ -240,7 +240,6 @@ void _vccKeyboardUpdateRolloverTable()
 
 void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e keyState)
 {
-	//XTRACE("Key  : %c (%3d / 0x%02X)  Scan : %d / 0x%02X\n",key,key,key, ScanCode, ScanCode);
 	//If requested, abort pasting operation.
 	if (ScanCode == 0x01 || ScanCode == 0x43 || ScanCode == 0x3F) { pasting = false; }
 

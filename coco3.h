@@ -30,7 +30,6 @@ struct DisplayDetails
 };
 
 
-//unsigned short RenderFrame (unsigned char);
 void SetClockSpeed(unsigned int Cycles);
 void SetLinesperScreen(unsigned char Lines);
 DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight);

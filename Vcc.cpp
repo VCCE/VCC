@@ -143,11 +143,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	unsigned threadID;
 	HANDLE hEvent,
 
-//	SetPriorityClass(GetCurrentProcess(),ABOVE_NORMAL_PRIORITY_CLASS );
-//	SetThreadPriority(GetCurrentThread(),THREAD_PRIORITY_ABOVE_NORMAL);
-//	CoInitializeEx(nullptr,COINIT_MULTITHREADED);
-//	CoInitialize(nullptr);
-//	InitializeCriticalSection();
 	OleInitialize(nullptr); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
@@ -206,8 +201,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	WaitForSingleObject( hEvent, INFINITE );
 	SetThreadPriority(hEMUThread,THREAD_PRIORITY_NORMAL);
 
-	//InitializeCriticalSection(&FrameRender);
-
 	while (BinaryRunning)
 	{
 		if (FlagEmuStop==TH_WAITING)	//Need to stop the EMU thread for screen mode change
@@ -257,7 +250,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			//-------------------------------------------------------------
 			if(wParam==SC_KEYMENU) {
 				if (GetKeyState(VK_LMENU) & 0x8000) return 0; // Left off
-			//	if (GetKeyState(VK_RMENU) & 0x8000) return 0; // Right off
 			}
 			// falls through to WM_COMMAND
 
@@ -426,11 +418,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case WM_CHAR:
-//			OEMscan=(unsigned char)((lParam & 0xFF0000)>>16);
-//			ascii=kb_char;
-//			sprintf(ttbuff,"Getting REAL CHAR %i",ascii);
-//			WriteLine ( ttbuff);
-//			KeyboardEvent(kb_char,OEMscan,1); //Capture ascii value for scancode
 			return 0;
 			break;
 
@@ -441,11 +428,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
-
 			// send emulator key up event to the emulator
 			// TODO: Key up checks whether the emulation is running, this does not
-
-			//OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16);
 	        OEMscan = (unsigned char) ((lParam >> 16) & 0xFF);
             Extended=(lParam >> 24) & 1;
 		    if (Extended && (OEMscan!=DIK_NUMLOCK)) OEMscan += 0x80;
@@ -479,7 +463,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_KEYDOWN:
 
 			// get key scan code for emulator control keys
-			//OEMscan = (unsigned char)((lParam & 0x00FF0000)>>16); // just get the scan code
 			OEMscan = (unsigned char) ((lParam >> 16) & 0xFF);
 			Extended=(lParam >> 24) & 1;
 			if (Extended && (OEMscan!=DIK_NUMLOCK)) OEMscan += 0x80;
@@ -649,9 +632,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 
 			return 0;
-
-//		default:
-//			return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
@@ -910,7 +890,6 @@ void LoadIniFile(void)
 		ReadIniFile();              // Load it
 		UpdateConfig();
 		EmuState.ResetPending = 2;
-//      SetClockSpeed(1); //Default clock speed .89 MHZ
 	}
 	return;
 }

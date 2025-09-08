@@ -768,9 +768,6 @@ unsigned char LoadExtRom( unsigned char RomType,char *FilePath)	//Returns 1 on i
 	unsigned char RetVal=0;
 	unsigned char *ThisRom[3]={ExternalRom,DiskRom,RGBDiskRom};
 
-//	ThisRom[0]=ExternalRom;
-//	ThisRom[1]=DiskRom;
-//	ThisRom[2]=RGBDiskRom;
 	rom_handle=fopen(FilePath,"rb");
 	if (rom_handle==nullptr)
 		memset(ThisRom[RomType],0xFF,EXTROMSIZE);

@@ -36,7 +36,6 @@ namespace VCC
             char message[256];
             snprintf(message, 64, "DirectX error %d\nCheck DirectX support", code);
             MessageBox(nullptr, message, "Error", 0);
-            //PrintLogC("OpenGL Error: %d\n", code);
         }
         return code;
     }
@@ -333,7 +332,6 @@ namespace VCC
         switch (rectOption)
         {
             case OPT_RECT_DISPLAY: GetDisplayArea(rect); break;
-            //case OPT_RECT_RENDER: GetRenderArea(rect); break;
             case OPT_RECT_SURFACE: GetSurfaceArea(rect); break;
             default: return Result(ERR_BADOPTION);
         }
@@ -355,7 +353,6 @@ namespace VCC
         hr = g_pDDSBack->Lock(nullptr, &ddsd, DDLOCK_WAIT | DDLOCK_SURFACEMEMORYPTR, nullptr);
         if (FAILED(hr))
         {
-            //		MessageBox(0,"Can't Lock surface","Error",0);
             return Result(ERR_UNKNOWN);
         }
 

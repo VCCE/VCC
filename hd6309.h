@@ -27,7 +27,6 @@ void HD6309ForcePC(unsigned short);
 VCC::CPUState HD6309GetState();
 void HD6309SetBreakpoints(const std::vector<unsigned short>& breakpoints);
 void HD6309SetTraceTriggers(const std::vector<unsigned short>& triggers);
-//unsigned short GetPC(void);
 
 void HD6309Init_s(void);
 int  HD6309Exec_s( int);

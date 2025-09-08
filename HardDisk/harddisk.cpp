@@ -40,10 +40,8 @@ static char HardDiskPath[MAX_PATH];
 
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-//typedef void (*ASSERTINTERUPT)(InterruptSource, Interrupt);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
-//static void (*AssertInt)(InterruptSource, Interrupt)=nullptr;
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
 static unsigned char *Memory=nullptr;
@@ -196,22 +194,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return(0);
 }
 
-/*
-// This captures the Fuction transfer point for the CPU assert interupt
-// NOTE: Vcc does not do interupts after DMA transfers
-//
-
-extern "C"
-{
-    __declspec(dllexport)
-    void AssertInterupt(ASSERTINTERUPT Dummy)
-    {
-        AssertInt=Dummy;
-        return;
-    }
-}
-*/
-
 // Export write to HD control port
 extern "C"
 {
@@ -235,17 +217,6 @@ extern "C"
 }
 
 
-/*
-extern "C"
-{
-    __declspec(dllexport) void HeartBeat(void)
-    {
-        PingFdc();
-        return;
-    }
-}
-*/
-
 // Set pointers to the MemRead8 and MemWrite8 functions.
 // This allows the DLL to do DMA xfers with CPU ram.
 extern "C"
@@ -260,25 +231,6 @@ extern "C"
     }
 }
 
-// Hook to read disk rom
-/* extern "C"
-{
-    __declspec(dllexport) unsigned char
-    PakMemRead8(unsigned short Address)
-    {
-        return(DiskRom[Address & 8191]);
-    }
-}
-
-extern "C"
-{
-    __declspec(dllexport) void
-    PakMemWrite8(unsigned char Data,unsigned short Address)
-    {
-        return;
-    }
-}
-*/
 
 // Return disk status. (from cc3vhd)
 extern "C"
@@ -303,28 +255,10 @@ extern "C"
     }
 }
 
-//extern "C"
-//{
-//    __declspec(dllexport) unsigned char
-//    ModuleReset(void)
-//    {
-//        VhdReset();
-//        return 0;
-//    }
-//}
-
-/*
-void CPUAssertInterupt(unsigned char Interupt,unsigned char Latencey)
-{
-    AssertInt(Interupt,Latencey);
-    return;
-}
-*/
 
 // Get filename from user and mount harddrive
 void LoadHardDisk(int drive)
 {
-//    OPENFILENAME ofn ;
     char msg[300];
 
     // Select VHD FileName buffer as per drive
@@ -378,7 +312,6 @@ void LoadHardDisk(int drive)
 void LoadConfig(void)
 {
     char ModName[MAX_LOADSTRING]="";
-    // char DiskRomPath[MAX_PATH];
     HANDLE hr;
 
     GetPrivateProfileString("DefaultPaths", "HardDiskPath", "",

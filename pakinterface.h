@@ -25,7 +25,6 @@ unsigned char PackMem8Read (unsigned short);
 void PackMem8Write(unsigned short,unsigned char);
 void GetModuleStatus( SystemState *);
 int LoadCart(void);
-//void ConfigThisModule (void);
 unsigned short PackAudioSample(void);
 void ResetBus(void);
 int load_ext_rom(char *);

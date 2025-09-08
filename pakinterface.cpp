@@ -72,7 +72,6 @@ static unsigned int BankedCartOffset=0;
 static char DllPath[256]="";
 static unsigned short ModualParms=0;
 static HINSTANCE hinstLib = nullptr;
-//static bool DialogOpen=false;
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 typedef void (*GETNAME)(char *,char *,DYNAMICMENUCALLBACK);
 typedef void (*CONFIGIT)(unsigned char);
@@ -120,7 +119,6 @@ static Dmenu MenuItem[100];
 static unsigned char MenuCount=0;
 
 static HMENU hVccMenu = nullptr;
-//static HMENU hSubMenu[64] = {nullptr};
 static bool CartMenuCreated = false;
 
 static 	char Modname[MAX_PATH]="Blank";
@@ -241,8 +239,6 @@ int LoadCart(void)
 // Insert Module returns 0 on success
 int InsertModule (char *ModulePath)
 {
-
-	//	char Modname[MAX_LOADSTRING]="Blank";
 	char CatNumber[MAX_LOADSTRING]="";
 	char Temp[MAX_LOADSTRING]="";
 	char String[1024]="";
@@ -275,7 +271,6 @@ int InsertModule (char *ModulePath)
 		UnloadDll();
 		hinstLib=nullptr;
 		hinstLib = LoadLibrary(ModulePath);
-		//PrintLogC("pak:LoadLibrary %s %d\n",ModulePath,hinstLib);
 		if (hinstLib == nullptr)
 			return NOMODULE;
 		SetCart(0);
@@ -296,7 +291,6 @@ int InsertModule (char *ModulePath)
 		if (GetModuleName == nullptr)
 		{
 			int rc = FreeLibrary(hinstLib);
-			//PrintLogC("pak:err FreeLibrary %d %d\n",hinstLib,rc);
 			hinstLib=nullptr;
 			return NOTVCC;
 		}
@@ -443,7 +437,6 @@ void UnloadDll(void)
 	ModuleAudioSample=nullptr;
 	ModuleReset=nullptr;
 	int rc = FreeLibrary(hinstLib);
-	//PrintLogC("pak:UnloadDll FreeLibrary %d %d\n",hinstLib,rc);
 	hinstLib=nullptr;
 	DynamicMenuCallback( "",0, 0); //Refresh Menus
 	DynamicMenuCallback( "",1, 0);

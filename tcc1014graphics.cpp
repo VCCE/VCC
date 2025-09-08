@@ -9914,13 +9914,7 @@ void MakeRGBPalette (void)
 
 void MakeCMPpalette(void)	
 {
-//	double saturation, brightness, contrast;
-//	int offset;
-//	double w;
 	double r,g,b;
-	
-//	int PaletteType = GetPaletteType();
-
 	unsigned char rr,gg,bb;
 	unsigned char Index=0;
 	
@@ -9959,68 +9953,14 @@ void MakeCMPpalette(void)
 
 	for (Index = 0; Index <= 63; Index++)
 	{
-//		if (PaletteType == 1)
-//		{
-			if (Index > 39) { gamma = 1.1F; }
-			if (Index > 55) { gamma = 1.0F; }
+		if (Index > 39) { gamma = 1.1F; }
+		if (Index > 55) { gamma = 1.0F; }
 
-			//int tmp = 0;
 
-			r = red[Index] * gamma; if (r > 255) { r = 255; }
-			g = green[Index] * gamma; if (g > 255) { g = 255; }
-			b = blue[Index] * gamma; if (b > 255) { b = 255; }
+		r = red[Index] * gamma; if (r > 255) { r = 255; }
+		g = green[Index] * gamma; if (g > 255) { g = 255; }
+		b = blue[Index] * gamma; if (b > 255) { b = 255; }
 
-/* Old palette stuff commented out TODO: remove these someday
-		}
-		else {  //Old palette //Stolen from M.E.S.S.
-					switch(Index)
-					{
-						case 0:
-							r = g = b = 0;
-							break;
-						case 16:
-							r = g = b = 47;
-							break;
-			
-						case 32:
-							r = g = b = 120;
-							break;
-			
-						case 48:
-						case 63:
-							r = g = b = 255;
-							break;
-			
-						default:
-							w = .4195456981879*1.01;
-							contrast = 70;
-							saturation = 92;
-							brightness = -20;
-							brightness += ((Index / 16) + 1) * contrast;
-							offset = (Index % 16) - 1 + (Index / 16)*15;
-							r = cos(w*(offset +  9.2)) * saturation + brightness;
-							g = cos(w*(offset + 14.2)) * saturation + brightness;
-							b = cos(w*(offset + 19.2)) * saturation + brightness;
-			
-							if (r < 0)
-								r = 0;
-							else if (r > 255)
-								r = 255;
-			
-							if (g < 0)
-								g = 0;
-							else if (g > 255)
-								g = 255;
-			
-							if (b < 0)
-								b = 0;
-							else if (b > 255)
-								b = 255;
-							break;
-
-				}
-		}
-*/
 		rr= (unsigned char)r;
 		gg= (unsigned char)g;
 		bb= (unsigned char)b;
@@ -10099,22 +10039,6 @@ void FlipArtifacts() {
 	else { ColorInvert = 0; }
 	UserFlipped = true;
 }
-/*
-unsigned char SetArtifacts(unsigned char Tmp)
-{
-	if (Tmp!=QUERY)
-	Artifacts=Tmp;
-	return(Artifacts);
-}
-*/
-/*
-unsigned char SetColorInvert(unsigned char Tmp)
-{
-	if (Tmp!=QUERY)
-		ColorInvert=Tmp;
-	return(ColorInvert);
-}
-*/
 
 // Render even/odd 2x2 ntsc pixels
 void RenderNTSCPixel2x2(Surface32 surface32, size_t surfaceDest, int XpitchDest, char colorIndex, char scanLines)

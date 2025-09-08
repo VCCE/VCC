@@ -50,17 +50,10 @@ void GMCCartridge::OnMenuItemSelected(unsigned char menuId)
 	if (menuId == MenuItems::SelectRom)
 	{
 		const auto selectedFile(SelectROMFile());
-//		if (!selectedFile.has_value())
 		if (selectedFile.empty())
 		{
 			return;
 		}
-
-		//if (!m_ROMImage.Load(*selectedFile))
-		//{
-		//	MessageBoxA(nullptr, "Unable to open file", "Error", MB_OK);
-		//	return;
-		//}
 
 		MessageBoxA(
 			nullptr,

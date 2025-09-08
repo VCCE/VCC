@@ -967,11 +967,6 @@ void SetCurrentLine()
         CurrentLineNum = lnum;
         SendMessage(hDisText,EM_SETSEL,lpos,lpos);
     }
-
-//DEBUG
-//int topline = SendMessage(hCtl,EM_GETFIRSTVISIBLELINE,0,0);
-//PrintLogC("%d %d %X %d\n",lnum,DisLineAdr[lnum],lpos,topline);
-
 }
 
 /**************************************************/

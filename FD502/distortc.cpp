@@ -132,10 +132,6 @@ void write_time(unsigned char data,unsigned char port)
 			{
 				case 0x0F:
 					Hour12=!((data & 4)>>2);
-				//	if (Hour12==0)
-				//		MessageBox(0,"Setting format 0","Ok",0);
-				//	else
-				//		MessageBox(0,"Setting format 1","Ok",0);
 				break;
 
 				default:

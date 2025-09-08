@@ -65,7 +65,6 @@ void buildTransDisp2ScanTable();
 
 LRESULT CALLBACK CpuConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK AudioConfig(HWND, UINT, WPARAM, LPARAM);
-//LRESULT CALLBACK MiscConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK DisplayConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK InputConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK JoyStickConfig(HWND, UINT, WPARAM, LPARAM);
@@ -87,7 +86,6 @@ struct STRConfig
 	unsigned char	CpuType;
 	unsigned char	HaltOpcEnabled;   // 0x15   halt enabled
 	unsigned char	BreakOpcEnabled;  // 0x113E halt enabled
-//	unsigned char	AudioMute;
 	unsigned char	MonitorType;
 	unsigned char   PaletteType;
 	unsigned char	ScanLines;
@@ -318,7 +316,6 @@ unsigned char ReadIniFile(void)
 	CurrentConfig.PaletteType = GetPrivateProfileInt("Video","PaletteType",PALETTE_NTSC,IniFilePath);
 	CurrentConfig.ScanLines = GetPrivateProfileInt("Video","ScanLines",0,IniFilePath);
 
-	//CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);
 	CurrentConfig.Aspect = GetPrivateProfileInt("Video","ForceAspect",1,IniFilePath);
 	CurrentConfig.RememberSize = GetPrivateProfileInt("Video","RememberSize",1,IniFilePath);
 	CurrentConfig.WindowRect.w = GetPrivateProfileInt("Video", "WindowSizeX", 640, IniFilePath);
@@ -839,11 +836,6 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 //		Rate dropdown has been replaced with a mute check box
 		bstate = (tmpcfg.AudioRate==0) ? BST_CHECKED : BST_UNCHECKED;
 		SendDlgItemMessage(hDlg,IDC_MUTE,BM_SETCHECK,bstate,0);
-//		for (Index=0;Index<4;Index++)
-//			SendDlgItemMessage(hDlg,IDC_RATE,CB_ADDSTRING,
-//			                   (WPARAM)0,(LPARAM)RateList[Index]);
-//		SendDlgItemMessage(hDlg,IDC_RATE,CB_SETCURSEL,
-//		                   (WPARAM)tmpcfg.AudioRate,(LPARAM)0);
 
 		// Sound device selection
 		tmpcfg.SndOutDev=0;

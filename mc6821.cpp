@@ -132,8 +132,6 @@ void WritePrintMon(char *);
 LRESULT CALLBACK PrintMon(HWND, UINT , WPARAM , LPARAM );
 static BOOL MonState=FALSE;
 
-//static unsigned char CoutSample=0;
-//extern STRConfig CurrentConfig;
 // Shift Row Col
 unsigned char pia0_read(unsigned char port)
 {
