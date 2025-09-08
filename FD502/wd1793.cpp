@@ -105,7 +105,7 @@ static int ExecTimeWaiter=0;
 static long TransferBufferIndex=0;
 static long TransferBufferSize=0;
 static unsigned int IOWaiter=0;
-static short IndexCounter=0;
+static unsigned int IndexCounter=0;
 //static unsigned char UseLeds=0;
 DWORD dwRet;
 HANDLE OpenFloppy (int );

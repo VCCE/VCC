@@ -149,44 +149,6 @@ namespace VCC
     };
 
 
-    //
-    // protect T by verifying surrounding bytes
-    //
-#ifdef _DEBUG
-    template <class T, size_t Size = 256>
-    struct Protect
-    {
-        Protect()
-        {
-            for (int i = 0; i < Size; ++i)
-                before[i] = after[i] = 0xDEADBEEF;
-        }
-
-        void Check()
-        {
-            for (int i = 0; i < Size; ++i)
-            {
-                assert(before[Size-i-1] == 0xDEADBEEF);
-                assert(after[i] == 0xDEADBEEF);
-            }
-        }
-
-    private:
-        uint32_t before[Size];
-    public:
-        T Data;
-    private:
-        uint32_t after[Size];
-    };
-#else
-    template <class T>
-    struct Protect 
-    {
-        T Data; 
-        void Check() {}
-    };
-#endif
-
     // delayed flip flop
     struct DFF 
     {
