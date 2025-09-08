@@ -42,15 +42,15 @@
 #define STA_WPROTECT  0x40   // write protect error
 #define STA_FAIL      0x80
 
-#define FLP_NORMAL    0x00;
-#define FLP_BUSY      0x01; // b0 Busy
-#define FLP_DATAREQ   0x02; // b1 DRQ
-#define FLP_DATALOST  0x04; // b2 Lost data
-#define FLP_READERR   0x08; // b3 Read error (CRC)
-#define FLP_SEEKERR   0x10; // b4 Seek error
-#define FLP_WRITEERR  0x20; // b5 Write error (Fault)
-#define FLP_READONLY  0x40; // b6 Write protected
-#define FLP_NOTREADY  0x80; // b7 Not ready
+#define FLP_NORMAL    0x00
+#define FLP_BUSY      0x01   // b0 Busy
+#define FLP_DATAREQ   0x02   // b1 DRQ
+#define FLP_DATALOST  0x04   // b2 Lost data
+#define FLP_READERR   0x08   // b3 Read error (CRC)
+#define FLP_SEEKERR   0x10   // b4 Seek error
+#define FLP_WRITEERR  0x20   // b5 Write error (Fault)
+#define FLP_READONLY  0x40   // b6 Write protected
+#define FLP_NOTREADY  0x80   // b7 Not ready
 
 // Single byte file attributes for File info records
 #define ATTR_NORM     0x00

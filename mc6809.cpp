@@ -27,11 +27,11 @@ This file is part of VCC (Virtual Color Computer).
 
 //Global variables for CPU Emulation-----------------------
 
-#define NTEST8(r) r>0x7F;
-#define NTEST16(r) r>0x7FFF;
-#define OTEST8(c,a,b,r) c ^ (((a^b^r)>>7) &1);
-#define OTEST16(c,a,b,r) c ^ (((a^b^r)>>15)&1);
-#define ZTEST(r) !r;
+#define NTEST8(r) r>0x7F
+#define NTEST16(r) r>0x7FFF
+#define OTEST8(c,a,b,r) c ^ (((a^b^r)>>7) &1)
+#define OTEST16(c,a,b,r) c ^ (((a^b^r)>>15)&1)
+#define ZTEST(r) !r
 
 // Quiet legacy compiler warning about forcing int value to bool
 #pragma warning( disable : 4800 )

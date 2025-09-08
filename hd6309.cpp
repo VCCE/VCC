@@ -36,12 +36,12 @@ This file is part of VCC (Virtual Color Computer).
 #endif
 
 //Global variables for CPU Emulation-----------------------
-#define NTEST8(r) r>0x7F;
-#define NTEST16(r) r>0x7FFF;
-#define NTEST32(r) r>0x7FFFFFFF;
-#define OVERFLOW8(c,a,b,r) c ^ (((a^b^r)>>7) &1);
-#define OVERFLOW16(c,a,b,r) c ^ (((a^b^r)>>15)&1);
-#define ZTEST(r) !r;
+#define NTEST8(r) r>0x7F
+#define NTEST16(r) r>0x7FFF
+#define NTEST32(r) r>0x7FFFFFFF
+#define OVERFLOW8(c,a,b,r) c ^ (((a^b^r)>>7) &1)
+#define OVERFLOW16(c,a,b,r) c ^ (((a^b^r)>>15)&1)
+#define ZTEST(r) !r
 
 #define DPADDRESS(r) (dp.Reg |MemRead8(r))
 #define IMMADDRESS(r) MemRead16(r)
