@@ -99,7 +99,6 @@ void  DoKeyDown(WPARAM,LPARAM);
 void  ShowMapError(int, const char *);
 void  SetDialogFocus(HWND);
 int   GetKeymapLine (char*, keytranslationentry_t *, int);
-int   CustKeyTransLen();
 char *GenKeymapLine(keytranslationentry_t *);
 
 // Lookup functions for keyname tables
