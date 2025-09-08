@@ -276,7 +276,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			DestroyWindow(hDlg);
 			g_hConfDlg = nullptr;
 			return TRUE;
-			break;
 
 		case WM_INITDIALOG:
 			CenterDialog(hDlg);
@@ -358,7 +357,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					DestroyWindow(hDlg);
 					g_hConfDlg = nullptr;
 					return TRUE;
-					break;
 
 				case IDC_EXTROM:
 				case IDC_TRSDOS:
@@ -399,7 +397,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 			}
 			return TRUE;
-		break;
 
 	}
     return FALSE;
@@ -526,7 +523,6 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			PathStripPath(Dummy);
 			SendDlgItemMessage(hDlg,IDC_TEXT1,WM_SETTEXT,0,(LPARAM)(LPCSTR)Dummy);
 			return TRUE;
-		break;
 
 		case WM_COMMAND:
 			switch (LOWORD(wParam))
@@ -580,13 +576,11 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					}
 					return TRUE;
 				}
-				break;
 
 				case IDCANCEL:
 					EndDialog(hDlg, LOWORD(wParam));
 					CreateFlag=0;
 					return FALSE;
-				break;
 			}
 			return TRUE;
 		break;

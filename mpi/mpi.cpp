@@ -391,7 +391,6 @@ LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		DestroyWindow(hDlg);
 		hConfDlg=nullptr;
 		return TRUE;
-		break;
 	case WM_INITDIALOG:
 		hParentWindow = GetParent(hDlg);
 		CenterDialog(hDlg);
@@ -443,7 +442,6 @@ LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		case ID_CONFIG4:
 			UpdateSlotConfig(3);
 			return TRUE;
-			break;
 		} // End switch LOWORD
 		break;
 	} // End switch message
@@ -543,7 +541,6 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 //		if (CartForSlot[SpareSelectSlot]==1)
 //			PakSetCart(1);
 		return 1;
-	break;
 
 	case 1:	//DLL File
 		UnloadModule(Slot);
@@ -596,7 +593,6 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 		if (ModuleResetCalls[Slot]!=nullptr)
 			ModuleResetCalls[Slot]();
 		return 1;
-	break;
 	}
 	return 0;
 }
