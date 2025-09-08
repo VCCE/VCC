@@ -240,7 +240,7 @@ void DecodeControlReg(unsigned char Tmp)
 		Side=0;
 	}
 	if ( !(Tmp & CTRL_MOTOR_EN))	//Turning off the drive makes the disk dirty
-		DirtyDisk=1;
+		DirtyDisk=true;
 
 	if (LastDisk != CurrentDisk)	//If we switch from reading one Physical disk to another we need to invalidate the cache
 		DirtyDisk=true;

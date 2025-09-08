@@ -7051,9 +7051,9 @@ int HD6309Exec(int CycleFor)
 
 		// Halted instruction pending.
 		if (HaltedInsPending) {
-			VCC::ApplyHaltpoints(0);
+			VCC::ApplyHaltpoints(false);
 			StepIns();
-			VCC::ApplyHaltpoints(1);
+			VCC::ApplyHaltpoints(true);
 			HaltedInsPending = 0;
 			return(CycleFor - CycleCounter);
 		}
