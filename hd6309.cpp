@@ -215,13 +215,6 @@ void Page_2(void);
 void Page_3(void);
 void MemWrite32(unsigned int, unsigned short);
 unsigned int MemRead32(unsigned short);
-// void MemWrite8(unsigned char, unsigned short);
-// void MemWrite16(unsigned short, unsigned short);
-// unsigned char MemRead8(unsigned short);
-// unsigned short MemRead16(unsigned short);
-// extern void SetNatEmuStat(unsigned char);
-
-//unsigned char GetDestReg(unsigned char);
 //END Fuction Prototypes-----------------------------------
 
 #include "CpuCommon.h"
@@ -7015,10 +7008,6 @@ void(*JmpVec3[256])(void) = {
 	InvalidInsHandler,		// FF
 };
 
-// static unsigned char op1, op2;
-// static unsigned short opstack[16];
-// static unsigned short addrstack[16];
-// static short int stckidx = 0;
 
 // Stepping check for Tfm and step over it
 void StepIns() {
@@ -7515,14 +7504,7 @@ void setmd (unsigned char binmd)
 	unsigned char bit;
 	for (bit=0;bit<=1;bit++)
 		md[bit]=!!(binmd & (1<<bit));
-	//if (md[NATIVE6309]) 
-	//{
-	//	SetNatEmuStat(2);
-	//}
-	//else 
-	//{
-	//	SetNatEmuStat(1);
-	//}
+
 	for(short i = 0 ; i < 24 ; i++)
 	{
 		*NatEmuCycles[i] = InsCycles[md[NATIVE6309]][i];
@@ -7563,14 +7545,6 @@ void HD6309DeAssertInterupt(InterruptSource src, Interrupt interrupt)
 
 void InvalidInsHandler(void)
 {	
-	// fprintf(stderr, "Illegal instruction %02x %02x \n", (int)op1, (int)op2);
-	// extern void dumpMem(UINT16, UINT16);
-	// dumpMem(PC_REG-8, (UINT16)16);
-	// for(short i = 0 ; i > -16 ; i--)
-	// {
-	// 	fprintf(stderr, "(%04x %04x)", addrstack[stckidx+i], opstack[stckidx+i]);
-	// }
-	// fprintf(stderr, "\n");
 	md[ILLEGAL]=1;
 	mdbits=getmd();
 	ErrorVector();
@@ -7644,11 +7618,3 @@ void MemWrite32(unsigned int data, unsigned short addr)
 	MemWrite16(data & 0xFFFF, addr + 2);
 	return;
 }
-
-
-// unsigned short GetPC(void)
-// {
-// 	return(PC_REG);
-// }
-
-

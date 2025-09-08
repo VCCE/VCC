@@ -33,12 +33,10 @@ unsigned char SetFrameSkip(unsigned char);
 unsigned char SetCpuType( unsigned char);
 unsigned char SetAutoStart(unsigned char);
 void SetPaletteType(void);
-//void StartCart(char *);
 void DoReboot(void);
 void DoHardReset(SystemState *);
 void LoadPack (void);
 void DynamicMenuCallback(const char *,int,int);
-//void RefreshWindow(void);
 
 //Type 0= HEAD TAG 1= Slave Tag 2=StandAlone
 #define	HEAD 0

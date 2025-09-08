@@ -85,7 +85,6 @@ static bool UseOpenGL = true;
 
 //Function Prototypes for this module
 extern LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); //Callback for the main window
-//void DisplayFlip(SystemState *);
 
 // load font on demand, otherwise false if not supported
 bool LoadOpenGLFont()
@@ -204,7 +203,6 @@ bool CreateDDWindow(SystemState *CWState)
 		::GetWindowRect(CWState->WindowHandle, &rStatBar);  
 		::MoveWindow(CWState->WindowHandle, rStatBar.left, rStatBar.top, // using MoveWindow to resize 
 											rStatBar.right - rStatBar.left, (rStatBar.bottom + StatusBarHeight) - rStatBar.top,
-//											rStatBar.right - rStatBar.left, rStatBar.bottom - rStatBar.top,
 											1);
 		::SendMessage(hwndStatusBar, WM_SIZE, 0, 0); // Redraw Status bar in new position
 	}
@@ -456,7 +454,6 @@ float Static(SystemState *STState)
 {
 	unsigned short x=0;
 	static unsigned short y=0;
-//	unsigned char Depth=0;
 	unsigned char Temp=0;
 	static unsigned char GreyScales[4] = { 128,135,184,191 };
 
@@ -466,8 +463,6 @@ float Static(SystemState *STState)
 	if (g_Display->LockSurface() != IDisplay::OK)
 		return 0;
 
-	//	y=(y+1) % 480;
-	
 	switch (STState->BitDepth)
 	{
 	case 0:

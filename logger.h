@@ -23,9 +23,6 @@ This file is part of VCC (Virtual Color Computer).
 #define TOCONS 0
 #define TOFILE 1
 
-//#include "tcc1014mmu.h"
-//void CpuDump(void);
-
 void WriteLog(char *, unsigned char);
 void PrintLogC(const void * fmt, ...);
 void PrintLogF(const void * fmt, ...);

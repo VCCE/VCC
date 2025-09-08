@@ -43,8 +43,6 @@ static void (*PakSetCart)(unsigned char)=nullptr;
 static HINSTANCE g_hinstDLL=nullptr;
 static char CatNumber[NUMSLOTS][MAX_LOADSTRING]={"","","",""};
 static char SlotLabel[NUMSLOTS][MAX_LOADSTRING*2]={"Empty","Empty","Empty","Empty"};
-//static unsigned char PersistPaks = 0;
-//static unsigned char DisableSCS = 0;
 static char ModulePaths[NUMSLOTS][MAX_PATH]={"","","",""};
 static char ModuleNames[NUMSLOTS][MAX_LOADSTRING]={"Empty","Empty","Empty","Empty"};
 static unsigned char *ExtRomPointers[NUMSLOTS]={nullptr,nullptr,nullptr,nullptr};
@@ -118,7 +116,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD  Reason, LPVOID Reserved)
 {
 	switch (Reason) {
 	case DLL_PROCESS_ATTACH:
-		//PrintLogC("MPI process attach %d\n",hinstDLL);
 		g_hinstDLL = hinstDLL;
 		break;
 	case DLL_PROCESS_DETACH:
@@ -366,11 +363,6 @@ extern "C"
 	}
 }
 
-//void AssertInterupt(Interrupt interrupt)
-//{
-//     AssertInt(IS_PIA1_CART, interrupt);
-//}
-
 extern "C"
 {
 	__declspec(dllexport) void SetCart(SETCART Pointer)
@@ -603,8 +595,6 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 													//For the multpak there is 1 for each slot se we know where it came from
 		if (ModuleResetCalls[Slot]!=nullptr)
 			ModuleResetCalls[Slot]();
-//		if (CartForSlot[SpareSelectSlot]==1)
-//			PakSetCart(1);
 		return(1);
 	break;
 	}
@@ -666,9 +656,6 @@ void LoadConfig(void)
 	char ModName[MAX_LOADSTRING]="";
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 
-	//PersistPaks=GetPrivateProfileInt(ModName, "PersistPaks", 1, IniFile);
-	//DisableSCS=GetPrivateProfileInt(ModName,"DisableSCS", 0, IniFile);
-
 	// Get default paths for modules
 	GetPrivateProfileString("DefaultPaths", "MPIPath", "", MPIPath, MAX_PATH, IniFile);
 
@@ -705,8 +692,6 @@ void WriteConfig(void)
 	}
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	WritePrivateProfileInt(ModName,"SWPOSITION",SwitchSlot,IniFile);
-//	WritePrivateProfileInt(ModName, "PesistPaks", PersistPaks, IniFile);
-//	WritePrivateProfileInt(ModName, "DisableSCS", DisableSCS, IniFile);
 	ValidatePath(ModulePaths[0]);
 	WritePrivateProfileString(ModName,"SLOT1",ModulePaths[0],IniFile);
 	ValidatePath(ModulePaths[1]);
@@ -761,8 +746,6 @@ void ReadModuleParms(unsigned char Slot,char *String)
 	if (ModuleResetCalls[Slot]!=nullptr)
 		strcat(String,"Needs Reset Notification\r\n");
 
-//	if (SetCartCalls[Slot]!=nullptr)
-//		strcat(String,"Asserts CART\r\n");
 	return;
 }
 

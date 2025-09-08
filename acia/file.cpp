@@ -43,12 +43,10 @@ int file_open()
     case COM_MODE_READ:
         strncat(filepath,AciaFileRdPath,MAX_PATH);
         FileStream = fopen(filepath,"rb");
-        //PrintLogF("Opened %s %d\n",filepath,FileStream);
         break;
     case COM_MODE_WRITE:
         strcat(filepath,AciaFileWrPath);
         FileStream = fopen(filepath,"wb");
-        //PrintLogF("Opened %s %d\n",filepath,FileStream);
         break;
     }
     return 0;
@@ -56,7 +54,6 @@ int file_open()
 
 void file_close()
 {
-    //PrintLogF("Close %d\n",FileStream);
     if(FileStream) fclose(FileStream);
     FileStream = nullptr;
 }
@@ -64,7 +61,6 @@ void file_close()
 // Read file.  If text remove LF characters
 int file_read(char* buf,int siz)
 {
-    //PrintLogF("Read %d %d\n",FileStream, siz);
     int PrevChrCR=0; // True if last char read was a carriage return
 
     if (FileStream == nullptr) {
@@ -97,7 +93,6 @@ int file_read(char* buf,int siz)
 // Write file.  If text skip LF chars and convert CR to CRLF
 int  file_write(char* buf,int siz)
 {
-    //PrintLogF("Write %d %d\n",FileStream, siz);
     int count = 0;
     if (FileStream && (siz > 0)) {
         if (AciaTextMode) {

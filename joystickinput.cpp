@@ -165,7 +165,6 @@ BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE* instance, VOID* context)
 bool InitJoyStick (unsigned char StickNumber)
 {
 #ifndef _M_ARM
-//  DIDEVCAPS capabilities;
     HRESULT hr;
     CurrentStick=StickNumber;
     if (Joysticks[StickNumber]==nullptr)
@@ -173,13 +172,6 @@ bool InitJoyStick (unsigned char StickNumber)
 
     if (FAILED(hr= Joysticks[StickNumber]->SetDataFormat(&c_dfDIJoystick2)))
         return false;
-
-//  if (FAILED(hr= Joysticks[StickNumber]->SetCooperativeLevel(nullptr, DISCL_EXCLUSIVE )))
-//      return(0);
-
-    //Fails for some reason Investigate this
-//  if (FAILED(hr= Joysticks[StickNumber]->GetCapabilities(&capabilities)))
-//      return(0);
 
     if (FAILED(hr= Joysticks[StickNumber]->EnumObjects(enumAxesCallback,nullptr,DIDFT_AXIS)))
         return false;
@@ -250,20 +242,12 @@ inline int vccJoystickType() {
 void
 vccJoystickStartTandy(unsigned char data, unsigned char next)
 {
-// FIXME: Disabled software joystick. Instruction timing too poor.
-//    switch(vccJoystickType()) {
-//    case 1:  // Software
-//        DAC_Change = (next>>2)-(data>>2); // For software hires
-//        JS_Ramp_Clock = 0;
-//        break;
-//    case 2:  // Tandy
 	if (vccJoystickType() == 2) {
         if ( next == 2 ) {
             JS_Ramp_On = 1;
             sticktarg = 0;
             JS_Ramp_Clock = 0;
         }
-//        break;
     }
 }
 
@@ -323,17 +307,6 @@ vccJoystickGetScan(unsigned char code)
     // else standard or software hires
     } else if (StickValue != 0) {  // OS9 joyin needs this for koronis rift
         unsigned int val = DACState();
-// Disabled software joystick
-//        if ((JS_Type==1) && (JS_Ramp_Clock < 10)) { // software hires?
-//            switch (DAC_Change) {
-//            case 1:
-//                val -= DAC_Rising[JS_Ramp_Clock];
-//                break;
-//            case -1:
-//                val += DAC_Falling[JS_Ramp_Clock];
-//                break;
-//            }
-//        }
         if (StickValue >= val) {
             code |= 0x80;
         }

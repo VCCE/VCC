@@ -529,15 +529,7 @@ void LocateMemory()
 	GetScrollInfo(hScrollBar, SB_CTL, &si);
 
 	memoryOffset = si.nPos;
-/*
-	// If addr is on screen set editing
-	if (addr >= memoryOffset && addr < memoryOffset + 16 * 32) {
-		editAddress = addr;
-		SetEditing(true);
-	} else {
-		SetEditing(false);
-	}
-*/
+
 	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
 }
 

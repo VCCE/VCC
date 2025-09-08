@@ -105,7 +105,7 @@ int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned int Rate)
 		if (hr!=DS_OK)
 			return 1;
 
-		hr=lpds->SetCooperativeLevel(main_window_handle,DSSCL_NORMAL);//DSSCL_NORMAL);// set cooperation level normal DSSCL_EXCLUSIVE
+		hr=lpds->SetCooperativeLevel(main_window_handle,DSSCL_NORMAL);	// set cooperation level normal DSSCL_EXCLUSIVE
 		if (hr!=DS_OK)
 			return 1;
 		// set up the format data structure
@@ -306,7 +306,6 @@ int SoundInInit (HWND main_window_handle,_GUID * Guid)
 	hr=lpdsin->CreateCaptureBuffer(&dsbdin, &lpdsbuffer2, nullptr);
 	if (hr!=DS_OK)
 		return 1;
-//	lpdsbuffer2->Initialize(lpdsin,&dsbdin);
 	lpdsbuffer2->Start(hr);
 	return 0;
 }

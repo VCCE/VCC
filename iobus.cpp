@@ -29,15 +29,8 @@ This file is part of VCC (Virtual Color Computer).
 unsigned char port_read(unsigned short addr)
 {
 	unsigned char port=0,temp=0;
-//	char Message[128]="";
 	port = (addr & 0xFF);
-/*
-if ( (port>=0x50) & (port <=0x5a))
-{
-		sprintf(Message,"Reading from %x\n",addr);
-		WriteLog(Message,TOCONS);
-}
-*/
+
 	switch (port)
 	{
 
@@ -171,14 +164,7 @@ void port_write(unsigned char data,unsigned short addr)
 {
 	unsigned char port=0;
 	port = (addr & 0xFF);
-	/*
-	char Message[256]="";
-	if ( (addr>=0x50) & (port <=0x5a))
-	{
-			sprintf(Message,"Wrting %x to %x\n",data,addr);
-			WriteLog(Message,TOCONS);
-	}
-	*/
+
 	switch (port)
 	{
 

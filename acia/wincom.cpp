@@ -26,7 +26,6 @@
 #include <errno.h>
 #include <string.h>
 #include "acia.h"
-//#include "sc6551.h"
 #include "../logger.h"
 
 HANDLE hReadEvent;
@@ -71,8 +70,6 @@ int wincom_open()
     PortDCB.ByteSize = DataLen;
     PortDCB.StopBits = (StopBits == 0) ? 0 : 2;
     SetCommState(hComPort,&PortDCB);
-    // PrintLogF("Baud:%d,Parity:%d,Data:%d,Stop:%d\n",
-    //           BaudRate,Parity,DataLen,StopBits);
     return 0;
 }
 

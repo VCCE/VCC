@@ -56,8 +56,6 @@ AudioHistory gAudioHistory[AudioHistorySize];
 int gAudioHistoryCount = 0;
 #endif
 
-//int CPUExeca(int);
-
 #define RENDERS_PER_BLINK_TOGGLE 16
 
 //****************************************
@@ -292,18 +290,6 @@ float RenderFrame (SystemState *RFState)
 	// Only affect frame rate if a debug window is open.
 	RFState->Debugger.Update();
 
-/*
-	//Debug Code
-	Frames++;
-	if (Frames==60)
-	{
-		Frames=0;
-		sprintf(Msga,"Total Cycles = %i Scan lines = %i LPS= %i\n",TotalCycles,Scans,LinesperScreen+TopBoarder+BottomBoarder+19);
-		WriteLog(Msga,0);
-		TotalCycles=0;
-		Scans=0;
-	}
-*/
 	return(CalculateFPS());
 }
 
@@ -620,16 +606,7 @@ void MiscReset(void)
 	ResetAudio();
 	return;
 }
-/*
-int CPUExeca(int Loops)
-{
-	int RetVal=0;
-	TotalCycles+=Loops;
-	RetVal=CPUExec(Loops);
-	TotalCycles+=abs(RetVal);
-	return(RetVal);
-}
-*/
+
 unsigned int SetAudioRate (unsigned int Rate)
 {
 
@@ -1111,7 +1088,6 @@ void CopyText() {
 		}
 	}
 	
-	//if (BytesPerRow == 32) { out = out.substr(0, out.length() - 2); }
 	bool succ = SetClipboard(out);
 }
 

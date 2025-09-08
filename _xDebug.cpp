@@ -9,13 +9,6 @@
 /*****************************************************************************/
 
 #include "xDebug.h"
-
-/*
-	System headers
-*/ 
-//#include <ucontext.h>
-//#include <unistd.h>
-//#include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -24,7 +17,6 @@
 /*****************************************************************************/
 
 int	g_bTraceMessageLogging	= TRUE;
-//int	g_bTraceMessageLogFile	= FALSE;
 
 /*****************************************************************************/
 
