@@ -1003,8 +1003,6 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 //-------------------------------------------------------------------------------
 	LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 	{
-		static int c = 0;
-
 		if (nCode < 0)  // do not process message 
 			return CallNextHookEx(hHookKeyboard, nCode, wParam, lParam);
 

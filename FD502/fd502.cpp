@@ -58,18 +58,14 @@ static char RomFileName[MAX_PATH]="";
 static char TempRomFileName[MAX_PATH]="";
 void (*AssertInt)(unsigned char,unsigned char)=nullptr;
 static void (*DynamicMenuCallback)( char *,int, int)=nullptr;
-static unsigned char (*MemRead8)(unsigned short);
-static void (*MemWrite8)(unsigned char,unsigned short);
-static unsigned char *Memory=nullptr;
 unsigned char PhysicalDriveA=0,PhysicalDriveB=0,OldPhysicalDriveA=0,OldPhysicalDriveB=0;
 static unsigned char *RomPointer[3]={ExternalRom,DiskRom,RGBDiskRom};
 static unsigned char SelectRom=0;
 unsigned char SetChip(unsigned char);
-static unsigned char NewDiskNumber=0,DialogOpen=0,CreateFlag=0;
+static unsigned char NewDiskNumber=0,CreateFlag=0;
 static unsigned char PersistDisks=0;
 static char IniFile[MAX_PATH]="";
 static unsigned char TempSelectRom=0;
-static unsigned char ClockEnabled=1,ClockReadOnly=1;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 void LoadConfig(void);
@@ -113,7 +109,6 @@ extern "C"
 {
 	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
 	{
-		int ErrorNumber=0;
 		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
 		DynamicMenuCallback =Temp;
@@ -269,7 +264,7 @@ void CenterDialog(HWND hDlg)
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	static unsigned char CurrentDisk=0,temp=0,temp2=0;
+	static unsigned char temp=0,temp2=0;
 	long ChipChoice[3]={IDC_EXTROM,IDC_TRSDOS,IDC_RGB};
 	long VirtualDrive[2]={IDC_DISKA,IDC_DISKB};
 	char VirtualNames[5][16]={"None","Drive 0","Drive 1","Drive 2","Drive 3"};
@@ -677,7 +672,6 @@ void LoadConfig(void)  // Called on SetIniPath
 	char DiskRomPath[MAX_PATH], RGBRomPath[MAX_PATH];
 	char DiskName[MAX_PATH]="";
 	unsigned int RetVal=0;
-	HANDLE hr=nullptr;
 
 #ifdef COMBINE_BECKER
 	strcpy(ModName,"HDBDOS/DW/Becker");

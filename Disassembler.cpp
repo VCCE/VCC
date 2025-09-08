@@ -824,7 +824,6 @@ void RemoveHaltpoint(int realaddr)
 /***************************************************/
 void SetHaltpoint(bool flag)
 {
-	HWND hDisText = nullptr;  // Richedit20 box for output
     std::string s;
     Haltpoint hp;
     int realaddr;

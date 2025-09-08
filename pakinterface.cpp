@@ -293,7 +293,7 @@ int InsertModule (char *ModulePath)
 		PakSetCart=(SETCARTPOINTER) GetProcAddress(hinstLib,"SetCart");
 		if (GetModuleName == nullptr)
 		{
-			int rc = FreeLibrary(hinstLib);
+			FreeLibrary(hinstLib);
 			// FIXME: This is needed and should not be commented out. Wrap it conditional
 			// either here or in the debug log functions.
 			//PrintLogC("pak:err FreeLibrary %d %d\n",hinstLib,rc);

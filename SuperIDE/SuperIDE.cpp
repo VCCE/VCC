@@ -35,9 +35,6 @@ typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
-static unsigned char (*MemRead8)(unsigned short);
-static void (*MemWrite8)(unsigned char,unsigned short);
-static unsigned char *Memory=nullptr;
 static void (*DynamicMenuCallback)( char *,int, int)=nullptr;
 static unsigned char BaseAddress=0x50;
 void BuildDynaMenu(void);
@@ -302,7 +299,6 @@ void Select_Disk(unsigned char Disk)
 
 void SaveConfig(void)
 {
-	unsigned char Index=0;
 	char ModName[MAX_LOADSTRING]="";
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	QueryDisk(MASTER,FileName);
@@ -322,11 +318,7 @@ void SaveConfig(void)
 void LoadConfig(void)
 {
 	char ModName[MAX_LOADSTRING]="";
-	unsigned char Index=0;
-	char Temp[16]="";
-	char DiskName[MAX_PATH]="";
-	unsigned int RetVal=0;
-	HANDLE hr=nullptr;
+
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	GetPrivateProfileString("DefaultPaths", "SuperIDEPath", "", SuperIDEPath, MAX_PATH, IniFile);
 	GetPrivateProfileString(ModName,"Master","",FileName,MAX_PATH,IniFile);

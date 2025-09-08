@@ -836,7 +836,6 @@ void ShowCoCoKey()
 {
 	char str[64];
 	const char * keytxt = "";
-	const char * modtxt = "";
 	struct CoCoKey *p;
 
 	// set coco keyboard buttons 
@@ -944,7 +943,6 @@ void ShowPCkey()
 {
 	char str[64];
 	const char * keytxt = "";
-	const char * modtxt = "";
     struct PCScanCode * entry;
 	if (PC_KeySelected>0) { 
 		entry = scantable_scancode_lookup(PC_KeySelected);

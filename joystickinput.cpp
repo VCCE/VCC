@@ -186,7 +186,6 @@ bool InitJoyStick (unsigned char StickNumber)
 #ifndef _M_ARM
 BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* context)
 {
-    HWND hDlg= (HWND)context;
     DIPROPRANGE propRange;
     propRange.diph.dwSize = sizeof(DIPROPRANGE);
     propRange.diph.dwHeaderSize = sizeof(DIPROPHEADER);

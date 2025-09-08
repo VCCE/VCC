@@ -68,7 +68,6 @@ char AciaFileRdPath[MAX_PATH]; // Path for file reads
 char AciaFileWrPath[MAX_PATH]; // Path for file writes
 
 static unsigned char Rom[8192];
-static void (*PakSetCart)(unsigned char)=nullptr;
 void (*AssertInt)(unsigned char, unsigned char);
 unsigned char LoadExtRom(char *);
 
