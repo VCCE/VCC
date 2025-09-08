@@ -32,7 +32,7 @@ namespace VCC { namespace Debugger
 		OpCodeTables_ = std::make_unique<OpCodeTables>();
 	}
 
-	void OpDecoder::CaptureBefore(long cycleTime, CPUState state)
+	void OpDecoder::CaptureBefore(long cycleTime, const CPUState& state)
 	{
 		BeforeCycles_ = cycleTime;
 		CurrentTrace_.event = TraceEvent::Instruction;
@@ -45,7 +45,7 @@ namespace VCC { namespace Debugger
 		DecodeInstruction(state, CurrentTrace_);
 	}
 
-	void OpDecoder::CaptureAfter(long cycleTime, CPUState state)
+	void OpDecoder::CaptureAfter(long cycleTime, const CPUState& state)
 	{
 		AfterCycles_ = cycleTime;
 		CurrentTrace_.cycleTime = TotalCycles_;
@@ -55,7 +55,7 @@ namespace VCC { namespace Debugger
 		TraceCaptured_.push_back(CurrentTrace_);
 	}
 
-	void OpDecoder::CaptureInterrupt(TraceEvent evt, IRQType irq, long cycleTime, CPUState state)
+	void OpDecoder::CaptureInterrupt(TraceEvent evt, IRQType irq, long cycleTime, const CPUState& state)
 	{
 		CPUTrace interrupt;
 		interrupt.event = evt;
@@ -207,7 +207,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpDecoder::DecodeInstruction(CPUState state, CPUTrace& trace)
+	bool OpDecoder::DecodeInstruction(const CPUState& state, CPUTrace& trace)
 	{
 		// Get the address of the next Op Code.
 		unsigned short PC = state.PC;
@@ -242,7 +242,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpDecoder::DecodePage2Instruction(unsigned short PC, CPUState state, CPUTrace& trace)
+	bool OpDecoder::DecodePage2Instruction(unsigned short PC, const CPUState& state, CPUTrace& trace)
 	{
 		// Get the extended Op Code.
 		unsigned char Op2 = DbgRead8(state.phyAddr,state.block,PC);
@@ -262,7 +262,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 	
-	bool OpDecoder::DecodePage3Instruction(unsigned short PC, CPUState state, CPUTrace& trace)
+	bool OpDecoder::DecodePage3Instruction(unsigned short PC, const CPUState& state, CPUTrace& trace)
 	{
 		// Get the extended Op Code.
 		unsigned char Op3 = DbgRead8(state.phyAddr,state.block,PC);

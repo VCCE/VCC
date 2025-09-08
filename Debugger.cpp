@@ -159,37 +159,37 @@ namespace VCC { namespace Debugger
 		return TraceRunning_;
 	}
 
-	void Debugger::TraceCaptureInterruptRequest(unsigned char irq, long cycleTime, CPUState state)
+	void Debugger::TraceCaptureInterruptRequest(unsigned char irq, long cycleTime, const CPUState& state)
 	{
 		Decoder_->CaptureInterrupt(TraceEvent::IRQRequested, Decoder_->ToIRQType(irq), cycleTime, state);
 		CheckStopTrace(state);
 	}
 
-	void Debugger::TraceCaptureInterruptMasked(unsigned char irq, long cycleTime, CPUState state)
+	void Debugger::TraceCaptureInterruptMasked(unsigned char irq, long cycleTime, const CPUState& state)
 	{
 		Decoder_->CaptureInterrupt(TraceEvent::IRQMasked, Decoder_->ToIRQType(irq), cycleTime, state);
 		CheckStopTrace(state);
 	}
 
-	void Debugger::TraceCaptureInterruptServicing(unsigned char irq, long cycleTime, CPUState state)
+	void Debugger::TraceCaptureInterruptServicing(unsigned char irq, long cycleTime, const CPUState& state)
 	{
 		Decoder_->CaptureInterrupt(TraceEvent::IRQServicing, Decoder_->ToIRQType(irq), cycleTime, state);
 		CheckStopTrace(state);
 	}
 
-	void Debugger::TraceCaptureInterruptExecuting(unsigned char irq, long cycleTime, CPUState state)
+	void Debugger::TraceCaptureInterruptExecuting(unsigned char irq, long cycleTime, const CPUState& state)
 	{
 		Decoder_->CaptureInterrupt(TraceEvent::IRQExecuting, Decoder_->ToIRQType(irq), cycleTime, state);
 		CheckStopTrace(state);
 	}
 
-	void Debugger::TraceCaptureBefore(long cycles, CPUState state)
+	void Debugger::TraceCaptureBefore(long cycles, const CPUState& state)
 	{
 		Decoder_->CaptureBefore(cycles, state);
 		CheckStopTrace(state);
 	}
 
-	void Debugger::TraceCaptureAfter(long cycles, CPUState state)
+	void Debugger::TraceCaptureAfter(long cycles, const CPUState& state)
 	{
 		Decoder_->CaptureAfter(cycles, state);
 		CheckStopTrace(state);

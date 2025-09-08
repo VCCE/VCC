@@ -961,18 +961,18 @@ namespace VCC { namespace Debugger
 	public:
 
 		// Calculate the exact number of cycles based on CPU state
-		bool ProcessHeuristics(OpCodeInfo& opcode, CPUState state, CPUTrace& trace);
+		bool ProcessHeuristics(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
 
 	protected:
 
-		bool ProcessNoAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace);
-		bool ProcessIndexModeAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace);
-		bool ProcessInterruptAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace);
-		bool ProcessStackAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace);
-		bool ProcessLongBranchAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace);
-		bool ProcessTFMAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace);
-		bool ProcessDIVAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace);
-		bool ProcessWaitForSYNCAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace);
+		bool ProcessNoAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
+		bool ProcessIndexModeAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
+		bool ProcessInterruptAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
+		bool ProcessStackAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
+		bool ProcessLongBranchAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
+		bool ProcessTFMAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
+		bool ProcessDIVAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
+		bool ProcessWaitForSYNCAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
 
 		int AdjustCycles(OpCodeInfo& opcode, int cycles, int bytes, bool IsNative6309);
 

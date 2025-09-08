@@ -38,8 +38,8 @@ namespace VCC { namespace Debugger { namespace UI { namespace {
 void SetEditing(bool);
 void FlashDialogWindow();
 void WriteMemory(int,unsigned char);
-void SetBackBuffer(RECT);
-void CreateScrollBar(RECT);
+void SetBackBuffer(const RECT&);
+void CreateScrollBar(const RECT&);
 void DrawForm(HDC,LPRECT);
 void DrawMemory(HDC,LPRECT);
 void SetEditPosition(int,int);
@@ -297,7 +297,7 @@ void WriteMemory(int addr, unsigned char value)
 //------------------------------------------------------------------
 // Setup back buffer for data display
 //------------------------------------------------------------------
-void SetBackBuffer(RECT rc)
+void SetBackBuffer(const RECT& rc)
 {
 	HDC hdc = GetDC(hDlgMem);
 	FillRect(hdc, &rc, (HBRUSH) (COLOR_WINDOW+1));
@@ -324,7 +324,7 @@ void SetBackBuffer(RECT rc)
 //------------------------------------------------------------------
 // Create vertical scroll bar
 //------------------------------------------------------------------
-void CreateScrollBar(RECT Rect)
+void CreateScrollBar(const RECT& Rect)
 {
 		hScrollBar = CreateWindowEx(
 			0,

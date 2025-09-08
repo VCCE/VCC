@@ -26,7 +26,7 @@
 
 namespace VCC { namespace Debugger
 {
-	bool OpCodeTables::ProcessHeuristics(OpCodeInfo& opcode, CPUState state, CPUTrace& trace)
+	bool OpCodeTables::ProcessHeuristics(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
 	{
 		bool valid = true;
 		trace.decodeCycles = state.IsNative6309 ? opcode.num6309cycles : opcode.num6809cycles;
@@ -66,7 +66,7 @@ namespace VCC { namespace Debugger
 		return valid;
 	}
 
-	bool OpCodeTables::ProcessNoAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace)
+	bool OpCodeTables::ProcessNoAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -136,7 +136,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessIndexModeAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace)
+	bool OpCodeTables::ProcessIndexModeAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -247,13 +247,13 @@ namespace VCC { namespace Debugger
 		return false;
 	}
 
-	bool OpCodeTables::ProcessInterruptAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace)
+	bool OpCodeTables::ProcessInterruptAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
 	{
 		trace.decodeCycles = AdjustCycles(opcode, 0, 0, state.IsNative6309);
 		return true;
 	}
 
-	bool OpCodeTables::ProcessStackAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace)
+	bool OpCodeTables::ProcessStackAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -290,7 +290,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessLongBranchAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace)
+	bool OpCodeTables::ProcessLongBranchAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -376,7 +376,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessTFMAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace)
+	bool OpCodeTables::ProcessTFMAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -409,7 +409,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessDIVAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace)
+	bool OpCodeTables::ProcessDIVAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
 	{
 		// Two rules:
 		//	1) DIVD executes in l fewer cycle if a two's-complement overflow occurs. 
@@ -463,7 +463,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessWaitForSYNCAdjust(OpCodeInfo& opcode, CPUState state, CPUTrace& trace)
+	bool OpCodeTables::ProcessWaitForSYNCAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
 	{
 		trace.decodeCycles = AdjustCycles(opcode, 0, 0, state.IsNative6309);
 		return true;

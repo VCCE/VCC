@@ -88,7 +88,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	}
 
 //-------------------------------------------------------------------------------
-	std::string ToStateChangeString(const CPUTrace trace, bool showPC = true)
+	std::string ToStateChangeString(const CPUTrace& trace, bool showPC = true)
 	{
 		std::ostringstream fmt;
 

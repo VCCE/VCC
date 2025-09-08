@@ -33,14 +33,14 @@ namespace VCC { namespace Debugger { namespace UI { namespace
     BackBufferInfo  BackBuf;
     std::unique_ptr<OpDecoder> Decoder;
 
-    void DrawCntrTxt(HDC hdc, RECT r, const char * str, int x, int y, int l, int h)
+    void DrawCntrTxt(HDC hdc, const RECT& r, const char * str, int x, int y, int l, int h)
     {
         RECT rc;
         SetRect(&rc, r.left + x, r.top + y, r.left + x + l, r.top + y + h);
         DrawText(hdc, str, -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     }
 
-    void DrawTextBox(HDC hdc, RECT r, int x, int y, int l, int h)
+    void DrawTextBox(HDC hdc, const RECT& r, int x, int y, int l, int h)
     {
         int rx = r.left + x;
         int ry = r.top + y;
@@ -51,7 +51,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
         LineTo(hdc, rx, ry);
     }
 
-    void DrawVrtLine(HDC hdc, RECT r, int x, int y, int h)
+    void DrawVrtLine(HDC hdc, const RECT& r, int x, int y, int h)
     {
         int rx = r.left + x;
         int ry = r.top + y;

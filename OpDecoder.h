@@ -42,9 +42,9 @@ namespace VCC { namespace Debugger
 		};
 
 		void Reset(long maxSamples);
-		void CaptureBefore(long cycleTime, CPUState state);
-		void CaptureAfter(long cycleTime, CPUState state);
-		void CaptureInterrupt(TraceEvent evt, IRQType irq, long cycleTime, CPUState state);
+		void CaptureBefore(long cycleTime, const CPUState& state);
+		void CaptureAfter(long cycleTime, const CPUState& state);
+		void CaptureInterrupt(TraceEvent evt, IRQType irq, long cycleTime, const CPUState& state);
 		void CaptureScreenEvent(TraceEvent evt, double cycles);
 		void CaptureEmulatorCycle(TraceEvent evt, int state, double lineNS, double irqNS, double soundNS, double cycles, double drift);
 
@@ -54,14 +54,14 @@ namespace VCC { namespace Debugger
 
 		IRQType ToIRQType(unsigned char irq);
 
-		bool DecodeInstruction(CPUState state, CPUTrace& trace);
+		bool DecodeInstruction(const CPUState& state, CPUTrace& trace);
 
 	protected:
 
 		bool DecodeInterrupt(TraceEvent evt, IRQType irq, std::string& interrupt);
 		bool DecodeScreen(TraceEvent evt, std::string& screen);
-		bool DecodePage2Instruction(unsigned short PC, CPUState state, CPUTrace& trace);
-		bool DecodePage3Instruction(unsigned short PC, CPUState state, CPUTrace& trace);
+		bool DecodePage2Instruction(unsigned short PC, const CPUState& state, CPUTrace& trace);
+		bool DecodePage3Instruction(unsigned short PC, const CPUState& state, CPUTrace& trace);
 
 	private:
 
