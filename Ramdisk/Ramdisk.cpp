@@ -68,16 +68,13 @@ extern "C"
 			case 0x42:
 				WritePort(Port,Data);
 				return;
-			break;
             // Write to RAM disk
 			case 0x43:
 				WriteArray(Data);
 				return;
-			break;
 
 			default:
 				return;
-			break;
 		}	//End port switch		
 		return;
 	}
@@ -93,11 +90,9 @@ extern "C"
 			// Read from RAM disk
 			case 0x43:
 				return(ReadArray());
-			break;
 
 			default:
 				return 0;
-			break;
 		}	//End port switch
 	}
 }

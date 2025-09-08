@@ -144,7 +144,6 @@ unsigned char disk_io_read(unsigned char port)
 			break;
 		default:
 			return 0;
-			break;
 	}	//END Switch port
 	return temp;
 }
@@ -423,7 +422,6 @@ long ReadSector (unsigned char Side,	//0 or 1
 				BytesRead=BytesperSector[Drive[CurrentDisk].SectorSize];
 			}
 			return(BytesperSector[Drive[CurrentDisk].SectorSize]);
-		break;
 
 		case DMK:	
 			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize));
@@ -438,7 +436,6 @@ long ReadSector (unsigned char Side,	//0 or 1
 				return 0;
 			memcpy(ReturnBuffer,&TempBuffer[CurrentSector.DAM],CurrentSector.Lenth);
 			return(CurrentSector.Lenth);
-		break;
 
 		case RAW:
 			pva=(unsigned char *)RawReadBuf;
@@ -466,10 +463,9 @@ long ReadSector (unsigned char Side,	//0 or 1
 					return 0;
 				DirtyDisk=false;
 			}
+
 			memcpy(ReturnBuffer,&pva[(Sector-1)*256],256);
 			return 256;
-			
-		break;
 	}
 	return 0;
 }
@@ -502,7 +498,6 @@ long WriteSector (	unsigned char Side,		//0 or 1
 			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			WriteFile(Drive[CurrentDisk].FileHandle,WriteBuffer,BytesperSector[Drive[CurrentDisk].SectorSize],&BytesWritten,nullptr);
 			return BytesWritten;
-		break;
 
 		case DMK:	//DMK 
 			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize));
@@ -524,7 +519,6 @@ long WriteSector (	unsigned char Side,		//0 or 1
 			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			WriteFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesWritten,nullptr);
 			return(CurrentSector.Lenth);
-		break;
 
 		case RAW:
 			DirtyDisk=true;
@@ -546,8 +540,6 @@ long WriteSector (	unsigned char Side,		//0 or 1
 			memcpy(RawReadBuf,WriteBuffer,256);
 			Ret=DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_WRITE_DATA, &rwp, sizeof(rwp), RawReadBuf,18*(128<<rwp.size), &dwRet, nullptr);
 			return dwRet;
-		break;
-
 	}
 	return 0;
 }
@@ -647,9 +639,6 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 			DirtyDisk=true;
 			DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &Track, sizeof(Track), nullptr, 0, &dwRet, nullptr);
 			return(FormatTrack (Drive[CurrentDisk].FileHandle , Track , Side, WriteBuffer[100] )); //KLUDGE!
-
-		break;
-
 	}
 	
 	return BytesWritten;
@@ -675,7 +664,6 @@ long ReadTrack (	unsigned char Side,		//0 or 1
 				return 0;
 			//STUB Write Me
 			return 0;
-		break;
 
 		case DMK:	
 			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize)+128);

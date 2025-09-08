@@ -161,7 +161,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         DestroyWindow(hDlg);
         hConfDlg=nullptr;
         return TRUE;
-        break;
 
     case WM_INITDIALOG:
         CenterDialog(hDlg);
@@ -169,7 +168,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         SendDlgItemMessage(hDlg,IDC_READONLY,BM_SETCHECK,ClockReadOnly,0);
         EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), TRUE);
         return TRUE;
-        break;
 
     case WM_COMMAND:
         switch (LOWORD(wParam))

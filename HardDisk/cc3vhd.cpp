@@ -282,25 +282,18 @@ unsigned char IdeRead(unsigned char port)
     switch (port-0x80) {
     case 0:
         return(SectorOffset.Byte.mswmsb);
-        break;
     case 1:
         return(SectorOffset.Byte.mswlsb);
-        break;
     case 2:
         return(SectorOffset.Byte.lswmsb);
-        break;
     case 3:
         return Status;
-        break;
     case 4:
         return(DMAaddress.Byte.msb);
-        break;
     case 5:
         return(DMAaddress.Byte.lsb);
-        break;
     case 6:
         return DriveSelect;
-        break;
     }
     return 0;
 }
