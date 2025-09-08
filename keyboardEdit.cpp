@@ -892,7 +892,10 @@ SubText_PCproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN:
         ScanCode=(lParam >> 16) & 0xFF;
         Extended=(lParam >> 24) & 1;
-		if (Extended && (ScanCode!=DIK_NUMLOCK)) ScanCode += 0x80;
+		if (Extended && (ScanCode!=DIK_NUMLOCK))
+		{
+			ScanCode += 0x80;
+		}
 	    switch (ScanCode) {
 		case DIK_LWIN:
 			return 0;

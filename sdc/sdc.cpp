@@ -1821,10 +1821,14 @@ void FixSDCPath(char *path, const char *fpath8)
         name[namlen++] = '.';
         int extlen=0;
         while(c = *pname8++) {
-        if ((c == '.')||(c == ' ')) continue;
-            name[namlen++] = c;
-            extlen++;
-            if (extlen > 2) break;
+			if (c == '.' || c == ' ')
+			{
+				continue;
+			}
+
+			name[namlen++] = c;
+			extlen++;
+			if (extlen > 2) break;
         }
     }
     name[namlen] = '\0';           // terminate name
@@ -2296,9 +2300,11 @@ void KillFile(const char *file)
     } else {
         if (DeleteFile(path))
             IF.status = STA_NORMAL;
-        else
-            _DLOG("Deletefile %s\n", strerror(errno));
-            IF.status = STA_FAIL | STA_NOTFOUND;
+		else
+		{
+			_DLOG("Deletefile %s\n", strerror(errno));
+			IF.status = STA_FAIL | STA_NOTFOUND;
+		}
     }
     return;
 }
