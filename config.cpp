@@ -1638,5 +1638,5 @@ void GetExtRomPath(char * RomPath)
 	if (CurrentConfig.UseExtCocoRom)
 		strncpy(RomPath,CurrentConfig.ExtRomFile,MAX_PATH);
 	else
-		*RomPath = '\0';;
+		*RomPath = '\0';
 }

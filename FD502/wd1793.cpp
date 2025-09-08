@@ -1062,7 +1062,7 @@ unsigned char GetBytefromAddress (unsigned char Tmp)
 			break;
 
 			case DMK:
-				TransferBuffer[0]= Drive[CurrentDisk].HeadPosition;; //CurrentSector.Track; not right need to get from image
+				TransferBuffer[0]= Drive[CurrentDisk].HeadPosition; //CurrentSector.Track; not right need to get from image
 				TransferBuffer[1]= Drive[CurrentDisk].Sides;
 				TransferBuffer[2]= IndexCounter/176;
 				TransferBuffer[3]= IndexCounter/176; //Drive[CurrentDrive].SectorSize;
@@ -1141,7 +1141,7 @@ unsigned char GetBytefromTrack (unsigned char Tmp)
 unsigned char WriteBytetoSector (unsigned char Tmp)
 {
 	unsigned long BytesRead=0,Result=0;
-	long FileOffset=0,RetVal=0;;
+	long FileOffset=0,RetVal=0;
 	unsigned char TempBuffer[16384];
 	SectorInfo CurrentSector;
 

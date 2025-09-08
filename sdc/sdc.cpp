@@ -990,14 +990,14 @@ void SDCWrite(unsigned char data,unsigned char port)
             if (IF.bufcnt > 0)
                 BlockReceive(data);
             else
-                IF.param2 = data;;
+                IF.param2 = data;
             break;
         // Command param #3 or block data receive
         case 0x4B:
             if (IF.bufcnt > 0)
                 BlockReceive(data);
             else
-                IF.param3 = data;;
+                IF.param3 = data;
             break;
         // Unhandled
         default:
