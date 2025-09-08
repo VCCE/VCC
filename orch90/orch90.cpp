@@ -37,10 +37,10 @@ BOOL WINAPI DllMain(
 	if (fdwReason == DLL_PROCESS_DETACH ) //Clean Up 
 	{
 		//Put shutdown procs here
-		return(1);
+		return 1;
 	}
 	g_hinstDLL=hinstDLL;
-	return(1);
+	return 1;
 }
 
 extern "C" 
@@ -150,5 +150,5 @@ unsigned char LoadExtRom(char *FilePath)	//Returns 1 on if loaded
 		RetVal = 1;
 		fclose(rom_handle);
 	}
-	return(RetVal);
+	return RetVal;
 }

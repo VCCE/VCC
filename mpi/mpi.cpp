@@ -230,7 +230,7 @@ extern "C"
 		if (Port == 0x7F) { // Self
 			SlotRegister&=0xCC;
 			SlotRegister|=(SpareSelectSlot | (ChipSelectSlot<<4));
-			return(SlotRegister);
+			return SlotRegister;
 		}
 
 		// Only read disk ports (0x40-0x5F) if SCS is set
@@ -238,7 +238,7 @@ extern "C"
 			if ( PakPortReadCalls[SpareSelectSlot] != nullptr)
 				return(PakPortReadCalls[SpareSelectSlot](Port));
 			else
-				return(0);
+				return 0;
 		}
 
 		for (int slot=0;slot<NUMSLOTS;slot++) {
@@ -246,10 +246,10 @@ extern "C"
 				//Return value from first module that returns non zero
 				unsigned char data=PakPortReadCalls[slot](Port);
 				if (data != 0)
-					return(data);
+					return data;
 			}
 		}
-		return(0);
+		return 0;
 	}
 }
 
@@ -327,7 +327,7 @@ extern "C"
 			if (ModuleAudioSampleCalls[slot] != nullptr)
 				TempSample+=ModuleAudioSampleCalls[slot]();
 
-		return(TempSample) ;
+		return TempSample ;
 	}
 }
 
@@ -503,7 +503,7 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 	unsigned int index=0;
 	FILE *rom_handle;
 	if (Slot>3)
-		return(0);
+		return 0;
 
 	// Copy ModuleName otherwise UnloadModule() will change it.
 	char MountName[MAX_PATH]="";
@@ -514,7 +514,7 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 	switch (ModuleType)
 	{
 	case 0: //File doesn't exist
-		return(0);
+		return 0;
 	break;
 
 	case 2: //ROM image
@@ -523,13 +523,13 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 		if (ExtRomPointers[Slot]==nullptr)
 		{
 			MessageBox(0,"Rom pointer is NULL","Error",0);
-			return(0); //Can Allocate RAM
+			return 0; //Can Allocate RAM
 		}
 		rom_handle=fopen(MountName,"rb");
 		if (rom_handle==nullptr)
 		{
 			MessageBox(0,"File handle is NULL","Error",0);
-			return(0);
+			return 0;
 		}
 		while ((feof(rom_handle)==0) & (index<0x40000))
 			ExtRomPointers[Slot][index++]=fgetc(rom_handle);
@@ -542,7 +542,7 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 		CartForSlot[Slot]=1;
 //		if (CartForSlot[SpareSelectSlot]==1)
 //			PakSetCart(1);
-		return(1);
+		return 1;
 	break;
 
 	case 1:	//DLL File
@@ -550,11 +550,11 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 		strcpy(ModulePaths[Slot],MountName);
 		hinstLib[Slot] = LoadLibrary(MountName);
 		if (hinstLib[Slot]==nullptr)
-			return(0);	//Error Can't open File
+			return 0;	//Error Can't open File
 		if (hinstLib[Slot] == g_hinstDLL) {
 			MessageBox(hConfDlg,"Can not insert MPI into a slot","ERROR",MB_ICONERROR);
 			UnloadModule(Slot);
-			return(0);
+			return 0;
 		}
 		GetModuleNameCalls[Slot]=(GETNAME)GetProcAddress(hinstLib[Slot], "ModuleName");
 		ConfigModuleCalls[Slot]=(CONFIGIT)GetProcAddress(hinstLib[Slot], "ModuleConfig");
@@ -577,7 +577,7 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 		{
 			UnloadModule(Slot);
 			MessageBox(0,"Not a valid Module","Ok",0);
-			return(0); //Error Not a Vcc Module
+			return 0; //Error Not a Vcc Module
 		}
 		GetModuleNameCalls[Slot](ModuleNames[Slot],CatNumber[Slot],DynamicMenuCallbackCalls[Slot]); //Need to add address of local Dynamic menu callback function!
 		strcpy(SlotLabel[Slot],ModuleNames[Slot]);
@@ -595,10 +595,10 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 													//For the multpak there is 1 for each slot se we know where it came from
 		if (ModuleResetCalls[Slot]!=nullptr)
 			ModuleResetCalls[Slot]();
-		return(1);
+		return 1;
 	break;
 	}
-	return(0);
+	return 0;
 }
 
 void UnloadModule(unsigned char Slot)
@@ -758,14 +758,14 @@ int FileID(const char *Filename)
 	char Temp[3]="";
 	DummyHandle=fopen(Filename,"rb");
 	if (DummyHandle==nullptr)
-		return(0);	//File Doesn't exist
+		return 0;	//File Doesn't exist
 	Temp[0]=fgetc(DummyHandle);
 	Temp[1]=fgetc(DummyHandle);
 	Temp[2]=0;
 	fclose(DummyHandle);
 	if (strcmp(Temp,"MZ")==0)
-		return(1);	//DLL File
-	return(2);		//Rom Image
+		return 1;	//DLL File
+	return 2;		//Rom Image
 }
 
 void SetCartSlot0(unsigned char Tmp)

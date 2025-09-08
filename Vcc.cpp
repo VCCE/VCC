@@ -540,7 +540,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 							InvalidateBoarder();
 						} else {
 							FlagEmuStop = TH_REQWAIT;
-							EmuState.FullScreen =! EmuState.FullScreen;
+							EmuState.FullScreen =!EmuState.FullScreen;
 						}
 					}
 				break;

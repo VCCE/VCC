@@ -66,7 +66,7 @@ int wincom_open()
     GetCommState(hComPort,&PortDCB);
     PortDCB.BaudRate = (BaudRate > 16) ? 9600 : bt[BaudRate];
     PortDCB.fParity  = EnParity;
-    PortDCB.Parity   = (EnParity) ? 0 : Parity;
+    PortDCB.Parity   = EnParity ? 0 : Parity;
     PortDCB.ByteSize = DataLen;
     PortDCB.StopBits = (StopBits == 0) ? 0 : 2;
     SetCommState(hComPort,&PortDCB);

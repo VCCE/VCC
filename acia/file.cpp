@@ -76,10 +76,10 @@ int file_read(char* buf,int siz)
         while ((count < siz) && (chr != EOF)) {
             chr = fgetc(FileStream);
             if (chr == EOF) {
-                if (!(PrevChrCR)) buf[count++] = '\r';
+                if (!PrevChrCR) buf[count++] = '\r';
                 buf[count++] = EOFCHR;
             } else {
-                if ( (chr != '\n') || !(PrevChrCR) ) buf[count++] = chr;
+                if ( (chr != '\n') || !PrevChrCR ) buf[count++] = chr;
                 PrevChrCR = (chr == '\r') ? 1 : 0;
             }
         }

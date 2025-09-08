@@ -120,7 +120,8 @@ unsigned char read_time(unsigned short port)
 
 		}
 	}
-return(ret_val);
+
+	return ret_val;
 }
 
 void write_time(unsigned char data,unsigned char port)

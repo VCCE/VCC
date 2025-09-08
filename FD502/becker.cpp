@@ -85,7 +85,7 @@ int becker_sethost(char *bufdwaddr, char *bufdwport)
 
 	if ((dwsport != curport) || (strcmp(dwaddress,curaddress) != 0))
 		dw_close();
-    return(0);
+    return 0;
 }
 
 //------------------------------------------------------
@@ -149,9 +149,9 @@ unsigned char becker_read(unsigned short port)
 		// read status
 		case 0x41:
 			if (dw_status() != 0)
-				return(2);
+				return 2;
 			else
-				return(0);
+				return 0;
 		// read data 
 		case 0x42:
 			return(dw_read());
@@ -196,9 +196,9 @@ unsigned char dw_status( void )
 {
 	// check for input data waiting
 	if (retry | (dwSocket == 0) | (InReadPos == InWritePos))
-		return(0);
+		return 0;
 	else
-		return(1);
+		return 1;
 }
 
 // coco reads a byte
@@ -209,7 +209,7 @@ unsigned char dw_read( void )
 	InReadPos++;
 	if (InReadPos == BUFFER_SIZE) InReadPos = 0;
 	BytesReadSince++;
-	return(dwdata);
+	return dwdata;
 }
 
 // coco writes a byte
@@ -229,7 +229,7 @@ int dw_write( char dwdata)
 	} else {
 		_DLOG("dw_write null socket\n");
 	}
-	return(0);
+	return 0;
 }
 
 void dw_close(void)
@@ -310,7 +310,7 @@ unsigned __stdcall dw_thread(void *Dummy)
 		if ((WSAStartup(0x202, &wsaData)) != 0) {
 			_DLOG("dw_thread winsock startup failed, exiting\n");
 			WSACleanup();
-			return(0);
+			return 0;
 		}
 	}
 	while(dwEnabled) {
@@ -352,5 +352,5 @@ unsigned __stdcall dw_thread(void *Dummy)
 	dwSocket = 0;
 
 	_endthreadex(0);
-	return(0);
+	return 0;
 }

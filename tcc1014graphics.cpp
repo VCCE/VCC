@@ -183,7 +183,7 @@ void UpdateScreen8 (SystemState *US8State)
 		TagY=US8State->LineCounter;
 	}
 	Start=StartofVidram+(TagY/LinesperRow)*(VPitch*ExtendedText);
-	YStride=(((US8State->LineCounter+VertCenter)*2)*US8State->SurfacePitch)+(HorzCenter)-1;
+	YStride=(((US8State->LineCounter+VertCenter)*2)*US8State->SurfacePitch)+HorzCenter-1;
 
 	switch (MasterMode) // (GraphicsMode <<7) | (CompatMode<<6)  | ((Bpp & 3)<<4) | (Stretch & 15);
 		{
@@ -214,7 +214,7 @@ void UpdateScreen8 (SystemState *US8State)
 					US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel&1];
 					if (!US8State->ScanLines)
 					{
-						YStride-=(8);
+						YStride-=8;
 						YStride+=US8State->SurfacePitch;
 						US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel >>7 ];
 						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>6)&1];
@@ -260,11 +260,11 @@ void UpdateScreen8 (SystemState *US8State)
 					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>2)&1];
 					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>1)&1];
 					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>1)&1];
-					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel & 1)];
-					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel & 1)];
+					US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel & 1];
+					US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel & 1];
 					if (!US8State->ScanLines)
 					{
-						YStride-=(16);
+						YStride-=16;
 						YStride+=US8State->SurfacePitch;
 						US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel>>7 ];
 						US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel>>7 ];
@@ -280,8 +280,8 @@ void UpdateScreen8 (SystemState *US8State)
 						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>2)&1];
 						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>1)&1];
 						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>1)&1];
-						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel & 1)];
-						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel & 1)];
+						US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel & 1];
+						US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel & 1];
 						YStride-=US8State->SurfacePitch;
 					}
 				} 
@@ -372,7 +372,7 @@ void UpdateScreen8 (SystemState *US8State)
 					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel & 8)/8 ];
 					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel & 4)/4];
 					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel & 2)/2 ];
-					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel & 1)];
+					US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel & 1];
 				} 
 			break;
 
@@ -452,16 +452,16 @@ void UpdateScreen8 (SystemState *US8State)
 						TextPallete[0]=Pallete8Bit[TextBGPallete];
 						TextPallete[1]=Pallete8Bit[TextFGPallete];
 						if (LowerCase & (Character < 32))
-							Pixel=ntsc_round_fontdata8x12[(Character + 80 )*12+ (US8State->LineCounter%12)];
+							Pixel=ntsc_round_fontdata8x12[(Character + 80)*12+ (US8State->LineCounter%12)];
 						else
-							Pixel=~ntsc_round_fontdata8x12[(Character )*12+ (US8State->LineCounter%12)];
+							Pixel=~ntsc_round_fontdata8x12[Character *12+ (US8State->LineCounter%12)];
 					break;
 
 					case 1:
 						Character = Character & 63;
 						TextPallete[0]=Pallete8Bit[TextBGPallete];
 						TextPallete[1]=Pallete8Bit[TextFGPallete];
-						Pixel=ntsc_round_fontdata8x12[(Character )*12+ (US8State->LineCounter%12)];
+						Pixel=ntsc_round_fontdata8x12[Character*12+ (US8State->LineCounter%12)];
 					break;
 
 					case 2:
@@ -469,12 +469,12 @@ void UpdateScreen8 (SystemState *US8State)
 						TextPallete[1] = Pallete8Bit[(Character & 112) >> 4];
 						TextPallete[0] = Pallete8Bit[8];
 						Character = 64 + (Character & 0xF);
-						Pixel=ntsc_round_fontdata8x12[(Character )*12+ (US8State->LineCounter%12)];
+						Pixel=ntsc_round_fontdata8x12[Character*12+ (US8State->LineCounter%12)];
 					break;
 
 					} //END SWITCH
-					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>7) ];
-					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>7) ];
+					US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel>>7];
+					US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel>>7];
 					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>6)&1];
 					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>6)&1];
 					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>5)&1];
@@ -487,14 +487,14 @@ void UpdateScreen8 (SystemState *US8State)
 					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>2)&1];
 					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>1)&1];
 					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>1)&1];
-					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel & 1)];
-					US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel & 1)];
+					US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel & 1];
+					US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel & 1];
 					if (!US8State->ScanLines)
 					{
-						YStride-=(16);
+						YStride-=16;
 						YStride+=US8State->SurfacePitch;
-						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>7) ];
-						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>7) ];
+						US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel>>7];
+						US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel>>7];
 						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>6)&1];
 						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>6)&1];
 						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>5)&1];
@@ -507,8 +507,8 @@ void UpdateScreen8 (SystemState *US8State)
 						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>2)&1];
 						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>1)&1];
 						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel>>1)&1];
-						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel & 1)];
-						US8State->PTRsurface8[YStride+=1]=TextPallete[(Pixel & 1)];
+						US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel & 1];
+						US8State->PTRsurface8[YStride+=1]=TextPallete[Pixel & 1];
 						YStride-=US8State->SurfacePitch;
 					}
 				
@@ -538,7 +538,7 @@ case 128+0: //Bpp=0 Sr=0 1BPP Stretch=1
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 1 & (WidePixel>>8)];
 		if (!US8State->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 1 & (WidePixel>>7)];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 1 & (WidePixel>>6)];
@@ -602,7 +602,7 @@ case 128+2:	//Bpp=0 Sr=2
 
 		if (!US8State->ScanLines)
 		{
-			YStride-=(32);
+			YStride-=32;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 1 & (WidePixel>>7)];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 1 & (WidePixel>>7)];
@@ -716,7 +716,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=4
 
 	if (!US8State->ScanLines)
 	{
-		YStride-=(64);
+		YStride-=64;
 		YStride+=US8State->SurfacePitch;
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 1 & (WidePixel>>7)];
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 1 & (WidePixel>>7)];
@@ -928,7 +928,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=8
 
 	if (!US8State->ScanLines)
 	{
-		YStride-=(128);
+		YStride-=128;
 		YStride+=US8State->SurfacePitch;
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 1 & (WidePixel>>7)];
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 1 & (WidePixel>>7)];
@@ -1078,7 +1078,7 @@ case 128+16: //BPP=1 Sr=0  2BPP Stretch=1
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 3 & (WidePixel>>8)];
 		if (!US8State->ScanLines)
 		{
-			YStride-=(8);
+			YStride-=8;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 3 & (WidePixel>>6)];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 3 & (WidePixel>>4)];
@@ -1117,7 +1117,7 @@ case 128+18: //Bpp=1 Sr=2
 
 		if (!US8State->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 3 & (WidePixel>>6)];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 3 & (WidePixel>>6)];
@@ -1182,7 +1182,7 @@ case 128+22: //Bpp=1 Sr=6
 
 		if (!US8State->ScanLines)
 		{
-			YStride-=(32);
+			YStride-=32;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 3 & (WidePixel>>6)];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 3 & (WidePixel>>6)];
@@ -1299,7 +1299,7 @@ case 128+30: //Bpp=1 Sr=14
 
 		if (!US8State->ScanLines)
 		{
-			YStride-=(64);
+			YStride-=64;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 3 & (WidePixel>>6)];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 3 & (WidePixel>>6)];
@@ -1505,7 +1505,7 @@ case 128+31: //Bpp=1 Sr=15 2BPP Stretch=16
 
 		if (!US8State->ScanLines)
 		{
-			YStride-=(128);
+			YStride-=128;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 3 & (WidePixel>>6)];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 3 & (WidePixel>>6)];
@@ -1650,7 +1650,7 @@ case 128+32: //Bpp=2 Sr=0 4BPP Stretch=1
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 15 & (WidePixel>>8)];
 		if (!US8State->ScanLines)
 		{
-			YStride-=(4);
+			YStride-=4;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 15 & (WidePixel>>4)];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 15 & WidePixel];
@@ -1676,7 +1676,7 @@ case 128+34: //Bpp=2 Sr=2
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 15 & (WidePixel>>8)];
 		if (!US8State->ScanLines)
 		{
-			YStride-=(8);
+			YStride-=8;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 15 & (WidePixel>>4)];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 15 & (WidePixel>>4)];
@@ -1717,7 +1717,7 @@ case 128+38: //Bpp=2 Sr=6
 
 		if (!US8State->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 15 & (WidePixel>>4)];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 15 & (WidePixel>>4)];
@@ -1786,7 +1786,7 @@ case 128+46: //Bpp=2 Sr=14
 
 		if (!US8State->ScanLines)
 		{
-			YStride-=(32);
+			YStride-=32;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 15 & (WidePixel>>4)];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 15 & (WidePixel>>4)];
@@ -1896,7 +1896,7 @@ case 128+47: //Bpp=2 Sr=15 4BPP Stretch=16
 
 		if (!US8State->ScanLines)
 		{
-			YStride-=(64);
+			YStride-=64;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 15 & (WidePixel>>4)];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[ 15 & (WidePixel>>4)];
@@ -2008,7 +2008,7 @@ case 192+0: //Bpp=0 Sr=0 1BPP Stretch=1
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 1 & (WidePixel>>8))];
 		if (!US8State->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 1 & (WidePixel>>7))];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 1 & (WidePixel>>6))];
@@ -2160,7 +2160,7 @@ case 192+2:	//Bpp=0 Sr=2
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 1 & (WidePixel>>8))];
 			if (!US8State->ScanLines)
 			{
-				YStride-=(32);
+				YStride-=32;
 				YStride+=US8State->SurfacePitch;
 				US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 1 & (WidePixel>>7))];
 				US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 1 & (WidePixel>>7))];
@@ -2276,7 +2276,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=4
 
 	if (!US8State->ScanLines)
 	{
-		YStride-=(64);
+		YStride-=64;
 		YStride+=US8State->SurfacePitch;
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 1 & (WidePixel>>7))];
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 1 & (WidePixel>>7))];
@@ -2488,7 +2488,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=8
 
 	if (!US8State->ScanLines)
 	{
-		YStride-=(128);
+		YStride-=128;
 		YStride+=US8State->SurfacePitch;
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 1 & (WidePixel>>7))];
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 1 & (WidePixel>>7))];
@@ -2638,7 +2638,7 @@ case 192+16: //BPP=1 Sr=0  2BPP Stretch=1
 		US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 3 & (WidePixel>>8))];
 		if (!US8State->ScanLines)
 		{
-			YStride-=(8);
+			YStride-=8;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 3 & (WidePixel>>4))];
@@ -2677,7 +2677,7 @@ case 192+18: //Bpp=1 Sr=2
 
 		if (!US8State->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 3 & (WidePixel>>6))];
@@ -2742,7 +2742,7 @@ case 192+22: //Bpp=1 Sr=6
 
 		if (!US8State->ScanLines)
 		{
-			YStride-=(32);
+			YStride-=32;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 3 & (WidePixel>>6))];
@@ -2859,7 +2859,7 @@ case 192+30: //Bpp=1 Sr=14
 
 		if (!US8State->ScanLines)
 		{
-			YStride-=(64);
+			YStride-=64;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 3 & (WidePixel>>6))];
@@ -3065,7 +3065,7 @@ case 192+31: //Bpp=1 Sr=15 2BPP Stretch=16
 
 		if (!US8State->ScanLines)
 		{
-			YStride-=(128);
+			YStride-=128;
 			YStride+=US8State->SurfacePitch;
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			US8State->PTRsurface8[YStride+=1]=Pallete8Bit[PalleteIndex+( 3 & (WidePixel>>6))];
@@ -3309,7 +3309,7 @@ void UpdateScreen16 (SystemState *USState16)
 					USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel&1];
 					if (!USState16->ScanLines)
 					{
-						YStride-=(8);
+						YStride-=8;
 						YStride+=USState16->SurfacePitch;
 						USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel >>7 ];
 						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>6)&1];
@@ -3355,11 +3355,11 @@ void UpdateScreen16 (SystemState *USState16)
 					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>2)&1];
 					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>1)&1];
 					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>1)&1];
-					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel & 1)];
-					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel & 1)];
+					USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel & 1];
+					USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel & 1];
 					if (!USState16->ScanLines)
 					{
-						YStride-=(16);
+						YStride-=16;
 						YStride+=USState16->SurfacePitch;
 						USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel>>7 ];
 						USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel>>7 ];
@@ -3375,8 +3375,8 @@ void UpdateScreen16 (SystemState *USState16)
 						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>2)&1];
 						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>1)&1];
 						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>1)&1];
-						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel & 1)];
-						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel & 1)];
+						USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel & 1];
+						USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel & 1];
 						YStride-=USState16->SurfacePitch;
 					}
 				} 
@@ -3467,7 +3467,7 @@ void UpdateScreen16 (SystemState *USState16)
 					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel & 8)/8 ];
 					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel & 4)/4];
 					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel & 2)/2 ];
-					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel & 1)];
+					USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel & 1];
 				} 
 			break;
 
@@ -3549,14 +3549,14 @@ void UpdateScreen16 (SystemState *USState16)
 						if (LowerCase & (Character < 32))
 							Pixel=ntsc_round_fontdata8x12[(Character + 80 )*12+ (USState16->LineCounter%12)];
 						else
-							Pixel=~ntsc_round_fontdata8x12[(Character )*12+ (USState16->LineCounter%12)];
+							Pixel=~ntsc_round_fontdata8x12[Character*12+ (USState16->LineCounter%12)];
 					break;
 
 					case 1:
 						Character = Character & 63;
 						TextPallete[0]=Pallete16Bit[TextBGPallete];
 						TextPallete[1]=Pallete16Bit[TextFGPallete];
-						Pixel=ntsc_round_fontdata8x12[(Character )*12+ (USState16->LineCounter%12)];
+						Pixel=ntsc_round_fontdata8x12[Character*12+ (USState16->LineCounter%12)];
 					break;
 
 					case 2:
@@ -3564,12 +3564,12 @@ void UpdateScreen16 (SystemState *USState16)
 						TextPallete[1] = Pallete16Bit[(Character & 112) >> 4];
 						TextPallete[0] = Pallete16Bit[8];
 						Character = 64 + (Character & 0xF);
-						Pixel=ntsc_round_fontdata8x12[(Character )*12+ (USState16->LineCounter%12)];
+						Pixel=ntsc_round_fontdata8x12[Character*12+ (USState16->LineCounter%12)];
 					break;
 
 					} //END SWITCH
-					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>7) ];
-					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>7) ];
+					USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel>>7];
+					USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel>>7];
 					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>6)&1];
 					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>6)&1];
 					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>5)&1];
@@ -3582,14 +3582,14 @@ void UpdateScreen16 (SystemState *USState16)
 					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>2)&1];
 					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>1)&1];
 					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>1)&1];
-					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel & 1)];
-					USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel & 1)];
+					USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel & 1];
+					USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel & 1];
 					if (!USState16->ScanLines)
 					{
-						YStride-=(16);
+						YStride-=16;
 						YStride+=USState16->SurfacePitch;
-						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>7) ];
-						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>7) ];
+						USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel>>7 ];
+						USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel>>7 ];
 						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>6)&1];
 						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>6)&1];
 						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>5)&1];
@@ -3602,8 +3602,8 @@ void UpdateScreen16 (SystemState *USState16)
 						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>2)&1];
 						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>1)&1];
 						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel>>1)&1];
-						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel & 1)];
-						USState16->PTRsurface16[YStride+=1]=TextPallete[(Pixel & 1)];
+						USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel & 1];
+						USState16->PTRsurface16[YStride+=1]=TextPallete[Pixel & 1];
 						YStride-=USState16->SurfacePitch;
 					}
 				
@@ -3633,7 +3633,7 @@ case 128+0: //Bpp=0 Sr=0 1BPP Stretch=1
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 1 & (WidePixel>>8)];
 		if (!USState16->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 1 & (WidePixel>>7)];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 1 & (WidePixel>>6)];
@@ -3697,7 +3697,7 @@ case 128+2:	//Bpp=0 Sr=2
 
 		if (!USState16->ScanLines)
 		{
-			YStride-=(32);
+			YStride-=32;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 1 & (WidePixel>>7)];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 1 & (WidePixel>>7)];
@@ -3811,7 +3811,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=4
 
 	if (!USState16->ScanLines)
 	{
-		YStride-=(64);
+		YStride-=64;
 		YStride+=USState16->SurfacePitch;
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 1 & (WidePixel>>7)];
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 1 & (WidePixel>>7)];
@@ -4023,7 +4023,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=8
 
 	if (!USState16->ScanLines)
 	{
-		YStride-=(128);
+		YStride-=128;
 		YStride+=USState16->SurfacePitch;
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 1 & (WidePixel>>7)];
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 1 & (WidePixel>>7)];
@@ -4173,7 +4173,7 @@ case 128+16: //BPP=1 Sr=0  2BPP Stretch=1
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 3 & (WidePixel>>8)];
 		if (!USState16->ScanLines)
 		{
-			YStride-=(8);
+			YStride-=8;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 3 & (WidePixel>>6)];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 3 & (WidePixel>>4)];
@@ -4212,7 +4212,7 @@ case 128+18: //Bpp=1 Sr=2
 
 		if (!USState16->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 3 & (WidePixel>>6)];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 3 & (WidePixel>>6)];
@@ -4277,7 +4277,7 @@ case 128+22: //Bpp=1 Sr=6
 
 		if (!USState16->ScanLines)
 		{
-			YStride-=(32);
+			YStride-=32;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 3 & (WidePixel>>6)];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 3 & (WidePixel>>6)];
@@ -4394,7 +4394,7 @@ case 128+30: //Bpp=1 Sr=14
 
 		if (!USState16->ScanLines)
 		{
-			YStride-=(64);
+			YStride-=64;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 3 & (WidePixel>>6)];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 3 & (WidePixel>>6)];
@@ -4600,7 +4600,7 @@ case 128+31: //Bpp=1 Sr=15 2BPP Stretch=16
 
 		if (!USState16->ScanLines)
 		{
-			YStride-=(128);
+			YStride-=128;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 3 & (WidePixel>>6)];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 3 & (WidePixel>>6)];
@@ -4745,7 +4745,7 @@ case 128+32: //Bpp=2 Sr=0 4BPP Stretch=1
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 15 & (WidePixel>>8)];
 		if (!USState16->ScanLines)
 		{
-			YStride-=(4);
+			YStride-=4;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 15 & (WidePixel>>4)];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 15 & WidePixel];
@@ -4771,7 +4771,7 @@ case 128+34: //Bpp=2 Sr=2
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 15 & (WidePixel>>8)];
 		if (!USState16->ScanLines)
 		{
-			YStride-=(8);
+			YStride-=8;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 15 & (WidePixel>>4)];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 15 & (WidePixel>>4)];
@@ -4812,7 +4812,7 @@ case 128+38: //Bpp=2 Sr=6
 
 		if (!USState16->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 15 & (WidePixel>>4)];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 15 & (WidePixel>>4)];
@@ -4881,7 +4881,7 @@ case 128+46: //Bpp=2 Sr=14
 
 		if (!USState16->ScanLines)
 		{
-			YStride-=(32);
+			YStride-=32;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 15 & (WidePixel>>4)];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 15 & (WidePixel>>4)];
@@ -4991,7 +4991,7 @@ case 128+47: //Bpp=2 Sr=15 4BPP Stretch=16
 
 		if (!USState16->ScanLines)
 		{
-			YStride-=(64);
+			YStride-=64;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 15 & (WidePixel>>4)];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[ 15 & (WidePixel>>4)];
@@ -5103,7 +5103,7 @@ case 192+0: //Bpp=0 Sr=0 1BPP Stretch=1
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 1 & (WidePixel>>8))];
 		if (!USState16->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 1 & (WidePixel>>7))];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 1 & (WidePixel>>6))];
@@ -5255,7 +5255,7 @@ case 192+2:	//Bpp=0 Sr=2
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 1 & (WidePixel>>8))];
 			if (!USState16->ScanLines)
 			{
-				YStride-=(32);
+				YStride-=32;
 				YStride+=USState16->SurfacePitch;
 				USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 1 & (WidePixel>>7))];
 				USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 1 & (WidePixel>>7))];
@@ -5371,7 +5371,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=4
 
 	if (!USState16->ScanLines)
 	{
-		YStride-=(64);
+		YStride-=64;
 		YStride+=USState16->SurfacePitch;
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 1 & (WidePixel>>7))];
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 1 & (WidePixel>>7))];
@@ -5583,7 +5583,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=8
 
 	if (!USState16->ScanLines)
 	{
-		YStride-=(128);
+		YStride-=128;
 		YStride+=USState16->SurfacePitch;
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 1 & (WidePixel>>7))];
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 1 & (WidePixel>>7))];
@@ -5733,7 +5733,7 @@ case 192+16: //BPP=1 Sr=0  2BPP Stretch=1
 		USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 3 & (WidePixel>>8))];
 		if (!USState16->ScanLines)
 		{
-			YStride-=(8);
+			YStride-=8;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 3 & (WidePixel>>4))];
@@ -5772,7 +5772,7 @@ case 192+18: //Bpp=1 Sr=2
 
 		if (!USState16->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 3 & (WidePixel>>6))];
@@ -5837,7 +5837,7 @@ case 192+22: //Bpp=1 Sr=6
 
 		if (!USState16->ScanLines)
 		{
-			YStride-=(32);
+			YStride-=32;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 3 & (WidePixel>>6))];
@@ -5954,7 +5954,7 @@ case 192+30: //Bpp=1 Sr=14
 
 		if (!USState16->ScanLines)
 		{
-			YStride-=(64);
+			YStride-=64;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 3 & (WidePixel>>6))];
@@ -6160,7 +6160,7 @@ case 192+31: //Bpp=1 Sr=15 2BPP Stretch=16
 
 		if (!USState16->ScanLines)
 		{
-			YStride-=(128);
+			YStride-=128;
 			YStride+=USState16->SurfacePitch;
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			USState16->PTRsurface16[YStride+=1]=Pallete16Bit[PalleteIndex+( 3 & (WidePixel>>6))];
@@ -6415,7 +6415,7 @@ void UpdateScreen32(SystemState *USState32)
 			case 0: //Width 80
 				curr_gmode = "80 Col. Text";
 				Attributes=0;
-				if (HorzOffsetReg & 128) { Start = StartofVidram + (TagY / LinesperRow)*(VPitch); } //Fix for Horizontal Offset Register in text mode.
+				if (HorzOffsetReg & 128) { Start = StartofVidram + (TagY / LinesperRow)*VPitch; } //Fix for Horizontal Offset Register in text mode.
 				for (HorzBeam=0;HorzBeam<BytesperRow*ExtendedText;HorzBeam+=ExtendedText)
 				{									
 					Character=buffer[Start+(unsigned char)(HorzBeam+Hoffset)];
@@ -6441,7 +6441,7 @@ void UpdateScreen32(SystemState *USState32)
 					szSurface32[YStride+=1]=TextPallete[Pixel&1];
 					if (!USState32->ScanLines)
 					{
-						YStride-=(8);
+						YStride-=8;
 						YStride+=Xpitch;
 						szSurface32[YStride+=1]=TextPallete[Pixel >>7 ];
 						szSurface32[YStride+=1]=TextPallete[(Pixel>>6)&1];
@@ -6488,11 +6488,11 @@ void UpdateScreen32(SystemState *USState32)
 					szSurface32[YStride+=1]=TextPallete[(Pixel>>2)&1];
 					szSurface32[YStride+=1]=TextPallete[(Pixel>>1)&1];
 					szSurface32[YStride+=1]=TextPallete[(Pixel>>1)&1];
-					szSurface32[YStride+=1]=TextPallete[(Pixel & 1)];
-					szSurface32[YStride+=1]=TextPallete[(Pixel & 1)];
+					szSurface32[YStride+=1]=TextPallete[Pixel & 1];
+					szSurface32[YStride+=1]=TextPallete[Pixel & 1];
 					if (!USState32->ScanLines)
 					{
-						YStride-=(16);
+						YStride-=16;
 						YStride+=Xpitch;
 						szSurface32[YStride+=1]=TextPallete[Pixel>>7 ];
 						szSurface32[YStride+=1]=TextPallete[Pixel>>7 ];
@@ -6508,8 +6508,8 @@ void UpdateScreen32(SystemState *USState32)
 						szSurface32[YStride+=1]=TextPallete[(Pixel>>2)&1];
 						szSurface32[YStride+=1]=TextPallete[(Pixel>>1)&1];
 						szSurface32[YStride+=1]=TextPallete[(Pixel>>1)&1];
-						szSurface32[YStride+=1]=TextPallete[(Pixel & 1)];
-						szSurface32[YStride+=1]=TextPallete[(Pixel & 1)];
+						szSurface32[YStride+=1]=TextPallete[Pixel & 1];
+						szSurface32[YStride+=1]=TextPallete[Pixel & 1];
 						YStride-=Xpitch;
 					}
 				} 
@@ -6600,7 +6600,7 @@ void UpdateScreen32(SystemState *USState32)
 					szSurface32[YStride+=1]=TextPallete[(Pixel & 8)/8 ];
 					szSurface32[YStride+=1]=TextPallete[(Pixel & 4)/4];
 					szSurface32[YStride+=1]=TextPallete[(Pixel & 2)/2 ];
-					szSurface32[YStride+=1]=TextPallete[(Pixel & 1)];
+					szSurface32[YStride+=1]=TextPallete[Pixel & 1];
 				} 
 			break;
 
@@ -6680,16 +6680,16 @@ void UpdateScreen32(SystemState *USState32)
 						TextPallete[0]=Pallete32Bit[TextBGPallete];
 						TextPallete[1]=Pallete32Bit[TextFGPallete];
 						if (LowerCase & (Character < 32))
-							Pixel=ntsc_round_fontdata8x12[(Character + 80 )*12+ (y%12)];
+							Pixel=ntsc_round_fontdata8x12[(Character + 80)*12+ (y%12)];
 						else
-							Pixel=~ntsc_round_fontdata8x12[(Character )*12+ (y%12)];
+							Pixel=~ntsc_round_fontdata8x12[Character *12+ (y%12)];
 					break;
 
 					case 1:
 						Character = Character & 63;
 						TextPallete[0]=Pallete32Bit[TextBGPallete];
 						TextPallete[1]=Pallete32Bit[TextFGPallete];
-						Pixel=ntsc_round_fontdata8x12[(Character )*12+ (y%12)];
+						Pixel=ntsc_round_fontdata8x12[Character*12+ (y%12)];
 					break;
 
 					case 2:
@@ -6697,12 +6697,12 @@ void UpdateScreen32(SystemState *USState32)
 						TextPallete[1] = Pallete32Bit[(Character & 112) >> 4];
 						TextPallete[0] = Pallete32Bit[8];
 						Character = 64 + (Character & 0xF);
-						Pixel=ntsc_round_fontdata8x12[(Character )*12+ (y%12)];
+						Pixel=ntsc_round_fontdata8x12[Character*12+ (y%12)];
 					break;
 
 					} //END SWITCH
-					szSurface32[YStride+=1]=TextPallete[(Pixel>>7) ];
-					szSurface32[YStride+=1]=TextPallete[(Pixel>>7) ];
+					szSurface32[YStride+=1]=TextPallete[Pixel>>7];
+					szSurface32[YStride+=1]=TextPallete[Pixel>>7];
 					szSurface32[YStride+=1]=TextPallete[(Pixel>>6)&1];
 					szSurface32[YStride+=1]=TextPallete[(Pixel>>6)&1];
 					szSurface32[YStride+=1]=TextPallete[(Pixel>>5)&1];
@@ -6715,14 +6715,14 @@ void UpdateScreen32(SystemState *USState32)
 					szSurface32[YStride+=1]=TextPallete[(Pixel>>2)&1];
 					szSurface32[YStride+=1]=TextPallete[(Pixel>>1)&1];
 					szSurface32[YStride+=1]=TextPallete[(Pixel>>1)&1];
-					szSurface32[YStride+=1]=TextPallete[(Pixel & 1)];
-					szSurface32[YStride+=1]=TextPallete[(Pixel & 1)];
+					szSurface32[YStride+=1]=TextPallete[Pixel & 1];
+					szSurface32[YStride+=1]=TextPallete[Pixel & 1];
 					if (!USState32->ScanLines)
 					{
-						YStride-=(16);
+						YStride-=16;
 						YStride+=Xpitch;
-						szSurface32[YStride+=1]=TextPallete[(Pixel>>7) ];
-						szSurface32[YStride+=1]=TextPallete[(Pixel>>7) ];
+						szSurface32[YStride+=1]=TextPallete[Pixel>>7];
+						szSurface32[YStride+=1]=TextPallete[Pixel>>7];
 						szSurface32[YStride+=1]=TextPallete[(Pixel>>6)&1];
 						szSurface32[YStride+=1]=TextPallete[(Pixel>>6)&1];
 						szSurface32[YStride+=1]=TextPallete[(Pixel>>5)&1];
@@ -6735,8 +6735,8 @@ void UpdateScreen32(SystemState *USState32)
 						szSurface32[YStride+=1]=TextPallete[(Pixel>>2)&1];
 						szSurface32[YStride+=1]=TextPallete[(Pixel>>1)&1];
 						szSurface32[YStride+=1]=TextPallete[(Pixel>>1)&1];
-						szSurface32[YStride+=1]=TextPallete[(Pixel & 1)];
-						szSurface32[YStride+=1]=TextPallete[(Pixel & 1)];
+						szSurface32[YStride+=1]=TextPallete[Pixel & 1];
+						szSurface32[YStride+=1]=TextPallete[Pixel & 1];
 						YStride-=Xpitch;
 					}
 				
@@ -6766,7 +6766,7 @@ case 128+0: //Bpp=0 Sr=0 1BPP Stretch=1
 		szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>8)];
 		if (!USState32->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>7)];
 			szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>6)];
@@ -6831,7 +6831,7 @@ case 128+2:	//Bpp=0 Sr=2
 
 		if (!USState32->ScanLines)
 		{
-			YStride-=(32);
+			YStride-=32;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>7)];
 			szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>7)];
@@ -6946,7 +6946,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=4
 
 	if (!USState32->ScanLines)
 	{
-		YStride-=(64);
+		YStride-=64;
 		YStride+=Xpitch;
 		szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>7)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>7)];
@@ -7159,7 +7159,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=8
 
 	if (!USState32->ScanLines)
 	{
-		YStride-=(128);
+		YStride-=128;
 		YStride+=Xpitch;
 		szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>7)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>7)];
@@ -7310,7 +7310,7 @@ case 128+16: //BPP=1 Sr=0  2BPP Stretch=1
 		szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>8)];
 		if (!USState32->ScanLines)
 		{
-			YStride-=(8);
+			YStride-=8;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>6)];
 			szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>4)];
@@ -7350,7 +7350,7 @@ case 128+18: //Bpp=1 Sr=2
 
 		if (!USState32->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>6)];
 			szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>6)];
@@ -7416,7 +7416,7 @@ case 128+22: //Bpp=1 Sr=6
 
 		if (!USState32->ScanLines)
 		{
-			YStride-=(32);
+			YStride-=32;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>6)];
 			szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>6)];
@@ -7534,7 +7534,7 @@ case 128+30: //Bpp=1 Sr=14
 
 		if (!USState32->ScanLines)
 		{
-			YStride-=(64);
+			YStride-=64;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>6)];
 			szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>6)];
@@ -7741,7 +7741,7 @@ case 128+31: //Bpp=1 Sr=15 2BPP Stretch=16
 
 		if (!USState32->ScanLines)
 		{
-			YStride-=(128);
+			YStride-=128;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>6)];
 			szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>6)];
@@ -7887,7 +7887,7 @@ case 128+32: //Bpp=2 Sr=0 4BPP Stretch=1
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>8)];
 		if (!USState32->ScanLines)
 		{
-			YStride-=(4);
+			YStride-=4;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>4)];
 			szSurface32[YStride+=1]=Pallete32Bit[ 15 & WidePixel];
@@ -7914,7 +7914,7 @@ case 128+34: //Bpp=2 Sr=2
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>8)];
 		if (!USState32->ScanLines)
 		{
-			YStride-=(8);
+			YStride-=8;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>4)];
 			szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>4)];
@@ -7956,7 +7956,7 @@ case 128+38: //Bpp=2 Sr=6
 
 		if (!USState32->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>4)];
 			szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>4)];
@@ -8026,7 +8026,7 @@ case 128+46: //Bpp=2 Sr=14
 
 		if (!USState32->ScanLines)
 		{
-			YStride-=(32);
+			YStride-=32;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>4)];
 			szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>4)];
@@ -8137,7 +8137,7 @@ case 128+47: //Bpp=2 Sr=15 4BPP Stretch=16
 
 		if (!USState32->ScanLines)
 		{
-			YStride-=(64);
+			YStride-=64;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>4)];
 			szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>4)];
@@ -8250,7 +8250,7 @@ case 192+0: //Bpp=0 Sr=0 1BPP Stretch=1
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>8))];
 		if (!USState32->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>7))];
 			szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>6))];
@@ -8415,7 +8415,7 @@ case 192+2:	//Bpp=0 Sr=2
 			szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>8))];
 			if (!USState32->ScanLines)
 			{
-				YStride-=(32);
+				YStride-=32;
 				YStride+=Xpitch;
 				szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>7))];
 				szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>7))];
@@ -8532,7 +8532,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=4
 
 	if (!USState32->ScanLines)
 	{
-		YStride-=(64);
+		YStride-=64;
 		YStride+=Xpitch;
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>7))];
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>7))];
@@ -8745,7 +8745,7 @@ case 192+14: //Bpp=0 Sr=14
 
 	if (!USState32->ScanLines)
 	{
-		YStride-=(128);
+		YStride-=128;
 		YStride+=Xpitch;
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>7))];
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>7))];
@@ -8896,7 +8896,7 @@ case 192+16: //BPP=1 Sr=0  2BPP Stretch=1
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>8))];
 		if (!USState32->ScanLines)
 		{
-			YStride-=(8);
+			YStride-=8;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>4))];
@@ -8936,7 +8936,7 @@ case 192+18: //Bpp=1 Sr=2
 
 		if (!USState32->ScanLines)
 		{
-			YStride-=(16);
+			YStride-=16;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>6))];
@@ -9002,7 +9002,7 @@ case 192+22: //Bpp=1 Sr=6
 
 		if (!USState32->ScanLines)
 		{
-			YStride-=(32);
+			YStride-=32;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>6))];
@@ -9120,7 +9120,7 @@ case 192+30: //Bpp=1 Sr=14
 
 		if (!USState32->ScanLines)
 		{
-			YStride-=(64);
+			YStride-=64;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>6))];
@@ -9327,7 +9327,7 @@ case 192+31: //Bpp=1 Sr=15 2BPP Stretch=16
 
 		if (!USState32->ScanLines)
 		{
-			YStride-=(128);
+			YStride-=128;
 			YStride+=Xpitch;
 			szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>6))];
 			szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>6))];
@@ -9667,7 +9667,7 @@ void SetGimePallet(unsigned char pallete,unsigned char color)
 {
 	// Convert the 6bit rgbrgb value to rrrrrggggggbbbbb for the Real video hardware.
 	//	unsigned char r,g,b;
-	Pallete[pallete]=((color &63));
+	Pallete[pallete]=color &63;
 	Pallete8Bit[pallete]= PalleteLookup8[MonType][color & 63]; 
 	Pallete16Bit[pallete]=PalleteLookup16[MonType][color & 63];
 	Pallete32Bit[pallete]=PalleteLookup32[MonType][color & 63];
@@ -9994,7 +9994,7 @@ unsigned char SetMonitorType(unsigned char Type)
 //		CurrentConfig.MonitorType=MonType;
 	}
 	SetGimeBoarderColor(tmp);
-	return(MonType);
+	return MonType;
 }
 void SetPaletteType() {
 	int tmp = CC3BoarderColor;
@@ -10012,7 +10012,7 @@ unsigned char SetScanLines(unsigned char Lines)
 		Cls(0,&EmuState);
 		BoarderChange=3;
 	}
-	return(0);
+	return 0;
 }
 int GetBytesPerRow() {
 	return BytesperRow;
@@ -10032,7 +10032,7 @@ unsigned int GetStartOfVidram() {
 	return StartofVidram;
 }
 int GetGraphicsMode() {
-	return(GraphicsMode);
+	return GraphicsMode;
 }
 void FlipArtifacts() {
 	if (ColorInvert == 0) { ColorInvert = 1; }

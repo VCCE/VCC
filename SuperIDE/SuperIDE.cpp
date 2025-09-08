@@ -64,7 +64,7 @@ BOOL WINAPI DllMain(
 		if (hConfDlg) DestroyWindow(hConfDlg);
 	}
 	g_hinstDLL=hinstDLL;
-	return(1);
+	return 1;
 }
 
 extern "C" 
@@ -132,7 +132,7 @@ extern "C"
 
 			}	//End port switch	
 			
-		return(RetVal);
+		return RetVal;
 	}
 }
 
@@ -280,7 +280,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 			}
 	}
-	return(0);
+	return 0;
 }
 
 void Select_Disk(unsigned char Disk)

@@ -84,7 +84,7 @@ int tcpip_open()
         tcpip_close();
         return -1;
    }
-    return(0);
+    return 0;
 }
 
 //Read
@@ -95,7 +95,7 @@ int tcpip_read(char* buf, int siz)
 
     while (cnt < 1) {
         cnt = recv(Socket,buf,siz,0);
-        if ((AciaTextMode) && (cnt == 0)) {
+        if (AciaTextMode && (cnt == 0)) {
             buf[cnt++] = EOFCHR;
             break;
         }

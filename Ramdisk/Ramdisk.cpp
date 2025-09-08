@@ -42,10 +42,10 @@ BOOL WINAPI DllMain(
 {
 	if (fdwReason == DLL_PROCESS_DETACH ) //Clean Up 
 	{
-		return(1);
+		return 1;
 	}
 	g_hinstDLL=hinstDLL;
-	return(1);
+	return 1;
 }
 
 extern "C" 
@@ -101,7 +101,7 @@ extern "C"
 			break;
 
 			default:
-				return(0);
+				return 0;
 			break;
 		}	//End port switch
 	}

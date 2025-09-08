@@ -215,7 +215,7 @@ void SN76489Device::write(uint8_t data)
 	{
 		r = (data & 0x70) >> 4;
 		m_last_register = r;
-		if (((m_ncr_style_psg) && (r == 6)) && ((data & 0x04) != (m_register[6] & 0x04)))
+		if ((m_ncr_style_psg && (r == 6)) && ((data & 0x04) != (m_register[6] & 0x04)))
 		{
 			m_RNG = m_feedback_mask; // NCR-style PSG resets the LFSR only on a mode write which actually changes the state of bit 2 of register 6
 		}

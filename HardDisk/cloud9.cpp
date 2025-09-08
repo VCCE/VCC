@@ -125,7 +125,7 @@ unsigned char ReadTime(unsigned short port)
 	} //End of port switch
 
 
-	return(ret_val);
+	return ret_val;
 }
 
 
@@ -183,9 +183,9 @@ void SetTime(void)
 unsigned char SetClockWrite(unsigned char Flag)
 {
 	if (Flag==0xFF)
-		return(WriteEnabled);
+		return WriteEnabled;
 	WriteEnabled=Flag&1;
-	return(WriteEnabled);
+	return WriteEnabled;
 }
 
 
