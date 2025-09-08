@@ -31,7 +31,7 @@ namespace VCC { namespace Debugger
 	class OpCodeTables
 	{
 	public:
-		OpCodeTables() {};
+		OpCodeTables() = default;
 
 		// 6x09 Address Modes
 		enum AddressingMode

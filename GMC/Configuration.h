@@ -7,7 +7,7 @@ class Configuration
 {
 public:
 
-	Configuration() {}
+	Configuration() = default;
 	explicit Configuration(std::string filename);
 	virtual ~Configuration() = default;
 

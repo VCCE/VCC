@@ -41,7 +41,7 @@ namespace VCC
 			uint8_t a;
 		};
 
-		Pixel() {}
+		Pixel() = default;
 		explicit Pixel(uint32_t p) : pixel(p) {}
 		Pixel(uint8_t r, uint8_t g, uint8_t b) : a(255), r(r), g(g), b(b) {}
 		bool operator==(const Pixel& o) const { return o.pixel == pixel; }
