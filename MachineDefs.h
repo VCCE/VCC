@@ -73,10 +73,10 @@ namespace VCC
 }
 
 // make nth bit 0-7
-inline constexpr uint8_t Bit(uint8_t n) { return 1 << n; }
+constexpr uint8_t Bit(uint8_t n) { return 1 << n; }
 
 // make mask of nth bit 0-7
-inline constexpr uint8_t BitMask(uint8_t n) { return ~Bit(n); }
+constexpr uint8_t BitMask(uint8_t n) { return ~Bit(n); }
 
 extern void (*CPUInit)(void);
 extern int  (*CPUExec)(int);
