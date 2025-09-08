@@ -184,7 +184,7 @@ void PackMem8Write(unsigned short Address,unsigned char Value)
 	if (PakMemWrite8!=nullptr)
 		PakMemWrite8(Address&32767,Value);
 	if (ExternalRomBuffer!=nullptr)
-		ExternalRomBuffer[(Address & 32767)+BankedCartOffset] = Value;;
+		ExternalRomBuffer[(Address & 32767)+BankedCartOffset] = Value;
 	return;
 }
 
