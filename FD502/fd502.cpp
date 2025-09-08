@@ -66,6 +66,7 @@ static unsigned char NewDiskNumber=0,CreateFlag=0;
 static unsigned char PersistDisks=0;
 static char IniFile[MAX_PATH]="";
 static unsigned char TempSelectRom=0;
+static unsigned char ClockEnabled=1;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 void LoadConfig(void);
