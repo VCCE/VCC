@@ -29,7 +29,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "cloud9.h"
 
 static 	SYSTEMTIME now;
-static unsigned char time_register=0;
 static unsigned __int64 InBuffer=0;
 static unsigned __int64 OutBuffer=0;
 static unsigned char BitCounter=0;

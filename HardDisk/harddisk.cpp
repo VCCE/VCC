@@ -44,7 +44,6 @@ typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
-static unsigned char *Memory=nullptr;
 static void (*DynamicMenuCallback)( char *,int, int)=nullptr;
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);

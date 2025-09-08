@@ -299,7 +299,6 @@ void dw_open( void )
 unsigned __stdcall dw_thread(void *Dummy)
 {
 	_DLOG("dw_thread %d\n",dwEnabled);
-	HANDLE hEvent = (HANDLE)Dummy;
 	WSADATA wsaData;
         
 	int sz;

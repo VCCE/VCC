@@ -108,7 +108,7 @@ BOOL PathRemoveExtension(char *Path)
 
 char* PathFindExtension(char *Path)
 {
-	size_t Index=strlen(Path),Lenth=Index;
+	size_t Index=strlen(Path);
 	if ( (Index==0) | (Index > MAX_PATH))
 		return(&Path[strlen(Path)+1]);
 	while ( (Index>0) & (Path[Index--] != '.') );

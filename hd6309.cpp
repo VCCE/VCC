@@ -7589,7 +7589,7 @@ unsigned char GetSorceReg(unsigned char Tmp)
 {
 	unsigned char Source=(Tmp>>4);
 	unsigned char Dest= Tmp & 15;
-	unsigned char Translate[]={0,0};
+
 	if ( (Source & 8) == (Dest & 8) ) //like size registers
 		return Source;
 return 0;

@@ -94,7 +94,6 @@ namespace VCC
 
 	void SampleFloatConversion(int width, uint8_t* outBuffer, const uint8_t* inBuffer, size_t samples)
 	{
-		float* in = (float*)inBuffer;
 		for (size_t i = 0; i < samples; ++i)
 		{
 			auto p = inBuffer + i * width;

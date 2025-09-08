@@ -206,7 +206,6 @@ unsigned char * Getint_rom_pointer(void)
 // and by SoftReset() in Vcc.c. If LoadRom() fails VCC can not run.
 void LoadRom(void)
 {
-	char UseExtRom = 0;
 	char RomPath[MAX_PATH]={};
 	unsigned short index=0;
 	FILE *hFile;

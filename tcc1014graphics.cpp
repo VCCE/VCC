@@ -3246,7 +3246,6 @@ void UpdateScreen16 (SystemState *USState16)
 {
 	unsigned short HorzBeam = 0;
 	unsigned int YStride=0;
-	static unsigned int TextColor=0;
 	static unsigned char Pixel=0;
 	static unsigned char Character=0,Attributes=0;
 	static unsigned short TextPallete[2]={0,0};

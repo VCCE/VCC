@@ -176,7 +176,7 @@ unsigned char pia0_read(unsigned char port)
 
 unsigned char pia1_read(unsigned char port)
 {
-	static unsigned int Flag=0,Flag2=0;
+	static unsigned int Flag=0;
 	unsigned char dda,ddb;
 	port-=0x20;
 	dda=(regb[1] & 4);
@@ -258,7 +258,6 @@ void pia0_write(unsigned char data,unsigned char port)
 void pia1_write(unsigned char data,unsigned char port)
 {
 	unsigned char dda,ddb;
-	static unsigned short LastSS=0;
 	port-=0x20;
 
 	dda=(regb[1] & 4);

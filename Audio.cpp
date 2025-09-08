@@ -157,7 +157,6 @@ int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned int Rate)
 
 void FlushAudioBuffer(unsigned int *Abuffer,unsigned int Lenth)
 {
-	unsigned char Flag=0;
 	unsigned char *Abuffer2=(unsigned char *)Abuffer;
 
 	if (!InitPassed || AudioPause || !Abuffer)

@@ -96,7 +96,6 @@ static unsigned char IndexPulse;
 static unsigned char TurboMode=0;
 static unsigned char CyclestoSettle=SETTLETIME;
 static unsigned char CyclesperStep=STEPTIME;
-static unsigned char MSectorCount=0;
 static unsigned char MSectorFlag=0; 
 static unsigned char LostDataFlag=0;
 static int ExecTimeWaiter=0;
@@ -279,7 +278,6 @@ unsigned char MountDisk(char *FileName,unsigned char disk)
 {
 	unsigned long BytesRead=0;
 	unsigned char HeaderBlock[HEADERBUFFERSIZE]="";
-	unsigned char Index1=0;
 	long TotalSectors=0;
 	unsigned char TmpSides=0,TmpSectors=0,TmpMod=0;
 
@@ -394,10 +392,8 @@ long ReadSector (unsigned char Side,	//0 or 1
 				 unsigned char Sector,	//1 to 18 could be 0 to 17
 				 unsigned char *ReturnBuffer)
 {
-	unsigned long BytesRead=0,Result=0,SectorLenth=0;
-	unsigned short IdamIndex=0,Temp1=0;
+	unsigned long BytesRead=0,Result=0;
 	long FileOffset=0;
-	unsigned char Density=0;
 	unsigned char TempBuffer[16384];
 	SectorInfo CurrentSector;
 //Needed for RAW access
@@ -485,9 +481,7 @@ long WriteSector (	unsigned char Side,		//0 or 1
 					long BytestoWrite)
 {
 	unsigned long BytesWritten=0,Result=0,BytesRead=0;
-	unsigned short IdamIndex=0,Temp1=0,Temp2=0;
 	unsigned int FileOffset=0;
-	unsigned char Density=0;
 	unsigned char TempBuffer[16384];
 	unsigned short Crc=0xABCD;
 //Needed for RAW access
@@ -567,8 +561,7 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 	unsigned short BufferIndex=0,WriteIndex=0,IdamIndex=0;
 	unsigned long FileOffset=0,Result=0,BytesWritten=0;
 	unsigned char *TempBuffer=nullptr;
-	unsigned short TBufferIndex=0,IdamPointer=0;
-	unsigned char TempChar=0,WriteToggle=0;
+	unsigned char TempChar=0;
 	unsigned short Crc=0,DataBlockPointer=0,Seed=0;	
 
 	if (Drive[CurrentDisk].FileHandle==nullptr)
@@ -669,7 +662,6 @@ long ReadTrack (	unsigned char Side,		//0 or 1
 {
 	unsigned long BytesRead=0,Result=0;
 	long FileOffset=0;
-	unsigned char Density=0;
 
 	if (Drive[CurrentDisk].FileHandle==nullptr)
 		return 0;
@@ -1044,7 +1036,7 @@ unsigned char GetBytefromAddress (unsigned char Tmp)
 {
 	unsigned char RetVal=0;
 	unsigned short Crc=0;
-	long FileOffset=0,Result=0;
+
 	if (TransferBufferSize == 0)
 	{
 		switch (Drive[CurrentDisk].ImageType)

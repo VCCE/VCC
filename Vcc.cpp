@@ -138,8 +138,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	MSG  Msg;
 
 	EmuState.WindowInstance = hInstance;
-	char temp1[MAX_PATH]="";
-	char temp2[MAX_PATH]=" Running on ";
 	unsigned threadID;
 	HANDLE hEvent,
 
@@ -235,8 +233,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	unsigned char kb_char;
 	static unsigned char OEMscan=0;
     int Extended;
-	static char ascii=0;
-	static unsigned long Width,Height;
 
 	kb_char = (unsigned char)wParam;
 

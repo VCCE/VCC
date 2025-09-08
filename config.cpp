@@ -298,7 +298,6 @@ unsigned char WriteIniFile(void)
 /***********************************************************/
 unsigned char ReadIniFile(void)
 {
-	HANDLE hr=nullptr;
 	unsigned char Index=0;
 
 	//Loads the config structure from the hard disk

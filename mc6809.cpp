@@ -332,7 +332,6 @@ static void MC6809WriteTfrExgRegister(uint8_t reg, uint16_t value)
 // Do instructions for CycleFor cycles. Return number cycles over.
 int MC6809Exec(int CycleFor)
 {
-	static unsigned char opcode=0;
 	extern int JS_Ramp_Clock;
 	int PrevCycleCount = 0;
 	CycleCounter=0;

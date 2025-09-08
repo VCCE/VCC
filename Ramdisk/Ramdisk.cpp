@@ -25,11 +25,6 @@ typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
-static unsigned char (*MemRead8)(unsigned short);
-static void (*MemWrite8)(unsigned char,unsigned short);
-static unsigned char *Memory=nullptr;
-static char FileName[MAX_PATH]="";
-static char IniFile[MAX_PATH]="";
 static void (*DynamicMenuCallback)( char *,int, int)=nullptr;
 
 

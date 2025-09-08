@@ -25,7 +25,6 @@ static unsigned int Lba=0,LastLba;
 char Message[256]="";	//DEBUG
 static unsigned char XferBuffer[512]="";
 
-static char *BigBuffer=nullptr;
 static unsigned int BufferIndex=0;
 static unsigned int BufferLenth=0;
 static unsigned char CurrentCommand=0;
@@ -68,8 +67,7 @@ void IdeInit()
 void IdeRegWrite(unsigned char Reg,unsigned short Data)
 {
 	unsigned char SData=(unsigned char)Data&0xFF;
-	BOOL bResult=0;
-
+	
 	switch (Reg)
 	{
 		case 0x0:
