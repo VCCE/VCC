@@ -17,317 +17,317 @@ This file is part of VCC (Virtual Color Computer).
 */
 
  //CC Flag masks
-#define E 7
-#define F 6
-#define H 5
-#define I 4
-#define N 3
-#define Z 2
-#define V 1
-#define C 0
+constexpr auto E = 7u;
+constexpr auto F = 6u;
+constexpr auto H = 5u;
+constexpr auto I = 4u;
+constexpr auto N = 3u;
+constexpr auto Z = 2u;
+constexpr auto V = 1u;
+constexpr auto C = 0u;
 
 // MC6809 Vector table
-#define VSWI3	0xFFF2
-#define VSWI2	0xFFF4
-#define VFIRQ	0xFFF6
-#define VIRQ	0xFFF8
-#define VSWI	0xFFFA
-#define VNMI	0xFFFC
-#define VRESET	0xFFFE
+constexpr auto VSWI3	= 0xFFF2u;
+constexpr auto VSWI2	= 0xFFF4u;
+constexpr auto VFIRQ	= 0xFFF6u;
+constexpr auto VIRQ		= 0xFFF8u;
+constexpr auto VSWI		= 0xFFFAu;
+constexpr auto VNMI		= 0xFFFCu;
+constexpr auto VRESET	= 0xFFFEu;
 
 //Opcode Defs
 //Last Char (D) Direct (I) Inherent (R) Relative (M) Immediate (X) Indexed (E) extened
-#define NEG_D	0x00
-#define COM_D	0x03
-#define LSR_D	0x04
-#define ROR_D	0x06
-#define ASR_D	0x07
-#define ASL_D	0x08
-#define ROL_D	0x09
-#define DEC_D	0x0A
-#define INC_D	0x0C
-#define TST_D	0x0D
-#define JMP_D	0x0E
-#define CLR_D	0x0F
+constexpr auto NEG_D	= 0x00u;
+constexpr auto COM_D	= 0x03u;
+constexpr auto LSR_D	= 0x04u;
+constexpr auto ROR_D	= 0x06u;
+constexpr auto ASR_D	= 0x07u;
+constexpr auto ASL_D	= 0x08u;
+constexpr auto ROL_D	= 0x09u;
+constexpr auto DEC_D	= 0x0Au;
+constexpr auto INC_D	= 0x0Cu;
+constexpr auto TST_D	= 0x0Du;
+constexpr auto JMP_D	= 0x0Eu;
+constexpr auto CLR_D	= 0x0Fu;
 
-#define Page2	0x10
-#define	Page3	0x11
-#define NOP_I	0x12
-#define SYNC_I	0x13
-#define HALT	0x15	// Vcc Halt_15
-#define LBRA_R	0x16
-#define LBSR_R	0x17
-#define DAA_I	0x19
-#define ORCC_M	0x1A
-#define ANDCC_M	0x1C
-#define SEX_I	0x1D
-#define EXG_M	0x1E		
-#define TFR_M	0x1F
+constexpr auto Page2	= 0x10u;
+constexpr auto Page3	= 0x11u;
+constexpr auto NOP_I	= 0x12u;
+constexpr auto SYNC_I	= 0x13u;
+constexpr auto HALT		= 0x15u;	// Vcc Halt_15
+constexpr auto LBRA_R	= 0x16u;
+constexpr auto LBSR_R	= 0x17u;
+constexpr auto DAA_I	= 0x19u;
+constexpr auto ORCC_M	= 0x1Au;
+constexpr auto ANDCC_M	= 0x1Cu;
+constexpr auto SEX_I	= 0x1Du;
+constexpr auto EXG_M	= 0x1Eu;		
+constexpr auto TFR_M	= 0x1Fu;
 
-#define BRA_R	0x20
-#define BRN_R	0x21
-#define BHI_R	0x22
-#define BLS_R	0x23
-#define BHS_R	0x24
-#define BLO_R	0x25
-#define BNE_R	0x26
-#define BEQ_R	0x27
-#define BVC_R	0x28
-#define BVS_R	0x29
-#define BPL_R	0x2A
-#define BMI_R	0x2B
-#define BGE_R	0x2C
-#define BLT_R	0x2D
-#define BGT_R	0x2E
-#define BLE_R	0x2F
+constexpr auto BRA_R	= 0x20u;
+constexpr auto BRN_R	= 0x21u;
+constexpr auto BHI_R	= 0x22u;
+constexpr auto BLS_R	= 0x23u;
+constexpr auto BHS_R	= 0x24u;
+constexpr auto BLO_R	= 0x25u;
+constexpr auto BNE_R	= 0x26u;
+constexpr auto BEQ_R	= 0x27u;
+constexpr auto BVC_R	= 0x28u;
+constexpr auto BVS_R	= 0x29u;
+constexpr auto BPL_R	= 0x2Au;
+constexpr auto BMI_R	= 0x2Bu;
+constexpr auto BGE_R	= 0x2Cu;
+constexpr auto BLT_R	= 0x2Du;
+constexpr auto BGT_R	= 0x2Eu;
+constexpr auto BLE_R	= 0x2Fu;
 
-#define LEAX_X	0x30
-#define LEAY_X	0x31
-#define LEAS_X	0x32
-#define LEAU_X	0x33
-#define PSHS_M	0x34
-#define PULS_M	0x35
-#define PSHU_M	0x36
-#define PULU_M	0x37
-#define RTS_I	0x39
-#define ABX_I	0x3A
-#define RTI_I	0x3B
-#define CWAI_I	0x3C
-#define MUL_I	0x3D
-#define RESET	0x3E	//Undocumented instruction
-#define SWI1_I	0x3F
+constexpr auto LEAX_X	= 0x30u;
+constexpr auto LEAY_X	= 0x31u;
+constexpr auto LEAS_X	= 0x32u;
+constexpr auto LEAU_X	= 0x33u;
+constexpr auto PSHS_M	= 0x34u;
+constexpr auto PULS_M	= 0x35u;
+constexpr auto PSHU_M	= 0x36u;
+constexpr auto PULU_M	= 0x37u;
+constexpr auto RTS_I	= 0x39u;
+constexpr auto ABX_I	= 0x3Au;
+constexpr auto RTI_I	= 0x3Bu;
+constexpr auto CWAI_I	= 0x3Cu;
+constexpr auto MUL_I	= 0x3Du;
+constexpr auto RESET	= 0x3Eu;	//Undocumented instruction
+constexpr auto SWI1_I	= 0x3Fu;
 
-#define NEGA_I	0x40	
-#define COMA_I	0x43
-#define LSRA_I	0x44
-#define RORA_I	0x46
-#define ASRA_I	0x47
-#define ASLA_I	0x48
-#define ROLA_I	0x49
-#define DECA_I	0x4A
-#define INCA_I	0x4C
-#define TSTA_I	0x4D
-#define CLRA_I	0x4F
+constexpr auto NEGA_I	= 0x40u;
+constexpr auto COMA_I	= 0x43u;
+constexpr auto LSRA_I	= 0x44u;
+constexpr auto RORA_I	= 0x46u;
+constexpr auto ASRA_I	= 0x47u;
+constexpr auto ASLA_I	= 0x48u;
+constexpr auto ROLA_I	= 0x49u;
+constexpr auto DECA_I	= 0x4Au;
+constexpr auto INCA_I	= 0x4Cu;
+constexpr auto TSTA_I	= 0x4Du;
+constexpr auto CLRA_I	= 0x4Fu;
 
-#define NEGB_I	0x50	
-#define COMB_I	0x53
-#define LSRB_I	0x54
-#define RORB_I	0x56
-#define ASRB_I	0x57
-#define ASLB_I	0x58
-#define ROLB_I	0x59
-#define DECB_I	0x5A
-#define INCB_I	0x5C
-#define TSTB_I	0x5D
-#define CLRB_I	0x5F
+constexpr auto NEGB_I	= 0x50u;	
+constexpr auto COMB_I	= 0x53u;
+constexpr auto LSRB_I	= 0x54u;
+constexpr auto RORB_I	= 0x56u;
+constexpr auto ASRB_I	= 0x57u;
+constexpr auto ASLB_I	= 0x58u;
+constexpr auto ROLB_I	= 0x59u;
+constexpr auto DECB_I	= 0x5Au;
+constexpr auto INCB_I	= 0x5Cu;
+constexpr auto TSTB_I	= 0x5Du;
+constexpr auto CLRB_I	= 0x5Fu;
 
-#define NEG_X	0x60
-#define COM_X	0x63
-#define LSR_X	0x64
-#define ROR_X	0x66
-#define ASR_X	0x67
-#define ASL_X	0x68
-#define ROL_X	0x69
-#define DEC_X	0x6A
-#define INC_X	0x6C
-#define TST_X	0x6D
-#define	JMP_X	0x6E
-#define CLR_X	0x6F
+constexpr auto NEG_X	= 0x60u;
+constexpr auto COM_X	= 0x63u;
+constexpr auto LSR_X	= 0x64u;
+constexpr auto ROR_X	= 0x66u;
+constexpr auto ASR_X	= 0x67u;
+constexpr auto ASL_X	= 0x68u;
+constexpr auto ROL_X	= 0x69u;
+constexpr auto DEC_X	= 0x6Au;
+constexpr auto INC_X	= 0x6Cu;
+constexpr auto TST_X	= 0x6Du;
+constexpr auto JMP_X	= 0x6Eu;
+constexpr auto CLR_X	= 0x6Fu;
 
-#define NEG_E	0x70
-#define COM_E	0x73
-#define LSR_E	0x74
-#define ROR_E	0x76
-#define ASR_E	0x77
-#define ASL_E	0x78
-#define ROL_E	0x79
-#define DEC_E	0x7A
-#define INC_E	0x7C
-#define TST_E	0x7D
-#define	JMP_E	0x7E
-#define CLR_E	0x7F
+constexpr auto NEG_E	= 0x70u;
+constexpr auto COM_E	= 0x73u;
+constexpr auto LSR_E	= 0x74u;
+constexpr auto ROR_E	= 0x76u;
+constexpr auto ASR_E	= 0x77u;
+constexpr auto ASL_E	= 0x78u;
+constexpr auto ROL_E	= 0x79u;
+constexpr auto DEC_E	= 0x7Au;
+constexpr auto INC_E	= 0x7Cu;
+constexpr auto TST_E	= 0x7Du;
+constexpr auto JMP_E	= 0x7Eu;
+constexpr auto CLR_E	= 0x7Fu;
 
-#define SUBA_M	0x80
-#define CMPA_M	0x81
-#define SBCA_M	0x82
-#define SUBD_M	0x83
-#define ANDA_M	0x84
-#define BITA_M	0x85
-#define LDA_M	0x86
-#define EORA_M	0x88
-#define ADCA_M	0x89
-#define ORA_M	0x8A
-#define	ADDA_M	0x8B
-#define CMPX_M	0x8C
-#define BSR_R	0x8D
-#define LDX_M	0x8E
+constexpr auto SUBA_M	= 0x80u;
+constexpr auto CMPA_M	= 0x81u;
+constexpr auto SBCA_M	= 0x82u;
+constexpr auto SUBD_M	= 0x83u;
+constexpr auto ANDA_M	= 0x84u;
+constexpr auto BITA_M	= 0x85u;
+constexpr auto LDA_M	= 0x86u;
+constexpr auto EORA_M	= 0x88u;
+constexpr auto ADCA_M	= 0x89u;
+constexpr auto ORA_M	= 0x8Au;
+constexpr auto ADDA_M	= 0x8Bu;
+constexpr auto CMPX_M	= 0x8Cu;
+constexpr auto BSR_R	= 0x8Du;
+constexpr auto LDX_M	= 0x8Eu;
 
-#define SUBA_D	0x90
-#define CMPA_D	0x91
-#define SBCA_D	0x92
-#define SUBD_D	0x93
-#define ANDA_D	0x94
-#define BITA_D	0x95
-#define LDA_D	0x96
-#define STA_D	0x97
-#define EORA_D	0x98
-#define ADCA_D	0x99
-#define ORA_D	0x9A
-#define	ADDA_D	0x9B
-#define CMPX_D	0x9C
-#define BSR_D	0x9D
-#define LDX_D	0x9E
-#define STX_D	0x9F
+constexpr auto SUBA_D	= 0x90u;
+constexpr auto CMPA_D	= 0x91u;
+constexpr auto SBCA_D	= 0x92u;
+constexpr auto SUBD_D	= 0x93u;
+constexpr auto ANDA_D	= 0x94u;
+constexpr auto BITA_D	= 0x95u;
+constexpr auto LDA_D	= 0x96u;
+constexpr auto STA_D	= 0x97u;
+constexpr auto EORA_D	= 0x98u;
+constexpr auto ADCA_D	= 0x99u;
+constexpr auto ORA_D	= 0x9Au;
+constexpr auto ADDA_D	= 0x9Bu;
+constexpr auto CMPX_D	= 0x9Cu;
+constexpr auto BSR_D	= 0x9Du;
+constexpr auto LDX_D	= 0x9Eu;
+constexpr auto STX_D	= 0x9Fu;
 
-#define SUBA_X	0xA0
-#define CMPA_X	0xA1
-#define SBCA_X	0xA2
-#define SUBD_X	0xA3
-#define ANDA_X	0xA4
-#define BITA_X	0xA5
-#define LDA_X	0xA6
-#define STA_X	0xA7
-#define EORA_X	0xA8
-#define ADCA_X	0xA9
-#define ORA_X	0xAA
-#define	ADDA_X	0xAB
-#define CMPX_X	0xAC
-#define BSR_X	0xAD
-#define LDX_X	0xAE
-#define STX_X	0xAF
+constexpr auto SUBA_X	= 0xA0u;
+constexpr auto CMPA_X	= 0xA1u;
+constexpr auto SBCA_X	= 0xA2u;
+constexpr auto SUBD_X	= 0xA3u;
+constexpr auto ANDA_X	= 0xA4u;
+constexpr auto BITA_X	= 0xA5u;
+constexpr auto LDA_X	= 0xA6u;
+constexpr auto STA_X	= 0xA7u;
+constexpr auto EORA_X	= 0xA8u;
+constexpr auto ADCA_X	= 0xA9u;
+constexpr auto ORA_X	= 0xAAu;
+constexpr auto ADDA_X	= 0xABu;
+constexpr auto CMPX_X	= 0xACu;
+constexpr auto BSR_X	= 0xADu;
+constexpr auto LDX_X	= 0xAEu;
+constexpr auto STX_X	= 0xAFu;
 
-#define SUBA_E	0xB0
-#define CMPA_E	0xB1
-#define SBCA_E	0xB2
-#define SUBD_E	0xB3
-#define ANDA_E	0xB4
-#define BITA_E	0xB5
-#define LDA_E	0xB6
-#define STA_E	0xB7
-#define EORA_E	0xB8
-#define ADCA_E	0xB9
-#define ORA_E	0xBA
-#define	ADDA_E	0xBB
-#define CMPX_E	0xBC
-#define BSR_E	0xBD
-#define LDX_E	0xBE
-#define STX_E	0xBF
+constexpr auto SUBA_E	= 0xB0u;
+constexpr auto CMPA_E	= 0xB1u;
+constexpr auto SBCA_E	= 0xB2u;
+constexpr auto SUBD_E	= 0xB3u;
+constexpr auto ANDA_E	= 0xB4u;
+constexpr auto BITA_E	= 0xB5u;
+constexpr auto LDA_E	= 0xB6u;
+constexpr auto STA_E	= 0xB7u;
+constexpr auto EORA_E	= 0xB8u;
+constexpr auto ADCA_E	= 0xB9u;
+constexpr auto ORA_E	= 0xBAu;
+constexpr auto ADDA_E	= 0xBBu;
+constexpr auto CMPX_E	= 0xBCu;
+constexpr auto BSR_E	= 0xBDu;
+constexpr auto LDX_E	= 0xBEu;
+constexpr auto STX_E	= 0xBFu;
 
-#define SUBB_M	0xC0
-#define CMPB_M	0xC1
-#define SBCB_M	0xC2
-#define ADDD_M	0xC3
-#define ANDB_M	0xC4
-#define BITB_M	0xC5
-#define LDB_M	0xC6
-#define EORB_M	0xC8
-#define ADCB_M	0xC9
-#define ORB_M	0xCA
-#define	ADDB_M	0xCB
-#define LDD_M	0xCC
-#define LDU_M	0xCE
+constexpr auto SUBB_M	= 0xC0u;
+constexpr auto CMPB_M	= 0xC1u;
+constexpr auto SBCB_M	= 0xC2u;
+constexpr auto ADDD_M	= 0xC3u;
+constexpr auto ANDB_M	= 0xC4u;
+constexpr auto BITB_M	= 0xC5u;
+constexpr auto LDB_M	= 0xC6u;
+constexpr auto EORB_M	= 0xC8u;
+constexpr auto ADCB_M	= 0xC9u;
+constexpr auto ORB_M	= 0xCAu;
+constexpr auto ADDB_M	= 0xCBu;
+constexpr auto LDD_M	= 0xCCu;
+constexpr auto LDU_M	= 0xCEu;
 
-#define SUBB_D	0xD0
-#define CMPB_D	0xD1
-#define SBCB_D	0xD2
-#define ADDD_D	0xD3
-#define ANDB_D	0xD4
-#define BITB_D	0xD5
-#define LDB_D	0xD6
-#define STB_D	0XD7
-#define EORB_D	0xD8
-#define ADCB_D	0xD9
-#define ORB_D	0xDA
-#define	ADDB_D	0xDB
-#define LDD_D	0xDC
-#define STD_D	0xDD
-#define LDU_D	0xDE
-#define STU_D	0xDF
+constexpr auto SUBB_D	= 0xD0u;
+constexpr auto CMPB_D	= 0xD1u;
+constexpr auto SBCB_D	= 0xD2u;
+constexpr auto ADDD_D	= 0xD3u;
+constexpr auto ANDB_D	= 0xD4u;
+constexpr auto BITB_D	= 0xD5u;
+constexpr auto LDB_D	= 0xD6u;
+constexpr auto STB_D	= 0XD7u;
+constexpr auto EORB_D	= 0xD8u;
+constexpr auto ADCB_D	= 0xD9u;
+constexpr auto ORB_D	= 0xDAu;
+constexpr auto ADDB_D	= 0xDBu;
+constexpr auto LDD_D	= 0xDCu;
+constexpr auto STD_D	= 0xDDu;
+constexpr auto LDU_D	= 0xDEu;
+constexpr auto STU_D	= 0xDFu;
 
-#define SUBB_X	0xE0
-#define CMPB_X	0xE1
-#define SBCB_X	0xE2
-#define ADDD_X	0xE3
-#define ANDB_X	0xE4
-#define BITB_X	0xE5
-#define LDB_X	0xE6
-#define	STB_X	0xE7
-#define EORB_X	0xE8
-#define ADCB_X	0xE9
-#define ORB_X	0xEA
-#define	ADDB_X	0xEB
-#define LDD_X	0xEC
-#define STD_X	0xED
-#define LDU_X	0xEE
-#define STU_X	0xEF
+constexpr auto SUBB_X	= 0xE0u;
+constexpr auto CMPB_X	= 0xE1u;
+constexpr auto SBCB_X	= 0xE2u;
+constexpr auto ADDD_X	= 0xE3u;
+constexpr auto ANDB_X	= 0xE4u;
+constexpr auto BITB_X	= 0xE5u;
+constexpr auto LDB_X	= 0xE6u;
+constexpr auto STB_X	= 0xE7u;
+constexpr auto EORB_X	= 0xE8u;
+constexpr auto ADCB_X	= 0xE9u;
+constexpr auto ORB_X	= 0xEAu;
+constexpr auto ADDB_X	= 0xEBu;
+constexpr auto LDD_X	= 0xECu;
+constexpr auto STD_X	= 0xEDu;
+constexpr auto LDU_X	= 0xEEu;
+constexpr auto STU_X	= 0xEFu;
 
-#define SUBB_E	0xF0
-#define CMPB_E	0xF1
-#define SBCB_E	0xF2
-#define ADDD_E	0xF3
-#define ANDB_E	0xF4
-#define BITB_E	0xF5
-#define LDB_E	0xF6
-#define	STB_E	0xF7
-#define EORB_E	0xF8
-#define ADCB_E	0xF9
-#define ORB_E	0xFA
-#define	ADDB_E	0xFB
-#define LDD_E	0xFC
-#define STD_E	0xFD
-#define LDU_E	0xFE
-#define STU_E	0xFF
+constexpr auto SUBB_E	= 0xF0u;
+constexpr auto CMPB_E	= 0xF1u;
+constexpr auto SBCB_E	= 0xF2u;
+constexpr auto ADDD_E	= 0xF3u;
+constexpr auto ANDB_E	= 0xF4u;
+constexpr auto BITB_E	= 0xF5u;
+constexpr auto LDB_E	= 0xF6u;
+constexpr auto STB_E	= 0xF7u;
+constexpr auto EORB_E	= 0xF8u;
+constexpr auto ADCB_E	= 0xF9u;
+constexpr auto ORB_E	= 0xFAu;
+constexpr auto ADDB_E	= 0xFBu;
+constexpr auto LDD_E	= 0xFCu;
+constexpr auto STD_E	= 0xFDu;
+constexpr auto LDU_E	= 0xFEu;
+constexpr auto STU_E	= 0xFFu;
 
 //******************Page 2 Codes*****************************
-#define LBRN_R	0x21
-#define LBHI_R	0x22
-#define LBLS_R	0x23
-#define LBHS_R	0x24
-#define LBCS_R	0x25
-#define LBNE_R	0x26
-#define LBEQ_R	0x27
-#define LBVC_R	0x28
-#define LBVS_R	0x29
-#define LBPL_R	0x2A
-#define LBMI_R	0x2B
-#define LBGE_R	0x2C
-#define LBLT_R	0x2D
-#define LBGT_R	0x2E
-#define LBLE_R	0x2F
-#define SWI2_I	0x3F
-#define CMPD_M	0x83
-#define CMPY_M	0x8C
-#define LDY_M	0x8E
-#define CMPD_D	0x93
-#define CMPY_D	0x9C
-#define LDY_D	0x9E
-#define STY_D	0x9F
-#define CMPD_X	0xA3
-#define CMPY_X	0xAC
-#define LDY_X	0xAE
-#define STY_X	0xAF
-#define CMPD_E	0xB3
-#define CMPY_E	0xBC
-#define LDY_E	0xBE
-#define STY_E	0xBF
-#define LDS_I	0xCE
-#define LDS_D	0xDE
-#define STS_D	0xDF
-#define LDQ_X	0xEC
-#define STQ_X	0xED
-#define LDS_X	0xEE
-#define STS_X	0xEF
-#define LDS_E	0xFE
-#define STS_E	0xFF
+constexpr auto LBRN_R	= 0x21u;
+constexpr auto LBHI_R	= 0x22u;
+constexpr auto LBLS_R	= 0x23u;
+constexpr auto LBHS_R	= 0x24u;
+constexpr auto LBCS_R	= 0x25u;
+constexpr auto LBNE_R	= 0x26u;
+constexpr auto LBEQ_R	= 0x27u;
+constexpr auto LBVC_R	= 0x28u;
+constexpr auto LBVS_R	= 0x29u;
+constexpr auto LBPL_R	= 0x2Au;
+constexpr auto LBMI_R	= 0x2Bu;
+constexpr auto LBGE_R	= 0x2Cu;
+constexpr auto LBLT_R	= 0x2Du;
+constexpr auto LBGT_R	= 0x2Eu;
+constexpr auto LBLE_R	= 0x2Fu;
+constexpr auto SWI2_I	= 0x3Fu;
+constexpr auto CMPD_M	= 0x83u;
+constexpr auto CMPY_M	= 0x8Cu;
+constexpr auto LDY_M	= 0x8Eu;
+constexpr auto CMPD_D	= 0x93u;
+constexpr auto CMPY_D	= 0x9Cu;
+constexpr auto LDY_D	= 0x9Eu;
+constexpr auto STY_D	= 0x9Fu;
+constexpr auto CMPD_X	= 0xA3u;
+constexpr auto CMPY_X	= 0xACu;
+constexpr auto LDY_X	= 0xAEu;
+constexpr auto STY_X	= 0xAFu;
+constexpr auto CMPD_E	= 0xB3u;
+constexpr auto CMPY_E	= 0xBCu;
+constexpr auto LDY_E	= 0xBEu;
+constexpr auto STY_E	= 0xBFu;
+constexpr auto LDS_I	= 0xCEu;
+constexpr auto LDS_D	= 0xDEu;
+constexpr auto STS_D	= 0xDFu;
+constexpr auto LDQ_X	= 0xECu;
+constexpr auto STQ_X	= 0xEDu;
+constexpr auto LDS_X	= 0xEEu;
+constexpr auto STS_X	= 0xEFu;
+constexpr auto LDS_E	= 0xFEu;
+constexpr auto STS_E	= 0xFFu;
 
 //*******************Page 3 Codes*********************************
-#define BREAK	0x3E	// Vcc Halt_113E
-#define SWI3_I	0x3F
-#define CMPU_M	0x83
-#define CMPS_M	0x8C
-#define CMPU_D	0x93
-#define CMPS_D	0x9C
-#define CMPU_X	0xA3
-#define CMPS_X	0xAC
-#define CMPU_E	0xB3
-#define CMPS_E	0xBC
+constexpr auto BREAK	= 0x3Eu;	// Vcc Halt_113E
+constexpr auto SWI3_I	= 0x3Fu;
+constexpr auto CMPU_M	= 0x83u;
+constexpr auto CMPS_M	= 0x8Cu;
+constexpr auto CMPU_D	= 0x93u;
+constexpr auto CMPS_D	= 0x9Cu;
+constexpr auto CMPU_X	= 0xA3u;
+constexpr auto CMPS_X	= 0xACu;
+constexpr auto CMPU_E	= 0xB3u;
+constexpr auto CMPS_E	= 0xBCu;

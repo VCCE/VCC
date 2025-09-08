@@ -18,17 +18,17 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define STOP	0
-#define PLAY	1
-#define REC		2
-#define EJECT	3
-#define CAS	1
-#define WAV 0
+constexpr auto STOP		= 0u;
+constexpr auto PLAY		= 1u;
+constexpr auto REC		= 2u;
+constexpr auto EJECT	= 3u;
+constexpr auto CAS		= 1u;
+constexpr auto WAV		= 0u;
 
-const int CAS_WRITEBUFFERSIZE = 0x40000;
-const int CAS_TAPEREADAHEAD = 1000; // decoded batch size
-const int CAS_SILENCE = 128;
-const int CAS_TAPEAUDIORATE = 44100;
+constexpr auto CAS_WRITEBUFFERSIZE = 0x40000u;
+constexpr auto CAS_TAPEREADAHEAD = 1000u; // decoded batch size
+constexpr auto CAS_SILENCE = 128u;
+constexpr auto CAS_TAPEAUDIORATE = 44100u;
 
 unsigned int GetTapeCounter(void);
 unsigned int LoadTape(void);

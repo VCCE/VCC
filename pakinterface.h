@@ -36,10 +36,10 @@ void UnloadDll(void);
 void UnloadPack(void);
 void DynamicMenuActivated(unsigned char );
 HMENU RefreshDynamicMenu(void);
-#define ID_SDYNAMENU 5000	//Defines the start and end IDs for the dynamic menus
-#define ID_EDYNAMENU 5100
-#define NOMODULE	1
-#define NOTVCC	2
+constexpr auto ID_SDYNAMENU = 5000;	//Defines the start and end IDs for the dynamic menus
+constexpr auto ID_EDYNAMENU = 5100;
+constexpr auto NOMODULE = 1;
+constexpr auto NOTVCC = 2;
 
 #define	HEAD 0
 #define SLAVE 1

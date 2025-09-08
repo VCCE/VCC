@@ -42,10 +42,10 @@ unsigned int GetDACSample(void);
 unsigned char GetCasSample(void);
 void SetCassetteSample(unsigned char);
 int OpenPrintFile(char *);
-#define FALLING 0
-#define RISING	1
-#define ANY		2
-#define RAMPMAX 900
+constexpr auto FALLING	= 0u;
+constexpr auto RISING	= 1u;
+constexpr auto ANY		= 2u;
+constexpr auto RAMPMAX	= 900u;
 
 const int PIA_MUX_DAC = 0;
 const int PIA_MUX_CASSETTE = 1;
