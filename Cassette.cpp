@@ -16,14 +16,14 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
+#include <Windows.h>
 #include <iostream>
 #include "resource.h"
 #include "defines.h"
 #include "coco3.h"
 #include "config.h"
-#include "dialogops.h"
-#include "cassette.h"
+#include "DialogOps.h"
+#include "Cassette.h"
 #include "stdio.h"
 #include "logger.h"
 #include <functional>

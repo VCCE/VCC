@@ -39,9 +39,9 @@ This file is part of VCC (Virtual Color Computer).
 #include <process.h>
 #include <commdlg.h>
 #include <stdio.h>
-#include <Mmsystem.h>
+#include <mmsystem.h>
 #include "fileops.h"
-#include "dialogops.h"
+#include "DialogOps.h"
 #include "defines.h"
 #include "resource.h"
 #include "joystickinput.h"

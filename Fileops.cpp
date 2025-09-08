@@ -16,7 +16,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
+#include <Windows.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include "fileops.h"
