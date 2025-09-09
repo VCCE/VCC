@@ -35,19 +35,20 @@ void VhdReset(void);
 #define SLAVE 1
 #define STANDALONE 2
 
-//#define DRIVESIZE 130
-#define DRIVESIZE 512 // Mb
-#define MAX_SECTOR DRIVESIZE*1024*1024
-#define SECTORSIZE 256
+constexpr auto DRIVESIZE = 512u; // Mb
+constexpr auto MAX_SECTOR = DRIVESIZE * 1024 * 1024;
+constexpr auto SECTORSIZE = 256u;
 
-#define HD_OK        0
-#define HD_PWRUP    -1
-#define HD_INVLD    -2
-#define HD_NODSK     4
-#define HD_WP        5
+// FIXME: These need should probably be turned into a scoped enum.
+constexpr auto HD_OK	= 0;
+constexpr auto HD_PWRUP	= -1;
+constexpr auto HD_INVLD	= -2;
+constexpr auto HD_NODSK	= 4;
+constexpr auto HD_WP	= 5;
 
-#define SECTOR_READ     0
-#define SECTOR_WRITE    1
-#define DISK_FLUSH      2
+// FIXME: These need should probably be turned into a scoped enum.
+constexpr auto SECTOR_READ	= 0u;
+constexpr auto SECTOR_WRITE	= 1u;
+constexpr auto DISK_FLUSH	= 2u;
 
 #endif

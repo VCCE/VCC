@@ -26,8 +26,6 @@
 #include <sys\stat.h>
 #include "logger.h"
 
-#define TOCONS 0
-#define TOFILE 1
 
 static HANDLE hLog_Out = nullptr;
 DWORD dummy;

@@ -39,6 +39,4 @@ POINT GetForcedAspectBorderPadding();
 void CloseScreen();
 void DumpScreenshot();
 
-#define MAX_LOADSTRING 100
-
 #endif

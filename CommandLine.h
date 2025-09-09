@@ -20,8 +20,8 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 // Declare global variables defined by GetCmdLineArgs
-#define CL_MAX_PATH 256
-#define CL_MAX_PASTE 256
+constexpr auto CL_MAX_PATH = 256u;
+constexpr auto CL_MAX_PASTE = 256u;
 struct CmdLineArguments {
 	char QLoadFile[CL_MAX_PATH];
 	char IniFile[CL_MAX_PATH];
@@ -34,6 +34,8 @@ extern struct CmdLineArguments CmdArg;
 int  GetCmdLineArgs(char * lpCmdLine);
 
 // Errors returned
+// FIXME: These need to be turned into a scoped enum and the signature of functions
+// that use them updated.
 #define CL_ERR_UNKOPT 1  // Unknown option found
 #define CL_ERR_XTRARG 2  // Too many arguments
 

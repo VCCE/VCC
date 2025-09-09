@@ -29,7 +29,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "../DialogOps.h"
 #include "../MachineDefs.h"
 
-#define DEF_HD_SIZE 132480
+constexpr auto DEF_HD_SIZE = 132480u;
 
 static char VHDfile0[MAX_PATH] { 0 };
 static char VHDfile1[MAX_PATH] { 0 };
@@ -38,6 +38,8 @@ static char NewVHDfile[MAX_PATH];
 static char IniFile[MAX_PATH]  { 0 };
 static char HardDiskPath[MAX_PATH];
 
+// FIXME: These typedefs are duplicated across more if not all projects and
+// need to be consolidated in one place.
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);

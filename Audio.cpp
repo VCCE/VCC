@@ -34,7 +34,7 @@ This file is part of VCC (Virtual Color Computer).
 
 using AuxBufferType = VCC::Array<VCC::Array<uint32_t, AUDIO_RATE / 60>, 6>;
 
-#define MAXCARDS	12
+constexpr auto MAXCARDS = 12u;
 //PlayBack
 static LPDIRECTSOUND	lpds;           // directsound interface pointer
 static DSBUFFERDESC		dsbd;           // directsound description

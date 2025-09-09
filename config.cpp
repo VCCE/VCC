@@ -137,7 +137,7 @@ unsigned char TapeFastLoad = 1;
 char Tmodes[4][10]={"STOP","PLAY","REC","STOP"};
 static int NumberOfSoundCards=0;
 
-#define MAXSOUNDCARDS 12
+constexpr auto MAXSOUNDCARDS = 12u;
 static SndCardList SoundCards[MAXSOUNDCARDS];
 
 CHARFORMAT CounterText;
@@ -152,7 +152,7 @@ const char * const keyNames[] = {
 		"'","Comma",".","/","CapsLk","Shift","Ctrl","Alt","Space","Enter",
 		"Insert","Delete","Home","End","PgUp","PgDown","Left","Right",
 		"Up","Down","F1","F2"};
-#define SCAN_TRANS_COUNT 84
+constexpr auto SCAN_TRANS_COUNT = 84u;
 unsigned char _TranslateDisp2Scan[SCAN_TRANS_COUNT];
 unsigned char _TranslateScan2Disp[SCAN_TRANS_COUNT] = {
 		0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,32,38,20,33,35,40,36,24,30,

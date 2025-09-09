@@ -79,18 +79,18 @@ extern int JS_Ramp_Clock=0;
 static int JS_Ramp_On;
 
 // Hires ramp constants. Determined during testing
-#define TANDYRAMPMIN   1200
-#define TANDYRAMPMAX  10950
-#define TANDYRAMPMUL     37
-#define CCMAXRAMPMIN    800
-#define CCMAXRAMPMAX  14000
-#define CCMAXRAMPMUL     21
+constexpr auto TANDYRAMPMIN  = 1200u;
+constexpr auto TANDYRAMPMAX  = 10950u;
+constexpr auto TANDYRAMPMUL  = 37u;
+constexpr auto CCMAXRAMPMIN  = 800u;
+constexpr auto CCMAXRAMPMAX  = 14000u;
+constexpr auto CCMAXRAMPMUL  = 21u;
 
 static int sticktarg = 0;    // Target stick cycle count
 
 // Joystick values  (0-16383)
-#define STICKMAX 16383
-#define STICKMID 8191
+constexpr auto STICKMAX = 16383u;
+constexpr auto STICKMID = 8191u;
 unsigned int LeftStickX = STICKMID;
 unsigned int LeftStickY = STICKMID;
 unsigned int RightStickX = STICKMID;
