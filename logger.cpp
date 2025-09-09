@@ -39,7 +39,7 @@ char LogFileName[MAX_PATH]="VccLog.txt";
 //        PrintLogF("%c",MemRead8(x));
 //}
 
-void WriteLog(char *Message, unsigned char Type) {
+void WriteLog(const char *Message, unsigned char Type) {
     switch (Type) {
     case TOCONS:
         PrintLogC(Message);
@@ -84,7 +84,7 @@ void PrintLogF(const void * fmt, ...)
 }
 
 // OpenLogFile - create new log file
-void OpenLogFile(char * logfile)
+void OpenLogFile(const char * logfile)
 {
 	if (strlen(logfile) > MAX_PATH) return;
 	strcpy(LogFileName,logfile);

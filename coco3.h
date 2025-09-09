@@ -45,7 +45,7 @@ void MiscReset(void);
 void PasteBASICWithNew();
 void PasteBASIC();
 void PasteText();
-void QueueText(char *);
+void QueueText(const char *);
 void CopyText();
 void FlipArtifacts();
 unsigned int SetAudioRate(unsigned int);

@@ -60,7 +60,7 @@ int OpenDumpFile()
 
 // Get size of physical memory
 // Dump some memory to file
-void blockdump(int fd, unsigned char * ptr, int siz)
+void blockdump(int fd, const unsigned char * ptr, int siz)
 {
 	while (siz > 0) {
 		int cnt = _write(fd,ptr,siz);
@@ -73,7 +73,7 @@ void blockdump(int fd, unsigned char * ptr, int siz)
 //---------------- public --------------------
 
 // Set dump file path
-void SetDumpPath(char * dumpfile)
+void SetDumpPath(const char * dumpfile)
 {
 	if (strlen(dumpfile) > MAX_PATH) return;
 	strncpy(DumpFilePath,dumpfile,MAX_PATH);

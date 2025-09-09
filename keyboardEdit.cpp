@@ -104,15 +104,15 @@ char *GenKeymapLine(keytranslationentry_t *);
 // Lookup functions for keyname tables
 static struct CoCoKey * cctable_rowcol_lookup(unsigned char, unsigned char);
 static struct CoCoKey * cctable_keyid_lookup(int);
-static struct CoCoKey * cocotable_keyname_lookup(char *);
+static struct CoCoKey * cocotable_keyname_lookup(const char *);
 static struct PCScanCode * scantable_scancode_lookup(int);
-static struct PCScanCode * scantable_keyname_lookup(char *);
+static struct PCScanCode * scantable_keyname_lookup(const char *);
 
 /**************************************************/
 /*          Load custom keymap from file          */
 /**************************************************/
 
-int LoadCustomKeyMap(char* keymapfile)
+int LoadCustomKeyMap(const char* keymapfile)
 {
     FILE *keymap;
     char buf[256];
@@ -284,7 +284,7 @@ int CloneStandardKeymap(int keymap)
 //-----------------------------------------------------
 // Save custom keymap to file
 //-----------------------------------------------------
-int SaveCustomKeyMap(char* keymapfile) 
+int SaveCustomKeyMap(const char* keymapfile) 
 {
     keytranslationentry_t * pTran;
 	pTran = keyTranslationsCustom;
@@ -456,7 +456,7 @@ void ShowMapError(int lnum, const char *msg)
 // Lookup sctable by scan code name. Binary search.
 //-----------------------------------------------------
 static struct 
-PCScanCode * scantable_keyname_lookup(char * keyname) 
+PCScanCode * scantable_keyname_lookup(const char * keyname) 
 {
     int first = 0;
     int last = (sizeof(sctable)/sizeof(sctable[0]))-1;
@@ -509,7 +509,7 @@ PCScanCode * scantable_scancode_lookup(int ScanCode)
 // Lookup CoCo key by keyname.  Binary search.
 //-----------------------------------------------------
 static struct 
-CoCoKey * cocotable_keyname_lookup(char * keyname)
+CoCoKey * cocotable_keyname_lookup(const char * keyname)
 {
     int first = 0;
 

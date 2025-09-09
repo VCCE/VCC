@@ -18,7 +18,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-int SoundInit (HWND,_GUID *,unsigned int);
+int SoundInit (HWND,const _GUID *,unsigned int);
 int SoundDeInit(void);
 void FlushAudioBuffer ( unsigned int *,unsigned int);
 void ResetAudio (void);

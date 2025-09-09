@@ -23,8 +23,8 @@ This file is part of VCC (Virtual Color Computer).
 BOOL InitInstance(HINSTANCE,int);
 BOOL InitDrawSurface(bool );
 void UnlockScreen(SystemState *);
-unsigned char LockScreen(SystemState *);
-void SetStatusBarText(const char *,SystemState *);
+unsigned char LockScreen(const SystemState *);
+void SetStatusBarText(const char *,const SystemState *);
 int GetRenderWindowStatusBarHeight();
 bool CreateDDWindow(SystemState *);
 void Cls(unsigned int,SystemState *);

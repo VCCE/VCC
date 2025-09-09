@@ -84,17 +84,17 @@ void SetCartSlot1(unsigned char);
 void SetCartSlot2(unsigned char);
 void SetCartSlot3(unsigned char);
 void BuildDynaMenu(void);
-void DynamicMenuCallback0(char *,int, int);
-void DynamicMenuCallback1(char *,int, int);
-void DynamicMenuCallback2(char *,int, int);
-void DynamicMenuCallback3(char *,int, int);
+void DynamicMenuCallback0(const char *,int, int);
+void DynamicMenuCallback1(const char *,int, int);
+void DynamicMenuCallback2(const char *,int, int);
+void DynamicMenuCallback3(const char *,int, int);
 static unsigned char CartForSlot[NUMSLOTS]={0};
 static void (*SetCarts[NUMSLOTS])(unsigned char)={SetCartSlot0,SetCartSlot1,SetCartSlot2,SetCartSlot3};
-static void (*DynamicMenuCallbackCalls[NUMSLOTS])(char *,int, int)={DynamicMenuCallback0,DynamicMenuCallback1,DynamicMenuCallback2,DynamicMenuCallback3};
+static DYNAMICMENUCALLBACK DynamicMenuCallbackCalls[NUMSLOTS]={DynamicMenuCallback0,DynamicMenuCallback1,DynamicMenuCallback2,DynamicMenuCallback3};
 static void (*SetCartCalls[NUMSLOTS])(SETCART)={nullptr};
 
 static void (*SetIniPathCalls[NUMSLOTS]) (char *)={nullptr};
-static void (*DynamicMenuCallback)( char *,int, int)=nullptr;
+static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
 //***************************************************************
 static HINSTANCE hinstLib[NUMSLOTS]={nullptr};
 static unsigned char ChipSelectSlot=3,SpareSelectSlot=3,SwitchSlot=3,SlotRegister=255;
@@ -819,7 +819,7 @@ void BuildDynaMenu(void)
 }
 
 // Callback for slot 1
-void DynamicMenuCallback0( char *MenuName,int MenuId, int Type)
+void DynamicMenuCallback0( const char *MenuName,int MenuId, int Type)
 {
 	if (MenuId==0)
 	{
@@ -841,7 +841,7 @@ void DynamicMenuCallback0( char *MenuName,int MenuId, int Type)
 }
 
 // Callback for Slot 2
-void DynamicMenuCallback1( char *MenuName,int MenuId, int Type)
+void DynamicMenuCallback1( const char *MenuName,int MenuId, int Type)
 {
 	if (MenuId==0)
 	{
@@ -862,7 +862,7 @@ void DynamicMenuCallback1( char *MenuName,int MenuId, int Type)
 }
 
 // Callback for Slot 3
-void DynamicMenuCallback2( char *MenuName,int MenuId, int Type)
+void DynamicMenuCallback2( const char *MenuName,int MenuId, int Type)
 {
 	if (MenuId==0)
 	{
@@ -883,7 +883,7 @@ void DynamicMenuCallback2( char *MenuName,int MenuId, int Type)
 }
 
 // Callback for Slot 4
-void DynamicMenuCallback3( char *MenuName,int MenuId, int Type)
+void DynamicMenuCallback3( const char *MenuName,int MenuId, int Type)
 {
 	if (MenuId==0)
 	{

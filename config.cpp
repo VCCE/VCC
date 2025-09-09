@@ -416,7 +416,7 @@ void GetIniFilePath( char *Path)
 	strcpy(Path,IniFilePath);
 	return;
 }
-void SetIniFilePath( char *Path)
+void SetIniFilePath( const char *Path)
 {
     //  Path must be to an existing ini file
     strcpy(IniFilePath,Path);
@@ -430,7 +430,7 @@ char * GetKeyMapFilePath()
 {
 	return KeyMapFilePath;
 }
-void SetKeyMapFilePath(char *Path)
+void SetKeyMapFilePath(const char *Path)
 {
     strcpy(KeyMapFilePath,Path);
 	WritePrivateProfileString("Misc","CustomKeyMapFile",KeyMapFilePath,IniFilePath);
@@ -879,7 +879,7 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 	return 0;
 }
 
-void UpdateSoundBar(unsigned int * audioBuf,unsigned int bufLen)
+void UpdateSoundBar(const unsigned int * audioBuf,unsigned int bufLen)
 {
 	if (hAudioDlg == nullptr) return;  // Do nothing if dialog is not running
 

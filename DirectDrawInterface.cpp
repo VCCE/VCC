@@ -319,7 +319,7 @@ void DisplayFlip(SystemState *DFState)	// Double buffering flip
 	return;
 }
 
-unsigned char LockScreen(SystemState *LSState)
+unsigned char LockScreen(const SystemState *LSState)
 {
 	if (!g_Display) 
 		return 0;
@@ -342,7 +342,7 @@ void UnlockScreen(SystemState *USState)
 	return;
 }
 
-void SetStatusBarText(const char *TextBuffer,SystemState *STState)
+void SetStatusBarText(const char *TextBuffer,const SystemState *STState)
 {
 	if (!STState->FullScreen)
 	{

@@ -36,7 +36,7 @@ void SetTapeCounter(unsigned int, bool force = false);
 void SetTapeMode(unsigned char);
 void Motor(unsigned char);
 void LoadCassetteBuffer(unsigned char *, unsigned int* CassBufferSize);
-void FlushCassetteBuffer(unsigned char *,unsigned int *);
+void FlushCassetteBuffer(const unsigned char *,unsigned int *);
 void GetTapeName(char *);
 void UpdateTapeStatus(char* status, int max);
 uint8_t CassInBitStream();

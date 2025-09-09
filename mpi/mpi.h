@@ -28,7 +28,7 @@ This file is part of VCC (Virtual Color Computer).
 #define SLAVE 1
 #define STANDALONE 2
 
-typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
+typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 typedef void (*GETNAME)(char *,char *,DYNAMICMENUCALLBACK); 
 typedef void (*CONFIGIT)(unsigned char); 
 typedef void (*HEARTBEAT) (void);

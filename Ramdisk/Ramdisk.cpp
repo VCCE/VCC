@@ -24,8 +24,9 @@ This file is part of VCC (Virtual Color Computer).
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
-typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
-static void (*DynamicMenuCallback)( char *,int, int)=nullptr;
+typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
+
+static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
 
 
 static HINSTANCE g_hinstDLL;

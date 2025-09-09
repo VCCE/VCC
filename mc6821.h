@@ -41,7 +41,7 @@ unsigned int DACState(void);
 unsigned int GetDACSample(void);
 unsigned char GetCasSample(void);
 void SetCassetteSample(unsigned char);
-int OpenPrintFile(char *);
+int OpenPrintFile(const char *);
 constexpr auto FALLING	= 0u;
 constexpr auto RISING	= 1u;
 constexpr auto ANY		= 2u;

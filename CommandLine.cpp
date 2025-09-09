@@ -87,7 +87,7 @@ struct CmdLineArguments CmdArg;
 
 #define SEPMARK 3  //To mark spaces as separators
 
-char *ParseCmdString(char *, const char *); 
+char *ParseCmdString(const char *, const char *); 
 char *GetNextToken ();
 static char *NxtTokenPtr;    
 
@@ -194,7 +194,7 @@ int GetCmdLineArgs(char *CmdString)
 //
 //-------------------------------------------------------------------
 
-char * ParseCmdString(char *CmdString, const char *ValueRequired) 
+char * ParseCmdString(const char *CmdString, const char *ValueRequired) 
 {
     static char cmdline[512]; // Copy of cmd string
     static char option[256];  // Used to append value to option
