@@ -103,8 +103,12 @@ int errDisplayTimer = 0;
 // String functions used for decode
 std::string PadRight(std::string const&,size_t);
 std::string OpFDB(int,std::string,std::string,std::string);
-std::string OpFCB(int,std::string,std::string);
-std::string FmtLine(int,std::string,std::string,std::string,std::string);
+std::string FmtLine(
+	int adr,
+	const std::string& ins,
+	const std::string& opc,
+	const std::string& opr,
+	const std::string& cmt);
 
 /**************************************************/
 /*            Static Variables                    */
@@ -1049,10 +1053,10 @@ std::string PadRight(std::string const& s, size_t w)
 /*           Format Disassembly line               */
 /***************************************************/
 std::string FmtLine(int adr,
-                    std::string ins,
-                    std::string opc,
-                    std::string opr,
-                    std::string cmt)
+                    const std::string& ins,
+                    const std::string& opc,
+                    const std::string& opr,
+					const std::string& cmt)
 {
     DisLineAdr[NumDisLines++] = adr;
     std::string s;
@@ -1067,7 +1071,7 @@ std::string FmtLine(int adr,
 /***************************************************/
 /*        Create FDB line with comment             */
 /***************************************************/
-std::string OpFDB(int adr,int b1,int b2,std::string cmt)
+std::string OpFDB(int adr,int b1,int b2, const std::string& cmt)
 {
     std::string s=HEXSTR(b1*256+b2,4);
     return FmtLine(adr,s,"FDB","$"+s,cmt);
@@ -1076,7 +1080,7 @@ std::string OpFDB(int adr,int b1,int b2,std::string cmt)
 /***************************************************/
 /*        Create FCB line with comment             */
 /***************************************************/
-std::string OpFCB(int adr,int b,std::string cmt)
+std::string OpFCB(int adr,int b, const std::string& cmt)
 {
     std::string s=HEXSTR(b,2);
     return FmtLine(adr,s,"FCB","$"+s,cmt);

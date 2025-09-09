@@ -102,7 +102,7 @@ namespace VCC { namespace Debugger
 
     std::string ToHexString(long value, int length, bool leadingZeros = true);
     std::string ToDecimalString(long value, int length, bool leadingZeros = true);
-	std::string ToByteString(std::vector<unsigned char> bytes);
+	std::string ToByteString(const std::vector<unsigned char>& bytes);
 	bool replace(std::string& str, const std::string& from, const std::string& to);
 	int roundUp(int numToRound, int multiple);
 	int roundDn(int numToRound, int multiple);

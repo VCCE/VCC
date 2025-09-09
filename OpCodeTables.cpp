@@ -66,7 +66,7 @@ namespace VCC { namespace Debugger
 		return valid;
 	}
 
-	bool OpCodeTables::ProcessNoAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessNoAdjust(const OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;

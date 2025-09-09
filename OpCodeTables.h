@@ -965,7 +965,7 @@ namespace VCC { namespace Debugger
 
 	protected:
 
-		bool ProcessNoAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
+		bool ProcessNoAdjust(const OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
 		bool ProcessIndexModeAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
 		bool ProcessInterruptAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
 		bool ProcessStackAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
