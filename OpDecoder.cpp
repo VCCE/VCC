@@ -119,7 +119,7 @@ namespace VCC { namespace Debugger
 		return TraceCaptured_.size();
 	}
 
-	OpDecoder::IRQType OpDecoder::ToIRQType(unsigned char irq)
+	OpDecoder::IRQType OpDecoder::ToIRQType(unsigned char irq) const
 	{
 		switch (irq)
 		{
@@ -133,7 +133,7 @@ namespace VCC { namespace Debugger
 		return IRQType();
 	}
 
-	bool OpDecoder::DecodeInterrupt(TraceEvent evt, IRQType irq, std::string& interrupt)
+	bool OpDecoder::DecodeInterrupt(TraceEvent evt, IRQType irq, std::string& interrupt) const
 	{
 		switch (irq)
 		{
