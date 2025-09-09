@@ -37,9 +37,14 @@ void DynamicMenuActivated(unsigned char );
 HMENU RefreshDynamicMenu(void);
 constexpr auto ID_SDYNAMENU = 5000;	//Defines the start and end IDs for the dynamic menus
 constexpr auto ID_EDYNAMENU = 5100;
+// FIXME: These need to be turned into an enum and the signature of functions
+// that use them updated.
 constexpr auto NOMODULE = 1;
 constexpr auto NOTVCC = 2;
 
+// FIXME: These need to be turned into an enum and the signature of functions
+// that use them updated. These are also duplicated everywhere and need to be
+// consolidated in one gdmf place.
 #define	HEAD 0
 #define SLAVE 1
 #define STANDALONE 2

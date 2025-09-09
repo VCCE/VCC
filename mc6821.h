@@ -42,11 +42,15 @@ unsigned int GetDACSample(void);
 unsigned char GetCasSample(void);
 void SetCassetteSample(unsigned char);
 int OpenPrintFile(const char *);
+// FIXME: These need to be turned into an enum and the signature of functions
+// that use them updated.
 constexpr auto FALLING	= 0u;
 constexpr auto RISING	= 1u;
 constexpr auto ANY		= 2u;
 constexpr auto RAMPMAX	= 900u;
 
+// FIXME: These need to be turned into an enum and the signature of functions
+// that use them updated.
 const int PIA_MUX_DAC = 0;
 const int PIA_MUX_CASSETTE = 1;
 const int PIA_MUX_CARTRIDGE = 2;

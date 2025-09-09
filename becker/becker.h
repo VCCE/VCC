@@ -23,6 +23,9 @@ extern const unsigned char Rom[8192];
 #define QUERY 255
 
 //menu 
+// FIXME: These need to be turned into an enum and the signature of functions
+// that use them updated. These are also duplicated everywhere and need to be
+// consolidated in one gdmf place.
 #define	HEAD 0
 #define SLAVE 1
 #define STANDALONE 2
