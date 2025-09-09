@@ -23,7 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 //#define WIN32_LEAN_AND_MEAN
 /*--------------------------------------------------------------------------*/
 
-// FIXME-CHET: This should be defined on the command line
+// FIXME: This should be defined on the command line
 #define DIRECTINPUT_VERSION 0x0800
 #define _WIN32_WINNT 0x0500
 #ifndef ABOVE_NORMAL_PRIORITY_CLASS

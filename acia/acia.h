@@ -21,7 +21,7 @@
 #ifndef __ACIA_H_
 #define __ACIA_H_
 
-// FIXME-CHET: This should be defined on the command line
+// FIXME: This should be defined on the command line
 #define DIRECTINPUT_VERSION 0x0800
 
 constexpr auto MAX_LOADSTRING = 200u;

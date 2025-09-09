@@ -317,9 +317,9 @@ namespace VCC { namespace Debugger
 		// We need to determine if the branch will be taken
 		bool willBranch = false;
 		bool C = (state.CC & 0b00000001) == 1;
-		bool V = (state.CC & 0b00000010) == 1;	//	FIXME-CHET: This will never be true because the result can never be 1
-		bool Z = (state.CC & 0b00000100) == 1;	//	FIXME-CHET: This will never be true because the result can never be 1
-		bool N = (state.CC & 0b00001000) == 1;	//	FIXME-CHET: This will never be true because the result can never be 1
+		bool V = (state.CC & 0b00000010) == 1;	//	FIXME: This will never be true because the result can never be 1
+		bool Z = (state.CC & 0b00000100) == 1;	//	FIXME: This will never be true because the result can never be 1
+		bool N = (state.CC & 0b00001000) == 1;	//	FIXME: This will never be true because the result can never be 1
 
 		// Will the branch be taken?
 		switch (opcode.opcode)

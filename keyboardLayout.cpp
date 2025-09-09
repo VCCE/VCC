@@ -67,7 +67,7 @@
 
 #include "keyboardLayout.h"
 
-// FIXME-CHET: This should be defined on the command line
+// FIXME: This should be defined on the command line
 #define DIRECTINPUT_VERSION 0x0800
 #include <Windows.h>
 #include <dinput.h>

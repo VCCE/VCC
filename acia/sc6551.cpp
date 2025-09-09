@@ -263,7 +263,7 @@ void sc6551_heartbeat()
             StatReg |= StatRxF;
             // Assert CART if interrupts not disabled or already asserted.
             if (!((CmdReg & CmdRxI) || (StatReg & StatIRQ))) {
-                AssertInt(INT_CART, 0);	//	FIXME-CHET: This should probably be IS_IRQ and not 0 (was NULL)
+                AssertInt(INT_CART, 0);	//	FIXME: This should probably be IS_IRQ and not 0 (was NULL)
                 StatReg |= StatIRQ;
             }
         }

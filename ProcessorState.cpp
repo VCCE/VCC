@@ -23,7 +23,7 @@
 #include <stdexcept>
 
 // Generate hex char string from int value
-// FIXME-CHET: This obfuscates that the callsite is using an rvalue.
+// FIXME: This obfuscates that the callsite is using an rvalue.
 #define HEXCHAR(v,l) (char *) ToHexString(v,l).c_str()
 
 extern SystemState EmuState;
