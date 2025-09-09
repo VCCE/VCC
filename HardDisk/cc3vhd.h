@@ -22,7 +22,7 @@ along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licens
 // cc3vhd.h
 
 void UnmountHD(int);
-int MountHD(char [256], int);
+int MountHD(const char*, int);
 unsigned char IdeRead(unsigned char);
 void IdeWrite (unsigned char, unsigned char);
 void DiskStatus(char *);

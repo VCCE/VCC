@@ -87,7 +87,7 @@ unsigned long BytesMoved=0;
 
 void HDcommand(unsigned char);
 
-int MountHD(char FileName[MAX_PATH], int drive)
+int MountHD(const char* FileName, int drive)
 {
     drive = drive&1;  // Drive can be 0 or 1
 
