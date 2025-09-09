@@ -1,13 +1,13 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#include <winsock2.h>
-#include <windows.h>
+#include <WinSock2.h>
+#include <Windows.h>
 #include <process.h>
 #include <stdio.h>
-#include "..\logger.h"
+#include "../logger.h"
 #include "becker.h"
 #include "resource.h" 
-#include "..\fileops.h"
+#include "../fileops.h"
 
 // socket
 static SOCKET dwSocket = 0;

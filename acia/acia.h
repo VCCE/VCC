@@ -22,7 +22,7 @@
 
 // FIXME: This should be defined on the command line
 #define DIRECTINPUT_VERSION 0x0800
-#include <windows.h>
+#include <Windows.h>
 #include <windowsx.h>
 #include <stdio.h>
 #include <conio.h>
