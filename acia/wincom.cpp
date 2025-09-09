@@ -70,6 +70,10 @@ int wincom_open()
     PortDCB.ByteSize = DataLen;
     PortDCB.StopBits = (StopBits == 0) ? 0 : 2;
     SetCommState(hComPort,&PortDCB);
+	// FIXME: This is needed and should not be commented out. Wrap it conditional
+	// either here or in the debug log functions.
+	// PrintLogF("Baud:%d,Parity:%d,Data:%d,Stop:%d\n",
+    //           BaudRate,Parity,DataLen,StopBits);
     return 0;
 }
 

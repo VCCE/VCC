@@ -271,6 +271,9 @@ int InsertModule (char *ModulePath)
 		UnloadDll();
 		hinstLib=nullptr;
 		hinstLib = LoadLibrary(ModulePath);
+		// FIXME: This is needed and should not be commented out. Wrap it conditional
+		// either here or in the debug log functions.
+		//PrintLogC("pak:LoadLibrary %s %d\n",ModulePath,hinstLib);
 		if (hinstLib == nullptr)
 			return NOMODULE;
 		SetCart(0);
@@ -291,6 +294,9 @@ int InsertModule (char *ModulePath)
 		if (GetModuleName == nullptr)
 		{
 			int rc = FreeLibrary(hinstLib);
+			// FIXME: This is needed and should not be commented out. Wrap it conditional
+			// either here or in the debug log functions.
+			//PrintLogC("pak:err FreeLibrary %d %d\n",hinstLib,rc);
 			hinstLib=nullptr;
 			return NOTVCC;
 		}
@@ -437,6 +443,9 @@ void UnloadDll(void)
 	ModuleAudioSample=nullptr;
 	ModuleReset=nullptr;
 	int rc = FreeLibrary(hinstLib);
+	// FIXME: This is needed and should not be commented out. Wrap it conditional
+	// either here or in the debug log functions.
+	//PrintLogC("pak:UnloadDll FreeLibrary %d %d\n",hinstLib,rc);
 	hinstLib=nullptr;
 	DynamicMenuCallback( "",0, 0); //Refresh Menus
 	DynamicMenuCallback( "",1, 0);

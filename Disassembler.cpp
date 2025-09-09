@@ -967,6 +967,13 @@ void SetCurrentLine()
         CurrentLineNum = lnum;
         SendMessage(hDisText,EM_SETSEL,lpos,lpos);
     }
+
+// FIXME: This is needed and should not be commented out. Wrap it conditional
+// either here or in the debug log functions.
+//DEBUG
+//int topline = SendMessage(hCtl,EM_GETFIRSTVISIBLELINE,0,0);
+//PrintLogC("%d %d %X %d\n",lnum,DisLineAdr[lnum],lpos,topline);
+
 }
 
 /**************************************************/
