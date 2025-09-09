@@ -323,12 +323,6 @@ VCC::CPUState HD6309GetState()
 	regs.CC = getcc();
 	regs.DP = DP_REG;
 	regs.MD = mdbits;
-#pragma push_macro("E")
-#pragma push_macro("F")
-#pragma push_macro("V")
-#undef E
-#undef F
-#undef V
 	regs.A = A_REG;
 	regs.B = B_REG;
 	regs.E = E_REG;
@@ -339,9 +333,6 @@ VCC::CPUState HD6309GetState()
 	regs.S = S_REG;
 	regs.V = V_REG;
 	regs.PC = PC_REG;
-#pragma pop_macro("E")
-#pragma pop_macro("F")
-#pragma pop_macro("V")
 
 	regs.IsNative6309 = md[NATIVE6309] != 0;
 
