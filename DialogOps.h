@@ -57,9 +57,9 @@ public:
 	void setFilter(const char * Filter);
 	void setFlags(unsigned int Flags);
 	void setTitle(const char * Title);
-	void getdir(char * Dir, int maxsize = MAX_PATH);
-	void getpath(char * Path, int maxsize = MAX_PATH);
-	void getupath(char * Path, int maxsize = MAX_PATH);
+	void getdir(char * Dir, int maxsize = MAX_PATH) const;
+	void getpath(char * Path, int maxsize = MAX_PATH) const;
+	void getupath(char * Path, int maxsize = MAX_PATH) const;
 	char * path();
 private:
 	OPENFILENAME ofn;

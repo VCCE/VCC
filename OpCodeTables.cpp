@@ -466,13 +466,13 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	std::string OpCodeTables::ToInterRegister(unsigned char reg)
+	std::string OpCodeTables::ToInterRegister(unsigned char reg) const
 	{
 		std::vector<std::string> regs = { "D", "X", "Y", "U", "S", "PC", "W", "V", "A", "B", "CC", "DP", "0", "0", "E", "F" };
 		return regs[reg];
 	}
 
-	std::string OpCodeTables::ToRegister(unsigned char postbyte)
+	std::string OpCodeTables::ToRegister(unsigned char postbyte) const
 	{
 		int reg = (postbyte & 0b01100000) >> 5;
 		switch (reg)
@@ -489,7 +489,7 @@ namespace VCC { namespace Debugger
 		return "?";
 	}
 
-	std::string OpCodeTables::ToRelativeAddressString(int value, int oplen, int operandlen)
+	std::string OpCodeTables::ToRelativeAddressString(int value, int oplen, int operandlen) const
 	{
 		std::ostringstream fmt;
 
@@ -522,7 +522,7 @@ namespace VCC { namespace Debugger
 		return fmt.str();
 	}
 
-	int OpCodeTables::AdjustCycles(OpCodeInfo& opcode, int cycles, int bytes, bool IsNative6309)
+	int OpCodeTables::AdjustCycles(OpCodeInfo& opcode, int cycles, int bytes, bool IsNative6309) const
 	{
 		if (IsNative6309)
 		{

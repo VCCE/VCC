@@ -95,13 +95,13 @@ void FileDialog::setpath(const char * NewPath) {
 }
 
 // Get a copy of the selected file path
-void FileDialog::getpath(char * PathCopy, int maxsize) {
+void FileDialog::getpath(char * PathCopy, int maxsize) const {
     if (PathCopy == nullptr || Path == nullptr || maxsize < 1) return;
 	strncpy(PathCopy,Path,maxsize);
 }
 
 // Get a copy of the selected file path with unix dir delimiters
-void FileDialog::getupath(char * PathCopy, int maxsize) {
+void FileDialog::getupath(char * PathCopy, int maxsize) const {
     if (PathCopy == nullptr || Path == nullptr || maxsize < 1) return;
     int i = 0;
     while (Path[i] != '\0' && i < maxsize - 1) {
@@ -121,7 +121,7 @@ char * FileDialog::path() {
 }
 
 // FileDialog::getdir() returns the directory portion of the file path
-void FileDialog::getdir(char * Dir, int maxsize) {
+void FileDialog::getdir(char * Dir, int maxsize) const {
     if (Dir == nullptr || Path == nullptr || maxsize < 1) return;
 	strncpy(Dir,Path,maxsize);
 	if (char * p = strrchr(Dir,'\\')) *p = '\0';

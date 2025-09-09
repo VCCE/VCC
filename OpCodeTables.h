@@ -974,12 +974,12 @@ namespace VCC { namespace Debugger
 		bool ProcessDIVAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
 		bool ProcessWaitForSYNCAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
 
-		int AdjustCycles(OpCodeInfo& opcode, int cycles, int bytes, bool IsNative6309);
+		int AdjustCycles(OpCodeInfo& opcode, int cycles, int bytes, bool IsNative6309) const;
 
 		bool GetIndexMode(unsigned char postbyte, IndexModeInfo& mode, std::string& operand);
-		std::string ToRegister(unsigned char postbyte);
-		std::string ToInterRegister(unsigned char reg);
-		std::string ToRelativeAddressString(int value, int oplen, int operandlen);
+		std::string ToRegister(unsigned char postbyte) const;
+		std::string ToInterRegister(unsigned char reg) const;
+		std::string ToRelativeAddressString(int value, int oplen, int operandlen) const;
 
 	};
 }}

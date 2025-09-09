@@ -406,7 +406,7 @@ namespace VCC
         return Result(OK);
     }
 
-    void DirectX::GetSurfaceArea(Rect* rect)
+    void DirectX::GetSurfaceArea(Rect* rect) const
     {
         rect->x = 0;
         rect->y = 0;
@@ -414,7 +414,7 @@ namespace VCC
         rect->h = 480;
     }
 
-    void DirectX::GetDisplayArea(Rect* rect)
+    void DirectX::GetDisplayArea(Rect* rect) const
     {
         using namespace Detail;
         rect->x = (float)ForcedAspectBorderPadding.x;
@@ -423,7 +423,7 @@ namespace VCC
         rect->h = 480;
     }
 
-    void DirectX::CheckSurfaces()
+    void DirectX::CheckSurfaces() const
     {
         using namespace Detail;
 
