@@ -70,8 +70,10 @@ void SetMmuPrefix(unsigned char);
 void SetCartMMU (unsigned char);
 unsigned char * Get_mem_pointer(void);
 
-constexpr auto _128K	= 0u;
-constexpr auto _512K	= 1u;
-constexpr auto _2M		= 2u;
+// FIXME: These need to be turned into an enum and the signature of functions
+// that use them updated.
+#define _128K	0	
+#define _512K	1
+#define _2M		2
 
 #endif

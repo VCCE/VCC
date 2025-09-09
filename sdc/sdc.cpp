@@ -148,6 +148,9 @@
 #include "sdc.h"
 
 // from ../pakinterface.h
+// FIXME: These need to be turned into an enum and the signature of functions
+// that use them updated. These are also duplicated everywhere and need to be
+// consolidated in one gdmf place.
 #define	HEAD 0
 #define SLAVE 1
 #define STANDALONE 2

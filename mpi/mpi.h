@@ -24,6 +24,9 @@ This file is part of VCC (Virtual Color Computer).
 #define MAX_LOADSTRING 100
 #define QUERY 255
 
+// FIXME: These need to be turned into an enum and the signature of functions
+// that use them updated. These are also duplicated everywhere and need to be
+// consolidated in one gdmf place.
 #define	HEAD 0
 #define SLAVE 1
 #define STANDALONE 2
