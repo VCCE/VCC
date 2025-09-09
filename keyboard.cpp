@@ -534,11 +534,11 @@ void SetPaste(bool tmp) {
 	pasting = tmp;
 }
 
-void PasteIntoQueue(std::string txt)
+void PasteIntoQueue(const std::string& txt)
 {
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)1);
 
-	for (auto& c : txt)
+	for (const auto& c : txt)
 	{
 		PasteInputQueue.push(c);
 	}

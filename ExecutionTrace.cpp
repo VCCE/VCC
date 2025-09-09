@@ -308,7 +308,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 		int x = 10;
 		int col = 0;
-		for (auto& h : headers)
+		for (const auto& h : headers)
 		{
 			RECT rc;
 			int w = columns[col++];

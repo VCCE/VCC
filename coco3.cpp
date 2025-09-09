@@ -958,7 +958,7 @@ std::string GetClipboardText()
 	return out;
 }
 
-bool SetClipboard(string sendout) {
+bool SetClipboard(const string& sendout) {
 	const char* clipout = sendout.c_str();
 	const size_t len = strlen(clipout) + 1;
 	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);

@@ -87,4 +87,4 @@ extern "C"
 
 bool GetPaste();
 void SetPaste(bool);
-void PasteIntoQueue(std::string txt);
+void PasteIntoQueue(const std::string& txt);

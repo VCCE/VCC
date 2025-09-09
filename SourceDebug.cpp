@@ -97,10 +97,9 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 		for (std::string line; getline(file, line); )
 		{
-			auto addr = line.length() >= 4 ? line.substr(0, 4): std::string(4, ' ');
-			auto opcodes = line.length() >= 20 ? line.substr(5, 16) : std::string(16, ' ');
-			auto sourceline = line.length() >= 45 ? line.substr(22, 25) : std::string(25, ' ');
-			auto code = line.length() >= 60 ? line.substr(56) : "";
+			const auto& addr = line.length() >= 4 ? line.substr(0, 4): std::string(4, ' ');
+			const auto& opcodes = line.length() >= 20 ? line.substr(5, 16) : std::string(16, ' ');
+			const auto& code = line.length() >= 60 ? line.substr(56) : "";
 
 			if (addr != std::string(4, ' '))
 			{
@@ -205,7 +204,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		SendDlgItemMessage(hWndSourceDebug, IDC_SOURCE_LISTING, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
 	}
 
-	void UpdateBreakpointUI(Breakpoint bp)
+	void UpdateBreakpointUI(const Breakpoint& bp)
 	{
 		HWND hListCtl = GetDlgItem(hWndSourceDebug, IDC_LIST_BREAKPOINTS);
 		const std::string enabled = bp.enabled ? "On" : "Off";

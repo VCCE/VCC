@@ -57,7 +57,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	// Draw string centered in rectangle width w, height 20
 	// x,y set the top left corner of the centering box
-	void PutText(HDC hdc,int x,int y,int w,std::string s)
+	void PutText(HDC hdc,int x,int y,int w, const std::string& s)
 	{
 		RECT rc;
 		SetRect( &rc, x, y, x + w, y + 20);

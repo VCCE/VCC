@@ -45,11 +45,11 @@ namespace VCC { namespace Debugger
 		return fmt.str();
 	}
 
-	std::string ToByteString(std::vector<unsigned char> bytes)
+	std::string ToByteString(const std::vector<unsigned char>& bytes)
 	{
 		std::ostringstream fmt;
 
-		for (auto& b : bytes)
+		for (const auto& b : bytes)
 		{
 			if (fmt.str().size() > 0)
 			{
