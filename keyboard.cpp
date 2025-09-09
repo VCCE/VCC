@@ -46,9 +46,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "keyboardLayout.h"
 #include "config.h"
 
-#include <queue>
-
 #include "xDebug.h"
+
+#include <queue>
+#include <sstream>
+
 
 /*****************************************************************************/
 /*
@@ -552,7 +554,6 @@ void PasteIntoQueue(const std::string& txt)
 	SetPaste(true);
 }
 
-#include <sstream>
 
 bool GetNextScanInPasteQueue(unsigned char col)
 {
