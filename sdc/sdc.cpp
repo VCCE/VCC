@@ -134,12 +134,12 @@
 #include <cstdio>
 #include <cerrno>
 #include <cstring>
-#include <windows.h>
+#include <Windows.h>
 #include <windowsx.h>
-#include <shlwapi.h>
+#include <Shlwapi.h>
 #pragma warning(push)
 #pragma warning(disable:4091)
-#include <shlobj.h>
+#include <ShlObj.h>
 #pragma warning(pop)
 #include <stdio.h>
 #include <ctype.h>

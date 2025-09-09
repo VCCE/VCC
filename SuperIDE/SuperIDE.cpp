@@ -16,17 +16,17 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
+#include <Windows.h>
 #include "stdio.h"
 #include <iostream>
 #include "resource.h" 
 #include "defines.h"
-#include "Superide.h"
-#include "idebus.h"
+#include "SuperIDE.h"
+#include "IdeBus.h"
 #include "cloud9.h"
 #include "logger.h"
 #include "../fileops.h"
-#include "../dialogops.h"
+#include "../DialogOps.h"
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };

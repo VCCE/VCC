@@ -15,7 +15,7 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <windows.h>
+#include <Windows.h>
 #include <stdio.h>
 #include "defines.h"
 #include "resource.h" 

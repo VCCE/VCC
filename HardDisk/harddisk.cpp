@@ -18,7 +18,7 @@ This file is part of VCC (Virtual Color Computer).
 
 // hardisk.cpp : Defines the entry point for the DLL application.
 
-#include <windows.h>
+#include <Windows.h>
 #include <stdio.h>
 #include<iostream>
 #include "resource.h"
