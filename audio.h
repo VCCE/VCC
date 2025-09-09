@@ -24,7 +24,6 @@ void FlushAudioBuffer ( unsigned int *,unsigned int);
 void ResetAudio (void);
 unsigned char PauseAudio(unsigned char Pause);
 int GetFreeBlockCount(void);
-int GetAuxBlockCount(void);
 void PurgeAuxBuffer(void);
 unsigned int GetSoundStatus(void);
 struct SndCardList

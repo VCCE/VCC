@@ -44,18 +44,17 @@ void GetMMUPage(size_t page, std::array<unsigned char, 8192>& outBuffer);
 void MemWrite8(unsigned char,unsigned short );
 void MemWrite16(unsigned short,unsigned short );
 
-unsigned short MemRead16(short unsigned int);
-unsigned char MemRead8(short unsigned int);
-unsigned char SafeMemRead8(short unsigned int);
+unsigned short MemRead16(unsigned short);
+unsigned char MemRead8(unsigned short);
+unsigned char SafeMemRead8(unsigned short);
 unsigned char * MmuInit(unsigned char);
 unsigned char *	Getint_rom_pointer(void);
-unsigned char * Getext_rom_pointer(void);
 unsigned short GetMem(unsigned long);
 void SetMem(unsigned long, unsigned short);
 bool MemCheckWrite(unsigned short address);
 
 void __fastcall fMemWrite8(unsigned char,unsigned short );
-unsigned char __fastcall fMemRead8(short unsigned int);
+unsigned char __fastcall fMemRead8(unsigned short);
 
 void SetMapType(unsigned char);
 void LoadRom(void);
@@ -67,7 +66,6 @@ void SetVectors(unsigned char);
 void MmuReset(void);
 void SetDistoRamBank(unsigned char);
 void SetMmuPrefix(unsigned char);
-void SetCartMMU (unsigned char);
 unsigned char * Get_mem_pointer(void);
 
 // FIXME: These need to be turned into an enum and the signature of functions

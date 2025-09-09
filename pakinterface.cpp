@@ -393,7 +393,7 @@ int InsertModule (char *ModulePath)
 Load a ROM pack
 return total bytes loaded, or 0 on failure
 */
-int load_ext_rom(const char filename[MAX_PATH])
+int load_ext_rom(const char *filename)
 {
 	constexpr size_t PAK_MAX_MEM = 0x40000;
 
