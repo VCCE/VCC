@@ -24,5 +24,5 @@
 #define __MEMDUMP_H__
 void CpuDump(void);
 void MemDump(void);
-void SetDumpPath(char *);
+void SetDumpPath(const char *);
 #endif

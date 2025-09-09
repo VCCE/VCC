@@ -122,8 +122,8 @@ static int LastTrans=0;
 static unsigned char Mask=0,Byte=0,LastSample=0;
 //****************************
 
-void WavtoCas(unsigned char *,unsigned int);
-int MountTape( char *);
+void WavtoCas(const unsigned char *,unsigned int);
+int MountTape( const char *);
 void CloseTapeFile(void);
 void SyncFileBuffer (void);
 void CastoWav(unsigned char *,unsigned int);
@@ -272,7 +272,7 @@ void SetTapeMode(unsigned char Mode)	//Handles button pressed from Dialog
 	return;
 }
 
-void FlushCassetteBuffer(unsigned char *Buffer,unsigned int *Len)
+void FlushCassetteBuffer(const unsigned char *Buffer,unsigned int *Len)
 {
 	if (TapeMode!=REC) 
 		return;
@@ -345,7 +345,7 @@ void LoadCassetteBuffer(unsigned char *CassBuffer, unsigned int* CassBufferSize)
 	return;
 }
 
-int MountTape( char *FileName)	//Return 1 on sucess 0 on fail
+int MountTape( const char *FileName)	//Return 1 on sucess 0 on fail
 {
 	char Extension[4]="";
 	unsigned char Index=0;
@@ -610,7 +610,7 @@ void CastoWav(unsigned char *Buffer,unsigned int BytestoConvert)
 }
 
 
-void WavtoCas(unsigned char *WaveBuffer,unsigned int Length)
+void WavtoCas(const unsigned char *WaveBuffer,unsigned int Length)
 {
 	unsigned char Bit=0,Sample=0;
 	unsigned int Index=0,Width=0;

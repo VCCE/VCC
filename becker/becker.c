@@ -15,7 +15,7 @@ static SOCKET dwSocket = 0;
 // vcc stuff
 typedef void (*SETCART)(unsigned char);
 typedef void (*SETCARTPOINTER)(SETCART);
-typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
+typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 static HINSTANCE g_hinstDLL=NULL;
 static void (*PakSetCart)(unsigned char)=NULL;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
@@ -58,12 +58,12 @@ char msg[MAX_PATH];
 // log lots of stuff...
 static boolean logging = false;
 
-static void (*DynamicMenuCallback)( char *,int, int)=NULL;
+static DYNAMICMENUCALLBACK DynamicMenuCallback = NULL;
 unsigned char LoadExtRom(char *);
 void SetDWTCPConnectionEnable(unsigned int enable);
 int dw_setaddr(char *bufdwaddr);
 int dw_setport(char *bufdwport);
-void WriteLog(char *Message,unsigned char Type);
+void WriteLog(const char *Message,unsigned char Type);
 void BuildDynaMenu(void);
 void LoadConfig(void);
 void SaveConfig(void);
@@ -570,7 +570,7 @@ void BuildDynaMenu(void)
 	}
 
 
-void WriteLog(char *Message,unsigned char Type)
+void WriteLog(const char *Message,unsigned char Type)
 {
 	if (logging)
 	{

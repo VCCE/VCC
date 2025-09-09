@@ -80,7 +80,7 @@ struct AudioBufferHistory
 AudioBufferHistory gAudioBufferHistory[AudioHistorySize];
 #endif
 
-int SoundInit (HWND main_window_handle,_GUID * Guid,unsigned int Rate)
+int SoundInit (HWND main_window_handle,const _GUID * Guid,unsigned int Rate)
 {
 	Rate=(Rate & 3);
 	if (Rate != 0)	//Force 44100 or Mute
@@ -292,7 +292,7 @@ int SoundDeInit(void)
 	return 0;
 }
 
-int SoundInInit (HWND main_window_handle,_GUID * Guid)
+int SoundInInit (HWND main_window_handle,const _GUID * Guid)
 {
 	hr=DirectSoundCaptureCreate(Guid, &lpdsin, nullptr);
 	if (hr!=DS_OK)

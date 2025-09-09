@@ -816,7 +816,7 @@ void PasteText() {
 	PasteIntoQueue(CvtStrToSC(clipparse));
 }
 
-void QueueText(char * text) {
+void QueueText(const char * text) {
 	using namespace std;
 	std::string str(text);
 	PasteIntoQueue(CvtStrToSC(str));

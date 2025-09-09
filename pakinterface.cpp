@@ -72,7 +72,7 @@ static unsigned int BankedCartOffset=0;
 static char DllPath[256]="";
 static unsigned short ModualParms=0;
 static HINSTANCE hinstLib = nullptr;
-typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
+typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 typedef void (*GETNAME)(char *,char *,DYNAMICMENUCALLBACK);
 typedef void (*CONFIGIT)(unsigned char);
 typedef void (*HEARTBEAT) (void);
@@ -107,7 +107,7 @@ static void (*PakSetCart)(SETCART)=nullptr;
 static char PakPath[MAX_PATH];
 
 static char Did=0;
-int FileID(char *);
+int FileID(const char *);
 struct Dmenu
 {
 	char MenuName[512];
@@ -211,7 +211,7 @@ unsigned short PackAudioSample(void)
 }
 
 // Shunt to convert first arg from (char *) to (const char *)
-void DynamicMenuCallbackChar(char* MenuName, int MenuId, int Type)
+void DynamicMenuCallbackChar(const char* MenuName, int MenuId, int Type)
 {
 	DynamicMenuCallback(MenuName, MenuId, Type);
 }
@@ -391,7 +391,7 @@ int InsertModule (char *ModulePath)
 Load a ROM pack
 return total bytes loaded, or 0 on failure
 */
-int load_ext_rom(char filename[MAX_PATH])
+int load_ext_rom(const char filename[MAX_PATH])
 {
 	constexpr size_t PAK_MAX_MEM = 0x40000;
 
@@ -484,7 +484,7 @@ void UnloadPack(void)
 	return;
 }
 
-int FileID(char *Filename)
+int FileID(const char *Filename)
 {
 	FILE *DummyHandle=nullptr;
 	char Temp[3]="";

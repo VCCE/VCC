@@ -79,7 +79,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		SetWindowPos(hCtl, nullptr, width - 172, height - 34, 0, 0, SWP_NOSIZE);
 	}
 
-	bool LoadSource(char* source)
+	bool LoadSource(const char* source)
 	{
 		SendDlgItemMessage(hWndSourceDebug, IDC_EDIT_SOURCE, WM_SETTEXT, 0, (LPARAM)(LPCSTR)source);
 

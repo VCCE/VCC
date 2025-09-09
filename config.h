@@ -27,14 +27,14 @@ unsigned char WriteIniFile(void);
 unsigned char ReadIniFile(void);
 void GetIniFilePath( char *);
 void UpdateConfig (void);
-void UpdateSoundBar(unsigned int *,unsigned int);
+void UpdateSoundBar(const unsigned int *,unsigned int);
 void UpdateTapeCounter(unsigned int,unsigned char,bool force = false);
 int GetKeyboardLayout();
 void SetWindowRect(const VCC::Rect&);
 void CaptureCurrentWindowRect();
 
-void SetIniFilePath(char *);
-void SetKeyMapFilePath(char *);
+void SetIniFilePath(const char *);
+void SetKeyMapFilePath(const char *);
 char * AppDirectory();
 char * GetKeyMapFilePath();
 char * KeyMapFiledir();

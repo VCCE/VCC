@@ -23,7 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 
 typedef void (*SETCART)(unsigned char);
 typedef void (*SETCARTPOINTER)(SETCART);
-typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
+typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 static HINSTANCE g_hinstDLL=nullptr;
 static unsigned char LeftChannel=0,RightChannel=0;
 static void (*PakSetCart)(unsigned char)=nullptr;

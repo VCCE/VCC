@@ -489,7 +489,7 @@ void CaptureBit(unsigned char Sample)
 	return;
 }
 
-int OpenPrintFile(char *FileName)
+int OpenPrintFile(const char *FileName)
 {
 	hPrintFile=CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,
 			FILE_SHARE_READ,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);

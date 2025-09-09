@@ -41,10 +41,10 @@ static char HardDiskPath[MAX_PATH];
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
-typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
+typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
-static void (*DynamicMenuCallback)( char *,int, int)=nullptr;
+static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 

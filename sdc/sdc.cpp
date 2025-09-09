@@ -157,10 +157,10 @@
 //======================================================================
 
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
-typedef void (*DYNAMICMENUCALLBACK)( char *,int, int);
+typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-static void (*DynamicMenuCallback)( char *,int, int)=nullptr;
+static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
 typedef void (*ASSERTINTERUPT)(unsigned char, unsigned char);
 void (*AssertInt)(unsigned char, unsigned char);
 void SDCInit(void);

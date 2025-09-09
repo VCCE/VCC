@@ -23,10 +23,10 @@ This file is part of VCC (Virtual Color Computer).
 #define TOCONS 0
 #define TOFILE 1
 
-void WriteLog(char *, unsigned char);
+void WriteLog(const char *, unsigned char);
 void PrintLogC(const void * fmt, ...);
 void PrintLogF(const void * fmt, ...);
-void OpenLogFile(char * filename);
+void OpenLogFile(const char * filename);
 
 // Debug logging if USE_LOGGING is defined
 

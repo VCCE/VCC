@@ -72,7 +72,7 @@ void ToggleAddrMode();
 int CpuBlock(int);
 int CpuToReal(int);
 int RealToCpu(int);
-int HexToUint(char *);
+int HexToUint(const char *);
 
 // Disassembler and helpers
 void DecodeAddr();
@@ -1236,7 +1236,7 @@ void Disassemble( unsigned short FromAdr,
 /**************************************************/
 /*        Convert hex digits to Address           */
 /**************************************************/
-int HexToUint(char * buf)
+int HexToUint(const char * buf)
 {
     long val;
     char *eptr;

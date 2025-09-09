@@ -30,10 +30,9 @@
 //------------------------------------------------------------------------
 
 // Transfer points for menu callback and cpu assert interrupt
-typedef void (*DYNAMICMENUCALLBACK)(char * ,int, int);
+typedef void (*DYNAMICMENUCALLBACK)(const char * ,int, int);
 typedef void (*ASSERTINTERUPT)(unsigned char, unsigned char);
 
-void (*DynamicMenuCallback)(char *,int,int)=nullptr;
 void BuildDynaMenu(void);
 
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
@@ -48,6 +47,7 @@ static HINSTANCE g_hDLL = nullptr;      // DLL handle
 static HWND g_hDlg = nullptr;           // Config dialog
 static char IniFile[MAX_PATH];       // Ini file name
 static char IniSect[MAX_LOADSTRING]; // Ini file section
+static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
 
 // Status for Vcc status line
 char AciaStat[32];
