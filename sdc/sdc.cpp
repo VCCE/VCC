@@ -159,6 +159,8 @@
 // Functions
 //======================================================================
 
+// FIXME: These typedefs are duplicated across more if not all projects and
+// need to be consolidated in one place.
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 typedef unsigned char (*MEMREAD8)(unsigned short);

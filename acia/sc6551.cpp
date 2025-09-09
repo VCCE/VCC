@@ -39,14 +39,14 @@ unsigned char CmdReg;
 unsigned char CtlReg;
 
 // Input
-#define IBUFSIZ 1024
+constexpr auto IBUFSIZ = 1024u;
 DWORD WINAPI sc6551_input_thread(LPVOID);
 char InBuf[IBUFSIZ];
 char *InRptr = InBuf;
 int Icnt = 0;
 
 // Output
-#define OBUFSIZ 1024
+constexpr auto OBUFSIZ = 1024u;
 DWORD WINAPI sc6551_output_thread(LPVOID);
 char OutBuf[OBUFSIZ];
 char *OutWptr = OutBuf;

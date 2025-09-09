@@ -29,6 +29,8 @@
 // Local Functions
 //------------------------------------------------------------------------
 
+// FIXME: These typedefs are duplicated across more if not all projects and
+// need to be consolidated in one place.
 // Transfer points for menu callback and cpu assert interrupt
 typedef void (*DYNAMICMENUCALLBACK)(const char * ,int, int);
 typedef void (*ASSERTINTERUPT)(unsigned char, unsigned char);

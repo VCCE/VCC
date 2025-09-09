@@ -20,6 +20,7 @@ This file is part of VCC (Virtual Color Computer).
 
 void WriteLog(char *,unsigned char);
 
+// FIXME: These should be a scoped enum
 #define TOCONS	0
 #define TOFILE	1
 

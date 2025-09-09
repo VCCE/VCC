@@ -13,6 +13,7 @@
 static SOCKET dwSocket = 0;
 
 // vcc stuff
+// FIXME: These typedefs are also duplicated everywhere and need to be consolidated in one place.
 typedef void (*SETCART)(unsigned char);
 typedef void (*SETCARTPOINTER)(SETCART);
 typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);

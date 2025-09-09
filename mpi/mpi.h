@@ -21,8 +21,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "../MachineDefs.h"
 
 //Misc
-#define MAX_LOADSTRING 100
-#define QUERY 255
+constexpr auto MAX_LOADSTRING = 100u;
+constexpr auto QUERY = 255u;
 
 // FIXME: These need to be turned into an enum and the signature of functions
 // that use them updated. These are also duplicated everywhere and need to be
@@ -31,6 +31,8 @@ This file is part of VCC (Virtual Color Computer).
 #define SLAVE 1
 #define STANDALONE 2
 
+// FIXME: These typedefs are duplicated across more if not all projects and
+// need to be consolidated in one place.
 typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 typedef void (*GETNAME)(char *,char *,DYNAMICMENUCALLBACK); 
 typedef void (*CONFIGIT)(unsigned char); 

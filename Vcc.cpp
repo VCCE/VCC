@@ -30,6 +30,7 @@ This file is part of VCC (Virtual Color Computer).
 //#define ABOVE_NORMAL_PRIORITY_CLASS  32768
 #endif
 
+// FIXME: These defines need to be converted to a scoped enumeration
 #define TH_RUNNING	0
 #define TH_REQWAIT	1
 #define TH_WAITING	2

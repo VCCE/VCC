@@ -25,7 +25,7 @@
 
 #include "keyboard.h"
 
-#define MAX_CTRANSTBLSIZ 150
+constexpr auto MAX_CTRANSTBLSIZ = 150u;
 
 /*****************************************************************************/
 

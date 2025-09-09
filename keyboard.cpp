@@ -64,7 +64,8 @@ bool GetNextScanInPasteQueue(unsigned char col);
 /*****************************************************************************/
 
 // key translation table maximum size, (arbitrary) most of the layouts are < 80 entries
-#define KBTABLE_ENTRY_COUNT 100
+constexpr auto KBTABLE_ENTRY_COUNT = 100u;
+// FIXME: These defines should either be a scoped enumeration or removed and boolean values used.
 #define KEY_DOWN	1
 #define KEY_UP		0
 

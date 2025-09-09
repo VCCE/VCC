@@ -40,11 +40,13 @@ This file is part of VCC (Virtual Color Computer).
 #include "becker.h"
 #endif
 
-#define EXTROMSIZE 16384
+constexpr auto EXTROMSIZE = 16384u;
 
 using namespace std;
 
 extern DiskInfo Drive[5];
+// FIXME: These typedefs are duplicated across more if not all projects and
+// need to be consolidated in one place.
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*PAKINTERUPT)(unsigned char, unsigned char);

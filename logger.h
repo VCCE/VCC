@@ -20,6 +20,11 @@ This file is part of VCC (Virtual Color Computer).
 #ifndef __LOGGER_H__
 #define __LOGGER_H__
 
+// FIXME: At the very least these need to be turned into a scoped enum and the
+// signature of functions that use them updated. A better option would be to
+// properly abstract the logging to these values are not necessary. Also the
+// notion of the callsite selecting the output device is not ideal so maybe
+// just replace it with something more effective.
 #define TOCONS 0
 #define TOFILE 1
 

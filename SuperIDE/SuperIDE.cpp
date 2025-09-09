@@ -31,6 +31,8 @@ This file is part of VCC (Virtual Color Computer).
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
 static char SuperIDEPath[MAX_PATH];
+// FIXME: These typedefs are duplicated across more if not all projects and
+// need to be consolidated in one place.
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);

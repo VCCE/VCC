@@ -56,7 +56,7 @@ AudioHistory gAudioHistory[AudioHistorySize];
 int gAudioHistoryCount = 0;
 #endif
 
-#define RENDERS_PER_BLINK_TOGGLE 16
+constexpr auto RENDERS_PER_BLINK_TOGGLE = 16u;
 
 //****************************************
 	static double SoundInterupt=0;
