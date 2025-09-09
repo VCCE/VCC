@@ -36,6 +36,9 @@ namespace VCC
             char message[256];
             snprintf(message, 64, "DirectX error %d\nCheck DirectX support", code);
             MessageBox(nullptr, message, "Error", 0);
+			// FIXME: This is needed and should not be commented out. Wrap it conditional
+			// either here or in the debug log functions.
+			//PrintLogC("OpenGL Error: %d\n", code);
         }
         return code;
     }
