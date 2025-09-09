@@ -16,7 +16,7 @@
 //		Breakpoint Display - Part of the Debugger package for VCC
 //		Authors: Mike Rojas, Chet Simpson
 
-#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING	//	FIXME-CHET: Temporary until codecvt deprecation can be addressed
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING	//	FIXME: Temporary until codecvt deprecation can be addressed
 
 #include "SourceDebug.h"
 #include "Debugger.h"
