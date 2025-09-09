@@ -1,9 +1,11 @@
 #ifndef __BECKER_H__
 #define __BECKER_H__
 
+#ifndef __cplusplus
 #define bool int
 #define true 1
 #define false 0
+#endif
 
 // functions
 void MemWrite(unsigned char,unsigned short );
