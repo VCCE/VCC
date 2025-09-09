@@ -23,7 +23,7 @@
 #include <stdarg.h>
 #include <io.h>
 #include <fcntl.h>
-#include <sys\stat.h>
+#include <sys/stat.h>
 #include "logger.h"
 
 

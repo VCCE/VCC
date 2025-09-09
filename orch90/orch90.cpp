@@ -19,7 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include "defines.h"
 #include "resource.h" 
-#include "..\fileops.h"
+#include "../fileops.h"
 
 // FIXME: These typedefs are duplicated across more if not all projects and
 // need to be consolidated in one place.

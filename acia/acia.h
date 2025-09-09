@@ -17,21 +17,20 @@
 // (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
 //
 //------------------------------------------------------------------
-
 #ifndef __ACIA_H_
 #define __ACIA_H_
 
 // FIXME: This should be defined on the command line
 #define DIRECTINPUT_VERSION 0x0800
-
-constexpr auto MAX_LOADSTRING = 200u;
-
 #include <windows.h>
 #include <windowsx.h>
 #include <stdio.h>
 #include <conio.h>
 #include <dinput.h>
 #include "resource.h"
+
+constexpr auto MAX_LOADSTRING = 200u;
+
 
 // Dynamic menu control
 // FIXME: These need to be turned into an enum and the signature of functions
