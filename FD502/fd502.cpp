@@ -599,7 +599,7 @@ long CreateDiskHeader(char *FileName,unsigned char Type,unsigned char Tracks,uns
 	unsigned short TrackSize=0x1900;
 	unsigned char IgnoreDensity=0,SingleDensity=0,HeaderSize=0;
 	unsigned long BytesWritten=0,FileSize=0;
-	hr=CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,0,0,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,0);
+	hr=CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
 	if (hr==INVALID_HANDLE_VALUE)
 		return 1; //Failed to create File
 
@@ -653,9 +653,9 @@ long CreateDiskHeader(char *FileName,unsigned char Type,unsigned char Tracks,uns
 		break;
 
 	}
-	SetFilePointer(hr,0,0,FILE_BEGIN);
+	SetFilePointer(hr,0,nullptr,FILE_BEGIN);
 	WriteFile(hr,HeaderBuffer,HeaderSize,&BytesWritten,nullptr);
-	SetFilePointer(hr,FileSize-1,0,FILE_BEGIN);
+	SetFilePointer(hr,FileSize-1,nullptr,FILE_BEGIN);
 	WriteFile(hr,&Dummy,1,&BytesWritten,nullptr);
 	CloseHandle(hr);
 	return 0;

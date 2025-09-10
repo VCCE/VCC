@@ -102,15 +102,15 @@ int MountHD(const char* FileName, int drive)
     DMAaddress.word = 0;
     HardDrive[drive] = CreateFile( FileName,
                                    GENERIC_READ | GENERIC_WRITE,
-                                   0,0,OPEN_EXISTING,
-                                   FILE_ATTRIBUTE_NORMAL,0);
+                                   0,nullptr,OPEN_EXISTING,
+                                   FILE_ATTRIBUTE_NORMAL,nullptr);
 
     // If can't open read/write try read only.
     if (HardDrive[drive] == INVALID_HANDLE_VALUE) {
         HardDrive[drive] = CreateFile( FileName,
                                        GENERIC_READ,
-                                       0,0,OPEN_EXISTING,
-                                       FILE_ATTRIBUTE_NORMAL,0);
+                                       0,nullptr,OPEN_EXISTING,
+                                       FILE_ATTRIBUTE_NORMAL,nullptr);
         WpHD[drive]=1; // drive is write protected
     }
 
@@ -162,7 +162,7 @@ void HDcommand(unsigned char Command) {
         }
 
         // Seek desired sector
-        SetFilePointer(HardDrive[DriveSelect],SectorOffset.All,0,FILE_BEGIN);
+        SetFilePointer(HardDrive[DriveSelect],SectorOffset.All,nullptr,FILE_BEGIN);
 
         // Read it; zero fill if past end of file
         ReadFile(HardDrive[DriveSelect],SectorBuffer,SECTORSIZE,&BytesMoved,nullptr);
@@ -199,7 +199,7 @@ void HDcommand(unsigned char Command) {
         }
 
         // Seek desired sector
-        SetFilePointer(HardDrive[DriveSelect],SectorOffset.All,0,FILE_BEGIN);
+        SetFilePointer(HardDrive[DriveSelect],SectorOffset.All,nullptr,FILE_BEGIN);
 
         // Write it
         WriteFile(HardDrive[DriveSelect],SectorBuffer,SECTORSIZE,&BytesMoved,nullptr);

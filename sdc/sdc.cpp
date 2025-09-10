@@ -817,7 +817,7 @@ void UpdateFlashItem(int index)
 void SelectCardBox(void)
 {
     // Prompt user for path
-    BROWSEINFO bi = { 0 };
+    BROWSEINFO bi = { nullptr };
     bi.hwndOwner = GetActiveWindow();
     bi.lpszTitle = "Set the SD card path";
     bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NONEWFOLDERBUTTON;

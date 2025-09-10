@@ -37,7 +37,7 @@ void WriteLog(char *Message,unsigned char Type)
 			SetConsoleTitle("Logging Window"); 
 		}
 		sprintf(cTemp,"%s",Message);
-		WriteConsole(hout,cTemp,strlen(cTemp),&dummy,0);
+		WriteConsole(hout,cTemp,strlen(cTemp),&dummy,nullptr);
 		Counter++;
 		break;
 

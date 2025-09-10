@@ -81,7 +81,7 @@ void IdeRegWrite(unsigned char Reg,unsigned short Data)
 			{
 				if ((CurrentCommand==0x30) | (CurrentCommand==0x31))
 				{
-					SetFilePointer(hDiskFile[DiskSelect],Lba*512,0,FILE_BEGIN);
+					SetFilePointer(hDiskFile[DiskSelect],Lba*512,nullptr,FILE_BEGIN);
 					WriteFile(hDiskFile[DiskSelect],XferBuffer,512,&BytesMoved,nullptr);
 				}
 				BufferIndex=0;
@@ -213,7 +213,7 @@ void ExecuteCommand(void)
 			BufferLenth=512;
 			BufferIndex=0;
 			Registers.Status[DiskSelect]=DRQ|RDY;
-			SetFilePointer(hDiskFile[DiskSelect],Lba*512,0,FILE_BEGIN);
+			SetFilePointer(hDiskFile[DiskSelect],Lba*512,nullptr,FILE_BEGIN);
 			memset(XferBuffer,0,512);
 			ReadFile(hDiskFile[DiskSelect],XferBuffer,512,&BytesMoved,nullptr);
 			LastLba=Lba;
@@ -282,13 +282,13 @@ HANDLE OpenDisk(char *ImageFile,unsigned char DiskNum)
 
 	strncpy(SerialNumber,ImageFile,20);
 
-	hTemp=CreateFile( ImageFile,GENERIC_READ | GENERIC_WRITE,0,0,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
+	hTemp=CreateFile( ImageFile,GENERIC_READ | GENERIC_WRITE,0,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 	if (hTemp==INVALID_HANDLE_VALUE)
 		return hTemp;
 
 	Registers.Status[DiskNum]=RDY;
 	Registers.Error[DiskNum]=0;
-	FileSize=SetFilePointer(hTemp,0,0,FILE_END);
+	FileSize=SetFilePointer(hTemp,0,nullptr,FILE_END);
 	LbaSectors=FileSize>>9;
 	//Build Disk ID return Buffer
 	ByteSwap(Model);
