@@ -79,18 +79,18 @@ extern int JS_Ramp_Clock=0;
 static int JS_Ramp_On;
 
 // Hires ramp constants. Determined during testing
-#define TANDYRAMPMIN   1200
-#define TANDYRAMPMAX  10950
-#define TANDYRAMPMUL     37
-#define CCMAXRAMPMIN    800
-#define CCMAXRAMPMAX  14000
-#define CCMAXRAMPMUL     21
+constexpr auto TANDYRAMPMIN  = 1200u;
+constexpr auto TANDYRAMPMAX  = 10950u;
+constexpr auto TANDYRAMPMUL  = 37u;
+constexpr auto CCMAXRAMPMIN  = 800u;
+constexpr auto CCMAXRAMPMAX  = 14000u;
+constexpr auto CCMAXRAMPMUL  = 21u;
 
 static int sticktarg = 0;    // Target stick cycle count
 
 // Joystick values  (0-16383)
-#define STICKMAX 16383
-#define STICKMID 8191
+constexpr auto STICKMAX = 16383u;
+constexpr auto STICKMID = 8191u;
 unsigned int LeftStickX = STICKMID;
 unsigned int LeftStickY = STICKMID;
 unsigned int RightStickX = STICKMID;
@@ -150,7 +150,7 @@ int EnumerateJoysticks(void)
 
 /*****************************************************************************/
 #ifndef _M_ARM
-BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE* instance, VOID* context)
+BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE* instance, VOID* /*context*/)
 {
     HRESULT hr;
     hr = di->CreateDevice(instance->guidInstance, &Joysticks[JoyStickIndex],nullptr);
@@ -184,7 +184,7 @@ bool InitJoyStick (unsigned char StickNumber)
 
 /*****************************************************************************/
 #ifndef _M_ARM
-BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* context)
+BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* /*context*/)
 {
     DIPROPRANGE propRange;
     propRange.diph.dwSize = sizeof(DIPROPRANGE);
@@ -238,8 +238,7 @@ inline int vccJoystickType() {
 
 /*****************************************************************************/
 // Called by mc6821 when $FF20 is written
-void
-vccJoystickStartTandy(unsigned char data, unsigned char next)
+void vccJoystickStartTandy(unsigned char next)
 {
 	if (vccJoystickType() == 2) {
         if ( next == 2 ) {
@@ -367,7 +366,7 @@ unsigned int
 get_pot_value(unsigned char pot)
 {
 #ifndef _M_ARM
-    DIJOYSTATE2 Stick1;
+	DIJOYSTATE2 Stick1 = { 0 };
 
     // Poll left joystick if attached
     if (LeftJS.UseMouse==3) {

@@ -17,11 +17,11 @@ Copyright 2015 by Joseph Forgione
 */
 // This is an expansion module for the Vcc Emulator. It simulated the functions of the TRS-80 Multi-Pak Interface
 
-#include <windows.h>
+#include <Windows.h>
 #include <iostream>
 #include "stdio.h"
 #include "resource.h"
-#include <commctrl.h>
+#include <CommCtrl.h>
 #include "mpi.h"
 #include "../fileops.h"
 #include "../DialogOps.h"
@@ -106,7 +106,7 @@ LRESULT CALLBACK MpiConfigDlg(HWND,UINT,WPARAM,LPARAM);
 
 unsigned char MountModule(unsigned char,const char *);
 void UnloadModule(unsigned char);
-void UpdateCartDLL(unsigned char,char *);
+void UpdateCartDLL(unsigned char slot);
 void LoadConfig(void);
 void WriteConfig(void);
 void ReadModuleParms(unsigned char,char *);
@@ -290,7 +290,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) void PakMemWrite8(unsigned char Data,unsigned short Address)
+	__declspec(dllexport) void PakMemWrite8(unsigned char /*Data*/,unsigned short /*Address*/)
 	{
 
 		return;
@@ -382,7 +382,7 @@ void CenterDialog(HWND hDlg)
 	SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
-LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 
 	switch (message) {
@@ -403,7 +403,7 @@ LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		}
 		UpdateSlotSelect(SwitchSlot);
 		return TRUE;
-		break;
+
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDC_SELECT1:
@@ -480,7 +480,7 @@ void UpdateSlotContent(int Slot)
 		return;
 	}
 
-	UpdateCartDLL(Slot,ModulePaths[Slot]);
+	UpdateCartDLL(Slot);
 	SendDlgItemMessage(hConfDlg,EDITBOXS[Slot],WM_SETTEXT,0,(LPARAM)SlotLabel[Slot]);
 	if ((strcmp(ModuleNames[Slot],"Empty") != 0) || hinstLib[Slot])
 		SendDlgItemMessage(hConfDlg,INSBOXS[Slot],WM_SETTEXT,0,(LPARAM)"X");
@@ -513,20 +513,19 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 	{
 	case 0: //File doesn't exist
 		return 0;
-	break;
 
 	case 2: //ROM image
 		UnloadModule(Slot);
 		ExtRomPointers[Slot]=(unsigned char *)malloc(0x40000);
 		if (ExtRomPointers[Slot]==nullptr)
 		{
-			MessageBox(0,"Rom pointer is NULL","Error",0);
+			MessageBox(nullptr,"Rom pointer is NULL","Error",0);
 			return 0; //Can Allocate RAM
 		}
 		rom_handle=fopen(MountName,"rb");
 		if (rom_handle==nullptr)
 		{
-			MessageBox(0,"File handle is NULL","Error",0);
+			MessageBox(nullptr,"File handle is NULL","Error",0);
 			return 0;
 		}
 		while ((feof(rom_handle)==0) & (index<0x40000))
@@ -573,7 +572,7 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 		if (GetModuleNameCalls[Slot] == nullptr)
 		{
 			UnloadModule(Slot);
-			MessageBox(0,"Not a valid Module","Ok",0);
+			MessageBox(nullptr,"Not a valid Module","Ok",0);
 			return 0; //Error Not a Vcc Module
 		}
 		GetModuleNameCalls[Slot](ModuleNames[Slot],CatNumber[Slot],DynamicMenuCallbackCalls[Slot]); //Need to add address of local Dynamic menu callback function!
@@ -628,7 +627,7 @@ void UnloadModule(unsigned char Slot)
 	return;
 }
 
-void UpdateCartDLL(unsigned char Slot,char *DllPath)
+void UpdateCartDLL(unsigned char Slot)
 {
 	if ((strcmp(ModuleNames[Slot],"Empty") != 0) || hinstLib[Slot]) {
 		UnloadModule(Slot);
@@ -791,7 +790,7 @@ void BuildDynaMenu(void)
 {
 	// DynamicMenuCallback() resides in VCC pakinterface. Make sure we have it's address
 	if (DynamicMenuCallback == nullptr) {
-		MessageBox(0,"MPI internal menu error","Ok",0);
+		MessageBox(nullptr,"MPI internal menu error","Ok",0);
 		return;
 	}
 

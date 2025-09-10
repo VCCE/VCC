@@ -102,7 +102,6 @@ int errDisplayTimer = 0;
 
 // String functions used for decode
 std::string PadRight(std::string const&,size_t);
-std::string OpFDB(int,std::string,std::string,std::string);
 std::string FmtLine(
 	int adr,
 	const std::string& ins,
@@ -495,7 +494,7 @@ LRESULT CALLBACK SubTextDlgProc(HWND hCtl,UINT msg,WPARAM wPrm,LPARAM lPrm)
 /*    Breakpoints list Dialog Processing          */
 /**************************************************/
 INT_PTR CALLBACK BreakpointsDlgProc
-    (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM lPrm)
+    (HWND hDlg,UINT msg,WPARAM wPrm,LPARAM /*lPrm*/)
 {
     int sel;
     HWND hList;

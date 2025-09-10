@@ -18,7 +18,7 @@ This file is part of VCC (Virtual Color Computer).
 
 // hardisk.cpp : Defines the entry point for the DLL application.
 
-#include <windows.h>
+#include <Windows.h>
 #include <stdio.h>
 #include<iostream>
 #include "resource.h"
@@ -29,7 +29,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "../DialogOps.h"
 #include "../MachineDefs.h"
 
-#define DEF_HD_SIZE 132480
+constexpr auto DEF_HD_SIZE = 132480u;
 
 static char VHDfile0[MAX_PATH] { 0 };
 static char VHDfile1[MAX_PATH] { 0 };
@@ -38,6 +38,8 @@ static char NewVHDfile[MAX_PATH];
 static char IniFile[MAX_PATH]  { 0 };
 static char HardDiskPath[MAX_PATH];
 
+// FIXME: These typedefs are duplicated across more if not all projects and
+// need to be consolidated in one place.
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
@@ -153,7 +155,7 @@ void CenterDialog(HWND hDlg)
     SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
-LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
     switch (message)
     {
@@ -402,7 +404,7 @@ void BuildDynaMenu(void)
 
 
 // Dialog for creating a new hard disk
-LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
     unsigned int hdsize=DEF_HD_SIZE;
     switch (message)
@@ -435,7 +437,7 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 int CreateDisk(HWND hDlg, int hdsize)
 {
     HANDLE hr=CreateFile( NewVHDfile, GENERIC_READ | GENERIC_WRITE,
-                          0,0,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,0);
+                          0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
     if (hr==INVALID_HANDLE_VALUE) {
         *NewVHDfile='\0';
         MessageBox(hDlg,"Can't create File","Error",0);
@@ -443,7 +445,7 @@ int CreateDisk(HWND hDlg, int hdsize)
     }
 
     if (hdsize>0) {
-        SetFilePointer(hr, hdsize * 1024, 0, FILE_BEGIN);
+        SetFilePointer(hr, hdsize * 1024, nullptr, FILE_BEGIN);
         SetEndOfFile(hr);
     }
 

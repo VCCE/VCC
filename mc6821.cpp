@@ -267,7 +267,7 @@ void pia1_write(unsigned char data,unsigned char port)
 	case 0: // cpu write FF20
 		if (dda)
 		{
-            vccJoystickStartTandy(regb[port],data);
+            vccJoystickStartTandy(data);
             regb[port]=data;
 			CaptureBit((regb[0]&2)>>1);
 			if (GetMuxState() == 0)

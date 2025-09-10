@@ -39,14 +39,14 @@ unsigned char CmdReg;
 unsigned char CtlReg;
 
 // Input
-#define IBUFSIZ 1024
+constexpr auto IBUFSIZ = 1024u;
 DWORD WINAPI sc6551_input_thread(LPVOID);
 char InBuf[IBUFSIZ];
 char *InRptr = InBuf;
 int Icnt = 0;
 
 // Output
-#define OBUFSIZ 1024
+constexpr auto OBUFSIZ = 1024u;
 DWORD WINAPI sc6551_output_thread(LPVOID);
 char OutBuf[OBUFSIZ];
 char *OutWptr = OutBuf;
@@ -159,7 +159,7 @@ void sc6551_close()
 //------------------------------------------------------------------------
 // Input thread
 //------------------------------------------------------------------------
-DWORD WINAPI sc6551_input_thread(LPVOID param)
+DWORD WINAPI sc6551_input_thread(LPVOID /*param*/)
 {
 	// FIXME: This is needed and should not be commented out. Wrap it conditional
 	// either here or in the debug log functions.
@@ -199,7 +199,7 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 //------------------------------------------------------------------------
 // Output thread.
 //------------------------------------------------------------------------
-DWORD WINAPI sc6551_output_thread(LPVOID param)
+DWORD WINAPI sc6551_output_thread(LPVOID /*param*/)
 {
     Wcnt = 0;
     OutWptr = OutBuf;

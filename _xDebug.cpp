@@ -36,17 +36,17 @@ void _xDbgTrace(const void * pFile, const int iLine, const void * pFormat, ...)
 	fflush(stdout);
 }
 #else
-void _xDbgTrace(const void * pFile, const int iLine, const void * pFormat, ...)
+void _xDbgTrace(const char* pFile, const int iLine, const char* pFormat, ...)
 {
 	va_list		args;
 	char temp[1024];
 
 	va_start(args, pFormat);
 
-	sprintf(temp, "%s(%d) : ", (char *)pFile, iLine);
+	sprintf(temp, "%s(%d) : ", pFile, iLine);
 	OutputDebugString(temp);
 
-	vsprintf(temp, (char *)pFormat, args);
+	vsprintf(temp, pFormat, args);
 	OutputDebugString(temp);
 
 	va_end(args);

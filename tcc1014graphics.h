@@ -53,7 +53,7 @@ void GimeInit(void);
 void GimeReset(void);
 void SetVideoBank(unsigned char);
 unsigned char SetMonitorType(unsigned char );
-void SetBoarderChange (unsigned char);
+void SetBoarderChange ();
 int GetBytesPerRow(void);
 unsigned char GetHorizontalBorderSize();
 unsigned short GetDisplayedPixelsPerLine();
@@ -66,6 +66,8 @@ static unsigned char Lpf[4]={192,199,225,225}; // 2 is really undefined but I go
 static unsigned char VcenterTable[4] = { 25,19,8,8 };
 static unsigned char TopOffScreenTable[4] = { 11,14,11,11 };
 static unsigned char BottomOffScreenTable[4] = { 5,1,5,5 };
+
+// FIXME: These should be a scoped enumeration
 #define MRGB	1
 #define MCMP	0
 

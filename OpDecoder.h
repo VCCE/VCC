@@ -52,13 +52,13 @@ namespace VCC { namespace Debugger
 
 		size_t GetSampleCount() const;
 
-		IRQType ToIRQType(unsigned char irq);
+		IRQType ToIRQType(unsigned char irq) const;
 
 		bool DecodeInstruction(const CPUState& state, CPUTrace& trace);
 
 	protected:
 
-		bool DecodeInterrupt(TraceEvent evt, IRQType irq, std::string& interrupt);
+		bool DecodeInterrupt(TraceEvent evt, IRQType irq, std::string& interrupt) const;
 		bool DecodeScreen(TraceEvent evt, std::string& screen);
 		bool DecodePage2Instruction(unsigned short PC, const CPUState& state, CPUTrace& trace);
 		bool DecodePage3Instruction(unsigned short PC, const CPUState& state, CPUTrace& trace);

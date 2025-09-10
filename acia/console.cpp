@@ -46,7 +46,6 @@ void console_cleol();
 void console_cleob();
 void console_cr();
 void console_eraseline();
-int  console_trans_color(int);
 void console_background(int);
 void console_forground(int);
 
@@ -139,7 +138,7 @@ int console_read(char * buf, int len) {
     }
 
     // If not line mode loop until at least one key press is found
-    while (1) {
+    for(;;) {
 
         // If Event buffer is empty load it (blocks)
         if (Event_Cnt < 1) {

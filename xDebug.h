@@ -19,7 +19,7 @@ extern "C"
 {
 #endif
 	
-	void		_xDbgTrace(const void * pFile, const int iLine, const void * pFormat, ...);
+	void		_xDbgTrace(const char* pFile, const int iLine, const char* pFormat, ...);
 	
 #ifdef __cplusplus
 }

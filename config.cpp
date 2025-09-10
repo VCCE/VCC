@@ -137,7 +137,7 @@ unsigned char TapeFastLoad = 1;
 char Tmodes[4][10]={"STOP","PLAY","REC","STOP"};
 static int NumberOfSoundCards=0;
 
-#define MAXSOUNDCARDS 12
+constexpr auto MAXSOUNDCARDS = 12u;
 static SndCardList SoundCards[MAXSOUNDCARDS];
 
 CHARFORMAT CounterText;
@@ -152,7 +152,7 @@ const char * const keyNames[] = {
 		"'","Comma",".","/","CapsLk","Shift","Ctrl","Alt","Space","Enter",
 		"Insert","Delete","Home","End","PgUp","PgDown","Left","Right",
 		"Up","Down","F1","F2"};
-#define SCAN_TRANS_COUNT 84
+constexpr auto SCAN_TRANS_COUNT = 84u;
 unsigned char _TranslateDisp2Scan[SCAN_TRANS_COUNT];
 unsigned char _TranslateScan2Disp[SCAN_TRANS_COUNT] = {
 		0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,32,38,20,33,35,40,36,24,30,
@@ -482,7 +482,7 @@ void OpenCpuConfig() {
 	SetFocus(hCpuDlg);
 }
 
-LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	short int Ramchoice[4] = {IDC_128K,IDC_512K,IDC_2M,IDC_8M};
 	short int Cpuchoice[2] = {IDC_6809,IDC_6309};
@@ -685,7 +685,7 @@ void OpenTapeConfig() {
 	ShowWindow(hTapeDlg,SW_SHOWNORMAL);
 	SetFocus(hTapeDlg);
 }
-LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	CounterText.cbSize = sizeof(CHARFORMAT);
 	CounterText.dwMask = CFM_BOLD | CFM_COLOR ;
@@ -808,7 +808,7 @@ void OpenAudioConfig() {
 	SetFocus(hAudioDlg);
 }
 
-LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	int Index;
 	static STRConfig tmpcfg;
@@ -933,7 +933,7 @@ void OpenDisplayConfig() {
 	SetFocus(hDisplayDlg);
 }
 
-LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	static STRConfig tmpcfg;
 	switch (message) {
@@ -1071,7 +1071,7 @@ void OpenInputConfig() {
 	ShowWindow(hInputDlg,SW_SHOWNORMAL);
 	SetFocus(hInputDlg);
 }
-LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
     switch (message) {
     case WM_INITDIALOG:
@@ -1199,7 +1199,7 @@ void OpenJoyStickConfig() {
 	SetFocus(hJoyStickDlg);
 }
 
-LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	static STRConfig tmpcfg;
     static JoyStick TempLeftJS, TempRightJS;
@@ -1504,7 +1504,7 @@ void OpenBitBangerConfig() {
 	ShowWindow(hBitBangerDlg,SW_SHOWNORMAL);
 	SetFocus(hBitBangerDlg);
 }
-LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	switch (message) {
 	case WM_INITDIALOG: //IDC_PRINTMON
@@ -1568,7 +1568,7 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 /********************************************/
 /*               Paths Config               */
 /********************************************/
-LRESULT CALLBACK Paths(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK Paths(HWND /*hDlg*/, UINT /*message*/, WPARAM /*wParam*/, LPARAM /*lParam*/)
 {
 	return 1;
 }

@@ -1,18 +1,19 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#include <winsock2.h>
-#include <windows.h>
+#include <WinSock2.h>
+#include <Windows.h>
 #include <process.h>
 #include <stdio.h>
-#include "..\logger.h"
+#include "../logger.h"
 #include "becker.h"
 #include "resource.h" 
-#include "..\fileops.h"
+#include "../fileops.h"
 
 // socket
 static SOCKET dwSocket = 0;
 
 // vcc stuff
+// FIXME: These typedefs are also duplicated everywhere and need to be consolidated in one place.
 typedef void (*SETCART)(unsigned char);
 typedef void (*SETCARTPOINTER)(SETCART);
 typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
@@ -110,9 +111,9 @@ unsigned char dw_status( void )
         // check for input data waiting
 
         if (retry | (dwSocket == 0) | (InReadPos == InWritePos))
-                return(0);
+                return 0;
         else
-                return(1);
+                return 1;
 }
 
 
@@ -129,7 +130,7 @@ unsigned char dw_read( void )
 
         BytesReadSince++;
 
-        return(dwdata);
+        return dwdata;
 }
 
 
@@ -159,7 +160,7 @@ int dw_write( char dwdata)
 	              WriteLog(msg,TOCONS);
 	     }
 
-        return(0);
+        return 0;
 }
 
 
@@ -185,7 +186,7 @@ void killDWTCPThread(void)
 int dw_setaddr(char *bufdwaddr)
 {
         strcpy(dwaddress,bufdwaddr);
-        return(0);
+        return 0;
 }
 
 
@@ -200,7 +201,7 @@ int dw_setport(char *bufdwport)
                 killDWTCPThread();
         }
 
-        return(0);
+        return 0;
 }
 
 
@@ -284,7 +285,7 @@ unsigned __stdcall DWTCPThread(void *Dummy)
         {
                 WriteLog("WSAStartup() failed, DWTCPConnection thread exiting\n",TOCONS);
                 WSACleanup();
-                return(0);
+                return 0;
         }
         
         
@@ -345,7 +346,7 @@ unsigned __stdcall DWTCPThread(void *Dummy)
         dwSocket = 0;
 
         _endthreadex(0);
-        return(0);
+        return 0;
 }
 
 
@@ -454,9 +455,9 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 			// read status
 			case 0x41:
 				if (dw_status() != 0)
-					return(2);
+					return 2;
 				else
-					return(0);
+					return 0;
 				break;
 			// read data 
 			case 0x42:
@@ -478,7 +479,7 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 	{
 		
 		PakSetCart=Pointer;
-		return(0);
+		return 0;
 	}
 
 	__declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
@@ -730,5 +731,5 @@ unsigned char LoadExtRom( char *FilePath)	//Returns 1 on if loaded
 		RetVal = 1;
 		fclose(rom_handle);
 	}
-	return(RetVal);
+	return RetVal;
 }

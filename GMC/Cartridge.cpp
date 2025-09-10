@@ -14,9 +14,7 @@ Cartridge* Cartridge::m_Singleton(nullptr);
 Cartridge::Cartridge(std::string name, std::string catalogId)
 	:
 	m_Name(move(name)),
-	m_CatalogId(move(catalogId)),
-	AssetCartridgeLinePtr(detail::NullAssetCartridgeLine),
-	AddMenuItemPtr(detail::NullAddMenuItem)
+	m_CatalogId(move(catalogId))
 {
 	if (m_Singleton)
 	{
@@ -41,7 +39,7 @@ void Cartridge::LoadConfiguration(const std::string& /*filename*/)
 }
 
 
-void Cartridge::LoadMenu()
+void Cartridge::LoadMenuItems()
 {
 }
 
@@ -72,7 +70,7 @@ void Cartridge::SetConfigurationPath(std::string path)
 {
 	m_ConfigurationPath = move(path);
 	LoadConfiguration(m_ConfigurationPath);
-	LoadMenu();
+	LoadMenuItems();
 }
 
 

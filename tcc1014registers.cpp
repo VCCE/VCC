@@ -36,11 +36,11 @@ static unsigned char EnhancedFIRQFlag=0,EnhancedIRQFlag=0;
 static int InteruptTimer=0;
 void SetInit0(unsigned char);
 void SetInit1(unsigned char);
-void SetGimeIRQStearing(unsigned char);
-void SetGimeFIRQStearing(unsigned char);
-void SetTimerMSB(unsigned char);
-void SetTimerLSB(unsigned char);
-unsigned char GetInit0(unsigned char port);
+void SetGimeIRQStearing();
+void SetGimeFIRQStearing();
+void SetTimerMSB();
+void SetTimerLSB();
+unsigned char GetInit0();
 static unsigned char IRQStearing[8]={0,0,0,0,0,0,0,0};
 static unsigned char FIRQStearing[8]={0,0,0,0,0,0,0,0};
 static unsigned char LastIrq = 0, LastFirq = 0;
@@ -72,19 +72,19 @@ void GimeWrite(unsigned char port,unsigned char data)
 		break;
 
 	case 0x92:
-		SetGimeIRQStearing(data);
+		SetGimeIRQStearing();
 		break;
 
 	case 0x93:
-		SetGimeFIRQStearing(data);
+		SetGimeFIRQStearing();
 		break;
 
 	case 0x94:
-		SetTimerMSB(data);
+		SetTimerMSB();
 		break;
 
 	case 0x95:
-		SetTimerLSB(data);
+		SetTimerLSB();
 		break;
 
 	case 0x96:
@@ -207,13 +207,13 @@ void SetInit1(unsigned char data)
 	return;
 }
 
-unsigned char GetInit0(unsigned char port)
+unsigned char GetInit0()
 {
 	unsigned char data=0;
 	return data;
 }
 
-void SetGimeIRQStearing(unsigned char data) //92
+void SetGimeIRQStearing() //92
 {
 	// FIXME: GimeIRQStearing for CART (bit 0)
 
@@ -239,7 +239,7 @@ void SetGimeIRQStearing(unsigned char data) //92
 	return;
 }
 
-void SetGimeFIRQStearing(unsigned char data) //93
+void SetGimeFIRQStearing() //93
 {
 	// FIXME: GimeFIRQStearing for CART (bit 0)
 
@@ -266,7 +266,7 @@ void SetGimeFIRQStearing(unsigned char data) //93
 	return;
 }
 
-void SetTimerMSB(unsigned char data) //94
+void SetTimerMSB() //94
 {
 	unsigned short Temp;
 	Temp=((GimeRegisters[0x94] <<8)+ GimeRegisters[0x95]) & 4095;
@@ -274,7 +274,7 @@ void SetTimerMSB(unsigned char data) //94
 	return;	
 }
 
-void SetTimerLSB(unsigned char data) //95
+void SetTimerLSB() //95
 {
 	unsigned short Temp;
 	Temp=((GimeRegisters[0x94] <<8)+ GimeRegisters[0x95]) & 4095;
@@ -368,7 +368,7 @@ unsigned char sam_read(unsigned char port) //SAM don't talk much :)
 
 	return 0;
 }
-void sam_write(unsigned char data ,unsigned char port)
+void sam_write(unsigned char port)
 {
 	unsigned char mask=0;
 	unsigned char reg=0;

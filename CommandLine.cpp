@@ -85,7 +85,7 @@ This file is part of VCC (Virtual Color Computer).
 // Define global command line settings
 struct CmdLineArguments CmdArg;
 
-#define SEPMARK 3  //To mark spaces as separators
+constexpr auto SEPMARK = 3u;  //To mark spaces as separators
 
 char *ParseCmdString(const char *, const char *); 
 char *GetNextToken ();

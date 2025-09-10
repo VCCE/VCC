@@ -55,9 +55,9 @@ namespace VCC
 
         ISystemState* state;
 
-        void GetDisplayArea(Rect* rect);
-        void GetSurfaceArea(Rect* rect);
-        void CheckSurfaces();
+        void GetDisplayArea(Rect* rect) const;
+        void GetSurfaceArea(Rect* rect) const;
+        void CheckSurfaces() const;
     };
 }
 

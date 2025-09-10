@@ -29,7 +29,6 @@ void ClosePrintFile(void);
 void SetSerialParams(unsigned char);
 void SetMonState(BOOL);
 unsigned char VDG_Mode(void);
-void kb_tap(unsigned int,unsigned int,unsigned int);
 void irq_hs(int);
 void irq_fs(int);
 void AssertCart(void);

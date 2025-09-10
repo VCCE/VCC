@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #pragma warning( disable : 4800 ) // For legacy builds
 
 //#define USE_LOGGING
-#include <windows.h>
+#include <Windows.h>
 #include <stdio.h>
 #include <iostream>
 #include "resource.h"
@@ -40,11 +40,13 @@ This file is part of VCC (Virtual Color Computer).
 #include "becker.h"
 #endif
 
-#define EXTROMSIZE 16384
+constexpr auto EXTROMSIZE = 16384u;
 
 using namespace std;
 
 extern DiskInfo Drive[5];
+// FIXME: These typedefs are duplicated across more if not all projects and
+// need to be consolidated in one place.
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*PAKINTERUPT)(unsigned char, unsigned char);
@@ -263,7 +265,7 @@ void CenterDialog(HWND hDlg)
     SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
-LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	static unsigned char temp=0,temp2=0;
 	long ChipChoice[3]={IDC_EXTROM,IDC_TRSDOS,IDC_RGB};
@@ -308,7 +310,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			SendDlgItemMessage (hDlg,IDC_BECKER_PORT,WM_SETTEXT,0,(LPARAM)(LPCSTR)BeckerPort);
 
 			return TRUE;
-		break;
 
 		case WM_COMMAND:
 			switch (LOWORD(wParam))
@@ -498,7 +499,7 @@ long CreateDisk (unsigned char Disk)
 	return 0;
 }
 
-LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	unsigned char temp=0,temp2=0;
 	static unsigned char NewDiskType=JVC,NewDiskTracks=2,DblSided=1;
@@ -511,7 +512,6 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_CLOSE:
 			EndDialog(hDlg,LOWORD(wParam));  //Modal dialog
 			return TRUE;
-			break;
 
 		case WM_INITDIALOG:
 			for (temp=0;temp<=2;temp++)
@@ -583,7 +583,6 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					return FALSE;
 			}
 			return TRUE;
-		break;
 	}
     return FALSE;
 }
@@ -597,7 +596,7 @@ long CreateDiskHeader(char *FileName,unsigned char Type,unsigned char Tracks,uns
 	unsigned short TrackSize=0x1900;
 	unsigned char IgnoreDensity=0,SingleDensity=0,HeaderSize=0;
 	unsigned long BytesWritten=0,FileSize=0;
-	hr=CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,0,0,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,0);
+	hr=CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
 	if (hr==INVALID_HANDLE_VALUE)
 		return 1; //Failed to create File
 
@@ -651,9 +650,9 @@ long CreateDiskHeader(char *FileName,unsigned char Type,unsigned char Tracks,uns
 		break;
 
 	}
-	SetFilePointer(hr,0,0,FILE_BEGIN);
+	SetFilePointer(hr,0,nullptr,FILE_BEGIN);
 	WriteFile(hr,HeaderBuffer,HeaderSize,&BytesWritten,nullptr);
-	SetFilePointer(hr,FileSize-1,0,FILE_BEGIN);
+	SetFilePointer(hr,FileSize-1,nullptr,FILE_BEGIN);
 	WriteFile(hr,&Dummy,1,&BytesWritten,nullptr);
 	CloseHandle(hr);
 	return 0;

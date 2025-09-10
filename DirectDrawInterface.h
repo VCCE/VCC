@@ -21,9 +21,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 
 BOOL InitInstance(HINSTANCE,int);
-BOOL InitDrawSurface(bool );
 void UnlockScreen(SystemState *);
-unsigned char LockScreen(const SystemState *);
+unsigned char LockScreen();
 void SetStatusBarText(const char *,const SystemState *);
 int GetRenderWindowStatusBarHeight();
 bool CreateDDWindow(SystemState *);
@@ -38,7 +37,5 @@ void DisplayFlip(SystemState *);
 POINT GetForcedAspectBorderPadding();
 void CloseScreen();
 void DumpScreenshot();
-
-#define MAX_LOADSTRING 100
 
 #endif

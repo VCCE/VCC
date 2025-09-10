@@ -122,13 +122,13 @@ DWORD WritePrivateProfileInt(LPCTSTR SectionName,LPCTSTR KeyName,int KeyValue,LP
 	return(WritePrivateProfileString(SectionName,KeyName,Buffer,IniFileName));
 }
 
-BOOL FilePrintf(HANDLE hFile, const void * fmt, ...)
+BOOL FilePrintf(HANDLE hFile, const char* fmt, ...)
 {
 	DWORD dummy;
 	va_list args;
 	char msg[512];
 	va_start(args, fmt);
-	vsnprintf(msg, 512, (char *)fmt, args);
+	vsnprintf(msg, 512, fmt, args);
 	va_end(args);
 	return WriteFile(hFile,msg,strlen(msg),&dummy,nullptr);
 }

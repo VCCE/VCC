@@ -319,7 +319,7 @@ void DisplayFlip(SystemState *DFState)	// Double buffering flip
 	return;
 }
 
-unsigned char LockScreen(const SystemState *LSState)
+unsigned char LockScreen()
 {
 	if (!g_Display) 
 		return 0;
@@ -365,7 +365,7 @@ void DoCls(SystemState *CLStatus)
 {
 	unsigned short x=0,y=0;
 
-	if(LockScreen(CLStatus))
+	if(LockScreen())
 		return;
 	switch (CLStatus->BitDepth)
 	{

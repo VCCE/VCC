@@ -16,21 +16,23 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
+#include <Windows.h>
 #include "stdio.h"
 #include <iostream>
 #include "resource.h" 
 #include "defines.h"
-#include "Superide.h"
-#include "idebus.h"
+#include "SuperIDE.h"
+#include "IdeBus.h"
 #include "cloud9.h"
 #include "logger.h"
 #include "../fileops.h"
-#include "../dialogops.h"
+#include "../DialogOps.h"
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
 static char SuperIDEPath[MAX_PATH];
+// FIXME: These typedefs are duplicated across more if not all projects and
+// need to be consolidated in one place.
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
@@ -217,7 +219,7 @@ void BuildDynaMenu(void)
 	DynamicMenuCallback("",1,0);
 }
 
-LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	unsigned char BTemp=0;
 	switch (message)

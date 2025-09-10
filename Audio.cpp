@@ -34,7 +34,7 @@ This file is part of VCC (Virtual Color Computer).
 
 using AuxBufferType = VCC::Array<VCC::Array<uint32_t, AUDIO_RATE / 60>, 6>;
 
-#define MAXCARDS	12
+constexpr auto MAXCARDS = 12u;
 //PlayBack
 static LPDIRECTSOUND	lpds;           // directsound interface pointer
 static DSBUFFERDESC		dsbd;           // directsound description
@@ -265,7 +265,7 @@ int GetSoundCardList (SndCardList *List)
 	return CardCount;
 }
 
-BOOL CALLBACK DSEnumCallback(LPGUID lpGuid,LPCSTR lpcstrDescription,LPCSTR lpcstrModule,LPVOID lpContext)          
+BOOL CALLBACK DSEnumCallback(LPGUID lpGuid,LPCSTR lpcstrDescription,LPCSTR /*lpcstrModule*/,LPVOID /*lpContext*/)          
 {
 	strncpy(Cards[CardCount].CardName,lpcstrDescription,63);
 	Cards[CardCount++].Guid=lpGuid;
@@ -292,7 +292,7 @@ int SoundDeInit(void)
 	return 0;
 }
 
-int SoundInInit (HWND main_window_handle,const _GUID * Guid)
+int SoundInInit (const _GUID * Guid)
 {
 	hr=DirectSoundCaptureCreate(Guid, &lpdsin, nullptr);
 	if (hr!=DS_OK)

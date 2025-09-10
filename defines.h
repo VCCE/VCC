@@ -35,15 +35,15 @@ constexpr auto SAMPLESPERFRAME = 262u;
 
 
 //CPU 
-#define FRAMESPERSECORD (double)59.923	//The coco really runs at about 59.923 Frames per second
-#define LINESPERSCREEN (double)262
-#define NANOSECOND (double)1000000000
-#define COLORBURST (double)3579545 
-#define AUDIOBUFFERS 12
+constexpr auto FRAMESPERSECORD = 59.923;	//The coco really runs at about 59.923 Frames per second
+constexpr auto LINESPERSCREEN = 262.0;
+constexpr auto NANOSECOND = 1000000000.0;
+constexpr auto COLORBURST = 3579545.0;
+constexpr auto AUDIOBUFFERS = 12u;
 //Misc
-#define MAX_LOADSTRING 100
-#define QUERY 255
-#define INDEXTIME ((LINESPERSCREEN * TARGETFRAMERATE)/5)
+constexpr auto MAX_LOADSTRING = 100u;
+constexpr auto QUERY = 255u;
+constexpr auto INDEXTIME = ((LINESPERSCREEN * TARGETFRAMERATE) / 5);
 
 struct SystemState;
 
@@ -86,6 +86,7 @@ namespace VCC
         }
     };
 
+	// FIXME: Remove this and use std::array
     //
     // bounds checking array type
     //

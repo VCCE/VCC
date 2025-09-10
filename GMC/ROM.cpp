@@ -1,6 +1,6 @@
 #include "ROM.h"
 #include <fstream>
-#include <windows.h>
+#include <Windows.h>
 using namespace std;
 
 bool ROM::Load(std::string filename)

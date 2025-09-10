@@ -49,7 +49,7 @@ void CloseCartDialog(HWND hDlg);
 class FileDialog {
 public:
 	FileDialog();
-	~FileDialog();
+
 	bool show(BOOL Save = FALSE, HWND Owner = nullptr);
 	void setpath(const char * Path);
 	void setDefExt(const char * DefExt);
@@ -57,9 +57,9 @@ public:
 	void setFilter(const char * Filter);
 	void setFlags(unsigned int Flags);
 	void setTitle(const char * Title);
-	void getdir(char * Dir, int maxsize = MAX_PATH);
-	void getpath(char * Path, int maxsize = MAX_PATH);
-	void getupath(char * Path, int maxsize = MAX_PATH);
+	void getdir(char * Dir, int maxsize = MAX_PATH) const;
+	void getpath(char * Path, int maxsize = MAX_PATH) const;
+	void getupath(char * Path, int maxsize = MAX_PATH) const;
 	char * path();
 private:
 	OPENFILENAME ofn;

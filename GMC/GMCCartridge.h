@@ -12,7 +12,6 @@ public:
 	GMCCartridge();
 
 	void LoadConfiguration(const std::string& filename) override;
-	void LoadMenu() override;
 
 	std::string GetStatusMessage() const override;
 	void OnMenuItemSelected(unsigned char menuId) override;
@@ -21,6 +20,12 @@ public:
 	unsigned char OnReadMemory(unsigned short address) const override;
 	void OnWritePort(unsigned char port, unsigned char data) override;
 	unsigned char OnReadPort(unsigned char port) const override;
+
+
+protected:
+
+	void LoadMenuItems() override;
+
 
 private:
 

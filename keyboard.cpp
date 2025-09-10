@@ -46,9 +46,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "keyboardLayout.h"
 #include "config.h"
 
-#include <queue>
-
 #include "xDebug.h"
+
+#include <queue>
+#include <sstream>
+
 
 /*****************************************************************************/
 /*
@@ -57,14 +59,15 @@ This file is part of VCC (Virtual Color Computer).
 
 unsigned char SetMouseStatus(unsigned char, unsigned char);
 bool pasting = false;  //Are the keyboard functions in the middle of a paste operation?
-bool GetNextScanInPasteQueue(unsigned char col);
+bool GetNextScanInPasteQueue();
 
 /*****************************************************************************/
 //	Global variables
 /*****************************************************************************/
 
 // key translation table maximum size, (arbitrary) most of the layouts are < 80 entries
-#define KBTABLE_ENTRY_COUNT 100
+constexpr auto KBTABLE_ENTRY_COUNT = 100u;
+// FIXME: These defines should either be a scoped enumeration or removed and boolean values used.
 #define KEY_DOWN	1
 #define KEY_UP		0
 
@@ -112,7 +115,7 @@ vccKeyboardGetScan(unsigned char Col)
 
 	ret_val = 0;
 
-	GetNextScanInPasteQueue(Col);
+	GetNextScanInPasteQueue();
 
 	temp = ~Col; //Get colums
 	mask = 1;
@@ -239,7 +242,7 @@ void _vccKeyboardUpdateRolloverTable()
 //	@param Status Key status - kEventKeyDown/kEventKeyUp
 /*****************************************************************************/
 
-void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e keyState)
+void vccKeyboardHandleKey(unsigned char ScanCode, keyevent_e keyState)
 {
 	//If requested, abort pasting operation.
 	if (ScanCode == 0x01 || ScanCode == 0x43 || ScanCode == 0x3F) { pasting = false; }
@@ -551,9 +554,8 @@ void PasteIntoQueue(const std::string& txt)
 	SetPaste(true);
 }
 
-#include <sstream>
 
-bool GetNextScanInPasteQueue(unsigned char col)
+bool GetNextScanInPasteQueue()
 {
 	if (CurrentPasteState == PasteState::Idle)
 	{
@@ -584,7 +586,7 @@ bool GetNextScanInPasteQueue(unsigned char col)
 		{
 			// Lower Shift key and get the next.
 			PasteInputQueue.pop();
-			vccKeyboardHandleKey(0x36, 0x36, kEventKeyDown);
+			vccKeyboardHandleKey(0x36, kEventKeyDown);
 			next = PasteInputQueue.front();
 			ShiftPaste = true;
 		}
@@ -593,11 +595,11 @@ bool GetNextScanInPasteQueue(unsigned char col)
 		{
 			// Lower Control key and get the next.
 			PasteInputQueue.pop();
-			vccKeyboardHandleKey(0x1D, 0x1D, kEventKeyDown);
+			vccKeyboardHandleKey(0x1D, kEventKeyDown);
 			next = PasteInputQueue.front();
 			CtrlPaste = true;
 		}
-		vccKeyboardHandleKey(next, next, kEventKeyDown);
+		vccKeyboardHandleKey(next, kEventKeyDown);
 		CurrentPasteState = KeyUp;
 		break;
 	}
@@ -606,10 +608,10 @@ bool GetNextScanInPasteQueue(unsigned char col)
 	{
 		// Raise key that was down.
 		unsigned char last = PasteInputQueue.front();
-		vccKeyboardHandleKey(last, last, kEventKeyUp);
+		vccKeyboardHandleKey(last, kEventKeyUp);
 		// Raise shift or control if either were down
-		if (ShiftPaste) vccKeyboardHandleKey(0x36, 0x36, kEventKeyUp);
-		if (CtrlPaste)  vccKeyboardHandleKey(0x1D, 0x1D, kEventKeyUp);
+		if (ShiftPaste) vccKeyboardHandleKey(0x36, kEventKeyUp);
+		if (CtrlPaste)  vccKeyboardHandleKey(0x1D, kEventKeyUp);
 		ShiftPaste = CtrlPaste = false;
 		PasteInputQueue.pop();
 		CurrentPasteState = CheckDone;

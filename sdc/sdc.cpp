@@ -134,12 +134,12 @@
 #include <cstdio>
 #include <cerrno>
 #include <cstring>
-#include <windows.h>
+#include <Windows.h>
 #include <windowsx.h>
-#include <shlwapi.h>
+#include <Shlwapi.h>
 #pragma warning(push)
 #pragma warning(disable:4091)
-#include <shlobj.h>
+#include <ShlObj.h>
 #pragma warning(pop)
 #include <stdio.h>
 #include <ctype.h>
@@ -159,6 +159,8 @@
 // Functions
 //======================================================================
 
+// FIXME: These typedefs are duplicated across more if not all projects and
+// need to be consolidated in one place.
 typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
 typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 typedef unsigned char (*MEMREAD8)(unsigned short);
@@ -226,16 +228,16 @@ void CommandDone(void);
 unsigned char PickReplyByte(unsigned char);
 unsigned char WriteFlashBank(unsigned short);
 
-void FloppyCommand(unsigned char,unsigned char);
-void FloppyRestore(unsigned char,unsigned char);
-void FloppySeek(unsigned char,unsigned char);
-void FloppyReadDisk(unsigned char,unsigned char);
-void FloppyWriteDisk(unsigned char,unsigned char);
-void FloppyTrack(unsigned char,unsigned char);
-void FloppySector(unsigned char,unsigned char);
-void FloppyWriteData(unsigned char,unsigned char);
-unsigned char FloppyStatus(unsigned char);
-unsigned char FloppyReadData(unsigned char);
+void FloppyCommand(unsigned char);
+void FloppyRestore(unsigned char);
+void FloppySeek(unsigned char);
+void FloppyReadDisk();
+void FloppyWriteDisk();
+void FloppyTrack(unsigned char);
+void FloppySector(unsigned char);
+void FloppyWriteData(unsigned char);
+unsigned char FloppyStatus();
+unsigned char FloppyReadData();
 
 //======================================================================
 // Globals
@@ -515,7 +517,7 @@ void CenterDialog(HWND hDlg)
 // Control SDC multi floppy
 //------------------------------------------------------------
 LRESULT CALLBACK
-SDC_Control(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+SDC_Control(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
     switch (message) {
     case WM_CLOSE:
@@ -545,7 +547,7 @@ SDC_Control(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 // Configure the SDC
 //------------------------------------------------------------
 LRESULT CALLBACK
-SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
     switch (message) {
     case WM_CLOSE:
@@ -815,14 +817,14 @@ void UpdateFlashItem(int index)
 void SelectCardBox(void)
 {
     // Prompt user for path
-    BROWSEINFO bi = { 0 };
+    BROWSEINFO bi = { nullptr };
     bi.hwndOwner = GetActiveWindow();
     bi.lpszTitle = "Set the SD card path";
     bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NONEWFOLDERBUTTON;
 
     // Start from user home diretory
     SHGetSpecialFolderLocation
-        (nullptr,CSIDL_PROFILE,(LPITEMIDLIST *) &bi.pidlRoot);
+        (nullptr,CSIDL_PROFILE, const_cast<LPITEMIDLIST*>(& bi.pidlRoot));
 
     LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
     if (pidl != nullptr) {
@@ -1032,19 +1034,19 @@ void SDCWrite(unsigned char data,unsigned char port)
             break;
         // floppy command
         case 0x48:
-            FloppyCommand(port,data);
+            FloppyCommand(data);
             break;
         // floppy set track
         case 0x49:
-            FloppyTrack(port,data);
+            FloppyTrack(data);
             break;
         // floppy set sector
         case 0x4A:
-            FloppySector(port,data);
+            FloppySector(data);
             break;
         // floppy write data
         case 0x4B:
-            FloppyWriteData(port,data);
+            FloppyWriteData(data);
             break;
         // Unhandled
         default:
@@ -1104,11 +1106,11 @@ unsigned char SDCRead(unsigned char port)
             break;
         // Floppy read status
         case 0x48:
-            rpy = FloppyStatus(port);
+            rpy = FloppyStatus();
             break;
         // Floppy read data
         case 0x4B:
-            rpy = FloppyReadData(port);
+            rpy = FloppyReadData();
             break;
         default:
             _DLOG("SDCRead U %02x\n",port);
@@ -1122,31 +1124,34 @@ unsigned char SDCRead(unsigned char port)
 //----------------------------------------------------------------------
 // Floppy I/O
 //----------------------------------------------------------------------
-void FloppyCommand(unsigned char port,unsigned char data)
+void FloppyCommand(unsigned char data)
 {
     switch (data >> 4) {
     // floppy restore
     case 0x0:
-        FloppyRestore(port,data);
+        FloppyRestore(data);
         break;
     case 0x1:
-        FloppySeek(port,data);
+        FloppySeek(data);
         break;
     // floppy read sector
     case 0x8:
-        FloppyReadDisk(port,data);
+        FloppyReadDisk();
         break;
     // floppy write sector
     case 0xA:
-        FloppyWriteDisk(port,data);
+        FloppyWriteDisk();
         break;
     }
 }
 
 // floppy restore
-void FloppyRestore(unsigned char port,unsigned char data)
+void FloppyRestore(unsigned char data)
 {
-    _DLOG("FloppyRestore %02x %02x\n",port,data);
+	// FIXME: Remove this once _DLOG is replaced
+	(void)data;
+
+    _DLOG("FloppyRestore %02x\n",data);
     FlopTrack = 0;
     FlopSector = 0;
     FlopStatus = FLP_NORMAL;
@@ -1156,13 +1161,16 @@ void FloppyRestore(unsigned char port,unsigned char data)
 }
 
 // floppy seek
-void FloppySeek(unsigned char port,unsigned char data)
+void FloppySeek(unsigned char data)
 {
-    _DLOG("FloppySeek %02x %02x\n",port,data);
+	// FIXME: Remove this once _DLOG is replaced
+	(void)data;
+
+	_DLOG("FloppySeek %02x\n",data);
 }
 
 // floppy read sector
-void FloppyReadDisk(unsigned char port,unsigned char data)
+void FloppyReadDisk()
 {
     int lsn = FlopTrack * 18 + FlopSector - 1;
     snprintf(Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
@@ -1181,7 +1189,7 @@ void FloppyReadDisk(unsigned char port,unsigned char data)
 }
 
 // floppy write sector
-void FloppyWriteDisk(unsigned char port,unsigned char data)
+void FloppyWriteDisk()
 {
     int lsn = FlopTrack * 18 + FlopSector - 1;
     // write not implemented yet
@@ -1190,14 +1198,14 @@ void FloppyWriteDisk(unsigned char port,unsigned char data)
 }
 
 // floppy set track
-void FloppyTrack(unsigned char port,unsigned char data)
+void FloppyTrack(unsigned char data)
 {
     _DLOG("FloppyTrack %d\n",data);
     FlopTrack = data;
 }
 
 // floppy set sector
-void FloppySector(unsigned char port,unsigned char data)
+void FloppySector(unsigned char data)
 {
     FlopSector = data;  // (1-18)
 
@@ -1207,9 +1215,9 @@ void FloppySector(unsigned char port,unsigned char data)
 }
 
 // floppy write data
-void FloppyWriteData(unsigned char port,unsigned char data)
+void FloppyWriteData(unsigned char data)
 {
-    _DLOG("FloppyWriteData %02x %02x\n",port,data);
+    _DLOG("FloppyWriteData %02x\n",data);
     if (FlopWrCnt<256)  {
         FlopWrCnt++;
         FlopWrBuf[FlopWrCnt] = data;
@@ -1220,14 +1228,14 @@ void FloppyWriteData(unsigned char port,unsigned char data)
 }
 
 // floppy get status
-unsigned char FloppyStatus(unsigned char port)
+unsigned char FloppyStatus()
 {
     _DLOG("FloppyStatus %02x\n",FlopStatus);
     return FlopStatus;
 }
 
 // floppy read data
-unsigned char FloppyReadData(unsigned char port)
+unsigned char FloppyReadData()
 {
     unsigned char rpy;
     if (FlopRdCnt>0)  {

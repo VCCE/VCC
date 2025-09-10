@@ -1,5 +1,5 @@
 #include "GMCCartridge.h"
-#include <windows.h>
+#include <Windows.h>
 
 GMCCartridge theCart;
 
@@ -41,7 +41,7 @@ std::string SelectROMFile()
 		selectedPath.clear();
 	}
 
-	return move(selectedPath);
+	return selectedPath;
 }
 
 

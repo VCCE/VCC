@@ -37,14 +37,12 @@ void SetIniFilePath(const char *);
 void SetKeyMapFilePath(const char *);
 char * AppDirectory();
 char * GetKeyMapFilePath();
-char * KeyMapFiledir();
 
 int GetPaletteType();
 enum PALETTETYPE {PALETTE_ORIG=0, PALETTE_UPD=1, PALETTE_NTSC=2};
 
 const VCC::Rect& GetIniWindowRect();
 int GetRememberSize();
-void SetConfigPath(int, string);
 void SwapJoySticks();
 
 void DecreaseOverclockSpeed();
@@ -54,7 +52,6 @@ void SetOverclock(unsigned char);
 // Openers for config dialogs
 void OpenAudioConfig();
 void OpenCpuConfig();
-void OpenMiscConfig();
 void OpenDisplayConfig();
 void OpenInputConfig();
 void OpenJoyStickConfig();

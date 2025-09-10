@@ -72,6 +72,8 @@ static unsigned int BankedCartOffset=0;
 static char DllPath[256]="";
 static unsigned short ModualParms=0;
 static HINSTANCE hinstLib = nullptr;
+// FIXME: These typedefs are duplicated across more if not all projects and
+// need to be consolidated in one place.
 typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 typedef void (*GETNAME)(char *,char *,DYNAMICMENUCALLBACK);
 typedef void (*CONFIGIT)(unsigned char);
@@ -391,7 +393,7 @@ int InsertModule (char *ModulePath)
 Load a ROM pack
 return total bytes loaded, or 0 on failure
 */
-int load_ext_rom(const char filename[MAX_PATH])
+int load_ext_rom(const char *filename)
 {
 	constexpr size_t PAK_MAX_MEM = 0x40000;
 

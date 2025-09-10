@@ -23,11 +23,11 @@
 //#define USE_LOGGING
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#include <winsock2.h>
-#include <windows.h>
+#include <WinSock2.h>
+#include <Windows.h>
 #include <process.h>
 #include <stdio.h>
-#include "..\logger.h"
+#include "../logger.h"
 #include "becker.h"
 
 #define BUFFER_SIZE 512
@@ -37,7 +37,7 @@
 //------------------------------------------------------
 // local functions
 //------------------------------------------------------
-int dw_open(char *,unsigned short);
+void dw_open();
 void dw_close();
 unsigned char dw_status(void);
 unsigned char dw_read(void);
@@ -296,7 +296,7 @@ void dw_open( void )
 }
 
 // TCP connection thread
-unsigned __stdcall dw_thread(void *Dummy)
+unsigned __stdcall dw_thread(void* /*Dummy*/)
 {
 	_DLOG("dw_thread %d\n",dwEnabled);
 	WSADATA wsaData;

@@ -16,11 +16,13 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
+#include <Windows.h>
 #include "resource.h" 
 #include "defines.h"
 #include "memboard.h"
 
+// FIXME: These typedefs are duplicated across more if not all projects and
+// need to be consolidated in one place.
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char,unsigned short);
 typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
@@ -77,7 +79,6 @@ extern "C"
 			default:
 				return;
 		}	//End port switch		
-		return;
 	}
 }
 

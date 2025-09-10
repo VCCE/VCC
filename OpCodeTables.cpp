@@ -26,7 +26,7 @@
 
 namespace VCC { namespace Debugger
 {
-	bool OpCodeTables::ProcessHeuristics(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessHeuristics(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		bool valid = true;
 		trace.decodeCycles = state.IsNative6309 ? opcode.num6309cycles : opcode.num6809cycles;
@@ -66,7 +66,7 @@ namespace VCC { namespace Debugger
 		return valid;
 	}
 
-	bool OpCodeTables::ProcessNoAdjust(const OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessNoAdjust(const OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -105,7 +105,7 @@ namespace VCC { namespace Debugger
 		case Indexed:
 			break;
 		case Relative:
-			trace.operand = ToRelativeAddressString(operand, opcode.oplen, operandLen);
+			trace.operand = ToRelativeAddressString(operand, operandLen);
 			break;
 		case Extended:
 			trace.operand = "$" + ToHexString(operand, 4);
@@ -134,7 +134,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessIndexModeAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessIndexModeAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -190,7 +190,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::GetIndexMode(unsigned char postbyte, IndexModeInfo& mode, std::string& operand)
+	bool OpCodeTables::GetIndexMode(unsigned char postbyte, IndexModeInfo& mode, std::string& operand) const
 	{
 		// Convert to key.
 		std::string key = std::bitset<8>(postbyte).to_string();
@@ -198,7 +198,7 @@ namespace VCC { namespace Debugger
 		// MSB = 0?  5 bit offset.
 		if (key[0] == '0')
 		{
-			mode = IndexingModes["0RRnnnnn"];
+			mode = IndexingModes.at("0RRnnnnn");
 			operand = mode.form;
 
 			// Determine the register.
@@ -215,7 +215,7 @@ namespace VCC { namespace Debugger
 		// Try exact match.
 		if (IndexingModes.find(key) != IndexingModes.end())
 		{
-			mode = IndexingModes[key];
+			mode = IndexingModes.at(key);
 			operand = mode.form;
 			return true;
 		}
@@ -225,7 +225,7 @@ namespace VCC { namespace Debugger
 		key[2] = 'X';
 		if (IndexingModes.find(key) != IndexingModes.end())
 		{
-			mode = IndexingModes[key];
+			mode = IndexingModes.at(key);
 			operand = mode.form;
 			return true;
 		}
@@ -235,7 +235,7 @@ namespace VCC { namespace Debugger
 		key[2] = 'R';
 		if (IndexingModes.find(key) != IndexingModes.end())
 		{
-			mode = IndexingModes[key];
+			mode = IndexingModes.at(key);
 			operand = mode.form;
 			replace(operand, "R", ToRegister(postbyte));
 			return true;
@@ -245,13 +245,13 @@ namespace VCC { namespace Debugger
 		return false;
 	}
 
-	bool OpCodeTables::ProcessInterruptAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessInterruptAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		trace.decodeCycles = AdjustCycles(opcode, 0, 0, state.IsNative6309);
 		return true;
 	}
 
-	bool OpCodeTables::ProcessStackAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessStackAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -288,7 +288,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessLongBranchAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessLongBranchAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -305,7 +305,7 @@ namespace VCC { namespace Debugger
 
 		// All long branches are relative.
 		int operand = (trace.bytes[opcode.oplen] << 8) + trace.bytes[opcode.oplen + 1];
-		trace.operand = ToRelativeAddressString(operand, opcode.oplen, operandLen);
+		trace.operand = ToRelativeAddressString(operand, operandLen);
 
 		// No adjustment needed on 6309 
 		if (state.IsNative6309)
@@ -373,7 +373,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessTFMAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessTFMAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -406,7 +406,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessDIVAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessDIVAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		// Two rules:
 		//	1) DIVD executes in l fewer cycle if a two's-complement overflow occurs. 
@@ -460,19 +460,19 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessWaitForSYNCAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessWaitForSYNCAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		trace.decodeCycles = AdjustCycles(opcode, 0, 0, state.IsNative6309);
 		return true;
 	}
 
-	std::string OpCodeTables::ToInterRegister(unsigned char reg)
+	std::string OpCodeTables::ToInterRegister(unsigned char reg) const
 	{
 		std::vector<std::string> regs = { "D", "X", "Y", "U", "S", "PC", "W", "V", "A", "B", "CC", "DP", "0", "0", "E", "F" };
 		return regs[reg];
 	}
 
-	std::string OpCodeTables::ToRegister(unsigned char postbyte)
+	std::string OpCodeTables::ToRegister(unsigned char postbyte) const
 	{
 		int reg = (postbyte & 0b01100000) >> 5;
 		switch (reg)
@@ -489,7 +489,7 @@ namespace VCC { namespace Debugger
 		return "?";
 	}
 
-	std::string OpCodeTables::ToRelativeAddressString(int value, int oplen, int operandlen)
+	std::string OpCodeTables::ToRelativeAddressString(int value, int operandlen) const
 	{
 		std::ostringstream fmt;
 
@@ -522,7 +522,7 @@ namespace VCC { namespace Debugger
 		return fmt.str();
 	}
 
-	int OpCodeTables::AdjustCycles(OpCodeInfo& opcode, int cycles, int bytes, bool IsNative6309)
+	int OpCodeTables::AdjustCycles(OpCodeInfo& opcode, int cycles, int bytes, bool IsNative6309) const
 	{
 		if (IsNative6309)
 		{

@@ -143,14 +143,6 @@
 
 
 SN76489Device::SN76489Device()
-	: m_feedback_mask(0x4000)
-	, m_period_divider(6.11f)
-	, m_whitenoise_tap1(0x01)
-	, m_whitenoise_tap2(0x02)
-	, m_negate(false)	//	Was true!
-	, m_stereo(false)
-	, m_ncr_style_psg(false)
-	, m_sega_style_psg(true)
 {}
 
 
@@ -285,7 +277,7 @@ void SN76489Device::write(uint8_t data)
 	}
 }
 
-inline bool SN76489Device::in_noise_mode()
+inline bool SN76489Device::in_noise_mode() const
 {
 	return ((m_register[6] & 4) != 0);
 }

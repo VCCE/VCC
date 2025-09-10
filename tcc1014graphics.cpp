@@ -35,8 +35,6 @@ using Surface32 = VCC::VideoArray<unsigned int, 640 * 480>;
 void SetupDisplay(void); //This routine gets called every time a software video register get updated.
 void MakeRGBPalette (void);
 void MakeCMPpalette(void);
-bool  DDFailedCheck(HRESULT hr, char *szMessage);
-char *DDErrorString(HRESULT hr);
 void RenderPMODE4NTSC(Surface32 surface32, size_t surfaceDest, int XpitchDest, const unsigned char* cocoSrc, char scanLines);
 
 //extern STRConfig CurrentConfig;
@@ -9718,7 +9716,7 @@ void SetGimeBoarderColor(unsigned char data)
 	return;
 }
 
-void SetBoarderChange (unsigned char data)
+void SetBoarderChange ()
 {
 	if (BoarderChange >0)
 		BoarderChange--;

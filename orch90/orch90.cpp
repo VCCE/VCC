@@ -15,12 +15,14 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <windows.h>
+#include <Windows.h>
 #include <stdio.h>
 #include "defines.h"
 #include "resource.h" 
-#include "..\fileops.h"
+#include "../fileops.h"
 
+// FIXME: These typedefs are duplicated across more if not all projects and
+// need to be consolidated in one place.
 typedef void (*SETCART)(unsigned char);
 typedef void (*SETCARTPOINTER)(SETCART);
 typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
@@ -45,7 +47,7 @@ BOOL WINAPI DllMain(
 
 extern "C" 
 {          
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
+	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK /*Temp*/)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
@@ -76,7 +78,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+	__declspec(dllexport) unsigned char PackPortRead(unsigned char /*Port*/)
 	{
 		return 0;
 	}
