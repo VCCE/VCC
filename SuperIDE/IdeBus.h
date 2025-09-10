@@ -33,7 +33,7 @@ void IdeInit();
 void IdeRegWrite(unsigned char,unsigned short);
 unsigned short IdeRegRead(unsigned char);
 void DiskStatus(char *);
-unsigned char MountDisk(char *,unsigned char );
+unsigned char MountDisk(const char *,unsigned char );
 unsigned char DropDisk(unsigned char);
 void QueryDisk(unsigned char,char *);
 //Status 

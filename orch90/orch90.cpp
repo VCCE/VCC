@@ -29,7 +29,7 @@ typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 static HINSTANCE g_hinstDLL=nullptr;
 static unsigned char LeftChannel=0,RightChannel=0;
 static void (*PakSetCart)(unsigned char)=nullptr;
-unsigned char LoadExtRom(char *);
+unsigned char LoadExtRom(const char *);
 static unsigned char Rom[8192];
 BOOL WINAPI DllMain(
     HINSTANCE hinstDLL,  // handle to DLL module
@@ -135,7 +135,7 @@ extern "C"
 
 
 
-unsigned char LoadExtRom(char *FilePath)	//Returns 1 on if loaded
+unsigned char LoadExtRom(const char *FilePath)	//Returns 1 on if loaded
 {
 
 	FILE *rom_handle = nullptr;

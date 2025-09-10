@@ -208,7 +208,7 @@ bool MountNext(int);
 void OpenNew(int,const char *,int);
 void CloseDrive(int);
 void OpenFound(int,int);
-void LoadReply(void *, int);
+void LoadReply(const void *, int);
 void BlockReceive(unsigned char);
 char * LastErrorTxt(void);
 void FlashControl(unsigned char);
@@ -434,7 +434,7 @@ extern "C"
     }
 
     // Set ini file path and Initialize SDC
-    __declspec(dllexport) void SetIniPath (char *IniFilePath)
+    __declspec(dllexport) void SetIniPath (const char *IniFilePath)
     {
         strncpy(IniFile,IniFilePath,MAX_PATH);
         return;
@@ -1410,7 +1410,7 @@ void GetDirectoryLeaf(void)
 
     // If at least one leaf find the last one
     if (n > 0) {
-        char *p = strrchr(CurDir,'/');
+		const char *p = strrchr(CurDir,'/');
         if (p == nullptr) {
             p = CurDir;
         } else {
@@ -1779,7 +1779,7 @@ void SDCControl(void)
 //----------------------------------------------------------------------
 // Load reply. Count is bytes, 512 max.
 //----------------------------------------------------------------------
-void LoadReply(void *data, int count)
+void LoadReply(const void *data, int count)
 {
     if ((count < 2) | (count > 512)) {
         _DLOG("LoadReply bad count %d\n",count);
@@ -1870,9 +1870,9 @@ bool LoadFoundFile(struct FileRecord * rec)
     }
 
     // File type
-    char * pdot = strrchr(dFound.cFileName,'.');
+	const char * pdot = strrchr(dFound.cFileName,'.');
     if (pdot) {
-        char * ptyp = pdot + 1;
+		const char * ptyp = pdot + 1;
         for (int cnt = 0; cnt<3; cnt++) {
            if (*ptyp == '\0') break;
            rec->type[cnt] = *ptyp++;
@@ -1880,7 +1880,7 @@ bool LoadFoundFile(struct FileRecord * rec)
     }
 
     // File name
-    char * pnam = dFound.cFileName;
+	const char * pnam = dFound.cFileName;
     for (int cnt = 0; cnt < 8; cnt++) {
         if (*pnam == '\0') break;
         if (pdot && (pnam == pdot)) break;

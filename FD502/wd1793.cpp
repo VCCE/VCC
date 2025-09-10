@@ -51,7 +51,7 @@ unsigned char WriteBytetoSector (unsigned char);
 unsigned char WriteBytetoTrack  (unsigned char);
 unsigned char (*WriteBytetoDisk)(unsigned char)=&WriteBytetoSector;
 
-unsigned char MountDisk(char *,unsigned char);
+unsigned char MountDisk(const char *filename,unsigned char);
 void DispatchCommand(unsigned char);
 void DecodeControlReg(unsigned char);
 void SetType1Flags(unsigned char);
@@ -59,12 +59,12 @@ void SetType2Flags(unsigned char);
 void SetType3Flags(unsigned char);
 
 long ReadSector (unsigned char,unsigned char,unsigned char,unsigned char *);
-long WriteSector(unsigned char,unsigned char,unsigned char,unsigned char *,long);
+long WriteSector(unsigned char,unsigned char,unsigned char,const unsigned char *,long);
 long ReadTrack  (unsigned char,unsigned char,unsigned char,unsigned char *);
-long WriteTrack (unsigned char,unsigned char,unsigned char,unsigned char *);
+long WriteTrack (unsigned char,unsigned char,unsigned char,const unsigned char *);
 
 unsigned short ccitt_crc16(unsigned short crc, const unsigned char *, unsigned short );
-long GetSectorInfo (SectorInfo *,unsigned char *);
+long GetSectorInfo (SectorInfo *,const unsigned char *);
 void CommandDone(void);
 extern unsigned char PhysicalDriveA,PhysicalDriveB;
 bool FormatTrack (HANDLE , BYTE , BYTE,BYTE );
@@ -241,7 +241,7 @@ void DecodeControlReg(unsigned char Tmp)
 	return;
 }
 
-int mount_disk_image(char filename[MAX_PATH],unsigned char drive)
+int mount_disk_image(const char *filename,unsigned char drive)
 {
 	unsigned int Temp=0;
 	Temp=MountDisk(filename,drive);
@@ -273,7 +273,7 @@ void DiskStatus(char *Status)
 	return;
 }
 
-unsigned char MountDisk(char *FileName,unsigned char disk)
+unsigned char MountDisk(const char *FileName,unsigned char disk)
 {
 	unsigned long BytesRead=0;
 	unsigned char HeaderBlock[HEADERBUFFERSIZE]="";
@@ -399,7 +399,7 @@ long ReadSector (unsigned char Side,	//0 or 1
 	DWORD dwRet;
 	FD_SEEK_PARAMS sp;
 	unsigned char Ret=0;
-	unsigned char *pva=nullptr;
+	const unsigned char *pva=nullptr;
 //************************
 
 	if (Drive[CurrentDisk].FileHandle==nullptr)
@@ -473,7 +473,7 @@ long ReadSector (unsigned char Side,	//0 or 1
 long WriteSector (	unsigned char Side,		//0 or 1
 					unsigned char Track,	//0 to 255 "REAL" values are 1 to 80
 					unsigned char Sector,	//1 to 18 could be 0 to 17
-					unsigned char *WriteBuffer, //)
+				    const unsigned char *WriteBuffer, //)
 					long BytestoWrite)
 {
 	unsigned long BytesWritten=0,Result=0,BytesRead=0;
@@ -484,7 +484,7 @@ long WriteSector (	unsigned char Side,		//0 or 1
 	DWORD dwRet;
 	FD_SEEK_PARAMS sp;
 	unsigned char Ret=0;
-	unsigned char *pva=nullptr;
+	const unsigned char *pva=nullptr;
 	SectorInfo CurrentSector;
 	if ( (Drive[CurrentDisk].FileHandle==nullptr) | ((Side+1) > Drive[CurrentDisk].Sides) )
 		return 0;
@@ -547,7 +547,7 @@ long WriteSector (	unsigned char Side,		//0 or 1
 long WriteTrack (	unsigned char Side,		//0 or 1
 					unsigned char Track,	//0 to 255 "REAL" values are 1 to 80
 					unsigned char /*Dummy*/,	//Sector Value unused
-					unsigned char *WriteBuffer)
+					const unsigned char *WriteBuffer)
 {
 	unsigned char xTrack=0,xSide=0,xSector=0,xLenth=0;
 	unsigned short BufferIndex=0,WriteIndex=0,IdamIndex=0;
@@ -1255,7 +1255,7 @@ unsigned char SetTurboDisk( unsigned char Tmp)
 	return TurboMode;
 }
 
-long GetSectorInfo (SectorInfo *Sector,unsigned char *TempBuffer)
+long GetSectorInfo (SectorInfo *Sector,const unsigned char *TempBuffer)
 {
 	unsigned short Temp1=0,Temp2=0;
 	unsigned char Density=0;

@@ -99,7 +99,7 @@ void  DoKeyDown(WPARAM,LPARAM);
 void  ShowMapError(int, const char *);
 void  SetDialogFocus(HWND);
 int   GetKeymapLine (char*, keytranslationentry_t *, int);
-char *GenKeymapLine(keytranslationentry_t *);
+const char *GenKeymapLine(const keytranslationentry_t *);
 
 // Lookup functions for keyname tables
 static struct CoCoKey * cctable_rowcol_lookup(unsigned char, unsigned char);
@@ -162,9 +162,9 @@ int LoadCustomKeyMap(const char* keymapfile)
 //-----------------------------------------------------
 int GetKeymapLine ( char* line, keytranslationentry_t * trans, int lnum)
 {
-    char *pStr;
-    static struct PCScanCode * pPCScanCode; 
-    static struct CoCoKey * pCoCoKey;
+	const char *pStr;
+    static struct PCScanCode * pPCScanCode; // FIXME: Why is this static?
+    static struct CoCoKey * pCoCoKey;		// FIXME: Why is this static?
 
     // pc scancode -> ScanCode1
     pStr = strtok(line, " \t\n\r");
@@ -259,7 +259,7 @@ int CloneStandardKeymap(int keymap)
 {
     int i = 0;
     keytranslationentry_t * dst = keyTranslationsCustom;
-    keytranslationentry_t * src;
+	const keytranslationentry_t * src;
     switch (keymap) {
     case kKBLayoutCoCo:
         src = keyTranslationsCoCo;
@@ -286,7 +286,7 @@ int CloneStandardKeymap(int keymap)
 //-----------------------------------------------------
 int SaveCustomKeyMap(const char* keymapfile) 
 {
-    keytranslationentry_t * pTran;
+	const keytranslationentry_t * pTran;
 	pTran = keyTranslationsCustom;
 
     FILE *omap;
@@ -355,11 +355,11 @@ int SaveCustomKeyMap(const char* keymapfile)
 //------------------------------------------------------
 // Convert translation record for keymap file
 //-----------------------------------------------------
-char * GenKeymapLine( keytranslationentry_t * pTran )
+const char * GenKeymapLine( const keytranslationentry_t * pTran )
 {
 	static char txt[64];
-	static struct PCScanCode * pSC; 
-    static struct CoCoKey * pCC; 
+	static struct PCScanCode * pSC;	// FIXME: Why is this static?
+    static struct CoCoKey * pCC;	// FIXME: Why is this static?
 	int CCmod = 0;
 	int PCmod = 0;
 
@@ -591,7 +591,7 @@ BOOL CALLBACK KeyMapProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case IDCANCEL:
             if (KeyMapChanged) { 
                 LoadCustomKeyMap(GetKeyMapFilePath());
-                vccKeyboardBuildRuntimeTable((keyboardlayout_e) kKBLayoutCustom);
+                vccKeyboardBuildRuntimeTable(kKBLayoutCustom);
              }
             return EndDialog(hWnd,wParam);
         default:
@@ -662,7 +662,7 @@ BOOL SetCustomKeymap() {
 
 	int ModCol;
 	int ModRow;
-	static struct CoCoKey *p;
+	static struct CoCoKey *p;	// FIXME: Why is this static?
 
 	if (pKeyTran == nullptr) {
 
@@ -735,7 +735,7 @@ BOOL SetCustomKeymap() {
 
     // Update runtime table
 	if (GetKeyboardLayout() == kKBLayoutCustom)
-			vccKeyboardBuildRuntimeTable((keyboardlayout_e) kKBLayoutCustom);
+			vccKeyboardBuildRuntimeTable(kKBLayoutCustom);
 
 	// Disable set button
 	EnableWindow(GetDlgItem(hKeyMapDlg,IDC_SET_CUST_KEYMAP),FALSE);
@@ -835,7 +835,7 @@ void ShowCoCoKey()
 {
 	char str[64];
 	const char * keytxt = "";
-	struct CoCoKey *p;
+	const struct CoCoKey *p;
 
 	// set coco keyboard buttons 
 	if (CC_KeySelected != CoCoKeySet) {
@@ -945,7 +945,7 @@ void ShowPCkey()
 {
 	char str[64];
 	const char * keytxt = "";
-    struct PCScanCode * entry;
+    const struct PCScanCode * entry;
 	if (PC_KeySelected>0) { 
 		entry = scantable_scancode_lookup(PC_KeySelected);
 		if (entry == nullptr) {
@@ -965,7 +965,7 @@ void ShowPCkey()
 //-----------------------------------------------------
 void SetCoCokey()
 {
-    static struct CoCoKey * pCoCoKey;
+    static struct CoCoKey * pCoCoKey;	// FIXME: Why is this static?
 
 	// Clear selected coco keys
     CC_KeySelected = 0;

@@ -10,7 +10,7 @@ public:
 
 	using stream_sample_t = unsigned short;
 
-	SN76489Device();
+	SN76489Device() = default;
 	virtual ~SN76489Device() = default;
 
 	virtual void device_start();

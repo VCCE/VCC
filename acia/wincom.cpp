@@ -32,7 +32,7 @@ HANDLE hReadEvent;
 HANDLE hWriteEvent;
 HANDLE hComPort=INVALID_HANDLE_VALUE;
 
-int writeport(char *buf,int siz);
+int writeport(const char *buf,int siz);
 
 static unsigned int BaudRate;
 static unsigned int EnParity;
@@ -119,7 +119,7 @@ int wincom_read(char* buf,int siz)
 //=====================================================
 // Write to com port.  If text mode convert line endings
 //=====================================================
-int  wincom_write(char* buf,int siz)
+int  wincom_write(const char* buf,int siz)
 {
     int cnt = 0;
     if (hComPort == INVALID_HANDLE_VALUE) return -1;
@@ -130,7 +130,8 @@ int  wincom_write(char* buf,int siz)
         // here maximizes write sizes without re-buffering.
         while(cnt < siz) {
             // search for a CR or LF
-            char *ptr, *tbuf, chr;
+			const char* ptr, * tbuf;
+			char chr;
             int tsiz;
             ptr = tbuf = buf + cnt;
             for (tsiz = 0; tsiz < siz-cnt; tsiz++) {
@@ -162,7 +163,7 @@ int  wincom_write(char* buf,int siz)
 //=====================================================
 // Write function for overlapped I/O
 //=====================================================
-int writeport(char *buf,int siz) {
+int writeport(const char *buf,int siz) {
     OVERLAPPED ovl = {0};
     ovl.hEvent = hWriteEvent;
     DWORD cnt;

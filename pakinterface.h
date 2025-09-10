@@ -29,7 +29,7 @@ unsigned short PackAudioSample(void);
 void ResetBus(void);
 int load_ext_rom(const char *);
 void GetCurrentModule(char *);
-int InsertModule (char *);
+int InsertModule (const char *);
 void UpdateBusPointer(void);
 void UnloadDll(void);
 void UnloadPack(void);

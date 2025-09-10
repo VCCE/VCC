@@ -916,7 +916,7 @@ namespace VCC { namespace Debugger
 			bool only6309 = false;		// Valid only if running a 6309, in other words, invalid on a 6809
 		};
 
-		const std::map<std::string, IndexModeInfo> IndexingModes = 
+		const std::map<std::string, IndexModeInfo, std::less<>> IndexingModes = 
 		{ 
 			{ "1RR00100", {"1RR00100", ",R",		0,	0,	0,	false } },
 			{ "0RRnnnnn", {"0RRnnnnn", "n,R",		1,	1,	0,	false } },

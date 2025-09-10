@@ -35,7 +35,7 @@ static HANDLE hDiskFile[2];
 static unsigned char DiskSelect=0,LbaEnabled=0;
 unsigned long BytesMoved=0;
 unsigned char BusyCounter=BUSYWAIT;
-HANDLE OpenDisk(char *,unsigned char);
+HANDLE OpenDisk(const char *,unsigned char);
 static unsigned short IDBlock[2][256];
 static unsigned char Mounted=0,ScanCount=0;
 static char CurrStatus[32]="IDE:Idle ";
@@ -270,7 +270,7 @@ void ByteSwap (char *String)
 	return;
 }
 
-HANDLE OpenDisk(char *ImageFile,unsigned char DiskNum)
+HANDLE OpenDisk(const char *ImageFile,unsigned char DiskNum)
 {
 	HANDLE hTemp=nullptr;
 	unsigned long FileSize=0;
@@ -333,7 +333,7 @@ void DiskStatus(char *Temp)
 	}
 	return;
 }
-unsigned char MountDisk(char *FileName,unsigned char DiskNumber)
+unsigned char MountDisk(const char *FileName,unsigned char DiskNumber)
 {
 	if (DiskNumber>1)
 		return FALSE;

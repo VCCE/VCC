@@ -485,7 +485,7 @@ namespace VCC { namespace Debugger
 		MemWrite8(memWrite.value, memWrite.addr);
 	}
 
-	bool Debugger::Halt_Enabled()
+	bool Debugger::Halt_Enabled() const
 	{
 		return Halt_Enabled_TF;
 	}
@@ -495,7 +495,7 @@ namespace VCC { namespace Debugger
 		Halt_Enabled_TF = flag;
 	}
 
-	bool Debugger::Break_Enabled()
+	bool Debugger::Break_Enabled() const
 	{
 		return Break_Enabled_TF;
 	}

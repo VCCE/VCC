@@ -73,7 +73,7 @@ LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 void LoadConfig(void);
 void SaveConfig(void);
-long CreateDiskHeader(char *,unsigned char,unsigned char,unsigned char);
+long CreateDiskHeader(const char *,unsigned char,unsigned char,unsigned char);
 void Load_Disk(unsigned char);
 void CenterDialog(HWND hDlg);
 
@@ -82,7 +82,7 @@ static HINSTANCE g_hinstDLL;
 static unsigned long RealDisks=0;
 long CreateDisk (unsigned char);
 static char TempFileName[MAX_PATH]="";
-unsigned char LoadExtRom( unsigned char,char *);
+unsigned char LoadExtRom( unsigned char, const char *);
 
 int BeckerEnabled=0;
 char BeckerAddr[MAX_PATH]="";
@@ -169,7 +169,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) void SetIniPath (char *IniFilePath)
+	__declspec(dllexport) void SetIniPath (const char *IniFilePath)
 	{
 		strcpy(IniFile,IniFilePath);
 		LoadConfig();
@@ -587,7 +587,7 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam
     return FALSE;
 }
 
-long CreateDiskHeader(char *FileName,unsigned char Type,unsigned char Tracks,unsigned char DblSided)
+long CreateDiskHeader(const char *FileName,unsigned char Type,unsigned char Tracks,unsigned char DblSided)
 {
 	HANDLE hr=nullptr;
 	unsigned char Dummy=0;
@@ -748,7 +748,7 @@ void SaveConfig(void)
 	return;
 }
 
-unsigned char LoadExtRom( unsigned char RomType,char *FilePath)	//Returns 1 on if loaded
+unsigned char LoadExtRom( unsigned char RomType,const char *FilePath)	//Returns 1 on if loaded
 {
 
 	FILE *rom_handle=nullptr;

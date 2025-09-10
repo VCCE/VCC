@@ -214,7 +214,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID /*param*/)
             if (!Ilock.test_and_set()) {
                 StatReg &= ~StatTxE;
                 if (AciaComMode != COM_MODE_READ) {
-                    char * ptr = OutBuf;
+                    const char * ptr = OutBuf;
                     while (Wcnt > 0) {
                         int cnt = com_write(ptr,Wcnt);
 						// FIXME: This is needed and should not be commented out. Wrap it conditional

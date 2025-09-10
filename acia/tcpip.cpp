@@ -53,7 +53,7 @@ int tcpip_open()
     }
 
     // resolve hostname
-    LPHOSTENT host = gethostbyname(AciaTcpHost);
+    const auto host = gethostbyname(AciaTcpHost);
     if (host == nullptr) {
         tcpip_close();
         return -1;
@@ -110,7 +110,7 @@ int tcpip_read(char* buf, int siz)
 }
 
 //Write
-int tcpip_write(char* buf, int siz)
+int tcpip_write(const char* buf, int siz)
 {
     char CRLF[3]="\r\n";
 

@@ -57,7 +57,7 @@ void GMCCartridge::OnMenuItemSelected(unsigned char menuId)
 			"ROM Selected",
 			MB_OK);
 
-		m_Configuration.SetActiveRom(selectedFile.data());
+		m_Configuration.SetActiveRom(selectedFile);
 
 		AssetCartridgeLine(false);
 		AssetCartridgeLine(true);

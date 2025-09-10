@@ -101,9 +101,9 @@ static char *NxtTokenPtr;
 // CmdString:  The third arg to WinMain()
 //-------------------------------------------------------------------
 
-int GetCmdLineArgs(char *CmdString) 
+int GetCmdLineArgs(const char *CmdString) 
 {
-    char *token;      // token pointer (to item in command string)
+	const char *token;      // token pointer (to item in command string)
     int  argnum = 0;  // non-option argument number
     int  len;         // len of a chr string
 
@@ -200,7 +200,7 @@ char * ParseCmdString(const char *CmdString, const char *ValueRequired)
     static char option[256];  // Used to append value to option
     int quoted;
     char *token;
-    char *value;
+	const char *value;
 
     // Initial call sets command string. Subsequent calls expect a NULL
     if (CmdString) {                   

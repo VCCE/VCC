@@ -60,7 +60,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
         LineTo(hdc, rx, ry + h);
     }
 
-    void DrawProcessorState(HDC hdc, LPRECT clientRect)
+    void DrawProcessorState(HDC hdc, LPCRECT clientRect)
     {
         RECT rect = *clientRect;
         Decoder = std::make_unique<OpDecoder>();
@@ -69,7 +69,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
         HBRUSH brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
         FillRect(hdc, &rect, brush);
 
-        HPEN pen = (HPEN)CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
+        HPEN pen = CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
         SelectObject(hdc, pen);
 
         // Draw the border.

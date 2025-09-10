@@ -16,7 +16,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
+#include <Windows.h>
 #include <stdio.h>
 #include "fileops.h"
 
@@ -25,7 +25,7 @@ void ValidatePath(char *Path)
 	char FullExePath[MAX_PATH]="";
 	char TempPath[MAX_PATH]="";
 
-	GetModuleFileName(NULL,FullExePath,MAX_PATH);
+	GetModuleFileName(nullptr,FullExePath,MAX_PATH);
 	PathRemoveFileSpec(FullExePath);	//Get path to executable
 	strcpy(TempPath,Path);			
 	PathRemoveFileSpec(TempPath);		//Get path to Incomming file
@@ -37,26 +37,26 @@ void ValidatePath(char *Path)
 int CheckPath( char *Path)	//Return 1 on Error
 {
 	char TempPath[MAX_PATH]="";
-	HANDLE hr=NULL;
+	HANDLE hr=nullptr;
 
 	if ((strlen(Path)==0) | (strlen(Path) > MAX_PATH))
-		return(1);
-	hr=CreateFile(Path,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+		return 1;
+	hr=CreateFile(Path,nullptr,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 	if (hr==INVALID_HANDLE_VALUE) //File Doesn't exist
 	{
-		GetModuleFileName(NULL,TempPath,MAX_PATH);
+		GetModuleFileName(nullptr,TempPath,MAX_PATH);
 		PathRemoveFileSpec(TempPath);
 		if ( (strlen(TempPath)) + (strlen(Path)) > MAX_PATH)	//Resulting path is to large Bail.
-			return(1);
+			return 1;
 
 		strcat(TempPath,Path);
-		hr=CreateFile(TempPath,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);			
+		hr=CreateFile(TempPath,nullptr,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);			
 		if (hr ==INVALID_HANDLE_VALUE)
-			return(1);
+			return 1;
 		strcpy(Path,TempPath);
 	}
 	CloseHandle(hr);
-	return(0);
+	return 0;
 }
 // These are here to remove dependance on shlwapi.dll. ASCII only
 void PathStripPath ( char *TextBuffer)  
@@ -80,14 +80,14 @@ BOOL PathRemoveFileSpec(char *Path)
 {
 	short unsigned Index=strlen(Path),Lenth=Index;
 	if ( (Index==0) | (Index > MAX_PATH))
-		return(false);
+		return false;
 	
 	while ( (Index>0) & (Path[Index] != '\\') )
 		Index--;
 	while ( (Index>0) & (Path[Index] == '\\') )
 		Index--;
 	if (Index==0)
-		return(false);
+		return false;
 	Path[Index+2]=0;
 	return( !(strlen(Path) == Lenth));
 }		
@@ -96,7 +96,7 @@ BOOL PathRemoveExtension(char *Path)
 {
 	short unsigned Index=strlen(Path),Lenth=Index;
 	if ( (Index==0) | (Index > MAX_PATH))
-		return(false);
+		return false;
 	
 	while ( (Index>0) & (Path[Index--] != '.') );
 	Path[Index+1]=0;
@@ -105,7 +105,7 @@ BOOL PathRemoveExtension(char *Path)
 
 char* PathFindExtension(char *Path)
 {
-	short unsigned Index=strlen(Path),Lenth=Index;
+	short unsigned Index=strlen(Path);
 	if ( (Index==0) | (Index > MAX_PATH))
 		return(&Path[strlen(Path)+1]);
 	while ( (Index>0) & (Path[Index--] != '.') );

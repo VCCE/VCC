@@ -172,12 +172,12 @@ unsigned char GimeRead(unsigned char port)
 		data=LastIrq;
 		LastIrq=0;
 		CPUDeAssertInterupt(IS_GIME, INT_IRQ);
-		return(data);
+		return data;
 	case 0x93:
 		data=LastFirq;
 		LastFirq=0;
 		CPUDeAssertInterupt(IS_GIME, INT_FIRQ);
-		return(data);
+		return data;
 	default:
 		if (port >= 0xA0) {
 			data = GimeRegisters[port];

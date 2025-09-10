@@ -113,7 +113,8 @@ void FileDialog::getupath(char * PathCopy, int maxsize) const {
 }
 
 // Get a pointer to the selected file path
-char * FileDialog::path() {
+const char *FileDialog::path() const
+{
 	return Path;
 }
 

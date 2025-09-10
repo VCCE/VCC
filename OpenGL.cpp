@@ -436,7 +436,7 @@ namespace VCC
 			return Result(OK);
 		}
 
-		int GetSurface(Pixel** pixels)
+		int GetSurface(Pixel** pixels) const
 		{
 			if (!isInitialized) return Result(ERR_NOTINITIALIZED);
 			*pixels = this->pixels;
@@ -469,7 +469,7 @@ namespace VCC
 			return Result(OK);
 		}
 
-		int RenderText(const OpenGLFont* font, float x, float y, float size, const char* text)
+		int RenderText(const OpenGLFont* font, float x, float y, float size, const char* text) const
 		{
 			if (!isInitialized) return Result(ERR_NOTINITIALIZED);
 
@@ -514,7 +514,7 @@ namespace VCC
 			return Result(OK);
 		}
 
-		int Present()
+		int Present() const
 		{
 			if (!isInitialized) return Result(ERR_NOTINITIALIZED);
 			wglMakeCurrent(hDC, hRC);
@@ -528,7 +528,7 @@ namespace VCC
 			return Result(OK);
 		}
 
-		int LoadFont(const OpenGLFont** outFont, int bitmapRes, const OpenGLFontGlyph* glyphs, int start, int end)
+		int LoadFont(const OpenGLFont** outFont, int bitmapRes, const OpenGLFontGlyph* glyphs, int start, int end) const
 		{
 			*outFont = nullptr;
 			if (!isInitialized) return Result(ERR_NOTINITIALIZED);
@@ -606,7 +606,7 @@ namespace VCC
 		}
 		#endif // USE_DEBUG_LINES
 
-		int RenderBox(float x, float y, float w, float h, Pixel color, bool filled)
+		int RenderBox(float x, float y, float w, float h, Pixel color, bool filled) const
 		{
 			if (!isInitialized) return Result(ERR_NOTINITIALIZED);
 			float x2 = x + w;
@@ -658,7 +658,7 @@ namespace VCC
 	private:
 
 		// returns the box where display should be rendered
-		void GetDisplayArea(Rect* area)
+		void GetDisplayArea(Rect* area) const
 		{
 			area->w = (float)width;
 			area->h = (float)height;
@@ -683,14 +683,14 @@ namespace VCC
 			area->y = (height - area->h) / 2.0f;
 		}
 
-		void GetRenderArea(Rect* area)
+		void GetRenderArea(Rect* area) const
 		{
 			area->x = area->y = 0;
 			area->w = (float)width;
 			area->h = (float)height;
 		}
 
-		void GetSurfaceArea(Rect* area)
+		void GetSurfaceArea(Rect* area) const
 		{
 			area->x = area->y = 0;
 			area->w = (float)SurfaceWidth;
