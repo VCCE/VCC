@@ -285,7 +285,7 @@ void SN76489Device::write(uint8_t data)
 	}
 }
 
-inline bool SN76489Device::in_noise_mode()
+inline bool SN76489Device::in_noise_mode() const
 {
 	return ((m_register[6] & 4) != 0);
 }

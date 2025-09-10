@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #pragma warning( disable : 4800 ) // For legacy builds
 
 //#define USE_LOGGING
-#include <windows.h>
+#include <Windows.h>
 #include <stdio.h>
 #include <iostream>
 #include "resource.h"
@@ -310,7 +310,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 			SendDlgItemMessage (hDlg,IDC_BECKER_PORT,WM_SETTEXT,0,(LPARAM)(LPCSTR)BeckerPort);
 
 			return TRUE;
-		break;
 
 		case WM_COMMAND:
 			switch (LOWORD(wParam))
@@ -513,7 +512,6 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam
 		case WM_CLOSE:
 			EndDialog(hDlg,LOWORD(wParam));  //Modal dialog
 			return TRUE;
-			break;
 
 		case WM_INITDIALOG:
 			for (temp=0;temp<=2;temp++)
@@ -585,7 +583,6 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam
 					return FALSE;
 			}
 			return TRUE;
-		break;
 	}
     return FALSE;
 }

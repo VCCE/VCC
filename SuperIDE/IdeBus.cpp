@@ -17,9 +17,9 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include "logger.h"
-#include "idebus.h"
+#include "IdeBus.h"
 #include <stdio.h>
-#include <windows.h>
+#include <Windows.h>
 
 static unsigned int Lba=0,LastLba;
 char Message[256]="";	//DEBUG

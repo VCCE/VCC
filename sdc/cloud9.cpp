@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 *																		*
 ************************************************************************/
 
-#include <windows.h>
+#include <Windows.h>
 #include "cloud9.h"
 
 static 	SYSTEMTIME now;

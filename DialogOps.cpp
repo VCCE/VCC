@@ -39,9 +39,6 @@ FileDialog::FileDialog() {
 	ofn.Flags = OFN_HIDEREADONLY;
 }
 
-// FileDialog destructor does nothing
-FileDialog::~FileDialog() { }
-
 // FileDialog::show calls GetOpenFileName() or GetSaveFileName()
 bool FileDialog::show(BOOL Save, HWND Owner) {
 

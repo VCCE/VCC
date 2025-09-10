@@ -23,8 +23,8 @@
 //#define USE_LOGGING
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#include <winsock2.h>
-#include <windows.h>
+#include <WinSock2.h>
+#include <Windows.h>
 #include <process.h>
 #include <stdio.h>
 #include "../logger.h"

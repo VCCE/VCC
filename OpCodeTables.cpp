@@ -66,7 +66,7 @@ namespace VCC { namespace Debugger
 		return valid;
 	}
 
-	bool OpCodeTables::ProcessNoAdjust(const OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessNoAdjust(const OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -134,7 +134,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessIndexModeAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessIndexModeAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -190,7 +190,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::GetIndexMode(unsigned char postbyte, IndexModeInfo& mode, std::string& operand)
+	bool OpCodeTables::GetIndexMode(unsigned char postbyte, IndexModeInfo& mode, std::string& operand) const
 	{
 		// Convert to key.
 		std::string key = std::bitset<8>(postbyte).to_string();
@@ -198,7 +198,7 @@ namespace VCC { namespace Debugger
 		// MSB = 0?  5 bit offset.
 		if (key[0] == '0')
 		{
-			mode = IndexingModes["0RRnnnnn"];
+			mode = IndexingModes.at("0RRnnnnn");
 			operand = mode.form;
 
 			// Determine the register.
@@ -215,7 +215,7 @@ namespace VCC { namespace Debugger
 		// Try exact match.
 		if (IndexingModes.find(key) != IndexingModes.end())
 		{
-			mode = IndexingModes[key];
+			mode = IndexingModes.at(key);
 			operand = mode.form;
 			return true;
 		}
@@ -225,7 +225,7 @@ namespace VCC { namespace Debugger
 		key[2] = 'X';
 		if (IndexingModes.find(key) != IndexingModes.end())
 		{
-			mode = IndexingModes[key];
+			mode = IndexingModes.at(key);
 			operand = mode.form;
 			return true;
 		}
@@ -235,7 +235,7 @@ namespace VCC { namespace Debugger
 		key[2] = 'R';
 		if (IndexingModes.find(key) != IndexingModes.end())
 		{
-			mode = IndexingModes[key];
+			mode = IndexingModes.at(key);
 			operand = mode.form;
 			replace(operand, "R", ToRegister(postbyte));
 			return true;
@@ -245,13 +245,13 @@ namespace VCC { namespace Debugger
 		return false;
 	}
 
-	bool OpCodeTables::ProcessInterruptAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessInterruptAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		trace.decodeCycles = AdjustCycles(opcode, 0, 0, state.IsNative6309);
 		return true;
 	}
 
-	bool OpCodeTables::ProcessStackAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessStackAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -288,7 +288,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessLongBranchAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessLongBranchAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -373,7 +373,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessTFMAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessTFMAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		// Get the current PC.
 		unsigned short PC = state.PC;
@@ -406,7 +406,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessDIVAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessDIVAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		// Two rules:
 		//	1) DIVD executes in l fewer cycle if a two's-complement overflow occurs. 
@@ -460,7 +460,7 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-	bool OpCodeTables::ProcessWaitForSYNCAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessWaitForSYNCAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		trace.decodeCycles = AdjustCycles(opcode, 0, 0, state.IsNative6309);
 		return true;

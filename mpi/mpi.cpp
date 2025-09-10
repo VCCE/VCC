@@ -17,11 +17,11 @@ Copyright 2015 by Joseph Forgione
 */
 // This is an expansion module for the Vcc Emulator. It simulated the functions of the TRS-80 Multi-Pak Interface
 
-#include <windows.h>
+#include <Windows.h>
 #include <iostream>
 #include "stdio.h"
 #include "resource.h"
-#include <commctrl.h>
+#include <CommCtrl.h>
 #include "mpi.h"
 #include "../fileops.h"
 #include "../DialogOps.h"
@@ -403,7 +403,7 @@ LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*l
 		}
 		UpdateSlotSelect(SwitchSlot);
 		return TRUE;
-		break;
+
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDC_SELECT1:
@@ -513,7 +513,6 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 	{
 	case 0: //File doesn't exist
 		return 0;
-	break;
 
 	case 2: //ROM image
 		UnloadModule(Slot);

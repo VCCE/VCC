@@ -49,7 +49,7 @@ void CloseCartDialog(HWND hDlg);
 class FileDialog {
 public:
 	FileDialog();
-	~FileDialog();
+
 	bool show(BOOL Save = FALSE, HWND Owner = nullptr);
 	void setpath(const char * Path);
 	void setDefExt(const char * DefExt);
