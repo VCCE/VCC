@@ -19,13 +19,13 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 int SoundInit (HWND,const _GUID *,unsigned int);
-int SoundDeInit(void);
+int SoundDeInit();
 void FlushAudioBuffer ( unsigned int *,unsigned int);
-void ResetAudio (void);
+void ResetAudio ();
 unsigned char PauseAudio(unsigned char Pause);
-int GetFreeBlockCount(void);
-void PurgeAuxBuffer(void);
-unsigned int GetSoundStatus(void);
+int GetFreeBlockCount();
+void PurgeAuxBuffer();
+unsigned int GetSoundStatus();
 struct SndCardList
 {
 	char CardName[64];

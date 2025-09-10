@@ -282,7 +282,7 @@ void SetTimerLSB() //95
 	return;
 }
 
-void GimeAssertKeyboardInterupt(void) 
+void GimeAssertKeyboardInterupt() 
 {
 	if ((GimeRegisters[0x93] & 2) && EnhancedFIRQFlag == 1)
 	{
@@ -296,7 +296,7 @@ void GimeAssertKeyboardInterupt(void)
 	}
 }
 
-void GimeAssertVertInterupt(void)
+void GimeAssertVertInterupt()
 {
 	if ((GimeRegisters[0x93] & 8) && EnhancedFIRQFlag == 1)
 	{
@@ -310,7 +310,7 @@ void GimeAssertVertInterupt(void)
 	}
 }
 
-void GimeAssertHorzInterupt(void)
+void GimeAssertHorzInterupt()
 {
 	if ((GimeRegisters[0x93] & 16) && EnhancedFIRQFlag == 1)
 	{
@@ -326,7 +326,7 @@ void GimeAssertHorzInterupt(void)
 
 // Timer [F]IRQ bit gets set even if interrupt is not enabled.
 // TODO: What about other gime interrupts? Are they simular?
-void GimeAssertTimerInterupt(void)
+void GimeAssertTimerInterupt()
 {
 	if (GimeRegisters[0x93] & 32) 
 	{
@@ -344,7 +344,7 @@ void GimeAssertTimerInterupt(void)
 }
 
 // CART
-void GimeAssertCartInterupt(void)
+void GimeAssertCartInterupt()
 {
 	if (GimeRegisters[0x93] & 1)
 	{
@@ -430,12 +430,12 @@ void mc6883_reset()
 	return;
 }
 
-unsigned char VDG_Offset(void)
+unsigned char VDG_Offset()
 {
 	return Dis_Offset;
 }
 
-unsigned char VDG_Modes(void)
+unsigned char VDG_Modes()
 {
 	return VDG_Mode;
 }

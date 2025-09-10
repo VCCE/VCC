@@ -22,7 +22,7 @@
 
 #ifndef __MEMDUMP_H__
 #define __MEMDUMP_H__
-void CpuDump(void);
-void MemDump(void);
+void CpuDump();
+void MemDump();
 void SetDumpPath(const char *);
 #endif

@@ -81,7 +81,7 @@ void SetDumpPath(const char * dumpfile)
 }
 
 // Dump real memory
-void MemDump(void)
+void MemDump()
 {
 	int fd = OpenDumpFile();
 	const unsigned char * ptr = Get_mem_pointer();
@@ -91,7 +91,7 @@ void MemDump(void)
 }
 
 // Dump CPU memory
-void CpuDump(void)
+void CpuDump()
 {
 	std::array<int,8> regs = GetMmuRegs();
 	const unsigned char * pmem = Get_mem_pointer();

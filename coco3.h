@@ -41,7 +41,7 @@ float RenderFrame (SystemState *);
 void SetTimerInteruptState(unsigned char);
 void SetTimerClockRate (unsigned char);	
 void SetInteruptTimer(unsigned int);
-void MiscReset(void);
+void MiscReset();
 void PasteBASICWithNew();
 void PasteBASIC();
 void PasteText();

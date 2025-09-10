@@ -19,9 +19,9 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-void MC6809Init(void);
+void MC6809Init();
 int  MC6809Exec( int);
-void MC6809Reset(void);
+void MC6809Reset();
 void MC6809AssertInterupt(InterruptSource, Interrupt);
 void MC6809DeAssertInterupt(InterruptSource, Interrupt);
 void MC6809ForcePC(unsigned short);

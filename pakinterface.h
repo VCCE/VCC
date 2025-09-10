@@ -18,23 +18,23 @@ This file is part of VCC (Virtual Color Computer).
 
 #pragma once
 
-void PakTimer(void);
+void PakTimer();
 unsigned char PackPortRead (unsigned char);
 void PackPortWrite(unsigned char,unsigned char);
 unsigned char PackMem8Read (unsigned short);
 void PackMem8Write(unsigned short,unsigned char);
 void GetModuleStatus( SystemState *);
-int LoadCart(void);
-unsigned short PackAudioSample(void);
-void ResetBus(void);
+int LoadCart();
+unsigned short PackAudioSample();
+void ResetBus();
 int load_ext_rom(const char *);
 void GetCurrentModule(char *);
 int InsertModule (const char *);
-void UpdateBusPointer(void);
-void UnloadDll(void);
-void UnloadPack(void);
+void UpdateBusPointer();
+void UnloadDll();
+void UnloadPack();
 
-HMENU RefreshDynamicMenu(void);
+HMENU RefreshDynamicMenu();
 void CallDynamicMenu(const char * MenuName,int MenuId,int Type);
 void DynamicMenuActivated(unsigned char);
 

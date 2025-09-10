@@ -79,21 +79,21 @@ static int HaltedInsPending = 0;
 _inline unsigned short CalculateEA(unsigned char);
 static void set_cc_flags(unsigned char);
 static unsigned char get_cc_flags();
-static void cpu_firq(void);
-static void cpu_irq(void);
-static void cpu_nmi(void);
+static void cpu_firq();
+static void cpu_irq();
+static void cpu_nmi();
 static void Do_Opcode(int);
-static void P2_Opcode(void);
-static void P3_Opcode(void);
+static void P2_Opcode();
+static void P3_Opcode();
 
 #include "CpuCommon.h"
 
 //END Fuction Prototypes-----------------------------------
-void MC6809Init(void)
+void MC6809Init()
 {
 }
 
-void MC6809Reset(void)
+void MC6809Reset()
 {
 	// Reset registers to 0
 	D_REG = 0;
@@ -2739,7 +2739,7 @@ void Do_Opcode(int CycleFor)
 } // Do_Opcode ENDS
 
 
-void P2_Opcode(void)
+void P2_Opcode()
 {
 	switch (MemRead8(pc.Reg++)) {
 
@@ -3127,7 +3127,7 @@ void P2_Opcode(void)
 	}
 } // P2_Opcode ends
 
-void P3_Opcode(void)
+void P3_Opcode()
 {
 
 	switch (MemRead8(pc.Reg++)) {
@@ -3248,7 +3248,7 @@ void P3_Opcode(void)
 
 } // P3_Opcode ends
 
-void cpu_firq(void)
+void cpu_firq()
 {
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptServicing(INT_FIRQ, CycleCounter, MC6809GetState());
@@ -3267,7 +3267,7 @@ void cpu_firq(void)
 		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_FIRQ, CycleCounter, MC6809GetState());
 }
 
-void cpu_irq(void)
+void cpu_irq()
 {
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptServicing(INT_IRQ, CycleCounter, MC6809GetState());
@@ -3295,7 +3295,7 @@ void cpu_irq(void)
 		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_IRQ, CycleCounter, MC6809GetState());
 }
 
-void cpu_nmi(void)
+void cpu_nmi()
 {
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptServicing(INT_NMI, CycleCounter, MC6809GetState());
@@ -3333,7 +3333,7 @@ void set_cc_flags (unsigned char bincc)
 	return;
 }
 
-unsigned char get_cc_flags(void)
+unsigned char get_cc_flags()
 {
 	unsigned char bincc=0,bit=0;
 	for (bit=0;bit<=7;bit++)

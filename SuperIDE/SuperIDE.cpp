@@ -34,7 +34,7 @@ static char IniFile[MAX_PATH]  { 0 };
 static char SuperIDEPath[MAX_PATH];
 static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
 static unsigned char BaseAddress=0x50;
-void BuildDynaMenu(void);
+void BuildDynaMenu();
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 void Select_Disk(unsigned char);
 void SaveConfig();
@@ -189,7 +189,7 @@ extern "C"
 	}
 }
 
-void BuildDynaMenu(void)
+void BuildDynaMenu()
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
@@ -294,7 +294,7 @@ void Select_Disk(unsigned char Disk)
 	return;
 }
 
-void SaveConfig(void)
+void SaveConfig()
 {
 	char ModName[MAX_LOADSTRING]="";
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
@@ -312,7 +312,7 @@ void SaveConfig(void)
 	return;
 }
 
-void LoadConfig(void)
+void LoadConfig()
 {
 	char ModName[MAX_LOADSTRING]="";
 

@@ -25,20 +25,20 @@ void pia0_write(unsigned char data,unsigned char port);
 unsigned char pia1_read(unsigned char port);
 void pia1_write(unsigned char data,unsigned char port);
 
-void ClosePrintFile(void);
+void ClosePrintFile();
 void SetSerialParams(unsigned char);
 void SetMonState(BOOL);
-unsigned char VDG_Mode(void);
+unsigned char VDG_Mode();
 void irq_hs(int);
 void irq_fs(int);
-void AssertCart(void);
+void AssertCart();
 void SetCart(unsigned char);
 unsigned char SetCartAutoStart(unsigned char);
 void PiaReset();
-unsigned char GetMuxState(void);
-unsigned int DACState(void);
-unsigned int GetDACSample(void);
-unsigned char GetCasSample(void);
+unsigned char GetMuxState();
+unsigned int DACState();
+unsigned int GetDACSample();
+unsigned char GetCasSample();
 void SetCassetteSample(unsigned char);
 int OpenPrintFile(const char *);
 // FIXME: These need to be turned into an enum and the signature of functions

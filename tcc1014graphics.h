@@ -49,12 +49,12 @@ void SetGimeBoarderColor(unsigned char);
 void SetVidMask(unsigned int);
 void InvalidateBoarder();
 
-void GimeInit(void);
-void GimeReset(void);
+void GimeInit();
+void GimeReset();
 void SetVideoBank(unsigned char);
 unsigned char SetMonitorType(unsigned char );
 void SetBoarderChange ();
-int GetBytesPerRow(void);
+int GetBytesPerRow();
 unsigned char GetHorizontalBorderSize();
 unsigned short GetDisplayedPixelsPerLine();
 unsigned int GetStartOfVidram();

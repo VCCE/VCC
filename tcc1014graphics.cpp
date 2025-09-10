@@ -32,9 +32,9 @@ This file is part of VCC (Virtual Color Computer).
 
 using Surface32 = VCC::VideoArray<unsigned int, 640 * 480>;
 
-void SetupDisplay(void); //This routine gets called every time a software video register get updated.
-void MakeRGBPalette (void);
-void MakeCMPpalette(void);
+void SetupDisplay(); //This routine gets called every time a software video register get updated.
+void MakeRGBPalette ();
+void MakeCMPpalette();
 void RenderPMODE4NTSC(Surface32 surface32, size_t surfaceDest, int XpitchDest, const unsigned char* cocoSrc, char scanLines);
 
 //extern STRConfig CurrentConfig;
@@ -9727,14 +9727,14 @@ void SetBoarderChange ()
 	return;
 }
 
-void InvalidateBoarder(void)
+void InvalidateBoarder()
 {
 	BoarderChange=5;
 	return;
 }
 
 
-void SetupDisplay(void)
+void SetupDisplay()
 {
 
 	static unsigned char CC2Bpp[8]={1,0,1,0,1,0,1,0};
@@ -9847,13 +9847,13 @@ void SetupDisplay(void)
 	return;
 }
 
-void GimeInit(void)
+void GimeInit()
 {
 	//Nothing but good to have.
 	return;
 }
 
-void GimeReset(void)
+void GimeReset()
 {
 	CC3Vmode=0;
 	CC3Vres=0;
@@ -9890,7 +9890,7 @@ void SetVideoBank(unsigned char data)
 }
 
 
-void MakeRGBPalette (void)
+void MakeRGBPalette ()
 {
 	unsigned char Index=0;
 	unsigned char r,g,b;
@@ -9912,7 +9912,7 @@ void MakeRGBPalette (void)
 	return;
 }
 
-void MakeCMPpalette(void)	
+void MakeCMPpalette()	
 {
 	double r,g,b;
 	unsigned char rr,gg,bb;

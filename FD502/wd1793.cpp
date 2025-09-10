@@ -65,7 +65,7 @@ long WriteTrack (unsigned char,unsigned char,unsigned char,const unsigned char *
 
 unsigned short ccitt_crc16(unsigned short crc, const unsigned char *, unsigned short );
 long GetSectorInfo (SectorInfo *,const unsigned char *);
-void CommandDone(void);
+void CommandDone();
 extern unsigned char PhysicalDriveA,PhysicalDriveB;
 bool FormatTrack (HANDLE , BYTE , BYTE,BYTE );
 bool CmdFormat (HANDLE , PFD_FORMAT_PARAMS , ULONG );
@@ -677,7 +677,7 @@ long ReadTrack (	unsigned char Side,		//0 or 1
 }
 
 //This gets called at the end of every scan line so the controller has acurate timing.
-void PingFdc(void)
+void PingFdc()
 {
 	static char wobble=0;
 	if (MotorOn==0)
@@ -1295,7 +1295,7 @@ long GetSectorInfo (SectorInfo *Sector,const unsigned char *TempBuffer)
 
 }
 
-void CommandDone(void)
+void CommandDone()
 {
 	if (InteruptEnable)
 		AssertInt(INT_NMI,IS_NMI);
@@ -1419,7 +1419,7 @@ bool CmdFormat (HANDLE h_, PFD_FORMAT_PARAMS pfp_, ULONG ulSize_)
     return !!DeviceIoControl(h_, IOCTL_FDCMD_FORMAT_TRACK, pfp_, ulSize_, nullptr, 0, &dwRet, nullptr);
 }
 
-unsigned short InitController (void)
+unsigned short InitController ()
 {
 	long RawDriverVersion=0;
 	RawDriverVersion=GetDriverVersion ();

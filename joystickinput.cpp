@@ -129,7 +129,7 @@ inline int vccJoystickType();
 
 /*****************************************************************************/
 // Locate connected joysticks.  Called by config.c
-int EnumerateJoysticks(void)
+int EnumerateJoysticks()
 {
 #ifdef _M_ARM
 	return(0);
