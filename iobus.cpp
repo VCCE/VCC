@@ -214,7 +214,7 @@ void port_write(unsigned char data,unsigned short addr)
 		case 0xDD:
 		case 0xDE:
 		case 0xDF:
-			sam_write(data,port);	//MC6883 S.A.M. address range $FFC0-$FFDF
+			sam_write(port);	//MC6883 S.A.M. address range $FFC0-$FFDF
 		break;
 
 		case 0x90:

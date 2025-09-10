@@ -368,7 +368,7 @@ unsigned char sam_read(unsigned char port) //SAM don't talk much :)
 
 	return 0;
 }
-void sam_write(unsigned char data ,unsigned char port)
+void sam_write(unsigned char port)
 {
 	unsigned char mask=0;
 	unsigned char reg=0;
