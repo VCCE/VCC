@@ -242,7 +242,7 @@ void _vccKeyboardUpdateRolloverTable()
 //	@param Status Key status - kEventKeyDown/kEventKeyUp
 /*****************************************************************************/
 
-void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e keyState)
+void vccKeyboardHandleKey(unsigned char ScanCode, keyevent_e keyState)
 {
 	//If requested, abort pasting operation.
 	if (ScanCode == 0x01 || ScanCode == 0x43 || ScanCode == 0x3F) { pasting = false; }
@@ -586,7 +586,7 @@ bool GetNextScanInPasteQueue()
 		{
 			// Lower Shift key and get the next.
 			PasteInputQueue.pop();
-			vccKeyboardHandleKey(0x36, 0x36, kEventKeyDown);
+			vccKeyboardHandleKey(0x36, kEventKeyDown);
 			next = PasteInputQueue.front();
 			ShiftPaste = true;
 		}
@@ -595,11 +595,11 @@ bool GetNextScanInPasteQueue()
 		{
 			// Lower Control key and get the next.
 			PasteInputQueue.pop();
-			vccKeyboardHandleKey(0x1D, 0x1D, kEventKeyDown);
+			vccKeyboardHandleKey(0x1D, kEventKeyDown);
 			next = PasteInputQueue.front();
 			CtrlPaste = true;
 		}
-		vccKeyboardHandleKey(next, next, kEventKeyDown);
+		vccKeyboardHandleKey(next, kEventKeyDown);
 		CurrentPasteState = KeyUp;
 		break;
 	}
@@ -608,10 +608,10 @@ bool GetNextScanInPasteQueue()
 	{
 		// Raise key that was down.
 		unsigned char last = PasteInputQueue.front();
-		vccKeyboardHandleKey(last, last, kEventKeyUp);
+		vccKeyboardHandleKey(last, kEventKeyUp);
 		// Raise shift or control if either were down
-		if (ShiftPaste) vccKeyboardHandleKey(0x36, 0x36, kEventKeyUp);
-		if (CtrlPaste)  vccKeyboardHandleKey(0x1D, 0x1D, kEventKeyUp);
+		if (ShiftPaste) vccKeyboardHandleKey(0x36, kEventKeyUp);
+		if (CtrlPaste)  vccKeyboardHandleKey(0x1D, kEventKeyUp);
 		ShiftPaste = CtrlPaste = false;
 		PasteInputQueue.pop();
 		CurrentPasteState = CheckDone;

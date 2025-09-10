@@ -218,7 +218,7 @@ void UpdateTapeStatus(char* status, int max)
 		StalledCtr++;
 	}
 	if (TotalSize > 0 && StalledCtr < 1000)
-		snprintf(status, max, " | Tape:%05d (%d%%)", TapeOffset, (TapeOffset + 50) * 100 / TotalSize);
+		snprintf(status, max, " | Tape:%05ul (%ul%%)", TapeOffset, (TapeOffset + 50) * 100 / TotalSize);
 }
 
 void SetTapeMode(unsigned char Mode)	//Handles button pressed from Dialog
