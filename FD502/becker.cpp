@@ -27,7 +27,7 @@
 #include <windows.h>
 #include <process.h>
 #include <stdio.h>
-#include "..\logger.h"
+#include "../logger.h"
 #include "becker.h"
 
 #define BUFFER_SIZE 512
@@ -37,7 +37,7 @@
 //------------------------------------------------------
 // local functions
 //------------------------------------------------------
-int dw_open(char *,unsigned short);
+void dw_open();
 void dw_close();
 unsigned char dw_status(void);
 unsigned char dw_read(void);

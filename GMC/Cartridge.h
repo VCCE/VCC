@@ -40,23 +40,23 @@ protected:
 		StandAlone
 	};
 
-	void AssetCartridgeLine(bool state)
+	void AssetCartridgeLine(bool state) const
 	{
 		AssetCartridgeLinePtr(state);
 	}
 
-	void AddMenuSeparator()
+	void AddMenuSeparator() const
 	{
 		AddMenuItem("", 6000, ItemType::Head);
 	}
 
-	void AddMenuItem(const std::string& name, int id, ItemType type)
+	void AddMenuItem(const std::string& name, int id, ItemType type) const
 	{
 		AddMenuItemPtr(name.c_str(), id, static_cast<int>(type));
 	}
 
 	virtual void LoadConfiguration(const std::string& filename);
-	virtual void LoadMenu();
+	virtual void LoadMenuItems();
 
 
 
