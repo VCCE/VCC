@@ -42,10 +42,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "fdrawcmd.h"	// http://simonowen.com/fdrawcmd/
 /****************Fuction Protos for this Module************/
 
-unsigned char GetBytefromSector (unsigned char);
-unsigned char GetBytefromAddress(unsigned char);
-unsigned char GetBytefromTrack  (unsigned char);
-unsigned char (*GetBytefromDisk)(unsigned char)=&GetBytefromSector;
+unsigned char GetBytefromSector ();
+unsigned char GetBytefromAddress();
+unsigned char GetBytefromTrack  ();
+unsigned char (*GetBytefromDisk)()=&GetBytefromSector;
 
 unsigned char WriteBytetoSector (unsigned char);
 unsigned char WriteBytetoTrack  (unsigned char);
@@ -136,7 +136,7 @@ unsigned char disk_io_read(unsigned char port)
 			if (CurrentCommand==IDLE)
 				temp=DataReg;
 			else
-				temp=GetBytefromDisk(0);
+				temp=GetBytefromDisk();
 			break;
 
 		case 0x40:	//Control Register can't be read
@@ -546,7 +546,7 @@ long WriteSector (	unsigned char Side,		//0 or 1
 
 long WriteTrack (	unsigned char Side,		//0 or 1
 					unsigned char Track,	//0 to 255 "REAL" values are 1 to 80
-					unsigned char Dummy,	//Sector Value unused
+					unsigned char /*Dummy*/,	//Sector Value unused
 					unsigned char *WriteBuffer)
 {
 	unsigned char xTrack=0,xSide=0,xSector=0,xLenth=0;
@@ -646,7 +646,7 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 
 long ReadTrack (	unsigned char Side,		//0 or 1
 					unsigned char Track,	//0 to 255 "REAL" values are 1 to 80
-					unsigned char Dummy,	//Sector Value unused
+					unsigned char /*Dummy*/,	//Sector Value unused
 					unsigned char *WriteBuffer)
 {
 	unsigned long BytesRead=0,Result=0;
@@ -811,7 +811,7 @@ void PingFdc(void)
 			if (IOWaiter>WAITTIME)
 			{
 				LostDataFlag=1;
-				GetBytefromSector(0);
+				GetBytefromSector();
 			}
 		break;
 
@@ -830,7 +830,7 @@ void PingFdc(void)
 			if (IOWaiter>WAITTIME)
 			{
 				LostDataFlag=1;
-				GetBytefromAddress (0);	
+				GetBytefromAddress ();	
 			}
 		break;
 
@@ -841,7 +841,7 @@ void PingFdc(void)
 			if (IOWaiter>WAITTIME)
 			{
 				LostDataFlag=1;
-				GetBytefromTrack(0);
+				GetBytefromTrack();
 			}
 		break;
 
@@ -981,7 +981,7 @@ void DispatchCommand(unsigned char Tmp)
 	return;
 }
 
-unsigned char GetBytefromSector (unsigned char Tmp)
+unsigned char GetBytefromSector ()
 {
 	unsigned char RetVal=0;
 
@@ -1020,7 +1020,7 @@ unsigned char GetBytefromSector (unsigned char Tmp)
 	return RetVal;
 }
 
-unsigned char GetBytefromAddress (unsigned char Tmp)
+unsigned char GetBytefromAddress ()
 {
 	unsigned char RetVal=0;
 	unsigned short Crc=0;
@@ -1080,7 +1080,7 @@ unsigned char GetBytefromAddress (unsigned char Tmp)
 	return RetVal;
 }
 
-unsigned char GetBytefromTrack (unsigned char Tmp)
+unsigned char GetBytefromTrack ()
 {
 	unsigned char RetVal=0;
 

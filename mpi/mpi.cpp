@@ -106,7 +106,7 @@ LRESULT CALLBACK MpiConfigDlg(HWND,UINT,WPARAM,LPARAM);
 
 unsigned char MountModule(unsigned char,const char *);
 void UnloadModule(unsigned char);
-void UpdateCartDLL(unsigned char,char *);
+void UpdateCartDLL(unsigned char slot);
 void LoadConfig(void);
 void WriteConfig(void);
 void ReadModuleParms(unsigned char,char *);
@@ -290,7 +290,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) void PakMemWrite8(unsigned char Data,unsigned short Address)
+	__declspec(dllexport) void PakMemWrite8(unsigned char /*Data*/,unsigned short /*Address*/)
 	{
 
 		return;
@@ -382,7 +382,7 @@ void CenterDialog(HWND hDlg)
 	SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
-LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 
 	switch (message) {
@@ -480,7 +480,7 @@ void UpdateSlotContent(int Slot)
 		return;
 	}
 
-	UpdateCartDLL(Slot,ModulePaths[Slot]);
+	UpdateCartDLL(Slot);
 	SendDlgItemMessage(hConfDlg,EDITBOXS[Slot],WM_SETTEXT,0,(LPARAM)SlotLabel[Slot]);
 	if ((strcmp(ModuleNames[Slot],"Empty") != 0) || hinstLib[Slot])
 		SendDlgItemMessage(hConfDlg,INSBOXS[Slot],WM_SETTEXT,0,(LPARAM)"X");
@@ -628,7 +628,7 @@ void UnloadModule(unsigned char Slot)
 	return;
 }
 
-void UpdateCartDLL(unsigned char Slot,char *DllPath)
+void UpdateCartDLL(unsigned char Slot)
 {
 	if ((strcmp(ModuleNames[Slot],"Empty") != 0) || hinstLib[Slot]) {
 		UnloadModule(Slot);

@@ -155,7 +155,7 @@ void CenterDialog(HWND hDlg)
     SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
-LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
     switch (message)
     {
@@ -404,7 +404,7 @@ void BuildDynaMenu(void)
 
 
 // Dialog for creating a new hard disk
-LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
     unsigned int hdsize=DEF_HD_SIZE;
     switch (message)

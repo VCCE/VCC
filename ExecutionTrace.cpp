@@ -1244,7 +1244,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 //-------------------------------------------------------------------------------
 // Export to file dialog
 //-------------------------------------------------------------------------------
-	INT_PTR CALLBACK ExportTraceProc(HWND hDlg,UINT uMsg,WPARAM wPrm,LPARAM lPrm) {
+	INT_PTR CALLBACK ExportTraceProc(HWND hDlg,UINT uMsg,WPARAM wPrm,LPARAM /*lPrm*/) {
 		switch (uMsg) {
 		case WM_INITDIALOG:
 			SetDlgItemInt(hDlg,IDC_EDIT_START,ExportStart,FALSE);

@@ -265,7 +265,7 @@ int GetSoundCardList (SndCardList *List)
 	return CardCount;
 }
 
-BOOL CALLBACK DSEnumCallback(LPGUID lpGuid,LPCSTR lpcstrDescription,LPCSTR lpcstrModule,LPVOID lpContext)          
+BOOL CALLBACK DSEnumCallback(LPGUID lpGuid,LPCSTR lpcstrDescription,LPCSTR /*lpcstrModule*/,LPVOID /*lpContext*/)          
 {
 	strncpy(Cards[CardCount].CardName,lpcstrDescription,63);
 	Cards[CardCount++].Guid=lpGuid;

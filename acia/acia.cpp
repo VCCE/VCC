@@ -203,7 +203,7 @@ __declspec(dllexport) void ModuleStatus(char *status)
 //  Dll export run config dialog
 //-----------------------------------------------------------------------
 extern "C"
-__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+__declspec(dllexport) void ModuleConfig(unsigned char /*MenuID*/)
 {
     HWND owner = GetActiveWindow();
     CreateDialog(g_hDLL,(LPCTSTR)IDD_PROPPAGE,owner,(DLGPROC)Config);
@@ -314,7 +314,7 @@ void SaveConfig(void)
 //   IDC_TEXTMODE  Translate CR <> CRLF if checked
 //-----------------------------------------------------------------------
 
-LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM lParam)
+LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM /*lParam*/)
 {
     int button;
     HWND hCtl;
