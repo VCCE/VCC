@@ -49,12 +49,12 @@ void WriteLog(const char *Message, unsigned char Type) {
 }
 
 // PrintLogC - Put formatted string to the console
-void PrintLogC(const void * fmt, ...)
+void PrintLogC(const char* fmt, ...)
 {
     va_list args;
     char msg[512];
     va_start(args, fmt);
-    vsnprintf(msg, 512, (char *)fmt, args);
+    vsnprintf(msg, 512, fmt, args);
     va_end(args);
 
     if (hLog_Out == nullptr) {
@@ -66,12 +66,12 @@ void PrintLogC(const void * fmt, ...)
 }
 
 // PrintLogF - Put formatted string to the log file
-void PrintLogF(const void * fmt, ...)
+void PrintLogF(const char* fmt, ...)
 {
     va_list args;
     char msg[512];
     va_start(args, fmt);
-    vsnprintf(msg, 512, (char *)fmt, args);
+    vsnprintf(msg, 512, fmt, args);
     va_end(args);
 
     int oflag = _O_CREAT | _O_APPEND | _O_RDWR;
