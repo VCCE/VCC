@@ -18,10 +18,10 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-void CalibrateThrottle(void);
-void StartRender(void);
+void CalibrateThrottle();
+void StartRender();
 void EndRender(unsigned char);
-void FrameWait(void);
-float CalculateFPS(void);
+void FrameWait();
+float CalculateFPS();
 
 #endif

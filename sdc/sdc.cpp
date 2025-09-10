@@ -158,7 +158,7 @@
 
 void (*AssertInt)(unsigned char, unsigned char);
 static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
-void SDCInit(void);
+void SDCInit();
 void LoadRom(unsigned char);
 void (*MemWrite8)(unsigned char,unsigned short)=nullptr;
 void SDCWrite(unsigned char,unsigned char);
@@ -169,26 +169,26 @@ unsigned char MemRead(unsigned short);
 LRESULT CALLBACK SDC_Control(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
 
-void LoadConfig(void);
+void LoadConfig();
 bool SaveConfig(HWND);
-void BuildDynaMenu(void);
+void BuildDynaMenu();
 void CenterDialog(HWND);
-void SelectCardBox(void);
-void update_disk0_box(void);
+void SelectCardBox();
+void update_disk0_box();
 void UpdateFlashItem(int);
 void ModifyFlashItem(int);
-void InitCardBox(void);
-void InitEditBoxes(void);
-void ParseStartup(void);
-void SDCCommand(void);
-void ReadSector(void);
-void StreamImage(void);
-void WriteSector(void);
+void InitCardBox();
+void InitEditBoxes();
+void ParseStartup();
+void SDCCommand();
+void ReadSector();
+void StreamImage();
+void WriteSector();
 bool SeekSector(unsigned char,unsigned int);
 bool ReadDrive(unsigned char,unsigned int);
-void GetDriveInfo(void);
-void SDCControl(void);
-void UpdateSD(void);
+void GetDriveInfo();
+void SDCControl();
+void UpdateSD();
 void AppendPathChar(char *,char c);
 bool LoadFoundFile(struct FileRecord *);
 void FixSDCPath(char *,const char *);
@@ -200,9 +200,9 @@ void CloseDrive(int);
 void OpenFound(int,int);
 void LoadReply(const void *, int);
 void BlockReceive(unsigned char);
-char * LastErrorTxt(void);
+char * LastErrorTxt();
 void FlashControl(unsigned char);
-void LoadDirPage(void);
+void LoadDirPage();
 void SetCurDir(const char *);
 bool SearchFile(const char *);
 void InitiateDir(const char *);
@@ -211,10 +211,10 @@ void RenameFile(const char *);
 void KillFile(const char *);
 void MakeDirectory(const char *);
 bool IsDirectory(const char *);
-void GetMountedImageRec(void);
-void GetSectorCount(void);
-void GetDirectoryLeaf(void);
-void CommandDone(void);
+void GetMountedImageRec();
+void GetSectorCount();
+void GetDirectoryLeaf();
+void CommandDone();
 unsigned char PickReplyByte(unsigned char);
 unsigned char WriteFlashBank(unsigned short);
 
@@ -381,7 +381,7 @@ extern "C"
     }
 
     // Reset module
-    __declspec(dllexport) unsigned char ModuleReset(void)
+    __declspec(dllexport) unsigned char ModuleReset()
     {
         _DLOG("ModuleReset\n");
         SDCInit();
@@ -481,7 +481,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 //-------------------------------------------------------------
 // Generate menu for configuring the SDC
 //-------------------------------------------------------------
-void BuildDynaMenu(void)
+void BuildDynaMenu()
 {
     DynamicMenuCallback("",MID_BEGIN,MIT_Head);
     DynamicMenuCallback("",MID_ENTRY,MIT_Seperator);
@@ -643,7 +643,7 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 //------------------------------------------------------------
 // Get SDC settings from ini file
 //------------------------------------------------------------
-void LoadConfig(void)
+void LoadConfig()
 {
     GetPrivateProfileString
         ("DefaultPaths", "MPIPath", "", MPIPath, MAX_PATH, IniFile);
@@ -696,7 +696,7 @@ bool SaveConfig(HWND hDlg)
 //----------------------------------------------------------------------
 // Init the controller. This gets called by ModuleReset
 //----------------------------------------------------------------------
-void SDCInit(void)
+void SDCInit()
 {
 
 #ifdef USE_LOGGING
@@ -731,7 +731,7 @@ void SDCInit(void)
 //------------------------------------------------------------
 // Init flash box
 //------------------------------------------------------------
-void InitEditBoxes(void)
+void InitEditBoxes()
 {
     for (int index=0; index<8; index++) {
         HWND h;
@@ -761,7 +761,7 @@ void update_disk0_box()
 // Init SD card box
 //------------------------------------------------------------
 
-void InitCardBox(void)
+void InitCardBox()
 {
     hSDCardBox = GetDlgItem(hConfigureDlg,ID_SD_BOX);
     SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM)SDCard);
@@ -804,7 +804,7 @@ void UpdateFlashItem(int index)
 //------------------------------------------------------------
 // Dialog to select SD card path in user home directory
 //------------------------------------------------------------
-void SelectCardBox(void)
+void SelectCardBox()
 {
     // Prompt user for path
     BROWSEINFO bi = { nullptr };
@@ -904,7 +904,7 @@ void LoadRom(unsigned char bank)
 //----------------------------------------------------------------------
 // Parse the startup.cfg file
 //----------------------------------------------------------------------
-void ParseStartup(void)
+void ParseStartup()
 {
     char buf[MAX_PATH+10];
     if (!IsDirectory(SDCard)) {
@@ -951,7 +951,7 @@ void ParseStartup(void)
 //----------------------------------------------------------------------
 //  Command done interrupt;
 //----------------------------------------------------------------------
-void CommandDone(void)
+void CommandDone()
 {
     _DLOG("*");
     AssertInt(INT_NMI,IS_NMI);
@@ -1272,7 +1272,7 @@ unsigned char PickReplyByte(unsigned char port)
 //----------------------------------------------------------------------
 //  Dispatch SDC commands
 //----------------------------------------------------------------------
-void SDCCommand(void)
+void SDCCommand()
 {
 
     switch (IF.cmdcode & 0xF0) {
@@ -1334,7 +1334,7 @@ void BlockReceive(unsigned char byte)
 //----------------------------------------------------------------------
 // Get drive information
 //----------------------------------------------------------------------
-void GetDriveInfo(void)
+void GetDriveInfo()
 {
     int drive = IF.cmdcode & 1;
     switch (IF.param1) {
@@ -1374,7 +1374,7 @@ void GetDriveInfo(void)
 // command to learn the full path when restore last session is active.
 // The full path is saved in SDCX.CFG for the next session.
 //----------------------------------------------------------------------
-void GetDirectoryLeaf(void)
+void GetDirectoryLeaf()
 {
     _DLOG("GetDirectoryLeaf CurDir '%s'\n",CurDir);
 
@@ -1415,7 +1415,7 @@ void GetDirectoryLeaf(void)
 //----------------------------------------------------------------------
 //  Update SD Commands.
 //----------------------------------------------------------------------
-void UpdateSD(void)
+void UpdateSD()
 {
     switch (IF.blkbuf[0]) {
     case 0x4D: //M
@@ -1609,7 +1609,7 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
 //    b1 single sided flag
 //    b2 eight bit transfer flag
 //----------------------------------------------------------------------
-void ReadSector(void)
+void ReadSector()
 {
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
 
@@ -1625,7 +1625,7 @@ void ReadSector(void)
 //----------------------------------------------------------------------
 // Stream image data
 //----------------------------------------------------------------------
-void StreamImage(void)
+void StreamImage()
 {
     // If already streaming continue
     if (streaming) {
@@ -1661,7 +1661,7 @@ void StreamImage(void)
 //----------------------------------------------------------------------
 // Write logical sector
 //----------------------------------------------------------------------
-void WriteSector(void)
+void WriteSector()
 {
     DWORD cnt = 0;
     int drive = IF.cmdcode & 1;
@@ -1695,7 +1695,7 @@ void WriteSector(void)
 //----------------------------------------------------------------------
 // Get most recent windows error text
 //----------------------------------------------------------------------
-char * LastErrorTxt(void) {
+char * LastErrorTxt() {
     static char msg[200];
     DWORD error_code = GetLastError();
     FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM |
@@ -1741,7 +1741,7 @@ void GetMountedImageRec()
 // IF.param1  0: Next disk 1-9: specific disk.
 // IF.param2 b0: Blink Enable
 //----------------------------------------------------------------------
-void SDCControl(void)
+void SDCControl()
 {
     // If streaming is in progress abort it.
     if (streaming) {
@@ -2515,7 +2515,7 @@ void InitiateDir(const char * path)
 // the pattern used in SearchFile. Can be called multiple times until
 // there are no more matches.
 //----------------------------------------------------------------------
-void LoadDirPage(void)
+void LoadDirPage()
 {
     memset(DirPage,0,sizeof(DirPage));
 

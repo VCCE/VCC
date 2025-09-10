@@ -124,8 +124,8 @@ static unsigned char Mask=0,Byte=0,LastSample=0;
 
 void WavtoCas(const unsigned char *,unsigned int);
 int MountTape( const char *);
-void CloseTapeFile(void);
-void SyncFileBuffer (void);
+void CloseTapeFile();
+void SyncFileBuffer();
 void CastoWav(unsigned char *,unsigned int);
 
 unsigned int GetTapeRate()
@@ -195,7 +195,7 @@ void Motor(unsigned char State)
 	return;
 }
 
-unsigned int GetTapeCounter(void)
+unsigned int GetTapeCounter()
 {
 	return TapeOffset;
 }
@@ -436,7 +436,7 @@ int MountTape( const char *FileName)	//Return 1 on sucess 0 on fail
 	return 1;
 }
 
-void CloseTapeFile(void)
+void CloseTapeFile()
 {
 	if (TapeHandle==nullptr)
 		return;
@@ -447,7 +447,7 @@ void CloseTapeFile(void)
 	TotalSize=0;
 }
 
-unsigned int LoadTape(void)
+unsigned int LoadTape()
 {
 	FileDialog dlg;
 	char IniFilePath[MAX_PATH];
@@ -479,7 +479,7 @@ void GetTapeName(char *Name)
 	return;
 }
 
-void SyncFileBuffer (void)
+void SyncFileBuffer ()
 {
 	if (!TapeWritten) return;
 	char Buffer[64]="";

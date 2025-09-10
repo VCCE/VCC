@@ -30,8 +30,8 @@ constexpr auto CAS_TAPEREADAHEAD = 1000u; // decoded batch size
 constexpr auto CAS_SILENCE = 128u;
 constexpr auto CAS_TAPEAUDIORATE = 44100u;
 
-unsigned int GetTapeCounter(void);
-unsigned int LoadTape(void);
+unsigned int GetTapeCounter();
+unsigned int LoadTape();
 void SetTapeCounter(unsigned int, bool force = false);
 void SetTapeMode(unsigned char);
 void Motor(unsigned char);

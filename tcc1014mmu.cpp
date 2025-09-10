@@ -51,7 +51,7 @@ static unsigned short MmuPrefix=0;
 static unsigned int RamSize=0;
 std::atomic_bool mem_initializing;
 
-void UpdateMmuArray(void);
+void UpdateMmuArray();
 
 /*****************************************************************************************
 * MmuInit Initilize and allocate memory for RAM Internal and External ROM Images.        *
@@ -104,7 +104,7 @@ unsigned char * MmuInit(unsigned char RamConfig)
 	return memory;
 }
 
-void MmuReset(void)
+void MmuReset()
 {
 	unsigned int Index1=0,Index2=0;
 	MmuTask=0;
@@ -197,14 +197,14 @@ void Set_MmuEnabled (unsigned char usingmmu)
 	return;
 }
  
-unsigned char * Getint_rom_pointer(void)
+unsigned char * Getint_rom_pointer()
 {
 	return InternalRomBuffer;
 }
 
 // LoadRom() loads Coco3.rom. It is called by MmuInit() here
 // and by SoftReset() in Vcc.c. If LoadRom() fails VCC can not run.
-void LoadRom(void)
+void LoadRom()
 {
 	char RomPath[MAX_PATH]={};
 	unsigned short index=0;
@@ -406,7 +406,7 @@ void SetMmuPrefix(unsigned char data)
 	return;
 }
 
-void UpdateMmuArray(void)
+void UpdateMmuArray()
 {
 	if (MapType)
 	{

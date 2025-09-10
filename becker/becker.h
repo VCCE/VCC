@@ -10,7 +10,7 @@
 // functions
 void MemWrite(unsigned char,unsigned short );
 unsigned char MemRead(unsigned short );
-void BuildDynaMenu(void);
+void BuildDynaMenu();
 
 extern const unsigned char Rom[8192];
 

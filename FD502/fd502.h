@@ -22,7 +22,7 @@ This file is part of VCC (Virtual Color Computer).
 #define COMBINE_BECKER
 
 extern "C" void (*AssertInt)(unsigned char,unsigned char);
-void BuildDynaMenu(void);
+void BuildDynaMenu();
 
 // FIXME: These need to be turned into a scoped enum and the signature of functions
 // that use them updated.

@@ -23,10 +23,10 @@ This file is part of VCC (Virtual Color Computer).
 void LoadConfig(SystemState *);
 void InitSound();
 void LoadModule();
-unsigned char WriteIniFile(void);
-unsigned char ReadIniFile(void);
+unsigned char WriteIniFile();
+unsigned char ReadIniFile();
 void GetIniFilePath( char *);
-void UpdateConfig (void);
+void UpdateConfig ();
 void UpdateSoundBar(const unsigned int *,unsigned int);
 void UpdateTapeCounter(unsigned int,unsigned char,bool force = false);
 int GetKeyboardLayout();

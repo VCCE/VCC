@@ -217,7 +217,7 @@ void FlushAudioBuffer(unsigned int *Abuffer,unsigned int Lenth)
 }
 
 
-int GetFreeBlockCount(void) //return 0 on full buffer
+int GetFreeBlockCount() //return 0 on full buffer
  {
 	unsigned long WriteCursor=0,PlayCursor=0;
 	long RetVal=0,MaxSize=0;
@@ -232,7 +232,7 @@ int GetFreeBlockCount(void) //return 0 on full buffer
 
  }
 
- void PurgeAuxBuffer(void)
+ void PurgeAuxBuffer()
  {
 	if ((!InitPassed) | AudioPause)
 		return;
@@ -272,7 +272,7 @@ BOOL CALLBACK DSEnumCallback(LPGUID lpGuid,LPCSTR lpcstrDescription,LPCSTR /*lpc
 	return (CardCount<MAXCARDS);
 }
 
-int SoundDeInit(void)
+int SoundDeInit()
 {
 	if (InitPassed)
 	{
@@ -309,12 +309,12 @@ int SoundInInit (const _GUID * Guid)
 	return 0;
 }
 
-unsigned int GetSoundStatus(void)
+unsigned int GetSoundStatus()
 {
 	return CurrentRate;
 }
 
-void ResetAudio (void)
+void ResetAudio ()
 {
 	SetAudioRate(GetTapeRate());
 	if (InitPassed)

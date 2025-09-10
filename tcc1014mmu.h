@@ -48,7 +48,7 @@ unsigned short MemRead16(unsigned short);
 unsigned char MemRead8(unsigned short);
 unsigned char SafeMemRead8(unsigned short);
 unsigned char * MmuInit(unsigned char);
-unsigned char *	Getint_rom_pointer(void);
+unsigned char *	Getint_rom_pointer();
 unsigned short GetMem(unsigned long);
 void SetMem(unsigned long, unsigned short);
 bool MemCheckWrite(unsigned short address);
@@ -57,16 +57,16 @@ void __fastcall fMemWrite8(unsigned char,unsigned short );
 unsigned char __fastcall fMemRead8(unsigned short);
 
 void SetMapType(unsigned char);
-void LoadRom(void);
+void LoadRom();
 void Set_MmuTask(unsigned char);
 void SetMmuRegister(unsigned char,unsigned char);
 void Set_MmuEnabled (unsigned char );
 void SetRomMap(unsigned char );
 void SetVectors(unsigned char);
-void MmuReset(void);
+void MmuReset();
 void SetDistoRamBank(unsigned char);
 void SetMmuPrefix(unsigned char);
-unsigned char * Get_mem_pointer(void);
+unsigned char * Get_mem_pointer();
 
 // FIXME: These need to be turned into an enum and the signature of functions
 // that use them updated.

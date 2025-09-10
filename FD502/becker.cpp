@@ -47,8 +47,8 @@ constexpr SOCKET SOCKET_FATAL = (SOCKET)-2;
 void dw_open();
 void dw_close();
 SOCKET dw_open(const char *, const char *);
-unsigned char dw_status(void);
-unsigned char dw_read(void);
+unsigned char dw_status();
+unsigned char dw_read();
 int dw_write(char);
 unsigned __stdcall dw_thread(void *);
 
@@ -240,7 +240,7 @@ int dw_write( char dwdata)
 	return 0;
 }
 
-void dw_close(void)
+void dw_close()
 {
 	// close socket to cause io thread to die
 	_DLOG("dw_close\n");

@@ -78,9 +78,9 @@ constexpr uint8_t Bit(uint8_t n) { return 1 << n; }
 // make mask of nth bit 0-7
 constexpr uint8_t BitMask(uint8_t n) { return ~Bit(n); }
 
-extern void (*CPUInit)(void);
+extern void (*CPUInit)();
 extern int  (*CPUExec)(int);
-extern void (*CPUReset)(void);
+extern void (*CPUReset)();
 extern void (*CPUAssertInterupt)(InterruptSource, Interrupt);
 extern void (*CPUDeAssertInterupt)(InterruptSource, Interrupt);
 extern void (*CPUForcePC)(unsigned short);

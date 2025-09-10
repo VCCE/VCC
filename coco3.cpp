@@ -101,16 +101,16 @@ static int AudioFreeBlockCount;
 
 static int clipcycle = 1, cyclewait=2000;
 bool codepaste, PasteWithNew = false; 
-void AudioOut(void);
-void CassOut(void);
-void CassIn(void);
-void (*AudioEvent)(void)=AudioOut;
-void SetMasterTickCounter(void);
+void AudioOut();
+void CassOut();
+void CassIn();
+void (*AudioEvent)()=AudioOut;
+void SetMasterTickCounter();
 void (*DrawTopBoarder[4]) (SystemState *)={DrawTopBoarder8,DrawTopBoarder16,DrawTopBoarder24,DrawTopBoarder32};
 void (*DrawBottomBoarder[4]) (SystemState *)={DrawBottomBoarder8,DrawBottomBoarder16,DrawBottomBoarder24,DrawBottomBoarder32};
 void (*UpdateScreen[4]) (SystemState *)={UpdateScreen8,UpdateScreen16,UpdateScreen24,UpdateScreen32};
 std::string GetClipboardText();
-void HLINE(void);
+void HLINE();
 void VSYNC(unsigned char level);
 void HSYNC(unsigned char level);
 std::string CvtStrToSC(std::string);
@@ -389,7 +389,7 @@ DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
 	return details;
 }
 
-_inline void HLINE(void)
+_inline void HLINE()
 {
 	UpdateAudio();
 
@@ -570,7 +570,7 @@ void SetTimerClockRate (unsigned char Tmp)	//1= 279.265nS (1/ColorBurst)
 	return;
 }
 
-void SetMasterTickCounter(void)
+void SetMasterTickCounter()
 {
 	// Rate = { 63613.2315, 279.265 };
 	double Rate[2]={NANOSECOND/(TARGETFRAMERATE*LINESPERSCREEN),NANOSECOND/COLORBURST};
@@ -584,7 +584,7 @@ void SetMasterTickCounter(void)
 	return;
 }
 
-void MiscReset(void)
+void MiscReset()
 {
 	HorzInteruptEnabled=0;
 	VertInteruptEnabled=0;
@@ -626,14 +626,14 @@ unsigned int SetAudioRate (unsigned int Rate)
 	return 0;
 }
 
-void AudioOut(void)
+void AudioOut()
 {
 
 	AudioBuffer[AudioIndex++]=GetDACSample();
 	return;
 }
 
-void CassOut(void)
+void CassOut()
 {
 	if (LastMotorState && CassIndex < sizeof(CassBuffer)/sizeof(*CassBuffer))
 		CassBuffer[CassIndex++]=GetCasSample();
@@ -667,7 +667,7 @@ uint8_t CassInBitStream()
 	return nextHalfBit >> 1;
 }
 
-void CassIn(void)
+void CassIn()
 {
 	// fade ramp state
 	static unsigned int fadeTo = 0;

@@ -313,7 +313,7 @@ void pia1_write(unsigned char data,unsigned char port)
 	return;
 }
 
-unsigned char VDG_Mode(void)
+unsigned char VDG_Mode()
 {
 	return( (regb[2] & 248) >>3);
 }
@@ -381,7 +381,7 @@ void irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
 	return;
 }
 
-void AssertCart(void)
+void AssertCart()
 {
 	regb[3]=(regb[3] | 128);
 	if (regb[3] & 1)
@@ -403,14 +403,14 @@ void PiaReset()
 }
 
 // Get analog I/O select.
-unsigned char GetMuxState(void)
+unsigned char GetMuxState()
 {
 	return ( ((rega[1] & 8)>>3) + ((rega[3] & 8) >>2));
 }
 
 // Return 14 bit value for DAC comparator. Coco DAC is six bits
 // but value is extended to allow more resolution.
-unsigned int DACState(void)
+unsigned int DACState()
 {
     int hrval = regb[0]<<6;  // Copy six high bits to integer
     return hrval;
@@ -422,7 +422,7 @@ void SetCart(unsigned char cart)
 	return;
 }
 
-unsigned int GetDACSample(void)
+unsigned int GetDACSample()
 {
 	auto pakSample = PackAudioSample();
 	auto pakLeft = pakSample >> 8;
@@ -443,7 +443,7 @@ unsigned char SetCartAutoStart(unsigned char Tmp)
 	return CartAutoStart;
 }
 
-unsigned char GetCasSample(void)
+unsigned char GetCasSample()
 {
 	return Csample;
 }
@@ -498,7 +498,7 @@ int OpenPrintFile(const char *FileName)
 	return 1;
 }
 
-void ClosePrintFile(void)
+void ClosePrintFile()
 {
 	CloseHandle(hPrintFile);
 	hPrintFile=INVALID_HANDLE_VALUE;
