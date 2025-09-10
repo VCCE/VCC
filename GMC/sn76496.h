@@ -11,6 +11,7 @@ public:
 	using stream_sample_t = unsigned short;
 
 	SN76489Device();
+	virtual ~SN76489Device() = default;
 
 	virtual void device_start();
 	virtual void write(uint8_t data);
@@ -23,7 +24,7 @@ protected:
 
 private:
 
-	inline bool     in_noise_mode();
+	inline bool     in_noise_mode() const;
 	void            countdown_cycles();
 
 

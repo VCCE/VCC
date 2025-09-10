@@ -916,7 +916,7 @@ namespace VCC { namespace Debugger
 			bool only6309;				// Valid only if running a 6309, in other words, invalid on a 6809
 		};
 
-		std::map<std::string, IndexModeInfo> IndexingModes = 
+		const std::map<std::string, IndexModeInfo> IndexingModes = 
 		{ 
 			{ "1RR00100", {"1RR00100", ",R",		0,	0,	0,	false } },
 			{ "0RRnnnnn", {"0RRnnnnn", "n,R",		1,	1,	0,	false } },
@@ -965,18 +965,18 @@ namespace VCC { namespace Debugger
 
 	protected:
 
-		bool ProcessNoAdjust(const OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
-		bool ProcessIndexModeAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
-		bool ProcessInterruptAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
-		bool ProcessStackAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
-		bool ProcessLongBranchAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
-		bool ProcessTFMAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
-		bool ProcessDIVAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
-		bool ProcessWaitForSYNCAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
+		bool ProcessNoAdjust(const OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const;
+		bool ProcessIndexModeAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const;
+		bool ProcessInterruptAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const;
+		bool ProcessStackAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const;
+		bool ProcessLongBranchAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const;
+		bool ProcessTFMAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const;
+		bool ProcessDIVAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const;
+		bool ProcessWaitForSYNCAdjust(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const;
 
 		int AdjustCycles(OpCodeInfo& opcode, int cycles, int bytes, bool IsNative6309) const;
 
-		bool GetIndexMode(unsigned char postbyte, IndexModeInfo& mode, std::string& operand);
+		bool GetIndexMode(unsigned char postbyte, IndexModeInfo& mode, std::string& operand) const;
 		std::string ToRegister(unsigned char postbyte) const;
 		std::string ToInterRegister(unsigned char reg) const;
 		std::string ToRelativeAddressString(int value, int oplen, int operandlen) const;

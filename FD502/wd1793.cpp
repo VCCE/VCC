@@ -31,7 +31,7 @@ This file is part of VCC (Virtual Color Computer).
 *																				*
 ********************************************************************************/
 
-#include <windows.h>
+#include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <winioctl.h>

@@ -15,11 +15,10 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "windows.h"
-#include "stdio.h"
-#include "stdlib.h"
+#include <Windows.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "distoRTC.h"
-#include "windows.h"
 
 /* Table description:							   Bit3  Bit2  Bit1  Bit0
 Write to $FF51 read from $FF50

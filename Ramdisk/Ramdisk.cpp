@@ -79,7 +79,6 @@ extern "C"
 			default:
 				return;
 		}	//End port switch		
-		return;
 	}
 }
 
