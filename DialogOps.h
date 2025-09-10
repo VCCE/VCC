@@ -60,7 +60,7 @@ public:
 	void getdir(char * Dir, int maxsize = MAX_PATH) const;
 	void getpath(char * Path, int maxsize = MAX_PATH) const;
 	void getupath(char * Path, int maxsize = MAX_PATH) const;
-	char * path();
+	const char *path() const;
 private:
 	OPENFILENAME ofn;
 	char Path[MAX_PATH] = {};

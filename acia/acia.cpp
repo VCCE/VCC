@@ -67,7 +67,7 @@ char AciaFileWrPath[MAX_PATH]; // Path for file writes
 
 static unsigned char Rom[8192];
 void (*AssertInt)(unsigned char, unsigned char);
-unsigned char LoadExtRom(char *);
+unsigned char LoadExtRom(const char *);
 
 //------------------------------------------------------------------------
 //  DLL Entry point
@@ -146,7 +146,7 @@ __declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
 //-----------------------------------------------------------------------
 // Load Rom. Returns 1 if loaded
 //-----------------------------------------------------------------------
-unsigned char LoadExtRom(char *FilePath)
+unsigned char LoadExtRom(const char *FilePath)
 {
     FILE *file;
     int cnt = 0;
@@ -211,7 +211,7 @@ __declspec(dllexport) void ModuleConfig(unsigned char /*MenuID*/)
 // Dll export VCC ini file path and load settings
 //-----------------------------------------------------------------------
 extern "C"
-__declspec(dllexport) void SetIniPath (char *IniFilePath)
+__declspec(dllexport) void SetIniPath (const char *IniFilePath)
 {
     strcpy(IniFile,IniFilePath);
     LoadConfig();
@@ -575,7 +575,7 @@ void com_close() {
 }
 
 // com_write will block until some data is written or error
-int com_write(char * buf, int len) {
+int com_write(const char * buf, int len) {
     switch (AciaComType) {
     case COM_CONSOLE:
         return console_write(buf,len);

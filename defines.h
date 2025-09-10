@@ -184,35 +184,35 @@ namespace VCC
 
 struct SystemState
 {
-    HWND			WindowHandle;
-    HWND			ConfigDialog;
+    HWND			WindowHandle = nullptr;
+    HWND			ConfigDialog = nullptr;
 
-    HINSTANCE		WindowInstance;
-    unsigned char	*RamBuffer;
-    unsigned short	*WRamBuffer;
-    std::atomic<unsigned char>	RamSize;
-    double			CPUCurrentSpeed;
-    unsigned char	DoubleSpeedMultiplyer;
-    unsigned char	DoubleSpeedFlag;
-    unsigned char	TurboSpeedFlag;
-    unsigned char	CpuType;
-    unsigned char	FrameSkip;
-    unsigned char	BitDepth;
-    unsigned char	Throttle;
-    unsigned char	*PTRsurface8;
-    unsigned short	*PTRsurface16;
-    unsigned int	*PTRsurface32;
-    long			SurfacePitch;
-    unsigned short	LineCounter;
-    unsigned char	ScanLines;
-    unsigned char	EmulationRunning;
-    unsigned char	ResetPending;
+    HINSTANCE		WindowInstance = nullptr;
+    unsigned char	*RamBuffer = nullptr;
+    unsigned short	*WRamBuffer = nullptr;
+    std::atomic<unsigned char>	RamSize = 0;
+    double			CPUCurrentSpeed = 0.0;
+    unsigned char	DoubleSpeedMultiplyer = 0;
+    unsigned char	DoubleSpeedFlag = 0;
+    unsigned char	TurboSpeedFlag = 0;
+    unsigned char	CpuType = 0;
+    unsigned char	FrameSkip = 0;
+    unsigned char	BitDepth = 0;
+    unsigned char	Throttle = 0;
+    unsigned char	*PTRsurface8 = nullptr;
+    unsigned short	*PTRsurface16 = nullptr;
+    unsigned int	*PTRsurface32 = nullptr;
+    long			SurfacePitch = 0;
+    unsigned short	LineCounter = 0;
+    unsigned char	ScanLines = 0;
+    unsigned char	EmulationRunning = 0;
+    unsigned char	ResetPending = 0;
     VCC::Size		WindowSize;
-    unsigned char	FullScreen;
-    bool        	Exiting;
-    unsigned char	MousePointer;
-    unsigned char	OverclockFlag;
-    char			StatusLine[256];
+    unsigned char	FullScreen = 0;
+    bool        	Exiting = false;
+    unsigned char	MousePointer = 0;
+    unsigned char	OverclockFlag = 0;
+	char			StatusLine[256] = { 0 };
 
 	// Debugger Package	
 	VCC::Debugger::Debugger Debugger;

@@ -170,7 +170,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	}
 
 //-------------------------------------------------------------------------------
-	void DrawBorder(HDC hdc, LPRECT clientRect)
+	void DrawBorder(HDC hdc, LPCRECT clientRect)
 	{
 		RECT rect = *clientRect;
 
@@ -178,7 +178,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		HBRUSH brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
 		FillRect(hdc, &rect, brush);
 
-		HPEN pen = (HPEN)CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
+		HPEN pen = CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
 		SelectObject(hdc, pen);
 
 		// Draw the border.
@@ -210,7 +210,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 		std::stringstream ss;
 		ss << samples << " Samples Collected";
-		DrawText(hdc, (LPCSTR)ss.str().c_str(), ss.str().size(), &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		DrawText(hdc, ss.str().c_str(), ss.str().size(), &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 		DeleteObject(hFont);
 	}
@@ -231,13 +231,13 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		SelectObject(hdc, hFont);
 
 		std::string s = "Press Enable to start collection";
-		DrawText(hdc, (LPCSTR)s.c_str(), s.size(), &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		DrawText(hdc, s.c_str(), s.size(), &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 		DeleteObject(hFont);
 	}
 
 //-------------------------------------------------------------------------------
-	void DrawSamples(HDC hdc, LPRECT clientRect)
+	void DrawSamples(HDC hdc, LPCRECT clientRect)
 	{
 		long samples = EmuState.Debugger.GetTraceSamples();
 
@@ -270,7 +270,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 			CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FIXED_PITCH, TEXT("Consolas"));
 		SelectObject(hdc, hFont);
 
-		HPEN pen = (HPEN)CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
+		HPEN pen = CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
 		SelectObject(hdc, pen);
 
 		EmuState.Debugger.LockTrace();
@@ -292,18 +292,11 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		// Running a 6309 CPU?
 		if (Is6309)
 		{
-			std::vector<std::string>::iterator itHeader;
-			std::vector<int>::iterator itColumn;
+			headers.emplace(headers.begin() + 9, "W");
+			columns.emplace(columns.begin() + 9, 30);
 
-			itHeader = headers.begin();
-			itHeader = headers.insert(itHeader + 9, "W");
-			itColumn = columns.begin();
-			itColumn = columns.insert(itColumn + 9, 30);
-
-			itHeader = headers.end();
-			itHeader = headers.insert(itHeader, "MD");
-			itColumn = columns.end();
-			itColumn = columns.insert(itColumn, 30);
+			headers.emplace_back("MD");
+			columns.emplace_back(30);
 		}
 
 		int x = 10;
@@ -622,7 +615,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	}
 
 //-------------------------------------------------------------------------------
-	void DrawExecutionTrace(HDC hdc, LPRECT clientRect)
+	void DrawExecutionTrace(HDC hdc, LPCRECT clientRect)
 	{
 		// Draw the border.
 		DrawBorder(hdc, clientRect);
@@ -1116,7 +1109,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		//	offset, nlines, count, _trace.size());
 
 		char* pos = line;
-		char* end = pos + lineSize;
+		const char* end = pos + lineSize;
 		DWORD dummy;
 
 		auto Flush = [&]()

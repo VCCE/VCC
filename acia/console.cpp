@@ -261,7 +261,7 @@ int  SeqArgsNeeded = 0;
 int  SeqArgsCount = 0;
 char SeqArgs[8];
 
-int console_write(char *buf, int len) {
+int console_write(const char *buf, int len) {
 
     int cnt = 0;
     int chr;

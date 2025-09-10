@@ -69,7 +69,7 @@ static unsigned char (*PakMemRead8)(unsigned short)=nullptr;
 static void (*ModuleStatus)(char *)=nullptr;
 static unsigned short (*ModuleAudioSample)(void)=nullptr;
 static void (*ModuleReset) (void)=nullptr;
-static void (*SetIniPath) (char *)=nullptr;
+static void (*SetIniPath) (const char *)=nullptr;
 static void (*PakSetCart)(SETCART)=nullptr;
 static char PakPath[MAX_PATH];
 
@@ -191,7 +191,7 @@ int LoadCart(void)
 }
 
 // Insert Module returns 0 on success
-int InsertModule (char *ModulePath)
+int InsertModule (const char *ModulePath)
 {
 	char CatNumber[MAX_LOADSTRING]="";
 	char Temp[MAX_LOADSTRING]="";

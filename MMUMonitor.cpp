@@ -87,7 +87,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	}
 
 	// Draw the Monitor Window
-	void DrawMMUMonitor(HDC hdc, LPRECT clientRect)
+	void DrawMMUMonitor(HDC hdc, LPCRECT clientRect)
 	{
 		RECT rect = *clientRect;
 
@@ -95,8 +95,8 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		HBRUSH brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
 		FillRect(hdc, &rect, brush);
 
-		HPEN pen = (HPEN)CreatePen(PS_SOLID, 1, rgbGray);
-		HPEN thickPen = (HPEN)CreatePen(PS_SOLID, 2, rgbGray);
+		HPEN pen = CreatePen(PS_SOLID, 1, rgbGray);
+		HPEN thickPen = CreatePen(PS_SOLID, 2, rgbGray);
 
 		HFONT hFont = CreateFont(14, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
 		                         DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,

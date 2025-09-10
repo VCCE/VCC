@@ -96,7 +96,7 @@ static void (*SetCarts[NUMSLOTS])(unsigned char)={SetCartSlot0,SetCartSlot1,SetC
 static DYNAMICMENUCALLBACK DynamicMenuCallbackCalls[NUMSLOTS]={DynamicMenuCallback0,DynamicMenuCallback1,DynamicMenuCallback2,DynamicMenuCallback3};
 static void (*SetCartCalls[NUMSLOTS])(SETCART)={nullptr};
 
-static void (*SetIniPathCalls[NUMSLOTS]) (char *)={nullptr};
+static void (*SetIniPathCalls[NUMSLOTS]) (const char *)={nullptr};
 static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
 //***************************************************************
 static HINSTANCE hinstLib[NUMSLOTS]={nullptr};
@@ -358,7 +358,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) void SetIniPath (char *IniFilePath)
+	__declspec(dllexport) void SetIniPath (const char *IniFilePath)
 	{
 		strcpy(IniFile,IniFilePath);
 		LoadConfig();

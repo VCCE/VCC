@@ -38,6 +38,9 @@ namespace VCC
 			DeleteCriticalSection(&Section_);
 		}
 
+		CriticalSection(const CriticalSection&) = delete;
+		CriticalSection& operator=(const CriticalSection&) = delete;
+
 		void Lock()
 		{
 			EnterCriticalSection(&Section_);

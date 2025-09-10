@@ -142,13 +142,6 @@
 #define MAX_OUTPUT 0x7fff
 
 
-SN76489Device::SN76489Device()
-{}
-
-
-
-
-
 void SN76489Device::device_start()
 {
 	for (int i = 0; i < 8; i += 2)

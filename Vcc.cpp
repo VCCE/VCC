@@ -100,7 +100,7 @@ LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM);
 void SoftReset(void);
 void LoadIniFile(void);
 void SaveConfig(void);
-unsigned __stdcall EmuLoop(void *);
+unsigned __stdcall EmuLoop(HANDLE hEvent);
 unsigned __stdcall CartLoad(void *);
 void (*CPUInit)(void)=nullptr;
 int  (*CPUExec)( int)=nullptr;
@@ -133,10 +133,10 @@ bool IsShiftKeyDown(void);
 
 //static CRITICAL_SECTION  FrameRender;
 /*--------------------------------------------------------------------------*/
-int APIENTRY WinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance,
-                     LPSTR     lpCmdLine,
-                     int       nCmdShow)
+int APIENTRY WinMain(_In_ HINSTANCE hInstance,
+					  _In_opt_ HINSTANCE hPrevInstance,
+					  _In_ LPSTR    lpCmdLine,
+					  _In_ int       nCmdShow)
 {
 	MSG  Msg;
 
@@ -952,9 +952,8 @@ void SaveConfig(void) {
 	return;
 }
 
-unsigned __stdcall EmuLoop(void *Dummy)
+unsigned __stdcall EmuLoop(HANDLE hEvent)
 {
-	HANDLE hEvent = (HANDLE)Dummy;
 	static float FPS;
 	static unsigned int FrameCounter=0;	
 	CalibrateThrottle();

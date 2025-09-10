@@ -35,5 +35,5 @@ typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
 typedef void (*SETINTERUPTCALLPOINTER) (PAKINTERUPT);
 typedef unsigned short (*MODULEAUDIOSAMPLE)(void);
 typedef void (*MODULERESET)(void);
-typedef void (*SETINIPATH)(char *);
+typedef void (*SETINIPATH)(const char *);
 typedef void (*ASSERTINTERUPT)(unsigned char, unsigned char);

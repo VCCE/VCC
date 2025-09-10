@@ -40,8 +40,8 @@ void FlashDialogWindow();
 void WriteMemory(int,unsigned char);
 void SetBackBuffer(const RECT&);
 void CreateScrollBar(const RECT&);
-void DrawForm(HDC,LPRECT);
-void DrawMemory(HDC,LPRECT);
+void DrawForm(HDC,LPCRECT);
+void DrawMemory(HDC,LPCRECT);
 void SetEditPosition(int,int);
 void LocateMemory();
 void CommitValue();
@@ -77,7 +77,7 @@ AddrMode AddrMode_ = AddrMode::NotSet;
 
 int MemSize = 0;
 int memoryOffset = 0;
-static unsigned char *Rom = nullptr;
+unsigned char *Rom = nullptr;
 bool Editing = false;
 int editAddress = 0;
 
@@ -349,7 +349,7 @@ void CreateScrollBar(const RECT& Rect)
 //------------------------------------------------------------------
 // Draw display form with header and vert guide lines
 //------------------------------------------------------------------
-void DrawForm(HDC hdc,LPRECT clientRect)
+void DrawForm(HDC hdc,LPCRECT clientRect)
 {
 	int top = clientRect->top;
 	int lft = clientRect->left;
@@ -395,7 +395,7 @@ void DrawForm(HDC hdc,LPRECT clientRect)
 //------------------------------------------------------------------
 // Fill memory data on form
 //------------------------------------------------------------------
-void DrawMemory(HDC hdc, LPRECT clientRect)
+void DrawMemory(HDC hdc, LPCRECT clientRect)
 {
 	int top = clientRect->top;
 	int lft = clientRect->left;
@@ -646,7 +646,7 @@ void InitializeDialog(HWND hDlg)
 		SetMemType();
 
 		// Set display pen color
-		HPEN pen = (HPEN) CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
+		HPEN pen = CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
 		SelectObject(BackBuf.DeviceContext, pen);
 		DeleteObject(pen);
 

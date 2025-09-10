@@ -322,56 +322,38 @@ int keyTransCompare(const void * e1, const void * e2)
 	// elem1 - elem2
 
 	// empty listing push to end
-	if (   entry1->ScanCode1 == 0
-		&& entry1->ScanCode2 == 0
-		&& entry2->ScanCode1 != 0
-		)
+	if (entry1->ScanCode1 == 0 && entry1->ScanCode2 == 0 && entry2->ScanCode1 != 0)
 	{
 		return 1;
 	}
-	else
-	if (   entry2->ScanCode1 == 0
-		&& entry2->ScanCode2 == 0
-		&& entry1->ScanCode1 != 0
-		)
+	else if (entry2->ScanCode1 == 0 && entry2->ScanCode2 == 0 && entry1->ScanCode1 != 0)
 	{
 		return -1;
 	}
-	else
 	// push shift/alt/control by themselves to the end
-	if (   entry1->ScanCode2 == 0
-		&& (   entry1->ScanCode1 == DIK_LSHIFT
-		    || entry1->ScanCode1 == DIK_LMENU
-		    || entry1->ScanCode1 == DIK_LCONTROL
-		   )
-		)
+	else if (
+		entry1->ScanCode2 == 0
+		&& (entry1->ScanCode1 == DIK_LSHIFT
+			|| entry1->ScanCode1 == DIK_LMENU
+			|| entry1->ScanCode1 == DIK_LCONTROL))
 	{
 		result = 1;
 	}
-	else
 	// push shift/alt/control by themselves to the end
-	if (   entry2->ScanCode2 == 0
-		&& (   entry2->ScanCode1 == DIK_LSHIFT
-		    || entry2->ScanCode1 == DIK_LMENU
-		    || entry2->ScanCode1 == DIK_LCONTROL
-			)
-		)
+	else if (entry2->ScanCode2 == 0
+		&& (entry2->ScanCode1 == DIK_LSHIFT
+			|| entry2->ScanCode1 == DIK_LMENU
+		    || entry2->ScanCode1 == DIK_LCONTROL))
 	{
 		result = -1;
 	}
-	else
 	// move double key combos in front of single ones
-	if (   entry1->ScanCode2 == 0
-		&& entry2->ScanCode2 != 0
-		)
+	else if (entry1->ScanCode2 == 0 && entry2->ScanCode2 != 0)
 	{
 		result = 1;
 	}
-	else
 	// move double key combos in front of single ones
-	if (   entry2->ScanCode2 == 0
-		&& entry1->ScanCode2 != 0
-		)
+	else if (entry2->ScanCode2 == 0 && entry1->ScanCode2 != 0)
 	{
 		result = -1;
 	}
@@ -414,7 +396,7 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
 {
 	int Index1 = 0;
 	int Index2 = 0;
-	keytranslationentry_t *		keyLayoutTable = nullptr;
+	const keytranslationentry_t *		keyLayoutTable = nullptr;
 	keytranslationentry_t		keyTransEntry;
 
 	assert(keyBoardLayout >= 0 && keyBoardLayout < kKBLayoutCount);

@@ -62,10 +62,10 @@ char msg[MAX_PATH];
 static boolean logging = false;
 
 static DYNAMICMENUCALLBACK DynamicMenuCallback = NULL;
-unsigned char LoadExtRom(char *);
+unsigned char LoadExtRom(const char *);
 void SetDWTCPConnectionEnable(unsigned int enable);
-int dw_setaddr(char *bufdwaddr);
-int dw_setport(char *bufdwport);
+int dw_setaddr(const char *bufdwaddr);
+int dw_setport(const char *bufdwport);
 void BuildDynaMenu(void);
 void LoadConfig(void);
 void SaveConfig(void);
@@ -184,7 +184,7 @@ void killDWTCPThread(void)
 
 
 // set our hostname, called from config.c
-int dw_setaddr(char *bufdwaddr)
+int dw_setaddr(const char *bufdwaddr)
 {
         strcpy(dwaddress,bufdwaddr);
         return 0;
@@ -192,7 +192,7 @@ int dw_setaddr(char *bufdwaddr)
 
 
 // set our port, called from config.c
-int dw_setport(char *bufdwport)
+int dw_setport(const char *bufdwport)
 {
         dwsport = (unsigned short)atoi(bufdwport);
 
@@ -560,7 +560,7 @@ extern "C" __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 		return;
 	}
 
-extern "C" __declspec(dllexport) void SetIniPath (char *IniFilePath)
+extern "C" __declspec(dllexport) void SetIniPath (const char *IniFilePath)
 	{
 		strcpy(IniFile,IniFilePath);
 		LoadConfig();
@@ -681,7 +681,7 @@ void SaveConfig(void)
 	return;
 }
 
-unsigned char LoadExtRom( char *FilePath)	//Returns 1 on if loaded
+unsigned char LoadExtRom( const char *FilePath)	//Returns 1 on if loaded
 {
 
 	FILE *rom_handle = NULL;

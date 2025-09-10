@@ -103,7 +103,7 @@ int file_read(char* buf,int siz)
 }
 
 // Write file.  If text skip LF chars and convert CR to CRLF
-int  file_write(char* buf,int siz)
+int  file_write(const char* buf,int siz)
 {
 	// FIXME: This is needed and should not be commented out. Wrap it conditional
 	// either here or in the debug log functions.
