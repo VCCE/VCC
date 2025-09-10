@@ -219,7 +219,7 @@ void BuildDynaMenu(void)
 	DynamicMenuCallback("",1,0);
 }
 
-LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	unsigned char BTemp=0;
 	switch (message)

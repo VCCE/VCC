@@ -159,7 +159,7 @@ void sc6551_close()
 //------------------------------------------------------------------------
 // Input thread
 //------------------------------------------------------------------------
-DWORD WINAPI sc6551_input_thread(LPVOID param)
+DWORD WINAPI sc6551_input_thread(LPVOID /*param*/)
 {
 	// FIXME: This is needed and should not be commented out. Wrap it conditional
 	// either here or in the debug log functions.
@@ -199,7 +199,7 @@ DWORD WINAPI sc6551_input_thread(LPVOID param)
 //------------------------------------------------------------------------
 // Output thread.
 //------------------------------------------------------------------------
-DWORD WINAPI sc6551_output_thread(LPVOID param)
+DWORD WINAPI sc6551_output_thread(LPVOID /*param*/)
 {
     Wcnt = 0;
     OutWptr = OutBuf;

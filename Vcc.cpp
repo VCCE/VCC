@@ -779,7 +779,7 @@ void SoftReset(void)
 }
 
 // Message handler for the About box.
-BOOL CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	switch (message)
 	{
@@ -799,7 +799,7 @@ BOOL CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 // Message handler for function key help.
-BOOL CALLBACK FunctionKeys(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK FunctionKeys(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	switch (message)
 	{
@@ -1029,7 +1029,7 @@ void LoadPack(void)
 	_beginthreadex( nullptr, 0, &CartLoad, CreateEvent( nullptr, FALSE, FALSE, nullptr ), 0, &threadID );
 }
 
-unsigned __stdcall CartLoad(void *Dummy)
+unsigned __stdcall CartLoad(void* /*Dummy*/)
 {
 	LoadCart();
 	EmuState.EmulationRunning=TRUE;

@@ -265,7 +265,7 @@ void CenterDialog(HWND hDlg)
     SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
-LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	static unsigned char temp=0,temp2=0;
 	long ChipChoice[3]={IDC_EXTROM,IDC_TRSDOS,IDC_RGB};
@@ -500,7 +500,7 @@ long CreateDisk (unsigned char Disk)
 	return 0;
 }
 
-LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	unsigned char temp=0,temp2=0;
 	static unsigned char NewDiskType=JVC,NewDiskTracks=2,DblSided=1;

@@ -296,7 +296,7 @@ void dw_open( void )
 }
 
 // TCP connection thread
-unsigned __stdcall dw_thread(void *Dummy)
+unsigned __stdcall dw_thread(void* /*Dummy*/)
 {
 	_DLOG("dw_thread %d\n",dwEnabled);
 	WSADATA wsaData;

@@ -150,7 +150,7 @@ int EnumerateJoysticks(void)
 
 /*****************************************************************************/
 #ifndef _M_ARM
-BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE* instance, VOID* context)
+BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE* instance, VOID* /*context*/)
 {
     HRESULT hr;
     hr = di->CreateDevice(instance->guidInstance, &Joysticks[JoyStickIndex],nullptr);
@@ -184,7 +184,7 @@ bool InitJoyStick (unsigned char StickNumber)
 
 /*****************************************************************************/
 #ifndef _M_ARM
-BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* context)
+BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* /*context*/)
 {
     DIPROPRANGE propRange;
     propRange.diph.dwSize = sizeof(DIPROPRANGE);
