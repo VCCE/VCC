@@ -910,10 +910,10 @@ namespace VCC { namespace Debugger
 		{
 			std::string postbyte;		// 8-bit postbyte key
 			std::string form;			// Assembler form
-			int num6809cycles;			// Additional number of cycles (6809 only and 6309 in emulation)
-			int num6309cycles;			// Additional number of cycles (6309 native only)
-			int numbytes;				// Additional number of bytes
-			bool only6309;				// Valid only if running a 6309, in other words, invalid on a 6809
+			int num6809cycles = 0;		// Additional number of cycles (6809 only and 6309 in emulation)
+			int num6309cycles = 0;		// Additional number of cycles (6309 native only)
+			int numbytes = 0;			// Additional number of bytes
+			bool only6309 = 0;			// Valid only if running a 6309, in other words, invalid on a 6809
 		};
 
 		const std::map<std::string, IndexModeInfo> IndexingModes = 

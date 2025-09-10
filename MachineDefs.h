@@ -9,24 +9,24 @@ namespace VCC
 	struct CPUState
 	{
 		//  
-		unsigned char DP;
-		unsigned char CC;
-		unsigned char MD;
+		unsigned char DP = 0;
+		unsigned char CC = 0;
+		unsigned char MD = 0;
 		//
-		unsigned char A;
-		unsigned char B;
-		unsigned char E;
-		unsigned char F;
-		unsigned short X;
-		unsigned short Y;
-		unsigned short U;
-		unsigned short S;
-		unsigned short PC;
-		unsigned short V;
+		unsigned char A = 0;
+		unsigned char B = 0;
+		unsigned char E = 0;
+		unsigned char F = 0;
+		unsigned short X = 0;
+		unsigned short Y = 0;
+		unsigned short U = 0;
+		unsigned short S = 0;
+		unsigned short PC = 0;
+		unsigned short V = 0;
 		//
-		bool IsNative6309;
-		bool phyAddr;               // Decode using block relative addressing
-		unsigned short block;       // Physical address = PC + block * 0x2000
+		bool IsNative6309 = false;
+		bool phyAddr = false;		// Decode using block relative addressing
+		unsigned short block = 0;	// Physical address = PC + block * 0x2000
 	};
 
 	// Trace Events
@@ -54,19 +54,19 @@ namespace VCC
 	// CPU Execution Tracing
 	struct CPUTrace
 	{
-		TraceEvent event;					// Trace Event type
-		int frame;							// Frame being rendered
-		int line;							// Line being rendered
-		long cycleTime;						// Time since Trace start in CPU cycles
-		unsigned short pc;					// Program Counter at time of event
+		TraceEvent event = TraceEvent::Instruction;	// Trace Event type
+		int frame = 0;						// Frame being rendered
+		int line = 0;						// Line being rendered
+		long cycleTime = 0;					// Time since Trace start in CPU cycles
+		unsigned short pc = 0;				// Program Counter at time of event
 		std::vector<unsigned char> bytes;	// Op code bytes
 		std::string instruction;			// Instruction
 		std::string operand;				// Instruction Operand
 		CPUState startState;				// CPU State before instruction
 		CPUState endState;					// CPU State after instruction
-		int execCycles;						// Number of cycles indicated by emulator
-		int decodeCycles;					// Number of cycles from OpDecoder
-		int emulationState;					// State switch in emulation cycles
+		int execCycles = 0;					// Number of cycles indicated by emulator
+		int decodeCycles = 0;				// Number of cycles from OpDecoder
+		int emulationState = 0;				// State switch in emulation cycles
 		std::vector<double> emulator;		// Emulation Tracing
 	};
 

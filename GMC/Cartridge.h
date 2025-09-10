@@ -1,5 +1,6 @@
 #pragma once
 #include "CartridgeTrampolines.h"
+#include "detail/default_handlers.h"
 #include <string>
 
 
@@ -80,6 +81,6 @@ private:
 	std::string			m_Name;
 	std::string			m_CatalogId;
 	std::string			m_ConfigurationPath;
-	SETCART				AssetCartridgeLinePtr;
-	DYNAMICMENUCALLBACK AddMenuItemPtr;
+	SETCART				AssetCartridgeLinePtr = detail::NullAssetCartridgeLine;
+	DYNAMICMENUCALLBACK AddMenuItemPtr = detail::NullAddMenuItem;
 };
