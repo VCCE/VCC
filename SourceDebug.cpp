@@ -81,7 +81,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 
 	bool LoadSource(const char* source)
 	{
-		SendDlgItemMessage(hWndSourceDebug, IDC_EDIT_SOURCE, WM_SETTEXT, 0, (LPARAM)(LPCSTR)source);
+		SendDlgItemMessage(hWndSourceDebug, IDC_EDIT_SOURCE, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(source));
 
 		int nLines = 0;
 		std::string loaded(std::to_string(nLines) + " lines loaded");
@@ -227,7 +227,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	{
 		Debugger::breakpointsbuffer_type breakpoints;
 
-		std::map<int, Breakpoint>::iterator it = mapBreakpoints.begin();
+		auto it = mapBreakpoints.begin();
 		while (it != mapBreakpoints.end())
 		{
 			Breakpoint bp = it->second;

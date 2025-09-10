@@ -34,7 +34,7 @@ struct CmdLineArguments {
 extern struct CmdLineArguments CmdArg;
 
 // Get Settings from Command line string 
-int  GetCmdLineArgs(char * lpCmdLine);
+int  GetCmdLineArgs(const char * lpCmdLine);
 
 // Errors returned
 // FIXME: These need to be turned into a scoped enum and the signature of functions

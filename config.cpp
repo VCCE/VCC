@@ -80,36 +80,36 @@ LRESULT CALLBACK Paths(HWND, UINT, WPARAM, LPARAM);
 // Structure for some (but not all) Vcc settings
 struct STRConfig
 {
-	unsigned char	CPUMultiplyer;
-	unsigned short	MaxOverclock;
-	unsigned char	FrameSkip;
-	unsigned char	SpeedThrottle;
-	unsigned char	CpuType;
-	unsigned char	HaltOpcEnabled;   // 0x15   halt enabled
-	unsigned char	BreakOpcEnabled;  // 0x113E halt enabled
-	unsigned char	MonitorType;
-	unsigned char   PaletteType;
-	unsigned char	ScanLines;
-	unsigned char	Resize;
-	unsigned char	Aspect;
-	unsigned char	RememberSize;
+	unsigned char	CPUMultiplyer = 0;
+	unsigned short	MaxOverclock = 0;
+	unsigned char	FrameSkip = 0;
+	unsigned char	SpeedThrottle = 0;
+	unsigned char	CpuType = 0;
+	unsigned char	HaltOpcEnabled = 0;   // 0x15   halt enabled
+	unsigned char	BreakOpcEnabled = 0;  // 0x113E halt enabled
+	unsigned char	MonitorType = 0;
+	unsigned char   PaletteType = 0;
+	unsigned char	ScanLines = 0;
+	unsigned char	Resize = 0;
+	unsigned char	Aspect = 0;
+	unsigned char	RememberSize = 0;
 	Rect			WindowRect;
-	unsigned char	RamSize;
-	unsigned char	AutoStart;
-	unsigned char	CartAutoStart;
-	unsigned char	RebootNow;
-	unsigned char	SndOutDev;
-	unsigned char	KeyMap;
-	char			SoundCardName[64];
-	unsigned int	AudioRate;	// 0 = Mute
-	char			ModulePath[MAX_PATH];
-	char			PathtoExe[MAX_PATH];
-	char			FloppyPath[MAX_PATH];
-	char			CassPath[MAX_PATH];
-    unsigned char   ShowMousePointer;
-	unsigned char	UseExtCocoRom;
-	char        	ExtRomFile[MAX_PATH];
-	unsigned char   EnableOverclock;
+	unsigned char	RamSize = 0;
+	unsigned char	AutoStart = 0;
+	unsigned char	CartAutoStart = 0;
+	unsigned char	RebootNow = 0;
+	unsigned char	SndOutDev = 0;
+	unsigned char	KeyMap = 0;
+	char			SoundCardName[64] = { 0 };
+	unsigned int	AudioRate = 0;	// 0 = Mute
+	char			ModulePath[MAX_PATH] = { 0 };
+	char			PathtoExe[MAX_PATH] = { 0 };
+	char			FloppyPath[MAX_PATH] = { 0 };
+	char			CassPath[MAX_PATH] = { 0 };
+    unsigned char   ShowMousePointer = 0;
+	unsigned char	UseExtCocoRom = 0;
+	char        	ExtRomFile[MAX_PATH] = { 0 };
+	unsigned char   EnableOverclock = 0;
 };
 
 static STRConfig CurrentConfig;

@@ -111,9 +111,9 @@ namespace VCC { namespace Debugger
 		// haltpoints to avoid conflict with the mechanism used by the source
 		// code debugger)  BREAK instruction is page two opcodes 0x113E and the
 		// HALT instruction is opcode 0x15.
-		bool Break_Enabled();
+		bool Break_Enabled() const;
 		void Enable_Break(bool);
-		bool Halt_Enabled();
+		bool Halt_Enabled() const;
 		void Enable_Halt(bool);
 
 	protected:
@@ -146,8 +146,8 @@ namespace VCC { namespace Debugger
 	private:
 
 		mutable CriticalSection			Section_;
-		bool							HasPendingCommand_;
-		ExecutionMode					PendingCommand_;
+		bool							HasPendingCommand_ = false;
+		ExecutionMode					PendingCommand_ = ExecutionMode::Halt;
 		breakpointsbuffer_type			Breakpoints_;
 		bool							BreakpointsChanged_ = false;
 		CPUState						ProcessorState_;

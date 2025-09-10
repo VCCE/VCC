@@ -252,14 +252,14 @@ void HD6309Init(void)
 	xfreg16[6] = &W_REG;
 	xfreg16[7] = &V_REG;
 
-	ureg8[0]=(unsigned char*)&A_REG;		
-	ureg8[1]=(unsigned char*)&B_REG;		
-	ureg8[2]=(unsigned char*)&ccbits;
-	ureg8[3]=(unsigned char*)&dp.B.msb;
-	ureg8[4]=(unsigned char*)&z.B.msb;
-	ureg8[5]=(unsigned char*)&z.B.lsb;
-	ureg8[6]=(unsigned char*)&E_REG;
-	ureg8[7]=(unsigned char*)&F_REG;
+	ureg8[0] = &A_REG;		
+	ureg8[1] = &B_REG;		
+	ureg8[2] = &ccbits;
+	ureg8[3] = &dp.B.msb;
+	ureg8[4] = &z.B.msb;
+	ureg8[5] = &z.B.lsb;
+	ureg8[6] = &E_REG;
+	ureg8[7] = &F_REG;
 
 	//This handles the disparity between 6309 and 6809 Instruction timing
 	InsCycles[0][M65]=6;	//6-5
@@ -762,8 +762,8 @@ void Addr(void)
 			switch (Source)
 			{
 			case 0: case 1: source16 = D_REG; break; // A & B Reg
-			case 2:	        source16 = (unsigned short)getcc(); break; // CC
-			case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
+			case 2:	        source16 = getcc(); break; // CC
+			case 3:	        source16 = dp.Reg; break; // DP
 			case 4: case 5: source16 = 0; break; // Zero Reg
 			case 6: case 7: source16 = W_REG; break; // E & F Reg
 			}
@@ -832,7 +832,7 @@ void Adcr(void)
 			{
 			case 0: case 1: source16 = D_REG; break; // A & B Reg
 			case 2:	        source16 = (unsigned short)getcc(); break; // CC
-			case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
+			case 3:	        source16 = dp.Reg; break; // DP
 			case 4: case 5: source16 = 0; break; // Zero Reg
 			case 6: case 7: source16 = W_REG; break; // E & F Reg
 			}
@@ -899,8 +899,8 @@ void Subr(void)
 			switch (Source)
 			{
 			case 0: case 1: source16 = D_REG; break; // A & B Reg
-			case 2:	        source16 = (unsigned short)getcc(); break; // CC
-			case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
+			case 2:	        source16 = getcc(); break; // CC
+			case 3:	        source16 = dp.Reg; break; // DP
 			case 4: case 5: source16 = 0; break; // Zero Reg
 			case 6: case 7: source16 = W_REG; break; // E & F Reg
 			}
@@ -968,8 +968,8 @@ void Sbcr(void)
 			switch (Source)
 			{
 			case 0: case 1: source16 = D_REG; break; // A & B Reg
-			case 2:	        source16 = (unsigned short)getcc(); break; // CC
-			case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
+			case 2:	        source16 = getcc(); break; // CC
+			case 3:	        source16 = dp.Reg; break; // DP
 			case 4: case 5: source16 = 0; break; // Zero Reg
 			case 6: case 7: source16 = W_REG; break; // E & F Reg
 			}
@@ -1014,9 +1014,9 @@ void Andr(void)
 		temp8 = dest8 & source8;
 		switch (Dest)
 		{
-			case 2: 				setcc((unsigned char)temp8); break;
+			case 2: 				setcc(temp8); break;
 			case 4: case 5: break; // never assign to zero reg
-			default: 				*ureg8[Dest] = (unsigned char)temp8; break;
+			default: 				*ureg8[Dest] = temp8; break;
 		}
 		cc[N] = temp8 >> 7;
 		cc[Z] = ZTEST(temp8);
@@ -1036,7 +1036,7 @@ void Andr(void)
 			{
 			case 0: case 1: source16 = D_REG; break; // A & B Reg
 			case 2:	        source16 = (unsigned short)getcc(); break; // CC
-			case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
+			case 3:	        source16 = dp.Reg; break; // DP
 			case 4: case 5: source16 = 0; break; // Zero Reg
 			case 6: case 7: source16 = W_REG; break; // E & F Reg
 			}
@@ -1080,9 +1080,9 @@ void Orr(void)
 		temp8 = dest8 | source8;
 		switch (Dest)
 		{
-			case 2: 				setcc((unsigned char)temp8); break;
+			case 2: 				setcc(temp8); break;
 			case 4: case 5: break; // never assign to zero reg
-			default: 				*ureg8[Dest] = (unsigned char)temp8; break;
+			default: 				*ureg8[Dest] = temp8; break;
 		}
 		cc[N] = temp8 >> 7;
 		cc[Z] = ZTEST(temp8);
@@ -1102,7 +1102,7 @@ void Orr(void)
 			{
 			case 0: case 1: source16 = D_REG; break; // A & B Reg
 			case 2:	        source16 = (unsigned short)getcc(); break; // CC
-			case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
+			case 3:	        source16 = dp.Reg; break; // DP
 			case 4: case 5: source16 = 0; break; // Zero Reg
 			case 6: case 7: source16 = W_REG; break; // E & F Reg
 			}
@@ -1146,9 +1146,9 @@ void Eorr(void)
 		temp8 = dest8 ^ source8;
 		switch (Dest)
 		{
-			case 2: 				setcc((unsigned char)temp8); break;
+			case 2: 				setcc(temp8); break;
 			case 4: case 5: break; // never assign to zero reg
-			default: 				*ureg8[Dest] = (unsigned char)temp8; break;
+			default: 				*ureg8[Dest] = temp8; break;
 		}
 		cc[N] = temp8 >> 7;
 		cc[Z] = ZTEST(temp8);
@@ -1168,7 +1168,7 @@ void Eorr(void)
 			{
 			case 0: case 1: source16 = D_REG; break; // A & B Reg
 			case 2:	        source16 = (unsigned short)getcc(); break; // CC
-			case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
+			case 3:	        source16 = dp.Reg; break; // DP
 			case 4: case 5: source16 = 0; break; // Zero Reg
 			case 6: case 7: source16 = W_REG; break; // E & F Reg
 			}
@@ -1231,7 +1231,7 @@ void Cmpr(void)
 			{
 			case 0: case 1: source16 = D_REG; break; // A & B Reg
 			case 2:	        source16 = (unsigned short)getcc(); break; // CC
-			case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
+			case 3:	        source16 = dp.Reg; break; // DP
 			case 4: case 5: source16 = 0; break; // Zero Reg
 			case 6: case 7: source16 = W_REG; break; // E & F Reg
 			}

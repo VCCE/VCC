@@ -20,7 +20,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 unsigned char disk_io_read(unsigned char port);
 void disk_io_write(unsigned char data,unsigned char port);	
-int mount_disk_image(char *,unsigned char );
+int mount_disk_image(const char *,unsigned char );
 void unmount_disk_image(unsigned char drive);
 void DiskStatus(char *);
 void PingFdc(void);

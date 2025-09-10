@@ -84,7 +84,7 @@ void SetDumpPath(const char * dumpfile)
 void MemDump(void)
 {
 	int fd = OpenDumpFile();
-	unsigned char * ptr = Get_mem_pointer();
+	const unsigned char * ptr = Get_mem_pointer();
 	int siz = GetMemSize();
 	blockdump(fd,ptr,siz);
     _close(fd);
@@ -94,12 +94,12 @@ void MemDump(void)
 void CpuDump(void)
 {
 	std::array<int,8> regs = GetMmuRegs();
-	unsigned char * pmem = Get_mem_pointer();
+	const unsigned char * pmem = Get_mem_pointer();
 	int blk;
 
 	int fd = OpenDumpFile();
 	for (blk=0; blk<8; blk++) {
-		unsigned char * ptr = pmem + regs[blk] * 0x2000;
+		const unsigned char * ptr = pmem + regs[blk] * 0x2000;
 		int siz = 0x2000;
 		blockdump(fd,ptr,siz);
 	}

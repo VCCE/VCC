@@ -241,7 +241,7 @@ extern "C"
 extern "C"
 {
     __declspec(dllexport) void
-    SetIniPath (char *IniFilePath)
+    SetIniPath (const char *IniFilePath)
     {
         strcpy(IniFile,IniFilePath);
         LoadConfig();

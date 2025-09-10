@@ -113,7 +113,7 @@ std::string GetClipboardText();
 void HLINE(void);
 void VSYNC(unsigned char level);
 void HSYNC(unsigned char level);
-string CvtStrToSC(string);
+std::string CvtStrToSC(std::string);
 
 using namespace std;
 
@@ -947,7 +947,7 @@ std::string GetClipboardText()
 	if (!OpenClipboard(nullptr)) { MessageBox(nullptr, "Unable to open clipboard.", "Clipboard", 0); return {}; }
 	HANDLE hClip = GetClipboardData(CF_TEXT);
 	if (hClip == nullptr) { CloseClipboard(); MessageBox(nullptr, "No text found in clipboard.", "Clipboard", 0); return {}; }
-	char* tmp = static_cast<char*>(GlobalLock(hClip));
+	const char* tmp = static_cast<char*>(GlobalLock(hClip));
 	if (tmp == nullptr) {
 		CloseClipboard();  MessageBox(nullptr, "NULL Pointer", "Clipboard", 0); return {};
 	}

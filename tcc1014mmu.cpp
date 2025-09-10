@@ -49,7 +49,7 @@ static unsigned int VidMask[4]={0x1FFFF,0x7FFFF,0x1FFFFF,0x7FFFFF};
 static unsigned char CurrentRamConfig=1;
 static unsigned short MmuPrefix=0;
 static unsigned int RamSize=0;
-atomic_bool mem_initializing;
+std::atomic_bool mem_initializing;
 
 void UpdateMmuArray(void);
 
@@ -276,10 +276,14 @@ void MemWrite8(unsigned char data,unsigned short address)
 		return;
 	}
 	if (RamVectors)	//Address must be $FE00 - $FEFF
-		memory[(0x2000*VectorMask[CurrentRamConfig])|(address & 0x1FFF)]=data;
-	else
-	if (MapType | (MmuRegisters[MmuState][address>>13] <VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address>>13] > VectorMask[CurrentRamConfig]))
-		MemPages[MmuRegisters[MmuState][address>>13]][address & 0x1FFF]=data;
+	{
+		memory[(0x2000 * VectorMask[CurrentRamConfig]) | (address & 0x1FFF)] = data;
+	}
+	else if (MapType | (MmuRegisters[MmuState][address >> 13] < VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address >> 13] > VectorMask[CurrentRamConfig]))
+	{
+		MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
+	}
+
 	return;
 }
 
@@ -325,10 +329,16 @@ void __fastcall fMemWrite8(unsigned char data,unsigned short address)
 		return;
 	}
 	if (RamVectors)	//Address must be $FE00 - $FEFF
-		memory[(0x2000*VectorMask[CurrentRamConfig])|(address & 0x1FFF)]=data;
+	{
+		memory[(0x2000 * VectorMask[CurrentRamConfig]) | (address & 0x1FFF)] = data;
+	}
 	else
-	if (MapType | (MmuRegisters[MmuState][address>>13] <VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address>>13] > VectorMask[CurrentRamConfig]))
-		MemPages[MmuRegisters[MmuState][address>>13]][address & 0x1FFF]=data;
+	{
+		if (MapType | (MmuRegisters[MmuState][address >> 13] < VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address >> 13] > VectorMask[CurrentRamConfig]))
+		{
+			MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
+		}
+	}
 	return;
 }
 

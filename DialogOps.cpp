@@ -24,7 +24,6 @@
 //    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 //
 //-------------------------------------------------------------------------------------------
-
 #include <Windows.h>
 #include "DialogOps.h"
 
@@ -113,7 +112,8 @@ void FileDialog::getupath(char * PathCopy, int maxsize) const {
 }
 
 // Get a pointer to the selected file path
-char * FileDialog::path() {
+const char *FileDialog::path() const
+{
 	return Path;
 }
 

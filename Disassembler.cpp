@@ -707,7 +707,7 @@ bool IsBreakpoint(int realaddr)
 /*******************************************************/
 void FindHaltpoints()
 {
-    std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
+    auto it = mHaltpoints.begin();
     while (it != mHaltpoints.end()) {
         int adr = it->first;
         // If decoded with CPU addressing convert haltpoint to CPU address
@@ -884,7 +884,7 @@ void RefreshHPlist()
     if (hBrkpDlg == nullptr) return;
     SendDlgItemMessage(hBrkpDlg,IDC_LIST_BREAKPOINTS,LB_RESETCONTENT,0,0);
     if (mHaltpoints.size() > 0) {
-        std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
+		auto it = mHaltpoints.begin();
         while (it != mHaltpoints.end()) {
             int realaddr = it->first;
             Haltpoint hp = it->second;
@@ -918,7 +918,7 @@ void ListHaltpoints()
 /*******************************************************/
 void KillHaltpoints()
 {
-    std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
+	auto it = mHaltpoints.begin();
     while (it != mHaltpoints.end()) {
         int realaddr = it->first;
         Haltpoint hp = it->second;
@@ -938,7 +938,7 @@ void KillHaltpoints()
 void ApplyHaltpoints(bool flag)
 {
     // Iterate over all defined haltpoints
-    std::map<int, Haltpoint>::iterator it = mHaltpoints.begin();
+	auto it = mHaltpoints.begin();
     while (it != mHaltpoints.end()) {
         int realaddr = it->first;
         Haltpoint hp = it->second;
@@ -1029,7 +1029,7 @@ void DecodeAddr()
 
     // Convert real address to offset and block for disassemble
     if (RealAdrMode) {
-        blk = (unsigned) adr >> 13;
+        blk = adr >> 13;
         adr = adr & 0x1FFF;
     }
 

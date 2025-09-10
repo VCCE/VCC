@@ -110,7 +110,7 @@ int tcpip_read(char* buf, int siz)
 }
 
 //Write
-int tcpip_write(char* buf, int siz)
+int tcpip_write(const char* buf, int siz)
 {
     char CRLF[3]="\r\n";
 

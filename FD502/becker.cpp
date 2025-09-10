@@ -86,7 +86,7 @@ static float WriteSpeed = 0;
 // Should default to "127.0.0.1" and "65504"
 //------------------------------------------------------
 
-int becker_sethost(char *bufdwaddr, char *bufdwport)
+int becker_sethost(const char *bufdwaddr, const char *bufdwport)
 {
 	strcpy(dwaddress,bufdwaddr);
 	strcpy(dwsport,bufdwport);

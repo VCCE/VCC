@@ -80,31 +80,31 @@ extern void sc6551_write(unsigned char data, unsigned short port);
 // Comunications hooks
 extern int  com_open();
 extern void com_close();
-extern int  com_write(char*,int);
+extern int  com_write(const char*,int);
 extern int  com_read(char*,int);
 
 // Console
 extern int  console_open();
 extern void console_close();
 extern int  console_read(char*,int);
-extern int  console_write(char*,int);
+extern int  console_write(const char*,int);
 
 // File
 extern int  file_open();
 extern void file_close();
 extern int  file_read(char*,int);
-extern int  file_write(char*,int);
+extern int  file_write(const char*,int);
 
 // Tcpip
 extern int  tcpip_open();
 extern void tcpip_close();
 extern int  tcpip_read(char*,int);
-extern int  tcpip_write( char*,int);
+extern int  tcpip_write(const char*,int);
 
 // WinCom 
 extern int  wincom_open();
 extern void wincom_close();
 extern int  wincom_read(char*,int);
-extern int  wincom_write(char*,int);
+extern int  wincom_write(const char*,int);
 
 #endif
