@@ -75,7 +75,7 @@ extern "C"
 {
 #endif
 	void			vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout);
-	void			vccKeyboardHandleKey(unsigned char, unsigned char, keyevent_e keyState);
+	void			vccKeyboardHandleKey(unsigned char, keyevent_e keyState);
 	unsigned char	vccKeyboardGetScan(unsigned char);
 #ifdef __cplusplus
 }

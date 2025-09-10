@@ -103,7 +103,7 @@ char *GenKeymapLine(keytranslationentry_t *);
 
 // Lookup functions for keyname tables
 static struct CoCoKey * cctable_rowcol_lookup(unsigned char, unsigned char);
-static struct CoCoKey * cctable_keyid_lookup(int);
+static struct CoCoKey * cctable_keyid_lookup();
 static struct CoCoKey * cocotable_keyname_lookup(const char *);
 static struct PCScanCode * scantable_scancode_lookup(int);
 static struct PCScanCode * scantable_keyname_lookup(const char *);
@@ -535,8 +535,7 @@ CoCoKey * cocotable_keyname_lookup(const char * keyname)
 //-----------------------------------------------------
 // Lookup CoCo key by button id.  Sequential search.
 //-----------------------------------------------------
-static struct 
-CoCoKey * cctable_keyid_lookup(int id) 
+static struct CoCoKey * cctable_keyid_lookup() 
 {
 	struct CoCoKey *p;
 	if (CC_KeySelected) {
@@ -670,7 +669,7 @@ BOOL SetCustomKeymap() {
 		// If no entry and no coco key to map do nothing
 		if ( (CC_KeySelected + CC_ModSelected) == 0 ) return TRUE;
 
-		p = cctable_keyid_lookup(CC_KeySelected);
+		p = cctable_keyid_lookup();
 		int len = 0;
 	    pKeyTran = keyTranslationsCustom;
 
@@ -709,7 +708,7 @@ BOOL SetCustomKeymap() {
 
 	// Update custom translation table
     if (CC_KeySelected != 0) {  // BtnId
-		p = cctable_keyid_lookup(CC_KeySelected);
+		p = cctable_keyid_lookup();
 		if (p) {
 			pKeyTran->Row1 = 1<<(p->row);
 		    pKeyTran->Col1 = p->col;
@@ -857,7 +856,7 @@ void ShowCoCoKey()
 
 	// Show coco keys names in editbox
 	if (CC_KeySelected) {
-        p = cctable_keyid_lookup(CC_KeySelected);
+        p = cctable_keyid_lookup();
 		if (p != nullptr) {
 			if (p->label != nullptr) {
 			    keytxt = p->label;

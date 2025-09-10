@@ -431,7 +431,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	        OEMscan = (unsigned char) ((lParam >> 16) & 0xFF);
             Extended=(lParam >> 24) & 1;
 		    if (Extended && (OEMscan!=DIK_NUMLOCK)) OEMscan += 0x80;
-			vccKeyboardHandleKey(kb_char,OEMscan,kEventKeyUp);
+			vccKeyboardHandleKey(OEMscan,kEventKeyUp);
 			
 			return 0;
 			break;
@@ -555,7 +555,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					// send shift and other keystrokes to the emulator if it is active
 					if ( EmuState.EmulationRunning )
 					{
-						vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyDown);
+						vccKeyboardHandleKey(OEMscan, kEventKeyDown);
 						// Save key down in case focus is lost
 						save_key_down(kb_char,OEMscan);
 					}
@@ -666,8 +666,8 @@ void save_key_down(unsigned char kb_char, unsigned char OEMscan) {
 
 // Send key up events to keyboard handler for saved keys
 void raise_saved_keys() {
-	if (SC_save1) vccKeyboardHandleKey(KB_save1,SC_save1,kEventKeyUp);
-	if (SC_save2) vccKeyboardHandleKey(KB_save2,SC_save2,kEventKeyUp);
+	if (SC_save1) vccKeyboardHandleKey(SC_save1,kEventKeyUp);
+	if (SC_save2) vccKeyboardHandleKey(SC_save2,kEventKeyUp);
 	SC_save1 = 0;
 	SC_save2 = 0;
 	return;
