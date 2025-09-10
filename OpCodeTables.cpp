@@ -26,7 +26,7 @@
 
 namespace VCC { namespace Debugger
 {
-	bool OpCodeTables::ProcessHeuristics(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace)
+	bool OpCodeTables::ProcessHeuristics(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
 		bool valid = true;
 		trace.decodeCycles = state.IsNative6309 ? opcode.num6309cycles : opcode.num6809cycles;

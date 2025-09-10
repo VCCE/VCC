@@ -961,7 +961,7 @@ namespace VCC { namespace Debugger
 	public:
 
 		// Calculate the exact number of cycles based on CPU state
-		bool ProcessHeuristics(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace);
+		bool ProcessHeuristics(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const;
 
 	protected:
 
