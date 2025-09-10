@@ -437,7 +437,7 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 int CreateDisk(HWND hDlg, int hdsize)
 {
     HANDLE hr=CreateFile( NewVHDfile, GENERIC_READ | GENERIC_WRITE,
-                          0,0,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,0);
+                          0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
     if (hr==INVALID_HANDLE_VALUE) {
         *NewVHDfile='\0';
         MessageBox(hDlg,"Can't create File","Error",0);
@@ -445,7 +445,7 @@ int CreateDisk(HWND hDlg, int hdsize)
     }
 
     if (hdsize>0) {
-        SetFilePointer(hr, hdsize * 1024, 0, FILE_BEGIN);
+        SetFilePointer(hr, hdsize * 1024, nullptr, FILE_BEGIN);
         SetEndOfFile(hr);
     }
 

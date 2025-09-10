@@ -297,10 +297,10 @@ unsigned char MountDisk(char *FileName,unsigned char disk)
 
 	if (Drive[disk].RawDrive==0)
 	{
-		Drive[disk].FileHandle = CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,0,0,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
+		Drive[disk].FileHandle = CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,0,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 		if (Drive[disk].FileHandle==INVALID_HANDLE_VALUE)
 		{	//Can't open read/write might be read only
-			Drive[disk].FileHandle = CreateFile(FileName,GENERIC_READ,0,0,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
+			Drive[disk].FileHandle = CreateFile(FileName,GENERIC_READ,0,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 			Drive[disk].WriteProtect=0xFF;
 		}
 		if (Drive[disk].FileHandle==INVALID_HANDLE_VALUE)

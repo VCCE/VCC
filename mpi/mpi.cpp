@@ -520,13 +520,13 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 		ExtRomPointers[Slot]=(unsigned char *)malloc(0x40000);
 		if (ExtRomPointers[Slot]==nullptr)
 		{
-			MessageBox(0,"Rom pointer is NULL","Error",0);
+			MessageBox(nullptr,"Rom pointer is NULL","Error",0);
 			return 0; //Can Allocate RAM
 		}
 		rom_handle=fopen(MountName,"rb");
 		if (rom_handle==nullptr)
 		{
-			MessageBox(0,"File handle is NULL","Error",0);
+			MessageBox(nullptr,"File handle is NULL","Error",0);
 			return 0;
 		}
 		while ((feof(rom_handle)==0) & (index<0x40000))
@@ -573,7 +573,7 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 		if (GetModuleNameCalls[Slot] == nullptr)
 		{
 			UnloadModule(Slot);
-			MessageBox(0,"Not a valid Module","Ok",0);
+			MessageBox(nullptr,"Not a valid Module","Ok",0);
 			return 0; //Error Not a Vcc Module
 		}
 		GetModuleNameCalls[Slot](ModuleNames[Slot],CatNumber[Slot],DynamicMenuCallbackCalls[Slot]); //Need to add address of local Dynamic menu callback function!
@@ -791,7 +791,7 @@ void BuildDynaMenu(void)
 {
 	// DynamicMenuCallback() resides in VCC pakinterface. Make sure we have it's address
 	if (DynamicMenuCallback == nullptr) {
-		MessageBox(0,"MPI internal menu error","Ok",0);
+		MessageBox(nullptr,"MPI internal menu error","Ok",0);
 		return;
 	}
 
