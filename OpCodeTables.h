@@ -979,7 +979,7 @@ namespace VCC { namespace Debugger
 		bool GetIndexMode(unsigned char postbyte, IndexModeInfo& mode, std::string& operand) const;
 		std::string ToRegister(unsigned char postbyte) const;
 		std::string ToInterRegister(unsigned char reg) const;
-		std::string ToRelativeAddressString(int value, int oplen, int operandlen) const;
+		std::string ToRelativeAddressString(int value, int operandlen) const;
 
 	};
 }}

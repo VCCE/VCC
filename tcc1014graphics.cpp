@@ -9716,7 +9716,7 @@ void SetGimeBoarderColor(unsigned char data)
 	return;
 }
 
-void SetBoarderChange (unsigned char data)
+void SetBoarderChange ()
 {
 	if (BoarderChange >0)
 		BoarderChange--;

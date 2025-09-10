@@ -59,7 +59,7 @@ This file is part of VCC (Virtual Color Computer).
 
 unsigned char SetMouseStatus(unsigned char, unsigned char);
 bool pasting = false;  //Are the keyboard functions in the middle of a paste operation?
-bool GetNextScanInPasteQueue(unsigned char col);
+bool GetNextScanInPasteQueue();
 
 /*****************************************************************************/
 //	Global variables
@@ -115,7 +115,7 @@ vccKeyboardGetScan(unsigned char Col)
 
 	ret_val = 0;
 
-	GetNextScanInPasteQueue(Col);
+	GetNextScanInPasteQueue();
 
 	temp = ~Col; //Get colums
 	mask = 1;
@@ -555,7 +555,7 @@ void PasteIntoQueue(const std::string& txt)
 }
 
 
-bool GetNextScanInPasteQueue(unsigned char col)
+bool GetNextScanInPasteQueue()
 {
 	if (CurrentPasteState == PasteState::Idle)
 	{

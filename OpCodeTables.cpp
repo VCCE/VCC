@@ -105,7 +105,7 @@ namespace VCC { namespace Debugger
 		case Indexed:
 			break;
 		case Relative:
-			trace.operand = ToRelativeAddressString(operand, opcode.oplen, operandLen);
+			trace.operand = ToRelativeAddressString(operand, operandLen);
 			break;
 		case Extended:
 			trace.operand = "$" + ToHexString(operand, 4);
@@ -305,7 +305,7 @@ namespace VCC { namespace Debugger
 
 		// All long branches are relative.
 		int operand = (trace.bytes[opcode.oplen] << 8) + trace.bytes[opcode.oplen + 1];
-		trace.operand = ToRelativeAddressString(operand, opcode.oplen, operandLen);
+		trace.operand = ToRelativeAddressString(operand, operandLen);
 
 		// No adjustment needed on 6309 
 		if (state.IsNative6309)
@@ -489,7 +489,7 @@ namespace VCC { namespace Debugger
 		return "?";
 	}
 
-	std::string OpCodeTables::ToRelativeAddressString(int value, int oplen, int operandlen) const
+	std::string OpCodeTables::ToRelativeAddressString(int value, int operandlen) const
 	{
 		std::ostringstream fmt;
 
