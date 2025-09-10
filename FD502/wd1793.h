@@ -51,13 +51,13 @@ struct DiskInfo
 
 struct SectorInfo
 {
-	unsigned char Track;
-	unsigned char Side;
-	unsigned char Sector;
-	unsigned short Lenth;
-	unsigned short CRC;
-	long DAM;
-	unsigned char Density;
+	unsigned char Track = 0;
+	unsigned char Side = 0;
+	unsigned char Sector = 0;
+	unsigned short Lenth = 0;
+	unsigned short CRC = 0;
+	long DAM = 0;
+	unsigned char Density = 0;
 };
 
 
