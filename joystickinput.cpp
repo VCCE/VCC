@@ -239,7 +239,7 @@ inline int vccJoystickType() {
 /*****************************************************************************/
 // Called by mc6821 when $FF20 is written
 void
-vccJoystickStartTandy(unsigned char data, unsigned char next)
+vccJoystickStartTandy(unsigned char next)
 {
 	if (vccJoystickType() == 2) {
         if ( next == 2 ) {
