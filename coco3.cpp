@@ -232,7 +232,7 @@ float RenderFrame (SystemState *RFState)
 
 	if (!(FrameCounter % RFState->FrameSkip))
 	{
-		if (LockScreen(RFState))
+		if (LockScreen())
 			return 0;
 	}
 
@@ -267,7 +267,7 @@ float RenderFrame (SystemState *RFState)
 	{
 		DrawBottomBoarder[RFState->BitDepth](RFState);
 		UnlockScreen(RFState);
-		SetBoarderChange(0);
+		SetBoarderChange();
 	}
 
 	// Bottom Border continues but is offscreen

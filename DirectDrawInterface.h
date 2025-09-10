@@ -22,7 +22,7 @@ This file is part of VCC (Virtual Color Computer).
 
 BOOL InitInstance(HINSTANCE,int);
 void UnlockScreen(SystemState *);
-unsigned char LockScreen(const SystemState *);
+unsigned char LockScreen();
 void SetStatusBarText(const char *,const SystemState *);
 int GetRenderWindowStatusBarHeight();
 bool CreateDDWindow(SystemState *);

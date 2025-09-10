@@ -36,9 +36,9 @@ static unsigned char EnhancedFIRQFlag=0,EnhancedIRQFlag=0;
 static int InteruptTimer=0;
 void SetInit0(unsigned char);
 void SetInit1(unsigned char);
-void SetGimeIRQStearing(unsigned char);
+void SetGimeIRQStearing();
 void SetGimeFIRQStearing(unsigned char);
-void SetTimerMSB(unsigned char);
+void SetTimerMSB();
 void SetTimerLSB(unsigned char);
 unsigned char GetInit0(unsigned char port);
 static unsigned char IRQStearing[8]={0,0,0,0,0,0,0,0};
@@ -72,7 +72,7 @@ void GimeWrite(unsigned char port,unsigned char data)
 		break;
 
 	case 0x92:
-		SetGimeIRQStearing(data);
+		SetGimeIRQStearing();
 		break;
 
 	case 0x93:
@@ -80,7 +80,7 @@ void GimeWrite(unsigned char port,unsigned char data)
 		break;
 
 	case 0x94:
-		SetTimerMSB(data);
+		SetTimerMSB();
 		break;
 
 	case 0x95:
@@ -213,7 +213,7 @@ unsigned char GetInit0(unsigned char port)
 	return data;
 }
 
-void SetGimeIRQStearing(unsigned char data) //92
+void SetGimeIRQStearing() //92
 {
 	// FIXME: GimeIRQStearing for CART (bit 0)
 
@@ -266,7 +266,7 @@ void SetGimeFIRQStearing(unsigned char data) //93
 	return;
 }
 
-void SetTimerMSB(unsigned char data) //94
+void SetTimerMSB() //94
 {
 	unsigned short Temp;
 	Temp=((GimeRegisters[0x94] <<8)+ GimeRegisters[0x95]) & 4095;

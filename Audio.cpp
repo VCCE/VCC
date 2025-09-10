@@ -292,7 +292,7 @@ int SoundDeInit(void)
 	return 0;
 }
 
-int SoundInInit (HWND main_window_handle,const _GUID * Guid)
+int SoundInInit (const _GUID * Guid)
 {
 	hr=DirectSoundCaptureCreate(Guid, &lpdsin, nullptr);
 	if (hr!=DS_OK)

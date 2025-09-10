@@ -53,7 +53,7 @@ void GimeInit(void);
 void GimeReset(void);
 void SetVideoBank(unsigned char);
 unsigned char SetMonitorType(unsigned char );
-void SetBoarderChange (unsigned char);
+void SetBoarderChange ();
 int GetBytesPerRow(void);
 unsigned char GetHorizontalBorderSize();
 unsigned short GetDisplayedPixelsPerLine();

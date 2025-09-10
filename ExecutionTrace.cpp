@@ -192,7 +192,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	}
 
 //-------------------------------------------------------------------------------
-	void DrawSamplingInProgress(HDC hdc, LPRECT clientRect)
+	void DrawSamplingInProgress(HDC hdc)
 	{
 		status = TraceStatus::Collecting;
 
@@ -216,7 +216,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	}
 
 //-------------------------------------------------------------------------------
-	void DrawNoSamplesCollected(HDC hdc, LPRECT clientRect)
+	void DrawNoSamplesCollected(HDC hdc)
 	{
 		status = TraceStatus::Empty;
 
@@ -244,7 +244,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		// Nothing collected yet?
 		if (samples == 0)
 		{
-			DrawNoSamplesCollected(hdc, clientRect);
+			DrawNoSamplesCollected(hdc);
 			return;
 		}
 
@@ -633,7 +633,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		// Show tracing is in progress.
 		if (tracing)
 		{
-			DrawSamplingInProgress(hdc, clientRect);
+			DrawSamplingInProgress(hdc);
 			return;
 		}
 
