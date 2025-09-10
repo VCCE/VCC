@@ -824,7 +824,7 @@ void SelectCardBox(void)
 
     // Start from user home diretory
     SHGetSpecialFolderLocation
-        (nullptr,CSIDL_PROFILE,(LPITEMIDLIST *) &bi.pidlRoot);
+        (nullptr,CSIDL_PROFILE, const_cast<LPITEMIDLIST*>(& bi.pidlRoot));
 
     LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
     if (pidl != nullptr) {

@@ -77,7 +77,7 @@ namespace VCC
 		for (size_t i = 0; i < samples; ++i)
 		{
 			auto p = inBuffer + i * width + width - 1;
-			int sample = (int)*(int8_t*)p;
+			int sample = *p;
 			outBuffer[i] = (uint8_t)(sample + CAS_SILENCE);
 		}
 	}
@@ -87,7 +87,7 @@ namespace VCC
 		for (size_t i = 0; i < samples; ++i)
 		{
 			auto p = inBuffer + i * width + width - 1;
-			uint8_t sample = *(uint8_t*)p;
+			uint8_t sample = *p;
 			outBuffer[i] = sample;
 		}
 	}
@@ -97,7 +97,7 @@ namespace VCC
 		for (size_t i = 0; i < samples; ++i)
 		{
 			auto p = inBuffer + i * width;
-			float sample = *(float*)p;
+			float sample = *reinterpret_cast<const float*>(p);
 			outBuffer[i] = (uint8_t)(sample * 128) + 256 / 2;
 		}
 	}

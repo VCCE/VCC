@@ -29,8 +29,8 @@ This file is part of VCC (Virtual Color Computer).
 #define TOFILE 1
 
 void WriteLog(const char *, unsigned char);
-void PrintLogC(const void * fmt, ...);
-void PrintLogF(const void * fmt, ...);
+void PrintLogC(const char* fmt, ...);
+void PrintLogF(const char* fmt, ...);
 void OpenLogFile(const char * filename);
 
 // Debug logging if USE_LOGGING is defined
