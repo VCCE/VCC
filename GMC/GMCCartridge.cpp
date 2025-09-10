@@ -1,10 +1,6 @@
 #include "GMCCartridge.h"
 #include <Windows.h>
 
-#undef AddMenuSeparator
-
-#undef AddMenuItem
-#undef LoadMenu
 
 GMCCartridge::GMCCartridge()
 	: Cartridge("Game Master Catridge", "SN76489")
@@ -18,7 +14,7 @@ void GMCCartridge::LoadConfiguration(const std::string& filename)
 }
 
 
-void GMCCartridge::LoadMenu()
+void GMCCartridge::LoadMenuItems()
 {
 	AddMenuItem("", 0, ItemType::Head);
 	AddMenuSeparator();

@@ -41,7 +41,7 @@ void Cartridge::LoadConfiguration(const std::string& /*filename*/)
 }
 
 
-void Cartridge::LoadMenu()
+void Cartridge::LoadMenuItems()
 {
 }
 
@@ -72,7 +72,7 @@ void Cartridge::SetConfigurationPath(std::string path)
 {
 	m_ConfigurationPath = move(path);
 	LoadConfiguration(m_ConfigurationPath);
-	LoadMenu();
+	LoadMenuItems();
 }
 
 
