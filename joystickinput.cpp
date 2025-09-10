@@ -367,7 +367,7 @@ unsigned int
 get_pot_value(unsigned char pot)
 {
 #ifndef _M_ARM
-    DIJOYSTATE2 Stick1;
+	DIJOYSTATE2 Stick1 = { 0 };
 
     // Poll left joystick if attached
     if (LeftJS.UseMouse==3) {

@@ -18,7 +18,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "distoRTC.h"
+#include "distortc.h"
 
 /* Table description:							   Bit3  Bit2  Bit1  Bit0
 Write to $FF51 read from $FF50
