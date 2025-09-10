@@ -14,9 +14,7 @@ Cartridge* Cartridge::m_Singleton(nullptr);
 Cartridge::Cartridge(std::string name, std::string catalogId)
 	:
 	m_Name(move(name)),
-	m_CatalogId(move(catalogId)),
-	AssetCartridgeLinePtr(detail::NullAssetCartridgeLine),
-	AddMenuItemPtr(detail::NullAddMenuItem)
+	m_CatalogId(move(catalogId))
 {
 	if (m_Singleton)
 	{
