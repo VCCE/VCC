@@ -164,30 +164,29 @@ void GimeWrite(unsigned char port,unsigned char data)
 
 unsigned char GimeRead(unsigned char port)
 {
-	// read irq status register $FF92
-	if (port == 0x92)
+	// iobus sets port range 0x90 to 0xBF
+	auto data = 0;
+	switch (port)
 	{
-		auto irqStatus = LastIrq;
-		LastIrq = 0;
+	case 0x92:
+		data=LastIrq;
+		LastIrq=0;
 		CPUDeAssertInterupt(IS_GIME, INT_IRQ);
-		return irqStatus;
-	}
-	// read firq status register $FF93
-	else if (port == 0x93)
-	{
-		auto irqStatus = LastFirq;
-		LastFirq = 0;
+		return(data);
+	case 0x93:
+		data=LastFirq;
+		LastFirq=0;
 		CPUDeAssertInterupt(IS_GIME, INT_FIRQ);
-		return irqStatus;
+		return(data);
+	default:
+		if (port >= 0xA0) {
+			data = GimeRegisters[port];
+		    if (port >= 0xB0) data &= 0x3F;
+			return data;
+	    } else {
+			return 0x1B;
+		}
 	}
-	// read mmu register $FFAx
-	else if ((port & 0xF0) == 0xA0)
-	{
-		return GimeRegisters[port];
-	}
-
-	// everything else is NC
-	return 0x1b;
 }
 
 void SetInit0(unsigned char data)
