@@ -172,7 +172,7 @@ bool CreateDDWindow(SystemState *CWState)
 		wcex.hCursor		= LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_NONE));
 	}
 	if (!RegisterClassEx(&wcex))
-		return FALSE;
+		return false;
 	if (CWState->FullScreen == 0)
 	{
 		//Windowed Mode
@@ -186,12 +186,12 @@ bool CreateDDWindow(SystemState *CWState)
 											 rc.right - rc.left, rc.bottom - rc.top,
 											 nullptr, nullptr, g_hInstance, nullptr);
 		if (!CWState->WindowHandle)	// Can't create window
-		   return FALSE;
+		   return false;
 		
 		// Create the Status Bar Window at the bottom
 		hwndStatusBar = ::CreateStatusWindow(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | CCS_BOTTOM , "Ready", CWState->WindowHandle, 2);
 		if (!hwndStatusBar) // Can't create Status bar
-		   return FALSE;
+		   return false;
 
 		// Retrieves the dimensions of the bounding rectangle of the specified window
 		// The dimensions are given in screen coordinates that are relative to the upper-left corner of the screen.
@@ -212,7 +212,7 @@ bool CreateDDWindow(SystemState *CWState)
 
 		MONITORINFO mi = { sizeof(mi) };
 		if (!GetMonitorInfo(hmon, &mi))
-			return nullptr;
+			return false;
 
 		CWState->WindowHandle = CreateWindow(
 			szWindowClass,
@@ -243,12 +243,12 @@ bool CreateDDWindow(SystemState *CWState)
 
 		// otherwise attempt to use directx
 		if (!UseOpenGL && !InitGraphics<ClassDirectX>(&g_DirectXDisplay, CWState, w, h))
-			return FALSE;
+			return false;
 
 		SetAspect(ForceAspect);
 	}
 
-	return TRUE;
+	return true;
 }
 
 /*--------------------------------------------------------------------------*/

@@ -931,7 +931,7 @@ void ParseStartup(void)
     }
 
     // Strict single char followed by '=' then path
-    while (fgets(buf,sizeof(buf),su) > 0) {
+    while (fgets(buf,sizeof(buf),su) != nullptr) {
         //Chomp line ending
         buf[strcspn(buf,"\r\n")] = 0;
         // Skip line if less than 3 chars;
