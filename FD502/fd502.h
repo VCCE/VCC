@@ -21,8 +21,6 @@ This file is part of VCC (Virtual Color Computer).
 // Comment next line to exclude becker code
 #define COMBINE_BECKER
 
-#include "../MachineDefs.h"
-
 extern "C" void (*AssertInt)(unsigned char,unsigned char);
 void BuildDynaMenu(void);
 // FIXME: These need to be turned into an enum and the signature of functions
