@@ -34,7 +34,7 @@ namespace Screenshot
         ERR_WRITEPNG,
     };
 
-    int Snap(VCC::IDisplay* display);
+    int Snap(VCC::IDisplay* display, const char* fname);
 }
 
 
