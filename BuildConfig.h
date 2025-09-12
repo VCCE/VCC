@@ -87,6 +87,17 @@
 #define USE_DEBUG_AUDIOTAPE false
 #endif
 
+//
+// Enable extra debugging options.
+// Command Line:
+//      -n              No video output.
+//      -f<n>           Render <n> frames.
+//      -s<file>        Write <file> screenshot after rendering <n> frames.
+//
+#ifndef USE_DEBUG_OPTIONS
+#define USE_DEBUG_OPTIONS false
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // 
 // Edit options above rather than these:

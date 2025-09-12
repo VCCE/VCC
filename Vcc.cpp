@@ -158,7 +158,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	LoadConfig(&EmuState);
 	EmuState.ResetPending=2; // after LoadConfig pls
 	InitInstance(hInstance, nCmdShow);
-	if (!CreateDDWindow(&EmuState))
+	if ((CmdArg.NoOutput && !CreateNullWindow(&EmuState)) ||
+		(!CmdArg.NoOutput && !CreateDDWindow(&EmuState)))
 	{
 		MessageBox(nullptr,"Can't create primary Window","Error",0);
 		exit(0);
@@ -208,15 +209,40 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			FullScreenToggle();
 			FlagEmuStop=TH_RUNNING;
 		}
-		GetMessage(&Msg,nullptr,0,0);		//Seems if the main loop stops polling the child threads stall
-		TranslateMessage(&Msg);
-		DispatchMessage(&Msg) ;
+		if (CmdArg.NoOutput)
+			Sleep(1);
+		else
+		{
+			// Seems if the main loop stops polling the child threads stall
+			// not GetMessage as it blocks, continue loop when no messages
+			if (PeekMessage(&Msg, nullptr, 0, 0, PM_REMOVE))
+			{
+				TranslateMessage(&Msg);
+				DispatchMessage(&Msg);
+			}
+		}
 	}
 	EmuState.Exiting = true;
 
 	PostThreadMessage(threadID, WM_QUIT, 0, 0);
 	SetEvent(hEMUQuit);							// Signal emulation thread to finish up.
-	WaitForSingleObject(hEMUThread, INFINITE);	// Wait for emulation thread to terminate
+
+	// Wait for emulation thread to terminate
+	while (WaitForSingleObject(hEMUThread, 10) == WAIT_TIMEOUT)
+	{
+		if (CmdArg.NoOutput)
+			Sleep(1);
+		else
+		{
+			// process messages while waiting, if any
+			// not GetMessage as it blocks, continue loop when no messages
+			if (PeekMessage(&Msg, nullptr, 0, 0, PM_REMOVE))
+			{
+				TranslateMessage(&Msg);
+				DispatchMessage(&Msg);
+			}
+		}
+	}
 	CloseHandle( hEvent ) ;	
 	CloseHandle( hEMUQuit ) ;
 	CloseHandle( hEMUThread ) ;
@@ -225,6 +251,13 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	UnloadDll();
 	WriteIniFile(); //Save Any changes to ini File
 	return Msg.wParam;
+}
+
+void CloseApp()
+{
+	BinaryRunning = false;
+	SoundDeInit();
+	UnloadDll();
 }
 
 /*--------------------------------------------------------------------------*/
@@ -410,9 +443,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case WM_CLOSE:
-			SoundDeInit();
-			BinaryRunning=false;
-			UnloadDll();
+			CloseApp();
 			break;
 
 		case WM_CHAR:
@@ -1012,6 +1043,13 @@ unsigned __stdcall EmuLoop(void *Dummy)
 		int len = strlen(tstatus);
 		UpdateTapeStatus(tstatus + len, sizeof(tstatus) - len);
 		SetStatusBarText(tstatus,&EmuState);
+
+		if (CmdArg.MaxFrames > 0 && FrameCounter >= CmdArg.MaxFrames)
+		{
+			if (*CmdArg.Screenshot != 0)
+				DumpScreenshot(CmdArg.Screenshot);
+			CloseApp();
+		}
 
 		if (EmuState.Throttle)	//Do nothing untill the frame is over returning unused time to OS
 			FrameWait();

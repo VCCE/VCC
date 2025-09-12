@@ -79,6 +79,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "BuildConfig.h"
 #include "CommandLine.h"
 #include "logger.h"
 
@@ -132,6 +133,24 @@ int GetCmdLineArgs(char *CmdString)
                 len = strlen(CmdArg.IniFile);
                 CmdArg.IniFile[len] = '\0';
                 break;
+
+#if USE_DEBUG_OPTIONS
+            // "-n" render no output at all for running in batch mode.
+            case 'n':
+                CmdArg.NoOutput = true;
+                break;
+
+            // "-f<n> render <n> frames and then exit.
+            case 'f':
+                CmdArg.MaxFrames = atoi(token + 2);
+                break;
+
+            // "-s<file> dump screen shot prior to exit of -f option.
+            case 's':
+                strncpy(CmdArg.Screenshot, token + 2, sizeof(CmdArg.Screenshot) - 1);
+                CmdArg.Screenshot[sizeof(CmdArg.Screenshot) - 1] = 0;
+                break;
+#endif
 
             // "-d[level]" enables logging console and sets log level
             // level is optional. It defaults to 1 and is forced to be
