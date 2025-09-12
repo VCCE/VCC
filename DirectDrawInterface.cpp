@@ -109,6 +109,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 template<typename T, typename Interface>
 bool InitGraphics(Interface** ptr, SystemState* CWState, int w, int h)
 {
+	if (!g_SystemState) g_SystemState = new SystemStatePtr(CWState);
 	if (!*ptr) *ptr = new T(g_SystemState);
 	if (!g_Display) g_Display = *ptr;
 	if (g_Display && g_Display->Setup(CWState->WindowHandle, w, h, StatusBarHeight, CWState->FullScreen == 1) == IDisplay::OK)
@@ -117,6 +118,12 @@ bool InitGraphics(Interface** ptr, SystemState* CWState, int w, int h)
 	*ptr = nullptr;
 	return false;
 };
+
+bool CreateNullWindow(SystemState* CWState)
+{
+	IDisplayOpenGL* display = nullptr;
+	return InitGraphics<DisplayNull>(&display, CWState, 640, 480);
+}
 
 bool CreateDDWindow(SystemState *CWState)
 {
@@ -231,8 +238,6 @@ bool CreateDDWindow(SystemState *CWState)
 	HWND windowHandle = CWState->WindowHandle;
 	if (windowHandle)
 	{
-		if (!g_SystemState) g_SystemState = new SystemStatePtr(CWState);
-
 		::GetClientRect(windowHandle, &rStatBar);
 		int w = rStatBar.right - rStatBar.left;
 		int h = rStatBar.bottom - rStatBar.top - StatusBarHeight;
@@ -575,11 +580,11 @@ void DebugPrint(float x, float y, float size, const char* str)
 		g_OpenGLDisplay->RenderText(g_DisplayFont, x, y, size, str);
 }
 
-void DumpScreenshot()
+void DumpScreenshot(const char* fname)
 {
 	using namespace Screenshot;
 
-	auto result = Snap(g_Display);
+	auto result = Snap(g_Display, fname);
 
 	if (result != OK)
 	{

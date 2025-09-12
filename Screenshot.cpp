@@ -29,27 +29,32 @@ namespace Screenshot
 {
     typedef std::uint8_t uint8_t;
 
-    int Snap(IDisplay* display)
+    int Snap(IDisplay* display, const char* fname)
     {
-        // get user directory
-        const char* userProfile = getenv("USERPROFILE");
-        if (!userProfile) return ERR_NOUSERPROFILE;
+		char path[_MAX_PATH];
 
-        // create filename
-        char path[_MAX_PATH];
-        time_t now = time(nullptr);
-        auto tm = *localtime(&now);
-        auto len = snprintf(path, _MAX_PATH, "%s\\Pictures\\vcc-%04d%02d%02d-%02d%02d%02d-0.png", userProfile, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-        if (len < 0 || len >= _MAX_PATH) return ERR_PATHTOOLONG;
+		if (!fname)
+		{
+			// get user directory
+			const char* userProfile = getenv("USERPROFILE");
+			if (!userProfile) return ERR_NOUSERPROFILE;
 
-        // check filename clash
-        char* next = path + len - 5; // '0'
-        struct stat st;
-        while (stat(path, &st) == 0)
-        {
-            if (*next == '9') return ERR_FILECLASH;
-            ++(*next);
-        }
+			// create filename
+			time_t now = time(nullptr);
+			auto tm = *localtime(&now);
+			auto len = snprintf(path, _MAX_PATH, "%s\\Pictures\\vcc-%04d%02d%02d-%02d%02d%02d-0.png", userProfile, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+			if (len < 0 || len >= _MAX_PATH) return ERR_PATHTOOLONG;
+
+			// check filename clash
+			char* next = path + len - 5; // '0'
+			struct stat st;
+			while (stat(path, &st) == 0)
+			{
+				if (*next == '9') return ERR_FILECLASH;
+				++(*next);
+			}
+			fname = path;
+		}
 
         if (display->LockSurface() != IDisplay::OK) return ERR_NOLOCK;
 
@@ -85,7 +90,7 @@ namespace Screenshot
         }
 
         // write the png
-        if (stbi_write_png(path, w, h, 3, rgb, w * 3) == 0)
+        if (stbi_write_png(fname, w, h, 3, rgb, w * 3) == 0)
             return cleanupMem(ERR_WRITEPNG);
 
         // cleanup

@@ -26,6 +26,7 @@ void UnlockScreen(SystemState *);
 unsigned char LockScreen(const SystemState *);
 void SetStatusBarText(const char *,const SystemState *);
 int GetRenderWindowStatusBarHeight();
+bool CreateNullWindow(SystemState*);
 bool CreateDDWindow(SystemState *);
 void Cls(unsigned int,SystemState *);
 void DoCls(SystemState *);
@@ -37,7 +38,7 @@ const VCC::Rect& GetCurWindowSize();
 void DisplayFlip(SystemState *);
 POINT GetForcedAspectBorderPadding();
 void CloseScreen();
-void DumpScreenshot();
+void DumpScreenshot(const char* fname = nullptr);
 
 #define MAX_LOADSTRING 100
 
