@@ -102,6 +102,7 @@ int errDisplayTimer = 0;
 
 // String functions used for decode
 std::string PadRight(std::string const&,size_t);
+std::string OpFDB(int,unsigned char,unsigned char,std::string const&);
 std::string FmtLine(
 	int adr,
 	const std::string& ins,
@@ -1070,7 +1071,7 @@ std::string FmtLine(int adr,
 /***************************************************/
 /*        Create FDB line with comment             */
 /***************************************************/
-std::string OpFDB(int adr,int b1,int b2, const std::string& cmt)
+std::string OpFDB(int adr, unsigned char b1, unsigned char b2, std::string const& cmt)
 {
     std::string s=HEXSTR(b1*256+b2,4);
     return FmtLine(adr,s,"FDB","$"+s,cmt);
