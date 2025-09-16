@@ -9,6 +9,10 @@
 #include "resource.h" 
 #include "../fileops.h"
 
+#ifndef USE_LOGGING
+#define WriteLog(a,b)
+#endif
+
 // socket
 static SOCKET dwSocket = 0;
 
@@ -64,7 +68,6 @@ unsigned char LoadExtRom(char *);
 void SetDWTCPConnectionEnable(unsigned int enable);
 int dw_setaddr(char *bufdwaddr);
 int dw_setport(char *bufdwport);
-void WriteLog(const char *Message,unsigned char Type);
 void BuildDynaMenu(void);
 void LoadConfig(void);
 void SaveConfig(void);
@@ -422,7 +425,7 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 
 
 // dll exported functions
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
+extern "C" __declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
@@ -435,7 +438,7 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 		return ;
 	}
 
-	__declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
+extern "C" __declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
 	{
 		switch (Port)
 		{
@@ -448,7 +451,7 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 	}
 
 
-	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+extern "C" __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
 	{
 		switch (Port)
 		{
@@ -475,14 +478,14 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 		return(0);
 	}
 */
-	__declspec(dllexport) unsigned char SetCart(SETCART Pointer)
+extern "C" __declspec(dllexport) unsigned char SetCart(SETCART Pointer)
 	{
 		
 		PakSetCart=Pointer;
 		return 0;
 	}
 
-	__declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
+extern "C" __declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
 	{
 		//sprintf(msg,"PalMemRead8: addr %d  val %d\n",(Address & 8191), Rom[Address & 8191]);
         //WriteLog(msg,TOCONS);
@@ -490,13 +493,13 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 	
 	}
 
-	__declspec(dllexport) void HeartBeat(void)
+extern "C" __declspec(dllexport) void HeartBeat(void)
 	{
 		// flush write buffer in the future..?
 		return;
 	}
 
-	__declspec(dllexport) void ModuleStatus(char *DWStatus)
+extern "C" __declspec(dllexport) void ModuleStatus(char *DWStatus)
 	{
         // calculate speed
         DWORD sinceCalc = GetTickCount() - LastStats;
@@ -554,7 +557,7 @@ void BuildDynaMenu(void)
 	
 }
 
-	__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+extern "C" __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 	{
 		HWND h_own = GetActiveWindow();
 		CreateDialog(g_hinstDLL,(LPCTSTR)IDD_PROPPAGE,h_own,(DLGPROC)Config);
@@ -563,43 +566,13 @@ void BuildDynaMenu(void)
 		return;
 	}
 
-	__declspec(dllexport) void SetIniPath (char *IniFilePath)
+extern "C" __declspec(dllexport) void SetIniPath (char *IniFilePath)
 	{
 		strcpy(IniFile,IniFilePath);
 		LoadConfig();
 		return;
 	}
 
-
-void WriteLog(const char *Message,unsigned char Type)
-{
-	if (logging)
-	{
-		static HANDLE hout=NULL;
-		static FILE  *disk_handle=NULL;
-		unsigned long dummy;
-		switch (Type)
-		{
-		case TOCONS:
-			if (hout==NULL)
-			{
-				AllocConsole();
-				hout=GetStdHandle(STD_OUTPUT_HANDLE);
-				SetConsoleTitle("Logging Window"); 
-			}
-			WriteConsole(hout,Message,strlen(Message),&dummy,0);
-			break;
-
-		case TOFILE:
-		if (disk_handle ==NULL)
-			disk_handle=fopen("c:\\VccLog.txt","w");
-
-		fprintf(disk_handle,"%s\r\n",Message);
-		fflush(disk_handle);
-		break;
-		}
-	}
-}
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
