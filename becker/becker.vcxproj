@@ -281,7 +281,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Fileops.cpp" />
-    <ClCompile Include="becker.c">
+    <ClCompile Include="..\logger.cpp" />
+    <ClCompile Include="becker.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -301,6 +302,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\fileops.h" />
+    <ClInclude Include="..\logger.h" />
     <ClInclude Include="becker.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
