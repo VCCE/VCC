@@ -22,9 +22,8 @@
 // Input from or Output to tcpip server
 //------------------------------------------------------------------
 
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-
 #include <WinSock2.h>
+#include <Ws2tcpip.h>
 #include <Windows.h>
 #include <stdio.h>
 #include "acia.h"
@@ -36,6 +35,7 @@ static SOCKET Socket = INVALID_SOCKET;
 //Close
 void tcpip_close()
 {
+    _DLOG("tcpip_close Socket %d\n",Socket);
     if (Socket != INVALID_SOCKET) closesocket(Socket);
     Socket = INVALID_SOCKET;
     WSACleanup();
@@ -51,40 +51,40 @@ int tcpip_open()
         WSACleanup();
         return -1;
     }
+    struct addrinfo hints;
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family   = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
 
-    // resolve hostname
-    LPHOSTENT host = gethostbyname(AciaTcpHost);
-    if (host == nullptr) {
-        tcpip_close();
-        return -1;
+    struct addrinfo *result = nullptr;
+    if (getaddrinfo(AciaTcpHost, AciaTcpPort, &hints, &result) != 0) {
+    _DLOG("tcpip_open getaddrinfo fail %s %s\n",AciaTcpHost,AciaTcpPort);
+    return -1;
+}
+
+    for (auto p = result; p != nullptr; p = p->ai_next) {
+        Socket = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+        if (Socket == INVALID_SOCKET) {
+            freeaddrinfo(result);
+            _DLOG("tcpip_open Fail\n");
+            return -1;
+        }
+        if (connect(Socket, p->ai_addr, p->ai_addrlen) != 0) {
+            closesocket(Socket);
+            Socket = INVALID_SOCKET;
+            continue;
+        }
+        break;
     }
+    freeaddrinfo(result);
 
-    // allocate socket
-    Socket = socket (AF_INET,SOCK_STREAM,IPPROTO_TCP);
-    if (Socket == INVALID_SOCKET) {
-        tcpip_close();
+    _DLOG("tcpip_open Socket %d\n",Socket);
+
+    if (Socket == INVALID_SOCKET)
         return -1;
-    }
-
-    BOOL bTrue = TRUE;
-    int iTrue = 1;
-    setsockopt(Socket,IPPROTO_TCP,
-                SO_REUSEADDR,(const char *)&bTrue,sizeof(bTrue));
-    setsockopt(Socket,IPPROTO_TCP,
-                TCP_NODELAY,(const char *)&iTrue,sizeof(iTrue));
-
-    // try to connect...
-    SOCKADDR_IN addr;
-    addr.sin_family= AF_INET;
-    addr.sin_addr= *((LPIN_ADDR)*host->h_addr_list);
-    addr.sin_port = htons(AciaTcpPort);
-    int rc = connect(Socket,(LPSOCKADDR)&addr, sizeof(addr));
-
-    if (rc==SOCKET_ERROR) {
-        tcpip_close();
-        return -1;
-   }
-    return 0;
+    else
+        return 0;
 }
 
 //Read

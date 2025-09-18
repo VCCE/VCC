@@ -24,6 +24,7 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include <WinSock2.h>
+#include <ws2tcpip.h>
 #include <Windows.h>
 #include <process.h>
 #include <stdio.h>
@@ -35,10 +36,17 @@
 #define STATS_PERIOD_MS 100
 
 //------------------------------------------------------
+// Error returns from SOCKET dw_open(...)
+//------------------------------------------------------
+constexpr SOCKET SOCKET_RETRY = (SOCKET)-1;
+constexpr SOCKET SOCKET_FATAL = (SOCKET)-2;
+
+//------------------------------------------------------
 // local functions
 //------------------------------------------------------
 void dw_open();
 void dw_close();
+SOCKET dw_open(const char *, const char *);
 unsigned char dw_status(void);
 unsigned char dw_read(void);
 int dw_write(char);
@@ -62,9 +70,9 @@ static int InWritePos = 0;
 
 // hostname and port
 static char dwaddress[MAX_PATH] = {};
-static unsigned short dwsport = 65504;
+static char dwsport[16] = "65504";
 static char curaddress[MAX_PATH] = {};
-static unsigned short curport = 65504;
+static char curport[16] = "65504";
 
 // statistics
 static int BytesWrittenSince = 0;
@@ -81,9 +89,9 @@ static float WriteSpeed = 0;
 int becker_sethost(char *bufdwaddr, char *bufdwport)
 {
 	strcpy(dwaddress,bufdwaddr);
-	dwsport = (unsigned short) atoi(bufdwport);
+	strcpy(dwsport,bufdwport);
 
-	if ((dwsport != curport) || (strcmp(dwaddress,curaddress) != 0))
+	if (strcmp(dwsport,curport) !=0 || (strcmp(dwaddress,curaddress) != 0))
 		dw_close();
     return 0;
 }
@@ -247,52 +255,45 @@ void dw_close(void)
 void dw_open( void )
 {
 	_DLOG("dw_open %s:%d\n",dwaddress,dwsport);
-
-	retry = true;
-	BOOL bOptValTrue = TRUE;
-	int iOptValTrue = 1;
-
-	strcpy(curaddress, dwaddress);
-	curport = dwsport;
-
-	// resolve hostname
-	LPHOSTENT dwSrvHost= gethostbyname(dwaddress);
-        
-	if (dwSrvHost == nullptr) {
-	// invalid hostname/no dns
+	dwSocket = dw_open(dwaddress,dwsport);
+	if (dwSocket == SOCKET_RETRY) {
+		retry = true;
+		dwSocket = 0;
+	} else if (dwSocket == SOCKET_FATAL) {
 		retry = false;
-		_DLOG("dw_open failed to resolve hostname\n");
+		dwSocket = 0;
 	}
-        
-	// allocate socket
-	dwSocket = socket (AF_INET,SOCK_STREAM,IPPROTO_TCP);
-	if (dwSocket == INVALID_SOCKET) {
-		retry = false;
-		_DLOG("dw_open invalid socket\n");
+}
+
+// Override for dw_open(void) replaces gethostbyname with getaddrinfo
+SOCKET dw_open(const char * server, const char * port)
+{
+	struct addrinfo hints;
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_family   = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+
+	struct addrinfo *result = nullptr;
+	if (getaddrinfo(server, port, &hints, &result) != 0)
+		return SOCKET_FATAL;
+
+	SOCKET s = SOCKET_RETRY;
+	for (auto p = result; p != nullptr; p = p->ai_next) {
+		s = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+		if (s == INVALID_SOCKET) {
+			freeaddrinfo(result);
+			return SOCKET_FATAL;
+		}
+		if (connect(s, p->ai_addr, p->ai_addrlen) != 0) {
+			closesocket(s);
+			s = SOCKET_RETRY;
+			continue;
+		}
+		break;
 	}
-
-	// set options
-	setsockopt(dwSocket,IPPROTO_TCP,SO_REUSEADDR,
-			(char *)&bOptValTrue,sizeof(bOptValTrue));
-	setsockopt(dwSocket,IPPROTO_TCP,TCP_NODELAY,
-			(char *)&iOptValTrue,sizeof(iOptValTrue));  
-
-	// build server address
-	SOCKADDR_IN dwSrvAddress;
-	dwSrvAddress.sin_family= AF_INET;
-	dwSrvAddress.sin_addr= *((LPIN_ADDR)*dwSrvHost->h_addr_list);
-	dwSrvAddress.sin_port = htons(dwsport);
-        
-	// try to connect...
-	int rc = connect(dwSocket,(LPSOCKADDR)&dwSrvAddress, sizeof(dwSrvAddress));
-
-	retry = false;
-
-	if (rc==SOCKET_ERROR) {
-		_DLOG("dw_open failed to connect\n");
-		closesocket(dwSocket);
-    	dwSocket = 0;
-	}
+	freeaddrinfo(result);
+	return s;
 }
 
 // TCP connection thread

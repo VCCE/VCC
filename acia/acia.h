@@ -71,7 +71,7 @@ extern int  AciaComType;              // Console,file,tcpip,wincom
 extern int  AciaComMode;              // Duplex,read,write
 extern int  AciaTextMode;             // CR and EOF translations 0=none 1=text
 extern int  AciaLineInput;            // Console line mode 0=Normal 1=Linemode
-extern int  AciaTcpPort;              // TCP port 1024-65536
+extern char AciaTcpPort[32];          // TCP port 1024-65536
 extern char AciaComPort[32];          // Windows Serial port eg COM20
 extern char AciaTcpHost[MAX_PATH];    // Tcpip hostname
 extern char AciaFileRdPath[MAX_PATH]; // Path for file reads

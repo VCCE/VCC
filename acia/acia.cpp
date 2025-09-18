@@ -63,7 +63,7 @@ int  AciaComType;              // Console,file,tcpip,wincom
 int  AciaComMode;              // Duplex,read,write
 int  AciaTextMode;             // CR and EOF translations 0=none 1=text
 int  AciaLineInput;            // Console line mode 0=Normal 1=Linemode
-int  AciaTcpPort;              // TCP port 1024-65536
+char AciaTcpPort[32];          // TCP port 1024-65536
 char AciaComPort[32];          // Windows Serial port eg COM20
 char AciaTcpHost[MAX_PATH];    // Tcpip hostname
 char AciaFileRdPath[MAX_PATH]; // Path for file reads
@@ -244,7 +244,6 @@ void LoadConfig(void)
                                      COM_MODE_DUPLEX,IniFile);
     AciaBasePort=GetPrivateProfileInt("Acia","AciaBasePort",
                                      BASE_PORT_RS232,IniFile);
-    AciaTcpPort=GetPrivateProfileInt("Acia","AciaTcpPort",48000,IniFile);
     AciaTextMode=GetPrivateProfileInt("Acia","AciaTextMode",0,IniFile);
     GetPrivateProfileString("Acia","AciaComPort","COM3",
                             AciaComPort,32,IniFile);
@@ -254,6 +253,8 @@ void LoadConfig(void)
                             AciaFileWrPath, MAX_PATH,IniFile);
     GetPrivateProfileString("Acia","AciaTcpHost","localhost",
                             AciaTcpHost, MAX_PATH,IniFile);
+    GetPrivateProfileString("Acia","AciaTcpPort","48000",
+                            AciaTcpPort,32,IniFile);
 
     // String for Vcc status line
     switch (AciaComType) {
@@ -264,7 +265,7 @@ void LoadConfig(void)
             sprintf(AciaStat,"Acia W");
         break;
     case COM_TCPIP:
-        sprintf(AciaStat,"Acia Net");
+        sprintf(AciaStat,"Acia tcpip");
         break;
     case COM_WINCOM:
         sprintf(AciaStat,"Acia %s",AciaComPort);
@@ -288,10 +289,8 @@ void SaveConfig(void)
     WritePrivateProfileString("Acia","AciaComType",txt,IniFile);
     sprintf(txt,"%d",AciaComMode);
     WritePrivateProfileString("Acia","AciaComMode",txt,IniFile);
-    sprintf(txt,"%d",AciaTcpPort);
-    WritePrivateProfileString("Acia","AciaTcpPort",txt,IniFile);
+    WritePrivateProfileString("Acia","AciaTcpPort",AciaTcpPort,IniFile);
     sprintf(txt,"%d",AciaTextMode);
-
     WritePrivateProfileString("Acia","AciaTextMode",txt,IniFile);
     WritePrivateProfileString("Acia","AciaComPort",AciaComPort,IniFile);
     WritePrivateProfileString("Acia","AciaFileRdPath",AciaFileRdPath,IniFile);
@@ -376,7 +375,7 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM /*lParam*/)
             EnableWindow(GetDlgItem(hDlg,IDC_NAME),TRUE);
             button = IDC_T_TCP;
             SetDlgItemText(hDlg,IDC_NAME,AciaTcpHost);
-            SetDlgItemInt(hDlg,IDC_PORT,AciaTcpPort,FALSE);
+            SetDlgItemText(hDlg,IDC_PORT,AciaTcpPort);
             sprintf(AciaStat,"Acia tcpip");
             break;
 
@@ -460,7 +459,7 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM /*lParam*/)
             AciaComType = COM_TCPIP;
             AciaComMode = COM_MODE_DUPLEX;
             SetDlgItemText(hDlg,IDC_NAME,AciaTcpHost);
-            SetDlgItemInt(hDlg,IDC_PORT,AciaTcpPort,FALSE);
+            SetDlgItemText(hDlg,IDC_PORT,AciaTcpPort);
             break;
 
         case IDC_T_COM: // COMx
@@ -501,7 +500,7 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM /*lParam*/)
                                     "Error", MB_OK|MB_ICONEXCLAMATION);
                     return TRUE;
                 }
-                AciaTcpPort = port;
+                snprintf(AciaTcpPort,16,"%d",port);
                 sprintf(AciaStat,"Acia tcpip");
                 break;
             case COM_WINCOM:
