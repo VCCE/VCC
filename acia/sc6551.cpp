@@ -16,6 +16,7 @@
 // received a copy of the GNU General Public License along with VCC
 // (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
 //
+//
 //------------------------------------------------------------------
 
 #include "acia.h"
@@ -70,7 +71,7 @@ static unsigned int BaudRate;
 // BaudDelay table for supported rates.  These are approximate.
 // If accuracy becomes an issue could use audio sample timer.
 // Corresponds with {    X,  75,  75, 110, 300, 300, 300,  600,
-//	                  1200,2400,2400,4800,4800,9600,9600,19200 };
+//                    1200,2400,2400,4800,4800,9600,9600,19200 };
 
 int BaudDelay[16] = {   0, 620, 620, 500, 250, 250, 250,  125,
                        60,  30,  30,  15,  15,   7,   7,    3 };
@@ -85,9 +86,7 @@ void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop)
         SetEvent(hstop);
         // If that fails force it
         if (WaitForSingleObject(hthread,500) == WAIT_TIMEOUT) {
-			// FIXME: This is needed and should not be commented out. Wrap it conditional
-			// either here or in the debug log functions.
-			//PrintLogF("FORCE TERMINATE %d\n",hthread);
+            _LOGF("FORCE TERMINATE %d\n",hthread);
             TerminateThread(hthread,1);
             WaitForSingleObject(hthread,500);
         }
@@ -101,7 +100,7 @@ void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop)
 //------------------------------------------------------------------------
 void sc6551_init()
 {
-	IntClock = 0;
+    IntClock = 0;
     DataLen  = 0;
     StopBits = 0;
     EchoOn   = 0;
@@ -119,7 +118,7 @@ void sc6551_open()
 
     if (sc6551_opened == 1) return;
 
-	// Open comunication
+    // Open comunication
     com_open();
 
     // Create I/O threads
@@ -153,7 +152,7 @@ void sc6551_close()
         Icnt = 0;
         Wcnt = 0;
         sc6551_opened = 0;
-	}
+    }
 }
 
 //------------------------------------------------------------------------
@@ -161,9 +160,7 @@ void sc6551_close()
 //------------------------------------------------------------------------
 DWORD WINAPI sc6551_input_thread(LPVOID /*param*/)
 {
-	// FIXME: This is needed and should not be commented out. Wrap it conditional
-	// either here or in the debug log functions.
-	//PrintLogF("START-IN %d\n",hInputThread);
+    _LOGF("START-IN %d\n",hInputThread);
     Icnt = 0;
     while(TRUE) {
         if (Icnt == 0) {
@@ -179,17 +176,13 @@ DWORD WINAPI sc6551_input_thread(LPVOID /*param*/)
                     InBuf[0] = '\r';
                     InBuf[1] = EOFCHR;
                 }
-				// FIXME: This is needed and should not be commented out. Wrap it conditional
-				// either here or in the debug log functions.
-				//PrintLogF("R %d\n",cnt);
+                _LOGF("R %d\n",cnt);
                 Icnt = cnt;
             }
         } else {
             if (WaitForSingleObject(hStopInput,100) != WAIT_TIMEOUT) {
                 if (Icnt > 0) Sleep(1000);
-				// FIXME: This is needed and should not be commented out. Wrap it conditional
-				// either here or in the debug log functions.
-				//PrintLogF("TERMINATE-IN\n");
+                _LOGF("TERMINATE-IN\n");
                 ExitThread(0);
             }
         }
@@ -204,9 +197,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID /*param*/)
     Wcnt = 0;
     OutWptr = OutBuf;
 
-	// FIXME: This is needed and should not be commented out. Wrap it conditional
-	// either here or in the debug log functions.
-	//PrintLogF("START-OUT %d\n",hOutputThread);
+    _LOGF("START-OUT %d\n",hOutputThread);
 
     while(TRUE) {
         if (Wcnt > 0) {
@@ -217,9 +208,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID /*param*/)
                     char * ptr = OutBuf;
                     while (Wcnt > 0) {
                         int cnt = com_write(ptr,Wcnt);
-						// FIXME: This is needed and should not be commented out. Wrap it conditional
-						// either here or in the debug log functions.
-						//PrintLogF("W %d\n",cnt);
+                        _LOGF("W %d\n",cnt);
                         if (cnt < 1) break;  //TODO Deal with write error
                         Wcnt -= cnt;
                         ptr += cnt;
@@ -233,9 +222,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID /*param*/)
 
         int rc = WaitForSingleObject(hStopOutput,100);
         if (rc != WAIT_TIMEOUT) {
-			// FIXME: This is needed and should not be commented out. Wrap it conditional
-			// either here or in the debug log functions.
-			//PrintLogF("TERMINATE-OUT\n");
+            _LOGF("TERMINATE-OUT\n");
             ExitThread(0);
         }
     }
@@ -263,7 +250,7 @@ void sc6551_heartbeat()
             StatReg |= StatRxF;
             // Assert CART if interrupts not disabled or already asserted.
             if (!((CmdReg & CmdRxI) || (StatReg & StatIRQ))) {
-                AssertInt(INT_CART, 0);	//	FIXME: This should probably be IS_IRQ and not 0 (was NULL)
+                AssertInt(INT_CART, 0);
                 StatReg |= StatIRQ;
             }
         }
@@ -327,9 +314,7 @@ void sc6551_write(unsigned char data,unsigned short port)
         break;
     // Write status does a reset
     case 1:
-		// FIXME: This is needed and should not be commented out. Wrap it conditional
-		// either here or in the debug log functions.
-		//PrintLogF("Reset\n");
+        _LOGF("Reset\n");
         StatReg = 0;
         break;
     // Write Command register
