@@ -27,6 +27,9 @@ struct CmdLineArguments {
 	char IniFile[CL_MAX_PATH];
 	char PasteText[CL_MAX_PASTE];
 	int  Logging;
+    bool NoOutput;
+    char Screenshot[CL_MAX_PATH];
+    unsigned int MaxFrames;
 };
 extern struct CmdLineArguments CmdArg;
 

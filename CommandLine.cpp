@@ -133,6 +133,19 @@ int GetCmdLineArgs(char *CmdString)
                 CmdArg.IniFile[len] = '\0';
                 break;
 
+            case 'n':
+                CmdArg.NoOutput = true;
+                break;
+
+            case 'f':
+                CmdArg.MaxFrames = atoi(token + 2);
+                break;
+
+            case 's':
+                strncpy(CmdArg.Screenshot, token + 2, sizeof(CmdArg.Screenshot) - 1);
+                CmdArg.Screenshot[sizeof(CmdArg.Screenshot) - 1] = 0;
+                break;
+
             // "-d[level]" enables logging console and sets log level
             // level is optional. It defaults to 1 and is forced to be
             // a positive integer 0 to 3.
