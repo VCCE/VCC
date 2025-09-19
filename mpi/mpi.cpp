@@ -394,6 +394,7 @@ LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*l
 	case WM_INITDIALOG:
 		hParentWindow = GetParent(hDlg);
 		CenterDialog(hDlg);
+		hConfDlg=hDlg;
 		for (int Slot=0;Slot<NUMSLOTS;Slot++) {
 			SendDlgItemMessage(hDlg,EDITBOXS[Slot],WM_SETTEXT,0,(LPARAM)SlotLabel[Slot]);
 			if ((strcmp(ModuleNames[Slot],"Empty") != 0) || hinstLib[Slot])
