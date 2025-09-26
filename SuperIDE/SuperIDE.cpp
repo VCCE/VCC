@@ -21,22 +21,16 @@ This file is part of VCC (Virtual Color Computer).
 #include <iostream>
 #include "resource.h" 
 #include "defines.h"
-#include "SuperIDE.h"
 #include "IdeBus.h"
 #include "cloud9.h"
 #include "logger.h"
 #include "../fileops.h"
 #include "../DialogOps.h"
+#include "../ModuleDefs.h"
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
 static char SuperIDEPath[MAX_PATH];
-// FIXME: These typedefs are duplicated across more if not all projects and
-// need to be consolidated in one place.
-typedef unsigned char (*MEMREAD8)(unsigned short);
-typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
-typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
 static unsigned char BaseAddress=0x50;
 void BuildDynaMenu(void);
@@ -198,25 +192,25 @@ void BuildDynaMenu(void)
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
-	DynamicMenuCallback("",0,0);
-	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "IDE Master",6000,HEAD);
-	DynamicMenuCallback( "Insert",5010,SLAVE);
+	DynamicMenuCallback( "", MID_BEGIN, MIT_Head);
+	DynamicMenuCallback( "", MID_ENTRY, MIT_Seperator);
+	DynamicMenuCallback( "IDE Master",MID_ENTRY,MIT_Head);
+	DynamicMenuCallback( "Insert",5010,MIT_Slave);
 	QueryDisk(MASTER,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
 
-	DynamicMenuCallback( TempMsg,5011,SLAVE);
-	DynamicMenuCallback( "IDE Slave",6000,HEAD);
-	DynamicMenuCallback( "Insert",5012,SLAVE);
+	DynamicMenuCallback( TempMsg,5011,MIT_Slave);
+	DynamicMenuCallback( "IDE Slave",MID_ENTRY,MIT_Head);
+	DynamicMenuCallback( "Insert",5012,MIT_Slave);
 	QueryDisk(SLAVE,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5013,SLAVE);
-	DynamicMenuCallback( "IDE Config",5014,STANDALONE);
-	DynamicMenuCallback("",1,0);
+	DynamicMenuCallback( TempMsg,5013,MIT_Slave);
+	DynamicMenuCallback( "IDE Config",5014,MIT_StandAlone);
+	DynamicMenuCallback( "", MID_FINISH, MIT_Head);
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)

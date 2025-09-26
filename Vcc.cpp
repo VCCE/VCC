@@ -56,6 +56,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "mc6821.h"
 #include "keyboard.h"
 #include "coco3.h"
+#include "DynamicMenu.h"
 #include "pakinterface.h"
 #include "audio.h"
 #include "config.h"
@@ -165,8 +166,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		exit(0);
 	}
 	InitSound();
-	DynamicMenuCallback( "",0, 0);
-	DynamicMenuCallback( "",1, 0);
+	CallDynamicMenu("", MID_BEGIN, MIT_Head);
+	CallDynamicMenu("", MID_FINISH, MIT_Head);
 	LoadModule();
 	SetClockSpeed(1);	//Default clock speed .89 MHZ	
 	BinaryRunning = true;
@@ -291,9 +292,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			wmEvent = HIWORD(wParam);
 			// Parse the menu selections:
 			// Added for Dynamic menu system
-			if ( (wmId >=ID_SDYNAMENU) & (wmId <=ID_EDYNAMENU) )
+			if ( (wmId >= MID_SDYNAMENU) & (wmId <= MID_EDYNAMENU) )
 			{
-				DynamicMenuActivated (wmId - ID_SDYNAMENU);	//Calls to the loaded DLL so it can do the right thing
+				DynamicMenuActivated (wmId - MID_SDYNAMENU);	//Calls to the loaded DLL so it can do the right thing
 				break;
 			}
 

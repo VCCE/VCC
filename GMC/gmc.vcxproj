@@ -255,6 +255,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ROM.cpp" />
     <ClCompile Include="sn76496.cpp" />
+	<ClCompile Include="../DialogOps.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CartridgeTrampolines.h" />

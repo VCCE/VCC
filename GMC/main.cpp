@@ -1,5 +1,6 @@
-#include "GMCCartridge.h"
 #include <Windows.h>
+#include "GMCCartridge.h"
+#include "../DialogOps.h"
 
 GMCCartridge theCart;
 
@@ -18,9 +19,21 @@ std::string ExtractFilename(std::string path)
 	return path;
 }
 
+
 std::string SelectROMFile()
 {
 	std::string selectedPath;
+
+	FileDialog dlg;
+	dlg.setFilter("ROM Files\0*.ROM\0\0");
+	dlg.setDefExt("rom");
+	dlg.setTitle("Select GMC Rom file");
+	if (dlg.show()) {
+		selectedPath = dlg.path();
+	} else {
+		selectedPath.clear();
+	}
+/*
 	OPENFILENAMEA ofn = { 0 };
 	char selectedPathBuffer[MAX_PATH] = { 0 };
 
@@ -33,14 +46,14 @@ std::string SelectROMFile()
 	ofn.lpstrFileTitle    = nullptr;						// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH ;						// sizeof lpstrFileTitle
 	ofn.lpstrInitialDir   = nullptr;						// initial directory
-	ofn.lpstrTitle        = "Select ROM file";				// title bar string
+	ofn.lpstrTitle        = "Select GMC ROM file";			// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
 	if (GetOpenFileNameA(&ofn)) {
 		selectedPath = selectedPathBuffer;
 	} else {
 		selectedPath.clear();
 	}
-
+*/
 	return selectedPath;
 }
 

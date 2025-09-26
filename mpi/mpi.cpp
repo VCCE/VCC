@@ -22,14 +22,16 @@ Copyright 2015 by Joseph Forgione
 #include "stdio.h"
 #include "resource.h"
 #include <CommCtrl.h>
-#include "mpi.h"
 #include "../fileops.h"
 #include "../DialogOps.h"
+#include "../ModuleDefs.h"
 #include "../MachineDefs.h"
 #include "../logger.h"
 
 // Number of slots supported. Changing this might require code modification
 #define NUMSLOTS 4
+
+constexpr auto MAX_LOADSTRING = 100u;
 
 // Is a port a disk port?
 #define ISDISKPORT(p) ((p > 0x3F) && (p < 0x60))
@@ -796,11 +798,11 @@ void BuildDynaMenu(void)
 	}
 
 	// Init the dynamic menus, then add a header line and then MPI config menu item
-	DynamicMenuCallback("",0,0);
-	DynamicMenuCallback("",6000,0);
+	DynamicMenuCallback( "",MID_BEGIN,MIT_Head);
+	DynamicMenuCallback( "",MID_ENTRY,MIT_Seperator);
 
 	// The second argument to DynamicMenuCallback establishes the wmID for mpithe config.
-	DynamicMenuCallback("MPI Config",5019,STANDALONE);
+	DynamicMenuCallback("MPI Config",5019,MIT_StandAlone);
 
 	// Build the rest of the menu for slots 4 thru 1
 	for (int ndx=0;ndx<MenuCount[3];ndx++)
@@ -815,7 +817,7 @@ void BuildDynaMenu(void)
 	for (int ndx=0;ndx<MenuCount[0];ndx++)
 		DynamicMenuCallback(MenuName0[ndx],MenuId0[ndx]+20,Type0[ndx]);
 
-	DynamicMenuCallback( "",1,0);
+	DynamicMenuCallback( "",MID_FINISH,MIT_Head);
 }
 
 // Callback for slot 1

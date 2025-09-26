@@ -4,10 +4,11 @@
 #include <Windows.h>
 #include <process.h>
 #include <stdio.h>
-#include "../logger.h"
 #include "becker.h"
 #include "resource.h" 
+#include "../logger.h"
 #include "../fileops.h"
+#include "../ModuleDefs.h"
 
 #ifndef USE_LOGGING
 #define WriteLog(a,b)
@@ -17,10 +18,6 @@
 static SOCKET dwSocket = 0;
 
 // vcc stuff
-// FIXME: These typedefs are also duplicated everywhere and need to be consolidated in one place.
-typedef void (*SETCART)(unsigned char);
-typedef void (*SETCARTPOINTER)(SETCART);
-typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 static HINSTANCE g_hinstDLL=NULL;
 static void (*PakSetCart)(unsigned char)=NULL;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
@@ -547,14 +544,10 @@ extern "C" __declspec(dllexport) void ModuleStatus(char *DWStatus)
 
 void BuildDynaMenu(void)
 {
-
-	if (DynamicMenuCallback ==NULL)
-		MessageBox(0,"No good","Ok",0);
-	DynamicMenuCallback("",0,0);
-	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "DriveWire Server..",5016,STANDALONE);
-	DynamicMenuCallback( "",1,0);
-	
+	DynamicMenuCallback( "",MID_BEGIN,MIT_Head);
+	DynamicMenuCallback( "",MID_ENTRY,MIT_Seperator);
+	DynamicMenuCallback( "DriveWire Server..",5016,MIT_StandAlone);
+	DynamicMenuCallback( "",MID_FINISH,MIT_Head);
 }
 
 extern "C" __declspec(dllexport) void ModuleConfig(unsigned char MenuID)

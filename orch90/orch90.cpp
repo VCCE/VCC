@@ -20,12 +20,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 #include "resource.h" 
 #include "../fileops.h"
+#include "../ModuleDefs.h"
 
-// FIXME: These typedefs are duplicated across more if not all projects and
-// need to be consolidated in one place.
-typedef void (*SETCART)(unsigned char);
-typedef void (*SETCARTPOINTER)(SETCART);
-typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 static HINSTANCE g_hinstDLL=nullptr;
 static unsigned char LeftChannel=0,RightChannel=0;
 static void (*PakSetCart)(unsigned char)=nullptr;

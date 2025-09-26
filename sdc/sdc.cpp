@@ -145,29 +145,15 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include "../DialogOps.h"
+#include "../ModuleDefs.h"
 #include "sdc.h"
-
-// from ../pakinterface.h
-// FIXME: These need to be turned into an enum and the signature of functions
-// that use them updated. These are also duplicated everywhere and need to be
-// consolidated in one gdmf place.
-#define	HEAD 0
-#define SLAVE 1
-#define STANDALONE 2
 
 //======================================================================
 // Functions
 //======================================================================
 
-// FIXME: These typedefs are duplicated across more if not all projects and
-// need to be consolidated in one place.
-typedef void (*ASSERTINTERUPT) (unsigned char,unsigned char);
-typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
-typedef unsigned char (*MEMREAD8)(unsigned short);
-typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
-typedef void (*ASSERTINTERUPT)(unsigned char, unsigned char);
 void (*AssertInt)(unsigned char, unsigned char);
+static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
 void SDCInit(void);
 void LoadRom(unsigned char);
 void (*MemWrite8)(unsigned char,unsigned short)=nullptr;
@@ -493,11 +479,11 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 //-------------------------------------------------------------
 void BuildDynaMenu(void)
 {
-    DynamicMenuCallback("",0,0);
-    DynamicMenuCallback("",6000,0);
-    DynamicMenuCallback("SDC Config",5010,STANDALONE);
-    DynamicMenuCallback("SDC Control",5011,STANDALONE);
-    DynamicMenuCallback("",1,0);
+    DynamicMenuCallback("",MID_BEGIN,MIT_Head);
+    DynamicMenuCallback("",MID_ENTRY,MIT_Seperator);
+    DynamicMenuCallback("SDC Config",5010,MIT_StandAlone);
+    DynamicMenuCallback("SDC Control",5011,MIT_StandAlone);
+    DynamicMenuCallback("",MID_FINISH,MIT_Head);
 }
 
 //------------------------------------------------------------

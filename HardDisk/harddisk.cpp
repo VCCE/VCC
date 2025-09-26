@@ -27,6 +27,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "cloud9.h"
 #include "../fileops.h"
 #include "../DialogOps.h"
+#include "../ModuleDefs.h"
 #include "../MachineDefs.h"
 
 constexpr auto DEF_HD_SIZE = 132480u;
@@ -38,12 +39,6 @@ static char NewVHDfile[MAX_PATH];
 static char IniFile[MAX_PATH]  { 0 };
 static char HardDiskPath[MAX_PATH];
 
-// FIXME: These typedefs are duplicated across more if not all projects and
-// need to be consolidated in one place.
-typedef unsigned char (*MEMREAD8)(unsigned short);
-typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
-typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
 static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
@@ -378,28 +373,27 @@ void BuildDynaMenu(void)
     char TempMsg[512]="";
     char TempBuf[MAX_PATH]="";
 
-    DynamicMenuCallback("",0,0);
-    DynamicMenuCallback( "",6000,0);
+    DynamicMenuCallback( "",MID_BEGIN,MIT_Head);
+    DynamicMenuCallback( "",MID_ENTRY,MIT_Seperator);
 
-    DynamicMenuCallback( "HD Drive 0",6000,HEAD);
-    DynamicMenuCallback( "Insert",5010,SLAVE);
+    DynamicMenuCallback( "HD Drive 0",MID_ENTRY,MIT_Head);
+    DynamicMenuCallback( "Insert",5010,MIT_Slave);
     strcpy(TempMsg,"Eject: ");
     strcpy(TempBuf,VHDfile0);
     PathStripPath (TempBuf);
     strcat(TempMsg,TempBuf);
-    DynamicMenuCallback(TempMsg,5011,SLAVE);
+    DynamicMenuCallback(TempMsg,5011,MIT_Slave);
 
-    DynamicMenuCallback( "HD Drive 1",6000,HEAD);
-    DynamicMenuCallback( "Insert",5012,SLAVE);
+    DynamicMenuCallback( "HD Drive 1",MID_ENTRY,MIT_Head);
+    DynamicMenuCallback( "Insert",5012,MIT_Slave);
     strcpy(TempMsg,"Eject: ");
     strcpy(TempBuf,VHDfile1);
     PathStripPath(TempBuf);
     strcat(TempMsg,TempBuf);
-    DynamicMenuCallback(TempMsg,5013,SLAVE);
+    DynamicMenuCallback(TempMsg,5013,MIT_Slave);
 
-    DynamicMenuCallback( "HD Config",5014,STANDALONE);
-
-    DynamicMenuCallback("",1,0);
+    DynamicMenuCallback( "HD Config",5014,MIT_StandAlone);
+    DynamicMenuCallback( "",MID_FINISH,MIT_Head);
 }
 
 
