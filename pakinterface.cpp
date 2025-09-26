@@ -16,24 +16,6 @@
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/***********************************************************************************
- *
- * NOTICE to maintainers
- *
- * As of VCC 2.1.9.2 the CPUAssertInterrupt args are changed from unsigned chars
- * to integer enums and their meanings are changed. The first argument is now the
- * Interrupt source and the second the interrupt number.  Previously the first
- * argument was interrupt number and the second was a latency value.  This change
- * corrects long standing issues with VCC interrupt handling. In order to maintain
- * DLL compatibility (fd502) with previous VCC versions the Pack assert argument
- * types remain unchanged and the first arg is the interrupt and the second is the
- * interrupt source, which is now reversed from the CPU assert interrupt function:
- *
- *  CPUAssertInterupt(InterruptSource, Interrupt)  // integer enums
- *  PakAssertInterupt(interrupt, interruptsource)  // unsigned chars
- *
- ************************************************************************************/
-
 #include <Windows.h>
 #include <windowsx.h>
 #include "commdlg.h"
@@ -42,6 +24,8 @@
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "tcc1014registers.h"
+#include "ModuleDefs.h"
+#include "DynamicMenu.h"
 #include "pakinterface.h"
 #include "config.h"
 #include "Vcc.h"
@@ -72,29 +56,10 @@ static unsigned int BankedCartOffset=0;
 static char DllPath[256]="";
 static unsigned short ModualParms=0;
 static HINSTANCE hinstLib = nullptr;
-// FIXME: These typedefs are duplicated across more if not all projects and
-// need to be consolidated in one place.
-typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
-typedef void (*GETNAME)(char *,char *,DYNAMICMENUCALLBACK);
-typedef void (*CONFIGIT)(unsigned char);
-typedef void (*HEARTBEAT) (void);
-typedef unsigned char (*PACKPORTREAD)(unsigned char);
-typedef void (*PACKPORTWRITE)(unsigned char,unsigned char);
-typedef void (*PAKINTERRUPT)(unsigned char, unsigned char);
-typedef unsigned char (*MEMREAD8)(unsigned short);
-typedef void (*SETCART)(unsigned char);
-typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-typedef void (*MODULESTATUS)(char *);
-typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
-typedef void (*SETCARTPOINTER)(SETCART);
-typedef void (*SETINTERUPTCALLPOINTER) (PAKINTERRUPT);
-typedef unsigned short (*MODULEAUDIOSAMPLE)(void);
-typedef void (*MODULERESET)(void);
-typedef void (*SETINIPATH)(char *);
 
 static void (*GetModuleName)(char *,char *,DYNAMICMENUCALLBACK)=nullptr;
 static void (*ConfigModule)(unsigned char)=nullptr;
-static void (*SetInteruptCallPointer)(PAKINTERRUPT)=nullptr;
+static void (*SetInteruptCallPointer)(PAKINTERUPT)=nullptr;
 static void (*DmaMemPointer) (MEMREAD8,MEMWRITE8)=nullptr;
 static void (*HeartBeat)(void)=nullptr;
 static void (*PakPortWrite)(unsigned char,unsigned char)=nullptr;
@@ -110,14 +75,7 @@ static char PakPath[MAX_PATH];
 
 static char Did=0;
 int FileID(const char *);
-struct Dmenu
-{
-	char MenuName[512];
-	int MenuId;
-	int Type;
-};
-
-static Dmenu MenuItem[100];
+static DynamicMenuItem MenuItem[100];
 static unsigned char MenuCount=0;
 
 static HMENU hVccMenu = nullptr;
@@ -212,12 +170,6 @@ unsigned short PackAudioSample(void)
 	return 0;
 }
 
-// Shunt to convert first arg from (char *) to (const char *)
-void DynamicMenuCallbackChar(const char* MenuName, int MenuId, int Type)
-{
-	DynamicMenuCallback(MenuName, MenuId, Type);
-}
-
 int LoadCart(void)
 {
 	char inifile[MAX_PATH];
@@ -261,8 +213,8 @@ int InsertModule (char *ModulePath)
 		strncpy(Modname,ModulePath,MAX_PATH);
 		PathStripPath(Modname);
 		// Following two calls refresh the memus
-		DynamicMenuCallback("", 0, 0);
-		DynamicMenuCallback("", 1, 0);
+		CallDynamicMenu("", MID_BEGIN, MIT_Head);
+		CallDynamicMenu("", MID_FINISH, MIT_Head);
 		// Reset if enabled
 		EmuState.ResetPending = 2;
 		SetCart(1);
@@ -273,9 +225,7 @@ int InsertModule (char *ModulePath)
 		UnloadDll();
 		hinstLib=nullptr;
 		hinstLib = LoadLibrary(ModulePath);
-		// FIXME: This is needed and should not be commented out. Wrap it conditional
-		// either here or in the debug log functions.
-		//PrintLogC("pak:LoadLibrary %s %d\n",ModulePath,hinstLib);
+		_DLOG("pak:LoadLibrary %s %d\n",ModulePath,hinstLib);
 		if (hinstLib == nullptr)
 			return NOMODULE;
 		SetCart(0);
@@ -296,9 +246,7 @@ int InsertModule (char *ModulePath)
 		if (GetModuleName == nullptr)
 		{
 			FreeLibrary(hinstLib);
-			// FIXME: This is needed and should not be commented out. Wrap it conditional
-			// either here or in the debug log functions.
-			//PrintLogC("pak:err FreeLibrary %d %d\n",hinstLib,rc);
+			_DLOG("pak:err FreeLibrary %d %d\n",hinstLib,rc);
 			hinstLib=nullptr;
 			return NOTVCC;
 		}
@@ -307,7 +255,7 @@ int InsertModule (char *ModulePath)
 			DmaMemPointer(MemRead8,MemWrite8);
 		if (SetInteruptCallPointer!=nullptr)
 			SetInteruptCallPointer(PakAssertInterupt);
-		GetModuleName(Modname,CatNumber,DynamicMenuCallbackChar);  //Instanciate the menus from HERE!
+		GetModuleName(Modname,CatNumber,CallDynamicMenu);  //Instanciate the menus from HERE!
 		sprintf(Temp,"Configure %s",Modname);
 
 		strcat(String,"Module Name: ");
@@ -447,10 +395,10 @@ void UnloadDll(void)
 	int rc = FreeLibrary(hinstLib);
 	// FIXME: This is needed and should not be commented out. Wrap it conditional
 	// either here or in the debug log functions.
-	//PrintLogC("pak:UnloadDll FreeLibrary %d %d\n",hinstLib,rc);
+	_DLOG("pak:UnloadDll FreeLibrary %d %d\n",hinstLib,rc);
 	hinstLib=nullptr;
-	DynamicMenuCallback( "",0, 0); //Refresh Menus
-	DynamicMenuCallback( "",1, 0);
+	CallDynamicMenu("", MID_BEGIN, MIT_Head);
+	CallDynamicMenu("", MID_FINISH, MIT_Head);
 	return;
 }
 
@@ -481,8 +429,8 @@ void UnloadPack(void)
 	ExternalRomBuffer=nullptr;
 
 	EmuState.ResetPending=2;
-	DynamicMenuCallback( "",0, 0); //Refresh Menus
-	DynamicMenuCallback( "",1, 0);
+	CallDynamicMenu("", MID_BEGIN, MIT_Head);
+	CallDynamicMenu("", MID_FINISH, MIT_Head);
 	return;
 }
 
@@ -527,34 +475,34 @@ void DynamicMenuActivated(unsigned char MenuID)
 	return;
 }
 
-// DynamicMenuCallback uses recursion to iterate the menu items
+// CallDynamicMenu uses recursion to iterate the menu items
 // MenuItem is an array of 100 menu items.
 // 	0 is the initial item (Cartridge)
 // 	1 is used to indicate refresh
 // 	Other than 0 and 1 MenuId is in range 5000 - 5099 for config items
 
-void DynamicMenuCallback(const char *MenuName, int MenuId, int Type)
+void CallDynamicMenu(const char *MenuName, int MenuId, int Type)
 {
 	switch (MenuId) {
 
 	// Menu 0 load or eject cart. Force eject before load.
-	case 0:
+	case MID_BEGIN:
 		{
 			MenuCount=0;
-			DynamicMenuCallback( "Cartridge",6000,HEAD);
+			CallDynamicMenu("Cartridge",MID_ENTRY,MIT_Head);
 			if (hinstLib) {
 				char Temp[256];
 				sprintf(Temp,"Eject ");
 				strcat(Temp, Modname);
-				DynamicMenuCallback(Temp,5002,SLAVE);
+				CallDynamicMenu(Temp,5002,MIT_Slave);
 			} else {
-				DynamicMenuCallback("Load Cart",5001,SLAVE);
+				CallDynamicMenu("Load Cart",5001,MIT_Slave);
 			}
 		}
 		break;
 
 	// Menu 1 refresh - Recreate all menu items
-	case 1:
+	case MID_FINISH:
 		RefreshDynamicMenu();
 		break;
 
@@ -569,7 +517,7 @@ void DynamicMenuCallback(const char *MenuName, int MenuId, int Type)
 	return;
 }
 
-// Create dynamic menu items. This gets called by DynamicMenuCallback for each menuitem
+// Create dynamic menu items. This gets called by CallDynamicMenu for each menuitem
 HMENU RefreshDynamicMenu(void)
 {
 	HMENU hMenu0, hMenu;
@@ -604,12 +552,12 @@ HMENU RefreshDynamicMenu(void)
 	// Next menu item
 	for (int ndx=0;ndx<MenuCount;ndx++) {
 		if (strlen(MenuItem[ndx].MenuName) == 0)
-			MenuItem[ndx].Type=STANDALONE;
+			MenuItem[ndx].Type=MIT_StandAlone;
 
 		//Create Menu item in title bar if no exist already
 		switch (MenuItem[ndx].Type)
 		{
-		case HEAD:
+		case MIT_Head:
 			hMenu = CreatePopupMenu();
 			Mii.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;
 			Mii.fType = MFT_STRING;
@@ -619,7 +567,7 @@ HMENU RefreshDynamicMenu(void)
 			Mii.cch=strlen(MenuItem[ndx].MenuName);
 			InsertMenuItem(hMenu0,0,FALSE,&Mii);
 			break;
-		case SLAVE:
+		case MIT_Slave:
 			Mii.fMask = MIIM_TYPE |  MIIM_ID;
 			Mii.fType = MFT_STRING;
 			Mii.wID = MenuItem[ndx].MenuId;
@@ -628,7 +576,16 @@ HMENU RefreshDynamicMenu(void)
 			Mii.cch=strlen(MenuItem[ndx].MenuName);
 			InsertMenuItem(hMenu,0,FALSE,&Mii);
 			break;
-		case STANDALONE:
+		case MIT_Seperator:
+			Mii.fMask = MIIM_TYPE |  MIIM_ID;
+			Mii.wID = MenuItem[ndx].MenuId;
+			Mii.hSubMenu = hVccMenu;
+			Mii.dwTypeData = "";
+			Mii.cch=0;
+			Mii.fType = MF_SEPARATOR;
+			InsertMenuItem(hMenu0,0,FALSE,&Mii);
+			break;
+		case MIT_StandAlone:
 			Mii.fMask = MIIM_TYPE |  MIIM_ID;
 			Mii.wID = MenuItem[ndx].MenuId;
 			Mii.hSubMenu = hVccMenu;

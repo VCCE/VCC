@@ -3,7 +3,6 @@
 #include "detail/default_handlers.h"
 #include <string>
 
-
 class Cartridge
 {
 protected:
@@ -34,32 +33,18 @@ public:
 
 protected:
 
-	enum class ItemType
-	{
-		Head,
-		Slave,
-		StandAlone
-	};
-
 	void AssetCartridgeLine(bool state) const
 	{
 		AssetCartridgeLinePtr(state);
 	}
 
-	void AddMenuSeparator() const
+	void AddMenuItem(const char * name, int id, MenuItemType type)
 	{
-		AddMenuItem("", 6000, ItemType::Head);
-	}
-
-	void AddMenuItem(const std::string& name, int id, ItemType type) const
-	{
-		AddMenuItemPtr(name.c_str(), id, static_cast<int>(type));
+		AddMenuItemPtr(name, id, static_cast<int> (type));
 	}
 
 	virtual void LoadConfiguration(const std::string& filename);
 	virtual void LoadMenuItems();
-
-
 
 private:
 
@@ -84,3 +69,4 @@ private:
 	SETCART				AssetCartridgeLinePtr = detail::NullAssetCartridgeLine;
 	DYNAMICMENUCALLBACK AddMenuItemPtr = detail::NullAddMenuItem;
 };
+

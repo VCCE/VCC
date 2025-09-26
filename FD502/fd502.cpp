@@ -31,6 +31,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "wd1793.h"
 #include "distortc.h"
 #include "fd502.h"
+#include "../ModuleDefs.h"
+#include "../DynamicMenu.h"
 #include "../fileops.h"
 #include "../DialogOps.h"
 #include "../logger.h"
@@ -45,13 +47,6 @@ constexpr auto EXTROMSIZE = 16384u;
 using namespace std;
 
 extern DiskInfo Drive[5];
-// FIXME: These typedefs are duplicated across more if not all projects and
-// need to be consolidated in one place.
-typedef unsigned char (*MEMREAD8)(unsigned short);
-typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-typedef void (*PAKINTERUPT)(unsigned char, unsigned char);
-typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
-typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 static unsigned char ExternalRom[EXTROMSIZE];
 static unsigned char DiskRom[EXTROMSIZE];
 static unsigned char RGBDiskRom[EXTROMSIZE];
@@ -453,42 +448,44 @@ void BuildDynaMenu(void)
 	char TempBuf[MAX_PATH]="";
 	if (DynamicMenuCallback ==nullptr)
 		MessageBox(g_hConfDlg,"No good","Ok",0);
-	DynamicMenuCallback("",0,0);
-	DynamicMenuCallback( "",6000,0);
-	DynamicMenuCallback( "FD-502 Drive 0",6000,HEAD);
-	DynamicMenuCallback( "Insert",5010,SLAVE);
+
+	DynamicMenuCallback( "", MID_BEGIN, MIT_Head);
+	DynamicMenuCallback( "", MID_ENTRY, MIT_Seperator);
+
+	DynamicMenuCallback( "FD-502 Drive 0",3,MIT_Head);
+	DynamicMenuCallback( "Insert",5010,MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[0].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5011,SLAVE);
+	DynamicMenuCallback( TempMsg,5011,MIT_Slave);
 
-	DynamicMenuCallback( "FD-502 Drive 1",6000,HEAD);
-	DynamicMenuCallback( "Insert",5012,SLAVE);
+	DynamicMenuCallback( "FD-502 Drive 1",MID_ENTRY,MIT_Head);
+	DynamicMenuCallback( "Insert",5012,MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[1].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5013,SLAVE);
+	DynamicMenuCallback( TempMsg,5013,MIT_Slave);
 
-	DynamicMenuCallback( "FD-502 Drive 2",6000,HEAD);
-	DynamicMenuCallback( "Insert",5014,SLAVE);
+	DynamicMenuCallback( "FD-502 Drive 2",MID_ENTRY,MIT_Head);
+	DynamicMenuCallback( "Insert",5014,MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[2].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5015,SLAVE);
-//NEW
-	DynamicMenuCallback( "FD-502 Drive 3",6000,HEAD);
-	DynamicMenuCallback( "Insert",5017,SLAVE);
+	DynamicMenuCallback( TempMsg,5015,MIT_Slave);
+
+	DynamicMenuCallback( "FD-502 Drive 3",MID_ENTRY,MIT_Head);
+	DynamicMenuCallback( "Insert",5017,MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[3].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5018,SLAVE);
-//NEW
-	DynamicMenuCallback( "FD-502 Config",5016,STANDALONE);
-	DynamicMenuCallback( "",1,0);
+	DynamicMenuCallback( TempMsg,5018,MIT_Slave);
+
+	DynamicMenuCallback( "FD-502 Config",5016,MIT_StandAlone);
+	DynamicMenuCallback("", MID_FINISH, MIT_Head);
 }
 
 long CreateDisk (unsigned char Disk)

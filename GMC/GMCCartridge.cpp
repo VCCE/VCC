@@ -13,15 +13,13 @@ void GMCCartridge::LoadConfiguration(const std::string& filename)
 	m_Configuration = Configuration(filename);
 }
 
-
 void GMCCartridge::LoadMenuItems()
 {
-	AddMenuItem("", 0, ItemType::Head);
-	AddMenuSeparator();
-	AddMenuItem("Select GMC ROM", 5000 + MenuItems::SelectRom, ItemType::StandAlone);
-	AddMenuItem("", 1, ItemType::Head);
+    AddMenuItem("",MID_BEGIN,MIT_Head);
+    AddMenuItem("",MID_ENTRY,MIT_Slave);
+    AddMenuItem("Select GMC ROM", MID_SDYNAMENU + MenuItems::SelectRom, MIT_StandAlone);
+    AddMenuItem("",MID_FINISH,MIT_Head);
 }
-
 
 std::string GMCCartridge::GetStatusMessage() const
 {
@@ -53,7 +51,7 @@ void GMCCartridge::OnMenuItemSelected(unsigned char menuId)
 
 		MessageBoxA(
 			nullptr,
-			"A new ROM file has been you selected. Press F9 to reset\nyour Color Computer and activate the ROM.",
+			"A new ROM file has been selected. Press F9 to reset\nyour Color Computer and activate the ROM.",
 			"ROM Selected",
 			MB_OK);
 

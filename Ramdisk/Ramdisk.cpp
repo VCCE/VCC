@@ -17,16 +17,10 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <Windows.h>
+#include "../ModuleDefs.h"
 #include "resource.h" 
 #include "defines.h"
 #include "memboard.h"
-
-// FIXME: These typedefs are duplicated across more if not all projects and
-// need to be consolidated in one place.
-typedef unsigned char (*MEMREAD8)(unsigned short);
-typedef void (*MEMWRITE8)(unsigned char,unsigned short);
-typedef void (*DMAMEMPOINTERS) ( MEMREAD8,MEMWRITE8);
-typedef void (*DYNAMICMENUCALLBACK)( const char *,int, int);
 
 static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
 

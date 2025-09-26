@@ -1,5 +1,3 @@
-#ifndef __PAKINTERFACE_H__
-#define __PAKINTERFACE_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -18,6 +16,8 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#pragma once
+
 void PakTimer(void);
 unsigned char PackPortRead (unsigned char);
 void PackPortWrite(unsigned char,unsigned char);
@@ -33,20 +33,13 @@ int InsertModule (char *);
 void UpdateBusPointer(void);
 void UnloadDll(void);
 void UnloadPack(void);
-void DynamicMenuActivated(unsigned char );
+
 HMENU RefreshDynamicMenu(void);
-constexpr auto ID_SDYNAMENU = 5000;	//Defines the start and end IDs for the dynamic menus
-constexpr auto ID_EDYNAMENU = 5100;
-// FIXME: These need to be turned into an enum and the signature of functions
-// that use them updated.
+void CallDynamicMenu(const char * MenuName,int MenuId,int Type);
+void DynamicMenuActivated(unsigned char);
+
+// Error return codes from InsertModule
+// FIXME: These should be turned into an enum
 constexpr auto NOMODULE = 1;
 constexpr auto NOTVCC = 2;
 
-// FIXME: These need to be turned into an enum and the signature of functions
-// that use them updated. These are also duplicated everywhere and need to be
-// consolidated in one gdmf place.
-#define	HEAD 0
-#define SLAVE 1
-#define STANDALONE 2
-
-#endif

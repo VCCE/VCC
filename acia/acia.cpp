@@ -22,18 +22,13 @@
 //------------------------------------------------------------------
 
 #include "acia.h"
+#include "../ModuleDefs.h"
 #include "../DialogOps.h"
 #include "../logger.h"
 
 //------------------------------------------------------------------------
 // Local Functions
 //------------------------------------------------------------------------
-
-// FIXME: These typedefs are duplicated across more if not all projects and
-// need to be consolidated in one place.
-// Transfer points for menu callback and cpu assert interrupt
-typedef void (*DYNAMICMENUCALLBACK)(const char * ,int, int);
-typedef void (*ASSERTINTERUPT)(unsigned char, unsigned char);
 
 void BuildDynaMenu(void);
 
@@ -227,10 +222,10 @@ __declspec(dllexport) void SetIniPath (char *IniFilePath)
 //----------------------------------------------------------------------
 void BuildDynaMenu(void)
 {
-    DynamicMenuCallback("",0,0);     // begin
-    DynamicMenuCallback("",6000,0);  // seperator
-    DynamicMenuCallback("ACIA Config",5016,STANDALONE); // Config
-    DynamicMenuCallback("",1,0);     // end
+    DynamicMenuCallback("",MID_BEGIN,MIT_Head);
+    DynamicMenuCallback("",MID_ENTRY,MIT_Seperator);
+    DynamicMenuCallback("ACIA Config",5016,MIT_StandAlone);
+    DynamicMenuCallback("",MID_FINISH,MIT_Head);
 }
 
 //-----------------------------------------------------------------------

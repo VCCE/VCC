@@ -28,13 +28,6 @@ void IdeWrite (unsigned char, unsigned char);
 void DiskStatus(char *);
 void VhdReset(void);
 
-// FIXME: These need to be turned into an enum and the signature of functions
-// that use them updated. These are also duplicated everywhere and need to be
-// consolidated in one gdmf place.
-#define HEAD 0
-#define SLAVE 1
-#define STANDALONE 2
-
 constexpr auto DRIVESIZE = 512u; // Mb
 constexpr auto MAX_SECTOR = DRIVESIZE * 1024 * 1024;
 constexpr auto SECTORSIZE = 256u;
