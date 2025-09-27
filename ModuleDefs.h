@@ -18,10 +18,8 @@ This file is part of VCC (Virtual Color Computer).
 
 #pragma once
 
-// Dynamic menu defines needed for DYNAMICMENUCALLBACK
-#include "DynamicMenu.h"
-
 // These typedefs define pointers for module capabilities
+typedef void (*DYNAMICMENUCALLBACK)(const char * MenuName, int MenuId, int MenuType);
 typedef void (*GETNAME)(char *,char *,DYNAMICMENUCALLBACK); 
 typedef void (*CONFIGIT)(unsigned char); 
 typedef void (*HEARTBEAT) (void);

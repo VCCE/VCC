@@ -145,6 +145,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include "../DialogOps.h"
+#include "../DynamicMenu.h"
 #include "../ModuleDefs.h"
 #include "sdc.h"
 

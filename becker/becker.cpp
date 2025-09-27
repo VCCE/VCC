@@ -8,6 +8,7 @@
 #include "resource.h" 
 #include "../logger.h"
 #include "../fileops.h"
+#include "../DynamicMenu.h"
 #include "../ModuleDefs.h"
 
 #ifndef USE_LOGGING

@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "../DynamicMenu.h"
 #include "../ModuleDefs.h"
 
 #ifdef GMC_EXPORTS

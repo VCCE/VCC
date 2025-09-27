@@ -22,6 +22,7 @@
 //------------------------------------------------------------------
 
 #include "acia.h"
+#include "../DynamicMenu.h"
 #include "../ModuleDefs.h"
 #include "../DialogOps.h"
 #include "../logger.h"

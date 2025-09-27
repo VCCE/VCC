@@ -19,11 +19,12 @@ Copyright 2015 by Joseph Forgione
 
 #include <Windows.h>
 #include <iostream>
-#include "stdio.h"
+#include <stdio.h>
 #include "resource.h"
 #include <CommCtrl.h>
 #include "../fileops.h"
 #include "../DialogOps.h"
+#include "../DynamicMenu.h"
 #include "../ModuleDefs.h"
 #include "../MachineDefs.h"
 #include "../logger.h"
