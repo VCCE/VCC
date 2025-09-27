@@ -25,6 +25,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "cloud9.h"
 #include "logger.h"
 #include "../fileops.h"
+#include "../DynamicMenu.h"
 #include "../DialogOps.h"
 #include "../ModuleDefs.h"
 

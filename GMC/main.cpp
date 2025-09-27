@@ -33,27 +33,6 @@ std::string SelectROMFile()
 	} else {
 		selectedPath.clear();
 	}
-/*
-	OPENFILENAMEA ofn = { 0 };
-	char selectedPathBuffer[MAX_PATH] = { 0 };
-
-	ofn.lStructSize		  = sizeof(ofn);
-	ofn.hwndOwner		  = GetActiveWindow();
-	ofn.lpstrFilter       =	"ROM Files\0*.ROM\0\0";			// filter string
-	ofn.nFilterIndex      = 1 ;								// current filter index
-	ofn.lpstrFile         = selectedPathBuffer;				// contains full path and filename on return
-	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
-	ofn.lpstrFileTitle    = nullptr;						// filename and extension only
-	ofn.nMaxFileTitle     = MAX_PATH ;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = nullptr;						// initial directory
-	ofn.lpstrTitle        = "Select GMC ROM file";			// title bar string
-	ofn.Flags             = OFN_HIDEREADONLY;
-	if (GetOpenFileNameA(&ofn)) {
-		selectedPath = selectedPathBuffer;
-	} else {
-		selectedPath.clear();
-	}
-*/
 	return selectedPath;
 }
 
