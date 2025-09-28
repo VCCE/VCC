@@ -31,9 +31,6 @@
     <ClCompile Include="iobus.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="joystickinput.c">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="keyboard.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -114,6 +111,8 @@
     <ClCompile Include="DirectX.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Dialogops.cpp" />
+    <ClCompile Include="joystickinput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h">

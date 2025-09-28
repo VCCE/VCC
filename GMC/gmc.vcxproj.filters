@@ -22,6 +22,7 @@
     <ClCompile Include="sn76496.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="../DialogOps.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="detail\default_handlers.h">
