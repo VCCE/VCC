@@ -128,6 +128,8 @@
 //  ROMS require their respective .DLL's to be installed to function,
 //  these are typically in MMI slot 3 and 4 respectively.
 //
+//#define USE_LOGGING
+//
 //----------------------------------------------------------------------
 
 #include <iostream>
@@ -144,6 +146,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include "../logger.h"
 #include "../DialogOps.h"
 #include "../DynamicMenu.h"
 #include "../ModuleDefs.h"
@@ -951,7 +954,7 @@ void ParseStartup(void)
 void CommandDone(void)
 {
     _DLOG("*");
-	AssertInt(INT_NMI,IS_NMI);
+    AssertInt(INT_NMI,IS_NMI);
 }
 
 //----------------------------------------------------------------------
@@ -1135,25 +1138,19 @@ void FloppyCommand(unsigned char data)
 // floppy restore
 void FloppyRestore(unsigned char data)
 {
-	// FIXME: Remove this once _DLOG is replaced
-	(void)data;
-
-    _DLOG("FloppyRestore %02x\n",data);
+    _DLOG("FloppyRestore\n");
     FlopTrack = 0;
     FlopSector = 0;
     FlopStatus = FLP_NORMAL;
     FlopWrCnt = 0;
     FlopRdCnt = 0;
-    CommandDone();
 }
 
 // floppy seek
 void FloppySeek(unsigned char data)
 {
-	// FIXME: Remove this once _DLOG is replaced
-	(void)data;
-
-	_DLOG("FloppySeek %02x\n",data);
+    // Seek not implemented
+    _DLOG("FloppySeek\n");
 }
 
 // floppy read sector
@@ -1178,8 +1175,8 @@ void FloppyReadDisk()
 // floppy write sector
 void FloppyWriteDisk()
 {
+    // write not implemented
     int lsn = FlopTrack * 18 + FlopSector - 1;
-    // write not implemented yet
     _DLOG("FloppyWriteDisk %d %d not implmented\n",FlopDrive,lsn);
     FlopStatus = FLP_READONLY;
 }
@@ -1187,7 +1184,7 @@ void FloppyWriteDisk()
 // floppy set track
 void FloppyTrack(unsigned char data)
 {
-    _DLOG("FloppyTrack %d\n",data);
+    //_DLOG("FloppyTrack %d\n",data);
     FlopTrack = data;
 }
 
@@ -1197,19 +1194,18 @@ void FloppySector(unsigned char data)
     FlopSector = data;  // (1-18)
 
     int lsn = FlopTrack * 18 + FlopSector - 1;
-    _DLOG("FloppySector %d lsn %d\n",FlopSector,lsn);
+    //_DLOG("FloppySector %d lsn %d\n",FlopSector,lsn);
     FlopStatus = FLP_NORMAL;
 }
 
 // floppy write data
 void FloppyWriteData(unsigned char data)
 {
-    _DLOG("FloppyWriteData %02x\n",data);
     if (FlopWrCnt<256)  {
         FlopWrCnt++;
         FlopWrBuf[FlopWrCnt] = data;
-        FlopStatus |= FLP_DATAREQ;
     } else {
+        if ((FlopStatus &= FLP_DATAREQ) != 0) CommandDone();
         FlopStatus = FLP_NORMAL;
     }
 }
@@ -1217,7 +1213,7 @@ void FloppyWriteData(unsigned char data)
 // floppy get status
 unsigned char FloppyStatus()
 {
-    _DLOG("FloppyStatus %02x\n",FlopStatus);
+    //_DLOG("FloppyStatus %02x\n",FlopStatus);
     return FlopStatus;
 }
 
@@ -1228,13 +1224,11 @@ unsigned char FloppyReadData()
     if (FlopRdCnt>0)  {
         rpy = FlopRdBuf[256-FlopRdCnt];
         FlopRdCnt--;
-        FlopStatus |= FLP_DATAREQ;
     } else {
+        if ((FlopStatus &= FLP_DATAREQ) != 0) CommandDone();
         FlopStatus = FLP_NORMAL;
-        CommandDone();
         rpy = 0;
     }
-    _DLOG("FloppyReadData %03d %02x\n",256-FlopRdCnt,rpy);
     return rpy;
 }
 
