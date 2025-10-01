@@ -19,9 +19,9 @@ This file is part of VCC (Virtual Color Computer).
 #pragma once
 
 // Module DLL capability pointers
-typedef void (*DYNAMICMENUCALLBACK)(const char * MenuName, int MenuId, int MenuType);
-typedef void (*GETNAME)(char *,char *,DYNAMICMENUCALLBACK); 
-typedef void (*CONFIGIT)(unsigned char); 
+typedef void (*CARTMENUCALLBACK)(const char * MenuName, int MenuId, int MenuType);
+typedef void (*GETNAME)(char *,char *,CARTMENUCALLBACK);
+typedef void (*CONFIGIT)(unsigned char);
 typedef void (*HEARTBEAT) (void);
 typedef unsigned char (*PACKPORTREAD)(unsigned char);
 typedef void (*PACKPORTWRITE)(unsigned char,unsigned char);

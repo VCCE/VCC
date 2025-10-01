@@ -43,7 +43,7 @@ BOOL WINAPI DllMain(
 
 extern "C" 
 {          
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK /*Temp*/)
+	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK /*Temp*/)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		

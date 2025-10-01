@@ -18,7 +18,7 @@ public:
 	virtual std::string GetCatalogId() const;
 
 	virtual void SetCartLineAssertCallback(SETCART callback);
-	virtual void SetMenuBuilderCallback(DYNAMICMENUCALLBACK addMenuCallback);
+	virtual void SetMenuBuilderCallback(CARTMENUCALLBACK addMenuCallback);
 	virtual void SetConfigurationPath(std::string path);
 
 	virtual std::string GetStatusMessage() const;
@@ -48,7 +48,7 @@ protected:
 
 private:
 
-	friend void ModuleName(char *ModName, char *CatNumber, DYNAMICMENUCALLBACK addMenuCallback);
+	friend void ModuleName(char *ModName, char *CatNumber, CARTMENUCALLBACK addMenuCallback);
 	friend void ModuleStatus(char *statusBuffer);
 	friend void ModuleConfig(unsigned char menuId);
 	friend void SetIniPath(const char *iniFilePath);
@@ -67,6 +67,6 @@ private:
 	std::string			m_CatalogId;
 	std::string			m_ConfigurationPath;
 	SETCART				AssetCartridgeLinePtr = detail::NullAssetCartridgeLine;
-	DYNAMICMENUCALLBACK AddMenuItemPtr = detail::NullAddMenuItem;
+	CARTMENUCALLBACK 	AddMenuItemPtr = detail::NullAddMenuItem;
 };
 

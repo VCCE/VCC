@@ -145,7 +145,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	EmuState.WindowInstance = hInstance;
 	unsigned threadID;
 	HANDLE hEvent,
-
 	OleInitialize(nullptr); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
@@ -167,17 +166,12 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		MessageBox(nullptr,"Can't create primary Window","Error",0);
 		exit(0);
 	}
+
+	// Set up the cartridge menu. This gets drawn after modules are loaded
+	CartMenu.init();
+	BeginCartMenu();
+
 	InitSound();
-
-	CartMenu.init(EmuState.WindowHandle,"Cartridge",3);
-	CartMenu.add("",MID_BEGIN,MIT_Head);
-	CartMenu.add("Cartridge",6000,MIT_Head);
-	CartMenu.add("Load Cart",5001,MIT_Slave);
-	CartMenu.add("",MID_FINISH,MIT_Head);
-	//CartMenu.draw();
-
-	//CallDynamicMenu("", MID_BEGIN, MIT_Head);
-	//CallDynamicMenu("", MID_FINISH, MIT_Head);
 	LoadModule();
 	SetClockSpeed(1);	//Default clock speed .89 MHZ	
 	BinaryRunning = true;
@@ -303,10 +297,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			// Parse the menu selections:
 			
-			// Check WmId dynamic menu range for items done by loaded modules
-			if ( (wmId >= MID_SDYNAMENU) & (wmId <= MID_EDYNAMENU) )
+			// Check if ID is in cartridge menu range
+			if ( (wmId >= MID_CONTROL) & (wmId < MID_CONTROL + 100) )
 			{
-				DynamicMenuActivated(wmId - MID_SDYNAMENU);
+				CartMenuActivated(wmId-MID_CONTROL);
 				break;
 			}
 
@@ -564,7 +558,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					if ( IsShiftKeyDown() ) {
 						hMenu = GetConfMenu();
 					} else {
-						//hMenu = RefreshDynamicMenu();
 						hMenu = CartMenu.draw();
 					}
 					if (hMenu && EmuState.FullScreen) {
@@ -1098,7 +1091,6 @@ void FullScreenToggle(void)
 		exit(0);
 	}
 	InvalidateBoarder();
-	//RefreshDynamicMenu();
 	CartMenu.draw();
 
 	EmuState.ConfigDialog=nullptr;

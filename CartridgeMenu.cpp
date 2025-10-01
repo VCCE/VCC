@@ -18,41 +18,43 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "CartridgeMenu.h"
 #include "logger.h"
+#include "defines.h"
 
 CartridgeMenu::CartridgeMenu() {};
 
-//  Init. hWin is main window id. Title is menu bar title. Position is where 
-//  the menu is placed on title bar
-void CartridgeMenu::init(HWND hWin,const char * title,int position) {
-PrintLogC("Init %d '%s' %d\n",hWin,title,position);
-	hMainWin = hWin;
-	BarTitle = title;
-	menu_position = position;
+//  Init. Title is menu bar title. Position is where the menu is placed on title bar
+void CartridgeMenu::init(const char * title,int position) {
+	MenuBarTitle = title;
+	MenuPosition = position;
 }
 
-//  Add menu entry.  cart number: 0 main cart, 1-4 mpi slot carts
-void CartridgeMenu::add(const char * name, int menu_id, MenuItemType type) {
-
-PrintLogC("ADD '%s' %d %d\n",name,menu_id,type);
-
-	if (menu_id == MID_BEGIN) {
-		if (menu.size() > 2) menu.resize(2);
-//		menu.clear();
-	} else if (menu_id == MID_FINISH) {
+//  Add menu entry.
+void CartridgeMenu::add(const char * name, unsigned int menu_id, MenuItemType type, unsigned int reserve) {
+	switch (menu_id) {
+	case MID_BEGIN:
+		if (menu.size() > reserve) menu.resize(reserve);
+	    break;
+	case MID_FINISH:
 		draw();
-	} else {
+		break;
+	default:
 		menu.push_back({name,menu_id,type});
+		break;
 	}
 }
 
 // Draw the menu
 HMENU CartridgeMenu::draw() {
 
-
-	if (hMenuBar == nullptr)  // Can hMainWin change?
+	// Fullscreen toggle changes the WindowHandle
+	if (hMenuBar == nullptr || hMainWin != EmuState.WindowHandle) {
+		hMainWin = EmuState.WindowHandle;
 		hMenuBar = GetMenu(hMainWin);
-	else
-		DeleteMenu(hMenuBar,menu_position,MF_BYPOSITION);
+	}
+
+	// Erase the Existing Cartridge Menu.  Vcc.rc defines a dummy Cartridge menu to
+	// preserve it's place.
+	DeleteMenu(hMenuBar,MenuPosition,MF_BYPOSITION);
 
 	// Create first sub menu item
 	HMENU hMenu = CreatePopupMenu();
@@ -66,29 +68,30 @@ HMENU CartridgeMenu::draw() {
 	Mii.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;  // setting the submenu id
 	Mii.fType = MFT_STRING;                          // Type is a string
 	Mii.hSubMenu = hMenu;
-	Mii.dwTypeData = const_cast<LPSTR>(BarTitle.c_str());
-	Mii.cch = BarTitle.size();
-	InsertMenuItem(hMenuBar,menu_position,TRUE,&Mii);
+	Mii.dwTypeData = const_cast<LPSTR>(MenuBarTitle.c_str());
+	Mii.cch = MenuBarTitle.size();
+	InsertMenuItem(hMenuBar,MenuPosition,TRUE,&Mii);
 
-	// Create sub menus
-	for (size_t i = 0; i < menu.size(); i++) {
-PrintLogC("Draw %d '%s' %d %d\n",i,menu[i].name.c_str(), menu[i].menu_id,menu[i].type);
-		switch (menu[i].type) {
+	// Create sub menus in order
+	unsigned int pos = 0u;
+	for (MenuItem item : menu) {
+		switch (item.type) {
 		case MIT_Head:
 			hMenu = CreatePopupMenu();
 			Mii.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;
 			Mii.fType = MFT_STRING;
 			Mii.hSubMenu = hMenu;
-			Mii.dwTypeData = const_cast<LPSTR>(menu[i].name.c_str());
-			InsertMenuItem(hMenu0,0,FALSE,&Mii);
+			Mii.dwTypeData = const_cast<LPSTR>(item.name.c_str());
+			InsertMenuItem(hMenu0,pos,TRUE,&Mii);
+			pos++;
 			break;
 		case MIT_Slave:
 			Mii.fMask = MIIM_TYPE | MIIM_ID;
 			Mii.fType = MFT_STRING;
-			Mii.wID = menu[i].menu_id;
+			Mii.wID = item.menu_id;
 			Mii.hSubMenu = hMenu;
-			Mii.dwTypeData = const_cast<LPSTR>(menu[i].name.c_str());
-			Mii.cch=menu[i].name.size();
+			Mii.dwTypeData = const_cast<LPSTR>(item.name.c_str());
+			Mii.cch=item.name.size();
 			InsertMenuItem(hMenu,0,FALSE,&Mii);
 			break;
 		case MIT_Seperator:
@@ -97,25 +100,22 @@ PrintLogC("Draw %d '%s' %d %d\n",i,menu[i].name.c_str(), menu[i].menu_id,menu[i]
 			Mii.dwTypeData = "";
 			Mii.cch=0;
 			Mii.fType = MF_SEPARATOR;
-			InsertMenuItem(hMenu0,0,FALSE,&Mii);
+			InsertMenuItem(hMenu0,pos,TRUE,&Mii);
+			pos++;
 			break;
 		case MIT_StandAlone:
 			Mii.fMask = MIIM_TYPE | MIIM_ID;
-		    Mii.wID = menu[i].menu_id;
+		    Mii.wID = item.menu_id;
 			Mii.hSubMenu = hMenuBar;
-			Mii.dwTypeData = const_cast<LPSTR>(menu[i].name.c_str());
-			Mii.cch=menu[i].name.size();
+			Mii.dwTypeData = const_cast<LPSTR>(item.name.c_str());
+			Mii.cch=item.name.size();
 			Mii.fType = MFT_STRING;
-			InsertMenuItem(hMenu0,0,FALSE,&Mii);
+			InsertMenuItem(hMenu0,pos,TRUE,&Mii);
+			pos++;
 			break;
 		}
 	}
 	DrawMenuBar(hMainWin);
 	return hMenu0;
-}
-								 
-//  Delete menu items
-void CartridgeMenu::del() {
-	menu.clear();
 }
 

@@ -31,7 +31,7 @@
 // Local Functions
 //------------------------------------------------------------------------
 
-void BuildDynaMenu(void);
+void BuildCartMenu(void);
 
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig(void);
@@ -45,7 +45,7 @@ static HINSTANCE g_hDLL = nullptr;      // DLL handle
 static HWND g_hDlg = nullptr;           // Config dialog
 static char IniFile[MAX_PATH];       // Ini file name
 static char IniSect[MAX_LOADSTRING]; // Ini file section
-static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
+static CARTMENUCALLBACK CartMenuCallback = nullptr;
 
 // Status for Vcc status line
 char AciaStat[32];
@@ -92,13 +92,13 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 //-----------------------------------------------------------------------
 extern "C"
 __declspec(dllexport) void
-ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
+ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
 {
     LoadString(g_hDLL,IDS_MODULE_NAME,ModName,MAX_LOADSTRING);
     LoadString(g_hDLL,IDS_CATNUMBER,CatNumber,MAX_LOADSTRING);
-    DynamicMenuCallback = Temp;
+    CartMenuCallback = Temp;
     strcpy(IniSect,ModName);   // Use module name for ini file section
-    if (DynamicMenuCallback != nullptr) BuildDynaMenu();
+    if (CartMenuCallback != nullptr) BuildCartMenu();
     sc6551_init();
     return ;
 }
@@ -221,12 +221,12 @@ __declspec(dllexport) void SetIniPath (const char *IniFilePath)
 //-----------------------------------------------------------------------
 //  Add config option to Cartridge menu
 //----------------------------------------------------------------------
-void BuildDynaMenu(void)
+void BuildCartMenu(void)
 {
-    DynamicMenuCallback("",MID_BEGIN,MIT_Head);
-    DynamicMenuCallback("",MID_ENTRY,MIT_Seperator);
-    DynamicMenuCallback("ACIA Config",5016,MIT_StandAlone);
-    DynamicMenuCallback("",MID_FINISH,MIT_Head);
+    CartMenuCallback("",MID_BEGIN,MIT_Head);
+    CartMenuCallback("",MID_ENTRY,MIT_Seperator);
+    CartMenuCallback("ACIA Config",ControlId(16),MIT_StandAlone);
+    CartMenuCallback("",MID_FINISH,MIT_Head);
 }
 
 //-----------------------------------------------------------------------

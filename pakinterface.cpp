@@ -57,7 +57,7 @@ static char DllPath[256]="";
 static unsigned short ModualParms=0;
 static HINSTANCE hinstLib = nullptr;
 
-static void (*GetModuleName)(char *,char *,DYNAMICMENUCALLBACK)=nullptr;
+static void (*GetModuleName)(char *,char *,CARTMENUCALLBACK)=nullptr;
 static void (*ConfigModule)(unsigned char)=nullptr;
 static void (*SetInteruptCallPointer)(PAKINTERUPT)=nullptr;
 static void (*DmaMemPointer) (MEMREAD8,MEMWRITE8)=nullptr;
@@ -168,25 +168,25 @@ unsigned short PackAudioSample(void)
 	return 0;
 }
 
+// Create first two entries for cartridge menu.
 void BeginCartMenu()
 {
-	CartMenu.del();
-	CartMenu.add("",MID_BEGIN,MIT_Head);
-	CartMenu.add("Cartridge",6000,MIT_Head);
+	CartMenu.add("", MID_BEGIN, MIT_Head, 0);
+	CartMenu.add("Cartridge",MID_ENTRY,MIT_Head);
 	if (hinstLib) {
 		char tmp[64];
 		snprintf(tmp,64,"Eject %s",PakName);
-		CartMenu.add(tmp,5002,MIT_Slave);
+		CartMenu.add(tmp,ControlId(2),MIT_Slave);
 	} else {
-		CartMenu.add("Load Cart",5001,MIT_Slave);
+		CartMenu.add("Load Cart",ControlId(1),MIT_Slave);
 	}
 	CartMenu.add("",MID_FINISH,MIT_Head);
-	//CartMenu.draw();
 }
 
-void AddCartMenu(const char *name, int menu_id, int type)
+// Callback for loaded cart DLLs. First two entries are reserved
+void CartMenuCallBack(const char *name, int menu_id, int type)
 {
-	CartMenu.add(name, menu_id, (MenuItemType) type);
+	CartMenu.add(name, menu_id, (MenuItemType) type, 2);
 }
 
 int LoadCart(void)
@@ -212,9 +212,6 @@ int LoadCart(void)
 // Insert Module returns 0 on success
 int InsertModule (const char *ModulePath)
 {
-
-PrintLogC("Insert '%s'\n",ModulePath);
-
 	char CatNumber[MAX_LOADSTRING]="";
 	char Temp[MAX_LOADSTRING]="";
 	char String[1024]="";
@@ -282,7 +279,7 @@ PrintLogC("Insert '%s'\n",ModulePath);
 			DmaMemPointer(MemRead8,MemWrite8);
 		if (SetInteruptCallPointer!=nullptr)
 			SetInteruptCallPointer(PakAssertInterupt);
-		GetModuleName(Modname,CatNumber,AddCartMenu);  //Instanciate the menus from HERE!
+		GetModuleName(Modname,CatNumber,CartMenuCallBack);  //Instanciate the menus HERE
 		sprintf(Temp,"Configure %s",Modname);
 
 		strcat(String,"Module Name: ");
@@ -475,12 +472,8 @@ int FileID(const char *Filename)
 	return 2;		//Rom Image
 }
 
-// DynamicMenuActivated is called from VCC main when a dynamic menu item is clicked.
-// The wmId for dynamic menu items is in the range 5000 thru 5100 which was choosen
-// to be outside the range for normal resource identifiers.  Vcc main subtractes 5000
-// from the wmId to get the MenuID.
-//
-void DynamicMenuActivated(unsigned char MenuID)
+// CartMenuActivated is called from VCC main when a cartridge menu item is clicked.
+void CartMenuActivated(unsigned int MenuID)
 {
 	switch (MenuID)
 	{

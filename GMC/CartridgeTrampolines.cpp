@@ -2,7 +2,7 @@
 #include "Cartridge.h"
 
 
-GMC_EXPORT void ModuleName(char *moduleName, char *catalogId, DYNAMICMENUCALLBACK addMenuCallback)
+GMC_EXPORT void ModuleName(char *moduleName, char *catalogId, CARTMENUCALLBACK addMenuCallback)
 {
 	Cartridge::m_Singleton->SetMenuBuilderCallback(addMenuCallback);
 

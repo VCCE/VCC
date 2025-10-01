@@ -22,55 +22,64 @@
 #include <vector>
 #include <string>
 
-// Menu IDs
-//  MID_BEGIN  must be used to begin the menu
-//  MID_FINISH must be used to finish the menu
-//  5002 thru 5099 are standalone or slave entries.
-//  6000 thru 6100 are dynamic entries.
-constexpr auto MID_BEGIN     = 0;
-constexpr auto MID_FINISH    = 1;
-constexpr auto MID_ENTRY     = 6000;
-constexpr auto MID_SDYNAMENU = 5000;
-constexpr auto MID_EDYNAMENU = 5100;
+// A menu ID is either a small unsigned integer less than 20 used to identify
+// cart menu functions or a control id in the range 5000 - 5019.  Menu ID's map
+// directly to control id's by adding 5000. The ControlId() constexpr should be
+// used to get the control id from a menu id. There are three "special" message
+// IDs as follows:
 
-// Menu item types
+constexpr auto MID_BEGIN  = 0;  // Clears the menu, optionally reserving some entries.
+constexpr auto MID_FINISH = 1;  // Draws the menu
+constexpr auto MID_ENTRY  = 2;  // A menu item with no control ID
+
+//  Menu IDs other than the above special ones must be converted to control IDs
+//  using the ControlId() constexpr. These reference controls that are activated
+//  when the menu item is selected.
+
+//  The MPI adds 20 times the slot number (1-4) to the ID when a cartridge is loaded in
+//  an mpi slot, then subtracts this value when the item is activated before using
+//  it to call the control in the cartridge dll. This allows module configs to work
+//  properly regardless of which slot they are in.
+
+constexpr auto MID_CONTROL = 5000;
+
+// constexpr to convert menu id number to control id
+constexpr int ControlId(int id) { return MID_CONTROL + id; }; 
+
+// Menu item types, one of the following.
 enum MenuItemType
 {
-	MIT_Head,
-	MIT_Slave,
-	MIT_StandAlone,
-	MIT_Seperator,
+	MIT_Head,       // Menu header with no associated control, may have slave items
+	MIT_Slave,      // Slave items with associated control in header submenu.
+	MIT_StandAlone, // Menu item with an associated control
+	MIT_Seperator,  // Draws a horizontal line to seperate groups of menu items
 };
 
 class CartridgeMenu {
 
 private:
-
-	// MenuItem
 	struct MenuItem {
 		std::string name;
-		int menu_id;
+		unsigned int menu_id;
 		MenuItemType type;
 	};
 	std::vector<MenuItem> menu {};
 	HWND hMainWin;
 	HMENU hMenuBar;
-	std::string BarTitle;
-	int menu_position;
+	std::string MenuBarTitle;
+	int MenuPosition;
 
 public:
-
 	CartridgeMenu();
 
-//  Init. hWin is main window id. title is menu bar title position is the 
-//  menubar position where the dynamic window is inserted.
-	void init(HWND hWin,const char * title="Cartridge",int position=3);
+//  Title is menu bar title, position is location menu will be placed on the menu bar.
+	void init(const char * title="Cartridge", int position=3);
 
-//  Add menu entry.
-	void add(const char * name, int menu_id, MenuItemType type);
-
-//  Delete menu items
-	void del();  
+//  Add menu entry. name is the item text, menu_id and type per above. Reserve is the
+//  number of menu items to kept before MID_BEGIN.  A reserve value of 2 allows the
+//  'Cartridge' menu item and it's submenu to remain intact when DLL's append items to
+//  the menu. The reserve value is only used whwn MID_BEGIN items are encountered.
+	void add(const char * name, unsigned int menu_id, MenuItemType type, unsigned int reserve=2);
 
 //  Draw refreshes the menu
     HMENU draw();

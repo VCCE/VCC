@@ -42,7 +42,7 @@ static char HardDiskPath[MAX_PATH];
 
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
-static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
+static CARTMENUCALLBACK CartMenuCallback = nullptr;
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 
@@ -89,13 +89,13 @@ unsigned char MemRead(unsigned short Address)
 extern "C"
 {
     __declspec(dllexport) void
-    ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
+    ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
     {
         LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
         LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
-        DynamicMenuCallback =Temp;
+        CartMenuCallback =Temp;
         SetClockWrite(!ClockReadOnly);
-        if (DynamicMenuCallback  != nullptr)
+        if (CartMenuCallback  != nullptr)
             BuildDynaMenu();
         return ;
     }
@@ -374,29 +374,28 @@ void BuildDynaMenu(void)
     char TempMsg[512]="";
     char TempBuf[MAX_PATH]="";
 
-    DynamicMenuCallback( "",MID_BEGIN,MIT_Head);
-    DynamicMenuCallback( "",MID_ENTRY,MIT_Seperator);
+    CartMenuCallback( "",MID_BEGIN,MIT_Head);
+    CartMenuCallback( "",MID_ENTRY,MIT_Seperator);
 
-    DynamicMenuCallback( "HD Drive 0",MID_ENTRY,MIT_Head);
-    DynamicMenuCallback( "Insert",5010,MIT_Slave);
+    CartMenuCallback( "HD Drive 0",MID_ENTRY,MIT_Head);
+    CartMenuCallback( "Insert",ControlId(10),MIT_Slave);
     strcpy(TempMsg,"Eject: ");
     strcpy(TempBuf,VHDfile0);
     PathStripPath (TempBuf);
     strcat(TempMsg,TempBuf);
-    DynamicMenuCallback(TempMsg,5011,MIT_Slave);
+    CartMenuCallback(TempMsg,ControlId(11),MIT_Slave);
 
-    DynamicMenuCallback( "HD Drive 1",MID_ENTRY,MIT_Head);
-    DynamicMenuCallback( "Insert",5012,MIT_Slave);
+    CartMenuCallback( "HD Drive 1",MID_ENTRY,MIT_Head);
+    CartMenuCallback( "Insert",ControlId(12),MIT_Slave);
     strcpy(TempMsg,"Eject: ");
     strcpy(TempBuf,VHDfile1);
     PathStripPath(TempBuf);
     strcat(TempMsg,TempBuf);
-    DynamicMenuCallback(TempMsg,5013,MIT_Slave);
+    CartMenuCallback(TempMsg,ControlId(13),MIT_Slave);
 
-    DynamicMenuCallback( "HD Config",5014,MIT_StandAlone);
-    DynamicMenuCallback( "",MID_FINISH,MIT_Head);
+    CartMenuCallback( "HD Config",ControlId(14),MIT_StandAlone);
+    CartMenuCallback( "",MID_FINISH,MIT_Head);
 }
-
 
 // Dialog for creating a new hard disk
 LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
