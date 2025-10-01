@@ -32,7 +32,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "distortc.h"
 #include "fd502.h"
 #include "../ModuleDefs.h"
-#include "../DynamicMenu.h"
+#include "../CartridgeMenu.h"
 #include "../fileops.h"
 #include "../DialogOps.h"
 #include "../logger.h"

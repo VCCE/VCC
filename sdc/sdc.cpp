@@ -148,7 +148,7 @@
 #include <sys/stat.h>
 #include "../logger.h"
 #include "../DialogOps.h"
-#include "../DynamicMenu.h"
+#include "../CartridgeMenu.h"
 #include "../ModuleDefs.h"
 #include "sdc.h"
 

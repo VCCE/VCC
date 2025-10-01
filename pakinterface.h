@@ -33,9 +33,6 @@ int InsertModule (const char *);
 void UpdateBusPointer(void);
 void UnloadDll(void);
 void UnloadPack(void);
-
-HMENU RefreshDynamicMenu(void);
-void CallDynamicMenu(const char * MenuName,int MenuId,int Type);
 void DynamicMenuActivated(unsigned char);
 
 // Error return codes from InsertModule

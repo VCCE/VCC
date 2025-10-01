@@ -1,6 +1,6 @@
 /*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
+    Copyright 2015 by Joseph Forgione
+    This file is part of VCC (Virtual Color Computer).
 
     VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,13 +18,9 @@ This file is part of VCC (Virtual Color Computer).
 
 #pragma once
 
-// MenuItem is an array of 100 menu items.
-struct DynamicMenuItem
-{
-	char MenuName[512];
-	int MenuId;
-	int Type;
-};
+#include <Windows.h>
+#include <vector>
+#include <string>
 
 // Menu IDs
 //  MID_BEGIN  must be used to begin the menu
@@ -43,6 +39,42 @@ enum MenuItemType
 	MIT_Head,
 	MIT_Slave,
 	MIT_StandAlone,
-	MIT_Seperator
+	MIT_Seperator,
 };
 
+class CartridgeMenu {
+
+private:
+
+	// MenuItem
+	struct MenuItem {
+		std::string name;
+		int menu_id;
+		MenuItemType type;
+	};
+	std::vector<MenuItem> menu {};
+	HWND hMainWin;
+	HMENU hMenuBar;
+	std::string BarTitle;
+	int menu_position;
+
+public:
+
+	CartridgeMenu();
+
+//  Init. hWin is main window id. title is menu bar title position is the 
+//  menubar position where the dynamic window is inserted.
+	void init(HWND hWin,const char * title="Cartridge",int position=3);
+
+//  Add menu entry.
+	void add(const char * name, int menu_id, MenuItemType type);
+
+//  Delete menu items
+	void del();  
+
+//  Draw refreshes the menu
+    HMENU draw();
+};
+
+// Make CartridgeMenu Object global;
+extern CartridgeMenu CartMenu;

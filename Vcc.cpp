@@ -56,7 +56,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "mc6821.h"
 #include "keyboard.h"
 #include "coco3.h"
-#include "DynamicMenu.h"
+#include "CartridgeMenu.h"
 #include "pakinterface.h"
 #include "audio.h"
 #include "config.h"
@@ -131,6 +131,8 @@ static unsigned char FlagEmuStop=TH_RUNNING;
 
 bool IsShiftKeyDown(void);
 
+CartridgeMenu CartMenu;
+
 //static CRITICAL_SECTION  FrameRender;
 /*--------------------------------------------------------------------------*/
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
@@ -166,8 +168,16 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		exit(0);
 	}
 	InitSound();
-	CallDynamicMenu("", MID_BEGIN, MIT_Head);
-	CallDynamicMenu("", MID_FINISH, MIT_Head);
+
+	CartMenu.init(EmuState.WindowHandle,"Cartridge",3);
+	CartMenu.add("",MID_BEGIN,MIT_Head);
+	CartMenu.add("Cartridge",6000,MIT_Head);
+	CartMenu.add("Load Cart",5001,MIT_Slave);
+	CartMenu.add("",MID_FINISH,MIT_Head);
+	//CartMenu.draw();
+
+	//CallDynamicMenu("", MID_BEGIN, MIT_Head);
+	//CallDynamicMenu("", MID_FINISH, MIT_Head);
 	LoadModule();
 	SetClockSpeed(1);	//Default clock speed .89 MHZ	
 	BinaryRunning = true;
@@ -290,11 +300,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			raise_saved_keys();
 			wmId    = LOWORD(wParam);
 			wmEvent = HIWORD(wParam);
+
 			// Parse the menu selections:
-			// Added for Dynamic menu system
+			
+			// Check WmId dynamic menu range for items done by loaded modules
 			if ( (wmId >= MID_SDYNAMENU) & (wmId <= MID_EDYNAMENU) )
 			{
-				DynamicMenuActivated (wmId - MID_SDYNAMENU);	//Calls to the loaded DLL so it can do the right thing
+				DynamicMenuActivated(wmId - MID_SDYNAMENU);
 				break;
 			}
 
@@ -552,7 +564,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					if ( IsShiftKeyDown() ) {
 						hMenu = GetConfMenu();
 					} else {
-						hMenu = RefreshDynamicMenu();
+						//hMenu = RefreshDynamicMenu();
+						hMenu = CartMenu.draw();
 					}
 					if (hMenu && EmuState.FullScreen) {
 						RECT r;
@@ -1085,7 +1098,9 @@ void FullScreenToggle(void)
 		exit(0);
 	}
 	InvalidateBoarder();
-	RefreshDynamicMenu();
+	//RefreshDynamicMenu();
+	CartMenu.draw();
+
 	EmuState.ConfigDialog=nullptr;
 	PauseAudio(false);
 	return;
