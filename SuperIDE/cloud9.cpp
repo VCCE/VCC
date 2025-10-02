@@ -38,7 +38,7 @@ static unsigned __int64 CurrentBit=0;
 static unsigned char FormatBit=0; //1 = 12Hour Mode
 static unsigned char CookieRecived=0;
 static unsigned char WriteEnabled=0;
-void SetTime(void);
+void SetTime();
 unsigned char ReadTime(unsigned short port)
 {
 	unsigned char ret_val=0;
@@ -129,7 +129,7 @@ unsigned char ReadTime(unsigned short port)
 }
 
 
-void SetTime(void)
+void SetTime()
 {
 	now.wMilliseconds= (unsigned short)(InBuffer & 15);
 	InBuffer>>=4;

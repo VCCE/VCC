@@ -32,7 +32,7 @@ DWORD dummy;
 
 char LogFileName[MAX_PATH]="VccLog.txt";
 
-//void CpuDump(void) {
+//void CpuDump() {
 //    for (x=0;x<=65535;x++)
 //        PrintLogF("%c",MemRead8(x));
 //}

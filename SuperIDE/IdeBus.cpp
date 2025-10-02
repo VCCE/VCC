@@ -28,7 +28,7 @@ static unsigned char XferBuffer[512]="";
 static unsigned int BufferIndex=0;
 static unsigned int BufferLenth=0;
 static unsigned char CurrentCommand=0;
-void ExecuteCommand(void);
+void ExecuteCommand();
 void ByteSwap (char *);
 static IDEINTERFACE Registers;
 static HANDLE hDiskFile[2];
@@ -178,7 +178,7 @@ unsigned short IdeRegRead(unsigned char Reg)
 	return RetVal;
 }
 
-void ExecuteCommand(void)
+void ExecuteCommand()
 {
 	CurrentCommand=Registers.Command;
 	char Temp=0;

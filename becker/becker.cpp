@@ -64,9 +64,9 @@ unsigned char LoadExtRom(const char *);
 void SetDWTCPConnectionEnable(unsigned int enable);
 int dw_setaddr(const char *bufdwaddr);
 int dw_setport(const char *bufdwport);
-void BuildCartMenu(void);
-void LoadConfig(void);
-void SaveConfig(void);
+void BuildCartMenu();
+void LoadConfig();
+void SaveConfig();
 
 
 // dll entry hook
@@ -163,7 +163,7 @@ int dw_write( char dwdata)
 }
 
 
-void killDWTCPThread(void)
+void killDWTCPThread()
 {
 
         // close socket to cause io thread to die
@@ -444,7 +444,7 @@ extern "C" __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
 		return 0;
 	}
 /*
-	__declspec(dllexport) unsigned char ModuleReset(void)
+	__declspec(dllexport) unsigned char ModuleReset()
 	{
 		if (PakSetCart!=NULL)
 			PakSetCart(1);
@@ -466,7 +466,7 @@ extern "C" __declspec(dllexport) unsigned char PakMemRead8(unsigned short Addres
 	
 	}
 
-extern "C" __declspec(dllexport) void HeartBeat(void)
+extern "C" __declspec(dllexport) void HeartBeat()
 	{
 		// flush write buffer in the future..?
 		return;
@@ -518,7 +518,7 @@ extern "C" __declspec(dllexport) void ModuleStatus(char *DWStatus)
 	}
 
 
-void BuildCartMenu(void)
+void BuildCartMenu()
 {
 	CartMenuCallback( "",MID_BEGIN,MIT_Head);
 	CartMenuCallback( "",MID_ENTRY,MIT_Seperator);
@@ -616,7 +616,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 
 
-void LoadConfig(void)
+void LoadConfig()
 {
 	char ModName[MAX_LOADSTRING]="";
 	char saddr[MAX_LOADSTRING]="";
@@ -646,7 +646,7 @@ void LoadConfig(void)
 	return;
 }
 
-void SaveConfig(void)
+void SaveConfig()
 {
 	char ModName[MAX_LOADSTRING]="";
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);

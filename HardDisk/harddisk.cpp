@@ -48,9 +48,9 @@ LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 
 ///void Load_Disk(unsigned char);
 void LoadHardDisk(int drive);
-void LoadConfig(void);
-void SaveConfig(void);
-void BuildDynaMenu(void);
+void LoadConfig();
+void SaveConfig();
+void BuildDynaMenu();
 int CreateDisk(HWND,int);
 void CenterDialog(HWND hDlg);
 
@@ -304,7 +304,7 @@ void LoadHardDisk(int drive)
 }
 
 // Get configuration items from ini file
-void LoadConfig(void)
+void LoadConfig()
 {
     char ModName[MAX_LOADSTRING]="";
     HANDLE hr;
@@ -350,7 +350,7 @@ void LoadConfig(void)
 }
 
 // Save config saves the hard disk path and vhd file names
-void SaveConfig(void)
+void SaveConfig()
 {
     char ModName[MAX_LOADSTRING]="";
     LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
@@ -369,7 +369,7 @@ void SaveConfig(void)
 }
 
 // Generate menu for mounting the drives
-void BuildDynaMenu(void)
+void BuildDynaMenu()
 {
     char TempMsg[512]="";
     char TempBuf[MAX_PATH]="";

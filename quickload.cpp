@@ -103,7 +103,7 @@ unsigned char QuickLoad(char *BinFileName)
 	return 255; //Invalid File type
 } //End Proc
 
-unsigned short GetXferAddr(void)
+unsigned short GetXferAddr()
 {
 	return XferAddress;
 }

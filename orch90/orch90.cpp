@@ -82,7 +82,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char ModuleReset(void)
+	__declspec(dllexport) unsigned char ModuleReset()
 	{
 		char RomPath[MAX_PATH];
 
@@ -122,7 +122,7 @@ extern "C"
 // This gets called at the end of every scan line 262 Lines * 60 Frames = 15780 Hz 15720
 extern "C" 
 {          
-	__declspec(dllexport) unsigned short ModuleAudioSample(void)
+	__declspec(dllexport) unsigned short ModuleAudioSample()
 	{
 		
 		return((LeftChannel<<8) | RightChannel) ;

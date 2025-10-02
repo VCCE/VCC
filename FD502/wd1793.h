@@ -23,11 +23,11 @@ void disk_io_write(unsigned char data,unsigned char port);
 int mount_disk_image(const char *,unsigned char );
 void unmount_disk_image(unsigned char drive);
 void DiskStatus(char *);
-void PingFdc(void);
+void PingFdc();
 unsigned char SetTurboDisk( unsigned char);
 //unsigned char UseKeyboardLeds(unsigned char);
 DWORD GetDriverVersion ();
-unsigned short InitController (void);
+unsigned short InitController ();
 //unsigned long UseRawDisk(unsigned char,unsigned char);
 // Commands for the wd1793 disk controller $FF48
 

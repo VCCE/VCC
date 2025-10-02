@@ -52,12 +52,12 @@ private:
 	friend void ModuleStatus(char *statusBuffer);
 	friend void ModuleConfig(unsigned char menuId);
 	friend void SetIniPath(const char *iniFilePath);
-	friend void ModuleReset(void);
+	friend void ModuleReset();
 	friend void SetCart(SETCART Pointer);
 	friend unsigned char PakMemRead8(unsigned short address);
 	friend void PackPortWrite(unsigned char port, unsigned char data);
 	friend unsigned char PackPortRead(unsigned char port);
-	friend unsigned short ModuleAudioSample(void);
+	friend unsigned short ModuleAudioSample();
 
 private:
 

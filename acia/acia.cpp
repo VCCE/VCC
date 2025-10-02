@@ -31,11 +31,11 @@
 // Local Functions
 //------------------------------------------------------------------------
 
-void BuildCartMenu(void);
+void BuildCartMenu();
 
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
-void LoadConfig(void);
-void SaveConfig(void);
+void LoadConfig();
+void SaveConfig();
 void CenterDialog(HWND);
 
 //------------------------------------------------------------------------
@@ -128,7 +128,7 @@ PackPortRead(unsigned char Port)
 // Dll export module reset
 //-----------------------------------------------------------------------
 extern "C"
-__declspec(dllexport) void ModuleReset(void)
+__declspec(dllexport) void ModuleReset()
 {
     sc6551_close();
     return;
@@ -168,7 +168,7 @@ unsigned char LoadExtRom(const char *FilePath)
 // Dll export Heartbeat (HSYNC)
 //-----------------------------------------------------------------------
 extern "C"
-__declspec(dllexport) void HeartBeat(void)
+__declspec(dllexport) void HeartBeat()
 {
     sc6551_heartbeat();
     return;
@@ -221,7 +221,7 @@ __declspec(dllexport) void SetIniPath (const char *IniFilePath)
 //-----------------------------------------------------------------------
 //  Add config option to Cartridge menu
 //----------------------------------------------------------------------
-void BuildCartMenu(void)
+void BuildCartMenu()
 {
     CartMenuCallback("",MID_BEGIN,MIT_Head);
     CartMenuCallback("",MID_ENTRY,MIT_Seperator);
@@ -232,7 +232,7 @@ void BuildCartMenu(void)
 //-----------------------------------------------------------------------
 //  Load saved config from ini file
 //----------------------------------------------------------------------
-void LoadConfig(void)
+void LoadConfig()
 {
     AciaComType=GetPrivateProfileInt("Acia","AciaComType",
                                      COM_CONSOLE,IniFile);
@@ -276,7 +276,7 @@ void LoadConfig(void)
 //-----------------------------------------------------------------------
 //  Save config to ini file
 //----------------------------------------------------------------------
-void SaveConfig(void)
+void SaveConfig()
 {
     char txt[16];
     sprintf(txt,"%d",AciaBasePort);

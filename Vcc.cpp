@@ -97,25 +97,25 @@ BOOL CALLBACK About(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK FunctionKeys(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM);
 
-void SoftReset(void);
-void LoadIniFile(void);
-void SaveConfig(void);
+void SoftReset();
+void LoadIniFile();
+void SaveConfig();
 unsigned __stdcall EmuLoop(HANDLE hEvent);
 unsigned __stdcall CartLoad(void *);
-void (*CPUInit)(void)=nullptr;
+void (*CPUInit)()=nullptr;
 int  (*CPUExec)( int)=nullptr;
-void (*CPUReset)(void)=nullptr;
+void (*CPUReset)()=nullptr;
 void (*CPUSetBreakpoints)(const std::vector<unsigned short>&) = nullptr;
 void (*CPUSetTraceTriggers)(const std::vector<unsigned short>&) = nullptr;
 VCC::CPUState (*CPUGetState)() = nullptr;
 void (*CPUAssertInterupt)(InterruptSource, Interrupt)=nullptr;
 void (*CPUDeAssertInterupt)(InterruptSource, Interrupt)=nullptr;
 void (*CPUForcePC)(unsigned short)=nullptr;
-void FullScreenToggle(void);
+void FullScreenToggle();
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
-void raise_saved_keys(void);
+void raise_saved_keys();
 void FunctionHelpBox(HWND);
-void SetupClock(void);
+void SetupClock();
 HMENU GetConfMenu();
 
 // Globals
@@ -129,7 +129,7 @@ static char g_szAppName[MAX_LOADSTRING] = "";
 bool BinaryRunning;
 static unsigned char FlagEmuStop=TH_RUNNING;
 
-bool IsShiftKeyDown(void);
+bool IsShiftKeyDown();
 
 CartridgeMenu CartMenu;
 
@@ -735,7 +735,7 @@ unsigned char SetCPUMultiplyer(unsigned char Multiplyer)
 	return(EmuState.DoubleSpeedMultiplyer);
 }
 
-void SetupClock(void)
+void SetupClock()
 {
 	int mult = (EmuState.OverclockFlag) ? EmuState.DoubleSpeedMultiplyer : 2;
 	SetClockSpeed(1);
@@ -802,7 +802,7 @@ void DoHardReset(SystemState* const HRState)
 	return;
 }
 
-void SoftReset(void)
+void SoftReset()
 {
 	mc6883_reset();
 	PiaReset();
@@ -892,7 +892,7 @@ unsigned char SetCpuType( unsigned char Tmp)
 	return(EmuState.CpuType);
 }
 
-void DoReboot(void)
+void DoReboot()
 {
 	EmuState.ResetPending=2;
 	return;
@@ -906,7 +906,7 @@ unsigned char SetAutoStart(unsigned char Tmp)
 }
 
 // LoadIniFile allows user to browse for an ini file and reloads the config from it.
-void LoadIniFile(void)
+void LoadIniFile()
 {
 	FileDialog dlg;
 	dlg.setFilter("INI\0*.ini\0\0");
@@ -931,7 +931,7 @@ void LoadIniFile(void)
 }
 
 // SaveConfig copies the current ini file to a choosen ini file.
-void SaveConfig(void) {
+void SaveConfig() {
 
 	FileDialog dlg;
 	dlg.setFilter("INI\0*.ini\0\0");
@@ -1064,7 +1064,7 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 	return 0;
 }
 
-void LoadPack(void)
+void LoadPack()
 {
 	unsigned threadID;
 	if (DialogOpen)
@@ -1082,7 +1082,7 @@ unsigned __stdcall CartLoad(void* /*Dummy*/)
 	return 0;
 }
 
-void FullScreenToggle(void)
+void FullScreenToggle()
 {
 	PauseAudio(true);
 	if (!CreateDDWindow(&EmuState))

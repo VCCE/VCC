@@ -46,7 +46,7 @@ extern JoyStick	LeftJS;
 extern JoyStick RightJS;
 
 HRESULT JoyStickPoll(DIJOYSTATE2 * ,unsigned char);
-int EnumerateJoysticks(void);
+int EnumerateJoysticks();
 bool InitJoyStick (unsigned char);
 
 #ifdef __cplusplus

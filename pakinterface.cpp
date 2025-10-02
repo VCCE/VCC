@@ -61,14 +61,14 @@ static void (*GetModuleName)(char *,char *,CARTMENUCALLBACK)=nullptr;
 static void (*ConfigModule)(unsigned char)=nullptr;
 static void (*SetInteruptCallPointer)(PAKINTERUPT)=nullptr;
 static void (*DmaMemPointer) (MEMREAD8,MEMWRITE8)=nullptr;
-static void (*HeartBeat)(void)=nullptr;
+static void (*HeartBeat)()=nullptr;
 static void (*PakPortWrite)(unsigned char,unsigned char)=nullptr;
 static unsigned char (*PakPortRead)(unsigned char)=nullptr;
 static void (*PakMemWrite8)(unsigned char,unsigned short)=nullptr;
 static unsigned char (*PakMemRead8)(unsigned short)=nullptr;
 static void (*ModuleStatus)(char *)=nullptr;
-static unsigned short (*ModuleAudioSample)(void)=nullptr;
-static void (*ModuleReset) (void)=nullptr;
+static unsigned short (*ModuleAudioSample)()=nullptr;
+static void (*ModuleReset) ()=nullptr;
 static void (*SetIniPath) (const char *)=nullptr;
 static void (*PakSetCart)(SETCART)=nullptr;
 static char PakPath[MAX_PATH] = "";
@@ -82,14 +82,14 @@ static bool CartMenuCreated = false;
 
 static 	char Modname[MAX_PATH]="Blank";
 
-void PakTimer(void)
+void PakTimer()
 {
 	if (HeartBeat != nullptr)
 		HeartBeat();
 	return;
 }
 
-void ResetBus(void)
+void ResetBus()
 {
 	BankedCartOffset=0;
 	if (ModuleReset !=nullptr)
@@ -151,6 +151,7 @@ void PackMem8Write(unsigned short Address,unsigned char Value)
 void (PakAssertInterupt) (unsigned char interrupt, unsigned char source)
 {
 	(void) source; // not used
+
 	switch (interrupt) {
 	case INT_CART:
 		GimeAssertCartInterupt();
@@ -161,7 +162,7 @@ void (PakAssertInterupt) (unsigned char interrupt, unsigned char source)
 	}
 }
 
-unsigned short PackAudioSample(void)
+unsigned short PackAudioSample()
 {
 	if (ModuleAudioSample !=nullptr)
 		return(ModuleAudioSample());
@@ -189,7 +190,7 @@ void CartMenuCallBack(const char *name, int menu_id, int type)
 	CartMenu.add(name, menu_id, (MenuItemType) type, 2);
 }
 
-int LoadCart(void)
+int LoadCart()
 {
 	char inifile[MAX_PATH];
 	GetIniFilePath(inifile);
@@ -402,7 +403,7 @@ int load_ext_rom(const char *filename)
 	return index;
 }
 
-void UnloadDll(void)
+void UnloadDll()
 {
 	GetModuleName=nullptr;
 	ConfigModule=nullptr;
@@ -430,14 +431,14 @@ void GetCurrentModule(char *DefaultModule)
 	return;
 }
 
-void UpdateBusPointer(void)
+void UpdateBusPointer()
 {
 	if (SetInteruptCallPointer!=nullptr)
 		SetInteruptCallPointer(PakAssertInterupt);
 	return;
 }
 
-void UnloadPack(void)
+void UnloadPack()
 {
 	UnloadDll();
 	strcpy(DllPath,"");
@@ -491,4 +492,5 @@ void CartMenuActivated(unsigned int MenuID)
 	}
 	return;
 }
+
 

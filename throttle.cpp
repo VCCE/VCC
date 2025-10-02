@@ -27,7 +27,7 @@ static _LARGE_INTEGER MasterClock,Now;
 static unsigned char FrameSkip=0;
 static float fMasterClock=0;
 
-void CalibrateThrottle(void)
+void CalibrateThrottle()
 {
 	timeBeginPeriod(1);	//Needed to get max resolution from the timer normally its 10Ms
 	QueryPerformanceFrequency(&MasterClock);
@@ -37,7 +37,7 @@ void CalibrateThrottle(void)
 }
 
 
-void StartRender(void)
+void StartRender()
 {
 	QueryPerformanceCounter(&StartTime);
 	return;
@@ -73,7 +73,7 @@ Sleep(1);
 	}
 }
 
-void FrameWait(void)
+void FrameWait()
 {
 	//If we have more that 2Ms till the end of the frame
 	QueryPerformanceCounter(&CurrentTime);
@@ -96,7 +96,7 @@ void FrameWait(void)
 }
 
 //Done at end of render;
-float CalculateFPS(void) 
+float CalculateFPS() 
 {
 	const int frameUpdateRate = FRAMEINTERVAL;
 	static unsigned int frameCount=0;

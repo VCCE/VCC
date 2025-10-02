@@ -19,6 +19,6 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 unsigned char QuickLoad(char *BinFileName);
-unsigned short GetXferAddr(void);
+unsigned short GetXferAddr();
 
 #endif

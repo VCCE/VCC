@@ -66,8 +66,8 @@ static unsigned char TempSelectRom=0;
 static unsigned char ClockEnabled=1;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
-void LoadConfig(void);
-void SaveConfig(void);
+void LoadConfig();
+void SaveConfig();
 long CreateDiskHeader(const char *,unsigned char,unsigned char,unsigned char);
 void Load_Disk(unsigned char);
 void CenterDialog(HWND hDlg);
@@ -216,7 +216,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) void HeartBeat(void)
+	__declspec(dllexport) void HeartBeat()
 	{
 		PingFdc();
 		return;
@@ -442,7 +442,7 @@ unsigned char SetChip(unsigned char Tmp)
 	return SelectRom;
 }
 
-void BuildDynaMenu(void)
+void BuildDynaMenu()
 {
 	char TempMsg[64]="";
 	char TempBuf[MAX_PATH]="";
@@ -655,7 +655,7 @@ long CreateDiskHeader(const char *FileName,unsigned char Type,unsigned char Trac
 	return 0;
 }
 
-void LoadConfig(void)  // Called on SetIniPath
+void LoadConfig()  // Called on SetIniPath
 {
 	char ModName[MAX_LOADSTRING]="";
 	unsigned char Index=0;
@@ -715,7 +715,7 @@ void LoadConfig(void)  // Called on SetIniPath
 	return;
 }
 
-void SaveConfig(void)
+void SaveConfig()
 {
 	unsigned char Index=0;
 	char ModName[MAX_LOADSTRING]="";

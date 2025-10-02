@@ -59,7 +59,7 @@ using namespace VCC;
 /********************************************/
 
 int SelectFile(char *);
-void RefreshJoystickStatus(void);
+void RefreshJoystickStatus();
 unsigned char TranslateDisp2Scan(int);
 unsigned char TranslateScan2Disp(int);
 void buildTransDisp2ScanTable();
@@ -222,7 +222,7 @@ void InitSound()
 /***********************************************************/
 /*        Save Configuration Settings to ini file          */
 /***********************************************************/
-unsigned char WriteIniFile(void)
+unsigned char WriteIniFile()
 {
 	Rect winRect = GetCurWindowSize();
 	CurrentConfig.Resize = 1;      // How to restore default window size?
@@ -297,7 +297,7 @@ unsigned char WriteIniFile(void)
 /***********************************************************/
 /*        Load Configuration Settings from ini file        */
 /***********************************************************/
-unsigned char ReadIniFile(void)
+unsigned char ReadIniFile()
 {
 	unsigned char Index=0;
 
@@ -440,7 +440,7 @@ void SetKeyMapFilePath(const char *Path)
 /*****************************************************/
 /*  Apply Current VCC settings. Also Called by Vcc.c */
 /*****************************************************/
-void UpdateConfig (void)
+void UpdateConfig ()
 {
 	SetPaletteType();
 	SetResize(CurrentConfig.Resize);
@@ -1470,7 +1470,7 @@ void buildTransDisp2ScanTable()
 	_TranslateDisp2Scan[51] = DIK_LSHIFT;
 }
 
-void RefreshJoystickStatus(void)
+void RefreshJoystickStatus()
 {
 	unsigned char Index=0;
 	bool Temp=false;

@@ -30,7 +30,7 @@ union
 
 static unsigned char *RamBuffer=nullptr;
 
-bool InitMemBoard(void)
+bool InitMemBoard()
 {
 	IndexAddress.Address=0;
 
@@ -65,7 +65,7 @@ bool WriteArray(unsigned char Data)
 	return false;
 }
 
-unsigned char ReadArray(void)
+unsigned char ReadArray()
 {
 	return(RamBuffer[IndexAddress.Address]);
 }

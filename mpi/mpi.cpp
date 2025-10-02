@@ -57,14 +57,14 @@ static char MPIPath[MAX_PATH];
 //Array of fuction pointer for each Slot
 static void (*GetModuleNameCalls[NUMSLOTS])(char *,char *,CARTMENUCALLBACK)={nullptr,nullptr,nullptr,nullptr};
 static void (*ConfigModuleCalls[NUMSLOTS])(unsigned char)={nullptr,nullptr,nullptr,nullptr};
-static void (*HeartBeatCalls[NUMSLOTS])(void)={nullptr,nullptr,nullptr,nullptr};
+static void (*HeartBeatCalls[NUMSLOTS])()={nullptr,nullptr,nullptr,nullptr};
 static void (*PakPortWriteCalls[NUMSLOTS])(unsigned char,unsigned char)={nullptr,nullptr,nullptr,nullptr};
 static unsigned char (*PakPortReadCalls[NUMSLOTS])(unsigned char)={nullptr,nullptr,nullptr,nullptr};
 static void (*PakMemWrite8Calls[NUMSLOTS])(unsigned char,unsigned short)={nullptr,nullptr,nullptr,nullptr};
 static unsigned char (*PakMemRead8Calls[NUMSLOTS])(unsigned short)={nullptr,nullptr,nullptr,nullptr};
 static void (*ModuleStatusCalls[NUMSLOTS])(char *)={nullptr,nullptr,nullptr,nullptr};
-static unsigned short (*ModuleAudioSampleCalls[NUMSLOTS])(void)={nullptr,nullptr,nullptr,nullptr};
-static void (*ModuleResetCalls[NUMSLOTS]) (void)={nullptr,nullptr,nullptr,nullptr};
+static unsigned short (*ModuleAudioSampleCalls[NUMSLOTS])()={nullptr,nullptr,nullptr,nullptr};
+static void (*ModuleResetCalls[NUMSLOTS]) ()={nullptr,nullptr,nullptr,nullptr};
 //Set callbacks for the DLL to call
 static void (*SetInteruptCallPointerCalls[NUMSLOTS]) ( PAKINTERUPT)={nullptr,nullptr,nullptr,nullptr};
 static void (*DmaMemPointerCalls[NUMSLOTS]) (MEMREAD8,MEMWRITE8)={nullptr,nullptr,nullptr,nullptr};
@@ -91,6 +91,7 @@ void CartMenuCallback0(const char *,int, int);
 void CartMenuCallback1(const char *,int, int);
 void CartMenuCallback2(const char *,int, int);
 void CartMenuCallback3(const char *,int, int);
+
 static unsigned char CartForSlot[NUMSLOTS]={0};
 static void (*SetCarts[NUMSLOTS])(unsigned char)={SetCartSlot0,SetCartSlot1,SetCartSlot2,SetCartSlot3};
 static CARTMENUCALLBACK CartMenuCallbackCalls[NUMSLOTS]={CartMenuCallback0,CartMenuCallback1,CartMenuCallback2,CartMenuCallback3};
@@ -110,8 +111,8 @@ LRESULT CALLBACK MpiConfigDlg(HWND,UINT,WPARAM,LPARAM);
 unsigned char MountModule(unsigned char,const char *);
 void UnloadModule(unsigned char);
 void UpdateCartDLL(unsigned char slot);
-void LoadConfig(void);
-void WriteConfig(void);
+void LoadConfig();
+void WriteConfig();
 void ReadModuleParms(unsigned char,char *);
 int FileID(const char *);
 
@@ -255,7 +256,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) void HeartBeat(void)
+	__declspec(dllexport) void HeartBeat()
 	{
 		for (int slot=0;slot<NUMSLOTS;slot++)
 			if (HeartBeatCalls[slot] != nullptr)
@@ -320,7 +321,7 @@ extern "C"
 // This gets called at the end of every scan line 262 Lines * 60 Frames = 15780 Hz 15720
 extern "C"
 {
-	__declspec(dllexport) unsigned short ModuleAudioSample(void)
+	__declspec(dllexport) unsigned short ModuleAudioSample()
 	{
 		unsigned short TempSample=0;
 		for (int slot=0;slot<NUMSLOTS;slot++)
@@ -333,7 +334,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char ModuleReset (void)
+	__declspec(dllexport) unsigned char ModuleReset ()
 	{
 		ChipSelectSlot=SwitchSlot;
 		SpareSelectSlot=SwitchSlot;
@@ -645,7 +646,7 @@ void UpdateCartDLL(unsigned char Slot)
 	return;
 }
 
-void LoadConfig(void)
+void LoadConfig()
 {
 	// Get the module name from this DLL (MPI)
 	char ModName[MAX_LOADSTRING]="";
@@ -679,7 +680,7 @@ void LoadConfig(void)
 	return;
 }
 
-void WriteConfig(void)
+void WriteConfig()
 {
 	char ModName[MAX_LOADSTRING]="";
 	if (strcmp(MPIPath, "") != 0) {
@@ -787,7 +788,7 @@ void SetCartSlot3(unsigned char Tmp)
 
 // This gets called on mpi startup and each time a module is inserted or deleted
 // It builds the entire Cartridge menu from entries provided by loaded DLLs
-void BuildCartMenu(void)
+void BuildCartMenu()
 {
 	// CartMenuCallback() resides in VCC pakinterface. Make sure we have it's address
 	if (CartMenuCallback == nullptr) {

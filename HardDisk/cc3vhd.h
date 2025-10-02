@@ -26,7 +26,7 @@ int MountHD(const char*, int);
 unsigned char IdeRead(unsigned char);
 void IdeWrite (unsigned char, unsigned char);
 void DiskStatus(char *);
-void VhdReset(void);
+void VhdReset();
 
 constexpr auto DRIVESIZE = 512u; // Mb
 constexpr auto MAX_SECTOR = DRIVESIZE * 1024 * 1024;
