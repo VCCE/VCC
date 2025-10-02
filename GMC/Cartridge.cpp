@@ -74,7 +74,7 @@ void Cartridge::SetConfigurationPath(std::string path)
 }
 
 
-void Cartridge::SetMenuBuilderCallback(DYNAMICMENUCALLBACK callback)
+void Cartridge::SetMenuBuilderCallback(CARTMENUCALLBACK callback)
 {
 	AddMenuItemPtr = callback;
 }

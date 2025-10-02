@@ -25,16 +25,16 @@ This file is part of VCC (Virtual Color Computer).
 #include "cloud9.h"
 #include "logger.h"
 #include "../fileops.h"
-#include "../DynamicMenu.h"
+#include "../CartridgeMenu.h"
 #include "../DialogOps.h"
 #include "../ModuleDefs.h"
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
 static char SuperIDEPath[MAX_PATH];
-static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
+static CARTMENUCALLBACK CartMenuCallback = nullptr;
 static unsigned char BaseAddress=0x50;
-void BuildDynaMenu();
+void BuildCartMenu();
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 void Select_Disk(unsigned char);
 void SaveConfig();
@@ -63,14 +63,14 @@ BOOL WINAPI DllMain(
 
 extern "C" 
 {          
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
+	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
-		DynamicMenuCallback =Temp;
+		CartMenuCallback =Temp;
 		IdeInit();
-		if (DynamicMenuCallback  != nullptr)
-			BuildDynaMenu();		
+		if (CartMenuCallback  != nullptr)
+			BuildCartMenu();		
 		return ;
 	}
 }
@@ -147,25 +147,25 @@ extern "C"
 		{
 		case 10:
 			Select_Disk(MASTER);
-			BuildDynaMenu();
+			BuildCartMenu();
 			SaveConfig();
 			break;
 
 		case 11:
 			DropDisk(MASTER);
-			BuildDynaMenu();
+			BuildCartMenu();
 			SaveConfig();
 			break;
 
 		case 12:
 			Select_Disk(SLAVE);
-			BuildDynaMenu();
+			BuildCartMenu();
 			SaveConfig();
 			break;
 
 		case 13:
 			DropDisk(SLAVE);
-			BuildDynaMenu();
+			BuildCartMenu();
 			SaveConfig();
 			break;
 
@@ -189,29 +189,28 @@ extern "C"
 	}
 }
 
-void BuildDynaMenu()
+void BuildCartMenu()
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
-	DynamicMenuCallback( "", MID_BEGIN, MIT_Head);
-	DynamicMenuCallback( "", MID_ENTRY, MIT_Seperator);
-	DynamicMenuCallback( "IDE Master",MID_ENTRY,MIT_Head);
-	DynamicMenuCallback( "Insert",5010,MIT_Slave);
+	CartMenuCallback( "", MID_BEGIN, MIT_Head);
+	CartMenuCallback( "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback( "IDE Master",MID_ENTRY,MIT_Head);
+	CartMenuCallback( "Insert",ControlId(10),MIT_Slave);
 	QueryDisk(MASTER,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-
-	DynamicMenuCallback( TempMsg,5011,MIT_Slave);
-	DynamicMenuCallback( "IDE Slave",MID_ENTRY,MIT_Head);
-	DynamicMenuCallback( "Insert",5012,MIT_Slave);
+	CartMenuCallback( TempMsg,ControlId(11),MIT_Slave);
+	CartMenuCallback( "IDE Slave",MID_ENTRY,MIT_Head);
+	CartMenuCallback( "Insert",ControlId(12),MIT_Slave);
 	QueryDisk(SLAVE,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5013,MIT_Slave);
-	DynamicMenuCallback( "IDE Config",5014,MIT_StandAlone);
-	DynamicMenuCallback( "", MID_FINISH, MIT_Head);
+	CartMenuCallback( TempMsg,ControlId(13),MIT_Slave);
+	CartMenuCallback( "IDE Config",ControlId(14),MIT_StandAlone);
+	CartMenuCallback( "", MID_FINISH, MIT_Head);
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
@@ -330,6 +329,6 @@ void LoadConfig()
 	BaseAddress=BaseTable[BaseAddr];
 	SetClockWrite(!ClockReadOnly);
 	MountDisk(FileName ,SLAVE);
-	BuildDynaMenu();
+	BuildCartMenu();
 	return;
 }

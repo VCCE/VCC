@@ -32,7 +32,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "distortc.h"
 #include "fd502.h"
 #include "../ModuleDefs.h"
-#include "../DynamicMenu.h"
+#include "../CartridgeMenu.h"
 #include "../fileops.h"
 #include "../DialogOps.h"
 #include "../logger.h"
@@ -54,7 +54,7 @@ static char FloppyPath[MAX_PATH];
 static char RomFileName[MAX_PATH]="";
 static char TempRomFileName[MAX_PATH]="";
 void (*AssertInt)(unsigned char,unsigned char)=nullptr;
-static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
+static CARTMENUCALLBACK CartMenuCallback = nullptr;
 unsigned char PhysicalDriveA=0,PhysicalDriveB=0,OldPhysicalDriveA=0,OldPhysicalDriveB=0;
 static unsigned char *RomPointer[3]={ExternalRom,DiskRom,RGBDiskRom};
 static unsigned char SelectRom=0;
@@ -105,12 +105,12 @@ BOOL WINAPI DllMain(
 
 extern "C"
 {
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
+	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
-		DynamicMenuCallback =Temp;
-		if (DynamicMenuCallback  != nullptr)
+		CartMenuCallback =Temp;
+		if (CartMenuCallback  != nullptr)
 			BuildDynaMenu();
 		return ;
 	}
@@ -446,46 +446,46 @@ void BuildDynaMenu()
 {
 	char TempMsg[64]="";
 	char TempBuf[MAX_PATH]="";
-	if (DynamicMenuCallback ==nullptr)
+	if (CartMenuCallback ==nullptr)
 		MessageBox(g_hConfDlg,"No good","Ok",0);
 
-	DynamicMenuCallback( "", MID_BEGIN, MIT_Head);
-	DynamicMenuCallback( "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback( "", MID_BEGIN, MIT_Head);
+	CartMenuCallback( "", MID_ENTRY, MIT_Seperator);
 
-	DynamicMenuCallback( "FD-502 Drive 0",3,MIT_Head);
-	DynamicMenuCallback( "Insert",5010,MIT_Slave);
+	CartMenuCallback( "FD-502 Drive 0",MID_ENTRY,MIT_Head);
+	CartMenuCallback( "Insert",ControlId(10),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[0].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5011,MIT_Slave);
+	CartMenuCallback( TempMsg,ControlId(11),MIT_Slave);
 
-	DynamicMenuCallback( "FD-502 Drive 1",MID_ENTRY,MIT_Head);
-	DynamicMenuCallback( "Insert",5012,MIT_Slave);
+	CartMenuCallback( "FD-502 Drive 1",MID_ENTRY,MIT_Head);
+	CartMenuCallback( "Insert",ControlId(12),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[1].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5013,MIT_Slave);
+	CartMenuCallback( TempMsg,ControlId(13),MIT_Slave);
 
-	DynamicMenuCallback( "FD-502 Drive 2",MID_ENTRY,MIT_Head);
-	DynamicMenuCallback( "Insert",5014,MIT_Slave);
+	CartMenuCallback( "FD-502 Drive 2",MID_ENTRY,MIT_Head);
+	CartMenuCallback( "Insert",ControlId(14),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[2].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5015,MIT_Slave);
+	CartMenuCallback( TempMsg,ControlId(15),MIT_Slave);
 
-	DynamicMenuCallback( "FD-502 Drive 3",MID_ENTRY,MIT_Head);
-	DynamicMenuCallback( "Insert",5017,MIT_Slave);
+	CartMenuCallback( "FD-502 Drive 3",MID_ENTRY,MIT_Head);
+	CartMenuCallback( "Insert",ControlId(17),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[3].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	DynamicMenuCallback( TempMsg,5018,MIT_Slave);
+	CartMenuCallback( TempMsg,ControlId(18),MIT_Slave);
 
-	DynamicMenuCallback( "FD-502 Config",5016,MIT_StandAlone);
-	DynamicMenuCallback("", MID_FINISH, MIT_Head);
+	CartMenuCallback( "FD-502 Config",ControlId(16),MIT_StandAlone);
+	CartMenuCallback("", MID_FINISH, MIT_Head);
 }
 
 long CreateDisk (unsigned char Disk)

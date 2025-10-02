@@ -24,7 +24,7 @@ Copyright 2015 by Joseph Forgione
 #include <CommCtrl.h>
 #include "../fileops.h"
 #include "../DialogOps.h"
-#include "../DynamicMenu.h"
+#include "../CartridgeMenu.h"
 #include "../ModuleDefs.h"
 #include "../MachineDefs.h"
 #include "../logger.h"
@@ -55,7 +55,7 @@ static char MPIPath[MAX_PATH];
 
 //**************************************************************
 //Array of fuction pointer for each Slot
-static void (*GetModuleNameCalls[NUMSLOTS])(char *,char *,DYNAMICMENUCALLBACK)={nullptr,nullptr,nullptr,nullptr};
+static void (*GetModuleNameCalls[NUMSLOTS])(char *,char *,CARTMENUCALLBACK)={nullptr,nullptr,nullptr,nullptr};
 static void (*ConfigModuleCalls[NUMSLOTS])(unsigned char)={nullptr,nullptr,nullptr,nullptr};
 static void (*HeartBeatCalls[NUMSLOTS])()={nullptr,nullptr,nullptr,nullptr};
 static void (*PakPortWriteCalls[NUMSLOTS])(unsigned char,unsigned char)={nullptr,nullptr,nullptr,nullptr};
@@ -86,18 +86,19 @@ void SetCartSlot0(unsigned char);
 void SetCartSlot1(unsigned char);
 void SetCartSlot2(unsigned char);
 void SetCartSlot3(unsigned char);
-void BuildDynaMenu();
-void DynamicMenuCallback0(const char *,int, int);
-void DynamicMenuCallback1(const char *,int, int);
-void DynamicMenuCallback2(const char *,int, int);
-void DynamicMenuCallback3(const char *,int, int);
+void BuildCartMenu(void);
+void CartMenuCallback0(const char *,int, int);
+void CartMenuCallback1(const char *,int, int);
+void CartMenuCallback2(const char *,int, int);
+void CartMenuCallback3(const char *,int, int);
+
 static unsigned char CartForSlot[NUMSLOTS]={0};
 static void (*SetCarts[NUMSLOTS])(unsigned char)={SetCartSlot0,SetCartSlot1,SetCartSlot2,SetCartSlot3};
-static DYNAMICMENUCALLBACK DynamicMenuCallbackCalls[NUMSLOTS]={DynamicMenuCallback0,DynamicMenuCallback1,DynamicMenuCallback2,DynamicMenuCallback3};
+static CARTMENUCALLBACK CartMenuCallbackCalls[NUMSLOTS]={CartMenuCallback0,CartMenuCallback1,CartMenuCallback2,CartMenuCallback3};
 static void (*SetCartCalls[NUMSLOTS])(SETCART)={nullptr};
 
 static void (*SetIniPathCalls[NUMSLOTS]) (const char *)={nullptr};
-static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
+static CARTMENUCALLBACK CartMenuCallback = nullptr;
 //***************************************************************
 static HINSTANCE hinstLib[NUMSLOTS]={nullptr};
 static unsigned char ChipSelectSlot=3,SpareSelectSlot=3,SwitchSlot=3,SlotRegister=255;
@@ -143,23 +144,20 @@ unsigned char MemRead(unsigned short Address)
 
 extern "C"
 {
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
+	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
-		DynamicMenuCallback =Temp;
+		CartMenuCallback =Temp;
 		return ;
 	}
 }
 
 extern "C"
 {
-	// MenuID is 1 thru 100
 	__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 	{
-		// Vcc subtracts 5000 from the wmId to get MenuID
-		// MPI config wmId is 5019 so 19 is used here.
-		if (MenuID == 19) {
+		if (MenuID == 19) {  //MPI Config
 			if (!hConfDlg)
 				hConfDlg = CreateDialog(g_hinstDLL, (LPCTSTR)IDD_DIALOG1,
 						GetActiveWindow(), (DLGPROC)MpiConfigDlg);
@@ -490,7 +488,7 @@ void UpdateSlotContent(int Slot)
 		SendDlgItemMessage(hConfDlg,INSBOXS[Slot],WM_SETTEXT,0,(LPARAM)"X");
 	else
 		SendDlgItemMessage(hConfDlg,INSBOXS[Slot],WM_SETTEXT,0,(LPARAM)">");
-	BuildDynaMenu();
+	BuildCartMenu();
 	return;
 }
 
@@ -541,8 +539,6 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 		strcpy(ModuleNames[Slot],MountName);
 		strcpy(SlotLabel[Slot],MountName); //JF
 		CartForSlot[Slot]=1;
-//		if (CartForSlot[SpareSelectSlot]==1)
-//			PakSetCart(1);
 		return 1;
 
 	case 1:	//DLL File
@@ -579,7 +575,8 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 			MessageBox(nullptr,"Not a valid Module","Ok",0);
 			return 0; //Error Not a Vcc Module
 		}
-		GetModuleNameCalls[Slot](ModuleNames[Slot],CatNumber[Slot],DynamicMenuCallbackCalls[Slot]); //Need to add address of local Dynamic menu callback function!
+		//Set address of local Dynamic menu callback function.
+		GetModuleNameCalls[Slot](ModuleNames[Slot],CatNumber[Slot],CartMenuCallbackCalls[Slot]);
 		strcpy(SlotLabel[Slot],ModuleNames[Slot]);
 		strcat(SlotLabel[Slot],"  ");
 		strcat(SlotLabel[Slot],CatNumber[Slot]);
@@ -590,9 +587,10 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 			DmaMemPointerCalls[Slot](MemRead8,MemWrite8);
 		if (SetIniPathCalls[Slot] != nullptr)
 			SetIniPathCalls[Slot](IniFile);
+		//Transfer the address of the SetCart routine to the pak
+		//There is one for each slot se we know where it came from
 		if (SetCartCalls[Slot] !=nullptr)
-			SetCartCalls[Slot](*SetCarts[Slot]);	//Transfer the address of the SetCart routin to the pak
-													//For the multpak there is 1 for each slot se we know where it came from
+			SetCartCalls[Slot](*SetCarts[Slot]);
 		if (ModuleResetCalls[Slot]!=nullptr)
 			ModuleResetCalls[Slot]();
 		return 1;
@@ -615,7 +613,6 @@ void UnloadModule(unsigned char Slot)
 	ModuleAudioSampleCalls[Slot]=nullptr;
 	ModuleResetCalls[Slot]=nullptr;
 	SetIniPathCalls[Slot]=nullptr;
-//	SetCartCalls[Slot]=nullptr;
 	strcpy(ModulePaths[Slot],"");
 	strcpy(ModuleNames[Slot],"Empty");
 	strcpy(CatNumber[Slot],"");
@@ -679,7 +676,7 @@ void LoadConfig()
 			MountModule(slot,ModulePaths[slot]);
 
 	// Build the dynamic menu
-	BuildDynaMenu();
+	BuildCartMenu();
 	return;
 }
 
@@ -790,39 +787,40 @@ void SetCartSlot3(unsigned char Tmp)
 }
 
 // This gets called on mpi startup and each time a module is inserted or deleted
-void BuildDynaMenu()
+// It builds the entire Cartridge menu from entries provided by loaded DLLs
+void BuildCartMenu()
 {
-	// DynamicMenuCallback() resides in VCC pakinterface. Make sure we have it's address
-	if (DynamicMenuCallback == nullptr) {
+	// CartMenuCallback() resides in VCC pakinterface. Make sure we have it's address
+	if (CartMenuCallback == nullptr) {
 		MessageBox(nullptr,"MPI internal menu error","Ok",0);
 		return;
 	}
 
-	// Init the dynamic menus, then add a header line and then MPI config menu item
-	DynamicMenuCallback( "",MID_BEGIN,MIT_Head);
-	DynamicMenuCallback( "",MID_ENTRY,MIT_Seperator);
+	// Init the menu
+	CartMenuCallback("",MID_BEGIN,MIT_Head);
+	CartMenuCallback("",MID_ENTRY,MIT_Seperator);
 
-	// The second argument to DynamicMenuCallback establishes the wmID for mpithe config.
-	DynamicMenuCallback("MPI Config",5019,MIT_StandAlone);
+	// Establish the MPI config control.
+	CartMenuCallback("MPI Config",ControlId(19),MIT_StandAlone);
 
-	// Build the rest of the menu for slots 4 thru 1
+	// Build the rest of the menu for slots 4 thru 1 from DLL callbacks
 	for (int ndx=0;ndx<MenuCount[3];ndx++)
-		DynamicMenuCallback(MenuName3[ndx],MenuId3[ndx]+80,Type3[ndx]);
+		CartMenuCallback(MenuName3[ndx],MenuId3[ndx]+80,Type3[ndx]);
 
 	for (int ndx=0;ndx<MenuCount[2];ndx++)
-		DynamicMenuCallback(MenuName2[ndx],MenuId2[ndx]+60,Type2[ndx]);
+		CartMenuCallback(MenuName2[ndx],MenuId2[ndx]+60,Type2[ndx]);
 
 	for (int ndx=0;ndx<MenuCount[1];ndx++)
-		DynamicMenuCallback(MenuName1[ndx],MenuId1[ndx]+40,Type1[ndx]);
+		CartMenuCallback(MenuName1[ndx],MenuId1[ndx]+40,Type1[ndx]);
 
 	for (int ndx=0;ndx<MenuCount[0];ndx++)
-		DynamicMenuCallback(MenuName0[ndx],MenuId0[ndx]+20,Type0[ndx]);
+		CartMenuCallback(MenuName0[ndx],MenuId0[ndx]+20,Type0[ndx]);
 
-	DynamicMenuCallback( "",MID_FINISH,MIT_Head);
+	CartMenuCallback("",MID_FINISH,MIT_Head);
 }
 
 // Callback for slot 1
-void DynamicMenuCallback0( const char *MenuName,int MenuId, int Type)
+void CartMenuCallback0( const char *MenuName,int MenuId, int Type)
 {
 	if (MenuId==0)
 	{
@@ -832,10 +830,9 @@ void DynamicMenuCallback0( const char *MenuName,int MenuId, int Type)
 
 	if (MenuId==1)
 	{
-		BuildDynaMenu();
+		BuildCartMenu();
 		return;
 	}
-
 	strcpy(MenuName0[MenuCount[0]],MenuName);
 	MenuId0[MenuCount[0]]=MenuId;
 	Type0[MenuCount[0]]=Type;
@@ -844,7 +841,7 @@ void DynamicMenuCallback0( const char *MenuName,int MenuId, int Type)
 }
 
 // Callback for Slot 2
-void DynamicMenuCallback1( const char *MenuName,int MenuId, int Type)
+void CartMenuCallback1( const char *MenuName,int MenuId, int Type)
 {
 	if (MenuId==0)
 	{
@@ -854,7 +851,7 @@ void DynamicMenuCallback1( const char *MenuName,int MenuId, int Type)
 
 	if (MenuId==1)
 	{
-		BuildDynaMenu();
+		BuildCartMenu();
 		return;
 	}
 	strcpy(MenuName1[MenuCount[1]],MenuName);
@@ -865,7 +862,7 @@ void DynamicMenuCallback1( const char *MenuName,int MenuId, int Type)
 }
 
 // Callback for Slot 3
-void DynamicMenuCallback2( const char *MenuName,int MenuId, int Type)
+void CartMenuCallback2( const char *MenuName,int MenuId, int Type)
 {
 	if (MenuId==0)
 	{
@@ -875,7 +872,7 @@ void DynamicMenuCallback2( const char *MenuName,int MenuId, int Type)
 
 	if (MenuId==1)
 	{
-		BuildDynaMenu();
+		BuildCartMenu();
 		return;
 	}
 	strcpy(MenuName2[MenuCount[2]],MenuName);
@@ -886,7 +883,7 @@ void DynamicMenuCallback2( const char *MenuName,int MenuId, int Type)
 }
 
 // Callback for Slot 4
-void DynamicMenuCallback3( const char *MenuName,int MenuId, int Type)
+void CartMenuCallback3( const char *MenuName,int MenuId, int Type)
 {
 	if (MenuId==0)
 	{
@@ -896,7 +893,7 @@ void DynamicMenuCallback3( const char *MenuName,int MenuId, int Type)
 
 	if (MenuId==1)
 	{
-		BuildDynaMenu();
+		BuildCartMenu();
 		return;
 	}
 	strcpy(MenuName3[MenuCount[3]],MenuName);

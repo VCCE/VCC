@@ -16,8 +16,8 @@ void GMCCartridge::LoadConfiguration(const std::string& filename)
 void GMCCartridge::LoadMenuItems()
 {
     AddMenuItem("",MID_BEGIN,MIT_Head);
-    AddMenuItem("",MID_ENTRY,MIT_Slave);
-    AddMenuItem("Select GMC ROM", MID_SDYNAMENU + MenuItems::SelectRom, MIT_StandAlone);
+	AddMenuItem("",MID_ENTRY, MIT_Seperator);
+    AddMenuItem("Select GMC ROM", ControlId(MenuItems::SelectRom), MIT_StandAlone);
     AddMenuItem("",MID_FINISH,MIT_Head);
 }
 
@@ -37,7 +37,6 @@ std::string GMCCartridge::GetStatusMessage() const
 
 	return message;
 }
-
 
 void GMCCartridge::OnMenuItemSelected(unsigned char menuId)
 {

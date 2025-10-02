@@ -8,7 +8,7 @@
 #include "resource.h" 
 #include "../logger.h"
 #include "../fileops.h"
-#include "../DynamicMenu.h"
+#include "../CartridgeMenu.h"
 #include "../ModuleDefs.h"
 
 #ifndef USE_LOGGING
@@ -50,8 +50,6 @@ static unsigned short dwsport = 65504;
 static char curaddress[MAX_PATH];
 static unsigned short curport = 65504;
 
-
-
 //thread handle
 static HANDLE hDWTCPThread;
 
@@ -61,12 +59,12 @@ char msg[MAX_PATH];
 // log lots of stuff...
 static boolean logging = false;
 
-static DYNAMICMENUCALLBACK DynamicMenuCallback = NULL;
+static CARTMENUCALLBACK CartMenuCallback = NULL;
 unsigned char LoadExtRom(const char *);
 void SetDWTCPConnectionEnable(unsigned int enable);
 int dw_setaddr(const char *bufdwaddr);
 int dw_setport(const char *bufdwport);
-void BuildDynaMenu();
+void BuildCartMenu();
 void LoadConfig();
 void SaveConfig();
 
@@ -219,10 +217,6 @@ void attemptDWConnection( void )
         strcpy(curaddress, dwaddress);
         curport= dwsport;
 
-
-      sprintf(msg,"Connecting to %s:%d... \n",dwaddress,dwsport);
-      WriteLog(msg,TOCONS);
-
         // resolve hostname
         LPHOSTENT dwSrvHost= gethostbyname(dwaddress);
         
@@ -230,7 +224,6 @@ void attemptDWConnection( void )
         {
                 // invalid hostname/no dns
                 retry = false;
-//              WriteLog("failed to resolve hostname.\n",TOCONS);
         }
         
         // allocate socket
@@ -262,14 +255,10 @@ void attemptDWConnection( void )
         if (rc==SOCKET_ERROR)
         {
                 // no deal
-//              WriteLog("failed to connect.\n",TOCONS);
                 closesocket(dwSocket);
                 dwSocket = 0;
         }
-        
 }
-
-
 
 
 // TCP connection thread
@@ -350,12 +339,6 @@ unsigned __stdcall DWTCPThread(void *Dummy)
         return 0;
 }
 
-
-
-
-
-
-
 // called from config.c/UpdateConfig
 void SetDWTCPConnectionEnable(unsigned int enable)
 {
@@ -414,24 +397,16 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 
 }
 
-
-
-
-
-
-
-
-
 // dll exported functions
-extern "C" __declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
+extern "C" __declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
 		strcpy(ModName,"HDBDOS/DW/Becker");
 
-		DynamicMenuCallback =Temp;
-		if (DynamicMenuCallback  != NULL)
-			BuildDynaMenu();
+		CartMenuCallback =Temp;
+		if (CartMenuCallback  != NULL)
+			BuildCartMenu();
 
 		return ;
 	}
@@ -543,12 +518,12 @@ extern "C" __declspec(dllexport) void ModuleStatus(char *DWStatus)
 	}
 
 
-void BuildDynaMenu()
+void BuildCartMenu()
 {
-	DynamicMenuCallback( "",MID_BEGIN,MIT_Head);
-	DynamicMenuCallback( "",MID_ENTRY,MIT_Seperator);
-	DynamicMenuCallback( "DriveWire Server..",5016,MIT_StandAlone);
-	DynamicMenuCallback( "",MID_FINISH,MIT_Head);
+	CartMenuCallback( "",MID_BEGIN,MIT_Head);
+	CartMenuCallback( "",MID_ENTRY,MIT_Seperator);
+	CartMenuCallback( "DriveWire Server..",ControlId(16),MIT_StandAlone);
+	CartMenuCallback( "",MID_FINISH,MIT_Head);
 }
 
 extern "C" __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
@@ -556,7 +531,7 @@ extern "C" __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 		HWND h_own = GetActiveWindow();
 		CreateDialog(g_hinstDLL,(LPCTSTR)IDD_PROPPAGE,h_own,(DLGPROC)Config);
 		ShowWindow(g_hConfigDlg,1);
-		BuildDynaMenu();
+		BuildCartMenu();
 		return;
 	}
 
@@ -663,7 +638,7 @@ void LoadConfig()
 		dw_setport("65504");
 
 	
-	BuildDynaMenu();
+	BuildCartMenu();
 	GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
 	PathRemoveFileSpec(DiskRomPath);
 	strcat( DiskRomPath, "hdbdwbck.rom");

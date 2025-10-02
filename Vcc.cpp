@@ -56,7 +56,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "mc6821.h"
 #include "keyboard.h"
 #include "coco3.h"
-#include "DynamicMenu.h"
+#include "CartridgeMenu.h"
 #include "pakinterface.h"
 #include "audio.h"
 #include "config.h"
@@ -131,6 +131,8 @@ static unsigned char FlagEmuStop=TH_RUNNING;
 
 bool IsShiftKeyDown();
 
+CartridgeMenu CartMenu;
+
 //static CRITICAL_SECTION  FrameRender;
 /*--------------------------------------------------------------------------*/
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
@@ -143,7 +145,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	EmuState.WindowInstance = hInstance;
 	unsigned threadID;
 	HANDLE hEvent,
-
 	OleInitialize(nullptr); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
@@ -165,9 +166,12 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		MessageBox(nullptr,"Can't create primary Window","Error",0);
 		exit(0);
 	}
+
+	// Set up the cartridge menu. This gets drawn after modules are loaded
+	CartMenu.init();
+	BeginCartMenu();
+
 	InitSound();
-	CallDynamicMenu("", MID_BEGIN, MIT_Head);
-	CallDynamicMenu("", MID_FINISH, MIT_Head);
 	LoadModule();
 	SetClockSpeed(1);	//Default clock speed .89 MHZ	
 	BinaryRunning = true;
@@ -290,11 +294,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			raise_saved_keys();
 			wmId    = LOWORD(wParam);
 			wmEvent = HIWORD(wParam);
+
 			// Parse the menu selections:
-			// Added for Dynamic menu system
-			if ( (wmId >= MID_SDYNAMENU) & (wmId <= MID_EDYNAMENU) )
+			
+			// Check if ID is in cartridge menu range
+			if ( (wmId >= MID_CONTROL) & (wmId < MID_CONTROL + 100) )
 			{
-				DynamicMenuActivated (wmId - MID_SDYNAMENU);	//Calls to the loaded DLL so it can do the right thing
+				CartMenuActivated(wmId-MID_CONTROL);
 				break;
 			}
 
@@ -552,7 +558,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					if ( IsShiftKeyDown() ) {
 						hMenu = GetConfMenu();
 					} else {
-						hMenu = RefreshDynamicMenu();
+						hMenu = CartMenu.draw();
 					}
 					if (hMenu && EmuState.FullScreen) {
 						RECT r;
@@ -1085,7 +1091,8 @@ void FullScreenToggle()
 		exit(0);
 	}
 	InvalidateBoarder();
-	RefreshDynamicMenu();
+	CartMenu.draw();
+
 	EmuState.ConfigDialog=nullptr;
 	PauseAudio(false);
 	return;

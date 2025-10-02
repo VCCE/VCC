@@ -33,10 +33,8 @@ int InsertModule (const char *);
 void UpdateBusPointer();
 void UnloadDll();
 void UnloadPack();
-
-HMENU RefreshDynamicMenu();
-void CallDynamicMenu(const char * MenuName,int MenuId,int Type);
-void DynamicMenuActivated(unsigned char);
+void BeginCartMenu();
+void CartMenuActivated(unsigned int);
 
 // Error return codes from InsertModule
 // FIXME: These should be turned into an enum

@@ -148,7 +148,7 @@
 #include <sys/stat.h>
 #include "../logger.h"
 #include "../DialogOps.h"
-#include "../DynamicMenu.h"
+#include "../CartridgeMenu.h"
 #include "../ModuleDefs.h"
 #include "sdc.h"
 
@@ -157,7 +157,7 @@
 //======================================================================
 
 void (*AssertInt)(unsigned char, unsigned char);
-static DYNAMICMENUCALLBACK DynamicMenuCallback = nullptr;
+static CARTMENUCALLBACK CartMenuCallback = nullptr;
 void SDCInit();
 void LoadRom(unsigned char);
 void (*MemWrite8)(unsigned char,unsigned short)=nullptr;
@@ -171,7 +171,7 @@ LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
 
 void LoadConfig();
 bool SaveConfig(HWND);
-void BuildDynaMenu();
+void BuildCartMenu();
 void CenterDialog(HWND);
 void SelectCardBox();
 void update_disk0_box();
@@ -352,12 +352,12 @@ extern "C"
 {
     // Register the DLL and build menu
     __declspec(dllexport) void ModuleName
-        (char *ModName,char *CatNumber,DYNAMICMENUCALLBACK Temp)
+        (char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
     {
         LoadString(hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
         LoadString(hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
-        DynamicMenuCallback = Temp;
-        if (DynamicMenuCallback != nullptr) BuildDynaMenu();
+        CartMenuCallback = Temp;
+        if (CartMenuCallback != nullptr) BuildCartMenu();
         return;
     }
 
@@ -406,7 +406,7 @@ extern "C"
             ShowWindow(hControlDlg,1);
             break;
         }
-        BuildDynaMenu();
+        BuildCartMenu();
         return;
     }
 
@@ -481,13 +481,13 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 //-------------------------------------------------------------
 // Generate menu for configuring the SDC
 //-------------------------------------------------------------
-void BuildDynaMenu()
+void BuildCartMenu()
 {
-    DynamicMenuCallback("",MID_BEGIN,MIT_Head);
-    DynamicMenuCallback("",MID_ENTRY,MIT_Seperator);
-    DynamicMenuCallback("SDC Config",5010,MIT_StandAlone);
-    DynamicMenuCallback("SDC Control",5011,MIT_StandAlone);
-    DynamicMenuCallback("",MID_FINISH,MIT_Head);
+    CartMenuCallback("",MID_BEGIN,MIT_Head);
+    CartMenuCallback("",MID_ENTRY,MIT_Seperator);
+    CartMenuCallback("SDC Config",ControlId(10),MIT_StandAlone);
+    CartMenuCallback("SDC Control",ControlId(11),MIT_StandAlone);
+    CartMenuCallback("",MID_FINISH,MIT_Head);
 }
 
 //------------------------------------------------------------

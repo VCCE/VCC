@@ -60,6 +60,11 @@ BEGIN
         MENUITEM "BitBanger",                   ID_BITBANGER_CONFIG
 
     END
+    // Dummy place holder for Cartrige menu, drawn after carts load
+    POPUP "Cartridge"
+    BEGIN
+        MENUITEM "Cartridge"                    ID_CARTS_LOAD
+    END
     POPUP "Debugger"
     BEGIN
         MENUITEM "Memory Display",              ID_MEMORY_DISPLAY
