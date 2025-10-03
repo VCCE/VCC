@@ -38,6 +38,9 @@ void CartridgeMenu::add(const char * name, unsigned int menu_id, MenuItemType ty
 		draw();
 		break;
 	default:
+		// Some older DLLs used message type MIT_Head with an empty name for a seperator.
+		// To support those here is a check for MIT_Head with an empty name.
+		if (type == MIT_Head && strcmp(name,"") == 0) type = MIT_Seperator;
 		menu.push_back({name,menu_id,type});
 		break;
 	}
@@ -75,6 +78,7 @@ HMENU CartridgeMenu::draw() {
 	// Create sub menus in order
 	unsigned int pos = 0u;
 	for (MenuItem item : menu) {
+		_DLOG("%4d %d '%s'\n",item.menu_id,item.type,item.name.c_str());
 		switch (item.type) {
 		case MIT_Head:
 			hMenu = CreatePopupMenu();
