@@ -6,28 +6,29 @@ VCC is licensed under the GNU General Public License v3.0. See the [LICENSE](COP
 ## Features
 VCC emulates a stock 128k CoCo 3 and additional products, including:
 - **Tandy MultiPak Interface (MPI)**: Four expansion slots.
-- **Tandy FD-502 Disk Drive Controller**: Includes Disk Extended BASIC and four configurable virtual disk drives.
-- **Generic Hard Drive Interface**: Allows VCC to use Virtual Hard Disks (VHDs).
+- **Tandy FD-502 Disk Drive Controller with Becker Port**: Includes Disk Extended BASIC,four configurable virtual disk drives, and a Becker Interface for connecting to a DriveWire Server
+- **Virtual Hard Drive Interface**: Allows VCC to connect two Virtual Hard Disks (VHDs).
 - **SuperIDE Hard Drive Controller**: Emulates dual IDE hard drives.
 - **Orchestra90cc**: A five-voice music sequencer with stereo 8-bit DACs.
-- **Becker Port**: Interface for connecting to a DriveWire server.
+- **Becker Port**: Old (previous to V2.1.9.3) VCC Interface for connecting to a DriveWire server.
 - **Memory Expansions**: Up to 8192k.
 - **CPU Replacement**: Swap the Motorola 6809 CPU with a Hitachi 6309.
+- **SDC Simulator**: Simulates a COCO SDC floppy emulator.
 
 ## Obtaining VCC
 
 Sources and binaries for VCC versions since v2.0.1 can be found at [VCC Releases](https://github.com/VCCE/VCC/releases). It is recommended to use the "latest" release.
 
-VCC version numbering is somewhat erratic. Currently, the version number consists of "Vcc-" followed by four numbers separated by dots, for example: "Vcc-2.1.8.2". The first number represents a fork; the current fork is "2". The second number represents a major version, the third number represents releases that make additions or significant changes, and the fourth number represents bug fixes or minor changes.
+VCC version numbering is somewhat erratic. Currently, the version number consists of "Vcc-" followed by four numbers separated by dots, for example: "Vcc-2.1.8.3". The first number represents a fork; the current fork is "2". The second number represents a major version, the third number represents releases that make additions or significant changes, and the fourth number represents bug fixes or minor changes.
 
-Please be aware that the binaries provided with VCC releases, including the installers, do not contain verification certificates. It is likely you will be presented with Windows security warnings when you first run them. Alternatively, you can build the version of your choice from the sources available with the release.
+Please be aware that the binaries provided with VCC releases, including the installers, do not contain verification certificates. It is likely you will be presented with Windows security warnings when you first run them. Alternatively, you can build the version of your choice from the sources available with the release.  Occasionally Virus detection software might flag VCC binaries due to false positives, even if you build from sources. If you encounter these issues you may be able to add an exception for VCC in the protection software you are using.  Every effort is taken to keep VCC safe to use but be aware there is no warranty that the instance of VCC you are running actually is.
 
 ## Building VCC
-VCC is written in C++ and C. Microsoft Visual Studio 2022 Community is used to build VCC and is available for free download from Microsoft. Optionally, components from Visual Studio 2015 can be used to build a "legacy" VCC version that will run on Windows XP.
+VCC is written in C++ and Microsoft Visual Studio 2022 Community is used to build VCC.  VS2022 is available for free download from Microsoft. The standard VCC build will run on Windows 10 and above. Optionally Visual Studio 2022 can be used to build a "legacy" VCC version using xp build tools that will run on Windows XP.
 
 To build VCC from the command line, launch the "Developer Command Prompt for VS 2022". From there, change to the directory containing the VCC sources and type "Build" or "BuildClean".
 
-Within Visual Studio, the "Release" and "Debug" configurations build VCC binaries that will run on current Windows versions. The "Legacy" configuration builds binaries that will run on Windows XP. "Release" and "Debug" use build tools from VS2022, and "Legacy" uses build tools from VS2015. Note that Windows versions before Windows 10 are considered out of service by Microsoft, and Visual Studio 2015 is no longer supplied using a web-based installer. For legacy builds, you need to find and install the v140_xp toolset from VS2015.
+Within Visual Studio, the "Release" and "Debug" configurations build VCC binaries that will run on current Windows versions. The "Legacy" configuration builds binaries that will run on Windows XP. "Legacy" uses the v121_xp build tools from which you need to find and install.  Maintaining a VCC version that will run on XP is becoming difficult and it is likely a future version will no longer support it 
 
 ## Contributing to VCC
 We welcome patches and code contributions that are consistent with our goals. Please comment your code well and add your name if you want credit for your work.
