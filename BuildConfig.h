@@ -25,14 +25,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 //
 // Enable the use of OpenGL display driver
 //
-#ifndef _LEGACY_VCC
 #ifndef USE_OPENGL
 #define USE_OPENGL true
-#endif
 #endif
 
 //
@@ -102,6 +99,13 @@
 // 
 // Edit options above rather than these:
 //
+
+//
+// Legacy does not support opengl so disable it.
+//
+#ifdef _LEGACY_VCC
+#define USE_OPENGL false
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Options that are always off for release

@@ -233,7 +233,7 @@
     <ClCompile Include="memdump.cpp" />
     <ClCompile Include="mc6809.cpp" />
     <ClCompile Include="mc6821.cpp" />
-	<ClCompile Include="MemoryMap.cpp" />
+    <ClCompile Include="MemoryMap.cpp" />
     <ClCompile Include="CartridgeMenu.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
@@ -280,6 +280,7 @@
     <ClInclude Include="DisplayNull.h" />
     <ClInclude Include="IDisplay.h" />
     <ClInclude Include="IDisplayDebug.h" />
+    <ClInclude Include="DisplayNone.h" />
     <ClInclude Include="interrupts.h" />
     <ClInclude Include="OpenGL.h" />
     <ClInclude Include="OpenGLFont.h" />

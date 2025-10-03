@@ -42,6 +42,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "OpenGLFontConsola.h"
 #include "DirectX.h"
 #include "DisplayNull.h"
+#include "DisplayNone.h"
 
 #if USE_DEBUG_AUDIOTAPE
 #include "IDisplayDebug.h"
@@ -122,7 +123,7 @@ bool InitGraphics(Interface** ptr, SystemState* CWState, int w, int h)
 bool CreateNullWindow(SystemState* CWState)
 {
 	IDisplayOpenGL* display = nullptr;
-	return InitGraphics<DisplayNull>(&display, CWState, 640, 480);
+	return InitGraphics<DisplayNone>(&display, CWState, 640, 480);
 }
 
 bool CreateDDWindow(SystemState *CWState)
