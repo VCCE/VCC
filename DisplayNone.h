@@ -25,21 +25,51 @@
 namespace VCC
 {
 	//
-	// Null display, stub all functions & allow no setup.
+	// No open display, just maintains surface.
 	//
-	struct DisplayNull : IDisplayDirectX, IDisplayOpenGL
+	struct DisplayNone : IDisplayDirectX, IDisplayOpenGL
 	{
-		explicit DisplayNull(ISystemState*state) {}
+		explicit DisplayNone(ISystemState* state) : surface(nullptr), state(state) {}
 
-		int Setup(void* hwnd, int width, int height, int statusHeight, bool fullscreen) override { return !OK; }
+		int Setup(void* hwnd, int width, int height, int statusHeight, bool fullscreen) override
+		{
+			area.x = 0;
+			area.y = 0;
+			area.w = (float)width;
+			area.h = (float)height;
+			surface = new Pixel[width * height];
+			return OK;
+		}
+		int Cleanup() override
+		{
+			delete[] surface;
+			surface = nullptr;
+			return OK;
+		}
+		int GetSurface(Pixel** pixels) override
+		{
+			*pixels = surface;
+			return OK;
+		}
+		int GetRect(int rectOption, Rect* rect) override
+		{
+			if (rect)
+			{
+				memcpy(rect, &area, sizeof(*rect));
+				return OK;
+			}
+			return !OK;
+		}
+		int LockSurface() override
+		{
+			state->SetSurface(surface, 3, 640);
+			return OK;
+		}
+
 		int Render() override { return OK; }
 		int Present() override { return OK; }
-		int Cleanup() override { return OK; }
-		int SetOption(int flagOption, bool enabled) override { return OK; }
-		int GetSurface(Pixel** pixels) override { return OK; }
-		int GetRect(int rectOption, Rect* rect) override { return !OK; }
-		int LockSurface() override { return OK; }
 		int UnlockSurface() override { return OK; }
+		int SetOption(int flagOption, bool enabled) override { return OK; }
 		void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color) override {}
 		void DebugDrawBox(float x, float y, float w, float h, Pixel color) override {}
 		int RenderSignalLostMessage() override { return OK; }
@@ -47,5 +77,11 @@ namespace VCC
 		int RenderText(const OpenGLFont* font, float x, float y, float size, const char* text) override { return OK; }
 		int LoadFont(const OpenGLFont** outFont, int bitmapRes, const OpenGLFontGlyph* glyphs, int start, int end) override { return OK; }
 		int RenderStatusLine(char* statusText) override { return OK; }
+
+	private:
+
+		Pixel* surface;
+		ISystemState* state;
+		Rect area;
 	};
 }

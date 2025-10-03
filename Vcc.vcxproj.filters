@@ -113,6 +113,7 @@
     </ClCompile>
     <ClCompile Include="Dialogops.cpp" />
     <ClCompile Include="joystickinput.cpp" />
+    <ClCompile Include="CartridgeMenu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h">
@@ -269,6 +270,9 @@
     </ClInclude>
     <ClInclude Include="interrupts.h">
       <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="DisplayNone.h">
+      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
