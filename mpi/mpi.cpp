@@ -19,6 +19,7 @@ Copyright 2015 by Joseph Forgione
 
 #include <Windows.h>
 #include <iostream>
+#include <vector>
 #include <stdio.h>
 #include "resource.h"
 #include <CommCtrl.h>
@@ -68,15 +69,10 @@ static void (*ModuleResetCalls[NUMSLOTS]) ()={nullptr,nullptr,nullptr,nullptr};
 //Set callbacks for the DLL to call
 static void (*SetInteruptCallPointerCalls[NUMSLOTS]) ( PAKINTERUPT)={nullptr,nullptr,nullptr,nullptr};
 static void (*DmaMemPointerCalls[NUMSLOTS]) (MEMREAD8,MEMWRITE8)={nullptr,nullptr,nullptr,nullptr};
-//MenuName,int MenuId, int Type)
-static char MenuName0[64][512],MenuName1[64][512],MenuName2[64][512],MenuName3[64][512];
-static int MenuId0[64],MenuId1[64],MenuId2[64],MenuId3[64];
-static int Type0[64],Type1[64],Type2[64],Type3[64];
-static int MenuCount[NUMSLOTS]={0};
-
 static unsigned short EDITBOXS[4]={IDC_EDIT1,IDC_EDIT2,IDC_EDIT3,IDC_EDIT4};
 static unsigned short RADIOBTN[4]={IDC_SELECT1,IDC_SELECT2,IDC_SELECT3,IDC_SELECT4};
 static unsigned short INSBOXS[4]={IDC_INSERT1,IDC_INSERT2,IDC_INSERT3,IDC_INSERT4};
+std::vector<CartMenuItem> SlotMenu[4] {};
 
 void UpdateSlotContent(int);
 void UpdateSlotConfig(int);
@@ -91,6 +87,7 @@ void CartMenuCallback0(const char *,int, int);
 void CartMenuCallback1(const char *,int, int);
 void CartMenuCallback2(const char *,int, int);
 void CartMenuCallback3(const char *,int, int);
+void SaveSlotMenuItem(int, CartMenuItem item);
 
 static unsigned char CartForSlot[NUMSLOTS]={0};
 static void (*SetCarts[NUMSLOTS])(unsigned char)={SetCartSlot0,SetCartSlot1,SetCartSlot2,SetCartSlot3};
@@ -620,8 +617,8 @@ void UnloadModule(unsigned char Slot)
 	if (ExtRomPointers[Slot] !=nullptr)
 		free(ExtRomPointers[Slot]);
 	ExtRomPointers[Slot]=nullptr;
+	SlotMenu[Slot].clear();
 	CartForSlot[Slot]=0;
-	MenuCount[Slot]=0;
 	if (hinstLib[Slot] !=nullptr)
 		FreeLibrary(hinstLib[Slot]);
 	hinstLib[Slot]=nullptr;
@@ -786,120 +783,61 @@ void SetCartSlot3(unsigned char Tmp)
 	return;
 }
 
-// This gets called on mpi startup and each time a module is inserted or deleted
-// It builds the entire Cartridge menu from entries provided by loaded DLLs
+// This gets called any time a cartridge menu is changed. It draws the entire menu.
 void BuildCartMenu()
 {
-	// CartMenuCallback() resides in VCC pakinterface. Make sure we have it's address
+	// Make sure we have access
 	if (CartMenuCallback == nullptr) {
 		MessageBox(nullptr,"MPI internal menu error","Ok",0);
 		return;
 	}
-
-	// Init the menu
+	// Init the menu, establish MPI config control, build slot menus, then draw it.
 	CartMenuCallback("",MID_BEGIN,MIT_Head);
 	CartMenuCallback("",MID_ENTRY,MIT_Seperator);
-
-	// Establish the MPI config control.
 	CartMenuCallback("MPI Config",ControlId(19),MIT_StandAlone);
-
-	// Build the rest of the menu for slots 4 thru 1 from DLL callbacks
-	for (int ndx=0;ndx<MenuCount[3];ndx++)
-		CartMenuCallback(MenuName3[ndx],MenuId3[ndx]+80,Type3[ndx]);
-
-	for (int ndx=0;ndx<MenuCount[2];ndx++)
-		CartMenuCallback(MenuName2[ndx],MenuId2[ndx]+60,Type2[ndx]);
-
-	for (int ndx=0;ndx<MenuCount[1];ndx++)
-		CartMenuCallback(MenuName1[ndx],MenuId1[ndx]+40,Type1[ndx]);
-
-	for (int ndx=0;ndx<MenuCount[0];ndx++)
-		CartMenuCallback(MenuName0[ndx],MenuId0[ndx]+20,Type0[ndx]);
-
-	CartMenuCallback("",MID_FINISH,MIT_Head);
+	for (int slot = 3; slot >= 0; slot--) {
+		for (CartMenuItem item : SlotMenu[slot]) {
+			CartMenuCallback(item.name.c_str(),item.menu_id,item.type);
+		}
+	}
+	CartMenuCallback("",MID_FINISH,MIT_Head);  // Finish draws the entire menu
 }
 
-// Callback for slot 1
-void CartMenuCallback0( const char *MenuName,int MenuId, int Type)
+// Save cart Menu items into containers per slot
+void SaveSlotMenuItem(int slot,CartMenuItem item)
 {
-	if (MenuId==0)
-	{
-		MenuCount[0]=0;
-		return;
-	}
-
-	if (MenuId==1)
-	{
+	switch (item.menu_id) {
+	case MID_BEGIN:
+		SlotMenu[slot].clear();
+		break;
+	case MID_FINISH:
 		BuildCartMenu();
-		return;
+		break;
+	default:
+		// Add 20 times the slot number to control id's
+		if (item.menu_id >= MID_CONTROL) item.menu_id += (slot+1) * 20;
+		SlotMenu[slot].push_back(item);
+		break;
 	}
-	strcpy(MenuName0[MenuCount[0]],MenuName);
-	MenuId0[MenuCount[0]]=MenuId;
-	Type0[MenuCount[0]]=Type;
-	MenuCount[0]++;
+}
+void CartMenuCallback0(const char *MenuName,int MenuId, int Type)
+{
+	SaveSlotMenuItem(0,{MenuName,static_cast<unsigned int>(MenuId),static_cast<MenuItemType>(Type)});
 	return;
 }
-
-// Callback for Slot 2
-void CartMenuCallback1( const char *MenuName,int MenuId, int Type)
+void CartMenuCallback1(const char *MenuName,int MenuId, int Type)
 {
-	if (MenuId==0)
-	{
-		MenuCount[1]=0;
-		return;
-	}
-
-	if (MenuId==1)
-	{
-		BuildCartMenu();
-		return;
-	}
-	strcpy(MenuName1[MenuCount[1]],MenuName);
-	MenuId1[MenuCount[1]]=MenuId;
-	Type1[MenuCount[1]]=Type;
-	MenuCount[1]++;
+	SaveSlotMenuItem(1,{MenuName,static_cast<unsigned int>(MenuId),static_cast<MenuItemType>(Type)});
 	return;
 }
-
-// Callback for Slot 3
-void CartMenuCallback2( const char *MenuName,int MenuId, int Type)
+void CartMenuCallback2(const char *MenuName,int MenuId, int Type)
 {
-	if (MenuId==0)
-	{
-		MenuCount[2]=0;
-		return;
-	}
-
-	if (MenuId==1)
-	{
-		BuildCartMenu();
-		return;
-	}
-	strcpy(MenuName2[MenuCount[2]],MenuName);
-	MenuId2[MenuCount[2]]=MenuId;
-	Type2[MenuCount[2]]=Type;
-	MenuCount[2]++;
+	SaveSlotMenuItem(2,{MenuName,static_cast<unsigned int>(MenuId),static_cast<MenuItemType>(Type)});
 	return;
 }
-
-// Callback for Slot 4
-void CartMenuCallback3( const char *MenuName,int MenuId, int Type)
+void CartMenuCallback3(const char *MenuName,int MenuId, int Type)
 {
-	if (MenuId==0)
-	{
-		MenuCount[3]=0;
-		return;
-	}
-
-	if (MenuId==1)
-	{
-		BuildCartMenu();
-		return;
-	}
-	strcpy(MenuName3[MenuCount[3]],MenuName);
-	MenuId3[MenuCount[3]]=MenuId;
-	Type3[MenuCount[3]]=Type;
-	MenuCount[3]++;
+	SaveSlotMenuItem(3,{MenuName,static_cast<unsigned int>(MenuId),static_cast<MenuItemType>(Type)});
 	return;
 }
 
