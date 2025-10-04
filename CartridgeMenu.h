@@ -55,15 +55,17 @@ enum MenuItemType
 	MIT_Seperator,  // Draws a horizontal line to seperate groups of menu items
 };
 
+
+struct CartMenuItem {
+	std::string name;
+	unsigned int menu_id;
+	MenuItemType type;
+};
+
 class CartridgeMenu {
 
 private:
-	struct MenuItem {
-		std::string name;
-		unsigned int menu_id;
-		MenuItemType type;
-	};
-	std::vector<MenuItem> menu {};
+	std::vector<CartMenuItem> menu {};
 	HWND hMainWin;
 	HMENU hMenuBar;
 	std::string MenuBarTitle;
