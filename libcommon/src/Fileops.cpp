@@ -19,7 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <Windows.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include "fileops.h"
+#include <vcc/common/FileOps.h>
 
 void ValidatePath(char *Path)
 {

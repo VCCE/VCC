@@ -31,7 +31,7 @@
 #include "Vcc.h"
 #include "mc6821.h"
 #include "logger.h"
-#include "fileops.h"
+#include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 
 #define HASCONFIG		1

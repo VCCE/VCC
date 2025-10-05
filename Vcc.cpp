@@ -42,7 +42,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <commdlg.h>
 #include <stdio.h>
 #include <mmsystem.h>
-#include "fileops.h"
+#include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include "defines.h"
 #include "resource.h"

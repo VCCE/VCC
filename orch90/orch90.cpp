@@ -19,7 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include "defines.h"
 #include "resource.h" 
-#include "../fileops.h"
+#include <vcc/common/FileOps.h>
 #include "../ModuleDefs.h"
 
 static HINSTANCE g_hinstDLL=nullptr;

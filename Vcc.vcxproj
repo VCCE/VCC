@@ -140,7 +140,6 @@
     <ClCompile Include="DirectDrawInterface.cpp" />
     <ClCompile Include="Disassembler.cpp" />
     <ClCompile Include="ExecutionTrace.cpp" />
-    <ClCompile Include="Fileops.cpp" />
     <ClCompile Include="hd6309.cpp" />
     <ClCompile Include="iobus.cpp" />
     <ClCompile Include="joystickinput.cpp" />
@@ -216,7 +215,6 @@
     <ClInclude Include="DirectDrawInterface.h" />
     <ClInclude Include="Disassembler.h" />
     <ClInclude Include="ExecutionTrace.h" />
-    <ClInclude Include="fileops.h" />
     <ClInclude Include="hd6309.h" />
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="iobus.h" />

@@ -25,7 +25,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "cc3vhd.h"
 #include "defines.h"
 #include "cloud9.h"
-#include "../fileops.h"
+#include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
 #include "../ModuleDefs.h"

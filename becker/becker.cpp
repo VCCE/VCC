@@ -7,7 +7,7 @@
 #include "becker.h"
 #include "resource.h" 
 #include "../logger.h"
-#include "../fileops.h"
+#include <vcc/common/FileOps.h>
 #include "../CartridgeMenu.h"
 #include "../ModuleDefs.h"
 

@@ -96,7 +96,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Fileops.cpp" />
     <ClCompile Include="..\logger.cpp" />
     <ClCompile Include="distortc.cpp" />
     <ClCompile Include="fd502.cpp" />
@@ -104,7 +103,6 @@
     <ClCompile Include="becker.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\fileops.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="distortc.h" />
     <ClInclude Include="fd502.h" />

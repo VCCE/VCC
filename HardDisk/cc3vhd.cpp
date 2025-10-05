@@ -56,7 +56,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "cc3vhd.h"
 #include "harddisk.h"
 #include "defines.h"
-#include "../fileops.h"
+#include <vcc/common/FileOps.h>
 
 typedef union {
     unsigned int All;

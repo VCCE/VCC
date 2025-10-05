@@ -27,7 +27,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <sstream>
 #include <array>
 #include <windowsx.h>
-#include "fileops.h"
+#include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include "logger.h"
 
