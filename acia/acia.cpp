@@ -25,7 +25,7 @@
 #include "../CartridgeMenu.h"
 #include "../ModuleDefs.h"
 #include <vcc/common/DialogOps.h>
-#include "../logger.h"
+#include <vcc/common/logger.h>
 
 //------------------------------------------------------------------------
 // Local Functions

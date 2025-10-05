@@ -146,7 +146,6 @@
     <ClCompile Include="keyboard.cpp" />
     <ClCompile Include="keyboardLayout.cpp" />
     <ClCompile Include="keyboardEdit.cpp" />
-    <ClCompile Include="logger.cpp" />
     <ClCompile Include="memdump.cpp" />
     <ClCompile Include="mc6809.cpp" />
     <ClCompile Include="mc6821.cpp" />
@@ -222,7 +221,6 @@
     <ClInclude Include="keyboard.h" />
     <ClInclude Include="keyboardLayout.h" />
     <ClInclude Include="keyboardEdit.h" />
-    <ClInclude Include="logger.h" />
     <ClInclude Include="memdump.h" />
     <ClInclude Include="MachineDefs.h" />
     <ClInclude Include="mc6809.h" />

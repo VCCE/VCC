@@ -35,7 +35,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "../CartridgeMenu.h"
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
-#include "../logger.h"
+#include <vcc/common/logger.h>
 
 //include becker code if COMBINE_BECKER is defined in fd502.h
 #ifdef COMBINE_BECKER

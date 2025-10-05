@@ -21,7 +21,7 @@
 //
 
 #include "../defines.h"
-#include "../logger.h"
+#include <vcc/common/logger.h>
 
 #include "resource.h"
 #include "cloud9.h"

@@ -30,7 +30,7 @@
 #include "config.h"
 #include "Vcc.h"
 #include "mc6821.h"
-#include "logger.h"
+#include <vcc/common/logger.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 

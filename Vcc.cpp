@@ -66,7 +66,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "Cassette.h"
 
 #include "CommandLine.h"
-#include "logger.h"
+#include <vcc/common/logger.h>
 #include "memdump.h"
 
 #include "MemoryMap.h"

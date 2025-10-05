@@ -22,7 +22,7 @@
 #include "acia.h"
 #include "sc6551.h"
 #include "../interrupts.h"
-#include "../logger.h"
+#include <vcc/common/logger.h>
 #include <atomic>
 
 //------------------------------------------------------------------------

@@ -115,7 +115,6 @@
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeaderOutputFile>
     </ClCompile>
-    <ClCompile Include="..\logger.cpp" />
     <ClCompile Include="console.cpp" />
     <ClCompile Include="sc6551.cpp" />
     <ClCompile Include="file.cpp" />

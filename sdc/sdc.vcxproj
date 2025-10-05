@@ -96,7 +96,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\logger.cpp" />
     <ClCompile Include="sdc.cpp" />
     <ClCompile Include="cloud9.cpp" />
   </ItemGroup>

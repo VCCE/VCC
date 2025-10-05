@@ -28,7 +28,7 @@
 #include <Windows.h>
 #include <process.h>
 #include <stdio.h>
-#include "../logger.h"
+#include <vcc/common/logger.h>
 #include "becker.h"
 
 #define BUFFER_SIZE 512

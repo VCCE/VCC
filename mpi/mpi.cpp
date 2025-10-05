@@ -28,7 +28,7 @@ Copyright 2015 by Joseph Forgione
 #include "../CartridgeMenu.h"
 #include "../ModuleDefs.h"
 #include "../MachineDefs.h"
-#include "../logger.h"
+#include <vcc/common/logger.h>
 
 // Number of slots supported. Changing this might require code modification
 #define NUMSLOTS 4
