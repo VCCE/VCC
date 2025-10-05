@@ -98,7 +98,6 @@
   <ItemGroup>
     <ClCompile Include="..\Fileops.cpp" />
     <ClCompile Include="..\logger.cpp" />
-    <ClCompile Include="..\DialogOps.cpp" />
     <ClCompile Include="sdc.cpp" />
     <ClCompile Include="cloud9.cpp" />
   </ItemGroup>
@@ -109,6 +108,11 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sdc.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\libcommon\libcommon.vcxproj">
+      <Project>{e0aa25bd-5527-475f-8d8b-b549a6311b0c}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
