@@ -149,7 +149,7 @@
 #include <vcc/common/logger.h>
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
-#include "../ModuleDefs.h"
+#include <vcc/common/ModuleDefs.h>
 #include "sdc.h"
 
 //======================================================================

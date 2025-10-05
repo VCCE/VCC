@@ -24,7 +24,7 @@
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "tcc1014registers.h"
-#include "ModuleDefs.h"
+#include <vcc/common/ModuleDefs.h>
 #include "CartridgeMenu.h"
 #include "pakinterface.h"
 #include "config.h"
