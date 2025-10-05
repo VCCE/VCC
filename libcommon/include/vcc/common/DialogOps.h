@@ -48,8 +48,10 @@ LIBCOMMON_EXPORT void CloseCartDialog(HWND hDlg);
 // getupath() gets a copy of "Path" with all '\' chars replaced by '/'
 //
 //-------------------------------------------------------------------------------------------
-class LIBCOMMON_EXPORT FileDialog {
+class LIBCOMMON_EXPORT FileDialog
+{
 public:
+
 	FileDialog();
 
 	bool show(BOOL Save = FALSE, HWND Owner = nullptr);
@@ -63,8 +65,11 @@ public:
 	void getpath(char * Path, int maxsize = MAX_PATH) const;
 	void getupath(char * Path, int maxsize = MAX_PATH) const;
 	const char *path() const;
+
+
 private:
-	OPENFILENAME ofn;
-	char Path[MAX_PATH] = {};
+
+	OPENFILENAME ofn_;
+	char path_[MAX_PATH] = {};
 };
 

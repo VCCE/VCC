@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -16,22 +15,17 @@ This file is part of VCC (Virtual Color Computer).
 	You should have received a copy of the GNU General Public License
 	along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
 #include <vcc/common/exports.h>
 #include <Windows.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-	LIBCOMMON_EXPORT void PathStripPath(char*);
-	LIBCOMMON_EXPORT void ValidatePath(char* Path);
-	LIBCOMMON_EXPORT int CheckPath(char*);
-	LIBCOMMON_EXPORT BOOL PathRemoveFileSpec(char*);
-	LIBCOMMON_EXPORT BOOL PathRemoveExtension(char*);
-	LIBCOMMON_EXPORT char* PathFindExtension(char*);
-	LIBCOMMON_EXPORT DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
-	LIBCOMMON_EXPORT BOOL FilePrintf(HANDLE, const char*, ...);
+LIBCOMMON_EXPORT void PathStripPath(char*);
+LIBCOMMON_EXPORT void ValidatePath(char* Path);
+LIBCOMMON_EXPORT int CheckPath(char*);
+LIBCOMMON_EXPORT BOOL PathRemoveFileSpec(char*);
+LIBCOMMON_EXPORT BOOL PathRemoveExtension(char*);
+LIBCOMMON_EXPORT char* PathFindExtension(char*);
+LIBCOMMON_EXPORT DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
+LIBCOMMON_EXPORT BOOL FilePrintf(HANDLE, const char*, ...);
 
-#ifdef __cplusplus
-}
-#endif
