@@ -21,12 +21,14 @@
 //
 //-------------------------------------------------------------------------------------------
 #pragma once
+#include <vcc/common/exports.h>
+#include <Windows.h>
 
 //-------------------------------------------------------------------------------------------
 // CloseCartDialog closes DLL dialog or force exits Vcc if it can not be.
 // It should be called by cartridge DLL's when they are unloaded.
 //-------------------------------------------------------------------------------------------
-void CloseCartDialog(HWND hDlg);
+LIBCOMMON_EXPORT void CloseCartDialog(HWND hDlg);
 
 //-------------------------------------------------------------------------------------------
 // FileDialog wraps dialogs for users to select files.
@@ -46,7 +48,7 @@ void CloseCartDialog(HWND hDlg);
 // getupath() gets a copy of "Path" with all '\' chars replaced by '/'
 //
 //-------------------------------------------------------------------------------------------
-class FileDialog {
+class LIBCOMMON_EXPORT FileDialog {
 public:
 	FileDialog();
 
