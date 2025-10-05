@@ -67,11 +67,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\DialogOps.cpp" />
+    <ClCompile Include="src\Fileops.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\vcc\common\DialogOps.h" />
     <ClInclude Include="include\vcc\common\exports.h" />
+    <ClInclude Include="include\vcc\common\FileOps.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

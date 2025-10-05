@@ -19,9 +19,6 @@
     <ClCompile Include="DirectDrawInterface.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Fileops.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="hd6309.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -140,9 +137,6 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="DirectDrawInterface.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="fileops.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="hd6309.h">

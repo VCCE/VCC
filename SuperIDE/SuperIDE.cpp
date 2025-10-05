@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "IdeBus.h"
 #include "cloud9.h"
 #include "logger.h"
-#include "../fileops.h"
+#include <vcc/common/FileOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/common/DialogOps.h>
 #include "../ModuleDefs.h"

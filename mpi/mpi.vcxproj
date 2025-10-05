@@ -93,12 +93,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Fileops.cpp" />
     <ClCompile Include="..\logger.cpp" />
     <ClCompile Include="mpi.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\fileops.h" />
     <ClInclude Include="mpi.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

@@ -23,7 +23,7 @@ Copyright 2015 by Joseph Forgione
 #include <stdio.h>
 #include "resource.h"
 #include <CommCtrl.h>
-#include "../fileops.h"
+#include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
 #include "../ModuleDefs.h"

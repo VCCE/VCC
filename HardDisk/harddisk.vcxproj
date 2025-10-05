@@ -93,7 +93,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Fileops.cpp" />
     <ClCompile Include="cc3vhd.cpp" />
     <ClCompile Include="cloud9.cpp" />
     <ClCompile Include="harddisk.cpp" />

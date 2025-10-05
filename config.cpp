@@ -45,7 +45,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "joystickinput.h"
 #include "keyboard.h"
 #include "keyboardEdit.h"
-#include "fileops.h"
+#include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include "Cassette.h"
 #include "CommandLine.h"

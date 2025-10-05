@@ -21,12 +21,18 @@
     <ClCompile Include="src\DialogOps.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Fileops.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\vcc\common\DialogOps.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\common\exports.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\common\FileOps.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
