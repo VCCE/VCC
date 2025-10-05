@@ -25,7 +25,7 @@
 //
 //-------------------------------------------------------------------------------------------
 #include <Windows.h>
-#include "DialogOps.h"
+#include <vcc/common/DialogOps.h>
 
 //-------------------------------------------------------------------------------------------
 // FileDialog class shows a dialog for user to select a file for open or save.

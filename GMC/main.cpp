@@ -1,6 +1,6 @@
 #include <Windows.h>
 #include "GMCCartridge.h"
-#include "../DialogOps.h"
+#include <vcc/common/DialogOps.h>
 
 GMCCartridge theCart;
 

@@ -17,3 +17,4 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     return TRUE;
 }
 
+__declspec(dllexport) void test() {}

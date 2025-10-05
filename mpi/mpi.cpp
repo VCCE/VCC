@@ -24,7 +24,7 @@ Copyright 2015 by Joseph Forgione
 #include "resource.h"
 #include <CommCtrl.h>
 #include "../fileops.h"
-#include "../DialogOps.h"
+#include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
 #include "../ModuleDefs.h"
 #include "../MachineDefs.h"

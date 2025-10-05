@@ -43,7 +43,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include <mmsystem.h>
 #include "fileops.h"
-#include "DialogOps.h"
+#include <vcc/common/DialogOps.h>
 #include "defines.h"
 #include "resource.h"
 #include "joystickinput.h"

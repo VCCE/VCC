@@ -24,7 +24,7 @@
 #include "acia.h"
 #include "../CartridgeMenu.h"
 #include "../ModuleDefs.h"
-#include "../DialogOps.h"
+#include <vcc/common/DialogOps.h>
 #include "../logger.h"
 
 //------------------------------------------------------------------------
