@@ -31,7 +31,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "wd1793.h"
 #include "distortc.h"
 #include "fd502.h"
-#include "../ModuleDefs.h"
+#include <vcc/common/ModuleDefs.h>
 #include "../CartridgeMenu.h"
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>

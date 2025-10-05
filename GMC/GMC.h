@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include "../CartridgeMenu.h"
-#include "../ModuleDefs.h"
+#include <vcc/common/ModuleDefs.h>
 
 #ifdef GMC_EXPORTS
 #define GMC_EXPORT extern "C" __declspec(dllexport)

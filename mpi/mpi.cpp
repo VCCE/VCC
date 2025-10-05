@@ -26,7 +26,7 @@ Copyright 2015 by Joseph Forgione
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
-#include "../ModuleDefs.h"
+#include <vcc/common/ModuleDefs.h>
 #include "../MachineDefs.h"
 #include <vcc/common/logger.h>
 
