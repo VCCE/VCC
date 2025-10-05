@@ -22,7 +22,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 #include "coco3.h"
 #include "config.h"
-#include "DialogOps.h"
+#include <vcc/common/DialogOps.h>
 #include "Cassette.h"
 #include "stdio.h"
 #include "logger.h"

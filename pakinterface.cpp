@@ -32,7 +32,8 @@
 #include "mc6821.h"
 #include "logger.h"
 #include "fileops.h"
-#include "DialogOps.h"
+#include <vcc/common/DialogOps.h>
+
 #define HASCONFIG		1
 #define HASIOWRITE		2
 #define HASIOREAD		4

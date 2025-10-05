@@ -26,7 +26,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "logger.h"
 #include "../fileops.h"
 #include "../CartridgeMenu.h"
-#include "../DialogOps.h"
+#include <vcc/common/DialogOps.h>
 #include "../ModuleDefs.h"
 
 static char FileName[MAX_PATH] { 0 };
