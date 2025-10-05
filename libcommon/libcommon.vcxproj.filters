@@ -41,5 +41,8 @@
     <ClInclude Include="include\vcc\common\logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\vcc\common\ModuleDefs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

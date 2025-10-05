@@ -2,7 +2,7 @@
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
 //	
-//	VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
+//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or modify
 //	it under the terms of the GNU General Public License as published by
 //	the Free Software Foundation, either version 3 of the License, or
 //	(at your option) any later version.
