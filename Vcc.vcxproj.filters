@@ -37,9 +37,6 @@
     <ClCompile Include="keyboardLayout.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="logger.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="mc6809.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -158,9 +155,6 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="keyboardLayout.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="logger.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="mc6809.h">

@@ -96,14 +96,12 @@
   <ItemGroup>
     <ClCompile Include="cloud9.cpp" />
     <ClCompile Include="IdeBus.cpp" />
-    <ClCompile Include="logger.cpp" />
     <ClCompile Include="SuperIDE.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cloud9.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="IdeBus.h" />
-    <ClInclude Include="logger.h" />
     <ClInclude Include="SuperIDE.h" />
   </ItemGroup>
   <ItemGroup>

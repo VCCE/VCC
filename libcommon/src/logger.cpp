@@ -24,13 +24,11 @@
 #include <io.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include "logger.h"
+#include <vcc/common/logger.h>
 
 
 static HANDLE hLog_Out = nullptr;
-DWORD dummy;
-
-char LogFileName[MAX_PATH]="VccLog.txt";
+static const auto LogFileName = "VccLog.txt";
 
 //void CpuDump() {
 //    for (x=0;x<=65535;x++)
@@ -62,7 +60,7 @@ void PrintLogC(const char* fmt, ...)
         hLog_Out = GetStdHandle(STD_OUTPUT_HANDLE);
         SetConsoleTitle("Logging Window");
     }
-    WriteFile(hLog_Out,msg,strlen(msg),&dummy,nullptr);
+    WriteFile(hLog_Out,msg,strlen(msg),nullptr,nullptr);
 }
 
 // PrintLogF - Put formatted string to the log file
@@ -80,15 +78,3 @@ void PrintLogF(const char* fmt, ...)
     _write(flog, msg, strlen(msg));
     _close(flog);
 }
-
-// OpenLogFile - create new log file
-void OpenLogFile(const char * logfile)
-{
-	if (strlen(logfile) > MAX_PATH) return;
-	strcpy(LogFileName,logfile);
-    int oflag = _O_CREAT | _O_TRUNC | _O_RDWR;
-    int pmode = _S_IREAD | _S_IWRITE;
-    int fLog = _open(LogFileName,oflag,pmode);
-    _close(fLog);
-}
-

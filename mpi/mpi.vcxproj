@@ -93,7 +93,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\logger.cpp" />
     <ClCompile Include="mpi.cpp" />
   </ItemGroup>
   <ItemGroup>

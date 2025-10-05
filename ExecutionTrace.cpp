@@ -29,7 +29,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <windowsx.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
-#include "logger.h"
+#include <vcc/common/logger.h>
 
 static HINSTANCE g_hinstDLG;
 

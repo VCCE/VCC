@@ -49,7 +49,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/common/DialogOps.h>
 #include "Cassette.h"
 #include "CommandLine.h"
-#include "logger.h"
+#include <vcc/common/logger.h>
 
 using namespace std;
 using namespace VCC;

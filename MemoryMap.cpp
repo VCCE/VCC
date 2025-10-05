@@ -30,7 +30,7 @@
 #include "tcc1014mmu.h"
 #include "resource.h"
 #include "pakinterface.h"
-#include "logger.h"
+#include <vcc/common/logger.h>
 
 namespace VCC { namespace Debugger { namespace UI { namespace {
 

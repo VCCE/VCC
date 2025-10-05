@@ -146,7 +146,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <sys/stat.h>
-#include "../logger.h"
+#include <vcc/common/logger.h>
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
 #include "../ModuleDefs.h"

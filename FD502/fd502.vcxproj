@@ -96,7 +96,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\logger.cpp" />
     <ClCompile Include="distortc.cpp" />
     <ClCompile Include="fd502.cpp" />
     <ClCompile Include="wd1793.cpp" />
