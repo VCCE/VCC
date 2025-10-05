@@ -24,8 +24,8 @@
 //    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 //
 //-------------------------------------------------------------------------------------------
-#include <Windows.h>
 #include <vcc/common/DialogOps.h>
+#include <Windows.h>
 
 //-------------------------------------------------------------------------------------------
 // FileDialog class shows a dialog for user to select a file for open or save.
