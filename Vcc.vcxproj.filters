@@ -111,7 +111,6 @@
     <ClCompile Include="DirectX.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Dialogops.cpp" />
     <ClCompile Include="joystickinput.cpp" />
     <ClCompile Include="CartridgeMenu.cpp" />
   </ItemGroup>
