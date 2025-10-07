@@ -1,3 +1,5 @@
+#pragma once
+
 // Enumerations for interrupts and their sources
 
 // CPU interrupts (counting from 1 because legacy)

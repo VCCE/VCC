@@ -75,6 +75,7 @@
     <ClInclude Include="include\vcc\common\DialogOps.h" />
     <ClInclude Include="include\vcc\common\exports.h" />
     <ClInclude Include="include\vcc\common\FileOps.h" />
+    <ClInclude Include="include\vcc\common\interrupts.h" />
     <ClInclude Include="include\vcc\common\logger.h" />
     <ClInclude Include="include\vcc\common\ModuleDefs.h" />
   </ItemGroup>
