@@ -79,6 +79,10 @@
     <ClInclude Include="include\vcc\common\interrupts.h" />
     <ClInclude Include="include\vcc\common\logger.h" />
     <ClInclude Include="include\vcc\common\ModuleDefs.h" />
+    <ClInclude Include="resource\resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resource\libcommon.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
