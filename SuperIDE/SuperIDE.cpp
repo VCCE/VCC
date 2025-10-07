@@ -20,7 +20,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "stdio.h"
 #include <iostream>
 #include "resource.h" 
-#include "defines.h"
 #include "IdeBus.h"
 #include "cloud9.h"
 #include "logger.h"

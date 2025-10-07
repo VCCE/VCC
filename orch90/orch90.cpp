@@ -17,7 +17,6 @@ This file is part of VCC (Virtual Color Computer).
 */
 #include <Windows.h>
 #include <stdio.h>
-#include "defines.h"
 #include "resource.h" 
 #include <vcc/common/FileOps.h>
 #include <vcc/common/ModuleDefs.h>

@@ -42,7 +42,6 @@ constexpr auto COLORBURST = 3579545.0;
 constexpr auto AUDIOBUFFERS = 12u;
 //Misc
 constexpr auto QUERY = 255u;
-constexpr auto INDEXTIME = ((LINESPERSCREEN * TARGETFRAMERATE) / 5);
 
 struct SystemState;
 
