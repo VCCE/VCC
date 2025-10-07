@@ -28,6 +28,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "../CartridgeMenu.h"
 #include <vcc/common/DialogOps.h>
 #include <vcc/common/ModuleDefs.h>
+#include <vcc/common/limits.h>
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };

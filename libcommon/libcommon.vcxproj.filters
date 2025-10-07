@@ -47,5 +47,8 @@
     <ClInclude Include="include\vcc\common\interrupts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\vcc\common\limits.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

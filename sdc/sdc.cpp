@@ -150,6 +150,7 @@
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/common/ModuleDefs.h>
+#include <vcc/common/limits.h>
 #include "sdc.h"
 
 //======================================================================

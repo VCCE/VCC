@@ -32,7 +32,6 @@ constexpr auto BLOCK_SIZE = LINESPERFIELD * 2;
 constexpr auto BLOCK_COUNT = 6u;
 
 //Misc
-constexpr auto MAX_LOADSTRING = 100u;
 constexpr auto QUERY = 255u;
 constexpr auto INDEXTIME = LINESPERFIELD * TARGETFRAMERATE / 5;
 

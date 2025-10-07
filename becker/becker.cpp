@@ -10,6 +10,7 @@
 #include <vcc/common/FileOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/common/ModuleDefs.h>
+#include <vcc/common/limits.h>
 
 #ifndef USE_LOGGING
 #define WriteLog(a,b)

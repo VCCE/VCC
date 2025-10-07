@@ -21,6 +21,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "resource.h" 
 #include <vcc/common/FileOps.h>
 #include <vcc/common/ModuleDefs.h>
+#include <vcc/common/limits.h>
 
 static HINSTANCE g_hinstDLL=nullptr;
 static unsigned char LeftChannel=0,RightChannel=0;
