@@ -23,7 +23,6 @@ This file is part of VCC (Virtual Color Computer).
 #include<iostream>
 #include "resource.h"
 #include "cc3vhd.h"
-#include "defines.h"
 #include "cloud9.h"
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>

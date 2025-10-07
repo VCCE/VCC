@@ -96,7 +96,6 @@
     <ClCompile Include="orch90.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="defines.h" />
     <ClInclude Include="orch90.h" />
   </ItemGroup>
   <ItemGroup>

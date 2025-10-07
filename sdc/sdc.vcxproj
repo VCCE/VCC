@@ -100,7 +100,6 @@
     <ClCompile Include="cloud9.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="defines.h" />
     <ClInclude Include="sdc.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
