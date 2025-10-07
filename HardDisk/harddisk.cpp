@@ -29,7 +29,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/common/ModuleDefs.h>
-#include "../MachineDefs.h"
+#include <vcc/common/interrupts.h>
 
 constexpr auto DEF_HD_SIZE = 132480u;
 

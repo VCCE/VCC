@@ -27,7 +27,7 @@ Copyright 2015 by Joseph Forgione
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/common/ModuleDefs.h>
-#include "../MachineDefs.h"
+#include <vcc/common/interrupts.h>
 #include <vcc/common/logger.h>
 
 // Number of slots supported. Changing this might require code modification

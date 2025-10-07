@@ -22,6 +22,7 @@
 
 #include "../defines.h"
 #include <vcc/common/logger.h>
+#include <vcc/common/interrupts.h>
 
 #include "resource.h"
 #include "cloud9.h"
