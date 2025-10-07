@@ -72,6 +72,7 @@
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\vcc\common\limits.h" />
     <ClInclude Include="include\vcc\common\DialogOps.h" />
     <ClInclude Include="include\vcc\common\exports.h" />
     <ClInclude Include="include\vcc\common\FileOps.h" />

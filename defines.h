@@ -41,7 +41,6 @@ constexpr auto NANOSECOND = 1000000000.0;
 constexpr auto COLORBURST = 3579545.0;
 constexpr auto AUDIOBUFFERS = 12u;
 //Misc
-constexpr auto MAX_LOADSTRING = 100u;
 constexpr auto QUERY = 255u;
 constexpr auto INDEXTIME = ((LINESPERSCREEN * TARGETFRAMERATE) / 5);
 

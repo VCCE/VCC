@@ -23,7 +23,6 @@ unsigned char MemRead(unsigned short );
 
 
 //Misc
-#define MAX_LOADSTRING 100
 #define QUERY 255
 
 #endif

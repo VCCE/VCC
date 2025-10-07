@@ -29,11 +29,10 @@ Copyright 2015 by Joseph Forgione
 #include <vcc/common/ModuleDefs.h>
 #include <vcc/common/interrupts.h>
 #include <vcc/common/logger.h>
+#include <vcc/common/limits.h>
 
 // Number of slots supported. Changing this might require code modification
 #define NUMSLOTS 4
-
-constexpr auto MAX_LOADSTRING = 100u;
 
 // Is a port a disk port?
 #define ISDISKPORT(p) ((p > 0x3F) && (p < 0x60))

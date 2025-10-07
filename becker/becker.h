@@ -20,7 +20,6 @@ extern const unsigned char Rom[8192];
 #define STATS_PERIOD_MS 100
 
 //Misc
-#define MAX_LOADSTRING 100
 #define QUERY 255
 
 #endif

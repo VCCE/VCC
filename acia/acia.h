@@ -29,7 +29,6 @@
 #include <dinput.h>
 #include "resource.h"
 
-constexpr auto MAX_LOADSTRING = 200u;
 
 // Text mode EOF character
 constexpr auto EOFCHR = 0x1Bu;
