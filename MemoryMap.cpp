@@ -169,7 +169,9 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 			InvalidateRect(hDlg, &BackBuf.Rect, FALSE);
 			break;
 		case IDC_BTN_EXPORT_MEM:
+			LocateMemory();
 			ExportMemory();
+			SetFocus(hEditAdrBeg);
 			break;
 		case IDC_BTN_HELP:
 			MessageBox(hDlg,DbgHelp,"Usage",0);
