@@ -6,10 +6,11 @@
 #include <stdio.h>
 #include "becker.h"
 #include "resource.h" 
-#include "../logger.h"
-#include "../fileops.h"
+#include <vcc/common/logger.h>
+#include <vcc/common/FileOps.h>
 #include "../CartridgeMenu.h"
-#include "../ModuleDefs.h"
+#include <vcc/common/ModuleDefs.h>
+#include <vcc/common/limits.h>
 
 #ifndef USE_LOGGING
 #define WriteLog(a,b)

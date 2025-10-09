@@ -26,9 +26,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include "tcc1014graphics.h"
 #include "pakinterface.h"
-#include "logger.h"
+#include <vcc/common/logger.h>
 #include "hd6309.h"
-#include "fileops.h"
+#include <vcc/common/FileOps.h>
+
+
 static unsigned char *MemPages[1024];
 static unsigned short MemPageOffsets[1024];
 static unsigned char *memory=nullptr;	//Emulated RAM

@@ -16,9 +16,8 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see
     <http://www.gnu.org/licenses/>.
 */
-
-#ifndef __LOGGER_H__
-#define __LOGGER_H__
+#pragma once
+#include <vcc/common/exports.h>
 
 // FIXME: At the very least these need to be turned into a scoped enum and the
 // signature of functions that use them updated. A better option would be to
@@ -28,10 +27,9 @@ This file is part of VCC (Virtual Color Computer).
 #define TOCONS 0
 #define TOFILE 1
 
-void WriteLog(const char *, unsigned char);
-void PrintLogC(const char* fmt, ...);
-void PrintLogF(const char* fmt, ...);
-void OpenLogFile(const char * filename);
+LIBCOMMON_EXPORT void WriteLog(const char *, unsigned char);
+LIBCOMMON_EXPORT void PrintLogC(const char* fmt, ...);
+LIBCOMMON_EXPORT void PrintLogF(const char* fmt, ...);
 
 // Debug logging if USE_LOGGING is defined
 
@@ -41,6 +39,4 @@ void OpenLogFile(const char * filename);
 #else
 #define _DLOG(...)
 #define _LOGF(...)
-#endif
-
 #endif

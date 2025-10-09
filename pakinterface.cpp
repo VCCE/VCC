@@ -24,15 +24,17 @@
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "tcc1014registers.h"
-#include "ModuleDefs.h"
+#include <vcc/common/ModuleDefs.h>
 #include "CartridgeMenu.h"
 #include "pakinterface.h"
 #include "config.h"
 #include "Vcc.h"
 #include "mc6821.h"
-#include "logger.h"
-#include "fileops.h"
-#include "DialogOps.h"
+#include <vcc/common/logger.h>
+#include <vcc/common/FileOps.h>
+#include <vcc/common/DialogOps.h>
+#include <vcc/common/limits.h>
+
 #define HASCONFIG		1
 #define HASIOWRITE		2
 #define HASIOREAD		4

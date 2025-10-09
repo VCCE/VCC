@@ -2,7 +2,7 @@
 #include <array>
 #include <vector>
 #include <string>
-#include "interrupts.h"
+#include <vcc/common/interrupts.h>
 
 namespace VCC
 {

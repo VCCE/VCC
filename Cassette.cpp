@@ -22,10 +22,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 #include "coco3.h"
 #include "config.h"
-#include "DialogOps.h"
+#include <vcc/common/DialogOps.h>
 #include "Cassette.h"
 #include "stdio.h"
-#include "logger.h"
+#include <vcc/common/logger.h>
 #include <functional>
 
 unsigned char MotorState=0,TapeMode=STOP,WriteProtect=0,Quiet=30;

@@ -24,8 +24,8 @@
 //    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 //
 //-------------------------------------------------------------------------------------------
+#include <vcc/common/DialogOps.h>
 #include <Windows.h>
-#include "DialogOps.h"
 
 //-------------------------------------------------------------------------------------------
 // FileDialog class shows a dialog for user to select a file for open or save.
@@ -33,78 +33,78 @@
 
 // FileDialog constructor initializes open file name structure.
 FileDialog::FileDialog() {
-	ZeroMemory(&ofn, sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.Flags = OFN_HIDEREADONLY;
+	ZeroMemory(&ofn_, sizeof(ofn_));
+	ofn_.lStructSize = sizeof(ofn_);
+	ofn_.Flags = OFN_HIDEREADONLY;
 }
 
 // FileDialog::show calls GetOpenFileName() or GetSaveFileName()
 bool FileDialog::show(BOOL Save, HWND Owner) {
 
 	// instance is that of the current module
-	ofn.hInstance = GetModuleHandle(nullptr);
+	ofn_.hInstance = GetModuleHandle(nullptr);
 
 	// use active window if owner is null
 	if (Owner != nullptr) {
-		ofn.hwndOwner = Owner;
+		ofn_.hwndOwner = Owner;
 	} else {
-		ofn.hwndOwner = GetActiveWindow();
+		ofn_.hwndOwner = GetActiveWindow();
 	}
 
-	ofn.nMaxFile = sizeof(Path);
-	ofn.lpstrFile = Path;
+	ofn_.nMaxFile = sizeof(path_);
+	ofn_.lpstrFile = path_;
 
 	// Call Save or Open per boolean
 	int rc;
 	if (Save) {
-		rc = GetSaveFileName(&ofn);
+		rc = GetSaveFileName(&ofn_);
 	} else {
-		rc = GetOpenFileName(&ofn) ;
+		rc = GetOpenFileName(&ofn_) ;
 	}
-	return ((rc == 1) && (*Path != '\0'));
+	return ((rc == 1) && (*path_ != '\0'));
 }
 
 void FileDialog::setDefExt(const char * DefExt) {
-	ofn.lpstrDefExt = DefExt;
+	ofn_.lpstrDefExt = DefExt;
 }
 
 void FileDialog::setInitialDir(const char * InitialDir) {
-	ofn.lpstrInitialDir = InitialDir;
+	ofn_.lpstrInitialDir = InitialDir;
 }
 
 void FileDialog::setFilter(const char * Filter) {
-	ofn.lpstrFilter = Filter;
+	ofn_.lpstrFilter = Filter;
 }
 
 void FileDialog::setFlags(unsigned int Flags) {
-	ofn.Flags |= Flags;
+	ofn_.Flags |= Flags;
 }
 
 void FileDialog::setTitle(const char * Title) {
-	ofn.lpstrTitle = Title;
+	ofn_.lpstrTitle = Title;
 }
 
-// Overwrite what is currently in Path
+// Overwrite what is currently in path_
 void FileDialog::setpath(const char * NewPath) {
     if (NewPath == nullptr) return;
-	strncpy(Path,NewPath,MAX_PATH);
+	strncpy(path_,NewPath,MAX_PATH);
 }
 
 // Get a copy of the selected file path
 void FileDialog::getpath(char * PathCopy, int maxsize) const {
-    if (PathCopy == nullptr || Path == nullptr || maxsize < 1) return;
-	strncpy(PathCopy,Path,maxsize);
+    if (PathCopy == nullptr || path_ == nullptr || maxsize < 1) return;
+	strncpy(PathCopy,path_,maxsize);
 }
 
 // Get a copy of the selected file path with unix dir delimiters
 void FileDialog::getupath(char * PathCopy, int maxsize) const {
-    if (PathCopy == nullptr || Path == nullptr || maxsize < 1) return;
+    if (PathCopy == nullptr || path_ == nullptr || maxsize < 1) return;
     int i = 0;
-    while (Path[i] != '\0' && i < maxsize - 1) {
-        if (Path[i] == '\\') {
+    while (path_[i] != '\0' && i < maxsize - 1) {
+        if (path_[i] == '\\') {
             PathCopy[i] = '/';
         } else {
-            PathCopy[i] = Path[i];
+            PathCopy[i] = path_[i];
         }
         i++;
     }
@@ -114,13 +114,13 @@ void FileDialog::getupath(char * PathCopy, int maxsize) const {
 // Get a pointer to the selected file path
 const char *FileDialog::path() const
 {
-	return Path;
+	return path_;
 }
 
 // FileDialog::getdir() returns the directory portion of the file path
 void FileDialog::getdir(char * Dir, int maxsize) const {
-    if (Dir == nullptr || Path == nullptr || maxsize < 1) return;
-	strncpy(Dir,Path,maxsize);
+    if (Dir == nullptr || path_ == nullptr || maxsize < 1) return;
+	strncpy(Dir,path_,maxsize);
 	if (char * p = strrchr(Dir,'\\')) *p = '\0';
 }
 

@@ -23,13 +23,13 @@ This file is part of VCC (Virtual Color Computer).
 #include<iostream>
 #include "resource.h"
 #include "cc3vhd.h"
-#include "defines.h"
 #include "cloud9.h"
-#include "../fileops.h"
-#include "../DialogOps.h"
+#include <vcc/common/FileOps.h>
+#include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
-#include "../ModuleDefs.h"
-#include "../MachineDefs.h"
+#include <vcc/common/ModuleDefs.h>
+#include <vcc/common/interrupts.h>
+#include <vcc/common/limits.h>
 
 constexpr auto DEF_HD_SIZE = 132480u;
 

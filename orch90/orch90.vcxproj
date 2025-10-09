@@ -93,16 +93,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Fileops.cpp" />
     <ClCompile Include="orch90.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\fileops.h" />
-    <ClInclude Include="defines.h" />
     <ClInclude Include="orch90.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="orch90.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\libcommon\libcommon.vcxproj">
+      <Project>{e0aa25bd-5527-475f-8d8b-b549a6311b0c}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

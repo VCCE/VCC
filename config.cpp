@@ -19,6 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 // FIXME: This should be defined on the command line
 #define DIRECTINPUT_VERSION 0x0800
 
+#include <vcc/common/limits.h>
 #include <Windows.h>
 #include <CommCtrl.h>
 #include <stdio.h>
@@ -45,11 +46,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "joystickinput.h"
 #include "keyboard.h"
 #include "keyboardEdit.h"
-#include "fileops.h"
-#include "DialogOps.h"
+#include <vcc/common/FileOps.h>
+#include <vcc/common/DialogOps.h>
 #include "Cassette.h"
 #include "CommandLine.h"
-#include "logger.h"
+#include <vcc/common/logger.h>
 
 using namespace std;
 using namespace VCC;

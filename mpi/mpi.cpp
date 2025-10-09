@@ -23,17 +23,16 @@ Copyright 2015 by Joseph Forgione
 #include <stdio.h>
 #include "resource.h"
 #include <CommCtrl.h>
-#include "../fileops.h"
-#include "../DialogOps.h"
+#include <vcc/common/FileOps.h>
+#include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
-#include "../ModuleDefs.h"
-#include "../MachineDefs.h"
-#include "../logger.h"
+#include <vcc/common/ModuleDefs.h>
+#include <vcc/common/interrupts.h>
+#include <vcc/common/logger.h>
+#include <vcc/common/limits.h>
 
 // Number of slots supported. Changing this might require code modification
 #define NUMSLOTS 4
-
-constexpr auto MAX_LOADSTRING = 100u;
 
 // Is a port a disk port?
 #define ISDISKPORT(p) ((p > 0x3F) && (p < 0x60))

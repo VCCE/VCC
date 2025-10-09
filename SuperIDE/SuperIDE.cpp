@@ -20,14 +20,14 @@ This file is part of VCC (Virtual Color Computer).
 #include "stdio.h"
 #include <iostream>
 #include "resource.h" 
-#include "defines.h"
 #include "IdeBus.h"
 #include "cloud9.h"
 #include "logger.h"
-#include "../fileops.h"
+#include <vcc/common/FileOps.h>
 #include "../CartridgeMenu.h"
-#include "../DialogOps.h"
-#include "../ModuleDefs.h"
+#include <vcc/common/DialogOps.h>
+#include <vcc/common/ModuleDefs.h>
+#include <vcc/common/limits.h>
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };

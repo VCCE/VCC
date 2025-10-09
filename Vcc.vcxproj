@@ -62,7 +62,7 @@
     <ClCompile>
       <PreprocessorDefinitions>WIN32;_LEGACY_VCC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/arch:SSE</AdditionalOptions>
-      <AdditionalIncludeDirectories>3rdparty</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>3rdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <Culture>0x0409</Culture>
@@ -80,7 +80,7 @@
     <ClCompile>
       <PreprocessorDefinitions>WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/arch:SSE</AdditionalOptions>
-      <AdditionalIncludeDirectories>3rdparty</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>3rdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile />
     <Link>
@@ -94,7 +94,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>3rdparty</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>3rdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile />
     <Link>
@@ -140,15 +140,12 @@
     <ClCompile Include="DirectDrawInterface.cpp" />
     <ClCompile Include="Disassembler.cpp" />
     <ClCompile Include="ExecutionTrace.cpp" />
-    <ClCompile Include="Fileops.cpp" />
-    <ClCompile Include="Dialogops.cpp" />
     <ClCompile Include="hd6309.cpp" />
     <ClCompile Include="iobus.cpp" />
     <ClCompile Include="joystickinput.cpp" />
     <ClCompile Include="keyboard.cpp" />
     <ClCompile Include="keyboardLayout.cpp" />
     <ClCompile Include="keyboardEdit.cpp" />
-    <ClCompile Include="logger.cpp" />
     <ClCompile Include="memdump.cpp" />
     <ClCompile Include="mc6809.cpp" />
     <ClCompile Include="mc6821.cpp" />
@@ -217,7 +214,6 @@
     <ClInclude Include="DirectDrawInterface.h" />
     <ClInclude Include="Disassembler.h" />
     <ClInclude Include="ExecutionTrace.h" />
-    <ClInclude Include="fileops.h" />
     <ClInclude Include="hd6309.h" />
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="iobus.h" />
@@ -225,7 +221,6 @@
     <ClInclude Include="keyboard.h" />
     <ClInclude Include="keyboardLayout.h" />
     <ClInclude Include="keyboardEdit.h" />
-    <ClInclude Include="logger.h" />
     <ClInclude Include="memdump.h" />
     <ClInclude Include="MachineDefs.h" />
     <ClInclude Include="mc6809.h" />
@@ -299,6 +294,11 @@
 -->
   <ItemGroup>
     <None Include="resources\cursor1.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="libcommon\libcommon.vcxproj">
+      <Project>{e0aa25bd-5527-475f-8d8b-b549a6311b0c}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

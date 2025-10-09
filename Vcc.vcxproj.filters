@@ -19,9 +19,6 @@
     <ClCompile Include="DirectDrawInterface.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Fileops.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="hd6309.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -38,9 +35,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="keyboardLayout.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="logger.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="mc6809.cpp">
@@ -111,7 +105,6 @@
     <ClCompile Include="DirectX.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Dialogops.cpp" />
     <ClCompile Include="joystickinput.cpp" />
     <ClCompile Include="CartridgeMenu.cpp" />
   </ItemGroup>
@@ -143,9 +136,6 @@
     <ClInclude Include="DirectDrawInterface.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="fileops.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="hd6309.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -165,9 +155,6 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="keyboardLayout.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="logger.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="mc6809.h">

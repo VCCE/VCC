@@ -23,9 +23,10 @@
 
 #include "acia.h"
 #include "../CartridgeMenu.h"
-#include "../ModuleDefs.h"
-#include "../DialogOps.h"
-#include "../logger.h"
+#include <vcc/common/ModuleDefs.h>
+#include <vcc/common/DialogOps.h>
+#include <vcc/common/logger.h>
+#include <vcc/common/limits.h>
 
 //------------------------------------------------------------------------
 // Local Functions

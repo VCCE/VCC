@@ -21,9 +21,4 @@ void MemWrite(unsigned char,unsigned short );
 unsigned char MemRead(unsigned short );
 //void CPUAssertInterupt(unsigned char,unsigned char);
 
-
-//Misc
-#define MAX_LOADSTRING 100
-#define QUERY 255
-
 #endif
