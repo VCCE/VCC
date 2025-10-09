@@ -18,4 +18,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     return TRUE;
 }
 
+#ifndef _LEGACY_VCC
 LIBCOMMON_EXPORT void test() {}
+#endif
