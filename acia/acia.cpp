@@ -23,10 +23,10 @@
 
 #include "acia.h"
 #include "../CartridgeMenu.h"
-#include <vcc/common/ModuleDefs.h>
+#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/limits.h>
 #include <vcc/common/DialogOps.h>
 #include <vcc/common/logger.h>
-#include <vcc/common/limits.h>
 
 //------------------------------------------------------------------------
 // Local Functions

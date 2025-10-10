@@ -1,29 +1,20 @@
-//-------------------------------------------------------------------------------------------
-//
-//  DialogOps.c
-//
-//    Functions common to VCC configuration dialogs should go here.
-//
-//    This function can be compiled as C++.  It's file extension is .c to avoid confusing
-//    the C compiler when compiling it for modules not written for C++. Maybe Someday 
-//    there will be no more modules compiled with the C compiler.
-//
-//    This file is part of VCC (Virtual Color Computer Copyright 2015 by Joseph Forgione
-//
-//    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-//
-//-------------------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+//	Copyright 2015 by Joseph Forgione
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	modify it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or (at your
+//	option) any later version.
+//	
+//	VCC (Virtual Color Computer) is distributed in the hope that it will be
+//	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+//	Public License for more details.
+//	
+//	You should have received a copy of the GNU General Public License along with
+//	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////////
 #include <vcc/common/DialogOps.h>
 #include <Windows.h>
 

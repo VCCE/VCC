@@ -15,17 +15,45 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#pragma once
-#include <vcc/core/detail/exports.h>
-#include <Windows.h>
+#include <vcc/core/cartridges/rom_cartridge.h>
 
 
-LIBCOMMON_EXPORT void PathStripPath(char*);
-LIBCOMMON_EXPORT void ValidatePath(char* Path);
-LIBCOMMON_EXPORT int CheckPath(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveFileSpec(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveExtension(char*);
-LIBCOMMON_EXPORT char* PathFindExtension(char*);
-LIBCOMMON_EXPORT DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
-LIBCOMMON_EXPORT BOOL FilePrintf(HANDLE, const char*, ...);
+namespace vcc { namespace core { namespace cartridges
+{
 
+	rom_cartridge::rom_cartridge(
+		AssertCartridgeLineModuleCallback assertCartCallback,
+		buffer_type buffer,
+		bool enable_bank_switching)
+		:
+		assertCartCallback_(assertCartCallback),
+		buffer_(move(buffer)),
+		enable_bank_switching_(enable_bank_switching),
+		bank_offset_(0)
+	{}
+
+
+	void rom_cartridge::reset()
+	{
+		bank_offset_ = 0;
+	}
+
+	void rom_cartridge::write_port(unsigned char portId, unsigned char value)
+	{
+		if (enable_bank_switching_ && portId == 0x40)
+		{
+			bank_offset_ = (value & 0x0f) << 14;
+		}
+	}
+
+	unsigned char rom_cartridge::read_memory_byte(unsigned short memoryAddress)
+	{
+		return buffer_[((memoryAddress & 32767) + bank_offset_) % buffer_.size()];
+	}
+
+	void rom_cartridge::initialize_bus()
+	{
+		assertCartCallback_(true);
+	}
+
+} } }

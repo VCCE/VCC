@@ -17,27 +17,21 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #pragma once
+#include <vcc/core/cartridge_loader.h>
 
 void PakTimer();
 unsigned char PackPortRead (unsigned char);
 void PackPortWrite(unsigned char,unsigned char);
 unsigned char PackMem8Read (unsigned short);
-void PackMem8Write(unsigned short,unsigned char);
 void GetModuleStatus( SystemState *);
-int LoadCart();
+vcc::core::cartridge_loader_status PakLoadCartridge(const char* filename);
+void PakLoadCartridgeUI();
 unsigned short PackAudioSample();
 void ResetBus();
-int load_ext_rom(const char *);
 void GetCurrentModule(char *);
-int InsertModule (const char *);
 void UpdateBusPointer();
 void UnloadDll();
 void UnloadPack();
 void BeginCartMenu();
 void CartMenuActivated(unsigned int);
-
-// Error return codes from InsertModule
-// FIXME: These should be turned into an enum
-constexpr auto NOMODULE = 1;
-constexpr auto NOTVCC = 2;
 

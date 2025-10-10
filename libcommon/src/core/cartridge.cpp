@@ -15,17 +15,54 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#pragma once
-#include <vcc/core/detail/exports.h>
-#include <Windows.h>
+#include <vcc/core/cartridge.h>
 
 
-LIBCOMMON_EXPORT void PathStripPath(char*);
-LIBCOMMON_EXPORT void ValidatePath(char* Path);
-LIBCOMMON_EXPORT int CheckPath(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveFileSpec(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveExtension(char*);
-LIBCOMMON_EXPORT char* PathFindExtension(char*);
-LIBCOMMON_EXPORT DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
-LIBCOMMON_EXPORT BOOL FilePrintf(HANDLE, const char*, ...);
+namespace vcc { namespace core
+{
 
+	void cartridge::start()
+	{
+		initialize_pak();
+		initialize_bus();
+	}
+
+	void cartridge::reset()
+	{}
+
+	void cartridge::heartbeat()
+	{}
+
+	void cartridge::write_port(unsigned char portId, unsigned char value)
+	{}
+
+	unsigned char cartridge::read_port(unsigned char portId)
+	{ 
+		return {};
+	}
+
+	unsigned char cartridge::read_memory_byte(unsigned short memoryAddress)
+	{
+		return {};
+	}
+
+	void cartridge::status(char* status_text)
+	{
+		*status_text = 0;
+	}
+
+	unsigned short cartridge::sample_audio()
+	{
+		return {};
+	}
+
+	void cartridge::menu_item_clicked(unsigned char menuItemId)
+	{}
+
+	void cartridge::initialize_pak()
+	{}
+
+	void cartridge::initialize_bus()
+	{}
+
+} }

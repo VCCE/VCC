@@ -16,126 +16,77 @@
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <Windows.h>
-#include <windowsx.h>
-#include "commdlg.h"
-#include <stdio.h>
-#include <process.h>
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "tcc1014registers.h"
-#include <vcc/common/ModuleDefs.h>
 #include "CartridgeMenu.h"
 #include "pakinterface.h"
 #include "config.h"
 #include "Vcc.h"
 #include "mc6821.h"
+#include "resource.h"
+#include <vcc/core/limits.h>
+#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/cartridges/legacy_cartridge.h>
+#include <vcc/core/cartridges/null_cartridge.h>
+#include <vcc/core/cartridges/rom_cartridge.h>
+#include <vcc/core/utils/dll_deleter.h>
 #include <vcc/common/logger.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
-#include <vcc/common/limits.h>
+#include <vcc/common/std.h>
+#include <fstream>
+#include <Windows.h>
+#include <commdlg.h>
+
+
+using cartridge_loader_status = vcc::core::cartridge_loader_status;
+using cartridge_loader_result = vcc::core::cartridge_loader_result;
 
 
 // Storage for Pak ROMs
-static uint8_t *ExternalRomBuffer = nullptr;
-static bool RomPackLoaded = false;
-
 extern SystemState EmuState;
-static unsigned int BankedCartOffset=0;
-static char DllPath[256]="";
-static unsigned short ModualParms=0;
-static HINSTANCE hinstLib = nullptr;
 
-static void (*GetModuleName)(char *,char *,AppendCartridgeMenuModuleCallback)=nullptr;
-static void (*ConfigModule)(unsigned char)=nullptr;
-static void (*SetInteruptCallPointer)(AssertInteruptModuleCallback)=nullptr;
-static void (*DmaMemPointer) (ReadMemoryByteModuleCallback,WriteMemoryByteModuleCallback)=nullptr;
-static void (*HeartBeat)()=nullptr;
-static void (*PakPortWrite)(unsigned char,unsigned char)=nullptr;
-static unsigned char (*PakPortRead)(unsigned char)=nullptr;
-static void (*PakMemWrite8)(unsigned char,unsigned short)=nullptr;
-static unsigned char (*PakMemRead8)(unsigned short)=nullptr;
-static void (*ModuleStatus)(char *)=nullptr;
-static unsigned short (*ModuleAudioSample)()=nullptr;
-static void (*ModuleReset) ()=nullptr;
-static void (*SetIniPath) (const char *)=nullptr;
-static void (*PakSetCart)(AssertCartridgeLineModuleCallback)=nullptr;
-static char PakPath[MAX_PATH] = "";
+static char DllPath[MAX_PATH] = "";
 static char PakName[MAX_PATH] = "";
+static cartridge_loader_result::handle_type gActiveModule;
+static cartridge_loader_result::cartridge_ptr_type gActiveCartrige(std::make_unique<vcc::core::cartridges::null_cartridge>());
 
-static char Did=0;
-int FileID(const char *);
+static cartridge_loader_status load_any_cartridge(const char* filename, const char* iniPath);
 
-static HMENU hVccMenu = nullptr;
-static bool CartMenuCreated = false;
 
 void PakTimer()
 {
-	if (HeartBeat != nullptr)
-		HeartBeat();
-	return;
+	gActiveCartrige->heartbeat();
 }
 
 void ResetBus()
 {
-	BankedCartOffset=0;
-	if (ModuleReset !=nullptr)
-		ModuleReset();
-	return;
+	gActiveCartrige->reset();
 }
 
 void GetModuleStatus(SystemState *SMState)
 {
-	if (ModuleStatus!=nullptr)
-		ModuleStatus(SMState->StatusLine);
-	else
-		sprintf(SMState->StatusLine,"");
-	return;
+	gActiveCartrige->status(SMState->StatusLine);
 }
 
 unsigned char PackPortRead (unsigned char port)
 {
-	if (PakPortRead != nullptr)
-		return(PakPortRead(port));
-
-	return 0;
+	return gActiveCartrige->read_port(port);
 }
 
 void PackPortWrite(unsigned char Port,unsigned char Data)
 {
-	if (PakPortWrite != nullptr)
-	{
-		PakPortWrite(Port,Data);
-		return;
-	}
-
-	if ((Port == 0x40) && (RomPackLoaded == true)) {
-		BankedCartOffset = (Data & 15) << 14;
-	}
-
-	return;
+	gActiveCartrige->write_port(Port,Data);
 }
 
 unsigned char PackMem8Read (unsigned short Address)
 {
-	if (PakMemRead8!=nullptr)
-		return(PakMemRead8(Address&32767));
-	if (ExternalRomBuffer!=nullptr)
-		return(ExternalRomBuffer[(Address & 32767)+BankedCartOffset]);
-	return 0;
-}
-
-void PackMem8Write(unsigned short Address,unsigned char Value)
-{
-	if (PakMemWrite8!=nullptr)
-		PakMemWrite8(Address&32767,Value);
-	if (ExternalRomBuffer!=nullptr)
-		ExternalRomBuffer[(Address & 32767)+BankedCartOffset] = Value;
-	return;
+	return gActiveCartrige->read_memory_byte(Address&32767);
 }
 
 // Convert PAK interrupt assert to CPU assert or Gime assert.
-void (PakAssertInterupt) (Interrupt interrupt, InterruptSource source)
+void PakAssertInterupt(Interrupt interrupt, InterruptSource source)
 {
 	(void) source; // not used
 
@@ -151,24 +102,22 @@ void (PakAssertInterupt) (Interrupt interrupt, InterruptSource source)
 
 unsigned short PackAudioSample()
 {
-	if (ModuleAudioSample !=nullptr)
-		return(ModuleAudioSample());
-	return 0;
+	return gActiveCartrige->sample_audio();
 }
 
 // Create first two entries for cartridge menu.
 void BeginCartMenu()
 {
 	CartMenu.add("", MID_BEGIN, MIT_Head, 0);
-	CartMenu.add("Cartridge",MID_ENTRY,MIT_Head);
-	if (hinstLib) {
-		char tmp[64];
-		snprintf(tmp,64,"Eject %s",PakName);
-		CartMenu.add(tmp,ControlId(2),MIT_Slave);
-	} else {
-		CartMenu.add("Load Cart",ControlId(1),MIT_Slave);
+	CartMenu.add("Cartridge", MID_ENTRY, MIT_Head);
+	if (PakName[0])
+	{
+		char tmp[64] = {};
+		snprintf(tmp, 64, "Eject %s", PakName);
+		CartMenu.add(tmp, ControlId(2), MIT_Slave);
 	}
-	CartMenu.add("",MID_FINISH,MIT_Head);
+	CartMenu.add("Load Cart", ControlId(1), MIT_Slave);
+	CartMenu.add("", MID_FINISH, MIT_Head);
 }
 
 // Callback for loaded cart DLLs. First two entries are reserved
@@ -177,175 +126,103 @@ void CartMenuCallBack(const char *name, int menu_id, MenuItemType type)
 	CartMenu.add(name, menu_id, type, 2);
 }
 
-int LoadCart()
+
+void PakLoadCartridgeUI()
 {
 	char inifile[MAX_PATH];
 	GetIniFilePath(inifile);
-	GetPrivateProfileString("DefaultPaths", "PakPath", "", PakPath, MAX_PATH, inifile);
+
+	static char pakPath[MAX_PATH] = "";
+	GetPrivateProfileString("DefaultPaths", "PakPath", "", pakPath, MAX_PATH, inifile);
 	FileDialog dlg;
 	dlg.setTitle(TEXT("Load Program Pack"));
-	dlg.setInitialDir(PakPath);
+	dlg.setInitialDir(pakPath);
 	dlg.setFilter("DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0");
 	dlg.setFlags(OFN_FILEMUSTEXIST);
 	if (dlg.show()) {
-		if (InsertModule(dlg.path()) == 0) {
-			dlg.getdir(PakPath);
-			WritePrivateProfileString("DefaultPaths", "PakPath", PakPath, inifile);
-			return 0;
+		if (PakLoadCartridge(dlg.path()) == cartridge_loader_status::success) {
+			dlg.getdir(pakPath);
+			WritePrivateProfileString("DefaultPaths", "PakPath", pakPath, inifile);
 		}
 	}
-	return 1;
+}
+
+cartridge_loader_status PakLoadCartridge(const char* filename)
+{
+	char* CurrentConfig = nullptr;
+	static const std::map<cartridge_loader_status, UINT> string_id_map = {
+		{ cartridge_loader_status::already_loaded, IDS_MODULE_ALREADY_LOADED},
+		{ cartridge_loader_status::cannot_open, IDS_MODULE_CANNOT_OPEN},
+		{ cartridge_loader_status::not_found, IDS_MODULE_NOT_FOUND },
+		{ cartridge_loader_status::not_loaded, IDS_MODULE_NOT_LOADED },
+		{ cartridge_loader_status::not_rom, IDS_MODULE_NOT_ROM },
+		{ cartridge_loader_status::not_expansion, IDS_MODULE_NOT_EXPANSION }
+	};
+
+	char TempIni[MAX_PATH]="";
+	GetIniFilePath(TempIni);
+
+	const auto result(load_any_cartridge(filename, TempIni));
+	if (result == cartridge_loader_status::success)
+	{
+		return result;
+	}
+
+	const auto string_id_ptr(string_id_map.find(result));
+	auto error_string(vcc::common::LoadStdString(
+		EmuState.WindowInstance,
+		string_id_ptr != string_id_map.end() ? string_id_ptr->second : IDS_UNKNOWN_ERROR));
+
+	error_string += "\n\n";
+	error_string += filename;
+
+	MessageBox(EmuState.WindowHandle, error_string.c_str(), "Load Error", MB_OK | MB_ICONERROR);
+
+	return result;
 }
 
 // Insert Module returns 0 on success
-int InsertModule (const char *ModulePath)
+static cartridge_loader_status load_any_cartridge(const char *filename, const char* iniPath)
 {
-	char CatNumber[MAX_LOADSTRING]="";
-	char Temp[MAX_PATH]="";
-	unsigned char FileType=0;
-
-	FileType=FileID(ModulePath);
-
-	switch (FileType)
+	cartridge_loader_result loadedCartridge(vcc::core::load_cartridge(
+		{
+			CartMenuCallBack,
+			MemRead8,
+			MemWrite8,
+			PakAssertInterupt,
+			SetCart
+		},
+		filename,
+		iniPath));
+	if (loadedCartridge.load_result != cartridge_loader_status::success)
 	{
-	case 0:		//File doesn't exist
-		return NOMODULE;
-		break;
-
-	case 2:		//File is a ROM image
-		UnloadDll();
-		load_ext_rom(ModulePath);
-
-		BeginCartMenu();
-
-		// Reset if enabled
-		EmuState.ResetPending = 2;
-		SetCart(1);
-		return NOMODULE;
-	break;
-
-	case 1:		//File is a DLL
-		UnloadDll();
-		hinstLib=nullptr;
-		hinstLib = LoadLibrary(ModulePath);
-		_DLOG("pak:LoadLibrary %s %d\n",ModulePath,hinstLib);
-		if (hinstLib == nullptr)
-			return NOMODULE;
-
-		strncpy(PakName,ModulePath,MAX_PATH);
-		PathStripPath(PakName);
-		BeginCartMenu();
-
-		SetCart(0);
-		GetModuleName=(GetNameModuleFunction)GetProcAddress(hinstLib, "ModuleName");
-		ConfigModule=(OnMenuItemClickedModuleFunction)GetProcAddress(hinstLib, "ModuleConfig");
-		PakPortWrite=(WritePortModuleFunction) GetProcAddress(hinstLib, "PackPortWrite");
-		PakPortRead=(ReadPortModuleFunction) GetProcAddress(hinstLib, "PackPortRead");
-		SetInteruptCallPointer=(SetAssertInterruptCallbackModuleFunction)GetProcAddress(hinstLib, "AssertInterupt");
-		DmaMemPointer=(SetDMACallbacksModuleFunction) GetProcAddress(hinstLib, "MemPointers");
-		HeartBeat=(HeartBeatModuleFunction) GetProcAddress(hinstLib, "HeartBeat");
-		PakMemWrite8=(WriteMemoryByteModuleCallback) GetProcAddress(hinstLib, "PakMemWrite8");
-		PakMemRead8=(ReadMemoryByteModuleCallback) 	GetProcAddress(hinstLib, "PakMemRead8");
-		ModuleStatus=(GetStatusModuleFunction) GetProcAddress(hinstLib, "ModuleStatus");
-		ModuleAudioSample=(SampleAudioModuleFunction) GetProcAddress(hinstLib, "ModuleAudioSample");
-		ModuleReset=(ResetModuleFunction) GetProcAddress(hinstLib, "ModuleReset");
-		SetIniPath=(SetConfigurationPathModuleFunction) GetProcAddress(hinstLib,"SetIniPath");
-		PakSetCart=(SetAssertCartridgeLineCallbackModuleFunction) GetProcAddress(hinstLib,"SetCart");
-		if (GetModuleName == nullptr)
-		{
-			FreeLibrary(hinstLib);
-			_DLOG("pak:err FreeLibrary %d %d\n",hinstLib,rc);
-			hinstLib=nullptr;
-			return NOTVCC;
-		}
-		BankedCartOffset=0;
-		if (DmaMemPointer!=nullptr)
-			DmaMemPointer(MemRead8,MemWrite8);
-		if (SetInteruptCallPointer!=nullptr)
-			SetInteruptCallPointer(PakAssertInterupt);
-		GetModuleName(Temp,Temp,CartMenuCallBack);  //Instanciate the menus HERE
-		
-		if (SetIniPath != nullptr)
-		{
-			GetIniFilePath(Temp);
-			SetIniPath(Temp);
-		}
-
-		if (PakSetCart != nullptr)
-		{
-			PakSetCart(SetCart);
-		}
-
-		strcpy(DllPath,ModulePath);
-		EmuState.ResetPending=2;
-
-		return 0;
-		break;
+		return loadedCartridge.load_result;
 	}
-	return NOMODULE;
-}
-
-/**
-Load a ROM pack
-return total bytes loaded, or 0 on failure
-*/
-int load_ext_rom(const char *filename)
-{
-	constexpr size_t PAK_MAX_MEM = 0x40000;
-
-	// If there is an existing ROM, ditch it
-	if (ExternalRomBuffer != nullptr) {
-		free(ExternalRomBuffer);
-	}
-
-	// Allocate memory for the ROM
-	ExternalRomBuffer = (uint8_t*)malloc(PAK_MAX_MEM);
-
-	// If memory was unable to be allocated, fail
-	if (ExternalRomBuffer == nullptr) {
-		MessageBox(nullptr, "cant allocate ram", "Ok", 0);
-		return 0;
-	}
-
-	// Open the ROM file, fail if unable to
-	FILE *rom_handle = fopen(filename, "rb");
-	if (rom_handle == nullptr)
-		return 0;
-
-	// Load the file, one byte at a time.. (TODO: Get size and read entire block)
-	size_t index=0;
-	while ((feof(rom_handle) == 0) && (index < PAK_MAX_MEM)) {
-		ExternalRomBuffer[index++] = fgetc(rom_handle);
-	}
-	fclose(rom_handle);
 
 	UnloadDll();
-	BankedCartOffset=0;
-	RomPackLoaded=true;
+	strcpy(DllPath, filename);
+	strncpy(PakName, filename, MAX_PATH);
+	PathStripPath(PakName);
+	gActiveCartrige = move(loadedCartridge.cartridge);
+	gActiveModule = move(loadedCartridge.handle);
+	BeginCartMenu();
+	gActiveCartrige->start();
 
-	return index;
+	// Reset if enabled
+	EmuState.ResetPending = 2;
+
+	return loadedCartridge.load_result;
 }
+
 
 void UnloadDll()
 {
-	GetModuleName=nullptr;
-	ConfigModule=nullptr;
-	PakPortWrite=nullptr;
-	PakPortRead=nullptr;
-	SetInteruptCallPointer=nullptr;
-	DmaMemPointer=nullptr;
-	HeartBeat=nullptr;
-	PakMemWrite8=nullptr;
-	PakMemRead8=nullptr;
-	ModuleStatus=nullptr;
-	ModuleAudioSample=nullptr;
-	ModuleReset=nullptr;
-	int rc = FreeLibrary(hinstLib);
-	_DLOG("pak:UnloadDll FreeLibrary %d %d\n",hinstLib,rc);
-	hinstLib=nullptr;
+	gActiveCartrige = std::make_unique<vcc::core::cartridges::null_cartridge>();
+	gActiveModule.reset();
+	PakName[0] = 0;
 
 	BeginCartMenu();
-	return;
+	gActiveCartrige->start();
 }
 
 void GetCurrentModule(char *DefaultModule)
@@ -356,44 +233,20 @@ void GetCurrentModule(char *DefaultModule)
 
 void UpdateBusPointer()
 {
-	if (SetInteruptCallPointer!=nullptr)
-		SetInteruptCallPointer(PakAssertInterupt);
-	return;
+	// Do nothing for now
 }
 
 void UnloadPack()
 {
 	UnloadDll();
 	strcpy(DllPath,"");
-	RomPackLoaded=false;
 	SetCart(0);
-
-	if (ExternalRomBuffer != nullptr) {
-		free(ExternalRomBuffer);
-	}
-	ExternalRomBuffer=nullptr;
 
 	EmuState.ResetPending=2;
 	BeginCartMenu();
 	return;
 }
 
-int FileID(const char *Filename)
-{
-	FILE *DummyHandle=nullptr;
-	char Temp[3]="";
-	DummyHandle=fopen(Filename,"rb");
-	if (DummyHandle==nullptr)
-		return 0;	//File Doesn't exist
-
-	Temp[0]=fgetc(DummyHandle);
-	Temp[1]=fgetc(DummyHandle);
-	Temp[2]=0;
-	fclose(DummyHandle);
-	if (strcmp(Temp,"MZ")==0)
-		return 1;	//DLL File
-	return 2;		//Rom Image
-}
 
 // CartMenuActivated is called from VCC main when a cartridge menu item is clicked.
 void CartMenuActivated(unsigned int MenuID)
@@ -407,9 +260,7 @@ void CartMenuActivated(unsigned int MenuID)
 		UnloadPack();
 		break;
 	default:
-		if (ConfigModule !=nullptr) {
-			ConfigModule(MenuID);
-		}
+		gActiveCartrige->menu_item_clicked(MenuID);
 		break;
 	}
 	return;

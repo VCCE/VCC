@@ -6,11 +6,11 @@
 #include <stdio.h>
 #include "becker.h"
 #include "resource.h" 
+#include "../CartridgeMenu.h"
+#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/limits.h>
 #include <vcc/common/logger.h>
 #include <vcc/common/FileOps.h>
-#include "../CartridgeMenu.h"
-#include <vcc/common/ModuleDefs.h>
-#include <vcc/common/limits.h>
 
 #ifndef USE_LOGGING
 #define WriteLog(a,b)

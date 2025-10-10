@@ -16,16 +16,48 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/detail/exports.h>
-#include <Windows.h>
+#include <vcc/core/cartridge.h>
+#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vector>
 
 
-LIBCOMMON_EXPORT void PathStripPath(char*);
-LIBCOMMON_EXPORT void ValidatePath(char* Path);
-LIBCOMMON_EXPORT int CheckPath(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveFileSpec(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveExtension(char*);
-LIBCOMMON_EXPORT char* PathFindExtension(char*);
-LIBCOMMON_EXPORT DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
-LIBCOMMON_EXPORT BOOL FilePrintf(HANDLE, const char*, ...);
+namespace vcc { namespace core { namespace cartridges
+{
 
+	class rom_cartridge : public cartridge
+	{
+	public:
+
+		using buffer_type = std::vector<uint8_t>;
+		using size_type = std::size_t;
+
+
+	public:
+
+		using cartridge::cartridge;
+
+
+		LIBCOMMON_EXPORT rom_cartridge(
+			AssertCartridgeLineModuleCallback assertCartCallback,
+			buffer_type buffer,
+			bool enable_bank_switching);
+		
+		LIBCOMMON_EXPORT void reset() override;
+		LIBCOMMON_EXPORT void write_port(unsigned char portId, unsigned char value) override;
+		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memoryAddress) override;
+
+
+	protected:
+
+		LIBCOMMON_EXPORT void initialize_bus() override;
+
+
+	private:
+
+		const AssertCartridgeLineModuleCallback assertCartCallback_;
+		const buffer_type buffer_;
+		const bool enable_bank_switching_;
+		size_type bank_offset_;
+	};
+
+} } }

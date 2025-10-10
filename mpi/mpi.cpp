@@ -26,10 +26,10 @@ Copyright 2015 by Joseph Forgione
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
-#include <vcc/common/ModuleDefs.h>
-#include <vcc/common/interrupts.h>
+#include <vcc/core/interrupts.h>
 #include <vcc/common/logger.h>
-#include <vcc/common/limits.h>
+#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/limits.h>
 
 // Number of slots supported. Changing this might require code modification
 #define NUMSLOTS 4
@@ -549,7 +549,7 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 			return 0;
 		}
 		GetModuleNameCalls[Slot] = (GetNameModuleFunction)GetProcAddress(hinstLib[Slot], "ModuleName");
-		ConfigModuleCalls[Slot] = (OnMenuItemClickedModuleFunction)GetProcAddress(hinstLib[Slot], "ModuleConfig");
+		ConfigModuleCalls[Slot] = (MenuItemClickedModuleFunction)GetProcAddress(hinstLib[Slot], "ModuleConfig");
 		PakPortWriteCalls[Slot] = (WritePortModuleFunction)GetProcAddress(hinstLib[Slot], "PackPortWrite");
 		PakPortReadCalls[Slot] = (ReadPortModuleFunction)GetProcAddress(hinstLib[Slot], "PackPortRead");
 		SetInteruptCallPointerCalls[Slot] = (SetAssertInterruptCallbackModuleFunction)GetProcAddress(hinstLib[Slot], "AssertInterupt");

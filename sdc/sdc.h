@@ -21,7 +21,7 @@
 //
 
 #include <vcc/common/logger.h>
-#include <vcc/common/interrupts.h>
+#include <vcc/core/interrupts.h>
 
 #include "resource.h"
 #include "cloud9.h"
