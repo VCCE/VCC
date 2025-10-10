@@ -18,14 +18,12 @@
 #pragma once
 #include <vcc/core/detail/exports.h>
 #include <Windows.h>
+#include <string>
 
 
-LIBCOMMON_EXPORT void PathStripPath(char*);
-LIBCOMMON_EXPORT void ValidatePath(char* Path);
-LIBCOMMON_EXPORT int CheckPath(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveFileSpec(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveExtension(char*);
-LIBCOMMON_EXPORT char* PathFindExtension(char*);
-LIBCOMMON_EXPORT DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
-LIBCOMMON_EXPORT BOOL FilePrintf(HANDLE, const char*, ...);
+namespace vcc { namespace common
+{
 
+	LIBCOMMON_EXPORT std::string LoadStdString(HINSTANCE instance, UINT id);
+
+} }

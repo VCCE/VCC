@@ -19,7 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 // FIXME: This should be defined on the command line
 #define DIRECTINPUT_VERSION 0x0800
 
-#include <vcc/common/limits.h>
+#include <vcc/core/limits.h>
 #include <Windows.h>
 #include <CommCtrl.h>
 #include <stdio.h>
@@ -388,7 +388,10 @@ unsigned char ReadIniFile()
 
 void LoadModule()
 {
-	InsertModule(CurrentConfig.ModulePath);
+	if (CurrentConfig.ModulePath[0])
+	{
+		PakLoadCartridge(CurrentConfig.ModulePath);
+	}
 }
 
 void SetWindowRect(const Rect& rect) 

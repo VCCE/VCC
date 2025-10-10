@@ -6,6 +6,13 @@
 #define IDS_CATNUMBER                   2
 #define IDAPPLY                         3
 #define IDOK2                           3
+#define IDS_UNKNOWN_ERROR               3
+#define IDS_MODULE_ALREADY_LOADED       4
+#define IDS_MODULE_CANNOT_OPEN          5
+#define IDS_MODULE_NOT_FOUND            6
+#define IDS_MODULE_NOT_LOADED           7
+#define IDS_MODULE_NOT_ROM              8
+#define IDS_MODULE_NOT_EXPANSION        9
 #define IDR_MENU                        101
 #define IDI_COCO3                       103
 #define IDD_ABOUTBOX                    104

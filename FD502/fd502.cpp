@@ -31,12 +31,12 @@ This file is part of VCC (Virtual Color Computer).
 #include "wd1793.h"
 #include "distortc.h"
 #include "fd502.h"
-#include <vcc/common/ModuleDefs.h>
 #include "../CartridgeMenu.h"
+#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/limits.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include <vcc/common/logger.h>
-#include <vcc/common/limits.h>
 
 //include becker code if COMBINE_BECKER is defined in fd502.h
 #ifdef COMBINE_BECKER

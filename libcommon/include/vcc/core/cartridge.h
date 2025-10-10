@@ -17,15 +17,43 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <vcc/core/detail/exports.h>
-#include <Windows.h>
+#include <string>
 
 
-LIBCOMMON_EXPORT void PathStripPath(char*);
-LIBCOMMON_EXPORT void ValidatePath(char* Path);
-LIBCOMMON_EXPORT int CheckPath(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveFileSpec(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveExtension(char*);
-LIBCOMMON_EXPORT char* PathFindExtension(char*);
-LIBCOMMON_EXPORT DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
-LIBCOMMON_EXPORT BOOL FilePrintf(HANDLE, const char*, ...);
+namespace vcc { namespace core
+{
 
+	struct LIBCOMMON_EXPORT cartridge
+	{
+	public:
+
+		using name_type = std::string;
+		using catalog_id_type = std::string;
+
+
+	public:
+
+		cartridge() = default;
+		cartridge(const cartridge&) = delete;
+		cartridge(cartridge&&) = delete;
+
+		virtual ~cartridge() = default;
+
+		virtual void start();
+		virtual void reset();
+		virtual void heartbeat();
+		virtual void write_port(unsigned char portId, unsigned char value);
+		virtual unsigned char read_port(unsigned char portId);
+		virtual unsigned char read_memory_byte(unsigned short memoryAddress);
+		virtual void status(char* status);
+		virtual unsigned short sample_audio();
+		virtual void menu_item_clicked(unsigned char menuItemId);
+
+
+	protected:
+
+		virtual void initialize_pak();
+		virtual void initialize_bus();
+	};
+
+} }

@@ -27,9 +27,9 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
-#include <vcc/common/ModuleDefs.h>
-#include <vcc/common/interrupts.h>
-#include <vcc/common/limits.h>
+#include <vcc/core/interrupts.h>
+#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/limits.h>
 
 constexpr auto DEF_HD_SIZE = 132480u;
 

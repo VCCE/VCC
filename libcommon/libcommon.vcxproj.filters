@@ -13,45 +13,105 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\common">
+      <UniqueIdentifier>{e3605b96-8b07-4c6f-8e0c-0c0f7ef7e1f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\common">
+      <UniqueIdentifier>{e1fb644c-d8fe-42cf-a190-8a3037bb20f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core">
+      <UniqueIdentifier>{6ca923e2-199b-44f0-8260-de0e62abca33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core">
+      <UniqueIdentifier>{3338d5c7-a9a1-4858-bc0f-b0ed9fa6b918}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\cartridges">
+      <UniqueIdentifier>{cc0a281d-6ff8-4a04-95a0-5bef8957ba5f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\cartridges">
+      <UniqueIdentifier>{6344b600-e0a8-4961-8a19-7ef6249e9a3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\utils">
+      <UniqueIdentifier>{f5ac3a16-8b52-47c1-a81c-d58a404a2181}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\detail">
+      <UniqueIdentifier>{fd029ab9-8064-4e1f-9460-edb495cf58ab}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\DialogOps.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Fileops.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\logger.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\cartridge.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\cartridges\legacy_cartridge.cpp">
+      <Filter>Source Files\core\cartridges</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\cartridges\rom_cartridge.cpp">
+      <Filter>Source Files\core\cartridges</Filter>
+    </ClCompile>
+    <ClCompile Include="src\std.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\DialogOps.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Fileops.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\logger.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\core\cartridge_loader.cpp">
+      <Filter>Source Files\core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\vcc\common\DialogOps.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\common\exports.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\common\FileOps.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\common\logger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\common\ModuleDefs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\common\interrupts.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\common\limits.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="resource\resource.h">
       <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\common\DialogOps.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\common\FileOps.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\common\logger.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\cartridge.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\cartridges\legacy_cartridge.h">
+      <Filter>Header Files\core\cartridges</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\cartridges\null_cartridge.h">
+      <Filter>Header Files\core\cartridges</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\cartridges\rom_cartridge.h">
+      <Filter>Header Files\core\cartridges</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\common\std.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\utils\dll_deleter.h">
+      <Filter>Header Files\core\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\detail\exports.h">
+      <Filter>Header Files\core\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\legacy_cartridge_definitions.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\limits.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\interrupts.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\cartridge_loader.h">
+      <Filter>Header Files\core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

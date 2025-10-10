@@ -16,16 +16,27 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/detail/exports.h>
-#include <Windows.h>
 
+// Enumerations for interrupts and their sources
 
-LIBCOMMON_EXPORT void PathStripPath(char*);
-LIBCOMMON_EXPORT void ValidatePath(char* Path);
-LIBCOMMON_EXPORT int CheckPath(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveFileSpec(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveExtension(char*);
-LIBCOMMON_EXPORT char* PathFindExtension(char*);
-LIBCOMMON_EXPORT DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
-LIBCOMMON_EXPORT BOOL FilePrintf(HANDLE, const char*, ...);
+// CPU interrupts (counting from 1 because legacy)
+// Pakinterface uses INT_NONE to clear cart IRQ
+enum Interrupt {
+	INT_IRQ = 1,
+	INT_FIRQ,
+	INT_NMI,
+	INT_CART
+};
+
+// Interrupt sources keep track of their own state.
+// NMI is its own source and always uses this.
+enum InterruptSource {
+	IS_NMI = 0,
+	IS_PIA0_HSYNC,
+	IS_PIA0_VSYNC,
+	IS_PIA1_CD,
+	IS_PIA1_CART,
+	IS_GIME,
+	IS_MAX
+};
 

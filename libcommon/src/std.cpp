@@ -15,17 +15,25 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#pragma once
-#include <vcc/core/detail/exports.h>
+#include <vcc/common/std.h>
 #include <Windows.h>
+#include <string>
+#include <codecvt>
 
 
-LIBCOMMON_EXPORT void PathStripPath(char*);
-LIBCOMMON_EXPORT void ValidatePath(char* Path);
-LIBCOMMON_EXPORT int CheckPath(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveFileSpec(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveExtension(char*);
-LIBCOMMON_EXPORT char* PathFindExtension(char*);
-LIBCOMMON_EXPORT DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
-LIBCOMMON_EXPORT BOOL FilePrintf(HANDLE, const char*, ...);
+namespace vcc { namespace common
+{
 
+	LIBCOMMON_EXPORT std::string LoadStdString(HINSTANCE instance, UINT id)
+	{
+		LPWSTR buffer_ptr = nullptr;
+		const auto buffer_length(LoadStringW(instance, id, reinterpret_cast<LPWSTR>(&buffer_ptr), 0));
+		if (buffer_length < 1 || buffer_ptr == nullptr)
+		{
+			return { };
+		}
+
+		return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(buffer_ptr, buffer_ptr + buffer_length);
+	}
+
+} }
