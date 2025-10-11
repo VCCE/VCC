@@ -157,8 +157,8 @@
 // Functions
 //======================================================================
 
-void (*AssertInt)(unsigned char, unsigned char);
-static CARTMENUCALLBACK CartMenuCallback = nullptr;
+AssertInteruptModuleCallback AssertInt = nullptr;;
+static AppendCartridgeMenuModuleCallback CartMenuCallback = nullptr;
 void SDCInit();
 void LoadRom(unsigned char);
 void (*MemWrite8)(unsigned char,unsigned short)=nullptr;
@@ -353,7 +353,7 @@ extern "C"
 {
     // Register the DLL and build menu
     __declspec(dllexport) void ModuleName
-        (char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
+        (char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
     {
         LoadString(hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
         LoadString(hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
@@ -444,7 +444,7 @@ extern "C"
     }
 
     // Capture pointers for MemRead8 and MemWrite8 functions.
-    __declspec(dllexport) void MemPointers(MEMREAD8 Temp1,MEMWRITE8 Temp2)
+    __declspec(dllexport) void MemPointers(ReadMemoryByteModuleCallback Temp1,WriteMemoryByteModuleCallback Temp2)
     {
         MemRead8=Temp1;
         MemWrite8=Temp2;
@@ -452,7 +452,7 @@ extern "C"
     }
 
     // Supply transfer point for interrupt
-    __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
+    __declspec(dllexport) void AssertInterupt(AssertInteruptModuleCallback Dummy)
     {
         AssertInt=Dummy;
         return;

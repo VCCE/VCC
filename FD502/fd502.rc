@@ -5,7 +5,6 @@
 #error Fd502.rc is not editable by Visual C++, edit it by hand.
 #endif //APSTUDIO_INVOKED
 
-#include "fd502.h"
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS

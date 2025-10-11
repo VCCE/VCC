@@ -32,7 +32,7 @@ This file is part of VCC (Virtual Color Computer).
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
 static char SuperIDEPath[MAX_PATH];
-static CARTMENUCALLBACK CartMenuCallback = nullptr;
+static AppendCartridgeMenuModuleCallback CartMenuCallback = nullptr;
 static unsigned char BaseAddress=0x50;
 void BuildCartMenu();
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
@@ -63,7 +63,7 @@ BOOL WINAPI DllMain(
 
 extern "C" 
 {          
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
+	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);

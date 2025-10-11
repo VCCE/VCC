@@ -2,7 +2,7 @@
 #include "Cartridge.h"
 
 
-GMC_EXPORT void ModuleName(char *moduleName, char *catalogId, CARTMENUCALLBACK addMenuCallback)
+GMC_EXPORT void ModuleName(char *moduleName, char *catalogId, AppendCartridgeMenuModuleCallback addMenuCallback)
 {
 	Cartridge::m_Singleton->SetMenuBuilderCallback(addMenuCallback);
 
@@ -29,7 +29,7 @@ GMC_EXPORT void ModuleReset()
 }
 
 
-GMC_EXPORT void SetCart(SETCART callback)
+GMC_EXPORT void SetCart(AssertCartridgeLineModuleCallback callback)
 {
 	Cartridge::m_Singleton->SetCartLineAssertCallback(callback);
 }

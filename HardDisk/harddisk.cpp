@@ -42,7 +42,7 @@ static char HardDiskPath[MAX_PATH];
 
 static unsigned char (*MemRead8)(unsigned short);
 static void (*MemWrite8)(unsigned char,unsigned short);
-static CARTMENUCALLBACK CartMenuCallback = nullptr;
+static AppendCartridgeMenuModuleCallback CartMenuCallback = nullptr;
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 
@@ -89,7 +89,7 @@ unsigned char MemRead(unsigned short Address)
 extern "C"
 {
     __declspec(dllexport) void
-    ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
+    ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
     {
         LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
         LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
@@ -217,7 +217,7 @@ extern "C"
 extern "C"
 {
     __declspec(dllexport) void
-    MemPointers(MEMREAD8 Temp1,MEMWRITE8 Temp2)
+    MemPointers(ReadMemoryByteModuleCallback Temp1,WriteMemoryByteModuleCallback Temp2)
     {
         MemRead8  = Temp1;
         MemWrite8 = Temp2;

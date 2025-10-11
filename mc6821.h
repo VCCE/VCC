@@ -32,7 +32,7 @@ unsigned char VDG_Mode();
 void irq_hs(int);
 void irq_fs(int);
 void AssertCart();
-void SetCart(unsigned char);
+void SetCart(bool lineState);
 unsigned char SetCartAutoStart(unsigned char);
 void PiaReset();
 unsigned char GetMuxState();

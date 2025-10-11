@@ -46,7 +46,7 @@ static HINSTANCE g_hDLL = nullptr;      // DLL handle
 static HWND g_hDlg = nullptr;           // Config dialog
 static char IniFile[MAX_PATH];       // Ini file name
 static char IniSect[MAX_LOADSTRING]; // Ini file section
-static CARTMENUCALLBACK CartMenuCallback = nullptr;
+static AppendCartridgeMenuModuleCallback CartMenuCallback = nullptr;
 
 // Status for Vcc status line
 char AciaStat[32];
@@ -67,7 +67,7 @@ char AciaFileRdPath[MAX_PATH]; // Path for file reads
 char AciaFileWrPath[MAX_PATH]; // Path for file writes
 
 static unsigned char Rom[8192];
-void (*AssertInt)(unsigned char, unsigned char);
+AssertInteruptModuleCallback AssertInt = nullptr;
 unsigned char LoadExtRom(const char *);
 
 //------------------------------------------------------------------------
@@ -93,7 +93,7 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 //-----------------------------------------------------------------------
 extern "C"
 __declspec(dllexport) void
-ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
+ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
 {
     LoadString(g_hDLL,IDS_MODULE_NAME,ModName,MAX_LOADSTRING);
     LoadString(g_hDLL,IDS_CATNUMBER,CatNumber,MAX_LOADSTRING);
@@ -179,7 +179,7 @@ __declspec(dllexport) void HeartBeat()
 // Dll export supply transfer point for interrupt
 //-----------------------------------------------------------------------
 extern "C"
-__declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
+__declspec(dllexport) void AssertInterupt(AssertInteruptModuleCallback Dummy)
 {
     AssertInt=Dummy;
     return;

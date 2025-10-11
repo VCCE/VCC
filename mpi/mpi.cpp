@@ -38,11 +38,11 @@ Copyright 2015 by Joseph Forgione
 #define ISDISKPORT(p) ((p > 0x3F) && (p < 0x60))
 
 using namespace std;
-static void (*AssertInt)(unsigned char, unsigned char)=nullptr;
+static AssertInteruptModuleCallback AssertInt = nullptr;
 static unsigned char (*MemRead8)(unsigned short)=nullptr;
 static void (*MemWrite8)(unsigned char,unsigned short)=nullptr;
 
-static void (*PakSetCart)(unsigned char)=nullptr;
+static AssertCartridgeLineModuleCallback PakSetCart = nullptr;
 static HINSTANCE g_hinstDLL=nullptr;
 static char CatNumber[NUMSLOTS][MAX_LOADSTRING]={"","","",""};
 static char SlotLabel[NUMSLOTS][MAX_LOADSTRING*2]={"Empty","Empty","Empty","Empty"};
@@ -55,7 +55,7 @@ static char MPIPath[MAX_PATH];
 
 //**************************************************************
 //Array of fuction pointer for each Slot
-static void (*GetModuleNameCalls[NUMSLOTS])(char *,char *,CARTMENUCALLBACK)={nullptr,nullptr,nullptr,nullptr};
+static void (*GetModuleNameCalls[NUMSLOTS])(char *,char *,AppendCartridgeMenuModuleCallback)={nullptr,nullptr,nullptr,nullptr};
 static void (*ConfigModuleCalls[NUMSLOTS])(unsigned char)={nullptr,nullptr,nullptr,nullptr};
 static void (*HeartBeatCalls[NUMSLOTS])()={nullptr,nullptr,nullptr,nullptr};
 static void (*PakPortWriteCalls[NUMSLOTS])(unsigned char,unsigned char)={nullptr,nullptr,nullptr,nullptr};
@@ -66,8 +66,8 @@ static void (*ModuleStatusCalls[NUMSLOTS])(char *)={nullptr,nullptr,nullptr,null
 static unsigned short (*ModuleAudioSampleCalls[NUMSLOTS])()={nullptr,nullptr,nullptr,nullptr};
 static void (*ModuleResetCalls[NUMSLOTS]) ()={nullptr,nullptr,nullptr,nullptr};
 //Set callbacks for the DLL to call
-static void (*SetInteruptCallPointerCalls[NUMSLOTS]) ( PAKINTERUPT)={nullptr,nullptr,nullptr,nullptr};
-static void (*DmaMemPointerCalls[NUMSLOTS]) (MEMREAD8,MEMWRITE8)={nullptr,nullptr,nullptr,nullptr};
+static void (*SetInteruptCallPointerCalls[NUMSLOTS]) ( AssertInteruptModuleCallback)={nullptr,nullptr,nullptr,nullptr};
+static void (*DmaMemPointerCalls[NUMSLOTS]) (ReadMemoryByteModuleCallback,WriteMemoryByteModuleCallback)={nullptr,nullptr,nullptr,nullptr};
 static unsigned short EDITBOXS[4]={IDC_EDIT1,IDC_EDIT2,IDC_EDIT3,IDC_EDIT4};
 static unsigned short RADIOBTN[4]={IDC_SELECT1,IDC_SELECT2,IDC_SELECT3,IDC_SELECT4};
 static unsigned short INSBOXS[4]={IDC_INSERT1,IDC_INSERT2,IDC_INSERT3,IDC_INSERT4};
@@ -77,24 +77,24 @@ void UpdateSlotContent(int);
 void UpdateSlotConfig(int);
 void UpdateSlotSelect(int);
 void CenterDialog(HWND);
-void SetCartSlot0(unsigned char);
-void SetCartSlot1(unsigned char);
-void SetCartSlot2(unsigned char);
-void SetCartSlot3(unsigned char);
+void SetCartSlot0(bool lineState);
+void SetCartSlot1(bool lineState);
+void SetCartSlot2(bool lineState);
+void SetCartSlot3(bool lineState);
 void BuildCartMenu(void);
-void CartMenuCallback0(const char *,int, int);
-void CartMenuCallback1(const char *,int, int);
-void CartMenuCallback2(const char *,int, int);
-void CartMenuCallback3(const char *,int, int);
+void CartMenuCallback0(const char *,int, MenuItemType);
+void CartMenuCallback1(const char *,int, MenuItemType);
+void CartMenuCallback2(const char *,int, MenuItemType);
+void CartMenuCallback3(const char *,int, MenuItemType);
 void SaveSlotMenuItem(int, CartMenuItem item);
 
 static unsigned char CartForSlot[NUMSLOTS]={0};
-static void (*SetCarts[NUMSLOTS])(unsigned char)={SetCartSlot0,SetCartSlot1,SetCartSlot2,SetCartSlot3};
-static CARTMENUCALLBACK CartMenuCallbackCalls[NUMSLOTS]={CartMenuCallback0,CartMenuCallback1,CartMenuCallback2,CartMenuCallback3};
-static void (*SetCartCalls[NUMSLOTS])(SETCART)={nullptr};
+static AssertCartridgeLineModuleCallback SetCarts[NUMSLOTS] = { SetCartSlot0,SetCartSlot1,SetCartSlot2,SetCartSlot3 };
+static AppendCartridgeMenuModuleCallback CartMenuCallbackCalls[NUMSLOTS]={CartMenuCallback0,CartMenuCallback1,CartMenuCallback2,CartMenuCallback3};
+static void (*SetCartCalls[NUMSLOTS])(AssertCartridgeLineModuleCallback)={nullptr};
 
 static void (*SetIniPathCalls[NUMSLOTS]) (const char *)={nullptr};
-static CARTMENUCALLBACK CartMenuCallback = nullptr;
+static AppendCartridgeMenuModuleCallback CartMenuCallback = nullptr;
 //***************************************************************
 static HINSTANCE hinstLib[NUMSLOTS]={nullptr};
 static unsigned char ChipSelectSlot=3,SpareSelectSlot=3,SwitchSlot=3,SlotRegister=255;
@@ -140,7 +140,7 @@ unsigned char MemRead(unsigned short Address)
 
 extern "C"
 {
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
+	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
@@ -180,7 +180,7 @@ extern "C"
 // This captures the Function transfer point for the CPU assert interupt
 extern "C"
 {
-	__declspec(dllexport) void AssertInterupt(PAKINTERUPT Dummy)
+	__declspec(dllexport) void AssertInterupt(AssertInteruptModuleCallback Dummy)
 	{
 		AssertInt=Dummy;
 		for (int slot=0;slot<NUMSLOTS;slot++) {
@@ -264,7 +264,7 @@ extern "C"
 //This captures the pointers to the MemRead8 and MemWrite8 functions. This allows the DLL to do DMA xfers with CPU ram.
 extern "C"
 {
-	__declspec(dllexport) void MemPointers(MEMREAD8 Temp1,MEMWRITE8 Temp2)
+	__declspec(dllexport) void MemPointers(ReadMemoryByteModuleCallback Temp1,WriteMemoryByteModuleCallback Temp2)
 	{
 		MemRead8=Temp1;
 		MemWrite8=Temp2;
@@ -362,7 +362,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) void SetCart(SETCART Pointer)
+	__declspec(dllexport) void SetCart(AssertCartridgeLineModuleCallback Pointer)
 	{
 		PakSetCart=Pointer;
 		return;
@@ -548,22 +548,22 @@ unsigned char MountModule(unsigned char Slot,const char *ModuleName)
 			UnloadModule(Slot);
 			return 0;
 		}
-		GetModuleNameCalls[Slot]=(GETNAME)GetProcAddress(hinstLib[Slot], "ModuleName");
-		ConfigModuleCalls[Slot]=(CONFIGIT)GetProcAddress(hinstLib[Slot], "ModuleConfig");
-		PakPortWriteCalls[Slot]=(PACKPORTWRITE) GetProcAddress(hinstLib[Slot], "PackPortWrite");
-		PakPortReadCalls[Slot]=(PACKPORTREAD) GetProcAddress(hinstLib[Slot], "PackPortRead");
-		SetInteruptCallPointerCalls[Slot]=(SETINTERUPTCALLPOINTER)GetProcAddress(hinstLib[Slot], "AssertInterupt");
+		GetModuleNameCalls[Slot] = (GetNameModuleFunction)GetProcAddress(hinstLib[Slot], "ModuleName");
+		ConfigModuleCalls[Slot] = (OnMenuItemClickedModuleFunction)GetProcAddress(hinstLib[Slot], "ModuleConfig");
+		PakPortWriteCalls[Slot] = (WritePortModuleFunction)GetProcAddress(hinstLib[Slot], "PackPortWrite");
+		PakPortReadCalls[Slot] = (ReadPortModuleFunction)GetProcAddress(hinstLib[Slot], "PackPortRead");
+		SetInteruptCallPointerCalls[Slot] = (SetAssertInterruptCallbackModuleFunction)GetProcAddress(hinstLib[Slot], "AssertInterupt");
 
-		DmaMemPointerCalls[Slot]=(DMAMEMPOINTERS) GetProcAddress(hinstLib[Slot], "MemPointers");
-		SetCartCalls[Slot]=(SETCARTPOINTER) GetProcAddress(hinstLib[Slot], "SetCart"); //HERE
+		DmaMemPointerCalls[Slot] = (SetDMACallbacksModuleFunction)GetProcAddress(hinstLib[Slot], "MemPointers");
+		SetCartCalls[Slot] = (SetAssertCartridgeLineCallbackModuleFunction)GetProcAddress(hinstLib[Slot], "SetCart"); //HERE
 
-		HeartBeatCalls[Slot]=(HEARTBEAT) GetProcAddress(hinstLib[Slot], "HeartBeat");
-		PakMemWrite8Calls[Slot]=(MEMWRITE8) GetProcAddress(hinstLib[Slot], "PakMemWrite8");
-		PakMemRead8Calls[Slot]=(MEMREAD8) GetProcAddress(hinstLib[Slot], "PakMemRead8");
-		ModuleStatusCalls[Slot]=(MODULESTATUS) GetProcAddress(hinstLib[Slot], "ModuleStatus");
-		ModuleAudioSampleCalls[Slot]=(MODULEAUDIOSAMPLE) GetProcAddress(hinstLib[Slot], "ModuleAudioSample");
-		ModuleResetCalls[Slot]=(MODULERESET) GetProcAddress(hinstLib[Slot], "ModuleReset");
-		SetIniPathCalls[Slot]=(SETINIPATH) GetProcAddress(hinstLib[Slot], "SetIniPath");
+		HeartBeatCalls[Slot] = (HeartBeatModuleFunction)GetProcAddress(hinstLib[Slot], "HeartBeat");
+		PakMemWrite8Calls[Slot] = (WriteMemoryByteModuleCallback)GetProcAddress(hinstLib[Slot], "PakMemWrite8");
+		PakMemRead8Calls[Slot] = (ReadMemoryByteModuleCallback)GetProcAddress(hinstLib[Slot], "PakMemRead8");
+		ModuleStatusCalls[Slot] = (GetStatusModuleFunction)GetProcAddress(hinstLib[Slot], "ModuleStatus");
+		ModuleAudioSampleCalls[Slot] = (SampleAudioModuleFunction)GetProcAddress(hinstLib[Slot], "ModuleAudioSample");
+		ModuleResetCalls[Slot] = (ResetModuleFunction)GetProcAddress(hinstLib[Slot], "ModuleReset");
+		SetIniPathCalls[Slot] = (SetConfigurationPathModuleFunction)GetProcAddress(hinstLib[Slot], "SetIniPath");
 
 		if (GetModuleNameCalls[Slot] == nullptr)
 		{
@@ -760,26 +760,24 @@ int FileID(const char *Filename)
 	return 2;		//Rom Image
 }
 
-void SetCartSlot0(unsigned char Tmp)
+void SetCartSlot0(bool lineState)
 {
-	CartForSlot[0]=Tmp;
-	return;
+	CartForSlot[0] = lineState;
 }
 
-void SetCartSlot1(unsigned char Tmp)
+void SetCartSlot1(bool lineState)
 {
-	CartForSlot[1]=Tmp;
-	return;
+	CartForSlot[1] = lineState;
 }
-void SetCartSlot2(unsigned char Tmp)
+
+void SetCartSlot2(bool lineState)
 {
-	CartForSlot[2]=Tmp;
-	return;
+	CartForSlot[2] = lineState;
 }
-void SetCartSlot3(unsigned char Tmp)
+
+void SetCartSlot3(bool lineState)
 {
-	CartForSlot[3]=Tmp;
-	return;
+	CartForSlot[3] = lineState;
 }
 
 // This gets called any time a cartridge menu is changed. It draws the entire menu.
@@ -819,24 +817,24 @@ void SaveSlotMenuItem(int slot,CartMenuItem item)
 		break;
 	}
 }
-void CartMenuCallback0(const char *MenuName,int MenuId, int Type)
+
+void CartMenuCallback0(const char* MenuName, int MenuId, MenuItemType Type)
 {
-	SaveSlotMenuItem(0,{MenuName,static_cast<unsigned int>(MenuId),static_cast<MenuItemType>(Type)});
-	return;
+	SaveSlotMenuItem(0, { MenuName,static_cast<unsigned int>(MenuId),Type });
 }
-void CartMenuCallback1(const char *MenuName,int MenuId, int Type)
+
+void CartMenuCallback1(const char* MenuName, int MenuId, MenuItemType Type)
 {
-	SaveSlotMenuItem(1,{MenuName,static_cast<unsigned int>(MenuId),static_cast<MenuItemType>(Type)});
-	return;
+	SaveSlotMenuItem(1, { MenuName,static_cast<unsigned int>(MenuId),Type });
 }
-void CartMenuCallback2(const char *MenuName,int MenuId, int Type)
+
+void CartMenuCallback2(const char* MenuName, int MenuId, MenuItemType Type)
 {
-	SaveSlotMenuItem(2,{MenuName,static_cast<unsigned int>(MenuId),static_cast<MenuItemType>(Type)});
-	return;
+	SaveSlotMenuItem(2, { MenuName,static_cast<unsigned int>(MenuId),Type });
 }
-void CartMenuCallback3(const char *MenuName,int MenuId, int Type)
+
+void CartMenuCallback3(const char* MenuName, int MenuId, MenuItemType Type)
 {
-	SaveSlotMenuItem(3,{MenuName,static_cast<unsigned int>(MenuId),static_cast<MenuItemType>(Type)});
-	return;
+	SaveSlotMenuItem(3, { MenuName,static_cast<unsigned int>(MenuId),Type });
 }
 
