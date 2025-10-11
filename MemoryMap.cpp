@@ -31,6 +31,8 @@
 #include "resource.h"
 #include "pakinterface.h"
 #include <vcc/common/logger.h>
+#include <vcc/common/DialogOps.h>
+#include <fstream>
 
 namespace VCC { namespace Debugger { namespace UI { namespace {
 
@@ -44,6 +46,7 @@ void DrawForm(HDC,LPCRECT);
 void DrawMemory(HDC,LPCRECT);
 void SetEditPosition(int,int);
 void LocateMemory();
+void ExportMemory();
 void CommitValue();
 void SetMemType();
 void InitializeDialog(HWND);
@@ -51,18 +54,21 @@ void DoScroll(WPARAM);
 int CStrToHex(const char *);
 
 LRESULT CALLBACK subEditValProc(HWND,UINT,WPARAM,LPARAM);
-LRESULT CALLBACK subEditAdrProc(HWND,UINT,WPARAM,LPARAM);
+LRESULT CALLBACK subEditAdrBegProc(HWND,UINT,WPARAM,LPARAM);
+LRESULT CALLBACK subEditAdrEndProc(HWND,UINT,WPARAM,LPARAM);
 INT_PTR CALLBACK MemoryMapDlgProc(HWND,UINT,WPARAM,LPARAM);
 
 // Global handles
 HWND hDlgMem = nullptr;
 HWND hScrollBar = nullptr;
-HWND hEditAdr = nullptr;
+HWND hEditAdrBeg = nullptr;
+HWND hEditAdrEnd = nullptr;
 HWND hEditVal = nullptr;
 
 // Original controls
 WNDPROC EditValProc;
-WNDPROC EditAdrProc;
+WNDPROC EditAdrBegProc;
+WNDPROC EditAdrEndProc;
 
 // Enum for memory type being examined
 enum AddrMode
@@ -77,6 +83,8 @@ AddrMode AddrMode_ = AddrMode::NotSet;
 
 int MemSize = 0;
 int memoryOffset = 0;
+int selectionRangeBeg = -1;
+int selectionRangeEnd = -1;
 unsigned char *Rom = nullptr;
 bool Editing = false;
 int editAddress = 0;
@@ -160,18 +168,21 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 			SetMemType();
 			InvalidateRect(hDlg, &BackBuf.Rect, FALSE);
 			break;
-		case IDC_BTN_FIND_MEM:
+		case IDC_BTN_EXPORT_MEM:
 			LocateMemory();
+			ExportMemory();
+			SetFocus(hEditAdrBeg);
 			break;
 		case IDC_BTN_HELP:
 			MessageBox(hDlg,DbgHelp,"Usage",0);
-			SetFocus(hEditAdr);
+			SetFocus(hEditAdrBeg);
 			break;
 		case IDCLOSE:
 		case WM_DESTROY:
 			KillTimer(hDlg, IDT_MEM_TIMER);
 			DeleteDC(BackBuf.DeviceContext);
 			DestroyWindow(hDlg);
+			AddrMode_ = AddrMode::NotSet;
 			hDlgMem = nullptr;
 			break;
 		}
@@ -193,7 +204,7 @@ LRESULT CALLBACK subEditValProc(
 			CommitValue();
 			return 0;
 		case VK_TAB:
-			SetFocus(hEditAdr);
+			SetFocus(hEditAdrBeg);
 			return 0;
 		case VK_UP:
 		case VK_DOWN:
@@ -211,7 +222,7 @@ LRESULT CALLBACK subEditValProc(
 //------------------------------------------------------------------
 //  Subclassed Edit Address Proc
 //------------------------------------------------------------------
-LRESULT CALLBACK subEditAdrProc(
+LRESULT CALLBACK subEditAdrBegProc(
 		HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg) {
@@ -221,7 +232,45 @@ LRESULT CALLBACK subEditAdrProc(
 			LocateMemory();
 			return 0;
 		case VK_TAB:
-			SetFocus(hEditVal);
+			LocateMemory();
+			SendMessage(hEditAdrEnd, EM_SETSEL, 0, -1);
+			SetFocus(hEditAdrEnd);
+			return 0;
+		case VK_UP:
+			DoScroll((WPARAM)SB_LINEUP);
+			return 0;
+		case VK_DOWN:
+			DoScroll((WPARAM)SB_LINEDOWN);
+			return 0;
+		case VK_PRIOR:
+			DoScroll((WPARAM)SB_PAGEUP);
+			return 0;
+		case VK_NEXT:
+			DoScroll((WPARAM)SB_PAGEDOWN);
+			return 0;
+		case VK_HOME:
+			DoScroll((WPARAM)SB_TOP);
+			return 0;
+		case VK_END:
+			DoScroll((WPARAM)SB_BOTTOM);
+			return 0;
+		}
+	}
+	return CallWindowProc(EditValProc, wnd, msg, wParam, lParam);
+}
+
+LRESULT CALLBACK subEditAdrEndProc(
+	HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg) {
+	case WM_KEYDOWN:
+		switch (wParam) {
+		case VK_RETURN:
+			LocateMemory();
+			return 0;
+		case VK_TAB:
+			LocateMemory();
+			SetFocus(hEditAdrBeg);
 			return 0;
 		case VK_UP:
 			DoScroll((WPARAM)SB_LINEUP);
@@ -507,12 +556,28 @@ void LocateMemory()
 {
 	char buf[32] = {0};
 
-	SendDlgItemMessage(hDlgMem, IDC_EDIT_ADDRESS, WM_GETTEXT,
+	SendDlgItemMessage(hDlgMem, IDC_EDIT_RANGE_BEG, WM_GETTEXT,
 			sizeof(buf), (LPARAM) buf);
-	SetDlgItemText(hDlgMem, IDC_EDIT_ADDRESS, "");
 
-	int addr = CStrToHex(buf);
-	if (addr < 0) {
+	selectionRangeBeg = CStrToHex(buf);
+
+	SendDlgItemMessage(hDlgMem, IDC_EDIT_RANGE_END, WM_GETTEXT,
+		sizeof(buf), (LPARAM)buf);
+
+	selectionRangeEnd = CStrToHex(buf);
+
+	if (selectionRangeEnd < selectionRangeBeg) {
+		selectionRangeEnd = selectionRangeBeg;
+	}
+
+	std::string begstr = ToHexString(selectionRangeBeg, 6, true);
+	std::string endstr = ToHexString(selectionRangeEnd, 6, true);
+
+	SetDlgItemText(hDlgMem, IDC_EDIT_RANGE_BEG, begstr.c_str());
+	SetDlgItemText(hDlgMem, IDC_EDIT_RANGE_END, endstr.c_str());
+
+	if (selectionRangeBeg < 0) {
+		selectionRangeBeg = selectionRangeEnd = -1;
 		FlashDialogWindow();
 		SetEditing(false);
 		return;
@@ -523,7 +588,7 @@ void LocateMemory()
 	si.fMask = SIF_ALL;
 	GetScrollInfo(hScrollBar, SB_CTL, &si);
 
-	si.nPos = roundDn(addr, 16);
+	si.nPos = roundDn(selectionRangeBeg, 16);
 	si.fMask = SIF_POS;
 	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 	GetScrollInfo(hScrollBar, SB_CTL, &si);
@@ -531,6 +596,36 @@ void LocateMemory()
 	memoryOffset = si.nPos;
 
 	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
+}
+
+//------------------------------------------------------------------
+// Export the selected range to disk
+//------------------------------------------------------------------
+void ExportMemory()
+{
+	if (selectionRangeBeg < 0 || selectionRangeEnd < 0) {
+		FlashDialogWindow();
+		SetEditing(false);
+		return;
+	}
+
+	FileDialog dlg;
+	dlg.setFilter("BIN\0*.bin\0\0");
+	dlg.setDefExt("bin");
+	dlg.setTitle(TEXT("Export Memory Range"));
+	dlg.setFlags(OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT);
+
+	if (dlg.show(1)) {
+		std::ofstream fout(dlg.path(), std::ios::out | std::ios::trunc
+			| std::ios::binary);
+
+		for (int adr = selectionRangeBeg; adr <= selectionRangeEnd; adr++) {
+			unsigned char val = ReadMemory(adr);
+			fout.write(reinterpret_cast<const char *>(&val), sizeof(val));
+		}
+
+		MessageBox(hDlgMem, "Export Complete", "Export", 0);
+	}
 }
 
 //------------------------------------------------------------------
@@ -626,9 +721,13 @@ void InitializeDialog(HWND hDlg)
 		CreateScrollBar(Rect);
 
 		//Subclass edit boxes
-		hEditAdr = GetDlgItem(hDlg, IDC_EDIT_ADDRESS);
-		EditAdrProc = (WNDPROC) SetWindowLongPtr
-				(hEditAdr, GWLP_WNDPROC, (LONG_PTR) subEditAdrProc);
+		hEditAdrBeg = GetDlgItem(hDlg, IDC_EDIT_RANGE_BEG);
+		EditAdrBegProc = (WNDPROC) SetWindowLongPtr
+				(hEditAdrBeg, GWLP_WNDPROC, (LONG_PTR) subEditAdrBegProc);
+
+		hEditAdrEnd = GetDlgItem(hDlg, IDC_EDIT_RANGE_END);
+		EditAdrEndProc = (WNDPROC)SetWindowLongPtr
+				(hEditAdrEnd, GWLP_WNDPROC, (LONG_PTR)subEditAdrEndProc);
 
 		hEditVal = GetDlgItem(hDlg, IDC_EDIT_VALUE);
 		EditValProc = (WNDPROC) SetWindowLongPtr
@@ -733,7 +832,7 @@ void SetEditing(bool tf) {
 		SetFocus(hEditVal);
 	} else {
 		SetDlgItemText(hDlgMem, IDC_ADRTXT, "");
-		SetFocus(hEditAdr);
+		SetFocus(hEditAdrBeg);
 	}
 	SetDlgItemText(hDlgMem, IDC_EDIT_VALUE, "");
 }
@@ -767,6 +866,6 @@ void VCC::Debugger::UI::OpenMemoryMapWindow(HINSTANCE hInst,HWND parent)
 	}
 
 	ShowWindow(hDlgMem, SW_SHOWNORMAL);
-	SetFocus(hEditAdr);
+	SetFocus(hEditAdrBeg);
 }
 

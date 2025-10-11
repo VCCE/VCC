@@ -364,7 +364,7 @@
 #define IDC_BTN_CPU_RUN                 2112
 #define IDC_BTN_CPU_STEP                2113
 #define IDC_EDIT_ADDRESS                2114
-#define IDC_BTN_FIND_MEM                2115
+#define IDC_BTN_EXPORT_MEM              2115
 #define IDC_SELECT_MMU_PAGE             2116
 #define IDC_BTN_ENABLE_TRACE            2117
 #define IDC_BTN_STOP_TRACE              2118
@@ -399,6 +399,9 @@
 #define IDC_EDIT_START                  2147
 #define IDC_EDIT_STOP                   2148
 #define IDC_FASTLOAD                    2151
+#define IDC_EDIT_RANGE_BEG              2152
+#define IDC_EDIT_RANGE_END              2153
+#define IDC_EDIT_RANGE_SEP              2154
 #define IDM_USER_WIKI                   40001
 #define ID_FILE_EXIT                    40002
 #define IDM_HELP_ABOUT                  40003
@@ -460,7 +463,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        180
 #define _APS_NEXT_COMMAND_VALUE         40060
-#define _APS_NEXT_CONTROL_VALUE         2152
+#define _APS_NEXT_CONTROL_VALUE         2155
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
