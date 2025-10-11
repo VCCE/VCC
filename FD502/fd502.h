@@ -17,11 +17,9 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <vcc/common/ModuleDefs.h>
 
-// Comment next line to exclude becker code
-#define COMBINE_BECKER
-
-extern "C" void (*AssertInt)(unsigned char,unsigned char);
+extern AssertInteruptModuleCallback AssertInt;
 void BuildDynaMenu();
 
 // FIXME: These need to be turned into a scoped enum and the signature of functions

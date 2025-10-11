@@ -21,7 +21,7 @@ static SOCKET dwSocket = 0;
 
 // vcc stuff
 static HINSTANCE g_hinstDLL=NULL;
-static void (*PakSetCart)(unsigned char)=NULL;
+static AssertCartridgeLineModuleCallback PakSetCart = nullptr;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 static char IniFile[MAX_PATH]="";
 static unsigned char HDBRom[8192];
@@ -60,7 +60,7 @@ char msg[MAX_PATH];
 // log lots of stuff...
 static boolean logging = false;
 
-static CARTMENUCALLBACK CartMenuCallback = NULL;
+static AppendCartridgeMenuModuleCallback CartMenuCallback = NULL;
 unsigned char LoadExtRom(const char *);
 void SetDWTCPConnectionEnable(unsigned int enable);
 int dw_setaddr(const char *bufdwaddr);
@@ -399,7 +399,7 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 }
 
 // dll exported functions
-extern "C" __declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
+extern "C" __declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
@@ -452,7 +452,7 @@ extern "C" __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
 		return(0);
 	}
 */
-extern "C" __declspec(dllexport) unsigned char SetCart(SETCART Pointer)
+extern "C" __declspec(dllexport) unsigned char SetCart(AssertCartridgeLineModuleCallback Pointer)
 	{
 		
 		PakSetCart=Pointer;

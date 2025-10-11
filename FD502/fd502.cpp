@@ -54,8 +54,8 @@ static unsigned char RGBDiskRom[EXTROMSIZE];
 static char FloppyPath[MAX_PATH];
 static char RomFileName[MAX_PATH]="";
 static char TempRomFileName[MAX_PATH]="";
-void (*AssertInt)(unsigned char,unsigned char)=nullptr;
-static CARTMENUCALLBACK CartMenuCallback = nullptr;
+AssertInteruptModuleCallback AssertInt = nullptr;
+static AppendCartridgeMenuModuleCallback CartMenuCallback = nullptr;
 unsigned char PhysicalDriveA=0,PhysicalDriveB=0,OldPhysicalDriveA=0,OldPhysicalDriveB=0;
 static unsigned char *RomPointer[3]={ExternalRom,DiskRom,RGBDiskRom};
 static unsigned char SelectRom=0;
@@ -106,7 +106,7 @@ BOOL WINAPI DllMain(
 
 extern "C"
 {
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
+	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
@@ -176,7 +176,7 @@ extern "C"
 // This captures the Fuction transfer point for the CPU assert interupt
 extern "C"
 {
-	__declspec(dllexport) void AssertInterupt(PAKINTERUPT Dummy)
+	__declspec(dllexport) void AssertInterupt(AssertInteruptModuleCallback Dummy)
 	{
 		AssertInt=Dummy;
 		return;

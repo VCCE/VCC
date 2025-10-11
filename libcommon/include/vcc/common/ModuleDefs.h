@@ -16,23 +16,27 @@
 //	along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include <vcc/common/interrupts.h>
 
-// Module DLL capability pointers
-typedef void (*CARTMENUCALLBACK)(const char* MenuName, int MenuId, int MenuType);
-typedef void (*GETNAME)(char*, char*, CARTMENUCALLBACK);
-typedef void (*CONFIGIT)(unsigned char);
-typedef void (*HEARTBEAT) (void);
-typedef unsigned char (*PACKPORTREAD)(unsigned char);
-typedef void (*PACKPORTWRITE)(unsigned char, unsigned char);
-typedef void (*PAKINTERUPT)(unsigned char, unsigned char);
-typedef unsigned char (*MEMREAD8)(unsigned short);
-typedef void (*SETCART)(unsigned char);
-typedef void (*SETCARTPOINTER)(SETCART);
-typedef void (*MEMWRITE8)(unsigned char, unsigned short);
-typedef void (*MODULESTATUS)(char*);
-typedef void (*DMAMEMPOINTERS) (MEMREAD8, MEMWRITE8);
-typedef void (*SETINTERUPTCALLPOINTER) (PAKINTERUPT);
-typedef unsigned short (*MODULEAUDIOSAMPLE)(void);
-typedef void (*MODULERESET)(void);
-typedef void (*SETINIPATH)(const char*);
-typedef void (*ASSERTINTERUPT)(unsigned char, unsigned char);
+// FIXME: this needs to come from the common library but is currently part of the
+// main vcc app. Update this when it is migrated.
+enum MenuItemType;
+
+using WriteMemoryByteModuleCallback = void (*)(unsigned char value, unsigned short address);
+using ReadMemoryByteModuleCallback = unsigned char (*)(unsigned short address);
+using AssertCartridgeLineModuleCallback = void (*)(bool lineState);
+using AssertInteruptModuleCallback = void (*)(Interrupt interrupt, InterruptSource interrupt_source);
+using AppendCartridgeMenuModuleCallback = void (*)(const char* menu_name, int menu_id, MenuItemType menu_type);
+
+using GetNameModuleFunction = void (*)(char* name_text, char* catalog_id_text, AppendCartridgeMenuModuleCallback addMenuItemCallback);
+using SetDMACallbacksModuleFunction = void (*)(ReadMemoryByteModuleCallback, WriteMemoryByteModuleCallback);
+using SetAssertInterruptCallbackModuleFunction = void (*)(AssertInteruptModuleCallback callback);
+using SetConfigurationPathModuleFunction = void (*)(const char* path);
+using SetAssertCartridgeLineCallbackModuleFunction = void (*)(AssertCartridgeLineModuleCallback callback);
+using ResetModuleFunction = void (*)();
+using HeartBeatModuleFunction = void (*)();
+using GetStatusModuleFunction = void (*)(char* status_text);
+using WritePortModuleFunction = void (*)(unsigned char port, unsigned char value);
+using ReadPortModuleFunction = unsigned char (*)(unsigned char port);
+using SampleAudioModuleFunction = unsigned short (*)();
+using OnMenuItemClickedModuleFunction = void (*)(unsigned char itemId);

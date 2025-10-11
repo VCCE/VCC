@@ -35,19 +35,6 @@
 #include <vcc/common/DialogOps.h>
 #include <vcc/common/limits.h>
 
-#define HASCONFIG		1
-#define HASIOWRITE		2
-#define HASIOREAD		4
-#define NEEDSCPUIRQ		8
-#define DOESDMA			16
-#define NEEDHEARTBEAT	32
-#define ANALOGAUDIO		64
-#define CSWRITE			128
-#define CSREAD			256
-#define RETURNSSTATUS	512
-#define CARTRESET		1024
-#define SAVESINI		2048
-#define ASSERTCART		4096
 
 // Storage for Pak ROMs
 static uint8_t *ExternalRomBuffer = nullptr;
@@ -59,10 +46,10 @@ static char DllPath[256]="";
 static unsigned short ModualParms=0;
 static HINSTANCE hinstLib = nullptr;
 
-static void (*GetModuleName)(char *,char *,CARTMENUCALLBACK)=nullptr;
+static void (*GetModuleName)(char *,char *,AppendCartridgeMenuModuleCallback)=nullptr;
 static void (*ConfigModule)(unsigned char)=nullptr;
-static void (*SetInteruptCallPointer)(PAKINTERUPT)=nullptr;
-static void (*DmaMemPointer) (MEMREAD8,MEMWRITE8)=nullptr;
+static void (*SetInteruptCallPointer)(AssertInteruptModuleCallback)=nullptr;
+static void (*DmaMemPointer) (ReadMemoryByteModuleCallback,WriteMemoryByteModuleCallback)=nullptr;
 static void (*HeartBeat)()=nullptr;
 static void (*PakPortWrite)(unsigned char,unsigned char)=nullptr;
 static unsigned char (*PakPortRead)(unsigned char)=nullptr;
@@ -72,7 +59,7 @@ static void (*ModuleStatus)(char *)=nullptr;
 static unsigned short (*ModuleAudioSample)()=nullptr;
 static void (*ModuleReset) ()=nullptr;
 static void (*SetIniPath) (const char *)=nullptr;
-static void (*PakSetCart)(SETCART)=nullptr;
+static void (*PakSetCart)(AssertCartridgeLineModuleCallback)=nullptr;
 static char PakPath[MAX_PATH] = "";
 static char PakName[MAX_PATH] = "";
 
@@ -81,8 +68,6 @@ int FileID(const char *);
 
 static HMENU hVccMenu = nullptr;
 static bool CartMenuCreated = false;
-
-static 	char Modname[MAX_PATH]="Blank";
 
 void PakTimer()
 {
@@ -150,7 +135,7 @@ void PackMem8Write(unsigned short Address,unsigned char Value)
 }
 
 // Convert PAK interrupt assert to CPU assert or Gime assert.
-void (PakAssertInterupt) (unsigned char interrupt, unsigned char source)
+void (PakAssertInterupt) (Interrupt interrupt, InterruptSource source)
 {
 	(void) source; // not used
 
@@ -187,9 +172,9 @@ void BeginCartMenu()
 }
 
 // Callback for loaded cart DLLs. First two entries are reserved
-void CartMenuCallBack(const char *name, int menu_id, int type)
+void CartMenuCallBack(const char *name, int menu_id, MenuItemType type)
 {
-	CartMenu.add(name, menu_id, (MenuItemType) type, 2);
+	CartMenu.add(name, menu_id, type, 2);
 }
 
 int LoadCart()
@@ -216,9 +201,7 @@ int LoadCart()
 int InsertModule (const char *ModulePath)
 {
 	char CatNumber[MAX_LOADSTRING]="";
-	char Temp[MAX_LOADSTRING]="";
-	char String[1024]="";
-	char TempIni[MAX_PATH]="";
+	char Temp[MAX_PATH]="";
 	unsigned char FileType=0;
 
 	FileType=FileID(ModulePath);
@@ -233,8 +216,6 @@ int InsertModule (const char *ModulePath)
 		UnloadDll();
 		load_ext_rom(ModulePath);
 
-		strncpy(Modname,ModulePath,MAX_PATH);
-		PathStripPath(Modname);
 		BeginCartMenu();
 
 		// Reset if enabled
@@ -256,20 +237,20 @@ int InsertModule (const char *ModulePath)
 		BeginCartMenu();
 
 		SetCart(0);
-		GetModuleName=(GETNAME)GetProcAddress(hinstLib, "ModuleName");
-		ConfigModule=(CONFIGIT)GetProcAddress(hinstLib, "ModuleConfig");
-		PakPortWrite=(PACKPORTWRITE) GetProcAddress(hinstLib, "PackPortWrite");
-		PakPortRead=(PACKPORTREAD) GetProcAddress(hinstLib, "PackPortRead");
-		SetInteruptCallPointer=(SETINTERUPTCALLPOINTER)GetProcAddress(hinstLib, "AssertInterupt");
-		DmaMemPointer=(DMAMEMPOINTERS) GetProcAddress(hinstLib, "MemPointers");
-		HeartBeat=(HEARTBEAT) GetProcAddress(hinstLib, "HeartBeat");
-		PakMemWrite8=(MEMWRITE8) GetProcAddress(hinstLib, "PakMemWrite8");
-		PakMemRead8=(MEMREAD8) 	GetProcAddress(hinstLib, "PakMemRead8");
-		ModuleStatus=(MODULESTATUS) GetProcAddress(hinstLib, "ModuleStatus");
-		ModuleAudioSample=(MODULEAUDIOSAMPLE) GetProcAddress(hinstLib, "ModuleAudioSample");
-		ModuleReset=(MODULERESET) GetProcAddress(hinstLib, "ModuleReset");
-		SetIniPath=(SETINIPATH) GetProcAddress(hinstLib,"SetIniPath");
-		PakSetCart=(SETCARTPOINTER) GetProcAddress(hinstLib,"SetCart");
+		GetModuleName=(GetNameModuleFunction)GetProcAddress(hinstLib, "ModuleName");
+		ConfigModule=(OnMenuItemClickedModuleFunction)GetProcAddress(hinstLib, "ModuleConfig");
+		PakPortWrite=(WritePortModuleFunction) GetProcAddress(hinstLib, "PackPortWrite");
+		PakPortRead=(ReadPortModuleFunction) GetProcAddress(hinstLib, "PackPortRead");
+		SetInteruptCallPointer=(SetAssertInterruptCallbackModuleFunction)GetProcAddress(hinstLib, "AssertInterupt");
+		DmaMemPointer=(SetDMACallbacksModuleFunction) GetProcAddress(hinstLib, "MemPointers");
+		HeartBeat=(HeartBeatModuleFunction) GetProcAddress(hinstLib, "HeartBeat");
+		PakMemWrite8=(WriteMemoryByteModuleCallback) GetProcAddress(hinstLib, "PakMemWrite8");
+		PakMemRead8=(ReadMemoryByteModuleCallback) 	GetProcAddress(hinstLib, "PakMemRead8");
+		ModuleStatus=(GetStatusModuleFunction) GetProcAddress(hinstLib, "ModuleStatus");
+		ModuleAudioSample=(SampleAudioModuleFunction) GetProcAddress(hinstLib, "ModuleAudioSample");
+		ModuleReset=(ResetModuleFunction) GetProcAddress(hinstLib, "ModuleReset");
+		SetIniPath=(SetConfigurationPathModuleFunction) GetProcAddress(hinstLib,"SetIniPath");
+		PakSetCart=(SetAssertCartridgeLineCallbackModuleFunction) GetProcAddress(hinstLib,"SetCart");
 		if (GetModuleName == nullptr)
 		{
 			FreeLibrary(hinstLib);
@@ -282,79 +263,19 @@ int InsertModule (const char *ModulePath)
 			DmaMemPointer(MemRead8,MemWrite8);
 		if (SetInteruptCallPointer!=nullptr)
 			SetInteruptCallPointer(PakAssertInterupt);
-		GetModuleName(Modname,CatNumber,CartMenuCallBack);  //Instanciate the menus HERE
-		sprintf(Temp,"Configure %s",Modname);
+		GetModuleName(Temp,Temp,CartMenuCallBack);  //Instanciate the menus HERE
+		
+		if (SetIniPath != nullptr)
+		{
+			GetIniFilePath(Temp);
+			SetIniPath(Temp);
+		}
 
-		strcat(String,"Module Name: ");
-		strcat(String,Modname);
-		strcat(String,"\n");
-		if (ConfigModule!=nullptr)
+		if (PakSetCart != nullptr)
 		{
-			ModualParms|=1;
-			strcat(String,"Has Configurable options\n");
-		}
-		if (PakPortWrite!=nullptr)
-		{
-			ModualParms|=2;
-			strcat(String,"Is IO writable\n");
-		}
-		if (PakPortRead!=nullptr)
-		{
-			ModualParms|=4;
-			strcat(String,"Is IO readable\n");
-		}
-		if (SetInteruptCallPointer!=nullptr)
-		{
-			ModualParms|=8;
-			strcat(String,"Generates Interupts\n");
-		}
-		if (DmaMemPointer!=nullptr)
-		{
-			ModualParms|=16;
-			strcat(String,"Generates DMA Requests\n");
-		}
-		if (HeartBeat!=nullptr)
-		{
-			ModualParms|=32;
-			strcat(String,"Needs Heartbeat\n");
-		}
-		if (ModuleAudioSample!=nullptr)
-		{
-			ModualParms|=64;
-			strcat(String,"Analog Audio Outputs\n");
-		}
-		if (PakMemWrite8!=nullptr)
-		{
-			ModualParms|=128;
-			strcat(String,"Needs ChipSelect Write\n");
-		}
-		if (PakMemRead8!=nullptr)
-		{
-			ModualParms|=256;
-			strcat(String,"Needs ChipSelect Read\n");
-		}
-		if (ModuleStatus!=nullptr)
-		{
-			ModualParms|=512;
-			strcat(String,"Returns Status\n");
-		}
-		if (ModuleReset!=nullptr)
-		{
-			ModualParms|=1024;
-			strcat(String,"Needs Reset Notification\n");
-		}
-		if (SetIniPath!=nullptr)
-		{
-			ModualParms|=2048;
-			GetIniFilePath(TempIni);
-			SetIniPath(TempIni);
-		}
-		if (PakSetCart!=nullptr)
-		{
-			ModualParms|=4096;
-			strcat(String,"Can Assert CART\n");
 			PakSetCart(SetCart);
 		}
+
 		strcpy(DllPath,ModulePath);
 		EmuState.ResetPending=2;
 
@@ -444,7 +365,6 @@ void UnloadPack()
 {
 	UnloadDll();
 	strcpy(DllPath,"");
-	strcpy(Modname,"Blank");
 	RomPackLoaded=false;
 	SetCart(0);
 

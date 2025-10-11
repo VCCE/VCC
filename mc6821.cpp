@@ -123,7 +123,7 @@ static unsigned char rega_dd[4]={0,0,0,0};
 static unsigned char regb_dd[4]={0,0,0,0};
 static unsigned char LeftChannel=0,RightChannel=0;
 static unsigned char Asample=0,Ssample=0,Csample=0;
-static unsigned char CartInserted=0,CartAutoStart=1;
+static bool CartInserted = false, CartAutoStart = true;
 static unsigned char AddLF=0;
 static HANDLE hPrintFile=INVALID_HANDLE_VALUE;
 void CaptureBit(unsigned char);
@@ -416,9 +416,9 @@ unsigned int DACState()
     return hrval;
 }
 
-void SetCart(unsigned char cart)
+void SetCart(bool lineState)
 {
-	CartInserted=cart;
+	CartInserted = lineState;
 	return;
 }
 

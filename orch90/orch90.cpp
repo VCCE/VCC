@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 
 static HINSTANCE g_hinstDLL=nullptr;
 static unsigned char LeftChannel=0,RightChannel=0;
-static void (*PakSetCart)(unsigned char)=nullptr;
+static AssertCartridgeLineModuleCallback PakSetCart = nullptr;
 unsigned char LoadExtRom(const char *);
 static unsigned char Rom[8192];
 BOOL WINAPI DllMain(
@@ -43,7 +43,7 @@ BOOL WINAPI DllMain(
 
 extern "C" 
 {          
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK /*Temp*/)
+	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback /*Temp*/)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
@@ -100,7 +100,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char SetCart(SETCART Pointer)
+	__declspec(dllexport) unsigned char SetCart(AssertCartridgeLineModuleCallback Pointer)
 	{
 		PakSetCart=Pointer;
 

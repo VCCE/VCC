@@ -22,7 +22,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 #include "memboard.h"
 
-static CARTMENUCALLBACK DynamicMenuCallback = nullptr;
+static AppendCartridgeMenuModuleCallback DynamicMenuCallback = nullptr;
 
 
 static HINSTANCE g_hinstDLL;
@@ -42,7 +42,7 @@ BOOL WINAPI DllMain(
 
 extern "C" 
 {          
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,CARTMENUCALLBACK Temp)
+	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
 	{
 		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
