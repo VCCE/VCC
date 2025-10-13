@@ -39,9 +39,14 @@ namespace vcc { namespace core { namespace cartridges
 
 		LIBCOMMON_EXPORT rom_cartridge(
 			AssertCartridgeLineModuleCallback assertCartCallback,
+			name_type name,
+			catalog_id_type catalog_id,
 			buffer_type buffer,
 			bool enable_bank_switching);
 		
+		LIBCOMMON_EXPORT const name_type& name() const override;
+		LIBCOMMON_EXPORT const catalog_id_type& catalog_id() const override;
+
 		LIBCOMMON_EXPORT void reset() override;
 		LIBCOMMON_EXPORT void write_port(unsigned char portId, unsigned char value) override;
 		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memoryAddress) override;
@@ -55,6 +60,8 @@ namespace vcc { namespace core { namespace cartridges
 	private:
 
 		const AssertCartridgeLineModuleCallback assertCartCallback_;
+		const name_type name_;
+		const catalog_id_type catalog_id_;
 		const buffer_type buffer_;
 		const bool enable_bank_switching_;
 		size_type bank_offset_;

@@ -26,6 +26,24 @@
 namespace vcc { namespace core
 {
 
+	namespace
+	{
+
+		std::string extract_filename(std::string name)
+		{
+			name = name.substr(name.find_last_of("/\\") + 1);
+			const auto endIndex = name.find_last_of('.');
+			if (endIndex > 0)
+			{
+				name = name.substr(0, endIndex);
+			}
+
+			return name;
+		}
+
+	}
+
+
 	cartridge_file_type determine_cartridge_type(const std::string& filename)
 	{
 		std::ifstream input(filename, std::ios::binary);
@@ -77,7 +95,12 @@ namespace vcc { namespace core
 
 		return {
 			nullptr,
-			std::make_unique<vcc::core::cartridges::rom_cartridge>(context.assertCartridgeLine, move(romImage), enable_bank_switching),
+			std::make_unique<vcc::core::cartridges::rom_cartridge>(
+				context.assertCartridgeLine,
+				extract_filename(filename),
+				"",
+				move(romImage),
+				enable_bank_switching),
 			cartridge_loader_status::success
 		};
 	}

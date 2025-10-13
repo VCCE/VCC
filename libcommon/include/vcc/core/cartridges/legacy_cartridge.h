@@ -43,6 +43,9 @@ namespace vcc { namespace core { namespace cartridges
 			AssertInteruptModuleCallback assertCallback,
 			AssertCartridgeLineModuleCallback assertCartCallback);
 
+		LIBCOMMON_EXPORT const name_type& name() const override;
+		LIBCOMMON_EXPORT const catalog_id_type& catalog_id() const override;
+
 		LIBCOMMON_EXPORT void reset() override;
 		LIBCOMMON_EXPORT void heartbeat() override;
 		LIBCOMMON_EXPORT void status(char* status) override;
@@ -62,6 +65,8 @@ namespace vcc { namespace core { namespace cartridges
 
 		const HMODULE handle_;
 		const path_type configurationPath_;
+		const name_type name_;
+		const catalog_id_type catalog_id_;
 
 		// callbacks
 		const AppendCartridgeMenuModuleCallback addMenuItemCallback_;
@@ -78,7 +83,6 @@ namespace vcc { namespace core { namespace cartridges
 		const ReadPortModuleFunction read_port_;
 		const ReadMemoryByteModuleFunction read_memory_byte_;
 		const SampleAudioModuleFunction sample_audio_;
-		const BuildMenuModuleFunction build_menu_;
 		const MenuItemClickedModuleFunction menu_item_clicked_;
 	};
 
