@@ -15,69 +15,34 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/core/cartridge.h>
+#include "cartridge_slot.h"
+#include <vcc/core/cartridges/null_cartridge.h>
 
 
-namespace vcc { namespace core
+namespace vcc { namespace modules { namespace mpi
 {
 
-	const cartridge::name_type& cartridge::name() const
-	{
-		static const name_type local_name;
-
-		return local_name;
-	}
-	
-	const cartridge::catalog_id_type& cartridge::catalog_id() const
-	{
-		static const catalog_id_type local_id;
-
-		return local_id;
-	}
-
-
-	void cartridge::start()
-	{
-		initialize_pak();
-		initialize_bus();
-	}
-
-	void cartridge::reset()
+	cartridge_slot::cartridge_slot()
+		: cartridge_(std::make_unique<::vcc::core::cartridges::null_cartridge>())
 	{}
 
-	void cartridge::heartbeat()
+	cartridge_slot::cartridge_slot(path_type path, handle_type handle, cartridge_ptr_type cartridge)
+		:
+		path_(move(path)),
+		handle_(move(handle)),
+		cartridge_(cartridge)
 	{}
 
-	void cartridge::write_port(unsigned char port_id, unsigned char value)
-	{}
 
-	unsigned char cartridge::read_port(unsigned char port_id)
-	{ 
-		return {};
-	}
-
-	unsigned char cartridge::read_memory_byte(unsigned short memory_address)
+	cartridge_slot::label_type cartridge_slot::label() const
 	{
-		return {};
+		std::string text;
+
+		text += cartridge_->name();
+		text += "  ";
+		text += cartridge_->catalog_id();
+
+		return text;
 	}
 
-	void cartridge::status(char* status_text)
-	{
-		*status_text = 0;
-	}
-
-	unsigned short cartridge::sample_audio()
-	{
-		return {};
-	}
-
-	void cartridge::menu_item_clicked(unsigned char menu_item_id)
-	{}
-
-	void cartridge::initialize_pak()
-	{}
-
-	void cartridge::initialize_bus()
-	{}
-
-} }
+} } }

@@ -1,251 +1,283 @@
-/*
-Copyright 2015 by Joseph Forgione
-	This file is part of VCC (Virtual Color Computer).
-
-	VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
-// This is an expansion module for the Vcc Emulator. It simulated the functions of the TRS-80 Multi-Pak Interface
-
-#include <Windows.h>
-#include <iostream>
-#include <vector>
-#include <stdio.h>
+////////////////////////////////////////////////////////////////////////////////
+//	Copyright 2015 by Joseph Forgione
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//	This is an expansion module for the Vcc Emulator. It simulated the functions
+//	of the TRS-80 Multi-Pak Interface.
+// 
+//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	modify it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or (at your
+//	option) any later version.
+//	
+//	VCC (Virtual Color Computer) is distributed in the hope that it will be
+//	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+//	Public License for more details.
+//	
+//	You should have received a copy of the GNU General Public License along with
+//	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////////
+#include "cartridge_slot.h"
 #include "resource.h"
-#include <CommCtrl.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
-#include <vcc/core/interrupts.h>
 #include <vcc/common/logger.h>
+#include <vcc/core/interrupts.h>
+#include <vcc/core/cartridge.h>
 #include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/cartridge_loader.h>
+#include <vcc/core/cartridges/null_cartridge.h>
+#include <vcc/core/utils/winapi.h>
+#include <vcc/core/utils/dll_deleter.h>
+#include <vcc/core/utils/filesystem.h>
 #include <vcc/core/limits.h>
+#include <array>
+#include <iostream>
+#include <vector>
+#include <stdio.h>
+#include <Windows.h>
+#include <CommCtrl.h>
+#include <vcc/core/utils/configuration_serializer.h>
+#include <vcc/core/utils/critical_section.h>
+
+
+using cartridge_loader_status = vcc::core::cartridge_loader_status;
 
 // Number of slots supported. Changing this might require code modification
-#define NUMSLOTS 4
+constexpr size_t NUMSLOTS = 4u;
+constexpr size_t multipak_memory_mapped_control_port_id = 0x7f;
+constexpr std::pair<size_t, size_t> disk_controller_io_port_range = { 0x40, 0x5f };
+
+struct cartridge_slot_details
+{
+	UINT edit_box_id;
+	UINT radio_button_id;
+	UINT insert_button_id;
+	AssertCartridgeLineModuleCallback set_cartridge_line;
+	AppendCartridgeMenuModuleCallback append_menu_item;
+};
 
 // Is a port a disk port?
-#define ISDISKPORT(p) ((p > 0x3F) && (p < 0x60))
+constexpr bool is_disk_controller_port(size_t port)
+{
+	return port >= disk_controller_io_port_range.first && port <= disk_controller_io_port_range.second;
+}
 
-using namespace std;
-static AssertInteruptModuleCallback AssertInt = nullptr;
-static unsigned char (*MemRead8)(unsigned short)=nullptr;
-static void (*MemWrite8)(unsigned char,unsigned short)=nullptr;
+template<size_t SlotIndex_>
+void assert_cartridge_line_on_slot(bool line_state)
+{
+	vcc::core::utils::section_locker lock(gPakMutex);
 
-static AssertCartridgeLineModuleCallback PakSetCart = nullptr;
-static HINSTANCE g_hinstDLL=nullptr;
-static char CatNumber[NUMSLOTS][MAX_LOADSTRING]={"","","",""};
-static char SlotLabel[NUMSLOTS][MAX_LOADSTRING*2]={"Empty","Empty","Empty","Empty"};
-static char ModulePaths[NUMSLOTS][MAX_PATH]={"","","",""};
-static char ModuleNames[NUMSLOTS][MAX_LOADSTRING]={"Empty","Empty","Empty","Empty"};
-static unsigned char *ExtRomPointers[NUMSLOTS]={nullptr,nullptr,nullptr,nullptr};
-static unsigned int BankedCartOffset[NUMSLOTS]={0,0,0,0};
-static char IniFile[MAX_PATH]="";
-static char MPIPath[MAX_PATH];
+	gCartridgeSlots[SlotIndex_].line_state(line_state);
+	if (SpareSelectSlot == SlotIndex_)
+	{
+		PakSetCart(gCartridgeSlots[SlotIndex_].line_state());
+	}
+}
 
-//**************************************************************
-//Array of fuction pointer for each Slot
-static void (*GetModuleNameCalls[NUMSLOTS])(char *,char *,AppendCartridgeMenuModuleCallback)={nullptr,nullptr,nullptr,nullptr};
-static void (*ConfigModuleCalls[NUMSLOTS])(unsigned char)={nullptr,nullptr,nullptr,nullptr};
-static void (*HeartBeatCalls[NUMSLOTS])()={nullptr,nullptr,nullptr,nullptr};
-static void (*PakPortWriteCalls[NUMSLOTS])(unsigned char,unsigned char)={nullptr,nullptr,nullptr,nullptr};
-static unsigned char (*PakPortReadCalls[NUMSLOTS])(unsigned char)={nullptr,nullptr,nullptr,nullptr};
-static void (*PakMemWrite8Calls[NUMSLOTS])(unsigned char,unsigned short)={nullptr,nullptr,nullptr,nullptr};
-static unsigned char (*PakMemRead8Calls[NUMSLOTS])(unsigned short)={nullptr,nullptr,nullptr,nullptr};
-static void (*ModuleStatusCalls[NUMSLOTS])(char *)={nullptr,nullptr,nullptr,nullptr};
-static unsigned short (*ModuleAudioSampleCalls[NUMSLOTS])()={nullptr,nullptr,nullptr,nullptr};
-static void (*ModuleResetCalls[NUMSLOTS]) ()={nullptr,nullptr,nullptr,nullptr};
-//Set callbacks for the DLL to call
-static void (*SetInteruptCallPointerCalls[NUMSLOTS]) ( AssertInteruptModuleCallback)={nullptr,nullptr,nullptr,nullptr};
-static void (*DmaMemPointerCalls[NUMSLOTS]) (ReadMemoryByteModuleCallback,WriteMemoryByteModuleCallback)={nullptr,nullptr,nullptr,nullptr};
-static unsigned short EDITBOXS[4]={IDC_EDIT1,IDC_EDIT2,IDC_EDIT3,IDC_EDIT4};
-static unsigned short RADIOBTN[4]={IDC_SELECT1,IDC_SELECT2,IDC_SELECT3,IDC_SELECT4};
-static unsigned short INSBOXS[4]={IDC_INSERT1,IDC_INSERT2,IDC_INSERT3,IDC_INSERT4};
-std::vector<CartMenuItem> SlotMenu[4] {};
+template<size_t SlotIndex_>
+void append_menu_item_on_slot(const char* text, int id, MenuItemType type)
+{
+	append_menu_item_on_slot(SlotIndex_, { text, static_cast<unsigned int>(id), type });
+}
 
-void UpdateSlotContent(int);
-void UpdateSlotConfig(int);
-void UpdateSlotSelect(int);
+
+void eject_or_select_new_cartridge(size_t slot);
+void menu_item_clicked_for_slot(size_t slot);
+void set_selected_slot(size_t slot);
 void CenterDialog(HWND);
-void SetCartSlot0(bool lineState);
-void SetCartSlot1(bool lineState);
-void SetCartSlot2(bool lineState);
-void SetCartSlot3(bool lineState);
-void BuildCartMenu(void);
-void CartMenuCallback0(const char *,int, MenuItemType);
-void CartMenuCallback1(const char *,int, MenuItemType);
-void CartMenuCallback2(const char *,int, MenuItemType);
-void CartMenuCallback3(const char *,int, MenuItemType);
-void SaveSlotMenuItem(int, CartMenuItem item);
-
-static unsigned char CartForSlot[NUMSLOTS]={0};
-static AssertCartridgeLineModuleCallback SetCarts[NUMSLOTS] = { SetCartSlot0,SetCartSlot1,SetCartSlot2,SetCartSlot3 };
-static AppendCartridgeMenuModuleCallback CartMenuCallbackCalls[NUMSLOTS]={CartMenuCallback0,CartMenuCallback1,CartMenuCallback2,CartMenuCallback3};
-static void (*SetCartCalls[NUMSLOTS])(AssertCartridgeLineModuleCallback)={nullptr};
-
-static void (*SetIniPathCalls[NUMSLOTS]) (const char *)={nullptr};
-static AppendCartridgeMenuModuleCallback CartMenuCallback = nullptr;
-//***************************************************************
-static HINSTANCE hinstLib[NUMSLOTS]={nullptr};
-static unsigned char ChipSelectSlot=3,SpareSelectSlot=3,SwitchSlot=3,SlotRegister=255;
-static HWND hConfDlg=nullptr;
-static HWND hParentWindow=nullptr;
+void build_cartridge_menu();
+void append_menu_item_on_slot(size_t slot, CartMenuItem item);
+void update_slot_ui_elements(size_t slot);
 
 //Function Prototypes for this module
-LRESULT CALLBACK MpiConfigDlg(HWND,UINT,WPARAM,LPARAM);
+LRESULT CALLBACK MpiConfigDlg(HWND, UINT, WPARAM, LPARAM);
 
-unsigned char MountModule(unsigned char,const char *);
-void UnloadModule(unsigned char);
-void UpdateCartDLL(unsigned char slot);
-void LoadConfig();
-void WriteConfig();
-void ReadModuleParms(unsigned char,char *);
-int FileID(const char *);
+void select_new_cartridge(size_t slot);
+cartridge_loader_status mount_cartridge(size_t slot, const std::string& filename);
+void eject_cartridge(size_t slot);
+void load_configuration();
+void save_configuration();
+std::string get_cartridge_description(size_t slot);
+
+static vcc::core::utils::critical_section gPakMutex;
+
+static AssertInteruptModuleCallback AssertInt = [](Interrupt, InterruptSource) {};
+static ReadMemoryByteModuleCallback MemRead8 = [](unsigned short) -> unsigned char { return 0; };
+static WriteMemoryByteModuleCallback MemWrite8 = [](unsigned char, unsigned short) {};
+static AssertCartridgeLineModuleCallback PakSetCart = [](bool) {};
+static AppendCartridgeMenuModuleCallback CartMenuCallback = nullptr;// FIXME: This is only null to account for existing error checking
+
+static HINSTANCE gModuleInstance = nullptr;
+static std::string gConfigurationFilename;
+static std::string gLastAccessedPath;
+
+
+//**************************************************************
+static std::array<vcc::modules::mpi::cartridge_slot, NUMSLOTS> gCartridgeSlots;
+static const std::array<cartridge_slot_details, NUMSLOTS> gAvailableSlotsDetails = { {
+	{ IDC_EDIT1, IDC_SELECT1, IDC_INSERT1, assert_cartridge_line_on_slot<0>, append_menu_item_on_slot<0> },
+	{ IDC_EDIT2, IDC_SELECT2, IDC_INSERT2, assert_cartridge_line_on_slot<1>, append_menu_item_on_slot<1> },
+	{ IDC_EDIT3, IDC_SELECT3, IDC_INSERT3, assert_cartridge_line_on_slot<2>, append_menu_item_on_slot<2> },
+	{ IDC_EDIT4, IDC_SELECT4, IDC_INSERT4, assert_cartridge_line_on_slot<3>, append_menu_item_on_slot<3> }
+} };
+
+//***************************************************************
+static size_t ChipSelectSlot = 3;
+static size_t SpareSelectSlot = 3;
+static size_t SwitchSlot = 3;
+static size_t SlotRegister = 255;
+static HWND gConfigurationDialogHandle = nullptr;
+static HWND gConfigurationParentHandle = nullptr;
+
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD  Reason, LPVOID Reserved)
 {
-	switch (Reason) {
+	switch (Reason)
+	{
 	case DLL_PROCESS_ATTACH:
-		g_hinstDLL = hinstDLL;
+		gModuleInstance = hinstDLL;
 		break;
+
 	case DLL_PROCESS_DETACH:
 		// Close dialog before unloading modules so config is saved
-		CloseCartDialog(hConfDlg);  // defined in DialogOps
-		for (int slot=0;slot<NUMSLOTS;slot++) UnloadModule(slot);
+		CloseCartDialog(gConfigurationDialogHandle);  // defined in DialogOps
+		for (auto slot(0u); slot < gCartridgeSlots.size(); slot++)
+		{
+			eject_cartridge(slot);
+		}
 		break;
 	}
+
 	return TRUE;
 }
 
-void MemWrite(unsigned char Data,unsigned short Address)
-{
-	MemWrite8(Data,Address);
-	return;
-}
-
-unsigned char MemRead(unsigned short Address)
-{
-	return(MemRead8(Address));
-}
 
 extern "C"
 {
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
+	__declspec(dllexport) void ModuleName(
+		char* module_name_buffer,
+		char* catalog_id_buffer,
+		AppendCartridgeMenuModuleCallback append_menu_item_callback)
 	{
-		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
-		CartMenuCallback =Temp;
-		return ;
+		LoadString(gModuleInstance, IDS_MODULE_NAME, module_name_buffer, MAX_LOADSTRING);
+		LoadString(gModuleInstance, IDS_CATNUMBER, catalog_id_buffer, MAX_LOADSTRING);
+		CartMenuCallback = append_menu_item_callback;
 	}
 }
 
 extern "C"
 {
-	__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+	__declspec(dllexport) void ModuleConfig(unsigned char menu_item_id)
 	{
-		if (MenuID == 19) {  //MPI Config
-			if (!hConfDlg)
-				hConfDlg = CreateDialog(g_hinstDLL, (LPCTSTR)IDD_DIALOG1,
-						GetActiveWindow(), (DLGPROC)MpiConfigDlg);
-			ShowWindow(hConfDlg,1);
+		if (menu_item_id == 19)	//MPI Config
+		{
+			if (!gConfigurationDialogHandle)
+			{
+				gConfigurationDialogHandle = CreateDialog(gModuleInstance, (LPCTSTR)IDD_DIALOG1, GetActiveWindow(), (DLGPROC)MpiConfigDlg);
+			}
+
+			ShowWindow(gConfigurationDialogHandle, 1);
 		}
 
+		vcc::core::utils::section_locker lock(gPakMutex);
+
 		//Configs for loaded carts
-		if ( (MenuID>=20) & (MenuID <=40) )
-			ConfigModuleCalls[0](MenuID-20);
+		if (menu_item_id >= 20 && menu_item_id <= 40)
+		{
+			gCartridgeSlots[0].menu_item_clicked(menu_item_id - 20);
+		}
 
-		if ( (MenuID>40) & (MenuID <=60) )
-			ConfigModuleCalls[1](MenuID-40);
+		if (menu_item_id > 40 && menu_item_id <= 60)
+		{
+			gCartridgeSlots[1].menu_item_clicked(menu_item_id - 40);
+		}
 
-		if ( (MenuID>60) & (MenuID <=80) )
-			ConfigModuleCalls[2](MenuID-60);
+		if (menu_item_id > 60 && menu_item_id <= 80)
+		{
+			gCartridgeSlots[2].menu_item_clicked(menu_item_id - 60);
+		}
 
-		if ( (MenuID>80) & (MenuID <=100) )
-			ConfigModuleCalls[3](MenuID-80);
-		return;
+		if (menu_item_id > 80 && menu_item_id <= 100)
+		{
+			gCartridgeSlots[3].menu_item_clicked(menu_item_id - 80);
+		}
 	}
-
 }
 
 // This captures the Function transfer point for the CPU assert interupt
 extern "C"
 {
-	__declspec(dllexport) void AssertInterupt(AssertInteruptModuleCallback Dummy)
+	__declspec(dllexport) void AssertInterupt(AssertInteruptModuleCallback assert_interupt_callback)
 	{
-		AssertInt=Dummy;
-		for (int slot=0;slot<NUMSLOTS;slot++) {
-			if(SetInteruptCallPointerCalls[slot] !=nullptr)
-				SetInteruptCallPointerCalls[slot](AssertInt);
-		}
-		return;
+		AssertInt = assert_interupt_callback;
 	}
 }
 
 extern "C"
 {
-	__declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
+	__declspec(dllexport) void PackPortWrite(unsigned char port_id, unsigned char value)
 	{
-		if (Port == 0x7F) //Multi-Pak selects
+		vcc::core::utils::section_locker lock(gPakMutex);
+
+		if (port_id == multipak_memory_mapped_control_port_id) //Multi-Pak selects
 		{
-			SpareSelectSlot= (Data & 3);          //SCS
-			ChipSelectSlot= ( (Data & 0x30)>>4);  //CTS
-			SlotRegister=Data;
-			PakSetCart(0);
-			if (CartForSlot[SpareSelectSlot]==1)
-				PakSetCart(1);
+			SpareSelectSlot = value & 3;				// SCS
+			ChipSelectSlot = (value & 0x30) >> 4;	// CTS
+			SlotRegister = value;
+
+			PakSetCart(gCartridgeSlots[SpareSelectSlot].line_state());
+
 			return;
 		}
 
 		// Only write disk ports (0x40-0x5F) if SCS is set
-		if (ISDISKPORT(Port)) {
-			BankedCartOffset[SpareSelectSlot]=(Data & 15)<<14;
-			if ( PakPortWriteCalls[SpareSelectSlot] != nullptr)
-				PakPortWriteCalls[SpareSelectSlot](Port,Data);
-		} else {
-			for (int slot=0;slot<NUMSLOTS;slot++)
-				if (PakPortWriteCalls[slot] != nullptr)
-					PakPortWriteCalls[slot](Port,Data);
+		if (is_disk_controller_port(port_id))
+		{
+			gCartridgeSlots[SpareSelectSlot].write_port(port_id, value);
+			return;
 		}
-		return;
+
+		for (const auto& cartridge_slot : gCartridgeSlots)
+		{
+			cartridge_slot.write_port(port_id, value);
+		}
 	}
 }
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+	__declspec(dllexport) unsigned char PackPortRead(unsigned char port_id)
 	{
-		if (Port == 0x7F) { // Self
-			SlotRegister&=0xCC;
-			SlotRegister|=(SpareSelectSlot | (ChipSelectSlot<<4));
-			return SlotRegister;
+		vcc::core::utils::section_locker lock(gPakMutex);
+
+		if (port_id == multipak_memory_mapped_control_port_id)	// Self
+		{
+			SlotRegister &= 0xCC;
+			SlotRegister |= (SpareSelectSlot | (ChipSelectSlot << 4));
+
+			return SlotRegister & 0xff;
 		}
 
 		// Only read disk ports (0x40-0x5F) if SCS is set
-		if (ISDISKPORT(Port)) {
-			if ( PakPortReadCalls[SpareSelectSlot] != nullptr)
-				return(PakPortReadCalls[SpareSelectSlot](Port));
-			else
-				return 0;
+		if (is_disk_controller_port(port_id))
+		{
+			return gCartridgeSlots[SpareSelectSlot].read_port(port_id);
 		}
 
-		for (int slot=0;slot<NUMSLOTS;slot++) {
-			if ( PakPortReadCalls[slot] !=nullptr) {
-				//Return value from first module that returns non zero
-				unsigned char data=PakPortReadCalls[slot](Port);
-				if (data != 0)
-					return data;
+		for (const auto& cartridge_slot : gCartridgeSlots)
+		{
+			// Return value from first module that returns non zero
+			// FIXME: Shouldn't this OR all the values together?
+			const auto data(cartridge_slot.read_port(port_id));
+			if (data != 0)
+			{
+				return data;
 			}
 		}
+
 		return 0;
 	}
 }
@@ -254,63 +286,55 @@ extern "C"
 {
 	__declspec(dllexport) void HeartBeat()
 	{
-		for (int slot=0;slot<NUMSLOTS;slot++)
-			if (HeartBeatCalls[slot] != nullptr)
-				HeartBeatCalls[slot]();
-		return;
+		for(const auto& cartridge_slot : gCartridgeSlots)
+		{
+			vcc::core::utils::section_locker lock(gPakMutex);
+
+			cartridge_slot.heartbeat();
+		}
 	}
 }
 
 //This captures the pointers to the MemRead8 and MemWrite8 functions. This allows the DLL to do DMA xfers with CPU ram.
 extern "C"
 {
-	__declspec(dllexport) void MemPointers(ReadMemoryByteModuleCallback Temp1,WriteMemoryByteModuleCallback Temp2)
+	__declspec(dllexport) void MemPointers(
+		ReadMemoryByteModuleCallback read_memory_byte_callback,
+		WriteMemoryByteModuleCallback write_memory_byte_callback)
 	{
-		MemRead8=Temp1;
-		MemWrite8=Temp2;
-		return;
+		MemRead8 = read_memory_byte_callback;
+		MemWrite8 = write_memory_byte_callback;
 	}
 }
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
+	__declspec(dllexport) unsigned char PakMemRead8(unsigned short memory_address)
 	{
-		if (ExtRomPointers[ChipSelectSlot] != nullptr)
-			return(ExtRomPointers[ChipSelectSlot][(Address & 32767)+BankedCartOffset[ChipSelectSlot]]); //Bank Select ???
-		if (PakMemRead8Calls[ChipSelectSlot] != nullptr)
-			return(PakMemRead8Calls[ChipSelectSlot](Address));
+		vcc::core::utils::section_locker lock(gPakMutex);
 
-		return 0;
+		return gCartridgeSlots[ChipSelectSlot].read_memory_byte(memory_address);
 	}
 }
 
 extern "C"
 {
-	__declspec(dllexport) void PakMemWrite8(unsigned char /*Data*/,unsigned short /*Address*/)
+	__declspec(dllexport) void ModuleStatus(char* status_buffer)
 	{
+		char TempStatus[64] = "";
 
-		return;
-	}
-}
-
-extern "C"
-{
-	__declspec(dllexport) void ModuleStatus(char *MyStatus)
-	{
-		char TempStatus[64]="";
-		sprintf(MyStatus,"MPI:%d,%d",ChipSelectSlot+1,SpareSelectSlot+1);
-		for (int slot=0;slot<NUMSLOTS;slot++)
+		sprintf(status_buffer, "MPI:%d,%d", ChipSelectSlot + 1, SpareSelectSlot + 1);
+		for (const auto& cartridge_slot : gCartridgeSlots)
 		{
-			strcpy(TempStatus,"");
-			if (ModuleStatusCalls[slot] != nullptr)
+			strcpy(TempStatus, "");
+			vcc::core::utils::section_locker lock(gPakMutex);
+			cartridge_slot.status(TempStatus);
+			if (TempStatus[0])
 			{
-				ModuleStatusCalls[slot](TempStatus);
-				strcat(MyStatus," | ");
-				strcat(MyStatus,TempStatus);
+				strcat(status_buffer, " | ");
+				strcat(status_buffer, TempStatus);
 			}
 		}
-		return ;
 	}
 }
 
@@ -319,522 +343,377 @@ extern "C"
 {
 	__declspec(dllexport) unsigned short ModuleAudioSample()
 	{
-		unsigned short TempSample=0;
-		for (int slot=0;slot<NUMSLOTS;slot++)
-			if (ModuleAudioSampleCalls[slot] != nullptr)
-				TempSample+=ModuleAudioSampleCalls[slot]();
+		unsigned short sample = 0;
+		for (const auto& cartridge_slot : gCartridgeSlots)
+		{
+			vcc::core::utils::section_locker lock(gPakMutex);
 
-		return TempSample ;
+			sample += cartridge_slot.sample_audio();
+		}
+
+		return sample;
 	}
 }
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char ModuleReset ()
+	__declspec(dllexport) unsigned char ModuleReset()
 	{
-		ChipSelectSlot=SwitchSlot;
-		SpareSelectSlot=SwitchSlot;
-		for (int slot=0;slot<NUMSLOTS;slot++)
-		{
-			BankedCartOffset[slot]=0; //Do I need to keep independant selects?
+		vcc::core::utils::section_locker lock(gPakMutex);
 
-			if (ModuleResetCalls[slot] != nullptr)
-				ModuleResetCalls[slot]();
+		ChipSelectSlot = SwitchSlot;
+		SpareSelectSlot = SwitchSlot;
+		for (const auto& cartridge_slot : gCartridgeSlots)
+		{
+			cartridge_slot.reset();
 		}
-		if (PakSetCart != nullptr) {
-			PakSetCart(0);
-			if (CartForSlot[SpareSelectSlot]==1)
-				PakSetCart(1);
-		}
+
+		PakSetCart(gCartridgeSlots[SpareSelectSlot].line_state());
+
 		return 0;
 	}
 }
 
 extern "C"
 {
-	__declspec(dllexport) void SetIniPath (const char *IniFilePath)
+	__declspec(dllexport) void SetIniPath(const char* configuration_path)
 	{
-		strcpy(IniFile,IniFilePath);
-		LoadConfig();
-		return;
+		gConfigurationFilename = configuration_path;
+		load_configuration();
 	}
 }
 
 extern "C"
 {
-	__declspec(dllexport) void SetCart(AssertCartridgeLineModuleCallback Pointer)
+	__declspec(dllexport) void SetCart(AssertCartridgeLineModuleCallback callback)
 	{
-		PakSetCart=Pointer;
-		return;
+		PakSetCart = callback;
 	}
 }
 
 void CenterDialog(HWND hDlg)
 {
-	RECT rPar, rDlg;
+	RECT rPar;
 	GetWindowRect(GetParent(hDlg), &rPar);
+
+	RECT rDlg;
 	GetWindowRect(hDlg, &rDlg);
-	int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
-	int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
+
+	const auto x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
+	const auto y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
 	SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 LRESULT CALLBACK MpiConfigDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
-
-	switch (message) {
+	switch (message)
+	{
 	case WM_CLOSE:
-		WriteConfig();
+		save_configuration();
 		DestroyWindow(hDlg);
-		hConfDlg=nullptr;
+		gConfigurationDialogHandle = nullptr;
 		return TRUE;
+
 	case WM_INITDIALOG:
-		hParentWindow = GetParent(hDlg);
+		gConfigurationParentHandle = GetParent(hDlg);
 		CenterDialog(hDlg);
-		hConfDlg=hDlg;
-		for (int Slot=0;Slot<NUMSLOTS;Slot++) {
-			SendDlgItemMessage(hDlg,EDITBOXS[Slot],WM_SETTEXT,0,(LPARAM)SlotLabel[Slot]);
-			if ((strcmp(ModuleNames[Slot],"Empty") != 0) || hinstLib[Slot])
-				SendDlgItemMessage(hDlg,INSBOXS[Slot],WM_SETTEXT,0,(LPARAM)"X");
-			else
-				SendDlgItemMessage(hDlg,INSBOXS[Slot],WM_SETTEXT,0,(LPARAM)">");
+		gConfigurationDialogHandle = hDlg;
+		for (int slot = 0; slot < NUMSLOTS; slot++)
+		{
+			update_slot_ui_elements(slot);
 		}
-		UpdateSlotSelect(SwitchSlot);
+
+		set_selected_slot(SwitchSlot);
 		return TRUE;
 
 	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
+		switch (LOWORD(wParam))
+		{
 		case IDC_SELECT1:
-			UpdateSlotSelect(0);
+			set_selected_slot(0);
 			return TRUE;
 		case IDC_SELECT2:
-			UpdateSlotSelect(1);
+			set_selected_slot(1);
 			return TRUE;
 		case IDC_SELECT3:
-			UpdateSlotSelect(2);
+			set_selected_slot(2);
 			return TRUE;
 		case IDC_SELECT4:
-			UpdateSlotSelect(3);
+			set_selected_slot(3);
 			return TRUE;
 		case IDC_INSERT1:
-			UpdateSlotContent(0);
+			eject_or_select_new_cartridge(0);
 			return TRUE;
 		case IDC_INSERT2:
-			UpdateSlotContent(1);
+			eject_or_select_new_cartridge(1);
 			return TRUE;
 		case IDC_INSERT3:
-			UpdateSlotContent(2);
+			eject_or_select_new_cartridge(2);
 			return TRUE;
 		case IDC_INSERT4:
-			UpdateSlotContent(3);
+			eject_or_select_new_cartridge(3);
 			return TRUE;
 		case ID_CONFIG1:
-			UpdateSlotConfig(0);
+			menu_item_clicked_for_slot(0);
 			return TRUE;
 		case ID_CONFIG2:
-			UpdateSlotConfig(1);
+			menu_item_clicked_for_slot(1);
 			return TRUE;
 		case ID_CONFIG3:
-			UpdateSlotConfig(2);
+			menu_item_clicked_for_slot(2);
 			return TRUE;
 		case ID_CONFIG4:
-			UpdateSlotConfig(3);
+			menu_item_clicked_for_slot(3);
 			return TRUE;
 		} // End switch LOWORD
 		break;
 	} // End switch message
+
 	return FALSE;
 }
 
-void UpdateSlotSelect(int slot)
+void set_selected_slot(size_t slot)
 {
-	char ConfigText[1024]="";
-	ReadModuleParms(slot,ConfigText);
-	SendDlgItemMessage(hConfDlg,IDC_MODINFO,WM_SETTEXT,0,(LPARAM)(LPCSTR)ConfigText);
+	SendDlgItemMessage(
+		gConfigurationDialogHandle,
+		IDC_MODINFO,
+		WM_SETTEXT,
+		0,
+		(LPARAM)get_cartridge_description(slot).c_str());
 
-	for (int ndx=0;ndx<4;ndx++) {
-		if (ndx==slot) {
-			SendDlgItemMessage(hConfDlg, RADIOBTN[ndx], BM_SETCHECK, 1, 0);
-		} else {
-			SendDlgItemMessage(hConfDlg, RADIOBTN[ndx], BM_SETCHECK, 0, 0);
-		}
+	for (auto ndx(0u); ndx < gAvailableSlotsDetails.size(); ndx++)
+	{
+		SendDlgItemMessage(
+			gConfigurationDialogHandle,
+			gAvailableSlotsDetails[ndx].radio_button_id,
+			BM_SETCHECK,
+			ndx == slot,
+			0);
 	}
+
+	vcc::core::utils::section_locker lock(gPakMutex);
+
 	SwitchSlot = slot;
 	SpareSelectSlot = slot;
 	ChipSelectSlot = slot;
-	if (CartForSlot[slot]==1)
-		PakSetCart(1);
-	else
-		PakSetCart(0);
+
+	PakSetCart(gCartridgeSlots[slot].line_state());
 }
 
-void UpdateSlotContent(int Slot)
+void eject_or_select_new_cartridge(size_t slot)
 {
 	// Disable Slot changes if parent is disabled.  This prevents user using the
 	// config dialog to eject a cartridge while VCC main is using a modal dialog
 	// Otherwise user can crash VCC by unloading a disk cart while inserting a disk
-	if (!IsWindowEnabled(hParentWindow)) {
-		MessageBox(hConfDlg,"Cannot change slot content with dialog open","ERROR",MB_ICONERROR);
+	if (!IsWindowEnabled(gConfigurationParentHandle))
+	{
+		MessageBox(gConfigurationDialogHandle, "Cannot change slot content with dialog open", "ERROR", MB_ICONERROR);
 		return;
 	}
 
-	UpdateCartDLL(Slot);
-	SendDlgItemMessage(hConfDlg,EDITBOXS[Slot],WM_SETTEXT,0,(LPARAM)SlotLabel[Slot]);
-	if ((strcmp(ModuleNames[Slot],"Empty") != 0) || hinstLib[Slot])
-		SendDlgItemMessage(hConfDlg,INSBOXS[Slot],WM_SETTEXT,0,(LPARAM)"X");
-	else
-		SendDlgItemMessage(hConfDlg,INSBOXS[Slot],WM_SETTEXT,0,(LPARAM)">");
-	BuildCartMenu();
-	return;
-}
-
-void UpdateSlotConfig(int slot)
-{
-	if (ConfigModuleCalls[slot] != nullptr)
-		ConfigModuleCalls[slot](0);
-}
-
-unsigned char MountModule(unsigned char Slot,const char *ModuleName)
-{
-	unsigned int index=0;
-	FILE *rom_handle;
-	if (Slot>3)
-		return 0;
-
-	// Copy ModuleName otherwise UnloadModule() will change it.
-	char MountName[MAX_PATH]="";
-	strcpy(MountName,ModuleName);
-
-	unsigned char ModuleType = FileID(MountName);
-
-	switch (ModuleType)
+	if (!gCartridgeSlots[slot].empty())
 	{
-	case 0: //File doesn't exist
-		return 0;
-
-	case 2: //ROM image
-		UnloadModule(Slot);
-		ExtRomPointers[Slot]=(unsigned char *)malloc(0x40000);
-		if (ExtRomPointers[Slot]==nullptr)
-		{
-			MessageBox(nullptr,"Rom pointer is NULL","Error",0);
-			return 0; //Can Allocate RAM
-		}
-		rom_handle=fopen(MountName,"rb");
-		if (rom_handle==nullptr)
-		{
-			MessageBox(nullptr,"File handle is NULL","Error",0);
-			return 0;
-		}
-		while ((feof(rom_handle)==0) & (index<0x40000))
-			ExtRomPointers[Slot][index++]=fgetc(rom_handle);
-		fclose(rom_handle);
-		strcpy(ModulePaths[Slot],MountName);
-		PathStripPath(MountName);
-		PathRemoveExtension(MountName);
-		strcpy(ModuleNames[Slot],MountName);
-		strcpy(SlotLabel[Slot],MountName); //JF
-		CartForSlot[Slot]=1;
-		return 1;
-
-	case 1:	//DLL File
-		UnloadModule(Slot);
-		strcpy(ModulePaths[Slot],MountName);
-		hinstLib[Slot] = LoadLibrary(MountName);
-		if (hinstLib[Slot]==nullptr)
-			return 0;	//Error Can't open File
-		if (hinstLib[Slot] == g_hinstDLL) {
-			MessageBox(hConfDlg,"Can not insert MPI into a slot","ERROR",MB_ICONERROR);
-			UnloadModule(Slot);
-			return 0;
-		}
-		GetModuleNameCalls[Slot] = (GetNameModuleFunction)GetProcAddress(hinstLib[Slot], "ModuleName");
-		ConfigModuleCalls[Slot] = (MenuItemClickedModuleFunction)GetProcAddress(hinstLib[Slot], "ModuleConfig");
-		PakPortWriteCalls[Slot] = (WritePortModuleFunction)GetProcAddress(hinstLib[Slot], "PackPortWrite");
-		PakPortReadCalls[Slot] = (ReadPortModuleFunction)GetProcAddress(hinstLib[Slot], "PackPortRead");
-		SetInteruptCallPointerCalls[Slot] = (SetAssertInterruptCallbackModuleFunction)GetProcAddress(hinstLib[Slot], "AssertInterupt");
-
-		DmaMemPointerCalls[Slot] = (SetDMACallbacksModuleFunction)GetProcAddress(hinstLib[Slot], "MemPointers");
-		SetCartCalls[Slot] = (SetAssertCartridgeLineCallbackModuleFunction)GetProcAddress(hinstLib[Slot], "SetCart"); //HERE
-
-		HeartBeatCalls[Slot] = (HeartBeatModuleFunction)GetProcAddress(hinstLib[Slot], "HeartBeat");
-		PakMemWrite8Calls[Slot] = (WriteMemoryByteModuleCallback)GetProcAddress(hinstLib[Slot], "PakMemWrite8");
-		PakMemRead8Calls[Slot] = (ReadMemoryByteModuleCallback)GetProcAddress(hinstLib[Slot], "PakMemRead8");
-		ModuleStatusCalls[Slot] = (GetStatusModuleFunction)GetProcAddress(hinstLib[Slot], "ModuleStatus");
-		ModuleAudioSampleCalls[Slot] = (SampleAudioModuleFunction)GetProcAddress(hinstLib[Slot], "ModuleAudioSample");
-		ModuleResetCalls[Slot] = (ResetModuleFunction)GetProcAddress(hinstLib[Slot], "ModuleReset");
-		SetIniPathCalls[Slot] = (SetConfigurationPathModuleFunction)GetProcAddress(hinstLib[Slot], "SetIniPath");
-
-		if (GetModuleNameCalls[Slot] == nullptr)
-		{
-			UnloadModule(Slot);
-			MessageBox(nullptr,"Not a valid Module","Ok",0);
-			return 0; //Error Not a Vcc Module
-		}
-		//Set address of local Dynamic menu callback function.
-		GetModuleNameCalls[Slot](ModuleNames[Slot],CatNumber[Slot],CartMenuCallbackCalls[Slot]);
-		strcpy(SlotLabel[Slot],ModuleNames[Slot]);
-		strcat(SlotLabel[Slot],"  ");
-		strcat(SlotLabel[Slot],CatNumber[Slot]);
-
-		if (SetInteruptCallPointerCalls[Slot] !=nullptr)
-			SetInteruptCallPointerCalls[Slot](AssertInt);
-		if (DmaMemPointerCalls[Slot] !=nullptr)
-			DmaMemPointerCalls[Slot](MemRead8,MemWrite8);
-		if (SetIniPathCalls[Slot] != nullptr)
-			SetIniPathCalls[Slot](IniFile);
-		//Transfer the address of the SetCart routine to the pak
-		//There is one for each slot se we know where it came from
-		if (SetCartCalls[Slot] !=nullptr)
-			SetCartCalls[Slot](*SetCarts[Slot]);
-		if (ModuleResetCalls[Slot]!=nullptr)
-			ModuleResetCalls[Slot]();
-		return 1;
+		eject_cartridge(slot);
 	}
-	return 0;
+	else
+	{
+		select_new_cartridge(slot);
+	}
+
+	update_slot_ui_elements(slot);
+	build_cartridge_menu();
 }
 
-void UnloadModule(unsigned char Slot)
+void menu_item_clicked_for_slot(size_t slot)
 {
-	GetModuleNameCalls[Slot]=nullptr;
-	ConfigModuleCalls[Slot]=nullptr;
-	PakPortWriteCalls[Slot]=nullptr;
-	PakPortReadCalls[Slot]=nullptr;
-	SetInteruptCallPointerCalls[Slot]=nullptr;
-	DmaMemPointerCalls[Slot]=nullptr;
-	HeartBeatCalls[Slot]=nullptr;
-	PakMemWrite8Calls[Slot]=nullptr;
-	PakMemRead8Calls[Slot]=nullptr;
-	ModuleStatusCalls[Slot]=nullptr;
-	ModuleAudioSampleCalls[Slot]=nullptr;
-	ModuleResetCalls[Slot]=nullptr;
-	SetIniPathCalls[Slot]=nullptr;
-	strcpy(ModulePaths[Slot],"");
-	strcpy(ModuleNames[Slot],"Empty");
-	strcpy(CatNumber[Slot],"");
-	strcpy(SlotLabel[Slot],"Empty");
-	if (ExtRomPointers[Slot] !=nullptr)
-		free(ExtRomPointers[Slot]);
-	ExtRomPointers[Slot]=nullptr;
-	SlotMenu[Slot].clear();
-	CartForSlot[Slot]=0;
-	if (hinstLib[Slot] !=nullptr)
-		FreeLibrary(hinstLib[Slot]);
-	hinstLib[Slot]=nullptr;
-	return;
+	vcc::core::utils::section_locker lock(gPakMutex);
+
+	gCartridgeSlots[slot].menu_item_clicked(0);
 }
 
-void UpdateCartDLL(unsigned char Slot)
+cartridge_loader_status mount_cartridge(size_t slot, const std::string& filename)
 {
-	if ((strcmp(ModuleNames[Slot],"Empty") != 0) || hinstLib[Slot]) {
-		UnloadModule(Slot);
-	} else {
-		FileDialog dlg;
-		dlg.setTitle("Load Program Pack");
-		dlg.setInitialDir(MPIPath);
-		dlg.setFilter("All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0");
-		dlg.setFlags(OFN_FILEMUSTEXIST);
-		if (dlg.show(0,hConfDlg)) {
-			MountModule(Slot,dlg.path());
-			dlg.getdir(MPIPath);
+	auto loadedCartridge(vcc::core::load_cartridge(
+		{
+			gAvailableSlotsDetails[slot].append_menu_item,
+			MemRead8,
+			MemWrite8,
+			AssertInt,
+			gAvailableSlotsDetails[slot].set_cartridge_line
+		},
+		filename,
+		gConfigurationFilename));
+	if (loadedCartridge.load_result != cartridge_loader_status::success)
+	{
+		return loadedCartridge.load_result;
+	}
+
+	vcc::core::utils::section_locker lock(gPakMutex);
+
+	gCartridgeSlots[slot] = {
+		filename,
+		move(loadedCartridge.handle),
+		move(loadedCartridge.cartridge)
+	};
+
+	gCartridgeSlots[slot].start();
+	gCartridgeSlots[slot].reset();
+
+	build_cartridge_menu();
+
+	return loadedCartridge.load_result;
+}
+
+void eject_cartridge(size_t slot)
+{
+	vcc::core::utils::section_locker lock(gPakMutex);
+
+	gCartridgeSlots[slot] = {};
+}
+
+void select_new_cartridge(size_t slot)
+{
+	FileDialog dlg;
+	dlg.setTitle("Load Program Pak");
+	dlg.setInitialDir(gLastAccessedPath.c_str());
+	dlg.setFilter(
+		"All Pak Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
+		"Hardware Pak (*.dll)\0*.dll\0"
+		"Rom Pak (*.rom; *.ccc; *.pak)\0*.rom;*.ccc;*.pak\0"
+		"\0");
+	dlg.setFlags(OFN_FILEMUSTEXIST);
+	if (dlg.show(0, gConfigurationDialogHandle))
+	{
+		eject_cartridge(slot);
+
+		if (mount_cartridge(slot, dlg.path()) == cartridge_loader_status::success)
+		{
+			gLastAccessedPath = ::vcc::core::utils::get_directory_from_path(dlg.path());
 		}
 	}
-	return;
 }
 
-void LoadConfig()
+void load_configuration()
 {
-	// Get the module name from this DLL (MPI)
-	char ModName[MAX_LOADSTRING]="";
-	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	const auto section(::vcc::core::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
+	::vcc::core::configuration_serializer serializer(gConfigurationFilename);
 
 	// Get default paths for modules
-	GetPrivateProfileString("DefaultPaths", "MPIPath", "", MPIPath, MAX_PATH, IniFile);
+	gLastAccessedPath = serializer.read("DefaultPaths", "MPIPath");
 
 	// Get the startup slot and set Chip select and SCS slots from ini file
-	SwitchSlot=GetPrivateProfileInt(ModName,"SWPOSITION",3,IniFile);
-	ChipSelectSlot=SwitchSlot;
-	SpareSelectSlot=SwitchSlot;
-
-	// Get saved path names for modules loaded in slots from ini file
-	GetPrivateProfileString(ModName,"SLOT1","",ModulePaths[0],MAX_PATH,IniFile);
-	CheckPath(ModulePaths[0]);
-	GetPrivateProfileString(ModName,"SLOT2","",ModulePaths[1],MAX_PATH,IniFile);
-	CheckPath(ModulePaths[1]);
-	GetPrivateProfileString(ModName,"SLOT3","",ModulePaths[2],MAX_PATH,IniFile);
-	CheckPath(ModulePaths[2]);
-	GetPrivateProfileString(ModName,"SLOT4","",ModulePaths[3],MAX_PATH,IniFile);
-	CheckPath(ModulePaths[3]);
+	SwitchSlot = serializer.read(::vcc::core::utils::load_string(gModuleInstance, IDS_MODULE_NAME), "SWPOSITION", 3);
+	ChipSelectSlot = SwitchSlot;
+	SpareSelectSlot = SwitchSlot;
 
 	// Mount them
-	for (int slot=0;slot<NUMSLOTS;slot++)
-		if (*ModulePaths[slot] != '\0')
-			MountModule(slot,ModulePaths[slot]);
-
-	// Build the dynamic menu
-	BuildCartMenu();
-	return;
-}
-
-void WriteConfig()
-{
-	char ModName[MAX_LOADSTRING]="";
-	if (strcmp(MPIPath, "") != 0) {
-		WritePrivateProfileString("DefaultPaths", "MPIPath", MPIPath, IniFile);
-	}
-	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	WritePrivateProfileInt(ModName,"SWPOSITION",SwitchSlot,IniFile);
-	ValidatePath(ModulePaths[0]);
-	WritePrivateProfileString(ModName,"SLOT1",ModulePaths[0],IniFile);
-	ValidatePath(ModulePaths[1]);
-	WritePrivateProfileString(ModName,"SLOT2",ModulePaths[1],IniFile);
-	ValidatePath(ModulePaths[2]);
-	WritePrivateProfileString(ModName,"SLOT3",ModulePaths[2],IniFile);
-	ValidatePath(ModulePaths[3]);
-	WritePrivateProfileString(ModName,"SLOT4",ModulePaths[3],IniFile);
-	return;
-}
-
-void ReadModuleParms(unsigned char Slot,char *String)
-{
-	strcat(String,"Module Name: ");
-	strcat(String,ModuleNames[Slot]);
-
-	strcat(String,"\r\n-----------------------------------------\r\n");
-
-	if (ConfigModuleCalls[Slot]!=nullptr)
-		strcat(String,"Has Configurable options\r\n");
-
-	if (SetIniPathCalls[Slot]!=nullptr)
-		strcat(String,"Saves Config Info\r\n");
-
-	if (PakPortWriteCalls[Slot]!=nullptr)
-		strcat(String,"Is IO writable\r\n");
-
-	if (PakPortReadCalls[Slot]!=nullptr)
-		strcat(String,"Is IO readable\r\n");
-
-	if (SetInteruptCallPointerCalls[Slot]!=nullptr)
-		strcat(String,"Generates Interupts\r\n");
-
-	if (DmaMemPointerCalls[Slot]!=nullptr)
-		strcat(String,"Generates DMA Requests\r\n");
-
-	if (HeartBeatCalls[Slot]!=nullptr)
-		strcat(String,"Needs Heartbeat\r\n");
-
-	if (ModuleAudioSampleCalls[Slot]!=nullptr)
-		strcat(String,"Analog Audio Outputs\r\n");
-
-	if (PakMemWrite8Calls[Slot]!=nullptr)
-		strcat(String,"Needs CS Write\r\n");
-
-	if (PakMemRead8Calls[Slot]!=nullptr)
-		strcat(String,"Needs CS Read (onboard ROM)\r\n");
-
-	if (ModuleStatusCalls[Slot]!=nullptr)
-		strcat(String,"Returns Status\r\n");
-
-	if (ModuleResetCalls[Slot]!=nullptr)
-		strcat(String,"Needs Reset Notification\r\n");
-
-	return;
-}
-
-// The e_magic field in the MS-DOS header) of a PE file contains the ASCII
-// characters "MZ". If file is a PE file then assume it is a DLL.
-// This could break in some future windows version.
-int FileID(const char *Filename)
-{
-	FILE *DummyHandle=nullptr;
-	char Temp[3]="";
-	DummyHandle=fopen(Filename,"rb");
-	if (DummyHandle==nullptr)
-		return 0;	//File Doesn't exist
-	Temp[0]=fgetc(DummyHandle);
-	Temp[1]=fgetc(DummyHandle);
-	Temp[2]=0;
-	fclose(DummyHandle);
-	if (strcmp(Temp,"MZ")==0)
-		return 1;	//DLL File
-	return 2;		//Rom Image
-}
-
-void SetCartSlot0(bool lineState)
-{
-	CartForSlot[0] = lineState;
-}
-
-void SetCartSlot1(bool lineState)
-{
-	CartForSlot[1] = lineState;
-}
-
-void SetCartSlot2(bool lineState)
-{
-	CartForSlot[2] = lineState;
-}
-
-void SetCartSlot3(bool lineState)
-{
-	CartForSlot[3] = lineState;
-}
-
-// This gets called any time a cartridge menu is changed. It draws the entire menu.
-void BuildCartMenu()
-{
-	// Make sure we have access
-	if (CartMenuCallback == nullptr) {
-		MessageBox(nullptr,"MPI internal menu error","Ok",0);
-		return;
-	}
-	// Init the menu, establish MPI config control, build slot menus, then draw it.
-	CartMenuCallback("",MID_BEGIN,MIT_Head);
-	CartMenuCallback("",MID_ENTRY,MIT_Seperator);
-	CartMenuCallback("MPI Config",ControlId(19),MIT_StandAlone);
-	for (int slot = 3; slot >= 0; slot--) {
-		for (CartMenuItem item : SlotMenu[slot]) {
-			CartMenuCallback(item.name.c_str(),item.menu_id,item.type);
+	for (auto slot(0u); slot < gCartridgeSlots.size(); slot++)
+	{
+		const auto path(vcc::core::utils::find_pak_module_path(serializer.read(section, "SLOT" + std::to_string(slot + 1))));
+		if (!path.empty())
+		{
+			mount_cartridge(slot, path);
 		}
 	}
-	CartMenuCallback("",MID_FINISH,MIT_Head);  // Finish draws the entire menu
+
+	// Build the dynamic menu
+	build_cartridge_menu();
+}
+
+void save_configuration()
+{
+	const auto section(vcc::core::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
+	::vcc::core::configuration_serializer serializer(gConfigurationFilename);
+
+	serializer.write("DefaultPaths", "MPIPath", gLastAccessedPath);
+	serializer.write(section, "SWPOSITION", SwitchSlot);
+	for (auto slot(0u); slot < gCartridgeSlots.size(); slot++)
+	{
+		serializer.write(
+			section,
+			"SLOT" + ::std::to_string(slot + 1),
+			vcc::core::utils::strip_application_path(gCartridgeSlots[slot].path()));
+	}
+}
+
+std::string get_cartridge_description(size_t slot)
+{
+	vcc::core::utils::section_locker lock(gPakMutex);
+
+	return "Module Name: " + gCartridgeSlots[slot].name();
+}
+
+
+// This gets called any time a cartridge menu is changed. It draws the entire menu.
+void build_cartridge_menu()
+{
+	// Make sure we have access
+	if (CartMenuCallback == nullptr)
+	{
+		MessageBox(nullptr, "MPI internal menu error", "Ok", 0);
+		return;
+	}
+
+	vcc::core::utils::section_locker lock(gPakMutex);
+
+	// Init the menu, establish MPI config control, build slot menus, then draw it.
+	CartMenuCallback("", MID_BEGIN, MIT_Head);
+	CartMenuCallback("", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback("MPI Config", ControlId(19), MIT_StandAlone);
+	for (int slot = 3; slot >= 0; slot--)
+	{
+		gCartridgeSlots[slot].enumerate_menu_items(CartMenuCallback);
+	}
+	CartMenuCallback("", MID_FINISH, MIT_Head);  // Finish draws the entire menu
 }
 
 // Save cart Menu items into containers per slot
-void SaveSlotMenuItem(int slot,CartMenuItem item)
+void append_menu_item_on_slot(size_t slot, CartMenuItem item)
 {
 	switch (item.menu_id) {
 	case MID_BEGIN:
-		SlotMenu[slot].clear();
+		{
+			vcc::core::utils::section_locker lock(gPakMutex);
+
+			gCartridgeSlots[slot].reset_menu();
+		}
 		break;
+
 	case MID_FINISH:
-		BuildCartMenu();
+		build_cartridge_menu();
 		break;
+
 	default:
 		// Add 20 times the slot number to control id's
-		if (item.menu_id >= MID_CONTROL) item.menu_id += (slot+1) * 20;
-		SlotMenu[slot].push_back(item);
+		if (item.menu_id >= MID_CONTROL)
+		{
+			item.menu_id += (slot + 1) * 20;
+		}
+		{
+			vcc::core::utils::section_locker lock(gPakMutex);
+
+			gCartridgeSlots[slot].append_menu_item(item);
+		}
 		break;
 	}
 }
 
-void CartMenuCallback0(const char* MenuName, int MenuId, MenuItemType Type)
-{
-	SaveSlotMenuItem(0, { MenuName,static_cast<unsigned int>(MenuId),Type });
-}
 
-void CartMenuCallback1(const char* MenuName, int MenuId, MenuItemType Type)
+void update_slot_ui_elements(size_t slot)
 {
-	SaveSlotMenuItem(1, { MenuName,static_cast<unsigned int>(MenuId),Type });
-}
+	vcc::core::utils::section_locker lock(gPakMutex);
 
-void CartMenuCallback2(const char* MenuName, int MenuId, MenuItemType Type)
-{
-	SaveSlotMenuItem(2, { MenuName,static_cast<unsigned int>(MenuId),Type });
-}
+	SendDlgItemMessage(
+		gConfigurationDialogHandle,
+		gAvailableSlotsDetails[slot].edit_box_id,
+		WM_SETTEXT,
+		0,
+		reinterpret_cast<LPARAM>(gCartridgeSlots[slot].label().c_str()));
 
-void CartMenuCallback3(const char* MenuName, int MenuId, MenuItemType Type)
-{
-	SaveSlotMenuItem(3, { MenuName,static_cast<unsigned int>(MenuId),Type });
+	SendDlgItemMessage(
+		gConfigurationDialogHandle,
+		gAvailableSlotsDetails[slot].insert_button_id,
+		WM_SETTEXT,
+		0,
+		reinterpret_cast<LPARAM>(gCartridgeSlots[slot].empty() ? "..." : "X"));
 }
-

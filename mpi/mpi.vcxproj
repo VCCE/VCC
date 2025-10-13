@@ -93,9 +93,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cartridge_slot.cpp" />
     <ClCompile Include="mpi.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cartridge_slot.h" />
     <ClInclude Include="mpi.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
