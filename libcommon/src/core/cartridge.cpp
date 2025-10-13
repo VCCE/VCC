@@ -21,6 +21,21 @@
 namespace vcc { namespace core
 {
 
+	const cartridge::name_type& cartridge::name() const
+	{
+		static const name_type local_name;
+
+		return local_name;
+	}
+	
+	const cartridge::catalog_id_type& cartridge::catalog_id() const
+	{
+		static const catalog_id_type local_id;
+
+		return local_id;
+	}
+
+
 	void cartridge::start()
 	{
 		initialize_pak();

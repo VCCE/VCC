@@ -40,5 +40,4 @@ using WritePortModuleFunction = void (*)(unsigned char port, unsigned char value
 using ReadMemoryByteModuleFunction = unsigned char (*)(unsigned short address);
 using ReadPortModuleFunction = unsigned char (*)(unsigned char port);
 using SampleAudioModuleFunction = unsigned short (*)();
-using BuildMenuModuleFunction = void (*)(AppendCartridgeMenuModuleCallback addMenuItemCallback);
 using MenuItemClickedModuleFunction = void (*)(unsigned char itemId);

@@ -27,9 +27,7 @@
 #include "resource.h"
 #include <vcc/core/limits.h>
 #include <vcc/core/legacy_cartridge_definitions.h>
-#include <vcc/core/cartridges/legacy_cartridge.h>
 #include <vcc/core/cartridges/null_cartridge.h>
-#include <vcc/core/cartridges/rom_cartridge.h>
 #include <vcc/core/utils/dll_deleter.h>
 #include <vcc/common/logger.h>
 #include <vcc/common/FileOps.h>
@@ -48,7 +46,6 @@ using cartridge_loader_result = vcc::core::cartridge_loader_result;
 extern SystemState EmuState;
 
 static char DllPath[MAX_PATH] = "";
-static char PakName[MAX_PATH] = "";
 static cartridge_loader_result::handle_type gActiveModule;
 static cartridge_loader_result::cartridge_ptr_type gActiveCartrige(std::make_unique<vcc::core::cartridges::null_cartridge>());
 
@@ -110,10 +107,10 @@ void BeginCartMenu()
 {
 	CartMenu.add("", MID_BEGIN, MIT_Head, 0);
 	CartMenu.add("Cartridge", MID_ENTRY, MIT_Head);
-	if (PakName[0])
+	if (!gActiveCartrige->name().empty())
 	{
 		char tmp[64] = {};
-		snprintf(tmp, 64, "Eject %s", PakName);
+		snprintf(tmp, 64, "Eject %s", gActiveCartrige->name().c_str());
 		CartMenu.add(tmp, ControlId(2), MIT_Slave);
 	}
 	CartMenu.add("Load Cart", ControlId(1), MIT_Slave);
@@ -201,8 +198,6 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 
 	UnloadDll();
 	strcpy(DllPath, filename);
-	strncpy(PakName, filename, MAX_PATH);
-	PathStripPath(PakName);
 	gActiveCartrige = move(loadedCartridge.cartridge);
 	gActiveModule = move(loadedCartridge.handle);
 	BeginCartMenu();
@@ -219,7 +214,6 @@ void UnloadDll()
 {
 	gActiveCartrige = std::make_unique<vcc::core::cartridges::null_cartridge>();
 	gActiveModule.reset();
-	PakName[0] = 0;
 
 	BeginCartMenu();
 	gActiveCartrige->start();
@@ -265,5 +259,3 @@ void CartMenuActivated(unsigned int MenuID)
 	}
 	return;
 }
-
-

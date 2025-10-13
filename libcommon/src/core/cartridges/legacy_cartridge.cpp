@@ -80,11 +80,30 @@ namespace vcc { namespace core { namespace cartridges
 		void default_set_ini_path(const char*)
 		{}
 
-		void default_build_menu(AppendCartridgeMenuModuleCallback)
-		{}
-
 		void default_set_cart_pointer(AssertCartridgeLineModuleCallback)
 		{}
+
+		legacy_cartridge::name_type get_module_name(HMODULE moduleHandle)
+		{
+			static char name_buffer[MAX_PATH];
+			static char catalog_id_buffer[MAX_PATH];
+			const auto getModuleName(GetImportedProcAddress(moduleHandle, "ModuleName", default_get_module_name));
+			
+			getModuleName(name_buffer, catalog_id_buffer, nullptr);
+
+			return name_buffer;
+		}
+
+		legacy_cartridge::name_type get_module_catalog_id(HMODULE moduleHandle)
+		{
+			static char name_buffer[MAX_PATH];
+			static char catalog_id_buffer[MAX_PATH];
+			const auto getModuleName(GetImportedProcAddress(moduleHandle, "ModuleName", default_get_module_name));
+
+			getModuleName(name_buffer, catalog_id_buffer, nullptr);
+
+			return catalog_id_buffer;
+		}
 
 	}
 
@@ -100,6 +119,8 @@ namespace vcc { namespace core { namespace cartridges
 		:
 		handle_(moduleHandle),
 		configurationPath_(configurationPath),
+		name_(get_module_name(moduleHandle)),
+		catalog_id_(get_module_catalog_id(moduleHandle)),
 		addMenuItemCallback_(addMenuItemCallback),
 		readDataFunction_(readDataFunction),
 		writeDataFunction_(writeDataFunction),
@@ -112,9 +133,38 @@ namespace vcc { namespace core { namespace cartridges
 		read_port_(GetImportedProcAddress(moduleHandle, "PackPortRead", default_read_port)),
 		read_memory_byte_(GetImportedProcAddress(moduleHandle, "PakMemRead8", default_read_memory_byte)),
 		sample_audio_(GetImportedProcAddress(moduleHandle, "ModuleAudioSample", default_sample_audio)),
-		build_menu_(GetImportedProcAddress(moduleHandle, "BuildMenu", default_build_menu)),
 		menu_item_clicked_(GetImportedProcAddress(moduleHandle, "ModuleConfig", default_menu_item_clicked))
-	{}
+	{
+		// FIXME: Initialization of name and catalog id requires invoking ModuleName
+		// twice (once for each detail). Some older paks may not account for this
+		// but this is a short-term hack until the existing modules are migrated. This
+		// will include renaming the imported functions to better reflect their purpose
+		// using the following (preliminary) changes.
+		// 
+		//		MemPointers			==>		PakInitialize
+		//		AssertInterupt		==>		PakInitialize
+		//		SetIniPath			==>		PakInitialize
+		//		SetCart				==>		PakInitialize
+		//		ModuleName			==>		PakGetName, PakGetCatalogId, PakInitialize
+		//		ModuleReset			==>		PakReset
+		//		HeartBeat			==>		PakPulse
+		//		ModuleStatus		==>		PakGetSTatus
+		//		PackPortWrite		==>		PakWritePort
+		//		PackPortRead		==>		PwkReadPort
+		//		PakMemRead8			==>		PakReadMemoryByte
+		//		ModuleAudioSample	==>		PakSampleAudio
+		//		ModuleConfig		==>		PakProcessMenuItem
+	}
+
+	const legacy_cartridge::name_type& legacy_cartridge::name() const
+	{
+		return name_;
+	}
+
+	const legacy_cartridge::catalog_id_type& legacy_cartridge::catalog_id() const
+	{
+		return catalog_id_;
+	}
 
 	void legacy_cartridge::reset()
 	{
@@ -164,9 +214,9 @@ namespace vcc { namespace core { namespace cartridges
 		const auto setInteruptCallPointer(GetImportedProcAddress(handle_, "AssertInterupt", default_set_interupt_call_pointer));
 		setInteruptCallPointer(assertCallback_);
 
-		static char name_buffer[MAX_PATH];
-		const auto getModuleName(GetImportedProcAddress<GetNameModuleFunction>(handle_, "ModuleName", default_get_module_name));
-		getModuleName(name_buffer, name_buffer, addMenuItemCallback_);
+		static char buffer[MAX_PATH];
+		const auto getModuleName(GetImportedProcAddress(handle_, "ModuleName", default_get_module_name));
+		getModuleName(buffer, buffer, addMenuItemCallback_);
 
 		const auto setIniPath(GetImportedProcAddress(handle_, "SetIniPath", default_set_ini_path));
 		setIniPath(configurationPath_.c_str());

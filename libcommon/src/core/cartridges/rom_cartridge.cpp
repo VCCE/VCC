@@ -23,14 +23,29 @@ namespace vcc { namespace core { namespace cartridges
 
 	rom_cartridge::rom_cartridge(
 		AssertCartridgeLineModuleCallback assertCartCallback,
+		name_type name,
+		catalog_id_type catalog_id,
 		buffer_type buffer,
 		bool enable_bank_switching)
 		:
 		assertCartCallback_(assertCartCallback),
+		name_(move(name)),
+		catalog_id_(move(catalog_id)),
 		buffer_(move(buffer)),
 		enable_bank_switching_(enable_bank_switching),
 		bank_offset_(0)
 	{}
+
+
+	const rom_cartridge::name_type& rom_cartridge::name() const
+	{
+		return name_;
+	}
+
+	const rom_cartridge::catalog_id_type& rom_cartridge::catalog_id() const
+	{
+		return catalog_id_;
+	}
 
 
 	void rom_cartridge::reset()
