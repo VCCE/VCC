@@ -4,11 +4,6 @@
 #define IDS_CATNUMBER                   2
 #define IDS_VERISON                     3
 
-#define ID_CONFIG1                      11
-#define ID_CONFIG2                      12
-#define ID_CONFIG3                      13
-#define ID_CONFIG4                      14
-
 #define IDD_DIALOG1                     101
 
 #define IDC_PAKSELECT                   1000
