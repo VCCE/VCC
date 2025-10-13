@@ -15,13 +15,44 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
+#pragma once
 #include "multipak_cartridge.h"
-#include "configuration_dialog.h"
 #include <Windows.h>
 
-extern HINSTANCE gModuleInstance;
-extern const std::shared_ptr<host_cartridge_context> gHostContext;
-extern multipak_cartridge gMultiPakInterface;
-extern configuration_dialog gConfigurationDialog;
-extern std::string gLastAccessedPath;
-extern std::string gConfigurationFilename;
+
+class configuration_dialog
+{
+public:
+
+	explicit configuration_dialog(multipak_cartridge& mpi);
+
+	configuration_dialog(const configuration_dialog&) = delete;
+	configuration_dialog(configuration_dialog&&) = delete;
+
+	configuration_dialog& operator=(const configuration_dialog&) = delete;
+	configuration_dialog& operator=(configuration_dialog&&) = delete;
+
+	void open();
+	void close();
+
+
+private:
+
+	void select_new_cartridge(size_t slot);
+	void set_selected_slot(size_t slot);
+	void update_slot_details(size_t slot);
+	void eject_or_select_new_cartridge(size_t slot);
+
+	static INT_PTR CALLBACK process_message(
+		HWND hDlg,
+		UINT message,
+		WPARAM wParam,
+		LPARAM lParam);
+
+
+private:
+
+	multipak_cartridge& mpi_;
+	HWND dialog_handle_ = nullptr;
+	HWND parent_handle_ = nullptr;
+};

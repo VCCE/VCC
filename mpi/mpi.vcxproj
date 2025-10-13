@@ -93,10 +93,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cartridge_slot.cpp" />
+    <ClCompile Include="configuration_dialog.cpp" />
     <ClCompile Include="mpi.cpp" />
+    <ClCompile Include="multipak_cartridge.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cartridge_slot.h" />
+    <ClInclude Include="host_cartridge_context.h" />
     <ClInclude Include="mpi.h" />
+    <ClInclude Include="multipak_cartridge.h" />
+    <ClInclude Include="configuration_dialog.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
