@@ -29,10 +29,10 @@
 #include <vcc/core/legacy_cartridge_definitions.h>
 #include <vcc/core/cartridges/null_cartridge.h>
 #include <vcc/core/utils/dll_deleter.h>
+#include <vcc/core/utils/winapi.h>
 #include <vcc/common/logger.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
-#include <vcc/common/std.h>
 #include <fstream>
 #include <Windows.h>
 #include <commdlg.h>
@@ -134,7 +134,7 @@ void PakLoadCartridgeUI()
 	FileDialog dlg;
 	dlg.setTitle(TEXT("Load Program Pack"));
 	dlg.setInitialDir(pakPath);
-	dlg.setFilter("DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0");
+	dlg.setFilter("All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0");
 	dlg.setFlags(OFN_FILEMUSTEXIST);
 	if (dlg.show()) {
 		if (PakLoadCartridge(dlg.path()) == cartridge_loader_status::success) {
@@ -166,7 +166,7 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 	}
 
 	const auto string_id_ptr(string_id_map.find(result));
-	auto error_string(vcc::common::LoadStdString(
+	auto error_string(vcc::core::utils::load_string(
 		EmuState.WindowInstance,
 		string_id_ptr != string_id_map.end() ? string_id_ptr->second : IDS_UNKNOWN_ERROR));
 

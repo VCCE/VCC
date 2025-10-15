@@ -37,6 +37,9 @@
     <Filter Include="Header Files\core\detail">
       <UniqueIdentifier>{fd029ab9-8064-4e1f-9460-edb495cf58ab}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\core\utils">
+      <UniqueIdentifier>{c3048278-09ca-471f-9cff-e11566354e5d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DialogOps.cpp">
@@ -57,14 +60,20 @@
     <ClCompile Include="src\core\cartridges\rom_cartridge.cpp">
       <Filter>Source Files\core\cartridges</Filter>
     </ClCompile>
-    <ClCompile Include="src\std.cpp">
-      <Filter>Source Files\common</Filter>
-    </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\core\cartridge_loader.cpp">
       <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\utils\configuration_serializer.cpp">
+      <Filter>Source Files\core\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\utils\filesystem.cpp">
+      <Filter>Source Files\core\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\utils\winapi.cpp">
+      <Filter>Source Files\core\utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -92,9 +101,6 @@
     <ClInclude Include="include\vcc\core\cartridges\rom_cartridge.h">
       <Filter>Header Files\core\cartridges</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\common\std.h">
-      <Filter>Header Files\common</Filter>
-    </ClInclude>
     <ClInclude Include="include\vcc\core\utils\dll_deleter.h">
       <Filter>Header Files\core\utils</Filter>
     </ClInclude>
@@ -112,6 +118,15 @@
     </ClInclude>
     <ClInclude Include="include\vcc\core\cartridge_loader.h">
       <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\utils\filesystem.h">
+      <Filter>Header Files\core\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\utils\configuration_serializer.h">
+      <Filter>Header Files\core\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\utils\winapi.h">
+      <Filter>Header Files\core\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
