@@ -15,25 +15,19 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/common/std.h>
-#include <Windows.h>
+#pragma once
+#include <vcc/core/detail/exports.h>
 #include <string>
-#include <codecvt>
+#include <Windows.h>
 
 
-namespace vcc { namespace common
+namespace vcc { namespace core { namespace utils
 {
 
-	LIBCOMMON_EXPORT std::string LoadStdString(HINSTANCE instance, UINT id)
-	{
-		LPWSTR buffer_ptr = nullptr;
-		const auto buffer_length(LoadStringW(instance, id, reinterpret_cast<LPWSTR>(&buffer_ptr), 0));
-		if (buffer_length < 1 || buffer_ptr == nullptr)
-		{
-			return { };
-		}
+	LIBCOMMON_EXPORT std::string get_module_path(HMODULE module_handle = nullptr);
+	LIBCOMMON_EXPORT std::string find_pak_module_path(std::string path);
+	LIBCOMMON_EXPORT std::string get_directory_from_path(std::string path);
+	LIBCOMMON_EXPORT std::string get_filename(std::string path);
+	LIBCOMMON_EXPORT std::string strip_application_path(std::string path);
 
-		return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(buffer_ptr, buffer_ptr + buffer_length);
-	}
-
-} }
+} } }

@@ -632,7 +632,7 @@ void UpdateCartDLL(unsigned char Slot)
 		FileDialog dlg;
 		dlg.setTitle("Load Program Pack");
 		dlg.setInitialDir(MPIPath);
-		dlg.setFilter("DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0");
+		dlg.setFilter("All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0");
 		dlg.setFlags(OFN_FILEMUSTEXIST);
 		if (dlg.show(0,hConfDlg)) {
 			MountModule(Slot,dlg.path());
