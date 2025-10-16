@@ -21,64 +21,6 @@
 #include <string>
 #include <vector>
 
-namespace VCC
-{
-
-	class CriticalSection
-	{
-	public:
-
-		CriticalSection()
-		{
-			InitializeCriticalSection(&Section_);
-		}
-
-		~CriticalSection()
-		{
-			DeleteCriticalSection(&Section_);
-		}
-
-		CriticalSection(const CriticalSection&) = delete;
-		CriticalSection& operator=(const CriticalSection&) = delete;
-
-		void Lock()
-		{
-			EnterCriticalSection(&Section_);
-		}
-
-		void Unlock()
-		{
-			LeaveCriticalSection(&Section_);
-		}
-
-
-	private:
-
-		CRITICAL_SECTION	Section_;
-	};
-
-
-	class SectionLocker
-	{
-	public:
-		explicit SectionLocker(CriticalSection& section)
-			: Section_(section)
-		{
-			Section_.Lock();
-		}
-
-		~SectionLocker()
-		{
-			Section_.Unlock();
-		}
-
-
-	private:
-
-		CriticalSection& Section_;
-	};
-
-}
 
 
 

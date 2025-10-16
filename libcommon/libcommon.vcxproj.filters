@@ -128,6 +128,9 @@
     <ClInclude Include="include\vcc\core\utils\winapi.h">
       <Filter>Header Files\core\utils</Filter>
     </ClInclude>
+    <ClInclude Include="include\vcc\core\utils\critical_section.h">
+      <Filter>Header Files\core\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource\libcommon.rc">
