@@ -124,6 +124,7 @@
     <ClInclude Include="include\vcc\core\legacy_cartridge_definitions.h" />
     <ClInclude Include="include\vcc\core\limits.h" />
     <ClInclude Include="include\vcc\core\utils\configuration_serializer.h" />
+    <ClInclude Include="include\vcc\core\utils\critical_section.h" />
     <ClInclude Include="include\vcc\core\utils\dll_deleter.h" />
     <ClInclude Include="include\vcc\core\utils\filesystem.h" />
     <ClInclude Include="include\vcc\core\utils\winapi.h" />
