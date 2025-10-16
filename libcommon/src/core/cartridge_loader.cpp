@@ -117,7 +117,7 @@ namespace vcc { namespace core
 
 		cartridge_loader_result details;
 		details.handle.reset(LoadLibrary(filename.c_str()));
-		_DLOG("pak:LoadLibrary %s %d\n", filename.c_str(), loadedModule);
+		_DLOG("pak:LoadLibrary %s %d\n", filename.c_str(), GetLastError());
 		if (details.handle == nullptr)
 		{
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
