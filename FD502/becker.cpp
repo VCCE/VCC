@@ -116,7 +116,7 @@ void becker_enable(bool enable)
 			hEvent = CreateEvent( nullptr, FALSE, FALSE, nullptr ) ;
                 
 			if (hEvent==nullptr) {
-				_DLOG("Cannot create DWTCPConnection thread!\n");
+				DLOG_C("Cannot create DWTCPConnection thread!\n");
 				return;
 			}
 
@@ -125,16 +125,16 @@ void becker_enable(bool enable)
 				( nullptr, 0, &dw_thread, hEvent, 0, &threadID );
 
 			if (hDWTCPThread==nullptr) {
-				_DLOG("Cannot start DWTCPConnection thread!\n");
+				DLOG_C("Cannot start DWTCPConnection thread!\n");
 				return;
 			}
 			dwEnabled = true;
-			_DLOG("DWTCPConnection thread started with id %d\n",threadID); 
+			DLOG_C("DWTCPConnection thread started with id %d\n",threadID); 
 		}
 	}  else {
 		dw_close();
 		dwEnabled = false;
-		_DLOG("DWTCPConnection has been disabled.\n");
+		DLOG_C("DWTCPConnection has been disabled.\n");
 	}
 }
 
@@ -227,7 +227,7 @@ int dw_write( char dwdata)
 	if ((dwSocket != 0) & (!retry)) {
 		int res = send(dwSocket, &dwdata, 1, 0);
 		if (res != 1) {
-			_DLOG("dw_write socket error %d\n", WSAGetLastError());
+			DLOG_C("dw_write socket error %d\n", WSAGetLastError());
 			closesocket(dwSocket);
 			dwSocket = 0;
 		} else {
@@ -235,7 +235,7 @@ int dw_write( char dwdata)
         }
 
 	} else {
-		_DLOG("dw_write null socket\n");
+		DLOG_C("dw_write null socket\n");
 	}
 	return 0;
 }
@@ -243,7 +243,7 @@ int dw_write( char dwdata)
 void dw_close()
 {
 	// close socket to cause io thread to die
-	_DLOG("dw_close\n");
+	DLOG_C("dw_close\n");
 	if (dwSocket != 0) closesocket(dwSocket);
 	dwSocket = 0;
 	InReadPos = 0;
@@ -254,7 +254,7 @@ void dw_close()
 // try to connect with DW server
 void dw_open( void )
 {
-	_DLOG("dw_open %s:%d\n",dwaddress,dwsport);
+	DLOG_C("dw_open %s:%d\n",dwaddress,dwsport);
 	dwSocket = dw_open(dwaddress,dwsport);
 	if (dwSocket == SOCKET_RETRY) {
 		retry = true;
@@ -299,7 +299,7 @@ SOCKET dw_open(const char * server, const char * port)
 // TCP connection thread
 unsigned __stdcall dw_thread(void* /*Dummy*/)
 {
-	_DLOG("dw_thread %d\n",dwEnabled);
+	DLOG_C("dw_thread %d\n",dwEnabled);
 	WSADATA wsaData;
         
 	int sz;
@@ -308,7 +308,7 @@ unsigned __stdcall dw_thread(void* /*Dummy*/)
 	if (dwEnabled) {
 		// Request Winsock version 2.2
 		if ((WSAStartup(0x202, &wsaData)) != 0) {
-			_DLOG("dw_thread winsock startup failed, exiting\n");
+			DLOG_C("dw_thread winsock startup failed, exiting\n");
 			WSACleanup();
 			return 0;
 		}

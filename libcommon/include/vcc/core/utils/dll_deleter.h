@@ -29,7 +29,7 @@ namespace vcc { namespace core
 			if (instance != nullptr)
 			{
 				const auto result(FreeLibrary(instance));
-				_DLOG("pak:err FreeLibrary %d %d\n", instance, result);
+				DLOG_C("pak:err FreeLibrary %d %d\n", instance, result);
 			}
 		};
 	};

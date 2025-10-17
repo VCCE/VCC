@@ -384,7 +384,7 @@ extern "C"
     // Reset module
     __declspec(dllexport) unsigned char ModuleReset()
     {
-        _DLOG("ModuleReset\n");
+        DLOG_C("ModuleReset\n");
         SDCInit();
         return 0;
     }
@@ -701,7 +701,7 @@ void SDCInit()
 {
 
 #ifdef USE_LOGGING
-    _DLOG("\nSDCInit\n");
+    DLOG_C("\nSDCInit\n");
     MoveWindow(GetConsoleWindow(),0,0,300,800,TRUE);
 #endif
 
@@ -852,10 +852,10 @@ void LoadRom(unsigned char bank)
 
     if (BankDirty) {
         RomFile = FlashFile[CurrentBank];
-        _DLOG("LoadRom switching out dirty bank %d %s\n",CurrentBank,RomFile);
+        DLOG_C("LoadRom switching out dirty bank %d %s\n",CurrentBank,RomFile);
         h_RomFile = fopen(RomFile,"wb");
         if (h_RomFile == nullptr) {
-            _DLOG("LoadRom failed to open bank file%d\n",bank);
+            DLOG_C("LoadRom failed to open bank file%d\n",bank);
         } else {
             ctr = 0;
             p_rom = PakRom;
@@ -866,15 +866,15 @@ void LoadRom(unsigned char bank)
         BankDirty = 0;
     }
 
-    _DLOG("LoadRom load flash bank %d\n",bank);
+    DLOG_C("LoadRom load flash bank %d\n",bank);
     RomFile = FlashFile[bank];
     CurrentBank = bank;
 
     // If bank is empty and is the StartupBank load SDC-DOS
     if (*FlashFile[CurrentBank] == '\0') {
-        _DLOG("LoadRom bank %d is empty\n",CurrentBank);
+        DLOG_C("LoadRom bank %d is empty\n",CurrentBank);
         if (CurrentBank == StartupBank) {
-            _DLOG("LoadRom loading default SDC-DOS\n");
+            DLOG_C("LoadRom loading default SDC-DOS\n");
             strncpy(RomFile,"SDC-DOS.ROM",MAX_PATH);
         }
     }
@@ -885,7 +885,7 @@ void LoadRom(unsigned char bank)
         if (CurrentBank != StartupBank) h_RomFile = fopen(RomFile,"wb");
     }
     if (h_RomFile == nullptr) {
-        _DLOG("LoadRom '%s' failed %s \n",RomFile,LastErrorTxt());
+        DLOG_C("LoadRom '%s' failed %s \n",RomFile,LastErrorTxt());
         return;
     }
 
@@ -909,7 +909,7 @@ void ParseStartup()
 {
     char buf[MAX_PATH+10];
     if (!IsDirectory(SDCard)) {
-        _DLOG("ParseStartup SDCard path invalid\n");
+        DLOG_C("ParseStartup SDCard path invalid\n");
         return;
     }
 
@@ -919,7 +919,7 @@ void ParseStartup()
 
     FILE *su = fopen(buf,"r");
     if (su == nullptr) {
-        _DLOG("ParseStartup file not found,%s\n",buf);
+        DLOG_C("ParseStartup file not found,%s\n",buf);
         return;
     }
 
@@ -954,7 +954,7 @@ void ParseStartup()
 //----------------------------------------------------------------------
 void CommandDone()
 {
-    _DLOG("*");
+    DLOG_C("*");
     AssertInt(INT_NMI,IS_NMI);
 }
 
@@ -997,7 +997,7 @@ void SDCWrite(unsigned char data,unsigned char port)
             break;
         // Unhandled
         default:
-            _DLOG("SDCWrite L %02x %02x\n",port,data);
+            DLOG_C("SDCWrite L %02x %02x\n",port,data);
             break;
         }
     } else {
@@ -1041,7 +1041,7 @@ void SDCWrite(unsigned char data,unsigned char port)
             break;
         // Unhandled
         default:
-            _DLOG("SDCWrite U %02x %02x\n",port,data);
+            DLOG_C("SDCWrite U %02x %02x\n",port,data);
             break;
         }
     }
@@ -1085,7 +1085,7 @@ unsigned char SDCRead(unsigned char port)
             }
             break;
         default:
-            _DLOG("SDCRead L %02x\n",port);
+            DLOG_C("SDCRead L %02x\n",port);
             rpy = 0;
             break;
         }
@@ -1104,7 +1104,7 @@ unsigned char SDCRead(unsigned char port)
             rpy = FloppyReadData();
             break;
         default:
-            _DLOG("SDCRead U %02x\n",port);
+            DLOG_C("SDCRead U %02x\n",port);
             rpy = 0;
             break;
         }
@@ -1139,7 +1139,7 @@ void FloppyCommand(unsigned char data)
 // floppy restore
 void FloppyRestore(unsigned char data)
 {
-    _DLOG("FloppyRestore\n");
+    DLOG_C("FloppyRestore\n");
     FlopTrack = 0;
     FlopSector = 0;
     FlopStatus = FLP_NORMAL;
@@ -1151,7 +1151,7 @@ void FloppyRestore(unsigned char data)
 void FloppySeek(unsigned char data)
 {
     // Seek not implemented
-    _DLOG("FloppySeek\n");
+    DLOG_C("FloppySeek\n");
 }
 
 // floppy read sector
@@ -1161,14 +1161,14 @@ void FloppyReadDisk()
     snprintf(Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
     if (SeekSector(FlopDrive,lsn)) {
         if (ReadFile(Disk[FlopDrive].hFile,FlopRdBuf,256,&FlopRdCnt,nullptr)) {
-            _DLOG("FloppyReadDisk %d %d\n",FlopDrive,lsn);
+            DLOG_C("FloppyReadDisk %d %d\n",FlopDrive,lsn);
             FlopStatus = FLP_DATAREQ;
         } else {
-            _DLOG("FloppyReadDisk read error %d %d\n",FlopDrive,lsn);
+            DLOG_C("FloppyReadDisk read error %d %d\n",FlopDrive,lsn);
             FlopStatus = FLP_READERR;
         }
     } else {
-        _DLOG("FloppyReadDisk seek error %d %d\n",FlopDrive,lsn);
+        DLOG_C("FloppyReadDisk seek error %d %d\n",FlopDrive,lsn);
         FlopStatus = FLP_SEEKERR;
     }
 }
@@ -1178,14 +1178,14 @@ void FloppyWriteDisk()
 {
     // write not implemented
     int lsn = FlopTrack * 18 + FlopSector - 1;
-    _DLOG("FloppyWriteDisk %d %d not implmented\n",FlopDrive,lsn);
+    DLOG_C("FloppyWriteDisk %d %d not implmented\n",FlopDrive,lsn);
     FlopStatus = FLP_READONLY;
 }
 
 // floppy set track
 void FloppyTrack(unsigned char data)
 {
-    //_DLOG("FloppyTrack %d\n",data);
+    //DLOG_C("FloppyTrack %d\n",data);
     FlopTrack = data;
 }
 
@@ -1195,7 +1195,7 @@ void FloppySector(unsigned char data)
     FlopSector = data;  // (1-18)
 
     int lsn = FlopTrack * 18 + FlopSector - 1;
-    //_DLOG("FloppySector %d lsn %d\n",FlopSector,lsn);
+    //DLOG_C("FloppySector %d lsn %d\n",FlopSector,lsn);
     FlopStatus = FLP_NORMAL;
 }
 
@@ -1214,7 +1214,7 @@ void FloppyWriteData(unsigned char data)
 // floppy get status
 unsigned char FloppyStatus()
 {
-    //_DLOG("FloppyStatus %02x\n",FlopStatus);
+    //DLOG_C("FloppyStatus %02x\n",FlopStatus);
     return FlopStatus;
 }
 
@@ -1325,7 +1325,7 @@ void BlockReceive(unsigned char byte)
             UpdateSD();
             break;
         default:
-            _DLOG("BlockReceive invalid cmd %d\n",IF.cmdcode);
+            DLOG_C("BlockReceive invalid cmd %d\n",IF.cmdcode);
             IF.status = STA_FAIL;
             break;
         }
@@ -1377,7 +1377,7 @@ void GetDriveInfo()
 //----------------------------------------------------------------------
 void GetDirectoryLeaf()
 {
-    _DLOG("GetDirectoryLeaf CurDir '%s'\n",CurDir);
+    DLOG_C("GetDirectoryLeaf CurDir '%s'\n",CurDir);
 
     char leaf[32];
     memset(leaf,0,32);
@@ -1447,7 +1447,7 @@ void UpdateSD()
         KillFile(&IF.blkbuf[2]);
         break;
     default:
-        _DLOG("UpdateSD %02x not Supported\n",IF.blkbuf[0]);
+        DLOG_C("UpdateSD %02x not Supported\n",IF.blkbuf[0]);
         IF.status = STA_FAIL;
         break;
     }
@@ -1491,7 +1491,7 @@ void FlashControl(unsigned char data)
 //----------------------------------------------------------------------
 unsigned char WriteFlashBank(unsigned short adr)
 {
-    _DLOG("WriteFlashBank %d %d %04X %02X\n",
+    DLOG_C("WriteFlashBank %d %d %04X %02X\n",
             BankWriteState,BankWriteNum,adr,BankData);
 
     // BankWriteState controls the write or kill
@@ -1557,7 +1557,7 @@ bool SeekSector(unsigned char cmdcode, unsigned int lsn)
 
     // Allow seek to expand a writable file to a resonable limit
     if (lsn > MAX_DSK_SECTORS) {
-        _DLOG("SeekSector exceed max image %d %d\n",drive,lsn);
+        DLOG_C("SeekSector exceed max image %d %d\n",drive,lsn);
         return false;
     }
 
@@ -1565,7 +1565,7 @@ bool SeekSector(unsigned char cmdcode, unsigned int lsn)
     LARGE_INTEGER pos;
     pos.QuadPart = lsn * Disk[drive].sectorsize + Disk[drive].headersize;
     if (!SetFilePointerEx(Disk[drive].hFile,pos,nullptr,FILE_BEGIN)) {
-        _DLOG("SeekSector error %s\n",LastErrorTxt());
+        DLOG_C("SeekSector error %s\n",LastErrorTxt());
         return false;
     }
     return true;
@@ -1580,7 +1580,7 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
     DWORD cnt = 0;
     int drive = cmdcode & 1;
     if (Disk[drive].hFile == nullptr) {
-        _DLOG("ReadDrive %d not open\n");
+        DLOG_C("ReadDrive %d not open\n");
         return false;
     }
 
@@ -1589,12 +1589,12 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
     }
 
     if (!ReadFile(Disk[drive].hFile,buf,Disk[drive].sectorsize,&cnt,nullptr)) {
-        _DLOG("ReadDrive %d %s\n",drive,LastErrorTxt());
+        DLOG_C("ReadDrive %d %s\n",drive,LastErrorTxt());
         return false;
     }
 
     if (cnt != Disk[drive].sectorsize) {
-        _DLOG("ReadDrive %d short read\n",drive);
+        DLOG_C("ReadDrive %d short read\n",drive);
         return false;
     }
 
@@ -1614,7 +1614,7 @@ void ReadSector()
 {
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
 
-    _DLOG("R%d\n",lsn);
+    DLOG_C("R%d\n",lsn);
 
     IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1; // words : bytes
     if (!ReadDrive(IF.cmdcode,lsn))
@@ -1636,7 +1636,7 @@ void StreamImage()
         stream_cmdcode = IF.cmdcode;
         IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1;
         stream_lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
-        _DLOG("StreamImage lsn %d\n",stream_lsn);
+        DLOG_C("StreamImage lsn %d\n",stream_lsn);
     }
 
     // For now can only stream 512 byte sectors
@@ -1645,13 +1645,13 @@ void StreamImage()
     Disk[drive].tracksectors = 9;
 
     if (stream_lsn > (Disk[drive].size/Disk[drive].sectorsize)) {
-        _DLOG("StreamImage done\n");
+        DLOG_C("StreamImage done\n");
         streaming = 0;
         return;
     }
 
     if (!ReadDrive(stream_cmdcode,stream_lsn)) {
-        _DLOG("StreamImage read error %s\n",LastErrorTxt());
+        DLOG_C("StreamImage read error %s\n",LastErrorTxt());
         IF.status = STA_FAIL;
         streaming = 0;
         return;
@@ -1680,12 +1680,12 @@ void WriteSector()
     }
     if (!WriteFile(Disk[drive].hFile,IF.blkbuf,
                    Disk[drive].sectorsize,&cnt,nullptr)) {
-        _DLOG("WriteSector %d %s\n",drive,LastErrorTxt());
+        DLOG_C("WriteSector %d %s\n",drive,LastErrorTxt());
         IF.status = STA_FAIL;
         return;
     }
     if (cnt != Disk[drive].sectorsize) {
-        _DLOG("WriteSector %d short write\n",drive);
+        DLOG_C("WriteSector %d short write\n",drive);
         IF.status = STA_FAIL;
         return;
     }
@@ -1728,7 +1728,7 @@ void  GetSectorCount() {
 void GetMountedImageRec()
 {
     int drive = IF.cmdcode & 1;
-    //_DLOG("GetMountedImageRec %d %s\n",drive,Disk[drive].fullpath);
+    //DLOG_C("GetMountedImageRec %d %s\n",drive,Disk[drive].fullpath);
     if (strlen(Disk[drive].fullpath) == 0) {
         IF.status = STA_FAIL;
     } else {
@@ -1746,13 +1746,13 @@ void SDCControl()
 {
     // If streaming is in progress abort it.
     if (streaming) {
-        _DLOG ("Streaming abort");
+        DLOG_C ("Streaming abort");
         streaming = 0;
         IF.status = STA_READY;
         IF.bufcnt = 0;
     } else {
         // TODO: Mount in set
-        _DLOG("SDCControl Mount in set unsupported %d %d %d \n",
+        DLOG_C("SDCControl Mount in set unsupported %d %d %d \n",
                   IF.cmdcode,IF.param1,IF.param2);
         IF.status = STA_FAIL | STA_NOTFOUND;
     }
@@ -1764,7 +1764,7 @@ void SDCControl()
 void LoadReply(const void *data, int count)
 {
     if ((count < 2) | (count > 512)) {
-        _DLOG("LoadReply bad count %d\n",count);
+        DLOG_C("LoadReply bad count %d\n",count);
         return;
     }
 
@@ -1894,7 +1894,7 @@ bool LoadFoundFile(struct FileRecord * rec)
 //----------------------------------------------------------------------
 void MountNewDisk (int drive, const char * path, int raw)
 {
-    //_DLOG("MountNewDisk %d %s %d\n",drive,path,raw);
+    //DLOG_C("MountNewDisk %d %s %d\n",drive,path,raw);
 
     // limit drive to 0 or 1
     drive &= 1;
@@ -1927,7 +1927,7 @@ void MountNewDisk (int drive, const char * path, int raw)
 //----------------------------------------------------------------------
 void MountDisk (int drive, const char * path, int raw)
 {
-    _DLOG("MountDisk %d %s %d\n",drive,path,raw);
+    DLOG_C("MountDisk %d %s %d\n",drive,path,raw);
 
     drive &= 1;
 
@@ -1937,7 +1937,7 @@ void MountDisk (int drive, const char * path, int raw)
 
     // Check for UNLOAD.  Path will be an empty string.
     if (*path == '\0') {
-        _DLOG("MountDisk unload %d %s\n",drive,path);
+        DLOG_C("MountDisk unload %d %s\n",drive,path);
         IF.status = STA_NORMAL;
         return;
     }
@@ -1965,7 +1965,7 @@ void MountDisk (int drive, const char * path, int raw)
 
     // Give up
     if (!found) {
-        _DLOG("MountDisk not found '%s'\n",file);
+        DLOG_C("MountDisk not found '%s'\n",file);
         IF.status = STA_FAIL | STA_NOTFOUND;
         return;
     }
@@ -1981,7 +1981,7 @@ void MountDisk (int drive, const char * path, int raw)
 bool MountNext (int drive)
 {
     if (FindNextFile(hFind,&dFound) == 0) {
-        _DLOG("MountNext no more\n");
+        DLOG_C("MountNext no more\n");
         FindClose(hFind);
         hFind = INVALID_HANDLE_VALUE;
         return false;
@@ -2009,7 +2009,7 @@ bool MountNext (int drive)
 //----------------------------------------------------------------------
 void OpenNew( int drive, const char * path, int raw)
 {
-    _DLOG("OpenNew %d '%s' %d %d %d\n",
+    DLOG_C("OpenNew %d '%s' %d %d %d\n",
           drive,path,raw,IF.param1,IF.param2);
 
     // Number of sides controls file type
@@ -2019,7 +2019,7 @@ void OpenNew( int drive, const char * path, int raw)
         break;
     case 1:    //NEW+
     case 2:    //NEW++
-        _DLOG("OpenNew SDF file not supported\n");
+        DLOG_C("OpenNew SDF file not supported\n");
         IF.status = STA_FAIL | STA_INVALID;
         return;
     }
@@ -2035,7 +2035,7 @@ void OpenNew( int drive, const char * path, int raw)
     // Trying to mount a directory. Find .DSK files in the ending
     // with a digit and mount the first one.
     if (IsDirectory(fqn)) {
-        _DLOG("OpenNew %s is a directory\n",fqn);
+        DLOG_C("OpenNew %s is a directory\n",fqn);
         IF.status = STA_FAIL | STA_INVALID;
         return;
     }
@@ -2050,8 +2050,8 @@ void OpenNew( int drive, const char * path, int raw)
 		nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
 
     if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
-        _DLOG("OpenNew fail %d file %s\n",drive,Disk[drive].fullpath);
-        _DLOG("... %s\n",LastErrorTxt());
+        DLOG_C("OpenNew fail %d file %s\n",drive,Disk[drive].fullpath);
+        DLOG_C("... %s\n",LastErrorTxt());
         IF.status = STA_FAIL | STA_WIN_ERROR;
         return;
     }
@@ -2098,7 +2098,7 @@ void OpenFound (int drive,int raw)
     drive &= 1;
     int writeprotect = 0;
 
-    _DLOG("OpenFound %d %s %d\n",
+    DLOG_C("OpenFound %d %s %d\n",
         drive, dFound.cFileName, Disk[drive].hFile);
 
     CloseDrive(drive);
@@ -2106,7 +2106,7 @@ void OpenFound (int drive,int raw)
 
     // Open a directory of containing DSK files
     if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        _DLOG("OpenFound %s is a directory\n",dFound.cFileName);
+        DLOG_C("OpenFound %s is a directory\n",dFound.cFileName);
         char path[MAX_PATH];
         strncpy(path,dFound.cFileName,MAX_PATH);
         AppendPathChar(path,'/');
@@ -2126,8 +2126,8 @@ void OpenFound (int drive,int raw)
         fqn, GENERIC_READ, FILE_SHARE_READ,
 		nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
     if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
-        _DLOG("OpenFound fail %d file %s\n",drive,fqn);
-        _DLOG("... %s\n",LastErrorTxt());
+        DLOG_C("OpenFound fail %d file %s\n",drive,fqn);
+        DLOG_C("... %s\n",LastErrorTxt());
         int ecode = GetLastError();
         if (ecode == ERROR_SHARING_VIOLATION) {
             IF.status = STA_FAIL | STA_INUSE;
@@ -2156,7 +2156,7 @@ void OpenFound (int drive,int raw)
         // Read a few bytes of the file to determine it's type
         unsigned char header[16];
         if (ReadFile(Disk[drive].hFile,header,12,nullptr,nullptr) == 0) {
-            _DLOG("OpenFound header read error\n");
+            DLOG_C("OpenFound header read error\n");
             IF.status = STA_FAIL | STA_INVALID;
             return;
         }
@@ -2167,7 +2167,7 @@ void OpenFound (int drive,int raw)
         // bytes of the header contains "SDF1"
         if ((Disk[drive].size >= 219262) &&
             (strncmp("SDF1",(const char *) header,4) == 0)) {
-            _DLOG("OpenFound SDF file unsupported\n");
+            DLOG_C("OpenFound SDF file unsupported\n");
             IF.status = STA_FAIL | STA_INVALID;
             return;
         }
@@ -2195,7 +2195,7 @@ void OpenFound (int drive,int raw)
             break;
         // Unknown or unsupported
         default: // More than 4 byte header is not supported
-            _DLOG("OpenFound unsuported image type %d %d\n",
+            DLOG_C("OpenFound unsuported image type %d %d\n",
                 drive, Disk[drive].headersize);
             IF.status = STA_FAIL | STA_INVALID;
             return;
@@ -2220,8 +2220,8 @@ void OpenFound (int drive,int raw)
             Disk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
 			nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
         if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
-            _DLOG("OpenFound reopen fail %d\n",drive);
-            _DLOG("... %s\n",LastErrorTxt());
+            DLOG_C("OpenFound reopen fail %d\n",drive);
+            DLOG_C("... %s\n",LastErrorTxt());
             IF.status = STA_FAIL | STA_WIN_ERROR;
             return;
         }
@@ -2259,10 +2259,10 @@ void RenameFile(const char *names)
     GetFullPath(from,names);
     GetFullPath(target,1+strchr(names,'\0'));
 
-    _DLOG("UpdateSD rename %s %s\n",from,target);
+    DLOG_C("UpdateSD rename %s %s\n",from,target);
 
     if (std::rename(from,target)) {
-        _DLOG("RenameFile %s\n", strerror(errno));
+        DLOG_C("RenameFile %s\n", strerror(errno));
         IF.status = STA_FAIL | STA_WIN_ERROR;
     } else {
         IF.status = STA_NORMAL;
@@ -2277,14 +2277,14 @@ void KillFile(const char *file)
 {
     char path[MAX_PATH];
     GetFullPath(path,file);
-    _DLOG("KillFile delete %s\n",path);
+    DLOG_C("KillFile delete %s\n",path);
 
     if (IsDirectory(path)) {
         if (PathIsDirectoryEmpty(path)) {
             if (RemoveDirectory(path)) {
                 IF.status = STA_NORMAL;
             } else {
-                _DLOG("Deletefile %s\n", strerror(errno));
+                DLOG_C("Deletefile %s\n", strerror(errno));
                 IF.status = STA_FAIL | STA_NOTFOUND;
             }
         } else {
@@ -2295,7 +2295,7 @@ void KillFile(const char *file)
             IF.status = STA_NORMAL;
 		else
 		{
-			_DLOG("Deletefile %s\n", strerror(errno));
+			DLOG_C("Deletefile %s\n", strerror(errno));
 			IF.status = STA_FAIL | STA_NOTFOUND;
 		}
     }
@@ -2309,7 +2309,7 @@ void MakeDirectory(const char *name)
 {
     char path[MAX_PATH];
     GetFullPath(path,name);
-    _DLOG("MakeDirectory %s\n",path);
+    DLOG_C("MakeDirectory %s\n",path);
 
     // Make sure directory is not in use
     struct _stat file_stat;
@@ -2322,7 +2322,7 @@ void MakeDirectory(const char *name)
     if (CreateDirectory(path,nullptr)) {
         IF.status = STA_NORMAL;
     } else {
-        _DLOG("MakeDirectory %s\n", strerror(errno));
+        DLOG_C("MakeDirectory %s\n", strerror(errno));
         IF.status = STA_FAIL | STA_WIN_ERROR;
     }
     return;
@@ -2369,18 +2369,18 @@ bool IsDirectory(const char * path)
 //----------------------------------------------------------------------
 void SetCurDir(const char * branch)
 {
-    _DLOG("SetCurdir '%s'\n",branch);
+    DLOG_C("SetCurdir '%s'\n",branch);
 
     // If branch is "." or "" do nothing
     if ((*branch == '\0') || (strcmp(branch,".") == 0)) {
-        _DLOG("SetCurdir no change\n");
+        DLOG_C("SetCurdir no change\n");
         IF.status = STA_NORMAL;
         return;
     }
 
     // If branch is "/" set CurDir to root
     if (strcmp(branch,"/") == 0) {
-        _DLOG("SetCurdir to root\n");
+        DLOG_C("SetCurdir to root\n");
         *CurDir = '\0';
         IF.status = STA_NORMAL;
         return;
@@ -2394,14 +2394,14 @@ void SetCurDir(const char * branch)
         } else {
             *CurDir = '\0';
         }
-        _DLOG("SetCurdir back %s\n",CurDir);
+        DLOG_C("SetCurdir back %s\n",CurDir);
         IF.status = STA_NORMAL;
         return;
     }
 
     // Disallow branch start with "//"
     if (strncmp(branch,"//",2) == 0) {
-        _DLOG("SetCurdir // invalid\n");
+        DLOG_C("SetCurdir // invalid\n");
         IF.status = STA_FAIL | STA_INVALID;
         return;
     }
@@ -2421,7 +2421,7 @@ void SetCurDir(const char * branch)
         strncat(test,branch+1,MAX_PATH);
     }
     if (!IsDirectory(test)) {
-        _DLOG("SetCurdir not a directory %s\n",test);
+        DLOG_C("SetCurdir not a directory %s\n",test);
         IF.status = STA_FAIL | STA_NOTFOUND;
         return;
     }
@@ -2439,7 +2439,7 @@ void SetCurDir(const char * branch)
     while (l > 0 && CurDir[l-1] == '/') l--;
     CurDir[l] = '\0';
 
-    _DLOG("SetCurdir set to '%s'\n",CurDir);
+    DLOG_C("SetCurdir set to '%s'\n",CurDir);
 
     IF.status = STA_NORMAL;
     return;
@@ -2463,7 +2463,7 @@ bool SearchFile(const char * pattern)
         strncat(path,pattern,MAX_PATH);
     }
 
-    _DLOG("SearchFile %s\n",path);
+    DLOG_C("SearchFile %s\n",path);
 
     // Close previous search
     if (hFind != INVALID_HANDLE_VALUE) {
@@ -2521,7 +2521,7 @@ void LoadDirPage()
     memset(DirPage,0,sizeof(DirPage));
 
     if (hFind == INVALID_HANDLE_VALUE) {
-         _DLOG("LoadDirPage Search fail\n");
+        DLOG_C("LoadDirPage Search fail\n");
         return;
     }
 
