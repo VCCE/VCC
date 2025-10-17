@@ -25,25 +25,8 @@
 #include <sys/stat.h>
 #include <vcc/common/logger.h>
 
-
 static HANDLE hLog_Out = nullptr;
 static const auto LogFileName = "VccLog.txt";
-
-//void CpuDump() {
-//    for (x=0;x<=65535;x++)
-//        PrintLogF("%c",MemRead8(x));
-//}
-
-void WriteLog(const char *Message, unsigned char Type) {
-    switch (Type) {
-    case TOCONS:
-        PrintLogC(Message);
-        break;
-    case TOFILE:
-        PrintLogF(Message);
-        break;
-    }
-}
 
 // PrintLogC - Put formatted string to the console
 void PrintLogC(const char* fmt, ...)

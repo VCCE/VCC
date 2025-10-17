@@ -35,7 +35,7 @@ static SOCKET Socket = INVALID_SOCKET;
 //Close
 void tcpip_close()
 {
-    _DLOG("tcpip_close Socket %d\n",Socket);
+    DLOG_C("tcpip_close Socket %d\n",Socket);
     if (Socket != INVALID_SOCKET) closesocket(Socket);
     Socket = INVALID_SOCKET;
     WSACleanup();
@@ -59,7 +59,7 @@ int tcpip_open()
 
     struct addrinfo *result = nullptr;
     if (getaddrinfo(AciaTcpHost, AciaTcpPort, &hints, &result) != 0) {
-    _DLOG("tcpip_open getaddrinfo fail %s %s\n",AciaTcpHost,AciaTcpPort);
+    DLOG_C("tcpip_open getaddrinfo fail %s %s\n",AciaTcpHost,AciaTcpPort);
     return -1;
 }
 
@@ -67,7 +67,7 @@ int tcpip_open()
         Socket = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
         if (Socket == INVALID_SOCKET) {
             freeaddrinfo(result);
-            _DLOG("tcpip_open Fail\n");
+            DLOG_C("tcpip_open Fail\n");
             return -1;
         }
         if (connect(Socket, p->ai_addr, p->ai_addrlen) != 0) {
@@ -79,7 +79,7 @@ int tcpip_open()
     }
     freeaddrinfo(result);
 
-    _DLOG("tcpip_open Socket %d\n",Socket);
+    DLOG_C("tcpip_open Socket %d\n",Socket);
 
     if (Socket == INVALID_SOCKET)
         return -1;

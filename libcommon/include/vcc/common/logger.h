@@ -18,24 +18,15 @@
 #pragma once
 #include <vcc/core/detail/exports.h>
 
-// FIXME: At the very least these need to be turned into a scoped enum and the
-// signature of functions that use them updated. A better option would be to
-// properly abstract the logging to these values are not necessary. Also the
-// notion of the callsite selecting the output device is not ideal so maybe
-// just replace it with something more effective.
-#define TOCONS 0
-#define TOFILE 1
-
-LIBCOMMON_EXPORT void WriteLog(const char *, unsigned char);
 LIBCOMMON_EXPORT void PrintLogC(const char* fmt, ...);
 LIBCOMMON_EXPORT void PrintLogF(const char* fmt, ...);
 
 // Debug logging if USE_LOGGING is defined
 
 #ifdef USE_LOGGING
-#define _DLOG(...) PrintLogC(__VA_ARGS__)
-#define _LOGF(...) PrintLogF(__VA_ARGS__)
+#define DLOG_C(...) PrintLogC(__VA_ARGS__)
+#define DLOG_F(...) PrintLogF(__VA_ARGS__)
 #else
-#define _DLOG(...)
-#define _LOGF(...)
+#define DLOG_C(...) ((void)0)
+#define DLOG_F(...) ((void)0)
 #endif

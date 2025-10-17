@@ -78,7 +78,7 @@ HMENU CartridgeMenu::draw() {
 	// Create sub menus in order
 	unsigned int pos = 0u;
 	for (CartMenuItem item : menu) {
-		_DLOG("%4d %d '%s'\n",item.menu_id,item.type,item.name.c_str());
+		DLOG_C("%4d %d '%s'\n",item.menu_id,item.type,item.name.c_str());
 		switch (item.type) {
 		case MIT_Head:
 			hMenu = CreatePopupMenu();

@@ -86,7 +86,7 @@ void sc6551_terminate_thread(HANDLE hthread, HANDLE hstop)
         SetEvent(hstop);
         // If that fails force it
         if (WaitForSingleObject(hthread,500) == WAIT_TIMEOUT) {
-            _LOGF("FORCE TERMINATE %d\n",hthread);
+            DLOG_F("FORCE TERMINATE %d\n",hthread);
             TerminateThread(hthread,1);
             WaitForSingleObject(hthread,500);
         }
@@ -160,7 +160,7 @@ void sc6551_close()
 //------------------------------------------------------------------------
 DWORD WINAPI sc6551_input_thread(LPVOID /*param*/)
 {
-    _LOGF("START-IN %d\n",hInputThread);
+    DLOG_F("START-IN %d\n",hInputThread);
     Icnt = 0;
     while(TRUE) {
         if (Icnt == 0) {
@@ -176,13 +176,13 @@ DWORD WINAPI sc6551_input_thread(LPVOID /*param*/)
                     InBuf[0] = '\r';
                     InBuf[1] = EOFCHR;
                 }
-                _LOGF("R %d\n",cnt);
+                DLOG_F("R %d\n",cnt);
                 Icnt = cnt;
             }
         } else {
             if (WaitForSingleObject(hStopInput,100) != WAIT_TIMEOUT) {
                 if (Icnt > 0) Sleep(1000);
-                _LOGF("TERMINATE-IN\n");
+                DLOG_F("TERMINATE-IN\n");
                 ExitThread(0);
             }
         }
@@ -197,7 +197,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID /*param*/)
     Wcnt = 0;
     OutWptr = OutBuf;
 
-    _LOGF("START-OUT %d\n",hOutputThread);
+    DLOG_F("START-OUT %d\n",hOutputThread);
 
     while(TRUE) {
         if (Wcnt > 0) {
@@ -208,7 +208,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID /*param*/)
                     const char * ptr = OutBuf;
                     while (Wcnt > 0) {
                         int cnt = com_write(ptr,Wcnt);
-                        _LOGF("W %d\n",cnt);
+                        DLOG_F("W %d\n",cnt);
                         if (cnt < 1) break;  //TODO Deal with write error
                         Wcnt -= cnt;
                         ptr += cnt;
@@ -222,7 +222,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID /*param*/)
 
         int rc = WaitForSingleObject(hStopOutput,100);
         if (rc != WAIT_TIMEOUT) {
-            _LOGF("TERMINATE-OUT\n");
+            DLOG_F("TERMINATE-OUT\n");
             ExitThread(0);
         }
     }
@@ -314,7 +314,7 @@ void sc6551_write(unsigned char data,unsigned short port)
         break;
     // Write status does a reset
     case 1:
-        _LOGF("Reset\n");
+        DLOG_F("Reset\n");
         StatReg = 0;
         break;
     // Write Command register
