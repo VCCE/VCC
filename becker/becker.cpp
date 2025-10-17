@@ -12,10 +12,6 @@
 #include <vcc/common/logger.h>
 #include <vcc/common/FileOps.h>
 
-#ifndef USE_LOGGING
-#define WriteLog(a,b)
-#endif
-
 // socket
 static SOCKET dwSocket = 0;
 
@@ -144,10 +140,9 @@ int dw_write( char dwdata)
 				int res = send(dwSocket, &dwdata, 1, 0);
                 if (res != 1)
                 {
-						sprintf(msg,"dw_write: socket error %d\n", WSAGetLastError());
-						WriteLog(msg,TOCONS);
-                        closesocket(dwSocket);
-                        dwSocket = 0;        
+                     DLOG_C("dw_write: socket error %d\n", WSAGetLastError());
+                     closesocket(dwSocket);
+                     dwSocket = 0;
                 }
                 else
                 {
@@ -156,8 +151,7 @@ int dw_write( char dwdata)
         }
 	     else
 	    {
-	              sprintf(msg,"coco write but null socket\n");
-	              WriteLog(msg,TOCONS);
+                DLOG_C("coco write but null socket error\n");
 	     }
 
         return 0;
@@ -232,9 +226,9 @@ void attemptDWConnection( void )
 
         if (dwSocket == INVALID_SOCKET)
         {
-                // no deal
-                retry = false;
-              WriteLog("invalid socket.\n", TOCONS);
+              // no deal
+              retry = false;
+              DLOG_C("invalid socket.\n");
         }
 
         // set options
@@ -274,7 +268,7 @@ unsigned __stdcall DWTCPThread(void *Dummy)
          // Request Winsock version 2.2
         if ((WSAStartup(0x202, &wsaData)) != 0)
         {
-                WriteLog("WSAStartup() failed, DWTCPConnection thread exiting\n",TOCONS);
+                DLOG_C("WSAStartup() failed, DWTCPConnection thread exiting\n");
                 WSACleanup();
                 return 0;
         }
@@ -349,12 +343,9 @@ void SetDWTCPConnectionEnable(unsigned int enable)
         {
                 DWTCPEnabled = true;
 
-               // WriteLog("DWTCPConnection has been enabled.\n",TOCONS);
-
                 // reset buffer pointers
                 InReadPos = 0;
                 InWritePos = 0;
-
 
                 
                 // start create thread to handle io
@@ -367,7 +358,7 @@ void SetDWTCPConnectionEnable(unsigned int enable)
                 
                 if (hEvent==NULL)
                 {
-                      WriteLog("Cannot create DWTCPConnection thread!\n",TOCONS);
+                      DLOG_C("Cannot create DWTCPConnection thread!\n");
                         return;
                 }
 
@@ -376,12 +367,11 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 
                 if (hDWTCPThread==NULL)
                 {
-	                    WriteLog("Cannot start DWTCPConnection thread!\n",TOCONS);
+	                    DLOG_C("Cannot start DWTCPConnection thread!\n");
                         return;
                 }
 
-                sprintf(msg,"DWTCPConnection thread started with id %d\n",threadID);
-                WriteLog(msg,TOCONS);
+                DLOG_C("DWTCPConnection thread started with id %d\n",threadID);
                 
 
         }
@@ -391,9 +381,6 @@ void SetDWTCPConnectionEnable(unsigned int enable)
                 DWTCPEnabled = false;
         
                 killDWTCPThread();
-        
-                // WriteLog("DWTCPConnection has been disabled.\n",TOCONS);
-        
         }
 
 }
@@ -461,8 +448,6 @@ extern "C" __declspec(dllexport) unsigned char SetCart(AssertCartridgeLineModule
 
 extern "C" __declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
 	{
-		//sprintf(msg,"PalMemRead8: addr %d  val %d\n",(Address & 8191), Rom[Address & 8191]);
-        //WriteLog(msg,TOCONS);
 		return(HDBRom[Address & 8191]);
 	
 	}
