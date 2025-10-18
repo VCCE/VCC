@@ -181,19 +181,19 @@ namespace vcc { namespace core { namespace cartridges
 		status_(status_text);
 	}
 
-	void legacy_cartridge::write_port(unsigned char portId, unsigned char value)
+	void legacy_cartridge::write_port(unsigned char port_id, unsigned char value)
 	{
-		write_port_(portId, value);
+		write_port_(port_id, value);
 	}
 
-	unsigned char legacy_cartridge::read_port(unsigned char portId)
+	unsigned char legacy_cartridge::read_port(unsigned char port_id)
 	{ 
-		return read_port_(portId);
+		return read_port_(port_id);
 	}
 
-	unsigned char legacy_cartridge::read_memory_byte(unsigned short memoryAddress)
+	unsigned char legacy_cartridge::read_memory_byte(unsigned short memory_address)
 	{
-		return read_memory_byte_(memoryAddress);
+		return read_memory_byte_(memory_address);
 	}
 
 	unsigned short legacy_cartridge::sample_audio()
@@ -201,9 +201,9 @@ namespace vcc { namespace core { namespace cartridges
 		return sample_audio_();
 	}
 
-	void legacy_cartridge::menu_item_clicked(unsigned char menuItemId)
+	void legacy_cartridge::menu_item_clicked(unsigned char menu_item_id)
 	{
-		menu_item_clicked_(menuItemId);
+		menu_item_clicked_(menu_item_id);
 	}
 
 	void legacy_cartridge::initialize_pak()
@@ -218,11 +218,11 @@ namespace vcc { namespace core { namespace cartridges
 		const auto getModuleName(GetImportedProcAddress(handle_, "ModuleName", default_get_module_name));
 		getModuleName(buffer, buffer, addMenuItemCallback_);
 
-		const auto setIniPath(GetImportedProcAddress(handle_, "SetIniPath", default_set_ini_path));
-		setIniPath(configurationPath_.c_str());
-
 		const auto pakSetCart(GetImportedProcAddress(handle_, "SetCart", default_set_cart_pointer));
 		pakSetCart(assertCartCallback_);
+
+		const auto setIniPath(GetImportedProcAddress(handle_, "SetIniPath", default_set_ini_path));
+		setIniPath(configurationPath_.c_str());
 	}
 
 } } }

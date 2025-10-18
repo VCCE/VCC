@@ -37,7 +37,6 @@ void BuildCartMenu();
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig();
 void SaveConfig();
-void CenterDialog(HWND);
 
 //------------------------------------------------------------------------
 // Globals
@@ -525,19 +524,6 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM /*lParam*/)
         return TRUE;
     }
     return FALSE;
-}
-
-//------------------------------------------------------------
-// Center a dialog box in parent window
-//------------------------------------------------------------
-void CenterDialog(HWND hDlg)
-{
-    RECT rPar, rDlg;
-    GetWindowRect(GetParent(hDlg), &rPar);
-    GetWindowRect(hDlg, &rDlg);
-    int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
-    int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
-    SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 //----------------------------------------------------------------

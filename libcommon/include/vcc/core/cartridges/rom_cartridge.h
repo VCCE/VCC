@@ -48,8 +48,8 @@ namespace vcc { namespace core { namespace cartridges
 		LIBCOMMON_EXPORT const catalog_id_type& catalog_id() const override;
 
 		LIBCOMMON_EXPORT void reset() override;
-		LIBCOMMON_EXPORT void write_port(unsigned char portId, unsigned char value) override;
-		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memoryAddress) override;
+		LIBCOMMON_EXPORT void write_port(unsigned char port_id, unsigned char value) override;
+		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memory_address) override;
 
 
 	protected:

@@ -48,15 +48,15 @@ namespace vcc { namespace core
 	void cartridge::heartbeat()
 	{}
 
-	void cartridge::write_port(unsigned char portId, unsigned char value)
+	void cartridge::write_port(unsigned char port_id, unsigned char value)
 	{}
 
-	unsigned char cartridge::read_port(unsigned char portId)
+	unsigned char cartridge::read_port(unsigned char port_id)
 	{ 
 		return {};
 	}
 
-	unsigned char cartridge::read_memory_byte(unsigned short memoryAddress)
+	unsigned char cartridge::read_memory_byte(unsigned short memory_address)
 	{
 		return {};
 	}
@@ -71,7 +71,7 @@ namespace vcc { namespace core
 		return {};
 	}
 
-	void cartridge::menu_item_clicked(unsigned char menuItemId)
+	void cartridge::menu_item_clicked(unsigned char menu_item_id)
 	{}
 
 	void cartridge::initialize_pak()

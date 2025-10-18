@@ -115,6 +115,23 @@ void FileDialog::getdir(char * Dir, int maxsize) const {
 	if (char * p = strrchr(Dir,'\\')) *p = '\0';
 }
 
+
+//------------------------------------------------------------
+// Center a dialog box in parent window
+//------------------------------------------------------------
+void CenterDialog(HWND hDlg)
+{
+	RECT rPar;
+	GetWindowRect(GetParent(hDlg), &rPar);
+
+	RECT rDlg;
+	GetWindowRect(hDlg, &rDlg);
+
+	const auto x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
+	const auto y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
+	SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+}
+
 //-------------------------------------------------------------------------------------------
 // CloseCartDialog should be called by cartridge DLL's when they are unloaded.
 //-------------------------------------------------------------------------------------------

@@ -24,6 +24,7 @@
 // It should be called by cartridge DLL's when they are unloaded.
 //-------------------------------------------------------------------------------------------
 LIBCOMMON_EXPORT void CloseCartDialog(HWND hDlg);
+LIBCOMMON_EXPORT void CenterDialog(HWND hDlg);
 
 //-------------------------------------------------------------------------------------------
 // FileDialog wraps dialogs for users to select files.
