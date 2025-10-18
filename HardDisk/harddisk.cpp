@@ -52,7 +52,6 @@ void LoadConfig();
 void SaveConfig();
 void BuildDynaMenu();
 int CreateDisk(HWND,int);
-void CenterDialog(HWND hDlg);
 
 static HINSTANCE g_hinstDLL;
 static HWND hConfDlg = nullptr;
@@ -139,16 +138,6 @@ extern "C"
         BuildDynaMenu();
         return;
     }
-}
-
-void CenterDialog(HWND hDlg)
-{
-    RECT rPar, rDlg;
-    GetWindowRect(GetParent(hDlg), &rPar);
-    GetWindowRect(hDlg, &rDlg);
-    int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
-    int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
-    SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)

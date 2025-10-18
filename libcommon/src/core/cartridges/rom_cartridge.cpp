@@ -53,17 +53,17 @@ namespace vcc { namespace core { namespace cartridges
 		bank_offset_ = 0;
 	}
 
-	void rom_cartridge::write_port(unsigned char portId, unsigned char value)
+	void rom_cartridge::write_port(unsigned char port_id, unsigned char value)
 	{
-		if (enable_bank_switching_ && portId == 0x40)
+		if (enable_bank_switching_ && port_id == 0x40)
 		{
 			bank_offset_ = (value & 0x0f) << 14;
 		}
 	}
 
-	unsigned char rom_cartridge::read_memory_byte(unsigned short memoryAddress)
+	unsigned char rom_cartridge::read_memory_byte(unsigned short memory_address)
 	{
-		return buffer_[((memoryAddress & 32767) + bank_offset_) % buffer_.size()];
+		return buffer_[((memory_address & 32767) + bank_offset_) % buffer_.size()];
 	}
 
 	void rom_cartridge::initialize_bus()

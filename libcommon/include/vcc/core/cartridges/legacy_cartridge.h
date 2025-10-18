@@ -49,11 +49,11 @@ namespace vcc { namespace core { namespace cartridges
 		LIBCOMMON_EXPORT void reset() override;
 		LIBCOMMON_EXPORT void heartbeat() override;
 		LIBCOMMON_EXPORT void status(char* status) override;
-		LIBCOMMON_EXPORT void write_port(unsigned char portId, unsigned char value) override;
-		LIBCOMMON_EXPORT unsigned char read_port(unsigned char portId) override;
-		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memoryAddress) override;
+		LIBCOMMON_EXPORT void write_port(unsigned char port_id, unsigned char value) override;
+		LIBCOMMON_EXPORT unsigned char read_port(unsigned char port_id) override;
+		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memory_address) override;
 		LIBCOMMON_EXPORT unsigned short sample_audio() override;
-		LIBCOMMON_EXPORT void menu_item_clicked(unsigned char menuItemId) override;
+		LIBCOMMON_EXPORT void menu_item_clicked(unsigned char menu_item_id) override;
 
 
 	protected:

@@ -45,12 +45,12 @@ namespace vcc { namespace core
 		virtual void start();
 		virtual void reset();
 		virtual void heartbeat();
-		virtual void write_port(unsigned char portId, unsigned char value);
-		virtual unsigned char read_port(unsigned char portId);
-		virtual unsigned char read_memory_byte(unsigned short memoryAddress);
+		virtual void write_port(unsigned char port_id, unsigned char value);
+		virtual unsigned char read_port(unsigned char port_id);
+		virtual unsigned char read_memory_byte(unsigned short memory_address);
 		virtual void status(char* status);
 		virtual unsigned short sample_audio();
-		virtual void menu_item_clicked(unsigned char menuItemId);
+		virtual void menu_item_clicked(unsigned char menu_item_id);
 
 
 	protected:

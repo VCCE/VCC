@@ -173,7 +173,6 @@ LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig();
 bool SaveConfig(HWND);
 void BuildCartMenu();
-void CenterDialog(HWND);
 void SelectCardBox();
 void update_disk0_box();
 void UpdateFlashItem(int);
@@ -489,19 +488,6 @@ void BuildCartMenu()
     CartMenuCallback("SDC Config",ControlId(10),MIT_StandAlone);
     CartMenuCallback("SDC Control",ControlId(11),MIT_StandAlone);
     CartMenuCallback("",MID_FINISH,MIT_Head);
-}
-
-//------------------------------------------------------------
-// Center a dialog box in parent window
-//------------------------------------------------------------
-void CenterDialog(HWND hDlg)
-{
-    RECT rPar, rDlg;
-    GetWindowRect(GetParent(hDlg), &rPar);
-    GetWindowRect(hDlg, &rDlg);
-    int x = rPar.left + (rPar.right - rPar.left - (rDlg.right - rDlg.left)) / 2;
-    int y = rPar.top + (rPar.bottom - rPar.top - (rDlg.bottom - rDlg.top)) / 2;
-    SetWindowPos(hDlg, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 //------------------------------------------------------------
