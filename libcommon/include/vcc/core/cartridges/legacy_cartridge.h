@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridge.h>
+#include <vcc/core/cartridges/basic_cartridge.h>
 #include <vcc/core/legacy_cartridge_definitions.h>
 #include <Windows.h>
 #include <string>
@@ -25,7 +25,7 @@
 namespace vcc { namespace core { namespace cartridges
 {
 
-	class legacy_cartridge: public cartridge
+	class legacy_cartridge: public basic_cartridge
 	{
 	public:
 

@@ -51,9 +51,6 @@
     <ClCompile Include="src\logger.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\cartridge.cpp">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
     <ClCompile Include="src\core\cartridges\legacy_cartridge.cpp">
       <Filter>Source Files\core\cartridges</Filter>
     </ClCompile>
@@ -74,6 +71,9 @@
     </ClCompile>
     <ClCompile Include="src\core\utils\winapi.cpp">
       <Filter>Source Files\core\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\cartridges\basic_cartridge.cpp">
+      <Filter>Source Files\core\cartridges</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -130,6 +130,9 @@
     </ClInclude>
     <ClInclude Include="include\vcc\core\utils\critical_section.h">
       <Filter>Header Files\core\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\cartridges\basic_cartridge.h">
+      <Filter>Header Files\core\cartridges</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

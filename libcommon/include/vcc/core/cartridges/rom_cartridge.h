@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridge.h>
+#include <vcc/core/cartridges/basic_cartridge.h>
 #include <vcc/core/legacy_cartridge_definitions.h>
 #include <vector>
 
@@ -24,7 +24,7 @@
 namespace vcc { namespace core { namespace cartridges
 {
 
-	class rom_cartridge : public cartridge
+	class rom_cartridge : public basic_cartridge
 	{
 	public:
 
@@ -34,7 +34,7 @@ namespace vcc { namespace core { namespace cartridges
 
 	public:
 
-		using cartridge::cartridge;
+		using basic_cartridge::basic_cartridge;
 
 
 		LIBCOMMON_EXPORT rom_cartridge(
