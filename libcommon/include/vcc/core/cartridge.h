@@ -39,24 +39,18 @@ namespace vcc { namespace core
 
 		virtual ~cartridge() = default;
 
-		virtual const name_type& name() const;
-		virtual const catalog_id_type& catalog_id() const;
+		virtual const name_type& name() const = 0;
+		virtual const catalog_id_type& catalog_id() const = 0;
 
-		virtual void start();
-		virtual void reset();
-		virtual void heartbeat();
-		virtual void write_port(unsigned char port_id, unsigned char value);
-		virtual unsigned char read_port(unsigned char port_id);
-		virtual unsigned char read_memory_byte(unsigned short memory_address);
-		virtual void status(char* status);
-		virtual unsigned short sample_audio();
-		virtual void menu_item_clicked(unsigned char menu_item_id);
-
-
-	protected:
-
-		virtual void initialize_pak();
-		virtual void initialize_bus();
+		virtual void start() = 0;
+		virtual void reset() = 0;
+		virtual void heartbeat() = 0;
+		virtual void write_port(unsigned char port_id, unsigned char value) = 0;
+		virtual unsigned char read_port(unsigned char port_id) = 0;
+		virtual unsigned char read_memory_byte(unsigned short memory_address) = 0;
+		virtual void status(char* status) = 0;
+		virtual unsigned short sample_audio() = 0;
+		virtual void menu_item_clicked(unsigned char menu_item_id) = 0;
 	};
 
 } }

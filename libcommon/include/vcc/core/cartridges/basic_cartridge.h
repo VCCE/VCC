@@ -15,69 +15,43 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
+#pragma once
 #include <vcc/core/cartridge.h>
 
 
-namespace vcc { namespace core
+namespace vcc { namespace core { namespace cartridges
 {
 
-	const cartridge::name_type& cartridge::name() const
+	struct LIBCOMMON_EXPORT basic_cartridge : public ::vcc::core::cartridge
 	{
-		static const name_type local_name;
+	public:
 
-		return local_name;
-	}
-	
-	const cartridge::catalog_id_type& cartridge::catalog_id() const
-	{
-		static const catalog_id_type local_id;
-
-		return local_id;
-	}
+		using name_type = std::string;
+		using catalog_id_type = std::string;
 
 
-	void cartridge::start()
-	{
-		initialize_pak();
-		initialize_bus();
-	}
+	public:
 
-	void cartridge::reset()
-	{}
+		using cartridge::cartridge;
 
-	void cartridge::heartbeat()
-	{}
+		const name_type& name() const override;
+		const catalog_id_type& catalog_id() const override;
 
-	void cartridge::write_port(unsigned char port_id, unsigned char value)
-	{}
+		void start() override;
+		void reset() override;
+		void heartbeat() override;
+		void write_port(unsigned char port_id, unsigned char value) override;
+		unsigned char read_port(unsigned char port_id) override;
+		unsigned char read_memory_byte(unsigned short memory_address) override;
+		void status(char* status) override;
+		unsigned short sample_audio() override;
+		void menu_item_clicked(unsigned char menu_item_id) override;
 
-	unsigned char cartridge::read_port(unsigned char port_id)
-	{ 
-		return {};
-	}
 
-	unsigned char cartridge::read_memory_byte(unsigned short memory_address)
-	{
-		return {};
-	}
+	protected:
 
-	void cartridge::status(char* status_text)
-	{
-		*status_text = 0;
-	}
+		virtual void initialize_pak();
+		virtual void initialize_bus();
+	};
 
-	unsigned short cartridge::sample_audio()
-	{
-		return {};
-	}
-
-	void cartridge::menu_item_clicked(unsigned char menu_item_id)
-	{}
-
-	void cartridge::initialize_pak()
-	{}
-
-	void cartridge::initialize_bus()
-	{}
-
-} }
+} } }
