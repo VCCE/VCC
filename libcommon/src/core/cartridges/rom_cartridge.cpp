@@ -22,13 +22,13 @@ namespace vcc { namespace core { namespace cartridges
 {
 
 	rom_cartridge::rom_cartridge(
-		AssertCartridgeLineModuleCallback assertCartCallback,
+		std::unique_ptr<context_type> context,
 		name_type name,
 		catalog_id_type catalog_id,
 		buffer_type buffer,
 		bool enable_bank_switching)
 		:
-		assertCartCallback_(assertCartCallback),
+		context_(move(context)),
 		name_(move(name)),
 		catalog_id_(move(catalog_id)),
 		buffer_(move(buffer)),
@@ -68,7 +68,7 @@ namespace vcc { namespace core { namespace cartridges
 
 	void rom_cartridge::initialize_bus()
 	{
-		assertCartCallback_(true);
+		context_->assert_cartridge_line(true);
 	}
 
 } } }

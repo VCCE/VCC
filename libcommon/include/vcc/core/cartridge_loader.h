@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <vcc/core/cartridge.h>
+#include <vcc/core/cartridge_context.h>
 #include <vcc/core/legacy_cartridge_definitions.h>
 #include <vcc/core/utils/dll_deleter.h>
 #include <string>
@@ -58,7 +59,7 @@ namespace vcc { namespace core
 		cartridge_loader_status load_result = cartridge_loader_status::not_loaded;
 	};
 
-	struct LIBCOMMON_EXPORT cartridge_loader_context
+	struct cartridge_loader_context
 	{
 		const AppendCartridgeMenuModuleCallback addMenuItemCallback;
 		const ReadMemoryByteModuleCallback readData;
@@ -69,13 +70,15 @@ namespace vcc { namespace core
 
 	LIBCOMMON_EXPORT cartridge_file_type determine_cartridge_type(const std::string& filename);
 	LIBCOMMON_EXPORT cartridge_loader_result load_rom_cartridge(
-		const cartridge_loader_context& context,
+		std::unique_ptr<cartridge_context> context,
 		const std::string& filename);
 	LIBCOMMON_EXPORT cartridge_loader_result load_legacy_cartridge(
+		std::unique_ptr<cartridge_context> cartridge_context,
 		const cartridge_loader_context& context,
 		const std::string& filename,
 		const std::string& iniPath);
 	LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
+		std::unique_ptr<cartridge_context> cartridge_context,
 		const cartridge_loader_context& context,
 		const std::string& filename,
 		const std::string& iniPath);

@@ -27,10 +27,10 @@
 #define EXPORT_PUBLIC_API extern "C" __declspec(dllexport)
 
 HINSTANCE gModuleInstance = nullptr;
-const std::shared_ptr<host_cartridge_context> gHostContext(std::make_shared<host_cartridge_context>());
+std::string gConfigurationFilename;
+const std::shared_ptr<host_cartridge_context> gHostContext(std::make_shared<host_cartridge_context>(gConfigurationFilename));
 multipak_cartridge gMultiPakInterface(gHostContext);
 configuration_dialog gConfigurationDialog(gMultiPakInterface);
-std::string gConfigurationFilename;
 
 
 BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, LPVOID /*reserved*/)

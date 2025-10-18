@@ -17,8 +17,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <vcc/core/cartridges/basic_cartridge.h>
-#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/cartridge_context.h>
 #include <vector>
+#include <memory>
 
 
 namespace vcc { namespace core { namespace cartridges
@@ -28,6 +29,7 @@ namespace vcc { namespace core { namespace cartridges
 	{
 	public:
 
+		using context_type = ::vcc::core::cartridge_context;
 		using buffer_type = std::vector<uint8_t>;
 		using size_type = std::size_t;
 
@@ -38,7 +40,7 @@ namespace vcc { namespace core { namespace cartridges
 
 
 		LIBCOMMON_EXPORT rom_cartridge(
-			AssertCartridgeLineModuleCallback assertCartCallback,
+			std::unique_ptr<context_type> context,
 			name_type name,
 			catalog_id_type catalog_id,
 			buffer_type buffer,
@@ -59,7 +61,7 @@ namespace vcc { namespace core { namespace cartridges
 
 	private:
 
-		const AssertCartridgeLineModuleCallback assertCartCallback_;
+		const std::unique_ptr<context_type> context_;
 		const name_type name_;
 		const catalog_id_type catalog_id_;
 		const buffer_type buffer_;

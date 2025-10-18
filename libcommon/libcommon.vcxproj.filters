@@ -75,6 +75,9 @@
     <ClCompile Include="src\core\cartridges\basic_cartridge.cpp">
       <Filter>Source Files\core\cartridges</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\rom_image.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource\resource.h">
@@ -133,6 +136,15 @@
     </ClInclude>
     <ClInclude Include="include\vcc\core\cartridges\basic_cartridge.h">
       <Filter>Header Files\core\cartridges</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\cartridge_context.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\cartridge_factory.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\rom_image.h">
+      <Filter>Header Files\core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

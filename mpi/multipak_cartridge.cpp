@@ -16,6 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "multipak_cartridge.h"
+#include "multipak_cartridge_context.h"
 #include "mpi.h"
 #include "resource.h"
 #include <vcc/core/utils/configuration_serializer.h>
@@ -278,6 +279,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	const path_type& filename)
 {
 	auto loadedCartridge(vcc::core::load_cartridge(
+		std::make_unique<multipak_cartridge_context>(slot, *context_, *this),
 		{
 			gSlotCallbacks[slot].append_menu_item,
 			gHostContext->read_memory_byte_,
@@ -286,7 +288,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 			gSlotCallbacks[slot].set_cartridge_line
 		},
 		filename,
-		gConfigurationFilename));
+		context_->configuration_path()));
 	if (loadedCartridge.load_result != mount_status_type::success)
 	{
 		return loadedCartridge.load_result;
@@ -381,7 +383,7 @@ void multipak_cartridge::build_menu()
 void multipak_cartridge::load_configuration()
 {
 	const auto& section(name());
-	::vcc::core::configuration_serializer serializer(gConfigurationFilename);
+	::vcc::core::configuration_serializer serializer(context_->configuration_path());
 
 	// Get the startup slot and set Chip select and SCS slots from ini file
 	switch_slot_ = serializer.read(section, "SWPOSITION", 3);
@@ -407,7 +409,7 @@ void multipak_cartridge::save_configuration() const
 	vcc::core::utils::section_locker lock(mutex_);
 
 	const auto& section(name());
-	::vcc::core::configuration_serializer serializer(gConfigurationFilename);
+	::vcc::core::configuration_serializer serializer(context_->configuration_path());
 
 	serializer.write(section, "SWPOSITION", switch_slot_);
 	for (auto slot(0u); slot < slots_.size(); slot++)

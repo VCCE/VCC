@@ -104,6 +104,7 @@
     <ClInclude Include="mpi.h" />
     <ClInclude Include="multipak_cartridge.h" />
     <ClInclude Include="configuration_dialog.h" />
+    <ClInclude Include="multipak_cartridge_context.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

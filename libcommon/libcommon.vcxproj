@@ -102,6 +102,7 @@
     <ClCompile Include="src\core\cartridges\legacy_cartridge.cpp" />
     <ClCompile Include="src\core\cartridges\rom_cartridge.cpp" />
     <ClCompile Include="src\core\cartridge_loader.cpp" />
+    <ClCompile Include="src\core\rom_image.cpp" />
     <ClCompile Include="src\core\utils\configuration_serializer.cpp" />
     <ClCompile Include="src\core\utils\filesystem.cpp" />
     <ClCompile Include="src\core\utils\winapi.cpp" />
@@ -119,11 +120,14 @@
     <ClInclude Include="include\vcc\core\cartridges\legacy_cartridge.h" />
     <ClInclude Include="include\vcc\core\cartridges\null_cartridge.h" />
     <ClInclude Include="include\vcc\core\cartridges\rom_cartridge.h" />
+    <ClInclude Include="include\vcc\core\cartridge_context.h" />
+    <ClInclude Include="include\vcc\core\cartridge_factory.h" />
     <ClInclude Include="include\vcc\core\cartridge_loader.h" />
     <ClInclude Include="include\vcc\core\detail\exports.h" />
     <ClInclude Include="include\vcc\core\interrupts.h" />
     <ClInclude Include="include\vcc\core\legacy_cartridge_definitions.h" />
     <ClInclude Include="include\vcc\core\limits.h" />
+    <ClInclude Include="include\vcc\core\rom_image.h" />
     <ClInclude Include="include\vcc\core\utils\configuration_serializer.h" />
     <ClInclude Include="include\vcc\core\utils\critical_section.h" />
     <ClInclude Include="include\vcc\core\utils\dll_deleter.h" />

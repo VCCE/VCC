@@ -52,6 +52,52 @@ static cartridge_loader_result::cartridge_ptr_type gActiveCartrige(std::make_uni
 
 static cartridge_loader_status load_any_cartridge(const char* filename, const char* iniPath);
 
+void CartMenuCallBack(const char* name, int menu_id, MenuItemType type);
+void PakAssertInterupt(Interrupt interrupt, InterruptSource source);
+
+
+struct vcc_cartridge_context : public ::vcc::core::cartridge_context
+{
+
+	path_type configuration_path() const override
+	{
+		char path_buffer[MAX_PATH];
+
+		GetIniFilePath(path_buffer);
+
+		return path_buffer;
+	}
+
+	void reset() override
+	{
+		EmuState.ResetPending = 2;
+	}
+
+	void write_memory_byte(unsigned char value, unsigned short address) override
+	{
+		MemWrite8(value, address);
+	}
+
+	unsigned char read_memory_byte(unsigned short address) override
+	{
+		return MemRead8(address);
+	}
+
+	void assert_cartridge_line(bool line_state) override
+	{
+		SetCart(line_state);
+	}
+
+	void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) override
+	{
+		PakAssertInterupt(interrupt, interrupt_source);
+	}
+
+	void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) override
+	{
+		CartMenuCallBack(menu_name, menu_id, menu_type);
+	}
+};
 
 void PakTimer()
 {
@@ -198,6 +244,7 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 static cartridge_loader_status load_any_cartridge(const char *filename, const char* iniPath)
 {
 	cartridge_loader_result loadedCartridge(vcc::core::load_cartridge(
+		std::make_unique<vcc_cartridge_context>(),
 		{
 			CartMenuCallBack,
 			MemRead8,

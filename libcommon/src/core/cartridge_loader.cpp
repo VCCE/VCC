@@ -21,6 +21,7 @@
 #include <vector>
 #include <fstream>
 #include <iterator>
+#include <vcc/core/cartridge_factory.h>
 
 
 namespace vcc { namespace core
@@ -61,7 +62,7 @@ namespace vcc { namespace core
 	}
 
 	cartridge_loader_result load_rom_cartridge(
-		const cartridge_loader_context& context,
+		std::unique_ptr<cartridge_context> context,
 		const std::string& filename)
 	{
 		constexpr size_t PAK_MAX_MEM = 0x40000;
@@ -96,7 +97,7 @@ namespace vcc { namespace core
 		return {
 			nullptr,
 			std::make_unique<vcc::core::cartridges::rom_cartridge>(
-				context.assertCartridgeLine,
+				move(context),
 				extract_filename(filename),
 				"",
 				move(romImage),
@@ -106,6 +107,7 @@ namespace vcc { namespace core
 	}
 
 	cartridge_loader_result load_legacy_cartridge(
+		std::unique_ptr<cartridge_context> cartridge_context,
 		const cartridge_loader_context& context,
 		const std::string& filename,
 		const std::string& iniPath)
@@ -123,25 +125,37 @@ namespace vcc { namespace core
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 		}
 
-		if (GetProcAddress(details.handle.get(), "ModuleName") == nullptr)
+		const auto factoryAccessor(reinterpret_cast<GetPakFactoryFunction>(GetProcAddress(
+			details.handle.get(),
+			"GetPakFactory")));
+		if (factoryAccessor != nullptr)
 		{
-			return { nullptr, nullptr, cartridge_loader_status::not_expansion };
+			details.cartridge = factoryAccessor()(move(cartridge_context));
+			details.load_result = cartridge_loader_status::success;
+
+			return details;
 		}
 
-		details.cartridge = std::make_unique<vcc::core::cartridges::legacy_cartridge>(
-			details.handle.get(),
-			iniPath,
-			context.addMenuItemCallback,
-			context.readData,
-			context.writeData,
-			context.assertInterrupt,
-			context.assertCartridgeLine);
-		details.load_result = cartridge_loader_status::success;
+		if (GetProcAddress(details.handle.get(), "ModuleName") != nullptr)
+		{
+			details.cartridge = std::make_unique<vcc::core::cartridges::legacy_cartridge>(
+				details.handle.get(),
+				iniPath,
+				context.addMenuItemCallback,
+				context.readData,
+				context.writeData,
+				context.assertInterrupt,
+				context.assertCartridgeLine);
+			details.load_result = cartridge_loader_status::success;
 
-		return details;
+			return details;
+		}
+
+		return { nullptr, nullptr, cartridge_loader_status::not_expansion };
 	}
 
 	cartridge_loader_result load_cartridge(
+		std::unique_ptr<cartridge_context> cartridge_context,
 		const cartridge_loader_context& context,
 		const std::string& filename,
 		const std::string& iniPath)
@@ -153,10 +167,10 @@ namespace vcc { namespace core
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 
 		case cartridge_file_type::rom_image:	//	File is a ROM image
-			return vcc::core::load_rom_cartridge(context, filename);
+			return vcc::core::load_rom_cartridge(move(cartridge_context), filename);
 
 		case cartridge_file_type::library:		//	File is a DLL
-			return vcc::core::load_legacy_cartridge(context, filename, iniPath);
+			return vcc::core::load_legacy_cartridge(move(cartridge_context), context, filename, iniPath);
 		}
 	}
 

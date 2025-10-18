@@ -30,7 +30,7 @@ class multipak_cartridge : public ::vcc::core::cartridge
 {
 public:
 
-	using context_type = host_cartridge_context;// ::vcc::core::cartridge_context;
+	using context_type = ::vcc::core::cartridge_context;
 	using mount_status_type = ::vcc::core::cartridge_loader_status;
 	using slot_id_type = ::std::size_t;
 	using path_type = ::std::string;
