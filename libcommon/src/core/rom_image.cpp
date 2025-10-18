@@ -15,14 +15,40 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "multipak_cartridge.h"
-#include "host_cartridge_context.h"
-#include "configuration_dialog.h"
+#include <vcc/core/rom_image.h>
+#include <fstream>
 #include <Windows.h>
 
-extern HINSTANCE gModuleInstance;
-extern const std::shared_ptr<host_cartridge_context> gHostContext;
-extern multipak_cartridge gMultiPakInterface;
-extern configuration_dialog gConfigurationDialog;
-extern std::string gLastAccessedPath;
-extern std::string gConfigurationFilename;
+
+namespace vcc { namespace core
+{
+
+	bool rom_image::load(path_type filename)
+	{
+		std::ifstream input(filename, std::ios::binary);
+		if (!input.is_open())
+		{
+			return false;
+		}
+
+		std::streamoff begin = input.tellg();
+		input.seekg(0, std::ios::end);
+		std::streamoff end = input.tellg();
+		std::streamoff file_length = end - begin;
+		input.seekg(0, std::ios::beg);
+
+		std::vector<unsigned char> rom_data(static_cast<size_t>(file_length));
+		input.read(reinterpret_cast<char*>(&rom_data[0]), rom_data.size());
+
+		if (file_length != rom_data.size())
+		{
+			return false;
+		}
+
+		filename_ = move(filename);
+		data_ = move(rom_data);
+
+		return true;
+	}
+
+} }

@@ -15,14 +15,62 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "multipak_cartridge.h"
-#include "host_cartridge_context.h"
-#include "configuration_dialog.h"
-#include <Windows.h>
+#pragma once
+#include <vcc/core/detail/exports.h>
+#include <string>
+#include <vector>
 
-extern HINSTANCE gModuleInstance;
-extern const std::shared_ptr<host_cartridge_context> gHostContext;
-extern multipak_cartridge gMultiPakInterface;
-extern configuration_dialog gConfigurationDialog;
-extern std::string gLastAccessedPath;
-extern std::string gConfigurationFilename;
+namespace vcc { namespace core
+{
+
+	class rom_image
+	{
+	public:
+
+		using path_type = std::string;
+		using container_type = std::vector<unsigned char>;
+		using value_type = container_type::value_type;
+		using size_type = container_type::size_type;
+
+
+	public:
+
+		LIBCOMMON_EXPORT rom_image() = default;
+		LIBCOMMON_EXPORT ~rom_image() = default;
+
+		bool empty() const
+		{
+			return data_.empty();
+		}
+
+		path_type filename() const
+		{
+			return filename_;
+		}
+
+		LIBCOMMON_EXPORT bool load(path_type filename);
+
+		void clear()
+		{
+			filename_.clear();
+			data_.clear();
+		}
+
+		value_type read_memory_byte(size_type memory_address) const
+		{
+			if (data_.empty())
+			{
+				return 0;
+			}
+
+			return data_[memory_address % data_.size()];
+		}
+
+
+	private:
+
+		path_type filename_;
+		container_type data_;
+	};
+
+} }

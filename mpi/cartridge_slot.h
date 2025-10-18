@@ -16,9 +16,9 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "host_cartridge_context.h"
 #include <vcc/core/cartridge.h>
 #include <vcc/core/cartridge_loader.h>
+#include <vcc/core/cartridge_context.h>
 #include "../CartridgeMenu.h"
 
 
@@ -37,7 +37,7 @@ namespace vcc { namespace modules { namespace mpi
 		using cartridge_ptr_type = ::std::unique_ptr<::vcc::core::cartridge>;
 		using menu_item_type = CartMenuItem;
 		using menu_item_collection_type = std::vector<menu_item_type>;
-		using context_type = host_cartridge_context;// ::vcc::core::cartridge_context;
+		using context_type = ::vcc::core::cartridge_context;
 
 
 	public:
