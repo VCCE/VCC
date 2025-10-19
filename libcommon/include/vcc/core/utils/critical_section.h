@@ -23,12 +23,12 @@ namespace vcc { namespace core { namespace utils
 		critical_section(const critical_section&) = delete;
 		critical_section& operator=(const critical_section&) = delete;
 
-		void lock()
+		void lock() const
 		{
 			EnterCriticalSection(&section_);
 		}
 
-		void unlock()
+		void unlock() const
 		{
 			LeaveCriticalSection(&section_);
 		}
@@ -36,7 +36,7 @@ namespace vcc { namespace core { namespace utils
 
 	private:
 
-		CRITICAL_SECTION	section_;
+		mutable CRITICAL_SECTION section_;
 	};
 
 
@@ -44,7 +44,7 @@ namespace vcc { namespace core { namespace utils
 	{
 	public:
 
-		explicit section_locker(critical_section& section)
+		explicit section_locker(const critical_section& section)
 			: section_(section)
 		{
 			section_.lock();
@@ -61,7 +61,7 @@ namespace vcc { namespace core { namespace utils
 
 	private:
 
-		critical_section& section_;
+		const critical_section& section_;
 	};
 
 } } }

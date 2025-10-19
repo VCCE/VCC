@@ -156,12 +156,12 @@ namespace vcc { namespace core { namespace cartridges
 		//		ModuleConfig		==>		PakProcessMenuItem
 	}
 
-	const legacy_cartridge::name_type& legacy_cartridge::name() const
+	legacy_cartridge::name_type legacy_cartridge::name() const
 	{
 		return name_;
 	}
 
-	const legacy_cartridge::catalog_id_type& legacy_cartridge::catalog_id() const
+	legacy_cartridge::catalog_id_type legacy_cartridge::catalog_id() const
 	{
 		return catalog_id_;
 	}
@@ -176,9 +176,9 @@ namespace vcc { namespace core { namespace cartridges
 		heartbeat_();
 	}
 
-	void legacy_cartridge::status(char* status_text)
+	void legacy_cartridge::status(char* status_buffer)
 	{
-		status_(status_text);
+		status_(status_buffer);
 	}
 
 	void legacy_cartridge::write_port(unsigned char port_id, unsigned char value)

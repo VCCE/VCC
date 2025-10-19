@@ -21,18 +21,14 @@
 namespace vcc { namespace core { namespace cartridges
 {
 
-	const basic_cartridge::name_type& basic_cartridge::name() const
+	basic_cartridge::name_type basic_cartridge::name() const
 	{
-		static const name_type local_name;
-
-		return local_name;
+		return {};
 	}
 	
-	const basic_cartridge::catalog_id_type& basic_cartridge::catalog_id() const
+	basic_cartridge::catalog_id_type basic_cartridge::catalog_id() const
 	{
-		static const catalog_id_type local_id;
-
-		return local_id;
+		return {};
 	}
 
 
@@ -61,9 +57,9 @@ namespace vcc { namespace core { namespace cartridges
 		return {};
 	}
 
-	void basic_cartridge::status(char* status_text)
+	void basic_cartridge::status(char* status_buffer)
 	{
-		*status_text = 0;
+		*status_buffer = 0;
 	}
 
 	unsigned short basic_cartridge::sample_audio()

@@ -39,8 +39,8 @@ namespace vcc { namespace core
 
 		virtual ~cartridge() = default;
 
-		virtual const name_type& name() const = 0;
-		virtual const catalog_id_type& catalog_id() const = 0;
+		virtual name_type name() const = 0;
+		virtual catalog_id_type catalog_id() const = 0;
 
 		virtual void start() = 0;
 		virtual void reset() = 0;
