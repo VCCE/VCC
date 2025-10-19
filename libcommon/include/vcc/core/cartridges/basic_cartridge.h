@@ -34,8 +34,8 @@ namespace vcc { namespace core { namespace cartridges
 
 		using cartridge::cartridge;
 
-		const name_type& name() const override;
-		const catalog_id_type& catalog_id() const override;
+		name_type name() const override;
+		catalog_id_type catalog_id() const override;
 
 		void start() override;
 		void reset() override;

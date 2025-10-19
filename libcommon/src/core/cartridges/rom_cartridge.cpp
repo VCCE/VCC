@@ -37,12 +37,12 @@ namespace vcc { namespace core { namespace cartridges
 	{}
 
 
-	const rom_cartridge::name_type& rom_cartridge::name() const
+	rom_cartridge::name_type rom_cartridge::name() const
 	{
 		return name_;
 	}
 
-	const rom_cartridge::catalog_id_type& rom_cartridge::catalog_id() const
+	rom_cartridge::catalog_id_type rom_cartridge::catalog_id() const
 	{
 		return catalog_id_;
 	}
