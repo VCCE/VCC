@@ -93,14 +93,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="orch90.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="orchestra90cc_cartridge.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="orch90.h" />
+    <ClInclude Include="orchestra90cc_cartridge.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="orch90.rc" />
+    <ResourceCompile Include="main.rc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\libcommon\libcommon.vcxproj">
