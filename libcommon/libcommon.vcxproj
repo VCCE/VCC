@@ -98,6 +98,7 @@
     <Link />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\core\banked_rom_image.cpp" />
     <ClCompile Include="src\core\cartridges\basic_cartridge.cpp" />
     <ClCompile Include="src\core\cartridges\legacy_cartridge.cpp" />
     <ClCompile Include="src\core\cartridges\rom_cartridge.cpp" />
@@ -117,6 +118,7 @@
     <ClInclude Include="include\vcc\common\DialogOps.h" />
     <ClInclude Include="include\vcc\common\FileOps.h" />
     <ClInclude Include="include\vcc\common\logger.h" />
+    <ClInclude Include="include\vcc\core\banked_rom_image.h" />
     <ClInclude Include="include\vcc\core\cartridge.h" />
     <ClInclude Include="include\vcc\core\cartridges\basic_cartridge.h" />
     <ClInclude Include="include\vcc\core\cartridges\legacy_cartridge.h" />

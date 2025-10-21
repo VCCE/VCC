@@ -96,6 +96,9 @@
     <ClCompile Include="src\devices\rtc\oki_m6242b.cpp">
       <Filter>Source Files\devices\rtc</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\banked_rom_image.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource\resource.h">
@@ -166,6 +169,9 @@
     </ClInclude>
     <ClInclude Include="include\vcc\devices\rtc\cloud9.h">
       <Filter>Header Files\devices\rtc</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\banked_rom_image.h">
+      <Filter>Header Files\core</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\devices\rtc\oki_m6242b.h">
       <Filter>Header Files\devices\rtc</Filter>
