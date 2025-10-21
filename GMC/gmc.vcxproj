@@ -90,23 +90,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Cartridge.cpp" />
-    <ClCompile Include="CartridgeTrampolines.cpp" />
-    <ClCompile Include="Configuration.cpp" />
-    <ClCompile Include="GMCCartridge.cpp" />
+    <ClCompile Include="gmc_cartridge.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="ROM.cpp" />
     <ClCompile Include="sn76496.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CartridgeTrampolines.h" />
-    <ClInclude Include="Configuration.h" />
-    <ClInclude Include="detail\default_handlers.h" />
-    <ClInclude Include="GMC.h" />
-    <ClInclude Include="Cartridge.h" />
-    <ClInclude Include="GMCCartridge.h" />
+    <ClInclude Include="gmc_cartridge.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="ROM.h" />
     <ClInclude Include="sn76496.h" />
   </ItemGroup>
   <ItemGroup>

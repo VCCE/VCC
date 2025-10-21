@@ -1,50 +1,28 @@
+#include "gmc_cartridge.h"
+#include <vcc/core/cartridge_factory.h>
 #include <Windows.h>
-#include "GMCCartridge.h"
-#include <vcc/common/DialogOps.h>
 
-HINSTANCE gModuleInstance = nullptr;
-GMCCartridge theCart;
 
-std::string ExtractFilename(std::string path)
+static HINSTANCE gModuleInstance;
+
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
-	char filename[MAX_PATH];
-	char ext[MAX_PATH];
-
-	_splitpath(path.c_str(), nullptr, nullptr, filename, ext);
-	path = filename;
-	if (ext[0])
+	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
-		path += ext;
+		gModuleInstance = hinstDLL;
 	}
 
-	return path;
+	return true;
 }
 
-
-std::string SelectROMFile()
+//
+extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 {
-	std::string selectedPath;
-
-	FileDialog dlg;
-	dlg.setFilter("ROM Files\0*.ROM\0\0");
-	dlg.setDefExt("rom");
-	dlg.setTitle("Select GMC Rom file");
-	if (dlg.show()) {
-		selectedPath = dlg.path();
-	} else {
-		selectedPath.clear();
-	}
-	return selectedPath;
-}
-
-
-BOOL APIENTRY DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
-{
-	if (reason == DLL_PROCESS_ATTACH)
+	return [](
+		[[maybe_unused]] std::unique_ptr<::vcc::core::cartridge_context> context,
+		[[maybe_unused]] const cpak_cartridge_context& cpak_context) -> std::unique_ptr<::vcc::core::cartridge>
 	{
-		gModuleInstance = hinst;
-	}
-
-	return TRUE;
+		return std::make_unique<gmc_cartridge>(move(context), gModuleInstance);
+	};
 }
-
