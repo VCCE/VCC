@@ -15,14 +15,32 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#pragma once
-#include <vcc/core/cartridge.h>
-#include <vcc/core/cartridge_context.h>
-#include <vcc/core/legacy_cartridge_definitions.h>
+#include "ramdisk_cartridge.h"
+#include <vcc/core/cartridge_factory.h>
 #include <memory>
+#include <Windows.h>
 
-using CreatePakFactoryFunction = std::unique_ptr<::vcc::core::cartridge> (*)(
-	std::unique_ptr<::vcc::core::cartridge_context> context,
-	const cpak_cartridge_context& cpak_context);
-using GetPakFactoryFunction = CreatePakFactoryFunction(*)();
 
+HINSTANCE gModuleInstance;
+
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
+{
+	if (fdwReason == DLL_PROCESS_ATTACH)
+	{
+		gModuleInstance = hinstDLL;
+	}
+
+	return true;
+}
+
+
+//
+extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
+{
+	return []([[maybe_unused]] std::unique_ptr<::vcc::core::cartridge_context> context,
+			  [[maybe_unused]] const cpak_cartridge_context& cpak_context) -> std::unique_ptr<::vcc::core::cartridge>
+	{
+		return std::make_unique<ramdisk_cartridge>();
+	};
+}

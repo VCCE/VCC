@@ -16,13 +16,41 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridge.h>
+#include <vcc/core/cartridges/basic_cartridge.h>
 #include <vcc/core/cartridge_context.h>
-#include <vcc/core/legacy_cartridge_definitions.h>
 #include <memory>
+#include <array>
 
-using CreatePakFactoryFunction = std::unique_ptr<::vcc::core::cartridge> (*)(
-	std::unique_ptr<::vcc::core::cartridge_context> context,
-	const cpak_cartridge_context& cpak_context);
-using GetPakFactoryFunction = CreatePakFactoryFunction(*)();
 
+class ramdisk_cartridge : public ::vcc::core::cartridges::basic_cartridge
+{
+public:
+
+	using address_type = ::std::size_t;
+
+
+public:
+
+	name_type name() const override;
+	catalog_id_type catalog_id() const override;
+
+	void start() override;
+	void reset() override;
+
+	void write_port(unsigned char port_id, unsigned char value) override;
+	unsigned char read_port(unsigned char port_id) override;
+
+
+private:
+
+	void initialize_state(bool initialize_memory);
+
+
+private:
+
+	address_type current_address_ = 0;
+	address_type address_byte0 = 0;
+	address_type address_byte1 = 0;
+	address_type address_byte2 = 0;
+	std::array<unsigned char, 1024u * 512u> ram_;
+};
