@@ -38,7 +38,7 @@ namespace vcc { namespace core { namespace cartridges
 			HMODULE module_handle,
 			void* const host_context,
 			path_type configuration_path,
-			const pak_initialization_parameters& parameters);
+			const cpak_cartridge_context& cpak_context);
 
 		LIBCOMMON_EXPORT name_type name() const override;
 		LIBCOMMON_EXPORT catalog_id_type catalog_id() const override;
@@ -58,7 +58,7 @@ namespace vcc { namespace core { namespace cartridges
 		const HMODULE handle_;
 		void* const host_context_;
 		const path_type configuration_path_;
-		const pak_initialization_parameters parameters_;
+		const cpak_cartridge_context cpak_context_;
 
 		// imported module functions
 		const PakInitializeModuleFunction initialize_;

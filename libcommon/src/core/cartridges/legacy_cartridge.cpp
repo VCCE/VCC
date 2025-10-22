@@ -81,12 +81,12 @@ namespace vcc { namespace core { namespace cartridges
 		HMODULE module_handle,
 		void* const host_context,
 		path_type configuration_path,
-		const pak_initialization_parameters& parameters)
+		const cpak_cartridge_context& cpak_context)
 		:
 		handle_(module_handle),
 		host_context_(host_context),
 		configuration_path_(move(configuration_path)),
-		parameters_(parameters),
+		cpak_context_(cpak_context),
 		initialize_(GetImportedProcAddress<PakInitializeModuleFunction>(module_handle, "PakInitialize", nullptr)),
 		get_name_(GetImportedProcAddress(module_handle, "PakGetName", default_get_name)),
 		get_catalog_id_(GetImportedProcAddress(module_handle, "PakGetCatalogId", default_get_catalog_id)),
@@ -118,7 +118,7 @@ namespace vcc { namespace core { namespace cartridges
 
 	void legacy_cartridge::start()
 	{
-		initialize_(host_context_, configuration_path_.c_str(), & parameters_);
+		initialize_(host_context_, configuration_path_.c_str(), &cpak_context_);
 	}
 
 	void legacy_cartridge::reset()

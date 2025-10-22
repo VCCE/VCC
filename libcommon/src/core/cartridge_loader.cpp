@@ -111,7 +111,7 @@ namespace vcc { namespace core
 		std::unique_ptr<cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& iniPath,
-		const pak_initialization_parameters& pak_parameters)
+		const cpak_cartridge_context& cpak_context)
 	{
 		if (GetModuleHandle(filename.c_str()) != nullptr)
 		{
@@ -143,7 +143,7 @@ namespace vcc { namespace core
 				details.handle.get(),
 				host_context,
 				iniPath,
-				pak_parameters);
+				cpak_context);
 			details.load_result = cartridge_loader_status::success;
 
 			return details;
@@ -157,7 +157,7 @@ namespace vcc { namespace core
 		std::unique_ptr<cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& iniPath,
-		const pak_initialization_parameters& pak_parameters)
+		const cpak_cartridge_context& cpak_context)
 	{
 		switch (vcc::core::determine_cartridge_type(filename))
 		{
@@ -174,7 +174,7 @@ namespace vcc { namespace core
 				move(cartridge_context),
 				host_context,
 				iniPath,
-				pak_parameters);
+				cpak_context);
 		}
 	}
 

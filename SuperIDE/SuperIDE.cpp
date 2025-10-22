@@ -88,10 +88,10 @@ extern "C"
 	__declspec(dllexport) void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,
-		const pak_initialization_parameters* const parameters)
+		const cpak_cartridge_context* const context)
 	{
 		gHostKeyPtr = host_key;
-		CartMenuCallback = parameters->add_menu_item;
+		CartMenuCallback = context->add_menu_item;
 		strcpy(IniFile, configuration_path);
 
 		LoadConfig();

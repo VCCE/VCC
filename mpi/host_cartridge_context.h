@@ -22,7 +22,7 @@
 extern "C" __declspec(dllexport) void PakInitialize(
 	void* const host_key,
 	const char* const configuration_path,
-	const pak_initialization_parameters* const parameters);
+	const cpak_cartridge_context* const context);
 
 // FIXME: this should be unnecessary here. VCC (or the 'host') should provide it
 class host_cartridge_context : public ::vcc::core::cartridge_context
@@ -81,7 +81,7 @@ private:
 	friend void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,
-		const pak_initialization_parameters* const parameters);
+		const cpak_cartridge_context* const context);
 	friend class multipak_cartridge;
 
 

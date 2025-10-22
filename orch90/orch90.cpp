@@ -68,10 +68,10 @@ extern "C"
 	__declspec(dllexport) void PakInitialize(
 		void* const host_key,
 		const char* const /*configuration_path*/,
-		const pak_initialization_parameters* const parameters)
+		const cpak_cartridge_context* const context)
 	{
 		gHostKey = host_key;
-		PakSetCart = parameters->assert_cartridge_line;
+		PakSetCart = context->assert_cartridge_line;
 	}
 
 }

@@ -116,11 +116,11 @@ extern "C"
 	__declspec(dllexport) void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,
-		const pak_initialization_parameters* const parameters)
+		const cpak_cartridge_context* const context)
 	{
 		gHostKeyPtr = host_key;
-		CartMenuCallback = parameters->add_menu_item;
-		AssertInt = parameters->assert_interrupt;
+		CartMenuCallback = context->add_menu_item;
+		AssertInt = context->assert_interrupt;
 		strcpy(IniFile, configuration_path);
 
 		LoadConfig();
