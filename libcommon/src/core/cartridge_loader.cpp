@@ -131,7 +131,7 @@ namespace vcc { namespace core
 			"GetPakFactory")));
 		if (factoryAccessor != nullptr)
 		{
-			details.cartridge = factoryAccessor()(move(cartridge_context));
+			details.cartridge = factoryAccessor()(move(cartridge_context), cpak_context);
 			details.load_result = cartridge_loader_status::success;
 
 			return details;
@@ -155,9 +155,9 @@ namespace vcc { namespace core
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
+		const cpak_cartridge_context& cpak_context,
 		void* const host_context,
-		const std::string& iniPath,
-		const cpak_cartridge_context& cpak_context)
+		const std::string& iniPath)
 	{
 		switch (vcc::core::determine_cartridge_type(filename))
 		{

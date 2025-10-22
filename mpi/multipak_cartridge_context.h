@@ -24,21 +24,24 @@ class multipak_cartridge_context : public ::vcc::core::cartridge_context
 {
 public:
 
-	multipak_cartridge_context(size_t slot_id, ::vcc::core::cartridge_context& parent_context, multipak_cartridge& multipak)
+	multipak_cartridge_context(
+		size_t slot_id,
+		::vcc::core::cartridge_context& host_context,
+		multipak_cartridge& multipak)
 		:
 		slot_id_(slot_id),
-		parent_context_(parent_context),
+		host_context_(host_context),
 		multipak_(multipak)
 	{}
 
 	path_type configuration_path() const override
 	{
-		return parent_context_.configuration_path();
+		return host_context_.configuration_path();
 	}
 
 	void reset() override
 	{
-		parent_context_.reset();
+		host_context_.reset();
 	}
 
 	void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) override
@@ -48,12 +51,12 @@ public:
 
 	void write_memory_byte(unsigned char value, unsigned short address) override
 	{
-		parent_context_.write_memory_byte(value, address);
+		host_context_.write_memory_byte(value, address);
 	}
 
 	unsigned char read_memory_byte(unsigned short address) override
 	{
-		return parent_context_.read_memory_byte(address);
+		return host_context_.read_memory_byte(address);
 	}
 
 	void assert_cartridge_line(bool line_state) override
@@ -63,13 +66,13 @@ public:
 
 	void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) override
 	{
-		parent_context_.assert_interrupt(interrupt, interrupt_source);
+		host_context_.assert_interrupt(interrupt, interrupt_source);
 	}
 
 
 private:
 
 	const size_t slot_id_;
-	::vcc::core::cartridge_context& parent_context_;
+	::vcc::core::cartridge_context& host_context_;
 	multipak_cartridge& multipak_;
 };

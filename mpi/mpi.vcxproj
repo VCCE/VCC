@@ -101,8 +101,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cartridge_slot.h" />
-    <ClInclude Include="host_cartridge_context.h" />
-    <ClInclude Include="mpi.h" />
     <ClInclude Include="multipak_cartridge.h" />
     <ClInclude Include="configuration_dialog.h" />
     <ClInclude Include="multipak_cartridge_context.h" />

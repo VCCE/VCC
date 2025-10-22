@@ -16,11 +16,11 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "configuration_dialog.h"
-#include "mpi.h"
 #include "resource.h"
 #include <vcc/common/DialogOps.h>
 #include <vcc/core/utils/critical_section.h>
 #include <vcc/core/utils/filesystem.h>
+#include <array>
 
 
 namespace
@@ -35,7 +35,7 @@ namespace
 		UINT insert_button_id;
 	};
 
-	const std::array<cartridge_ui_element_identifiers, NUMSLOTS> gSlotUiElementIds = { {
+	const std::array<cartridge_ui_element_identifiers, 4> gSlotUiElementIds = { {
 		{ IDC_EDIT1, IDC_SELECT1, IDC_INSERT1 },
 		{ IDC_EDIT2, IDC_SELECT2, IDC_INSERT2 },
 		{ IDC_EDIT3, IDC_SELECT3, IDC_INSERT3 },
@@ -45,9 +45,11 @@ namespace
 }
 
 configuration_dialog::configuration_dialog(
+	HINSTANCE module_handle,
 	multipak_configuration& configuration,
-	multipak_cartridge& mpi)
+	multipak_controller& mpi)
 	:
+	module_handle_(module_handle),
 	configuration_(configuration),
 	mpi_(mpi)
 {}
@@ -58,7 +60,7 @@ void configuration_dialog::open()
 	if (!dialog_handle_)
 	{
 		dialog_handle_ = CreateDialogParam(
-			gModuleInstance,
+			module_handle_,
 			MAKEINTRESOURCE(IDD_DIALOG1),
 			GetActiveWindow(),
 			callback_procedure,
@@ -74,7 +76,7 @@ void configuration_dialog::close()
 }
 
 
-void configuration_dialog::select_new_cartridge(size_t slot)
+void configuration_dialog::select_new_cartridge(slot_id_type slot)
 {
 	FileDialog dlg;
 	dlg.setTitle("Load Program Pak");
@@ -99,7 +101,7 @@ void configuration_dialog::select_new_cartridge(size_t slot)
 	}
 }
 
-void configuration_dialog::set_selected_slot(size_t slot)
+void configuration_dialog::set_selected_slot(slot_id_type slot)
 {
 	SendDlgItemMessage(
 		dialog_handle_,
@@ -118,13 +120,13 @@ void configuration_dialog::set_selected_slot(size_t slot)
 			0);
 	}
 
-	// FIXME: Maube move this to the callsite or when the dialog closes or at least make it optional?
+	// FIXME-CHET: Maube move this to the callsite or when the dialog closes or at least make it optional?
 	mpi_.switch_to_slot(slot);
 	configuration_.selected_slot(slot);
 }
 
 
-void configuration_dialog::update_slot_details(size_t slot)
+void configuration_dialog::update_slot_details(slot_id_type slot)
 {
 	SendDlgItemMessage(
 		dialog_handle_,
@@ -142,7 +144,7 @@ void configuration_dialog::update_slot_details(size_t slot)
 }
 
 
-void configuration_dialog::eject_or_select_new_cartridge(size_t slot)
+void configuration_dialog::eject_or_select_new_cartridge(slot_id_type slot)
 {
 	// Disable Slot changes if parent is disabled.  This prevents user using the
 	// config dialog to eject a cartridge while VCC main is using a modal dialog
@@ -205,7 +207,7 @@ INT_PTR configuration_dialog::process_message(
 		dialog_handle_ = hDlg;
 		parent_handle_ = GetParent(hDlg);
 		CenterDialog(hDlg);
-		for (int slot = 0; slot < NUMSLOTS; slot++)
+		for (slot_id_type slot(0); slot < gSlotUiElementIds.size(); slot++)
 		{
 			update_slot_details(slot);
 		}

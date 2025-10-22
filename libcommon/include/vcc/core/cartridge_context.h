@@ -31,6 +31,7 @@ namespace vcc { namespace core
 	struct LIBCOMMON_EXPORT cartridge_context
 	{
 		using path_type = ::std::string;
+		using menu_item_type = MenuItemType;
 
 
 		virtual ~cartridge_context() = default;

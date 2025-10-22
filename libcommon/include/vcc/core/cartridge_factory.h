@@ -20,6 +20,8 @@
 #include <vcc/core/cartridge_context.h>
 #include <memory>
 
-using CreatePakFactoryFunction = std::unique_ptr<::vcc::core::cartridge> (*)(std::unique_ptr<::vcc::core::cartridge_context> context);
+using CreatePakFactoryFunction = std::unique_ptr<::vcc::core::cartridge> (*)(
+	std::unique_ptr<::vcc::core::cartridge_context> context,
+	const cpak_cartridge_context& cpak_context);
 using GetPakFactoryFunction = CreatePakFactoryFunction(*)();
 

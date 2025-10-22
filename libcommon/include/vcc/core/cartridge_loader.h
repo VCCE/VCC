@@ -59,15 +59,6 @@ namespace vcc { namespace core
 		cartridge_loader_status load_result = cartridge_loader_status::not_loaded;
 	};
 
-	struct cartridge_loader_context
-	{
-		const PakAssertInteruptHostCallback pak_assert_interrupt;
-		const PakAssertCartridgeLineHostCallback pak_assert_cartridge_line;
-		const PakWriteMemoryByteHostCallback pak_write_memory_byte;
-		const PakReadMemoryByteHostCallback pak_read_memory_byte;
-		const PakAppendCartridgeMenuHostCallback pak_add_menu_item;
-	};
-
 	LIBCOMMON_EXPORT cartridge_file_type determine_cartridge_type(const std::string& filename);
 
 	LIBCOMMON_EXPORT cartridge_loader_result load_rom_cartridge(
@@ -84,8 +75,8 @@ namespace vcc { namespace core
 	LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
+		const cpak_cartridge_context& cpak_context,
 		void* const host_context,
-		const std::string& iniPath,
-		const cpak_cartridge_context& cpak_context);
+		const std::string& iniPath);
 
 } }
