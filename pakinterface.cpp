@@ -53,11 +53,23 @@ static cartridge_loader_status load_any_cartridge(const char* filename, const ch
 
 void CartMenuCallBack(const char* name, int menu_id, MenuItemType type);
 void PakAssertInterupt(Interrupt interrupt, InterruptSource source);
+static void PakAssertCartrigeLine(void* host_key, bool line_state);
+static void PakWriteMemoryByte(void* host_key, unsigned char data, unsigned short address);
+static unsigned char PakReadMemoryByte(void* host_key, unsigned short address);
+static void PakAssertInterupt(void* host_key, Interrupt interrupt, InterruptSource source);
+static void PakAddMenuItem(void* host_key, const char* name, int menu_id, MenuItemType type);
 
-
-struct vcc_cartridge_context : public ::vcc::core::cartridge_context
+const cpak_cartridge_context default_cpak_context =
 {
+	PakAssertInterupt,
+	PakAssertCartrigeLine,
+	PakWriteMemoryByte,
+	PakReadMemoryByte,
+	PakAddMenuItem
+};
 
+class vcc_cartridge_context : public ::vcc::core::cartridge_context
+{
 	path_type configuration_path() const override
 	{
 		char path_buffer[MAX_PATH];
@@ -66,6 +78,7 @@ struct vcc_cartridge_context : public ::vcc::core::cartridge_context
 
 		return path_buffer;
 	}
+
 
 	void reset() override
 	{
@@ -270,8 +283,6 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	cartridge_loader_result loadedCartridge(vcc::core::load_cartridge(
 		filename,
 		std::make_unique<vcc_cartridge_context>(),
-		nullptr, // TODO: there is currently no host context in vcc so we just use nullptr. Maybe add a context.
-		iniPath,
 		{
 			// new pak interface
 			PakAssertInterupt,
@@ -279,7 +290,9 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 			PakWriteMemoryByte,
 			PakReadMemoryByte,
 			PakAddMenuItem
-		}));
+		},
+		nullptr, // TODO: there is currently no host context in vcc so we just use nullptr. Maybe add a context.
+		iniPath));
 	if (loadedCartridge.load_result != cartridge_loader_status::success)
 	{
 		return loadedCartridge.load_result;

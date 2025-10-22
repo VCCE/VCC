@@ -57,7 +57,7 @@ namespace vcc { namespace core
 		const string_type& key,
 		const string_type& default_value) const
 	{
-		// FIXME: Need to determine the size of the string
+		// FIXME-CHET: Need to determine the size of the string
 		char loaded_string[MAX_PATH] = {};
 
 		GetPrivateProfileString(
