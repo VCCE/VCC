@@ -79,13 +79,13 @@ namespace vcc { namespace core
 		std::unique_ptr<cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& iniPath,
-		const pak_initialization_parameters& pak_parameters);
+		const cpak_cartridge_context& cpak_context);
 
 	LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& iniPath,
-		const pak_initialization_parameters& pak_parameters);
+		const cpak_cartridge_context& cpak_context);
 
 } }

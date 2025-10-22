@@ -76,14 +76,14 @@ extern "C"
 	EXPORT_PUBLIC_API void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,
-		const pak_initialization_parameters* const parameters)
+		const cpak_cartridge_context* const context)
 	{
 		gConfigurationFilename = configuration_path;
-		gHostContext->add_menu_item_ = parameters->add_menu_item;
-		gHostContext->read_memory_byte_ = parameters->read_memory_byte;
-		gHostContext->write_memory_byte_ = parameters->write_memory_byte;
-		gHostContext->assert_interrupt_ = parameters->assert_interrupt;
-		gHostContext->assert_cartridge_line_ = parameters->assert_cartridge_line;
+		gHostContext->add_menu_item_ = context->add_menu_item;
+		gHostContext->read_memory_byte_ = context->read_memory_byte;
+		gHostContext->write_memory_byte_ = context->write_memory_byte;
+		gHostContext->assert_interrupt_ = context->assert_interrupt;
+		gHostContext->assert_cartridge_line_ = context->assert_cartridge_line;
 
 		gMultiPakInterface.start();
 	}

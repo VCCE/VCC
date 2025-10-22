@@ -6,7 +6,7 @@ GMC_EXPORT const char* PakCatalogName();
 GMC_EXPORT void PakInitialize(
 	void* const host_key,
 	const char* const configuration_path,
-	const pak_initialization_parameters* const parameters);
+	const cpak_cartridge_context* const context);
 
 GMC_EXPORT void PakGetStatus(char* text_buffer, size_t buffer_size);
 GMC_EXPORT void PakMenuItemClicked(unsigned char /*menuId*/);

@@ -31,8 +31,9 @@ extern "C"
 	using PakAssertInteruptHostCallback = void (*)(void* host_key, Interrupt interrupt, InterruptSource interrupt_source);
 	using PakAppendCartridgeMenuHostCallback = void (*)(void* host_key, const char* menu_name, int menu_id, MenuItemType menu_type);
 
-	struct pak_initialization_parameters
+	struct cpak_cartridge_context
 	{
+		// FIXME-CHET: This needs a reset callback
 		const PakAssertInteruptHostCallback assert_interrupt;
 		const PakAssertCartridgeLineHostCallback assert_cartridge_line;
 		const PakWriteMemoryByteHostCallback write_memory_byte;
@@ -43,7 +44,7 @@ extern "C"
 	using PakInitializeModuleFunction = void (*)(
 		void* host_key,
 		const char* const configuration_path,
-		const pak_initialization_parameters* const parameters);
+		const cpak_cartridge_context* const context);
 	using PakGetNameModuleFunction = const char* (*)();
 	using PakGetCatalogIdModuleFunction = const char* (*)();
 	using PakGetDescriptionModuleFunction = const char* (*)();

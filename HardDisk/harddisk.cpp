@@ -118,12 +118,12 @@ extern "C"
 	__declspec(dllexport) void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,
-		const pak_initialization_parameters* const parameters)
+		const cpak_cartridge_context* const context)
 	{
 		gHostKey = host_key;
-		CartMenuCallback = parameters->add_menu_item;
-		MemRead8 = parameters->read_memory_byte;
-		MemWrite8 = parameters->write_memory_byte;
+		CartMenuCallback = context->add_menu_item;
+		MemRead8 = context->read_memory_byte;
+		MemWrite8 = context->write_memory_byte;
 		strcpy(IniFile, configuration_path);
 
 		LoadConfig();
