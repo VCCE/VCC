@@ -1,5 +1,5 @@
 namespace detail
 {
-	void NullAssetCartridgeLine(bool);
-	void NullAddMenuItem(const char*, int, MenuItemType);
+	void NullAssetCartridgeLine(void*, bool);
+	void NullAddMenuItem(void*, const char*, int, MenuItemType);
 }

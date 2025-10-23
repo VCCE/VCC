@@ -19,11 +19,12 @@
 #include <vcc/core/cartridge_context.h>
 #include <vcc/core/legacy_cartridge_definitions.h>
 
-extern "C" __declspec(dllexport) void ModuleName(char*, char*, AppendCartridgeMenuModuleCallback);
-extern "C" __declspec(dllexport) void MemPointers(ReadMemoryByteModuleCallback, WriteMemoryByteModuleCallback);
-extern "C" __declspec(dllexport) void AssertInterupt(AssertInteruptModuleCallback);
-extern "C" __declspec(dllexport) void SetCart(AssertCartridgeLineModuleCallback);
+extern "C" __declspec(dllexport) void PakInitialize(
+	void* const host_key,
+	const char* const configuration_path,
+	const pak_initialization_parameters* const parameters);
 
+// FIXME: this should be unnecessary here. VCC (or the 'host') should provide it
 class host_cartridge_context : public ::vcc::core::cartridge_context
 {
 public:
@@ -34,8 +35,10 @@ public:
 
 public:
 
-	explicit host_cartridge_context(const path_type& configuration_filename)
-		: configuration_filename_(configuration_filename)
+	explicit host_cartridge_context(void* host_key, const path_type& configuration_filename)
+		:
+		host_key_(host_key),
+		configuration_filename_(configuration_filename)
 	{}
 
 	path_type configuration_path() const override
@@ -50,44 +53,45 @@ public:
 
 	void write_memory_byte(unsigned char value, unsigned short address) override
 	{
-		write_memory_byte_(value, address);
+		write_memory_byte_(host_key_, value, address);
 	}
 
 	unsigned char read_memory_byte(unsigned short address) override
 	{
-		return read_memory_byte_(address);
+		return read_memory_byte_(host_key_, address);
 	}
 
 	void assert_cartridge_line(bool line_state) override
 	{
-		assert_cartridge_line_(line_state);
+		assert_cartridge_line_(host_key_, line_state);
 	}
 
 	void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) override
 	{
-		assert_interrupt_(interrupt, interrupt_source);
+		assert_interrupt_(host_key_, interrupt, interrupt_source);
 	}
 
 	void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) override
 	{
-		add_menu_item_(menu_name, menu_id, menu_type);
+		add_menu_item_(host_key_, menu_name, menu_id, menu_type);
 	}
 
 private:
 
-	friend void ModuleName(char*, char*, AppendCartridgeMenuModuleCallback);
-	friend void MemPointers(ReadMemoryByteModuleCallback, WriteMemoryByteModuleCallback);
-	friend void AssertInterupt(AssertInteruptModuleCallback);
-	friend void SetCart(AssertCartridgeLineModuleCallback);
-
+	friend void PakInitialize(
+		void* const host_key,
+		const char* const configuration_path,
+		const pak_initialization_parameters* const parameters);
 	friend class multipak_cartridge;
+
 
 private:
 
+	void* const							host_key_;
 	const path_type&					configuration_filename_;
-	WriteMemoryByteModuleCallback		write_memory_byte_ = [](unsigned char, unsigned short) {};
-	ReadMemoryByteModuleCallback		read_memory_byte_ = [](unsigned short) -> unsigned char { return 0; };
-	AssertCartridgeLineModuleCallback	assert_cartridge_line_ = [](bool) {};
-	AssertInteruptModuleCallback		assert_interrupt_ = [](Interrupt, InterruptSource) {};
-	AppendCartridgeMenuModuleCallback	add_menu_item_ = [](const char*, int, MenuItemType) {};
+	PakWriteMemoryByteHostCallback		write_memory_byte_ = [](void*, unsigned char, unsigned short) {};
+	PakReadMemoryByteHostCallback		read_memory_byte_ = [](void*, unsigned short) -> unsigned char { return 0; };
+	PakAssertCartridgeLineHostCallback	assert_cartridge_line_ = [](void*, bool) {};
+	PakAssertInteruptHostCallback		assert_interrupt_ = [](void*, Interrupt, InterruptSource) {};
+	PakAppendCartridgeMenuHostCallback	add_menu_item_ = [](void*, const char*, int, MenuItemType) {};
 };

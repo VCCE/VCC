@@ -2,41 +2,41 @@
 #include "Cartridge.h"
 
 
-GMC_EXPORT void ModuleName(char *moduleName, char *catalogId, AppendCartridgeMenuModuleCallback addMenuCallback)
+GMC_EXPORT const char* PakGetName()
 {
-	Cartridge::m_Singleton->SetMenuBuilderCallback(addMenuCallback);
+	return Cartridge::m_Singleton->GetName().c_str();
+}
 
-	strcpy(moduleName, Cartridge::m_Singleton->GetName().c_str());
-	strcpy(catalogId, Cartridge::m_Singleton->GetCatalogId().c_str());
+GMC_EXPORT const char* PakCatalogName()
+{
+	return Cartridge::m_Singleton->GetCatalogId().c_str();
+}
+
+GMC_EXPORT void PakInitialize(
+	void* const host_key,
+	const char* const configuration_path,
+	const pak_initialization_parameters* const parameters)
+{
+	Cartridge::m_Singleton->SetHostKey(host_key);
+	Cartridge::m_Singleton->SetMenuBuilderCallback(parameters->add_menu_item);
+	Cartridge::m_Singleton->SetCartLineAssertCallback(parameters->assert_cartridge_line);
+	Cartridge::m_Singleton->SetConfigurationPath(configuration_path);
 }
 
 
-GMC_EXPORT void ModuleConfig(unsigned char menuId)
+GMC_EXPORT void PakMenuItemClicked(unsigned char menuId)
 {
 	Cartridge::m_Singleton->OnMenuItemSelected(menuId);
 }
 
 
-GMC_EXPORT void SetIniPath(const char *iniFilePath)
-{
-	Cartridge::m_Singleton->SetConfigurationPath(iniFilePath);
-}
-
-
-GMC_EXPORT void ModuleReset()
+GMC_EXPORT void PakReset()
 {
 	Cartridge::m_Singleton->OnReset();
 }
 
 
-GMC_EXPORT void SetCart(AssertCartridgeLineModuleCallback callback)
-{
-	Cartridge::m_Singleton->SetCartLineAssertCallback(callback);
-}
-
-
-
-GMC_EXPORT void ModuleStatus(char *statusBuffer)
+GMC_EXPORT void PakGetStatus(char* text_buffer, size_t buffer_size)
 {
 	auto message(Cartridge::m_Singleton->GetStatusMessage());
 	if (message.size() > 63)
@@ -44,11 +44,11 @@ GMC_EXPORT void ModuleStatus(char *statusBuffer)
 		message.resize(63);
 	}
 
-	strcpy(statusBuffer, message.c_str());
+	strcpy(text_buffer, message.c_str());
 }
 
 
-GMC_EXPORT unsigned char PakMemRead8(unsigned short address)
+GMC_EXPORT unsigned char PakReadMemoryByte(unsigned short address)
 {
 	return Cartridge::m_Singleton->OnReadMemory(address);
 }
@@ -56,20 +56,20 @@ GMC_EXPORT unsigned char PakMemRead8(unsigned short address)
 
 
 
-GMC_EXPORT void PackPortWrite(unsigned char port, unsigned char data)
+GMC_EXPORT void PakWritePort(unsigned char port, unsigned char data)
 {
 	Cartridge::m_Singleton->OnWritePort(port, data);
 }
 
 
-GMC_EXPORT unsigned char PackPortRead(unsigned char port)
+GMC_EXPORT unsigned char PakReadPort(unsigned char port)
 {
 	return Cartridge::m_Singleton->OnReadPort(port);
 }
 
 
 // This gets called at the end of every scan line 262 Lines * 60 Frames = 15780 Hz 15720
-GMC_EXPORT unsigned short ModuleAudioSample()
+GMC_EXPORT unsigned short PakSampleAudio()
 {
 	return Cartridge::m_Singleton->UpdateAudio();
 }

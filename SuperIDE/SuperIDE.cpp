@@ -32,9 +32,9 @@ This file is part of VCC (Virtual Color Computer).
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
 static char SuperIDEPath[MAX_PATH];
-static AppendCartridgeMenuModuleCallback CartMenuCallback = nullptr;
+static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 static unsigned char BaseAddress=0x50;
-void BuildCartMenu();
+void BuildCartridgeMenu();
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 void Select_Disk(unsigned char);
 void SaveConfig();
@@ -43,8 +43,10 @@ unsigned char BaseTable[4]={0x40,0x50,0x60,0x70};
 
 static unsigned char BaseAddr=1,ClockEnabled=1,ClockReadOnly=1;
 static unsigned char DataLatch=0;
-static HINSTANCE g_hinstDLL;
+static HINSTANCE gModuleInstance;
 static HWND hConfDlg = nullptr;
+static void* gHostKeyPtr = nullptr;
+static void* const& gHostKey(gHostKeyPtr);
 
 using namespace std;
 
@@ -57,27 +59,52 @@ BOOL WINAPI DllMain(
 	{
 		if (hConfDlg) DestroyWindow(hConfDlg);
 	}
-	g_hinstDLL=hinstDLL;
+	gModuleInstance = hinstDLL;
 	return 1;
 }
 
-extern "C" 
-{          
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
+
+extern "C"
+{
+
+	__declspec(dllexport) const char* PakGetName()
 	{
-		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
-		CartMenuCallback =Temp;
-		IdeInit();
-		if (CartMenuCallback  != nullptr)
-			BuildCartMenu();		
-		return ;
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
 	}
+
+	__declspec(dllexport) const char* PakCatalogName()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
+	__declspec(dllexport) void PakInitialize(
+		void* const host_key,
+		const char* const configuration_path,
+		const pak_initialization_parameters* const parameters)
+	{
+		gHostKeyPtr = host_key;
+		CartMenuCallback = parameters->add_menu_item;
+		strcpy(IniFile, configuration_path);
+
+		LoadConfig();
+		IdeInit();
+
+		BuildCartridgeMenu();		
+	}
+
 }
 
 extern "C" 
 {         
-	__declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
+	__declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
 	{
 		if ( (Port >=BaseAddress) & (Port <= (BaseAddress+8)))
 			switch (Port-BaseAddress)
@@ -100,7 +127,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+	__declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
 	{
 		unsigned char RetVal=0;
 		unsigned short Temp=0;
@@ -132,45 +159,44 @@ extern "C"
 
 extern "C" 
 {          
-	__declspec(dllexport) void ModuleStatus(char *MyStatus)
+	__declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
 	{
-		DiskStatus(MyStatus);
-		return ;
+		DiskStatus(text_buffer, buffer_size);
 	}
 }
 
 extern "C" 
 {          
-	__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+	__declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
 	{
 		switch (MenuID)
 		{
 		case 10:
 			Select_Disk(MASTER);
-			BuildCartMenu();
+			BuildCartridgeMenu();
 			SaveConfig();
 			break;
 
 		case 11:
 			DropDisk(MASTER);
-			BuildCartMenu();
+			BuildCartridgeMenu();
 			SaveConfig();
 			break;
 
 		case 12:
 			Select_Disk(SLAVE);
-			BuildCartMenu();
+			BuildCartridgeMenu();
 			SaveConfig();
 			break;
 
 		case 13:
 			DropDisk(SLAVE);
-			BuildCartMenu();
+			BuildCartridgeMenu();
 			SaveConfig();
 			break;
 
 		case 14:
-			CreateDialog( g_hinstDLL, (LPCTSTR) IDD_CONFIG,
+			CreateDialog( gModuleInstance, (LPCTSTR) IDD_CONFIG,
 					GetActiveWindow(), (DLGPROC) Config );
 			ShowWindow(hConfDlg,1);
 			break;
@@ -179,38 +205,29 @@ extern "C"
 	}
 }
 
-extern "C" 
-{
-	__declspec(dllexport) void SetIniPath (const char *IniFilePath)
-	{
-		strcpy(IniFile,IniFilePath);
-		LoadConfig();
-		return;
-	}
-}
 
-void BuildCartMenu()
+void BuildCartridgeMenu()
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
-	CartMenuCallback( "", MID_BEGIN, MIT_Head);
-	CartMenuCallback( "", MID_ENTRY, MIT_Seperator);
-	CartMenuCallback( "IDE Master",MID_ENTRY,MIT_Head);
-	CartMenuCallback( "Insert",ControlId(10),MIT_Slave);
+	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback(gHostKey, "IDE Master",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gHostKey, "Insert",ControlId(10),MIT_Slave);
 	QueryDisk(MASTER,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback( TempMsg,ControlId(11),MIT_Slave);
-	CartMenuCallback( "IDE Slave",MID_ENTRY,MIT_Head);
-	CartMenuCallback( "Insert",ControlId(12),MIT_Slave);
+	CartMenuCallback(gHostKey, TempMsg,ControlId(11),MIT_Slave);
+	CartMenuCallback(gHostKey, "IDE Slave",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gHostKey, "Insert",ControlId(12),MIT_Slave);
 	QueryDisk(SLAVE,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback( TempMsg,ControlId(13),MIT_Slave);
-	CartMenuCallback( "IDE Config",ControlId(14),MIT_StandAlone);
-	CartMenuCallback( "", MID_FINISH, MIT_Head);
+	CartMenuCallback(gHostKey, TempMsg,ControlId(13),MIT_Slave);
+	CartMenuCallback(gHostKey, "IDE Config",ControlId(14),MIT_StandAlone);
+	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
@@ -296,7 +313,7 @@ void Select_Disk(unsigned char Disk)
 void SaveConfig()
 {
 	char ModName[MAX_LOADSTRING]="";
-	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	QueryDisk(MASTER,FileName);
 	WritePrivateProfileString(ModName,"Master",FileName,IniFile);
 	QueryDisk(SLAVE,FileName);
@@ -315,7 +332,7 @@ void LoadConfig()
 {
 	char ModName[MAX_LOADSTRING]="";
 
-	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	GetPrivateProfileString("DefaultPaths", "SuperIDEPath", "", SuperIDEPath, MAX_PATH, IniFile);
 	GetPrivateProfileString(ModName,"Master","",FileName,MAX_PATH,IniFile);
 	MountDisk(FileName ,MASTER);
@@ -329,6 +346,6 @@ void LoadConfig()
 	BaseAddress=BaseTable[BaseAddr];
 	SetClockWrite(!ClockReadOnly);
 	MountDisk(FileName ,SLAVE);
-	BuildCartMenu();
+	BuildCartridgeMenu();
 	return;
 }

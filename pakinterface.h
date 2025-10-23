@@ -20,8 +20,8 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/core/cartridge_loader.h>
 
 void PakTimer();
-unsigned char PackPortRead (unsigned char);
-void PackPortWrite(unsigned char,unsigned char);
+unsigned char PakReadPort (unsigned char);
+void PakWritePort(unsigned char,unsigned char);
 unsigned char PackMem8Read (unsigned short);
 void GetModuleStatus( SystemState *);
 vcc::core::cartridge_loader_status PakLoadCartridge(const char* filename);

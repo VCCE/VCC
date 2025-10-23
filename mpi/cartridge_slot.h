@@ -102,9 +102,9 @@ namespace vcc { namespace modules { namespace mpi
 			return cartridge_->read_memory_byte(memory_address);
 		}
 
-		void status(char* status) const
+		void status(char* text_buffer, size_t buffer_size) const
 		{
-			cartridge_->status(status);
+			cartridge_->status(text_buffer, buffer_size);
 		}
 
 		unsigned short sample_audio() const

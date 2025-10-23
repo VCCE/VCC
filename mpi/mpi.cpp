@@ -28,7 +28,8 @@
 
 HINSTANCE gModuleInstance = nullptr;
 std::string gConfigurationFilename;
-const std::shared_ptr<host_cartridge_context> gHostContext(std::make_shared<host_cartridge_context>(gConfigurationFilename));
+// FIXME: The host context will be provided by VCC once the full implementation is complete
+const std::shared_ptr<host_cartridge_context> gHostContext(std::make_shared<host_cartridge_context>(nullptr, gConfigurationFilename));
 multipak_cartridge gMultiPakInterface(gHostContext);
 configuration_dialog gConfigurationDialog(gMultiPakInterface);
 
@@ -51,54 +52,55 @@ BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, LPVOID /*reserved*/
 }
 
 
-EXPORT_PUBLIC_API void ModuleName(
-	char* module_name_buffer,
-	char* catalog_id_buffer,
-	AppendCartridgeMenuModuleCallback append_menu_item_callback)
+extern "C"
 {
-	LoadString(gModuleInstance, IDS_MODULE_NAME, module_name_buffer, MAX_LOADSTRING);
-	LoadString(gModuleInstance, IDS_CATNUMBER, catalog_id_buffer, MAX_LOADSTRING);
-	gHostContext->add_menu_item_ = append_menu_item_callback;
+
+	EXPORT_PUBLIC_API const char* PakGetName()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
+	EXPORT_PUBLIC_API const char* PakCatalogName()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
+	EXPORT_PUBLIC_API void PakInitialize(
+		void* const host_key,
+		const char* const configuration_path,
+		const pak_initialization_parameters* const parameters)
+	{
+		gConfigurationFilename = configuration_path;
+		gHostContext->add_menu_item_ = parameters->add_menu_item;
+		gHostContext->read_memory_byte_ = parameters->read_memory_byte;
+		gHostContext->write_memory_byte_ = parameters->write_memory_byte;
+		gHostContext->assert_interrupt_ = parameters->assert_interrupt;
+		gHostContext->assert_cartridge_line_ = parameters->assert_cartridge_line;
+
+		gMultiPakInterface.start();
+	}
+
 }
 
-// This captures the pointers to the HostReadMemoryByte and HostWriteMemoryByte functions.
-// This allows the DLL to do DMA xfers with CPU ram.
-EXPORT_PUBLIC_API void MemPointers(
-	ReadMemoryByteModuleCallback read_memory_byte_callback,
-	WriteMemoryByteModuleCallback write_memory_byte_callback)
-{
-	gHostContext->read_memory_byte_ = read_memory_byte_callback;
-	gHostContext->write_memory_byte_ = write_memory_byte_callback;
-}
-
-// This captures the Function transfer point for the CPU assert interupt
-EXPORT_PUBLIC_API void AssertInterupt(AssertInteruptModuleCallback assert_interupt_callback)
-{
-	gHostContext->assert_interrupt_ = assert_interupt_callback;
-}
-
-EXPORT_PUBLIC_API void SetCart(AssertCartridgeLineModuleCallback callback)
-{
-	gHostContext->assert_cartridge_line_ = callback;
-}
-
-EXPORT_PUBLIC_API void SetIniPath(const char* configuration_path)
-{
-	gConfigurationFilename = configuration_path;
-	gMultiPakInterface.start();
-}
-
-EXPORT_PUBLIC_API void ModuleConfig(unsigned char menu_item_id)
+EXPORT_PUBLIC_API void PakMenuItemClicked(unsigned char menu_item_id)
 {
 	gMultiPakInterface.menu_item_clicked(menu_item_id);
 }
 
-EXPORT_PUBLIC_API void PackPortWrite(unsigned char port_id, unsigned char value)
+EXPORT_PUBLIC_API void PakWritePort(unsigned char port_id, unsigned char value)
 {
 	gMultiPakInterface.write_port(port_id, value);
 }
 
-EXPORT_PUBLIC_API unsigned char PackPortRead(unsigned char port_id)
+EXPORT_PUBLIC_API unsigned char PakReadPort(unsigned char port_id)
 {
 	return gMultiPakInterface.read_port(port_id);
 }
@@ -108,22 +110,22 @@ EXPORT_PUBLIC_API void HeartBeat()
 	gMultiPakInterface.heartbeat();
 }
 
-EXPORT_PUBLIC_API unsigned char PakMemRead8(unsigned short memory_address)
+EXPORT_PUBLIC_API unsigned char PakReadMemoryByte(unsigned short memory_address)
 {
 	return gMultiPakInterface.read_memory_byte(memory_address);
 }
 
-EXPORT_PUBLIC_API void ModuleStatus(char* status_buffer)
+EXPORT_PUBLIC_API void PakGetStatus(char* text_buffer, size_t buffer_size)
 {
-	gMultiPakInterface.status(status_buffer);
+	gMultiPakInterface.status(text_buffer, buffer_size);
 }
 
-EXPORT_PUBLIC_API unsigned short ModuleAudioSample()
+EXPORT_PUBLIC_API unsigned short PakSampleAudio()
 {
 	return gMultiPakInterface.sample_audio();
 }
 
-EXPORT_PUBLIC_API unsigned char ModuleReset()
+EXPORT_PUBLIC_API unsigned char PakReset()
 {
 	gMultiPakInterface.reset();
 

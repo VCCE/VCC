@@ -25,7 +25,7 @@ void UnmountHD(int);
 int MountHD(const char*, int);
 unsigned char IdeRead(unsigned char);
 void IdeWrite (unsigned char, unsigned char);
-void DiskStatus(char *);
+void DiskStatus(char* text_buffer, size_t buffer_size);
 void VhdReset();
 
 constexpr auto DRIVESIZE = 512u; // Mb

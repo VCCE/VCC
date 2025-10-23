@@ -23,7 +23,6 @@
 
 #include "acia.h"
 #include "../CartridgeMenu.h"
-#include <vcc/core/legacy_cartridge_definitions.h>
 #include <vcc/core/limits.h>
 #include <vcc/common/DialogOps.h>
 #include <vcc/common/logger.h>
@@ -32,20 +31,27 @@
 // Local Functions
 //------------------------------------------------------------------------
 
-void BuildCartMenu();
+void BuildCartridgeMenu();
 
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig();
 void SaveConfig();
 
 //------------------------------------------------------------------------
+// Pak host
+//------------------------------------------------------------------------
+static void* gHostKeyPtr = nullptr;
+void* const& gHostKey(gHostKeyPtr);
+static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
+PakAssertInteruptHostCallback AssertInt = nullptr;
+
+//------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------
-static HINSTANCE g_hDLL = nullptr;      // DLL handle
+static HINSTANCE gModuleInstance;      // DLL handle
 static HWND g_hDlg = nullptr;           // Config dialog
 static char IniFile[MAX_PATH];       // Ini file name
 static char IniSect[MAX_LOADSTRING]; // Ini file section
-static AppendCartridgeMenuModuleCallback CartMenuCallback = nullptr;
 
 // Status for Vcc status line
 char AciaStat[32];
@@ -66,7 +72,6 @@ char AciaFileRdPath[MAX_PATH]; // Path for file reads
 char AciaFileWrPath[MAX_PATH]; // Path for file writes
 
 static unsigned char Rom[8192];
-AssertInteruptModuleCallback AssertInt = nullptr;
 unsigned char LoadExtRom(const char *);
 
 //------------------------------------------------------------------------
@@ -76,7 +81,7 @@ BOOL APIENTRY
 DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
     if (reason == DLL_PROCESS_ATTACH) {
-        g_hDLL = hinst;
+		gModuleInstance = hinst;
         LoadExtRom("RS232.ROM");
 
     } else if (reason == DLL_PROCESS_DETACH) {
@@ -87,20 +92,41 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
     return TRUE;
 }
 
-//-----------------------------------------------------------------------
-//  Dll export register the DLL and build entry on dynamic menu
-//-----------------------------------------------------------------------
+
 extern "C"
-__declspec(dllexport) void
-ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
 {
-    LoadString(g_hDLL,IDS_MODULE_NAME,ModName,MAX_LOADSTRING);
-    LoadString(g_hDLL,IDS_CATNUMBER,CatNumber,MAX_LOADSTRING);
-    CartMenuCallback = Temp;
-    strcpy(IniSect,ModName);   // Use module name for ini file section
-    if (CartMenuCallback != nullptr) BuildCartMenu();
-    sc6551_init();
-    return ;
+	__declspec(dllexport) const char* PakGetName()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
+	__declspec(dllexport) const char* PakCatalogName()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
+	__declspec(dllexport) void PakInitialize(
+		void* const host_key,
+		const char* const configuration_path,
+		const pak_initialization_parameters* const parameters)
+	{
+		gHostKeyPtr = host_key;
+		CartMenuCallback = parameters->add_menu_item;
+		AssertInt = parameters->assert_interrupt;
+		strcpy(IniFile, configuration_path);
+
+		LoadConfig();
+		sc6551_init();
+	}
+
 }
 
 //-----------------------------------------------------------------------
@@ -108,7 +134,7 @@ ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
 //-----------------------------------------------------------------------
 extern "C"
 __declspec(dllexport) void
-PackPortWrite(unsigned char Port,unsigned char Data)
+PakWritePort(unsigned char Port,unsigned char Data)
 {
     sc6551_write(Data,Port);
     return;
@@ -119,7 +145,7 @@ PackPortWrite(unsigned char Port,unsigned char Data)
 //-----------------------------------------------------------------------
 extern "C"
 __declspec(dllexport) unsigned char
-PackPortRead(unsigned char Port)
+PakReadPort(unsigned char Port)
 {
     return sc6551_read(Port);
 }
@@ -128,7 +154,7 @@ PackPortRead(unsigned char Port)
 // Dll export module reset
 //-----------------------------------------------------------------------
 extern "C"
-__declspec(dllexport) void ModuleReset()
+__declspec(dllexport) void PakReset()
 {
     sc6551_close();
     return;
@@ -138,7 +164,7 @@ __declspec(dllexport) void ModuleReset()
 // Dll export pak rom read
 //-----------------------------------------------------------------------
 extern "C"
-__declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
+__declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short Address)
 {
     return(Rom[Address & 8191]);
 }
@@ -168,19 +194,9 @@ unsigned char LoadExtRom(const char *FilePath)
 // Dll export Heartbeat (HSYNC)
 //-----------------------------------------------------------------------
 extern "C"
-__declspec(dllexport) void HeartBeat()
+__declspec(dllexport) void PakProcessHorizontalSync()
 {
     sc6551_heartbeat();
-    return;
-}
-
-//-----------------------------------------------------------------------
-// Dll export supply transfer point for interrupt
-//-----------------------------------------------------------------------
-extern "C"
-__declspec(dllexport) void AssertInterupt(AssertInteruptModuleCallback Dummy)
-{
-    AssertInt=Dummy;
     return;
 }
 
@@ -188,45 +204,34 @@ __declspec(dllexport) void AssertInterupt(AssertInteruptModuleCallback Dummy)
 // Dll export return module status for VCC status line
 //-----------------------------------------------------------------------
 extern "C"
-__declspec(dllexport) void ModuleStatus(char *status)
+__declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
 {
-    strncpy (status,AciaStat,16);
-    status[16]='\n';
-    return;
+	strncpy(text_buffer, AciaStat, buffer_size);
+	text_buffer[16] = '\n';
 }
 
 //-----------------------------------------------------------------------
 //  Dll export run config dialog
 //-----------------------------------------------------------------------
 extern "C"
-__declspec(dllexport) void ModuleConfig(unsigned char /*MenuID*/)
+__declspec(dllexport) void PakMenuItemClicked(unsigned char /*MenuID*/)
 {
     HWND owner = GetActiveWindow();
-    CreateDialog(g_hDLL,(LPCTSTR)IDD_PROPPAGE,owner,(DLGPROC)Config);
+    CreateDialog(gModuleInstance,(LPCTSTR)IDD_PROPPAGE,owner,(DLGPROC)Config);
     ShowWindow(g_hDlg,1);
     return;
 }
 
-//-----------------------------------------------------------------------
-// Dll export VCC ini file path and load settings
-//-----------------------------------------------------------------------
-extern "C"
-__declspec(dllexport) void SetIniPath (const char *IniFilePath)
-{
-    strcpy(IniFile,IniFilePath);
-    LoadConfig();
-    return;
-}
 
 //-----------------------------------------------------------------------
 //  Add config option to Cartridge menu
 //----------------------------------------------------------------------
-void BuildCartMenu()
+void BuildCartridgeMenu()
 {
-    CartMenuCallback("",MID_BEGIN,MIT_Head);
-    CartMenuCallback("",MID_ENTRY,MIT_Seperator);
-    CartMenuCallback("ACIA Config",ControlId(16),MIT_StandAlone);
-    CartMenuCallback("",MID_FINISH,MIT_Head);
+	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback(gHostKey, "ACIA Config", ControlId(16), MIT_StandAlone);
+	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
 }
 
 //-----------------------------------------------------------------------

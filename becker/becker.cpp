@@ -16,8 +16,10 @@
 static SOCKET dwSocket = 0;
 
 // vcc stuff
-static HINSTANCE g_hinstDLL=NULL;
-static AssertCartridgeLineModuleCallback PakSetCart = nullptr;
+static HINSTANCE gModuleInstance;
+static void* gHostKey = nullptr;
+static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
+static PakAssertCartridgeLineHostCallback PakSetCart = nullptr;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 static char IniFile[MAX_PATH]="";
 static unsigned char HDBRom[8192];
@@ -56,12 +58,11 @@ char msg[MAX_PATH];
 // log lots of stuff...
 static boolean logging = false;
 
-static AppendCartridgeMenuModuleCallback CartMenuCallback = NULL;
 unsigned char LoadExtRom(const char *);
 void SetDWTCPConnectionEnable(unsigned int enable);
 int dw_setaddr(const char *bufdwaddr);
 int dw_setport(const char *bufdwport);
-void BuildCartMenu();
+void BuildCartridgeMenu();
 void LoadConfig();
 void SaveConfig();
 
@@ -76,7 +77,7 @@ BOOL APIENTRY DllMain( HINSTANCE  hinstDLL,
 	{
 		case DLL_PROCESS_ATTACH:
 			// init
-			g_hinstDLL=hinstDLL;
+			gModuleInstance = hinstDLL;
 			LastStats = GetTickCount();
 			SetDWTCPConnectionEnable(1);
 
@@ -385,21 +386,45 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 
 }
 
-// dll exported functions
-extern "C" __declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
+extern "C"
+{
+	__declspec(dllexport) const char* PakGetName()
 	{
-		LoadString(g_hinstDLL,IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
-		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
-		strcpy(ModName,"HDBDOS/DW/Becker");
+		static char string_buffer[MAX_LOADSTRING];
 
-		CartMenuCallback =Temp;
-		if (CartMenuCallback  != NULL)
-			BuildCartMenu();
+		//LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+		strcpy(string_buffer, "HDBDOS/DW/Becker");
 
-		return ;
+		return string_buffer;
 	}
 
-extern "C" __declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
+	__declspec(dllexport) const char* PakCatalogName()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
+	__declspec(dllexport) void PakInitialize(
+		void* const host_key,
+		const char* const configuration_path,
+		const pak_initialization_parameters* const parameters)
+	{
+		gHostKey = host_key;
+		CartMenuCallback = parameters->add_menu_item;
+		PakSetCart = parameters->assert_cartridge_line;
+		strcpy(IniFile, configuration_path);
+
+		LoadConfig();
+		BuildCartridgeMenu();
+	}
+
+}
+
+
+extern "C" __declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
 	{
 		switch (Port)
 		{
@@ -412,7 +437,7 @@ extern "C" __declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned 
 	}
 
 
-extern "C" __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+extern "C" __declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
 	{
 		switch (Port)
 		{
@@ -431,34 +456,30 @@ extern "C" __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
 
 		return 0;
 	}
+
 /*
-	__declspec(dllexport) unsigned char ModuleReset()
+	__declspec(dllexport) unsigned char PakReset()
 	{
 		if (PakSetCart!=NULL)
 			PakSetCart(1);
 		return(0);
 	}
 */
-extern "C" __declspec(dllexport) unsigned char SetCart(AssertCartridgeLineModuleCallback Pointer)
-	{
-		
-		PakSetCart=Pointer;
-		return 0;
-	}
 
-extern "C" __declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
+
+extern "C" __declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short Address)
 	{
 		return(HDBRom[Address & 8191]);
 	
 	}
 
-extern "C" __declspec(dllexport) void HeartBeat()
+extern "C" __declspec(dllexport) void PakProcessHorizontalSync()
 	{
 		// flush write buffer in the future..?
 		return;
 	}
 
-extern "C" __declspec(dllexport) void ModuleStatus(char *DWStatus)
+extern "C" __declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
 	{
         // calculate speed
         DWORD sinceCalc = GetTickCount() - LastStats;
@@ -478,11 +499,11 @@ extern "C" __declspec(dllexport) void ModuleStatus(char *DWStatus)
         {
                 if (retry)
                 {
-                        sprintf(DWStatus,"DW %s?", curaddress);
+                        sprintf(text_buffer,"DW %s?", curaddress);
                 }
                 else if (dwSocket == 0)
                 {
-                        sprintf(DWStatus,"DW ConError");
+                        sprintf(text_buffer,"DW ConError");
                 }
                 else
                 {
@@ -491,40 +512,33 @@ extern "C" __declspec(dllexport) void ModuleStatus(char *DWStatus)
                                 buffersize = BUFFER_SIZE - InReadPos + InWritePos;
 
                         
-                        sprintf(DWStatus,"DW OK R:%04.1f W:%04.1f", ReadSpeed , WriteSpeed);
+                        sprintf(text_buffer,"DW OK R:%04.1f W:%04.1f", ReadSpeed , WriteSpeed);
 
                         
                 }
         }
         else
         {
-                        sprintf(DWStatus,"");
+                        sprintf(text_buffer,"");
         }
         return;
 	}
 
 
-void BuildCartMenu()
+void BuildCartridgeMenu()
 {
-	CartMenuCallback( "",MID_BEGIN,MIT_Head);
-	CartMenuCallback( "",MID_ENTRY,MIT_Seperator);
-	CartMenuCallback( "DriveWire Server..",ControlId(16),MIT_StandAlone);
-	CartMenuCallback( "",MID_FINISH,MIT_Head);
+	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback(gHostKey, "DriveWire Server..", ControlId(16), MIT_StandAlone);
+	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
 }
 
-extern "C" __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+extern "C" __declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
 	{
 		HWND h_own = GetActiveWindow();
-		CreateDialog(g_hinstDLL,(LPCTSTR)IDD_PROPPAGE,h_own,(DLGPROC)Config);
+		CreateDialog(gModuleInstance,(LPCTSTR)IDD_PROPPAGE,h_own,(DLGPROC)Config);
 		ShowWindow(g_hConfigDlg,1);
-		BuildCartMenu();
-		return;
-	}
-
-extern "C" __declspec(dllexport) void SetIniPath (const char *IniFilePath)
-	{
-		strcpy(IniFile,IniFilePath);
-		LoadConfig();
+		BuildCartridgeMenu();
 		return;
 	}
 
@@ -609,7 +623,7 @@ void LoadConfig()
 	char sport[MAX_LOADSTRING]="";
 	char DiskRomPath[MAX_PATH];
 
-	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	GetPrivateProfileString(ModName,"DWServerAddr","",saddr, MAX_LOADSTRING,IniFile);
 	GetPrivateProfileString(ModName,"DWServerPort","",sport, MAX_LOADSTRING,IniFile);
 	
@@ -624,7 +638,7 @@ void LoadConfig()
 		dw_setport("65504");
 
 	
-	BuildCartMenu();
+	BuildCartridgeMenu();
 	GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
 	PathRemoveFileSpec(DiskRomPath);
 	strcat( DiskRomPath, "hdbdwbck.rom");
@@ -635,7 +649,7 @@ void LoadConfig()
 void SaveConfig()
 {
 	char ModName[MAX_LOADSTRING]="";
-	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	WritePrivateProfileString(ModName,"DWServerAddr",dwaddress,IniFile);
 	sprintf(msg, "%d", dwsport);
 	WritePrivateProfileString(ModName,"DWServerPort",msg,IniFile);

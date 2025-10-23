@@ -61,26 +61,31 @@ namespace vcc { namespace core
 
 	struct cartridge_loader_context
 	{
-		const AppendCartridgeMenuModuleCallback addMenuItemCallback;
-		const ReadMemoryByteModuleCallback readData;
-		const WriteMemoryByteModuleCallback writeData;
-		const AssertInteruptModuleCallback assertInterrupt;
-		const AssertCartridgeLineModuleCallback assertCartridgeLine;
+		const PakAssertInteruptHostCallback pak_assert_interrupt;
+		const PakAssertCartridgeLineHostCallback pak_assert_cartridge_line;
+		const PakWriteMemoryByteHostCallback pak_write_memory_byte;
+		const PakReadMemoryByteHostCallback pak_read_memory_byte;
+		const PakAppendCartridgeMenuHostCallback pak_add_menu_item;
 	};
 
 	LIBCOMMON_EXPORT cartridge_file_type determine_cartridge_type(const std::string& filename);
+
 	LIBCOMMON_EXPORT cartridge_loader_result load_rom_cartridge(
-		std::unique_ptr<cartridge_context> context,
-		const std::string& filename);
+		const std::string& filename,
+		std::unique_ptr<cartridge_context> cartridge_context);
+
 	LIBCOMMON_EXPORT cartridge_loader_result load_legacy_cartridge(
-		std::unique_ptr<cartridge_context> cartridge_context,
-		const cartridge_loader_context& context,
 		const std::string& filename,
-		const std::string& iniPath);
+		std::unique_ptr<cartridge_context> cartridge_context,
+		void* const host_context,
+		const std::string& iniPath,
+		const pak_initialization_parameters& pak_parameters);
+
 	LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
-		std::unique_ptr<cartridge_context> cartridge_context,
-		const cartridge_loader_context& context,
 		const std::string& filename,
-		const std::string& iniPath);
+		std::unique_ptr<cartridge_context> cartridge_context,
+		void* const host_context,
+		const std::string& iniPath,
+		const pak_initialization_parameters& pak_parameters);
 
 } }

@@ -15,17 +15,14 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
-
-#include <Windows.h>
-#include <vcc/core/legacy_cartridge_definitions.h>
-#include "resource.h" 
-#include "defines.h"
 #include "memboard.h"
+#include "defines.h"
+#include "resource.h" 
+#include <vcc/core/legacy_cartridge_definitions.h>
+#include <Windows.h>
 
-static AppendCartridgeMenuModuleCallback DynamicMenuCallback = nullptr;
+static HINSTANCE gModuleInstance;
 
-
-static HINSTANCE g_hinstDLL;
 
 BOOL WINAPI DllMain(
     HINSTANCE hinstDLL,  // handle to DLL module
@@ -36,26 +33,45 @@ BOOL WINAPI DllMain(
 	{
 		return 1;
 	}
-	g_hinstDLL=hinstDLL;
+	gModuleInstance = hinstDLL;
 	return 1;
 }
 
 extern "C" 
 {          
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
+
+	__declspec(dllexport) const char* PakGetName()
 	{
-		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
-		InitMemBoard();
-		DynamicMenuCallback =Temp;
-		return ;
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
 	}
+
+	__declspec(dllexport) const char* PakCatalogName()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
+	__declspec(dllexport) void PakInitialize(
+		void* const /*host_key*/,
+		const char* const /*configuration_path*/,
+		const pak_initialization_parameters* const /*parameters*/)
+	{
+		InitMemBoard();
+	}
+
 }
 
 
 extern "C" 
 {         
-	__declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
+	__declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
 	{
 		switch (Port)
 		{
@@ -79,7 +95,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+	__declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
 	{
 		switch (Port)
 		{

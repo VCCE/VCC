@@ -22,9 +22,10 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/core/legacy_cartridge_definitions.h>
 #include <vcc/core/limits.h>
 
-static HINSTANCE g_hinstDLL=nullptr;
+static HINSTANCE gModuleInstance;
+static void* gHostKey = nullptr;
+static PakAssertCartridgeLineHostCallback PakSetCart = nullptr;
 static unsigned char LeftChannel=0,RightChannel=0;
-static AssertCartridgeLineModuleCallback PakSetCart = nullptr;
 unsigned char LoadExtRom(const char *);
 static unsigned char Rom[8192];
 BOOL WINAPI DllMain(
@@ -37,25 +38,48 @@ BOOL WINAPI DllMain(
 		//Put shutdown procs here
 		return 1;
 	}
-	g_hinstDLL=hinstDLL;
+	gModuleInstance = hinstDLL;
 	return 1;
 }
 
+
 extern "C" 
 {          
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback /*Temp*/)
+
+	__declspec(dllexport) const char* PakGetName()
 	{
-		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);		
-		strcpy(ModName,"Orchestra-90");
-		return ;
+		static char string_buffer[MAX_LOADSTRING];
+
+		//LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+		strcpy(string_buffer, "Orchestra-90");
+
+		return string_buffer;
 	}
+
+	__declspec(dllexport) const char* PakCatalogName()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
+	__declspec(dllexport) void PakInitialize(
+		void* const host_key,
+		const char* const /*configuration_path*/,
+		const pak_initialization_parameters* const parameters)
+	{
+		gHostKey = host_key;
+		PakSetCart = parameters->assert_cartridge_line;
+	}
+
 }
 
 
 extern "C" 
 {         
-	__declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
+	__declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
 	{
 		switch (Port)
 		{
@@ -74,7 +98,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PackPortRead(unsigned char /*Port*/)
+	__declspec(dllexport) unsigned char PakReadPort(unsigned char /*Port*/)
 	{
 		return 0;
 	}
@@ -82,7 +106,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char ModuleReset()
+	__declspec(dllexport) unsigned char PakReset()
 	{
 		char RomPath[MAX_PATH];
 
@@ -91,18 +115,8 @@ extern "C"
 		PathRemoveFileSpec(RomPath);
 		strcpy(RomPath, "ORCH90.ROM");
 		
-		if ((PakSetCart!=nullptr) & LoadExtRom(RomPath))	//If we can load the rom them assert cart 
-			PakSetCart(1);
-
-		return 0;
-	}
-}
-
-extern "C"
-{
-	__declspec(dllexport) unsigned char SetCart(AssertCartridgeLineModuleCallback Pointer)
-	{
-		PakSetCart=Pointer;
+		if (LoadExtRom(RomPath))	//If we can load the rom them assert cart 
+			PakSetCart(gHostKey, 1);
 
 		return 0;
 	}
@@ -111,7 +125,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
+	__declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short Address)
 	{
 		return(Rom[Address & 8191]);
 	}
@@ -122,7 +136,7 @@ extern "C"
 // This gets called at the end of every scan line 262 Lines * 60 Frames = 15780 Hz 15720
 extern "C" 
 {          
-	__declspec(dllexport) unsigned short ModuleAudioSample()
+	__declspec(dllexport) unsigned short PakSampleAudio()
 	{
 		
 		return((LeftChannel<<8) | RightChannel) ;

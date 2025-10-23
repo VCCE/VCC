@@ -27,18 +27,34 @@
 namespace
 {
 
+	template<multipak_cartridge::slot_id_type SlotIndex_>
+	void assert_cartridge_line_on_slot(void* host_context, bool line_state)
+	{
+		static_cast<multipak_cartridge*>(host_context)->assert_cartridge_line(
+			SlotIndex_,
+			line_state);
+	}
+
+	template<multipak_cartridge::slot_id_type SlotIndex_>
+	void append_menu_item_on_slot(void* host_context, const char* text, int id, MenuItemType type)
+	{
+		static_cast<multipak_cartridge*>(host_context)->append_menu_item(
+			SlotIndex_,
+			{ text, static_cast<unsigned int>(id), type });
+	}
+
 	struct cartridge_slot_callbacks
 	{
-		AssertCartridgeLineModuleCallback set_cartridge_line;
-		AppendCartridgeMenuModuleCallback append_menu_item;
+		PakAssertCartridgeLineHostCallback set_cartridge_line;
+		PakAppendCartridgeMenuHostCallback append_menu_item;
 	};
 
 	//**************************************************************
 	const std::array<cartridge_slot_callbacks, NUMSLOTS> gSlotCallbacks = { {
-		{ assert_cartridge_line_on_slot<0, gMultiPakInterface>, append_menu_item_on_slot<0, gMultiPakInterface> },
-		{ assert_cartridge_line_on_slot<1, gMultiPakInterface>, append_menu_item_on_slot<1, gMultiPakInterface> },
-		{ assert_cartridge_line_on_slot<2, gMultiPakInterface>, append_menu_item_on_slot<2, gMultiPakInterface> },
-		{ assert_cartridge_line_on_slot<3, gMultiPakInterface>, append_menu_item_on_slot<3, gMultiPakInterface> }
+		{ assert_cartridge_line_on_slot<0>, append_menu_item_on_slot<0> },
+		{ assert_cartridge_line_on_slot<1>, append_menu_item_on_slot<1> },
+		{ assert_cartridge_line_on_slot<2>, append_menu_item_on_slot<2> },
+		{ assert_cartridge_line_on_slot<3>, append_menu_item_on_slot<3> }
 	} };
 
 	constexpr std::pair<size_t, size_t> disk_controller_io_port_range = { 0x40, 0x5f };
@@ -51,17 +67,6 @@ namespace
 
 }
 
-template<multipak_cartridge::slot_id_type SlotIndex_, multipak_cartridge& cartridge>
-void assert_cartridge_line_on_slot(bool line_state)
-{
-	cartridge.assert_cartridge_line(SlotIndex_, line_state);
-}
-
-template<multipak_cartridge::slot_id_type SlotIndex_, multipak_cartridge& cartridge>
-void append_menu_item_on_slot(const char* text, int id, MenuItemType type)
-{
-	cartridge.append_menu_item(SlotIndex_, { text, static_cast<unsigned int>(id), type });
-}
 
 multipak_cartridge::multipak_cartridge(std::shared_ptr<context_type> context)
 	: context_(move(context))
@@ -173,21 +178,21 @@ unsigned char multipak_cartridge::read_memory_byte(unsigned short memory_address
 	return slots_[cached_cts_slot_].read_memory_byte(memory_address);
 }
 
-void multipak_cartridge::status(char* status_buffer)
+void multipak_cartridge::status(char* text_buffer, size_t buffer_size)
 {
 	vcc::core::utils::section_locker lock(mutex_);
 
 	char TempStatus[64] = "";
 
-	sprintf(status_buffer, "MPI:%d,%d", cached_cts_slot_ + 1, cached_scs_slot_ + 1);
+	sprintf(text_buffer, "MPI:%d,%d", cached_cts_slot_ + 1, cached_scs_slot_ + 1);
 	for (const auto& cartridge_slot : slots_)
 	{
 		strcpy(TempStatus, "");
-		cartridge_slot.status(TempStatus);
+		cartridge_slot.status(TempStatus, sizeof(TempStatus));
 		if (TempStatus[0])
 		{
-			strcat(status_buffer, " | ");
-			strcat(status_buffer, TempStatus);
+			strcat(text_buffer, " | ");
+			strcat(text_buffer, TempStatus);
 		}
 	}
 }
@@ -279,16 +284,17 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	const path_type& filename)
 {
 	auto loadedCartridge(vcc::core::load_cartridge(
-		std::make_unique<multipak_cartridge_context>(slot, *context_, *this),
-		{
-			gSlotCallbacks[slot].append_menu_item,
-			gHostContext->read_memory_byte_,
-			gHostContext->write_memory_byte_,
-			gHostContext->assert_interrupt_,
-			gSlotCallbacks[slot].set_cartridge_line
-		},
 		filename,
-		context_->configuration_path()));
+		std::make_unique<multipak_cartridge_context>(slot, *context_, *this),
+		this,
+		context_->configuration_path(),
+		{
+			gHostContext->assert_interrupt_,
+			gSlotCallbacks[slot].set_cartridge_line,
+			gHostContext->write_memory_byte_,
+			gHostContext->read_memory_byte_,
+			gSlotCallbacks[slot].append_menu_item
+		}));
 	if (loadedCartridge.load_result != mount_status_type::success)
 	{
 		return loadedCartridge.load_result;

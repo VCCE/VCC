@@ -58,7 +58,7 @@ public:
 	void write_port(unsigned char port_id, unsigned char value) override;
 	unsigned char read_port(unsigned char port_id) override;
 	unsigned char read_memory_byte(unsigned short memory_address) override;
-	void status(char* status) override;
+	void status(char* text_buffer, size_t buffer_size) override;
 	unsigned short sample_audio() override;
 	void menu_item_clicked(unsigned char menu_item_id) override;
 
@@ -84,16 +84,9 @@ public:
 	void append_menu_item(slot_id_type slot, menu_item_type item);
 
 
-
 private:
 
 	void load_configuration();
-
-	template<slot_id_type SlotIndex_, multipak_cartridge& cartridge>
-	friend void assert_cartridge_line_on_slot(bool line_state);
-
-	template<multipak_cartridge::slot_id_type SlotIndex_, multipak_cartridge& cartridge>
-	friend void append_menu_item_on_slot(const char* text, int id, MenuItemType type);
 
 
 private:
