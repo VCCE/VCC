@@ -28,7 +28,9 @@ VCC is written in C++ and Microsoft Visual Studio 2022 Community is used to buil
 
 To build VCC from the command line, launch the "Developer Command Prompt for VS 2022". From there, change to the directory containing the VCC sources and type "Build" or "BuildClean".
 
-Within Visual Studio, the "Release" and "Debug" configurations build VCC binaries that will run on current Windows versions. The "Legacy" configuration builds binaries that will run on Windows XP. "Legacy" uses the v121_xp build tools from which you need to find and install.  Maintaining a VCC version that will run on XP is becoming difficult and it is likely a future version will no longer support it 
+Within Visual Studio, the "Release" and "Debug" configurations build VCC binaries that will run on current Windows versions. The "Legacy" configuration builds binaries that will run on Windows XP. "Legacy" uses the v141_xp build tools from which you need to find and install.  Maintaining a VCC version that will run on XP is becoming difficult and it is likely a future version will no longer support it.
+
+Portions of VCC code have been modified to use features of the C++17 standard.
 
 ## Contributing to VCC
 We welcome patches and code contributions that are consistent with our goals. Please comment your code well and add your name if you want credit for your work.
