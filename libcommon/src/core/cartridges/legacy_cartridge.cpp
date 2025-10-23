@@ -33,22 +33,10 @@ namespace vcc { namespace core { namespace cartridges
 		}
 
 
-		void default_get_module_name(char* moduleName, char* projectId, AppendCartridgeMenuModuleCallback addMenuItemCallback)
-		{
-			*moduleName = 0;
-			*projectId = 0;
-		}
-
 		void default_menu_item_clicked(unsigned char)
 		{}
 
-		void default_set_interupt_call_pointer(AssertInteruptModuleCallback)
-		{}
-
-		void default_dma_mem_pointers(ReadMemoryByteModuleCallback, WriteMemoryByteModuleCallback)
-		{}
-
-		void default_heartbeat(void)
+		void default_heartbeat()
 		{}
 
 		void default_write_port(unsigned char, unsigned char)
@@ -64,106 +52,73 @@ namespace vcc { namespace core { namespace cartridges
 			return {};
 		}
 
-		void default_status(char* status)
+		void default_status(char* text_buffer, size_t buffer_size)
 		{
-			*status = 0;
+			*text_buffer = 0;
 		}
 
-		unsigned short default_sample_audio(void)
+		unsigned short default_sample_audio()
 		{
 			return {};
 		}
 
-		void default_reset(void)
+		void default_reset()
 		{}
 
-		void default_set_ini_path(const char*)
-		{}
-
-		void default_set_cart_pointer(AssertCartridgeLineModuleCallback)
-		{}
-
-		legacy_cartridge::name_type get_module_name(HMODULE moduleHandle)
+		const char* default_get_name()
 		{
-			static char name_buffer[MAX_PATH];
-			static char catalog_id_buffer[MAX_PATH];
-			const auto getModuleName(GetImportedProcAddress(moduleHandle, "ModuleName", default_get_module_name));
-			
-			getModuleName(name_buffer, catalog_id_buffer, nullptr);
-
-			return name_buffer;
+			return "";
 		}
 
-		legacy_cartridge::name_type get_module_catalog_id(HMODULE moduleHandle)
+		const char* default_get_catalog_id()
 		{
-			static char name_buffer[MAX_PATH];
-			static char catalog_id_buffer[MAX_PATH];
-			const auto getModuleName(GetImportedProcAddress(moduleHandle, "ModuleName", default_get_module_name));
-
-			getModuleName(name_buffer, catalog_id_buffer, nullptr);
-
-			return catalog_id_buffer;
+			return "";
 		}
-
 	}
 
 
 	legacy_cartridge::legacy_cartridge(
-		HMODULE moduleHandle,
-		const path_type& configurationPath,
-		AppendCartridgeMenuModuleCallback addMenuItemCallback,
-		ReadMemoryByteModuleCallback readDataFunction,
-		WriteMemoryByteModuleCallback writeDataFunction,
-		AssertInteruptModuleCallback assertCallback,
-		AssertCartridgeLineModuleCallback assertCartCallback)
+		HMODULE module_handle,
+		void* const host_context,
+		path_type configuration_path,
+		const pak_initialization_parameters& parameters)
 		:
-		handle_(moduleHandle),
-		configurationPath_(configurationPath),
-		name_(get_module_name(moduleHandle)),
-		catalog_id_(get_module_catalog_id(moduleHandle)),
-		addMenuItemCallback_(addMenuItemCallback),
-		readDataFunction_(readDataFunction),
-		writeDataFunction_(writeDataFunction),
-		assertCallback_(assertCallback),
-		assertCartCallback_(assertCartCallback),
-		reset_(GetImportedProcAddress(moduleHandle, "ModuleReset", default_reset)),
-		heartbeat_(GetImportedProcAddress(moduleHandle, "HeartBeat", default_heartbeat)),
-		status_(GetImportedProcAddress(moduleHandle, "ModuleStatus", default_status)),
-		write_port_(GetImportedProcAddress(moduleHandle, "PackPortWrite", default_write_port)),
-		read_port_(GetImportedProcAddress(moduleHandle, "PackPortRead", default_read_port)),
-		read_memory_byte_(GetImportedProcAddress(moduleHandle, "PakMemRead8", default_read_memory_byte)),
-		sample_audio_(GetImportedProcAddress(moduleHandle, "ModuleAudioSample", default_sample_audio)),
-		menu_item_clicked_(GetImportedProcAddress(moduleHandle, "ModuleConfig", default_menu_item_clicked))
+		handle_(module_handle),
+		host_context_(host_context),
+		configuration_path_(move(configuration_path)),
+		parameters_(parameters),
+		initialize_(GetImportedProcAddress<PakInitializeModuleFunction>(module_handle, "PakInitialize", nullptr)),
+		get_name_(GetImportedProcAddress(module_handle, "PakGetName", default_get_name)),
+		get_catalog_id_(GetImportedProcAddress(module_handle, "PakGetCatalogId", default_get_catalog_id)),
+		reset_(GetImportedProcAddress(module_handle, "PakReset", default_reset)),
+		heartbeat_(GetImportedProcAddress(module_handle, "PakProcessHorizontalSync", default_heartbeat)),
+		status_(GetImportedProcAddress(module_handle, "PakGetStatus", default_status)),
+		write_port_(GetImportedProcAddress(module_handle, "PakWritePort", default_write_port)),
+		read_port_(GetImportedProcAddress(module_handle, "PakReadPort", default_read_port)),
+		read_memory_byte_(GetImportedProcAddress(module_handle, "PakReadMemoryByte", default_read_memory_byte)),
+		sample_audio_(GetImportedProcAddress(module_handle, "PakSampleAudio", default_sample_audio)),
+		menu_item_clicked_(GetImportedProcAddress(module_handle, "PakMenuItemClicked", default_menu_item_clicked))
 	{
-		// FIXME: Initialization of name and catalog id requires invoking ModuleName
-		// twice (once for each detail). Some older paks may not account for this
-		// but this is a short-term hack until the existing modules are migrated. This
-		// will include renaming the imported functions to better reflect their purpose
-		// using the following (preliminary) changes.
-		// 
-		//		MemPointers			==>		PakInitialize
-		//		AssertInterupt		==>		PakInitialize
-		//		SetIniPath			==>		PakInitialize
-		//		SetCart				==>		PakInitialize
-		//		ModuleName			==>		PakGetName, PakGetCatalogId, PakInitialize
-		//		ModuleReset			==>		PakReset
-		//		HeartBeat			==>		PakPulse
-		//		ModuleStatus		==>		PakGetSTatus
-		//		PackPortWrite		==>		PakWritePort
-		//		PackPortRead		==>		PwkReadPort
-		//		PakMemRead8			==>		PakReadMemoryByte
-		//		ModuleAudioSample	==>		PakSampleAudio
-		//		ModuleConfig		==>		PakProcessMenuItem
+		if (initialize_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot initialize pak interface. Module does not export PakInitialize.");
+		}
 	}
 
 	legacy_cartridge::name_type legacy_cartridge::name() const
 	{
-		return name_;
+		return get_name_();
 	}
 
 	legacy_cartridge::catalog_id_type legacy_cartridge::catalog_id() const
 	{
-		return catalog_id_;
+		return get_catalog_id_();
+	}
+
+
+	void legacy_cartridge::start()
+	{
+		initialize_(host_context_, configuration_path_.c_str(), & parameters_);
 	}
 
 	void legacy_cartridge::reset()
@@ -176,9 +131,9 @@ namespace vcc { namespace core { namespace cartridges
 		heartbeat_();
 	}
 
-	void legacy_cartridge::status(char* status_buffer)
+	void legacy_cartridge::status(char* text_buffer, size_t buffer_size)
 	{
-		status_(status_buffer);
+		status_(text_buffer, buffer_size);
 	}
 
 	void legacy_cartridge::write_port(unsigned char port_id, unsigned char value)
@@ -204,25 +159,6 @@ namespace vcc { namespace core { namespace cartridges
 	void legacy_cartridge::menu_item_clicked(unsigned char menu_item_id)
 	{
 		menu_item_clicked_(menu_item_id);
-	}
-
-	void legacy_cartridge::initialize_pak()
-	{
-		const auto dmaMemPointer(GetImportedProcAddress(handle_, "MemPointers", default_dma_mem_pointers));
-		dmaMemPointer(readDataFunction_, writeDataFunction_);
-
-		const auto setInteruptCallPointer(GetImportedProcAddress(handle_, "AssertInterupt", default_set_interupt_call_pointer));
-		setInteruptCallPointer(assertCallback_);
-
-		static char buffer[MAX_PATH];
-		const auto getModuleName(GetImportedProcAddress(handle_, "ModuleName", default_get_module_name));
-		getModuleName(buffer, buffer, addMenuItemCallback_);
-
-		const auto pakSetCart(GetImportedProcAddress(handle_, "SetCart", default_set_cart_pointer));
-		pakSetCart(assertCartCallback_);
-
-		const auto setIniPath(GetImportedProcAddress(handle_, "SetIniPath", default_set_ini_path));
-		setIniPath(configurationPath_.c_str());
 	}
 
 } } }

@@ -57,9 +57,9 @@ namespace vcc { namespace core { namespace cartridges
 		return {};
 	}
 
-	void basic_cartridge::status(char* status_buffer)
+	void basic_cartridge::status(char* text_buffer, size_t buffer_size)
 	{
-		*status_buffer = 0;
+		*text_buffer = 0;
 	}
 
 	unsigned short basic_cartridge::sample_audio()

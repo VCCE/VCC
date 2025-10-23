@@ -40,9 +40,10 @@ static char NewVHDfile[MAX_PATH];
 static char IniFile[MAX_PATH]  { 0 };
 static char HardDiskPath[MAX_PATH];
 
-static unsigned char (*MemRead8)(unsigned short);
-static void (*MemWrite8)(unsigned char,unsigned short);
-static AppendCartridgeMenuModuleCallback CartMenuCallback = nullptr;
+static void* gHostKey = nullptr;
+static PakReadMemoryByteHostCallback MemRead8 = nullptr;
+static PakWriteMemoryByteHostCallback MemWrite8 = nullptr;
+static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 static unsigned char ClockEnabled=1,ClockReadOnly=1;
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 
@@ -50,10 +51,10 @@ LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 void LoadHardDisk(int drive);
 void LoadConfig();
 void SaveConfig();
-void BuildDynaMenu();
+void BuildCartridgeMenu();
 int CreateDisk(HWND,int);
 
-static HINSTANCE g_hinstDLL;
+static HINSTANCE gModuleInstance;
 static HWND hConfDlg = nullptr;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 
@@ -68,37 +69,62 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL,  // handle to DLL module
         UnmountHD(0);
         UnmountHD(1);
     } else {
-        g_hinstDLL=hinstDLL;
+		gModuleInstance = hinstDLL;
     }
     return 1;
 }
 
-void MemWrite(unsigned char Data,unsigned short Address)
+void MemWrite(unsigned char Data, unsigned short Address)
 {
-    MemWrite8(Data,Address);
-    return;
+	MemWrite8(gHostKey, Data, Address);
 }
 
 unsigned char MemRead(unsigned short Address)
 {
-    return(MemRead8(Address));
+	return MemRead8(gHostKey, Address);
 }
 
-// Register the DLL
+
 extern "C"
 {
-    __declspec(dllexport) void
-    ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
-    {
-        LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-        LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
-        CartMenuCallback =Temp;
-        SetClockWrite(!ClockReadOnly);
-        if (CartMenuCallback  != nullptr)
-            BuildDynaMenu();
-        return ;
-    }
+
+	__declspec(dllexport) const char* PakGetName()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
+	__declspec(dllexport) const char* PakCatalogName()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
+	__declspec(dllexport) void PakInitialize(
+		void* const host_key,
+		const char* const configuration_path,
+		const pak_initialization_parameters* const parameters)
+	{
+		gHostKey = host_key;
+		CartMenuCallback = parameters->add_menu_item;
+		MemRead8 = parameters->read_memory_byte;
+		MemWrite8 = parameters->write_memory_byte;
+		strcpy(IniFile, configuration_path);
+
+		LoadConfig();
+		SetClockWrite(!ClockReadOnly);
+		VhdReset(); // Selects drive zero
+		BuildCartridgeMenu();
+	}
+
 }
+
 
 // Configure the hard drive(s).  Called from menu
 // Mount or dismount a hard drive and save config
@@ -106,7 +132,7 @@ extern "C"
 extern "C"
 {
     __declspec(dllexport) void
-    ModuleConfig(unsigned char MenuID)
+	PakMenuItemClicked(unsigned char MenuID)
     {
         switch (MenuID)
         {
@@ -130,12 +156,12 @@ extern "C"
 
         case 14:
             if (hConfDlg == nullptr)
-                hConfDlg = CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,GetActiveWindow(),(DLGPROC)Config);
+                hConfDlg = CreateDialog(gModuleInstance,(LPCTSTR)IDD_CONFIG,GetActiveWindow(),(DLGPROC)Config);
             ShowWindow(hConfDlg,1);
             return;
         }
         SaveConfig();
-        BuildDynaMenu();
+		BuildCartridgeMenu();
         return;
     }
 }
@@ -182,7 +208,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 extern "C"
 {
     __declspec(dllexport) void
-    PackPortWrite(unsigned char Port,unsigned char Data)
+	PakWritePort(unsigned char Port,unsigned char Data)
     {
         IdeWrite(Data,Port);
         return;
@@ -192,7 +218,7 @@ extern "C"
 // Export read from HD control port
 extern "C"
 {
-    __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+    __declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
     {
         if ( ((Port==0x78) | (Port==0x79) | (Port==0x7C)) & ClockEnabled)
             return(ReadTime(Port));
@@ -201,41 +227,13 @@ extern "C"
 }
 
 
-// Set pointers to the MemRead8 and MemWrite8 functions.
-// This allows the DLL to do DMA xfers with CPU ram.
-extern "C"
-{
-    __declspec(dllexport) void
-    MemPointers(ReadMemoryByteModuleCallback Temp1,WriteMemoryByteModuleCallback Temp2)
-    {
-        MemRead8  = Temp1;
-        MemWrite8 = Temp2;
-        VhdReset(); // Selects drive zero
-        return;
-    }
-}
-
-
 // Return disk status. (from cc3vhd)
 extern "C"
 {
     __declspec(dllexport) void
-    ModuleStatus(char *MyStatus)
+	PakGetStatus(char* text_buffer, size_t buffer_size)
     {
-        DiskStatus(MyStatus);
-        return ;
-    }
-}
-
-// Set ini file path and load HD config settings
-extern "C"
-{
-    __declspec(dllexport) void
-    SetIniPath (const char *IniFilePath)
-    {
-        strcpy(IniFile,IniFilePath);
-        LoadConfig();
-        return;
+        DiskStatus(text_buffer, buffer_size);
     }
 }
 
@@ -271,7 +269,7 @@ void LoadHardDisk(int drive)
         // Present new disk dialog if file does not exist
         if (GetFileAttributes(NewVHDfile) == INVALID_FILE_ATTRIBUTES) {
             // Dialog box returns zero if file is not created
-            if (DialogBox(g_hinstDLL,(LPCTSTR)IDD_NEWDISK,hWnd,(DLGPROC)NewDisk)==0)
+            if (DialogBox(gModuleInstance,(LPCTSTR)IDD_NEWDISK,hWnd,(DLGPROC)NewDisk)==0)
                 return;
         }
 
@@ -302,7 +300,7 @@ void LoadConfig()
                              HardDiskPath, MAX_PATH, IniFile);
 
     // Determine module name for config lookups
-    LoadString(g_hinstDLL,IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
+    LoadString(gModuleInstance,IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
 
     // Verify HD0 image file exists and mount it.
     GetPrivateProfileString(ModName,"VHDImage" ,"",VHDfile0,MAX_PATH,IniFile);
@@ -334,7 +332,7 @@ void LoadConfig()
     ClockReadOnly=GetPrivateProfileInt(ModName,"ClkRdOnly",1,IniFile);
 
     // Create config menu
-    BuildDynaMenu();
+	BuildCartridgeMenu();
     return;
 }
 
@@ -342,7 +340,7 @@ void LoadConfig()
 void SaveConfig()
 {
     char ModName[MAX_LOADSTRING]="";
-    LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+    LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 
     ValidatePath(VHDfile0);
     ValidatePath(VHDfile1);
@@ -358,32 +356,32 @@ void SaveConfig()
 }
 
 // Generate menu for mounting the drives
-void BuildDynaMenu()
+void BuildCartridgeMenu()
 {
-    char TempMsg[512]="";
-    char TempBuf[MAX_PATH]="";
+	char TempMsg[512] = "";
+	char TempBuf[MAX_PATH] = "";
 
-    CartMenuCallback( "",MID_BEGIN,MIT_Head);
-    CartMenuCallback( "",MID_ENTRY,MIT_Seperator);
+	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
 
-    CartMenuCallback( "HD Drive 0",MID_ENTRY,MIT_Head);
-    CartMenuCallback( "Insert",ControlId(10),MIT_Slave);
-    strcpy(TempMsg,"Eject: ");
-    strcpy(TempBuf,VHDfile0);
-    PathStripPath (TempBuf);
-    strcat(TempMsg,TempBuf);
-    CartMenuCallback(TempMsg,ControlId(11),MIT_Slave);
+	CartMenuCallback(gHostKey, "HD Drive 0", MID_ENTRY, MIT_Head);
+	CartMenuCallback(gHostKey, "Insert", ControlId(10), MIT_Slave);
+	strcpy(TempMsg, "Eject: ");
+	strcpy(TempBuf, VHDfile0);
+	PathStripPath(TempBuf);
+	strcat(TempMsg, TempBuf);
+	CartMenuCallback(gHostKey, TempMsg, ControlId(11), MIT_Slave);
 
-    CartMenuCallback( "HD Drive 1",MID_ENTRY,MIT_Head);
-    CartMenuCallback( "Insert",ControlId(12),MIT_Slave);
-    strcpy(TempMsg,"Eject: ");
-    strcpy(TempBuf,VHDfile1);
-    PathStripPath(TempBuf);
-    strcat(TempMsg,TempBuf);
-    CartMenuCallback(TempMsg,ControlId(13),MIT_Slave);
+	CartMenuCallback(gHostKey, "HD Drive 1", MID_ENTRY, MIT_Head);
+	CartMenuCallback(gHostKey, "Insert", ControlId(12), MIT_Slave);
+	strcpy(TempMsg, "Eject: ");
+	strcpy(TempBuf, VHDfile1);
+	PathStripPath(TempBuf);
+	strcat(TempMsg, TempBuf);
+	CartMenuCallback(gHostKey, TempMsg, ControlId(13), MIT_Slave);
 
-    CartMenuCallback( "HD Config",ControlId(14),MIT_StandAlone);
-    CartMenuCallback( "",MID_FINISH,MIT_Head);
+	CartMenuCallback(gHostKey, "HD Config", ControlId(14), MIT_StandAlone);
+	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
 }
 
 // Dialog for creating a new hard disk

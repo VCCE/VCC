@@ -3,8 +3,8 @@
 
 namespace detail
 {
-	void NullAssetCartridgeLine(bool) {}
-	void NullAddMenuItem(const char *, int, MenuItemType) {}
+	void NullAssetCartridgeLine(void*, bool) {}
+	void NullAddMenuItem(void*, const char *, int, MenuItemType) {}
 }
 
 
@@ -60,7 +60,13 @@ std::string Cartridge::GetCatalogId() const
 
 
 
-void Cartridge::SetCartLineAssertCallback(AssertCartridgeLineModuleCallback callback)
+void Cartridge::SetHostKey(void* key)
+{
+	m_HostKey = key;
+}
+
+
+void Cartridge::SetCartLineAssertCallback(PakAssertCartridgeLineHostCallback callback)
 {
 	AssetCartridgeLinePtr = callback;
 }
@@ -74,7 +80,7 @@ void Cartridge::SetConfigurationPath(std::string path)
 }
 
 
-void Cartridge::SetMenuBuilderCallback(AppendCartridgeMenuModuleCallback callback)
+void Cartridge::SetMenuBuilderCallback(PakAppendCartridgeMenuHostCallback callback)
 {
 	AddMenuItemPtr = callback;
 }

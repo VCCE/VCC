@@ -245,7 +245,7 @@ int mount_disk_image(const char *filename,unsigned char drive)
 {
 	unsigned int Temp=0;
 	Temp=MountDisk(filename,drive);
-	BuildDynaMenu();
+	BuildCartridgeMenu();
 	return(!Temp);
 }
 
@@ -264,13 +264,12 @@ void unmount_disk_image(unsigned char drive)
 	return;
 }
 
-void DiskStatus(char *Status)
+void DiskStatus(char* text_buffer, size_t buffer_size)
 {
 	if (MotorOn==1) 
-		sprintf(Status,"FD-502:Drv:%1.1i %s Trk:%2.2i Sec:%2.2i Hd:%1.1i",CurrentDisk,ImageFormat[Drive[CurrentDisk].ImageType],Drive[CurrentDisk].HeadPosition,SectorReg,Side);
+		sprintf(text_buffer,"FD-502:Drv:%1.1i %s Trk:%2.2i Sec:%2.2i Hd:%1.1i",CurrentDisk,ImageFormat[Drive[CurrentDisk].ImageType],Drive[CurrentDisk].HeadPosition,SectorReg,Side);
 	else
-		sprintf(Status,"FD-502:Idle");
-	return;
+		sprintf(text_buffer,"FD-502:Idle");
 }
 
 unsigned char MountDisk(const char *FileName,unsigned char disk)
@@ -953,7 +952,7 @@ void DispatchCommand(unsigned char Tmp)
 			StatusReg=READY;
 			ExecTimeWaiter=1;
 			if ((Tmp & 15) != 0)
-				AssertInt(INT_NMI,IS_NMI);
+				AssertInt(gHostKey, INT_NMI,IS_NMI);
 //			WriteLog("FORCEINTERUPT",0);
 			break;
 
@@ -1298,7 +1297,7 @@ long GetSectorInfo (SectorInfo *Sector,const unsigned char *TempBuffer)
 void CommandDone()
 {
 	if (InteruptEnable)
-		AssertInt(INT_NMI,IS_NMI);
+		AssertInt(gHostKey, INT_NMI,IS_NMI);
 	TransferBufferSize=0;
 	CurrentCommand=IDLE;
 }

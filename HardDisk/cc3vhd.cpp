@@ -226,9 +226,9 @@ void HDcommand(unsigned char Command) {
     }
 }
 
-void DiskStatus(char *Temp)
+void DiskStatus(char* text_buffer, size_t buffer_size)
 {
-    strcpy(Temp,DStatus);
+    strcpy(text_buffer,DStatus);
     ScanCount++;
 
     if (SectorOffset.All != LastSectorNum) {

@@ -154,7 +154,7 @@ unsigned char port_read(unsigned short addr)
 			temp=GimeRead(port);
 		break;
 		default:
-			temp=PackPortRead (port);
+			temp=PakReadPort (port);
 		}
 	return temp;
 }
@@ -268,7 +268,7 @@ void port_write(unsigned char data,unsigned short addr)
 			GimeWrite(port,data);
 		break;
 		default:
-			PackPortWrite (port,data);
+			PakWritePort (port,data);
 	}
 	return;
 }

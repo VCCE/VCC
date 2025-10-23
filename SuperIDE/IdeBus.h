@@ -32,7 +32,7 @@ struct IDEINTERFACE {
 void IdeInit();
 void IdeRegWrite(unsigned char,unsigned short);
 unsigned short IdeRegRead(unsigned char);
-void DiskStatus(char *);
+void DiskStatus(char* text_buffer, size_t buffer_size);
 unsigned char MountDisk(const char *,unsigned char );
 unsigned char DropDisk(unsigned char);
 void QueryDisk(unsigned char,char *);

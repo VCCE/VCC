@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridges/basic_cartridge.h>
+#include <vcc/core/cartridge.h>
 #include <vcc/core/legacy_cartridge_definitions.h>
 #include <Windows.h>
 #include <string>
@@ -25,7 +25,7 @@
 namespace vcc { namespace core { namespace cartridges
 {
 
-	class legacy_cartridge: public basic_cartridge
+	class legacy_cartridge: public cartridge
 	{
 	public:
 
@@ -35,55 +35,43 @@ namespace vcc { namespace core { namespace cartridges
 	public:
 
 		LIBCOMMON_EXPORT legacy_cartridge(
-			HMODULE moduleHandle,
-			const path_type& configurationPath,
-			AppendCartridgeMenuModuleCallback addMenuItemCallback,
-			ReadMemoryByteModuleCallback readDataFunction,
-			WriteMemoryByteModuleCallback writeDataFunction,
-			AssertInteruptModuleCallback assertCallback,
-			AssertCartridgeLineModuleCallback assertCartCallback);
+			HMODULE module_handle,
+			void* const host_context,
+			path_type configuration_path,
+			const pak_initialization_parameters& parameters);
 
 		LIBCOMMON_EXPORT name_type name() const override;
 		LIBCOMMON_EXPORT catalog_id_type catalog_id() const override;
 
+		LIBCOMMON_EXPORT void start() override;
 		LIBCOMMON_EXPORT void reset() override;
 		LIBCOMMON_EXPORT void heartbeat() override;
-		LIBCOMMON_EXPORT void status(char* status) override;
+		LIBCOMMON_EXPORT void status(char* text_buffer, size_t buffer_size) override;
 		LIBCOMMON_EXPORT void write_port(unsigned char port_id, unsigned char value) override;
 		LIBCOMMON_EXPORT unsigned char read_port(unsigned char port_id) override;
 		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memory_address) override;
 		LIBCOMMON_EXPORT unsigned short sample_audio() override;
 		LIBCOMMON_EXPORT void menu_item_clicked(unsigned char menu_item_id) override;
 
-
-	protected:
-
-		LIBCOMMON_EXPORT void initialize_pak() override;
-
-
 	private:
 
 		const HMODULE handle_;
-		const path_type configurationPath_;
-		const name_type name_;
-		const catalog_id_type catalog_id_;
-
-		// callbacks
-		const AppendCartridgeMenuModuleCallback addMenuItemCallback_;
-		const ReadMemoryByteModuleCallback readDataFunction_;
-		const WriteMemoryByteModuleCallback writeDataFunction_;
-		const AssertInteruptModuleCallback assertCallback_;
-		const AssertCartridgeLineModuleCallback assertCartCallback_;
+		void* const host_context_;
+		const path_type configuration_path_;
+		const pak_initialization_parameters parameters_;
 
 		// imported module functions
-		const ResetModuleFunction reset_;
-		const HeartBeatModuleFunction heartbeat_;
-		const GetStatusModuleFunction status_;
-		const WritePortModuleFunction  write_port_;
-		const ReadPortModuleFunction read_port_;
-		const ReadMemoryByteModuleFunction read_memory_byte_;
-		const SampleAudioModuleFunction sample_audio_;
-		const MenuItemClickedModuleFunction menu_item_clicked_;
+		const PakInitializeModuleFunction initialize_;
+		const PakGetNameModuleFunction get_name_;
+		const PakGetCatalogIdModuleFunction get_catalog_id_;
+		const PakResetModuleFunction reset_;
+		const PakHeartBeatModuleFunction heartbeat_;
+		const PakGetStatusModuleFunction status_;
+		const PakWritePortModuleFunction  write_port_;
+		const PakReadPortModuleFunction read_port_;
+		const PakReadMemoryByteModuleFunction read_memory_byte_;
+		const PakSampleAudioModuleFunction sample_audio_;
+		const PakMenuItemClickedModuleFunction menu_item_clicked_;
 	};
 
 } } }

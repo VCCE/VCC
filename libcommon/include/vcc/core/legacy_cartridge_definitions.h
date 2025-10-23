@@ -18,26 +18,41 @@
 #pragma once
 #include <vcc/core/interrupts.h>
 
-// FIXME: this needs to come from the common library but is currently part of the
-// main vcc app. Update this when it is migrated.
-enum MenuItemType;
+extern "C"
+{
 
-using WriteMemoryByteModuleCallback = void (*)(unsigned char value, unsigned short address);
-using ReadMemoryByteModuleCallback = unsigned char (*)(unsigned short address);
-using AssertCartridgeLineModuleCallback = void (*)(bool lineState);
-using AssertInteruptModuleCallback = void (*)(Interrupt interrupt, InterruptSource interrupt_source);
-using AppendCartridgeMenuModuleCallback = void (*)(const char* menu_name, int menu_id, MenuItemType menu_type);
+	// FIXME: this needs to come from the common library but is currently part of the
+	// main vcc app. Update this when it is migrated.
+	enum MenuItemType;
 
-using GetNameModuleFunction = void (*)(char* name_text, char* catalog_id_text, AppendCartridgeMenuModuleCallback addMenuItemCallback);
-using SetDMACallbacksModuleFunction = void (*)(ReadMemoryByteModuleCallback, WriteMemoryByteModuleCallback);
-using SetAssertInterruptCallbackModuleFunction = void (*)(AssertInteruptModuleCallback callback);
-using SetConfigurationPathModuleFunction = void (*)(const char* path);
-using SetAssertCartridgeLineCallbackModuleFunction = void (*)(AssertCartridgeLineModuleCallback callback);
-using ResetModuleFunction = void (*)();
-using HeartBeatModuleFunction = void (*)();
-using GetStatusModuleFunction = void (*)(char* status_text);
-using WritePortModuleFunction = void (*)(unsigned char port, unsigned char value);
-using ReadMemoryByteModuleFunction = unsigned char (*)(unsigned short address);
-using ReadPortModuleFunction = unsigned char (*)(unsigned char port);
-using SampleAudioModuleFunction = unsigned short (*)();
-using MenuItemClickedModuleFunction = void (*)(unsigned char itemId);
+	using PakWriteMemoryByteHostCallback = void (*)(void* host_key, unsigned char value, unsigned short address);
+	using PakReadMemoryByteHostCallback = unsigned char (*)(void* host_key, unsigned short address);
+	using PakAssertCartridgeLineHostCallback = void (*)(void* host_key, bool lineState);
+	using PakAssertInteruptHostCallback = void (*)(void* host_key, Interrupt interrupt, InterruptSource interrupt_source);
+	using PakAppendCartridgeMenuHostCallback = void (*)(void* host_key, const char* menu_name, int menu_id, MenuItemType menu_type);
+
+	struct pak_initialization_parameters
+	{
+		const PakAssertInteruptHostCallback assert_interrupt;
+		const PakAssertCartridgeLineHostCallback assert_cartridge_line;
+		const PakWriteMemoryByteHostCallback write_memory_byte;
+		const PakReadMemoryByteHostCallback read_memory_byte;
+		const PakAppendCartridgeMenuHostCallback add_menu_item;
+	};
+
+	using PakInitializeModuleFunction = void (*)(
+		void* host_key,
+		const char* const configuration_path,
+		const pak_initialization_parameters* const parameters);
+	using PakGetNameModuleFunction = const char* (*)();
+	using PakGetCatalogIdModuleFunction = const char* (*)();
+	using PakResetModuleFunction = void (*)();
+	using PakHeartBeatModuleFunction = void (*)();
+	using PakGetStatusModuleFunction = void (*)(char* text_buffer, size_t buffer_size);
+	using PakWritePortModuleFunction = void (*)(unsigned char port, unsigned char value);
+	using PakReadMemoryByteModuleFunction = unsigned char (*)(unsigned short address);
+	using PakReadPortModuleFunction = unsigned char (*)(unsigned char port);
+	using PakSampleAudioModuleFunction = unsigned short (*)();
+	using PakMenuItemClickedModuleFunction = void (*)(unsigned char itemId);
+
+}

@@ -19,8 +19,9 @@ This file is part of VCC (Virtual Color Computer).
 */
 #include <vcc/core/legacy_cartridge_definitions.h>
 
-extern AssertInteruptModuleCallback AssertInt;
-void BuildDynaMenu();
+extern void*const& gHostKey;
+extern PakAssertInteruptHostCallback AssertInt;
+void BuildCartridgeMenu();
 
 // FIXME: These need to be turned into a scoped enum and the signature of functions
 // that use them updated.

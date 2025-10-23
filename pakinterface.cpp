@@ -26,7 +26,6 @@
 #include "mc6821.h"
 #include "resource.h"
 #include <vcc/core/limits.h>
-#include <vcc/core/legacy_cartridge_definitions.h>
 #include <vcc/core/cartridges/null_cartridge.h>
 #include <vcc/core/utils/dll_deleter.h>
 #include <vcc/core/utils/winapi.h>
@@ -99,6 +98,31 @@ struct vcc_cartridge_context : public ::vcc::core::cartridge_context
 	}
 };
 
+static void PakAssertCartrigeLine(void* /*host_key*/, bool line_state)
+{
+	SetCart(line_state);
+}
+
+static void PakWriteMemoryByte(void* /*host_key*/, unsigned char data, unsigned short address)
+{
+	MemWrite8(data, address);
+}
+
+static unsigned char PakReadMemoryByte(void* /*host_key*/, unsigned short address)
+{
+	return MemRead8(address);
+}
+
+static void PakAssertInterupt(void* /*host_key*/, Interrupt interrupt, InterruptSource source)
+{
+	PakAssertInterupt(interrupt, source);
+}
+
+static void PakAddMenuItem(void* /*host_key*/, const char* name, int menu_id, MenuItemType type)
+{
+	CartMenuCallBack(name, menu_id, type);
+}
+
 void PakTimer()
 {
 	vcc::core::utils::section_locker lock(gPakMutex);
@@ -117,17 +141,17 @@ void GetModuleStatus(SystemState *SMState)
 {
 	vcc::core::utils::section_locker lock(gPakMutex);
 
-	gActiveCartrige->status(SMState->StatusLine);
+	gActiveCartrige->status(SMState->StatusLine, sizeof(SMState->StatusLine));
 }
 
-unsigned char PackPortRead (unsigned char port)
+unsigned char PakReadPort (unsigned char port)
 {
 	vcc::core::utils::section_locker lock(gPakMutex);
 
 	return gActiveCartrige->read_port(port);
 }
 
-void PackPortWrite(unsigned char Port,unsigned char Data)
+void PakWritePort(unsigned char Port,unsigned char Data)
 {
 	vcc::core::utils::section_locker lock(gPakMutex);
 
@@ -244,16 +268,18 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 static cartridge_loader_status load_any_cartridge(const char *filename, const char* iniPath)
 {
 	cartridge_loader_result loadedCartridge(vcc::core::load_cartridge(
-		std::make_unique<vcc_cartridge_context>(),
-		{
-			CartMenuCallBack,
-			MemRead8,
-			MemWrite8,
-			PakAssertInterupt,
-			SetCart
-		},
 		filename,
-		iniPath));
+		std::make_unique<vcc_cartridge_context>(),
+		nullptr, // TODO: there is currently no host context in vcc so we just use nullptr. Maybe add a context.
+		iniPath,
+		{
+			// new pak interface
+			PakAssertInterupt,
+			PakAssertCartrigeLine,
+			PakWriteMemoryByte,
+			PakReadMemoryByte,
+			PakAddMenuItem
+		}));
 	if (loadedCartridge.load_result != cartridge_loader_status::success)
 	{
 		return loadedCartridge.load_result;

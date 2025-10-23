@@ -17,8 +17,9 @@ public:
 	virtual std::string GetName() const;
 	virtual std::string GetCatalogId() const;
 
-	virtual void SetCartLineAssertCallback(AssertCartridgeLineModuleCallback callback);
-	virtual void SetMenuBuilderCallback(AppendCartridgeMenuModuleCallback addMenuCallback);
+	virtual void SetHostKey(void* key);
+	virtual void SetCartLineAssertCallback(PakAssertCartridgeLineHostCallback callback);
+	virtual void SetMenuBuilderCallback(PakAppendCartridgeMenuHostCallback addMenuCallback);
 	virtual void SetConfigurationPath(std::string path);
 
 	virtual std::string GetStatusMessage() const;
@@ -35,12 +36,12 @@ protected:
 
 	void AssetCartridgeLine(bool state) const
 	{
-		AssetCartridgeLinePtr(state);
+		AssetCartridgeLinePtr(m_HostKey, state);
 	}
 
 	void AddMenuItem(const char * name, int id, MenuItemType type)
 	{
-		AddMenuItemPtr(name, id, type);
+		AddMenuItemPtr(m_HostKey, name, id, type);
 	}
 
 	virtual void LoadConfiguration(const std::string& filename);
@@ -48,25 +49,29 @@ protected:
 
 private:
 
-	friend void ModuleName(char *ModName, char *CatNumber, AppendCartridgeMenuModuleCallback addMenuCallback);
-	friend void ModuleStatus(char *statusBuffer);
-	friend void ModuleConfig(unsigned char menuId);
-	friend void SetIniPath(const char *iniFilePath);
-	friend void ModuleReset();
-	friend void SetCart(AssertCartridgeLineModuleCallback Pointer);
-	friend unsigned char PakMemRead8(unsigned short address);
-	friend void PackPortWrite(unsigned char port, unsigned char data);
-	friend unsigned char PackPortRead(unsigned char port);
-	friend unsigned short ModuleAudioSample();
+	friend const char* PakGetName();
+	friend const char* PakCatalogName();
+	friend void PakInitialize(
+		void* const host_key,
+		const char* const configuration_path,
+		const pak_initialization_parameters* const parameters);
+	friend void PakGetStatus(char* text_buffer, size_t buffer_size);
+	friend void PakMenuItemClicked(unsigned char menuId);
+	friend void PakReset();
+	friend unsigned char PakReadMemoryByte(unsigned short address);
+	friend void PakWritePort(unsigned char port, unsigned char data);
+	friend unsigned char PakReadPort(unsigned char port);
+	friend unsigned short PakSampleAudio();
 
 private:
 
 	static Cartridge*	m_Singleton;
 
+	void*				m_HostKey = nullptr;
 	std::string			m_Name;
 	std::string			m_CatalogId;
 	std::string			m_ConfigurationPath;
-	AssertCartridgeLineModuleCallback	AssetCartridgeLinePtr = detail::NullAssetCartridgeLine;
-	AppendCartridgeMenuModuleCallback 	AddMenuItemPtr = detail::NullAddMenuItem;
+	PakAssertCartridgeLineHostCallback	AssetCartridgeLinePtr = detail::NullAssetCartridgeLine;
+	PakAppendCartridgeMenuHostCallback 	AddMenuItemPtr = detail::NullAddMenuItem;
 };
 

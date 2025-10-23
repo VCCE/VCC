@@ -107,10 +107,11 @@ namespace vcc { namespace core
 	}
 
 	cartridge_loader_result load_legacy_cartridge(
-		std::unique_ptr<cartridge_context> cartridge_context,
-		const cartridge_loader_context& context,
 		const std::string& filename,
-		const std::string& iniPath)
+		std::unique_ptr<cartridge_context> cartridge_context,
+		void* const host_context,
+		const std::string& iniPath,
+		const pak_initialization_parameters& pak_parameters)
 	{
 		if (GetModuleHandle(filename.c_str()) != nullptr)
 		{
@@ -136,16 +137,13 @@ namespace vcc { namespace core
 			return details;
 		}
 
-		if (GetProcAddress(details.handle.get(), "ModuleName") != nullptr)
+		if (GetProcAddress(details.handle.get(), "PakInitialize") != nullptr)
 		{
 			details.cartridge = std::make_unique<vcc::core::cartridges::legacy_cartridge>(
 				details.handle.get(),
+				host_context,
 				iniPath,
-				context.addMenuItemCallback,
-				context.readData,
-				context.writeData,
-				context.assertInterrupt,
-				context.assertCartridgeLine);
+				pak_parameters);
 			details.load_result = cartridge_loader_status::success;
 
 			return details;
@@ -155,10 +153,11 @@ namespace vcc { namespace core
 	}
 
 	cartridge_loader_result load_cartridge(
-		std::unique_ptr<cartridge_context> cartridge_context,
-		const cartridge_loader_context& context,
 		const std::string& filename,
-		const std::string& iniPath)
+		std::unique_ptr<cartridge_context> cartridge_context,
+		void* const host_context,
+		const std::string& iniPath,
+		const pak_initialization_parameters& pak_parameters)
 	{
 		switch (vcc::core::determine_cartridge_type(filename))
 		{
@@ -170,7 +169,12 @@ namespace vcc { namespace core
 			return vcc::core::load_rom_cartridge(move(cartridge_context), filename);
 
 		case cartridge_file_type::library:		//	File is a DLL
-			return vcc::core::load_legacy_cartridge(move(cartridge_context), context, filename, iniPath);
+			return vcc::core::load_legacy_cartridge(
+				filename,
+				move(cartridge_context),
+				host_context,
+				iniPath,
+				pak_parameters);
 		}
 	}
 

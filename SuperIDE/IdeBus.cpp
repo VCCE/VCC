@@ -314,9 +314,9 @@ HANDLE OpenDisk(const char *ImageFile,unsigned char DiskNum)
 	return hTemp;
 }
 
-void DiskStatus(char *Temp)
+void DiskStatus(char* text_buffer, size_t buffer_size)
 {
-	strcpy(Temp,CurrStatus);
+	strcpy(text_buffer,CurrStatus);
 	ScanCount++;
 	if (Lba != LastLba)
 	{

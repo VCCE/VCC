@@ -32,7 +32,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "distortc.h"
 #include "fd502.h"
 #include "../CartridgeMenu.h"
-#include <vcc/core/legacy_cartridge_definitions.h>
 #include <vcc/core/limits.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
@@ -54,8 +53,10 @@ static unsigned char RGBDiskRom[EXTROMSIZE];
 static char FloppyPath[MAX_PATH];
 static char RomFileName[MAX_PATH]="";
 static char TempRomFileName[MAX_PATH]="";
-AssertInteruptModuleCallback AssertInt = nullptr;
-static AppendCartridgeMenuModuleCallback CartMenuCallback = nullptr;
+static void* gHostKeyPtr = nullptr;
+void* const& gHostKey(gHostKeyPtr);
+PakAssertInteruptHostCallback AssertInt = nullptr;
+static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 unsigned char PhysicalDriveA=0,PhysicalDriveB=0,OldPhysicalDriveA=0,OldPhysicalDriveB=0;
 static unsigned char *RomPointer[3]={ExternalRom,DiskRom,RGBDiskRom};
 static unsigned char SelectRom=0;
@@ -73,7 +74,7 @@ long CreateDiskHeader(const char *,unsigned char,unsigned char,unsigned char);
 void Load_Disk(unsigned char);
 
 static HWND g_hConfDlg = nullptr;
-static HINSTANCE g_hinstDLL;
+static HINSTANCE gModuleInstance;
 static unsigned long RealDisks=0;
 long CreateDisk (unsigned char);
 static char TempFileName[MAX_PATH]="";
@@ -97,7 +98,7 @@ BOOL WINAPI DllMain(
 	}
 	else
 	{
-		g_hinstDLL=hinstDLL;
+		gModuleInstance = hinstDLL;
 		RealDisks=InitController();
 	}
 	return 1;
@@ -105,20 +106,44 @@ BOOL WINAPI DllMain(
 
 extern "C"
 {
-	__declspec(dllexport) void ModuleName(char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
+
+	__declspec(dllexport) const char* PakGetName()
 	{
-		LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-		LoadString(g_hinstDLL,IDS_CATNUMBER,CatNumber, MAX_LOADSTRING);
-		CartMenuCallback =Temp;
-		if (CartMenuCallback  != nullptr)
-			BuildDynaMenu();
-		return ;
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
 	}
+
+	__declspec(dllexport) const char* PakCatalogName()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
+	__declspec(dllexport) void PakInitialize(
+		void* const host_key,
+		const char* const configuration_path,
+		const pak_initialization_parameters* const parameters)
+	{
+		gHostKeyPtr = host_key;
+		CartMenuCallback = parameters->add_menu_item;
+		AssertInt = parameters->assert_interrupt;
+		strcpy(IniFile, configuration_path);
+
+		LoadConfig();
+		BuildCartridgeMenu();
+	}
+
 }
 
 extern "C"
 {
-	__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+	__declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
 	{
 		HWND h_own = GetActiveWindow();
 		switch (MenuID)
@@ -146,7 +171,7 @@ extern "C"
 				break;
 			case 16:
 				if (g_hConfDlg == nullptr)
-					g_hConfDlg = CreateDialog(g_hinstDLL,(LPCTSTR)IDD_CONFIG,h_own,(DLGPROC)Config);
+					g_hConfDlg = CreateDialog(gModuleInstance,(LPCTSTR)IDD_CONFIG,h_own,(DLGPROC)Config);
 				ShowWindow(g_hConfDlg,1);
 				break;
 			case 17:
@@ -157,34 +182,15 @@ extern "C"
 				SaveConfig();
 				break;
 		}
-		BuildDynaMenu();
+		BuildCartridgeMenu();
 		return;
 	}
 }
 
-extern "C"
-{
-	__declspec(dllexport) void SetIniPath (const char *IniFilePath)
-	{
-		strcpy(IniFile,IniFilePath);
-		LoadConfig();
-		return;
-	}
-}
-
-// This captures the Fuction transfer point for the CPU assert interupt
-extern "C"
-{
-	__declspec(dllexport) void AssertInterupt(AssertInteruptModuleCallback Dummy)
-	{
-		AssertInt=Dummy;
-		return;
-	}
-}
 
 extern "C"
 {
-	__declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
+	__declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
 	{
 #ifdef COMBINE_BECKER
 		if (BeckerEnabled && (Port == 0x42)) {
@@ -202,7 +208,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+	__declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
 	{
 #ifdef COMBINE_BECKER
 		if (BeckerEnabled && ((Port == 0x41) | (Port== 0x42 )))
@@ -216,7 +222,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) void HeartBeat()
+	__declspec(dllexport) void PakProcessHorizontalSync()
 	{
 		PingFdc();
 		return;
@@ -225,7 +231,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
+	__declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short Address)
 	{
 		return(RomPointer[SelectRom][Address & (EXTROMSIZE-1)]);
 	}
@@ -233,17 +239,17 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) void ModuleStatus(char *MyStatus)
+	__declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
 	{
 		char diskstat[64];
-		DiskStatus(diskstat);
-		strcpy(MyStatus,diskstat);
+		DiskStatus(diskstat, sizeof(diskstat));
+		strcpy(text_buffer,diskstat);
 #ifdef COMBINE_BECKER
 		char beckerstat[64];
 		if(BeckerEnabled) {
 			becker_status(beckerstat);
-			strcat(MyStatus," | ");
-			strcat(MyStatus,beckerstat);
+			strcat(text_buffer," | ");
+			strcat(text_buffer,beckerstat);
 		}
 #endif
 		return ;
@@ -408,7 +414,7 @@ void Load_Disk(unsigned char disk)
 		if (hr == INVALID_HANDLE_VALUE) {
 			NewDiskNumber = disk;
 			//DialogBox will set CreateFlag = 0 on cancel
-			DialogBox(g_hinstDLL, (LPCTSTR)IDD_NEWDISK, h_own, (DLGPROC)NewDisk);
+			DialogBox(gModuleInstance, (LPCTSTR)IDD_NEWDISK, h_own, (DLGPROC)NewDisk);
 		} else {
 			CloseHandle(hr);
 		}
@@ -432,57 +438,57 @@ unsigned char SetChip(unsigned char Tmp)
 	return SelectRom;
 }
 
-void BuildDynaMenu()
+void BuildCartridgeMenu()
 {
 	char TempMsg[64]="";
 	char TempBuf[MAX_PATH]="";
 	if (CartMenuCallback ==nullptr)
 		MessageBox(g_hConfDlg,"No good","Ok",0);
 
-	CartMenuCallback( "", MID_BEGIN, MIT_Head);
-	CartMenuCallback( "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
 
-	CartMenuCallback( "FD-502 Drive 0",MID_ENTRY,MIT_Head);
-	CartMenuCallback( "Insert",ControlId(10),MIT_Slave);
+	CartMenuCallback(gHostKey, "FD-502 Drive 0",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gHostKey, "Insert",ControlId(10),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[0].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback( TempMsg,ControlId(11),MIT_Slave);
+	CartMenuCallback(gHostKey, TempMsg,ControlId(11),MIT_Slave);
 
-	CartMenuCallback( "FD-502 Drive 1",MID_ENTRY,MIT_Head);
-	CartMenuCallback( "Insert",ControlId(12),MIT_Slave);
+	CartMenuCallback(gHostKey, "FD-502 Drive 1",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gHostKey, "Insert",ControlId(12),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[1].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback( TempMsg,ControlId(13),MIT_Slave);
+	CartMenuCallback(gHostKey, TempMsg,ControlId(13),MIT_Slave);
 
-	CartMenuCallback( "FD-502 Drive 2",MID_ENTRY,MIT_Head);
-	CartMenuCallback( "Insert",ControlId(14),MIT_Slave);
+	CartMenuCallback(gHostKey, "FD-502 Drive 2",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gHostKey, "Insert",ControlId(14),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[2].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback( TempMsg,ControlId(15),MIT_Slave);
+	CartMenuCallback(gHostKey, TempMsg,ControlId(15),MIT_Slave);
 
-	CartMenuCallback( "FD-502 Drive 3",MID_ENTRY,MIT_Head);
-	CartMenuCallback( "Insert",ControlId(17),MIT_Slave);
+	CartMenuCallback(gHostKey, "FD-502 Drive 3",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gHostKey, "Insert",ControlId(17),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf,Drive[3].ImageName);
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback( TempMsg,ControlId(18),MIT_Slave);
+	CartMenuCallback(gHostKey, TempMsg,ControlId(18),MIT_Slave);
 
-	CartMenuCallback( "FD-502 Config",ControlId(16),MIT_StandAlone);
-	CartMenuCallback("", MID_FINISH, MIT_Head);
+	CartMenuCallback(gHostKey, "FD-502 Config",ControlId(16),MIT_StandAlone);
+	CartMenuCallback(gHostKey,"", MID_FINISH, MIT_Head);
 }
 
 long CreateDisk (unsigned char Disk)
 {
 	NewDiskNumber=Disk;
 	HWND h_own = GetActiveWindow();
-	DialogBox(g_hinstDLL, (LPCTSTR)IDD_NEWDISK, h_own, (DLGPROC)NewDisk);
+	DialogBox(gModuleInstance, (LPCTSTR)IDD_NEWDISK, h_own, (DLGPROC)NewDisk);
 	return 0;
 }
 
@@ -665,7 +671,7 @@ void LoadConfig()  // Called on SetIniPath
 	becker_enable(BeckerEnabled);
 #endif
 
-	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	GetPrivateProfileString("DefaultPaths", "FloppyPath", "", FloppyPath, MAX_PATH, IniFile);
 
 	SelectRom = GetPrivateProfileInt(ModName,"DiskRom",1,IniFile);  //0 External 1=TRSDOS 2=RGB Dos
@@ -701,7 +707,7 @@ void LoadConfig()  // Called on SetIniPath
 	ClockEnabled=GetPrivateProfileInt(ModName,"ClkEnable",1,IniFile);
 	SetTurboDisk(GetPrivateProfileInt(ModName, "TurboDisk", 1, IniFile));
 
-	BuildDynaMenu();
+	BuildCartridgeMenu();
 	return;
 }
 
@@ -710,7 +716,7 @@ void SaveConfig()
 	unsigned char Index=0;
 	char ModName[MAX_LOADSTRING]="";
 	char Temp[16]="";
-	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	ValidatePath(RomFileName);
 	WritePrivateProfileInt(ModName,"DiskRom",SelectRom ,IniFile);
 	WritePrivateProfileString(ModName,"RomPath",RomFileName,IniFile);

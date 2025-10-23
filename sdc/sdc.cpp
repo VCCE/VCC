@@ -157,14 +157,16 @@
 // Functions
 //======================================================================
 
-AssertInteruptModuleCallback AssertInt = nullptr;;
-static AppendCartridgeMenuModuleCallback CartMenuCallback = nullptr;
+static void* gHostKey = nullptr;
+static PakAssertInteruptHostCallback AssertInt = nullptr;;
+static PakWriteMemoryByteHostCallback MemWrite8 = nullptr;
+static PakReadMemoryByteHostCallback MemRead8 = nullptr;
+static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
+
 void SDCInit();
 void LoadRom(unsigned char);
-void (*MemWrite8)(unsigned char,unsigned short)=nullptr;
 void SDCWrite(unsigned char,unsigned char);
 void MemWrite(unsigned char,unsigned short);
-unsigned char (*MemRead8)(unsigned short)=nullptr;
 unsigned char SDCRead(unsigned char port);
 unsigned char MemRead(unsigned short);
 LRESULT CALLBACK SDC_Control(HWND, UINT, WPARAM, LPARAM);
@@ -172,7 +174,7 @@ LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
 
 void LoadConfig();
 bool SaveConfig(HWND);
-void BuildCartMenu();
+void BuildCartridgeMenu();
 void SelectCardBox();
 void update_disk0_box();
 void UpdateFlashItem(int);
@@ -305,7 +307,7 @@ static unsigned char BankDirty = 0;
 static unsigned char BankData = 0;
 
 // Dll handle
-static HINSTANCE hinstDLL;
+static HINSTANCE gModuleInstance;
 
 // Clock enable IDC_CLOCK
 static int ClockEnable;
@@ -350,26 +352,49 @@ static char MPIPath[MAX_PATH];
 //======================================================================
 extern "C"
 {
-    // Register the DLL and build menu
-    __declspec(dllexport) void ModuleName
-        (char *ModName,char *CatNumber,AppendCartridgeMenuModuleCallback Temp)
-    {
-        LoadString(hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
-        LoadString(hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
-        CartMenuCallback = Temp;
-        if (CartMenuCallback != nullptr) BuildCartMenu();
-        return;
-    }
+	__declspec(dllexport) const char* PakGetName()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
+	__declspec(dllexport) const char* PakCatalogName()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
+	__declspec(dllexport) void PakInitialize(
+		void* const host_key,
+		const char* const configuration_path,
+		const pak_initialization_parameters* const parameters)
+	{
+		gHostKey = host_key;
+		CartMenuCallback = parameters->add_menu_item;
+		MemRead8 = parameters->read_memory_byte;
+		MemWrite8 = parameters->write_memory_byte;
+		AssertInt = parameters->assert_interrupt;
+		strcpy(IniFile, configuration_path);
+
+		LoadConfig();
+		BuildCartridgeMenu();
+	}
 
     // Write to port
-    __declspec(dllexport) void PackPortWrite(unsigned char Port,unsigned char Data)
+    __declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
     {
         SDCWrite(Data,Port);
         return;
     }
 
     // Read from port
-    __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+    __declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
     {
         if (ClockEnable && ((Port==0x78) | (Port==0x79) | (Port==0x7C))) {
             return ReadTime(Port);
@@ -381,57 +406,50 @@ extern "C"
     }
 
     // Reset module
-    __declspec(dllexport) unsigned char ModuleReset()
+    __declspec(dllexport) unsigned char PakReset()
     {
-        DLOG_C("ModuleReset\n");
+        DLOG_C("PakReset\n");
         SDCInit();
         return 0;
     }
 
     //  Dll export run config dialog
-    __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+    __declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
     {
         switch (MenuID)
         {
         case 10:
             if (hConfigureDlg == nullptr)  // Only create dialog once
-                hConfigureDlg = CreateDialog(hinstDLL, (LPCTSTR) IDD_CONFIG,
+                hConfigureDlg = CreateDialog(gModuleInstance, (LPCTSTR) IDD_CONFIG,
                          GetActiveWindow(), (DLGPROC) SDC_Configure);
             ShowWindow(hConfigureDlg,1);
             break;
         case 11:
             if (hControlDlg == nullptr)
-                hControlDlg = CreateDialog(hinstDLL, (LPCTSTR) IDD_CONTROL,
+                hControlDlg = CreateDialog(gModuleInstance, (LPCTSTR) IDD_CONTROL,
                          GetActiveWindow(), (DLGPROC) SDC_Control);
             ShowWindow(hControlDlg,1);
             break;
         }
-        BuildCartMenu();
+		BuildCartridgeMenu();
         return;
     }
 
     // Return SDC status.
-    __declspec(dllexport) void ModuleStatus(char *MyStatus)
+    __declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
     {
-        strncpy(MyStatus,Status,16);
+        strncpy(text_buffer,Status,buffer_size);
         if (idle_ctr < 100) {
             idle_ctr++;
         } else {
             idle_ctr = 0;
             snprintf(Status,16,"SDC:%d idle",CurrentBank);
         }
-        return ;
     }
 
-    // Set ini file path and Initialize SDC
-    __declspec(dllexport) void SetIniPath (const char *IniFilePath)
-    {
-        strncpy(IniFile,IniFilePath,MAX_PATH);
-        return;
-    }
 
     // Return a byte from the current PAK ROM
-    __declspec(dllexport) unsigned char PakMemRead8(unsigned short adr)
+    __declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short adr)
     {
         adr &= 0x3FFF;
         if (EnableBankWrite) {
@@ -442,20 +460,6 @@ extern "C"
         }
     }
 
-    // Capture pointers for MemRead8 and MemWrite8 functions.
-    __declspec(dllexport) void MemPointers(ReadMemoryByteModuleCallback Temp1,WriteMemoryByteModuleCallback Temp2)
-    {
-        MemRead8=Temp1;
-        MemWrite8=Temp2;
-        return;
-    }
-
-    // Supply transfer point for interrupt
-    __declspec(dllexport) void AssertInterupt(AssertInteruptModuleCallback Dummy)
-    {
-        AssertInt=Dummy;
-        return;
-    }
 }
 
 //======================================================================
@@ -465,7 +469,7 @@ extern "C"
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 {
     if (reason == DLL_PROCESS_ATTACH) {
-        hinstDLL = hinst;
+		gModuleInstance = hinst;
 
     } else if (reason == DLL_PROCESS_DETACH) {
         CloseCartDialog(hControlDlg);
@@ -481,13 +485,13 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 //-------------------------------------------------------------
 // Generate menu for configuring the SDC
 //-------------------------------------------------------------
-void BuildCartMenu()
+void BuildCartridgeMenu()
 {
-    CartMenuCallback("",MID_BEGIN,MIT_Head);
-    CartMenuCallback("",MID_ENTRY,MIT_Seperator);
-    CartMenuCallback("SDC Config",ControlId(10),MIT_StandAlone);
-    CartMenuCallback("SDC Control",ControlId(11),MIT_StandAlone);
-    CartMenuCallback("",MID_FINISH,MIT_Head);
+	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback(gHostKey, "SDC Config", ControlId(10), MIT_StandAlone);
+	CartMenuCallback(gHostKey, "SDC Control", ControlId(11), MIT_StandAlone);
+	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
 }
 
 //------------------------------------------------------------
@@ -681,7 +685,7 @@ bool SaveConfig(HWND hDlg)
 }
 
 //----------------------------------------------------------------------
-// Init the controller. This gets called by ModuleReset
+// Init the controller. This gets called by PakReset
 //----------------------------------------------------------------------
 void SDCInit()
 {
@@ -941,7 +945,7 @@ void ParseStartup()
 void CommandDone()
 {
     DLOG_C("*");
-    AssertInt(INT_NMI,IS_NMI);
+	AssertInt(gHostKey, INT_NMI, IS_NMI);
 }
 
 //----------------------------------------------------------------------
