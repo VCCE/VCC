@@ -101,6 +101,7 @@
   <ItemGroup>
     <ClInclude Include="cloud9.h" />
     <ClInclude Include="IdeBus.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="SuperIDE.h" />
   </ItemGroup>
   <ItemGroup>

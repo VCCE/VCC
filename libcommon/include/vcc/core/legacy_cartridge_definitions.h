@@ -46,6 +46,7 @@ extern "C"
 		const pak_initialization_parameters* const parameters);
 	using PakGetNameModuleFunction = const char* (*)();
 	using PakGetCatalogIdModuleFunction = const char* (*)();
+	using PakGetDescriptionModuleFunction = const char* (*)();
 	using PakResetModuleFunction = void (*)();
 	using PakHeartBeatModuleFunction = void (*)();
 	using PakGetStatusModuleFunction = void (*)(char* text_buffer, size_t buffer_size);

@@ -31,6 +31,7 @@ namespace vcc { namespace modules { namespace mpi
 
 		using name_type = ::vcc::core::cartridge::name_type;
 		using catalog_id_type = ::vcc::core::cartridge::catalog_id_type;
+		using description_type = ::vcc::core::cartridge::description_type;
 		using path_type = ::std::string;
 		using label_type = ::std::string;
 		using handle_type = ::vcc::core::cartridge_loader_result::handle_type;
@@ -68,6 +69,11 @@ namespace vcc { namespace modules { namespace mpi
 		catalog_id_type catalog_id() const
 		{
 			return cartridge_->catalog_id();
+		}
+
+		description_type description() const
+		{
+			return cartridge_->description();
 		}
 
 		label_type label() const;

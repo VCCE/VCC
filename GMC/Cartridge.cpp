@@ -1,4 +1,5 @@
 #include "Cartridge.h"
+#include <vcc/core/utils/winapi.h>
 
 
 namespace detail
@@ -11,10 +12,7 @@ namespace detail
 Cartridge* Cartridge::m_Singleton(nullptr);
 
 
-Cartridge::Cartridge(std::string name, std::string catalogId)
-	:
-	m_Name(move(name)),
-	m_CatalogId(move(catalogId))
+Cartridge::Cartridge()
 {
 	if (m_Singleton)
 	{
@@ -42,21 +40,6 @@ void Cartridge::LoadConfiguration(const std::string& /*filename*/)
 void Cartridge::LoadMenuItems()
 {
 }
-
-
-
-
-std::string Cartridge::GetName() const
-{
-	return m_Name;
-}
-
-
-std::string Cartridge::GetCatalogId() const
-{
-	return m_CatalogId;
-}
-
 
 
 

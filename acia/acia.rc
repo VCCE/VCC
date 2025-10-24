@@ -133,7 +133,7 @@ BEGIN
             VALUE "FileDescription", "acia"
             VALUE "FileVersion", "2.1.9.3"
             VALUE "InternalName", "SC6551 Interface"
-            VALUE "LegalCopyright", "Copyright © 2023"
+            VALUE "LegalCopyright", "Copyright ï¿½ 2023"
             VALUE "OriginalFilename", "acia.dll"
             VALUE "ProductName", "acia"
             VALUE "ProductVersion", "26-3124"
@@ -164,9 +164,10 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MODULE_NAME         "ACIA Interface"
+    IDS_MODULE_NAME         "Tandy Deluxe RS232 Pak (Beta)"
+    IDS_CATNUMBER           "26-2226"
+	IDS_DESCRIPTION         "[TODO: DESCRIPTION]"
     IDS_VERSION             "1.00"
-    IDS_CATNUMBER           "Beta"
 END
 
 #endif    // English (United States) resources

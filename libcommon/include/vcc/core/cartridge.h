@@ -27,8 +27,9 @@ namespace vcc { namespace core
 	{
 	public:
 
-		using name_type = std::string;
-		using catalog_id_type = std::string;
+		using name_type = ::std::string;
+		using catalog_id_type = ::std::string;
+		using description_type = ::std::string;
 
 
 	public:
@@ -41,6 +42,7 @@ namespace vcc { namespace core
 
 		virtual name_type name() const = 0;
 		virtual catalog_id_type catalog_id() const = 0;
+		virtual description_type description() const = 0;
 
 		virtual void start() = 0;
 		virtual void reset() = 0;

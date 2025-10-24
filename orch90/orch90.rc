@@ -75,7 +75,7 @@ BEGIN
             VALUE "FileDescription", "Orchestra 90-CC \0"
             VALUE "FileVersion", "2.1.8.1\0"
             VALUE "InternalName", "orch90\0"
-            VALUE "LegalCopyright", "Copyright © 2006\0"
+            VALUE "LegalCopyright", "Copyright ï¿½ 2006\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "orch90.dll\0"
             VALUE "PrivateBuild", "\0"
@@ -103,6 +103,7 @@ BEGIN
     IDS_MODULE_NAME         "Orchestra-90"
     IDS_CATNUMBER           "26-3143"
     IDS_VERSION             "1.30"
+    IDS_DESCRIPTION         "[TODO: DESCRIPTION]"
 END
 
 #endif    // English (U.S.) resources

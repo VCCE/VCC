@@ -42,6 +42,7 @@ namespace vcc { namespace core { namespace cartridges
 
 		LIBCOMMON_EXPORT name_type name() const override;
 		LIBCOMMON_EXPORT catalog_id_type catalog_id() const override;
+		LIBCOMMON_EXPORT description_type description() const override;
 
 		LIBCOMMON_EXPORT void start() override;
 		LIBCOMMON_EXPORT void reset() override;
@@ -64,6 +65,7 @@ namespace vcc { namespace core { namespace cartridges
 		const PakInitializeModuleFunction initialize_;
 		const PakGetNameModuleFunction get_name_;
 		const PakGetCatalogIdModuleFunction get_catalog_id_;
+		const PakGetDescriptionModuleFunction get_description_;
 		const PakResetModuleFunction reset_;
 		const PakHeartBeatModuleFunction heartbeat_;
 		const PakGetStatusModuleFunction status_;

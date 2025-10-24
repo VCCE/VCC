@@ -51,6 +51,7 @@ public:
 	//	Cartridge implementation
 	name_type name() const override;
 	catalog_id_type catalog_id() const override;
+	description_type description() const override;
 
 	void start() override;
 	void reset() override;

@@ -7,15 +7,13 @@ class Cartridge
 {
 protected:
 
-	explicit Cartridge(std::string name, std::string catalogId = std::string());
+	Cartridge();
 
 
 public:
 
 	virtual ~Cartridge();
 
-	virtual std::string GetName() const;
-	virtual std::string GetCatalogId() const;
 
 	virtual void SetHostKey(void* key);
 	virtual void SetCartLineAssertCallback(PakAssertCartridgeLineHostCallback callback);
