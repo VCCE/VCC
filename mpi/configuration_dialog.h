@@ -43,12 +43,16 @@ private:
 	void update_slot_details(size_t slot);
 	void eject_or_select_new_cartridge(size_t slot);
 
-	static INT_PTR CALLBACK process_message(
+	static INT_PTR CALLBACK callback_procedure(
 		HWND hDlg,
 		UINT message,
 		WPARAM wParam,
 		LPARAM lParam);
 
+	INT_PTR process_message(
+		HWND hDlg,
+		UINT message,
+		WPARAM wParam);
 
 private:
 
