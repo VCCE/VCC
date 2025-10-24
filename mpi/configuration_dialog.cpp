@@ -54,11 +54,12 @@ void configuration_dialog::open()
 {
 	if (!dialog_handle_)
 	{
-		dialog_handle_ = CreateDialog(
+		dialog_handle_ = CreateDialogParam(
 			gModuleInstance,
 			MAKEINTRESOURCE(IDD_DIALOG1),
 			GetActiveWindow(),
-			process_message);
+			callback_procedure,
+			reinterpret_cast<LPARAM>(this));
 	}
 
 	ShowWindow(dialog_handle_, SW_SHOWNORMAL);
@@ -172,59 +173,75 @@ void configuration_dialog::eject_or_select_new_cartridge(size_t slot)
 	mpi_.build_menu();
 }
 
-INT_PTR CALLBACK configuration_dialog::process_message(
+INT_PTR CALLBACK configuration_dialog::callback_procedure(
 	HWND hDlg,
 	UINT message,
 	WPARAM wParam,
-	LPARAM /*lParam*/)
+	LPARAM lParam)
+{
+	if (message == WM_INITDIALOG)
+	{
+		SetWindowLongPtr(hDlg, GWLP_USERDATA, lParam);
+	}
+
+	auto dialog(reinterpret_cast<configuration_dialog*>(GetWindowLongPtr(hDlg, GWLP_USERDATA)));
+
+	return dialog->process_message(hDlg, message, wParam);
+}
+
+
+INT_PTR configuration_dialog::process_message(
+	HWND hDlg,
+	UINT message,
+	WPARAM wParam)
 {
 	switch (message)
 	{
 	case WM_CLOSE:
-		gMultiPakInterface.save_configuration();
+		mpi_.save_configuration();
 		DestroyWindow(hDlg);
-		gConfigurationDialog.dialog_handle_ = nullptr;
-		gConfigurationDialog.parent_handle_ = nullptr;
+		dialog_handle_ = nullptr;
+		parent_handle_ = nullptr;
 		return TRUE;
 
 	case WM_INITDIALOG:
-		gConfigurationDialog.dialog_handle_ = hDlg;
-		gConfigurationDialog.parent_handle_ = GetParent(hDlg);
+		dialog_handle_ = hDlg;
+		parent_handle_ = GetParent(hDlg);
 		CenterDialog(hDlg);
 		for (int slot = 0; slot < NUMSLOTS; slot++)
 		{
-			gConfigurationDialog.update_slot_details(slot);
+			update_slot_details(slot);
 		}
 
-		gConfigurationDialog.set_selected_slot(gMultiPakInterface.selected_switch_slot());
+		set_selected_slot(mpi_.selected_switch_slot());
 		return TRUE;
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
 		case IDC_SELECT1:
-			gConfigurationDialog.set_selected_slot(0);
+			set_selected_slot(0);
 			return TRUE;
 		case IDC_SELECT2:
-			gConfigurationDialog.set_selected_slot(1);
+			set_selected_slot(1);
 			return TRUE;
 		case IDC_SELECT3:
-			gConfigurationDialog.set_selected_slot(2);
+			set_selected_slot(2);
 			return TRUE;
 		case IDC_SELECT4:
-			gConfigurationDialog.set_selected_slot(3);
+			set_selected_slot(3);
 			return TRUE;
 		case IDC_INSERT1:
-			gConfigurationDialog.eject_or_select_new_cartridge(0);
+			eject_or_select_new_cartridge(0);
 			return TRUE;
 		case IDC_INSERT2:
-			gConfigurationDialog.eject_or_select_new_cartridge(1);
+			eject_or_select_new_cartridge(1);
 			return TRUE;
 		case IDC_INSERT3:
-			gConfigurationDialog.eject_or_select_new_cartridge(2);
+			eject_or_select_new_cartridge(2);
 			return TRUE;
 		case IDC_INSERT4:
-			gConfigurationDialog.eject_or_select_new_cartridge(3);
+			eject_or_select_new_cartridge(3);
 			return TRUE;
 		} // End switch LOWORD
 		break;
