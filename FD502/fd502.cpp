@@ -125,6 +125,15 @@ extern "C"
 		return string_buffer;
 	}
 
+	__declspec(dllexport) const char* PakGetDescription()
+	{
+		static char string_buffer[MAX_LOADSTRING];
+
+		LoadString(gModuleInstance, IDS_DESCRIPTION, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
+	}
+
 	__declspec(dllexport) void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,

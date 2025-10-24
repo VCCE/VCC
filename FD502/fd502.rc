@@ -164,7 +164,7 @@ BEGIN
             VALUE "FileDescription", "DiskController"
             VALUE "FileVersion", "2.1.8.1"
             VALUE "InternalName", "DiskController"
-            VALUE "LegalCopyright", "Copyright © 2010"
+            VALUE "LegalCopyright", "Copyright ï¿½ 2010"
             VALUE "OriginalFilename", "fd502.dll"
             VALUE "ProductName", "Vcc Module file"
             VALUE "ProductVersion", "26-3133"
@@ -198,6 +198,7 @@ STRINGTABLE
 BEGIN
     IDS_MODULE_NAME         "FD-502"
     IDS_VERSION             "3.0.1"
+    IDS_DESCRIPTION         "Turn any Color Computer with Extended BASIC into a disk system. Write your own disk applications or add ready-to-run software. Plugs into the Program Pak port or Multi-Pak Interface."
 #ifdef COMBINE_BECKER
     IDS_CATNUMBER           "+ Becker"
 #else

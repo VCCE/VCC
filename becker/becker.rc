@@ -92,7 +92,7 @@ BEGIN
             VALUE "FileDescription", "becker"
             VALUE "FileVersion", "2.1.8.1"
             VALUE "InternalName", "Becker Port Interface"
-            VALUE "LegalCopyright", "Copyright © 2007"
+            VALUE "LegalCopyright", "Copyright ï¿½ 2007"
             VALUE "OriginalFilename", "becker.dll"
             VALUE "ProductName", "becker"
             VALUE "ProductVersion", "26-3124"
@@ -134,6 +134,7 @@ BEGIN
     IDS_MODULE_NAME         "HDBDOS/DW/Becker"
     IDS_VERSION             "1.00"
     IDS_CATNUMBER           "00-0000"
+    IDS_DESCRIPTION         "[TODO: DESCRIPTION]"
 END
 
 #endif    // English (U.S.) resources

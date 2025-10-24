@@ -47,6 +47,11 @@ namespace vcc { namespace core { namespace cartridges
 		return catalog_id_;
 	}
 
+	rom_cartridge::description_type rom_cartridge:: description() const
+	{
+		return {};
+	}
+
 
 	void rom_cartridge::reset()
 	{

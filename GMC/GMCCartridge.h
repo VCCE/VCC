@@ -9,8 +9,6 @@ class GMCCartridge : public Cartridge
 {
 public:
 
-	GMCCartridge();
-
 	void LoadConfiguration(const std::string& filename) override;
 
 	std::string GetStatusMessage() const override;

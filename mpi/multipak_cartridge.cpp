@@ -82,6 +82,12 @@ multipak_cartridge::catalog_id_type multipak_cartridge::catalog_id() const
 	return ::vcc::core::utils::load_string(gModuleInstance, IDS_CATNUMBER);
 }
 
+multipak_cartridge::description_type multipak_cartridge:: description() const
+{
+	return ::vcc::core::utils::load_string(gModuleInstance, IDS_CATNUMBER);
+}
+
+
 void multipak_cartridge::start()
 {
 	load_configuration();
@@ -253,7 +259,7 @@ multipak_cartridge::description_type multipak_cartridge::slot_description(slot_i
 {
 	vcc::core::utils::section_locker lock(mutex_);
 
-	return "Module Name: " + slots_[slot].name();
+	return slots_[slot].description();
 }
 
 bool multipak_cartridge::empty(slot_id_type slot) const

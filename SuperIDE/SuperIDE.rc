@@ -74,7 +74,7 @@ BEGIN
             VALUE "FileDescription", "SuperIDE\0"
             VALUE "FileVersion", "2.1.8.3\0"
             VALUE "InternalName", "SuperIDE\0"
-            VALUE "LegalCopyright", "Copyright © 2010\0"
+            VALUE "LegalCopyright", "Copyright ï¿½ 2010\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "SuperIDE.dll\0"
             VALUE "PrivateBuild", "\0"
@@ -142,6 +142,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_MODULE_NAME         "Glenside-IDE /w Clock"
     IDS_CATNUMBER           "000"
+    IDS_DESCRIPTION         "[TODO: DESCRIPTION]"
 END
 
 #endif    // English (U.S.) resources

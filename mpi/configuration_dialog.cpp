@@ -110,7 +110,7 @@ void configuration_dialog::set_selected_slot(size_t slot)
 		IDC_MODINFO,
 		WM_SETTEXT,
 		0,
-		(LPARAM)mpi_.slot_description(slot).c_str());
+		reinterpret_cast<LPARAM>(mpi_.slot_description(slot).c_str()));
 
 	for (auto ndx(0u); ndx < gSlotUiElementIds.size(); ndx++)
 	{

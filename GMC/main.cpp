@@ -2,6 +2,7 @@
 #include "GMCCartridge.h"
 #include <vcc/common/DialogOps.h>
 
+HINSTANCE gModuleInstance = nullptr;
 GMCCartridge theCart;
 
 std::string ExtractFilename(std::string path)
@@ -37,8 +38,13 @@ std::string SelectROMFile()
 }
 
 
-BOOL WINAPI DllMain(HINSTANCE /*hinstDLL*/, DWORD /*fdwReason*/, LPVOID /*lpReserved*/)
+BOOL APIENTRY DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
+	if (reason == DLL_PROCESS_ATTACH)
+	{
+		gModuleInstance = hinst;
+	}
+
 	return TRUE;
 }
 

@@ -31,6 +31,11 @@ namespace vcc { namespace core { namespace cartridges
 		return {};
 	}
 
+	basic_cartridge::description_type basic_cartridge:: description() const
+	{
+		return {};
+	}
+
 
 	void basic_cartridge::start()
 	{

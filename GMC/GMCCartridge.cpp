@@ -2,11 +2,6 @@
 #include <Windows.h>
 
 
-GMCCartridge::GMCCartridge()
-	: Cartridge("Game Master Catridge", "SN76489")
-{}
-
-
 void GMCCartridge::LoadConfiguration(const std::string& filename)
 {
 	Cartridge::LoadConfiguration(filename);

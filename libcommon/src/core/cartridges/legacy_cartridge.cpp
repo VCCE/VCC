@@ -65,15 +65,11 @@ namespace vcc { namespace core { namespace cartridges
 		void default_reset()
 		{}
 
-		const char* default_get_name()
+		const char* default_get_empty_string()
 		{
 			return "";
 		}
 
-		const char* default_get_catalog_id()
-		{
-			return "";
-		}
 	}
 
 
@@ -88,8 +84,9 @@ namespace vcc { namespace core { namespace cartridges
 		configuration_path_(move(configuration_path)),
 		parameters_(parameters),
 		initialize_(GetImportedProcAddress<PakInitializeModuleFunction>(module_handle, "PakInitialize", nullptr)),
-		get_name_(GetImportedProcAddress(module_handle, "PakGetName", default_get_name)),
-		get_catalog_id_(GetImportedProcAddress(module_handle, "PakGetCatalogId", default_get_catalog_id)),
+		get_name_(GetImportedProcAddress(module_handle, "PakGetName", default_get_empty_string)),
+		get_catalog_id_(GetImportedProcAddress(module_handle, "PakGetCatalogId", default_get_empty_string)),
+		get_description_(GetImportedProcAddress(module_handle, "PakGetDescription", default_get_empty_string)),
 		reset_(GetImportedProcAddress(module_handle, "PakReset", default_reset)),
 		heartbeat_(GetImportedProcAddress(module_handle, "PakProcessHorizontalSync", default_heartbeat)),
 		status_(GetImportedProcAddress(module_handle, "PakGetStatus", default_status)),
@@ -113,6 +110,11 @@ namespace vcc { namespace core { namespace cartridges
 	legacy_cartridge::catalog_id_type legacy_cartridge::catalog_id() const
 	{
 		return get_catalog_id_();
+	}
+
+	legacy_cartridge::description_type legacy_cartridge:: description() const
+	{
+		return get_description_();
 	}
 
 

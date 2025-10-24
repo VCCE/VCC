@@ -75,7 +75,7 @@ BEGIN
             VALUE "FileDescription", "Ramdisk\0"
             VALUE "FileVersion", "1, 0, 0, 1\0"
             VALUE "InternalName", "Ramdisk\0"
-            VALUE "LegalCopyright", "Copyright © 2007\0"
+            VALUE "LegalCopyright", "Copyright ï¿½ 2007\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "Ramdisk.dll\0"
             VALUE "PrivateBuild", "\0"
@@ -102,6 +102,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_MODULE_NAME         "RamDisk"
     IDS_CATNUMBER           "00-0000"
+    IDS_DESCRIPTION         "[TODO: DESCRIPTION]"
 END
 
 #endif    // English (U.S.) resources

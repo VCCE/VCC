@@ -48,6 +48,7 @@ namespace vcc { namespace core { namespace cartridges
 		
 		LIBCOMMON_EXPORT name_type name() const override;
 		LIBCOMMON_EXPORT catalog_id_type catalog_id() const override;
+		LIBCOMMON_EXPORT description_type description() const override;
 
 		LIBCOMMON_EXPORT void reset() override;
 		LIBCOMMON_EXPORT void write_port(unsigned char port_id, unsigned char value) override;

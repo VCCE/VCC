@@ -1,16 +1,36 @@
 #include "CartridgeTrampolines.h"
 #include "Cartridge.h"
+#include "resource.h"
+#include <vcc/core/limits.h>
 
 
 GMC_EXPORT const char* PakGetName()
 {
-	return Cartridge::m_Singleton->GetName().c_str();
+	static char string_buffer[MAX_LOADSTRING];
+
+	LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+
+	return string_buffer;
 }
 
 GMC_EXPORT const char* PakCatalogName()
 {
-	return Cartridge::m_Singleton->GetCatalogId().c_str();
+	static char string_buffer[MAX_LOADSTRING];
+
+	LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+
+	return string_buffer;
 }
+
+GMC_EXPORT const char* PakGetDescription()
+{
+	static char string_buffer[MAX_LOADSTRING];
+
+	LoadString(gModuleInstance, IDS_DESCRIPTION, string_buffer, MAX_LOADSTRING);
+
+	return string_buffer;
+}
+
 
 GMC_EXPORT void PakInitialize(
 	void* const host_key,
