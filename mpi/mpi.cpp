@@ -105,7 +105,7 @@ EXPORT_PUBLIC_API unsigned char PakReadPort(unsigned char port_id)
 	return gMultiPakInterface.read_port(port_id);
 }
 
-EXPORT_PUBLIC_API void HeartBeat()
+EXPORT_PUBLIC_API void PakProcessHorizontalSync()
 {
 	gMultiPakInterface.heartbeat();
 }
