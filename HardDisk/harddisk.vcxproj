@@ -94,12 +94,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cc3vhd.cpp" />
-    <ClCompile Include="cloud9.cpp" />
     <ClCompile Include="harddisk.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cc3vhd.h" />
-    <ClInclude Include="cloud9.h" />
     <ClInclude Include="harddisk.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

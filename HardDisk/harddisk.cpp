@@ -23,7 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include<iostream>
 #include "resource.h"
 #include "cc3vhd.h"
-#include "cloud9.h"
+#include <vcc/devices/rtc/cloud9.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
@@ -39,12 +39,14 @@ static char *VHDfile; // Selected drive file name
 static char NewVHDfile[MAX_PATH];
 static char IniFile[MAX_PATH]  { 0 };
 static char HardDiskPath[MAX_PATH];
+static ::vcc::devices::rtc::cloud9 cloud9_rtc;
 
 static void* gHostKey = nullptr;
 static PakReadMemoryByteHostCallback MemRead8 = nullptr;
 static PakWriteMemoryByteHostCallback MemWrite8 = nullptr;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
-static unsigned char ClockEnabled=1,ClockReadOnly=1;
+static bool ClockEnabled = true;
+static bool ClockReadOnly = true;
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 
 ///void Load_Disk(unsigned char);
@@ -125,7 +127,7 @@ extern "C"
 		strcpy(IniFile, configuration_path);
 
 		LoadConfig();
-		SetClockWrite(!ClockReadOnly);
+		cloud9_rtc.set_read_only(ClockReadOnly);
 		VhdReset(); // Selects drive zero
 		BuildCartridgeMenu();
 	}
@@ -191,8 +193,8 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 
     case WM_INITDIALOG:
         CenterDialog(hDlg);
-        SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnabled,0);
-        SendDlgItemMessage(hDlg,IDC_READONLY,BM_SETCHECK,ClockReadOnly,0);
+		SendDlgItemMessage(hDlg, IDC_CLOCK, BM_SETCHECK, ClockEnabled, 0);
+		SendDlgItemMessage(hDlg, IDC_READONLY, BM_SETCHECK, ClockReadOnly, 0);
         EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), TRUE);
         return TRUE;
 
@@ -200,9 +202,9 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
         switch (LOWORD(wParam))
         {
         case IDOK:
-            ClockEnabled=(unsigned char)SendDlgItemMessage(hDlg,IDC_CLOCK,BM_GETCHECK,0,0);
-            ClockReadOnly=(unsigned char)SendDlgItemMessage(hDlg,IDC_READONLY,BM_GETCHECK,0,0);
-            SetClockWrite(!ClockReadOnly);
+			ClockEnabled = SendDlgItemMessage(hDlg, IDC_CLOCK, BM_GETCHECK, 0, 0) != 0;
+			ClockReadOnly = SendDlgItemMessage(hDlg, IDC_READONLY, BM_GETCHECK, 0, 0) != 0;
+			cloud9_rtc.set_read_only(ClockReadOnly);
             SaveConfig();
             DestroyWindow(hDlg);
             hConfDlg=nullptr;
@@ -234,8 +236,8 @@ extern "C"
 {
     __declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
     {
-        if ( ((Port==0x78) | (Port==0x79) | (Port==0x7C)) & ClockEnabled)
-            return(ReadTime(Port));
+		if (((Port == 0x78) | (Port == 0x79) | (Port == 0x7C)) & ClockEnabled)
+			return cloud9_rtc.read_port(Port);
         return(IdeRead(Port));
     }
 }
@@ -342,8 +344,8 @@ void LoadConfig()
         MountHD(VHDfile1,1);
     }
 
-    ClockEnabled=GetPrivateProfileInt(ModName,"ClkEnable",1,IniFile);
-    ClockReadOnly=GetPrivateProfileInt(ModName,"ClkRdOnly",1,IniFile);
+	ClockEnabled = GetPrivateProfileInt(ModName, "ClkEnable", 1, IniFile) != 0;
+	ClockReadOnly = GetPrivateProfileInt(ModName, "ClkRdOnly", 1, IniFile) != 0;
 
     // Create config menu
 	BuildCartridgeMenu();
@@ -364,8 +366,8 @@ void SaveConfig()
     }
     WritePrivateProfileString(ModName,"VHDImage",VHDfile0 ,IniFile);
     WritePrivateProfileString(ModName,"VHDImage1",VHDfile1 ,IniFile);
-    WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
-    WritePrivateProfileInt(ModName,"ClkRdOnly",ClockReadOnly ,IniFile);
+	WritePrivateProfileInt(ModName, "ClkEnable", ClockEnabled, IniFile);
+	WritePrivateProfileInt(ModName, "ClkRdOnly", ClockReadOnly, IniFile);
     return;
 }
 

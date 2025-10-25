@@ -24,7 +24,6 @@
 #include <vcc/core/interrupts.h>
 
 #include "resource.h"
-#include "cloud9.h"
 
 // Return values for status register
 #define STA_NORMAL    0x00

@@ -21,7 +21,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <iostream>
 #include "resource.h" 
 #include "IdeBus.h"
-#include "cloud9.h"
+#include <vcc/devices/rtc/cloud9.h>
 #include "logger.h"
 #include <vcc/common/FileOps.h>
 #include "../CartridgeMenu.h"
@@ -32,6 +32,7 @@ This file is part of VCC (Virtual Color Computer).
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
 static char SuperIDEPath[MAX_PATH];
+static ::vcc::devices::rtc::cloud9 cloud9_rtc;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 static unsigned char BaseAddress=0x50;
 void BuildCartridgeMenu();
@@ -41,7 +42,9 @@ void SaveConfig();
 void LoadConfig();
 unsigned char BaseTable[4]={0x40,0x50,0x60,0x70};
 
-static unsigned char BaseAddr=1,ClockEnabled=1,ClockReadOnly=1;
+static unsigned char BaseAddr=1;
+static bool ClockEnabled = true;
+static bool ClockReadOnly = true;
 static unsigned char DataLatch=0;
 static HINSTANCE gModuleInstance;
 static HWND hConfDlg = nullptr;
@@ -148,8 +151,8 @@ extern "C"
 	{
 		unsigned char RetVal=0;
 		unsigned short Temp=0;
-		if ( ((Port==0x78) | (Port==0x79) | (Port==0x7C)) & ClockEnabled)
-			RetVal=ReadTime(Port);
+		if (((Port == 0x78) | (Port == 0x79) | (Port == 0x7C)) & ClockEnabled)
+			RetVal = cloud9_rtc.read_port(Port);
 
 		if ( (Port >=BaseAddress) & (Port <= (BaseAddress+8)))
 			switch (Port-BaseAddress)
@@ -254,8 +257,8 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 	{
 		case WM_INITDIALOG:
 			hConfDlg=hDlg;
-			SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnabled,0);
-			SendDlgItemMessage(hDlg,IDC_READONLY,BM_SETCHECK,ClockReadOnly,0);
+			SendDlgItemMessage(hDlg, IDC_CLOCK, BM_SETCHECK, ClockEnabled, 0);
+			SendDlgItemMessage(hDlg, IDC_READONLY, BM_SETCHECK, ClockReadOnly, 0);
 			SendDlgItemMessage(hDlg,IDC_BASEADDR, CB_ADDSTRING, 0, (LPARAM) "40");
 			SendDlgItemMessage(hDlg,IDC_BASEADDR, CB_ADDSTRING, 0, (LPARAM) "50");
 			SendDlgItemMessage(hDlg,IDC_BASEADDR, CB_ADDSTRING, 0, (LPARAM) "60");
@@ -264,7 +267,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 			EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), TRUE);
 			if (BaseAddr==3)
 			{
-				ClockEnabled=0;
+				ClockEnabled = false;
 				SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnabled,0);
 				EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), FALSE);
 			}
@@ -275,10 +278,10 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 			{
 				case IDOK:
 					BaseAddr=(unsigned char)SendDlgItemMessage(hDlg,IDC_BASEADDR,CB_GETCURSEL,0,0);
-					ClockEnabled=(unsigned char)SendDlgItemMessage(hDlg,IDC_CLOCK,BM_GETCHECK,0,0);
-					ClockReadOnly=(unsigned char)SendDlgItemMessage(hDlg,IDC_READONLY,BM_GETCHECK,0,0);
+					ClockEnabled = (unsigned char)SendDlgItemMessage(hDlg, IDC_CLOCK, BM_GETCHECK, 0, 0) != 0;
+					ClockReadOnly = (unsigned char)SendDlgItemMessage(hDlg, IDC_READONLY, BM_GETCHECK, 0, 0) != 0;
 					BaseAddress=BaseTable[BaseAddr & 3];
-					SetClockWrite(!ClockReadOnly);
+					cloud9_rtc.set_read_only(ClockReadOnly);
 					SaveConfig();
 					EndDialog(hDlg, LOWORD(wParam));
 
@@ -300,7 +303,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 					EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), TRUE);
 					if (BTemp==3)
 					{
-						ClockEnabled=0;
+						ClockEnabled = false;
 						SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnabled,0);
 						EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), FALSE);
 					}
@@ -337,7 +340,7 @@ void SaveConfig()
 	WritePrivateProfileString(ModName,"Slave",FileName,IniFile);
 	WritePrivateProfileInt(ModName,"BaseAddr",BaseAddr ,IniFile);
 	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
-	WritePrivateProfileInt(ModName,"ClkRdOnly",ClockReadOnly ,IniFile);
+	WritePrivateProfileInt(ModName, "ClkRdOnly", ClockReadOnly, IniFile);
 	if (strcmp(SuperIDEPath, "") != 0) { 
 		WritePrivateProfileString("DefaultPaths", "SuperIDEPath", SuperIDEPath, IniFile); 
 	}
@@ -355,13 +358,13 @@ void LoadConfig()
 	MountDisk(FileName ,MASTER);
 	GetPrivateProfileString(ModName,"Slave","",FileName,MAX_PATH,IniFile);
 	BaseAddr=GetPrivateProfileInt(ModName,"BaseAddr",1,IniFile); 
-	ClockEnabled=GetPrivateProfileInt(ModName,"ClkEnable",1,IniFile); 
-	ClockReadOnly=GetPrivateProfileInt(ModName,"ClkRdOnly",1,IniFile); 
+	ClockEnabled = GetPrivateProfileInt(ModName, "ClkEnable", true, IniFile) != 0;
+	ClockReadOnly = GetPrivateProfileInt(ModName, "ClkRdOnly", true, IniFile) != 0;
 	BaseAddr&=3;
-	if (BaseAddr==3)
-		ClockEnabled=0;
+	if (BaseAddr == 3)
+		ClockEnabled = false;
 	BaseAddress=BaseTable[BaseAddr];
-	SetClockWrite(!ClockReadOnly);
+	cloud9_rtc.set_read_only(ClockReadOnly);
 	MountDisk(FileName ,SLAVE);
 	BuildCartridgeMenu();
 	return;

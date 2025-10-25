@@ -97,7 +97,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="sdc.cpp" />
-    <ClCompile Include="cloud9.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sdc.h" />

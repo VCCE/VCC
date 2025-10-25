@@ -94,12 +94,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="cloud9.cpp" />
     <ClCompile Include="IdeBus.cpp" />
     <ClCompile Include="SuperIDE.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cloud9.h" />
     <ClInclude Include="IdeBus.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SuperIDE.h" />

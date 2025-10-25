@@ -146,6 +146,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <vcc/devices/rtc/cloud9.h>
 #include <vcc/common/logger.h>
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
@@ -162,6 +163,8 @@ static PakAssertInteruptHostCallback AssertInt = nullptr;;
 static PakWriteMemoryByteHostCallback MemWrite8 = nullptr;
 static PakReadMemoryByteHostCallback MemRead8 = nullptr;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
+
+static ::vcc::devices::rtc::cloud9 cloud9_rtc;
 
 void SDCInit();
 void LoadRom(unsigned char);
@@ -416,7 +419,7 @@ extern "C"
     __declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
     {
         if (ClockEnable && ((Port==0x78) | (Port==0x79) | (Port==0x7C))) {
-            return ReadTime(Port);
+            return cloud9_rtc.read_port(Port);
         } else if ((Port > 0x3F) & (Port < 0x60)) {
             return SDCRead(Port);
         } else {
