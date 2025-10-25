@@ -78,14 +78,10 @@ BOOL APIENTRY DllMain( HINSTANCE  hinstDLL,
 		case DLL_PROCESS_ATTACH:
 			// init
 			gModuleInstance = hinstDLL;
-			LastStats = GetTickCount();
-			SetDWTCPConnectionEnable(1);
-
 			break;
+
 		case DLL_PROCESS_DETACH:
 			// shutdown
-
-		
 			break;
 
 		// not used by Vcc
@@ -426,10 +422,11 @@ extern "C"
 		PakSetCart = context->assert_cartridge_line;
 		strcpy(IniFile, configuration_path);
 
+		LastStats = GetTickCount();
 		LoadConfig();
+		SetDWTCPConnectionEnable(1);
 		BuildCartridgeMenu();
 	}
-
 }
 
 

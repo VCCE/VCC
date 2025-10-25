@@ -90,18 +90,12 @@ BOOL WINAPI DllMain(
     DWORD fdwReason,     // reason for calling function
     LPVOID lpReserved )  // reserved
 {
-	if (fdwReason == DLL_PROCESS_DETACH ) //Clean Up
-	{
-        CloseCartDialog(g_hConfDlg);
-		for (unsigned char Drive=0;Drive<=3;Drive++)
-			unmount_disk_image(Drive);
-	}
-	else
+	if (fdwReason == DLL_PROCESS_ATTACH) //Clean Up
 	{
 		gModuleInstance = hinstDLL;
-		RealDisks=InitController();
 	}
-	return 1;
+
+	return TRUE;
 }
 
 extern "C"
@@ -144,8 +138,18 @@ extern "C"
 		AssertInt = context->assert_interrupt;
 		strcpy(IniFile, configuration_path);
 
+		RealDisks = InitController();
 		LoadConfig();
 		BuildCartridgeMenu();
+	}
+
+	__declspec(dllexport) void PakTerminate()
+	{
+		CloseCartDialog(g_hConfDlg);
+		for (unsigned char Drive = 0; Drive <= 3; Drive++)
+		{
+			unmount_disk_image(Drive);
+		}
 	}
 
 }

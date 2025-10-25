@@ -29,12 +29,12 @@ BOOL WINAPI DllMain(
     DWORD fdwReason,     // reason for calling function
     LPVOID lpReserved )  // reserved
 {
-	if (fdwReason == DLL_PROCESS_DETACH ) //Clean Up 
+	if (fdwReason == DLL_PROCESS_ATTACH) //Clean Up 
 	{
-		return 1;
+		gModuleInstance = hinstDLL;
 	}
-	gModuleInstance = hinstDLL;
-	return 1;
+
+	return TRUE;
 }
 
 extern "C" 

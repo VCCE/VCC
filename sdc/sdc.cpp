@@ -395,6 +395,16 @@ extern "C"
 		BuildCartridgeMenu();
 	}
 
+	__declspec(dllexport) void PakTerminate()
+	{
+		CloseCartDialog(hControlDlg);
+		CloseCartDialog(hConfigureDlg);
+		hControlDlg = nullptr;
+		hConfigureDlg = nullptr;
+		CloseDrive(0);
+		CloseDrive(1);
+	}
+
     // Write to port
     __declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
     {
@@ -477,17 +487,11 @@ extern "C"
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 {
-    if (reason == DLL_PROCESS_ATTACH) {
+    if (reason == DLL_PROCESS_ATTACH)
+	{
 		gModuleInstance = hinst;
-
-    } else if (reason == DLL_PROCESS_DETACH) {
-        CloseCartDialog(hControlDlg);
-        CloseCartDialog(hConfigureDlg);
-        hControlDlg = nullptr;
-        hConfigureDlg = nullptr;
-        CloseDrive(0);
-        CloseDrive(1);
     }
+
     return TRUE;
 }
 

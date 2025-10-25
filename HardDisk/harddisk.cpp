@@ -64,14 +64,12 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL,  // handle to DLL module
                      DWORD fdwReason,     // reason for calling function
                      LPVOID lpReserved )  // reserved
 {
-    if (fdwReason == DLL_PROCESS_DETACH ) {
-        CloseCartDialog(hConfDlg);
-        UnmountHD(0);
-        UnmountHD(1);
-    } else {
+    if (fdwReason == DLL_PROCESS_ATTACH)
+	{
 		gModuleInstance = hinstDLL;
     }
-    return 1;
+
+    return TRUE;
 }
 
 void MemWrite(unsigned char Data, unsigned short Address)
@@ -130,6 +128,13 @@ extern "C"
 		SetClockWrite(!ClockReadOnly);
 		VhdReset(); // Selects drive zero
 		BuildCartridgeMenu();
+	}
+
+	__declspec(dllexport) void PakTerminate()
+	{
+		CloseCartDialog(hConfDlg);
+		UnmountHD(0);
+		UnmountHD(1);
 	}
 
 }

@@ -39,6 +39,8 @@ namespace vcc { namespace core { namespace cartridges
 		description_type description() const override;
 
 		void start() override;
+		void stop() override;
+
 		void reset() override;
 		void heartbeat() override;
 		void write_port(unsigned char port_id, unsigned char value) override;

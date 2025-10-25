@@ -43,6 +43,9 @@ namespace vcc { namespace core { namespace cartridges
 		initialize_bus();
 	}
 
+	void basic_cartridge::stop()
+	{}
+
 	void basic_cartridge::reset()
 	{}
 
