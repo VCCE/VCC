@@ -48,7 +48,7 @@ protected:
 private:
 
 	friend const char* PakGetName();
-	friend const char* PakCatalogName();
+	friend const char* PakGetCatalogId();
 	friend void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,

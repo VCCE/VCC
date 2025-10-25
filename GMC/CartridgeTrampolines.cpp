@@ -13,7 +13,7 @@ GMC_EXPORT const char* PakGetName()
 	return string_buffer;
 }
 
-GMC_EXPORT const char* PakCatalogName()
+GMC_EXPORT const char* PakGetCatalogId()
 {
 	static char string_buffer[MAX_LOADSTRING];
 
