@@ -55,7 +55,7 @@ public:
 
 	void start() override;
 	void reset() override;
-	void heartbeat() override;
+	void process_horizontal_sync() override;
 	void write_port(unsigned char port_id, unsigned char value) override;
 	unsigned char read_port(unsigned char port_id) override;
 	unsigned char read_memory_byte(unsigned short memory_address) override;

@@ -46,7 +46,7 @@ namespace vcc { namespace core { namespace cartridges
 
 		LIBCOMMON_EXPORT void start() override;
 		LIBCOMMON_EXPORT void reset() override;
-		LIBCOMMON_EXPORT void heartbeat() override;
+		LIBCOMMON_EXPORT void process_horizontal_sync() override;
 		LIBCOMMON_EXPORT void status(char* text_buffer, size_t buffer_size) override;
 		LIBCOMMON_EXPORT void write_port(unsigned char port_id, unsigned char value) override;
 		LIBCOMMON_EXPORT unsigned char read_port(unsigned char port_id) override;

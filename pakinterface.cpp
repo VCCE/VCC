@@ -127,7 +127,7 @@ void PakTimer()
 {
 	vcc::core::utils::section_locker lock(gPakMutex);
 
-	gActiveCartrige->heartbeat();
+	gActiveCartrige->process_horizontal_sync();
 }
 
 void ResetBus()

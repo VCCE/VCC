@@ -46,7 +46,7 @@ namespace vcc { namespace core { namespace cartridges
 	void basic_cartridge::reset()
 	{}
 
-	void basic_cartridge::heartbeat()
+	void basic_cartridge::process_horizontal_sync()
 	{}
 
 	void basic_cartridge::write_port(unsigned char port_id, unsigned char value)

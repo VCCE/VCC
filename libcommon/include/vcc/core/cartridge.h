@@ -46,7 +46,7 @@ namespace vcc { namespace core
 
 		virtual void start() = 0;
 		virtual void reset() = 0;
-		virtual void heartbeat() = 0;
+		virtual void process_horizontal_sync() = 0;
 		virtual void write_port(unsigned char port_id, unsigned char value) = 0;
 		virtual unsigned char read_port(unsigned char port_id) = 0;
 		virtual unsigned char read_memory_byte(unsigned short memory_address) = 0;
