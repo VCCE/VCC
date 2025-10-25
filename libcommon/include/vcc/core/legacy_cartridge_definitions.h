@@ -45,6 +45,7 @@ extern "C"
 		void* host_key,
 		const char* const configuration_path,
 		const cpak_cartridge_context* const context);
+	using PakTerminateModuleFunction = void (*)();
 	using PakGetNameModuleFunction = const char* (*)();
 	using PakGetCatalogIdModuleFunction = const char* (*)();
 	using PakGetDescriptionModuleFunction = const char* (*)();

@@ -80,15 +80,11 @@ unsigned char LoadExtRom(const char *);
 BOOL APIENTRY
 DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
-    if (reason == DLL_PROCESS_ATTACH) {
+    if (reason == DLL_PROCESS_ATTACH)
+	{
 		gModuleInstance = hinst;
-        LoadExtRom("RS232.ROM");
-
-    } else if (reason == DLL_PROCESS_DETACH) {
-        sc6551_close();
-        AciaStat[0]='\0';
-        CloseCartDialog(g_hDlg);
     }
+
     return TRUE;
 }
 
@@ -133,8 +129,16 @@ extern "C"
 		strcpy(IniFile, configuration_path);
 
 		LoadConfig();
+		LoadExtRom("RS232.ROM");
 		sc6551_init();
 	}
+	__declspec(dllexport) void PakTerminate()
+	{
+		CloseCartDialog(g_hDlg);
+		sc6551_close();
+		AciaStat[0]='\0';
+	}
+	
 
 }
 

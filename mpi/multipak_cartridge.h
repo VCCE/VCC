@@ -57,6 +57,8 @@ public:
 	description_type description() const override;
 
 	void start() override;
+	void stop() override;
+
 	void reset() override;
 	void heartbeat() override;
 	void write_port(unsigned char port_id, unsigned char value) override;
@@ -72,7 +74,6 @@ public:
 
 	bool empty(slot_id_type slot) const;
 
-	void eject_all();
 	void eject_cartridge(slot_id_type slot);
 	mount_status_type mount_cartridge(slot_id_type slot, const path_type& filename);
 

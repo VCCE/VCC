@@ -306,6 +306,8 @@ void UnloadDll()
 {
 	vcc::core::utils::section_locker lock(gPakMutex);
 
+	gActiveCartrige->stop();
+
 	gActiveCartrige = std::make_unique<vcc::core::cartridges::null_cartridge>();
 	gActiveModule.reset();
 

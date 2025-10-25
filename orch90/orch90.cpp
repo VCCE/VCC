@@ -28,18 +28,19 @@ static PakAssertCartridgeLineHostCallback PakSetCart = nullptr;
 static unsigned char LeftChannel=0,RightChannel=0;
 unsigned char LoadExtRom(const char *);
 static unsigned char Rom[8192];
+
+
 BOOL WINAPI DllMain(
     HINSTANCE hinstDLL,  // handle to DLL module
     DWORD fdwReason,     // reason for calling function
     LPVOID lpReserved )  // reserved
 {
-	if (fdwReason == DLL_PROCESS_DETACH ) //Clean Up 
+	if (fdwReason == DLL_PROCESS_ATTACH) //Clean Up 
 	{
-		//Put shutdown procs here
-		return 1;
+		gModuleInstance = hinstDLL;
 	}
-	gModuleInstance = hinstDLL;
-	return 1;
+
+	return TRUE;
 }
 
 

@@ -32,6 +32,8 @@ namespace vcc { namespace core { namespace cartridges
 			return importedFunction ? importedFunction : defaultFunction;
 		}
 
+		void default_stop()
+		{}
 
 		void default_menu_item_clicked(unsigned char)
 		{}
@@ -84,6 +86,7 @@ namespace vcc { namespace core { namespace cartridges
 		configuration_path_(move(configuration_path)),
 		cpak_context_(cpak_context),
 		initialize_(GetImportedProcAddress<PakInitializeModuleFunction>(module_handle, "PakInitialize", nullptr)),
+		terminate_(GetImportedProcAddress(module_handle, "PakTerminate", default_stop)),
 		get_name_(GetImportedProcAddress(module_handle, "PakGetName", default_get_empty_string)),
 		get_catalog_id_(GetImportedProcAddress(module_handle, "PakGetCatalogId", default_get_empty_string)),
 		get_description_(GetImportedProcAddress(module_handle, "PakGetDescription", default_get_empty_string)),
@@ -121,6 +124,11 @@ namespace vcc { namespace core { namespace cartridges
 	void legacy_cartridge::start()
 	{
 		initialize_(host_context_, configuration_path_.c_str(), &cpak_context_);
+	}
+
+	void legacy_cartridge::stop()
+	{
+		terminate_();
 	}
 
 	void legacy_cartridge::reset()

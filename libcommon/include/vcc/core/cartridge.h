@@ -45,6 +45,8 @@ namespace vcc { namespace core
 		virtual description_type description() const = 0;
 
 		virtual void start() = 0;
+		virtual void stop() = 0;
+
 		virtual void reset() = 0;
 		virtual void heartbeat() = 0;
 		virtual void write_port(unsigned char port_id, unsigned char value) = 0;
