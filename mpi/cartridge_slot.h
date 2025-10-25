@@ -93,9 +93,9 @@ namespace vcc { namespace modules { namespace mpi
 			cartridge_->reset();
 		}
 
-		void heartbeat() const
+		void process_horizontal_sync() const
 		{
-			cartridge_->heartbeat();
+			cartridge_->process_horizontal_sync();
 		}
 
 		void write_port(unsigned char port_id, unsigned char value) const

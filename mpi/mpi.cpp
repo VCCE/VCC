@@ -113,7 +113,7 @@ EXPORT_PUBLIC_API unsigned char PakReadPort(unsigned char port_id)
 
 EXPORT_PUBLIC_API void PakProcessHorizontalSync()
 {
-	gMultiPakInterface.heartbeat();
+	gMultiPakInterface.process_horizontal_sync();
 }
 
 EXPORT_PUBLIC_API unsigned char PakReadMemoryByte(unsigned short memory_address)

@@ -136,7 +136,7 @@ namespace vcc { namespace core { namespace cartridges
 		reset_();
 	}
 
-	void legacy_cartridge::heartbeat()
+	void legacy_cartridge::process_horizontal_sync()
 	{
 		heartbeat_();
 	}
