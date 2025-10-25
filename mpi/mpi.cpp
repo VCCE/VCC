@@ -27,11 +27,12 @@
 #define EXPORT_PUBLIC_API extern "C" __declspec(dllexport)
 
 HINSTANCE gModuleInstance = nullptr;
-std::string gConfigurationFilename;
+static std::string gConfigurationFilename;
 // FIXME: The host context will be provided by VCC once the full implementation is complete
 const std::shared_ptr<host_cartridge_context> gHostContext(std::make_shared<host_cartridge_context>(nullptr, gConfigurationFilename));
-multipak_cartridge gMultiPakInterface(gHostContext);
-configuration_dialog gConfigurationDialog(gMultiPakInterface);
+multipak_configuration gMultiPakConfiguration("MPI");
+multipak_cartridge gMultiPakInterface(gMultiPakConfiguration, gHostContext);
+configuration_dialog gConfigurationDialog(gMultiPakConfiguration, gMultiPakInterface);
 
 
 BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, LPVOID /*reserved*/)
@@ -78,6 +79,7 @@ extern "C"
 		const char* const configuration_path,
 		const pak_initialization_parameters* const parameters)
 	{
+		gMultiPakConfiguration.configuration_path(configuration_path);
 		gConfigurationFilename = configuration_path;
 		gHostContext->add_menu_item_ = parameters->add_menu_item;
 		gHostContext->read_memory_byte_ = parameters->read_memory_byte;

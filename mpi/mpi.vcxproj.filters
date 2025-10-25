@@ -13,6 +13,9 @@
     <ClCompile Include="multipak_cartridge.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="multipak_configuration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cartridge_slot.h">
@@ -34,6 +37,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="multipak_cartridge_context.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="multipak_configuration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
