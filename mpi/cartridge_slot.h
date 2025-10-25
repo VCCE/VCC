@@ -83,6 +83,11 @@ namespace vcc { namespace modules { namespace mpi
 			cartridge_->start();
 		}
 
+		void stop() const
+		{
+			cartridge_->stop();
+		}
+
 		void reset() const
 		{
 			cartridge_->reset();

@@ -43,8 +43,6 @@ BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, LPVOID /*reserved*/
 		break;
 
 	case DLL_PROCESS_DETACH:
-		gConfigurationDialog.close();
-		gMultiPakInterface.eject_all();
 		break;
 	}
 
@@ -86,6 +84,12 @@ extern "C"
 		gHostContext->assert_cartridge_line_ = context->assert_cartridge_line;
 
 		gMultiPakInterface.start();
+	}
+
+	__declspec(dllexport) void PakTerminate()
+	{
+		gConfigurationDialog.close();
+		gMultiPakInterface.stop();
 	}
 
 }

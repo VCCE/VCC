@@ -93,6 +93,17 @@ void multipak_cartridge::start()
 	load_configuration();
 }
 
+
+void multipak_cartridge::stop()
+{
+	gConfigurationDialog.close();
+
+	for (auto slot(0u); slot < slots_.size(); slot++)
+	{
+		eject_cartridge(slot);
+	}
+}
+
 void multipak_cartridge::reset()
 {
 	vcc::core::utils::section_locker lock(mutex_);
@@ -269,18 +280,11 @@ bool multipak_cartridge::empty(slot_id_type slot) const
 	return slots_[slot].empty();
 }
 
-// FIXME: refactor this into a stop that also shuts down the configuration dialog
-void multipak_cartridge::eject_all()
-{
-	for (auto slot(0u); slot < slots_.size(); slot++)
-	{
-		eject_cartridge(slot);
-	}
-}
-
 void multipak_cartridge::eject_cartridge(slot_id_type slot)
 {
 	vcc::core::utils::section_locker lock(mutex_);
+
+	slots_[slot].stop();
 
 	slots_[slot] = {};
 }
