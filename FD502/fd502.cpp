@@ -116,7 +116,7 @@ extern "C"
 		return string_buffer;
 	}
 
-	__declspec(dllexport) const char* PakCatalogName()
+	__declspec(dllexport) const char* PakGetCatalogId()
 	{
 		static char string_buffer[MAX_LOADSTRING];
 

@@ -64,7 +64,7 @@ extern "C"
 		return string_buffer;
 	}
 
-	EXPORT_PUBLIC_API const char* PakCatalogName()
+	EXPORT_PUBLIC_API const char* PakGetCatalogId()
 	{
 		static char string_buffer[MAX_LOADSTRING];
 

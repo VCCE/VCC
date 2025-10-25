@@ -2,7 +2,7 @@
 #include "GMC.h"
 
 GMC_EXPORT const char* PakGetName();
-GMC_EXPORT const char* PakCatalogName();
+GMC_EXPORT const char* PakGetCatalogId();
 GMC_EXPORT void PakInitialize(
 	void* const host_key,
 	const char* const configuration_path,
