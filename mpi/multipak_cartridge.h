@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "cartridge_slot.h"
+#include "multipak_configuration.h"
 #include <vcc/core/cartridges/basic_cartridge.h>
 #include <vcc/core/cartridge_loader.h>
 #include <vcc/core/utils/critical_section.h>
@@ -41,7 +42,9 @@ public:
 
 public:
 
-	explicit multipak_cartridge(std::shared_ptr<context_type> context);
+	multipak_cartridge(
+		multipak_configuration& configuration,
+		std::shared_ptr<context_type> context);
 	multipak_cartridge(const multipak_cartridge&) = delete;
 	multipak_cartridge(multipak_cartridge&&) = delete;
 
@@ -80,14 +83,8 @@ public:
 	void build_menu();
 
 	// Make automatic when mounting, ejecting, selecting slot, etc.
-	void save_configuration() const;
 	void assert_cartridge_line(slot_id_type slot, bool line_state);
 	void append_menu_item(slot_id_type slot, menu_item_type item);
-
-
-private:
-
-	void load_configuration();
 
 
 private:
@@ -97,6 +94,7 @@ private:
 	static const size_t default_slot_register_value = 0xff;
 
 	vcc::core::utils::critical_section mutex_;
+	multipak_configuration& configuration_;
 	std::shared_ptr<context_type> context_;
 	std::array<vcc::modules::mpi::cartridge_slot, NUMSLOTS> slots_;
 	unsigned char slot_register_ = default_slot_register_value;

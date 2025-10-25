@@ -19,7 +19,6 @@
 #include "multipak_cartridge_context.h"
 #include "mpi.h"
 #include "resource.h"
-#include <vcc/core/utils/configuration_serializer.h>
 #include <vcc/core/utils/winapi.h>
 #include <vcc/core/utils/filesystem.h>
 
@@ -68,8 +67,12 @@ namespace
 }
 
 
-multipak_cartridge::multipak_cartridge(std::shared_ptr<context_type> context)
-	: context_(move(context))
+multipak_cartridge::multipak_cartridge(
+	multipak_configuration& configuration,
+	std::shared_ptr<context_type> context)
+	:
+	configuration_(configuration),
+	context_(move(context))
 { }
 
 multipak_cartridge::name_type multipak_cartridge::name() const
@@ -90,7 +93,23 @@ multipak_cartridge::description_type multipak_cartridge:: description() const
 
 void multipak_cartridge::start()
 {
-	load_configuration();
+	// Get the startup slot and set Chip select and SCS slots from ini file
+	switch_slot_ = configuration_.selected_slot();
+	cached_cts_slot_ = switch_slot_;
+	cached_scs_slot_ = switch_slot_;
+
+	// Mount them
+	for (auto slot(0u); slot < slots_.size(); slot++)
+	{
+		const auto path(vcc::core::utils::find_pak_module_path(configuration_.slot_cartridge_path(slot)));
+		if (!path.empty())
+		{
+			mount_cartridge(slot, path);
+		}
+	}
+
+	// Build the dynamic menu
+	build_menu();
 }
 
 void multipak_cartridge::reset()
@@ -391,47 +410,6 @@ void multipak_cartridge::build_menu()
 	context_->add_menu_item("", MID_FINISH, MIT_Head);  // Finish draws the entire menu
 }
 
-
-void multipak_cartridge::load_configuration()
-{
-	const auto& section(name());
-	::vcc::core::configuration_serializer serializer(context_->configuration_path());
-
-	// Get the startup slot and set Chip select and SCS slots from ini file
-	switch_slot_ = serializer.read(section, "SWPOSITION", 3);
-	cached_cts_slot_ = switch_slot_;
-	cached_scs_slot_ = switch_slot_;
-
-	// Mount them
-	for (auto slot(0u); slot < slots_.size(); slot++)
-	{
-		const auto path(vcc::core::utils::find_pak_module_path(serializer.read(section, "SLOT" + std::to_string(slot + 1))));
-		if (!path.empty())
-		{
-			mount_cartridge(slot, path);
-		}
-	}
-
-	// Build the dynamic menu
-	build_menu();
-}
-
-void multipak_cartridge::save_configuration() const
-{
-	vcc::core::utils::section_locker lock(mutex_);
-
-	const auto& section(name());
-	::vcc::core::configuration_serializer serializer(context_->configuration_path());
-
-	serializer.write(section, "SWPOSITION", switch_slot_);
-	for (auto slot(0u); slot < slots_.size(); slot++)
-	{
-		serializer.write(
-			section,
-			"SLOT" + ::std::to_string(slot + 1),
-			vcc::core::utils::strip_application_path(slots_[slot].path()));
-	}
-}
 
 void multipak_cartridge::assert_cartridge_line(slot_id_type slot, bool line_state)
 {

@@ -21,7 +21,6 @@
 #include <vcc/common/DialogOps.h>
 #include <vcc/core/utils/critical_section.h>
 #include <vcc/core/utils/filesystem.h>
-#include <vcc/core/utils/configuration_serializer.h>
 
 
 namespace
@@ -45,8 +44,12 @@ namespace
 
 }
 
-configuration_dialog::configuration_dialog(multipak_cartridge& mpi)
-	: mpi_(mpi)
+configuration_dialog::configuration_dialog(
+	multipak_configuration& configuration,
+	multipak_cartridge& mpi)
+	:
+	configuration_(configuration),
+	mpi_(mpi)
 {}
 
 
@@ -73,14 +76,9 @@ void configuration_dialog::close()
 
 void configuration_dialog::select_new_cartridge(size_t slot)
 {
-	::vcc::core::configuration_serializer serializer(gConfigurationFilename);
-
-	// Get default paths for modules. 
-	const auto gLastAccessedPath(serializer.read("DefaultPaths", "MPIPath"));
-
 	FileDialog dlg;
 	dlg.setTitle("Load Program Pak");
-	dlg.setInitialDir(gLastAccessedPath.c_str());
+	dlg.setInitialDir(configuration_.last_accessed_module_path().c_str());
 	dlg.setFilter(
 		"All Pak Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
 		"Hardware Pak (*.dll)\0*.dll\0"
@@ -93,10 +91,8 @@ void configuration_dialog::select_new_cartridge(size_t slot)
 
 		if (mpi_.mount_cartridge(slot, dlg.path()) == cartridge_loader_status::success)
 		{
-			serializer.write(
-				"DefaultPaths",
-				"MPIPath",
-				::vcc::core::utils::get_directory_from_path(dlg.path()));
+			configuration_.slot_cartridge_path(slot, dlg.path());
+			configuration_.last_accessed_module_path(::vcc::core::utils::get_directory_from_path(dlg.path()));
 		}
 
 		mpi_.build_menu();
@@ -124,6 +120,7 @@ void configuration_dialog::set_selected_slot(size_t slot)
 
 	// FIXME: Maube move this to the callsite or when the dialog closes or at least make it optional?
 	mpi_.switch_to_slot(slot);
+	configuration_.selected_slot(slot);
 }
 
 
@@ -163,6 +160,7 @@ void configuration_dialog::eject_or_select_new_cartridge(size_t slot)
 	if (!mpi_.empty(slot))
 	{
 		mpi_.eject_cartridge(slot);
+		configuration_.slot_cartridge_path(slot, {});
 	}
 	else
 	{
@@ -198,7 +196,6 @@ INT_PTR configuration_dialog::process_message(
 	switch (message)
 	{
 	case WM_CLOSE:
-		mpi_.save_configuration();
 		DestroyWindow(hDlg);
 		dialog_handle_ = nullptr;
 		parent_handle_ = nullptr;

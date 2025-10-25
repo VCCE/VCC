@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "multipak_cartridge.h"
+#include "multipak_configuration.h"
 #include <Windows.h>
 
 
@@ -24,7 +25,9 @@ class configuration_dialog
 {
 public:
 
-	explicit configuration_dialog(multipak_cartridge& mpi);
+	configuration_dialog(
+		multipak_configuration& configuration,
+		multipak_cartridge& mpi);
 
 	configuration_dialog(const configuration_dialog&) = delete;
 	configuration_dialog(configuration_dialog&&) = delete;
@@ -56,6 +59,7 @@ private:
 
 private:
 
+	multipak_configuration& configuration_;
 	multipak_cartridge& mpi_;
 	HWND dialog_handle_ = nullptr;
 	HWND parent_handle_ = nullptr;
