@@ -106,6 +106,7 @@
     <ClCompile Include="src\core\utils\configuration_serializer.cpp" />
     <ClCompile Include="src\core\utils\filesystem.cpp" />
     <ClCompile Include="src\core\utils\winapi.cpp" />
+    <ClCompile Include="src\devices\rtc\cloud9.cpp" />
     <ClCompile Include="src\DialogOps.cpp" />
     <ClCompile Include="src\Fileops.cpp" />
     <ClCompile Include="src\logger.cpp" />
@@ -133,6 +134,7 @@
     <ClInclude Include="include\vcc\core\utils\dll_deleter.h" />
     <ClInclude Include="include\vcc\core\utils\filesystem.h" />
     <ClInclude Include="include\vcc\core\utils\winapi.h" />
+    <ClInclude Include="include\vcc\devices\rtc\cloud9.h" />
     <ClInclude Include="resource\resource.h" />
   </ItemGroup>
   <ItemGroup>

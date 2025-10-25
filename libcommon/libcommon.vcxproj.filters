@@ -40,6 +40,18 @@
     <Filter Include="Source Files\core\utils">
       <UniqueIdentifier>{c3048278-09ca-471f-9cff-e11566354e5d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\devices">
+      <UniqueIdentifier>{b50b01e9-581e-4c73-8f71-43979671a294}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\devices">
+      <UniqueIdentifier>{3930ad82-f3e9-4f32-a039-b60aa3a7af94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\devices\rtc">
+      <UniqueIdentifier>{1703911c-1a3b-40a2-8b45-cd2798b15495}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\devices\rtc">
+      <UniqueIdentifier>{7916028f-7cb9-4a17-8897-43634a51ba3d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DialogOps.cpp">
@@ -77,6 +89,9 @@
     </ClCompile>
     <ClCompile Include="src\core\rom_image.cpp">
       <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\devices\rtc\cloud9.cpp">
+      <Filter>Source Files\devices\rtc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -145,6 +160,9 @@
     </ClInclude>
     <ClInclude Include="include\vcc\core\rom_image.h">
       <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\devices\rtc\cloud9.h">
+      <Filter>Header Files\devices\rtc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
