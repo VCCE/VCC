@@ -23,6 +23,9 @@ extern void*const& gHostKey;
 extern PakAssertInteruptHostCallback AssertInt;
 void BuildCartridgeMenu();
 
+// DO NOT REMOVE until becker.dll is retired.  Then FD502 becker becomes permanant.
+#define COMBINE_BECKER
+
 // FIXME: These need to be turned into a scoped enum and the signature of functions
 // that use them updated.
 #define External 0
