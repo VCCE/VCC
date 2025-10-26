@@ -114,7 +114,7 @@
     <ClCompile Include="src\core\cartridge.cpp" />
     <ClCompile Include="src\devices\rom\banked_rom_image.cpp" />
     <ClCompile Include="src\devices\rom\rom_image.cpp" />
-    <ClCompile Include="src\devices\rtc\cloud9.cpp" />
+    <ClCompile Include="src\devices\rtc\ds1315.cpp" />
     <ClCompile Include="src\devices\rtc\oki_m6242b.cpp" />
     <ClCompile Include="src\devices\becker\beckerport.cpp" />
     <ClCompile Include="src\DialogOps.cpp" />
@@ -142,7 +142,7 @@
     <ClInclude Include="include\vcc\core\limits.h" />
     <ClInclude Include="include\vcc\devices\rom\banked_rom_image.h" />
     <ClInclude Include="include\vcc\devices\rom\rom_image.h" />
-    <ClInclude Include="include\vcc\devices\rtc\cloud9.h" />
+    <ClInclude Include="include\vcc\devices\rtc\ds1315.h" />
     <ClInclude Include="include\vcc\devices\rtc\oki_m6242b.h" />
     <ClInclude Include="include\vcc\devices\becker\beckerport.h" />
     <ClInclude Include="include\vcc\utils\cartridge_loader.h" />

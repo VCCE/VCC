@@ -23,7 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include<iostream>
 #include "resource.h"
 #include "cc3vhd.h"
-#include <vcc/devices/rtc/cloud9.h>
+#include <vcc/devices/rtc/ds1315.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
@@ -40,7 +40,7 @@ static char *VHDfile; // Selected drive file name
 static char NewVHDfile[MAX_PATH];
 static char IniFile[MAX_PATH]  { 0 };
 static char HardDiskPath[MAX_PATH];
-static ::vcc::devices::rtc::cloud9 cloud9_rtc;
+static ::vcc::devices::rtc::ds1315 ds1315_rtc;
 static const char* const gConfigurationSection = "Hard Drive";
 
 static void* gHostKey = nullptr;
@@ -123,7 +123,7 @@ extern "C"
 		strcpy(IniFile, configuration_path);
 
 		LoadConfig();
-		cloud9_rtc.set_read_only(ClockReadOnly);
+		ds1315_rtc.set_read_only(ClockReadOnly);
 		VhdReset(); // Selects drive zero
 		BuildCartridgeMenu();
 	}
@@ -200,7 +200,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
         case IDOK:
 			ClockEnabled = SendDlgItemMessage(hDlg, IDC_CLOCK, BM_GETCHECK, 0, 0) != 0;
 			ClockReadOnly = SendDlgItemMessage(hDlg, IDC_READONLY, BM_GETCHECK, 0, 0) != 0;
-			cloud9_rtc.set_read_only(ClockReadOnly);
+			ds1315_rtc.set_read_only(ClockReadOnly);
             SaveConfig();
             DestroyWindow(hDlg);
             hConfDlg=nullptr;
@@ -233,7 +233,7 @@ extern "C"
     __declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
     {
 		if (((Port == 0x78) | (Port == 0x79) | (Port == 0x7C)) & ClockEnabled)
-			return cloud9_rtc.read_port(Port);
+			return ds1315_rtc.read_port(Port);
         return(IdeRead(Port));
     }
 }
