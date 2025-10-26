@@ -18,19 +18,18 @@
 #pragma warning( disable : 4800 ) // For legacy builds
 
 //#define USE_LOGGING
-#include <Windows.h>
-#include <stdio.h>
-#include <iostream>
 #include "resource.h"
 #include "wd1793.h"
 #include "fd502.h"
 #include "../CartridgeMenu.h"
-#include <vcc/devices/rtc/oki_m6242b.h>
 #include <vcc/devices/becker/beckerport.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include <vcc/common/logger.h>
+#include <vcc/utils/winapi.h>
+#include <vcc/devices/rtc/oki_m6242b.h>
 #include <vcc/core/limits.h>
+#include <Windows.h>
 
 constexpr auto EXTROMSIZE = 16384u;
 
@@ -96,29 +95,23 @@ extern "C"
 
 	__declspec(dllexport) const char* PakGetName()
 	{
-		static char string_buffer[MAX_LOADSTRING];
+		static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
 
-		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
-
-		return string_buffer;
+		return name.c_str();
 	}
 
 	__declspec(dllexport) const char* PakGetCatalogId()
 	{
-		static char string_buffer[MAX_LOADSTRING];
+		static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
 
-		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
-
-		return string_buffer;
+		return catalog_id.c_str();
 	}
 
 	__declspec(dllexport) const char* PakGetDescription()
 	{
-		static char string_buffer[MAX_LOADSTRING];
+		static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
 
-		LoadString(gModuleInstance, IDS_DESCRIPTION, string_buffer, MAX_LOADSTRING);
-
-		return string_buffer;
+		return description.c_str();
 	}
 
 	__declspec(dllexport) void PakInitialize(
