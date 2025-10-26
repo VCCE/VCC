@@ -72,6 +72,12 @@ orchestra90cc_cartridge::catalog_id_type orchestra90cc_cartridge::catalog_id() c
 	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
 }
 
+orchestra90cc_cartridge::description_type orchestra90cc_cartridge::description() const
+{
+	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
+}
+
+
 void orchestra90cc_cartridge::reset()
 {
 	using ::vcc::utils::get_module_path;

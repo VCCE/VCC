@@ -98,9 +98,10 @@
     <Link />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\cartridges\basic_cartridge.cpp" />
-    <ClCompile Include="src\cartridges\legacy_cartridge.cpp" />
+    <ClCompile Include="src\cartridges\empty_cartridge.cpp" />
+    <ClCompile Include="src\cartridges\capi_adapter_cartridge.cpp" />
     <ClCompile Include="src\cartridges\rom_cartridge.cpp" />
+    <ClCompile Include="src\core\cartridge.cpp" />
     <ClCompile Include="src\devices\rom\banked_rom_image.cpp" />
     <ClCompile Include="src\devices\rom\rom_image.cpp" />
     <ClCompile Include="src\devices\rtc\cloud9.cpp" />
@@ -115,9 +116,8 @@
     <ClCompile Include="src\utils\winapi.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\vcc\cartridges\basic_cartridge.h" />
-    <ClInclude Include="include\vcc\cartridges\legacy_cartridge.h" />
-    <ClInclude Include="include\vcc\cartridges\null_cartridge.h" />
+    <ClInclude Include="include\vcc\cartridges\capi_adapter_cartridge.h" />
+    <ClInclude Include="include\vcc\cartridges\empty_cartridge.h" />
     <ClInclude Include="include\vcc\cartridges\rom_cartridge.h" />
     <ClInclude Include="include\vcc\common\DialogOps.h" />
     <ClInclude Include="include\vcc\common\FileOps.h" />
@@ -127,7 +127,7 @@
     <ClInclude Include="include\vcc\core\cartridge_factory.h" />
     <ClInclude Include="include\vcc\core\detail\exports.h" />
     <ClInclude Include="include\vcc\core\interrupts.h" />
-    <ClInclude Include="include\vcc\core\legacy_cartridge_definitions.h" />
+    <ClInclude Include="include\vcc\core\cartridge_capi.h" />
     <ClInclude Include="include\vcc\core\limits.h" />
     <ClInclude Include="include\vcc\devices\rom\banked_rom_image.h" />
     <ClInclude Include="include\vcc\devices\rom\rom_image.h" />

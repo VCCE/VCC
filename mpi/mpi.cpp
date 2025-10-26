@@ -47,11 +47,11 @@ extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 {
 	return [](
 		std::unique_ptr<::vcc::core::cartridge_context> context,
-		const cpak_cartridge_context& cpak_context) -> std::unique_ptr<::vcc::core::cartridge>
+		const cartridge_capi_context& capi_context) -> std::unique_ptr<::vcc::core::cartridge>
 	{
 		gConfiguration.configuration_path(context->configuration_path());
 
-		return std::make_unique<multipak_cartridge>(gModuleInstance, gConfiguration, move(context), cpak_context);
+		return std::make_unique<multipak_cartridge>(gModuleInstance, gConfiguration, move(context), capi_context);
 	};
 
 }

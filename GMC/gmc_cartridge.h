@@ -27,12 +27,17 @@ public:
 	void start() override;
 	void stop() override;
 	void reset() override;
-	void process_horizontal_sync() override;
+
+	unsigned char read_memory_byte(unsigned short memory_address) override;
+
 	void write_port(unsigned char port_id, unsigned char value) override;
 	unsigned char read_port(unsigned char port_id) override;
-	unsigned char read_memory_byte(unsigned short memory_address) override;
-	void status(char* status_buffer, size_t buffer_size) override;
+
+	void process_horizontal_sync() override;
+
 	unsigned short sample_audio() override;
+
+	void status(char* status_buffer, size_t buffer_size) override;
 	void menu_item_clicked(unsigned char menu_item_id) override;
 
 

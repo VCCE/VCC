@@ -39,7 +39,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 {
 	return []([[maybe_unused]] std::unique_ptr<::vcc::core::cartridge_context> context,
-			  [[maybe_unused]] const cpak_cartridge_context& cpak_context) -> std::unique_ptr<::vcc::core::cartridge>
+			  [[maybe_unused]] const cartridge_capi_context& capi_context) -> std::unique_ptr<::vcc::core::cartridge>
 	{
 		return std::make_unique<ramdisk_cartridge>();
 	};

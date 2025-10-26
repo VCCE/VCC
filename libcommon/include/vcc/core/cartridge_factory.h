@@ -18,12 +18,12 @@
 #pragma once
 #include <vcc/core/cartridge.h>
 #include <vcc/core/cartridge_context.h>
-#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/cartridge_capi.h>
 #include <memory>
 
 
 using CreatePakFactoryFunction = std::unique_ptr<::vcc::core::cartridge> (*)(
 	std::unique_ptr<::vcc::core::cartridge_context> context,
-	const cpak_cartridge_context& cpak_context);
+	const cartridge_capi_context& capi_context);
 using GetPakFactoryFunction = CreatePakFactoryFunction(*)();
 
