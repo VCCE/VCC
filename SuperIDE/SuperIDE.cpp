@@ -51,6 +51,7 @@ static HINSTANCE gModuleInstance;
 static HWND hConfDlg = nullptr;
 static void* gHostKeyPtr = nullptr;
 static void* const& gHostKey(gHostKeyPtr);
+static const char* const gConfigurationSection = "Glenside-IDE /w Clock";
 
 using namespace std;
 
@@ -327,15 +328,13 @@ void Select_Disk(unsigned char Disk)
 
 void SaveConfig()
 {
-	char ModName[MAX_LOADSTRING]="";
-	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	QueryDisk(MASTER,FileName);
-	WritePrivateProfileString(ModName,"Master",FileName,IniFile);
+	WritePrivateProfileString(gConfigurationSection,"Master",FileName,IniFile);
 	QueryDisk(SLAVE,FileName);
-	WritePrivateProfileString(ModName,"Slave",FileName,IniFile);
-	WritePrivateProfileInt(ModName,"BaseAddr",BaseAddr ,IniFile);
-	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
-	WritePrivateProfileInt(ModName, "ClkRdOnly", ClockReadOnly, IniFile);
+	WritePrivateProfileString(gConfigurationSection,"Slave",FileName,IniFile);
+	WritePrivateProfileInt(gConfigurationSection,"BaseAddr",BaseAddr ,IniFile);
+	WritePrivateProfileInt(gConfigurationSection,"ClkEnable",ClockEnabled ,IniFile);
+	WritePrivateProfileInt(gConfigurationSection, "ClkRdOnly", ClockReadOnly, IniFile);
 	if (strcmp(SuperIDEPath, "") != 0) { 
 		WritePrivateProfileString("DefaultPaths", "SuperIDEPath", SuperIDEPath, IniFile); 
 	}
@@ -345,16 +344,13 @@ void SaveConfig()
 
 void LoadConfig()
 {
-	char ModName[MAX_LOADSTRING]="";
-
-	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	GetPrivateProfileString("DefaultPaths", "SuperIDEPath", "", SuperIDEPath, MAX_PATH, IniFile);
-	GetPrivateProfileString(ModName,"Master","",FileName,MAX_PATH,IniFile);
+	GetPrivateProfileString(gConfigurationSection,"Master","",FileName,MAX_PATH,IniFile);
 	MountDisk(FileName ,MASTER);
-	GetPrivateProfileString(ModName,"Slave","",FileName,MAX_PATH,IniFile);
-	BaseAddr=GetPrivateProfileInt(ModName,"BaseAddr",1,IniFile); 
-	ClockEnabled = GetPrivateProfileInt(ModName, "ClkEnable", true, IniFile) != 0;
-	ClockReadOnly = GetPrivateProfileInt(ModName, "ClkRdOnly", true, IniFile) != 0;
+	GetPrivateProfileString(gConfigurationSection,"Slave","",FileName,MAX_PATH,IniFile);
+	BaseAddr=GetPrivateProfileInt(gConfigurationSection,"BaseAddr",1,IniFile); 
+	ClockEnabled = GetPrivateProfileInt(gConfigurationSection, "ClkEnable", true, IniFile) != 0;
+	ClockReadOnly = GetPrivateProfileInt(gConfigurationSection, "ClkRdOnly", true, IniFile) != 0;
 	BaseAddr&=3;
 	if (BaseAddr == 3)
 		ClockEnabled = false;

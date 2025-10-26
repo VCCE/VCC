@@ -52,7 +52,6 @@ PakAssertInteruptHostCallback AssertInt = nullptr;
 static HINSTANCE gModuleInstance;      // DLL handle
 static HWND g_hDlg = nullptr;           // Config dialog
 static char IniFile[MAX_PATH];       // Ini file name
-static char IniSect[MAX_LOADSTRING]; // Ini file section
 
 // Status for Vcc status line
 char AciaStat[32];
