@@ -55,6 +55,9 @@ END
 // Dialog
 //
 
+// DO NOT REMOVE until becker.dll is retired.  Then FD502 becker becomes permanant.
+#define COMBINE_BECKER
+
 IDD_CONFIG DIALOGEX 0, 0, 268, 185
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Floppy Configuration"
@@ -198,7 +201,7 @@ STRINGTABLE
 BEGIN
     IDS_MODULE_NAME         "FD-502"
     IDS_VERSION             "3.0.1"
-    IDS_DESCRIPTION         "Turn any Color Computer with Extended BASIC into a disk system. Write your own disk applications or add ready-to-run software. Plugs into the Program Pak port or Multi-Pak Interface."
+    IDS_DESCRIPTION         "Emulate FD502 floppy controller with four floppy drives.  Loads Disk Extended Color Basic (disl11.rom) or user selectable disk rom.  Also includes Becker Port for communicating with Drivewire and a Disto Clock for use with OS-9.  Uses SCS selectable disk ports.  Plugs into the Program Pak port or Multi-Pak Interface."
 #ifdef COMBINE_BECKER
     IDS_CATNUMBER           "+ Becker"
 #else
