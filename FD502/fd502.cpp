@@ -1,26 +1,20 @@
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
-
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
-/********************************************************************************************
-*	fd502.cpp : Defines the entry point for the DLL application.							*
-*	DLL for use with Vcc 1.0 or higher. DLL interface 1.0 Beta								*
-*	This Module will emulate a Tandy Floppy Disk Model FD-502 With 3 DSDD drives attached	*
-*	Copyright 2006 (c) by Joseph Forgione 													*
-*********************************************************************************************/
+//---------------------------------------------------------------------------------
+// Copyright 2015 by Joseph Forgione
+// This file is part of VCC (Virtual Color Computer).
+//
+// VCC (Virtual Color Computer) is free software: you can redistribute it and/or
+// modify it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or any later
+// version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+// more details.  You should have received a copy of the GNU General Public License
+// along with VCC (Virtual Color Computer).  If not, see
+// <http://www.gnu.org/licenses/>.
+//
+//---------------------------------------------------------------------------------
 #pragma warning( disable : 4800 ) // For legacy builds
 
 //#define USE_LOGGING
@@ -32,15 +26,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "fd502.h"
 #include "../CartridgeMenu.h"
 #include <vcc/devices/rtc/oki_m6242b.h>
+#include <vcc/devices/becker/beckerport.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include <vcc/common/logger.h>
 #include <vcc/core/limits.h>
-
-//include becker code if COMBINE_BECKER is defined in fd502.h
-#ifdef COMBINE_BECKER
-#include "becker.h"
-#endif
 
 constexpr auto EXTROMSIZE = 16384u;
 
@@ -85,6 +75,7 @@ char BeckerAddr[MAX_PATH]="";
 char BeckerPort[32]="";
 
 static ::vcc::devices::rtc::oki_m6242b gDistoRtc;
+static ::vcc::devices::beckerport::Becker gBecker;
 
 //----------------------------------------------------------------------------
 BOOL WINAPI DllMain(
@@ -207,11 +198,9 @@ extern "C"
 {
 	__declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
 	{
-#ifdef COMBINE_BECKER
 		if (BeckerEnabled && (Port == 0x42)) {
-			becker_write(Data,Port);
+			gBecker.write(Data,Port);
 		} else //if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
-#endif
 		if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
 			gDistoRtc.write_port(Data, Port);
 		} else {
@@ -225,10 +214,8 @@ extern "C"
 {
 	__declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
 	{
-#ifdef COMBINE_BECKER
 		if (BeckerEnabled && ((Port == 0x41) | (Port== 0x42 )))
-			return(becker_read(Port));
-#endif
+			return(gBecker.read(Port));
 		if (((Port == 0x50) | (Port == 0x51)) & ClockEnabled)
 			return gDistoRtc.read_port(Port);
 		return(disk_io_read(Port));
@@ -259,14 +246,12 @@ extern "C"
 		char diskstat[64];
 		DiskStatus(diskstat, sizeof(diskstat));
 		strcpy(text_buffer,diskstat);
-#ifdef COMBINE_BECKER
 		char beckerstat[64];
 		if(BeckerEnabled) {
-			becker_status(beckerstat);
+			gBecker.status(beckerstat);
 			strcat(text_buffer," | ");
 			strcat(text_buffer,beckerstat);
 		}
-#endif
 		return ;
 	}
 }
@@ -353,13 +338,11 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 					strcpy(RomFileName,TempRomFileName );
 					CheckPath(RomFileName);
 					LoadExtRom(External,RomFileName); //JF
-#ifdef COMBINE_BECKER
 					GetDlgItemText(hDlg,IDC_BECKER_HOST,BeckerAddr,MAX_PATH);
 					GetDlgItemText(hDlg,IDC_BECKER_PORT,BeckerPort,32);
-					becker_sethost(BeckerAddr,BeckerPort);
+					gBecker.sethost(BeckerAddr,BeckerPort);
 					BeckerEnabled = SendDlgItemMessage (hDlg,IDC_BECKER_ENAB,BM_GETCHECK,0,0);
-					becker_enable(BeckerEnabled);
-#endif
+					gBecker.enable(BeckerEnabled);
 					SaveConfig();
 					DestroyWindow(hDlg);
 					g_hConfDlg = nullptr;
@@ -675,16 +658,14 @@ void LoadConfig()  // Called on SetIniPath
 	char DiskName[MAX_PATH]="";
 	unsigned int RetVal=0;
 
-#ifdef COMBINE_BECKER
 	strcpy(ModName,"HDBDOS/DW/Becker");
 	BeckerEnabled=GetPrivateProfileInt(ModName,"DWEnable", 0, IniFile);
 	GetPrivateProfileString(ModName,"DWServerAddr","127.0.0.1",BeckerAddr,MAX_PATH,IniFile);
 	GetPrivateProfileString(ModName,"DWServerPort","65504",BeckerPort,32,IniFile);
 	if(*BeckerAddr == '\0') strcpy(BeckerAddr,"127.0.0.1");
 	if(*BeckerPort == '\0') strcpy(BeckerPort,"65504");
-	becker_sethost(BeckerAddr,BeckerPort);
-	becker_enable(BeckerEnabled);
-#endif
+	gBecker.sethost(BeckerAddr,BeckerPort);
+	gBecker.enable(BeckerEnabled);
 
 	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	GetPrivateProfileString("DefaultPaths", "FloppyPath", "", FloppyPath, MAX_PATH, IniFile);
@@ -747,12 +728,10 @@ void SaveConfig()
 	if (strcmp(FloppyPath, "") != 0) {
 		WritePrivateProfileString("DefaultPaths", "FloppyPath", FloppyPath, IniFile);
 	}
-#ifdef COMBINE_BECKER
     strcpy(ModName,"HDBDOS/DW/Becker");
 	WritePrivateProfileInt(ModName,"DWEnable", BeckerEnabled, IniFile);
 	WritePrivateProfileString(ModName,"DWServerAddr", BeckerAddr, IniFile);
 	WritePrivateProfileString(ModName,"DWServerPort", BeckerPort, IniFile);
-#endif
 	return;
 }
 

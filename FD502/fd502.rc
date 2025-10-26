@@ -55,9 +55,6 @@ END
 // Dialog
 //
 
-// DO NOT REMOVE until becker.dll is retired.  Then FD502 becker becomes permanant.
-#define COMBINE_BECKER
-
 IDD_CONFIG DIALOGEX 0, 0, 268, 185
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Floppy Configuration"
@@ -72,14 +69,11 @@ BEGIN
     CONTROL         "OverClock Disk Drive",IDC_TURBO,"Button",BS_AUTOCHECKBOX     | WS_TABSTOP,5,75,90,10
     CONTROL         "Persistent Disk Images",IDC_PERSIST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,87,90,10
     CONTROL         "Disto Clock [0xFF50-51]",IDC_CLOCK,"Button",BS_AUTOCHECKBOX  | WS_TABSTOP,5,99,90,10
-
-#ifdef COMBINE_BECKER
     CONTROL         "Becker Drivewire [0xFF41-42]",IDC_BECKER_ENAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,110,75,130,10
     LTEXT           "Server Address",IDC_STATIC,108,87,50,10
     LTEXT           "Server Port",IDC_STATIC,120,99,40,10
     EDITTEXT        IDC_BECKER_HOST,160,87,103,10,ES_AUTOHSCROLL
     EDITTEXT        IDC_BECKER_PORT,160,100,30,10,ES_NUMBER
-#endif
 
     GROUPBOX        "Physical Disks",IDC_STATIC,3,118,260,43,BS_CENTER
     LTEXT           "A:",IDC_STATIC,10,128,8,8,
@@ -202,11 +196,7 @@ BEGIN
     IDS_MODULE_NAME         "FD-502"
     IDS_VERSION             "3.0.1"
     IDS_DESCRIPTION         "Emulate FD502 floppy controller with four floppy drives.  Loads Disk Extended Color Basic (disl11.rom) or user selectable disk rom.  Also includes Becker Port for communicating with Drivewire and a Disto Clock for use with OS-9.  Uses SCS selectable disk ports.  Plugs into the Program Pak port or Multi-Pak Interface."
-#ifdef COMBINE_BECKER
     IDS_CATNUMBER           "+ Becker"
-#else
-    IDS_CATNUMBER           "26-3133"
-#endif
 END
 
 #endif    // English (United States) resources
