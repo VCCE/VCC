@@ -41,10 +41,12 @@ namespace vcc::utils
 		already_loaded,
 		cannot_open,
 		not_found,
+		unsupported_api,
 		not_loaded,
 		not_rom,
 		not_expansion
 	};
+
 
 	struct LIBCOMMON_EXPORT cartridge_loader_result
 	{
@@ -79,4 +81,5 @@ namespace vcc::utils
 		void* const host_context,
 		const std::string& iniPath);
 
+	LIBCOMMON_EXPORT ::std::string load_error_string(cartridge_loader_status status);
 }
