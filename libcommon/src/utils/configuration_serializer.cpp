@@ -15,11 +15,11 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/core/utils/configuration_serializer.h>
+#include <vcc/utils/configuration_serializer.h>
 #include <Windows.h>
 
 
-namespace vcc { namespace core
+namespace vcc::utils
 {
 
 	configuration_serializer::configuration_serializer(path_type path)
@@ -71,4 +71,4 @@ namespace vcc { namespace core
 		return loaded_string;
 	}
 
-} }
+}

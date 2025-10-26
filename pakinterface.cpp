@@ -26,9 +26,9 @@
 #include "mc6821.h"
 #include "resource.h"
 #include <vcc/core/limits.h>
-#include <vcc/core/cartridges/null_cartridge.h>
-#include <vcc/core/utils/dll_deleter.h>
-#include <vcc/core/utils/winapi.h>
+#include <vcc/cartridges/null_cartridge.h>
+#include <vcc/utils/dll_deleter.h>
+#include <vcc/utils/winapi.h>
 #include <vcc/common/logger.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
@@ -37,17 +37,17 @@
 #include <commdlg.h>
 
 
-using cartridge_loader_status = vcc::core::cartridge_loader_status;
-using cartridge_loader_result = vcc::core::cartridge_loader_result;
+using cartridge_loader_status = vcc::utils::cartridge_loader_status;
+using cartridge_loader_result = vcc::utils::cartridge_loader_result;
 
 
 // Storage for Pak ROMs
 extern SystemState EmuState;
 
-static vcc::core::utils::critical_section gPakMutex;
+static vcc::utils::critical_section gPakMutex;
 static char DllPath[MAX_PATH] = "";
 static cartridge_loader_result::handle_type gActiveModule;
-static cartridge_loader_result::cartridge_ptr_type gActiveCartrige(std::make_unique<vcc::core::cartridges::null_cartridge>());
+static cartridge_loader_result::cartridge_ptr_type gActiveCartrige(std::make_unique<vcc::cartridges::null_cartridge>());
 
 static cartridge_loader_status load_any_cartridge(const char* filename, const char* iniPath);
 
@@ -138,42 +138,42 @@ static void PakAddMenuItem(void* /*host_key*/, const char* name, int menu_id, Me
 
 void PakTimer()
 {
-	vcc::core::utils::section_locker lock(gPakMutex);
+	vcc::utils::section_locker lock(gPakMutex);
 
 	gActiveCartrige->process_horizontal_sync();
 }
 
 void ResetBus()
 {
-	vcc::core::utils::section_locker lock(gPakMutex);
+	vcc::utils::section_locker lock(gPakMutex);
 
 	gActiveCartrige->reset();
 }
 
 void GetModuleStatus(SystemState *SMState)
 {
-	vcc::core::utils::section_locker lock(gPakMutex);
+	vcc::utils::section_locker lock(gPakMutex);
 
 	gActiveCartrige->status(SMState->StatusLine, sizeof(SMState->StatusLine));
 }
 
 unsigned char PakReadPort (unsigned char port)
 {
-	vcc::core::utils::section_locker lock(gPakMutex);
+	vcc::utils::section_locker lock(gPakMutex);
 
 	return gActiveCartrige->read_port(port);
 }
 
 void PakWritePort(unsigned char Port,unsigned char Data)
 {
-	vcc::core::utils::section_locker lock(gPakMutex);
+	vcc::utils::section_locker lock(gPakMutex);
 
 	gActiveCartrige->write_port(Port,Data);
 }
 
 unsigned char PackMem8Read (unsigned short Address)
 {
-	vcc::core::utils::section_locker lock(gPakMutex);
+	vcc::utils::section_locker lock(gPakMutex);
 
 	return gActiveCartrige->read_memory_byte(Address&32767);
 }
@@ -195,7 +195,7 @@ void PakAssertInterupt(Interrupt interrupt, InterruptSource source)
 
 unsigned short PackAudioSample()
 {
-	vcc::core::utils::section_locker lock(gPakMutex);
+	vcc::utils::section_locker lock(gPakMutex);
 
 	return gActiveCartrige->sample_audio();
 }
@@ -203,7 +203,7 @@ unsigned short PackAudioSample()
 // Create first two entries for cartridge menu.
 void BeginCartMenu()
 {
-	vcc::core::utils::section_locker lock(gPakMutex);
+	vcc::utils::section_locker lock(gPakMutex);
 
 	CartMenu.add("", MID_BEGIN, MIT_Head, 0);
 	CartMenu.add("Cartridge", MID_ENTRY, MIT_Head);
@@ -265,7 +265,7 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 	}
 
 	const auto string_id_ptr(string_id_map.find(result));
-	auto error_string(vcc::core::utils::load_string(
+	auto error_string(vcc::utils::load_string(
 		EmuState.WindowInstance,
 		string_id_ptr != string_id_map.end() ? string_id_ptr->second : IDS_UNKNOWN_ERROR));
 
@@ -280,7 +280,7 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 // Insert Module returns 0 on success
 static cartridge_loader_status load_any_cartridge(const char *filename, const char* iniPath)
 {
-	cartridge_loader_result loadedCartridge(vcc::core::load_cartridge(
+	cartridge_loader_result loadedCartridge(vcc::utils::load_cartridge(
 		filename,
 		std::make_unique<vcc_cartridge_context>(),
 		{
@@ -300,7 +300,7 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 
 	UnloadDll();
 
-	vcc::core::utils::section_locker lock(gPakMutex);
+	vcc::utils::section_locker lock(gPakMutex);
 
 	strcpy(DllPath, filename);
 	gActiveCartrige = move(loadedCartridge.cartridge);
@@ -317,11 +317,11 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 
 void UnloadDll()
 {
-	vcc::core::utils::section_locker lock(gPakMutex);
+	vcc::utils::section_locker lock(gPakMutex);
 
 	gActiveCartrige->stop();
 
-	gActiveCartrige = std::make_unique<vcc::core::cartridges::null_cartridge>();
+	gActiveCartrige = std::make_unique<vcc::cartridges::null_cartridge>();
 	gActiveModule.reset();
 
 	BeginCartMenu();
@@ -366,7 +366,7 @@ void CartMenuActivated(unsigned int MenuID)
 		break;
 	}
 
-	vcc::core::utils::section_locker lock(gPakMutex);
+	vcc::utils::section_locker lock(gPakMutex);
 
 	gActiveCartrige->menu_item_clicked(MenuID);
 }

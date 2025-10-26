@@ -18,8 +18,8 @@
 #include "orchestra90cc_cartridge.h"
 #include "resource.h"
 #include <vcc/common/FileOps.h>
-#include <vcc/core/utils/winapi.h>
-#include <vcc/core/utils/filesystem.h>
+#include <vcc/utils/winapi.h>
+#include <vcc/utils/filesystem.h>
 #include <Windows.h>
 
 
@@ -64,18 +64,18 @@ orchestra90cc_cartridge::orchestra90cc_cartridge(
 
 orchestra90cc_cartridge::name_type orchestra90cc_cartridge::name() const
 {
-	return ::vcc::core::utils::load_string(module_instance_, IDS_MODULE_NAME);
+	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
 orchestra90cc_cartridge::catalog_id_type orchestra90cc_cartridge::catalog_id() const
 {
-	return ::vcc::core::utils::load_string(module_instance_, IDS_CATNUMBER);
+	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
 }
 
 void orchestra90cc_cartridge::reset()
 {
-	using ::vcc::core::utils::get_module_path;
-	using ::vcc::core::utils::get_directory_from_path;
+	using ::vcc::utils::get_module_path;
+	using ::vcc::utils::get_directory_from_path;
 
 	if (LoadExtRom(get_directory_from_path(get_module_path(module_instance_)) + "ORCH90.ROM"))
 	{

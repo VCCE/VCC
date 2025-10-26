@@ -1,15 +1,15 @@
 #pragma once
-#include <vcc/core/rom_image.h>
+#include <vcc/devices/rom/rom_image.h>
 
 
-namespace vcc::core
+namespace vcc::devices::rom
 {
 
 	class banked_rom_image
 	{
 	public:
 
-		using rom_image_type = ::vcc::core::rom_image;
+		using rom_image_type = ::vcc::devices::rom::rom_image;
 		using value_type = rom_image_type::value_type;
 		using size_type = rom_image_type::size_type;
 

@@ -15,10 +15,10 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/core/cartridges/basic_cartridge.h>
+#include <vcc/cartridges/basic_cartridge.h>
 
 
-namespace vcc { namespace core { namespace cartridges
+namespace vcc::cartridges
 {
 
 	basic_cartridge::name_type basic_cartridge::name() const
@@ -84,4 +84,4 @@ namespace vcc { namespace core { namespace cartridges
 	void basic_cartridge::initialize_bus()
 	{}
 
-} } }
+}

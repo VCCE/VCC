@@ -16,13 +16,13 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridges/basic_cartridge.h>
+#include <vcc/cartridges/basic_cartridge.h>
 #include <vcc/core/cartridge_context.h>
 #include <vector>
 #include <memory>
 
 
-namespace vcc { namespace core { namespace cartridges
+namespace vcc::cartridges
 {
 
 	class rom_cartridge : public basic_cartridge
@@ -70,4 +70,4 @@ namespace vcc { namespace core { namespace cartridges
 		size_type bank_offset_;
 	};
 
-} } }
+}

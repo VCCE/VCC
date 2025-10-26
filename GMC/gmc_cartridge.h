@@ -1,8 +1,8 @@
 #pragma once
 #include "sn76496.h"
+#include <vcc/devices/rom/banked_rom_image.h>
 #include <vcc/core/cartridge.h>
 #include <vcc/core/cartridge_context.h>
-#include <vcc/core/banked_rom_image.h>
 #include <memory>
 #include <Windows.h>
 
@@ -13,7 +13,7 @@ public:
 
 	using context_type = ::vcc::core::cartridge_context;
 	using path_type = ::std::string;
-	using rom_image_type = ::vcc::core::banked_rom_image;
+	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
 
 
 public:
