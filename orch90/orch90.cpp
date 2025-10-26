@@ -116,7 +116,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PakReset()
+	__declspec(dllexport) void PakReset()
 	{
 		char RomPath[MAX_PATH];
 
@@ -127,8 +127,6 @@ extern "C"
 		
 		if (LoadExtRom(RomPath))	//If we can load the rom them assert cart 
 			PakSetCart(gHostKey, 1);
-
-		return 0;
 	}
 }
 
