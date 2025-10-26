@@ -122,7 +122,6 @@
     <ClInclude Include="include\vcc\common\DialogOps.h" />
     <ClInclude Include="include\vcc\common\FileOps.h" />
     <ClInclude Include="include\vcc\common\logger.h" />
-    <ClInclude Include="include\vcc\core\banked_rom_image.h" />
     <ClInclude Include="include\vcc\core\cartridge.h" />
     <ClInclude Include="include\vcc\core\cartridge_context.h" />
     <ClInclude Include="include\vcc\core\cartridge_factory.h" />

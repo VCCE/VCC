@@ -140,9 +140,6 @@
     <ClInclude Include="include\vcc\devices\rtc\cloud9.h">
       <Filter>Header Files\devices\rtc</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\banked_rom_image.h">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
     <ClInclude Include="include\vcc\devices\rtc\oki_m6242b.h">
       <Filter>Header Files\devices\rtc</Filter>
     </ClInclude>
