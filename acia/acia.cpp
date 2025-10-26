@@ -22,10 +22,11 @@
 //------------------------------------------------------------------
 
 #include "acia.h"
-#include "../CartridgeMenu.h"
-#include <vcc/core/limits.h>
 #include <vcc/common/DialogOps.h>
+#include "../CartridgeMenu.h"
 #include <vcc/common/logger.h>
+#include <vcc/utils/winapi.h>
+#include <vcc/core/limits.h>
 
 //------------------------------------------------------------------------
 // Local Functions
@@ -91,31 +92,26 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 
 extern "C"
 {
+
 	__declspec(dllexport) const char* PakGetName()
 	{
-		static char string_buffer[MAX_LOADSTRING];
+		static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
 
-		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
-
-		return string_buffer;
+		return name.c_str();
 	}
 
 	__declspec(dllexport) const char* PakGetCatalogId()
 	{
-		static char string_buffer[MAX_LOADSTRING];
+		static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
 
-		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
-
-		return string_buffer;
+		return catalog_id.c_str();
 	}
 
 	__declspec(dllexport) const char* PakGetDescription()
 	{
-		static char string_buffer[MAX_LOADSTRING];
+		static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
 
-		LoadString(gModuleInstance, IDS_DESCRIPTION, string_buffer, MAX_LOADSTRING);
-
-		return string_buffer;
+		return description.c_str();
 	}
 
 	__declspec(dllexport) void PakInitialize(
