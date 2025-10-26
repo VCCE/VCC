@@ -41,6 +41,7 @@ static char NewVHDfile[MAX_PATH];
 static char IniFile[MAX_PATH]  { 0 };
 static char HardDiskPath[MAX_PATH];
 static ::vcc::devices::rtc::cloud9 cloud9_rtc;
+static const char* const gConfigurationSection = "Hard Drive";
 
 static void* gHostKey = nullptr;
 static PakReadMemoryByteHostCallback MemRead8 = nullptr;
@@ -304,43 +305,39 @@ void LoadHardDisk(int drive)
 // Get configuration items from ini file
 void LoadConfig()
 {
-    char ModName[MAX_LOADSTRING]="";
     HANDLE hr;
 
     GetPrivateProfileString("DefaultPaths", "HardDiskPath", "",
                              HardDiskPath, MAX_PATH, IniFile);
 
-    // Determine module name for config lookups
-    LoadString(gModuleInstance,IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
-
     // Verify HD0 image file exists and mount it.
-    GetPrivateProfileString(ModName,"VHDImage" ,"",VHDfile0,MAX_PATH,IniFile);
+    GetPrivateProfileString(gConfigurationSection,"VHDImage" ,"",VHDfile0,MAX_PATH,IniFile);
     CheckPath(VHDfile0);
     hr = CreateFile (VHDfile0,0,FILE_SHARE_READ,nullptr,
                      OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
     if (hr==INVALID_HANDLE_VALUE) {
         strcpy(VHDfile0,"");
-        WritePrivateProfileString(ModName,"VHDImage","",IniFile);
+        WritePrivateProfileString(gConfigurationSection,"VHDImage","",IniFile);
     } else {
         CloseHandle(hr);
         MountHD(VHDfile0,0);
     }
 
     // Verify HD1 image file exists and mount it.
-    GetPrivateProfileString(ModName,"VHDImage1","",VHDfile1,MAX_PATH,IniFile);
+    GetPrivateProfileString(gConfigurationSection,"VHDImage1","",VHDfile1,MAX_PATH,IniFile);
     CheckPath(VHDfile1);
     hr = CreateFile (VHDfile1,0,FILE_SHARE_READ,nullptr,
                      OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
     if (hr==INVALID_HANDLE_VALUE) {
         strcpy(VHDfile1,"");
-        WritePrivateProfileString(ModName,"VHDImage1","",IniFile);
+        WritePrivateProfileString(gConfigurationSection,"VHDImage1","",IniFile);
     } else {
         CloseHandle(hr);
         MountHD(VHDfile1,1);
     }
 
-	ClockEnabled = GetPrivateProfileInt(ModName, "ClkEnable", 1, IniFile) != 0;
-	ClockReadOnly = GetPrivateProfileInt(ModName, "ClkRdOnly", 1, IniFile) != 0;
+	ClockEnabled = GetPrivateProfileInt(gConfigurationSection, "ClkEnable", 1, IniFile) != 0;
+	ClockReadOnly = GetPrivateProfileInt(gConfigurationSection, "ClkRdOnly", 1, IniFile) != 0;
 
     // Create config menu
 	BuildCartridgeMenu();
@@ -350,19 +347,16 @@ void LoadConfig()
 // Save config saves the hard disk path and vhd file names
 void SaveConfig()
 {
-    char ModName[MAX_LOADSTRING]="";
-    LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-
     ValidatePath(VHDfile0);
     ValidatePath(VHDfile1);
     if (strcmp(HardDiskPath, "") != 0) {
         WritePrivateProfileString
             ("DefaultPaths", "HardDiskPath", HardDiskPath, IniFile);
     }
-    WritePrivateProfileString(ModName,"VHDImage",VHDfile0 ,IniFile);
-    WritePrivateProfileString(ModName,"VHDImage1",VHDfile1 ,IniFile);
-	WritePrivateProfileInt(ModName, "ClkEnable", ClockEnabled, IniFile);
-	WritePrivateProfileInt(ModName, "ClkRdOnly", ClockReadOnly, IniFile);
+    WritePrivateProfileString(gConfigurationSection,"VHDImage",VHDfile0 ,IniFile);
+    WritePrivateProfileString(gConfigurationSection,"VHDImage1",VHDfile1 ,IniFile);
+	WritePrivateProfileInt(gConfigurationSection, "ClkEnable", ClockEnabled, IniFile);
+	WritePrivateProfileInt(gConfigurationSection, "ClkRdOnly", ClockReadOnly, IniFile);
     return;
 }
 
