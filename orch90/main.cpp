@@ -20,12 +20,12 @@
 #include <stdio.h>
 #include "resource.h" 
 #include <vcc/common/FileOps.h>
+#include <vcc/utils/winapi.h>
+#include <vcc/utils/filesystem.h>
 #include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/cartridge_factory.h>
 #include <vcc/core/limits.h>
 #include <memory>
-#include <vcc/core/utils/winapi.h>
-#include <vcc/core/utils/filesystem.h>
-#include <vcc/core/cartridge_factory.h>
 
 
 static HINSTANCE gModuleInstance=nullptr;

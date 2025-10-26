@@ -16,18 +16,22 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/detail/exports.h>
-#include <string>
+#include <vcc/common/logger.h>
 #include <Windows.h>
 
-
-namespace vcc { namespace core { namespace utils
+namespace vcc::utils
 {
 
-	LIBCOMMON_EXPORT std::string get_module_path(HMODULE module_handle = nullptr);
-	LIBCOMMON_EXPORT std::string find_pak_module_path(std::string path);
-	LIBCOMMON_EXPORT std::string get_directory_from_path(std::string path);
-	LIBCOMMON_EXPORT std::string get_filename(std::string path);
-	LIBCOMMON_EXPORT std::string strip_application_path(std::string path);
+	struct LIBCOMMON_EXPORT dll_deleter
+	{
+		void operator()(HMODULE instance) const
+		{
+			if (instance != nullptr)
+			{
+				const auto result(FreeLibrary(instance));
+				DLOG_C("pak:err FreeLibrary %d %d\n", instance, result);
+			}
+		};
+	};
 
-} } }
+}

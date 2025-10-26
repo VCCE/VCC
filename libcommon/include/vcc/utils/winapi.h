@@ -16,22 +16,14 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/common/logger.h>
+#include <vcc/core/detail/exports.h>
 #include <Windows.h>
+#include <string>
 
-namespace vcc { namespace core
+
+namespace vcc::utils
 {
 
-	struct LIBCOMMON_EXPORT dll_deleter
-	{
-		void operator()(HMODULE instance) const
-		{
-			if (instance != nullptr)
-			{
-				const auto result(FreeLibrary(instance));
-				DLOG_C("pak:err FreeLibrary %d %d\n", instance, result);
-			}
-		};
-	};
+	LIBCOMMON_EXPORT std::string load_string(HINSTANCE instance, UINT id);
 
-} }
+}

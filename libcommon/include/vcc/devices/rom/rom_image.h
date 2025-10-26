@@ -16,13 +16,61 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridges/basic_cartridge.h>
+#include <vcc/core/detail/exports.h>
+#include <string>
+#include <vector>
 
-
-namespace vcc { namespace core { namespace cartridges
+namespace vcc::devices::rom
 {
 
-	class LIBCOMMON_EXPORT null_cartridge : public basic_cartridge
-	{};
+	class rom_image
+	{
+	public:
 
-} } }
+		using path_type = std::string;
+		using container_type = std::vector<unsigned char>;
+		using value_type = container_type::value_type;
+		using size_type = container_type::size_type;
+
+
+	public:
+
+		LIBCOMMON_EXPORT rom_image() = default;
+		LIBCOMMON_EXPORT ~rom_image() = default;
+
+		bool empty() const
+		{
+			return data_.empty();
+		}
+
+		path_type filename() const
+		{
+			return filename_;
+		}
+
+		LIBCOMMON_EXPORT bool load(path_type filename);
+
+		void clear()
+		{
+			filename_.clear();
+			data_.clear();
+		}
+
+		value_type read_memory_byte(size_type memory_address) const
+		{
+			if (data_.empty())
+			{
+				return 0;
+			}
+
+			return data_[memory_address % data_.size()];
+		}
+
+
+	private:
+
+		path_type filename_;
+		container_type data_;
+	};
+
+}

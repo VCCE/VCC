@@ -15,16 +15,16 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/core/cartridge_loader.h>
-#include <vcc/core/cartridges/rom_cartridge.h>
-#include <vcc/core/cartridges/legacy_cartridge.h>
+#include <vcc/utils/cartridge_loader.h>
+#include <vcc/cartridges/rom_cartridge.h>
+#include <vcc/cartridges/legacy_cartridge.h>
 #include <vector>
 #include <fstream>
 #include <iterator>
 #include <vcc/core/cartridge_factory.h>
 
 
-namespace vcc { namespace core
+namespace vcc::utils
 {
 
 	namespace
@@ -62,7 +62,7 @@ namespace vcc { namespace core
 	}
 
 	cartridge_loader_result load_rom_cartridge(
-		std::unique_ptr<cartridge_context> context,
+		std::unique_ptr<::vcc::core::cartridge_context> context,
 		const std::string& filename)
 	{
 		constexpr size_t PAK_MAX_MEM = 0x40000;
@@ -96,7 +96,7 @@ namespace vcc { namespace core
 
 		return {
 			nullptr,
-			std::make_unique<vcc::core::cartridges::rom_cartridge>(
+			std::make_unique<vcc::cartridges::rom_cartridge>(
 				move(context),
 				extract_filename(filename),
 				"",
@@ -108,7 +108,7 @@ namespace vcc { namespace core
 
 	cartridge_loader_result load_legacy_cartridge(
 		const std::string& filename,
-		std::unique_ptr<cartridge_context> cartridge_context,
+		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& iniPath,
 		const cpak_cartridge_context& cpak_context)
@@ -139,7 +139,7 @@ namespace vcc { namespace core
 
 		if (GetProcAddress(details.handle.get(), "PakInitialize") != nullptr)
 		{
-			details.cartridge = std::make_unique<vcc::core::cartridges::legacy_cartridge>(
+			details.cartridge = std::make_unique<vcc::cartridges::legacy_cartridge>(
 				details.handle.get(),
 				host_context,
 				iniPath,
@@ -154,22 +154,22 @@ namespace vcc { namespace core
 
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<cartridge_context> cartridge_context,
+		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		const cpak_cartridge_context& cpak_context,
 		void* const host_context,
 		const std::string& iniPath)
 	{
-		switch (vcc::core::determine_cartridge_type(filename))
+		switch (::vcc::utils::determine_cartridge_type(filename))
 		{
 		default:
 		case cartridge_file_type::not_opened:	//	File doesn't exist or can't be opened
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 
 		case cartridge_file_type::rom_image:	//	File is a ROM image
-			return vcc::core::load_rom_cartridge(move(cartridge_context), filename);
+			return load_rom_cartridge(move(cartridge_context), filename);
 
 		case cartridge_file_type::library:		//	File is a DLL
-			return vcc::core::load_legacy_cartridge(
+			return load_legacy_cartridge(
 				filename,
 				move(cartridge_context),
 				host_context,
@@ -178,4 +178,4 @@ namespace vcc { namespace core
 		}
 	}
 
-} }
+}

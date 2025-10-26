@@ -18,15 +18,15 @@
 #include "configuration_dialog.h"
 #include "resource.h"
 #include <vcc/common/DialogOps.h>
-#include <vcc/core/utils/critical_section.h>
-#include <vcc/core/utils/filesystem.h>
+#include <vcc/utils/critical_section.h>
+#include <vcc/utils/filesystem.h>
 #include <array>
 
 
 namespace
 {
 
-	using cartridge_loader_status = vcc::core::cartridge_loader_status;
+	using cartridge_loader_status = vcc::utils::cartridge_loader_status;
 
 	struct cartridge_ui_element_identifiers
 	{
@@ -94,7 +94,7 @@ void configuration_dialog::select_new_cartridge(slot_id_type slot)
 		if (mpi_.mount_cartridge(slot, dlg.path()) == cartridge_loader_status::success)
 		{
 			configuration_.slot_cartridge_path(slot, dlg.path());
-			configuration_.last_accessed_module_path(::vcc::core::utils::get_directory_from_path(dlg.path()));
+			configuration_.last_accessed_module_path(::vcc::utils::get_directory_from_path(dlg.path()));
 		}
 
 		mpi_.build_menu();

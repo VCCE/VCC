@@ -22,23 +22,8 @@
     <Filter Include="Header Files\core">
       <UniqueIdentifier>{6ca923e2-199b-44f0-8260-de0e62abca33}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\core">
-      <UniqueIdentifier>{3338d5c7-a9a1-4858-bc0f-b0ed9fa6b918}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\core\cartridges">
-      <UniqueIdentifier>{cc0a281d-6ff8-4a04-95a0-5bef8957ba5f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\core\cartridges">
-      <UniqueIdentifier>{6344b600-e0a8-4961-8a19-7ef6249e9a3e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\core\utils">
-      <UniqueIdentifier>{f5ac3a16-8b52-47c1-a81c-d58a404a2181}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\core\detail">
       <UniqueIdentifier>{fd029ab9-8064-4e1f-9460-edb495cf58ab}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\core\utils">
-      <UniqueIdentifier>{c3048278-09ca-471f-9cff-e11566354e5d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\devices">
       <UniqueIdentifier>{b50b01e9-581e-4c73-8f71-43979671a294}</UniqueIdentifier>
@@ -52,6 +37,24 @@
     <Filter Include="Source Files\devices\rtc">
       <UniqueIdentifier>{7916028f-7cb9-4a17-8897-43634a51ba3d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\cartridges">
+      <UniqueIdentifier>{cc0a281d-6ff8-4a04-95a0-5bef8957ba5f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\utils">
+      <UniqueIdentifier>{f5ac3a16-8b52-47c1-a81c-d58a404a2181}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\cartridges">
+      <UniqueIdentifier>{6344b600-e0a8-4961-8a19-7ef6249e9a3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\utils">
+      <UniqueIdentifier>{c3048278-09ca-471f-9cff-e11566354e5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\devices\rom">
+      <UniqueIdentifier>{29529fa0-403b-47f9-9537-8a84b9ba90b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\devices\rom">
+      <UniqueIdentifier>{3338d5c7-a9a1-4858-bc0f-b0ed9fa6b918}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DialogOps.cpp">
@@ -63,32 +66,8 @@
     <ClCompile Include="src\logger.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\cartridges\legacy_cartridge.cpp">
-      <Filter>Source Files\core\cartridges</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\cartridges\rom_cartridge.cpp">
-      <Filter>Source Files\core\cartridges</Filter>
-    </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\cartridge_loader.cpp">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\utils\configuration_serializer.cpp">
-      <Filter>Source Files\core\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\utils\filesystem.cpp">
-      <Filter>Source Files\core\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\utils\winapi.cpp">
-      <Filter>Source Files\core\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\cartridges\basic_cartridge.cpp">
-      <Filter>Source Files\core\cartridges</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\rom_image.cpp">
-      <Filter>Source Files\core</Filter>
     </ClCompile>
     <ClCompile Include="src\devices\rtc\cloud9.cpp">
       <Filter>Source Files\devices\rtc</Filter>
@@ -96,8 +75,32 @@
     <ClCompile Include="src\devices\rtc\oki_m6242b.cpp">
       <Filter>Source Files\devices\rtc</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\banked_rom_image.cpp">
-      <Filter>Source Files\core</Filter>
+    <ClCompile Include="src\cartridges\basic_cartridge.cpp">
+      <Filter>Source Files\cartridges</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cartridges\legacy_cartridge.cpp">
+      <Filter>Source Files\cartridges</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cartridges\rom_cartridge.cpp">
+      <Filter>Source Files\cartridges</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\configuration_serializer.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\filesystem.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\winapi.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\devices\rom\rom_image.cpp">
+      <Filter>Source Files\devices\rom</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\cartridge_loader.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\devices\rom\banked_rom_image.cpp">
+      <Filter>Source Files\devices\rom</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -116,18 +119,6 @@
     <ClInclude Include="include\vcc\core\cartridge.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\cartridges\legacy_cartridge.h">
-      <Filter>Header Files\core\cartridges</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\core\cartridges\null_cartridge.h">
-      <Filter>Header Files\core\cartridges</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\core\cartridges\rom_cartridge.h">
-      <Filter>Header Files\core\cartridges</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\core\utils\dll_deleter.h">
-      <Filter>Header Files\core\utils</Filter>
-    </ClInclude>
     <ClInclude Include="include\vcc\core\detail\exports.h">
       <Filter>Header Files\core\detail</Filter>
     </ClInclude>
@@ -140,31 +131,10 @@
     <ClInclude Include="include\vcc\core\interrupts.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\cartridge_loader.h">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\core\utils\filesystem.h">
-      <Filter>Header Files\core\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\core\utils\configuration_serializer.h">
-      <Filter>Header Files\core\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\core\utils\winapi.h">
-      <Filter>Header Files\core\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\core\utils\critical_section.h">
-      <Filter>Header Files\core\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\core\cartridges\basic_cartridge.h">
-      <Filter>Header Files\core\cartridges</Filter>
-    </ClInclude>
     <ClInclude Include="include\vcc\core\cartridge_context.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\core\cartridge_factory.h">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\core\rom_image.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\devices\rtc\cloud9.h">
@@ -175,6 +145,42 @@
     </ClInclude>
     <ClInclude Include="include\vcc\devices\rtc\oki_m6242b.h">
       <Filter>Header Files\devices\rtc</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\cartridges\basic_cartridge.h">
+      <Filter>Header Files\cartridges</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\cartridges\legacy_cartridge.h">
+      <Filter>Header Files\cartridges</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\cartridges\null_cartridge.h">
+      <Filter>Header Files\cartridges</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\cartridges\rom_cartridge.h">
+      <Filter>Header Files\cartridges</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\configuration_serializer.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\critical_section.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\dll_deleter.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\filesystem.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\winapi.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\devices\rom\rom_image.h">
+      <Filter>Header Files\devices\rom</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\cartridge_loader.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\devices\rom\banked_rom_image.h">
+      <Filter>Header Files\devices\rom</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

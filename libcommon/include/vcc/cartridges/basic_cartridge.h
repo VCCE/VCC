@@ -16,61 +16,45 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/detail/exports.h>
-#include <string>
-#include <vector>
+#include <vcc/core/cartridge.h>
 
-namespace vcc { namespace core
+
+namespace vcc::cartridges
 {
 
-	class rom_image
+	struct LIBCOMMON_EXPORT basic_cartridge : public ::vcc::core::cartridge
 	{
 	public:
 
-		using path_type = std::string;
-		using container_type = std::vector<unsigned char>;
-		using value_type = container_type::value_type;
-		using size_type = container_type::size_type;
+		using name_type = std::string;
+		using catalog_id_type = std::string;
 
 
 	public:
 
-		LIBCOMMON_EXPORT rom_image() = default;
-		LIBCOMMON_EXPORT ~rom_image() = default;
+		using cartridge::cartridge;
 
-		bool empty() const
-		{
-			return data_.empty();
-		}
+		name_type name() const override;
+		catalog_id_type catalog_id() const override;
+		description_type description() const override;
 
-		path_type filename() const
-		{
-			return filename_;
-		}
+		void start() override;
+		void stop() override;
 
-		LIBCOMMON_EXPORT bool load(path_type filename);
-
-		void clear()
-		{
-			filename_.clear();
-			data_.clear();
-		}
-
-		value_type read_memory_byte(size_type memory_address) const
-		{
-			if (data_.empty())
-			{
-				return 0;
-			}
-
-			return data_[memory_address % data_.size()];
-		}
+		void reset() override;
+		void process_horizontal_sync() override;
+		void write_port(unsigned char port_id, unsigned char value) override;
+		unsigned char read_port(unsigned char port_id) override;
+		unsigned char read_memory_byte(unsigned short memory_address) override;
+		void status(char* text_buffer, size_t buffer_size) override;
+		unsigned short sample_audio() override;
+		void menu_item_clicked(unsigned char menu_item_id) override;
 
 
-	private:
+	protected:
 
-		path_type filename_;
-		container_type data_;
+		virtual void initialize_pak();
+		virtual void initialize_bus();
 	};
 
-} }
+}

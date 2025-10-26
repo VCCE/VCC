@@ -15,15 +15,37 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#pragma once
-#include <vcc/core/detail/exports.h>
-#include <Windows.h>
+
+#include <vcc/utils/winapi.h>
 #include <string>
+#include <windows.h>
 
-
-namespace vcc { namespace core { namespace utils
+namespace vcc::utils
 {
 
-	LIBCOMMON_EXPORT std::string load_string(HINSTANCE instance, UINT id);
+	LIBCOMMON_EXPORT std::string load_string(HINSTANCE instance, UINT id)
+	{
+		const wchar_t* buffer_ptr;
+		// Get len of string to load
+		const int length = LoadStringW(instance, id, reinterpret_cast<LPWSTR>(&buffer_ptr), 0);
+		if (length == 0)
+			return {};
 
-} } }
+		// Copy load string to wide_str
+		const std::wstring wide_str(buffer_ptr, length);
+
+		// Get len of string when converted
+		const int utf8_len = WideCharToMultiByte(CP_UTF8, 0, wide_str.data(), wide_str.size(), nullptr, 0, nullptr, nullptr);
+		if (utf8_len == 0)
+		{
+			return {};
+		}
+
+		// Convert string from wide_str to utf8_str
+		std::string utf8_str(utf8_len, '\0');
+		WideCharToMultiByte(CP_UTF8, 0, wide_str.data(), wide_str.size(), utf8_str.data(), utf8_len, nullptr, nullptr);
+
+		return utf8_str;
+	}
+}
+

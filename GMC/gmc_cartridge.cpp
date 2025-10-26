@@ -1,11 +1,11 @@
 #include "gmc_cartridge.h"
 #include "resource.h"
 #include <vcc/common/DialogOps.h>
-#include <vcc/core/utils/winapi.h>
-#include <vcc/core/utils/filesystem.h>
-#include <Windows.h>
+#include <vcc/utils/configuration_serializer.h>
+#include <vcc/utils/winapi.h>
+#include <vcc/utils/filesystem.h>
 #include "../CartridgeMenu.h"
-#include <vcc/core/utils/configuration_serializer.h>
+#include <Windows.h>
 
 namespace
 {
@@ -39,22 +39,22 @@ gmc_cartridge::gmc_cartridge(std::unique_ptr<context_type> context, HINSTANCE mo
 
 gmc_cartridge::name_type gmc_cartridge::name() const
 {
-	return ::vcc::core::utils::load_string(module_instance_, IDS_MODULE_NAME);
+	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
 gmc_cartridge::catalog_id_type gmc_cartridge::catalog_id() const
 {
-	return ::vcc::core::utils::load_string(module_instance_, IDS_CATNUMBER);
+	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
 }
 
 gmc_cartridge::description_type gmc_cartridge::description() const
 {
-	return ::vcc::core::utils::load_string(module_instance_, IDS_DESCRIPTION);
+	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
 }
 
 void gmc_cartridge::start()
 {
-	::vcc::core::configuration_serializer serializer(context_->configuration_path());
+	::vcc::utils::configuration_serializer serializer(context_->configuration_path());
 	const auto selected_file(serializer.read(configuration_section_id_, configuration_rom_key_id_));
 
 	load_rom(selected_file, false);
@@ -107,7 +107,7 @@ void gmc_cartridge::status(char* status, size_t buffer_size)
 {
 	std::string message("GMC Active");
 
-	const auto activeRom(::vcc::core::utils::get_filename(rom_image_.filename()));
+	const auto activeRom(::vcc::utils::get_filename(rom_image_.filename()));
 	if (!rom_image_.empty())
 	{
 		message += " (" + activeRom + " Loaded)";
@@ -143,7 +143,7 @@ void gmc_cartridge::menu_item_clicked(unsigned char menuId)
 			return;
 		}
 
-		::vcc::core::configuration_serializer serializer(context_->configuration_path());
+		::vcc::utils::configuration_serializer serializer(context_->configuration_path());
 		serializer.write(
 			configuration_section_id_,
 			configuration_rom_key_id_,

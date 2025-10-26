@@ -16,13 +16,13 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridges/basic_cartridge.h>
+#include <vcc/cartridges/basic_cartridge.h>
 #include <vcc/core/cartridge_context.h>
 #include <memory>
 #include <Windows.h>
 
 
-class orchestra90cc_cartridge : public ::vcc::core::cartridges::basic_cartridge
+class orchestra90cc_cartridge : public ::vcc::cartridges::basic_cartridge
 {
 public:
 	

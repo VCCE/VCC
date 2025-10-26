@@ -19,8 +19,8 @@
 #include "cartridge_slot.h"
 #include "configuration_dialog.h"
 #include "multipak_configuration.h"
-#include <vcc/core/cartridges/basic_cartridge.h>
-#include <vcc/core/utils/critical_section.h>
+#include <vcc/cartridges/basic_cartridge.h>
+#include <vcc/utils/critical_section.h>
 #include "../CartridgeMenu.h"
 #include <array>
 
@@ -33,7 +33,7 @@ class multipak_cartridge
 public:
 
 	using context_type = ::vcc::core::cartridge_context;
-	using mount_status_type = ::vcc::core::cartridge_loader_status;
+	using mount_status_type = ::vcc::utils::cartridge_loader_status;
 	using slot_id_type = ::std::size_t;
 	using path_type = ::std::string;
 	using label_type = ::std::string;
@@ -121,7 +121,7 @@ private:
 	static const size_t default_switch_slot_value = 0x03;
 	static const size_t default_slot_register_value = 0xff;
 
-	vcc::core::utils::critical_section mutex_;
+	vcc::utils::critical_section mutex_;
 	const HINSTANCE module_instance_;
 	multipak_configuration& configuration_;
 	std::shared_ptr<context_type> context_;

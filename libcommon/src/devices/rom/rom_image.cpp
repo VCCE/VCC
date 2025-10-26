@@ -15,36 +15,40 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
+#include <vcc/devices/rom/rom_image.h>
+#include <fstream>
+#include <Windows.h>
 
-#include <vcc/core/utils/winapi.h>
-#include <string>
-#include <windows.h>
 
-namespace vcc::core::utils
+namespace vcc::devices::rom
 {
-	LIBCOMMON_EXPORT std::string load_string(HINSTANCE instance, UINT id)
+
+	bool rom_image::load(path_type filename)
 	{
-		const wchar_t* buffer_ptr;
-		// Get len of string to load
-		const int length = LoadStringW(instance, id, reinterpret_cast<LPWSTR>(&buffer_ptr), 0);
-		if (length == 0)
-			return {};
-
-		// Copy load string to wide_str
-		const std::wstring wide_str(buffer_ptr, length);
-
-		// Get len of string when converted
-		const int utf8_len = WideCharToMultiByte(CP_UTF8, 0, wide_str.data(), wide_str.size(), nullptr, 0, nullptr, nullptr);
-		if (utf8_len == 0)
+		std::ifstream input(filename, std::ios::binary);
+		if (!input.is_open())
 		{
-			return {};
+			return false;
 		}
 
-		// Convert string from wide_str to utf8_str
-		std::string utf8_str(utf8_len, '\0');
-		WideCharToMultiByte(CP_UTF8, 0, wide_str.data(), wide_str.size(), utf8_str.data(), utf8_len, nullptr, nullptr);
+		std::streamoff begin = input.tellg();
+		input.seekg(0, std::ios::end);
+		std::streamoff end = input.tellg();
+		std::streamoff file_length = end - begin;
+		input.seekg(0, std::ios::beg);
 
-		return utf8_str;
+		std::vector<unsigned char> rom_data(static_cast<size_t>(file_length));
+		input.read(reinterpret_cast<char*>(&rom_data[0]), rom_data.size());
+
+		if (file_length != rom_data.size())
+		{
+			return false;
+		}
+
+		filename_ = move(filename);
+		data_ = move(rom_data);
+
+		return true;
 	}
-}
 
+}

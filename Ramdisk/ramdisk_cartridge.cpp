@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "ramdisk_cartridge.h"
 #include "resource.h"
-#include <vcc/core/utils/winapi.h>
+#include <vcc/utils/winapi.h>
 
 
 extern HINSTANCE gModuleInstance;
@@ -25,12 +25,12 @@ extern HINSTANCE gModuleInstance;
 
 ramdisk_cartridge::name_type ramdisk_cartridge::name() const
 {
-	return ::vcc::core::utils::load_string(gModuleInstance, IDS_MODULE_NAME);
+	return ::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME);
 }
 
 ramdisk_cartridge::catalog_id_type ramdisk_cartridge::catalog_id() const
 {
-	return ::vcc::core::utils::load_string(gModuleInstance, IDS_CATNUMBER);
+	return ::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER);
 }
 
 void ramdisk_cartridge::start()

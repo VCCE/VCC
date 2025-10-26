@@ -15,11 +15,11 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/core/utils/filesystem.h>
-#include <vcc/core/utils/winapi.h>
+#include <vcc/utils/filesystem.h>
+#include <vcc/utils/winapi.h>
 
 
-namespace vcc { namespace core { namespace utils
+namespace vcc::utils
 {
 
 
@@ -58,7 +58,7 @@ namespace vcc { namespace core { namespace utils
 		auto file_handle(CreateFile(path.c_str(), 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
 		if (file_handle == INVALID_HANDLE_VALUE)
 		{
-			const auto application_path = get_directory_from_path(::vcc::core::utils::get_module_path());
+			const auto application_path = get_directory_from_path(::vcc::utils::get_module_path());
 			const auto alternate_path = application_path + path;
 			file_handle = CreateFile(alternate_path.c_str(), 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 			if (file_handle == INVALID_HANDLE_VALUE)
@@ -85,7 +85,7 @@ namespace vcc { namespace core { namespace utils
 
 	LIBCOMMON_EXPORT std::string strip_application_path(std::string path)
 	{
-		const auto module_path = get_directory_from_path(vcc::core::utils::get_module_path(nullptr));
+		const auto module_path = get_directory_from_path(vcc::utils::get_module_path(nullptr));
 		auto temp_path(get_directory_from_path(path));
 		if (module_path == temp_path)	// If they match remove the Path
 		{
@@ -108,4 +108,4 @@ namespace vcc { namespace core { namespace utils
 		return path;
 	}
 
-} } }
+}

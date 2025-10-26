@@ -19,13 +19,13 @@
 #include <vcc/core/cartridge.h>
 #include <vcc/core/cartridge_context.h>
 #include <vcc/core/legacy_cartridge_definitions.h>
-#include <vcc/core/utils/dll_deleter.h>
+#include <vcc/utils/dll_deleter.h>
 #include <string>
 #include <memory>
 #include <Windows.h>
 
 
-namespace vcc { namespace core
+namespace vcc::utils
 {
 
 	enum class cartridge_file_type
@@ -48,7 +48,7 @@ namespace vcc { namespace core
 
 	struct LIBCOMMON_EXPORT cartridge_loader_result
 	{
-		using handle_type = std::unique_ptr<std::remove_pointer_t<HMODULE>, vcc::core::dll_deleter>;
+		using handle_type = std::unique_ptr<std::remove_pointer_t<HMODULE>, vcc::utils::dll_deleter>;
 		using cartridge_ptr_type = std::unique_ptr<vcc::core::cartridge>;
 
 #pragma warning(push)
@@ -63,20 +63,20 @@ namespace vcc { namespace core
 
 	LIBCOMMON_EXPORT cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
-		std::unique_ptr<cartridge_context> cartridge_context);
+		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context);
 
 	LIBCOMMON_EXPORT cartridge_loader_result load_legacy_cartridge(
 		const std::string& filename,
-		std::unique_ptr<cartridge_context> cartridge_context,
+		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& iniPath,
 		const cpak_cartridge_context& cpak_context);
 
 	LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<cartridge_context> cartridge_context,
+		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		const cpak_cartridge_context& cpak_context,
 		void* const host_context,
 		const std::string& iniPath);
 
-} }
+}

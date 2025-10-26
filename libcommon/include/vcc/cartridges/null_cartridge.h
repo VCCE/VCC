@@ -16,33 +16,13 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/detail/exports.h>
-#include <string>
+#include <vcc/cartridges/basic_cartridge.h>
 
 
-namespace vcc { namespace core
+namespace vcc::cartridges
 {
 
-	class configuration_serializer
-	{
-	public:
+	class LIBCOMMON_EXPORT null_cartridge : public basic_cartridge
+	{};
 
-		using path_type = ::std::string;
-		using string_type = ::std::string;
-
-	public:
-
-		LIBCOMMON_EXPORT explicit configuration_serializer(path_type path);
-
-		LIBCOMMON_EXPORT void write(const string_type& section, const string_type& key, int value) const;
-		LIBCOMMON_EXPORT void write(const string_type& section, const string_type& key, const string_type& value) const;
-
-		LIBCOMMON_EXPORT int read(const string_type& section, const string_type& key, int default_value) const;
-		LIBCOMMON_EXPORT string_type read(const string_type& section, const string_type& key, const string_type& default_value = {}) const;
-
-
-	private:
-
-		const path_type path_;
-	};
-} }
+}

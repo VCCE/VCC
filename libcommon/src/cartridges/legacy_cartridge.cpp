@@ -15,10 +15,10 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/core/cartridges/legacy_cartridge.h>
+#include <vcc/cartridges/legacy_cartridge.h>
 #include <stdexcept>
 
-namespace vcc { namespace core { namespace cartridges
+namespace vcc::cartridges
 {
 
 	namespace
@@ -171,4 +171,4 @@ namespace vcc { namespace core { namespace cartridges
 		menu_item_clicked_(menu_item_id);
 	}
 
-} } }
+}

@@ -1,7 +1,7 @@
-#include <vcc/core/banked_rom_image.h>
+#include <vcc/devices/rom/banked_rom_image.h>
 
 
-namespace vcc::core
+namespace vcc::devices::rom
 {
 
 	bool banked_rom_image::load(std::string filename)
