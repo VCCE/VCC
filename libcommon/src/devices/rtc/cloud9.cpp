@@ -29,20 +29,7 @@ along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licens
 namespace vcc::devices::rtc
 {
 
-	static 	SYSTEMTIME now;
-	static unsigned __int64 InBuffer = 0;
-	static unsigned __int64 OutBuffer = 0;
-	static unsigned char BitCounter = 0;
-	static unsigned char TempHour = 0;
-	static unsigned char AmPmBit = 0;
-	static unsigned __int64 CurrentBit = 0;
-	static unsigned char FormatBit = 0; //1 = 12Hour Mode
-	static unsigned char CookieRecived = 0;
-	static unsigned char WriteEnabled = 0;
-	
-	void SetTime();
-	
-	unsigned char cloud9::read_port(unsigned short port) const
+	unsigned char cloud9::read_port(unsigned short port)
 	{
 		unsigned char ret_val = 0;
 
@@ -59,7 +46,7 @@ namespace vcc::devices::rtc
 			{
 				if (BitCounter == 0)
 				{
-					SetTime();
+					set_time();
 					CookieRecived = 0;
 				}
 				BitCounter--;
@@ -134,7 +121,7 @@ namespace vcc::devices::rtc
 	}
 
 
-	void SetTime()
+	void cloud9::set_time()
 	{
 		now.wMilliseconds = (unsigned short)(InBuffer & 15);
 		InBuffer >>= 4;
