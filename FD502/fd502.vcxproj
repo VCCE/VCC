@@ -96,14 +96,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="distortc.cpp" />
     <ClCompile Include="fd502.cpp" />
     <ClCompile Include="wd1793.cpp" />
     <ClCompile Include="becker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defines.h" />
-    <ClInclude Include="distortc.h" />
     <ClInclude Include="fd502.h" />
     <ClInclude Include="fdrawcmd.h" />
     <ClInclude Include="resource.h" />

@@ -15,10 +15,10 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <vcc/devices/rtc/oki_m6242b.h>
 #include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "distortc.h"
 
 /* Table description:							   Bit3  Bit2  Bit1  Bit0
 Write to $FF51 read from $FF50
@@ -51,99 +51,114 @@ Write to $FF51 read from $FF50
 
 
 */
-static unsigned char time_register=0;
-static 	SYSTEMTIME now;
-static unsigned char Hour12=0;
 
-unsigned char read_time(unsigned short port)
+namespace vcc::devices::rtc
 {
-	unsigned char ret_val=0;
-	if (port == 0x50)
+
+	unsigned char oki_m6242b::read_port(unsigned short port_id)
 	{
-		GetLocalTime(&now);
-		switch (time_register)
+		unsigned char ret_val=0;
+
+		if (port_id == 0x50)
 		{
+			SYSTEMTIME now;
 
-		case 0:
-		ret_val= now.wSecond % 10;
-		break;
-		case 1:
-		ret_val= now.wSecond / 10;
-		break;
-		case 2:
-		ret_val = now.wMinute % 10;
-		break;
-		case 3:
-		ret_val = now.wMinute / 10;
-		break;
-		case 4:
-		ret_val = now.wHour % 10;
-		break;
-		case 5:
-		ret_val = now.wHour / 10;
-		
-		break;
-		case 6:
-		ret_val = now.wDay % 10;
-		break;
-		case 7:
-		ret_val = now.wDay /10;
-		break;
-		case 8:
-		ret_val = now.wMonth % 10;
-		break;
-		case 9:
-		ret_val = now.wMonth /10 ;
-		break;
-		case 0xA:
-		ret_val = now.wYear%10;
-		break;
-		case 0xB:
-		ret_val = (now.wYear%100)/10;
-		break;
-		case 0xC:
-		ret_val=(unsigned char)now.wDayOfWeek; //May not be right
-		break;
-		case 0xD:
-
-		break;
-		case 0xE:
-
-		break;
-		case 0xF:
-		//	Hour12
-		break;
-		default:
-			ret_val=0;
-		break;
-
-		}
-	}
-
-	return ret_val;
-}
-
-void write_time(unsigned char data,unsigned char port)
-{
-	switch (port)
-	{
-		case 0x50:
-			switch (time_register)
+			GetLocalTime(&now);
+			switch (time_register_)
 			{
-				case 0x0F:
-					Hour12=!((data & 4)>>2);
+
+			case 0:
+				ret_val = now.wSecond % 10;
 				break;
 
-				default:
+			case 1:
+				ret_val = now.wSecond / 10;
+				break;
+
+			case 2:
+				ret_val = now.wMinute % 10;
+				break;
+
+			case 3:
+				ret_val = now.wMinute / 10;
+				break;
+
+			case 4:
+				ret_val = now.wHour % 10;
+				break;
+
+			case 5:
+				ret_val = now.wHour / 10;
+				break;
+
+			case 6:
+				ret_val = now.wDay % 10;
+				break;
+
+			case 7:
+				ret_val = now.wDay / 10;
+				break;
+
+			case 8:
+				ret_val = now.wMonth % 10;
+				break;
+
+			case 9:
+				ret_val = now.wMonth / 10;
+				break;
+
+			case 0xA:
+				ret_val = now.wYear % 10;
+				break;
+
+			case 0xB:
+				ret_val = (now.wYear % 100) / 10;
+				break;
+
+			case 0xC:
+				ret_val = (unsigned char)now.wDayOfWeek; //May not be right
+				break;
+
+			case 0xD:
+				break;
+
+			case 0xE:
+				break;
+
+			case 0xF:
+				break;
+
+			default:
+				ret_val = 0;
+				break;
+
+			}
+		}
+
+		return ret_val;
+	}
+
+	void oki_m6242b::write_port(unsigned char data, unsigned char port_id)
+	{
+		switch (port_id)
+		{
+		case 0x50:
+			switch (time_register_)
+			{
+			case 0x0F:
+				hour12_ = !((data & 4) >> 2);
+				break;
+
+			default:
 				break;
 			}
 
-		break;
+			break;
 
 		case 0x51:
-			time_register=(data & 0xF);
-		break;
+			time_register_ = (data & 0xF);
+			break;
+		}
 	}
-	return;
-}
 
+}
