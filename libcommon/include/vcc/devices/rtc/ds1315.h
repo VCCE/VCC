@@ -23,7 +23,7 @@
 namespace vcc::devices::rtc
 {
 
-	class LIBCOMMON_EXPORT cloud9
+	class LIBCOMMON_EXPORT ds1315
 	{
 	public:
 
