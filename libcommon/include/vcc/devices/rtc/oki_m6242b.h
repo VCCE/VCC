@@ -26,8 +26,10 @@ namespace vcc::devices::rtc
 	{
 	public:
 
-		[[nodiscard]] unsigned char read_port(unsigned short port_id);
-		void write_port(unsigned char data, unsigned char port_id);
+		void set_read_write_address(size_t address);
+
+		void write_data(unsigned char value);
+		[[nodiscard]] unsigned char read_data() const;
 
 
 	private:

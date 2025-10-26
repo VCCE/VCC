@@ -54,109 +54,92 @@ Write to $FF51 read from $FF50
 namespace vcc::devices::rtc
 {
 
-	unsigned char oki_m6242b::read_port(unsigned short port_id)
+	unsigned char oki_m6242b::read_data() const
 	{
-		auto ret_val = 0u;
+		unsigned char ret_val = 0;
 
-		if (port_id == 0x50)
+		SYSTEMTIME now;
+
+		GetLocalTime(&now);
+		switch (time_register_)
 		{
-			SYSTEMTIME now;
 
-			GetLocalTime(&now);
-			switch (time_register_)
-			{
+		case 0:
+			ret_val = now.wSecond % 10;
+			break;
 
-			case 0:
-				ret_val = now.wSecond % 10;
-				break;
+		case 1:
+			ret_val = now.wSecond / 10;
+			break;
 
-			case 1:
-				ret_val = now.wSecond / 10;
-				break;
+		case 2:
+			ret_val = now.wMinute % 10;
+			break;
 
-			case 2:
-				ret_val = now.wMinute % 10;
-				break;
+		case 3:
+			ret_val = now.wMinute / 10;
+			break;
 
-			case 3:
-				ret_val = now.wMinute / 10;
-				break;
+		case 4:
+			ret_val = now.wHour % 10;
+			break;
 
-			case 4:
-				ret_val = now.wHour % 10;
-				break;
+		case 5:
+			ret_val = now.wHour / 10;
+			break;
 
-			case 5:
-				ret_val = now.wHour / 10;
-				break;
+		case 6:
+			ret_val = now.wDay % 10;
+			break;
 
-			case 6:
-				ret_val = now.wDay % 10;
-				break;
+		case 7:
+			ret_val = now.wDay / 10;
+			break;
 
-			case 7:
-				ret_val = now.wDay / 10;
-				break;
+		case 8:
+			ret_val = now.wMonth % 10;
+			break;
 
-			case 8:
-				ret_val = now.wMonth % 10;
-				break;
+		case 9:
+			ret_val = now.wMonth / 10;
+			break;
 
-			case 9:
-				ret_val = now.wMonth / 10;
-				break;
+		case 0xA:
+			ret_val = now.wYear % 10;
+			break;
 
-			case 0xA:
-				ret_val = now.wYear % 10;
-				break;
+		case 0xB:
+			ret_val = (now.wYear % 100) / 10;
+			break;
 
-			case 0xB:
-				ret_val = (now.wYear % 100) / 10;
-				break;
+		case 0xC:
+			ret_val = static_cast<unsigned char>(now.wDayOfWeek); // May not be right
+			break;
 
-			case 0xC:
-				ret_val = (unsigned char)now.wDayOfWeek; //May not be right
-				break;
+		case 0xD:
+			break;
 
-			case 0xD:
-				break;
+		case 0xE:
+			break;
 
-			case 0xE:
-				break;
-
-			case 0xF:
-				break;
-
-			default:
-				ret_val = 0;
-				break;
-
-			}
+		case 0xF:
+			break;
 		}
 
 		return static_cast<unsigned char>(ret_val);
 	}
 
-	void oki_m6242b::write_port(unsigned char data, unsigned char port_id)
+
+	void oki_m6242b::set_read_write_address(size_t address)
 	{
-		switch (port_id)
+		time_register_ = (address & 0xF);
+	}
+
+	void oki_m6242b::write_data(unsigned char value)
+	{
+		if (time_register_ == 0x0F)
 		{
-		case 0x50:
-			switch (time_register_)
-			{
-			case 0x0F:
-				hour12_ = !((data & 4) >> 2);
-				break;
-
-			default:
-				break;
-			}
-
-			break;
-
-		case 0x51:
-			time_register_ = (data & 0xF);
-			break;
+			hour12_ = !((value & 4) >> 2);
 		}
 	}
 

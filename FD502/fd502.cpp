@@ -189,29 +189,49 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
+	__declspec(dllexport) void PakWritePort(unsigned char port_id, unsigned char value)
 	{
-		if (BeckerEnabled && (Port == 0x42)) {
-			gBecker.write(Data,Port);
-		} else //if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
-		if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
-			gDistoRtc.write_port(Data, Port);
-		} else {
-			disk_io_write(Data,Port);
+		if (BeckerEnabled && port_id == 0x42)
+		{
+			becker_write(value, port_id);
 		}
-		return;
+		else
+		if (ClockEnabled && port_id == 0x50)
+		{
+			gDistoRtc.write_data(value);
+		}
+		else if (ClockEnabled && port_id == 0x51)
+		{
+			gDistoRtc.set_read_write_address(value);
+		}
+		else
+		{
+			disk_io_write(value, port_id);
+		}
 	}
 }
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
+	__declspec(dllexport) unsigned char PakReadPort(unsigned char port_id)
 	{
-		if (BeckerEnabled && ((Port == 0x41) | (Port== 0x42 )))
-			return(gBecker.read(Port));
-		if (((Port == 0x50) | (Port == 0x51)) & ClockEnabled)
-			return gDistoRtc.read_port(Port);
-		return(disk_io_read(Port));
+		if (BeckerEnabled && ((port_id == 0x41) | (port_id == 0x42)))
+		{
+			return becker_read(port_id);
+		}
+#endif
+
+		if (ClockEnabled && port_id == 0x50)
+		{
+			return gDistoRtc.read_data();
+		}
+
+		if (ClockEnabled && port_id == 0x51)
+		{
+			return 0;
+		}
+
+		return disk_io_read(port_id);
 	}
 }
 
