@@ -167,7 +167,7 @@ STRINGTABLE
 BEGIN
     IDS_MODULE_NAME         "MPI"
     IDS_CATNUMBER           "26-3124"
-    IDS_VERISON             "1.301"
+    IDS_VERSION             "1.301"
     IDS_DESCRIPTION         "[TODO: DESCRIPTION]"
 END
 
