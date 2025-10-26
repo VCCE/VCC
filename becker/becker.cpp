@@ -464,7 +464,7 @@ extern "C" __declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
 	}
 
 /*
-	__declspec(dllexport) unsigned char PakReset()
+	__declspec(dllexport) void PakReset()
 	{
 		if (PakSetCart!=NULL)
 			PakSetCart(1);

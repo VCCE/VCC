@@ -428,11 +428,10 @@ extern "C"
     }
 
     // Reset module
-    __declspec(dllexport) unsigned char PakReset()
+    __declspec(dllexport) void PakReset()
     {
         DLOG_C("PakReset\n");
         SDCInit();
-        return 0;
     }
 
     //  Dll export run config dialog
