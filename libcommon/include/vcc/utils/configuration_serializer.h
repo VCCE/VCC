@@ -34,11 +34,23 @@ namespace vcc::utils
 
 		LIBCOMMON_EXPORT explicit configuration_serializer(path_type path);
 
-		LIBCOMMON_EXPORT void write(const string_type& section, const string_type& key, int value) const;
-		LIBCOMMON_EXPORT void write(const string_type& section, const string_type& key, const string_type& value) const;
+		LIBCOMMON_EXPORT [[nodiscard]] void write(
+			const string_type& section,
+			const string_type& key,
+			int value) const;
+		LIBCOMMON_EXPORT [[nodiscard]] void write(
+			const string_type& section,
+			const string_type& key,
+			const string_type& value) const;
 
-		LIBCOMMON_EXPORT int read(const string_type& section, const string_type& key, int default_value) const;
-		LIBCOMMON_EXPORT string_type read(const string_type& section, const string_type& key, const string_type& default_value = {}) const;
+		LIBCOMMON_EXPORT [[nodiscard]] int read(
+			const string_type& section,
+			const string_type& key,
+			int default_value) const;
+		LIBCOMMON_EXPORT [[nodiscard]] string_type read(
+			const string_type& section,
+			const string_type& key,
+			const string_type& default_value = {}) const;
 
 
 	private:

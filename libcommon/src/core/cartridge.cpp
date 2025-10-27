@@ -33,20 +33,22 @@ namespace vcc::core
 	void cartridge::process_horizontal_sync()
 	{}
 
-	void cartridge::write_port(unsigned char port_id, unsigned char value)
+	void cartridge::write_port(
+		[[maybe_unused]] unsigned char port_id,
+		[[maybe_unused]] unsigned char value)
 	{}
 
-	unsigned char cartridge::read_port(unsigned char port_id)
+	unsigned char cartridge::read_port([[maybe_unused]] unsigned char port_id)
 	{ 
 		return {};
 	}
 
-	unsigned char cartridge::read_memory_byte(unsigned short memory_address)
+	unsigned char cartridge::read_memory_byte([[maybe_unused]] unsigned short memory_address)
 	{
 		return {};
 	}
 
-	void cartridge::status(char* text_buffer, size_t buffer_size)
+	void cartridge::status(char* text_buffer, [[maybe_unused]] size_t buffer_size)
 	{
 		*text_buffer = 0;
 	}
@@ -56,7 +58,7 @@ namespace vcc::core
 		return {};
 	}
 
-	void cartridge::menu_item_clicked(unsigned char menu_item_id)
+	void cartridge::menu_item_clicked([[maybe_unused]] unsigned char menu_item_id)
 	{}
 
 }

@@ -46,20 +46,16 @@ namespace vcc::cartridges
 			buffer_type buffer,
 			bool enable_bank_switching);
 		
-		LIBCOMMON_EXPORT name_type name() const override;
-		LIBCOMMON_EXPORT catalog_id_type catalog_id() const override;
-		LIBCOMMON_EXPORT description_type description() const override;
+		LIBCOMMON_EXPORT [[nodiscard]] name_type name() const override;
+		LIBCOMMON_EXPORT [[nodiscard]] catalog_id_type catalog_id() const override;
+		LIBCOMMON_EXPORT [[nodiscard]] description_type description() const override;
 
 		LIBCOMMON_EXPORT void start() override;
 		LIBCOMMON_EXPORT void reset() override;
 
-		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memory_address) override;
+		LIBCOMMON_EXPORT [[nodiscard]] unsigned char read_memory_byte(unsigned short memory_address) override;
 
 		LIBCOMMON_EXPORT void write_port(unsigned char port_id, unsigned char value) override;
-
-
-	protected:
-
 
 
 	private:

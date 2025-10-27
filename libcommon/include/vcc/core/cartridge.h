@@ -40,22 +40,22 @@ namespace vcc::core
 
 		virtual ~cartridge() = default;
 
-		virtual name_type name() const = 0;
-		virtual catalog_id_type catalog_id() const = 0;
-		virtual description_type description() const = 0;
+		virtual [[nodiscard]] name_type name() const = 0;
+		virtual [[nodiscard]] catalog_id_type catalog_id() const = 0;
+		virtual [[nodiscard]] description_type description() const = 0;
 
 		virtual void start();
 		virtual void stop();
 		virtual void reset();
 
-		virtual unsigned char read_memory_byte(unsigned short memory_address);
+		virtual [[nodiscard]] unsigned char read_memory_byte(unsigned short memory_address);
 
 		virtual void write_port(unsigned char port_id, unsigned char value);
-		virtual unsigned char read_port(unsigned char port_id);
+		virtual [[nodiscard]] unsigned char read_port(unsigned char port_id);
 
 		virtual void process_horizontal_sync();
 
-		virtual unsigned short sample_audio();
+		virtual [[nodiscard]] unsigned short sample_audio();
 
 		virtual void status(char* text_buffer, size_t buffer_size);
 		virtual void menu_item_clicked(unsigned char menu_item_id);
