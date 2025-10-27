@@ -1,24 +1,25 @@
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
-
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
+////////////////////////////////////////////////////////////////////////////////
+//	Copyright 2015 by Joseph Forgione
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	modify it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or (at your
+//	option) any later version.
+//	
+//	VCC (Virtual Color Computer) is distributed in the hope that it will be
+//	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+//	Public License for more details.
+//	
+//	You should have received a copy of the GNU General Public License along with
+//	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////////
 #include <vcc/devices/rtc/oki_m6242b.h>
 #include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 
 /* Table description:							   Bit3  Bit2  Bit1  Bit0
 Write to $FF51 read from $FF50
@@ -48,8 +49,6 @@ Write to $FF51 read from $FF50
 	
 	Note: Digits are BDC. Registers only four bits wide.
 	X denotes 'not used'
-
-
 */
 
 namespace vcc::devices::rtc
@@ -57,7 +56,7 @@ namespace vcc::devices::rtc
 
 	unsigned char oki_m6242b::read_port(unsigned short port_id)
 	{
-		unsigned char ret_val=0;
+		auto ret_val = 0u;
 
 		if (port_id == 0x50)
 		{
@@ -135,7 +134,7 @@ namespace vcc::devices::rtc
 			}
 		}
 
-		return ret_val;
+		return static_cast<unsigned char>(ret_val);
 	}
 
 	void oki_m6242b::write_port(unsigned char data, unsigned char port_id)

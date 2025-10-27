@@ -36,7 +36,7 @@ namespace vcc::core
 
 		virtual ~cartridge_context() = default;
 
-		virtual path_type configuration_path() const = 0;
+		virtual [[nodiscard]] path_type configuration_path() const = 0;
 
 		virtual void reset() = 0;
 
@@ -44,7 +44,7 @@ namespace vcc::core
 		virtual void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) = 0;
 
 		virtual void write_memory_byte(unsigned char value, unsigned short address) = 0;
-		virtual unsigned char read_memory_byte(unsigned short address) = 0;
+		virtual [[nodiscard]] unsigned char read_memory_byte(unsigned short address) = 0;
 
 		virtual void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) = 0;
 	};

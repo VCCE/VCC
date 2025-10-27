@@ -24,6 +24,6 @@
 namespace vcc::utils
 {
 
-	LIBCOMMON_EXPORT std::string load_string(HINSTANCE instance, UINT id);
+	LIBCOMMON_EXPORT [[nodiscard]] std::string load_string(HINSTANCE instance, UINT id);
 
 }

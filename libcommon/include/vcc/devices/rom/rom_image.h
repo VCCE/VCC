@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+
 namespace vcc::devices::rom
 {
 
@@ -38,17 +39,17 @@ namespace vcc::devices::rom
 		LIBCOMMON_EXPORT rom_image() = default;
 		LIBCOMMON_EXPORT ~rom_image() = default;
 
-		bool empty() const
+		[[nodiscard]] bool empty() const
 		{
 			return data_.empty();
 		}
 
-		path_type filename() const
+		[[nodiscard]] path_type filename() const
 		{
 			return filename_;
 		}
 
-		LIBCOMMON_EXPORT bool load(path_type filename);
+		LIBCOMMON_EXPORT [[nodiscard]] bool load(path_type filename);
 
 		void clear()
 		{
@@ -56,7 +57,7 @@ namespace vcc::devices::rom
 			data_.clear();
 		}
 
-		value_type read_memory_byte(size_type memory_address) const
+		[[nodiscard]] value_type read_memory_byte(size_type memory_address) const
 		{
 			if (data_.empty())
 			{
