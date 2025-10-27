@@ -15,13 +15,13 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/utils/cartridge_loader.h>
 #include <vcc/cartridges/rom_cartridge.h>
-#include <vcc/cartridges/legacy_cartridge.h>
+#include <vcc/cartridges/capi_adapter_cartridge.h>
+#include <vcc/utils/cartridge_loader.h>
+#include <vcc/core/cartridge_factory.h>
 #include <vector>
 #include <fstream>
 #include <iterator>
-#include <vcc/core/cartridge_factory.h>
 
 
 namespace vcc::utils
@@ -62,8 +62,8 @@ namespace vcc::utils
 	}
 
 	cartridge_loader_result load_rom_cartridge(
-		std::unique_ptr<::vcc::core::cartridge_context> context,
-		const std::string& filename)
+		const std::string& filename,
+		std::unique_ptr<::vcc::core::cartridge_context> context)
 	{
 		constexpr size_t PAK_MAX_MEM = 0x40000;
 
@@ -106,12 +106,12 @@ namespace vcc::utils
 		};
 	}
 
-	cartridge_loader_result load_legacy_cartridge(
+	cartridge_loader_result load_capi_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& iniPath,
-		const cpak_cartridge_context& cpak_context)
+		const cartridge_capi_context& capi_context)
 	{
 		if (GetModuleHandle(filename.c_str()) != nullptr)
 		{
@@ -131,7 +131,7 @@ namespace vcc::utils
 			"GetPakFactory")));
 		if (factoryAccessor != nullptr)
 		{
-			details.cartridge = factoryAccessor()(move(cartridge_context), cpak_context);
+			details.cartridge = factoryAccessor()(move(cartridge_context), capi_context);
 			details.load_result = cartridge_loader_status::success;
 
 			return details;
@@ -139,11 +139,11 @@ namespace vcc::utils
 
 		if (GetProcAddress(details.handle.get(), "PakInitialize") != nullptr)
 		{
-			details.cartridge = std::make_unique<vcc::cartridges::legacy_cartridge>(
+			details.cartridge = std::make_unique<vcc::cartridges::capi_adapter_cartridge>(
 				details.handle.get(),
 				host_context,
 				iniPath,
-				cpak_context);
+				capi_context);
 			details.load_result = cartridge_loader_status::success;
 
 			return details;
@@ -155,7 +155,7 @@ namespace vcc::utils
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
-		const cpak_cartridge_context& cpak_context,
+		const cartridge_capi_context& capi_context,
 		void* const host_context,
 		const std::string& iniPath)
 	{
@@ -166,15 +166,15 @@ namespace vcc::utils
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 
 		case cartridge_file_type::rom_image:	//	File is a ROM image
-			return load_rom_cartridge(move(cartridge_context), filename);
+			return load_rom_cartridge(filename, move(cartridge_context));
 
 		case cartridge_file_type::library:		//	File is a DLL
-			return load_legacy_cartridge(
+			return load_capi_cartridge(
 				filename,
 				move(cartridge_context),
 				host_context,
 				iniPath,
-				cpak_context);
+				capi_context);
 		}
 	}
 

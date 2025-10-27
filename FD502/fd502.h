@@ -16,7 +16,7 @@
 //
 //---------------------------------------------------------------------------------
 #pragma once
-#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/cartridge_capi.h>
 
 extern void*const& gHostKey;
 extern PakAssertInteruptHostCallback AssertInt;

@@ -18,7 +18,7 @@
 #pragma once
 #include <vcc/core/cartridge.h>
 #include <vcc/core/cartridge_context.h>
-#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/cartridge_capi.h>
 #include <vcc/utils/dll_deleter.h>
 #include <string>
 #include <memory>
@@ -65,17 +65,17 @@ namespace vcc::utils
 		const std::string& filename,
 		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context);
 
-	LIBCOMMON_EXPORT cartridge_loader_result load_legacy_cartridge(
+	LIBCOMMON_EXPORT cartridge_loader_result load_capi_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& iniPath,
-		const cpak_cartridge_context& cpak_context);
+		const cartridge_capi_context& capi_context);
 
 	LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
-		const cpak_cartridge_context& cpak_context,
+		const cartridge_capi_context& capi_context,
 		void* const host_context,
 		const std::string& iniPath);
 
