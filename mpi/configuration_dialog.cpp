@@ -82,9 +82,9 @@ void configuration_dialog::select_new_cartridge(slot_id_type slot)
 	dlg.setTitle("Load Program Pak");
 	dlg.setInitialDir(configuration_.last_accessed_module_path().c_str());
 	dlg.setFilter(
-		"All Pak Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
 		"Hardware Pak (*.dll)\0*.dll\0"
 		"Rom Pak (*.rom; *.ccc; *.pak)\0*.rom;*.ccc;*.pak\0"
+		"All Pak Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
 		"\0");
 	dlg.setFlags(OFN_FILEMUSTEXIST);
 	if (dlg.show(0, dialog_handle_))
