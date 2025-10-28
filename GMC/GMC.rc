@@ -94,7 +94,7 @@ STRINGTABLE
 BEGIN
     IDS_MODULE_NAME         "Game Master Catridge (SN76489)"
     IDS_CATNUMBER           "26-XXXX"
-    IDS_DESCRIPTION         "[TODO: DESCRIPTION]"
+    IDS_DESCRIPTION         "Emulates John Linville's Game Master Cart. This cartridge provides a dedicated sound chip (SN76489) and more memory, allowing for enhanced graphics and audio in games."
     IDS_VERSION             "1.0"
 END
 
