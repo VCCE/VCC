@@ -103,7 +103,7 @@ BEGIN
     IDS_MODULE_NAME         "Orchestra-90"
     IDS_CATNUMBER           "26-3143"
     IDS_VERSION             "1.30"
-    IDS_DESCRIPTION         "[TODO: DESCRIPTION]"
+    IDS_DESCRIPTION         "Emulates Tandy Orchestra-90 CC Stereo Music Synthesizer cart with rom. Supports six octave ranges and up tp five simultaneous voices. Can transfer music to/from tape or from a floppy mounted in FD502 drive one.  FD502 must be inserted in mpi slot 4."
 END
 
 #endif    // English (U.S.) resources
