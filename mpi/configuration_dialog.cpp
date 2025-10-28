@@ -103,13 +103,9 @@ void configuration_dialog::select_new_cartridge(slot_id_type slot)
 
 void configuration_dialog::set_selected_slot(slot_id_type slot)
 {
-	SendDlgItemMessage(
-		dialog_handle_,
-		IDC_MODINFO,
-		WM_SETTEXT,
-		0,
-		reinterpret_cast<LPARAM>(mpi_.slot_description(slot).c_str()));
+	display_slot_description(slot);
 
+	// Get radio button IDs
 	for (auto ndx(0u); ndx < gSlotUiElementIds.size(); ndx++)
 	{
 		SendDlgItemMessage(
@@ -125,6 +121,15 @@ void configuration_dialog::set_selected_slot(slot_id_type slot)
 	configuration_.selected_slot(slot);
 }
 
+void configuration_dialog::display_slot_description(slot_id_type slot)
+{
+	SendDlgItemMessage(
+		dialog_handle_,
+			IDC_MODINFO,
+			WM_SETTEXT,
+			0,
+			reinterpret_cast<LPARAM>(mpi_.slot_description(slot).c_str()));
+}
 
 void configuration_dialog::update_slot_details(slot_id_type slot)
 {
@@ -159,10 +164,12 @@ void configuration_dialog::eject_or_select_new_cartridge(slot_id_type slot)
 		return;
 	}
 
+
 	if (!mpi_.empty(slot))
 	{
 		mpi_.eject_cartridge(slot);
 		configuration_.slot_cartridge_path(slot, {});
+
 	}
 	else
 	{
@@ -170,6 +177,13 @@ void configuration_dialog::eject_or_select_new_cartridge(slot_id_type slot)
 	}
 
 	update_slot_details(slot);
+
+	// Update description if slot was selected
+	if (slot == configuration_.selected_slot())
+	{
+		display_slot_description(slot);
+	}
+
 	mpi_.build_menu();
 }
 
