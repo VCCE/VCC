@@ -39,4 +39,4 @@ jobs:
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: cmd.exe /c BuildAll.bat
+      run: cmd.exe /c BuildLogging.bat
