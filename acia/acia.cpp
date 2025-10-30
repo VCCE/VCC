@@ -122,19 +122,18 @@ extern "C"
 		CartMenuCallback = context->add_menu_item;
 		AssertInt = context->assert_interrupt;
 		strcpy(IniFile, configuration_path);
-
 		LoadConfig();
+		BuildCartridgeMenu();
 		LoadExtRom("RS232.ROM");
 		sc6551_init();
 	}
+
 	__declspec(dllexport) void PakTerminate()
 	{
 		CloseCartDialog(g_hDlg);
 		sc6551_close();
 		AciaStat[0]='\0';
 	}
-	
-
 }
 
 //-----------------------------------------------------------------------
