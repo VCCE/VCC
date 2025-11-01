@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <vcc/cartridges/rom_cartridge.h>
 
+// Interface for ROM cartridge
 
 namespace vcc::cartridges
 {
@@ -63,6 +64,7 @@ namespace vcc::cartridges
 		bank_offset_ = 0;
 	}
 
+	// A write to port 0x40 of a bank switching cart (eg RoboCop) will set the bank offset
 	void rom_cartridge::write_port(unsigned char port_id, unsigned char value)
 	{
 		if (enable_bank_switching_ && port_id == 0x40)
@@ -73,7 +75,7 @@ namespace vcc::cartridges
 
 	unsigned char rom_cartridge::read_memory_byte(unsigned short memory_address)
 	{
-		return buffer_[((memory_address & 32767) + bank_offset_) % buffer_.size()];
+		return buffer_[((memory_address & 0x7fff) + bank_offset_) % buffer_.size()];
 	}
 
 

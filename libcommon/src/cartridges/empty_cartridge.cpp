@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <vcc/cartridges/empty_cartridge.h>
 
+// Interface for empty cartridge
 
 namespace vcc::cartridges
 {
