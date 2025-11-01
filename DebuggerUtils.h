@@ -21,10 +21,7 @@
 #include <string>
 #include <vector>
 
-
-
-
-namespace VCC { namespace Debugger
+namespace VCC::Debugger
 {
 
     template<class Type_>
@@ -52,9 +49,9 @@ namespace VCC { namespace Debugger
 	int roundUp(int numToRound, int multiple);
 	int roundDn(int numToRound, int multiple);
 	unsigned char DbgRead8(bool phyAddr, unsigned short block, unsigned short PC);
-} }
+}
 
-namespace VCC { namespace Debugger { namespace UI
+namespace VCC::Debugger::UI
 {
 
 	struct BackBufferInfo
@@ -68,4 +65,4 @@ namespace VCC { namespace Debugger { namespace UI
 
 	BackBufferInfo AttachBackBuffer(HWND hWnd, int widthAdjust, int heightAdjust);
 
-} } }
+}

@@ -24,7 +24,7 @@
 #include <memory>
 #include "defines.h"
 
-namespace VCC { namespace Debugger
+namespace VCC::Debugger
 {
 
 	std::string ToHexString(long value, int length, bool leadingZeros)
@@ -104,9 +104,9 @@ namespace VCC { namespace Debugger
 		}
 	}
 	
-} }
+}
 
-namespace VCC { namespace Debugger { namespace UI
+namespace VCC::Debugger::UI
 {
 
 	BackBufferInfo AttachBackBuffer(HWND hWnd, int widthAdjust, int heightAdjust)
@@ -142,5 +142,5 @@ namespace VCC { namespace Debugger { namespace UI
 		return backBuffer;
 	}
 
-} } }
+}
 

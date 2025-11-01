@@ -22,7 +22,7 @@
 #include "OpCodeTables.h"
 #include "MachineDefs.h"
 
-namespace VCC { namespace Debugger
+namespace VCC::Debugger
 {
 	class OpDecoder
 	{
@@ -75,4 +75,4 @@ namespace VCC { namespace Debugger
 		int								CurrentLine_ = 0;
 	};
 
-} }
+}

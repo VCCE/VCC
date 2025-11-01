@@ -21,7 +21,7 @@
 #include "DebuggerUtils.h"
 #include "defines.h"
 
-namespace VCC { namespace Debugger
+namespace VCC::Debugger
 {
 
 	void OpDecoder::Reset(long maxSamples)
@@ -282,4 +282,4 @@ namespace VCC { namespace Debugger
 		return true;
 	}
 
-} }
+}

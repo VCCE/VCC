@@ -19,9 +19,9 @@
 #pragma once
 #include <Windows.h>
 
-namespace VCC { namespace Debugger { namespace UI
+namespace VCC::Debugger::UI
 {
 
 	void OpenExecutionTraceWindow(HINSTANCE instance, HWND parent);
 
-} } }
+}
