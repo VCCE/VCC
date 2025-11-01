@@ -44,7 +44,7 @@ namespace vcc::utils
 
 	}
 
-	// Look for magic "MZ" to detect DLL.  Assume rom is not.
+	// Look for magic "MZ" to detect DLL.  Assume rom if not.
 	cartridge_file_type determine_cartridge_type(const std::string& filename)
 	{
 		std::ifstream input(filename, std::ios::binary);
