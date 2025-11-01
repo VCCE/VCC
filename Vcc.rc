@@ -834,13 +834,6 @@ STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "VCC 2.1.9.3-pre3 Tandy Color Computer 3 Emulator"
     IDS_CATNUMBER           "26-3334"
-    IDS_MODULE_ALREADY_LOADED "Module is already loaded."
-    IDS_MODULE_CANNOT_OPEN  "Cannot open module."
-    IDS_MODULE_NOT_FOUND    "Module not found."
-    IDS_MODULE_NOT_LOADED   "Unable to load module."
-    IDS_MODULE_NOT_ROM      "Module is not a valid ROM image."
-    IDS_MODULE_NOT_EXPANSION "Module is not a valid expansion plugin."
-    IDS_UNKNOWN_ERROR       "Unknown error."
 END
 
 #endif    // English (United States) resources

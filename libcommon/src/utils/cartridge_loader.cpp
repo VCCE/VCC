@@ -15,14 +15,19 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
+#include "../resource/resource.h"
 #include <vcc/cartridges/rom_cartridge.h>
 #include <vcc/cartridges/capi_adapter_cartridge.h>
 #include <vcc/utils/cartridge_loader.h>
+#include <vcc/utils/winapi.h>
 #include <vcc/core/cartridge_factory.h>
 #include <vector>
 #include <fstream>
 #include <iterator>
+#include <map>
 
+
+extern HINSTANCE gModuleInstance;
 
 namespace vcc::utils
 {
@@ -128,6 +133,11 @@ namespace vcc::utils
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 		}
 
+		if (GetProcAddress(details.handle.get(), "ModuleName") != nullptr)
+		{
+			return { nullptr, nullptr, cartridge_loader_status::unsupported_api };
+		}
+
 		const auto factoryAccessor(reinterpret_cast<GetPakFactoryFunction>(GetProcAddress(
 			details.handle.get(),
 			"GetPakFactory")));
@@ -178,6 +188,25 @@ namespace vcc::utils
 				iniPath,
 				capi_context);
 		}
+	}
+
+	::std::string load_error_string(cartridge_loader_status status)
+	{
+		static const std::map<cartridge_loader_status, UINT> string_id_map = {
+			{ cartridge_loader_status::already_loaded, IDS_ERROR_CARTRIDGE_ALREADY_LOADED},
+			{ cartridge_loader_status::cannot_open, IDS_ERROR_CARTRIDGE_CANNOT_OPEN},
+			{ cartridge_loader_status::not_found, IDS_ERROR_CARTRIDGE_NOT_FOUND },
+			{ cartridge_loader_status::unsupported_api, IDS_ERROR_CARTRIDGE_API_NOT_SUPPORTED },
+			{ cartridge_loader_status::not_loaded, IDS_ERROR_CARTRIDGE_NOT_LOADED },
+			{ cartridge_loader_status::not_rom, IDS_ERROR_CARTRIDGE_NOT_ROM },
+			{ cartridge_loader_status::not_expansion, IDS_ERROR_CARTRIDGE_NOT_EXPANSION }
+		};
+
+		const auto string_id_ptr(string_id_map.find(status));
+
+		return vcc::utils::load_string(
+			gModuleInstance,
+			string_id_ptr != string_id_map.end() ? string_id_ptr->second : IDS_ERROR_UNKNOWN);
 	}
 
 }

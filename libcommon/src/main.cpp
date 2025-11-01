@@ -3,10 +3,15 @@
 #include <Windows.h>
 
 
-BOOL APIENTRY DllMain(
-	[[maybe_unused]] HMODULE hModule,
-	[[maybe_unused]] DWORD  ul_reason_for_call,
-	[[maybe_unused]] LPVOID lpReserved)
+HINSTANCE gModuleInstance = nullptr;
+
+
+BOOL APIENTRY DllMain(HMODULE module_handle, DWORD  reason, LPVOID reserved)
 {
+    if(reason == DLL_PROCESS_ATTACH)
+    {
+		gModuleInstance = module_handle;
+    }
+
 	return TRUE;
 }
