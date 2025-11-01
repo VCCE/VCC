@@ -30,7 +30,7 @@
 #include "OpDecoder.h"
 
 
-namespace VCC { namespace Debugger
+namespace VCC::Debugger
 {
 
 	struct Client
@@ -173,4 +173,4 @@ namespace VCC { namespace Debugger
 		bool							Break_Enabled_TF = false;
 		bool							Halt_Enabled_TF = false;
 	};
-} }
+}

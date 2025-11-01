@@ -20,9 +20,9 @@
 #include <Windows.h>
 
 
-namespace VCC { namespace Debugger { namespace UI
+namespace VCC::Debugger::UI
 {
 
 	void OpenSourceDebugWindow(HINSTANCE instance, HWND parent);
 
-} } }
+}

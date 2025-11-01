@@ -25,7 +25,7 @@
 #include "audio.h"
 #include "Disassembler.h"
 
-namespace VCC { namespace Debugger
+namespace VCC::Debugger
 {
 
 	void Debugger::Reset()
@@ -505,6 +505,6 @@ namespace VCC { namespace Debugger
 		Break_Enabled_TF = flag;
 	}
 
-} }
+}
 
 

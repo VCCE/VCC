@@ -33,7 +33,7 @@ This file is part of VCC (Virtual Color Computer).
 
 static HINSTANCE g_hinstDLG;
 
-namespace VCC { namespace Debugger { namespace UI { namespace 
+namespace VCC::Debugger::UI { namespace
 {
 	HWND ExecutionTraceWindow = nullptr;
 	HWND hWndExecutionTrace;
@@ -1500,7 +1500,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		return FALSE;
 	}
 
-} } } }
+} }
 
 
 //-------------------------------------------------------------------------------

@@ -25,7 +25,7 @@
 #include <array>
 #include "MachineDefs.h"
 
-namespace VCC { namespace Debugger
+namespace VCC::Debugger
 {
 
 	class OpCodeTables
@@ -982,6 +982,6 @@ namespace VCC { namespace Debugger
 		std::string ToRelativeAddressString(int value, int operandlen) const;
 
 	};
-}}
+}
 
 #pragma warning(pop)

@@ -22,7 +22,7 @@
 #include "../CartridgeMenu.h"
 
 
-namespace vcc { namespace modules { namespace mpi
+namespace vcc::modules::mpi
 {
 
 	class cartridge_slot
@@ -167,4 +167,4 @@ namespace vcc { namespace modules { namespace mpi
 		bool line_state_ = false;
 	};
 
-} } }
+}
