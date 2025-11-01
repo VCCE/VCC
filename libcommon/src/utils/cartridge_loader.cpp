@@ -44,7 +44,7 @@ namespace vcc::utils
 
 	}
 
-
+	// Look for magic "MZ" to detect DLL.  Assume rom is not.
 	cartridge_file_type determine_cartridge_type(const std::string& filename)
 	{
 		std::ifstream input(filename, std::ios::binary);
@@ -61,11 +61,12 @@ namespace vcc::utils
 		return cartridge_file_type::rom_image;
 	}
 
+	// Load rom cartridge
 	cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::core::cartridge_context> context)
 	{
-		constexpr size_t PAK_MAX_MEM = 0x40000;
+		constexpr size_t PAK_MAX_MEM = 0x40000;   // 256KB
 
 		std::vector<uint8_t> romImage;
 
@@ -91,7 +92,7 @@ namespace vcc::utils
 		}
 
 		// Force enable bank switching since we don't have a way to detect if
-		// it should be enabled.
+		// it should be enabled.   (CCC file > 16KB?)
 		constexpr bool enable_bank_switching = true;
 
 		return {
@@ -106,6 +107,7 @@ namespace vcc::utils
 		};
 	}
 
+	// Load C API hardware cart
 	cartridge_loader_result load_capi_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,

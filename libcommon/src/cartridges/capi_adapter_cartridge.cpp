@@ -18,6 +18,7 @@
 #include <vcc/cartridges/capi_adapter_cartridge.h>
 #include <stdexcept>
 
+// C API hardware cartridge interface
 
 namespace vcc::cartridges
 {
