@@ -1,36 +1,20 @@
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
-
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-/********************************************************************************
-*  File name: wd1793.c															*
-*  Copyright 2005 by Joseph Forgione											*
-*  This will Emulate the Western Digital wd1793 Floppy Disk Controller chip		*
-*  and  support circuts as implemented in the Tandy Color Computer 1,2 and 3.	*
-*  Last change date 03/16/2005													*				
-*  Last change date 07/14/2005 Changes NMI assert fucntion						*
-*  Last change date 07/26/2005 Complete rewrite to get F**king nitros09 to boot	*
-*  Last change date 02/04/2006 rewritten again for DMK and writetrack support	*
-*  Last change date 06/27/2006 seek time more closely emulated					*
-*  Last change date 05/16/2007 Better DMK support. Diecom protection works now	*
-*  Last change date 05/21/2007 Added fdrawcmd support for real disk access/		*
-*																				*
-********************************************************************************/
-
+////////////////////////////////////////////////////////////////////////////////
+//	Copyright 2015 by Joseph Forgione
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	modify it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or (at your
+//	option) any later version.
+//	
+//	VCC (Virtual Color Computer) is distributed in the hope that it will be
+//	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+//	Public License for more details.
+//	
+//	You should have received a copy of the GNU General Public License along with
+//	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////////
 #include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>
