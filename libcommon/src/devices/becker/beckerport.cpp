@@ -58,6 +58,16 @@ namespace vcc::devices::beckerport
 			dw_close();
 	}
 
+	const char* Becker::server_address() const
+	{
+		return address_;
+	}
+
+	const char* Becker::server_port() const
+	{
+		return port_;
+	}
+
 	// Enable the interface
 	void Becker::enable(bool enable)
 	{
