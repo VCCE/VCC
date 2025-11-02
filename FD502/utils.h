@@ -16,9 +16,10 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridge_capi.h>
 
-extern void*const& gHostKey;
-extern PakAssertInteruptHostCallback AssertInt;
-void BuildCartridgeMenu();
 
+long CreateDiskHeader(
+	const char* FileName,
+	unsigned char Type,
+	unsigned char Tracks,
+	unsigned char DblSided);

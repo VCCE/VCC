@@ -47,9 +47,22 @@ namespace vcc::utils
 		WritePrivateProfileString(section.c_str(), key.c_str(), value.c_str(), path_.c_str());
 	}
 
-	int configuration_serializer::read(const string_type& section, const string_type& key, int default_value) const
+	int configuration_serializer::read(const string_type& section, const string_type& key, const int& default_value) const
 	{
 		return GetPrivateProfileInt(section.c_str(), key.c_str(), default_value, path_.c_str());
+	}
+
+	configuration_serializer::size_type configuration_serializer::read(
+		const string_type& section,
+		const string_type& key,
+		const size_type& default_value) const
+	{
+		return GetPrivateProfileInt(section.c_str(), key.c_str(), default_value, path_.c_str());
+	}
+
+	bool configuration_serializer::read(const string_type& section, const string_type& key, bool default_value) const
+	{
+		return GetPrivateProfileInt(section.c_str(), key.c_str(), default_value, path_.c_str()) != 0;
 	}
 
 	configuration_serializer::string_type configuration_serializer::read(

@@ -29,6 +29,7 @@ namespace vcc::utils
 
 		using path_type = ::std::string;
 		using string_type = ::std::string;
+		using size_type = ::std::size_t;
 
 	public:
 
@@ -43,10 +44,18 @@ namespace vcc::utils
 			const string_type& key,
 			const string_type& value) const;
 
+		LIBCOMMON_EXPORT [[nodiscard]] bool read(
+			const string_type& section,
+			const string_type& key,
+			bool default_value) const;
 		LIBCOMMON_EXPORT [[nodiscard]] int read(
 			const string_type& section,
 			const string_type& key,
-			int default_value) const;
+			const int& default_value) const;
+		LIBCOMMON_EXPORT [[nodiscard]] size_type read(
+			const string_type& section,
+			const string_type& key,
+			const size_type& default_value) const;
 		LIBCOMMON_EXPORT [[nodiscard]] string_type read(
 			const string_type& section,
 			const string_type& key,
