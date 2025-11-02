@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <vcc/core/detail/exports.h>
+#include <Windows.h>
 
 
 namespace vcc::devices::beckerport
@@ -28,6 +29,9 @@ namespace vcc::devices::beckerport
 	public:
 		Becker();
 		~Becker();
+
+		const char* server_address() const;
+		const char* server_port() const;
 
 		void enable(bool);                        // enable or disable
 		void sethost(const char *, const char *); // server ip address, port

@@ -15,16 +15,31 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#pragma once
-#include <vcc/core/detail/exports.h>
+#include "becker_cartridge.h"
+#include <vcc/core/cartridge_factory.h>
 #include <Windows.h>
-#include <string>
 
 
-namespace vcc::utils
+static HINSTANCE gModuleInstance;
+
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
+	if (fdwReason == DLL_PROCESS_ATTACH)
+	{
+		gModuleInstance = hinstDLL;
+	}
 
-	LIBCOMMON_EXPORT [[nodiscard]] std::string load_string(HINSTANCE instance, UINT id);
-	LIBCOMMON_EXPORT [[nodiscard]] std::string get_dialog_item_text(HWND window, UINT id);
+	return true;
+}
 
+
+extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
+{
+	return [](
+		[[maybe_unused]] std::unique_ptr<::vcc::core::cartridge_context> context,
+		[[maybe_unused]] const cartridge_capi_context& capi_context) -> std::unique_ptr<::vcc::core::cartridge>
+		{
+			return std::make_unique<becker_cartridge>(move(context), gModuleInstance);
+		};
 }
