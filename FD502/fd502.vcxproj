@@ -85,6 +85,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="fd502.cpp" />
+    <ClCompile Include="utils.cpp" />
     <ClCompile Include="wd1793.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -92,7 +93,9 @@
     <ClInclude Include="fd502.h" />
     <ClInclude Include="fdrawcmd.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="utils.h" />
     <ClInclude Include="wd1793.h" />
+    <ClInclude Include="wd1793defs.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="fd502.rc" />

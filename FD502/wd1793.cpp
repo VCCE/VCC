@@ -15,15 +15,16 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
+#include "wd1793.h"
+#include "wd1793defs.h"
+#include "defines.h"
+#include "fd502.h"
+#include "fdrawcmd.h"	// http://simonowen.com/fdrawcmd/
+#include <vcc/core/interrupts.h>
+#include <winioctl.h>
 #include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <winioctl.h>
-#include "defines.h"
-#include <vcc/core/interrupts.h>
-#include "wd1793.h"
-#include "fd502.h"
-#include "fdrawcmd.h"	// http://simonowen.com/fdrawcmd/
 /****************Fuction Protos for this Module************/
 
 unsigned char GetBytefromSector ();
@@ -57,7 +58,7 @@ bool CmdFormat (HANDLE , PFD_FORMAT_PARAMS , ULONG );
 static unsigned char StepTimesMS[4]={6,12,20,30};
 static unsigned short BytesperSector[4]={128,256,512,1024};
 static unsigned char TransferBuffer[16384]="";
-DiskInfo Drive[5];
+static DiskInfo Drive[5];
 static unsigned char StatusReg=READY;
 static unsigned char DataReg=0;
 static unsigned char TrackReg=0;
@@ -96,6 +97,12 @@ bool SetDataRate (HANDLE , BYTE );
 static FD_READ_WRITE_PARAMS rwp;
 static bool DirtyDisk=true;
 char ImageFormat[5][4]={"JVC","VDK","DMK","OS9","RAW"};
+
+
+::std::string get_mounted_disk_filename(::std::size_t drive_index)
+{
+	return Drive[drive_index].ImageName;
+}
 
 /*************************************************************/
 unsigned char disk_io_read(unsigned char port)
