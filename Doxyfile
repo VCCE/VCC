@@ -970,6 +970,7 @@ INPUT                  = ./mpi					\
 						 ./gmc					\
 						 ./orch90				\
 						 ./ramdisk				\
+						 ./fd502				\
 						 ./libcommon/include
 						 
 # This tag can be used to specify the character encoding of the source files
