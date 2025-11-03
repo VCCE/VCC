@@ -29,8 +29,6 @@ void DiskStatus(char* text_buffer, size_t buffer_size);
 void PingFdc();
 unsigned char SetTurboDisk( unsigned char);
 //unsigned char UseKeyboardLeds(unsigned char);
-DWORD GetDriverVersion ();
-unsigned short InitController ();
 ::std::string get_mounted_disk_filename(::std::size_t drive_index);
 
 // FIXME: Needs a name and should be scoped
@@ -39,6 +37,5 @@ enum
 	JVC,
 	VDK,
 	DMK,
-	OS9,
-	RAW
+	OS9
 };

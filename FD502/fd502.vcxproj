@@ -91,7 +91,6 @@
   <ItemGroup>
     <ClInclude Include="defines.h" />
     <ClInclude Include="fd502.h" />
-    <ClInclude Include="fdrawcmd.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="wd1793.h" />

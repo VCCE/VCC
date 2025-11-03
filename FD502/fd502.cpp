@@ -23,17 +23,17 @@
 #include "utils.h"
 #include "../CartridgeMenu.h"
 #include <vcc/devices/becker/beckerport.h>
+#include <vcc/devices/rtc/oki_m6242b.h>
+#include <vcc/devices/rom/rom_image.h>
+#include <vcc/utils/winapi.h>
+#include <vcc/utils/configuration_serializer.h>
+#include <vcc/utils/filesystem.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include <vcc/common/logger.h>
-#include <vcc/utils/winapi.h>
-#include <vcc/devices/rtc/oki_m6242b.h>
 #include <vcc/core/limits.h>
-#include <vcc/devices/rom/rom_image.h>
 #include <Windows.h>
 #include <array>
-#include <vcc/utils/configuration_serializer.h>
-#include <vcc/utils/filesystem.h>
 
 
 static const auto default_selected_rom_index = 1u;
@@ -57,10 +57,6 @@ static ::vcc::devices::rom::rom_image ExternalRom;
 static ::vcc::devices::rom::rom_image DiskRom;
 static ::vcc::devices::rom::rom_image RGBDiskRom;
 
-unsigned char PhysicalDriveA = 0;
-unsigned char PhysicalDriveB = 0;
-unsigned char OldPhysicalDriveA = 0;
-unsigned char OldPhysicalDriveB = 0;
 static const std::array<::vcc::devices::rom::rom_image*, 3> RomPointer = { &ExternalRom, &DiskRom, &RGBDiskRom };
 static unsigned char NewDiskNumber = 0;
 static unsigned char CreateFlag = 0;
@@ -69,7 +65,6 @@ static size_t TempSelectRomIndex = default_selected_rom_index;
 
 static HWND g_hConfDlg = nullptr;
 static HINSTANCE gModuleInstance;
-static unsigned long RealDisks=0;
 long CreateDisk (unsigned char);
 static char TempFileName[MAX_PATH]="";
 static char TempRomFileName[MAX_PATH]="";
@@ -137,7 +132,6 @@ extern "C"
 		AssertInt = context->assert_interrupt;
 		strcpy(IniFile, configuration_path);
 
-		RealDisks = InitController();
 		LoadConfig();
 		BuildCartridgeMenu();
 	}
@@ -279,8 +273,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 {
 	static unsigned char temp=0,temp2=0;
 	long ChipChoice[3]={IDC_EXTROM,IDC_TRSDOS,IDC_RGB};
-	long VirtualDrive[2]={IDC_DISKA,IDC_DISKB};
-	char VirtualNames[5][16]={"None","Drive 0","Drive 1","Drive 2","Drive 3"};
 
 	switch (message)
 	{
@@ -292,16 +284,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 		case WM_INITDIALOG:
 			CenterDialog(hDlg);
 			TempSelectRomIndex = SelectRomIndex;
-			if (!RealDisks)
-			{
-				EnableWindow(GetDlgItem(hDlg, IDC_DISKA), FALSE);
-				EnableWindow(GetDlgItem(hDlg, IDC_DISKB), FALSE);
-				PhysicalDriveA=0;
-				PhysicalDriveB=0;
-			}
 			SendDlgItemMessage(hDlg, IDC_CLOCK, BM_SETCHECK, ClockEnabled, false);
-			OldPhysicalDriveA=PhysicalDriveA;
-			OldPhysicalDriveB=PhysicalDriveB;
 			strcpy(TempRomFileName,RomFileName.c_str());
 			SendDlgItemMessage(hDlg,IDC_TURBO,BM_SETCHECK,SetTurboDisk(QUERY),0);
 			SendDlgItemMessage(hDlg, IDC_PERSIST, BM_SETCHECK, PersistDisks, false);
@@ -309,12 +292,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 			{
 				SendDlgItemMessage(hDlg, ChipChoice[temp], BM_SETCHECK, (temp == TempSelectRomIndex), 0);
 			}
-			for (temp=0;temp<2;temp++)
-				for (temp2=0;temp2<5;temp2++)
-						SendDlgItemMessage (hDlg,VirtualDrive[temp], CB_ADDSTRING, 0, (LPARAM) VirtualNames[temp2]);
-
-			SendDlgItemMessage (hDlg, IDC_DISKA,CB_SETCURSEL,(WPARAM)PhysicalDriveA,(LPARAM)0);
-			SendDlgItemMessage (hDlg, IDC_DISKB,CB_SETCURSEL,(WPARAM)PhysicalDriveB,(LPARAM)0);
 			SendDlgItemMessage (hDlg,IDC_ROMPATH,WM_SETTEXT,0,(LPARAM)(LPCSTR)TempRomFileName);
 
 			SendDlgItemMessage(hDlg, IDC_BECKER_ENAB, BM_SETCHECK, BeckerEnabled, false);
@@ -330,31 +307,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 					ClockEnabled = SendDlgItemMessage(hDlg, IDC_CLOCK, BM_GETCHECK, 0, 0) != 0;
 					SetTurboDisk((unsigned char)SendDlgItemMessage(hDlg,IDC_TURBO,BM_GETCHECK,0,0));
 					PersistDisks = SendDlgItemMessage(hDlg, IDC_PERSIST, BM_GETCHECK, 0, 0) != 0;
-					PhysicalDriveA=(unsigned char)SendDlgItemMessage(hDlg,IDC_DISKA,CB_GETCURSEL,0,0);
-					PhysicalDriveB=(unsigned char)SendDlgItemMessage(hDlg,IDC_DISKB,CB_GETCURSEL,0,0);
-					if (!RealDisks)
-					{
-						PhysicalDriveA=0;
-						PhysicalDriveB=0;
-					//	MessageBox(0,"Wrong Version or Driver not installed","FDRAWCMD Driver",0);
-					}
-					else
-					{
-						if (PhysicalDriveA != OldPhysicalDriveA)	//Drive changed
-						{
-							if (OldPhysicalDriveA!=0)
-								unmount_disk_image(OldPhysicalDriveA-1);
-							if (PhysicalDriveA!=0)
-								mount_disk_image("*Floppy A:",PhysicalDriveA-1);
-						}
-						if (PhysicalDriveB != OldPhysicalDriveB)	//Drive changed
-						{
-							if (OldPhysicalDriveB!=0)
-								unmount_disk_image(OldPhysicalDriveB-1);
-							if (PhysicalDriveB!=0)
-								mount_disk_image("*Floppy B:",PhysicalDriveB-1);
-						}
-					}
 					SelectRomIndex = ::std::min(TempSelectRomIndex, RomPointer.size());
 					RomFileName = ::vcc::utils::find_pak_module_path(TempRomFileName);
 					ExternalRom.load(RomFileName); //JF
@@ -636,18 +588,7 @@ void LoadConfig()  // Called on SetIniPath
 			const auto disk_filename(serializer.read(fd502_section_name, settings_key));
 			if (!disk_filename.empty())
 			{
-				if (mount_disk_image(disk_filename.c_str(), Index))
-				{
-					if (disk_filename == "*Floppy A:")	//RealDisks
-					{
-						PhysicalDriveA = Index + 1;
-					}
-
-					if (disk_filename == "*Floppy B:")
-					{
-						PhysicalDriveB = Index + 1;
-					}
-				}
+				mount_disk_image(disk_filename.c_str(), Index);
 			}
 		}
 	}

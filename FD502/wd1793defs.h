@@ -18,7 +18,6 @@ struct DiskInfo
 	unsigned short TrackSize;
 	unsigned char WriteProtect;
 	unsigned char HeadPosition;	// The "Physical" Track the head is over
-	unsigned char RawDrive;
 	char ImageTypeName[4];
 };
 

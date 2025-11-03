@@ -18,9 +18,6 @@
     <ClInclude Include="fd502.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="fdrawcmd.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="wd1793.h">
       <Filter>Header Files</Filter>
     </ClInclude>

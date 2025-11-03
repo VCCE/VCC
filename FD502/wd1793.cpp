@@ -19,7 +19,6 @@
 #include "wd1793defs.h"
 #include "defines.h"
 #include "fd502.h"
-#include "fdrawcmd.h"	// http://simonowen.com/fdrawcmd/
 #include <vcc/core/interrupts.h>
 #include <winioctl.h>
 #include <Windows.h>
@@ -51,9 +50,7 @@ long WriteTrack (unsigned char,unsigned char,unsigned char,const unsigned char *
 unsigned short ccitt_crc16(unsigned short crc, const unsigned char *, unsigned short );
 long GetSectorInfo (SectorInfo *,const unsigned char *);
 void CommandDone();
-extern unsigned char PhysicalDriveA,PhysicalDriveB;
-bool FormatTrack (HANDLE , BYTE , BYTE,BYTE );
-bool CmdFormat (HANDLE , PFD_FORMAT_PARAMS , ULONG );
+
 /**********************************************************/
 static unsigned char StepTimesMS[4]={6,12,20,30};
 static unsigned short BytesperSector[4]={128,256,512,1024};
@@ -90,11 +87,7 @@ static unsigned int IOWaiter=0;
 static unsigned int IndexCounter=0;
 //static unsigned char UseLeds=0;
 DWORD dwRet;
-HANDLE OpenFloppy (int );
-static PVOID RawReadBuf=nullptr;
 
-bool SetDataRate (HANDLE , BYTE );
-static FD_READ_WRITE_PARAMS rwp;
 static bool DirtyDisk=true;
 char ImageFormat[5][4]={"JVC","VDK","DMK","OS9","RAW"};
 
@@ -209,8 +202,6 @@ void DecodeControlReg(unsigned char Tmp)
 	if (Tmp & CTRL_MOTOR_EN)
 	{
 		MotorOn=1;
-		if ( Drive[CurrentDisk].ImageType == RAW)
-			DeviceIoControl(Drive[CurrentDisk].FileHandle, IOCTL_FD_MOTOR_ON, nullptr, 0, nullptr, 0, &dwRet, nullptr);
 	}
 
 	if ( (Side==1) & (CurrentDisk==NONE) )
@@ -248,11 +239,6 @@ void unmount_disk_image(unsigned char drive)
 	Drive[drive].ImageType=0;
 	strcpy(Drive[drive].ImageName,"");
 	DirtyDisk=true;
-	if (drive==(PhysicalDriveA-1))
-		PhysicalDriveA=0;
-	if (drive==(PhysicalDriveB-1))
-		PhysicalDriveB=0;
-	return;
 }
 
 void DiskStatus(char* text_buffer, size_t buffer_size)
@@ -278,31 +264,20 @@ unsigned char MountDisk(const char *FileName,unsigned char disk)
 	Drive[disk].Sectors=18;
 	Drive[disk].SectorSize=1;
 	Drive[disk].WriteProtect=0;
-	Drive[disk].RawDrive=0;
 
-	if (!strcmp(FileName,"*Floppy A:"))
-		Drive[disk].RawDrive=1;
-	if (!strcmp(FileName,"*Floppy B:"))
-		Drive[disk].RawDrive=2;
-
-	if (Drive[disk].RawDrive==0)
-	{
-		Drive[disk].FileHandle = CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,0,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
-		if (Drive[disk].FileHandle==INVALID_HANDLE_VALUE)
-		{	//Can't open read/write might be read only
-			Drive[disk].FileHandle = CreateFile(FileName,GENERIC_READ,0,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
-			Drive[disk].WriteProtect=0xFF;
-		}
-		if (Drive[disk].FileHandle==INVALID_HANDLE_VALUE)
-			return 1; //Give up cant mount it
-		strcpy(Drive[disk].ImageName,FileName);
-		Drive[disk].FileSize= GetFileSize(Drive[disk].FileHandle,nullptr);
-		Drive[disk].HeaderSize = Drive[disk].FileSize % 256;
-		SetFilePointer(Drive[disk].FileHandle,0,nullptr,FILE_BEGIN);
-		ReadFile(Drive[disk].FileHandle,HeaderBlock,HEADERBUFFERSIZE,&BytesRead,nullptr);
+	Drive[disk].FileHandle = CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,0,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+	if (Drive[disk].FileHandle==INVALID_HANDLE_VALUE)
+	{	//Can't open read/write might be read only
+		Drive[disk].FileHandle = CreateFile(FileName,GENERIC_READ,0,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+		Drive[disk].WriteProtect=0xFF;
 	}
-	else
-		Drive[disk].HeaderSize=0xFF;
+	if (Drive[disk].FileHandle==INVALID_HANDLE_VALUE)
+		return 1; //Give up cant mount it
+	strcpy(Drive[disk].ImageName,FileName);
+	Drive[disk].FileSize= GetFileSize(Drive[disk].FileHandle,nullptr);
+	Drive[disk].HeaderSize = Drive[disk].FileSize % 256;
+	SetFilePointer(Drive[disk].FileHandle,0,nullptr,FILE_BEGIN);
+	ReadFile(Drive[disk].FileHandle,HeaderBlock,HEADERBUFFERSIZE,&BytesRead,nullptr);
 
 	switch (Drive[disk].HeaderSize)
 	{
@@ -347,24 +322,6 @@ unsigned char MountDisk(const char *FileName,unsigned char disk)
 		Drive[disk].Sides = 2-((HeaderBlock[4] & 16 )>>4);
 	break;
 
-	case 0xFF:
-		if (Drive[disk].RawDrive)
-		{
-			if (Drive[disk].FileHandle !=nullptr)
-				unmount_disk_image(disk);
-			Drive[disk].ImageType=RAW;
-			Drive[disk].Sides=2;
-
-			Drive[disk].FileHandle = OpenFloppy(Drive[disk].RawDrive-1);
-			if (Drive[disk].FileHandle == nullptr)
-				return 1;
-			strcpy(Drive[disk].ImageName,FileName);
-			if (Drive[disk].RawDrive==1)
-				PhysicalDriveA=disk+1;
-			if (Drive[disk].RawDrive==2)
-				PhysicalDriveB=disk+1;
-		}
-	break;
 	default:
 		return 1;
 	}
@@ -386,8 +343,6 @@ long ReadSector (unsigned char Side,	//0 or 1
 	unsigned char TempBuffer[16384];
 	SectorInfo CurrentSector;
 //Needed for RAW access
-	DWORD dwRet;
-	FD_SEEK_PARAMS sp;
 	unsigned char Ret=0;
 	const unsigned char *pva=nullptr;
 //************************
@@ -426,36 +381,6 @@ long ReadSector (unsigned char Side,	//0 or 1
 				return 0;
 			memcpy(ReturnBuffer,&TempBuffer[CurrentSector.DAM],CurrentSector.Lenth);
 			return(CurrentSector.Lenth);
-
-		case RAW:
-			pva=(unsigned char *)RawReadBuf;
-			if (TrackReg != Drive[CurrentDisk].HeadPosition)
-				return 0;
-			//Read the entire track and cache it. Speeds up disk reads 
-			if (DirtyDisk | (rwp.phead != Side) | (rwp.cyl != Drive[CurrentDisk].HeadPosition ) )
-			{
-				rwp.flags = FD_OPTION_MFM;
-				rwp.phead = Side;
-				rwp.cyl = Drive[CurrentDisk].HeadPosition;
-				rwp.head = Side;
-				rwp.sector = 1;
-				rwp.size = 1;	//256 Byte Secotors
-				rwp.eot = 1+18;
-				rwp.gap = 0x0a;
-				rwp.datalen = 0xff;
-				// details of seek location
-				sp.cyl = Track;
-				sp.head = Side;
-				// seek to cyl 
-				DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &sp, sizeof(sp), nullptr, 0, &dwRet, nullptr);
-				Ret=DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_READ_DATA, &rwp, sizeof(rwp), RawReadBuf,4608, &dwRet, nullptr);
-				if (dwRet != 4608)
-					return 0;
-				DirtyDisk=false;
-			}
-
-			memcpy(ReturnBuffer,&pva[(Sector-1)*256],256);
-			return 256;
 	}
 	return 0;
 }
@@ -471,8 +396,6 @@ long WriteSector (	unsigned char Side,		//0 or 1
 	unsigned char TempBuffer[16384];
 	unsigned short Crc=0xABCD;
 //Needed for RAW access
-	DWORD dwRet;
-	FD_SEEK_PARAMS sp;
 	unsigned char Ret=0;
 	const unsigned char *pva=nullptr;
 	SectorInfo CurrentSector;
@@ -509,27 +432,6 @@ long WriteSector (	unsigned char Side,		//0 or 1
 			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			WriteFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesWritten,nullptr);
 			return(CurrentSector.Lenth);
-
-		case RAW:
-			DirtyDisk=true;
-			pva=(unsigned char *) RawReadBuf;
-			rwp.flags = FD_OPTION_MFM;
-			rwp.phead = Side;
-			rwp.cyl = Drive[CurrentDisk].HeadPosition;
-			rwp.head = Side;
-			rwp.sector = Sector;
-			rwp.size = 1;	//256 Byte Secotors
-			rwp.eot = 1+Sector;
-			rwp.gap = 0x0a;
-			rwp.datalen = 0xff;
-			// details of seek location
-			sp.cyl = Track;
-			sp.head = Side;
-			// seek to cyl
-			DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &Track, sizeof(Track), nullptr, 0, &dwRet, nullptr);
-			memcpy(RawReadBuf,WriteBuffer,256);
-			Ret=DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_WRITE_DATA, &rwp, sizeof(rwp), RawReadBuf,18*(128<<rwp.size), &dwRet, nullptr);
-			return dwRet;
 	}
 	return 0;
 }
@@ -623,12 +525,6 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 			WriteFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesWritten,nullptr);				
 			free(TempBuffer);
 		break;
-
-
-		case RAW:
-			DirtyDisk=true;
-			DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &Track, sizeof(Track), nullptr, 0, &dwRet, nullptr);
-			return(FormatTrack (Drive[CurrentDisk].FileHandle , Track , Side, WriteBuffer[100] )); //KLUDGE!
 	}
 	
 	return BytesWritten;
@@ -706,8 +602,6 @@ void PingFdc()
 			{
 				Drive[CurrentDisk].HeadPosition-=1;
 				ExecTimeWaiter=(CyclesperStep * StepTimeMS);
-				if (Drive[CurrentDisk].ImageType==RAW)
-					DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, nullptr, 1, nullptr, 0, &dwRet, nullptr);
 			}
 			else
 			{
@@ -740,8 +634,6 @@ void PingFdc()
 					StatusReg|=WRITEPROTECT;
 				CommandDone();
 			}
-			if (Drive[CurrentDisk].ImageType==RAW)
-				DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &TrackReg, sizeof(TrackReg), nullptr, 0, &dwRet, nullptr);
 		break;
 
 		case STEP:
@@ -1146,10 +1038,6 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 				}
 				TransferBufferSize = CurrentSector.Lenth;
 			break;
-
-			case RAW:
-				TransferBufferSize = 256;
-			break;
 		}	//END Switch
 	}	//END if
 
@@ -1342,82 +1230,4 @@ unsigned short ccitt_crc16(unsigned short crc, const unsigned char *buffer, unsi
 	for (i = 0; i < buffer_len; i++)
 		crc = (crc << 8) ^ ccitt_crc16_table[(crc >> 8) ^ buffer[i]];
 	return crc;
-}
-
-//Stolen from fdrawcmd.sys Demo Disk Utility by Simon Owen <simon@simonowen.com>
-
-DWORD GetDriverVersion ()
-{
-    DWORD dwVersion = 0;
-    HANDLE h = CreateFile("\\\\.\\fdrawcmd", GENERIC_READ|GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
-
-    if (h != INVALID_HANDLE_VALUE)
-    {
-        DeviceIoControl(h, IOCTL_FDRAWCMD_GET_VERSION, nullptr, 0, &dwVersion, sizeof(dwVersion), &dwRet, nullptr);
-        CloseHandle(h);
-    }
-    return dwVersion;
-}
-
-
-HANDLE OpenFloppy (int nDrive_)
-{
-    char szDevice[32],szTemp[128]="";
-	HANDLE h=nullptr;
-    wsprintf(szDevice, "\\\\.\\fdraw%u", nDrive_);
-    h = CreateFile(szDevice, GENERIC_READ|GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
-	if (h == INVALID_HANDLE_VALUE)
-	{
-		sprintf(szTemp,"Unable to open RAW device %s",szDevice);
-		MessageBox(nullptr,szTemp,"Ok",0);
-	}
-    return (h != INVALID_HANDLE_VALUE && SetDataRate(h, DISK_DATARATE)) ? h : nullptr;
-}
-
-bool SetDataRate (HANDLE h_, BYTE bDataRate_)
-{
-    return !!DeviceIoControl(h_,IOCTL_FD_SET_DATA_RATE,&bDataRate_,sizeof(bDataRate_),nullptr,0,&dwRet,nullptr);
-}
-
-bool FormatTrack (HANDLE h_, BYTE cyl_, BYTE head_, BYTE Fill)
-{
-    BYTE abFormat[sizeof(FD_FORMAT_PARAMS) + sizeof(FD_ID_HEADER)*DISK_SECTORS];
-
-    PFD_FORMAT_PARAMS pfp = (PFD_FORMAT_PARAMS)abFormat;
-    pfp->flags = FD_OPTION_MFM;
-    pfp->phead = head_;
-    pfp->size = SECTOR_SIZE_CODE;
-    pfp->sectors = DISK_SECTORS;
-    pfp->gap = SECTOR_GAP3;
-    pfp->fill = Fill;//SECTOR_FILL;
-
-    PFD_ID_HEADER ph = pfp->Header;
-
-    for (BYTE s = 0 ; s < pfp->sectors ; s++, ph++)
-    {
-        ph->cyl = cyl_;
-        ph->head = head_;
-        ph->sector = SECTOR_BASE + ((s + cyl_*(pfp->sectors - TRACK_SKEW)) % pfp->sectors);
-        ph->size = pfp->size;
-    }
-
-    return CmdFormat(h_, pfp, (PBYTE)ph - abFormat);
-}
-
-bool CmdFormat (HANDLE h_, PFD_FORMAT_PARAMS pfp_, ULONG ulSize_)
-{
-    return !!DeviceIoControl(h_, IOCTL_FDCMD_FORMAT_TRACK, pfp_, ulSize_, nullptr, 0, &dwRet, nullptr);
-}
-
-unsigned short InitController ()
-{
-	long RawDriverVersion=0;
-	RawDriverVersion=GetDriverVersion ();
-
-	if (RawReadBuf==nullptr)
-		RawReadBuf = VirtualAlloc(nullptr, 4608, MEM_COMMIT, PAGE_READWRITE);
-	if (RawReadBuf==nullptr)
-		return 0;
-
-	return 1;
 }

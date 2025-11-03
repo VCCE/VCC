@@ -38,8 +38,6 @@
 #define IDC_EXTROM                      1023
 #define IDC_TRSDOS                      1024
 #define IDC_PERSIST                     1028
-#define IDC_DISKA                       1029
-#define IDC_DISKB                       1030
 #define IDC_CLOCK                       1031
 #define IDC_READONLY                    1032
 #define IDC_BECKER_ENAB                 1033
