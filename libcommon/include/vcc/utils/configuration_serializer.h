@@ -60,6 +60,10 @@ namespace vcc::utils
 			const string_type& section,
 			const string_type& key,
 			const string_type& default_value = {}) const;
+		LIBCOMMON_EXPORT [[nodiscard]] string_type read(
+			const string_type& section,
+			const string_type& key,
+			const char* default_value) const;
 
 
 	private:

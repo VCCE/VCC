@@ -70,13 +70,26 @@ namespace vcc::utils
 		const string_type& key,
 		const string_type& default_value) const
 	{
-		// FIXME-CHET: Need to determine the size of the string
+		return read(section, key, default_value.c_str());
+	}
+
+	configuration_serializer::string_type configuration_serializer::read(
+		const string_type& section,
+		const string_type& key,
+		const char* default_value) const
+	{
+		// FIXME-CHET: There is no way to effectively determining the length of
+		// the string that will be loaded. This will need to either use a fixed
+		// buffer of 65536 characters (the maximum allowed), iterate growing
+		// the buffer the string is loaded into until it is big enough, switch
+		// to a library that better supports INI configuration instead of using
+		// an API that's intended for 16bit compatibility.
 		char loaded_string[MAX_PATH] = {};
 
 		GetPrivateProfileString(
 			section.c_str(),
 			key.c_str(),
-			default_value.c_str(),
+			default_value,
 			loaded_string,
 			MAX_PATH,
 			path_.c_str());
