@@ -20,6 +20,7 @@
 #include <Windows.h>
 #include <string>
 
+// returns resource strings
 
 namespace vcc::utils
 {

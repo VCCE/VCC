@@ -1,24 +1,23 @@
-// SDC simulator DLL
+////////////////////////////////////////////////////////////////////////////////
+//	Copyright 2015 by Joseph Forgione
+//	This file is part of VCC (Virtual Color Computer).
 //
-// By E J Jaquay 2025
+//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	modify it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or (at your
+//	option) any later version.
 //
-// This file is part of VCC (Virtual Color Computer).
-// Vcc is Copyright 2015 by Joseph Forgione
+//	VCC (Virtual Color Computer) is distributed in the hope that it will be
+//	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+//	Public License for more details.
 //
-// VCC (Virtual Color Computer) is free software, you can redistribute
-// and/or modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation, either version 3 of
-// the License, or (at your option) any later version.
+//	You should have received a copy of the GNU General Public License along with
+//	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////////
 //
-// VCC (Virtual Color Computer) is distributed in the hope that it will
-// be useful, but WITHOUT ANY WARRANTY; without even the implied
-// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// See the GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with VCC (Virtual Color Computer).  If not, see
-// <http://www.gnu.org/licenses/>.
-//
+//----------------------------------------------------------------------
+// SDC simulator E J Jaquay 2025 
 //----------------------------------------------------------------------
 //
 //  SDC Floppy port conflicts
@@ -74,8 +73,8 @@
 //  for data so these must be always alowed for becker.dll to work. This
 //  means sdc.dll requires the new version of mmi.dll to work properly.
 //
-//  NOTE: Stock SDCDOS does not in support the becker ports, it expects
-//  drivewire to be on the bitbanger ports. RGBDOS does, however, and will
+//  NOTE: Stock SDC-DOS does not support the becker ports, it expects
+//  drivewire to use the bitbanger ports. RGBDOS does, however, and will
 //  still work with sdc.dll installed.
 //
 //  MPI control is accomplished by writing $FF7F (65407) multi-pak slot
@@ -108,15 +107,22 @@
 //  is likely that some commands mentioned there are not yet supported
 //  by this interface.
 //
+//  The SDC simulator tries to simulate the commands as documented in
+//  Darren Atkinson's CoCo SDC user guide.
+//
+//  Psuedo floppy interface
+//  -----------------------
+//  Some programs do not use SDC-DOS's disk driver, instead they contain
+//  their own disk drivers to access drives 0 and 1. The SDC simulator
+//  tries to emulate a fd502 interface to allow those programs to see 
+//  the SDC drives as floppy drives.
+//
 //  Flash data
 //  ----------
 //  There are eight 16K banks of programable flash memory. In this
-//  simulator the banks are set to files where the ROMs for the
+//  simulator the banks are associated with ROM files where the
 //  bank is stored. When a bank is selected the file is read into ROM.
 //  The SDC-DOS RUN@n command can be used to select a bank.
-//
-//  This simulator has no provision for writing to the banks or the
-//  associated files. These are easily managed using the host system.
 //
 //  Data written to the flash data port (0x42) can be read back.
 //  When the flash data port (0x43) is written the three low bits
@@ -128,63 +134,62 @@
 //  ROMS require their respective .DLL's to be installed to function,
 //  these are typically in MMI slot 3 and 4 respectively.
 //
-//#define USE_LOGGING
+//  This software was created a command at a time and is somewhat messy.
+//  It also contains bugs and does not completely simulate all of the
+//  CoCo SDC functioality. It could use a through going over.
 //
 //----------------------------------------------------------------------
+//#define USE_LOGGING
 
-#include <iostream>
-#include <cstdio>
-#include <cerrno>
-#include <cstring>
+#include <Shlwapi.h>   // for PathIsDirectoryEmpty
+
 #include <Windows.h>
-#include <windowsx.h>
-#include <Shlwapi.h>
-#pragma warning(push)
-#pragma warning(disable:4091)
-#include <ShlObj.h>
-#pragma warning(pop)
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/stat.h>
 #include <vcc/devices/rtc/ds1315.h>
 #include <vcc/common/logger.h>
-#include <vcc/common/DialogOps.h>
-#include "../CartridgeMenu.h"
 #include <vcc/core/cartridge_capi.h>
-#include <vcc/utils/winapi.h>
-#include <vcc/core/limits.h>
-#include "sdc.h"
+#include "../CartridgeMenu.h"
 
-//======================================================================
-// Functions
-//======================================================================
+#include "sdc_cartridge.h"
+#include "sdc_configuration.h"
 
-static void* gHostKey = nullptr;
-static PakAssertInteruptHostCallback AssertInt = nullptr;;
-static PakWriteMemoryByteHostCallback MemWrite8 = nullptr;
-static PakReadMemoryByteHostCallback MemRead8 = nullptr;
-static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
+// Return values for status register from CoCo SDC User Guide
+constexpr unsigned char STA_NORMAL    = 0x00;
+constexpr unsigned char STA_BUSY      = 0x01;
+constexpr unsigned char STA_READY     = 0x02;   // reply from command is ready
+constexpr unsigned char STA_INVALID   = 0x04;   // file or dir path is invalid
+constexpr unsigned char STA_WIN_ERROR = 0x08;   // Misc windows error
+constexpr unsigned char STA_INITERROR = 0x08;   // Directory not initiated
+constexpr unsigned char STA_READERROR = 0x08;   // Read error
+constexpr unsigned char STA_BAD_LSN   = 0x10;   // LSN or no image error
+constexpr unsigned char STA_NOTFOUND  = 0x10;   // file (directory) not found
+constexpr unsigned char STA_DELETED   = 0x20;   // Sector deleted mark
+constexpr unsigned char STA_INUSE     = 0x20;   // image already in use
+constexpr unsigned char STA_NOTEMPTY  = 0x20;   // Delete directory error
+constexpr unsigned char STA_WPROTECT  = 0x40;   // write protect error
+constexpr unsigned char STA_FAIL      = 0x80;
 
-static ::vcc::devices::rtc::ds1315 ds1315_rtc;
+// Floppy mode (unlatched) status
+constexpr unsigned char FLP_NORMAL    = 0x00;
+constexpr unsigned char FLP_BUSY      = 0x01;   // b0 Busy
+constexpr unsigned char FLP_DATAREQ   = 0x02;   // b1 DRQ
+constexpr unsigned char FLP_DATALOST  = 0x04;   // b2 Lost data
+constexpr unsigned char FLP_READERR   = 0x08;   // b3 Read error (CRC)
+constexpr unsigned char FLP_SEEKERR   = 0x10;   // b4 Seek error
+constexpr unsigned char FLP_WRITEERR  = 0x20;   // b5 Write error (Fault)
+constexpr unsigned char FLP_READONLY  = 0x40;   // b6 Write protected
+constexpr unsigned char FLP_NOTREADY  = 0x80;   // b7 Not ready
 
-void SDCInit();
-void LoadRom(unsigned char);
-void SDCWrite(unsigned char,unsigned char);
-void MemWrite(unsigned char,unsigned short);
-unsigned char SDCRead(unsigned char port);
-unsigned char MemRead(unsigned short);
-LRESULT CALLBACK SDC_Control(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
+// Single byte file attributes for File info records
+constexpr unsigned char ATTR_NORM     = 0x00;
+constexpr unsigned char ATTR_RDONLY   = 0x01;
+constexpr unsigned char ATTR_HIDDEN   = 0x02;
+constexpr unsigned char ATTR_SDF      = 0x04;
+constexpr unsigned char ATTR_DIR      = 0x10;
 
-void LoadConfig();
-bool SaveConfig(HWND);
-void BuildCartridgeMenu();
-void SelectCardBox();
-void update_disk0_box();
-void UpdateFlashItem(int);
-void ModifyFlashItem(int);
-void InitCardBox();
-void InitEditBoxes();
+// Self imposed limit on maximum dsk file size.
+constexpr unsigned int MAX_DSK_SECTORS = 2097152;
+
+// Private functions
 void ParseStartup();
 void SDCCommand();
 void ReadSector();
@@ -200,9 +205,7 @@ bool LoadFoundFile(struct FileRecord *);
 void FixSDCPath(char *,const char *);
 void MountDisk(int,const char *,int);
 void MountNewDisk(int,const char *,int);
-bool MountNext(int);
 void OpenNew(int,const char *,int);
-void CloseDrive(int);
 void OpenFound(int,int);
 void LoadReply(const void *, int);
 void BlockReceive(unsigned char);
@@ -216,14 +219,11 @@ void GetFullPath(char *,const char *);
 void RenameFile(const char *);
 void KillFile(const char *);
 void MakeDirectory(const char *);
-bool IsDirectory(const char *);
 void GetMountedImageRec();
 void GetSectorCount();
 void GetDirectoryLeaf();
 void CommandDone();
 unsigned char PickReplyByte(unsigned char);
-unsigned char WriteFlashBank(unsigned short);
-
 void FloppyCommand(unsigned char);
 void FloppyRestore(unsigned char);
 void FloppySeek(unsigned char);
@@ -236,11 +236,36 @@ unsigned char FloppyStatus();
 unsigned char FloppyReadData();
 
 //======================================================================
-// Globals
+// Public Data 
 //======================================================================
+
+void* gHostKey = nullptr;
+PakAssertInteruptHostCallback AssertInt = nullptr;
+PakWriteMemoryByteHostCallback MemWrite8 = nullptr;
+PakReadMemoryByteHostCallback MemRead8 = nullptr;
+PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 
 // Idle Status counter
 int idle_ctr = 0;
+
+// Cart ROM
+char PakRom[0x4000];
+
+// Host paths for SDC
+char IniFile[MAX_PATH] = {}; // Vcc ini file name
+char SDCard[MAX_PATH] = {};  // SD card root directory
+
+unsigned char EnableBankWrite = 0;
+unsigned char BankWriteState = 0;
+
+unsigned char StartupBank = 0;
+unsigned char CurrentBank = 0xff;
+
+char SDC_Status[16] = {};
+
+//======================================================================
+// Private Data
+//======================================================================
 
 // SDC CoCo Interface
 struct Interface
@@ -261,16 +286,10 @@ struct Interface
     char *bufptr;
     char blkbuf[600];
 };
-static Interface IF;
+static Interface IF = {};
 
-// Cart ROM
-char PakRom[0x4000];
-
-// Host paths for SDC
-static char IniFile[MAX_PATH] = {};  // Vcc ini file name
-static char SDCard[MAX_PATH]  = {};  // SD card root directory
-static char CurDir[256]       = {};  // SDC current directory
-static char SeaDir[MAX_PATH]  = {};  // Last directory searched
+static char CurDir[256] = {};       // SDC current directory
+static char SeaDir[MAX_PATH] = {};  // Last directory searched
 
 // Packed file records for interface
 #pragma pack(1)
@@ -284,7 +303,7 @@ struct FileRecord {
     char lolo_size;
 };
 #pragma pack()
-static struct FileRecord DirPage[16];
+static struct FileRecord DirPage[16] = {};
 
 // Mounted image data
 struct _Disk {
@@ -297,42 +316,23 @@ struct _Disk {
     char name[MAX_PATH];
     char fullpath[MAX_PATH];
     struct FileRecord filerec;
-} Disk[2];
+};
+static struct _Disk Disk[2] = {};
 
 // Flash banks
-static char FlashFile[8][MAX_PATH];
 static FILE *h_RomFile = nullptr;
-static unsigned char StartupBank = 0;
-static unsigned char CurrentBank = 0xff;
-static unsigned char EnableBankWrite = 0;
 static unsigned char BankWriteNum = 0;
-static unsigned char BankWriteState = 0;
 static unsigned char BankDirty = 0;
 static unsigned char BankData = 0;
-
-// Dll handle
-static HINSTANCE gModuleInstance;
-
-// Clock enable IDC_CLOCK
-static int ClockEnable;
 
 // Windows file lookup handle and data
 static HANDLE hFind = INVALID_HANDLE_VALUE;
 static WIN32_FIND_DATAA dFound;
 
-// config control handles
-static HWND hControlDlg = nullptr;
-static HWND hConfigureDlg = nullptr;
-//static HWND hFlashBox = nullptr;
-static HWND hSDCardBox = nullptr;
-static HWND hStartupBank = nullptr;
-
 // Streaming control
 static int streaming;
 static unsigned char stream_cmdcode;
 static unsigned int stream_lsn;
-
-static char Status[16] = {};
 
 // Floppy I/O
 static char FlopDrive = 0;
@@ -343,357 +343,6 @@ static DWORD FlopWrCnt = 0;
 static DWORD FlopRdCnt = 0;
 static char FlopWrBuf[256];
 static char FlopRdBuf[256];
-
-static int EDBOXES[8] = {ID_TEXT0,ID_TEXT1,ID_TEXT2,ID_TEXT3,
-                         ID_TEXT4,ID_TEXT5,ID_TEXT6,ID_TEXT7};
-static int UPDBTNS[8] = {ID_UPDATE0,ID_UPDATE1,ID_UPDATE2,ID_UPDATE3,
-                         ID_UPDATE4,ID_UPDATE5,ID_UPDATE6,ID_UPDATE7};
-
-static char MPIPath[MAX_PATH];
-
-//======================================================================
-// DLL exports
-//======================================================================
-extern "C"
-{
-
-	__declspec(dllexport) const char* PakGetName()
-	{
-		static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
-
-		return name.c_str();
-	}
-
-	__declspec(dllexport) const char* PakGetCatalogId()
-	{
-		static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
-
-		return catalog_id.c_str();
-	}
-
-	__declspec(dllexport) const char* PakGetDescription()
-	{
-		static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
-
-		return description.c_str();
-	}
-
-	__declspec(dllexport) void PakInitialize(
-		void* const host_key,
-		const char* const configuration_path,
-		const cartridge_capi_context* const context)
-	{
-		gHostKey = host_key;
-		CartMenuCallback = context->add_menu_item;
-		MemRead8 = context->read_memory_byte;
-		MemWrite8 = context->write_memory_byte;
-		AssertInt = context->assert_interrupt;
-		strcpy(IniFile, configuration_path);
-
-		LoadConfig();
-		BuildCartridgeMenu();
-	}
-
-	__declspec(dllexport) void PakTerminate()
-	{
-		CloseCartDialog(hControlDlg);
-		CloseCartDialog(hConfigureDlg);
-		hControlDlg = nullptr;
-		hConfigureDlg = nullptr;
-		CloseDrive(0);
-		CloseDrive(1);
-	}
-
-    // Write to port
-    __declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
-    {
-        SDCWrite(Data,Port);
-        return;
-    }
-
-    // Read from port
-    __declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
-    {
-        if (ClockEnable && ((Port==0x78) | (Port==0x79) | (Port==0x7C))) {
-            return ds1315_rtc.read_port(Port);
-        } else if ((Port > 0x3F) & (Port < 0x60)) {
-            return SDCRead(Port);
-        } else {
-            return 0;
-        }
-    }
-
-    // Reset module
-    __declspec(dllexport) void PakReset()
-    {
-        DLOG_C("PakReset\n");
-        SDCInit();
-    }
-
-    //  Dll export run config dialog
-    __declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
-    {
-        switch (MenuID)
-        {
-        case 10:
-            if (hConfigureDlg == nullptr)  // Only create dialog once
-                hConfigureDlg = CreateDialog(gModuleInstance, (LPCTSTR) IDD_CONFIG,
-                         GetActiveWindow(), (DLGPROC) SDC_Configure);
-            ShowWindow(hConfigureDlg,1);
-            break;
-        case 11:
-            if (hControlDlg == nullptr)
-                hControlDlg = CreateDialog(gModuleInstance, (LPCTSTR) IDD_CONTROL,
-                         GetActiveWindow(), (DLGPROC) SDC_Control);
-            ShowWindow(hControlDlg,1);
-            break;
-        }
-		BuildCartridgeMenu();
-        return;
-    }
-
-    // Return SDC status.
-    __declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
-    {
-        strncpy(text_buffer,Status,buffer_size);
-        if (idle_ctr < 100) {
-            idle_ctr++;
-        } else {
-            idle_ctr = 0;
-            snprintf(Status,16,"SDC:%d idle",CurrentBank);
-        }
-    }
-
-
-    // Return a byte from the current PAK ROM
-    __declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short adr)
-    {
-        adr &= 0x3FFF;
-        if (EnableBankWrite) {
-            return WriteFlashBank(adr);
-        } else {
-            BankWriteState = 0;  // Any read resets write state
-            return(PakRom[adr]);
-        }
-    }
-
-}
-
-//======================================================================
-// Internal functions
-//======================================================================
-
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
-{
-    if (reason == DLL_PROCESS_ATTACH)
-	{
-		gModuleInstance = hinst;
-    }
-
-    return TRUE;
-}
-
-//-------------------------------------------------------------
-// Generate menu for configuring the SDC
-//-------------------------------------------------------------
-void BuildCartridgeMenu()
-{
-	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
-	CartMenuCallback(gHostKey, "SDC Config", ControlId(10), MIT_StandAlone);
-	CartMenuCallback(gHostKey, "SDC Control", ControlId(11), MIT_StandAlone);
-	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
-}
-
-//------------------------------------------------------------
-// Control SDC multi floppy
-//------------------------------------------------------------
-LRESULT CALLBACK
-SDC_Control(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
-{
-    switch (message) {
-    case WM_CLOSE:
-        DestroyWindow(hDlg);
-        hControlDlg=nullptr;
-        return TRUE;
-        break;
-    case WM_INITDIALOG:
-        CenterDialog(hDlg);
-        update_disk0_box();
-        SetFocus(GetDlgItem(hDlg,ID_NEXT));
-        return TRUE;
-        break;
-    case WM_COMMAND:
-        switch (LOWORD(wParam)) {
-        case ID_NEXT:
-            MountNext (0);
-            SetFocus(GetParent(hDlg));
-            return TRUE;
-            break;
-        }
-    }
-    return FALSE;
-}
-
-//------------------------------------------------------------
-// Configure the SDC
-//------------------------------------------------------------
-LRESULT CALLBACK
-SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
-{
-    switch (message) {
-    case WM_CLOSE:
-        DestroyWindow(hDlg);
-        hConfigureDlg=nullptr;
-        return TRUE;
-        break;
-    case WM_INITDIALOG:
-        hConfigureDlg=hDlg;  // needed for LoadConfig() and Init..()
-        CenterDialog(hDlg);
-        LoadConfig();
-        InitEditBoxes();
-        InitCardBox();
-        SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnable,0);
-        hStartupBank = GetDlgItem(hDlg,ID_STARTUP_BANK);
-        char tmp[4];
-        snprintf(tmp,4,"%d",(StartupBank & 7));
-        SetWindowText(hStartupBank,tmp);
-        break;
-    case WM_COMMAND:
-        switch (LOWORD(wParam)) {
-        case ID_SD_SELECT:
-            SelectCardBox();
-            break;
-        case ID_SD_BOX:
-            if (HIWORD(wParam) == EN_CHANGE) {
-                char tmp[MAX_PATH];
-                GetWindowText(hSDCardBox,tmp,MAX_PATH);
-                if (*tmp != '\0') strncpy(SDCard,tmp,MAX_PATH);
-            }
-            return TRUE;
-        case ID_UPDATE0:
-            UpdateFlashItem(0);
-            return TRUE;
-        case ID_UPDATE1:
-            UpdateFlashItem(1);
-            return TRUE;
-        case ID_UPDATE2:
-            UpdateFlashItem(2);
-            return TRUE;
-        case ID_UPDATE3:
-            UpdateFlashItem(3);
-            return TRUE;
-        case ID_UPDATE4:
-            UpdateFlashItem(4);
-            return TRUE;
-        case ID_UPDATE5:
-            UpdateFlashItem(5);
-            return TRUE;
-        case ID_UPDATE6:
-            UpdateFlashItem(6);
-            return TRUE;
-        case ID_UPDATE7:
-            UpdateFlashItem(7);
-            return TRUE;
-        case ID_TEXT0:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(0);
-            return TRUE;
-        case ID_TEXT1:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(1);
-            return FALSE;
-        case ID_TEXT2:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(2);
-            return FALSE;
-        case ID_TEXT3:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(3);
-            return FALSE;
-        case ID_TEXT4:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(4);
-            return FALSE;
-        case ID_TEXT5:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(5);
-            return FALSE;
-        case ID_TEXT6:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(6);
-            return FALSE;
-        case ID_TEXT7:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(7);
-            return FALSE;
-        case ID_STARTUP_BANK:
-            if (HIWORD(wParam) == EN_CHANGE) {
-                char tmp[4];
-                GetWindowText(hStartupBank,tmp,4);
-                StartupBank = atoi(tmp);// & 7;
-                if (StartupBank > 7) {
-                    StartupBank &= 7;
-                    char tmp[4];
-                    snprintf(tmp,4,"%d",StartupBank);
-                    SetWindowText(hStartupBank,tmp);
-                }
-            }
-            break;
-        case IDOK:
-            SaveConfig(hDlg);
-            DestroyWindow(hDlg);
-            hConfigureDlg=nullptr;
-            break;
-        }
-    }
-    return 0;
-}
-
-//------------------------------------------------------------
-// Get SDC settings from ini file
-//------------------------------------------------------------
-void LoadConfig()
-{
-    GetPrivateProfileString
-        ("DefaultPaths", "MPIPath", "", MPIPath, MAX_PATH, IniFile);
-    GetPrivateProfileString
-        ("SDC", "SDCardPath", "", SDCard, MAX_PATH, IniFile);
-
-    if (!IsDirectory(SDCard)) {
-        MessageBox (nullptr,"Invalid SDCard Path in VCC init","Error",0);
-    }
-
-    for (int i=0;i<8;i++) {
-        char txt[32];
-        snprintf(txt,MAX_PATH,"FlashFile_%d",i);
-        GetPrivateProfileString
-            ("SDC", txt, "", FlashFile[i], MAX_PATH, IniFile);
-    }
-
-    ClockEnable = GetPrivateProfileInt("SDC","ClockEnable",1,IniFile);
-    StartupBank = GetPrivateProfileInt("SDC","StarupBank",0,IniFile);
-}
-
-//------------------------------------------------------------
-// Save config to ini file
-//------------------------------------------------------------
-bool SaveConfig(HWND hDlg)
-{
-    if (!IsDirectory(SDCard)) {
-        MessageBox(nullptr,"Invalid SDCard Path\n","Error",0);
-        return false;
-    }
-    WritePrivateProfileString("SDC","SDCardPath",SDCard,IniFile);
-
-    for (int i=0;i<8;i++) {
-        char txt[32];
-        sprintf(txt,"FlashFile_%d",i);
-        WritePrivateProfileString("SDC",txt,FlashFile[i],IniFile);
-    }
-
-    if (SendDlgItemMessage(hDlg,IDC_CLOCK,BM_GETCHECK,0,0)) {
-        WritePrivateProfileString("SDC","ClockEnable","1",IniFile);
-    } else {
-        WritePrivateProfileString("SDC","ClockEnable","0",IniFile);
-    }
-    char tmp[4];
-    snprintf(tmp,4,"%d",(StartupBank & 7));
-    WritePrivateProfileString("SDC","StarupBank",tmp,IniFile);
-    return true;
-}
 
 //----------------------------------------------------------------------
 // Init the controller. This gets called by PakReset
@@ -715,11 +364,11 @@ void SDCInit()
 
     // Load SDC settings
     LoadConfig();
+
+    // Load the startup rom
     LoadRom(StartupBank);
 
     SetCurDir(""); // May be changed by ParseStartup()
-
-    memset((void *) &Disk,0,sizeof(Disk));
 
     // Process the startup config file
     ParseStartup();
@@ -728,108 +377,6 @@ void SDCInit()
     memset(&IF,0,sizeof(IF));
 
     return;
-}
-
-//------------------------------------------------------------
-// Init flash box
-//------------------------------------------------------------
-void InitEditBoxes()
-{
-    for (int index=0; index<8; index++) {
-        HWND h;
-        h = GetDlgItem(hConfigureDlg,EDBOXES[index]);
-        SetWindowText(h,FlashFile[index]);
-        h = GetDlgItem(hConfigureDlg,UPDBTNS[index]);
-        if (*FlashFile[index] == '\0') {
-            SetWindowText(h,">");
-        } else {
-            SetWindowText(h,"X");
-        }
-    }
-}
-
-//----------------------------------------------------------------------
-// Put disk 0 name to control dialog
-//----------------------------------------------------------------------
-void update_disk0_box()
-{ 
-    if (hControlDlg != nullptr) {
-        HWND h = GetDlgItem(hControlDlg,ID_DISK0);
-        SendMessage(h, WM_SETTEXT, 0, (LPARAM) Disk[0].name );
-    }
-}
-
-//------------------------------------------------------------
-// Init SD card box
-//------------------------------------------------------------
-
-void InitCardBox()
-{
-    hSDCardBox = GetDlgItem(hConfigureDlg,ID_SD_BOX);
-    SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM)SDCard);
-}
-
-//------------------------------------------------------------
-// Modify and or Update flash box item
-//------------------------------------------------------------
-void ModifyFlashItem(int index)
-{
-    if ((index < 0) | (index > 7)) return;
-    HWND h = GetDlgItem(hConfigureDlg,EDBOXES[index]);
-    GetWindowText(h, FlashFile[index], MAX_PATH);
-}
-
-void UpdateFlashItem(int index)
-{
-    char filename[MAX_PATH]={};
-
-    if ((index < 0) | (index > 7)) return;
-
-    if (*FlashFile[index] != '\0') {
-        *FlashFile[index] = '\0';
-    } else {
-        char title[64];
-        snprintf(title,64,"Load Flash Bank %d",index);
-        FileDialog dlg;
-        dlg.setDefExt("rom");
-        dlg.setFilter("Rom File\0*.rom\0All Files\0*.*\0\0");
-        dlg.setTitle(title);
-        dlg.setInitialDir(MPIPath);   // FIXME someday
-        if (dlg.show(0,hConfigureDlg)) {
-            dlg.getupath(filename,MAX_PATH); // cvt to unix style
-            strncpy(FlashFile[index],filename,MAX_PATH);
-        }
-    }
-    InitEditBoxes();
-}
-
-//------------------------------------------------------------
-// Dialog to select SD card path in user home directory
-//------------------------------------------------------------
-void SelectCardBox()
-{
-    // Prompt user for path
-    BROWSEINFO bi = { nullptr };
-    bi.hwndOwner = GetActiveWindow();
-    bi.lpszTitle = "Set the SD card path";
-    bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NONEWFOLDERBUTTON;
-
-    // Start from user home diretory
-    SHGetSpecialFolderLocation
-        (nullptr,CSIDL_PROFILE, const_cast<LPITEMIDLIST*>(& bi.pidlRoot));
-
-    LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
-    if (pidl != nullptr) {
-        SHGetPathFromIDList(pidl,SDCard);
-        CoTaskMemFree(pidl);
-    }
-
-    // Sanitize slashes
-    for(unsigned int i=0; i<strlen(SDCard); i++) {
-        if (SDCard[i] == '\\') SDCard[i] = '/';
-    }
-
-    SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM)SDCard);
 }
 
 //-------------------------------------------------------------
@@ -956,17 +503,17 @@ void ParseStartup()
 void CommandDone()
 {
     DLOG_C("*");
-	AssertInt(gHostKey, INT_NMI, IS_NMI);
+    AssertInt(gHostKey, INT_NMI, IS_NMI);
 }
 
 //----------------------------------------------------------------------
-// Write port.  If a command needs a data block to complete it
-// will put a count (256 or 512) in IF.bufcnt.
+// Write port.  
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port)
 {
-    if (port < 0x40 || port > 0x4F) return;
+    if (port < 0x40 || port > 0x4F) return;  // Not disk data
 
+    // Latched writes 
     if (IF.sdclatch) {
         switch (port) {
         // Control Latch
@@ -982,14 +529,14 @@ void SDCWrite(unsigned char data,unsigned char port)
         case 0x49:
             IF.param1 = data;
             break;
-        // Command param #2 or block data receive
+        // Command param #2, #3, or receive block data. If a previous
+        // command expects data it will have put a count in IF.bufcnt
         case 0x4A:
             if (IF.bufcnt > 0)
                 BlockReceive(data);
             else
                 IF.param2 = data;
             break;
-        // Command param #3 or block data receive
         case 0x4B:
             if (IF.bufcnt > 0)
                 BlockReceive(data);
@@ -1001,6 +548,8 @@ void SDCWrite(unsigned char data,unsigned char port)
             DLOG_C("SDCWrite L %02x %02x\n",port,data);
             break;
         }
+
+    // Unlatched writes
     } else {
         switch (port) {
         // Command latch and floppy drive select
@@ -1056,6 +605,7 @@ unsigned char SDCRead(unsigned char port)
 {
     unsigned char rpy = 0;
 
+    // Latched reads
     if (IF.sdclatch) {
         switch (port) {
         case 0x48:
@@ -1090,7 +640,9 @@ unsigned char SDCRead(unsigned char port)
             rpy = 0;
             break;
         }
-    } else {
+
+    // Unlatched reads
+    } else { 
         switch (port) {
         // Flash control read is used by SDCDOS to detect the SDC
         case 0x43:
@@ -1104,8 +656,8 @@ unsigned char SDCRead(unsigned char port)
         case 0x4B:
             rpy = FloppyReadData();
             break;
-        default:
-            DLOG_C("SDCRead U %02x\n",port);
+        default: //TODO: why constant reads of ports 0x49,0x4a
+            //DLOG_C("SDCRead U %02x\n",port);
             rpy = 0;
             break;
         }
@@ -1159,7 +711,7 @@ void FloppySeek(unsigned char data)
 void FloppyReadDisk()
 {
     int lsn = FlopTrack * 18 + FlopSector - 1;
-    snprintf(Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
+    snprintf(SDC_Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
     if (SeekSector(FlopDrive,lsn)) {
         if (ReadFile(Disk[FlopDrive].hFile,FlopRdBuf,256,&FlopRdCnt,nullptr)) {
             DLOG_C("FloppyReadDisk %d %d\n",FlopDrive,lsn);
@@ -1599,7 +1151,7 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
         return false;
     }
 
-    snprintf(Status,16,"SDC:%d Rd %d,%d",CurrentBank,drive,lsn);
+    snprintf(SDC_Status,16,"SDC:%d Rd %d,%d",CurrentBank,drive,lsn);
     LoadReply(buf,cnt);
     return true;
 }
@@ -1615,7 +1167,7 @@ void ReadSector()
 {
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
 
-    DLOG_C("R%d\n",lsn);
+    //DLOG_C("R%d\n",lsn);
 
     IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1; // words : bytes
     if (!ReadDrive(IF.cmdcode,lsn))
@@ -1668,7 +1220,7 @@ void WriteSector()
     DWORD cnt = 0;
     int drive = IF.cmdcode & 1;
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
-    snprintf(Status,16,"SDC:%d Wr %d,%d",CurrentBank,drive,lsn);
+    snprintf(SDC_Status,16,"SDC:%d Wr %d,%d",CurrentBank,drive,lsn);
 
     if (Disk[drive].hFile == nullptr) {
         IF.status = STA_FAIL;
@@ -1815,14 +1367,10 @@ void FixSDCPath(char *path, const char *fpath8)
         name[namlen++] = '.';
         int extlen=0;
         while(c = *pname8++) {
-			if (c == '.' || c == ' ')
-			{
-				continue;
-			}
-
-			name[namlen++] = c;
-			extlen++;
-			if (extlen > 2) break;
+            if (c == '.' || c == ' ') continue;
+            name[namlen++] = c;
+            extlen++;
+            if (extlen > 2) break;
         }
     }
     name[namlen] = '\0';           // terminate name
@@ -1853,17 +1401,17 @@ bool LoadFoundFile(struct FileRecord * rec)
     }
 
     // File type
-	const char * pdot = strrchr(dFound.cFileName,'.');
+    const char * pdot = strrchr(dFound.cFileName,'.');
     if (pdot) {
-		const char * ptyp = pdot + 1;
+        const char * ptyp = pdot + 1;
         for (int cnt = 0; cnt<3; cnt++) {
            if (*ptyp == '\0') break;
            rec->type[cnt] = *ptyp++;
         }
-    }
+     }
 
     // File name
-	const char * pnam = dFound.cFileName;
+    const char * pnam = dFound.cFileName;
     for (int cnt = 0; cnt < 8; cnt++) {
         if (*pnam == '\0') break;
         if (pdot && (pnam == pdot)) break;
@@ -1977,6 +1525,14 @@ void MountDisk (int drive, const char * path, int raw)
 }
 
 //----------------------------------------------------------------------
+// Retrieve disk name for configure 
+//----------------------------------------------------------------------
+std::string DiskName(int drive)
+{
+    return Disk[drive].name;
+}
+
+//----------------------------------------------------------------------
 // Mount Next Disk from found set
 //----------------------------------------------------------------------
 bool MountNext (int drive)
@@ -2048,7 +1604,7 @@ void OpenNew( int drive, const char * path, int raw)
     // Open file for write
     Disk[drive].hFile = CreateFile(
         Disk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
-		nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
+        nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
 
     if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
         DLOG_C("OpenNew fail %d file %s\n",drive,Disk[drive].fullpath);
@@ -2105,7 +1661,7 @@ void OpenFound (int drive,int raw)
     CloseDrive(drive);
     *Disk[drive].name = '\0';
 
-    // Open a directory of containing DSK files
+    // Open a directory ontaining DSK files
     if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
         DLOG_C("OpenFound %s is a directory\n",dFound.cFileName);
         char path[MAX_PATH];
@@ -2113,7 +1669,8 @@ void OpenFound (int drive,int raw)
         AppendPathChar(path,'/');
         strncat(path,"*.DSK",MAX_PATH);
         InitiateDir(path);
-        OpenFound(drive,0);
+        // TODO Fix this nonsensical recursion
+        if (IF.status == STA_NORMAL) OpenFound(drive,0);
         return;
     }
 
@@ -2125,7 +1682,7 @@ void OpenFound (int drive,int raw)
     // Open file for read
     Disk[drive].hFile = CreateFile(
         fqn, GENERIC_READ, FILE_SHARE_READ,
-		nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+        nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
     if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
         DLOG_C("OpenFound fail %d file %s\n",drive,fqn);
         DLOG_C("... %s\n",LastErrorTxt());
@@ -2219,7 +1776,7 @@ void OpenFound (int drive,int raw)
         CloseHandle(Disk[drive].hFile);
         Disk[drive].hFile = CreateFile(
             Disk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
-			nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+            nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
         if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
             DLOG_C("OpenFound reopen fail %d\n",drive);
             DLOG_C("... %s\n",LastErrorTxt());
@@ -2292,13 +1849,12 @@ void KillFile(const char *file)
             IF.status = STA_FAIL | STA_NOTEMPTY;
         }
     } else {
-        if (DeleteFile(path))
+        if (DeleteFile(path)) {
             IF.status = STA_NORMAL;
-		else
-		{
-			DLOG_C("Deletefile %s\n", strerror(errno));
-			IF.status = STA_FAIL | STA_NOTFOUND;
-		}
+        } else {
+            DLOG_C("Deletefile %s\n", strerror(errno));
+            IF.status = STA_FAIL | STA_NOTFOUND;
+        }
     }
     return;
 }
