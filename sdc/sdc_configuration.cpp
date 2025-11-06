@@ -30,6 +30,7 @@
 #include <vcc/common/DialogOps.h>
 #include <vcc/core/cartridge_capi.h>
 #include <vcc/core/limits.h>
+#include <vcc/utils/configuration_serializer.h>
 #include "../CartridgeMenu.h"
 #include "resource.h"
 #include "sdc_cartridge.h"
@@ -218,25 +219,19 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 //------------------------------------------------------------
 void LoadConfig()
 {
-DLOG_C("LoadConfig()\n");
-    GetPrivateProfileString
-        ("DefaultPaths", "MPIPath", "", MPIPath, MAX_PATH, IniFile);
-    GetPrivateProfileString
-        ("SDC", "SDCardPath", "", SDCard, MAX_PATH, IniFile);
+    ::vcc::utils::configuration_serializer conf(IniFile);
 
-    if (!IsDirectory(SDCard)) {
-        MessageBox (nullptr,"Invalid SDCard Path in VCC init","Error",0);
-    }
+    strncpy(MPIPath,conf.read("DefaultPaths","MPIPath").c_str(),MAX_PATH);
+    strncpy(SDCard,conf.read("SDC","SDCardPath").c_str(),MAX_PATH);
 
+    char key[32];
     for (int i=0;i<8;i++) {
-        char txt[32];
-        snprintf(txt,MAX_PATH,"FlashFile_%d",i);
-        GetPrivateProfileString
-            ("SDC", txt, "", FlashFile[i], MAX_PATH, IniFile);
+        snprintf(key,32,"FlashFile_%d",i);
+        strncpy(FlashFile[i],conf.read("SDC",key).c_str(),MAX_PATH);
     }
 
-    ClockEnable = GetPrivateProfileInt("SDC","ClockEnable",1,IniFile);
-    StartupBank = GetPrivateProfileInt("SDC","StarupBank",0,IniFile);
+    ClockEnable = conf.read("SDC","ClockEnable",1);
+    StartupBank = conf.read("SDC","StartupBank",0);
 }
 
 //------------------------------------------------------------
@@ -248,22 +243,23 @@ bool SaveConfig(HWND hDlg)
         MessageBox(nullptr,"Invalid SDCard Path\n","Error",0);
         return false;
     }
-    WritePrivateProfileString("SDC","SDCardPath",SDCard,IniFile);
 
-    for (int i=0;i<8;i++) {
-        char txt[32];
-        sprintf(txt,"FlashFile_%d",i);
-        WritePrivateProfileString("SDC",txt,FlashFile[i],IniFile);
-    }
-
-    if (SendDlgItemMessage(hDlg,IDC_CLOCK,BM_GETCHECK,0,0)) {
-        WritePrivateProfileString("SDC","ClockEnable","1",IniFile);
+    if (SendDlgItemMessage(hDlg,IDC_CLOCK,BM_GETCHECK,0,0)==BST_CHECKED) {
+        ClockEnable = 1;
     } else {
-        WritePrivateProfileString("SDC","ClockEnable","0",IniFile);
+        ClockEnable = 0;
     }
-    char tmp[4];
-    snprintf(tmp,4,"%d",(StartupBank & 7));
-    WritePrivateProfileString("SDC","StarupBank",tmp,IniFile);
+
+    ::vcc::utils::configuration_serializer conf(IniFile);
+
+    conf.write("SDC","SDCardPath",SDCard);
+    char key[32];
+    for (int i=0;i<8;i++) {
+        snprintf(key,32,"FlashFile_%d",i);
+        conf.write("SDC",key,FlashFile[i]);
+    }
+    conf.write("SDC","ClockEnable",ClockEnable);
+    conf.write("SDC","StartupBank",StartupBank & 7);
     return true;
 }
 
