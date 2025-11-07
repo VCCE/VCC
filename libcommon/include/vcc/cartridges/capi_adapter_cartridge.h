@@ -21,6 +21,7 @@
 #include <Windows.h>
 #include <string>
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 namespace vcc::cartridges
 {
@@ -84,3 +85,5 @@ namespace vcc::cartridges
 	};
 
 }
+
+#endif

@@ -19,6 +19,8 @@
 #include <vcc/core/interrupts.h>
 
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 extern "C"
 {
 
@@ -60,3 +62,5 @@ extern "C"
 	};
 
 }
+
+#endif
