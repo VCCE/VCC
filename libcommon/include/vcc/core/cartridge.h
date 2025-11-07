@@ -30,6 +30,7 @@ namespace vcc::core
 		using name_type = ::std::string;
 		using catalog_id_type = ::std::string;
 		using description_type = ::std::string;
+		using size_type = ::std::size_t;
 
 
 	public:
@@ -48,7 +49,7 @@ namespace vcc::core
 		virtual void stop();
 		virtual void reset();
 
-		virtual [[nodiscard]] unsigned char read_memory_byte(unsigned short memory_address);
+		virtual [[nodiscard]] unsigned char read_memory_byte(size_type memory_address);
 
 		virtual void write_port(unsigned char port_id, unsigned char value);
 		virtual [[nodiscard]] unsigned char read_port(unsigned char port_id);
@@ -57,7 +58,7 @@ namespace vcc::core
 
 		virtual [[nodiscard]] unsigned short sample_audio();
 
-		virtual void status(char* text_buffer, size_t buffer_size);
+		virtual void status(char* text_buffer, size_type buffer_size);
 		virtual void menu_item_clicked(unsigned char menu_item_id);
 	};
 

@@ -211,7 +211,7 @@ unsigned char multipak_cartridge::read_port(unsigned char port_id)
 	return 0;
 }
 
-unsigned char multipak_cartridge::read_memory_byte(unsigned short memory_address)
+unsigned char multipak_cartridge::read_memory_byte(size_type memory_address)
 {
 	vcc::utils::section_locker lock(mutex_);
 

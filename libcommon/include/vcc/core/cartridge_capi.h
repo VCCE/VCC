@@ -44,7 +44,7 @@ extern "C"
 	using PakHeartBeatModuleFunction = void (*)();
 	using PakGetStatusModuleFunction = void (*)(char* text_buffer, size_t buffer_size);
 	using PakWritePortModuleFunction = void (*)(unsigned char port, unsigned char value);
-	using PakReadMemoryByteModuleFunction = unsigned char (*)(unsigned short address);
+	using PakReadMemoryByteModuleFunction = unsigned char (*)(size_t address);
 	using PakReadPortModuleFunction = unsigned char (*)(unsigned char port);
 	using PakSampleAudioModuleFunction = unsigned short (*)();
 	using PakMenuItemClickedModuleFunction = void (*)(unsigned char itemId);

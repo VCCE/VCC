@@ -252,7 +252,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short Address)
+	__declspec(dllexport) unsigned char PakReadMemoryByte(::std::size_t Address)
 	{
 		return RomPointer[SelectRomIndex]->read_memory_byte(Address);
 	}

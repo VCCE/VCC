@@ -51,7 +51,7 @@ namespace vcc::cartridges
 			return {};
 		}
 
-		unsigned char default_read_memory_byte(unsigned short)
+		unsigned char default_read_memory_byte(size_t)
 		{
 			return {};
 		}
@@ -158,9 +158,11 @@ namespace vcc::cartridges
 		return read_port_(port_id);
 	}
 
-	unsigned char capi_adapter_cartridge::read_memory_byte(unsigned short memory_address)
+	unsigned char capi_adapter_cartridge::read_memory_byte(size_type memory_address)
 	{
-		return read_memory_byte_(memory_address);
+		// FIXME: This cast goes away when the signature of read memory is changed
+		// to take a size_t instead of a short.
+		return read_memory_byte_(static_cast<unsigned short>(memory_address));
 	}
 
 	unsigned short capi_adapter_cartridge::sample_audio()

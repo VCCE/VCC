@@ -466,11 +466,11 @@ extern "C"
 
 
     // Return a byte from the current PAK ROM
-    __declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short adr)
+    __declspec(dllexport) unsigned char PakReadMemoryByte(::std::size_t adr)
     {
         adr &= 0x3FFF;
         if (EnableBankWrite) {
-            return WriteFlashBank(adr);
+            return WriteFlashBank(static_cast<unsigned short>(adr));
         } else {
             BankWriteState = 0;  // Any read resets write state
             return(PakRom[adr]);
