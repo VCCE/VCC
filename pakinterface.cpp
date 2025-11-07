@@ -25,7 +25,6 @@
 #include "Vcc.h"
 #include "mc6821.h"
 #include "resource.h"
-#include <vcc/core/limits.h>
 #include <vcc/cartridges/empty_cartridge.h>
 #include <vcc/utils/dll_deleter.h>
 #include <vcc/utils/winapi.h>

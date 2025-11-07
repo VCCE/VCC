@@ -67,7 +67,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "CommandLine.h"
 #include <vcc/common/logger.h>
-#include <vcc/core/limits.h>
 #include "memdump.h"
 
 #include "MemoryMap.h"

@@ -26,7 +26,6 @@
 #include "../CartridgeMenu.h"
 #include <vcc/common/logger.h>
 #include <vcc/utils/winapi.h>
-#include <vcc/core/limits.h>
 
 //------------------------------------------------------------------------
 // Local Functions

@@ -108,6 +108,9 @@
     <ClCompile Include="src\core\cartridge.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
+    <ClCompile Include="src\devices\becker\beckerport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource\resource.h">
@@ -129,9 +132,6 @@
       <Filter>Header Files\core\detail</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\core\cartridge_capi.h">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\core\limits.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\core\interrupts.h">
@@ -181,6 +181,9 @@
     </ClInclude>
     <ClInclude Include="include\vcc\devices\rom\banked_rom_image.h">
       <Filter>Header Files\devices\rom</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\devices\becker\beckerport.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

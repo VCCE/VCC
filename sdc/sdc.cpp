@@ -152,7 +152,6 @@
 #include "../CartridgeMenu.h"
 #include <vcc/core/cartridge_capi.h>
 #include <vcc/utils/winapi.h>
-#include <vcc/core/limits.h>
 #include "sdc.h"
 
 //======================================================================

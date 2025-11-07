@@ -30,7 +30,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/utils/winapi.h>
 #include <vcc/core/interrupts.h>
 #include <vcc/core/cartridge_capi.h>
-#include <vcc/core/limits.h>
 
 constexpr auto DEF_HD_SIZE = 132480u;
 
