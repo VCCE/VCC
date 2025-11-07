@@ -24,7 +24,6 @@ This file is part of VCC (Virtual Color Computer).
 #define _WIN32_WINNT 0x05010000 // I want to support XP
 
 #include "BuildConfig.h"
-#include <vcc/core/limits.h>
 #include <Windows.h>
 #include <CommCtrl.h>	// Windows common controls
 #include "defines.h"

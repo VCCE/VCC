@@ -28,7 +28,6 @@
 #include <vcc/common/logger.h>
 #include <vcc/utils/winapi.h>
 #include <vcc/devices/rtc/oki_m6242b.h>
-#include <vcc/core/limits.h>
 #include <vcc/devices/rom/rom_image.h>
 #include <Windows.h>
 #include <array>

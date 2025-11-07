@@ -24,7 +24,6 @@
 #include <vcc/utils/filesystem.h>
 #include <vcc/core/cartridge_capi.h>
 #include <vcc/core/cartridge_factory.h>
-#include <vcc/core/limits.h>
 #include <memory>
 
 

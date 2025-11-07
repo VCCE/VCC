@@ -28,7 +28,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/common/DialogOps.h>
 #include <vcc/core/cartridge_capi.h>
 #include <vcc/utils/winapi.h>
-#include <vcc/core/limits.h>
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
