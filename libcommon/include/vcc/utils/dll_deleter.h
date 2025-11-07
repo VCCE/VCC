@@ -23,9 +23,13 @@
 namespace vcc::utils
 {
 
+	/// @brief Custom `std::unique_ptr` "deleter" for managing the lifetime of shared libraries.
 	struct LIBCOMMON_EXPORT dll_deleter
 	{
-		void operator()(HMODULE instance) const
+		/// @brief Release a shared library.
+		/// 
+		/// @param instance The handle to the shared library to release.
+		void operator()(HMODULE instance) const noexcept
 		{
 			if (instance != nullptr)
 			{

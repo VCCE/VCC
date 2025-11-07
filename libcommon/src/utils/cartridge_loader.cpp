@@ -113,11 +113,11 @@ namespace vcc::utils
 	}
 
 	// Load C API hardware cart
-	cartridge_loader_result load_capi_cartridge(
+	cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		void* const host_context,
-		const std::string& iniPath,
+		const std::string& configuration_path,
 		const cartridge_capi_context& capi_context)
 	{
 		if (GetModuleHandle(filename.c_str()) != nullptr)
@@ -154,7 +154,7 @@ namespace vcc::utils
 			details.cartridge = std::make_unique<vcc::cartridges::capi_adapter_cartridge>(
 				details.handle.get(),
 				host_context,
-				iniPath,
+				configuration_path,
 				capi_context);
 			details.load_result = cartridge_loader_status::success;
 
@@ -169,7 +169,7 @@ namespace vcc::utils
 		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		const cartridge_capi_context& capi_context,
 		void* const host_context,
-		const std::string& iniPath)
+		const std::string& configuration_path)
 	{
 		switch (::vcc::utils::determine_cartridge_type(filename))
 		{
@@ -181,11 +181,11 @@ namespace vcc::utils
 			return load_rom_cartridge(filename, move(cartridge_context));
 
 		case cartridge_file_type::library:		//	File is a DLL
-			return load_capi_cartridge(
+			return load_library_cartridge(
 				filename,
 				move(cartridge_context),
 				host_context,
-				iniPath,
+				configuration_path,
 				capi_context);
 		}
 	}
