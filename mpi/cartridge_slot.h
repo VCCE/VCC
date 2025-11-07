@@ -40,6 +40,7 @@ namespace vcc::modules::mpi
 		using handle_type = ::vcc::utils::cartridge_loader_result::handle_type;
 		using menu_item_type = CartMenuItem;
 		using menu_item_collection_type = std::vector<menu_item_type>;
+		using size_type = ::std::size_t;
 
 
 	public:
@@ -109,7 +110,7 @@ namespace vcc::modules::mpi
 			return cartridge_->read_port(port_id);
 		}
 
-		unsigned char read_memory_byte(unsigned short memory_address) const
+		unsigned char read_memory_byte(size_type memory_address) const
 		{
 			return cartridge_->read_memory_byte(memory_address);
 		}

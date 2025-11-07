@@ -48,7 +48,7 @@ namespace vcc::cartridges
 		LIBCOMMON_EXPORT void stop() override;
 		LIBCOMMON_EXPORT void reset() override;
 
-		LIBCOMMON_EXPORT [[nodiscard]] unsigned char read_memory_byte(unsigned short memory_address) override;
+		LIBCOMMON_EXPORT [[nodiscard]] unsigned char read_memory_byte(size_type memory_address) override;
 
 		LIBCOMMON_EXPORT void write_port(unsigned char port_id, unsigned char value) override;
 		LIBCOMMON_EXPORT [[nodiscard]] unsigned char read_port(unsigned char port_id) override;
@@ -56,7 +56,7 @@ namespace vcc::cartridges
 		LIBCOMMON_EXPORT void process_horizontal_sync() override;
 		LIBCOMMON_EXPORT [[nodiscard]] unsigned short sample_audio() override;
 
-		LIBCOMMON_EXPORT void status(char* text_buffer, size_t buffer_size) override;
+		LIBCOMMON_EXPORT void status(char* text_buffer, size_type buffer_size) override;
 		LIBCOMMON_EXPORT void menu_item_clicked(unsigned char menu_item_id) override;
 
 

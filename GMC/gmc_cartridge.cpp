@@ -98,7 +98,7 @@ unsigned char gmc_cartridge::read_port(unsigned char port)
 	return 0;
 }
 
-unsigned char gmc_cartridge::read_memory_byte(unsigned short address)
+unsigned char gmc_cartridge::read_memory_byte(size_type address)
 {
 	return rom_image_.read_memory_byte(address);
 }

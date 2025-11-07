@@ -73,7 +73,7 @@ namespace vcc::cartridges
 		}
 	}
 
-	unsigned char rom_cartridge::read_memory_byte(unsigned short memory_address)
+	unsigned char rom_cartridge::read_memory_byte(size_type memory_address)
 	{
 		return buffer_[((memory_address & 0x7fff) + bank_offset_) % buffer_.size()];
 	}
