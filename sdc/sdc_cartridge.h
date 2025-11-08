@@ -39,7 +39,6 @@ unsigned char MemRead(unsigned short);
 LRESULT CALLBACK SDC_Control(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
 
-// frendly functions 
 void CloseDrive(int);
 bool IsDirectory(const char *);
 unsigned char WriteFlashBank(unsigned short);

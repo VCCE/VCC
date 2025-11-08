@@ -141,9 +141,8 @@
 //----------------------------------------------------------------------
 //#define USE_LOGGING
 
-#include <Shlwapi.h>   // for PathIsDirectoryEmpty
-
 #include <Windows.h>
+#include <filesystem>
 #include <vcc/devices/rtc/ds1315.h>
 #include <vcc/common/logger.h>
 #include <vcc/core/cartridge_capi.h>
@@ -450,6 +449,15 @@ void LoadRom(unsigned char bank)
     return;
 }
 
+//----------------------------------------------------------------------
+// Determine if path is a directory
+//----------------------------------------------------------------------
+bool IsDirectory(const char * path)
+{
+    std::filesystem::file_status stat = std::filesystem::status(path);
+    return std::filesystem::is_directory(stat);
+}
+//
 //----------------------------------------------------------------------
 // Parse the startup.cfg file
 //----------------------------------------------------------------------
@@ -1816,20 +1824,29 @@ void RenameFile(const char *names)
 
     GetFullPath(from,names);
     GetFullPath(target,1+strchr(names,'\0'));
-
     DLOG_C("UpdateSD rename %s %s\n",from,target);
 
-    if (std::rename(from,target)) {
-        DLOG_C("RenameFile %s\n", strerror(errno));
-        IF.status = STA_FAIL | STA_WIN_ERROR;
-    } else {
+    if (!std::filesystem::exists(from)) {
+        IF.status = STA_FAIL | STA_NOTFOUND;
+        return;
+    }
+
+    if (std::filesystem::exists(target)) {
+        IF.status = STA_FAIL | STA_INVALID;
+        return;
+    }
+
+    try {
+        std::filesystem::rename(from, target);
         IF.status = STA_NORMAL;
+    } catch (const std::filesystem::filesystem_error&) {
+        IF.status = STA_FAIL | STA_WIN_ERROR;
     }
     return;
 }
 
 //----------------------------------------------------------------------
-// Delete disk or directory
+// Delete disk image or directory
 //----------------------------------------------------------------------
 void KillFile(const char *file)
 {
@@ -1837,24 +1854,22 @@ void KillFile(const char *file)
     GetFullPath(path,file);
     DLOG_C("KillFile delete %s\n",path);
 
+    if (!std::filesystem::exists(path)) {
+        IF.status = STA_FAIL | STA_NOTFOUND;
+        return;
+    }
+
     if (IsDirectory(path)) {
-        if (PathIsDirectoryEmpty(path)) {
-            if (RemoveDirectory(path)) {
-                IF.status = STA_NORMAL;
-            } else {
-                DLOG_C("Deletefile %s\n", strerror(errno));
-                IF.status = STA_FAIL | STA_NOTFOUND;
-            }
-        } else {
+        if (!std::filesystem::is_empty(path)) {
             IF.status = STA_FAIL | STA_NOTEMPTY;
+            return;
         }
+    }
+
+    if (std::filesystem::remove(path)) {
+        IF.status = STA_NORMAL;
     } else {
-        if (DeleteFile(path)) {
-            IF.status = STA_NORMAL;
-        } else {
-            DLOG_C("Deletefile %s\n", strerror(errno));
-            IF.status = STA_FAIL | STA_NOTFOUND;
-        }
+        IF.status = STA_FAIL | STA_WIN_ERROR;
     }
     return;
 }
@@ -1868,15 +1883,12 @@ void MakeDirectory(const char *name)
     GetFullPath(path,name);
     DLOG_C("MakeDirectory %s\n",path);
 
-    // Make sure directory is not in use
-    struct _stat file_stat;
-    int result = _stat(path,&file_stat);
-    if (result == 0) {
+    if (std::filesystem::exists(path)) {
         IF.status = STA_FAIL | STA_INVALID;
         return;
     }
 
-    if (CreateDirectory(path,nullptr)) {
+    if (std::filesystem::create_directory(path)) {
         IF.status = STA_NORMAL;
     } else {
         DLOG_C("MakeDirectory %s\n", strerror(errno));
@@ -1907,17 +1919,6 @@ void AppendPathChar(char * path, char c)
     if (l > (MAX_PATH-2)) return;
     path[l] = c;
     path[l+1] = '\0';
-}
-
-//----------------------------------------------------------------------
-// Determine if path is a direcory
-//----------------------------------------------------------------------
-bool IsDirectory(const char * path)
-{
-    struct _stat file_stat;
-    int result = _stat(path,&file_stat);
-    if (result != 0) return false;
-    return ((file_stat.st_mode & _S_IFDIR) != 0);
 }
 
 //----------------------------------------------------------------------
