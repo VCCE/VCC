@@ -15,28 +15,20 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-
 #pragma once
 #include <vcc/core/detail/exports.h>
 #include <string>
 
-// The configuration_serializer class reads or writes VCC settings kept in the
-// VCC initialization file (typically vcc.ini)
-//
-// In programming, a serializer is a mechanism or tool used to convert a complex
-// data structure or object into a format that can be easily stored, transmitted,
-// or reconstructed later. This class barely meets that definition. It might be
-// better named "settings_manager" or just "Settings".
 
 namespace vcc::utils
 {
 
 	/// @brief Provides facilities to save and restore values.
 	///
-	/// The Configuration Serializer provides facilities for saving values to and loading
+	/// The Persistent Value Store provides facilities for saving values to and loading
 	/// values from a file that persists between sessions. Values are stored grouped in
 	/// sections and are accessed using a textual key.
-	class configuration_serializer
+	class persistent_value_store
 	{
 	public:
 
@@ -47,12 +39,13 @@ namespace vcc::utils
 		/// @brief The type used to represent a size or length.
 		using size_type = ::std::size_t;
 
+
 	public:
 
-		/// @brief Constructs a Configuration Serializer.
+		/// @brief Constructs a Persistent Value Store.
 		/// 
 		/// @param path The path to the file where the values are stored.
-		LIBCOMMON_EXPORT explicit configuration_serializer(path_type path);
+		LIBCOMMON_EXPORT explicit persistent_value_store(path_type path);
 
 		/// @brief Save a signed integer value.
 		/// 
@@ -76,15 +69,14 @@ namespace vcc::utils
 
 		/// @brief Retrieve a boolean value.
 		/// 
-		/// Retrieves a boolean value from the configuration. If the value is not present in
-		/// the configuration, a default value is returned.
+		/// Retrieves a boolean value from the value store. If the value is not present in the
+		/// value store, a default value is returned.
 		/// 
 		/// @param section The section the value is stored in.
 		/// @param key The key the value is saved as.
-		/// @param default_value The value to return if it does not exist in the configuration.
+		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
-		/// @return The value stored in the configuration if it exists; otherwise the specified
-		/// default value.
+		/// @return The stored value if it exists; otherwise the specified default value.
 		LIBCOMMON_EXPORT [[nodiscard]] bool read(
 			const string_type& section,
 			const string_type& key,
@@ -92,15 +84,14 @@ namespace vcc::utils
 
 		/// @brief Retrieve a signed integer value.
 		/// 
-		/// Retrieves a signed integer value from the configuration. If the value is not present
-		/// in the configuration, a default value is returned.
+		/// Retrieves a signed integer value from the value store. If the value is not present
+		/// in the value store, a default value is returned.
 		/// 
 		/// @param section The section the value is stored in.
 		/// @param key The key the value is saved as.
-		/// @param default_value The value to return if it does not exist in the configuration.
+		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
-		/// @return The value stored in the configuration if it exists; otherwise the specified
-		/// default value.
+		/// @return The stored value if it exists; otherwise the specified default value.
 		LIBCOMMON_EXPORT [[nodiscard]] int read(
 			const string_type& section,
 			const string_type& key,
@@ -108,15 +99,14 @@ namespace vcc::utils
 
 		/// @brief Retrieve an unsigned integer value.
 		/// 
-		/// Retrieves an unsigned integer value from the configuration. If the value is not present
-		/// in the configuration, a default value is returned.
+		/// Retrieves an unsigned integer value from the value store. If the value is not present
+		/// in the value store, a default value is returned.
 		/// 
 		/// @param section The section the value is stored in.
 		/// @param key The key the value is saved as.
-		/// @param default_value The value to return if it does not exist in the configuration.
+		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
-		/// @return The value stored in the configuration if it exists; otherwise the specified
-		/// default value.
+		/// @return The stored value if it exists; otherwise the specified default value.
 		LIBCOMMON_EXPORT [[nodiscard]] size_type read(
 			const string_type& section,
 			const string_type& key,
@@ -124,15 +114,14 @@ namespace vcc::utils
 
 		/// @brief Retrieve a string value.
 		/// 
-		/// Retrieves a string value from the configuration. If the value is not present in the
-		/// configuration, a default value is returned.
+		/// Retrieves a string value from the value store. If the value is not present in the
+		/// value store, a default value is returned.
 		/// 
 		/// @param section The section the value is stored in.
 		/// @param key The key the value is saved as.
-		/// @param default_value The value to return if it does not exist in the configuration.
+		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
-		/// @return The value stored in the configuration if it exists; otherwise the specified
-		/// default value.
+		/// @return The stored value if it exists; otherwise the specified default value.
 		LIBCOMMON_EXPORT [[nodiscard]] string_type read(
 			const string_type& section,
 			const string_type& key,
@@ -140,15 +129,14 @@ namespace vcc::utils
 
 		/// @brief Retrieve a string value.
 		/// 
-		/// Retrieves a string value from the configuration. If the value is not present in the
-		/// configuration, a default value is returned.
+		/// Retrieves a string value from the value store. If the value is not present in the
+		/// value store, a default value is returned.
 		/// 
 		/// @param section The section the value is stored in.
 		/// @param key The key the value is saved as.
-		/// @param default_value The value to return if it does not exist in the configuration.
+		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
-		/// @return The value stored in the configuration if it exists; otherwise the specified
-		/// default value.
+		/// @return The stored value if it exists; otherwise the specified default value.
 		LIBCOMMON_EXPORT [[nodiscard]] string_type read(
 			const string_type& section,
 			const string_type& key,

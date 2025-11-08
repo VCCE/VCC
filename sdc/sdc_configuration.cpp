@@ -29,7 +29,7 @@
 #include <vcc/common/logger.h>
 #include <vcc/common/DialogOps.h>
 #include <vcc/core/cartridge_capi.h>
-#include <vcc/utils/configuration_serializer.h>
+#include <vcc/utils/persistent_value_store.h>
 #include "../CartridgeMenu.h"
 #include "resource.h"
 #include "sdc_cartridge.h"
@@ -218,7 +218,7 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 //------------------------------------------------------------
 void LoadConfig()
 {
-    ::vcc::utils::configuration_serializer conf(IniFile);
+    ::vcc::utils::persistent_value_store conf(IniFile);
 
     strncpy(MPIPath,conf.read("DefaultPaths","MPIPath").c_str(),MAX_PATH);
     strncpy(SDCard,conf.read("SDC","SDCardPath").c_str(),MAX_PATH);
@@ -249,7 +249,7 @@ bool SaveConfig(HWND hDlg)
         ClockEnable = 0;
     }
 
-    ::vcc::utils::configuration_serializer conf(IniFile);
+    ::vcc::utils::persistent_value_store conf(IniFile);
 
     conf.write("SDC","SDCardPath",SDCard);
     char key[32];

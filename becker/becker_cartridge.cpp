@@ -18,7 +18,7 @@
 #include "becker_cartridge.h"
 #include "resource.h"
 #include <vcc/utils/winapi.h>
-#include <vcc/utils/configuration_serializer.h>
+#include <vcc/utils/persistent_value_store.h>
 #include "../CartridgeMenu.h"
 
 // Contains Becker cart exports
@@ -51,11 +51,11 @@ void becker_cartridge::start()
 {
 
 //  Load becker config
-	::vcc::utils::configuration_serializer serializer(context_->configuration_path());
+	::vcc::utils::persistent_value_store settings(context_->configuration_path());
 
 	gBecker.sethost(
-		serializer.read(configuration_section_id_, "DWServerAddr", "127.0.0.1").c_str(),
-		serializer.read(configuration_section_id_, "DWServerPort", "65504").c_str());
+		settings.read(configuration_section_id_, "DWServerAddr", "127.0.0.1").c_str(),
+		settings.read(configuration_section_id_, "DWServerPort", "65504").c_str());
 	gBecker.enable(true);
 
 //  Create dynamic menu
@@ -131,8 +131,8 @@ void becker_cartridge::configure_server(string_type server_address, string_type 
 {
 	gBecker.sethost(server_address.c_str(), server_port.c_str());
 
-	::vcc::utils::configuration_serializer serializer(context_->configuration_path());
+	::vcc::utils::persistent_value_store settings(context_->configuration_path());
 
-	serializer.write(configuration_section_id_, "DWServerAddr", server_address);
-	serializer.write(configuration_section_id_, "DWServerPort", server_port);
+	settings.write(configuration_section_id_, "DWServerAddr", server_address);
+	settings.write(configuration_section_id_, "DWServerPort", server_port);
 }

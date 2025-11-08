@@ -118,7 +118,7 @@
     <ClCompile Include="src\logger.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\utils\cartridge_loader.cpp" />
-    <ClCompile Include="src\utils\configuration_serializer.cpp" />
+    <ClCompile Include="src\utils\persistent_value_store.cpp" />
     <ClCompile Include="src\utils\filesystem.cpp" />
     <ClCompile Include="src\utils\winapi.cpp" />
   </ItemGroup>
@@ -141,7 +141,7 @@
     <ClInclude Include="include\vcc\devices\rtc\oki_m6242b.h" />
     <ClInclude Include="include\vcc\devices\becker\beckerport.h" />
     <ClInclude Include="include\vcc\utils\cartridge_loader.h" />
-    <ClInclude Include="include\vcc\utils\configuration_serializer.h" />
+    <ClInclude Include="include\vcc\utils\persistent_value_store.h" />
     <ClInclude Include="include\vcc\utils\critical_section.h" />
     <ClInclude Include="include\vcc\utils\dll_deleter.h" />
     <ClInclude Include="include\vcc\utils\filesystem.h" />

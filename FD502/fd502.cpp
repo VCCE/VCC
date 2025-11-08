@@ -31,7 +31,7 @@
 #include <vcc/devices/rom/rom_image.h>
 #include <Windows.h>
 #include <array>
-#include <vcc/utils/configuration_serializer.h>
+#include <vcc/utils/persistent_value_store.h>
 #include <vcc/utils/filesystem.h>
 
 
@@ -601,20 +601,20 @@ void LoadConfig()  // Called on SetIniPath
 	char DiskRomPath[MAX_PATH];
 	char RGBRomPath[MAX_PATH];
 
-	utils::configuration_serializer serializer(IniFile);
+	::vcc::utils::persistent_value_store settings(IniFile);
 
-	BeckerEnabled = serializer.read(becker_section_name, "DWEnable", false);
-	BeckerAddr = serializer.read(becker_section_name, "DWServerAddr", "127.0.0.1");
-	BeckerPort = serializer.read(becker_section_name, "DWServerPort", "65504");
+	BeckerEnabled = settings.read(becker_section_name, "DWEnable", false);
+	BeckerAddr = settings.read(becker_section_name, "DWServerAddr", "127.0.0.1");
+	BeckerPort = settings.read(becker_section_name, "DWServerPort", "65504");
 	gBecker.sethost(BeckerAddr.c_str(), BeckerPort.c_str());
 	gBecker.enable(BeckerEnabled);
 
-	FloppyPath = serializer.read("DefaultPaths", "FloppyPath");
+	FloppyPath = settings.read("DefaultPaths", "FloppyPath");
 	SelectRomIndex = std::min(
-		serializer.read(fd502_section_name, "DiskRom", default_selected_rom_index),
+		settings.read(fd502_section_name, "DiskRom", default_selected_rom_index),
 		RomPointer.size());
-	RomFileName = utils::find_pak_module_path(serializer.read(fd502_section_name, "RomPath"));
-	PersistDisks = serializer.read(fd502_section_name, "Persist", true);
+	RomFileName = utils::find_pak_module_path(settings.read(fd502_section_name, "RomPath"));
+	PersistDisks = settings.read(fd502_section_name, "Persist", true);
 
 	RomFileName = utils::find_pak_module_path(RomFileName);
 	ExternalRom.load(RomFileName); //JF
@@ -632,7 +632,7 @@ void LoadConfig()  // Called on SetIniPath
 		for (auto Index = 0; Index < 4; Index++)
 		{
 			const auto settings_key = "Disk#" + std::to_string(Index);
-			const auto disk_filename(serializer.read(fd502_section_name, settings_key));
+			const auto disk_filename(settings.read(fd502_section_name, settings_key));
 			if (!disk_filename.empty())
 			{
 				if (mount_disk_image(disk_filename.c_str(), Index))
@@ -651,7 +651,7 @@ void LoadConfig()  // Called on SetIniPath
 		}
 	}
 
-	ClockEnabled = serializer.read(fd502_section_name, "ClkEnable", true);
+	ClockEnabled = settings.read(fd502_section_name, "ClkEnable", true);
 	SetTurboDisk(GetPrivateProfileInt(fd502_section_name, "TurboDisk", 1, IniFile));
 }
 
@@ -660,28 +660,28 @@ void SaveConfig()
 	unsigned char Index = 0;
 	char Temp[16] = "";
 
-	::vcc::utils::configuration_serializer serializer(IniFile);
+	::vcc::utils::persistent_value_store settings(IniFile);
 
 	RomFileName = ::vcc::utils::strip_application_path(RomFileName);
-	serializer.write(fd502_section_name, "DiskRom", SelectRomIndex);
-	serializer.write(fd502_section_name, "RomPath", RomFileName);
-	serializer.write(fd502_section_name, "Persist", PersistDisks);
+	settings.write(fd502_section_name, "DiskRom", SelectRomIndex);
+	settings.write(fd502_section_name, "RomPath", RomFileName);
+	settings.write(fd502_section_name, "Persist", PersistDisks);
 	if (PersistDisks)
 	{
 		for (auto disk_id = 0; disk_id < 4; disk_id++)
 		{
 			sprintf(Temp, "Disk#%i", disk_id);
-			serializer.write(fd502_section_name, Temp, get_mounted_disk_filename(disk_id));
+			settings.write(fd502_section_name, Temp, get_mounted_disk_filename(disk_id));
 		}
 	}
-	serializer.write(fd502_section_name, "ClkEnable", ClockEnabled);
-	serializer.write(fd502_section_name, "TurboDisk", SetTurboDisk(QUERY));
+	settings.write(fd502_section_name, "ClkEnable", ClockEnabled);
+	settings.write(fd502_section_name, "TurboDisk", SetTurboDisk(QUERY));
 	if (!FloppyPath.empty())
 	{
-		serializer.write("DefaultPaths", "FloppyPath", FloppyPath);
+		settings.write("DefaultPaths", "FloppyPath", FloppyPath);
 	}
 
-	serializer.write(becker_section_name, "DWEnable", BeckerEnabled);
-	serializer.write(becker_section_name, "DWServerAddr", BeckerAddr);
-	serializer.write(becker_section_name, "DWServerPort", BeckerPort);
+	settings.write(becker_section_name, "DWEnable", BeckerEnabled);
+	settings.write(becker_section_name, "DWServerAddr", BeckerAddr);
+	settings.write(becker_section_name, "DWServerPort", BeckerPort);
 }
