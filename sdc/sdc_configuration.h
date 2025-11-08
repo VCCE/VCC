@@ -21,7 +21,6 @@
 // SDC simulator E J Jaquay 2025 
 //----------------------------------------------------------------------
 //
-// frendly functions 
 void update_disk0_box();
 void LoadConfig();
 void BuildCartridgeMenu();
