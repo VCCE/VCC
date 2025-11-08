@@ -18,6 +18,8 @@
 #include <vcc/utils/configuration_serializer.h>
 #include <Windows.h>
 
+// The configuration_serializer class reads or writes VCC configuration data from
+// the VCC initialization store (typically vcc.ini)
 
 namespace vcc::utils
 {

@@ -15,10 +15,18 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
+
 #pragma once
 #include <vcc/core/detail/exports.h>
 #include <string>
 
+// The configuration_serializer class reads or writes VCC settings kept in the
+// VCC initialization file (typically vcc.ini)
+//
+// In programming, a serializer is a mechanism or tool used to convert a complex
+// data structure or object into a format that can be easily stored, transmitted,
+// or reconstructed later. This class barely meets that definition. It might be
+// better named "settings_manager" or just "Settings".
 
 namespace vcc::utils
 {

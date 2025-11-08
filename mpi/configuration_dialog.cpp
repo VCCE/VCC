@@ -155,7 +155,7 @@ void configuration_dialog::update_slot_details(slot_id_type slot)
 		gSlotUiElementIds[slot].insert_button_id,
 		WM_SETTEXT,
 		0,
-		reinterpret_cast<LPARAM>(mpi_.empty(slot) ? "..." : "X"));
+		reinterpret_cast<LPARAM>(mpi_.empty(slot) ? ">" : "X"));
 }
 
 

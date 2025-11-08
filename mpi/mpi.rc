@@ -78,7 +78,7 @@ BEGIN
     EDITTEXT        IDC_MODINFO,        175,8,118,115, ES_MULTILINE|ES_READONLY|ES_WANTRETURN
 
 	LTEXT "Radio button selects startup slot.", IDC_STATIC, 10,128,105,10
-	LTEXT "...  Mount cartridge.", IDC_STATIC, 125,128,90,10
+	LTEXT ">  Mount cartridge.", IDC_STATIC, 125,128,90,10
 	LTEXT "X  Eject cartridge.", IDC_STATIC, 215,128,60,10
 
 //    CHECKBOX        "Persistent ProgramPak Images",IDC_PERSIST_PAK,   15,165,110,10
