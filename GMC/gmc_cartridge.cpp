@@ -1,7 +1,7 @@
 #include "gmc_cartridge.h"
 #include "resource.h"
 #include <vcc/common/DialogOps.h>
-#include <vcc/utils/configuration_serializer.h>
+#include <vcc/utils/persistent_value_store.h>
 #include <vcc/utils/winapi.h>
 #include <vcc/utils/filesystem.h>
 #include "../CartridgeMenu.h"
@@ -54,8 +54,8 @@ gmc_cartridge::description_type gmc_cartridge::description() const
 
 void gmc_cartridge::start()
 {
-	::vcc::utils::configuration_serializer serializer(context_->configuration_path());
-	const auto selected_file(serializer.read(configuration_section_id_, configuration_rom_key_id_));
+	::vcc::utils::persistent_value_store settings(context_->configuration_path());
+	const auto selected_file(settings.read(configuration_section_id_, configuration_rom_key_id_));
 
 	load_rom(selected_file, false);
 	build_menu();
@@ -143,8 +143,8 @@ void gmc_cartridge::menu_item_clicked(unsigned char menuId)
 			return;
 		}
 
-		::vcc::utils::configuration_serializer serializer(context_->configuration_path());
-		serializer.write(
+		::vcc::utils::persistent_value_store settings(context_->configuration_path());
+		settings.write(
 			configuration_section_id_,
 			configuration_rom_key_id_,
 			selected_file);

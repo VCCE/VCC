@@ -87,7 +87,7 @@
     <ClCompile Include="src\cartridges\rom_cartridge.cpp">
       <Filter>Source Files\cartridges</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\configuration_serializer.cpp">
+    <ClCompile Include="src\utils\persistent_value_store.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\filesystem.cpp">
@@ -158,7 +158,7 @@
     <ClInclude Include="include\vcc\cartridges\rom_cartridge.h">
       <Filter>Header Files\cartridges</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\utils\configuration_serializer.h">
+    <ClInclude Include="include\vcc\utils\persistent_value_store.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\utils\critical_section.h">
