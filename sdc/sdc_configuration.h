@@ -1,3 +1,4 @@
+
 ////////////////////////////////////////////////////////////////////////////////
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
@@ -15,31 +16,16 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "becker_cartridge.h"
-#include <vcc/core/cartridge_factory.h>
-#include <Windows.h>
-
-
-static HINSTANCE gModuleInstance;
-
-// Becker dll main
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
-{
-	if (fdwReason == DLL_PROCESS_ATTACH)
-	{
-		gModuleInstance = hinstDLL;
-	}
-
-	return true;
-}
-
-// Establish Becker cart exports
-extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
-{
-	return [](
-		[[maybe_unused]] std::unique_ptr<::vcc::core::cartridge_context> context,
-		[[maybe_unused]] const cartridge_capi_context& capi_context) -> std::unique_ptr<::vcc::core::cartridge>
-		{
-			return std::make_unique<becker_cartridge>(move(context), gModuleInstance);
-		};
-}
+//
+//----------------------------------------------------------------------
+// SDC simulator E J Jaquay 2025 
+//----------------------------------------------------------------------
+//
+// frendly functions 
+void update_disk0_box();
+void LoadConfig();
+void BuildCartridgeMenu();
+// config control handles
+extern HWND hControlDlg;
+extern HWND hConfigureDlg;
+extern int ClockEnable;

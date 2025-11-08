@@ -123,6 +123,7 @@ INT_PTR configuration_dialog::process_message(
 		switch (LOWORD(wParam))
 		{
 		case IDOK:
+			// Save config dialog data
 			controller_.configure_server(
 				::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPHOST),
 				::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPPORT));
