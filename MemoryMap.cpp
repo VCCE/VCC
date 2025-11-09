@@ -30,7 +30,7 @@
 #include "tcc1014mmu.h"
 #include "resource.h"
 #include "pakinterface.h"
-#include <vcc/common/logger.h>
+#include <vcc/utils/logger.h>
 #include <vcc/common/DialogOps.h>
 #include <fstream>
 

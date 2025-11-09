@@ -25,8 +25,8 @@
 #include <process.h>
 #include <string>
 
-#include <vcc/common/logger.h>
 #include <vcc/devices/serial/beckerport.h>
+#include <vcc/utils/logger.h>
 
 namespace vcc::devices::serial
 {

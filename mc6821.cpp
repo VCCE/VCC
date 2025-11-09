@@ -113,7 +113,7 @@ Bit 0 CART FIRQ 0 = FIRQ disabled 1 = enabled
 #include "coco3.h"
 #include "pakinterface.h"
 #include "Cassette.h"
-#include <vcc/common/logger.h>
+#include <vcc/utils/logger.h>
 #include "resource.h"
 #include <cstdint>
 

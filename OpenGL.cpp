@@ -24,7 +24,7 @@
 #include <gl/GL.h>
 #include "GL/glext.h"
 #include "GL/wglext.h"
-#include <vcc/common/logger.h>
+#include <vcc/utils/logger.h>
 
 #if USE_OPENGL
 

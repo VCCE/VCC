@@ -114,12 +114,12 @@
     <ClCompile Include="src\devices\rtc\oki_m6242b.cpp" />
     <ClCompile Include="src\devices\serial\beckerport.cpp" />
     <ClCompile Include="src\DialogOps.cpp" />
-    <ClCompile Include="src\Fileops.cpp" />
-    <ClCompile Include="src\logger.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\utils\cartridge_loader.cpp" />
     <ClCompile Include="src\utils\persistent_value_store.cpp" />
+    <ClCompile Include="src\utils\Fileops.cpp" />
     <ClCompile Include="src\utils\filesystem.cpp" />
+    <ClCompile Include="src\utils\logger.cpp" />
     <ClCompile Include="src\utils\winapi.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -127,8 +127,6 @@
     <ClInclude Include="include\vcc\cartridges\empty_cartridge.h" />
     <ClInclude Include="include\vcc\cartridges\rom_cartridge.h" />
     <ClInclude Include="include\vcc\common\DialogOps.h" />
-    <ClInclude Include="include\vcc\common\FileOps.h" />
-    <ClInclude Include="include\vcc\common\logger.h" />
     <ClInclude Include="include\vcc\core\cartridge.h" />
     <ClInclude Include="include\vcc\core\cartridge_context.h" />
     <ClInclude Include="include\vcc\core\cartridge_factory.h" />
@@ -144,7 +142,9 @@
     <ClInclude Include="include\vcc\utils\persistent_value_store.h" />
     <ClInclude Include="include\vcc\utils\critical_section.h" />
     <ClInclude Include="include\vcc\utils\dll_deleter.h" />
+    <ClInclude Include="include\vcc\utils\FileOps.h" />
     <ClInclude Include="include\vcc\utils\filesystem.h" />
+    <ClInclude Include="include\vcc\utils\logger.h" />
     <ClInclude Include="include\vcc\utils\winapi.h" />
     <ClInclude Include="resource\resource.h" />
   </ItemGroup>

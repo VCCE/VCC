@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "resource.h"
 #include "cc3vhd.h"
 #include <vcc/devices/rtc/ds1315.h>
-#include <vcc/common/FileOps.h>
+#include <vcc/utils/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/utils/winapi.h>
