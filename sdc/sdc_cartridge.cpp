@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 //----------------------------------------------------------------------
-// SDC simulator E J Jaquay 2025 
+// SDC simulator E J Jaquay 2025
 //----------------------------------------------------------------------
 //
 //  SDC Floppy port conflicts
@@ -114,7 +114,7 @@
 //  -----------------------
 //  Some programs do not use SDC-DOS's disk driver, instead they contain
 //  their own disk drivers to access drives 0 and 1. The SDC simulator
-//  tries to emulate a fd502 interface to allow those programs to see 
+//  tries to emulate a fd502 interface to allow those programs to see
 //  the SDC drives as floppy drives.
 //
 //  Flash data
@@ -188,6 +188,55 @@ constexpr unsigned char ATTR_DIR      = 0x10;
 // Self imposed limit on maximum dsk file size.
 constexpr unsigned int MAX_DSK_SECTORS = 2097152;
 
+// SDC CoCo Interface
+struct Interface
+{
+    int sdclatch;
+    unsigned char cmdcode;
+    unsigned char status;
+    unsigned char reply1;
+    unsigned char reply2;
+    unsigned char reply3;
+    unsigned char param1;
+    unsigned char param2;
+    unsigned char param3;
+    unsigned char reply_mode;  // 0=words, 1=bytes
+    unsigned char reply_status;
+    unsigned char half_sent;
+    int bufcnt;
+    char *bufptr;
+    char blkbuf[600];
+};
+
+// Packed file records for directory list
+#pragma pack(push,1)
+struct SdcFile {
+    char name[8];
+    char type[3];
+};
+struct FileRecord {
+    SdcFile file;
+    char attrib;
+    char hihi_size;
+    char lohi_size;
+    char hilo_size;
+    char lolo_size;
+};
+#pragma pack(pop)
+
+// Mounted image data
+struct DiskImage {
+    HANDLE hFile;
+    unsigned int size;
+    unsigned int headersize;
+    DWORD sectorsize;
+    DWORD tracksectors;
+    char doublesided;
+    char name[MAX_PATH];
+    char fullpath[MAX_PATH];
+    struct FileRecord filerec;
+};
+
 // Private functions
 void ParseStartup();
 void SDCCommand();
@@ -233,9 +282,11 @@ void FloppySector(unsigned char);
 void FloppyWriteData(unsigned char);
 unsigned char FloppyStatus();
 unsigned char FloppyReadData();
+void set_filerecord_file_size(FileRecord& , uint32_t);
+void set_sdcfile_from_filename(SdcFile&, const std::string& );
 
 //======================================================================
-// Public Data 
+// Public Data
 //======================================================================
 
 void* gHostKey = nullptr;
@@ -266,57 +317,13 @@ char SDC_Status[16] = {};
 // Private Data
 //======================================================================
 
-// SDC CoCo Interface
-struct Interface
-{
-    int sdclatch;
-    unsigned char cmdcode;
-    unsigned char status;
-    unsigned char reply1;
-    unsigned char reply2;
-    unsigned char reply3;
-    unsigned char param1;
-    unsigned char param2;
-    unsigned char param3;
-    unsigned char reply_mode;  // 0=words, 1=bytes
-    unsigned char reply_status;
-    unsigned char half_sent;
-    int bufcnt;
-    char *bufptr;
-    char blkbuf[600];
-};
 static Interface IF = {};
 
 static char CurDir[256] = {};       // SDC current directory
 static char SeaDir[MAX_PATH] = {};  // Last directory searched
 
-// Packed file records for interface
-#pragma pack(1)
-struct FileRecord {
-    char name[8];
-    char type[3];
-    char attrib;
-    char hihi_size;
-    char lohi_size;
-    char hilo_size;
-    char lolo_size;
-};
-#pragma pack()
 static struct FileRecord DirPage[16] = {};
-
-// Mounted image data
-struct _Disk {
-    HANDLE hFile;
-    unsigned int size;
-    unsigned int headersize;
-    DWORD sectorsize;
-    DWORD tracksectors;
-    char doublesided;
-    char name[MAX_PATH];
-    char fullpath[MAX_PATH];
-    struct FileRecord filerec;
-};
-static struct _Disk Disk[2] = {};
+static struct DiskImage Disk[2] = {};
 
 // Flash banks
 static FILE *h_RomFile = nullptr;
@@ -515,13 +522,13 @@ void CommandDone()
 }
 
 //----------------------------------------------------------------------
-// Write port.  
+// Write port.
 //----------------------------------------------------------------------
 void SDCWrite(unsigned char data,unsigned char port)
 {
     if (port < 0x40 || port > 0x4F) return;  // Not disk data
 
-    // Latched writes 
+    // Latched writes
     if (IF.sdclatch) {
         switch (port) {
         // Control Latch
@@ -650,7 +657,7 @@ unsigned char SDCRead(unsigned char port)
         }
 
     // Unlatched reads
-    } else { 
+    } else {
         switch (port) {
         // Flash control read is used by SDCDOS to detect the SDC
         case 0x43:
@@ -1343,46 +1350,73 @@ void LoadReply(const void *data, int count)
 }
 
 //----------------------------------------------------------------------
-// The name portion of SDC path may be in SDC format which does
-// not use a dot to seperate the extension examples:
-//    "FOO     DSK" = FOO.DSK
-//    "ALONGFOODSK" = ALONGFOO.DSK
+// Set file size in file record
 //----------------------------------------------------------------------
-void FixSDCPath(char *path, const char *fpath8)
+void set_filerecord_file_size(FileRecord& rec, uint32_t size) {
+     rec.hihi_size = static_cast<char>((size >> 24) & 0xFF);
+     rec.lohi_size = static_cast<char>((size >> 16) & 0xFF);
+     rec.hilo_size = static_cast<char>((size >> 8)  & 0xFF);
+     rec.lolo_size = static_cast<char>(size & 0xFF);
+}
+
+//----------------------------------------------------------------------
+// Set file name in file record
+//----------------------------------------------------------------------
+void set_sdcfile_from_filename(SdcFile& sdcfile, const std::string& filename) {
+    auto dot = filename.find_last_of('.');
+    std::string base = (dot != std::string::npos) ? filename.substr(0, dot) : filename;
+    std::string ext  = (dot != std::string::npos) ? filename.substr(dot + 1) : "";
+    std::memset(&sdcfile,' ',sizeof(sdcfile));
+    std::memcpy(sdcfile.name, base.data(), base.length());
+    std::memcpy(sdcfile.type, ext.data(), ext.length());
+}
+
+//----------------------------------------------------------------------
+// SDC uses a packed 8.3 format but users will usually input paths with
+// normalized format. FixSDCPath normalizes a path if it is 8.3 packed.
+//----------------------------------------------------------------------
+void FixSDCPath(char *dst, const char *src, std::size_t dst_size)
 {
-    const char *pname8 = strrchr(fpath8,'/');
-    // Copy Directory portion
-    if (pname8 != nullptr) {
-        pname8++;
-        memcpy(path,fpath8,pname8-fpath8);
-    } else {
-        pname8 = fpath8;
-    }
-    path[pname8-fpath8]='\0'; // terminate directory portion
+    if (!dst || !src || dst_size == 0) return;
 
-    // Copy Name portion
-    char c;
-    char name[16];
-    int  namlen=0;
-    while(c = *pname8++) {
-        if ((c == '.')||(c == ' ')) break;
-        name[namlen++] = c;
-        if (namlen > 7) break;
+    std::size_t dst_ndx = 0;
+    std::size_t src_ndx = 0;
+
+    // Copy directory portion of src path
+    const char * slash = strrchr(src,'/');
+    if (slash != nullptr ) {
+        size_t len = slash-src+1;
+        memcpy(dst,src,len);
+        src_ndx = len;
+        dst_ndx = len;
     }
 
-    // Copy extension if any thing is left
-    if (c) {
-        name[namlen++] = '.';
-        int extlen=0;
-        while(c = *pname8++) {
-            if (c == '.' || c == ' ') continue;
-            name[namlen++] = c;
-            extlen++;
-            if (extlen > 2) break;
+    std::size_t name_len = 0;
+    bool dot_inserted = false;
+
+    // Copy name and extension with paked format conversion
+    while (src[src_ndx] != '\0' && dst_ndx + 1 < dst_size) {
+        char ch = src[src_ndx++];
+        if ((ch == ' ' || ch == '.') && !dot_inserted) {
+            if (dst_ndx + 1 < dst_size) {
+                dst[dst_ndx++] = '.';
+                dot_inserted = true;
+            }
+        } else if (ch != ' ') {
+            dst[dst_ndx++] = ch;
+            if (!dot_inserted) {
+                if (++name_len == 8 && dst_ndx + 1 < dst_size) {
+                    dst[dst_ndx++] = '.';
+                    dot_inserted = true;
+                }
+            }
         }
     }
-    name[namlen] = '\0';           // terminate name
-    strncat(path,name,MAX_PATH);   // append it to directory
+
+    // Terminate the destination char array
+    dst[dst_ndx] = '\0';
+
+    return;
 }
 
 //----------------------------------------------------------------------
@@ -1391,55 +1425,35 @@ void FixSDCPath(char *path, const char *fpath8)
 bool LoadFoundFile(struct FileRecord * rec)
 {
     memset(rec,0,sizeof(rec));
-    memset(rec->name,' ',8);
-    memset(rec->type,' ',3);
 
-    // Special case filename starts with a dot
-    if (dFound.cFileName[0] == '.' ) {
-        // Don't load if current directory is SD root,
-        // is only one dot, or if more than two chars
-        if ((*CurDir=='\0') |
-            (dFound.cFileName[1] != '.' ) |
-            (dFound.cFileName[2] != '\0'))
-            return false;
-        rec->name[0]='.';
-        rec->name[1]='.';
+    // If CurDir is not root and filename is ".." set to ".."
+    if ((strcmp(CurDir,"")!=0) && (strcmp(dFound.cFileName,"..")==0)) {
+        std::memset(&rec->file,' ',sizeof(SdcFile));
+        std::memset(rec->file.name,'.',2);
         rec->attrib = ATTR_DIR;
         return true;
     }
 
-    // File type
-    const char * pdot = strrchr(dFound.cFileName,'.');
-    if (pdot) {
-        const char * ptyp = pdot + 1;
-        for (int cnt = 0; cnt<3; cnt++) {
-           if (*ptyp == '\0') break;
-           rec->type[cnt] = *ptyp++;
-        }
-     }
-
-    // File name
-    const char * pnam = dFound.cFileName;
-    for (int cnt = 0; cnt < 8; cnt++) {
-        if (*pnam == '\0') break;
-        if (pdot && (pnam == pdot)) break;
-        rec->name[cnt] = *pnam++;
+    // Ignore any other filename that starts with a dot.
+    if (dFound.cFileName[0] == '.' ) {
+        return false;
     }
+
+    // Load file name and type
+    set_sdcfile_from_filename(rec->file,dFound.cFileName);
 
     // Attributes
     if (dFound.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
         rec->attrib |= ATTR_RDONLY;
     }
+
+    // Directory does not need size
     if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
         rec->attrib |= ATTR_DIR;
+        return true;
     }
 
-    // Filesize, sssume < 4G (dFound.nFileSizeHigh == 0)
-    rec->lolo_size = (dFound.nFileSizeLow) & 0xFF;
-    rec->hilo_size = (dFound.nFileSizeLow >> 8) & 0xFF;
-    rec->lohi_size = (dFound.nFileSizeLow >> 16) & 0xFF;
-    rec->hihi_size = (dFound.nFileSizeLow >> 24) & 0xFF;
-
+    set_filerecord_file_size(*rec, dFound.nFileSizeLow);
     return true;
 }
 
@@ -1458,11 +1472,11 @@ void MountNewDisk (int drive, const char * path, int raw)
 
     // Close and clear previous entry
     CloseDrive(drive);
-    memset((void *) &Disk[drive],0,sizeof(_Disk));
+    memset((void *) &Disk[drive],0,sizeof(DiskImage));
 
-    // Convert from SDC format
+    // Convert from 8.3 format if used
     char file[MAX_PATH];
-    FixSDCPath(file,path);
+    FixSDCPath(file,path,MAX_PATH);
 
     // Look for pre-existing file
     if (SearchFile(file)) {
@@ -1490,7 +1504,7 @@ void MountDisk (int drive, const char * path, int raw)
 
     // Close and clear previous entry
     CloseDrive(drive);
-    memset((void *) &Disk[drive],0,sizeof(_Disk));
+    memset((void *) &Disk[drive],0,sizeof(DiskImage));
 
     // Check for UNLOAD.  Path will be an empty string.
     if (*path == '\0') {
@@ -1502,8 +1516,8 @@ void MountDisk (int drive, const char * path, int raw)
     char file[MAX_PATH];
     char tmp[MAX_PATH];
 
-    // Convert from SDC format
-    FixSDCPath(file,path);
+    // Convert from 8.3 format if used
+    FixSDCPath(file,path,MAX_PATH);
 
     // Look for the file
     bool found = SearchFile(file);
@@ -1533,7 +1547,7 @@ void MountDisk (int drive, const char * path, int raw)
 }
 
 //----------------------------------------------------------------------
-// Retrieve disk name for configure 
+// Retrieve disk name for configure
 //----------------------------------------------------------------------
 std::string DiskName(int drive)
 {
@@ -1800,7 +1814,7 @@ void OpenFound (int drive,int raw)
 }
 
 //----------------------------------------------------------------------
-// Convert file name from SDC format and prepend current dir.
+// Convert file name from 8.3 format and prepend current dir.
 //----------------------------------------------------------------------
 void GetFullPath(char * path, const char * file) {
     char tmp[MAX_PATH];
@@ -1808,7 +1822,7 @@ void GetFullPath(char * path, const char * file) {
     AppendPathChar(path,'/');
     strncat(path,CurDir,MAX_PATH);
     AppendPathChar(path,'/');
-    FixSDCPath(tmp,file);
+    FixSDCPath(tmp,file,MAX_PATH);
     strncat(path,tmp,MAX_PATH);
 }
 
