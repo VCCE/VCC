@@ -26,7 +26,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/utils/FileOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/common/DialogOps.h>
-#include <vcc/core/cartridge_capi.h>
+#include <vcc/bus/cartridge_capi.h>
 #include <vcc/utils/winapi.h>
 
 static char FileName[MAX_PATH] { 0 };

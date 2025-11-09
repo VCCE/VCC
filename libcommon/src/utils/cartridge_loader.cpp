@@ -20,7 +20,7 @@
 #include <vcc/cartridges/capi_adapter_cartridge.h>
 #include <vcc/utils/cartridge_loader.h>
 #include <vcc/utils/winapi.h>
-#include <vcc/core/cartridge_factory.h>
+#include <vcc/bus/cartridge_factory.h>
 #include <vector>
 #include <fstream>
 #include <iterator>
@@ -69,7 +69,7 @@ namespace vcc::utils
 	// Load rom cartridge
 	cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::core::cartridge_context> context)
+		std::unique_ptr<::vcc::bus::cartridge_context> context)
 	{
 		constexpr size_t PAK_MAX_MEM = 0x40000;   // 256KB
 
@@ -115,7 +115,7 @@ namespace vcc::utils
 	// Load C API hardware cart
 	cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
+		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& configuration_path,
 		const cartridge_capi_context& capi_context)
@@ -166,7 +166,7 @@ namespace vcc::utils
 
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
+		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
 		const cartridge_capi_context& capi_context,
 		void* const host_context,
 		const std::string& configuration_path)

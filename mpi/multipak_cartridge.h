@@ -19,7 +19,7 @@
 #include "cartridge_slot.h"
 #include "configuration_dialog.h"
 #include "multipak_configuration.h"
-#include <vcc/core/cartridge.h>
+#include <vcc/bus/cartridge.h>
 #include <vcc/utils/critical_section.h>
 #include "../CartridgeMenu.h"
 #include <array>
@@ -27,12 +27,12 @@
 
 class multipak_cartridge
 	:
-	public ::vcc::core::cartridge,
+	public ::vcc::bus::cartridge,
 	private multipak_controller
 {
 public:
 
-	using context_type = ::vcc::core::cartridge_context;
+	using context_type = ::vcc::bus::cartridge_context;
 	using mount_status_type = ::vcc::utils::cartridge_loader_status;
 	using slot_id_type = ::std::size_t;
 	using path_type = ::std::string;

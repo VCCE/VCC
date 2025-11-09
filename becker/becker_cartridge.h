@@ -18,20 +18,20 @@
 #pragma once
 #include "configuration_dialog.h"
 #include <vcc/devices/serial/beckerport.h>
-#include <vcc/core/cartridge.h>
-#include <vcc/core/cartridge_context.h>
+#include <vcc/bus/cartridge.h>
+#include <vcc/bus/cartridge_context.h>
 #include <memory>
 #include <Windows.h>
 
 
 class becker_cartridge
 	:
-	public ::vcc::core::cartridge,
+	public ::vcc::bus::cartridge,
 	private ::cartridge_controller
 {
 public:
 
-	using context_type = ::vcc::core::cartridge_context;
+	using context_type = ::vcc::bus::cartridge_context;
 	using becker_device_type = ::vcc::devices::serial::Becker;
 
 

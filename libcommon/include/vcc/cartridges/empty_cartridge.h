@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridge.h>
+#include <vcc/bus/cartridge.h>
 
 
 namespace vcc::cartridges
@@ -26,7 +26,7 @@ namespace vcc::cartridges
 	/// 
 	/// The Empty Cartridge provides no functionality, extensions, or ROM to the system. It
 	/// does nothing and can act as a placeholder where a cartridge instance may be needed.
-	class LIBCOMMON_EXPORT empty_cartridge final : public ::vcc::core::cartridge 
+	class LIBCOMMON_EXPORT empty_cartridge final : public ::vcc::bus::cartridge 
 	{
 	public:
 

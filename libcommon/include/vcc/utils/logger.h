@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/detail/exports.h>
+#include <vcc/detail/exports.h>
 
 LIBCOMMON_EXPORT void PrintLogC(const char* fmt, ...);
 LIBCOMMON_EXPORT void PrintLogF(const char* fmt, ...);

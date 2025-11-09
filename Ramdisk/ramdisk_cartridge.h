@@ -16,13 +16,13 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridge.h>
-#include <vcc/core/cartridge_context.h>
+#include <vcc/bus/cartridge.h>
+#include <vcc/bus/cartridge_context.h>
 #include <memory>
 #include <array>
 
 
-class ramdisk_cartridge : public ::vcc::core::cartridge
+class ramdisk_cartridge : public ::vcc::bus::cartridge
 {
 public:
 

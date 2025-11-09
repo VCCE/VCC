@@ -16,17 +16,17 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridge.h>
-#include <vcc/core/cartridge_context.h>
+#include <vcc/bus/cartridge.h>
+#include <vcc/bus/cartridge_context.h>
 #include <memory>
 #include <Windows.h>
 
 
-class orchestra90cc_cartridge : public ::vcc::core::cartridge
+class orchestra90cc_cartridge : public ::vcc::bus::cartridge
 {
 public:
 	
-	using context_type = ::vcc::core::cartridge_context;
+	using context_type = ::vcc::bus::cartridge_context;
 
 	orchestra90cc_cartridge(HINSTANCE module_instance, std::unique_ptr<context_type> context);
 
