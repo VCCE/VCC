@@ -19,7 +19,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "multipak_cartridge.h"
-#include <vcc/core/cartridge_factory.h>
+#include <vcc/bus/cartridge_factory.h>
 #include <Windows.h>
 
 
@@ -46,8 +46,8 @@ BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, [[maybe_unused]] LP
 extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 {
 	return [](
-		std::unique_ptr<::vcc::core::cartridge_context> context,
-		const cartridge_capi_context& capi_context) -> std::unique_ptr<::vcc::core::cartridge>
+		std::unique_ptr<::vcc::bus::cartridge_context> context,
+		const cartridge_capi_context& capi_context) -> std::unique_ptr<::vcc::bus::cartridge>
 	{
 		gConfiguration.configuration_path(context->configuration_path());
 

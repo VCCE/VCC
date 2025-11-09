@@ -22,7 +22,7 @@
 
 // FIXME: This should be defined on the command line
 #define DIRECTINPUT_VERSION 0x0800
-#include <vcc/core/cartridge_capi.h>
+#include <vcc/bus/cartridge_capi.h>
 #include <Windows.h>
 #include <windowsx.h>
 #include <stdio.h>

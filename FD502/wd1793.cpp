@@ -20,7 +20,7 @@
 #include "defines.h"
 #include "fd502.h"
 #include "fdrawcmd.h"	// http://simonowen.com/fdrawcmd/
-#include <vcc/core/interrupts.h>
+#include <vcc/bus/interrupts.h>
 #include <winioctl.h>
 #include <Windows.h>
 #include <stdio.h>

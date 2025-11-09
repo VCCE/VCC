@@ -1,17 +1,17 @@
 #pragma once
 #include "sn76496.h"
 #include <vcc/devices/rom/banked_rom_image.h>
-#include <vcc/core/cartridge.h>
-#include <vcc/core/cartridge_context.h>
+#include <vcc/bus/cartridge.h>
+#include <vcc/bus/cartridge_context.h>
 #include <memory>
 #include <Windows.h>
 
 
-class gmc_cartridge : public ::vcc::core::cartridge
+class gmc_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using context_type = ::vcc::core::cartridge_context;
+	using context_type = ::vcc::bus::cartridge_context;
 	using path_type = ::std::string;
 	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
 

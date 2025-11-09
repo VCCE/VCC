@@ -16,8 +16,8 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridge.h>
-#include <vcc/core/cartridge_context.h>
+#include <vcc/bus/cartridge.h>
+#include <vcc/bus/cartridge_context.h>
 #include <vector>
 #include <memory>
 
@@ -28,13 +28,13 @@ namespace vcc::cartridges
 	/// @brief A cartridge that contains a ROM image.
 	/// 
 	/// @todo provide summary once the switch `banked_rom_image` is complete.
-	class rom_cartridge : public ::vcc::core::cartridge
+	class rom_cartridge : public ::vcc::bus::cartridge
 	{
 	public:
 
 		/// @brief The type that defines the interface for communicating with the
 		/// system managing the cartridge.
-		using context_type = ::vcc::core::cartridge_context;
+		using context_type = ::vcc::bus::cartridge_context;
 		/// @brief The type used to store the ROM image.
 		/// @todo Change to using `banked_rom_image`.
 		using buffer_type = std::vector<uint8_t>;

@@ -28,8 +28,8 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/utils/winapi.h>
-#include <vcc/core/interrupts.h>
-#include <vcc/core/cartridge_capi.h>
+#include <vcc/bus/interrupts.h>
+#include <vcc/bus/cartridge_capi.h>
 
 constexpr auto DEF_HD_SIZE = 132480u;
 

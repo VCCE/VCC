@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/interrupts.h>
+#include <vcc/bus/interrupts.h>
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS

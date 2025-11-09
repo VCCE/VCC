@@ -16,8 +16,8 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridge.h>
-#include <vcc/core/cartridge_capi.h>
+#include <vcc/bus/cartridge.h>
+#include <vcc/bus/cartridge_capi.h>
 #include <Windows.h>
 #include <string>
 
@@ -26,7 +26,7 @@
 namespace vcc::cartridges
 {
 
-	class capi_adapter_cartridge : public ::vcc::core::cartridge
+	class capi_adapter_cartridge : public ::vcc::bus::cartridge
 	{
 	public:
 

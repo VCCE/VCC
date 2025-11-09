@@ -17,8 +17,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <vcc/utils/cartridge_loader.h>
-#include <vcc/core/cartridge.h>
-#include <vcc/core/cartridge_context.h>
+#include <vcc/bus/cartridge.h>
+#include <vcc/bus/cartridge_context.h>
 #include "../CartridgeMenu.h"
 
 
@@ -29,8 +29,8 @@ namespace vcc::modules::mpi
 	{
 	public:
 
-		using context_type = ::vcc::core::cartridge_context;
-		using cartridge_type = ::vcc::core::cartridge;
+		using context_type = ::vcc::bus::cartridge_context;
+		using cartridge_type = ::vcc::bus::cartridge;
 		using cartridge_ptr_type = ::std::unique_ptr<cartridge_type>;
 		using name_type = cartridge_type::name_type;
 		using catalog_id_type = cartridge_type::catalog_id_type;
