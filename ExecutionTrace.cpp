@@ -28,9 +28,9 @@ This file is part of VCC (Virtual Color Computer).
 #include <cstddef>
 #include <array>
 #include <windowsx.h>
-#include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
-#include <vcc/common/logger.h>
+#include <vcc/utils/FileOps.h>
+#include <vcc/utils/logger.h>
 
 static HINSTANCE g_hinstDLG;
 

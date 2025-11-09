@@ -144,7 +144,7 @@
 #include <Windows.h>
 #include <filesystem>
 #include <vcc/devices/rtc/ds1315.h>
-#include <vcc/common/logger.h>
+#include <vcc/utils/logger.h>
 #include <vcc/core/cartridge_capi.h>
 #include "../CartridgeMenu.h"
 

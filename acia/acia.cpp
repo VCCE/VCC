@@ -24,7 +24,7 @@
 #include "acia.h"
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
-#include <vcc/common/logger.h>
+#include <vcc/utils/logger.h>
 #include <vcc/utils/winapi.h>
 
 //------------------------------------------------------------------------

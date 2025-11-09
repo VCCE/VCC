@@ -23,7 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "Vcc.h"
 #include "coco3.h"
 #include "tcc1014mmu.h"
-#include <vcc/common/FileOps.h>
+#include <vcc/utils/FileOps.h>
 
 
 static unsigned char FileType=0;

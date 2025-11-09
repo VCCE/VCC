@@ -19,12 +19,6 @@
     <Filter Include="Source Files\common">
       <UniqueIdentifier>{e1fb644c-d8fe-42cf-a190-8a3037bb20f4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\core">
-      <UniqueIdentifier>{6ca923e2-199b-44f0-8260-de0e62abca33}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\core\detail">
-      <UniqueIdentifier>{fd029ab9-8064-4e1f-9460-edb495cf58ab}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\devices">
       <UniqueIdentifier>{b50b01e9-581e-4c73-8f71-43979671a294}</UniqueIdentifier>
     </Filter>
@@ -64,15 +58,15 @@
     <Filter Include="Source Files\devices\serial">
       <UniqueIdentifier>{d6ed6a4b-cbaa-4ed2-84db-8b9a1430d2e8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\core">
+      <UniqueIdentifier>{6ca923e2-199b-44f0-8260-de0e62abca33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\detail">
+      <UniqueIdentifier>{fd029ab9-8064-4e1f-9460-edb495cf58ab}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DialogOps.cpp">
-      <Filter>Source Files\common</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Fileops.cpp">
-      <Filter>Source Files\common</Filter>
-    </ClCompile>
-    <ClCompile Include="src\logger.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
     <ClCompile Include="src\main.cpp">
@@ -117,18 +111,18 @@
     <ClCompile Include="src\devices\serial\beckerport.cpp">
       <Filter>Source Files\devices\serial</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\Fileops.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\logger.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource\resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\common\DialogOps.h">
-      <Filter>Header Files\common</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\common\FileOps.h">
-      <Filter>Header Files\common</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\common\logger.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\core\cartridge.h">
@@ -190,6 +184,12 @@
     </ClInclude>
     <ClInclude Include="include\vcc\devices\serial\beckerport.h">
       <Filter>Header Files\devices\serial</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\FileOps.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\logger.h">
+      <Filter>Header Files\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

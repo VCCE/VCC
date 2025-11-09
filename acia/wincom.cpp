@@ -26,7 +26,7 @@
 #include <errno.h>
 #include <string.h>
 #include "acia.h"
-#include <vcc/common/logger.h>
+#include <vcc/utils/logger.h>
 
 HANDLE hReadEvent;
 HANDLE hWriteEvent;

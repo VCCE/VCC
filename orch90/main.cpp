@@ -19,7 +19,7 @@
 #include <Windows.h>
 #include <stdio.h>
 #include "resource.h" 
-#include <vcc/common/FileOps.h>
+#include <vcc/utils/FileOps.h>
 #include <vcc/utils/winapi.h>
 #include <vcc/utils/filesystem.h>
 #include <vcc/core/cartridge_capi.h>

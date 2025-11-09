@@ -26,7 +26,7 @@
 #include <Windows.h>
 
 #include <vcc/devices/rtc/ds1315.h>
-#include <vcc/common/logger.h>
+#include <vcc/utils/logger.h>
 #include <vcc/common/DialogOps.h>
 #include <vcc/core/cartridge_capi.h>
 #include <vcc/utils/persistent_value_store.h>
