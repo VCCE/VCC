@@ -112,7 +112,7 @@
     <ClCompile Include="src\devices\rom\rom_image.cpp" />
     <ClCompile Include="src\devices\rtc\ds1315.cpp" />
     <ClCompile Include="src\devices\rtc\oki_m6242b.cpp" />
-    <ClCompile Include="src\devices\becker\beckerport.cpp" />
+    <ClCompile Include="src\devices\serial\beckerport.cpp" />
     <ClCompile Include="src\DialogOps.cpp" />
     <ClCompile Include="src\Fileops.cpp" />
     <ClCompile Include="src\logger.cpp" />
@@ -139,7 +139,7 @@
     <ClInclude Include="include\vcc\devices\rom\rom_image.h" />
     <ClInclude Include="include\vcc\devices\rtc\ds1315.h" />
     <ClInclude Include="include\vcc\devices\rtc\oki_m6242b.h" />
-    <ClInclude Include="include\vcc\devices\becker\beckerport.h" />
+    <ClInclude Include="include\vcc\devices\serial\beckerport.h" />
     <ClInclude Include="include\vcc\utils\cartridge_loader.h" />
     <ClInclude Include="include\vcc\utils\persistent_value_store.h" />
     <ClInclude Include="include\vcc\utils\critical_section.h" />

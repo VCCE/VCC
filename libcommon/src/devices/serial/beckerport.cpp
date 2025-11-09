@@ -26,9 +26,9 @@
 #include <string>
 
 #include <vcc/common/logger.h>
-#include <vcc/devices/becker/beckerport.h>
+#include <vcc/devices/serial/beckerport.h>
 
-namespace vcc::devices::beckerport
+namespace vcc::devices::serial
 {
 
 	constexpr int TCP_RETRY_DELAY = 500;
