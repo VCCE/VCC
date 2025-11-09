@@ -22,7 +22,7 @@
 #include <memory>
 
 
-namespace vcc::cartridges
+namespace vcc::bus::cartridges
 {
 
 	/// @brief A cartridge that contains a ROM image.
