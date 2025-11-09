@@ -23,7 +23,7 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-namespace vcc::cartridges
+namespace vcc::bus::cartridges
 {
 
 	class capi_adapter_cartridge : public ::vcc::bus::cartridge

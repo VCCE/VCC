@@ -104,10 +104,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\cartridges\empty_cartridge.cpp" />
-    <ClCompile Include="src\cartridges\capi_adapter_cartridge.cpp" />
-    <ClCompile Include="src\cartridges\rom_cartridge.cpp" />
-    <ClCompile Include="src\core\cartridge.cpp" />
+    <ClCompile Include="src\bus\cartridge.cpp" />
+    <ClCompile Include="src\bus\cartridges\capi_adapter_cartridge.cpp" />
+    <ClCompile Include="src\bus\cartridges\empty_cartridge.cpp" />
+    <ClCompile Include="src\bus\cartridges\rom_cartridge.cpp" />
     <ClCompile Include="src\devices\rom\banked_rom_image.cpp" />
     <ClCompile Include="src\devices\rom\rom_image.cpp" />
     <ClCompile Include="src\devices\rtc\ds1315.cpp" />
@@ -124,13 +124,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\vcc\bus\cartridge.h" />
+    <ClInclude Include="include\vcc\bus\cartridges\capi_adapter_cartridge.h" />
+    <ClInclude Include="include\vcc\bus\cartridges\empty_cartridge.h" />
+    <ClInclude Include="include\vcc\bus\cartridges\rom_cartridge.h" />
     <ClInclude Include="include\vcc\bus\cartridge_capi.h" />
     <ClInclude Include="include\vcc\bus\cartridge_context.h" />
     <ClInclude Include="include\vcc\bus\cartridge_factory.h" />
     <ClInclude Include="include\vcc\bus\interrupts.h" />
-    <ClInclude Include="include\vcc\cartridges\capi_adapter_cartridge.h" />
-    <ClInclude Include="include\vcc\cartridges\empty_cartridge.h" />
-    <ClInclude Include="include\vcc\cartridges\rom_cartridge.h" />
     <ClInclude Include="include\vcc\common\DialogOps.h" />
     <ClInclude Include="include\vcc\detail\exports.h" />
     <ClInclude Include="include\vcc\devices\rom\banked_rom_image.h" />
