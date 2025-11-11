@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{3d8e57b8-dfc3-42b8-834f-74aeca5764c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\media">
+      <UniqueIdentifier>{43779a20-4fad-4c5b-abce-e0898a332ecd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\media\disk_images">
+      <UniqueIdentifier>{f797b596-84b8-4706-9986-e69e965b2da6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\media\memory_stream_buffer.h">
+      <Filter>src\media</Filter>
+    </ClInclude>
+    <ClInclude Include="src\media\disk_images\test_generic_disk_image.h">
+      <Filter>src\media\disk_images</Filter>
+    </ClInclude>
+    <ClInclude Include="src\media\test_disk_image.h">
+      <Filter>src\media</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\media\disk_images\test_generic_disk_image.cpp">
+      <Filter>src\media\disk_images</Filter>
+    </ClCompile>
+    <ClCompile Include="src\media\test_disk_image.cpp">
+      <Filter>src\media</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

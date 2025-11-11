@@ -115,11 +115,16 @@
     <ClCompile Include="src\devices\serial\beckerport.cpp" />
     <ClCompile Include="src\DialogOps.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\media\disk_image.cpp" />
+    <ClCompile Include="src\media\disk_images\generic_disk_image.cpp" />
+    <ClCompile Include="src\media\disk_images\placeholder_disk_image.cpp" />
+    <ClCompile Include="src\peripherals\disk_drives\basic_disk_drive.cpp" />
     <ClCompile Include="src\utils\cartridge_loader.cpp" />
     <ClCompile Include="src\utils\persistent_value_store.cpp" />
     <ClCompile Include="src\utils\Fileops.cpp" />
     <ClCompile Include="src\utils\filesystem.cpp" />
     <ClCompile Include="src\utils\logger.cpp" />
+    <ClCompile Include="src\utils\streams.cpp" />
     <ClCompile Include="src\utils\winapi.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -138,6 +143,17 @@
     <ClInclude Include="include\vcc\devices\rtc\ds1315.h" />
     <ClInclude Include="include\vcc\devices\rtc\oki_m6242b.h" />
     <ClInclude Include="include\vcc\devices\serial\beckerport.h" />
+    <ClInclude Include="include\vcc\media\disk_geometry.h" />
+    <ClInclude Include="include\vcc\media\disk_image.h" />
+    <ClInclude Include="include\vcc\media\disk_images\generic_disk_image.h" />
+    <ClInclude Include="include\vcc\media\disk_images\placeholder_disk_image.h" />
+    <ClInclude Include="include\vcc\media\exceptions.h" />
+    <ClInclude Include="include\vcc\media\geometry\generic_disk_geometry.h" />
+    <ClInclude Include="include\vcc\media\sector_record.h" />
+    <ClInclude Include="include\vcc\media\sector_record_header.h" />
+    <ClInclude Include="include\vcc\peripherals\disk_drive.h" />
+    <ClInclude Include="include\vcc\peripherals\disk_drives\basic_disk_drive.h" />
+    <ClInclude Include="include\vcc\peripherals\step_direction.h" />
     <ClInclude Include="include\vcc\utils\cartridge_loader.h" />
     <ClInclude Include="include\vcc\utils\persistent_value_store.h" />
     <ClInclude Include="include\vcc\utils\critical_section.h" />
@@ -145,6 +161,7 @@
     <ClInclude Include="include\vcc\utils\FileOps.h" />
     <ClInclude Include="include\vcc\utils\filesystem.h" />
     <ClInclude Include="include\vcc\utils\logger.h" />
+    <ClInclude Include="include\vcc\utils\streams.h" />
     <ClInclude Include="include\vcc\utils\winapi.h" />
     <ClInclude Include="resource\resource.h" />
   </ItemGroup>
