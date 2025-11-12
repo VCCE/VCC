@@ -297,6 +297,19 @@ namespace vcc::media
 
 	protected:
 
+		/// @brief Retrieve the number of sectors available on a specific head and track.
+		/// 
+		/// Retrieves the number of sectors available on a specific head and track of the disk
+		/// image without validating the head and track parameters are valid.
+		/// 
+		/// @param disk_head The head the sector is stored on. This value must be a valid
+		/// head in the disk image. If this value is not valid the behavior of the function
+		/// is undefined.
+		/// @param disk_track The track the sector is stored in. This value must be a valid
+		/// head in the disk image. If this value is not valid the behavior of the function
+		/// is undefined.
+		/// 
+		/// @return The total number of sectors or 0 (zero) if the track has no sectors.
 		[[nodiscard]] virtual size_type get_sector_count_unchecked(
 			size_type disk_head,
 			size_type disk_track) const noexcept = 0;
