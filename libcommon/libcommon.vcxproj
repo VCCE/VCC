@@ -118,7 +118,6 @@
     <ClCompile Include="src\media\disk_image.cpp" />
     <ClCompile Include="src\media\disk_images\generic_disk_image.cpp" />
     <ClCompile Include="src\media\disk_images\placeholder_disk_image.cpp" />
-    <ClCompile Include="src\peripherals\disk_drives\basic_disk_drive.cpp" />
     <ClCompile Include="src\utils\cartridge_loader.cpp" />
     <ClCompile Include="src\utils\persistent_value_store.cpp" />
     <ClCompile Include="src\utils\Fileops.cpp" />

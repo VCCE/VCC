@@ -82,12 +82,6 @@
     <Filter Include="Header Files\peripherals\disk_drives">
       <UniqueIdentifier>{7ab6f860-0d60-4d89-ac1d-ded223b42df3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\peripherals">
-      <UniqueIdentifier>{5223b06b-9884-4cd4-aadd-cb9a7b9ef377}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\peripherals\disk_drives">
-      <UniqueIdentifier>{91b24e1a-a26d-45ca-b222-371e66367f2e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\media\geometry">
       <UniqueIdentifier>{723c4f2c-3122-4c03-88d8-bbc635a93c2b}</UniqueIdentifier>
     </Filter>
@@ -146,9 +140,6 @@
     </ClCompile>
     <ClCompile Include="src\media\disk_images\generic_disk_image.cpp">
       <Filter>Source Files\media\disk_images</Filter>
-    </ClCompile>
-    <ClCompile Include="src\peripherals\disk_drives\basic_disk_drive.cpp">
-      <Filter>Source Files\peripherals\disk_drives</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\streams.cpp">
       <Filter>Source Files\utils</Filter>
