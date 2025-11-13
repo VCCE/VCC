@@ -6,10 +6,10 @@
 TEST_F(test_disk_image, invalid_ctor_arguments)
 {
 	// Must throw on 0 heads
-	EXPECT_THROW(disk_image({ 0, 1 }), ::std::invalid_argument);
+	EXPECT_THROW(disk_image({ 0, 1 }), std::invalid_argument);
 
 	// Must throw on 0 tracks
-	EXPECT_THROW(disk_image({ 1, 0 }), ::std::invalid_argument);
+	EXPECT_THROW(disk_image({ 1, 0 }), std::invalid_argument);
 }
 
 // Validates the head count returned is the same as the one specified in the geometry

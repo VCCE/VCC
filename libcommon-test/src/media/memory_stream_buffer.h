@@ -8,8 +8,8 @@
 class memory_stream_buffer : public std::strstreambuf
 {
 public:
-	using size_type = ::std::size_t;
-	using buffer_type = ::std::vector<unsigned char>;
+	using size_type = std::size_t;
+	using buffer_type = std::vector<unsigned char>;
 	using iterator = buffer_type::iterator;
 	using const_iterator = buffer_type::const_iterator;
 	using value_type = buffer_type::value_type;

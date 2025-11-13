@@ -197,7 +197,7 @@ namespace vcc::media::disk_images
 		if (stream_.bad())
 		{
 			// TODO: This should throw
-			::std::fill(data_buffer.begin(), data_buffer.end(), 0xff);
+			std::fill(data_buffer.begin(), data_buffer.end(), 0xff);
 		}
 	}
 

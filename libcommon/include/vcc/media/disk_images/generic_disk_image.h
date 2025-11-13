@@ -22,9 +22,9 @@ namespace vcc::media::disk_images
 		/// @brief The type used to hold geometry describing the disk capacity.
 		using geometry_type = ::vcc::media::geometry::generic_disk_geometry;
 		/// @brief The type of stream used to access the disk image file.
-		using stream_type = ::std::iostream;
+		using stream_type = std::iostream;
 		/// @brief The type used to hold a pointer to the stream used to access the disk image file.
-		using stream_ptr_type = ::std::unique_ptr<stream_type>;
+		using stream_ptr_type = std::unique_ptr<stream_type>;
 		/// @brief The type used to store a position in the disk image file.
 		using position_type = stream_type::pos_type;
 

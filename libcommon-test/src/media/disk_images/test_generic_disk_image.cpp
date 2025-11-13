@@ -6,12 +6,12 @@
 TEST_F(test_generic_disk_image, invalid_ctor_arguments)
 {
 	// Must throw on a nullptr stream
-	EXPECT_THROW(generic_disk_image({}, test_geometry_, 0, 0, false), ::std::invalid_argument);
+	EXPECT_THROW(generic_disk_image({}, test_geometry_, 0, 0, false), std::invalid_argument);
 
 	// Must throw if stream is an fstream and not open.
 	EXPECT_THROW(
 		generic_disk_image(std::make_unique<std::fstream>(), test_geometry_, 0, 0, false),
-		::std::invalid_argument);
+		std::invalid_argument);
 
 #ifdef INCLUDE_INCOMPLETE_AND_BROKEN_LIBCOMMON_CODE
 	// Must throw if stream size is too small
@@ -20,7 +20,7 @@ TEST_F(test_generic_disk_image, invalid_ctor_arguments)
 
 	EXPECT_THROW(
 		generic_disk_image(move(stream), test_geometry_, 0, 0, true),
-		::std::runtime_error);
+		std::runtime_error);
 #endif
 }
 
