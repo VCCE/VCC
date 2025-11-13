@@ -197,13 +197,13 @@ namespace vcc::devices::serial
 		// Permit retry unless urecoverable error or success
 		retry_ = true;
 
-		struct addrinfo hints;
+		addrinfo hints;
 		ZeroMemory(&hints, sizeof(hints));
 		hints.ai_family   = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_protocol = IPPROTO_TCP;
 
-		struct addrinfo *result = nullptr;
+		addrinfo *result = nullptr;
 		if (getaddrinfo(cur_address_, cur_port_, &hints, &result) != 0) {
 			retry_ = false;
 			return;

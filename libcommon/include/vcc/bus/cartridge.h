@@ -29,7 +29,7 @@ namespace vcc::bus
 	/// that can be connected to devices such as a computer or video game console to
 	/// provide programs and data on ROM, extra RAM, or additional hardware capabilities
 	/// such as a floppy disk controller or programmable sound generator.
-	struct LIBCOMMON_EXPORT cartridge
+	class LIBCOMMON_EXPORT cartridge
 	{
 	public:
 
