@@ -27,6 +27,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sdc", "sdc\sdc.vcxproj", "{
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcommon", "libcommon\libcommon.vcxproj", "{E0AA25BD-5527-475F-8D8B-B549A6311B0C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcommon-test", "libcommon-test\libcommon-test.vcxproj", "{B4228078-E3E3-4664-9A84-C8674C71AD76}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -106,6 +108,12 @@ Global
 		{E0AA25BD-5527-475F-8D8B-B549A6311B0C}.Legacy|x86.Build.0 = Legacy|Win32
 		{E0AA25BD-5527-475F-8D8B-B549A6311B0C}.Release|x86.ActiveCfg = Release|Win32
 		{E0AA25BD-5527-475F-8D8B-B549A6311B0C}.Release|x86.Build.0 = Release|Win32
+		{B4228078-E3E3-4664-9A84-C8674C71AD76}.Debug|x86.ActiveCfg = Debug|Win32
+		{B4228078-E3E3-4664-9A84-C8674C71AD76}.Debug|x86.Build.0 = Debug|Win32
+		{B4228078-E3E3-4664-9A84-C8674C71AD76}.Legacy|x86.ActiveCfg = Debug|Win32
+		{B4228078-E3E3-4664-9A84-C8674C71AD76}.Legacy|x86.Build.0 = Debug|Win32
+		{B4228078-E3E3-4664-9A84-C8674C71AD76}.Release|x86.ActiveCfg = Release|Win32
+		{B4228078-E3E3-4664-9A84-C8674C71AD76}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
