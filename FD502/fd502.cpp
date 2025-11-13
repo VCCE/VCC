@@ -251,7 +251,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PakReadMemoryByte(::std::size_t Address)
+	__declspec(dllexport) unsigned char PakReadMemoryByte(std::size_t Address)
 	{
 		return RomPointer[SelectRomIndex]->read_memory_byte(Address);
 	}
@@ -354,7 +354,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 								mount_disk_image("*Floppy B:",PhysicalDriveB-1);
 						}
 					}
-					SelectRomIndex = ::std::min(TempSelectRomIndex, RomPointer.size());
+					SelectRomIndex = std::min(TempSelectRomIndex, RomPointer.size());
 					RomFileName = ::vcc::utils::find_pak_module_path(TempRomFileName);
 					ExternalRom.load(RomFileName); //JF
 					BeckerAddr = ::vcc::utils::get_dialog_item_text(hDlg, IDC_BECKER_HOST);

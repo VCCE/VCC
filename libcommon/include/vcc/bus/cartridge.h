@@ -34,13 +34,13 @@ namespace vcc::bus
 	public:
 
 		/// @brief Specifies the type used to store names.
-		using name_type = ::std::string;
+		using name_type = std::string;
 		/// @brief Specifies the type used to store catalog identifiers.
-		using catalog_id_type = ::std::string;
+		using catalog_id_type = std::string;
 		/// @brief Specifies the type used to store cartridge descriptions.
-		using description_type = ::std::string;
+		using description_type = std::string;
 		/// @brief Specifies the type used to store a size of length.
-		using size_type = ::std::size_t;
+		using size_type = std::size_t;
 
 
 	public:

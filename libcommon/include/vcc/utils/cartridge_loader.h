@@ -149,5 +149,5 @@ namespace vcc::utils
 	/// @param status The status to retrieve the description for.
 	/// 
 	/// @return A string containing a description of the error.
-	LIBCOMMON_EXPORT ::std::string load_error_string(cartridge_loader_status status);
+	LIBCOMMON_EXPORT std::string load_error_string(cartridge_loader_status status);
 }

@@ -190,7 +190,7 @@ namespace vcc::utils
 		}
 	}
 
-	::std::string load_error_string(cartridge_loader_status status)
+	std::string load_error_string(cartridge_loader_status status)
 	{
 		static const std::map<cartridge_loader_status, UINT> string_id_map = {
 			{ cartridge_loader_status::already_loaded, IDS_ERROR_CARTRIDGE_ALREADY_LOADED},

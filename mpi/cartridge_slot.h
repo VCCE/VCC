@@ -31,16 +31,16 @@ namespace vcc::modules::mpi
 
 		using context_type = ::vcc::bus::cartridge_context;
 		using cartridge_type = ::vcc::bus::cartridge;
-		using cartridge_ptr_type = ::std::unique_ptr<cartridge_type>;
+		using cartridge_ptr_type = std::unique_ptr<cartridge_type>;
 		using name_type = cartridge_type::name_type;
 		using catalog_id_type = cartridge_type::catalog_id_type;
 		using description_type = cartridge_type::description_type;
-		using path_type = ::std::string;
-		using label_type = ::std::string;
+		using path_type = std::string;
+		using label_type = std::string;
 		using handle_type = ::vcc::utils::cartridge_loader_result::handle_type;
 		using menu_item_type = CartMenuItem;
 		using menu_item_collection_type = std::vector<menu_item_type>;
-		using size_type = ::std::size_t;
+		using size_type = std::size_t;
 
 
 	public:

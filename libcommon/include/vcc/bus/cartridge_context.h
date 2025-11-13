@@ -38,7 +38,7 @@ namespace vcc::bus
 	public:
 
 		/// @brief The type used to represent paths.
-		using path_type = ::std::string;
+		using path_type = std::string;
 		/// @brief The type used to represent menu items.
 		using menu_item_type = MenuItemType;
 

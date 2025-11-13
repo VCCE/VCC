@@ -33,11 +33,11 @@ namespace vcc::utils
 	public:
 
 		/// @brief The type used to represent paths.
-		using path_type = ::std::string;
+		using path_type = std::string;
 		/// @brief The type used to represent strings.
-		using string_type = ::std::string;
+		using string_type = std::string;
 		/// @brief The type used to represent a size or length.
-		using size_type = ::std::size_t;
+		using size_type = std::size_t;
 
 
 	public:

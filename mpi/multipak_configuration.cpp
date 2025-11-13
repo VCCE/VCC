@@ -56,5 +56,5 @@ multipak_configuration::path_type multipak_configuration::slot_cartridge_path(sl
 
 multipak_configuration::string_type multipak_configuration::get_slot_path_key(slot_id_type slot) const
 {
-	return "SLOT" + ::std::to_string(slot + 1);
+	return "SLOT" + std::to_string(slot + 1);
 }
