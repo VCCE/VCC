@@ -38,17 +38,17 @@ namespace vcc::bus::cartridges
 	{
 		if (context_ == nullptr)
 		{
-			throw ::std::invalid_argument("Cannot construct ROM Cartridge. The cartridge context is null.");
+			throw std::invalid_argument("Cannot construct ROM Cartridge. The cartridge context is null.");
 		}
 
 		if (name.empty())
 		{
-			throw ::std::invalid_argument("Cannot construct ROM Cartridge. The catalog name is empty.");
+			throw std::invalid_argument("Cannot construct ROM Cartridge. The catalog name is empty.");
 		}
 
 		if (buffer.empty())
 		{
-			throw ::std::invalid_argument("Cannot construct ROM Cartridge. The ROM buffer is empty.");
+			throw std::invalid_argument("Cannot construct ROM Cartridge. The ROM buffer is empty.");
 		}
 	}
 

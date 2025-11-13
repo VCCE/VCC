@@ -99,7 +99,7 @@ static bool DirtyDisk=true;
 char ImageFormat[5][4]={"JVC","VDK","DMK","OS9","RAW"};
 
 
-::std::string get_mounted_disk_filename(::std::size_t drive_index)
+std::string get_mounted_disk_filename(::std::size_t drive_index)
 {
 	return Drive[drive_index].ImageName;
 }

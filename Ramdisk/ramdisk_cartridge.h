@@ -26,7 +26,7 @@ class ramdisk_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using address_type = ::std::size_t;
+	using address_type = std::size_t;
 
 
 public:

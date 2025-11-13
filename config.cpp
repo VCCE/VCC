@@ -895,7 +895,7 @@ void UpdateSoundBar(const unsigned int * audioBuf,unsigned int bufLen)
 	int lMax = lval;
 	int rMin = rval;
 	int rMax = rval;
-	for (size_t i = 1; i < ::std::min(bufLen,100u); ++i) {
+	for (size_t i = 1; i < std::min(bufLen,100u); ++i) {
 		int lval = audioBuf[i] >> 16;
 		int rval = audioBuf[i] & 0xFFFF;
 		if (lval > lMax) lMax = lval;

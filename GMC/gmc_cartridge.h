@@ -12,7 +12,7 @@ class gmc_cartridge : public ::vcc::bus::cartridge
 public:
 
 	using context_type = ::vcc::bus::cartridge_context;
-	using path_type = ::std::string;
+	using path_type = std::string;
 	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
 
 

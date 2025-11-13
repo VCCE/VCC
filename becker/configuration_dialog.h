@@ -24,7 +24,7 @@ class cartridge_controller
 {
 public:
 
-	using string_type = ::std::string;
+	using string_type = std::string;
 
 
 public:
