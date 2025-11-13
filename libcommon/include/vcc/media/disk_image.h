@@ -5,7 +5,6 @@
 #include <optional>
 #include <vector>
 
-#define VIRTUAL
 
 namespace vcc::media
 {
@@ -55,12 +54,12 @@ namespace vcc::media
 		/// @brief Indicates the total number of heads in supported by the disk.
 		/// 
 		/// @return A value greater than 0 (zero) specifying the number of heads.
-		[[nodiscard]] VIRTUAL size_type head_count() const noexcept;
+		[[nodiscard]] virtual size_type head_count() const noexcept;
 
 		/// @brief Indicates the total number of tracks in supported by the disk.
 		/// 
 		/// @return A value greater than 0 (zero) specifying the number of heads.
-		[[nodiscard]] VIRTUAL size_type track_count() const noexcept;
+		[[nodiscard]] virtual size_type track_count() const noexcept;
 
 		/// @brief Retrieves the first valid sector id supported by the disk.
 		/// 
@@ -70,14 +69,14 @@ namespace vcc::media
 		/// a base 0 sector id - but that may not always work. This however may not be possible.
 		/// 
 		/// @return The first valid sector identifier.
-		[[nodiscard]] VIRTUAL size_type first_valid_sector_id() const noexcept;
+		[[nodiscard]] virtual size_type first_valid_sector_id() const noexcept;
 
 		/// @brief Indicates if the disk is write protected.
 		/// 
 		/// Indicates if the disk is in write protect mode and cannot be written to.
 		/// 
 		/// @return `true` if the disk is write protected; otherwise `false`.
-		[[nodiscard]] VIRTUAL bool is_write_protected() const noexcept;
+		[[nodiscard]] virtual bool is_write_protected() const noexcept;
 
 
 		/// @brief Retrieve the number of sectors available on a specific head and track.
@@ -93,7 +92,7 @@ namespace vcc::media
 		/// 
 		/// @throws std::invalid_argument if the head specified in `disk_head` does not exist.
 		/// @throws std::invalid_argument if the track specified in `disk_track` does not exist.
-		[[nodiscard]] VIRTUAL size_type get_sector_count(
+		[[nodiscard]] virtual size_type get_sector_count(
 			size_type disk_head,
 			size_type disk_track) const;
 
@@ -103,14 +102,14 @@ namespace vcc::media
 		/// @param disk_head The head to validate.
 		/// 
 		/// @return `true` if the head exists on the disk; `false` otherwise.
-		[[nodiscard]] VIRTUAL bool is_valid_disk_head(size_type disk_head) const noexcept;
+		[[nodiscard]] virtual bool is_valid_disk_head(size_type disk_head) const noexcept;
 
 		/// @brief Check if the disk image contains a specific track on a specific head.
 		/// 
 		/// @param disk_track The track to validate.
 		/// 
 		/// @return `true` if the track exists on the disk; `false` otherwise.
-		[[nodiscard]] VIRTUAL bool is_valid_disk_track(size_type disk_track) const noexcept;
+		[[nodiscard]] virtual bool is_valid_disk_track(size_type disk_track) const noexcept;
 
 		/// @brief Check if the disk image contains a sector on a specific head and track.
 		/// 
@@ -124,7 +123,7 @@ namespace vcc::media
 		/// @param disk_sector The zero based index of the sector to validate.
 		/// 
 		/// @return `true` if the track exists on the disk; `false` otherwise.
-		[[nodiscard]] VIRTUAL bool is_valid_track_sector(
+		[[nodiscard]] virtual bool is_valid_track_sector(
 			size_type disk_head,
 			size_type disk_track,
 			size_type disk_sector) const noexcept;
