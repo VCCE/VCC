@@ -94,11 +94,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="ramdisk_cartridge.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ramdisk_cartridge.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
