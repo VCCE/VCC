@@ -91,11 +91,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="gmc_cartridge.cpp" />
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="sn76496.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="gmc_cartridge.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="sn76496.h" />
   </ItemGroup>
