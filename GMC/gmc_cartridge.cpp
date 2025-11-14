@@ -6,9 +6,35 @@
 #include <vcc/utils/filesystem.h>
 #include "../CartridgeMenu.h"
 #include <Windows.h>
+#include <vcc/bus/cartridge_capi.h>
 
 namespace
 {
+
+	HINSTANCE gModuleInstance;
+
+	using context_type = ::vcc::bus::cartridge_context;
+	using path_type = ::std::string;
+	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
+
+	struct menu_item_ids
+	{
+		static const unsigned int select_rom = 3;
+	};
+
+	struct mmio_registers
+	{
+		static const unsigned char select_bank = 0x40;
+		static const unsigned char psg_io = 0x41;
+	};
+
+	const std::unique_ptr<context_type> context_;
+	rom_image_type rom_image_;
+	SN76489Device psg_;
+
+	const path_type configuration_section_id_("GMC-SN74689");
+	const path_type configuration_rom_key_id_("ROM");
+
 
 	std::string SelectROMFile()
 	{
@@ -27,32 +53,41 @@ namespace
 
 }
 
-const gmc_cartridge::path_type gmc_cartridge::configuration_section_id_("GMC-SN74689");
-const gmc_cartridge::path_type gmc_cartridge::configuration_rom_key_id_("ROM");
 
-gmc_cartridge::gmc_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance)
-	:
-	context_(move(context)),
-	module_instance_(module_instance)
-{}
-
-
-gmc_cartridge::name_type gmc_cartridge::name() const
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
-	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
+	if (fdwReason == DLL_PROCESS_ATTACH)
+	{
+		gModuleInstance = hinstDLL;
+	}
+
+	return true;
 }
 
-gmc_cartridge::catalog_id_type gmc_cartridge::catalog_id() const
+
+__declspec(dllexport) const char* PakGetName()
 {
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
+	static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
+	return name.c_str();
 }
 
-gmc_cartridge::description_type gmc_cartridge::description() const
+__declspec(dllexport) const char* PakGetCatalogId()
 {
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
+	static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
+	return catalog_id.c_str();
 }
 
-void gmc_cartridge::start()
+__declspec(dllexport) const char* PakGetDescription()
+{
+	static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
+	return description.c_str();
+}
+
+
+__declspec(dllexport) void PakInitialize(
+	void* const host_key,
+	const char* const configuration_path,
+	const cartridge_capi_context* const context)
 {
 	::vcc::utils::persistent_value_store settings(context_->configuration_path());
 	const auto selected_file(settings.read(configuration_section_id_, configuration_rom_key_id_));
@@ -61,20 +96,15 @@ void gmc_cartridge::start()
 	build_menu();
 }
 
-void gmc_cartridge::stop()
-{}
 
-
-void gmc_cartridge::reset()
+__declspec(dllexport) void PakReset()
 {
 	psg_.device_start();
 	build_menu();
 }
 
-void gmc_cartridge::process_horizontal_sync()
-{}
 
-void gmc_cartridge::write_port(unsigned char port, unsigned char data)
+__declspec(dllexport) void PakWritePort(unsigned char port,unsigned char data)
 {
 	switch (port)
 	{
@@ -88,7 +118,7 @@ void gmc_cartridge::write_port(unsigned char port, unsigned char data)
 	}
 }
 
-unsigned char gmc_cartridge::read_port(unsigned char port)
+__declspec(dllexport) unsigned char PakReadPort(unsigned char port)
 {
 	if (port == mmio_registers::select_bank)
 	{
@@ -98,12 +128,12 @@ unsigned char gmc_cartridge::read_port(unsigned char port)
 	return 0;
 }
 
-unsigned char gmc_cartridge::read_memory_byte(size_type address)
+__declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short address)
 {
 	return rom_image_.read_memory_byte(address);
 }
 
-void gmc_cartridge::status(char* status, size_t buffer_size)
+__declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
 {
 	std::string message("GMC Active");
 
@@ -122,10 +152,10 @@ void gmc_cartridge::status(char* status, size_t buffer_size)
 		message.reserve(buffer_size - 1);
 	}
 
-	strcpy(status, message.c_str());
+	strcpy(text_buffer, message.c_str());
 }
 
-unsigned short gmc_cartridge::sample_audio()
+__declspec(dllexport) unsigned short PakSampleAudio()
 {
 	SN76489Device::stream_sample_t lbuffer = 0;
 	SN76489Device::stream_sample_t rbuffer = 0;
