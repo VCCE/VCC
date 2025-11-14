@@ -54,7 +54,7 @@ namespace vcc::bus::cartridges
 		LIBCOMMON_EXPORT void write_port(unsigned char port_id, unsigned char value) override;
 		LIBCOMMON_EXPORT [[nodiscard]] unsigned char read_port(unsigned char port_id) override;
 
-		LIBCOMMON_EXPORT void process_horizontal_sync() override;
+		LIBCOMMON_EXPORT void update(float delta) override;
 		LIBCOMMON_EXPORT [[nodiscard]] unsigned short sample_audio() override;
 
 		LIBCOMMON_EXPORT void status(char* text_buffer, size_type buffer_size) override;
@@ -75,7 +75,7 @@ namespace vcc::bus::cartridges
 		const PakGetCatalogIdModuleFunction get_catalog_id_;
 		const PakGetDescriptionModuleFunction get_description_;
 		const PakResetModuleFunction reset_;
-		const PakHeartBeatModuleFunction heartbeat_;
+		const PakUpdateModuleFunction update_;
 		const PakGetStatusModuleFunction status_;
 		const PakWritePortModuleFunction  write_port_;
 		const PakReadPortModuleFunction read_port_;

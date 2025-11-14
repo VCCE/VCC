@@ -40,7 +40,7 @@ namespace vcc::bus::cartridges
 		void default_menu_item_clicked(unsigned char)
 		{}
 
-		void default_heartbeat()
+		void default_update([[maybe_unused]] float delta )
 		{}
 
 		void default_write_port(unsigned char, unsigned char)
@@ -93,7 +93,7 @@ namespace vcc::bus::cartridges
 		get_catalog_id_(GetImportedProcAddress(module_handle, "PakGetCatalogId", default_get_empty_string)),
 		get_description_(GetImportedProcAddress(module_handle, "PakGetDescription", default_get_empty_string)),
 		reset_(GetImportedProcAddress(module_handle, "PakReset", default_reset)),
-		heartbeat_(GetImportedProcAddress(module_handle, "PakProcessHorizontalSync", default_heartbeat)),
+		update_(GetImportedProcAddress(module_handle, "PakUpdate", default_update)),
 		status_(GetImportedProcAddress(module_handle, "PakGetStatus", default_status)),
 		write_port_(GetImportedProcAddress(module_handle, "PakWritePort", default_write_port)),
 		read_port_(GetImportedProcAddress(module_handle, "PakReadPort", default_read_port)),
@@ -138,9 +138,9 @@ namespace vcc::bus::cartridges
 		reset_();
 	}
 
-	void capi_adapter_cartridge::process_horizontal_sync()
+	void capi_adapter_cartridge::update(float delta)
 	{
-		heartbeat_();
+		update_(delta);
 	}
 
 	void capi_adapter_cartridge::status(char* text_buffer, size_t buffer_size)

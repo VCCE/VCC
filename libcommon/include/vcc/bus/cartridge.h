@@ -164,17 +164,18 @@ namespace vcc::bus
 
 		/// @brief Process a horizontal sync signal.
 		///
-		/// Invoked when a horizontal sync signal is processed by the cartridge host. This
-		/// must be called by the host to allow the cartridge to perform tasks asynchronously
-		/// or coupled with the timing of the flow of emulation. The expected frequency is
-		/// roughly 15.72khz.
+		/// Invoked frequently during system emulation. This must be called by the host to allow
+		/// cartridge to perform tasks asynchronously and manage their state in line with the overall
+		/// emulation.
+		/// 
+		/// The current frequency is roughly 15.72khz but is subject to change.
 		/// 
 		/// If this function is called before the cartridge is initialized or after it has
 		/// been terminated an exception is thrown.
 		/// 
 		/// @todo Add exception information. Need custom exceptions first.
 		/// @todo Consider renaming this.
-		virtual void process_horizontal_sync();
+		virtual void update(float delta);
 
 		/// @brief Read the current audio sample.
 		/// 

@@ -95,9 +95,9 @@ namespace vcc::modules::mpi
 			cartridge_->reset();
 		}
 
-		void process_horizontal_sync() const
+		void update(float delta) const
 		{
-			cartridge_->process_horizontal_sync();
+			cartridge_->update(delta);
 		}
 
 		void write_port(unsigned char port_id, unsigned char value) const

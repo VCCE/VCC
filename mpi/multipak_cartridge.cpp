@@ -141,13 +141,13 @@ void multipak_cartridge::reset()
 	context_->assert_cartridge_line(slots_[cached_scs_slot_].line_state());
 }
 
-void multipak_cartridge::process_horizontal_sync()
+void multipak_cartridge::update(float delta)
 {
 	vcc::utils::section_locker lock(mutex_);
 
 	for(const auto& cartridge_slot : slots_)
 	{
-		cartridge_slot.process_horizontal_sync();
+		cartridge_slot.update(delta);
 	}
 }
 

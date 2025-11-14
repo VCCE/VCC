@@ -71,7 +71,7 @@ void gmc_cartridge::reset()
 	build_menu();
 }
 
-void gmc_cartridge::process_horizontal_sync()
+void gmc_cartridge::update([[maybe_unused]] float delta)
 {}
 
 void gmc_cartridge::write_port(unsigned char port, unsigned char data)

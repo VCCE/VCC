@@ -43,7 +43,7 @@ extern "C"
 	using PakGetCatalogIdModuleFunction = const char* (*)();
 	using PakGetDescriptionModuleFunction = const char* (*)();
 	using PakResetModuleFunction = void (*)();
-	using PakHeartBeatModuleFunction = void (*)();
+	using PakUpdateModuleFunction = void (*)(float delta);
 	using PakGetStatusModuleFunction = void (*)(char* text_buffer, size_t buffer_size);
 	using PakWritePortModuleFunction = void (*)(unsigned char port, unsigned char value);
 	using PakReadMemoryByteModuleFunction = unsigned char (*)(size_t address);

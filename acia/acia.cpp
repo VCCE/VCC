@@ -200,7 +200,7 @@ unsigned char LoadExtRom(const char *FilePath)
 // Dll export Heartbeat (HSYNC)
 //-----------------------------------------------------------------------
 extern "C"
-__declspec(dllexport) void PakProcessHorizontalSync()
+__declspec(dllexport) void PakUpdate([[maybe_unused]] float delta)
 {
     sc6551_heartbeat();
     return;

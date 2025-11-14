@@ -68,7 +68,7 @@ public:
 	void write_port(unsigned char port_id, unsigned char value) override;
 	unsigned char read_port(unsigned char port_id) override;
 
-	void process_horizontal_sync() override;
+	void update(float delta) override;
 	unsigned short sample_audio() override;
 
 	void status(char* text_buffer, size_t buffer_size) override;

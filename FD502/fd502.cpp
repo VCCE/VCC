@@ -242,7 +242,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) void PakProcessHorizontalSync()
+	__declspec(dllexport) void PakUpdate([[maybe_unused]] float delta)
 	{
 		PingFdc();
 		return;

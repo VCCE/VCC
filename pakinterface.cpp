@@ -139,7 +139,9 @@ void PakTimer()
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	gActiveCartrige->process_horizontal_sync();
+	// FIXME: The timing here matches the horizontal sync frequency but should be
+	// defined somewhere else and passed to this function.
+	gActiveCartrige->update(1.0f / (60 * 262));
 }
 
 void ResetBus()

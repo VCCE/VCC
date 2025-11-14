@@ -30,7 +30,7 @@ namespace vcc::bus
 	void cartridge::reset()
 	{}
 
-	void cartridge::process_horizontal_sync()
+	void cartridge::update([[maybe_unused]] float delta)
 	{}
 
 	void cartridge::write_port(
