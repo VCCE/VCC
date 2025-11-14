@@ -15,17 +15,27 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "orchestra90cc_cartridge.h"
 #include "resource.h"
+#include <Windows.h>
 #include <vcc/utils/FileOps.h>
 #include <vcc/utils/winapi.h>
 #include <vcc/utils/filesystem.h>
-#include <Windows.h>
+#include <vcc/bus/cartridge_capi.h>
 
 
 namespace
 {
+
+	using context_type = cartridge_capi_context;
+
+	void* gHostKeyPtr = nullptr;
+	HINSTANCE gModuleInstance = nullptr;
+	cartridge_capi_context* context_ = nullptr;
+	unsigned char left_channel_buffer_ = 0;
+	unsigned char right_channel_buffer_ = 0;
+
 	unsigned char Rom[8192];
+
 
 	bool LoadExtRom(const std::string& filename)	//Returns 1 on if loaded
 	{
@@ -54,63 +64,81 @@ namespace
 }
 
 
-orchestra90cc_cartridge::orchestra90cc_cartridge(
-	HINSTANCE module_instance,
-	std::unique_ptr<context_type> context)
-	:
-	module_instance_(module_instance),
-	context_(move(context))
-{ }
 
-orchestra90cc_cartridge::name_type orchestra90cc_cartridge::name() const
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
-	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
-}
-
-orchestra90cc_cartridge::catalog_id_type orchestra90cc_cartridge::catalog_id() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
-}
-
-orchestra90cc_cartridge::description_type orchestra90cc_cartridge::description() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
-}
-
-
-void orchestra90cc_cartridge::reset()
-{
-	using ::vcc::utils::get_module_path;
-	using ::vcc::utils::get_directory_from_path;
-
-	if (LoadExtRom(get_directory_from_path(get_module_path(module_instance_)) + "ORCH90.ROM"))
+	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
-		context_->assert_cartridge_line(true);
+		gModuleInstance = hinstDLL;
+	}
+
+	return TRUE;
+}
+
+
+extern "C"
+{
+
+	__declspec(dllexport) void PakInitialize(
+		void* const host_key,
+		[[maybe_unused]] const char* const configuration_path,
+		[[maybe_unused]] const cartridge_capi_context* const context)
+	{
+		gHostKeyPtr = host_key;
+	}
+
+	__declspec(dllexport) const char* PakGetName()
+	{
+		static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
+		return name.c_str();
+	}
+
+	__declspec(dllexport) const char* PakGetCatalogId()
+	{
+		static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
+		return catalog_id.c_str();
+	}
+
+	__declspec(dllexport) const char* PakGetDescription()
+	{
+		static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
+		return description.c_str();
+	}
+
+	__declspec(dllexport) void PakReset()
+	{
+		using ::vcc::utils::get_module_path;
+		using ::vcc::utils::get_directory_from_path;
+
+		if (LoadExtRom(get_directory_from_path(get_module_path(gModuleInstance)) + "ORCH90.ROM"))
+		{
+			context_->assert_cartridge_line(gHostKeyPtr, true);
+		}
+
+	}
+
+	__declspec(dllexport) void PakWritePort(unsigned char Port, unsigned char Data)
+	{
+		switch (Port)
+		{
+		case 0x7A:
+			right_channel_buffer_ = Data;
+			break;
+
+		case 0x7B:
+			left_channel_buffer_ = Data;
+			break;
+		}
+	}
+
+	__declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short address)
+	{
+		return Rom[address & 8191];
+	}
+
+	__declspec(dllexport) unsigned short PakSampleAudio()
+	{
+		return (left_channel_buffer_ << 8) | right_channel_buffer_;
 	}
 
 }
-
-void orchestra90cc_cartridge::write_port(unsigned char Port,unsigned char Data)
-{
-	switch (Port)
-	{
-	case 0x7A:
-		right_channel_buffer_=Data;			
-		break;
-
-	case 0x7B:
-		left_channel_buffer_=Data;
-		break;
-	}
-}
-
-unsigned char orchestra90cc_cartridge::read_memory_byte(size_type Address)
-{
-	return Rom[Address & 8191];
-}
-
-unsigned short orchestra90cc_cartridge::sample_audio()
-{
-	return (left_channel_buffer_ << 8) | right_channel_buffer_;
-}
-

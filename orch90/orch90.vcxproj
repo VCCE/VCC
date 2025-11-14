@@ -93,11 +93,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="orchestra90cc_cartridge.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="orchestra90cc_cartridge.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
