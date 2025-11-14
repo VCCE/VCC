@@ -19,25 +19,28 @@ This file is part of VCC (Virtual Color Computer).
 #pragma once
 #include "vcc/ui/menu/menu_item_collection.h"
 #include "vcc/utils/cartridge_loader.h"
-#include <filesystem>
+#include <vcc/utils/cartridge_catalog.h>
 #include <string>
+#include <filesystem>
 
 std::filesystem::path PakGetSystemCartridgePath();
 std::filesystem::path PakGetLastAccessedRomPakPath();
 void PakSetLastAccessedRomPakPath(const std::filesystem::path& path);
+::vcc::utils::cartridge_loader_status PakInsertRom(const std::filesystem::path& filename);
+::vcc::utils::cartridge_loader_status PakInsertCartridge(const ::vcc::utils::cartridge_catalog::guid_type& id);
+void PakEjectCartridge(bool reset_machine);
+vcc::utils::cartridge_loader_status PakLoadCartridge(const char* filename);
+
 std::string PakGetName();
 void PakTimer();
 unsigned char PakReadPort (unsigned char);
 void PakWritePort(unsigned char,unsigned char);
 unsigned char PackMem8Read (unsigned short);
 void GetModuleStatus( SystemState *);
-vcc::utils::cartridge_loader_status PakLoadCartridge(const char* filename);
 unsigned short PackAudioSample();
 void ResetBus();
-void GetCurrentModule(char *);
 void UpdateBusPointer();
-void UnloadDll();
-void UnloadPack();
 void CartMenuActivated(unsigned int);
 ::vcc::ui::menu::menu_item_collection PakGetMenuItems();
 
+extern const vcc::utils::cartridge_catalog cartridge_catalog_;

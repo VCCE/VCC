@@ -18,7 +18,7 @@ This file is part of VCC (Virtual Color Computer).
 
 // FIXME: This should be defined on the command line
 #define DIRECTINPUT_VERSION 0x0800
-
+#include "config.h"
 #include <Windows.h>
 #include <CommCtrl.h>
 #include <stdio.h>
@@ -234,9 +234,6 @@ unsigned char WriteIniFile()
 		winRect.h = 480;
 	}
 
-	GetCurrentModule(CurrentConfig.ModulePath);
-	ValidatePath(CurrentConfig.ModulePath);
-
 	WritePrivateProfileString("Version","Release",AppName,IniFilePath);
 	WritePrivateProfileInt("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer,IniFilePath);
 	WritePrivateProfileInt("CPU","FrameSkip",CurrentConfig.FrameSkip,IniFilePath);
@@ -268,7 +265,7 @@ unsigned char WriteIniFile()
 	WritePrivateProfileInt("Misc", "Overclock", CurrentConfig.EnableOverclock, IniFilePath);
 	WritePrivateProfileString("Misc", "ExternalBasicImage", CurrentConfig.ExtRomFile,IniFilePath);
 
-	WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
+	WritePrivateProfileString("expansion-port", "cartridge.path", CurrentConfig.ModulePath, IniFilePath);
 
 	WritePrivateProfileInt("LeftJoyStick","UseMouse",LeftJS.UseMouse,IniFilePath);
 	WritePrivateProfileInt("LeftJoyStick","Left",LeftJS.Left,IniFilePath);
@@ -331,7 +328,7 @@ unsigned char ReadIniFile()
 
 	CurrentConfig.RamSize = GetPrivateProfileInt("Memory","RamSize",1,IniFilePath);
 
-	GetPrivateProfileString("Module","OnBoot","",CurrentConfig.ModulePath,MAX_PATH,IniFilePath);
+	GetPrivateProfileString("expansion-port","cartridge.path","",CurrentConfig.ModulePath,MAX_PATH,IniFilePath);
 
 	CurrentConfig.KeyMap = GetPrivateProfileInt("Misc","KeyMapIndex",0,IniFilePath);
 	if (CurrentConfig.KeyMap>3)
@@ -385,14 +382,6 @@ unsigned char ReadIniFile()
 	return 0;
 }
 
-void LoadModule()
-{
-	if (CurrentConfig.ModulePath[0])
-	{
-		PakLoadCartridge(CurrentConfig.ModulePath);
-	}
-}
-
 void SetWindowRect(const Rect& rect) 
 {
 	if (EmuState.WindowHandle != nullptr)
@@ -418,8 +407,35 @@ void SetWindowRect(const Rect& rect)
 void GetIniFilePath( char *Path)
 {
 	strcpy(Path,IniFilePath);
-	return;
 }
+
+std::string GetCartridgeLocation()
+{
+	return CurrentConfig.ModulePath;
+}
+
+void SetStartupCartridge(const ::vcc::utils::resource_location& path)
+{
+	// FIXME-CHET: Change module path to a string once the config is loaded and saved using
+	// the value store.
+	strcpy(CurrentConfig.ModulePath, path.to_string().c_str());
+	WriteIniFile();
+}
+
+
+void ClearStartupCartridge()
+{
+	// FIXME-CHET: Change module path to a defaulted value (i.e. {}) once the config is
+	// loaded and saved using the value store.
+	strcpy(CurrentConfig.ModulePath, "");
+	WriteIniFile();
+}
+
+std::string GetIniFilePath()
+{
+	return IniFilePath;
+}
+
 void SetIniFilePath( const char *Path)
 {
     //  Path must be to an existing ini file

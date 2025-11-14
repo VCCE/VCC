@@ -228,17 +228,8 @@
     <ClInclude Include="OpCodeTables.h">
       <Filter>Headers\Debugger</Filter>
     </ClInclude>
-    <ClInclude Include="OpenGL.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="IDisplay.h">
       <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenGLFont.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenGLFontConsola.h">
-      <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="IDisplayDebug.h">
       <Filter>Headers</Filter>
@@ -246,23 +237,11 @@
     <ClInclude Include="BuildConfig.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Screenshot.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="DirectX.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="CpuCommon.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="DisplayNull.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="interrupts.h">
       <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="DisplayNone.h">
-      <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="Disassembler.h">
       <Filter>Headers</Filter>
@@ -274,6 +253,27 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="menu_populator.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectX.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="DisplayNone.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="DisplayNull.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLFont.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGL.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLFontConsola.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Screenshot.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

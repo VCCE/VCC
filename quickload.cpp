@@ -60,7 +60,8 @@ unsigned char QuickLoad(char *BinFileName)
 	_strlwr(Extension);
 	if ( (strcmp(Extension,".rom")==0) | (strcmp(Extension,".ccc")==0) | (strcmp(Extension,"*.pak")==0))
 	{
-		PakLoadCartridge(BinFileName);
+		PakInsertRom(BinFileName);
+		// FIXME-CHET: Report errors
 		return 0;
 	}
 	if ( strcmp(Extension,".bin")==0)

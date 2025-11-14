@@ -30,6 +30,7 @@
 #include "vcc/utils/logger.h"
 #include "vcc/utils/FileOps.h"
 #include "vcc/utils/filesystem.h"
+#include "vcc/common/DialogOps.h"
 #include <fstream>
 #include <Windows.h>
 #include <commdlg.h>
@@ -47,14 +48,11 @@ extern SystemState EmuState;
 
 static std::recursive_mutex gCartridgeMutex;
 static std::recursive_mutex gDriverMutex;
-static char DllPath[MAX_PATH] = "";
 static expansion_port<std::recursive_mutex> gExpansionSlot(gCartridgeMutex, gDriverMutex);
 const vcc::utils::cartridge_catalog cartridge_catalog_(
 	std::filesystem::path(::vcc::utils::get_module_path())
 	.parent_path()
 	.append("Cartridges"));
-
-static cartridge_loader_status load_any_cartridge(const char* filename, const char* iniPath);
 
 void PakAssertInterupt(Interrupt interrupt, InterruptSource source);
 static void PakAssertCartrigeLine(void* host_key, bool line_state);
@@ -300,42 +298,23 @@ unsigned short PackAudioSample()
 
 
 
-cartridge_loader_status PakLoadCartridge(const char* filename)
+void PakInsertCartridge(
+	cartridge_loader_result::handle_type handle,
+	cartridge_loader_result::cartridge_ptr_type cartridge);
+
+
+cartridge_loader_status PakInsertCartridge(const ::vcc::utils::cartridge_catalog::guid_type& id)
 {
-	static const std::map<cartridge_loader_status, UINT> string_id_map = {
-		{ cartridge_loader_status::already_loaded, IDS_MODULE_ALREADY_LOADED},
-		{ cartridge_loader_status::cannot_open, IDS_MODULE_CANNOT_OPEN},
-		{ cartridge_loader_status::not_found, IDS_MODULE_NOT_FOUND },
-		{ cartridge_loader_status::not_loaded, IDS_MODULE_NOT_LOADED },
-		{ cartridge_loader_status::not_rom, IDS_MODULE_NOT_ROM },
-		{ cartridge_loader_status::not_expansion, IDS_MODULE_NOT_EXPANSION }
-	};
-
-	char TempIni[MAX_PATH]="";
-	GetIniFilePath(TempIni);
-
-	const auto result(load_any_cartridge(filename, TempIni));
-	if (result == cartridge_loader_status::success)
+	if (!cartridge_catalog_.is_valid_cartridge_id(id))
 	{
-		return result;
+		return cartridge_loader_status::unknown_cartridge;
 	}
 
-	// FIXME-CHET: There should be no UI here, let the call site handle reporting the
-	// error.
-	auto error_string(load_error_string(result) + "\n\n" + filename);
+	const auto filename(cartridge_catalog_.get_item_pathname(id).string());
 
-	MessageBox(EmuState.WindowHandle, error_string.c_str(), "Load Error", MB_OK | MB_ICONERROR);
-
-	return result;
-}
-
-// Insert Module returns 0 on success
-static cartridge_loader_status load_any_cartridge(const char *filename, const char* iniPath)
-{
-	const auto gExpansionPortHost(std::make_shared<vcc_expansion_port_host>(cartridge_catalog_));
-	cartridge_loader_result loadedCartridge(vcc::utils::load_cartridge(
+	cartridge_loader_result loadedCartridge(vcc::utils::load_library_cartridge(
 		filename,
-		gExpansionPortHost,
+		std::make_shared<vcc_expansion_port_host>(cartridge_catalog_),
 		std::make_unique<vcc_expansion_port_ui>(),
 		std::make_unique<vcc_expansion_port_bus>()));
 	if (loadedCartridge.load_result != cartridge_loader_status::success)
@@ -343,49 +322,64 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 		return loadedCartridge.load_result;
 	}
 
-	UnloadDll();
-
-	std::scoped_lock cartridge_lock(gCartridgeMutex, gDriverMutex);
-
-	strcpy(DllPath, filename);
-	gExpansionSlot.insert(move(loadedCartridge.handle), move(loadedCartridge.cartridge));
-	gExpansionSlot.start();
-
-	// Reset if enabled
-	EmuState.ResetPending = 2;
+	PakInsertCartridge(move(loadedCartridge.handle), move(loadedCartridge.cartridge));
 
 	return loadedCartridge.load_result;
 }
 
-
-void UnloadDll()
+cartridge_loader_status PakInsertRom(const std::filesystem::path& filename)
 {
-	std::scoped_lock cartridge_lock(gCartridgeMutex, gDriverMutex);
+	cartridge_loader_result loadedCartridge(vcc::utils::load_rom_cartridge(
+		filename,
+		std::make_shared<vcc_expansion_port_host>(cartridge_catalog_),
+		std::make_unique<vcc_expansion_port_ui>(),
+		std::make_unique<vcc_expansion_port_bus>()));
+	if (loadedCartridge.load_result != cartridge_loader_status::success)
+	{
+		return loadedCartridge.load_result;
+	}
+
+	PakInsertCartridge(move(loadedCartridge.handle), move(loadedCartridge.cartridge));
+
+	return loadedCartridge.load_result;
+}
+
+void PakInsertCartridge(
+	cartridge_loader_result::handle_type handle,
+	cartridge_loader_result::cartridge_ptr_type cartridge)
+{
+	std::scoped_lock lock(gCartridgeMutex, gDriverMutex);
+
+	PakEjectCartridge(false);
+
+	gExpansionSlot.insert(move(handle), move(cartridge));
+	gExpansionSlot.start();
+
+	// Reset if enabled
+	EmuState.ResetPending = 2;
+}
+
+void PakEjectCartridge(bool reset_machine)
+{
+	std::scoped_lock lock(gCartridgeMutex, gDriverMutex);
 
 	gExpansionSlot.stop();
 	gExpansionSlot.eject();
-}
 
-void GetCurrentModule(char *DefaultModule)
-{
-	strcpy(DefaultModule,DllPath);
-	return;
+	// Clear the cartridge line and start the cartridge
+	SetCart(false);
+	gExpansionSlot.start();	//	FIXME-CHET: Do we really need to call this here?
+
+	if (reset_machine)
+	{
+		EmuState.ResetPending = 2;
+	}
 }
 
 void UpdateBusPointer()
 {
 	// Do nothing for now
 }
-
-void UnloadPack()
-{
-	UnloadDll();
-	strcpy(DllPath,"");
-	SetCart(0);
-
-	EmuState.ResetPending=2;
-}
-
 
 // CartMenuActivated is called from VCC main when a cartridge menu item is clicked.
 void CartMenuActivated(unsigned int MenuID)
