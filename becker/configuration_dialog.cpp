@@ -16,18 +16,10 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "configuration_dialog.h"
+#include "becker_cartridge.h"
 #include "resource.h"
 #include <vcc/common/DialogOps.h>
 #include <vcc/utils/winapi.h>
-
-
-configuration_dialog::configuration_dialog(
-	HINSTANCE module_handle,
-	controller_type& controller)
-	:
-	module_handle_(module_handle),
-	controller_(controller)
-{}
 
 
 void configuration_dialog::open()
@@ -35,7 +27,7 @@ void configuration_dialog::open()
 	if (!dialog_handle_)
 	{
 		dialog_handle_ = CreateDialogParam(
-			module_handle_,
+			gModuleInstance,
 			MAKEINTRESOURCE(IDD_PROPPAGE),
 			GetActiveWindow(),
 			callback_procedure,
@@ -110,13 +102,13 @@ INT_PTR configuration_dialog::process_message(
 			IDC_TCPHOST,
 			WM_SETTEXT,
 			0,
-			reinterpret_cast<LPARAM>(controller_.server_address().c_str()));
+			reinterpret_cast<LPARAM>(becker_server_address().c_str()));
 		SendDlgItemMessage(
 			hDlg,
 			IDC_TCPPORT,
 			WM_SETTEXT,
 			0,
-			reinterpret_cast<LPARAM>(controller_.server_port().c_str()));
+			reinterpret_cast<LPARAM>(becker_server_port().c_str()));
 		return TRUE;
 
 	case WM_COMMAND:
@@ -124,7 +116,7 @@ INT_PTR configuration_dialog::process_message(
 		{
 		case IDOK:
 			// Save config dialog data
-			controller_.configure_server(
+			becker_configure_server(
 				::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPHOST),
 				::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPPORT));
 			EndDialog(hDlg, LOWORD(wParam));
