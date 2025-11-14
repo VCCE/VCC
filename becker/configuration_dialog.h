@@ -20,39 +20,10 @@
 #include <Windows.h>
 
 
-class cartridge_controller
-{
-public:
-
-	using string_type = ::std::string;
-
-
-public:
-
-	virtual ~cartridge_controller() = default;
-
-	virtual string_type server_address() const = 0;
-	virtual string_type server_port() const = 0;
-	virtual void configure_server(string_type server_address, string_type server_port) = 0;
-};
-
 
 class configuration_dialog
 {
 public:
-
-	using controller_type = cartridge_controller;
-
-
-public:
-
-	configuration_dialog(HINSTANCE module_handle, controller_type& controller);
-
-	configuration_dialog(const configuration_dialog&) = delete;
-	configuration_dialog(configuration_dialog&&) = delete;
-
-	configuration_dialog& operator=(const configuration_dialog&) = delete;
-	configuration_dialog& operator=(configuration_dialog&&) = delete;
 
 	void open();
 	void close();
@@ -73,8 +44,6 @@ private:
 
 private:
 
-	const HINSTANCE module_handle_;
-	controller_type& controller_;
 	HWND dialog_handle_ = nullptr;
 	HWND parent_handle_ = nullptr;
 };
