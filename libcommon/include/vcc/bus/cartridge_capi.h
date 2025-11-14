@@ -54,11 +54,11 @@ extern "C"
 	struct cartridge_capi_context
 	{
 		// FIXME-CHET: This needs a reset callback
-		const PakAssertInteruptHostCallback assert_interrupt;
-		const PakAssertCartridgeLineHostCallback assert_cartridge_line;
-		const PakWriteMemoryByteHostCallback write_memory_byte;
-		const PakReadMemoryByteHostCallback read_memory_byte;
-		const PakAppendCartridgeMenuHostCallback add_menu_item;
+		PakAssertInteruptHostCallback assert_interrupt;
+		PakAssertCartridgeLineHostCallback assert_cartridge_line;
+		PakWriteMemoryByteHostCallback write_memory_byte;
+		PakReadMemoryByteHostCallback read_memory_byte;
+		PakAppendCartridgeMenuHostCallback add_menu_item;
 	};
 
 }

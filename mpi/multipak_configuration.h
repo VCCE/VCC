@@ -39,3 +39,5 @@ private:
 	const string_type section_;
 	path_type configuration_path_;
 };
+
+extern multipak_configuration configuration_;
