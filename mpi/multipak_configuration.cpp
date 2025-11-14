@@ -3,6 +3,7 @@
 
 
 using value_store = ::vcc::utils::persistent_value_store;
+multipak_configuration configuration_("MPI");
 
 
 multipak_configuration::multipak_configuration(string_type section)

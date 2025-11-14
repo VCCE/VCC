@@ -95,7 +95,6 @@
   <ItemGroup>
     <ClCompile Include="cartridge_slot.cpp" />
     <ClCompile Include="configuration_dialog.cpp" />
-    <ClCompile Include="mpi.cpp" />
     <ClCompile Include="multipak_cartridge.cpp" />
     <ClCompile Include="multipak_configuration.cpp" />
   </ItemGroup>
@@ -103,7 +102,6 @@
     <ClInclude Include="cartridge_slot.h" />
     <ClInclude Include="multipak_cartridge.h" />
     <ClInclude Include="configuration_dialog.h" />
-    <ClInclude Include="multipak_cartridge_context.h" />
     <ClInclude Include="multipak_configuration.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

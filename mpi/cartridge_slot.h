@@ -29,7 +29,7 @@ namespace vcc::modules::mpi
 	{
 	public:
 
-		using context_type = ::vcc::bus::cartridge_context;
+		using context_type = cartridge_capi_context;
 		using cartridge_type = ::vcc::bus::cartridge;
 		using cartridge_ptr_type = ::std::unique_ptr<cartridge_type>;
 		using name_type = cartridge_type::name_type;
@@ -150,11 +150,11 @@ namespace vcc::modules::mpi
 			menu_items_.push_back(item);
 		}
 
-		void enumerate_menu_items(context_type& context) const
+		void enumerate_menu_items(void* host_key, const context_type& context) const
 		{
 			for (const auto& item : menu_items_)
 			{
-				context.add_menu_item(item.name.c_str(), item.menu_id, item.type);
+				context.add_menu_item(host_key, item.name.c_str(), item.menu_id, item.type);
 			}
 		}
 
