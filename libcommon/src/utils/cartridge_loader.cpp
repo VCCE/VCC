@@ -25,6 +25,7 @@
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <vcc/utils/filesystem.h>
 
 
 extern HINSTANCE gModuleInstance;
@@ -73,25 +74,13 @@ namespace vcc::utils
 	{
 		constexpr size_t PAK_MAX_MEM = 0x40000;   // 256KB
 
-		std::vector<uint8_t> romImage;
-
-		romImage.reserve(PAK_MAX_MEM);
-
-		// Open the ROM file, fail if unable to
-		std::ifstream input(filename, std::ios::binary);
-		if (!input.is_open())
+		const auto rom_image(load_file_to_vector(filename));
+		if (!rom_image.has_value())
 		{
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 		}
 
-		// Load the file
-		input.unsetf(std::ios::skipws);
-		std::copy(
-			std::istream_iterator<uint8_t>(input),
-			std::istream_iterator<uint8_t>(),
-			back_inserter(romImage));
-
-		if (romImage.empty())
+		if (rom_image->empty())
 		{
 			return { nullptr, nullptr, cartridge_loader_status::not_rom };
 		}
@@ -106,7 +95,7 @@ namespace vcc::utils
 				move(context),
 				extract_filename(filename),
 				"",
-				move(romImage),
+				move(*rom_image),
 				enable_bank_switching),
 			cartridge_loader_status::success
 		};

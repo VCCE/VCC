@@ -102,6 +102,14 @@ namespace vcc::bus
 		/// @param menu_id The identifier sent to the cartridge instance when the item is selected.
 		/// @param menu_type The type of menu item to add.
 		virtual void add_menu_item(const char* text, int menu_id, MenuItemType menu_type) = 0;
+
+		/// @brief Retrieves the path to where system ROMS are stored.
+		/// 
+		/// This function returns a path to where ROMS used by the system and by cartridges are
+		/// stored.
+		/// 
+		/// @return A path to where system ROMS are stored.
+		virtual path_type system_rom_path() const = 0;
 	};
 
 }

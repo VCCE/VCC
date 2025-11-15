@@ -34,6 +34,7 @@
 #include <fstream>
 #include <Windows.h>
 #include <commdlg.h>
+#include <vcc/utils/filesystem.h>
 
 
 using cartridge_loader_status = vcc::utils::cartridge_loader_status;
@@ -108,6 +109,12 @@ class vcc_cartridge_context : public ::vcc::bus::cartridge_context
 	{
 		CartMenuCallBack(menu_name, menu_id, menu_type);
 	}
+
+	path_type system_rom_path() const override
+	{
+		return ::vcc::utils::get_directory_from_path(::vcc::utils::get_module_path(nullptr)) + "/ROMS/";
+	}
+
 };
 
 static void PakAssertCartrigeLine(void* /*host_key*/, bool line_state)
