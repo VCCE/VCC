@@ -21,7 +21,7 @@
 #include <Windows.h>
 
 
-HINSTANCE gModuleInstance;
+static HINSTANCE gModuleInstance;
 
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
@@ -40,9 +40,9 @@ extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 {
 	return []([[maybe_unused]] std::unique_ptr<::vcc::bus::cartridge_context> context,
 			  [[maybe_unused]] const cartridge_capi_context& capi_context) -> std::unique_ptr<::vcc::bus::cartridge>
-	{
-		return std::make_unique<ramdisk_cartridge>();
-	};
+		{
+			return std::make_unique<ramdisk_cartridge>(gModuleInstance);
+		};
 }
 
 static_assert(

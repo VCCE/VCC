@@ -20,52 +20,56 @@
 #include "vcc/utils/winapi.h"
 
 
-extern HINSTANCE gModuleInstance;
+ramdisk_cartridge::ramdisk_cartridge(HINSTANCE module_instance)
+	: module_instance_(module_instance)
+{
+}
 
 
 ramdisk_cartridge::name_type ramdisk_cartridge::name() const
 {
-	return ::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME);
+	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
 ramdisk_cartridge::catalog_id_type ramdisk_cartridge::catalog_id() const
 {
-	return ::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER);
+	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
 }
 
 ramdisk_cartridge::description_type ramdisk_cartridge::description() const
 {
-	return ::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION);
+	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
 }
 
 
 void ramdisk_cartridge::start()
 {
-	initialize_state(true);
+	initialize_device_state();
+	std::fill(ram_.begin(), ram_.end(), 0xff);
 }
 
 void ramdisk_cartridge::reset()
 {
-	initialize_state(false);
+	initialize_device_state();
 }
 
 void ramdisk_cartridge::write_port(unsigned char port_id, unsigned char value)
 {
 	switch (port_id)
 	{
-	case 0x40:
+	case mmio_ports::address_low:
 		address_byte0 = value;
 		break;
 
-	case 0x41:
+	case mmio_ports::address_middle:
 		address_byte1 = value;
 		break;
 
-	case 0x42:
+	case mmio_ports::address_high:
 		address_byte2 = (value & 0x7);
 		break;
 
-	case 0x43:
+	case mmio_ports::data:
 		ram_[current_address_] = value;
 		return;
 
@@ -78,7 +82,7 @@ void ramdisk_cartridge::write_port(unsigned char port_id, unsigned char value)
 
 unsigned char ramdisk_cartridge::read_port(unsigned char port_id)
 {
-	if (port_id == 0x43)
+	if (port_id == mmio_ports::data)
 	{
 		return ram_[current_address_];
 	}
@@ -87,14 +91,10 @@ unsigned char ramdisk_cartridge::read_port(unsigned char port_id)
 }
 
 
-void ramdisk_cartridge::initialize_state(bool initialize_memory)
+void ramdisk_cartridge::initialize_device_state()
 {
 	current_address_ = 0;
 	address_byte0 = 0;
 	address_byte1 = 0;
 	address_byte2 = 0;
-	if (initialize_memory)
-	{
-		std::fill(ram_.begin(), ram_.end(), 0xff);
-	}
 }

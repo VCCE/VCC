@@ -18,6 +18,7 @@
 #pragma once
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/cartridge_context.h"
+#include <Windows.h>
 #include <memory>
 #include <array>
 
@@ -30,6 +31,8 @@ public:
 
 
 public:
+
+	explicit ramdisk_cartridge(HINSTANCE module_instance);
 
 	name_type name() const override;
 	catalog_id_type catalog_id() const override;
@@ -44,11 +47,20 @@ public:
 
 private:
 
-	void initialize_state(bool initialize_memory);
+	void initialize_device_state();
 
 
 private:
 
+	struct mmio_ports
+	{
+		static const unsigned char address_low = 0x40;
+		static const unsigned char address_middle = 0x41;
+		static const unsigned char address_high = 0x42;
+		static const unsigned char data = 0x43;
+	};
+
+	const HINSTANCE module_instance_;
 	address_type current_address_ = 0;
 	address_type address_byte0 = 0;
 	address_type address_byte1 = 0;
