@@ -26,3 +26,7 @@ extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 		return std::make_unique<gmc_cartridge>(move(context), gModuleInstance);
 	};
 }
+
+static_assert(
+	std::is_same_v<decltype(&GetPakFactory), GetPakFactoryFunction>,
+	"GMC GetPakFactory does not have the correct signature.");

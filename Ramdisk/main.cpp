@@ -44,3 +44,7 @@ extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 		return std::make_unique<ramdisk_cartridge>();
 	};
 }
+
+static_assert(
+	std::is_same_v<decltype(&GetPakFactory), GetPakFactoryFunction>,
+	"RamDisk GetPakFactory does not have the correct signature.");

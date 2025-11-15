@@ -55,3 +55,7 @@ extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 	};
 
 }
+
+static_assert(
+	std::is_same_v<decltype(&GetPakFactory), GetPakFactoryFunction>,
+	"MPI GetPakFactory does not have the correct signature.");

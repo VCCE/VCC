@@ -49,3 +49,7 @@ extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 		return std::make_unique<orchestra90cc_cartridge>(gModuleInstance, move(context));
 	};
 }
+
+static_assert(
+	std::is_same_v<decltype(&GetPakFactory), GetPakFactoryFunction>,
+	"Orchestra-90cc GetPakFactory does not have the correct signature.");
