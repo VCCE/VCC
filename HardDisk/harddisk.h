@@ -1,23 +1,66 @@
-#ifndef __HARDDISK_H__
-#define __HARDDISK_H__
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
+////////////////////////////////////////////////////////////////////////////////
+//	Copyright 2015 by Joseph Forgione
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	modify it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or (at your
+//	option) any later version.
+//	
+//	VCC (Virtual Color Computer) is distributed in the hope that it will be
+//	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+//	Public License for more details.
+//	
+//	You should have received a copy of the GNU General Public License along with
+//	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////////
+#pragma once
 
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+#include "vcc/bus/cartridge.h"
+#include "vcc/bus/cartridge_context.h"
+#include "vcc/devices/rom/rom_image.h"
+#include <memory>
+#include <Windows.h>
 
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
-void MemWrite(unsigned char,unsigned short );
-unsigned char MemRead(unsigned short );
+class vcc_hard_disk_cartridge : public ::vcc::bus::cartridge
+{
+public:
 
-#endif
+	using context_type = ::vcc::bus::cartridge_context;
+	using rom_image_type = ::vcc::devices::rom::rom_image;
+
+	vcc_hard_disk_cartridge(HINSTANCE module_instance, std::unique_ptr<context_type> context);
+
+	/// @inheritdoc
+	name_type name() const override;
+
+	/// @inheritdoc
+	catalog_id_type catalog_id() const override;
+
+	/// @inheritdoc
+	description_type description() const override;
+
+
+	void start() override;
+	void stop() override;
+
+	void write_port(unsigned char port_id, unsigned char value) override;
+	[[nodiscard]] unsigned char read_port(unsigned char port_id) override;
+
+	void status(char* text_buffer, size_type buffer_size) override;
+	void menu_item_clicked(unsigned char menu_item_id) override;
+
+
+private:
+
+	void LoadConfig();
+	void BuildCartridgeMenu();
+
+private:
+
+	const HINSTANCE module_instance_;
+	const std::unique_ptr<context_type> context_;
+};
+
