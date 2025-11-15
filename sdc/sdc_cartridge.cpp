@@ -145,7 +145,6 @@
 #include <filesystem>
 #include "vcc/devices/rtc/ds1315.h"
 #include "vcc/utils/logger.h"
-#include "vcc/bus/cartridge_capi.h"
 #include "../CartridgeMenu.h"
 
 #include "sdc_cartridge.h"
@@ -238,62 +237,17 @@ struct DiskImage {
 };
 
 // Private functions
-void ParseStartup();
-void SDCCommand();
-void ReadSector();
-void StreamImage();
-void WriteSector();
-bool SeekSector(unsigned char,unsigned int);
-bool ReadDrive(unsigned char,unsigned int);
-void GetDriveInfo();
-void SDCControl();
-void UpdateSD();
 void AppendPathChar(char *,char c);
-bool LoadFoundFile(struct FileRecord *);
 void FixSDCPath(char *,const char *);
-void MountDisk(int,const char *,int);
-void MountNewDisk(int,const char *,int);
 void OpenNew(int,const char *,int);
-void OpenFound(int,int);
-void LoadReply(const void *, int);
-void BlockReceive(unsigned char);
-char * LastErrorTxt();
-void FlashControl(unsigned char);
-void LoadDirPage();
-void SetCurDir(const char *);
 bool SearchFile(const char *);
 void InitiateDir(const char *);
-void GetFullPath(char *,const char *);
-void RenameFile(const char *);
-void KillFile(const char *);
-void MakeDirectory(const char *);
-void GetMountedImageRec();
-void GetSectorCount();
-void GetDirectoryLeaf();
-void CommandDone();
-unsigned char PickReplyByte(unsigned char);
-void FloppyCommand(unsigned char);
-void FloppyRestore(unsigned char);
-void FloppySeek(unsigned char);
-void FloppyReadDisk();
-void FloppyWriteDisk();
-void FloppyTrack(unsigned char);
-void FloppySector(unsigned char);
-void FloppyWriteData(unsigned char);
-unsigned char FloppyStatus();
-unsigned char FloppyReadData();
 void set_filerecord_file_size(FileRecord& , uint32_t);
 void set_sdcfile_from_filename(SdcFile&, const std::string& );
 
 //======================================================================
 // Public Data
 //======================================================================
-
-void* gHostKey = nullptr;
-PakAssertInteruptHostCallback AssertInt = nullptr;
-PakWriteMemoryByteHostCallback MemWrite8 = nullptr;
-PakReadMemoryByteHostCallback MemRead8 = nullptr;
-PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 
 // Idle Status counter
 int idle_ctr = 0;
@@ -353,7 +307,7 @@ static char FlopRdBuf[256];
 //----------------------------------------------------------------------
 // Init the controller. This gets called by PakReset
 //----------------------------------------------------------------------
-void SDCInit()
+void sdc_cartridge::SDCInit()
 {
 
 #ifdef USE_LOGGING
@@ -468,7 +422,7 @@ bool IsDirectory(const char * path)
 //----------------------------------------------------------------------
 // Parse the startup.cfg file
 //----------------------------------------------------------------------
-void ParseStartup()
+void sdc_cartridge::ParseStartup()
 {
     char buf[MAX_PATH+10];
     if (!IsDirectory(SDCard)) {
@@ -515,16 +469,16 @@ void ParseStartup()
 //----------------------------------------------------------------------
 //  Command done interrupt;
 //----------------------------------------------------------------------
-void CommandDone()
+void sdc_cartridge::CommandDone()
 {
     DLOG_C("*");
-    AssertInt(gHostKey, INT_NMI, IS_NMI);
+    context_->assert_interrupt(INT_NMI, IS_NMI);
 }
 
 //----------------------------------------------------------------------
 // Write port.
 //----------------------------------------------------------------------
-void SDCWrite(unsigned char data,unsigned char port)
+void sdc_cartridge::SDCWrite(unsigned char data,unsigned char port)
 {
     if (port < 0x40 || port > 0x4F) return;  // Not disk data
 
@@ -616,7 +570,7 @@ void SDCWrite(unsigned char data,unsigned char port)
 //----------------------------------------------------------------------
 // Read port. If there are bytes in the reply buffer return them.
 //----------------------------------------------------------------------
-unsigned char SDCRead(unsigned char port)
+unsigned char sdc_cartridge::SDCRead(unsigned char port)
 {
     unsigned char rpy = 0;
 
@@ -683,7 +637,7 @@ unsigned char SDCRead(unsigned char port)
 //----------------------------------------------------------------------
 // Floppy I/O
 //----------------------------------------------------------------------
-void FloppyCommand(unsigned char data)
+void sdc_cartridge::FloppyCommand(unsigned char data)
 {
     switch (data >> 4) {
     // floppy restore
@@ -705,7 +659,7 @@ void FloppyCommand(unsigned char data)
 }
 
 // floppy restore
-void FloppyRestore(unsigned char data)
+void sdc_cartridge::FloppyRestore(unsigned char data)
 {
     DLOG_C("FloppyRestore\n");
     FlopTrack = 0;
@@ -716,14 +670,14 @@ void FloppyRestore(unsigned char data)
 }
 
 // floppy seek
-void FloppySeek(unsigned char data)
+void sdc_cartridge::FloppySeek(unsigned char data)
 {
     // Seek not implemented
     DLOG_C("FloppySeek\n");
 }
 
 // floppy read sector
-void FloppyReadDisk()
+void sdc_cartridge::FloppyReadDisk()
 {
     int lsn = FlopTrack * 18 + FlopSector - 1;
     snprintf(SDC_Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
@@ -742,7 +696,7 @@ void FloppyReadDisk()
 }
 
 // floppy write sector
-void FloppyWriteDisk()
+void sdc_cartridge::FloppyWriteDisk()
 {
     // write not implemented
     int lsn = FlopTrack * 18 + FlopSector - 1;
@@ -751,14 +705,14 @@ void FloppyWriteDisk()
 }
 
 // floppy set track
-void FloppyTrack(unsigned char data)
+void sdc_cartridge::FloppyTrack(unsigned char data)
 {
     //DLOG_C("FloppyTrack %d\n",data);
     FlopTrack = data;
 }
 
 // floppy set sector
-void FloppySector(unsigned char data)
+void sdc_cartridge::FloppySector(unsigned char data)
 {
     FlopSector = data;  // (1-18)
 
@@ -768,7 +722,7 @@ void FloppySector(unsigned char data)
 }
 
 // floppy write data
-void FloppyWriteData(unsigned char data)
+void sdc_cartridge::FloppyWriteData(unsigned char data)
 {
     if (FlopWrCnt<256)  {
         FlopWrCnt++;
@@ -780,14 +734,14 @@ void FloppyWriteData(unsigned char data)
 }
 
 // floppy get status
-unsigned char FloppyStatus()
+unsigned char sdc_cartridge::FloppyStatus()
 {
     //DLOG_C("FloppyStatus %02x\n",FlopStatus);
     return FlopStatus;
 }
 
 // floppy read data
-unsigned char FloppyReadData()
+unsigned char sdc_cartridge::FloppyReadData()
 {
     unsigned char rpy;
     if (FlopRdCnt>0)  {
@@ -806,7 +760,7 @@ unsigned char FloppyReadData()
 // has most replies in words and the order the word bytes are read can
 // vary so we play games to send the right ones
 //----------------------------------------------------------------------
-unsigned char PickReplyByte(unsigned char port)
+unsigned char sdc_cartridge::PickReplyByte(unsigned char port)
 {
     unsigned char rpy = 0;
 
@@ -841,7 +795,7 @@ unsigned char PickReplyByte(unsigned char port)
 //----------------------------------------------------------------------
 //  Dispatch SDC commands
 //----------------------------------------------------------------------
-void SDCCommand()
+void sdc_cartridge::SDCCommand()
 {
 
     switch (IF.cmdcode & 0xF0) {
@@ -876,7 +830,7 @@ void SDCCommand()
 //----------------------------------------------------------------------
 // Receive block data
 //----------------------------------------------------------------------
-void BlockReceive(unsigned char byte)
+void sdc_cartridge::BlockReceive(unsigned char byte)
 {
     if (IF.bufcnt > 0) {
         IF.bufcnt--;
@@ -903,7 +857,7 @@ void BlockReceive(unsigned char byte)
 //----------------------------------------------------------------------
 // Get drive information
 //----------------------------------------------------------------------
-void GetDriveInfo()
+void sdc_cartridge::GetDriveInfo()
 {
     int drive = IF.cmdcode & 1;
     switch (IF.param1) {
@@ -943,7 +897,7 @@ void GetDriveInfo()
 // command to learn the full path when restore last session is active.
 // The full path is saved in SDCX.CFG for the next session.
 //----------------------------------------------------------------------
-void GetDirectoryLeaf()
+void sdc_cartridge::GetDirectoryLeaf()
 {
     DLOG_C("GetDirectoryLeaf CurDir '%s'\n",CurDir);
 
@@ -984,7 +938,7 @@ void GetDirectoryLeaf()
 //----------------------------------------------------------------------
 //  Update SD Commands.
 //----------------------------------------------------------------------
-void UpdateSD()
+void sdc_cartridge::UpdateSD()
 {
     switch (IF.blkbuf[0]) {
     case 0x4D: //M
@@ -1024,7 +978,7 @@ void UpdateSD()
 //----------------------------------------------------------------------
 // Flash control
 //----------------------------------------------------------------------
-void FlashControl(unsigned char data)
+void sdc_cartridge::FlashControl(unsigned char data)
 {
     unsigned char bank = data & 7;
     EnableBankWrite = data & 0x80;
@@ -1057,7 +1011,7 @@ void FlashControl(unsigned char data)
 //    state 6 write bank # adr sect val 30 kill bank # sect (adr & 0x3000)
 //
 //----------------------------------------------------------------------
-unsigned char WriteFlashBank(unsigned short adr)
+unsigned char sdc_cartridge::WriteFlashBank(unsigned short adr)
 {
     DLOG_C("WriteFlashBank %d %d %04X %02X\n",
             BankWriteState,BankWriteNum,adr,BankData);
@@ -1113,7 +1067,7 @@ unsigned char WriteFlashBank(unsigned short adr)
 //    b1 single sided flag
 //    b2 eight bit transfer flag
 //----------------------------------------------------------------------
-bool SeekSector(unsigned char cmdcode, unsigned int lsn)
+bool sdc_cartridge::SeekSector(unsigned char cmdcode, unsigned int lsn)
 {
     // Adjust for read of one side of a doublesided disk.
     int drive = cmdcode & 1;
@@ -1142,7 +1096,7 @@ bool SeekSector(unsigned char cmdcode, unsigned int lsn)
 //----------------------------------------------------------------------
 // Read a sector from drive image and load reply
 //----------------------------------------------------------------------
-bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
+bool sdc_cartridge::ReadDrive(unsigned char cmdcode, unsigned int lsn)
 {
     char buf[520];
     DWORD cnt = 0;
@@ -1178,7 +1132,7 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
 //    b1 single sided flag
 //    b2 eight bit transfer flag
 //----------------------------------------------------------------------
-void ReadSector()
+void sdc_cartridge::ReadSector()
 {
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
 
@@ -1194,7 +1148,7 @@ void ReadSector()
 //----------------------------------------------------------------------
 // Stream image data
 //----------------------------------------------------------------------
-void StreamImage()
+void sdc_cartridge::StreamImage()
 {
     // If already streaming continue
     if (streaming) {
@@ -1230,7 +1184,7 @@ void StreamImage()
 //----------------------------------------------------------------------
 // Write logical sector
 //----------------------------------------------------------------------
-void WriteSector()
+void sdc_cartridge::WriteSector()
 {
     DWORD cnt = 0;
     int drive = IF.cmdcode & 1;
@@ -1264,7 +1218,7 @@ void WriteSector()
 //----------------------------------------------------------------------
 // Get most recent windows error text
 //----------------------------------------------------------------------
-char * LastErrorTxt() {
+char * sdc_cartridge::LastErrorTxt() {
     static char msg[200];
     DWORD error_code = GetLastError();
     FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM |
@@ -1278,7 +1232,7 @@ char * LastErrorTxt() {
 //----------------------------------------------------------------------
 // Return sector count for mounted disk image
 //----------------------------------------------------------------------
-void  GetSectorCount() {
+void  sdc_cartridge::GetSectorCount() {
 
     int drive = IF.cmdcode & 1;
     unsigned int numsec = Disk[drive].size/Disk[drive].sectorsize;
@@ -1293,7 +1247,7 @@ void  GetSectorCount() {
 //----------------------------------------------------------------------
 // Return file record for mounted disk image
 //----------------------------------------------------------------------
-void GetMountedImageRec()
+void sdc_cartridge::GetMountedImageRec()
 {
     int drive = IF.cmdcode & 1;
     //DLOG_C("GetMountedImageRec %d %s\n",drive,Disk[drive].fullpath);
@@ -1310,7 +1264,7 @@ void GetMountedImageRec()
 // IF.param1  0: Next disk 1-9: specific disk.
 // IF.param2 b0: Blink Enable
 //----------------------------------------------------------------------
-void SDCControl()
+void sdc_cartridge::SDCControl()
 {
     // If streaming is in progress abort it.
     if (streaming) {
@@ -1329,7 +1283,7 @@ void SDCControl()
 //----------------------------------------------------------------------
 // Load reply. Count is bytes, 512 max.
 //----------------------------------------------------------------------
-void LoadReply(const void *data, int count)
+void sdc_cartridge::LoadReply(const void *data, int count)
 {
     if ((count < 2) | (count > 512)) {
         DLOG_C("LoadReply bad count %d\n",count);
@@ -1422,7 +1376,7 @@ void FixSDCPath(char *dst, const char *src, std::size_t dst_size)
 //----------------------------------------------------------------------
 // Load a file record with the file found by Find File
 //----------------------------------------------------------------------
-bool LoadFoundFile(struct FileRecord * rec)
+bool sdc_cartridge::LoadFoundFile(struct FileRecord * rec)
 {
     memset(rec,0,sizeof(rec));
 
@@ -1463,7 +1417,7 @@ bool LoadFoundFile(struct FileRecord * rec)
 //  IF.param1 SDF image number of cylinders
 //  IF.param2 SDC image number of sides
 //----------------------------------------------------------------------
-void MountNewDisk (int drive, const char * path, int raw)
+void sdc_cartridge::MountNewDisk (int drive, const char * path, int raw)
 {
     //DLOG_C("MountNewDisk %d %s %d\n",drive,path,raw);
 
@@ -1496,7 +1450,7 @@ void MountNewDisk (int drive, const char * path, int raw)
 // the 'Next Disk' function.
 // TODO: Sets of type SOMEAPPn.DSK
 //----------------------------------------------------------------------
-void MountDisk (int drive, const char * path, int raw)
+void sdc_cartridge::MountDisk (int drive, const char * path, int raw)
 {
     DLOG_C("MountDisk %d %s %d\n",drive,path,raw);
 
@@ -1557,7 +1511,7 @@ std::string DiskName(int drive)
 //----------------------------------------------------------------------
 // Mount Next Disk from found set
 //----------------------------------------------------------------------
-bool MountNext (int drive)
+bool sdc_cartridge::MountNext (int drive)
 {
     if (FindNextFile(hFind,&dFound) == 0) {
         DLOG_C("MountNext no more\n");
@@ -1586,7 +1540,7 @@ bool MountNext (int drive)
 //  cylinders with num cyl controlling num sides
 //
 //----------------------------------------------------------------------
-void OpenNew( int drive, const char * path, int raw)
+void sdc_cartridge::OpenNew( int drive, const char * path, int raw)
 {
     DLOG_C("OpenNew %d '%s' %d %d %d\n",
           drive,path,raw,IF.param1,IF.param2);
@@ -1672,7 +1626,7 @@ void OpenNew( int drive, const char * path, int raw)
 //----------------------------------------------------------------------
 // Open disk image found.  Raw flag skips file type checks
 //----------------------------------------------------------------------
-void OpenFound (int drive,int raw)
+void sdc_cartridge::OpenFound (int drive,int raw)
 {
     drive &= 1;
     int writeprotect = 0;
@@ -1816,7 +1770,7 @@ void OpenFound (int drive,int raw)
 //----------------------------------------------------------------------
 // Convert file name from 8.3 format and prepend current dir.
 //----------------------------------------------------------------------
-void GetFullPath(char * path, const char * file) {
+void sdc_cartridge::GetFullPath(char * path, const char * file) {
     char tmp[MAX_PATH];
     strncpy(path,SDCard,MAX_PATH);
     AppendPathChar(path,'/');
@@ -1831,7 +1785,7 @@ void GetFullPath(char * path, const char * file) {
 //   names contains two consecutive null terminated name strings
 //   first is file or directory to rename, second is target name
 //----------------------------------------------------------------------
-void RenameFile(const char *names)
+void sdc_cartridge::RenameFile(const char *names)
 {
     char from[MAX_PATH];
     char target[MAX_PATH];
@@ -1862,7 +1816,7 @@ void RenameFile(const char *names)
 //----------------------------------------------------------------------
 // Delete disk image or directory
 //----------------------------------------------------------------------
-void KillFile(const char *file)
+void sdc_cartridge::KillFile(const char *file)
 {
     char path[MAX_PATH];
     GetFullPath(path,file);
@@ -1891,7 +1845,7 @@ void KillFile(const char *file)
 //----------------------------------------------------------------------
 // Create directory
 //----------------------------------------------------------------------
-void MakeDirectory(const char *name)
+void sdc_cartridge::MakeDirectory(const char *name)
 {
     char path[MAX_PATH];
     GetFullPath(path,name);
@@ -1926,7 +1880,7 @@ void CloseDrive (int drive)
 //----------------------------------------------------------------------
 // Append char to path if not there
 //----------------------------------------------------------------------
-void AppendPathChar(char * path, char c)
+void sdc_cartridge::AppendPathChar(char * path, char c)
 {
     int l = strlen(path);
     if ((l > 0) && (path[l-1] == c)) return;
@@ -1939,7 +1893,7 @@ void AppendPathChar(char * path, char c)
 // Set the Current Directory relative to previous current or to SDRoot
 // This is complicated by the many ways a user can change the directory
 //----------------------------------------------------------------------
-void SetCurDir(const char * branch)
+void sdc_cartridge::SetCurDir(const char * branch)
 {
     DLOG_C("SetCurdir '%s'\n",branch);
 
@@ -2020,7 +1974,7 @@ void SetCurDir(const char * branch)
 //----------------------------------------------------------------------
 //  Start File search.  Searches start from the root of the SDCard.
 //----------------------------------------------------------------------
-bool SearchFile(const char * pattern)
+bool sdc_cartridge::SearchFile(const char * pattern)
 {
     // Path always starts with SDCard
     char path[MAX_PATH];
@@ -2063,7 +2017,7 @@ bool SearchFile(const char * pattern)
 //----------------------------------------------------------------------
 // InitiateDir command.
 //----------------------------------------------------------------------
-void InitiateDir(const char * path)
+void sdc_cartridge::InitiateDir(const char * path)
 {
     bool rc;
     // Append "*.*" if last char in path was '/';
@@ -2088,7 +2042,7 @@ void InitiateDir(const char * path)
 // the pattern used in SearchFile. Can be called multiple times until
 // there are no more matches.
 //----------------------------------------------------------------------
-void LoadDirPage()
+void sdc_cartridge::LoadDirPage()
 {
     memset(DirPage,0,sizeof(DirPage));
 
