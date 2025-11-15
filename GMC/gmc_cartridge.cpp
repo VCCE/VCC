@@ -10,7 +10,7 @@
 namespace
 {
 
-	std::string SelectROMFile()
+	std::string select_rom_file()
 	{
 		FileDialog dlg;
 
@@ -34,7 +34,8 @@ gmc_cartridge::gmc_cartridge(std::unique_ptr<context_type> context, HINSTANCE mo
 	:
 	context_(move(context)),
 	module_instance_(module_instance)
-{}
+{
+}
 
 
 gmc_cartridge::name_type gmc_cartridge::name() const
@@ -58,31 +59,24 @@ void gmc_cartridge::start()
 	const auto selected_file(settings.read(configuration_section_id_, configuration_rom_key_id_));
 
 	load_rom(selected_file, false);
+	psg_.start();
 	build_menu();
 }
-
-void gmc_cartridge::stop()
-{}
-
 
 void gmc_cartridge::reset()
 {
-	psg_.device_start();
-	build_menu();
+	psg_.reset();
 }
-
-void gmc_cartridge::update([[maybe_unused]] float delta)
-{}
 
 void gmc_cartridge::write_port(unsigned char port, unsigned char data)
 {
 	switch (port)
 	{
-	case mmio_registers::select_bank:
+	case mmio_ports::select_bank:
 		rom_image_.select_bank(data);
 		break;
 
-	case mmio_registers::psg_io:
+	case mmio_ports::psg_io:
 		psg_.write(data);
 		break;
 	}
@@ -90,7 +84,7 @@ void gmc_cartridge::write_port(unsigned char port, unsigned char data)
 
 unsigned char gmc_cartridge::read_port(unsigned char port)
 {
-	if (port == mmio_registers::select_bank)
+	if (port == mmio_ports::select_bank)
 	{
 		return rom_image_.selected_bank();
 	}
@@ -117,7 +111,7 @@ void gmc_cartridge::status(char* status, size_t buffer_size)
 		message += activeRom.empty() ? " (No ROM Selected)" : "(Unable to load `" + activeRom + "`)";
 	}
 
-	if(message.size() >= buffer_size)
+	if (message.size() >= buffer_size)
 	{
 		message.reserve(buffer_size - 1);
 	}
@@ -127,8 +121,8 @@ void gmc_cartridge::status(char* status, size_t buffer_size)
 
 unsigned short gmc_cartridge::sample_audio()
 {
-	SN76489Device::stream_sample_t lbuffer = 0;
-	SN76489Device::stream_sample_t rbuffer = 0;
+	sample_type lbuffer = 0;
+	sample_type rbuffer = 0;
 
 	return psg_.sound_stream_update(lbuffer, rbuffer);
 }
@@ -137,7 +131,7 @@ void gmc_cartridge::menu_item_clicked(unsigned char menuId)
 {
 	if (menuId == menu_item_ids::select_rom)
 	{
-		const auto selected_file(SelectROMFile());
+		const auto selected_file(select_rom_file());
 		if (selected_file.empty())
 		{
 			return;
