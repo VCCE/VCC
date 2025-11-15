@@ -33,7 +33,9 @@ public:
 
 	virtual string_type server_address() const = 0;
 	virtual string_type server_port() const = 0;
-	virtual void configure_server(string_type server_address, string_type server_port) = 0;
+	virtual void set_server_address(
+		const string_type& server_address,
+		const string_type& server_port) = 0;
 };
 
 

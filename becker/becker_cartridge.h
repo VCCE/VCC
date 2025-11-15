@@ -48,7 +48,7 @@ public:
 
 	void write_port(unsigned char port_id, unsigned char value) override;
 	unsigned char read_port(unsigned char port_id) override;
-	
+
 	void status(char* text_buffer, size_t buffer_size) override;
 	void menu_item_clicked(unsigned char menu_item_id) override;
 
@@ -57,16 +57,24 @@ protected:
 
 	string_type server_address() const override;
 	string_type server_port() const override;
-	void configure_server(string_type server_address, string_type server_port) override;
+	void set_server_address(
+		const string_type& server_address,
+		const string_type& server_port) override;
 
 	void build_menu() const;
 
 
 private:
 
-	struct menu_identifiers
+	struct menu_item_ids
 	{
 		static const UINT open_configuration = 16;
+	};
+
+	struct mmio_ports
+	{
+		static const auto status = 0x41;
+		static const auto data = 0x42;
 	};
 
 	static const inline std::string configuration_section_id_ = "DW Becker";

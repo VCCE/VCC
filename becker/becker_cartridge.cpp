@@ -21,14 +21,14 @@
 #include "vcc/utils/persistent_value_store.h"
 #include "../CartridgeMenu.h"
 
-// Contains Becker cart exports
 
 becker_cartridge::becker_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance)
 	:
 	context_(move(context)),
 	module_instance_(module_instance),
 	configuration_dialog_(module_instance, *this)
-{}
+{
+}
 
 
 becker_cartridge::name_type becker_cartridge::name() const
@@ -49,8 +49,6 @@ becker_cartridge::description_type becker_cartridge::description() const
 
 void becker_cartridge::start()
 {
-
-//  Load becker config
 	::vcc::utils::persistent_value_store settings(context_->configuration_path());
 
 	gBecker.sethost(
@@ -58,7 +56,6 @@ void becker_cartridge::start()
 		settings.read(configuration_section_id_, "DWServerPort", "65504").c_str());
 	gBecker.enable(true);
 
-//  Create dynamic menu
 	build_menu();
 }
 
@@ -72,9 +69,9 @@ void becker_cartridge::stop()
 
 void becker_cartridge::write_port(unsigned char port_id, unsigned char value)
 {
-	if (port_id == 0x42)
+	if (port_id == mmio_ports::data)
 	{
-		gBecker.write(value,port_id);
+		gBecker.write(value, port_id);
 	}
 }
 
@@ -82,10 +79,10 @@ unsigned char becker_cartridge::read_port(unsigned char port_id)
 {
 	switch (port_id)
 	{
-	case 0x41:	// read status
+	case mmio_ports::status:
 		return gBecker.read(port_id) != 0 ? 2 : 0;
 
-	case 0x42:	// read data
+	case mmio_ports::data:
 		return gBecker.read(port_id);
 	}
 
@@ -94,13 +91,15 @@ unsigned char becker_cartridge::read_port(unsigned char port_id)
 
 void becker_cartridge::status(char* text_buffer, size_t buffer_size)
 {
-	gBecker.status(text_buffer);  // text buffer size??
+	// TODO-CHET: The becker port device should not be generating the status, that should
+	// be done here. The FD502 implementation will need to be updated along with this.
+	gBecker.status(text_buffer);
 }
 
 
 void becker_cartridge::menu_item_clicked(unsigned char menu_item_id)
 {
-	if (menu_item_id == menu_identifiers::open_configuration)
+	if (menu_item_id == menu_item_ids::open_configuration)
 	{
 		configuration_dialog_.open();
 	}
@@ -111,7 +110,7 @@ void becker_cartridge::build_menu() const
 {
 	context_->add_menu_item("", MID_BEGIN, MIT_Head);
 	context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	context_->add_menu_item("DriveWire Server..", ControlId(menu_identifiers::open_configuration), MIT_StandAlone);
+	context_->add_menu_item("DriveWire Server..", ControlId(menu_item_ids::open_configuration), MIT_StandAlone);
 	context_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
@@ -126,8 +125,9 @@ becker_cartridge::string_type becker_cartridge::server_port() const
 	return gBecker.server_port();
 }
 
-// Save becker config
-void becker_cartridge::configure_server(string_type server_address, string_type server_port)
+void becker_cartridge::set_server_address(
+	const string_type& server_address,
+	const string_type& server_port)
 {
 	gBecker.sethost(server_address.c_str(), server_port.c_str());
 
