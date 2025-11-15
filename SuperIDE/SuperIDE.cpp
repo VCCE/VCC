@@ -15,7 +15,7 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#include "SuperIDE.h"
 #include <Windows.h>
 #include "stdio.h"
 #include <iostream>
@@ -26,223 +26,188 @@ This file is part of VCC (Virtual Color Computer).
 #include "vcc/utils/FileOps.h"
 #include "../CartridgeMenu.h"
 #include "vcc/common/DialogOps.h"
-#include "vcc/bus/cartridge_capi.h"
 #include "vcc/utils/winapi.h"
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
 static char SuperIDEPath[MAX_PATH];
 static ::vcc::devices::rtc::ds1315 ds1315_rtc;
-static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 static unsigned char BaseAddress=0x50;
-void BuildCartridgeMenu();
-LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
-void Select_Disk(unsigned char);
-void SaveConfig();
-void LoadConfig();
-unsigned char BaseTable[4]={0x40,0x50,0x60,0x70};
+static LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
+static void Select_Disk(unsigned char);
+static void SaveConfig();
+static void LoadConfig();
+static unsigned char BaseTable[4]={0x40,0x50,0x60,0x70};
 
 static unsigned char BaseAddr=1;
 static bool ClockEnabled = true;
 static bool ClockReadOnly = true;
 static unsigned char DataLatch=0;
-static HINSTANCE gModuleInstance;
 static HWND hConfDlg = nullptr;
-static void* gHostKeyPtr = nullptr;
-static void* const& gHostKey(gHostKeyPtr);
 static const char* const gConfigurationSection = "Glenside-IDE /w Clock";
 
-using namespace std;
 
-BOOL WINAPI DllMain(
-    HINSTANCE hinstDLL,  // handle to DLL module
-    DWORD fdwReason,     // reason for calling function
-    LPVOID lpReserved )  // reserved
+superide_cartridge::superide_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance)
+	:
+	context_(move(context)),
+	module_instance_(module_instance)
 {
-	if (fdwReason == DLL_PROCESS_ATTACH) //Clean Up 
-	{
-		gModuleInstance = hinstDLL;
-	}
-
-	return TRUE;
 }
 
-
-extern "C"
+superide_cartridge::name_type superide_cartridge::name() const
 {
+	static const auto name(::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME));
 
-	__declspec(dllexport) const char* PakGetName()
+	return name.c_str();
+}
+
+superide_cartridge::catalog_id_type superide_cartridge::catalog_id() const
+{
+	static const auto catalog_id(::vcc::utils::load_string(module_instance_, IDS_CATNUMBER));
+
+	return catalog_id.c_str();
+}
+
+superide_cartridge::description_type superide_cartridge::description() const
+{
+	static const auto description(::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION));
+
+	return description.c_str();
+}
+
+void superide_cartridge::start()
+{
+	strcpy(IniFile, context_->configuration_path().c_str());
+
+	LoadConfig();
+	IdeInit();
+
+	BuildCartridgeMenu();		
+}
+
+void superide_cartridge::stop()
+{
+	if (hConfDlg)
 	{
-		static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
-
-		return name.c_str();
+		CloseCartDialog(hConfDlg);
+		hConfDlg = nullptr;
 	}
+}
 
-	__declspec(dllexport) const char* PakGetCatalogId()
-	{
-		static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
-
-		return catalog_id.c_str();
-	}
-
-	__declspec(dllexport) const char* PakGetDescription()
-	{
-		static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
-
-		return description.c_str();
-	}
-
-	__declspec(dllexport) void PakInitialize(
-		void* const host_key,
-		const char* const configuration_path,
-		const cartridge_capi_context* const context)
-	{
-		gHostKeyPtr = host_key;
-		CartMenuCallback = context->add_menu_item;
-		strcpy(IniFile, configuration_path);
-
-		LoadConfig();
-		IdeInit();
-
-		BuildCartridgeMenu();		
-	}
-
-	__declspec(dllexport) void PakTerminate()
-	{
-		if (hConfDlg)
+void superide_cartridge::write_port(unsigned char Port, unsigned char Data)
+{
+	if ( (Port >=BaseAddress) & (Port <= (BaseAddress+8)))
+		switch (Port-BaseAddress)
 		{
-			CloseCartDialog(hConfDlg);
-			hConfDlg = nullptr;
-		}
-	}
+			case 0x0:	
+				IdeRegWrite(Port-BaseAddress,(DataLatch<<8)+ Data );
+				break;
+
+			case 0x8:
+				DataLatch=Data & 0xFF;		//Latch
+				break;
+
+			default:
+				IdeRegWrite(Port-BaseAddress,Data);
+				break;
+		}	//End port switch	
+	return;
 }
 
-extern "C" 
-{         
-	__declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
-	{
-		if ( (Port >=BaseAddress) & (Port <= (BaseAddress+8)))
-			switch (Port-BaseAddress)
-			{
-				case 0x0:	
-					IdeRegWrite(Port-BaseAddress,(DataLatch<<8)+ Data );
-					break;
-
-				case 0x8:
-					DataLatch=Data & 0xFF;		//Latch
-					break;
-
-				default:
-					IdeRegWrite(Port-BaseAddress,Data);
-					break;
-			}	//End port switch	
-		return;
-	}
-}
-
-extern "C"
+unsigned char superide_cartridge::read_port(unsigned char Port)
 {
-	__declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
-	{
-		unsigned char RetVal=0;
-		unsigned short Temp=0;
-		if (((Port == 0x78) | (Port == 0x79) | (Port == 0x7C)) & ClockEnabled)
-			RetVal = ds1315_rtc.read_port(Port);
+	unsigned char RetVal=0;
+	unsigned short Temp=0;
+	if (((Port == 0x78) | (Port == 0x79) | (Port == 0x7C)) & ClockEnabled)
+		RetVal = ds1315_rtc.read_port(Port);
 
-		if ( (Port >=BaseAddress) & (Port <= (BaseAddress+8)))
-			switch (Port-BaseAddress)
-			{
-				case 0x0:	
-					Temp=IdeRegRead(Port-BaseAddress);
+	if ( (Port >=BaseAddress) & (Port <= (BaseAddress+8)))
+		switch (Port-BaseAddress)
+		{
+			case 0x0:	
+				Temp=IdeRegRead(Port-BaseAddress);
 
-					RetVal=Temp & 0xFF;
-					DataLatch= Temp>>8;
-					break;
+				RetVal=Temp & 0xFF;
+				DataLatch= Temp>>8;
+				break;
 
-				case 0x8:
-					RetVal=DataLatch;		//Latch
-					break;
-				default:
-					RetVal=IdeRegRead(Port-BaseAddress)& 0xFF;
-					break;
+			case 0x8:
+				RetVal=DataLatch;		//Latch
+				break;
+			default:
+				RetVal=IdeRegRead(Port-BaseAddress)& 0xFF;
+				break;
 
-			}	//End port switch	
+		}	//End port switch	
 			
-		return RetVal;
-	}
+	return RetVal;
 }
 
-extern "C" 
-{          
-	__declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
+void superide_cartridge::status(char* text_buffer, size_t buffer_size)
+{
+	DiskStatus(text_buffer, buffer_size);
+}
+
+void superide_cartridge::menu_item_clicked(unsigned char item_id)
+{
+	switch (item_id)
 	{
-		DiskStatus(text_buffer, buffer_size);
+	case 10:
+		Select_Disk(MASTER);
+		BuildCartridgeMenu();
+		SaveConfig();
+		break;
+
+	case 11:
+		DropDisk(MASTER);
+		BuildCartridgeMenu();
+		SaveConfig();
+		break;
+
+	case 12:
+		Select_Disk(SLAVE);
+		BuildCartridgeMenu();
+		SaveConfig();
+		break;
+
+	case 13:
+		DropDisk(SLAVE);
+		BuildCartridgeMenu();
+		SaveConfig();
+		break;
+
+	case 14:
+		CreateDialog( module_instance_, (LPCTSTR) IDD_CONFIG,
+				GetActiveWindow(), (DLGPROC) Config );
+		ShowWindow(hConfDlg,1);
+		break;
 	}
-}
-
-extern "C" 
-{          
-	__declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
-	{
-		switch (MenuID)
-		{
-		case 10:
-			Select_Disk(MASTER);
-			BuildCartridgeMenu();
-			SaveConfig();
-			break;
-
-		case 11:
-			DropDisk(MASTER);
-			BuildCartridgeMenu();
-			SaveConfig();
-			break;
-
-		case 12:
-			Select_Disk(SLAVE);
-			BuildCartridgeMenu();
-			SaveConfig();
-			break;
-
-		case 13:
-			DropDisk(SLAVE);
-			BuildCartridgeMenu();
-			SaveConfig();
-			break;
-
-		case 14:
-			CreateDialog( gModuleInstance, (LPCTSTR) IDD_CONFIG,
-					GetActiveWindow(), (DLGPROC) Config );
-			ShowWindow(hConfDlg,1);
-			break;
-		}
-		return;
-	}
+	return;
 }
 
 
-void BuildCartridgeMenu()
+void superide_cartridge::BuildCartridgeMenu()
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
-	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
-	CartMenuCallback(gHostKey, "IDE Master",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gHostKey, "Insert",ControlId(10),MIT_Slave);
+	context_->add_menu_item("", MID_BEGIN, MIT_Head);
+	context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	context_->add_menu_item("IDE Master",MID_ENTRY,MIT_Head);
+	context_->add_menu_item("Insert",ControlId(10),MIT_Slave);
 	QueryDisk(MASTER,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback(gHostKey, TempMsg,ControlId(11),MIT_Slave);
-	CartMenuCallback(gHostKey, "IDE Slave",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gHostKey, "Insert",ControlId(12),MIT_Slave);
+	context_->add_menu_item(TempMsg,ControlId(11),MIT_Slave);
+	context_->add_menu_item("IDE Slave",MID_ENTRY,MIT_Head);
+	context_->add_menu_item("Insert",ControlId(12),MIT_Slave);
 	QueryDisk(SLAVE,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback(gHostKey, TempMsg,ControlId(13),MIT_Slave);
-	CartMenuCallback(gHostKey, "IDE Config",ControlId(14),MIT_StandAlone);
-	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
+	context_->add_menu_item(TempMsg,ControlId(13),MIT_Slave);
+	context_->add_menu_item("IDE Config",ControlId(14),MIT_StandAlone);
+	context_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
@@ -341,7 +306,7 @@ void SaveConfig()
 	return;
 }
 
-void LoadConfig()
+void superide_cartridge::LoadConfig()
 {
 	GetPrivateProfileString("DefaultPaths", "SuperIDEPath", "", SuperIDEPath, MAX_PATH, IniFile);
 	GetPrivateProfileString(gConfigurationSection,"Master","",FileName,MAX_PATH,IniFile);

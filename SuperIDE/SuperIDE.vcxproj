@@ -98,6 +98,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="IdeBus.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="SuperIDE.cpp" />
   </ItemGroup>
   <ItemGroup>
