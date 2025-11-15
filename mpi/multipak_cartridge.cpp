@@ -18,8 +18,8 @@
 #include "multipak_cartridge.h"
 #include "multipak_cartridge_context.h"
 #include "resource.h"
-#include <vcc/utils/winapi.h>
-#include <vcc/utils/filesystem.h>
+#include "vcc/utils/winapi.h"
+#include "vcc/utils/filesystem.h"
 
 
 namespace

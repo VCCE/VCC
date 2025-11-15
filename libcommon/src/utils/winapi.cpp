@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <vcc/utils/winapi.h>
+#include "vcc/utils/winapi.h"
 #include <string>
 #include <windows.h>
 

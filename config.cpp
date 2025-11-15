@@ -45,11 +45,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "joystickinput.h"
 #include "keyboard.h"
 #include "keyboardEdit.h"
-#include <vcc/utils/FileOps.h>
-#include <vcc/common/DialogOps.h>
+#include "vcc/utils/FileOps.h"
+#include "vcc/common/DialogOps.h"
 #include "Cassette.h"
 #include "CommandLine.h"
-#include <vcc/utils/logger.h>
+#include "vcc/utils/logger.h"
 
 using namespace std;
 using namespace VCC;

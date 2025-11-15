@@ -21,13 +21,13 @@ This file is part of VCC (Virtual Color Computer).
 #include <iostream>
 #include "resource.h" 
 #include "IdeBus.h"
-#include <vcc/devices/rtc/ds1315.h>
+#include "vcc/devices/rtc/ds1315.h"
 #include "logger.h"
-#include <vcc/utils/FileOps.h>
+#include "vcc/utils/FileOps.h"
 #include "../CartridgeMenu.h"
-#include <vcc/common/DialogOps.h>
-#include <vcc/bus/cartridge_capi.h>
-#include <vcc/utils/winapi.h>
+#include "vcc/common/DialogOps.h"
+#include "vcc/bus/cartridge_capi.h"
+#include "vcc/utils/winapi.h"
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };

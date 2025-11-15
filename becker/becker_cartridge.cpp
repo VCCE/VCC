@@ -17,8 +17,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "becker_cartridge.h"
 #include "resource.h"
-#include <vcc/utils/winapi.h>
-#include <vcc/utils/persistent_value_store.h>
+#include "vcc/utils/winapi.h"
+#include "vcc/utils/persistent_value_store.h"
 #include "../CartridgeMenu.h"
 
 // Contains Becker cart exports

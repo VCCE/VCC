@@ -17,9 +17,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "orchestra90cc_cartridge.h"
 #include "resource.h"
-#include <vcc/utils/FileOps.h>
-#include <vcc/utils/winapi.h>
-#include <vcc/utils/filesystem.h>
+#include "vcc/utils/FileOps.h"
+#include "vcc/utils/winapi.h"
+#include "vcc/utils/filesystem.h"
 #include <Windows.h>
 
 

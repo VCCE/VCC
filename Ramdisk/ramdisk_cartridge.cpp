@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "ramdisk_cartridge.h"
 #include "resource.h"
-#include <vcc/utils/winapi.h>
+#include "vcc/utils/winapi.h"
 
 
 extern HINSTANCE gModuleInstance;

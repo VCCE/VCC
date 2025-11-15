@@ -19,7 +19,7 @@
 #pragma once
 #include "DebuggerUtils.h"
 #include "MachineDefs.h"
-#include <vcc/utils/critical_section.h>
+#include "vcc/utils/critical_section.h"
 #include <string>
 #include <vector>
 #include <functional>

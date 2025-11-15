@@ -22,10 +22,10 @@
 //------------------------------------------------------------------
 
 #include "acia.h"
-#include <vcc/common/DialogOps.h>
+#include "vcc/common/DialogOps.h"
 #include "../CartridgeMenu.h"
-#include <vcc/utils/logger.h>
-#include <vcc/utils/winapi.h>
+#include "vcc/utils/logger.h"
+#include "vcc/utils/winapi.h"
 
 //------------------------------------------------------------------------
 // Local Functions

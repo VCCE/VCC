@@ -1,5 +1,5 @@
 #include "test_generic_disk_image.h"
-#include <vcc/media/exceptions.h>
+#include "vcc/media/exceptions.h"
 
 
 // Validates the constructor throws an exception on invalid arguments.

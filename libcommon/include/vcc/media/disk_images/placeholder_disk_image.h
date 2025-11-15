@@ -1,6 +1,6 @@
 #pragma once
-#include <vcc/media/disk_image.h>
-#include <vcc/media/geometry/generic_disk_geometry.h>
+#include "vcc/media/disk_image.h"
+#include "vcc/media/geometry/generic_disk_geometry.h"
 #include <Windows.h>
 #include <iostream>
 #include <memory>

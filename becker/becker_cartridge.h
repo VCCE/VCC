@@ -17,9 +17,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "configuration_dialog.h"
-#include <vcc/devices/serial/beckerport.h>
-#include <vcc/bus/cartridge.h>
-#include <vcc/bus/cartridge_context.h>
+#include "vcc/devices/serial/beckerport.h"
+#include "vcc/bus/cartridge.h"
+#include "vcc/bus/cartridge_context.h"
 #include <memory>
 #include <Windows.h>
 

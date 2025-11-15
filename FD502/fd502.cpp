@@ -22,17 +22,17 @@
 #include "fd502.h"
 #include "utils.h"
 #include "../CartridgeMenu.h"
-#include <vcc/devices/serial/beckerport.h>
-#include <vcc/common/DialogOps.h>
-#include <vcc/utils/FileOps.h>
-#include <vcc/utils/logger.h>
-#include <vcc/utils/winapi.h>
-#include <vcc/devices/rtc/oki_m6242b.h>
-#include <vcc/devices/rom/rom_image.h>
+#include "vcc/devices/serial/beckerport.h"
+#include "vcc/common/DialogOps.h"
+#include "vcc/utils/FileOps.h"
+#include "vcc/utils/logger.h"
+#include "vcc/utils/winapi.h"
+#include "vcc/devices/rtc/oki_m6242b.h"
+#include "vcc/devices/rom/rom_image.h"
 #include <Windows.h>
 #include <array>
-#include <vcc/utils/persistent_value_store.h>
-#include <vcc/utils/filesystem.h>
+#include "vcc/utils/persistent_value_store.h"
+#include "vcc/utils/filesystem.h"
 
 
 static const auto default_selected_rom_index = 1u;

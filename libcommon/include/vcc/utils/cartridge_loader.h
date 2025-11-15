@@ -16,10 +16,10 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/bus/cartridge.h>
-#include <vcc/bus/cartridge_context.h>
-#include <vcc/bus/cartridge_capi.h>
-#include <vcc/utils/dll_deleter.h>
+#include "vcc/bus/cartridge.h"
+#include "vcc/bus/cartridge_context.h"
+#include "vcc/bus/cartridge_capi.h"
+#include "vcc/utils/dll_deleter.h"
 #include <string>
 #include <memory>
 #include <Windows.h>
@@ -71,7 +71,7 @@ namespace vcc::utils
 		/// @brief Specifies the type of handle used to reference shared libraries.
 		using handle_type = std::unique_ptr<std::remove_pointer_t<HMODULE>, vcc::utils::dll_deleter>;
 		/// @brief Specifies the type pointer used to reference instances of a cartridge.
-		using cartridge_ptr_type = std::unique_ptr<vcc::bus::cartridge>;
+		using cartridge_ptr_type = std::unique_ptr<::vcc::bus::cartridge>;
 
 
 		/// @brief The reference to the shared library containing the custom cartridge

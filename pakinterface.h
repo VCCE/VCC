@@ -17,7 +17,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #pragma once
-#include <vcc/utils/cartridge_loader.h>
+#include "vcc/utils/cartridge_loader.h"
 
 void PakTimer();
 unsigned char PakReadPort (unsigned char);

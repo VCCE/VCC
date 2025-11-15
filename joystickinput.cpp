@@ -20,7 +20,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <Windows.h>
 #include "defines.h"
 #include "joystickinput.h"
-#include <vcc/utils/logger.h>
+#include "vcc/utils/logger.h"
 
 #if USE_DEBUG_RAMP
 #include "IDisplayDebug.h"

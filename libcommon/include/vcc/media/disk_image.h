@@ -1,7 +1,7 @@
 #pragma once
-#include <vcc/media/disk_geometry.h>
-#include <vcc/media/sector_record.h>
-#include <vcc/detail/exports.h>
+#include "vcc/media/disk_geometry.h"
+#include "vcc/media/sector_record.h"
+#include "vcc/detail/exports.h"
 #include <optional>
 #include <vector>
 

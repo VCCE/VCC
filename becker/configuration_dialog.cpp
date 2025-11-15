@@ -17,8 +17,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "configuration_dialog.h"
 #include "resource.h"
-#include <vcc/common/DialogOps.h>
-#include <vcc/utils/winapi.h>
+#include "vcc/common/DialogOps.h"
+#include "vcc/utils/winapi.h"
 
 
 configuration_dialog::configuration_dialog(

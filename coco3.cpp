@@ -34,7 +34,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "Vcc.h"
 #include "Cassette.h"
 #include "DirectDrawInterface.h"
-#include <vcc/utils/logger.h>
+#include "vcc/utils/logger.h"
 #include "keyboard.h"
 #include <string>
 #include <iostream>

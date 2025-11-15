@@ -25,11 +25,11 @@
 #include <ShlObj.h>    // for SH Browse info
 #include <Windows.h>
 
-#include <vcc/devices/rtc/ds1315.h>
-#include <vcc/utils/logger.h>
-#include <vcc/common/DialogOps.h>
-#include <vcc/bus/cartridge_capi.h>
-#include <vcc/utils/persistent_value_store.h>
+#include "vcc/devices/rtc/ds1315.h"
+#include "vcc/utils/logger.h"
+#include "vcc/common/DialogOps.h"
+#include "vcc/bus/cartridge_capi.h"
+#include "vcc/utils/persistent_value_store.h"
 #include "../CartridgeMenu.h"
 #include "resource.h"
 #include "sdc_cartridge.h"

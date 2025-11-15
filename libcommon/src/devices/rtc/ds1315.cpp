@@ -15,7 +15,7 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/devices/rtc/ds1315.h>
+#include "vcc/devices/rtc/ds1315.h"
 #include <Windows.h>
 
 //	Basically simulates the Dallas DS1315 Real Time Clock				*

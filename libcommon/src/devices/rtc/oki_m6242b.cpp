@@ -15,7 +15,7 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/devices/rtc/oki_m6242b.h>
+#include "vcc/devices/rtc/oki_m6242b.h"
 #include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>

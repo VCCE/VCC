@@ -16,11 +16,11 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "../resource/resource.h"
-#include <vcc/bus/cartridges/rom_cartridge.h>
-#include <vcc/bus/cartridges/capi_adapter_cartridge.h>
-#include <vcc/utils/cartridge_loader.h>
-#include <vcc/utils/winapi.h>
-#include <vcc/bus/cartridge_factory.h>
+#include "vcc/bus/cartridges/rom_cartridge.h"
+#include "vcc/bus/cartridges/capi_adapter_cartridge.h"
+#include "vcc/utils/cartridge_loader.h"
+#include "vcc/utils/winapi.h"
+#include "vcc/bus/cartridge_factory.h"
 #include <vector>
 #include <fstream>
 #include <iterator>
@@ -102,7 +102,7 @@ namespace vcc::utils
 
 		return {
 			nullptr,
-			std::make_unique<vcc::bus::cartridges::rom_cartridge>(
+			std::make_unique<::vcc::bus::cartridges::rom_cartridge>(
 				move(context),
 				extract_filename(filename),
 				"",
@@ -151,7 +151,7 @@ namespace vcc::utils
 
 		if (GetProcAddress(details.handle.get(), "PakInitialize") != nullptr)
 		{
-			details.cartridge = std::make_unique<vcc::bus::cartridges::capi_adapter_cartridge>(
+			details.cartridge = std::make_unique<::vcc::bus::cartridges::capi_adapter_cartridge>(
 				details.handle.get(),
 				host_context,
 				configuration_path,

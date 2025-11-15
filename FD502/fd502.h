@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/bus/cartridge_capi.h>
+#include "vcc/bus/cartridge_capi.h"
 
 extern void*const& gHostKey;
 extern PakAssertInteruptHostCallback AssertInt;

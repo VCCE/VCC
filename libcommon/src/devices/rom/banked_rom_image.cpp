@@ -15,7 +15,7 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/devices/rom/banked_rom_image.h>
+#include "vcc/devices/rom/banked_rom_image.h"
 
 
 namespace vcc::devices::rom

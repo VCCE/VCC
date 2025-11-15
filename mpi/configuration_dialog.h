@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "multipak_configuration.h"
-#include <vcc/utils/cartridge_loader.h>
+#include "vcc/utils/cartridge_loader.h"
 #include <Windows.h>
 
 

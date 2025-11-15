@@ -19,7 +19,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "multipak_cartridge.h"
-#include <vcc/bus/cartridge_factory.h>
+#include "vcc/bus/cartridge_factory.h"
 #include <Windows.h>
 
 

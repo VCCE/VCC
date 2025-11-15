@@ -19,8 +19,8 @@
 #include "cartridge_slot.h"
 #include "configuration_dialog.h"
 #include "multipak_configuration.h"
-#include <vcc/bus/cartridge.h>
-#include <vcc/utils/critical_section.h>
+#include "vcc/bus/cartridge.h"
+#include "vcc/utils/critical_section.h"
 #include "../CartridgeMenu.h"
 #include <array>
 
@@ -129,7 +129,7 @@ private:
 	multipak_configuration& configuration_;
 	std::shared_ptr<context_type> context_;
 	const std::array<cartridge_capi_context, 4> capi_contexts_;
-	std::array<vcc::modules::mpi::cartridge_slot, 4> slots_;
+	std::array<::vcc::modules::mpi::cartridge_slot, 4> slots_;
 	unsigned char slot_register_ = default_slot_register_value;
 	slot_id_type switch_slot_ = default_switch_slot_value;
 	slot_id_type cached_cts_slot_ = default_switch_slot_value;

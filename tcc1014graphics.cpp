@@ -25,7 +25,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "cc3font.h"
 #include "config.h"
 #include "DirectDrawInterface.h"
-#include <vcc/utils/logger.h>
+#include "vcc/utils/logger.h"
 #include "math.h"
 #include <stdio.h>
 #include <CommCtrl.h>	// Windows common controls

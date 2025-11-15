@@ -17,9 +17,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "configuration_dialog.h"
 #include "resource.h"
-#include <vcc/common/DialogOps.h>
-#include <vcc/utils/critical_section.h>
-#include <vcc/utils/filesystem.h>
+#include "vcc/common/DialogOps.h"
+#include "vcc/utils/critical_section.h"
+#include "vcc/utils/filesystem.h"
 #include <array>
 
 

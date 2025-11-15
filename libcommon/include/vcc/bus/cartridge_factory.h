@@ -16,14 +16,15 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/bus/cartridge.h>
-#include <vcc/bus/cartridge_context.h>
-#include <vcc/bus/cartridge_capi.h>
+#include "vcc/bus/cartridge.h"
+#include "vcc/bus/cartridge_context.h"
+#include "vcc/bus/cartridge_capi.h"
 #include <memory>
 
 
 using CreatePakFactoryFunction = std::unique_ptr<::vcc::bus::cartridge> (*)(
 	std::unique_ptr<::vcc::bus::cartridge_context> context,
 	const cartridge_capi_context& capi_context);
+
 using GetPakFactoryFunction = CreatePakFactoryFunction(*)();
 

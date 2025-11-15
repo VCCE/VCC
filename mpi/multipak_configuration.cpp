@@ -1,5 +1,5 @@
 #include "multipak_configuration.h"
-#include <vcc/utils/persistent_value_store.h>
+#include "vcc/utils/persistent_value_store.h"
 
 
 using value_store = ::vcc::utils::persistent_value_store;

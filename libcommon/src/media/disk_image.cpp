@@ -15,8 +15,8 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/media/disk_image.h>
-#include <vcc/media/exceptions.h>
+#include "vcc/media/disk_image.h"
+#include "vcc/media/exceptions.h"
 
 
 namespace vcc::media
