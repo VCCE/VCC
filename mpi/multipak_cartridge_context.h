@@ -69,6 +69,11 @@ public:
 		host_context_.assert_interrupt(interrupt, interrupt_source);
 	}
 
+	path_type system_rom_path() const override
+	{
+		return host_context_.system_rom_path();
+	}
+
 
 private:
 

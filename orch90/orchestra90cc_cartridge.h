@@ -18,6 +18,7 @@
 #pragma once
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/cartridge_context.h"
+#include "vcc/devices/rom/rom_image.h"
 #include <memory>
 #include <Windows.h>
 
@@ -25,27 +26,47 @@
 class orchestra90cc_cartridge : public ::vcc::bus::cartridge
 {
 public:
-	
+
 	using context_type = ::vcc::bus::cartridge_context;
+	using rom_image_type = ::vcc::devices::rom::rom_image;
 
 	orchestra90cc_cartridge(HINSTANCE module_instance, std::unique_ptr<context_type> context);
 
+	/// @inheritdoc
 	name_type name() const override;
+
+	/// @inheritdoc
 	catalog_id_type catalog_id() const override;
+
+	/// @inheritdoc
 	description_type description() const override;
 
-	void reset() override;
 
+	void start() override;
+
+	/// @inheritdoc
 	unsigned char read_memory_byte(size_type memory_address) override;
 
 	void write_port(unsigned char port_id, unsigned char value) override;
 
 	unsigned short sample_audio() override;
 
+
+protected:
+
+	struct mmio_ports
+	{
+		static const auto right_channel = 0x7a;
+		static const auto left_channel = 0x7b;
+	};
+
+
 private:
 
+	static const inline std::string default_rom_filename_ = "orch90.rom";
 	const HINSTANCE module_instance_;
 	const std::unique_ptr<context_type> context_;
+	rom_image_type rom_image_;
 	unsigned char left_channel_buffer_ = 0;
 	unsigned char right_channel_buffer_ = 0;
 };

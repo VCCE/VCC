@@ -18,6 +18,7 @@
 #include "vcc/devices/rom/rom_image.h"
 #include <fstream>
 #include <Windows.h>
+#include <vcc/utils/filesystem.h>
 
 
 namespace vcc::devices::rom
@@ -25,28 +26,14 @@ namespace vcc::devices::rom
 
 	bool rom_image::load(path_type filename)
 	{
-		std::ifstream input(filename, std::ios::binary);
-		if (!input.is_open())
-		{
-			return false;
-		}
-
-		std::streamoff begin = input.tellg();
-		input.seekg(0, std::ios::end);
-		std::streamoff end = input.tellg();
-		std::streamoff file_length = end - begin;
-		input.seekg(0, std::ios::beg);
-
-		std::vector<unsigned char> rom_data(static_cast<size_t>(file_length));
-		input.read(reinterpret_cast<char*>(&rom_data[0]), rom_data.size());
-
-		if (file_length != rom_data.size())
+		auto rom_data(::vcc::utils::load_file_to_vector(filename));
+		if (!rom_data.has_value() || rom_data->empty())
 		{
 			return false;
 		}
 
 		filename_ = move(filename);
-		data_ = move(rom_data);
+		data_ = move(*rom_data);
 
 		return true;
 	}

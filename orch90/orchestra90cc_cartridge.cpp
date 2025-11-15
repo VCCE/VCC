@@ -17,41 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "orchestra90cc_cartridge.h"
 #include "resource.h"
-#include "vcc/utils/FileOps.h"
 #include "vcc/utils/winapi.h"
-#include "vcc/utils/filesystem.h"
-#include <Windows.h>
-
-
-namespace
-{
-	unsigned char Rom[8192];
-
-	bool LoadExtRom(const std::string& filename)	//Returns 1 on if loaded
-	{
-		FILE *rom_handle = nullptr;
-		unsigned short index = 0;
-		bool RetVal = false;
-
-		rom_handle = fopen(filename.c_str(), "rb");
-		if (rom_handle == nullptr)
-		{
-			memset(Rom, 0xFF, 8192);
-		}
-		else
-		{
-			while ((feof(rom_handle) == 0) & (index < 8192))
-			{
-				Rom[index++] = fgetc(rom_handle);
-			}
-
-			RetVal = true;
-			fclose(rom_handle);
-		}
-		return RetVal;
-	}
-
-}
 
 
 orchestra90cc_cartridge::orchestra90cc_cartridge(
@@ -60,7 +26,9 @@ orchestra90cc_cartridge::orchestra90cc_cartridge(
 	:
 	module_instance_(module_instance),
 	context_(move(context))
-{ }
+{
+}
+
 
 orchestra90cc_cartridge::name_type orchestra90cc_cartridge::name() const
 {
@@ -78,39 +46,36 @@ orchestra90cc_cartridge::description_type orchestra90cc_cartridge::description()
 }
 
 
-void orchestra90cc_cartridge::reset()
+void orchestra90cc_cartridge::start()
 {
-	using ::vcc::utils::get_module_path;
-	using ::vcc::utils::get_directory_from_path;
-
-	if (LoadExtRom(get_directory_from_path(get_module_path(module_instance_)) + "ORCH90.ROM"))
+	if (rom_image_.load(context_->system_rom_path() + default_rom_filename_))
 	{
 		context_->assert_cartridge_line(true);
 	}
-
 }
 
-void orchestra90cc_cartridge::write_port(unsigned char Port,unsigned char Data)
+
+void orchestra90cc_cartridge::write_port(unsigned char port_id, unsigned char value)
 {
-	switch (Port)
+	switch (port_id)
 	{
-	case 0x7A:
-		right_channel_buffer_=Data;			
+	case mmio_ports::right_channel:
+		right_channel_buffer_ = value;
 		break;
 
-	case 0x7B:
-		left_channel_buffer_=Data;
+	case mmio_ports::left_channel:
+		left_channel_buffer_ = value;
 		break;
 	}
 }
 
-unsigned char orchestra90cc_cartridge::read_memory_byte(size_type Address)
+unsigned char orchestra90cc_cartridge::read_memory_byte(size_type memory_address)
 {
-	return Rom[Address & 8191];
+	return rom_image_.read_memory_byte(memory_address);
 }
+
 
 unsigned short orchestra90cc_cartridge::sample_audio()
 {
 	return (left_channel_buffer_ << 8) | right_channel_buffer_;
 }
-

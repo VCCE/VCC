@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "vcc/utils/filesystem.h"
 #include "vcc/utils/winapi.h"
+#include <fstream>
 
 
 namespace vcc::utils
@@ -105,6 +106,30 @@ namespace vcc::utils
 		path.erase(0, last_seperator + 1);
 
 		return path;
+	}
+
+	LIBCOMMON_EXPORT std::optional<std::vector<unsigned char>> load_file_to_vector(std::string filename)
+	{
+		std::basic_ifstream<unsigned char> input(filename, std::ios::binary);
+		if (!input.is_open())
+		{
+			return {};
+		}
+
+		const auto current_position(input.tellg());
+		input.seekg(0, std::ios::end);
+		const auto file_length(input.tellg());
+		input.seekg(current_position, std::ios::beg);
+
+		std::vector<unsigned char> file_image(static_cast<size_t>(file_length));
+		input.read(&file_image[0], file_image.size());
+
+		if (file_length != file_image.size())
+		{
+			return {};
+		}
+
+		return file_image;
 	}
 
 }
