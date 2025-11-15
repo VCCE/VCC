@@ -22,9 +22,9 @@ extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 	return [](
 		[[maybe_unused]] std::unique_ptr<::vcc::bus::cartridge_context> context,
 		[[maybe_unused]] const cartridge_capi_context& capi_context) -> std::unique_ptr<::vcc::bus::cartridge>
-	{
-		return std::make_unique<gmc_cartridge>(move(context), gModuleInstance);
-	};
+		{
+			return std::make_unique<gmc_cartridge>(move(context), gModuleInstance);
+		};
 }
 
 static_assert(

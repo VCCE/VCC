@@ -103,6 +103,7 @@
     <ClCompile Include="src\bus\cartridges\capi_adapter_cartridge.cpp" />
     <ClCompile Include="src\bus\cartridges\empty_cartridge.cpp" />
     <ClCompile Include="src\bus\cartridges\rom_cartridge.cpp" />
+    <ClCompile Include="src\devices\psg\sn76496.cpp" />
     <ClCompile Include="src\devices\rom\banked_rom_image.cpp" />
     <ClCompile Include="src\devices\rom\rom_image.cpp" />
     <ClCompile Include="src\devices\rtc\ds1315.cpp" />
@@ -132,6 +133,7 @@
     <ClInclude Include="include\vcc\bus\interrupts.h" />
     <ClInclude Include="include\vcc\common\DialogOps.h" />
     <ClInclude Include="include\vcc\detail\exports.h" />
+    <ClInclude Include="include\vcc\devices\psg\sn76496.h" />
     <ClInclude Include="include\vcc\devices\rom\banked_rom_image.h" />
     <ClInclude Include="include\vcc\devices\rom\rom_image.h" />
     <ClInclude Include="include\vcc\devices\rtc\ds1315.h" />

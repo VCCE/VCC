@@ -1,5 +1,5 @@
 #pragma once
-#include "sn76496.h"
+#include "vcc/devices/psg/sn76496.h"
 #include "vcc/devices/rom/banked_rom_image.h"
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/cartridge_context.h"
@@ -25,15 +25,12 @@ public:
 	description_type description() const override;
 
 	void start() override;
-	void stop() override;
 	void reset() override;
 
 	unsigned char read_memory_byte(size_type memory_address) override;
 
 	void write_port(unsigned char port_id, unsigned char value) override;
 	unsigned char read_port(unsigned char port_id) override;
-
-	void update(float delta) override;
 
 	unsigned short sample_audio() override;
 
@@ -54,7 +51,7 @@ private:
 		static const unsigned int select_rom = 3;
 	};
 
-	struct mmio_registers
+	struct mmio_ports
 	{
 		static const unsigned char select_bank = 0x40;
 		static const unsigned char psg_io = 0x41;
@@ -67,7 +64,11 @@ private:
 	const std::unique_ptr<context_type> context_;
 	const HINSTANCE module_instance_;
 	rom_image_type rom_image_;
-	SN76489Device psg_;
+
+	using psg_device_type = ::vcc::devices::psg::sn76489_device;
+	using sample_type = psg_device_type::sample_type;
+
+	psg_device_type psg_;
 };
 
 
