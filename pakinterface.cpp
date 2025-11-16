@@ -277,7 +277,6 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	cartridge_loader_result loadedCartridge(vcc::utils::load_cartridge(
 		filename,
 		std::make_unique<vcc_cartridge_context>(),
-		nullptr, // TODO: there is currently no host context in vcc so we just use nullptr. Maybe add a context.
 		iniPath));
 	if (loadedCartridge.load_result != cartridge_loader_status::success)
 	{

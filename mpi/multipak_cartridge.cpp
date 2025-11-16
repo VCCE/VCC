@@ -289,7 +289,6 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	auto loadedCartridge(vcc::utils::load_cartridge(
 		filename,
 		std::make_unique<multipak_cartridge_context>(slot, *context_, *this),
-		this,
 		context_->configuration_path()));
 	if (loadedCartridge.load_result != mount_status_type::success)
 	{

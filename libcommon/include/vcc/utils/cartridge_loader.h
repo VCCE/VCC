@@ -120,7 +120,6 @@ namespace vcc::utils
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
-		void* const host_context,
 		const std::string& configuration_path);
 
 	/// @brief Load a cartridge file.
@@ -136,7 +135,6 @@ namespace vcc::utils
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
-		void* const host_context,
 		const std::string& configuration_path);
 
 	/// @brief Retrieve a string describing a cartridge loader error

@@ -104,7 +104,6 @@ namespace vcc::utils
 	cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
-		void* const host_context,
 		const std::string& configuration_path)
 	{
 		if (GetModuleHandle(filename.c_str()) != nullptr)
@@ -142,7 +141,6 @@ namespace vcc::utils
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
-		void* const host_context,
 		const std::string& configuration_path)
 	{
 		switch (::vcc::utils::determine_cartridge_type(filename))
@@ -158,7 +156,6 @@ namespace vcc::utils
 			return load_library_cartridge(
 				filename,
 				move(cartridge_context),
-				host_context,
 				configuration_path);
 		}
 	}
