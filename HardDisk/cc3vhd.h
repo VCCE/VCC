@@ -20,13 +20,14 @@ along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licens
 */
 
 // cc3vhd.h
+#include "vcc/bus/cartridge_context.h"
 
 void UnmountHD(int);
 int MountHD(const char*, int);
 unsigned char IdeRead(unsigned char);
-void IdeWrite (unsigned char, unsigned char);
+void IdeWrite (::vcc::bus::cartridge_context& context, unsigned char, unsigned char);
 void DiskStatus(char* text_buffer, size_t buffer_size);
-void VhdReset();
+void VhdReset(::vcc::bus::cartridge_context& context);
 
 constexpr auto DRIVESIZE = 512u; // Mb
 constexpr auto MAX_SECTOR = DRIVESIZE * 1024 * 1024;

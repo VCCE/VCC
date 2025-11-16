@@ -98,6 +98,7 @@
   <ItemGroup>
     <ClCompile Include="cc3vhd.cpp" />
     <ClCompile Include="harddisk.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cc3vhd.h" />

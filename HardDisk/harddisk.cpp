@@ -17,7 +17,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 // hardisk.cpp : Defines the entry point for the DLL application.
-
+#include "harddisk.h"
 #include <Windows.h>
 #include <stdio.h>
 #include<iostream>
@@ -29,7 +29,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "../CartridgeMenu.h"
 #include "vcc/utils/winapi.h"
 #include "vcc/bus/interrupts.h"
-#include "vcc/bus/cartridge_capi.h"
 
 constexpr auto DEF_HD_SIZE = 132480u;
 
@@ -42,10 +41,6 @@ static char HardDiskPath[MAX_PATH];
 static ::vcc::devices::rtc::ds1315 ds1315_rtc;
 static const char* const gConfigurationSection = "Hard Drive";
 
-static void* gHostKey = nullptr;
-static PakReadMemoryByteHostCallback MemRead8 = nullptr;
-static PakWriteMemoryByteHostCallback MemWrite8 = nullptr;
-static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 static bool ClockEnabled = true;
 static bool ClockReadOnly = true;
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
@@ -54,127 +49,85 @@ LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 void LoadHardDisk(int drive);
 void LoadConfig();
 void SaveConfig();
-void BuildCartridgeMenu();
 int CreateDisk(HWND,int);
 
-static HINSTANCE gModuleInstance;
+extern HINSTANCE gModuleInstance;
 static HWND hConfDlg = nullptr;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 
-using namespace std;
 
-BOOL WINAPI DllMain( HINSTANCE hinstDLL,  // handle to DLL module
-                     DWORD fdwReason,     // reason for calling function
-                     LPVOID lpReserved )  // reserved
+
+vcc_hard_disk_cartridge::vcc_hard_disk_cartridge(HINSTANCE module_instance, std::unique_ptr<context_type> context)
+	:
+	module_instance_(module_instance),
+	context_(move(context))
+{ }
+
+
+vcc_hard_disk_cartridge::name_type vcc_hard_disk_cartridge::name() const
 {
-    if (fdwReason == DLL_PROCESS_ATTACH)
-	{
-		gModuleInstance = hinstDLL;
-    }
-
-    return TRUE;
+	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-void MemWrite(unsigned char Data, unsigned short Address)
+vcc_hard_disk_cartridge::catalog_id_type vcc_hard_disk_cartridge::catalog_id() const
 {
-	MemWrite8(gHostKey, Data, Address);
+	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
 }
 
-unsigned char MemRead(unsigned short Address)
+vcc_hard_disk_cartridge::description_type vcc_hard_disk_cartridge::description() const
 {
-	return MemRead8(gHostKey, Address);
-}
-
-
-extern "C"
-{
-
-	__declspec(dllexport) const char* PakGetName()
-	{
-		static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
-
-		return name.c_str();
-	}
-
-	__declspec(dllexport) const char* PakGetCatalogId()
-	{
-		static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
-
-		return catalog_id.c_str();
-	}
-
-	__declspec(dllexport) const char* PakGetDescription()
-	{
-		static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
-
-		return description.c_str();
-	}
-
-	__declspec(dllexport) void PakInitialize(
-		void* const host_key,
-		const char* const configuration_path,
-		const cartridge_capi_context* const context)
-	{
-		gHostKey = host_key;
-		CartMenuCallback = context->add_menu_item;
-		MemRead8 = context->read_memory_byte;
-		MemWrite8 = context->write_memory_byte;
-		strcpy(IniFile, configuration_path);
-
-		LoadConfig();
-		ds1315_rtc.set_read_only(ClockReadOnly);
-		VhdReset(); // Selects drive zero
-		BuildCartridgeMenu();
-	}
-
-	__declspec(dllexport) void PakTerminate()
-	{
-		CloseCartDialog(hConfDlg);
-		UnmountHD(0);
-		UnmountHD(1);
-	}
-
+	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
 }
 
 
-// Configure the hard drive(s).  Called from menu
-// Mount or dismount a hard drive and save config
-// MountHD and UnmountHD are defined in cc3vhd
-extern "C"
+void vcc_hard_disk_cartridge::start()
 {
-    __declspec(dllexport) void
-	PakMenuItemClicked(unsigned char MenuID)
+	strcpy(IniFile, context_->configuration_path().c_str());
+
+	LoadConfig();
+	ds1315_rtc.set_read_only(ClockReadOnly);
+	VhdReset(*context_); // Selects drive zero
+	BuildCartridgeMenu();
+}
+
+void vcc_hard_disk_cartridge::stop()
+{
+	CloseCartDialog(hConfDlg);
+	UnmountHD(0);
+	UnmountHD(1);
+}
+
+void vcc_hard_disk_cartridge::menu_item_clicked(unsigned char MenuID)
+{
+    switch (MenuID)
     {
-        switch (MenuID)
-        {
-        case 10:
-            LoadHardDisk(0);
-            break;
+    case 10:
+        LoadHardDisk(0);
+        break;
 
-        case 11:
-            UnmountHD(0);
-            *VHDfile0 = '\0';
-            break;
+    case 11:
+        UnmountHD(0);
+        *VHDfile0 = '\0';
+        break;
 
-        case 12:
-            LoadHardDisk(1);
-            break;
+    case 12:
+        LoadHardDisk(1);
+        break;
 
-        case 13:
-            UnmountHD(1);
-            *VHDfile1 = '\0';
-            break;
+    case 13:
+        UnmountHD(1);
+        *VHDfile1 = '\0';
+        break;
 
-        case 14:
-            if (hConfDlg == nullptr)
-                hConfDlg = CreateDialog(gModuleInstance,(LPCTSTR)IDD_CONFIG,GetActiveWindow(),(DLGPROC)Config);
-            ShowWindow(hConfDlg,1);
-            return;
-        }
-        SaveConfig();
-		BuildCartridgeMenu();
+    case 14:
+        if (hConfDlg == nullptr)
+            hConfDlg = CreateDialog(gModuleInstance,(LPCTSTR)IDD_CONFIG,GetActiveWindow(),(DLGPROC)Config);
+        ShowWindow(hConfDlg,1);
         return;
     }
+    SaveConfig();
+	BuildCartridgeMenu();
+    return;
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
@@ -216,36 +169,25 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 }
 
 // Export write to HD control port
-extern "C"
+void vcc_hard_disk_cartridge::write_port(unsigned char Port,unsigned char Data)
 {
-    __declspec(dllexport) void
-	PakWritePort(unsigned char Port,unsigned char Data)
-    {
-        IdeWrite(Data,Port);
-        return;
-    }
+	IdeWrite(*context_, Data, Port);
+    return;
 }
 
 // Export read from HD control port
-extern "C"
+unsigned char vcc_hard_disk_cartridge::read_port(unsigned char Port)
 {
-    __declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
-    {
-		if (((Port == 0x78) | (Port == 0x79) | (Port == 0x7C)) & ClockEnabled)
-			return ds1315_rtc.read_port(Port);
-        return(IdeRead(Port));
-    }
+	if (((Port == 0x78) | (Port == 0x79) | (Port == 0x7C)) & ClockEnabled)
+		return ds1315_rtc.read_port(Port);
+    return(IdeRead(Port));
 }
 
 
 // Return disk status. (from cc3vhd)
-extern "C"
+void vcc_hard_disk_cartridge::status(char* text_buffer, size_t buffer_size)
 {
-    __declspec(dllexport) void
-	PakGetStatus(char* text_buffer, size_t buffer_size)
-    {
-        DiskStatus(text_buffer, buffer_size);
-    }
+    DiskStatus(text_buffer, buffer_size);
 }
 
 
@@ -302,7 +244,7 @@ void LoadHardDisk(int drive)
 }
 
 // Get configuration items from ini file
-void LoadConfig()
+void vcc_hard_disk_cartridge::LoadConfig()
 {
     HANDLE hr;
 
@@ -360,32 +302,32 @@ void SaveConfig()
 }
 
 // Generate menu for mounting the drives
-void BuildCartridgeMenu()
+void vcc_hard_disk_cartridge::BuildCartridgeMenu()
 {
 	char TempMsg[512] = "";
 	char TempBuf[MAX_PATH] = "";
 
-	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
+	context_->add_menu_item("", MID_BEGIN, MIT_Head);
+	context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
 
-	CartMenuCallback(gHostKey, "HD Drive 0", MID_ENTRY, MIT_Head);
-	CartMenuCallback(gHostKey, "Insert", ControlId(10), MIT_Slave);
+	context_->add_menu_item("HD Drive 0", MID_ENTRY, MIT_Head);
+	context_->add_menu_item("Insert", ControlId(10), MIT_Slave);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHDfile0);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	CartMenuCallback(gHostKey, TempMsg, ControlId(11), MIT_Slave);
+	context_->add_menu_item(TempMsg, ControlId(11), MIT_Slave);
 
-	CartMenuCallback(gHostKey, "HD Drive 1", MID_ENTRY, MIT_Head);
-	CartMenuCallback(gHostKey, "Insert", ControlId(12), MIT_Slave);
+	context_->add_menu_item("HD Drive 1", MID_ENTRY, MIT_Head);
+	context_->add_menu_item("Insert", ControlId(12), MIT_Slave);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHDfile1);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	CartMenuCallback(gHostKey, TempMsg, ControlId(13), MIT_Slave);
+	context_->add_menu_item(TempMsg, ControlId(13), MIT_Slave);
 
-	CartMenuCallback(gHostKey, "HD Config", ControlId(14), MIT_StandAlone);
-	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
+	context_->add_menu_item("HD Config", ControlId(14), MIT_StandAlone);
+	context_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 // Dialog for creating a new hard disk
