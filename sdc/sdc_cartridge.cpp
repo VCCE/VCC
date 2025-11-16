@@ -237,13 +237,9 @@ struct DiskImage {
 };
 
 // Private functions
-void AppendPathChar(char *,char c);
-void FixSDCPath(char *,const char *);
-void OpenNew(int,const char *,int);
-bool SearchFile(const char *);
-void InitiateDir(const char *);
 void set_filerecord_file_size(FileRecord& , uint32_t);
 void set_sdcfile_from_filename(SdcFile&, const std::string& );
+char* LastErrorTxt();
 
 //======================================================================
 // Public Data
@@ -1218,7 +1214,7 @@ void sdc_cartridge::WriteSector()
 //----------------------------------------------------------------------
 // Get most recent windows error text
 //----------------------------------------------------------------------
-char * sdc_cartridge::LastErrorTxt() {
+char * LastErrorTxt() {
     static char msg[200];
     DWORD error_code = GetLastError();
     FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM |

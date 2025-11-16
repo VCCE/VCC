@@ -134,7 +134,6 @@ private:
 	virtual void OpenFound(int,int);
 	virtual void LoadReply(const void *, int);
 	virtual void BlockReceive(unsigned char);
-	virtual char * LastErrorTxt();
 	virtual void FlashControl(unsigned char);
 	virtual void LoadDirPage();
 	virtual void SetCurDir(const char *);
