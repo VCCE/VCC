@@ -20,35 +20,25 @@
 // properly before VCC 2.1.9.2 (Console mode Nitros9 using /t2 broken)
 //
 //------------------------------------------------------------------
-
 #include "acia.h"
 #include "vcc/common/DialogOps.h"
-#include "../CartridgeMenu.h"
 #include "vcc/utils/logger.h"
 #include "vcc/utils/winapi.h"
+#include "../CartridgeMenu.h"
+
 
 //------------------------------------------------------------------------
 // Local Functions
 //------------------------------------------------------------------------
-
-void BuildCartridgeMenu();
 
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig();
 void SaveConfig();
 
 //------------------------------------------------------------------------
-// Pak host
-//------------------------------------------------------------------------
-static void* gHostKeyPtr = nullptr;
-void* const& gHostKey(gHostKeyPtr);
-static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
-PakAssertInteruptHostCallback AssertInt = nullptr;
-
-//------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------
-static HINSTANCE gModuleInstance;      // DLL handle
+extern HINSTANCE gModuleInstance;      // DLL handle
 static HWND g_hDlg = nullptr;           // Config dialog
 static char IniFile[MAX_PATH];       // Ini file name
 
@@ -73,85 +63,57 @@ char AciaFileWrPath[MAX_PATH]; // Path for file writes
 static unsigned char Rom[8192];
 unsigned char LoadExtRom(const char *);
 
-//------------------------------------------------------------------------
-//  DLL Entry point
-//------------------------------------------------------------------------
-BOOL APIENTRY
-DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
-{
-    if (reason == DLL_PROCESS_ATTACH)
-	{
-		gModuleInstance = hinst;
-    }
 
-    return TRUE;
+rs232pak_cartridge::rs232pak_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance)
+	:
+	context_(move(context)),
+	module_instance_(module_instance)
+{
 }
 
-
-extern "C"
+rs232pak_cartridge::name_type rs232pak_cartridge::name() const
 {
+	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
+}
 
-	__declspec(dllexport) const char* PakGetName()
-	{
-		static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
+rs232pak_cartridge::catalog_id_type rs232pak_cartridge::catalog_id() const
+{
+	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
+}
 
-		return name.c_str();
-	}
+rs232pak_cartridge::description_type rs232pak_cartridge::description() const
+{
+	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
+}
 
-	__declspec(dllexport) const char* PakGetCatalogId()
-	{
-		static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
+void rs232pak_cartridge::start()
+{
+	strcpy(IniFile, context_->configuration_path().c_str());
+	LoadConfig();
+	BuildCartridgeMenu();
+	LoadExtRom("RS232.ROM");
+	sc6551_init();
+}
 
-		return catalog_id.c_str();
-	}
-
-	__declspec(dllexport) const char* PakGetDescription()
-	{
-		static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
-
-		return description.c_str();
-	}
-
-	__declspec(dllexport) void PakInitialize(
-		void* const host_key,
-		const char* const configuration_path,
-		const cartridge_capi_context* const context)
-	{
-		gHostKeyPtr = host_key;
-		CartMenuCallback = context->add_menu_item;
-		AssertInt = context->assert_interrupt;
-		strcpy(IniFile, configuration_path);
-		LoadConfig();
-		BuildCartridgeMenu();
-		LoadExtRom("RS232.ROM");
-		sc6551_init();
-	}
-
-	__declspec(dllexport) void PakTerminate()
-	{
-		CloseCartDialog(g_hDlg);
-		sc6551_close();
-		AciaStat[0]='\0';
-	}
+void rs232pak_cartridge::stop()
+{
+	CloseCartDialog(g_hDlg);
+	sc6551_close();
+	AciaStat[0]='\0';
 }
 
 //-----------------------------------------------------------------------
 // Dll export write to port
 //-----------------------------------------------------------------------
-extern "C"
-__declspec(dllexport) void
-PakWritePort(unsigned char Port,unsigned char Data)
+void rs232pak_cartridge::write_port(unsigned char Port, unsigned char Data)
 {
     sc6551_write(Data,Port);
-    return;
 }
 
 //-----------------------------------------------------------------------
 // Dll export read from port
 //-----------------------------------------------------------------------
-extern "C"
-__declspec(dllexport) unsigned char
-PakReadPort(unsigned char Port)
+unsigned char rs232pak_cartridge::read_port(unsigned char Port)
 {
     return sc6551_read(Port);
 }
@@ -159,18 +121,15 @@ PakReadPort(unsigned char Port)
 //-----------------------------------------------------------------------
 // Dll export module reset
 //-----------------------------------------------------------------------
-extern "C"
-__declspec(dllexport) void PakReset()
+void rs232pak_cartridge::reset()
 {
     sc6551_close();
-    return;
 }
 
 //-----------------------------------------------------------------------
 // Dll export pak rom read
 //-----------------------------------------------------------------------
-extern "C"
-__declspec(dllexport) unsigned char PakReadMemoryByte(std::size_t Address)
+unsigned char rs232pak_cartridge::read_memory_byte(size_type Address)
 {
     return(Rom[Address & 8191]);
 }
@@ -199,18 +158,15 @@ unsigned char LoadExtRom(const char *FilePath)
 //-----------------------------------------------------------------------
 // Dll export Heartbeat (HSYNC)
 //-----------------------------------------------------------------------
-extern "C"
-__declspec(dllexport) void PakUpdate([[maybe_unused]] float delta)
+void rs232pak_cartridge::update([[maybe_unused]] float delta)
 {
-    sc6551_heartbeat();
-    return;
+    sc6551_heartbeat(*context_);
 }
 
 //-----------------------------------------------------------------------
 // Dll export return module status for VCC status line
 //-----------------------------------------------------------------------
-extern "C"
-__declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
+void rs232pak_cartridge::status(char* text_buffer, size_t buffer_size)
 {
 	strncpy(text_buffer, AciaStat, buffer_size);
 	text_buffer[16] = '\n';
@@ -219,8 +175,7 @@ __declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
 //-----------------------------------------------------------------------
 //  Dll export run config dialog
 //-----------------------------------------------------------------------
-extern "C"
-__declspec(dllexport) void PakMenuItemClicked(unsigned char /*MenuID*/)
+void rs232pak_cartridge::menu_item_clicked(unsigned char menuId)
 {
     HWND owner = GetActiveWindow();
     CreateDialog(gModuleInstance,(LPCTSTR)IDD_PROPPAGE,owner,(DLGPROC)Config);
@@ -232,12 +187,12 @@ __declspec(dllexport) void PakMenuItemClicked(unsigned char /*MenuID*/)
 //-----------------------------------------------------------------------
 //  Add config option to Cartridge menu
 //----------------------------------------------------------------------
-void BuildCartridgeMenu()
+void rs232pak_cartridge::BuildCartridgeMenu()
 {
-	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
-	CartMenuCallback(gHostKey, "ACIA Config", ControlId(16), MIT_StandAlone);
-	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
+	context_->add_menu_item("", MID_BEGIN, MIT_Head);
+	context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	context_->add_menu_item("ACIA Config", ControlId(16), MIT_StandAlone);
+	context_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 //-----------------------------------------------------------------------

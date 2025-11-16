@@ -119,6 +119,7 @@
       </PrecompiledHeaderOutputFile>
     </ClCompile>
     <ClCompile Include="console.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="sc6551.cpp" />
     <ClCompile Include="file.cpp" />
     <ClCompile Include="tcpip.cpp" />
@@ -130,6 +131,7 @@
   <ItemGroup>
     <ClInclude Include="acia.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="sc6551.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\libcommon\libcommon.vcxproj">

@@ -1,34 +1,77 @@
-//------------------------------------------------------------------
-// Copyright E J Jaquay 2022
-//
-// This file is part of VCC (Virtual Color Computer).
-//
-// VCC (Virtual Color Computer) is free software: you can redistribute it
-// and/or modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation, either version 3 of the
-// License, or (at your option) any later version.
-//
-// VCC (Virtual Color Computer) is distributed in the hope that it will be
-// useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//
-// See the GNU General Public License for more details.  You should have
-// received a copy of the GNU General Public License  along with VCC
-// (Virtual Color Computer). If not see <http://www.gnu.org/licenses/>.
-//
-//------------------------------------------------------------------
-#ifndef __ACIA_H_
-#define __ACIA_H_
-
-// FIXME: This should be defined on the command line
-#define DIRECTINPUT_VERSION 0x0800
-#include "vcc/bus/cartridge_capi.h"
-#include <Windows.h>
-#include <windowsx.h>
+////////////////////////////////////////////////////////////////////////////////
+//	Copyright 2015 by Joseph Forgione
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	modify it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or (at your
+//	option) any later version.
+//	
+//	VCC (Virtual Color Computer) is distributed in the hope that it will be
+//	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+//	Public License for more details.
+//	
+//	You should have received a copy of the GNU General Public License along with
+//	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////////
+#pragma once
+#include "vcc/bus/cartridge.h"
+#include "vcc/bus/cartridge_context.h"
+#include "vcc/devices/rom/rom_image.h"
+#include "resource.h"
 #include <stdio.h>
 #include <conio.h>
-#include <dinput.h>
-#include "resource.h"
+#include <windowsx.h>
+#include <Windows.h>
+#include <memory>
+
+
+class rs232pak_cartridge : public ::vcc::bus::cartridge
+{
+public:
+
+	using context_type = ::vcc::bus::cartridge_context;
+	using rom_image_type = ::vcc::devices::rom::rom_image;
+
+	rs232pak_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance);
+
+	/// @inheritdoc
+	name_type name() const override;
+
+	/// @inheritdoc
+	catalog_id_type catalog_id() const override;
+
+	/// @inheritdoc
+	description_type description() const override;
+
+
+	void start() override;
+	void stop() override;
+	void reset() override;
+
+	unsigned char read_memory_byte(size_type memory_address) override;
+
+	void write_port(unsigned char port_id, unsigned char value) override;
+	[[nodiscard]] unsigned char read_port(unsigned char port_id) override;
+
+	void status(char* text_buffer, size_type buffer_size) override;
+	void menu_item_clicked(unsigned char menu_item_id) override;
+	void update(float delta) override;
+
+
+private:
+
+	//void LoadConfig();
+	void BuildCartridgeMenu();
+
+private:
+
+	const std::unique_ptr<context_type> context_;
+	const HINSTANCE module_instance_;
+};
+
+
 
 
 // Text mode EOF character
@@ -68,13 +111,12 @@ extern char AciaTcpHost[MAX_PATH];    // Tcpip hostname
 extern char AciaFileRdPath[MAX_PATH]; // Path for file reads
 extern char AciaFileWrPath[MAX_PATH]; // Path for file writes
 
-extern PakAssertInteruptHostCallback AssertInt;
 extern void* const& gHostKey;
 
 // Device
 extern void sc6551_init();
 extern void sc6551_close();
-extern void sc6551_heartbeat();
+void sc6551_heartbeat(::vcc::bus::cartridge_context& context);
 extern unsigned char sc6551_read(unsigned char data);
 extern void sc6551_write(unsigned char data, unsigned short port);
 
@@ -108,4 +150,3 @@ extern void wincom_close();
 extern int  wincom_read(char*,int);
 extern int  wincom_write(const char*,int);
 
-#endif

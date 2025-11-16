@@ -240,7 +240,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID /*param*/)
 //
 //------------------------------------------------------------------------
 
-void sc6551_heartbeat()
+void sc6551_heartbeat(::vcc::bus::cartridge_context& context)
 {
     // Countdown to receive next byte
     if (HBcounter-- < 1) {
@@ -250,7 +250,7 @@ void sc6551_heartbeat()
             StatReg |= StatRxF;
             // Assert CART if interrupts not disabled or already asserted.
             if (!((CmdReg & CmdRxI) || (StatReg & StatIRQ))) {
-                AssertInt(gHostKey, INT_CART, IS_NMI);
+				context.assert_interrupt(INT_CART, IS_NMI);
                 StatReg |= StatIRQ;
             }
         }

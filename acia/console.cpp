@@ -23,6 +23,8 @@
 //------------------------------------------------------------------
 
 #include "acia.h"
+#define DIRECTINPUT_VERSION 0x0800
+#include <dinput.h>
 
 // Macros for key state modifiers
 #define modshift(state)  (state & SHIFT_PRESSED)
