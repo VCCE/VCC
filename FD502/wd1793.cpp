@@ -27,17 +27,17 @@
 #include <stdlib.h>
 /****************Fuction Protos for this Module************/
 
-unsigned char GetBytefromSector ();
-unsigned char GetBytefromAddress();
-unsigned char GetBytefromTrack  ();
-unsigned char (*GetBytefromDisk)()=&GetBytefromSector;
+unsigned char GetBytefromSector (::vcc::bus::cartridge_context& context);
+unsigned char GetBytefromAddress(::vcc::bus::cartridge_context& context);
+unsigned char GetBytefromTrack  (::vcc::bus::cartridge_context& context);
+unsigned char (*GetBytefromDisk)(::vcc::bus::cartridge_context&)=&GetBytefromSector;
 
-unsigned char WriteBytetoSector (unsigned char);
-unsigned char WriteBytetoTrack  (unsigned char);
-unsigned char (*WriteBytetoDisk)(unsigned char)=&WriteBytetoSector;
+unsigned char WriteBytetoSector (::vcc::bus::cartridge_context& context, unsigned char);
+unsigned char WriteBytetoTrack  (::vcc::bus::cartridge_context& context, unsigned char);
+unsigned char (*WriteBytetoDisk)(::vcc::bus::cartridge_context&, unsigned char)=&WriteBytetoSector;
 
 unsigned char MountDisk(const char *filename,unsigned char);
-void DispatchCommand(unsigned char);
+void DispatchCommand(::vcc::bus::cartridge_context& context, unsigned char);
 void DecodeControlReg(unsigned char);
 void SetType1Flags(unsigned char);
 void SetType2Flags(unsigned char);
@@ -50,7 +50,7 @@ long WriteTrack (unsigned char,unsigned char,unsigned char,const unsigned char *
 
 unsigned short ccitt_crc16(unsigned short crc, const unsigned char *, unsigned short );
 long GetSectorInfo (SectorInfo *,const unsigned char *);
-void CommandDone();
+void CommandDone(::vcc::bus::cartridge_context& context);
 extern unsigned char PhysicalDriveA,PhysicalDriveB;
 bool FormatTrack (HANDLE , BYTE , BYTE,BYTE );
 bool CmdFormat (HANDLE , PFD_FORMAT_PARAMS , ULONG );
@@ -105,7 +105,7 @@ std::string get_mounted_disk_filename(::std::size_t drive_index)
 }
 
 /*************************************************************/
-unsigned char disk_io_read(unsigned char port)
+unsigned char disk_io_read(::vcc::bus::cartridge_context& context, unsigned char port)
 {
 	unsigned char temp;
 
@@ -127,7 +127,7 @@ unsigned char disk_io_read(unsigned char port)
 			if (CurrentCommand==IDLE)
 				temp=DataReg;
 			else
-				temp=GetBytefromDisk();
+				temp=GetBytefromDisk(context);
 			break;
 
 		case 0x40:	//Control Register can't be read
@@ -139,12 +139,12 @@ unsigned char disk_io_read(unsigned char port)
 	return temp;
 }
 
-void disk_io_write(unsigned char data,unsigned char port)
+void disk_io_write(::vcc::bus::cartridge_context& context, unsigned char data,unsigned char port)
 {
 	switch (port)
 	{
 	case	0x48:	//Command Register
-		DispatchCommand(data);
+		DispatchCommand(context, data);
 	break;
 
 	case	0x49:
@@ -159,7 +159,7 @@ void disk_io_write(unsigned char data,unsigned char port)
 		if (CurrentCommand==IDLE)
 			DataReg=data;
 		else
-			WriteBytetoDisk(data);
+			WriteBytetoDisk(context, data);
 	break;
 			
 	case	0x40:
@@ -236,7 +236,8 @@ int mount_disk_image(const char *filename,unsigned char drive)
 {
 	unsigned int Temp=0;
 	Temp=MountDisk(filename,drive);
-	BuildCartridgeMenu();
+	// FIXME-CHET: This needs to be added back in
+	//BuildCartridgeMenu();
 	return(!Temp);
 }
 
@@ -667,7 +668,7 @@ long ReadTrack (	unsigned char Side,		//0 or 1
 }
 
 //This gets called at the end of every scan line so the controller has acurate timing.
-void PingFdc()
+void PingFdc(::vcc::bus::cartridge_context& context)
 {
 	static char wobble=0;
 	if (MotorOn==0)
@@ -717,7 +718,7 @@ void PingFdc()
 				Drive[CurrentDisk].HeadPosition=0;
 				if (Drive[CurrentDisk].WriteProtect)
 					StatusReg|=WRITEPROTECT;
-				CommandDone();
+				CommandDone(context);
 			}
 		break;
 
@@ -738,7 +739,7 @@ void PingFdc()
 					StatusReg|=TRACK_ZERO;
 				if (Drive[CurrentDisk].WriteProtect)
 					StatusReg|=WRITEPROTECT;
-				CommandDone();
+				CommandDone(context);
 			}
 			if (Drive[CurrentDisk].ImageType==RAW)
 				DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &TrackReg, sizeof(TrackReg), nullptr, 0, &dwRet, nullptr);
@@ -766,7 +767,7 @@ void PingFdc()
 			if (Drive[CurrentDisk].WriteProtect)
 				StatusReg|=WRITEPROTECT;
 			StatusReg=READY;
-			CommandDone();
+			CommandDone(context);
 		break;
 
 		case STEPIN:
@@ -778,7 +779,7 @@ void PingFdc()
 			if (Drive[CurrentDisk].WriteProtect)
 				StatusReg|=WRITEPROTECT;
 			StatusReg=READY;
-			CommandDone();
+			CommandDone(context);
 		break;
 
 		case STEPOUT:
@@ -793,7 +794,7 @@ void PingFdc()
 			if (Drive[CurrentDisk].WriteProtect)
 				StatusReg|=WRITEPROTECT;
 			StatusReg=READY;
-			CommandDone();
+			CommandDone(context);
 		break;
 
 		case READSECTOR:
@@ -801,7 +802,7 @@ void PingFdc()
 			if (IOWaiter>WAITTIME)
 			{
 				LostDataFlag=1;
-				GetBytefromSector();
+				GetBytefromSector(context);
 			}
 		break;
 
@@ -812,7 +813,7 @@ void PingFdc()
 			{
 				LostDataFlag=1;
 //				WriteLog("WRITESECTOR TIMEOUT",0);
-				WriteBytetoSector(0);
+				WriteBytetoSector(context, 0);
 			}
 		break;
 
@@ -820,7 +821,7 @@ void PingFdc()
 			if (IOWaiter>WAITTIME)
 			{
 				LostDataFlag=1;
-				GetBytefromAddress ();	
+				GetBytefromAddress (context);	
 			}
 		break;
 
@@ -831,7 +832,7 @@ void PingFdc()
 			if (IOWaiter>WAITTIME)
 			{
 				LostDataFlag=1;
-				GetBytefromTrack();
+				GetBytefromTrack(context);
 			}
 		break;
 
@@ -840,7 +841,7 @@ void PingFdc()
 			if (IOWaiter>WAITTIME)
 			{
 				LostDataFlag=1;
-				WriteBytetoTrack(0);
+				WriteBytetoTrack(context, 0);
 			}
 		break;
 
@@ -850,7 +851,7 @@ void PingFdc()
 	return;
 }
 
-void DispatchCommand(unsigned char Tmp)
+void DispatchCommand(::vcc::bus::cartridge_context& context, unsigned char Tmp)
 {
 	unsigned char Command= (Tmp >>4);
 	if ( (CurrentCommand !=IDLE) & (Command != 13) ) 
@@ -943,7 +944,7 @@ void DispatchCommand(unsigned char Tmp)
 			StatusReg=READY;
 			ExecTimeWaiter=1;
 			if ((Tmp & 15) != 0)
-				AssertInt(gHostKey, INT_NMI,IS_NMI);
+				context.assert_interrupt(INT_NMI,IS_NMI);
 //			WriteLog("FORCEINTERUPT",0);
 			break;
 
@@ -971,7 +972,7 @@ void DispatchCommand(unsigned char Tmp)
 	return;
 }
 
-unsigned char GetBytefromSector ()
+unsigned char GetBytefromSector (::vcc::bus::cartridge_context& context)
 {
 	unsigned char RetVal=0;
 
@@ -983,7 +984,7 @@ unsigned char GetBytefromSector ()
 
 	if (TransferBufferSize==0)// IRON| (TrackReg != Drive[CurrentDrive].HeadPosition) ) //| (SectorReg > Drive[CurrentDrive].Sectors)
 	{
-		CommandDone();
+		CommandDone(context);
 		StatusReg=RECNOTFOUND;
 		return 0;
 	}
@@ -999,7 +1000,7 @@ unsigned char GetBytefromSector ()
 	{
 //		WriteLog("READSECTOR DONE",0);
 		StatusReg=READY;
-		CommandDone();
+		CommandDone(context);
 		if (LostDataFlag==1)
 		{
 			StatusReg=LOSTDATA;
@@ -1010,7 +1011,7 @@ unsigned char GetBytefromSector ()
 	return RetVal;
 }
 
-unsigned char GetBytefromAddress ()
+unsigned char GetBytefromAddress (::vcc::bus::cartridge_context& context)
 {
 	unsigned char RetVal=0;
 	unsigned short Crc=0;
@@ -1047,7 +1048,7 @@ unsigned char GetBytefromAddress ()
 	if (   Drive[CurrentDisk].FileHandle==nullptr  )
 	{
 		StatusReg=RECNOTFOUND;
-		CommandDone();
+		CommandDone(context);
 		return 0;
 	}
 
@@ -1060,7 +1061,7 @@ unsigned char GetBytefromAddress ()
 	else
 	{
 		StatusReg=READY;
-		CommandDone();
+		CommandDone(context);
 		if (LostDataFlag==1)
 		{
 			StatusReg=LOSTDATA;
@@ -1070,7 +1071,7 @@ unsigned char GetBytefromAddress ()
 	return RetVal;
 }
 
-unsigned char GetBytefromTrack ()
+unsigned char GetBytefromTrack (::vcc::bus::cartridge_context& context)
 {
 	unsigned char RetVal=0;
 
@@ -1082,7 +1083,7 @@ unsigned char GetBytefromTrack ()
 
 	if (TransferBufferSize==0)//iron | (TrackReg != Drive[CurrentDrive].HeadPosition) ) //| (SectorReg > Drive[CurrentDrive].Sectors)
 	{
-		CommandDone();
+		CommandDone(context);
 		StatusReg=RECNOTFOUND;
 		return 0;
 	}
@@ -1097,7 +1098,7 @@ unsigned char GetBytefromTrack ()
 	{
 //		WriteLog("READTRACK DONE",0);
 		StatusReg=READY;
-		CommandDone();
+		CommandDone(context);
 		if (LostDataFlag==1)
 		{
 			StatusReg=LOSTDATA;
@@ -1108,7 +1109,7 @@ unsigned char GetBytefromTrack ()
 	return RetVal;
 }
 
-unsigned char WriteBytetoSector (unsigned char Tmp)
+unsigned char WriteBytetoSector (::vcc::bus::cartridge_context& context, unsigned char Tmp)
 {
 	unsigned long BytesRead=0,Result=0;
 	long FileOffset=0,RetVal=0;
@@ -1127,7 +1128,7 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 				if ((TransferBufferSize==0)  | (TrackReg != Drive[CurrentDisk].HeadPosition) | (SectorReg > Drive[CurrentDisk].Sectors) )
 				{
 					StatusReg=RECNOTFOUND;
-					CommandDone();
+					CommandDone(context);
 					return 0;
 				}
 			break;
@@ -1141,7 +1142,7 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 				if ( (CurrentSector.DAM == 0) | (BytesRead != Drive[CurrentDisk].TrackSize) )
 				{
 					StatusReg=RECNOTFOUND;
-					CommandDone();
+					CommandDone(context);
 					return 0;
 				}
 				TransferBufferSize = CurrentSector.Lenth;
@@ -1161,7 +1162,7 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 			StatusReg=LOSTDATA;
 		if (Drive[CurrentDisk].WriteProtect != 0)
 			StatusReg=WRITEPROTECT | RECNOTFOUND;
-		CommandDone();	
+		CommandDone(context);	
 		LostDataFlag=0;
 		SectorReg++;
 	}
@@ -1173,7 +1174,7 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 	}
 	return 0;
 }
-unsigned char WriteBytetoTrack (unsigned char Tmp)
+unsigned char WriteBytetoTrack (::vcc::bus::cartridge_context& context, unsigned char Tmp)
 {
 	long RetVal=0;
 	if (TransferBufferSize==0)
@@ -1189,7 +1190,7 @@ unsigned char WriteBytetoTrack (unsigned char Tmp)
 			StatusReg=LOSTDATA;
 		if (Drive[CurrentDisk].WriteProtect != 0)
 			StatusReg=WRITEPROTECT | RECNOTFOUND;
-		CommandDone();
+		CommandDone(context);
 		LostDataFlag=0;
 	}
 	else
@@ -1285,10 +1286,10 @@ long GetSectorInfo (SectorInfo *Sector,const unsigned char *TempBuffer)
 
 }
 
-void CommandDone()
+void CommandDone(::vcc::bus::cartridge_context& context)
 {
 	if (InteruptEnable)
-		AssertInt(gHostKey, INT_NMI,IS_NMI);
+		context.assert_interrupt(INT_NMI,IS_NMI);
 	TransferBufferSize=0;
 	CurrentCommand=IDLE;
 }
