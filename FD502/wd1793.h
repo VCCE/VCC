@@ -17,16 +17,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "defines.h"
+#include "vcc/bus/cartridge_context.h"
 #include <Windows.h>
 #include <string>
 
 
-unsigned char disk_io_read(unsigned char port);
-void disk_io_write(unsigned char data,unsigned char port);	
+unsigned char disk_io_read(::vcc::bus::cartridge_context& context, unsigned char port);
+void disk_io_write(::vcc::bus::cartridge_context& context, unsigned char data,unsigned char port);	
 int mount_disk_image(const char *,unsigned char );
 void unmount_disk_image(unsigned char drive);
 void DiskStatus(char* text_buffer, size_t buffer_size);
-void PingFdc();
+void PingFdc(::vcc::bus::cartridge_context& context);
 unsigned char SetTurboDisk( unsigned char);
 //unsigned char UseKeyboardLeds(unsigned char);
 DWORD GetDriverVersion ();

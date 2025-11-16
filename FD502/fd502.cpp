@@ -23,23 +23,21 @@
 #include "utils.h"
 #include "../CartridgeMenu.h"
 #include "vcc/devices/serial/beckerport.h"
-#include "vcc/common/DialogOps.h"
+#include "vcc/devices/rtc/oki_m6242b.h"
+#include "vcc/devices/rom/rom_image.h"
 #include "vcc/utils/FileOps.h"
 #include "vcc/utils/logger.h"
 #include "vcc/utils/winapi.h"
-#include "vcc/devices/rtc/oki_m6242b.h"
-#include "vcc/devices/rom/rom_image.h"
-#include <Windows.h>
-#include <array>
 #include "vcc/utils/persistent_value_store.h"
 #include "vcc/utils/filesystem.h"
+#include "vcc/common/DialogOps.h"
+#include <Windows.h>
+#include <array>
 
+
+extern HINSTANCE gModuleInstance;
 
 static const auto default_selected_rom_index = 1u;
-static void* gHostKeyPtr = nullptr;
-void* const& gHostKey(gHostKeyPtr);
-PakAssertInteruptHostCallback AssertInt = nullptr;
-static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 
 static std::string FloppyPath;
 static size_t SelectRomIndex = default_selected_rom_index;
@@ -67,7 +65,6 @@ static char IniFile[MAX_PATH]="";
 static size_t TempSelectRomIndex = default_selected_rom_index;
 
 static HWND g_hConfDlg = nullptr;
-static HINSTANCE gModuleInstance;
 static unsigned long RealDisks=0;
 long CreateDisk (unsigned char);
 static char TempFileName[MAX_PATH]="";
@@ -89,189 +86,151 @@ void Load_Disk(unsigned char);
 
 
 //----------------------------------------------------------------------------
-BOOL WINAPI DllMain(
-    HINSTANCE hinstDLL,  // handle to DLL module
-    DWORD fdwReason,     // reason for calling function
-    LPVOID lpReserved )  // reserved
-{
-	if (fdwReason == DLL_PROCESS_ATTACH) //Clean Up
-	{
-		gModuleInstance = hinstDLL;
-	}
 
-	return TRUE;
+
+fd502_cartridge::fd502_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance)
+	:
+	context_(move(context)),
+	module_instance_(module_instance)
+{
 }
 
-extern "C"
+
+fd502_cartridge::name_type fd502_cartridge::name() const
 {
-
-	__declspec(dllexport) const char* PakGetName()
-	{
-		static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
-
-		return name.c_str();
-	}
-
-	__declspec(dllexport) const char* PakGetCatalogId()
-	{
-		static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
-
-		return catalog_id.c_str();
-	}
-
-	__declspec(dllexport) const char* PakGetDescription()
-	{
-		static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
-
-		return description.c_str();
-	}
-
-	__declspec(dllexport) void PakInitialize(
-		void* const host_key,
-		const char* const configuration_path,
-		const cartridge_capi_context* const context)
-	{
-		gHostKeyPtr = host_key;
-		CartMenuCallback = context->add_menu_item;
-		AssertInt = context->assert_interrupt;
-		strcpy(IniFile, configuration_path);
-
-		RealDisks = InitController();
-		LoadConfig();
-		BuildCartridgeMenu();
-	}
-
-	__declspec(dllexport) void PakTerminate()
-	{
-		CloseCartDialog(g_hConfDlg);
-		for (unsigned char Drive = 0; Drive <= 3; Drive++)
-		{
-			unmount_disk_image(Drive);
-		}
-	}
-
+	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-extern "C"
+fd502_cartridge::catalog_id_type fd502_cartridge::catalog_id() const
 {
-	__declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
+	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
+}
+
+fd502_cartridge::description_type fd502_cartridge::description() const
+{
+	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
+}
+
+void fd502_cartridge::start()
+{
+	strcpy(IniFile, context_->configuration_path().c_str());
+
+	RealDisks = InitController();
+	LoadConfig();
+	BuildCartridgeMenu();
+}
+
+void fd502_cartridge::stop()
+{
+	CloseCartDialog(g_hConfDlg);
+	for (unsigned char Drive = 0; Drive <= 3; Drive++)
 	{
-		HWND h_own = GetActiveWindow();
-		switch (MenuID)
-		{
-			case 10:
-				Load_Disk(0);
-				break;
-			case 11:
-				unmount_disk_image(0);
-				SaveConfig();
-				break;
-			case 12:
-				Load_Disk(1);
-				break;
-			case 13:
-				unmount_disk_image(1);
-				SaveConfig();
-				break;
-			case 14:
-				Load_Disk(2);
-				break;
-			case 15:
-				unmount_disk_image(2);
-				SaveConfig();
-				break;
-			case 16:
-				if (g_hConfDlg == nullptr)
-					g_hConfDlg = CreateDialog(gModuleInstance,(LPCTSTR)IDD_CONFIG,h_own,(DLGPROC)Config);
-				ShowWindow(g_hConfDlg,1);
-				break;
-			case 17:
-				Load_Disk(3);
-				break;
-			case 18:
-				unmount_disk_image(3);
-				SaveConfig();
-				break;
-		}
-		BuildCartridgeMenu();
-		return;
+		unmount_disk_image(Drive);
 	}
 }
 
 
-extern "C"
+void fd502_cartridge::menu_item_clicked(unsigned char MenuID)
 {
-	__declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
+	HWND h_own = GetActiveWindow();
+	switch (MenuID)
 	{
-		if (BeckerEnabled && Port == 0x42)
-		{
-			gBecker.write(Data, Port);
-		}
-		else if (ClockEnabled && Port == 0x50)
-		{
-			gDistoRtc.write_data(Data);
-		}
-		else if (ClockEnabled && Port == 0x51)
-		{
-			gDistoRtc.set_read_write_address(Data);
-		}
-		else
-		{
-			disk_io_write(Data, Port);
-		}
+		case 10:
+			Load_Disk(0);
+			break;
+		case 11:
+			unmount_disk_image(0);
+			SaveConfig();
+			break;
+		case 12:
+			Load_Disk(1);
+			break;
+		case 13:
+			unmount_disk_image(1);
+			SaveConfig();
+			break;
+		case 14:
+			Load_Disk(2);
+			break;
+		case 15:
+			unmount_disk_image(2);
+			SaveConfig();
+			break;
+		case 16:
+			if (g_hConfDlg == nullptr)
+				g_hConfDlg = CreateDialog(gModuleInstance,(LPCTSTR)IDD_CONFIG,h_own,(DLGPROC)Config);
+			ShowWindow(g_hConfDlg,1);
+			break;
+		case 17:
+			Load_Disk(3);
+			break;
+		case 18:
+			unmount_disk_image(3);
+			SaveConfig();
+			break;
+	}
+	BuildCartridgeMenu();
+	return;
+}
+
+void fd502_cartridge::write_port(unsigned char Port, unsigned char Data)
+{
+	if (BeckerEnabled && Port == 0x42)
+	{
+		gBecker.write(Data, Port);
+	}
+	else if (ClockEnabled && Port == 0x50)
+	{
+		gDistoRtc.write_data(Data);
+	}
+	else if (ClockEnabled && Port == 0x51)
+	{
+		gDistoRtc.set_read_write_address(Data);
+	}
+	else
+	{
+		disk_io_write(*context_, Data, Port);
 	}
 }
 
-extern "C"
+unsigned char fd502_cartridge::read_port(unsigned char Port)
 {
-	__declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
+	if (BeckerEnabled && (Port == 0x41 || Port == 0x42))
 	{
-		if (BeckerEnabled && (Port == 0x41 || Port == 0x42))
-		{
-			return(gBecker.read(Port));
-		}
-
-		if (ClockEnabled && (Port == 0x50 || Port == 0x51))
-		{
-			return gDistoRtc.read_data();
-		}
-
-		return disk_io_read(Port);
+		return(gBecker.read(Port));
 	}
+
+	if (ClockEnabled && (Port == 0x50 || Port == 0x51))
+	{
+		return gDistoRtc.read_data();
+	}
+
+	return disk_io_read(*context_, Port);
 }
 
-extern "C"
+void fd502_cartridge::update(float delta)
 {
-	__declspec(dllexport) void PakUpdate([[maybe_unused]] float delta)
-	{
-		PingFdc();
-		return;
-	}
+	PingFdc(*context_);
+	return;
 }
 
-extern "C"
+unsigned char fd502_cartridge::read_memory_byte(size_type Address)
 {
-	__declspec(dllexport) unsigned char PakReadMemoryByte(std::size_t Address)
-	{
-		return RomPointer[SelectRomIndex]->read_memory_byte(Address);
-	}
+	return RomPointer[SelectRomIndex]->read_memory_byte(Address);
 }
 
-extern "C"
+void fd502_cartridge::status(char* text_buffer, size_t buffer_size)
 {
-	__declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
-	{
-		char diskstat[64];
-		DiskStatus(diskstat, sizeof(diskstat));
-		strcpy(text_buffer,diskstat);
-		char beckerstat[64];
-		if(BeckerEnabled) {
-			gBecker.status(beckerstat);
-			strcat(text_buffer," | ");
-			strcat(text_buffer,beckerstat);
-		}
-		return ;
+	char diskstat[64];
+	DiskStatus(diskstat, sizeof(diskstat));
+	strcpy(text_buffer,diskstat);
+	char beckerstat[64];
+	if(BeckerEnabled) {
+		gBecker.status(beckerstat);
+		strcat(text_buffer," | ");
+		strcat(text_buffer,beckerstat);
 	}
+	return ;
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
@@ -448,50 +407,48 @@ void Load_Disk(unsigned char disk)
 	return;
 }
 
-void BuildCartridgeMenu()
+void fd502_cartridge::BuildCartridgeMenu()
 {
 	char TempMsg[64]="";
 	char TempBuf[MAX_PATH]="";
-	if (CartMenuCallback ==nullptr)
-		MessageBox(g_hConfDlg,"No good","Ok",0);
 
-	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
+	context_->add_menu_item("", MID_BEGIN, MIT_Head);
+	context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
 
-	CartMenuCallback(gHostKey, "FD-502 Drive 0",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gHostKey, "Insert",ControlId(10),MIT_Slave);
+	context_->add_menu_item("FD-502 Drive 0",MID_ENTRY,MIT_Head);
+	context_->add_menu_item("Insert",ControlId(10),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, get_mounted_disk_filename(0).c_str());
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback(gHostKey, TempMsg,ControlId(11),MIT_Slave);
+	context_->add_menu_item(TempMsg,ControlId(11),MIT_Slave);
 
-	CartMenuCallback(gHostKey, "FD-502 Drive 1",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gHostKey, "Insert",ControlId(12),MIT_Slave);
+	context_->add_menu_item("FD-502 Drive 1",MID_ENTRY,MIT_Head);
+	context_->add_menu_item("Insert",ControlId(12),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, get_mounted_disk_filename(1).c_str());
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback(gHostKey, TempMsg,ControlId(13),MIT_Slave);
+	context_->add_menu_item(TempMsg,ControlId(13),MIT_Slave);
 
-	CartMenuCallback(gHostKey, "FD-502 Drive 2",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gHostKey, "Insert",ControlId(14),MIT_Slave);
+	context_->add_menu_item("FD-502 Drive 2",MID_ENTRY,MIT_Head);
+	context_->add_menu_item("Insert",ControlId(14),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, get_mounted_disk_filename(2).c_str());
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback(gHostKey, TempMsg,ControlId(15),MIT_Slave);
+	context_->add_menu_item(TempMsg,ControlId(15),MIT_Slave);
 
-	CartMenuCallback(gHostKey, "FD-502 Drive 3",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gHostKey, "Insert",ControlId(17),MIT_Slave);
+	context_->add_menu_item("FD-502 Drive 3",MID_ENTRY,MIT_Head);
+	context_->add_menu_item("Insert",ControlId(17),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, get_mounted_disk_filename(3).c_str());
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback(gHostKey, TempMsg,ControlId(18),MIT_Slave);
+	context_->add_menu_item(TempMsg,ControlId(18),MIT_Slave);
 
-	CartMenuCallback(gHostKey, "FD-502 Config",ControlId(16),MIT_StandAlone);
-	CartMenuCallback(gHostKey,"", MID_FINISH, MIT_Head);
+	context_->add_menu_item("FD-502 Config",ControlId(16),MIT_StandAlone);
+	context_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 long CreateDisk (unsigned char Disk)
