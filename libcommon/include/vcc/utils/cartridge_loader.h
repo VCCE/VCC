@@ -18,7 +18,6 @@
 #pragma once
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/cartridge_context.h"
-#include "vcc/bus/cartridge_capi.h"
 #include "vcc/utils/dll_deleter.h"
 #include <string>
 #include <memory>
@@ -116,15 +115,13 @@ namespace vcc::utils
 	/// @param cartridge_context The fluent C++ context of the system that will manage the cartridge.
 	/// @param host_context A handle identifying the host managing the cartridge.
 	/// @param configuration_path The path of the configuration file.
-	/// @param capi_context The C based context of the system that will manage the cartridge.
 	/// 
 	/// @return A status result and data references needed to manage the cartridge.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
 		void* const host_context,
-		const std::string& configuration_path,
-		const cartridge_capi_context& capi_context);
+		const std::string& configuration_path);
 
 	/// @brief Load a cartridge file.
 	/// 
@@ -132,7 +129,6 @@ namespace vcc::utils
 	/// 
 	/// @param filename The name of the cartridge to load.
 	/// @param cartridge_context The fluent C++ context of the system that will manage the cartridge.
-	/// @param capi_context The C based context of the system that will manage the cartridge.
 	/// @param host_context A handle identifying the host managing the cartridge.
 	/// @param configuration_path The path of the configuration file.
 	/// 
@@ -140,7 +136,6 @@ namespace vcc::utils
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
-		const cartridge_capi_context& capi_context,
 		void* const host_context,
 		const std::string& configuration_path);
 

@@ -135,9 +135,6 @@
     <ClCompile Include="src\bus\cartridge.cpp">
       <Filter>Source Files\bus</Filter>
     </ClCompile>
-    <ClCompile Include="src\bus\cartridges\capi_adapter_cartridge.cpp">
-      <Filter>Source Files\bus\cartridges</Filter>
-    </ClCompile>
     <ClCompile Include="src\bus\cartridges\empty_cartridge.cpp">
       <Filter>Source Files\bus\cartridges</Filter>
     </ClCompile>
@@ -209,9 +206,6 @@
     <ClInclude Include="include\vcc\bus\cartridge.h">
       <Filter>Header Files\bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\bus\cartridge_capi.h">
-      <Filter>Header Files\bus</Filter>
-    </ClInclude>
     <ClInclude Include="include\vcc\bus\cartridge_context.h">
       <Filter>Header Files\bus</Filter>
     </ClInclude>
@@ -223,9 +217,6 @@
     </ClInclude>
     <ClInclude Include="include\vcc\detail\exports.h">
       <Filter>Header Files\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\bus\cartridges\capi_adapter_cartridge.h">
-      <Filter>Header Files\bus\cartridges</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\bus\cartridges\empty_cartridge.h">
       <Filter>Header Files\bus\cartridges</Filter>

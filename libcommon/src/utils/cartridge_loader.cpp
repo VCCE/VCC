@@ -17,7 +17,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "../resource/resource.h"
 #include "vcc/bus/cartridges/rom_cartridge.h"
-#include "vcc/bus/cartridges/capi_adapter_cartridge.h"
 #include "vcc/utils/cartridge_loader.h"
 #include "vcc/utils/winapi.h"
 #include "vcc/bus/cartridge_factory.h"
@@ -106,8 +105,7 @@ namespace vcc::utils
 		const std::string& filename,
 		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
 		void* const host_context,
-		const std::string& configuration_path,
-		const cartridge_capi_context& capi_context)
+		const std::string& configuration_path)
 	{
 		if (GetModuleHandle(filename.c_str()) != nullptr)
 		{
@@ -132,19 +130,7 @@ namespace vcc::utils
 			"GetPakFactory")));
 		if (factoryAccessor != nullptr)
 		{
-			details.cartridge = factoryAccessor()(move(cartridge_context), capi_context);
-			details.load_result = cartridge_loader_status::success;
-
-			return details;
-		}
-
-		if (GetProcAddress(details.handle.get(), "PakInitialize") != nullptr)
-		{
-			details.cartridge = std::make_unique<::vcc::bus::cartridges::capi_adapter_cartridge>(
-				details.handle.get(),
-				host_context,
-				configuration_path,
-				capi_context);
+			details.cartridge = factoryAccessor()(move(cartridge_context));
 			details.load_result = cartridge_loader_status::success;
 
 			return details;
@@ -156,7 +142,6 @@ namespace vcc::utils
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
-		const cartridge_capi_context& capi_context,
 		void* const host_context,
 		const std::string& configuration_path)
 	{
@@ -174,8 +159,7 @@ namespace vcc::utils
 				filename,
 				move(cartridge_context),
 				host_context,
-				configuration_path,
-				capi_context);
+				configuration_path);
 		}
 	}
 

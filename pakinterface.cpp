@@ -59,14 +59,6 @@ static unsigned char PakReadMemoryByte(void* host_key, unsigned short address);
 static void PakAssertInterupt(void* host_key, Interrupt interrupt, InterruptSource source);
 static void PakAddMenuItem(void* host_key, const char* name, int menu_id, MenuItemType type);
 
-const cartridge_capi_context default_capi_context =
-{
-	PakAssertInterupt,
-	PakAssertCartrigeLine,
-	PakWriteMemoryByte,
-	PakReadMemoryByte,
-	PakAddMenuItem
-};
 
 class vcc_cartridge_context : public ::vcc::bus::cartridge_context
 {
@@ -285,14 +277,6 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	cartridge_loader_result loadedCartridge(vcc::utils::load_cartridge(
 		filename,
 		std::make_unique<vcc_cartridge_context>(),
-		{
-			// new pak interface
-			PakAssertInterupt,
-			PakAssertCartrigeLine,
-			PakWriteMemoryByte,
-			PakReadMemoryByte,
-			PakAddMenuItem
-		},
 		nullptr, // TODO: there is currently no host context in vcc so we just use nullptr. Maybe add a context.
 		iniPath));
 	if (loadedCartridge.load_result != cartridge_loader_status::success)
