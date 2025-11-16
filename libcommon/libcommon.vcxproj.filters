@@ -206,7 +206,7 @@
     <ClInclude Include="include\vcc\bus\cartridge.h">
       <Filter>Header Files\bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\bus\expansion_bus.h">
+    <ClInclude Include="include\vcc\bus\expansion_port_bus.h">
       <Filter>Header Files\bus</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\bus\cartridge_factory.h">
@@ -262,6 +262,12 @@
     </ClInclude>
     <ClInclude Include="include\vcc\devices\psg\sn76496.h">
       <Filter>Header Files\devices\psg</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\expansion_port_host.h">
+      <Filter>Header Files\bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\expansion_port_ui.h">
+      <Filter>Header Files\bus</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

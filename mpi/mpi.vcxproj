@@ -106,8 +106,10 @@
     <ClInclude Include="cartridge_slot.h" />
     <ClInclude Include="multipak_cartridge.h" />
     <ClInclude Include="configuration_dialog.h" />
-    <ClInclude Include="multipak_cartridge_context.h" />
+    <ClInclude Include="multipak_expansion_slot_ui.h" />
+    <ClInclude Include="multipak_expansion_slot_bus.h" />
     <ClInclude Include="multipak_configuration.h" />
+    <ClInclude Include="multipak_expansion_slot_host.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

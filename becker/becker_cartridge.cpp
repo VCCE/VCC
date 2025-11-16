@@ -23,9 +23,13 @@
 
 
 becker_cartridge::becker_cartridge(
-	std::unique_ptr<expansion_bus_type> bus,
+	std::unique_ptr<expansion_port_host_type> host,
+	std::unique_ptr<expansion_port_ui_type> ui,
+	std::unique_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)
 	:
+	host_(move(host)),
+	ui_(move(ui)),
 	bus_(move(bus)),
 	module_instance_(module_instance),
 	configuration_dialog_(module_instance, *this)
@@ -51,7 +55,7 @@ becker_cartridge::description_type becker_cartridge::description() const
 
 void becker_cartridge::start()
 {
-	::vcc::utils::persistent_value_store settings(bus_->configuration_path());
+	::vcc::utils::persistent_value_store settings(host_->configuration_path());
 
 	gBecker.sethost(
 		settings.read(configuration_section_id_, "DWServerAddr", "127.0.0.1").c_str(),
@@ -110,10 +114,10 @@ void becker_cartridge::menu_item_clicked(unsigned char menu_item_id)
 
 void becker_cartridge::build_menu() const
 {
-	bus_->add_menu_item("", MID_BEGIN, MIT_Head);
-	bus_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	bus_->add_menu_item("DriveWire Server..", ControlId(menu_item_ids::open_configuration), MIT_StandAlone);
-	bus_->add_menu_item("", MID_FINISH, MIT_Head);
+	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
+	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	ui_->add_menu_item("DriveWire Server..", ControlId(menu_item_ids::open_configuration), MIT_StandAlone);
+	ui_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 
@@ -133,7 +137,7 @@ void becker_cartridge::set_server_address(
 {
 	gBecker.sethost(server_address.c_str(), server_port.c_str());
 
-	::vcc::utils::persistent_value_store settings(bus_->configuration_path());
+	::vcc::utils::persistent_value_store settings(host_->configuration_path());
 
 	settings.write(configuration_section_id_, "DWServerAddr", server_address);
 	settings.write(configuration_section_id_, "DWServerPort", server_port);

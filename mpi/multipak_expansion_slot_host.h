@@ -15,38 +15,39 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "ramdisk_cartridge.h"
-#include "vcc/bus/cartridge_factory.h"
-#include <memory>
-#include <Windows.h>
+#pragma once
+#include "multipak_cartridge.h"
+#include "vcc/bus/expansion_port_host.h"
 
 
-static HINSTANCE gModuleInstance;
-
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
+class multipak_expansion_slot_host : public ::vcc::bus::expansion_port_host
 {
-	if (fdwReason == DLL_PROCESS_ATTACH)
+public:
+
+	multipak_expansion_slot_host(
+		size_t slot_id,
+		::vcc::bus::expansion_port_host& host,
+		multipak_cartridge& multipak)
+		:
+		slot_id_(slot_id),
+		host_(host),
+		multipak_(multipak)
+	{}
+
+	path_type configuration_path() const override
 	{
-		gModuleInstance = hinstDLL;
+		return host_.configuration_path();
 	}
 
-	return true;
-}
+	path_type system_rom_path() const override
+	{
+		return host_.system_rom_path();
+	}
 
 
-//
-extern "C" __declspec(dllexport) ::vcc::bus::cartridge_factory_prototype GetPakFactory()
-{
-	return [](
-		std::unique_ptr<::vcc::bus::expansion_port_host> host,
-		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
-		std::unique_ptr<::vcc::bus::expansion_port_bus> bus) -> ::vcc::bus::cartridge_factory_result
-		{
-			return std::make_unique<ramdisk_cartridge>(gModuleInstance);
-		};
-}
+private:
 
-static_assert(
-	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::create_cartridge_factory_prototype>,
-	"RamDisk GetPakFactory does not have the correct signature.");
+	const size_t slot_id_;
+	::vcc::bus::expansion_port_host& host_;
+	multipak_cartridge& multipak_;
+};

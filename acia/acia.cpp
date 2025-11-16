@@ -65,9 +65,13 @@ unsigned char LoadExtRom(const char *);
 
 
 rs232pak_cartridge::rs232pak_cartridge(
-	std::unique_ptr<expansion_bus_type> bus,
+	std::unique_ptr<expansion_port_host_type> host,
+	std::unique_ptr<expansion_port_ui_type> ui,
+	std::unique_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)
 	:
+	host_(move(host)),
+	ui_(move(ui)),
 	bus_(move(bus)),
 	module_instance_(module_instance)
 {
@@ -90,7 +94,7 @@ rs232pak_cartridge::description_type rs232pak_cartridge::description() const
 
 void rs232pak_cartridge::start()
 {
-	strcpy(IniFile, bus_->configuration_path().c_str());
+	strcpy(IniFile, host_->configuration_path().c_str());
 	LoadConfig();
 	BuildCartridgeMenu();
 	LoadExtRom("RS232.ROM");
@@ -191,10 +195,10 @@ void rs232pak_cartridge::menu_item_clicked(unsigned char menuId)
 //----------------------------------------------------------------------
 void rs232pak_cartridge::BuildCartridgeMenu()
 {
-	bus_->add_menu_item("", MID_BEGIN, MIT_Head);
-	bus_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	bus_->add_menu_item("ACIA Config", ControlId(16), MIT_StandAlone);
-	bus_->add_menu_item("", MID_FINISH, MIT_Head);
+	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
+	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	ui_->add_menu_item("ACIA Config", ControlId(16), MIT_StandAlone);
+	ui_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 //-----------------------------------------------------------------------

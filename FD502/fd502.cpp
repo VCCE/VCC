@@ -89,9 +89,13 @@ void Load_Disk(unsigned char);
 
 
 fd502_cartridge::fd502_cartridge(
-	std::unique_ptr<expansion_bus_type> bus,
+	std::unique_ptr<expansion_port_host_type> host,
+	std::unique_ptr<expansion_port_ui_type> ui,
+	std::unique_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)
 	:
+	host_(move(host)),
+	ui_(move(ui)),
 	bus_(move(bus)),
 	module_instance_(module_instance)
 {
@@ -115,7 +119,7 @@ fd502_cartridge::description_type fd502_cartridge::description() const
 
 void fd502_cartridge::start()
 {
-	strcpy(IniFile, bus_->configuration_path().c_str());
+	strcpy(IniFile, host_->configuration_path().c_str());
 
 	RealDisks = InitController();
 	LoadConfig();
@@ -414,43 +418,43 @@ void fd502_cartridge::BuildCartridgeMenu()
 	char TempMsg[64]="";
 	char TempBuf[MAX_PATH]="";
 
-	bus_->add_menu_item("", MID_BEGIN, MIT_Head);
-	bus_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
+	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
 
-	bus_->add_menu_item("FD-502 Drive 0",MID_ENTRY,MIT_Head);
-	bus_->add_menu_item("Insert",ControlId(10),MIT_Slave);
+	ui_->add_menu_item("FD-502 Drive 0",MID_ENTRY,MIT_Head);
+	ui_->add_menu_item("Insert",ControlId(10),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, get_mounted_disk_filename(0).c_str());
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	bus_->add_menu_item(TempMsg,ControlId(11),MIT_Slave);
+	ui_->add_menu_item(TempMsg,ControlId(11),MIT_Slave);
 
-	bus_->add_menu_item("FD-502 Drive 1",MID_ENTRY,MIT_Head);
-	bus_->add_menu_item("Insert",ControlId(12),MIT_Slave);
+	ui_->add_menu_item("FD-502 Drive 1",MID_ENTRY,MIT_Head);
+	ui_->add_menu_item("Insert",ControlId(12),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, get_mounted_disk_filename(1).c_str());
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	bus_->add_menu_item(TempMsg,ControlId(13),MIT_Slave);
+	ui_->add_menu_item(TempMsg,ControlId(13),MIT_Slave);
 
-	bus_->add_menu_item("FD-502 Drive 2",MID_ENTRY,MIT_Head);
-	bus_->add_menu_item("Insert",ControlId(14),MIT_Slave);
+	ui_->add_menu_item("FD-502 Drive 2",MID_ENTRY,MIT_Head);
+	ui_->add_menu_item("Insert",ControlId(14),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, get_mounted_disk_filename(2).c_str());
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	bus_->add_menu_item(TempMsg,ControlId(15),MIT_Slave);
+	ui_->add_menu_item(TempMsg,ControlId(15),MIT_Slave);
 
-	bus_->add_menu_item("FD-502 Drive 3",MID_ENTRY,MIT_Head);
-	bus_->add_menu_item("Insert",ControlId(17),MIT_Slave);
+	ui_->add_menu_item("FD-502 Drive 3",MID_ENTRY,MIT_Head);
+	ui_->add_menu_item("Insert",ControlId(17),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, get_mounted_disk_filename(3).c_str());
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	bus_->add_menu_item(TempMsg,ControlId(18),MIT_Slave);
+	ui_->add_menu_item(TempMsg,ControlId(18),MIT_Slave);
 
-	bus_->add_menu_item("FD-502 Config",ControlId(16),MIT_StandAlone);
-	bus_->add_menu_item("", MID_FINISH, MIT_Head);
+	ui_->add_menu_item("FD-502 Config",ControlId(16),MIT_StandAlone);
+	ui_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 long CreateDisk (unsigned char Disk)

@@ -16,30 +16,53 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "defines.h"
+#include "multipak_cartridge.h"
 #include "vcc/bus/expansion_port_bus.h"
-#include <Windows.h>
-#include <string>
 
 
-unsigned char disk_io_read(::vcc::bus::expansion_port_bus& bus, unsigned char port);
-void disk_io_write(::vcc::bus::expansion_port_bus& bus, unsigned char data,unsigned char port);	
-int mount_disk_image(const char *,unsigned char );
-void unmount_disk_image(unsigned char drive);
-void DiskStatus(char* text_buffer, size_t buffer_size);
-void PingFdc(::vcc::bus::expansion_port_bus& bus);
-unsigned char SetTurboDisk( unsigned char);
-//unsigned char UseKeyboardLeds(unsigned char);
-DWORD GetDriverVersion ();
-unsigned short InitController ();
-std::string get_mounted_disk_filename(::std::size_t drive_index);
-
-// FIXME: Needs a name and should be scoped
-enum
+class multipak_expansion_slot_bus : public ::vcc::bus::expansion_port_bus
 {
-	JVC,
-	VDK,
-	DMK,
-	OS9,
-	RAW
+public:
+
+	multipak_expansion_slot_bus(
+		size_t slot_id,
+		::vcc::bus::expansion_port_bus& bus,
+		multipak_cartridge& multipak)
+		:
+		slot_id_(slot_id),
+		bus_(bus),
+		multipak_(multipak)
+	{}
+
+	void reset() override
+	{
+		bus_.reset();
+	}
+
+	void write_memory_byte(unsigned char value, unsigned short address) override
+	{
+		bus_.write_memory_byte(value, address);
+	}
+
+	unsigned char read_memory_byte(unsigned short address) override
+	{
+		return bus_.read_memory_byte(address);
+	}
+
+	void assert_cartridge_line(bool line_state) override
+	{
+		multipak_.assert_cartridge_line(slot_id_, line_state);
+	}
+
+	void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) override
+	{
+		bus_.assert_interrupt(interrupt, interrupt_source);
+	}
+
+
+private:
+
+	const size_t slot_id_;
+	::vcc::bus::expansion_port_bus& bus_;
+	multipak_cartridge& multipak_;
 };

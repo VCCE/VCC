@@ -1,20 +1,20 @@
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
-
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
+////////////////////////////////////////////////////////////////////////////////
+//	Copyright 2015 by Joseph Forgione
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	modify it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or (at your
+//	option) any later version.
+//	
+//	VCC (Virtual Color Computer) is distributed in the hope that it will be
+//	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+//	Public License for more details.
+//	
+//	You should have received a copy of the GNU General Public License along with
+//	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////////
 #include "SuperIDE.h"
 #include <Windows.h>
 #include "stdio.h"
@@ -48,9 +48,13 @@ static const char* const gConfigurationSection = "Glenside-IDE /w Clock";
 
 
 superide_cartridge::superide_cartridge(
-	std::unique_ptr<expansion_bus_type> bus,
+	std::unique_ptr<expansion_port_host_type> host,
+	std::unique_ptr<expansion_port_ui_type> ui,
+	std::unique_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)
 	:
+	host_(move(host)),
+	ui_(move(ui)),
 	bus_(move(bus)),
 	module_instance_(module_instance)
 {
@@ -79,7 +83,7 @@ superide_cartridge::description_type superide_cartridge::description() const
 
 void superide_cartridge::start()
 {
-	strcpy(IniFile, bus_->configuration_path().c_str());
+	strcpy(IniFile, host_->configuration_path().c_str());
 
 	LoadConfig();
 	IdeInit();
@@ -192,24 +196,24 @@ void superide_cartridge::BuildCartridgeMenu()
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
-	bus_->add_menu_item("", MID_BEGIN, MIT_Head);
-	bus_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	bus_->add_menu_item("IDE Master",MID_ENTRY,MIT_Head);
-	bus_->add_menu_item("Insert",ControlId(10),MIT_Slave);
+	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
+	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	ui_->add_menu_item("IDE Master",MID_ENTRY,MIT_Head);
+	ui_->add_menu_item("Insert",ControlId(10),MIT_Slave);
 	QueryDisk(MASTER,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	bus_->add_menu_item(TempMsg,ControlId(11),MIT_Slave);
-	bus_->add_menu_item("IDE Slave",MID_ENTRY,MIT_Head);
-	bus_->add_menu_item("Insert",ControlId(12),MIT_Slave);
+	ui_->add_menu_item(TempMsg,ControlId(11),MIT_Slave);
+	ui_->add_menu_item("IDE Slave",MID_ENTRY,MIT_Head);
+	ui_->add_menu_item("Insert",ControlId(12),MIT_Slave);
 	QueryDisk(SLAVE,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	bus_->add_menu_item(TempMsg,ControlId(13),MIT_Slave);
-	bus_->add_menu_item("IDE Config",ControlId(14),MIT_StandAlone);
-	bus_->add_menu_item("", MID_FINISH, MIT_Head);
+	ui_->add_menu_item(TempMsg,ControlId(13),MIT_Slave);
+	ui_->add_menu_item("IDE Config",ControlId(14),MIT_StandAlone);
+	ui_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)

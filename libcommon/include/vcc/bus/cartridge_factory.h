@@ -17,15 +17,21 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/expansion_bus.h"
+#include "vcc/bus/expansion_port_host.h"
+#include "vcc/bus/expansion_port_ui.h"
+#include "vcc/bus/expansion_port_bus.h"
 #include <memory>
 
 namespace vcc::bus
 {
 
-	using CreatePakFactoryFunction = std::unique_ptr<::vcc::bus::cartridge>(*)(
-		std::unique_ptr<::vcc::bus::expansion_bus> bus);
+	using cartridge_factory_result = std::unique_ptr<::vcc::bus::cartridge>;
 
-	using GetPakFactoryFunction = CreatePakFactoryFunction(*)();
+	using cartridge_factory_prototype = cartridge_factory_result(*)(
+		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
+		std::unique_ptr<::vcc::bus::expansion_port_bus> bus);
+
+	using create_cartridge_factory_prototype = cartridge_factory_prototype(*)();
 
 }

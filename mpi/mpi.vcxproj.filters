@@ -30,13 +30,19 @@
     <ClInclude Include="configuration_dialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="multipak_cartridge_context.h">
+    <ClInclude Include="multipak_expansion_slot_bus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="multipak_configuration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="multipak_configuration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="multipak_expansion_slot_host.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="multipak_expansion_slot_ui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

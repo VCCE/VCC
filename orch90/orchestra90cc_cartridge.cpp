@@ -21,9 +21,11 @@
 
 
 orchestra90cc_cartridge::orchestra90cc_cartridge(
-	std::unique_ptr<expansion_bus_type> bus,
+	std::unique_ptr<expansion_port_host_type> host,
+	std::unique_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)
 	:
+	host_(move(host)),
 	bus_(move(bus)),
 	module_instance_(module_instance)
 {
@@ -48,7 +50,7 @@ orchestra90cc_cartridge::description_type orchestra90cc_cartridge::description()
 
 void orchestra90cc_cartridge::start()
 {
-	if (rom_image_.load(bus_->system_rom_path() + default_rom_filename_))
+	if (rom_image_.load(host_->system_rom_path() + default_rom_filename_))
 	{
 		bus_->assert_cartridge_line(true);
 	}

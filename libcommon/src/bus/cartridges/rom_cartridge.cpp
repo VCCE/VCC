@@ -23,7 +23,7 @@ namespace vcc::bus::cartridges
 {
 
 	rom_cartridge::rom_cartridge(
-		std::unique_ptr<expansion_bus_type> bus,
+		std::unique_ptr<expansion_port_bus_type> bus,
 		name_type name,
 		catalog_id_type catalog_id,
 		buffer_type buffer,

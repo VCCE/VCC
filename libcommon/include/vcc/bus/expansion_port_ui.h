@@ -15,38 +15,35 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "ramdisk_cartridge.h"
-#include "vcc/bus/cartridge_factory.h"
-#include <memory>
-#include <Windows.h>
+#pragma once
+#include "vcc/detail/exports.h"
 
 
-static HINSTANCE gModuleInstance;
+// FIXME: this needs to come from the common library but is currently part of the
+// main vcc app. Update this when it is migrated.
+enum MenuItemType;
 
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
+namespace vcc::bus
 {
-	if (fdwReason == DLL_PROCESS_ATTACH)
+
+	class LIBCOMMON_EXPORT expansion_port_ui
 	{
-		gModuleInstance = hinstDLL;
-	}
+	public:
 
-	return true;
+		/// @brief The type used to represent menu items.
+		using menu_item_type = MenuItemType;
+
+
+	public:
+
+		virtual ~expansion_port_ui() = default;
+
+		/// @brief Adds an item to the cartridges UI menu.
+		/// 
+		/// @param text The text to display.
+		/// @param menu_id The identifier sent to the cartridge instance when the item is selected.
+		/// @param menu_type The type of menu item to add.
+		virtual void add_menu_item(const char* text, int menu_id, menu_item_type menu_type) = 0;
+	};
+
 }
-
-
-//
-extern "C" __declspec(dllexport) ::vcc::bus::cartridge_factory_prototype GetPakFactory()
-{
-	return [](
-		std::unique_ptr<::vcc::bus::expansion_port_host> host,
-		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
-		std::unique_ptr<::vcc::bus::expansion_port_bus> bus) -> ::vcc::bus::cartridge_factory_result
-		{
-			return std::make_unique<ramdisk_cartridge>(gModuleInstance);
-		};
-}
-
-static_assert(
-	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::create_cartridge_factory_prototype>,
-	"RamDisk GetPakFactory does not have the correct signature.");

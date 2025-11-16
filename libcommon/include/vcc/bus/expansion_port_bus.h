@@ -18,12 +18,7 @@
 #pragma once
 #include "vcc/detail/exports.h"
 #include "vcc/bus/interrupts.h"
-#include <string>
 
-
-// FIXME: this needs to come from the common library but is currently part of the
-// main vcc app. Update this when it is migrated.
-enum MenuItemType;
 
 namespace vcc::bus
 {
@@ -33,24 +28,11 @@ namespace vcc::bus
 	/// The Cartridge Context abstract class provides an interface to the system managing
 	/// one or more cartridges. It's primary purpose is to allow the cartridge to communicate
 	/// hardware related events required for property emulation of the system.
-	class LIBCOMMON_EXPORT expansion_bus
+	class LIBCOMMON_EXPORT expansion_port_bus
 	{
 	public:
 
-		/// @brief The type used to represent paths.
-		using path_type = std::string;
-		/// @brief The type used to represent menu items.
-		using menu_item_type = MenuItemType;
-
-
-	public:
-
-		virtual ~expansion_bus() = default;
-
-		/// @brief Retrieve the path to the configuration file.
-		/// 
-		/// @return A copy of the path to the configuration file.
-		virtual [[nodiscard]] path_type configuration_path() const = 0;
+		virtual ~expansion_port_bus() = default;
 
 		/// @brief Requests the emulated system be reset.
 		///
@@ -95,21 +77,6 @@ namespace vcc::bus
 		/// 
 		/// @return The value at the specified address.
 		virtual [[nodiscard]] unsigned char read_memory_byte(unsigned short address) = 0;
-
-		/// @brief Adds an item to the cartridges UI menu.
-		/// 
-		/// @param text The text to display.
-		/// @param menu_id The identifier sent to the cartridge instance when the item is selected.
-		/// @param menu_type The type of menu item to add.
-		virtual void add_menu_item(const char* text, int menu_id, MenuItemType menu_type) = 0;
-
-		/// @brief Retrieves the path to where system ROMS are stored.
-		/// 
-		/// This function returns a path to where ROMS used by the system and by cartridges are
-		/// stored.
-		/// 
-		/// @return A path to where system ROMS are stored.
-		virtual path_type system_rom_path() const = 0;
 	};
 
 }

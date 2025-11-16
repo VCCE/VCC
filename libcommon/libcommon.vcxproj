@@ -125,8 +125,10 @@
     <ClInclude Include="include\vcc\bus\cartridge.h" />
     <ClInclude Include="include\vcc\bus\cartridges\empty_cartridge.h" />
     <ClInclude Include="include\vcc\bus\cartridges\rom_cartridge.h" />
-    <ClInclude Include="include\vcc\bus\expansion_bus.h" />
+    <ClInclude Include="include\vcc\bus\expansion_port_ui.h" />
+    <ClInclude Include="include\vcc\bus\expansion_port_bus.h" />
     <ClInclude Include="include\vcc\bus\cartridge_factory.h" />
+    <ClInclude Include="include\vcc\bus\expansion_port_host.h" />
     <ClInclude Include="include\vcc\bus\interrupts.h" />
     <ClInclude Include="include\vcc\common\DialogOps.h" />
     <ClInclude Include="include\vcc\detail\exports.h" />

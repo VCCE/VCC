@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/expansion_bus.h"
+#include "vcc/bus/expansion_port_bus.h"
 #include <Windows.h>
 #include <memory>
 #include <array>

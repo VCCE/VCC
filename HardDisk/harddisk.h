@@ -16,9 +16,10 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/expansion_bus.h"
+#include "vcc/bus/expansion_port_host.h"
+#include "vcc/bus/expansion_port_ui.h"
+#include "vcc/bus/expansion_port_bus.h"
 #include "vcc/devices/rom/rom_image.h"
 #include <memory>
 #include <Windows.h>
@@ -28,11 +29,15 @@ class vcc_hard_disk_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using expansion_bus_type = ::vcc::bus::expansion_bus;
+	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
+	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
+	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
 	using rom_image_type = ::vcc::devices::rom::rom_image;
 
 	vcc_hard_disk_cartridge(
-		std::unique_ptr<expansion_bus_type> bus,
+		std::unique_ptr<expansion_port_host_type> host,
+		std::unique_ptr<expansion_port_ui_type> ui,
+		std::unique_ptr<expansion_port_bus_type> bus,
 		HINSTANCE module_instance);
 
 	/// @inheritdoc
@@ -62,7 +67,9 @@ private:
 
 private:
 
-	const std::unique_ptr<expansion_bus_type> bus_;
+	const std::unique_ptr<expansion_port_host_type> host_;
+	const std::unique_ptr<expansion_port_ui_type> ui_;
+	const std::unique_ptr<expansion_port_bus_type> bus_;
 	const HINSTANCE module_instance_;
 };
 

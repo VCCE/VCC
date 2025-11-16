@@ -20,7 +20,9 @@
 ///
 /// Contains functions for loading various types of cartridge files.
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/expansion_bus.h"
+#include "vcc/bus/expansion_port_host.h"
+#include "vcc/bus/expansion_port_ui.h"
+#include "vcc/bus/expansion_port_bus.h"
 #include "vcc/utils/dll_deleter.h"
 #include <string>
 #include <memory>
@@ -109,7 +111,9 @@ namespace vcc::utils
 	/// @throws std::invalid_argument if `bus` is null.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::expansion_bus> bus);
+		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
+		std::unique_ptr<::vcc::bus::expansion_port_bus> bus);
 
 	/// @brief Load a shared library as a cartridge.
 	/// 
@@ -123,7 +127,9 @@ namespace vcc::utils
 	/// @throws std::invalid_argument if `bus` is null.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::expansion_bus> bus);
+		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
+		std::unique_ptr<::vcc::bus::expansion_port_bus> bus);
 
 	/// @brief Load a cartridge file.
 	/// 
@@ -137,7 +143,9 @@ namespace vcc::utils
 	/// @throws std::invalid_argument if `bus` is null.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::expansion_bus> bus);
+		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
+		std::unique_ptr<::vcc::bus::expansion_port_bus> bus);
 
 	/// @brief Retrieve a string describing a cartridge loader error.
 	/// 

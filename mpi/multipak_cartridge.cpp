@@ -16,7 +16,9 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "multipak_cartridge.h"
-#include "multipak_cartridge_context.h"
+#include "multipak_expansion_slot_host.h"
+#include "multipak_expansion_slot_ui.h"
+#include "multipak_expansion_slot_bus.h"
 #include "resource.h"
 #include "vcc/utils/winapi.h"
 #include "vcc/utils/filesystem.h"
@@ -37,10 +39,14 @@ namespace
 
 
 multipak_cartridge::multipak_cartridge(
-	std::unique_ptr<expansion_bus_type> bus,
+	std::unique_ptr<expansion_port_host_type> host,
+	std::unique_ptr<expansion_port_ui_type> ui,
+	std::unique_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance,
 	multipak_configuration& configuration)
 	:
+	host_(move(host)),
+	ui_(move(ui)),
 	bus_(move(bus)),
 	module_instance_(module_instance),
 	configuration_(configuration),
@@ -288,7 +294,9 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 {
 	auto loadedCartridge(vcc::utils::load_cartridge(
 		filename,
-		std::make_unique<multipak_expansion_bus>(slot, *bus_, *this)));
+		std::make_unique<multipak_expansion_slot_host>(slot, *host_, *this),
+		std::make_unique<multipak_expansion_slot_ui>(slot, *this),
+		std::make_unique<multipak_expansion_slot_bus>(slot, *bus_, *this)));
 	if (loadedCartridge.load_result != mount_status_type::success)
 	{
 		return loadedCartridge.load_result;
@@ -369,14 +377,14 @@ void multipak_cartridge::build_menu()
 	vcc::utils::section_locker lock(mutex_);
 
 	// Init the menu, establish MPI config control, build slot menus, then draw it.
-	bus_->add_menu_item("", MID_BEGIN, MIT_Head);
-	bus_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	bus_->add_menu_item("MPI Config", ControlId(19), MIT_StandAlone);
+	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
+	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	ui_->add_menu_item("MPI Config", ControlId(19), MIT_StandAlone);
 	for (int slot = 3; slot >= 0; slot--)
 	{
-		slots_[slot].enumerate_menu_items(*bus_);
+		slots_[slot].accept(*ui_);
 	}
-	bus_->add_menu_item("", MID_FINISH, MIT_Head);  // Finish draws the entire menu
+	ui_->add_menu_item("", MID_FINISH, MIT_Head);  // Finish draws the entire menu
 }
 
 

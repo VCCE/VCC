@@ -1,20 +1,20 @@
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
-
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
+////////////////////////////////////////////////////////////////////////////////
+//	Copyright 2015 by Joseph Forgione
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	modify it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or (at your
+//	option) any later version.
+//	
+//	VCC (Virtual Color Computer) is distributed in the hope that it will be
+//	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+//	Public License for more details.
+//	
+//	You should have received a copy of the GNU General Public License along with
+//	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////////
 
 // hardisk.cpp : Defines the entry point for the DLL application.
 #include "harddisk.h"
@@ -58,9 +58,13 @@ LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 
 
 vcc_hard_disk_cartridge::vcc_hard_disk_cartridge(
-	std::unique_ptr<expansion_bus_type> bus,
+	std::unique_ptr<expansion_port_host_type> host,
+	std::unique_ptr<expansion_port_ui_type> ui,
+	std::unique_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)
 	:
+	host_(move(host)),
+	ui_(move(ui)),
 	bus_(move(bus)),
 	module_instance_(module_instance)
 { }
@@ -84,7 +88,7 @@ vcc_hard_disk_cartridge::description_type vcc_hard_disk_cartridge::description()
 
 void vcc_hard_disk_cartridge::start()
 {
-	strcpy(IniFile, bus_->configuration_path().c_str());
+	strcpy(IniFile, host_->configuration_path().c_str());
 
 	LoadConfig();
 	ds1315_rtc.set_read_only(ClockReadOnly);
@@ -309,27 +313,27 @@ void vcc_hard_disk_cartridge::BuildCartridgeMenu()
 	char TempMsg[512] = "";
 	char TempBuf[MAX_PATH] = "";
 
-	bus_->add_menu_item("", MID_BEGIN, MIT_Head);
-	bus_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
+	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
 
-	bus_->add_menu_item("HD Drive 0", MID_ENTRY, MIT_Head);
-	bus_->add_menu_item("Insert", ControlId(10), MIT_Slave);
+	ui_->add_menu_item("HD Drive 0", MID_ENTRY, MIT_Head);
+	ui_->add_menu_item("Insert", ControlId(10), MIT_Slave);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHDfile0);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	bus_->add_menu_item(TempMsg, ControlId(11), MIT_Slave);
+	ui_->add_menu_item(TempMsg, ControlId(11), MIT_Slave);
 
-	bus_->add_menu_item("HD Drive 1", MID_ENTRY, MIT_Head);
-	bus_->add_menu_item("Insert", ControlId(12), MIT_Slave);
+	ui_->add_menu_item("HD Drive 1", MID_ENTRY, MIT_Head);
+	ui_->add_menu_item("Insert", ControlId(12), MIT_Slave);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHDfile1);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	bus_->add_menu_item(TempMsg, ControlId(13), MIT_Slave);
+	ui_->add_menu_item(TempMsg, ControlId(13), MIT_Slave);
 
-	bus_->add_menu_item("HD Config", ControlId(14), MIT_StandAlone);
-	bus_->add_menu_item("", MID_FINISH, MIT_Head);
+	ui_->add_menu_item("HD Config", ControlId(14), MIT_StandAlone);
+	ui_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 // Dialog for creating a new hard disk

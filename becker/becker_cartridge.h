@@ -19,7 +19,9 @@
 #include "configuration_dialog.h"
 #include "vcc/devices/serial/beckerport.h"
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/expansion_bus.h"
+#include "vcc/bus/expansion_port_host.h"
+#include "vcc/bus/expansion_port_ui.h"
+#include "vcc/bus/expansion_port_bus.h"
 #include <memory>
 #include <Windows.h>
 
@@ -31,14 +33,18 @@ class becker_cartridge
 {
 public:
 
-	using expansion_bus_type = ::vcc::bus::expansion_bus;
+	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
+	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
+	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
 	using becker_device_type = ::vcc::devices::serial::Becker;
 
 
 public:
 
 	becker_cartridge(
-		std::unique_ptr<expansion_bus_type> bus,
+		std::unique_ptr<expansion_port_host_type> host,
+		std::unique_ptr<expansion_port_ui_type> ui,
+		std::unique_ptr<expansion_port_bus_type> bus,
 		HINSTANCE module_instance);
 
 	name_type name() const override;
@@ -81,7 +87,9 @@ private:
 
 	static const inline std::string configuration_section_id_ = "DW Becker";
 
-	const std::unique_ptr<expansion_bus_type> bus_;
+	const std::unique_ptr<expansion_port_host_type> host_;
+	const std::unique_ptr<expansion_port_ui_type> ui_;
+	const std::unique_ptr<expansion_port_bus_type> bus_;
 	const HINSTANCE module_instance_;
 	configuration_dialog configuration_dialog_;
 	becker_device_type gBecker;

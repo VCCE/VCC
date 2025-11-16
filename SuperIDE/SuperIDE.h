@@ -1,8 +1,27 @@
+////////////////////////////////////////////////////////////////////////////////
+//	Copyright 2015 by Joseph Forgione
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	modify it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or (at your
+//	option) any later version.
+//	
+//	VCC (Virtual Color Computer) is distributed in the hope that it will be
+//	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+//	Public License for more details.
+//	
+//	You should have received a copy of the GNU General Public License along with
+//	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/devices/psg/sn76496.h"
 #include "vcc/devices/rom/banked_rom_image.h"
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/expansion_bus.h"
+#include "vcc/bus/expansion_port_host.h"
+#include "vcc/bus/expansion_port_ui.h"
+#include "vcc/bus/expansion_port_bus.h"
 #include <memory>
 #include <Windows.h>
 
@@ -11,7 +30,9 @@ class superide_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using expansion_bus_type = ::vcc::bus::expansion_bus;
+	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
+	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
+	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
 	using path_type = std::string;
 	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
 
@@ -19,7 +40,9 @@ public:
 public:
 
 	superide_cartridge(
-		std::unique_ptr<expansion_bus_type> bus,
+		std::unique_ptr<expansion_port_host_type> host,
+		std::unique_ptr<expansion_port_ui_type> ui,
+		std::unique_ptr<expansion_port_bus_type> bus,
 		HINSTANCE module_instance);
 
 	name_type name() const override;
@@ -45,6 +68,8 @@ private:
 
 private:
 
-	const std::unique_ptr<expansion_bus_type> bus_;
+	const std::unique_ptr<expansion_port_host_type> host_;
+	const std::unique_ptr<expansion_port_ui_type> ui_;
+	const std::unique_ptr<expansion_port_bus_type> bus_;
 	const HINSTANCE module_instance_;
 };

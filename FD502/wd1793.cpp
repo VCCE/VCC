@@ -27,17 +27,17 @@
 #include <stdlib.h>
 /****************Fuction Protos for this Module************/
 
-unsigned char GetBytefromSector (::vcc::bus::expansion_bus& bus);
-unsigned char GetBytefromAddress(::vcc::bus::expansion_bus& bus);
-unsigned char GetBytefromTrack  (::vcc::bus::expansion_bus& bus);
-unsigned char (*GetBytefromDisk)(::vcc::bus::expansion_bus&)=&GetBytefromSector;
+unsigned char GetBytefromSector (::vcc::bus::expansion_port_bus& bus);
+unsigned char GetBytefromAddress(::vcc::bus::expansion_port_bus& bus);
+unsigned char GetBytefromTrack  (::vcc::bus::expansion_port_bus& bus);
+unsigned char (*GetBytefromDisk)(::vcc::bus::expansion_port_bus&)=&GetBytefromSector;
 
-unsigned char WriteBytetoSector (::vcc::bus::expansion_bus& bus, unsigned char);
-unsigned char WriteBytetoTrack  (::vcc::bus::expansion_bus& bus, unsigned char);
-unsigned char (*WriteBytetoDisk)(::vcc::bus::expansion_bus&, unsigned char)=&WriteBytetoSector;
+unsigned char WriteBytetoSector (::vcc::bus::expansion_port_bus& bus, unsigned char);
+unsigned char WriteBytetoTrack  (::vcc::bus::expansion_port_bus& bus, unsigned char);
+unsigned char (*WriteBytetoDisk)(::vcc::bus::expansion_port_bus&, unsigned char)=&WriteBytetoSector;
 
 unsigned char MountDisk(const char *filename,unsigned char);
-void DispatchCommand(::vcc::bus::expansion_bus& bus, unsigned char);
+void DispatchCommand(::vcc::bus::expansion_port_bus& bus, unsigned char);
 void DecodeControlReg(unsigned char);
 void SetType1Flags(unsigned char);
 void SetType2Flags(unsigned char);
@@ -50,7 +50,7 @@ long WriteTrack (unsigned char,unsigned char,unsigned char,const unsigned char *
 
 unsigned short ccitt_crc16(unsigned short crc, const unsigned char *, unsigned short );
 long GetSectorInfo (SectorInfo *,const unsigned char *);
-void CommandDone(::vcc::bus::expansion_bus& bus);
+void CommandDone(::vcc::bus::expansion_port_bus& bus);
 extern unsigned char PhysicalDriveA,PhysicalDriveB;
 bool FormatTrack (HANDLE , BYTE , BYTE,BYTE );
 bool CmdFormat (HANDLE , PFD_FORMAT_PARAMS , ULONG );
@@ -105,7 +105,7 @@ std::string get_mounted_disk_filename(::std::size_t drive_index)
 }
 
 /*************************************************************/
-unsigned char disk_io_read(::vcc::bus::expansion_bus& bus, unsigned char port)
+unsigned char disk_io_read(::vcc::bus::expansion_port_bus& bus, unsigned char port)
 {
 	unsigned char temp;
 
@@ -139,7 +139,7 @@ unsigned char disk_io_read(::vcc::bus::expansion_bus& bus, unsigned char port)
 	return temp;
 }
 
-void disk_io_write(::vcc::bus::expansion_bus& bus, unsigned char data,unsigned char port)
+void disk_io_write(::vcc::bus::expansion_port_bus& bus, unsigned char data,unsigned char port)
 {
 	switch (port)
 	{
@@ -668,7 +668,7 @@ long ReadTrack (	unsigned char Side,		//0 or 1
 }
 
 //This gets called at the end of every scan line so the controller has acurate timing.
-void PingFdc(::vcc::bus::expansion_bus& bus)
+void PingFdc(::vcc::bus::expansion_port_bus& bus)
 {
 	static char wobble=0;
 	if (MotorOn==0)
@@ -851,7 +851,7 @@ void PingFdc(::vcc::bus::expansion_bus& bus)
 	return;
 }
 
-void DispatchCommand(::vcc::bus::expansion_bus& bus, unsigned char Tmp)
+void DispatchCommand(::vcc::bus::expansion_port_bus& bus, unsigned char Tmp)
 {
 	unsigned char Command= (Tmp >>4);
 	if ( (CurrentCommand !=IDLE) & (Command != 13) ) 
@@ -972,7 +972,7 @@ void DispatchCommand(::vcc::bus::expansion_bus& bus, unsigned char Tmp)
 	return;
 }
 
-unsigned char GetBytefromSector (::vcc::bus::expansion_bus& bus)
+unsigned char GetBytefromSector (::vcc::bus::expansion_port_bus& bus)
 {
 	unsigned char RetVal=0;
 
@@ -1011,7 +1011,7 @@ unsigned char GetBytefromSector (::vcc::bus::expansion_bus& bus)
 	return RetVal;
 }
 
-unsigned char GetBytefromAddress (::vcc::bus::expansion_bus& bus)
+unsigned char GetBytefromAddress (::vcc::bus::expansion_port_bus& bus)
 {
 	unsigned char RetVal=0;
 	unsigned short Crc=0;
@@ -1071,7 +1071,7 @@ unsigned char GetBytefromAddress (::vcc::bus::expansion_bus& bus)
 	return RetVal;
 }
 
-unsigned char GetBytefromTrack (::vcc::bus::expansion_bus& bus)
+unsigned char GetBytefromTrack (::vcc::bus::expansion_port_bus& bus)
 {
 	unsigned char RetVal=0;
 
@@ -1109,7 +1109,7 @@ unsigned char GetBytefromTrack (::vcc::bus::expansion_bus& bus)
 	return RetVal;
 }
 
-unsigned char WriteBytetoSector (::vcc::bus::expansion_bus& bus, unsigned char Tmp)
+unsigned char WriteBytetoSector (::vcc::bus::expansion_port_bus& bus, unsigned char Tmp)
 {
 	unsigned long BytesRead=0,Result=0;
 	long FileOffset=0,RetVal=0;
@@ -1174,7 +1174,7 @@ unsigned char WriteBytetoSector (::vcc::bus::expansion_bus& bus, unsigned char T
 	}
 	return 0;
 }
-unsigned char WriteBytetoTrack (::vcc::bus::expansion_bus& bus, unsigned char Tmp)
+unsigned char WriteBytetoTrack (::vcc::bus::expansion_port_bus& bus, unsigned char Tmp)
 {
 	long RetVal=0;
 	if (TransferBufferSize==0)
@@ -1286,7 +1286,7 @@ long GetSectorInfo (SectorInfo *Sector,const unsigned char *TempBuffer)
 
 }
 
-void CommandDone(::vcc::bus::expansion_bus& bus)
+void CommandDone(::vcc::bus::expansion_port_bus& bus)
 {
 	if (InteruptEnable)
 		bus.assert_interrupt(INT_NMI,IS_NMI);

@@ -17,14 +17,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "../resource/resource.h"
 #include "vcc/bus/cartridges/rom_cartridge.h"
+#include "vcc/bus/cartridge_factory.h"
 #include "vcc/utils/cartridge_loader.h"
 #include "vcc/utils/winapi.h"
-#include "vcc/bus/cartridge_factory.h"
+#include "vcc/utils/filesystem.h"
 #include <vector>
 #include <fstream>
 #include <iterator>
 #include <map>
-#include <vcc/utils/filesystem.h>
 
 
 extern HINSTANCE gModuleInstance;
@@ -67,7 +67,9 @@ namespace vcc::utils
 
 	cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::expansion_bus> bus)
+		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
+		std::unique_ptr<::vcc::bus::expansion_port_bus> bus)
 	{
 		if (bus == nullptr)
 		{
@@ -105,7 +107,9 @@ namespace vcc::utils
 
 	cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::expansion_bus> bus)
+		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
+		std::unique_ptr<::vcc::bus::expansion_port_bus> bus)
 	{
 		if (bus == nullptr)
 		{
@@ -130,12 +134,12 @@ namespace vcc::utils
 			return { nullptr, nullptr, cartridge_loader_status::unsupported_api };
 		}
 
-		const auto factoryAccessor(reinterpret_cast<::vcc::bus::GetPakFactoryFunction>(GetProcAddress(
+		const auto factoryAccessor(reinterpret_cast<::vcc::bus::create_cartridge_factory_prototype>(GetProcAddress(
 			details.handle.get(),
 			"GetPakFactory")));
 		if (factoryAccessor != nullptr)
 		{
-			details.cartridge = factoryAccessor()(move(bus));
+			details.cartridge = factoryAccessor()(move(host), move(ui), move(bus));
 			details.load_result = cartridge_loader_status::success;
 
 			return details;
@@ -146,7 +150,9 @@ namespace vcc::utils
 
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::expansion_bus> bus)
+		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
+		std::unique_ptr<::vcc::bus::expansion_port_bus> bus)
 	{
 		if (bus == nullptr)
 		{
@@ -160,12 +166,10 @@ namespace vcc::utils
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 
 		case cartridge_file_type::rom_image:	//	File is a ROM image
-			return load_rom_cartridge(filename, move(bus));
+			return load_rom_cartridge(filename, move(host), move(ui), move(bus));
 
 		case cartridge_file_type::library:		//	File is a DLL
-			return load_library_cartridge(
-				filename,
-				move(bus));
+			return load_library_cartridge(filename, move(host), move(ui), move(bus));
 		}
 	}
 

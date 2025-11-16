@@ -16,9 +16,10 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "vcc/utils/cartridge_loader.h"
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/expansion_bus.h"
+#include "vcc/bus/expansion_port_ui.h"
+#include "vcc/bus/expansion_port_bus.h"
+#include "vcc/utils/cartridge_loader.h"
 #include "../CartridgeMenu.h"
 
 
@@ -29,7 +30,8 @@ namespace vcc::modules::mpi
 	{
 	public:
 
-		using expansion_bus_type = ::vcc::bus::expansion_bus;
+		using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
+		using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 		using cartridge_type = ::vcc::bus::cartridge;
 		using cartridge_ptr_type = std::unique_ptr<cartridge_type>;
 		using name_type = cartridge_type::name_type;
@@ -150,11 +152,12 @@ namespace vcc::modules::mpi
 			menu_items_.push_back(item);
 		}
 
-		void enumerate_menu_items(expansion_bus_type& bus) const
+		// FIXME-CHET: This should take a function or other callable object
+		void accept(expansion_port_ui_type& ui) const
 		{
 			for (const auto& item : menu_items_)
 			{
-				bus.add_menu_item(item.name.c_str(), item.menu_id, item.type);
+				ui.add_menu_item(item.name.c_str(), item.menu_id, item.type);
 			}
 		}
 

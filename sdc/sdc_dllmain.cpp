@@ -1,18 +1,17 @@
-
 ////////////////////////////////////////////////////////////////////////////////
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
-//
+//	
 //	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
 //	modify it under the terms of the GNU General Public License as published by
 //	the Free Software Foundation, either version 3 of the License, or (at your
 //	option) any later version.
-//
+//	
 //	VCC (Virtual Color Computer) is distributed in the hope that it will be
 //	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 //	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 //	Public License for more details.
-//
+//	
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
@@ -50,24 +49,30 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 
 
 //
-extern "C" __declspec(dllexport) ::vcc::bus::CreatePakFactoryFunction GetPakFactory()
+extern "C" __declspec(dllexport) ::vcc::bus::cartridge_factory_prototype GetPakFactory()
 {
 	return [](
-		std::unique_ptr<::vcc::bus::expansion_bus> bus) -> std::unique_ptr<::vcc::bus::cartridge>
+		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
+		std::unique_ptr<::vcc::bus::expansion_port_bus> bus) -> ::vcc::bus::cartridge_factory_result
 		{
-			return std::make_unique<sdc_cartridge>(move(bus), gModuleInstance);
+			return std::make_unique<sdc_cartridge>(move(host), move(ui), move(bus), gModuleInstance);
 		};
 }
 
 static_assert(
-	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::GetPakFactoryFunction>,
+	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::create_cartridge_factory_prototype>,
 	"GMC GetPakFactory does not have the correct signature.");
 
 
 sdc_cartridge::sdc_cartridge(
-	std::unique_ptr<expansion_bus_type> bus,
+	std::unique_ptr<expansion_port_host_type> host,
+	std::unique_ptr<expansion_port_ui_type> ui,
+	std::unique_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)
 	:
+	host_(move(host)),
+	ui_(move(ui)),
 	bus_(move(bus)),
 	module_instance_(module_instance)
 {
@@ -91,7 +96,7 @@ sdc_cartridge::description_type sdc_cartridge::description() const
 
 void sdc_cartridge::start()
 {
-    strcpy(IniFile, bus_->configuration_path().c_str());
+    strcpy(IniFile, host_->configuration_path().c_str());
 
     LoadConfig();
     BuildCartridgeMenu();

@@ -84,7 +84,7 @@ static char DStatus[128]="";
 static char Status = HD_PWRUP;
 unsigned long BytesMoved=0;
 
-void HDcommand(::vcc::bus::expansion_bus& bus, unsigned char);
+void HDcommand(::vcc::bus::expansion_port_bus& bus, unsigned char);
 
 int MountHD(const char* FileName, int drive)
 {
@@ -137,11 +137,11 @@ void UnmountHD(int drive)
 }
 
 // Clear drive select on reset
-void VhdReset(::vcc::bus::expansion_bus& bus) {
+void VhdReset(::vcc::bus::expansion_port_bus& bus) {
 	bus.write_memory_byte(0,0xFF86);
 }
 
-void HDcommand(::vcc::bus::expansion_bus& bus, unsigned char Command) {
+void HDcommand(::vcc::bus::expansion_port_bus& bus, unsigned char Command) {
 
     unsigned short Temp=0;
 
@@ -247,7 +247,7 @@ void DiskStatus(char* text_buffer, size_t buffer_size)
     return;
 }
 
-void IdeWrite(::vcc::bus::expansion_bus& bus, unsigned char data,unsigned char port)
+void IdeWrite(::vcc::bus::expansion_port_bus& bus, unsigned char data,unsigned char port)
 {
     switch (port-0x80) {
     case 0:

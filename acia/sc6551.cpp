@@ -240,7 +240,7 @@ DWORD WINAPI sc6551_output_thread(LPVOID /*param*/)
 //
 //------------------------------------------------------------------------
 
-void sc6551_heartbeat(::vcc::bus::expansion_bus& bus)
+void sc6551_heartbeat(::vcc::bus::expansion_port_bus& bus)
 {
     // Countdown to receive next byte
     if (HBcounter-- < 1) {

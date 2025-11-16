@@ -32,7 +32,9 @@ class multipak_cartridge
 {
 public:
 
-	using expansion_bus_type = ::vcc::bus::expansion_bus;
+	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
+	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
+	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using mount_status_type = ::vcc::utils::cartridge_loader_status;
 	using slot_id_type = std::size_t;
 	using path_type = std::string;
@@ -44,7 +46,9 @@ public:
 public:
 
 	multipak_cartridge(
-		std::unique_ptr<expansion_bus_type> bus,
+		std::unique_ptr<expansion_port_host_type> host,
+		std::unique_ptr<expansion_port_ui_type> ui,
+		std::unique_ptr<expansion_port_bus_type> bus,
 		HINSTANCE module_instance,
 		multipak_configuration& configuration);
 	multipak_cartridge(const multipak_cartridge&) = delete;
@@ -98,7 +102,9 @@ protected:
 	void assert_cartridge_line(slot_id_type slot, bool line_state);
 	void append_menu_item(slot_id_type slot, menu_item_type item);
 
-	friend class multipak_expansion_bus;
+	friend class multipak_expansion_slot_host;
+	friend class multipak_expansion_slot_ui;
+	friend class multipak_expansion_slot_bus;
 
 
 private:
@@ -108,7 +114,9 @@ private:
 	static const size_t default_slot_register_value = 0xff;
 
 	vcc::utils::critical_section mutex_;
-	std::shared_ptr<expansion_bus_type> bus_;
+	const std::unique_ptr<expansion_port_host_type> host_;
+	const std::unique_ptr<expansion_port_ui_type> ui_;
+	const std::shared_ptr<expansion_port_bus_type> bus_;
 	const HINSTANCE module_instance_;
 	multipak_configuration& configuration_;
 	std::array<::vcc::modules::mpi::cartridge_slot, 4> slots_;

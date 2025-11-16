@@ -1,21 +1,20 @@
-/*
-    Copyright 2015 by Joseph Forgione
-    This file is part of VCC (Virtual Color Computer).
-
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
-
+////////////////////////////////////////////////////////////////////////////////
+//	Copyright 2015 by Joseph Forgione
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	modify it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or (at your
+//	option) any later version.
+//	
+//	VCC (Virtual Color Computer) is distributed in the hope that it will be
+//	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+//	Public License for more details.
+//	
+//	You should have received a copy of the GNU General Public License along with
+//	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////////
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "tcc1014registers.h"
@@ -30,11 +29,11 @@
 #include "vcc/utils/winapi.h"
 #include "vcc/utils/logger.h"
 #include "vcc/utils/FileOps.h"
+#include "vcc/utils/filesystem.h"
 #include "vcc/common/DialogOps.h"
 #include <fstream>
 #include <Windows.h>
 #include <commdlg.h>
-#include <vcc/utils/filesystem.h>
 
 
 using cartridge_loader_status = vcc::utils::cartridge_loader_status;
@@ -60,17 +59,9 @@ static void PakAssertInterupt(void* host_key, Interrupt interrupt, InterruptSour
 static void PakAddMenuItem(void* host_key, const char* name, int menu_id, MenuItemType type);
 
 
-class vcc_expansion_bus : public ::vcc::bus::expansion_bus
+class vcc_expansion_port_bus : public ::vcc::bus::expansion_port_bus
 {
-	path_type configuration_path() const override
-	{
-		char path_buffer[MAX_PATH];
-
-		GetIniFilePath(path_buffer);
-
-		return path_buffer;
-	}
-
+public:
 
 	void reset() override
 	{
@@ -96,10 +87,20 @@ class vcc_expansion_bus : public ::vcc::bus::expansion_bus
 	{
 		PakAssertInterupt(interrupt, interrupt_source);
 	}
+};
 
-	void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) override
+
+class vcc_expansion_port_host : public ::vcc::bus::expansion_port_host
+{
+public:
+
+	path_type configuration_path() const override
 	{
-		CartMenuCallBack(menu_name, menu_id, menu_type);
+		char path_buffer[MAX_PATH];
+
+		GetIniFilePath(path_buffer);
+
+		return path_buffer;
 	}
 
 	path_type system_rom_path() const override
@@ -107,6 +108,16 @@ class vcc_expansion_bus : public ::vcc::bus::expansion_bus
 		return ::vcc::utils::get_directory_from_path(::vcc::utils::get_module_path(nullptr)) + "/ROMS/";
 	}
 
+};
+
+class vcc_expansion_port_ui : public ::vcc::bus::expansion_port_ui
+{
+public:
+
+	void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) override
+	{
+		CartMenuCallBack(menu_name, menu_id, menu_type);
+	}
 };
 
 static void PakAssertCartrigeLine(void* /*host_key*/, bool line_state)
@@ -276,7 +287,9 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 {
 	cartridge_loader_result loadedCartridge(vcc::utils::load_cartridge(
 		filename,
-		std::make_unique<vcc_expansion_bus>()));
+		std::make_unique<vcc_expansion_port_host>(),
+		std::make_unique<vcc_expansion_port_ui>(),
+		std::make_unique<vcc_expansion_port_bus>()));
 	if (loadedCartridge.load_result != cartridge_loader_status::success)
 	{
 		return loadedCartridge.load_result;

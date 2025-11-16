@@ -15,38 +15,39 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "ramdisk_cartridge.h"
-#include "vcc/bus/cartridge_factory.h"
-#include <memory>
-#include <Windows.h>
+#pragma once
+#include "vcc/detail/exports.h"
+#include "vcc/bus/interrupts.h"
+#include <string>
 
 
-static HINSTANCE gModuleInstance;
-
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
+namespace vcc::bus
 {
-	if (fdwReason == DLL_PROCESS_ATTACH)
+
+	class LIBCOMMON_EXPORT expansion_port_host
 	{
-		gModuleInstance = hinstDLL;
-	}
+	public:
 
-	return true;
+		/// @brief The type used to represent paths.
+		using path_type = std::string;
+
+
+	public:
+
+		virtual ~expansion_port_host() = default;
+
+		/// @brief Retrieve the path to the configuration file.
+		/// 
+		/// @return A copy of the path to the configuration file.
+		virtual [[nodiscard]] path_type configuration_path() const = 0;
+
+		/// @brief Retrieves the path to where system ROMS are stored.
+		/// 
+		/// This function returns a path to where ROMS used by the system and by cartridges are
+		/// stored.
+		/// 
+		/// @return A path to where system ROMS are stored.
+		virtual [[nodiscard]] path_type system_rom_path() const = 0;
+	};
+
 }
-
-
-//
-extern "C" __declspec(dllexport) ::vcc::bus::cartridge_factory_prototype GetPakFactory()
-{
-	return [](
-		std::unique_ptr<::vcc::bus::expansion_port_host> host,
-		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
-		std::unique_ptr<::vcc::bus::expansion_port_bus> bus) -> ::vcc::bus::cartridge_factory_result
-		{
-			return std::make_unique<ramdisk_cartridge>(gModuleInstance);
-		};
-}
-
-static_assert(
-	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::create_cartridge_factory_prototype>,
-	"RamDisk GetPakFactory does not have the correct signature.");

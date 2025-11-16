@@ -19,7 +19,9 @@
 #include "vcc/devices/psg/sn76496.h"
 #include "vcc/devices/rom/banked_rom_image.h"
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/expansion_bus.h"
+#include "vcc/bus/expansion_port_bus.h"
+#include "vcc/bus/expansion_port_ui.h"
+#include "vcc/bus/expansion_port_host.h"
 #include <memory>
 #include <Windows.h>
 
@@ -28,7 +30,9 @@ class fd502_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using expansion_bus_type = ::vcc::bus::expansion_bus;
+	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
+	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
+	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
 	using path_type = std::string;
 	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
 
@@ -36,7 +40,9 @@ public:
 public:
 
 	fd502_cartridge(
-		std::unique_ptr<expansion_bus_type> bus,
+		std::unique_ptr<expansion_port_host_type> host,
+		std::unique_ptr<expansion_port_ui_type> ui,
+		std::unique_ptr<expansion_port_bus_type> bus,
 		HINSTANCE module_instance);
 
 	name_type name() const override;
@@ -64,7 +70,9 @@ protected:
 private:
 
 
-	const std::unique_ptr<expansion_bus_type> bus_;
+	const std::unique_ptr<expansion_port_host_type> host_;
+	const std::unique_ptr<expansion_port_ui_type> ui_;
+	const std::unique_ptr<expansion_port_bus_type> bus_;
 	const HINSTANCE module_instance_;
 
 };

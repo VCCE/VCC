@@ -16,9 +16,9 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "vcc/devices/rom/rom_image.h"
+#include "vcc/utils/filesystem.h"
 #include <fstream>
 #include <Windows.h>
-#include <vcc/utils/filesystem.h>
 
 
 namespace vcc::devices::rom

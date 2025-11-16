@@ -2,9 +2,6 @@
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
 //	
-//	This is an expansion module for the Vcc Emulator. It simulated the functions
-//	of the TRS-80 Multi-Pak Interface.
-// 
 //	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
 //	modify it under the terms of the GNU General Public License as published by
 //	the Free Software Foundation, either version 3 of the License, or (at your
@@ -43,18 +40,20 @@ BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, [[maybe_unused]] LP
 }
 
 //
-extern "C" __declspec(dllexport) ::vcc::bus::CreatePakFactoryFunction GetPakFactory()
+extern "C" __declspec(dllexport) ::vcc::bus::cartridge_factory_prototype GetPakFactory()
 {
 	return [](
-		std::unique_ptr<::vcc::bus::expansion_bus> bus) -> std::unique_ptr<::vcc::bus::cartridge>
+		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
+		std::unique_ptr<::vcc::bus::expansion_port_bus> bus) -> ::vcc::bus::cartridge_factory_result
 		{
-			gConfiguration.configuration_path(bus->configuration_path());
+			gConfiguration.configuration_path(host->configuration_path());
 
-			return std::make_unique<multipak_cartridge>(move(bus), gModuleInstance, gConfiguration);
+			return std::make_unique<multipak_cartridge>(move(host), move(ui), move(bus), gModuleInstance, gConfiguration);
 		};
 
 }
 
 static_assert(
-	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::GetPakFactoryFunction>,
+	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::create_cartridge_factory_prototype>,
 	"MPI GetPakFactory does not have the correct signature.");

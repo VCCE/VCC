@@ -1,3 +1,20 @@
+////////////////////////////////////////////////////////////////////////////////
+//	Copyright 2015 by Joseph Forgione
+//	This file is part of VCC (Virtual Color Computer).
+//	
+//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	modify it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or (at your
+//	option) any later version.
+//	
+//	VCC (Virtual Color Computer) is distributed in the hope that it will be
+//	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+//	Public License for more details.
+//	
+//	You should have received a copy of the GNU General Public License along with
+//	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////////
 #include "gmc_cartridge.h"
 #include "resource.h"
 #include "vcc/common/DialogOps.h"
@@ -31,10 +48,14 @@ const gmc_cartridge::path_type gmc_cartridge::configuration_section_id_("GMC-SN7
 const gmc_cartridge::path_type gmc_cartridge::configuration_rom_key_id_("ROM");
 
 gmc_cartridge::gmc_cartridge(
-	std::unique_ptr<expansion_bus_type> bus,
+	std::unique_ptr<expansion_port_host_type> host,
+	std::unique_ptr<expansion_port_ui_type> ui,
+	std::unique_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)
 	:
 	bus_(move(bus)),
+	ui_(move(ui)),
+	host_(move(host)),
 	module_instance_(module_instance)
 {
 }
@@ -57,7 +78,7 @@ gmc_cartridge::description_type gmc_cartridge::description() const
 
 void gmc_cartridge::start()
 {
-	::vcc::utils::persistent_value_store settings(bus_->configuration_path());
+	::vcc::utils::persistent_value_store settings(host_->configuration_path());
 	const auto selected_file(settings.read(configuration_section_id_, configuration_rom_key_id_));
 
 	load_rom(selected_file, false);
@@ -139,7 +160,7 @@ void gmc_cartridge::menu_item_clicked(unsigned char menuId)
 			return;
 		}
 
-		::vcc::utils::persistent_value_store settings(bus_->configuration_path());
+		::vcc::utils::persistent_value_store settings(host_->configuration_path());
 		settings.write(
 			configuration_section_id_,
 			configuration_rom_key_id_,
@@ -153,10 +174,10 @@ void gmc_cartridge::menu_item_clicked(unsigned char menuId)
 
 void gmc_cartridge::build_menu()
 {
-	bus_->add_menu_item("", MID_BEGIN, MIT_Head);
-	bus_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	bus_->add_menu_item("Select GMC ROM", ControlId(menu_item_ids::select_rom), MIT_StandAlone);
-	bus_->add_menu_item("", MID_FINISH, MIT_Head);
+	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
+	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	ui_->add_menu_item("Select GMC ROM", ControlId(menu_item_ids::select_rom), MIT_StandAlone);
+	ui_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 void gmc_cartridge::load_rom(const path_type& filename, bool reset_on_load)

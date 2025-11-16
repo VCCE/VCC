@@ -17,7 +17,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/expansion_bus.h"
+#include "vcc/bus/expansion_port_host.h"
+#include "vcc/bus/expansion_port_ui.h"
+#include "vcc/bus/expansion_port_bus.h"
 #include "vcc/devices/rom/rom_image.h"
 #include "resource.h"
 #include <stdio.h>
@@ -31,11 +33,15 @@ class rs232pak_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using expansion_bus_type = ::vcc::bus::expansion_bus;
+	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
+	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
+	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using rom_image_type = ::vcc::devices::rom::rom_image;
 
 	rs232pak_cartridge(
-		std::unique_ptr<expansion_bus_type> bus,
+		std::unique_ptr<expansion_port_host_type> host,
+		std::unique_ptr<expansion_port_ui_type> ui,
+		std::unique_ptr<expansion_port_bus_type> bus,
 		HINSTANCE module_instance);
 
 	/// @inheritdoc
@@ -67,9 +73,12 @@ private:
 	//void LoadConfig();
 	void BuildCartridgeMenu();
 
+
 private:
 
-	const std::unique_ptr<expansion_bus_type> bus_;
+	const std::unique_ptr<expansion_port_host_type> host_;
+	const std::unique_ptr<expansion_port_ui_type> ui_;
+	const std::unique_ptr<expansion_port_bus_type> bus_;
 	const HINSTANCE module_instance_;
 };
 
@@ -118,7 +127,7 @@ extern void* const& gHostKey;
 // Device
 extern void sc6551_init();
 extern void sc6551_close();
-void sc6551_heartbeat(::vcc::bus::expansion_bus& bus);
+void sc6551_heartbeat(::vcc::bus::expansion_port_bus& bus);
 extern unsigned char sc6551_read(unsigned char data);
 extern void sc6551_write(unsigned char data, unsigned short port);
 
