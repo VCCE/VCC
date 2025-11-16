@@ -28,7 +28,6 @@
 #include "vcc/devices/rtc/ds1315.h"
 #include "vcc/utils/logger.h"
 #include "vcc/common/DialogOps.h"
-#include "vcc/bus/cartridge_capi.h"
 #include "vcc/utils/persistent_value_store.h"
 #include "../CartridgeMenu.h"
 #include "resource.h"
@@ -63,14 +62,14 @@ char MPIPath[MAX_PATH] = {};
 //-------------------------------------------------------------
 // Generate menu for configuring the SDC
 //-------------------------------------------------------------
-void BuildCartridgeMenu()
+void sdc_cartridge::BuildCartridgeMenu()
 {
     DLOG_C("BuildCartridgeMenu()\n");
-    CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
-    CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
-    CartMenuCallback(gHostKey, "SDC Config", ControlId(10), MIT_StandAlone);
-    CartMenuCallback(gHostKey, "SDC Control", ControlId(11), MIT_StandAlone);
-    CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
+    context_->add_menu_item("", MID_BEGIN, MIT_Head);
+    context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+    context_->add_menu_item("SDC Config", ControlId(10), MIT_StandAlone);
+    context_->add_menu_item("SDC Control", ControlId(11), MIT_StandAlone);
+    context_->add_menu_item("", MID_FINISH, MIT_Head);
     DLOG_C("ret\n");
 }
 
@@ -97,7 +96,8 @@ SDC_Control(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case ID_NEXT:
-            MountNext (0);
+			// FIXME-CHET: We need access to the cartridge but the UI is not ready for it.
+            //MountNext (0);
             SetFocus(GetParent(hDlg));
             return TRUE;
             break;

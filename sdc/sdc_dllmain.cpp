@@ -24,12 +24,12 @@
 
 #include <Windows.h>
 
+#include "vcc/bus/cartridge_factory.h"
 #include "vcc/devices/rtc/ds1315.h"
 #include "vcc/utils/logger.h"
 #include "vcc/utils/winapi.h"
 #include "vcc/common/DialogOps.h"
 #include "vcc/bus/interrupts.h"
-#include "vcc/bus/cartridge_capi.h"
 #include "resource.h"
 #include "sdc_cartridge.h"
 #include "sdc_configuration.h"
@@ -48,121 +48,132 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
     return TRUE;
 }
 
-extern "C"
+
+//
+extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 {
-    __declspec(dllexport) const char* PakGetName()
-    {
-        static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
-        return name.c_str();
+	return [](
+		[[maybe_unused]] std::unique_ptr<::vcc::bus::cartridge_context> context,
+		[[maybe_unused]] const cartridge_capi_context& capi_context) -> std::unique_ptr<::vcc::bus::cartridge>
+		{
+			return std::make_unique<sdc_cartridge>(move(context), gModuleInstance);
+		};
+}
+
+static_assert(
+	std::is_same_v<decltype(&GetPakFactory), GetPakFactoryFunction>,
+	"GMC GetPakFactory does not have the correct signature.");
+
+
+sdc_cartridge::sdc_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance)
+	:
+	context_(move(context)),
+	module_instance_(module_instance)
+{
+}
+
+
+sdc_cartridge::name_type sdc_cartridge::name() const
+{
+	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
+}
+
+sdc_cartridge::catalog_id_type sdc_cartridge::catalog_id() const
+{
+	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
+}
+
+sdc_cartridge::description_type sdc_cartridge::description() const
+{
+	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
+}
+
+void sdc_cartridge::start()
+{
+    strcpy(IniFile, context_->configuration_path().c_str());
+
+    LoadConfig();
+    BuildCartridgeMenu();
+}
+
+void sdc_cartridge::stop()
+{
+    CloseCartDialog(hControlDlg);
+    CloseCartDialog(hConfigureDlg);
+    hControlDlg = nullptr;
+    hConfigureDlg = nullptr;
+    CloseDrive(0);
+    CloseDrive(1);
+}
+
+// Write to port
+void sdc_cartridge::write_port(unsigned char Port, unsigned char Data)
+{
+    SDCWrite(Data,Port);
+    return;
+}
+
+// Read from port
+unsigned char sdc_cartridge::read_port(unsigned char Port)
+{
+    if (ClockEnable && ((Port==0x78) | (Port==0x79) | (Port==0x7C))) {
+        return ds1315_rtc.read_port(Port);
+    } else if ((Port > 0x3F) & (Port < 0x60)) {
+        return SDCRead(Port);
+    } else {
+        return 0;
     }
+}
 
-    __declspec(dllexport) const char* PakGetCatalogId()
+// Reset module
+void sdc_cartridge::reset()
+{
+    SDCInit();
+}
+
+//  Dll export run config dialog
+void sdc_cartridge::menu_item_clicked(unsigned char MenuID)
+{
+    switch (MenuID)
     {
-        static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
-        return catalog_id.c_str();
+    case 10:
+        if (hConfigureDlg == nullptr)  // Only create dialog once
+            hConfigureDlg = CreateDialog(gModuleInstance, (LPCTSTR) IDD_CONFIG,
+                        GetActiveWindow(), (DLGPROC) SDC_Configure);
+        ShowWindow(hConfigureDlg,1);
+        break;
+    case 11:
+        if (hControlDlg == nullptr)
+            hControlDlg = CreateDialog(gModuleInstance, (LPCTSTR) IDD_CONTROL,
+                        GetActiveWindow(), (DLGPROC) SDC_Control);
+        ShowWindow(hControlDlg,1);
+        break;
     }
+    BuildCartridgeMenu();
+    return;
+}
 
-    __declspec(dllexport) const char* PakGetDescription()
-    {
-        static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
-        return description.c_str();
+// Return SDC status.
+void sdc_cartridge::status(char* text_buffer, size_t buffer_size)
+{
+    strncpy(text_buffer,SDC_Status,buffer_size);
+    if (idle_ctr < 100) {
+        idle_ctr++;
+    } else {
+        idle_ctr = 0;
+        snprintf(SDC_Status,16,"SDC:%d idle",CurrentBank);
     }
+}
 
-    __declspec(dllexport) void PakInitialize(
-    void* const host_key,
-    const char* const configuration_path,
-    const cartridge_capi_context* const context)
-    {
-        gHostKey = host_key;
-        CartMenuCallback = context->add_menu_item;
-        MemRead8 = context->read_memory_byte;
-        MemWrite8 = context->write_memory_byte;
-        AssertInt = context->assert_interrupt;
-        strcpy(IniFile, configuration_path);
-
-        LoadConfig();
-        BuildCartridgeMenu();
-    }
-
-    __declspec(dllexport) void PakTerminate()
-    {
-        CloseCartDialog(hControlDlg);
-        CloseCartDialog(hConfigureDlg);
-        hControlDlg = nullptr;
-        hConfigureDlg = nullptr;
-        CloseDrive(0);
-        CloseDrive(1);
-    }
-
-    // Write to port
-    __declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
-    {
-        SDCWrite(Data,Port);
-        return;
-    }
-
-    // Read from port
-    __declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
-    {
-        if (ClockEnable && ((Port==0x78) | (Port==0x79) | (Port==0x7C))) {
-            return ds1315_rtc.read_port(Port);
-        } else if ((Port > 0x3F) & (Port < 0x60)) {
-            return SDCRead(Port);
-        } else {
-            return 0;
-        }
-    }
-
-    // Reset module
-    __declspec(dllexport) void PakReset()
-    {
-        SDCInit();
-    }
-
-    //  Dll export run config dialog
-    __declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
-    {
-        switch (MenuID)
-        {
-        case 10:
-            if (hConfigureDlg == nullptr)  // Only create dialog once
-                hConfigureDlg = CreateDialog(gModuleInstance, (LPCTSTR) IDD_CONFIG,
-                         GetActiveWindow(), (DLGPROC) SDC_Configure);
-            ShowWindow(hConfigureDlg,1);
-            break;
-        case 11:
-            if (hControlDlg == nullptr)
-                hControlDlg = CreateDialog(gModuleInstance, (LPCTSTR) IDD_CONTROL,
-                         GetActiveWindow(), (DLGPROC) SDC_Control);
-            ShowWindow(hControlDlg,1);
-            break;
-        }
-        BuildCartridgeMenu();
-        return;
-    }
-
-    // Return SDC status.
-    __declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
-    {
-        strncpy(text_buffer,SDC_Status,buffer_size);
-        if (idle_ctr < 100) {
-            idle_ctr++;
-        } else {
-            idle_ctr = 0;
-            snprintf(SDC_Status,16,"SDC:%d idle",CurrentBank);
-        }
-    }
-
-    // Return a byte from the current PAK ROM
-    __declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short adr)
-    {
-        adr &= 0x3FFF;
-        if (EnableBankWrite) {
-            return WriteFlashBank(adr);
-        } else {
-            BankWriteState = 0;  // Any read resets write state
-            return(PakRom[adr]);
-        }
+// Return a byte from the current PAK ROM
+unsigned char sdc_cartridge::read_memory_byte(size_type adr)
+{
+    adr &= 0x3FFF;
+    if (EnableBankWrite) {
+        return WriteFlashBank(adr);
+    } else {
+        BankWriteState = 0;  // Any read resets write state
+        return(PakRom[adr]);
     }
 }
 

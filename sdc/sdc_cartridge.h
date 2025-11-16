@@ -21,7 +21,12 @@
 // SDC simulator E J Jaquay 2025 
 //----------------------------------------------------------------------
 //
-
+#pragma once
+#include "vcc/devices/psg/sn76496.h"
+#include "vcc/devices/rom/banked_rom_image.h"
+#include "vcc/bus/cartridge.h"
+#include "vcc/bus/cartridge_context.h"
+#include <memory>
 #include <Windows.h>
 
 //======================================================================
@@ -30,31 +35,20 @@
 
 static ::vcc::devices::rtc::ds1315 ds1315_rtc;
 
-void SDCInit();
 void LoadRom(unsigned char);
-void SDCWrite(unsigned char,unsigned char);
 void MemWrite(unsigned char,unsigned short);
-unsigned char SDCRead(unsigned char port);
 unsigned char MemRead(unsigned short);
 LRESULT CALLBACK SDC_Control(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
 
 void CloseDrive(int);
 bool IsDirectory(const char *);
-unsigned char WriteFlashBank(unsigned short);
-bool MountNext(int);
 
 std::string DiskName(int);
 
 //======================================================================
 // Public Data
 //======================================================================
-
-extern void* gHostKey;
-extern PakAssertInteruptHostCallback AssertInt;
-extern PakWriteMemoryByteHostCallback MemWrite8;
-extern PakReadMemoryByteHostCallback MemRead8;
-extern PakAppendCartridgeMenuHostCallback CartMenuCallback;
 
 // Idle Status counter
 extern int idle_ctr;
@@ -78,3 +72,97 @@ extern int ClockEnable;
 
 extern char SDC_Status[16];
 
+
+
+
+class sdc_cartridge : public ::vcc::bus::cartridge
+{
+public:
+
+	using context_type = ::vcc::bus::cartridge_context;
+	using path_type = std::string;
+	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
+
+
+public:
+
+	sdc_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance);
+
+	name_type name() const override;
+	catalog_id_type catalog_id() const override;
+	description_type description() const override;
+
+	void start() override;
+	void stop() override;
+	void reset() override;
+
+	[[nodiscard]] unsigned char read_memory_byte(size_type memory_address) override;
+
+	void write_port(unsigned char port_id, unsigned char value) override;
+	unsigned char read_port(unsigned char port_id) override;
+
+	void status(char* status_buffer, size_t buffer_size) override;
+
+	void menu_item_clicked(unsigned char menu_item_id) override;
+
+
+private:
+
+	virtual void SDCInit();
+
+	virtual void BuildCartridgeMenu();
+	virtual bool MountNext(int drive);
+
+	virtual void CommandDone();
+	virtual void FloppyWriteData(unsigned char data);
+	virtual void SDCWrite(unsigned char data, unsigned char port);
+	virtual void ParseStartup();
+	virtual void SDCCommand();
+	virtual void ReadSector();
+	virtual void StreamImage();
+	virtual void WriteSector();
+	virtual bool SeekSector(unsigned char,unsigned int);
+	virtual bool ReadDrive(unsigned char,unsigned int);
+	virtual void GetDriveInfo();
+	virtual void SDCControl();
+	virtual void UpdateSD();
+	virtual void AppendPathChar(char *,char c);
+	virtual bool LoadFoundFile(struct FileRecord *);
+	virtual void MountDisk(int,const char *,int);
+	virtual void MountNewDisk(int,const char *,int);
+	virtual void OpenNew(int,const char *,int);
+	virtual void OpenFound(int,int);
+	virtual void LoadReply(const void *, int);
+	virtual void BlockReceive(unsigned char);
+	virtual char * LastErrorTxt();
+	virtual void FlashControl(unsigned char);
+	virtual void LoadDirPage();
+	virtual void SetCurDir(const char *);
+	virtual bool SearchFile(const char *);
+	virtual void InitiateDir(const char *);
+	virtual void GetFullPath(char *,const char *);
+	virtual void RenameFile(const char *);
+	virtual void KillFile(const char *);
+	virtual void MakeDirectory(const char *);
+	virtual void GetMountedImageRec();
+	virtual void GetSectorCount();
+	virtual void GetDirectoryLeaf();
+	virtual unsigned char PickReplyByte(unsigned char);
+	virtual void FloppyCommand(unsigned char);
+	virtual void FloppyRestore(unsigned char);
+	virtual void FloppySeek(unsigned char);
+	virtual void FloppyReadDisk();
+	virtual void FloppyWriteDisk();
+	virtual void FloppyTrack(unsigned char);
+	virtual void FloppySector(unsigned char);
+	virtual unsigned char FloppyStatus();
+	virtual unsigned char FloppyReadData();
+	virtual unsigned char SDCRead(unsigned char port);
+	virtual unsigned char WriteFlashBank(unsigned short adr);
+
+
+private:
+
+	const std::unique_ptr<context_type> context_;
+	const HINSTANCE module_instance_;
+};
