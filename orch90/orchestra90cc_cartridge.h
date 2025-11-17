@@ -30,7 +30,9 @@ public:
 	using context_type = ::vcc::bus::cartridge_context;
 	using rom_image_type = ::vcc::devices::rom::rom_image;
 
-	orchestra90cc_cartridge(HINSTANCE module_instance, std::unique_ptr<context_type> context);
+	orchestra90cc_cartridge(
+		std::unique_ptr<context_type> context,
+		HINSTANCE module_instance);
 
 	/// @inheritdoc
 	name_type name() const override;
@@ -64,8 +66,8 @@ protected:
 private:
 
 	static const inline std::string default_rom_filename_ = "orch90.rom";
-	const HINSTANCE module_instance_;
 	const std::unique_ptr<context_type> context_;
+	const HINSTANCE module_instance_;
 	rom_image_type rom_image_;
 	unsigned char left_channel_buffer_ = 0;
 	unsigned char right_channel_buffer_ = 0;

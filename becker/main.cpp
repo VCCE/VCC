@@ -34,15 +34,15 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 }
 
 // Establish Becker cart exports
-extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
+extern "C" __declspec(dllexport) ::vcc::bus::CreatePakFactoryFunction GetPakFactory()
 {
 	return [](
-		[[maybe_unused]] std::unique_ptr<::vcc::bus::cartridge_context> context) -> std::unique_ptr<::vcc::bus::cartridge>
+		std::unique_ptr<::vcc::bus::cartridge_context> context) -> std::unique_ptr<::vcc::bus::cartridge>
 		{
 			return std::make_unique<becker_cartridge>(move(context), gModuleInstance);
 		};
 }
 
 static_assert(
-	std::is_same_v<decltype(&GetPakFactory), GetPakFactoryFunction>,
+	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::GetPakFactoryFunction>,
 	"Becker Port GetPakFactory does not have the correct signature.");

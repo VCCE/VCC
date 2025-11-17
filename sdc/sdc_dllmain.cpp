@@ -50,21 +50,23 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 
 
 //
-extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
+extern "C" __declspec(dllexport) ::vcc::bus::CreatePakFactoryFunction GetPakFactory()
 {
 	return [](
-		[[maybe_unused]] std::unique_ptr<::vcc::bus::cartridge_context> context) -> std::unique_ptr<::vcc::bus::cartridge>
+		std::unique_ptr<::vcc::bus::cartridge_context> context) -> std::unique_ptr<::vcc::bus::cartridge>
 		{
 			return std::make_unique<sdc_cartridge>(move(context), gModuleInstance);
 		};
 }
 
 static_assert(
-	std::is_same_v<decltype(&GetPakFactory), GetPakFactoryFunction>,
+	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::GetPakFactoryFunction>,
 	"GMC GetPakFactory does not have the correct signature.");
 
 
-sdc_cartridge::sdc_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance)
+sdc_cartridge::sdc_cartridge(
+	std::unique_ptr<context_type> context,
+	HINSTANCE module_instance)
 	:
 	context_(move(context)),
 	module_instance_(module_instance)
@@ -169,7 +171,7 @@ unsigned char sdc_cartridge::read_memory_byte(size_type adr)
 {
     adr &= 0x3FFF;
     if (EnableBankWrite) {
-        return WriteFlashBank(adr);
+        return WriteFlashBank(static_cast<unsigned short>(adr));
     } else {
         BankWriteState = 0;  // Any read resets write state
         return(PakRom[adr]);

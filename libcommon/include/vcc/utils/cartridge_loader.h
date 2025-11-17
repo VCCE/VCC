@@ -119,8 +119,7 @@ namespace vcc::utils
 	/// @return A status result and data references needed to manage the cartridge.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
-		const std::string& configuration_path);
+		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context);
 
 	/// @brief Load a cartridge file.
 	/// 
@@ -134,8 +133,7 @@ namespace vcc::utils
 	/// @return A status result and data references needed to manage the cartridge.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
-		const std::string& configuration_path);
+		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context);
 
 	/// @brief Retrieve a string describing a cartridge loader error
 	/// .

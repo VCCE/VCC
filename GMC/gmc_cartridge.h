@@ -18,7 +18,9 @@ public:
 
 public:
 
-	gmc_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance);
+	gmc_cartridge(
+		std::unique_ptr<context_type> context,
+		HINSTANCE module_instance);
 
 	name_type name() const override;
 	catalog_id_type catalog_id() const override;

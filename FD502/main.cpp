@@ -19,16 +19,16 @@ BOOL WINAPI DllMain(
 }
 
 
-extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
+extern "C" __declspec(dllexport) ::vcc::bus::CreatePakFactoryFunction GetPakFactory()
 {
 	return [](
-		[[maybe_unused]] std::unique_ptr<::vcc::bus::cartridge_context> context) -> std::unique_ptr<::vcc::bus::cartridge>
+		std::unique_ptr<::vcc::bus::cartridge_context> context) -> std::unique_ptr<::vcc::bus::cartridge>
 		{
 			return std::make_unique<fd502_cartridge>(move(context), gModuleInstance);
 		};
 }
 
 static_assert(
-	std::is_same_v<decltype(&GetPakFactory), GetPakFactoryFunction>,
+	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::GetPakFactoryFunction>,
 	"FD502 GetPakFactory does not have the correct signature.");
 

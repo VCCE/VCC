@@ -21,11 +21,11 @@
 
 
 orchestra90cc_cartridge::orchestra90cc_cartridge(
-	HINSTANCE module_instance,
-	std::unique_ptr<context_type> context)
+	std::unique_ptr<context_type> context,
+	HINSTANCE module_instance)
 	:
-	module_instance_(module_instance),
-	context_(move(context))
+	context_(move(context)),
+	module_instance_(module_instance)
 {
 }
 

@@ -43,18 +43,18 @@ BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, [[maybe_unused]] LP
 }
 
 //
-extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
+extern "C" __declspec(dllexport) ::vcc::bus::CreatePakFactoryFunction GetPakFactory()
 {
 	return [](
 		std::unique_ptr<::vcc::bus::cartridge_context> context) -> std::unique_ptr<::vcc::bus::cartridge>
-	{
-		gConfiguration.configuration_path(context->configuration_path());
+		{
+			gConfiguration.configuration_path(context->configuration_path());
 
-		return std::make_unique<multipak_cartridge>(gModuleInstance, gConfiguration, move(context));
-	};
+			return std::make_unique<multipak_cartridge>(move(context), gModuleInstance, gConfiguration);
+		};
 
 }
 
 static_assert(
-	std::is_same_v<decltype(&GetPakFactory), GetPakFactoryFunction>,
+	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::GetPakFactoryFunction>,
 	"MPI GetPakFactory does not have the correct signature.");

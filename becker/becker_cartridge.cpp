@@ -22,7 +22,9 @@
 #include "../CartridgeMenu.h"
 
 
-becker_cartridge::becker_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance)
+becker_cartridge::becker_cartridge(
+	std::unique_ptr<context_type> context,
+	HINSTANCE module_instance)
 	:
 	context_(move(context)),
 	module_instance_(module_instance),

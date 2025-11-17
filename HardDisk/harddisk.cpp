@@ -57,10 +57,12 @@ LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 
 
 
-vcc_hard_disk_cartridge::vcc_hard_disk_cartridge(HINSTANCE module_instance, std::unique_ptr<context_type> context)
+vcc_hard_disk_cartridge::vcc_hard_disk_cartridge(
+	std::unique_ptr<context_type> context,
+	HINSTANCE module_instance)
 	:
-	module_instance_(module_instance),
-	context_(move(context))
+	context_(move(context)),
+	module_instance_(module_instance)
 { }
 
 

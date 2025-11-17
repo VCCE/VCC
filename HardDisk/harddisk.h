@@ -31,7 +31,9 @@ public:
 	using context_type = ::vcc::bus::cartridge_context;
 	using rom_image_type = ::vcc::devices::rom::rom_image;
 
-	vcc_hard_disk_cartridge(HINSTANCE module_instance, std::unique_ptr<context_type> context);
+	vcc_hard_disk_cartridge(
+		std::unique_ptr<context_type> context,
+		HINSTANCE module_instance);
 
 	/// @inheritdoc
 	name_type name() const override;
@@ -60,7 +62,7 @@ private:
 
 private:
 
-	const HINSTANCE module_instance_;
 	const std::unique_ptr<context_type> context_;
+	const HINSTANCE module_instance_;
 };
 

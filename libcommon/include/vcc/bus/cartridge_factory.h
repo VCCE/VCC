@@ -20,9 +20,12 @@
 #include "vcc/bus/cartridge_context.h"
 #include <memory>
 
+namespace vcc::bus
+{
 
-using CreatePakFactoryFunction = std::unique_ptr<::vcc::bus::cartridge> (*)(
-	std::unique_ptr<::vcc::bus::cartridge_context> context);
+	using CreatePakFactoryFunction = std::unique_ptr<::vcc::bus::cartridge>(*)(
+		std::unique_ptr<::vcc::bus::cartridge_context> context);
 
-using GetPakFactoryFunction = CreatePakFactoryFunction(*)();
+	using GetPakFactoryFunction = CreatePakFactoryFunction(*)();
 
+}

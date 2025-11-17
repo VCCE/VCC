@@ -88,7 +88,9 @@ void Load_Disk(unsigned char);
 //----------------------------------------------------------------------------
 
 
-fd502_cartridge::fd502_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance)
+fd502_cartridge::fd502_cartridge(
+	std::unique_ptr<context_type> context,
+	HINSTANCE module_instance)
 	:
 	context_(move(context)),
 	module_instance_(module_instance)

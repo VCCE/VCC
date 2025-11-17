@@ -30,7 +30,9 @@ namespace
 const gmc_cartridge::path_type gmc_cartridge::configuration_section_id_("GMC-SN74689");
 const gmc_cartridge::path_type gmc_cartridge::configuration_rom_key_id_("ROM");
 
-gmc_cartridge::gmc_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance)
+gmc_cartridge::gmc_cartridge(
+	std::unique_ptr<context_type> context,
+	HINSTANCE module_instance)
 	:
 	context_(move(context)),
 	module_instance_(module_instance)

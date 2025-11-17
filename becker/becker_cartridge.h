@@ -37,7 +37,9 @@ public:
 
 public:
 
-	becker_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance);
+	becker_cartridge(
+		std::unique_ptr<context_type> context,
+		HINSTANCE module_instance);
 
 	name_type name() const override;
 	catalog_id_type catalog_id() const override;

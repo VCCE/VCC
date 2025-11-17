@@ -37,13 +37,13 @@ namespace
 
 
 multipak_cartridge::multipak_cartridge(
+	std::unique_ptr<context_type> context,
 	HINSTANCE module_instance,
-	multipak_configuration& configuration,
-	std::shared_ptr<context_type> context)
+	multipak_configuration& configuration)
 	:
+	context_(move(context)),
 	module_instance_(module_instance),
 	configuration_(configuration),
-	context_(move(context)),
 	settings_dialog_(module_instance, configuration, *this)
 { }
 
@@ -288,8 +288,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 {
 	auto loadedCartridge(vcc::utils::load_cartridge(
 		filename,
-		std::make_unique<multipak_cartridge_context>(slot, *context_, *this),
-		context_->configuration_path()));
+		std::make_unique<multipak_cartridge_context>(slot, *context_, *this)));
 	if (loadedCartridge.load_result != mount_status_type::success)
 	{
 		return loadedCartridge.load_result;

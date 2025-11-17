@@ -36,14 +36,15 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 
 
 //
-extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
+extern "C" __declspec(dllexport) ::vcc::bus::CreatePakFactoryFunction GetPakFactory()
 {
-	return []([[maybe_unused]] std::unique_ptr<::vcc::bus::cartridge_context> context) -> std::unique_ptr<::vcc::bus::cartridge>
+	return [](
+		std::unique_ptr<::vcc::bus::cartridge_context> context) -> std::unique_ptr<::vcc::bus::cartridge>
 		{
 			return std::make_unique<ramdisk_cartridge>(gModuleInstance);
 		};
 }
 
 static_assert(
-	std::is_same_v<decltype(&GetPakFactory), GetPakFactoryFunction>,
+	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::GetPakFactoryFunction>,
 	"RamDisk GetPakFactory does not have the correct signature.");

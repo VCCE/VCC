@@ -44,9 +44,9 @@ public:
 public:
 
 	multipak_cartridge(
+		std::unique_ptr<context_type> context,
 		HINSTANCE module_instance,
-		multipak_configuration& configuration,
-		std::shared_ptr<context_type> context);
+		multipak_configuration& configuration);
 	multipak_cartridge(const multipak_cartridge&) = delete;
 	multipak_cartridge(multipak_cartridge&&) = delete;
 
@@ -108,9 +108,9 @@ private:
 	static const size_t default_slot_register_value = 0xff;
 
 	vcc::utils::critical_section mutex_;
+	std::shared_ptr<context_type> context_;
 	const HINSTANCE module_instance_;
 	multipak_configuration& configuration_;
-	std::shared_ptr<context_type> context_;
 	std::array<::vcc::modules::mpi::cartridge_slot, 4> slots_;
 	unsigned char slot_register_ = default_slot_register_value;
 	slot_id_type switch_slot_ = default_switch_slot_value;

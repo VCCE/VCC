@@ -47,7 +47,9 @@ static HWND hConfDlg = nullptr;
 static const char* const gConfigurationSection = "Glenside-IDE /w Clock";
 
 
-superide_cartridge::superide_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance)
+superide_cartridge::superide_cartridge(
+	std::unique_ptr<context_type> context,
+	HINSTANCE module_instance)
 	:
 	context_(move(context)),
 	module_instance_(module_instance)

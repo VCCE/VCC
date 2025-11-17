@@ -71,9 +71,12 @@ namespace vcc::utils
 		const std::string& filename,
 		std::unique_ptr<::vcc::bus::cartridge_context> context)
 	{
-		constexpr size_t PAK_MAX_MEM = 0x40000;   // 256KB
+		if (context == nullptr)
+		{
+			throw std::invalid_argument("Cannot load ROM cartridge. Context is null.");
+		}
 
-		const auto rom_image(load_file_to_vector(filename));
+		auto rom_image(load_file_to_vector(filename));
 		if (!rom_image.has_value())
 		{
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
@@ -88,14 +91,16 @@ namespace vcc::utils
 		// it should be enabled.   (CCC file > 16KB?)
 		constexpr bool enable_bank_switching = true;
 
-		return {
-			nullptr,
+		auto rom_cartridge(
 			std::make_unique<::vcc::bus::cartridges::rom_cartridge>(
 				move(context),
 				extract_filename(filename),
 				"",
 				move(*rom_image),
-				enable_bank_switching),
+				enable_bank_switching));
+		return {
+			nullptr,
+			move(rom_cartridge),
 			cartridge_loader_status::success
 		};
 	}
@@ -103,9 +108,13 @@ namespace vcc::utils
 	// Load C API hardware cart
 	cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
-		const std::string& configuration_path)
+		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context)
 	{
+		if (cartridge_context == nullptr)
+		{
+			throw std::invalid_argument("Cannot load library cartridge. Context is null.");
+		}
+
 		if (GetModuleHandle(filename.c_str()) != nullptr)
 		{
 			return { nullptr, nullptr, cartridge_loader_status::already_loaded };
@@ -124,7 +133,7 @@ namespace vcc::utils
 			return { nullptr, nullptr, cartridge_loader_status::unsupported_api };
 		}
 
-		const auto factoryAccessor(reinterpret_cast<GetPakFactoryFunction>(GetProcAddress(
+		const auto factoryAccessor(reinterpret_cast<::vcc::bus::GetPakFactoryFunction>(GetProcAddress(
 			details.handle.get(),
 			"GetPakFactory")));
 		if (factoryAccessor != nullptr)
@@ -140,9 +149,13 @@ namespace vcc::utils
 
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
-		const std::string& configuration_path)
+		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context)
 	{
+		if (cartridge_context == nullptr)
+		{
+			throw std::invalid_argument("Cannot load cartridge. Context is null.");
+		}
+
 		switch (::vcc::utils::determine_cartridge_type(filename))
 		{
 		default:
@@ -155,8 +168,7 @@ namespace vcc::utils
 		case cartridge_file_type::library:		//	File is a DLL
 			return load_library_cartridge(
 				filename,
-				move(cartridge_context),
-				configuration_path);
+				move(cartridge_context));
 		}
 	}
 

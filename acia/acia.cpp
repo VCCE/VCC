@@ -64,7 +64,9 @@ static unsigned char Rom[8192];
 unsigned char LoadExtRom(const char *);
 
 
-rs232pak_cartridge::rs232pak_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance)
+rs232pak_cartridge::rs232pak_cartridge(
+	std::unique_ptr<context_type> context,
+	HINSTANCE module_instance)
 	:
 	context_(move(context)),
 	module_instance_(module_instance)

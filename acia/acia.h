@@ -34,7 +34,9 @@ public:
 	using context_type = ::vcc::bus::cartridge_context;
 	using rom_image_type = ::vcc::devices::rom::rom_image;
 
-	rs232pak_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance);
+	rs232pak_cartridge(
+		std::unique_ptr<context_type> context,
+		HINSTANCE module_instance);
 
 	/// @inheritdoc
 	name_type name() const override;

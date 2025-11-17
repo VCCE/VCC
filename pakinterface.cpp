@@ -47,7 +47,7 @@ extern SystemState EmuState;
 static vcc::utils::critical_section gPakMutex;
 static char DllPath[MAX_PATH] = "";
 static cartridge_loader_result::handle_type gActiveModule;
-static cartridge_loader_result::cartridge_ptr_type gActiveCartrige(std::make_unique<::vcc::bus::cartridges::empty_cartridge>());
+static cartridge_loader_result::cartridge_ptr_type gActiveCartridge(std::make_unique<::vcc::bus::cartridges::empty_cartridge>());
 
 static cartridge_loader_status load_any_cartridge(const char* filename, const char* iniPath);
 
@@ -140,42 +140,42 @@ void PakTimer()
 
 	// FIXME: The timing here matches the horizontal sync frequency but should be
 	// defined somewhere else and passed to this function.
-	gActiveCartrige->update(1.0f / (60 * 262));
+	gActiveCartridge->update(1.0f / (60 * 262));
 }
 
 void ResetBus()
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	gActiveCartrige->reset();
+	gActiveCartridge->reset();
 }
 
 void GetModuleStatus(SystemState *SMState)
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	gActiveCartrige->status(SMState->StatusLine, sizeof(SMState->StatusLine));
+	gActiveCartridge->status(SMState->StatusLine, sizeof(SMState->StatusLine));
 }
 
 unsigned char PakReadPort (unsigned char port)
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	return gActiveCartrige->read_port(port);
+	return gActiveCartridge->read_port(port);
 }
 
 void PakWritePort(unsigned char Port,unsigned char Data)
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	gActiveCartrige->write_port(Port,Data);
+	gActiveCartridge->write_port(Port,Data);
 }
 
 unsigned char PackMem8Read (unsigned short Address)
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	return gActiveCartrige->read_memory_byte(Address&32767);
+	return gActiveCartridge->read_memory_byte(Address&32767);
 }
 
 // Convert PAK interrupt assert to CPU assert or Gime assert.
@@ -197,7 +197,7 @@ unsigned short PackAudioSample()
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	return gActiveCartrige->sample_audio();
+	return gActiveCartridge->sample_audio();
 }
 
 // Create first two entries for cartridge menu.
@@ -207,10 +207,10 @@ void BeginCartMenu()
 
 	CartMenu.add("", MID_BEGIN, MIT_Head, 0);
 	CartMenu.add("Cartridge", MID_ENTRY, MIT_Head);
-	if (!gActiveCartrige->name().empty())
+	if (!gActiveCartridge->name().empty())
 	{
 		char tmp[64] = {};
-		snprintf(tmp, 64, "Eject %s", gActiveCartrige->name().c_str());
+		snprintf(tmp, 64, "Eject %s", gActiveCartridge->name().c_str());
 		CartMenu.add(tmp, ControlId(2), MIT_Slave);
 	}
 	CartMenu.add("Load Cart", ControlId(1), MIT_Slave);
@@ -276,8 +276,7 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 {
 	cartridge_loader_result loadedCartridge(vcc::utils::load_cartridge(
 		filename,
-		std::make_unique<vcc_cartridge_context>(),
-		iniPath));
+		std::make_unique<vcc_cartridge_context>()));
 	if (loadedCartridge.load_result != cartridge_loader_status::success)
 	{
 		return loadedCartridge.load_result;
@@ -288,10 +287,10 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	vcc::utils::section_locker lock(gPakMutex);
 
 	strcpy(DllPath, filename);
-	gActiveCartrige = move(loadedCartridge.cartridge);
+	gActiveCartridge = move(loadedCartridge.cartridge);
 	gActiveModule = move(loadedCartridge.handle);
 	BeginCartMenu();
-	gActiveCartrige->start();
+	gActiveCartridge->start();
 
 	// Reset if enabled
 	EmuState.ResetPending = 2;
@@ -304,13 +303,13 @@ void UnloadDll()
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	gActiveCartrige->stop();
+	gActiveCartridge->stop();
 
-	gActiveCartrige = std::make_unique<::vcc::bus::cartridges::empty_cartridge>();
+	gActiveCartridge = std::make_unique<::vcc::bus::cartridges::empty_cartridge>();
 	gActiveModule.reset();
 
 	BeginCartMenu();
-	gActiveCartrige->start();
+	gActiveCartridge->start();
 }
 
 void GetCurrentModule(char *DefaultModule)
@@ -353,5 +352,5 @@ void CartMenuActivated(unsigned int MenuID)
 
 	vcc::utils::section_locker lock(gPakMutex);
 
-	gActiveCartrige->menu_item_clicked(MenuID);
+	gActiveCartridge->menu_item_clicked(MenuID);
 }
