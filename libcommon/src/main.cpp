@@ -5,7 +5,7 @@
 
 HINSTANCE gModuleInstance = nullptr;
 
-
+#ifndef USE_STATIC_LIB
 BOOL APIENTRY DllMain(HMODULE module_handle, DWORD  reason, LPVOID reserved)
 {
     if(reason == DLL_PROCESS_ATTACH)
@@ -15,3 +15,4 @@ BOOL APIENTRY DllMain(HMODULE module_handle, DWORD  reason, LPVOID reserved)
 
 	return TRUE;
 }
+#endif

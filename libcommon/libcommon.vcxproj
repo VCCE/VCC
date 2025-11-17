@@ -23,18 +23,21 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType Condition="'$(USE_STATIC_LIB)' == 'true'">StaticLibrary</ConfigurationType>
+    <ConfigurationType Condition="'$(USE_STATIC_LIB)' != 'true'">DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType Condition="'$(USE_STATIC_LIB)' == 'true'">StaticLibrary</ConfigurationType>
+    <ConfigurationType Condition="'$(USE_STATIC_LIB)' != 'true'">DynamicLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v141_xp</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType Condition="'$(USE_STATIC_LIB)' == 'true'">StaticLibrary</ConfigurationType>
+    <ConfigurationType Condition="'$(USE_STATIC_LIB)' != 'true'">DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -61,32 +64,38 @@
     <Import Project="..\vss-release.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <TargetExt>.vcc</TargetExt>
-    <OutDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\vcc\out\</OutDir>
+    <OutDir Condition="'$(USE_STATIC_LIB)' == 'true'">$(SolutionDir)__obj\$(Platform)\$(Configuration)\libcommon\out\</OutDir>
+    <OutDir Condition="'$(USE_STATIC_LIB)' != 'true'">$(SolutionDir)__obj\$(Platform)\$(Configuration)\vcc\out\</OutDir>
+    <TargetExt Condition="'$(USE_STATIC_LIB)' == 'true'">.vcc</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
     <LibraryPath>C:\Program Files %28x86%29\Windows Kits\8.1\Lib\winv6.3\um\x86;$(LibraryPath)</LibraryPath>
-    <TargetExt>.vcc</TargetExt>
-    <OutDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\vcc\out\</OutDir>
+    <OutDir Condition="'$(USE_STATIC_LIB)' == 'true'">$(SolutionDir)__obj\$(Platform)\$(Configuration)\libcommon\out\</OutDir>
+    <OutDir Condition="'$(USE_STATIC_LIB)' != 'true'">$(SolutionDir)__obj\$(Platform)\$(Configuration)\vcc\out\</OutDir>
+    <TargetExt Condition="'$(USE_STATIC_LIB)' != 'true'">.vcc</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <TargetExt>.vcc</TargetExt>
-    <OutDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\vcc\out\</OutDir>
+    <OutDir Condition="'$(USE_STATIC_LIB)' == 'true'">$(SolutionDir)__obj\$(Platform)\$(Configuration)\libcommon\out\</OutDir>
+    <OutDir Condition="'$(USE_STATIC_LIB)' != 'true'">$(SolutionDir)__obj\$(Platform)\$(Configuration)\vcc\out\</OutDir>
+    <TargetExt Condition="'$(USE_STATIC_LIB)' != 'true'">.vcc</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;_DEBUG;LIBCOMMON_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(USE_STATIC_LIB)' != 'true'">WIN32;_DEBUG;LIBCOMMON_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(USE_STATIC_LIB)' == 'true'">WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WholeProgramOptimization Condition="'$(USE_STATIC_LIB)' != 'true'">false</WholeProgramOptimization>
     </ClCompile>
     <Link>
-      <LinkDLL>true</LinkDLL>
+      <LinkDLL Condition="'$(USE_STATIC_LIB)' != 'true'">true</LinkDLL>
       <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;_USRDLL;LIBCOMMON_EXPORTS;_LEGACY_VCC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(USE_STATIC_LIB)' != 'true'">WIN32;_USRDLL;LIBCOMMON_EXPORTS;_LEGACY_VCC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(USE_STATIC_LIB)' == 'true'">WIN32;_LEGACY_VCC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WholeProgramOptimization Condition="'$(USE_STATIC_LIB)' != 'true'">false</WholeProgramOptimization>
       <AdditionalOptions>/arch:SSE</AdditionalOptions>
     </ClCompile>
     <ResourceCompile>
@@ -94,16 +103,18 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <LinkDLL>true</LinkDLL>
+      <LinkDLL Condition="'$(USE_STATIC_LIB)' != 'true'">true</LinkDLL>
       <AdditionalDependencies>Shlwapi.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;LIBCOMMON_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(USE_STATIC_LIB)' != 'true'">WIN32;NDEBUG;LIBCOMMON_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(USE_STATIC_LIB)' == 'true'">WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WholeProgramOptimization Condition="'$(USE_STATIC_LIB)' != 'true'">false</WholeProgramOptimization>
     </ClCompile>
     <Link>
-      <LinkDLL>true</LinkDLL>
+      <LinkDLL Condition="'$(USE_STATIC_LIB)' != 'true'">true</LinkDLL>
       <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
