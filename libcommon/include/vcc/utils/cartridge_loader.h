@@ -16,6 +16,9 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
+/// @file
+///
+/// Contains functions for loading various types of cartridge files.
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/cartridge_context.h"
 #include "vcc/utils/dll_deleter.h"
@@ -72,13 +75,12 @@ namespace vcc::utils
 		/// @brief Specifies the type pointer used to reference instances of a cartridge.
 		using cartridge_ptr_type = std::unique_ptr<::vcc::bus::cartridge>;
 
-
 		/// @brief The reference to the shared library containing the custom cartridge
 		/// functionality or empty (also nullptr) if the cartridge loaded is not
 		/// a shared library. If the load files this value is empty.
 		handle_type handle;
 
-		/// @brief The reference to the instance of the loaded cartridge.  If the load files
+		/// @brief The reference to the instance of the loaded cartridge.  If the load fails
 		/// this value is empty.
 		cartridge_ptr_type cartridge;
 
@@ -100,45 +102,48 @@ namespace vcc::utils
 	/// @brief Load a ROM file as a cartridge.
 	/// 
 	/// @param filename The name of the ROM file to load.
-	/// @param cartridge_context The host context of the system that will manage the cartridge.
+	/// @param context The host context of the system that will manage the cartridge.
 	/// 
 	/// @return A status result and data references needed to manage the cartridge.
+	/// 
+	/// @throws std::invalid_argument if `context` is null.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context);
+		std::unique_ptr<::vcc::bus::cartridge_context> context);
 
 	/// @brief Load a shared library as a cartridge.
 	/// 
 	/// Load a shared library containing a cartridge plugin.
 	/// 
 	/// @param filename The name of the shared library to load.
-	/// @param cartridge_context The fluent C++ context of the system that will manage the cartridge.
-	/// @param host_context A handle identifying the host managing the cartridge.
-	/// @param configuration_path The path of the configuration file.
+	/// @param context The context of the system that will manage the cartridge.
 	/// 
 	/// @return A status result and data references needed to manage the cartridge.
+	/// 
+	/// @throws std::invalid_argument if `context` is null.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context);
+		std::unique_ptr<::vcc::bus::cartridge_context> context);
 
 	/// @brief Load a cartridge file.
 	/// 
 	/// Load a variety of automatically detected cartridge types.
 	/// 
 	/// @param filename The name of the cartridge to load.
-	/// @param cartridge_context The fluent C++ context of the system that will manage the cartridge.
-	/// @param host_context A handle identifying the host managing the cartridge.
-	/// @param configuration_path The path of the configuration file.
+	/// @param context The context of the system that will manage the cartridge.
 	/// 
 	/// @return A status result and data references needed to manage the cartridge.
+	/// 
+	/// @throws std::invalid_argument if `context` is null.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context);
+		std::unique_ptr<::vcc::bus::cartridge_context> context);
 
-	/// @brief Retrieve a string describing a cartridge loader error
-	/// .
+	/// @brief Retrieve a string describing a cartridge loader error.
+	/// 
 	/// @param status The status to retrieve the description for.
 	/// 
 	/// @return A string containing a description of the error.
 	LIBCOMMON_EXPORT std::string load_error_string(cartridge_loader_status status);
+
 }

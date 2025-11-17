@@ -38,10 +38,10 @@ namespace vcc::utils
 		std::string extract_filename(std::string name)
 		{
 			name = name.substr(name.find_last_of("/\\") + 1);
-			const auto endIndex = name.find_last_of('.');
-			if (endIndex > 0)
+			
+			if (const auto end_index(name.find_last_of('.')); end_index > 0)
 			{
-				name = name.substr(0, endIndex);
+				name = name.substr(0, end_index);
 			}
 
 			return name;
@@ -49,7 +49,6 @@ namespace vcc::utils
 
 	}
 
-	// Look for magic "MZ" to detect DLL.  Assume rom if not.
 	cartridge_file_type determine_cartridge_type(const std::string& filename)
 	{
 		std::ifstream input(filename, std::ios::binary);
@@ -66,7 +65,6 @@ namespace vcc::utils
 		return cartridge_file_type::rom_image;
 	}
 
-	// Load rom cartridge
 	cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::bus::cartridge_context> context)
@@ -105,12 +103,11 @@ namespace vcc::utils
 		};
 	}
 
-	// Load C API hardware cart
 	cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context)
+		std::unique_ptr<::vcc::bus::cartridge_context> context)
 	{
-		if (cartridge_context == nullptr)
+		if (context == nullptr)
 		{
 			throw std::invalid_argument("Cannot load library cartridge. Context is null.");
 		}
@@ -138,7 +135,7 @@ namespace vcc::utils
 			"GetPakFactory")));
 		if (factoryAccessor != nullptr)
 		{
-			details.cartridge = factoryAccessor()(move(cartridge_context));
+			details.cartridge = factoryAccessor()(move(context));
 			details.load_result = cartridge_loader_status::success;
 
 			return details;
@@ -149,9 +146,9 @@ namespace vcc::utils
 
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context)
+		std::unique_ptr<::vcc::bus::cartridge_context> context)
 	{
-		if (cartridge_context == nullptr)
+		if (context == nullptr)
 		{
 			throw std::invalid_argument("Cannot load cartridge. Context is null.");
 		}
@@ -163,12 +160,12 @@ namespace vcc::utils
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 
 		case cartridge_file_type::rom_image:	//	File is a ROM image
-			return load_rom_cartridge(filename, move(cartridge_context));
+			return load_rom_cartridge(filename, move(context));
 
 		case cartridge_file_type::library:		//	File is a DLL
 			return load_library_cartridge(
 				filename,
-				move(cartridge_context));
+				move(context));
 		}
 	}
 

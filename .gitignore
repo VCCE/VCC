@@ -23,7 +23,7 @@
 *.aps
 *.vscode
 
-__obj
+/build
 
 Debug
 Release

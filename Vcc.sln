@@ -41,6 +41,33 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcommon", "libcommon\libc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcommon-test", "libcommon-test\libcommon-test.vcxproj", "{B4228078-E3E3-4664-9A84-C8674C71AD76}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Cartridges", "Cartridges", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "@Solution Items", "@Solution Items", "{DCD53B8F-A698-463D-B4F9-7540467D38FA}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		COPYING = COPYING
+		Doxyfile = Doxyfile
+		license.txt = license.txt
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{410DD484-EA61-4135-8363-5B36C10DC654}"
+	ProjectSection(SolutionItems) = preProject
+		Build.bat = Build.bat
+		BuildClean.bat = BuildClean.bat
+		BuildLogging.bat = BuildLogging.bat
+		CopyFiles.bat = CopyFiles.bat
+		Make.bat = Make.bat
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "License", "License", "{0E181130-D9D2-4EC7-8A1F-45550C228D8E}"
+	ProjectSection(SolutionItems) = preProject
+		COPYING = COPYING
+		license.txt = license.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -129,6 +156,20 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F4DC9499-4FF1-4A56-83DD-6499062972AA} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{FC5D90DF-A488-4E57-A4B2-7C74AE861F9E} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{678097F4-F33B-4739-B3E1-7A72BD1F4A3A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{89C050F1-9427-4C5F-B260-C5F9EB43E915} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{23D3931C-364B-45E2-B58C-9B3FBC584C0F} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{95713490-9812-4348-9E5E-818F736A271A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{C78D7242-DB92-49BC-AFF5-433E16C3C9D4} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{BD7CA587-71D0-43D6-A730-582126B1C1F4} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{337BE96D-E8B6-4409-BBFD-0AD8C49AF94B} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{597294EB-A5F9-44C4-A68C-54C3116E8D36} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{410DD484-EA61-4135-8363-5B36C10DC654} = {DCD53B8F-A698-463D-B4F9-7540467D38FA}
+		{0E181130-D9D2-4EC7-8A1F-45550C228D8E} = {DCD53B8F-A698-463D-B4F9-7540467D38FA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4AF251C5-5E20-44FC-B459-B7317DBA3470}
