@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- This is included first for release, legacy, and debug builds in every VCC project -->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
@@ -12,10 +13,13 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(USE_STATIC_LIB)' == 'true'">USE_STATIC_LIB=true;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BrowseInformation>true</BrowseInformation>
       <AdditionalIncludeDirectories>$(SolutionDir)libcommon/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
+      <AdditionalDependencies Condition="'$(USE_STATIC_LIB)' == 'true' and '$(ProjectName)' != 'libcommon'">libcommon.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories Condition="'$(USE_STATIC_LIB)' == 'true' and '$(ProjectName)' != 'libcommon'">$(SolutionDir)__obj\$(Platform)\$(Configuration)\libcommon\out\</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
