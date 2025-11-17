@@ -67,9 +67,9 @@ namespace vcc::utils
 
 	cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> context)
+		std::unique_ptr<::vcc::bus::expansion_bus> bus)
 	{
-		if (context == nullptr)
+		if (bus == nullptr)
 		{
 			throw std::invalid_argument("Cannot load ROM cartridge. Context is null.");
 		}
@@ -91,7 +91,7 @@ namespace vcc::utils
 
 		auto rom_cartridge(
 			std::make_unique<::vcc::bus::cartridges::rom_cartridge>(
-				move(context),
+				move(bus),
 				extract_filename(filename),
 				"",
 				move(*rom_image),
@@ -105,9 +105,9 @@ namespace vcc::utils
 
 	cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> context)
+		std::unique_ptr<::vcc::bus::expansion_bus> bus)
 	{
-		if (context == nullptr)
+		if (bus == nullptr)
 		{
 			throw std::invalid_argument("Cannot load library cartridge. Context is null.");
 		}
@@ -135,7 +135,7 @@ namespace vcc::utils
 			"GetPakFactory")));
 		if (factoryAccessor != nullptr)
 		{
-			details.cartridge = factoryAccessor()(move(context));
+			details.cartridge = factoryAccessor()(move(bus));
 			details.load_result = cartridge_loader_status::success;
 
 			return details;
@@ -146,9 +146,9 @@ namespace vcc::utils
 
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> context)
+		std::unique_ptr<::vcc::bus::expansion_bus> bus)
 	{
-		if (context == nullptr)
+		if (bus == nullptr)
 		{
 			throw std::invalid_argument("Cannot load cartridge. Context is null.");
 		}
@@ -160,12 +160,12 @@ namespace vcc::utils
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 
 		case cartridge_file_type::rom_image:	//	File is a ROM image
-			return load_rom_cartridge(filename, move(context));
+			return load_rom_cartridge(filename, move(bus));
 
 		case cartridge_file_type::library:		//	File is a DLL
 			return load_library_cartridge(
 				filename,
-				move(context));
+				move(bus));
 		}
 	}
 

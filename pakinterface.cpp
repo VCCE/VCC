@@ -60,7 +60,7 @@ static void PakAssertInterupt(void* host_key, Interrupt interrupt, InterruptSour
 static void PakAddMenuItem(void* host_key, const char* name, int menu_id, MenuItemType type);
 
 
-class vcc_cartridge_context : public ::vcc::bus::cartridge_context
+class vcc_expansion_bus : public ::vcc::bus::expansion_bus
 {
 	path_type configuration_path() const override
 	{
@@ -276,7 +276,7 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 {
 	cartridge_loader_result loadedCartridge(vcc::utils::load_cartridge(
 		filename,
-		std::make_unique<vcc_cartridge_context>()));
+		std::make_unique<vcc_expansion_bus>()));
 	if (loadedCartridge.load_result != cartridge_loader_status::success)
 	{
 		return loadedCartridge.load_result;

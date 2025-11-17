@@ -206,7 +206,7 @@
     <ClInclude Include="include\vcc\bus\cartridge.h">
       <Filter>Header Files\bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\bus\cartridge_context.h">
+    <ClInclude Include="include\vcc\bus\expansion_bus.h">
       <Filter>Header Files\bus</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\bus\cartridge_factory.h">

@@ -17,14 +17,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/cartridge_context.h"
+#include "vcc/bus/expansion_bus.h"
 #include <memory>
 
 namespace vcc::bus
 {
 
 	using CreatePakFactoryFunction = std::unique_ptr<::vcc::bus::cartridge>(*)(
-		std::unique_ptr<::vcc::bus::cartridge_context> context);
+		std::unique_ptr<::vcc::bus::expansion_bus> bus);
 
 	using GetPakFactoryFunction = CreatePakFactoryFunction(*)();
 

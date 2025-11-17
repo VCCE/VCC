@@ -46,11 +46,11 @@ BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, [[maybe_unused]] LP
 extern "C" __declspec(dllexport) ::vcc::bus::CreatePakFactoryFunction GetPakFactory()
 {
 	return [](
-		std::unique_ptr<::vcc::bus::cartridge_context> context) -> std::unique_ptr<::vcc::bus::cartridge>
+		std::unique_ptr<::vcc::bus::expansion_bus> bus) -> std::unique_ptr<::vcc::bus::cartridge>
 		{
-			gConfiguration.configuration_path(context->configuration_path());
+			gConfiguration.configuration_path(bus->configuration_path());
 
-			return std::make_unique<multipak_cartridge>(move(context), gModuleInstance, gConfiguration);
+			return std::make_unique<multipak_cartridge>(move(bus), gModuleInstance, gConfiguration);
 		};
 
 }

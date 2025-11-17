@@ -48,10 +48,10 @@ static const char* const gConfigurationSection = "Glenside-IDE /w Clock";
 
 
 superide_cartridge::superide_cartridge(
-	std::unique_ptr<context_type> context,
+	std::unique_ptr<expansion_bus_type> bus,
 	HINSTANCE module_instance)
 	:
-	context_(move(context)),
+	bus_(move(bus)),
 	module_instance_(module_instance)
 {
 }
@@ -79,7 +79,7 @@ superide_cartridge::description_type superide_cartridge::description() const
 
 void superide_cartridge::start()
 {
-	strcpy(IniFile, context_->configuration_path().c_str());
+	strcpy(IniFile, bus_->configuration_path().c_str());
 
 	LoadConfig();
 	IdeInit();
@@ -192,24 +192,24 @@ void superide_cartridge::BuildCartridgeMenu()
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
-	context_->add_menu_item("", MID_BEGIN, MIT_Head);
-	context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	context_->add_menu_item("IDE Master",MID_ENTRY,MIT_Head);
-	context_->add_menu_item("Insert",ControlId(10),MIT_Slave);
+	bus_->add_menu_item("", MID_BEGIN, MIT_Head);
+	bus_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	bus_->add_menu_item("IDE Master",MID_ENTRY,MIT_Head);
+	bus_->add_menu_item("Insert",ControlId(10),MIT_Slave);
 	QueryDisk(MASTER,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	context_->add_menu_item(TempMsg,ControlId(11),MIT_Slave);
-	context_->add_menu_item("IDE Slave",MID_ENTRY,MIT_Head);
-	context_->add_menu_item("Insert",ControlId(12),MIT_Slave);
+	bus_->add_menu_item(TempMsg,ControlId(11),MIT_Slave);
+	bus_->add_menu_item("IDE Slave",MID_ENTRY,MIT_Head);
+	bus_->add_menu_item("Insert",ControlId(12),MIT_Slave);
 	QueryDisk(SLAVE,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	context_->add_menu_item(TempMsg,ControlId(13),MIT_Slave);
-	context_->add_menu_item("IDE Config",ControlId(14),MIT_StandAlone);
-	context_->add_menu_item("", MID_FINISH, MIT_Head);
+	bus_->add_menu_item(TempMsg,ControlId(13),MIT_Slave);
+	bus_->add_menu_item("IDE Config",ControlId(14),MIT_StandAlone);
+	bus_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)

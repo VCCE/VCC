@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/cartridge_context.h"
+#include "vcc/bus/expansion_bus.h"
 #include "vcc/devices/rom/rom_image.h"
 #include <memory>
 #include <Windows.h>
@@ -27,11 +27,11 @@ class orchestra90cc_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using context_type = ::vcc::bus::cartridge_context;
+	using expansion_bus_type = ::vcc::bus::expansion_bus;
 	using rom_image_type = ::vcc::devices::rom::rom_image;
 
 	orchestra90cc_cartridge(
-		std::unique_ptr<context_type> context,
+		std::unique_ptr<expansion_bus_type> bus,
 		HINSTANCE module_instance);
 
 	/// @inheritdoc
@@ -66,7 +66,7 @@ protected:
 private:
 
 	static const inline std::string default_rom_filename_ = "orch90.rom";
-	const std::unique_ptr<context_type> context_;
+	const std::unique_ptr<expansion_bus_type> bus_;
 	const HINSTANCE module_instance_;
 	rom_image_type rom_image_;
 	unsigned char left_channel_buffer_ = 0;

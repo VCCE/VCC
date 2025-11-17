@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/cartridge_context.h"
+#include "vcc/bus/expansion_bus.h"
 #include <vector>
 #include <memory>
 
@@ -34,7 +34,7 @@ namespace vcc::bus::cartridges
 
 		/// @brief The type that defines the interface for communicating with the
 		/// system managing the cartridge.
-		using context_type = ::vcc::bus::cartridge_context;
+		using expansion_bus_type = ::vcc::bus::expansion_bus;
 		/// @brief The type used to store the ROM image.
 		/// @todo Change to using `banked_rom_image`.
 		using buffer_type = std::vector<uint8_t>;
@@ -46,17 +46,17 @@ namespace vcc::bus::cartridges
 
 		/// @brief Constructs a ROM Cartridge.
 		/// 
-		/// @param context The context of the system managing the cartridge. This parameter cannot be null.
+		/// @param bus The expansion bus of the system managing the cartridge. This parameter cannot be null.
 		/// @param name The name of the cartridge. This parameter cannot be empty.
 		/// @param catalog_id The catalog id or part number of the cartridge.
 		/// @param buffer A buffer containing the ROM image. This parameter cannot be empty.
 		/// @param enable_bank_switching Specifies if bank switching should be enabled.
 		/// 
-		/// @throw std::invalid_argument If `context` is null.
+		/// @throw std::invalid_argument If `bus` is null.
 		/// @throw std::invalid_argument If `name` is empty.
 		/// @throw std::invalid_argument If `buffer` is empty.
 		LIBCOMMON_EXPORT rom_cartridge(
-			std::unique_ptr<context_type> context,
+			std::unique_ptr<expansion_bus_type> bus,
 			name_type name,
 			catalog_id_type catalog_id,
 			buffer_type buffer,
@@ -123,7 +123,7 @@ namespace vcc::bus::cartridges
 
 	private:
 
-		const std::unique_ptr<context_type> context_;
+		const std::unique_ptr<expansion_bus_type> bus_;
 		const name_type name_;
 		const catalog_id_type catalog_id_;
 		const buffer_type buffer_;

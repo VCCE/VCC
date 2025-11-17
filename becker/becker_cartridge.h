@@ -19,7 +19,7 @@
 #include "configuration_dialog.h"
 #include "vcc/devices/serial/beckerport.h"
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/cartridge_context.h"
+#include "vcc/bus/expansion_bus.h"
 #include <memory>
 #include <Windows.h>
 
@@ -31,14 +31,14 @@ class becker_cartridge
 {
 public:
 
-	using context_type = ::vcc::bus::cartridge_context;
+	using expansion_bus_type = ::vcc::bus::expansion_bus;
 	using becker_device_type = ::vcc::devices::serial::Becker;
 
 
 public:
 
 	becker_cartridge(
-		std::unique_ptr<context_type> context,
+		std::unique_ptr<expansion_bus_type> bus,
 		HINSTANCE module_instance);
 
 	name_type name() const override;
@@ -81,7 +81,7 @@ private:
 
 	static const inline std::string configuration_section_id_ = "DW Becker";
 
-	const std::unique_ptr<context_type> context_;
+	const std::unique_ptr<expansion_bus_type> bus_;
 	const HINSTANCE module_instance_;
 	configuration_dialog configuration_dialog_;
 	becker_device_type gBecker;

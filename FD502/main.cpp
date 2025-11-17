@@ -22,9 +22,9 @@ BOOL WINAPI DllMain(
 extern "C" __declspec(dllexport) ::vcc::bus::CreatePakFactoryFunction GetPakFactory()
 {
 	return [](
-		std::unique_ptr<::vcc::bus::cartridge_context> context) -> std::unique_ptr<::vcc::bus::cartridge>
+		std::unique_ptr<::vcc::bus::expansion_bus> bus) -> std::unique_ptr<::vcc::bus::cartridge>
 		{
-			return std::make_unique<fd502_cartridge>(move(context), gModuleInstance);
+			return std::make_unique<fd502_cartridge>(move(bus), gModuleInstance);
 		};
 }
 

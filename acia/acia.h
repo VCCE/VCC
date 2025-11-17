@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/cartridge_context.h"
+#include "vcc/bus/expansion_bus.h"
 #include "vcc/devices/rom/rom_image.h"
 #include "resource.h"
 #include <stdio.h>
@@ -31,11 +31,11 @@ class rs232pak_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using context_type = ::vcc::bus::cartridge_context;
+	using expansion_bus_type = ::vcc::bus::expansion_bus;
 	using rom_image_type = ::vcc::devices::rom::rom_image;
 
 	rs232pak_cartridge(
-		std::unique_ptr<context_type> context,
+		std::unique_ptr<expansion_bus_type> bus,
 		HINSTANCE module_instance);
 
 	/// @inheritdoc
@@ -69,7 +69,7 @@ private:
 
 private:
 
-	const std::unique_ptr<context_type> context_;
+	const std::unique_ptr<expansion_bus_type> bus_;
 	const HINSTANCE module_instance_;
 };
 
@@ -118,7 +118,7 @@ extern void* const& gHostKey;
 // Device
 extern void sc6551_init();
 extern void sc6551_close();
-void sc6551_heartbeat(::vcc::bus::cartridge_context& context);
+void sc6551_heartbeat(::vcc::bus::expansion_bus& bus);
 extern unsigned char sc6551_read(unsigned char data);
 extern void sc6551_write(unsigned char data, unsigned short port);
 

@@ -58,10 +58,10 @@ LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 
 
 vcc_hard_disk_cartridge::vcc_hard_disk_cartridge(
-	std::unique_ptr<context_type> context,
+	std::unique_ptr<expansion_bus_type> bus,
 	HINSTANCE module_instance)
 	:
-	context_(move(context)),
+	bus_(move(bus)),
 	module_instance_(module_instance)
 { }
 
@@ -84,11 +84,11 @@ vcc_hard_disk_cartridge::description_type vcc_hard_disk_cartridge::description()
 
 void vcc_hard_disk_cartridge::start()
 {
-	strcpy(IniFile, context_->configuration_path().c_str());
+	strcpy(IniFile, bus_->configuration_path().c_str());
 
 	LoadConfig();
 	ds1315_rtc.set_read_only(ClockReadOnly);
-	VhdReset(*context_); // Selects drive zero
+	VhdReset(*bus_); // Selects drive zero
 	BuildCartridgeMenu();
 }
 
@@ -173,7 +173,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 // Export write to HD control port
 void vcc_hard_disk_cartridge::write_port(unsigned char Port,unsigned char Data)
 {
-	IdeWrite(*context_, Data, Port);
+	IdeWrite(*bus_, Data, Port);
     return;
 }
 
@@ -309,27 +309,27 @@ void vcc_hard_disk_cartridge::BuildCartridgeMenu()
 	char TempMsg[512] = "";
 	char TempBuf[MAX_PATH] = "";
 
-	context_->add_menu_item("", MID_BEGIN, MIT_Head);
-	context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	bus_->add_menu_item("", MID_BEGIN, MIT_Head);
+	bus_->add_menu_item("", MID_ENTRY, MIT_Seperator);
 
-	context_->add_menu_item("HD Drive 0", MID_ENTRY, MIT_Head);
-	context_->add_menu_item("Insert", ControlId(10), MIT_Slave);
+	bus_->add_menu_item("HD Drive 0", MID_ENTRY, MIT_Head);
+	bus_->add_menu_item("Insert", ControlId(10), MIT_Slave);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHDfile0);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	context_->add_menu_item(TempMsg, ControlId(11), MIT_Slave);
+	bus_->add_menu_item(TempMsg, ControlId(11), MIT_Slave);
 
-	context_->add_menu_item("HD Drive 1", MID_ENTRY, MIT_Head);
-	context_->add_menu_item("Insert", ControlId(12), MIT_Slave);
+	bus_->add_menu_item("HD Drive 1", MID_ENTRY, MIT_Head);
+	bus_->add_menu_item("Insert", ControlId(12), MIT_Slave);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHDfile1);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	context_->add_menu_item(TempMsg, ControlId(13), MIT_Slave);
+	bus_->add_menu_item(TempMsg, ControlId(13), MIT_Slave);
 
-	context_->add_menu_item("HD Config", ControlId(14), MIT_StandAlone);
-	context_->add_menu_item("", MID_FINISH, MIT_Head);
+	bus_->add_menu_item("HD Config", ControlId(14), MIT_StandAlone);
+	bus_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 // Dialog for creating a new hard disk

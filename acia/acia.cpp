@@ -65,10 +65,10 @@ unsigned char LoadExtRom(const char *);
 
 
 rs232pak_cartridge::rs232pak_cartridge(
-	std::unique_ptr<context_type> context,
+	std::unique_ptr<expansion_bus_type> bus,
 	HINSTANCE module_instance)
 	:
-	context_(move(context)),
+	bus_(move(bus)),
 	module_instance_(module_instance)
 {
 }
@@ -90,7 +90,7 @@ rs232pak_cartridge::description_type rs232pak_cartridge::description() const
 
 void rs232pak_cartridge::start()
 {
-	strcpy(IniFile, context_->configuration_path().c_str());
+	strcpy(IniFile, bus_->configuration_path().c_str());
 	LoadConfig();
 	BuildCartridgeMenu();
 	LoadExtRom("RS232.ROM");
@@ -162,7 +162,7 @@ unsigned char LoadExtRom(const char *FilePath)
 //-----------------------------------------------------------------------
 void rs232pak_cartridge::update([[maybe_unused]] float delta)
 {
-    sc6551_heartbeat(*context_);
+    sc6551_heartbeat(*bus_);
 }
 
 //-----------------------------------------------------------------------
@@ -191,10 +191,10 @@ void rs232pak_cartridge::menu_item_clicked(unsigned char menuId)
 //----------------------------------------------------------------------
 void rs232pak_cartridge::BuildCartridgeMenu()
 {
-	context_->add_menu_item("", MID_BEGIN, MIT_Head);
-	context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	context_->add_menu_item("ACIA Config", ControlId(16), MIT_StandAlone);
-	context_->add_menu_item("", MID_FINISH, MIT_Head);
+	bus_->add_menu_item("", MID_BEGIN, MIT_Head);
+	bus_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	bus_->add_menu_item("ACIA Config", ControlId(16), MIT_StandAlone);
+	bus_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 //-----------------------------------------------------------------------

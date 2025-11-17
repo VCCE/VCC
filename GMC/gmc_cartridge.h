@@ -2,7 +2,7 @@
 #include "vcc/devices/psg/sn76496.h"
 #include "vcc/devices/rom/banked_rom_image.h"
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/cartridge_context.h"
+#include "vcc/bus/expansion_bus.h"
 #include <memory>
 #include <Windows.h>
 
@@ -11,7 +11,7 @@ class gmc_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using context_type = ::vcc::bus::cartridge_context;
+	using expansion_bus_type = ::vcc::bus::expansion_bus;
 	using path_type = std::string;
 	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
 
@@ -19,7 +19,7 @@ public:
 public:
 
 	gmc_cartridge(
-		std::unique_ptr<context_type> context,
+		std::unique_ptr<expansion_bus_type> bus,
 		HINSTANCE module_instance);
 
 	name_type name() const override;
@@ -63,7 +63,7 @@ private:
 	static const path_type configuration_rom_key_id_;
 
 
-	const std::unique_ptr<context_type> context_;
+	const std::unique_ptr<expansion_bus_type> bus_;
 	const HINSTANCE module_instance_;
 	rom_image_type rom_image_;
 

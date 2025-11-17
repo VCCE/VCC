@@ -19,9 +19,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 extern "C" __declspec(dllexport) ::vcc::bus::CreatePakFactoryFunction GetPakFactory()
 {
 	return [](
-		std::unique_ptr<::vcc::bus::cartridge_context> context) -> std::unique_ptr<::vcc::bus::cartridge>
+		std::unique_ptr<::vcc::bus::expansion_bus> bus) -> std::unique_ptr<::vcc::bus::cartridge>
 		{
-			return std::make_unique<rs232pak_cartridge>(move(context), gModuleInstance);
+			return std::make_unique<rs232pak_cartridge>(move(bus), gModuleInstance);
 		};
 }
 

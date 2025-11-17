@@ -18,7 +18,7 @@
 #pragma once
 
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/cartridge_context.h"
+#include "vcc/bus/expansion_bus.h"
 #include "vcc/devices/rom/rom_image.h"
 #include <memory>
 #include <Windows.h>
@@ -28,11 +28,11 @@ class vcc_hard_disk_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using context_type = ::vcc::bus::cartridge_context;
+	using expansion_bus_type = ::vcc::bus::expansion_bus;
 	using rom_image_type = ::vcc::devices::rom::rom_image;
 
 	vcc_hard_disk_cartridge(
-		std::unique_ptr<context_type> context,
+		std::unique_ptr<expansion_bus_type> bus,
 		HINSTANCE module_instance);
 
 	/// @inheritdoc
@@ -62,7 +62,7 @@ private:
 
 private:
 
-	const std::unique_ptr<context_type> context_;
+	const std::unique_ptr<expansion_bus_type> bus_;
 	const HINSTANCE module_instance_;
 };
 

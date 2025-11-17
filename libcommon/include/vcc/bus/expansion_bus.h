@@ -33,7 +33,7 @@ namespace vcc::bus
 	/// The Cartridge Context abstract class provides an interface to the system managing
 	/// one or more cartridges. It's primary purpose is to allow the cartridge to communicate
 	/// hardware related events required for property emulation of the system.
-	class LIBCOMMON_EXPORT cartridge_context
+	class LIBCOMMON_EXPORT expansion_bus
 	{
 	public:
 
@@ -45,7 +45,7 @@ namespace vcc::bus
 
 	public:
 
-		virtual ~cartridge_context() = default;
+		virtual ~expansion_bus() = default;
 
 		/// @brief Retrieve the path to the configuration file.
 		/// 

@@ -23,22 +23,22 @@ namespace vcc::bus::cartridges
 {
 
 	rom_cartridge::rom_cartridge(
-		std::unique_ptr<context_type> context,
+		std::unique_ptr<expansion_bus_type> bus,
 		name_type name,
 		catalog_id_type catalog_id,
 		buffer_type buffer,
 		bool enable_bank_switching)
 		:
-		context_(move(context)),
+		bus_(move(bus)),
 		name_(move(name)),
 		catalog_id_(move(catalog_id)),
 		buffer_(move(buffer)),
 		enable_bank_switching_(enable_bank_switching),
 		bank_offset_(0)
 	{
-		if (context_ == nullptr)
+		if (bus_ == nullptr)
 		{
-			throw std::invalid_argument("Cannot construct ROM Cartridge. The cartridge context is null.");
+			throw std::invalid_argument("Cannot construct ROM Cartridge. The expansion bus is null.");
 		}
 
 		if (name.empty())
@@ -71,7 +71,7 @@ namespace vcc::bus::cartridges
 
 	void rom_cartridge::start()
 	{
-		context_->assert_cartridge_line(true);
+		bus_->assert_cartridge_line(true);
 	}
 
 	void rom_cartridge::reset()
@@ -92,6 +92,5 @@ namespace vcc::bus::cartridges
 	{
 		return buffer_[((memory_address & 0x7fff) + bank_offset_) % buffer_.size()];
 	}
-
 
 }

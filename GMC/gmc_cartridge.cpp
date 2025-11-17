@@ -31,10 +31,10 @@ const gmc_cartridge::path_type gmc_cartridge::configuration_section_id_("GMC-SN7
 const gmc_cartridge::path_type gmc_cartridge::configuration_rom_key_id_("ROM");
 
 gmc_cartridge::gmc_cartridge(
-	std::unique_ptr<context_type> context,
+	std::unique_ptr<expansion_bus_type> bus,
 	HINSTANCE module_instance)
 	:
-	context_(move(context)),
+	bus_(move(bus)),
 	module_instance_(module_instance)
 {
 }
@@ -57,7 +57,7 @@ gmc_cartridge::description_type gmc_cartridge::description() const
 
 void gmc_cartridge::start()
 {
-	::vcc::utils::persistent_value_store settings(context_->configuration_path());
+	::vcc::utils::persistent_value_store settings(bus_->configuration_path());
 	const auto selected_file(settings.read(configuration_section_id_, configuration_rom_key_id_));
 
 	load_rom(selected_file, false);
@@ -139,7 +139,7 @@ void gmc_cartridge::menu_item_clicked(unsigned char menuId)
 			return;
 		}
 
-		::vcc::utils::persistent_value_store settings(context_->configuration_path());
+		::vcc::utils::persistent_value_store settings(bus_->configuration_path());
 		settings.write(
 			configuration_section_id_,
 			configuration_rom_key_id_,
@@ -153,20 +153,20 @@ void gmc_cartridge::menu_item_clicked(unsigned char menuId)
 
 void gmc_cartridge::build_menu()
 {
-	context_->add_menu_item("", MID_BEGIN, MIT_Head);
-	context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	context_->add_menu_item("Select GMC ROM", ControlId(menu_item_ids::select_rom), MIT_StandAlone);
-	context_->add_menu_item("", MID_FINISH, MIT_Head);
+	bus_->add_menu_item("", MID_BEGIN, MIT_Head);
+	bus_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	bus_->add_menu_item("Select GMC ROM", ControlId(menu_item_ids::select_rom), MIT_StandAlone);
+	bus_->add_menu_item("", MID_FINISH, MIT_Head);
 }
 
 void gmc_cartridge::load_rom(const path_type& filename, bool reset_on_load)
 {
 	if (!filename.empty() && rom_image_.load(filename))
 	{
-		context_->assert_cartridge_line(true);
+		bus_->assert_cartridge_line(true);
 		if (reset_on_load)
 		{
-			context_->reset();
+			bus_->reset();
 		}
 	}
 	else

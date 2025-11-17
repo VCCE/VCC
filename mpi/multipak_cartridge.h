@@ -32,7 +32,7 @@ class multipak_cartridge
 {
 public:
 
-	using context_type = ::vcc::bus::cartridge_context;
+	using expansion_bus_type = ::vcc::bus::expansion_bus;
 	using mount_status_type = ::vcc::utils::cartridge_loader_status;
 	using slot_id_type = std::size_t;
 	using path_type = std::string;
@@ -44,7 +44,7 @@ public:
 public:
 
 	multipak_cartridge(
-		std::unique_ptr<context_type> context,
+		std::unique_ptr<expansion_bus_type> bus,
 		HINSTANCE module_instance,
 		multipak_configuration& configuration);
 	multipak_cartridge(const multipak_cartridge&) = delete;
@@ -98,7 +98,7 @@ protected:
 	void assert_cartridge_line(slot_id_type slot, bool line_state);
 	void append_menu_item(slot_id_type slot, menu_item_type item);
 
-	friend class multipak_cartridge_context;
+	friend class multipak_expansion_bus;
 
 
 private:
@@ -108,7 +108,7 @@ private:
 	static const size_t default_slot_register_value = 0xff;
 
 	vcc::utils::critical_section mutex_;
-	std::shared_ptr<context_type> context_;
+	std::shared_ptr<expansion_bus_type> bus_;
 	const HINSTANCE module_instance_;
 	multipak_configuration& configuration_;
 	std::array<::vcc::modules::mpi::cartridge_slot, 4> slots_;

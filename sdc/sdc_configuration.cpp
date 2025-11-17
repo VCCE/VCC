@@ -65,11 +65,11 @@ char MPIPath[MAX_PATH] = {};
 void sdc_cartridge::BuildCartridgeMenu()
 {
     DLOG_C("BuildCartridgeMenu()\n");
-    context_->add_menu_item("", MID_BEGIN, MIT_Head);
-    context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-    context_->add_menu_item("SDC Config", ControlId(10), MIT_StandAlone);
-    context_->add_menu_item("SDC Control", ControlId(11), MIT_StandAlone);
-    context_->add_menu_item("", MID_FINISH, MIT_Head);
+	bus_->add_menu_item("", MID_BEGIN, MIT_Head);
+	bus_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	bus_->add_menu_item("SDC Config", ControlId(10), MIT_StandAlone);
+	bus_->add_menu_item("SDC Control", ControlId(11), MIT_StandAlone);
+	bus_->add_menu_item("", MID_FINISH, MIT_Head);
     DLOG_C("ret\n");
 }
 

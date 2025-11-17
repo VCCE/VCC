@@ -37,11 +37,11 @@ namespace
 
 
 multipak_cartridge::multipak_cartridge(
-	std::unique_ptr<context_type> context,
+	std::unique_ptr<expansion_bus_type> bus,
 	HINSTANCE module_instance,
 	multipak_configuration& configuration)
 	:
-	context_(move(context)),
+	bus_(move(bus)),
 	module_instance_(module_instance),
 	configuration_(configuration),
 	settings_dialog_(module_instance, configuration, *this)
@@ -107,7 +107,7 @@ void multipak_cartridge::reset()
 		cartridge_slot.reset();
 	}
 
-	context_->assert_cartridge_line(slots_[cached_scs_slot_].line_state());
+	bus_->assert_cartridge_line(slots_[cached_scs_slot_].line_state());
 }
 
 void multipak_cartridge::update(float delta)
@@ -130,7 +130,7 @@ void multipak_cartridge::write_port(unsigned char port_id, unsigned char value)
 		cached_cts_slot_ = (value >> 4) & 0b00000011;	// CTS
 		slot_register_ = value;
 
-		context_->assert_cartridge_line(slots_[cached_scs_slot_].line_state());
+		bus_->assert_cartridge_line(slots_[cached_scs_slot_].line_state());
 
 		return;
 	}
@@ -288,7 +288,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 {
 	auto loadedCartridge(vcc::utils::load_cartridge(
 		filename,
-		std::make_unique<multipak_cartridge_context>(slot, *context_, *this)));
+		std::make_unique<multipak_expansion_bus>(slot, *bus_, *this)));
 	if (loadedCartridge.load_result != mount_status_type::success)
 	{
 		return loadedCartridge.load_result;
@@ -319,7 +319,7 @@ void multipak_cartridge::switch_to_slot(slot_id_type slot)
 	cached_scs_slot_ = slot;
 	cached_cts_slot_ = slot;
 
-	context_->assert_cartridge_line(slots_[slot].line_state());
+	bus_->assert_cartridge_line(slots_[slot].line_state());
 }
 
 multipak_cartridge::slot_id_type multipak_cartridge::selected_switch_slot() const
@@ -369,14 +369,14 @@ void multipak_cartridge::build_menu()
 	vcc::utils::section_locker lock(mutex_);
 
 	// Init the menu, establish MPI config control, build slot menus, then draw it.
-	context_->add_menu_item("", MID_BEGIN, MIT_Head);
-	context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	context_->add_menu_item("MPI Config", ControlId(19), MIT_StandAlone);
+	bus_->add_menu_item("", MID_BEGIN, MIT_Head);
+	bus_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	bus_->add_menu_item("MPI Config", ControlId(19), MIT_StandAlone);
 	for (int slot = 3; slot >= 0; slot--)
 	{
-		slots_[slot].enumerate_menu_items(*context_);
+		slots_[slot].enumerate_menu_items(*bus_);
 	}
-	context_->add_menu_item("", MID_FINISH, MIT_Head);  // Finish draws the entire menu
+	bus_->add_menu_item("", MID_FINISH, MIT_Head);  // Finish draws the entire menu
 }
 
 
@@ -387,6 +387,6 @@ void multipak_cartridge::assert_cartridge_line(slot_id_type slot, bool line_stat
 	slots_[slot].line_state(line_state);
 	if (selected_scs_slot() == slot)
 	{
-		context_->assert_cartridge_line(slots_[slot].line_state());
+		bus_->assert_cartridge_line(slots_[slot].line_state());
 	}
 }

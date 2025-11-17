@@ -20,7 +20,7 @@
 ///
 /// Contains functions for loading various types of cartridge files.
 #include "vcc/bus/cartridge.h"
-#include "vcc/bus/cartridge_context.h"
+#include "vcc/bus/expansion_bus.h"
 #include "vcc/utils/dll_deleter.h"
 #include <string>
 #include <memory>
@@ -102,42 +102,42 @@ namespace vcc::utils
 	/// @brief Load a ROM file as a cartridge.
 	/// 
 	/// @param filename The name of the ROM file to load.
-	/// @param context The host context of the system that will manage the cartridge.
+	/// @param bus The expansion bus of the system hosting the cartridge.
 	/// 
 	/// @return A status result and data references needed to manage the cartridge.
 	/// 
-	/// @throws std::invalid_argument if `context` is null.
+	/// @throws std::invalid_argument if `bus` is null.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> context);
+		std::unique_ptr<::vcc::bus::expansion_bus> bus);
 
 	/// @brief Load a shared library as a cartridge.
 	/// 
 	/// Load a shared library containing a cartridge plugin.
 	/// 
 	/// @param filename The name of the shared library to load.
-	/// @param context The context of the system that will manage the cartridge.
+	/// @param bus The expansion bus of the system that will manage the cartridge.
 	/// 
 	/// @return A status result and data references needed to manage the cartridge.
 	/// 
-	/// @throws std::invalid_argument if `context` is null.
+	/// @throws std::invalid_argument if `bus` is null.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> context);
+		std::unique_ptr<::vcc::bus::expansion_bus> bus);
 
 	/// @brief Load a cartridge file.
 	/// 
 	/// Load a variety of automatically detected cartridge types.
 	/// 
 	/// @param filename The name of the cartridge to load.
-	/// @param context The context of the system that will manage the cartridge.
+	/// @param bus The expansion bus of the system that will manage the cartridge.
 	/// 
 	/// @return A status result and data references needed to manage the cartridge.
 	/// 
-	/// @throws std::invalid_argument if `context` is null.
+	/// @throws std::invalid_argument if `bus` is null.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> context);
+		std::unique_ptr<::vcc::bus::expansion_bus> bus);
 
 	/// @brief Retrieve a string describing a cartridge loader error.
 	/// 

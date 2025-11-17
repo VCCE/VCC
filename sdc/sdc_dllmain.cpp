@@ -53,9 +53,9 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 extern "C" __declspec(dllexport) ::vcc::bus::CreatePakFactoryFunction GetPakFactory()
 {
 	return [](
-		std::unique_ptr<::vcc::bus::cartridge_context> context) -> std::unique_ptr<::vcc::bus::cartridge>
+		std::unique_ptr<::vcc::bus::expansion_bus> bus) -> std::unique_ptr<::vcc::bus::cartridge>
 		{
-			return std::make_unique<sdc_cartridge>(move(context), gModuleInstance);
+			return std::make_unique<sdc_cartridge>(move(bus), gModuleInstance);
 		};
 }
 
@@ -65,10 +65,10 @@ static_assert(
 
 
 sdc_cartridge::sdc_cartridge(
-	std::unique_ptr<context_type> context,
+	std::unique_ptr<expansion_bus_type> bus,
 	HINSTANCE module_instance)
 	:
-	context_(move(context)),
+	bus_(move(bus)),
 	module_instance_(module_instance)
 {
 }
@@ -91,7 +91,7 @@ sdc_cartridge::description_type sdc_cartridge::description() const
 
 void sdc_cartridge::start()
 {
-    strcpy(IniFile, context_->configuration_path().c_str());
+    strcpy(IniFile, bus_->configuration_path().c_str());
 
     LoadConfig();
     BuildCartridgeMenu();

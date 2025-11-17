@@ -17,31 +17,31 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "multipak_cartridge.h"
-#include "vcc/bus/cartridge_context.h"
+#include "vcc/bus/expansion_bus.h"
 
 
-class multipak_cartridge_context : public ::vcc::bus::cartridge_context
+class multipak_expansion_bus : public ::vcc::bus::expansion_bus
 {
 public:
 
-	multipak_cartridge_context(
+	multipak_expansion_bus(
 		size_t slot_id,
-		::vcc::bus::cartridge_context& host_context,
+		::vcc::bus::expansion_bus& bus,
 		multipak_cartridge& multipak)
 		:
 		slot_id_(slot_id),
-		host_context_(host_context),
+		bus_(bus),
 		multipak_(multipak)
 	{}
 
 	path_type configuration_path() const override
 	{
-		return host_context_.configuration_path();
+		return bus_.configuration_path();
 	}
 
 	void reset() override
 	{
-		host_context_.reset();
+		bus_.reset();
 	}
 
 	void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) override
@@ -51,12 +51,12 @@ public:
 
 	void write_memory_byte(unsigned char value, unsigned short address) override
 	{
-		host_context_.write_memory_byte(value, address);
+		bus_.write_memory_byte(value, address);
 	}
 
 	unsigned char read_memory_byte(unsigned short address) override
 	{
-		return host_context_.read_memory_byte(address);
+		return bus_.read_memory_byte(address);
 	}
 
 	void assert_cartridge_line(bool line_state) override
@@ -66,18 +66,18 @@ public:
 
 	void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) override
 	{
-		host_context_.assert_interrupt(interrupt, interrupt_source);
+		bus_.assert_interrupt(interrupt, interrupt_source);
 	}
 
 	path_type system_rom_path() const override
 	{
-		return host_context_.system_rom_path();
+		return bus_.system_rom_path();
 	}
 
 
 private:
 
 	const size_t slot_id_;
-	::vcc::bus::cartridge_context& host_context_;
+	::vcc::bus::expansion_bus& bus_;
 	multipak_cartridge& multipak_;
 };

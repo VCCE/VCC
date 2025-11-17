@@ -25,7 +25,7 @@ class multipak_controller
 {
 public:
 
-	using context_type = ::vcc::bus::cartridge_context;
+	using expansion_bus_type = ::vcc::bus::expansion_bus;
 	using mount_status_type = ::vcc::utils::cartridge_loader_status;
 	using slot_id_type = ::multipak_configuration::slot_id_type;
 	using path_type = ::multipak_configuration::path_type;
