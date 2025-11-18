@@ -25,13 +25,23 @@
 namespace vcc::bus
 {
 
+	/// @brief The type returned by the cartridge factory function.
 	using cartridge_factory_result = std::unique_ptr<::vcc::bus::cartridge>;
 
+	/// @brief The function type used to create instances of a cartridge.
+	///
+	/// @param host The host system that will manage the cartridge.
+	/// @param ui The user interface manager that allows interaction between the cartridge
+	/// and the user.
+	/// @param bus The expansion bus of the emulated system.
+	/// 
+	/// @return An instance of a cartridge.
 	using cartridge_factory_prototype = cartridge_factory_result(*)(
 		std::unique_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus);
 
+	/// @brief The function type used to retrieve the factory function of a cartridge.
 	using create_cartridge_factory_prototype = cartridge_factory_prototype(*)();
 
 }

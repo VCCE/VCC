@@ -25,8 +25,8 @@ namespace vcc::bus
 
 	/// @brief Represents an interchangeable cartridge device.
 	///
-	/// This abstract class defines the fundamental operations of a cartridge device
-	/// that can be connected to devices such as a computer or video game console to
+	/// This abstract class defines the fundamental operations of a cartridge device that
+	/// can be connected to expansion ports such as a computer or video game console to
 	/// provide programs and data on ROM, extra RAM, or additional hardware capabilities
 	/// such as a floppy disk controller or programmable sound generator.
 	class LIBCOMMON_EXPORT cartridge

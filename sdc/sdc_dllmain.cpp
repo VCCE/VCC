@@ -28,7 +28,6 @@
 #include "vcc/utils/logger.h"
 #include "vcc/utils/winapi.h"
 #include "vcc/common/DialogOps.h"
-#include "vcc/bus/interrupts.h"
 #include "resource.h"
 #include "sdc_cartridge.h"
 #include "sdc_configuration.h"

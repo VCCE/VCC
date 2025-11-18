@@ -99,7 +99,7 @@ protected:
 protected:
 
 	// Make automatic when mounting, ejecting, selecting slot, etc.
-	void assert_cartridge_line(slot_id_type slot, bool line_state);
+	void set_cartridge_select_line(slot_id_type slot, bool line_state);
 	void append_menu_item(slot_id_type slot, menu_item_type item);
 
 	friend class multipak_expansion_slot_host;

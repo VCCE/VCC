@@ -21,7 +21,6 @@
 
 #include "acia.h"
 #include "sc6551.h"
-#include "vcc/bus/interrupts.h"
 #include "vcc/utils/logger.h"
 #include <atomic>
 
@@ -250,7 +249,7 @@ void sc6551_heartbeat(::vcc::bus::expansion_port_bus& bus)
             StatReg |= StatRxF;
             // Assert CART if interrupts not disabled or already asserted.
             if (!((CmdReg & CmdRxI) || (StatReg & StatIRQ))) {
-				bus.assert_interrupt(INT_CART, IS_NMI);
+				bus.assert_cartridge_interrupt_line();
                 StatReg |= StatIRQ;
             }
         }

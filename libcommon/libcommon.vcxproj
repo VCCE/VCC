@@ -129,7 +129,6 @@
     <ClInclude Include="include\vcc\bus\expansion_port_bus.h" />
     <ClInclude Include="include\vcc\bus\cartridge_factory.h" />
     <ClInclude Include="include\vcc\bus\expansion_port_host.h" />
-    <ClInclude Include="include\vcc\bus\interrupts.h" />
     <ClInclude Include="include\vcc\common\DialogOps.h" />
     <ClInclude Include="include\vcc\detail\exports.h" />
     <ClInclude Include="include\vcc\devices\psg\sn76496.h" />

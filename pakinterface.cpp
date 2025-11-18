@@ -78,15 +78,26 @@ public:
 		return MemRead8(address);
 	}
 
-	void assert_cartridge_line(bool line_state) override
+	void set_cartridge_select_line(bool line_state) override
 	{
 		SetCart(line_state);
 	}
 
-	void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) override
+	void assert_irq_interrupt_line() override
 	{
-		PakAssertInterupt(interrupt, interrupt_source);
+		PakAssertInterupt(INT_IRQ, IS_NMI);
 	}
+
+	void assert_nmi_interrupt_line() override
+	{
+		PakAssertInterupt(INT_NMI, IS_NMI);
+	}
+
+	void assert_cartridge_interrupt_line() override
+	{
+		PakAssertInterupt(INT_CART, IS_NMI);
+	}
+
 };
 
 

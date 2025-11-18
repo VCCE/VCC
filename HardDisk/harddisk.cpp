@@ -28,7 +28,6 @@
 #include "vcc/common/DialogOps.h"
 #include "../CartridgeMenu.h"
 #include "vcc/utils/winapi.h"
-#include "vcc/bus/interrupts.h"
 
 constexpr auto DEF_HD_SIZE = 132480u;
 

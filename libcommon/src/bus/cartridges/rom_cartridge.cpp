@@ -71,7 +71,7 @@ namespace vcc::bus::cartridges
 
 	void rom_cartridge::start()
 	{
-		bus_->assert_cartridge_line(true);
+		bus_->set_cartridge_select_line(true);
 	}
 
 	void rom_cartridge::reset()

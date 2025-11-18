@@ -20,7 +20,6 @@
 #include "defines.h"
 #include "fd502.h"
 #include "fdrawcmd.h"	// http://simonowen.com/fdrawcmd/
-#include "vcc/bus/interrupts.h"
 #include <winioctl.h>
 #include <Windows.h>
 #include <stdio.h>
@@ -944,7 +943,7 @@ void DispatchCommand(::vcc::bus::expansion_port_bus& bus, unsigned char Tmp)
 			StatusReg=READY;
 			ExecTimeWaiter=1;
 			if ((Tmp & 15) != 0)
-				bus.assert_interrupt(INT_NMI,IS_NMI);
+				bus.assert_nmi_interrupt_line();
 //			WriteLog("FORCEINTERUPT",0);
 			break;
 
@@ -1289,7 +1288,7 @@ long GetSectorInfo (SectorInfo *Sector,const unsigned char *TempBuffer)
 void CommandDone(::vcc::bus::expansion_port_bus& bus)
 {
 	if (InteruptEnable)
-		bus.assert_interrupt(INT_NMI,IS_NMI);
+		bus.assert_nmi_interrupt_line();
 	TransferBufferSize=0;
 	CurrentCommand=IDLE;
 }

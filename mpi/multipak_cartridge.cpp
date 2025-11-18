@@ -113,7 +113,7 @@ void multipak_cartridge::reset()
 		cartridge_slot.reset();
 	}
 
-	bus_->assert_cartridge_line(slots_[cached_scs_slot_].line_state());
+	bus_->set_cartridge_select_line(slots_[cached_scs_slot_].line_state());
 }
 
 void multipak_cartridge::update(float delta)
@@ -136,7 +136,7 @@ void multipak_cartridge::write_port(unsigned char port_id, unsigned char value)
 		cached_cts_slot_ = (value >> 4) & 0b00000011;	// CTS
 		slot_register_ = value;
 
-		bus_->assert_cartridge_line(slots_[cached_scs_slot_].line_state());
+		bus_->set_cartridge_select_line(slots_[cached_scs_slot_].line_state());
 
 		return;
 	}
@@ -327,7 +327,7 @@ void multipak_cartridge::switch_to_slot(slot_id_type slot)
 	cached_scs_slot_ = slot;
 	cached_cts_slot_ = slot;
 
-	bus_->assert_cartridge_line(slots_[slot].line_state());
+	bus_->set_cartridge_select_line(slots_[slot].line_state());
 }
 
 multipak_cartridge::slot_id_type multipak_cartridge::selected_switch_slot() const
@@ -388,13 +388,13 @@ void multipak_cartridge::build_menu()
 }
 
 
-void multipak_cartridge::assert_cartridge_line(slot_id_type slot, bool line_state)
+void multipak_cartridge::set_cartridge_select_line(slot_id_type slot, bool line_state)
 {
 	vcc::utils::section_locker lock(mutex_);
 
 	slots_[slot].line_state(line_state);
 	if (selected_scs_slot() == slot)
 	{
-		bus_->assert_cartridge_line(slots_[slot].line_state());
+		bus_->set_cartridge_select_line(slots_[slot].line_state());
 	}
 }

@@ -52,7 +52,7 @@ void orchestra90cc_cartridge::start()
 {
 	if (rom_image_.load(host_->system_rom_path() + default_rom_filename_))
 	{
-		bus_->assert_cartridge_line(true);
+		bus_->set_cartridge_select_line(true);
 	}
 }
 

@@ -17,7 +17,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/detail/exports.h"
-#include "vcc/bus/interrupts.h"
 
 
 namespace vcc::bus
@@ -44,21 +43,23 @@ namespace vcc::bus
 		/// 
 		/// Set the status of the cartridge select line on the simulated hardware bus.
 		/// 
-		/// @todo rename to set_cartridge_select or set_cartridge_select_signal.
-		/// 
 		/// @param line_state The new state of the cartridge line.
-		virtual void assert_cartridge_line(bool line_state) = 0;
+		virtual void set_cartridge_select_line(bool line_state) = 0;
 
-		/// @brief Issue an interrupt.
+		/// @brief Issue an interrupt on the IRQ line of the bus.
 		/// 
-		/// Assets a selected interrupt line on the simulated hardware bus.
+		/// Assets the IRQ interrupt line on the simulated hardware bus.
+		virtual void assert_irq_interrupt_line() = 0;
+
+		/// @brief Issue an interrupt on the NMI line of the bus.
 		/// 
-		/// @todo Remove interrupt_source as it seems to be irrelevant to the assertion here.
-		/// @todo Limit the interrupts that can be asserted to only those that are actually possible.
+		/// Assets the NMI ((non-maskable interrupt) interrupt line on the simulated hardware bus.
+		virtual void assert_nmi_interrupt_line() = 0;
+
+		/// @brief Issue an interrupt on the cartridge interrupt line of the bus.
 		/// 
-		/// @param interrupt The type of interrupt to asset.
-		/// @param interrupt_source The event source that caused the interrupt to be asserted.
-		virtual void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) = 0;
+		/// Assets the CART (cartridge interrupt) line on the simulated hardware bus.
+		virtual void assert_cartridge_interrupt_line() = 0;
 
 		/// @brief Write a byte to the CPU address space.
 		/// 

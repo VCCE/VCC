@@ -468,7 +468,7 @@ void sdc_cartridge::ParseStartup()
 void sdc_cartridge::CommandDone()
 {
     DLOG_C("*");
-	bus_->assert_interrupt(INT_NMI, IS_NMI);
+	bus_->assert_nmi_interrupt_line();
 }
 
 //----------------------------------------------------------------------

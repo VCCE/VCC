@@ -2,7 +2,7 @@
 #include <array>
 #include <vector>
 #include <string>
-#include "vcc/bus/interrupts.h"
+#include "interrupts.h"
 
 namespace VCC
 {

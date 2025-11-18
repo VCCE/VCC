@@ -17,7 +17,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/detail/exports.h"
-#include "vcc/bus/interrupts.h"
 #include <string>
 
 

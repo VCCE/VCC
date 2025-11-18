@@ -184,7 +184,7 @@ void gmc_cartridge::load_rom(const path_type& filename, bool reset_on_load)
 {
 	if (!filename.empty() && rom_image_.load(filename))
 	{
-		bus_->assert_cartridge_line(true);
+		bus_->set_cartridge_select_line(true);
 		if (reset_on_load)
 		{
 			bus_->reset();

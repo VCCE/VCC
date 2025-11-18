@@ -49,14 +49,24 @@ public:
 		return bus_.read_memory_byte(address);
 	}
 
-	void assert_cartridge_line(bool line_state) override
+	void set_cartridge_select_line(bool line_state) override
 	{
-		multipak_.assert_cartridge_line(slot_id_, line_state);
+		multipak_.set_cartridge_select_line(slot_id_, line_state);
 	}
 
-	void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) override
+	void assert_irq_interrupt_line() override
 	{
-		bus_.assert_interrupt(interrupt, interrupt_source);
+		bus_.assert_irq_interrupt_line();
+	}
+
+	void assert_nmi_interrupt_line() override
+	{
+		bus_.assert_nmi_interrupt_line();
+	}
+
+	void assert_cartridge_interrupt_line() override
+	{
+		bus_.assert_cartridge_interrupt_line();
 	}
 
 
