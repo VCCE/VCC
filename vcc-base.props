@@ -9,6 +9,9 @@
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup>
+    <ResourceCompile>
+      <PreprocessorDefinitions Condition="'$(USE_STATIC_LIB)' == 'true'">USE_STATIC_LIB=true;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <WarningLevel>Level3</WarningLevel>
