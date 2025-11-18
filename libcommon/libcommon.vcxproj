@@ -146,9 +146,6 @@
     <ClInclude Include="include\vcc\media\geometry\generic_disk_geometry.h" />
     <ClInclude Include="include\vcc\media\sector_record.h" />
     <ClInclude Include="include\vcc\media\sector_record_header.h" />
-    <ClInclude Include="include\vcc\peripherals\disk_drive.h" />
-    <ClInclude Include="include\vcc\peripherals\disk_drives\basic_disk_drive.h" />
-    <ClInclude Include="include\vcc\peripherals\step_direction.h" />
     <ClInclude Include="include\vcc\utils\cartridge_loader.h" />
     <ClInclude Include="include\vcc\utils\persistent_value_store.h" />
     <ClInclude Include="include\vcc\utils\critical_section.h" />

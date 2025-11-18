@@ -76,12 +76,6 @@
     <Filter Include="Header Files\media\disk_images">
       <UniqueIdentifier>{ca7ed50b-0652-4744-8ac4-05a84c227b6a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\peripherals">
-      <UniqueIdentifier>{9ccb2347-d0f2-499d-a3a3-1a04b5d52df5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\peripherals\disk_drives">
-      <UniqueIdentifier>{7ab6f860-0d60-4d89-ac1d-ded223b42df3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\media\geometry">
       <UniqueIdentifier>{723c4f2c-3122-4c03-88d8-bbc635a93c2b}</UniqueIdentifier>
     </Filter>
@@ -238,15 +232,6 @@
     </ClInclude>
     <ClInclude Include="include\vcc\media\sector_record_header.h">
       <Filter>Header Files\media</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\peripherals\disk_drive.h">
-      <Filter>Header Files\peripherals</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\peripherals\disk_drives\basic_disk_drive.h">
-      <Filter>Header Files\peripherals\disk_drives</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\peripherals\step_direction.h">
-      <Filter>Header Files\peripherals</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\utils\streams.h">
       <Filter>Header Files\utils</Filter>
