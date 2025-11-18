@@ -6,6 +6,7 @@
 #define IDS_CATNUMBER                   2
 #define IDAPPLY                         3
 #define IDOK2                           3
+
 #define IDS_UNKNOWN_ERROR               3
 #define IDS_MODULE_ALREADY_LOADED       4
 #define IDS_MODULE_CANNOT_OPEN          5
@@ -13,6 +14,19 @@
 #define IDS_MODULE_NOT_LOADED           7
 #define IDS_MODULE_NOT_ROM              8
 #define IDS_MODULE_NOT_EXPANSION        9
+
+// FIXME
+#ifdef USE_STATIC_LIB
+#define IDS_ERROR_UNKNOWN                     501
+#define IDS_ERROR_CARTRIDGE_ALREADY_LOADED    502
+#define IDS_ERROR_CARTRIDGE_CANNOT_OPEN       503
+#define IDS_ERROR_CARTRIDGE_NOT_FOUND         504
+#define IDS_ERROR_CARTRIDGE_NOT_LOADED        505
+#define IDS_ERROR_CARTRIDGE_NOT_ROM           506
+#define IDS_ERROR_CARTRIDGE_NOT_EXPANSION     507
+#define IDS_ERROR_CARTRIDGE_API_NOT_SUPPORTED 508
+#endif
+
 #define IDR_MENU                        101
 #define IDI_COCO3                       103
 #define IDD_ABOUTBOX                    104

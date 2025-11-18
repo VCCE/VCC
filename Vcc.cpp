@@ -133,6 +133,7 @@ bool IsShiftKeyDown();
 
 CartridgeMenu CartMenu;
 
+
 //static CRITICAL_SECTION  FrameRender;
 /*--------------------------------------------------------------------------*/
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
@@ -147,6 +148,9 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	HANDLE hEvent,
 	OleInitialize(nullptr); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
+
+// Init static libcommon
+void InitStaticModuleInstance();
 
 	// Parse command line
 	memset(&CmdArg,0,sizeof(CmdArg));
