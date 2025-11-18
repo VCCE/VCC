@@ -51,7 +51,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 extern "C" __declspec(dllexport) ::vcc::bus::cartridge_factory_prototype GetPakFactory()
 {
 	return [](
-		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus) -> ::vcc::bus::cartridge_factory_result
 		{
@@ -65,7 +65,7 @@ static_assert(
 
 
 sdc_cartridge::sdc_cartridge(
-	std::unique_ptr<expansion_port_host_type> host,
+	std::shared_ptr<expansion_port_host_type> host,
 	std::unique_ptr<expansion_port_ui_type> ui,
 	std::unique_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)

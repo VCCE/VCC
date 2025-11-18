@@ -37,7 +37,7 @@ namespace vcc::bus
 	/// 
 	/// @return An instance of a cartridge.
 	using cartridge_factory_prototype = cartridge_factory_result(*)(
-		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus);
 

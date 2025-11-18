@@ -39,9 +39,6 @@
     <ClInclude Include="multipak_configuration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="multipak_expansion_slot_host.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="multipak_expansion_slot_ui.h">
       <Filter>Header Files</Filter>
     </ClInclude>

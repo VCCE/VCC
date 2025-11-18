@@ -67,7 +67,7 @@ namespace vcc::utils
 
 	cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus)
 	{
@@ -107,7 +107,7 @@ namespace vcc::utils
 
 	cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus)
 	{
@@ -150,7 +150,7 @@ namespace vcc::utils
 
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::expansion_port_host> host,
+		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus)
 	{

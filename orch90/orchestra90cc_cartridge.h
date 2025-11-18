@@ -33,7 +33,7 @@ public:
 	using rom_image_type = ::vcc::devices::rom::rom_image;
 
 	orchestra90cc_cartridge(
-		std::unique_ptr<expansion_port_host_type> host,
+		std::shared_ptr<expansion_port_host_type> host,
 		std::unique_ptr<expansion_port_bus_type> bus,
 		HINSTANCE module_instance);
 
@@ -70,7 +70,7 @@ private:
 
 	static const inline std::string default_rom_filename_ = "orch90.rom";
 
-	const std::unique_ptr<expansion_port_host_type> host_;
+	const std::shared_ptr<expansion_port_host_type> host_;
 	const std::unique_ptr<expansion_port_bus_type> bus_;
 	const HINSTANCE module_instance_;
 	rom_image_type rom_image_;

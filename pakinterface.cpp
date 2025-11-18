@@ -296,9 +296,10 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 // Insert Module returns 0 on success
 static cartridge_loader_status load_any_cartridge(const char *filename, const char* iniPath)
 {
+	const auto gExpansionPortHost(std::make_shared<vcc_expansion_port_host>());
 	cartridge_loader_result loadedCartridge(vcc::utils::load_cartridge(
 		filename,
-		std::make_unique<vcc_expansion_port_host>(),
+		gExpansionPortHost,
 		std::make_unique<vcc_expansion_port_ui>(),
 		std::make_unique<vcc_expansion_port_bus>()));
 	if (loadedCartridge.load_result != cartridge_loader_status::success)

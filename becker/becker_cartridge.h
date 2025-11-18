@@ -42,7 +42,7 @@ public:
 public:
 
 	becker_cartridge(
-		std::unique_ptr<expansion_port_host_type> host,
+		std::shared_ptr<expansion_port_host_type> host,
 		std::unique_ptr<expansion_port_ui_type> ui,
 		std::unique_ptr<expansion_port_bus_type> bus,
 		HINSTANCE module_instance);
@@ -87,7 +87,7 @@ private:
 
 	static const inline std::string configuration_section_id_ = "DW Becker";
 
-	const std::unique_ptr<expansion_port_host_type> host_;
+	const std::shared_ptr<expansion_port_host_type> host_;
 	const std::unique_ptr<expansion_port_ui_type> ui_;
 	const std::unique_ptr<expansion_port_bus_type> bus_;
 	const HINSTANCE module_instance_;

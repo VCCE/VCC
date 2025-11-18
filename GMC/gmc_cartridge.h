@@ -40,7 +40,7 @@ public:
 public:
 
 	gmc_cartridge(
-		std::unique_ptr<expansion_port_host_type> host,
+		std::shared_ptr<expansion_port_host_type> host,
 		std::unique_ptr<expansion_port_ui_type> ui,
 		std::unique_ptr<expansion_port_bus_type> bus,
 		HINSTANCE module_instance);
@@ -86,7 +86,7 @@ private:
 	static const path_type configuration_rom_key_id_;
 
 
-	const std::unique_ptr<expansion_port_host_type> host_;
+	const std::shared_ptr<expansion_port_host_type> host_;
 	const std::unique_ptr<expansion_port_ui_type> ui_;
 	const std::unique_ptr<expansion_port_bus_type> bus_;
 	const HINSTANCE module_instance_;

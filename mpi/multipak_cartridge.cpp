@@ -16,7 +16,6 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "multipak_cartridge.h"
-#include "multipak_expansion_slot_host.h"
 #include "multipak_expansion_slot_ui.h"
 #include "multipak_expansion_slot_bus.h"
 #include "resource.h"
@@ -39,7 +38,7 @@ namespace
 
 
 multipak_cartridge::multipak_cartridge(
-	std::unique_ptr<expansion_port_host_type> host,
+	std::shared_ptr<expansion_port_host_type> host,
 	std::unique_ptr<expansion_port_ui_type> ui,
 	std::unique_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance,
@@ -294,7 +293,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 {
 	auto loadedCartridge(vcc::utils::load_cartridge(
 		filename,
-		std::make_unique<multipak_expansion_slot_host>(slot, *host_, *this),
+		host_,
 		std::make_unique<multipak_expansion_slot_ui>(slot, *this),
 		std::make_unique<multipak_expansion_slot_bus>(slot, *bus_, *this)));
 	if (loadedCartridge.load_result != mount_status_type::success)

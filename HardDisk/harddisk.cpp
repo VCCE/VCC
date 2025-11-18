@@ -57,7 +57,7 @@ LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 
 
 vcc_hard_disk_cartridge::vcc_hard_disk_cartridge(
-	std::unique_ptr<expansion_port_host_type> host,
+	std::shared_ptr<expansion_port_host_type> host,
 	std::unique_ptr<expansion_port_ui_type> ui,
 	std::unique_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)
