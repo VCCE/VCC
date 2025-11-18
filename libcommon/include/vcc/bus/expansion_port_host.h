@@ -24,6 +24,10 @@
 namespace vcc::bus
 {
 
+	/// @brief Interface to the system managing the expansion port.
+	///
+	/// The Expansion Port Host abstract class defines the services and properties provided
+	/// by the system managing the expansion port and exposed to external devices.
 	class LIBCOMMON_EXPORT expansion_port_host
 	{
 	public:

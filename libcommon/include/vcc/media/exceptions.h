@@ -23,6 +23,7 @@
 namespace vcc::media
 {
 	
+	/// @brief Exception raised when IO error the system cannot or should not recover from.
 	class fatal_io_error : public std::runtime_error
 	{
 	public:
@@ -30,6 +31,8 @@ namespace vcc::media
 		using std::runtime_error::runtime_error;
 	};
 
+	/// @brief Exception raised when an operation on a buffer has been requested but the
+	/// size of the buffer is incorrect or not sufficient for the operation.
 	class buffer_size_error : public std::runtime_error
 	{
 	public:
@@ -37,6 +40,8 @@ namespace vcc::media
 		using std::runtime_error::runtime_error;
 	};
 
+	/// @brief Exception raised when an attempt to write to media that is wrote protected
+	/// is attempted.
 	class write_protect_error : public std::runtime_error
 	{
 	public:
@@ -44,6 +49,7 @@ namespace vcc::media
 		using std::runtime_error::runtime_error;
 	};
 
+	/// @brief Exception raised when an invalid sector record is encountered.
 	class sector_record_error : public std::runtime_error
 	{
 	public:

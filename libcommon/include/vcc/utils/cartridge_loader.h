@@ -78,12 +78,12 @@ namespace vcc::utils
 		using cartridge_ptr_type = std::unique_ptr<::vcc::bus::cartridge>;
 
 		/// @brief The reference to the shared library containing the custom cartridge
-		/// functionality or empty (also nullptr) if the cartridge loaded is not
-		/// a shared library. If the load files this value is empty.
+		/// functionality or null if the cartridge loaded is not a shared library. If the load
+		/// files this value is null.
 		handle_type handle;
 
 		/// @brief The reference to the instance of the loaded cartridge.  If the load fails
-		/// this value is empty.
+		/// this member is null.
 		cartridge_ptr_type cartridge;
 
 		/// @brief The status result of the load operation.
@@ -104,7 +104,10 @@ namespace vcc::utils
 	/// @brief Load a ROM file as a cartridge.
 	/// 
 	/// @param filename The name of the ROM file to load.
-	/// @param bus The expansion bus of the system hosting the cartridge.
+	/// @param host The host system that will manage the cartridge.
+	/// @param ui The user interface manager that allows interaction between the cartridge
+	/// and the user.
+	/// @param bus The expansion bus of the emulated system.
 	/// 
 	/// @return A status result and data references needed to manage the cartridge.
 	/// 
@@ -120,7 +123,10 @@ namespace vcc::utils
 	/// Load a shared library containing a cartridge plugin.
 	/// 
 	/// @param filename The name of the shared library to load.
-	/// @param bus The expansion bus of the system that will manage the cartridge.
+	/// @param host The host system that will manage the cartridge.
+	/// @param ui The user interface manager that allows interaction between the cartridge
+	/// and the user.
+	/// @param bus The expansion bus of the emulated system.
 	/// 
 	/// @return A status result and data references needed to manage the cartridge.
 	/// 
@@ -136,7 +142,10 @@ namespace vcc::utils
 	/// Load a variety of automatically detected cartridge types.
 	/// 
 	/// @param filename The name of the cartridge to load.
-	/// @param bus The expansion bus of the system that will manage the cartridge.
+	/// @param host The host system that will manage the cartridge.
+	/// @param ui The user interface manager that allows interaction between the cartridge
+	/// and the user.
+	/// @param bus The expansion bus of the emulated system.
 	/// 
 	/// @return A status result and data references needed to manage the cartridge.
 	/// 

@@ -48,7 +48,7 @@ namespace vcc::bus
 		return {};
 	}
 
-	void cartridge::status(char* text_buffer, [[maybe_unused]] size_t buffer_size)
+	void cartridge::status(char* text_buffer, [[maybe_unused]] size_type buffer_size)
 	{
 		*text_buffer = 0;
 	}

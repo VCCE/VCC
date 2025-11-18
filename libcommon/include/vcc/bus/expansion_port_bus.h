@@ -23,11 +23,12 @@
 namespace vcc::bus
 {
 
-	/// @brief Context to the system managing the cartridge.
+	/// @brief Interface to the expansion port bus.
 	///
-	/// The Cartridge Context abstract class provides an interface to the system managing
-	/// one or more cartridges. It's primary purpose is to allow the cartridge to communicate
-	/// hardware related events required for property emulation of the system.
+	/// The Expansion Port Bus abstract class defines the core bus control functionality
+	/// available to cartridges connected to the expansion bus. It's primary purpose is to
+	/// allow the cartridge to communicate hardware related events required for property
+	/// emulation of the system.
 	class LIBCOMMON_EXPORT expansion_port_bus
 	{
 	public:

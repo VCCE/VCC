@@ -26,16 +26,11 @@ namespace vcc::utils
 		const auto current_position(stream.tellg());
 		if (current_position < 0)
 		{
-			return {};
+			return current_position;
 		}
 
 		stream.seekg(0, std::ios::end);
 		const auto file_size(stream.tellg());
-		if (file_size < 0)
-		{
-			return {};
-		}
-
 		stream.seekg(current_position);
 
 		return file_size;
