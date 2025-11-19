@@ -20,7 +20,6 @@
 #include "vcc/bus/expansion_port_ui.h"
 #include "vcc/bus/expansion_port_bus.h"
 #include "vcc/utils/cartridge_loader.h"
-#include "../CartridgeMenu.h"
 
 
 namespace vcc::modules::mpi
@@ -37,11 +36,10 @@ namespace vcc::modules::mpi
 		using name_type = cartridge_type::name_type;
 		using catalog_id_type = cartridge_type::catalog_id_type;
 		using description_type = cartridge_type::description_type;
+		using menu_item_collection_type = cartridge_type::menu_item_collection_type;
 		using path_type = std::string;
 		using label_type = std::string;
 		using handle_type = ::vcc::utils::cartridge_loader_result::handle_type;
-		using menu_item_type = CartMenuItem;
-		using menu_item_collection_type = std::vector<menu_item_type>;
 		using size_type = std::size_t;
 
 
@@ -142,23 +140,9 @@ namespace vcc::modules::mpi
 			return line_state_;
 		}
 
-		void reset_menu()
+		virtual menu_item_collection_type get_menu_items() const
 		{
-			menu_items_.clear();
-		}
-
-		void append_menu_item(const menu_item_type& item)
-		{
-			menu_items_.push_back(item);
-		}
-
-		// FIXME-CHET: This should take a function or other callable object
-		void accept(expansion_port_ui_type& ui) const
-		{
-			for (const auto& item : menu_items_)
-			{
-				ui.add_menu_item(item.name.c_str(), item.menu_id, item.type);
-			}
+			return cartridge_->get_menu_items();
 		}
 
 
@@ -167,7 +151,6 @@ namespace vcc::modules::mpi
 		path_type path_;
 		handle_type handle_;
 		cartridge_ptr_type cartridge_;
-		menu_item_collection_type menu_items_;
 		bool line_state_ = false;
 	};
 

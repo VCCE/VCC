@@ -62,11 +62,12 @@ public:
 	void status(char* status_buffer, size_t buffer_size) override;
 	void menu_item_clicked(unsigned char menu_item_id) override;
 
+	menu_item_collection_type get_menu_items() const override;
+
 
 protected:
 
 	void load_rom(const path_type& filename, bool reset_on_load);
-	void build_menu();
 
 
 private:

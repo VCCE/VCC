@@ -23,12 +23,11 @@
 
 #include <ShlObj.h>    // for SH Browse info
 #include <Windows.h>
-
+#include <vcc/ui/menu/menu_builder.h>
 #include "vcc/devices/rtc/ds1315.h"
 #include "vcc/utils/logger.h"
 #include "vcc/common/DialogOps.h"
 #include "vcc/utils/persistent_value_store.h"
-#include "../CartridgeMenu.h"
 #include "resource.h"
 #include "sdc_cartridge.h"
 #include "sdc_configuration.h"
@@ -61,15 +60,12 @@ char MPIPath[MAX_PATH] = {};
 //-------------------------------------------------------------
 // Generate menu for configuring the SDC
 //-------------------------------------------------------------
-void sdc_cartridge::BuildCartridgeMenu()
+sdc_cartridge::menu_item_collection_type sdc_cartridge::get_menu_items() const
 {
-    DLOG_C("BuildCartridgeMenu()\n");
-	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
-	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	ui_->add_menu_item("SDC Config", ControlId(10), MIT_StandAlone);
-	ui_->add_menu_item("SDC Control", ControlId(11), MIT_StandAlone);
-	ui_->add_menu_item("", MID_FINISH, MIT_Head);
-    DLOG_C("ret\n");
+	return ::vcc::ui::menu::menu_builder()
+		.add_root_item(10, "SDC Config")
+		.add_root_item(11, "SDC Control")
+		.release_items();
 }
 
 //------------------------------------------------------------

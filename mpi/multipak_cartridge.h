@@ -21,7 +21,6 @@
 #include "multipak_configuration.h"
 #include "vcc/bus/cartridge.h"
 #include "vcc/utils/critical_section.h"
-#include "../CartridgeMenu.h"
 #include <array>
 
 
@@ -40,7 +39,6 @@ public:
 	using path_type = std::string;
 	using label_type = std::string;
 	using description_type = std::string;
-	using menu_item_type = CartMenuItem;
 
 
 public:
@@ -77,8 +75,14 @@ public:
 	void status(char* text_buffer, size_t buffer_size) override;
 	void menu_item_clicked(unsigned char menu_item_id) override;
 
+	menu_item_collection_type get_menu_items() const override;
+
 
 protected:
+
+	static const auto expansion_port_base_menu_id = 20u;
+	static const auto expansion_port_menu_id_range_size = 20u;
+
 
 	//	multipak controller implementation
 	label_type slot_label(slot_id_type slot) const override;
@@ -93,14 +97,11 @@ protected:
 	slot_id_type selected_switch_slot() const override;
 	slot_id_type selected_scs_slot() const override;
 
-	void build_menu() override;
-
 
 protected:
 
 	// Make automatic when mounting, ejecting, selecting slot, etc.
 	void set_cartridge_select_line(slot_id_type slot, bool line_state);
-	void append_menu_item(slot_id_type slot, menu_item_type item);
 
 	friend class multipak_expansion_slot_host;
 	friend class multipak_expansion_slot_ui;

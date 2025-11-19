@@ -21,7 +21,7 @@
 #include "wd1793.h"
 #include "fd502.h"
 #include "utils.h"
-#include "../CartridgeMenu.h"
+#include <vcc/ui/menu/menu_builder.h>
 #include "vcc/devices/serial/beckerport.h"
 #include "vcc/devices/rtc/oki_m6242b.h"
 #include "vcc/devices/rom/rom_image.h"
@@ -123,7 +123,6 @@ void fd502_cartridge::start()
 
 	RealDisks = InitController();
 	LoadConfig();
-	BuildCartridgeMenu();
 }
 
 void fd502_cartridge::stop()
@@ -175,8 +174,6 @@ void fd502_cartridge::menu_item_clicked(unsigned char MenuID)
 			SaveConfig();
 			break;
 	}
-	BuildCartridgeMenu();
-	return;
 }
 
 void fd502_cartridge::write_port(unsigned char Port, unsigned char Data)
@@ -413,48 +410,52 @@ void Load_Disk(unsigned char disk)
 	return;
 }
 
-void fd502_cartridge::BuildCartridgeMenu()
+fd502_cartridge::menu_item_collection_type fd502_cartridge::get_menu_items() const
 {
 	char TempMsg[64]="";
 	char TempBuf[MAX_PATH]="";
 
-	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
-	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	::vcc::ui::menu::menu_builder builder;
 
-	ui_->add_menu_item("FD-502 Drive 0",MID_ENTRY,MIT_Head);
-	ui_->add_menu_item("Insert",ControlId(10),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, get_mounted_disk_filename(0).c_str());
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	ui_->add_menu_item(TempMsg,ControlId(11),MIT_Slave);
+	builder
+		.add_root_submenu("FD-502 Drive 0")
+		.add_submenu_item(10, "Insert")
+		.add_submenu_item(11, TempMsg);
 
-	ui_->add_menu_item("FD-502 Drive 1",MID_ENTRY,MIT_Head);
-	ui_->add_menu_item("Insert",ControlId(12),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, get_mounted_disk_filename(1).c_str());
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	ui_->add_menu_item(TempMsg,ControlId(13),MIT_Slave);
+	builder
+		.add_root_submenu("FD-502 Drive 1")
+		.add_submenu_item(12, "Insert")
+		.add_submenu_item(13, TempMsg);
 
-	ui_->add_menu_item("FD-502 Drive 2",MID_ENTRY,MIT_Head);
-	ui_->add_menu_item("Insert",ControlId(14),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, get_mounted_disk_filename(2).c_str());
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	ui_->add_menu_item(TempMsg,ControlId(15),MIT_Slave);
+	builder
+		.add_root_submenu("FD-502 Drive 2")
+		.add_submenu_item(14,"Insert")
+		.add_submenu_item(15,TempMsg);
 
-	ui_->add_menu_item("FD-502 Drive 3",MID_ENTRY,MIT_Head);
-	ui_->add_menu_item("Insert",ControlId(17),MIT_Slave);
 	strcpy(TempMsg,"Eject: ");
 	strcpy(TempBuf, get_mounted_disk_filename(3).c_str());
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
-	ui_->add_menu_item(TempMsg,ControlId(18),MIT_Slave);
+	builder
+		.add_root_submenu("FD-502 Drive 3")
+		.add_submenu_item(17, "Insert")
+		.add_submenu_item(18, TempMsg);
 
-	ui_->add_menu_item("FD-502 Config",ControlId(16),MIT_StandAlone);
-	ui_->add_menu_item("", MID_FINISH, MIT_Head);
+	return builder
+		.add_root_item(16, "FD-502 Config")
+		.release_items();
 }
 
 long CreateDisk (unsigned char Disk)

@@ -44,13 +44,6 @@ namespace vcc::bus
 	public:
 
 		virtual ~expansion_port_ui() = default;
-
-		/// @brief Adds an item to the cartridges UI menu.
-		/// 
-		/// @param text The text to display.
-		/// @param menu_id The identifier sent to the cartridge instance when the item is selected.
-		/// @param menu_type The type of menu item to add.
-		virtual void add_menu_item(const char* text, int menu_id, menu_item_type menu_type) = 0;
 	};
 
 }

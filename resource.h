@@ -446,7 +446,6 @@
 #define IDC_REMEMBER_SIZE               40039
 #define ID_MEMORY_DISPLAY               40040
 #define ID_PROCESSOR_STATE              40041
-#define ID_BREAKPOINTS                  43332
 #define ID_MMU_MONITOR                  40043
 #define ID_EXEC_TRACE                   40044
 #define ID_PAUSE_EMULATION              40045
@@ -461,6 +460,9 @@
 #define ID_BITBANGER_CONFIG             40057
 #define ID_SWAP_JOYSTICKS               40058
 #define IDM_HELP_FUNKEY                 40059
+#define ID_CARTRIDGE_INSERT40060        40060
+#define ID_CARTRIDGE_EJECT              40061
+#define ID_BREAKPOINTS                  43332
 #define ID_CONFIGURE_OPTIONS            65535
 
 
@@ -469,7 +471,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        180
-#define _APS_NEXT_COMMAND_VALUE         40060
+#define _APS_NEXT_COMMAND_VALUE         40062
 #define _APS_NEXT_CONTROL_VALUE         2155
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

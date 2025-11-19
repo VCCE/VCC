@@ -63,7 +63,11 @@ BEGIN
     // Dummy place holder for Cartrige menu, drawn after carts load
     POPUP "Cartridge"
     BEGIN
-        MENUITEM "Cartridge"                    ID_CARTS_LOAD
+        POPUP "Cartridge Port"
+        BEGIN
+            MENUITEM "Insert",                  ID_CARTRIDGE_INSERT
+            MENUITEM "Eject",                   ID_CARTRIDGE_EJECT
+        END
     END
     POPUP "Debugger"
     BEGIN

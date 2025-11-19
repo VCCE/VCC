@@ -106,8 +106,6 @@ void configuration_dialog::select_new_cartridge(slot_id_type slot)
 
 			MessageBox(dialog_handle_, error_string.c_str(), "Load Error", MB_OK | MB_ICONERROR);
 		}
-
-		mpi_.build_menu();
 	}
 }
 
@@ -193,8 +191,6 @@ void configuration_dialog::eject_or_select_new_cartridge(slot_id_type slot)
 	{
 		display_slot_description(slot);
 	}
-
-	mpi_.build_menu();
 }
 
 INT_PTR CALLBACK configuration_dialog::callback_procedure(

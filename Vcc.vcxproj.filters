@@ -91,22 +91,27 @@
     <ClCompile Include="OpCodeTables.cpp">
       <Filter>Source\Debugger</Filter>
     </ClCompile>
-    <ClCompile Include="Disassembler.cpp" />
     <ClCompile Include="OpenGL.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="OpenGLFontConsola.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="memdump.cpp" />
     <ClCompile Include="Screenshot.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="DirectX.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="joystickinput.cpp" />
-    <ClCompile Include="CartridgeMenu.cpp" />
+    <ClCompile Include="Disassembler.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="joystickinput.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="memdump.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h">
@@ -223,7 +228,6 @@
     <ClInclude Include="OpCodeTables.h">
       <Filter>Headers\Debugger</Filter>
     </ClInclude>
-    <ClInclude Include="Disassembler.h" />
     <ClInclude Include="OpenGL.h">
       <Filter>Source</Filter>
     </ClInclude>
@@ -242,7 +246,6 @@
     <ClInclude Include="BuildConfig.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="memdump.h" />
     <ClInclude Include="Screenshot.h">
       <Filter>Source</Filter>
     </ClInclude>
@@ -260,6 +263,18 @@
     </ClInclude>
     <ClInclude Include="DisplayNone.h">
       <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Disassembler.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="memdump.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="keynames.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="menu_populator.h">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -314,10 +329,9 @@
     <Image Include="resources\moto.ico">
       <Filter>Resources</Filter>
     </Image>
-    <Image Include="resources\consola.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="README.md" />
+    <Image Include="resources\consola.bmp">
+      <Filter>Resources</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

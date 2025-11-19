@@ -45,7 +45,6 @@ namespace vcc::modules::mpi
 			path_ = move(other.path_);
 			handle_ = move(other.handle_);
 			cartridge_ = move(other.cartridge_);
-			menu_items_ = move(other.menu_items_);
 			line_state_ = other.line_state_;
 
 			other.line_state_ = false;

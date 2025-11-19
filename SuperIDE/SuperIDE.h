@@ -59,11 +59,12 @@ public:
 
 	void menu_item_clicked(unsigned char menu_item_id) override;
 
+	menu_item_collection_type get_menu_items() const override;
+
 
 private:
 
 	void LoadConfig();
-	void BuildCartridgeMenu();
 
 
 private:

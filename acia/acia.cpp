@@ -21,10 +21,10 @@
 //
 //------------------------------------------------------------------
 #include "acia.h"
+#include <vcc/ui/menu/menu_builder.h>
 #include "vcc/common/DialogOps.h"
 #include "vcc/utils/logger.h"
 #include "vcc/utils/winapi.h"
-#include "../CartridgeMenu.h"
 
 
 //------------------------------------------------------------------------
@@ -96,7 +96,6 @@ void rs232pak_cartridge::start()
 {
 	strcpy(IniFile, host_->configuration_path().c_str());
 	LoadConfig();
-	BuildCartridgeMenu();
 	LoadExtRom("RS232.ROM");
 	sc6551_init();
 }
@@ -193,12 +192,11 @@ void rs232pak_cartridge::menu_item_clicked(unsigned char menuId)
 //-----------------------------------------------------------------------
 //  Add config option to Cartridge menu
 //----------------------------------------------------------------------
-void rs232pak_cartridge::BuildCartridgeMenu()
+rs232pak_cartridge::menu_item_collection_type rs232pak_cartridge::get_menu_items() const
 {
-	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
-	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	ui_->add_menu_item("ACIA Config", ControlId(16), MIT_StandAlone);
-	ui_->add_menu_item("", MID_FINISH, MIT_Head);
+	return ::vcc::ui::menu::menu_builder()
+		.add_root_item(16, "ACIA Config")
+		.release_items();
 }
 
 //-----------------------------------------------------------------------

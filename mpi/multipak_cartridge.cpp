@@ -19,6 +19,7 @@
 #include "multipak_expansion_slot_ui.h"
 #include "multipak_expansion_slot_bus.h"
 #include "resource.h"
+#include <vcc/ui/menu/menu_builder.h>
 #include "vcc/utils/winapi.h"
 #include "vcc/utils/filesystem.h"
 
@@ -85,9 +86,6 @@ void multipak_cartridge::start()
 			mount_cartridge(slot, path);
 		}
 	}
-
-	// Build the dynamic menu
-	build_menu();
 }
 
 
@@ -294,7 +292,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	auto loadedCartridge(vcc::utils::load_cartridge(
 		filename,
 		host_,
-		std::make_unique<multipak_expansion_slot_ui>(slot, *this),
+		std::make_unique<multipak_expansion_slot_ui>(),
 		std::make_unique<multipak_expansion_slot_bus>(slot, *bus_, *this)));
 	if (loadedCartridge.load_result != mount_status_type::success)
 	{
@@ -339,51 +337,36 @@ multipak_cartridge::slot_id_type multipak_cartridge::selected_scs_slot() const
 	return cached_scs_slot_;
 }
 
-// Save cart Menu items into containers per slot
-void multipak_cartridge::append_menu_item(slot_id_type slot, menu_item_type item)
-{
-	switch (item.menu_id) {
-	case MID_BEGIN:
-	{
-		vcc::utils::section_locker lock(mutex_);
-
-		slots_[slot].reset_menu();
-	}
-	break;
-
-	case MID_FINISH:
-		build_menu();
-		break;
-
-	default:
-		// Add 20 times the slot number to control id's
-		if (item.menu_id >= MID_CONTROL)
-		{
-			item.menu_id += (slot + 1) * 20;
-		}
-		{
-			vcc::utils::section_locker lock(mutex_);
-
-			slots_[slot].append_menu_item(item);
-		}
-		break;
-	}
-}
-
 // This gets called any time a cartridge menu is changed. It draws the entire menu.
-void multipak_cartridge::build_menu()
+multipak_cartridge::menu_item_collection_type multipak_cartridge::get_menu_items() const
 {
 	vcc::utils::section_locker lock(mutex_);
 
-	// Init the menu, establish MPI config control, build slot menus, then draw it.
-	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
-	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	ui_->add_menu_item("MPI Config", ControlId(19), MIT_StandAlone);
-	for (int slot = 3; slot >= 0; slot--)
+	::vcc::ui::menu::menu_builder builder;
+
+	for (int slot(slots_.size() - 1); slot >= 0; slot--)
 	{
-		slots_[slot].accept(*ui_);
+		const auto items(slots_[slot].get_menu_items());
+		if (!items.empty())
+		{
+			if (!builder.empty())
+			{
+				builder.add_root_separator();
+			}
+
+			builder.add_items(
+				items,
+				expansion_port_base_menu_id + slot * expansion_port_menu_id_range_size);
+		}
 	}
-	ui_->add_menu_item("", MID_FINISH, MIT_Head);  // Finish draws the entire menu
+
+	if (!builder.empty())
+	{
+		builder.add_root_separator();
+	}
+
+	builder.add_root_item(19, "MPI Config");
+	return builder.release_items();
 }
 
 

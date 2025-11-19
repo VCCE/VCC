@@ -23,7 +23,6 @@
 //
 void update_disk0_box();
 void LoadConfig();
-void BuildCartridgeMenu();
 // config control handles
 extern HWND hControlDlg;
 extern HWND hConfigureDlg;

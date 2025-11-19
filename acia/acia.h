@@ -67,11 +67,7 @@ public:
 	void menu_item_clicked(unsigned char menu_item_id) override;
 	void update(float delta) override;
 
-
-private:
-
-	//void LoadConfig();
-	void BuildCartridgeMenu();
+	menu_item_collection_type get_menu_items() const override;
 
 
 private:

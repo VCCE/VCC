@@ -22,9 +22,9 @@
 #include "resource.h" 
 #include "IdeBus.h"
 #include "vcc/devices/rtc/ds1315.h"
+#include <vcc/ui/menu/menu_builder.h>
 #include "logger.h"
 #include "vcc/utils/FileOps.h"
-#include "../CartridgeMenu.h"
 #include "vcc/common/DialogOps.h"
 #include "vcc/utils/winapi.h"
 
@@ -87,8 +87,6 @@ void superide_cartridge::start()
 
 	LoadConfig();
 	IdeInit();
-
-	BuildCartridgeMenu();		
 }
 
 void superide_cartridge::stop()
@@ -160,25 +158,21 @@ void superide_cartridge::menu_item_clicked(unsigned char item_id)
 	{
 	case 10:
 		Select_Disk(MASTER);
-		BuildCartridgeMenu();
 		SaveConfig();
 		break;
 
 	case 11:
 		DropDisk(MASTER);
-		BuildCartridgeMenu();
 		SaveConfig();
 		break;
 
 	case 12:
 		Select_Disk(SLAVE);
-		BuildCartridgeMenu();
 		SaveConfig();
 		break;
 
 	case 13:
 		DropDisk(SLAVE);
-		BuildCartridgeMenu();
 		SaveConfig();
 		break;
 
@@ -192,28 +186,34 @@ void superide_cartridge::menu_item_clicked(unsigned char item_id)
 }
 
 
-void superide_cartridge::BuildCartridgeMenu()
+superide_cartridge::menu_item_collection_type superide_cartridge::get_menu_items() const
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
-	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
-	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	ui_->add_menu_item("IDE Master",MID_ENTRY,MIT_Head);
-	ui_->add_menu_item("Insert",ControlId(10),MIT_Slave);
+
+	::vcc::ui::menu::menu_builder builder;
+
 	QueryDisk(MASTER,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	ui_->add_menu_item(TempMsg,ControlId(11),MIT_Slave);
-	ui_->add_menu_item("IDE Slave",MID_ENTRY,MIT_Head);
-	ui_->add_menu_item("Insert",ControlId(12),MIT_Slave);
+	builder
+		.add_root_submenu("IDE Master")
+		.add_submenu_item(10, "Insert")
+		.add_submenu_item(11, TempMsg);
+
 	QueryDisk(SLAVE,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	ui_->add_menu_item(TempMsg,ControlId(13),MIT_Slave);
-	ui_->add_menu_item("IDE Config",ControlId(14),MIT_StandAlone);
-	ui_->add_menu_item("", MID_FINISH, MIT_Head);
+	builder
+		.add_root_submenu("IDE Slave")
+		.add_submenu_item(12, "Insert")
+		.add_submenu_item(13, TempMsg);
+
+	builder.add_root_item(14, "IDE Config");
+
+	return builder.release_items();
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
@@ -327,6 +327,4 @@ void superide_cartridge::LoadConfig()
 	BaseAddress=BaseTable[BaseAddr];
 	ds1315_rtc.set_read_only(ClockReadOnly);
 	MountDisk(FileName ,SLAVE);
-	BuildCartridgeMenu();
-	return;
 }

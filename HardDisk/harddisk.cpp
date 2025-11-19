@@ -23,10 +23,10 @@
 #include<iostream>
 #include "resource.h"
 #include "cc3vhd.h"
+#include <vcc/ui/menu/menu_builder.h>
 #include "vcc/devices/rtc/ds1315.h"
 #include "vcc/utils/FileOps.h"
 #include "vcc/common/DialogOps.h"
-#include "../CartridgeMenu.h"
 #include "vcc/utils/winapi.h"
 
 constexpr auto DEF_HD_SIZE = 132480u;
@@ -92,7 +92,6 @@ void vcc_hard_disk_cartridge::start()
 	LoadConfig();
 	ds1315_rtc.set_read_only(ClockReadOnly);
 	VhdReset(*bus_); // Selects drive zero
-	BuildCartridgeMenu();
 }
 
 void vcc_hard_disk_cartridge::stop()
@@ -131,8 +130,6 @@ void vcc_hard_disk_cartridge::menu_item_clicked(unsigned char MenuID)
         return;
     }
     SaveConfig();
-	BuildCartridgeMenu();
-    return;
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
@@ -284,10 +281,6 @@ void vcc_hard_disk_cartridge::LoadConfig()
 
 	ClockEnabled = GetPrivateProfileInt(gConfigurationSection, "ClkEnable", 1, IniFile) != 0;
 	ClockReadOnly = GetPrivateProfileInt(gConfigurationSection, "ClkRdOnly", 1, IniFile) != 0;
-
-    // Create config menu
-	BuildCartridgeMenu();
-    return;
 }
 
 // Save config saves the hard disk path and vhd file names
@@ -307,32 +300,34 @@ void SaveConfig()
 }
 
 // Generate menu for mounting the drives
-void vcc_hard_disk_cartridge::BuildCartridgeMenu()
+vcc_hard_disk_cartridge::menu_item_collection_type vcc_hard_disk_cartridge::get_menu_items() const
 {
 	char TempMsg[512] = "";
 	char TempBuf[MAX_PATH] = "";
 
-	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
-	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
+	::vcc::ui::menu::menu_builder builder;
 
-	ui_->add_menu_item("HD Drive 0", MID_ENTRY, MIT_Head);
-	ui_->add_menu_item("Insert", ControlId(10), MIT_Slave);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHDfile0);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	ui_->add_menu_item(TempMsg, ControlId(11), MIT_Slave);
+	builder
+		.add_root_submenu("HD Drive 0")
+		.add_submenu_item(10, "Insert")
+		.add_submenu_item(11, TempMsg);
 
-	ui_->add_menu_item("HD Drive 1", MID_ENTRY, MIT_Head);
-	ui_->add_menu_item("Insert", ControlId(12), MIT_Slave);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHDfile1);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	ui_->add_menu_item(TempMsg, ControlId(13), MIT_Slave);
+	builder
+		.add_root_submenu("HD Drive 1")
+		.add_submenu_item(12, "Insert")
+		.add_submenu_item(13, TempMsg);
 
-	ui_->add_menu_item("HD Config", ControlId(14), MIT_StandAlone);
-	ui_->add_menu_item("", MID_FINISH, MIT_Head);
+	builder.add_root_item(14, "HD Config");
+
+	return builder.release_items();
 }
 
 // Dialog for creating a new hard disk

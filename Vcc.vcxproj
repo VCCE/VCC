@@ -150,14 +150,6 @@
     <ClCompile Include="mc6809.cpp" />
     <ClCompile Include="mc6821.cpp" />
     <ClCompile Include="MemoryMap.cpp" />
-    <ClCompile Include="CartridgeMenu.cpp">
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">Level4</WarningLevel>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Level4</WarningLevel>
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">true</TreatWarningAsError>
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
-    </ClCompile>
     <ClCompile Include="MMUMonitor.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
@@ -186,9 +178,6 @@
     <ClCompile Include="_xDebug.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="README.md" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="audio.h" />
     <ClInclude Include="BuildConfig.h" />
     <ClInclude Include="CpuCommon.h" />
@@ -198,6 +187,8 @@
     <ClInclude Include="IDisplayDebug.h" />
     <ClInclude Include="DisplayNone.h" />
     <ClInclude Include="interrupts.h" />
+    <ClInclude Include="keynames.h" />
+    <ClInclude Include="menu_populator.h" />
     <ClInclude Include="OpenGL.h" />
     <ClInclude Include="OpenGLFont.h" />
     <ClInclude Include="OpenGLFontConsola.h" />

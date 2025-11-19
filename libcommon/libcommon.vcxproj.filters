@@ -85,6 +85,21 @@
     <Filter Include="Source Files\devices\psg">
       <UniqueIdentifier>{7b706004-1ad1-464f-b580-933db3783964}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\ui">
+      <UniqueIdentifier>{19e32e30-3704-4687-9823-a154e8fc7641}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ui\menu">
+      <UniqueIdentifier>{4357f869-2cfe-404d-a1ac-960264a1735f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ui\menu\detail">
+      <UniqueIdentifier>{0197c3b2-e4ee-4630-9df9-d01859a57e02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ui">
+      <UniqueIdentifier>{1c4ad340-a23d-45fb-b106-74bbb701436e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ui\menu">
+      <UniqueIdentifier>{68f6b89f-8c36-4cc7-8710-b19e4c54c6ae}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DialogOps.cpp">
@@ -149,6 +164,12 @@
     </ClCompile>
     <ClCompile Include="src\devices\psg\sn76496.cpp">
       <Filter>Source Files\devices\psg</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\menu\menu_builder.cpp">
+      <Filter>Source Files\ui\menu</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\menu\menu_item_collection.cpp">
+      <Filter>Source Files\ui\menu</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -250,6 +271,21 @@
     </ClInclude>
     <ClInclude Include="include\vcc\bus\expansion_port_ui.h">
       <Filter>Header Files\bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\ui\menu\menu_builder.h">
+      <Filter>Header Files\ui\menu</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\ui\menu\detail\menu_category.h">
+      <Filter>Header Files\ui\menu\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\ui\menu\detail\menu_item.h">
+      <Filter>Header Files\ui\menu\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\ui\menu\menu_item_visitor.h">
+      <Filter>Header Files\ui\menu</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\ui\menu\menu_item_collection.h">
+      <Filter>Header Files\ui\menu</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -42,6 +42,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <commdlg.h>
 #include <stdio.h>
 #include <mmsystem.h>
+#include "vcc/ui/menu/menu_builder.h"
 #include "vcc/utils/FileOps.h"
 #include "vcc/common/DialogOps.h"
 #include "defines.h"
@@ -56,7 +57,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "mc6821.h"
 #include "keyboard.h"
 #include "coco3.h"
-#include "CartridgeMenu.h"
 #include "pakinterface.h"
 #include "audio.h"
 #include "config.h"
@@ -79,6 +79,7 @@ This file is part of VCC (Virtual Color Computer).
 #if USE_DEBUG_MOUSE
 #include "IDisplayDebug.h"
 #endif
+#include "menu_populator.h"
 
 using namespace VCC;
 
@@ -122,6 +123,9 @@ HMENU GetConfMenu();
 static 	HANDLE hEMUThread ;
 static	HANDLE hEMUQuit;
 
+constexpr auto first_cartridge_menu_id = 5000;
+constexpr auto last_cartridge_menu_id = 5099;
+
 // Function key overclocking flag
 //unsigned char OverclockFlag = 1;
 
@@ -131,7 +135,6 @@ static unsigned char FlagEmuStop=TH_RUNNING;
 
 bool IsShiftKeyDown();
 
-CartridgeMenu CartMenu;
 
 //static CRITICAL_SECTION  FrameRender;
 /*--------------------------------------------------------------------------*/
@@ -166,10 +169,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		MessageBox(nullptr,"Can't create primary Window","Error",0);
 		exit(0);
 	}
-
-	// Set up the cartridge menu. This gets drawn after modules are loaded
-	CartMenu.init();
-	BeginCartMenu();
 
 	InitSound();
 	LoadModule();
@@ -265,6 +264,38 @@ void CloseApp()
 	UnloadDll();
 }
 
+
+void UpdateCartridgeMenu(HMENU menu)
+{
+	while (GetMenuItemCount(menu) > 0)
+	{
+		RemoveMenu(menu, 0, MF_BYPOSITION);
+	}
+
+	::vcc::ui::menu::menu_builder builder;
+	builder.add_root_submenu("Cartridge Port");
+	if (const auto& name(PakGetName()); !name.empty())
+	{
+		// HACK: We subtract first_cartridge_menu_id from the id here because it gets 
+		// added to each of the id's in the item list to virtualize them. Since this
+		// id shouldn't be virtualized we hack it here to cheat,
+		builder.add_submenu_item(ID_CARTRIDGE_EJECT - first_cartridge_menu_id, "Eject " + name);
+	}
+	// HACK: See above comment.
+	builder.add_submenu_item(ID_CARTRIDGE_INSERT - first_cartridge_menu_id, "Load Cart");
+
+	if (const auto& menu_items(PakGetMenuItems()); !menu_items.empty())
+	{
+		builder.add_root_separator();
+		builder.add_items(menu_items);
+	}
+	
+	builder
+		.release_items()
+		.accept(menu_populator(menu, first_cartridge_menu_id));
+}
+
+
 /*--------------------------------------------------------------------------*/
 // The Window Procedure
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -278,6 +309,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	switch (message)
 	{
+		case WM_INITMENUPOPUP:
+			// FIXME-CHET: magic number for menu index
+			if (const auto menu(reinterpret_cast<HMENU>(wParam)); menu == GetSubMenu(GetMenu(hWnd), 3))
+			{
+				UpdateCartridgeMenu(reinterpret_cast<HMENU>(wParam));
+			}
+			break;
+
 		case WM_SYSCOMMAND:
 			//-------------------------------------------------------------
 			// Control ATL key menu access.
@@ -297,10 +336,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			// Parse the menu selections:
 			
-			// Check if ID is in cartridge menu range
-			if ( (wmId >= MID_CONTROL) & (wmId < MID_CONTROL + 100) )
+			if (wmId == ID_CARTRIDGE_INSERT)
 			{
-				CartMenuActivated(wmId-MID_CONTROL);
+				LoadPack();
+			}
+			if (wmId == ID_CARTRIDGE_EJECT)
+			{
+				UnloadPack();
+			}
+
+
+			// Check if ID is in cartridge menu range
+			if (wmId >= first_cartridge_menu_id && wmId <= last_cartridge_menu_id)
+			{
+				CartMenuActivated(wmId - first_cartridge_menu_id);
 				break;
 			}
 
@@ -553,20 +602,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 				case DIK_F10:
-				{
-					HMENU hMenu = nullptr;
-					if ( IsShiftKeyDown() ) {
-						hMenu = GetConfMenu();
-					} else {
-						hMenu = CartMenu.draw();
+					if (EmuState.FullScreen)
+					{
+						// FIXME-CHET: magic number for menu index
+						if (const HMENU hMenu(IsShiftKeyDown() ? GetConfMenu() : GetSubMenu(GetMenu(hWnd), 3));
+							hMenu != nullptr)
+						{
+							RECT r;
+							GetClientRect(hWnd, &r);
+							TrackPopupMenu(
+								hMenu,
+								TPM_CENTERALIGN | TPM_VCENTERALIGN,
+								r.right / 2,
+								r.bottom / 2,
+								0,
+								hWnd,
+								nullptr);
+						}
 					}
-					if (hMenu && EmuState.FullScreen) {
-						RECT r;
-						GetClientRect(hWnd,&r);
-						TrackPopupMenu(hMenu,TPM_CENTERALIGN|TPM_VCENTERALIGN,
-							r.right/2,r.bottom/2,0,hWnd,nullptr);
-					}
-				}
 				break;
 				
 				case DIK_F11:
@@ -1091,7 +1144,6 @@ void FullScreenToggle()
 		exit(0);
 	}
 	InvalidateBoarder();
-	CartMenu.draw();
 
 	EmuState.ConfigDialog=nullptr;
 	PauseAudio(false);

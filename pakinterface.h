@@ -17,8 +17,12 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #pragma once
+#include "vcc/ui/menu/menu_item_collection.h"
 #include "vcc/utils/cartridge_loader.h"
+#include <string>
 
+
+std::string PakGetName();
 void PakTimer();
 unsigned char PakReadPort (unsigned char);
 void PakWritePort(unsigned char,unsigned char);
@@ -32,6 +36,6 @@ void GetCurrentModule(char *);
 void UpdateBusPointer();
 void UnloadDll();
 void UnloadPack();
-void BeginCartMenu();
 void CartMenuActivated(unsigned int);
+::vcc::ui::menu::menu_item_collection PakGetMenuItems();
 

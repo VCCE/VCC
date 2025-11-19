@@ -22,23 +22,4 @@
 
 class multipak_expansion_slot_ui : public ::vcc::bus::expansion_port_ui
 {
-public:
-
-	multipak_expansion_slot_ui(size_t slot_id, multipak_cartridge& multipak)
-		:
-		slot_id_(slot_id),
-		multipak_(multipak)
-	{}
-
-
-	void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) override
-	{
-		multipak_.append_menu_item(slot_id_, { menu_name, static_cast<unsigned int>(menu_id), menu_type });
-	}
-
-
-private:
-
-	const size_t slot_id_;
-	multipak_cartridge& multipak_;
 };

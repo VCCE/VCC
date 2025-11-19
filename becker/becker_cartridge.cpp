@@ -17,9 +17,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "becker_cartridge.h"
 #include "resource.h"
+#include <vcc/ui/menu/menu_builder.h>
 #include "vcc/utils/winapi.h"
 #include "vcc/utils/persistent_value_store.h"
-#include "../CartridgeMenu.h"
 
 
 becker_cartridge::becker_cartridge(
@@ -61,8 +61,6 @@ void becker_cartridge::start()
 		settings.read(configuration_section_id_, "DWServerAddr", "127.0.0.1").c_str(),
 		settings.read(configuration_section_id_, "DWServerPort", "65504").c_str());
 	gBecker.enable(true);
-
-	build_menu();
 }
 
 
@@ -112,12 +110,11 @@ void becker_cartridge::menu_item_clicked(unsigned char menu_item_id)
 }
 
 
-void becker_cartridge::build_menu() const
+becker_cartridge::menu_item_collection_type becker_cartridge::get_menu_items() const
 {
-	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
-	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	ui_->add_menu_item("DriveWire Server..", ControlId(menu_item_ids::open_configuration), MIT_StandAlone);
-	ui_->add_menu_item("", MID_FINISH, MIT_Head);
+	return ::vcc::ui::menu::menu_builder()
+		.add_root_item(menu_item_ids::open_configuration, "DriveWire Server..")
+		.release_items();
 }
 
 

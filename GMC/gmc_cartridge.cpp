@@ -17,11 +17,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "gmc_cartridge.h"
 #include "resource.h"
+#include <vcc/ui/menu/menu_builder.h>
 #include "vcc/common/DialogOps.h"
 #include "vcc/utils/persistent_value_store.h"
 #include "vcc/utils/winapi.h"
 #include "vcc/utils/filesystem.h"
-#include "../CartridgeMenu.h"
 #include <Windows.h>
 
 namespace
@@ -83,7 +83,6 @@ void gmc_cartridge::start()
 
 	load_rom(selected_file, false);
 	psg_.start();
-	build_menu();
 }
 
 void gmc_cartridge::reset()
@@ -167,17 +166,15 @@ void gmc_cartridge::menu_item_clicked(unsigned char menuId)
 			selected_file);
 
 		load_rom(selected_file, true);
-		build_menu();
 	}
 }
 
 
-void gmc_cartridge::build_menu()
+gmc_cartridge::menu_item_collection_type gmc_cartridge::get_menu_items() const
 {
-	ui_->add_menu_item("", MID_BEGIN, MIT_Head);
-	ui_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	ui_->add_menu_item("Select GMC ROM", ControlId(menu_item_ids::select_rom), MIT_StandAlone);
-	ui_->add_menu_item("", MID_FINISH, MIT_Head);
+	return ::vcc::ui::menu::menu_builder()
+		.add_root_item(menu_item_ids::select_rom, "Select GMC ROM")
+		.release_items();
 }
 
 void gmc_cartridge::load_rom(const path_type& filename, bool reset_on_load)

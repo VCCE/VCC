@@ -98,7 +98,6 @@ void sdc_cartridge::start()
     strcpy(IniFile, host_->configuration_path().c_str());
 
     LoadConfig();
-    BuildCartridgeMenu();
 }
 
 void sdc_cartridge::stop()
@@ -154,8 +153,6 @@ void sdc_cartridge::menu_item_clicked(unsigned char MenuID)
         ShowWindow(hControlDlg,1);
         break;
     }
-    BuildCartridgeMenu();
-    return;
 }
 
 // Return SDC status.

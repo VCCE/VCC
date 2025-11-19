@@ -61,10 +61,7 @@ public:
 	void status(char* status_buffer, size_t buffer_size) override;
 	void menu_item_clicked(unsigned char menu_item_id) override;
 
-
-protected:
-
-	void BuildCartridgeMenu();
+	menu_item_collection_type get_menu_items() const override;
 
 
 private:

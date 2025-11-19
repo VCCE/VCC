@@ -16,6 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "vcc/ui/menu/menu_item_collection.h"
 #include "vcc/detail/exports.h"
 #include <string>
 
@@ -41,6 +42,8 @@ namespace vcc::bus
 		using description_type = std::string;
 		/// @brief Specifies the type used to store a size of length.
 		using size_type = std::size_t;
+		/// @brief Specifies the type used to store a collection of menu items.
+		using menu_item_collection_type = ::vcc::ui::menu::menu_item_collection;
 
 
 	public:
@@ -219,6 +222,14 @@ namespace vcc::bus
 		/// 
 		/// @param menu_item_id The identifier of the menu item.
 		virtual void menu_item_clicked(unsigned char menu_item_id);
+
+		/// @brief Get the list of menu items for this cartridge.
+		/// 
+		/// Retrieves the list of menu and submenu items that can be used to control the
+		/// cartridge by invoking the `menu_item_clicked` member.
+		/// 
+		/// @return A collection of menu items for this cartridge.
+		virtual menu_item_collection_type get_menu_items() const;
 	};
 
 }

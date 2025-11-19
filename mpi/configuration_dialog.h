@@ -48,8 +48,6 @@ public:
 	virtual void switch_to_slot(slot_id_type slot) = 0;
 	virtual slot_id_type selected_switch_slot() const = 0;
 	virtual slot_id_type selected_scs_slot() const = 0;
-
-	virtual void build_menu() = 0;
 };
 
 

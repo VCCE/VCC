@@ -18,7 +18,6 @@
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "tcc1014registers.h"
-#include "CartridgeMenu.h"
 #include "pakinterface.h"
 #include "config.h"
 #include "Vcc.h"
@@ -50,13 +49,11 @@ static cartridge_loader_result::cartridge_ptr_type gActiveCartridge(std::make_un
 
 static cartridge_loader_status load_any_cartridge(const char* filename, const char* iniPath);
 
-void CartMenuCallBack(const char* name, int menu_id, MenuItemType type);
 void PakAssertInterupt(Interrupt interrupt, InterruptSource source);
 static void PakAssertCartrigeLine(void* host_key, bool line_state);
 static void PakWriteMemoryByte(void* host_key, unsigned char data, unsigned short address);
 static unsigned char PakReadMemoryByte(void* host_key, unsigned short address);
 static void PakAssertInterupt(void* host_key, Interrupt interrupt, InterruptSource source);
-static void PakAddMenuItem(void* host_key, const char* name, int menu_id, MenuItemType type);
 
 
 class vcc_expansion_port_bus : public ::vcc::bus::expansion_port_bus
@@ -123,12 +120,6 @@ public:
 
 class vcc_expansion_port_ui : public ::vcc::bus::expansion_port_ui
 {
-public:
-
-	void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) override
-	{
-		CartMenuCallBack(menu_name, menu_id, menu_type);
-	}
 };
 
 static void PakAssertCartrigeLine(void* /*host_key*/, bool line_state)
@@ -151,9 +142,9 @@ static void PakAssertInterupt(void* /*host_key*/, Interrupt interrupt, Interrupt
 	PakAssertInterupt(interrupt, source);
 }
 
-static void PakAddMenuItem(void* /*host_key*/, const char* name, int menu_id, MenuItemType type)
+std::string PakGetName()
 {
-	CartMenuCallBack(name, menu_id, type);
+	return gActiveCartridge->name();
 }
 
 void PakTimer()
@@ -223,27 +214,13 @@ unsigned short PackAudioSample()
 }
 
 // Create first two entries for cartridge menu.
-void BeginCartMenu()
+::vcc::ui::menu::menu_item_collection PakGetMenuItems()
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	CartMenu.add("", MID_BEGIN, MIT_Head, 0);
-	CartMenu.add("Cartridge", MID_ENTRY, MIT_Head);
-	if (!gActiveCartridge->name().empty())
-	{
-		char tmp[64] = {};
-		snprintf(tmp, 64, "Eject %s", gActiveCartridge->name().c_str());
-		CartMenu.add(tmp, ControlId(2), MIT_Slave);
-	}
-	CartMenu.add("Load Cart", ControlId(1), MIT_Slave);
-	CartMenu.add("", MID_FINISH, MIT_Head);
+	return gActiveCartridge->get_menu_items();
 }
 
-// Callback for loaded cart DLLs. First two entries are reserved
-void CartMenuCallBack(const char *name, int menu_id, MenuItemType type)
-{
-	CartMenu.add(name, menu_id, type, 2);
-}
 
 
 void PakLoadCartridgeUI()
@@ -314,7 +291,6 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	strcpy(DllPath, filename);
 	gActiveCartridge = move(loadedCartridge.cartridge);
 	gActiveModule = move(loadedCartridge.handle);
-	BeginCartMenu();
 	gActiveCartridge->start();
 
 	// Reset if enabled
@@ -333,7 +309,6 @@ void UnloadDll()
 	gActiveCartridge = std::make_unique<::vcc::bus::cartridges::empty_cartridge>();
 	gActiveModule.reset();
 
-	BeginCartMenu();
 	gActiveCartridge->start();
 }
 
@@ -361,20 +336,6 @@ void UnloadPack()
 // CartMenuActivated is called from VCC main when a cartridge menu item is clicked.
 void CartMenuActivated(unsigned int MenuID)
 {
-	switch (MenuID)
-	{
-	case 1:
-		LoadPack();
-		return;
-
-	case 2:
-		UnloadPack();
-		return;
-
-	default:
-		break;
-	}
-
 	vcc::utils::section_locker lock(gPakMutex);
 
 	gActiveCartridge->menu_item_clicked(MenuID);

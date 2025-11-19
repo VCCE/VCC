@@ -60,6 +60,8 @@ public:
 	void status(char* text_buffer, size_t buffer_size) override;
 	void menu_item_clicked(unsigned char menu_item_id) override;
 
+	menu_item_collection_type get_menu_items() const override;
+
 
 protected:
 
@@ -68,9 +70,6 @@ protected:
 	void set_server_address(
 		const string_type& server_address,
 		const string_type& server_port) override;
-
-	void build_menu() const;
-
 
 private:
 
