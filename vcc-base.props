@@ -1,18 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- This is included first for release, legacy, and debug builds in every VCC project -->
+<!-- This is included first in every VCC project -->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\$(ProjectName)\out\</OutDir>
-    <IntDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\$(ProjectName)\int\</IntDir>
+    <!-- Define linkage type: Static or Dynamic, default is Dynamic -->
+    <LinkageType Condition="'$(USE_STATIC_LIB)' == 'true'">Static</LinkageType>
+    <LinkageType Condition="'$(LinkageType)' != 'Static'">Dynamic</LinkageType>
+    <!-- static builds go to their own subdirectory -->
+    <LinkTypeSubDir Condition="'$(LinkageType)' == 'Static'">Static</LinkTypeSubDir>
+    <LinkTypeSubDir Condition="'$(LinkageType)' == 'Dynamic'"></LinkTypeSubDir>
+    <OutDir>$(SolutionDir)__obj\$(Platform)\$(LinkTypeSubDir)\$(Configuration)\$(ProjectName)\out\</OutDir>
+    <IntDir>$(SolutionDir)__obj\$(Platform)\$(LinkTypeSubDir)\$(Configuration)\$(ProjectName)\int\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(USE_STATIC_LIB)' != 'true'">
+  <ItemDefinitionGroup Condition="'$(LinkageType)' == 'Dynamic'">
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_STATIC_LIB=false;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BrowseInformation>true</BrowseInformation>
       <AdditionalIncludeDirectories>$(SolutionDir)libcommon/include</AdditionalIncludeDirectories>
     </ClCompile>
@@ -21,7 +27,7 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(USE_STATIC_LIB)' == 'true'">
+  <ItemDefinitionGroup Condition="'$(LinkageType)' == 'Static'">
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <WarningLevel>Level3</WarningLevel>
@@ -39,6 +45,5 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
-
   <ItemGroup />
 </Project>
