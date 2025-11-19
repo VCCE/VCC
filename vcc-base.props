@@ -8,24 +8,37 @@
     <IntDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\$(ProjectName)\int\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
-  <ItemDefinitionGroup>
-    <ResourceCompile>
-      <PreprocessorDefinitions Condition="'$(USE_STATIC_LIB)' == 'true'">USE_STATIC_LIB=true;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ResourceCompile>
+  <ItemDefinitionGroup Condition="'$(USE_STATIC_LIB)' != 'true'">
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(USE_STATIC_LIB)' == 'true'">USE_STATIC_LIB=true;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BrowseInformation>true</BrowseInformation>
       <AdditionalIncludeDirectories>$(SolutionDir)libcommon/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies Condition="'$(USE_STATIC_LIB)' == 'true' and '$(ProjectName)' != 'libcommon'">libcommon.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories Condition="'$(USE_STATIC_LIB)' == 'true' and '$(ProjectName)' != 'libcommon'">$(SolutionDir)__obj\$(Platform)\$(Configuration)\libcommon\out\</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(USE_STATIC_LIB)' == 'true'">
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>USE_STATIC_LIB=true;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BrowseInformation>true</BrowseInformation>
+      <AdditionalIncludeDirectories>$(SolutionDir)libcommon/include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>USE_STATIC_LIB=true;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies Condition="'$(ProjectName)' != 'libcommon'">libcommon.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories Condition="'$(ProjectName)' != 'libcommon'">$(SolutionDir)__obj\$(Platform)\$(Configuration)\libcommon\out\</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
+
   <ItemGroup />
 </Project>
