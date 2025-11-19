@@ -10,8 +10,8 @@
     <ClCompile />
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <RuntimeLibrary Condition="'$(USE_STATIC_LIB)' == 'true'">MultiThreadedDebug</RuntimeLibrary>
-      <RuntimeLibrary Condition="'$(USE_STATIC_LIB)' != 'true'">MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(LinkageType)' == 'Static'">MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(LinkageType)' == 'Dynamic'">MultiThreadedDebugDLL</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <BrowseInformation>true</BrowseInformation>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>

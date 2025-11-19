@@ -10,8 +10,8 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <RuntimeLibrary Condition="'$(USE_STATIC_LIB)' == 'true'">MultiThreaded</RuntimeLibrary>
-      <RuntimeLibrary Condition="'$(USE_STATIC_LIB)' != 'true'">MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(LinkageType)' == 'Static'">MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(LinkageType)' == 'Dynamic'">MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
