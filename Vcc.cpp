@@ -133,6 +133,9 @@ bool IsShiftKeyDown();
 
 CartridgeMenu CartMenu;
 
+#ifdef USE_STATIC_LIB
+void InitStaticModuleInstance(HINSTANCE hInstance);
+#endif
 
 //static CRITICAL_SECTION  FrameRender;
 /*--------------------------------------------------------------------------*/
@@ -149,8 +152,10 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	OleInitialize(nullptr); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
 
-// Init static libcommon
-void InitStaticModuleInstance();
+#ifdef USE_STATIC_LIB
+	// Init static libcommon
+	InitStaticModuleInstance(hInstance);
+#endif
 
 	// Parse command line
 	memset(&CmdArg,0,sizeof(CmdArg));
