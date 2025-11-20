@@ -21,6 +21,7 @@
 #include <vcc/utils/winapi.h>
 #include <vcc/utils/filesystem.h>
 
+#include <vcc/common/logger.h>
 
 namespace
 {
@@ -317,6 +318,9 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	slot_id_type slot,
 	const path_type& filename)
 {
+
+//PrintLogC("multipak_cartridge Mount cartridge %s\n",filename.c_str());
+
 	auto loadedCartridge(vcc::utils::load_cartridge(
 		filename,
 		std::make_unique<multipak_cartridge_context>(slot, *context_, *this),

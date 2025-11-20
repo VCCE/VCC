@@ -22,6 +22,7 @@
 #include <vcc/utils/filesystem.h>
 #include <array>
 
+#include <vcc/common/logger.h>
 
 namespace
 {
@@ -78,6 +79,7 @@ void configuration_dialog::close()
 
 void configuration_dialog::select_new_cartridge(slot_id_type slot)
 {
+//PrintLogC("select\n");
 	FileDialog dlg;
 	dlg.setTitle("Load Program Pak");
 	dlg.setInitialDir(configuration_.last_accessed_module_path().c_str());
