@@ -16,10 +16,44 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "multipak_cartridge.h"
+#include "vcc/bus/cartridge.h"
 #include "vcc/bus/expansion_port_ui.h"
+#include "vcc/bus/expansion_port_bus.h"
+#include "vcc/bus/expansion_port.h"
+#include "vcc/utils/cartridge_loader.h"
 
 
-class multipak_expansion_slot_ui : public ::vcc::bus::expansion_port_ui
+class multipak_expansion_port : public ::vcc::bus::expansion_port
 {
+public:
+
+	using label_type = std::string;
+
+
+public:
+
+	using expansion_port::expansion_port;
+
+	multipak_expansion_port(const multipak_expansion_port&) = delete;
+	multipak_expansion_port(multipak_expansion_port&&) = default;
+
+	multipak_expansion_port& operator=(const multipak_expansion_port& other) = delete;
+	multipak_expansion_port& operator=(multipak_expansion_port&& other) noexcept;
+
+	void line_state(bool state)
+	{
+		line_state_ = state;
+	}
+
+	bool line_state() const
+	{
+		return line_state_;
+	}
+
+	label_type label() const;
+
+
+private:
+
+	bool line_state_ = false;
 };

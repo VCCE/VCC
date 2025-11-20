@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="cartridge_slot.cpp">
+    <ClCompile Include="multipak_expansion_port.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="configuration_dialog.cpp">
@@ -16,9 +16,12 @@
     <ClCompile Include="multipak_configuration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="multipak_device.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cartridge_slot.h">
+    <ClInclude Include="multipak_expansion_port.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="multipak_cartridge.h">
@@ -30,7 +33,7 @@
     <ClInclude Include="configuration_dialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="multipak_expansion_slot_bus.h">
+    <ClInclude Include="multipak_expansion_port_bus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="multipak_configuration.h">
@@ -39,7 +42,10 @@
     <ClInclude Include="multipak_configuration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="multipak_expansion_slot_ui.h">
+    <ClInclude Include="multipak_expansion_port_ui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="multipak_device.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

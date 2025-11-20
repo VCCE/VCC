@@ -15,38 +15,26 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "cartridge_slot.h"
+#include "multipak_expansion_port.h"
 #include "vcc/bus/cartridges/empty_cartridge.h"
 
 
-namespace vcc::modules::mpi
+multipak_expansion_port& multipak_expansion_port::operator=(multipak_expansion_port&& other) noexcept
 {
-
-	cartridge_slot::cartridge_slot(path_type path, handle_type handle, cartridge_ptr_type cartridge)
-		:
-		expansion_port(move(handle), move(cartridge)),
-		path_(move(path))
-	{}
-
-	cartridge_slot& cartridge_slot::operator=(cartridge_slot&& other) noexcept
+	if (this != &other)
 	{
-		if (this != &other)
-		{
-			expansion_port::operator=(std::move(other));
+		expansion_port::operator=(std::move(other));
 
-			path_ = move(other.path_);
-			line_state_ = other.line_state_;
+		line_state_ = other.line_state_;
 
-			other.line_state_ = false;
-		}
-
-		return *this;
+		other.line_state_ = false;
 	}
 
+	return *this;
+}
 
-	cartridge_slot::label_type cartridge_slot::label() const
-	{
-		return name() + "  " + catalog_id();
-	}
 
+multipak_expansion_port::label_type multipak_expansion_port::label() const
+{
+	return name() + "  " + catalog_id();
 }

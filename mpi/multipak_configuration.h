@@ -19,13 +19,13 @@ public:
 	void configuration_path(path_type path);	//	FIXME: maybe make private with a friend setter
 	path_type configuration_path() const;
 
-	void last_accessed_module_path(const path_type& path) const;
+	void last_accessed_module_path(const path_type& path);
 	path_type last_accessed_module_path() const;
 
-	void selected_slot(slot_id_type slot) const;
+	void selected_slot(slot_id_type slot);
 	slot_id_type selected_slot() const;
 
-	void slot_cartridge_path(slot_id_type slot, const path_type& path) const;
+	void slot_cartridge_path(slot_id_type slot, const path_type& path);
 	path_type slot_cartridge_path(slot_id_type slot) const;
 
 

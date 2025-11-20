@@ -47,11 +47,15 @@ namespace
 configuration_dialog::configuration_dialog(
 	HINSTANCE module_handle,
 	multipak_configuration& configuration,
-	multipak_controller& mpi)
+	std::shared_ptr<multipak_device> mpi,
+	insert_function_type insert_callback,
+	eject_function_type eject_callback)
 	:
 	module_handle_(module_handle),
 	configuration_(configuration),
-	mpi_(mpi)
+	mpi_(mpi),
+	insert_callback_(move(insert_callback)),
+	eject_callback_(move(eject_callback))
 {}
 
 
@@ -89,9 +93,9 @@ void configuration_dialog::select_new_cartridge(slot_id_type slot)
 	dlg.setFlags(OFN_FILEMUSTEXIST);
 	if (dlg.show(0, dialog_handle_))
 	{
-		mpi_.eject_cartridge(slot);
+		mpi_->eject_cartridge(slot);
 		
-		if (const auto mount_result(mpi_.mount_cartridge(slot, dlg.path()));
+		if (const auto mount_result(insert_callback_(slot, dlg.path()));
 			mount_result == cartridge_loader_status::success)
 		{
 			configuration_.slot_cartridge_path(slot, dlg.path());
@@ -125,7 +129,7 @@ void configuration_dialog::set_selected_slot(slot_id_type slot)
 	}
 
 	// FIXME-CHET: Maube move this to the callsite or when the dialog closes or at least make it optional?
-	mpi_.switch_to_slot(slot);
+	mpi_->switch_to_slot(slot);
 	configuration_.selected_slot(slot);
 }
 
@@ -136,7 +140,7 @@ void configuration_dialog::display_slot_description(slot_id_type slot)
 			IDC_MODINFO,
 			WM_SETTEXT,
 			0,
-			reinterpret_cast<LPARAM>(mpi_.slot_description(slot).c_str()));
+			reinterpret_cast<LPARAM>(mpi_->slot_description(slot).c_str()));
 }
 
 void configuration_dialog::update_slot_details(slot_id_type slot)
@@ -146,14 +150,14 @@ void configuration_dialog::update_slot_details(slot_id_type slot)
 		gSlotUiElementIds[slot].edit_box_id,
 		WM_SETTEXT,
 		0,
-		reinterpret_cast<LPARAM>(mpi_.slot_label(slot).c_str()));
+		reinterpret_cast<LPARAM>(mpi_->slot_label(slot).c_str()));
 
 	SendDlgItemMessage(
 		dialog_handle_,
 		gSlotUiElementIds[slot].insert_button_id,
 		WM_SETTEXT,
 		0,
-		reinterpret_cast<LPARAM>(mpi_.empty(slot) ? ">" : "X"));
+		reinterpret_cast<LPARAM>(mpi_->empty(slot) ? ">" : "X"));
 }
 
 
@@ -173,9 +177,9 @@ void configuration_dialog::eject_or_select_new_cartridge(slot_id_type slot)
 	}
 
 
-	if (!mpi_.empty(slot))
+	if (!mpi_->empty(slot))
 	{
-		mpi_.eject_cartridge(slot);
+		mpi_->eject_cartridge(slot);
 		configuration_.slot_cartridge_path(slot, {});
 
 	}
@@ -232,7 +236,7 @@ INT_PTR configuration_dialog::process_message(
 			update_slot_details(slot);
 		}
 
-		set_selected_slot(mpi_.selected_switch_slot());
+		set_selected_slot(mpi_->selected_switch_slot());
 		return TRUE;
 
 	case WM_COMMAND:

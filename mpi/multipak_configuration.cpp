@@ -26,13 +26,13 @@ multipak_configuration::path_type multipak_configuration::last_accessed_module_p
 	return value_store(configuration_path()).read("DefaultPaths", "MPIPath");
 }
 
-void multipak_configuration::last_accessed_module_path(const path_type& path) const
+void multipak_configuration::last_accessed_module_path(const path_type& path)
 {
 	value_store(configuration_path()).write("DefaultPaths", "MPIPath", path);
 }
 
 
-void multipak_configuration::selected_slot(slot_id_type slot) const
+void multipak_configuration::selected_slot(slot_id_type slot)
 {
 	value_store(configuration_path()).write(section_, "SWPOSITION", slot);
 }
@@ -43,7 +43,7 @@ multipak_configuration::slot_id_type multipak_configuration::selected_slot() con
 }
 
 
-void multipak_configuration::slot_cartridge_path(slot_id_type slot, const path_type& path) const
+void multipak_configuration::slot_cartridge_path(slot_id_type slot, const path_type& path)
 {
 	value_store(configuration_path()).write(section_, get_slot_path_key(slot), path);
 }

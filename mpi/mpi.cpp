@@ -15,6 +15,7 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
+#include "multipak_device.h"
 #include "multipak_cartridge.h"
 #include "vcc/bus/cartridge_factory.h"
 #include <Windows.h>
@@ -52,7 +53,19 @@ extern "C" __declspec(dllexport) ::vcc::bus::cartridge_factory_prototype GetPakF
 		{
 			gConfiguration.configuration_path(host->configuration_path());
 
-			return std::make_unique<multipak_cartridge>(move(host), move(ui), move(bus), gModuleInstance, gConfiguration);
+			std::shared_ptr<::vcc::bus::expansion_port_bus> shared_bus(move(bus));
+
+			auto device(std::make_unique<multipak_device>(
+				shared_bus,
+				gConfiguration));
+
+			return std::make_unique<multipak_cartridge>(
+				host,
+				move(ui),
+				shared_bus,
+				move(device),
+				gModuleInstance,
+				gConfiguration);
 		};
 
 }
