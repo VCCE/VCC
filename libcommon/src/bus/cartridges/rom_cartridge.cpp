@@ -41,12 +41,12 @@ namespace vcc::bus::cartridges
 			throw std::invalid_argument("Cannot construct ROM Cartridge. The expansion bus is null.");
 		}
 
-		if (name.empty())
+		if (name_.empty())
 		{
 			throw std::invalid_argument("Cannot construct ROM Cartridge. The catalog name is empty.");
 		}
 
-		if (buffer.empty())
+		if (buffer_.empty())
 		{
 			throw std::invalid_argument("Cannot construct ROM Cartridge. The ROM buffer is empty.");
 		}
