@@ -24,13 +24,13 @@ static HINSTANCE gModuleInstance;
 
 
 BOOL WINAPI DllMain(
-	HINSTANCE hinstDLL,
-	DWORD fdwReason,
-	[[maybe_unused]] LPVOID lpReserved)
+	HINSTANCE module_instance,
+	DWORD call_reason,
+	[[maybe_unused]] LPVOID reserved)
 {
-	if (fdwReason == DLL_PROCESS_ATTACH)
+	if (call_reason == DLL_PROCESS_ATTACH)
 	{
-		gModuleInstance = hinstDLL;
+		gModuleInstance = module_instance;
 	}
 
 	return true;

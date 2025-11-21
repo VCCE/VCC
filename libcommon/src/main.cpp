@@ -7,13 +7,13 @@ HINSTANCE gModuleInstance = nullptr;
 
 
 BOOL APIENTRY DllMain(
-	HMODULE module_handle,
-	DWORD reason,
+	HINSTANCE module_instance,
+	DWORD call_reason,
 	[[maybe_unused]] LPVOID reserved)
 {
-    if(reason == DLL_PROCESS_ATTACH)
+    if(call_reason == DLL_PROCESS_ATTACH)
     {
-		gModuleInstance = module_handle;
+		gModuleInstance = module_instance;
     }
 
 	return TRUE;

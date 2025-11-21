@@ -29,9 +29,12 @@ namespace
 }
 
 
-BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, [[maybe_unused]] LPVOID reserved)
+BOOL WINAPI DllMain(
+	HINSTANCE module_instance,
+	DWORD call_reason,
+	[[maybe_unused]] LPVOID reserved)
 {
-	if (reason == DLL_PROCESS_ATTACH)
+	if (call_reason == DLL_PROCESS_ATTACH)
 	{
 		gModuleInstance = module_instance;
 	}
