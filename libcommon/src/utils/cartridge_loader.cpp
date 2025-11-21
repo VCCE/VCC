@@ -67,8 +67,8 @@ namespace vcc::utils
 
 	cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
-		std::shared_ptr<::vcc::bus::expansion_port_host> host,
-		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
+		[[maybe_unused]] std::shared_ptr<::vcc::bus::expansion_port_host> host,
+		[[maybe_unused]] std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus)
 	{
 		if (bus == nullptr)

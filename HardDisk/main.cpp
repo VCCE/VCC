@@ -29,7 +29,10 @@
 HINSTANCE gModuleInstance = nullptr;
 
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
+BOOL WINAPI DllMain(
+	HINSTANCE hinstDLL,
+	DWORD fdwReason,
+	[[maybe_unused]] LPVOID lpReserved)
 {
 	if (fdwReason == DLL_PROCESS_ATTACH)
 	{

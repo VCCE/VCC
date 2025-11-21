@@ -25,7 +25,7 @@ HINSTANCE gModuleInstance;
 BOOL WINAPI DllMain(
 	HINSTANCE hinstDLL,  // handle to DLL module
 	DWORD fdwReason,     // reason for calling function
-	LPVOID lpReserved )  // reserved
+	[[maybe_unused]] LPVOID lpReserved )  // reserved
 {
 	if (fdwReason == DLL_PROCESS_ATTACH) //Clean Up
 	{

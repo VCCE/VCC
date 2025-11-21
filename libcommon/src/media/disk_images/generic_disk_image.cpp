@@ -197,7 +197,7 @@ namespace vcc::media::disk_images
 		if (stream_.bad())
 		{
 			// TODO: This should throw
-			std::fill(data_buffer.begin(), data_buffer.end(), 0xff);
+			std::fill(data_buffer.begin(), data_buffer.end(), buffer_type::value_type(0xffu));
 		}
 	}
 
@@ -316,8 +316,8 @@ namespace vcc::media::disk_images
 
 
 	generic_disk_image::size_type generic_disk_image::get_sector_count_unchecked(
-		size_type disk_head,
-		size_type disk_track) const noexcept
+		[[maybe_unused]] size_type disk_head,
+		[[maybe_unused]] size_type disk_track) const noexcept
 	{
 		return sector_count_;
 	}

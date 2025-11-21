@@ -653,7 +653,8 @@ void sdc_cartridge::FloppyCommand(unsigned char data)
 }
 
 // floppy restore
-void sdc_cartridge::FloppyRestore(unsigned char data)
+// FIXME: Why does this even take an argument?
+void sdc_cartridge::FloppyRestore([[maybe_unused]] unsigned char data)
 {
     DLOG_C("FloppyRestore\n");
     FlopTrack = 0;
@@ -664,7 +665,8 @@ void sdc_cartridge::FloppyRestore(unsigned char data)
 }
 
 // floppy seek
-void sdc_cartridge::FloppySeek(unsigned char data)
+// FIXME: Why does this even take an argument? Why does it even exist?
+void sdc_cartridge::FloppySeek([[maybe_unused]] unsigned char data)
 {
     // Seek not implemented
     DLOG_C("FloppySeek\n");

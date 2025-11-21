@@ -45,7 +45,7 @@ ramdisk_cartridge::description_type ramdisk_cartridge::description() const
 void ramdisk_cartridge::start()
 {
 	initialize_device_state();
-	std::fill(ram_.begin(), ram_.end(), 0xff);
+	std::fill(ram_.begin(), ram_.end(), buffer_type::value_type(0xffu));
 }
 
 void ramdisk_cartridge::reset()

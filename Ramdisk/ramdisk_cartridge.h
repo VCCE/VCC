@@ -28,6 +28,7 @@ class ramdisk_cartridge : public ::vcc::bus::cartridge
 public:
 
 	using address_type = std::size_t;
+	using buffer_type = std::array<unsigned char, 1024u * 512u>;
 
 
 public:
@@ -65,5 +66,5 @@ private:
 	address_type address_byte0 = 0;
 	address_type address_byte1 = 0;
 	address_type address_byte2 = 0;
-	std::array<unsigned char, 1024u * 512u> ram_;
+	buffer_type ram_;
 };

@@ -56,7 +56,7 @@ namespace vcc::devices::rtc
 
 	unsigned char oki_m6242b::read_data() const
 	{
-		unsigned char ret_val = 0;
+		auto ret_val(0);
 
 		SYSTEMTIME now;
 
@@ -113,7 +113,7 @@ namespace vcc::devices::rtc
 			break;
 
 		case 0xC:
-			ret_val = static_cast<unsigned char>(now.wDayOfWeek); // May not be right
+			ret_val = now.wDayOfWeek; // May not be right
 			break;
 
 		case 0xD:

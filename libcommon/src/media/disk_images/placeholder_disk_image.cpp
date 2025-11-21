@@ -111,45 +111,45 @@ namespace vcc::media::disk_images
 	}
 
 	void placeholder_disk_image::read_sector(
-		size_type disk_head,
-		size_type disk_track,
-		size_type head_id,
-		size_type track_id,
-		size_type sector_id,
-		buffer_type& data_buffer)
+		[[maybe_unused]] size_type disk_head,
+		[[maybe_unused]] size_type disk_track,
+		[[maybe_unused]] size_type head_id,
+		[[maybe_unused]] size_type track_id,
+		[[maybe_unused]] size_type sector_id,
+		[[maybe_unused]] buffer_type& data_buffer)
 	{
 		throw fatal_io_error("Cannot read sector. Disk does not exist.");
 	}
 
 	void placeholder_disk_image::write_sector(
-		size_type disk_head,
-		size_type disk_track,
-		size_type head_id,
-		size_type track_id,
-		size_type sector_id,
-		const buffer_type& data_buffer)
+		[[maybe_unused]] size_type disk_head,
+		[[maybe_unused]] size_type disk_track,
+		[[maybe_unused]] size_type head_id,
+		[[maybe_unused]] size_type track_id,
+		[[maybe_unused]] size_type sector_id,
+		[[maybe_unused]] const buffer_type& data_buffer)
 	{
 		throw fatal_io_error("Cannot write sector. Disk does not exist.");
 	}
 
 	placeholder_disk_image::sector_record_vector placeholder_disk_image::read_track(
-		size_type disk_head,
-		size_type disk_track)
+		[[maybe_unused]] size_type disk_head,
+		[[maybe_unused]] size_type disk_track)
 	{
 		throw fatal_io_error("Cannot read track. Disk does not exist.");
 	}
 
 	void placeholder_disk_image::write_track(
-		size_type disk_head,
-		size_type disk_track,
-		const sector_record_vector& sectors)
+		[[maybe_unused]] size_type disk_head,
+		[[maybe_unused]] size_type disk_track,
+		[[maybe_unused]] const sector_record_vector& sectors)
 	{
 		throw fatal_io_error("Cannot write track. Disk does not exist.");
 	}
 
 	placeholder_disk_image::size_type placeholder_disk_image::get_sector_count_unchecked(
-		size_type disk_head,
-		size_type disk_track) const noexcept
+		[[maybe_unused]] size_type disk_head,
+		[[maybe_unused]] size_type disk_track) const noexcept
 	{
 		return geometry_.sector_count;
 	}
