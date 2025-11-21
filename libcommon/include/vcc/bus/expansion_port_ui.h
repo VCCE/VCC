@@ -19,10 +19,6 @@
 #include "vcc/detail/exports.h"
 
 
-// FIXME: this needs to come from the common library but is currently part of the
-// main vcc app. Update this when it is migrated.
-enum MenuItemType;
-
 namespace vcc::bus
 {
 
@@ -35,12 +31,6 @@ namespace vcc::bus
 	/// services and properties provided by the system managing the expansion port.
 	class LIBCOMMON_EXPORT expansion_port_ui
 	{
-	public:
-
-		/// @brief The type used to represent menu items.
-		using menu_item_type = MenuItemType;
-
-
 	public:
 
 		virtual ~expansion_port_ui() = default;
