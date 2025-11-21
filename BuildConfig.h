@@ -33,13 +33,6 @@
 #endif
 
 //
-// Legacy does not support opengl so disable it.
-//
-#ifdef _LEGACY_VCC
-#undef USE_OPENGL
-#endif
-
-//
 // Enable the use of DirectX display driver
 //
 #ifndef USE_DIRECTX

@@ -478,14 +478,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
-#ifdef _LEGACY_VCC
-		case WM_CREATE:
-			{	char title[80] = "Legacy ";
-				strncat(title,g_szAppName,80);
-				SetWindowTextA(hWnd,title); }
-			break;
-#endif
-
 		case WM_SETCURSOR:
 			// Hide mouse cursor
             if ((EmuState.MousePointer != 1) && (LOWORD(lParam) == HTCLIENT)) {
