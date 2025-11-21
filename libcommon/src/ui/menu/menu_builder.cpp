@@ -91,7 +91,9 @@ namespace vcc::ui::menu
 
 	menu_builder& menu_builder::add_items(const item_collection_type& items, size_t menu_id_offset)
 	{
-		items.accept(menu_copy_visitor(*this, menu_id_offset));
+		menu_copy_visitor visitor(*this, menu_id_offset);
+
+		items.accept(visitor);
 
 		return *this;
 	}

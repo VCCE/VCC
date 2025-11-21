@@ -46,8 +46,8 @@ static char IniFile[MAX_PATH];       // Ini file name
 char AciaStat[32];
 
 // Some strings for config dialog
-char *IOModeTxt[] = {"RW","R","W"};
-char *ComTypeTxt[] = {"CONS","FILE","TCP","COM"};
+const char *IOModeTxt[] = {"RW","R","W"};
+const char *ComTypeTxt[] = {"CONS","FILE","TCP","COM"};
 
 int  AciaBasePort;             // Base port for sc6651 (0x68 or 0x6C)
 int  AciaComType;              // Console,file,tcpip,wincom

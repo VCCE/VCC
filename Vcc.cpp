@@ -290,9 +290,11 @@ void UpdateCartridgeMenu(HMENU menu)
 		builder.add_items(menu_items);
 	}
 	
+	menu_populator menu_item_visitor(menu, first_cartridge_menu_id);
+
 	builder
 		.release_items()
-		.accept(menu_populator(menu, first_cartridge_menu_id));
+		.accept(menu_item_visitor);
 }
 
 

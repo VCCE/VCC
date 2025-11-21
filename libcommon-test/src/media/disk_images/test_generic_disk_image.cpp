@@ -129,11 +129,13 @@ TEST_F(test_generic_disk_image, first_valid_sector_id_property)
 // Validates the size of each sector on the disk can be retrieved.
 TEST_F(test_generic_disk_image, get_sector_size)
 {
+	generic_disk_image disk_image{ create_stream(buffer_stream_, test_geometry_), test_geometry_ };
+
 	iterate_geometry(
-		generic_disk_image{ create_stream(buffer_stream_, test_geometry_), test_geometry_},
+		disk_image,
 		buffer_stream_,
 		test_geometry_,
-		[](generic_disk_image& image,
+		[](const generic_disk_image& image,
 		   [[maybe_unused]] memory_stream_buffer& stream_buffer,
 		   const geometry_type& geometry,
 		   size_type head,
