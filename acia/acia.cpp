@@ -92,6 +92,12 @@ rs232pak_cartridge::description_type rs232pak_cartridge::description() const
 	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
 }
 
+rs232pak_cartridge::device_type& rs232pak_cartridge::device()
+{
+	return *this;
+}
+
+
 void rs232pak_cartridge::start()
 {
 	strcpy(IniFile, host_->configuration_path().c_str());

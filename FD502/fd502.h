@@ -26,10 +26,13 @@
 #include <Windows.h>
 
 
-class fd502_cartridge : public ::vcc::bus::cartridge
+class fd502_cartridge : 
+	public ::vcc::bus::cartridge,
+	public ::vcc::bus::cartridge_device
 {
 public:
 
+	using size_type = ::vcc::bus::cartridge::size_type;	//	FIXME-CHET: Delete this when device is removes as base class!
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
@@ -48,6 +51,7 @@ public:
 	name_type name() const override;
 	catalog_id_type catalog_id() const override;
 	description_type description() const override;
+	[[nodiscard]] device_type& device() override;
 
 	void start() override;
 	void stop() override;

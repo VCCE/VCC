@@ -171,6 +171,12 @@
     <ClCompile Include="src\ui\menu\menu_item_collection.cpp">
       <Filter>Source Files\ui\menu</Filter>
     </ClCompile>
+    <ClCompile Include="src\bus\cartridge_device.cpp">
+      <Filter>Source Files\bus</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bus\expansion_port.cpp">
+      <Filter>Source Files\bus</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource\resource.h">
@@ -286,6 +292,15 @@
     </ClInclude>
     <ClInclude Include="include\vcc\ui\menu\menu_item_collection.h">
       <Filter>Header Files\ui\menu</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\cartridge_device.h">
+      <Filter>Header Files\bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\expansion_port.h">
+      <Filter>Header Files\bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\borrowed_ptr.h">
+      <Filter>Header Files\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

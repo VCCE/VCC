@@ -52,6 +52,11 @@ becker_cartridge::description_type becker_cartridge::description() const
 	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
 }
 
+becker_cartridge::device_type& becker_cartridge::device()
+{
+	return *this;
+}
+
 
 void becker_cartridge::start()
 {

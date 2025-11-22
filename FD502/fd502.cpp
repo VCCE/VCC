@@ -117,6 +117,12 @@ fd502_cartridge::description_type fd502_cartridge::description() const
 	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
 }
 
+fd502_cartridge::device_type& fd502_cartridge::device()
+{
+	return *this;
+}
+
+
 void fd502_cartridge::start()
 {
 	strcpy(IniFile, host_->configuration_path().c_str());

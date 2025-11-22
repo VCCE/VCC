@@ -68,6 +68,11 @@ namespace vcc::bus::cartridges
 		return {};
 	}
 
+	rom_cartridge::device_type& rom_cartridge::device()
+	{
+		return *this;
+	}
+
 
 	void rom_cartridge::start()
 	{

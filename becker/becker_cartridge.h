@@ -29,6 +29,7 @@
 class becker_cartridge
 	:
 	public ::vcc::bus::cartridge,
+	public ::vcc::bus::cartridge_device,
 	private ::cartridge_controller
 {
 public:
@@ -50,6 +51,7 @@ public:
 	name_type name() const override;
 	catalog_id_type catalog_id() const override;
 	description_type description() const override;
+	[[nodiscard]] device_type& device() override;
 
 	void start() override;
 	void stop() override;

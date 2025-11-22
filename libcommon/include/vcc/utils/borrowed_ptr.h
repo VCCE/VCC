@@ -16,37 +16,13 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "vcc/bus/cartridge.h"
+#include <type_traits>
 
 
-namespace vcc::bus::cartridges
+namespace vcc::utils
 {
 
-	/// @brief A cartridge that does nothing.
-	/// 
-	/// The Empty Cartridge provides no functionality, extensions, or ROM to the system. It
-	/// does nothing and can act as a placeholder where a cartridge instance may be needed.
-	class LIBCOMMON_EXPORT empty_cartridge final : 
-		public ::vcc::bus::cartridge,
-		public ::vcc::bus::cartridge_device 
-	{
-	public:
-
-		/// @brief Retrieves the name of the cartridge.
-		/// 
-		/// @return An empty string.
-		[[nodiscard]] name_type name() const override;
-
-		/// @brief Retrieves an optional catalog identifier of the cartridge.
-		/// 
-		/// @return An empty string.
-		[[nodiscard]] catalog_id_type catalog_id() const override;
-
-		/// @brief Retrieves an optional description of the cartridge.
-		/// 
-		/// @return An empty string.
-		[[nodiscard]] description_type description() const override;
-		[[nodiscard]] device_type& device() override;
-	};
+	template <class T, std::enable_if_t<std::is_pointer<T>::value, bool> = true>
+	using borrowed_ptr = T;
 
 }

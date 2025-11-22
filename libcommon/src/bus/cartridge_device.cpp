@@ -15,38 +15,36 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#pragma once
-#include "vcc/bus/cartridge.h"
+#include "vcc/bus/cartridge_device.h"
 
 
-namespace vcc::bus::cartridges
+namespace vcc::bus
 {
 
-	/// @brief A cartridge that does nothing.
-	/// 
-	/// The Empty Cartridge provides no functionality, extensions, or ROM to the system. It
-	/// does nothing and can act as a placeholder where a cartridge instance may be needed.
-	class LIBCOMMON_EXPORT empty_cartridge final : 
-		public ::vcc::bus::cartridge,
-		public ::vcc::bus::cartridge_device 
+	void cartridge_device::reset()
+	{}
+
+	void cartridge_device::update([[maybe_unused]] float delta)
+	{}
+
+	void cartridge_device::write_port(
+		[[maybe_unused]] unsigned char port_id,
+		[[maybe_unused]] unsigned char value)
+	{}
+
+	unsigned char cartridge_device::read_port([[maybe_unused]] unsigned char port_id)
+	{ 
+		return {};
+	}
+
+	unsigned char cartridge_device::read_memory_byte([[maybe_unused]] size_type memory_address)
 	{
-	public:
+		return {};
+	}
 
-		/// @brief Retrieves the name of the cartridge.
-		/// 
-		/// @return An empty string.
-		[[nodiscard]] name_type name() const override;
-
-		/// @brief Retrieves an optional catalog identifier of the cartridge.
-		/// 
-		/// @return An empty string.
-		[[nodiscard]] catalog_id_type catalog_id() const override;
-
-		/// @brief Retrieves an optional description of the cartridge.
-		/// 
-		/// @return An empty string.
-		[[nodiscard]] description_type description() const override;
-		[[nodiscard]] device_type& device() override;
-	};
+	unsigned short cartridge_device::sample_audio()
+	{
+		return {};
+	}
 
 }

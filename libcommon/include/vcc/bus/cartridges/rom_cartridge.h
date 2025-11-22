@@ -28,7 +28,10 @@ namespace vcc::bus::cartridges
 	/// @brief A cartridge that contains a ROM image.
 	/// 
 	/// @todo provide summary once the switch `banked_rom_image` is complete.
-	class rom_cartridge : public ::vcc::bus::cartridge
+	class rom_cartridge
+		:
+		public ::vcc::bus::cartridge,
+		public ::vcc::bus::cartridge_device
 	{
 	public:
 
@@ -75,6 +78,8 @@ namespace vcc::bus::cartridges
 		///
 		/// @return Am empty string.
 		LIBCOMMON_EXPORT [[nodiscard]] description_type description() const override;
+
+		[[nodiscard]] device_type& device() override;
 
 		/// @brief Initialize the cartridge.
 		///

@@ -29,10 +29,13 @@
 #include <memory>
 
 
-class rs232pak_cartridge : public ::vcc::bus::cartridge
+class rs232pak_cartridge : 
+	public ::vcc::bus::cartridge,
+	public ::vcc::bus::cartridge_device
 {
 public:
 
+	using size_type = ::vcc::bus::cartridge::size_type;	//	FIXME-CHET: Delete this when device is removes as base class!
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
 	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
@@ -53,6 +56,7 @@ public:
 	/// @inheritdoc
 	description_type description() const override;
 
+	[[nodiscard]] device_type& device() override;
 
 	void start() override;
 	void stop() override;

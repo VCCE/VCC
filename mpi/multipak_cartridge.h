@@ -27,10 +27,12 @@
 class multipak_cartridge
 	:
 	public ::vcc::bus::cartridge,
+	public ::vcc::bus::cartridge_device,
 	private multipak_controller
 {
 public:
 
+	using size_type = ::vcc::bus::cartridge::size_type;	//	FIXME-CHET: Delete this when device is removes as base class!
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
 	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
@@ -59,6 +61,7 @@ public:
 	name_type name() const override;
 	catalog_id_type catalog_id() const override;
 	description_type description() const override;
+	[[nodiscard]] device_type& device() override;
 
 	void start() override;
 	void stop() override;

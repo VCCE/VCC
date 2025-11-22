@@ -41,6 +41,10 @@ ramdisk_cartridge::description_type ramdisk_cartridge::description() const
 	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
 }
 
+ramdisk_cartridge::device_type& ramdisk_cartridge::device()
+{
+	return *this;
+}
 
 void ramdisk_cartridge::start()
 {

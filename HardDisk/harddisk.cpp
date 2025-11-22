@@ -84,6 +84,11 @@ vcc_hard_disk_cartridge::description_type vcc_hard_disk_cartridge::description()
 	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
 }
 
+vcc_hard_disk_cartridge::device_type& vcc_hard_disk_cartridge::device()
+{
+	return *this;
+}
+
 
 void vcc_hard_disk_cartridge::start()
 {

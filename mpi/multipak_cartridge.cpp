@@ -69,6 +69,11 @@ multipak_cartridge::description_type multipak_cartridge:: description() const
 	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
 }
 
+multipak_cartridge::device_type& multipak_cartridge::device()
+{
+	return *this;
+}
+
 
 void multipak_cartridge::start()
 {

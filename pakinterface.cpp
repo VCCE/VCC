@@ -23,7 +23,7 @@
 #include "Vcc.h"
 #include "mc6821.h"
 #include "resource.h"
-#include "vcc/bus/cartridges/empty_cartridge.h"
+#include "vcc/bus/expansion_port.h"
 #include "vcc/utils/dll_deleter.h"
 #include "vcc/utils/winapi.h"
 #include "vcc/utils/logger.h"
@@ -37,6 +37,7 @@
 
 using cartridge_loader_status = vcc::utils::cartridge_loader_status;
 using cartridge_loader_result = vcc::utils::cartridge_loader_result;
+using expansion_port = vcc::bus::expansion_port;
 
 
 // Storage for Pak ROMs
@@ -44,8 +45,7 @@ extern SystemState EmuState;
 
 static vcc::utils::critical_section gPakMutex;
 static char DllPath[MAX_PATH] = "";
-static cartridge_loader_result::handle_type gActiveModule;
-static cartridge_loader_result::cartridge_ptr_type gActiveCartridge(std::make_unique<::vcc::bus::cartridges::empty_cartridge>());
+static expansion_port gExpansionSlot;
 
 static cartridge_loader_status load_any_cartridge(const char* filename, const char* iniPath);
 
@@ -144,7 +144,7 @@ static void PakAssertInterupt(void* /*host_key*/, Interrupt interrupt, Interrupt
 
 std::string PakGetName()
 {
-	return gActiveCartridge->name();
+	return gExpansionSlot.name();
 }
 
 void PakTimer()
@@ -153,42 +153,42 @@ void PakTimer()
 
 	// FIXME: The timing here matches the horizontal sync frequency but should be
 	// defined somewhere else and passed to this function.
-	gActiveCartridge->update(1.0f / (60 * 262));
+	gExpansionSlot.update(1.0f / (60 * 262));
 }
 
 void ResetBus()
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	gActiveCartridge->reset();
+	gExpansionSlot.reset();
 }
 
 void GetModuleStatus(SystemState *SMState)
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	gActiveCartridge->status(SMState->StatusLine, sizeof(SMState->StatusLine));
+	gExpansionSlot.status(SMState->StatusLine, sizeof(SMState->StatusLine));
 }
 
 unsigned char PakReadPort (unsigned char port)
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	return gActiveCartridge->read_port(port);
+	return gExpansionSlot.read_port(port);
 }
 
 void PakWritePort(unsigned char Port,unsigned char Data)
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	gActiveCartridge->write_port(Port,Data);
+	gExpansionSlot.write_port(Port,Data);
 }
 
 unsigned char PackMem8Read (unsigned short Address)
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	return gActiveCartridge->read_memory_byte(Address&32767);
+	return gExpansionSlot.read_memory_byte(Address&32767);
 }
 
 // Convert PAK interrupt assert to CPU assert or Gime assert.
@@ -210,7 +210,7 @@ unsigned short PackAudioSample()
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	return gActiveCartridge->sample_audio();
+	return gExpansionSlot.sample_audio();
 }
 
 // Create first two entries for cartridge menu.
@@ -218,7 +218,7 @@ unsigned short PackAudioSample()
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	return gActiveCartridge->get_menu_items();
+	return gExpansionSlot.get_menu_items();
 }
 
 
@@ -289,9 +289,8 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	vcc::utils::section_locker lock(gPakMutex);
 
 	strcpy(DllPath, filename);
-	gActiveCartridge = move(loadedCartridge.cartridge);
-	gActiveModule = move(loadedCartridge.handle);
-	gActiveCartridge->start();
+	gExpansionSlot = { move(loadedCartridge.handle), move(loadedCartridge.cartridge) };
+	gExpansionSlot.start();
 
 	// Reset if enabled
 	EmuState.ResetPending = 2;
@@ -304,12 +303,9 @@ void UnloadDll()
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	gActiveCartridge->stop();
-
-	gActiveCartridge = std::make_unique<::vcc::bus::cartridges::empty_cartridge>();
-	gActiveModule.reset();
-
-	gActiveCartridge->start();
+	gExpansionSlot.stop();
+	gExpansionSlot = {};
+	gExpansionSlot.start();	//	FIXME-CHET: Do we really need to call this here?
 }
 
 void GetCurrentModule(char *DefaultModule)
@@ -338,5 +334,5 @@ void CartMenuActivated(unsigned int MenuID)
 {
 	vcc::utils::section_locker lock(gPakMutex);
 
-	gActiveCartridge->menu_item_clicked(MenuID);
+	gExpansionSlot.menu_item_clicked(MenuID);
 }

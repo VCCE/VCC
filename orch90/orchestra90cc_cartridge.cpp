@@ -47,6 +47,11 @@ orchestra90cc_cartridge::description_type orchestra90cc_cartridge::description()
 	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
 }
 
+orchestra90cc_cartridge::device_type& orchestra90cc_cartridge::device()
+{
+	return *this;
+}
+
 
 void orchestra90cc_cartridge::start()
 {

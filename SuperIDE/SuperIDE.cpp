@@ -81,6 +81,11 @@ superide_cartridge::description_type superide_cartridge::description() const
 	return description.c_str();
 }
 
+superide_cartridge::device_type& superide_cartridge::device()
+{
+	return *this;
+}
+
 void superide_cartridge::start()
 {
 	strcpy(IniFile, host_->configuration_path().c_str());

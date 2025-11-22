@@ -73,6 +73,7 @@ namespace vcc::utils
 	struct cartridge_loader_result
 	{
 		/// @brief Specifies the type of handle used to reference shared libraries.
+		/// @todo rename this to managed_handle_type
 		using handle_type = std::unique_ptr<std::remove_pointer_t<HMODULE>, vcc::utils::dll_deleter>;
 		/// @brief Specifies the type pointer used to reference instances of a cartridge.
 		using cartridge_ptr_type = std::unique_ptr<::vcc::bus::cartridge>;

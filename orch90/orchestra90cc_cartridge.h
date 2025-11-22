@@ -24,10 +24,13 @@
 #include <Windows.h>
 
 
-class orchestra90cc_cartridge : public ::vcc::bus::cartridge
+class orchestra90cc_cartridge : 
+	public ::vcc::bus::cartridge,
+	public ::vcc::bus::cartridge_device
 {
 public:
 
+	using size_type = ::vcc::bus::cartridge::size_type;	//	FIXME-CHET: Delete this when device is removes as base class!
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
 	using rom_image_type = ::vcc::devices::rom::rom_image;
@@ -45,6 +48,7 @@ public:
 
 	/// @inheritdoc
 	description_type description() const override;
+	[[nodiscard]] device_type& device() override;
 
 
 	void start() override;

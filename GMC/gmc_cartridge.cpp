@@ -76,6 +76,12 @@ gmc_cartridge::description_type gmc_cartridge::description() const
 	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
 }
 
+gmc_cartridge::device_type& gmc_cartridge::device()
+{
+	return *this;
+}
+
+
 void gmc_cartridge::start()
 {
 	::vcc::utils::persistent_value_store settings(host_->configuration_path());

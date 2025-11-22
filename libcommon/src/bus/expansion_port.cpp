@@ -15,31 +15,24 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
+#include "vcc/bus/expansion_port.h"
 #include "vcc/bus/cartridges/empty_cartridge.h"
 
-// Interface for empty cartridge
 
-namespace vcc::bus::cartridges
+namespace vcc::bus
 {
 
-	empty_cartridge::name_type empty_cartridge::name() const
-	{
-		return {};
-	}
-	
-	empty_cartridge::catalog_id_type empty_cartridge::catalog_id() const
-	{
-		return {};
-	}
+	expansion_port::expansion_port()
+		:
+		cartridge_(std::make_unique<::vcc::bus::cartridges::empty_cartridge>()),
+		device_(&cartridge_->device())
+	{ }
 
-	empty_cartridge::description_type empty_cartridge:: description() const
-	{
-		return {};
-	}
-
-	empty_cartridge::device_type& empty_cartridge::device()
-	{
-		return *this;
-	}
+	expansion_port::expansion_port(managed_handle_type handle, cartridge_ptr_type cartridge)
+		:
+		cartridge_(move(cartridge)),
+		handle_(move(handle)),
+		device_(&cartridge_->device())
+	{ }
 
 }

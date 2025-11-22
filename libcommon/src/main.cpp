@@ -1,4 +1,4 @@
-// NOTE: The following two includes are here to force exporting implicit definitions.
+// NOTE: The following includes is here to force exporting implicit definitions.
 #include "vcc/utils/dll_deleter.h"
 #include <Windows.h>
 
