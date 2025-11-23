@@ -57,6 +57,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="fd502.cpp" />
+    <ClCompile Include="fd502_device.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="wd1793.cpp" />
@@ -64,6 +65,7 @@
   <ItemGroup>
     <ClInclude Include="defines.h" />
     <ClInclude Include="fd502.h" />
+    <ClInclude Include="fd502_device.h" />
     <ClInclude Include="fdrawcmd.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="utils.h" />

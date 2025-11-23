@@ -13,6 +13,9 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fd502_device.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defines.h">
@@ -34,6 +37,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="wd1793defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fd502_device.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
