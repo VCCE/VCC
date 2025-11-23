@@ -38,9 +38,9 @@ namespace vcc::ui::menu
 				menu_id_offset_(menu_id_offset)
 			{}
 
-			void root_submenu(const string_type& text) override
+			void root_submenu(const string_type& text, icon_type icon) override
 			{
-				menu_.add_root_submenu(text);
+				menu_.add_root_submenu(text, icon);
 			}
 
 			void root_separator() override
@@ -48,14 +48,19 @@ namespace vcc::ui::menu
 				menu_.add_root_separator();
 			}
 
-			void root_item(item_id_type id, const string_type& text) override
+			void root_item(item_id_type id, const string_type& text, icon_type icon, bool disabled) override
 			{
-				menu_.add_root_item(id + menu_id_offset_, text);
+				menu_.add_root_item(id + menu_id_offset_, text, icon, disabled);
 			}
 
-			void submenu_item(item_id_type id, const string_type& text) override
+			void submenu_separator() override
 			{
-				menu_.add_submenu_item(id + menu_id_offset_, text);
+				menu_.add_submenu_separator();
+			}
+
+			void submenu_item(item_id_type id, const string_type& text, icon_type icon, bool disabled) override
+			{
+				menu_.add_submenu_item(id + menu_id_offset_, text, icon, disabled);
 			}
 
 
@@ -78,9 +83,9 @@ namespace vcc::ui::menu
 		return *this;
 	}
 
-	menu_builder& menu_builder::add_root_submenu(string_type text)
+	menu_builder& menu_builder::add_root_submenu(string_type text, icon_type icon)
 	{
-		add_item(category_type::root_sub_menu, 0, move(text));
+		add_item(category_type::root_sub_menu, 0, move(text), icon);
 
 		return *this;
 	}
@@ -92,16 +97,23 @@ namespace vcc::ui::menu
 		return *this;
 	}
 	
-	menu_builder& menu_builder::add_root_item(item_id_type id, string_type text)
+	menu_builder& menu_builder::add_root_item(item_id_type id, string_type text, icon_type icon, bool disabled)
 	{
-		add_item(category_type::root_menu_item, id, move(text));
+		add_item(category_type::root_menu_item, id, move(text), icon, disabled);
 
 		return *this;
 	}
 
-	menu_builder& menu_builder::add_submenu_item(item_id_type id, string_type text)
+	menu_builder& menu_builder::add_submenu_separator()
 	{
-		add_item(category_type::sub_menu_item, id, move(text));
+		add_item(category_type::sub_menu_separator, 0, {});
+
+		return *this;
+	}
+
+	menu_builder& menu_builder::add_submenu_item(item_id_type id, string_type text, icon_type icon, bool disabled)
+	{
+		add_item(category_type::sub_menu_item, id, move(text), icon, disabled);
 
 		return *this;
 	}
@@ -123,9 +135,11 @@ namespace vcc::ui::menu
 	void menu_builder::add_item(
 		category_type category,
 		item_id_type id,
-		string_type text)
+		string_type text,
+		icon_type icon,
+		bool disabled)
 	{
-		items_.push_back(item_type{ move(text), id, category });
+		items_.push_back(item_type{ move(text), id, category, icon, disabled });
 	}
 
 }

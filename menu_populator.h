@@ -18,27 +18,32 @@
 #pragma once
 #include "vcc/ui/menu/menu_item_visitor.h"
 #include <Windows.h>
+#include <vcc/utils/winapi.h>
 
 
 class menu_populator : public ::vcc::ui::menu::menu_item_visitor
 {
 public:
 
-	menu_populator(HMENU root_menu, item_id_type base_menu_id)
+	menu_populator(
+		HMENU root_menu,
+		item_id_type base_menu_id)
 		:
 		base_menu_id_(base_menu_id),
 		root_menu_(root_menu)
 	{ }
 
-	void root_submenu(const string_type& text) override
+	void root_submenu(const string_type& text, icon_type icon) override
 	{
 		MENUITEMINFO item_info = {};
 
 		current_submenu_ = CreatePopupMenu();
 
 		item_info.cbSize = sizeof(item_info);
-		item_info.fMask = MIIM_TYPE | MIIM_SUBMENU;
+		item_info.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_CHECKMARKS | MIIM_STATE;
 		item_info.fType = MFT_STRING;
+		item_info.fState |= icon == nullptr ? 0 : MFS_CHECKED;
+		item_info.hbmpChecked = icon;
 		item_info.hSubMenu = current_submenu_;
 		item_info.dwTypeData = const_cast<LPSTR>(text.c_str());
 		item_info.cch = text.size();
@@ -56,22 +61,41 @@ public:
 
 		InsertMenuItem(root_menu_, GetMenuItemCount(root_menu_), TRUE, &item_info);
 	}
-
-	void root_item(item_id_type id, const string_type& text) override
+	
+	void root_item(item_id_type id, const string_type& text, icon_type icon, bool disabled) override
 	{
 		MENUITEMINFO item_info = {};
 
 		item_info.cbSize = sizeof(item_info);
-		item_info.fMask = MIIM_TYPE | MIIM_ID;
+		item_info.fMask = MIIM_TYPE | MIIM_ID | MIIM_CHECKMARKS | MIIM_STATE;
 		item_info.fType = MFT_STRING;
+		item_info.fState |= disabled ? MFS_DISABLED : 0;
+		item_info.fState |= icon == nullptr ? 0 : MFS_CHECKED;
+		item_info.hbmpChecked = icon;
 		item_info.wID = id + base_menu_id_;
 		item_info.dwTypeData = const_cast<LPSTR>(text.c_str());
 		item_info.cch = text.size();
 
 		InsertMenuItem(root_menu_, GetMenuItemCount(root_menu_), TRUE, &item_info);
-
 	}
-	void submenu_item(item_id_type id, const string_type& text) override
+
+	void submenu_separator() override
+	{
+		if (current_submenu_ == nullptr)
+		{
+			throw std::runtime_error("Cannot add sub menu separator. No sub menu to add to");
+		}
+
+		MENUITEMINFO item_info = {};
+
+		item_info.cbSize = sizeof(item_info);
+		item_info.fMask = MIIM_TYPE;
+		item_info.fType = MF_SEPARATOR;
+
+		InsertMenuItem(current_submenu_, GetMenuItemCount(current_submenu_), TRUE, &item_info);
+	}
+
+	void submenu_item(item_id_type id, const string_type& text, icon_type icon, bool disabled) override
 	{
 		if (current_submenu_ == nullptr)
 		{
@@ -81,8 +105,10 @@ public:
 		MENUITEMINFO item_info = {};
 
 		item_info.cbSize = sizeof(item_info);
-		item_info.fMask = MIIM_TYPE | MIIM_ID;
+		item_info.fMask = MIIM_TYPE | MIIM_ID | MIIM_CHECKMARKS | MIIM_STATE;
 		item_info.fType = MFT_STRING;
+		item_info.fState |= icon == nullptr ? 0 : MFS_CHECKED;
+		item_info.hbmpChecked = icon;
 		item_info.wID = id + base_menu_id_;
 		item_info.dwTypeData = const_cast<LPSTR>(text.c_str());
 		item_info.cch = text.size();
@@ -94,7 +120,6 @@ public:
 private:
 
 	const item_id_type base_menu_id_;
-	HMENU root_menu_ = nullptr;
+	const HMENU root_menu_ = nullptr;
 	HMENU current_submenu_ = nullptr;
-
 };

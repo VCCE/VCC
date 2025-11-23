@@ -49,6 +49,18 @@ namespace vcc::utils
 		return utf8_str;
 	}
 
+	LIBCOMMON_EXPORT HBITMAP load_shared_bitmap(HINSTANCE module_handle, UINT id, bool transparent)
+	{
+		return static_cast<HBITMAP>(LoadImage(
+			module_handle,
+			MAKEINTRESOURCE(id),
+			IMAGE_BITMAP,
+			0,
+			0,
+			LR_LOADTRANSPARENT | LR_SHARED));
+	}
+
+
 	LIBCOMMON_EXPORT std::string get_dialog_item_text(HWND window, UINT id)
 	{
 		const auto length(SendDlgItemMessage(window, id, WM_GETTEXTLENGTH, 0, 0));

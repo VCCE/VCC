@@ -56,7 +56,7 @@ namespace vcc::bus
 
 		[[nodiscard]] bool empty() const
 		{
-			return cartridge_ != nullptr;
+			return cartridge_ == nullptr;
 		}
 
 		[[nodiscard]] name_type name() const

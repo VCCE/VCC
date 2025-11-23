@@ -29,6 +29,8 @@ namespace vcc::ui::menu::detail
 		root_seperator,
 		/// @brief Menu item with an associated control
 		root_menu_item,
+
+		sub_menu_separator,
 		/// @brief Slave items with associated control in header sub-menu.
 		sub_menu_item
 	};

@@ -18,6 +18,7 @@
 #pragma once
 #include "vcc/ui/menu/detail/menu_category.h"
 #include <string>
+#include <Windows.h>
 
 
 namespace vcc::ui::menu::detail
@@ -28,10 +29,13 @@ namespace vcc::ui::menu::detail
 		using category_type = ::vcc::ui::menu::detail::menu_category;
 		using item_id_type = unsigned int;
 		using string_type = ::std::string;
+		using icon_type = HBITMAP;
 
 		string_type name;
-		item_id_type menu_id;
-		category_type type;
+		item_id_type menu_id = 0;
+		category_type type = category_type::root_seperator;
+		icon_type icon = nullptr;
+		bool disabled = false;
 	};
 
 }

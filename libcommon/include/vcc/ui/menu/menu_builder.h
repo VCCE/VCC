@@ -19,6 +19,7 @@
 #include "vcc/ui/menu/menu_item_collection.h"
 #include "vcc/ui/menu/detail/menu_item.h"
 #include "vcc/detail/exports.h"
+#include <Windows.h>
 #include <vector>
 #include <functional>
 
@@ -36,6 +37,7 @@ namespace vcc::ui::menu
 		using string_type = item_type::string_type;
 		using item_collection_type = menu_item_collection;
 		using item_container_type = menu_item_collection::item_container_type;
+		using icon_type = HBITMAP;
 
 
 	public:
@@ -44,10 +46,19 @@ namespace vcc::ui::menu
 		
 		LIBCOMMON_EXPORT menu_builder& clear();
 
-		LIBCOMMON_EXPORT menu_builder& add_root_submenu(string_type text);
+		LIBCOMMON_EXPORT menu_builder& add_root_submenu(string_type text, icon_type icon = nullptr);
 		LIBCOMMON_EXPORT menu_builder& add_root_separator();
-		LIBCOMMON_EXPORT menu_builder& add_root_item(item_id_type id, string_type text);
-		LIBCOMMON_EXPORT menu_builder& add_submenu_item(item_id_type id, string_type text);
+		LIBCOMMON_EXPORT menu_builder& add_root_item(
+			item_id_type id,
+			string_type text,
+			icon_type icon = nullptr,
+			bool disabled = false);
+		LIBCOMMON_EXPORT menu_builder& add_submenu_separator();
+		LIBCOMMON_EXPORT menu_builder& add_submenu_item(
+			item_id_type id,
+			string_type text,
+			icon_type icon = nullptr,
+			bool disabled = false);
 		LIBCOMMON_EXPORT menu_builder& add_items(const item_collection_type& items, size_t menu_id_offset = 0);
 
 		LIBCOMMON_EXPORT item_collection_type release_items();
@@ -58,7 +69,9 @@ namespace vcc::ui::menu
 		LIBCOMMON_EXPORT void add_item(
 			category_type category,
 			item_id_type id,
-			string_type text);
+			string_type text,
+			icon_type icon = nullptr,
+			bool disabled = false);
 
 	private:
 
