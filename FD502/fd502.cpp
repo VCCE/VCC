@@ -91,15 +91,15 @@ void Load_Disk(unsigned char);
 fd502_cartridge::fd502_cartridge(
 	std::shared_ptr<expansion_port_host_type> host,
 	std::unique_ptr<expansion_port_ui_type> ui,
-	std::unique_ptr<expansion_port_bus_type> bus,
+	std::shared_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)
 	:
-	host_(move(host)),
+	host_(host),
 	ui_(move(ui)),
-	bus_(move(bus)),
-	module_instance_(module_instance)
-{
-}
+	bus_(bus),
+	module_instance_(module_instance),
+	device_(host, bus)
+{}
 
 
 fd502_cartridge::name_type fd502_cartridge::name() const
@@ -119,7 +119,7 @@ fd502_cartridge::description_type fd502_cartridge::description() const
 
 fd502_cartridge::device_type& fd502_cartridge::device()
 {
-	return *this;
+	return device_;
 }
 
 
@@ -182,7 +182,7 @@ void fd502_cartridge::menu_item_clicked(unsigned char MenuID)
 	}
 }
 
-void fd502_cartridge::write_port(unsigned char Port, unsigned char Data)
+void fd502_device::write_port(unsigned char Port, unsigned char Data)
 {
 	if (BeckerEnabled && Port == 0x42)
 	{
@@ -202,7 +202,7 @@ void fd502_cartridge::write_port(unsigned char Port, unsigned char Data)
 	}
 }
 
-unsigned char fd502_cartridge::read_port(unsigned char Port)
+unsigned char fd502_device::read_port(unsigned char Port)
 {
 	if (BeckerEnabled && (Port == 0x41 || Port == 0x42))
 	{
@@ -217,13 +217,12 @@ unsigned char fd502_cartridge::read_port(unsigned char Port)
 	return disk_io_read(*bus_, Port);
 }
 
-void fd502_cartridge::update(float delta)
+void fd502_device::update(float delta)
 {
 	PingFdc(*bus_);
-	return;
 }
 
-unsigned char fd502_cartridge::read_memory_byte(size_type Address)
+unsigned char fd502_device::read_memory_byte(size_type Address)
 {
 	return RomPointer[SelectRomIndex]->read_memory_byte(Address);
 }

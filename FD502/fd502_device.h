@@ -16,55 +16,45 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "fd502_device.h"
-#include "vcc/devices/psg/sn76496.h"
-#include "vcc/devices/rom/banked_rom_image.h"
-#include "vcc/bus/cartridge.h"
+#include "vcc/bus/cartridge_device.h"
 #include "vcc/bus/expansion_port_bus.h"
 #include "vcc/bus/expansion_port_ui.h"
 #include "vcc/bus/expansion_port_host.h"
+#include "vcc/devices/rom/banked_rom_image.h"
 #include <memory>
-#include <Windows.h>
 
 
-class fd502_cartridge : public ::vcc::bus::cartridge
+class fd502_device : public ::vcc::bus::cartridge_device
 {
 public:
 
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
+	using path_type = std::string;
+	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
 
 
 public:
 
-	fd502_cartridge(
+	fd502_device(
 		std::shared_ptr<expansion_port_host_type> host,
-		std::unique_ptr<expansion_port_ui_type> ui,
-		std::shared_ptr<expansion_port_bus_type> bus,
-		HINSTANCE module_instance);
+		std::shared_ptr<expansion_port_bus_type> bus);
 
-	name_type name() const override;
-	catalog_id_type catalog_id() const override;
-	description_type description() const override;
-	[[nodiscard]] device_type& device() override;
+	void start() /*override*/;
+	void stop() /*override*/;
 
-	void start() override;
-	void stop() override;
+	unsigned char read_memory_byte(size_type memory_address) override;
 
-	void status(char* status_buffer, size_t buffer_size) override;
-	void menu_item_clicked(unsigned char menu_item_id) override;
-
-	menu_item_collection_type get_menu_items() const override;
-
+	void write_port(unsigned char port_id, unsigned char value) override;
+	unsigned char read_port(unsigned char port_id) override;
+	void update(float delta) override;
 
 private:
 
+
 	const std::shared_ptr<expansion_port_host_type> host_;
-	const std::unique_ptr<expansion_port_ui_type> ui_;
 	const std::shared_ptr<expansion_port_bus_type> bus_;
-	const HINSTANCE module_instance_;
-	fd502_device device_;
 };
 
 
