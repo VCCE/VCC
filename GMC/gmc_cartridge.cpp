@@ -50,13 +50,14 @@ const gmc_cartridge::path_type gmc_cartridge::configuration_rom_key_id_("ROM");
 gmc_cartridge::gmc_cartridge(
 	std::shared_ptr<expansion_port_host_type> host,
 	std::unique_ptr<expansion_port_ui_type> ui,
-	std::unique_ptr<expansion_port_bus_type> bus,
+	std::shared_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)
 	:
-	bus_(move(bus)),
+	bus_(bus),
 	ui_(move(ui)),
 	host_(move(host)),
-	module_instance_(module_instance)
+	module_instance_(module_instance),
+	device_(bus)
 {
 }
 
@@ -78,7 +79,7 @@ gmc_cartridge::description_type gmc_cartridge::description() const
 
 gmc_cartridge::device_type& gmc_cartridge::device()
 {
-	return *this;
+	return device_;
 }
 
 
@@ -87,50 +88,15 @@ void gmc_cartridge::start()
 	::vcc::utils::persistent_value_store settings(host_->configuration_path());
 	const auto selected_file(settings.read(configuration_section_id_, configuration_rom_key_id_));
 
-	load_rom(selected_file, false);
-	psg_.start();
-}
-
-void gmc_cartridge::reset()
-{
-	psg_.reset();
-}
-
-void gmc_cartridge::write_port(unsigned char port, unsigned char data)
-{
-	switch (port)
-	{
-	case mmio_ports::select_bank:
-		rom_image_.select_bank(data);
-		break;
-
-	case mmio_ports::psg_io:
-		psg_.write(data);
-		break;
-	}
-}
-
-unsigned char gmc_cartridge::read_port(unsigned char port)
-{
-	if (port == mmio_ports::select_bank)
-	{
-		return rom_image_.selected_bank();
-	}
-
-	return 0;
-}
-
-unsigned char gmc_cartridge::read_memory_byte(size_type address)
-{
-	return rom_image_.read_memory_byte(address);
+	device_.start(selected_file);
 }
 
 void gmc_cartridge::status(char* status, size_t buffer_size)
 {
 	std::string message("GMC Active");
 
-	const auto activeRom(::vcc::utils::get_filename(rom_image_.filename()));
-	if (!rom_image_.empty())
+	const auto activeRom(::vcc::utils::get_filename(device_.rom_filename()));
+	if (device_.has_rom())
 	{
 		message += " (" + activeRom + " Loaded)";
 	}
@@ -147,13 +113,6 @@ void gmc_cartridge::status(char* status, size_t buffer_size)
 	strcpy(status, message.c_str());
 }
 
-unsigned short gmc_cartridge::sample_audio()
-{
-	sample_type lbuffer = 0;
-	sample_type rbuffer = 0;
-
-	return psg_.sound_stream_update(lbuffer, rbuffer);
-}
 
 void gmc_cartridge::menu_item_clicked(unsigned char menuId)
 {
@@ -171,7 +130,7 @@ void gmc_cartridge::menu_item_clicked(unsigned char menuId)
 			configuration_rom_key_id_,
 			selected_file);
 
-		load_rom(selected_file, true);
+		device_.load_rom(selected_file, true);
 	}
 }
 
@@ -183,18 +142,3 @@ gmc_cartridge::menu_item_collection_type gmc_cartridge::get_menu_items() const
 		.release_items();
 }
 
-void gmc_cartridge::load_rom(const path_type& filename, bool reset_on_load)
-{
-	if (!filename.empty() && rom_image_.load(filename))
-	{
-		bus_->set_cartridge_select_line(true);
-		if (reset_on_load)
-		{
-			bus_->reset();
-		}
-	}
-	else
-	{
-		rom_image_.clear();
-	}
-}
