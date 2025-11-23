@@ -16,12 +16,10 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "ramdisk_device.h"
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/expansion_port_bus.h"
 #include <Windows.h>
-#include <memory>
-#include <array>
-#include "ramdisk_device.h"
 
 
 class ramdisk_cartridge : public ::vcc::bus::cartridge

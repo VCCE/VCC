@@ -16,14 +16,13 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "orchestra90cc_cartridge.h"
-#include <Windows.h>
-#include <stdio.h>
 #include "resource.h" 
 #include "vcc/utils/FileOps.h"
 #include "vcc/utils/winapi.h"
 #include "vcc/utils/filesystem.h"
 #include "vcc/bus/cartridge_factory.h"
 #include <memory>
+#include <Windows.h>
 
 
 static HINSTANCE gModuleInstance;

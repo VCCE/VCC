@@ -22,8 +22,8 @@
 #include "vcc/bus/expansion_port_host.h"
 #include "vcc/bus/expansion_port_ui.h"
 #include "vcc/bus/expansion_port_bus.h"
-#include <memory>
 #include <Windows.h>
+#include <memory>
 
 
 class becker_cartridge : public ::vcc::bus::cartridge

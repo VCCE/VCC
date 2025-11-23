@@ -17,14 +17,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "gmc_device.h"
-#include "vcc/devices/psg/sn76496.h"
-#include "vcc/devices/rom/banked_rom_image.h"
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/expansion_port_host.h"
 #include "vcc/bus/expansion_port_ui.h"
 #include "vcc/bus/expansion_port_bus.h"
-#include <memory>
 #include <Windows.h>
+#include <memory>
 
 
 class gmc_cartridge : public ::vcc::bus::cartridge

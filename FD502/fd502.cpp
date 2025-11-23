@@ -21,7 +21,7 @@
 #include "wd1793.h"
 #include "fd502.h"
 #include "utils.h"
-#include <vcc/ui/menu/menu_builder.h>
+#include "vcc/ui/menu/menu_builder.h"
 #include "vcc/devices/serial/beckerport.h"
 #include "vcc/devices/rtc/oki_m6242b.h"
 #include "vcc/devices/rom/rom_image.h"

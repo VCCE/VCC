@@ -16,17 +16,15 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "SuperIDE.h"
-#include <Windows.h>
-#include "stdio.h"
-#include <iostream>
-#include "resource.h" 
 #include "IdeBus.h"
+#include "resource.h" 
 #include "vcc/devices/rtc/ds1315.h"
-#include <vcc/ui/menu/menu_builder.h>
-#include "logger.h"
+#include "vcc/ui/menu/menu_builder.h"
 #include "vcc/utils/FileOps.h"
 #include "vcc/common/DialogOps.h"
 #include "vcc/utils/winapi.h"
+#include <Windows.h>
+#include <iostream>
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };

@@ -18,8 +18,6 @@
 #pragma once
 #include "vcc/bus/cartridge_device.h"
 #include "vcc/bus/expansion_port_bus.h"
-#include <Windows.h>
-#include <memory>
 #include <array>
 
 
@@ -61,5 +59,5 @@ private:
 	address_type address_byte0 = 0;
 	address_type address_byte1 = 0;
 	address_type address_byte2 = 0;
-	buffer_type ram_;
+	buffer_type ram_ = {};
 };

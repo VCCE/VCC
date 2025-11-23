@@ -23,7 +23,7 @@
 #include<iostream>
 #include "resource.h"
 #include "cc3vhd.h"
-#include <vcc/ui/menu/menu_builder.h>
+#include "vcc/ui/menu/menu_builder.h"
 #include "vcc/devices/rtc/ds1315.h"
 #include "vcc/utils/FileOps.h"
 #include "vcc/common/DialogOps.h"

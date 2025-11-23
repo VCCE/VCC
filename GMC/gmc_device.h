@@ -21,7 +21,6 @@
 #include "vcc/bus/cartridge_device.h"
 #include "vcc/bus/expansion_port_bus.h"
 #include <memory>
-#include <Windows.h>
 
 
 class gmc_device :  public ::vcc::bus::cartridge_device

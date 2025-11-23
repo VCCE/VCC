@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "becker_cartridge.h"
 #include "resource.h"
-#include <vcc/ui/menu/menu_builder.h>
+#include "vcc/ui/menu/menu_builder.h"
 #include "vcc/utils/winapi.h"
 #include "vcc/utils/persistent_value_store.h"
 

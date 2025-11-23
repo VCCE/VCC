@@ -18,7 +18,7 @@
 #pragma once
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/expansion_port_bus.h"
-#include <vcc/utils/borrowed_ptr.h>
+#include "vcc/utils/borrowed_ptr.h"
 #include "vcc/utils/cartridge_loader.h"
 #include "vcc/detail/exports.h"
 #include <memory>

@@ -16,8 +16,6 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "ramdisk_device.h"
-#include "resource.h"
-#include "vcc/utils/winapi.h"
 
 
 void ramdisk_device::start()

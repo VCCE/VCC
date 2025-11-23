@@ -17,7 +17,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "orchestra90cc_device.h"
 #include "resource.h"
-#include "vcc/utils/winapi.h"
 
 
 orchestra90cc_device::orchestra90cc_device(std::shared_ptr<expansion_port_bus_type> bus)

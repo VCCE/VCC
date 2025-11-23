@@ -23,7 +23,7 @@
 
 #include <ShlObj.h>    // for SH Browse info
 #include <Windows.h>
-#include <vcc/ui/menu/menu_builder.h>
+#include "vcc/ui/menu/menu_builder.h"
 #include "vcc/devices/rtc/ds1315.h"
 #include "vcc/utils/logger.h"
 #include "vcc/common/DialogOps.h"

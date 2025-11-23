@@ -20,7 +20,6 @@
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/expansion_port_bus.h"
 #include "vcc/bus/expansion_port_host.h"
-#include "vcc/devices/rom/rom_image.h"
 #include <memory>
 #include <Windows.h>
 
@@ -29,11 +28,13 @@ class orchestra90cc_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using size_type = ::vcc::bus::cartridge::size_type;	//	FIXME-CHET: Delete this when device is removes as base class!
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
 	using device_type = orchestra90cc_device;
 	using rom_image_type = ::vcc::devices::rom::rom_image;
+
+
+public:
 
 	orchestra90cc_cartridge(
 		std::shared_ptr<expansion_port_host_type> host,

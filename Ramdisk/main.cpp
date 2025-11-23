@@ -17,8 +17,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "ramdisk_cartridge.h"
 #include "vcc/bus/cartridge_factory.h"
-#include <memory>
 #include <Windows.h>
+#include <memory>
 
 
 static HINSTANCE gModuleInstance;

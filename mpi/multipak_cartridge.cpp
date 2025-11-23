@@ -17,17 +17,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "multipak_cartridge.h"
-#include "configuration_dialog.h"
 #include "multipak_configuration.h"
-#include "vcc/bus/cartridge.h"
-#include <array>
 #include "multipak_expansion_port_ui.h"
 #include "multipak_expansion_port_bus.h"
-#include <vcc/utils/filesystem.h>
-#include <vcc/ui/menu/menu_builder.h>
-#include <vcc/utils/winapi.h>
+#include "configuration_dialog.h"
 #include "resource.h"
-#include <vcc/bus/cartridges/empty_cartridge.h>
+#include "vcc/ui/menu/menu_builder.h"
+#include "vcc/utils/filesystem.h"
+#include "vcc/utils/winapi.h"
+#include "vcc/bus/cartridge.h"
+#include "vcc/bus/cartridges/empty_cartridge.h"
+#include <array>
 
 
 multipak_cartridge::multipak_cartridge(
