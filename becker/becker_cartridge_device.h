@@ -16,57 +16,46 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <string>
-#include <Windows.h>
-#include <functional>
+#include "vcc/devices/serial/beckerport.h"
+#include "vcc/bus/cartridge_device.h"
 
 
-class configuration_dialog
+class becker_cartridge_device : public ::vcc::bus::cartridge_device
 {
 public:
 
+	using becker_device_type = ::vcc::devices::serial::Becker;
 	using string_type = std::string;
-	using set_server_function_type = std::function<void(
-		const string_type& server_address,
-		const string_type& server_port)>;
 
 
 public:
 
-	configuration_dialog(
-		HINSTANCE module_handle,
-		set_server_function_type set_server_callback);
+	void start(const string_type& server_address, const string_type& server_port);
+	void stop();
 
-	configuration_dialog(const configuration_dialog&) = delete;
-	configuration_dialog(configuration_dialog&&) = delete;
+	void write_port(unsigned char port_id, unsigned char value) override;
+	unsigned char read_port(unsigned char port_id) override;
 
-	configuration_dialog& operator=(const configuration_dialog&) = delete;
-	configuration_dialog& operator=(configuration_dialog&&) = delete;
-
-	void open(string_type server_address, string_type server_port);
-	void close();
+	void set_server_address(
+		const string_type& server_address,
+		const string_type& server_port);
 
 
 private:
 
-	static INT_PTR CALLBACK callback_procedure(
-		HWND hDlg,
-		UINT message,
-		WPARAM wParam,
-		LPARAM lParam);
-
-	INT_PTR process_message(
-		HWND hDlg,
-		UINT message,
-		WPARAM wParam);
+	string_type server_address() const;
+	string_type server_port() const;
 
 private:
 
-	const HINSTANCE module_handle_;
-	const set_server_function_type set_server_callback_;
-	HWND dialog_handle_ = nullptr;
-	HWND parent_handle_ = nullptr;
+	struct mmio_ports
+	{
+		static const auto status = 0x41;
+		static const auto data = 0x42;
+	};
 
-	string_type server_address_;
-	string_type server_port_;
+
+private:
+
+	becker_device_type becker_device_;
 };

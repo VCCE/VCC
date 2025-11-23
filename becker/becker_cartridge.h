@@ -16,8 +16,8 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "becker_cartridge_device.h"
 #include "configuration_dialog.h"
-#include "vcc/devices/serial/beckerport.h"
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/expansion_port_host.h"
 #include "vcc/bus/expansion_port_ui.h"
@@ -26,18 +26,15 @@
 #include <Windows.h>
 
 
-class becker_cartridge
-	:
-	public ::vcc::bus::cartridge,
-	public ::vcc::bus::cartridge_device,
-	private ::cartridge_controller
+class becker_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
-	using becker_device_type = ::vcc::devices::serial::Becker;
+	using device_type = becker_cartridge_device;
+	using string_type = std::string;
 
 
 public:
@@ -56,9 +53,6 @@ public:
 	void start() override;
 	void stop() override;
 
-	void write_port(unsigned char port_id, unsigned char value) override;
-	unsigned char read_port(unsigned char port_id) override;
-
 	void status(char* text_buffer, size_t buffer_size) override;
 	void menu_item_clicked(unsigned char menu_item_id) override;
 
@@ -67,23 +61,17 @@ public:
 
 protected:
 
-	string_type server_address() const override;
-	string_type server_port() const override;
+	string_type server_address() const;
+	string_type server_port() const;
 	void set_server_address(
 		const string_type& server_address,
-		const string_type& server_port) override;
+		const string_type& server_port);
 
 private:
 
 	struct menu_item_ids
 	{
 		static const UINT open_configuration = 16;
-	};
-
-	struct mmio_ports
-	{
-		static const auto status = 0x41;
-		static const auto data = 0x42;
 	};
 
 	static const inline std::string configuration_section_id_ = "DW Becker";
@@ -93,5 +81,5 @@ private:
 	const std::unique_ptr<expansion_port_bus_type> bus_;
 	const HINSTANCE module_instance_;
 	configuration_dialog configuration_dialog_;
-	becker_device_type gBecker;
+	device_type device_;
 };

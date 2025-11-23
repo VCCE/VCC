@@ -32,7 +32,9 @@ becker_cartridge::becker_cartridge(
 	ui_(move(ui)),
 	bus_(move(bus)),
 	module_instance_(module_instance),
-	configuration_dialog_(module_instance, *this)
+	configuration_dialog_(
+		module_instance,
+		std::bind(&becker_cartridge::set_server_address, this, std::placeholders::_1, std::placeholders::_2))
 {
 }
 
@@ -54,55 +56,27 @@ becker_cartridge::description_type becker_cartridge::description() const
 
 becker_cartridge::device_type& becker_cartridge::device()
 {
-	return *this;
+	return device_;
 }
 
 
 void becker_cartridge::start()
 {
-	::vcc::utils::persistent_value_store settings(host_->configuration_path());
-
-	gBecker.sethost(
-		settings.read(configuration_section_id_, "DWServerAddr", "127.0.0.1").c_str(),
-		settings.read(configuration_section_id_, "DWServerPort", "65504").c_str());
-	gBecker.enable(true);
+	device_.start(server_address(), server_port());
 }
 
 
 void becker_cartridge::stop()
 {
-	gBecker.enable(false);
-	configuration_dialog_.close();
+	device_.stop();
 }
 
-
-void becker_cartridge::write_port(unsigned char port_id, unsigned char value)
-{
-	if (port_id == mmio_ports::data)
-	{
-		gBecker.write(value, port_id);
-	}
-}
-
-unsigned char becker_cartridge::read_port(unsigned char port_id)
-{
-	switch (port_id)
-	{
-	case mmio_ports::status:
-		return gBecker.read(port_id) != 0 ? 2 : 0;
-
-	case mmio_ports::data:
-		return gBecker.read(port_id);
-	}
-
-	return 0;
-}
 
 void becker_cartridge::status(char* text_buffer, size_t buffer_size)
 {
-	// TODO-CHET: The becker port device should not be generating the status, that should
-	// be done here. The FD502 implementation will need to be updated along with this.
-	gBecker.status(text_buffer);
+	// TODO-CHET: The becker port device should not be generating the status like it is
+	// now. Update the device to provide properties that can be queried and used to
+	// generate the status.
 }
 
 
@@ -110,7 +84,7 @@ void becker_cartridge::menu_item_clicked(unsigned char menu_item_id)
 {
 	if (menu_item_id == menu_item_ids::open_configuration)
 	{
-		configuration_dialog_.open();
+		configuration_dialog_.open(server_address(), server_port());
 	}
 }
 
@@ -125,22 +99,26 @@ becker_cartridge::menu_item_collection_type becker_cartridge::get_menu_items() c
 
 becker_cartridge::string_type becker_cartridge::server_address() const
 {
-	return gBecker.server_address();
+	::vcc::utils::persistent_value_store settings(host_->configuration_path());
+
+	return settings.read(configuration_section_id_, "DWServerAddr", "127.0.0.1");
 }
 
 becker_cartridge::string_type becker_cartridge::server_port() const
 {
-	return gBecker.server_port();
+	::vcc::utils::persistent_value_store settings(host_->configuration_path());
+
+	return settings.read(configuration_section_id_, "DWServerPort", "65504");
 }
 
 void becker_cartridge::set_server_address(
 	const string_type& server_address,
 	const string_type& server_port)
 {
-	gBecker.sethost(server_address.c_str(), server_port.c_str());
-
 	::vcc::utils::persistent_value_store settings(host_->configuration_path());
 
 	settings.write(configuration_section_id_, "DWServerAddr", server_address);
 	settings.write(configuration_section_id_, "DWServerPort", server_port);
+
+	device_.set_server_address(server_address, server_port);
 }

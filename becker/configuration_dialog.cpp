@@ -23,18 +23,21 @@
 
 configuration_dialog::configuration_dialog(
 	HINSTANCE module_handle,
-	controller_type& controller)
+	set_server_function_type set_server_callback)
 	:
 	module_handle_(module_handle),
-	controller_(controller)
+	set_server_callback_(move(set_server_callback))
 {
 }
 
 
-void configuration_dialog::open()
+void configuration_dialog::open(string_type server_address, string_type server_port)
 {
 	if (!dialog_handle_)
 	{
+		server_address_ = move(server_address);
+		server_port_ = move(server_port);
+
 		dialog_handle_ = CreateDialogParam(
 			module_handle_,
 			MAKEINTRESOURCE(IDD_PROPPAGE),
@@ -111,13 +114,13 @@ INT_PTR configuration_dialog::process_message(
 			IDC_TCPHOST,
 			WM_SETTEXT,
 			0,
-			reinterpret_cast<LPARAM>(controller_.server_address().c_str()));
+			reinterpret_cast<LPARAM>(server_address_.c_str()));
 		SendDlgItemMessage(
 			hDlg,
 			IDC_TCPPORT,
 			WM_SETTEXT,
 			0,
-			reinterpret_cast<LPARAM>(controller_.server_port().c_str()));
+			reinterpret_cast<LPARAM>(server_port_.c_str()));
 		return TRUE;
 
 	case WM_COMMAND:
@@ -125,7 +128,7 @@ INT_PTR configuration_dialog::process_message(
 		{
 		case IDOK:
 			// Save config dialog data
-			controller_.set_server_address(
+			set_server_callback_(
 				::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPHOST),
 				::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPPORT));
 			EndDialog(hDlg, LOWORD(wParam));
