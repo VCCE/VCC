@@ -21,16 +21,14 @@
 #include <Windows.h>
 #include <memory>
 #include <array>
+#include "ramdisk_device.h"
 
 
-class ramdisk_cartridge : 
-	public ::vcc::bus::cartridge,
-	public ::vcc::bus::cartridge_device
+class ramdisk_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using address_type = std::size_t;
-	using buffer_type = std::array<unsigned char, 1024u * 512u>;
+	using device_type = ramdisk_device;
 
 
 public:
@@ -43,31 +41,10 @@ public:
 	[[nodiscard]] device_type& device() override;
 
 	void start() override;
-	void reset() override;
-
-	void write_port(unsigned char port_id, unsigned char value) override;
-	unsigned char read_port(unsigned char port_id) override;
 
 
 private:
-
-	void initialize_device_state();
-
-
-private:
-
-	struct mmio_ports
-	{
-		static const unsigned char address_low = 0x40;
-		static const unsigned char address_middle = 0x41;
-		static const unsigned char address_high = 0x42;
-		static const unsigned char data = 0x43;
-	};
 
 	const HINSTANCE module_instance_;
-	address_type current_address_ = 0;
-	address_type address_byte0 = 0;
-	address_type address_byte1 = 0;
-	address_type address_byte2 = 0;
-	buffer_type ram_;
+	device_type device_;
 };

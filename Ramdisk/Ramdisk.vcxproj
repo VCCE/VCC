@@ -65,9 +65,11 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ramdisk_cartridge.cpp" />
+    <ClCompile Include="ramdisk_device.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ramdisk_cartridge.h" />
+    <ClInclude Include="ramdisk_device.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

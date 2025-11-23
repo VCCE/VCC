@@ -15,38 +15,51 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "ramdisk_cartridge.h"
-#include "resource.h"
-#include "vcc/utils/winapi.h"
+#pragma once
+#include "vcc/bus/cartridge_device.h"
+#include "vcc/bus/expansion_port_bus.h"
+#include <Windows.h>
+#include <memory>
+#include <array>
 
 
-ramdisk_cartridge::ramdisk_cartridge(HINSTANCE module_instance)
-	: module_instance_(module_instance)
+class ramdisk_device : public ::vcc::bus::cartridge_device
 {
-}
+public:
+
+	using address_type = std::size_t;
+	using buffer_type = std::array<unsigned char, 1024u * 512u>;
 
 
-ramdisk_cartridge::name_type ramdisk_cartridge::name() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
-}
+public:
 
-ramdisk_cartridge::catalog_id_type ramdisk_cartridge::catalog_id() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
-}
+	ramdisk_device() = default;
 
-ramdisk_cartridge::description_type ramdisk_cartridge::description() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
-}
+	void start();
+	void reset() override;
 
-ramdisk_cartridge::device_type& ramdisk_cartridge::device()
-{
-	return device_;
-}
+	void write_port(unsigned char port_id, unsigned char value) override;
+	unsigned char read_port(unsigned char port_id) override;
 
-void ramdisk_cartridge::start()
-{
-	device_.start();
-}
+
+private:
+
+	void initialize_device_state();
+
+
+private:
+
+	struct mmio_ports
+	{
+		static const unsigned char address_low = 0x40;
+		static const unsigned char address_middle = 0x41;
+		static const unsigned char address_high = 0x42;
+		static const unsigned char data = 0x43;
+	};
+
+	address_type current_address_ = 0;
+	address_type address_byte0 = 0;
+	address_type address_byte1 = 0;
+	address_type address_byte2 = 0;
+	buffer_type ram_;
+};

@@ -15,38 +15,64 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "ramdisk_cartridge.h"
+#include "ramdisk_device.h"
 #include "resource.h"
 #include "vcc/utils/winapi.h"
 
 
-ramdisk_cartridge::ramdisk_cartridge(HINSTANCE module_instance)
-	: module_instance_(module_instance)
+void ramdisk_device::start()
 {
+	initialize_device_state();
+	std::fill(ram_.begin(), ram_.end(), buffer_type::value_type(0xffu));
+}
+
+void ramdisk_device::reset()
+{
+	initialize_device_state();
+}
+
+void ramdisk_device::write_port(unsigned char port_id, unsigned char value)
+{
+	switch (port_id)
+	{
+	case mmio_ports::address_low:
+		address_byte0 = value;
+		break;
+
+	case mmio_ports::address_middle:
+		address_byte1 = value;
+		break;
+
+	case mmio_ports::address_high:
+		address_byte2 = (value & 0x7);
+		break;
+
+	case mmio_ports::data:
+		ram_[current_address_] = value;
+		return;
+
+	default:
+		return;
+	}
+
+	current_address_ = (address_byte2 << 16) | (address_byte1 << 8) | address_byte0;
+}
+
+unsigned char ramdisk_device::read_port(unsigned char port_id)
+{
+	if (port_id == mmio_ports::data)
+	{
+		return ram_[current_address_];
+	}
+
+	return 0;
 }
 
 
-ramdisk_cartridge::name_type ramdisk_cartridge::name() const
+void ramdisk_device::initialize_device_state()
 {
-	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
-}
-
-ramdisk_cartridge::catalog_id_type ramdisk_cartridge::catalog_id() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
-}
-
-ramdisk_cartridge::description_type ramdisk_cartridge::description() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
-}
-
-ramdisk_cartridge::device_type& ramdisk_cartridge::device()
-{
-	return device_;
-}
-
-void ramdisk_cartridge::start()
-{
-	device_.start();
+	current_address_ = 0;
+	address_byte0 = 0;
+	address_byte1 = 0;
+	address_byte2 = 0;
 }
