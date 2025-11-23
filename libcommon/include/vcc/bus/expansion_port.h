@@ -84,6 +84,21 @@ namespace vcc::bus
 			cartridge_->stop();
 		}
 
+		void status(char* text_buffer, size_t buffer_size) const
+		{
+			cartridge_->status(text_buffer, buffer_size);
+		}
+
+		[[nodiscard]] menu_item_collection_type get_menu_items() const
+		{
+			return cartridge_->get_menu_items();
+		}
+
+		void menu_item_clicked(unsigned char item_id) const
+		{
+			return cartridge_->menu_item_clicked(item_id);
+		}
+
 		void reset() const
 		{
 			device_->reset();
@@ -109,24 +124,9 @@ namespace vcc::bus
 			return device_->read_memory_byte(memory_address);
 		}
 
-		void status(char* text_buffer, size_t buffer_size) const
-		{
-			cartridge_->status(text_buffer, buffer_size);
-		}
-
 		[[nodiscard]] unsigned short sample_audio() const
 		{
-			return cartridge_->sample_audio();
-		}
-
-		[[nodiscard]] menu_item_collection_type get_menu_items() const
-		{
-			return cartridge_->get_menu_items();
-		}
-
-		void menu_item_clicked(unsigned char item_id) const
-		{
-			return cartridge_->menu_item_clicked(item_id);
+			return device_->sample_audio();
 		}
 
 

@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/bus/cartridge.h"
+#include "vcc/bus/expansion_port.h"
 #include "vcc/bus/expansion_port_ui.h"
 #include "vcc/bus/expansion_port_bus.h"
 #include "vcc/utils/cartridge_loader.h"
@@ -25,7 +26,7 @@
 namespace vcc::modules::mpi
 {
 
-	class cartridge_slot
+	class cartridge_slot : public ::vcc::bus::expansion_port
 	{
 	public:
 
@@ -45,90 +46,13 @@ namespace vcc::modules::mpi
 
 	public:
 
-		cartridge_slot();
+		using expansion_port::expansion_port;
 		cartridge_slot(path_type path, handle_type handle, cartridge_ptr_type cartridge);
-		cartridge_slot(const cartridge_slot&) = delete;
-		cartridge_slot(cartridge_slot&&) = delete;
 
 		cartridge_slot& operator=(const cartridge_slot& other) = delete;
 		cartridge_slot& operator=(cartridge_slot&& other) noexcept;
 
-		bool empty() const
-		{
-			return path_.empty();
-		}
-
-		const path_type& path() const
-		{
-			return path_;
-		}
-
-		name_type name() const
-		{
-			return cartridge_->name();
-		}
-
-		catalog_id_type catalog_id() const
-		{
-			return cartridge_->catalog_id();
-		}
-
-		description_type description() const
-		{
-			return cartridge_->description();
-		}
-
 		label_type label() const;
-
-		void start() const
-		{
-			cartridge_->start();
-		}
-
-		void stop() const
-		{
-			cartridge_->stop();
-		}
-
-		void reset() const
-		{
-			cartridge_->reset();
-		}
-
-		void update(float delta) const
-		{
-			cartridge_->update(delta);
-		}
-
-		void write_port(unsigned char port_id, unsigned char value) const
-		{
-			cartridge_->write_port(port_id, value);
-		}
-
-		unsigned char read_port(unsigned char port_id) const
-		{
-			return cartridge_->read_port(port_id);
-		}
-
-		unsigned char read_memory_byte(size_type memory_address) const
-		{
-			return cartridge_->read_memory_byte(memory_address);
-		}
-
-		void status(char* text_buffer, size_t buffer_size) const
-		{
-			cartridge_->status(text_buffer, buffer_size);
-		}
-
-		unsigned short sample_audio() const
-		{
-			return cartridge_->sample_audio();
-		}
-
-		void menu_item_clicked(unsigned char item_id) const
-		{
-			return cartridge_->menu_item_clicked(item_id);
-		}
 
 		void line_state(bool state)
 		{
@@ -140,17 +64,10 @@ namespace vcc::modules::mpi
 			return line_state_;
 		}
 
-		virtual menu_item_collection_type get_menu_items() const
-		{
-			return cartridge_->get_menu_items();
-		}
-
 
 	private:
 
 		path_type path_;
-		handle_type handle_;
-		cartridge_ptr_type cartridge_;
 		bool line_state_ = false;
 	};
 

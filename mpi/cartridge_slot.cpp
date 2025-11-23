@@ -22,29 +22,19 @@
 namespace vcc::modules::mpi
 {
 
-	cartridge_slot::cartridge_slot()
-		: cartridge_(std::make_unique<::vcc::bus::cartridges::empty_cartridge>())
-	{}
-
 	cartridge_slot::cartridge_slot(path_type path, handle_type handle, cartridge_ptr_type cartridge)
 		:
-		path_(move(path)),
-		handle_(move(handle)),
-		cartridge_(move(cartridge))
+		expansion_port(move(handle), move(cartridge)),
+		path_(move(path))
 	{}
 
 	cartridge_slot& cartridge_slot::operator=(cartridge_slot&& other) noexcept
 	{
 		if (this != &other)
 		{
-			//	Destroy the cartrige first before the handle is released
-			//	in case this is the last reference to the shared library
-			cartridge_.reset();
-			handle_.reset();
+			expansion_port::operator=(std::move(other));
 
 			path_ = move(other.path_);
-			handle_ = move(other.handle_);
-			cartridge_ = move(other.cartridge_);
 			line_state_ = other.line_state_;
 
 			other.line_state_ = false;
@@ -56,13 +46,7 @@ namespace vcc::modules::mpi
 
 	cartridge_slot::label_type cartridge_slot::label() const
 	{
-		std::string text;
-
-		text += cartridge_->name();
-		text += "  ";
-		text += cartridge_->catalog_id();
-
-		return text;
+		return name() + "  " + catalog_id();
 	}
 
 }
