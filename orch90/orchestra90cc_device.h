@@ -16,8 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "orchestra90cc_device.h"
-#include "vcc/bus/cartridge.h"
+#include "vcc/bus/cartridge_device.h"
 #include "vcc/bus/expansion_port_bus.h"
 #include "vcc/bus/expansion_port_host.h"
 #include "vcc/devices/rom/rom_image.h"
@@ -25,42 +24,42 @@
 #include <Windows.h>
 
 
-class orchestra90cc_cartridge : public ::vcc::bus::cartridge
+class orchestra90cc_device : public ::vcc::bus::cartridge_device
 {
 public:
 
-	using size_type = ::vcc::bus::cartridge::size_type;	//	FIXME-CHET: Delete this when device is removes as base class!
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
-	using device_type = orchestra90cc_device;
 	using rom_image_type = ::vcc::devices::rom::rom_image;
-
-	orchestra90cc_cartridge(
-		std::shared_ptr<expansion_port_host_type> host,
-		std::shared_ptr<expansion_port_bus_type> bus,
-		HINSTANCE module_instance);
-
-	/// @inheritdoc
-	name_type name() const override;
-
-	/// @inheritdoc
-	catalog_id_type catalog_id() const override;
-
-	/// @inheritdoc
-	description_type description() const override;
-
-	[[nodiscard]] device_type& device() override;
+	using path_type = std::string;
 
 
-	void start() override;
+public:
+
+	explicit orchestra90cc_device(std::shared_ptr<expansion_port_bus_type> bus);
+
+	void start(const path_type& rom_filename);
+
+	unsigned char read_memory_byte(size_type memory_address) override;
+
+	void write_port(unsigned char port_id, unsigned char value) override;
+
+	unsigned short sample_audio() override;
+
+
+protected:
+
+	struct mmio_ports
+	{
+		static const auto right_channel = 0x7a;
+		static const auto left_channel = 0x7b;
+	};
 
 
 private:
 
-	static const inline std::string default_rom_filename_ = "orch90.rom";
-
-	const std::shared_ptr<expansion_port_host_type> host_;
 	const std::shared_ptr<expansion_port_bus_type> bus_;
-	const HINSTANCE module_instance_;
-	device_type device_;
+	rom_image_type rom_image_;
+	unsigned char left_channel_buffer_ = 0;
+	unsigned char right_channel_buffer_ = 0;
 };

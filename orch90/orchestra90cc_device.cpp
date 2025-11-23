@@ -15,45 +15,46 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "orchestra90cc_cartridge.h"
+#include "orchestra90cc_device.h"
 #include "resource.h"
 #include "vcc/utils/winapi.h"
 
 
-orchestra90cc_cartridge::orchestra90cc_cartridge(
-	std::shared_ptr<expansion_port_host_type> host,
-	std::shared_ptr<expansion_port_bus_type> bus,
-	HINSTANCE module_instance)
-	:
-	host_(move(host)),
-	bus_(bus),
-	module_instance_(module_instance),
-	device_(bus)
+orchestra90cc_device::orchestra90cc_device(std::shared_ptr<expansion_port_bus_type> bus)
+	: bus_(move(bus))
 {}
 
 
-orchestra90cc_cartridge::name_type orchestra90cc_cartridge::name() const
+void orchestra90cc_device::start(const path_type& rom_filename)
 {
-	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
-}
-
-orchestra90cc_cartridge::catalog_id_type orchestra90cc_cartridge::catalog_id() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
-}
-
-orchestra90cc_cartridge::description_type orchestra90cc_cartridge::description() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
-}
-
-orchestra90cc_cartridge::device_type& orchestra90cc_cartridge::device()
-{
-	return device_;
+	if (!rom_filename.empty() && rom_image_.load(rom_filename))
+	{
+		bus_->set_cartridge_select_line(true);
+	}
 }
 
 
-void orchestra90cc_cartridge::start()
+void orchestra90cc_device::write_port(unsigned char port_id, unsigned char value)
 {
-	device_.start(host_->system_rom_path() + default_rom_filename_);
+	switch (port_id)
+	{
+	case mmio_ports::right_channel:
+		right_channel_buffer_ = value;
+		break;
+
+	case mmio_ports::left_channel:
+		left_channel_buffer_ = value;
+		break;
+	}
+}
+
+unsigned char orchestra90cc_device::read_memory_byte(size_type memory_address)
+{
+	return rom_image_.read_memory_byte(memory_address);
+}
+
+
+unsigned short orchestra90cc_device::sample_audio()
+{
+	return (left_channel_buffer_ << 8) | right_channel_buffer_;
 }
