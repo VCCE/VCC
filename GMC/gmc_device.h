@@ -16,67 +16,56 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "gmc_device.h"
 #include "vcc/devices/psg/sn76496.h"
 #include "vcc/devices/rom/banked_rom_image.h"
-#include "vcc/bus/cartridge.h"
-#include "vcc/bus/expansion_port_host.h"
-#include "vcc/bus/expansion_port_ui.h"
+#include "vcc/bus/cartridge_device.h"
 #include "vcc/bus/expansion_port_bus.h"
 #include <memory>
 #include <Windows.h>
 
 
-class gmc_cartridge : public ::vcc::bus::cartridge
+class gmc_device :  public ::vcc::bus::cartridge_device
 {
 public:
 
-	using size_type = ::vcc::bus::cartridge::size_type;	//	FIXME-CHET: Delete this when device is removes as base class!
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
-	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
-	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
 	using path_type = std::string;
 	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
-	using device_type = gmc_device;
+	using psg_device_type = ::vcc::devices::psg::sn76489_device;
+	using sample_type = psg_device_type::sample_type;
+
 
 public:
 
-	gmc_cartridge(
-		std::shared_ptr<expansion_port_host_type> host,
-		std::unique_ptr<expansion_port_ui_type> ui,
-		std::shared_ptr<expansion_port_bus_type> bus,
-		HINSTANCE module_instance);
+	explicit gmc_device(std::shared_ptr<expansion_port_bus_type> bus);
 
-	name_type name() const override;
-	catalog_id_type catalog_id() const override;
-	description_type description() const override;
-	[[nodiscard]] device_type& device() override;
+	void start(const path_type& rom_filename);
+	void reset() override;
 
-	void start() override;
+	bool has_rom() const noexcept;
+	path_type rom_filename() const;
 
-	void status(char* status_buffer, size_t buffer_size) override;
-	void menu_item_clicked(unsigned char menu_item_id) override;
+	void load_rom(const path_type& filename, bool reset_on_load);
 
-	menu_item_collection_type get_menu_items() const override;
+	unsigned char read_memory_byte(size_type memory_address) override;
+
+	void write_port(unsigned char port_id, unsigned char value) override;
+	unsigned char read_port(unsigned char port_id) override;
+
+	unsigned short sample_audio() override;
 
 
 private:
 
-	struct menu_item_ids
+	struct mmio_ports
 	{
-		static const unsigned int select_rom = 3;
+		static const unsigned char select_rom_bank = 0x40;
+		static const unsigned char psg_io = 0x41;
 	};
 
-	static const path_type configuration_section_id_;
-	static const path_type configuration_rom_key_id_;
-
-
-	const std::shared_ptr<expansion_port_host_type> host_;
-	const std::unique_ptr<expansion_port_ui_type> ui_;
 	const std::shared_ptr<expansion_port_bus_type> bus_;
-	const HINSTANCE module_instance_;
-
-	device_type device_;
+	rom_image_type rom_image_;
+	psg_device_type psg_;
 };
 
 

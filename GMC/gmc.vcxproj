@@ -61,10 +61,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="gmc_cartridge.cpp" />
+    <ClCompile Include="gmc_device.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gmc_cartridge.h" />
+    <ClInclude Include="gmc_device.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
