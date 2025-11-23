@@ -64,9 +64,11 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="orchestra90cc_cartridge.cpp" />
+    <ClCompile Include="orchestra90cc_device.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="orchestra90cc_cartridge.h" />
+    <ClInclude Include="orchestra90cc_device.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
