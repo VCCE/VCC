@@ -7,13 +7,13 @@
     <!-- Define linkage type: Static or Dynamic, default is Dynamic -->
     <LinkageType Condition="'$(USE_STATIC_LIB)' == 'true'">Static</LinkageType>
     <LinkageType Condition="'$(LinkageType)' != 'Static'">Dynamic</LinkageType>
-    <!-- static builds go to their own subdirectory -->
+    <!-- Output and Intermediate directories -->
     <LinkTypeSubDir Condition="'$(LinkageType)' == 'Static'">Static</LinkTypeSubDir>
-    <LinkTypeSubDir Condition="'$(LinkageType)' == 'Dynamic'"></LinkTypeSubDir>
-    <OutDir>$(SolutionDir)__obj\$(Platform)\$(LinkTypeSubDir)\$(Configuration)\$(ProjectName)\out\</OutDir>
-    <IntDir>$(SolutionDir)__obj\$(Platform)\$(LinkTypeSubDir)\$(Configuration)\$(ProjectName)\int\</IntDir>
+    <LinkTypeSubDir Condition="'$(LinkageType)' == 'Dynamic'">Dynamic</LinkTypeSubDir>
+    <OutDir>$(SolutionDir)__obj\$(LinkTypeSubDir)\$(Platform)\$(Configuration)\$(ProjectName)\out\</OutDir>
+    <IntDir>$(SolutionDir)__obj\$(LinkTypeSubDir)\$(Platform)\$(Configuration)\$(ProjectName)\int\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    </PropertyGroup>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(LinkageType)' == 'Dynamic'">
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -39,7 +39,6 @@
       <PreprocessorDefinitions>USE_STATIC_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <AdditionalLibraryDirectories Condition="'$(ProjectName)' != 'libcommon'">$(SolutionDir)__obj\$(Platform)\$(Configuration)\libcommon\out\</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
