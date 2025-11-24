@@ -64,7 +64,7 @@
       <WholeProgramOptimization Condition="'$(LinkageType)' == 'Static'">true</WholeProgramOptimization>
       <WholeProgramOptimization Condition="'$(LinkageType)' == 'Dynamic'">false</WholeProgramOptimization>
     </ClCompile>
-    <OutDir Condition="'$(LinkageType)' == 'Dynamic'">$(SolutionDir)__obj\$(Platform)\$(LinkTypeSubDir)\$(Configuration)\vcc\out\</OutDir>
+    <OutDir>$(SolutionDir)__obj\$(LinkTypeSubDir)\$(Platform)\$(Configuration)\vcc\out\</OutDir>
     <TargetExt Condition="'$(LinkageType)' == 'Dynamic'">.vcc</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
