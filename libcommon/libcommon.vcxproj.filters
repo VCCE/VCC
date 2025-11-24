@@ -31,8 +31,14 @@
     <Filter Include="Source Files\devices\rtc">
       <UniqueIdentifier>{7916028f-7cb9-4a17-8897-43634a51ba3d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\cartridges">
+      <UniqueIdentifier>{cc0a281d-6ff8-4a04-95a0-5bef8957ba5f}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Header Files\utils">
       <UniqueIdentifier>{f5ac3a16-8b52-47c1-a81c-d58a404a2181}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\cartridges">
+      <UniqueIdentifier>{6344b600-e0a8-4961-8a19-7ef6249e9a3e}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\utils">
       <UniqueIdentifier>{c3048278-09ca-471f-9cff-e11566354e5d}</UniqueIdentifier>
@@ -42,6 +48,9 @@
     </Filter>
     <Filter Include="Source Files\devices\rom">
       <UniqueIdentifier>{3338d5c7-a9a1-4858-bc0f-b0ed9fa6b918}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core">
+      <UniqueIdentifier>{4decb533-7b10-402c-995c-a6d2d41f1c35}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\devices\serial">
       <UniqueIdentifier>{cebd23b4-ab92-47f2-926b-fe8afb144131}</UniqueIdentifier>
@@ -54,15 +63,6 @@
     </Filter>
     <Filter Include="Header Files\detail">
       <UniqueIdentifier>{5ec3142f-ca23-485c-b5c6-60bf376faf78}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\bus">
-      <UniqueIdentifier>{4decb533-7b10-402c-995c-a6d2d41f1c35}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\bus\cartridges">
-      <UniqueIdentifier>{6344b600-e0a8-4961-8a19-7ef6249e9a3e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\bus\cartridges">
-      <UniqueIdentifier>{cc0a281d-6ff8-4a04-95a0-5bef8957ba5f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -77,6 +77,15 @@
     </ClCompile>
     <ClCompile Include="src\devices\rtc\oki_m6242b.cpp">
       <Filter>Source Files\devices\rtc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cartridges\empty_cartridge.cpp">
+      <Filter>Source Files\cartridges</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cartridges\capi_adapter_cartridge.cpp">
+      <Filter>Source Files\cartridges</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cartridges\rom_cartridge.cpp">
+      <Filter>Source Files\cartridges</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\persistent_value_store.cpp">
       <Filter>Source Files\utils</Filter>
@@ -96,6 +105,9 @@
     <ClCompile Include="src\devices\rom\banked_rom_image.cpp">
       <Filter>Source Files\devices\rom</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\cartridge.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
     <ClCompile Include="src\devices\serial\beckerport.cpp">
       <Filter>Source Files\devices\serial</Filter>
     </ClCompile>
@@ -104,18 +116,6 @@
     </ClCompile>
     <ClCompile Include="src\utils\logger.cpp">
       <Filter>Source Files\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="src\bus\cartridge.cpp">
-      <Filter>Source Files\bus</Filter>
-    </ClCompile>
-    <ClCompile Include="src\bus\cartridges\capi_adapter_cartridge.cpp">
-      <Filter>Source Files\bus\cartridges</Filter>
-    </ClCompile>
-    <ClCompile Include="src\bus\cartridges\empty_cartridge.cpp">
-      <Filter>Source Files\bus\cartridges</Filter>
-    </ClCompile>
-    <ClCompile Include="src\bus\cartridges\rom_cartridge.cpp">
-      <Filter>Source Files\bus\cartridges</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -130,6 +130,15 @@
     </ClInclude>
     <ClInclude Include="include\vcc\devices\rtc\oki_m6242b.h">
       <Filter>Header Files\devices\rtc</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\cartridges\capi_adapter_cartridge.h">
+      <Filter>Header Files\cartridges</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\cartridges\empty_cartridge.h">
+      <Filter>Header Files\cartridges</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\cartridges\rom_cartridge.h">
+      <Filter>Header Files\cartridges</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\utils\persistent_value_store.h">
       <Filter>Header Files\utils</Filter>
@@ -181,15 +190,6 @@
     </ClInclude>
     <ClInclude Include="include\vcc\detail\exports.h">
       <Filter>Header Files\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\bus\cartridges\capi_adapter_cartridge.h">
-      <Filter>Header Files\bus\cartridges</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\bus\cartridges\empty_cartridge.h">
-      <Filter>Header Files\bus\cartridges</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\bus\cartridges\rom_cartridge.h">
-      <Filter>Header Files\bus\cartridges</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
