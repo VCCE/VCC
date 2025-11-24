@@ -22,7 +22,7 @@
 #include "fd502.h"
 #include "utils.h"
 #include "../CartridgeMenu.h"
-#include <vcc/devices/serial/beckerport.h>
+#include <vcc/devices/becker/beckerport.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include <vcc/common/logger.h>
@@ -75,7 +75,7 @@ static char TempRomFileName[MAX_PATH]="";
 
 
 static ::vcc::devices::rtc::oki_m6242b gDistoRtc;
-static ::vcc::devices::serial::Becker gBecker;
+static ::vcc::devices::beckerport::Becker gBecker;
 
 unsigned char SetChip(unsigned char);
 

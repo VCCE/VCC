@@ -20,7 +20,7 @@
 #include <Windows.h>
 
 
-namespace vcc::devices::serial
+namespace vcc::devices::beckerport
 {
 	constexpr int BUFFER_SIZE = 512;
 
