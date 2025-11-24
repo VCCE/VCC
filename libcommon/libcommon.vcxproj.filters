@@ -58,11 +58,11 @@
     <Filter Include="Source Files\devices\serial">
       <UniqueIdentifier>{d6ed6a4b-cbaa-4ed2-84db-8b9a1430d2e8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\bus">
+    <Filter Include="Header Files\core">
       <UniqueIdentifier>{6ca923e2-199b-44f0-8260-de0e62abca33}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\detail">
-      <UniqueIdentifier>{5ec3142f-ca23-485c-b5c6-60bf376faf78}</UniqueIdentifier>
+    <Filter Include="Header Files\core\detail">
+      <UniqueIdentifier>{fd029ab9-8064-4e1f-9460-edb495cf58ab}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -125,6 +125,24 @@
     <ClInclude Include="include\vcc\common\DialogOps.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
+    <ClInclude Include="include\vcc\core\cartridge.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\detail\exports.h">
+      <Filter>Header Files\core\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\cartridge_capi.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\interrupts.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\cartridge_context.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\cartridge_factory.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
     <ClInclude Include="include\vcc\devices\rtc\ds1315.h">
       <Filter>Header Files\devices\rtc</Filter>
     </ClInclude>
@@ -172,24 +190,6 @@
     </ClInclude>
     <ClInclude Include="include\vcc\utils\logger.h">
       <Filter>Header Files\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\bus\cartridge.h">
-      <Filter>Header Files\bus</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\bus\cartridge_capi.h">
-      <Filter>Header Files\bus</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\bus\cartridge_context.h">
-      <Filter>Header Files\bus</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\bus\cartridge_factory.h">
-      <Filter>Header Files\bus</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\bus\interrupts.h">
-      <Filter>Header Files\bus</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\detail\exports.h">
-      <Filter>Header Files\detail</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

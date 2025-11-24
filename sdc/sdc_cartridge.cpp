@@ -145,7 +145,7 @@
 #include <filesystem>
 #include <vcc/devices/rtc/ds1315.h>
 #include <vcc/utils/logger.h>
-#include <vcc/bus/cartridge_capi.h>
+#include <vcc/core/cartridge_capi.h>
 #include "../CartridgeMenu.h"
 
 #include "sdc_cartridge.h"

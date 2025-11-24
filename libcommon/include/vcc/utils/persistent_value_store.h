@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/detail/exports.h>
+#include <vcc/core/detail/exports.h>
 #include <string>
 
 

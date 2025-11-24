@@ -16,9 +16,9 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/bus/cartridge.h>
-#include <vcc/bus/cartridge_context.h>
-#include <vcc/bus/cartridge_capi.h>
+#include <vcc/core/cartridge.h>
+#include <vcc/core/cartridge_context.h>
+#include <vcc/core/cartridge_capi.h>
 #include <vcc/utils/dll_deleter.h>
 #include <string>
 #include <memory>
@@ -71,7 +71,7 @@ namespace vcc::utils
 		/// @brief Specifies the type of handle used to reference shared libraries.
 		using handle_type = std::unique_ptr<std::remove_pointer_t<HMODULE>, vcc::utils::dll_deleter>;
 		/// @brief Specifies the type pointer used to reference instances of a cartridge.
-		using cartridge_ptr_type = std::unique_ptr<vcc::bus::cartridge>;
+		using cartridge_ptr_type = std::unique_ptr<vcc::core::cartridge>;
 
 
 		/// @brief The reference to the shared library containing the custom cartridge
@@ -106,7 +106,7 @@ namespace vcc::utils
 	/// @return A status result and data references needed to manage the cartridge.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context);
+		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context);
 
 	/// @brief Load a shared library as a cartridge.
 	/// 
@@ -121,7 +121,7 @@ namespace vcc::utils
 	/// @return A status result and data references needed to manage the cartridge.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_library_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
+		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& configuration_path,
 		const cartridge_capi_context& capi_context);
@@ -139,7 +139,7 @@ namespace vcc::utils
 	/// @return A status result and data references needed to manage the cartridge.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<::vcc::bus::cartridge_context> cartridge_context,
+		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		const cartridge_capi_context& capi_context,
 		void* const host_context,
 		const std::string& configuration_path);
