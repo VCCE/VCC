@@ -28,8 +28,8 @@
 #include <vcc/cartridges/empty_cartridge.h>
 #include <vcc/utils/dll_deleter.h>
 #include <vcc/utils/winapi.h>
-#include <vcc/utils/logger.h>
-#include <vcc/utils/FileOps.h>
+#include <vcc/common/logger.h>
+#include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include <fstream>
 #include <Windows.h>

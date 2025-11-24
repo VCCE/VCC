@@ -18,7 +18,7 @@
 #include <Windows.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <vcc/utils/FileOps.h>
+#include <vcc/common/FileOps.h>
 
 void ValidatePath(char *Path)
 {
