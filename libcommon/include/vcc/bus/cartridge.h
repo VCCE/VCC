@@ -92,6 +92,13 @@ namespace vcc::bus
 		/// does not include a description an empty string is returned.
 		virtual [[nodiscard]] description_type description() const = 0;
 
+		/// @brief Retrieves a reference to the device this cartridge controls.
+		/// 
+		/// Each cartridge controls an emulated hardware device that is accessed directly via
+		/// the expansion port. The reference returned by this function can be used to access
+		/// the functionality of the device through that interface
+		/// 
+		/// @return A reference to a cartridge device.
 		virtual [[nodiscard]] device_type& device() = 0;
 
 		/// @brief Initialize the device.

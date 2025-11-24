@@ -25,8 +25,6 @@ namespace vcc::bus
 	/// @brief Interface to the user interface services of the system managing the
 	/// expansion port.
 	///
-	/// @todo rename to expansion_port_ux
-	/// 
 	/// The Expansion Port User Experience abstract class defines the user experience
 	/// services and properties provided by the system managing the expansion port.
 	class LIBCOMMON_EXPORT expansion_port_ui
