@@ -95,7 +95,6 @@ namespace vcc::utils
 			std::make_unique<::vcc::bus::cartridges::rom_cartridge>(
 				move(bus),
 				extract_filename(filename),
-				"",
 				move(*rom_image),
 				enable_bank_switching));
 		return {

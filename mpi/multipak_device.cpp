@@ -166,18 +166,11 @@ unsigned short multipak_device::sample_audio()
 }
 
 
-multipak_device::label_type multipak_device::slot_label(slot_id_type slot) const
+multipak_device::name_type multipak_device::slot_name(slot_id_type slot) const
 {
 	vcc::utils::section_locker lock(mutex_);
 
-	return slots_[slot].label();
-}
-
-multipak_device::description_type multipak_device::slot_description(slot_id_type slot) const
-{
-	vcc::utils::section_locker lock(mutex_);
-
-	return slots_[slot].description();
+	return slots_[slot].name();
 }
 
 bool multipak_device::empty(slot_id_type slot) const

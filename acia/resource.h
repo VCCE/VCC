@@ -3,9 +3,6 @@
 // Used by acia.rc
 //
 #define IDS_MODULE_NAME                 1
-#define IDS_VERSION                     2
-#define IDS_CATNUMBER                   3
-#define IDS_DESCRIPTION                 4
 #define IDD_PROPPAGE                    102
 
 #define IDC_PORT                        1010

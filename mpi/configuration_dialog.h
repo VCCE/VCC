@@ -61,7 +61,6 @@ private:
 	void set_selected_slot(slot_id_type slot);
 	void update_slot_details(slot_id_type slot);
 	void eject_or_select_new_cartridge(slot_id_type slot);
-	void display_slot_description(slot_id_type slot);
 
 	static INT_PTR CALLBACK callback_procedure(
 		HWND hDlg,
@@ -82,5 +81,5 @@ private:
 	const insert_function_type insert_callback_;
 	const eject_function_type eject_callback_;
 	HWND dialog_handle_ = nullptr;
-	HWND parent_handle_ = nullptr;
+	HWND parent_handle_ = nullptr;	//	FIXME-CHET: This is only used for one thing. Delete it!
 };

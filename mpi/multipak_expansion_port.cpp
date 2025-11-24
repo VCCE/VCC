@@ -32,9 +32,3 @@ multipak_expansion_port& multipak_expansion_port::operator=(multipak_expansion_p
 
 	return *this;
 }
-
-
-multipak_expansion_port::label_type multipak_expansion_port::label() const
-{
-	return name() + "  " + catalog_id();
-}

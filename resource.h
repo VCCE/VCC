@@ -3,7 +3,6 @@
 // Used by Vcc.rc
 //
 #define IDS_APP_TITLE                   1
-#define IDS_CATNUMBER                   2
 #define IDAPPLY                         3
 #define IDOK2                           3
 #define IDS_UNKNOWN_ERROR               3

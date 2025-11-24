@@ -131,11 +131,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    IDS_MODULE_NAME         "DW Becker"
-    IDS_VERSION             "1.00"
-    IDS_CATNUMBER           ""
-    IDS_DESCRIPTION         "Standalone Becker Port for communicating with Drivewire. Uses SCS selectable disk ports. Currently no rom is loaded by this module.  For most purposes it is better to use the Becker interface included with the FD-502 module." 
-
+    IDS_MODULE_NAME         "DriveWire/Becker Port"
 END
 
 #endif    // English (U.S.) resources

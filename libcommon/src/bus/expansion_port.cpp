@@ -22,9 +22,14 @@
 namespace vcc::bus
 {
 
+	const expansion_port::cartridge_ptr_type
+		expansion_port::default_empty_cartridge_(
+			std::make_shared<::vcc::bus::cartridges::empty_cartridge>());
+
+
 	expansion_port::expansion_port()
 		:
-		cartridge_(std::make_unique<::vcc::bus::cartridges::empty_cartridge>()),
+		cartridge_(default_empty_cartridge_),
 		device_(&cartridge_->device())
 	{ }
 

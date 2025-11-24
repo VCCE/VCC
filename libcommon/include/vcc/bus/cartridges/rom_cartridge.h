@@ -61,23 +61,11 @@ namespace vcc::bus::cartridges
 		LIBCOMMON_EXPORT rom_cartridge(
 			std::unique_ptr<expansion_port_bus_type> bus,
 			name_type name,
-			catalog_id_type catalog_id,
 			buffer_type buffer,
 			bool enable_bank_switching);
 		
 		/// @inheritdoc
 		LIBCOMMON_EXPORT [[nodiscard]] name_type name() const override;
-
-		/// @inheritdoc
-		LIBCOMMON_EXPORT [[nodiscard]] catalog_id_type catalog_id() const override;
-
-		/// @brief Retrieves an optional description of the cartridge.
-		/// 
-		/// This function may be invoked prior to calling `start` to initialize the device
-		/// and after `stop` has been called to terminate the device.
-		///
-		/// @return Am empty string.
-		LIBCOMMON_EXPORT [[nodiscard]] description_type description() const override;
 
 		[[nodiscard]] device_type& device() override;
 
@@ -130,7 +118,6 @@ namespace vcc::bus::cartridges
 
 		const std::unique_ptr<expansion_port_bus_type> bus_;
 		const name_type name_;
-		const catalog_id_type catalog_id_;
 		const buffer_type buffer_;
 		const bool enable_bank_switching_;
 		size_type bank_offset_;

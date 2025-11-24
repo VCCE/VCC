@@ -77,16 +77,6 @@ rs232pak_cartridge::name_type rs232pak_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-rs232pak_cartridge::catalog_id_type rs232pak_cartridge::catalog_id() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
-}
-
-rs232pak_cartridge::description_type rs232pak_cartridge::description() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
-}
-
 rs232pak_cartridge::device_type& rs232pak_cartridge::device()
 {
 	return *this;
@@ -196,7 +186,7 @@ void rs232pak_cartridge::menu_item_clicked(unsigned char menuId)
 rs232pak_cartridge::menu_item_collection_type rs232pak_cartridge::get_menu_items() const
 {
 	return ::vcc::ui::menu::menu_builder()
-		.add_root_item(16, "ACIA Config")
+		.add_root_item(16, "DCM/RS-232 Pak Settings")
 		.release_items();
 }
 

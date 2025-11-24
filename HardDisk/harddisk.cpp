@@ -74,16 +74,6 @@ vcc_hard_disk_cartridge::name_type vcc_hard_disk_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-vcc_hard_disk_cartridge::catalog_id_type vcc_hard_disk_cartridge::catalog_id() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
-}
-
-vcc_hard_disk_cartridge::description_type vcc_hard_disk_cartridge::description() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
-}
-
 vcc_hard_disk_cartridge::device_type& vcc_hard_disk_cartridge::device()
 {
 	return *this;

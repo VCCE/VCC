@@ -48,8 +48,6 @@ public:
 		HINSTANCE module_instance);
 
 	name_type name() const override;
-	catalog_id_type catalog_id() const override;
-	description_type description() const override;
 	[[nodiscard]] device_type& device() override;
 
 	void start() override;

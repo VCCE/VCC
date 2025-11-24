@@ -31,16 +31,6 @@ ramdisk_cartridge::name_type ramdisk_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-ramdisk_cartridge::catalog_id_type ramdisk_cartridge::catalog_id() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
-}
-
-ramdisk_cartridge::description_type ramdisk_cartridge::description() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
-}
-
 ramdisk_cartridge::device_type& ramdisk_cartridge::device()
 {
 	return device_;

@@ -1,9 +1,6 @@
 // Used by mpi.rc
 //
 #define IDS_MODULE_NAME                 1
-#define IDS_CATNUMBER                   2
-#define IDS_VERSION                     3
-#define IDS_DESCRIPTION                 4
 #define IDD_DIALOG1                     101
 
 #define IDC_PAKSELECT                   1000

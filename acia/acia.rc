@@ -128,7 +128,7 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "Tandy Delux RS232 Pak"
+            VALUE "Comments", "Tandy Direct Connect Modem / Deluxe RS-232 Pak"
             VALUE "CompanyName", "BitRot Software"
             VALUE "FileDescription", "acia"
             VALUE "FileVersion", "2.1.9.3"
@@ -137,7 +137,7 @@ BEGIN
             VALUE "OriginalFilename", "acia.dll"
             VALUE "ProductName", "acia"
             VALUE "ProductVersion", "26-3124"
-            VALUE "SpecialBuild", "Tandy Deluxe RS232 Pak"
+            VALUE "SpecialBuild", "Tandy Direct Connect Modem / Deluxe RS-232 Pak"
         END
     END
     BLOCK "VarFileInfo"
@@ -164,10 +164,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MODULE_NAME         "Tandy RS232 Pak"
-    IDS_CATNUMBER           "26-2226"
-    IDS_DESCRIPTION         "Emulates 6551 UART. Communicate with windows terminal console, PC serial ports, Internet telnet servers, or read and write to a file."
-    IDS_VERSION             "1.00"
+    IDS_MODULE_NAME         "Direct Connect Modem / Deluxe RS-232 Pak"
 END
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////

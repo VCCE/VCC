@@ -20,9 +20,6 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 #define IDS_MODULE_NAME                 1
-#define IDS_VERSION                     2
-#define IDS_CATNUMBER                   3
-#define IDS_DESCRIPTION                 4
 #define IDD_CONFIG                      101
 #define IDD_NEWDISK                     102
 #define IDC_CLOCK                       1001

@@ -86,16 +86,6 @@ sdc_cartridge::name_type sdc_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-sdc_cartridge::catalog_id_type sdc_cartridge::catalog_id() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
-}
-
-sdc_cartridge::description_type sdc_cartridge::description() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
-}
-
 sdc_cartridge::device_type& sdc_cartridge::device()
 {
 	return *this;

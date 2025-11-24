@@ -37,16 +37,6 @@ orchestra90cc_cartridge::name_type orchestra90cc_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-orchestra90cc_cartridge::catalog_id_type orchestra90cc_cartridge::catalog_id() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
-}
-
-orchestra90cc_cartridge::description_type orchestra90cc_cartridge::description() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
-}
-
 orchestra90cc_cartridge::device_type& orchestra90cc_cartridge::device()
 {
 	return device_;

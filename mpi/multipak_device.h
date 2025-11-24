@@ -32,9 +32,8 @@ public:
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using mount_status_type = ::vcc::utils::cartridge_loader_status;
 	using slot_id_type = std::size_t;
-	using label_type = std::string;
+	using name_type = std::string;
 	using size_type = std::size_t;
-	using description_type = std::string;
 	using cartridge_type = ::vcc::bus::cartridge;
 	using cartridge_ptr_type = std::shared_ptr<cartridge_type>;
 	using handle_type = std::unique_ptr<std::remove_pointer_t<HMODULE>, vcc::utils::dll_deleter>;
@@ -68,9 +67,7 @@ public:
 		return slots_.size();
 	}
 
-	// FIXME-CHET: slot_label doesn't seem to belong here
-	label_type slot_label(slot_id_type slot) const;
-	description_type slot_description(slot_id_type slot) const;
+	name_type slot_name(slot_id_type slot) const;
 
 	void switch_to_slot(slot_id_type slot);
 	slot_id_type selected_switch_slot() const;

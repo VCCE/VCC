@@ -67,16 +67,6 @@ gmc_cartridge::name_type gmc_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-gmc_cartridge::catalog_id_type gmc_cartridge::catalog_id() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
-}
-
-gmc_cartridge::description_type gmc_cartridge::description() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
-}
-
 gmc_cartridge::device_type& gmc_cartridge::device()
 {
 	return device_;

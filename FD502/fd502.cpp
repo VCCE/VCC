@@ -107,16 +107,6 @@ fd502_cartridge::name_type fd502_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-fd502_cartridge::catalog_id_type fd502_cartridge::catalog_id() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
-}
-
-fd502_cartridge::description_type fd502_cartridge::description() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
-}
-
 fd502_cartridge::device_type& fd502_cartridge::device()
 {
 	return device_;

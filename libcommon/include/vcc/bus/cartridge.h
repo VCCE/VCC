@@ -39,10 +39,6 @@ namespace vcc::bus
 		using size_type = std::size_t;
 		/// @brief Specifies the type used to store names.
 		using name_type = std::string;
-		/// @brief Specifies the type used to store catalog identifiers.
-		using catalog_id_type = std::string;
-		/// @brief Specifies the type used to store cartridge descriptions.
-		using description_type = std::string;
 		/// @brief Specifies the type used to store a collection of menu items.
 		using menu_item_collection_type = ::vcc::ui::menu::menu_item_collection;
 		/// @bridge Specifies the type of devices supported by this cartridge.
@@ -68,29 +64,6 @@ namespace vcc::bus
 		///
 		/// @return A string containing the cartridge name.
 		virtual [[nodiscard]] name_type name() const = 0;
-
-		/// @brief Retrieves an optional catalog identifier of the cartridge.
-		/// 
-		/// Retrieves an optional catalog identifier of the cartridge. Catalog identifiers
-		/// are arbitrary and generally represent the part number of the cartridge included
-		/// in catalogs and magazine advertisements. Cartridges are not requires to provide
-		/// a catalog identifier and may return an empty string.
-		/// 
-		/// This function may be invoked prior to calling `start` to initialize the device
-		/// and after `stop` has been called to terminate the device.
-		///
-		/// @return A string containing the catalog identifier. If the cartridge does not
-		/// include a catalog id an empty string is returned.
-		virtual [[nodiscard]] catalog_id_type catalog_id() const = 0;
-
-		/// @brief Retrieves an optional description of the cartridge.
-		/// 
-		/// This function may be invoked prior to calling `start` to initialize the device
-		/// and after `stop` has been called to terminate the device.
-		///
-		/// @return A string containing the description of the cartridge. If the cartridge
-		/// does not include a description an empty string is returned.
-		virtual [[nodiscard]] description_type description() const = 0;
 
 		/// @brief Retrieves a reference to the device this cartridge controls.
 		/// 

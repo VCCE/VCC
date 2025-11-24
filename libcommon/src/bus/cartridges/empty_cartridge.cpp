@@ -27,16 +27,6 @@ namespace vcc::bus::cartridges
 		return {};
 	}
 	
-	empty_cartridge::catalog_id_type empty_cartridge::catalog_id() const
-	{
-		return {};
-	}
-
-	empty_cartridge::description_type empty_cartridge:: description() const
-	{
-		return {};
-	}
-
 	empty_cartridge::device_type& empty_cartridge::device()
 	{
 		return *this;

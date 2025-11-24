@@ -33,8 +33,6 @@ public:
 	using mount_status_type = ::vcc::utils::cartridge_loader_status;
 	using slot_id_type = std::size_t;
 	using path_type = std::string;
-	using label_type = std::string;
-	using description_type = std::string;
 	using cartridge_ptr_type = std::shared_ptr<::vcc::bus::cartridge>;
 
 
@@ -55,8 +53,6 @@ public:
 
 	//	Cartridge implementation
 	name_type name() const override;
-	catalog_id_type catalog_id() const override;
-	description_type description() const override;
 	[[nodiscard]] device_type& device() override;
 
 	void start() override;

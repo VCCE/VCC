@@ -65,20 +65,6 @@ superide_cartridge::name_type superide_cartridge::name() const
 	return name.c_str();
 }
 
-superide_cartridge::catalog_id_type superide_cartridge::catalog_id() const
-{
-	static const auto catalog_id(::vcc::utils::load_string(module_instance_, IDS_CATNUMBER));
-
-	return catalog_id.c_str();
-}
-
-superide_cartridge::description_type superide_cartridge::description() const
-{
-	static const auto description(::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION));
-
-	return description.c_str();
-}
-
 superide_cartridge::device_type& superide_cartridge::device()
 {
 	return *this;

@@ -3,8 +3,6 @@
 // Used by Ramdisk.rc
 //
 #define IDS_MODULE_NAME                 1
-#define IDS_CATNUMBER                   2
-#define IDS_DESCRIPTION                 3
 
 // Next default values for new objects
 // 

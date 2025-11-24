@@ -152,10 +152,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    IDS_MODULE_NAME         "Hard Drive"
-    IDS_VERSION             "2.0.2"
-    IDS_CATNUMBER           "+ Cloud9 RTC"
-    IDS_DESCRIPTION         "Enable virtual hard drive emulation. Uses direct memory acces (DMA) to offload the CPU from data transfer tasks. Two VHD hard disk files can be loaded. Also includes a Cloud9 clock."
+    IDS_MODULE_NAME         "Virtual Hard Drive Controller"
 END
 
 #endif    // English (U.S.) resources

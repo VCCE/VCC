@@ -27,11 +27,6 @@ class multipak_expansion_port : public ::vcc::bus::expansion_port
 {
 public:
 
-	using label_type = std::string;
-
-
-public:
-
 	using expansion_port::expansion_port;
 
 	multipak_expansion_port(const multipak_expansion_port&) = delete;
@@ -49,8 +44,6 @@ public:
 	{
 		return line_state_;
 	}
-
-	label_type label() const;
 
 
 private:

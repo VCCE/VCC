@@ -63,16 +63,6 @@ multipak_cartridge::name_type multipak_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-multipak_cartridge::catalog_id_type multipak_cartridge::catalog_id() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
-}
-
-multipak_cartridge::description_type multipak_cartridge::description() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
-}
-
 multipak_cartridge::device_type& multipak_cartridge::device()
 {
 	return *device_;
@@ -177,7 +167,7 @@ multipak_cartridge::menu_item_collection_type multipak_cartridge::get_menu_items
 		builder.add_root_separator();
 	}
 
-	builder.add_root_item(19, "MPI Config");
+	builder.add_root_item(19, "Multi-Pak Slot Manager");
 
 	return builder.release_items();
 }

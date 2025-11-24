@@ -166,9 +166,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MODULE_NAME         "SDC simulator"
-    IDS_VERSION             "1.0"
-    IDS_DESCRIPTION         "Simulation of Darren Atkinson's SDC floppy drive emulator with an added Cloud9 Clock. Uses SCS selectable disk ports. The included sdc-dos rom manages SCS selection to allow access to the first two FD502 floppy drives if present. Supports most, but not all, SDC functions."
+    IDS_MODULE_NAME         "SDC Simulator"
 END
 
 #endif    // English (United States) resources

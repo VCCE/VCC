@@ -38,8 +38,6 @@ namespace vcc::bus
 		using device_type = ::vcc::bus::cartridge_device;
 		using device_ptr_type = ::vcc::utils::borrowed_ptr<device_type*>;
 		using name_type = cartridge_type::name_type;
-		using catalog_id_type = cartridge_type::catalog_id_type;
-		using description_type = cartridge_type::description_type;
 		using menu_item_collection_type = cartridge_type::menu_item_collection_type;
 
 	public:
@@ -56,22 +54,15 @@ namespace vcc::bus
 
 		[[nodiscard]] bool empty() const
 		{
-			return cartridge_ == nullptr;
+			// FIXME-CHET-NOW: This is seems like it might break easily. The empty state here can
+			// only be caused through the default ctor (or a copy from one that default ctored).
+			// Review and see if this is an actual problem.
+			return cartridge_ == default_empty_cartridge_;
 		}
 
 		[[nodiscard]] name_type name() const
 		{
 			return cartridge_->name();
-		}
-
-		[[nodiscard]] catalog_id_type catalog_id() const
-		{
-			return cartridge_->catalog_id();
-		}
-
-		[[nodiscard]] description_type description() const
-		{
-			return cartridge_->description();
 		}
 
 		void start() const
@@ -131,6 +122,8 @@ namespace vcc::bus
 
 
 	private:
+
+		LIBCOMMON_EXPORT static const cartridge_ptr_type default_empty_cartridge_;
 
 		cartridge_ptr_type cartridge_;
 		managed_handle_type handle_;

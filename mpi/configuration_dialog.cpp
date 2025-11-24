@@ -83,12 +83,12 @@ void configuration_dialog::close()
 void configuration_dialog::select_new_cartridge(slot_id_type slot)
 {
 	FileDialog dlg;
-	dlg.setTitle("Load Program Pak");
+	dlg.setTitle("Insert Cartridge");
 	dlg.setInitialDir(configuration_.last_accessed_module_path().c_str());
 	dlg.setFilter(
-		"Hardware Pak (*.dll)\0*.dll\0"
-		"Rom Pak (*.rom; *.ccc; *.pak)\0*.rom;*.ccc;*.pak\0"
-		"All Pak Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
+		"All Cartridge Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
+		"ROM Pak (*.rom; *.ccc; *.pak)\0*.rom;*.ccc;*.pak\0"
+		"Functional Cartridge (*.dll)\0*.dll\0"
 		"\0");
 	dlg.setFlags(OFN_FILEMUSTEXIST);
 	if (dlg.show(0, dialog_handle_))
@@ -115,8 +115,6 @@ void configuration_dialog::select_new_cartridge(slot_id_type slot)
 
 void configuration_dialog::set_selected_slot(slot_id_type slot)
 {
-	display_slot_description(slot);
-
 	// Get radio button IDs
 	for (auto ndx(0u); ndx < gSlotUiElementIds.size(); ndx++)
 	{
@@ -133,15 +131,6 @@ void configuration_dialog::set_selected_slot(slot_id_type slot)
 	configuration_.selected_slot(slot);
 }
 
-void configuration_dialog::display_slot_description(slot_id_type slot)
-{
-	SendDlgItemMessage(
-		dialog_handle_,
-			IDC_MODINFO,
-			WM_SETTEXT,
-			0,
-			reinterpret_cast<LPARAM>(mpi_->slot_description(slot).c_str()));
-}
 
 void configuration_dialog::update_slot_details(slot_id_type slot)
 {
@@ -150,7 +139,7 @@ void configuration_dialog::update_slot_details(slot_id_type slot)
 		gSlotUiElementIds[slot].edit_box_id,
 		WM_SETTEXT,
 		0,
-		reinterpret_cast<LPARAM>(mpi_->slot_label(slot).c_str()));
+		reinterpret_cast<LPARAM>(mpi_->slot_name(slot).c_str()));
 
 	SendDlgItemMessage(
 		dialog_handle_,
@@ -189,12 +178,6 @@ void configuration_dialog::eject_or_select_new_cartridge(slot_id_type slot)
 	}
 
 	update_slot_details(slot);
-
-	// Update description if slot was selected
-	if (slot == configuration_.selected_slot())
-	{
-		display_slot_description(slot);
-	}
 }
 
 INT_PTR CALLBACK configuration_dialog::callback_procedure(

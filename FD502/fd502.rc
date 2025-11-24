@@ -193,10 +193,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MODULE_NAME         "FD-502"
-    IDS_VERSION             "3.0.1"
-    IDS_DESCRIPTION         "Emulate FD502 floppy controller with four floppy drives.  Loads Disk Extended Color Basic (disl11.rom) or user selectable disk rom.  Also includes Becker Port for communicating with Drivewire and a Disto Clock for use with OS-9.  Uses SCS selectable disk ports.  Plugs into the Program Pak port or Multi-Pak Interface."
-    IDS_CATNUMBER           "+ Becker"
+    IDS_MODULE_NAME         "FD-502 Floppy Disk Controller"
 END
 
 #endif    // English (United States) resources

@@ -25,13 +25,11 @@ namespace vcc::bus::cartridges
 	rom_cartridge::rom_cartridge(
 		std::unique_ptr<expansion_port_bus_type> bus,
 		name_type name,
-		catalog_id_type catalog_id,
 		buffer_type buffer,
 		bool enable_bank_switching)
 		:
 		bus_(move(bus)),
 		name_(move(name)),
-		catalog_id_(move(catalog_id)),
 		buffer_(move(buffer)),
 		enable_bank_switching_(enable_bank_switching),
 		bank_offset_(0)
@@ -56,16 +54,6 @@ namespace vcc::bus::cartridges
 	rom_cartridge::name_type rom_cartridge::name() const
 	{
 		return name_;
-	}
-
-	rom_cartridge::catalog_id_type rom_cartridge::catalog_id() const
-	{
-		return catalog_id_;
-	}
-
-	rom_cartridge::description_type rom_cartridge:: description() const
-	{
-		return {};
 	}
 
 	rom_cartridge::device_type& rom_cartridge::device()

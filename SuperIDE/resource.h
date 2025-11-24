@@ -3,8 +3,6 @@
 // Used by SuperIDE.rc
 //
 #define IDS_MODULE_NAME                 1
-#define IDS_CATNUMBER                   2
-#define IDS_DESCRIPTION                 3
 #define IDD_DIALOG1                     101
 #define IDD_CONFIG                      101
 #define IDC_BASEADDR                    1000

@@ -44,16 +44,6 @@ becker_cartridge::name_type becker_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-becker_cartridge::catalog_id_type becker_cartridge::catalog_id() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_CATNUMBER);
-}
-
-becker_cartridge::description_type becker_cartridge::description() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_DESCRIPTION);
-}
-
 becker_cartridge::device_type& becker_cartridge::device()
 {
 	return device_;
@@ -92,7 +82,7 @@ void becker_cartridge::menu_item_clicked(unsigned char menu_item_id)
 becker_cartridge::menu_item_collection_type becker_cartridge::get_menu_items() const
 {
 	return ::vcc::ui::menu::menu_builder()
-		.add_root_item(menu_item_ids::open_configuration, "DriveWire Server..")
+		.add_root_item(menu_item_ids::open_configuration, "DriveWire Settings")
 		.release_items();
 }
 

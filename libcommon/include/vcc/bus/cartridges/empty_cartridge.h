@@ -39,15 +39,6 @@ namespace vcc::bus::cartridges
 		/// @return An empty string.
 		[[nodiscard]] name_type name() const override;
 
-		/// @brief Retrieves an optional catalog identifier of the cartridge.
-		/// 
-		/// @return An empty string.
-		[[nodiscard]] catalog_id_type catalog_id() const override;
-
-		/// @brief Retrieves an optional description of the cartridge.
-		/// 
-		/// @return An empty string.
-		[[nodiscard]] description_type description() const override;
 		[[nodiscard]] device_type& device() override;
 	};
 

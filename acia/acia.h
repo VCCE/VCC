@@ -50,12 +50,6 @@ public:
 	/// @inheritdoc
 	name_type name() const override;
 
-	/// @inheritdoc
-	catalog_id_type catalog_id() const override;
-
-	/// @inheritdoc
-	description_type description() const override;
-
 	[[nodiscard]] device_type& device() override;
 
 	void start() override;
