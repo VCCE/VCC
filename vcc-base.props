@@ -4,9 +4,9 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <!-- Define linkage type: Static or Dynamic, default is Dynamic -->
-    <LinkageType Condition="'$(USE_STATIC_LIB)' == 'true'">Static</LinkageType>
-    <LinkageType Condition="'$(LinkageType)' != 'Static'">Dynamic</LinkageType>
+    <!-- Define linkage type: Static or Dynamic, default is Static -->
+    <LinkageType>Static</LinkageType>
+    <LinkageType Condition="'$(USE_STATIC_LIB)' == 'false'">Dynamic</LinkageType>
     <!-- Output and Intermediate directories -->
     <LinkTypeSubDir Condition="'$(LinkageType)' == 'Static'">Static</LinkTypeSubDir>
     <LinkTypeSubDir Condition="'$(LinkageType)' == 'Dynamic'">Dynamic</LinkTypeSubDir>
