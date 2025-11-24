@@ -15,26 +15,35 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/bus/cartridges/empty_cartridge.h>
+#pragma once
+#include <vcc/bus/cartridge.h>
 
-// Interface for empty cartridge
 
-namespace vcc::bus::cartridges
+namespace vcc::cartridges
 {
 
-	empty_cartridge::name_type empty_cartridge::name() const
+	/// @brief A cartridge that does nothing.
+	/// 
+	/// The Empty Cartridge provides no functionality, extensions, or ROM to the system. It
+	/// does nothing and can act as a placeholder where a cartridge instance may be needed.
+	class LIBCOMMON_EXPORT empty_cartridge final : public ::vcc::bus::cartridge 
 	{
-		return {};
-	}
-	
-	empty_cartridge::catalog_id_type empty_cartridge::catalog_id() const
-	{
-		return {};
-	}
+	public:
 
-	empty_cartridge::description_type empty_cartridge:: description() const
-	{
-		return {};
-	}
+		/// @brief Retrieves the name of the cartridge.
+		/// 
+		/// @return An empty string.
+		[[nodiscard]] name_type name() const override;
+
+		/// @brief Retrieves an optional catalog identifier of the cartridge.
+		/// 
+		/// @return An empty string.
+		[[nodiscard]] catalog_id_type catalog_id() const override;
+
+		/// @brief Retrieves an optional description of the cartridge.
+		/// 
+		/// @return An empty string.
+		[[nodiscard]] description_type description() const override;
+	};
 
 }

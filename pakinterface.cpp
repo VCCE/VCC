@@ -25,7 +25,7 @@
 #include "Vcc.h"
 #include "mc6821.h"
 #include "resource.h"
-#include <vcc/bus/cartridges/empty_cartridge.h>
+#include <vcc/cartridges/empty_cartridge.h>
 #include <vcc/utils/dll_deleter.h>
 #include <vcc/utils/winapi.h>
 #include <vcc/utils/logger.h>
@@ -46,7 +46,7 @@ extern SystemState EmuState;
 static vcc::utils::critical_section gPakMutex;
 static char DllPath[MAX_PATH] = "";
 static cartridge_loader_result::handle_type gActiveModule;
-static cartridge_loader_result::cartridge_ptr_type gActiveCartrige(std::make_unique<vcc::bus::cartridges::empty_cartridge>());
+static cartridge_loader_result::cartridge_ptr_type gActiveCartrige(std::make_unique<vcc::cartridges::empty_cartridge>());
 
 static cartridge_loader_status load_any_cartridge(const char* filename, const char* iniPath);
 
@@ -314,7 +314,7 @@ void UnloadDll()
 
 	gActiveCartrige->stop();
 
-	gActiveCartrige = std::make_unique<vcc::bus::cartridges::empty_cartridge>();
+	gActiveCartrige = std::make_unique<vcc::cartridges::empty_cartridge>();
 	gActiveModule.reset();
 
 	BeginCartMenu();
