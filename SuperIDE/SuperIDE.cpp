@@ -23,7 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "IdeBus.h"
 #include <vcc/devices/rtc/ds1315.h>
 #include "logger.h"
-#include <vcc/utils/FileOps.h>
+#include <vcc/common/FileOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/common/DialogOps.h>
 #include <vcc/core/cartridge_capi.h>

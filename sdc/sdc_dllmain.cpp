@@ -25,11 +25,11 @@
 #include <Windows.h>
 
 #include <vcc/devices/rtc/ds1315.h>
-#include <vcc/utils/logger.h>
-#include <vcc/utils/winapi.h>
+#include <vcc/common/logger.h>
 #include <vcc/common/DialogOps.h>
 #include <vcc/core/interrupts.h>
 #include <vcc/core/cartridge_capi.h>
+#include <vcc/utils/winapi.h>
 #include "resource.h"
 #include "sdc_cartridge.h"
 #include "sdc_configuration.h"
