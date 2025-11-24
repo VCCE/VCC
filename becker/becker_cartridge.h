@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "configuration_dialog.h"
-#include <vcc/devices/serial/beckerport.h>
+#include <vcc/devices/becker/beckerport.h>
 #include <vcc/core/cartridge.h>
 #include <vcc/core/cartridge_context.h>
 #include <memory>
@@ -32,7 +32,7 @@ class becker_cartridge
 public:
 
 	using context_type = ::vcc::core::cartridge_context;
-	using becker_device_type = ::vcc::devices::serial::Becker;
+	using becker_device_type = ::vcc::devices::beckerport::Becker;
 
 
 public:

@@ -58,12 +58,6 @@
     <Filter Include="Source Files\core">
       <UniqueIdentifier>{4decb533-7b10-402c-995c-a6d2d41f1c35}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\devices\serial">
-      <UniqueIdentifier>{cebd23b4-ab92-47f2-926b-fe8afb144131}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\devices\serial">
-      <UniqueIdentifier>{d6ed6a4b-cbaa-4ed2-84db-8b9a1430d2e8}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DialogOps.cpp">
@@ -114,8 +108,8 @@
     <ClCompile Include="src\core\cartridge.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
-    <ClCompile Include="src\devices\serial\beckerport.cpp">
-      <Filter>Source Files\devices\serial</Filter>
+    <ClCompile Include="src\devices\becker\beckerport.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -188,8 +182,8 @@
     <ClInclude Include="include\vcc\devices\rom\banked_rom_image.h">
       <Filter>Header Files\devices\rom</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\devices\serial\beckerport.h">
-      <Filter>Header Files\devices\serial</Filter>
+    <ClInclude Include="include\vcc\devices\becker\beckerport.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
