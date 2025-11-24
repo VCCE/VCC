@@ -16,8 +16,8 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/detail/exports.h>
-#include <vcc/bus/interrupts.h>
+#include <vcc/core/detail/exports.h>
+#include <vcc/core/interrupts.h>
 #include <string>
 
 
@@ -25,7 +25,7 @@
 // main vcc app. Update this when it is migrated.
 enum MenuItemType;
 
-namespace vcc::bus
+namespace vcc::core
 {
 
 	/// @brief Context to the system managing the cartridge.

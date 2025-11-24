@@ -67,7 +67,7 @@ const cartridge_capi_context default_capi_context =
 	PakAddMenuItem
 };
 
-class vcc_cartridge_context : public ::vcc::bus::cartridge_context
+class vcc_cartridge_context : public ::vcc::core::cartridge_context
 {
 	path_type configuration_path() const override
 	{

@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "becker_cartridge.h"
-#include <vcc/bus/cartridge_factory.h>
+#include <vcc/core/cartridge_factory.h>
 #include <Windows.h>
 
 
@@ -37,8 +37,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 {
 	return [](
-		[[maybe_unused]] std::unique_ptr<::vcc::bus::cartridge_context> context,
-		[[maybe_unused]] const cartridge_capi_context& capi_context) -> std::unique_ptr<::vcc::bus::cartridge>
+		[[maybe_unused]] std::unique_ptr<::vcc::core::cartridge_context> context,
+		[[maybe_unused]] const cartridge_capi_context& capi_context) -> std::unique_ptr<::vcc::core::cartridge>
 		{
 			return std::make_unique<becker_cartridge>(move(context), gModuleInstance);
 		};

@@ -123,16 +123,16 @@
     <ClCompile Include="src\utils\winapi.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\vcc\bus\cartridge.h" />
-    <ClInclude Include="include\vcc\bus\cartridge_capi.h" />
-    <ClInclude Include="include\vcc\bus\cartridge_context.h" />
-    <ClInclude Include="include\vcc\bus\cartridge_factory.h" />
-    <ClInclude Include="include\vcc\bus\interrupts.h" />
     <ClInclude Include="include\vcc\cartridges\capi_adapter_cartridge.h" />
     <ClInclude Include="include\vcc\cartridges\empty_cartridge.h" />
     <ClInclude Include="include\vcc\cartridges\rom_cartridge.h" />
     <ClInclude Include="include\vcc\common\DialogOps.h" />
-    <ClInclude Include="include\vcc\detail\exports.h" />
+    <ClInclude Include="include\vcc\core\cartridge.h" />
+    <ClInclude Include="include\vcc\core\cartridge_context.h" />
+    <ClInclude Include="include\vcc\core\cartridge_factory.h" />
+    <ClInclude Include="include\vcc\core\detail\exports.h" />
+    <ClInclude Include="include\vcc\core\interrupts.h" />
+    <ClInclude Include="include\vcc\core\cartridge_capi.h" />
     <ClInclude Include="include\vcc\devices\rom\banked_rom_image.h" />
     <ClInclude Include="include\vcc\devices\rom\rom_image.h" />
     <ClInclude Include="include\vcc\devices\rtc\ds1315.h" />

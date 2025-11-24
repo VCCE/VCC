@@ -28,8 +28,8 @@
 #include <vcc/utils/logger.h>
 #include <vcc/utils/winapi.h>
 #include <vcc/common/DialogOps.h>
-#include <vcc/bus/interrupts.h>
-#include <vcc/bus/cartridge_capi.h>
+#include <vcc/core/interrupts.h>
+#include <vcc/core/cartridge_capi.h>
 #include "resource.h"
 #include "sdc_cartridge.h"
 #include "sdc_configuration.h"

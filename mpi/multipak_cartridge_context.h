@@ -17,16 +17,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "multipak_cartridge.h"
-#include <vcc/bus/cartridge_context.h>
+#include <vcc/core/cartridge_context.h>
 
 
-class multipak_cartridge_context : public ::vcc::bus::cartridge_context
+class multipak_cartridge_context : public ::vcc::core::cartridge_context
 {
 public:
 
 	multipak_cartridge_context(
 		size_t slot_id,
-		::vcc::bus::cartridge_context& host_context,
+		::vcc::core::cartridge_context& host_context,
 		multipak_cartridge& multipak)
 		:
 		slot_id_(slot_id),
@@ -73,6 +73,6 @@ public:
 private:
 
 	const size_t slot_id_;
-	::vcc::bus::cartridge_context& host_context_;
+	::vcc::core::cartridge_context& host_context_;
 	multipak_cartridge& multipak_;
 };
