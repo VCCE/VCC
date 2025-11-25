@@ -16,8 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "vcc/detail/exports.h"
-#include <string>
+#include "vcc/utils/persistent_value_store.h"
 
 
 namespace vcc::utils
@@ -28,18 +27,19 @@ namespace vcc::utils
 	/// The Persistent Value Store provides facilities for saving values to and loading
 	/// values from a file that persists between sessions. Values are stored grouped in
 	/// sections and are accessed using a textual key.
-	class persistent_value_store
+	class persistent_value_section_store
 	{
 	public:
 
+		using value_store_type = ::vcc::utils::persistent_value_store;
 		/// @brief The type used to represent paths.
-		using path_type = std::string;
-		/// @brief The type used to represent strings.
-		using string_type = std::string;
+		using path_type = value_store_type::path_type;
 		/// @brief The type used to represent section identifiers.
-		using section_type = std::string;
+		using section_type = value_store_type::section_type;
+		/// @brief The type used to represent strings.
+		using string_type = value_store_type::string_type;
 		/// @brief The type used to represent a size or length.
-		using size_type = std::size_t;
+		using size_type = value_store_type::size_type;
 
 
 	public:
@@ -47,40 +47,31 @@ namespace vcc::utils
 		/// @brief Constructs a Persistent Value Store.
 		/// 
 		/// @param path The path to the file where the values are stored.
-		LIBCOMMON_EXPORT explicit persistent_value_store(path_type path);
+		/// @param section The section of the configuration file the values are stored in.
+		LIBCOMMON_EXPORT persistent_value_section_store(path_type path, section_type section);
 
 		/// @brief Save a signed integer value.
 		/// 
-		/// @param section The section to store the value in.
 		/// @param key The key used to identify the value in.
 		/// @param value The integer value to store.
-		LIBCOMMON_EXPORT void write(
-			const section_type& section,
-			const string_type& key,
-			int value) const;
+		LIBCOMMON_EXPORT void write(const string_type& key, int value) const;
 
 		/// @brief Save a string value.
 		/// 
-		/// @param section The section to store the value in.
 		/// @param key The key used to identify the value in.
 		/// @param value The string value to store.
-		LIBCOMMON_EXPORT void write(
-			const section_type& section,
-			const string_type& key,
-			const string_type& value) const;
+		LIBCOMMON_EXPORT void write(const string_type& key, const string_type& value) const;
 
 		/// @brief Retrieve a boolean value.
 		/// 
 		/// Retrieves a boolean value from the value store. If the value is not present in the
 		/// value store, a default value is returned.
 		/// 
-		/// @param section The section the value is stored in.
 		/// @param key The key the value is saved as.
 		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
 		/// @return The stored value if it exists; otherwise the specified default value.
 		LIBCOMMON_EXPORT [[nodiscard]] bool read(
-			const section_type& section,
 			const string_type& key,
 			bool default_value) const;
 
@@ -89,13 +80,11 @@ namespace vcc::utils
 		/// Retrieves a signed integer value from the value store. If the value is not present
 		/// in the value store, a default value is returned.
 		/// 
-		/// @param section The section the value is stored in.
 		/// @param key The key the value is saved as.
 		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
 		/// @return The stored value if it exists; otherwise the specified default value.
 		LIBCOMMON_EXPORT [[nodiscard]] int read(
-			const section_type& section,
 			const string_type& key,
 			const int& default_value) const;
 
@@ -104,13 +93,11 @@ namespace vcc::utils
 		/// Retrieves an unsigned integer value from the value store. If the value is not present
 		/// in the value store, a default value is returned.
 		/// 
-		/// @param section The section the value is stored in.
 		/// @param key The key the value is saved as.
 		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
 		/// @return The stored value if it exists; otherwise the specified default value.
 		LIBCOMMON_EXPORT [[nodiscard]] size_type read(
-			const section_type& section,
 			const string_type& key,
 			const size_type& default_value) const;
 
@@ -119,13 +106,11 @@ namespace vcc::utils
 		/// Retrieves a string value from the value store. If the value is not present in the
 		/// value store, a default value is returned.
 		/// 
-		/// @param section The section the value is stored in.
 		/// @param key The key the value is saved as.
 		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
 		/// @return The stored value if it exists; otherwise the specified default value.
 		LIBCOMMON_EXPORT [[nodiscard]] string_type read(
-			const section_type& section,
 			const string_type& key,
 			const string_type& default_value = {}) const;
 
@@ -134,19 +119,18 @@ namespace vcc::utils
 		/// Retrieves a string value from the value store. If the value is not present in the
 		/// value store, a default value is returned.
 		/// 
-		/// @param section The section the value is stored in.
 		/// @param key The key the value is saved as.
 		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
 		/// @return The stored value if it exists; otherwise the specified default value.
 		LIBCOMMON_EXPORT [[nodiscard]] string_type read(
-			const section_type& section,
 			const string_type& key,
 			const char* default_value) const;
 
 
 	private:
 
-		const path_type path_;
+		const value_store_type store_;
+		const section_type section_;
 	};
 }

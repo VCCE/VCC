@@ -87,6 +87,7 @@
     <ClCompile Include="src\ui\menu\menu_builder.cpp" />
     <ClCompile Include="src\ui\menu\menu_item_collection.cpp" />
     <ClCompile Include="src\utils\cartridge_loader.cpp" />
+    <ClCompile Include="src\utils\persistent_section_value_store.cpp" />
     <ClCompile Include="src\utils\persistent_value_store.cpp" />
     <ClCompile Include="src\utils\Fileops.cpp" />
     <ClCompile Include="src\utils\filesystem.cpp" />
@@ -127,6 +128,7 @@
     <ClInclude Include="include\vcc\ui\menu\menu_item_visitor.h" />
     <ClInclude Include="include\vcc\utils\borrowed_ptr.h" />
     <ClInclude Include="include\vcc\utils\cartridge_loader.h" />
+    <ClInclude Include="include\vcc\utils\persistent_value_section_store.h" />
     <ClInclude Include="include\vcc\utils\persistent_value_store.h" />
     <ClInclude Include="include\vcc\utils\critical_section.h" />
     <ClInclude Include="include\vcc\utils\dll_deleter.h" />

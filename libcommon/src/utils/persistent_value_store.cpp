@@ -2,7 +2,7 @@
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
 //	
-//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	VCC (Virtual Color Computer) is free software: you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License as published by
 //	the Free Software Foundation, either version 3 of the License, or (at your
 //	option) any later version.
@@ -28,7 +28,7 @@ namespace vcc::utils
 	}
 
 	void persistent_value_store::write(
-		const string_type& section,
+		const section_type& section,
 		const string_type& key,
 		int value) const
 	{
@@ -40,33 +40,33 @@ namespace vcc::utils
 	}
 
 	void persistent_value_store::write(
-		const string_type& section,
+		const section_type& section,
 		const string_type& key,
 		const string_type& value) const
 	{
 		WritePrivateProfileString(section.c_str(), key.c_str(), value.c_str(), path_.c_str());
 	}
 
-	int persistent_value_store::read(const string_type& section, const string_type& key, const int& default_value) const
+	int persistent_value_store::read(const section_type& section, const string_type& key, const int& default_value) const
 	{
 		return GetPrivateProfileInt(section.c_str(), key.c_str(), default_value, path_.c_str());
 	}
 
 	persistent_value_store::size_type persistent_value_store::read(
-		const string_type& section,
+		const section_type& section,
 		const string_type& key,
 		const size_type& default_value) const
 	{
 		return GetPrivateProfileInt(section.c_str(), key.c_str(), default_value, path_.c_str());
 	}
 
-	bool persistent_value_store::read(const string_type& section, const string_type& key, bool default_value) const
+	bool persistent_value_store::read(const section_type& section, const string_type& key, bool default_value) const
 	{
 		return GetPrivateProfileInt(section.c_str(), key.c_str(), default_value, path_.c_str()) != 0;
 	}
 
 	persistent_value_store::string_type persistent_value_store::read(
-		const string_type& section,
+		const section_type& section,
 		const string_type& key,
 		const string_type& default_value) const
 	{
@@ -74,7 +74,7 @@ namespace vcc::utils
 	}
 
 	persistent_value_store::string_type persistent_value_store::read(
-		const string_type& section,
+		const section_type& section,
 		const string_type& key,
 		const char* default_value) const
 	{

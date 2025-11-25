@@ -177,6 +177,9 @@
     <ClCompile Include="src\bus\expansion_port.cpp">
       <Filter>Source Files\bus</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\persistent_section_value_store.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource\resource.h">
@@ -300,6 +303,9 @@
       <Filter>Header Files\bus</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\utils\borrowed_ptr.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\persistent_value_section_store.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
   </ItemGroup>
