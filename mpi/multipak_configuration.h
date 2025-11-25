@@ -8,6 +8,7 @@ public:
 
 	using slot_id_type = std::size_t;
 	using path_type = std::string;
+	/// @brief Defines the type used to hold a variable length string.
 	using string_type = std::string;
 
 

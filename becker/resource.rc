@@ -1,4 +1,4 @@
-//Microsoft Developer Studio generated resource script.
+// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -27,18 +25,18 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE 
 BEGIN
     "#include ""winres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE 
 BEGIN
     "\r\n"
     "\0"
@@ -52,18 +50,20 @@ END
 // Dialog
 //
 
-IDD_PROPPAGE DIALOG DISCARDABLE  0, 0, 192, 86
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "DriveWire Server"
-FONT 8, "MS Sans Serif"
+IDD_SETTINGS_DIALOG DIALOGEX 0, 0, 207, 86
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Becker Port Cartridge Settings"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    RTEXT           "Server address:",IDC_STATIC,8,16,61,10
-    RTEXT           "Server port:",IDC_STATIC,25,34,44,11
-    EDITTEXT        IDC_TCPPORT,74,32,46,12,ES_AUTOHSCROLL | ES_NUMBER
-    DEFPUSHBUTTON   "Ok",IDOK,73,59,48,19
-    PUSHBUTTON      "Cancel",IDCANCEL,138,59,45,19
-    EDITTEXT        IDC_TCPHOST,74,14,105,12,ES_AUTOHSCROLL
+    GROUPBOX        "DriveWire Server",IDC_STATIC,7,7,193,51
+    RTEXT           "Server address:",IDC_STATIC,14,23,51,10
+    RTEXT           "Server port:",IDC_STATIC,14,41,51,11
+    PUSHBUTTON      "Cancel",IDCANCEL,155,65,45,14
+    EDITTEXT        IDC_TCPHOST,72,21,121,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TCPPORT,72,39,121,12,ES_AUTOHSCROLL | ES_NUMBER
+    DEFPUSHBUTTON   "Ok",IDOK,103,65,45,14
 END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -71,8 +71,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,1,8,1
- PRODUCTVERSION 2,1,8,1
+ FILEVERSION 0,0,0,1
+ PRODUCTVERSION 0,0,0,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x21L
@@ -87,16 +87,14 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "Becker Port Interface"
             VALUE "CompanyName", "BitRot Software"
-            VALUE "FileDescription", "becker"
-            VALUE "FileVersion", "2.1.8.1"
-            VALUE "InternalName", "Becker Port Interface"
+            VALUE "FileDescription", "Becker Port Cartridge Plugin for DREAM"
+            VALUE "FileVersion", "0,0,0,1"
+            VALUE "InternalName", "Becker Port Cartridge"
             VALUE "LegalCopyright", "Copyright � 2007"
             VALUE "OriginalFilename", "becker.dll"
-            VALUE "ProductName", "becker"
-            VALUE "ProductVersion", "26-3124"
-            VALUE "SpecialBuild", "Becker Port Interface"
+            VALUE "ProductName", "DREAM"
+            VALUE "ProductVersion", "0, 0, 0, 1"
         END
     END
     BLOCK "VarFileInfo"
@@ -105,20 +103,27 @@ BEGIN
     END
 END
 
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // DESIGNINFO
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
+GUIDELINES DESIGNINFO
 BEGIN
-    IDD_PROPPAGE, DIALOG
+    IDD_SETTINGS_DIALOG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 185
+        RIGHTMARGIN, 200
+        VERTGUIDE, 7
+        VERTGUIDE, 14
+        VERTGUIDE, 65
+        VERTGUIDE, 72
+        VERTGUIDE, 193
         TOPMARGIN, 7
         BOTTOMMARGIN, 79
+        HORZGUIDE, 58
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -126,15 +131,26 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_SETTINGS_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE
 BEGIN
     IDS_MODULE_NAME         "DriveWire/Becker Port"
 END
 
-#endif    // English (U.S.) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

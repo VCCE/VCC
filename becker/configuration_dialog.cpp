@@ -2,7 +2,7 @@
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
 //	
-//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	VCC (Virtual Color Computer) is free software: you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License as published by
 //	the Free Software Foundation, either version 3 of the License, or (at your
 //	option) any later version.
@@ -23,10 +23,10 @@
 
 configuration_dialog::configuration_dialog(
 	HINSTANCE module_handle,
-	set_server_function_type set_server_callback)
+	update_connection_settings_type update_connection_settings)
 	:
 	module_handle_(module_handle),
-	set_server_callback_(move(set_server_callback))
+	update_connection_settings(move(update_connection_settings))
 {
 }
 
@@ -40,7 +40,7 @@ void configuration_dialog::open(string_type server_address, string_type server_p
 
 		dialog_handle_ = CreateDialogParam(
 			module_handle_,
-			MAKEINTRESOURCE(IDD_PROPPAGE),
+			MAKEINTRESOURCE(IDD_SETTINGS_DIALOG),
 			GetActiveWindow(),
 			callback_procedure,
 			reinterpret_cast<LPARAM>(this));
@@ -76,9 +76,6 @@ INT_PTR configuration_dialog::process_message(
 	UINT message,
 	WPARAM wParam)
 {
-	HWND hwndOwner;
-	RECT rc, rcDlg, rcOwner;
-
 	switch (message)
 	{
 	case WM_DESTROY:
@@ -88,26 +85,7 @@ INT_PTR configuration_dialog::process_message(
 	case WM_INITDIALOG:
 		dialog_handle_ = hDlg;
 
-		hwndOwner = GetParent(hDlg);
-		if (hwndOwner == nullptr)
-		{
-			hwndOwner = GetDesktopWindow();
-		}
-
-		GetWindowRect(hwndOwner, &rcOwner);
-		GetWindowRect(hDlg, &rcDlg);
-		CopyRect(&rc, &rcOwner);
-
-		OffsetRect(&rcDlg, -rcDlg.left, -rcDlg.top);
-		OffsetRect(&rc, -rc.left, -rc.top);
-		OffsetRect(&rc, -rcDlg.right, -rcDlg.bottom);
-
-		SetWindowPos(hDlg,
-					 HWND_TOP,
-					 rcOwner.left + (rc.right / 2),
-					 rcOwner.top + (rc.bottom / 2),
-					 0, 0,          // Ignores size arguments.
-					 SWP_NOSIZE);
+		CenterDialog(hDlg);
 
 		SendDlgItemMessage(
 			hDlg,
@@ -127,18 +105,16 @@ INT_PTR configuration_dialog::process_message(
 		switch (LOWORD(wParam))
 		{
 		case IDOK:
-			// Save config dialog data
-			set_server_callback_(
+			// FIXME-CHET: This should validate that the address is in a valid format and
+			// the port is an integer and in a valid range.
+			update_connection_settings(
 				::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPHOST),
 				::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPPORT));
-			EndDialog(hDlg, LOWORD(wParam));
-			return TRUE;
-
-		case IDHELP:
-			return TRUE;
+			EndDialog(hDlg, IDOK);
+			break;
 
 		case IDCANCEL:
-			EndDialog(hDlg, LOWORD(wParam));
+			EndDialog(hDlg, IDCANCEL);
 			break;
 		}
 

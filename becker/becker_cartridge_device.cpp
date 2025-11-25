@@ -2,7 +2,7 @@
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
 //
-//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	VCC (Virtual Color Computer) is free software: you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License as published by
 //	the Free Software Foundation, either version 3 of the License, or (at your
 //	option) any later version.
@@ -22,7 +22,7 @@ void becker_cartridge_device::start(
 	const string_type& server_address,
 	const string_type& server_port)
 {
-	becker_device_.sethost(server_address.c_str(), server_port.c_str());
+	update_connection_settings(server_address, server_port);
 	becker_device_.enable(true);
 }
 
@@ -68,7 +68,7 @@ becker_cartridge_device::string_type becker_cartridge_device::server_port() cons
 	return becker_device_.server_port();
 }
 
-void becker_cartridge_device::set_server_address(
+void becker_cartridge_device::update_connection_settings(
 	const string_type& server_address,
 	const string_type& server_port)
 {

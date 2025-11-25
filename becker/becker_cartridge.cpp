@@ -2,7 +2,7 @@
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
 //
-//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	VCC (Virtual Color Computer) is free software: you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License as published by
 //	the Free Software Foundation, either version 3 of the License, or (at your
 //	option) any later version.
@@ -19,22 +19,18 @@
 #include "resource.h"
 #include "vcc/ui/menu/menu_builder.h"
 #include "vcc/utils/winapi.h"
-#include "vcc/utils/persistent_value_store.h"
+#include "vcc/utils/persistent_value_section_store.h"
 
 
 becker_cartridge::becker_cartridge(
 	std::shared_ptr<expansion_port_host_type> host,
-	std::unique_ptr<expansion_port_ui_type> ui,
-	std::unique_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)
 	:
 	host_(move(host)),
-	ui_(move(ui)),
-	bus_(move(bus)),
 	module_instance_(module_instance),
 	configuration_dialog_(
 		module_instance,
-		std::bind(&becker_cartridge::set_server_address, this, std::placeholders::_1, std::placeholders::_2))
+		std::bind(&becker_cartridge::update_connection_settings, this, std::placeholders::_1, std::placeholders::_2))
 {
 }
 
@@ -52,7 +48,7 @@ becker_cartridge::device_type& becker_cartridge::device()
 
 void becker_cartridge::start()
 {
-	device_.start(server_address(), server_port());
+	device_.start(server_address_setting(), server_port_setting());
 }
 
 
@@ -72,9 +68,9 @@ void becker_cartridge::status(char* text_buffer, size_t buffer_size)
 
 void becker_cartridge::menu_item_clicked(unsigned char menu_item_id)
 {
-	if (menu_item_id == menu_item_ids::open_configuration)
+	if (menu_item_id == menu_item_ids::open_settings)
 	{
-		configuration_dialog_.open(server_address(), server_port());
+		configuration_dialog_.open(server_address_setting(), server_port_setting());
 	}
 }
 
@@ -82,33 +78,41 @@ void becker_cartridge::menu_item_clicked(unsigned char menu_item_id)
 becker_cartridge::menu_item_collection_type becker_cartridge::get_menu_items() const
 {
 	return ::vcc::ui::menu::menu_builder()
-		.add_root_item(menu_item_ids::open_configuration, "DriveWire Settings")
+		.add_root_item(menu_item_ids::open_settings, "Becker Port Settings")
 		.release_items();
 }
 
 
-becker_cartridge::string_type becker_cartridge::server_address() const
+becker_cartridge::string_type becker_cartridge::server_address_setting() const
 {
 	::vcc::utils::persistent_value_store settings(host_->configuration_path());
 
-	return settings.read(configuration_section_id_, "DWServerAddr", "127.0.0.1");
+	return settings.read(
+		configuration::section,
+		configuration::keys::server_address,
+		configuration::defaults::server_address);
 }
 
-becker_cartridge::string_type becker_cartridge::server_port() const
+becker_cartridge::string_type becker_cartridge::server_port_setting() const
 {
 	::vcc::utils::persistent_value_store settings(host_->configuration_path());
 
-	return settings.read(configuration_section_id_, "DWServerPort", "65504");
+	return settings.read(
+		configuration::section,
+		configuration::keys::server_port,
+		configuration::defaults::server_port);
 }
 
-void becker_cartridge::set_server_address(
+void becker_cartridge::update_connection_settings(
 	const string_type& server_address,
 	const string_type& server_port)
 {
-	::vcc::utils::persistent_value_store settings(host_->configuration_path());
+	::vcc::utils::persistent_value_section_store settings(
+		host_->configuration_path(),
+		configuration::section);
 
-	settings.write(configuration_section_id_, "DWServerAddr", server_address);
-	settings.write(configuration_section_id_, "DWServerPort", server_port);
+	settings.write(configuration::keys::server_address, server_address);
+	settings.write(configuration::keys::server_port, server_port);
 
-	device_.set_server_address(server_address, server_port);
+	device_.update_connection_settings(server_address, server_port);
 }

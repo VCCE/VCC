@@ -34,7 +34,7 @@ namespace vcc::utils
 
 		/// @brief The type used to represent paths.
 		using path_type = std::string;
-		/// @brief The type used to represent strings.
+		/// @brief Defines the type used to hold a variable length string.
 		using string_type = std::string;
 		/// @brief The type used to represent section identifiers.
 		using section_type = std::string;

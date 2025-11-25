@@ -1,11 +1,11 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
-// Used by becker.rc
+// Microsoft Visual C++ generated include file.
+// Used by resource.rc
 //
 #define IDS_MODULE_NAME                 1
-#define IDD_PROPPAGE                    102
-#define IDC_TCPPORT                     1004
-#define IDC_TCPHOST                     1005
+#define IDD_SETTINGS_DIALOG             101
+#define IDC_TCPPORT                     1001
+#define IDC_TCPHOST                     1002
 
 // Next default values for new objects
 // 
@@ -13,7 +13,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        101
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1008
+#define _APS_NEXT_CONTROL_VALUE         1003
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
