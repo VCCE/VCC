@@ -27,6 +27,12 @@ namespace vcc::utils
 	{
 	}
 
+
+	void persistent_value_store::remove(const section_type& section, const string_type& key) const
+	{
+		WritePrivateProfileString(section.c_str(), key.c_str(), nullptr, path_.c_str());
+	}
+
 	void persistent_value_store::write(
 		const section_type& section,
 		const string_type& key,

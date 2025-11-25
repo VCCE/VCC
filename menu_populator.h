@@ -69,7 +69,7 @@ public:
 		item_info.cbSize = sizeof(item_info);
 		item_info.fMask = MIIM_TYPE | MIIM_ID | MIIM_CHECKMARKS | MIIM_STATE;
 		item_info.fType = MFT_STRING;
-		item_info.fState |= disabled ? MFS_DISABLED : 0;
+		item_info.fState |= disabled ? (MFS_DISABLED | MFS_GRAYED) : 0;
 		item_info.fState |= icon == nullptr ? 0 : MFS_CHECKED;
 		item_info.hbmpChecked = icon;
 		item_info.wID = id + base_menu_id_;
@@ -107,6 +107,7 @@ public:
 		item_info.cbSize = sizeof(item_info);
 		item_info.fMask = MIIM_TYPE | MIIM_ID | MIIM_CHECKMARKS | MIIM_STATE;
 		item_info.fType = MFT_STRING;
+		item_info.fState |= disabled ? (MFS_DISABLED | MFS_GRAYED) : 0;
 		item_info.fState |= icon == nullptr ? 0 : MFS_CHECKED;
 		item_info.hbmpChecked = icon;
 		item_info.wID = id + base_menu_id_;

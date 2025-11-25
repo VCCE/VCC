@@ -28,6 +28,7 @@ class multipak_cartridge : public ::vcc::bus::cartridge
 public:
 
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
+	/// @brief Defines the type providing user interface services to the cartridge.
 	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using mount_status_type = ::vcc::utils::cartridge_loader_status;

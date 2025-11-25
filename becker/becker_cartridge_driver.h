@@ -60,11 +60,15 @@ namespace vcc::cartridges::becker_port
 			/// |  5  | 0b00100000 | Unused      |
 			/// |  6  | 0b01000000 | Unused      |
 			/// |  7  | 0b10000000 | Unused      |
+			/// 
+			/// @todo move this documentation into the becker port device implementation once it
+			/// exposes a has_data() function.
 			static const auto status = 0x41u;
 
 			/// @brief Defines the bit masks for each of the flags in the status register.
 			struct status_bits
 			{
+				/// @brief When this bit is setm data is ready to be read.
 				static const auto data_ready = 0b00000010;
 			};
 

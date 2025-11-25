@@ -49,6 +49,12 @@ namespace vcc::utils
 		/// @param path The path to the file where the values are stored.
 		LIBCOMMON_EXPORT explicit persistent_value_store(path_type path);
 
+		/// @brief Remove a value from a specific section.
+		/// 
+		/// @param section The section the value is stored in.
+		/// @param key The key the value is stored as.
+		LIBCOMMON_EXPORT void remove(const section_type& section, const string_type& key) const;
+
 		/// @brief Save a signed integer value.
 		/// 
 		/// @param section The section to store the value in.

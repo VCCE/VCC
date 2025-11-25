@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,1,8,1
- PRODUCTVERSION 2,1,8,1
+ FILEVERSION 0,0,0,1
+ PRODUCTVERSION 0,0,0,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x21L
@@ -67,15 +67,13 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "Game Master Cartridge (SN76489)"
-            VALUE "FileDescription", "GMC"
-            VALUE "FileVersion", "2.1.8.1"
-            VALUE "InternalName", "orch90"
-            VALUE "LegalCopyright", "Copyright Â© 2019"
+            VALUE "FileDescription", "Game Master Cartridge "
+            VALUE "FileVersion", "0.0.0.1"
+            VALUE "InternalName", "gmc"
+            VALUE "LegalCopyright", "Copyright © 2019"
             VALUE "OriginalFilename", "gmc.dll"
-            VALUE "ProductName", "Game Master Cartridge (SN76489)"
-            VALUE "ProductVersion", "26-XXXX"
-            VALUE "SpecialBuild", "Game Master Cartridge (SN76489)"
+            VALUE "ProductName", "DREAM Tandy Color Computer 3 Emulator"
+            VALUE "ProductVersion", "0.0.0.1"
         END
     END
     BLOCK "VarFileInfo"

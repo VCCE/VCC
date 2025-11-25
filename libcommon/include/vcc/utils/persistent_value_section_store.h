@@ -50,6 +50,12 @@ namespace vcc::utils
 		/// @param section The section of the configuration file the values are stored in.
 		LIBCOMMON_EXPORT persistent_value_section_store(path_type path, section_type section);
 
+		/// @brief Remove a value from a specific section.
+		/// 
+		/// @param section The section the value is stored in.
+		/// @param key The key the value is stored as.
+		LIBCOMMON_EXPORT void remove(const string_type& key) const;
+
 		/// @brief Save a signed integer value.
 		/// 
 		/// @param key The key used to identify the value in.

@@ -966,8 +966,11 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = ./libcommon/include	\
-						 ./becker
+						 ./becker				\
+						 ./gmc
 
+#./libcommon/include	\
+						 
 # This tag can be used to specify the character encoding of the source files
 # that Doxygen parses. Internally Doxygen uses the UTF-8 encoding. Doxygen uses
 # libiconv (or the iconv built into libc) for the transcoding. See the libiconv

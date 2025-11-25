@@ -93,7 +93,7 @@ BEGIN
             VALUE "InternalName", "Becker Port Cartridge"
             VALUE "LegalCopyright", "Copyright � 2007"
             VALUE "OriginalFilename", "becker.dll"
-            VALUE "ProductName", "DREAM"
+            VALUE "ProductName", "DREAM Tandy Color Computer 3 Emulator"
             VALUE "ProductVersion", "0, 0, 0, 1"
         END
     END
@@ -147,7 +147,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MODULE_NAME         "DriveWire/Becker Port"
+    IDS_MODULE_NAME         "Becker Port"
 END
 
 #endif    // English (United States) resources

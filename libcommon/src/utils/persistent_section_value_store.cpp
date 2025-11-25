@@ -31,6 +31,11 @@ namespace vcc::utils
 	{}
 
 
+	void persistent_value_section_store::remove(const string_type& key) const
+	{
+		store_.remove(section_, key);
+	}
+
 	void persistent_value_section_store::write(
 		const string_type& key,
 		int value) const
