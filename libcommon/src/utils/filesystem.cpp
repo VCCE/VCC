@@ -21,6 +21,10 @@
 
 namespace vcc::utils
 {
+	// Returns fully qualified path of a DLL
+	// Wrapper for GetModuleFileName used by orch90/orchestra90cc_cartridge.cpp
+	// GetModuleFileName is still used by FD502/fd502.cpp, config.cpp
+	// and tcc1014mmu.cpp
 
 	LIBCOMMON_EXPORT std::string get_module_path(HMODULE module_handle)
 	{
@@ -47,6 +51,8 @@ namespace vcc::utils
 		}
 	}
 
+	// Validate a path to a DLL
+	// Used by FD502/fd502.cpp, mpi/multipak_cartridge.cpp
 	LIBCOMMON_EXPORT std::string find_pak_module_path(std::string path)
 	{
 		if (path.empty())
@@ -71,6 +77,8 @@ namespace vcc::utils
 		return path;
 	}
 
+	// Returns the directory portion of a path name
+	// Used by mpi/configuration_dialog.cpp orch90/orchestra90cc_cartridge.cpp
 	LIBCOMMON_EXPORT std::string get_directory_from_path(std::string path)
 	{
 		const auto last_separator(path.find_last_of('\\'));
@@ -82,6 +90,8 @@ namespace vcc::utils
 		return path;
 	}		
 
+	// Strips the DLL or EXE apllication directory from a filename
+	// Used by FD502/fd502.cpp
 	LIBCOMMON_EXPORT std::string strip_application_path(std::string path)
 	{
 		const auto module_path = get_directory_from_path(vcc::utils::get_module_path(nullptr));
@@ -94,6 +104,8 @@ namespace vcc::utils
 		return path;
 	}
 
+	// Get the name portion of a path
+	// Used by GMC/gmc_cartridge.cpp mpi/configuration_dialog.cpp
 	LIBCOMMON_EXPORT std::string get_filename(std::string path)
 	{
 		const auto last_seperator = path.find_last_of('\\');
