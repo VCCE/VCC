@@ -44,7 +44,7 @@ namespace vcc::utils
 			{
 				name = name.substr(0, endIndex);
 			}
-//PrintLogC("%s\n",name.c_str());
+			//PrintLogC("%s\n",name.c_str());
 			return name;
 		}
 
@@ -53,7 +53,7 @@ namespace vcc::utils
 	// Look for magic "MZ" to detect DLL.  Assume rom if not.
 	cartridge_file_type determine_cartridge_type(const std::string& filename)
 	{
-//PrintLogC("cart file type %s\n",filename.c_str());
+		//PrintLogC("cart file type %s\n",filename.c_str());
 		std::ifstream input(filename, std::ios::binary);
 		if (!input.is_open())
 		{
@@ -174,8 +174,7 @@ namespace vcc::utils
 		const std::string& configuration_path)
 	{
 
-//PrintLogC("load cart %s\n",filename.c_str());
-
+		//PrintLogC("load cart %s\n",filename.c_str());
 		switch (::vcc::utils::determine_cartridge_type(filename))
 		{
 		default:

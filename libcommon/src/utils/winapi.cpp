@@ -24,6 +24,11 @@
 namespace vcc::utils
 {
 
+	// Get string from instance's resource file
+	// Used by FD502/fd502.cpp, GMC/gmc_cartridge.cpp, HardDisk/harddisk.cpp,
+	// Ramdisk/ramdisk_cartridge.cpp SuperIDE/SuperIDE.cpp, acia/acia.cpp,
+	// becker/becker_cartridge.cpp, libcommon/src/utils/cartridge_loader.cpp
+	// mpi/multipak_cartridge.cpp orch90/orchestra90cc_cartridge.cpp sdc/sdc_dllmain.cpp
 	LIBCOMMON_EXPORT std::string load_string(HINSTANCE instance, UINT id)
 	{
 		const wchar_t* buffer_ptr;
@@ -49,6 +54,8 @@ namespace vcc::utils
 		return utf8_str;
 	}
 
+
+	// This mimics GetDialogItemText() and is used in fd502.cpp and becker/configuration_dialog
 	LIBCOMMON_EXPORT std::string get_dialog_item_text(HWND window, UINT id)
 	{
 		const auto length(SendDlgItemMessage(window, id, WM_GETTEXTLENGTH, 0, 0));

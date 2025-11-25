@@ -18,6 +18,17 @@
 #include <vcc/utils/persistent_value_store.h>
 #include <Windows.h>
 
+// Persistent value store manages vcc ini files
+// Encapsulates Read/Write PrivateProfile String/Int
+// Used by FD502/fd502.cpp, GMC/gmc_cartridge.cpp,
+// becker/becker_cartridge.cpp, mpi/multipak_configuration.cpp
+// sdc/sdc_configuration.cpp
+//
+// TODO: Direct PrivateProfile access to vcc ini still exists in
+// Cassette.cpp FD502/fd502.cpp HardDisk/harddisk.cpp SuperIDE/SuperIDE.cpp
+// acia/acia.cpp config.cpp and pakinterface.cpp
+//
+// TODO: A read overload that copies into a size limited cstring would be usefull
 
 namespace vcc::utils
 {
