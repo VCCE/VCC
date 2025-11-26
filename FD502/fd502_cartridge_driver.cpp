@@ -15,10 +15,10 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "fd502_device.h"
+#include "fd502_cartridge_driver.h"
 
 
-fd502_device::fd502_device(
+fd502_cartridge_driver::fd502_cartridge_driver(
 	std::shared_ptr<expansion_port_host_type> host,
 	std::shared_ptr<expansion_port_bus_type> bus)
 	:

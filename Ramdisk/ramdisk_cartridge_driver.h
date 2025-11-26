@@ -16,12 +16,12 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "vcc/bus/cartridge_device.h"
+#include "vcc/bus/cartridge_driver.h"
 #include "vcc/bus/expansion_port_bus.h"
 #include <array>
 
 
-class ramdisk_device : public ::vcc::bus::cartridge_device
+class ramdisk_cartridge_driver : public ::vcc::bus::cartridge_driver
 {
 public:
 
@@ -31,7 +31,7 @@ public:
 
 public:
 
-	ramdisk_device() = default;
+	ramdisk_cartridge_driver() = default;
 
 	void start();
 	void reset() override;

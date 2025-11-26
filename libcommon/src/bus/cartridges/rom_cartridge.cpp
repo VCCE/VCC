@@ -56,7 +56,7 @@ namespace vcc::bus::cartridges
 		return name_;
 	}
 
-	rom_cartridge::device_type& rom_cartridge::device()
+	rom_cartridge::driver_type& rom_cartridge::driver()
 	{
 		return *this;
 	}

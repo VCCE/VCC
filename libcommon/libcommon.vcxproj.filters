@@ -171,7 +171,7 @@
     <ClCompile Include="src\ui\menu\menu_item_collection.cpp">
       <Filter>Source Files\ui\menu</Filter>
     </ClCompile>
-    <ClCompile Include="src\bus\cartridge_device.cpp">
+    <ClCompile Include="src\bus\cartridge_driver.cpp">
       <Filter>Source Files\bus</Filter>
     </ClCompile>
     <ClCompile Include="src\bus\expansion_port.cpp">
@@ -296,7 +296,7 @@
     <ClInclude Include="include\vcc\ui\menu\menu_item_collection.h">
       <Filter>Header Files\ui\menu</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\bus\cartridge_device.h">
+    <ClInclude Include="include\vcc\bus\cartridge_driver.h">
       <Filter>Header Files\bus</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\bus\expansion_port.h">

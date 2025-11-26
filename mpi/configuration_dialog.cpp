@@ -47,7 +47,7 @@ namespace
 configuration_dialog::configuration_dialog(
 	HINSTANCE module_handle,
 	multipak_configuration& configuration,
-	std::shared_ptr<multipak_device> mpi,
+	std::shared_ptr<multipak_cartridge_driver> mpi,
 	insert_function_type insert_callback,
 	eject_function_type eject_callback)
 	:

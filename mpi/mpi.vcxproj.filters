@@ -45,7 +45,7 @@
     <ClInclude Include="multipak_expansion_port_ui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="multipak_device.h">
+    <ClInclude Include="multipak_cartridge_driver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

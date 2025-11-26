@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "gmc_device.h"
+#include "gmc_cartridge_driver.h"
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/expansion_port_host.h"
 #include "vcc/bus/expansion_port_ui.h"
@@ -29,13 +29,12 @@ class gmc_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using size_type = ::vcc::bus::cartridge::size_type;	//	FIXME-CHET: Delete this when device is removes as base class!
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
 	using path_type = std::string;
 	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
-	using device_type = gmc_device;
+	using driver_type = gmc_cartridge_driver;
 
 public:
 
@@ -46,7 +45,7 @@ public:
 		HINSTANCE module_instance);
 
 	name_type name() const override;
-	[[nodiscard]] device_type& device() override;
+	[[nodiscard]] driver_type& driver() override;
 
 	void start() override;
 
@@ -72,7 +71,7 @@ private:
 	const std::shared_ptr<expansion_port_bus_type> bus_;
 	const HINSTANCE module_instance_;
 
-	device_type device_;
+	driver_type driver_;
 };
 
 

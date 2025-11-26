@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "multipak_configuration.h"
-#include "multipak_device.h"
+#include "multipak_cartridge_driver.h"
 #include "vcc/utils/cartridge_loader.h"
 #include <Windows.h>
 #include <functional>
@@ -28,7 +28,7 @@ class configuration_dialog
 public:
 
 	using cartridge_type = ::vcc::bus::cartridge;
-	using slot_id_type = ::multipak_device::slot_id_type;
+	using slot_id_type = ::multipak_cartridge_driver::slot_id_type;
 	using insert_cartridge_status_type = ::vcc::utils::cartridge_loader_status;
 	using path_type = std::string;
 	using insert_function_type = std::function<insert_cartridge_status_type(slot_id_type, const path_type&)>;
@@ -40,7 +40,7 @@ public:
 	configuration_dialog(
 		HINSTANCE module_handle,
 		multipak_configuration& configuration,
-		std::shared_ptr<multipak_device> mpi,
+		std::shared_ptr<multipak_cartridge_driver> mpi,
 		insert_function_type insert_callback,
 		eject_function_type eject_callback);
 
@@ -77,7 +77,7 @@ private:
 
 	const HINSTANCE module_handle_;
 	multipak_configuration& configuration_;
-	const std::shared_ptr<multipak_device> mpi_;
+	const std::shared_ptr<multipak_cartridge_driver> mpi_;
 	const insert_function_type insert_callback_;
 	const eject_function_type eject_callback_;
 	HWND dialog_handle_ = nullptr;

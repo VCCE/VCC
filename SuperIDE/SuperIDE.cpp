@@ -65,7 +65,7 @@ superide_cartridge::name_type superide_cartridge::name() const
 	return name.c_str();
 }
 
-superide_cartridge::device_type& superide_cartridge::device()
+superide_cartridge::driver_type& superide_cartridge::driver()
 {
 	return *this;
 }

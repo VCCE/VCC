@@ -31,12 +31,12 @@ ramdisk_cartridge::name_type ramdisk_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-ramdisk_cartridge::device_type& ramdisk_cartridge::device()
+ramdisk_cartridge::driver_type& ramdisk_cartridge::driver()
 {
-	return device_;
+	return driver_;
 }
 
 void ramdisk_cartridge::start()
 {
-	device_.start();
+	driver_.start();
 }

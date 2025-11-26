@@ -18,12 +18,12 @@
 #pragma once
 #include "vcc/devices/psg/sn76496.h"
 #include "vcc/devices/rom/banked_rom_image.h"
-#include "vcc/bus/cartridge_device.h"
+#include "vcc/bus/cartridge_driver.h"
 #include "vcc/bus/expansion_port_bus.h"
 #include <memory>
 
 
-class gmc_device :  public ::vcc::bus::cartridge_device
+class gmc_cartridge_driver :  public ::vcc::bus::cartridge_driver
 {
 public:
 
@@ -36,7 +36,7 @@ public:
 
 public:
 
-	explicit gmc_device(std::shared_ptr<expansion_port_bus_type> bus);
+	explicit gmc_cartridge_driver(std::shared_ptr<expansion_port_bus_type> bus);
 
 	void start(const path_type& rom_filename);
 	void reset() override;

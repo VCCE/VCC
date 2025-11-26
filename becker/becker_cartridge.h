@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "becker_cartridge_device.h"
+#include "becker_cartridge_driver.h"
 #include "configuration_dialog.h"
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/expansion_port_host.h"
@@ -39,8 +39,8 @@ public:
 	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 	/// @brief Defines the type providing system services to the cartridge.
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
-	/// @brief Defines the primary device type the cartridge controls.
-	using device_type = becker_cartridge_device;
+	/// @brief Defines the primary driver type the cartridge controls.
+	using driver_type = becker_cartridge_driver;
 	/// @brief Defines the type used to hold a variable length string.
 	using string_type = std::string;
 
@@ -60,7 +60,7 @@ public:
 	name_type name() const override;
 
 	/// @inheritdoc
-	[[nodiscard]] device_type& device() override;
+	[[nodiscard]] driver_type& driver() override;
 
 	/// @inheritdoc
 	void start() override;
@@ -80,12 +80,12 @@ public:
 
 protected:
 
-	/// @brief Retrieve the address of the DriveWire server the Becker device will connect to.
+	/// @brief Retrieve the address of the DriveWire server the Becker driver will connect to.
 	/// 
 	/// @return A string containing the server address.
 	string_type server_address_setting() const;
 
-	/// @brief Retrieve the port of the DriveWire server the Becker device will connect to.
+	/// @brief Retrieve the port of the DriveWire server the Becker driver will connect to.
 	/// 
 	/// @return A string containing the server port.
 	string_type server_port_setting() const;
@@ -141,5 +141,5 @@ private:
 	const std::shared_ptr<expansion_port_host_type> host_;
 	const HINSTANCE module_instance_;
 	configuration_dialog configuration_dialog_;
-	device_type device_;
+	driver_type driver_;
 };

@@ -15,34 +15,34 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "vcc/bus/cartridge_device.h"
+#include "vcc/bus/cartridge_driver.h"
 
 
 namespace vcc::bus
 {
 
-	void cartridge_device::reset()
+	void cartridge_driver::reset()
 	{}
 
-	void cartridge_device::update([[maybe_unused]] float delta)
+	void cartridge_driver::update([[maybe_unused]] float delta)
 	{}
 
-	void cartridge_device::write_port(
+	void cartridge_driver::write_port(
 		[[maybe_unused]] unsigned char port_id,
 		[[maybe_unused]] unsigned char value)
 	{}
 
-	unsigned char cartridge_device::read_port([[maybe_unused]] unsigned char port_id)
+	unsigned char cartridge_driver::read_port([[maybe_unused]] unsigned char port_id)
 	{ 
 		return {};
 	}
 
-	unsigned char cartridge_device::read_memory_byte([[maybe_unused]] size_type memory_address)
+	unsigned char cartridge_driver::read_memory_byte([[maybe_unused]] size_type memory_address)
 	{
 		return {};
 	}
 
-	unsigned short cartridge_device::sample_audio()
+	unsigned short cartridge_driver::sample_audio()
 	{
 		return {};
 	}

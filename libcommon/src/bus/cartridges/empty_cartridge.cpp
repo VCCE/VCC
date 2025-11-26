@@ -27,7 +27,7 @@ namespace vcc::bus::cartridges
 		return {};
 	}
 	
-	empty_cartridge::device_type& empty_cartridge::device()
+	empty_cartridge::driver_type& empty_cartridge::driver()
 	{
 		return *this;
 	}

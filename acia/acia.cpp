@@ -77,7 +77,7 @@ rs232pak_cartridge::name_type rs232pak_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-rs232pak_cartridge::device_type& rs232pak_cartridge::device()
+rs232pak_cartridge::driver_type& rs232pak_cartridge::driver()
 {
 	return *this;
 }

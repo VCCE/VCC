@@ -98,7 +98,7 @@ fd502_cartridge::fd502_cartridge(
 	ui_(move(ui)),
 	bus_(bus),
 	module_instance_(module_instance),
-	device_(host, bus)
+	driver_(host, bus)
 {}
 
 
@@ -107,9 +107,9 @@ fd502_cartridge::name_type fd502_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-fd502_cartridge::device_type& fd502_cartridge::device()
+fd502_cartridge::driver_type& fd502_cartridge::driver()
 {
-	return device_;
+	return driver_;
 }
 
 
@@ -172,7 +172,7 @@ void fd502_cartridge::menu_item_clicked(unsigned char MenuID)
 	}
 }
 
-void fd502_device::write_port(unsigned char Port, unsigned char Data)
+void fd502_cartridge_driver::write_port(unsigned char Port, unsigned char Data)
 {
 	if (BeckerEnabled && Port == 0x42)
 	{
@@ -192,7 +192,7 @@ void fd502_device::write_port(unsigned char Port, unsigned char Data)
 	}
 }
 
-unsigned char fd502_device::read_port(unsigned char Port)
+unsigned char fd502_cartridge_driver::read_port(unsigned char Port)
 {
 	if (BeckerEnabled && (Port == 0x41 || Port == 0x42))
 	{
@@ -207,12 +207,12 @@ unsigned char fd502_device::read_port(unsigned char Port)
 	return disk_io_read(*bus_, Port);
 }
 
-void fd502_device::update(float delta)
+void fd502_cartridge_driver::update(float delta)
 {
 	PingFdc(*bus_);
 }
 
-unsigned char fd502_device::read_memory_byte(size_type Address)
+unsigned char fd502_cartridge_driver::read_memory_byte(size_type Address)
 {
 	return RomPointer[SelectRomIndex]->read_memory_byte(Address);
 }

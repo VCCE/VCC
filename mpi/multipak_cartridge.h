@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "multipak_device.h"
+#include "multipak_cartridge_driver.h"
 #include "configuration_dialog.h"
 #include "multipak_configuration.h"
 #include "vcc/bus/cartridge.h"
@@ -42,7 +42,7 @@ public:
 		std::shared_ptr<expansion_port_host_type> host,
 		std::shared_ptr<expansion_port_ui_type> ui,
 		std::shared_ptr<expansion_port_bus_type> bus,
-		std::shared_ptr<multipak_device> device,
+		std::shared_ptr<multipak_cartridge_driver> driver,
 		HINSTANCE module_instance,
 		multipak_configuration& configuration);
 	multipak_cartridge(const multipak_cartridge&) = delete;
@@ -53,7 +53,7 @@ public:
 
 	//	Cartridge implementation
 	name_type name() const override;
-	[[nodiscard]] device_type& device() override;
+	[[nodiscard]] driver_type& driver() override;
 
 	void start() override;
 	void stop() override;
@@ -75,9 +75,9 @@ private:
 	const std::shared_ptr<expansion_port_host_type> host_;
 	const std::shared_ptr<expansion_port_ui_type> ui_;
 	const std::shared_ptr<expansion_port_bus_type> bus_;
-	const std::shared_ptr<multipak_device> device_;
+	const std::shared_ptr<multipak_cartridge_driver> driver_;
 	const HINSTANCE module_instance_;
 	multipak_configuration& configuration_;
 	configuration_dialog settings_dialog_;
-	std::array<cartridge_ptr_type, multipak_device::total_slot_count> cartridges_;
+	std::array<cartridge_ptr_type, multipak_cartridge_driver::total_slot_count> cartridges_;
 };

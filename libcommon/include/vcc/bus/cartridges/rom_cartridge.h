@@ -31,7 +31,7 @@ namespace vcc::bus::cartridges
 	class rom_cartridge
 		:
 		public ::vcc::bus::cartridge,
-		public ::vcc::bus::cartridge_device
+		public ::vcc::bus::cartridge_driver
 	{
 	public:
 
@@ -67,7 +67,7 @@ namespace vcc::bus::cartridges
 		/// @inheritdoc
 		LIBCOMMON_EXPORT [[nodiscard]] name_type name() const override;
 
-		[[nodiscard]] device_type& device() override;
+		[[nodiscard]] driver_type& driver() override;
 
 		/// @brief Initialize the cartridge.
 		///

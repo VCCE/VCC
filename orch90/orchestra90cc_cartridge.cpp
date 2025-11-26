@@ -28,7 +28,7 @@ orchestra90cc_cartridge::orchestra90cc_cartridge(
 	host_(move(host)),
 	bus_(bus),
 	module_instance_(module_instance),
-	device_(bus)
+	driver_(bus)
 {}
 
 
@@ -37,13 +37,13 @@ orchestra90cc_cartridge::name_type orchestra90cc_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-orchestra90cc_cartridge::device_type& orchestra90cc_cartridge::device()
+orchestra90cc_cartridge::driver_type& orchestra90cc_cartridge::driver()
 {
-	return device_;
+	return driver_;
 }
 
 
 void orchestra90cc_cartridge::start()
 {
-	device_.start(host_->system_rom_path() + default_rom_filename_);
+	driver_.start(host_->system_rom_path() + default_rom_filename_);
 }

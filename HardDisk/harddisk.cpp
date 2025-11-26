@@ -74,7 +74,7 @@ vcc_hard_disk_cartridge::name_type vcc_hard_disk_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-vcc_hard_disk_cartridge::device_type& vcc_hard_disk_cartridge::device()
+vcc_hard_disk_cartridge::driver_type& vcc_hard_disk_cartridge::driver()
 {
 	return *this;
 }

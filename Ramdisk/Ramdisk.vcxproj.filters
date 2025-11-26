@@ -7,7 +7,7 @@
     <ClCompile Include="ramdisk_cartridge.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ramdisk_device.cpp">
+    <ClCompile Include="ramdisk_cartridge_driver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -18,7 +18,7 @@
     <ClInclude Include="resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="ramdisk_device.h">
+    <ClInclude Include="ramdisk_cartridge_driver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -31,7 +31,7 @@
 
 class rs232pak_cartridge : 
 	public ::vcc::bus::cartridge,
-	public ::vcc::bus::cartridge_device
+	public ::vcc::bus::cartridge_driver
 {
 public:
 
@@ -50,7 +50,7 @@ public:
 	/// @inheritdoc
 	name_type name() const override;
 
-	[[nodiscard]] device_type& device() override;
+	[[nodiscard]] driver_type& driver() override;
 
 	void start() override;
 	void stop() override;

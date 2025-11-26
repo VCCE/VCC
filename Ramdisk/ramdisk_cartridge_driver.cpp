@@ -15,21 +15,21 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "ramdisk_device.h"
+#include "ramdisk_cartridge_driver.h"
 
 
-void ramdisk_device::start()
+void ramdisk_cartridge_driver::start()
 {
 	initialize_device_state();
 	std::fill(ram_.begin(), ram_.end(), buffer_type::value_type(0xffu));
 }
 
-void ramdisk_device::reset()
+void ramdisk_cartridge_driver::reset()
 {
 	initialize_device_state();
 }
 
-void ramdisk_device::write_port(unsigned char port_id, unsigned char value)
+void ramdisk_cartridge_driver::write_port(unsigned char port_id, unsigned char value)
 {
 	switch (port_id)
 	{
@@ -56,7 +56,7 @@ void ramdisk_device::write_port(unsigned char port_id, unsigned char value)
 	current_address_ = (address_byte2 << 16) | (address_byte1 << 8) | address_byte0;
 }
 
-unsigned char ramdisk_device::read_port(unsigned char port_id)
+unsigned char ramdisk_cartridge_driver::read_port(unsigned char port_id)
 {
 	if (port_id == mmio_ports::data)
 	{
@@ -67,7 +67,7 @@ unsigned char ramdisk_device::read_port(unsigned char port_id)
 }
 
 
-void ramdisk_device::initialize_device_state()
+void ramdisk_cartridge_driver::initialize_device_state()
 {
 	current_address_ = 0;
 	address_byte0 = 0;

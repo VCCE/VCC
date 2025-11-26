@@ -16,45 +16,50 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "vcc/bus/cartridge_device.h"
+#include "vcc/bus/cartridge_driver.h"
 #include "vcc/bus/expansion_port_bus.h"
-#include "vcc/bus/expansion_port_ui.h"
 #include "vcc/bus/expansion_port_host.h"
-#include "vcc/devices/rom/banked_rom_image.h"
+#include "vcc/devices/rom/rom_image.h"
 #include <memory>
+#include <Windows.h>
 
 
-class fd502_device : public ::vcc::bus::cartridge_device
+class orchestra90cc_cartridge_driver : public ::vcc::bus::cartridge_driver
 {
 public:
 
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
-	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
+	using rom_image_type = ::vcc::devices::rom::rom_image;
 	using path_type = std::string;
-	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
 
 
 public:
 
-	fd502_device(
-		std::shared_ptr<expansion_port_host_type> host,
-		std::shared_ptr<expansion_port_bus_type> bus);
+	explicit orchestra90cc_cartridge_driver(std::shared_ptr<expansion_port_bus_type> bus);
 
-	void start() /*override*/;
-	void stop() /*override*/;
+	void start(const path_type& rom_filename);
 
 	unsigned char read_memory_byte(size_type memory_address) override;
 
 	void write_port(unsigned char port_id, unsigned char value) override;
-	unsigned char read_port(unsigned char port_id) override;
-	void update(float delta) override;
+
+	unsigned short sample_audio() override;
+
+
+protected:
+
+	struct mmio_ports
+	{
+		static const auto right_channel = 0x7a;
+		static const auto left_channel = 0x7b;
+	};
+
 
 private:
 
-
-	const std::shared_ptr<expansion_port_host_type> host_;
 	const std::shared_ptr<expansion_port_bus_type> bus_;
+	rom_image_type rom_image_;
+	unsigned char left_channel_buffer_ = 0;
+	unsigned char right_channel_buffer_ = 0;
 };
-
-

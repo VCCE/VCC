@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "orchestra90cc_device.h"
+#include "orchestra90cc_cartridge_driver.h"
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/expansion_port_bus.h"
 #include "vcc/bus/expansion_port_host.h"
@@ -30,7 +30,7 @@ public:
 
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
-	using device_type = orchestra90cc_device;
+	using driver_type = orchestra90cc_cartridge_driver;
 	using rom_image_type = ::vcc::devices::rom::rom_image;
 
 
@@ -44,7 +44,7 @@ public:
 	/// @inheritdoc
 	name_type name() const override;
 
-	[[nodiscard]] device_type& device() override;
+	[[nodiscard]] driver_type& driver() override;
 
 
 	void start() override;
@@ -57,5 +57,5 @@ private:
 	const std::shared_ptr<expansion_port_host_type> host_;
 	const std::shared_ptr<expansion_port_bus_type> bus_;
 	const HINSTANCE module_instance_;
-	device_type device_;
+	driver_type driver_;
 };

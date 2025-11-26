@@ -71,7 +71,7 @@
     <ClCompile Include="src\bus\cartridge.cpp" />
     <ClCompile Include="src\bus\cartridges\empty_cartridge.cpp" />
     <ClCompile Include="src\bus\cartridges\rom_cartridge.cpp" />
-    <ClCompile Include="src\bus\cartridge_device.cpp" />
+    <ClCompile Include="src\bus\cartridge_driver.cpp" />
     <ClCompile Include="src\bus\expansion_port.cpp" />
     <ClCompile Include="src\devices\psg\sn76496.cpp" />
     <ClCompile Include="src\devices\rom\banked_rom_image.cpp" />
@@ -99,7 +99,7 @@
     <ClInclude Include="include\vcc\bus\cartridge.h" />
     <ClInclude Include="include\vcc\bus\cartridges\empty_cartridge.h" />
     <ClInclude Include="include\vcc\bus\cartridges\rom_cartridge.h" />
-    <ClInclude Include="include\vcc\bus\cartridge_device.h" />
+    <ClInclude Include="include\vcc\bus\cartridge_driver.h" />
     <ClInclude Include="include\vcc\bus\expansion_port_ui.h" />
     <ClInclude Include="include\vcc\bus\expansion_port_bus.h" />
     <ClInclude Include="include\vcc\bus\cartridge_factory.h" />

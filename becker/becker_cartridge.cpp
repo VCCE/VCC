@@ -40,21 +40,21 @@ becker_cartridge::name_type becker_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-becker_cartridge::device_type& becker_cartridge::device()
+becker_cartridge::driver_type& becker_cartridge::driver()
 {
-	return device_;
+	return driver_;
 }
 
 
 void becker_cartridge::start()
 {
-	device_.start(server_address_setting(), server_port_setting());
+	driver_.start(server_address_setting(), server_port_setting());
 }
 
 
 void becker_cartridge::stop()
 {
-	device_.stop();
+	driver_.stop();
 }
 
 
@@ -114,5 +114,5 @@ void becker_cartridge::update_connection_settings(
 	settings.write(configuration::keys::server_address, server_address);
 	settings.write(configuration::keys::server_port, server_port);
 
-	device_.update_connection_settings(server_address, server_port);
+	driver_.update_connection_settings(server_address, server_port);
 }

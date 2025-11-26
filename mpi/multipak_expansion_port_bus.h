@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "multipak_device.h"
+#include "multipak_cartridge_driver.h"
 #include "vcc/bus/expansion_port_bus.h"
 
 
@@ -28,11 +28,11 @@ public:
 		size_t slot_id,
 		std::shared_ptr<::vcc::bus::expansion_port_bus> bus,
 		//	FIXME: maybe change to shared_ptr (or weak_ptr since its lifetime will be managed by the cartridge)
-		multipak_device& device)
+		multipak_cartridge_driver& driver)
 		:
 		slot_id_(slot_id),
 		bus_(bus),
-		device_(device)
+		driver_(driver)
 	{}
 
 	void reset() override
@@ -52,7 +52,7 @@ public:
 
 	void set_cartridge_select_line(bool line_state) override
 	{
-		device_.set_cartridge_select_line(slot_id_, line_state);
+		driver_.set_cartridge_select_line(slot_id_, line_state);
 	}
 
 	void assert_irq_interrupt_line() override
@@ -75,5 +75,5 @@ private:
 
 	const size_t slot_id_;
 	const std::shared_ptr<::vcc::bus::expansion_port_bus> bus_;
-	multipak_device& device_;
+	multipak_cartridge_driver& driver_;
 };

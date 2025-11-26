@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "vcc/bus/cartridge_device.h"
+#include "vcc/bus/cartridge_driver.h"
 #include "vcc/ui/menu/menu_item_collection.h"
 #include "vcc/detail/exports.h"
 #include <string>
@@ -42,7 +42,7 @@ namespace vcc::bus
 		/// @brief Specifies the type used to store a collection of menu items.
 		using menu_item_collection_type = ::vcc::ui::menu::menu_item_collection;
 		/// @bridge Specifies the type of devices supported by this cartridge.
-		using device_type = ::vcc::bus::cartridge_device;
+		using driver_type = ::vcc::bus::cartridge_driver;
 
 
 	public:
@@ -72,7 +72,7 @@ namespace vcc::bus
 		/// the functionality of the device through that interface
 		/// 
 		/// @return A reference to a cartridge device.
-		virtual [[nodiscard]] device_type& device() = 0;
+		virtual [[nodiscard]] driver_type& driver() = 0;
 
 		/// @brief Initialize the device.
 		///

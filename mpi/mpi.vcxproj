@@ -73,7 +73,7 @@
     <ClInclude Include="multipak_expansion_port.h" />
     <ClInclude Include="multipak_cartridge.h" />
     <ClInclude Include="configuration_dialog.h" />
-    <ClInclude Include="multipak_device.h" />
+    <ClInclude Include="multipak_cartridge_driver.h" />
     <ClInclude Include="multipak_expansion_port_ui.h" />
     <ClInclude Include="multipak_expansion_port_bus.h" />
     <ClInclude Include="multipak_configuration.h" />

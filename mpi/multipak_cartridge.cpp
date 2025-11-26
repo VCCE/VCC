@@ -34,20 +34,20 @@ multipak_cartridge::multipak_cartridge(
 	std::shared_ptr<expansion_port_host_type> host,
 	std::shared_ptr<expansion_port_ui_type> ui,
 	std::shared_ptr<expansion_port_bus_type> bus,
-	std::shared_ptr<multipak_device> device,
+	std::shared_ptr<multipak_cartridge_driver> driver,
 	HINSTANCE module_instance,
 	multipak_configuration& configuration)
 	:
 	host_(host),
 	ui_(ui),
 	bus_(bus),
-	device_(device),
+	driver_(driver),
 	module_instance_(module_instance),
 	configuration_(configuration),
 	settings_dialog_(
 		module_instance,
 		configuration,
-		device_,
+		driver_,
 		std::bind(&multipak_cartridge::insert_cartridge, this, std::placeholders::_1, std::placeholders::_2),
 		std::bind(&multipak_cartridge::eject_cartridge, this, std::placeholders::_1))
 {
@@ -63,17 +63,17 @@ multipak_cartridge::name_type multipak_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-multipak_cartridge::device_type& multipak_cartridge::device()
+multipak_cartridge::driver_type& multipak_cartridge::driver()
 {
-	return *device_;
+	return *driver_;
 }
 
 
 void multipak_cartridge::start()
 {
-	device_->start();
+	driver_->start();
 
-	for (auto slot(0u); slot < device_->slot_count(); slot++)
+	for (auto slot(0u); slot < driver_->slot_count(); slot++)
 	{
 		const auto path(vcc::utils::find_pak_module_path(configuration_.slot_cartridge_path(slot)));
 		if (!path.empty())
@@ -94,14 +94,14 @@ void multipak_cartridge::stop()
 	}
 
 	cartridges_ = {};
-	device_->stop();
+	driver_->stop();
 }
 
 void multipak_cartridge::status(char* text_buffer, size_t buffer_size)
 {
 	char TempStatus[64] = "";
 
-	sprintf(text_buffer, "MPI:%d,%d", device_->selected_cts_slot() + 1, device_->selected_scs_slot() + 1);
+	sprintf(text_buffer, "MPI:%d,%d", driver_->selected_cts_slot() + 1, driver_->selected_scs_slot() + 1);
 	for (auto slot(0u); slot < cartridges_.size(); ++slot)
 	{
 		strcpy(TempStatus, "");
@@ -181,14 +181,14 @@ multipak_cartridge::mount_status_type multipak_cartridge::insert_cartridge(
 		filename,
 		host_,
 		std::make_unique<multipak_expansion_port_ui>(),
-		std::make_unique<multipak_expansion_port_bus>(slot, bus_, *device_)));
+		std::make_unique<multipak_expansion_port_bus>(slot, bus_, *driver_)));
 	if (loadedCartridge.load_result != mount_status_type::success)
 	{
 		return loadedCartridge.load_result;
 	}
 
 	cartridges_[slot] = move(loadedCartridge.cartridge);
-	device_->insert_cartridge(
+	driver_->insert_cartridge(
 		slot,
 		move(loadedCartridge.handle),
 		cartridges_[slot]);
@@ -198,6 +198,6 @@ multipak_cartridge::mount_status_type multipak_cartridge::insert_cartridge(
 
 void multipak_cartridge::eject_cartridge(slot_id_type slot)
 {
-	device_->eject_cartridge(slot);
+	driver_->eject_cartridge(slot);
 	cartridges_[slot] = std::make_shared<::vcc::bus::cartridges::empty_cartridge>();
 }

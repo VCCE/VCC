@@ -15,7 +15,7 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "multipak_device.h"
+#include "multipak_cartridge_driver.h"
 #include "multipak_expansion_port_ui.h"
 #include "multipak_expansion_port_bus.h"
 #include "resource.h"
@@ -27,7 +27,7 @@ namespace
 	constexpr std::pair<size_t, size_t> disk_controller_io_port_range = { 0x40, 0x5f };
 
 	// Is a port a disk port?
-	constexpr bool is_disk_controller_port(multipak_device::slot_id_type port)
+	constexpr bool is_disk_controller_port(multipak_cartridge_driver::slot_id_type port)
 	{
 		return port >= disk_controller_io_port_range.first && port <= disk_controller_io_port_range.second;
 	}
@@ -35,7 +35,7 @@ namespace
 }
 
 
-multipak_device::multipak_device(
+multipak_cartridge_driver::multipak_cartridge_driver(
 	std::shared_ptr<expansion_port_bus_type> bus,
 	const multipak_configuration& configuration)
 	:
@@ -44,7 +44,7 @@ multipak_device::multipak_device(
 { }
 
 
-void multipak_device::start()
+void multipak_cartridge_driver::start()
 {
 	// Get the startup slot and set Chip select and SCS slots from ini file
 	switch_slot_ = configuration_.selected_slot();
@@ -53,7 +53,7 @@ void multipak_device::start()
 }
 
 
-void multipak_device::stop()
+void multipak_cartridge_driver::stop()
 {
 	for (auto slot(0u); slot < slots_.size(); slot++)
 	{
@@ -61,7 +61,7 @@ void multipak_device::stop()
 	}
 }
 
-void multipak_device::reset()
+void multipak_cartridge_driver::reset()
 {
 	vcc::utils::section_locker lock(mutex_);
 
@@ -75,7 +75,7 @@ void multipak_device::reset()
 	bus_->set_cartridge_select_line(slots_[cached_scs_slot_].line_state());
 }
 
-void multipak_device::update(float delta)
+void multipak_cartridge_driver::update(float delta)
 {
 	vcc::utils::section_locker lock(mutex_);
 
@@ -85,7 +85,7 @@ void multipak_device::update(float delta)
 	}
 }
 
-void multipak_device::write_port(unsigned char port_id, unsigned char value)
+void multipak_cartridge_driver::write_port(unsigned char port_id, unsigned char value)
 {
 	vcc::utils::section_locker lock(mutex_);
 
@@ -113,7 +113,7 @@ void multipak_device::write_port(unsigned char port_id, unsigned char value)
 	}
 }
 
-unsigned char multipak_device::read_port(unsigned char port_id)
+unsigned char multipak_cartridge_driver::read_port(unsigned char port_id)
 {
 	vcc::utils::section_locker lock(mutex_);
 
@@ -145,14 +145,14 @@ unsigned char multipak_device::read_port(unsigned char port_id)
 	return 0;
 }
 
-unsigned char multipak_device::read_memory_byte(size_type memory_address)
+unsigned char multipak_cartridge_driver::read_memory_byte(size_type memory_address)
 {
 	vcc::utils::section_locker lock(mutex_);
 
 	return slots_[cached_cts_slot_].read_memory_byte(memory_address);
 }
 
-unsigned short multipak_device::sample_audio()
+unsigned short multipak_cartridge_driver::sample_audio()
 {
 	vcc::utils::section_locker lock(mutex_);
 
@@ -166,21 +166,21 @@ unsigned short multipak_device::sample_audio()
 }
 
 
-multipak_device::name_type multipak_device::slot_name(slot_id_type slot) const
+multipak_cartridge_driver::name_type multipak_cartridge_driver::slot_name(slot_id_type slot) const
 {
 	vcc::utils::section_locker lock(mutex_);
 
 	return slots_[slot].name();
 }
 
-bool multipak_device::empty(slot_id_type slot) const
+bool multipak_cartridge_driver::empty(slot_id_type slot) const
 {
 	vcc::utils::section_locker lock(mutex_);
 
 	return slots_[slot].empty();
 }
 
-void multipak_device::eject_cartridge(slot_id_type slot)
+void multipak_cartridge_driver::eject_cartridge(slot_id_type slot)
 {
 	vcc::utils::section_locker lock(mutex_);
 
@@ -189,7 +189,7 @@ void multipak_device::eject_cartridge(slot_id_type slot)
 }
 
 
-void multipak_device::switch_to_slot(slot_id_type slot)
+void multipak_cartridge_driver::switch_to_slot(slot_id_type slot)
 {
 	vcc::utils::section_locker lock(mutex_);
 
@@ -200,23 +200,23 @@ void multipak_device::switch_to_slot(slot_id_type slot)
 	bus_->set_cartridge_select_line(slots_[slot].line_state());
 }
 
-multipak_device::slot_id_type multipak_device::selected_switch_slot() const
+multipak_cartridge_driver::slot_id_type multipak_cartridge_driver::selected_switch_slot() const
 {
 	return switch_slot_;
 }
 
-multipak_device::slot_id_type multipak_device::selected_scs_slot() const
+multipak_cartridge_driver::slot_id_type multipak_cartridge_driver::selected_scs_slot() const
 {
 	return cached_scs_slot_;
 }
 
-multipak_device::slot_id_type multipak_device::selected_cts_slot() const
+multipak_cartridge_driver::slot_id_type multipak_cartridge_driver::selected_cts_slot() const
 {
 	return cached_cts_slot_;
 }
 
 
-void multipak_device::set_cartridge_select_line(slot_id_type slot, bool line_state)
+void multipak_cartridge_driver::set_cartridge_select_line(slot_id_type slot, bool line_state)
 {
 	vcc::utils::section_locker lock(mutex_);
 
@@ -228,7 +228,7 @@ void multipak_device::set_cartridge_select_line(slot_id_type slot, bool line_sta
 }
 
 
-void multipak_device::insert_cartridge(
+void multipak_cartridge_driver::insert_cartridge(
 	slot_id_type slot,
 	handle_type handle,
 	cartridge_ptr_type cartridge)

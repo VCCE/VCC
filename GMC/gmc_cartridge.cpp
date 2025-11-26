@@ -53,11 +53,11 @@ gmc_cartridge::gmc_cartridge(
 	std::shared_ptr<expansion_port_bus_type> bus,
 	HINSTANCE module_instance)
 	:
-	bus_(bus),
-	ui_(move(ui)),
 	host_(move(host)),
+	ui_(move(ui)),
+	bus_(bus),
 	module_instance_(module_instance),
-	device_(bus)
+	driver_(bus)
 {
 }
 
@@ -67,9 +67,9 @@ gmc_cartridge::name_type gmc_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-gmc_cartridge::device_type& gmc_cartridge::device()
+gmc_cartridge::driver_type& gmc_cartridge::driver()
 {
-	return device_;
+	return driver_;
 }
 
 
@@ -78,15 +78,15 @@ void gmc_cartridge::start()
 	::vcc::utils::persistent_value_store settings(host_->configuration_path());
 	const auto selected_file(settings.read(configuration_section_id_, configuration_rom_key_id_));
 
-	device_.start(selected_file);
+	driver_.start(selected_file);
 }
 
 void gmc_cartridge::status(char* status, size_t buffer_size)
 {
 	std::string message("GMC Active");
 
-	const auto activeRom(::vcc::utils::get_filename(device_.rom_filename()));
-	if (device_.has_rom())
+	const auto activeRom(::vcc::utils::get_filename(driver_.rom_filename()));
+	if (driver_.has_rom())
 	{
 		message += " (" + activeRom + " Loaded)";
 	}
@@ -120,7 +120,7 @@ void gmc_cartridge::menu_item_clicked(unsigned char menuId)
 			configuration_rom_key_id_,
 			selected_file);
 
-		device_.load_rom(selected_file, true);
+		driver_.load_rom(selected_file, true);
 	}
 }
 

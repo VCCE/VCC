@@ -17,18 +17,18 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/devices/serial/beckerport.h"
-#include "vcc/bus/cartridge_device.h"
+#include "vcc/bus/cartridge_driver.h"
 
 
-/// @brief Cartridge device implementation of the Becker Port hardware.
+/// @brief Cartridge driver implementation of the Becker Port hardware.
 ///
-/// Device implementation emulating the Becker Port device.
-class becker_cartridge_device : public ::vcc::bus::cartridge_device
+/// Device implementation emulating the Becker Port driver.
+class becker_cartridge_driver : public ::vcc::bus::cartridge_driver
 {
 public:
 
-	/// @brief Defines the type used to reference a Becker Port device implementation.
-	using becker_device_type = ::vcc::devices::serial::Becker;
+	/// @brief Defines the type used to reference a Becker Port driver implementation.
+	using becker_driver_type = ::vcc::devices::serial::Becker;
 	/// @brief Defines the type used to hold a variable length string.
 	using string_type = std::string;
 
@@ -65,7 +65,7 @@ private:
 
 public:
 
-	/// @brief Start the cartridge device and initialize the emulated hardware.
+	/// @brief Start the cartridge driver and initialize the emulated hardware.
 	/// 
 	/// @param server_address The address of the DriveWrite server to connect to.
 	/// @param server_port The port of the DriveWire server to connect to.
@@ -104,5 +104,5 @@ protected:
 
 private:
 
-	becker_device_type becker_device_;
+	becker_driver_type becker_device_;
 };

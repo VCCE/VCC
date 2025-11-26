@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "fd502_device.h"
+#include "fd502_cartridge_driver.h"
 #include "vcc/devices/psg/sn76496.h"
 #include "vcc/devices/rom/banked_rom_image.h"
 #include "vcc/bus/cartridge.h"
@@ -34,6 +34,7 @@ public:
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
+	using driver_type = fd502_cartridge_driver;
 
 
 public:
@@ -45,7 +46,7 @@ public:
 		HINSTANCE module_instance);
 
 	name_type name() const override;
-	[[nodiscard]] device_type& device() override;
+	[[nodiscard]] driver_type& driver() override;
 
 	void start() override;
 	void stop() override;
@@ -62,7 +63,7 @@ private:
 	const std::unique_ptr<expansion_port_ui_type> ui_;
 	const std::shared_ptr<expansion_port_bus_type> bus_;
 	const HINSTANCE module_instance_;
-	fd502_device device_;
+	driver_type driver_;
 };
 
 

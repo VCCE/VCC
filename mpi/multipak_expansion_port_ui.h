@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "multipak_device.h"
+#include "multipak_cartridge_driver.h"
 #include "vcc/bus/expansion_port_ui.h"
 
 

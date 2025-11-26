@@ -15,10 +15,10 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "becker_cartridge_device.h"
+#include "becker_cartridge_driver.h"
 
 
-void becker_cartridge_device::start(
+void becker_cartridge_driver::start(
 	const string_type& server_address,
 	const string_type& server_port)
 {
@@ -26,13 +26,13 @@ void becker_cartridge_device::start(
 	becker_device_.enable(true);
 }
 
-void becker_cartridge_device::stop()
+void becker_cartridge_driver::stop()
 {
 	becker_device_.enable(false);
 }
 
 
-void becker_cartridge_device::write_port(unsigned char port_id, unsigned char value)
+void becker_cartridge_driver::write_port(unsigned char port_id, unsigned char value)
 {
 	if (port_id == mmio_ports::data)
 	{
@@ -41,7 +41,7 @@ void becker_cartridge_device::write_port(unsigned char port_id, unsigned char va
 	}
 }
 
-unsigned char becker_cartridge_device::read_port(unsigned char port_id)
+unsigned char becker_cartridge_driver::read_port(unsigned char port_id)
 {
 	switch (port_id)
 	{
@@ -58,17 +58,17 @@ unsigned char becker_cartridge_device::read_port(unsigned char port_id)
 	return 0;
 }
 
-becker_cartridge_device::string_type becker_cartridge_device::server_address() const
+becker_cartridge_driver::string_type becker_cartridge_driver::server_address() const
 {
 	return becker_device_.server_address();
 }
 
-becker_cartridge_device::string_type becker_cartridge_device::server_port() const
+becker_cartridge_driver::string_type becker_cartridge_driver::server_port() const
 {
 	return becker_device_.server_port();
 }
 
-void becker_cartridge_device::update_connection_settings(
+void becker_cartridge_driver::update_connection_settings(
 	const string_type& server_address,
 	const string_type& server_port)
 {

@@ -18,12 +18,12 @@
 #pragma once
 #include "multipak_expansion_port.h"
 #include "multipak_configuration.h"
-#include "vcc/bus/cartridge_device.h"
+#include "vcc/bus/cartridge_driver.h"
 #include "vcc/utils/critical_section.h"
 #include <array>
 
 
-class multipak_device : public ::vcc::bus::cartridge_device
+class multipak_cartridge_driver : public ::vcc::bus::cartridge_driver
 {
 public:
 
@@ -42,14 +42,14 @@ public:
 
 public:
 
-	multipak_device(
+	multipak_cartridge_driver(
 		std::shared_ptr<expansion_port_bus_type> bus,
 		const multipak_configuration& configuration);
-	multipak_device(const multipak_device&) = delete;
-	multipak_device(multipak_device&&) = delete;
+	multipak_cartridge_driver(const multipak_cartridge_driver&) = delete;
+	multipak_cartridge_driver(multipak_cartridge_driver&&) = delete;
 
-	multipak_device& operator=(const multipak_device&) = delete;
-	multipak_device& operator=(multipak_device&&) = delete;
+	multipak_cartridge_driver& operator=(const multipak_cartridge_driver&) = delete;
+	multipak_cartridge_driver& operator=(multipak_cartridge_driver&&) = delete;
 
 	/// @inheritdoc
 	void start() /*override*/;

@@ -15,16 +15,16 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "orchestra90cc_device.h"
+#include "orchestra90cc_cartridge_driver.h"
 #include "resource.h"
 
 
-orchestra90cc_device::orchestra90cc_device(std::shared_ptr<expansion_port_bus_type> bus)
+orchestra90cc_cartridge_driver::orchestra90cc_cartridge_driver(std::shared_ptr<expansion_port_bus_type> bus)
 	: bus_(move(bus))
 {}
 
 
-void orchestra90cc_device::start(const path_type& rom_filename)
+void orchestra90cc_cartridge_driver::start(const path_type& rom_filename)
 {
 	if (!rom_filename.empty() && rom_image_.load(rom_filename))
 	{
@@ -33,7 +33,7 @@ void orchestra90cc_device::start(const path_type& rom_filename)
 }
 
 
-void orchestra90cc_device::write_port(unsigned char port_id, unsigned char value)
+void orchestra90cc_cartridge_driver::write_port(unsigned char port_id, unsigned char value)
 {
 	switch (port_id)
 	{
@@ -47,13 +47,13 @@ void orchestra90cc_device::write_port(unsigned char port_id, unsigned char value
 	}
 }
 
-unsigned char orchestra90cc_device::read_memory_byte(size_type memory_address)
+unsigned char orchestra90cc_cartridge_driver::read_memory_byte(size_type memory_address)
 {
 	return rom_image_.read_memory_byte(memory_address);
 }
 
 
-unsigned short orchestra90cc_device::sample_audio()
+unsigned short orchestra90cc_cartridge_driver::sample_audio()
 {
 	return (left_channel_buffer_ << 8) | right_channel_buffer_;
 }

@@ -28,7 +28,7 @@ namespace vcc::bus::cartridges
 	/// does nothing and can act as a placeholder where a cartridge instance may be needed.
 	class LIBCOMMON_EXPORT empty_cartridge final : 
 		public ::vcc::bus::cartridge,
-		public ::vcc::bus::cartridge_device 
+		public ::vcc::bus::cartridge_driver 
 	{
 	public:
 
@@ -39,7 +39,7 @@ namespace vcc::bus::cartridges
 		/// @return An empty string.
 		[[nodiscard]] name_type name() const override;
 
-		[[nodiscard]] device_type& device() override;
+		[[nodiscard]] driver_type& driver() override;
 	};
 
 }

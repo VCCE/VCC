@@ -13,7 +13,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fd502_device.cpp">
+    <ClCompile Include="fd502_cartridge_driver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -39,7 +39,7 @@
     <ClInclude Include="wd1793defs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="fd502_device.h">
+    <ClInclude Include="fd502_cartridge_driver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

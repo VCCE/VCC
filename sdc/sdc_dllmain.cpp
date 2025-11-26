@@ -86,7 +86,7 @@ sdc_cartridge::name_type sdc_cartridge::name() const
 	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
 }
 
-sdc_cartridge::device_type& sdc_cartridge::device()
+sdc_cartridge::driver_type& sdc_cartridge::driver()
 {
 	return *this;
 }

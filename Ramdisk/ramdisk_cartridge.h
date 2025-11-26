@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "ramdisk_device.h"
+#include "ramdisk_cartridge_driver.h"
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/expansion_port_bus.h"
 #include <Windows.h>
@@ -26,7 +26,7 @@ class ramdisk_cartridge : public ::vcc::bus::cartridge
 {
 public:
 
-	using device_type = ramdisk_device;
+	using driver_type = ramdisk_cartridge_driver;
 
 
 public:
@@ -34,7 +34,7 @@ public:
 	explicit ramdisk_cartridge(HINSTANCE module_instance);
 
 	name_type name() const override;
-	[[nodiscard]] device_type& device() override;
+	[[nodiscard]] driver_type& driver() override;
 
 	void start() override;
 
@@ -42,5 +42,5 @@ public:
 private:
 
 	const HINSTANCE module_instance_;
-	device_type device_;
+	driver_type driver_;
 };

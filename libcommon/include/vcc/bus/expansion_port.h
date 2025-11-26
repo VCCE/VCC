@@ -35,8 +35,8 @@ namespace vcc::bus
 		using managed_handle_type = ::vcc::utils::cartridge_loader_result::handle_type;
 		using cartridge_type = ::vcc::bus::cartridge;
 		using cartridge_ptr_type = std::shared_ptr<cartridge_type>;
-		using device_type = ::vcc::bus::cartridge_device;
-		using device_ptr_type = ::vcc::utils::borrowed_ptr<device_type*>;
+		using driver_type = ::vcc::bus::cartridge_driver;
+		using device_ptr_type = ::vcc::utils::borrowed_ptr<driver_type*>;
 		using name_type = cartridge_type::name_type;
 		using menu_item_collection_type = cartridge_type::menu_item_collection_type;
 

@@ -15,7 +15,7 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "gmc_device.h"
+#include "gmc_cartridge_driver.h"
 #include "resource.h"
 #include "vcc/ui/menu/menu_builder.h"
 #include "vcc/common/DialogOps.h"
@@ -25,23 +25,23 @@
 #include <Windows.h>
 
 
-gmc_device::gmc_device(std::shared_ptr<expansion_port_bus_type> bus)
+gmc_cartridge_driver::gmc_cartridge_driver(std::shared_ptr<expansion_port_bus_type> bus)
 	: bus_(move(bus))
 {}
 
 
-void gmc_device::start(const path_type& rom_filename)
+void gmc_cartridge_driver::start(const path_type& rom_filename)
 {
 	load_rom(rom_filename, false);
 	psg_.start();
 }
 
-void gmc_device::reset()
+void gmc_cartridge_driver::reset()
 {
 	psg_.reset();
 }
 
-void gmc_device::write_port(unsigned char port, unsigned char data)
+void gmc_cartridge_driver::write_port(unsigned char port, unsigned char data)
 {
 	switch (port)
 	{
@@ -55,7 +55,7 @@ void gmc_device::write_port(unsigned char port, unsigned char data)
 	}
 }
 
-unsigned char gmc_device::read_port(unsigned char port)
+unsigned char gmc_cartridge_driver::read_port(unsigned char port)
 {
 	if (port == mmio_ports::select_rom_bank)
 	{
@@ -66,23 +66,23 @@ unsigned char gmc_device::read_port(unsigned char port)
 }
 
 
-bool gmc_device::has_rom() const noexcept
+bool gmc_cartridge_driver::has_rom() const noexcept
 {
 	return !rom_image_.empty();
 }
 
-gmc_device::path_type gmc_device::rom_filename() const
+gmc_cartridge_driver::path_type gmc_cartridge_driver::rom_filename() const
 {
 	return rom_image_.filename();
 }
 
 
-unsigned char gmc_device::read_memory_byte(size_type address)
+unsigned char gmc_cartridge_driver::read_memory_byte(size_type address)
 {
 	return rom_image_.read_memory_byte(address);
 }
 
-unsigned short gmc_device::sample_audio()
+unsigned short gmc_cartridge_driver::sample_audio()
 {
 	sample_type lbuffer = 0;
 	sample_type rbuffer = 0;
@@ -91,7 +91,7 @@ unsigned short gmc_device::sample_audio()
 }
 
 
-void gmc_device::load_rom(const path_type& filename, bool reset_on_load)
+void gmc_cartridge_driver::load_rom(const path_type& filename, bool reset_on_load)
 {
 	// FIXME-CHET: This should load the file into a new rom instance then
 	// swap that on success. This way the original rom is always retained

@@ -23,7 +23,7 @@
 namespace vcc::bus
 {
 
-	class LIBCOMMON_EXPORT cartridge_device
+	class LIBCOMMON_EXPORT cartridge_driver
 	{
 	public:
 
@@ -34,12 +34,12 @@ namespace vcc::bus
 	public:
 
 		/// @brief Construct the cartridge to a default state.
-		cartridge_device() = default;
-		cartridge_device(const cartridge_device&) = delete;
-		cartridge_device(cartridge_device&&) = delete;
+		cartridge_driver() = default;
+		cartridge_driver(const cartridge_driver&) = delete;
+		cartridge_driver(cartridge_driver&&) = delete;
 
 		/// @brief Release all resources held by the cartridge.
-		virtual ~cartridge_device() = default;
+		virtual ~cartridge_driver() = default;
 
 		/// @brief Resets the device to a default state.
 		///
