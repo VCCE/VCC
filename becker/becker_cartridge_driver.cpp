@@ -16,61 +16,78 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "becker_cartridge_driver.h"
+#include <stdexcept>
 
 
-void becker_cartridge_driver::start(
-	const string_type& server_address,
-	const string_type& server_port)
+namespace vcc::cartridges::becker_port
 {
-	update_connection_settings(server_address, server_port);
-	becker_device_.enable(true);
-}
 
-void becker_cartridge_driver::stop()
-{
-	becker_device_.enable(false);
-}
-
-
-void becker_cartridge_driver::write_port(unsigned char port_id, unsigned char value)
-{
-	if (port_id == mmio_ports::data)
+	void becker_cartridge_driver::start(
+		const string_type& server_address,
+		const string_type& server_port)
 	{
-		// FIXME-CHET: this should call a function called write_data() without the port id.
-		becker_device_.write(value, port_id);
-	}
-}
-
-unsigned char becker_cartridge_driver::read_port(unsigned char port_id)
-{
-	switch (port_id)
-	{
-	case mmio_ports::status:
-		// FIXME-CHET: WTF is the 2? make symbolic
-		// FIXME-CHET: this should call a function called read_status() without the port id.
-		return becker_device_.read(port_id) != 0 ? 2 : 0;
-
-	case mmio_ports::data:
-		// FIXME-CHET: this should call a function called read_data() without the port id.
-		return becker_device_.read(port_id);
+		// Note: this relies on update_connection_settings to validate the settings and throw
+		// on invalid values.
+		update_connection_settings(server_address, server_port);
+		becker_device_.enable(true);
 	}
 
-	return 0;
-}
+	void becker_cartridge_driver::stop()
+	{
+		becker_device_.enable(false);
+	}
 
-becker_cartridge_driver::string_type becker_cartridge_driver::server_address() const
-{
-	return becker_device_.server_address();
-}
 
-becker_cartridge_driver::string_type becker_cartridge_driver::server_port() const
-{
-	return becker_device_.server_port();
-}
+	void becker_cartridge_driver::write_port(unsigned char port_id, unsigned char value)
+	{
+		if (port_id == mmio_ports::data)
+		{
+			// FIXME-CHET: this should call a function called write_data() without the port id.
+			becker_device_.write(value, port_id);
+		}
+	}
 
-void becker_cartridge_driver::update_connection_settings(
-	const string_type& server_address,
-	const string_type& server_port)
-{
-	becker_device_.sethost(server_address.c_str(), server_port.c_str());
+	unsigned char becker_cartridge_driver::read_port(unsigned char port_id)
+	{
+		switch (port_id)
+		{
+		case mmio_ports::status:
+			// FIXME-CHET: this should call a function called has_data() without the port id.
+			return becker_device_.read(port_id) != 0 ? mmio_ports::status_bits::data_ready : 0;
+
+		case mmio_ports::data:
+			// FIXME-CHET: this should call a function called read_data() without the port id.
+			return becker_device_.read(port_id);
+		}
+
+		return 0;
+	}
+
+	becker_cartridge_driver::string_type becker_cartridge_driver::server_address() const
+	{
+		return becker_device_.server_address();
+	}
+
+	becker_cartridge_driver::string_type becker_cartridge_driver::server_port() const
+	{
+		return becker_device_.server_port();
+	}
+
+	void becker_cartridge_driver::update_connection_settings(
+		const string_type& server_address,
+		const string_type& server_port)
+	{
+		if (server_address.empty())
+		{
+			throw std::invalid_argument("Cannot update Becker Port Driver connection settings. The server address is empty.");
+		}
+
+		if (server_port.empty())
+		{
+			throw std::invalid_argument("Cannot update Becker Port Driver connection settings. The server port is empty.");
+		}
+
+		becker_device_.sethost(server_address.c_str(), server_port.c_str());
+	}
+
 }

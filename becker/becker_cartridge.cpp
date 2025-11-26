@@ -20,99 +20,126 @@
 #include "vcc/ui/menu/menu_builder.h"
 #include "vcc/utils/winapi.h"
 #include "vcc/utils/persistent_value_section_store.h"
+#include <stdexcept>
 
 
-becker_cartridge::becker_cartridge(
-	std::shared_ptr<expansion_port_host_type> host,
-	HINSTANCE module_instance)
-	:
-	host_(move(host)),
-	module_instance_(module_instance),
-	configuration_dialog_(
-		module_instance,
-		std::bind(&becker_cartridge::update_connection_settings, this, std::placeholders::_1, std::placeholders::_2))
+namespace vcc::cartridges::becker_port
 {
-}
 
-
-becker_cartridge::name_type becker_cartridge::name() const
-{
-	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
-}
-
-becker_cartridge::driver_type& becker_cartridge::driver()
-{
-	return driver_;
-}
-
-
-void becker_cartridge::start()
-{
-	driver_.start(server_address_setting(), server_port_setting());
-}
-
-
-void becker_cartridge::stop()
-{
-	driver_.stop();
-}
-
-
-void becker_cartridge::status(char* text_buffer, size_t buffer_size)
-{
-	// TODO-CHET: The becker port device should not be generating the status like it is
-	// now. Update the device to provide properties that can be queried and used to
-	// generate the status.
-}
-
-
-void becker_cartridge::menu_item_clicked(unsigned char menu_item_id)
-{
-	if (menu_item_id == menu_item_ids::open_settings)
+	becker_cartridge::becker_cartridge(
+		std::shared_ptr<expansion_port_host_type> host,
+		HINSTANCE module_instance)
+		:
+		host_(move(host)),
+		module_instance_(module_instance),
+		configuration_dialog_(
+			module_instance,
+			std::bind(&becker_cartridge::update_connection_settings, this, std::placeholders::_1, std::placeholders::_2))
 	{
-		configuration_dialog_.open(server_address_setting(), server_port_setting());
+		if (host_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Becker Port Cartridge. The host pointer is null.");
+		}
+
+		if (module_instance_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Becker Port Cartridge. The module handle is null.");
+		}
 	}
-}
 
 
-becker_cartridge::menu_item_collection_type becker_cartridge::get_menu_items() const
-{
-	return ::vcc::ui::menu::menu_builder()
-		.add_root_item(menu_item_ids::open_settings, "Becker Port Settings")
-		.release_items();
-}
+	becker_cartridge::name_type becker_cartridge::name() const
+	{
+		return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
+	}
+
+	becker_cartridge::driver_type& becker_cartridge::driver()
+	{
+		return driver_;
+	}
 
 
-becker_cartridge::string_type becker_cartridge::server_address_setting() const
-{
-	::vcc::utils::persistent_value_store settings(host_->configuration_path());
+	void becker_cartridge::start()
+	{
+		driver_.start(server_address_setting(), server_port_setting());
+	}
 
-	return settings.read(
-		configuration::section,
-		configuration::keys::server_address,
-		configuration::defaults::server_address);
-}
 
-becker_cartridge::string_type becker_cartridge::server_port_setting() const
-{
-	::vcc::utils::persistent_value_store settings(host_->configuration_path());
+	void becker_cartridge::stop()
+	{
+		driver_.stop();
+	}
 
-	return settings.read(
-		configuration::section,
-		configuration::keys::server_port,
-		configuration::defaults::server_port);
-}
 
-void becker_cartridge::update_connection_settings(
-	const string_type& server_address,
-	const string_type& server_port)
-{
-	::vcc::utils::persistent_value_section_store settings(
-		host_->configuration_path(),
-		configuration::section);
+	void becker_cartridge::status(char* text_buffer, size_t buffer_size)
+	{
+		// TODO-CHET: The becker port device should not be generating the status like it is
+		// now. Update the device to provide properties that can be queried and used to
+		// generate the status.
+	}
 
-	settings.write(configuration::keys::server_address, server_address);
-	settings.write(configuration::keys::server_port, server_port);
 
-	driver_.update_connection_settings(server_address, server_port);
+	void becker_cartridge::menu_item_clicked(unsigned char menu_item_id)
+	{
+		if (menu_item_id == menu_item_ids::open_settings)
+		{
+			configuration_dialog_.open(server_address_setting(), server_port_setting());
+		}
+	}
+
+
+	becker_cartridge::menu_item_collection_type becker_cartridge::get_menu_items() const
+	{
+		return ::vcc::ui::menu::menu_builder()
+			.add_root_item(menu_item_ids::open_settings, "Becker Port Settings")
+			.release_items();
+	}
+
+
+	becker_cartridge::string_type becker_cartridge::server_address_setting() const
+	{
+		::vcc::utils::persistent_value_store settings(host_->configuration_path());
+
+		// FIXME-CHET: This needs to validate the server address is in a valid format
+		return settings.read(
+			configuration::section,
+			configuration::keys::server_address,
+			configuration::defaults::server_address);
+	}
+
+	becker_cartridge::string_type becker_cartridge::server_port_setting() const
+	{
+		::vcc::utils::persistent_value_store settings(host_->configuration_path());
+
+		// FIXME-CHET: This needs to validate the server port
+		return settings.read(
+			configuration::section,
+			configuration::keys::server_port,
+			configuration::defaults::server_port);
+	}
+
+	void becker_cartridge::update_connection_settings(
+		const string_type& server_address,
+		const string_type& server_port)
+	{
+		if (server_address.empty())
+		{
+			throw std::invalid_argument("Cannot update Becker Port connection settings. The server address is empty.");
+		}
+
+		if (server_port.empty())
+		{
+			throw std::invalid_argument("Cannot update Becker Port connection settings. The server address is empty.");
+		}
+
+		::vcc::utils::persistent_value_section_store settings(
+			host_->configuration_path(),
+			configuration::section);
+
+		settings.write(configuration::keys::server_address, server_address);
+		settings.write(configuration::keys::server_port, server_port);
+
+		driver_.update_connection_settings(server_address, server_port);
+	}
+
 }

@@ -21,105 +21,110 @@
 #include "vcc/utils/winapi.h"
 
 
-configuration_dialog::configuration_dialog(
-	HINSTANCE module_handle,
-	update_connection_settings_type update_connection_settings)
-	:
-	module_handle_(module_handle),
-	update_connection_settings(move(update_connection_settings))
+namespace vcc::cartridges::becker_port
 {
-}
 
-
-void configuration_dialog::open(string_type server_address, string_type server_port)
-{
-	if (!dialog_handle_)
+	configuration_dialog::configuration_dialog(
+		HINSTANCE module_handle,
+		update_connection_settings_type update_connection_settings)
+		:
+		module_handle_(module_handle),
+		update_connection_settings(move(update_connection_settings))
 	{
-		server_address_ = move(server_address);
-		server_port_ = move(server_port);
-
-		dialog_handle_ = CreateDialogParam(
-			module_handle_,
-			MAKEINTRESOURCE(IDD_SETTINGS_DIALOG),
-			GetActiveWindow(),
-			callback_procedure,
-			reinterpret_cast<LPARAM>(this));
 	}
 
-	ShowWindow(dialog_handle_, SW_SHOWNORMAL);
-}
 
-void configuration_dialog::close()
-{
-	CloseCartDialog(dialog_handle_);
-}
-
-
-INT_PTR CALLBACK configuration_dialog::callback_procedure(
-	HWND hDlg,
-	UINT message,
-	WPARAM wParam,
-	LPARAM lParam)
-{
-	if (message == WM_INITDIALOG)
+	void configuration_dialog::open(string_type server_address, string_type server_port)
 	{
-		SetWindowLongPtr(hDlg, GWLP_USERDATA, lParam);
-	}
-
-	auto dialog(reinterpret_cast<configuration_dialog*>(GetWindowLongPtr(hDlg, GWLP_USERDATA)));
-
-	return dialog->process_message(hDlg, message, wParam);
-}
-
-INT_PTR configuration_dialog::process_message(
-	HWND hDlg,
-	UINT message,
-	WPARAM wParam)
-{
-	switch (message)
-	{
-	case WM_DESTROY:
-		dialog_handle_ = nullptr;
-		break;
-
-	case WM_INITDIALOG:
-		dialog_handle_ = hDlg;
-
-		CenterDialog(hDlg);
-
-		SendDlgItemMessage(
-			hDlg,
-			IDC_TCPHOST,
-			WM_SETTEXT,
-			0,
-			reinterpret_cast<LPARAM>(server_address_.c_str()));
-		SendDlgItemMessage(
-			hDlg,
-			IDC_TCPPORT,
-			WM_SETTEXT,
-			0,
-			reinterpret_cast<LPARAM>(server_port_.c_str()));
-		return TRUE;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam))
+		if (!dialog_handle_)
 		{
-		case IDOK:
-			// FIXME-CHET: This should validate that the address is in a valid format and
-			// the port is an integer and in a valid range.
-			update_connection_settings(
-				::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPHOST),
-				::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPPORT));
-			EndDialog(hDlg, IDOK);
-			break;
+			server_address_ = move(server_address);
+			server_port_ = move(server_port);
 
-		case IDCANCEL:
-			EndDialog(hDlg, IDCANCEL);
-			break;
+			dialog_handle_ = CreateDialogParam(
+				module_handle_,
+				MAKEINTRESOURCE(IDD_SETTINGS_DIALOG),
+				GetActiveWindow(),
+				callback_procedure,
+				reinterpret_cast<LPARAM>(this));
 		}
 
-		return TRUE;
+		ShowWindow(dialog_handle_, SW_SHOWNORMAL);
 	}
 
-	return FALSE;
+	void configuration_dialog::close()
+	{
+		CloseCartDialog(dialog_handle_);
+	}
+
+
+	INT_PTR CALLBACK configuration_dialog::callback_procedure(
+		HWND hDlg,
+		UINT message,
+		WPARAM wParam,
+		LPARAM lParam)
+	{
+		if (message == WM_INITDIALOG)
+		{
+			SetWindowLongPtr(hDlg, GWLP_USERDATA, lParam);
+		}
+
+		auto dialog(reinterpret_cast<configuration_dialog*>(GetWindowLongPtr(hDlg, GWLP_USERDATA)));
+
+		return dialog->process_message(hDlg, message, wParam);
+	}
+
+	INT_PTR configuration_dialog::process_message(
+		HWND hDlg,
+		UINT message,
+		WPARAM wParam)
+	{
+		switch (message)
+		{
+		case WM_DESTROY:
+			dialog_handle_ = nullptr;
+			break;
+
+		case WM_INITDIALOG:
+			dialog_handle_ = hDlg;
+
+			CenterDialog(hDlg);
+
+			SendDlgItemMessage(
+				hDlg,
+				IDC_TCPHOST,
+				WM_SETTEXT,
+				0,
+				reinterpret_cast<LPARAM>(server_address_.c_str()));
+			SendDlgItemMessage(
+				hDlg,
+				IDC_TCPPORT,
+				WM_SETTEXT,
+				0,
+				reinterpret_cast<LPARAM>(server_port_.c_str()));
+			return TRUE;
+
+		case WM_COMMAND:
+			switch (LOWORD(wParam))
+			{
+			case IDOK:
+				// FIXME-CHET: This should validate that the address is in a valid format and
+				// the port is an integer and in a valid range.
+				update_connection_settings(
+					::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPHOST),
+					::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPPORT));
+				EndDialog(hDlg, IDOK);
+				break;
+
+			case IDCANCEL:
+				EndDialog(hDlg, IDCANCEL);
+				break;
+			}
+
+			return TRUE;
+		}
+
+		return FALSE;
+	}
+
 }
