@@ -42,7 +42,7 @@ namespace vcc::bus
 		return {};
 	}
 
-	unsigned short cartridge_driver::sample_audio()
+	cartridge_driver::sample_type cartridge_driver::sample_audio()
 	{
 		return {};
 	}

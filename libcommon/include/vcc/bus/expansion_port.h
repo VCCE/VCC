@@ -36,9 +36,10 @@ namespace vcc::bus
 		using cartridge_type = ::vcc::bus::cartridge;
 		using cartridge_ptr_type = std::shared_ptr<cartridge_type>;
 		using driver_type = ::vcc::bus::cartridge_driver;
-		using device_ptr_type = ::vcc::utils::borrowed_ptr<driver_type*>;
+		using driver_ptr_type = ::vcc::utils::borrowed_ptr<driver_type*>;
 		using name_type = cartridge_type::name_type;
 		using menu_item_collection_type = cartridge_type::menu_item_collection_type;
+		using sample_type = driver_type::sample_type;
 
 	public:
 
@@ -92,32 +93,32 @@ namespace vcc::bus
 
 		void reset() const
 		{
-			device_->reset();
+			driver_->reset();
 		}
 
 		void update(float delta) const
 		{
-			device_->update(delta);
+			driver_->update(delta);
 		}
 
 		void write_port(unsigned char port_id, unsigned char value) const
 		{
-			device_->write_port(port_id, value);
+			driver_->write_port(port_id, value);
 		}
 
 		[[nodiscard]] unsigned char read_port(unsigned char port_id) const
 		{
-			return device_->read_port(port_id);
+			return driver_->read_port(port_id);
 		}
 
 		[[nodiscard]] unsigned char read_memory_byte(size_type memory_address) const
 		{
-			return device_->read_memory_byte(memory_address);
+			return driver_->read_memory_byte(memory_address);
 		}
 
-		[[nodiscard]] unsigned short sample_audio() const
+		[[nodiscard]] sample_type sample_audio() const
 		{
-			return device_->sample_audio();
+			return driver_->sample_audio();
 		}
 
 
@@ -127,7 +128,7 @@ namespace vcc::bus
 
 		cartridge_ptr_type cartridge_;
 		managed_handle_type handle_;
-		device_ptr_type device_;
+		driver_ptr_type driver_;
 	};
 
 }

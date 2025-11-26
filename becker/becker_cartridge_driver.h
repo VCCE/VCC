@@ -34,7 +34,7 @@ namespace vcc::cartridges::becker_port
 	public:
 
 		/// @brief Type alias for the component emulating the Becker Port serial device.
-		using becker_driver_type = ::vcc::devices::serial::Becker;
+		using becker_device_type = ::vcc::devices::serial::Becker;
 		/// @brief Type alias for variable length strings.
 		using string_type = std::string;
 
@@ -122,7 +122,7 @@ namespace vcc::cartridges::becker_port
 
 	private:
 
-		becker_driver_type becker_device_;
+		becker_device_type becker_device_;
 	};
 
 }

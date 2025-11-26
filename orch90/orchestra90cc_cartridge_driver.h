@@ -44,7 +44,7 @@ public:
 
 	void write_port(unsigned char port_id, unsigned char value) override;
 
-	unsigned short sample_audio() override;
+	sample_type sample_audio() override;
 
 
 protected:

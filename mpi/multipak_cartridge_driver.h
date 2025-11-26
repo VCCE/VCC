@@ -94,7 +94,7 @@ public:
 	void update(float delta) override;
 
 	/// @inheritdoc
-	unsigned short sample_audio() override;
+	sample_type sample_audio() override;
 
 
 protected:

@@ -31,7 +31,7 @@ namespace vcc::devices::rom
 		using size_type = rom_image_type::size_type;
 		using path_type = std::string;
 
-		static const unsigned BankSize = 16384;	//	8k banks
+		static const unsigned BankSize = 16384;	//	8k banks - WUT? FIXME-CHET: This should be configurable
 
 		[[nodiscard]] bool empty() const
 		{
@@ -83,5 +83,11 @@ namespace vcc::devices::rom
 		unsigned char bank_register_ = 0;
 		size_type bank_offset_ = 0;
 	};
+
+
+	inline banked_rom_image&& move(banked_rom_image& builder)
+	{
+		return static_cast<banked_rom_image&&>(builder);
+	}
 
 }

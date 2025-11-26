@@ -53,7 +53,7 @@ unsigned char orchestra90cc_cartridge_driver::read_memory_byte(size_type memory_
 }
 
 
-unsigned short orchestra90cc_cartridge_driver::sample_audio()
+orchestra90cc_cartridge_driver::sample_type orchestra90cc_cartridge_driver::sample_audio()
 {
 	return (left_channel_buffer_ << 8) | right_channel_buffer_;
 }

@@ -82,10 +82,10 @@ unsigned char gmc_cartridge_driver::read_memory_byte(size_type address)
 	return rom_image_.read_memory_byte(address);
 }
 
-unsigned short gmc_cartridge_driver::sample_audio()
+gmc_cartridge_driver::sample_type gmc_cartridge_driver::sample_audio()
 {
-	sample_type lbuffer = 0;
-	sample_type rbuffer = 0;
+	psg_device_type::sample_type lbuffer = 0;
+	psg_device_type::sample_type rbuffer = 0;
 
 	return psg_.sound_stream_update(lbuffer, rbuffer);
 }

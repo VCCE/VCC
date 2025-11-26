@@ -125,7 +125,7 @@ namespace vcc::cartridges::becker_port
 		struct menu_item_ids
 		{
 			/// @brief Requests the Becker Port Cartridge open its settings menu.
-			static const UINT open_settings = 16;
+			static const UINT open_settings = 1;
 		};
 
 		/// @brief Defines the configuration section, value keys, and default values for the

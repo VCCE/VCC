@@ -31,7 +31,6 @@ public:
 	using path_type = std::string;
 	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
 	using psg_device_type = ::vcc::devices::psg::sn76489_device;
-	using sample_type = psg_device_type::sample_type;
 
 
 public:
@@ -51,7 +50,7 @@ public:
 	void write_port(unsigned char port_id, unsigned char value) override;
 	unsigned char read_port(unsigned char port_id) override;
 
-	unsigned short sample_audio() override;
+	sample_type sample_audio() override;
 
 
 private:

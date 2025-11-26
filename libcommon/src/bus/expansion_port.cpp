@@ -30,14 +30,14 @@ namespace vcc::bus
 	expansion_port::expansion_port()
 		:
 		cartridge_(default_empty_cartridge_),
-		device_(&cartridge_->driver())
+		driver_(&cartridge_->driver())
 	{ }
 
 	expansion_port::expansion_port(managed_handle_type handle, cartridge_ptr_type cartridge)
 		:
 		cartridge_(move(cartridge)),
 		handle_(move(handle)),
-		device_(&cartridge_->driver())
+		driver_(&cartridge_->driver())
 	{ }
 
 }

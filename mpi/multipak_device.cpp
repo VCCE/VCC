@@ -152,11 +152,11 @@ unsigned char multipak_cartridge_driver::read_memory_byte(size_type memory_addre
 	return slots_[cached_cts_slot_].read_memory_byte(memory_address);
 }
 
-unsigned short multipak_cartridge_driver::sample_audio()
+multipak_cartridge_driver::sample_type multipak_cartridge_driver::sample_audio()
 {
 	vcc::utils::section_locker lock(mutex_);
 
-	unsigned short sample = 0;
+	sample_type sample = 0;
 	for (const auto& cartridge_slot : slots_)
 	{
 		sample += cartridge_slot.sample_audio();

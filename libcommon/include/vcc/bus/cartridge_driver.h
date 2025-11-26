@@ -27,8 +27,10 @@ namespace vcc::bus
 	{
 	public:
 
-		/// @brief Specifies the type used to store a size of length.
+		/// @brief Type alias for lengths and sizes.
 		using size_type = std::size_t;
+		/// @brief Type alias for the sample data returned digital audio sampler.
+		using sample_type = unsigned short;
 
 
 	public:
@@ -130,7 +132,7 @@ namespace vcc::bus
 		/// @todo Add exception information. Need custom exceptions first.
 		/// 
 		/// @return The stereo waveform sample data.
-		virtual [[nodiscard]] unsigned short sample_audio();
+		virtual [[nodiscard]] sample_type sample_audio();
 	};
 
 }
