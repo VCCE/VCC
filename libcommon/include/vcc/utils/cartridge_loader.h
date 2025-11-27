@@ -41,12 +41,10 @@ namespace vcc::utils
 		already_loaded,
 		cannot_open,
 		not_found,
-		unsupported_api,
 		not_loaded,
 		not_rom,
 		not_expansion
 	};
-
 
 	struct LIBCOMMON_EXPORT cartridge_loader_result
 	{
@@ -61,25 +59,24 @@ namespace vcc::utils
 		cartridge_loader_status load_result = cartridge_loader_status::not_loaded;
 	};
 
-	LIBCOMMON_EXPORT [[nodiscard]] cartridge_file_type determine_cartridge_type(const std::string& filename);
+	LIBCOMMON_EXPORT cartridge_file_type determine_cartridge_type(const std::string& filename);
 
-	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_rom_cartridge(
+	LIBCOMMON_EXPORT cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context);
 
-	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_capi_cartridge(
+	LIBCOMMON_EXPORT cartridge_loader_result load_capi_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& iniPath,
 		const cartridge_capi_context& capi_context);
 
-	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_cartridge(
+	LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		const cartridge_capi_context& capi_context,
 		void* const host_context,
 		const std::string& iniPath);
 
-	LIBCOMMON_EXPORT ::std::string load_error_string(cartridge_loader_status status);
 }

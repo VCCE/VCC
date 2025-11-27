@@ -102,7 +102,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_MODULE_NAME         "RamDisk"
     IDS_CATNUMBER           "00-0000"
-    IDS_DESCRIPTION         "Emulation of a 512k ram card simular to those made by Disto. Uses SCS selectable disk ports. Data written is lost when VCC is restarted."
+    IDS_DESCRIPTION         "[TODO: DESCRIPTION]"
 END
 
 #endif    // English (U.S.) resources

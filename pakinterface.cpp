@@ -264,7 +264,13 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 		return result;
 	}
 
-	auto error_string(load_error_string(result) + "\n\n" + filename);
+	const auto string_id_ptr(string_id_map.find(result));
+	auto error_string(vcc::utils::load_string(
+		EmuState.WindowInstance,
+		string_id_ptr != string_id_map.end() ? string_id_ptr->second : IDS_UNKNOWN_ERROR));
+
+	error_string += "\n\n";
+	error_string += filename;
 
 	MessageBox(EmuState.WindowHandle, error_string.c_str(), "Load Error", MB_OK | MB_ICONERROR);
 

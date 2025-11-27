@@ -1,17 +1,22 @@
-// NOTE: The following include is here to force exporting implicit definitions.
+// NOTE: The following includes are here to force exporting implicit
+// definitions.
 #include <vcc/utils/dll_deleter.h>
 #include <Windows.h>
 
 
-HINSTANCE gModuleInstance = nullptr;
-
-
-BOOL APIENTRY DllMain(HMODULE module_handle, DWORD  reason, LPVOID reserved)
+BOOL APIENTRY DllMain( HMODULE hModule,
+                       DWORD  ul_reason_for_call,
+                       LPVOID lpReserved
+                     )
 {
-    if(reason == DLL_PROCESS_ATTACH)
+    switch (ul_reason_for_call)
     {
-		gModuleInstance = module_handle;
+    case DLL_PROCESS_ATTACH:
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+        break;
     }
-
-	return TRUE;
+    return TRUE;
 }
+

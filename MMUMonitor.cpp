@@ -24,7 +24,7 @@
 #include <string>
 #include <stdexcept>
 
-namespace VCC::Debugger::UI { namespace
+namespace VCC { namespace Debugger { namespace UI { namespace
 {
 	// Color constants
 	const COLORREF rgbBlack  = RGB(  0,   0,   0);
@@ -255,7 +255,7 @@ namespace VCC::Debugger::UI { namespace
 		return FALSE;
 	}
 
-} }
+} } } }
 
 
 void VCC::Debugger::UI::OpenMMUMonitorWindow(HINSTANCE instance, HWND parent)

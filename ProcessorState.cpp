@@ -28,7 +28,7 @@
 
 extern SystemState EmuState;
 
-namespace VCC::Debugger::UI { namespace
+namespace VCC { namespace Debugger { namespace UI { namespace
 {
     HWND    ProcessorStateWindow = nullptr;
     BackBufferInfo  BackBuf;
@@ -261,7 +261,7 @@ namespace VCC::Debugger::UI { namespace
         return FALSE;
     }
 
-} }
+} } } }
 
 
 void VCC::Debugger::UI::OpenProcessorStateWindow(HINSTANCE instance, HWND parent)

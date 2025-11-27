@@ -19,7 +19,7 @@
 #include <vcc/cartridges/empty_cartridge.h>
 
 
-namespace vcc::modules::mpi
+namespace vcc { namespace modules { namespace mpi
 {
 
 	cartridge_slot::cartridge_slot()
@@ -66,4 +66,4 @@ namespace vcc::modules::mpi
 		return text;
 	}
 
-}
+} } }

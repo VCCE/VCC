@@ -34,7 +34,7 @@
 #include <vcc/common/DialogOps.h>
 #include <fstream>
 
-namespace VCC::Debugger::UI { namespace {
+namespace VCC { namespace Debugger { namespace UI { namespace {
 
 // Local functions
 void SetEditing(bool);
@@ -847,7 +847,7 @@ void FlashDialogWindow()
 	FlashWindow(hDlgMem,false);
 }
 
-} }  // end namespace
+} } } }  // end namespace
 
 //------------------------------------------------------------------
 // Launch Memory Dialog

@@ -24,7 +24,7 @@
 #include <sstream>
 #include <iomanip>
 
-namespace VCC::Debugger
+namespace VCC { namespace Debugger
 {
 	bool OpCodeTables::ProcessHeuristics(OpCodeInfo& opcode, const CPUState& state, CPUTrace& trace) const
 	{
@@ -537,4 +537,4 @@ namespace VCC::Debugger
 		opcode.numbytes += bytes;
 		return cycles;
 	}
-}
+} }

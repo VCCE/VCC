@@ -20,7 +20,6 @@
 #include <string>
 #include <windows.h>
 
-
 namespace vcc::utils
 {
 

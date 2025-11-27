@@ -20,9 +20,9 @@
 #include <Windows.h>
 
 
-namespace VCC::Debugger::UI
+namespace VCC { namespace Debugger { namespace UI
 {
 
 	void OpenMMUMonitorWindow(HINSTANCE instance, HWND parent);
 
-}
+} } }

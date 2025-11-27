@@ -20,9 +20,9 @@
 #include <Windows.h>
 
 
-namespace VCC::Debugger::UI
+namespace VCC { namespace Debugger { namespace UI
 {
 
 	void OpenProcessorStateWindow(HINSTANCE instance, HWND parent);
 
-}
+} } }

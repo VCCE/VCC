@@ -26,9 +26,9 @@ namespace vcc::cartridges
 	{
 	public:
 
-		[[nodiscard]] name_type name() const override;
-		[[nodiscard]] catalog_id_type catalog_id() const override;
-		[[nodiscard]] description_type description() const override;
+		name_type name() const override;
+		catalog_id_type catalog_id() const override;
+		description_type description() const override;
 	};
 
 }
