@@ -18,8 +18,6 @@
 #include <vcc/cartridges/capi_adapter_cartridge.h>
 #include <stdexcept>
 
-// C API hardware cartridge interface
-
 namespace vcc::cartridges
 {
 
@@ -56,7 +54,7 @@ namespace vcc::cartridges
 			return {};
 		}
 
-		void default_status(char* text_buffer, [[maybe_unused]] size_t buffer_size)
+		void default_status(char* text_buffer, size_t buffer_size)
 		{
 			*text_buffer = 0;
 		}

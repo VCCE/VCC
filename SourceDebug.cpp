@@ -36,7 +36,7 @@
 #include <Richedit.h>
 
 
-namespace VCC::Debugger::UI { namespace
+namespace VCC { namespace Debugger { namespace UI { namespace
 {
 	HWND SourceDebugWindow = nullptr;
 	HWND hWndSourceDebug;
@@ -606,7 +606,7 @@ namespace VCC::Debugger::UI { namespace
 		return FALSE;
 	}
 
-} }
+} } } }
 
 
 void VCC::Debugger::UI::OpenSourceDebugWindow(HINSTANCE instance, HWND parent)

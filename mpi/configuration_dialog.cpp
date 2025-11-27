@@ -82,29 +82,19 @@ void configuration_dialog::select_new_cartridge(slot_id_type slot)
 	dlg.setTitle("Load Program Pak");
 	dlg.setInitialDir(configuration_.last_accessed_module_path().c_str());
 	dlg.setFilter(
+		"All Pak Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
 		"Hardware Pak (*.dll)\0*.dll\0"
 		"Rom Pak (*.rom; *.ccc; *.pak)\0*.rom;*.ccc;*.pak\0"
-		"All Pak Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
 		"\0");
 	dlg.setFlags(OFN_FILEMUSTEXIST);
 	if (dlg.show(0, dialog_handle_))
 	{
 		mpi_.eject_cartridge(slot);
-		
-		if (const auto mount_result(mpi_.mount_cartridge(slot, dlg.path()));
-			mount_result == cartridge_loader_status::success)
+
+		if (mpi_.mount_cartridge(slot, dlg.path()) == cartridge_loader_status::success)
 		{
 			configuration_.slot_cartridge_path(slot, dlg.path());
 			configuration_.last_accessed_module_path(::vcc::utils::get_directory_from_path(dlg.path()));
-		}
-		else
-		{
-			auto error_string(
-				::vcc::utils::load_error_string(mount_result)
-				+ "\n\n"
-				+ ::vcc::utils::get_filename(dlg.path()));
-
-			MessageBox(dialog_handle_, error_string.c_str(), "Load Error", MB_OK | MB_ICONERROR);
 		}
 
 		mpi_.build_menu();
@@ -113,9 +103,13 @@ void configuration_dialog::select_new_cartridge(slot_id_type slot)
 
 void configuration_dialog::set_selected_slot(slot_id_type slot)
 {
-	display_slot_description(slot);
+	SendDlgItemMessage(
+		dialog_handle_,
+		IDC_MODINFO,
+		WM_SETTEXT,
+		0,
+		reinterpret_cast<LPARAM>(mpi_.slot_description(slot).c_str()));
 
-	// Get radio button IDs
 	for (auto ndx(0u); ndx < gSlotUiElementIds.size(); ndx++)
 	{
 		SendDlgItemMessage(
@@ -131,15 +125,6 @@ void configuration_dialog::set_selected_slot(slot_id_type slot)
 	configuration_.selected_slot(slot);
 }
 
-void configuration_dialog::display_slot_description(slot_id_type slot)
-{
-	SendDlgItemMessage(
-		dialog_handle_,
-			IDC_MODINFO,
-			WM_SETTEXT,
-			0,
-			reinterpret_cast<LPARAM>(mpi_.slot_description(slot).c_str()));
-}
 
 void configuration_dialog::update_slot_details(slot_id_type slot)
 {
@@ -174,12 +159,10 @@ void configuration_dialog::eject_or_select_new_cartridge(slot_id_type slot)
 		return;
 	}
 
-
 	if (!mpi_.empty(slot))
 	{
 		mpi_.eject_cartridge(slot);
 		configuration_.slot_cartridge_path(slot, {});
-
 	}
 	else
 	{
@@ -187,13 +170,6 @@ void configuration_dialog::eject_or_select_new_cartridge(slot_id_type slot)
 	}
 
 	update_slot_details(slot);
-
-	// Update description if slot was selected
-	if (slot == configuration_.selected_slot())
-	{
-		display_slot_description(slot);
-	}
-
 	mpi_.build_menu();
 }
 

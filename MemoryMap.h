@@ -26,7 +26,8 @@
 #pragma once
 #include <Windows.h>
 
-namespace VCC::Debugger::UI
+namespace VCC { namespace Debugger { namespace UI
 {
 	void OpenMemoryMapWindow(HINSTANCE instance, HWND parent);
-}
+
+} } }

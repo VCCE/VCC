@@ -50,7 +50,7 @@ public:
 
 	FileDialog();
 
-	[[nodiscard]] bool show(BOOL Save = FALSE, HWND Owner = nullptr);
+	bool show(BOOL Save = FALSE, HWND Owner = nullptr);
 	void setpath(const char * Path);
 	void setDefExt(const char * DefExt);
 	void setInitialDir(const char * InitialDir);
@@ -60,7 +60,7 @@ public:
 	void getdir(char * Dir, int maxsize = MAX_PATH) const;
 	void getpath(char * Path, int maxsize = MAX_PATH) const;
 	void getupath(char * Path, int maxsize = MAX_PATH) const;
-	[[nodiscard]] const char *path() const;
+	const char *path() const;
 
 
 private:

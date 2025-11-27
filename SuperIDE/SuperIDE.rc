@@ -142,7 +142,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_MODULE_NAME         "Glenside-IDE /w Clock"
     IDS_CATNUMBER           "000"
-    IDS_DESCRIPTION         "Emulates Glenside IDE disk device. It supports a master and a slave IDE disk image. Also contains a Dallas DS1315 real time clock."
+    IDS_DESCRIPTION         "[TODO: DESCRIPTION]"
 END
 
 #endif    // English (U.S.) resources

@@ -19,7 +19,6 @@
 #include <vcc/common/logger.h>
 #include <Windows.h>
 
-
 namespace vcc::utils
 {
 
@@ -29,7 +28,7 @@ namespace vcc::utils
 		{
 			if (instance != nullptr)
 			{
-				[[maybe_unused]] const auto result(FreeLibrary(instance));
+				const auto result(FreeLibrary(instance));
 				DLOG_C("pak:err FreeLibrary %d %d\n", instance, result);
 			}
 		};

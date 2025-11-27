@@ -22,6 +22,7 @@
 namespace vcc::utils
 {
 
+
 	LIBCOMMON_EXPORT std::string get_module_path(HMODULE module_handle)
 	{
 		std::string text(MAX_PATH, 0);
