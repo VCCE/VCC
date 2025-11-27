@@ -16,8 +16,10 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "becker_cartridge.h"
+#include "resource.h"
 #include "vcc/bus/cartridge_factory.h"
 #include <Windows.h>
+#include <vcc/utils/winapi.h>
 
 
 static HINSTANCE gModuleInstance;
@@ -37,7 +39,7 @@ BOOL WINAPI DllMain(
 }
 
 
-extern "C" __declspec(dllexport) ::vcc::bus::cartridge_factory_prototype GetPakFactory()
+extern "C" __declspec(dllexport) ::vcc::bus::cartridge_plugin_factory_prototype GetCartridgePluginFactory()
 {
 	return [](
 		std::shared_ptr<::vcc::bus::expansion_port_host> host,
@@ -50,5 +52,5 @@ extern "C" __declspec(dllexport) ::vcc::bus::cartridge_factory_prototype GetPakF
 
 
 static_assert(
-	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::create_cartridge_factory_prototype>,
-	"Becker Port GetPakFactory does not have the correct signature.");
+	std::is_same_v<decltype(&GetCartridgePluginFactory), ::vcc::bus::get_cartridge_plugin_factory_prototype>,
+	"Becker Port GetCartridgePluginFactory does not have the correct signature.");

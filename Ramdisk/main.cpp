@@ -39,7 +39,7 @@ BOOL WINAPI DllMain(
 
 
 //
-extern "C" __declspec(dllexport) ::vcc::bus::cartridge_factory_prototype GetPakFactory()
+extern "C" __declspec(dllexport) ::vcc::bus::cartridge_plugin_factory_prototype GetCartridgePluginFactory()
 {
 	return [](
 		[[maybe_unused]] std::shared_ptr<::vcc::bus::expansion_port_host> host,
@@ -51,5 +51,5 @@ extern "C" __declspec(dllexport) ::vcc::bus::cartridge_factory_prototype GetPakF
 }
 
 static_assert(
-	std::is_same_v<decltype(&GetPakFactory), ::vcc::bus::create_cartridge_factory_prototype>,
-	"RamDisk GetPakFactory does not have the correct signature.");
+	std::is_same_v<decltype(&GetCartridgePluginFactory), ::vcc::bus::get_cartridge_plugin_factory_prototype>,
+	"RamDisk GetCartridgePluginFactory does not have the correct signature.");

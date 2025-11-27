@@ -134,9 +134,9 @@ namespace vcc::utils
 			return { nullptr, nullptr, cartridge_loader_status::unsupported_api };
 		}
 
-		const auto factoryAccessor(reinterpret_cast<::vcc::bus::create_cartridge_factory_prototype>(GetProcAddress(
+		const auto factoryAccessor(reinterpret_cast<::vcc::bus::get_cartridge_plugin_factory_prototype>(GetProcAddress(
 			details.handle.get(),
-			"GetPakFactory")));
+			"GetCartridgePluginFactory")));
 		if (factoryAccessor != nullptr)
 		{
 			details.cartridge = factoryAccessor()(move(host), move(ui), move(bus));

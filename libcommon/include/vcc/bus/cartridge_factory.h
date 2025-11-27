@@ -36,12 +36,12 @@ namespace vcc::bus
 	/// @param bus The expansion bus of the emulated system.
 	/// 
 	/// @return An instance of a cartridge.
-	using cartridge_factory_prototype = cartridge_factory_result(*)(
+	using cartridge_plugin_factory_prototype = cartridge_factory_result(*)(
 		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus);
 
 	/// @brief The function type used to retrieve the factory function of a cartridge.
-	using create_cartridge_factory_prototype = cartridge_factory_prototype(*)();
+	using get_cartridge_plugin_factory_prototype = cartridge_plugin_factory_prototype(*)();
 
 }
