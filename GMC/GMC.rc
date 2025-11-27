@@ -71,7 +71,7 @@ BEGIN
             VALUE "FileDescription", "GMC"
             VALUE "FileVersion", "2.1.8.1"
             VALUE "InternalName", "orch90"
-            VALUE "LegalCopyright", "Copyright © 2019"
+            VALUE "LegalCopyright", "Copyright � 2019"
             VALUE "OriginalFilename", "gmc.dll"
             VALUE "ProductName", "Game Master Cartridge (SN76489)"
             VALUE "ProductVersion", "26-XXXX"
@@ -92,7 +92,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MODULE_NAME         "Game Master Catridge (SN76489)"
+    IDS_MODULE_NAME         "Game Master Catridge"
     IDS_CATNUMBER           "26-XXXX"
     IDS_DESCRIPTION         "[TODO: DESCRIPTION]"
     IDS_VERSION             "1.0"

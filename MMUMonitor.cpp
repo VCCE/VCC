@@ -31,7 +31,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 	const COLORREF rgbViolet = RGB(100,   0, 170);
 	const COLORREF rgbGray   = RGB(120, 120, 120);
 
-	vcc::utils::critical_section Section_;
+	vcc::core::utils::critical_section Section_;
 	MMUState MMUState_;
 
 	HWND MMUMonitorWindow = nullptr;
@@ -44,7 +44,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		void OnReset() override {
 		}
 		void OnUpdate() override {
-			vcc::utils::section_locker lock(Section_);
+			vcc::core::utils::section_locker lock(Section_);
 			MMUState_ = GetMMUState();
 		}
 	};
@@ -107,7 +107,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		// Quick pull out MMU state
 		MMUState regs;
 		{
-			vcc::utils::section_locker lock(Section_);
+			vcc::core::utils::section_locker lock(Section_);
 			regs = MMUState_;
 		}
 

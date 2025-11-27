@@ -94,20 +94,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="ramdisk_cartridge.cpp" />
+    <ClCompile Include="memboard.cpp" />
+    <ClCompile Include="Ramdisk.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ramdisk_cartridge.h" />
+    <ClInclude Include="memboard.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="main.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\libcommon\libcommon.vcxproj">
-      <Project>{e0aa25bd-5527-475f-8d8b-b549a6311b0c}</Project>
-    </ProjectReference>
+    <ResourceCompile Include="Ramdisk.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

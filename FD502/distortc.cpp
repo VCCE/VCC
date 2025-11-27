@@ -20,7 +20,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdlib.h>
 #include "distortc.h"
 
-
 /* Table description:							   Bit3  Bit2  Bit1  Bit0
 Write to $FF51 read from $FF50
 	0x00		1-second digit register				 S8    S4    S2    S1

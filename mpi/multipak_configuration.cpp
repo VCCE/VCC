@@ -1,8 +1,8 @@
 #include "multipak_configuration.h"
-#include <vcc/utils/configuration_serializer.h>
+#include <vcc/core/utils/configuration_serializer.h>
 
 
-using serializer = ::vcc::utils::configuration_serializer;
+using serializer = ::vcc::core::configuration_serializer;
 
 
 multipak_configuration::multipak_configuration(string_type section)
