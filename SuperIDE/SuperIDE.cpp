@@ -27,7 +27,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "../CartridgeMenu.h"
 #include <vcc/common/DialogOps.h>
 #include <vcc/core/cartridge_capi.h>
-#include <vcc/utils/winapi.h>
 #include <vcc/core/limits.h>
 
 static char FileName[MAX_PATH] { 0 };
@@ -51,7 +50,6 @@ static HINSTANCE gModuleInstance;
 static HWND hConfDlg = nullptr;
 static void* gHostKeyPtr = nullptr;
 static void* const& gHostKey(gHostKeyPtr);
-static const char* const gConfigurationSection = "Glenside-IDE /w Clock";
 
 using namespace std;
 
@@ -74,23 +72,29 @@ extern "C"
 
 	__declspec(dllexport) const char* PakGetName()
 	{
-		static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
+		static char string_buffer[MAX_LOADSTRING];
 
-		return name.c_str();
+		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
 	}
 
 	__declspec(dllexport) const char* PakGetCatalogId()
 	{
-		static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
+		static char string_buffer[MAX_LOADSTRING];
 
-		return catalog_id.c_str();
+		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
 	}
 
 	__declspec(dllexport) const char* PakGetDescription()
 	{
-		static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
+		static char string_buffer[MAX_LOADSTRING];
 
-		return description.c_str();
+		LoadString(gModuleInstance, IDS_DESCRIPTION, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
 	}
 
 	__declspec(dllexport) void PakInitialize(
@@ -328,13 +332,15 @@ void Select_Disk(unsigned char Disk)
 
 void SaveConfig()
 {
+	char ModName[MAX_LOADSTRING]="";
+	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	QueryDisk(MASTER,FileName);
-	WritePrivateProfileString(gConfigurationSection,"Master",FileName,IniFile);
+	WritePrivateProfileString(ModName,"Master",FileName,IniFile);
 	QueryDisk(SLAVE,FileName);
-	WritePrivateProfileString(gConfigurationSection,"Slave",FileName,IniFile);
-	WritePrivateProfileInt(gConfigurationSection,"BaseAddr",BaseAddr ,IniFile);
-	WritePrivateProfileInt(gConfigurationSection,"ClkEnable",ClockEnabled ,IniFile);
-	WritePrivateProfileInt(gConfigurationSection, "ClkRdOnly", ClockReadOnly, IniFile);
+	WritePrivateProfileString(ModName,"Slave",FileName,IniFile);
+	WritePrivateProfileInt(ModName,"BaseAddr",BaseAddr ,IniFile);
+	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
+	WritePrivateProfileInt(ModName, "ClkRdOnly", ClockReadOnly, IniFile);
 	if (strcmp(SuperIDEPath, "") != 0) { 
 		WritePrivateProfileString("DefaultPaths", "SuperIDEPath", SuperIDEPath, IniFile); 
 	}
@@ -344,13 +350,16 @@ void SaveConfig()
 
 void LoadConfig()
 {
+	char ModName[MAX_LOADSTRING]="";
+
+	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	GetPrivateProfileString("DefaultPaths", "SuperIDEPath", "", SuperIDEPath, MAX_PATH, IniFile);
-	GetPrivateProfileString(gConfigurationSection,"Master","",FileName,MAX_PATH,IniFile);
+	GetPrivateProfileString(ModName,"Master","",FileName,MAX_PATH,IniFile);
 	MountDisk(FileName ,MASTER);
-	GetPrivateProfileString(gConfigurationSection,"Slave","",FileName,MAX_PATH,IniFile);
-	BaseAddr=GetPrivateProfileInt(gConfigurationSection,"BaseAddr",1,IniFile); 
-	ClockEnabled = GetPrivateProfileInt(gConfigurationSection, "ClkEnable", true, IniFile) != 0;
-	ClockReadOnly = GetPrivateProfileInt(gConfigurationSection, "ClkRdOnly", true, IniFile) != 0;
+	GetPrivateProfileString(ModName,"Slave","",FileName,MAX_PATH,IniFile);
+	BaseAddr=GetPrivateProfileInt(ModName,"BaseAddr",1,IniFile); 
+	ClockEnabled = GetPrivateProfileInt(ModName, "ClkEnable", true, IniFile) != 0;
+	ClockReadOnly = GetPrivateProfileInt(ModName, "ClkRdOnly", true, IniFile) != 0;
 	BaseAddr&=3;
 	if (BaseAddr == 3)
 		ClockEnabled = false;

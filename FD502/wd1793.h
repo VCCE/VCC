@@ -18,8 +18,6 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "defines.h"
-#include <Windows.h>
-
 unsigned char disk_io_read(unsigned char port);
 void disk_io_write(unsigned char data,unsigned char port);	
 int mount_disk_image(const char *,unsigned char );
