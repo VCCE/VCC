@@ -152,6 +152,7 @@
 #include "../CartridgeMenu.h"
 #include <vcc/core/cartridge_capi.h>
 #include <vcc/utils/winapi.h>
+#include <vcc/core/limits.h>
 #include "sdc.h"
 
 //======================================================================
@@ -465,11 +466,11 @@ extern "C"
 
 
     // Return a byte from the current PAK ROM
-    __declspec(dllexport) unsigned char PakReadMemoryByte(::std::size_t adr)
+    __declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short adr)
     {
         adr &= 0x3FFF;
         if (EnableBankWrite) {
-            return WriteFlashBank(static_cast<unsigned short>(adr));
+            return WriteFlashBank(adr);
         } else {
             BankWriteState = 0;  // Any read resets write state
             return(PakRom[adr]);

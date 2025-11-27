@@ -53,7 +53,7 @@ namespace vcc::cartridges
 		LIBCOMMON_EXPORT void start() override;
 		LIBCOMMON_EXPORT void reset() override;
 
-		LIBCOMMON_EXPORT [[nodiscard]] unsigned char read_memory_byte(size_type memory_address) override;
+		LIBCOMMON_EXPORT [[nodiscard]] unsigned char read_memory_byte(unsigned short memory_address) override;
 
 		LIBCOMMON_EXPORT void write_port(unsigned char port_id, unsigned char value) override;
 

@@ -26,6 +26,7 @@
 #include "../CartridgeMenu.h"
 #include <vcc/common/logger.h>
 #include <vcc/utils/winapi.h>
+#include <vcc/core/limits.h>
 
 //------------------------------------------------------------------------
 // Local Functions
@@ -170,7 +171,7 @@ __declspec(dllexport) void PakReset()
 // Dll export pak rom read
 //-----------------------------------------------------------------------
 extern "C"
-__declspec(dllexport) unsigned char PakReadMemoryByte(::std::size_t Address)
+__declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short Address)
 {
     return(Rom[Address & 8191]);
 }

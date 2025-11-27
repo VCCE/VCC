@@ -104,7 +104,7 @@ void orchestra90cc_cartridge::write_port(unsigned char Port,unsigned char Data)
 	}
 }
 
-unsigned char orchestra90cc_cartridge::read_memory_byte(size_type Address)
+unsigned char orchestra90cc_cartridge::read_memory_byte(unsigned short Address)
 {
 	return Rom[Address & 8191];
 }

@@ -43,7 +43,7 @@ namespace vcc::core
 		return {};
 	}
 
-	unsigned char cartridge::read_memory_byte([[maybe_unused]] size_type memory_address)
+	unsigned char cartridge::read_memory_byte([[maybe_unused]] unsigned short memory_address)
 	{
 		return {};
 	}

@@ -27,6 +27,14 @@
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include <vcc/common/logger.h>
+#include <vcc/utils/winapi.h>
+#include <vcc/devices/rtc/oki_m6242b.h>
+#include <vcc/core/limits.h>
+#include <vcc/devices/rom/rom_image.h>
+#include <Windows.h>
+#include <array>
+#include <vcc/utils/configuration_serializer.h>
+#include <vcc/utils/filesystem.h>
 
 static const auto default_selected_rom_index = 1u;
 static void* gHostKeyPtr = nullptr;
@@ -220,7 +228,7 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PakReadMemoryByte(::std::size_t Address)
+	__declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short Address)
 	{
 		return RomPointer[SelectRomIndex]->read_memory_byte(Address);
 	}
