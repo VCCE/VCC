@@ -18,19 +18,20 @@
 #pragma warning( disable : 4800 ) // For legacy builds
 
 //#define USE_LOGGING
+#include <Windows.h>
+#include <stdio.h>
+#include <iostream>
 #include "resource.h"
 #include "wd1793.h"
 #include "distortc.h"
 #include "fd502.h"
 #include "../CartridgeMenu.h"
-#include <vcc/core/limits.h>
+#include <vcc/devices/rtc/oki_m6242b.h>
+#include <vcc/devices/becker/beckerport.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include <vcc/common/logger.h>
-#include <vcc/utils/winapi.h>
-#include <vcc/devices/rtc/oki_m6242b.h>
 #include <vcc/core/limits.h>
-#include <Windows.h>
 
 constexpr auto EXTROMSIZE = 16384u;
 
@@ -93,23 +94,29 @@ extern "C"
 
 	__declspec(dllexport) const char* PakGetName()
 	{
-		static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
+		static char string_buffer[MAX_LOADSTRING];
 
-		return name.c_str();
+		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
 	}
 
 	__declspec(dllexport) const char* PakGetCatalogId()
 	{
-		static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
+		static char string_buffer[MAX_LOADSTRING];
 
-		return catalog_id.c_str();
+		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
 	}
 
 	__declspec(dllexport) const char* PakGetDescription()
 	{
-		static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
+		static char string_buffer[MAX_LOADSTRING];
 
-		return description.c_str();
+		LoadString(gModuleInstance, IDS_DESCRIPTION, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
 	}
 
 	__declspec(dllexport) void PakInitialize(
@@ -189,36 +196,6 @@ extern "C"
 {
 	__declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
 	{
-<<<<<<< HEAD
-<<<<<<< HEAD
-#ifdef COMBINE_BECKER
-		if (BeckerEnabled && (Port == 0x42)) {
-			becker_write(Data,Port);
-		} else //if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
-#endif
-		if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
-			write_time(Data,Port);
-		} else {
-			disk_io_write(Data,Port);
-=======
-		if (BeckerEnabled && port_id == 0x42)
-		{
-			becker_write(value, port_id);
-		}
-		else
-		if (ClockEnabled && port_id == 0x50)
-		{
-			gDistoRtc.write_data(value);
-		}
-		else if (ClockEnabled && port_id == 0x51)
-		{
-			gDistoRtc.set_read_write_address(value);
-		}
-		else
-		{
-			disk_io_write(value, port_id);
->>>>>>> parent of fce3076 (rename `cloud9` to `ds1315`)
-=======
 		if (BeckerEnabled && (Port == 0x42)) {
 			gBecker.write(Data,Port);
 		} else //if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
@@ -226,7 +203,6 @@ extern "C"
 			gDistoRtc.write_port(Data, Port);
 		} else {
 			disk_io_write(Data,Port);
->>>>>>> parent of 7b5e8bf (change interface of oki_m6242b device putting mmio port decisions to the callsite)
 		}
 		return;
 	}
@@ -236,41 +212,11 @@ extern "C"
 {
 	__declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
 	{
-<<<<<<< HEAD
-<<<<<<< HEAD
-#ifdef COMBINE_BECKER
-		if (BeckerEnabled && ((Port == 0x41) | (Port== 0x42 )))
-			return(becker_read(Port));
-#endif
-		if ( ((Port == 0x50) | (Port== 0x51 )) & ClockEnabled)
-			return(read_time(Port));
-		return(disk_io_read(Port));
-=======
-		if (BeckerEnabled && ((port_id == 0x41) | (port_id == 0x42)))
-		{
-			return becker_read(port_id);
-		}
-#endif
-
-		if (ClockEnabled && port_id == 0x50)
-		{
-			return gDistoRtc.read_data();
-		}
-
-		if (ClockEnabled && port_id == 0x51)
-		{
-			return 0;
-		}
-
-		return disk_io_read(port_id);
->>>>>>> parent of fce3076 (rename `cloud9` to `ds1315`)
-=======
 		if (BeckerEnabled && ((Port == 0x41) | (Port== 0x42 )))
 			return(gBecker.read(Port));
 		if (((Port == 0x50) | (Port == 0x51)) & ClockEnabled)
 			return gDistoRtc.read_port(Port);
 		return(disk_io_read(Port));
->>>>>>> parent of 7b5e8bf (change interface of oki_m6242b device putting mmio port decisions to the callsite)
 	}
 }
 

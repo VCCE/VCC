@@ -22,11 +22,10 @@
 //------------------------------------------------------------------
 
 #include "acia.h"
-#include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
-#include <vcc/common/logger.h>
-#include <vcc/utils/winapi.h>
 #include <vcc/core/limits.h>
+#include <vcc/common/DialogOps.h>
+#include <vcc/common/logger.h>
 
 //------------------------------------------------------------------------
 // Local Functions
@@ -52,6 +51,7 @@ PakAssertInteruptHostCallback AssertInt = nullptr;
 static HINSTANCE gModuleInstance;      // DLL handle
 static HWND g_hDlg = nullptr;           // Config dialog
 static char IniFile[MAX_PATH];       // Ini file name
+static char IniSect[MAX_LOADSTRING]; // Ini file section
 
 // Status for Vcc status line
 char AciaStat[32];
@@ -91,26 +91,31 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 
 extern "C"
 {
-
 	__declspec(dllexport) const char* PakGetName()
 	{
-		static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
+		static char string_buffer[MAX_LOADSTRING];
 
-		return name.c_str();
+		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
 	}
 
 	__declspec(dllexport) const char* PakGetCatalogId()
 	{
-		static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
+		static char string_buffer[MAX_LOADSTRING];
 
-		return catalog_id.c_str();
+		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
 	}
 
 	__declspec(dllexport) const char* PakGetDescription()
 	{
-		static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
+		static char string_buffer[MAX_LOADSTRING];
 
-		return description.c_str();
+		LoadString(gModuleInstance, IDS_DESCRIPTION, string_buffer, MAX_LOADSTRING);
+
+		return string_buffer;
 	}
 
 	__declspec(dllexport) void PakInitialize(

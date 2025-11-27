@@ -21,7 +21,7 @@
 #include "becker.h"
 #include "resource.h"
 #include "../CartridgeMenu.h"
-#include <vcc/utils/winapi.h>
+
 #include <vcc/core/cartridge_capi.h>
 #include <vcc/devices/becker/beckerport.h>
 #include <vcc/core/limits.h>
@@ -65,26 +65,25 @@ BOOL APIENTRY DllMain( HINSTANCE  hinstDLL,
 
 extern "C"
 {
-
 	__declspec(dllexport) const char* PakGetName()
 	{
-		static const auto name(::vcc::utils::load_string(gModuleInstance, IDS_MODULE_NAME));
-
-		return name.c_str();
+		static char string_buffer[MAX_LOADSTRING];
+		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+		return string_buffer;
 	}
 
 	__declspec(dllexport) const char* PakGetCatalogId()
 	{
-		static const auto catalog_id(::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER));
-
-		return catalog_id.c_str();
+		static char string_buffer[MAX_LOADSTRING];
+		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+		return string_buffer;
 	}
 
 	__declspec(dllexport) const char* PakGetDescription()
 	{
-		static const auto description(::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION));
-
-		return description.c_str();
+		static char string_buffer[MAX_LOADSTRING];
+		LoadString(gModuleInstance, IDS_DESCRIPTION, string_buffer, MAX_LOADSTRING);
+		return string_buffer;
 	}
 
 	__declspec(dllexport) void PakInitialize(
