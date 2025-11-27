@@ -1,20 +1,21 @@
-////////////////////////////////////////////////////////////////////////////////
-//	Copyright 2015 by Joseph Forgione
-//	This file is part of VCC (Virtual Color Computer).
-//	
-//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
-//	modify it under the terms of the GNU General Public License as published by
-//	the Free Software Foundation, either version 3 of the License, or (at your
-//	option) any later version.
-//	
-//	VCC (Virtual Color Computer) is distributed in the hope that it will be
-//	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
-//	Public License for more details.
-//	
-//	You should have received a copy of the GNU General Public License along with
-//	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
-////////////////////////////////////////////////////////////////////////////////
+//---------------------------------------------------------------------------------
+// Copyright 2015 by Joseph Forgione
+// This file is part of VCC (Virtual Color Computer).
+//
+// VCC (Virtual Color Computer) is free software: you can redistribute it and/or
+// modify it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or any later
+// version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+// more details.  You should have received a copy of the GNU General Public License
+// along with VCC (Virtual Color Computer).  If not, see
+// <http://www.gnu.org/licenses/>.
+//
+//---------------------------------------------------------------------------------
+#pragma warning( disable : 4800 ) // For legacy builds
 
 //#define USE_LOGGING
 #include "resource.h"
@@ -186,8 +187,9 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
+	__declspec(dllexport) void PakWritePort(unsigned char port_id, unsigned char value)
 	{
+<<<<<<< HEAD
 #ifdef COMBINE_BECKER
 		if (BeckerEnabled && (Port == 0x42)) {
 			becker_write(Data,Port);
@@ -197,14 +199,33 @@ extern "C"
 			write_time(Data,Port);
 		} else {
 			disk_io_write(Data,Port);
+=======
+		if (BeckerEnabled && port_id == 0x42)
+		{
+			becker_write(value, port_id);
+		}
+		else
+		if (ClockEnabled && port_id == 0x50)
+		{
+			gDistoRtc.write_data(value);
+		}
+		else if (ClockEnabled && port_id == 0x51)
+		{
+			gDistoRtc.set_read_write_address(value);
+		}
+		else
+		{
+			disk_io_write(value, port_id);
+>>>>>>> parent of fce3076 (rename `cloud9` to `ds1315`)
 		}
 	}
 }
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
+	__declspec(dllexport) unsigned char PakReadPort(unsigned char port_id)
 	{
+<<<<<<< HEAD
 #ifdef COMBINE_BECKER
 		if (BeckerEnabled && ((Port == 0x41) | (Port== 0x42 )))
 			return(becker_read(Port));
@@ -212,6 +233,25 @@ extern "C"
 		if ( ((Port == 0x50) | (Port== 0x51 )) & ClockEnabled)
 			return(read_time(Port));
 		return(disk_io_read(Port));
+=======
+		if (BeckerEnabled && ((port_id == 0x41) | (port_id == 0x42)))
+		{
+			return becker_read(port_id);
+		}
+#endif
+
+		if (ClockEnabled && port_id == 0x50)
+		{
+			return gDistoRtc.read_data();
+		}
+
+		if (ClockEnabled && port_id == 0x51)
+		{
+			return 0;
+		}
+
+		return disk_io_read(port_id);
+>>>>>>> parent of fce3076 (rename `cloud9` to `ds1315`)
 	}
 }
 

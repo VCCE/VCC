@@ -108,6 +108,7 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
+<<<<<<< HEAD
     <ClCompile Include="src\core\cartridges\basic_cartridge.cpp" />
     <ClCompile Include="src\core\cartridges\legacy_cartridge.cpp" />
     <ClCompile Include="src\core\cartridges\rom_cartridge.cpp" />
@@ -117,6 +118,17 @@
     <ClCompile Include="src\core\utils\filesystem.cpp" />
     <ClCompile Include="src\core\utils\winapi.cpp" />
     <ClCompile Include="src\devices\rtc\cloud9.cpp" />
+=======
+    <ClCompile Include="src\cartridges\empty_cartridge.cpp" />
+    <ClCompile Include="src\cartridges\capi_adapter_cartridge.cpp" />
+    <ClCompile Include="src\cartridges\rom_cartridge.cpp" />
+    <ClCompile Include="src\core\cartridge.cpp" />
+    <ClCompile Include="src\devices\rom\banked_rom_image.cpp" />
+    <ClCompile Include="src\devices\rom\rom_image.cpp" />
+    <ClCompile Include="src\devices\rtc\cloud9.cpp" />
+    <ClCompile Include="src\devices\rtc\oki_m6242b.cpp" />
+    <ClCompile Include="src\devices\becker\beckerport.cpp" />
+>>>>>>> parent of fce3076 (rename `cloud9` to `ds1315`)
     <ClCompile Include="src\DialogOps.cpp" />
     <ClCompile Include="src\Fileops.cpp" />
     <ClCompile Include="src\logger.cpp" />
@@ -140,6 +152,7 @@
     <ClInclude Include="include\vcc\core\interrupts.h" />
     <ClInclude Include="include\vcc\core\legacy_cartridge_definitions.h" />
     <ClInclude Include="include\vcc\core\limits.h" />
+<<<<<<< HEAD
     <ClInclude Include="include\vcc\core\rom_image.h" />
     <ClInclude Include="include\vcc\core\utils\configuration_serializer.h" />
     <ClInclude Include="include\vcc\core\utils\critical_section.h" />
@@ -147,6 +160,19 @@
     <ClInclude Include="include\vcc\core\utils\filesystem.h" />
     <ClInclude Include="include\vcc\core\utils\winapi.h" />
     <ClInclude Include="include\vcc\devices\rtc\cloud9.h" />
+=======
+    <ClInclude Include="include\vcc\devices\rom\banked_rom_image.h" />
+    <ClInclude Include="include\vcc\devices\rom\rom_image.h" />
+    <ClInclude Include="include\vcc\devices\rtc\cloud9.h" />
+    <ClInclude Include="include\vcc\devices\rtc\oki_m6242b.h" />
+    <ClInclude Include="include\vcc\devices\becker\beckerport.h" />
+    <ClInclude Include="include\vcc\utils\cartridge_loader.h" />
+    <ClInclude Include="include\vcc\utils\configuration_serializer.h" />
+    <ClInclude Include="include\vcc\utils\critical_section.h" />
+    <ClInclude Include="include\vcc\utils\dll_deleter.h" />
+    <ClInclude Include="include\vcc\utils\filesystem.h" />
+    <ClInclude Include="include\vcc\utils\winapi.h" />
+>>>>>>> parent of fce3076 (rename `cloud9` to `ds1315`)
     <ClInclude Include="resource\resource.h" />
   </ItemGroup>
   <ItemGroup>

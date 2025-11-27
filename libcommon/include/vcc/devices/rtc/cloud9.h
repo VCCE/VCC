@@ -15,31 +15,40 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "becker_cartridge.h"
-#include <vcc/core/cartridge_factory.h>
+#pragma once
+#include <vcc/core/detail/exports.h>
 #include <Windows.h>
 
 
-static HINSTANCE gModuleInstance;
-
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
+namespace vcc::devices::rtc
 {
-	if (fdwReason == DLL_PROCESS_ATTACH)
+
+	class LIBCOMMON_EXPORT cloud9
 	{
-		gModuleInstance = hinstDLL;
-	}
+	public:
 
-	return true;
-}
+		void set_read_only(bool value);
+
+		[[nodiscard]] unsigned char read_port(unsigned short port_id);
 
 
-extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
-{
-	return [](
-		[[maybe_unused]] std::unique_ptr<::vcc::core::cartridge_context> context,
-		[[maybe_unused]] const cartridge_capi_context& capi_context) -> std::unique_ptr<::vcc::core::cartridge>
-		{
-			return std::make_unique<becker_cartridge>(move(context), gModuleInstance);
-		};
+	private:
+
+		void set_time();
+
+
+	private:
+
+		SYSTEMTIME now;
+		unsigned __int64 InBuffer = 0;
+		unsigned __int64 OutBuffer = 0;
+		unsigned char BitCounter = 0;
+		unsigned char TempHour = 0;
+		unsigned char AmPmBit = 0;
+		unsigned __int64 CurrentBit = 0;
+		unsigned char FormatBit = 0; //1 = 12Hour Mode
+		unsigned char CookieRecived = 0;
+		unsigned char WriteEnabled = 0;
+	};
+
 }

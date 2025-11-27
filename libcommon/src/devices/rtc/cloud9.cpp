@@ -15,7 +15,7 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/devices/rtc/ds1315.h>
+#include <vcc/devices/rtc/cloud9.h>
 #include <Windows.h>
 
 //	Basically simulates the Dallas DS1315 Real Time Clock				*
@@ -23,7 +23,7 @@
 namespace vcc::devices::rtc
 {
 
-	unsigned char ds1315::read_port(unsigned short port)
+	unsigned char cloud9::read_port(unsigned short port)
 	{
 		unsigned char ret_val = 0;
 
@@ -115,7 +115,7 @@ namespace vcc::devices::rtc
 	}
 
 
-	void ds1315::set_time()
+	void cloud9::set_time()
 	{
 		now.wMilliseconds = (unsigned short)(InBuffer & 15);
 		InBuffer >>= 4;
@@ -172,7 +172,7 @@ namespace vcc::devices::rtc
 	}
 
 
-	void ds1315::set_read_only(bool value)
+	void cloud9::set_read_only(bool value)
 	{
 		WriteEnabled = value;
 	}
