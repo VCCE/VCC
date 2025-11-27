@@ -25,6 +25,5 @@ namespace vcc::utils
 {
 
 	LIBCOMMON_EXPORT [[nodiscard]] std::string load_string(HINSTANCE instance, UINT id);
-	LIBCOMMON_EXPORT [[nodiscard]] std::string get_dialog_item_text(HWND window, UINT id);
 
 }

@@ -48,16 +48,5 @@ namespace vcc::utils
 
 		return utf8_str;
 	}
-
-	LIBCOMMON_EXPORT std::string get_dialog_item_text(HWND window, UINT id)
-	{
-		const auto length(SendDlgItemMessage(window, id, WM_GETTEXTLENGTH, 0, 0));
-
-		std::string text(length, 0);
-		SendDlgItemMessage(window, id, WM_GETTEXT, MAX_PATH, reinterpret_cast<LPARAM>(text.data()));
-
-		return text;
-	}
-
 }
 

@@ -21,7 +21,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <iostream>
 #include "resource.h" 
 #include "IdeBus.h"
-#include <vcc/devices/rtc/ds1315.h>
+#include <vcc/devices/rtc/cloud9.h>
 #include "logger.h"
 #include <vcc/common/FileOps.h>
 #include "../CartridgeMenu.h"
@@ -33,7 +33,7 @@ This file is part of VCC (Virtual Color Computer).
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
 static char SuperIDEPath[MAX_PATH];
-static ::vcc::devices::rtc::ds1315 ds1315_rtc;
+static ::vcc::devices::rtc::cloud9 cloud9_rtc;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 static unsigned char BaseAddress=0x50;
 void BuildCartridgeMenu();
@@ -148,7 +148,7 @@ extern "C"
 		unsigned char RetVal=0;
 		unsigned short Temp=0;
 		if (((Port == 0x78) | (Port == 0x79) | (Port == 0x7C)) & ClockEnabled)
-			RetVal = ds1315_rtc.read_port(Port);
+			RetVal = cloud9_rtc.read_port(Port);
 
 		if ( (Port >=BaseAddress) & (Port <= (BaseAddress+8)))
 			switch (Port-BaseAddress)
@@ -277,7 +277,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 					ClockEnabled = (unsigned char)SendDlgItemMessage(hDlg, IDC_CLOCK, BM_GETCHECK, 0, 0) != 0;
 					ClockReadOnly = (unsigned char)SendDlgItemMessage(hDlg, IDC_READONLY, BM_GETCHECK, 0, 0) != 0;
 					BaseAddress=BaseTable[BaseAddr & 3];
-					ds1315_rtc.set_read_only(ClockReadOnly);
+					cloud9_rtc.set_read_only(ClockReadOnly);
 					SaveConfig();
 					EndDialog(hDlg, LOWORD(wParam));
 
@@ -355,7 +355,7 @@ void LoadConfig()
 	if (BaseAddr == 3)
 		ClockEnabled = false;
 	BaseAddress=BaseTable[BaseAddr];
-	ds1315_rtc.set_read_only(ClockReadOnly);
+	cloud9_rtc.set_read_only(ClockReadOnly);
 	MountDisk(FileName ,SLAVE);
 	BuildCartridgeMenu();
 	return;

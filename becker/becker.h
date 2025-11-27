@@ -16,15 +16,6 @@
 //
 //---------------------------------------------------------------------------------
 #pragma once
-#include <vcc/core/cartridge_capi.h>
-
-extern void*const& gHostKey;
-extern PakAssertInteruptHostCallback AssertInt;
+void MemWrite(unsigned char,unsigned short );
+unsigned char MemRead(unsigned short );
 void BuildCartridgeMenu();
-
-// FIXME: These need to be turned into a scoped enum and the signature of functions
-// that use them updated.
-#define External 0
-#define TandyDisk 1
-#define RGBDisk 2
-
