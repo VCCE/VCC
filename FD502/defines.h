@@ -16,7 +16,6 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <cstddef>
 
 // FIXME: These are duplicates from the defines.h file in vcc and should be consolidates.
 constexpr auto TARGETFRAMERATE = 60u;
