@@ -17,43 +17,54 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "orchestra90cc_cartridge_driver.h"
 #include "resource.h"
+#include <stdexcept>
 
 
-orchestra90cc_cartridge_driver::orchestra90cc_cartridge_driver(std::shared_ptr<expansion_port_bus_type> bus)
-	: bus_(move(bus))
-{}
-
-
-void orchestra90cc_cartridge_driver::start(const path_type& rom_filename)
+namespace vcc::cartridges::orchestra90cc
 {
-	if (!rom_filename.empty() && rom_image_.load(rom_filename))
+
+	orchestra90cc_cartridge_driver::orchestra90cc_cartridge_driver(std::unique_ptr<expansion_port_bus_type> bus)
+		: bus_(move(bus))
 	{
-		bus_->set_cartridge_select_line(true);
+		if (bus_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Orchestra-90 driver. Bus is null.");
+		}
 	}
-}
 
 
-void orchestra90cc_cartridge_driver::write_port(unsigned char port_id, unsigned char value)
-{
-	switch (port_id)
+	void orchestra90cc_cartridge_driver::start(const path_type& rom_filename)
 	{
-	case mmio_ports::right_channel:
-		right_channel_buffer_ = value;
-		break;
-
-	case mmio_ports::left_channel:
-		left_channel_buffer_ = value;
-		break;
+		if (!rom_filename.empty() && rom_image_.load(rom_filename))
+		{
+			bus_->set_cartridge_select_line(true);
+		}
 	}
-}
-
-unsigned char orchestra90cc_cartridge_driver::read_memory_byte(size_type memory_address)
-{
-	return rom_image_.read_memory_byte(memory_address);
-}
 
 
-orchestra90cc_cartridge_driver::sample_type orchestra90cc_cartridge_driver::sample_audio()
-{
-	return (left_channel_buffer_ << 8) | right_channel_buffer_;
+	void orchestra90cc_cartridge_driver::write_port(unsigned char port_id, unsigned char value)
+	{
+		switch (port_id)
+		{
+		case mmio_ports::right_channel:
+			right_channel_buffer_ = value;
+			break;
+
+		case mmio_ports::left_channel:
+			left_channel_buffer_ = value;
+			break;
+		}
+	}
+
+	unsigned char orchestra90cc_cartridge_driver::read_memory_byte(size_type memory_address)
+	{
+		return rom_image_.read_memory_byte(memory_address);
+	}
+
+
+	orchestra90cc_cartridge_driver::sample_type orchestra90cc_cartridge_driver::sample_audio()
+	{
+		return (left_channel_buffer_ << 8) | right_channel_buffer_;
+	}
+
 }

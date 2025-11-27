@@ -50,6 +50,8 @@ namespace vcc::cartridges::rambuffer
 		/// 
 		/// @param module_instance A handle to the instance of the module containing the
 		/// plugins resources.
+		/// 
+		/// @throws std::invalid_argument if `module_instance` is null.
 		explicit ramdisk_cartridge(HINSTANCE module_instance);
 
 		/// @inheritdoc

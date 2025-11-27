@@ -55,6 +55,9 @@ namespace vcc::cartridges::gmc
 		/// @param bus A pointer to the bus interface.
 		/// @param module_instance A handle to the instance of the module containing the
 		/// GMC resources.
+		/// 
+		/// @throws std::invalid_argument if `host` is null.
+		/// @throws std::invalid_argument if `module_instance` is null.
 		gmc_cartridge(
 			std::shared_ptr<expansion_port_host_type> host,
 			std::unique_ptr<expansion_port_bus_type> bus,

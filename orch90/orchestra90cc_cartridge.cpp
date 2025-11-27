@@ -18,32 +18,47 @@
 #include "orchestra90cc_cartridge.h"
 #include "resource.h"
 #include "vcc/utils/winapi.h"
+#include <stdexcept>
 
 
-orchestra90cc_cartridge::orchestra90cc_cartridge(
-	std::shared_ptr<expansion_port_host_type> host,
-	std::shared_ptr<expansion_port_bus_type> bus,
-	HINSTANCE module_instance)
-	:
-	host_(move(host)),
-	bus_(bus),
-	module_instance_(module_instance),
-	driver_(bus)
-{}
-
-
-orchestra90cc_cartridge::name_type orchestra90cc_cartridge::name() const
+namespace vcc::cartridges::orchestra90cc
 {
-	return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
-}
 
-orchestra90cc_cartridge::driver_type& orchestra90cc_cartridge::driver()
-{
-	return driver_;
-}
+	orchestra90cc_cartridge::orchestra90cc_cartridge(
+		std::shared_ptr<expansion_port_host_type> host,
+		std::unique_ptr<expansion_port_bus_type> bus,
+		HINSTANCE module_instance)
+		:
+		host_(move(host)),
+		module_instance_(module_instance),
+		driver_(move(bus))
+	{
+		if (host_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Orchestra-90 Cartridge. The host pointer is null.");
+		}
+
+		if (module_instance_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Orchestra-90 Cartridge. The module handle is null.");
+		}
+	}
 
 
-void orchestra90cc_cartridge::start()
-{
-	driver_.start(host_->system_rom_path() + default_rom_filename_);
+	orchestra90cc_cartridge::name_type orchestra90cc_cartridge::name() const
+	{
+		return ::vcc::utils::load_string(module_instance_, IDS_MODULE_NAME);
+	}
+
+	orchestra90cc_cartridge::driver_type& orchestra90cc_cartridge::driver()
+	{
+		return driver_;
+	}
+
+
+	void orchestra90cc_cartridge::start()
+	{
+		driver_.start(host_->system_rom_path() + rom_filename_);
+	}
+
 }

@@ -34,7 +34,7 @@ namespace vcc::cartridges::gmc
 	{
 	public:
 
-		/// @brief Type alias for the component acting as the expansion bus the cartridge plugin
+		/// @brief Type alias for the component acting as the expansion bus the driver
 		/// is connected to.
 		using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 		/// @brief Type alias for file paths.
@@ -124,7 +124,7 @@ namespace vcc::cartridges::gmc
 			static const auto psg_io = 0x41;
 		};
 
-		/// @brief The expansion port host.
+		/// @brief The expansion port bus.
 		const std::shared_ptr<expansion_port_bus_type> bus_;
 		/// @brief The ROM image.
 		rom_image_type rom_image_;

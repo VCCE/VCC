@@ -23,6 +23,7 @@
 #include "vcc/utils/winapi.h"
 #include "vcc/utils/filesystem.h"
 #include <Windows.h>
+#include <stdexcept>
 
 
 namespace vcc::cartridges::gmc
@@ -37,6 +38,15 @@ namespace vcc::cartridges::gmc
 		module_instance_(module_instance),
 		driver_(move(bus))
 	{
+		if (host_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Game Master Cartridge. The host pointer is null.");
+		}
+
+		if (module_instance_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Game Master Cartridge. The module handle is null.");
+		}
 	}
 
 	gmc_cartridge::name_type gmc_cartridge::name() const
