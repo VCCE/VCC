@@ -187,8 +187,9 @@ extern "C"
 
 extern "C"
 {
-	__declspec(dllexport) void PakWritePort(unsigned char port_id, unsigned char value)
+	__declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
 	{
+<<<<<<< HEAD
 <<<<<<< HEAD
 #ifdef COMBINE_BECKER
 		if (BeckerEnabled && (Port == 0x42)) {
@@ -217,14 +218,25 @@ extern "C"
 		{
 			disk_io_write(value, port_id);
 >>>>>>> parent of fce3076 (rename `cloud9` to `ds1315`)
+=======
+		if (BeckerEnabled && (Port == 0x42)) {
+			gBecker.write(Data,Port);
+		} else //if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
+		if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
+			gDistoRtc.write_port(Data, Port);
+		} else {
+			disk_io_write(Data,Port);
+>>>>>>> parent of 7b5e8bf (change interface of oki_m6242b device putting mmio port decisions to the callsite)
 		}
+		return;
 	}
 }
 
 extern "C"
 {
-	__declspec(dllexport) unsigned char PakReadPort(unsigned char port_id)
+	__declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
 	{
+<<<<<<< HEAD
 <<<<<<< HEAD
 #ifdef COMBINE_BECKER
 		if (BeckerEnabled && ((Port == 0x41) | (Port== 0x42 )))
@@ -252,6 +264,13 @@ extern "C"
 
 		return disk_io_read(port_id);
 >>>>>>> parent of fce3076 (rename `cloud9` to `ds1315`)
+=======
+		if (BeckerEnabled && ((Port == 0x41) | (Port== 0x42 )))
+			return(gBecker.read(Port));
+		if (((Port == 0x50) | (Port == 0x51)) & ClockEnabled)
+			return gDistoRtc.read_port(Port);
+		return(disk_io_read(Port));
+>>>>>>> parent of 7b5e8bf (change interface of oki_m6242b device putting mmio port decisions to the callsite)
 	}
 }
 
