@@ -117,13 +117,13 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "Comments", "Tandy Multi-Pak Interface"
-            VALUE "CompanyName", "BitRot Software"
+            VALUE "CompanyName", "Team DREAM!"
             VALUE "FileDescription", "mpi"
             VALUE "FileVersion", "2.1.9.3"
             VALUE "InternalName", "MultiPak Interface"
             VALUE "LegalCopyright", "Copyright � 2007"
             VALUE "OriginalFilename", "mpi.dll"
-            VALUE "ProductName", "mpi"
+            VALUE "ProductName", "DREAM - The Tandy Color Computer 3 Emulator"
             VALUE "ProductVersion", "2.1.9.3"
             VALUE "SpecialBuild", "Tandy Multi-Pak Interface"
         END

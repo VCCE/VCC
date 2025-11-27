@@ -126,6 +126,7 @@ namespace vcc::cartridges::becker_port
 
 	private:
 
+		/// @brief The emulated Becker Port serial device.
 		becker_device_type becker_device_;
 	};
 

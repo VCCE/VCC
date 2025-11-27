@@ -2,7 +2,7 @@
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
 //	
-//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	VCC (Virtual Color Computer) is free software: you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License as published by
 //	the Free Software Foundation, either version 3 of the License, or (at your
 //	option) any later version.
@@ -46,7 +46,7 @@ extern "C" __declspec(dllexport) ::vcc::bus::cartridge_plugin_factory_prototype 
 		[[maybe_unused]] std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		[[maybe_unused]] std::unique_ptr<::vcc::bus::expansion_port_bus> bus) -> ::vcc::bus::cartridge_factory_result
 		{
-			return std::make_unique<ramdisk_cartridge>(gModuleInstance);
+			return std::make_unique<vcc::cartridges::rambuffer::ramdisk_cartridge>(gModuleInstance);
 		};
 }
 

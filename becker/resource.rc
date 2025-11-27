@@ -87,13 +87,13 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "BitRot Software"
+            VALUE "CompanyName", "Team DREAM!"
             VALUE "FileDescription", "Becker Port Cartridge Plugin for DREAM"
             VALUE "FileVersion", "0,0,0,1"
             VALUE "InternalName", "Becker Port Cartridge"
             VALUE "LegalCopyright", "Copyright � 2007"
             VALUE "OriginalFilename", "becker.dll"
-            VALUE "ProductName", "DREAM Tandy Color Computer 3 Emulator"
+            VALUE "ProductName", "DREAM - The Tandy Color Computer 3 Emulator"
             VALUE "ProductVersion", "0, 0, 0, 1"
         END
     END

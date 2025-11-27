@@ -159,9 +159,13 @@ namespace vcc::cartridges::becker_port
 
 	private:
 
+		/// @brief The expansion port host.
 		const std::shared_ptr<expansion_port_host_type> host_;
+		/// @brief The handle to the module instance containing the cartridges resources.
 		const HINSTANCE module_instance_;
+		/// @brief The dialog providing the cartridge settings user interface.
 		configuration_dialog configuration_dialog_;
+		/// @brief The driver emulating the Becker Port hardware.
 		driver_type driver_;
 	};
 

@@ -2,7 +2,7 @@
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
 //	
-//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	VCC (Virtual Color Computer) is free software: you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License as published by
 //	the Free Software Foundation, either version 3 of the License, or (at your
 //	option) any later version.
@@ -22,25 +22,52 @@
 #include <Windows.h>
 
 
-class ramdisk_cartridge : public ::vcc::bus::cartridge
+namespace vcc::cartridges::rambuffer
 {
-public:
 
-	using driver_type = ramdisk_cartridge_driver;
+	/// @brief RAM Disk/Buffer Cartridge
+	/// 
+	/// This plugin provides an implementation of a cartridge containing a large amount
+	/// of RAM suitable for use as a RAM or print spooler. 
+	///
+	/// @todo Determine original of hardware and if it was a commercial product, from an
+	/// article in The Rainbow, or a _fantasy_ device.
+	/// @todo Add _battery backup_ feature in the same vein as Vidicom's SolidDrive and have
+	/// the data stored in the RAM buffers persisted to a user selectable file.
+	/// @todo Consider renaming since it's just a buffer and provides no actual disk
+	/// like functionality.
+	class ramdisk_cartridge : public ::vcc::bus::cartridge
+	{
+	public:
+
+		/// @brief Type alias for the cartridge driver used by the plugin.
+		using driver_type = ::vcc::cartridges::rambuffer::ramdisk_cartridge_driver;
 
 
-public:
+	public:
 
-	explicit ramdisk_cartridge(HINSTANCE module_instance);
+		/// @brief Construct the cartridge.
+		/// 
+		/// @param module_instance A handle to the instance of the module containing the
+		/// plugins resources.
+		explicit ramdisk_cartridge(HINSTANCE module_instance);
 
-	name_type name() const override;
-	[[nodiscard]] driver_type& driver() override;
+		/// @inheritdoc
+		name_type name() const override;
 
-	void start() override;
+		/// @inheritdoc
+		[[nodiscard]] driver_type& driver() override;
+
+		/// @brief Initializes the device logic and memory to default values.
+		void start() override;
 
 
-private:
+	private:
 
-	const HINSTANCE module_instance_;
-	driver_type driver_;
-};
+		/// @brief The handle to the module instance containing the cartridges resources.
+		const HINSTANCE module_instance_;
+		/// @brief The driver emulating the RAM buffer hardware.
+		driver_type driver_;
+	};
+
+}

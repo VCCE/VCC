@@ -20,6 +20,7 @@
 #include <string>
 #include <functional>
 
+
 namespace vcc::cartridges::becker_port
 {
 
@@ -66,11 +67,37 @@ namespace vcc::cartridges::becker_port
 
 	private:
 
+		/// @brief Process window messages for the settings dialog.
+		/// 
+		/// @param hDlg The handle to the dialog the message is for.
+		/// @param message The identifier of the message.
+		/// @param wParam The word parameter of the message. The contents of this parameter
+		/// depend on the message received.
+		/// 
+		/// @return The return value depends on the message being processed.
 		INT_PTR process_message(
 			HWND hDlg,
 			UINT message,
 			WPARAM wParam);
 
+		/// @brief The procedure that receives window messages for the dialog
+		/// 
+		/// This function receives window messages for the settings dialog and passes them
+		/// to an instance of the configuration dialog. When the dialog is created a
+		/// pointer to the instance of the configuration dialog is passed to the create
+		/// function. When the `WM_INITDIALOG` message is received by this function that
+		/// pointer is retrieved from the `lParam` parameter and stored in the dialog
+		/// windows user data. On all subsequent calls, the pointer will be retrieved from
+		/// the user data and the message forwarded to the `process_message` function.
+		/// 
+		/// @param hDlg The handle to the dialog the message is for.
+		/// @param message The identifier of the message.
+		/// @param wParam The word parameter of the message. The contents of this parameter
+		/// depend on the message received.
+		/// @param lParam The long parameter of the message. The contents of this parameter
+		/// depend on the message received.
+		/// 
+		/// @return The return value depends on the message being processed.
 		static INT_PTR CALLBACK callback_procedure(
 			HWND hDlg,
 			UINT message,
@@ -80,11 +107,16 @@ namespace vcc::cartridges::becker_port
 
 	private:
 
+		/// @brief The handle to the module instance containing the dialog's resources.
 		const HINSTANCE module_handle_;
+		/// @brief A function that will be invoked if/when the connection settings are
+		/// changed by the user.
 		const update_connection_settings_type update_connection_settings;
+		/// @brief The handle to the current dialog or `null` if no dialog is open.
 		HWND dialog_handle_ = nullptr;
-
+		/// @brief The server address the dialog will show when initially created.
 		string_type server_address_;
+		/// @brief The server port the dialog will show when initially created.
 		string_type server_port_;
 	};
 

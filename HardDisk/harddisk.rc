@@ -71,7 +71,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "Comments", "Emulator Hard Disk Controller with 130Mb drive\0"
-            VALUE "CompanyName", "BitRot Software.\0"
+            VALUE "CompanyName", "Team DREAM!\0"
             VALUE "FileDescription", "Hard Disk\0"
             VALUE "FileVersion", "2.1.8.3\0"
             VALUE "InternalName", "Hard Disk\0"
@@ -79,7 +79,7 @@ BEGIN
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "harddisk.dll\0"
             VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "Vcc Module file\0"
+            VALUE "ProductName", "DREAM - The Tandy Color Computer 3 Emulator\0"
             VALUE "ProductVersion", "2.1.8.3\0"
             VALUE "SpecialBuild", "RGB Hard Disk Controller\0"
         END

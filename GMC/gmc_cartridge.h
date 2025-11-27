@@ -108,9 +108,11 @@ namespace vcc::cartridges::gmc
 
 	private:
 
+		/// @brief The expansion port host.
 		const std::shared_ptr<expansion_port_host_type> host_;
+		/// @brief The handle to the module instance containing the cartridges resources.
 		const HINSTANCE module_instance_;
-
+		/// @brief The driver emulating the Game Master Cartridge hardware.
 		driver_type driver_;
 	};
 

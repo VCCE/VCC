@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
-// Used by Ramdisk.rc
+// Microsoft Visual C++ generated include file.
+// Used by main.rc
 //
 #define IDS_MODULE_NAME                 1
 

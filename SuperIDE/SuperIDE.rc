@@ -70,7 +70,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "Comments", "SuperIDE Disk Controller\0"
-            VALUE "CompanyName", "BitRot Software.\0"
+            VALUE "CompanyName", "Team DREAM!\0"
             VALUE "FileDescription", "SuperIDE\0"
             VALUE "FileVersion", "2.1.8.3\0"
             VALUE "InternalName", "SuperIDE\0"
@@ -78,7 +78,7 @@ BEGIN
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "SuperIDE.dll\0"
             VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "Vcc Module file\0"
+            VALUE "ProductName", "DREAM - The Tandy Color Computer 3 Emulator\0"
             VALUE "ProductVersion", "2.1.8.3\0"
             VALUE "SpecialBuild", "SuperIDE Disk Controller\0"
         END

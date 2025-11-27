@@ -72,7 +72,7 @@ BEGIN
             VALUE "InternalName", "gmc"
             VALUE "LegalCopyright", "Copyright © 2019"
             VALUE "OriginalFilename", "gmc.dll"
-            VALUE "ProductName", "DREAM Tandy Color Computer 3 Emulator"
+            VALUE "ProductName", "DREAM - The Tandy Color Computer 3 Emulator"
             VALUE "ProductVersion", "0.0.0.1"
         END
     END

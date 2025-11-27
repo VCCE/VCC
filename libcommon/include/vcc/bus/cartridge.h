@@ -41,7 +41,7 @@ namespace vcc::bus
 		using name_type = std::string;
 		/// @brief Specifies the type used to store a collection of menu items.
 		using menu_item_collection_type = ::vcc::ui::menu::menu_item_collection;
-		/// @bridge Specifies the type of devices supported by this cartridge.
+		/// @brief Specifies the type of devices supported by this cartridge.
 		using driver_type = ::vcc::bus::cartridge_driver;
 
 

@@ -72,7 +72,7 @@ namespace vcc::cartridges::gmc
 		/// @return The filename of the currently loaded ROM image.
 		[[nodiscard]] path_type rom_filename() const;
 
-		/// @brief Loads a new rom image.
+		/// @brief Loads a new ROM image.
 		/// 
 		/// Attempts to load a specified ROM file. If the ROM image is loaded successfully
 		/// the current image is replaced with the new one. If the ROM image cannot be
@@ -85,6 +85,10 @@ namespace vcc::cartridges::gmc
 		/// @throws std::invalid_argument if `filename` is empty.
 		void load_rom(const path_type& filename, bool reset_on_load);
 
+		/// @brief Ejects the ROM image from the cartridge.
+		///
+		/// Ejects the ROM image from the cartridge. Any attempts to read from memory
+		/// after the ROM has been ejected will always return `0` (zero).
 		void eject_rom();
 
 		/// @brief Reads a byte from the currently loaded ROM image.
@@ -120,8 +124,11 @@ namespace vcc::cartridges::gmc
 			static const auto psg_io = 0x41;
 		};
 
+		/// @brief The expansion port host.
 		const std::shared_ptr<expansion_port_bus_type> bus_;
+		/// @brief The ROM image.
 		rom_image_type rom_image_;
+		/// @brief The device emulating the PSG hardware.
 		psg_device_type psg_;
 	};
 

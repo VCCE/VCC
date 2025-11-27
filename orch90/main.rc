@@ -71,7 +71,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "Comments", "Tandy Orchestra 90-CC Stereo Sound Pak\0"
-            VALUE "CompanyName", "BitRot Software.\0"
+            VALUE "CompanyName", "Team DREAM!\0"
             VALUE "FileDescription", "Orchestra 90-CC \0"
             VALUE "FileVersion", "2.1.8.1\0"
             VALUE "InternalName", "orch90\0"
@@ -79,7 +79,7 @@ BEGIN
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "orch90.dll\0"
             VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "Orchestra 90-CC\0"
+            VALUE "ProductName", "DREAM - The Tandy Color Computer 3 Emulator\0"
             VALUE "ProductVersion", "26-3143\0"
             VALUE "SpecialBuild", "Tandy Orchestra-90-CC\0"
         END
