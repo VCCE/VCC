@@ -187,7 +187,7 @@ struct SystemState
     HWND			WindowHandle = nullptr;
     HWND			ConfigDialog = nullptr;
 
-    HINSTANCE		WindowInstance = nullptr;
+    HINSTANCE		WindowInstance = nullptr;	//	This is named wrong. no fucking surprise. ModuleHandle or ModuleInstance or ModuleInstanceHandle!
     unsigned char	*RamBuffer = nullptr;
     unsigned short	*WRamBuffer = nullptr;
     std::atomic<unsigned char>	RamSize = 0;

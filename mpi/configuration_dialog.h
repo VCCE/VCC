@@ -31,7 +31,7 @@ public:
 	using slot_id_type = ::multipak_cartridge_driver::slot_id_type;
 	using insert_cartridge_status_type = ::vcc::utils::cartridge_loader_status;
 	using path_type = std::string;
-	using insert_function_type = std::function<insert_cartridge_status_type(slot_id_type, const path_type&)>;
+	using insert_function_type = std::function<void(slot_id_type)>;
 	using eject_function_type = std::function<void(slot_id_type)>;
 
 
@@ -53,11 +53,13 @@ public:
 	void open();
 	void close();
 
+	void slot_changed(slot_id_type slot);
+	void update_selected_slot();
+
 
 private:
 
 
-	void select_new_cartridge(slot_id_type slot);
 	void set_selected_slot(slot_id_type slot);
 	void update_slot_details(slot_id_type slot);
 	void eject_or_select_new_cartridge(slot_id_type slot);

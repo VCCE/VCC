@@ -417,7 +417,7 @@ fd502_cartridge::menu_item_collection_type fd502_cartridge::get_menu_items() con
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
 	builder
-		.add_root_submenu("FD-502 Drive 0")
+		.add_root_submenu("Floppy Drive 0")
 		.add_submenu_item(10, "Insert")
 		.add_submenu_item(11, TempMsg);
 
@@ -426,7 +426,7 @@ fd502_cartridge::menu_item_collection_type fd502_cartridge::get_menu_items() con
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
 	builder
-		.add_root_submenu("FD-502 Drive 1")
+		.add_root_submenu("Floppy Drive 1")
 		.add_submenu_item(12, "Insert")
 		.add_submenu_item(13, TempMsg);
 
@@ -435,7 +435,7 @@ fd502_cartridge::menu_item_collection_type fd502_cartridge::get_menu_items() con
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
 	builder
-		.add_root_submenu("FD-502 Drive 2")
+		.add_root_submenu("Floppy Drive 2")
 		.add_submenu_item(14,"Insert")
 		.add_submenu_item(15,TempMsg);
 
@@ -444,12 +444,12 @@ fd502_cartridge::menu_item_collection_type fd502_cartridge::get_menu_items() con
 	PathStripPath(TempBuf);
 	strcat(TempMsg,TempBuf);
 	builder
-		.add_root_submenu("FD-502 Drive 3")
+		.add_root_submenu("Floppy Drive 3")
 		.add_submenu_item(17, "Insert")
 		.add_submenu_item(18, TempMsg);
 
 	return builder
-		.add_root_item(16, "FD-502 Config")
+		.add_root_item(16, "FD-502 Cartridge Settings")
 		.release_items();
 }
 

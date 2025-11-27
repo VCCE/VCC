@@ -21,6 +21,7 @@
 #include "vcc/utils/critical_section.h"
 #include "vcc/utils/filesystem.h"
 #include <array>
+#include <format>
 
 
 namespace
@@ -65,7 +66,7 @@ void configuration_dialog::open()
 	{
 		dialog_handle_ = CreateDialogParam(
 			module_handle_,
-			MAKEINTRESOURCE(IDD_DIALOG1),
+			MAKEINTRESOURCE(IDD_SLOT_MANAGER),
 			GetActiveWindow(),
 			callback_procedure,
 			reinterpret_cast<LPARAM>(this));
@@ -80,41 +81,13 @@ void configuration_dialog::close()
 }
 
 
-void configuration_dialog::select_new_cartridge(slot_id_type slot)
+void configuration_dialog::update_selected_slot()
 {
-	FileDialog dlg;
-	dlg.setTitle("Insert Cartridge");
-	dlg.setInitialDir(configuration_.last_accessed_module_path().c_str());
-	dlg.setFilter(
-		"All Cartridge Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
-		"ROM Pak (*.rom; *.ccc; *.pak)\0*.rom;*.ccc;*.pak\0"
-		"Functional Cartridge (*.dll)\0*.dll\0"
-		"\0");
-	dlg.setFlags(OFN_FILEMUSTEXIST);
-	if (dlg.show(0, dialog_handle_))
+	if (dialog_handle_ == nullptr || !IsWindow(dialog_handle_))
 	{
-		mpi_->eject_cartridge(slot);
-		
-		if (const auto mount_result(insert_callback_(slot, dlg.path()));
-			mount_result == cartridge_loader_status::success)
-		{
-			configuration_.slot_cartridge_path(slot, dlg.path());
-			configuration_.last_accessed_module_path(::vcc::utils::get_directory_from_path(dlg.path()));
-		}
-		else
-		{
-			auto error_string(
-				::vcc::utils::load_error_string(mount_result)
-				+ "\n\n"
-				+ ::vcc::utils::get_filename(dlg.path()));
-
-			MessageBox(dialog_handle_, error_string.c_str(), "Load Error", MB_OK | MB_ICONERROR);
-		}
+		return;
 	}
-}
 
-void configuration_dialog::set_selected_slot(slot_id_type slot)
-{
 	// Get radio button IDs
 	for (auto ndx(0u); ndx < gSlotUiElementIds.size(); ndx++)
 	{
@@ -122,15 +95,35 @@ void configuration_dialog::set_selected_slot(slot_id_type slot)
 			dialog_handle_,
 			gSlotUiElementIds[ndx].radio_button_id,
 			BM_SETCHECK,
-			ndx == slot,
+			ndx == mpi_->selected_switch_slot(),
 			0);
 	}
 
+	SetDlgItemText(
+		dialog_handle_,
+		IDC_SELECTED_SLOT_STATUS,
+		std::format("Slot {} is selected as startup slot.", mpi_->selected_switch_slot() + 1).c_str());
+}
+
+void configuration_dialog::slot_changed(slot_id_type slot)
+{
+	if (dialog_handle_ == nullptr || !IsWindow(dialog_handle_))
+	{
+		return;
+	}
+
+	update_slot_details(slot);
+}
+
+
+void configuration_dialog::set_selected_slot(slot_id_type slot)
+{
 	// FIXME-CHET: Maube move this to the callsite or when the dialog closes or at least make it optional?
 	mpi_->switch_to_slot(slot);
 	configuration_.selected_slot(slot);
-}
 
+	update_selected_slot();
+}
 
 void configuration_dialog::update_slot_details(slot_id_type slot)
 {
@@ -165,19 +158,15 @@ void configuration_dialog::eject_or_select_new_cartridge(slot_id_type slot)
 		return;
 	}
 
-
 	if (!mpi_->empty(slot))
 	{
-		mpi_->eject_cartridge(slot);
+		eject_callback_(slot);
 		configuration_.slot_cartridge_path(slot, {});
-
 	}
 	else
 	{
-		select_new_cartridge(slot);
+		insert_callback_(slot);
 	}
-
-	update_slot_details(slot);
 }
 
 INT_PTR CALLBACK configuration_dialog::callback_procedure(
@@ -219,7 +208,7 @@ INT_PTR configuration_dialog::process_message(
 			update_slot_details(slot);
 		}
 
-		set_selected_slot(mpi_->selected_switch_slot());
+		update_selected_slot();
 		return TRUE;
 
 	case WM_COMMAND:

@@ -25,6 +25,7 @@
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <vcc/common/DialogOps.h>
 
 
 extern HINSTANCE gModuleInstance;
@@ -171,6 +172,38 @@ namespace vcc::utils
 			return load_library_cartridge(filename, move(host), move(ui), move(bus));
 		}
 	}
+
+	void select_cartridge(
+		HWND parent_window,
+		const std::string& title,
+		const std::string& initial_path,
+		const std::function<cartridge_loader_status(const std::string&)>& execute_load)
+	{
+		FileDialog dlg;
+
+		dlg.setTitle(title.c_str());
+		dlg.setInitialDir(initial_path.c_str());
+		dlg.setFilter(
+			"All Cartridge and ROM Pak Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
+			"ROM Pak (*.rom; *.ccc; *.pak)\0*.rom;*.ccc;*.pak\0"
+			"Functional Cartridge (*.dll)\0*.dll\0"
+			"\0");
+		dlg.setFlags(OFN_FILEMUSTEXIST);
+		if (dlg.show(0, parent_window))
+		{
+			if (const auto mount_result(execute_load(dlg.path()));
+				mount_result != cartridge_loader_status::success)
+			{
+				auto error_string(
+					::vcc::utils::load_error_string(mount_result)
+					+ "\n\n"
+					+ ::vcc::utils::get_filename(dlg.path()));
+
+				MessageBox(parent_window, error_string.c_str(), "Unable to load cartridge", MB_OK | MB_ICONERROR);
+			}
+		}
+	}
+
 
 	std::string load_error_string(cartridge_loader_status status)
 	{

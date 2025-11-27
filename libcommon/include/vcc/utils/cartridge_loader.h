@@ -25,6 +25,7 @@
 #include "vcc/bus/expansion_port_bus.h"
 #include "vcc/utils/dll_deleter.h"
 #include <string>
+#include <functional>
 #include <memory>
 #include <Windows.h>
 
@@ -163,5 +164,11 @@ namespace vcc::utils
 	/// 
 	/// @return A string containing a description of the error.
 	LIBCOMMON_EXPORT std::string load_error_string(cartridge_loader_status status);
+
+	LIBCOMMON_EXPORT void select_cartridge(
+		HWND parent_window,
+		const std::string& title,
+		const std::string& initial_path,
+		const std::function<cartridge_loader_status(const std::string&)>& execute_load);
 
 }

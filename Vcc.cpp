@@ -282,7 +282,7 @@ void UpdateCartridgeMenu(HMENU menu)
 		builder.add_submenu_item(ID_CARTRIDGE_EJECT - first_cartridge_menu_id, "Eject " + name);
 	}
 	// HACK: See above comment.
-	builder.add_submenu_item(ID_CARTRIDGE_INSERT - first_cartridge_menu_id, "Load Cart");
+	builder.add_submenu_item(ID_CARTRIDGE_INSERT - first_cartridge_menu_id, "Insert Cartridge or ROM Pak");
 
 	if (const auto& menu_items(PakGetMenuItems()); !menu_items.empty())
 	{

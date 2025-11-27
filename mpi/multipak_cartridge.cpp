@@ -28,6 +28,7 @@
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/cartridges/empty_cartridge.h"
 #include <array>
+#include <format>
 
 
 multipak_cartridge::multipak_cartridge(
@@ -48,8 +49,8 @@ multipak_cartridge::multipak_cartridge(
 		module_instance,
 		configuration,
 		driver_,
-		std::bind(&multipak_cartridge::insert_cartridge, this, std::placeholders::_1, std::placeholders::_2),
-		std::bind(&multipak_cartridge::eject_cartridge, this, std::placeholders::_1))
+		std::bind(&multipak_cartridge::select_and_insert_cartridge, this, std::placeholders::_1),
+		std::bind(&multipak_cartridge::eject_cartridge, this, std::placeholders::_1, true))
 {
 	for (auto& controller : cartridges_)
 	{
@@ -79,7 +80,7 @@ void multipak_cartridge::start()
 		if (!path.empty())
 		{
 			// FIXME-CHET: Check return value and act on it
-			insert_cartridge(slot, path);
+			insert_cartridge(slot, path, false);
 		}
 	}
 }
@@ -116,11 +117,61 @@ void multipak_cartridge::status(char* text_buffer, size_t buffer_size)
 
 void multipak_cartridge::menu_item_clicked(unsigned char menu_item_id)
 {
-	if (menu_item_id == 19)
+	switch (menu_item_id)
 	{
+	case menu_item_ids::open_settings:
 		settings_dialog_.open();
 		return;
+
+	case menu_item_ids::select_slot_1:
+		switch_to_slot(0);
+		return;
+
+	case menu_item_ids::select_slot_2:
+		switch_to_slot(1);
+		return;
+
+	case menu_item_ids::select_slot_3:
+		switch_to_slot(2);
+		return;
+
+	case menu_item_ids::select_slot_4:
+		switch_to_slot(3);
+		return;
+
+	case menu_item_ids::insert_into_slot_1:
+		select_and_insert_cartridge(0);
+		return;
+
+	case menu_item_ids::insert_into_slot_2:
+		select_and_insert_cartridge(1);
+		return;
+
+	case menu_item_ids::insert_into_slot_3:
+		select_and_insert_cartridge(2);
+		return;
+
+	case menu_item_ids::insert_into_slot_4:
+		select_and_insert_cartridge(3);
+		return;
+
+	case menu_item_ids::eject_slot_1:
+		eject_cartridge(0, true);
+		return;
+
+	case menu_item_ids::eject_slot_2:
+		eject_cartridge(1, true);
+		return;
+
+	case menu_item_ids::eject_slot_3:
+		eject_cartridge(2, true);
+		return;
+
+	case menu_item_ids::eject_slot_4:
+		eject_cartridge(3, true);
+		return;
 	}
+
 
 	if (menu_item_id >= 20 && menu_item_id <= 40)
 	{
@@ -143,39 +194,96 @@ void multipak_cartridge::menu_item_clicked(unsigned char menu_item_id)
 	}
 }
 
+
+
+const std::array<multipak_cartridge::slot_action_command_descriptor, 4> multipak_cartridge::slot_action_command_ids =
+{
+	slot_action_command_descriptor{menu_item_ids::select_slot_1, menu_item_ids::insert_into_slot_1, menu_item_ids::eject_slot_1},
+	slot_action_command_descriptor{menu_item_ids::select_slot_2, menu_item_ids::insert_into_slot_2, menu_item_ids::eject_slot_2},
+	slot_action_command_descriptor{menu_item_ids::select_slot_3, menu_item_ids::insert_into_slot_3, menu_item_ids::eject_slot_3},
+	slot_action_command_descriptor{menu_item_ids::select_slot_4, menu_item_ids::insert_into_slot_4, menu_item_ids::eject_slot_4},
+};
+
+
 multipak_cartridge::menu_item_collection_type multipak_cartridge::get_menu_items() const
 {
-	::vcc::ui::menu::menu_builder builder;
+	::vcc::ui::menu::menu_builder menu;
 
+	// Build the menus items for all of the inserted cartridges and add them to beginning.
 	for (int slot(cartridges_.size() - 1); slot >= 0; slot--)
 	{
 		if (const auto& items(cartridges_[slot]->get_menu_items()); !items.empty())
 		{
-			if (!builder.empty())
+			if (!menu.empty())
 			{
-				builder.add_root_separator();
+				menu.add_root_separator();
 			}
 
-			builder.add_items(
+			menu.add_items(
 				items,
 				expansion_port_base_menu_id + slot * expansion_port_menu_id_range_size);
 		}
 	}
 
-	if (!builder.empty())
+	if (!menu.empty())
 	{
-		builder.add_root_separator();
+		menu.add_root_separator();
 	}
 
-	builder.add_root_item(19, "Multi-Pak Slot Manager");
+	// Add the multipak menu items for insert/eject slot.
+	for (auto slot(driver_->slot_count()); slot > 0; --slot)
+	{
+		const auto index(slot - 1);
+		const bool is_at_selected_slot(driver_->selected_switch_slot() == index);
+		const bool is_slot_occupied(!driver_->empty(index));
 
-	return builder.release_items();
+		menu
+			.add_root_submenu(
+				std::format("Multi-Pak Slot {}{}", slot, is_at_selected_slot ? " (selected)" : ""),
+				nullptr)
+			.add_submenu_item(
+				slot_action_command_ids[index].select,
+				"Switch To",
+				nullptr,
+				is_at_selected_slot)
+			.add_submenu_item(slot_action_command_ids[index].insert, "Insert Cartridge or ROM Pak")
+			.add_submenu_item(
+				slot_action_command_ids[index].eject,
+				"Eject " + driver_->slot_name(index),
+				nullptr,
+				driver_->empty(index));
+	}
+
+	menu.add_root_item(menu_item_ids::open_settings, "Open Multi-Pak Slot Manager");
+
+	return menu.release_items();
 }
 
+void multipak_cartridge::switch_to_slot(slot_id_type slot)
+{
+	driver_->switch_to_slot(slot);
+	configuration_.selected_slot(slot);
+	settings_dialog_.update_selected_slot();
+}
+
+void multipak_cartridge::select_and_insert_cartridge(slot_id_type slot)
+{
+	const auto callback = [this, &slot](const std::string& filename)
+		{
+			return insert_cartridge(slot, filename, true);
+		};
+
+	::vcc::utils::select_cartridge(
+		GetActiveWindow(),
+		std::format("Insert Cartridge or ROM Pak into slot {}", slot + 1),
+		configuration_.last_accessed_module_path(),
+		callback);
+}
 
 multipak_cartridge::mount_status_type multipak_cartridge::insert_cartridge(
 	slot_id_type slot,
-	const path_type& filename)
+	const path_type& filename,
+	bool update_settings)
 {
 	auto loadedCartridge(vcc::utils::load_cartridge(
 		filename,
@@ -187,17 +295,34 @@ multipak_cartridge::mount_status_type multipak_cartridge::insert_cartridge(
 		return loadedCartridge.load_result;
 	}
 
+	if (update_settings)
+	{
+		configuration_.slot_cartridge_path(slot, filename);
+		configuration_.last_accessed_module_path(::vcc::utils::get_directory_from_path(filename));
+	}
+
+	eject_cartridge(slot, false);
+
 	cartridges_[slot] = move(loadedCartridge.cartridge);
 	driver_->insert_cartridge(
 		slot,
 		move(loadedCartridge.handle),
 		cartridges_[slot]);
 
+	settings_dialog_.slot_changed(slot);
+
 	return loadedCartridge.load_result;
 }
 
-void multipak_cartridge::eject_cartridge(slot_id_type slot)
+void multipak_cartridge::eject_cartridge(slot_id_type slot, bool update_settings)
 {
-	driver_->eject_cartridge(slot);
+	if (update_settings)
+	{
+		configuration_.slot_cartridge_path(slot, {});
+	}
+
 	cartridges_[slot] = std::make_shared<::vcc::bus::cartridges::empty_cartridge>();
+	driver_->eject_cartridge(slot);
+
+	settings_dialog_.slot_changed(slot);
 }

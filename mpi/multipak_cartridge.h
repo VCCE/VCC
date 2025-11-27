@@ -67,11 +67,47 @@ public:
 
 private:
 
-	mount_status_type insert_cartridge(slot_id_type slot, const path_type& filename);
-	void eject_cartridge(slot_id_type slot);
+	void switch_to_slot(slot_id_type slot);
+	void select_and_insert_cartridge(slot_id_type slot);
+
+	mount_status_type insert_cartridge(
+		slot_id_type slot,
+		const path_type& filename,
+		bool update_settings);
+	void eject_cartridge(slot_id_type slot, bool update_settings);
+
+	struct slot_action_command_descriptor
+	{
+		size_t select;
+		size_t insert;
+		size_t eject;
+	};
+
+	/// @brief Defines the identifiers for the options available to the user in the
+	/// emulator's cartridge menu.
+	struct menu_item_ids
+	{
+		/// @brief Requests the Becker Port Cartridge open its settings menu.
+		static const UINT open_settings = 1;
+		static const UINT select_slot_1 = 2;
+		static const UINT select_slot_2 = 3;
+		static const UINT select_slot_3 = 4;
+		static const UINT select_slot_4 = 5;
+		static const UINT insert_into_slot_1 = 6;
+		static const UINT insert_into_slot_2 = 7;
+		static const UINT insert_into_slot_3 = 8;
+		static const UINT insert_into_slot_4 = 9;
+
+		static const UINT eject_slot_1 = 10;
+		static const UINT eject_slot_2 = 11;
+		static const UINT eject_slot_3 = 12;
+		static const UINT eject_slot_4 = 13;
+	};
+
 
 	static const auto expansion_port_base_menu_id = 20u;
 	static const auto expansion_port_menu_id_range_size = 20u;
+	static const std::array<slot_action_command_descriptor, multipak_cartridge_driver::total_slot_count> slot_action_command_ids;
 
 	const std::shared_ptr<expansion_port_host_type> host_;
 	const std::shared_ptr<expansion_port_ui_type> ui_;
