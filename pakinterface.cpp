@@ -33,6 +33,7 @@
 #include <fstream>
 #include <Windows.h>
 #include <commdlg.h>
+#include <mutex>
 
 
 using cartridge_loader_status = vcc::utils::cartridge_loader_status;
@@ -43,7 +44,7 @@ using expansion_port = vcc::bus::expansion_port;
 // Storage for Pak ROMs
 extern SystemState EmuState;
 
-static vcc::utils::critical_section gPakMutex;
+static std::recursive_mutex gPakMutex;
 static char DllPath[MAX_PATH] = "";
 static expansion_port gExpansionSlot;
 
@@ -116,6 +117,11 @@ public:
 		return ::vcc::utils::get_directory_from_path(::vcc::utils::get_module_path(nullptr)) + "/ROMS/";
 	}
 
+	[[nodiscard]] catridge_mutex_type& cartridge_mutex() const override
+	{
+		return gPakMutex;
+	}
+
 };
 
 class vcc_expansion_port_ui : public ::vcc::bus::expansion_port_ui
@@ -149,7 +155,7 @@ std::string PakGetName()
 
 void PakTimer()
 {
-	vcc::utils::section_locker lock(gPakMutex);
+	std::scoped_lock lock(gPakMutex);
 
 	// FIXME: The timing here matches the horizontal sync frequency but should be
 	// defined somewhere else and passed to this function.
@@ -158,35 +164,35 @@ void PakTimer()
 
 void ResetBus()
 {
-	vcc::utils::section_locker lock(gPakMutex);
+	std::scoped_lock lock(gPakMutex);
 
 	gExpansionSlot.reset();
 }
 
 void GetModuleStatus(SystemState *SMState)
 {
-	vcc::utils::section_locker lock(gPakMutex);
+	std::scoped_lock lock(gPakMutex);
 
 	gExpansionSlot.status(SMState->StatusLine, sizeof(SMState->StatusLine));
 }
 
 unsigned char PakReadPort (unsigned char port)
 {
-	vcc::utils::section_locker lock(gPakMutex);
+	std::scoped_lock lock(gPakMutex);
 
 	return gExpansionSlot.read_port(port);
 }
 
 void PakWritePort(unsigned char Port,unsigned char Data)
 {
-	vcc::utils::section_locker lock(gPakMutex);
+	std::scoped_lock lock(gPakMutex);
 
 	gExpansionSlot.write_port(Port,Data);
 }
 
 unsigned char PackMem8Read (unsigned short Address)
 {
-	vcc::utils::section_locker lock(gPakMutex);
+	std::scoped_lock lock(gPakMutex);
 
 	return gExpansionSlot.read_memory_byte(Address&32767);
 }
@@ -208,7 +214,7 @@ void PakAssertInterupt(Interrupt interrupt, InterruptSource source)
 
 unsigned short PackAudioSample()
 {
-	vcc::utils::section_locker lock(gPakMutex);
+	std::scoped_lock lock(gPakMutex);
 
 	return gExpansionSlot.sample_audio();
 }
@@ -216,7 +222,7 @@ unsigned short PackAudioSample()
 // Create first two entries for cartridge menu.
 ::vcc::ui::menu::menu_item_collection PakGetMenuItems()
 {
-	vcc::utils::section_locker lock(gPakMutex);
+	std::scoped_lock lock(gPakMutex);
 
 	return gExpansionSlot.get_menu_items();
 }
@@ -286,7 +292,7 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 
 	UnloadDll();
 
-	vcc::utils::section_locker lock(gPakMutex);
+	std::scoped_lock lock(gPakMutex);
 
 	strcpy(DllPath, filename);
 	gExpansionSlot = { move(loadedCartridge.handle), move(loadedCartridge.cartridge) };
@@ -301,7 +307,7 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 
 void UnloadDll()
 {
-	vcc::utils::section_locker lock(gPakMutex);
+	std::scoped_lock lock(gPakMutex);
 
 	gExpansionSlot.stop();
 	gExpansionSlot = {};
@@ -332,7 +338,7 @@ void UnloadPack()
 // CartMenuActivated is called from VCC main when a cartridge menu item is clicked.
 void CartMenuActivated(unsigned int MenuID)
 {
-	vcc::utils::section_locker lock(gPakMutex);
+	std::scoped_lock lock(gPakMutex);
 
 	gExpansionSlot.menu_item_clicked(MenuID);
 }

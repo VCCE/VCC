@@ -18,6 +18,7 @@
 #pragma once
 #include "vcc/detail/exports.h"
 #include <string>
+#include <mutex>
 
 
 namespace vcc::bus
@@ -31,8 +32,10 @@ namespace vcc::bus
 	{
 	public:
 
-		/// @brief The type used to represent paths.
+		/// @brief Type alias for file paths.
 		using path_type = std::string;
+		/// @brief Type alias for the cartridge port mutex.
+		using catridge_mutex_type = std::recursive_mutex;
 
 
 	public:
@@ -51,6 +54,13 @@ namespace vcc::bus
 		/// 
 		/// @return A path to where system ROMS are stored.
 		virtual [[nodiscard]] path_type system_rom_path() const = 0;
+
+		/// @brief Retrieve the cartridge plugin mutex.
+		/// 
+		/// Retrieve the mutex used to gain exclusive access to cartridge plugins.
+		/// 
+		/// @return The cartridge mutex.
+		virtual [[nodiscard]] catridge_mutex_type& cartridge_mutex() const = 0;
 	};
 
 }

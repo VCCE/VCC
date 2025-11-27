@@ -19,7 +19,6 @@
 #include "multipak_expansion_port.h"
 #include "multipak_configuration.h"
 #include "vcc/bus/cartridge_driver.h"
-#include "vcc/utils/critical_section.h"
 #include <array>
 
 
@@ -210,10 +209,6 @@ namespace vcc::cartridges::multipak
 			static const size_t slot_register = 0xff;
 		};
 
-
-		/// @brief A lock mutex.
-		/// @todo Remove this when the fix for the race-condition is in.
-		vcc::utils::critical_section mutex_;
 		/// @brief A pointer to the bus the cartridge is connected to.
 		const std::shared_ptr<expansion_port_bus_type> bus_;
 		/// @brief A pointer to the Multi-Pak configuration.

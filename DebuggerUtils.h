@@ -21,37 +21,98 @@
 #include <string>
 #include <vector>
 
-namespace VCC::Debugger
+namespace VCC
 {
 
-    template<class Type_>
-    inline LPCSTR ToLPCSTR(std::basic_string<Type_>& str)
-    {
-        return str.c_str();
-    }
+	class CriticalSection
+	{
+	public:
 
-    template<class Type_>
-    inline LPCSTR ToLPCSTR(const std::basic_string<Type_>& str)
-    {
-        return str.c_str();
-    }
+		CriticalSection()
+		{
+			InitializeCriticalSection(&Section_);
+		}
 
-    template<class Type_>
-    LPCSTR ToLPCSTR(const std::basic_filebuf<Type_>&& str)
-    {
-        static_assert("RValue not supported for ToLPCSTR");
-    }
+		~CriticalSection()
+		{
+			DeleteCriticalSection(&Section_);
+		}
 
-    std::string ToHexString(long value, int length, bool leadingZeros = true);
-    std::string ToDecimalString(long value, int length, bool leadingZeros = true);
+		CriticalSection(const CriticalSection&) = delete;
+		CriticalSection& operator=(const CriticalSection&) = delete;
+
+		void Lock()
+		{
+			EnterCriticalSection(&Section_);
+		}
+
+		void Unlock()
+		{
+			LeaveCriticalSection(&Section_);
+		}
+
+
+	private:
+
+		CRITICAL_SECTION	Section_;
+	};
+
+
+	class SectionLocker
+	{
+	public:
+		explicit SectionLocker(CriticalSection& section)
+			: Section_(section)
+		{
+			Section_.Lock();
+		}
+
+		~SectionLocker()
+		{
+			Section_.Unlock();
+		}
+
+
+	private:
+
+		CriticalSection& Section_;
+	};
+
+}
+
+
+
+namespace VCC { namespace Debugger
+{
+
+	template<class Type_>
+	inline LPCSTR ToLPCSTR(std::basic_string<Type_>& str)
+	{
+		return str.c_str();
+	}
+
+	template<class Type_>
+	inline LPCSTR ToLPCSTR(const std::basic_string<Type_>& str)
+	{
+		return str.c_str();
+	}
+
+	template<class Type_>
+	LPCSTR ToLPCSTR(const std::basic_filebuf<Type_>&& str)
+	{
+		static_assert("RValue not supported for ToLPCSTR");
+	}
+
+	std::string ToHexString(long value, int length, bool leadingZeros = true);
+	std::string ToDecimalString(long value, int length, bool leadingZeros = true);
 	std::string ToByteString(const std::vector<unsigned char>& bytes);
 	bool replace(std::string& str, const std::string& from, const std::string& to);
 	int roundUp(int numToRound, int multiple);
 	int roundDn(int numToRound, int multiple);
 	unsigned char DbgRead8(bool phyAddr, unsigned short block, unsigned short PC);
-}
+} }
 
-namespace VCC::Debugger::UI
+namespace VCC { namespace Debugger { namespace UI
 {
 
 	struct BackBufferInfo
@@ -65,4 +126,4 @@ namespace VCC::Debugger::UI
 
 	BackBufferInfo AttachBackBuffer(HWND hWnd, int widthAdjust, int heightAdjust);
 
-}
+} } }

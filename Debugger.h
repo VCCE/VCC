@@ -19,7 +19,6 @@
 #pragma once
 #include "DebuggerUtils.h"
 #include "MachineDefs.h"
-#include "vcc/utils/critical_section.h"
 #include <string>
 #include <vector>
 #include <functional>
@@ -146,7 +145,7 @@ namespace VCC::Debugger
 
 	private:
 
-		mutable vcc::utils::critical_section	Section_;
+		mutable CriticalSection			Section_;
 		bool							HasPendingCommand_ = false;
 		ExecutionMode					PendingCommand_ = ExecutionMode::Halt;
 		breakpointsbuffer_type			Breakpoints_;

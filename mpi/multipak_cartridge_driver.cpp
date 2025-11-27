@@ -76,8 +76,6 @@ namespace vcc::cartridges::multipak
 
 	void multipak_cartridge_driver::reset()
 	{
-		vcc::utils::section_locker lock(mutex_);
-
 		cached_cts_slot_ = switch_slot_;
 		cached_scs_slot_ = switch_slot_;
 		for (const auto& cartridge_slot : slots_)
@@ -90,8 +88,6 @@ namespace vcc::cartridges::multipak
 
 	void multipak_cartridge_driver::update(float delta)
 	{
-		vcc::utils::section_locker lock(mutex_);
-
 		for (const auto& cartridge_slot : slots_)
 		{
 			cartridge_slot.update(delta);
@@ -100,8 +96,6 @@ namespace vcc::cartridges::multipak
 
 	void multipak_cartridge_driver::write_port(unsigned char port_id, unsigned char value)
 	{
-		vcc::utils::section_locker lock(mutex_);
-
 		if (port_id == mmio_ports::slot_select)
 		{
 			cached_scs_slot_ = value & 0b00000011;			// SCS
@@ -128,8 +122,6 @@ namespace vcc::cartridges::multipak
 
 	unsigned char multipak_cartridge_driver::read_port(unsigned char port_id)
 	{
-		vcc::utils::section_locker lock(mutex_);
-
 		if (port_id == mmio_ports::slot_select)
 		{
 			// FIXME-CHET: The next two lines should be handled by the write_port function
@@ -161,15 +153,11 @@ namespace vcc::cartridges::multipak
 
 	unsigned char multipak_cartridge_driver::read_memory_byte(size_type memory_address)
 	{
-		vcc::utils::section_locker lock(mutex_);
-
 		return slots_[cached_cts_slot_].read_memory_byte(memory_address);
 	}
 
 	multipak_cartridge_driver::sample_type multipak_cartridge_driver::sample_audio()
 	{
-		vcc::utils::section_locker lock(mutex_);
-
 		sample_type sample = 0;
 		for (const auto& cartridge_slot : slots_)
 		{
@@ -182,22 +170,16 @@ namespace vcc::cartridges::multipak
 
 	multipak_cartridge_driver::name_type multipak_cartridge_driver::slot_name(slot_id_type slot) const
 	{
-		vcc::utils::section_locker lock(mutex_);
-
 		return slots_[slot].name();
 	}
 
 	bool multipak_cartridge_driver::empty(slot_id_type slot) const
 	{
-		vcc::utils::section_locker lock(mutex_);
-
 		return slots_[slot].empty();
 	}
 
 	void multipak_cartridge_driver::eject_cartridge(slot_id_type slot)
 	{
-		vcc::utils::section_locker lock(mutex_);
-
 		slots_[slot].stop();
 		slots_[slot] = {};
 	}
@@ -205,8 +187,6 @@ namespace vcc::cartridges::multipak
 
 	void multipak_cartridge_driver::switch_to_slot(slot_id_type slot)
 	{
-		vcc::utils::section_locker lock(mutex_);
-
 		switch_slot_ = slot;
 		// FIXME-CHET: Should this set the scs and cts lines when the selection is physically
 		// changed or should they only be loaded at startup?
@@ -249,8 +229,6 @@ namespace vcc::cartridges::multipak
 	{
 		// FIXME-CHET: We should probably call eject(slot) here in order to ensure that the
 		// cartridge is shut down correctly.
-		vcc::utils::section_locker lock(mutex_);
-
 		slots_[slot] = { move(handle), move(cartridge) };
 		slots_[slot].start();
 		slots_[slot].reset();	//	FIXME-CHET: This is legacy shit and doesn't need to be here. remove after all carts get full refactor

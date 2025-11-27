@@ -130,7 +130,6 @@
     <ClInclude Include="include\vcc\utils\cartridge_loader.h" />
     <ClInclude Include="include\vcc\utils\persistent_value_section_store.h" />
     <ClInclude Include="include\vcc\utils\persistent_value_store.h" />
-    <ClInclude Include="include\vcc\utils\critical_section.h" />
     <ClInclude Include="include\vcc\utils\dll_deleter.h" />
     <ClInclude Include="include\vcc\utils\FileOps.h" />
     <ClInclude Include="include\vcc\utils\filesystem.h" />
