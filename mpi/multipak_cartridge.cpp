@@ -31,6 +31,34 @@
 #include <format>
 
 
+namespace
+{
+
+	UINT get_icon_id(bool is_at_selected_slot, bool is_slot_occupied)
+	{
+		if (is_at_selected_slot)
+		{
+			return is_slot_occupied
+				? IDB_CARTRIDGE_SLOT_OCCUPIED_SELECTED
+				: IDB_CARTRIDGE_SLOT_EMPTY_SELECTED;
+		}
+
+		return is_slot_occupied
+			? IDB_CARTRIDGE_SLOT_OCCUPIED
+			: IDB_CARTRIDGE_SLOT_EMPTY;
+	}
+
+}
+
+const std::array<multipak_cartridge::slot_action_command_descriptor, 4> multipak_cartridge::slot_action_command_ids =
+{
+	slot_action_command_descriptor{menu_item_ids::select_slot_1, menu_item_ids::insert_into_slot_1, menu_item_ids::eject_slot_1},
+	slot_action_command_descriptor{menu_item_ids::select_slot_2, menu_item_ids::insert_into_slot_2, menu_item_ids::eject_slot_2},
+	slot_action_command_descriptor{menu_item_ids::select_slot_3, menu_item_ids::insert_into_slot_3, menu_item_ids::eject_slot_3},
+	slot_action_command_descriptor{menu_item_ids::select_slot_4, menu_item_ids::insert_into_slot_4, menu_item_ids::eject_slot_4},
+};
+
+
 multipak_cartridge::multipak_cartridge(
 	std::shared_ptr<expansion_port_host_type> host,
 	std::shared_ptr<expansion_port_ui_type> ui,
@@ -195,16 +223,6 @@ void multipak_cartridge::menu_item_clicked(unsigned char menu_item_id)
 }
 
 
-
-const std::array<multipak_cartridge::slot_action_command_descriptor, 4> multipak_cartridge::slot_action_command_ids =
-{
-	slot_action_command_descriptor{menu_item_ids::select_slot_1, menu_item_ids::insert_into_slot_1, menu_item_ids::eject_slot_1},
-	slot_action_command_descriptor{menu_item_ids::select_slot_2, menu_item_ids::insert_into_slot_2, menu_item_ids::eject_slot_2},
-	slot_action_command_descriptor{menu_item_ids::select_slot_3, menu_item_ids::insert_into_slot_3, menu_item_ids::eject_slot_3},
-	slot_action_command_descriptor{menu_item_ids::select_slot_4, menu_item_ids::insert_into_slot_4, menu_item_ids::eject_slot_4},
-};
-
-
 multipak_cartridge::menu_item_collection_type multipak_cartridge::get_menu_items() const
 {
 	::vcc::ui::menu::menu_builder menu;
@@ -236,17 +254,22 @@ multipak_cartridge::menu_item_collection_type multipak_cartridge::get_menu_items
 		const auto index(slot - 1);
 		const bool is_at_selected_slot(driver_->selected_switch_slot() == index);
 		const bool is_slot_occupied(!driver_->empty(index));
+		const auto icon(::vcc::utils::load_shared_bitmap(
+			module_instance_,
+			get_icon_id(is_at_selected_slot, is_slot_occupied)));
 
 		menu
 			.add_root_submenu(
 				std::format("Multi-Pak Slot {}{}", slot, is_at_selected_slot ? " (selected)" : ""),
-				nullptr)
+				icon)
 			.add_submenu_item(
 				slot_action_command_ids[index].select,
 				"Switch To",
 				nullptr,
 				is_at_selected_slot)
-			.add_submenu_item(slot_action_command_ids[index].insert, "Insert Cartridge or ROM Pak")
+			.add_submenu_item(
+				slot_action_command_ids[index].insert,
+				is_slot_occupied ? "Insert different Cartridge or ROM Pak" : "Insert Cartridge or ROM Pak")
 			.add_submenu_item(
 				slot_action_command_ids[index].eject,
 				"Eject " + driver_->slot_name(index),

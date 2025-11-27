@@ -148,6 +148,20 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// Bitmap
+//
+
+IDB_CARTRIDGE_SLOT_EMPTY BITMAP                  "resources\\cartridge_slot_empty.bmp"
+
+IDB_CARTRIDGE_SLOT_OCCUPIED BITMAP                  "resources\\cartridge_slot_occupied.bmp"
+
+IDB_CARTRIDGE_SLOT_OCCUPIED_SELECTED BITMAP                  "resources\\cartridge_slot_occupied_selected.bmp"
+
+IDB_CARTRIDGE_SLOT_EMPTY_SELECTED BITMAP                  "resources\\cartridge_slot_empty_selected.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 

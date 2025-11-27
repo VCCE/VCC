@@ -65,4 +65,18 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\cartridge_slot_empty.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\cartridge_slot_occupied.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\cartridge_slot_occupied_selected.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\cartridge_slot_empty_selected.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

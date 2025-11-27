@@ -449,7 +449,7 @@ fd502_cartridge::menu_item_collection_type fd502_cartridge::get_menu_items() con
 		.add_submenu_item(18, TempMsg);
 
 	return builder
-		.add_root_item(16, "FD-502 Cartridge Settings")
+		.add_root_item(16, "Open FD-502 Cartridge Settings")
 		.release_items();
 }
 

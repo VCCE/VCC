@@ -87,6 +87,12 @@
       <Project>{e0aa25bd-5527-475f-8d8b-b549a6311b0c}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\cartridge_slot_empty.bmp" />
+    <Image Include="resources\cartridge_slot_empty_selected.bmp" />
+    <Image Include="resources\cartridge_slot_occupied.bmp" />
+    <Image Include="resources\cartridge_slot_occupied_selected.bmp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
