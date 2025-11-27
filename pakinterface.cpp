@@ -26,7 +26,7 @@
 #include "mc6821.h"
 #include "resource.h"
 #include <vcc/core/limits.h>
-#include <vcc/cartridges/empty_cartridge.h>
+#include <vcc/cartridges/null_cartridge.h>
 #include <vcc/utils/dll_deleter.h>
 #include <vcc/utils/winapi.h>
 #include <vcc/common/logger.h>
@@ -47,7 +47,7 @@ extern SystemState EmuState;
 static vcc::utils::critical_section gPakMutex;
 static char DllPath[MAX_PATH] = "";
 static cartridge_loader_result::handle_type gActiveModule;
-static cartridge_loader_result::cartridge_ptr_type gActiveCartrige(std::make_unique<vcc::cartridges::empty_cartridge>());
+static cartridge_loader_result::cartridge_ptr_type gActiveCartrige(std::make_unique<vcc::cartridges::null_cartridge>());
 
 static cartridge_loader_status load_any_cartridge(const char* filename, const char* iniPath);
 
@@ -59,7 +59,7 @@ static unsigned char PakReadMemoryByte(void* host_key, unsigned short address);
 static void PakAssertInterupt(void* host_key, Interrupt interrupt, InterruptSource source);
 static void PakAddMenuItem(void* host_key, const char* name, int menu_id, MenuItemType type);
 
-const cartridge_capi_context default_capi_context =
+const cpak_cartridge_context default_cpak_context =
 {
 	PakAssertInterupt,
 	PakAssertCartrigeLine,
@@ -321,7 +321,7 @@ void UnloadDll()
 
 	gActiveCartrige->stop();
 
-	gActiveCartrige = std::make_unique<vcc::cartridges::empty_cartridge>();
+	gActiveCartrige = std::make_unique<vcc::cartridges::null_cartridge>();
 	gActiveModule.reset();
 
 	BeginCartMenu();

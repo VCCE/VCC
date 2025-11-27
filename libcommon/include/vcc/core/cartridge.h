@@ -20,7 +20,7 @@
 #include <string>
 
 
-namespace vcc::core
+namespace vcc { namespace core
 {
 
 	struct LIBCOMMON_EXPORT cartridge
@@ -44,21 +44,17 @@ namespace vcc::core
 		virtual catalog_id_type catalog_id() const = 0;
 		virtual description_type description() const = 0;
 
-		virtual void start();
-		virtual void stop();
-		virtual void reset();
+		virtual void start() = 0;
+		virtual void stop() = 0;
 
-		virtual unsigned char read_memory_byte(unsigned short memory_address);
-
-		virtual void write_port(unsigned char port_id, unsigned char value);
-		virtual unsigned char read_port(unsigned char port_id);
-
-		virtual void process_horizontal_sync();
-
-		virtual unsigned short sample_audio();
-
-		virtual void status(char* text_buffer, size_t buffer_size);
-		virtual void menu_item_clicked(unsigned char menu_item_id);
+		virtual void reset() = 0;
+		virtual void process_horizontal_sync() = 0;
+		virtual void write_port(unsigned char port_id, unsigned char value) = 0;
+		virtual unsigned char read_port(unsigned char port_id) = 0;
+		virtual unsigned char read_memory_byte(unsigned short memory_address) = 0;
+		virtual void status(char* text_buffer, size_t buffer_size) = 0;
+		virtual unsigned short sample_audio() = 0;
+		virtual void menu_item_clicked(unsigned char menu_item_id) = 0;
 	};
 
-}
+} }

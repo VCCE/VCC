@@ -1,7 +1,10 @@
+// dllmain.cpp : Defines the entry point for the DLL application.
+#include <Windows.h>
+#include <vcc/core/detail/exports.h>
 // NOTE: The following includes are here to force exporting implicit
 // definitions.
+#include <vcc/cartridges/null_cartridge.h>
 #include <vcc/utils/dll_deleter.h>
-#include <Windows.h>
 
 
 BOOL APIENTRY DllMain( HMODULE hModule,

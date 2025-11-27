@@ -15,25 +15,14 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/cartridges/empty_cartridge.h>
+#pragma once
+#include <vcc/cartridges/basic_cartridge.h>
 
 
 namespace vcc::cartridges
 {
 
-	empty_cartridge::name_type empty_cartridge::name() const
-	{
-		return {};
-	}
-	
-	empty_cartridge::catalog_id_type empty_cartridge::catalog_id() const
-	{
-		return {};
-	}
-
-	empty_cartridge::description_type empty_cartridge:: description() const
-	{
-		return {};
-	}
+	class LIBCOMMON_EXPORT null_cartridge : public basic_cartridge
+	{};
 
 }

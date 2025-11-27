@@ -28,7 +28,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/common/DialogOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/core/interrupts.h>
-#include <vcc/core/cartridge_capi.h>
+#include <vcc/core/legacy_cartridge_definitions.h>
 #include <vcc/core/limits.h>
 
 constexpr auto DEF_HD_SIZE = 132480u;
@@ -118,7 +118,7 @@ extern "C"
 	__declspec(dllexport) void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,
-		const cartridge_capi_context* const context)
+		const cpak_cartridge_context* const context)
 	{
 		gHostKey = host_key;
 		CartMenuCallback = context->add_menu_item;

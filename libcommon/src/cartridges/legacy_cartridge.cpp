@@ -15,7 +15,7 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/cartridges/capi_adapter_cartridge.h>
+#include <vcc/cartridges/legacy_cartridge.h>
 #include <stdexcept>
 
 namespace vcc::cartridges
@@ -75,16 +75,16 @@ namespace vcc::cartridges
 	}
 
 
-	capi_adapter_cartridge::capi_adapter_cartridge(
+	legacy_cartridge::legacy_cartridge(
 		HMODULE module_handle,
-		void* host_key,
+		void* const host_context,
 		path_type configuration_path,
-		const cartridge_capi_context& capi_context)
+		const cpak_cartridge_context& cpak_context)
 		:
 		handle_(module_handle),
-		host_key_(host_key),
+		host_context_(host_context),
 		configuration_path_(move(configuration_path)),
-		capi_context_(capi_context),
+		cpak_context_(cpak_context),
 		initialize_(GetImportedProcAddress<PakInitializeModuleFunction>(module_handle, "PakInitialize", nullptr)),
 		terminate_(GetImportedProcAddress(module_handle, "PakTerminate", default_stop)),
 		get_name_(GetImportedProcAddress(module_handle, "PakGetName", default_get_empty_string)),
@@ -105,68 +105,68 @@ namespace vcc::cartridges
 		}
 	}
 
-	capi_adapter_cartridge::name_type capi_adapter_cartridge::name() const
+	legacy_cartridge::name_type legacy_cartridge::name() const
 	{
 		return get_name_();
 	}
 
-	capi_adapter_cartridge::catalog_id_type capi_adapter_cartridge::catalog_id() const
+	legacy_cartridge::catalog_id_type legacy_cartridge::catalog_id() const
 	{
 		return get_catalog_id_();
 	}
 
-	capi_adapter_cartridge::description_type capi_adapter_cartridge:: description() const
+	legacy_cartridge::description_type legacy_cartridge:: description() const
 	{
 		return get_description_();
 	}
 
 
-	void capi_adapter_cartridge::start()
+	void legacy_cartridge::start()
 	{
-		initialize_(host_key_, configuration_path_.c_str(), &capi_context_);
+		initialize_(host_context_, configuration_path_.c_str(), &cpak_context_);
 	}
 
-	void capi_adapter_cartridge::stop()
+	void legacy_cartridge::stop()
 	{
 		terminate_();
 	}
 
-	void capi_adapter_cartridge::reset()
+	void legacy_cartridge::reset()
 	{
 		reset_();
 	}
 
-	void capi_adapter_cartridge::process_horizontal_sync()
+	void legacy_cartridge::process_horizontal_sync()
 	{
 		heartbeat_();
 	}
 
-	void capi_adapter_cartridge::status(char* text_buffer, size_t buffer_size)
+	void legacy_cartridge::status(char* text_buffer, size_t buffer_size)
 	{
 		status_(text_buffer, buffer_size);
 	}
 
-	void capi_adapter_cartridge::write_port(unsigned char port_id, unsigned char value)
+	void legacy_cartridge::write_port(unsigned char port_id, unsigned char value)
 	{
 		write_port_(port_id, value);
 	}
 
-	unsigned char capi_adapter_cartridge::read_port(unsigned char port_id)
+	unsigned char legacy_cartridge::read_port(unsigned char port_id)
 	{ 
 		return read_port_(port_id);
 	}
 
-	unsigned char capi_adapter_cartridge::read_memory_byte(unsigned short memory_address)
+	unsigned char legacy_cartridge::read_memory_byte(unsigned short memory_address)
 	{
 		return read_memory_byte_(memory_address);
 	}
 
-	unsigned short capi_adapter_cartridge::sample_audio()
+	unsigned short legacy_cartridge::sample_audio()
 	{
 		return sample_audio_();
 	}
 
-	void capi_adapter_cartridge::menu_item_clicked(unsigned char menu_item_id)
+	void legacy_cartridge::menu_item_clicked(unsigned char menu_item_id)
 	{
 		menu_item_clicked_(menu_item_id);
 	}

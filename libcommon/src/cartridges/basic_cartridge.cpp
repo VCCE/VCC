@@ -15,48 +15,73 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/core/cartridge.h>
+#include <vcc/cartridges/basic_cartridge.h>
 
 
-namespace vcc::core
+namespace vcc::cartridges
 {
 
-	void cartridge::start()
+	basic_cartridge::name_type basic_cartridge::name() const
+	{
+		return {};
+	}
+	
+	basic_cartridge::catalog_id_type basic_cartridge::catalog_id() const
+	{
+		return {};
+	}
+
+	basic_cartridge::description_type basic_cartridge:: description() const
+	{
+		return {};
+	}
+
+
+	void basic_cartridge::start()
+	{
+		initialize_pak();
+		initialize_bus();
+	}
+
+	void basic_cartridge::stop()
 	{}
 
-	void cartridge::stop()
+	void basic_cartridge::reset()
 	{}
 
-	void cartridge::reset()
+	void basic_cartridge::process_horizontal_sync()
 	{}
 
-	void cartridge::process_horizontal_sync()
+	void basic_cartridge::write_port(unsigned char port_id, unsigned char value)
 	{}
 
-	void cartridge::write_port(unsigned char port_id, unsigned char value)
-	{}
-
-	unsigned char cartridge::read_port(unsigned char port_id)
+	unsigned char basic_cartridge::read_port(unsigned char port_id)
 	{ 
 		return {};
 	}
 
-	unsigned char cartridge::read_memory_byte(unsigned short memory_address)
+	unsigned char basic_cartridge::read_memory_byte(unsigned short memory_address)
 	{
 		return {};
 	}
 
-	void cartridge::status(char* text_buffer, size_t buffer_size)
+	void basic_cartridge::status(char* text_buffer, size_t buffer_size)
 	{
 		*text_buffer = 0;
 	}
 
-	unsigned short cartridge::sample_audio()
+	unsigned short basic_cartridge::sample_audio()
 	{
 		return {};
 	}
 
-	void cartridge::menu_item_clicked(unsigned char menu_item_id)
+	void basic_cartridge::menu_item_clicked(unsigned char menu_item_id)
+	{}
+
+	void basic_cartridge::initialize_pak()
+	{}
+
+	void basic_cartridge::initialize_bus()
 	{}
 
 }
