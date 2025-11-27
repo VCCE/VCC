@@ -16,14 +16,14 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "cartridge_slot.h"
-#include <vcc/cartridges/null_cartridge.h>
+#include <vcc/core/cartridges/null_cartridge.h>
 
 
 namespace vcc { namespace modules { namespace mpi
 {
 
 	cartridge_slot::cartridge_slot()
-		: cartridge_(std::make_unique<::vcc::cartridges::null_cartridge>())
+		: cartridge_(std::make_unique<::vcc::core::cartridges::null_cartridge>())
 	{}
 
 	cartridge_slot::cartridge_slot(path_type path, handle_type handle, cartridge_ptr_type cartridge)

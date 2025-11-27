@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "multipak_configuration.h"
-#include <vcc/utils/cartridge_loader.h>
+#include <vcc/core/cartridge_loader.h>
 #include <Windows.h>
 
 
@@ -26,7 +26,7 @@ class multipak_controller
 public:
 
 	using context_type = ::vcc::core::cartridge_context;
-	using mount_status_type = ::vcc::utils::cartridge_loader_status;
+	using mount_status_type = ::vcc::core::cartridge_loader_status;
 	using slot_id_type = ::multipak_configuration::slot_id_type;
 	using path_type = ::multipak_configuration::path_type;
 	using label_type = ::std::string;

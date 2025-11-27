@@ -3,8 +3,8 @@
 #include <vcc/core/detail/exports.h>
 // NOTE: The following includes are here to force exporting implicit
 // definitions.
-#include <vcc/cartridges/null_cartridge.h>
-#include <vcc/utils/dll_deleter.h>
+#include <vcc/core/cartridges/null_cartridge.h>
+#include <vcc/core/utils/dll_deleter.h>
 
 
 BOOL APIENTRY DllMain( HMODULE hModule,

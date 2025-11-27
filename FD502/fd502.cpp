@@ -32,11 +32,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "distortc.h"
 #include "fd502.h"
 #include "../CartridgeMenu.h"
-#include <vcc/devices/rtc/oki_m6242b.h>
+#include <vcc/core/limits.h>
 #include <vcc/common/FileOps.h>
 #include <vcc/common/DialogOps.h>
 #include <vcc/common/logger.h>
-#include <vcc/core/limits.h>
 
 //include becker code if COMBINE_BECKER is defined in fd502.h
 #ifdef COMBINE_BECKER
@@ -84,8 +83,6 @@ unsigned char LoadExtRom( unsigned char, const char *);
 int BeckerEnabled=0;
 char BeckerAddr[MAX_PATH]="";
 char BeckerPort[32]="";
-
-static ::vcc::devices::rtc::oki_m6242b gDistoRtc;
 
 //----------------------------------------------------------------------------
 BOOL WINAPI DllMain(
@@ -214,7 +211,7 @@ extern "C"
 		} else //if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
 #endif
 		if ( ((Port == 0x50) | (Port==0x51)) & ClockEnabled) {
-			gDistoRtc.write_port(Data, Port);
+			write_time(Data,Port);
 		} else {
 			disk_io_write(Data,Port);
 		}
@@ -230,8 +227,8 @@ extern "C"
 		if (BeckerEnabled && ((Port == 0x41) | (Port== 0x42 )))
 			return(becker_read(Port));
 #endif
-		if (((Port == 0x50) | (Port == 0x51)) & ClockEnabled)
-			return gDistoRtc.read_port(Port);
+		if ( ((Port == 0x50) | (Port== 0x51 )) & ClockEnabled)
+			return(read_time(Port));
 		return(disk_io_read(Port));
 	}
 }
