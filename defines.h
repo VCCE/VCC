@@ -26,8 +26,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <Windows.h>
 #include <assert.h>
 
-constexpr auto MAX_LOADSTRING = 400u;
-
 //Speed throttling
 constexpr auto FRAMEINTERVAL = 120u;	//Number of frames to sum the framecounter over
 constexpr auto TARGETFRAMERATE = 60u;	//Number of throttled Frames per second to render

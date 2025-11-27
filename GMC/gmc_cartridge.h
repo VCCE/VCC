@@ -28,7 +28,7 @@ public:
 	void stop() override;
 	void reset() override;
 
-	unsigned char read_memory_byte(size_type memory_address) override;
+	unsigned char read_memory_byte(unsigned short memory_address) override;
 
 	void write_port(unsigned char port_id, unsigned char value) override;
 	unsigned char read_port(unsigned char port_id) override;
