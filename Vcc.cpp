@@ -642,11 +642,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					maxHorizontalPosition -= (displayDetails.leftBorderColumns + displayDetails.rightBorderColumns);
 					maxVerticalPosition -= (displayDetails.topBorderRows + displayDetails.bottomBorderRows);
 
-					mouseXPosition = ::std::min(
-						::std::max(0, mouseXPosition - displayDetails.leftBorderColumns),
+					mouseXPosition = min(
+						max(0, mouseXPosition - displayDetails.leftBorderColumns),
 						maxHorizontalPosition);
-					mouseYPosition = ::std::min(
-						::std::max(0, mouseYPosition - displayDetails.topBorderRows),
+					mouseYPosition = min(
+						max(0, mouseYPosition - displayDetails.topBorderRows),
 						maxVerticalPosition);
 
 #if USE_DEBUG_MOUSE

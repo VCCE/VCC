@@ -25,7 +25,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdexcept>
 #include <Richedit.h>
 #include <sstream>
-#include <cstddef>
 #include <array>
 #include <windowsx.h>
 #include <vcc/common/FileOps.h>
@@ -364,7 +363,7 @@ namespace VCC::Debugger::UI { namespace
 		// Draw our current page of samples
 		SetTextColor(hdc, RGB(0, 0, 0));
 		int y = rect.top + 20;
-		int lines = ::std::min((long)currentTrace.size(), tracePage);
+		int lines = min((long)currentTrace.size(), tracePage);
 		for (int i = 0; i < lines; i++)
 		{
 			std::string s;
@@ -1100,7 +1099,7 @@ namespace VCC::Debugger::UI { namespace
 		EmuState.Debugger.LockTrace();
 		unsigned int offset = start > 1 ? start-1 : 0;
 		auto & _trace = EmuState.Debugger.GetTraceResult();
-		int count = ::std::min((unsigned int)_trace.size(), nlines);
+		int count = min((unsigned int)_trace.size(), nlines);
 		const size_t lineSize = 65536;
 		char *line = new char[lineSize];
 
