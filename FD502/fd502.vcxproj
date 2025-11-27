@@ -65,6 +65,10 @@
       <PreprocessorDefinitions>WIN32;fd502_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <ResourceCompile />
+    <Link>
+      <LinkDLL>true</LinkDLL>
+      <AdditionalDependencies>WS2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
     <ClCompile>
@@ -75,6 +79,10 @@
       <Culture>0x0409</Culture>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <Link>
+      <LinkDLL>true</LinkDLL>
+      <AdditionalDependencies>WS2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -82,11 +90,16 @@
       <AdditionalOptions>/arch:SSE</AdditionalOptions>
     </ClCompile>
     <ResourceCompile />
+    <Link>
+      <LinkDLL>true</LinkDLL>
+      <AdditionalDependencies>WS2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="distortc.cpp" />
     <ClCompile Include="fd502.cpp" />
     <ClCompile Include="wd1793.cpp" />
+    <ClCompile Include="becker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defines.h" />
@@ -95,6 +108,7 @@
     <ClInclude Include="fdrawcmd.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="wd1793.h" />
+    <ClInclude Include="becker.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="fd502.rc" />

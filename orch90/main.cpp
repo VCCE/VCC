@@ -22,7 +22,7 @@
 #include <vcc/common/FileOps.h>
 #include <vcc/utils/winapi.h>
 #include <vcc/utils/filesystem.h>
-#include <vcc/core/cartridge_capi.h>
+#include <vcc/core/legacy_cartridge_definitions.h>
 #include <vcc/core/cartridge_factory.h>
 #include <vcc/core/limits.h>
 #include <memory>
@@ -45,7 +45,7 @@ extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 {
 	return [](
 		std::unique_ptr<::vcc::core::cartridge_context> context,
-		[[maybe_unused]] const cartridge_capi_context& capi_context) -> std::unique_ptr<::vcc::core::cartridge>
+		[[maybe_unused]] const cpak_cartridge_context& cpak_context) -> std::unique_ptr<::vcc::core::cartridge>
 	{
 		return std::make_unique<orchestra90cc_cartridge>(gModuleInstance, move(context));
 	};

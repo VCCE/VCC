@@ -25,7 +25,7 @@
 // main vcc app. Update this when it is migrated.
 enum MenuItemType;
 
-namespace vcc::core
+namespace vcc { namespace core
 {
 
 	struct LIBCOMMON_EXPORT cartridge_context
@@ -49,4 +49,4 @@ namespace vcc::core
 		virtual void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) = 0;
 	};
 
-}
+} }

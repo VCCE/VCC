@@ -19,7 +19,7 @@
 #include "cartridge_slot.h"
 #include "configuration_dialog.h"
 #include "multipak_configuration.h"
-#include <vcc/core/cartridge.h>
+#include <vcc/cartridges/basic_cartridge.h>
 #include <vcc/utils/critical_section.h>
 #include "../CartridgeMenu.h"
 #include <array>
@@ -47,7 +47,7 @@ public:
 		HINSTANCE module_instance,
 		multipak_configuration& configuration,
 		std::shared_ptr<context_type> context,
-		const cartridge_capi_context& capi_context);
+		const cpak_cartridge_context& cpak_context);
 	multipak_cartridge(const multipak_cartridge&) = delete;
 	multipak_cartridge(multipak_cartridge&&) = delete;
 
@@ -61,17 +61,14 @@ public:
 
 	void start() override;
 	void stop() override;
+
 	void reset() override;
-
-	unsigned char read_memory_byte(unsigned short memory_address) override;
-
+	void process_horizontal_sync() override;
 	void write_port(unsigned char port_id, unsigned char value) override;
 	unsigned char read_port(unsigned char port_id) override;
-
-	void process_horizontal_sync() override;
-	unsigned short sample_audio() override;
-
+	unsigned char read_memory_byte(unsigned short memory_address) override;
 	void status(char* text_buffer, size_t buffer_size) override;
+	unsigned short sample_audio() override;
 	void menu_item_clicked(unsigned char menu_item_id) override;
 
 
@@ -128,7 +125,7 @@ private:
 	const HINSTANCE module_instance_;
 	multipak_configuration& configuration_;
 	std::shared_ptr<context_type> context_;
-	const std::array<cartridge_capi_context, 4> capi_contexts_;
+	const std::array<cpak_cartridge_context, 4> cpak_contexts_;
 	std::array<vcc::modules::mpi::cartridge_slot, 4> slots_;
 	unsigned char slot_register_ = default_slot_register_value;
 	slot_id_type switch_slot_ = default_switch_slot_value;

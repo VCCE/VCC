@@ -53,11 +53,6 @@ namespace vcc::cartridges
 	}
 
 
-	void rom_cartridge::start()
-	{
-		context_->assert_cartridge_line(true);
-	}
-
 	void rom_cartridge::reset()
 	{
 		bank_offset_ = 0;
@@ -76,5 +71,9 @@ namespace vcc::cartridges
 		return buffer_[((memory_address & 32767) + bank_offset_) % buffer_.size()];
 	}
 
+	void rom_cartridge::initialize_bus()
+	{
+		context_->assert_cartridge_line(true);
+	}
 
 }

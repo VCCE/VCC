@@ -33,12 +33,6 @@ ramdisk_cartridge::catalog_id_type ramdisk_cartridge::catalog_id() const
 	return ::vcc::utils::load_string(gModuleInstance, IDS_CATNUMBER);
 }
 
-ramdisk_cartridge::description_type ramdisk_cartridge::description() const
-{
-	return ::vcc::utils::load_string(gModuleInstance, IDS_DESCRIPTION);
-}
-
-
 void ramdisk_cartridge::start()
 {
 	initialize_state(true);

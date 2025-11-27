@@ -40,38 +40,38 @@ multipak_cartridge::multipak_cartridge(
 	HINSTANCE module_instance,
 	multipak_configuration& configuration,
 	std::shared_ptr<context_type> context,
-	const cartridge_capi_context& capi_context)
+	const cpak_cartridge_context& cpak_context)
 	:
 	module_instance_(module_instance),
 	configuration_(configuration),
 	context_(move(context)),
-	capi_contexts_{ {
+	cpak_contexts_{ {
 		{
-			capi_context.assert_interrupt,
+			cpak_context.assert_interrupt,
 			assert_cartridge_line_on_slot<0>,
-			capi_context.write_memory_byte,
-			capi_context.read_memory_byte,
+			cpak_context.write_memory_byte,
+			cpak_context.read_memory_byte,
 			append_menu_item_on_slot<0>
 		},
 		{
-			capi_context.assert_interrupt,
+			cpak_context.assert_interrupt,
 			assert_cartridge_line_on_slot<1>,
-			capi_context.write_memory_byte,
-			capi_context.read_memory_byte,
+			cpak_context.write_memory_byte,
+			cpak_context.read_memory_byte,
 			append_menu_item_on_slot<1>
 		},
 		{
-			capi_context.assert_interrupt,
+			cpak_context.assert_interrupt,
 			assert_cartridge_line_on_slot<2>,
-			capi_context.write_memory_byte,
-			capi_context.read_memory_byte,
+			cpak_context.write_memory_byte,
+			cpak_context.read_memory_byte,
 			append_menu_item_on_slot<2>
 		},
 		{
-			capi_context.assert_interrupt,
+			cpak_context.assert_interrupt,
 			assert_cartridge_line_on_slot<3>,
-			capi_context.write_memory_byte,
-			capi_context.read_memory_byte,
+			cpak_context.write_memory_byte,
+			cpak_context.read_memory_byte,
 			append_menu_item_on_slot<3>
 		}
 	} },
@@ -320,7 +320,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	auto loadedCartridge(vcc::utils::load_cartridge(
 		filename,
 		std::make_unique<multipak_cartridge_context>(slot, *context_, *this),
-		capi_contexts_[slot],
+		cpak_contexts_[slot],
 		this,
 		context_->configuration_path()));
 	if (loadedCartridge.load_result != mount_status_type::success)

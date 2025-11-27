@@ -18,7 +18,6 @@
 #pragma once
 #include <vcc/core/interrupts.h>
 
-
 extern "C"
 {
 
@@ -32,10 +31,20 @@ extern "C"
 	using PakAssertInteruptHostCallback = void (*)(void* host_key, Interrupt interrupt, InterruptSource interrupt_source);
 	using PakAppendCartridgeMenuHostCallback = void (*)(void* host_key, const char* menu_name, int menu_id, MenuItemType menu_type);
 
+	struct cpak_cartridge_context
+	{
+		// FIXME-CHET: This needs a reset callback
+		const PakAssertInteruptHostCallback assert_interrupt;
+		const PakAssertCartridgeLineHostCallback assert_cartridge_line;
+		const PakWriteMemoryByteHostCallback write_memory_byte;
+		const PakReadMemoryByteHostCallback read_memory_byte;
+		const PakAppendCartridgeMenuHostCallback add_menu_item;
+	};
+
 	using PakInitializeModuleFunction = void (*)(
 		void* host_key,
 		const char* const configuration_path,
-		const struct cartridge_capi_context* const context);
+		const cpak_cartridge_context* const context);
 	using PakTerminateModuleFunction = void (*)();
 	using PakGetNameModuleFunction = const char* (*)();
 	using PakGetCatalogIdModuleFunction = const char* (*)();
@@ -48,15 +57,5 @@ extern "C"
 	using PakReadPortModuleFunction = unsigned char (*)(unsigned char port);
 	using PakSampleAudioModuleFunction = unsigned short (*)();
 	using PakMenuItemClickedModuleFunction = void (*)(unsigned char itemId);
-
-	struct cartridge_capi_context
-	{
-		// FIXME-CHET: This needs a reset callback
-		const PakAssertInteruptHostCallback assert_interrupt;
-		const PakAssertCartridgeLineHostCallback assert_cartridge_line;
-		const PakWriteMemoryByteHostCallback write_memory_byte;
-		const PakReadMemoryByteHostCallback read_memory_byte;
-		const PakAppendCartridgeMenuHostCallback add_menu_item;
-	};
 
 }

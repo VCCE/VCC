@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <vcc/core/cartridge.h>
-#include <vcc/core/cartridge_capi.h>
+#include <vcc/core/legacy_cartridge_definitions.h>
 #include <Windows.h>
 #include <string>
 
@@ -25,7 +25,7 @@
 namespace vcc::cartridges
 {
 
-	class capi_adapter_cartridge : public ::vcc::core::cartridge
+	class legacy_cartridge: public ::vcc::core::cartridge
 	{
 	public:
 
@@ -34,11 +34,11 @@ namespace vcc::cartridges
 
 	public:
 
-		LIBCOMMON_EXPORT capi_adapter_cartridge(
+		LIBCOMMON_EXPORT legacy_cartridge(
 			HMODULE module_handle,
-			void* host_key,
+			void* const host_context,
 			path_type configuration_path,
-			const cartridge_capi_context& capi_context);
+			const cpak_cartridge_context& cpak_context);
 
 		LIBCOMMON_EXPORT name_type name() const override;
 		LIBCOMMON_EXPORT catalog_id_type catalog_id() const override;
@@ -46,26 +46,23 @@ namespace vcc::cartridges
 
 		LIBCOMMON_EXPORT void start() override;
 		LIBCOMMON_EXPORT void stop() override;
+
 		LIBCOMMON_EXPORT void reset() override;
-
-		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memory_address) override;
-
+		LIBCOMMON_EXPORT void process_horizontal_sync() override;
+		LIBCOMMON_EXPORT void status(char* text_buffer, size_t buffer_size) override;
 		LIBCOMMON_EXPORT void write_port(unsigned char port_id, unsigned char value) override;
 		LIBCOMMON_EXPORT unsigned char read_port(unsigned char port_id) override;
-
-		LIBCOMMON_EXPORT void process_horizontal_sync() override;
+		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memory_address) override;
 		LIBCOMMON_EXPORT unsigned short sample_audio() override;
-
-		LIBCOMMON_EXPORT void status(char* text_buffer, size_t buffer_size) override;
 		LIBCOMMON_EXPORT void menu_item_clicked(unsigned char menu_item_id) override;
 
 
 	private:
 
 		const HMODULE handle_;
-		void* const host_key_;
+		void* const host_context_;
 		const path_type configuration_path_;
-		const cartridge_capi_context capi_context_;
+		const cpak_cartridge_context cpak_context_;
 
 		// imported module functions
 		const PakInitializeModuleFunction initialize_;

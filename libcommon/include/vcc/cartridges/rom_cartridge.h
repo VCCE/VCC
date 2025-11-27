@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridge.h>
+#include <vcc/cartridges/basic_cartridge.h>
 #include <vcc/core/cartridge_context.h>
 #include <vector>
 #include <memory>
@@ -25,7 +25,7 @@
 namespace vcc::cartridges
 {
 
-	class rom_cartridge : public ::vcc::core::cartridge
+	class rom_cartridge : public basic_cartridge
 	{
 	public:
 
@@ -36,7 +36,7 @@ namespace vcc::cartridges
 
 	public:
 
-		using ::vcc::core::cartridge::cartridge;
+		using basic_cartridge::basic_cartridge;
 
 
 		LIBCOMMON_EXPORT rom_cartridge(
@@ -50,16 +50,14 @@ namespace vcc::cartridges
 		LIBCOMMON_EXPORT catalog_id_type catalog_id() const override;
 		LIBCOMMON_EXPORT description_type description() const override;
 
-		LIBCOMMON_EXPORT void start() override;
 		LIBCOMMON_EXPORT void reset() override;
-
-		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memory_address) override;
-
 		LIBCOMMON_EXPORT void write_port(unsigned char port_id, unsigned char value) override;
+		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memory_address) override;
 
 
 	protected:
 
+		LIBCOMMON_EXPORT void initialize_bus() override;
 
 
 	private:

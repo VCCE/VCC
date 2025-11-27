@@ -1,21 +1,22 @@
-//---------------------------------------------------------------------------------
-// Copyright 2015 by Joseph Forgione
-// This file is part of VCC (Virtual Color Computer).
-//
-// VCC (Virtual Color Computer) is free software: you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or any later
-// version.
-//
-// VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-// more details.  You should have received a copy of the GNU General Public License
-// along with VCC (Virtual Color Computer).  If not, see
-// <http://www.gnu.org/licenses/>.
-//
-//---------------------------------------------------------------------------------
-#pragma once
+#ifndef __BECKER_H__
+#define __BECKER_H__
+
+#ifndef __cplusplus
+#define bool int
+#define true 1
+#define false 0
+#endif
+
+// functions
 void MemWrite(unsigned char,unsigned short );
 unsigned char MemRead(unsigned short );
 void BuildCartridgeMenu();
+
+extern const unsigned char Rom[8192];
+
+// settings.. should these be settings in the gui?
+#define BUFFER_SIZE 512
+#define TCP_RETRY_DELAY 500
+#define STATS_PERIOD_MS 100
+
+#endif
