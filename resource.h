@@ -6,7 +6,6 @@
 #define IDS_CATNUMBER                   2
 #define IDAPPLY                         3
 #define IDOK2                           3
-//
 #define IDS_UNKNOWN_ERROR               3
 #define IDS_MODULE_ALREADY_LOADED       4
 #define IDS_MODULE_CANNOT_OPEN          5
@@ -14,7 +13,6 @@
 #define IDS_MODULE_NOT_LOADED           7
 #define IDS_MODULE_NOT_ROM              8
 #define IDS_MODULE_NOT_EXPANSION        9
-
 #define IDR_MENU                        101
 #define IDI_COCO3                       103
 #define IDD_ABOUTBOX                    104
@@ -60,16 +58,6 @@
 #define IDD_EXPORT                      177
 #define IDB_FONT_CONSOLA                178
 #define IDD_FUNCTION_KEYS               179
-
-// error string resources FIXME: duplicated in libcommon
-#define IDS_ERROR_UNKNOWN                     501
-#define IDS_ERROR_CARTRIDGE_ALREADY_LOADED    502
-#define IDS_ERROR_CARTRIDGE_CANNOT_OPEN       503
-#define IDS_ERROR_CARTRIDGE_NOT_FOUND         504
-#define IDS_ERROR_CARTRIDGE_NOT_LOADED        505
-#define IDS_ERROR_CARTRIDGE_NOT_ROM           506
-#define IDS_ERROR_CARTRIDGE_NOT_EXPANSION     507
-#define IDS_ERROR_CARTRIDGE_API_NOT_SUPPORTED 508
 
 #define IDC_MUTE                        1003
 #define IDC_THROTTLE                    1004
@@ -475,9 +463,9 @@
 #define IDM_HELP_FUNKEY                 40059
 #define ID_CONFIGURE_OPTIONS            65535
 
-// Next default values for new objects
-// Caution: error strings resources start at 501
 
+// Next default values for new objects
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        180

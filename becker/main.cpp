@@ -22,7 +22,7 @@
 
 static HINSTANCE gModuleInstance;
 
-// Becker dll main
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
 	if (fdwReason == DLL_PROCESS_ATTACH)
@@ -33,7 +33,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 	return true;
 }
 
-// Establish Becker cart exports
+
 extern "C" __declspec(dllexport) CreatePakFactoryFunction GetPakFactory()
 {
 	return [](

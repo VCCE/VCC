@@ -26,7 +26,6 @@
 #include <iterator>
 #include <map>
 
-#include <vcc/common/logger.h>
 
 extern HINSTANCE gModuleInstance;
 
@@ -44,6 +43,7 @@ namespace vcc::utils
 			{
 				name = name.substr(0, endIndex);
 			}
+
 			return name;
 		}
 
@@ -52,7 +52,6 @@ namespace vcc::utils
 	// Look for magic "MZ" to detect DLL.  Assume rom if not.
 	cartridge_file_type determine_cartridge_type(const std::string& filename)
 	{
-
 		std::ifstream input(filename, std::ios::binary);
 		if (!input.is_open())
 		{
@@ -114,11 +113,11 @@ namespace vcc::utils
 	}
 
 	// Load C API hardware cart
-	cartridge_loader_result load_library_cartridge(
+	cartridge_loader_result load_capi_cartridge(
 		const std::string& filename,
 		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		void* const host_context,
-		const std::string& configuration_path,
+		const std::string& iniPath,
 		const cartridge_capi_context& capi_context)
 	{
 		if (GetModuleHandle(filename.c_str()) != nullptr)
@@ -155,7 +154,7 @@ namespace vcc::utils
 			details.cartridge = std::make_unique<vcc::cartridges::capi_adapter_cartridge>(
 				details.handle.get(),
 				host_context,
-				configuration_path,
+				iniPath,
 				capi_context);
 			details.load_result = cartridge_loader_status::success;
 
@@ -170,9 +169,8 @@ namespace vcc::utils
 		std::unique_ptr<::vcc::core::cartridge_context> cartridge_context,
 		const cartridge_capi_context& capi_context,
 		void* const host_context,
-		const std::string& configuration_path)
+		const std::string& iniPath)
 	{
-
 		switch (::vcc::utils::determine_cartridge_type(filename))
 		{
 		default:
@@ -183,11 +181,11 @@ namespace vcc::utils
 			return load_rom_cartridge(filename, move(cartridge_context));
 
 		case cartridge_file_type::library:		//	File is a DLL
-			return load_library_cartridge(
+			return load_capi_cartridge(
 				filename,
 				move(cartridge_context),
 				host_context,
-				configuration_path,
+				iniPath,
 				capi_context);
 		}
 	}

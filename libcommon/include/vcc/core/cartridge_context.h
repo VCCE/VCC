@@ -28,80 +28,25 @@ enum MenuItemType;
 namespace vcc::core
 {
 
-	/// @brief Context to the system managing the cartridge.
-	///
-	/// The Cartridge Context abstract class provides an interface to the system managing
-	/// one or more cartridges. It's primary purpose is to allow the cartridge to communicate
-	/// hardware related events required for property emulation of the system.
-	class LIBCOMMON_EXPORT cartridge_context
+	struct LIBCOMMON_EXPORT cartridge_context
 	{
-	public:
-
-		/// @brief The type used to represent paths.
 		using path_type = ::std::string;
-		/// @brief The type used to represent menu items.
 		using menu_item_type = MenuItemType;
 
 
-	public:
-
 		virtual ~cartridge_context() = default;
 
-		/// @brief Retrieve the path to the configuration file.
-		/// 
-		/// @return A copy of the path to the configuration file.
 		virtual [[nodiscard]] path_type configuration_path() const = 0;
 
-		/// @brief Requests the emulated system be reset.
-		///
-		/// Informs the system that it should perform a hard reset of the emulated machine.
 		virtual void reset() = 0;
 
-		/// @brief Set the assert state of the cartridge line.
-		/// 
-		/// Set the status of the cartridge select line on the simulated hardware bus.
-		/// 
-		/// @todo rename to set_cartridge_select or set_cartridge_select_signal.
-		/// 
-		/// @param line_state The new state of the cartridge line.
 		virtual void assert_cartridge_line(bool line_state) = 0;
-
-		/// @brief Issue an interrupt.
-		/// 
-		/// Assets a selected interrupt line on the simulated hardware bus.
-		/// 
-		/// @todo Remove interrupt_source as it seems to be irrelevant to the assertion here.
-		/// @todo Limit the interrupts that can be asserted to only those that are actually possible.
-		/// 
-		/// @param interrupt The type of interrupt to asset.
-		/// @param interrupt_source The event source that caused the interrupt to be asserted.
 		virtual void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) = 0;
 
-		/// @brief Write a byte to the CPU address space.
-		/// 
-		/// @todo Remove this. This is used for DMA and the CoCo 3 does not support it without
-		/// modification.
-		/// 
-		/// @param value The value to write.
-		/// @param address The address to write the value to.
 		virtual void write_memory_byte(unsigned char value, unsigned short address) = 0;
-
-		/// @brief Read a byte from the CPU address space.
-		/// 
-		/// @todo Remove this. This is used for DMA and the CoCo 3 does not support it without
-		/// modification.
-		/// 
-		/// @param address The address to read the value from.
-		/// 
-		/// @return The value at the specified address.
 		virtual [[nodiscard]] unsigned char read_memory_byte(unsigned short address) = 0;
 
-		/// @brief Adds an item to the cartridges UI menu.
-		/// 
-		/// @param text The text to display.
-		/// @param menu_id The identifier sent to the cartridge instance when the item is selected.
-		/// @param menu_type The type of menu item to add.
-		virtual void add_menu_item(const char* text, int menu_id, MenuItemType menu_type) = 0;
+		virtual void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) = 0;
 	};
 
 }
