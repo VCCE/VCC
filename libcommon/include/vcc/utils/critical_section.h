@@ -19,6 +19,7 @@
 #include "vcc/detail/exports.h"
 #include <Windows.h>
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 namespace vcc::utils
 {
@@ -83,3 +84,5 @@ namespace vcc::utils
 	};
 
 }
+
+#endif

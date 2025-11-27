@@ -23,6 +23,10 @@
 namespace vcc::bus
 {
 
+	/// @brief Cartridge Driver used for implementing cartridge hardware logic that is
+	/// accessible through the expansion bus.
+	///
+	/// @todo add more details.
 	class LIBCOMMON_EXPORT cartridge_driver
 	{
 	public:
@@ -48,7 +52,7 @@ namespace vcc::bus
 		/// Resets the cartridge to a default state.
 		/// 
 		/// If this function is called before the cartridge is initialized or after it has
-		/// been terminated an exception is thrown.
+		/// been terminated the behavior is undefined.
 		/// 
 		/// @todo Add exception information. Need custom exceptions first.
 		virtual void reset();
@@ -56,7 +60,7 @@ namespace vcc::bus
 		/// @brief Read a byte of memory from the cartridge.
 		/// 
 		/// If this function is called before the cartridge is initialized or after it has
-		/// been terminated an exception is thrown.
+		/// been terminated the behavior is undefined.
 		/// 
 		/// @todo Add exception information. Need custom exceptions first.
 		/// @todo consider defining the result of reading from a memory address that does
@@ -73,7 +77,7 @@ namespace vcc::bus
 		/// Write a byte of data to an I/O port.
 		/// 
 		/// If this function is called before the cartridge is initialized or after it has
-		/// been terminated an exception is thrown.
+		/// been terminated the behavior is undefined.
 		/// 
 		/// @todo Add exception information. Need custom exceptions first.
 		/// @todo Consider renaming this to try_write_port
@@ -87,7 +91,7 @@ namespace vcc::bus
 		/// Read a byte value from an I/O port.
 		/// 
 		/// If this function is called before the cartridge is initialized or after it has
-		/// been terminated an exception is thrown.
+		/// been terminated the behavior is undefined.
 		/// 
 		/// @todo Add exception information. Need custom exceptions first.
 		/// @todo Consider renaming this to try_read_port
@@ -111,7 +115,7 @@ namespace vcc::bus
 		/// is subject to change.
 		/// 
 		/// If this function is called before the cartridge is initialized or after it has
-		/// been terminated an exception is thrown.
+		/// been terminated the behavior is undefined.
 		/// 
 		/// @todo Add exception information. Need custom exceptions first.
 		/// @todo Consider renaming this.
@@ -127,7 +131,7 @@ namespace vcc::bus
 		/// returns 0.
 		/// 
 		/// If this function is called before the cartridge is initialized or after it has
-		/// been terminated an exception is thrown.
+		/// been terminated the behavior is undefined.
 		/// 
 		/// @todo Add exception information. Need custom exceptions first.
 		/// 

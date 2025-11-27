@@ -119,6 +119,7 @@ namespace vcc::media::disk_images
 
 	private:
 
+		/// @brief The geometry of the fake disk.
 		const geometry_type geometry_;
 	};
 

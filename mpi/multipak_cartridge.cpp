@@ -296,7 +296,7 @@ void multipak_cartridge::select_and_insert_cartridge(slot_id_type slot)
 			return insert_cartridge(slot, filename, true);
 		};
 
-	::vcc::utils::select_cartridge(
+	::vcc::utils::select_cartridge_file(
 		GetActiveWindow(),
 		std::format("Insert Cartridge or ROM Pak into slot {}", slot + 1),
 		configuration_.last_accessed_module_path(),

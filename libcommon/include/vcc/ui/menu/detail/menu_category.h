@@ -25,13 +25,13 @@ namespace vcc::ui::menu::detail
 	{
 		/// @brief Menu header with no associated control, may have slave items
 		root_sub_menu,
-		/// @brief Draws a horizontal line to separate groups of menu items
+		/// @brief Draws a horizontal line to separate groups of menu items in the root menu.
 		root_seperator,
-		/// @brief Menu item with an associated control
+		/// @brief Menu item with an associated control appearing in the root menu
 		root_menu_item,
-
+		/// @brief Draws a horizontal line to separate groups of menu items in a sub-menu.
 		sub_menu_separator,
-		/// @brief Slave items with associated control in header sub-menu.
+		/// @brief Slave items with associated control in a sub-menu.
 		sub_menu_item
 	};
 

@@ -31,6 +31,7 @@ namespace vcc::utils
 	{
 	public:
 
+		/// @brief Type alias for the store used to manage values.
 		using value_store_type = ::vcc::utils::persistent_value_store;
 		/// @brief The type used to represent paths.
 		using path_type = value_store_type::path_type;
@@ -38,7 +39,7 @@ namespace vcc::utils
 		using section_type = value_store_type::section_type;
 		/// @brief The type used to represent strings.
 		using string_type = value_store_type::string_type;
-		/// @brief The type used to represent a size or length.
+		/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
 		using size_type = value_store_type::size_type;
 
 
@@ -52,7 +53,6 @@ namespace vcc::utils
 
 		/// @brief Remove a value from a specific section.
 		/// 
-		/// @param section The section the value is stored in.
 		/// @param key The key the value is stored as.
 		LIBCOMMON_EXPORT void remove(const string_type& key) const;
 
@@ -136,7 +136,9 @@ namespace vcc::utils
 
 	private:
 
+		/// @brief The value store.
 		const value_store_type store_;
+		/// @brief The section where values are stored.
 		const section_type section_;
 	};
 }

@@ -173,7 +173,7 @@ namespace vcc::utils
 		}
 	}
 
-	void select_cartridge(
+	void select_cartridge_file(
 		HWND parent_window,
 		const std::string& title,
 		const std::string& initial_path,

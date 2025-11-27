@@ -27,7 +27,8 @@ namespace vcc::bus::cartridges
 
 	/// @brief A cartridge that contains a ROM image.
 	/// 
-	/// @todo provide summary once the switch `banked_rom_image` is complete.
+	/// @todo provide documentation summary once the switch `banked_rom_image` is complete.
+	/// @todo switch to using one of the ROM images.
 	class rom_cartridge
 		:
 		public ::vcc::bus::cartridge,
@@ -51,7 +52,6 @@ namespace vcc::bus::cartridges
 		/// 
 		/// @param bus The expansion bus of the system managing the cartridge. This parameter cannot be null.
 		/// @param name The name of the cartridge. This parameter cannot be empty.
-		/// @param catalog_id The catalog id or part number of the cartridge.
 		/// @param buffer A buffer containing the ROM image. This parameter cannot be empty.
 		/// @param enable_bank_switching Specifies if bank switching should be enabled.
 		/// 
@@ -67,6 +67,7 @@ namespace vcc::bus::cartridges
 		/// @inheritdoc
 		LIBCOMMON_EXPORT [[nodiscard]] name_type name() const override;
 
+		/// @inheritdoc
 		[[nodiscard]] driver_type& driver() override;
 
 		/// @brief Initialize the cartridge.
@@ -116,10 +117,15 @@ namespace vcc::bus::cartridges
 
 	private:
 
+		/// @brief The expansion port bus.
 		const std::unique_ptr<expansion_port_bus_type> bus_;
+		/// @brief The name of the ROM image.
 		const name_type name_;
-		const buffer_type buffer_;
+		/// @brief Flag controlling if bank switching is enabled.
 		const bool enable_bank_switching_;
+		/// @brief The buffer containing the ROM image
+		const buffer_type buffer_;
+		/// @brief The offset into the ROM image of the currently selected bank.
 		size_type bank_offset_;
 	};
 

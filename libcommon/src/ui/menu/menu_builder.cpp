@@ -29,6 +29,7 @@ namespace vcc::ui::menu
 		{
 		public:
 
+			/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
 			using size_type = std::size_t;
 
 

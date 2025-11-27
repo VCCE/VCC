@@ -155,12 +155,20 @@ namespace vcc::media::disk_images
 
 	private:
 
+		/// @brief The stream providing access to the disk data.
 		const stream_ptr_type stream_ptr_;
+		/// @brief A reference to the stream.
 		stream_type& stream_;
+		/// @brief The size in bytes of the disk image file.
 		const position_type file_size_;
+		/// @brief The offset from the start of the disk image file where the track
+		/// data starts.
 		const position_type track_data_offset_;
+		/// @brief The number of sectors on each track.
 		const size_type sector_count_;
+		/// @brief The size in bytes of each track.
 		const size_type track_size_;
+		/// @brief The size in bytes of each sector.
 		const size_type sector_size_;
 	};
 

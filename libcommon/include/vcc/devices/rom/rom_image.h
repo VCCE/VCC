@@ -35,7 +35,7 @@ namespace vcc::devices::rom
 		using value_type = unsigned char;
 		/// @brief The type used to store the ROM in memory.
 		using container_type = std::vector<value_type>;
-		/// @brief The type used to represent a size or length.
+		/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
 		using size_type = container_type::size_type;
 
 
@@ -98,7 +98,9 @@ namespace vcc::devices::rom
 
 	private:
 
+		/// @brief The filename of the ROM image.
 		path_type filename_;
+		/// @brief The ROM data.
 		container_type data_;
 	};
 

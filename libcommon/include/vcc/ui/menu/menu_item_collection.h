@@ -25,31 +25,59 @@
 namespace vcc::ui::menu
 {
 
+	/// @brief A read only lightweight collection of menu items.
+	///
+	/// A read only lightweight collection of menu items that can be processed
+	/// through a visitor.
 	class menu_item_collection
 	{
 	public:
 
+		/// @brief Type alias for a menu item.
 		using item_type = ::vcc::ui::menu::detail::menu_item;
+		/// @brief Type alias for a the container menu items are stored in.
 		using item_container_type = std::vector<item_type>;
+		/// @brief Type alias for the visitors we accept.
 		using visitor_type = menu_item_visitor;
+
+
+	public:
 
 		LIBCOMMON_EXPORT menu_item_collection() = default;
 
+		/// @brief Construct a Menu Item Collection.
+		/// 
+		/// @param items The list of items to initialize the collection with.
 		LIBCOMMON_EXPORT explicit menu_item_collection(item_container_type items);
 
+		/// @brief Indicates if the collection is empty.
+		/// 
+		/// @return `true` if the collection is empty; `false` otherwise.
 		LIBCOMMON_EXPORT bool empty() const;
 
+		/// @brief Accept a visitor.
+		/// 
+		/// When the visitor is accepted it will be called for each of the menu items
+		/// in the collection, in the same order they are stored.
+		/// 
+		/// @param visitor The visitor to accept.
 		LIBCOMMON_EXPORT void accept(visitor_type& visitor) const;
 
 
 	private:
 
+		/// @brief The list of menu items in the collection.
 		item_container_type items_;
 	};
 
-	inline menu_item_collection&& move(menu_item_collection& builder)
+	/// @brief Convert an lvalue reference to a menu item collection to an rvalue.
+	/// 
+	/// @param collection The item collection to convert.
+	/// 
+	/// @return The reference passed in `collection` as an `rvalue`.
+	inline menu_item_collection&& move(menu_item_collection& collection)
 	{
-		return static_cast<menu_item_collection&&>(builder);
+		return static_cast<menu_item_collection&&>(collection);
 	}
 
 }

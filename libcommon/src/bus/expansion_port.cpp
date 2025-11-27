@@ -17,19 +17,20 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "vcc/bus/expansion_port.h"
 #include "vcc/bus/cartridges/empty_cartridge.h"
+#include <stdexcept>
 
 
 namespace vcc::bus
 {
 
 	const expansion_port::cartridge_ptr_type
-		expansion_port::default_empty_cartridge_(
+		expansion_port::shared_empty_cartridge_(
 			std::make_shared<::vcc::bus::cartridges::empty_cartridge>());
 
 
 	expansion_port::expansion_port()
 		:
-		cartridge_(default_empty_cartridge_),
+		cartridge_(shared_empty_cartridge_),
 		driver_(&cartridge_->driver())
 	{ }
 
@@ -38,6 +39,11 @@ namespace vcc::bus
 		cartridge_(move(cartridge)),
 		handle_(move(handle)),
 		driver_(&cartridge_->driver())
-	{ }
+	{
+		if (cartridge_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Expansion Port. The cartridge pointer is null.");
+		}
+	}
 
 }

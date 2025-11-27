@@ -38,7 +38,7 @@ namespace vcc::utils
 		using string_type = std::string;
 		/// @brief The type used to represent section identifiers.
 		using section_type = std::string;
-		/// @brief The type used to represent a size or length.
+		/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
 		using size_type = std::size_t;
 
 
@@ -153,6 +153,7 @@ namespace vcc::utils
 
 	private:
 
+		/// @brief The path where the file containing the values is stored.
 		const path_type path_;
 	};
 }

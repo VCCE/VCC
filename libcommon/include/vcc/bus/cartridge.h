@@ -35,7 +35,7 @@ namespace vcc::bus
 	{
 	public:
 
-		/// @brief Specifies the type used to store a size of length.
+		/// @brief Specifies the type used to store a size or length.
 		using size_type = std::size_t;
 		/// @brief Specifies the type used to store names.
 		using name_type = std::string;
@@ -59,9 +59,6 @@ namespace vcc::bus
 		/// 
 		/// Retrieves the name of the cartridge.
 		/// 
-		/// This function may be invoked prior to calling `start` to initialize the device
-		/// and after `stop` has been called to terminate the device.
-		///
 		/// @return A string containing the cartridge name.
 		virtual [[nodiscard]] name_type name() const = 0;
 
@@ -77,7 +74,7 @@ namespace vcc::bus
 		/// @brief Initialize the device.
 		///
 		/// Initialize the cartridge device to a default state. If this called more than
-		/// once without stopping the device an exception is thrown.
+		/// once without stopping the device the behavior is undefined.
 		/// 
 		/// @todo Add exception information. Need custom exceptions first.
 		virtual void start();
@@ -87,7 +84,7 @@ namespace vcc::bus
 		/// Stops all device operations and releases all resources. This function must be
 		/// called prior to the cartridge being destroyed to ensure that all resources are
 		/// gracefully released. If this function is called before the cartridge is
-		/// initialized or after it has been terminated an exception is thrown.
+		/// initialized or after it has been terminated the behavior is undefined.
 		/// 
 		/// @todo Add exception information. Need custom exceptions first.
 		virtual void stop();
@@ -97,7 +94,7 @@ namespace vcc::bus
 		/// Retrieves the status of the cartridge as a human readable string.
 		/// 
 		/// If this function is called before the cartridge is initialized or after it has
-		/// been terminated an exception is thrown.
+		/// been terminated the behavior is undefined.
 		/// 
 		/// @todo Add exception information. Need custom exceptions first.
 		/// @todo Maybe rename `buffer_size` to `buffer_length`.
@@ -111,7 +108,7 @@ namespace vcc::bus
 		/// Inform the cartridge a menu item associated with it has been clicked.
 		/// 
 		/// If this function is called before the cartridge is initialized or after it has
-		/// been terminated an exception is thrown.
+		/// been terminated the behavior is undefined.
 		/// 
 		/// @todo Add exception information. Need custom exceptions first.
 		/// 

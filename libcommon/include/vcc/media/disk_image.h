@@ -35,7 +35,7 @@ namespace vcc::media
 	{
 	public:
 
-		/// @brief Specifies the type specifying a size or length.
+		/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
 		using size_type = ::std::size_t;
 		/// @brief The type used to hold geometry describing the disk capacity.
 		using geometry_type = ::vcc::media::disk_geometry;
@@ -332,9 +332,13 @@ namespace vcc::media
 
 	private:
 
+		/// @brief The number of heads on the disk.
 		const size_type head_count_;
+		/// @brief The number of heads on each track.
 		const size_type track_count_;
+		/// @brief The first sector id allowed by the media.
 		const size_type first_valid_sector_id_;
+		/// @brief Flag indicating if the disk image is write protected.
 		const bool write_protected_;
 	};
 

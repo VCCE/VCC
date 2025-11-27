@@ -27,95 +27,140 @@
 namespace vcc::bus
 {
 
+	/// @brief Expansion port used for managing and using cartridges.
+	///
+	/// @todo add more details.
 	class expansion_port
 	{
 	public:
 
+		/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
 		using size_type = std::size_t;
+		/// @brief Type alias for a windows handle managed with a unique_ptr.
 		using managed_handle_type = ::vcc::utils::cartridge_loader_result::handle_type;
+		/// @brief Type alias for the cartridge that can be inserted into the slot.
 		using cartridge_type = ::vcc::bus::cartridge;
+		/// @brief Type alias for a managed cartridge pointer.
 		using cartridge_ptr_type = std::shared_ptr<cartridge_type>;
+		/// @brief Type alias for the cartridge driver the expansion port communicates with.
 		using driver_type = ::vcc::bus::cartridge_driver;
+		/// @brief Type alias for a managed cartridge driver pointer.
 		using driver_ptr_type = ::vcc::utils::borrowed_ptr<driver_type*>;
+		/// @brief Type alias for a name container.
 		using name_type = cartridge_type::name_type;
+		/// @brief Type alias for a collection of menu items.
 		using menu_item_collection_type = cartridge_type::menu_item_collection_type;
+		/// @brief Type alias for a digital audio sample.
 		using sample_type = driver_type::sample_type;
 
 	public:
 
+		/// @brief Construct an expansion port.
+		/// 
+		/// Construct an expansion to a default empty state. When constructed the cartridge
+		/// managed in `shared_empty_cartridge_` will be used.
 		LIBCOMMON_EXPORT expansion_port();
+
+		/// @brief Construct an expansion port.
+		/// @param handle A managed handle to the module that owns the cartridge. This
+		/// parameter may be null.
+		/// @param cartridge A pointer to the cartridge.
+		/// 
+		/// @throws std::invalid_argument if `cartridge` is null.
 		LIBCOMMON_EXPORT expansion_port(managed_handle_type handle, cartridge_ptr_type cartridge);
+
+		/// @inheritdoc
 		expansion_port(const expansion_port&) = delete;
+
+		/// @inheritdoc
 		LIBCOMMON_EXPORT expansion_port(expansion_port&&) = default;
 
+		/// @inheritdoc
 		LIBCOMMON_EXPORT virtual ~expansion_port() = default;
 
+		/// @inheritdoc
 		expansion_port& operator=(const expansion_port& other) = delete;
+		/// @inheritdoc
 		LIBCOMMON_EXPORT expansion_port& operator=(expansion_port&& other) noexcept = default;
 
+		/// @brief Specifies if the expansion port is empty.
+		/// 
+		/// @return `true` is the expansion port is empty; `false` otherwise.
 		[[nodiscard]] bool empty() const
 		{
 			// FIXME-CHET-NOW: This is seems like it might break easily. The empty state here can
 			// only be caused through the default ctor (or a copy from one that default ctored).
 			// Review and see if this is an actual problem.
-			return cartridge_ == default_empty_cartridge_;
+			return cartridge_ == shared_empty_cartridge_;
 		}
 
+		/// @copydoc cartridge_type::name
 		[[nodiscard]] name_type name() const
 		{
 			return cartridge_->name();
 		}
 
+		/// @copydoc cartridge_type::start
 		void start() const
 		{
 			cartridge_->start();
 		}
 
+		/// @copydoc cartridge_type::stop
 		void stop() const
 		{
 			cartridge_->stop();
 		}
 
+		/// @copydoc cartridge_type::status
 		void status(char* text_buffer, size_t buffer_size) const
 		{
 			cartridge_->status(text_buffer, buffer_size);
 		}
 
+		/// @copydoc cartridge_type::get_menu_items
 		[[nodiscard]] menu_item_collection_type get_menu_items() const
 		{
 			return cartridge_->get_menu_items();
 		}
 
-		void menu_item_clicked(unsigned char item_id) const
+		/// @copydoc cartridge_type::menu_item_clicked
+		void menu_item_clicked(unsigned char menu_item_id) const
 		{
-			return cartridge_->menu_item_clicked(item_id);
+			return cartridge_->menu_item_clicked(menu_item_id);
 		}
 
+		/// @copydoc driver_type::reset
 		void reset() const
 		{
 			driver_->reset();
 		}
 
+		/// @copydoc driver_type::update
 		void update(float delta) const
 		{
 			driver_->update(delta);
 		}
 
+		/// @copydoc driver_type::write_port
 		void write_port(unsigned char port_id, unsigned char value) const
 		{
 			driver_->write_port(port_id, value);
 		}
 
+		/// @copydoc driver_type::read_port
 		[[nodiscard]] unsigned char read_port(unsigned char port_id) const
 		{
 			return driver_->read_port(port_id);
 		}
 
+		/// @copydoc driver_type::read_memory_byte
 		[[nodiscard]] unsigned char read_memory_byte(size_type memory_address) const
 		{
 			return driver_->read_memory_byte(memory_address);
 		}
 
+		/// @copydoc driver_type::sample_audio
 		[[nodiscard]] sample_type sample_audio() const
 		{
 			return driver_->sample_audio();
@@ -124,10 +169,15 @@ namespace vcc::bus
 
 	private:
 
-		LIBCOMMON_EXPORT static const cartridge_ptr_type default_empty_cartridge_;
+		/// @brief A shared cartridge that does nothing and is used as a sentinel
+		/// to indicate an empty state.
+		LIBCOMMON_EXPORT static const cartridge_ptr_type shared_empty_cartridge_;
 
+		/// @brief A pointer to the currently inserted cartridge.
 		cartridge_ptr_type cartridge_;
+		/// @brief A handle to the module that owns the currently inserted cartridge.
 		managed_handle_type handle_;
+		/// @brief A pointer to the hardware driver owned by the cartridge.
 		driver_ptr_type driver_;
 	};
 

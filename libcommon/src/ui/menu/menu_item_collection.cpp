@@ -40,7 +40,7 @@ namespace vcc::ui::menu
 			switch (item.type)
 			{
 			case category_type::root_sub_menu:
-				visitor.root_submenu(item.name, item.icon);
+				visitor.root_submenu(item.text, item.icon);
 				break;
 
 			case category_type::root_seperator:
@@ -52,11 +52,11 @@ namespace vcc::ui::menu
 				break;
 
 			case category_type::sub_menu_item:
-				visitor.submenu_item(item.menu_id, item.name, item.icon, item.disabled);
+				visitor.submenu_item(item.id, item.text, item.icon, item.disabled);
 				break;
 
 			case category_type::root_menu_item:
-				visitor.root_item(item.menu_id, item.name, item.icon, item.disabled);
+				visitor.root_item(item.id, item.text, item.icon, item.disabled);
 				break;
 			}
 		}

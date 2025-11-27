@@ -165,7 +165,15 @@ namespace vcc::utils
 	/// @return A string containing a description of the error.
 	LIBCOMMON_EXPORT std::string load_error_string(cartridge_loader_status status);
 
-	LIBCOMMON_EXPORT void select_cartridge(
+	/// @brief Selects a cartridge file 
+	/// 
+	/// Opens a file select dialog and invokes a callback function if one is selected.
+	/// 
+	/// @param parent_window The parent or owner window of the file selection dialog.
+	/// @param title The title of the dialog to present to the user.
+	/// @param initial_path The directory to open.
+	/// @param execute_load A callback function that will be invoked if a file is selected.
+	LIBCOMMON_EXPORT void select_cartridge_file(
 		HWND parent_window,
 		const std::string& title,
 		const std::string& initial_path,

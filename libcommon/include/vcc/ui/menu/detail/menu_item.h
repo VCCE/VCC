@@ -24,17 +24,27 @@
 namespace vcc::ui::menu::detail
 {
 
+	/// @brief Describes the common properties of a menu item.
 	struct menu_item
 	{
+		/// @brief Type alias for a menu item category.
 		using category_type = ::vcc::ui::menu::detail::menu_category;
+		/// @brief Type alias for a menu item id.
 		using item_id_type = unsigned int;
+		/// @brief Type alias for a variable length string.
 		using string_type = ::std::string;
+		/// @brief Type alias for a system bitmap handle.
 		using icon_type = HBITMAP;
 
-		string_type name;
-		item_id_type menu_id = 0;
+		/// @brief The item text
+		string_type text;
+		/// @brief The menu id.
+		item_id_type id = 0;
+		/// @brief The item type.
 		category_type type = category_type::root_seperator;
+		/// @brief An optional icon to display next to the menu text.
 		icon_type icon = nullptr;
+		/// @brief Flag indicating if the item is disabled.
 		bool disabled = false;
 	};
 

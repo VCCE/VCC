@@ -25,7 +25,7 @@ namespace vcc::media
 	/// @brief Represents the properties of a disk sector
 	struct sector_record_header
 	{
-		/// @brief Specifies the type used to store header properties.
+		/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
 		using size_type = std::size_t;
 
 		/// @brief The identifier of the drive stored in the sector header. This value may be
