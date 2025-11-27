@@ -22,27 +22,12 @@
 namespace vcc::cartridges
 {
 
-	/// @brief A cartridge that does nothing.
-	/// 
-	/// The Empty Cartridge provides no functionality, extensions, or ROM to the system. It
-	/// does nothing and can act as a placeholder where a cartridge instance may be needed.
-	class LIBCOMMON_EXPORT empty_cartridge final : public ::vcc::core::cartridge 
+	class LIBCOMMON_EXPORT empty_cartridge : public ::vcc::core::cartridge
 	{
 	public:
 
-		/// @brief Retrieves the name of the cartridge.
-		/// 
-		/// @return An empty string.
 		[[nodiscard]] name_type name() const override;
-
-		/// @brief Retrieves an optional catalog identifier of the cartridge.
-		/// 
-		/// @return An empty string.
 		[[nodiscard]] catalog_id_type catalog_id() const override;
-
-		/// @brief Retrieves an optional description of the cartridge.
-		/// 
-		/// @return An empty string.
 		[[nodiscard]] description_type description() const override;
 	};
 

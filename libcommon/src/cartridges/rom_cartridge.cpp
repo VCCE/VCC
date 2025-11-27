@@ -16,12 +16,12 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include <vcc/cartridges/rom_cartridge.h>
-#include <stdexcept>
 
-#include <vcc/common/logger.h>
+// Interface for ROM cartridge
 
 namespace vcc::cartridges
 {
+
 	rom_cartridge::rom_cartridge(
 		std::unique_ptr<context_type> context,
 		name_type name,
@@ -35,22 +35,8 @@ namespace vcc::cartridges
 		buffer_(move(buffer)),
 		enable_bank_switching_(enable_bank_switching),
 		bank_offset_(0)
-	{
-		if (context_ == nullptr)
-		{
-			throw ::std::invalid_argument("Cannot construct ROM Cartridge. The cartridge context is null.");
-		}
+	{}
 
-		if (name_.empty())
-		{
-			throw ::std::invalid_argument("Cannot construct ROM Cartridge. The catalog name is empty.");
-		}
-
-		if (buffer_.empty())
-		{
-			throw ::std::invalid_argument("Cannot construct ROM Cartridge. The ROM buffer is empty.");
-		}
-	}
 
 	rom_cartridge::name_type rom_cartridge::name() const
 	{
@@ -66,6 +52,7 @@ namespace vcc::cartridges
 	{
 		return {};
 	}
+
 
 	void rom_cartridge::start()
 	{
@@ -90,4 +77,6 @@ namespace vcc::cartridges
 	{
 		return buffer_[((memory_address & 0x7fff) + bank_offset_) % buffer_.size()];
 	}
+
+
 }

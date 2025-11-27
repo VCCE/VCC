@@ -22,7 +22,6 @@
 #include <vcc/utils/filesystem.h>
 #include <array>
 
-#include <vcc/common/logger.h>
 
 namespace
 {
@@ -79,7 +78,6 @@ void configuration_dialog::close()
 
 void configuration_dialog::select_new_cartridge(slot_id_type slot)
 {
-//PrintLogC("select\n");
 	FileDialog dlg;
 	dlg.setTitle("Load Program Pak");
 	dlg.setInitialDir(configuration_.last_accessed_module_path().c_str());
@@ -157,7 +155,7 @@ void configuration_dialog::update_slot_details(slot_id_type slot)
 		gSlotUiElementIds[slot].insert_button_id,
 		WM_SETTEXT,
 		0,
-		reinterpret_cast<LPARAM>(mpi_.empty(slot) ? ">" : "X"));
+		reinterpret_cast<LPARAM>(mpi_.empty(slot) ? "..." : "X"));
 }
 
 

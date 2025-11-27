@@ -18,12 +18,8 @@
 #pragma once
 
 
-#ifdef USE_STATIC_LIB
-#define LIBCOMMON_EXPORT
-#else
 #ifdef LIBCOMMON_EXPORTS
 #define LIBCOMMON_EXPORT __declspec(dllexport)
 #else
 #define LIBCOMMON_EXPORT __declspec(dllimport)
-#endif
 #endif

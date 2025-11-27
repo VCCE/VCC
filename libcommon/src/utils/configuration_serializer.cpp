@@ -15,30 +15,19 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/utils/persistent_value_store.h>
+#include <vcc/utils/configuration_serializer.h>
 #include <Windows.h>
 
-// Persistent value store manages vcc ini files
-// Encapsulates Read/Write PrivateProfile String/Int
-// Used by FD502/fd502.cpp, GMC/gmc_cartridge.cpp,
-// becker/becker_cartridge.cpp, mpi/multipak_configuration.cpp
-// sdc/sdc_configuration.cpp
-//
-// TODO: Direct PrivateProfile access to vcc ini still exists in
-// Cassette.cpp FD502/fd502.cpp HardDisk/harddisk.cpp SuperIDE/SuperIDE.cpp
-// acia/acia.cpp config.cpp and pakinterface.cpp
-//
-// TODO: A read overload that copies into a size limited cstring would be usefull
 
 namespace vcc::utils
 {
 
-	persistent_value_store::persistent_value_store(path_type path)
+	configuration_serializer::configuration_serializer(path_type path)
 		: path_(move(path))
 	{
 	}
 
-	void persistent_value_store::write(
+	void configuration_serializer::write(
 		const string_type& section,
 		const string_type& key,
 		int value) const
@@ -50,7 +39,7 @@ namespace vcc::utils
 			path_.c_str());
 	}
 
-	void persistent_value_store::write(
+	void configuration_serializer::write(
 		const string_type& section,
 		const string_type& key,
 		const string_type& value) const
@@ -58,12 +47,12 @@ namespace vcc::utils
 		WritePrivateProfileString(section.c_str(), key.c_str(), value.c_str(), path_.c_str());
 	}
 
-	int persistent_value_store::read(const string_type& section, const string_type& key, const int& default_value) const
+	int configuration_serializer::read(const string_type& section, const string_type& key, const int& default_value) const
 	{
 		return GetPrivateProfileInt(section.c_str(), key.c_str(), default_value, path_.c_str());
 	}
 
-	persistent_value_store::size_type persistent_value_store::read(
+	configuration_serializer::size_type configuration_serializer::read(
 		const string_type& section,
 		const string_type& key,
 		const size_type& default_value) const
@@ -71,12 +60,12 @@ namespace vcc::utils
 		return GetPrivateProfileInt(section.c_str(), key.c_str(), default_value, path_.c_str());
 	}
 
-	bool persistent_value_store::read(const string_type& section, const string_type& key, bool default_value) const
+	bool configuration_serializer::read(const string_type& section, const string_type& key, bool default_value) const
 	{
 		return GetPrivateProfileInt(section.c_str(), key.c_str(), default_value, path_.c_str()) != 0;
 	}
 
-	persistent_value_store::string_type persistent_value_store::read(
+	configuration_serializer::string_type configuration_serializer::read(
 		const string_type& section,
 		const string_type& key,
 		const string_type& default_value) const
@@ -84,7 +73,7 @@ namespace vcc::utils
 		return read(section, key, default_value.c_str());
 	}
 
-	persistent_value_store::string_type persistent_value_store::read(
+	configuration_serializer::string_type configuration_serializer::read(
 		const string_type& section,
 		const string_type& key,
 		const char* default_value) const

@@ -1,27 +1,26 @@
 ////////////////////////////////////////////////////////////////////////////////
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
-//
+//	
 //	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
 //	modify it under the terms of the GNU General Public License as published by
 //	the Free Software Foundation, either version 3 of the License, or (at your
 //	option) any later version.
-//
+//	
 //	VCC (Virtual Color Computer) is distributed in the hope that it will be
 //	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 //	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 //	Public License for more details.
-//
+//	
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "becker_cartridge.h"
 #include "resource.h"
 #include <vcc/utils/winapi.h>
-#include <vcc/utils/persistent_value_store.h>
+#include <vcc/utils/configuration_serializer.h>
 #include "../CartridgeMenu.h"
 
-// Contains Becker cart exports
 
 becker_cartridge::becker_cartridge(std::unique_ptr<context_type> context, HINSTANCE module_instance)
 	:
@@ -49,16 +48,13 @@ becker_cartridge::description_type becker_cartridge::description() const
 
 void becker_cartridge::start()
 {
-
-//  Load becker config
-	::vcc::utils::persistent_value_store settings(context_->configuration_path());
+	::vcc::utils::configuration_serializer serializer(context_->configuration_path());
 
 	gBecker.sethost(
-		settings.read(configuration_section_id_, "DWServerAddr", "127.0.0.1").c_str(),
-		settings.read(configuration_section_id_, "DWServerPort", "65504").c_str());
+		serializer.read(configuration_section_id_, "DWServerAddr", "127.0.0.1").c_str(),
+		serializer.read(configuration_section_id_, "DWServerPort", "65504").c_str());
 	gBecker.enable(true);
 
-//  Create dynamic menu
 	build_menu();
 }
 
@@ -84,7 +80,7 @@ unsigned char becker_cartridge::read_port(unsigned char port_id)
 	{
 	case 0x41:	// read status
 		return gBecker.read(port_id) != 0 ? 2 : 0;
-
+		
 	case 0x42:	// read data
 		return gBecker.read(port_id);
 	}
@@ -126,13 +122,12 @@ becker_cartridge::string_type becker_cartridge::server_port() const
 	return gBecker.server_port();
 }
 
-// Save becker config
 void becker_cartridge::configure_server(string_type server_address, string_type server_port)
 {
 	gBecker.sethost(server_address.c_str(), server_port.c_str());
 
-	::vcc::utils::persistent_value_store settings(context_->configuration_path());
+	::vcc::utils::configuration_serializer serializer(context_->configuration_path());
 
-	settings.write(configuration_section_id_, "DWServerAddr", server_address);
-	settings.write(configuration_section_id_, "DWServerPort", server_port);
+	serializer.write(configuration_section_id_, "DWServerAddr", server_address);
+	serializer.write(configuration_section_id_, "DWServerPort", server_port);
 }

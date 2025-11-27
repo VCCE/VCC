@@ -22,23 +22,22 @@
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <Import Project="..\vcc-base.props" />
-  <PropertyGroup>
-    <ConfigurationType Condition="'$(LinkageType)' == 'Static'">StaticLibrary</ConfigurationType>
-    <ConfigurationType Condition="'$(LinkageType)' == 'Dynamic'">DynamicLibrary</ConfigurationType>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v141_xp</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -48,42 +47,42 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\vcc-base.props" />
     <Import Project="..\vcc-debug.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\vcc-base.props" />
     <Import Project="..\vss-release.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\vcc-base.props" />
     <Import Project="..\vss-release.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup>
-    <ClCompile>
-      <WholeProgramOptimization Condition="'$(LinkageType)' == 'Static'">true</WholeProgramOptimization>
-      <WholeProgramOptimization Condition="'$(LinkageType)' == 'Dynamic'">false</WholeProgramOptimization>
-    </ClCompile>
-    <OutDir>$(SolutionDir)__obj\$(LinkTypeSubDir)\$(Platform)\$(Configuration)\vcc\out\</OutDir>
-    <TargetExt Condition="'$(LinkageType)' == 'Dynamic'">.vcc</TargetExt>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\vcc\out\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
-    <LibraryPath>"$(ProgramFiles(x86))\Windows Kits\8.1\Lib\winv6.3\um\x86;$(LibraryPath)"</LibraryPath>
+    <LibraryPath>C:\Program Files %28x86%29\Windows Kits\8.1\Lib\winv6.3\um\x86;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\vcc\out\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\vcc\out\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Dynamic'">WIN32;_DEBUG;LIBCOMMON_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Static'">WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;LIBCOMMON_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <LinkDLL Condition="'$(LinkageType)' == 'Dynamic'">true</LinkDLL>
+      <LinkDLL>true</LinkDLL>
       <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Dynamic'">WIN32;_USRDLL;LIBCOMMON_EXPORTS;_LEGACY_VCC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Static'">WIN32;_LEGACY_VCC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_USRDLL;LIBCOMMON_EXPORTS;_LEGACY_VCC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/arch:SSE</AdditionalOptions>
     </ClCompile>
     <ResourceCompile>
@@ -91,21 +90,21 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <LinkDLL Condition="'$(LinkageType)' == 'Dynamic'">true</LinkDLL>
+      <LinkDLL>true</LinkDLL>
       <AdditionalDependencies>Shlwapi.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Dynamic'">WIN32;NDEBUG;LIBCOMMON_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Static'">WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;LIBCOMMON_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <LinkDLL Condition="'$(LinkageType)' == 'Dynamic'">true</LinkDLL>
+      <LinkDLL>true</LinkDLL>
       <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+<<<<<<< HEAD
     <ClCompile Include="src\cartridges\empty_cartridge.cpp" />
     <ClCompile Include="src\cartridges\capi_adapter_cartridge.cpp" />
     <ClCompile Include="src\cartridges\rom_cartridge.cpp" />
@@ -115,12 +114,23 @@
     <ClCompile Include="src\devices\rtc\ds1315.cpp" />
     <ClCompile Include="src\devices\rtc\oki_m6242b.cpp" />
     <ClCompile Include="src\devices\becker\beckerport.cpp" />
+=======
+    <ClCompile Include="src\core\cartridges\basic_cartridge.cpp" />
+    <ClCompile Include="src\core\cartridges\legacy_cartridge.cpp" />
+    <ClCompile Include="src\core\cartridges\rom_cartridge.cpp" />
+    <ClCompile Include="src\core\cartridge_loader.cpp" />
+    <ClCompile Include="src\core\rom_image.cpp" />
+    <ClCompile Include="src\core\utils\configuration_serializer.cpp" />
+    <ClCompile Include="src\core\utils\filesystem.cpp" />
+    <ClCompile Include="src\core\utils\winapi.cpp" />
+    <ClCompile Include="src\devices\rtc\cloud9.cpp" />
+>>>>>>> parent of 4bddbb8 (relocate distortc into vcc::devices::rtc::oki_m6242b device and update fd502 cart to use it)
     <ClCompile Include="src\DialogOps.cpp" />
     <ClCompile Include="src\Fileops.cpp" />
     <ClCompile Include="src\logger.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\utils\cartridge_loader.cpp" />
-    <ClCompile Include="src\utils\persistent_value_store.cpp" />
+    <ClCompile Include="src\utils\configuration_serializer.cpp" />
     <ClCompile Include="src\utils\filesystem.cpp" />
     <ClCompile Include="src\utils\winapi.cpp" />
   </ItemGroup>
@@ -136,6 +146,7 @@
     <ClInclude Include="include\vcc\core\cartridge_factory.h" />
     <ClInclude Include="include\vcc\core\detail\exports.h" />
     <ClInclude Include="include\vcc\core\interrupts.h" />
+<<<<<<< HEAD
     <ClInclude Include="include\vcc\core\cartridge_capi.h" />
     <ClInclude Include="include\vcc\devices\rom\banked_rom_image.h" />
     <ClInclude Include="include\vcc\devices\rom\rom_image.h" />
@@ -143,11 +154,22 @@
     <ClInclude Include="include\vcc\devices\rtc\oki_m6242b.h" />
     <ClInclude Include="include\vcc\devices\becker\beckerport.h" />
     <ClInclude Include="include\vcc\utils\cartridge_loader.h" />
-    <ClInclude Include="include\vcc\utils\persistent_value_store.h" />
+    <ClInclude Include="include\vcc\utils\configuration_serializer.h" />
     <ClInclude Include="include\vcc\utils\critical_section.h" />
     <ClInclude Include="include\vcc\utils\dll_deleter.h" />
     <ClInclude Include="include\vcc\utils\filesystem.h" />
     <ClInclude Include="include\vcc\utils\winapi.h" />
+=======
+    <ClInclude Include="include\vcc\core\legacy_cartridge_definitions.h" />
+    <ClInclude Include="include\vcc\core\limits.h" />
+    <ClInclude Include="include\vcc\core\rom_image.h" />
+    <ClInclude Include="include\vcc\core\utils\configuration_serializer.h" />
+    <ClInclude Include="include\vcc\core\utils\critical_section.h" />
+    <ClInclude Include="include\vcc\core\utils\dll_deleter.h" />
+    <ClInclude Include="include\vcc\core\utils\filesystem.h" />
+    <ClInclude Include="include\vcc\core\utils\winapi.h" />
+    <ClInclude Include="include\vcc\devices\rtc\cloud9.h" />
+>>>>>>> parent of 4bddbb8 (relocate distortc into vcc::devices::rtc::oki_m6242b device and update fd502 cart to use it)
     <ClInclude Include="resource\resource.h" />
   </ItemGroup>
   <ItemGroup>

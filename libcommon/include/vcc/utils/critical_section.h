@@ -23,7 +23,6 @@
 namespace vcc::utils
 {
 
-	// FIXME: Remove all of this and replace with something from <mutex>
 	class critical_section
 	{
 	public:

@@ -827,26 +827,13 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// String Table. ** Resources are being used by libcommon.rc!! **
-// These strings are duplicated for Vcc.exe so they are available for
-// static builds. libcommon should not use these because resources are
-// not a thing with static builds - they can not be contained in a static
-// object library.
+// String Table
+//
 
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "VCC 2.1.9.3-pre3 Tandy Color Computer 3 Emulator"
     IDS_CATNUMBER           "26-3334"
-    // Strings for error messages FIXME: duplicated in libcommon
-    IDS_ERROR_UNKNOWN                  "Unknown error."
-    IDS_ERROR_CARTRIDGE_ALREADY_LOADED "Cartridge is already loaded."
-    IDS_ERROR_CARTRIDGE_CANNOT_OPEN    "Cannot open cartridge."
-    IDS_ERROR_CARTRIDGE_NOT_FOUND      "Cartridge not found."
-    IDS_ERROR_CARTRIDGE_NOT_LOADED     "Unable to load cartridge."
-    IDS_ERROR_CARTRIDGE_NOT_ROM        "Cartridge is not a valid ROM image."
-    IDS_ERROR_CARTRIDGE_NOT_EXPANSION  "Cartridge is not a valid expansion plugin."
-    IDS_ERROR_CARTRIDGE_API_NOT_SUPPORTED "Cartridge is using an API that is no longer supported."
-
 END
 
 #endif    // English (United States) resources

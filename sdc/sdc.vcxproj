@@ -96,14 +96,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="sdc_dllmain.cpp" />
-    <ClCompile Include="sdc_cartridge.cpp" />
-    <ClCompile Include="sdc_configuration.cpp" />
+    <ClCompile Include="sdc.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="sdc.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="sdc_cartridge.h" />
-    <ClInclude Include="sdc_configuration.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sdc.rc" />
