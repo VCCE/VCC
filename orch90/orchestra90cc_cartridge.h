@@ -49,7 +49,7 @@ namespace vcc::cartridges::orchestra90cc
 
 		/// @brief Construct the cartridge.
 		/// 
-		/// @param host A pointer to the host interface.
+		/// @param host A pointer to the host services interface.
 		/// @param bus A pointer to the bus interface.
 		/// @param module_instance A handle to the instance of the module containing the
 		/// cartridge resources.

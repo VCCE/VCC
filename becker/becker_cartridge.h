@@ -60,7 +60,7 @@ namespace vcc::cartridges::becker_port
 
 		/// @brief Construct the Becker Port cartridge.
 		/// 
-		/// @param host A pointer to the host interface.
+		/// @param host A pointer to the host services interface.
 		/// @param module_instance A handle to the instance of the module containing the
 		/// Becker Port resources.
 		/// 

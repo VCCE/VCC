@@ -71,22 +71,18 @@ namespace vcc::bus
 		/// @return A reference to a cartridge device.
 		virtual [[nodiscard]] driver_type& driver() = 0;
 
-		/// @brief Initialize the device.
+		/// @brief Initialize the plugin.
 		///
 		/// Initialize the cartridge device to a default state. If this called more than
 		/// once without stopping the device the behavior is undefined.
-		/// 
-		/// @todo Add exception information. Need custom exceptions first.
 		virtual void start();
 
-		/// @brief Terminate the device.
+		/// @brief Terminate the plugin.
 		///
 		/// Stops all device operations and releases all resources. This function must be
 		/// called prior to the cartridge being destroyed to ensure that all resources are
 		/// gracefully released. If this function is called before the cartridge is
 		/// initialized or after it has been terminated the behavior is undefined.
-		/// 
-		/// @todo Add exception information. Need custom exceptions first.
 		virtual void stop();
 
 		/// @brief Retrieve the cartridge status.
@@ -96,7 +92,6 @@ namespace vcc::bus
 		/// If this function is called before the cartridge is initialized or after it has
 		/// been terminated the behavior is undefined.
 		/// 
-		/// @todo Add exception information. Need custom exceptions first.
 		/// @todo Maybe rename `buffer_size` to `buffer_length`.
 		/// 
 		/// @param text_buffer The text buffer to generate the status string in.
@@ -110,7 +105,7 @@ namespace vcc::bus
 		/// If this function is called before the cartridge is initialized or after it has
 		/// been terminated the behavior is undefined.
 		/// 
-		/// @todo Add exception information. Need custom exceptions first.
+		/// @todo rename this to `execute_menu_command` or something.
 		/// 
 		/// @param menu_item_id The identifier of the menu item.
 		virtual void menu_item_clicked(unsigned char menu_item_id);

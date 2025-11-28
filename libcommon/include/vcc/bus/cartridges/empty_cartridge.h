@@ -24,6 +24,8 @@ namespace vcc::bus::cartridges
 
 	/// @brief A cartridge that does nothing.
 	/// 
+	/// @todo rename to placeholder_cartridge.
+	/// 
 	/// The Empty Cartridge provides no functionality, extensions, or ROM to the system. It
 	/// does nothing and can act as a placeholder where a cartridge instance may be needed.
 	class LIBCOMMON_EXPORT empty_cartridge final : 

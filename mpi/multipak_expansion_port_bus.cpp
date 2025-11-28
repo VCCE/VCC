@@ -15,20 +15,26 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "multipak_expansion_port.h"
-#include "vcc/bus/cartridges/empty_cartridge.h"
+#include "multipak_expansion_port_bus.h"
+#include <stdexcept>
 
 
-multipak_expansion_port& multipak_expansion_port::operator=(multipak_expansion_port&& other) noexcept
+namespace vcc::cartridges::multipak
 {
-	if (this != &other)
+
+	multipak_expansion_port_bus::multipak_expansion_port_bus(
+		std::shared_ptr<::vcc::bus::expansion_port_bus> bus,
+		slot_id_type slot_id,
+		driver_type& driver)
+		:
+		bus_(bus),
+		slot_id_(slot_id),
+		driver_(driver)
 	{
-		expansion_port::operator=(std::move(other));
-
-		line_state_ = other.line_state_;
-
-		other.line_state_ = false;
+		if (bus_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Expansion Bus adapter. Parent bus is null.");
+		}
 	}
 
-	return *this;
 }

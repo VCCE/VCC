@@ -20,6 +20,12 @@
 #include "vcc/bus/expansion_port_ui.h"
 
 
-class multipak_expansion_port_ui : public ::vcc::bus::expansion_port_ui
+namespace vcc::cartridges::multipak
 {
-};
+
+	/// @inheritdoc
+	class multipak_expansion_port_ui : public ::vcc::bus::expansion_port_ui
+	{
+	};
+
+}

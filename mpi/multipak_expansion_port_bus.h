@@ -20,60 +20,95 @@
 #include "vcc/bus/expansion_port_bus.h"
 
 
-class multipak_expansion_port_bus : public ::vcc::bus::expansion_port_bus
+namespace vcc::cartridges::multipak
 {
-public:
 
-	multipak_expansion_port_bus(
-		size_t slot_id,
-		std::shared_ptr<::vcc::bus::expansion_port_bus> bus,
-		//	FIXME: maybe change to shared_ptr (or weak_ptr since its lifetime will be managed by the cartridge)
-		multipak_cartridge_driver& driver)
-		:
-		slot_id_(slot_id),
-		bus_(bus),
-		driver_(driver)
-	{}
-
-	void reset() override
+	/// @brief Interface to the expansion port bus.
+	///
+	/// This Expansion Port Bus extends the base implementation to support routing of bus
+	/// related calls made by the cartridges inserted into the Multi-Pak. All calls except
+	/// `set_cartridge_select_line` are routed to the bus the Multi-Pak. The calls to
+	/// `set_cartridge_select_line` are routed to the Multi-Pak Cartridge Driver.
+	class multipak_expansion_port_bus : public ::vcc::bus::expansion_port_bus
 	{
-		bus_->reset();
-	}
+	public:
 
-	void write_memory_byte(unsigned char value, unsigned short address) override
-	{
-		bus_->write_memory_byte(value, address);
-	}
-
-	unsigned char read_memory_byte(unsigned short address) override
-	{
-		return bus_->read_memory_byte(address);
-	}
-
-	void set_cartridge_select_line(bool line_state) override
-	{
-		driver_.set_cartridge_select_line(slot_id_, line_state);
-	}
-
-	void assert_irq_interrupt_line() override
-	{
-		bus_->assert_irq_interrupt_line();
-	}
-
-	void assert_nmi_interrupt_line() override
-	{
-		bus_->assert_nmi_interrupt_line();
-	}
-
-	void assert_cartridge_interrupt_line() override
-	{
-		bus_->assert_cartridge_interrupt_line();
-	}
+		/// @brief Type alias for the component emulating the Multi-Pak hardware.
+		using driver_type = ::vcc::cartridges::multipak::multipak_cartridge_driver;
+		/// @copydoc driver_type::slot_id_type
+		using slot_id_type = driver_type::slot_id_type;
 
 
-private:
+	public:
 
-	const size_t slot_id_;
-	const std::shared_ptr<::vcc::bus::expansion_port_bus> bus_;
-	multipak_cartridge_driver& driver_;
-};
+		/// @brief Construct the Multi-Pak expansion bus adapter.
+		/// 
+		/// @param bus A pointer to the expansion bus the Multi-Pak is connected to.
+		/// @param slot_id the Id of the slot the adapter is for.
+		/// @param driver The Multi-Pak driver.
+		/// 
+		/// @throws std::invalid_argument if `bus` is null.
+		multipak_expansion_port_bus(
+			std::shared_ptr<::vcc::bus::expansion_port_bus> bus,
+			slot_id_type slot_id,
+			driver_type& driver);
+
+		/// @inheritdoc
+		void reset() override
+		{
+			bus_->reset();
+		}
+
+		/// @inheritdoc
+		void write_memory_byte(unsigned char value, unsigned short address) override
+		{
+			bus_->write_memory_byte(value, address);
+		}
+
+		/// @inheritdoc
+		[[nodiscard]] unsigned char read_memory_byte(unsigned short address) override
+		{
+			return bus_->read_memory_byte(address);
+		}
+
+		/// @brief Set the cartridge select line.
+		/// 
+		/// Set the cartridge select line for the cartridge. Unlike other calls this
+		/// is routed to the Multi-Pak driver instead of the bus of the host system.
+		/// 
+		/// @param line_state The new state of the cartridge select line.
+		void set_cartridge_select_line(bool line_state) override
+		{
+			driver_.set_cartridge_select_line(slot_id_, line_state);
+		}
+
+		/// @inheritdoc
+		void assert_irq_interrupt_line() override
+		{
+			bus_->assert_irq_interrupt_line();
+		}
+
+		/// @inheritdoc
+		void assert_nmi_interrupt_line() override
+		{
+			bus_->assert_nmi_interrupt_line();
+		}
+
+		/// @inheritdoc
+		void assert_cartridge_interrupt_line() override
+		{
+			bus_->assert_cartridge_interrupt_line();
+		}
+
+
+	private:
+
+		/// @brief The parent bus the Multi-Pak is connected to.
+		const std::shared_ptr<::vcc::bus::expansion_port_bus> bus_;
+		/// @brief The slot id the adapter is for.
+		const slot_id_type slot_id_;
+		/// @brief The Multi-Pak cartridge driver.
+		driver_type& driver_;
+	};
+
+}

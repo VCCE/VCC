@@ -62,11 +62,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="multipak_expansion_port.cpp" />
+    <ClCompile Include="multipak_expansion_port_bus.cpp" />
     <ClCompile Include="configuration_dialog.cpp" />
     <ClCompile Include="mpi.cpp" />
     <ClCompile Include="multipak_cartridge.cpp" />
-    <ClCompile Include="multipak_device.cpp" />
+    <ClCompile Include="multipak_cartridge_driver.cpp" />
     <ClCompile Include="multipak_configuration.cpp" />
   </ItemGroup>
   <ItemGroup>

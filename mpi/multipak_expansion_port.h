@@ -23,30 +23,38 @@
 #include "vcc/utils/cartridge_loader.h"
 
 
-class multipak_expansion_port : public ::vcc::bus::expansion_port
+namespace vcc::cartridges::multipak
 {
-public:
 
-	using expansion_port::expansion_port;
-
-	multipak_expansion_port(const multipak_expansion_port&) = delete;
-	multipak_expansion_port(multipak_expansion_port&&) = default;
-
-	multipak_expansion_port& operator=(const multipak_expansion_port& other) = delete;
-	multipak_expansion_port& operator=(multipak_expansion_port&& other) noexcept;
-
-	void line_state(bool state)
+	/// @brief Extends `expansion_port` to add support for the cartridge line select of
+	/// cartridges inserted into the Multi-Pak.
+	class multipak_expansion_port : public ::vcc::bus::expansion_port
 	{
-		line_state_ = state;
-	}
+	public:
 
-	bool line_state() const
-	{
-		return line_state_;
-	}
+		using expansion_port::expansion_port;
+
+		/// @brief Sets the cartridge port line state.
+		/// 
+		/// @param state The new state.
+		void cartridge_select_line(bool state)
+		{
+			line_state_ = state;
+		}
+
+		/// @brief Retrieves the cartridge port line state.
+		/// 
+		/// @return The cartridge port line state.
+		[[nodiscard]] bool cartridge_select_line() const
+		{
+			return line_state_;
+		}
 
 
-private:
+	private:
 
-	bool line_state_ = false;
-};
+		/// @brief The line state.
+		bool line_state_ = false;
+	};
+
+}

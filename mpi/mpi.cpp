@@ -21,13 +21,7 @@
 #include <Windows.h>
 
 
-namespace
-{
-
-	HINSTANCE gModuleInstance = nullptr;
-	multipak_configuration gConfiguration("MPI");
-
-}
+static HINSTANCE gModuleInstance = nullptr;
 
 
 BOOL WINAPI DllMain(
@@ -51,21 +45,23 @@ extern "C" __declspec(dllexport) ::vcc::bus::cartridge_plugin_factory_prototype 
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus) -> ::vcc::bus::cartridge_factory_result
 		{
-			gConfiguration.configuration_path(host->configuration_path());
+			auto configuration(std::make_shared<::vcc::cartridges::multipak::multipak_configuration>(
+				host->configuration_path(),
+				"Cartridges.MultiPakInterface"));
 
 			std::shared_ptr<::vcc::bus::expansion_port_bus> shared_bus(move(bus));
 
-			auto device(std::make_unique<multipak_cartridge_driver>(
+			auto device(std::make_unique<::vcc::cartridges::multipak::multipak_cartridge_driver>(
 				shared_bus,
-				gConfiguration));
+				configuration));
 
-			return std::make_unique<multipak_cartridge>(
+			return std::make_unique<::vcc::cartridges::multipak::multipak_cartridge>(
 				host,
 				move(ui),
 				shared_bus,
 				move(device),
 				gModuleInstance,
-				gConfiguration);
+				configuration);
 		};
 
 }

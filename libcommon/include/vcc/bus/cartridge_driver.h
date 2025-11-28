@@ -31,7 +31,7 @@ namespace vcc::bus
 	{
 	public:
 
-		/// @brief Type alias for lengths and sizes.
+		/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
 		using size_type = std::size_t;
 		/// @brief Type alias for the sample data returned digital audio sampler.
 		using sample_type = unsigned short;
