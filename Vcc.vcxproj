@@ -188,24 +188,17 @@
     <ClInclude Include="xDebug.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="resources\binfile.ico" />
     <Image Include="resources\consola.bmp" />
     <Image Include="resources\hitachi.ico" />
     <Image Include="resources\ico00004.ico" />
     <Image Include="resources\icon1.ico" />
-    <Image Include="resources\3guys.bmp" />
-    <Image Include="joystick.ico" />
     <Image Include="resources\joystick.ico" />
     <Image Include="resources\Keyboard.ico" />
     <Image Include="resources\moto.ico" />
     <Image Include="resources\mouse.ico" />
-    <Image Include="resources\progpack.ico" />
     <Image Include="resources\composite.ico" />
-    <Image Include="resources\speaker1.bmp" />
-    <Image Include="resources\speaker2.bmp" />
     <Image Include="resources\vcc.bmp" />
     <Image Include="resources\rgb.ico" />
-    <Image Include="resources\speaker.ico" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Vcc.rc" />

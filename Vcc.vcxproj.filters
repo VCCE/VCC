@@ -278,12 +278,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="resources\3guys.bmp">
-      <Filter>Resources</Filter>
-    </Image>
-    <Image Include="resources\binfile.ico">
-      <Filter>Resources</Filter>
-    </Image>
     <Image Include="resources\composite.ico">
       <Filter>Resources</Filter>
     </Image>
@@ -299,28 +293,13 @@
     <Image Include="resources\joystick.ico">
       <Filter>Resources</Filter>
     </Image>
-    <Image Include="joystick.ico">
-      <Filter>Resources</Filter>
-    </Image>
     <Image Include="resources\Keyboard.ico">
-      <Filter>Resources</Filter>
-    </Image>
-    <Image Include="resources\speaker1.bmp">
-      <Filter>Resources</Filter>
-    </Image>
-    <Image Include="resources\speaker2.bmp">
       <Filter>Resources</Filter>
     </Image>
     <Image Include="resources\vcc.bmp">
       <Filter>Resources</Filter>
     </Image>
-    <Image Include="resources\speaker.ico">
-      <Filter>Resources</Filter>
-    </Image>
     <Image Include="resources\rgb.ico">
-      <Filter>Resources</Filter>
-    </Image>
-    <Image Include="resources\progpack.ico">
       <Filter>Resources</Filter>
     </Image>
     <Image Include="resources\mouse.ico">
