@@ -18,17 +18,13 @@
 #define IDD_CONFIG                      105
 #define IDD_DISKS                       106
 #define IDB_VCC                         108
-#define IDI_BINFILE                     110
 #define IDB_BENDER                      111
-#define IDI_CART                        112
 #define IDC_NONE                        113
 #define IDI_MOTO                        114
 #define IDI_HITACHI2                    116
 #define IDI_COMPOSITE                   117
 #define IDI_RGB                         118
 #define IDC_CURSOR1                     120
-#define IDB_NOMUTE                      128
-#define IDB_MUTE                        130
 #define IDD_KEYBOARD                    134
 #define IDD_TCONFIG                     135
 #define IDD_DISPLAY                     136
@@ -41,7 +37,6 @@
 #define IDI_JOYSTICK                    149
 #define IDI_MOUSE                       150
 #define IDD_MISC                        154
-#define IDB_3GUYS                       156
 #define IDD_CASSETTE                    157
 #define IDD_NEWTAPE                     158
 #define IDD_BITBANGER                   159
@@ -57,7 +52,6 @@
 #define IDD_EXPORT                      177
 #define IDB_FONT_CONSOLA                178
 #define IDD_FUNCTION_KEYS               179
-
 #define IDC_MUTE                        1003
 #define IDC_THROTTLE                    1004
 #define IDC_ARTIFACTS                   1005
@@ -264,10 +258,7 @@
 #define IDC_ROMPATH                     1084
 #define IDC_USE_EXTROM                  1085
 #define IDC_OVERCLOCK                   1086
-
 #define IDC_KEYMAPED                    1090
-// IDC_KEYBTN_FIRST must point to the lowest CoCo KEYBTN Id
-// IDC_KEYBTN_LAST must point to the highest CoCo KEYBTN Id
 #define IDC_KEYBTN_FIRST                1092
 #define IDC_KEYBTN_1                    1092
 #define IDC_KEYBTN_2                    1093
@@ -322,31 +313,24 @@
 #define IDC_KEYBTN_SPACE                1143
 #define IDC_KEYBTN_F1                   1144
 #define IDC_KEYBTN_F2                   1145
-// Modifiers must be at tail of CoCo key buttons
 #define IDC_KEYBTN_ALT                  1146
 #define IDC_KEYBTN_CTRL                 1147
 #define IDC_KEYBTN_RSHIFT               1148
 #define IDC_KEYBTN_LSHIFT               1149
 #define IDC_KEYBTN_LAST                 1149
-
-// Other key map editor controls
 #define IDC_SELECT_KEYMAP               1150
 #define IDC_KEYMAP_OK                   1152
 #define IDC_SET_CUST_KEYMAP             1153
 #define IDC_PCKEY_TXT                   1155
 #define IDC_CCKEY_TXT                   1156
 #define IDC_KEYMAP_FILE                 1157
-
 #define IDC_KEYMAP_COCO                 1158
 #define IDC_KEYMAP_NATURAL              1159
 #define IDC_KEYMAP_COMPACT              1160
 #define IDC_KEYMAP_CUSTOM               1170
-// End keymapedit
-
 #define IDC_ORG_PALETTE                 1191
 #define IDC_UPD_PALETTE                 1192
 #define IDC_NTSC5_PALETTE               1193
-
 #define IDC_MEM_VSCROLLBAR              2001
 #define IDT_MEM_TIMER                   2002
 #define IDT_PROC_TIMER                  2003
@@ -354,7 +338,6 @@
 #define IDT_TRC_VSCROLLBAR              2005
 #define IDT_MMU_VSCROLLBAR              2006
 #define IDT_TRC_HSCROLLBAR              2007
-
 #define IDC_EDIT_SOURCE                 2100
 #define IDC_BTN_SOURCE_BROWSE           2101
 #define IDC_LINES_LOADED                2102
@@ -412,14 +395,12 @@
 #define ID_FILE_EXIT                    40002
 #define IDM_HELP_ABOUT                  40003
 #define ID_FILE_RUN                     40004
-#define ID_FILE_RESET                   40005
 #define ID_CARTS_LOAD                   40006
 #define ID_DISKS_DRIVE0                 40007
 #define ID_DISKS_DRIVE1                 40008
 #define ID_DISKS_DRIVE2                 40009
 #define ID_DISKS_DRIVE3                 40010
 #define ID_DISKS_HD                     40010
-#define ID_FILE_RESET_SFT               40011
 #define ID_DUMPMEM                      40012
 #define ID_CONSOLE                      40013
 #define ID_CPUDUMP                      40014
@@ -447,7 +428,6 @@
 #define ID_PROCESSOR_STATE              40041
 #define ID_MMU_MONITOR                  40043
 #define ID_EXEC_TRACE                   40044
-#define ID_PAUSE_EMULATION              40045
 #define ID_DISASSEMBLER                 40046
 #define ID_AUDIO_CONFIG                 40050
 #define ID_CPU_CONFIG                   40051
@@ -457,20 +437,27 @@
 #define ID_MISC_CONFIG                  40055
 #define ID_TAPE_CONFIG                  40056
 #define ID_BITBANGER_CONFIG             40057
-#define ID_SWAP_JOYSTICKS               40058
 #define IDM_HELP_FUNKEY                 40059
-#define ID_CARTRIDGE_INSERT40060        40060
-#define ID_CARTRIDGE_EJECT              40061
+#define ID_CARTRIDGE_EJECT              40060
+#define ID_CONTROL_HARD_RESET           40061
+#define ID_CONTROL_SOFT_RESET           40062
+#define ID_CONTROL_TOGGLE_DISPLAY_TYPE  40063
+#define ID_CONTROL_TOGGLE_ARTIFACT_COLORS 40064
+#define ID_CONTROL_TOGGLE_THROTTLE      40065
+#define ID_CONTROL_TOGGLE_PAUSE         40066
+#define ID_CONTROL_TOGGLE_OVERCLOCK     40067
+#define ID_CONTROL_OVERCLOCK_INCREASE   40068
+#define ID_CONTROL_OVERCLOCK_DECREASE   40069
+#define ID_CONTROL_SWAP_JOYSTICKS       40070
 #define ID_BREAKPOINTS                  43332
 #define ID_CONFIGURE_OPTIONS            65535
 
-
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        180
-#define _APS_NEXT_COMMAND_VALUE         40062
+#define _APS_NEXT_COMMAND_VALUE         40071
 #define _APS_NEXT_CONTROL_VALUE         2155
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

@@ -264,6 +264,41 @@ void CloseApp()
 	UnloadDll();
 }
 
+void set_menu_item_text(HMENU menu, UINT id, std::string text, std::string hotkey)
+{
+	MENUITEMINFO item_info = {};
+
+	if (!hotkey.empty())
+	{
+		text += "\t" + hotkey;
+	}
+
+	item_info.cbSize = sizeof(item_info);
+	item_info.fMask = MIIM_STRING;
+	item_info.fType = MFT_STRING;
+
+	item_info.dwTypeData = text.data();
+	item_info.cch = text.size();
+
+	SetMenuItemInfo(menu, id, FALSE, &item_info);
+}
+
+void UpdateControlMenu(HMENU menu)
+{
+	set_menu_item_text(
+		menu,
+		ID_CONTROL_TOGGLE_PAUSE,
+		EmuState.Debugger.IsHalted() ? "Resume" : "Pause",
+		"F7");
+
+	set_menu_item_text(
+		menu,
+		ID_CONTROL_TOGGLE_DISPLAY_TYPE,
+		// FIXME-CHET: Magic number returned by setmonitortype should be enum
+		// FIXME-CHET: QUERY SHIT!
+		SetMonitorType(QUERY) == 0 ? "Switch to RGB Display" : "Switch to Composite Display",
+		"F6");
+}
 
 void UpdateCartridgeMenu(HMENU menu)
 {
@@ -312,12 +347,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 		case WM_INITMENUPOPUP:
-			// FIXME-CHET: magic number for menu index
-			if (const auto menu(reinterpret_cast<HMENU>(wParam)); menu == GetSubMenu(GetMenu(hWnd), 3))
+		{
+			const auto menu(GetMenu(hWnd));
+			const auto menu_opening(reinterpret_cast<HMENU>(wParam));
+			// FIXME-CHET: magic number for menu index. find some place to put the symbolic
+			if (menu_opening == GetSubMenu(menu, 4))
 			{
-				UpdateCartridgeMenu(reinterpret_cast<HMENU>(wParam));
+				UpdateCartridgeMenu(menu_opening);
+			}
+
+			// FIXME-CHET: magic number for menu index. find some place to put the symbolic
+			else if (menu_opening == GetSubMenu(menu, 3))
+			{
+				UpdateControlMenu(menu_opening);
 			}
 			break;
+		}
 
 		case WM_SYSCOMMAND:
 			//-------------------------------------------------------------
@@ -397,19 +442,52 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					SendMessage (hWnd, WM_CLOSE, 0, 0);
 					break;
 
-				case ID_FILE_RESET:
-					if (EmuState.EmulationRunning)
-						EmuState.ResetPending=2;
-					break;
-
 				case ID_FILE_RUN:
 					EmuState.EmulationRunning=TRUE;
 					InvalidateBoarder();
 					break;
 
-				case ID_FILE_RESET_SFT:
+				case ID_CONTROL_HARD_RESET:
+					if (EmuState.EmulationRunning)
+						EmuState.ResetPending=2;
+					break;
+
+				case ID_CONTROL_SOFT_RESET:
 					if (EmuState.EmulationRunning)
 						EmuState.ResetPending=1;
+					break;
+
+				case ID_CONTROL_TOGGLE_DISPLAY_TYPE:
+					SetMonitorType(!SetMonitorType(QUERY));
+					break;
+
+				case ID_CONTROL_TOGGLE_ARTIFACT_COLORS:
+					FlipArtifacts();
+					break;
+
+				case ID_CONTROL_TOGGLE_THROTTLE:
+					SetSpeedThrottle(!SetSpeedThrottle(QUERY));
+					break;
+
+				case ID_CONTROL_TOGGLE_OVERCLOCK:
+					SetOverclock(!EmuState.OverclockFlag);
+					SetupClock();
+					break;
+
+				case ID_CONTROL_OVERCLOCK_INCREASE:
+					IncreaseOverclockSpeed();
+					break;
+
+				case ID_CONTROL_OVERCLOCK_DECREASE:
+					DecreaseOverclockSpeed();
+					break;
+
+				case ID_CONTROL_TOGGLE_PAUSE:
+					EmuState.Debugger.ToggleRun();
+					break;
+
+				case ID_CONTROL_SWAP_JOYSTICKS:
+					SwapJoySticks();
 					break;
 
 				case ID_FILE_LOAD:
@@ -434,19 +512,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case ID_PASTE_BASIC_NEW:
 					PasteBASICWithNew();
-					break;
-
-				case ID_FLIP_ARTIFACTS:
-					FlipArtifacts();
-					break;
-
-				case ID_SWAP_JOYSTICKS:
-					SwapJoySticks();
-					break;
-
-
-				case ID_PAUSE_EMULATION:
-					EmuState.Debugger.ToggleRun();
 					break;
 
 				case ID_MEMORY_DISPLAY:

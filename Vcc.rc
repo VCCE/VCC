@@ -24,65 +24,72 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Menu
 //
 
-IDR_MENU MENU
+IDR_MENU MENUEX
 BEGIN
-    POPUP "File"
+    POPUP "File",                           65535,MFT_STRING,MFS_ENABLED
     BEGIN
-        MENUITEM "Run",                         ID_FILE_RUN
-        MENUITEM "Save Config",                 ID_SAVE_CONFIG
-        MENUITEM "Load Config",                 ID_FILE_LOAD
-        MENUITEM SEPARATOR
-        MENUITEM "[F9] Hard Reset",             ID_FILE_RESET
-        MENUITEM "[F5] Soft Reset",             ID_FILE_RESET_SFT
-        MENUITEM "[F7] Pause",                  ID_PAUSE_EMULATION
-        MENUITEM SEPARATOR
-        MENUITEM "Exit",                        ID_FILE_EXIT
+        MENUITEM "Run",                         ID_FILE_RUN,MFT_STRING,MFS_ENABLED
+        MENUITEM "Save Config",                 ID_SAVE_CONFIG,MFT_STRING,MFS_ENABLED
+        MENUITEM "Load Config",                 ID_FILE_LOAD,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Exit",                        ID_FILE_EXIT,MFT_STRING,MFS_ENABLED
     END
-    POPUP "Edit"
+    POPUP "Edit",                           65535,MFT_STRING,MFS_ENABLED
     BEGIN
-        MENUITEM "Copy Text",                   ID_COPY_TEXT
-        MENUITEM "Paste Text",                  ID_PASTE_TEXT
-        MENUITEM "Paste BASIC Code (Merge)",    ID_PASTE_BASIC
-        MENUITEM "Paste BASIC Code (with NEW)", ID_PASTE_BASIC_NEW
+        MENUITEM "Copy Text",                   ID_COPY_TEXT,MFT_STRING,MFS_ENABLED
+        MENUITEM "Paste Text",                  ID_PASTE_TEXT,MFT_STRING,MFS_ENABLED
+        MENUITEM "Paste BASIC Code (Merge)",    ID_PASTE_BASIC,MFT_STRING,MFS_ENABLED
+        MENUITEM "Paste BASIC Code (with NEW)", ID_PASTE_BASIC_NEW,MFT_STRING,MFS_ENABLED
     END
-    POPUP "Configuration"
+    POPUP "Configuration",                  65535,MFT_STRING,MFS_ENABLED
     BEGIN
-        MENUITEM "Flip Artifact Colors",        ID_FLIP_ARTIFACTS
-        MENUITEM "Swap Joysticks",              ID_SWAP_JOYSTICKS
-
-        MENUITEM SEPARATOR
-        MENUITEM "Audio",                       ID_AUDIO_CONFIG
-        MENUITEM "Cpu",                         ID_CPU_CONFIG
-        MENUITEM "Display",                     ID_DISPLAY_CONFIG
-        MENUITEM "Keyboard",                    ID_KEYBOARD_CONFIG
-        MENUITEM "JoySticks",                   ID_JOYSTICKS_CONFIG
-        MENUITEM "Tape",                        ID_TAPE_CONFIG
-        MENUITEM "BitBanger",                   ID_BITBANGER_CONFIG
-
+        MENUITEM "Audio",                       ID_AUDIO_CONFIG,MFT_STRING,MFS_ENABLED
+        MENUITEM "CPU",                         ID_CPU_CONFIG,MFT_STRING,MFS_ENABLED
+        MENUITEM "Display",                     ID_DISPLAY_CONFIG,MFT_STRING,MFS_ENABLED
+        MENUITEM "Keyboard",                    ID_KEYBOARD_CONFIG,MFT_STRING,MFS_ENABLED
+        MENUITEM "JoySticks",                   ID_JOYSTICKS_CONFIG,MFT_STRING,MFS_ENABLED
+        MENUITEM "Tape",                        ID_TAPE_CONFIG,MFT_STRING,MFS_ENABLED
+        MENUITEM "BitBanger",                   ID_BITBANGER_CONFIG,MFT_STRING,MFS_ENABLED
     END
-    // Dummy place holder for Cartrige menu, drawn after carts load
-    POPUP "Cartridge"
+    POPUP "Control",                        65535,MFT_STRING,MFS_ENABLED
     BEGIN
-        POPUP "Cartridge Port"
+        MENUITEM "Pause\tF7",                   ID_CONTROL_TOGGLE_PAUSE,MFT_STRING,MFS_ENABLED
+        MENUITEM "Soft Reset\tF5",              ID_CONTROL_SOFT_RESET,MFT_STRING,MFS_ENABLED
+        MENUITEM "Hard Reset\tF9",              ID_CONTROL_HARD_RESET,MFT_STRING,MFS_ENABLED
+        MENUITEM "Switch to RGB/CMB\tF6",       ID_CONTROL_TOGGLE_DISPLAY_TYPE,MFT_STRING,MFS_ENABLED
+        MENUITEM "Toggle NTSC Artifacts Colors\tShift+F6", ID_CONTROL_TOGGLE_ARTIFACT_COLORS,MFT_STRING,MFS_ENABLED
+        MENUITEM "Toggle Throttle\tF8",         ID_CONTROL_TOGGLE_THROTTLE,MFT_STRING,MFS_ENABLED
+        MENUITEM "Swap Joysticks\tShift+F7",    ID_CONTROL_SWAP_JOYSTICKS,MFT_STRING,MFS_ENABLED
+        POPUP "Overclock",                      65535,MFT_STRING,MFS_ENABLED
         BEGIN
-            MENUITEM "Insert",                  ID_CARTRIDGE_INSERT
-            MENUITEM "Eject",                   ID_CARTRIDGE_EJECT
+            MENUITEM "Enable\tShift+F8",            ID_CONTROL_TOGGLE_OVERCLOCK,MFT_STRING,MFS_ENABLED
+            MENUITEM "Increase Speed\tF3",          ID_CONTROL_OVERCLOCK_INCREASE,MFT_STRING,MFS_ENABLED
+            MENUITEM "Decrease Speed\tF4",          ID_CONTROL_OVERCLOCK_DECREASE,MFT_STRING,MFS_ENABLED
         END
     END
-    POPUP "Debugger"
+    POPUP "Cartridge",                      65535,MFT_STRING,MFS_ENABLED
     BEGIN
-        MENUITEM "Memory Display",              ID_MEMORY_DISPLAY
-        MENUITEM "Processor State",             ID_PROCESSOR_STATE
-        MENUITEM "Disassembler",                ID_DISASSEMBLER
-        MENUITEM "Source Debugger",             ID_BREAKPOINTS
-        MENUITEM "MMU Monitor",                 ID_MMU_MONITOR
-        MENUITEM "Execution Trace",             ID_EXEC_TRACE
+        POPUP "Cartridge Port",                 65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "Insert",                      ID_CARTRIDGE_INSERT,MFT_STRING,MFS_ENABLED
+            MENUITEM "Eject",                       ID_CARTRIDGE_EJECT,MFT_STRING,MFS_ENABLED
+        END
     END
-    POPUP "Help", HELP
+    POPUP "Debugger",                       65535,MFT_STRING,MFS_ENABLED
     BEGIN
-        MENUITEM "About Vcc",                   IDM_HELP_ABOUT
-        MENUITEM "Function Keys",               IDM_HELP_FUNKEY
-        MENUITEM "User Guide",                  IDM_USER_WIKI
+        MENUITEM "Memory Display",              ID_MEMORY_DISPLAY,MFT_STRING,MFS_ENABLED
+        MENUITEM "Processor State",             ID_PROCESSOR_STATE,MFT_STRING,MFS_ENABLED
+        MENUITEM "Disassembler",                ID_DISASSEMBLER,MFT_STRING,MFS_ENABLED
+        MENUITEM "Source Debugger",             ID_BREAKPOINTS,MFT_STRING,MFS_ENABLED
+        MENUITEM "MMU Monitor",                 ID_MMU_MONITOR,MFT_STRING,MFS_ENABLED
+        MENUITEM "Execution Trace",             ID_EXEC_TRACE,MFT_STRING,MFS_ENABLED
+    END
+    POPUP "Help",                           65535,MFT_STRING | MFT_RIGHTJUSTIFY,MFS_ENABLED
+    BEGIN
+        MENUITEM "About DREAM - A Better VCC",  IDM_HELP_ABOUT,MFT_STRING,MFS_ENABLED
+        MENUITEM "Function Keys",               IDM_HELP_FUNKEY,MFT_STRING,MFS_ENABLED
+        MENUITEM "User Guide",                  IDM_USER_WIKI,MFT_STRING,MFS_ENABLED
     END
 END
 
@@ -93,18 +100,18 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE
+2 TEXTINCLUDE 
 BEGIN
     "#include ""winres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE
+3 TEXTINCLUDE 
 BEGIN
     "\r\n"
     "\0"
@@ -121,10 +128,6 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_COCO3               ICON                    "resources\\icon1.ico"
-
-IDI_BINFILE             ICON                    "resources\\binfile.ico"
-
-IDI_CART                ICON                    "resources\\progpack.ico"
 
 IDI_MOTO                ICON                    "resources\\moto.ico"
 
@@ -148,54 +151,53 @@ IDI_MOUSE               ICON                    "resources\\mouse.ico"
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 232, 345
+IDD_ABOUTBOX DIALOGEX 0, 0, 255, 281
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "About"
+CAPTION "About DREAM - A Better VCC"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    CONTROL         IDB_VCC,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,8,5,217,45
-    CONTROL         IDB_3GUYS,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE,16,53,77,57,WS_EX_DLGMODALFRAME
-    LTEXT           "DREAM Version 0.1",IDC_STATIC,114,65,85,10
-    LTEXT           "Another classic computer canceled before it's time!",IDC_STATIC,114,80,85,20
-    LTEXT           "Copyright 2015, 2026 By Joseph Forgione, Chet Simpson",IDC_STATIC,8,120,120,15
-    LTEXT           "DREAM is free software: you can redistribute and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.",IDC_STATIC,8,135,210,35
-    LTEXT           "DREAM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",IDC_STATIC,8,172,210,35
-    LTEXT           "See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with VCC (Virtual Color Computer). If not, see http://www.gnu.org/licenses/.",IDC_STATIC,8,210,215,40
-    LTEXT           "DREAM Repository and Release Packages maintained by Chet Simpson.",IDC_STATIC,8,250,206,20
-    LTEXT           "Adapted to Visual Studio by Gary Coulbourne and Wes Gale. Hitachi 6309 port by Walter Zambotti.",IDC_STATIC,8,270,206,20
-    LTEXT           "Other contributions by Bill Pierce, James Ross, Peter Westberg, James Rye, EJ Jaquay, Mike Rojas, Trey Tomes, and Craig Allsop.  ",IDC_STATIC,8,290,206,30
-    DEFPUSHBUTTON   "OK",IDOK,175,320,50,14
+    CONTROL         IDB_VCC,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,7,7,240,45
+    LTEXT           "DREAM - Version 0.0.0.1",IDC_STATIC,7,57,240,8
+    LTEXT           "Copyright 2015, 2026 By Joseph Forgione, Chet Simpson",IDC_STATIC,7,66,240,8
+    LTEXT           "DREAM is free software: you can redistribute and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.",IDC_STATIC,7,156,240,32
+    LTEXT           "DREAM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",IDC_STATIC,7,195,240,24
+    LTEXT           "See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with VCC (Virtual Color Computer). If not, see http://www.gnu.org/licenses/.",IDC_STATIC,7,226,240,24
+    LTEXT           "DREAM Repository and Release Packages maintained by Chet Simpson.",IDC_STATIC,7,134,240,8
+    LTEXT           "Adapted to Visual Studio by Gary Coulbourne and Wes Gale.",IDC_STATIC,7,81,240,8
+    LTEXT           "Bug fixes and other contributions by Bill Pierce, James Ross, Peter Westberg, James Rye, EJ Jaquay, Mike Rojas, Trey Tomes, and Craig Allsop.  ",IDC_STATIC,7,111,240,16
+    DEFPUSHBUTTON   "Close",IDOK,197,260,50,14
+    LTEXT           "Hitachi 6309 port by Walter Zambotti.",IDC_STATIC,7,96,240,8
 END
 
-IDD_FUNCTION_KEYS DIALOGEX 0,0,166,145
-STYLE DS_CENTERMOUSE | DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_FUNCTION_KEYS DIALOGEX 0, 0, 166, 145
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Function Keys"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    GROUPBOX "",IDC_STATIC,3,2,160,121,BS_CENTER
-    LTEXT "Unmodified",IDC_STATIC,30,8,50,10
-    LTEXT " F3   Decrease Overclock", IDC_STATIC,5,20,85,10
-    LTEXT " F4   Increase Overclock", IDC_STATIC,5,30,85,10
-    LTEXT " F5   Soft Reset",         IDC_STATIC,5,40,85,10
-    LTEXT " F6   RGB Toggle",         IDC_STATIC,5,50,85,10
-    LTEXT " F7   Pause Toggle"        IDC_STATIC,5,60,85,10
-    LTEXT " F8   Toggle Throttle",    IDC_STATIC,5,70,85,10
-    LTEXT " F9   Stop/Start reset",   IDC_STATIC,5,80,85,10
-    LTEXT "F10  FS Cart Menu",        IDC_STATIC,5,90,85,10
-    LTEXT "F11  Toggle Fullscreen",   IDC_STATIC,5,100,85,10
-    LTEXT "F12  Function Keys",       IDC_STATIC,5,110,85,10
-    LTEXT "Shifted",          IDC_STATIC,110,8,50,10
-    LTEXT "---",              IDC_STATIC,115,20,40,10
-    LTEXT "---",              IDC_STATIC,115,30,40,10
-    LTEXT "Hard Reset",       IDC_STATIC,100,40,60,10
-    LTEXT "Flip Artifacts",   IDC_STATIC,100,50,60,10
-    LTEXT "Swap Joysticks",   IDC_STATIC,100,60,60,10
-    LTEXT "Overclock Toggle", IDC_STATIC,100,70,60,10
-    LTEXT "---",              IDC_STATIC,115,80,40,10
-    LTEXT "FS Config Menu",   IDC_STATIC,100,90,60,10
-    LTEXT "FS Toggle Status", IDC_STATIC,100,100,60,10
-    LTEXT "Take Screenshot",  IDC_STATIC,100,110,60,10
-    DEFPUSHBUTTON "OK",IDOK,57,126,50,15
+    GROUPBOX        "",IDC_STATIC,3,2,160,121,BS_CENTER
+    LTEXT           "Unmodified",IDC_STATIC,30,8,50,10
+    LTEXT           " F3   Decrease Overclock",IDC_STATIC,5,20,85,10
+    LTEXT           " F4   Increase Overclock",IDC_STATIC,5,30,85,10
+    LTEXT           " F5   Soft Reset",IDC_STATIC,5,40,85,10
+    LTEXT           " F6   RGB Toggle",IDC_STATIC,5,50,85,10
+    LTEXT           " F7   Pause Toggle",IDC_STATIC,5,60,85,10
+    LTEXT           " F8   Toggle Throttle",IDC_STATIC,5,70,85,10
+    LTEXT           " F9   Stop/Start reset",IDC_STATIC,5,80,85,10
+    LTEXT           "F10  FS Cart Menu",IDC_STATIC,5,90,85,10
+    LTEXT           "F11  Toggle Fullscreen",IDC_STATIC,5,100,85,10
+    LTEXT           "F12  Function Keys",IDC_STATIC,5,110,85,10
+    LTEXT           "Shifted",IDC_STATIC,110,8,50,10
+    LTEXT           "---",IDC_STATIC,115,20,40,10
+    LTEXT           "---",IDC_STATIC,115,30,40,10
+    LTEXT           "Hard Reset",IDC_STATIC,100,40,60,10
+    LTEXT           "Flip Artifacts",IDC_STATIC,100,50,60,10
+    LTEXT           "Swap Joysticks",IDC_STATIC,100,60,60,10
+    LTEXT           "Overclock Toggle",IDC_STATIC,100,70,60,10
+    LTEXT           "---",IDC_STATIC,115,80,40,10
+    LTEXT           "FS Config Menu",IDC_STATIC,100,90,60,10
+    LTEXT           "FS Toggle Status",IDC_STATIC,100,100,60,10
+    LTEXT           "Take Screenshot",IDC_STATIC,100,110,60,10
+    DEFPUSHBUTTON   "OK",IDOK,57,126,50,15
 END
 
 IDD_DISPLAY DIALOGEX 0, 0, 254, 220
@@ -208,19 +210,15 @@ BEGIN
     RADIOBUTTON     "RGB",IDC_RGB,23,23,31,10
     RADIOBUTTON     "Composite",IDC_COMPOSITE,23,37,49,10
     RADIOBUTTON     "Updated Palette",IDC_UPD_PALETTE,33,48,70,11
-    RADIOBUTTON     "NTSC Palette", IDC_NTSC5_PALETTE, 33, 60, 70, 11
-
+    RADIOBUTTON     "NTSC Palette",IDC_NTSC5_PALETTE,33,60,70,11
     GROUPBOX        "Frame Skip",IDC_STATIC,16,80,222,35,BS_CENTER
     CONTROL         "Slider1",IDC_FRAMESKIP,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,20,92,177,15,WS_EX_CLIENTEDGE
     EDITTEXT        IDC_FRAMEDISPLAY,200,93,33,15,ES_AUTOHSCROLL | ES_READONLY
-    
     CONTROL         "Scan Lines",IDC_SCANLINES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,128,70,10
     CONTROL         "Force Aspect",IDC_ASPECT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,141,70,10
     CONTROL         "Remember Size and Position",IDC_REMEMBER_SIZE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,95,128,110,10
     CONTROL         "[F8] Throttle Speed",IDC_THROTTLE,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,95,141,110,10
-
     CTEXT           "WARNING: Unchecking the ""Throttle Speed"" can greatly affect many functions of the VCC emulation including keyboard operation. Use with CAUTION! Please use ""Over-Clocking"" instead",IDC_STATIC,16,160,220,28,SS_SUNKEN,WS_EX_STATICEDGE
-
     DEFPUSHBUTTON   "OK",IDOK,75,200,36,14
     PUSHBUTTON      "Apply",IDAPPLY,120,200,36,14
     PUSHBUTTON      "Cancel",IDCANCEL,165,200,36,14
@@ -231,34 +229,34 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "CPU Configuration"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    GROUPBOX      "Over-Clocking",IDC_STATIC,16,12,234,36,BS_CENTER
-    CONTROL       "",IDC_OVERCLOCK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,22,28,10,10
-    CONTROL       "Slider1",IDC_CLOCKSPEED,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,35,26,160,15,WS_EX_CLIENTEDGE
-    EDITTEXT      IDC_CLOCKDISPLAY,199,27,45,12,ES_AUTOHSCROLL | ES_READONLY
-    GROUPBOX      "Memory Size",IDC_STATIC,17,58,60,54,BS_CENTER
-    RADIOBUTTON   "128 K",IDC_128K,27,69,35,10
-    RADIOBUTTON   "512 K",IDC_512K,27,79,35,10
-    RADIOBUTTON   "2048 K",IDC_2M,27,90,39,10
-    RADIOBUTTON   "8192 K",IDC_8M,27,101,39,10
-    GROUPBOX      "CPU",IDC_STATIC,87,63,154,45,BS_CENTER
-    RADIOBUTTON   "Motorola MC6809 CPU",IDC_6809,97,74,89,10
-    RADIOBUTTON   "Hitachi HD6309 CPU",IDC_6309,97,88,87,10,WS_TABSTOP
-    ICON          "",IDC_CPUICON,207,77,21,20
-    GROUPBOX      "VCC Debug",IDC_STATIC,16,120,110,34,BS_CENTER
-    CONTROL       "Enable BREAK ($113E)",IDC_ENABLE_BREAK,"Button",BS_AUTOCHECKBOX|WS_TABSTOP,25,133,90,10
-    GROUPBOX      "Auto Start",IDC_STATIC,142,114,98,40,BS_CENTER
-    CONTROL       "Auto Start Emulation",IDC_AUTOSTART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,154,126,80,10
-    CONTROL       "Auto Start Cartridge",IDC_AUTOCART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,154,138,80,10
-    GROUPBOX      "Alt Basic Rom",IDC_STATIC,14,160,228,31,BS_CENTER
-    CONTROL       "",IDC_USE_EXTROM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,173,10,10
-    EDITTEXT      IDC_ROMPATH,34,172,160,12,ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
-    PUSHBUTTON    "Browse",IDC_BROWSE,200,170,35,16
-    DEFPUSHBUTTON "OK",IDOK,65,198,36,14
-    PUSHBUTTON    "Apply",IDAPPLY,115,198,36,14
-    PUSHBUTTON    "Cancel",IDCANCEL,165,198,36,14
+    GROUPBOX        "Over-Clocking",IDC_STATIC,16,12,234,36,BS_CENTER
+    CONTROL         "",IDC_OVERCLOCK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,22,28,10,10
+    CONTROL         "Slider1",IDC_CLOCKSPEED,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,35,26,160,15,WS_EX_CLIENTEDGE
+    EDITTEXT        IDC_CLOCKDISPLAY,199,27,45,12,ES_AUTOHSCROLL | ES_READONLY
+    GROUPBOX        "Memory Size",IDC_STATIC,17,58,60,54,BS_CENTER
+    RADIOBUTTON     "128 K",IDC_128K,27,69,35,10
+    RADIOBUTTON     "512 K",IDC_512K,27,79,35,10
+    RADIOBUTTON     "2048 K",IDC_2M,27,90,39,10
+    RADIOBUTTON     "8192 K",IDC_8M,27,101,39,10
+    GROUPBOX        "CPU",IDC_STATIC,87,63,154,45,BS_CENTER
+    RADIOBUTTON     "Motorola MC6809 CPU",IDC_6809,97,74,89,10
+    RADIOBUTTON     "Hitachi HD6309 CPU",IDC_6309,97,88,87,10,WS_TABSTOP
+    ICON            "",IDC_CPUICON,207,77,21,20
+    GROUPBOX        "VCC Debug",IDC_STATIC,16,120,110,34,BS_CENTER
+    CONTROL         "Enable BREAK ($113E)",IDC_ENABLE_BREAK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,25,133,90,10
+    GROUPBOX        "Auto Start",IDC_STATIC,142,114,98,40,BS_CENTER
+    CONTROL         "Auto Start Emulation",IDC_AUTOSTART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,154,126,80,10
+    CONTROL         "Auto Start Cartridge",IDC_AUTOCART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,154,138,80,10
+    GROUPBOX        "Alt Basic Rom",IDC_STATIC,14,160,228,31,BS_CENTER
+    CONTROL         "",IDC_USE_EXTROM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,173,10,10
+    EDITTEXT        IDC_ROMPATH,34,172,160,12,ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    PUSHBUTTON      "Browse",IDC_BROWSE,200,170,35,16
+    DEFPUSHBUTTON   "OK",IDOK,65,198,36,14
+    PUSHBUTTON      "Apply",IDAPPLY,115,198,36,14
+    PUSHBUTTON      "Cancel",IDCANCEL,165,198,36,14
 END
 
-IDD_AUDIO DIALOGEX 0, 0, 210,110
+IDD_AUDIO DIALOGEX 0, 0, 210, 110
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Audio Configuration"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
@@ -292,13 +290,11 @@ BEGIN
     LTEXT           "Standard PC keyboard layout.(OS-9)",IDC_STATIC,67,37,180,12
     LTEXT           "Natural PC layout with no number pad.",IDC_STATIC,67,49,180,12
     LTEXT           "User designed custom keyboard layout.",IDC_STATIC,67,61,180,12
-
     GROUPBOX        "Configure Custom Keyboard",IDC_STATIC,7,90,264,68,BS_CENTER
     PUSHBUTTON      "Choose File",IDC_SELECT_KEYMAP,13,103,50,16,BS_MULTILINE
     CTEXT           "",IDC_KEYMAP_FILE,69,106,193,10,SS_NOPREFIX | SS_PATHELLIPSIS,WS_EX_STATICEDGE
     PUSHBUTTON      "EDIT",IDC_KEYMAPED,13,130,50,14
     LTEXT           "Choosing a new file clones the previously selected mapping.\nEdit selects custom and runs the graphical keymap editor.",IDC_STATIC,68,130,190,25
-
     DEFPUSHBUTTON   "OK",IDOK,85,170,36,14
     PUSHBUTTON      "Apply",IDAPPLY,125,170,36,14
     PUSHBUTTON      "Cancel",IDCANCEL,165,170,36,14
@@ -371,23 +367,22 @@ FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     LTEXT           "",IDC_TAPEFILE,6,12,200,11,SS_NOPREFIX | SS_PATHELLIPSIS,WS_EX_STATICEDGE
     PUSHBUTTON      "Browse",IDC_TBROWSE,210,11,50,14
-    PUSHBUTTON      "Rec",IDC_REC,     5,  32,35,18,BS_CENTER,WS_EX_DLGMODALFRAME
-    PUSHBUTTON      "Play",IDC_PLAY,   44, 32,35,18,BS_CENTER,WS_EX_DLGMODALFRAME
-    PUSHBUTTON      "Stop",IDC_STOP,   83, 32,35,18,BS_CENTER,WS_EX_DLGMODALFRAME
-    PUSHBUTTON      "Eject",IDC_EJECT, 122,32,35,18,BS_CENTER,WS_EX_DLGMODALFRAME
+    PUSHBUTTON      "Rec",IDC_REC,5,32,35,18,BS_CENTER,WS_EX_DLGMODALFRAME
+    PUSHBUTTON      "Play",IDC_PLAY,44,32,35,18,BS_CENTER,WS_EX_DLGMODALFRAME
+    PUSHBUTTON      "Stop",IDC_STOP,83,32,35,18,BS_CENTER,WS_EX_DLGMODALFRAME
+    PUSHBUTTON      "Eject",IDC_EJECT,122,32,35,18,BS_CENTER,WS_EX_DLGMODALFRAME
     PUSHBUTTON      "Rewind",IDC_RESET,161,32,35,18,BS_CENTER,WS_EX_DLGMODALFRAME
-    CONTROL         "", IDC_MODE,"RichEdit20W", WS_BORDER | 0x800, 7, 56,35,14,WS_EX_CLIENTEDGE | WS_EX_STATICEDGE
+    CONTROL         "",IDC_MODE,"RichEdit20W",WS_BORDER | 0x800,7,56,35,14,WS_EX_CLIENTEDGE | WS_EX_STATICEDGE
     CONTROL         "",IDC_TCOUNT,"RichEdit20W",WS_BORDER | 0x2800,53,56,50,15,WS_EX_CLIENTEDGE | WS_EX_RIGHT | WS_EX_STATICEDGE
-    CTEXT           "Mode",   IDC_STATIC, 7,72,35,8
+    CTEXT           "Mode",IDC_STATIC,7,72,35,8
     CTEXT           "Counter",IDC_STATIC,53,72,50,8
-
     DEFPUSHBUTTON   "OK",IDOK,65,90,36,14
     PUSHBUTTON      "Apply",IDAPPLY,105,90,36,14
     PUSHBUTTON      "Cancel",IDCANCEL,145,90,36,14
     CONTROL         "Fast Load",IDC_FASTLOAD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,204,37,48,10
 END
 
-IDD_BITBANGER DIALOGEX 0, 0, 255,100
+IDD_BITBANGER DIALOGEX 0, 0, 255, 100
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "BitBanger Configuration"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
@@ -489,7 +484,7 @@ BEGIN
     LTEXT           ":",IDC_EDIT_RANGE_SEP,93,6,8,8
     EDITTEXT        IDC_EDIT_RANGE_END,98,4,40,12,ES_AUTOHSCROLL
     PUSHBUTTON      "Export",IDC_BTN_EXPORT_MEM,142,4,31,12
-    LTEXT           "",IDC_ADRTXT,184,2,31,16,ES_CENTER
+    CTEXT           "",IDC_ADRTXT,184,2,31,16
     EDITTEXT        IDC_EDIT_VALUE,214,4,24,12,ES_AUTOHSCROLL
     COMBOBOX        IDC_MEM_TYPE,252,4,40,80,CBS_DROPDOWNLIST
     PUSHBUTTON      "Help",IDC_BTN_HELP,300,4,36,12
@@ -543,22 +538,22 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICK
 CAPTION "Execution Trace"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    PUSHBUTTON      "Enable",IDC_BTN_ENABLE_TRACE, 12, 5,54,13
-    PUSHBUTTON      "Stop",  IDC_BTN_STOP_TRACE,   12,20,54,13
-    PUSHBUTTON      "Reset", IDC_BTN_RESET_TRACE,  12,35,54,13
-    PUSHBUTTON      "Export",IDC_BTN_EXPORT,       12,50,54,13
-    GROUPBOX        "Start/Stop Triggers",IDC_STATIC, 83,5,210,60
-    LTEXT           "Enter Address",IDC_STATIC,       92,25,80,8
-    EDITTEXT        IDC_EDIT_TRACE_ADDR,             138,23,30,14,ES_AUTOHSCROLL
-    LTEXT           "Start Addresses",IDC_STATIC,    175,13,50,10
-    LISTBOX         IDC_LIST_START_TRACE,            175,23,50,25,LBS_SORT | LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Add",IDC_BTN_ADD_START_TRACE,   178,48,22,12
-    PUSHBUTTON      "Del",IDC_BTN_DEL_START_TRACE,   200,48,22,12
-    LTEXT           "Stop Addresses",IDC_STATIC,     232,13,50,10
-    LISTBOX         IDC_LIST_STOP_TRACE,             232,23,50,25,LBS_SORT | LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Add",IDC_BTN_ADD_STOP_TRACE,    234,48,22,12
-    PUSHBUTTON      "Del",IDC_BTN_DEL_STOP_TRACE,    256,48,22,12
-    LTEXT           "Trace is disabled",IDC_TRACE_STATUS, 8,68,60,8
+    PUSHBUTTON      "Enable",IDC_BTN_ENABLE_TRACE,12,5,54,13
+    PUSHBUTTON      "Stop",IDC_BTN_STOP_TRACE,12,20,54,13
+    PUSHBUTTON      "Reset",IDC_BTN_RESET_TRACE,12,35,54,13
+    PUSHBUTTON      "Export",IDC_BTN_EXPORT,12,50,54,13
+    GROUPBOX        "Start/Stop Triggers",IDC_STATIC,83,5,210,60
+    LTEXT           "Enter Address",IDC_STATIC,92,25,80,8
+    EDITTEXT        IDC_EDIT_TRACE_ADDR,138,23,30,14,ES_AUTOHSCROLL
+    LTEXT           "Start Addresses",IDC_STATIC,175,13,50,10
+    LISTBOX         IDC_LIST_START_TRACE,175,23,50,25,LBS_SORT | LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Add",IDC_BTN_ADD_START_TRACE,178,48,22,12
+    PUSHBUTTON      "Del",IDC_BTN_DEL_START_TRACE,200,48,22,12
+    LTEXT           "Stop Addresses",IDC_STATIC,232,13,50,10
+    LISTBOX         IDC_LIST_STOP_TRACE,232,23,50,25,LBS_SORT | LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Add",IDC_BTN_ADD_STOP_TRACE,234,48,22,12
+    PUSHBUTTON      "Del",IDC_BTN_DEL_STOP_TRACE,256,48,22,12
+    LTEXT           "Trace is disabled",IDC_TRACE_STATUS,8,68,60,8
     CONTROL         "Screen",IDC_SHOW_SCN_TRACE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,70,40,8
     CONTROL         "Emulation",IDC_SHOW_EMU_TRACE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,70,40,8
     LTEXT           "Samples",IDC_STATIC,200,70,35,8
@@ -572,15 +567,15 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Disassembler"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    CONTROL    "Real Address", IDC_BTN_REAL, "Button",BS_AUTOCHECKBOX,15, 4,55,10
-    LTEXT      "Address",IDC_ADRTXT,        10,18, 25,9
-    EDITTEXT   IDC_EDIT_PC_ADDR,            38,18, 35,10
-    CONTROL    "Os9 Mode",   IDC_BTN_OS9,    "Button",BS_AUTOCHECKBOX,92, 4,65,10
-    CONTROL    "Auto track PC",IDC_BTN_AUTO, "Button",BS_AUTOCHECKBOX,92,18,65,10
-    LTEXT           "",IDC_ERROR_TEXT,       4,31,150,10
-    DEFPUSHBUTTON   "Decode",IDAPPLY,      164, 3, 38,16
-    PUSHBUTTON      "Help", IDC_BTN_HELP,  164,22, 38,16
-    CONTROL         "",IDC_DISASSEMBLY_TEXT, "RichEdit20A",ES_MULTILINE|ES_READONLY|WS_VSCROLL,5,43,205,344
+    CONTROL         "Real Address",IDC_BTN_REAL,"Button",BS_AUTOCHECKBOX,15,4,55,10
+    LTEXT           "Address",IDC_ADRTXT,10,18,25,9
+    EDITTEXT        IDC_EDIT_PC_ADDR,38,18,35,10
+    CONTROL         "Os9 Mode",IDC_BTN_OS9,"Button",BS_AUTOCHECKBOX,92,4,65,10
+    CONTROL         "Auto track PC",IDC_BTN_AUTO,"Button",BS_AUTOCHECKBOX,92,18,65,10
+    LTEXT           "",IDC_ERROR_TEXT,4,31,150,10
+    DEFPUSHBUTTON   "Decode",IDAPPLY,164,3,38,16
+    PUSHBUTTON      "Help",IDC_BTN_HELP,164,22,38,16
+    CONTROL         "",IDC_DISASSEMBLY_TEXT,"RichEdit20A",ES_MULTILINE | ES_READONLY | WS_VSCROLL,5,43,205,344
 END
 
 IDD_BPLISTDIALOG DIALOGEX 160, 40, 85, 102
@@ -588,23 +583,24 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Breakpoints"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    LISTBOX    IDC_LIST_BREAKPOINTS,12,4,60,84,LBS_SORT | LBS_USETABSTOPS | WS_VSCROLL
-    PUSHBUTTON "Delete",IDC_BTN_DEL_BREAKPOINT,22,82,40,14
+    LISTBOX         IDC_LIST_BREAKPOINTS,12,4,60,84,LBS_SORT | LBS_USETABSTOPS | WS_VSCROLL
+    PUSHBUTTON      "Delete",IDC_BTN_DEL_BREAKPOINT,22,82,40,14
 END
 
-IDD_EXPORT DIALOG DISCARDABLE 10,5,100,60
+IDD_EXPORT DIALOG 10, 5, 100, 60
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Export Trace"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT         "First Line",IDC_STATIC,10,2,40,8
-    LTEXT         "Last Line", IDC_STATIC,55,2,40,8
-    EDITTEXT      IDC_EDIT_START,    7,12,36,12,ES_NUMBER
-    EDITTEXT      IDC_EDIT_STOP,    52,12,36,12,ES_NUMBER
-    LTEXT         "",IDC_ERROR_TEXT, 7,26,80,10
-    DEFPUSHBUTTON "OK",IDOK,         7,38,36,14
-    PUSHBUTTON    "Cancel",IDCANCEL,52,38,36,14
+    LTEXT           "First Line",IDC_STATIC,10,2,40,8
+    LTEXT           "Last Line",IDC_STATIC,55,2,40,8
+    EDITTEXT        IDC_EDIT_START,7,12,36,12,ES_NUMBER
+    EDITTEXT        IDC_EDIT_STOP,52,12,36,12,ES_NUMBER
+    LTEXT           "",IDC_ERROR_TEXT,7,26,80,10
+    DEFPUSHBUTTON   "OK",IDOK,7,38,36,14
+    PUSHBUTTON      "Cancel",IDCANCEL,52,38,36,14
 END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -616,19 +612,14 @@ GUIDELINES DESIGNINFO
 BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
-        LEFTMARGIN, 1
-        RIGHTMARGIN, 231
-        TOPMARGIN, 3
-        BOTTOMMARGIN, 377
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 247
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 274
     END
 
-    IDD_TCONFIG, DIALOG
+    IDD_FUNCTION_KEYS, DIALOG
     BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 288
-        VERTGUIDE, 280
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 302
     END
 
     IDD_DISPLAY, DIALOG
@@ -649,8 +640,6 @@ BEGIN
 
     IDD_AUDIO, DIALOG
     BEGIN
-        RIGHTMARGIN, 261
-        BOTTOMMARGIN, 154
     END
 
     IDD_INPUT, DIALOG
@@ -658,23 +647,13 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 264
         TOPMARGIN, 7
-        BOTTOMMARGIN, 228
     END
 
     IDD_JOYSTICK, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        VERTGUIDE, 270
         TOPMARGIN, 7
         HORZGUIDE, 164
-    END
-
-    IDD_MISC, DIALOG
-    BEGIN
-        LEFTMARGIN, 4
-        RIGHTMARGIN, 216
-        TOPMARGIN, 3
-        BOTTOMMARGIN, 111
     END
 
     IDD_CASSETTE, DIALOG
@@ -688,7 +667,6 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 254
         TOPMARGIN, 7
-        BOTTOMMARGIN, 222
     END
 
     IDD_KEYMAPEDIT, DIALOG
@@ -696,6 +674,30 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 352
         TOPMARGIN, 7
+    END
+
+    IDD_MEMORY_MAP, DIALOG
+    BEGIN
+    END
+
+    IDD_PROCESSOR_STATE, DIALOG
+    BEGIN
+    END
+
+    IDD_BREAKPOINTS, DIALOG
+    BEGIN
+    END
+
+    IDD_DISASSEMBLER, DIALOG
+    BEGIN
+    END
+
+    IDD_BPLISTDIALOG, DIALOG
+    BEGIN
+    END
+
+    IDD_EXPORT, DIALOG
+    BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -707,8 +709,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,1,9,3
- PRODUCTVERSION 2,1,9,3
+ FILEVERSION 0,0,0,1
+ PRODUCTVERSION 0,0,0,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x29L
@@ -723,17 +725,13 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "How bored are you that your reading this?"
             VALUE "CompanyName", "Team DREAM!"
-            VALUE "FileDescription", "DREAM "
+            VALUE "FileDescription", "DREAM - A Better VCC"
             VALUE "FileVersion", "0,0,0,1"
-            VALUE "InternalName", "Poco"
             VALUE "LegalCopyright", "Copyright 2015 by BitRot Software"
-            VALUE "LegalTrademarks", "BLAZEMONGER!"
             VALUE "OriginalFilename", "dream.exe"
             VALUE "ProductName", "DREAM - The Tandy Color Computer 3 Emulator"
-            VALUE "ProductVersion", "26-3334"
-            VALUE "SpecialBuild", "Tandy Color Computer 3"
+            VALUE "ProductVersion", "0,0,0,1"
         END
     END
     BLOCK "VarFileInfo"
@@ -748,13 +746,7 @@ END
 // Bitmap
 //
 
-IDB_NOMUTE              BITMAP                  "resources\\speaker1.bmp"
-
-IDB_MUTE                BITMAP                  "resources\\speaker2.bmp"
-
 IDB_VCC                 BITMAP                  "resources\\vcc.bmp"
-
-IDB_3GUYS               BITMAP                  "resources\\3guys.bmp"
 
 IDB_FONT_CONSOLA        BITMAP                  "resources\\consola.bmp"
 
@@ -835,7 +827,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_APP_TITLE           "DREAM (A Better VCC) Tandy Color Computer 3 Emulator "
+    IDS_APP_TITLE           "DREAM - The Tandy Color Computer 3 Emulator"
 END
 
 #endif    // English (United States) resources

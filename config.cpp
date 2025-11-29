@@ -116,7 +116,7 @@ static STRConfig CurrentConfig;
 
 static HICON CpuIcons[2],MonIcons[2],JoystickIcons[4];
 static unsigned char temp=0,temp2=0;
-static char IniFileName[]="Vcc.ini";
+static char IniFileName[]="DREAM.ini";
 static char IniFilePath[MAX_PATH]="";
 static char KeyMapFilePath[MAX_PATH]="";
 static char TapeFileName[MAX_PATH]="";
