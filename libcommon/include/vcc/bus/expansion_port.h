@@ -52,6 +52,9 @@ namespace vcc::bus
 		using menu_item_collection_type = cartridge_type::menu_item_collection_type;
 		/// @brief Type alias for a digital audio sample.
 		using sample_type = driver_type::sample_type;
+		/// @copydoc cartridge_type::menu_item_id_type
+		using menu_item_id_type = cartridge_type::menu_item_id_type;
+
 
 	public:
 
@@ -125,7 +128,7 @@ namespace vcc::bus
 		}
 
 		/// @copydoc cartridge_type::menu_item_clicked
-		void menu_item_clicked(unsigned char menu_item_id) const
+		void menu_item_clicked(menu_item_id_type menu_item_id) const
 		{
 			return cartridge_->menu_item_clicked(menu_item_id);
 		}

@@ -56,8 +56,6 @@ namespace vcc::cartridges::multipak
 		using mount_status_type = driver_type::mount_status_type;
 		/// @copydoc driver_type::slot_id_type
 		using slot_id_type = driver_type::slot_id_type;
-		/// @brief Type alias for menu item identifiers.
-		using menu_item_id_type = UINT;
 
 
 	public:
@@ -138,7 +136,7 @@ namespace vcc::cartridges::multipak
 		/// been terminated the behavior is undefined.
 		/// 
 		/// @param menu_item_id The identifier of the menu item.
-		void menu_item_clicked(unsigned char menu_item_id) override;
+		void menu_item_clicked(menu_item_id_type menu_item_id) override;
 
 		/// @brief Get the list of menu items for the Multi-Pak and all inserted cartridges.
 		/// 

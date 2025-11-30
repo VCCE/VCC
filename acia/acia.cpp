@@ -171,7 +171,7 @@ void rs232pak_cartridge::status(char* text_buffer, size_t buffer_size)
 //-----------------------------------------------------------------------
 //  Dll export run config dialog
 //-----------------------------------------------------------------------
-void rs232pak_cartridge::menu_item_clicked(unsigned char menuId)
+void rs232pak_cartridge::menu_item_clicked(menu_item_id_type menuId)
 {
     HWND owner = GetActiveWindow();
     CreateDialog(gModuleInstance,(LPCTSTR)IDD_PROPPAGE,owner,(DLGPROC)Config);

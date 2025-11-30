@@ -32,7 +32,7 @@ namespace vcc::bus
 		*text_buffer = 0;
 	}
 
-	void cartridge::menu_item_clicked([[maybe_unused]] unsigned char menu_item_id)
+	void cartridge::menu_item_clicked([[maybe_unused]] menu_item_id_type menu_item_id)
 	{}
 
 	cartridge::menu_item_collection_type cartridge::get_menu_items() const

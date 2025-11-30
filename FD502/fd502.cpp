@@ -131,7 +131,7 @@ void fd502_cartridge::stop()
 }
 
 
-void fd502_cartridge::menu_item_clicked(unsigned char MenuID)
+void fd502_cartridge::menu_item_clicked(menu_item_id_type MenuID)
 {
 	HWND h_own = GetActiveWindow();
 	switch (MenuID)

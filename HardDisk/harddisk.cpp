@@ -96,7 +96,7 @@ void vcc_hard_disk_cartridge::stop()
 	UnmountHD(1);
 }
 
-void vcc_hard_disk_cartridge::menu_item_clicked(unsigned char MenuID)
+void vcc_hard_disk_cartridge::menu_item_clicked(menu_item_id_type MenuID)
 {
     switch (MenuID)
     {

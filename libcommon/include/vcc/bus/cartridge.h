@@ -43,6 +43,8 @@ namespace vcc::bus
 		using menu_item_collection_type = ::vcc::ui::menu::menu_item_collection;
 		/// @brief Specifies the type of devices supported by this cartridge.
 		using driver_type = ::vcc::bus::cartridge_driver;
+		/// @brief Type alias for menu item identifiers.
+		using menu_item_id_type = UINT;
 
 
 	public:
@@ -108,7 +110,7 @@ namespace vcc::bus
 		/// @todo rename this to `execute_menu_command` or something.
 		/// 
 		/// @param menu_item_id The identifier of the menu item.
-		virtual void menu_item_clicked(unsigned char menu_item_id);
+		virtual void menu_item_clicked(menu_item_id_type menu_item_id);
 
 		/// @brief Get the list of menu items for this cartridge.
 		/// 

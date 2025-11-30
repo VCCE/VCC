@@ -198,7 +198,7 @@ namespace vcc::cartridges::multipak
 		}
 	}
 
-	void multipak_cartridge::menu_item_clicked(unsigned char menu_item_id)
+	void multipak_cartridge::menu_item_clicked(menu_item_id_type menu_item_id)
 	{
 		// FIXME-CHET: This needs to be simplified. If the multipak itself is considered
 		// slot 0 the id can be divided by the item count per slot to get the slot id
@@ -278,6 +278,7 @@ namespace vcc::cartridges::multipak
 					menu.add_root_separator();
 				}
 
+				// FIXME-CHET: Check for menu item ids that exceed max id value
 				menu.add_items(
 					items,
 					cartridges_menu::base_menu_id + slot * cartridges_menu::menu_id_count);

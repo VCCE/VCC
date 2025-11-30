@@ -141,7 +141,7 @@ void superide_cartridge::status(char* text_buffer, size_t buffer_size)
 	DiskStatus(text_buffer, buffer_size);
 }
 
-void superide_cartridge::menu_item_clicked(unsigned char item_id)
+void superide_cartridge::menu_item_clicked(menu_item_id_type item_id)
 {
 	switch (item_id)
 	{

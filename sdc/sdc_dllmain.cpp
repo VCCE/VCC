@@ -134,7 +134,7 @@ void sdc_cartridge::reset()
 }
 
 //  Dll export run config dialog
-void sdc_cartridge::menu_item_clicked(unsigned char MenuID)
+void sdc_cartridge::menu_item_clicked(menu_item_id_type MenuID)
 {
     switch (MenuID)
     {

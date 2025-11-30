@@ -79,7 +79,7 @@ namespace vcc::cartridges::becker_port
 	}
 
 
-	void becker_cartridge::menu_item_clicked(unsigned char menu_item_id)
+	void becker_cartridge::menu_item_clicked(menu_item_id_type menu_item_id)
 	{
 		if (menu_item_id == menu_item_ids::open_settings)
 		{

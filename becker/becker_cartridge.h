@@ -86,7 +86,7 @@ namespace vcc::cartridges::becker_port
 		menu_item_collection_type get_menu_items() const override;
 
 		/// @inheritdoc
-		void menu_item_clicked(unsigned char menu_item_id) override;
+		void menu_item_clicked(menu_item_id_type menu_item_id) override;
 
 		/// @inheritdoc
 		void status(char* text_buffer, size_t buffer_size) override;

@@ -67,7 +67,7 @@ namespace vcc::cartridges::gmc
 		driver_.start(selected_file);
 	}
 
-	void gmc_cartridge::menu_item_clicked(unsigned char menu_item_id)
+	void gmc_cartridge::menu_item_clicked(menu_item_id_type menu_item_id)
 	{
 		::vcc::utils::persistent_value_store settings(host_->configuration_path());
 
