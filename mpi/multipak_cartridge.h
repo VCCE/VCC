@@ -17,18 +17,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "cartridge_slot.h"
-#include "configuration_dialog.h"
 #include "multipak_configuration.h"
 #include <vcc/core/cartridges/basic_cartridge.h>
+#include <vcc/core/cartridge_loader.h>
 #include <vcc/core/utils/critical_section.h>
 #include "../CartridgeMenu.h"
 #include <array>
 
 
-class multipak_cartridge
-	:
-	public ::vcc::core::cartridge,
-	private multipak_controller
+constexpr size_t NUMSLOTS = 4u;
+
+class multipak_cartridge : public ::vcc::core::cartridge
 {
 public:
 
@@ -44,10 +43,8 @@ public:
 public:
 
 	multipak_cartridge(
-		HINSTANCE module_instance,
 		multipak_configuration& configuration,
-		std::shared_ptr<context_type> context,
-		const cpak_cartridge_context& cpak_context);
+		std::shared_ptr<context_type> context);
 	multipak_cartridge(const multipak_cartridge&) = delete;
 	multipak_cartridge(multipak_cartridge&&) = delete;
 
@@ -71,48 +68,24 @@ public:
 	unsigned short sample_audio() override;
 	void menu_item_clicked(unsigned char menu_item_id) override;
 
+	//	Multi-pak implementation
+	label_type slot_label(slot_id_type slot) const;
+	description_type slot_description(slot_id_type slot) const;
 
-protected:
+	bool empty(slot_id_type slot) const;
 
-	//	multipak controller implementation
-	label_type slot_label(slot_id_type slot) const override;
-	description_type slot_description(slot_id_type slot) const override;
+	void eject_cartridge(slot_id_type slot);
+	mount_status_type mount_cartridge(slot_id_type slot, const path_type& filename);
 
-	bool empty(slot_id_type slot) const override;
+	void switch_to_slot(slot_id_type slot);
+	slot_id_type selected_switch_slot() const;
+	slot_id_type selected_scs_slot() const;
 
-	void eject_cartridge(slot_id_type slot) override;
-	mount_status_type mount_cartridge(slot_id_type slot, const path_type& filename) override;
-
-	void switch_to_slot(slot_id_type slot) override;
-	slot_id_type selected_switch_slot() const override;
-	slot_id_type selected_scs_slot() const override;
-
-	void build_menu() override;
-
-
-protected:
-
-	template<multipak_cartridge::slot_id_type SlotIndex_>
-	static void assert_cartridge_line_on_slot(void* host_context, bool line_state)
-	{
-		static_cast<multipak_cartridge*>(host_context)->assert_cartridge_line(
-			SlotIndex_,
-			line_state);
-	}
-
-	template<multipak_cartridge::slot_id_type SlotIndex_>
-	static void append_menu_item_on_slot(void* host_context, const char* text, int id, MenuItemType type)
-	{
-		static_cast<multipak_cartridge*>(host_context)->append_menu_item(
-			SlotIndex_,
-			{ text, static_cast<unsigned int>(id), type });
-	}
+	void build_menu();
 
 	// Make automatic when mounting, ejecting, selecting slot, etc.
 	void assert_cartridge_line(slot_id_type slot, bool line_state);
 	void append_menu_item(slot_id_type slot, menu_item_type item);
-
-	friend class multipak_cartridge_context;
 
 
 private:
@@ -122,14 +95,11 @@ private:
 	static const size_t default_slot_register_value = 0xff;
 
 	vcc::core::utils::critical_section mutex_;
-	const HINSTANCE module_instance_;
 	multipak_configuration& configuration_;
 	std::shared_ptr<context_type> context_;
-	const std::array<cpak_cartridge_context, 4> cpak_contexts_;
-	std::array<vcc::modules::mpi::cartridge_slot, 4> slots_;
+	std::array<vcc::modules::mpi::cartridge_slot, NUMSLOTS> slots_;
 	unsigned char slot_register_ = default_slot_register_value;
 	slot_id_type switch_slot_ = default_switch_slot_value;
 	slot_id_type cached_cts_slot_ = default_switch_slot_value;
 	slot_id_type cached_scs_slot_ = default_switch_slot_value;
-	configuration_dialog settings_dialog_;
 };

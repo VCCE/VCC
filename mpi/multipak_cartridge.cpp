@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "multipak_cartridge.h"
 #include "multipak_cartridge_context.h"
+#include "mpi.h"
 #include "resource.h"
 #include <vcc/core/utils/winapi.h>
 #include <vcc/core/utils/filesystem.h>
@@ -24,6 +25,36 @@
 
 namespace
 {
+
+	template<multipak_cartridge::slot_id_type SlotIndex_>
+	void assert_cartridge_line_on_slot(void* host_context, bool line_state)
+	{
+		static_cast<multipak_cartridge*>(host_context)->assert_cartridge_line(
+			SlotIndex_,
+			line_state);
+	}
+
+	template<multipak_cartridge::slot_id_type SlotIndex_>
+	void append_menu_item_on_slot(void* host_context, const char* text, int id, MenuItemType type)
+	{
+		static_cast<multipak_cartridge*>(host_context)->append_menu_item(
+			SlotIndex_,
+			{ text, static_cast<unsigned int>(id), type });
+	}
+
+	struct cartridge_slot_callbacks
+	{
+		PakAssertCartridgeLineHostCallback set_cartridge_line;
+		PakAppendCartridgeMenuHostCallback append_menu_item;
+	};
+
+	//**************************************************************
+	const std::array<cartridge_slot_callbacks, NUMSLOTS> gSlotCallbacks = { {
+		{ assert_cartridge_line_on_slot<0>, append_menu_item_on_slot<0> },
+		{ assert_cartridge_line_on_slot<1>, append_menu_item_on_slot<1> },
+		{ assert_cartridge_line_on_slot<2>, append_menu_item_on_slot<2> },
+		{ assert_cartridge_line_on_slot<3>, append_menu_item_on_slot<3> }
+	} };
 
 	constexpr std::pair<size_t, size_t> disk_controller_io_port_range = { 0x40, 0x5f };
 
@@ -37,61 +68,26 @@ namespace
 
 
 multipak_cartridge::multipak_cartridge(
-	HINSTANCE module_instance,
 	multipak_configuration& configuration,
-	std::shared_ptr<context_type> context,
-	const cpak_cartridge_context& cpak_context)
+	std::shared_ptr<context_type> context)
 	:
-	module_instance_(module_instance),
 	configuration_(configuration),
-	context_(move(context)),
-	cpak_contexts_{ {
-		{
-			cpak_context.assert_interrupt,
-			assert_cartridge_line_on_slot<0>,
-			cpak_context.write_memory_byte,
-			cpak_context.read_memory_byte,
-			append_menu_item_on_slot<0>
-		},
-		{
-			cpak_context.assert_interrupt,
-			assert_cartridge_line_on_slot<1>,
-			cpak_context.write_memory_byte,
-			cpak_context.read_memory_byte,
-			append_menu_item_on_slot<1>
-		},
-		{
-			cpak_context.assert_interrupt,
-			assert_cartridge_line_on_slot<2>,
-			cpak_context.write_memory_byte,
-			cpak_context.read_memory_byte,
-			append_menu_item_on_slot<2>
-		},
-		{
-			cpak_context.assert_interrupt,
-			assert_cartridge_line_on_slot<3>,
-			cpak_context.write_memory_byte,
-			cpak_context.read_memory_byte,
-			append_menu_item_on_slot<3>
-		}
-	} },
-	settings_dialog_(module_instance, configuration, *this)
+	context_(move(context))
 { }
-
 
 multipak_cartridge::name_type multipak_cartridge::name() const
 {
-	return ::vcc::core::utils::load_string(module_instance_, IDS_MODULE_NAME);
+	return ::vcc::core::utils::load_string(gModuleInstance, IDS_MODULE_NAME);
 }
 
 multipak_cartridge::catalog_id_type multipak_cartridge::catalog_id() const
 {
-	return ::vcc::core::utils::load_string(module_instance_, IDS_CATNUMBER);
+	return ::vcc::core::utils::load_string(gModuleInstance, IDS_CATNUMBER);
 }
 
 multipak_cartridge::description_type multipak_cartridge:: description() const
 {
-	return ::vcc::core::utils::load_string(module_instance_, IDS_CATNUMBER);
+	return ::vcc::core::utils::load_string(gModuleInstance, IDS_CATNUMBER);
 }
 
 
@@ -119,7 +115,7 @@ void multipak_cartridge::start()
 
 void multipak_cartridge::stop()
 {
-	settings_dialog_.close();
+	gConfigurationDialog.close();
 
 	for (auto slot(0u); slot < slots_.size(); slot++)
 	{
@@ -200,7 +196,7 @@ unsigned char multipak_cartridge::read_port(unsigned char port_id)
 	for (const auto& cartridge_slot : slots_)
 	{
 		// Return value from first module that returns non zero
-		// FIXME-CHET: Shouldn't this OR all the values together?
+		// FIXME: Shouldn't this OR all the values together?
 		const auto data(cartridge_slot.read_port(port_id));
 		if (data != 0)
 		{
@@ -254,8 +250,7 @@ void multipak_cartridge::menu_item_clicked(unsigned char menu_item_id)
 {
 	if (menu_item_id == 19)	//MPI Config
 	{
-		settings_dialog_.open();
-		return;
+		gConfigurationDialog.open();
 	}
 
 	vcc::core::utils::section_locker lock(mutex_);
@@ -320,15 +315,21 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	auto loadedCartridge(vcc::core::load_cartridge(
 		filename,
 		std::make_unique<multipak_cartridge_context>(slot, *context_, *this),
-		cpak_contexts_[slot],
 		this,
-		context_->configuration_path()));
+		context_->configuration_path(),
+		{
+			gHostContext->assert_interrupt_,
+			gSlotCallbacks[slot].set_cartridge_line,
+			gHostContext->write_memory_byte_,
+			gHostContext->read_memory_byte_,
+			gSlotCallbacks[slot].append_menu_item
+		}));
 	if (loadedCartridge.load_result != mount_status_type::success)
 	{
 		return loadedCartridge.load_result;
 	}
 
-	// FIXME-CHET: We should probably call eject(slot) here in order to ensure that the
+	// FIXME: We should probably call eject(slot) here in order to ensure that the
 	// cartridge is shut down correctly.
 
 	vcc::core::utils::section_locker lock(mutex_);
