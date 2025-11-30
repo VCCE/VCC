@@ -209,14 +209,15 @@ namespace vcc::cartridges::multipak
 
 		auto dialog(reinterpret_cast<configuration_dialog*>(GetWindowLongPtr(hDlg, GWLP_USERDATA)));
 
-		return dialog->process_message(hDlg, message, wParam);
+		return dialog->process_message(hDlg, message, wParam, lParam);
 	}
 
 
 	INT_PTR configuration_dialog::process_message(
 		HWND hDlg,
 		UINT message,
-		WPARAM wParam)
+		WPARAM wParam,
+		LPARAM lParam)
 	{
 		switch (message)
 		{

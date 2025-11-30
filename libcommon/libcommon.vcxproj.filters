@@ -195,6 +195,9 @@
     <ClCompile Include="src\utils\persistent_section_value_store.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\load_disk_image.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource\resource.h">
@@ -328,6 +331,9 @@
     </ClInclude>
     <ClInclude Include="include\vcc\peripherals\disk_drives\generic_disk_drive.h">
       <Filter>Header Files\peripherals\disk_drives</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\disk_image_loader.h">
+      <Filter>Header Files\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -129,7 +129,8 @@ namespace vcc::cartridges::multipak
 		INT_PTR process_message(
 			HWND hDlg,
 			UINT message,
-			WPARAM wParam);
+			WPARAM wParam,
+			LPARAM lParam);
 
 	private:
 

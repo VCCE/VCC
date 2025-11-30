@@ -69,6 +69,11 @@ namespace vcc::devices::serial
 	}
 
 	// Enable the interface
+	bool Becker::enabled() const
+	{
+		return enabled_;
+	}
+
 	void Becker::enable(bool enable)
 	{
 		if (enable) {

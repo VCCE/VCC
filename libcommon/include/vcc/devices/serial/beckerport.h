@@ -34,6 +34,7 @@ namespace vcc::devices::serial
 		const char* server_port() const;
 
 		void enable(bool);                        // enable or disable
+		bool enabled() const;					  // is enable or disable
 		void sethost(const char *, const char *); // server ip address, port
 		unsigned char read(unsigned short);       // coco port
 		void write(unsigned char,unsigned short); // value, coco port
