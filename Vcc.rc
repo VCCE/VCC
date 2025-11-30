@@ -834,6 +834,7 @@ STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "VCC 2.1.9.3-pre3 Tandy Color Computer 3 Emulator"
     IDS_CATNUMBER           "26-3334"
+    // TODO:  The following should not be used
     IDS_MODULE_ALREADY_LOADED "Module is already loaded."
     IDS_MODULE_CANNOT_OPEN  "Cannot open module."
     IDS_MODULE_NOT_FOUND    "Module not found."

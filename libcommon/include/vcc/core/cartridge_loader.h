@@ -25,7 +25,7 @@
 #include <Windows.h>
 
 
-namespace vcc { namespace core
+namespace vcc::core
 {
 
 	enum class cartridge_file_type
@@ -88,4 +88,8 @@ namespace vcc { namespace core
 		const std::string& iniPath,
 		const cpak_cartridge_context& cpak_context);
 
-} }
+	// Return load error string per cartridge load status
+	LIBCOMMON_EXPORT std::string cartridge_load_error_string(
+			const cartridge_loader_status error_status);
+
+}
