@@ -326,11 +326,16 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		}));
 	if (loadedCartridge.load_result != mount_status_type::success)
 	{
+		// Tell user why load failed
+		auto error_string(vcc::core::cartridge_load_error_string(loadedCartridge.load_result));
+		error_string += "\n\n";
+		error_string += filename;
+		MessageBox(GetForegroundWindow(), error_string.c_str(), "Load Error", MB_OK | MB_ICONERROR);
 		return loadedCartridge.load_result;
-	}
+	} 
 
 	// FIXME: We should probably call eject(slot) here in order to ensure that the
-	// cartridge is shut down correctly.
+	// cartridge is shut down correctly.  (OR FORCE USER TO EJECT BEFORE TRYING TO LOAD!!)
 
 	vcc::core::utils::section_locker lock(mutex_);
 
