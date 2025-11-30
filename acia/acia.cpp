@@ -129,6 +129,7 @@ extern "C"
 		strcpy(IniFile, configuration_path);
 
 		LoadConfig();
+		BuildCartridgeMenu();
 		LoadExtRom("RS232.ROM");
 		sc6551_init();
 	}
