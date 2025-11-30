@@ -200,66 +200,52 @@ namespace vcc::cartridges::multipak
 
 	void multipak_cartridge::menu_item_clicked(menu_item_id_type menu_item_id)
 	{
-		// FIXME-CHET: This needs to be simplified. If the multipak itself is considered
-		// slot 0 the id can be divided by the item count per slot to get the slot id
-		// (0 = multi-pak, others = slots) and modulus can be used to determine the id to
-		// send to the cartridges.
+		if (menu_item_id < cartridges_menu::first_item_id)
+		{
+			return multipak_menu_item_clicked(menu_item_id);
+		}
+
+		menu_item_id -= cartridges_menu::first_item_id;
+
+		const auto cartridge_id(menu_item_id / cartridges_menu::item_count);
+		if (cartridge_id >= cartridges_.size())
+		{
+			throw std::out_of_range("Cannot process menu item. Item id is out of range.");
+		}
+
+		menu_item_id %= cartridges_menu::item_count;
+
+		cartridges_[cartridge_id]->menu_item_clicked(menu_item_id);
+	}
+
+	void multipak_cartridge::multipak_menu_item_clicked(menu_item_id_type menu_item_id)
+	{
 		switch (menu_item_id)
 		{
 		case menu_item_ids::open_settings:
 			settings_dialog_.open();
-			return;
+			break;
 
 		case menu_item_ids::select_slot_1:
 		case menu_item_ids::select_slot_2:
 		case menu_item_ids::select_slot_3:
 		case menu_item_ids::select_slot_4:
 			switch_to_slot(menu_item_id - menu_item_ids::select_slot_1);
-			return;
+			break;
 
 		case menu_item_ids::insert_into_slot_1:
 		case menu_item_ids::insert_into_slot_2:
 		case menu_item_ids::insert_into_slot_3:
 		case menu_item_ids::insert_into_slot_4:
 			select_and_insert_cartridge(menu_item_id - menu_item_ids::insert_into_slot_4);
-			return;
+			break;
 
 		case menu_item_ids::eject_slot_1:
-			eject_cartridge(0, true);
-			return;
-
 		case menu_item_ids::eject_slot_2:
-			eject_cartridge(1, true);
-			return;
-
 		case menu_item_ids::eject_slot_3:
-			eject_cartridge(2, true);
-			return;
-
 		case menu_item_ids::eject_slot_4:
-			eject_cartridge(3, true);
-			return;
-		}
-
-
-		if (menu_item_id >= 20 && menu_item_id <= 40)
-		{
-			cartridges_[0]->menu_item_clicked(menu_item_id - 20);
-		}
-
-		if (menu_item_id > 40 && menu_item_id <= 60)
-		{
-			cartridges_[1]->menu_item_clicked(menu_item_id - 40);
-		}
-
-		if (menu_item_id > 60 && menu_item_id <= 80)
-		{
-			cartridges_[2]->menu_item_clicked(menu_item_id - 60);
-		}
-
-		if (menu_item_id > 80 && menu_item_id <= 100)
-		{
-			cartridges_[3]->menu_item_clicked(menu_item_id - 80);
+			eject_cartridge(menu_item_id - menu_item_ids::eject_slot_1, true);
+			break;
 		}
 	}
 
@@ -281,7 +267,7 @@ namespace vcc::cartridges::multipak
 				// FIXME-CHET: Check for menu item ids that exceed max id value
 				menu.add_items(
 					items,
-					cartridges_menu::base_menu_id + slot * cartridges_menu::menu_id_count);
+					cartridges_menu::first_item_id + slot * cartridges_menu::item_count);
 			}
 		}
 

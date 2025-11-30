@@ -152,6 +152,16 @@ namespace vcc::cartridges::multipak
 
 	private:
 
+		/// @brief Execute a Multi-Pak menu command.
+		/// 
+		/// Execute a menu command owned by the Multi-Pak cartridge.
+		/// 
+		/// If this function is called before the cartridge is initialized or after it has
+		/// been terminated the behavior is undefined.
+		/// 
+		/// @param menu_item_id The identifier of the Multi-Pak menu item.
+		void multipak_menu_item_clicked(menu_item_id_type menu_item_id);
+
 		/// @brief Switch to a specific slot.
 		/// 
 		/// Switches the active/startup slot of the Multi-Pak to a specific slot index.
@@ -247,9 +257,9 @@ namespace vcc::cartridges::multipak
 		struct cartridges_menu
 		{
 			/// @brief The first menu id representing a menu item for an inserted cartridge.
-			static constexpr auto base_menu_id = 20u;
+			static constexpr auto first_item_id = 200u;
 			/// @brief The number of menu ids allocated for each inserted cartridge.
-			static constexpr auto menu_id_count = 20u;
+			static constexpr auto item_count = 100u;
 		};
 
 		/// @brief The total number of slots in the Multi-Pak.

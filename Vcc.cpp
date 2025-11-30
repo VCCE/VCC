@@ -124,7 +124,7 @@ static 	HANDLE hEMUThread ;
 static	HANDLE hEMUQuit;
 
 constexpr auto first_cartridge_menu_id = 5000;
-constexpr auto last_cartridge_menu_id = 5099;
+constexpr auto last_cartridge_menu_id = 5999;
 
 // Function key overclocking flag
 //unsigned char OverclockFlag = 1;
