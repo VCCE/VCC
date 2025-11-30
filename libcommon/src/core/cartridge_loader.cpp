@@ -21,7 +21,8 @@
 #include <vector>
 #include <fstream>
 #include <iterator>
-#include <vcc/core/cartridge_factory.h>
+
+//#include <vcc/core/cartridge_factory.h>
 
 
 namespace vcc { namespace core
@@ -44,7 +45,7 @@ namespace vcc { namespace core
 
 	}
 
-
+    // Determine cart type by looking for magic 'MZ'
 	cartridge_file_type determine_cartridge_type(const std::string& filename)
 	{
 		std::ifstream input(filename, std::ios::binary);
@@ -61,10 +62,12 @@ namespace vcc { namespace core
 		return cartridge_file_type::rom_image;
 	}
 
+	// Load a ROM cartridge
 	cartridge_loader_result load_rom_cartridge(
 		std::unique_ptr<cartridge_context> context,
 		const std::string& filename)
 	{
+PrintLogC("libcommonloader load_rom_cartridge\n");
 		constexpr size_t PAK_MAX_MEM = 0x40000;
 
 		std::vector<uint8_t> romImage;
@@ -106,6 +109,7 @@ namespace vcc { namespace core
 		};
 	}
 
+	// Load a legacy cartridge
 	cartridge_loader_result load_legacy_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
@@ -113,6 +117,7 @@ namespace vcc { namespace core
 		const std::string& iniPath,
 		const cpak_cartridge_context& cpak_context)
 	{
+PrintLogC("libcommonloader load_legacy_cartridge\n");
 		if (GetModuleHandle(filename.c_str()) != nullptr)
 		{
 			return { nullptr, nullptr, cartridge_loader_status::already_loaded };
@@ -126,16 +131,17 @@ namespace vcc { namespace core
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 		}
 
-		const auto factoryAccessor(reinterpret_cast<GetPakFactoryFunction>(GetProcAddress(
-			details.handle.get(),
-			"GetPakFactory")));
-		if (factoryAccessor != nullptr)
-		{
-			details.cartridge = factoryAccessor()(move(cartridge_context), cpak_context);
-			details.load_result = cartridge_loader_status::success;
-
-			return details;
-		}
+// Factory is no longer to be used
+//		const auto factoryAccessor(reinterpret_cast<GetPakFactoryFunction>(GetProcAddress(
+//			details.handle.get(),
+//			"GetPakFactory")));
+//		if (factoryAccessor != nullptr)
+//		{
+//			details.cartridge = factoryAccessor()(move(cartridge_context), cpak_context);
+//			details.load_result = cartridge_loader_status::success;
+//
+//			return details;
+//		}
 
 		if (GetProcAddress(details.handle.get(), "PakInitialize") != nullptr)
 		{
@@ -152,20 +158,16 @@ namespace vcc { namespace core
 		return { nullptr, nullptr, cartridge_loader_status::not_expansion };
 	}
 
-
-//	LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
-//		const std::string& filename,
-//		std::unique_ptr<cartridge_context> cartridge_context,
-//		void* const host_context,
-//		const std::string& iniPath,
-//		const cpak_cartridge_context& cpak_context);
-//
-//	cartridge_loader_result load_cartridge(
-//		const std::string& filename,
-//		std::unique_ptr<cartridge_context> cartridge_context,
-//		const cpak_cartridge_context& cpak_context,
-//		void* const host_context,
-//		const std::string& iniPath)
+    // Load a cartridge; either a ROM image or a pak dll.  Load cartridge is called
+	// by both mpi/multipak_cartridge.cpp and pakinterface.cpp.  cartridge_context is defined
+	// in libcommon/include/vcc/core/cartridge_context.h.  host_context is a generic 
+	// pointer explicitly cast to multipak_cartridge in mpi/multipak_cartridge.cpp.
+	// mutlipak_cartridge refers specifically to a cart loaded by the multipak.
+	// cpak_cartridge_context is used by all hardware paks and is defined in 
+	// libcommon/include/vcc/core/legacy_cartridge_definitions.h.  cartridge_loader_result
+	// is defined in libcommon/include/vcc/core/cartridge_loader.h which also defines
+	// the cartridge_loader_status enum in the cartrodge_loader_result load_result element.
+	// TODO: Fix the insanity. (experimental interface changes not rolled back enough?)
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
@@ -191,5 +193,9 @@ namespace vcc { namespace core
 				cpak_context);
 		}
 	}
+
+	// TODO define a function to display reasons for failed loads, This currently exists in 
+	// pakinterface but not in mpi/mutlipak_cartridge. Will either need to use VCC Instance
+	// to get the error strings or more simply just contain the strings within it.
 
 } }
