@@ -152,12 +152,26 @@ namespace vcc { namespace core
 		return { nullptr, nullptr, cartridge_loader_status::not_expansion };
 	}
 
+
+//	LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
+//		const std::string& filename,
+//		std::unique_ptr<cartridge_context> cartridge_context,
+//		void* const host_context,
+//		const std::string& iniPath,
+//		const cpak_cartridge_context& cpak_context);
+//
+//	cartridge_loader_result load_cartridge(
+//		const std::string& filename,
+//		std::unique_ptr<cartridge_context> cartridge_context,
+//		const cpak_cartridge_context& cpak_context,
+//		void* const host_context,
+//		const std::string& iniPath)
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
-		const cpak_cartridge_context& cpak_context,
 		void* const host_context,
-		const std::string& iniPath)
+		const std::string& iniPath,
+		const cpak_cartridge_context& cpak_context)
 	{
 		switch (vcc::core::determine_cartridge_type(filename))
 		{
