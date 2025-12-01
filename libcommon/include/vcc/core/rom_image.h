@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-namespace vcc { namespace core
+namespace vcc::core
 {
 
 	class rom_image
@@ -73,4 +73,4 @@ namespace vcc { namespace core
 		container_type data_;
 	};
 
-} }
+}

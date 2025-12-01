@@ -19,10 +19,10 @@
 #include <vcc/core/cartridges/basic_cartridge.h>
 
 
-namespace vcc { namespace core { namespace cartridges
+namespace vcc::core::cartridges
 {
 
 	class LIBCOMMON_EXPORT null_cartridge : public basic_cartridge
 	{};
 
-} } }
+}

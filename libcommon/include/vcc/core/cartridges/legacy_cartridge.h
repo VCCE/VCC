@@ -22,7 +22,7 @@
 #include <string>
 
 
-namespace vcc { namespace core { namespace cartridges
+namespace vcc::core::cartridges
 {
 
 	class legacy_cartridge: public cartridge
@@ -80,4 +80,4 @@ namespace vcc { namespace core { namespace cartridges
 		const PakMenuItemClickedModuleFunction menu_item_clicked_;
 	};
 
-} } }
+}

@@ -21,7 +21,7 @@
 #include <Windows.h>
 
 
-namespace vcc { namespace core { namespace utils
+namespace vcc::core::utils
 {
 
 	LIBCOMMON_EXPORT std::string get_module_path(HMODULE module_handle = nullptr);
@@ -30,4 +30,4 @@ namespace vcc { namespace core { namespace utils
 	LIBCOMMON_EXPORT std::string get_filename(std::string path);
 	LIBCOMMON_EXPORT std::string strip_application_path(std::string path);
 
-} } }
+}

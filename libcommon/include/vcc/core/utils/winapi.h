@@ -20,10 +20,12 @@
 #include <Windows.h>
 #include <string>
 
+// I think winapi is intended to contain windows api calls. Not sure why it
+// was created because that could be any thing used to interact with Windows.
 
-namespace vcc { namespace core { namespace utils
+namespace vcc::core::utils
 {
-
+    // Load resource string
 	LIBCOMMON_EXPORT std::string load_string(HINSTANCE instance, UINT id);
 
-} } }
+}

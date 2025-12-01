@@ -19,7 +19,7 @@
 #include <vcc/core/utils/winapi.h>
 
 
-namespace vcc { namespace core { namespace utils
+namespace vcc::core::utils
 {
 
 
@@ -108,4 +108,4 @@ namespace vcc { namespace core { namespace utils
 		return path;
 	}
 
-} } }
+}
