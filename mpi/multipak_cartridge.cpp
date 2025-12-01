@@ -237,7 +237,7 @@ namespace vcc::cartridges::multipak
 		case menu_item_ids::insert_into_slot_2:
 		case menu_item_ids::insert_into_slot_3:
 		case menu_item_ids::insert_into_slot_4:
-			select_and_insert_cartridge(menu_item_id - menu_item_ids::insert_into_slot_4);
+			select_and_insert_cartridge(menu_item_id - menu_item_ids::insert_into_slot_1);
 			break;
 
 		case menu_item_ids::eject_slot_1:
