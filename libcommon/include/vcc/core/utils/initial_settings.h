@@ -20,10 +20,10 @@
 #include <string>
 
 
-namespace vcc { namespace core
+namespace vcc::core
 {
 
-	class configuration_serializer
+	class initial_settings
 	{
 	public:
 
@@ -32,7 +32,7 @@ namespace vcc { namespace core
 
 	public:
 
-		LIBCOMMON_EXPORT explicit configuration_serializer(path_type path);
+		LIBCOMMON_EXPORT explicit initial_settings(path_type path);
 
 		LIBCOMMON_EXPORT void write(const string_type& section, const string_type& key, int value) const;
 		LIBCOMMON_EXPORT void write(const string_type& section, const string_type& key, const string_type& value) const;
@@ -45,4 +45,4 @@ namespace vcc { namespace core
 
 		const path_type path_;
 	};
-} }
+}

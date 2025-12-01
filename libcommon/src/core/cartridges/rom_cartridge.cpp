@@ -18,7 +18,7 @@
 #include <vcc/core/cartridges/rom_cartridge.h>
 
 
-namespace vcc { namespace core { namespace cartridges
+namespace vcc::core::cartridges
 {
 
 	rom_cartridge::rom_cartridge(
@@ -76,4 +76,4 @@ namespace vcc { namespace core { namespace cartridges
 		context_->assert_cartridge_line(true);
 	}
 
-} } }
+}

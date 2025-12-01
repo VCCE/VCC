@@ -18,7 +18,7 @@
 #include <vcc/core/cartridges/legacy_cartridge.h>
 #include <stdexcept>
 
-namespace vcc { namespace core { namespace cartridges
+namespace vcc::core::cartridges
 {
 
 	namespace
@@ -171,4 +171,4 @@ namespace vcc { namespace core { namespace cartridges
 		menu_item_clicked_(menu_item_id);
 	}
 
-} } }
+}

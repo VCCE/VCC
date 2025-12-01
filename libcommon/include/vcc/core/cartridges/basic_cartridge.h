@@ -19,7 +19,7 @@
 #include <vcc/core/cartridge.h>
 
 
-namespace vcc { namespace core { namespace cartridges
+namespace vcc::core::cartridges
 {
 
 	struct LIBCOMMON_EXPORT basic_cartridge : public ::vcc::core::cartridge
@@ -57,4 +57,4 @@ namespace vcc { namespace core { namespace cartridges
 		virtual void initialize_bus();
 	};
 
-} } }
+}

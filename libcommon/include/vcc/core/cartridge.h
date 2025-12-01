@@ -20,7 +20,7 @@
 #include <string>
 
 
-namespace vcc { namespace core
+namespace vcc::core
 {
 
 	struct LIBCOMMON_EXPORT cartridge
@@ -57,4 +57,4 @@ namespace vcc { namespace core
 		virtual void menu_item_clicked(unsigned char menu_item_id) = 0;
 	};
 
-} }
+}

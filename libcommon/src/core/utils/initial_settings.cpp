@@ -15,19 +15,19 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/core/utils/configuration_serializer.h>
+#include <vcc/core/utils/initial_settings.h>
 #include <Windows.h>
 
 
-namespace vcc { namespace core
+namespace vcc::core
 {
 
-	configuration_serializer::configuration_serializer(path_type path)
+	initial_settings::initial_settings(path_type path)
 		: path_(move(path))
 	{
 	}
 
-	void configuration_serializer::write(
+	void initial_settings::write(
 		const string_type& section,
 		const string_type& key,
 		int value) const
@@ -39,7 +39,7 @@ namespace vcc { namespace core
 			path_.c_str());
 	}
 
-	void configuration_serializer::write(
+	void initial_settings::write(
 		const string_type& section,
 		const string_type& key,
 		const string_type& value) const
@@ -47,12 +47,12 @@ namespace vcc { namespace core
 		WritePrivateProfileString(section.c_str(), key.c_str(), value.c_str(), path_.c_str());
 	}
 
-	int configuration_serializer::read(const string_type& section, const string_type& key, int default_value) const
+	int initial_settings::read(const string_type& section, const string_type& key, int default_value) const
 	{
 		return GetPrivateProfileInt(section.c_str(), key.c_str(), default_value, path_.c_str());
 	}
 
-	configuration_serializer::string_type configuration_serializer::read(
+	initial_settings::string_type initial_settings::read(
 		const string_type& section,
 		const string_type& key,
 		const string_type& default_value) const
@@ -71,4 +71,4 @@ namespace vcc { namespace core
 		return loaded_string;
 	}
 
-} }
+}

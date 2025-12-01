@@ -22,7 +22,7 @@
 #include <memory>
 
 
-namespace vcc { namespace core { namespace cartridges
+namespace vcc::core::cartridges
 {
 
 	class rom_cartridge : public basic_cartridge
@@ -70,4 +70,4 @@ namespace vcc { namespace core { namespace cartridges
 		size_type bank_offset_;
 	};
 
-} } }
+}

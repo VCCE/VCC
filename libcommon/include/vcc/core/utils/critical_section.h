@@ -3,7 +3,7 @@
 #include <Windows.h>
 
 
-namespace vcc { namespace core { namespace utils
+namespace vcc::core::utils
 {
 
 	class critical_section
@@ -64,4 +64,4 @@ namespace vcc { namespace core { namespace utils
 		const critical_section& section_;
 	};
 
-} } }
+}

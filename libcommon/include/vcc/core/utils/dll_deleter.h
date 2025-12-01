@@ -19,7 +19,7 @@
 #include <vcc/common/logger.h>
 #include <Windows.h>
 
-namespace vcc { namespace core
+namespace vcc::core
 {
 
 	struct LIBCOMMON_EXPORT dll_deleter
@@ -29,9 +29,8 @@ namespace vcc { namespace core
 			if (instance != nullptr)
 			{
 				const auto result(FreeLibrary(instance));
-				DLOG_C("pak:err FreeLibrary %d %d\n", instance, result);
 			}
 		};
 	};
 
-} }
+}

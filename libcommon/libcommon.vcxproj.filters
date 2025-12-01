@@ -75,7 +75,7 @@
     <ClCompile Include="src\core\cartridge_loader.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\utils\configuration_serializer.cpp">
+    <ClCompile Include="src\core\utils\initial_settings.cpp">
       <Filter>Source Files\core\utils</Filter>
     </ClCompile>
     <ClCompile Include="src\core\utils\filesystem.cpp">
@@ -140,7 +140,7 @@
     <ClInclude Include="include\vcc\core\utils\filesystem.h">
       <Filter>Header Files\core\utils</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\utils\configuration_serializer.h">
+    <ClInclude Include="include\vcc\core\utils\initial_settings.h">
       <Filter>Header Files\core\utils</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\core\utils\winapi.h">

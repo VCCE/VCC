@@ -20,7 +20,7 @@
 #include <Windows.h>
 
 
-namespace vcc { namespace core
+namespace vcc::core
 {
 
 	bool rom_image::load(path_type filename)
@@ -51,4 +51,4 @@ namespace vcc { namespace core
 		return true;
 	}
 
-} }
+}

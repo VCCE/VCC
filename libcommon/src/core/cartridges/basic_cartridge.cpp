@@ -18,7 +18,7 @@
 #include <vcc/core/cartridges/basic_cartridge.h>
 
 
-namespace vcc { namespace core { namespace cartridges
+namespace vcc::core::cartridges
 {
 
 	basic_cartridge::name_type basic_cartridge::name() const
@@ -84,4 +84,4 @@ namespace vcc { namespace core { namespace cartridges
 	void basic_cartridge::initialize_bus()
 	{}
 
-} } }
+}
