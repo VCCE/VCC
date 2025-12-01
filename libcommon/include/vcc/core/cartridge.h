@@ -27,9 +27,9 @@ namespace vcc::core
 	{
 	public:
 
-		using name_type = ::std::string;
-		using catalog_id_type = ::std::string;
-		using description_type = ::std::string;
+		using name_type = std::string;
+		using catalog_id_type = std::string;
+		using description_type = std::string;
 
 
 	public:
