@@ -6,9 +6,9 @@ class multipak_configuration
 {
 public:
 
-	using slot_id_type = ::std::size_t;
-	using path_type = ::std::string;
-	using string_type = ::std::string;
+	using slot_id_type = std::size_t;
+	using path_type = std::string;
+	using string_type = std::string;
 
 
 public:

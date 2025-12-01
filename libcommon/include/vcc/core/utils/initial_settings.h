@@ -27,8 +27,8 @@ namespace vcc::core
 	{
 	public:
 
-		using path_type = ::std::string;
-		using string_type = ::std::string;
+		using path_type = std::string;
+		using string_type = std::string;
 
 	public:
 

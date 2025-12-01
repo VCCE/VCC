@@ -33,10 +33,10 @@ public:
 
 	using context_type = ::vcc::core::cartridge_context;
 	using mount_status_type = ::vcc::core::cartridge_loader_status;
-	using slot_id_type = ::std::size_t;
-	using path_type = ::std::string;
-	using label_type = ::std::string;
-	using description_type = ::std::string;
+	using slot_id_type = std::size_t;
+	using path_type = std::string;
+	using label_type = std::string;
+	using description_type = std::string;
 	using menu_item_type = CartMenuItem;
 
 

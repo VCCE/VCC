@@ -30,7 +30,7 @@ namespace vcc::core
 
 	struct LIBCOMMON_EXPORT cartridge_context
 	{
-		using path_type = ::std::string;
+		using path_type = std::string;
 
 
 		virtual ~cartridge_context() = default;

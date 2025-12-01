@@ -32,10 +32,10 @@ namespace vcc::modules::mpi
 		using name_type = ::vcc::core::cartridge::name_type;
 		using catalog_id_type = ::vcc::core::cartridge::catalog_id_type;
 		using description_type = ::vcc::core::cartridge::description_type;
-		using path_type = ::std::string;
-		using label_type = ::std::string;
+		using path_type = std::string;
+		using label_type = std::string;
 		using handle_type = ::vcc::core::cartridge_loader_result::handle_type;
-		using cartridge_ptr_type = ::std::unique_ptr<::vcc::core::cartridge>;
+		using cartridge_ptr_type = std::unique_ptr<::vcc::core::cartridge>;
 		using menu_item_type = CartMenuItem;
 		using menu_item_collection_type = std::vector<menu_item_type>;
 		using context_type = ::vcc::core::cartridge_context;

@@ -30,7 +30,7 @@ class host_cartridge_context : public ::vcc::core::cartridge_context
 public:
 
 	// FIXME: Remove this when we derive from cartridge_context
-	using path_type = ::std::string;
+	using path_type = std::string;
 
 
 public:
