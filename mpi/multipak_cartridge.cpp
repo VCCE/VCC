@@ -84,7 +84,7 @@ namespace vcc::cartridges::multipak
 		std::shared_ptr<expansion_port_ui_type> ui,
 		std::shared_ptr<expansion_port_bus_type> bus,
 		std::shared_ptr<multipak_cartridge_driver> driver,
-		// FIXME-CHET: globally rename module_instance to library_handle
+		// TODO-CHET: globally rename module_instance to library_handle
 		HINSTANCE module_instance,
 		std::shared_ptr<multipak_configuration> configuration)
 		:

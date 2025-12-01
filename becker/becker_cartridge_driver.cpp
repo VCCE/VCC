@@ -42,7 +42,7 @@ namespace vcc::cartridges::becker_port
 	{
 		if (port_id == mmio_ports::data)
 		{
-			// FIXME-CHET: this should call a function called write_data() without the port id.
+			// TODO-CHET: this should call a function called write_data() without the port id.
 			becker_device_.write(value, port_id);
 		}
 	}
@@ -52,11 +52,11 @@ namespace vcc::cartridges::becker_port
 		switch (port_id)
 		{
 		case mmio_ports::status:
-			// FIXME-CHET: this should call a function called has_data() without the port id.
+			// TODO-CHET: this should call a function called has_data() without the port id.
 			return becker_device_.read(port_id) != 0 ? mmio_ports::status_bits::data_ready : 0;
 
 		case mmio_ports::data:
-			// FIXME-CHET: this should call a function called read_data() without the port id.
+			// TODO-CHET: this should call a function called read_data() without the port id.
 			return becker_device_.read(port_id);
 		}
 

@@ -124,7 +124,7 @@ namespace vcc::cartridges::multipak
 	{
 		if (port_id == mmio_ports::slot_select)
 		{
-			// FIXME-CHET: The next two lines should be handled by the write_port function
+			// TODO-CHET: The next two lines should be handled by the write_port function
 			slot_register_ &= 0b11001100;
 			slot_register_ |= cached_scs_slot_ | (cached_cts_slot_ << 4);
 
@@ -227,7 +227,7 @@ namespace vcc::cartridges::multipak
 		managed_handle_type handle,
 		cartridge_ptr_type cartridge)
 	{
-		// FIXME-CHET: We should probably call eject(slot) here in order to ensure that the
+		// TODO-CHET: We should probably call eject(slot) here in order to ensure that the
 		// cartridge is shut down correctly.
 		slots_[slot] = { move(handle), move(cartridge) };
 		slots_[slot].start();

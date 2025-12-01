@@ -27,6 +27,7 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include <filesystem>
 #include <Windows.h>
 
 
@@ -101,7 +102,7 @@ namespace vcc::utils
 	/// @param filename The name of the file to check.
 	/// 
 	/// @return The type of cartridge detected.
-	LIBCOMMON_EXPORT [[nodiscard]] cartridge_file_type determine_cartridge_type(const std::string& filename);
+	LIBCOMMON_EXPORT [[nodiscard]] cartridge_file_type determine_cartridge_type(const std::filesystem::path& pathname);
 
 	/// @brief Load a ROM file as a cartridge.
 	/// 
@@ -115,7 +116,7 @@ namespace vcc::utils
 	/// 
 	/// @throws std::invalid_argument if `bus` is null.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_rom_cartridge(
-		const std::string& filename,
+		const std::filesystem::path& pathname,
 		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus);
@@ -134,7 +135,7 @@ namespace vcc::utils
 	/// 
 	/// @throws std::invalid_argument if `bus` is null.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_library_cartridge(
-		const std::string& filename,
+		const std::filesystem::path& pathname,
 		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus);
@@ -153,7 +154,7 @@ namespace vcc::utils
 	/// 
 	/// @throws std::invalid_argument if `bus` is null.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_cartridge(
-		const std::string& filename,
+		const std::filesystem::path& pathname,
 		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus);

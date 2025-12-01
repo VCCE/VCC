@@ -373,12 +373,12 @@ TEST_F(test_generic_disk_image, write_sector)
 
 TEST_F(test_generic_disk_image, read_track)
 {
-	// TODO: implementation of read_track is pending. Tests deferred.
+	// TODO-CHET: implementation of read_track is pending. Tests deferred.
 }
 
 TEST_F(test_generic_disk_image, write_track)
 {
-	// TODO: completion of write_track is pending. Tests deferred.
+	// TODO-CHET: completion of write_track is pending. Tests deferred.
 }
 
 TEST_F(test_generic_disk_image, write_track_throws_on_invalid_arguments)

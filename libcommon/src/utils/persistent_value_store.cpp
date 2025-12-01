@@ -84,7 +84,7 @@ namespace vcc::utils
 		const string_type& key,
 		const char* default_value) const
 	{
-		// FIXME-CHET: There is no way to effectively determining the length of
+		// TODO-CHET: There is no way to effectively determining the length of
 		// the string that will be loaded. This will need to either use a fixed
 		// buffer of 65536 characters (the maximum allowed), iterate growing
 		// the buffer the string is loaded into until it is big enough, switch

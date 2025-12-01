@@ -91,7 +91,7 @@ SDC_Control(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case ID_NEXT:
-			// FIXME-CHET: We need access to the cartridge but the UI is not ready for it.
+			// TODO-CHET: We need access to the cartridge but the UI is not ready for it.
             //MountNext (0);
             SetFocus(GetParent(hDlg));
             return TRUE;

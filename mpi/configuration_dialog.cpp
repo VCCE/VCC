@@ -48,7 +48,7 @@ namespace vcc::cartridges::multipak
 	}
 
 	configuration_dialog::configuration_dialog(
-		// FIXME-CHET: globally rename module_handle to library_handle
+		// TODO-CHET: globally rename module_handle to library_handle
 		HINSTANCE module_handle,
 		std::shared_ptr<multipak_configuration> configuration,
 		std::shared_ptr<multipak_cartridge_driver> mpi,
@@ -136,7 +136,7 @@ namespace vcc::cartridges::multipak
 
 	void configuration_dialog::set_selected_slot(slot_id_type slot)
 	{
-		// FIXME-CHET: Maube move this to the callsite or when the dialog closes or at least make it optional?
+		// TODO-CHET: Maube move this to the callsite or when the dialog closes or at least make it optional?
 		mpi_->switch_to_slot(slot);
 		configuration_->selected_slot(slot);
 

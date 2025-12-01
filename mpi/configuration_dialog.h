@@ -147,7 +147,7 @@ namespace vcc::cartridges::multipak
 		/// @brief The handle to the currently opened dialog, or null if no dialog is open.
 		HWND dialog_handle_ = nullptr;
 		/// @brief The parent window of the currently opened dialog, or null if no dialog is open.
-		HWND parent_handle_ = nullptr;	//	FIXME-CHET: This is only used for one thing. Delete it!
+		HWND parent_handle_ = nullptr;	//	TODO-CHET: This is only used for one thing. Delete it!
 	};
 
 }

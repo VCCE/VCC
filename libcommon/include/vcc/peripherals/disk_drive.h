@@ -8,7 +8,7 @@
 #include <string>
 
 
-// FIXME: Move to vcc::devices (i.e. vcc::devices::peripherals)
+// TODO-CHET: Maybe move to vcc::devices or vcc::devices::peripherals or somewhere
 namespace vcc::peripherals
 {
 

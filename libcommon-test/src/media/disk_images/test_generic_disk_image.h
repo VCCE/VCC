@@ -32,7 +32,7 @@ protected:
 	using geometry_type = generic_disk_image::geometry_type;
 	using buffer_type = generic_disk_image::buffer_type;
 
-	// FIXME: Remove first_sector_id from parameter list
+	// TODO-CHET: Remove first_sector_id from parameter list
 	using geometry_iterator_function_type = void(
 		generic_disk_image& image,
 		memory_stream_buffer&,

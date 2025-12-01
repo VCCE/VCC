@@ -54,7 +54,7 @@ namespace vcc::media::disk_images
 		track_size_(geometry.sector_count * geometry.sector_size),
 		sector_size_(geometry.sector_size)
 	{
-		// TODO: find a way to do this without the cast. i.e. the file size is <0 if
+		// TODO-CHET: find a way to do this without the cast. i.e. the file size is <0 if
 		// the file is closed. Also check good/bad flags.
 		if (const auto file_stream(dynamic_cast<std::fstream*>(&stream_));
 			file_stream && !file_stream->is_open())
@@ -183,7 +183,7 @@ namespace vcc::media::disk_images
 			throw fatal_io_error("Cannot read sector. Fatal IO error encountered while seeking to sector position.");
 		}
 
-		// TODO: There needs to be unchecked versions of sector_size() and other similar
+		// TODO-CHET: There needs to be unchecked versions of sector_size() and other similar
 		// functions since we're already checking the input parameters here.
 		data_buffer.resize(get_sector_size(
 			disk_head,
@@ -196,7 +196,7 @@ namespace vcc::media::disk_images
 		stream_.read(reinterpret_cast<char*>(data_buffer.data()), data_buffer.size());
 		if (stream_.bad())
 		{
-			// TODO: This should throw
+			// FIXME-CHET: This should throw
 			std::fill(data_buffer.begin(), data_buffer.end(), buffer_type::value_type(0xffu));
 		}
 	}
@@ -227,7 +227,7 @@ namespace vcc::media::disk_images
 		const auto sector_size(get_sector_size(disk_head, disk_track, head_id, track_id, sector_id));
 		if (sector_size > data_buffer.size())
 		{
-			// TODO: Determine if we should write a partial sector here or if a write_partial_sector
+			// TODO-CHET: Determine if we should write a partial sector here or if a write_partial_sector
 			// should be added and used by the client.
 			throw buffer_size_error("Cannot write sector. Sector buffer is smaller than the sector.");
 		}
@@ -288,7 +288,7 @@ namespace vcc::media::disk_images
 			throw write_protect_error("Cannot write track. Disk is write protected.");
 		}
 
-		// TODO: This needs a more robust solution in order to support derived disk images
+		// TODO-CHET: This needs a more robust solution in order to support derived disk images
 		// that manage sector record details in their format. We should
 		//  - check for valid sector id's
 		//  - check for sequential sector id's
@@ -302,7 +302,7 @@ namespace vcc::media::disk_images
 
 		for (const auto& sector : sectors)
 		{
-			// TODO: This is a placeholder. A more robust solution is needed to support other disk
+			// TODO-CHET: This is a placeholder. A more robust solution is needed to support other disk
 			// formats
 			write_sector(
 				disk_head,

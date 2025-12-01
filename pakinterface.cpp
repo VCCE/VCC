@@ -157,7 +157,7 @@ void PakTimer()
 {
 	std::scoped_lock lock(gPakMutex);
 
-	// FIXME: The timing here matches the horizontal sync frequency but should be
+	// TODO-CHET: The timing here matches the horizontal sync frequency but should be
 	// defined somewhere else and passed to this function.
 	gExpansionSlot.update(1.0f / (60 * 262));
 }

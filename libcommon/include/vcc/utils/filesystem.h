@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <filesystem>
 #include <Windows.h>
 
 
@@ -31,6 +32,7 @@ namespace vcc::utils
 	LIBCOMMON_EXPORT [[nodiscard]] std::string get_directory_from_path(std::string path);
 	LIBCOMMON_EXPORT [[nodiscard]] std::string get_filename(std::string path);
 	LIBCOMMON_EXPORT [[nodiscard]] std::string strip_application_path(std::string path);
-	LIBCOMMON_EXPORT [[nodiscard]] std::optional<std::vector<unsigned char>> load_file_to_vector(std::string filename);
+	LIBCOMMON_EXPORT [[nodiscard]] std::optional<std::vector<unsigned char>>
+		load_file_to_vector(const std::filesystem::path& pathname);
 
 }

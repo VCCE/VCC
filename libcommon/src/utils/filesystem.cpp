@@ -108,9 +108,9 @@ namespace vcc::utils
 		return path;
 	}
 
-	LIBCOMMON_EXPORT std::optional<std::vector<unsigned char>> load_file_to_vector(std::string filename)
+	LIBCOMMON_EXPORT std::optional<std::vector<unsigned char>> load_file_to_vector(const std::filesystem::path& pathname)
 	{
-		std::basic_ifstream<unsigned char> input(filename, std::ios::binary);
+		std::basic_ifstream<unsigned char> input(pathname, std::ios::binary);
 		if (!input.is_open())
 		{
 			return {};
@@ -121,6 +121,8 @@ namespace vcc::utils
 		const auto file_length(input.tellg());
 		input.seekg(current_position, std::ios::beg);
 
+		// TODO-CHET: Check if this is mucking up loading of roms (i.e. stream is filtering
+		// something).
 		std::vector<unsigned char> file_image(static_cast<size_t>(file_length));
 		input.read(&file_image[0], file_image.size());
 

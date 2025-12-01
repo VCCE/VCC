@@ -61,7 +61,7 @@ namespace vcc::utils
 		auto first_valid_sector_id = 1u;
 
 		::vcc::media::geometry::generic_disk_geometry geometry;
-		// FIXME: This needs to calculate the number of tracks available (35, 40, or 80. More for hard disks)
+		// TODO-CHET: This needs to calculate the number of tracks available (35, 40, or 80. More for hard disks)
 		switch (header_size)
 		{
 		case 4:

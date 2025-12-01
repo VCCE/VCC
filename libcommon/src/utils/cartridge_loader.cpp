@@ -50,9 +50,9 @@ namespace vcc::utils
 
 	}
 
-	cartridge_file_type determine_cartridge_type(const std::string& filename)
+	cartridge_file_type determine_cartridge_type(const std::filesystem::path& pathname)
 	{
-		std::ifstream input(filename, std::ios::binary);
+		std::ifstream input(pathname, std::ios::binary);
 		if (!input.is_open())
 		{
 			return cartridge_file_type::not_opened;
@@ -67,7 +67,7 @@ namespace vcc::utils
 	}
 
 	cartridge_loader_result load_rom_cartridge(
-		const std::string& filename,
+		const std::filesystem::path& pathname,
 		[[maybe_unused]] std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		[[maybe_unused]] std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus)
@@ -77,7 +77,7 @@ namespace vcc::utils
 			throw std::invalid_argument("Cannot load ROM cartridge. Context is null.");
 		}
 
-		auto rom_image(load_file_to_vector(filename));
+		auto rom_image(load_file_to_vector(pathname));
 		if (!rom_image.has_value())
 		{
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
@@ -95,7 +95,7 @@ namespace vcc::utils
 		auto rom_cartridge(
 			std::make_unique<::vcc::bus::cartridges::rom_cartridge>(
 				move(bus),
-				extract_filename(filename),
+				pathname.stem().string(),
 				move(*rom_image),
 				enable_bank_switching));
 		return {
@@ -106,7 +106,7 @@ namespace vcc::utils
 	}
 
 	cartridge_loader_result load_library_cartridge(
-		const std::string& filename,
+		const std::filesystem::path& pathname,
 		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus)
@@ -116,14 +116,14 @@ namespace vcc::utils
 			throw std::invalid_argument("Cannot load library cartridge. Context is null.");
 		}
 
-		if (GetModuleHandle(filename.c_str()) != nullptr)
+		if (GetModuleHandle(pathname.string().c_str()) != nullptr)
 		{
 			return { nullptr, nullptr, cartridge_loader_status::already_loaded };
 		}
 
 		cartridge_loader_result details;
-		details.handle.reset(LoadLibrary(filename.c_str()));
-		DLOG_C("pak:LoadLibrary %s %d\n", filename.c_str(), GetLastError());
+		details.handle.reset(LoadLibrary(pathname.string().c_str()));
+		//DLOG_C("pak:LoadLibrary %s %d\n", pathname.c_str(), GetLastError());
 		if (details.handle == nullptr)
 		{
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
@@ -149,7 +149,7 @@ namespace vcc::utils
 	}
 
 	cartridge_loader_result load_cartridge(
-		const std::string& filename,
+		const std::filesystem::path& pathname,
 		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		std::unique_ptr<::vcc::bus::expansion_port_bus> bus)
@@ -159,17 +159,17 @@ namespace vcc::utils
 			throw std::invalid_argument("Cannot load cartridge. Context is null.");
 		}
 
-		switch (::vcc::utils::determine_cartridge_type(filename))
+		switch (::vcc::utils::determine_cartridge_type(pathname))
 		{
 		default:
 		case cartridge_file_type::not_opened:	//	File doesn't exist or can't be opened
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 
 		case cartridge_file_type::rom_image:	//	File is a ROM image
-			return load_rom_cartridge(filename, move(host), move(ui), move(bus));
+			return load_rom_cartridge(pathname, move(host), move(ui), move(bus));
 
 		case cartridge_file_type::library:		//	File is a DLL
-			return load_library_cartridge(filename, move(host), move(ui), move(bus));
+			return load_library_cartridge(pathname, move(host), move(ui), move(bus));
 		}
 	}
 

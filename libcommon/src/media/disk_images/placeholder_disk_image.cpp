@@ -51,7 +51,7 @@ namespace vcc::media::disk_images
 			return false;
 		}
 
-		// TODO: add get_sector_count_unchecked() since this function shouldn't throw and
+		// TODO-CHET: add get_sector_count_unchecked() since this function shouldn't throw and
 		// sector_count does.
 		return sector_id - first_valid_sector_id() < get_sector_count(disk_head, disk_track);
 	}

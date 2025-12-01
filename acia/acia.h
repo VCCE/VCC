@@ -35,7 +35,7 @@ class rs232pak_cartridge :
 {
 public:
 
-	using size_type = ::vcc::bus::cartridge::size_type;	//	FIXME-CHET: Delete this when device is removes as base class!
+	using size_type = ::vcc::bus::cartridge::size_type;	//	TODO-CHET: Delete this when device is removes as base class!
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
 	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;

@@ -20,7 +20,7 @@
 #include <strstream>
 
 
-// FIXME: strstreambuf is deprecated but used here until a new solution that is
+// TODO-CHET: strstreambuf is deprecated but used here until a new solution that is
 // lighter than the current alternative.
 class memory_stream_buffer : public std::strstreambuf
 {
