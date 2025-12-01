@@ -124,6 +124,8 @@ namespace vcc::cartridges::multipak
 		/// @param message The message.
 		/// @param wParam The word parameter for the message. The contents of this parameter
 		/// depend on the message received.
+		/// @param lParam The long parameter for the message. The contents of this parameter
+		/// depend on the message received.
 		/// 
 		/// @return The return value depends on the message being processed.
 		INT_PTR process_message(

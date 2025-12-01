@@ -9,7 +9,7 @@
 #define IDS_ERROR_CARTRIDGE_NOT_LOADED        105
 #define IDS_ERROR_CARTRIDGE_NOT_ROM           106
 #define IDS_ERROR_CARTRIDGE_NOT_EXPANSION     107
-#define IDS_ERROR_CARTRIDGE_API_NOT_SUPPORTED 108
+#define IDS_ERROR_CARTRIDGE_UNKNOWN_ID        108
 
 // Next default values for new objects
 // 

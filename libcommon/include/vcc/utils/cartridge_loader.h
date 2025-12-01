@@ -58,9 +58,8 @@ namespace vcc::utils
 		cannot_open,
 		/// @brief The cartridge file cannot be found.
 		not_found,
-		/// @brief The cartridge file is a shared library but uses an API not supported by the
-		/// system.
-		unsupported_api,
+		/// @brief The cartridge id is unknown.
+		unknown_cartridge,
 		/// @brief The cartridge file was not loaded.
 		not_loaded,
 		/// @brief The cartridge file was loaded as a ROM pak but the file does not contain a ROM.
@@ -99,14 +98,14 @@ namespace vcc::utils
 	/// 
 	/// @todo This should return a std::optional using an empty value to indicate no type determined.
 	/// 
-	/// @param filename The name of the file to check.
+	/// @param pathname The name of the file to check.
 	/// 
 	/// @return The type of cartridge detected.
 	LIBCOMMON_EXPORT [[nodiscard]] cartridge_file_type determine_cartridge_type(const std::filesystem::path& pathname);
 
 	/// @brief Load a ROM file as a cartridge.
 	/// 
-	/// @param filename The name of the ROM file to load.
+	/// @param pathname The name of the ROM file to load.
 	/// @param host The host system that will manage the cartridge.
 	/// @param ui The user interface manager that allows interaction between the cartridge
 	/// and the user.
@@ -125,7 +124,7 @@ namespace vcc::utils
 	/// 
 	/// Load a shared library containing a cartridge plugin.
 	/// 
-	/// @param filename The name of the shared library to load.
+	/// @param pathname The name of the shared library to load.
 	/// @param host The host system that will manage the cartridge.
 	/// @param ui The user interface manager that allows interaction between the cartridge
 	/// and the user.
@@ -144,7 +143,7 @@ namespace vcc::utils
 	/// 
 	/// Load a variety of automatically detected cartridge types.
 	/// 
-	/// @param filename The name of the cartridge to load.
+	/// @param pathname The name of the cartridge to load.
 	/// @param host The host system that will manage the cartridge.
 	/// @param ui The user interface manager that allows interaction between the cartridge
 	/// and the user.
