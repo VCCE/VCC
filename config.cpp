@@ -91,7 +91,6 @@ struct STRConfig
 	unsigned char	MonitorType = 0;
 	unsigned char   PaletteType = 0;
 	unsigned char	ScanLines = 0;
-	unsigned char	Resize = 0;
 	unsigned char	Aspect = 0;
 	unsigned char	RememberSize = 0;
 	Rect			WindowRect;
@@ -226,15 +225,6 @@ void InitSound()
 unsigned char WriteIniFile()
 {
 	Rect winRect = GetCurWindowSize();
-	CurrentConfig.Resize = 1;      // How to restore default window size?
-
-	// Prevent bad window size being written to the inifile
-	if (winRect.w < 20 || winRect.h < 20) 
-	{
-		winRect.w = 640;
-		winRect.h = 480;
-	}
-
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
 
@@ -378,11 +368,17 @@ unsigned char ReadIniFile()
 		}
 	}
 
-	CurrentConfig.Resize = 1; //Checkbox removed. Remove this from the ini?
+	// Make sure Window geometry is reasonable
+	int sw = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+	int sh = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+	if ( (CurrentConfig.WindowRect.w < 215)  |
+		 (CurrentConfig.WindowRect.h < 160)  |
+		 (CurrentConfig.WindowRect.x < -100) |
+		 (CurrentConfig.WindowRect.y < -80)  |
+		 (CurrentConfig.WindowRect.x > sw-100) |
+		 (CurrentConfig.WindowRect.y > sh-80) )
+		CurrentConfig.WindowRect = {0,0,640,480};
 
-	Rect rect = { CW_USEDEFAULT, CW_USEDEFAULT, DefaultWidth, DefaultHeight };
-	if (CurrentConfig.RememberSize)
-		rect = CurrentConfig.WindowRect;
 	return 0;
 }
 
@@ -398,7 +394,7 @@ void SetWindowRect(const Rect& rect)
 {
 	if (EmuState.WindowHandle != nullptr)
 	{
-		RECT ra = { 0,0,0,0 };
+		RECT ra = { 0,0,0,0 };  // left,top,right,bottom
 		::AdjustWindowRect(&ra, WS_OVERLAPPEDWINDOW, TRUE);
 		int windowBorderWidth = ra.right - ra.left;
 		int windowBorderHeight = ra.bottom - ra.top;
@@ -447,7 +443,6 @@ void SetKeyMapFilePath(const char *Path)
 void UpdateConfig ()
 {
 	SetPaletteType();
-	SetResize(CurrentConfig.Resize);
 	SetAspect(CurrentConfig.Aspect);
 	SetScanLines(CurrentConfig.ScanLines);
 	SetFrameSkip(CurrentConfig.FrameSkip);
@@ -950,7 +945,6 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*
 		SendDlgItemMessage(hDlg,IDC_SCANLINES,BM_SETCHECK,tmpcfg.ScanLines,0);
 		SendDlgItemMessage(hDlg,IDC_THROTTLE,BM_SETCHECK,tmpcfg.SpeedThrottle,0);
 		SendDlgItemMessage(hDlg,IDC_FRAMESKIP,TBM_SETPOS,TRUE,tmpcfg.FrameSkip);
-		SendDlgItemMessage(hDlg,IDC_RESIZE,BM_SETCHECK,tmpcfg.Resize,0);
 		SendDlgItemMessage(hDlg,IDC_ASPECT,BM_SETCHECK,tmpcfg.Aspect,0);
 		SendDlgItemMessage(hDlg,IDC_REMEMBER_SIZE, BM_SETCHECK, tmpcfg.RememberSize, 0);
 		sprintf(OutBuffer,"%i",tmpcfg.FrameSkip);
@@ -983,14 +977,12 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*
 		break;
 
 	case WM_COMMAND:
-		tmpcfg.Resize = 1;//(unsigned char)SendDlgItemMessage(hDlg,IDC_RESIZE,BM_GETCHECK,0,0);
 		tmpcfg.Aspect = (unsigned char) SendDlgItemMessage(hDlg,IDC_ASPECT,BM_GETCHECK,0,0);
 		tmpcfg.ScanLines = (unsigned char) SendDlgItemMessage(hDlg,IDC_SCANLINES,BM_GETCHECK,0,0);
 		tmpcfg.SpeedThrottle = (unsigned char)
 			SendDlgItemMessage(hDlg,IDC_THROTTLE,BM_GETCHECK,0,0);
 		tmpcfg.RememberSize = (unsigned char)
 			SendDlgItemMessage(hDlg,IDC_REMEMBER_SIZE,BM_GETCHECK,0,0);
-		//POINT p = { 640,480 };
 		switch (LOWORD (wParam)) {
 
 		case IDCANCEL:
@@ -1001,12 +993,10 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*
 		case IDOK:
 		case IDAPPLY:
 			CurrentConfig.FrameSkip     = tmpcfg.FrameSkip;
-			CurrentConfig.Resize        = tmpcfg.Resize;
 			CurrentConfig.Aspect        = tmpcfg.Aspect;
 			CurrentConfig.ScanLines     = tmpcfg.ScanLines;
 			CurrentConfig.SpeedThrottle = tmpcfg.SpeedThrottle;
 			CurrentConfig.RememberSize  = tmpcfg.RememberSize;
-			CurrentConfig.Resize        = tmpcfg.Resize;
 			CurrentConfig.MonitorType   = tmpcfg.MonitorType;
 			CurrentConfig.PaletteType   = tmpcfg.PaletteType;
 			UpdateConfig();
@@ -1017,7 +1007,6 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*
 			break;
 
 		case IDC_REMEMBER_SIZE:
-			tmpcfg.Resize = 1;
 			SendDlgItemMessage(hDlg, IDC_RESIZE, BM_GETCHECK, 1, 0);
 			break;
 
