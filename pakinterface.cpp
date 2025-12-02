@@ -187,27 +187,37 @@ unsigned short PackAudioSample()
 	return gActiveCartrige->sample_audio();
 }
 
-// Create first two entries for cartridge menu.
+// Create entries for cartridge menu. The rest will be for MPI
 void BeginCartMenu()
 {
 	vcc::core::utils::section_locker lock(gPakMutex);
 
-	CartMenu.add("", MID_BEGIN, MIT_Head, 0);
+	CartMenu.reserve(0);
+	CartMenu.add("", MID_BEGIN, MIT_Head);
 	CartMenu.add("Cartridge", MID_ENTRY, MIT_Head);
 	if (!gActiveCartrige->name().empty())
 	{
 		char tmp[64] = {};
 		snprintf(tmp, 64, "Eject %s", gActiveCartrige->name().c_str());
 		CartMenu.add(tmp, ControlId(2), MIT_Slave);
+		if (gActiveCartrige->name() == "MPI") {
+			snprintf(tmp, 64, "Reset %s", "MPI");
+			CartMenu.add(tmp, ControlId(3), MIT_Slave);
+			CartMenu.reserve(3);
+		} else {
+			CartMenu.reserve(2);
+		}
+	} else {
+		CartMenu.add("Load Cart", ControlId(1), MIT_Slave);
+		CartMenu.add("", MID_FINISH, MIT_Head);
+		CartMenu.reserve(2);
 	}
-	CartMenu.add("Load Cart", ControlId(1), MIT_Slave);
-	CartMenu.add("", MID_FINISH, MIT_Head);
 }
 
-// Callback for loaded cart DLLs. First two entries are reserved
+// Callback for loaded cart DLLs.
 void CartMenuCallBack(const char *name, int menu_id, MenuItemType type)
 {
-	CartMenu.add(name, menu_id, type, 2);
+	CartMenu.add(name, menu_id, type);
 }
 
 
@@ -343,6 +353,11 @@ void CartMenuActivated(unsigned int MenuID)
 
 	case 2:
 		UnloadPack();
+		return;
+
+	case 3:
+		UnloadPack();
+		PakLoadCartridge("mpi.dll");
 		return;
 
 	default:

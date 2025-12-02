@@ -65,11 +65,12 @@ struct CartMenuItem {
 class CartridgeMenu {
 
 private:
-	std::vector<CartMenuItem> menu {};
-	HWND hMainWin;
-	HMENU hMenuBar;
-	std::string MenuBarTitle;
-	int MenuPosition;
+	std::vector<CartMenuItem> menu_ {};
+	HWND hMainWin_;
+	HMENU hMenuBar_;
+	std::string MenuBarTitle_;
+	int MenuPosition_;
+	unsigned int reserve_;
 
 public:
 	CartridgeMenu();
@@ -77,11 +78,14 @@ public:
 //  Title is menu bar title, position is location menu will be placed on the menu bar.
 	void init(const char * title="Cartridge", int position=3);
 
+//  Reserve cartmenu items. The reserve value allows the 'Cartridge' menu item and 
+//  it's submenu to remain intact when DLL's append items to the menu. The reserve 
+//  value is only used whwn MID_BEGIN items are encountered.
+	void reserve(const unsigned int count);
+
 //  Add menu entry. name is the item text, menu_id and type per above. Reserve is the
-//  number of menu items to kept before MID_BEGIN.  A reserve value of 2 allows the
-//  'Cartridge' menu item and it's submenu to remain intact when DLL's append items to
-//  the menu. The reserve value is only used whwn MID_BEGIN items are encountered.
-	void add(const char * name, unsigned int menu_id, MenuItemType type, unsigned int reserve=2);
+//  number of menu items to kept before MID_BEGIN.
+	void add(const char * name, unsigned int menu_id, MenuItemType type);
 
 //  Draw refreshes the menu
     HMENU draw();
