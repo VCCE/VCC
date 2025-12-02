@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/detail/exports.h"
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -30,7 +31,7 @@ namespace vcc::devices::rom
 	public:
 
 		/// @brief The type used to represent paths.
-		using path_type = std::string;
+		using path_type = std::filesystem::path;
 		/// @brief The type used to store a single datum in ROM.
 		using value_type = unsigned char;
 		/// @brief The type used to store the ROM in memory.

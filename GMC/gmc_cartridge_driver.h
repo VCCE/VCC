@@ -20,6 +20,7 @@
 #include "vcc/devices/rom/banked_rom_image.h"
 #include "vcc/bus/cartridge_driver.h"
 #include "vcc/bus/expansion_port_bus.h"
+#include <filesystem>
 #include <memory>
 
 
@@ -38,7 +39,7 @@ namespace vcc::cartridges::gmc
 		/// is connected to.
 		using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 		/// @brief Type alias for file paths.
-		using path_type = std::string;
+		using path_type = std::filesystem::path;
 		/// @brief Type alias for the component that manages the ROM image.
 		using rom_image_type = ::vcc::devices::rom::banked_rom_image;
 		/// @brief Type alias for the component emulating the SN76489 PSG.

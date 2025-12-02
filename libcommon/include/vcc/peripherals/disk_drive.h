@@ -3,6 +3,7 @@
 #include <vcc/peripherals/step_direction.h>
 #include <vcc/media/disk_geometry.h>
 #include <vcc/media/sector_record.h>
+#include <filesystem>
 #include <vector>
 #include <optional>
 #include <string>
@@ -23,9 +24,9 @@ namespace vcc::peripherals
 	public:
 
 		/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
-		using size_type = ::std::size_t;
+		using size_type = std::size_t;
 		/// @brief Type alias for file paths.
-		using path_type = ::std::string;
+		using path_type = std::filesystem::path;
 		/// @brief TYpe alias for a sector record
 		using sector_record_type = ::vcc::media::sector_record;
 		/// @brief TYpe alias for a sector record header

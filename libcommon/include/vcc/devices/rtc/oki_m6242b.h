@@ -26,6 +26,9 @@ namespace vcc::devices::rtc
 	{
 	public:
 
+		void enable(bool state);
+		bool enabled() const;
+
 		void set_read_write_address(size_t address);
 
 		void write_data(unsigned char value);
@@ -34,6 +37,7 @@ namespace vcc::devices::rtc
 
 	private:
 
+		bool enabled_ = false;
 		unsigned char time_register_ = 0;
 		unsigned char hour12_ = 0;
 	};

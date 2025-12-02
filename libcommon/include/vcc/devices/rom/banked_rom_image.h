@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/devices/rom/rom_image.h"
+#include <filesystem>
 
 
 namespace vcc::devices::rom
@@ -37,7 +38,7 @@ namespace vcc::devices::rom
 		/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
 		using size_type = rom_image_type::size_type;
 		/// @brief Type alias for file paths.
-		using path_type = std::string;
+		using path_type = std::filesystem::path;
 
 
 		/// @copydoc rom_image_type::empty

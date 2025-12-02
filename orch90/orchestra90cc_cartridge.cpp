@@ -58,7 +58,7 @@ namespace vcc::cartridges::orchestra90cc
 
 	void orchestra90cc_cartridge::start()
 	{
-		driver_.start(host_->system_rom_path() + rom_filename_);
+		driver_.start(host_->system_rom_path().append(rom_filename_));
 	}
 
 }

@@ -49,7 +49,7 @@ namespace vcc::cartridges::multipak
 		/// @brief Type alias for managed cartridges plugins managed by Multi-Pak.
 		using cartridge_ptr_type = std::shared_ptr<cartridge_type>;
 		/// @brief Type alias for file paths.
-		using path_type = std::string;
+		using path_type = std::filesystem::path;
 		/// @brief Type alias for the component emulating the Multi-Pak hardware.
 		using driver_type = multipak_cartridge_driver;
 		/// @copydoc driver_type::mount_status_type

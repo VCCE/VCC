@@ -26,7 +26,7 @@ namespace vcc::utils
 		path_type path,
 		section_type section)
 		:
-		store_(move(path)),
+		store_(std::move(path)),
 		section_(move(section))
 	{}
 
@@ -46,6 +46,20 @@ namespace vcc::utils
 	void persistent_value_section_store::write(
 		const string_type& key,
 		const string_type& value) const
+	{
+		store_.write(section_, key, value);
+	}
+
+	void persistent_value_section_store::write(
+		const string_type& key,
+		string_type::const_pointer value) const
+	{
+		store_.write(section_, key, value);
+	}
+
+	void persistent_value_section_store::write(
+		const string_type& key,
+		const path_type& value) const
 	{
 		store_.write(section_, key, value);
 	}

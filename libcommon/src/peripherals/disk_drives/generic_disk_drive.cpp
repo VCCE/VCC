@@ -109,7 +109,7 @@ namespace vcc::peripherals::disk_drives
 		eject();
 
 		disk_image_ = move(disk_image);
-		file_path_ = move(file_path);
+		file_path_ = std::move(file_path);
 	}
 
 	void generic_disk_drive::eject()

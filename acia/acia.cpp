@@ -85,7 +85,7 @@ rs232pak_cartridge::driver_type& rs232pak_cartridge::driver()
 
 void rs232pak_cartridge::start()
 {
-	strcpy(IniFile, host_->configuration_path().c_str());
+	strcpy(IniFile, host_->configuration_path().string().c_str());
 	LoadConfig();
 	LoadExtRom("RS232.ROM");
 	sc6551_init();

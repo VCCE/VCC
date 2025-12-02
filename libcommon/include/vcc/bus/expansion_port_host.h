@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/detail/exports.h"
+#include <filesystem>
 #include <string>
 #include <mutex>
 
@@ -33,7 +34,7 @@ namespace vcc::bus
 	public:
 
 		/// @brief Type alias for file paths.
-		using path_type = std::string;
+		using path_type = std::filesystem::path;
 		/// @brief Type alias for the cartridge port mutex.
 		using catridge_mutex_type = std::recursive_mutex;
 

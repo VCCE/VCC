@@ -32,7 +32,7 @@ namespace vcc::ui::menu::detail
 		/// @brief Type alias for a menu item id.
 		using item_id_type = unsigned int;
 		/// @brief Type alias for a variable length string.
-		using string_type = ::std::string;
+		using string_type = std::string;
 		/// @brief Type alias for a system bitmap handle.
 		using icon_type = HBITMAP;
 

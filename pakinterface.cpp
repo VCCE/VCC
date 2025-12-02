@@ -114,7 +114,11 @@ public:
 
 	path_type system_rom_path() const override
 	{
-		return ::vcc::utils::get_directory_from_path(::vcc::utils::get_module_path(nullptr)) + "/ROMS/";
+		// TODO-CHET: Once get_module_path is changed to return a path remove
+		// the explicit conversion.
+		return path_type(::vcc::utils::get_module_path(nullptr))
+			.parent_path()
+			.append("ROMS");
 	}
 
 	[[nodiscard]] catridge_mutex_type& cartridge_mutex() const override

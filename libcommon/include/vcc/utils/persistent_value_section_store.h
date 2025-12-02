@@ -68,6 +68,20 @@ namespace vcc::utils
 		/// @param value The string value to store.
 		LIBCOMMON_EXPORT void write(const string_type& key, const string_type& value) const;
 
+		/// @brief Save a string value.
+		/// 
+		/// @param key The key used to identify the value in.
+		/// @param value A pointer to the null terminated string to store.
+		LIBCOMMON_EXPORT void write(
+			const string_type& key,
+			string_type::const_pointer value) const;
+
+		/// @brief Save a path value.
+		/// 
+		/// @param key The key used to identify the value in.
+		/// @param value The path to store.
+		LIBCOMMON_EXPORT void write(const string_type& key, const path_type& value) const;
+
 		/// @brief Retrieve a boolean value.
 		/// 
 		/// Retrieves a boolean value from the value store. If the value is not present in the

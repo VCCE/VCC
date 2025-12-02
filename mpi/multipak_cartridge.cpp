@@ -155,7 +155,7 @@ namespace vcc::cartridges::multipak
 
 		for (auto slot(0u); slot < driver_->slot_count(); slot++)
 		{
-			const auto path(vcc::utils::find_pak_module_path(configuration_->slot_path(slot)));
+			const auto path(vcc::utils::find_pak_module_path(configuration_->slot_path(slot).string()));
 			if (!path.empty())
 			{
 				if (const auto insert_result(insert_cartridge(slot, path, false));
@@ -350,7 +350,7 @@ namespace vcc::cartridges::multipak
 		if (update_settings)
 		{
 			configuration_->slot_path(slot, filename);
-			configuration_->last_accessed_path(::vcc::utils::get_directory_from_path(filename));
+			configuration_->last_accessed_path(filename.parent_path());
 		}
 
 		eject_cartridge(slot, false);

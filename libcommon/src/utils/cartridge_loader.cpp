@@ -116,13 +116,13 @@ namespace vcc::utils
 			throw std::invalid_argument("Cannot load library cartridge. Context is null.");
 		}
 
-		if (GetModuleHandle(pathname.string().c_str()) != nullptr)
+		if (GetModuleHandleW(pathname.c_str()) != nullptr)
 		{
 			return { nullptr, nullptr, cartridge_loader_status::already_loaded };
 		}
 
 		cartridge_loader_result details;
-		details.handle.reset(LoadLibrary(pathname.string().c_str()));
+		details.handle.reset(LoadLibraryW(pathname.c_str()));
 		//DLOG_C("pak:LoadLibrary %s %d\n", pathname.c_str(), GetLastError());
 		if (details.handle == nullptr)
 		{
@@ -171,13 +171,18 @@ namespace vcc::utils
 	void select_cartridge_file(
 		HWND parent_window,
 		const std::string& title,
-		const std::string& initial_path,
+		const std::filesystem::path& initial_path,
 		const std::function<cartridge_loader_status(const std::string&)>& execute_load)
 	{
 		FileDialog dlg;
 
+		// TODO-CHET: This is only needed because the file dialog only maintains a
+		// pointer to the string instead of a copy of it. Once the new file dialog
+		// is added remove this.
+		const auto initial_path_str(initial_path.string());
+
 		dlg.setTitle(title.c_str());
-		dlg.setInitialDir(initial_path.c_str());
+		dlg.setInitialDir(initial_path_str.c_str());
 		dlg.setFilter(
 			"All Cartridge and ROM Pak Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
 			"ROM Pak (*.rom; *.ccc; *.pak)\0*.rom;*.ccc;*.pak\0"

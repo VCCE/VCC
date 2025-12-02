@@ -41,7 +41,7 @@ namespace vcc::cartridges::orchestra90cc
 		/// @brief Type alias for the component that manages the ROM image.
 		using rom_image_type = ::vcc::devices::rom::rom_image;
 		/// @brief Type alias for file paths.
-		using path_type = std::string;
+		using path_type = std::filesystem::path;
 
 
 	public:

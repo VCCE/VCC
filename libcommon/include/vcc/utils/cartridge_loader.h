@@ -176,7 +176,7 @@ namespace vcc::utils
 	LIBCOMMON_EXPORT void select_cartridge_file(
 		HWND parent_window,
 		const std::string& title,
-		const std::string& initial_path,
+		const std::filesystem::path& initial_path,
 		const std::function<cartridge_loader_status(const std::string&)>& execute_load);
 
 }

@@ -54,6 +54,16 @@ Write to $FF51 read from $FF50
 namespace vcc::devices::rtc
 {
 
+	void oki_m6242b::enable(bool state)
+	{
+		enabled_ = state;
+	}
+
+	bool oki_m6242b::enabled() const
+	{
+		return enabled_;
+	}
+
 	unsigned char oki_m6242b::read_data() const
 	{
 		auto ret_val(0);

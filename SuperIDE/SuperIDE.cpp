@@ -72,7 +72,7 @@ superide_cartridge::driver_type& superide_cartridge::driver()
 
 void superide_cartridge::start()
 {
-	strcpy(IniFile, host_->configuration_path().c_str());
+	strcpy(IniFile, host_->configuration_path().string().c_str());
 
 	LoadConfig();
 	IdeInit();

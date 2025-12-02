@@ -115,7 +115,7 @@ fd502_cartridge::driver_type& fd502_cartridge::driver()
 
 void fd502_cartridge::start()
 {
-	strcpy(IniFile, host_->configuration_path().c_str());
+	strcpy(IniFile, host_->configuration_path().string().c_str());
 
 	RealDisks = InitController();
 	LoadConfig();

@@ -82,7 +82,7 @@ vcc_hard_disk_cartridge::driver_type& vcc_hard_disk_cartridge::driver()
 
 void vcc_hard_disk_cartridge::start()
 {
-	strcpy(IniFile, host_->configuration_path().c_str());
+	strcpy(IniFile, host_->configuration_path().string().c_str());
 
 	LoadConfig();
 	ds1315_rtc.set_read_only(ClockReadOnly);

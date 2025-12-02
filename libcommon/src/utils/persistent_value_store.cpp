@@ -23,9 +23,8 @@ namespace vcc::utils
 {
 
 	persistent_value_store::persistent_value_store(path_type path)
-		: path_(move(path))
-	{
-	}
+		: path_(path.string())
+	{}
 
 
 	void persistent_value_store::remove(const section_type& section, const string_type& key) const
@@ -52,6 +51,23 @@ namespace vcc::utils
 	{
 		WritePrivateProfileString(section.c_str(), key.c_str(), value.c_str(), path_.c_str());
 	}
+
+	void persistent_value_store::write(
+		const section_type& section,
+		const string_type& key,
+		string_type::const_pointer value) const
+	{
+		WritePrivateProfileString(section.c_str(), key.c_str(), value, path_.c_str());
+	}
+
+	void persistent_value_store::write(
+		const section_type& section,
+		const string_type& key,
+		const path_type& value) const
+	{
+		WritePrivateProfileString(section.c_str(), key.c_str(), value.string().c_str(), path_.c_str());
+	}
+
 
 	int persistent_value_store::read(const section_type& section, const string_type& key, const int& default_value) const
 	{

@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/detail/exports.h"
+#include <filesystem>
 #include <string>
 
 
@@ -33,7 +34,7 @@ namespace vcc::utils
 	public:
 
 		/// @brief The type used to represent paths.
-		using path_type = std::string;
+		using path_type = std::filesystem::path;
 		/// @brief Defines the type used to hold a variable length string.
 		using string_type = std::string;
 		/// @brief The type used to represent section identifiers.
@@ -74,6 +75,26 @@ namespace vcc::utils
 			const section_type& section,
 			const string_type& key,
 			const string_type& value) const;
+
+		/// @brief Save a string value.
+		/// 
+		/// @param section The section to store the value in.
+		/// @param key The key used to identify the value in.
+		/// @param value A pointer to the null terminated string to store.
+		LIBCOMMON_EXPORT void write(
+			const section_type& section,
+			const string_type& key,
+			string_type::const_pointer value) const;
+
+		/// @brief Save a path value.
+		/// 
+		/// @param section The section to store the value in.
+		/// @param key The key used to identify the value in.
+		/// @param value The path to store.
+		LIBCOMMON_EXPORT void write(
+			const section_type& section,
+			const string_type& key,
+			const path_type& value) const;
 
 		/// @brief Retrieve a boolean value.
 		/// 
@@ -154,6 +175,8 @@ namespace vcc::utils
 	private:
 
 		/// @brief The path where the file containing the values is stored.
-		const path_type path_;
+		/// 
+		/// This value is stored as string for convenience in working with the windows API.
+		const string_type path_;
 	};
 }

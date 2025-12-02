@@ -24,9 +24,9 @@ namespace vcc::peripherals::disk_drives
 		/// @brief Type alias for the disk images this disk drive operates on.
 		using disk_image_type = ::vcc::media::disk_image;
 		/// @brief Type alias for a pointer to a disk image with single ownership.
-		using disk_image_ptr_type = ::std::unique_ptr<::vcc::media::disk_image>;
+		using disk_image_ptr_type = std::unique_ptr<::vcc::media::disk_image>;
 		/// @brief Type alias for a shared pointer to the disk images this disk drive operates on.
-		using shared_disk_image_ptr_type = ::std::shared_ptr<::vcc::media::disk_image>;
+		using shared_disk_image_ptr_type = std::shared_ptr<::vcc::media::disk_image>;
 		/// @brief Type alias for the geometry that defines the storage parameters of the drive.
 		using geometry_type = ::vcc::media::disk_geometry;
 

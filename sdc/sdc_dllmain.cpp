@@ -93,7 +93,7 @@ sdc_cartridge::driver_type& sdc_cartridge::driver()
 
 void sdc_cartridge::start()
 {
-    strcpy(IniFile, host_->configuration_path().c_str());
+    strcpy(IniFile, host_->configuration_path().string().c_str());
 
     LoadConfig();
 }

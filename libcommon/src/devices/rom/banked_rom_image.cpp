@@ -23,7 +23,7 @@ namespace vcc::devices::rom
 
 	bool banked_rom_image::load(path_type filename)
 	{
-		if (!rom_image_.load(move(filename)))
+		if (!rom_image_.load(std::move(filename)))
 		{
 			return false;
 		}

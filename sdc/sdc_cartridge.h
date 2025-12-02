@@ -86,7 +86,7 @@ public:
 	using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 	using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 	using expansion_port_host_type = ::vcc::bus::expansion_port_host;
-	using path_type = std::string;
+	using path_type = std::filesystem::path;
 	using rom_image_type = ::vcc::devices::rom::banked_rom_image;
 
 

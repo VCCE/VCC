@@ -17,7 +17,7 @@ namespace vcc::cartridges::multipak
 		/// @brief Type alias of the value store used to serialize the configuration.
 		using value_store_type = ::vcc::utils::persistent_value_section_store;
 		/// @brief Type alias for file paths.
-		using path_type = std::string;
+		using path_type = std::filesystem::path;
 		/// @brief Type alias for slot indexes and identifiers.
 		using slot_id_type = std::size_t;
 		/// @brief Defines the type used to hold a variable length string.

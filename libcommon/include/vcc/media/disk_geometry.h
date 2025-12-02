@@ -26,7 +26,7 @@ namespace vcc::media
 	struct disk_geometry
 	{
 		/// @brief Specifies the type used to store geometry properties.
-		using size_type = ::std::size_t;
+		using size_type = std::size_t;
 
 		/// @brief The number of heads on the drive or image. This member is initialized with a
 		/// value of 1.

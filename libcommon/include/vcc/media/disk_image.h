@@ -36,7 +36,7 @@ namespace vcc::media
 	public:
 
 		/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
-		using size_type = ::std::size_t;
+		using size_type = std::size_t;
 		/// @brief The type used to hold geometry describing the disk capacity.
 		using geometry_type = ::vcc::media::disk_geometry;
 		/// @brief Specifies the type used to represent a sector record.

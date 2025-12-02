@@ -5,7 +5,7 @@ namespace vcc::cartridges::multipak
 {
 
 	multipak_configuration::multipak_configuration(path_type path, string_type section)
-		: value_store_(move(path), move(section))
+		: value_store_(std::move(path), move(section))
 	{
 	}
 
