@@ -198,6 +198,9 @@
     <ClCompile Include="src\utils\load_disk_image.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\ui\select_file_dialog.cpp">
+      <Filter>Source Files\ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource\resource.h">
@@ -334,6 +337,12 @@
     </ClInclude>
     <ClInclude Include="include\vcc\utils\disk_image_loader.h">
       <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\ui\select_file_dialog.h">
+      <Filter>Header Files\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\ui\file_filter.h">
+      <Filter>Header Files\ui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

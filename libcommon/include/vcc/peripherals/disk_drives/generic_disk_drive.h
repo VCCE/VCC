@@ -58,6 +58,9 @@ namespace vcc::peripherals::disk_drives
 
 		/// @brief Retrieve the file path to the disk image.
 		/// 
+		/// @todo this should not be here. The drive doesn't care where the image came from
+		/// so that should be managed somewhere else.
+		/// 
 		/// @return The file path of the disk image.
 		[[nodiscard]] LIBCOMMON_EXPORT virtual path_type file_path() const;
 

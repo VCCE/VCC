@@ -84,6 +84,7 @@
     <ClCompile Include="src\media\disk_image.cpp" />
     <ClCompile Include="src\media\disk_images\generic_disk_image.cpp" />
     <ClCompile Include="src\media\disk_images\placeholder_disk_image.cpp" />
+    <ClCompile Include="src\ui\select_file_dialog.cpp" />
     <ClCompile Include="src\ui\menu\menu_builder.cpp" />
     <ClCompile Include="src\ui\menu\menu_item_collection.cpp" />
     <ClCompile Include="src\peripherals\disk_drives\generic_disk_drive.cpp" />
@@ -126,6 +127,8 @@
     <ClInclude Include="include\vcc\peripherals\disk_drive.h" />
     <ClInclude Include="include\vcc\peripherals\disk_drives\generic_disk_drive.h" />
     <ClInclude Include="include\vcc\peripherals\step_direction.h" />
+    <ClInclude Include="include\vcc\ui\select_file_dialog.h" />
+    <ClInclude Include="include\vcc\ui\file_filter.h" />
     <ClInclude Include="include\vcc\ui\menu\detail\menu_category.h" />
     <ClInclude Include="include\vcc\ui\menu\detail\menu_item.h" />
     <ClInclude Include="include\vcc\ui\menu\menu_builder.h" />

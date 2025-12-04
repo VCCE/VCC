@@ -116,8 +116,6 @@ extern char AciaTcpHost[MAX_PATH];    // Tcpip hostname
 extern char AciaFileRdPath[MAX_PATH]; // Path for file reads
 extern char AciaFileWrPath[MAX_PATH]; // Path for file writes
 
-extern void* const& gHostKey;
-
 // Device
 extern void sc6551_init();
 extern void sc6551_close();
