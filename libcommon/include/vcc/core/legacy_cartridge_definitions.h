@@ -20,9 +20,6 @@
 
 extern "C"
 {
-
-	// FIXME: this needs to come from the common library but is currently part of the
-	// main vcc app. Update this when it is migrated.
 	enum MenuItemType;
 
 	using PakWriteMemoryByteHostCallback = void (*)(void* host_key, unsigned char value, unsigned short address);
@@ -30,15 +27,16 @@ extern "C"
 	using PakAssertCartridgeLineHostCallback = void (*)(void* host_key, bool lineState);
 	using PakAssertInteruptHostCallback = void (*)(void* host_key, Interrupt interrupt, InterruptSource interrupt_source);
 	using PakAppendCartridgeMenuHostCallback = void (*)(void* host_key, const char* menu_name, int menu_id, MenuItemType menu_type);
+	using PakResetHostCallback = void (*)(void* host_key);
 
 	struct cpak_cartridge_context
 	{
-		// FIXME-CHET: This needs a reset callback
 		const PakAssertInteruptHostCallback assert_interrupt;
 		const PakAssertCartridgeLineHostCallback assert_cartridge_line;
 		const PakWriteMemoryByteHostCallback write_memory_byte;
 		const PakReadMemoryByteHostCallback read_memory_byte;
 		const PakAppendCartridgeMenuHostCallback add_menu_item;
+		const PakResetHostCallback reset;
 	};
 
 	using PakInitializeModuleFunction = void (*)(

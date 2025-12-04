@@ -490,8 +490,8 @@ extern "C"
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 {
     if (reason == DLL_PROCESS_ATTACH)
-	{
-		gModuleInstance = hinst;
+    {
+        gModuleInstance = hinst;
     }
 
     return TRUE;
@@ -502,11 +502,17 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 //-------------------------------------------------------------
 void BuildCartridgeMenu()
 {
-	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
-	CartMenuCallback(gHostKey, "SDC Config", ControlId(10), MIT_StandAlone);
-	CartMenuCallback(gHostKey, "SDC Control", ControlId(11), MIT_StandAlone);
-	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
+    CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
+
+    CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
+    CartMenuCallback(gHostKey, "SDC",MID_ENTRY,MIT_Head);
+    CartMenuCallback(gHostKey, "Config",ControlId(10),MIT_Slave);
+    CartMenuCallback(gHostKey, "NextDisk",ControlId(11),MIT_Slave);
+
+    CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
+    CartMenuCallback(gHostKey, "SDC Config", ControlId(10), MIT_StandAlone);
+    CartMenuCallback(gHostKey, "SDC Control", ControlId(11), MIT_StandAlone);
+    CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
 }
 
 //------------------------------------------------------------

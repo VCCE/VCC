@@ -29,6 +29,10 @@ void CartridgeMenu::init(const char * title,int position) {
 	reserve_ = 0;
 }
 
+// Menu add requests come from both the pakinterface and carts via config calls;
+// pakinterface entries should always be first, followed by carts in slot 4 to 1 in
+// that order. pakinterface can set the reserve to keep it's menu items from being
+// overwritten from the mpi scan of the slots.
 // Set the number of entries to reserve for cartridge menu
 void CartridgeMenu::reserve(const unsigned int count) {
 	reserve_ = count;
