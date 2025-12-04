@@ -25,6 +25,7 @@
 // main vcc app. Update this when it is migrated.
 enum MenuItemType;
 
+// TODO:  Where cartridge_context is used make it explicit;  It should not be passed as void *;
 namespace vcc::core
 {
 

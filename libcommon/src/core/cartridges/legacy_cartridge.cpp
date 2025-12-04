@@ -15,6 +15,9 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
+
+// TODO: Rename this to hardware_cartridge
+
 #include <vcc/core/cartridges/legacy_cartridge.h>
 #include <stdexcept>
 

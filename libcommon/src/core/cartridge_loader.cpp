@@ -105,6 +105,8 @@ namespace vcc::core
 		};
 	}
 
+	// TODO Rename to hardware cartridge
+	// TODO Remove unecessary context
 	// Load a legacy cartridge
 	cartridge_loader_result load_legacy_cartridge(
 		const std::string& filename,
@@ -149,7 +151,7 @@ namespace vcc::core
 	// cpak_cartridge_context is used by all hardware paks and is defined in 
 	// libcommon/include/vcc/core/legacy_cartridge_definitions.h.  cartridge_loader_result
 	// is defined in libcommon/include/vcc/core/cartridge_loader.h
-	// TODO: Fix the insanity. (experimental interface changes not rolled back enough?)
+	// TODO: Fix the context insanity
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
