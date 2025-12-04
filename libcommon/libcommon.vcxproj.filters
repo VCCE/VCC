@@ -201,6 +201,9 @@
     <ClCompile Include="src\ui\select_file_dialog.cpp">
       <Filter>Source Files\ui</Filter>
     </ClCompile>
+    <ClCompile Include="src\ui\dialog_window.cpp">
+      <Filter>Source Files\ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource\resource.h">
@@ -342,6 +345,12 @@
       <Filter>Header Files\ui</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\ui\file_filter.h">
+      <Filter>Header Files\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\ui\file_filter.h">
+      <Filter>Header Files\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\ui\dialog_window.h">
       <Filter>Header Files\ui</Filter>
     </ClInclude>
   </ItemGroup>
