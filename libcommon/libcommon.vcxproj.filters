@@ -347,9 +347,6 @@
     <ClInclude Include="include\vcc\ui\file_filter.h">
       <Filter>Header Files\ui</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\ui\file_filter.h">
-      <Filter>Header Files\ui</Filter>
-    </ClInclude>
     <ClInclude Include="include\vcc\ui\dialog_window.h">
       <Filter>Header Files\ui</Filter>
     </ClInclude>
