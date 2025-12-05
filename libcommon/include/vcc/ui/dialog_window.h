@@ -59,6 +59,17 @@ namespace vcc::ui
 		/// @return `true` if the dialog is open; `false` otherwise.
 		bool is_open() const;
 
+
+		/// @brief 
+		/// 
+		/// Creates a modal dialog box from a dialog box template resource. Before
+		/// displaying the dialog box.
+		/// 
+		/// @param owner A handle to the window that owns the dialog box.
+		/// 
+		/// @return 
+		virtual INT_PTR do_modal(HWND owner);
+
 		/// @brief Opens the dialog.
 		///
 		/// Opens the configuration dialog. If the dialog is already open, it is brought to the
@@ -168,8 +179,8 @@ namespace vcc::ui
 		/// @param lParam The long parameter for the message. The contents of this parameter
 		/// depend on the message received.
 		/// 
-		/// @return The return value depends on the message being processed.
-		virtual void on_command(WPARAM wParam, LPARAM lParam);
+		/// @return '0' (zero) if the function processes the command; non-zero otherwise.
+		virtual INT_PTR on_command(WPARAM wParam, LPARAM lParam);
 
 
 		/// @brief Initialize the dialog window.
@@ -209,6 +220,15 @@ namespace vcc::ui
 		/// Called when button assigned the identifier `IDCANCEL` is pressed.
 		virtual void on_cancel();
 
+		/// @brief Destroys the window.
+		/// 
+		/// This is usually invoked by functions like on_destroy, ok_ok, and on_cancel
+		/// to close the dialog with a status code that will be returned if the dialog
+		/// is modal.
+		/// 
+		/// @param return_code The value to return when ending a modal dialog.
+		virtual void do_destroy_window(UINT return_code);
+
 
 	private:
 
@@ -227,9 +247,6 @@ namespace vcc::ui
 			UINT message,
 			WPARAM wParam,
 			LPARAM lParam);
-
-
-	private:
 
 		/// @brief Callback procedure that processes dialog messages.
 		/// 
@@ -256,6 +273,8 @@ namespace vcc::ui
 		const UINT dialog_resource_id_;
 		/// @brief The handle to the currently opened dialog, or null if no dialog is open.
 		HWND dialog_handle_ = nullptr;
+		/// @brief Flag indicating if the open dialog is modal or modaless.
+		bool is_modal_ = false;
 	};
 
 }

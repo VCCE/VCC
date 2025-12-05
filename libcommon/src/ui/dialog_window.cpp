@@ -28,10 +28,29 @@ namespace vcc::ui
 		return handle() != nullptr;
 	}
 
+
+	INT_PTR dialog_window::do_modal(HWND owner)
+	{
+		if (is_open())
+		{
+			throw std::runtime_error("Cannot open a modal instance of the dialog window. It is already open.");
+		}
+
+		is_modal_ = true;
+
+		return DialogBoxParam(
+			module_handle_,
+			MAKEINTRESOURCE(dialog_resource_id_),
+			owner,
+			callback_procedure,
+			reinterpret_cast<LPARAM>(this));
+	}
+
 	void dialog_window::open()
 	{
 		if (!is_open())
 		{
+			is_modal_ = false;
 			CreateDialogParam(
 				module_handle_,
 				MAKEINTRESOURCE(dialog_resource_id_),
@@ -113,8 +132,7 @@ namespace vcc::ui
 				on_cancel();
 				return TRUE;
 			}
-			on_command(wParam, lParam);
-			return TRUE;
+			return on_command(wParam, lParam);
 		}
 
 		return on_message(message, wParam, lParam);
@@ -177,6 +195,18 @@ namespace vcc::ui
 			0);
 	}
 
+	void dialog_window::do_destroy_window(UINT return_code)
+	{
+		if (is_modal_)
+		{
+			EndDialog(handle(), return_code);
+		}
+		else
+		{
+			destroy_window();
+		}
+	}
+
 
 	INT_PTR dialog_window::on_message(
 		[[maybe_unused]] UINT message,
@@ -186,10 +216,12 @@ namespace vcc::ui
 		return FALSE;
 	}
 
-	void dialog_window::on_command(
+	INT_PTR dialog_window::on_command(
 		[[maybe_unused]] WPARAM wParam,
 		[[maybe_unused]] LPARAM lParam)
 	{
+		// Return non-zero to indicate message has not been processed
+		return 1;
 	}
 
 
@@ -200,21 +232,22 @@ namespace vcc::ui
 
 	void dialog_window::on_close()
 	{
-		destroy_window();
+		do_destroy_window(IDCANCEL);
 	}
 
 	void dialog_window::on_destroy()
 	{
 	}
 
+
 	void dialog_window::on_ok()
 	{
-		destroy_window();
+		do_destroy_window(IDOK);
 	}
 
 	void dialog_window::on_cancel()
 	{
-		destroy_window();
+		do_destroy_window(IDCANCEL);
 	}
 
 }
