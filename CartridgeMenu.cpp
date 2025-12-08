@@ -16,6 +16,8 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// TODO: move this to libcommon
+
 #include "CartridgeMenu.h"
 #include <vcc/common/logger.h>
 #include "defines.h"

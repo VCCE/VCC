@@ -143,10 +143,6 @@
     <ClInclude Include="include\vcc\core\utils\filesystem.h" />
     <ClInclude Include="include\vcc\core\utils\winapi.h" />
     <ClInclude Include="include\vcc\devices\rtc\cloud9.h" />
-    <ClInclude Include="resource\resource.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="resource\libcommon.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
