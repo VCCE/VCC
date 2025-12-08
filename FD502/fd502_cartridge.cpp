@@ -202,10 +202,33 @@ namespace vcc::cartridges::fd502
 		//}
 	}
 
+	fd502_cartridge::string_type fd502_cartridge::format_next_disk_image_menu_text(
+		drive_id_type drive_index,
+		const std::filesystem::path& path) const
+	{
+		return std::format(
+			"Insert next disk `{}` into drive {}",
+			path.filename().string(),
+			drive_index);
+	}
 
 	fd502_cartridge::menu_item_collection_type fd502_cartridge::get_menu_items() const
 	{
 		::vcc::ui::menu::menu_builder builder;
+
+		// Add 'insert next disk' priority items first
+		for (auto drive_index(0u); drive_index < disk_drive_menu_items_.size(); ++drive_index)
+		{
+			const auto next_disk_path = get_next_disk_image_for_drive(drive_index);
+			if (next_disk_path.empty())
+			{
+				continue;
+			}
+
+			builder.add_root_item(
+				disk_drive_menu_items_[drive_index].insert_next,
+				format_next_disk_image_menu_text(drive_index, next_disk_path));
+		}
 
 		// Add floppy drive mounting quick access sub-menus
 		for (auto drive_index(0u); drive_index < disk_drive_menu_items_.size(); ++drive_index)
@@ -224,6 +247,13 @@ namespace vcc::cartridges::fd502
 				: ::vcc::utils::load_shared_bitmap(module_instance_, icon_id, true));
 
 			builder.add_root_submenu(std::format("Floppy Drive {}", drive_index), bitmap);
+
+			if (const auto& next_disk_path(get_next_disk_image_for_drive(drive_index)); !next_disk_path.empty())
+			{
+				builder.add_submenu_item(
+					ids.insert_next,
+					format_next_disk_image_menu_text(drive_index, next_disk_path));
+			}
 
 			builder
 				.add_submenu_item(
@@ -262,6 +292,12 @@ namespace vcc::cartridges::fd502
 		case menu_item_ids::eject_drive_3:
 			eject_disk(MenuID - menu_item_ids::eject_drive_0);
 			break;
+
+		case menu_item_ids::insert_next_drive_0:
+		case menu_item_ids::insert_next_drive_1:
+		case menu_item_ids::insert_next_drive_2:
+		case menu_item_ids::insert_next_drive_3:
+			insert_next_disk(MenuID - menu_item_ids::insert_next_drive_0);
 		}
 	}
 
@@ -293,25 +329,41 @@ namespace vcc::cartridges::fd502
 				return;
 			}
 
-			// Attempt mount if file existed or file create was not canceled
-			auto disk_image(::vcc::utils::load_disk_image(selected_path));
-			if (!disk_image)
-			{
-				// TODO-CHET: Add real error message
-				MessageBox(h_own, "Can't open file", "Error", 0);
-				return;
-			}
-
-			driver_->insert_disk(drive_id, move(disk_image), selected_path);
-			// TODO-CHET: Maybe this should be handled in the configuration. This way it can
-			// keep track of any new mount changes and update accordingly (i.e. turning them
-			// on needs to save all the new mounts).
-			if (configuration_->serialize_drive_mount_settings())
-			{
-				configuration_->set_disk_image_path(drive_id, selected_path);
-				configuration_->set_disk_image_directory(selected_path.parent_path());
-			}
+			insert_disk(drive_id, selected_path);
 		}
+	}
+
+	void fd502_cartridge::insert_disk(drive_id_type drive_id, const path_type& disk_image_path)
+	{
+		// Attempt mount if file existed or file create was not canceled
+		auto disk_image(::vcc::utils::load_disk_image(disk_image_path));
+		if (!disk_image)
+		{
+			// TODO-CHET: Add real error message
+			MessageBox(GetActiveWindow(), "Can't open file", "Error", 0);
+			return;
+		}
+
+		driver_->insert_disk(drive_id, move(disk_image), disk_image_path);
+		// TODO-CHET: Maybe this should be handled in the configuration. This way it can
+		// keep track of any new mount changes and update accordingly (i.e. turning them
+		// on needs to save all the new mounts).
+		if (configuration_->serialize_drive_mount_settings())
+		{
+			configuration_->set_disk_image_path(drive_id, disk_image_path);
+			configuration_->set_disk_image_directory(disk_image_path.parent_path());
+		}
+	}
+
+	void fd502_cartridge::insert_next_disk(drive_id_type drive_id)
+	{
+		const auto next_disk_path = get_next_disk_image_for_drive(drive_id);
+		if (next_disk_path.empty())
+		{
+			return;
+		}
+
+		insert_disk(drive_id, next_disk_path);
 	}
 
 	void fd502_cartridge::eject_disk(drive_id_type drive_id)
@@ -361,4 +413,35 @@ namespace vcc::cartridges::fd502
 			configuration_->becker_port_server_port());
 	}
 
+
+	fd502_cartridge::path_type fd502_cartridge::get_next_disk_image_for_drive(drive_id_type drive_index) const
+	{
+		const auto& path(std::filesystem::path(driver_->get_mounted_disk_filename(drive_index)));
+		auto stem(path.stem().string());
+		if (stem.empty())
+		{
+			return {};
+		}
+
+		auto& last_char(stem.back());
+		if (!isdigit(last_char))
+		{
+			return {};
+		}
+		++last_char;
+
+		const auto& extension(path.extension());
+		const auto& directory(path.parent_path());
+
+		auto next_disk(directory);
+		next_disk.append(stem + extension.string());
+
+		if (!std::filesystem::exists(next_disk))
+		{
+			return {};
+		}
+
+		return next_disk;
+
+	}
 }

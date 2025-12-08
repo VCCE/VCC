@@ -36,6 +36,8 @@ namespace vcc::cartridges::fd502
 
 		/// @brief Type alias for variable length strings.
 		using string_type = std::string;
+		/// @brief Type alias for file paths.
+		using path_type = std::filesystem::path;
 		/// @brief Type alias for the component providing global system services to the
 		/// cartridge plugin.
 		using expansion_port_host_type = ::vcc::bus::expansion_port_host;
@@ -134,6 +136,24 @@ namespace vcc::cartridges::fd502
 		/// @param drive_id The identifier of the drive to insert the disk image into.
 		void insert_disk(drive_id_type drive_id);
 
+		/// @brief Loads and inserts a disk into a specific drive.
+		/// 
+		/// Attempts to load a disk image and inserts it into the specified drive.
+		/// 
+		/// @todo this needs to return an error code or report an actual error message.
+		/// 
+		/// @param drive_id The identifier of the drive to insert the disk image into.
+		/// @param disk_image_path The path to the disk image to load and insert.
+		void insert_disk(drive_id_type drive_id, const path_type& disk_image_path);
+
+		/// @brief Attempts to insert the next disk of a series into a specific drive.
+		/// 
+		/// Attempts to insert the next disk of a series into a specific drive based on
+		/// the filename of the disk that is currently inserted.
+		/// 
+		/// @param drive_id The drive to insert the next disk into.
+		void insert_next_disk(drive_id_type drive_id);
+
 		/// @brief Ejects a disk from a virtual drive.
 		/// 
 		/// @param drive_id The identifier of the drive containing the disk image to eject.
@@ -146,6 +166,31 @@ namespace vcc::cartridges::fd502
 		/// @return If the ROM was loaded successfully, a pointer to the loaded ROM image;
 		/// `nullptr` otherwise.
 		std::unique_ptr<rom_image_type> load_rom(rom_image_id_type rom_id) const;
+
+		/// @brief Retrieve the path to the next disk image of a series.
+		/// 
+		/// Attempts to determine the path to the next disk image of a series that disk
+		/// currently inserted in the drive is a part of. This function uses the last
+		/// character of the filename to determine which in the series the current disk
+		/// is and checks if a disk with the same filename but ends a number one digit
+		/// higher.
+		/// 
+		/// @param drive_index The index of the drive to check.
+		/// 
+		/// @return If the current disk is part of a series and the next disk in the
+		/// series can be found this function returns the path to the next disk image;
+		/// otherwise an empty path is returned.
+		path_type get_next_disk_image_for_drive(drive_id_type drive_index) const;
+
+		/// @brief Generates a menu item string for the path of the next disk in a series.
+		/// 
+		/// @param drive_index The identifier of the drive the disk will be inserted into.
+		/// @param path The path to the disk image.
+		/// 
+		/// @return A string containing the menu text.
+		string_type format_next_disk_image_menu_text(
+			drive_id_type drive_index,
+			const std::filesystem::path& path) const;
 
 		/// @brief Called when the configuration dialog changes the settings.
 		///
