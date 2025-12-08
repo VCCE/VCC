@@ -30,6 +30,7 @@ extern "C"
 	using PakAssertCartridgeLineHostCallback = void (*)(void* host_key, bool lineState);
 	using PakAssertInteruptHostCallback = void (*)(void* host_key, Interrupt interrupt, InterruptSource interrupt_source);
 	using PakAppendCartridgeMenuHostCallback = void (*)(void* host_key, const char* menu_name, int menu_id, MenuItemType menu_type);
+	using PakResetHostCallback = void (*)(void* host_key);
 
 	// TODO: rename cpak_cartridge_context to cpak_callbacks
 	struct cpak_cartridge_context
@@ -40,6 +41,7 @@ extern "C"
 		const PakWriteMemoryByteHostCallback write_memory_byte;
 		const PakReadMemoryByteHostCallback read_memory_byte;
 		const PakAppendCartridgeMenuHostCallback add_menu_item;
+		const PakResetHostCallback reset;
 	};
 
 	// Hardware carts access reset callbacks here

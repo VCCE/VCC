@@ -1065,23 +1065,30 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 	return 0;
 }
 
-void LoadPack()
-{
-	unsigned threadID;
-	if (DialogOpen)
-		return;
-	DialogOpen=true;
-	_beginthreadex( nullptr, 0, &CartLoad, CreateEvent( nullptr, FALSE, FALSE, nullptr ), 0, &threadID );
-}
+// only called by pakinterface
+//void LoadPack(int type)  // type is a suggestion 0=ROM, 1=Hardware PAK
+//{
+//	unsigned threadID;
+//	if (DialogOpen)	return;
+//	DialogOpen=true;
+//	_beginthreadex( 
+//			nullptr, 
+//			0, 
+//			&CartLoad, 
+//			reinterpret_cast<void*>(static_cast<intptr_t>(type)), 
+//			0,        
+//			&threadID
+//		    );
+//}
 
-unsigned __stdcall CartLoad(void* /*Dummy*/)
-{
-	PakLoadCartridgeUI();
-	EmuState.EmulationRunning=TRUE;
-	DialogOpen=false;
-
-	return 0;
-}
+// Only called here.  What would have unset EmulationRunning?
+//unsigned __stdcall CartLoad(void* param) {
+//    int type = static_cast<int>(reinterpret_cast<intptr_t>(param));
+//    PakLoadCartridgeUI(type);
+//    EmuState.EmulationRunning = TRUE;
+//    DialogOpen = false;
+//    return 0;
+//}
 
 void FullScreenToggle()
 {

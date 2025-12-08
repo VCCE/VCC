@@ -35,6 +35,6 @@ unsigned char SetAutoStart(unsigned char);
 void SetPaletteType();
 void DoReboot();
 void DoHardReset(SystemState *);
-void LoadPack ();
+void LoadPack (int);
 
 #endif

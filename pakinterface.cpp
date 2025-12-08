@@ -187,31 +187,39 @@ unsigned short PackAudioSample()
 	return gActiveCartrige->sample_audio();
 }
 
-// Create first two entries for cartridge menu.
+// Create entries for cartridge menu. The rest will be for MPI
+// ControlId(MenuId) set what control does
 void BeginCartMenu()
 {
 	vcc::core::utils::section_locker lock(gPakMutex);
 
-	CartMenu.add("", MID_BEGIN, MIT_Head, 0);
+	CartMenu.reserve(0);
+	CartMenu.add("", MID_BEGIN, MIT_Head);
 	CartMenu.add("Cartridge", MID_ENTRY, MIT_Head);
 	if (!gActiveCartrige->name().empty())
 	{
 		char tmp[64] = {};
 		snprintf(tmp, 64, "Eject %s", gActiveCartrige->name().c_str());
 		CartMenu.add(tmp, ControlId(2), MIT_Slave);
+		CartMenu.add("", MID_FINISH, MIT_Head);
+		CartMenu.reserve(2);
+	} else {
+		CartMenu.add("Load MPI", ControlId(3), MIT_Slave);
+		CartMenu.add("Load PAK", ControlId(1), MIT_Slave);
+		CartMenu.add("Load ROM", ControlId(4), MIT_Slave);
+		CartMenu.add("", MID_FINISH, MIT_Head);
+		CartMenu.reserve(3);
 	}
-	CartMenu.add("Load Cart", ControlId(1), MIT_Slave);
-	CartMenu.add("", MID_FINISH, MIT_Head);
 }
 
-// Callback for loaded cart DLLs. First two entries are reserved
+// Callback for loaded cart DLLs.
 void CartMenuCallBack(const char *name, int menu_id, MenuItemType type)
 {
-	CartMenu.add(name, menu_id, type, 2);
+	CartMenu.add(name, menu_id, type);
 }
 
 
-void PakLoadCartridgeUI()
+void PakLoadCartridgeUI(int type)
 {
 	char inifile[MAX_PATH];
 	GetIniFilePath(inifile);
@@ -219,9 +227,15 @@ void PakLoadCartridgeUI()
 	static char pakPath[MAX_PATH] = "";
 	GetPrivateProfileString("DefaultPaths", "PakPath", "", pakPath, MAX_PATH, inifile);
 	FileDialog dlg;
-	dlg.setTitle(TEXT("Load Program Pack"));
-	dlg.setInitialDir(pakPath);
-	dlg.setFilter("All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0");
+	if (type == 0) {
+		dlg.setTitle(TEXT("Load Program Pack"));
+		dlg.setInitialDir(pakPath);
+		dlg.setFilter("Hardware Packs\0*.dll\0All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0\0");
+	} else {
+		dlg.setTitle(TEXT("Load ROM"));
+		dlg.setInitialDir(pakPath);
+		dlg.setFilter("Rom Packs(*.ccc;*.rom)\0*.ccc;*.rom\0All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0\0");
+	}
 	dlg.setFlags(OFN_FILEMUSTEXIST);
 	if (dlg.show()) {
 		if (PakLoadCartridge(dlg.path()) == cartridge_loader_status::success) {
@@ -266,10 +280,9 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	cartridge_loader_result loadedCartridge(vcc::core::load_cartridge(
 		filename,
 		std::make_unique<vcc_cartridge_context>(),
-		nullptr, // TODO: there is currently no host context in vcc so we just use nullptr. Maybe add a context.
+		nullptr, // TODO:  Maybe add a VCC host context.
 		iniPath,
 		{
-			// new pak interface
 			PakAssertInterupt,
 			PakAssertCartrigeLine,
 			PakWriteMemoryByte,
@@ -319,7 +332,8 @@ void GetCurrentModule(char *DefaultModule)
 
 void UpdateBusPointer()
 {
-	// Do nothing for now
+	// Do nothing for now.
+	// No clue given what the plan here was.
 }
 
 void UnloadPack()
@@ -327,10 +341,13 @@ void UnloadPack()
 	UnloadDll();
 	strcpy(DllPath,"");
 	SetCart(0);
-
 	EmuState.ResetPending=2;
 }
 
+void LoadPack(int type) {
+    PakLoadCartridgeUI(type);
+	EmuState.ResetPending=2;
+}
 
 // CartMenuActivated is called from VCC main when a cartridge menu item is clicked.
 void CartMenuActivated(unsigned int MenuID)
@@ -338,11 +355,19 @@ void CartMenuActivated(unsigned int MenuID)
 	switch (MenuID)
 	{
 	case 1:
-		LoadPack();
+		LoadPack(0);
 		return;
 
 	case 2:
 		UnloadPack();
+		return;
+
+	case 3:
+		PakLoadCartridge("mpi.dll");
+		return;
+
+	case 4:
+		LoadPack(1);
 		return;
 
 	default:
