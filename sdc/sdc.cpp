@@ -355,58 +355,52 @@ static char MPIPath[MAX_PATH];
 //======================================================================
 extern "C"
 {
-	__declspec(dllexport) const char* PakGetName()
-	{
-		static char string_buffer[MAX_LOADSTRING];
+    __declspec(dllexport) const char* PakGetName()
+    {
+        static char string_buffer[MAX_LOADSTRING];
+        LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+        return string_buffer;
+    }
 
-		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
+    __declspec(dllexport) const char* PakGetCatalogId()
+    {
+        static char string_buffer[MAX_LOADSTRING];
+        LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+        return string_buffer;
+    }
 
-		return string_buffer;
-	}
+    __declspec(dllexport) const char* PakGetDescription()
+    {
+        static char string_buffer[MAX_LOADSTRING];
+        LoadString(gModuleInstance, IDS_DESCRIPTION, string_buffer, MAX_LOADSTRING);
+        return string_buffer;
+    }
 
-	__declspec(dllexport) const char* PakGetCatalogId()
-	{
-		static char string_buffer[MAX_LOADSTRING];
+    __declspec(dllexport) void PakInitialize(
+        void* const host_key,
+        const char* const configuration_path,
+        const cpak_cartridge_context* const context)
+    {
+        gHostKey = host_key;
+        CartMenuCallback = context->add_menu_item;
+        MemRead8 = context->read_memory_byte;
+        MemWrite8 = context->write_memory_byte;
+        AssertInt = context->assert_interrupt;
+        strcpy(IniFile, configuration_path);
 
-		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+        LoadConfig();
+        BuildCartridgeMenu();
+    }
 
-		return string_buffer;
-	}
-
-	__declspec(dllexport) const char* PakGetDescription()
-	{
-		static char string_buffer[MAX_LOADSTRING];
-
-		LoadString(gModuleInstance, IDS_DESCRIPTION, string_buffer, MAX_LOADSTRING);
-
-		return string_buffer;
-	}
-
-	__declspec(dllexport) void PakInitialize(
-		void* const host_key,
-		const char* const configuration_path,
-		const cpak_cartridge_context* const context)
-	{
-		gHostKey = host_key;
-		CartMenuCallback = context->add_menu_item;
-		MemRead8 = context->read_memory_byte;
-		MemWrite8 = context->write_memory_byte;
-		AssertInt = context->assert_interrupt;
-		strcpy(IniFile, configuration_path);
-
-		LoadConfig();
-		BuildCartridgeMenu();
-	}
-
-	__declspec(dllexport) void PakTerminate()
-	{
-		CloseCartDialog(hControlDlg);
-		CloseCartDialog(hConfigureDlg);
-		hControlDlg = nullptr;
-		hConfigureDlg = nullptr;
-		CloseDrive(0);
-		CloseDrive(1);
-	}
+    __declspec(dllexport) void PakTerminate()
+    {
+        CloseCartDialog(hControlDlg);
+        CloseCartDialog(hConfigureDlg);
+        hControlDlg = nullptr;
+        hConfigureDlg = nullptr;
+        CloseDrive(0);
+        CloseDrive(1);
+    }
 
     // Write to port
     __declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
@@ -452,7 +446,7 @@ extern "C"
             ShowWindow(hControlDlg,1);
             break;
         }
-		BuildCartridgeMenu();
+        BuildCartridgeMenu();
         return;
     }
 
@@ -503,12 +497,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 void BuildCartridgeMenu()
 {
     CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
-
-    CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
-    CartMenuCallback(gHostKey, "SDC",MID_ENTRY,MIT_Head);
-    CartMenuCallback(gHostKey, "Config",ControlId(10),MIT_Slave);
-    CartMenuCallback(gHostKey, "NextDisk",ControlId(11),MIT_Slave);
-
     CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
     CartMenuCallback(gHostKey, "SDC Config", ControlId(10), MIT_StandAlone);
     CartMenuCallback(gHostKey, "SDC Control", ControlId(11), MIT_StandAlone);

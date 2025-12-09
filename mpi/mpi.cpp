@@ -23,7 +23,6 @@
 #include <vcc/common/DialogOps.h>
 #include <vcc/core/limits.h>
 
-
 #define EXPORT_PUBLIC_API extern "C" __declspec(dllexport)
 
 HINSTANCE gModuleInstance = nullptr;
@@ -50,6 +49,19 @@ BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, LPVOID /*reserved*/
 	return TRUE;
 }
 
+// TODO: Group all exported functions under one extern "C" block
+//extern "C" {
+//   __declspec(dllexport) const char* PakGetName()
+//   {
+//      return "ExamplePakName";
+//   }
+//   __declspec(dllexport) int PakFoo()
+//   {
+//      return 1;
+//   }
+//   ...
+// }
+// And eliminate the silly EXPORT_PUBLIC_API macro
 
 extern "C"
 {
