@@ -205,7 +205,7 @@ void BeginCartMenu()
 		CartMenu.reserve(2);
 	} else {
 		CartMenu.add("Load MPI", ControlId(3), MIT_Slave);
-		CartMenu.add("Load PAK", ControlId(1), MIT_Slave);
+		CartMenu.add("Load DLL", ControlId(1), MIT_Slave);
 		CartMenu.add("Load ROM", ControlId(4), MIT_Slave);
 		CartMenu.add("", MID_FINISH, MIT_Head);
 		CartMenu.reserve(3);
@@ -224,23 +224,29 @@ void PakLoadCartridgeUI(int type)
 	char inifile[MAX_PATH];
 	GetIniFilePath(inifile);
 
-	static char pakPath[MAX_PATH] = "";
-	GetPrivateProfileString("DefaultPaths", "PakPath", "", pakPath, MAX_PATH, inifile);
+	static char cartDir[MAX_PATH] = "";
 	FileDialog dlg;
 	if (type == 0) {
 		dlg.setTitle(TEXT("Load Program Pack"));
-		dlg.setInitialDir(pakPath);
 		dlg.setFilter("Hardware Packs\0*.dll\0All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0\0");
+		GetPrivateProfileString("DefaultPaths", "MPIPath", "", cartDir, MAX_PATH, inifile);
 	} else {
 		dlg.setTitle(TEXT("Load ROM"));
-		dlg.setInitialDir(pakPath);
 		dlg.setFilter("Rom Packs(*.ccc;*.rom)\0*.ccc;*.rom\0All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0\0");
+		GetPrivateProfileString("DefaultPaths", "PakPath", "", cartDir, MAX_PATH, inifile);
 	}
+	dlg.setInitialDir(cartDir);
 	dlg.setFlags(OFN_FILEMUSTEXIST);
 	if (dlg.show()) {
 		if (PakLoadCartridge(dlg.path()) == cartridge_loader_status::success) {
-			dlg.getdir(pakPath);
-			WritePrivateProfileString("DefaultPaths", "PakPath", pakPath, inifile);
+			char filetype[4];
+			dlg.getdir(cartDir);
+			dlg.gettype(filetype);
+			if ((strcmp(filetype,"dll") == 0) | (strcmp(filetype,"DLL") == 0 )) {  // DLL?
+				WritePrivateProfileString("DefaultPaths", "MPIPath", cartDir, inifile);
+			} else {
+				WritePrivateProfileString("DefaultPaths", "PAKPath", cartDir, inifile);
+			}
 		}
 	}
 }
@@ -363,9 +369,14 @@ void CartMenuActivated(unsigned int MenuID)
 		return;
 
 	case 3:
-		PakLoadCartridge("mpi.dll");
+	{
+		char path[MAX_PATH];
+		GetModuleFileName(nullptr,path,MAX_PATH);
+		PathRemoveFileSpec(path);
+		strncat(path,"mpi.dll",MAX_PATH);
+		PakLoadCartridge(path);
 		return;
-
+    }
 	case 4:
 		LoadPack(1);
 		return;

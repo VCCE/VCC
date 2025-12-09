@@ -16,7 +16,9 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include <vcc/common/DialogOps.h>
-#include <Windows.h>
+#include <string>
+#include <filesystem>
+//#include <Windows.h>
 
 //-------------------------------------------------------------------------------------------
 // FileDialog class shows a dialog for user to select a file for open or save.
@@ -115,6 +117,31 @@ void FileDialog::getdir(char * Dir, int maxsize) const {
 	if (char * p = strrchr(Dir,'\\')) *p = '\0';
 }
 
+// FileDialog::gettype() returns the file type
+void FileDialog::gettype(char * Type, int maxsize) const {
+    if (Type == nullptr || path_ == nullptr || maxsize < 1) return;
+	const char* dot = strrchr(path_, '.');
+    if (!dot || strchr(dot, '/') || strchr(dot, '\\')) {
+        *Type = '\0';
+    }
+    strncpy(Type,dot+1,maxsize);
+}
+
+// String overloads for path_ and path_ components
+std::string FileDialog::getpath() {
+	return path_;
+}
+std::string FileDialog::getdir() {
+    if (path_ == nullptr) return "";
+	std::filesystem::path p(path_);
+	return p.parent_path().string();
+
+}
+std::string FileDialog::gettype() {
+    if (path_ == nullptr) return "";
+	std::filesystem::path p(path_);
+	return p.extension().string();
+}
 
 //------------------------------------------------------------
 // Center a dialog box in parent window

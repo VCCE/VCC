@@ -44,6 +44,9 @@ LIBCOMMON_EXPORT void CenterDialog(HWND hDlg);
 // getupath() gets a copy of "Path" with all '\' chars replaced by '/'
 //
 //-------------------------------------------------------------------------------------------
+#include <windows.h>
+#include <string>
+
 class LIBCOMMON_EXPORT FileDialog
 {
 public:
@@ -60,8 +63,12 @@ public:
 	void getdir(char * Dir, int maxsize = MAX_PATH) const;
 	void getpath(char * Path, int maxsize = MAX_PATH) const;
 	void getupath(char * Path, int maxsize = MAX_PATH) const;
-	const char *path() const;
+	void gettype(char * Type, int maxsize = 4) const;
+	std::string getdir();
+	std::string gettype();
+	std::string getpath();
 
+	const char *path() const;
 
 private:
 

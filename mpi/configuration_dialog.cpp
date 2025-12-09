@@ -73,17 +73,28 @@ void configuration_dialog::close()
 	CloseCartDialog(dialog_handle_);
 }
 
-
 void configuration_dialog::select_new_cartridge(size_t slot)
 {
 	FileDialog dlg;
-	dlg.setTitle("Load Program Pak");
-	dlg.setInitialDir(configuration_.last_accessed_module_path().c_str());
-	dlg.setFilter(
-		"All Pak Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
-		"Hardware Pak (*.dll)\0*.dll\0"
-		"Rom Pak (*.rom; *.ccc; *.pak)\0*.rom;*.ccc;*.pak\0"
-		"\0");
+
+	// Kludge until we figure out a way for user to spec what cart type they want
+	if (configuration_.last_accessed_module_type() == "dll") {
+		dlg.setTitle("Load Hardware Pak");
+		dlg.setInitialDir(configuration_.last_accessed_dll_path().c_str());
+		dlg.setFilter(
+			"Hardware Pak (*.dll)\0*.dll\0"
+			"Rom Pak (*.rom; *.ccc; *.pak)\0*.rom;*.ccc;*.pak\0"
+			"All Pak Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
+			"\0");
+	} else {
+		dlg.setTitle("Load Rom Pak");
+		dlg.setInitialDir(configuration_.last_accessed_rom_path().c_str());
+		dlg.setFilter(
+			"Rom Pak (*.rom; *.ccc; *.pak)\0*.rom;*.ccc;*.pak\0"
+			"Hardware Pak (*.dll)\0*.dll\0"
+			"All Pak Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
+			"\0");
+	}
 	dlg.setFlags(OFN_FILEMUSTEXIST);
 	if (dlg.show(0, dialog_handle_))
 	{
@@ -92,11 +103,18 @@ void configuration_dialog::select_new_cartridge(size_t slot)
 		if (mpi_.mount_cartridge(slot, dlg.path()) == cartridge_loader_status::success)
 		{
 			configuration_.slot_cartridge_path(slot, dlg.path());
-			configuration_.last_accessed_module_path(::vcc::core::utils::get_directory_from_path(dlg.path()));
+			if ( (dlg.gettype()=="dll") || (dlg.gettype() == "DLL") ) {  // DLL?
+				configuration_.last_accessed_dll_path(dlg.getdir());
+				configuration_.last_accessed_module_type("dll");
+			} else {
+				configuration_.last_accessed_rom_path(dlg.getdir());
+				configuration_.last_accessed_module_type("rom");
+			}
 		}
 
 		mpi_.build_menu();
 	}
+
 }
 
 void configuration_dialog::set_selected_slot(size_t slot)
