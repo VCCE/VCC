@@ -27,18 +27,18 @@ namespace vcc::cartridges::fd502
 		UINT,
 		create_disk_image_dialog::disk_image_format_type> create_disk_image_dialog::disk_type_id_to_enum_map_ =
 	{
-		{IDC_NEWDISK_JVC_FORMAT, disk_image_format_type::JVC},
-		{IDC_NEWDISK_VDK_FORMAT, disk_image_format_type::VDK},
-		{IDC_NEWDISK_DMK_FORMAT, disk_image_format_type::DMK}
+		{IDC_NEWDISK_JVC_FORMAT, disk_image_format_type::jvc},
+		{IDC_NEWDISK_VDK_FORMAT, disk_image_format_type::vdk},
+		{IDC_NEWDISK_DMK_FORMAT, disk_image_format_type::dmk}
 	};
 
 	const std::map<
 		create_disk_image_dialog::disk_image_format_type,
 		UINT> create_disk_image_dialog::disk_type_enum_map_to_id_ =
 	{
-		{disk_image_format_type::JVC, IDC_NEWDISK_JVC_FORMAT},
-		{disk_image_format_type::VDK, IDC_NEWDISK_VDK_FORMAT},
-		{disk_image_format_type::DMK, IDC_NEWDISK_DMK_FORMAT}
+		{disk_image_format_type::jvc, IDC_NEWDISK_JVC_FORMAT},
+		{disk_image_format_type::vdk, IDC_NEWDISK_VDK_FORMAT},
+		{disk_image_format_type::dmk, IDC_NEWDISK_DMK_FORMAT}
 	};
 
 	const std::map<

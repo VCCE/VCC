@@ -15,27 +15,39 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#pragma once
-/// @file
-/// 
-/// @brief Defines disk image format identifiers.
+#include "vcc/media/geometry_calculators/jvc_disk_geometry_calculator.h"
+#include <limits>
 
 
-namespace vcc::cartridges::fd502::detail
+namespace vcc::media::geometry_calculators
 {
 
-	/// @brief Defines unique identifiers for the disk images formats.
-	enum class disk_image_format_id
+	jvc_disk_geometry_calculator::optional_calculated_geometry_type jvc_disk_geometry_calculator::calculate(
+		const header_buffer_type& header_buffer,
+		size_type file_size) const
 	{
-		/// @brief Raw format arranged by track and sector ordered sequentially.
-		jvc,
-		/// @brief ?Virtual Disk?
-		vdk,
-		/// @brief Raw format arranged by track and sector ordered sequentially formatted
-		/// for OS-9.
-		os9,
-		/// @brief Rich disk format that includes sector records and other detailed data.
-		dmk
-	};
+		auto geometry(default_geometry());
+
+		geometry.head_count = header_buffer[header_elements::head_count];
+		// TODO-CHET: Maybe only accept head counts of 1 and 2.
+		if (geometry.head_count == 0)
+		{
+			return {};
+		}
+
+		geometry.sector_count = header_buffer[header_elements::sector_count];
+
+		const auto disk_image_size(file_size - header_size);
+		const auto track_size_in_bytes(geometry.sector_count * geometry.sector_size * geometry.head_count);
+
+		if (disk_image_size % track_size_in_bytes != 0)
+		{
+			return {};
+		}
+
+		geometry.track_count = disk_image_size / track_size_in_bytes;
+
+		return calculated_geometry_type{ header_size, geometry };
+	}
 
 }

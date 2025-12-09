@@ -112,6 +112,12 @@
     <Filter Include="Header Files\peripherals\disk_drives">
       <UniqueIdentifier>{2da60ff8-bf2b-4be3-a81d-b74c6df12a0d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\media\geometry_calculators">
+      <UniqueIdentifier>{aca13926-253f-4c4e-a2ab-ce76bd27faef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\media\geometry_calculators">
+      <UniqueIdentifier>{41e623a0-daf9-4387-87ef-c39c9082d04d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DialogOps.cpp">
@@ -203,6 +209,21 @@
     </ClCompile>
     <ClCompile Include="src\ui\dialog_window.cpp">
       <Filter>Source Files\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\media\geometry_calculators\os9_disk_geometry_calculator.cpp">
+      <Filter>Source Files\media\geometry_calculators</Filter>
+    </ClCompile>
+    <ClCompile Include="src\media\geometry_calculators\raw_disk_geometry_calculator.cpp">
+      <Filter>Source Files\media\geometry_calculators</Filter>
+    </ClCompile>
+    <ClCompile Include="src\media\geometry_calculators\jvc_disk_geometry_calculator.cpp">
+      <Filter>Source Files\media\geometry_calculators</Filter>
+    </ClCompile>
+    <ClCompile Include="src\media\geometry_calculators\vdk_disk_geometry_calculator.cpp">
+      <Filter>Source Files\media\geometry_calculators</Filter>
+    </ClCompile>
+    <ClCompile Include="src\media\geometry_calculators\floppy_disk_geometry_calculator.cpp">
+      <Filter>Source Files\media\geometry_calculators</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -349,6 +370,24 @@
     </ClInclude>
     <ClInclude Include="include\vcc\ui\dialog_window.h">
       <Filter>Header Files\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\media\geometry_calculators\raw_disk_geometry_calculator.h">
+      <Filter>Header Files\media\geometry_calculators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\media\geometry_calculator.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\media\geometry_calculators\os9_disk_geometry_calculator.h">
+      <Filter>Header Files\media\geometry_calculators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\media\geometry_calculators\jvc_disk_geometry_calculator.h">
+      <Filter>Header Files\media\geometry_calculators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\media\geometry_calculators\vdk_disk_geometry_calculator.h">
+      <Filter>Header Files\media\geometry_calculators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\media\geometry_calculators\floppy_disk_geometry_calculator.h">
+      <Filter>Header Files\media\geometry_calculators</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

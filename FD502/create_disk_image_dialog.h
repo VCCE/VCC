@@ -62,7 +62,7 @@ namespace vcc::cartridges::fd502
 		struct defaults
 		{
 			/// @brief Defines the default disk image layout used to format the disk image.
-			static const auto image_layout = disk_image_format_type::JVC;
+			static const auto image_layout = disk_image_format_type::jvc;
 			/// @brief Defines the default setting for creating double sided disk images.
 			static const auto double_sided = false;
 			/// @brief Defines the default number of tracks.

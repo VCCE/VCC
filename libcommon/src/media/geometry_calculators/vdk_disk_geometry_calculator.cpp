@@ -2,7 +2,7 @@
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
 //	
-//	VCC (Virtual Color Computer) is free software: you can redistribute itand/or
+//	VCC (Virtual Color Computer) is free software: you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License as published by
 //	the Free Software Foundation, either version 3 of the License, or (at your
 //	option) any later version.
@@ -15,25 +15,18 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#pragma once
-#include <cstddef>
+#include "vcc/media/geometry_calculators/vdk_disk_geometry_calculator.h"
+#include <limits>
 
 
-namespace vcc::media
+namespace vcc::media::geometry_calculators
 {
 
-	/// @brief Describes the geometry of a disk device or image.
-	struct disk_geometry
+	vdk_disk_geometry_calculator::optional_calculated_geometry_type vdk_disk_geometry_calculator::calculate(
+		const header_buffer_type& header_buffer,
+		[[maybe_unused]] size_type file_size) const
 	{
-		/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
-		using size_type = std::size_t;
-
-		/// @brief The number of heads on the drive or image. This member is initialized with a
-		/// value of 1.
-		size_type head_count = 1;
-		/// @brief The number of tracks on the drive or image. This member is initialized with
-		/// a default value of 35.
-		size_type track_count = 35;
-	};
+		return {};
+	}
 
 }
