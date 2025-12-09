@@ -164,7 +164,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MODULE_NAME         "Tandy Deluxe RS232 Pak (Beta)"
+    IDS_MODULE_NAME         "RS232 Pak"
     IDS_CATNUMBER           "26-2226"
 	IDS_DESCRIPTION         "Emulates 6551 UART. Communicate with windows terminal console, PC serial ports, Internet telnet servers, or read and write to a file."
     IDS_VERSION             "1.00"

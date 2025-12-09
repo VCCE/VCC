@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 
+//TODO:  Eliminate this insanity. This class gains nothing but obscurity
 
 class multipak_configuration
 {
@@ -19,8 +20,14 @@ public:
 	void configuration_path(path_type path);	//	FIXME: maybe make private with a friend setter
 	path_type configuration_path() const;
 
-	void last_accessed_module_path(const path_type& path) const;
-	path_type last_accessed_module_path() const;
+	void last_accessed_module_type(const path_type& path) const;
+	path_type last_accessed_module_type() const;
+
+	void last_accessed_rom_path(const path_type& path) const;
+	path_type last_accessed_rom_path() const;
+
+	void last_accessed_dll_path(const path_type& path) const;
+	path_type last_accessed_dll_path() const;
 
 	void selected_slot(slot_id_type slot) const;
 	slot_id_type selected_slot() const;

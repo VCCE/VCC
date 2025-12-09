@@ -1065,24 +1065,6 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 	return 0;
 }
 
-void LoadPack()
-{
-	unsigned threadID;
-	if (DialogOpen)
-		return;
-	DialogOpen=true;
-	_beginthreadex( nullptr, 0, &CartLoad, CreateEvent( nullptr, FALSE, FALSE, nullptr ), 0, &threadID );
-}
-
-unsigned __stdcall CartLoad(void* /*Dummy*/)
-{
-	PakLoadCartridgeUI();
-	EmuState.EmulationRunning=TRUE;
-	DialogOpen=false;
-
-	return 0;
-}
-
 void FullScreenToggle()
 {
 	PauseAudio(true);

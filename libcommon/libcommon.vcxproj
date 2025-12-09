@@ -131,7 +131,6 @@
     <ClInclude Include="include\vcc\core\cartridges\null_cartridge.h" />
     <ClInclude Include="include\vcc\core\cartridges\rom_cartridge.h" />
     <ClInclude Include="include\vcc\core\cartridge_context.h" />
-    <ClInclude Include="include\vcc\core\cartridge_factory.h" />
     <ClInclude Include="include\vcc\core\cartridge_loader.h" />
     <ClInclude Include="include\vcc\core\detail\exports.h" />
     <ClInclude Include="include\vcc\core\interrupts.h" />
@@ -144,10 +143,6 @@
     <ClInclude Include="include\vcc\core\utils\filesystem.h" />
     <ClInclude Include="include\vcc\core\utils\winapi.h" />
     <ClInclude Include="include\vcc\devices\rtc\cloud9.h" />
-    <ClInclude Include="resource\resource.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="resource\libcommon.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

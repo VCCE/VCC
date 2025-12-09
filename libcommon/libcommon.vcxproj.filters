@@ -155,9 +155,6 @@
     <ClInclude Include="include\vcc\core\cartridge_context.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\cartridge_factory.h">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
     <ClInclude Include="include\vcc\core\rom_image.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>

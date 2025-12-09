@@ -20,11 +20,9 @@
 #include <vcc/core/interrupts.h>
 #include <string>
 
-
-// FIXME: this needs to come from the common library but is currently part of the
-// main vcc app. Update this when it is migrated.
 enum MenuItemType;
 
+// TODO:  Where cartridge_context is used make it explicit;  It should not be passed as void *;
 namespace vcc::core
 {
 
