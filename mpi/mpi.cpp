@@ -84,6 +84,7 @@ extern "C"
 		return string_buffer;
 	}
 
+	//See cartridge_loader.h to know what these are actually doing
 	EXPORT_PUBLIC_API void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,

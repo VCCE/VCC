@@ -103,7 +103,7 @@ void configuration_dialog::select_new_cartridge(size_t slot)
 		if (mpi_.mount_cartridge(slot, dlg.path()) == cartridge_loader_status::success)
 		{
 			configuration_.slot_cartridge_path(slot, dlg.path());
-			if ( (dlg.gettype()=="dll") || (dlg.gettype() == "DLL") ) {  // DLL?
+			if ( (dlg.gettype()==".dll") || (dlg.gettype() == ".DLL") ) {  // DLL?
 				configuration_.last_accessed_dll_path(dlg.getdir());
 				configuration_.last_accessed_module_type("dll");
 			} else {

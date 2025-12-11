@@ -21,7 +21,7 @@
 #include "resource.h"
 #include <vcc/core/utils/winapi.h>
 #include <vcc/core/utils/filesystem.h>
-
+#include <vcc/common/logger.h>
 
 namespace
 {
@@ -210,7 +210,6 @@ unsigned char multipak_cartridge::read_port(unsigned char port_id)
 unsigned char multipak_cartridge::read_memory_byte(unsigned short memory_address)
 {
 	vcc::core::utils::section_locker lock(mutex_);
-
 	return slots_[cached_cts_slot_].read_memory_byte(memory_address);
 }
 
@@ -302,10 +301,11 @@ bool multipak_cartridge::empty(slot_id_type slot) const
 void multipak_cartridge::eject_cartridge(slot_id_type slot)
 {
 	vcc::core::utils::section_locker lock(mutex_);
-
-	slots_[slot].stop();
-
-	slots_[slot] = {};
+	// TODO: Do a hard reset here instead of blocking eject
+	if (slot != cached_scs_slot_) {
+		slots_[slot].stop();
+		slots_[slot] = {};
+	}
 }
 
 multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
@@ -332,7 +332,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		error_string += filename;
 		MessageBox(GetForegroundWindow(), error_string.c_str(), "Load Error", MB_OK | MB_ICONERROR);
 		return loadedCartridge.load_result;
-	} 
+	}
 
 	// FIXME: We should probably call eject(slot) here in order to ensure that the
 	// cartridge is shut down correctly.  (OR FORCE USER TO EJECT BEFORE TRYING TO LOAD!!)
@@ -351,15 +351,16 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	return loadedCartridge.load_result;
 }
 
+// TODO: switching slots should cause a hard reset. (pakinterface does set EmuState.ResetPending = 2)
+// Real CoCo startup slot select does nothing until coco is restarted. A checkbox is needed on config
+// screen to enable hard reset when the slot select is changed.
 void multipak_cartridge::switch_to_slot(slot_id_type slot)
 {
 	vcc::core::utils::section_locker lock(mutex_);
-
 	switch_slot_ = slot;
-	cached_scs_slot_ = slot;
-	cached_cts_slot_ = slot;
-
-	context_->assert_cartridge_line(slots_[slot].line_state());
+//	cached_scs_slot_ = slot;
+//	cached_cts_slot_ = slot;
+//	context_->assert_cartridge_line(slots_[slot].line_state());
 }
 
 multipak_cartridge::slot_id_type multipak_cartridge::selected_switch_slot() const
