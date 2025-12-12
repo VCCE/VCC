@@ -24,17 +24,23 @@
 #include <vcc/core/limits.h>
 #include <vcc/common/logger.h>
 
-#define EXPORT_PUBLIC_API extern "C" __declspec(dllexport)
-
 HINSTANCE gModuleInstance = nullptr;
 static std::string gConfigurationFilename;
-// FIXME: The host context will be provided by VCC once the full implementation is complete
+HWND gVccWnd;
+
+// host_catridge_context (remove someday)
 const std::shared_ptr<host_cartridge_context> gHostContext(std::make_shared<host_cartridge_context>(nullptr, gConfigurationFilename));
+
+// Instatiate mpi configuration object (remove someday)
 multipak_configuration gMultiPakConfiguration("MPI");
+
+// Instatiate mpi cartridge object (remove someday)
 multipak_cartridge gMultiPakInterface(gMultiPakConfiguration, gHostContext);
+
+// Instatiate the config dialog
 configuration_dialog gConfigurationDialog(gMultiPakConfiguration, gMultiPakInterface);
 
-
+// DLLMain
 BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, LPVOID /*reserved*/)
 {
 	switch (reason)
@@ -46,66 +52,41 @@ BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, LPVOID /*reserved*/
 	case DLL_PROCESS_DETACH:
 		break;
 	}
-
 	return TRUE;
 }
 
-// TODO: Group all exported functions under one extern "C" block
-//extern "C" {
-//   __declspec(dllexport) const char* PakGetName()
-//   {
-//      return "ExamplePakName";
-//   }
-//   __declspec(dllexport) int PakFoo()
-//   {
-//      return 1;
-//   }
-//   ...
-// }
-// And eliminate the silly EXPORT_PUBLIC_API macro
-
+// DLL exports
 extern "C"
 {
-
-	EXPORT_PUBLIC_API const char* PakGetName()
+	__declspec(dllexport) const char* PakGetName()
 	{
 		static char string_buffer[MAX_LOADSTRING];
-
 		LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
-
 		return string_buffer;
 	}
 
-	EXPORT_PUBLIC_API const char* PakGetCatalogId()
+	__declspec(dllexport) const char* PakGetCatalogId()
 	{
 		static char string_buffer[MAX_LOADSTRING];
-
 		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
-
 		return string_buffer;
 	}
 
-	//See cartridge_loader.h to know what these are actually doing
-	EXPORT_PUBLIC_API void PakInitialize(
+	//Initialize MPI -	capture callback addresses and build menus.
+	__declspec(dllexport) void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
-
-//#define IDM_HELP_ABOUT                  40003
-//#define ID_FILE_RESET                   40005
-//SendMessage(hVccWnd,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
-//SendMessage(hVccWnd,WM_COMMAND,(WPARAM) IDM_HELP_ABOUT,(LPARAM) 0);
-
 		gMultiPakConfiguration.configuration_path(configuration_path);
 		gConfigurationFilename = configuration_path;
+		gVccWnd = hVccWnd;
 		gHostContext->add_menu_item_ = callbacks->add_menu_item;
 		gHostContext->read_memory_byte_ = callbacks->read_memory_byte;
 		gHostContext->write_memory_byte_ = callbacks->write_memory_byte;
 		gHostContext->assert_interrupt_ = callbacks->assert_interrupt;
 		gHostContext->assert_cartridge_line_ = callbacks->assert_cartridge_line;
-
 		gMultiPakInterface.start();
 	}
 
@@ -115,46 +96,49 @@ extern "C"
 		gMultiPakInterface.stop();
 	}
 
-}
+	__declspec(dllexport) void PakMenuItemClicked(unsigned char menu_item_id)
+	{
+		gMultiPakInterface.menu_item_clicked(menu_item_id);
+	}
 
-EXPORT_PUBLIC_API void PakMenuItemClicked(unsigned char menu_item_id)
-{
-	gMultiPakInterface.menu_item_clicked(menu_item_id);
-}
+	// Write to port
+	__declspec(dllexport) void PakWritePort(unsigned char port_id,unsigned char value)
+	{
+		gMultiPakInterface.write_port(port_id, value);
+		return;
+	}
 
-EXPORT_PUBLIC_API void PakWritePort(unsigned char port_id, unsigned char value)
-{
-	gMultiPakInterface.write_port(port_id, value);
-}
+	// Read from port
+	__declspec(dllexport) unsigned char PakReadPort(unsigned char port_id)
+	{
+		return gMultiPakInterface.read_port(port_id);
+	}
 
-EXPORT_PUBLIC_API unsigned char PakReadPort(unsigned char port_id)
-{
-	return gMultiPakInterface.read_port(port_id);
-}
+	// Reset module
+	__declspec(dllexport) unsigned char PakReset()
+	{
+		gMultiPakInterface.reset();
+		return 0;
+	}
 
-EXPORT_PUBLIC_API void PakProcessHorizontalSync()
-{
-	gMultiPakInterface.process_horizontal_sync();
-}
+	__declspec(dllexport)  void PakProcessHorizontalSync()
+	{
+		gMultiPakInterface.process_horizontal_sync();
+	}
 
-EXPORT_PUBLIC_API unsigned char PakReadMemoryByte(unsigned short memory_address)
-{
-	return gMultiPakInterface.read_memory_byte(memory_address);
-}
+	__declspec(dllexport)  unsigned char PakReadMemoryByte(unsigned short memory_address)
+	{
+		return gMultiPakInterface.read_memory_byte(memory_address);
+	}
 
-EXPORT_PUBLIC_API void PakGetStatus(char* text_buffer, size_t buffer_size)
-{
-	gMultiPakInterface.status(text_buffer, buffer_size);
-}
+	// Return MPI status.
+	__declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
+	{
+		gMultiPakInterface.status(text_buffer, buffer_size);
+	}
 
-EXPORT_PUBLIC_API unsigned short PakSampleAudio()
-{
-	return gMultiPakInterface.sample_audio();
-}
-
-EXPORT_PUBLIC_API unsigned char PakReset()
-{
-	gMultiPakInterface.reset();
-
-	return 0;
+	__declspec(dllexport) unsigned short PakSampleAudio()
+	{
+		return gMultiPakInterface.sample_audio();
+	}
 }

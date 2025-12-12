@@ -27,13 +27,17 @@
 #define IDC_MODINFO                     1100
 #define IDC_PERSIST_PAK                 1101
 #define IDC_SCS_DISABLE                 1102
+#define IDC_RESET                       1103
 
+#define ID_FILE_RESET                   40005 // From vcc/resource.h
+
+extern HINSTANCE gModuleInstance;
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        103
-#define _APS_NEXT_COMMAND_VALUE         40001
+#define _APS_NEXT_COMMAND_VALUE         40006
 #define _APS_NEXT_CONTROL_VALUE         1105
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

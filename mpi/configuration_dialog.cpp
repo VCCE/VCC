@@ -22,7 +22,6 @@
 #include <vcc/core/utils/critical_section.h>
 #include <vcc/core/utils/filesystem.h>
 
-
 namespace
 {
 
@@ -136,7 +135,7 @@ void configuration_dialog::set_selected_slot(size_t slot)
 			0);
 	}
 
-	// FIXME: Maube move this to the callsite or when the dialog closes or at least make it optional?
+	// FIXME: Maybe move this to the callsite or when the dialog closes or at least make it optional?
 	mpi_.switch_to_slot(slot);
 	configuration_.selected_slot(slot);
 }
@@ -257,6 +256,9 @@ INT_PTR configuration_dialog::process_message(
 			return TRUE;
 		case IDC_INSERT4:
 			eject_or_select_new_cartridge(3);
+			return TRUE;
+		case IDC_RESET:
+			SendMessage(gVccWnd,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
 			return TRUE;
 		} // End switch LOWORD
 		break;
