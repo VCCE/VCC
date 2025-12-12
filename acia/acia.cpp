@@ -162,10 +162,9 @@ void rs232pak_cartridge::update([[maybe_unused]] float delta)
 //-----------------------------------------------------------------------
 // Dll export return module status for VCC status line
 //-----------------------------------------------------------------------
-void rs232pak_cartridge::status(char* text_buffer, size_t buffer_size)
+rs232pak_cartridge::status_type rs232pak_cartridge::status() const
 {
-	strncpy(text_buffer, AciaStat, buffer_size);
-	text_buffer[16] = '\n';
+	return AciaStat;
 }
 
 //-----------------------------------------------------------------------

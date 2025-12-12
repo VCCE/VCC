@@ -136,9 +136,9 @@ unsigned char superide_cartridge::read_port(unsigned char Port)
 	return RetVal;
 }
 
-void superide_cartridge::status(char* text_buffer, size_t buffer_size)
+superide_cartridge::status_type superide_cartridge::status() const
 {
-	DiskStatus(text_buffer, buffer_size);
+	return DiskStatus();
 }
 
 void superide_cartridge::menu_item_clicked(menu_item_id_type item_id)

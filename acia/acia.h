@@ -61,7 +61,7 @@ public:
 	void write_port(unsigned char port_id, unsigned char value) override;
 	[[nodiscard]] unsigned char read_port(unsigned char port_id) override;
 
-	void status(char* text_buffer, size_type buffer_size) override;
+	status_type status() const override;
 	void menu_item_clicked(menu_item_id_type menu_item_id) override;
 	void update(float delta) override;
 

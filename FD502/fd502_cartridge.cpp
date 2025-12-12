@@ -174,23 +174,22 @@ namespace vcc::cartridges::fd502
 	}
 
 
-	void fd502_cartridge::status(char* text_buffer, size_type buffer_size)
+	fd502_cartridge::status_type fd502_cartridge::status() const
 	{
+		status_type text_buffer;
 		if (const auto current_disk_index_(driver_->get_selected_drive_id());
 			current_disk_index_.has_value() && driver_->is_motor_running())
 		{
-			const auto text = std::format(
+			text_buffer = std::format(
 				"FD-502: Drive: {} Trk: {} Sec: {} Hd: {}",
 				current_disk_index_.value(),
 				driver_->get_head_position(),
 				driver_->get_current_sector(),
 				driver_->get_selected_head());
-
-			strncpy(text_buffer, text.c_str(), buffer_size);
 		}
 		else
 		{
-			strncpy(text_buffer, "FD-502 Idle", buffer_size);
+			text_buffer = "FD-502 Idle";
 		}
 
 		//char beckerstat[64];
@@ -200,6 +199,8 @@ namespace vcc::cartridges::fd502
 		//	strcat(text_buffer, " | ");
 		//	strcat(text_buffer, beckerstat);
 		//}
+
+		return text_buffer;
 	}
 
 	fd502_cartridge::string_type fd502_cartridge::format_next_disk_image_menu_text(

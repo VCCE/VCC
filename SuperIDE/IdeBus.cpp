@@ -312,9 +312,11 @@ HANDLE OpenDisk(const char *ImageFile,unsigned char DiskNum)
 	return hTemp;
 }
 
-void DiskStatus(char* text_buffer, size_t buffer_size)
+std::string DiskStatus()
 {
-	strcpy(text_buffer,CurrStatus);
+	std::string text_buffer;
+
+	text_buffer = CurrStatus;
 	ScanCount++;
 	if (Lba != LastLba)
 	{
@@ -329,7 +331,8 @@ void DiskStatus(char* text_buffer, size_t buffer_size)
 		else
 			strcpy(CurrStatus,"IDe:No Image!");
 	}
-	return;
+
+	return text_buffer;
 }
 unsigned char MountDisk(const char *FileName,unsigned char DiskNumber)
 {

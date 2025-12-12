@@ -187,21 +187,20 @@ namespace vcc::cartridges::multipak
 		driver_->stop();
 	}
 
-	void multipak_cartridge::status(char* text_buffer, size_t buffer_size)
+	multipak_cartridge::status_type multipak_cartridge::status() const
 	{
-		char TempStatus[64] = "";
-
-		sprintf(text_buffer, "MPI:%d,%d", driver_->selected_cts_slot() + 1, driver_->selected_scs_slot() + 1);
+		auto status(std::format("MPI:{},{}", driver_->selected_cts_slot() + 1, driver_->selected_scs_slot() + 1));
 		for (const auto& cartridge : cartridges_)
 		{
-			strcpy(TempStatus, "");
-			cartridge->status(TempStatus, sizeof(TempStatus));
-			if (TempStatus[0])
+			auto cart_status(cartridge->status());
+			if (!cart_status.empty())
 			{
-				strcat(text_buffer, " | ");
-				strcat(text_buffer, TempStatus);
+				status += " | ";
+				status += cart_status;
 			}
 		}
+
+		return status;
 	}
 
 	void multipak_cartridge::menu_item_clicked(menu_item_id_type menu_item_id)

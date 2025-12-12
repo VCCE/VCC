@@ -184,7 +184,8 @@ void GetModuleStatus(SystemState *SMState)
 {
 	std::scoped_lock lock(gPakMutex);
 
-	gExpansionSlot.status(SMState->StatusLine, sizeof(SMState->StatusLine));
+	auto status(gExpansionSlot.status());
+	strncpy_s(SMState->StatusLine, status.c_str(), sizeof(SMState->StatusLine));
 }
 
 unsigned char PakReadPort (unsigned char port)

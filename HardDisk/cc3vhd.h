@@ -21,12 +21,13 @@ along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licens
 
 // cc3vhd.h
 #include "vcc/bus/expansion_port_bus.h"
+#include <string>
 
 void UnmountHD(int);
 int MountHD(const char*, int);
 unsigned char IdeRead(unsigned char);
 void IdeWrite (::vcc::bus::expansion_port_bus& bus, unsigned char, unsigned char);
-void DiskStatus(char* text_buffer, size_t buffer_size);
+std::string DiskStatus();
 void VhdReset(::vcc::bus::expansion_port_bus& bus);
 
 constexpr auto DRIVESIZE = 512u; // Mb

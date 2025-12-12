@@ -109,7 +109,7 @@ namespace vcc::cartridges::fd502
 		/// 
 		/// @param status_buffer The buffer to put the status text in.
 		/// @param buffer_size The size of the status buffer.
-		void status(char* status_buffer, size_type buffer_size) override;
+		status_type status() const override;
 
 		/// @brief Builds the menu for the cartridge features.
 		/// 

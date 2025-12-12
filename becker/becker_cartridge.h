@@ -91,7 +91,7 @@ namespace vcc::cartridges::becker_port
 		void menu_item_clicked(menu_item_id_type menu_item_id) override;
 
 		/// @inheritdoc
-		void status(char* text_buffer, size_t buffer_size) override;
+		status_type status() const override;
 
 
 	protected:

@@ -36,6 +36,8 @@ namespace vcc::bus
 
 		/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
 		using size_type = std::size_t;
+		/// @brief Type alias for variable length status strings.
+		using status_type = std::string;
 		/// @brief Type alias for a windows handle managed with a unique_ptr.
 		using managed_handle_type = ::vcc::utils::cartridge_loader_result::handle_type;
 		/// @brief Type alias for the cartridge that can be inserted into the slot.
@@ -116,9 +118,9 @@ namespace vcc::bus
 		}
 
 		/// @copydoc cartridge_type::status
-		void status(char* text_buffer, size_t buffer_size) const
+		status_type status() const
 		{
-			cartridge_->status(text_buffer, buffer_size);
+			return cartridge_->status();
 		}
 
 		/// @copydoc cartridge_type::get_menu_items

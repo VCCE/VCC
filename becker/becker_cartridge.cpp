@@ -73,11 +73,12 @@ namespace vcc::cartridges::becker_port
 	}
 
 
-	void becker_cartridge::status(char* text_buffer, size_t buffer_size)
+	becker_cartridge::status_type becker_cartridge::status() const
 	{
 		// TODO-CHET: The becker port device should not be generating the status like it is
 		// now. Update the device to provide properties that can be queried and used to
 		// generate the status.
+		return {};
 	}
 
 

@@ -27,9 +27,9 @@ namespace vcc::bus
 	void cartridge::stop()
 	{}
 
-	void cartridge::status(char* text_buffer, [[maybe_unused]] size_type buffer_size)
+	cartridge::status_type cartridge::status() const
 	{
-		*text_buffer = 0;
+		return {};
 	}
 
 	void cartridge::menu_item_clicked([[maybe_unused]] menu_item_id_type menu_item_id)

@@ -182,9 +182,9 @@ unsigned char vcc_hard_disk_cartridge::read_port(unsigned char Port)
 
 
 // Return disk status. (from cc3vhd)
-void vcc_hard_disk_cartridge::status(char* text_buffer, size_t buffer_size)
+vcc_hard_disk_cartridge::status_type vcc_hard_disk_cartridge::status() const
 {
-    DiskStatus(text_buffer, buffer_size);
+    return DiskStatus();
 }
 
 

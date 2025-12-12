@@ -56,7 +56,7 @@ public:
 	void write_port(unsigned char port_id, unsigned char value) override;
 	unsigned char read_port(unsigned char port_id) override;
 
-	void status(char* status_buffer, size_t buffer_size) override;
+	status_type status() const override;
 
 	void menu_item_clicked(menu_item_id_type menu_item_id) override;
 

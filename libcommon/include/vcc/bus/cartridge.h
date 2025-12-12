@@ -39,6 +39,8 @@ namespace vcc::bus
 		using size_type = std::size_t;
 		/// @brief Specifies the type used to store names.
 		using name_type = std::string;
+		/// @brief Type alias for variable length status strings.
+		using status_type = std::string;
 		/// @brief Specifies the type used to store a collection of menu items.
 		using menu_item_collection_type = ::vcc::ui::menu::menu_item_collection;
 		/// @brief Specifies the type of devices supported by this cartridge.
@@ -93,12 +95,7 @@ namespace vcc::bus
 		/// 
 		/// If this function is called before the cartridge is initialized or after it has
 		/// been terminated the behavior is undefined.
-		/// 
-		/// @todo Maybe rename `buffer_size` to `buffer_length`.
-		/// 
-		/// @param text_buffer The text buffer to generate the status string in.
-		/// @param buffer_size The length of the text buffer.
-		virtual void status(char* text_buffer, size_type buffer_size);
+		virtual status_type status() const;
 
 		/// @brief Inform the cartridge a menu item has been clicked.
 		/// 

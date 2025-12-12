@@ -121,7 +121,7 @@ namespace vcc::cartridges::multipak
 		/// 
 		/// If this function is called before the cartridge is initialized or after it has
 		/// been terminated the behavior is undefined.
-		void status(char* text_buffer, size_t buffer_size) override;
+		status_type status() const override;
 
 		/// @brief Execute a command based on a menu item identifier.
 		/// 

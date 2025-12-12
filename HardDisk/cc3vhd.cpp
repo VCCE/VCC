@@ -226,9 +226,9 @@ void HDcommand(::vcc::bus::expansion_port_bus& bus, unsigned char Command) {
     }
 }
 
-void DiskStatus(char* text_buffer, size_t buffer_size)
+std::string DiskStatus()
 {
-    strcpy(text_buffer,DStatus);
+	const std::string text_buffer(DStatus);
     ScanCount++;
 
     if (SectorOffset.All != LastSectorNum) {
@@ -244,7 +244,8 @@ void DiskStatus(char* text_buffer, size_t buffer_size)
             sprintf(DStatus,"HD%d:No Image!",DriveSelect);
         }
     }
-    return;
+
+    return text_buffer;
 }
 
 void IdeWrite(::vcc::bus::expansion_port_bus& bus, unsigned char data,unsigned char port)
