@@ -126,7 +126,7 @@ BEGIN
             VALUE "InternalName", "MultiPak Interface"
             VALUE "LegalCopyright", "Copyright � 2007"
             VALUE "OriginalFilename", "mpi.dll"
-            VALUE "ProductName", "DREAM - The Tandy Color Computer 3 Emulator"
+            VALUE "ProductName", "DREAM-VCC - The Tandy Color Computer 3 Emulator"
             VALUE "ProductVersion", "2.1.9.3"
             VALUE "SpecialBuild", "Tandy Multi-Pak Interface"
         END

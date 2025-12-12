@@ -78,7 +78,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright � 2006\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "orch90.dll\0"
-            VALUE "ProductName", "DREAM - The Tandy Color Computer 3 Emulator\0"
+            VALUE "ProductName", "DREAM-VCC - The Tandy Color Computer 3 Emulator\0"
             VALUE "ProductVersion", "0,0,0,1\0"
         END
     END

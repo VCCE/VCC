@@ -115,7 +115,6 @@ void (*CPUForcePC)(unsigned short)=nullptr;
 void FullScreenToggle();
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys();
-void FunctionHelpBox(HWND);
 void SetupClock();
 HMENU GetConfMenu();
 
@@ -411,10 +410,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_ABOUTBOX,
 						hWnd, (DLGPROC)About);
 				    break;
-				case IDM_HELP_FUNKEY:
-					DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_FUNCTION_KEYS,
-						hWnd, (DLGPROC)FunctionKeys);
-				    break;
 				case ID_AUDIO_CONFIG:
 					OpenAudioConfig();
 				    break;
@@ -695,10 +690,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case DIK_F12:
 					if (IsShiftKeyDown())
+					{
 						DumpScreenshot();
-					else
-						// If help dialog is modeless it prevents full screen
-						FunctionHelpBox(hWnd);
+					}
+					
 				break;
 
 				default:
@@ -948,21 +943,6 @@ BOOL CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
     return FALSE;
 }
 
-// Message handler for function key help.
-BOOL CALLBACK FunctionKeys(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
-{
-	switch (message)
-	{
-		case WM_INITDIALOG:
-			SendDlgItemMessage(hDlg,IDC_TITLE,WM_SETTEXT,0,(LPARAM)(LPCSTR)g_szAppName);
-			return TRUE;
-		case WM_CLOSE:
-		case WM_COMMAND:
-			EndDialog(hDlg, wParam);
-			return TRUE;
-	}
-    return FALSE;
-}
 
 unsigned char SetRamSize(unsigned char Size)
 {
@@ -1209,11 +1189,6 @@ void FullScreenToggle()
 	return;
 }
 
-void FunctionHelpBox(HWND hWnd)
-{
-	DialogBox(EmuState.WindowInstance,
-			MAKEINTRESOURCE(IDD_FUNCTION_KEYS),hWnd,FunctionKeys);
-}
 
 HMENU GetConfMenu()
 {

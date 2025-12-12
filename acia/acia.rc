@@ -135,7 +135,7 @@ BEGIN
             VALUE "InternalName", "SC6551 Interface"
             VALUE "LegalCopyright", "Copyright � 2023"
             VALUE "OriginalFilename", "acia.dll"
-            VALUE "ProductName", "DREAM - The Tandy Color Computer 3 Emulator"
+            VALUE "ProductName", "DREAM-VCC - The Tandy Color Computer 3 Emulator"
             VALUE "ProductVersion", "26-3124"
             VALUE "SpecialBuild", "Tandy Direct Connect Modem / Deluxe RS-232 Pak"
         END

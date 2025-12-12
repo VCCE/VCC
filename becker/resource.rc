@@ -93,7 +93,7 @@ BEGIN
             VALUE "InternalName", "Becker Port Cartridge"
             VALUE "LegalCopyright", "Copyright � 2007"
             VALUE "OriginalFilename", "becker.dll"
-            VALUE "ProductName", "DREAM - The Tandy Color Computer 3 Emulator"
+            VALUE "ProductName", "DREAM-VCC - The Tandy Color Computer 3 Emulator"
             VALUE "ProductVersion", "0, 0, 0, 1"
         END
     END

@@ -154,7 +154,7 @@ BEGIN
             VALUE "InternalName", "DiskController"
             VALUE "LegalCopyright", "Copyright � 2010"
             VALUE "OriginalFilename", "fd502.dll"
-            VALUE "ProductName", "DREAM - The Tandy Color Computer 3 Emulator"
+            VALUE "ProductName", "DREAM-VCC - The Tandy Color Computer 3 Emulator"
             VALUE "ProductVersion", "26-3133"
             VALUE "SpecialBuild", "Tandy Floppy Disk Controller"
         END
