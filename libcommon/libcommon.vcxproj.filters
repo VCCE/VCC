@@ -225,6 +225,12 @@
     <ClCompile Include="src\media\geometry_calculators\floppy_disk_geometry_calculator.cpp">
       <Filter>Source Files\media\geometry_calculators</Filter>
     </ClCompile>
+    <ClCompile Include="src\bus\cartridge_catalog.cpp">
+      <Filter>Source Files\bus</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\basic_guid.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource\resource.h">
@@ -388,6 +394,15 @@
     </ClInclude>
     <ClInclude Include="include\vcc\media\geometry_calculators\floppy_disk_geometry_calculator.h">
       <Filter>Header Files\media\geometry_calculators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\cartridge_catalog.h">
+      <Filter>Header Files\bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\cartridge_catalog_item.h">
+      <Filter>Header Files\bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\basic_guid.h">
+      <Filter>Header Files\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
