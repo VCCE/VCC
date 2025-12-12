@@ -98,7 +98,9 @@ namespace vcc::cartridges::fd502
 
 	bool configuration_dialog::on_init_dialog()
 	{
-		dialog_window::on_init_dialog();
+		// We don't need the return value as we always return true so keyboard focus
+		// is given to the default control (if there is one).
+		(void)dialog_window::on_init_dialog();
 
 		selected_rom_id_ = configuration_->get_rom_image_id();
 

@@ -7,7 +7,7 @@ namespace vcc::media::geometry_calculators
 
 	/// @brief Implementation of the Geometry Calculator used for determining the
 	/// geometry of a disk image in VDK format.
-	class vdk_disk_geometry_calculator : public ::vcc::media::geometry_calculator
+	class LIBCOMMON_EXPORT vdk_disk_geometry_calculator : public ::vcc::media::geometry_calculator
 	{
 	public:
 
@@ -28,7 +28,7 @@ namespace vcc::media::geometry_calculators
 		/// 
 		/// @return If the geometry can be calculated the results containing the geometry,
 		/// file offset to the start image data, and other information; empty value otherwise.
-		optional_calculated_geometry_type calculate(
+		[[nodiscard]] optional_calculated_geometry_type calculate(
 			const header_buffer_type& header_buffer,
 			size_type file_size) const override;
 

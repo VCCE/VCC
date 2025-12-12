@@ -37,7 +37,7 @@ namespace vcc::bus
 		/// @brief Retrieve the handle to the main application window.
 		/// 
 		/// @return A handle to the main application window.
-		virtual HWND app_window() const noexcept = 0;
+		[[nodiscard]] virtual HWND app_window() const noexcept = 0;
 	};
 
 }

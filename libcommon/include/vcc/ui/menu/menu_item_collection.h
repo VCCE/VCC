@@ -53,7 +53,7 @@ namespace vcc::ui::menu
 		/// @brief Indicates if the collection is empty.
 		/// 
 		/// @return `true` if the collection is empty; `false` otherwise.
-		LIBCOMMON_EXPORT bool empty() const;
+		[[nodiscard]] LIBCOMMON_EXPORT bool empty() const;
 
 		/// @brief Accept a visitor.
 		/// 

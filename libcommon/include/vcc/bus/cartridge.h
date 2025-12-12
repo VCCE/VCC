@@ -95,7 +95,7 @@ namespace vcc::bus
 		/// 
 		/// If this function is called before the cartridge is initialized or after it has
 		/// been terminated the behavior is undefined.
-		virtual status_type status() const;
+		[[nodiscard]] virtual status_type status() const;
 
 		/// @brief Inform the cartridge a menu item has been clicked.
 		/// 
@@ -115,7 +115,7 @@ namespace vcc::bus
 		/// cartridge by invoking the `menu_item_clicked` member.
 		/// 
 		/// @return A collection of menu items for this cartridge.
-		virtual menu_item_collection_type get_menu_items() const;
+		[[nodiscard]] virtual menu_item_collection_type get_menu_items() const;
 	};
 
 }

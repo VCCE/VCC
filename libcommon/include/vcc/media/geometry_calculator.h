@@ -1,5 +1,6 @@
 #pragma once
 #include <vcc/media/geometry/generic_disk_geometry.h>
+#include "vcc/detail/exports.h"
 #include <array>
 #include <optional>
 
@@ -8,7 +9,7 @@ namespace vcc::media
 {
 
 	/// @brief The results of determining the geometry of a disk image.
-	struct calculated_geometry
+	struct LIBCOMMON_EXPORT calculated_geometry
 	{
 		/// @brief Type alias to lengths, 1 dimension sizes, and indexes.
 		using size_type = std::size_t;
@@ -26,7 +27,7 @@ namespace vcc::media
 	///
 	/// This abstract class defines the interface and base behavior of Geometry
 	/// Calculators used to determine the layout details of a disk image file.
-	class geometry_calculator
+	class LIBCOMMON_EXPORT geometry_calculator
 	{
 	public:
 
@@ -69,7 +70,7 @@ namespace vcc::media
 		/// 
 		/// @return If the geometry can be calculated the results containing the geometry,
 		/// file offset to the start image data, and other information; empty value otherwise.
-		virtual optional_calculated_geometry_type calculate(
+		[[nodiscard]] virtual optional_calculated_geometry_type calculate(
 			const header_buffer_type& header_buffer,
 			size_type file_size) const = 0;
 
@@ -79,7 +80,7 @@ namespace vcc::media
 		/// @brief Retrieve the default geometry.
 		/// 
 		/// @return The default geometry.
-		const geometry_type& default_geometry() const noexcept
+		[[nodiscard]] const geometry_type& default_geometry() const noexcept
 		{
 			return default_geometry_;
 		}

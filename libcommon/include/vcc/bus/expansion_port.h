@@ -118,7 +118,7 @@ namespace vcc::bus
 		}
 
 		/// @copydoc cartridge_type::status
-		status_type status() const
+		[[nodiscard]] status_type status() const
 		{
 			return cartridge_->status();
 		}

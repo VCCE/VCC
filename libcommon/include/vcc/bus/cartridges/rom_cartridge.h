@@ -68,7 +68,7 @@ namespace vcc::bus::cartridges
 		LIBCOMMON_EXPORT [[nodiscard]] name_type name() const override;
 
 		/// @inheritdoc
-		[[nodiscard]] driver_type& driver() override;
+		[[nodiscard]] LIBCOMMON_EXPORT driver_type& driver() override;
 
 		/// @brief Initialize the cartridge.
 		///

@@ -57,7 +57,7 @@ namespace vcc::ui
 		/// @brief Returns the open status of the dialog.
 		/// 
 		/// @return `true` if the dialog is open; `false` otherwise.
-		bool is_open() const;
+		[[nodiscard]] bool is_open() const;
 
 
 		/// @brief 
@@ -68,7 +68,7 @@ namespace vcc::ui
 		/// @param owner A handle to the window that owns the dialog box.
 		/// 
 		/// @return 
-		virtual INT_PTR do_modal(HWND owner);
+		[[nodiscard]] virtual INT_PTR do_modal(HWND owner);
 
 		/// @brief Opens the dialog.
 		///
@@ -114,7 +114,7 @@ namespace vcc::ui
 		/// @param control_id The identifier of the control to retrieve the text from.
 		/// 
 		/// @return A string containing the controls text.
-		string_type get_control_text(UINT control_id) const;
+		[[nodiscard]] string_type get_control_text(UINT control_id) const;
 
 		/// @brief Sets the text of a window.
 		/// 
@@ -134,7 +134,7 @@ namespace vcc::ui
 		/// status of.
 		/// 
 		/// @return `true` if the control is checked; 'false` otherwise.
-		bool is_button_checked(UINT control_id) const;
+		[[nodiscard]] bool is_button_checked(UINT control_id) const;
 
 		/// @brief Sets the check state of a control.
 		/// 
@@ -152,7 +152,7 @@ namespace vcc::ui
 		/// @brief Retrieve the dialogs window handle.
 		/// 
 		/// @return The dialogs window handle.
-		HWND handle() const;
+		[[nodiscard]] HWND handle() const;
 
 		/// @brief Process a dialog message.
 		/// 
@@ -163,7 +163,7 @@ namespace vcc::ui
 		/// depend on the message received.
 		/// 
 		/// @return The return value depends on the message being processed.
-		virtual INT_PTR on_message(
+		[[nodiscard]] virtual INT_PTR on_message(
 			UINT message,
 			WPARAM wParam,
 			LPARAM lParam);
@@ -180,7 +180,7 @@ namespace vcc::ui
 		/// depend on the message received.
 		/// 
 		/// @return '0' (zero) if the function processes the command; non-zero otherwise.
-		virtual INT_PTR on_command(WPARAM wParam, LPARAM lParam);
+		[[nodiscard]] virtual INT_PTR on_command(WPARAM wParam, LPARAM lParam);
 
 
 		/// @brief Initialize the dialog window.
@@ -192,7 +192,7 @@ namespace vcc::ui
 		/// 
 		/// @return `true` if the windowing system should set the keyboard focus to the
 		/// default control.
-		virtual bool on_init_dialog();
+		[[nodiscard]] virtual bool on_init_dialog();
 
 		/// @brief Close the window.
 		///
@@ -242,7 +242,7 @@ namespace vcc::ui
 		/// depend on the message received.
 		/// 
 		/// @return The return value depends on the message being processed.
-		INT_PTR process_message(
+		[[nodiscard]] INT_PTR process_message(
 			HWND hDlg,
 			UINT message,
 			WPARAM wParam,
@@ -258,7 +258,7 @@ namespace vcc::ui
 		/// depend on the message received.
 		/// 
 		/// @return The return value depends on the message being processed.
-		static INT_PTR CALLBACK callback_procedure(
+		[[nodiscard]] static INT_PTR CALLBACK callback_procedure(
 			HWND hDlg,
 			UINT message,
 			WPARAM wParam,

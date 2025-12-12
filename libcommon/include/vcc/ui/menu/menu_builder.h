@@ -56,7 +56,7 @@ namespace vcc::ui::menu
 
 		/// @brief Indicates if the menu builder is empty.
 		/// @return `true` if the builder is empty and contains no menu items; `false` otherwise.
-		LIBCOMMON_EXPORT bool empty() const;
+		[[nodiscard]] LIBCOMMON_EXPORT bool empty() const;
 		
 		/// @brief Removes all menu items from the builder.
 		/// 
@@ -133,7 +133,7 @@ namespace vcc::ui::menu
 		/// collection.
 		/// 
 		/// @return A collection of all items added to the builder.
-		LIBCOMMON_EXPORT item_collection_type release_items();
+		[[nodiscard]] LIBCOMMON_EXPORT item_collection_type release_items();
 
 
 	protected:

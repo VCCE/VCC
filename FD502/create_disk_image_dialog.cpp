@@ -72,7 +72,9 @@ namespace vcc::cartridges::fd502
 
 	bool create_disk_image_dialog::on_init_dialog()
 	{
-		dialog_window::on_init_dialog();
+		// We don't need the return value as we always return true so keyboard focus
+		// is given to the default control (if there is one).
+		(void)dialog_window::on_init_dialog();
 
 		CenterDialog(handle());
 

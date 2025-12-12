@@ -19,7 +19,7 @@ namespace vcc::media::geometry_calculators
 
 
 		/// @inheritdoc
-		explicit floppy_disk_geometry_calculator(const geometry_type& default_geometry);
+		LIBCOMMON_EXPORT explicit floppy_disk_geometry_calculator(const geometry_type& default_geometry);
 
 		/// @brief Calculates the geometry for a variety of disk image formats.
 		/// 
@@ -35,7 +35,7 @@ namespace vcc::media::geometry_calculators
 		/// 
 		/// @return If the geometry can be calculated the results containing the geometry,
 		/// file offset to the start image data, and other information; empty value otherwise.
-		optional_calculated_geometry_type calculate(
+		LIBCOMMON_EXPORT [[nodiscard]] optional_calculated_geometry_type calculate(
 			const header_buffer_type& header_buffer,
 			size_type file_size) const override;
 

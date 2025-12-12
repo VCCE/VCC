@@ -68,14 +68,14 @@ namespace vcc::bus
 		/// @brief Determines if the Catalog is empty.
 		/// 
 		/// @return `true` if the Catalog is empty; `false` otherwise.
-		LIBCOMMON_EXPORT virtual bool empty() const;
+		[[nodiscard]] LIBCOMMON_EXPORT virtual bool empty() const;
 
 		/// @brief Determines if an identifier represents an installed cartridge.
 		/// 
 		/// @param id The identifier to check.
 		/// 
 		/// @return `true` if the cartridge is installed; `false` otherwise.
-		LIBCOMMON_EXPORT virtual bool is_valid_cartridge_id(const guid_type& id) const;
+		[[nodiscard]] LIBCOMMON_EXPORT virtual bool is_valid_cartridge_id(const guid_type& id) const;
 
 		/// @brief Determines if a cartridge is already loaded.
 		/// 
@@ -84,7 +84,7 @@ namespace vcc::bus
 		/// @return `true` if the cartridge is loaded; `false` otherwise.
 		/// 
 		/// @throws std::invalid_argument if a cartridge matching the identifier is not found.
-		LIBCOMMON_EXPORT virtual bool is_loaded(const guid_type& id) const;
+		[[nodiscard]] LIBCOMMON_EXPORT virtual bool is_loaded(const guid_type& id) const;
 
 		/// @brief Get the absolute pathname to a cartridge file.
 		/// 
@@ -93,17 +93,17 @@ namespace vcc::bus
 		/// @return An absolute system path to the cartridge file.
 		/// 
 		/// @throws std::invalid_argument if a cartridge matching the identifier is not found.
-		LIBCOMMON_EXPORT virtual path_type get_item_pathname(const guid_type& id) const;
+		[[nodiscard]] LIBCOMMON_EXPORT virtual path_type get_item_pathname(const guid_type& id) const;
 
 		/// @brief Create a copy of the Cartridge items in an associative container.
 		/// 
 		/// @return An associative container containing copies of all cartridge items.
-		LIBCOMMON_EXPORT virtual item_map_type copy_items() const;
+		[[nodiscard]] LIBCOMMON_EXPORT virtual item_map_type copy_items() const;
 
 		/// @brief Create a copy of the Cartridge items in a sequence container.
 		/// 
 		/// @return A sequence container containing copies of all cartridge items.
-		LIBCOMMON_EXPORT virtual item_container_type copy_items_ordered() const;
+		[[nodiscard]] LIBCOMMON_EXPORT virtual item_container_type copy_items_ordered() const;
 
 		/// @brief Accept a cartridge item visitor.
 		/// 

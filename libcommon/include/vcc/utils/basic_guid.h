@@ -21,6 +21,7 @@ namespace vcc::utils
 		/// @brief Container used to store the guid data.
 		using guid_type = std::array<unsigned char, 16>;
 
+
 	public:
 
 		/// @brief Construct a Basic GUID.
