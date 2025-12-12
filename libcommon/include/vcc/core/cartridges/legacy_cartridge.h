@@ -35,10 +35,11 @@ namespace vcc::core::cartridges
 	public:
 
 		LIBCOMMON_EXPORT legacy_cartridge(
-			HMODULE module_handle,
-			void* const host_context,
-			path_type configuration_path,
-			const cpak_cartridge_context& cpak_context);
+			HMODULE module_handle,                        // Cartridge filename
+			void* const host_context,                     // Yet another cartridge context
+			path_type configuration_path,                 // Path of ini file
+			HWND hVccWnd,                                 // Handle to main VCC window proc 
+			const cpak_callbacks& cpak_callbacks);  // Callbacks AKA context
 
 		LIBCOMMON_EXPORT name_type name() const override;
 		LIBCOMMON_EXPORT catalog_id_type catalog_id() const override;
@@ -61,8 +62,9 @@ namespace vcc::core::cartridges
 
 		const HMODULE handle_;
 		void* const host_context_;
+		const HWND hVccWnd_;
 		const path_type configuration_path_;
-		const cpak_cartridge_context cpak_context_;
+		const cpak_callbacks cpak_callbacks_;
 
 		// imported module functions
 		const PakInitializeModuleFunction initialize_;

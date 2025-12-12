@@ -22,6 +22,7 @@
 #include "resource.h"
 #include <vcc/common/DialogOps.h>
 #include <vcc/core/limits.h>
+#include <vcc/common/logger.h>
 
 #define EXPORT_PUBLIC_API extern "C" __declspec(dllexport)
 
@@ -88,15 +89,22 @@ extern "C"
 	EXPORT_PUBLIC_API void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,
-		const cpak_cartridge_context* const context)
+		HWND hVccWnd,
+		const cpak_callbacks* const callbacks)
 	{
+
+//#define IDM_HELP_ABOUT                  40003
+//#define ID_FILE_RESET                   40005
+//SendMessage(hVccWnd,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
+//SendMessage(hVccWnd,WM_COMMAND,(WPARAM) IDM_HELP_ABOUT,(LPARAM) 0);
+
 		gMultiPakConfiguration.configuration_path(configuration_path);
 		gConfigurationFilename = configuration_path;
-		gHostContext->add_menu_item_ = context->add_menu_item;
-		gHostContext->read_memory_byte_ = context->read_memory_byte;
-		gHostContext->write_memory_byte_ = context->write_memory_byte;
-		gHostContext->assert_interrupt_ = context->assert_interrupt;
-		gHostContext->assert_cartridge_line_ = context->assert_cartridge_line;
+		gHostContext->add_menu_item_ = callbacks->add_menu_item;
+		gHostContext->read_memory_byte_ = callbacks->read_memory_byte;
+		gHostContext->write_memory_byte_ = callbacks->write_memory_byte;
+		gHostContext->assert_interrupt_ = callbacks->assert_interrupt;
+		gHostContext->assert_cartridge_line_ = callbacks->assert_cartridge_line;
 
 		gMultiPakInterface.start();
 	}

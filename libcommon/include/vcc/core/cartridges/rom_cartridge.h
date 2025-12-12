@@ -17,11 +17,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <vcc/core/cartridges/basic_cartridge.h>
-#include <vcc/core/cartridge_context.h>
+#include <vcc/core/cartridge_callbacks.h>
 #include <vector>
 #include <memory>
 
-
+// TODO:  This could be alot simpler
 namespace vcc::core::cartridges
 {
 

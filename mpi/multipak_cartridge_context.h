@@ -17,7 +17,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "multipak_cartridge.h"
-#include <vcc/core/cartridge_context.h>
 
 
 class multipak_cartridge_context : public ::vcc::core::cartridge_context

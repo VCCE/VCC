@@ -23,6 +23,7 @@
 enum MenuItemType;
 
 // TODO:  Where cartridge_context is used make it explicit;  It should not be passed as void *;
+// Defines the callbacks a cartridge can make
 namespace vcc::core
 {
 

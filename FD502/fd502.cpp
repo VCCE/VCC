@@ -131,11 +131,12 @@ extern "C"
 	__declspec(dllexport) void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,
-		const cpak_cartridge_context* const context)
+		HWND hVccWnd,
+		const cpak_callbacks* const callbacks)
 	{
 		gHostKeyPtr = host_key;
-		CartMenuCallback = context->add_menu_item;
-		AssertInt = context->assert_interrupt;
+		CartMenuCallback = callbacks->add_menu_item;
+		AssertInt = callbacks->assert_interrupt;
 		strcpy(IniFile, configuration_path);
 
 		RealDisks = InitController();

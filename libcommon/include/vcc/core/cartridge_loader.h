@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <vcc/core/cartridge.h>
-#include <vcc/core/cartridge_context.h>
+#include <vcc/core/cartridge_callbacks.h>
 #include <vcc/core/legacy_cartridge_definitions.h>
 #include <vcc/core/utils/dll_deleter.h>
 #include <string>
@@ -59,7 +59,8 @@ namespace vcc::core
 		cartridge_loader_status load_result = cartridge_loader_status::not_loaded;
 	};
 
-	struct cartridge_loader_context
+	// TODO: Are these really needed - callbacks are defined in cartridge_callbacks.h
+/*	struct cartridge_loader_context
 	{
 		const PakAssertInteruptHostCallback pak_assert_interrupt;
 		const PakAssertCartridgeLineHostCallback pak_assert_cartridge_line;
@@ -67,9 +68,10 @@ namespace vcc::core
 		const PakReadMemoryByteHostCallback pak_read_memory_byte;
 		const PakAppendCartridgeMenuHostCallback pak_add_menu_item;
 	};
-
+*/
 	LIBCOMMON_EXPORT cartridge_file_type determine_cartridge_type(const std::string& filename);
 
+	// TODO: Eliminate the redundant overloads of loader result
 	LIBCOMMON_EXPORT cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context);
@@ -79,14 +81,16 @@ namespace vcc::core
 		std::unique_ptr<cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& iniPath,
-		const cpak_cartridge_context& cpak_context);
+		HWND hVccWnd,
+		const cpak_callbacks& cpak_callbacks);
 
 	LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
-		const std::string& filename,
-		std::unique_ptr<cartridge_context> cartridge_context,
-		void* const host_context,
-		const std::string& iniPath,
-		const cpak_cartridge_context& cpak_context);
+		const std::string& filename,                          // Cartridge filename
+		std::unique_ptr<cartridge_context> cartridge_context, // Yet another cartridge context
+		void* const host_context,                             // Even more context
+		const std::string& iniPath,                           // Path of ini file
+		HWND hVccWnd,                                         // handle to main VCC window proc
+		const cpak_callbacks& cpak_callbacks);                // Callbacks AKA context
 
 	// Return load error string per cartridge load status
 	LIBCOMMON_EXPORT std::string cartridge_load_error_string(

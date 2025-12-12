@@ -70,7 +70,8 @@ extern "C"
 	__declspec(dllexport) void PakInitialize(
 		void* const /*host_key*/,
 		const char* const /*configuration_path*/,
-		const cpak_cartridge_context* const /*context*/)
+		HWND hVccWnd,
+		const cpak_callbacks* const /*context*/)
 	{
 		InitMemBoard();
 	}

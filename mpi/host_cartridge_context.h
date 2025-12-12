@@ -16,13 +16,15 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridge_context.h>
 #include <vcc/core/legacy_cartridge_definitions.h>
+
+// Define the CPAK interface in yet another place but call it something else.
 
 extern "C" __declspec(dllexport) void PakInitialize(
 	void* const host_key,
 	const char* const configuration_path,
-	const cpak_cartridge_context* const context);
+	HWND hVccWnd,
+	const cpak_callbacks* const callbacks);
 
 // FIXME: this should be unnecessary here. VCC (or the 'host') should provide it
 class host_cartridge_context : public ::vcc::core::cartridge_context
@@ -81,7 +83,8 @@ private:
 	friend void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,
-		const cpak_cartridge_context* const context);
+		HWND hVccWnd,
+		const cpak_callbacks* const callbacks);
 	friend class multipak_cartridge;
 
 
