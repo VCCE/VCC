@@ -20,7 +20,7 @@
 #include "configuration_dialog.h"
 #include <Windows.h>
 
-extern HINSTANCE gModuleInstance;
+extern HWND	gVccWnd;
 extern const std::shared_ptr<host_cartridge_context> gHostContext;
 extern multipak_cartridge gMultiPakInterface;
 extern configuration_dialog gConfigurationDialog;
