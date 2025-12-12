@@ -43,10 +43,10 @@ extern "C" __declspec(dllexport) ::vcc::bus::cartridge_plugin_factory_prototype 
 {
 	return [](
 		std::shared_ptr<::vcc::bus::expansion_port_host> host,
-		[[maybe_unused]] std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
+		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
 		[[maybe_unused]] std::unique_ptr<::vcc::bus::expansion_port_bus> bus) -> ::vcc::bus::cartridge_factory_result
 		{
-			return std::make_unique<::vcc::cartridges::becker_port::becker_cartridge>(move(host), gModuleInstance);
+			return std::make_unique<::vcc::cartridges::becker_port::becker_cartridge>(move(host), move(ui), gModuleInstance);
 		};
 }
 

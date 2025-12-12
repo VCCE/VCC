@@ -61,6 +61,7 @@ namespace vcc::cartridges::becker_port
 		/// @brief Construct the Becker Port cartridge.
 		/// 
 		/// @param host A pointer to the host services interface.
+		/// @param ui A pointer to the UI services interface.
 		/// @param module_instance A handle to the instance of the module containing the
 		/// Becker Port resources.
 		/// 
@@ -68,6 +69,7 @@ namespace vcc::cartridges::becker_port
 		/// @throws std::invalid_argument if `module_instance` is null.
 		becker_cartridge(
 			std::shared_ptr<expansion_port_host_type> host,
+			std::shared_ptr<expansion_port_ui_type> ui,
 			HINSTANCE module_instance);
 
 		/// @inheritdoc

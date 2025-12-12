@@ -19,6 +19,9 @@
 #include "vcc/detail/exports.h"
 #include <Windows.h>
 
+// This is getting nuked! Don't document or enhance in any way
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 //-------------------------------------------------------------------------------------------
 // CloseCartDialog closes DLL dialog or force exits Vcc if it can not be.
 // It should be called by cartridge DLL's when they are unloaded.
@@ -69,3 +72,5 @@ private:
 	char path_[MAX_PATH] = {};
 };
 
+
+#endif

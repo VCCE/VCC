@@ -20,6 +20,9 @@
 #include <Windows.h>
 
 
+// DO NOT DOCUMENT UNTIL THIS GARBAGE IS REFACTORED
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 namespace vcc::devices::rtc
 {
 
@@ -52,3 +55,5 @@ namespace vcc::devices::rtc
 	};
 
 }
+
+#endif

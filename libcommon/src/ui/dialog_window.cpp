@@ -46,15 +46,17 @@ namespace vcc::ui
 			reinterpret_cast<LPARAM>(this));
 	}
 
-	void dialog_window::open()
+	void dialog_window::open(HWND owner)
 	{
+		// FIXME-CHET: This should assert if the window is already open and expect the
+		// call side to handle it.
 		if (!is_open())
 		{
 			is_modal_ = false;
 			CreateDialogParam(
 				module_handle_,
 				MAKEINTRESOURCE(dialog_resource_id_),
-				GetActiveWindow(),
+				owner,
 				callback_procedure,
 				reinterpret_cast<LPARAM>(this));
 		}

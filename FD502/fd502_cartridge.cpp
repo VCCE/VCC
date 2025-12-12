@@ -276,7 +276,7 @@ namespace vcc::cartridges::fd502
 		switch (MenuID)
 		{
 		case menu_item_ids::open_settings:
-			settings_dialog_.open();
+			settings_dialog_.open(ui_->app_window());
 			break;
 
 		case menu_item_ids::insert_drive_0:
@@ -304,7 +304,7 @@ namespace vcc::cartridges::fd502
 
 	void fd502_cartridge::insert_disk(drive_id_type drive_id)
 	{
-		HWND h_own = GetActiveWindow();
+		HWND h_own = ui_->app_window();
 		::vcc::ui::select_file_dialog insert_disk_dialog;
 		insert_disk_dialog.set_title(std::format("Insert Disk Into Drive {}", drive_id))
 			.set_initial_directory(configuration_->disk_image_directory())
@@ -340,7 +340,7 @@ namespace vcc::cartridges::fd502
 		if (!disk_image)
 		{
 			// TODO-CHET: Add real error message
-			MessageBox(GetActiveWindow(), "Can't open file", "Error", 0);
+			MessageBox(ui_->app_window(), "Can't open file", "Error", 0);
 			return;
 		}
 

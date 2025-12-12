@@ -19,6 +19,7 @@
 #include "resource.h"
 #include "vcc/common/DialogOps.h"
 #include "vcc/utils/winapi.h"
+#include <stdexcept>
 
 
 namespace vcc::cartridges::becker_port
@@ -26,11 +27,27 @@ namespace vcc::cartridges::becker_port
 
 	configuration_dialog::configuration_dialog(
 		HINSTANCE module_handle,
+		std::shared_ptr<expansion_port_ui_type> ui,
 		update_connection_settings_type update_connection_settings)
 		:
 		module_handle_(module_handle),
-		update_connection_settings(move(update_connection_settings))
+		ui_(move(ui)),
+		update_connection_settings_(move(update_connection_settings))
 	{
+		if (module_handle_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Becker Port configuration dialog. Module handle is null.");
+		}
+
+		if (ui_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Becker Port configuration dialog. UI is null.");
+		}
+
+		if (update_connection_settings_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Becker Port configuration dialog. Update callback is null.");
+		}
 	}
 
 
@@ -44,7 +61,7 @@ namespace vcc::cartridges::becker_port
 			dialog_handle_ = CreateDialogParam(
 				module_handle_,
 				MAKEINTRESOURCE(IDD_SETTINGS_DIALOG),
-				GetActiveWindow(),
+				ui_->app_window(),
 				callback_procedure,
 				reinterpret_cast<LPARAM>(this));
 		}
@@ -110,7 +127,7 @@ namespace vcc::cartridges::becker_port
 			case IDOK:
 				// FIXME-CHET: This should validate that the address is in a valid format and
 				// the port is an integer and in a valid range.
-				update_connection_settings(
+				update_connection_settings_(
 					::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPHOST),
 					::vcc::utils::get_dialog_item_text(hDlg, IDC_TCPPORT));
 				EndDialog(hDlg, IDOK);

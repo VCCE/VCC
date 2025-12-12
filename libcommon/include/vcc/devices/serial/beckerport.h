@@ -20,6 +20,9 @@
 #include <Windows.h>
 
 
+// DO NOT DOCUMENT UNTIL THIS GARBAGE IS REFACTORED
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 namespace vcc::devices::serial
 {
 	constexpr int BUFFER_SIZE = 512;
@@ -78,3 +81,5 @@ namespace vcc::devices::serial
 		float write_speed_ = 0;
 	};
 }
+
+#endif

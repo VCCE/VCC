@@ -53,6 +53,7 @@ namespace vcc::cartridges::multipak
 		std::shared_ptr<multipak_configuration> configuration,
 		std::shared_ptr<multipak_cartridge_driver> mpi,
 		std::shared_ptr<expansion_port_bus_type> bus,
+		std::shared_ptr<expansion_port_ui_type> ui,
 		insert_function_type insert_callback,
 		eject_function_type eject_callback)
 		:
@@ -60,6 +61,7 @@ namespace vcc::cartridges::multipak
 		configuration_(move(configuration)),
 		mpi_(move(mpi)),
 		bus_(move(bus)),
+		ui_(move(ui)),
 		insert_callback_(move(insert_callback)),
 		eject_callback_(move(eject_callback))
 	{
@@ -83,6 +85,11 @@ namespace vcc::cartridges::multipak
 			throw std::invalid_argument("Cannot construct Multi-Pak Cartridge. Bus is null.");
 		}
 
+		if (ui_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Multi-Pak Cartridge. UI is null.");
+		}
+
 		if (insert_callback_ == nullptr)
 		{
 			throw std::invalid_argument("Cannot construct Multi-Pak Cartridge. Insert cartridge function is null.");
@@ -102,7 +109,7 @@ namespace vcc::cartridges::multipak
 			dialog_handle_ = CreateDialogParam(
 				module_handle_,
 				MAKEINTRESOURCE(IDD_SLOT_MANAGER),
-				GetActiveWindow(),
+				ui_->app_window(),
 				callback_procedure,
 				reinterpret_cast<LPARAM>(this));
 		}

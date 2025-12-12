@@ -103,6 +103,7 @@ namespace vcc::cartridges::multipak
 			configuration,
 			driver_,
 			bus,
+			ui,
 			std::bind(&multipak_cartridge::select_and_insert_cartridge, this, std::placeholders::_1),
 			std::bind(&multipak_cartridge::eject_cartridge, this, std::placeholders::_1, true, true))
 	{
@@ -347,7 +348,7 @@ namespace vcc::cartridges::multipak
 			};
 
 		::vcc::utils::select_cartridge_file(
-			GetActiveWindow(),
+			ui_->app_window(),
 			std::format("Insert Cartridge or ROM Pak into slot {}", slot + 1),
 			configuration_->last_accessed_path(),
 			callback);
@@ -362,7 +363,7 @@ namespace vcc::cartridges::multipak
 		auto loadedCartridge(vcc::utils::load_cartridge(
 			filename,
 			host_,
-			std::make_unique<multipak_expansion_port_ui>(),
+			std::make_unique<multipak_expansion_port_ui>(ui_),
 			std::make_unique<multipak_expansion_port_bus>(bus_, slot, *driver_)));
 		if (loadedCartridge.load_result != mount_status_type::success)
 		{

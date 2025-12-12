@@ -28,12 +28,14 @@ namespace vcc::cartridges::becker_port
 
 	becker_cartridge::becker_cartridge(
 		std::shared_ptr<expansion_port_host_type> host,
+		std::shared_ptr<expansion_port_ui_type> ui,
 		HINSTANCE module_instance)
 		:
 		host_(move(host)),
 		module_instance_(module_instance),
 		configuration_dialog_(
 			module_instance,
+			ui,
 			std::bind(&becker_cartridge::update_connection_settings, this, std::placeholders::_1, std::placeholders::_2))
 	{
 		if (host_ == nullptr)

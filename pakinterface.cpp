@@ -130,6 +130,13 @@ public:
 
 class vcc_expansion_port_ui : public ::vcc::bus::expansion_port_ui
 {
+public:
+
+	HWND app_window() const noexcept override
+	{
+		return EmuState.WindowHandle;
+	}
+
 };
 
 static void PakAssertCartrigeLine(void* /*host_key*/, bool line_state)

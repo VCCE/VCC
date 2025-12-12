@@ -26,6 +26,31 @@ namespace vcc::cartridges::multipak
 	/// @inheritdoc
 	class multipak_expansion_port_ui : public ::vcc::bus::expansion_port_ui
 	{
+	public:
+
+		/// @brief Construct the UI service
+		/// 
+		/// @param host_ui A pointer to the cartridge hosts UI service.
+		explicit multipak_expansion_port_ui(std::shared_ptr<::vcc::bus::expansion_port_ui> host_ui)
+			: host_ui_(move(host_ui))
+		{
+			if (host_ui_ == nullptr)
+			{
+				throw std::invalid_argument("Cannot construct Multi-Pak UI Service Shim. UI is null.");
+			}
+		}
+
+		/// @inheritdoc
+		HWND app_window() const noexcept override
+		{
+			return host_ui_->app_window();
+		}
+
+
+	private:
+
+		/// @brief The cartridge hosts UI service.
+		std::shared_ptr<::vcc::bus::expansion_port_ui> host_ui_;
 	};
 
 }

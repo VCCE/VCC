@@ -5,6 +5,9 @@
 #include <cstdint>
 
 
+// DO NOT DOCUMENT UNTIL THIS IS REFACTORED
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 namespace vcc::devices::psg
 {
 
@@ -56,3 +59,5 @@ namespace vcc::devices::psg
 	};
 
 }
+
+#endif

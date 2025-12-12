@@ -16,7 +16,9 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "vcc/bus/expansion_port_ui.h"
 #include <Windows.h>
+#include <memory>
 #include <string>
 #include <functional>
 
@@ -31,6 +33,9 @@ namespace vcc::cartridges::becker_port
 
 		/// @brief Defines the type used to hold a variable length string.
 		using string_type = std::string;
+		/// @brief Type alias for the component providing user interface services to the
+		/// cartridge plugin.
+		using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 
 		/// @brief Defines the type and signature of the function called when
 		/// the connection settings change.
@@ -45,10 +50,16 @@ namespace vcc::cartridges::becker_port
 		/// 
 		/// @param module_handle The module instance of the DLL containing the dialog
 		/// resources.
+		/// @param ui A pointer to the UI services interface.
 		/// @param update_connection_settings A callback function that will be invoked
 		/// when the settings change.
+		/// 
+		/// @throws std::invalid_argument if `module_handle` is null.
+		/// @throws std::invalid_argument if `ui` is null.
+		/// @throws std::invalid_argument if `update_connection_settings` is null.
 		configuration_dialog(
 			HINSTANCE module_handle,
+			std::shared_ptr<expansion_port_ui_type> ui,
 			update_connection_settings_type update_connection_settings);
 
 		/// @brief Open the settings dialog
@@ -109,9 +120,11 @@ namespace vcc::cartridges::becker_port
 
 		/// @brief The handle to the module instance containing the dialog's resources.
 		const HINSTANCE module_handle_;
+		/// @brief The expansion port UI service provider.
+		const std::shared_ptr<expansion_port_ui_type> ui_;
 		/// @brief A function that will be invoked if/when the connection settings are
 		/// changed by the user.
-		const update_connection_settings_type update_connection_settings;
+		const update_connection_settings_type update_connection_settings_;
 		/// @brief The handle to the current dialog or `null` if no dialog is open.
 		HWND dialog_handle_ = nullptr;
 		/// @brief The server address the dialog will show when initially created.

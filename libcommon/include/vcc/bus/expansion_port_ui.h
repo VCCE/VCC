@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/detail/exports.h"
+#include <Windows.h>
 
 
 namespace vcc::bus
@@ -32,6 +33,11 @@ namespace vcc::bus
 	public:
 
 		virtual ~expansion_port_ui() = default;
+
+		/// @brief Retrieve the handle to the main application window.
+		/// 
+		/// @return A handle to the main application window.
+		virtual HWND app_window() const noexcept = 0;
 	};
 
 }
