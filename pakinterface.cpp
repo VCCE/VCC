@@ -284,11 +284,12 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 static cartridge_loader_status load_any_cartridge(const char *filename, const char* iniPath)
 {
 	cartridge_loader_result loadedCartridge(vcc::core::load_cartridge(
-		filename,
-		std::make_unique<vcc_cartridge_context>(),
-		nullptr, // TODO:  Maybe add a VCC host context.
-		iniPath,
-		{
+		filename,                                   // Cartridge filename
+		std::make_unique<vcc_cartridge_context>(),  // Yet another cartridge context
+		nullptr,                                    // Maybe a VCC host context
+		iniPath,                                    // Path of ini file
+		EmuState.WindowHandle,                      // HWND hVccWnd
+		{                                           // Callbacks AKA context
 			PakAssertInterupt,
 			PakAssertCartrigeLine,
 			PakWriteMemoryByte,

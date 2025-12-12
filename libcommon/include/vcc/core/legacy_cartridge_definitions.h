@@ -17,12 +17,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <vcc/core/interrupts.h>
+#include <windows.h>
 
 // This is included by all hardware packs
+// TODO: Rename this to cpak_cartridge_definitions.h  (legacy_cartridge --> cpak_cartridge)
 extern "C"
 {
-	// TODO: Rename this to cpak_cartridge_definitions.h  (legacy_cartridge --> cpak_cartridge)
-	// TODO: The host_key should be strongly typed and refer to the loaded cart.
 	enum MenuItemType;
 
 	using PakWriteMemoryByteHostCallback = void (*)(void* host_key, unsigned char value, unsigned short address);
@@ -32,10 +32,8 @@ extern "C"
 	using PakAppendCartridgeMenuHostCallback = void (*)(void* host_key, const char* menu_name, int menu_id, MenuItemType menu_type);
 	using PakResetHostCallback = void (*)(void* host_key);
 
-	// TODO: rename cpak_cartridge_context to cpak_callbacks
-	struct cpak_cartridge_context
+	struct cpak_callbacks
 	{
-		// TODO: This needs a reset callback for mpi
 		const PakAssertInteruptHostCallback assert_interrupt;
 		const PakAssertCartridgeLineHostCallback assert_cartridge_line;
 		const PakWriteMemoryByteHostCallback write_memory_byte;
@@ -44,11 +42,13 @@ extern "C"
 		const PakResetHostCallback reset;
 	};
 
-	// Hardware carts access reset callbacks here
+	// Hardware carts access reset callbacks on Initialize
 	using PakInitializeModuleFunction = void (*)(
-		void* host_key,                                  // HMODULE of dll??
-		const char* const configuration_path,            // Path of ini file
-		const cpak_cartridge_context* const context);    // Callbacks
+		void* host_key,                          // Mysterious master key
+		const char* const configuration_path,    // Path of ini file
+		HWND hVccWnd,                            // VCC Main window HWND
+		const cpak_callbacks* const context);    // Callbacks
+
 	using PakTerminateModuleFunction = void (*)();
 	using PakGetNameModuleFunction = const char* (*)();
 	using PakGetCatalogIdModuleFunction = const char* (*)();

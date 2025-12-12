@@ -18,7 +18,7 @@
 #pragma once
 #include <vcc/core/cartridge.h>
 
-
+//TODO: Stomp this bad boy out. It has no purpose
 namespace vcc::core::cartridges
 {
 

@@ -35,11 +35,12 @@ GMC_EXPORT const char* PakGetDescription()
 GMC_EXPORT void PakInitialize(
 	void* const host_key,
 	const char* const configuration_path,
-	const cpak_cartridge_context* const context)
+	HWND hVccWnd,
+	const cpak_callbacks* const callbacks)
 {
 	Cartridge::m_Singleton->SetHostKey(host_key);
-	Cartridge::m_Singleton->SetMenuBuilderCallback(context->add_menu_item);
-	Cartridge::m_Singleton->SetCartLineAssertCallback(context->assert_cartridge_line);
+	Cartridge::m_Singleton->SetMenuBuilderCallback(callbacks->add_menu_item);
+	Cartridge::m_Singleton->SetCartLineAssertCallback(callbacks->assert_cartridge_line);
 	Cartridge::m_Singleton->SetConfigurationPath(configuration_path);
 }
 

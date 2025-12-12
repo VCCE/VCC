@@ -130,7 +130,7 @@
     <ClInclude Include="include\vcc\core\cartridges\legacy_cartridge.h" />
     <ClInclude Include="include\vcc\core\cartridges\null_cartridge.h" />
     <ClInclude Include="include\vcc\core\cartridges\rom_cartridge.h" />
-    <ClInclude Include="include\vcc\core\cartridge_context.h" />
+    <ClInclude Include="include\vcc\core\cartridge_callbacks.h" />
     <ClInclude Include="include\vcc\core\cartridge_loader.h" />
     <ClInclude Include="include\vcc\core\detail\exports.h" />
     <ClInclude Include="include\vcc\core\interrupts.h" />

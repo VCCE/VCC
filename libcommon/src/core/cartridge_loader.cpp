@@ -113,7 +113,8 @@ namespace vcc::core
 		std::unique_ptr<cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& iniPath,
-		const cpak_cartridge_context& cpak_context)
+		HWND hVccWnd,
+		const cpak_callbacks& cpak_callbacks)
 	{
 		if (GetModuleHandle(filename.c_str()) != nullptr)
 		{
@@ -134,7 +135,8 @@ namespace vcc::core
 				details.handle.get(),
 				host_context,
 				iniPath,
-				cpak_context);
+				hVccWnd,
+				cpak_callbacks);
 			details.load_result = cartridge_loader_status::success;
 
 			return details;
@@ -148,7 +150,7 @@ namespace vcc::core
 	// in libcommon/include/vcc/core/cartridge_context.h.  host_context is a generic 
 	// pointer explicitly cast to multipak_cartridge in mpi/multipak_cartridge.cpp.
 	// mutlipak_cartridge refers specifically to a cart loaded by the multipak.
-	// cpak_cartridge_context is used by all hardware paks and is defined in 
+	// cpak_callbacks is used by all hardware paks and is defined in 
 	// libcommon/include/vcc/core/legacy_cartridge_definitions.h.  cartridge_loader_result
 	// is defined in libcommon/include/vcc/core/cartridge_loader.h
 	// TODO: Fix the context insanity
@@ -157,7 +159,8 @@ namespace vcc::core
 		std::unique_ptr<cartridge_context> cartridge_context,
 		void* const host_context,
 		const std::string& iniPath,
-		const cpak_cartridge_context& cpak_context)
+		HWND hVccWnd,
+		const cpak_callbacks& cpak_callbacks)
 	{
 		switch (vcc::core::determine_cartridge_type(filename))
 		{
@@ -174,12 +177,14 @@ namespace vcc::core
 				move(cartridge_context),
 				host_context,
 				iniPath,
-				cpak_context);
+				hVccWnd,
+				cpak_callbacks);					// Callbacks hidden in here
 		}
 	}
 
 	// Return error string per cartridge load status.  This abandons loading the strings
 	// from Vcc.rc resources so mpi does not need to either access or duplicate them.
+	// TODO: Move and make this generic so it also can be used elsewhere in the project
 	std::string cartridge_load_error_string(const cartridge_loader_status error_status)
 	{
 		switch (error_status)

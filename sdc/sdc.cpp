@@ -379,13 +379,14 @@ extern "C"
     __declspec(dllexport) void PakInitialize(
         void* const host_key,
         const char* const configuration_path,
-        const cpak_cartridge_context* const context)
+        HWND hVccWnd,
+        const cpak_callbacks* const callbacks)
     {
         gHostKey = host_key;
-        CartMenuCallback = context->add_menu_item;
-        MemRead8 = context->read_memory_byte;
-        MemWrite8 = context->write_memory_byte;
-        AssertInt = context->assert_interrupt;
+        CartMenuCallback = callbacks->add_menu_item;
+        MemRead8 = callbacks->read_memory_byte;
+        MemWrite8 = callbacks->write_memory_byte;
+        AssertInt = callbacks->assert_interrupt;
         strcpy(IniFile, configuration_path);
 
         LoadConfig();

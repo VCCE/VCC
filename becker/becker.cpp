@@ -415,11 +415,12 @@ extern "C"
 	__declspec(dllexport) void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,
-		const cpak_cartridge_context* const context)
+		HWND hVccWnd,
+		const cpak_callbacks* const callbacks)
 	{
 		gHostKey = host_key;
-		CartMenuCallback = context->add_menu_item;
-		PakSetCart = context->assert_cartridge_line;
+		CartMenuCallback = callbacks->add_menu_item;
+		PakSetCart = callbacks->assert_cartridge_line;
 		strcpy(IniFile, configuration_path);
 
 		LastStats = GetTickCount();

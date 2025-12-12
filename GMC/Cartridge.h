@@ -52,7 +52,8 @@ private:
 	friend void PakInitialize(
 		void* const host_key,
 		const char* const configuration_path,
-		const cpak_cartridge_context* const context);
+		HWND hVccWnd,
+		const cpak_callbacks* const callbacks);
 	friend void PakGetStatus(char* text_buffer, size_t buffer_size);
 	friend void PakMenuItemClicked(unsigned char menuId);
 	friend void PakReset();

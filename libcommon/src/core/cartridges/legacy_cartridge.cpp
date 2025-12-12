@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 
-// TODO: Rename this to hardware_cartridge
+// TODO: Rename this to hardware_cartridge (cpak_cartridge?)
 
 #include <vcc/core/cartridges/legacy_cartridge.h>
 #include <stdexcept>
@@ -82,12 +82,14 @@ namespace vcc::core::cartridges
 		HMODULE module_handle,
 		void* const host_context,
 		path_type configuration_path,
-		const cpak_cartridge_context& cpak_context)
+		const HWND hVccWnd,
+		const cpak_callbacks& cpak_callbacks)
 		:
 		handle_(module_handle),
 		host_context_(host_context),
 		configuration_path_(move(configuration_path)),
-		cpak_context_(cpak_context),
+		hVccWnd_(hVccWnd),
+		cpak_callbacks_(cpak_callbacks),
 		initialize_(GetImportedProcAddress<PakInitializeModuleFunction>(module_handle, "PakInitialize", nullptr)),
 		terminate_(GetImportedProcAddress(module_handle, "PakTerminate", default_stop)),
 		get_name_(GetImportedProcAddress(module_handle, "PakGetName", default_get_empty_string)),
@@ -123,10 +125,9 @@ namespace vcc::core::cartridges
 		return get_description_();
 	}
 
-
 	void legacy_cartridge::start()
 	{
-		initialize_(host_context_, configuration_path_.c_str(), &cpak_context_);
+		initialize_(host_context_, configuration_path_.c_str(), hVccWnd_, &cpak_callbacks_);
 	}
 
 	void legacy_cartridge::stop()

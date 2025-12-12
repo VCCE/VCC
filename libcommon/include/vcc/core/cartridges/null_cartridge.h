@@ -18,7 +18,7 @@
 #pragma once
 #include <vcc/core/cartridges/basic_cartridge.h>
 
-
+// Basically not a cartridge but by another name
 namespace vcc::core::cartridges
 {
 

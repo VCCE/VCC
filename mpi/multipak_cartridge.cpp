@@ -317,6 +317,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		std::make_unique<multipak_cartridge_context>(slot, *context_, *this),
 		this,
 		context_->configuration_path(),
+		NULL,  // HWND WinMain not needed by othercarts yet
 		{
 			gHostContext->assert_interrupt_,
 			gSlotCallbacks[slot].set_cartridge_line,
