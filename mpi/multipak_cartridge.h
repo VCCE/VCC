@@ -167,7 +167,9 @@ namespace vcc::cartridges::multipak
 		/// Switches the active/startup slot of the Multi-Pak to a specific slot index.
 		/// 
 		/// @param slot The slot index to switch to.
-		void switch_to_slot(slot_id_type slot);
+		/// @param reset If `true` the cartridge will request the system perform a
+		/// hard reset one the switch is complete.
+		void switch_to_slot(slot_id_type slot, bool reset);
 
 		/// @brief Select and insert a cartridge.
 		/// 
@@ -184,20 +186,30 @@ namespace vcc::cartridges::multipak
 		/// @param filename The name of the cartridge file to load.
 		/// @param update_settings It `true` the settings for that slot will be updated with
 		/// the filename of the new cartridge.
+		/// @param allow_reset If `true` and the value in `slot` is the same as the
+		/// currently CTS or SCS slot selected via the MPI's control register, the
+		/// cartridge will request the system perform a hard reset.
 		/// 
 		/// @return The status of the insert operation.
 		[[nodiscard]] mount_status_type insert_cartridge(
 			slot_id_type slot,
 			const path_type& filename,
-			bool update_settings);
+			bool update_settings,
+			bool allow_reset);
 
 		/// @brief Insert a cartridge from a slot.
 		/// 
+		/// Ejects a cartridge from a slot and optionally performs a hard reset of the
+		/// of the system.
+		/// 
 		/// @param slot The slot containing the cartridge to eject.
-		/// @param update_settings It `true` the settings for that slot will be updated to
-		/// indicate no cartridge should be inserted in that slot the next time the emulator
-		/// starts.
-		void eject_cartridge(slot_id_type slot, bool update_settings);
+		/// @param update_settings It `true` the settings for that slot will be updated
+		/// to indicate no cartridge should be inserted in that slot the next time the
+		/// emulator starts.
+		/// @param allow_reset If `true` and the value in `slot` is the same as the
+		/// currently CTS or SCS slot selected via the MPI's control register, the
+		/// cartridge will request the system perform a hard reset.
+		void eject_cartridge(slot_id_type slot, bool update_settings, bool allow_reset);
 
 
 	private:
@@ -208,6 +220,8 @@ namespace vcc::cartridges::multipak
 		{
 			/// @brief Select the slot as the active/startup slot.
 			menu_item_id_type select;
+			/// @brief Select the slot as the active/startup slot.
+			menu_item_id_type select_and_reset;
 			/// @brief Insert a cartridge into the slot.
 			menu_item_id_type insert;
 			/// @brief Eject a cartridge from a slot.
@@ -227,6 +241,7 @@ namespace vcc::cartridges::multipak
 		{
 			/// @brief Requests the Becker Port Cartridge open its settings menu.
 			static const menu_item_id_type open_settings = 1;
+
 			/// @brief Select slot 1 as the active/startup slot.
 			static const menu_item_id_type select_slot_1 = 2;
 			/// @brief Select slot 2 as the active/startup slot.
@@ -235,22 +250,32 @@ namespace vcc::cartridges::multipak
 			static const menu_item_id_type select_slot_3 = 4;
 			/// @brief Select slot 4 as the active/startup slot.
 			static const menu_item_id_type select_slot_4 = 5;
+
+			/// @brief Select slot 1 as the active/startup slot.
+			static const menu_item_id_type select_slot_1_and_reset = 6;
+			/// @brief Select slot 2 as the active/startup slot.
+			static const menu_item_id_type select_slot_2_and_reset = 7;
+			/// @brief Select slot 3 as the active/startup slot.
+			static const menu_item_id_type select_slot_3_and_reset = 8;
+			/// @brief Select slot 4 as the active/startup slot.
+			static const menu_item_id_type select_slot_4_and_reset = 9;
+
 			/// @brief Insert cartridge into slot 1
-			static const menu_item_id_type insert_into_slot_1 = 6;
+			static const menu_item_id_type insert_into_slot_1 = 10;
 			/// @brief Insert cartridge into slot 2
-			static const menu_item_id_type insert_into_slot_2 = 7;
+			static const menu_item_id_type insert_into_slot_2 = 11;
 			/// @brief Insert cartridge into slot 3
-			static const menu_item_id_type insert_into_slot_3 = 8;
+			static const menu_item_id_type insert_into_slot_3 = 12;
 			/// @brief Insert cartridge into slot 4
-			static const menu_item_id_type insert_into_slot_4 = 9;
+			static const menu_item_id_type insert_into_slot_4 = 13;
 			/// @brief Eject cartridge from slot 1
-			static const menu_item_id_type eject_slot_1 = 10;
+			static const menu_item_id_type eject_slot_1 = 14;
 			/// @brief Eject cartridge from slot 2
-			static const menu_item_id_type eject_slot_2 = 11;
+			static const menu_item_id_type eject_slot_2 = 15;
 			/// @brief Eject cartridge from slot 3
-			static const menu_item_id_type eject_slot_3 = 12;
+			static const menu_item_id_type eject_slot_3 = 16;
 			/// @brief Eject cartridge from slot 4
-			static const menu_item_id_type eject_slot_4 = 13;
+			static const menu_item_id_type eject_slot_4 = 17;
 		};
 
 		/// @brief Defines details for managing the menu items of inserted cartridges.

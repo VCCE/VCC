@@ -52,12 +52,14 @@ namespace vcc::cartridges::multipak
 		HINSTANCE module_handle,
 		std::shared_ptr<multipak_configuration> configuration,
 		std::shared_ptr<multipak_cartridge_driver> mpi,
+		std::shared_ptr<expansion_port_bus_type> bus,
 		insert_function_type insert_callback,
 		eject_function_type eject_callback)
 		:
 		module_handle_(module_handle),
 		configuration_(move(configuration)),
 		mpi_(move(mpi)),
+		bus_(move(bus)),
 		insert_callback_(move(insert_callback)),
 		eject_callback_(move(eject_callback))
 	{
@@ -74,6 +76,11 @@ namespace vcc::cartridges::multipak
 		if (mpi_ == nullptr)
 		{
 			throw std::invalid_argument("Cannot construct Multi-Pak Cartridge. MPI is null.");
+		}
+
+		if (bus_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Multi-Pak Cartridge. Bus is null.");
 		}
 
 		if (insert_callback_ == nullptr)
@@ -242,6 +249,14 @@ namespace vcc::cartridges::multipak
 		case WM_COMMAND:
 			switch (LOWORD(wParam))
 			{
+			case IDOK:
+				SendMessage(hDlg,WM_CLOSE,0,0);
+				return TRUE;
+
+			case IDC_RESET_COMPUTER:
+				bus_->reset();
+				return TRUE;
+
 			case IDC_SELECT1:
 				set_selected_slot(0);
 				return TRUE;

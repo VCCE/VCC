@@ -70,7 +70,7 @@ namespace vcc::cartridges::multipak
 	{
 		for (auto slot(0u); slot < slots_.size(); slot++)
 		{
-			eject_cartridge(slot);
+			eject_cartridge(slot, false);
 		}
 	}
 
@@ -178,22 +178,25 @@ namespace vcc::cartridges::multipak
 		return slots_[slot].empty();
 	}
 
-	void multipak_cartridge_driver::eject_cartridge(slot_id_type slot)
+	void multipak_cartridge_driver::eject_cartridge(slot_id_type slot, bool allow_reset)
 	{
 		slots_[slot].stop();
 		slots_[slot] = {};
+
+		// If the cartridge is being ejected from a slot that is the selected SCS or CTS
+		// slot we force a reset just to be safe.
+		//
+		// TODO-CHET: Maybe update the menu to show that the eject will also do a reset.
+		if (allow_reset && (slot == cached_scs_slot_ || slot == cached_cts_slot_))
+		{
+			bus_->reset();
+		}
 	}
 
 
 	void multipak_cartridge_driver::switch_to_slot(slot_id_type slot)
 	{
 		switch_slot_ = slot;
-		// FIXME-CHET: Should this set the scs and cts lines when the selection is physically
-		// changed or should they only be loaded at startup?
-		cached_scs_slot_ = slot;
-		cached_cts_slot_ = slot;
-
-		bus_->set_cartridge_select_line(slots_[slot].cartridge_select_line());
 	}
 
 	multipak_cartridge_driver::slot_id_type multipak_cartridge_driver::selected_switch_slot() const
@@ -225,13 +228,24 @@ namespace vcc::cartridges::multipak
 	void multipak_cartridge_driver::insert_cartridge(
 		slot_id_type slot,
 		managed_handle_type handle,
-		cartridge_ptr_type cartridge)
+		cartridge_ptr_type cartridge,
+		bool allow_reset)
 	{
 		// TODO-CHET: We should probably call eject(slot) here in order to ensure that the
 		// cartridge is shut down correctly.
 		slots_[slot] = { move(handle), move(cartridge) };
 		slots_[slot].start();
 		slots_[slot].reset();	//	FIXME-CHET: This is legacy shit and doesn't need to be here. remove after all carts get full refactor
+
+		// If the cartridge is being inserted into a slot that is the selected SCS or CTS
+		// slot we force a reset just to be safe.
+		//
+		// TODO-CHET: Maybe update the menu to show that the insert will also do a reset.
+		// TODO-CHET: This 
+		if (allow_reset && (slot == cached_scs_slot_ || slot == cached_cts_slot_))
+		{
+			bus_->reset();
+		}
 	}
 
 }

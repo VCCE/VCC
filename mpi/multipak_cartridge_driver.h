@@ -29,7 +29,7 @@ namespace vcc::cartridges::multipak
 	///
 	/// This cartridge driver emulates the Multi-Pak Interface. It provides the standard
 	/// features of 4 individual cartridge slots, the ability to insert and eject
-	/// cartridges and select the active/startup slot.
+	/// cartridges and select the startup slot.
 	class multipak_cartridge_driver : public ::vcc::bus::cartridge_driver
 	{
 	public:
@@ -89,7 +89,7 @@ namespace vcc::cartridges::multipak
 
 		/// @brief Resets the device.
 		///
-		/// Resets the device by setting the CTS and SCS selected slots to the active/startup
+		/// Resets the device by setting the CTS and SCS selected slots to the startup
 		/// slot, resets all inserted cartridges, and sets the cartridge line for the active
 		/// slot.
 		void reset() override;
@@ -118,17 +118,17 @@ namespace vcc::cartridges::multipak
 		/// cartridge is in the slot.
 		[[nodiscard]] name_type slot_name(slot_id_type slot) const;
 
-		/// @brief Sets the active/startup slot.
+		/// @brief Sets the startup slot.
 		/// 
-		/// @param slot The new active/startup slot.
+		/// @param slot The new startup slot.
 		void switch_to_slot(slot_id_type slot);
 
-		/// @brief Retrieves the active/startup slot.
+		/// @brief Retrieves the startup slot.
 		/// 
-		/// Retrieves the active/startup slot. This is the slot selected by the virtual front
+		/// Retrieves the startup slot. This is the slot selected by the virtual front
 		/// panel switch of the Multi-Pak.
 		/// 
-		/// @return The index of the active/startup slot.
+		/// @return The index of the startup slot.
 		[[nodiscard]] slot_id_type selected_switch_slot() const;
 
 		/// @brief Returns the Spare Chip Select slot.
@@ -155,15 +155,22 @@ namespace vcc::cartridges::multipak
 		/// @param slot The index of the slot to insert the cartridge into.
 		/// @param handle The library handle containing the cartridge plugin.
 		/// @param cartridge The cartridge to insert into the slot.
+		/// @param allow_reset If `true` and the value in `slot` is the same as the
+		/// currently CTS or SCS slot selected via the MPI's control register, the
+		/// cartridge will request the system perform a hard reset.
 		void insert_cartridge(
 			slot_id_type slot,
 			managed_handle_type handle,
-			cartridge_ptr_type cartridge);
+			cartridge_ptr_type cartridge,
+			bool allow_reset);
 
 		/// @brief Eject a cartridge from a slot.
 		/// 
 		/// @param slot The index of the slot to eject the cartridge from.
-		void eject_cartridge(slot_id_type slot);
+		/// @param allow_reset If `true` and the value in `slot` is the same as the
+		/// currently CTS or SCS slot selected via the MPI's control register, the
+		/// cartridge will request the system perform a hard reset.
+		void eject_cartridge(slot_id_type slot, bool allow_reset);
 
 		/// @inheritdoc
 		[[nodiscard]] unsigned char read_memory_byte(size_type memory_address) override;
@@ -203,7 +210,7 @@ namespace vcc::cartridges::multipak
 		/// @brief Defines default values used by the Multi-Pak driver.
 		struct defaults
 		{
-			/// @brief The default active/startup slot if one is not configured.
+			/// @brief The default startup slot if one is not configured.
 			static const size_t switch_slot = 0x03;
 			/// @brief The initial value of the slot CTS/SCS select register.
 			static const size_t slot_register = 0xff;

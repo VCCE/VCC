@@ -39,6 +39,9 @@ namespace vcc::cartridges::multipak
 		using insert_function_type = std::function<void(slot_id_type)>;
 		/// @brief Type alias for the function called to eject a cartridge from the Multi-Pak.
 		using eject_function_type = std::function<void(slot_id_type)>;
+		/// @brief Type alias for the component acting as the expansion bus the cartridge plugin
+		/// is connected to.
+		using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 
 
 	public:
@@ -49,6 +52,7 @@ namespace vcc::cartridges::multipak
 		/// resources for the configuration dialog.
 		/// @param configuration A pointer to the configuration for this instance.
 		/// @param mpi A pointer to the Multi-Pak driver the configuration is for.
+		/// @param bus A pointer to the bus interface.
 		/// @param insert_callback A function that performs a cartridge insert on the
 		/// Multi-Pak.
 		/// @param eject_callback A function that performs a cartridge eject on the
@@ -57,12 +61,14 @@ namespace vcc::cartridges::multipak
 		/// @throws std::invalid_argument if `module_instance` is null.
 		/// @throws std::invalid_argument if `configuration` is null.
 		/// @throws std::invalid_argument if `mpi` is null.
+		/// @throws std::invalid_argument if `bus` is null.
 		/// @throws std::invalid_argument if `insert_callback` is empty.
 		/// @throws std::invalid_argument if `eject_callback` is empty.
 		configuration_dialog(
 			HINSTANCE module_handle,
 			std::shared_ptr<multipak_configuration> configuration,
 			std::shared_ptr<multipak_cartridge_driver> mpi,
+			std::shared_ptr<expansion_port_bus_type> bus,
 			insert_function_type insert_callback,
 			eject_function_type eject_callback);
 
@@ -142,6 +148,8 @@ namespace vcc::cartridges::multipak
 		const std::shared_ptr<multipak_configuration> configuration_;
 		/// @brief A pointer to the Multi-Pak driver the configuration is for.
 		const std::shared_ptr<multipak_cartridge_driver> mpi_;
+		/// @brief A pointer to the bus the plugin is connected to.
+		const std::shared_ptr<expansion_port_bus_type> bus_;
 		/// @brief A function that performs a cartridge insert on the
 		const insert_function_type insert_callback_;
 		/// @brief A function that performs a cartridge eject on the
