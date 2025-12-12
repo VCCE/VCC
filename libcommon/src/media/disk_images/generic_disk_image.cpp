@@ -338,11 +338,14 @@ namespace vcc::media::disk_images
 		[[maybe_unused]] size_type track_id,
 		size_type sector_id) const noexcept
 	{
-		const auto head_offset(disk_head * track_size_ * track_count());
-		const auto track_offset(disk_track * track_size_);
+		// Calculate the base offset to the requested track data with tracks interleaved
+		// with the heads (i.e. track 0 side A = image track 0, track 0 side B = image
+		// track 1).
+		const auto base_offset(head_count() * disk_track * track_size_);
+		const auto track_offset(disk_head * track_size_);
 		const auto sector_offset((sector_id - first_valid_sector_id()) * sector_size_);
 
-		return track_data_offset_ + position_type(head_offset + track_offset + sector_offset);
+		return track_data_offset_ + position_type(base_offset + track_offset + sector_offset);
 	}
 
 }
