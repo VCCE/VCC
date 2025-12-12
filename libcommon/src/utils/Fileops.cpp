@@ -94,17 +94,6 @@ BOOL PathRemoveFileSpec(char *Path)
 	return( !(strlen(Path) == Lenth));
 }		
 
-BOOL PathRemoveExtension(char *Path)
-{
-	size_t Index=strlen(Path),Lenth=Index;
-	if ( (Index==0) | (Index > MAX_PATH))
-		return false;
-	
-	while ( (Index>0) & (Path[Index--] != '.') );
-	Path[Index+1]=0;
-	return( !(strlen(Path) == Lenth));
-}
-
 char* PathFindExtension(char *Path)
 {
 	size_t Index=strlen(Path);
@@ -120,15 +109,3 @@ DWORD WritePrivateProfileInt(LPCTSTR SectionName,LPCTSTR KeyName,int KeyValue,LP
 	sprintf(Buffer,"%i",KeyValue);
 	return(WritePrivateProfileString(SectionName,KeyName,Buffer,IniFileName));
 }
-
-BOOL FilePrintf(HANDLE hFile, const char* fmt, ...)
-{
-	DWORD dummy;
-	va_list args;
-	char msg[512];
-	va_start(args, fmt);
-	vsnprintf(msg, 512, fmt, args);
-	va_end(args);
-	return WriteFile(hFile,msg,strlen(msg),&dummy,nullptr);
-}
-

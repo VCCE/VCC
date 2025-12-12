@@ -101,7 +101,7 @@ namespace vcc::utils
 	/// @param pathname The name of the file to check.
 	/// 
 	/// @return The type of cartridge detected.
-	LIBCOMMON_EXPORT [[nodiscard]] cartridge_file_type determine_cartridge_type(const std::filesystem::path& pathname);
+	[[nodiscard]] LIBCOMMON_EXPORT cartridge_file_type determine_cartridge_type(const std::filesystem::path& pathname);
 
 	/// @brief Load a ROM file as a cartridge.
 	/// 
@@ -114,7 +114,7 @@ namespace vcc::utils
 	/// @return A status result and data references needed to manage the cartridge.
 	/// 
 	/// @throws std::invalid_argument if `bus` is null.
-	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_rom_cartridge(
+	[[nodiscard]] LIBCOMMON_EXPORT cartridge_loader_result load_rom_cartridge(
 		const std::filesystem::path& pathname,
 		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
@@ -133,7 +133,7 @@ namespace vcc::utils
 	/// @return A status result and data references needed to manage the cartridge.
 	/// 
 	/// @throws std::invalid_argument if `bus` is null.
-	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_library_cartridge(
+	[[nodiscard]] LIBCOMMON_EXPORT cartridge_loader_result load_library_cartridge(
 		const std::filesystem::path& pathname,
 		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,
@@ -152,7 +152,7 @@ namespace vcc::utils
 	/// @return A status result and data references needed to manage the cartridge.
 	/// 
 	/// @throws std::invalid_argument if `bus` is null.
-	LIBCOMMON_EXPORT [[nodiscard]] cartridge_loader_result load_cartridge(
+	[[nodiscard]] LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
 		const std::filesystem::path& pathname,
 		std::shared_ptr<::vcc::bus::expansion_port_host> host,
 		std::unique_ptr<::vcc::bus::expansion_port_ui> ui,

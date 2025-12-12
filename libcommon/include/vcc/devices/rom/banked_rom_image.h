@@ -58,7 +58,7 @@ namespace vcc::devices::rom
 		/// @param filename The filename of the ROM image to load.
 		/// 
 		/// @return `true` if the load was successful; `false` otherwise.
-		LIBCOMMON_EXPORT [[nodiscard]] bool load(path_type filename);
+		[[nodiscard]] LIBCOMMON_EXPORT bool load(path_type filename);
 
 		/// @brief Removes the ROM image and resets the state of the bank selector
 		/// to bank 0.

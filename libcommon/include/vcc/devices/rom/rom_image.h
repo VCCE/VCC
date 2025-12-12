@@ -67,7 +67,7 @@ namespace vcc::devices::rom
 		/// @param filename The filename to load.
 		/// 
 		/// @return `true` if the ROM file was loaded successfully; `false` otherwise.
-		LIBCOMMON_EXPORT [[nodiscard]] bool load(path_type filename);
+		[[nodiscard]] LIBCOMMON_EXPORT bool load(path_type filename);
 
 		/// @brief Releases the ROM image.
 		void clear()

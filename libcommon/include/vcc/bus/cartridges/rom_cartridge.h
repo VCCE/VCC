@@ -65,7 +65,7 @@ namespace vcc::bus::cartridges
 			bool enable_bank_switching);
 		
 		/// @inheritdoc
-		LIBCOMMON_EXPORT [[nodiscard]] name_type name() const override;
+		[[nodiscard]] LIBCOMMON_EXPORT name_type name() const override;
 
 		/// @inheritdoc
 		[[nodiscard]] LIBCOMMON_EXPORT driver_type& driver() override;
@@ -106,7 +106,7 @@ namespace vcc::bus::cartridges
 		/// @param memory_address The address in memory to read the byte from.
 		/// 
 		/// @return The value read from memory.
-		LIBCOMMON_EXPORT [[nodiscard]] unsigned char read_memory_byte(size_type memory_address) override;
+		[[nodiscard]] LIBCOMMON_EXPORT unsigned char read_memory_byte(size_type memory_address) override;
 
 		/// @inheritdoc
 		/// 

@@ -27,12 +27,11 @@
 namespace vcc::utils
 {
 
-	LIBCOMMON_EXPORT [[nodiscard]] std::string get_module_path(HMODULE module_handle = nullptr);
-	LIBCOMMON_EXPORT [[nodiscard]] std::string find_pak_module_path(std::string path);
-	LIBCOMMON_EXPORT [[nodiscard]] std::string get_directory_from_path(std::string path);
-	LIBCOMMON_EXPORT [[nodiscard]] std::string get_filename(std::string path);
-	LIBCOMMON_EXPORT [[nodiscard]] std::string strip_application_path(std::string path);
-	LIBCOMMON_EXPORT [[nodiscard]] std::optional<std::vector<unsigned char>>
+	[[nodiscard]] LIBCOMMON_EXPORT std::string get_module_path(HMODULE module_handle = nullptr);
+	[[nodiscard]] LIBCOMMON_EXPORT std::string find_pak_module_path(std::string path);
+	[[nodiscard]] LIBCOMMON_EXPORT std::string get_directory_from_path(std::string path);
+	[[nodiscard]] LIBCOMMON_EXPORT std::string get_filename(std::string path);
+	[[nodiscard]] LIBCOMMON_EXPORT std::optional<std::vector<unsigned char>>
 		load_file_to_vector(const std::filesystem::path& pathname);
 
 }

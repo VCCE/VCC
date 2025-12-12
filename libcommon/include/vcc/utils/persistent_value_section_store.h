@@ -91,7 +91,7 @@ namespace vcc::utils
 		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
 		/// @return The stored value if it exists; otherwise the specified default value.
-		LIBCOMMON_EXPORT [[nodiscard]] bool read(
+		[[nodiscard]] LIBCOMMON_EXPORT bool read(
 			const string_type& key,
 			bool default_value) const;
 
@@ -104,7 +104,7 @@ namespace vcc::utils
 		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
 		/// @return The stored value if it exists; otherwise the specified default value.
-		LIBCOMMON_EXPORT [[nodiscard]] int read(
+		[[nodiscard]] LIBCOMMON_EXPORT int read(
 			const string_type& key,
 			const int& default_value) const;
 
@@ -117,7 +117,7 @@ namespace vcc::utils
 		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
 		/// @return The stored value if it exists; otherwise the specified default value.
-		LIBCOMMON_EXPORT [[nodiscard]] size_type read(
+		[[nodiscard]] LIBCOMMON_EXPORT size_type read(
 			const string_type& key,
 			const size_type& default_value) const;
 
@@ -130,7 +130,7 @@ namespace vcc::utils
 		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
 		/// @return The stored value if it exists; otherwise the specified default value.
-		LIBCOMMON_EXPORT [[nodiscard]] string_type read(
+		[[nodiscard]] LIBCOMMON_EXPORT string_type read(
 			const string_type& key,
 			const string_type& default_value = {}) const;
 
@@ -143,7 +143,7 @@ namespace vcc::utils
 		/// @param default_value The value to return if it does not exist in the value store.
 		/// 
 		/// @return The stored value if it exists; otherwise the specified default value.
-		LIBCOMMON_EXPORT [[nodiscard]] string_type read(
+		[[nodiscard]] LIBCOMMON_EXPORT string_type read(
 			const string_type& key,
 			const char* default_value) const;
 

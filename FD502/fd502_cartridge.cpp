@@ -381,19 +381,21 @@ namespace vcc::cartridges::fd502
 	{
 		auto rom_image(std::make_unique<rom_image_type>());
 
-		// TODO-CHET: Check for errors
 		switch (rom_id)
 		{
 		case rom_image_id_type::custom:
-			rom_image->load(configuration_->rom_image_path());
+			// TODO-CHET: Check for errors
+			(void)rom_image->load(configuration_->rom_image_path());
 			break;
 
 		case rom_image_id_type::microsoft:
-			rom_image->load(host_->system_rom_path().append("disk11.rom"));
+			// TODO-CHET: Check for errors
+			(void)rom_image->load(host_->system_rom_path().append("disk11.rom"));
 			break;
 
 		case rom_image_id_type::rgbdos:
-			rom_image->load(host_->system_rom_path().append("rgbdos.rom"));
+			// TODO-CHET: Check for errors
+			(void)rom_image->load(host_->system_rom_path().append("rgbdos.rom"));
 			break;
 
 		default:

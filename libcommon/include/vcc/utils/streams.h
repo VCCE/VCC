@@ -32,6 +32,6 @@ namespace vcc::utils
 	/// @param stream The stream to determine the size of.
 	/// @return If the stream is open and no errors occur, the size in bytes of the
 	/// stream; otherwise `pos_type(-1)`.
-	LIBCOMMON_EXPORT [[nodiscard]] std::iostream::pos_type get_stream_size(std::iostream& stream);
+	[[nodiscard]] LIBCOMMON_EXPORT std::iostream::pos_type get_stream_size(std::iostream& stream);
 
 }

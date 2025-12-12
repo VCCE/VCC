@@ -83,18 +83,6 @@ namespace vcc::utils
 		return path;
 	}		
 
-	LIBCOMMON_EXPORT std::string strip_application_path(std::string path)
-	{
-		const auto module_path = get_directory_from_path(vcc::utils::get_module_path(nullptr));
-		auto temp_path(get_directory_from_path(path));
-		if (module_path == temp_path)	// If they match remove the Path
-		{
-			path = get_filename(path);
-		}
-
-		return path;
-	}
-
 	LIBCOMMON_EXPORT std::string get_filename(std::string path)
 	{
 		const auto last_seperator = path.find_last_of('\\');

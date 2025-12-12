@@ -24,8 +24,6 @@ LIBCOMMON_EXPORT void PathStripPath(char*);
 LIBCOMMON_EXPORT void ValidatePath(char* Path);
 LIBCOMMON_EXPORT [[nodiscard]] int CheckPath(char*);
 LIBCOMMON_EXPORT [[nodiscard]] BOOL PathRemoveFileSpec(char*);
-LIBCOMMON_EXPORT [[nodiscard]] BOOL PathRemoveExtension(char*);
 LIBCOMMON_EXPORT [[nodiscard]] char* PathFindExtension(char*);
 LIBCOMMON_EXPORT [[nodiscard]] DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
-LIBCOMMON_EXPORT [[nodiscard]] BOOL FilePrintf(HANDLE, const char*, ...);
 
