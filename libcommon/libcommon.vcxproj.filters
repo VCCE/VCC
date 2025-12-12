@@ -195,9 +195,6 @@
     <ClCompile Include="src\bus\cartridge_driver.cpp">
       <Filter>Source Files\bus</Filter>
     </ClCompile>
-    <ClCompile Include="src\bus\expansion_port.cpp">
-      <Filter>Source Files\bus</Filter>
-    </ClCompile>
     <ClCompile Include="src\utils\persistent_section_value_store.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>

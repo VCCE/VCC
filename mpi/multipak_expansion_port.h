@@ -28,17 +28,27 @@ namespace vcc::cartridges::multipak
 
 	/// @brief Extends `expansion_port` to add support for the cartridge line select of
 	/// cartridges inserted into the Multi-Pak.
-	class multipak_expansion_port : public ::vcc::bus::expansion_port
+	class multipak_expansion_port : public ::vcc::bus::expansion_port<>
 	{
 	public:
 
 		using expansion_port::expansion_port;
+
+		virtual void insert(managed_handle_type handle, cartridge_ptr_type cartridge)
+		{
+			dual_scoped_lock_type lock(cartridge_mutex_, driver_mutex_);
+
+			expansion_port::insert(move(handle), move(cartridge));
+			line_state_ = false;
+		}
 
 		/// @brief Sets the cartridge port line state.
 		/// 
 		/// @param state The new state.
 		void cartridge_select_line(bool state)
 		{
+			scoped_lock_type lock(driver_mutex_);
+
 			line_state_ = state;
 		}
 
@@ -47,6 +57,8 @@ namespace vcc::cartridges::multipak
 		/// @return The cartridge port line state.
 		[[nodiscard]] bool cartridge_select_line() const
 		{
+			scoped_lock_type lock(driver_mutex_);
+
 			return line_state_;
 		}
 

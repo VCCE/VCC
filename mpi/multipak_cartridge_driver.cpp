@@ -44,7 +44,13 @@ namespace vcc::cartridges::multipak
 		std::shared_ptr<multipak_configuration> configuration)
 		:
 		bus_(move(bus)),
-		configuration_(move(configuration))
+		configuration_(move(configuration)),
+		slots_{{
+			{::vcc::utils::noop_mutex::shared_instance_, ::vcc::utils::noop_mutex::shared_instance_},
+			{::vcc::utils::noop_mutex::shared_instance_, ::vcc::utils::noop_mutex::shared_instance_},
+			{::vcc::utils::noop_mutex::shared_instance_, ::vcc::utils::noop_mutex::shared_instance_},
+			{::vcc::utils::noop_mutex::shared_instance_, ::vcc::utils::noop_mutex::shared_instance_}
+		}}
 	{
 		if (bus_ == nullptr)
 		{
@@ -181,7 +187,7 @@ namespace vcc::cartridges::multipak
 	void multipak_cartridge_driver::eject_cartridge(slot_id_type slot, bool allow_reset)
 	{
 		slots_[slot].stop();
-		slots_[slot] = {};
+		slots_[slot].eject();
 
 		// If the cartridge is being ejected from a slot that is the selected SCS or CTS
 		// slot we force a reset just to be safe.
@@ -233,7 +239,7 @@ namespace vcc::cartridges::multipak
 	{
 		// TODO-CHET: We should probably call eject(slot) here in order to ensure that the
 		// cartridge is shut down correctly.
-		slots_[slot] = { move(handle), move(cartridge) };
+		slots_[slot].insert(move(handle), move(cartridge));
 		slots_[slot].start();
 		slots_[slot].reset();	//	FIXME-CHET: This is legacy shit and doesn't need to be here. remove after all carts get full refactor
 

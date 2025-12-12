@@ -38,15 +38,17 @@
 
 using cartridge_loader_status = vcc::utils::cartridge_loader_status;
 using cartridge_loader_result = vcc::utils::cartridge_loader_result;
-using expansion_port = vcc::bus::expansion_port;
+template<class T_>
+using expansion_port = vcc::bus::expansion_port<T_>;
 
 
 // Storage for Pak ROMs
 extern SystemState EmuState;
 
-static std::recursive_mutex gPakMutex;
+static std::recursive_mutex gCartridgeMutex;
+static std::recursive_mutex gDriverMutex;
 static char DllPath[MAX_PATH] = "";
-static expansion_port gExpansionSlot;
+static expansion_port<std::recursive_mutex> gExpansionSlot(gCartridgeMutex, gDriverMutex);
 
 static cartridge_loader_status load_any_cartridge(const char* filename, const char* iniPath);
 
@@ -121,9 +123,9 @@ public:
 			.append("ROMS");
 	}
 
-	[[nodiscard]] catridge_mutex_type& cartridge_mutex() const override
+	[[nodiscard]] catridge_mutex_type& driver_mutex() const override
 	{
-		return gPakMutex;
+		return gDriverMutex;
 	}
 
 };
@@ -166,8 +168,6 @@ std::string PakGetName()
 
 void PakTimer()
 {
-	std::scoped_lock lock(gPakMutex);
-
 	// TODO-CHET: The timing here matches the horizontal sync frequency but should be
 	// defined somewhere else and passed to this function.
 	gExpansionSlot.update(1.0f / (60 * 262));
@@ -175,37 +175,29 @@ void PakTimer()
 
 void ResetBus()
 {
-	std::scoped_lock lock(gPakMutex);
-
 	gExpansionSlot.reset();
 }
 
 void GetModuleStatus(SystemState *SMState)
 {
-	std::scoped_lock lock(gPakMutex);
-
-	auto status(gExpansionSlot.status());
-	strncpy_s(SMState->StatusLine, status.c_str(), sizeof(SMState->StatusLine));
+	strncpy_s(
+		SMState->StatusLine,
+		gExpansionSlot.status().c_str(),
+		sizeof(SMState->StatusLine));
 }
 
 unsigned char PakReadPort (unsigned char port)
 {
-	std::scoped_lock lock(gPakMutex);
-
 	return gExpansionSlot.read_port(port);
 }
 
 void PakWritePort(unsigned char Port,unsigned char Data)
 {
-	std::scoped_lock lock(gPakMutex);
-
 	gExpansionSlot.write_port(Port,Data);
 }
 
 unsigned char PackMem8Read (unsigned short Address)
 {
-	std::scoped_lock lock(gPakMutex);
-
 	return gExpansionSlot.read_memory_byte(Address&32767);
 }
 
@@ -226,16 +218,12 @@ void PakAssertInterupt(Interrupt interrupt, InterruptSource source)
 
 unsigned short PackAudioSample()
 {
-	std::scoped_lock lock(gPakMutex);
-
 	return gExpansionSlot.sample_audio();
 }
 
 // Create first two entries for cartridge menu.
 ::vcc::ui::menu::menu_item_collection PakGetMenuItems()
 {
-	std::scoped_lock lock(gPakMutex);
-
 	return gExpansionSlot.get_menu_items();
 }
 
@@ -304,10 +292,10 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 
 	UnloadDll();
 
-	std::scoped_lock lock(gPakMutex);
+	std::scoped_lock cartridge_lock(gCartridgeMutex, gDriverMutex);
 
 	strcpy(DllPath, filename);
-	gExpansionSlot = { move(loadedCartridge.handle), move(loadedCartridge.cartridge) };
+	gExpansionSlot.insert(move(loadedCartridge.handle), move(loadedCartridge.cartridge));
 	gExpansionSlot.start();
 
 	// Reset if enabled
@@ -319,10 +307,10 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 
 void UnloadDll()
 {
-	std::scoped_lock lock(gPakMutex);
+	std::scoped_lock cartridge_lock(gCartridgeMutex, gDriverMutex);
 
 	gExpansionSlot.stop();
-	gExpansionSlot = {};
+	gExpansionSlot.eject();
 	gExpansionSlot.start();	//	FIXME-CHET: Do we really need to call this here?
 }
 
@@ -350,7 +338,5 @@ void UnloadPack()
 // CartMenuActivated is called from VCC main when a cartridge menu item is clicked.
 void CartMenuActivated(unsigned int MenuID)
 {
-	std::scoped_lock lock(gPakMutex);
-
 	gExpansionSlot.menu_item_clicked(MenuID);
 }

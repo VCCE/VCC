@@ -187,6 +187,9 @@ namespace vcc::cartridges::multipak
 
 	multipak_cartridge::status_type multipak_cartridge::status() const
 	{
+		// TODO-CHET: Scope out for potential deadlock since this is called from the ui context.
+		std::scoped_lock lock(host_->driver_mutex());
+
 		auto status(std::format("MPI:{},{}", driver_->selected_cts_slot() + 1, driver_->selected_scs_slot() + 1));
 		for (const auto& cartridge : cartridges_)
 		{
@@ -286,6 +289,8 @@ namespace vcc::cartridges::multipak
 			menu.add_root_separator();
 		}
 
+		std::scoped_lock lock(host_->driver_mutex());
+
 		// Add the multipak menu items for insert/eject slot.
 		for (auto slot(driver_->slot_count()); slot > 0; --slot)
 		{
@@ -328,22 +333,33 @@ namespace vcc::cartridges::multipak
 
 	bool multipak_cartridge::is_cartridge_slot_empty(slot_id_type slot_id) const
 	{
+		std::scoped_lock lock(host_->driver_mutex());
+
 		return driver_->empty(slot_id);
 	}
 
 	multipak_cartridge::name_type multipak_cartridge::get_cartridge_slot_name(slot_id_type slot_id) const
 	{
+		std::scoped_lock lock(host_->driver_mutex());
+
 		return driver_->slot_name(slot_id);
 	}
 
 	multipak_cartridge::slot_id_type multipak_cartridge::selected_switch_slot() const
 	{
+		std::scoped_lock lock(host_->driver_mutex());
+
 		return driver_->selected_switch_slot();
 	}
 
 	void multipak_cartridge::switch_to_slot(slot_id_type slot_id, bool reset)
 	{
-		driver_->switch_to_slot(slot_id);
+		{
+			// TODO-CHET: Might want to lock the ui/cart mutex as well
+			std::scoped_lock lock(host_->driver_mutex());
+
+			driver_->switch_to_slot(slot_id);
+		}
 		configuration_->selected_slot(slot_id);
 		settings_dialog_.update_selected_slot();
 		if (reset)
@@ -388,6 +404,9 @@ namespace vcc::cartridges::multipak
 			configuration_->last_accessed_path(filename.parent_path());
 		}
 
+		// TODO-CHET: This should probably also lock the ui/cart mutex as well
+		std::scoped_lock lock(host_->driver_mutex());
+
 		eject_cartridge(slot, false, false);
 
 		cartridges_[slot] = move(loadedCartridge.cartridge);
@@ -408,6 +427,9 @@ namespace vcc::cartridges::multipak
 		{
 			configuration_->slot_path(slot, {});
 		}
+
+		// TODO-CHET: This should probably also lock the ui/cart mutex as well
+		std::scoped_lock lock(host_->driver_mutex());
 
 		// FIXME: eject_cartridge indirectly creates an empty cartridge as a placeholder.
 		// We should be using that same one here. Might make more sense to handle this

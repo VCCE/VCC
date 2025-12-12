@@ -61,7 +61,7 @@ namespace vcc::bus
 		/// Retrieve the mutex used to gain exclusive access to cartridge plugins.
 		/// 
 		/// @return The cartridge mutex.
-		virtual [[nodiscard]] catridge_mutex_type& cartridge_mutex() const = 0;
+		virtual [[nodiscard]] catridge_mutex_type& driver_mutex() const = 0;
 	};
 
 }
