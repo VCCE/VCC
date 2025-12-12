@@ -177,7 +177,7 @@ void LoadConfig(SystemState *LCState)
 		OutputDebugString(AppDataPath);
 	strcpy(CurrentConfig.PathtoExe,ExecDirectory);
 
-	strcat(AppDataPath, "\\VCC");
+	strcat(AppDataPath, "\\DREAM-VCC");
 
 	if (_mkdir(AppDataPath) != 0) {
 		OutputDebugString("Unable to create VCC config folder.");
