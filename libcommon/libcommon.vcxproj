@@ -107,42 +107,42 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\core\cartridges\basic_cartridge.cpp" />
-    <ClCompile Include="src\core\cartridges\legacy_cartridge.cpp" />
-    <ClCompile Include="src\core\cartridges\rom_cartridge.cpp" />
-    <ClCompile Include="src\core\cartridge_loader.cpp" />
-    <ClCompile Include="src\core\rom_image.cpp" />
-    <ClCompile Include="src\core\utils\initial_settings.cpp" />
-    <ClCompile Include="src\core\utils\filesystem.cpp" />
-    <ClCompile Include="src\core\utils\winapi.cpp" />
-    <ClCompile Include="src\devices\rtc\cloud9.cpp" />
-    <ClCompile Include="src\DialogOps.cpp" />
-    <ClCompile Include="src\Fileops.cpp" />
-    <ClCompile Include="src\logger.cpp" />
+    <ClCompile Include="src\bus\basic_cartridge.cpp" />
+    <ClCompile Include="src\bus\legacy_cartridge.cpp" />
+    <ClCompile Include="src\bus\rom_cartridge.cpp" />
+    <ClCompile Include="src\bus\cartridge_loader.cpp" />
+    <ClCompile Include="src\bus\rom_image.cpp" />
+    <ClCompile Include="src\core\initial_settings.cpp" />
+    <ClCompile Include="src\core\filesystem.cpp" />
+    <ClCompile Include="src\core\winapi.cpp" />
+    <ClCompile Include="src\core\DialogOps.cpp" />
+    <ClCompile Include="src\core\Fileops.cpp" />
+    <ClCompile Include="src\core\logger.cpp" />
+    <ClCompile Include="src\devices\cloud9.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\vcc\common\DialogOps.h" />
-    <ClInclude Include="include\vcc\common\FileOps.h" />
-    <ClInclude Include="include\vcc\common\logger.h" />
-    <ClInclude Include="include\vcc\core\cartridge.h" />
-    <ClInclude Include="include\vcc\core\cartridges\basic_cartridge.h" />
-    <ClInclude Include="include\vcc\core\cartridges\legacy_cartridge.h" />
-    <ClInclude Include="include\vcc\core\cartridges\null_cartridge.h" />
-    <ClInclude Include="include\vcc\core\cartridges\rom_cartridge.h" />
-    <ClInclude Include="include\vcc\core\cartridge_callbacks.h" />
-    <ClInclude Include="include\vcc\core\cartridge_loader.h" />
-    <ClInclude Include="include\vcc\core\detail\exports.h" />
+    <ClInclude Include="include\vcc\bus\basic_cartridge.h" />
+    <ClInclude Include="include\vcc\bus\cartridge.h" />
+    <ClInclude Include="include\vcc\bus\cartridge_callbacks.h" />
+    <ClInclude Include="include\vcc\bus\cartridge_loader.h" />
+    <ClInclude Include="include\vcc\bus\dll_deleter.h" />
+    <ClInclude Include="include\vcc\bus\exports.h" />
+    <ClInclude Include="include\vcc\bus\legacy_cartridge.h" />
+    <ClInclude Include="include\vcc\bus\legacy_cartridge_definitions.h" />
+    <ClInclude Include="include\vcc\bus\null_cartridge.h" />
+    <ClInclude Include="include\vcc\bus\rom_cartridge.h" />
+    <ClInclude Include="include\vcc\bus\rom_image.h" />
+    <ClInclude Include="include\vcc\core\DialogOps.h" />
+    <ClInclude Include="include\vcc\core\FileOps.h" />
     <ClInclude Include="include\vcc\core\interrupts.h" />
-    <ClInclude Include="include\vcc\core\legacy_cartridge_definitions.h" />
     <ClInclude Include="include\vcc\core\limits.h" />
-    <ClInclude Include="include\vcc\core\rom_image.h" />
-    <ClInclude Include="include\vcc\core\utils\initial_settings.h" />
-    <ClInclude Include="include\vcc\core\utils\critical_section.h" />
-    <ClInclude Include="include\vcc\core\utils\dll_deleter.h" />
-    <ClInclude Include="include\vcc\core\utils\filesystem.h" />
-    <ClInclude Include="include\vcc\core\utils\winapi.h" />
-    <ClInclude Include="include\vcc\devices\rtc\cloud9.h" />
+    <ClInclude Include="include\vcc\core\logger.h" />
+    <ClInclude Include="include\vcc\core\initial_settings.h" />
+    <ClInclude Include="include\vcc\core\critical_section.h" />
+    <ClInclude Include="include\vcc\core\filesystem.h" />
+    <ClInclude Include="include\vcc\core\winapi.h" />
+    <ClInclude Include="include\vcc\devices\cloud9.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
