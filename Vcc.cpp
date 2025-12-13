@@ -1079,6 +1079,8 @@ void CALLBACK update_status(HWND, UINT, UINT_PTR, DWORD)
 
 unsigned __stdcall EmuLoop(HANDLE hEvent)
 {
+	SetThreadDescription(GetCurrentThread(), L"** Emulation Thread");
+
 	static float FPS;
 	static unsigned int FrameCounter=0;	
 	CalibrateThrottle();
@@ -1177,6 +1179,8 @@ void LoadPack()
 
 unsigned __stdcall CartLoad(void* /*Dummy*/)
 {
+	SetThreadDescription(GetCurrentThread(), L"** Cartridge Loader UI Thread");
+
 	PakLoadCartridgeUI();
 	EmuState.EmulationRunning=TRUE;
 	DialogOpen=false;

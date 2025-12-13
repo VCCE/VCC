@@ -159,7 +159,9 @@ void sc6551_close()
 //------------------------------------------------------------------------
 DWORD WINAPI sc6551_input_thread(LPVOID /*param*/)
 {
-    DLOG_F("START-IN %d\n",hInputThread);
+	SetThreadDescription(GetCurrentThread(), L"** SC6551 Input Thread");
+
+	DLOG_F("START-IN %d\n",hInputThread);
     Icnt = 0;
     while(TRUE) {
         if (Icnt == 0) {
@@ -193,7 +195,9 @@ DWORD WINAPI sc6551_input_thread(LPVOID /*param*/)
 //------------------------------------------------------------------------
 DWORD WINAPI sc6551_output_thread(LPVOID /*param*/)
 {
-    Wcnt = 0;
+	SetThreadDescription(GetCurrentThread(), L"** SC6551 Output Thread");
+
+	Wcnt = 0;
     OutWptr = OutBuf;
 
     DLOG_F("START-OUT %d\n",hOutputThread);

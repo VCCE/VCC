@@ -252,6 +252,8 @@ namespace vcc::devices::serial
 
 	unsigned __stdcall Becker::runThread(void* /*Dummy*/)
 	{
+		SetThreadDescription(GetCurrentThread(), L"** Becker Port Communication Thread");
+
 		DLOG_C("dw_thread %d\n",enabled_);
 		WSADATA wsaData;
 
