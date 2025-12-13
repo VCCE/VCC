@@ -51,19 +51,15 @@ namespace vcc::cartridges::multipak
 		// TODO-CHET: globally rename module_handle to library_handle
 		HINSTANCE module_handle,
 		std::shared_ptr<multipak_configuration> configuration,
-		std::shared_ptr<multipak_cartridge_driver> mpi,
 		std::shared_ptr<expansion_port_bus_type> bus,
 		std::shared_ptr<expansion_port_ui_type> ui,
-		insert_function_type insert_callback,
-		eject_function_type eject_callback)
+		cartridge_controller_type& controller)
 		:
 		module_handle_(module_handle),
 		configuration_(move(configuration)),
-		mpi_(move(mpi)),
 		bus_(move(bus)),
 		ui_(move(ui)),
-		insert_callback_(move(insert_callback)),
-		eject_callback_(move(eject_callback))
+		controller_(controller)
 	{
 		if (module_handle_ == nullptr)
 		{
@@ -75,11 +71,6 @@ namespace vcc::cartridges::multipak
 			throw std::invalid_argument("Cannot construct Multi-Pak Cartridge. Configuration is null.");
 		}
 
-		if (mpi_ == nullptr)
-		{
-			throw std::invalid_argument("Cannot construct Multi-Pak Cartridge. MPI is null.");
-		}
-
 		if (bus_ == nullptr)
 		{
 			throw std::invalid_argument("Cannot construct Multi-Pak Cartridge. Bus is null.");
@@ -88,16 +79,6 @@ namespace vcc::cartridges::multipak
 		if (ui_ == nullptr)
 		{
 			throw std::invalid_argument("Cannot construct Multi-Pak Cartridge. UI is null.");
-		}
-
-		if (insert_callback_ == nullptr)
-		{
-			throw std::invalid_argument("Cannot construct Multi-Pak Cartridge. Insert cartridge function is null.");
-		}
-
-		if (eject_callback_ == nullptr)
-		{
-			throw std::invalid_argument("Cannot construct Multi-Pak Cartridge. Eject cartridge function is null.");
 		}
 	}
 
@@ -137,21 +118,21 @@ namespace vcc::cartridges::multipak
 				dialog_handle_,
 				gSlotUiElementIds[ndx].radio_button_id,
 				BM_SETCHECK,
-				ndx == mpi_->selected_switch_slot(),
+				ndx == controller_.selected_switch_slot(),
 				0);
 		}
 
 		SetDlgItemText(
 			dialog_handle_,
 			IDC_SELECTED_SLOT_STATUS,
-			std::format("Slot {} is selected as startup slot.", mpi_->selected_switch_slot() + 1).c_str());
+			std::format("Slot {} is selected as startup slot.", controller_.selected_switch_slot() + 1).c_str());
 	}
 
 
 	void configuration_dialog::set_selected_slot(slot_id_type slot)
 	{
 		// TODO-CHET: Maube move this to the callsite or when the dialog closes or at least make it optional?
-		mpi_->switch_to_slot(slot);
+		controller_.switch_to_slot(slot, false);
 		configuration_->selected_slot(slot);
 
 		update_selected_slot();
@@ -169,14 +150,14 @@ namespace vcc::cartridges::multipak
 			gSlotUiElementIds[slot].edit_box_id,
 			WM_SETTEXT,
 			0,
-			reinterpret_cast<LPARAM>(mpi_->slot_name(slot).c_str()));
+			reinterpret_cast<LPARAM>(controller_.get_cartridge_slot_name(slot).c_str()));
 
 		SendDlgItemMessage(
 			dialog_handle_,
 			gSlotUiElementIds[slot].insert_button_id,
 			WM_SETTEXT,
 			0,
-			reinterpret_cast<LPARAM>(mpi_->empty(slot) ? ">" : "X"));
+			reinterpret_cast<LPARAM>(controller_.is_cartridge_slot_empty(slot) ? ">" : "X"));
 	}
 
 
@@ -199,14 +180,14 @@ namespace vcc::cartridges::multipak
 		//	return;
 		//}
 
-		if (!mpi_->empty(slot))
+		if (!controller_.is_cartridge_slot_empty(slot))
 		{
-			eject_callback_(slot);
+			controller_.eject_cartridge(slot, true, true);
 			configuration_->slot_path(slot, {});
 		}
 		else
 		{
-			insert_callback_(slot);
+			controller_.select_and_insert_cartridge(slot);
 		}
 	}
 

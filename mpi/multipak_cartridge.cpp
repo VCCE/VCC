@@ -101,11 +101,9 @@ namespace vcc::cartridges::multipak
 		settings_dialog_(
 			module_instance,
 			configuration,
-			driver_,
 			bus,
 			ui,
-			std::bind(&multipak_cartridge::select_and_insert_cartridge, this, std::placeholders::_1),
-			std::bind(&multipak_cartridge::eject_cartridge, this, std::placeholders::_1, true, true))
+			*this)
 	{
 		if (host_ == nullptr)
 		{
@@ -328,10 +326,25 @@ namespace vcc::cartridges::multipak
 		return menu.release_items();
 	}
 
-	void multipak_cartridge::switch_to_slot(slot_id_type slot, bool reset)
+	bool multipak_cartridge::is_cartridge_slot_empty(slot_id_type slot_id) const
 	{
-		driver_->switch_to_slot(slot);
-		configuration_->selected_slot(slot);
+		return driver_->empty(slot_id);
+	}
+
+	multipak_cartridge::name_type multipak_cartridge::get_cartridge_slot_name(slot_id_type slot_id) const
+	{
+		return driver_->slot_name(slot_id);
+	}
+
+	multipak_cartridge::slot_id_type multipak_cartridge::selected_switch_slot() const
+	{
+		return driver_->selected_switch_slot();
+	}
+
+	void multipak_cartridge::switch_to_slot(slot_id_type slot_id, bool reset)
+	{
+		driver_->switch_to_slot(slot_id);
+		configuration_->selected_slot(slot_id);
 		settings_dialog_.update_selected_slot();
 		if (reset)
 		{
@@ -339,16 +352,16 @@ namespace vcc::cartridges::multipak
 		}
 	}
 
-	void multipak_cartridge::select_and_insert_cartridge(slot_id_type slot)
+	void multipak_cartridge::select_and_insert_cartridge(slot_id_type slot_id)
 	{
-		const auto callback = [this, &slot](const std::string& filename)
+		const auto callback = [this, &slot_id](const std::string& filename)
 			{
-				return insert_cartridge(slot, filename, true, true);
+				return insert_cartridge(slot_id, filename, true, true);
 			};
 
 		::vcc::utils::select_cartridge_file(
 			ui_->app_window(),
-			std::format("Insert Cartridge or ROM Pak into slot {}", slot + 1),
+			std::format("Insert Cartridge or ROM Pak into slot {}", slot_id + 1),
 			configuration_->last_accessed_path(),
 			callback);
 	}

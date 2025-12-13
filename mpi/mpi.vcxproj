@@ -70,6 +70,7 @@
     <ClCompile Include="multipak_configuration.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cartridge_controller.h" />
     <ClInclude Include="multipak_expansion_port.h" />
     <ClInclude Include="multipak_cartridge.h" />
     <ClInclude Include="configuration_dialog.h" />

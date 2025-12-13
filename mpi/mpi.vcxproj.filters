@@ -48,6 +48,9 @@
     <ClInclude Include="multipak_cartridge_driver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cartridge_controller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">

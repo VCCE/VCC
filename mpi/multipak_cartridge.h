@@ -31,10 +31,15 @@ namespace vcc::cartridges::multipak
 	/// This plugin provides an implementation of the Multi-Pak Interface, access to the
 	/// Multi-Pak device driver, and user interface functionality for access to the Slot
 	/// Manager and other plugin control features.
-	class multipak_cartridge : public ::vcc::bus::cartridge
+	class multipak_cartridge
+		:
+		public ::vcc::bus::cartridge,
+		private ::vcc::cartridges::multipak::multipak_cartridge_controller
 	{
 	public:
 
+		/// @brief Specifies the type used to store names.
+		using name_type = ::vcc::bus::cartridge::name_type;
 		/// @brief Type alias for the component providing global system services to the
 		/// cartridge plugin.
 		using expansion_port_host_type = ::vcc::bus::expansion_port_host;
@@ -162,21 +167,20 @@ namespace vcc::cartridges::multipak
 		/// @param menu_item_id The identifier of the Multi-Pak menu item.
 		void multipak_menu_item_clicked(menu_item_id_type menu_item_id);
 
-		/// @brief Switch to a specific slot.
-		/// 
-		/// Switches the active/startup slot of the Multi-Pak to a specific slot index.
-		/// 
-		/// @param slot The slot index to switch to.
-		/// @param reset If `true` the cartridge will request the system perform a
-		/// hard reset one the switch is complete.
-		void switch_to_slot(slot_id_type slot, bool reset);
+		/// @inheritdoc
+		bool is_cartridge_slot_empty(slot_id_type slot_id) const override;
 
-		/// @brief Select and insert a cartridge.
-		/// 
-		/// Select a cartridge from a file and insert it into a specific slot.
-		/// 
-		/// @param slot The slot to insert the cartridge into.
-		void select_and_insert_cartridge(slot_id_type slot);
+		/// @inheritdoc
+		name_type get_cartridge_slot_name(slot_id_type slot_id) const override;
+
+		/// @inheritdoc
+		slot_id_type selected_switch_slot() const override;
+
+		/// @inheritdoc
+		void switch_to_slot(slot_id_type slot_id, bool reset) override;
+
+		/// @inheritdoc
+		void select_and_insert_cartridge(slot_id_type slot_id) override;
 
 		/// @brief Load and insert a cartridge.
 		/// 
@@ -197,19 +201,8 @@ namespace vcc::cartridges::multipak
 			bool update_settings,
 			bool allow_reset);
 
-		/// @brief Insert a cartridge from a slot.
-		/// 
-		/// Ejects a cartridge from a slot and optionally performs a hard reset of the
-		/// of the system.
-		/// 
-		/// @param slot The slot containing the cartridge to eject.
-		/// @param update_settings It `true` the settings for that slot will be updated
-		/// to indicate no cartridge should be inserted in that slot the next time the
-		/// emulator starts.
-		/// @param allow_reset If `true` and the value in `slot` is the same as the
-		/// currently CTS or SCS slot selected via the MPI's control register, the
-		/// cartridge will request the system perform a hard reset.
-		void eject_cartridge(slot_id_type slot, bool update_settings, bool allow_reset);
+		/// @inheritdoc
+		void eject_cartridge(slot_id_type slot_id, bool update_settings, bool allow_reset) override;
 
 
 	private:

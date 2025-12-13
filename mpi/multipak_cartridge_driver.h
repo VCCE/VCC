@@ -114,6 +114,7 @@ namespace vcc::cartridges::multipak
 		/// @todo this should return std::optional
 		/// 
 		/// @param slot The slot to retrieve the name from.
+		/// 
 		/// @return The name of the cartridge in the specified slot or an empty string if no
 		/// cartridge is in the slot.
 		[[nodiscard]] name_type slot_name(slot_id_type slot) const;

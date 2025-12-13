@@ -16,6 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "cartridge_controller.h"
 #include "multipak_configuration.h"
 #include "multipak_cartridge_driver.h"
 #include "vcc/utils/cartridge_loader.h"
@@ -35,16 +36,14 @@ namespace vcc::cartridges::multipak
 
 		/// @brief Type alias for slot indexes and identifiers.
 		using slot_id_type = ::vcc::cartridges::multipak::multipak_cartridge_driver::slot_id_type;
-		/// @brief Type alias for the function called to insert a cartridge in the Multi-Pak.
-		using insert_function_type = std::function<void(slot_id_type)>;
-		/// @brief Type alias for the function called to eject a cartridge from the Multi-Pak.
-		using eject_function_type = std::function<void(slot_id_type)>;
 		/// @brief Type alias for the component acting as the expansion bus the cartridge plugin
 		/// is connected to.
 		using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 		/// @brief Type alias for the component providing user interface services to the
 		/// cartridge plugin.
 		using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
+		/// @brief Type alias for the cartridge controller interface.
+		using cartridge_controller_type = ::vcc::cartridges::multipak::multipak_cartridge_controller;
 
 
 	public:
@@ -54,29 +53,21 @@ namespace vcc::cartridges::multipak
 		/// @param module_handle A handle to the instance of the module containing the
 		/// resources for the configuration dialog.
 		/// @param configuration A pointer to the configuration for this instance.
-		/// @param mpi A pointer to the Multi-Pak driver the configuration is for.
 		/// @param bus A pointer to the bus interface.
 		/// @param ui A pointer to the UI services interface.
-		/// @param insert_callback A function that performs a cartridge insert on the
-		/// Multi-Pak.
-		/// @param eject_callback A function that performs a cartridge eject on the
-		/// Multi-Pak.
+		/// @param controller A pointer to the cartridge controller.
 		/// 
 		/// @throws std::invalid_argument if `module_instance` is null.
 		/// @throws std::invalid_argument if `configuration` is null.
-		/// @throws std::invalid_argument if `mpi` is null.
 		/// @throws std::invalid_argument if `bus` is null.
 		/// @throws std::invalid_argument if `ui` is null.
-		/// @throws std::invalid_argument if `insert_callback` is empty.
-		/// @throws std::invalid_argument if `eject_callback` is empty.
 		configuration_dialog(
 			HINSTANCE module_handle,
 			std::shared_ptr<multipak_configuration> configuration,
-			std::shared_ptr<multipak_cartridge_driver> mpi,
 			std::shared_ptr<expansion_port_bus_type> bus,
 			std::shared_ptr<expansion_port_ui_type> ui,
-			insert_function_type insert_callback,
-			eject_function_type eject_callback);
+			cartridge_controller_type& controller);
+
 
 		/// @brief Opens the dialog.
 		///
@@ -152,16 +143,12 @@ namespace vcc::cartridges::multipak
 		const HINSTANCE module_handle_;
 		/// @brief The Multi-Pak configuration.
 		const std::shared_ptr<multipak_configuration> configuration_;
-		/// @brief A pointer to the Multi-Pak driver the configuration is for.
-		const std::shared_ptr<multipak_cartridge_driver> mpi_;
 		/// @brief A pointer to the bus the plugin is connected to.
 		const std::shared_ptr<expansion_port_bus_type> bus_;
 		/// @brief The expansion port UI service provider.
 		const std::shared_ptr<expansion_port_ui_type> ui_;
-		/// @brief A function that performs a cartridge insert on the
-		const insert_function_type insert_callback_;
-		/// @brief A function that performs a cartridge eject on the
-		const eject_function_type eject_callback_;
+		/// @brief The Multi-Pak cartridge controller.
+		cartridge_controller_type& controller_;
 		/// @brief The handle to the currently opened dialog, or null if no dialog is open.
 		HWND dialog_handle_ = nullptr;
 		/// @brief The parent window of the currently opened dialog, or null if no dialog is open.
