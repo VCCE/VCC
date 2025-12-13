@@ -16,9 +16,8 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/detail/exports.h>
+#include <vcc/core/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <string>
-
 
 namespace vcc::core
 {

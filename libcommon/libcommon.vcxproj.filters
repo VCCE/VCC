@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\bus\basic_cartridge.cpp">
+      <Filter>bus</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bus\cartridge_loader.cpp">
+      <Filter>bus</Filter>
+    </ClCompile>
+    <ClCompile Include="src\devices\cloud9.cpp">
+      <Filter>devices</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\DialogOps.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Fileops.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\filesystem.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\initial_settings.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bus\legacy_cartridge.cpp">
+      <Filter>bus</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bus\rom_cartridge.cpp">
+      <Filter>bus</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bus\rom_image.cpp">
+      <Filter>bus</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\logger.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\winapi.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\vcc\bus\basic_cartridge.h">
+      <Filter>bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\cartridge.h">
+      <Filter>bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\cartridge_callbacks.h">
+      <Filter>bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\cartridge_loader.h">
+      <Filter>bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\devices\cloud9.h">
+      <Filter>devices</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\critical_section.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\DialogOps.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\exports.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\FileOps.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\filesystem.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\initial_settings.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\interrupts.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\dll_deleter.h">
+      <Filter>bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\legacy_cartridge.h">
+      <Filter>bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\legacy_cartridge_definitions.h">
+      <Filter>bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\null_cartridge.h">
+      <Filter>bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\rom_cartridge.h">
+      <Filter>bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\rom_image.h">
+      <Filter>bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\limits.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\logger.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\core\winapi.h">
+      <Filter>core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="bus">
+      <UniqueIdentifier>{d04caca3-9ea4-47ba-a4dc-9eea701fed59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core">
+      <UniqueIdentifier>{c08f8de7-2daf-4b34-b6f4-7d6fb1b7a04a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="devices">
+      <UniqueIdentifier>{58ab01e8-6aca-4aab-b647-a543552a9715}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

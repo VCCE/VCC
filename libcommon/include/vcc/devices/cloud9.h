@@ -1,7 +1,6 @@
 #pragma once
-#include <vcc/core/detail/exports.h>
+#include <vcc/core/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <Windows.h>
-
 
 namespace vcc::devices::rtc
 {

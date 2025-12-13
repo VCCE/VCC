@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridge.h>
+#include <vcc/bus/cartridge.h>
 
 //TODO: Stomp this bad boy out. It has no purpose
 namespace vcc::core::cartridges

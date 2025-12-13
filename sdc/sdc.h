@@ -20,7 +20,7 @@
 // <http://www.gnu.org/licenses/>.
 //
 
-#include <vcc/common/logger.h>
+#include <vcc/core/logger.h>
 #include <vcc/core/interrupts.h>
 
 #include "resource.h"

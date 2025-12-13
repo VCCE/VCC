@@ -18,7 +18,7 @@
 
 // TODO: Rename this to hardware_cartridge (cpak_cartridge?)
 
-#include <vcc/core/cartridges/legacy_cartridge.h>
+#include <vcc/bus/legacy_cartridge.h>
 #include <stdexcept>
 
 namespace vcc::core::cartridges

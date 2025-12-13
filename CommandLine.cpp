@@ -81,7 +81,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <string.h>
 #include "BuildConfig.h"
 #include "CommandLine.h"
-#include <vcc/common/logger.h>
+#include <vcc/core/logger.h>
 
 // Define global command line settings
 struct CmdLineArguments CmdArg;

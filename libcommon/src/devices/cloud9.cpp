@@ -23,7 +23,7 @@ along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licens
 *																		*
 *																		*
 ************************************************************************/
-#include <vcc/devices/rtc/cloud9.h>
+#include <vcc/devices/cloud9.h>
 #include <Windows.h>
 
 namespace vcc::devices::rtc

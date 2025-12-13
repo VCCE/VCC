@@ -16,8 +16,8 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/cartridge.h>
-#include <vcc/core/cartridge_loader.h>
+#include <vcc/bus/cartridge.h>
+#include <vcc/bus/cartridge_loader.h>
 #include "../CartridgeMenu.h"
 
 

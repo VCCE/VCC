@@ -18,9 +18,9 @@
 #pragma once
 #include "cartridge_slot.h"
 #include "multipak_configuration.h"
-#include <vcc/core/cartridges/basic_cartridge.h>
-#include <vcc/core/cartridge_loader.h>
-#include <vcc/core/utils/critical_section.h>
+#include <vcc/bus/basic_cartridge.h>
+#include <vcc/bus/cartridge_loader.h>
+#include <vcc/core/critical_section.h>
 #include "../CartridgeMenu.h"
 #include <array>
 

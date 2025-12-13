@@ -15,7 +15,7 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/core/cartridges/rom_cartridge.h>
+#include <vcc/bus/rom_cartridge.h>
 
 
 namespace vcc::core::cartridges

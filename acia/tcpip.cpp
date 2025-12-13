@@ -27,7 +27,7 @@
 #include <Windows.h>
 #include <stdio.h>
 #include "acia.h"
-#include <vcc/common/logger.h>
+#include <vcc/core/logger.h>
 
 // socket
 static SOCKET Socket = INVALID_SOCKET;
