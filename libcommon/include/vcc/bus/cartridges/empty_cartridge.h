@@ -40,11 +40,13 @@ namespace vcc::bus::cartridges
 		/// @return An empty string.
 		LIBCOMMON_EXPORT [[nodiscard]] name_type name() const override;
 
+		/// @inheritdoc
 		LIBCOMMON_EXPORT [[nodiscard]] driver_type& driver() override;
 
 
 	public:
 
+		/// @brief A shared instance for public use.
 		LIBCOMMON_EXPORT static const std::shared_ptr<::vcc::bus::cartridge> shared_placeholder_cartridge_;
 	};
 

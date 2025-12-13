@@ -60,9 +60,11 @@ namespace vcc::bus
 		using sample_type = driver_type::sample_type;
 		/// @copydoc cartridge_type::menu_item_id_type
 		using menu_item_id_type = cartridge_type::menu_item_id_type;
-
+		/// @brief Type alias for the mutex used to coordinate access to member state.
 		using mutex_type = typename MutexType_;
+		/// @brief Type alias for the lock that used to acquire ownership of a mutex.
 		using scoped_lock_type = typename LockType_<mutex_type>;
+		/// @brief Type alias for the lock that used to acquire ownership of two mutexes.
 		using dual_scoped_lock_type = typename LockType_<mutex_type, mutex_type>;
 
 
@@ -72,6 +74,9 @@ namespace vcc::bus
 		/// 
 		/// Construct an expansion to a default empty state. When constructed the cartridge
 		/// managed in `shared_placeholder_cartridge_` will be used.
+		/// 
+		/// @param cartridge_mutex The mutex used to coordinate access to the cartridge plugin.
+		/// @param driver_mutex The mutex used to coordinate access to the cartridge driver.
 		expansion_port(mutex_type& cartridge_mutex, mutex_type& driver_mutex)
 			:
 			cartridge_mutex_(cartridge_mutex),
@@ -82,6 +87,14 @@ namespace vcc::bus
 
 		virtual ~expansion_port() = default;
 
+		/// @brief Inserts a cartridge into the slot.
+		/// 
+		/// @param handle The handle to the library containing the cartridge
+		/// implementation or null if the cartridge has no library associated with it
+		/// (i.e. a ROM Pak).
+		/// @param cartridge The cartridge being inserted.
+		/// 
+		/// @throws std::invalid_argument if the cartridge is null.
 		virtual void insert(managed_handle_type handle, cartridge_ptr_type cartridge)
 		{
 			if (cartridge == nullptr)
@@ -99,6 +112,11 @@ namespace vcc::bus
 			driver_ = &cartridge_->driver();
 		};
 
+		/// @brief Eject the cartridge from the slot.
+		///
+		/// Ejects the cartridge from the slot. Once the cartridge has been ejected all
+		/// calls to expansion port that are normally forwarded to the cartridge result
+		/// in a noop.
 		void eject()
 		{
 			// Lock both mutexes so the entire operation is atomic
@@ -226,7 +244,9 @@ namespace vcc::bus
 
 	protected:
 
+		/// @brief The mutex used to coordinate access to the cartridge plugin.
 		mutex_type& cartridge_mutex_;
+		/// @brief The mutex used to coordinate access to the cartridge driver.
 		mutex_type& driver_mutex_;
 
 	private:
