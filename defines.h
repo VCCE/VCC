@@ -213,6 +213,7 @@ struct SystemState
     unsigned char	MousePointer = 0;
     unsigned char	OverclockFlag = 0;
 	char			StatusLine[256] = { 0 };
+	float			FPS = 0.0f;
 
 	// Debugger Package	
 	VCC::Debugger::Debugger Debugger;

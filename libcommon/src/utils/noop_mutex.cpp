@@ -15,27 +15,12 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "vcc/bus/cartridges/empty_cartridge.h"
+#include "vcc/utils/noop_mutex.h"
 
-// Interface for empty cartridge
 
-namespace vcc::bus::cartridges
+namespace vcc::utils
 {
 
-	LIBCOMMON_EXPORT
-		const std::shared_ptr<::vcc::bus::cartridge>
-		empty_cartridge::shared_placeholder_cartridge_(
-			std::make_shared<::vcc::bus::cartridges::empty_cartridge>());
-
-
-	empty_cartridge::name_type empty_cartridge::name() const
-	{
-		return {};
-	}
-	
-	empty_cartridge::driver_type& empty_cartridge::driver()
-	{
-		return *this;
-	}
+	LIBCOMMON_EXPORT noop_mutex noop_mutex::shared_instance_;
 
 }

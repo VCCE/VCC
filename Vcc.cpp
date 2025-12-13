@@ -117,6 +117,7 @@ void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys();
 void SetupClock();
 HMENU GetConfMenu();
+void CALLBACK update_status(HWND, UINT, UINT_PTR, DWORD);
 
 // Globals
 static 	HANDLE hEMUThread ;
@@ -345,6 +346,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	switch (message)
 	{
+		case WM_CREATE:
+			SetTimer(hWnd, 100, 15, update_status);
+			break;
+
 		case WM_INITMENUPOPUP:
 		{
 			const auto menu(GetMenu(hWnd));
@@ -1050,6 +1055,28 @@ void SaveConfig() {
 	return;
 }
 
+void CALLBACK update_status(HWND, UINT, UINT_PTR, DWORD)
+{
+	GetModuleStatus(&EmuState);
+
+	char tstatus[128];
+	char tspeed[32];
+	snprintf(tspeed,sizeof(tspeed),"%2.2fMhz",EmuState.CPUCurrentSpeed);
+	// Append "+" to speed if overclocking is enabled
+	if (EmuState.OverclockFlag && (EmuState.DoubleSpeedMultiplyer>2))
+		strncat (tspeed,"+",sizeof(tspeed));
+	if (EmuState.Debugger.IsHalted()) {
+		snprintf(tstatus,sizeof(tstatus), " Paused - Hit F7 | %s @ %s | %s",
+				 CpuName,tspeed,EmuState.StatusLine);
+	} else {
+		snprintf(tstatus,sizeof(tstatus),"Skip:%2.2i | FPS:%3.0f | %s @ %s | %s",
+				 EmuState.FrameSkip,EmuState.FPS,CpuName,tspeed,EmuState.StatusLine);
+	}
+	int len = strlen(tstatus);
+	UpdateTapeStatus(tstatus + len, sizeof(tstatus) - len);
+	SetStatusBarText(tstatus,&EmuState);
+}
+
 unsigned __stdcall EmuLoop(HANDLE hEvent)
 {
 	static float FPS;
@@ -1123,24 +1150,7 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 		}
 		EndRender(EmuState.FrameSkip);
 		FPS/=EmuState.FrameSkip;
-		GetModuleStatus(&EmuState);
-		
-		char tstatus[128];
-		char tspeed[32];
-		snprintf(tspeed,sizeof(tspeed),"%2.2fMhz",EmuState.CPUCurrentSpeed);
-		// Append "+" to speed if overclocking is enabled
-		if (EmuState.OverclockFlag && (EmuState.DoubleSpeedMultiplyer>2))
-			strncat (tspeed,"+",sizeof(tspeed));
-		if (EmuState.Debugger.IsHalted()) {
-			snprintf(tstatus,sizeof(tstatus), " Paused - Hit F7 | %s @ %s | %s",
-				CpuName,tspeed,EmuState.StatusLine);
-		} else {
-			snprintf(tstatus,sizeof(tstatus),"Skip:%2.2i | FPS:%3.0f | %s @ %s | %s",
-				EmuState.FrameSkip,FPS,CpuName,tspeed,EmuState.StatusLine);
-		}
-		int len = strlen(tstatus);
-		UpdateTapeStatus(tstatus + len, sizeof(tstatus) - len);
-		SetStatusBarText(tstatus,&EmuState);
+		EmuState.FPS = FPS;
 
 		if (CmdArg.MaxFrames > 0 && FrameCounter >= CmdArg.MaxFrames)
 		{

@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/bus/cartridge.h"
+#include <memory>
 
 
 namespace vcc::bus::cartridges
@@ -28,7 +29,7 @@ namespace vcc::bus::cartridges
 	/// 
 	/// The Empty Cartridge provides no functionality, extensions, or ROM to the system. It
 	/// does nothing and can act as a placeholder where a cartridge instance may be needed.
-	class LIBCOMMON_EXPORT empty_cartridge final : 
+	class empty_cartridge final : 
 		public ::vcc::bus::cartridge,
 		public ::vcc::bus::cartridge_driver 
 	{
@@ -37,9 +38,14 @@ namespace vcc::bus::cartridges
 		/// @brief Retrieves the name of the cartridge.
 		/// 
 		/// @return An empty string.
-		[[nodiscard]] name_type name() const override;
+		LIBCOMMON_EXPORT [[nodiscard]] name_type name() const override;
 
-		[[nodiscard]] driver_type& driver() override;
+		LIBCOMMON_EXPORT [[nodiscard]] driver_type& driver() override;
+
+
+	public:
+
+		LIBCOMMON_EXPORT static const std::shared_ptr<::vcc::bus::cartridge> shared_placeholder_cartridge_;
 	};
 
 }

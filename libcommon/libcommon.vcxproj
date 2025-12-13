@@ -98,6 +98,7 @@
     <ClCompile Include="src\utils\basic_guid.cpp" />
     <ClCompile Include="src\utils\cartridge_loader.cpp" />
     <ClCompile Include="src\utils\load_disk_image.cpp" />
+    <ClCompile Include="src\utils\noop_mutex.cpp" />
     <ClCompile Include="src\utils\persistent_section_value_store.cpp" />
     <ClCompile Include="src\utils\persistent_value_store.cpp" />
     <ClCompile Include="src\utils\Fileops.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="include\vcc\utils\cartridge_loader.h" />
     <ClInclude Include="include\vcc\utils\disk_image_loader.h" />
     <ClInclude Include="include\vcc\utils\basic_guid.h" />
+    <ClInclude Include="include\vcc\utils\noop_mutex.h" />
     <ClInclude Include="include\vcc\utils\persistent_value_section_store.h" />
     <ClInclude Include="include\vcc\utils\persistent_value_store.h" />
     <ClInclude Include="include\vcc\utils\dll_deleter.h" />
