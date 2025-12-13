@@ -122,7 +122,7 @@ namespace vcc::peripherals::disk_drives
 
 
 		/// @inheritdoc
-		LIBCOMMON_EXPORT void read_sector(
+		[[nodiscard]] LIBCOMMON_EXPORT error_id_type read_sector(
 			size_type drive_head,
 			size_type head_id,
 			size_type track_id,
@@ -130,7 +130,7 @@ namespace vcc::peripherals::disk_drives
 			buffer_type& data_buffer) const override;
 
 		/// @inheritdoc
-		LIBCOMMON_EXPORT void write_sector(
+		[[nodiscard]] LIBCOMMON_EXPORT error_id_type write_sector(
 			size_type drive_head,
 			size_type head_id,
 			size_type track_id,

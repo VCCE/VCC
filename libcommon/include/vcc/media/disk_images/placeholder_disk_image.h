@@ -80,7 +80,7 @@ namespace vcc::media::disk_images
 			size_type disk_sector) const override;
 
 		/// @inheritdoc
-		LIBCOMMON_EXPORT void read_sector(
+		[[nodiscard]] LIBCOMMON_EXPORT error_id_type read_sector(
 			size_type disk_head,
 			size_type disk_track,
 			size_type head_id,
@@ -89,7 +89,7 @@ namespace vcc::media::disk_images
 			buffer_type& data_buffer) override;
 
 		/// @inheritdoc
-		LIBCOMMON_EXPORT void write_sector(
+		[[nodiscard]] LIBCOMMON_EXPORT error_id_type write_sector(
 			size_type disk_head,
 			size_type disk_track,
 			size_type head_id,

@@ -31,6 +31,13 @@
 namespace vcc::cartridges::fd502
 {
 
+	/// @brief Implementation of the 1793 version of the FD179X series of devices.
+	///
+	/// The FD179X devices perform the functions of a Floppy Disk Formatter/Controller.
+	/// They are IBM 3740 compatible in single density mode (FM) and System 34 compatible
+	/// in Double Density Mode (MFM). The FD179X contains all the features of its
+	/// predecessor the FD1771, plus the added features necessary to read/write and format
+	/// a double density diskette.
 	class wd1793_device
 	{
 	public:
@@ -56,6 +63,8 @@ namespace vcc::cartridges::fd502
 		using step_direction_type = ::vcc::peripherals::step_direction;
 		/// @brief Type alias for tick counters.
 		using tick_type = std::size_t;
+		/// @copydoc disk_drive_device_type::error_id_type
+		using disk_error_id_type = disk_drive_device_type::error_id_type;
 
 
 	public:
@@ -226,10 +235,32 @@ namespace vcc::cartridges::fd502
 		/// @return The number of disk drives supported.
 		size_type drive_count() const;
 
+		/// @brief Determine if the drive motor is enabled.
+		/// 
+		/// @return `true` is the drive motor is enabled; `false` otherwise.
 		bool is_motor_running() const noexcept;
+
+		/// @brief Retrieve the selected drive identifier.
+		/// 
+		/// @todo This should not be here. Drive selection is not a function of the wd179x
+		/// 
+		/// @return The selected drive identifier or an empty value is no drive is
+		/// currently selected.
 		std::optional<drive_id_type> get_selected_drive_id() const noexcept;
+
+		/// @brief Retrieve the currently selected head.
+		/// 
+		/// @return The identifier of the currently selected head.
+		head_id_type get_selected_head() const noexcept;
+
+		/// @brief Retrieve the currently selected head position (i.e track).
+		/// 
+		/// @return The head position or track identifier.
 		size_type get_head_position() const noexcept;
-		size_type get_selected_head() const noexcept;
+
+		/// @brief Retrieve the currently selected sector.
+		/// 
+		/// @return The currently selected sector.
 		size_type get_current_sector() const noexcept;
 
 

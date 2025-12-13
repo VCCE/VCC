@@ -1,4 +1,7 @@
 #pragma once
+/// @file
+///
+/// Contains definitions for motor step directions.
 
 
 namespace vcc::peripherals

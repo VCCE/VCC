@@ -106,9 +106,6 @@ namespace vcc::cartridges::fd502
 		/// 
 		/// @todo This is currently stripped of most device status details and will need to
 		/// be expanded when the cart is finished.
-		/// 
-		/// @param status_buffer The buffer to put the status text in.
-		/// @param buffer_size The size of the status buffer.
 		status_type status() const override;
 
 		/// @brief Builds the menu for the cartridge features.

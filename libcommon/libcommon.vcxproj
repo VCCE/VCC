@@ -127,6 +127,7 @@
     <ClInclude Include="include\vcc\devices\rtc\ds1315.h" />
     <ClInclude Include="include\vcc\devices\rtc\oki_m6242b.h" />
     <ClInclude Include="include\vcc\devices\serial\beckerport.h" />
+    <ClInclude Include="include\vcc\media\disk_error_id.h" />
     <ClInclude Include="include\vcc\media\disk_geometry.h" />
     <ClInclude Include="include\vcc\media\disk_image.h" />
     <ClInclude Include="include\vcc\media\disk_images\generic_disk_image.h" />

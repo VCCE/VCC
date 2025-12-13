@@ -110,7 +110,7 @@ namespace vcc::media::disk_images
 		};
 	}
 
-	void placeholder_disk_image::read_sector(
+	placeholder_disk_image::error_id_type placeholder_disk_image::read_sector(
 		[[maybe_unused]] size_type disk_head,
 		[[maybe_unused]] size_type disk_track,
 		[[maybe_unused]] size_type head_id,
@@ -118,10 +118,10 @@ namespace vcc::media::disk_images
 		[[maybe_unused]] size_type sector_id,
 		[[maybe_unused]] buffer_type& data_buffer)
 	{
-		throw fatal_io_error("Cannot read sector. Disk does not exist.");
+		return error_id_type::empty;
 	}
 
-	void placeholder_disk_image::write_sector(
+	placeholder_disk_image::error_id_type placeholder_disk_image::write_sector(
 		[[maybe_unused]] size_type disk_head,
 		[[maybe_unused]] size_type disk_track,
 		[[maybe_unused]] size_type head_id,
@@ -129,7 +129,7 @@ namespace vcc::media::disk_images
 		[[maybe_unused]] size_type sector_id,
 		[[maybe_unused]] const buffer_type& data_buffer)
 	{
-		throw fatal_io_error("Cannot write sector. Disk does not exist.");
+		return error_id_type::empty;
 	}
 
 	placeholder_disk_image::sector_record_vector placeholder_disk_image::read_track(

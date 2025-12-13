@@ -28,6 +28,7 @@ class test_generic_disk_image : public testing::Test
 protected:
 
 	using generic_disk_image = ::vcc::media::disk_images::generic_disk_image;
+	using disk_error_id_type = generic_disk_image::error_id_type;
 	using size_type = generic_disk_image::size_type;
 	using geometry_type = generic_disk_image::geometry_type;
 	using buffer_type = generic_disk_image::buffer_type;
@@ -139,7 +140,8 @@ protected:
 	{
 		buffer_type sector_buffer;
 
-		image.read_sector(head, track, head, track, sector, sector_buffer);
+		const auto result(image.read_sector(head, track, head, track, sector, sector_buffer));
+		ASSERT_EQ(result, decltype(result)::success);
 		ASSERT_EQ(sector_buffer.size(), geometry.sector_size);
 
 		const auto id(make_validation_id(head, track, sector - image.first_valid_sector_id()));
@@ -165,7 +167,7 @@ protected:
 			data = id;
 		}
 
-		(void)image.write_sector(head, track, head, track, sector, sector_buffer);
+		ASSERT_EQ(image.write_sector(head, track, head, track, sector, sector_buffer), disk_error_id_type::success);
 	};
 
 	static void validate_sector_data(
@@ -189,6 +191,5 @@ protected:
 
 	static const inline geometry_type test_geometry_ = create_geometry();
 	memory_stream_buffer buffer_stream_;
-	buffer_type sector_buffer_;
 	static const inline auto test_value_sequence_ = { 1, 2, 3, 4, 5, 10 };
 };

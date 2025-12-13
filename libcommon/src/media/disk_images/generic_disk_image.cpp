@@ -155,7 +155,7 @@ namespace vcc::media::disk_images
 		};
 	}
 
-	void generic_disk_image::read_sector(
+	generic_disk_image::error_id_type generic_disk_image::read_sector(
 		size_type disk_head,
 		size_type disk_track,
 		size_type head_id,
@@ -163,19 +163,19 @@ namespace vcc::media::disk_images
 		size_type sector_id,
 		buffer_type& data_buffer)
 	{
-		if (!is_valid_disk_head(disk_head))
+		if (!is_valid_disk_head(disk_head) || !is_valid_disk_head(head_id))
 		{
-			throw std::invalid_argument("Cannot read sector. Specified drive head is invalid.");
+			return error_id_type::invalid_head;
 		}
 
-		if (!is_valid_disk_track(disk_track))
+		if (!is_valid_disk_track(disk_track) || !is_valid_disk_track(track_id))
 		{
-			throw std::invalid_argument("Cannot read sector. Specified drive track is invalid.");
+			return error_id_type::invalid_track;
 		}
 
 		if (!is_valid_sector_record(disk_head, disk_track, head_id, track_id, sector_id))
 		{
-			throw std::invalid_argument("Cannot read sector. Specified sector id is invalid.");
+			return error_id_type::invalid_sector;
 		}
 
 		if (!seek(calculate_sector_offset_unchecked(disk_head, disk_track, head_id, track_id, sector_id)))
@@ -199,9 +199,11 @@ namespace vcc::media::disk_images
 			// FIXME-CHET: This should throw
 			std::fill(data_buffer.begin(), data_buffer.end(), buffer_type::value_type(0xffu));
 		}
+
+		return error_id_type::success;
 	}
 
-	void generic_disk_image::write_sector(
+	generic_disk_image::error_id_type generic_disk_image::write_sector(
 		size_type disk_head,
 		size_type disk_track,
 		size_type head_id,
@@ -209,19 +211,19 @@ namespace vcc::media::disk_images
 		size_type sector_id,
 		const buffer_type& data_buffer)
 	{
-		if (!is_valid_disk_head(disk_head))
+		if (!is_valid_disk_head(disk_head) || !is_valid_disk_head(head_id))
 		{
-			throw std::invalid_argument("Cannot write sector. Specified drive head is invalid.");
+			return error_id_type::invalid_head;
 		}
 
-		if (!is_valid_disk_track(disk_track))
+		if (!is_valid_disk_track(disk_track) || !is_valid_disk_track(track_id))
 		{
-			throw std::invalid_argument("Cannot write sector. Specified drive track is invalid.");
+			return error_id_type::invalid_track;
 		}
 
 		if (!is_valid_sector_record(disk_head, disk_track, head_id, track_id, sector_id))
 		{
-			throw std::invalid_argument("Cannot write sector. Specified sector id is invalid.");
+			return error_id_type::invalid_sector;
 		}
 
 		const auto sector_size(get_sector_size(disk_head, disk_track, head_id, track_id, sector_id));
@@ -239,7 +241,7 @@ namespace vcc::media::disk_images
 
 		if (is_write_protected())
 		{
-			throw write_protect_error("Cannot write sector. Disk is write protected.");
+			return error_id_type::write_protected;
 		}
 
 		stream_.write(reinterpret_cast<const char*>(data_buffer.data()), sector_size);
@@ -248,6 +250,8 @@ namespace vcc::media::disk_images
 		{
 			throw fatal_io_error("Cannot write sector. Fatal IO error encountered while writing sector.");
 		}
+
+		return error_id_type::success;
 	}
 
 
@@ -300,18 +304,25 @@ namespace vcc::media::disk_images
 			}
 		}
 
+		auto last_result(error_id_type::success);
 		for (const auto& sector : sectors)
 		{
 			// TODO-CHET: This is a placeholder. A more robust solution is needed to support other disk
 			// formats
-			write_sector(
+			const auto result(write_sector(
 				disk_head,
 				disk_track,
 				sector.header.head_id,
 				sector.header.track_id,
 				sector.header.sector_id,
-				sector.data);
+				sector.data));
+			if (result != error_id_type::success)
+			{
+				last_result = result;
+			}
 		}
+
+		//return last_result;
 	}
 
 

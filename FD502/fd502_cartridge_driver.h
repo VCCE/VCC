@@ -56,6 +56,8 @@ namespace vcc::cartridges::fd502
 		using becker_port_device_type = ::vcc::devices::serial::Becker;
 		/// @brief Type alias for the Real Time Clock (RTC) device.
 		using real_time_clock_device_type = ::vcc::devices::rtc::oki_m6242b;
+		/// @brief Type alias for drive head identifiers.
+		using head_id_type = std::size_t;
 
 
 	public:
@@ -193,11 +195,15 @@ namespace vcc::cartridges::fd502
 		/// @return The total number of disk drives supported.
 		size_type drive_count() const;
 
-
+		/// @copydoc wd1793_device::is_motor_running
 		bool is_motor_running() const noexcept;
+		/// @copydoc wd1793_device::get_selected_drive_id
 		std::optional<drive_id_type> get_selected_drive_id() const noexcept;
-		size_type get_selected_head() const noexcept;
+		/// @copydoc wd1793_device::get_selected_head
+		head_id_type get_selected_head() const noexcept;
+		/// @copydoc wd1793_device::get_head_position
 		size_type get_head_position() const noexcept;
+		/// @copydoc wd1793_device::get_current_sector
 		size_type get_current_sector() const noexcept;
 
 	private:

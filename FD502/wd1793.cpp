@@ -453,8 +453,10 @@ namespace vcc::cartridges::fd502
 			write_data_byte_function_ = &wd1793_device::write_byte_to_sector;
 			ExecTimeWaiter = 5;
 			IOWaiter = 0;
-			// FIXME-CHET: This is a temporary fix until all write protect states are handled.
-			if (get_selected_drive().is_write_protected())
+			// FIXME-CHET: This is a temporary fix until all write protect states are
+			// handled properly. This should be handled in the command executor (update
+			// function).
+			if (working_drive.is_write_protected())
 			{
 				complete_command(WRITEPROTECT);
 			}
@@ -471,11 +473,14 @@ namespace vcc::cartridges::fd502
 			current_command_.reset();
 			registers_.status = READY;
 			ExecTimeWaiter = 1;
+			// FIXME-CHET: This is incorrect. There are 4 different interrupt flags for
+			// various conditions but only one is immediate and the new state of the
+			// status register is determined by the flags and whether a command is
+			// currently executing and some conditions are satisfied asynchronously
+			// like generating an interrupt for index holes passing by.
 			if ((command_packet & 15) != 0)
 			{
-				{
-					bus_->assert_nmi_interrupt_line();
-				}
+				bus_->assert_nmi_interrupt_line();
 			}
 			break;
 
@@ -492,8 +497,10 @@ namespace vcc::cartridges::fd502
 			ExecTimeWaiter = 1;
 			ExecTimeWaiter = 5;
 			IOWaiter = 0;
-			// FIXME-CHET: This is a temporary fix until all write protect states are handled.
-			if (get_selected_drive().is_write_protected())
+			// FIXME-CHET: This is a temporary fix until all write protect states are
+			// handled properly. This should be handled in the command executor (update
+			// function).
+			if (working_drive.is_write_protected())
 			{
 				complete_command(WRITEPROTECT);
 			}
@@ -517,29 +524,58 @@ namespace vcc::cartridges::fd502
 			return 0;
 		}
 
+		// TODO-CHET: This is from the original implementation but is not correct. Once
+		// the drive has stepped the head to the desired track, the track register can be
+		// changed before the read command is initiated and is used to match the sector
+		// record on the track. While checking the head position against the track
+		// register here is OK for raw disk images like DSK (the vast majority of images)
+		// it could break for DMK or similar formats where copy protection is a factor.
+		// This would be better handled in the disk drive or image or a collaboration
+		// among them.
 		if (read_transfer_buffer_.empty() && registers_.track == working_drive.head_position())
 		{
-			// FIXME-CHET: This was originally handled in the read_sector function but needs to be
-			// handled here. Currently this fails at the end of a disk format (DSKINI#)
-			//if (registers_.track != working_drive.head_position())
-			//{
-			//	return 0;
-			//}
-
-			// TODO-CHET: Not sure if we should check the head, track, and sector here or if that
-			// should have been checked before the first time the read is allowed to happen. Right
-			// Now it allows reads immediately but really shouldn't be available until the sector
-			// is actually spinning by the head.
-			working_drive.read_sector(
+			// TODO-CHET: Right now it reads immediately but really shouldn't be available
+			// until the sector is actually spinning by the head. 
+			auto result(working_drive.read_sector(
 				control_register_.head(),
 				control_register_.head(),
 				registers_.track,
 				registers_.sector,
-				read_transfer_buffer_);
+				read_transfer_buffer_));
+
+			if (result != disk_error_id_type::success)
+			{
+				auto status_flags(0u);
+				switch (result)
+				{
+				case disk_error_id_type::success:
+					throw std::runtime_error("Cannot process success status in error handler.");
+
+				case disk_error_id_type::empty:
+					status_flags |= LOSTDATA;
+					break;
+
+				case disk_error_id_type::invalid_head:
+				case disk_error_id_type::invalid_track:
+				case disk_error_id_type::invalid_sector:
+					status_flags |= RECNOTFOUND;
+					break;
+
+				case disk_error_id_type::write_protected:
+					// TODO-CHET: Not sure how to handle this since there should never
+					// be an instance where this occurs. Maybe throw.
+					status_flags |= WRITEPROTECT;
+					break;
+				}
+
+				complete_command(status_flags);
+				return 0;
+			}
+
 			read_transfer_position_ = 0;
 		}
 
-		if (read_transfer_buffer_.empty())// IRON| (registers_.track != disk_drives_[CurrentDrive].head_position()) ) //| (registers_.sector > disk_drives_[CurrentDrive].sector_count_)
+		if (read_transfer_buffer_.empty())
 		{
 			complete_command(RECNOTFOUND);
 			return 0;
@@ -574,6 +610,11 @@ namespace vcc::cartridges::fd502
 
 		if (read_transfer_buffer_.empty())
 		{
+			// FIXME-CHET: This isn't quite correct. If accurate timing is expected this
+			// needs to take into account the interleave and other factors to get an
+			// accurate sector to select from. For drive image formats like DMK which can
+			// have sectors in any order some type of mechanism to determine the next
+			// sector will be needd.
 			const auto drive_sector(index_pulse_tick_counter_ / 176);
 			const auto sector_record(working_drive.query_sector_header_by_index(control_register_.head(), drive_sector));
 			if (!sector_record.has_value())
@@ -582,13 +623,10 @@ namespace vcc::cartridges::fd502
 				return 0;
 			}
 
-			// FIXME-CHET: This whole thing is probably wrong but it works for the moment. Verify where
-			// the values actually need to come from (some obviously from the sector record).
-			// FIXME-CHET: The value for sector_id is likely incorrect, even in the original
 			read_transfer_buffer_.resize(6);
 			read_transfer_buffer_[0] = static_cast<unsigned char>(sector_record->head_id);
 			read_transfer_buffer_[1] = static_cast<unsigned char>(sector_record->track_id);
-			read_transfer_buffer_[2] = static_cast<unsigned char>(sector_record->sector_id); // static_cast<unsigned char>(index_pulse_tick_counter_ / 176);
+			read_transfer_buffer_[2] = static_cast<unsigned char>(sector_record->sector_id);
 			read_transfer_buffer_[3] = get_id_from_sector_size(sector_record->sector_length);
 			read_transfer_buffer_[4] = 0;	//	TODO-CHET: Need to calculate the CRC for
 			read_transfer_buffer_[5] = 0;	//	bytes 4 and 5
@@ -678,23 +716,11 @@ namespace vcc::cartridges::fd502
 	{
 		if (write_transfer_buffer_.empty())
 		{
-			const auto& working_drive(get_selected_drive());
-
-			// FIXME-CHET: This should check if the sector actually exists and/or is valid
-			const auto sector_size(working_drive.get_sector_size(
-				control_register_.head(),
-				control_register_.head(),
-				registers_.track,
-				registers_.sector));
-			if (sector_size == 0
-				|| registers_.track != working_drive.head_position()
-				|| registers_.sector > working_drive.get_sector_count(control_register_.head(), registers_.track))
-			{
-				complete_command(RECNOTFOUND);
-				return;
-			}
-
-			write_transfer_buffer_.resize(sector_size);
+			// TODO-CHET: The disk image will resize the buffer to fit a full sector in
+			// regardless of its size. We're setting it to a default of 256 here and will
+			// rely on the result of calling the write_sector function to report record
+			// not found. We may want to just query this but probably not.
+			write_transfer_buffer_.resize(256);
 			write_transfer_position_ = 0;
 		}
 
@@ -702,22 +728,49 @@ namespace vcc::cartridges::fd502
 		{
 			const auto& working_drive(get_selected_drive());
 
-			working_drive.write_sector(
+			const auto result(working_drive.write_sector(
 				control_register_.head(),
 				control_register_.head(),
 				registers_.track,
 				registers_.sector,
-				write_transfer_buffer_);
+				write_transfer_buffer_));
 
 			auto status_flags(READY);
-			if (data_loss_detected_)	//	TODO-CHET: no data loss should be possible here?
+
+			switch (result)
+			{
+			case disk_error_id_type::success:
+				break;
+
+			case disk_error_id_type::empty:
+				status_flags |= LOSTDATA;
+				break;
+
+			case disk_error_id_type::invalid_head:
+			case disk_error_id_type::invalid_track:
+			case disk_error_id_type::invalid_sector:
+				status_flags |= RECNOTFOUND;
+				break;
+
+			case disk_error_id_type::write_protected:
+				status_flags |= WRITEPROTECT;
+			}
+
+			// TODO-CHET: Can data loss really be reported here?
+			if (data_loss_detected_)
 			{
 				status_flags |= LOSTDATA;
 			}
+
+			// TODO-CHET: The status returned by the disk drive may be sufficient. If not
+			// we should check the write-protect state before going the write.
 			if (working_drive.is_write_protected())
 			{
+				// TODO-CHET: I didn't see anything in the documentation about setting
+				// record not found. Validate this is the right behavior.
 				status_flags |= WRITEPROTECT | RECNOTFOUND;
 			}
+
 			complete_command(status_flags);
 			data_loss_detected_ = false;
 			++registers_.sector;
@@ -843,7 +896,7 @@ namespace vcc::cartridges::fd502
 		return control_register_.selected_drive();
 	}
 
-	wd1793_device::size_type wd1793_device::get_selected_head() const noexcept
+	wd1793_device::head_id_type wd1793_device::get_selected_head() const noexcept
 	{
 		return control_register_.head();
 	}

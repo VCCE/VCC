@@ -2,6 +2,7 @@
 #include <vcc/detail/exports.h>
 #include <vcc/peripherals/step_direction.h>
 #include <vcc/media/disk_geometry.h>
+#include <vcc/media/disk_error_id.h>
 #include <vcc/media/sector_record.h>
 #include <filesystem>
 #include <vector>
@@ -35,6 +36,8 @@ namespace vcc::peripherals
 		using sector_record_vector = std::vector<sector_record_type>;
 		/// @brief TYpe alias for the buffer used to store and transfer sector data.
 		using buffer_type = std::vector<unsigned char>;
+		/// @brief Type alias for error codes returned by various functions.
+		using error_id_type = ::vcc::media::disk_error_id;
 
 
 	public:
@@ -196,7 +199,7 @@ namespace vcc::peripherals
 		/// @param track_id The track identifier assigned to the sector to read.
 		/// @param sector_id The sector identifier assigned to the sector to read.
 		/// @param data_buffer The buffer to store the sector data in.
-		virtual void read_sector(
+		virtual error_id_type read_sector(
 			size_type drive_head,
 			size_type head_id,
 			size_type track_id,
@@ -215,7 +218,7 @@ namespace vcc::peripherals
 		/// @param track_id The track identifier assigned to the sector to write.
 		/// @param sector_id The sector identifier assigned to the sector to write.
 		/// @param data_buffer The buffer containing the data to write to the sector.
-		virtual void write_sector(
+		virtual error_id_type write_sector(
 			size_type drive_head,
 			size_type head_id,
 			size_type track_id,

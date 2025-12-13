@@ -57,7 +57,7 @@ namespace vcc::cartridges::fd502
 		return wd1793_.get_selected_drive_id();
 	}
 	
-	fd502_cartridge_driver::size_type fd502_cartridge_driver::get_selected_head() const noexcept
+	fd502_cartridge_driver::head_id_type fd502_cartridge_driver::get_selected_head() const noexcept
 	{
 		return wd1793_.get_selected_head();
 	}
