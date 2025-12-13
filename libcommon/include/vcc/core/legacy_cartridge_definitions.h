@@ -19,19 +19,26 @@
 #include <vcc/core/interrupts.h>
 #include <windows.h>
 
-// This is included by all hardware packs
 // TODO: Rename this to cpak_cartridge_definitions.h  (legacy_cartridge --> cpak_cartridge)
+// This defines the hardware cartridge interface, it is included by all hardware packs.
 extern "C"
 {
 	enum MenuItemType;
 
-	using PakWriteMemoryByteHostCallback = void (*)(void* host_key, unsigned char value, unsigned short address);
-	using PakReadMemoryByteHostCallback = unsigned char (*)(void* host_key, unsigned short address);
-	using PakAssertCartridgeLineHostCallback = void (*)(void* host_key, bool lineState);
-	using PakAssertInteruptHostCallback = void (*)(void* host_key, Interrupt interrupt, InterruptSource interrupt_source);
-	using PakAppendCartridgeMenuHostCallback = void (*)(void* host_key, const char* menu_name, int menu_id, MenuItemType menu_type);
-	using PakResetHostCallback = void (*)(void* host_key);
+	using PakWriteMemoryByteHostCallback = void (*)
+		(void* host_key, unsigned char value, unsigned short address);
+	using PakReadMemoryByteHostCallback = unsigned char (*)
+		(void* host_key, unsigned short address);
+	using PakAssertCartridgeLineHostCallback = void (*)
+		(void* host_key, bool lineState);
+	using PakAssertInteruptHostCallback = void (*)
+		(void* host_key, Interrupt interrupt, InterruptSource interrupt_source);
+	using PakAppendCartridgeMenuHostCallback = void (*)
+		(void* host_key, const char* menu_name, int menu_id, MenuItemType menu_type);
+	using PakResetHostCallback = void (*)
+		(void* host_key);
 
+	// Cartridge Callbacks
 	struct cpak_callbacks
 	{
 		const PakAssertInteruptHostCallback assert_interrupt;
@@ -42,13 +49,12 @@ extern "C"
 		const PakResetHostCallback reset;
 	};
 
-	// Hardware carts access reset callbacks on Initialize
+	// Cartridge exports. At least PakInitilizeModuleFunction must be implimented
 	using PakInitializeModuleFunction = void (*)(
 		void* host_key,                          // Mysterious master key
 		const char* const configuration_path,    // Path of ini file
 		HWND hVccWnd,                            // VCC Main window HWND
 		const cpak_callbacks* const context);    // Callbacks
-
 	using PakTerminateModuleFunction = void (*)();
 	using PakGetNameModuleFunction = const char* (*)();
 	using PakGetCatalogIdModuleFunction = const char* (*)();
