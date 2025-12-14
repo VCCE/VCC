@@ -34,7 +34,8 @@ namespace vcc::cartridges::multipak
 
 		using expansion_port::expansion_port;
 
-		virtual void insert(managed_handle_type handle, cartridge_ptr_type cartridge)
+		/// @@inheritdoc
+		void insert(managed_handle_type handle, cartridge_ptr_type cartridge) override
 		{
 			dual_scoped_lock_type lock(cartridge_mutex_, driver_mutex_);
 

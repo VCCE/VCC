@@ -72,8 +72,9 @@ BEGIN
     BEGIN
         POPUP "Cartridge Port",                 65535,MFT_STRING,MFS_ENABLED
         BEGIN
-            MENUITEM "Insert",                      ID_CARTRIDGE_INSERT,MFT_STRING,MFS_ENABLED
-            MENUITEM "Eject",                       ID_CARTRIDGE_EJECT,MFT_STRING,MFS_ENABLED
+            MENUITEM "Insert ROM Pak Cartridge",    ID_INSERT_ROMPAK_CARTRIDGE,MFT_STRING,MFS_ENABLED
+            MENUITEM "Insert Device Cartridge",     ID_INSERT_DEVICE_CARTRIDGE,MFT_STRING,MFS_ENABLED
+            MENUITEM "Eject",                       ID_EJECT_CARTRIDGE,MFT_STRING,MFS_ENABLED
         END
     END
     POPUP "Debugger",                       65535,MFT_STRING,MFS_ENABLED

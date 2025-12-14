@@ -68,12 +68,19 @@ namespace vcc::cartridges::multipak
 		/// @return The index of the startup slot.
 		virtual slot_id_type selected_switch_slot() const = 0;
 
-		/// @brief Select and insert a cartridge.
+		/// @brief Select and insert a Device Cartridge.
 		/// 
-		/// Select a cartridge from a file and insert it into a specific slot.
+		/// Select a Device Cartridge from a file and insert it into a specific slot.
 		/// 
 		/// @param slot_id The slot to insert the cartridge into.
 		virtual void select_and_insert_cartridge(slot_id_type slot_id) = 0;
+
+		/// @brief Select and insert a Rom Pak Cartridge.
+		/// 
+		/// Select a ROM PAk cartridge from a file and insert it into a specific slot.
+		/// 
+		/// @param slot_id The slot to insert the cartridge into.
+		virtual void select_and_insert_rompak(slot_id_type slot_id) = 0;
 
 		/// @brief Insert a cartridge from a slot.
 		/// 

@@ -19,9 +19,12 @@ This file is part of VCC (Virtual Color Computer).
 #pragma once
 #include "vcc/ui/menu/menu_item_collection.h"
 #include "vcc/utils/cartridge_loader.h"
+#include <filesystem>
 #include <string>
 
-
+std::filesystem::path PakGetSystemCartridgePath();
+std::filesystem::path PakGetLastAccessedRomPakPath();
+void PakSetLastAccessedRomPakPath(const std::filesystem::path& path);
 std::string PakGetName();
 void PakTimer();
 unsigned char PakReadPort (unsigned char);
@@ -29,7 +32,6 @@ void PakWritePort(unsigned char,unsigned char);
 unsigned char PackMem8Read (unsigned short);
 void GetModuleStatus( SystemState *);
 vcc::utils::cartridge_loader_status PakLoadCartridge(const char* filename);
-void PakLoadCartridgeUI();
 unsigned short PackAudioSample();
 void ResetBus();
 void GetCurrentModule(char *);

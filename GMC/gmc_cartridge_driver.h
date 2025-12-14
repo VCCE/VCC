@@ -84,7 +84,7 @@ namespace vcc::cartridges::gmc
 		/// reset. If this value is `true` the system will be reset.
 		/// 
 		/// @throws std::invalid_argument if `filename` is empty.
-		void load_rom(const path_type& filename, bool reset_on_load);
+		[[nodiscard]] bool load_rom(const path_type& filename, bool reset_on_load);
 
 		/// @brief Ejects the ROM image from the cartridge.
 		///

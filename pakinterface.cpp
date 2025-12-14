@@ -29,7 +29,6 @@
 #include "vcc/utils/logger.h"
 #include "vcc/utils/FileOps.h"
 #include "vcc/utils/filesystem.h"
-#include "vcc/common/DialogOps.h"
 #include <fstream>
 #include <Windows.h>
 #include <commdlg.h>
@@ -114,13 +113,18 @@ public:
 		return path_buffer;
 	}
 
-	path_type system_rom_path() const override
+	path_type system_cartridge_path() const override
 	{
 		// TODO-CHET: Once get_module_path is changed to return a path remove
 		// the explicit conversion.
 		return path_type(::vcc::utils::get_module_path(nullptr))
 			.parent_path()
-			.append("ROMS");
+			.append("cartridges");
+	}
+
+	path_type system_rom_path() const override
+	{
+		return PakGetSystemCartridgePath();
 	}
 
 	[[nodiscard]] catridge_mutex_type& driver_mutex() const override
@@ -137,6 +141,16 @@ public:
 	HWND app_window() const noexcept override
 	{
 		return EmuState.WindowHandle;
+	}
+
+	[[nodiscard]] path_type last_accessed_rompak_path() const override
+	{
+		return PakGetLastAccessedRomPakPath();
+	}
+
+	void last_accessed_rompak_path(path_type path) const override
+	{
+		PakSetLastAccessedRomPakPath(path);
 	}
 
 };
@@ -159,6 +173,44 @@ static unsigned char PakReadMemoryByte(void* /*host_key*/, unsigned short addres
 static void PakAssertInterupt(void* /*host_key*/, Interrupt interrupt, InterruptSource source)
 {
 	PakAssertInterupt(interrupt, source);
+}
+
+std::filesystem::path PakGetSystemCartridgePath()
+{
+	// TODO-CHET: Once get_module_path is changed to return a path remove
+	// the explicit conversion.
+	return std::filesystem::path(::vcc::utils::get_module_path(nullptr))
+		.parent_path()
+		.append("cartridges");
+}
+
+std::filesystem::path PakGetLastAccessedRomPakPath()
+{
+	char inifile[MAX_PATH];
+	GetIniFilePath(inifile);
+
+	static char pakPath[MAX_PATH] = "";
+	GetPrivateProfileString(
+		"DefaultPaths",
+		"PakPath",
+		"",
+		pakPath,
+		MAX_PATH,
+		inifile);
+
+	return pakPath;
+}
+
+void PakSetLastAccessedRomPakPath(const std::filesystem::path& path)
+{
+	char inifile[MAX_PATH];
+	GetIniFilePath(inifile);
+
+	WritePrivateProfileString(
+		"DefaultPaths",
+		"PakPath",
+		path.string().c_str(),
+		inifile);
 }
 
 std::string PakGetName()
@@ -229,26 +281,6 @@ unsigned short PackAudioSample()
 
 
 
-void PakLoadCartridgeUI()
-{
-	char inifile[MAX_PATH];
-	GetIniFilePath(inifile);
-
-	static char pakPath[MAX_PATH] = "";
-	GetPrivateProfileString("DefaultPaths", "PakPath", "", pakPath, MAX_PATH, inifile);
-	FileDialog dlg;
-	dlg.setTitle(TEXT("Load Program Pack"));
-	dlg.setInitialDir(pakPath);
-	dlg.setFilter("All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0DLL Packs\0*.dll\0Rom Packs\0*.ROM;*.ccc;*.pak\0\0");
-	dlg.setFlags(OFN_FILEMUSTEXIST);
-	if (dlg.show()) {
-		if (PakLoadCartridge(dlg.path()) == cartridge_loader_status::success) {
-			dlg.getdir(pakPath);
-			WritePrivateProfileString("DefaultPaths", "PakPath", pakPath, inifile);
-		}
-	}
-}
-
 cartridge_loader_status PakLoadCartridge(const char* filename)
 {
 	static const std::map<cartridge_loader_status, UINT> string_id_map = {
@@ -269,6 +301,8 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 		return result;
 	}
 
+	// FIXME-CHET: There should be no UI here, let the callsite handle reporting the
+	// error.
 	auto error_string(load_error_string(result) + "\n\n" + filename);
 
 	MessageBox(EmuState.WindowHandle, error_string.c_str(), "Load Error", MB_OK | MB_ICONERROR);

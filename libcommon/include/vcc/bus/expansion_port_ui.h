@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/detail/exports.h"
+#include <filesystem>
 #include <Windows.h>
 
 
@@ -32,12 +33,31 @@ namespace vcc::bus
 	{
 	public:
 
+		/// @brief Type alias for file paths.
+		using path_type = std::filesystem::path;
+
+
+	public:
+
 		virtual ~expansion_port_ui() = default;
 
 		/// @brief Retrieve the handle to the main application window.
 		/// 
 		/// @return A handle to the main application window.
 		[[nodiscard]] virtual HWND app_window() const noexcept = 0;
+
+		/// @brief Retrieve the path to the directory containing the last ROM
+		/// image selected by the user.
+		/// 
+		/// @return the path to the directory containing the last ROM image.
+		virtual [[nodiscard]] path_type last_accessed_rompak_path() const = 0;
+
+		/// @brief Set the path to the directory containing the last ROM
+		/// image selected by the user.
+		/// 
+		/// @param path The path to the directory containing the last ROM image selected
+		/// by the user.
+		virtual void last_accessed_rompak_path(path_type path) const = 0;
 	};
 
 }

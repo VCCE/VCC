@@ -18,8 +18,6 @@
 #include "gmc_cartridge_driver.h"
 #include "resource.h"
 #include "vcc/ui/menu/menu_builder.h"
-#include "vcc/common/DialogOps.h"
-#include "vcc/utils/persistent_value_store.h"
 #include "vcc/utils/winapi.h"
 #include "vcc/utils/filesystem.h"
 #include <Windows.h>
@@ -43,7 +41,8 @@ namespace vcc::cartridges::gmc
 	{
 		if (!rom_filename.empty())
 		{
-			load_rom(rom_filename, false);
+			// FIXME-CHET: This needs to report failures!
+			(void)load_rom(rom_filename, false);
 		}
 
 		psg_.start();
@@ -105,7 +104,7 @@ namespace vcc::cartridges::gmc
 	}
 
 
-	void gmc_cartridge_driver::load_rom(const path_type& filename, bool reset_on_load)
+	bool gmc_cartridge_driver::load_rom(const path_type& filename, bool reset_on_load)
 	{
 		if (filename.empty())
 		{
@@ -120,7 +119,11 @@ namespace vcc::cartridges::gmc
 			{
 				bus_->reset();
 			}
+
+			return true;
 		}
+
+		return false;
 	}
 
 	void gmc_cartridge_driver::eject_rom()

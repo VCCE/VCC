@@ -1,6 +1,7 @@
 #pragma once
-#include <string>
 #include "vcc/utils/persistent_value_section_store.h"
+#include "vcc/bus/expansion_port_ui.h"
+#include <string>
 
 
 namespace vcc::cartridges::multipak
@@ -14,23 +15,32 @@ namespace vcc::cartridges::multipak
 	{
 	public:
 
-		/// @brief Type alias of the value store used to serialize the configuration.
-		using value_store_type = ::vcc::utils::persistent_value_section_store;
+		/// @brief Defines the type used to hold a variable length string.
+		using string_type = std::string;
 		/// @brief Type alias for file paths.
 		using path_type = std::filesystem::path;
 		/// @brief Type alias for slot indexes and identifiers.
 		using slot_id_type = std::size_t;
-		/// @brief Defines the type used to hold a variable length string.
-		using string_type = std::string;
+		/// @brief Type alias for the component providing user interface services to the
+		/// cartridge plugin.
+		using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
+		/// @brief Type alias of the value store used to serialize the configuration.
+		using value_store_type = ::vcc::utils::persistent_value_section_store;
 
 
 	public:
 
 		/// @brief Construct a Multi-Pak Configuration.
 		/// 
+		/// @param ui A pointer to the UI services interface.
 		/// @param path The path fo the configuration file
 		/// @param section The section in the configuration file to store the values.
-		multipak_configuration(path_type path, string_type section);
+		/// 
+		/// @throws std::invalid_argument if `ui` is null.
+		multipak_configuration(
+			std::shared_ptr<expansion_port_ui_type> ui,
+			path_type path,
+			string_type section);
 
 		/// @brief Sets the last path accessed.
 		/// 
@@ -84,6 +94,8 @@ namespace vcc::cartridges::multipak
 
 	private:
 
+		/// @brief The expansion port UI service provider.
+		const std::shared_ptr<expansion_port_ui_type> ui_;
 		/// @brief The value store that manages serializing the configuration values.
 		value_store_type value_store_;
 	};

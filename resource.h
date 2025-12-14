@@ -413,7 +413,8 @@
 #define ID_IRQ                          40023
 #define ID_FIRQ                         40024
 #define ID_NMI                          40025
-#define ID_CARTRIDGE_INSERT             40026
+#define ID_INSERT_DEVICE_CARTRIDGE      40026
+#define ID_INSERT_ROMPAK_CARTRIDGE      40027
 #define ID_FILE_LOAD                    40028
 #define ID_SAVE_CONFIG                  40029
 #define ID_CARTS_EJECT                  40030
@@ -436,7 +437,7 @@
 #define ID_MISC_CONFIG                  40055
 #define ID_TAPE_CONFIG                  40056
 #define ID_BITBANGER_CONFIG             40057
-#define ID_CARTRIDGE_EJECT              40060
+#define ID_EJECT_CARTRIDGE              40060
 #define ID_CONTROL_HARD_RESET           40061
 #define ID_CONTROL_SOFT_RESET           40062
 #define ID_CONTROL_TOGGLE_DISPLAY_TYPE  40063

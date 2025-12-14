@@ -182,6 +182,9 @@ namespace vcc::cartridges::multipak
 		/// @inheritdoc
 		void select_and_insert_cartridge(slot_id_type slot_id) override;
 
+		/// @inheritdoc
+		void select_and_insert_rompak(slot_id_type slot_id) override;
+
 		/// @brief Load and insert a cartridge.
 		/// 
 		/// Loads a cartridge by filename and insert it into a specific slot.
@@ -215,10 +218,12 @@ namespace vcc::cartridges::multipak
 			menu_item_id_type select;
 			/// @brief Select the slot as the active/startup slot.
 			menu_item_id_type select_and_reset;
-			/// @brief Insert a cartridge into the slot.
-			menu_item_id_type insert;
 			/// @brief Eject a cartridge from a slot.
 			menu_item_id_type eject;
+			/// @brief Insert a ROM Pak Cartridge into the slot.
+			menu_item_id_type insert_rompak;
+			/// @brief Insert a Device Cartridge into the slot.
+			menu_item_id_type insert_cartridge;
 		};
 
 		/// @brief Defines the identifiers for menu options.
@@ -253,22 +258,32 @@ namespace vcc::cartridges::multipak
 			/// @brief Select slot 4 as the active/startup slot.
 			static const menu_item_id_type select_slot_4_and_reset = 9;
 
-			/// @brief Insert cartridge into slot 1
-			static const menu_item_id_type insert_into_slot_1 = 10;
-			/// @brief Insert cartridge into slot 2
-			static const menu_item_id_type insert_into_slot_2 = 11;
-			/// @brief Insert cartridge into slot 3
-			static const menu_item_id_type insert_into_slot_3 = 12;
-			/// @brief Insert cartridge into slot 4
-			static const menu_item_id_type insert_into_slot_4 = 13;
 			/// @brief Eject cartridge from slot 1
-			static const menu_item_id_type eject_slot_1 = 14;
+			static const menu_item_id_type eject_slot_1 = 10;
 			/// @brief Eject cartridge from slot 2
-			static const menu_item_id_type eject_slot_2 = 15;
+			static const menu_item_id_type eject_slot_2 = 11;
 			/// @brief Eject cartridge from slot 3
-			static const menu_item_id_type eject_slot_3 = 16;
+			static const menu_item_id_type eject_slot_3 = 12;
 			/// @brief Eject cartridge from slot 4
-			static const menu_item_id_type eject_slot_4 = 17;
+			static const menu_item_id_type eject_slot_4 = 13;
+
+			/// @brief Insert cartridge into slot 1
+			static const menu_item_id_type insert_rompak_into_slot_1 = 15;
+			/// @brief Insert cartridge into slot 2
+			static const menu_item_id_type insert_rompak_into_slot_2 = 16;
+			/// @brief Insert cartridge into slot 3
+			static const menu_item_id_type insert_rompak_into_slot_3 = 17;
+			/// @brief Insert cartridge into slot 4
+			static const menu_item_id_type insert_rompak_into_slot_4 = 18;
+
+			/// @brief Insert cartridge into slot 1
+			static const menu_item_id_type insert_cartridge_into_slot_1 = 20;
+			/// @brief Insert cartridge into slot 2
+			static const menu_item_id_type insert_cartridge_into_slot_2 = 21;
+			/// @brief Insert cartridge into slot 3
+			static const menu_item_id_type insert_cartridge_into_slot_3 = 22;
+			/// @brief Insert cartridge into slot 4
+			static const menu_item_id_type insert_cartridge_into_slot_4 = 23;
 		};
 
 		/// @brief Defines details for managing the menu items of inserted cartridges.

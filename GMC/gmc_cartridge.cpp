@@ -18,8 +18,6 @@
 #include "gmc_cartridge.h"
 #include "resource.h"
 #include "vcc/ui/menu/menu_builder.h"
-#include "vcc/common/DialogOps.h"
-#include "vcc/utils/persistent_value_store.h"
 #include "vcc/utils/winapi.h"
 #include "vcc/utils/filesystem.h"
 #include <Windows.h>
@@ -31,16 +29,23 @@ namespace vcc::cartridges::gmc
 
 	gmc_cartridge::gmc_cartridge(
 		std::shared_ptr<expansion_port_host_type> host,
+		std::shared_ptr<expansion_port_ui_type> ui,
 		std::unique_ptr<expansion_port_bus_type> bus,
 		HINSTANCE module_instance)
 		:
 		host_(move(host)),
+		ui_(move(ui)),
 		module_instance_(module_instance),
 		driver_(move(bus))
 	{
 		if (host_ == nullptr)
 		{
 			throw std::invalid_argument("Cannot construct Game Master Cartridge. The host pointer is null.");
+		}
+
+		if (ui_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Game Master Cartridge. UI Service is null.");
 		}
 
 		if (module_instance_ == nullptr)
@@ -69,35 +74,22 @@ namespace vcc::cartridges::gmc
 
 	void gmc_cartridge::menu_item_clicked(menu_item_id_type menu_item_id)
 	{
-		::vcc::utils::persistent_value_store settings(host_->configuration_path());
-
 		if (menu_item_id == menu_item_ids::select_rom)
 		{
-			FileDialog dlg;
-
-			dlg.setFilter("ROM Pak (*.rom; *.ccc; *.pak)\0*.rom;*.ccc;*.pak\0\0");
-			dlg.setDefExt("rom");
-			dlg.setTitle("Select ROM for Game Master Cartridge");
-			if (!dlg.show())
-			{
-				return;
-			}
-
-			const auto selected_file(dlg.path());
-
-			settings.write(
-				configuration::section,
-				configuration::keys::rom_filename,
-				selected_file);
-
-			driver_.load_rom(selected_file, true);
+			::vcc::utils::select_rompak_cartridge_file(
+				ui_->app_window(),
+				"Select ROM Image for Game Master Cartridge",
+				ui_->last_accessed_rompak_path(),
+				std::bind(&gmc_cartridge::load_selected_rom, this, std::placeholders::_1));
 
 			return;
 		}
 
 		if (menu_item_id == menu_item_ids::remove_rom)
 		{
-			settings.remove(configuration::section, configuration::keys::rom_filename);
+			value_store_type(host_->configuration_path()).remove(
+				configuration::section,
+				configuration::keys::rom_filename);
 
 			driver_.eject_rom();
 		}
@@ -111,6 +103,24 @@ namespace vcc::cartridges::gmc
 			.add_submenu_item(menu_item_ids::select_rom, "Insert ROM")
 			.add_submenu_item(menu_item_ids::remove_rom, "Eject ROM", nullptr, !driver_.has_rom())
 			.release_items();
+	}
+
+
+	gmc_cartridge::load_rom_status_type gmc_cartridge::load_selected_rom(const path_type& filename)
+	{
+		if (const auto result(driver_.load_rom(filename, true)); result)
+		{
+			value_store_type(host_->configuration_path()).write(
+				configuration::section,
+				configuration::keys::rom_filename,
+				filename);
+
+			ui_->last_accessed_rompak_path(filename.parent_path());
+
+			return load_rom_status_type::success;
+		}
+
+		return load_rom_status_type::general_load_failure;
 	}
 
 }

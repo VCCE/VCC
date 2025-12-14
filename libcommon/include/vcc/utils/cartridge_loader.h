@@ -52,6 +52,8 @@ namespace vcc::utils
 	{
 		/// @brief The cartridge was loaded successfully.
 		success,
+		/// @brief The cartridge failed to load for an unspecified reason.
+		general_load_failure,
 		/// @brief The cartridge is a shared library and is already loaded.
 		already_loaded,
 		/// @brief The cartridge file cannot be opened.
@@ -165,18 +167,33 @@ namespace vcc::utils
 	/// @return A string containing a description of the error.
 	[[nodiscard]] LIBCOMMON_EXPORT std::string load_error_string(cartridge_loader_status status);
 
-	/// @brief Selects a cartridge file 
+	/// @brief Selects a ROM Pak Cartridge file 
 	/// 
-	/// Opens a file select dialog and invokes a callback function if one is selected.
+	/// Opens a file select dialog that lets the user select a ROM Pak file and invokes a
+	/// callback function if one is selected.
 	/// 
 	/// @param parent_window The parent or owner window of the file selection dialog.
 	/// @param title The title of the dialog to present to the user.
-	/// @param initial_path The directory to open.
+	/// @param initial_path The directory containing the Device Cartridges.
 	/// @param execute_load A callback function that will be invoked if a file is selected.
-	LIBCOMMON_EXPORT void select_cartridge_file(
+	LIBCOMMON_EXPORT void select_rompak_cartridge_file(
 		HWND parent_window,
 		const std::string& title,
 		const std::filesystem::path& initial_path,
-		const std::function<cartridge_loader_status(const std::string&)>& execute_load);
+		const std::function<cartridge_loader_status(const std::filesystem::path&)>& execute_load);
 
+	/// @brief Selects a Device Cartridge file 
+	/// 
+	/// Opens a file select dialog that lets the user select a Device Cartridge file and
+	/// invokes a callback function if one is selected.
+	/// 
+	/// @param parent_window The parent or owner window of the file selection dialog.
+	/// @param title The title of the dialog to present to the user.
+	/// @param initial_path The directory containing the Device Cartridges.
+	/// @param execute_load A callback function that will be invoked if a file is selected.
+	LIBCOMMON_EXPORT void select_device_cartridge_file(
+		HWND parent_window,
+		const std::string& title,
+		const std::filesystem::path& initial_path,
+		const std::function<cartridge_loader_status(const std::filesystem::path&)>& execute_load);
 }

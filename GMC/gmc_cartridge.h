@@ -17,6 +17,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "gmc_cartridge_driver.h"
+#include "vcc/utils/cartridge_loader.h"
+#include "vcc/utils/persistent_value_store.h"
 #include "vcc/bus/cartridge.h"
 #include "vcc/bus/expansion_port_host.h"
 #include "vcc/bus/expansion_port_ui.h"
@@ -37,14 +39,23 @@ namespace vcc::cartridges::gmc
 	{
 	public:
 
-		/// @brief Type alias for the component acting as the expansion bus the cartridge plugin
-		/// is connected to.
-		using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 		/// @brief Type alias for the component providing global system services to the
 		/// cartridge plugin.
 		using expansion_port_host_type = ::vcc::bus::expansion_port_host;
+		/// @brief Type alias for the component providing user interface services to the
+		/// cartridge plugin.
+		using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
+		/// @brief Type alias for the component acting as the expansion bus the cartridge plugin
+		/// is connected to.
+		using expansion_port_bus_type = ::vcc::bus::expansion_port_bus;
 		/// @brief Type alias for the component emulating the Game Master Cartridge hardware.
 		using driver_type = ::vcc::cartridges::gmc::gmc_cartridge_driver;
+		/// @brief Type alias for file paths.
+		using path_type = std::filesystem::path;
+		/// @brief Type alias for the store used to manage configuration values.
+		using value_store_type = ::vcc::utils::persistent_value_store;
+		/// @brief Type alias for status values returned when loading and inserting a ROM image.
+		using load_rom_status_type = ::vcc::utils::cartridge_loader_status;
 
 
 	public:
@@ -52,14 +63,17 @@ namespace vcc::cartridges::gmc
 		/// @brief Construct the cartridge.
 		/// 
 		/// @param host A pointer to the host services interface.
+		/// @param ui A pointer to the UI services interface.
 		/// @param bus A pointer to the bus interface.
 		/// @param module_instance A handle to the instance of the module containing the
 		/// GMC resources.
 		/// 
 		/// @throws std::invalid_argument if `host` is null.
+		/// @throws std::invalid_argument if `ui` is null.
 		/// @throws std::invalid_argument if `module_instance` is null.
 		gmc_cartridge(
 			std::shared_ptr<expansion_port_host_type> host,
+			std::shared_ptr<expansion_port_ui_type> ui,
 			std::unique_ptr<expansion_port_bus_type> bus,
 			HINSTANCE module_instance);
 
@@ -77,6 +91,16 @@ namespace vcc::cartridges::gmc
 
 		/// @inheritdoc
 		void menu_item_clicked(menu_item_id_type menu_item_id) override;
+
+
+	private:
+
+		/// @brief Loads a ROM image and set in the GMC.
+		/// 
+		/// @param filename The full path to the ROM image.
+		/// 
+		/// @return The status/error code of the load operation.
+		load_rom_status_type load_selected_rom(const path_type& filename);
 
 
 	private:
@@ -113,6 +137,8 @@ namespace vcc::cartridges::gmc
 
 		/// @brief The expansion port host.
 		const std::shared_ptr<expansion_port_host_type> host_;
+		/// @brief The expansion port UI service provider.
+		const std::shared_ptr<expansion_port_ui_type> ui_;
 		/// @brief The handle to the module instance containing the cartridges resources.
 		const HINSTANCE module_instance_;
 		/// @brief The driver emulating the Game Master Cartridge hardware.

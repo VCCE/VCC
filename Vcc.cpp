@@ -86,7 +86,6 @@ using namespace VCC;
 static HANDLE hout=nullptr;
 
 SystemState EmuState;
-static bool DialogOpen=false;
 static unsigned char AutoStart=1;
 static unsigned char Qflag=0;
 static unsigned char Pflag=0;
@@ -102,7 +101,6 @@ void SoftReset();
 void LoadIniFile();
 void SaveConfig();
 unsigned __stdcall EmuLoop(HANDLE hEvent);
-unsigned __stdcall CartLoad(void *);
 void (*CPUInit)()=nullptr;
 int  (*CPUExec)( int)=nullptr;
 void (*CPUReset)()=nullptr;
@@ -118,6 +116,9 @@ void raise_saved_keys();
 void SetupClock();
 HMENU GetConfMenu();
 void CALLBACK update_status(HWND, UINT, UINT_PTR, DWORD);
+static void InsertDeviceCartridge();
+static void InsertRomPakCartridge();
+static void InsertCartridge(_beginthreadex_proc_type proc);
 
 // Globals
 static 	HANDLE hEMUThread ;
@@ -314,10 +315,12 @@ void UpdateCartridgeMenu(HMENU menu)
 		// HACK: We subtract first_cartridge_menu_id from the id here because it gets 
 		// added to each of the id's in the item list to virtualize them. Since this
 		// id shouldn't be virtualized we hack it here to cheat,
-		builder.add_submenu_item(ID_CARTRIDGE_EJECT - first_cartridge_menu_id, "Eject " + name);
+		builder.add_submenu_item(ID_EJECT_CARTRIDGE - first_cartridge_menu_id, "Eject " + name);
 	}
 	// HACK: See above comment.
-	builder.add_submenu_item(ID_CARTRIDGE_INSERT - first_cartridge_menu_id, "Insert Cartridge or ROM Pak");
+	builder.add_submenu_item(ID_INSERT_ROMPAK_CARTRIDGE - first_cartridge_menu_id, "Insert ROM Pak Cartridge");
+	// HACK: See above comment.
+	builder.add_submenu_item(ID_INSERT_DEVICE_CARTRIDGE - first_cartridge_menu_id, "Insert Device Cartridge");
 
 	if (const auto& menu_items(PakGetMenuItems()); !menu_items.empty())
 	{
@@ -385,18 +388,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			wmId    = LOWORD(wParam);
 			wmEvent = HIWORD(wParam);
 
-			// Parse the menu selections:
-			
-			if (wmId == ID_CARTRIDGE_INSERT)
-			{
-				LoadPack();
-			}
-			if (wmId == ID_CARTRIDGE_EJECT)
-			{
-				UnloadPack();
-			}
-
-
 			// Check if ID is in cartridge menu range
 			if (wmId >= first_cartridge_menu_id && wmId <= last_cartridge_menu_id)
 			{
@@ -404,8 +395,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 
+			// Parse the menu selections:
 			switch (wmId)
 			{	
+				case ID_INSERT_DEVICE_CARTRIDGE:
+					InsertDeviceCartridge();
+					break;
+
+				case ID_INSERT_ROMPAK_CARTRIDGE:
+					InsertRomPakCartridge();
+					break;
+
+				case ID_EJECT_CARTRIDGE:
+					UnloadPack();
+					break;
+
 				case IDM_USER_WIKI:
 					ShellExecute(nullptr, "open",
 								 "https://github.com/VCCE/VCC/wiki/UserGuide",
@@ -1168,25 +1172,6 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 	return 0;
 }
 
-void LoadPack()
-{
-	unsigned threadID;
-	if (DialogOpen)
-		return;
-	DialogOpen=true;
-	_beginthreadex( nullptr, 0, &CartLoad, CreateEvent( nullptr, FALSE, FALSE, nullptr ), 0, &threadID );
-}
-
-unsigned __stdcall CartLoad(void* /*Dummy*/)
-{
-	SetThreadDescription(GetCurrentThread(), L"** Cartridge Loader UI Thread");
-
-	PakLoadCartridgeUI();
-	EmuState.EmulationRunning=TRUE;
-	DialogOpen=false;
-
-	return 0;
-}
 
 void FullScreenToggle()
 {
@@ -1225,3 +1210,40 @@ bool IsShiftKeyDown()
   return (GetKeyState(VK_SHIFT) & 0x8000) != 0;
 }
 
+
+
+static ::vcc::utils::cartridge_loader_status InsertCatridge(
+	const std::filesystem::path& filename,
+	bool save_last_path)
+{
+	const auto result(PakLoadCartridge(filename.string().c_str()));
+
+	if (result == vcc::utils::cartridge_loader_status::success && save_last_path)
+	{
+		PakSetLastAccessedRomPakPath(filename.parent_path());
+	}
+
+	return result;
+};
+
+static void InsertRomPakCartridge()
+{
+	SetThreadDescription(GetCurrentThread(), L"** ROM Pak Cartridge Loader UI Thread");
+
+	::vcc::utils::select_rompak_cartridge_file(
+		GetActiveWindow(),
+		"Insert ROM Pak Cartridge",
+		PakGetLastAccessedRomPakPath(),
+		std::bind(InsertCatridge, std::placeholders::_1, true));
+}
+
+static void InsertDeviceCartridge()
+{
+	SetThreadDescription(GetCurrentThread(), L"** Device Cartridge Loader UI Thread");
+
+	::vcc::utils::select_device_cartridge_file(
+		GetActiveWindow(),
+		"Insert Device Cartridge",
+		PakGetSystemCartridgePath(),
+		std::bind(InsertCatridge, std::placeholders::_1, false));
+}

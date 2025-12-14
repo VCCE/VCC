@@ -16,6 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "../resource/resource.h"
+#include "vcc/ui/select_file_dialog.h"
 #include "vcc/bus/cartridges/rom_cartridge.h"
 #include "vcc/bus/cartridge_factory.h"
 #include "vcc/utils/cartridge_loader.h"
@@ -168,46 +169,70 @@ namespace vcc::utils
 		}
 	}
 
-	void select_cartridge_file(
+	void select_device_cartridge_file(
 		HWND parent_window,
 		const std::string& title,
 		const std::filesystem::path& initial_path,
-		const std::function<cartridge_loader_status(const std::string&)>& execute_load)
+		const std::function<cartridge_loader_status(const std::filesystem::path&)>& execute_load)
 	{
-		FileDialog dlg;
+		::vcc::ui::select_file_dialog dlg;
 
-		// TODO-CHET: This is only needed because the file dialog only maintains a
-		// pointer to the string instead of a copy of it. Once the new file dialog
-		// is added remove this.
-		const auto initial_path_str(initial_path.string());
+		dlg.set_title(title);
+		dlg.set_initial_directory(initial_path);
+		dlg.set_selection_filter({ {"Device Cartridge Files", {"*.dll"} } });
+		dlg.append_flags(OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR);
 
-		dlg.setTitle(title.c_str());
-		dlg.setInitialDir(initial_path_str.c_str());
-		dlg.setFilter(
-			"All Cartridge and ROM Pak Types (*.dll; *.rom; *.ccc; *.pak)\0*.dll;*.ccc;*.rom;*.pak\0"
-			"ROM Pak (*.rom; *.ccc; *.pak)\0*.rom;*.ccc;*.pak\0"
-			"Functional Cartridge (*.dll)\0*.dll\0"
-			"\0");
-		dlg.setFlags(OFN_FILEMUSTEXIST);
-		if (dlg.show(0, parent_window))
+		if (dlg.do_modal_load_dialog(parent_window))
 		{
-			if (const auto mount_result(execute_load(dlg.path()));
+			if (const auto mount_result(execute_load(dlg.selected_path()));
 				mount_result != cartridge_loader_status::success)
 			{
 				auto error_string(
 					::vcc::utils::load_error_string(mount_result)
 					+ "\n\n"
-					+ ::vcc::utils::get_filename(dlg.path()));
+					+ dlg.selected_path().filename().string());
 
-				MessageBox(parent_window, error_string.c_str(), "Unable to load cartridge", MB_OK | MB_ICONERROR);
+				MessageBox(parent_window, error_string.c_str(), "Unable to load device cartridge", MB_OK | MB_ICONERROR);
 			}
 		}
 	}
 
 
+	void select_rompak_cartridge_file(
+		HWND parent_window,
+		const std::string& title,
+		const std::filesystem::path& initial_path,
+		const std::function<cartridge_loader_status(const std::filesystem::path&)>& execute_load)
+	{
+		::vcc::ui::select_file_dialog dlg;
+
+		dlg.set_title(title);
+		dlg.set_initial_directory(initial_path);
+		dlg.set_selection_filter({ {"ROM Images", {"*.rom", "*.ccc", "*.pak"} } });
+		dlg.append_flags(OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR);
+
+		if (dlg.do_modal_load_dialog(parent_window))
+		{
+			if (const auto mount_result(execute_load(dlg.selected_path()));
+				mount_result != cartridge_loader_status::success)
+			{
+				auto error_string(
+					::vcc::utils::load_error_string(mount_result)
+					+ "\n\n"
+					+ dlg.selected_path().filename().string());
+
+				// TODO-CHET: There should be a custom error message. Maybe a cartridge
+				// add a loader class provided by the host or ui service provider.
+				MessageBox(parent_window, error_string.c_str(), "Unable to load ROM Pak", MB_OK | MB_ICONERROR);
+			}
+		}
+	}
+
 	std::string load_error_string(cartridge_loader_status status)
 	{
 		static const std::map<cartridge_loader_status, UINT> string_id_map = {
+			
+			{ cartridge_loader_status::general_load_failure, IDS_ERROR_CARTRIDGE_GENERAL_LOAD_FAILURE},
 			{ cartridge_loader_status::already_loaded, IDS_ERROR_CARTRIDGE_ALREADY_LOADED},
 			{ cartridge_loader_status::cannot_open, IDS_ERROR_CARTRIDGE_CANNOT_OPEN},
 			{ cartridge_loader_status::not_found, IDS_ERROR_CARTRIDGE_NOT_FOUND },

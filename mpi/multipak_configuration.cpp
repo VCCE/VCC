@@ -4,20 +4,29 @@
 namespace vcc::cartridges::multipak
 {
 
-	multipak_configuration::multipak_configuration(path_type path, string_type section)
-		: value_store_(std::move(path), move(section))
+	multipak_configuration::multipak_configuration(
+		std::shared_ptr<expansion_port_ui_type> ui,
+		path_type path,
+		string_type section)
+		: 
+		ui_(move(ui)),
+		value_store_(std::move(path), move(section))
 	{
+		if (ui_ == nullptr)
+		{
+			throw std::invalid_argument("Cannot construct Multi-Pak Cartridge. UI is null.");
+		}
 	}
 
 
 	multipak_configuration::path_type multipak_configuration::last_accessed_path() const
 	{
-		return value_store_.read("paths.cartridges");
+		return ui_->last_accessed_rompak_path();
 	}
 
 	void multipak_configuration::last_accessed_path(const path_type& path)
 	{
-		value_store_.write("paths.cartridges", path);
+		ui_->last_accessed_rompak_path(path);
 	}
 
 

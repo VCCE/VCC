@@ -41,9 +41,21 @@ namespace vcc::cartridges::multipak
 		}
 
 		/// @inheritdoc
-		HWND app_window() const noexcept override
+		[[nodiscard]] HWND app_window() const noexcept override
 		{
 			return host_ui_->app_window();
+		}
+
+		/// @inheritdoc
+		[[nodiscard]] path_type last_accessed_rompak_path() const override
+		{
+			return host_ui_->last_accessed_rompak_path();
+
+		}
+		/// @inheritdoc
+		void last_accessed_rompak_path(path_type path) const override
+		{
+			host_ui_->last_accessed_rompak_path(path);
 		}
 
 
