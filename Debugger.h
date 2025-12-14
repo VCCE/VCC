@@ -19,7 +19,7 @@
 #pragma once
 #include "DebuggerUtils.h"
 #include "MachineDefs.h"
-#include <vcc/core/utils/critical_section.h>
+#include <vcc/core/critical_section.h>
 #include <string>
 #include <vector>
 #include <functional>
@@ -30,7 +30,7 @@
 #include "OpDecoder.h"
 
 
-namespace VCC { namespace Debugger
+namespace VCC::Debugger
 {
 
 	struct Client
@@ -173,4 +173,4 @@ namespace VCC { namespace Debugger
 		bool							Break_Enabled_TF = false;
 		bool							Halt_Enabled_TF = false;
 	};
-} }
+}

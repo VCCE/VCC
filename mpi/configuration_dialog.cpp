@@ -18,9 +18,9 @@
 #include "configuration_dialog.h"
 #include "mpi.h"
 #include "resource.h"
-#include <vcc/common/DialogOps.h>
-#include <vcc/core/utils/critical_section.h>
-#include <vcc/core/utils/filesystem.h>
+#include <vcc/core/DialogOps.h>
+#include <vcc/core/critical_section.h>
+#include <vcc/core/filesystem.h>
 
 namespace
 {

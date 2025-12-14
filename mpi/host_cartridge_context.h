@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/bus/legacy_cartridge_definitions.h>
 
 // Define the CPAK interface in yet another place but call it something else.
 

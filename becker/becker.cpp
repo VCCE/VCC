@@ -7,10 +7,10 @@
 #include "becker.h"
 #include "resource.h" 
 #include "../CartridgeMenu.h"
-#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/bus/legacy_cartridge_definitions.h>
 #include <vcc/core/limits.h>
-#include <vcc/common/logger.h>
-#include <vcc/common/FileOps.h>
+#include <vcc/core/logger.h>
+#include <vcc/core/FileOps.h>
 
 // socket
 static SOCKET dwSocket = 0;

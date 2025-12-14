@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "cartridge_slot.h"
-#include <vcc/core/cartridges/null_cartridge.h>
+#include <vcc/bus/null_cartridge.h>
 
 
 namespace vcc::modules::mpi

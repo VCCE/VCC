@@ -18,8 +18,8 @@ This file is part of VCC (Virtual Color Computer).
 #include <Windows.h>
 #include <stdio.h>
 #include "resource.h" 
-#include <vcc/common/FileOps.h>
-#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/FileOps.h>
+#include <vcc/bus/legacy_cartridge_definitions.h>
 #include <vcc/core/limits.h>
 
 static HINSTANCE gModuleInstance;

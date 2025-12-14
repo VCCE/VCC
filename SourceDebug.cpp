@@ -23,7 +23,7 @@
 #include "DebuggerUtils.h"
 #include "defines.h"
 #include "resource.h"
-#include <vcc/common/DialogOps.h>
+#include <vcc/core/DialogOps.h>
 #include <map>
 #include <fstream>
 #include <string>
@@ -36,8 +36,8 @@
 #include <Richedit.h>
 
 
-namespace VCC { namespace Debugger { namespace UI { namespace
-{
+namespace VCC::Debugger::UI { 
+    namespace {
 	HWND SourceDebugWindow = nullptr;
 	HWND hWndSourceDebug;
 	WNDPROC oldEditProc;
@@ -606,7 +606,7 @@ namespace VCC { namespace Debugger { namespace UI { namespace
 		return FALSE;
 	}
 
-} } } }
+} }
 
 
 void VCC::Debugger::UI::OpenSourceDebugWindow(HINSTANCE instance, HWND parent)

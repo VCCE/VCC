@@ -21,12 +21,12 @@ This file is part of VCC (Virtual Color Computer).
 #include <iostream>
 #include "resource.h" 
 #include "IdeBus.h"
-#include <vcc/devices/rtc/cloud9.h>
+#include <vcc/devices/cloud9.h>
 #include "logger.h"
-#include <vcc/common/FileOps.h>
+#include <vcc/core/FileOps.h>
 #include "../CartridgeMenu.h"
-#include <vcc/common/DialogOps.h>
-#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/core/DialogOps.h>
+#include <vcc/bus/legacy_cartridge_definitions.h>
 #include <vcc/core/limits.h>
 
 static char FileName[MAX_PATH] { 0 };

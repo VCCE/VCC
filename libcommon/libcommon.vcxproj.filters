@@ -1,170 +1,118 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Header Files\common">
-      <UniqueIdentifier>{e3605b96-8b07-4c6f-8e0c-0c0f7ef7e1f4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\common">
-      <UniqueIdentifier>{e1fb644c-d8fe-42cf-a190-8a3037bb20f4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\core">
-      <UniqueIdentifier>{6ca923e2-199b-44f0-8260-de0e62abca33}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\core">
-      <UniqueIdentifier>{3338d5c7-a9a1-4858-bc0f-b0ed9fa6b918}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\core\cartridges">
-      <UniqueIdentifier>{cc0a281d-6ff8-4a04-95a0-5bef8957ba5f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\core\cartridges">
-      <UniqueIdentifier>{6344b600-e0a8-4961-8a19-7ef6249e9a3e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\core\utils">
-      <UniqueIdentifier>{f5ac3a16-8b52-47c1-a81c-d58a404a2181}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\core\detail">
-      <UniqueIdentifier>{fd029ab9-8064-4e1f-9460-edb495cf58ab}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\core\utils">
-      <UniqueIdentifier>{c3048278-09ca-471f-9cff-e11566354e5d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\devices">
-      <UniqueIdentifier>{b50b01e9-581e-4c73-8f71-43979671a294}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\devices">
-      <UniqueIdentifier>{3930ad82-f3e9-4f32-a039-b60aa3a7af94}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\devices\rtc">
-      <UniqueIdentifier>{1703911c-1a3b-40a2-8b45-cd2798b15495}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\devices\rtc">
-      <UniqueIdentifier>{7916028f-7cb9-4a17-8897-43634a51ba3d}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\DialogOps.cpp">
-      <Filter>Source Files\common</Filter>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\bus\basic_cartridge.cpp">
+      <Filter>bus</Filter>
     </ClCompile>
-    <ClCompile Include="src\Fileops.cpp">
-      <Filter>Source Files\common</Filter>
+    <ClCompile Include="src\bus\cartridge_loader.cpp">
+      <Filter>bus</Filter>
     </ClCompile>
-    <ClCompile Include="src\logger.cpp">
-      <Filter>Source Files\common</Filter>
+    <ClCompile Include="src\devices\cloud9.cpp">
+      <Filter>devices</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\cartridges\legacy_cartridge.cpp">
-      <Filter>Source Files\core\cartridges</Filter>
+    <ClCompile Include="src\core\DialogOps.cpp">
+      <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\cartridges\rom_cartridge.cpp">
-      <Filter>Source Files\core\cartridges</Filter>
+    <ClCompile Include="src\core\Fileops.cpp">
+      <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\main.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\core\filesystem.cpp">
+      <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\cartridge_loader.cpp">
-      <Filter>Source Files\core</Filter>
+    <ClCompile Include="src\core\initial_settings.cpp">
+      <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\utils\initial_settings.cpp">
-      <Filter>Source Files\core\utils</Filter>
+    <ClCompile Include="src\bus\legacy_cartridge.cpp">
+      <Filter>bus</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\utils\filesystem.cpp">
-      <Filter>Source Files\core\utils</Filter>
+    <ClCompile Include="src\bus\rom_cartridge.cpp">
+      <Filter>bus</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\utils\winapi.cpp">
-      <Filter>Source Files\core\utils</Filter>
+    <ClCompile Include="src\bus\rom_image.cpp">
+      <Filter>bus</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\cartridges\basic_cartridge.cpp">
-      <Filter>Source Files\core\cartridges</Filter>
+    <ClCompile Include="src\core\logger.cpp">
+      <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\rom_image.cpp">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\devices\rtc\cloud9.cpp">
-      <Filter>Source Files\devices\rtc</Filter>
+    <ClCompile Include="src\core\winapi.cpp">
+      <Filter>core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="resource\resource.h">
-      <Filter>Resource Files</Filter>
+    <ClInclude Include="include\vcc\bus\basic_cartridge.h">
+      <Filter>bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\common\DialogOps.h">
-      <Filter>Header Files\common</Filter>
+    <ClInclude Include="include\vcc\bus\cartridge.h">
+      <Filter>bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\common\FileOps.h">
-      <Filter>Header Files\common</Filter>
+    <ClInclude Include="include\vcc\bus\cartridge_callbacks.h">
+      <Filter>bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\common\logger.h">
-      <Filter>Header Files\common</Filter>
+    <ClInclude Include="include\vcc\bus\cartridge_loader.h">
+      <Filter>bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\cartridge.h">
-      <Filter>Header Files\core</Filter>
+    <ClInclude Include="include\vcc\devices\cloud9.h">
+      <Filter>devices</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\cartridges\legacy_cartridge.h">
-      <Filter>Header Files\core\cartridges</Filter>
+    <ClInclude Include="include\vcc\core\critical_section.h">
+      <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\cartridges\null_cartridge.h">
-      <Filter>Header Files\core\cartridges</Filter>
+    <ClInclude Include="include\vcc\core\DialogOps.h">
+      <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\cartridges\rom_cartridge.h">
-      <Filter>Header Files\core\cartridges</Filter>
+    <ClInclude Include="include\vcc\bus\exports.h">
+      <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\utils\dll_deleter.h">
-      <Filter>Header Files\core\utils</Filter>
+    <ClInclude Include="include\vcc\core\FileOps.h">
+      <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\detail\exports.h">
-      <Filter>Header Files\core\detail</Filter>
+    <ClInclude Include="include\vcc\core\filesystem.h">
+      <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\legacy_cartridge_definitions.h">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\core\limits.h">
-      <Filter>Header Files\core</Filter>
+    <ClInclude Include="include\vcc\core\initial_settings.h">
+      <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\core\interrupts.h">
-      <Filter>Header Files\core</Filter>
+      <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\cartridge_loader.h">
-      <Filter>Header Files\core</Filter>
+    <ClInclude Include="include\vcc\bus\dll_deleter.h">
+      <Filter>bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\utils\filesystem.h">
-      <Filter>Header Files\core\utils</Filter>
+    <ClInclude Include="include\vcc\bus\legacy_cartridge.h">
+      <Filter>bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\utils\initial_settings.h">
-      <Filter>Header Files\core\utils</Filter>
+    <ClInclude Include="include\vcc\bus\legacy_cartridge_definitions.h">
+      <Filter>bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\utils\winapi.h">
-      <Filter>Header Files\core\utils</Filter>
+    <ClInclude Include="include\vcc\bus\null_cartridge.h">
+      <Filter>bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\utils\critical_section.h">
-      <Filter>Header Files\core\utils</Filter>
+    <ClInclude Include="include\vcc\bus\rom_cartridge.h">
+      <Filter>bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\cartridges\basic_cartridge.h">
-      <Filter>Header Files\core\cartridges</Filter>
+    <ClInclude Include="include\vcc\bus\rom_image.h">
+      <Filter>bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\cartridge_callbacks.h">
-      <Filter>Header Files\core</Filter>
+    <ClInclude Include="include\vcc\core\limits.h">
+      <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\rom_image.h">
-      <Filter>Header Files\core</Filter>
+    <ClInclude Include="include\vcc\core\logger.h">
+      <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\devices\rtc\cloud9.h">
-      <Filter>Header Files\devices\rtc</Filter>
+    <ClInclude Include="include\vcc\core\winapi.h">
+      <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="resource\libcommon.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
+    <Filter Include="bus">
+      <UniqueIdentifier>{d04caca3-9ea4-47ba-a4dc-9eea701fed59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core">
+      <UniqueIdentifier>{c08f8de7-2daf-4b34-b6f4-7d6fb1b7a04a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="devices">
+      <UniqueIdentifier>{58ab01e8-6aca-4aab-b647-a543552a9715}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

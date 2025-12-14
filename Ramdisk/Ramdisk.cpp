@@ -18,7 +18,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "memboard.h"
 #include "defines.h"
 #include "resource.h" 
-#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/bus/legacy_cartridge_definitions.h>
 #include <Windows.h>
 
 static HINSTANCE gModuleInstance;

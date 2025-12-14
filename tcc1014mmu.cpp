@@ -26,9 +26,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include "tcc1014graphics.h"
 #include "pakinterface.h"
-#include <vcc/common/logger.h>
+#include <vcc/core/logger.h>
 #include "hd6309.h"
-#include <vcc/common/FileOps.h>
+#include <vcc/core/FileOps.h>
 
 
 static unsigned char *MemPages[1024];

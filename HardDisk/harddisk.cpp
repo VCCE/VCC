@@ -23,12 +23,12 @@ This file is part of VCC (Virtual Color Computer).
 #include<iostream>
 #include "resource.h"
 #include "cc3vhd.h"
-#include <vcc/devices/rtc/cloud9.h>
-#include <vcc/common/FileOps.h>
-#include <vcc/common/DialogOps.h>
+#include <vcc/devices/cloud9.h>
+#include <vcc/core/FileOps.h>
+#include <vcc/core/DialogOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/core/interrupts.h>
-#include <vcc/core/legacy_cartridge_definitions.h>
+#include <vcc/bus/legacy_cartridge_definitions.h>
 #include <vcc/core/limits.h>
 
 constexpr auto DEF_HD_SIZE = 132480u;

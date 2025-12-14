@@ -42,8 +42,8 @@ This file is part of VCC (Virtual Color Computer).
 #include <commdlg.h>
 #include <stdio.h>
 #include <mmsystem.h>
-#include <vcc/common/FileOps.h>
-#include <vcc/common/DialogOps.h>
+#include <vcc/core/FileOps.h>
+#include <vcc/core/DialogOps.h>
 #include "defines.h"
 #include "resource.h"
 #include "joystickinput.h"
@@ -66,7 +66,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "Cassette.h"
 
 #include "CommandLine.h"
-#include <vcc/common/logger.h>
+#include <vcc/core/logger.h>
 #include <vcc/core/limits.h>
 #include "memdump.h"
 
