@@ -35,14 +35,16 @@ namespace vcc::cartridges::multipak
 		{
 			UINT edit_box_id;
 			UINT radio_button_id;
-			UINT insert_button_id;
+			UINT eject_button_id;
+			UINT insert_rompak_button_id;
+			UINT insert_device_button_id;
 		};
 
 		const std::array<cartridge_ui_element_identifiers, 4> gSlotUiElementIds = { {
-			{ IDC_EDIT1, IDC_SELECT1, IDC_INSERT1 },
-			{ IDC_EDIT2, IDC_SELECT2, IDC_INSERT2 },
-			{ IDC_EDIT3, IDC_SELECT3, IDC_INSERT3 },
-			{ IDC_EDIT4, IDC_SELECT4, IDC_INSERT4 }
+			{ IDC_EDIT1, IDC_SELECT_SLOT1, IDC_EJECT_SLOT1, IDC_INSERT_ROMPAK_INTO_SLOT1, IDC_INSERT_DEVICE_INTO_SLOT1 },
+			{ IDC_EDIT2, IDC_SELECT_SLOT2, IDC_EJECT_SLOT2, IDC_INSERT_ROMPAK_INTO_SLOT2, IDC_INSERT_DEVICE_INTO_SLOT2 },
+			{ IDC_EDIT3, IDC_SELECT_SLOT3, IDC_EJECT_SLOT3, IDC_INSERT_ROMPAK_INTO_SLOT3, IDC_INSERT_DEVICE_INTO_SLOT3 },
+			{ IDC_EDIT4, IDC_SELECT_SLOT4, IDC_EJECT_SLOT4, IDC_INSERT_ROMPAK_INTO_SLOT4, IDC_INSERT_DEVICE_INTO_SLOT4 }
 		} };
 
 	}
@@ -129,11 +131,10 @@ namespace vcc::cartridges::multipak
 	}
 
 
-	void configuration_dialog::set_selected_slot(slot_id_type slot)
+	void configuration_dialog::set_selected_slot(slot_id_type slot_id)
 	{
-		// TODO-CHET: Maube move this to the callsite or when the dialog closes or at least make it optional?
-		controller_.switch_to_slot(slot, false);
-		configuration_->selected_slot(slot);
+		controller_.switch_to_slot(slot_id, false);
+		configuration_->selected_slot(slot_id);
 
 		update_selected_slot();
 	}
@@ -152,43 +153,25 @@ namespace vcc::cartridges::multipak
 			0,
 			reinterpret_cast<LPARAM>(controller_.get_cartridge_slot_name(slot).c_str()));
 
-		SendDlgItemMessage(
-			dialog_handle_,
-			gSlotUiElementIds[slot].insert_button_id,
-			WM_SETTEXT,
-			0,
-			reinterpret_cast<LPARAM>(controller_.is_cartridge_slot_empty(slot) ? ">" : "X"));
+		EnableWindow(
+			GetDlgItem(dialog_handle_, gSlotUiElementIds[slot].eject_button_id),
+			!controller_.is_cartridge_slot_empty(slot));
 	}
 
-
-	void configuration_dialog::eject_or_select_new_cartridge(slot_id_type slot)
+	void configuration_dialog::eject_cartridge(slot_id_type slot_id)
 	{
-		// FIXME-CHET: This does not seem to be a problem any more with recent changes.
-		// Find a way to reproduce on old version and validate. The emulator or multipak
-		// should check to see if the plugin being ejected is busy before ejecting it.
-		// 
-		// Disable Slot changes if parent is disabled.  This prevents user using the
-		// config dialog to eject a cartridge while VCC main is using a modal dialog
-		// Otherwise user can crash VCC by unloading a disk cart while inserting a disk
-		//if (!IsWindowEnabled(parent_handle_))
-		//{
-		//	MessageBox(
-		//		dialog_handle_,
-		//		"Cannot change slot content with dialog open",
-		//		"ERROR",
-		//		MB_ICONERROR);
-		//	return;
-		//}
+		controller_.eject_cartridge(slot_id, true, true);
+		configuration_->slot_path(slot_id, {});
+	}
 
-		if (!controller_.is_cartridge_slot_empty(slot))
-		{
-			controller_.eject_cartridge(slot, true, true);
-			configuration_->slot_path(slot, {});
-		}
-		else
-		{
-			controller_.select_and_insert_cartridge(slot);
-		}
+	void configuration_dialog::insert_rompak_cartridge(slot_id_type slot_id)
+	{
+		controller_.select_and_insert_rompak_cartridge(slot_id);
+	}
+
+	void configuration_dialog::insert_device_cartridge(slot_id_type slot_id)
+	{
+		controller_.select_and_insert_device_cartridge(slot_id);
 	}
 
 	INT_PTR CALLBACK configuration_dialog::callback_procedure(
@@ -245,29 +228,56 @@ namespace vcc::cartridges::multipak
 				bus_->reset();
 				return TRUE;
 
-			case IDC_SELECT1:
+			case IDC_SELECT_SLOT1:
 				set_selected_slot(0);
 				return TRUE;
-			case IDC_SELECT2:
+			case IDC_SELECT_SLOT2:
 				set_selected_slot(1);
 				return TRUE;
-			case IDC_SELECT3:
+			case IDC_SELECT_SLOT3:
 				set_selected_slot(2);
 				return TRUE;
-			case IDC_SELECT4:
+			case IDC_SELECT_SLOT4:
 				set_selected_slot(3);
 				return TRUE;
-			case IDC_INSERT1:
-				eject_or_select_new_cartridge(0);
+
+			case IDC_EJECT_SLOT1:
+				eject_cartridge(0);
 				return TRUE;
-			case IDC_INSERT2:
-				eject_or_select_new_cartridge(1);
+			case IDC_EJECT_SLOT2:
+				eject_cartridge(1);
 				return TRUE;
-			case IDC_INSERT3:
-				eject_or_select_new_cartridge(2);
+			case IDC_EJECT_SLOT3:
+				eject_cartridge(2);
 				return TRUE;
-			case IDC_INSERT4:
-				eject_or_select_new_cartridge(3);
+			case IDC_EJECT_SLOT4:
+				eject_cartridge(3);
+				return TRUE;
+
+			case IDC_INSERT_ROMPAK_INTO_SLOT1:
+				insert_rompak_cartridge(0);
+				return TRUE;
+			case IDC_INSERT_ROMPAK_INTO_SLOT2:
+				insert_rompak_cartridge(1);
+				return TRUE;
+			case IDC_INSERT_ROMPAK_INTO_SLOT3:
+				insert_rompak_cartridge(2);
+				return TRUE;
+			case IDC_INSERT_ROMPAK_INTO_SLOT4:
+				insert_rompak_cartridge(3);
+				return TRUE;
+
+			case IDC_INSERT_DEVICE_INTO_SLOT1:
+				insert_device_cartridge(0);
+				return TRUE;
+			case IDC_INSERT_DEVICE_INTO_SLOT2:
+				insert_device_cartridge(1);
+				return TRUE;
+			case IDC_INSERT_DEVICE_INTO_SLOT3:
+				insert_device_cartridge(2);
+				return TRUE;
+			case IDC_INSERT_DEVICE_INTO_SLOT4:
+				insert_device_cartridge(3);
 				return TRUE;
 			} // End switch LOWORD
 			break;

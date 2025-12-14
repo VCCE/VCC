@@ -56,14 +56,14 @@ namespace vcc::cartridges::multipak
 		/// @return The last path accessed.
 		[[nodiscard]] path_type last_accessed_path() const;
 
-		/// @brief Sets the active/startup slot.
+		/// @brief Sets the startup slot.
 		/// 
-		/// @param slot The new active/startup slot.
+		/// @param slot The new startup slot.
 		void selected_slot(slot_id_type slot);
 
-		/// @brief Retrieves the active/startup slot.
+		/// @brief Retrieves the startup slot.
 		/// 
-		/// @return The active/startup slot.
+		/// @return The startup slot.
 		[[nodiscard]] slot_id_type selected_slot() const;
 
 		/// @brief Sets the cartridge path for a slot.

@@ -180,10 +180,10 @@ namespace vcc::cartridges::multipak
 		void switch_to_slot(slot_id_type slot_id, bool reset) override;
 
 		/// @inheritdoc
-		void select_and_insert_cartridge(slot_id_type slot_id) override;
+		void select_and_insert_device_cartridge(slot_id_type slot_id) override;
 
 		/// @inheritdoc
-		void select_and_insert_rompak(slot_id_type slot_id) override;
+		void select_and_insert_rompak_cartridge(slot_id_type slot_id) override;
 
 		/// @brief Load and insert a cartridge.
 		/// 
@@ -214,9 +214,9 @@ namespace vcc::cartridges::multipak
 		/// on a single slot.
 		struct slot_action_command_descriptor
 		{
-			/// @brief Select the slot as the active/startup slot.
+			/// @brief Select the slot as the startup slot.
 			menu_item_id_type select;
-			/// @brief Select the slot as the active/startup slot.
+			/// @brief Select the slot as the startup slot.
 			menu_item_id_type select_and_reset;
 			/// @brief Eject a cartridge from a slot.
 			menu_item_id_type eject;
@@ -240,22 +240,22 @@ namespace vcc::cartridges::multipak
 			/// @brief Requests the Becker Port Cartridge open its settings menu.
 			static const menu_item_id_type open_settings = 1;
 
-			/// @brief Select slot 1 as the active/startup slot.
+			/// @brief Select slot 1 as the startup slot.
 			static const menu_item_id_type select_slot_1 = 2;
-			/// @brief Select slot 2 as the active/startup slot.
+			/// @brief Select slot 2 as the startup slot.
 			static const menu_item_id_type select_slot_2 = 3;
-			/// @brief Select slot 3 as the active/startup slot.
+			/// @brief Select slot 3 as the startup slot.
 			static const menu_item_id_type select_slot_3 = 4;
-			/// @brief Select slot 4 as the active/startup slot.
+			/// @brief Select slot 4 as the startup slot.
 			static const menu_item_id_type select_slot_4 = 5;
 
-			/// @brief Select slot 1 as the active/startup slot.
+			/// @brief Select slot 1 as the startup slot.
 			static const menu_item_id_type select_slot_1_and_reset = 6;
-			/// @brief Select slot 2 as the active/startup slot.
+			/// @brief Select slot 2 as the startup slot.
 			static const menu_item_id_type select_slot_2_and_reset = 7;
-			/// @brief Select slot 3 as the active/startup slot.
+			/// @brief Select slot 3 as the startup slot.
 			static const menu_item_id_type select_slot_3_and_reset = 8;
-			/// @brief Select slot 4 as the active/startup slot.
+			/// @brief Select slot 4 as the startup slot.
 			static const menu_item_id_type select_slot_4_and_reset = 9;
 
 			/// @brief Eject cartridge from slot 1

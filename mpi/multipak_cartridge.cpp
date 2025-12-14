@@ -261,14 +261,14 @@ namespace vcc::cartridges::multipak
 		case menu_item_ids::insert_rompak_into_slot_2:
 		case menu_item_ids::insert_rompak_into_slot_3:
 		case menu_item_ids::insert_rompak_into_slot_4:
-			select_and_insert_rompak(menu_item_id - menu_item_ids::insert_rompak_into_slot_1);
+			select_and_insert_rompak_cartridge(menu_item_id - menu_item_ids::insert_rompak_into_slot_1);
 			break;
 
 		case menu_item_ids::insert_cartridge_into_slot_1:
 		case menu_item_ids::insert_cartridge_into_slot_2:
 		case menu_item_ids::insert_cartridge_into_slot_3:
 		case menu_item_ids::insert_cartridge_into_slot_4:
-			select_and_insert_cartridge(menu_item_id - menu_item_ids::insert_cartridge_into_slot_1);
+			select_and_insert_device_cartridge(menu_item_id - menu_item_ids::insert_cartridge_into_slot_1);
 			break;
 		}
 	}
@@ -382,7 +382,7 @@ namespace vcc::cartridges::multipak
 		}
 	}
 
-	void multipak_cartridge::select_and_insert_rompak(slot_id_type slot_id)
+	void multipak_cartridge::select_and_insert_rompak_cartridge(slot_id_type slot_id)
 	{
 		const auto callback = [this, &slot_id](const std::filesystem::path& filename)
 			{
@@ -402,7 +402,7 @@ namespace vcc::cartridges::multipak
 			callback);
 	}
 
-	void multipak_cartridge::select_and_insert_cartridge(slot_id_type slot_id)
+	void multipak_cartridge::select_and_insert_device_cartridge(slot_id_type slot_id)
 	{
 		const auto callback = [this, &slot_id](const std::filesystem::path& filename)
 			{

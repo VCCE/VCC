@@ -81,7 +81,7 @@ namespace vcc::cartridges::multipak
 		void close();
 
 		/// @brief Updates the visual elements that show which slot is selected as the
-		/// active/startup slot.
+		/// startup slot.
 		void update_selected_slot();
 
 		/// @brief Updates the details of a slot.
@@ -95,15 +95,25 @@ namespace vcc::cartridges::multipak
 
 	private:
 
-		/// @brief Sets the active/startup slot of the Multi-Pak.
+		/// @brief Sets the startup slot of the Multi-Pak.
 		/// 
-		/// @param slot The new active/startup slot.
-		void set_selected_slot(slot_id_type slot);
+		/// @param slot_id The new startup slot.
+		void set_selected_slot(slot_id_type slot_id);
 
-		/// @brief Eject or insert a new cartridge.
+		/// @brief Eject a cartridge from specific slot.
 		/// 
-		/// @param slot The slot to eject or add the cartridge to.
-		void eject_or_select_new_cartridge(slot_id_type slot);
+		/// @param slot_id The slot to eject the cartridge from.
+		void eject_cartridge(slot_id_type slot_id);
+
+		/// @brief Insert a ROM Pak Cartridge into a specific cartridge slot.
+		/// 
+		/// @param slot_id The slot to insert the ROM Pak Cartridge into.
+		void insert_rompak_cartridge(slot_id_type slot_id);
+
+		/// @brief Insert a Device Cartridge into a specific cartridge slot.
+		/// 
+		/// @param slot_id The slot to insert the Device Cartridge into.
+		void insert_device_cartridge(slot_id_type slot_id);
 
 		/// @brief Callback procedure that processes dialog messages.
 		/// 

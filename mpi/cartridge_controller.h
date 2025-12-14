@@ -73,14 +73,14 @@ namespace vcc::cartridges::multipak
 		/// Select a Device Cartridge from a file and insert it into a specific slot.
 		/// 
 		/// @param slot_id The slot to insert the cartridge into.
-		virtual void select_and_insert_cartridge(slot_id_type slot_id) = 0;
+		virtual void select_and_insert_device_cartridge(slot_id_type slot_id) = 0;
 
 		/// @brief Select and insert a Rom Pak Cartridge.
 		/// 
 		/// Select a ROM PAk cartridge from a file and insert it into a specific slot.
 		/// 
 		/// @param slot_id The slot to insert the cartridge into.
-		virtual void select_and_insert_rompak(slot_id_type slot_id) = 0;
+		virtual void select_and_insert_rompak_cartridge(slot_id_type slot_id) = 0;
 
 		/// @brief Insert a cartridge from a slot.
 		/// 
