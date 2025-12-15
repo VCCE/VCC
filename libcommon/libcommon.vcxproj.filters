@@ -231,8 +231,8 @@
     <ClCompile Include="src\utils\noop_mutex.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\cartridge_path.cpp">
-      <Filter>Header Files\utils</Filter>
+    <ClCompile Include="src\utils\resource_location.cpp">
+      <Filter>Source Files\utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -410,7 +410,7 @@
     <ClInclude Include="include\vcc\utils\noop_mutex.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\utils\cartridge_path.h">
+    <ClInclude Include="include\vcc\utils\resource_location.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\media\disk_error_id.h">
