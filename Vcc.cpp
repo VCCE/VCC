@@ -939,6 +939,7 @@ BOOL CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 	{
 		case WM_INITDIALOG:
 			SendDlgItemMessage(hDlg,IDC_TITLE,WM_SETTEXT,0,(LPARAM)(LPCSTR)g_szAppName);
+			CenterDialog(hDlg);
 			return TRUE;
 		case WM_CLOSE:
 			EndDialog(hDlg, LOWORD(wParam));
