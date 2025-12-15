@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/bus/cartridge_catalog_item.h>
+#include <vcc/utils/cartridge_catalog_item.h>
 #include <vcc/detail/exports.h>
 #include <string>
 #include <array>
@@ -27,7 +27,7 @@
 #include <functional>
 
 
-namespace vcc::bus
+namespace vcc::utils
 {
 
 	/// @brief Basic Cartridge Catalog.

@@ -7,7 +7,7 @@ namespace vcc::utils
 	resource_location::resource_location(path_type path)
 		: path_or_id_(std::move(path))
 	{
-		if (get<location_class_id_type::system_path>(path_or_id_).empty())
+		if (get<location_class_id_type::path>(path_or_id_).empty())
 		{
 			throw std::invalid_argument("Cannot construct Resource Location. System file path is empty.");
 		}
@@ -17,14 +17,19 @@ namespace vcc::utils
 		: path_or_id_(id)
 	{ }
 
+	bool resource_location::empty() const noexcept
+	{
+		return path_or_id_.index() == location_class_id_type::empty;
+	}
+
 	bool resource_location::is_path() const noexcept
 	{
-		return path_or_id_.index() == location_class_id_type::system_path;
+		return path_or_id_.index() == location_class_id_type::path;
 	}
 
 	bool resource_location::is_guid() const noexcept
 	{
-		return path_or_id_.index() == location_class_id_type::system_guid;
+		return path_or_id_.index() == location_class_id_type::guid;
 	}
 
 	resource_location::path_type resource_location::path() const
@@ -34,7 +39,7 @@ namespace vcc::utils
 			throw std::runtime_error("Cannot retrieve path. Resource Location is not a path.");
 		}
 
-		return get<location_class_id_type::system_path>(path_or_id_);
+		return get<location_class_id_type::path>(path_or_id_);
 	}
 
 	resource_location::guid_type resource_location::guid() const
@@ -44,7 +49,7 @@ namespace vcc::utils
 			throw std::runtime_error("Cannot retrieve unique identifier. Resource Location is not an identifier.");
 		}
 
-		return get<location_class_id_type::system_guid>(path_or_id_);
+		return get<location_class_id_type::guid>(path_or_id_);
 	}
 
 	std::optional<resource_location> resource_location::from_string(const string_type& text)
@@ -75,11 +80,11 @@ namespace vcc::utils
 		case location_class_id_type::empty:
 			return {};
 
-		case location_class_id_type::system_path:
-			return path_location_prefix_ + get<location_class_id_type::system_path>(path_or_id_).string();
+		case location_class_id_type::path:
+			return path_location_prefix_ + get<location_class_id_type::path>(path_or_id_).string();
 
-		case location_class_id_type::system_guid:
-			return guid_location_prefix_ + get<location_class_id_type::system_guid>(path_or_id_).to_string();
+		case location_class_id_type::guid:
+			return guid_location_prefix_ + get<location_class_id_type::guid>(path_or_id_).to_string();
 		}
 
 		return {};

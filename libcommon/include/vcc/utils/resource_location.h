@@ -1,5 +1,6 @@
 #pragma once
 #include "vcc/utils/basic_guid.h"
+#include "vcc/utils/detail/location_class_id.h"
 #include <vcc/detail/exports.h>
 #include <filesystem>
 #include <variant>
@@ -14,20 +15,6 @@ namespace vcc::utils
 	{
 	private:
 
-		/// @brief Resource location classifications.
-		/// 
-		/// The order of items is important here as the value_type uses them to
-		/// determine the location type by the index of the variant.
-		enum location_class_id
-		{
-			/// @brief The location is empty.
-			empty,
-			/// @brief The location is a path.
-			system_path,
-			/// @brief The location is defined by a unique identifier.
-			system_guid
-		};
-
 
 	public:
 
@@ -38,7 +25,7 @@ namespace vcc::utils
 		/// @brief Type alias for a globally unique identifier.
 		using guid_type = ::vcc::utils::basic_guid;
 		/// @brief Type alias for resource location type classifications.
-		using location_class_id_type = location_class_id;
+		using location_class_id_type = ::vcc::utils::detail::location_class_id;
 		/// @brief Type alias for the variant that will be used to store the various path
 		/// types.
 		/// 
@@ -62,6 +49,11 @@ namespace vcc::utils
 		/// 
 		/// @param id The identifier of the location.
 		LIBCOMMON_EXPORT resource_location(guid_type id);
+
+		/// @brief Determines if the location is empty.
+		/// 
+		/// @return `true` if the path location is empty; `false` otherwise.
+		[[nodiscard]] LIBCOMMON_EXPORT bool empty() const noexcept;
 
 		/// @brief Determines if the location is a file path.
 		/// 
@@ -111,8 +103,11 @@ namespace vcc::utils
 
 	private:
 
+		/// @brief Prefix for locations that are a system path.
 		static const inline string_type path_location_prefix_ = "file:";
+		/// @brief Prefix for locations that are a unique identifier.
 		static const inline string_type guid_location_prefix_ = "guid:";
+
 
 	private:
 

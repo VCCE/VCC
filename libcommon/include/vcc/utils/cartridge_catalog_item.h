@@ -22,7 +22,7 @@
 #include <array>
 
 
-namespace vcc::bus
+namespace vcc::utils
 {
 
 	/// @brief Defines the same of a cartridge catalog item

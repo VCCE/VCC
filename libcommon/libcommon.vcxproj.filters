@@ -118,6 +118,9 @@
     <Filter Include="Source Files\media\geometry_calculators">
       <UniqueIdentifier>{41e623a0-daf9-4387-87ef-c39c9082d04d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\utils\detail">
+      <UniqueIdentifier>{5bf81da7-8e68-4093-a8d5-53550cc926fe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DialogOps.cpp">
@@ -222,9 +225,6 @@
     <ClCompile Include="src\media\geometry_calculators\floppy_disk_geometry_calculator.cpp">
       <Filter>Source Files\media\geometry_calculators</Filter>
     </ClCompile>
-    <ClCompile Include="src\bus\cartridge_catalog.cpp">
-      <Filter>Source Files\bus</Filter>
-    </ClCompile>
     <ClCompile Include="src\utils\basic_guid.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
@@ -232,6 +232,9 @@
       <Filter>Source Files\utils</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\resource_location.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\cartridge_catalog.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
   </ItemGroup>
@@ -398,12 +401,6 @@
     <ClInclude Include="include\vcc\media\geometry_calculators\floppy_disk_geometry_calculator.h">
       <Filter>Header Files\media\geometry_calculators</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\bus\cartridge_catalog.h">
-      <Filter>Header Files\bus</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\bus\cartridge_catalog_item.h">
-      <Filter>Header Files\bus</Filter>
-    </ClInclude>
     <ClInclude Include="include\vcc\utils\basic_guid.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
@@ -415,6 +412,15 @@
     </ClInclude>
     <ClInclude Include="include\vcc\media\disk_error_id.h">
       <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\detail\location_class_id.h">
+      <Filter>Header Files\utils\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\cartridge_catalog.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\utils\cartridge_catalog_item.h">
+      <Filter>Header Files\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

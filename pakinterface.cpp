@@ -24,7 +24,7 @@
 #include "mc6821.h"
 #include "resource.h"
 #include "vcc/bus/expansion_port.h"
-#include "vcc/bus/cartridge_catalog.h"
+#include "vcc/utils/cartridge_catalog.h"
 #include "vcc/utils/dll_deleter.h"
 #include "vcc/utils/winapi.h"
 #include "vcc/utils/logger.h"
@@ -49,7 +49,7 @@ static std::recursive_mutex gCartridgeMutex;
 static std::recursive_mutex gDriverMutex;
 static char DllPath[MAX_PATH] = "";
 static expansion_port<std::recursive_mutex> gExpansionSlot(gCartridgeMutex, gDriverMutex);
-const vcc::bus::cartridge_catalog cartridge_catalog_(
+const vcc::utils::cartridge_catalog cartridge_catalog_(
 	std::filesystem::path(::vcc::utils::get_module_path())
 	.parent_path()
 	.append("Cartridges"));
@@ -109,7 +109,7 @@ class vcc_expansion_port_host : public ::vcc::bus::expansion_port_host
 {
 public:
 
-	explicit vcc_expansion_port_host(const vcc::bus::cartridge_catalog& cartridge_items)
+	explicit vcc_expansion_port_host(const catalog_type& cartridge_items)
 		: cartridge_catalog_(cartridge_items)
 	{}
 	
@@ -150,7 +150,7 @@ public:
 
 private:
 
-	const vcc::bus::cartridge_catalog& cartridge_catalog_;
+	const catalog_type& cartridge_catalog_;
 };
 
 class vcc_expansion_port_ui : public ::vcc::bus::expansion_port_ui

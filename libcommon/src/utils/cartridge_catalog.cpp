@@ -15,17 +15,17 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/bus/cartridge_catalog.h>
+#include <vcc/utils/cartridge_catalog.h>
 #include <Windows.h>
 #include <ranges>
 
 
-namespace vcc::bus
+namespace vcc::utils
 {
 
 	namespace
 	{
-		using guid_type = ::vcc::bus::cartridge_catalog::guid_type;
+		using guid_type = ::vcc::utils::cartridge_catalog::guid_type;
 
 		const auto mpi_catalog_id			= guid_type({ 0xDE, 0xAD, 0xBE, 0xEF, 0x11, 0x38, 0x19, 0x85, 0x13, 0x37, 0x01, 0, 0, 0, 0, 1 });
 		const auto fd502_catalog_id			= guid_type({ 0xDE, 0xAD, 0xBE, 0xEF, 0x11, 0x38, 0x19, 0x85, 0x13, 0x37, 0x02, 0, 0, 0, 0, 1 });
@@ -37,7 +37,7 @@ namespace vcc::bus
 		const auto gmc_catalog_id			= guid_type({ 0xDE, 0xAD, 0xBE, 0xEF, 0x11, 0x38, 0x19, 0x85, 0x13, 0x37, 0x05, 0, 0, 0, 0, 2 });
 		const auto ramdisk_catalog_id		= guid_type({ 0xDE, 0xAD, 0xBE, 0xEF, 0x11, 0x38, 0x19, 0x85, 0x13, 0x37, 0xff, 0, 0, 0, 0, 1 });
 
-		const ::vcc::bus::cartridge_catalog::item_map_type cartridge_items_ = {
+		const ::vcc::utils::cartridge_catalog::item_map_type cartridge_items_ = {
 			{ mpi_catalog_id,			{ mpi_catalog_id,			"Multi-Pak Interface", "mpi.dll"} },
 			{ fd502_catalog_id,			{ fd502_catalog_id,			"FD502 Floppy Disk Controller", "fd502.dll"} },
 			//{ harddisk_catalog_id,	{ harddisk_catalog_id,		"VCC Virtual Hard Disk Controller", "", ""} },

@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/detail/exports.h"
-#include <vcc/bus/cartridge_catalog.h>
+#include <vcc/utils/cartridge_catalog.h>
 #include <filesystem>
 #include <string>
 #include <functional>
@@ -40,7 +40,7 @@ namespace vcc::bus
 		/// @brief Type alias for the cartridge port mutex.
 		using catridge_mutex_type = std::recursive_mutex;
 		/// @brief Type alias for the cartridge catalog.
-		using catalog_type = ::vcc::bus::cartridge_catalog;
+		using catalog_type = ::vcc::utils::cartridge_catalog;
 		/// @copydoc catalog_type::guid_type.
 		using guid_type = catalog_type::guid_type;
 
