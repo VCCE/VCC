@@ -96,6 +96,7 @@
     <ClCompile Include="src\peripherals\disk_drives\generic_disk_drive.cpp" />
     <ClCompile Include="src\utils\basic_guid.cpp" />
     <ClCompile Include="src\utils\cartridge_loader.cpp" />
+    <ClCompile Include="src\utils\cartridge_path.cpp" />
     <ClCompile Include="src\utils\load_disk_image.cpp" />
     <ClCompile Include="src\utils\noop_mutex.cpp" />
     <ClCompile Include="src\utils\persistent_section_value_store.cpp" />
@@ -153,6 +154,7 @@
     <ClInclude Include="include\vcc\ui\menu\menu_item_visitor.h" />
     <ClInclude Include="include\vcc\utils\borrowed_ptr.h" />
     <ClInclude Include="include\vcc\utils\cartridge_loader.h" />
+    <ClInclude Include="include\vcc\utils\cartridge_path.h" />
     <ClInclude Include="include\vcc\utils\disk_image_loader.h" />
     <ClInclude Include="include\vcc\utils\basic_guid.h" />
     <ClInclude Include="include\vcc\utils\noop_mutex.h" />

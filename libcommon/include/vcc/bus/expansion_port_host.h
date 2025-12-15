@@ -17,8 +17,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vcc/detail/exports.h"
+#include <vcc/bus/cartridge_catalog.h>
 #include <filesystem>
 #include <string>
+#include <functional>
 #include <mutex>
 
 
@@ -37,6 +39,10 @@ namespace vcc::bus
 		using path_type = std::filesystem::path;
 		/// @brief Type alias for the cartridge port mutex.
 		using catridge_mutex_type = std::recursive_mutex;
+		/// @brief Type alias for the cartridge catalog.
+		using catalog_type = ::vcc::bus::cartridge_catalog;
+		/// @copydoc catalog_type::guid_type.
+		using guid_type = catalog_type::guid_type;
 
 
 	public:
@@ -69,6 +75,14 @@ namespace vcc::bus
 		/// 
 		/// @return The cartridge mutex.
 		virtual [[nodiscard]] catridge_mutex_type& driver_mutex() const = 0;
+
+		/// @brief Retrieve the system wide cartridge catalog.
+		/// 
+		/// Retrieves the system wide cartridge catalog providing details about the cartridges
+		/// installed.
+		/// 
+		/// @return A reference to the system wide cartridge catalog.
+		virtual const catalog_type& cartridge_catalog() const = 0;
 	};
 
 }
