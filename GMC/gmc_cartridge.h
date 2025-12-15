@@ -109,12 +109,10 @@ namespace vcc::cartridges::gmc
 		/// emulator's cartridge menu.
 		struct menu_item_ids
 		{
-			//FIXME-CHET: The first id should be 0 but its not handled properly by the menu system.
-
 			/// @brief Requests the Game Master Cartridge select a new ROM image to use.
-			static const unsigned int select_rom = 1;
+			static const unsigned int select_rom = 0;
 			/// @brief Requests the Game Master Cartridge remove the current ROM image.
-			static const unsigned int remove_rom = 2;
+			static const unsigned int remove_rom = 1;
 		};
 
 		/// @brief Defines the configuration section, value keys, and default values for the

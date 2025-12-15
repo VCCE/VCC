@@ -191,7 +191,6 @@ namespace vcc::cartridges::multipak
 
 	multipak_cartridge::status_type multipak_cartridge::status() const
 	{
-		// TODO-CHET: Scope out for potential deadlock since this is called from the ui context.
 		std::scoped_lock lock(host_->driver_mutex());
 
 		auto status(std::format("MPI:{},{}", driver_->selected_cts_slot() + 1, driver_->selected_scs_slot() + 1));
@@ -288,7 +287,19 @@ namespace vcc::cartridges::multipak
 					menu.add_root_separator();
 				}
 
-				// FIXME-CHET: Check for menu item ids that exceed max id value
+				// Find the maximum item id used in the menu and check to ensure it does
+				// not exceed the maximum allowed per cartridge.
+				items.accept(
+					[](auto id, auto, auto, auto)
+					{
+						if (id >= cartridges_menu::item_count)
+						{
+							throw std::runtime_error(std::format(
+								"Cannot construct cartridge menu. Menu ID `{}` is out of range.",
+								id));
+						}
+					});
+
 				menu.add_items(
 					items,
 					cartridges_menu::first_item_id + slot * cartridges_menu::item_count);
@@ -317,12 +328,15 @@ namespace vcc::cartridges::multipak
 				.add_root_submenu(
 					std::format("Multi-Pak Slot {}{}", slot, is_at_selected_slot ? " (selected)" : ""),
 					icon)
+				// TODO-CHET: Maybe update the menu to show that the insert will also do a reset.
 				.add_submenu_item(
 					command_ids.insert_rompak,
 					is_slot_occupied ? "Insert different ROM Pak" : "Insert ROM Pak")
+				// TODO-CHET: Maybe update the menu to show that the insert will also do a reset.
 				.add_submenu_item(
 					command_ids.insert_cartridge,
 					is_slot_occupied ? "Insert different Cartridge" : "Insert Cartridge")
+				// TODO-CHET: Maybe update the menu to show that the eject will also do a reset.
 				.add_submenu_item(
 					command_ids.eject,
 					"Eject " + driver_->slot_name(index),

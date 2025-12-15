@@ -45,7 +45,7 @@ namespace vcc::cartridges::fd502
 
 
 	configuration_dialog::configuration_dialog(
-		// FIXME-CHET: globally rename module_handle to library_handle
+		// TODO-CHET: globally rename module_handle and module_instance to native_library_handle
 		HINSTANCE module_handle,
 		std::shared_ptr<fd502_configuration> configuration,
 		std::shared_ptr<fd502_cartridge_driver> driver,

@@ -62,4 +62,19 @@ namespace vcc::ui::menu
 		}
 	}
 
+	void menu_item_collection::accept(const item_visitor_type& visitor) const
+	{
+		using category_type = ::vcc::ui::menu::detail::menu_category;
+
+		for (const auto& item : items_)
+		{
+			switch (item.type)
+			{
+			case category_type::sub_menu_item:
+			case category_type::root_menu_item:
+				visitor(item.id, item.text, item.icon, item.disabled);
+			}
+		}
+	}
+
 }

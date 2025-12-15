@@ -209,8 +209,11 @@ namespace vcc::peripherals::disk_drives
 
 	void generic_disk_drive::seek_to_track(size_type drive_track)
 	{
-		//	FIXME-CHET: Check for exceeding max track.
-		head_position_ = drive_track;
+		// TODO-CHET: If the emulator is expected to support images that have less than
+		// 35 tracks the number of tracks should probably be managed here most likely via
+		// a value passed to the ctor. Even if the disk image has 35 tracks it may be
+		// beneficial to only support 40 and 80 track disk drives.
+		head_position_ = std::min(drive_track, track_count() - 1);
 	}
 
 }

@@ -614,7 +614,7 @@ namespace vcc::cartridges::fd502
 			// needs to take into account the interleave and other factors to get an
 			// accurate sector to select from. For drive image formats like DMK which can
 			// have sectors in any order some type of mechanism to determine the next
-			// sector will be needd.
+			// sector will be need.
 			const auto drive_sector(index_pulse_tick_counter_ / 176);
 			const auto sector_record(working_drive.query_sector_header_by_index(control_register_.head(), drive_sector));
 			if (!sector_record.has_value())

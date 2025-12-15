@@ -110,6 +110,8 @@ namespace vcc::bus
 			handle_ = move(handle);
 			cartridge_ = move(cartridge);
 			driver_ = &cartridge_->driver();
+
+			// TODO-CHET: This should call cartridge_.start()
 		};
 
 		/// @brief Eject the cartridge from the slot.
@@ -122,6 +124,7 @@ namespace vcc::bus
 			// Lock both mutexes so the entire operation is atomic
 			dual_scoped_lock_type lock(cartridge_mutex_, driver_mutex_);
 
+			// TODO-CHET: This should call cartridge_.stop()
 			cartridge_.reset();
 			driver_ = nullptr;
 			handle_.reset();
@@ -137,9 +140,6 @@ namespace vcc::bus
 		{
 			scoped_lock_type lock(cartridge_mutex_);
 
-			// FIXME-CHET-NOW: This is seems like it might break easily. The empty state here can
-			// only be caused through the default ctor (or a copy from one that default ctored).
-			// Review and see if this is an actual problem.
 			return cartridge_ == ::vcc::bus::cartridges::empty_cartridge::shared_placeholder_cartridge_;
 		}
 
@@ -151,6 +151,7 @@ namespace vcc::bus
 			return cartridge_->name();
 		}
 
+		// TODO-CHET: Remove start function
 		/// @copydoc cartridge_type::start
 		void start() const
 		{
@@ -159,6 +160,7 @@ namespace vcc::bus
 			cartridge_->start();
 		}
 
+		// TODO-CHET: Remove stop function
 		/// @copydoc cartridge_type::stop
 		void stop() const
 		{
@@ -170,8 +172,6 @@ namespace vcc::bus
 		/// @copydoc cartridge_type::status
 		[[nodiscard]] status_type status() const
 		{
-			// FIXME-CHET: The status function is called from the emulation loop which causes
-			// it to lock up while the UI is open and locked with a different mutex. 
 			scoped_lock_type lock(cartridge_mutex_);
 
 			return cartridge_->status();

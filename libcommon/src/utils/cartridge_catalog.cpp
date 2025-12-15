@@ -16,6 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include <vcc/utils/cartridge_catalog.h>
+#include <vcc/utils/exception.h>
 #include <Windows.h>
 #include <ranges>
 
@@ -83,8 +84,7 @@ namespace vcc::utils
 		const auto item_ptr(items_.find(id));
 		if (item_ptr == items_.end())
 		{
-			// FIXME-CHET: This should probably be a different exception or return `false`
-			throw std::invalid_argument("Cannot check if cartridge is loaded. Identifier does not exist.");
+			throw ::vcc::utils::invalid_guid_error("Cannot check if cartridge is loaded. Identifier does not exist.");
 		}
 
 		return GetModuleHandle(path_type(cartridge_path_).append(item_ptr->second.filename).string().c_str()) != nullptr;
@@ -95,8 +95,7 @@ namespace vcc::utils
 		const auto item_ptr(items_.find(id));
 		if (item_ptr == items_.end())
 		{
-			// FIXME-CHET: This should probably be a different exception or return std::optional
-			throw std::invalid_argument("Cannot get catalog item for cartridge. Identifier does not exist.");
+			throw ::vcc::utils::invalid_guid_error("Cannot get path for cartridge. Identifier does not exist.");
 		}
 
 		return path_type(cartridge_path_).append(item_ptr->second.filename);

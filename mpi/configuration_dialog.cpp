@@ -202,12 +202,10 @@ namespace vcc::cartridges::multipak
 		case WM_CLOSE:
 			DestroyWindow(hDlg);
 			dialog_handle_ = nullptr;
-			parent_handle_ = nullptr;
 			return TRUE;
 
 		case WM_INITDIALOG:
 			dialog_handle_ = hDlg;
-			parent_handle_ = GetParent(hDlg);
 			CenterDialog(hDlg);
 			for (slot_id_type slot(0); slot < gSlotUiElementIds.size(); slot++)
 			{

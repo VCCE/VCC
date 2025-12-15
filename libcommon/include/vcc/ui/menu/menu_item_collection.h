@@ -20,6 +20,7 @@
 #include "vcc/ui/menu/detail/menu_item.h"
 #include "vcc/detail/exports.h"
 #include <vector>
+#include <functional>
 
 
 namespace vcc::ui::menu
@@ -39,6 +40,11 @@ namespace vcc::ui::menu
 		using item_container_type = std::vector<item_type>;
 		/// @brief Type alias for the visitors we accept.
 		using visitor_type = menu_item_visitor;
+		using item_visitor_type = std::function<void(
+			item_type::item_id_type,
+			const item_type::string_type&,
+			item_type::icon_type icon,
+			bool disabled)>;
 
 
 	public:
@@ -62,6 +68,7 @@ namespace vcc::ui::menu
 		/// 
 		/// @param visitor The visitor to accept.
 		LIBCOMMON_EXPORT void accept(visitor_type& visitor) const;
+		LIBCOMMON_EXPORT void accept(const item_visitor_type& visitor) const;
 
 
 	private:

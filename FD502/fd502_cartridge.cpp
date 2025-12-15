@@ -63,7 +63,6 @@ namespace vcc::cartridges::fd502
 			static const UINT insert_next_drive_3 = 13;
 		};
 
-		// FIXME-CHET: rename
 		const std::array<cartridge_menu_item_ids, 4> disk_drive_menu_items_ = { {
 			{ menu_item_ids::insert_drive_0, menu_item_ids::eject_drive_0, menu_item_ids::insert_next_drive_0 },
 			{ menu_item_ids::insert_drive_1, menu_item_ids::eject_drive_1, menu_item_ids::insert_next_drive_1 },
@@ -277,7 +276,12 @@ namespace vcc::cartridges::fd502
 		switch (MenuID)
 		{
 		case menu_item_ids::open_settings:
-			settings_dialog_.open(ui_->app_window());
+			if (!settings_dialog_.is_open())
+			{
+				settings_dialog_.create(ui_->app_window());
+			}
+
+			settings_dialog_.show_window(SW_SHOWNORMAL);
 			break;
 
 		case menu_item_ids::insert_drive_0:

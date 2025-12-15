@@ -74,12 +74,14 @@ namespace vcc::ui
 		///
 		/// Opens the configuration dialog. If the dialog is already open, it is brought to the
 		/// top of the Z-order and presented to the user.
-		virtual void open(HWND owner);
+		virtual void create(HWND owner);
 
 		/// @brief Closes the dialog.
 		///
 		/// Closes the dialog if it is open.
 		virtual void close();
+
+		bool show_window(int show_command);
 
 		/// @brief Destroys the dialog window.
 		///

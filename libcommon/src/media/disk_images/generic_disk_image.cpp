@@ -196,8 +196,7 @@ namespace vcc::media::disk_images
 		stream_.read(reinterpret_cast<char*>(data_buffer.data()), data_buffer.size());
 		if (stream_.bad())
 		{
-			// FIXME-CHET: This should throw
-			std::fill(data_buffer.begin(), data_buffer.end(), buffer_type::value_type(0xffu));
+			throw fatal_io_error("Cannot read sector. Fatal IO error encountered while reading sector data.");
 		}
 
 		return error_id_type::success;

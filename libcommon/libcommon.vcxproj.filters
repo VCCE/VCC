@@ -422,6 +422,9 @@
     <ClInclude Include="include\vcc\utils\cartridge_catalog_item.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
+    <ClInclude Include="include\vcc\utils\exception.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource\libcommon.rc">

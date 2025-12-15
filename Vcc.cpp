@@ -127,6 +127,12 @@ static	HANDLE hEMUQuit;
 constexpr auto first_cartridge_menu_id = 5000;
 constexpr auto last_cartridge_menu_id = 5999;
 
+struct menu_bar_indexes
+{
+	static const auto control_menu = 3u;
+	static const auto cartridge_menu = 4u;
+};
+
 // Function key overclocking flag
 //unsigned char OverclockFlag = 1;
 
@@ -356,15 +362,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_INITMENUPOPUP:
 		{
 			const auto menu(GetMenu(hWnd));
-			const auto menu_opening(reinterpret_cast<HMENU>(wParam));
-			// FIXME-CHET: magic number for menu index. find some place to put the symbolic
-			if (menu_opening == GetSubMenu(menu, 4))
+			
+			if (const auto menu_opening(reinterpret_cast<HMENU>(wParam));
+				menu_opening == GetSubMenu(menu, menu_bar_indexes::cartridge_menu))
 			{
 				UpdateCartridgeMenu(menu_opening);
 			}
-
-			// FIXME-CHET: magic number for menu index. find some place to put the symbolic
-			else if (menu_opening == GetSubMenu(menu, 3))
+			else if (menu_opening == GetSubMenu(menu, menu_bar_indexes::control_menu))
 			{
 				UpdateControlMenu(menu_opening);
 			}
@@ -667,8 +671,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				case DIK_F10:
 					if (EmuState.FullScreen)
 					{
-						// FIXME-CHET: magic number for menu index
-						if (const HMENU hMenu(IsShiftKeyDown() ? GetConfMenu() : GetSubMenu(GetMenu(hWnd), 3));
+						if (const HMENU hMenu(IsShiftKeyDown()
+											  ? GetConfMenu()
+											  : GetSubMenu(GetMenu(hWnd), menu_bar_indexes::control_menu));
 							hMenu != nullptr)
 						{
 							RECT r;

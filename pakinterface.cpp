@@ -320,7 +320,7 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 		return result;
 	}
 
-	// FIXME-CHET: There should be no UI here, let the callsite handle reporting the
+	// FIXME-CHET: There should be no UI here, let the call site handle reporting the
 	// error.
 	auto error_string(load_error_string(result) + "\n\n" + filename);
 
@@ -364,7 +364,6 @@ void UnloadDll()
 
 	gExpansionSlot.stop();
 	gExpansionSlot.eject();
-	gExpansionSlot.start();	//	FIXME-CHET: Do we really need to call this here?
 }
 
 void GetCurrentModule(char *DefaultModule)

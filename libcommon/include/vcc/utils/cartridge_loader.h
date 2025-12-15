@@ -64,7 +64,7 @@ namespace vcc::utils
 		unknown_cartridge,
 		/// @brief The cartridge file was not loaded.
 		not_loaded,
-		/// @brief The cartridge file was loaded as a ROM pak but the file does not contain a ROM.
+		/// @brief The cartridge file was loaded as a ROM Pak but the file does not contain a ROM.
 		/// @todo Rename this to something else (i.e. invalid_format)
 		not_rom,
 		/// @brief The cartridge file was loaded as a shared library but it does not use a

@@ -156,6 +156,7 @@
     <ClInclude Include="include\vcc\utils\cartridge_catalog_item.h" />
     <ClInclude Include="include\vcc\utils\cartridge_loader.h" />
     <ClInclude Include="include\vcc\utils\detail\location_class_id.h" />
+    <ClInclude Include="include\vcc\utils\exception.h" />
     <ClInclude Include="include\vcc\utils\resource_location.h" />
     <ClInclude Include="include\vcc\utils\disk_image_loader.h" />
     <ClInclude Include="include\vcc\utils\basic_guid.h" />

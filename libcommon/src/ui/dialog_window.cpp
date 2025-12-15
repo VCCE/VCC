@@ -46,30 +46,27 @@ namespace vcc::ui
 			reinterpret_cast<LPARAM>(this));
 	}
 
-	void dialog_window::open(HWND owner)
+	void dialog_window::create(HWND owner)
 	{
-		// FIXME-CHET: This should assert if the window is already open and expect the
-		// call side to handle it.
-		if (!is_open())
+		if (is_open())
 		{
-			is_modal_ = false;
-			CreateDialogParam(
-				module_handle_,
-				MAKEINTRESOURCE(dialog_resource_id_),
-				owner,
-				callback_procedure,
-				reinterpret_cast<LPARAM>(this));
+			throw std::runtime_error("Cannot open dialog window. Dialog is already open.");
 		}
 
-		ShowWindow(handle(), SW_SHOWNORMAL);
+		is_modal_ = false;
+		CreateDialogParam(
+			module_handle_,
+			MAKEINTRESOURCE(dialog_resource_id_),
+			owner,
+			callback_procedure,
+			reinterpret_cast<LPARAM>(this));
 	}
 
 	void dialog_window::close()
 	{
 		if (is_open())
 		{
-			CloseCartDialog(handle());
-			dialog_handle_ = nullptr;
+			destroy_window();
 		}
 	}
 
@@ -107,19 +104,11 @@ namespace vcc::ui
 			return TRUE;
 
 		case WM_INITDIALOG:
-		{
 			dialog_handle_ = hDlg;
-			auto result(on_init_dialog());
-			if (!result)
-			{
-				dialog_handle_ = nullptr;
-			}
-			return result;
-		}
+			return on_init_dialog();
 
 		case WM_DESTROY:
 			on_destroy();
-			// FIXME-CHET: this is probably the wrong place to do this.
 			dialog_handle_ = nullptr;
 			return TRUE;
 
@@ -140,6 +129,16 @@ namespace vcc::ui
 		return on_message(message, wParam, lParam);
 	}
 
+
+	bool dialog_window::show_window(int show_command)
+	{
+		if (is_open())
+		{
+			return false;
+		}
+
+		return ShowWindow(handle(), show_command) != FALSE;
+	}
 
 	void dialog_window::destroy_window()
 	{

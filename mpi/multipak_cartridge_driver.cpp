@@ -184,22 +184,6 @@ namespace vcc::cartridges::multipak
 		return slots_[slot].empty();
 	}
 
-	void multipak_cartridge_driver::eject_cartridge(slot_id_type slot, bool allow_reset)
-	{
-		slots_[slot].stop();
-		slots_[slot].eject();
-
-		// If the cartridge is being ejected from a slot that is the selected SCS or CTS
-		// slot we force a reset just to be safe.
-		//
-		// TODO-CHET: Maybe update the menu to show that the eject will also do a reset.
-		if (allow_reset && (slot == cached_scs_slot_ || slot == cached_cts_slot_))
-		{
-			bus_->reset();
-		}
-	}
-
-
 	void multipak_cartridge_driver::switch_to_slot(slot_id_type slot)
 	{
 		switch_slot_ = slot;
@@ -237,17 +221,25 @@ namespace vcc::cartridges::multipak
 		cartridge_ptr_type cartridge,
 		bool allow_reset)
 	{
-		// TODO-CHET: We should probably call eject(slot) here in order to ensure that the
-		// cartridge is shut down correctly.
+		eject_cartridge(slot, false);	//	TODO-CHET: Remove once insert/eject handle the start/stop calls
 		slots_[slot].insert(move(handle), move(cartridge));
 		slots_[slot].start();
-		slots_[slot].reset();	//	FIXME-CHET: This is legacy shit and doesn't need to be here. remove after all carts get full refactor
 
 		// If the cartridge is being inserted into a slot that is the selected SCS or CTS
 		// slot we force a reset just to be safe.
-		//
-		// TODO-CHET: Maybe update the menu to show that the insert will also do a reset.
-		// TODO-CHET: This 
+		if (allow_reset && (slot == cached_scs_slot_ || slot == cached_cts_slot_))
+		{
+			bus_->reset();
+		}
+	}
+
+	void multipak_cartridge_driver::eject_cartridge(slot_id_type slot, bool allow_reset)
+	{
+		slots_[slot].stop();
+		slots_[slot].eject();
+
+		// If the cartridge is being ejected from a slot that is the selected SCS or CTS
+		// slot we force a reset just to be safe.
 		if (allow_reset && (slot == cached_scs_slot_ || slot == cached_cts_slot_))
 		{
 			bus_->reset();
