@@ -132,7 +132,7 @@ namespace vcc::ui
 
 	bool dialog_window::show_window(int show_command)
 	{
-		if (is_open())
+		if (!is_open())
 		{
 			return false;
 		}
