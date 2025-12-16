@@ -208,31 +208,55 @@ unsigned char * Getint_rom_pointer()
 // and by SoftReset() in Vcc.c. If LoadRom() fails VCC can not run.
 void LoadRom()
 {
-	char RomPath[MAX_PATH]={};
-	unsigned short index=0;
-	FILE *hFile;
-
-	GetExtRomPath(RomPath);
-	if (*RomPath == '\0') {
-		GetModuleFileName(nullptr, RomPath, MAX_PATH);
-		PathRemoveFileSpec(RomPath);
-		strncat(RomPath, "coco3.rom", MAX_PATH);
+	std::filesystem::path filename;
+	if (GetUseCustomSystemRom())
+	{
+		filename = GetCustomSystemRomPath();
+		if (filename.empty())
+		{
+			MessageBox(
+				nullptr,
+				"The emulator is configured to use a custom system ROM but no ROM file was specified.",
+				"Unable to load System ROM",
+				MB_TASKMODAL | MB_TOPMOST | MB_SETFOREGROUND);
+			return;
+		}
+	}
+	else
+	{
+		filename = PakGetSystemRomPath().append("coco3.rom");
 	}
 
-	if ((hFile = fopen(RomPath,"rb")) != nullptr) {
-		while ((feof(hFile)==0) & (index<0x8000)) {
-			InternalRomBuffer[index++] = fgetc(hFile);
-		}
+	size_t index(0u);
+	static const auto expected_file_size(0x8000u);
+	if (auto hFile(fopen(filename.string().c_str(), "rb")); hFile != nullptr)
+	{
+		index = fread(InternalRomBuffer, 1, expected_file_size, hFile);
 		fclose(hFile);
 	}
-	if ((hFile == nullptr) | (index == 0)) {
-		MessageBox(nullptr,
-				"coco3.rom load failed\n"
-				"Close this then\n"
-				"check ROM path.\n",
-				"Error", MB_TASKMODAL | MB_TOPMOST | MB_SETFOREGROUND);
+
+	if (index != expected_file_size)
+	{
+		std::fill(InternalRomBuffer, InternalRomBuffer + expected_file_size, 0xff);
+
+		std::string message;
+		if (GetUseCustomSystemRom())
+		{
+			message = "Unable to load the custom system ROM file.";
+		}
+		else
+		{
+			message = "Unable to load the Microsoft BASIC ROM.";
+		}
+
+		message += "\n\n" + filename.string() + "\n does not exist or cannot be opened.";
+
+		MessageBox(
+			nullptr,
+			message.c_str(),
+			"Unable to load ROM file",
+			MB_TASKMODAL | MB_TOPMOST | MB_SETFOREGROUND | MB_ICONERROR);
 	}
-	return;
 }
 
 // Coco3 MMU Code

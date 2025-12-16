@@ -47,7 +47,7 @@ namespace vcc::utils
 			{ becker_port_catalog_id,	{ becker_port_catalog_id,	"Becker Port", "becker.dll"} },
 			{ gmc_catalog_id,			{ gmc_catalog_id,			"Game Master Cartridge", "gmc.dll"} },
 			{ orch90_catalog_id,		{ orch90_catalog_id,		"Orchestra-90cc", "orch90.dll"} },
-			{ ramdisk_catalog_id,		{ ramdisk_catalog_id,		"<TODO> 512K Ram Disk/Buffer", "ramdisk.dll"} },
+			{ ramdisk_catalog_id,		{ ramdisk_catalog_id,		"512K Ram Disk/Buffer", "ramdisk.dll"} },
 		};
 
 	}

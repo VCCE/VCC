@@ -66,7 +66,8 @@ void OpenTapeConfig();
 void OpenBitBangerConfig();
 
 // For tcc1014mmu to load coco3 rom
-void GetExtRomPath(char *);
+bool GetUseCustomSystemRom();
+std::filesystem::path GetCustomSystemRomPath();
 
 #endif
 

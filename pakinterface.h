@@ -23,7 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <string>
 #include <filesystem>
 
-std::filesystem::path PakGetSystemCartridgePath();
+std::filesystem::path PakGetSystemRomPath();
 std::filesystem::path PakGetLastAccessedRomPakPath();
 void PakSetLastAccessedRomPakPath(const std::filesystem::path& path);
 ::vcc::utils::cartridge_loader_status PakInsertRom(const std::filesystem::path& filename);

@@ -1651,11 +1651,12 @@ void CaptureCurrentWindowRect()
 	CurrentConfig.WindowRect = GetCurWindowSize();
 }
 
-//Called by tcc1014mmu:LoadRom
-void GetExtRomPath(char * RomPath)
+std::filesystem::path GetCustomSystemRomPath()
 {
-	if (CurrentConfig.UseExtCocoRom)
-		strncpy(RomPath,CurrentConfig.ExtRomFile,MAX_PATH);
-	else
-		*RomPath = '\0';
+	return CurrentConfig.ExtRomFile;
+}
+
+bool GetUseCustomSystemRom()
+{
+	return CurrentConfig.UseExtCocoRom != 0;
 }

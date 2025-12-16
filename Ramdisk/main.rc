@@ -91,7 +91,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MODULE_NAME         "<TODO> 512K Ram Disk/Buffer"
+    IDS_MODULE_NAME         "512K Ram Disk/Buffer"
 END
 
 #endif    // English (United States) resources

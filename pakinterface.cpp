@@ -132,7 +132,7 @@ public:
 
 	path_type system_rom_path() const override
 	{
-		return PakGetSystemCartridgePath();
+		return PakGetSystemRomPath();
 	}
 
 	[[nodiscard]] catridge_mutex_type& driver_mutex() const override
@@ -192,13 +192,13 @@ static void PakAssertInterupt(void* /*host_key*/, Interrupt interrupt, Interrupt
 	PakAssertInterupt(interrupt, source);
 }
 
-std::filesystem::path PakGetSystemCartridgePath()
+std::filesystem::path PakGetSystemRomPath()
 {
 	// TODO-CHET: Once get_module_path is changed to return a path remove
 	// the explicit conversion.
 	return std::filesystem::path(::vcc::utils::get_module_path(nullptr))
 		.parent_path()
-		.append("cartridges");
+		.append("system-roms");
 }
 
 std::filesystem::path PakGetLastAccessedRomPakPath()
