@@ -46,7 +46,7 @@ namespace vcc::cartridges::multipak
 		value_store_.write(get_slot_path_key(slot), path.to_string());
 	}
 
-	void multipak_configuration::slot_path(slot_id_type slot, nullptr_t)
+	void multipak_configuration::slot_path(slot_id_type slot, std::nullptr_t )
 	{
 		value_store_.write(get_slot_path_key(slot), nullptr);
 	}

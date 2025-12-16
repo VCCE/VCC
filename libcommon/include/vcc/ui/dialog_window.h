@@ -81,6 +81,30 @@ namespace vcc::ui
 		/// Closes the dialog if it is open.
 		virtual void close();
 
+		/// @brief Shows or hides the window.
+		/// 
+		/// | Show Command			| Description |
+		/// |-----------------------|-------------------------------------------------------------|
+		///	| SW_HIDE				| Hides the window and activates another window. |
+		///	| SW_SHOWNORMAL			| Hides the window and activates another window. |
+		///	| SW_NORMAL				| Activates and displays a window. |
+		///	| SW_SHOWMINIMIZED		| Activates the window and displays it as a minimized window. |
+		///	| SW_SHOWMAXIMIZED		| Activates the window and displays it as a minimized window. |
+		///	| SW_MAXIMIZE			| Activates the window and displays it as a maximized window. |
+		///	| SW_SHOWNOACTIVATE		| Displays a window in its most recent size and position. |
+		///	| SW_SHOW				| Activates the window and displays it in its current size and position. |
+		///	| SW_MINIMIZE			| Minimizes the specified window and activates the next top-level window in the Z order. |
+		///	| SW_SHOWMINNOACTIVE	| Displays the window as a minimized window. |
+		///	| SW_SHOWNA				| Displays the window in its current size and position. |
+		///	| SW_RESTORE			| Activates and displays the window. |
+		///	| SW_SHOWDEFAULT		| Sets the show state based on the SW_ value specified to CreateProcess. |
+		///	| SW_FORCEMINIMIZE		| Minimizes a window. |
+		/// 
+		/// For more information on the behavior of show_window and the above commands
+		/// see https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-showwindow
+		/// 
+		/// @param show_command The command to apply when showing or hiding the window.
+		/// @return `true` if the operation was successful; `false` otherwise.
 		bool show_window(int show_command);
 
 		/// @brief Destroys the dialog window.
@@ -135,7 +159,7 @@ namespace vcc::ui
 		/// @param control_id The identifier of the control to get the check
 		/// status of.
 		/// 
-		/// @return `true` if the control is checked; 'false` otherwise.
+		/// @return `true` if the control is checked; `false` otherwise.
 		[[nodiscard]] bool is_button_checked(UINT control_id) const;
 
 		/// @brief Sets the check state of a control.

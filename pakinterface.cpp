@@ -209,7 +209,7 @@ std::filesystem::path PakGetLastAccessedRomPakPath()
 	static char pakPath[MAX_PATH] = "";
 	GetPrivateProfileString(
 		"DefaultPaths",
-		"PakPath",
+		"rom-paks",
 		"",
 		pakPath,
 		MAX_PATH,
@@ -225,7 +225,7 @@ void PakSetLastAccessedRomPakPath(const std::filesystem::path& path)
 
 	WritePrivateProfileString(
 		"DefaultPaths",
-		"PakPath",
+		"rom-paks",
 		path.string().c_str(),
 		inifile);
 }

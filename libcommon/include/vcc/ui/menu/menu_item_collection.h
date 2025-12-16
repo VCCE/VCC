@@ -40,6 +40,7 @@ namespace vcc::ui::menu
 		using item_container_type = std::vector<item_type>;
 		/// @brief Type alias for the visitors we accept.
 		using visitor_type = menu_item_visitor;
+		/// @brief Type alias for the menu item visitor.
 		using item_visitor_type = std::function<void(
 			item_type::item_id_type,
 			const item_type::string_type&,
@@ -68,6 +69,14 @@ namespace vcc::ui::menu
 		/// 
 		/// @param visitor The visitor to accept.
 		LIBCOMMON_EXPORT void accept(visitor_type& visitor) const;
+
+		/// @brief Accept a menu item visitor.
+		/// 
+		/// When the visitor is accepted it will be called for each selectable menu item
+		/// in the collection, in the same order they are stored. Sub menus and separators
+		/// are not visited.
+		/// 
+		/// @param visitor The visitor to accept.
 		LIBCOMMON_EXPORT void accept(const item_visitor_type& visitor) const;
 
 

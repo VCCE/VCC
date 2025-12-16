@@ -68,6 +68,7 @@ namespace vcc::cartridges::multipak
 		using cartridge_catalog_item_type = ::vcc::utils::cartridge_catalog_item;
 		/// @brief Type alias for the sequential container of catalog items.
 		using cartridge_catalog_collection_type = std::vector<cartridge_catalog_item_type>;
+		/// @brief Type alias for a resource location
 		using resource_location_type = ::vcc::utils::resource_location;
 
 	public:
@@ -194,7 +195,7 @@ namespace vcc::cartridges::multipak
 		/// Loads a cartridge by filename and insert it into a specific slot.
 		/// 
 		/// @param slot The slot to insert the cartridge into.
-		/// @param filename The name of the cartridge file to load.
+		/// @param location The location of the cartridge file to load.
 		/// @param update_settings It `true` the settings for that slot will be updated with
 		/// the filename of the new cartridge.
 		/// @param allow_reset If `true` and the value in `slot` is the same as the
@@ -211,7 +212,13 @@ namespace vcc::cartridges::multipak
 		/// @inheritdoc
 		void eject_cartridge(slot_id_type slot_id, bool update_settings, bool allow_reset) override;
 
-
+		/// @brief Builds the `Insert...` device cartridge list for a slot.
+		/// 
+		/// @param available_cartridge_list List of available cartridges to include.
+		/// @param starting_id The starting menu item id of the insert items.
+		/// @param postfix_text The text to append to each menu item.
+		/// 
+		/// @return A collection of menu items.
 		menu_item_collection_type build_device_cartridge_menu(
 			const cartridge_catalog_collection_type& available_cartridge_list,
 			menu_item_id_type starting_id,
@@ -320,11 +327,11 @@ namespace vcc::cartridges::multipak
 		configuration_dialog settings_dialog_;
 		/// @brief Collection of all cartridges inserted into the Multi-Pak.
 		std::array<cartridge_ptr_type, multipak_cartridge_driver::total_slot_count> cartridges_;
-		// @brief Cached list of available cartridge catalog saved while processing the
-		// menu as the list of available cartridges may change or their order may change
-		// which invalidate the indexes.
-		// 
-		// @todo the main app should send a menu closed event so the cache can be released
+		/// @brief Cached list of available cartridge catalog saved while processing the
+		/// menu as the list of available cartridges may change or their order may change
+		/// which invalidate the indexes.
+		/// 
+		/// @todo the main app should send a menu closed event so the cache can be released
 		mutable cartridge_catalog_collection_type available_cartridge_list_;
 	};
 
