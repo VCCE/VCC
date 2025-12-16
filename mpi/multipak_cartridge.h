@@ -19,6 +19,7 @@
 #include "multipak_cartridge_driver.h"
 #include "configuration_dialog.h"
 #include "multipak_configuration.h"
+#include "vcc/utils/resource_location.h"
 #include "vcc/bus/cartridge.h"
 #include <array>
 
@@ -38,6 +39,8 @@ namespace vcc::cartridges::multipak
 	{
 	public:
 
+		/// @brief Type alias for variable length strings.
+		using string_type = std::string;
 		/// @brief Specifies the type used to store names.
 		using name_type = ::vcc::bus::cartridge::name_type;
 		/// @brief Type alias for the component providing global system services to the
@@ -61,7 +64,11 @@ namespace vcc::cartridges::multipak
 		using mount_status_type = driver_type::mount_status_type;
 		/// @copydoc driver_type::slot_id_type
 		using slot_id_type = driver_type::slot_id_type;
-
+		/// @brief Type alias for a cartridge catalog item.
+		using cartridge_catalog_item_type = ::vcc::utils::cartridge_catalog_item;
+		/// @brief Type alias for the sequential container of catalog items.
+		using cartridge_catalog_collection_type = std::vector<cartridge_catalog_item_type>;
+		using resource_location_type = ::vcc::utils::resource_location;
 
 	public:
 
@@ -180,9 +187,6 @@ namespace vcc::cartridges::multipak
 		void switch_to_slot(slot_id_type slot_id, bool reset) override;
 
 		/// @inheritdoc
-		void select_and_insert_device_cartridge(slot_id_type slot_id) override;
-
-		/// @inheritdoc
 		void select_and_insert_rompak_cartridge(slot_id_type slot_id) override;
 
 		/// @brief Load and insert a cartridge.
@@ -200,13 +204,18 @@ namespace vcc::cartridges::multipak
 		/// @return The status of the insert operation.
 		[[nodiscard]] mount_status_type insert_cartridge(
 			slot_id_type slot,
-			const path_type& filename,
+			const resource_location_type& location,
 			bool update_settings,
 			bool allow_reset);
 
 		/// @inheritdoc
 		void eject_cartridge(slot_id_type slot_id, bool update_settings, bool allow_reset) override;
 
+
+		menu_item_collection_type build_device_cartridge_menu(
+			const cartridge_catalog_collection_type& available_cartridge_list,
+			menu_item_id_type starting_id,
+			const string_type& postfix_text) const;
 
 	private:
 
@@ -222,8 +231,6 @@ namespace vcc::cartridges::multipak
 			menu_item_id_type eject;
 			/// @brief Insert a ROM Pak Cartridge into the slot.
 			menu_item_id_type insert_rompak;
-			/// @brief Insert a Device Cartridge into the slot.
-			menu_item_id_type insert_cartridge;
 		};
 
 		/// @brief Defines the identifiers for menu options.
@@ -276,14 +283,9 @@ namespace vcc::cartridges::multipak
 			/// @brief Insert cartridge into slot 4
 			static const menu_item_id_type insert_rompak_into_slot_4 = 18;
 
-			/// @brief Insert cartridge into slot 1
-			static const menu_item_id_type insert_cartridge_into_slot_1 = 20;
-			/// @brief Insert cartridge into slot 2
-			static const menu_item_id_type insert_cartridge_into_slot_2 = 21;
-			/// @brief Insert cartridge into slot 3
-			static const menu_item_id_type insert_cartridge_into_slot_3 = 22;
-			/// @brief Insert cartridge into slot 4
-			static const menu_item_id_type insert_cartridge_into_slot_4 = 23;
+			/// @brief First identifier for inserting device cartridge into a slots
+			static const menu_item_id_type insert_device_into_slot_start = 20;
+
 		};
 
 		/// @brief Defines details for managing the menu items of inserted cartridges.
@@ -318,6 +320,12 @@ namespace vcc::cartridges::multipak
 		configuration_dialog settings_dialog_;
 		/// @brief Collection of all cartridges inserted into the Multi-Pak.
 		std::array<cartridge_ptr_type, multipak_cartridge_driver::total_slot_count> cartridges_;
+		// @brief Cached list of available cartridge catalog saved while processing the
+		// menu as the list of available cartridges may change or their order may change
+		// which invalidate the indexes.
+		// 
+		// @todo the main app should send a menu closed event so the cache can be released
+		mutable cartridge_catalog_collection_type available_cartridge_list_;
 	};
 
 }

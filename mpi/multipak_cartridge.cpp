@@ -61,29 +61,25 @@ namespace vcc::cartridges::multipak
 			menu_item_ids::select_slot_1,
 			menu_item_ids::select_slot_1_and_reset,
 			menu_item_ids::eject_slot_1,
-			menu_item_ids::insert_rompak_into_slot_1,
-			menu_item_ids::insert_cartridge_into_slot_1},
+			menu_item_ids::insert_rompak_into_slot_1},
 
 		slot_action_command_descriptor{
 			menu_item_ids::select_slot_2,
 			menu_item_ids::select_slot_2_and_reset,
 			menu_item_ids::eject_slot_2,
-			menu_item_ids::insert_rompak_into_slot_2,
-			menu_item_ids::insert_cartridge_into_slot_2},
+			menu_item_ids::insert_rompak_into_slot_2},
 
 		slot_action_command_descriptor{
 			menu_item_ids::select_slot_3,
 			menu_item_ids::select_slot_3_and_reset,
 			menu_item_ids::eject_slot_3,
-			menu_item_ids::insert_rompak_into_slot_3,
-			menu_item_ids::insert_cartridge_into_slot_3},
+			menu_item_ids::insert_rompak_into_slot_3},
 
 		slot_action_command_descriptor{
 			menu_item_ids::select_slot_4,
 			menu_item_ids::select_slot_4_and_reset,
 			menu_item_ids::eject_slot_4,
-			menu_item_ids::insert_rompak_into_slot_4,
-			menu_item_ids::insert_cartridge_into_slot_4},
+			menu_item_ids::insert_rompak_into_slot_4},
 	};
 
 
@@ -163,10 +159,10 @@ namespace vcc::cartridges::multipak
 
 		for (auto slot(0u); slot < driver_->slot_count(); slot++)
 		{
-			const auto path(vcc::utils::find_pak_module_path(configuration_->slot_path(slot).string()));
-			if (!path.empty())
+			
+			if (const auto path(configuration_->slot_path(slot)); path.has_value() && !path->empty())
 			{
-				if (const auto insert_result(insert_cartridge(slot, path, false, false));
+				if (const auto insert_result(insert_cartridge(slot, *path, false, false));
 					insert_result != mount_status_type::success)
 				{
 					// FIXME-CHET: Report error to host
@@ -262,14 +258,53 @@ namespace vcc::cartridges::multipak
 		case menu_item_ids::insert_rompak_into_slot_4:
 			select_and_insert_rompak_cartridge(menu_item_id - menu_item_ids::insert_rompak_into_slot_1);
 			break;
-
-		case menu_item_ids::insert_cartridge_into_slot_1:
-		case menu_item_ids::insert_cartridge_into_slot_2:
-		case menu_item_ids::insert_cartridge_into_slot_3:
-		case menu_item_ids::insert_cartridge_into_slot_4:
-			select_and_insert_device_cartridge(menu_item_id - menu_item_ids::insert_cartridge_into_slot_1);
-			break;
 		}
+
+		if (menu_item_id < menu_item_ids::insert_device_into_slot_start)
+		{
+			return;
+		}
+
+		menu_item_id -= menu_item_ids::insert_device_into_slot_start;
+		const auto slot(menu_item_id / available_cartridge_list_.size());
+		const auto cartridge_details(available_cartridge_list_[menu_item_id % available_cartridge_list_.size()]);
+
+		(void)insert_cartridge(slot, cartridge_details.id, true, true);
+	}
+
+	multipak_cartridge::menu_item_collection_type multipak_cartridge::build_device_cartridge_menu(
+		const cartridge_catalog_collection_type& available_cartridge_list,
+		menu_item_id_type starting_id,
+		const string_type& postfix_text) const
+	{
+		if (available_cartridge_list.empty())
+		{
+			return {};
+		}
+
+		::vcc::ui::menu::menu_builder menu;
+
+		auto cartridgeSelectMenuItemId(starting_id);
+
+		menu.add_submenu_separator();
+		for (auto& item : available_cartridge_list)
+		{
+			if (cartridgeSelectMenuItemId >= cartridges_menu::first_item_id)
+			{
+				throw std::runtime_error("Cannot add device cartridge item to menu. Menu item id exceeds maximum allowed");
+			}
+
+			menu.add_submenu_item(
+				cartridgeSelectMenuItemId,
+				"Insert " + item.name + postfix_text,
+				{},
+				host_->cartridge_catalog().is_loaded(item.id));
+
+			++cartridgeSelectMenuItemId;
+		}
+		menu.add_submenu_separator();
+
+		return menu.release_items();
 	}
 
 
@@ -313,7 +348,9 @@ namespace vcc::cartridges::multipak
 
 		std::scoped_lock lock(host_->driver_mutex());
 
-		// Add the multipak menu items for insert/eject slot.
+		available_cartridge_list_ = host_->cartridge_catalog().copy_items_ordered();
+
+		// Add the Multi-Pak menu items for insert/eject slot.
 		for (auto slot(driver_->slot_count()); slot > 0; --slot)
 		{
 			const auto index(slot - 1);
@@ -323,6 +360,8 @@ namespace vcc::cartridges::multipak
 				module_instance_,
 				get_icon_id(is_at_selected_slot, is_slot_occupied)));
 			const auto& command_ids(slot_action_command_ids_[index]);
+			const auto will_reset(index == driver_->selected_cts_slot() || index == driver_->selected_scs_slot());
+			const auto postfix_text(will_reset ? " and Reset" : string_type());
 
 			menu
 				.add_root_submenu(
@@ -331,30 +370,31 @@ namespace vcc::cartridges::multipak
 				// TODO-CHET: Maybe update the menu to show that the insert will also do a reset.
 				.add_submenu_item(
 					command_ids.insert_rompak,
-					is_slot_occupied ? "Insert different ROM Pak" : "Insert ROM Pak")
+					(is_slot_occupied ? "Insert different ROM Pak" : "Insert ROM Pak") + postfix_text)
+				.add_items(build_device_cartridge_menu(
+					available_cartridge_list_,
+					menu_item_ids::insert_device_into_slot_start + (available_cartridge_list_.size() * index),
+					postfix_text))
 				// TODO-CHET: Maybe update the menu to show that the insert will also do a reset.
 				.add_submenu_item(
-					command_ids.insert_cartridge,
-					is_slot_occupied ? "Insert different Cartridge" : "Insert Cartridge")
-				// TODO-CHET: Maybe update the menu to show that the eject will also do a reset.
-				.add_submenu_item(
 					command_ids.eject,
-					"Eject " + driver_->slot_name(index),
+					"Eject " + driver_->slot_name(index) + postfix_text,
 					nullptr,
 					driver_->empty(index))
+				.add_submenu_separator()
 				.add_submenu_item(
 					command_ids.select,
-					"Switch To",
+					"Switch to Slot",
 					nullptr,
 					is_at_selected_slot)
 				.add_submenu_item(
 					command_ids.select_and_reset,
-					"Switch To And Reset",
+					"Switch to Slot and Reset",
 					nullptr,
 					is_at_selected_slot);
 		}
 
-		menu.add_root_item(menu_item_ids::open_settings, "Open Multi-Pak Slot Manager");
+		//menu.add_root_item(menu_item_ids::open_settings, "Open Multi-Pak Slot Manager");
 
 		return menu.release_items();
 	}
@@ -416,26 +456,22 @@ namespace vcc::cartridges::multipak
 			callback);
 	}
 
-	void multipak_cartridge::select_and_insert_device_cartridge(slot_id_type slot_id)
-	{
-		const auto callback = [this, &slot_id](const std::filesystem::path& filename)
-			{
-				return insert_cartridge(slot_id, filename, true, true);
-			};
-
-		::vcc::utils::select_device_cartridge_file(
-			ui_->app_window(),
-			std::format("Insert Device Cartridge into slot {}", slot_id + 1),
-			host_->system_cartridge_path(),
-			callback);
-	}
-
 	multipak_cartridge::mount_status_type multipak_cartridge::insert_cartridge(
 		slot_id_type slot,
-		const path_type& filename,
+		const resource_location_type& location,
 		bool update_settings,
 		bool allow_reset)
 	{
+		path_type filename;
+		if (location.is_path())
+		{
+			filename = location.path();
+		}
+		else if (location.is_guid())
+		{
+			filename = host_->cartridge_catalog().get_item_pathname(location.guid());
+		}
+
 		auto loadedCartridge(vcc::utils::load_cartridge(
 			filename,
 			host_,
@@ -448,7 +484,7 @@ namespace vcc::cartridges::multipak
 
 		if (update_settings)
 		{
-			configuration_->slot_path(slot, filename);
+			configuration_->slot_path(slot, location);
 		}
 
 		// TODO-CHET: This should probably also lock the ui/cart mutex as well
@@ -472,7 +508,7 @@ namespace vcc::cartridges::multipak
 	{
 		if (update_settings)
 		{
-			configuration_->slot_path(slot, {});
+			configuration_->slot_path(slot, nullptr);
 		}
 
 		// TODO-CHET: This should probably also lock the ui/cart mutex as well

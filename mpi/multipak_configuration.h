@@ -1,7 +1,9 @@
 #pragma once
 #include "vcc/utils/persistent_value_section_store.h"
+#include "vcc/utils/resource_location.h"
 #include "vcc/bus/expansion_port_ui.h"
 #include <string>
+#include <optional>
 
 
 namespace vcc::cartridges::multipak
@@ -26,6 +28,7 @@ namespace vcc::cartridges::multipak
 		using expansion_port_ui_type = ::vcc::bus::expansion_port_ui;
 		/// @brief Type alias of the value store used to serialize the configuration.
 		using value_store_type = ::vcc::utils::persistent_value_section_store;
+		using resource_location_type = ::vcc::utils::resource_location;
 
 
 	public:
@@ -72,14 +75,15 @@ namespace vcc::cartridges::multipak
 		/// 
 		/// @param slot The slot the cartridge should be loaded in.
 		/// @param path The path to the cartridge to load.
-		void slot_path(slot_id_type slot, const path_type& path);
+		void slot_path(slot_id_type slot, const resource_location_type& path);
+		void slot_path(slot_id_type slot, std::nullptr_t);
 
 		/// @brief Retrieves the cartridge path for a slot.
 		/// 
 		/// @param slot The slot to the retrieve the path for.
 		/// 
 		/// @return The path.
-		[[nodiscard]] path_type slot_path(slot_id_type slot) const;
+		[[nodiscard]] std::optional<resource_location_type> slot_path(slot_id_type slot) const;
 
 
 	private:

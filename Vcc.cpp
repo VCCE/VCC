@@ -311,6 +311,26 @@ void UpdateControlMenu(HMENU menu)
 		// FIXME-CHET: QUERY SHIT!
 		SetMonitorType(QUERY) == 0 ? "Switch to RGB Display" : "Switch to Composite Display",
 		"F6");
+
+	set_menu_item_text(
+		menu,
+		ID_CONTROL_TOGGLE_THROTTLE,
+		// FIXME-CHET: Magic number returned by setmonitortype should be enum
+		// FIXME-CHET: QUERY SHIT!
+		SetSpeedThrottle(QUERY) == 0 ? "Enable Speed Throttle" : "Disable Speed Throttle",
+		"F8");
+
+	// FIXME-CHET: We should probably just iterate all items and submenus and have
+	// a container that maps ids to update functions.
+	const auto overclock_menu(GetSubMenu(menu, GetMenuItemCount(menu) - 1));
+	if (overclock_menu != nullptr)
+	{
+		set_menu_item_text(
+			overclock_menu,
+			ID_CONTROL_TOGGLE_OVERCLOCK,
+			EmuState.OverclockFlag == false ? "Enable CPU Overclocking" : "Disable CPU Overclocking",
+			"Shift+F8");
+	}
 }
 
 [[nodiscard]] std::vector<vcc::utils::cartridge_catalog::item_type> UpdateCartridgeMenu(HMENU menu)
@@ -322,18 +342,9 @@ void UpdateControlMenu(HMENU menu)
 
 	::vcc::ui::menu::menu_builder builder;
 	builder.add_root_submenu("Cartridge Port");
-	if (const auto& name(PakGetName()); !name.empty())
-	{
-		// HACK: We subtract first_cartridge_menu_id from the id here because it gets 
-		// added to each of the id's in the item list to virtualize them. Since this
-		// id shouldn't be virtualized we hack it here to cheat,
-		builder.add_submenu_item(ID_EJECT_CARTRIDGE - first_cartridge_menu_id, "Eject " + name);
-		builder.add_submenu_separator();
-	}
 
 	builder.add_submenu_item(ID_INSERT_ROMPAK_CARTRIDGE - first_cartridge_menu_id, "Insert ROM Pak Catridge...");
 	//builder.add_submenu_item(ID_CARTRIDGE_INSERT_ROM - first_cartridge_menu_id, "Recently used ROM Paks", nullptr, true);
-
 	using item_type = vcc::utils::cartridge_catalog::item_type;
 
 	const auto catalog_items(cartridge_catalog_.copy_items_ordered());
@@ -356,6 +367,16 @@ void UpdateControlMenu(HMENU menu)
 			++cartridgeSelectMenuItemId;
 		}
 	}
+
+	if (const auto& name(PakGetName()); !name.empty())
+	{
+		builder.add_submenu_separator();
+		// HACK: We subtract first_cartridge_menu_id from the id here because it gets 
+		// added to each of the id's in the item list to virtualize them. Since this
+		// id shouldn't be virtualized we hack it here to cheat,
+		builder.add_submenu_item(ID_EJECT_CARTRIDGE - first_cartridge_menu_id, "Eject " + name);
+	}
+
 
 	if (const auto& menu_items(PakGetMenuItems()); !menu_items.empty())
 	{

@@ -161,7 +161,7 @@ namespace vcc::cartridges::multipak
 	void configuration_dialog::eject_cartridge(slot_id_type slot_id)
 	{
 		controller_.eject_cartridge(slot_id, true, true);
-		configuration_->slot_path(slot_id, {});
+		configuration_->slot_path(slot_id, nullptr);
 	}
 
 	void configuration_dialog::insert_rompak_cartridge(slot_id_type slot_id)
@@ -171,7 +171,7 @@ namespace vcc::cartridges::multipak
 
 	void configuration_dialog::insert_device_cartridge(slot_id_type slot_id)
 	{
-		controller_.select_and_insert_device_cartridge(slot_id);
+		//controller_.select_and_insert_device_cartridge(slot_id);
 	}
 
 	INT_PTR CALLBACK configuration_dialog::callback_procedure(
