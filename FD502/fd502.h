@@ -17,9 +17,9 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <vcc/bus/legacy_cartridge_definitions.h>
+#include <vcc/bus/cpak_cartridge_definitions.h>
 
-extern void*const& gHostKey;
+extern void*const& gCallbackContext;
 extern PakAssertInteruptHostCallback AssertInt;
 void BuildCartridgeMenu();
 

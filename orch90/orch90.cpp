@@ -19,11 +19,11 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include "resource.h" 
 #include <vcc/core/FileOps.h>
-#include <vcc/bus/legacy_cartridge_definitions.h>
+#include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/core/limits.h>
 
 static HINSTANCE gModuleInstance;
-static void* gHostKey = nullptr;
+static void* gCallbackContext = nullptr;
 static PakAssertCartridgeLineHostCallback PakSetCart = nullptr;
 static unsigned char LeftChannel=0,RightChannel=0;
 unsigned char LoadExtRom(const char *);
@@ -76,12 +76,12 @@ extern "C"
 	}
 
 	__declspec(dllexport) void PakInitialize(
-		void* const host_key,
+		void* const callback_context,
 		const char* const /*configuration_path*/,
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
-		gHostKey = host_key;
+		gCallbackContext = callback_context;
 		PakSetCart = callbacks->assert_cartridge_line;
 	}
 
@@ -127,7 +127,7 @@ extern "C"
 		strcpy(RomPath, "ORCH90.ROM");
 		
 		if (LoadExtRom(RomPath))	//If we can load the rom them assert cart 
-			PakSetCart(gHostKey, 1);
+			PakSetCart(gCallbackContext, 1);
 	}
 }
 

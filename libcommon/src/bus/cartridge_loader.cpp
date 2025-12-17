@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <vcc/bus/cartridge_loader.h>
 #include <vcc/bus/rom_cartridge.h>
-#include <vcc/bus/legacy_cartridge.h>
+#include <vcc/bus/cpak_cartridge.h>
 #include <vector>
 #include <fstream>
 #include <iterator>
@@ -108,7 +108,7 @@ namespace vcc::core
 	// TODO Rename to hardware cartridge
 	// TODO Remove unecessary context
 	// Load a legacy cartridge
-	cartridge_loader_result load_legacy_cartridge(
+	cartridge_loader_result load_cpak_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
 		void* const host_context,
@@ -131,7 +131,7 @@ namespace vcc::core
 
 		if (GetProcAddress(details.handle.get(), "PakInitialize") != nullptr)
 		{
-			details.cartridge = std::make_unique<vcc::core::cartridges::legacy_cartridge>(
+			details.cartridge = std::make_unique<vcc::core::cartridges::cpak_cartridge>(
 				details.handle.get(),
 				host_context,
 				iniPath,
@@ -151,7 +151,7 @@ namespace vcc::core
 	// pointer explicitly cast to multipak_cartridge in mpi/multipak_cartridge.cpp.
 	// mutlipak_cartridge refers specifically to a cart loaded by the multipak.
 	// cpak_callbacks is used by all hardware paks and is defined in 
-	// libcommon/include/vcc/core/legacy_cartridge_definitions.h.  cartridge_loader_result
+	// libcommon/include/vcc/core/cpak_cartridge_definitions.h.  cartridge_loader_result
 	// is defined in libcommon/include/vcc/core/cartridge_loader.h
 	// TODO: Fix the context insanity
 	cartridge_loader_result load_cartridge(
@@ -172,7 +172,7 @@ namespace vcc::core
 			return vcc::core::load_rom_cartridge(move(cartridge_context), filename);
 
 		case cartridge_file_type::library:		//	File is a DLL
-			return vcc::core::load_legacy_cartridge(
+			return vcc::core::load_cpak_cartridge(
 				filename,
 				move(cartridge_context),
 				host_context,

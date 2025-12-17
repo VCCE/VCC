@@ -26,7 +26,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/core/FileOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/core/DialogOps.h>
-#include <vcc/bus/legacy_cartridge_definitions.h>
+#include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/core/limits.h>
 
 static char FileName[MAX_PATH] { 0 };
@@ -48,8 +48,8 @@ static bool ClockReadOnly = true;
 static unsigned char DataLatch=0;
 static HINSTANCE gModuleInstance;
 static HWND hConfDlg = nullptr;
-static void* gHostKeyPtr = nullptr;
-static void* const& gHostKey(gHostKeyPtr);
+static void* gCallbackContextPtr = nullptr;
+static void* const& gCallbackContext(gCallbackContextPtr);
 
 using namespace std;
 
@@ -98,12 +98,12 @@ extern "C"
 	}
 
 	__declspec(dllexport) void PakInitialize(
-		void* const host_key,
+		void* const callback_context,
 		const char* const configuration_path,
         HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
-		gHostKeyPtr = host_key;
+		gCallbackContextPtr = callback_context;
 		CartMenuCallback = callbacks->add_menu_item;
 		strcpy(IniFile, configuration_path);
 
@@ -231,24 +231,24 @@ void BuildCartridgeMenu()
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
-	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
-	CartMenuCallback(gHostKey, "IDE Master",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gHostKey, "Insert",ControlId(10),MIT_Slave);
+	CartMenuCallback(gCallbackContext, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gCallbackContext, "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback(gCallbackContext, "IDE Master",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gCallbackContext, "Insert",ControlId(10),MIT_Slave);
 	QueryDisk(MASTER,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback(gHostKey, TempMsg,ControlId(11),MIT_Slave);
-	CartMenuCallback(gHostKey, "IDE Slave",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gHostKey, "Insert",ControlId(12),MIT_Slave);
+	CartMenuCallback(gCallbackContext, TempMsg,ControlId(11),MIT_Slave);
+	CartMenuCallback(gCallbackContext, "IDE Slave",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gCallbackContext, "Insert",ControlId(12),MIT_Slave);
 	QueryDisk(SLAVE,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback(gHostKey, TempMsg,ControlId(13),MIT_Slave);
-	CartMenuCallback(gHostKey, "IDE Config",ControlId(14),MIT_StandAlone);
-	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
+	CartMenuCallback(gCallbackContext, TempMsg,ControlId(13),MIT_Slave);
+	CartMenuCallback(gCallbackContext, "IDE Config",ControlId(14),MIT_StandAlone);
+	CartMenuCallback(gCallbackContext, "", MID_FINISH, MIT_Head);
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)

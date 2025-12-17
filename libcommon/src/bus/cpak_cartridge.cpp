@@ -18,7 +18,7 @@
 
 // TODO: Rename this to hardware_cartridge (cpak_cartridge?)
 
-#include <vcc/bus/legacy_cartridge.h>
+#include <vcc/bus/cpak_cartridge.h>
 #include <stdexcept>
 
 namespace vcc::core::cartridges
@@ -78,7 +78,7 @@ namespace vcc::core::cartridges
 	}
 
 
-	legacy_cartridge::legacy_cartridge(
+	cpak_cartridge::cpak_cartridge(
 		HMODULE module_handle,
 		void* const host_context,
 		path_type configuration_path,
@@ -110,67 +110,67 @@ namespace vcc::core::cartridges
 		}
 	}
 
-	legacy_cartridge::name_type legacy_cartridge::name() const
+	cpak_cartridge::name_type cpak_cartridge::name() const
 	{
 		return get_name_();
 	}
 
-	legacy_cartridge::catalog_id_type legacy_cartridge::catalog_id() const
+	cpak_cartridge::catalog_id_type cpak_cartridge::catalog_id() const
 	{
 		return get_catalog_id_();
 	}
 
-	legacy_cartridge::description_type legacy_cartridge:: description() const
+	cpak_cartridge::description_type cpak_cartridge:: description() const
 	{
 		return get_description_();
 	}
 
-	void legacy_cartridge::start()
+	void cpak_cartridge::start()
 	{
 		initialize_(host_context_, configuration_path_.c_str(), hVccWnd_, &cpak_callbacks_);
 	}
 
-	void legacy_cartridge::stop()
+	void cpak_cartridge::stop()
 	{
 		terminate_();
 	}
 
-	void legacy_cartridge::reset()
+	void cpak_cartridge::reset()
 	{
 		reset_();
 	}
 
-	void legacy_cartridge::process_horizontal_sync()
+	void cpak_cartridge::process_horizontal_sync()
 	{
 		heartbeat_();
 	}
 
-	void legacy_cartridge::status(char* text_buffer, size_t buffer_size)
+	void cpak_cartridge::status(char* text_buffer, size_t buffer_size)
 	{
 		status_(text_buffer, buffer_size);
 	}
 
-	void legacy_cartridge::write_port(unsigned char port_id, unsigned char value)
+	void cpak_cartridge::write_port(unsigned char port_id, unsigned char value)
 	{
 		write_port_(port_id, value);
 	}
 
-	unsigned char legacy_cartridge::read_port(unsigned char port_id)
+	unsigned char cpak_cartridge::read_port(unsigned char port_id)
 	{ 
 		return read_port_(port_id);
 	}
 
-	unsigned char legacy_cartridge::read_memory_byte(unsigned short memory_address)
+	unsigned char cpak_cartridge::read_memory_byte(unsigned short memory_address)
 	{
 		return read_memory_byte_(memory_address);
 	}
 
-	unsigned short legacy_cartridge::sample_audio()
+	unsigned short cpak_cartridge::sample_audio()
 	{
 		return sample_audio_();
 	}
 
-	void legacy_cartridge::menu_item_clicked(unsigned char menu_item_id)
+	void cpak_cartridge::menu_item_clicked(unsigned char menu_item_id)
 	{
 		menu_item_clicked_(menu_item_id);
 	}

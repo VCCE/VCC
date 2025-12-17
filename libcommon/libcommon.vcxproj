@@ -108,7 +108,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\bus\basic_cartridge.cpp" />
-    <ClCompile Include="src\bus\legacy_cartridge.cpp" />
+    <ClCompile Include="src\bus\cpak_cartridge.cpp" />
     <ClCompile Include="src\bus\rom_cartridge.cpp" />
     <ClCompile Include="src\bus\cartridge_loader.cpp" />
     <ClCompile Include="src\bus\rom_image.cpp" />
@@ -128,8 +128,8 @@
     <ClInclude Include="include\vcc\bus\cartridge_loader.h" />
     <ClInclude Include="include\vcc\bus\dll_deleter.h" />
     <ClInclude Include="include\vcc\bus\exports.h" />
-    <ClInclude Include="include\vcc\bus\legacy_cartridge.h" />
-    <ClInclude Include="include\vcc\bus\legacy_cartridge_definitions.h" />
+    <ClInclude Include="include\vcc\bus\cpak_cartridge.h" />
+    <ClInclude Include="include\vcc\bus\cpak_cartridge_definitions.h" />
     <ClInclude Include="include\vcc\bus\null_cartridge.h" />
     <ClInclude Include="include\vcc\bus\rom_cartridge.h" />
     <ClInclude Include="include\vcc\bus\rom_image.h" />

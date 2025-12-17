@@ -19,24 +19,23 @@
 #include <vcc/core/interrupts.h>
 #include <windows.h>
 
-// TODO: Rename this to cpak_cartridge_definitions.h  (legacy_cartridge --> cpak_cartridge)
 // This defines the hardware cartridge interface, it is included by all hardware packs.
 extern "C"
 {
 	enum MenuItemType;
 
 	using PakWriteMemoryByteHostCallback = void (*)
-		(void* host_key, unsigned char value, unsigned short address);
+		(void* callback_context, unsigned char value, unsigned short address);
 	using PakReadMemoryByteHostCallback = unsigned char (*)
-		(void* host_key, unsigned short address);
+		(void* callback_context, unsigned short address);
 	using PakAssertCartridgeLineHostCallback = void (*)
-		(void* host_key, bool lineState);
+		(void* callback_context, bool lineState);
 	using PakAssertInteruptHostCallback = void (*)
-		(void* host_key, Interrupt interrupt, InterruptSource interrupt_source);
+		(void* callback_context, Interrupt interrupt, InterruptSource interrupt_source);
 	using PakAppendCartridgeMenuHostCallback = void (*)
-		(void* host_key, const char* menu_name, int menu_id, MenuItemType menu_type);
+		(void* callback_context, const char* menu_name, int menu_id, MenuItemType menu_type);
 	using PakResetHostCallback = void (*)
-		(void* host_key);
+		(void* callback_context);
 
 	// Cartridge Callbacks
 	struct cpak_callbacks
@@ -51,7 +50,7 @@ extern "C"
 
 	// Cartridge exports. At least PakInitilizeModuleFunction must be implimented
 	using PakInitializeModuleFunction = void (*)(
-		void* host_key,                          // Mysterious master key
+		void* callback_context,                  // Host or MPI 
 		const char* const configuration_path,    // Path of ini file
 		HWND hVccWnd,                            // VCC Main window HWND
 		const cpak_callbacks* const context);    // Callbacks

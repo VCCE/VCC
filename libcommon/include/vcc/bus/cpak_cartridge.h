@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <vcc/bus/cartridge.h>
-#include <vcc/bus/legacy_cartridge_definitions.h>
+#include <vcc/bus/cpak_cartridge_definitions.h>
 #include <Windows.h>
 #include <string>
 
@@ -25,7 +25,7 @@
 namespace vcc::core::cartridges
 {
 
-	class legacy_cartridge: public cartridge
+	class cpak_cartridge: public cartridge
 	{
 	public:
 
@@ -34,7 +34,7 @@ namespace vcc::core::cartridges
 
 	public:
 
-		LIBCOMMON_EXPORT legacy_cartridge(
+		LIBCOMMON_EXPORT cpak_cartridge(
 			HMODULE module_handle,                        // Cartridge filename
 			void* const host_context,                     // Yet another cartridge context
 			path_type configuration_path,                 // Path of ini file

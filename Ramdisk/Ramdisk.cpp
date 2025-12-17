@@ -18,7 +18,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "memboard.h"
 #include "defines.h"
 #include "resource.h" 
-#include <vcc/bus/legacy_cartridge_definitions.h>
+#include <vcc/bus/cpak_cartridge_definitions.h>
 #include <Windows.h>
 
 static HINSTANCE gModuleInstance;
@@ -68,7 +68,7 @@ extern "C"
 	}
 
 	__declspec(dllexport) void PakInitialize(
-		void* const /*host_key*/,
+		void* const /*callback_context*/,
 		const char* const /*configuration_path*/,
 		HWND hVccWnd,
 		const cpak_callbacks* const /*context*/)

@@ -7,7 +7,7 @@
 #include "becker.h"
 #include "resource.h" 
 #include "../CartridgeMenu.h"
-#include <vcc/bus/legacy_cartridge_definitions.h>
+#include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/core/limits.h>
 #include <vcc/core/logger.h>
 #include <vcc/core/FileOps.h>
@@ -17,7 +17,7 @@ static SOCKET dwSocket = 0;
 
 // vcc stuff
 static HINSTANCE gModuleInstance;
-static void* gHostKey = nullptr;
+static void* gCallbackContext = nullptr;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 static PakAssertCartridgeLineHostCallback PakSetCart = nullptr;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
@@ -413,12 +413,12 @@ extern "C"
 	}
 
 	__declspec(dllexport) void PakInitialize(
-		void* const host_key,
+		void* const callback_context,
 		const char* const configuration_path,
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
-		gHostKey = host_key;
+		gCallbackContext = callback_context;
 		CartMenuCallback = callbacks->add_menu_item;
 		PakSetCart = callbacks->assert_cartridge_line;
 		strcpy(IniFile, configuration_path);
@@ -534,10 +534,10 @@ extern "C" __declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buf
 
 void BuildCartridgeMenu()
 {
-	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
-	CartMenuCallback(gHostKey, "DriveWire Server..", ControlId(16), MIT_StandAlone);
-	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
+	CartMenuCallback(gCallbackContext, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gCallbackContext, "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback(gCallbackContext, "DriveWire Server..", ControlId(16), MIT_StandAlone);
+	CartMenuCallback(gCallbackContext, "", MID_FINISH, MIT_Head);
 }
 
 extern "C" __declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
