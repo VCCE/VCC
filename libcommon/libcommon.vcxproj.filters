@@ -23,7 +23,7 @@
     <ClCompile Include="src\core\initial_settings.cpp">
       <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\bus\legacy_cartridge.cpp">
+    <ClCompile Include="src\bus\cpak_cartridge.cpp">
       <Filter>bus</Filter>
     </ClCompile>
     <ClCompile Include="src\bus\rom_cartridge.cpp">
@@ -79,10 +79,10 @@
     <ClInclude Include="include\vcc\bus\dll_deleter.h">
       <Filter>bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\bus\legacy_cartridge.h">
+    <ClInclude Include="include\vcc\bus\cpak_cartridge.h">
       <Filter>bus</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\bus\legacy_cartridge_definitions.h">
+    <ClInclude Include="include\vcc\bus\cpak_cartridge_definitions.h">
       <Filter>bus</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\bus\null_cartridge.h">

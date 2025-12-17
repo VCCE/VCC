@@ -150,7 +150,7 @@
 #include <vcc/core/logger.h>
 #include <vcc/core/DialogOps.h>
 #include "../CartridgeMenu.h"
-#include <vcc/bus/legacy_cartridge_definitions.h>
+#include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/core/limits.h>
 #include "sdc.h"
 
@@ -158,7 +158,7 @@
 // Functions
 //======================================================================
 
-static void* gHostKey = nullptr;
+static void* gCallbackContext = nullptr;
 static PakAssertInteruptHostCallback AssertInt = nullptr;;
 static PakWriteMemoryByteHostCallback MemWrite8 = nullptr;
 static PakReadMemoryByteHostCallback MemRead8 = nullptr;
@@ -377,12 +377,12 @@ extern "C"
     }
 
     __declspec(dllexport) void PakInitialize(
-        void* const host_key,
+        void* const callback_context,
         const char* const configuration_path,
         HWND hVccWnd,
         const cpak_callbacks* const callbacks)
     {
-        gHostKey = host_key;
+        gCallbackContext = callback_context;
         CartMenuCallback = callbacks->add_menu_item;
         MemRead8 = callbacks->read_memory_byte;
         MemWrite8 = callbacks->write_memory_byte;
@@ -497,11 +497,11 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 //-------------------------------------------------------------
 void BuildCartridgeMenu()
 {
-    CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
-    CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
-    CartMenuCallback(gHostKey, "SDC Config", ControlId(10), MIT_StandAlone);
-    CartMenuCallback(gHostKey, "SDC Control", ControlId(11), MIT_StandAlone);
-    CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
+    CartMenuCallback(gCallbackContext, "", MID_BEGIN, MIT_Head);
+    CartMenuCallback(gCallbackContext, "", MID_ENTRY, MIT_Seperator);
+    CartMenuCallback(gCallbackContext, "SDC Config", ControlId(10), MIT_StandAlone);
+    CartMenuCallback(gCallbackContext, "SDC Control", ControlId(11), MIT_StandAlone);
+    CartMenuCallback(gCallbackContext, "", MID_FINISH, MIT_Head);
 }
 
 //------------------------------------------------------------
@@ -955,7 +955,7 @@ void ParseStartup()
 void CommandDone()
 {
     DLOG_C("*");
-	AssertInt(gHostKey, INT_NMI, IS_NMI);
+	AssertInt(gCallbackContext, INT_NMI, IS_NMI);
 }
 
 //----------------------------------------------------------------------

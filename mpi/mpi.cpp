@@ -74,7 +74,7 @@ extern "C"
 
 	//Initialize MPI -	capture callback addresses and build menus.
 	__declspec(dllexport) void PakInitialize(
-		void* const host_key,
+		void* const callback_context,
 		const char* const configuration_path,
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks)

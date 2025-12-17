@@ -60,9 +60,9 @@ void Cartridge::LoadMenuItems()
 
 
 
-void Cartridge::SetHostKey(void* key)
+void Cartridge::SetCallbackContext(void* key)
 {
-	m_HostKey = key;
+	m_CallbackContext = key;
 }
 
 

@@ -16,12 +16,12 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/bus/legacy_cartridge_definitions.h>
+#include <vcc/bus/cpak_cartridge_definitions.h>
 
 // Define the CPAK interface in yet another place but call it something else.
 
 extern "C" __declspec(dllexport) void PakInitialize(
-	void* const host_key,
+	void* const callback_context,
 	const char* const configuration_path,
 	HWND hVccWnd,
 	const cpak_callbacks* const callbacks);
@@ -37,9 +37,9 @@ public:
 
 public:
 
-	explicit host_cartridge_context(void* host_key, const path_type& configuration_filename)
+	explicit host_cartridge_context(void* callback_context, const path_type& configuration_filename)
 		:
-		host_key_(host_key),
+		callback_context_(callback_context),
 		configuration_filename_(configuration_filename)
 	{}
 
@@ -55,33 +55,33 @@ public:
 
 	void write_memory_byte(unsigned char value, unsigned short address) override
 	{
-		write_memory_byte_(host_key_, value, address);
+		write_memory_byte_(callback_context_, value, address);
 	}
 
 	unsigned char read_memory_byte(unsigned short address) override
 	{
-		return read_memory_byte_(host_key_, address);
+		return read_memory_byte_(callback_context_, address);
 	}
 
 	void assert_cartridge_line(bool line_state) override
 	{
-		assert_cartridge_line_(host_key_, line_state);
+		assert_cartridge_line_(callback_context_, line_state);
 	}
 
 	void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) override
 	{
-		assert_interrupt_(host_key_, interrupt, interrupt_source);
+		assert_interrupt_(callback_context_, interrupt, interrupt_source);
 	}
 
 	void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) override
 	{
-		add_menu_item_(host_key_, menu_name, menu_id, menu_type);
+		add_menu_item_(callback_context_, menu_name, menu_id, menu_type);
 	}
 
 private:
 
 	friend void PakInitialize(
-		void* const host_key,
+		void* const callback_context,
 		const char* const configuration_path,
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks);
@@ -90,7 +90,7 @@ private:
 
 private:
 
-	void* const							host_key_;
+	void* const							callback_context_;
 	const path_type&					configuration_filename_;
 	PakWriteMemoryByteHostCallback		write_memory_byte_ = [](void*, unsigned char, unsigned short) {};
 	PakReadMemoryByteHostCallback		read_memory_byte_ = [](void*, unsigned short) -> unsigned char { return 0; };

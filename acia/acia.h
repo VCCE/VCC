@@ -22,7 +22,7 @@
 
 // FIXME: This should be defined on the command line
 #define DIRECTINPUT_VERSION 0x0800
-#include <vcc/bus/legacy_cartridge_definitions.h>
+#include <vcc/bus/cpak_cartridge_definitions.h>
 #include <Windows.h>
 #include <windowsx.h>
 #include <stdio.h>
@@ -69,7 +69,7 @@ extern char AciaFileRdPath[MAX_PATH]; // Path for file reads
 extern char AciaFileWrPath[MAX_PATH]; // Path for file writes
 
 extern PakAssertInteruptHostCallback AssertInt;
-extern void* const& gHostKey;
+extern void* const& gCallbackContext;
 
 // Device
 extern void sc6551_init();

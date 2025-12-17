@@ -28,7 +28,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/core/DialogOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/core/interrupts.h>
-#include <vcc/bus/legacy_cartridge_definitions.h>
+#include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/core/limits.h>
 
 constexpr auto DEF_HD_SIZE = 132480u;
@@ -41,7 +41,7 @@ static char IniFile[MAX_PATH]  { 0 };
 static char HardDiskPath[MAX_PATH];
 static ::vcc::devices::rtc::cloud9 cloud9_rtc;
 
-static void* gHostKey = nullptr;
+static void* gCallbackContext = nullptr;
 static PakReadMemoryByteHostCallback MemRead8 = nullptr;
 static PakWriteMemoryByteHostCallback MemWrite8 = nullptr;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
@@ -76,12 +76,12 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL,  // handle to DLL module
 
 void MemWrite(unsigned char Data, unsigned short Address)
 {
-	MemWrite8(gHostKey, Data, Address);
+	MemWrite8(gCallbackContext, Data, Address);
 }
 
 unsigned char MemRead(unsigned short Address)
 {
-	return MemRead8(gHostKey, Address);
+	return MemRead8(gCallbackContext, Address);
 }
 
 
@@ -116,12 +116,12 @@ extern "C"
 	}
 
 	__declspec(dllexport) void PakInitialize(
-		void* const host_key,
+		void* const callback_context,
 		const char* const configuration_path,
         HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
-		gHostKey = host_key;
+		gCallbackContext = callback_context;
 		CartMenuCallback = callbacks->add_menu_item;
 		MemRead8 = callbacks->read_memory_byte;
 		MemWrite8 = callbacks->write_memory_byte;
@@ -378,27 +378,27 @@ void BuildCartridgeMenu()
 	char TempMsg[512] = "";
 	char TempBuf[MAX_PATH] = "";
 
-	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback(gCallbackContext, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gCallbackContext, "", MID_ENTRY, MIT_Seperator);
 
-	CartMenuCallback(gHostKey, "HD Drive 0", MID_ENTRY, MIT_Head);
-	CartMenuCallback(gHostKey, "Insert", ControlId(10), MIT_Slave);
+	CartMenuCallback(gCallbackContext, "HD Drive 0", MID_ENTRY, MIT_Head);
+	CartMenuCallback(gCallbackContext, "Insert", ControlId(10), MIT_Slave);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHDfile0);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	CartMenuCallback(gHostKey, TempMsg, ControlId(11), MIT_Slave);
+	CartMenuCallback(gCallbackContext, TempMsg, ControlId(11), MIT_Slave);
 
-	CartMenuCallback(gHostKey, "HD Drive 1", MID_ENTRY, MIT_Head);
-	CartMenuCallback(gHostKey, "Insert", ControlId(12), MIT_Slave);
+	CartMenuCallback(gCallbackContext, "HD Drive 1", MID_ENTRY, MIT_Head);
+	CartMenuCallback(gCallbackContext, "Insert", ControlId(12), MIT_Slave);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHDfile1);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	CartMenuCallback(gHostKey, TempMsg, ControlId(13), MIT_Slave);
+	CartMenuCallback(gCallbackContext, TempMsg, ControlId(13), MIT_Slave);
 
-	CartMenuCallback(gHostKey, "HD Config", ControlId(14), MIT_StandAlone);
-	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
+	CartMenuCallback(gCallbackContext, "HD Config", ControlId(14), MIT_StandAlone);
+	CartMenuCallback(gCallbackContext, "", MID_FINISH, MIT_Head);
 }
 
 // Dialog for creating a new hard disk

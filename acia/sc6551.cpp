@@ -250,7 +250,7 @@ void sc6551_heartbeat()
             StatReg |= StatRxF;
             // Assert CART if interrupts not disabled or already asserted.
             if (!((CmdReg & CmdRxI) || (StatReg & StatIRQ))) {
-                AssertInt(gHostKey, INT_CART, IS_NMI);
+                AssertInt(gCallbackContext, INT_CART, IS_NMI);
                 StatReg |= StatIRQ;
             }
         }

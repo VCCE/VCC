@@ -40,8 +40,8 @@ void SaveConfig();
 //------------------------------------------------------------------------
 // Pak host
 //------------------------------------------------------------------------
-static void* gHostKeyPtr = nullptr;
-void* const& gHostKey(gHostKeyPtr);
+static void* gCallbackContextPtr = nullptr;
+void* const& gCallbackContext(gCallbackContextPtr);
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 PakAssertInteruptHostCallback AssertInt = nullptr;
 
@@ -119,12 +119,12 @@ extern "C"
 	}
 
 	__declspec(dllexport) void PakInitialize(
-		void* const host_key,
+		void* const callback_context,
 		const char* const configuration_path,
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
-		gHostKeyPtr = host_key;
+		gCallbackContextPtr = callback_context;
 		CartMenuCallback = callbacks->add_menu_item;
 		AssertInt = callbacks->assert_interrupt;
 		strcpy(IniFile, configuration_path);
@@ -243,10 +243,10 @@ __declspec(dllexport) void PakMenuItemClicked(unsigned char /*MenuID*/)
 //----------------------------------------------------------------------
 void BuildCartridgeMenu()
 {
-	CartMenuCallback(gHostKey, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gHostKey, "", MID_ENTRY, MIT_Seperator);
-	CartMenuCallback(gHostKey, "ACIA Config", ControlId(16), MIT_StandAlone);
-	CartMenuCallback(gHostKey, "", MID_FINISH, MIT_Head);
+	CartMenuCallback(gCallbackContext, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gCallbackContext, "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback(gCallbackContext, "ACIA Config", ControlId(16), MIT_StandAlone);
+	CartMenuCallback(gCallbackContext, "", MID_FINISH, MIT_Head);
 }
 
 //-----------------------------------------------------------------------
