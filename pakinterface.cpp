@@ -69,6 +69,7 @@ struct vcc_cartridge_context : public ::vcc::core::cartridge_context
 
 	void reset() override
 	{
+		//SendMessage(EmuState.WindowHandle,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
 		EmuState.ResetPending = 2;
 	}
 
