@@ -484,11 +484,12 @@ extern "C"
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 {
-    if (reason == DLL_PROCESS_ATTACH)
-    {
+    if (reason == DLL_PROCESS_ATTACH) {
         gModuleInstance = hinst;
+    } else if (reason == DLL_PROCESS_DETACH) {
+        CloseDrive(0);
+        CloseDrive(1);
     }
-
     return TRUE;
 }
 
@@ -2334,7 +2335,7 @@ void MakeDirectory(const char *name)
 void CloseDrive (int drive)
 {
     drive &= 1;
-    if (Disk[drive].hFile != nullptr) {
+    if (Disk[drive].hFile && Disk[drive].hFile != INVALID_HANDLE_VALUE) {
         CloseHandle(Disk[drive].hFile);
         Disk[drive].hFile = INVALID_HANDLE_VALUE;
     }
