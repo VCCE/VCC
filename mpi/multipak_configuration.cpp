@@ -20,16 +20,6 @@ multipak_configuration::path_type multipak_configuration::configuration_path() c
 	return configuration_path_;
 }
 
-// last module type
-void multipak_configuration::last_accessed_module_type(const path_type& path) const
-{
-   settings(configuration_path()).write("DefaultPaths", "MPIType", path);
-}
-multipak_configuration::path_type multipak_configuration::last_accessed_module_type() const
-{
-   return settings(configuration_path()).read("DefaultPaths", "MPIType");
-}
-
 // last rom path
 void multipak_configuration::last_accessed_rom_path(const path_type& path) const
 {

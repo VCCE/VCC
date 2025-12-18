@@ -6,6 +6,7 @@
 #define IDS_DESCRIPTION                 4
 
 #define IDD_DIALOG1                     101
+#define IDD_POPUP_MENU                  102
 
 #define IDC_PAKSELECT                   1000
 
@@ -23,6 +24,10 @@
 #define IDC_INSERT2                     1022
 #define IDC_INSERT3                     1023
 #define IDC_INSERT4                     1024
+
+// Don't change order of the next two
+#define IDC_LOAD_DLL                    1031
+#define IDC_LOAD_ROM                    1032
 
 #define IDC_MODINFO                     1100
 #define IDC_PERSIST_PAK                 1101
