@@ -78,7 +78,7 @@ BEGIN
     EDITTEXT        IDC_MODINFO,        175,8,118,115, ES_MULTILINE|ES_READONLY|ES_WANTRETURN
 
     LTEXT           "Radio button selects startup slot.", IDC_STATIC, 12,128,105,10
-    LTEXT           ">  Mount cartridge.", IDC_STATIC, 124,128,60,10
+    LTEXT           ">  Load cartridge.", IDC_STATIC, 124,128,60,10
     LTEXT           "X  Eject cartridge.", IDC_STATIC, 194,128,60,10
 
     LTEXT           "Reset VCC for selected slot changes to take effect", IDC_STATIC, 74,144,230,10
@@ -88,6 +88,16 @@ BEGIN
 //    CHECKBOX        "Disable Cart Select Signal",IDC_SCS_DISABLE,    140,165,100,10
 //    DEFPUSHBUTTON   "OK",IDOK,                                       245,163, 40,14
 END
+
+IDD_POPUP_MENU MENU
+BEGIN
+   POPUP "select"
+   BEGIN
+       MENUITEM "Load DLL", IDC_LOAD_DLL
+       MENUITEM "Load ROM", IDC_LOAD_ROM
+   END
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //

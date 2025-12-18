@@ -20,7 +20,7 @@
 #include "multipak_configuration.h"
 #include <Windows.h>
 
-
+//TODO:  ELiminate this useless class BS.  It gains nothing but obscurity
 class configuration_dialog
 {
 public:
@@ -41,10 +41,11 @@ public:
 
 private:
 
-	void select_new_cartridge(size_t slot);
+	void select_new_cartridge(unsigned int item);
 	void set_selected_slot(size_t slot);
 	void update_slot_details(size_t slot);
-	void eject_or_select_new_cartridge(size_t slot);
+	void eject_or_select_new_cartridge(unsigned int button);
+	void cart_type_menu(unsigned int button);
 
 	static INT_PTR CALLBACK callback_procedure(
 		HWND hDlg,
@@ -59,6 +60,7 @@ private:
 
 private:
 
+    size_t slot_to_load_;
 	multipak_configuration& configuration_;
 	multipak_cartridge& mpi_;
 	HWND dialog_handle_ = nullptr;

@@ -21,6 +21,7 @@
 #include <vcc/core/DialogOps.h>
 #include <vcc/core/critical_section.h>
 #include <vcc/core/filesystem.h>
+#include <vcc/core/logger.h>
 
 namespace
 {
@@ -40,7 +41,6 @@ namespace
 		{ IDC_EDIT3, IDC_SELECT3, IDC_INSERT3 },
 		{ IDC_EDIT4, IDC_SELECT4, IDC_INSERT4 }
 	} };
-
 }
 
 configuration_dialog::configuration_dialog(
@@ -72,12 +72,15 @@ void configuration_dialog::close()
 	CloseCartDialog(dialog_handle_);
 }
 
-void configuration_dialog::select_new_cartridge(size_t slot)
+void configuration_dialog::select_new_cartridge(unsigned int item)
 {
+    size_t slot = slot_to_load_;
+
 	FileDialog dlg;
 
-	// Kludge until we figure out a way for user to spec what cart type they want
-	if (configuration_.last_accessed_module_type() == "dll") {
+	int type = (item == IDC_LOAD_DLL) ? 1:0; //1=dll,0=rom
+
+	if (type == 1) {
 		dlg.setTitle("Load Hardware Pak");
 		dlg.setInitialDir(configuration_.last_accessed_dll_path().c_str());
 		dlg.setFilter(
@@ -104,20 +107,20 @@ void configuration_dialog::select_new_cartridge(size_t slot)
 			configuration_.slot_cartridge_path(slot, dlg.path());
 			if ( (dlg.gettype()==".dll") || (dlg.gettype() == ".DLL") ) {  // DLL?
 				configuration_.last_accessed_dll_path(dlg.getdir());
-				configuration_.last_accessed_module_type("dll");
 			} else {
 				configuration_.last_accessed_rom_path(dlg.getdir());
-				configuration_.last_accessed_module_type("rom");
 			}
 		}
 
-		mpi_.build_menu();
 	}
 
+	update_slot_details(slot);
+	mpi_.build_menu();
 }
 
 void configuration_dialog::set_selected_slot(size_t slot)
 {
+
 	SendDlgItemMessage(
 		dialog_handle_,
 		IDC_MODINFO,
@@ -158,8 +161,24 @@ void configuration_dialog::update_slot_details(size_t slot)
 		reinterpret_cast<LPARAM>(mpi_.empty(slot) ? ">" : "X"));
 }
 
+// This could be expanded to include MRU, etc
+void configuration_dialog::cart_type_menu(unsigned int Button)
+{
+	HWND hDlg = dialog_handle_;
+	HWND hButton = GetDlgItem(hDlg, Button);
+	RECT rcButton;
+	GetWindowRect(hButton, &rcButton);
+	HMENU hMenuLoaded = LoadMenu(gModuleInstance, MAKEINTRESOURCE(IDD_POPUP_MENU));
+	HMENU hPopupMenu = GetSubMenu(hMenuLoaded, 0);
+	TrackPopupMenu(	hPopupMenu,
+		TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
+		rcButton.right, rcButton.top, // position in screen coordinates
+		0, hDlg, NULL );              // Reserved, Owner, reserved
+	DestroyMenu(hMenuLoaded);
+	return;
+}
 
-void configuration_dialog::eject_or_select_new_cartridge(size_t slot)
+void configuration_dialog::eject_or_select_new_cartridge(unsigned int Button)
 {
 	// Disable Slot changes if parent is disabled.  This prevents user using the
 	// config dialog to eject a cartridge while VCC main is using a modal dialog
@@ -174,18 +193,35 @@ void configuration_dialog::eject_or_select_new_cartridge(size_t slot)
 		return;
 	}
 
+	// Determine slot from button ID
+	size_t slot = 0;
+	switch (Button) {
+		case IDC_INSERT1:
+			slot = 0;
+			break;
+		case IDC_INSERT2:
+			slot = 1;
+			break;
+		case IDC_INSERT3:
+			slot = 2;
+			break;
+		case IDC_INSERT4:
+			slot = 3;
+			break;
+	}	
+
 	if (!mpi_.empty(slot))
 	{
 		mpi_.eject_cartridge(slot);
 		configuration_.slot_cartridge_path(slot, {});
+		update_slot_details(slot);
+		mpi_.build_menu();
 	}
 	else
 	{
-		select_new_cartridge(slot);
+		slot_to_load_ = slot;
+		cart_type_menu(Button);
 	}
-
-	update_slot_details(slot);
-	mpi_.build_menu();
 }
 
 INT_PTR CALLBACK configuration_dialog::callback_procedure(
@@ -210,6 +246,7 @@ INT_PTR configuration_dialog::process_message(
 	UINT message,
 	WPARAM wParam)
 {
+	unsigned int button;
 	switch (message)
 	{
 	case WM_CLOSE:
@@ -231,7 +268,8 @@ INT_PTR configuration_dialog::process_message(
 		return TRUE;
 
 	case WM_COMMAND:
-		switch (LOWORD(wParam))
+		button = LOWORD(wParam);
+		switch (button)
 		{
 		case IDC_SELECT1:
 			set_selected_slot(0);
@@ -246,16 +284,14 @@ INT_PTR configuration_dialog::process_message(
 			set_selected_slot(3);
 			return TRUE;
 		case IDC_INSERT1:
-			eject_or_select_new_cartridge(0);
-			return TRUE;
 		case IDC_INSERT2:
-			eject_or_select_new_cartridge(1);
-			return TRUE;
 		case IDC_INSERT3:
-			eject_or_select_new_cartridge(2);
-			return TRUE;
 		case IDC_INSERT4:
-			eject_or_select_new_cartridge(3);
+			eject_or_select_new_cartridge(button);
+			return TRUE;
+		case IDC_LOAD_DLL:
+		case IDC_LOAD_ROM:
+			select_new_cartridge(button);
 			return TRUE;
 		case IDC_RESET:
 			SendMessage(gVccWnd,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
