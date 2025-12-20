@@ -40,21 +40,6 @@ multipak_cartridge gMultiPakInterface(gMultiPakConfiguration, gHostContext);
 // Instatiate the config dialog
 configuration_dialog gConfigurationDialog(gMultiPakConfiguration, gMultiPakInterface);
 
-// DLLMain
-BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, LPVOID /*reserved*/)
-{
-	switch (reason)
-	{
-	case DLL_PROCESS_ATTACH:
-		gModuleInstance = module_instance;
-		break;
-
-	case DLL_PROCESS_DETACH:
-		break;
-	}
-	return TRUE;
-}
-
 // DLL exports
 extern "C"
 {
@@ -142,3 +127,19 @@ extern "C"
 		return gMultiPakInterface.sample_audio();
 	}
 }
+
+// DLLMain
+BOOL WINAPI DllMain(HINSTANCE module_instance, DWORD reason, LPVOID /*reserved*/)
+{
+	switch (reason) {
+	case DLL_PROCESS_ATTACH:
+		gModuleInstance = module_instance;
+		break;
+	case DLL_PROCESS_DETACH:
+		PakTerminate();
+		break;
+	}
+	return TRUE;
+}
+
+

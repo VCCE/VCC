@@ -62,18 +62,6 @@ LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 
 using namespace std;
 
-BOOL WINAPI DllMain( HINSTANCE hinstDLL,  // handle to DLL module
-                     DWORD fdwReason,     // reason for calling function
-                     LPVOID lpReserved )  // reserved
-{
-    if (fdwReason == DLL_PROCESS_ATTACH)
-	{
-		gModuleInstance = hinstDLL;
-    }
-
-    return TRUE;
-}
-
 void MemWrite(unsigned char Data, unsigned short Address)
 {
 	MemWrite8(gCallbackContext, Data, Address);
@@ -252,6 +240,18 @@ extern "C"
     {
         DiskStatus(text_buffer, buffer_size);
     }
+}
+
+BOOL WINAPI DllMain( HINSTANCE hinstDLL,  // handle to DLL module
+                     DWORD fdwReason,     // reason for calling function
+                     LPVOID lpReserved )  // reserved
+{
+    if (fdwReason == DLL_PROCESS_ATTACH) {
+		gModuleInstance = hinstDLL;
+    } else if (fdwReason == DLL_PROCESS_DETACH) {
+        PakTerminate();
+    }
+    return TRUE;
 }
 
 

@@ -34,8 +34,6 @@ extern "C"
 		(void* callback_context, Interrupt interrupt, InterruptSource interrupt_source);
 	using PakAppendCartridgeMenuHostCallback = void (*)
 		(void* callback_context, const char* menu_name, int menu_id, MenuItemType menu_type);
-	using PakResetHostCallback = void (*)
-		(void* callback_context);
 
 	// Cartridge Callbacks
 	struct cpak_callbacks
@@ -45,7 +43,6 @@ extern "C"
 		const PakWriteMemoryByteHostCallback write_memory_byte;
 		const PakReadMemoryByteHostCallback read_memory_byte;
 		const PakAppendCartridgeMenuHostCallback add_menu_item;
-		const PakResetHostCallback reset;
 	};
 
 	// Cartridge exports. At least PakInitilizeModuleFunction must be implimented

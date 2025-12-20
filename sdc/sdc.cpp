@@ -128,13 +128,12 @@
 //  ROMS require their respective .DLL's to be installed to function,
 //  these are typically in MMI slot 3 and 4 respectively.
 //
-//#define USE_LOGGING
-//
 //----------------------------------------------------------------------
+//#define USE_LOGGING
 
 #include <iostream>
-#include <cstdio>
 #include <cerrno>
+#include <cstdio>
 #include <cstring>
 #include <Windows.h>
 #include <windowsx.h>
@@ -181,9 +180,8 @@ void BuildCartridgeMenu();
 void SelectCardBox();
 void update_disk0_box();
 void UpdateFlashItem(int);
-void ModifyFlashItem(int);
 void InitCardBox();
-void InitEditBoxes();
+void InitFlashBoxes();
 void ParseStartup();
 void SDCCommand();
 void ReadSector();
@@ -207,10 +205,12 @@ void LoadReply(const void *, int);
 void BlockReceive(unsigned char);
 char * LastErrorTxt();
 void FlashControl(unsigned char);
+void ConvertSlashes(char *);
+void FitEditTextPath(HWND, int, const char *);
 void LoadDirPage();
 void SetCurDir(const char *);
 bool SearchFile(const char *);
-void InitiateDir(const char *);
+bool InitiateDir(const char *);
 void GetFullPath(char *,const char *);
 void RenameFile(const char *);
 void KillFile(const char *);
@@ -260,7 +260,7 @@ struct Interface
     char *bufptr;
     char blkbuf[600];
 };
-static Interface IF;
+static Interface IF = {};
 
 // Cart ROM
 char PakRom[0x4000];
@@ -286,7 +286,7 @@ struct FileRecord {
 static struct FileRecord DirPage[16];
 
 // Mounted image data
-struct _Disk {
+struct SDC_disk_t {
     HANDLE hFile;
     unsigned int size;
     unsigned int headersize;
@@ -296,7 +296,8 @@ struct _Disk {
     char name[MAX_PATH];
     char fullpath[MAX_PATH];
     struct FileRecord filerec;
-} Disk[2];
+};
+SDC_disk_t SDC_disk[2] = {};
 
 // Flash banks
 static char FlashFile[8][MAX_PATH];
@@ -322,7 +323,6 @@ static WIN32_FIND_DATAA dFound;
 // config control handles
 static HWND hControlDlg = nullptr;
 static HWND hConfigureDlg = nullptr;
-//static HWND hFlashBox = nullptr;
 static HWND hSDCardBox = nullptr;
 static HWND hStartupBank = nullptr;
 
@@ -382,6 +382,14 @@ extern "C"
         HWND hVccWnd,
         const cpak_callbacks* const callbacks)
     {
+
+        DLOG_C("SDC %p %p %p %p %p\n",
+            callbacks->assert_interrupt,
+            callbacks->assert_cartridge_line,
+            callbacks->write_memory_byte,
+            callbacks->read_memory_byte,
+            callbacks->add_menu_item);
+
         gCallbackContext = callback_context;
         CartMenuCallback = callbacks->add_menu_item;
         MemRead8 = callbacks->read_memory_byte;
@@ -393,6 +401,9 @@ extern "C"
         BuildCartridgeMenu();
     }
 
+    // This is not called reliably by the pak interface
+    // Clean up must also be done on DLL_UNLOAD incase
+    // VCC is closed!
     __declspec(dllexport) void PakTerminate()
     {
         CloseCartDialog(hControlDlg);
@@ -475,7 +486,6 @@ extern "C"
             return(PakRom[adr]);
         }
     }
-
 }
 
 //======================================================================
@@ -487,8 +497,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
     if (reason == DLL_PROCESS_ATTACH) {
         gModuleInstance = hinst;
     } else if (reason == DLL_PROCESS_DETACH) {
-        CloseDrive(0);
-        CloseDrive(1);
+        PakTerminate();
     }
     return TRUE;
 }
@@ -516,20 +525,18 @@ SDC_Control(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
         DestroyWindow(hDlg);
         hControlDlg=nullptr;
         return TRUE;
-        break;
     case WM_INITDIALOG:
         CenterDialog(hDlg);
+        hControlDlg=hDlg;
         update_disk0_box();
         SetFocus(GetDlgItem(hDlg,ID_NEXT));
-        return TRUE;
-        break;
+        return FALSE; // Don't reset focus
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case ID_NEXT:
             MountNext (0);
             SetFocus(GetParent(hDlg));
             return TRUE;
-            break;
         }
     }
     return FALSE;
@@ -551,7 +558,7 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
         hConfigureDlg=hDlg;  // needed for LoadConfig() and Init..()
         CenterDialog(hDlg);
         LoadConfig();
-        InitEditBoxes();
+        InitFlashBoxes();
         InitCardBox();
         SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnable,0);
         hStartupBank = GetDlgItem(hDlg,ID_STARTUP_BANK);
@@ -595,30 +602,6 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
         case ID_UPDATE7:
             UpdateFlashItem(7);
             return TRUE;
-        case ID_TEXT0:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(0);
-            return TRUE;
-        case ID_TEXT1:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(1);
-            return FALSE;
-        case ID_TEXT2:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(2);
-            return FALSE;
-        case ID_TEXT3:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(3);
-            return FALSE;
-        case ID_TEXT4:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(4);
-            return FALSE;
-        case ID_TEXT5:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(5);
-            return FALSE;
-        case ID_TEXT6:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(6);
-            return FALSE;
-        case ID_TEXT7:
-            if (HIWORD(wParam) == EN_CHANGE) ModifyFlashItem(7);
-            return FALSE;
         case ID_STARTUP_BANK:
             if (HIWORD(wParam) == EN_CHANGE) {
                 char tmp[4];
@@ -719,28 +702,45 @@ void SDCInit()
 
     SetCurDir(""); // May be changed by ParseStartup()
 
-    memset((void *) &Disk,0,sizeof(Disk));
+    SDC_disk[0] = {};
+    SDC_disk[1] = {};
 
     // Process the startup config file
     ParseStartup();
 
     // init the interface
-    memset(&IF,0,sizeof(IF));
+    IF = {};
 
     return;
 }
 
 //------------------------------------------------------------
+// Fit path in edit text box (Box must be ES_READONLY)
+//------------------------------------------------------------
+void FitEditTextPath(HWND hDlg, int ID, const char * path) {
+    HDC c;
+    HWND h;
+    RECT r;
+    char p[MAX_PATH];
+    if ((c = GetDC(hDlg)) == NULL) return;
+    if ((h = GetDlgItem(hDlg, ID)) == NULL) return;
+    GetClientRect(h, &r);
+    strncpy(p, path, MAX_PATH);
+    PathCompactPath(c, p, r.right);
+    ConvertSlashes(p);
+    SetWindowText(h, p);
+    ReleaseDC(hDlg, c);
+}
+
+//------------------------------------------------------------
 // Init flash box
 //------------------------------------------------------------
-void InitEditBoxes()
+void InitFlashBoxes()
 {
-    for (int index=0; index<8; index++) {
-        HWND h;
-        h = GetDlgItem(hConfigureDlg,EDBOXES[index]);
-        SetWindowText(h,FlashFile[index]);
-        h = GetDlgItem(hConfigureDlg,UPDBTNS[index]);
-        if (*FlashFile[index] == '\0') {
+    for (int idx=0; idx<8; idx++) {
+        FitEditTextPath(hConfigureDlg,EDBOXES[idx],FlashFile[idx]);
+        HWND h = GetDlgItem(hConfigureDlg,UPDBTNS[idx]);
+        if (*FlashFile[idx] == '\0') {
             SetWindowText(h,">");
         } else {
             SetWindowText(h,"X");
@@ -749,13 +749,13 @@ void InitEditBoxes()
 }
 
 //----------------------------------------------------------------------
-// Put disk 0 name to control dialog
+// Put disk 0 name to control dialog and set focus to next button
 //----------------------------------------------------------------------
 void update_disk0_box()
 { 
     if (hControlDlg != nullptr) {
         HWND h = GetDlgItem(hControlDlg,ID_DISK0);
-        SendMessage(h, WM_SETTEXT, 0, (LPARAM) Disk[0].name );
+        SendMessage(h, WM_SETTEXT, 0, (LPARAM) SDC_disk[0].name );
     }
 }
 
@@ -772,12 +772,6 @@ void InitCardBox()
 //------------------------------------------------------------
 // Modify and or Update flash box item
 //------------------------------------------------------------
-void ModifyFlashItem(int index)
-{
-    if ((index < 0) | (index > 7)) return;
-    HWND h = GetDlgItem(hConfigureDlg,EDBOXES[index]);
-    GetWindowText(h, FlashFile[index], MAX_PATH);
-}
 
 void UpdateFlashItem(int index)
 {
@@ -794,13 +788,28 @@ void UpdateFlashItem(int index)
         dlg.setDefExt("rom");
         dlg.setFilter("Rom File\0*.rom\0All Files\0*.*\0\0");
         dlg.setTitle(title);
-        dlg.setInitialDir(MPIPath);   // FIXME someday
+        dlg.setInitialDir(MPIPath);   // FIXME should be SDC rom path
         if (dlg.show(0,hConfigureDlg)) {
             dlg.getupath(filename,MAX_PATH); // cvt to unix style
             strncpy(FlashFile[index],filename,MAX_PATH);
         }
     }
-    InitEditBoxes();
+    InitFlashBoxes();
+
+    // Save path to ini file
+    char txt[32];
+    sprintf(txt,"FlashFile_%d",index);
+    WritePrivateProfileString("SDC",txt,FlashFile[index],IniFile);
+}
+
+//------------------------------------------------------------
+// Convert path slashes 
+//------------------------------------------------------------
+void ConvertSlashes(char * path)
+{
+    for(size_t i=0; i < strlen(path); i++) {
+        if (path[i] == '\\') path[i] = '/';
+    }
 }
 
 //------------------------------------------------------------
@@ -824,12 +833,9 @@ void SelectCardBox()
         CoTaskMemFree(pidl);
     }
 
-    // Sanitize slashes
-    for(unsigned int i=0; i<strlen(SDCard); i++) {
-        if (SDCard[i] == '\\') SDCard[i] = '/';
-    }
-
+    ConvertSlashes(SDCard);
     SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM)SDCard);
+//  FitEditTextPath(hConfigureDlg, ID_SD_BOX, SDCard); //No EDIT
 }
 
 //-------------------------------------------------------------
@@ -971,7 +977,7 @@ void SDCWrite(unsigned char data,unsigned char port)
         switch (port) {
         // Control Latch
         case 0x40:
-            if (IF.sdclatch) memset(&IF,0,sizeof(IF));
+            if (IF.sdclatch) IF = {};
             break;
         // Command registor
         case 0x48:
@@ -1161,7 +1167,7 @@ void FloppyReadDisk()
     int lsn = FlopTrack * 18 + FlopSector - 1;
     snprintf(Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
     if (SeekSector(FlopDrive,lsn)) {
-        if (ReadFile(Disk[FlopDrive].hFile,FlopRdBuf,256,&FlopRdCnt,nullptr)) {
+        if (ReadFile(SDC_disk[FlopDrive].hFile,FlopRdBuf,256,&FlopRdCnt,nullptr)) {
             DLOG_C("FloppyReadDisk %d %d\n",FlopDrive,lsn);
             FlopStatus = FLP_DATAREQ;
         } else {
@@ -1393,7 +1399,7 @@ void GetDirectoryLeaf()
 
     // If at least one leaf find the last one
     if (n > 0) {
-		const char *p = strrchr(CurDir,'/');
+        const char *p = strrchr(CurDir,'/');
         if (p == nullptr) {
             p = CurDir;
         } else {
@@ -1548,12 +1554,14 @@ unsigned char WriteFlashBank(unsigned short adr)
 //----------------------------------------------------------------------
 bool SeekSector(unsigned char cmdcode, unsigned int lsn)
 {
-    // Adjust for read of one side of a doublesided disk.
+    // Adjust lsn for single sided read of a doublesided disk.
     int drive = cmdcode & 1;
-    if ((Disk[drive].doublesided) && (cmdcode & 2)) {
-        int trk = lsn / Disk[drive].tracksectors;
-        int sec = lsn % Disk[drive].tracksectors;
-        lsn = 2 * Disk[drive].tracksectors * trk + sec;
+    int sside = cmdcode & 2;
+    if (sside && SDC_disk[drive].doublesided) {
+        DLOG_C("SeekSector sside %d %d\n",drive,lsn);
+        int trk = lsn / SDC_disk[drive].tracksectors;
+        int sec = lsn % SDC_disk[drive].tracksectors;
+        lsn = 2 * SDC_disk[drive].tracksectors * trk + sec;
     }
 
     // Allow seek to expand a writable file to a resonable limit
@@ -1564,8 +1572,8 @@ bool SeekSector(unsigned char cmdcode, unsigned int lsn)
 
     // Seek to logical sector on drive.
     LARGE_INTEGER pos;
-    pos.QuadPart = lsn * Disk[drive].sectorsize + Disk[drive].headersize;
-    if (!SetFilePointerEx(Disk[drive].hFile,pos,nullptr,FILE_BEGIN)) {
+    pos.QuadPart = lsn * SDC_disk[drive].sectorsize + SDC_disk[drive].headersize;
+    if (!SetFilePointerEx(SDC_disk[drive].hFile,pos,nullptr,FILE_BEGIN)) {
         DLOG_C("SeekSector error %s\n",LastErrorTxt());
         return false;
     }
@@ -1580,7 +1588,7 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
     char buf[520];
     DWORD cnt = 0;
     int drive = cmdcode & 1;
-    if (Disk[drive].hFile == nullptr) {
+    if (SDC_disk[drive].hFile == nullptr) {
         DLOG_C("ReadDrive %d not open\n");
         return false;
     }
@@ -1589,12 +1597,12 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
         return false;
     }
 
-    if (!ReadFile(Disk[drive].hFile,buf,Disk[drive].sectorsize,&cnt,nullptr)) {
+    if (!ReadFile(SDC_disk[drive].hFile,buf,SDC_disk[drive].sectorsize,&cnt,nullptr)) {
         DLOG_C("ReadDrive %d %s\n",drive,LastErrorTxt());
         return false;
     }
 
-    if (cnt != Disk[drive].sectorsize) {
+    if (cnt != SDC_disk[drive].sectorsize) {
         DLOG_C("ReadDrive %d short read\n",drive);
         return false;
     }
@@ -1642,10 +1650,10 @@ void StreamImage()
 
     // For now can only stream 512 byte sectors
     int drive = stream_cmdcode & 1;
-    Disk[drive].sectorsize = 512;
-    Disk[drive].tracksectors = 9;
+    SDC_disk[drive].sectorsize = 512;
+    SDC_disk[drive].tracksectors = 9;
 
-    if (stream_lsn > (Disk[drive].size/Disk[drive].sectorsize)) {
+    if (stream_lsn > (SDC_disk[drive].size/SDC_disk[drive].sectorsize)) {
         DLOG_C("StreamImage done\n");
         streaming = 0;
         return;
@@ -1670,7 +1678,7 @@ void WriteSector()
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
     snprintf(Status,16,"SDC:%d Wr %d,%d",CurrentBank,drive,lsn);
 
-    if (Disk[drive].hFile == nullptr) {
+    if (SDC_disk[drive].hFile == nullptr) {
         IF.status = STA_FAIL;
         return;
     }
@@ -1679,13 +1687,13 @@ void WriteSector()
         IF.status = STA_FAIL;
         return;
     }
-    if (!WriteFile(Disk[drive].hFile,IF.blkbuf,
-                   Disk[drive].sectorsize,&cnt,nullptr)) {
+    if (!WriteFile(SDC_disk[drive].hFile,IF.blkbuf,
+                   SDC_disk[drive].sectorsize,&cnt,nullptr)) {
         DLOG_C("WriteSector %d %s\n",drive,LastErrorTxt());
         IF.status = STA_FAIL;
         return;
     }
-    if (cnt != Disk[drive].sectorsize) {
+    if (cnt != SDC_disk[drive].sectorsize) {
         DLOG_C("WriteSector %d short write\n",drive);
         IF.status = STA_FAIL;
         return;
@@ -1714,7 +1722,7 @@ char * LastErrorTxt() {
 void  GetSectorCount() {
 
     int drive = IF.cmdcode & 1;
-    unsigned int numsec = Disk[drive].size/Disk[drive].sectorsize;
+    unsigned int numsec = SDC_disk[drive].size/SDC_disk[drive].sectorsize;
     IF.reply3 = numsec & 0xFF;
     numsec = numsec >> 8;
     IF.reply2 = numsec & 0xFF;
@@ -1729,12 +1737,12 @@ void  GetSectorCount() {
 void GetMountedImageRec()
 {
     int drive = IF.cmdcode & 1;
-    //DLOG_C("GetMountedImageRec %d %s\n",drive,Disk[drive].fullpath);
-    if (strlen(Disk[drive].fullpath) == 0) {
+    //DLOG_C("GetMountedImageRec %d %s\n",drive,SDC_disk[drive].fullpath);
+    if (strlen(SDC_disk[drive].fullpath) == 0) {
         IF.status = STA_FAIL;
     } else {
         IF.reply_mode = 0;
-        LoadReply(&Disk[drive].filerec,sizeof(FileRecord));
+        LoadReply(&SDC_disk[drive].filerec,sizeof(FileRecord));
     }
 }
 
@@ -1783,10 +1791,11 @@ void LoadReply(const void *data, int count)
 }
 
 //----------------------------------------------------------------------
-// The name portion of SDC path may be in SDC format which does
-// not use a dot to seperate the extension examples:
-//    "FOO     DSK" = FOO.DSK
-//    "ALONGFOODSK" = ALONGFOO.DSK
+// A file path may be in SDC format which does not use a dot to seperate
+// the name from the extension. User is free to use standard dot format.
+//    "FOODIR/FOO.DSK"     = FOODIR/FOO.DSK
+//    "FOODIR/FOO     DSK" = FOODIR/FOO.DSK
+//    "FOODIR/ALONGFOODSK" = FOODIR/ALONGFOO.DSK
 //----------------------------------------------------------------------
 void FixSDCPath(char *path, const char *fpath8)
 {
@@ -1815,14 +1824,10 @@ void FixSDCPath(char *path, const char *fpath8)
         name[namlen++] = '.';
         int extlen=0;
         while(c = *pname8++) {
-			if (c == '.' || c == ' ')
-			{
-				continue;
-			}
-
-			name[namlen++] = c;
-			extlen++;
-			if (extlen > 2) break;
+            if (c == '.' || c == ' ') continue;
+            name[namlen++] = c;
+            extlen++;
+            if (extlen > 2) break;
         }
     }
     name[namlen] = '\0';           // terminate name
@@ -1902,7 +1907,7 @@ void MountNewDisk (int drive, const char * path, int raw)
 
     // Close and clear previous entry
     CloseDrive(drive);
-    memset((void *) &Disk[drive],0,sizeof(_Disk));
+    SDC_disk[drive] = {};
 
     // Convert from SDC format
     char file[MAX_PATH];
@@ -1934,7 +1939,7 @@ void MountDisk (int drive, const char * path, int raw)
 
     // Close and clear previous entry
     CloseDrive(drive);
-    memset((void *) &Disk[drive],0,sizeof(_Disk));
+    SDC_disk[drive] = {};
 
     // Check for UNLOAD.  Path will be an empty string.
     if (*path == '\0') {
@@ -2043,45 +2048,45 @@ void OpenNew( int drive, const char * path, int raw)
 
     // Try to create file
     CloseDrive(drive);
-    strncpy(Disk[drive].fullpath,fqn,MAX_PATH);
+    strncpy(SDC_disk[drive].fullpath,fqn,MAX_PATH);
 
     // Open file for write
-    Disk[drive].hFile = CreateFile(
-        Disk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
-		nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
+    SDC_disk[drive].hFile = CreateFile(
+        SDC_disk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
+        nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
 
-    if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
-        DLOG_C("OpenNew fail %d file %s\n",drive,Disk[drive].fullpath);
+    if (SDC_disk[drive].hFile == INVALID_HANDLE_VALUE) {
+        DLOG_C("OpenNew fail %d file %s\n",drive,SDC_disk[drive].fullpath);
         DLOG_C("... %s\n",LastErrorTxt());
         IF.status = STA_FAIL | STA_WIN_ERROR;
         return;
     }
 
     // Sectorsize and sectors per track
-    Disk[drive].sectorsize = 256;
-    Disk[drive].tracksectors = 18;
+    SDC_disk[drive].sectorsize = 256;
+    SDC_disk[drive].tracksectors = 18;
 
     IF.status = STA_FAIL;
     if (raw) {
         // New raw file is empty - can be any format
         IF.status = STA_NORMAL;
-        Disk[drive].doublesided = 0;
-        Disk[drive].headersize = 0;
-        Disk[drive].size = 0;
+        SDC_disk[drive].doublesided = 0;
+        SDC_disk[drive].headersize = 0;
+        SDC_disk[drive].size = 0;
     } else {
         // TODO: handle SDF
         // Create headerless 35 track JVC file
-        Disk[drive].doublesided = 0;
-        Disk[drive].headersize = 0;
-        Disk[drive].size = 35
-                         * Disk[drive].sectorsize
-                         * Disk[drive].tracksectors
-                         + Disk[drive].headersize;
+        SDC_disk[drive].doublesided = 0;
+        SDC_disk[drive].headersize = 0;
+        SDC_disk[drive].size = 35
+                         * SDC_disk[drive].sectorsize
+                         * SDC_disk[drive].tracksectors
+                         + SDC_disk[drive].headersize;
         // Extend file to size
         LARGE_INTEGER l_siz;
-        l_siz.QuadPart = Disk[drive].size;
-        if (SetFilePointerEx(Disk[drive].hFile,l_siz,nullptr,FILE_BEGIN)) {
-            if (SetEndOfFile(Disk[drive].hFile)) {
+        l_siz.QuadPart = SDC_disk[drive].size;
+        if (SetFilePointerEx(SDC_disk[drive].hFile,l_siz,nullptr,FILE_BEGIN)) {
+            if (SetEndOfFile(SDC_disk[drive].hFile)) {
                 IF.status = STA_NORMAL;
             } else {
                 IF.status = STA_FAIL | STA_WIN_ERROR;
@@ -2100,20 +2105,23 @@ void OpenFound (int drive,int raw)
     int writeprotect = 0;
 
     DLOG_C("OpenFound %d %s %d\n",
-        drive, dFound.cFileName, Disk[drive].hFile);
+        drive, dFound.cFileName, SDC_disk[drive].hFile);
 
     CloseDrive(drive);
-    *Disk[drive].name = '\0';
+    *SDC_disk[drive].name = '\0';
 
     // Open a directory of containing DSK files
     if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        DLOG_C("OpenFound %s is a directory\n",dFound.cFileName);
         char path[MAX_PATH];
         strncpy(path,dFound.cFileName,MAX_PATH);
         AppendPathChar(path,'/');
         strncat(path,"*.DSK",MAX_PATH);
-        InitiateDir(path);
-        OpenFound(drive,0);
+        // Open disk in directory if .DSK is found
+        if (InitiateDir(path)) { 
+            DLOG_C("OpenFound %s in directory\n",dFound.cFileName);
+            OpenFound(drive,0);
+            update_disk0_box();
+        }
         return;
     }
 
@@ -2123,10 +2131,10 @@ void OpenFound (int drive,int raw)
     strncat(fqn,dFound.cFileName,MAX_PATH);
 
     // Open file for read
-    Disk[drive].hFile = CreateFile(
+    SDC_disk[drive].hFile = CreateFile(
         fqn, GENERIC_READ, FILE_SHARE_READ,
-		nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
-    if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
+        nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+    if (SDC_disk[drive].hFile == INVALID_HANDLE_VALUE) {
         DLOG_C("OpenFound fail %d file %s\n",drive,fqn);
         DLOG_C("... %s\n",LastErrorTxt());
         int ecode = GetLastError();
@@ -2138,25 +2146,25 @@ void OpenFound (int drive,int raw)
         return;
     }
 
-    strncpy(Disk[drive].fullpath,fqn,MAX_PATH);
-    strncpy(Disk[drive].name,dFound.cFileName,MAX_PATH);
+    strncpy(SDC_disk[drive].fullpath,fqn,MAX_PATH);
+    strncpy(SDC_disk[drive].name,dFound.cFileName,MAX_PATH);
 
     // Default sectorsize and sectors per track
-    Disk[drive].sectorsize = 256;
-    Disk[drive].tracksectors = 18;
+    SDC_disk[drive].sectorsize = 256;
+    SDC_disk[drive].tracksectors = 18;
 
     // Grab filesize from found record
-    Disk[drive].size = dFound.nFileSizeLow;
+    SDC_disk[drive].size = dFound.nFileSizeLow;
 
     if (raw) {
         writeprotect = 0;
-        Disk[drive].headersize = 0;
-        Disk[drive].doublesided = 0;
+        SDC_disk[drive].headersize = 0;
+        SDC_disk[drive].doublesided = 0;
     } else {
 
         // Read a few bytes of the file to determine it's type
         unsigned char header[16];
-        if (ReadFile(Disk[drive].hFile,header,12,nullptr,nullptr) == 0) {
+        if (ReadFile(SDC_disk[drive].hFile,header,12,nullptr,nullptr) == 0) {
             DLOG_C("OpenFound header read error\n");
             IF.status = STA_FAIL | STA_INVALID;
             return;
@@ -2166,7 +2174,7 @@ void OpenFound (int drive,int raw)
         // track record is 6250 bytes. Assume at least 35 tracks so
         // minimum size of a SDF file is 219262 bytes. The first four
         // bytes of the header contains "SDF1"
-        if ((Disk[drive].size >= 219262) &&
+        if ((SDC_disk[drive].size >= 219262) &&
             (strncmp("SDF1",(const char *) header,4) == 0)) {
             DLOG_C("OpenFound SDF file unsupported\n");
             IF.status = STA_FAIL | STA_INVALID;
@@ -2174,30 +2182,30 @@ void OpenFound (int drive,int raw)
         }
 
         unsigned int numsec;
-        Disk[drive].headersize = Disk[drive].size & 255;
-        switch (Disk[drive].headersize) {
+        SDC_disk[drive].headersize = SDC_disk[drive].size & 255;
+        switch (SDC_disk[drive].headersize) {
         // JVC optional header bytes
         case 4: // First Sector     = header[3]   1 assumed
         case 3: // Sector Size code = header[2] 256 assumed {128,256,512,1024}
         case 2: // Number of sides  = header[1]   1 or 2
         case 1: // Sectors per trk  = header[0]  18 assumed
-            Disk[drive].doublesided = (header[1] == 2);
+            SDC_disk[drive].doublesided = (header[1] == 2);
             break;
         // No apparant header
         // JVC or OS9 disk if no header, side count per file size
         case 0:
-            numsec = Disk[drive].size >> 8;
-            Disk[drive].doublesided = ((numsec > 720) && (numsec <= 2880));
+            numsec = SDC_disk[drive].size >> 8;
+            SDC_disk[drive].doublesided = ((numsec > 720) && (numsec <= 2880));
             break;
         // VDK
         case 12:
-            Disk[drive].doublesided = (header[8] == 2);
+            SDC_disk[drive].doublesided = (header[8] == 2);
             writeprotect = header[9] & 1;
             break;
         // Unknown or unsupported
         default: // More than 4 byte header is not supported
             DLOG_C("OpenFound unsuported image type %d %d\n",
-                drive, Disk[drive].headersize);
+                drive, SDC_disk[drive].headersize);
             IF.status = STA_FAIL | STA_INVALID;
             return;
             break;
@@ -2205,22 +2213,22 @@ void OpenFound (int drive,int raw)
     }
 
     // Fill in image info.
-    LoadFoundFile(&Disk[drive].filerec);
+    LoadFoundFile(&SDC_disk[drive].filerec);
 
     // Set readonly attrib per find status or file header
-    if ((Disk[drive].filerec.attrib & ATTR_RDONLY) != 0) {
+    if ((SDC_disk[drive].filerec.attrib & ATTR_RDONLY) != 0) {
         writeprotect = 1;
     } else if (writeprotect) {
-        Disk[drive].filerec.attrib |= ATTR_RDONLY;
+        SDC_disk[drive].filerec.attrib |= ATTR_RDONLY;
     }
 
     // If file is writeable reopen read/write
     if (!writeprotect) {
-        CloseHandle(Disk[drive].hFile);
-        Disk[drive].hFile = CreateFile(
-            Disk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
-			nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
-        if (Disk[drive].hFile == INVALID_HANDLE_VALUE) {
+        CloseHandle(SDC_disk[drive].hFile);
+        SDC_disk[drive].hFile = CreateFile(
+            SDC_disk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
+            nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+        if (SDC_disk[drive].hFile == INVALID_HANDLE_VALUE) {
             DLOG_C("OpenFound reopen fail %d\n",drive);
             DLOG_C("... %s\n",LastErrorTxt());
             IF.status = STA_FAIL | STA_WIN_ERROR;
@@ -2335,9 +2343,9 @@ void MakeDirectory(const char *name)
 void CloseDrive (int drive)
 {
     drive &= 1;
-    if (Disk[drive].hFile && Disk[drive].hFile != INVALID_HANDLE_VALUE) {
-        CloseHandle(Disk[drive].hFile);
-        Disk[drive].hFile = INVALID_HANDLE_VALUE;
+    if (SDC_disk[drive].hFile && SDC_disk[drive].hFile != INVALID_HANDLE_VALUE) {
+        CloseHandle(SDC_disk[drive].hFile);
+        SDC_disk[drive].hFile = INVALID_HANDLE_VALUE;
     }
 }
 
@@ -2492,7 +2500,7 @@ bool SearchFile(const char * pattern)
 //----------------------------------------------------------------------
 // InitiateDir command.
 //----------------------------------------------------------------------
-void InitiateDir(const char * path)
+bool InitiateDir(const char * path)
 {
     bool rc;
     // Append "*.*" if last char in path was '/';
@@ -2505,11 +2513,13 @@ void InitiateDir(const char * path)
     } else {
         rc = SearchFile(path);
     }
-    if (rc)
+    if (rc) {
         IF.status = STA_NORMAL;
-    else
+        return true;
+    } else {
         IF.status = STA_FAIL | STA_INVALID;
-    return;
+        return false;
+    }
 }
 
 //----------------------------------------------------------------------

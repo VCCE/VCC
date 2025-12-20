@@ -21,9 +21,9 @@ This file is part of VCC (Virtual Color Computer).
 *	This Module will emulate a Tandy Floppy Disk Model FD-502 With 3 DSDD drives attached	*
 *	Copyright 2006 (c) by Joseph Forgione 													*
 *********************************************************************************************/
+//#define USE_LOGGING
 #pragma warning( disable : 4800 ) // For legacy builds
 
-//#define USE_LOGGING
 #include <Windows.h>
 #include <stdio.h>
 #include <iostream>
@@ -85,19 +85,6 @@ char BeckerAddr[MAX_PATH]="";
 char BeckerPort[32]="";
 
 //----------------------------------------------------------------------------
-BOOL WINAPI DllMain(
-    HINSTANCE hinstDLL,  // handle to DLL module
-    DWORD fdwReason,     // reason for calling function
-    LPVOID lpReserved )  // reserved
-{
-	if (fdwReason == DLL_PROCESS_ATTACH) //Clean Up
-	{
-		gModuleInstance = hinstDLL;
-	}
-
-	return TRUE;
-}
-
 extern "C"
 {
 
@@ -134,6 +121,13 @@ extern "C"
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
+		DLOG_C("FDC %p %p %p %p %p\n",
+			callbacks->assert_interrupt,
+			callbacks->assert_cartridge_line,
+			callbacks->write_memory_byte,
+			callbacks->read_memory_byte,
+			callbacks->add_menu_item);
+
 		gCallbackContextPtr = callback_context;
 		CartMenuCallback = callbacks->add_menu_item;
 		AssertInt = callbacks->assert_interrupt;
@@ -153,10 +147,6 @@ extern "C"
 		}
 	}
 
-}
-
-extern "C"
-{
 	__declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
 	{
 		HWND h_own = GetActiveWindow();
@@ -199,11 +189,7 @@ extern "C"
 		BuildCartridgeMenu();
 		return;
 	}
-}
 
-
-extern "C"
-{
 	__declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
 	{
 #ifdef COMBINE_BECKER
@@ -218,10 +204,7 @@ extern "C"
 		}
 		return;
 	}
-}
 
-extern "C"
-{
 	__declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
 	{
 #ifdef COMBINE_BECKER
@@ -232,27 +215,18 @@ extern "C"
 			return(read_time(Port));
 		return(disk_io_read(Port));
 	}
-}
 
-extern "C"
-{
 	__declspec(dllexport) void PakProcessHorizontalSync()
 	{
 		PingFdc();
 		return;
 	}
-}
 
-extern "C"
-{
 	__declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short Address)
 	{
 		return(RomPointer[SelectRom][Address & (EXTROMSIZE-1)]);
 	}
-}
 
-extern "C"
-{
 	__declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
 	{
 		char diskstat[64];
@@ -268,6 +242,19 @@ extern "C"
 #endif
 		return ;
 	}
+}
+
+BOOL WINAPI DllMain(
+    HINSTANCE hinstDLL,  // handle to DLL module
+    DWORD reason,        // reason for calling function
+    LPVOID lpReserved )  // reserved
+{
+	if (reason == DLL_PROCESS_ATTACH) {
+		gModuleInstance = hinstDLL;
+	} else if (reason == DLL_PROCESS_DETACH) {
+		PakTerminate();
+	}
+	return TRUE;
 }
 
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)

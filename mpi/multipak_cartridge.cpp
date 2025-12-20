@@ -15,6 +15,7 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
+//#define USE_LOGGING
 #include "multipak_cartridge.h"
 #include "multipak_cartridge_context.h"
 #include "mpi.h"
@@ -301,17 +302,24 @@ bool multipak_cartridge::empty(slot_id_type slot) const
 void multipak_cartridge::eject_cartridge(slot_id_type slot)
 {
 	vcc::core::utils::section_locker lock(mutex_);
-	// TODO: Do a hard reset here instead of blocking eject
-	if (slot != cached_scs_slot_) {
-		slots_[slot].stop();
-		slots_[slot] = {};
-	}
+	slots_[slot].stop();
+	slots_[slot] = {};
+	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
 }
 
 multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	slot_id_type slot,
 	const path_type& filename)
 {
+
+	DLOG_C("%3d %p %p %p %p %p\n",slot,
+		gHostContext->assert_interrupt_,
+		gSlotCallbacks[slot].set_cartridge_line,
+		gHostContext->write_memory_byte_,
+		gHostContext->read_memory_byte_,
+		gSlotCallbacks[slot].append_menu_item);
+
+
 	auto loadedCartridge(vcc::core::load_cartridge(
 		filename,
 		std::make_unique<multipak_cartridge_context>(slot, *context_, *this),
