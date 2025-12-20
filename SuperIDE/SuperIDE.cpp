@@ -15,6 +15,7 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+//#define USE_LOGGING
 
 #include <Windows.h>
 #include "stdio.h"
@@ -28,6 +29,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/core/DialogOps.h>
 #include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/core/limits.h>
+#include <vcc/core/logger.h>
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
@@ -36,7 +38,7 @@ static ::vcc::devices::rtc::cloud9 cloud9_rtc;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 static unsigned char BaseAddress=0x50;
 void BuildCartridgeMenu();
-LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
+LRESULT CALLBACK IDE_Config(HWND, UINT, WPARAM, LPARAM );
 void Select_Disk(unsigned char);
 void SaveConfig();
 void LoadConfig();
@@ -52,19 +54,6 @@ static void* gCallbackContextPtr = nullptr;
 static void* const& gCallbackContext(gCallbackContextPtr);
 
 using namespace std;
-
-BOOL WINAPI DllMain(
-    HINSTANCE hinstDLL,  // handle to DLL module
-    DWORD fdwReason,     // reason for calling function
-    LPVOID lpReserved )  // reserved
-{
-	if (fdwReason == DLL_PROCESS_ATTACH) //Clean Up 
-	{
-		gModuleInstance = hinstDLL;
-	}
-
-	return TRUE;
-}
 
 
 extern "C"
@@ -115,16 +104,10 @@ extern "C"
 
 	__declspec(dllexport) void PakTerminate()
 	{
-		if (hConfDlg)
-		{
-			CloseCartDialog(hConfDlg);
-			hConfDlg = nullptr;
-		}
+		CloseCartDialog(hConfDlg);
+		hConfDlg = nullptr;
 	}
-}
 
-extern "C" 
-{         
 	__declspec(dllexport) void PakWritePort(unsigned char Port,unsigned char Data)
 	{
 		if ( (Port >=BaseAddress) & (Port <= (BaseAddress+8)))
@@ -144,10 +127,7 @@ extern "C"
 			}	//End port switch	
 		return;
 	}
-}
 
-extern "C"
-{
 	__declspec(dllexport) unsigned char PakReadPort(unsigned char Port)
 	{
 		unsigned char RetVal=0;
@@ -176,18 +156,13 @@ extern "C"
 			
 		return RetVal;
 	}
-}
-
-extern "C" 
-{          
+          
 	__declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
 	{
 		DiskStatus(text_buffer, buffer_size);
 	}
-}
-
-extern "C" 
-{          
+ 
+          
 	__declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
 	{
 		switch (MenuID)
@@ -218,7 +193,7 @@ extern "C"
 
 		case 14:
 			CreateDialog( gModuleInstance, (LPCTSTR) IDD_CONFIG,
-					GetActiveWindow(), (DLGPROC) Config );
+					GetActiveWindow(), (DLGPROC) IDE_Config );
 			ShowWindow(hConfDlg,1);
 			break;
 		}
@@ -226,6 +201,21 @@ extern "C"
 	}
 }
 
+BOOL WINAPI DllMain(
+    HINSTANCE hinstDLL,
+    DWORD reason,
+    LPVOID /*lpReserved*/ )
+{
+	switch (reason) {
+	case DLL_PROCESS_ATTACH:
+		gModuleInstance = hinstDLL;
+		break;
+	case DLL_PROCESS_DETACH:
+		PakTerminate();
+		break;
+	}
+	return TRUE;
+}
 
 void BuildCartridgeMenu()
 {
@@ -251,11 +241,17 @@ void BuildCartridgeMenu()
 	CartMenuCallback(gCallbackContext, "", MID_FINISH, MIT_Head);
 }
 
-LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
+LRESULT CALLBACK IDE_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	unsigned char BTemp=0;
 	switch (message)
 	{
+    	case WM_CLOSE:
+        	DestroyWindow(hDlg);
+        	hConfDlg=nullptr;
+        	return TRUE;
+        	break;
+
 		case WM_INITDIALOG:
 			hConfDlg=hDlg;
 			SendDlgItemMessage(hDlg, IDC_CLOCK, BM_SETCHECK, ClockEnabled, 0);

@@ -57,9 +57,10 @@ std::string SelectROMFile()
 
 BOOL APIENTRY DllMain(HINSTANCE hinst, DWORD reason, LPVOID foo)
 {
-	if (reason == DLL_PROCESS_ATTACH)
-	{
+	if (reason == DLL_PROCESS_ATTACH) { 
 		gModuleInstance = hinst;
+	} else if (reason == DLL_PROCESS_DETACH) {
+		//Clean up here.
 	}
 
 	return TRUE;

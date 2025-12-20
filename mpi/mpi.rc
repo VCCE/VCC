@@ -81,7 +81,7 @@ BEGIN
     LTEXT           ">  Load cartridge.", IDC_STATIC, 124,128,60,10
     LTEXT           "X  Eject cartridge.", IDC_STATIC, 194,128,60,10
 
-    LTEXT           "Reset VCC for selected slot changes to take effect", IDC_STATIC, 74,144,230,10
+    LTEXT           "Reset VCC for startup slot change to take effect", IDC_STATIC, 74,144,230,10
     PUSHBUTTON      "Reset VCC",IDC_RESET, 10,142,58,14
 
 //    CHECKBOX        "Persistent ProgramPak Images",IDC_PERSIST_PAK,   15,165,110,10

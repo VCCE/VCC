@@ -11,6 +11,7 @@
 #include <vcc/core/limits.h>
 #include <vcc/core/logger.h>
 #include <vcc/core/FileOps.h>
+#include <vcc/core/DialogOps.h>
 
 // socket
 static SOCKET dwSocket = 0;
@@ -69,11 +70,11 @@ void SaveConfig();
 
 // dll entry hook
 BOOL APIENTRY DllMain( HINSTANCE  hinstDLL, 
-                       DWORD  ul_reason_for_call, 
+                       DWORD  reason, 
                        LPVOID lpReserved
 					 )
 {
-    switch (ul_reason_for_call)
+    switch (reason)
 	{
 		case DLL_PROCESS_ATTACH:
 			// init
@@ -81,7 +82,8 @@ BOOL APIENTRY DllMain( HINSTANCE  hinstDLL,
 			break;
 
 		case DLL_PROCESS_DETACH:
-			// shutdown
+			// Clean up here 
+			CloseCartDialog(g_hConfigDlg);
 			break;
 
 		// not used by Vcc
