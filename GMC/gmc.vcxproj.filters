@@ -24,9 +24,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="detail\default_handlers.h">
-      <Filter>Header Files\detail</Filter>
-    </ClInclude>
     <ClInclude Include="Cartridge.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -58,9 +55,6 @@
     </Filter>
     <Filter Include="Header Files">
       <UniqueIdentifier>{1bc76e3c-f021-4d3d-9abc-d398f3daab81}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\detail">
-      <UniqueIdentifier>{9281fe40-ccf9-438e-b774-607516e595a9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{c2b09bad-8285-4ea1-9cde-aaaa010a2925}</UniqueIdentifier>

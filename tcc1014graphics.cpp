@@ -6335,7 +6335,7 @@ case 192+63: //Bpp=3 Sr=15
 
 
 // BEGIN of 24 Bit render loop *****************************************************************************************
-void UpdateScreen24 (SystemState */*USState24*/)
+void UpdateScreen24 (SystemState * /*USState24*/)
 {
 
 	return;
@@ -9532,7 +9532,7 @@ void DrawTopBoarder16(SystemState *DTState)
 	return;
 }
 
-void DrawTopBoarder24(SystemState */*DTState*/)
+void DrawTopBoarder24(SystemState * /*DTState*/)
 {
 
 	return;
@@ -9583,7 +9583,7 @@ void DrawBottomBoarder16(SystemState *DTState)
 	return;
 }
 
-void DrawBottomBoarder24(SystemState */*DTState*/)
+void DrawBottomBoarder24(SystemState * /*DTState*/)
 {
 	return;
 }

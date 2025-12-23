@@ -2,7 +2,9 @@
 #include "Cartridge.h"
 #include "resource.h"
 #include <vcc/core/limits.h>
+#include <vcc/core/logger.h>
 
+//#define USE_LOGGING
 
 GMC_EXPORT const char* PakGetName()
 {
@@ -38,6 +40,13 @@ GMC_EXPORT void PakInitialize(
 	HWND hVccWnd,
 	const cpak_callbacks* const callbacks)
 {
+    DLOG_C("GMC %p %p %p %p %p\n",
+            callbacks->assert_interrupt,
+            callbacks->assert_cartridge_line,
+            callbacks->write_memory_byte,
+            callbacks->read_memory_byte,
+            callbacks->add_menu_item);
+
 	Cartridge::m_Singleton->SetCallbackContext(callback_context);
 	Cartridge::m_Singleton->SetMenuBuilderCallback(callbacks->add_menu_item);
 	Cartridge::m_Singleton->SetCartLineAssertCallback(callbacks->assert_cartridge_line);
