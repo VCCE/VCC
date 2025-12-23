@@ -22,8 +22,6 @@
 #include <fstream>
 #include <iterator>
 
-//#include <vcc/core/cartridge_factory.h>
-
 
 namespace vcc::core
 {

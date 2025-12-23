@@ -312,7 +312,7 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	BeginCartMenu();
 	gActiveCartrige->start();
 
-	// Reset if enabled
+	// Reset if enabled.  TODO: Send DoHardReset message instead
 	EmuState.ResetPending = 2;
 
 	return loadedCartridge.load_result;
@@ -340,8 +340,7 @@ void GetCurrentModule(char *DefaultModule)
 
 void UpdateBusPointer()
 {
-	// Do nothing for now.
-	// No clue given what the plan here was.
+	// Do nothing for now. No clue given what the plan for this was.
 }
 
 void UnloadPack()

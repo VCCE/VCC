@@ -1,7 +1,12 @@
 #pragma once
 #include "CartridgeTrampolines.h"
-#include "detail/default_handlers.h"
 #include <string>
+
+namespace detail
+{
+	void NullAssetCartridgeLine(void*, bool);
+	void NullAddMenuItem(void*, const char*, int, MenuItemType);
+}
 
 class Cartridge
 {
