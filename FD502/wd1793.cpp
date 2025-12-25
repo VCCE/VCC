@@ -30,6 +30,7 @@ This file is part of VCC (Virtual Color Computer).
 *  Last change date 05/21/2007 Added fdrawcmd support for real disk access/		*
 *																				*
 ********************************************************************************/
+//#define USE_LOGGING
 
 #include <Windows.h>
 #include <stdio.h>
@@ -37,6 +38,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <winioctl.h>
 #include "defines.h"
 #include <vcc/core/interrupts.h>
+#include <vcc/core/logger.h>
 #include "wd1793.h"
 #include "fd502.h"
 #include "fdrawcmd.h"	// http://simonowen.com/fdrawcmd/
@@ -96,7 +98,7 @@ static unsigned char IndexPulse;
 static unsigned char TurboMode=0;
 static unsigned char CyclestoSettle=SETTLETIME;
 static unsigned char CyclesperStep=STEPTIME;
-static unsigned char MSectorFlag=0; 
+static unsigned char MSectorFlag=0;
 static unsigned char LostDataFlag=0;
 static int ExecTimeWaiter=0;
 static long TransferBufferIndex=0;
@@ -266,7 +268,7 @@ void unmount_disk_image(unsigned char drive)
 
 void DiskStatus(char* text_buffer, size_t buffer_size)
 {
-	if (MotorOn==1) 
+	if (MotorOn==1)
 		sprintf(text_buffer,"FD-502:Drv:%1.1i %s Trk:%2.2i Sec:%2.2i Hd:%1.1i",CurrentDisk,ImageFormat[Drive[CurrentDisk].ImageType],Drive[CurrentDisk].HeadPosition,SectorReg,Side);
 	else
 		sprintf(text_buffer,"FD-502:Idle");
@@ -331,14 +333,14 @@ unsigned char MountDisk(const char *FileName,unsigned char disk)
 		TmpMod=1;
 		if ( (TmpSides*TmpSectors)!=0)
 			TmpMod = TotalSectors%(TmpSides*TmpSectors);	
-		if ((TmpSectors ==18) & (TmpMod==0) & (Drive[disk].HeaderSize ==0))	//Sanity Check 
+		if ((TmpSectors ==18) & (TmpMod==0) & (Drive[disk].HeaderSize ==0))	//Sanity Check
 		{
 			Drive[disk].ImageType=OS9;
 			Drive[disk].Sides = TmpSides;
 			Drive[disk].Sectors = TmpSectors;
 		}
 		else
-			Drive[disk].ImageType=JVC; 
+			Drive[disk].ImageType=JVC;
 		Drive[disk].TrackSize = Drive[disk].Sectors * BytesperSector[Drive[disk].SectorSize];
 	break;
 
@@ -349,8 +351,8 @@ unsigned char MountDisk(const char *FileName,unsigned char disk)
 		break;
 
 	case 16:
-		Drive[disk].ImageType=DMK;	//DMK 
-		if (Drive[disk].WriteProtect != 0xFF) 
+		Drive[disk].ImageType=DMK;	//DMK
+		if (Drive[disk].WriteProtect != 0xFF)
 			Drive[disk].WriteProtect = HeaderBlock[0];
 		Drive[disk].TrackSize = (HeaderBlock[3]<<8 | HeaderBlock[2]);
 		Drive[disk].Sides = 2-((HeaderBlock[4] & 16 )>>4);
@@ -413,11 +415,20 @@ long ReadSector (unsigned char Side,	//0 or 1
 				return 0;
 
 			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize) + (BytesperSector[Drive[CurrentDisk].SectorSize] * (Sector - Drive[CurrentDisk].FirstSector) ) ) ;
+
+			DLOG_C("FDC S%d trk:%d side:%d sect:%d hsiz:%d nside:%d tsiz:%d ssiz:%d fsec:%d\n",
+					FileOffset, Track, Side, Sector,
+					Drive[CurrentDisk].HeaderSize,
+					Drive[CurrentDisk].Sides,
+					Drive[CurrentDisk].TrackSize,
+					BytesperSector[Drive[CurrentDisk].SectorSize],
+					Drive[CurrentDisk].FirstSector);
+
 			SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			ReadFile(Drive[CurrentDisk].FileHandle,ReturnBuffer,BytesperSector[Drive[CurrentDisk].SectorSize],&BytesRead,nullptr);
 			if (BytesRead != BytesperSector[Drive[CurrentDisk].SectorSize]) //Fake the read for short images
 			{
-				memset(ReturnBuffer,0xFF,BytesperSector[Drive[CurrentDisk].SectorSize]); 
+				memset(ReturnBuffer,0xFF,BytesperSector[Drive[CurrentDisk].SectorSize]);
 				BytesRead=BytesperSector[Drive[CurrentDisk].SectorSize];
 			}
 			return(BytesperSector[Drive[CurrentDisk].SectorSize]);
@@ -440,7 +451,7 @@ long ReadSector (unsigned char Side,	//0 or 1
 			pva=(unsigned char *)RawReadBuf;
 			if (TrackReg != Drive[CurrentDisk].HeadPosition)
 				return 0;
-			//Read the entire track and cache it. Speeds up disk reads 
+			//Read the entire track and cache it. Speeds up disk reads
 			if (DirtyDisk | (rwp.phead != Side) | (rwp.cyl != Drive[CurrentDisk].HeadPosition ) )
 			{
 				rwp.flags = FD_OPTION_MFM;
@@ -455,7 +466,7 @@ long ReadSector (unsigned char Side,	//0 or 1
 				// details of seek location
 				sp.cyl = Track;
 				sp.head = Side;
-				// seek to cyl 
+				// seek to cyl
 				DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &sp, sizeof(sp), nullptr, 0, &dwRet, nullptr);
 				Ret=DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_READ_DATA, &rwp, sizeof(rwp), RawReadBuf,4608, &dwRet, nullptr);
 				if (dwRet != 4608)
@@ -498,7 +509,7 @@ long WriteSector (	unsigned char Side,		//0 or 1
 			WriteFile(Drive[CurrentDisk].FileHandle,WriteBuffer,BytesperSector[Drive[CurrentDisk].SectorSize],&BytesWritten,nullptr);
 			return BytesWritten;
 
-		case DMK:	//DMK 
+		case DMK:	//DMK
 			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize));
 			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			//Need to read the entire track due to the emulation of interleave on these images			
@@ -615,7 +626,7 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 					}
 					if (TempChar == 0xFE)	//ID address marker
 					{
-						DataBlockPointer = BufferIndex;    
+						DataBlockPointer = BufferIndex;
 						Seed = 0xCDB4;
 					}
 					
@@ -684,7 +695,7 @@ void PingFdc()
 	IndexCounter++;
 	if (IndexCounter> ((INDEXTIME-30)+wobble))
 		IndexPulse=1;
-	if (IndexCounter > (INDEXTIME+wobble)) 
+	if (IndexCounter > (INDEXTIME+wobble))
 	{
 		IndexPulse=0;
 		IndexCounter=0;
@@ -815,7 +826,7 @@ void PingFdc()
 		break;
 
 		case WRITESECTOR:
-		case WRITESECTORM: 
+		case WRITESECTORM:
 			StatusReg |=DRQ;	//IRON
 			if (IOWaiter>WAITTIME)
 			{
@@ -825,7 +836,7 @@ void PingFdc()
 			}
 		break;
 
-		case READADDRESS: 
+		case READADDRESS:
 			if (IOWaiter>WAITTIME)
 			{
 				LostDataFlag=1;
@@ -833,7 +844,7 @@ void PingFdc()
 			}
 		break;
 
-		case FORCEINTERUPT: 
+		case FORCEINTERUPT:
 		break;
 
 		case READTRACK:
@@ -862,7 +873,7 @@ void PingFdc()
 void DispatchCommand(unsigned char Tmp)
 {
 	unsigned char Command= (Tmp >>4);
-	if ( (CurrentCommand !=IDLE) & (Command != 13) ) 
+	if ( (CurrentCommand !=IDLE) & (Command != 13) )
 		return;
 	CurrentCommand=Command;
 	switch (Command)
@@ -923,7 +934,7 @@ void DispatchCommand(unsigned char Tmp)
 			break;
 
 		case WRITESECTOR:
-		case WRITESECTORM: 
+		case WRITESECTORM:
 //			WriteLog("Getting WriteSector Command",0);
 			SetType2Flags(Tmp);
 			TransferBufferIndex=0;
@@ -935,7 +946,7 @@ void DispatchCommand(unsigned char Tmp)
 //			WriteLog("WRITESECTOR",0);
 			break;
 
-		case READADDRESS: 
+		case READADDRESS:
 //			MessageBox(0,"Hitting Get Address","Ok",0);
 			SetType3Flags(Tmp);
 			TransferBufferIndex=0;
@@ -946,7 +957,7 @@ void DispatchCommand(unsigned char Tmp)
 
 			break;
 
-		case FORCEINTERUPT: 
+		case FORCEINTERUPT:
 			CurrentCommand=IDLE;
 			TransferBufferSize=0;
 			StatusReg=READY;
@@ -1132,7 +1143,7 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 			case JVC:
 			case VDK:
 			case OS9:
-				TransferBufferSize=BytesperSector[Drive[CurrentDisk].SectorSize] ; 
+				TransferBufferSize=BytesperSector[Drive[CurrentDisk].SectorSize];
 				if ((TransferBufferSize==0)  | (TrackReg != Drive[CurrentDisk].HeadPosition) | (SectorReg > Drive[CurrentDisk].Sectors) )
 				{
 					StatusReg=RECNOTFOUND;
@@ -1162,7 +1173,7 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 		}	//END Switch
 	}	//END if
 
-	if (TransferBufferIndex>=TransferBufferSize) 
+	if (TransferBufferIndex>=TransferBufferSize)
 	{
 		RetVal=WriteSector(Side,Drive[CurrentDisk].HeadPosition,SectorReg,TransferBuffer,TransferBufferSize);
 		StatusReg=READY;
@@ -1189,7 +1200,7 @@ unsigned char WriteBytetoTrack (unsigned char Tmp)
 		TransferBufferSize=6272 ;
 
 
-	if (TransferBufferIndex>=TransferBufferSize) 
+	if (TransferBufferIndex>=TransferBufferSize)
 	{
 		RetVal=WriteTrack(Side,Drive[CurrentDisk].HeadPosition,SectorReg,TransferBuffer);
 
@@ -1262,9 +1273,9 @@ long GetSectorInfo (SectorInfo *Sector,const unsigned char *TempBuffer)
 
 	do		//Scan IDAM table for correct sector
 	{
-		Temp1= (TempBuffer[IdamIndex+1]<<8) | TempBuffer[IdamIndex];	//Reverse Bytes and Get the pointer 
+		Temp1= (TempBuffer[IdamIndex+1]<<8) | TempBuffer[IdamIndex];	//Reverse Bytes and Get the pointer
 		Density= Temp1>>15;												//Density flag
-		Temp1=  (0x3FFF & Temp1) % Drive[CurrentDisk].TrackSize;				//Mask and keep from overflowing
+		Temp1=  (0x3FFF & Temp1) % Drive[CurrentDisk].TrackSize;		//Mask and keep from overflowing
 		IdamIndex+=2;
 	}
 	while ( (IdamIndex<128) & (Temp1 !=0) & (Sector->Sector != TempBuffer[Temp1+3]) );
@@ -1280,7 +1291,7 @@ long GetSectorInfo (SectorInfo *Sector,const unsigned char *TempBuffer)
 	Sector->CRC = (TempBuffer[Temp1+5]<<8) | TempBuffer[Temp1+6] ;
 	Sector->Density = Density;
 	if ( (Sector->Track != TrackReg) | (Sector->Sector != SectorReg) )
-		return 0; 
+		return 0;
 	
 	Temp1+=7;				//Ignore the CRC
 	Temp2=Temp1+43;			//Scan for D.A.M.
