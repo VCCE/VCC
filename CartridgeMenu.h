@@ -22,29 +22,29 @@
 #include <vector>
 #include <string>
 
-// A menu ID is either a small unsigned integer less than 20 used to identify
-// cart menu functions or a control id in the range 5000 - 5019.  Menu ID's map
-// directly to control id's by adding 5000. The ControlId() constexpr should be
-// used to get the control id from a menu id. There are three "special" message
-// IDs as follows:
+// A menu ID is either a small unsigned integer less than or equal to 50 used
+// to identify cart menu functions with control id in the range 5000 - 5050.
+// Menu ID's map directly to control id's by adding 5000. The ControlId()
+// constexpr should be used to get the control id from a menu id. There are three
+// "special" message IDs as follows:
 
 constexpr auto MID_BEGIN  = 0;  // Clears the menu, optionally reserving some entries.
 constexpr auto MID_FINISH = 1;  // Draws the menu
-constexpr auto MID_ENTRY  = 2;  // A menu item with no control ID
+constexpr auto MID_ENTRY  = 2;  // A menu item with no control
 
 //  Menu IDs other than the above special ones must be converted to control IDs
 //  using the ControlId() constexpr. These reference controls that are activated
 //  when the menu item is selected.
 
-//  The MPI adds 20 times the slot number (1-4) to the ID when a cartridge is loaded in
+//  The MPI adds 50 times the slot number (1-4) to the ID when a cartridge is loaded in
 //  an mpi slot, then subtracts this value when the item is activated before using
-//  it to call the control in the cartridge dll. This allows module configs to work
-//  properly regardless of which slot they are in.
+//  it to call the control in the cartridge dll. This allows dynamic cartridge menus to
+//  work properly regardless of which slot they are in.
 
 constexpr auto MID_CONTROL = 5000;
 
 // constexpr to convert menu id number to control id
-constexpr int ControlId(int id) { return MID_CONTROL + id; }; 
+constexpr int ControlId(int id) { return MID_CONTROL + id; };
 
 // Menu item types, one of the following.
 enum MenuItemType
@@ -78,8 +78,8 @@ public:
 //  Title is menu bar title, position is location menu will be placed on the menu bar.
 	void init(const char * title="Cartridge", int position=3);
 
-//  Reserve cartmenu items. The reserve value allows the 'Cartridge' menu item and 
-//  it's submenu to remain intact when DLL's append items to the menu. The reserve 
+//  Reserve cartmenu items. The reserve value allows the 'Cartridge' menu item and
+//  it's submenu to remain intact when DLL's append items to the menu. The reserve
 //  value is only used whwn MID_BEGIN items are encountered.
 	void reserve(const unsigned int count);
 

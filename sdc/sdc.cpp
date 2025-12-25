@@ -380,12 +380,7 @@ extern "C"
         HWND hVccWnd,
         const cpak_callbacks* const callbacks)
     {
-        DLOG_C("SDC %p %p %p %p %p\n",
-            callbacks->assert_interrupt,
-            callbacks->assert_cartridge_line,
-            callbacks->write_memory_byte,
-            callbacks->read_memory_byte,
-            callbacks->add_menu_item);
+        DLOG_C("SDC %p %p %p %p %p\n",*callbacks);
         gCallbackContext = callback_context;
         CartMenuCallback = callbacks->add_menu_item;
         AssertIntCallback = callbacks->assert_interrupt;

@@ -21,7 +21,7 @@
 #include <Windows.h>
 
 extern HWND	gVccWnd;
-extern const std::shared_ptr<host_cartridge_context> gHostContext;
+extern const std::shared_ptr<host_cartridge_context> gHostCallbacks;
 extern multipak_cartridge gMultiPakInterface;
 extern configuration_dialog gConfigurationDialog;
 extern std::string gLastAccessedPath;

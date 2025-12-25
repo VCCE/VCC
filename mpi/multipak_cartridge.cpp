@@ -26,7 +26,10 @@
 
 namespace
 {
-
+	// Callback trampolines
+	// host_context is the opaque callback_context provided for this cartridge instance.
+	// In multipak this is always a multipak_cartridge*, allowing the trampoline to
+	// bounce the operation to the correct slot without exposing host internals.
 	template<multipak_cartridge::slot_id_type SlotIndex_>
 	void assert_cartridge_line_on_slot(void* host_context, bool line_state)
 	{
@@ -34,7 +37,6 @@ namespace
 			SlotIndex_,
 			line_state);
 	}
-
 	template<multipak_cartridge::slot_id_type SlotIndex_>
 	void append_menu_item_on_slot(void* host_context, const char* text, int id, MenuItemType type)
 	{
@@ -43,13 +45,16 @@ namespace
 			{ text, static_cast<unsigned int>(id), type });
 	}
 
+	// Per-slot callback table.
+	// Each entry provides the host-side trampoline functions for that slot,
+	// allowing cartridges to call back into multipak using a uniform API
+	// while the trampolines route the request to the correct slot.
+	// Multipak uses two slot specific callbacks, the rest are just passed from vcc.
 	struct cartridge_slot_callbacks
 	{
 		PakAssertCartridgeLineHostCallback set_cartridge_line;
 		PakAppendCartridgeMenuHostCallback append_menu_item;
 	};
-
-	//**************************************************************
 	const std::array<cartridge_slot_callbacks, NUMSLOTS> gSlotCallbacks = { {
 		{ assert_cartridge_line_on_slot<0>, append_menu_item_on_slot<0> },
 		{ assert_cartridge_line_on_slot<1>, append_menu_item_on_slot<1> },
@@ -57,16 +62,14 @@ namespace
 		{ assert_cartridge_line_on_slot<3>, append_menu_item_on_slot<3> }
 	} };
 
-	constexpr std::pair<size_t, size_t> disk_controller_io_port_range = { 0x40, 0x5f };
-
 	// Is a port a disk port?
+	constexpr std::pair<size_t, size_t> disk_controller_io_port_range = { 0x40, 0x5f };
 	constexpr bool is_disk_controller_port(multipak_cartridge::slot_id_type port)
 	{
 		return port >= disk_controller_io_port_range.first && port <= disk_controller_io_port_range.second;
 	}
 
 }
-
 
 multipak_cartridge::multipak_cartridge(
 	multipak_configuration& configuration,
@@ -197,7 +200,7 @@ unsigned char multipak_cartridge::read_port(unsigned char port_id)
 	for (const auto& cartridge_slot : slots_)
 	{
 		// Return value from first module that returns non zero
-		// FIXME: Shouldn't this OR all the values together?
+		// Should this OR all the values together?
 		const auto data(cartridge_slot.read_port(port_id));
 		if (data != 0)
 		{
@@ -255,25 +258,25 @@ void multipak_cartridge::menu_item_clicked(unsigned char menu_item_id)
 
 	vcc::core::utils::section_locker lock(mutex_);
 
-	//Configs for loaded carts
-	if (menu_item_id >= 20 && menu_item_id <= 40)
+	// Menu items for loaded carts. Each slot is allocated 50.
+	if (menu_item_id >= 50 && menu_item_id <= 100)
 	{
-		slots_[0].menu_item_clicked(menu_item_id - 20);
+		slots_[0].menu_item_clicked(menu_item_id - 50);
 	}
 
-	if (menu_item_id > 40 && menu_item_id <= 60)
+	if (menu_item_id > 100 && menu_item_id <= 150)
 	{
-		slots_[1].menu_item_clicked(menu_item_id - 40);
+		slots_[1].menu_item_clicked(menu_item_id - 100);
 	}
 
-	if (menu_item_id > 60 && menu_item_id <= 80)
+	if (menu_item_id > 150 && menu_item_id <= 200)
 	{
-		slots_[2].menu_item_clicked(menu_item_id - 60);
+		slots_[2].menu_item_clicked(menu_item_id - 150);
 	}
 
-	if (menu_item_id > 80 && menu_item_id <= 100)
+	if (menu_item_id > 200 && menu_item_id <= 250)
 	{
-		slots_[3].menu_item_clicked(menu_item_id - 80);
+		slots_[3].menu_item_clicked(menu_item_id - 200);
 	}
 }
 
@@ -308,31 +311,35 @@ void multipak_cartridge::eject_cartridge(slot_id_type slot)
 }
 
 multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
-	slot_id_type slot,
-	const path_type& filename)
+	slot_id_type slot, const path_type& filename)
 {
-
-	DLOG_C("%3d %p %p %p %p %p\n",slot,
-		gHostContext->assert_interrupt_,
+	cpak_callbacks callbacks {
+		gHostCallbacks->assert_interrupt_,
 		gSlotCallbacks[slot].set_cartridge_line,
-		gHostContext->write_memory_byte_,
-		gHostContext->read_memory_byte_,
-		gSlotCallbacks[slot].append_menu_item);
+		gHostCallbacks->write_memory_byte_,
+		gHostCallbacks->read_memory_byte_,
+		gSlotCallbacks[slot].append_menu_item
+	};
+	DLOG_C("%3d %p %p %p %p %p\n",slot,callbacks);
 
+	auto* multipakHost = this;
 
-	auto loadedCartridge(vcc::core::load_cartridge(
+	// callback_context is a host-owned opaque per-cartridge state. Passed to cartridges
+	// at initialization and returned on every callback so the host can route and manage a
+	// specific cartridge instance. MPI currently uses it to know what slot a cart is in.
+	auto ctx = std::make_unique<multipak_cartridge_context>(
+		slot,
+		*context_,
+		*multipakHost);
+
+	auto loadedCartridge = vcc::core::load_cartridge(
 		filename,
-		std::make_unique<multipak_cartridge_context>(slot, *context_, *this),
-		this,
+		std::move(ctx),
+		multipakHost,
 		context_->configuration_path(),
-		NULL,  // HWND WinMain not needed by othercarts yet
-		{
-			gHostContext->assert_interrupt_,
-			gSlotCallbacks[slot].set_cartridge_line,
-			gHostContext->write_memory_byte_,
-			gHostContext->read_memory_byte_,
-			gSlotCallbacks[slot].append_menu_item
-		}));
+		gVccWnd,
+		callbacks);
+
 	if (loadedCartridge.load_result != mount_status_type::success)
 	{
 		// Tell user why load failed
@@ -343,8 +350,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		return loadedCartridge.load_result;
 	}
 
-	// FIXME: We should probably call eject(slot) here in order to ensure that the
-	// cartridge is shut down correctly.  (OR FORCE USER TO EJECT BEFORE TRYING TO LOAD!!)
+	// Should we call eject(slot) here?
 
 	vcc::core::utils::section_locker lock(mutex_);
 
@@ -360,16 +366,10 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	return loadedCartridge.load_result;
 }
 
-// TODO: switching slots should cause a hard reset. (pakinterface does set EmuState.ResetPending = 2)
-// Real CoCo startup slot select does nothing until coco is restarted. A checkbox is needed on config
-// screen to enable hard reset when the slot select is changed.
+// The following has no effect until VCC is reset
 void multipak_cartridge::switch_to_slot(slot_id_type slot)
 {
-	vcc::core::utils::section_locker lock(mutex_);
 	switch_slot_ = slot;
-//	cached_scs_slot_ = slot;
-//	cached_cts_slot_ = slot;
-//	context_->assert_cartridge_line(slots_[slot].line_state());
 }
 
 multipak_cartridge::slot_id_type multipak_cartridge::selected_switch_slot() const
@@ -387,29 +387,26 @@ void multipak_cartridge::append_menu_item(slot_id_type slot, menu_item_type item
 {
 	switch (item.menu_id) {
 	case MID_BEGIN:
-	{
-		vcc::core::utils::section_locker lock(mutex_);
-
-		slots_[slot].reset_menu();
-	}
-	break;
+		{
+			vcc::core::utils::section_locker lock(mutex_);
+			slots_[slot].reset_menu();
+			break;
+		}
 
 	case MID_FINISH:
 		build_menu();
 		break;
 
 	default:
-		// Add 20 times the slot number to control id's
-		if (item.menu_id >= MID_CONTROL)
 		{
-			item.menu_id += (slot + 1) * 20;
-		}
-		{
+			// Add 50 times the slot number to control id's
+			if (item.menu_id >= MID_CONTROL) {
+				item.menu_id += (slot + 1) * 50;
+			}
 			vcc::core::utils::section_locker lock(mutex_);
-
 			slots_[slot].append_menu_item(item);
+			break;
 		}
-		break;
 	}
 }
 
