@@ -284,19 +284,27 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 // Insert Module returns 0 on success
 static cartridge_loader_status load_any_cartridge(const char *filename, const char* iniPath)
 {
-	cartridge_loader_result loadedCartridge(vcc::core::load_cartridge(
-		filename,                                   // Cartridge filename
-		std::make_unique<vcc_cartridge_context>(),  // Yet another cartridge context
-		nullptr,                                    // Maybe a VCC host context
-		iniPath,                                    // Path of ini file
-		EmuState.WindowHandle,                      // HWND hVccWnd
-		{                                           // Callbacks AKA context
-			PakAssertInterupt,
-			PakAssertCartrigeLine,
-			PakWriteMemoryByte,
-			PakReadMemoryByte,
-			PakAddMenuItem
-		}));
+	// callback_context is a host-owned opaque per-cartridge state. Passed to the cartridge
+	// at initialization and returned on every callback so the host can route and manage a
+	// specific cartridge instance. Currently for pakinterface it is empty, but MPI uses it.
+	auto vccContext=std::make_unique<vcc_cartridge_context>();
+
+	cpak_callbacks callbacks {
+		PakAssertInterupt,
+		PakAssertCartrigeLine,
+		PakWriteMemoryByte,
+		PakReadMemoryByte,
+		PakAddMenuItem
+	};
+
+	auto loadedCartridge = vcc::core::load_cartridge(
+		filename,
+		std::move(vccContext),
+		nullptr,                 // No host context for the main app
+		iniPath,
+		EmuState.WindowHandle,
+		callbacks);
+
 	if (loadedCartridge.load_result != cartridge_loader_status::success)
 	{
 		return loadedCartridge.load_result;
@@ -388,5 +396,10 @@ void CartMenuActivated(unsigned int MenuID)
 
 	vcc::core::utils::section_locker lock(gPakMutex);
 
-	gActiveCartrige->menu_item_clicked(MenuID);
+	// menu_item_clicked takes unsigned char. This limits total number of menu items
+	// to 255. 50 are allocated to host cart and 50 each to mpi carts for 250 total.
+	// This should be more than enough for future needs.
+
+	unsigned char menu_item = MenuID & 0xFF;
+	gActiveCartrige->menu_item_clicked(menu_item);
 }

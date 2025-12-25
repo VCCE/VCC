@@ -28,16 +28,16 @@ HINSTANCE gModuleInstance = nullptr;
 static std::string gConfigurationFilename;
 HWND gVccWnd;
 
-// host_catridge_context (remove someday)
-const std::shared_ptr<host_cartridge_context> gHostContext(std::make_shared<host_cartridge_context>(nullptr, gConfigurationFilename));
+const std::shared_ptr<host_cartridge_context>
+	gHostCallbacks(std::make_shared<host_cartridge_context>(nullptr, gConfigurationFilename));
 
-// Instatiate mpi configuration object (remove someday)
+// mpi configuration object
 multipak_configuration gMultiPakConfiguration("MPI");
 
-// Instatiate mpi cartridge object (remove someday)
-multipak_cartridge gMultiPakInterface(gMultiPakConfiguration, gHostContext);
+// mpi cartridge object
+multipak_cartridge gMultiPakInterface(gMultiPakConfiguration, gHostCallbacks);
 
-// Instatiate the config dialog
+// the config dialog
 configuration_dialog gConfigurationDialog(gMultiPakConfiguration, gMultiPakInterface);
 
 // DLL exports
@@ -67,11 +67,11 @@ extern "C"
 		gMultiPakConfiguration.configuration_path(configuration_path);
 		gConfigurationFilename = configuration_path;
 		gVccWnd = hVccWnd;
-		gHostContext->add_menu_item_ = callbacks->add_menu_item;
-		gHostContext->read_memory_byte_ = callbacks->read_memory_byte;
-		gHostContext->write_memory_byte_ = callbacks->write_memory_byte;
-		gHostContext->assert_interrupt_ = callbacks->assert_interrupt;
-		gHostContext->assert_cartridge_line_ = callbacks->assert_cartridge_line;
+		gHostCallbacks->add_menu_item_ = callbacks->add_menu_item;
+		gHostCallbacks->read_memory_byte_ = callbacks->read_memory_byte;
+		gHostCallbacks->write_memory_byte_ = callbacks->write_memory_byte;
+		gHostCallbacks->assert_interrupt_ = callbacks->assert_interrupt;
+		gHostCallbacks->assert_cartridge_line_ = callbacks->assert_cartridge_line;
 		gMultiPakInterface.start();
 	}
 

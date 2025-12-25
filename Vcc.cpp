@@ -299,7 +299,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			// Parse the menu selections:
 			
 			// Check if ID is in cartridge menu range
-			if ( (wmId >= MID_CONTROL) & (wmId < MID_CONTROL + 100) )
+			if ( (wmId >= MID_CONTROL) & (wmId < MID_CONTROL + 250) )
 			{
 				CartMenuActivated(wmId-MID_CONTROL);
 				break;
