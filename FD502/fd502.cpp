@@ -132,6 +132,11 @@ extern "C"
 		BuildCartridgeMenu();
 	}
 
+	__declspec(dllexport) void PakReset()
+	{
+		LoadExtRom(External,RomFileName);
+	}
+
 	__declspec(dllexport) void PakTerminate()
 	{
 		CloseCartDialog(g_hConfDlg);
@@ -677,11 +682,11 @@ void LoadConfig()  // Called on SetIniPath
 	GetModuleFileName(nullptr, DiskRomPath, MAX_PATH);
 	PathRemoveFileSpec(DiskRomPath);
 	strcpy(RGBRomPath, DiskRomPath);
-	strcat(DiskRomPath, "disk11.rom"); //Failing silent, Maybe we should throw a warning?
-	strcat(RGBRomPath, "rgbdos.rom");  //Future, Grey out dialog option if can't find file
-	LoadExtRom(TandyDisk, DiskRomPath);
-	LoadExtRom(RGBDisk, RGBRomPath);
-	if (PersistDisks)
+	strcat(DiskRomPath, "disk11.rom");
+	strcat(RGBRomPath, "rgbdos.rom");
+	LoadExtRom(TandyDisk, DiskRomPath); // Why load?
+	LoadExtRom(RGBDisk, RGBRomPath);    // Why load?
+	if (PersistDisks)                   // TODO: Fix this, checkbox was removed
 		for (Index=0;Index<4;Index++)
 		{
 			sprintf(Temp,"Disk#%i",Index);
@@ -738,7 +743,6 @@ void SaveConfig()
 
 unsigned char LoadExtRom( unsigned char RomType,const char *FilePath)	//Returns 1 on if loaded
 {
-
 	FILE *rom_handle=nullptr;
 	unsigned short index=0;
 	unsigned char RetVal=0;
@@ -755,5 +759,6 @@ unsigned char LoadExtRom( unsigned char RomType,const char *FilePath)	//Returns 
 		fclose(rom_handle);
 	}
 
+	DLOG_C("load %s %d %d\n",FilePath,RomType,RetVal);
 	return RetVal;
 }
