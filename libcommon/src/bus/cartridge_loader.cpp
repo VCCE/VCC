@@ -103,8 +103,6 @@ namespace vcc::core
 		};
 	}
 
-	// TODO Rename to hardware cartridge
-	// TODO Remove unecessary context
 	// Load a legacy cartridge
 	cartridge_loader_result load_cpak_cartridge(
 		const std::string& filename,
@@ -120,7 +118,9 @@ namespace vcc::core
 		}
 
 		cartridge_loader_result details;
-		details.handle.reset(LoadLibrary(filename.c_str()));
+		HMODULE hCart = LoadLibrary(filename.c_str());
+		details.handle.reset(hCart);
+
 		DLOG_C("pak:LoadLibrary %s %d\n", filename.c_str(), GetLastError());
 		if (details.handle == nullptr)
 		{
@@ -145,13 +145,12 @@ namespace vcc::core
 
     // Load a cartridge; either a ROM image or a pak dll.  Load cartridge is called
 	// by both mpi/multipak_cartridge.cpp and pakinterface.cpp.  cartridge_context is defined
-	// in libcommon/include/vcc/core/cartridge_context.h.  host_context is a generic 
+	// in libcommon/include/vcc/bus/cartridge_context.h.  host_context is a generic 
 	// pointer explicitly cast to multipak_cartridge in mpi/multipak_cartridge.cpp.
 	// mutlipak_cartridge refers specifically to a cart loaded by the multipak.
 	// cpak_callbacks is used by all hardware paks and is defined in 
-	// libcommon/include/vcc/core/cpak_cartridge_definitions.h.  cartridge_loader_result
-	// is defined in libcommon/include/vcc/core/cartridge_loader.h
-	// TODO: Fix the context insanity
+	// libcommon/include/vcc/bus/cpak_cartridge_definitions.h.  cartridge_loader_result
+	// is defined in libcommon/include/vcc/bus/cartridge_loader.h
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,

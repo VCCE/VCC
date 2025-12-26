@@ -59,16 +59,6 @@ namespace vcc::core
 		cartridge_loader_status load_result = cartridge_loader_status::not_loaded;
 	};
 
-	// TODO: Are these really needed - callbacks are defined in cartridge_callbacks.h
-/*	struct cartridge_loader_context
-	{
-		const PakAssertInteruptHostCallback pak_assert_interrupt;
-		const PakAssertCartridgeLineHostCallback pak_assert_cartridge_line;
-		const PakWriteMemoryByteHostCallback pak_write_memory_byte;
-		const PakReadMemoryByteHostCallback pak_read_memory_byte;
-		const PakAppendCartridgeMenuHostCallback pak_add_menu_item;
-	};
-*/
 	LIBCOMMON_EXPORT cartridge_file_type determine_cartridge_type(const std::string& filename);
 
 	// TODO: Eliminate the redundant overloads of loader result

@@ -1,0 +1,644 @@
+
+				---- Gime Regs ----
+
+Source: Lomont v0.82
+
+=====================================================
+$FF90 (65424) Initialization Register 0 - INIT0
+
+Bit 7 CoCo Bit 1 = Color Computer 1/2 Compatible, 0 = CoCo3
+Bit 6 M/P 1 = MMU enabled
+Bit 5 IEN 1 = GIME IRQ output enabled to CPU, 0 = disabled
+Bit 4 FEN 1 = GIME FIRQ output enabled to CPU, 0 = disabled
+Bit 3 MC3 1 = Vector RAM at FEXX enabled, 0 = disabled
+Bit 2 MC2 1 = Standard SCS (DISK) (0=expand 1=normal)
+Bit 1 MC1 ROM Map
+Bit 0 MC0 " "
+
+MC1,MC0 ROM MAP (IRQ VECTORS EXCLUDED)
+
+ 0  X 16K INTERNAL, 16K EXTERNAL
+ 1  0 32K INTERNAL
+ 1  1 32K EXTERNAL (EXCEPT INTERRUPT VECTORS)
+
+SCS is Spare Chip Select
+
+To get CoCo 1/2: CoCo bit set, MMU disabled, Video address from SAM, RGB/Comp
+Palettes => CC2.
+
+To use CoCo 3 graphics, the COCO bit must be set to zero. When using CoCo 1/2
+resolutions, the bit is set to 1. RSDOS typically sets the INIT0 register to 196 in CoCo 2
+resolutions and 68 when using CoCo 3 graphics modes.
+
+========================================================
+$FF91 (65425) Initialization Register 1 - INIT1
+
+Bit 7        Unused
+Bit 6        Memory type 1=256K, 0=64K chips
+Bit 5   TINS Timer INput clock source 1=279.365 nsec, 0=63.695 usec
+Bit 4-1      Unused
+Bit 0        MMU Task Register select 0=enable $FFA0-$FFA7 1=enable $FFA8-$FFAF
+
+TINS = 1 is a 279.365 ns (3.58 MHZ) clock, not a 70ns clock as published some places.
+TINS = 0 is default
+
+The TINS bit selects the clock speed of the countdown timer. The 279 ns clock is 
+useful for interrupt driven sound routines while the 63 us (15.87 kHZ) clock is 
+used for a slower timer.
+
+The task register selects which set of MMU bank registers to assign to the CPU's 64K
+workspace. The task bit is generally set to zero in DECB.
+
+========================================================
+$FF92 (65426) Interrupt Request Enable Register – IRQENR
+
+Bit 7-6       Unused
+Bit 5   TMR   1=Enable timer IRQ, 0 = disable
+Bit 4   HBORD 1=Enable Horizontal border Sync IRQ, 0 = disable
+Bit 3   VBORD 1=Enable Vertical border Sync IRQ, 0 = disable
+Bit 2   EI2   1=Enable RS232 Serial data IRQ, 0 = disable
+Bit 1   EI1   1=Enable Keyboard IRQ, 0 = disable
+Bit 0   EI0   1=Enable Cartridge IRQ, 0 = disable
+
+This register works the same as firqenr except that it generates IRQ
+interrupts.
+
+See notes following $FF93 FIRQENR for more interrupt information.
+
+========================================================
+$FF93 (65427) Interrupt Request Enable Register – IRQENR
+
+Bit 7-6       Unused
+Bit 5   TMR   1=Enable timer FIRQ, 0 = disable
+Bit 4   HBORD 1=Enable Horizontal border Sync FIRQ, 0 = disable
+Bit 3   VBORD 1=Enable Vertical border Sync FIRQ, 0 = disable
+Bit 2   EI2   1=Enable RS232 Serial data FIRQ, 0 = disable
+Bit 1   EI1   1=Enable Keyboard FIRQ, 0 = disable
+Bit 0   EI0   1=Enable Cartridge FIRQ, 0 = disable
+
+This register works the same as IRWENR except that it generates FIRQ
+interrupts.
+
+TMR:   FIRQ interrupt generated whenever 12 bit timer counts down to zero.
+HBORD: Horiz border FIRQ interrupt generated on falling edge of HSYNC.
+VBORD: Vert border FIRQ interrupt generated on falling edge of VSYNC.
+EI2:   Serial FIRQ interrupt generated on falling edge of the signal on PIN 4 of the serial port.
+EI1:   Keyboard FIRQ interrupt whenever a zero appears on any one of PA0-PA6 on the PIA0.
+EI0:   Cartridge FIRQ interrupt on the falling edge of the signal on PIN 8 of the cartridge port.
+
+Reading from the register tells you which interrupts came in and acknowledges and resets the 
+interrupt source.
+
+Here's a table of the interrupt vectors and where they end up going. You can't change the $FFxx
+vectors, but you can change the $FExx and $01xx vectors which contain jmps/lbras to the interrupt
+routine. Be sure to disable the interrupt you are setting before changing values.
+Interrupt -> CPU reads -> points to -> jumps to this routine
+
+SWI3  $FFF2 $FEEE $0100
+SWI2  $FFF4 $FEF1 $0103
+FIRQ  $FFF6 $FEF4 $010F
+IRQ   $FFF8 $FEF7 $010C
+SWI   $FFFA $FEFA $0106
+NMI   $FFFC $FEFD $0109
+RESET $FFFE $8C1B
+
+This is in order of increasing precedence. Thus an IRQ firing while a FIRQ is being serviced will
+interrupt the FIRQ. Conversely, a FIRQ never interrupts an IRQ.
+
+Note that the equivalent interrupt output enable bit must be set in $FF90
+
+You can also read these regs to see if there is a LOW on an interrupt input pin. If you have both
+the IRQ and FIRQ for the same device enabled, you read a 1 bit on both regs if that input is low.
+For example, if you set $FF02=0 and $FF92=2, then as long as a key is held down, you will read
+back bit 1 as Set.
+
+=====================================================
+$FF94-$FF95 TIMERMSB/TIMERLSB
+
+$FF94 (65428) Timer register MSB - TIMERMSB
+Bits 7-4 Unused
+Bits 3-0 TMRH - Timer Bits 8-11 - write here to start timer
+
+$FF95 (65429) Timer register LSB - TIMERLSB
+Bits 7-0 TIMRL - Timer Bits 0-7
+
+The 12-bit timer can be loaded with any number from 0-4095. The timer resets and restarts
+counting down as soon as a number is written to $FF94. Writing to $FF95 does not restart
+the timer, but the value does save. Reading from either register does not restart the timer.
+When the timer reaches zero, it automatically restarts and triggers an interrupt (if enabled).
+The timer also controls the rate of blinking text. Storing a zero to both registers stops the
+timer from operating. Lastly, the timer works slightly differently on the 1986 and 1987
+versions of the GIME. Neither can actually run a clock count of 1. That is, if you store a
+1 into the timer register, the 1986 GIME actually processes this as a '3' and the 1987 GIME
+processes it as a '2'. All other values stored are affected the same way: nnn+2 for 1986
+GIME and nnn+1 for 1987 GIME.
+
+Must turn timer interrupt enable off/on again to reset timer IRQ/FIRQ.
+
+Storing a $00 at $FF94 seems to stop the timer. Also, apparently each time it passes thru
+zero, the $FF92/93 bit is set without having to re-enable that Interrupt Request.
+
+=====================================================
+$FF96-$FF97 (65430-65431) Unused
+
+=====================================================
+$FF98 (65432) Video mode register - VMODE
+
+Bit 7 BP 0=alphanumeric (text modes), 1=bit plane (graphics modes)
+Bit 6 Unused
+Bit 5 DESCEN 1 = extra DESCender ENable(text), swap artifact colors (in gr mode)
+Bit 4 MOCH MOnoCHrome (composite video output) (1=mono), 0 = color
+Bit 3 H50 1=50hz vs 0=60hz bit
+Bit 2-0 LPR210 - Number of lines/char row
+
+LPR210 is Lines Per Row:
+000 - 1 line/row 100 - 9
+001 - 2 (CoCo1&2) 101 - 10 (Reserved?)
+010 - 3 (CoCo1&2) 110 - 11 (12?(CoCo1&2?))
+011 - 8 111 - (12?) Infinite*
+
+Bit 5 is the artifact color shift bit. Change it to flip Pmode 4 colors.
+A One is what is put there if you hold down the F1 key on reset.
+POKE &HFF98,&H13 from Basic if colors artifact the wrong way for you.
+
+Infinite is Mostly useless, but it does generate a graphics mode where the whole screen is
+filled with the same line of graphics - like a 320x1 resolution. This can be used for a very
+fast oscilloscope type display where the program only updates data in one scan line over 
+time and as the screen refreshes, you get a screen full of samples. Sockmaster used it in
+his Boink bouncing ball demo to take manual control of the vertical resolution of the screen
+to make the ball appear that it's going up and down (without actually scrolling the whole 
+screen up and down).
+
+=====================================================
+$FF99 (65433) Video resolution register - VRES
+Bit 7   Unused(?)
+Bit 6-5 LPF10   – Lines per field
+Bit 4-2 HRES210 – Horizontal resolution
+Bit 1-0 CO01    – Color bits
+
+BITS 6-5: LINES PER FIELD LPF:
+00 -> 192 SCAN LINES ON SCREEN
+01 -> 200 SCAN LINES ON SCREEN
+10 -> *ZERO/INFINITE LINES ON SCREEN (UNDEFINED)
+11 -> 225 SCAN LINES ON SCREEN
+
+Bits 4-2: Horizontal resolution HR 
+
+Graphics modes:
+000=16 bytes per row
+001=20 bytes per row
+010=32 bytes per row
+011=40 bytes per row
+100=64 bytes per row
+101=80 bytes per row
+110=128 bytes per row
+111=160 bytes per row
+
+Text modes (x - don't care for text):
+0x0=32 characters per row
+0x1=40 characters per row
+1x0=64 characters per row
+1x1=80 characters per row
+
+Bits 1-0 CRES Color Resolution
+
+Graphics modes:
+00=2  colors (8 pixels per byte)
+01=4  colors (4 pixels per byte)
+10=16 colors (2 pixels per byte)
+11=Undefined (would have been 256 colors!?)
+
+Text modes (x - don't care for text):
+x0=No color attributes
+x1=Color attributes enabled
+
+*The zero/infinite scanlines setting will either set the screen to display nothing but border
+(zero lines) or graphics going all the way up and down out of the screen, never retriggering.
+It all depends on when you set the register. If you set it while the video raster was drawing
+the vertical border you get zero lines, and if you set it while video was drawing graphics
+you get infinite lines. Mostly useless, but it should be possible to coax a vertical overscan
+mode using this with some tricky timing.
+
+Old SAM modes work if CC Bit set. HR and CRES are Don't Care in SAM mode. Note the
+correspondence of HR2 HR0 to the text mode's bytes/line.
+
+Commonly used graphics modes:
+
+Width, Colors, HR210, C010
+ 640  4 111 01
+ 640  2 101 00
+ 512  4 110 01
+ 512  2 100 00
+ 320 16 111 10
+ 320  4 101 01
+ 320  2 011 00
+ 256 16 110 10
+ 256  4 100 01
+ 256  2 010 00
+ 160 16 101 10
+ 160  4 011 01 *
+ 160  2 001 00 *
+ 128 16 100 10 *
+ 128  4 010 01 *
+ 128  2 000 00 *
+
+* - not supported. Other combos also possible but not supported.
+
+HiRes text always two bytes per character; even byte 6 bit character, odd byte attribute.
+
+Characters from 128 ASCII, no graphic chars Format:
+
+Bit  7 1 = Blink
+Bit  6 1 = Underline
+Bits 5-3 Foreground Palette 0-7 from $FFB0-$FFB7
+Bits 2-0 Background Palette 0-7 from $FFB8-$FFBF
+
+Due to a design error in the GIME, the "200-line" mode only displays 199 lines of active
+video on the screen. If you do the BASIC pokes for 25 lines on the WIDTH 40 and
+WIDTH 80 screens, you will see the blinking underscore cursor disappear at the bottom
+line. If the graphic screens are poked for 200 lines, the bottom-most line will be #198, not
+#199. Try it and see.
+(Rodney V Hamilton)
+
+=====================================================
+$FF9A (65434) Border color register - BRDR 
+Bits 7-6 Unused
+Bits 5-0 Border palette color, same format as $FFB0-$FFBF
+
+This controls the color of the border around the screen. The color bits work the same as
+the palette registers. This register only controls the border color of CoCo 3 video modes
+and does not affect Coco 1/2 modes.
+
+See $FFB0-$FFBF for color definition.
+
+Format depends on Composite or RGB monitor.
+
+=====================================================
+$FF9B (65435) Disto 2 Meg Upgrade bank
+
+Bits 7-2
+Bits 1-0 VBANK Used by Disto 2 Meg upgrades to switch between 512K banks
+
+=====================================================
+$FF9C (65436) Vertical scroll register - VSC
+
+Bits7-4
+Unused
+Bit 3-0
+VSC Vertical smooth scroll 3=MSB <-> LSB=0 vals 0=16 (?)
+The vertical scroll register is used to allow smooth scrolling in text modes. Consecutive
+numbers scroll the screen upwards one scan line at a time in video modes where more than
+one scan line makes up a row of text (typically 8 lines per character row) or graphics
+(double height + graphics)
+
+=====================================================
+$FF9D-$FF9E Vertical offset register
+
+$FF9D (65437) Vertical offset register LSB
+Bits 7-0 Y15-Y8 MSB Start of video in GIME RAM (video location * 2048)
+
+$FF9E (65438) Vertical offset register LSB
+Bits 7-0 Y7-Y0 LSB Start of video in GIME RAM (video location * 8)
+
+$FF9D VERTICAL OFFSET V SCROLL MUST BE $0F
+$FF9D Screen start address Bits 18-11
+
+$FF9E Screen Start Address Register 0 (bits 10-3)
+$FF9E V OFFSET #2 WORD = ADDRESS/8 EX. $C000 = $60000/8
+	BIT 7
+	|
+	BIT 0 LSB
+
+$FF9E Screen start address Bits 10-3
+	DDDDDDDDEEEEEEEE000
+
+$FF9E (65438) Vertical offset register LSB
+
+Y15-Y0 is used to set the video mode to start in any GIME memory location in 512K by steps
+of 8 bytes. On a 128K machine, the memory range is $60000-$7FFFF. There is a bug in some
+versions of the GIME that causes the computer to crash when you set odd numbered values in
+$FF9E in some resolutions, so it's safest to limit positioning to steps of 16 bytes. 
+Fortunately, you can use $FF9F to make up for it and get steps as small as 2 bytes.
+
+=====================================================
+$FF9F (65439) Horizontal offset register
+
+Bit 7 HVEN 1=Horizontal virtual screen enable (256 bytes per row)
+           0=Normal horizontal display
+Bit 6-0    0-127 byte offset from $FF9D/$FF9E
+
+If Bit 7 set & in Text mode there are 128 chars (only 80 seen)/line. This allows an offset
+to be specified into a virtual 128-char/line screen, useful for horizontal hardware scrolling
+on wide text or spreadsheets.
+
+If you set Bit 7 and you're in graphics mode, you can scroll across a 128-byte picture. To
+use this, of course, you'd have to write your own graphics routines. On my machine, though,
+an offset of more than about 5 crashes.
+	Bit 7
+	Bits 6-0 X6-X0 Horizontal offset address (video location *2)
+
+You can combine the horizontal and vertical offsets to get a higher definition video
+position: Y15-Y4,X6-X0 which gives you 19 bit positioning by steps of 2 bytes. Otherwise,
+you can use this register to do scrolling effects. The virtual screen mode allows you to
+set up a 256 byte wide graphics or text screen, showing only part of it at a time and
+allowing you to scroll it vertically (horizontally TODO ?)
+
+======================================================
+$FFA0-$FFAF (65440-65455) MMU bank registers (tasks 0 and 1)
+
+$FFA0-$FFA7 (65440-65447) MMU bank registers (task 0)
+$FFA8-$FFAF (65448-65455) MMU bank registers (task 1)
+
+$FFA0/8 Page $0000-$1FFF
+$FFA1/9 Page $2000-$3FFF
+$FFA2/A Page $4000-$5FFF
+$FFA3/B Page $6000-$7FFF
+$FFA4/C Page $8000-$9FFF
+$FFA5/D Page $A000-$BFFF
+$FFA6/E Page $C000-$DFFF
+$FFA7/F Page $E000-$FFFF ($E000-$FDFF)
+
+The MMU registers select 8K pages from the GIME addressable space $0-$7FFFFF into
+CPU addressable space $0-$FFFF in 8K blocks.
+
+The pages are numbered by the top 6 bits of the address, and are $30-$3F for a 128K
+machine, and $00-$3F for a 512K machine.
+
+In a 128K machine pages $0-$2F are copies of pages $30-$3F.
+
+The registers to set the various 8K blocks, and power-up contents:
+
+Task0 Task1  CPU Address   Block  Power-up Page
+----- -----  -----------    --      ---
+$FFA0 $FFA8  $0000-$1FFF     0      $38
+$FFA1 $FFA9  $2000-$3FFF     1      $39
+$FFA2 $FFAA  $4000-$5FFF     2      $3A
+$FFA3 $FFAB  $6000-$7FFF     3      $3B
+$FFA4 $FFAC  $8000-$9FFF     4      $3C
+$FFA5 $FFAD  $A000-$BFFF     5      $3D
+$FFA6 $FFAE  $C000-$DFFF     6      $3E
+$FFA7 $FFAF  $E000-$FDFF     7      $3F
+
+$FF91 Bit 0 selects task 0 (bit = 0) or task 1 (bit = 1). Task 0 uses MMU pages from
+$FFA0-$FFA7 and Task 1 uses MMU pages from $FFA8-$FFAF.
+
+$FE00-$FFFF can be held constant at $7Fexx.
+
+If you don't know it is safe not to, you should turn off interrupts before swapping MMU
+blocks. Be very careful when swapping out ROM or low system RAM.
+
+These registers can be read, but the top two bits must be masked out since they might
+contain garbage.
+
+GIME address view and default page usage:
+
+ Page   GIME Address CPU Address* Standard Page Contents
+------ ------------- ------------ ---------------------------------
+$00-2F $00000-$5FFFF              512K upgrade RAM, not in 128K
+$30    $60000-$61FFF              Hi-Res page #1
+$31    $62000-$63FFF              Hi-Res page #2
+$32    $64000-$65FFF              Hi-Res page #3
+$33    $66000-$67FFF              Hi-Res page #4
+$34    $68000-$69FFF              HGET/HPUT buffer
+$35    $6A000-$6BFFF              Secondary Stack
+$36    $6C000-$6DFFF              Hi-Res text screen RAM
+$37    $6E000-$6FFFF              unused
+$38    $70000-$71FFF $0000-$1FFF  Basic memory
+$39    $72000-$73FFF $2000-$3FFF  Basic memory
+$3A    $74000-$75FFF $4000-$5FFF  Basic memory
+$3B    $76000-$77FFF $6000-$7FFF  Basic memory
+$3C    $78000-$79FFF $8000-$9FFF  Extended Basic Interpreter
+$3D    $7A000-$7BFFF $A000-$BFFF  Color Basic Interpreter
+$3E    $7C000-$7DFFF $C000-$DFFF  Disk Basic Interpreter
+$3F    $7E000-$7FFFF $E000-$FFFF  Super Basic, GIME regs, I/O, Interrupts
+
+=======================================================
+$FFB0-$FFBF (65456-65471) Color palette registers
+
+$FFB0-$FFBF Palette entries 0-15
+
+RGB Mode: Bits 7-6 Unused
+Bit 5 = High order Red R1
+Bit 4 = High order Green G1
+Bit 3 = High order Blue B1
+Bit 2 = Low order Red R0
+Bit 1 = Low order Green G0
+Bit 0 = Low order Blue B0
+
+Composite mode: Bits 7-6 Unused
+Bits 5-4 =  4 intensity levels I1 I0
+Bits 3-0 = 16 colors P3 P2 P1 P0
+
+Todo - RGB/Composite bit, names Of the 16 composite colors?
+
+These 16 registers set the 16 colors used in the system.
+
+Their format depends on the RGB/Composite bit setting in TODO
+
+They can be read, but the top two (or three) bits must be masked off for correctness.
+
+Both reading and writing to the palette registers causes a small glitch on the screen,
+which can be avoided by changing the palettes while the video retrace is in the vertical
+or horizontal border.
+
+The BORDER register uses the same format, and also depends on the RGB/COMPOSITE setting
+
+$FFB0-$FFB7 are also used for the text mode character background colors, and $FFB8-$FFBF
+
+Default RGB palette values on power up:
+   $FFB0 GREEN   $12   $FFB8 BLACK  $00
+   $FFB1 YELLOW  $36   $FFB9 GREEN  $12
+   $FFB2 BLUE    $09   $FFBA BLACK  $00
+   $FFB3 RED     $24   $FFBB BUFF   $3F
+   $FFB4 BUFF    $3F   $FFBC BLACK  $00
+   $FFB5 CYAN    $1B   $FFBD GREEN  $12
+   $FFB6 MAGENTA $2D   $FFBE BLACK  $00
+   $FFB7 ORANGE  $26   $FFBF ORANGE $26
+
+Default Composite palette values on power up:
+   $FFB0 GREEN   $12   $FFB8 BLACK  $00
+   $FFB1 YELLOW  $24   $FFB9 GREEN  $12
+   $FFB2 BLUE    $0B   $FFBA BLACK  $00
+   $FFB3 RED     $07   $FFBB BUFF   $3F
+   $FFB4 BUFF    $3F   $FFBC BLACK  $00
+   $FFB5 CYAN    $1F   $FFBD GREEN  $12
+   $FFB6 MAGENTA $09   $FFBE BLACK  $00
+   $FFB7 ORANGE  $26   $FFBF ORANGE $26
+
+
+=======================================================
+$FFC0 (65472)-$FFC5 (65477) SAM Video Display - SAM_Vx $FFC0-$FFC5 (65472-65477)
+
+$FFC0/1 SAM_V0, or V0CLR/V0SET
+$FFC2/3 SAM_V1, or V1CLR/V1SET
+$FFC4/5 SAM_V2, or V2CLR/V1SET
+
+This allows setting video modes on the CoCo 1 and 2
+In the CoCo 3, The SAM is mostly CoCo 1/2 compatible Write-Only registers
+
+SAM_Vx are three pairs of addresses (V0-V2), and poking any value to EVEN addresses
+sets bit Vx off (0) in Video Display Generator (VDG) circuitry. Poking a value to 
+ODD addresses sets bit on (1) in VDG circuit.
+
+These registers work with $FF22 for setting modes, and should match up
+
+Default screen mode is semigraphic-4
+
+Mode correspondence between the SAM and the VDG:
+
+      Mode              VDG Settings      SAM
+                      A/G GM2 GM1 GM0  V2/V1/V0    Desc.       RAM used
+Internal alphanumeric  0   X   X   0    0  0  0  32x16 (5x7)
+External alphanumeric  0   X   X   1    0  0  0  32x16 (8x12)
+Semigraphic-4          0   X   X   0    0  0  0  32x16 (64x32)
+Semigraphic-6          0   X   X   1    0  0  0  64x48 
+Full graphic 1-C       1   0   0   0    0  0  1  64x64x4      $400 (1024)
+Full graphic 1-R       1   0   0   1    0  0  1  128x64x2     $400 (1024)
+Full graphic 2-C       1   0   1   0    0  1  0  128x64x4     $800 (2048)
+Full graphic 2-R       1   0   1   1    0  1  1  128x96x2     $600 (1536)
+Full graphic 3-C       1   1   0   0    1  0  0  128x96x4     $C00 (3072)
+Full graphic 3-R       1   1   0   1    1  0  1  128x192x2    $C00 (3072)
+Full graphic 6-C       1   1   1   0    1  1  0  128x192x4   $1800 (6144)
+Full graphic 6-R       1   1   1   1    1  1  0  256x192x2   $1800 (6144)
+Direct memory access   X   X   X   X    1  1  1
+
+
+  - The graphic modes with -C are 4 color, -R is 2 color.
+  - 2 color mode - 8 pixels per byte (each bit denotes on/off)
+    4 color mode - 4 pixels per byte (each 2 bits denotes color)
+  - CSS (in FF22) is the color select bit:
+       Color set 0: 0 = black, 1 = green for -R modes
+         00 = green, 01 = yellow for -C modes
+         10 = blue, 11 = red for -C modes
+       Color set 1: 0 = black, 1 = buff for -R modes
+         00 = buff, 01 = cyan, for -C modes
+         10 = magenta, 11 = orange for -C modes
+
+In semigraphic-4 mode, each byte is a char or 4 pixels:
+  bit 7 = 0 -> text char in following 7 bits
+  bit 7 = 1 -> graphic: 3 bit color code, then 4 bits for 4 quads of color
+    colors 000-cyan, yellow, blue, red, buff, cyan, magenta, orange=111
+    quad bits orientation UL, UR, LL, LR
+
+In semigraphic-6 mode, each byte is 6 pixels:
+  bit 7-6 = C1-C0 color from 4 color sets above
+  bit 5-0 = 6 pixels in 2x3 block, each on/off
+  TODO - orientation
+
+Example: To set 6-C color set 0, lda #$E0, sta in $FF22, $FFC3, $FFC5
+   To return to text mode, clra, sta in $FF22, $FFC2, $FFC4
+
+
+=======================================================
+$FFC6 (65478)-$FFD3 (65491) SAM Page Select Reg-SAM_Fx
+
+$FFC6/7 SAM_F0, or F0CLR/F0SET
+$FFC8/9 SAM_F1, or F1CLR/F1SET
+$FFCA/B SAM_F2, or F2CLR/F2SET
+$FFCC/D SAM_F3, or F3CLR/F3SET
+$FFCE/F SAM_F4, or F4CLR/F4SET
+$FFD0/1 SAM_F5, or F5CLR/F5SET
+$FFD2/3 SAM_F6, or F6CLR/F6SET
+
+These registers denote the start of the image in RAM to display in CoCo 1 and 2 text and
+graphics modes. The value in $F0-$F6 times 512 is the start of video RAM.
+
+SAM_Fx are seven pairs of addresses ($F0-$F6), and poking any value to EVEN addresses
+sets bit Fx off (0) in Video Display Generator (VDG) circuitry. Poking value to ODD
+addresses sets bit on (1) in VDG circuit.
+
+=======================================================
+$FFD4 (65492)-$FFD5 (65493) SAM Page Select Reg-SAMPAG ?
+
+$FFD4 Any write sets page #1 P1 control bit to 0, 0 = normal
+$FFD5 Any write sets page #1 P1 control bit to 1
+
+page register MPU addresses $0000-$7FFF, apply page #1 if P1 = 1
+
+=======================================================
+$FFD6 (65494)-$FFD9 (65497) Clock Speed R0/R1 - SAM_R0/1
+
+$FFD6 SAM_R0 - Any write sets R0 control bit to 0
+$FFD7      | - Any write sets R0 control bit to 1
+$FFD8 SAM_R1 - Any write sets R1 control bit to 0
+$FFD9      | - Any write sets R1 control bit to 1
+
+R1-R0: 00-0.89 MHZ only transparent refresh
+       01-0.89/1.78 speed up in rom
+       10-1.78 MHZ only
+       11-1.78 MHZ ?
+
+May not work on early CoCo1, but works on all CoCo 3's.
+
+0.89 Mhz: no address-dependent speed.
+
+These are commonly used as follows:
+  Slow poke: $FFD8 write selects 0.89 Mhz CPU clock
+  Fast poke: $FFD9 write selects 1.78 Mhz CPU clock
+
+Switching the SAM into 1.8MHz operation gives the CPU the time
+ordinarily used by the VDG and refresh, so the display shows garbage,
+so this mode is seldom used. The SAM in Address Dependent mode, where
+ROM reads (since they do not use the DRAM) occur at 1.8MHz but regular
+RAM access occurs at .89MHz, runs the BASIC interpreter from ROM twice
+as fast, nearly doubling BASIC program performance.
+
+=======================================================
+$FFDA (65498)-$FFDD (65501) Memory size M0/M1 - SAM_M0/1
+
+$FFD6 SAM_M0 - Any write sets M0 control bit to 0
+$FFD7        - Any write sets M0 control bit to 1
+$FFD8 SAM_M1 - Any write sets M1 control bit to 0
+$FFD9        - Any write sets M1 control bit to 1
+
+M1-M0: 00 -  4K, 
+       01 - 16K
+       10 - 64K
+       11 - 64K static
+
+Is this right or Dragon only?
+
+=======================================================
+$FFDE/$FFDF (65502/65503) ROM/RAM map type - SAM_TYP
+
+$FFDE Any write switches system ROMs into memory map (ROM mode)
+$FFDF Any write selects all-RAM mode (RAM mode)
+
+RAM accesses use MMU translations in CoCo 3
+
+Default mode 0 - ROM Mode CoCo 1/2, 
+Default mode 1 - RAM Mode CoCo 3
+
+These registers are often called TY=0 and TY=1
+
+
+=======================================================
+$FFF2-$FFFF (65523/65535) Interrupt vectors
+
+$FFF0/1 reserved
+$FFF2/3 SWI3  points to $FEEE  LBR XXXX
+$FFF4/5 SWI2  points to $FEF1  ...
+$FFF6/7 FIRQ  points to $FEF4  ...
+$FFF8/9 IRQ   points to $FEF7  ...
+$FFFA/B SWI   points to $FEFA  ...
+$FFFC/D NMI   points to $FEFD  ...
+$FFFE/F RESET points to $8C1B  ...
+
+When an interrupt of the given type occurs, the vector is loaded into the
+program counter, which points to the address given above. You can set
+your own interrupt routines by replacing the $FEXX values with your own
+LBRA XXXX values
+
+Turn off interrupts before setting a new value.  Restore what was there to
+restore the system.
+
+
+=======================================================
+Example code to set video mode
+
+lda	#%01100000 ; set Initialization register: MMU enabled; GIME IRQ enabled
+sta	$ff90
+ldd	#$80b6     ; set Video Mode and Video Resolution registers $ff98 and $ff99
+std	$ff98      ; $ff98 %10000000: graphics mode enabled, one lines per row
+               ; $ff99 %10110110: 200 scan lines, 80 bytes per row (160 horiz rez), 16 colors
+
