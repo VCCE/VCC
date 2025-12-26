@@ -8,10 +8,10 @@
     <LinkageType>Static</LinkageType>
     <LinkageType Condition="'$(USE_STATIC_LIB)' == 'false'">Dynamic</LinkageType>
     <!-- Output and Intermediate directories -->
-    <LinkTypeSubDir Condition="'$(LinkageType)' == 'Static'">Static</LinkTypeSubDir>
-    <LinkTypeSubDir Condition="'$(LinkageType)' == 'Dynamic'">Dynamic</LinkTypeSubDir>
-    <OutDir>$(SolutionDir)__obj\$(LinkTypeSubDir)\$(Platform)\$(Configuration)\$(ProjectName)\out\</OutDir>
-    <IntDir>$(SolutionDir)__obj\$(LinkTypeSubDir)\$(Platform)\$(Configuration)\$(ProjectName)\int\</IntDir>
+    <LinkTypeSubDir Condition="'$(LinkageType)' == 'Static'"></LinkTypeSubDir>
+    <LinkTypeSubDir Condition="'$(LinkageType)' == 'Dynamic'">Dynamic\</LinkTypeSubDir>
+    <OutDir>$(SolutionDir)__obj\$(LinkTypeSubDir)$(Platform)\$(Configuration)\$(ProjectName)\out\</OutDir>
+    <IntDir>$(SolutionDir)__obj\$(LinkTypeSubDir)$(Platform)\$(Configuration)\$(ProjectName)\int\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(LinkageType)' == 'Dynamic'">

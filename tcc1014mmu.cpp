@@ -58,7 +58,7 @@ void UpdateMmuArray();
 /*****************************************************************************************
 * MmuInit Initilize and allocate memory for RAM Internal and External ROM Images.        *
 * Copy Rom Images to buffer space and reset GIME MMU registers to 0                      *
-* Returns nullptr if any of the above fail.                                                 *
+* Returns nullptr if any of the above fail.                                              *
 *****************************************************************************************/
 unsigned char * MmuInit(unsigned char RamConfig)
 {

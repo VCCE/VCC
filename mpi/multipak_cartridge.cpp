@@ -131,8 +131,10 @@ void multipak_cartridge::reset()
 {
 	vcc::core::utils::section_locker lock(mutex_);
 
-	cached_cts_slot_ = switch_slot_;
-	cached_scs_slot_ = switch_slot_;
+	unsigned char slot = switch_slot_ & 3;
+	switch_slot_ = cached_cts_slot_ = cached_scs_slot_ = slot;
+	slot_register_ = 0b11001100 | slot | (slot << 4);
+
 	for (const auto& cartridge_slot : slots_)
 	{
 		cartridge_slot.reset();
@@ -155,10 +157,13 @@ void multipak_cartridge::write_port(unsigned char port_id, unsigned char value)
 {
 	vcc::core::utils::section_locker lock(mutex_);
 
+	// slot_select_port_id is 0x7f
 	if (port_id == slot_select_port_id)
 	{
-		cached_scs_slot_ = value & 0b00000011;			// SCS
-		cached_cts_slot_ = (value >> 4) & 0b00000011;	// CTS
+		// Bits 1-0 SCS slot (FDC)
+		// Bits 5-4 CTS slot (ROM)
+		cached_scs_slot_ = value & 3;
+		cached_cts_slot_ = (value >> 4) & 3;
 		slot_register_ = value;
 
 		context_->assert_cartridge_line(slots_[cached_scs_slot_].line_state());
@@ -183,6 +188,7 @@ unsigned char multipak_cartridge::read_port(unsigned char port_id)
 {
 	vcc::core::utils::section_locker lock(mutex_);
 
+	// slot_select_port_id will ALLWAYS be 0x7f chet
 	if (port_id == slot_select_port_id)	// Self
 	{
 		slot_register_ &= 0b11001100;
@@ -307,7 +313,8 @@ void multipak_cartridge::eject_cartridge(slot_id_type slot)
 	vcc::core::utils::section_locker lock(mutex_);
 	slots_[slot].stop();
 	slots_[slot] = {};
-	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
+	if (slot == cached_cts_slot_ || slot == switch_slot_)
+		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
 }
 
 multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
