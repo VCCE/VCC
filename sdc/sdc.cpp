@@ -37,7 +37,15 @@
 //  The FD502 interface uses following ports;
 //
 //  $FF40 ; Control register (write)
-//      Coco uses this for drive select, density, precomp, enable, and motor on
+//      Bit 7 halt flag 0 = disabled 1 = enabled
+//      Bit 6 drive select 3 or side select
+//      Bit 5 density flag 0 = single 1 = double
+//      Bit 4 write precompensation 0 = no precomp 1 = precomp
+//      Bit 3 drive motor enable 0 = motors off 1 = motors on
+//      Bit 2 drive select 2
+//      Bit 1 drive select 1
+//      Bit 0 drive select 0
+//
 //  $FF48 ; Command register (write)
 //      high order nibble; low order nibble type; command
 //      0x0 ;   I ; Restore
@@ -162,12 +170,7 @@ static ::vcc::devices::rtc::cloud9 cloud9_rtc;
 // Private functions
 //======================================================================
 
-void SDCInit();
-void LoadRom(unsigned char);
-void SDCWrite(unsigned char,unsigned char);
-unsigned char SDCRead(unsigned char port);
 LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
-
 void LoadConfig();
 bool SaveConfig(HWND);
 void BuildCartridgeMenu();
@@ -175,6 +178,18 @@ void SelectCardBox();
 void UpdateFlashItem(int);
 void InitCardBox();
 void InitFlashBoxes();
+void FitEditTextPath(HWND, int, const char *);
+
+void AppendPathChar(char *,char c);
+bool IsDirectory(const char *);
+char * LastErrorTxt();
+void ConvertSlashes(char *);
+
+void SDCInit();
+void LoadRom(unsigned char);
+void SDCWrite(unsigned char,unsigned char);
+unsigned char SDCRead(unsigned char port);
+
 void ParseStartup();
 void SDCCommand();
 void ReadSector();
@@ -185,7 +200,6 @@ bool ReadDrive(unsigned char,unsigned int);
 void GetDriveInfo();
 void SDCControl();
 void UpdateSD();
-void AppendPathChar(char *,char c);
 bool LoadFoundFile(struct FileRecord *);
 void FixSDCPath(char *,const char *);
 void MountDisk(int,const char *,int);
@@ -196,10 +210,7 @@ void CloseDrive(int);
 void OpenFound(int,int);
 void LoadReply(const void *, int);
 void BlockReceive(unsigned char);
-char * LastErrorTxt();
 void FlashControl(unsigned char);
-void ConvertSlashes(char *);
-void FitEditTextPath(HWND, int, const char *);
 void LoadDirPage();
 void SetCurDir(const char *);
 bool SearchFile(const char *);
@@ -208,11 +219,9 @@ void GetFullPath(char *,const char *);
 void RenameFile(const char *);
 void KillFile(const char *);
 void MakeDirectory(const char *);
-bool IsDirectory(const char *);
 void GetMountedImageRec();
 void GetSectorCount();
 void GetDirectoryLeaf();
-void CommandDone();
 unsigned char PickReplyByte(unsigned char);
 unsigned char WriteFlashBank(unsigned short);
 
@@ -224,6 +233,7 @@ void FloppyWriteDisk();
 void FloppyTrack(unsigned char);
 void FloppySector(unsigned char);
 void FloppyWriteData(unsigned char);
+unsigned int FloppyLSN(unsigned int,unsigned int,unsigned int);
 unsigned char FloppyStatus();
 unsigned char FloppyReadData();
 
@@ -589,10 +599,6 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
     return 0;
 }
 
-//=====================================================================
-// Utility
-//======================================================================
-
 //------------------------------------------------------------
 // Get SDC settings from ini file
 //------------------------------------------------------------
@@ -644,42 +650,6 @@ bool SaveConfig(HWND hDlg)
     snprintf(tmp,4,"%d",(StartupBank & 7));
     WritePrivateProfileString("SDC","StarupBank",tmp,IniFile);
     return true;
-}
-
-//----------------------------------------------------------------------
-// Init the controller. This gets called by PakReset
-//----------------------------------------------------------------------
-void SDCInit()
-{
-
-    DLOG_C("\nSDCInit\n");
-#ifdef USE_LOGGING
-    MoveWindow(GetConsoleWindow(),0,0,300,800,TRUE);
-#endif
-
-    // Init the hFind handle (otherwise could crash on dll load)
-    hFind = INVALID_HANDLE_VALUE;
-
-    // Make sure drives are unloaded
-    MountDisk (0,"",0);
-    MountDisk (1,"",0);
-
-    // Load SDC settings
-    LoadConfig();
-    LoadRom(StartupBank);
-
-    SetCurDir(""); // May be changed by ParseStartup()
-
-    SDC_disk[0] = {};
-    SDC_disk[1] = {};
-
-    // Process the startup config file
-    ParseStartup();
-
-    // init the interface
-    IF = {};
-
-    return;
 }
 
 //------------------------------------------------------------
@@ -784,14 +754,44 @@ void SelectCardBox()
     SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM)SDCard);
 }
 
-//------------------------------------------------------------
-// Convert path slashes
-//------------------------------------------------------------
-void ConvertSlashes(char * path)
+//=====================================================================
+// SDC Simulation
+//======================================================================
+
+//----------------------------------------------------------------------
+// Init the controller. This gets called by PakReset
+//----------------------------------------------------------------------
+void SDCInit()
 {
-    for(size_t i=0; i < strlen(path); i++) {
-        if (path[i] == '\\') path[i] = '/';
-    }
+
+    DLOG_C("\nSDCInit\n");
+#ifdef USE_LOGGING
+    MoveWindow(GetConsoleWindow(),0,0,300,800,TRUE);
+#endif
+
+    // Init the hFind handle (otherwise could crash on dll load)
+    hFind = INVALID_HANDLE_VALUE;
+
+    // Make sure drives are unloaded
+    MountDisk (0,"",0);
+    MountDisk (1,"",0);
+
+    // Load SDC settings
+    LoadConfig();
+    LoadRom(StartupBank);
+
+    SetCurDir(""); // May be changed by ParseStartup()
+
+    SDC_disk[0] = {};
+    SDC_disk[1] = {};
+
+    // Process the startup config file
+    ParseStartup();
+
+    // init the interface
+    IF = {};
+
+    return;
 }
 
 //-------------------------------------------------------------
@@ -913,14 +913,6 @@ void ParseStartup()
 }
 
 //----------------------------------------------------------------------
-//  Command done interrupt;
-//----------------------------------------------------------------------
-void CommandDone()
-{
-    AssertIntCallback(gCallbackContext, INT_NMI, IS_NMI);
-}
-
-//----------------------------------------------------------------------
 // Write port.  If a command needs a data block to complete it
 // will put a count (256 or 512) in IF.bufcnt.
 //----------------------------------------------------------------------
@@ -964,20 +956,34 @@ void SDCWrite(unsigned char data,unsigned char port)
         }
     } else {
         switch (port) {
-        // Command latch and floppy drive select
         case 0x40:
-            if (data == 0x43) {
+            // Command latch and floppy drive select
+            // Mask out halt, density, precomp, and motor
+            switch (data & 0x43) { // 0b01000111
+            case 0:
+                IF.sdclatch = false;
+                break;
+            case 0x43:
                 IF.sdclatch = true;
-            } else {
-                int tmp = data & 0x47;
-                if (tmp == 1) {
-                    FlopDrive = 0;
-                } else if (tmp == 2) {
-                    FlopDrive = 1;
-                }
+                break;
+            case 0b00000001:
+                FlopDrive = 0;
+                break;
+            case 0b00000010:
+                FlopDrive = 1;
+                break;
+            case 0b00000100:
+                DLOG_C("SDC floppy 2 not supported\n");
+                break;
+            case 0b01000000:
+                DLOG_C("SDC floppy 3 not supported\n");
+                break;
+            default:
+                DLOG_C("SDC invalid select %d\n",data);
+                break;
             }
             break;
-         // Flash Data
+        // Flash Data
         case 0x42:
             BankData = data;
             break;
@@ -1121,7 +1127,7 @@ void FloppyRestore()
     FlopStatus = FLP_NORMAL;
     FlopWrCnt = 0;
     FlopRdCnt = 0;
-    CommandDone();
+    AssertIntCallback(gCallbackContext, INT_NMI, IS_NMI);
 }
 
 // floppy seek
@@ -1131,10 +1137,24 @@ void FloppySeek()
     FlopTrack = FlopData;
 }
 
+// Convert floppy drive, track, sector, to LSN
+//TODO: Side select
+//TODO: Support floppy formats other than raw
+unsigned int FloppyLSN(
+        unsigned int drive,   // 0 or 1
+        unsigned int track,   // 0 to num tracks
+        unsigned int sector   // 1 to 18
+    )
+{
+    return track * 18 + sector - 1;
+}
+
 // floppy read sector
 void FloppyReadDisk()
 {
-    int lsn = FlopTrack * 18 + FlopSector - 1;
+    auto lsn = FloppyLSN(FlopDrive,FlopTrack,FlopSector);
+    //DLOG_C("FloppyReadDisk %d %d\n",FlopDrive,lsn);
+
     snprintf(Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
     if (SeekSector(FlopDrive,lsn)) {
         if (ReadFile(SDC_disk[FlopDrive].hFile,FlopRdBuf,256,&FlopRdCnt,nullptr)) {
@@ -1162,15 +1182,14 @@ void FloppyWriteDisk()
 // floppy set track
 void FloppyTrack(unsigned char data)
 {
-    if (FlopTrack != data) DLOG_C("FloppyTrack miss %d %d\n",FlopTrack,data);
     FlopTrack = data;
 }
 
 // floppy set sector
 void FloppySector(unsigned char data)
 {
-    FlopSector = data;  // (1-18)
-    int lsn = FlopTrack * 18 + FlopSector - 1;
+    FlopSector = data;  // Sector num in track (1-18)
+    //int lsn = FlopTrack * 18 + FlopSector - 1;
     //DLOG_C("FloppySector %d lsn %d\n",FlopSector,lsn);
     FlopStatus = FLP_NORMAL;
 }
@@ -1183,8 +1202,9 @@ void FloppyWriteData(unsigned char data)
         FlopWrCnt++;
         FlopWrBuf[FlopWrCnt] = data;
     } else {
-        if ((FlopStatus &= FLP_DATAREQ) != 0) CommandDone();
         FlopStatus = FLP_NORMAL;
+        if ((FlopStatus &= FLP_DATAREQ) != 0)
+            AssertIntCallback(gCallbackContext, INT_NMI, IS_NMI);
     }
     FlopData = data;
 }
@@ -1204,7 +1224,8 @@ unsigned char FloppyReadData()
         rpy = FlopRdBuf[256-FlopRdCnt];
         FlopRdCnt--;
     } else {
-        if ((FlopStatus &= FLP_DATAREQ) != 0) CommandDone();
+        if ((FlopStatus &= FLP_DATAREQ) != 0)
+            AssertIntCallback(gCallbackContext, INT_NMI, IS_NMI);
         FlopStatus = FLP_NORMAL;
         rpy = 0;
     }
@@ -1520,18 +1541,21 @@ unsigned char WriteFlashBank(unsigned short adr)
 // Seek sector in drive image
 //  cmdcode:
 //    b0 drive number
-//    b1 single sided flag
+//    b1 single sided LSN flag
 //    b2 eight bit transfer flag
+//
 //----------------------------------------------------------------------
 bool SeekSector(unsigned char cmdcode, unsigned int lsn)
 {
-    // Adjust lsn for single sided read of a doublesided disk.
-    int drive = cmdcode & 1;
-    int sside = cmdcode & 2;
+    int drive = cmdcode & 1; // Drive number 0 or 1
+    int sside = cmdcode & 2; // Single sided LSN flag
 
     int trk = lsn / SDC_disk[drive].tracksectors;
     int sec = lsn % SDC_disk[drive].tracksectors;
 
+    // The single sided LSN flag tells the controller that the lsn
+    // assumes the disk image is a single-sided floppy disk. If the
+    // disk is actually double-sided the LSN must be adjusted.
     if (sside && SDC_disk[drive].doublesided) {
         DLOG_C("SeekSector sside %d %d\n",drive,lsn);
         lsn = 2 * SDC_disk[drive].tracksectors * trk + sec;
@@ -1546,10 +1570,6 @@ bool SeekSector(unsigned char cmdcode, unsigned int lsn)
     // Seek to logical sector on drive.
     LARGE_INTEGER pos{0};
     pos.QuadPart = lsn * SDC_disk[drive].sectorsize + SDC_disk[drive].headersize;
-
-    //DLOG_C("SeekSector %d %lld trk:%d sec:%d lsn:%d ssiz:%d tsec:%d\n",
-    //        drive, pos.QuadPart, trk, sec, lsn,
-    //        SDC_disk[drive].sectorsize, SDC_disk[drive].tracksectors);
 
     if (!SetFilePointerEx(SDC_disk[drive].hFile,pos,nullptr,FILE_BEGIN)) {
         DLOG_C("SeekSector error %s\n",LastErrorTxt());
@@ -1678,20 +1698,6 @@ void WriteSector()
     }
     IF.status = 0;
     return;
-}
-
-//----------------------------------------------------------------------
-// Get most recent windows error text
-//----------------------------------------------------------------------
-char * LastErrorTxt() {
-    static char msg[200];
-    DWORD error_code = GetLastError();
-    FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM |
-                   FORMAT_MESSAGE_IGNORE_INSERTS,
-                   nullptr, error_code,
-                   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                   msg, 200, nullptr );
-    return msg;
 }
 
 //----------------------------------------------------------------------
@@ -2083,7 +2089,7 @@ void OpenFound (int drive,int raw)
     drive &= 1;
     int writeprotect = 0;
 
-    DLOG_C("OpenFound %d %s %d\n",
+    DLOG_C("OpenFound drive %d %s hfile %d\n",
         drive, dFound.cFileName, SDC_disk[drive].hFile);
 
     CloseDrive(drive);
@@ -2331,29 +2337,6 @@ void CloseDrive (int drive)
 }
 
 //----------------------------------------------------------------------
-// Append char to path if not there
-//----------------------------------------------------------------------
-void AppendPathChar(char * path, char c)
-{
-    int l = strlen(path);
-    if ((l > 0) && (path[l-1] == c)) return;
-    if (l > (MAX_PATH-2)) return;
-    path[l] = c;
-    path[l+1] = '\0';
-}
-
-//----------------------------------------------------------------------
-// Determine if path is a direcory
-//----------------------------------------------------------------------
-bool IsDirectory(const char * path)
-{
-    struct _stat file_stat;
-    int result = _stat(path,&file_stat);
-    if (result != 0) return false;
-    return ((file_stat.st_mode & _S_IFDIR) != 0);
-}
-
-//----------------------------------------------------------------------
 // Set the Current Directory relative to previous current or to SDRoot
 // This is complicated by the many ways a user can change the directory
 //----------------------------------------------------------------------
@@ -2527,3 +2510,51 @@ void LoadDirPage()
         }
     }
 }
+
+//----------------------------------------------------------------------
+// Append char to path if not there
+//----------------------------------------------------------------------
+void AppendPathChar(char * path, char c)
+{
+    int l = strlen(path);
+    if ((l > 0) && (path[l-1] == c)) return;
+    if (l > (MAX_PATH-2)) return;
+    path[l] = c;
+    path[l+1] = '\0';
+}
+
+//----------------------------------------------------------------------
+// Determine if path is a direcory
+//----------------------------------------------------------------------
+bool IsDirectory(const char * path)
+{
+    struct _stat file_stat;
+    int result = _stat(path,&file_stat);
+    if (result != 0) return false;
+    return ((file_stat.st_mode & _S_IFDIR) != 0);
+}
+
+//----------------------------------------------------------------------
+// Get most recent windows error text
+//----------------------------------------------------------------------
+char * LastErrorTxt() {
+    static char msg[200];
+    DWORD error_code = GetLastError();
+    FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM |
+                   FORMAT_MESSAGE_IGNORE_INSERTS,
+                   nullptr, error_code,
+                   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                   msg, 200, nullptr );
+    return msg;
+}
+
+//------------------------------------------------------------
+// Convert path slashes
+//------------------------------------------------------------
+void ConvertSlashes(char * path)
+{
+    for(size_t i=0; i < strlen(path); i++) {
+        if (path[i] == '\\') path[i] = '/';
+    }
+}
+
