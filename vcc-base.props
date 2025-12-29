@@ -10,7 +10,7 @@
     <!-- Output and Intermediate directories -->
     <LinkTypeSubDir Condition="'$(LinkageType)' == 'Static'"></LinkTypeSubDir>
     <LinkTypeSubDir Condition="'$(LinkageType)' == 'Dynamic'">Dynamic\</LinkTypeSubDir>
-    <OutDir>$(SolutionDir)__obj\$(LinkTypeSubDir)$(Platform)\$(Configuration)\$(ProjectName)\out\</OutDir>
+    <OutDir>$(SolutionDir)__bin\$(LinkTypeSubDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)__obj\$(LinkTypeSubDir)$(Platform)\$(Configuration)\$(ProjectName)\int\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
