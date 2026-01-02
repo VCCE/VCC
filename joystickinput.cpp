@@ -105,22 +105,14 @@ static unsigned char RightButton1Status = 0;
 static unsigned char LeftButton2Status = 0;
 static unsigned char RightButton2Status = 0;
 
-// FIXME Direct input not working for ARM - disable joysticks for arm builds
-#ifdef _M_ARM
-unsigned int Joysticks[MAXSTICKS] = {nullptr};
-#else
 static LPDIRECTINPUTDEVICE8 Joysticks[MAXSTICKS];
-#endif
 
 char StickName[MAXSTICKS][STRLEN];
 static unsigned char JoyStickIndex=0;
 
-#ifdef _M_ARM
-#else
 static LPDIRECTINPUT8 di;
 BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE* , VOID* );
 BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* , VOID* );
-#endif
 
 static unsigned char CurrentStick;
 
@@ -131,9 +123,6 @@ inline int vccJoystickType();
 // Locate connected joysticks.  Called by config.c
 int EnumerateJoysticks()
 {
-#ifdef _M_ARM
-	return(0);
-#else
     HRESULT hr;
     JoyStickIndex=0;
     if (FAILED(hr = DirectInput8Create(GetModuleHandle(nullptr),
@@ -145,11 +134,9 @@ int EnumerateJoysticks()
         return 0;
 
     return JoyStickIndex;
-#endif
 }
 
 /*****************************************************************************/
-#ifndef _M_ARM
 BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE* instance, VOID* /*context*/)
 {
     HRESULT hr;
@@ -158,13 +145,11 @@ BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE* instance, VOID* /*context*/)
     JoyStickIndex++;
     return(JoyStickIndex<MAXSTICKS);
 }
-#endif
 
 /*****************************************************************************/
 // Init joystick called by config.c
 bool InitJoyStick (unsigned char StickNumber)
 {
-#ifndef _M_ARM
     HRESULT hr;
     CurrentStick=StickNumber;
     if (Joysticks[StickNumber]==nullptr)
@@ -177,13 +162,9 @@ bool InitJoyStick (unsigned char StickNumber)
         return false;
 
 	return true; //return true on success
-#else
-	return(1);
-#endif
 }
 
 /*****************************************************************************/
-#ifndef _M_ARM
 BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* /*context*/)
 {
     DIPROPRANGE propRange;
@@ -199,11 +180,9 @@ BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* /*c
 
     return DIENUM_CONTINUE;
 }
-#endif
 
 /*****************************************************************************/
 // Called by get_pot_value to read data from physical joystick
-#ifndef _M_ARM
 HRESULT
 JoyStickPoll(DIJOYSTATE2 *js,unsigned char StickNumber)
 {
@@ -228,7 +207,6 @@ JoyStickPoll(DIJOYSTATE2 *js,unsigned char StickNumber)
         return hr;
     return(S_OK);
 }
-#endif
 
 /*****************************************************************************/
 // inline function returns joystick emulation type
@@ -365,7 +343,6 @@ SetStickNumbers(unsigned char Temp1,unsigned char Temp2)
 unsigned int
 get_pot_value(unsigned char pot)
 {
-#ifndef _M_ARM
 	DIJOYSTATE2 Stick1 = { 0 };
 
     // Poll left joystick if attached
@@ -385,7 +362,6 @@ get_pot_value(unsigned char pot)
         RightButton1Status= Stick1.rgbButtons[0]>>7;
         RightButton2Status= Stick1.rgbButtons[1]>>7;
     }
-#endif
 
     switch (pot) {
     case 0:
