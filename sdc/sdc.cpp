@@ -143,6 +143,7 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <Windows.h>
 #include <windowsx.h>
 #include <Shlwapi.h>
@@ -180,7 +181,6 @@ void InitCardBox();
 void InitFlashBoxes();
 void FitEditTextPath(HWND, int, const char *);
 
-void AppendPathChar(char *,char c);
 bool IsDirectory(const char *);
 char * LastErrorTxt();
 void ConvertSlashes(char *);
@@ -201,6 +201,7 @@ void GetDriveInfo();
 void SDCControl();
 void UpdateSD();
 bool LoadFoundFile(struct FileRecord *);
+std::string FixSDCPath(const std::string &);
 void FixSDCPath(char *,const char *);
 void MountDisk(int,const char *,int);
 void MountNewDisk(int,const char *,int);
@@ -215,6 +216,7 @@ void LoadDirPage();
 void SetCurDir(const char *);
 bool SearchFile(const char *);
 bool InitiateDir(const char *);
+std::string GetFullPath(const std::string&);
 void GetFullPath(char *,const char *);
 void RenameFile(const char *);
 void KillFile(const char *);
@@ -277,13 +279,13 @@ static char SeaDir[MAX_PATH]  = {};  // Last directory searched
 // Packed file records for interface
 #pragma pack(1)
 struct FileRecord {
-    char name[8];
-    char type[3];
-    char attrib;
-    char hihi_size;
-    char lohi_size;
-    char hilo_size;
-    char lolo_size;
+    char FR_name[8];
+    char FR_type[3];
+    char FR_attrib;
+    char FR_hihi_size;
+    char FR_lohi_size;
+    char FR_hilo_size;
+    char FR_lolo_size;
 };
 #pragma pack()
 static struct FileRecord DirPage[16];
@@ -323,7 +325,8 @@ static int ClockEnable;
 static HANDLE hFind = INVALID_HANDLE_VALUE;
 static WIN32_FIND_DATAA dFound;
 
-// config control handles
+// Window handles
+static HWND gVccWindow = nullptr;
 static HWND hConfigureDlg = nullptr;
 static HWND hSDCardBox = nullptr;
 static HWND hStartupBank = nullptr;
@@ -333,7 +336,8 @@ static int streaming;
 static unsigned char stream_cmdcode;
 static unsigned int stream_lsn;
 
-static char Status[16] = {};
+// Status for VCC status line
+static char SDC_Status[16] = {};
 
 // Floppy I/O
 static char FlopDrive = 0;
@@ -384,12 +388,14 @@ extern "C"
         return string_buffer;
     }
 
+    // PakInitialize gets called first, sets up dynamic menues and captures callbacks
     __declspec(dllexport) void PakInitialize(
         void* const callback_context,
         const char* const configuration_path,
         HWND hVccWnd,
         const cpak_callbacks* const callbacks)
     {
+        gVccWindow = hVccWnd;
         DLOG_C("SDC %p %p %p %p %p\n",*callbacks);
         gCallbackContext = callback_context;
         CartMenuCallback = callbacks->add_menu_item;
@@ -457,13 +463,13 @@ extern "C"
     // Return SDC status.
     __declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
     {
-        strncpy(text_buffer,Status,buffer_size);
         if (idle_ctr < 100) {
             idle_ctr++;
         } else {
             idle_ctr = 0;
-            snprintf(Status,16,"SDC:%d idle",CurrentBank);
+            snprintf(SDC_Status,16,"SDC:%d idle",CurrentBank);
         }
+        strncpy(text_buffer,SDC_Status,buffer_size);
     }
 
     // Return a byte from the current PAK ROM
@@ -870,23 +876,23 @@ void LoadRom(unsigned char bank)
 //----------------------------------------------------------------------
 void ParseStartup()
 {
-    char buf[MAX_PATH+10];
-    if (!IsDirectory(SDCard)) {
+    namespace fs = std::filesystem;
+    fs::path sd = fs::path(SDCard);
+
+    if (!fs::is_directory(sd)) {
         DLOG_C("ParseStartup SDCard path invalid\n");
         return;
     }
 
-    strncpy(buf,SDCard,MAX_PATH);
-    AppendPathChar(buf,'/');
-    strncat(buf,"startup.cfg",MAX_PATH);
-
-    FILE *su = fopen(buf,"r");
+    fs::path cfg = sd / "startup.cfg";
+    FILE* su = std::fopen(cfg.string().c_str(), "r");
     if (su == nullptr) {
-        DLOG_C("ParseStartup file not found,%s\n",buf);
+        DLOG_C("ParseStartup file not found, %s\n", cfg.string().c_str());
         return;
     }
 
     // Strict single char followed by '=' then path
+    char buf[MAX_PATH];
     while (fgets(buf,sizeof(buf),su) != nullptr) {
         //Chomp line ending
         buf[strcspn(buf,"\r\n")] = 0;
@@ -1155,7 +1161,7 @@ void FloppyReadDisk()
     auto lsn = FloppyLSN(FlopDrive,FlopTrack,FlopSector);
     //DLOG_C("FloppyReadDisk %d %d\n",FlopDrive,lsn);
 
-    snprintf(Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
+    snprintf(SDC_Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
     if (SeekSector(FlopDrive,lsn)) {
         if (ReadFile(SDC_disk[FlopDrive].hFile,FlopRdBuf,256,&FlopRdCnt,nullptr)) {
             DLOG_C("FloppyReadDisk %d %d\n",FlopDrive,lsn);
@@ -1605,7 +1611,7 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
         return false;
     }
 
-    snprintf(Status,16,"SDC:%d Rd %d,%d",CurrentBank,drive,lsn);
+    snprintf(SDC_Status,16,"SDC:%d Rd %d,%d",CurrentBank,drive,lsn);
     LoadReply(buf,cnt);
     return true;
 }
@@ -1674,7 +1680,7 @@ void WriteSector()
     DWORD cnt = 0;
     int drive = IF.cmdcode & 1;
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
-    snprintf(Status,16,"SDC:%d Wr %d,%d",CurrentBank,drive,lsn);
+    snprintf(SDC_Status,16,"SDC:%d Wr %d,%d",CurrentBank,drive,lsn);
 
     if (SDC_disk[drive].hFile == nullptr) {
         IF.status = STA_FAIL;
@@ -1775,47 +1781,37 @@ void LoadReply(const void *data, int count)
 }
 
 //----------------------------------------------------------------------
-// A file path may be in SDC format which does not use a dot to seperate
+// A file path may use SDC format which does not use a dot to separate
 // the name from the extension. User is free to use standard dot format.
 //    "FOODIR/FOO.DSK"     = FOODIR/FOO.DSK
 //    "FOODIR/FOO     DSK" = FOODIR/FOO.DSK
 //    "FOODIR/ALONGFOODSK" = FOODIR/ALONGFOO.DSK
 //----------------------------------------------------------------------
-void FixSDCPath(char *path, const char *fpath8)
+std::string FixSDCPath(const std::string& sdcpath)
 {
-    const char *pname8 = strrchr(fpath8,'/');
-    // Copy Directory portion
-    if (pname8 != nullptr) {
-        pname8++;
-        memcpy(path,fpath8,pname8-fpath8);
-    } else {
-        pname8 = fpath8;
-    }
-    path[pname8-fpath8]='\0'; // terminate directory portion
+    std::filesystem::path p(sdcpath);
 
-    // Copy Name portion
-    char c;
-    char name[16];
-    int  namlen=0;
-    while(c = *pname8++) {
-        if ((c == '.')||(c == ' ')) break;
-        name[namlen++] = c;
-        if (namlen > 7) break;
+    auto chop = [](std::string s) {
+        size_t space = s.find(' ');
+        if (space != std::string::npos) s.erase(space);
+        return s;
+    };
+
+    std::string fname = p.filename().string();
+    if (fname.length() == 11 && fname.find('.') == std::string::npos) {
+        auto nam = chop(fname.substr(0,8));
+        auto ext = chop(fname.substr(8,3));
+        fname = ext.empty() ? nam : nam + "." + ext;
     }
 
-    // Copy extension if any thing is left
-    if (c) {
-        name[namlen++] = '.';
-        int extlen=0;
-        while(c = *pname8++) {
-            if (c == '.' || c == ' ') continue;
-            name[namlen++] = c;
-            extlen++;
-            if (extlen > 2) break;
-        }
-    }
-    name[namlen] = '\0';           // terminate name
-    strncat(path,name,MAX_PATH);   // append it to directory
+    std::filesystem::path out = p.parent_path() / fname;
+    return out.generic_string();
+}
+void FixSDCPath(char* path, const char* sdcpath)
+{
+    std::string fixed = FixSDCPath(std::string(sdcpath));
+    strncpy(path, fixed.c_str(), MAX_PATH);
+    path[MAX_PATH - 1] = '\0';
 }
 
 //----------------------------------------------------------------------
@@ -1823,55 +1819,47 @@ void FixSDCPath(char *path, const char *fpath8)
 //----------------------------------------------------------------------
 bool LoadFoundFile(struct FileRecord * rec)
 {
+    std::string fname = dFound.cFileName;
+
+    // clear the file record
     memset(rec,0,sizeof(rec));
-    memset(rec->name,' ',8);
-    memset(rec->type,' ',3);
 
-    // Special case filename starts with a dot
-    if (dFound.cFileName[0] == '.' ) {
-        // Don't load if current directory is SD root,
-        // is only one dot, or if more than two chars
-        if ((*CurDir=='\0') |
-            (dFound.cFileName[1] != '.' ) |
-            (dFound.cFileName[2] != '\0'))
-            return false;
-        rec->name[0]='.';
-        rec->name[1]='.';
-        rec->attrib = ATTR_DIR;
-        return true;
+    // Ignore single dot or two dots if current dir is root
+    if (fname == ".") return false;
+    if (fname == ".." && *CurDir == '\0') return false;
+
+    // Split found file name into name and extension
+    std::string nam, ext;
+
+    // Two dots or no dot is a file without an extension
+    auto dot = fname.find_last_of('.');
+    if (fname == ".." || dot == std::string::npos) {
+        nam = fname;
+        ext = "";
+    } else {
+        nam = fname.substr(0, dot);
+        ext = fname.substr(dot + 1);
     }
 
-    // File type
-    const char * pdot = strrchr(dFound.cFileName,'.');
-    if (pdot) {
-        const char * ptyp = pdot + 1;
-        for (int cnt = 0; cnt<3; cnt++) {
-           if (*ptyp == '\0') break;
-           rec->type[cnt] = *ptyp++;
-        }
-    }
+    // Fill or trim as required to fit 8.3
+    nam.resize(8,' ');
+    ext.resize(3,' ');
+    std::memcpy(rec->FR_name, nam.data(), 8);
+    std::memcpy(rec->FR_type, ext.data(), 3);
 
-    // File name
-    const char * pnam = dFound.cFileName;
-    for (int cnt = 0; cnt < 8; cnt++) {
-        if (*pnam == '\0') break;
-        if (pdot && (pnam == pdot)) break;
-        rec->name[cnt] = *pnam++;
-    }
-
-    // Attributes
     if (dFound.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
-        rec->attrib |= ATTR_RDONLY;
-    }
-    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        rec->attrib |= ATTR_DIR;
+        rec->FR_attrib |= ATTR_RDONLY;
     }
 
-    // Filesize, sssume < 4G (dFound.nFileSizeHigh == 0)
-    rec->lolo_size = (dFound.nFileSizeLow) & 0xFF;
-    rec->hilo_size = (dFound.nFileSizeLow >> 8) & 0xFF;
-    rec->lohi_size = (dFound.nFileSizeLow >> 16) & 0xFF;
-    rec->hihi_size = (dFound.nFileSizeLow >> 24) & 0xFF;
+    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        rec->FR_attrib |= ATTR_DIR;
+    }
+
+    // Filesize max 4G. Byte order is reversed so copy byte by byte
+    rec->FR_lolo_size = (dFound.nFileSizeLow) & 0xFF;
+    rec->FR_hilo_size = (dFound.nFileSizeLow >> 8) & 0xFF;
+    rec->FR_lohi_size = (dFound.nFileSizeLow >> 16) & 0xFF;
+    rec->FR_hihi_size = (dFound.nFileSizeLow >> 24) & 0xFF;
 
     return true;
 }
@@ -1971,6 +1959,7 @@ void MountDisk (int drive, const char * path, int raw)
 //----------------------------------------------------------------------
 bool MountNext (int drive)
 {
+    //FIXME: should loop back to first file at end of set
     if (FindNextFile(hFind,&dFound) == 0) {
         DLOG_C("MountNext no more\n");
         FindClose(hFind);
@@ -2015,25 +2004,17 @@ void OpenNew( int drive, const char * path, int raw)
         return;
     }
 
-    // Contruct fully qualified file name
-    char fqn[MAX_PATH]={};
-    strncpy(fqn,SDCard,MAX_PATH);
-    AppendPathChar(fqn,'/');
-    strncat(fqn,CurDir,MAX_PATH);
-    AppendPathChar(fqn,'/');
-    strncat(fqn,path,MAX_PATH);
+    namespace fs = std::filesystem;
+    fs::path fqn = fs::path(SDCard) / CurDir / path;
 
-    // Trying to mount a directory. Find .DSK files in the ending
-    // with a digit and mount the first one.
-    if (IsDirectory(fqn)) {
-        DLOG_C("OpenNew %s is a directory\n",fqn);
+    if (fs::is_directory(fqn)) {
+        DLOG_C("OpenNew %s is a directory\n",path);
         IF.status = STA_FAIL | STA_INVALID;
         return;
     }
 
-    // Try to create file
     CloseDrive(drive);
-    strncpy(SDC_disk[drive].fullpath,fqn,MAX_PATH);
+    strncpy(SDC_disk[drive].fullpath,fqn.string().c_str(),MAX_PATH);
 
     // Open file for write
     SDC_disk[drive].hFile = CreateFile(
@@ -2095,33 +2076,43 @@ void OpenFound (int drive,int raw)
     CloseDrive(drive);
     *SDC_disk[drive].name = '\0';
 
-    // Open a directory of containing DSK files
-    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        char path[MAX_PATH];
-        strncpy(path,dFound.cFileName,MAX_PATH);
-        AppendPathChar(path,'/');
-        strncat(path,"*.DSK",MAX_PATH);
-        // Open disk in directory if .DSK is found
-        if (InitiateDir(path)) {
-            DLOG_C("OpenFound %s in directory\n",dFound.cFileName);
-            OpenFound(drive,0);
+    namespace fs = std::filesystem;
+
+    // If found item is a directory
+    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+    {
+        // Build: "<dirname>/*.DSK"
+        fs::path dir = dFound.cFileName;
+        fs::path pattern = dir / "*.DSK";
+
+        std::string pat = pattern.string();
+        std::replace(pat.begin(), pat.end(), '\\', '/');
+
+        if (InitiateDir(pat.c_str())) {
+            DLOG_C("OpenFound %s in directory\n", dFound.cFileName);
+            OpenFound(drive, 0);
             if (drive == 0) BuildCartridgeMenu();
         }
         return;
     }
 
-    // Fully qualify name of found file and try to open it
-    char fqn[MAX_PATH]={};
-    strncpy(fqn,SeaDir,MAX_PATH);
-    strncat(fqn,dFound.cFileName,MAX_PATH);
+    // Found item is a file
+    fs::path fqn = fs::path(SeaDir) / dFound.cFileName;
 
-    // Open file for read
-    SDC_disk[drive].hFile = CreateFile(
-        fqn, GENERIC_READ, FILE_SHARE_READ,
-        nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+    std::string file = fqn.string();
+
+    SDC_disk[drive].hFile = CreateFileA(
+        file.c_str(),
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        nullptr,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        nullptr
+    );
 
     if (SDC_disk[drive].hFile == INVALID_HANDLE_VALUE) {
-        DLOG_C("OpenFound fail %d file %s\n",drive,fqn);
+        DLOG_C("OpenFound fail %d file %s\n",drive,file.c_str());
         DLOG_C("... %s\n",LastErrorTxt());
         int ecode = GetLastError();
         if (ecode == ERROR_SHARING_VIOLATION) {
@@ -2132,7 +2123,7 @@ void OpenFound (int drive,int raw)
         return;
     }
 
-    strncpy(SDC_disk[drive].fullpath,fqn,MAX_PATH);
+    strncpy(SDC_disk[drive].fullpath,file.c_str(),MAX_PATH);
     strncpy(SDC_disk[drive].name,dFound.cFileName,MAX_PATH);
 
     // Default sectorsize and sectors per track
@@ -2204,10 +2195,10 @@ void OpenFound (int drive,int raw)
     LoadFoundFile(&SDC_disk[drive].filerec);
 
     // Set readonly attrib per find status or file header
-    if ((SDC_disk[drive].filerec.attrib & ATTR_RDONLY) != 0) {
+    if ((SDC_disk[drive].filerec.FR_attrib & ATTR_RDONLY) != 0) {
         writeprotect = 1;
     } else if (writeprotect) {
-        SDC_disk[drive].filerec.attrib |= ATTR_RDONLY;
+        SDC_disk[drive].filerec.FR_attrib |= ATTR_RDONLY;
     }
 
     // If file is writeable reopen read/write
@@ -2233,14 +2224,17 @@ void OpenFound (int drive,int raw)
 //----------------------------------------------------------------------
 // Convert file name from SDC format and prepend current dir.
 //----------------------------------------------------------------------
-void GetFullPath(char * path, const char * file) {
-    char tmp[MAX_PATH];
-    strncpy(path,SDCard,MAX_PATH);
-    AppendPathChar(path,'/');
-    strncat(path,CurDir,MAX_PATH);
-    AppendPathChar(path,'/');
-    FixSDCPath(tmp,file);
-    strncat(path,tmp,MAX_PATH);
+std::string GetFullPath(const std::string& file)
+{
+    return (std::filesystem::path(SDCard)
+        / CurDir / FixSDCPath(file)).generic_string();
+}
+void GetFullPath(char * path, const char * file)
+{
+    std::string full = GetFullPath(std::string(file));
+    strncpy(path, full.c_str(), MAX_PATH);
+    path[MAX_PATH - 1] = '\0';
+    DLOG_C("GetFullPath %s -> %s\n",file,path);
 }
 
 //----------------------------------------------------------------------
@@ -2340,103 +2334,102 @@ void CloseDrive (int drive)
 // Set the Current Directory relative to previous current or to SDRoot
 // This is complicated by the many ways a user can change the directory
 //----------------------------------------------------------------------
-void SetCurDir(const char * branch)
-{
-    DLOG_C("SetCurdir '%s'\n",branch);
 
-    // If branch is "." or "" do nothing
-    if ((*branch == '\0') || (strcmp(branch,".") == 0)) {
+void SetCurDir(const char* branch)
+{
+    namespace fs = std::filesystem;
+
+    DLOG_C("SetCurdir '%s'\n", branch);
+
+    fs::path cur = CurDir;     // current relative directory
+    fs::path root = SDCard;    // SD card root
+
+    // "." or "" no change
+    if (*branch == '\0' || strcmp(branch, ".") == 0) {
         DLOG_C("SetCurdir no change\n");
         IF.status = STA_NORMAL;
         return;
     }
 
-    // If branch is "/" set CurDir to root
-    if (strcmp(branch,"/") == 0) {
+    // "/" go to root
+    if (strcmp(branch, "/") == 0) {
+        CurDir[0] = '\0';
         DLOG_C("SetCurdir to root\n");
-        *CurDir = '\0';
         IF.status = STA_NORMAL;
         return;
     }
 
-    // If branch is ".." go back a directory
-    if (strcmp(branch,"..") == 0) {
-        char *p = strrchr(CurDir,'/');
-        if (p != nullptr) {
-            *p = '\0';
-        } else {
-            *CurDir = '\0';
-        }
-        DLOG_C("SetCurdir back %s\n",CurDir);
+    // ".." parent directory
+    if (strcmp(branch, "..") == 0) {
+        cur = cur.parent_path();
+        std::string tmp = cur.string();
+        std::snprintf(CurDir, MAX_PATH, "%s", tmp.c_str());
+        DLOG_C("SetCurdir back %s\n", CurDir);
         IF.status = STA_NORMAL;
         return;
     }
 
-    // Disallow branch start with "//"
-    if (strncmp(branch,"//",2) == 0) {
+    //  Reject "//"
+    if (strncmp(branch, "//", 2) == 0) {
         DLOG_C("SetCurdir // invalid\n");
         IF.status = STA_FAIL | STA_INVALID;
         return;
     }
 
-    // Test for CurDir relative branch
-    int relative = (*branch != '/');
+    //  Build the candidate directory
+    bool relative = (branch[0] != '/');
 
-    // Test the full directory path
-    char test[MAX_PATH];
-    strncpy(test,SDCard,MAX_PATH);
-    AppendPathChar(test,'/');
+    fs::path candidate;
     if (relative) {
-        strncat(test,CurDir,MAX_PATH);
-        AppendPathChar(test,'/');
-        strncat(test,branch,MAX_PATH);
+        candidate = root / cur / branch;
     } else {
-        strncat(test,branch+1,MAX_PATH);
+        candidate = root / fs::path(branch).relative_path();
     }
-    if (!IsDirectory(test)) {
-        DLOG_C("SetCurdir not a directory %s\n",test);
+
+    //  Validate directory
+    if (!fs::is_directory(candidate)) {
+        DLOG_C("SetCurdir not a directory %s\n", candidate.string().c_str());
         IF.status = STA_FAIL | STA_NOTFOUND;
         return;
     }
 
-    // Set current directory
+    //  Update CurDir
+    fs::path newCur;
     if (relative) {
-        if (*CurDir != '\0') AppendPathChar(CurDir,'/');
-        strncat(CurDir,branch,MAX_PATH);
+        newCur = cur / branch;
     } else {
-        strncpy(CurDir,branch+1,MAX_PATH);
+        newCur = fs::path(branch).relative_path();
     }
 
-    // Trim trailing '/'
-    int l = strlen(CurDir);
-    while (l > 0 && CurDir[l-1] == '/') l--;
-    CurDir[l] = '\0';
+    // Normalize: remove trailing slash
+    newCur = newCur.lexically_normal();
 
-    DLOG_C("SetCurdir set to '%s'\n",CurDir);
+    std::string tmp = newCur.string();
+    std::replace(tmp.begin(), tmp.end(), '\\', '/');
+    std::snprintf(CurDir, MAX_PATH, "%s", tmp.c_str());
 
+    DLOG_C("SetCurdir set to '%s'\n", CurDir);
     IF.status = STA_NORMAL;
-    return;
 }
 
 //----------------------------------------------------------------------
 //  Start File search.  Searches start from the root of the SDCard.
 //----------------------------------------------------------------------
-bool SearchFile(const char * pattern)
+
+bool SearchFile(const char* pattern)
 {
-    // Path always starts with SDCard
-    char path[MAX_PATH];
-    strncpy(path,SDCard,MAX_PATH);
-    AppendPathChar(path,'/');
+    namespace fs = std::filesystem;
+
+    // Build the full search path
+    fs::path base = fs::path(SDCard);
 
     if (*pattern == '/') {
-        strncat(path,&pattern[1],MAX_PATH);
+        base /= fs::path(pattern).relative_path();
     } else {
-        strncat(path,CurDir,MAX_PATH);
-        AppendPathChar(path,'/');
-        strncat(path,pattern,MAX_PATH);
+        base /= fs::path(CurDir);
+        base /= pattern;
     }
-
-    DLOG_C("SearchFile %s\n",path);
+    DLOG_C("SearchFile %s\n", base.string().c_str());
 
     // Close previous search
     if (hFind != INVALID_HANDLE_VALUE) {
@@ -2444,21 +2437,24 @@ bool SearchFile(const char * pattern)
         hFind = INVALID_HANDLE_VALUE;
     }
 
-    // Search
-    hFind = FindFirstFile(path, &dFound);
-
+    hFind = FindFirstFileA(base.string().c_str(), &dFound);
     if (hFind == INVALID_HANDLE_VALUE) {
-        *SeaDir = '\0';
+        SeaDir[0] = '\0';
         return false;
-    } else {
-        // Save directory portion for prepending to results
-        char * pnam = strrchr(path,'/');
-        if (pnam != nullptr) pnam[1] = '\0';
-        strncpy(SeaDir,path,MAX_PATH);
-        return true;
     }
 
-    return (hFind != INVALID_HANDLE_VALUE);
+    // Extract directory portion for later use
+    fs::path dir = base.parent_path();
+
+    std::string sea = dir.string();
+    std::replace(sea.begin(), sea.end(), '\\', '/');
+
+    // Ensure trailing slash
+    if (!sea.empty() && sea.back() != '/') sea.push_back('/');
+
+    std::snprintf(SeaDir, MAX_PATH, "%s", sea.c_str());
+
+    return true;
 }
 
 //----------------------------------------------------------------------
@@ -2509,18 +2505,6 @@ void LoadDirPage()
             break;
         }
     }
-}
-
-//----------------------------------------------------------------------
-// Append char to path if not there
-//----------------------------------------------------------------------
-void AppendPathChar(char * path, char c)
-{
-    int l = strlen(path);
-    if ((l > 0) && (path[l-1] == c)) return;
-    if (l > (MAX_PATH-2)) return;
-    path[l] = c;
-    path[l+1] = '\0';
 }
 
 //----------------------------------------------------------------------
