@@ -1,3 +1,5 @@
+//#define USE_LOGGING
+//======================================================================
 // SDC simulator DLL
 //
 // By E J Jaquay 2025
@@ -19,7 +21,7 @@
 // along with VCC (Virtual Color Computer).  If not, see
 // <http://www.gnu.org/licenses/>.
 //
-//----------------------------------------------------------------------
+//======================================================================
 //
 //  SDC Floppy port conflicts
 //  -------------------------
@@ -136,9 +138,9 @@
 //  ROMS require their respective .DLL's to be installed to function,
 //  these are typically in MMI slot 3 and 4 respectively.
 //
-//----------------------------------------------------------------------
-//#define USE_LOGGING
-
+//======================================================================
+#include <string>
+#include <algorithm>
 #include <iostream>
 #include <cerrno>
 #include <cstdio>
@@ -163,7 +165,6 @@
 #include "sdc.h"
 
 //======================================================================
-//======================================================================
 
 static ::vcc::devices::rtc::cloud9 cloud9_rtc;
 
@@ -180,16 +181,12 @@ void UpdateFlashItem(int);
 void InitCardBox();
 void InitFlashBoxes();
 void FitEditTextPath(HWND, int, const char *);
-
-bool IsDirectory(const char *);
+inline bool IsDirectory(const std::string&);
 char * LastErrorTxt();
-void ConvertSlashes(char *);
-
 void SDCInit();
 void LoadRom(unsigned char);
 void SDCWrite(unsigned char,unsigned char);
 unsigned char SDCRead(unsigned char port);
-
 void ParseStartup();
 void SDCCommand();
 void ReadSector();
@@ -201,7 +198,7 @@ void GetDriveInfo();
 void SDCControl();
 void UpdateSD();
 bool LoadFoundFile(struct FileRecord *);
-std::string FixSDCPath(const std::string &);
+std::string FixSDCPath(const std::string&);
 void FixSDCPath(char *,const char *);
 void MountDisk(int,const char *,int);
 void MountNewDisk(int,const char *,int);
@@ -270,11 +267,37 @@ static Interface IF = {};
 // Cart ROM
 char PakRom[0x4000];
 
-// Host paths for SDC
 static char IniFile[MAX_PATH] = {};  // Vcc ini file name
-static char SDCard[MAX_PATH]  = {};  // SD card root directory
-static char CurDir[256]       = {};  // SDC current directory
-static char SeaDir[MAX_PATH]  = {};  // Last directory searched
+
+// Directory globals
+static std::string gSDRoot {}; // SD card root directory
+static std::string gCurDir {}; // Current directory relative to root
+static std::string gSeaDir {}; // Last directory searched
+
+// A less than 4GB host file with a short name
+// File location is gSeaDir
+struct HostFile {
+    std::string name;
+    DWORD size;
+    bool isDirectory;
+    bool isReadonly;
+    // Constructor
+    HostFile(const char* cName, DWORD nSize, DWORD attr) :
+        name(cName),
+        size(nSize),
+        isDirectory((attr & FILE_ATTRIBUTE_DIRECTORY) != 0),
+        isReadonly((attr & FILE_ATTRIBUTE_READONLY)   != 0)
+    {}
+};
+
+// Global list of host files TODO: Use these
+static std::vector<HostFile> gFileList;
+static size_t gLastFileLoaded {};
+static size_t gLastDirPageFile {};
+
+// Clean up slashes on directory or path
+void FixDirSlashes(std::string &dir);
+void FixDirSlashes(char *dir);
 
 // Packed file records for interface
 #pragma pack(1)
@@ -290,16 +313,25 @@ struct FileRecord {
 #pragma pack()
 static struct FileRecord DirPage[16];
 
+enum DiskType {
+    DTYPE_RAW = 0,
+    DTYPE_DSK,
+    DTYPE_JVC,
+    DTYPE_VDK,
+    DTYPE_SDF
+};
+
 // Mounted image data
 struct SDC_disk_t {
-    HANDLE hFile;
-    unsigned int size;
-    unsigned int headersize;
-    DWORD sectorsize;
-    DWORD tracksectors;
-    char doublesided;
-    char name[MAX_PATH];
-    char fullpath[MAX_PATH];
+    HANDLE hFile;              // stream handle
+    unsigned int size;         // number of bytes total
+    unsigned int headersize;   // number of bytes in header
+    DWORD sectorsize;          // number of bytes per sector
+    DWORD tracksectors;        // number of sectors per side
+    DiskType type;             // Disk image type (RAW,DSK,JVC,VDK,SDF)
+    char doublesided;          // false:1 side, true:2 sides
+    char name[MAX_PATH];       // name of file (8.3)
+    char fullpath[MAX_PATH];   // full file path
     struct FileRecord filerec;
 };
 SDC_disk_t SDC_disk[2] = {};
@@ -555,7 +587,11 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
             if (HIWORD(wParam) == EN_CHANGE) {
                 char tmp[MAX_PATH];
                 GetWindowText(hSDCardBox,tmp,MAX_PATH);
-                if (*tmp != '\0') strncpy(SDCard,tmp,MAX_PATH);
+                if (*tmp != '\0') {
+                    gCurDir = tmp;
+                    FixDirSlashes(gCurDir);
+                    //strncpy(SDCard,tmp,MAX_PATH);
+                }
             }
             return TRUE;
         case ID_UPDATE0:
@@ -610,12 +646,21 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 //------------------------------------------------------------
 void LoadConfig()
 {
+    char tmp[MAX_PATH];
+
     GetPrivateProfileString
         ("DefaultPaths", "MPIPath", "", MPIPath, MAX_PATH, IniFile);
-    GetPrivateProfileString
-        ("SDC", "SDCardPath", "", SDCard, MAX_PATH, IniFile);
 
-    if (!IsDirectory(SDCard)) {
+    GetPrivateProfileString
+        ("SDC", "SDCardPath", "", tmp, MAX_PATH, IniFile);
+
+    gSDRoot = tmp;
+    FixDirSlashes(gSDRoot);
+
+    DLOG_C("LoadConfig MPIPath %s\n",MPIPath);
+    DLOG_C("LoadConfig gSDRoot %s\n",gSDRoot);
+
+    if (!IsDirectory(gSDRoot)) {
         MessageBox (nullptr,"Invalid SDCard Path in VCC init","Error",0);
     }
 
@@ -635,11 +680,11 @@ void LoadConfig()
 //------------------------------------------------------------
 bool SaveConfig(HWND hDlg)
 {
-    if (!IsDirectory(SDCard)) {
+    if (!IsDirectory(gSDRoot)) {
         MessageBox(nullptr,"Invalid SDCard Path\n","Error",0);
         return false;
     }
-    WritePrivateProfileString("SDC","SDCardPath",SDCard,IniFile);
+    WritePrivateProfileString("SDC","SDCardPath",gSDRoot.c_str(),IniFile);
 
     for (int i=0;i<8;i++) {
         char txt[32];
@@ -671,7 +716,7 @@ void FitEditTextPath(HWND hDlg, int ID, const char * path) {
     GetClientRect(h, &r);
     strncpy(p, path, MAX_PATH);
     PathCompactPath(c, p, r.right);
-    ConvertSlashes(p);
+    FixDirSlashes(p);
     SetWindowText(h, p);
     ReleaseDC(hDlg, c);
 }
@@ -699,7 +744,7 @@ void InitFlashBoxes()
 void InitCardBox()
 {
     hSDCardBox = GetDlgItem(hConfigureDlg,ID_SD_BOX);
-    SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM)SDCard);
+    SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM) gSDRoot.c_str());
 }
 
 //------------------------------------------------------------
@@ -738,26 +783,42 @@ void UpdateFlashItem(int index)
 //------------------------------------------------------------
 // Dialog to select SD card path in user home directory
 //------------------------------------------------------------
+
+// TODO: Replace Win32 browse dialog with the modern IFileDialog API (Vista+)
 void SelectCardBox()
 {
-    // Prompt user for path
-    BROWSEINFO bi = { nullptr };
+    namespace fs = std::filesystem;
+
+    // Prepare browse dialog
+    BROWSEINFO bi = {};
     bi.hwndOwner = GetActiveWindow();
     bi.lpszTitle = "Set the SD card path";
     bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NONEWFOLDERBUTTON;
 
-    // Start from user home diretory
-    SHGetSpecialFolderLocation
-        (nullptr,CSIDL_PROFILE, const_cast<LPITEMIDLIST*>(& bi.pidlRoot));
+    // Set initial folder to user profile
+    LPITEMIDLIST pidlRoot = nullptr;
+    if (SUCCEEDED(SHGetSpecialFolderLocation(nullptr, CSIDL_PROFILE, &pidlRoot)))
+        bi.pidlRoot = pidlRoot;
 
+    // Show dialog
     LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
-    if (pidl != nullptr) {
-        SHGetPathFromIDList(pidl,SDCard);
+
+    // Free root PIDL if allocated
+    if (pidlRoot)
+        CoTaskMemFree(pidlRoot);
+
+    if (pidl)
+    {
+        char tmp[MAX_PATH] = {};
+        if (SHGetPathFromIDList(pidl, tmp))
+        {
+            gSDRoot = tmp;
+            FixDirSlashes(gSDRoot);
+            SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM)gSDRoot.c_str());
+        }
+
         CoTaskMemFree(pidl);
     }
-
-    ConvertSlashes(SDCard);
-    SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM)SDCard);
 }
 
 //=====================================================================
@@ -877,7 +938,7 @@ void LoadRom(unsigned char bank)
 void ParseStartup()
 {
     namespace fs = std::filesystem;
-    fs::path sd = fs::path(SDCard);
+    fs::path sd = fs::path(gSDRoot);
 
     if (!fs::is_directory(sd)) {
         DLOG_C("ParseStartup SDCard path invalid\n");
@@ -1136,16 +1197,18 @@ void FloppyRestore()
     AssertIntCallback(gCallbackContext, INT_NMI, IS_NMI);
 }
 
-// floppy seek
+// floppy seek.  No attempt is made to simulate seek times here.
 void FloppySeek()
 {
     DLOG_C("FloppySeek %d %d\n",FlopTrack,FlopData);
     FlopTrack = FlopData;
 }
 
-// Convert floppy drive, track, sector, to LSN
-//TODO: Side select
-//TODO: Support floppy formats other than raw
+// convert side (drive), track, sector, to LSN.  The floppy controller
+// uses CHS addressing while hard drives, and the SDC, use LBA addressing.
+// FIXME:
+//  Nine sector tracks, (512 byte sectors)
+//  disk type: SDC_disk[drive].type
 unsigned int FloppyLSN(
         unsigned int drive,   // 0 or 1
         unsigned int track,   // 0 to num tracks
@@ -1375,47 +1438,31 @@ void GetDriveInfo()
 }
 
 //----------------------------------------------------------------------
-// Get directory leaf.  This is the leaf name of the current directory,
-// not it's full path.  SDCEXP uses this with the set directory '..'
-// command to learn the full path when restore last session is active.
-// The full path is saved in SDCX.CFG for the next session.
+// Reply with directory leaf. Reply is 32 byte directory record. The first
+// 8 bytes are the name of the leaf, the next 3 are blanks, and the
+// remainder is undefined ("Private" is SDC docs)
+// SDCEXP uses this with the set directory '..' command to learn the full
+// path when restore last session is active. The full path is saved in
+// SDCX.CFG for the next session.
 //----------------------------------------------------------------------
 void GetDirectoryLeaf()
 {
-    DLOG_C("GetDirectoryLeaf CurDir '%s'\n",CurDir);
+    namespace fs = std::filesystem;
 
-    char leaf[32];
-    memset(leaf,0,32);
+    char leaf[32] = {};
 
-    // Strip trailing '/' from current directory. There should not
-    // be one there but the slash is so bothersome best to check.
-    int n = strlen(CurDir);
-    if (n > 0) {
-        n -= 1;
-        if (CurDir[n] == '/') CurDir[n] = '\0';
-    }
-
-    // If at least one leaf find the last one
-    if (n > 0) {
-        const char *p = strrchr(CurDir,'/');
-        if (p == nullptr) {
-            p = CurDir;
-        } else {
-            p += 1;
-        }
-        // Build reply
-        memset(leaf,32,12);
-        strncpy(leaf,p,12);
-        n = strlen(p);
-        // SDC filenames are fixed 8 chars so blank any terminator
-        if (n < 12) leaf[n] = ' ';
-    // If current directory is SDCard root reply with zeros and status
+    if (!gCurDir.empty()) {
+        std::string leafName = fs::path(gCurDir).filename().string();
+        memset(leaf, ' ', 11);
+        size_t copyLen = std::min<size_t>(8,leafName.size());
+        memcpy(leaf, leafName.data(), copyLen);
     } else {
         IF.reply_status = STA_FAIL | STA_NOTFOUND;
     }
+    DLOG_C("GetDirectoryLeaf CurDir '%s' leaf '%s' \n", gCurDir.c_str(),leaf);
 
-    IF.reply_mode=0;
-    LoadReply(leaf,32);
+    IF.reply_mode = 0;
+    LoadReply(leaf, sizeof(leaf));
 }
 
 //----------------------------------------------------------------------
@@ -1805,8 +1852,11 @@ std::string FixSDCPath(const std::string& sdcpath)
     }
 
     std::filesystem::path out = p.parent_path() / fname;
+
+    DLOG_C("FixSDCPath in %s out %s\n",sdcpath.c_str(),out.generic_string().c_str());
     return out.generic_string();
 }
+
 void FixSDCPath(char* path, const char* sdcpath)
 {
     std::string fixed = FixSDCPath(std::string(sdcpath));
@@ -1826,7 +1876,7 @@ bool LoadFoundFile(struct FileRecord * rec)
 
     // Ignore single dot or two dots if current dir is root
     if (fname == ".") return false;
-    if (fname == ".." && *CurDir == '\0') return false;
+    if (fname == ".." && gCurDir == "") return false;
 
     // Split found file name into name and extension
     std::string nam, ext;
@@ -1921,14 +1971,14 @@ void MountDisk (int drive, const char * path, int raw)
         return;
     }
 
-    char file[MAX_PATH];
-    char tmp[MAX_PATH];
-
     // Convert from SDC format
+    char file[MAX_PATH];
     FixSDCPath(file,path);
 
     // Look for the file
     bool found = SearchFile(file);
+
+    char tmp[MAX_PATH];
 
     // if no '.' in the name try appending .DSK  or wildcard
     if (!found && (strchr(file,'.') == nullptr)) {
@@ -2005,7 +2055,7 @@ void OpenNew( int drive, const char * path, int raw)
     }
 
     namespace fs = std::filesystem;
-    fs::path fqn = fs::path(SDCard) / CurDir / path;
+    fs::path fqn = fs::path(gSDRoot) / gCurDir / path;
 
     if (fs::is_directory(fqn)) {
         DLOG_C("OpenNew %s is a directory\n",path);
@@ -2086,7 +2136,7 @@ void OpenFound (int drive,int raw)
         fs::path pattern = dir / "*.DSK";
 
         std::string pat = pattern.string();
-        std::replace(pat.begin(), pat.end(), '\\', '/');
+        FixDirSlashes(pat);
 
         if (InitiateDir(pat.c_str())) {
             DLOG_C("OpenFound %s in directory\n", dFound.cFileName);
@@ -2097,7 +2147,7 @@ void OpenFound (int drive,int raw)
     }
 
     // Found item is a file
-    fs::path fqn = fs::path(SeaDir) / dFound.cFileName;
+    fs::path fqn = fs::path(gSeaDir) / dFound.cFileName;
 
     std::string file = fqn.string();
 
@@ -2133,8 +2183,10 @@ void OpenFound (int drive,int raw)
     // Grab filesize from found record
     SDC_disk[drive].size = dFound.nFileSizeLow;
 
+    // Determine file type (RAW,DSK,JVC,VDK,SDF)
     if (raw) {
         writeprotect = 0;
+        SDC_disk[drive].type = DTYPE_RAW;
         SDC_disk[drive].headersize = 0;
         SDC_disk[drive].doublesided = 0;
     } else {
@@ -2151,8 +2203,9 @@ void OpenFound (int drive,int raw)
         // track record is 6250 bytes. Assume at least 35 tracks so
         // minimum size of a SDF file is 219262 bytes. The first four
         // bytes of the header contains "SDF1"
-        if ((SDC_disk[drive].size >= 219262) &&
+        if ((SDC_disk[drive].size >= 219262) &&  // is this reasonable?
             (strncmp("SDF1",(const char *) header,4) == 0)) {
+            SDC_disk[drive].type = DTYPE_SDF;
             DLOG_C("OpenFound SDF file unsupported\n");
             IF.status = STA_FAIL | STA_INVALID;
             return;
@@ -2168,6 +2221,7 @@ void OpenFound (int drive,int raw)
         case 2: // Number of sides  = header[1]   1 or 2
         case 1: // Sectors per trk  = header[0]  18 assumed
             SDC_disk[drive].doublesided = (header[1] == 2);
+            SDC_disk[drive].type = DTYPE_JVC;
             break;
         // No apparant header
         // JVC or OS9 disk if no header, side count per file size
@@ -2175,11 +2229,13 @@ void OpenFound (int drive,int raw)
             numsec = SDC_disk[drive].size >> 8;
             DLOG_C("OpenFound JVC/OS9 sectors %d\n",numsec);
             SDC_disk[drive].doublesided = ((numsec > 720) && (numsec <= 2880));
+            SDC_disk[drive].type = DTYPE_JVC;
             break;
         // VDK
         case 12:
             SDC_disk[drive].doublesided = (header[8] == 2);
             writeprotect = header[9] & 1;
+            SDC_disk[drive].type = DTYPE_VDK;
             break;
         // Unknown or unsupported
         default: // More than 4 byte header is not supported
@@ -2226,15 +2282,15 @@ void OpenFound (int drive,int raw)
 //----------------------------------------------------------------------
 std::string GetFullPath(const std::string& file)
 {
-    return (std::filesystem::path(SDCard)
-        / CurDir / FixSDCPath(file)).generic_string();
+    std::string out = gSDRoot + '/' + gCurDir + '/' + FixSDCPath(file);
+    DLOG_C("GetFullPath in %s out %s\n",file,out);
+    return (out);
 }
+
 void GetFullPath(char * path, const char * file)
 {
     std::string full = GetFullPath(std::string(file));
-    strncpy(path, full.c_str(), MAX_PATH);
-    path[MAX_PATH - 1] = '\0';
-    DLOG_C("GetFullPath %s -> %s\n",file,path);
+    std::snprintf(path, MAX_PATH, "%s", full.c_str());
 }
 
 //----------------------------------------------------------------------
@@ -2341,8 +2397,8 @@ void SetCurDir(const char* branch)
 
     DLOG_C("SetCurdir '%s'\n", branch);
 
-    fs::path cur = CurDir;     // current relative directory
-    fs::path root = SDCard;    // SD card root
+    fs::path cur  = gCurDir;    // current relative directory
+    fs::path root = gSDRoot;    // SD card root
 
     // "." or "" no change
     if (*branch == '\0' || strcmp(branch, ".") == 0) {
@@ -2353,7 +2409,7 @@ void SetCurDir(const char* branch)
 
     // "/" go to root
     if (strcmp(branch, "/") == 0) {
-        CurDir[0] = '\0';
+        gCurDir = "";
         DLOG_C("SetCurdir to root\n");
         IF.status = STA_NORMAL;
         return;
@@ -2362,9 +2418,9 @@ void SetCurDir(const char* branch)
     // ".." parent directory
     if (strcmp(branch, "..") == 0) {
         cur = cur.parent_path();
-        std::string tmp = cur.string();
-        std::snprintf(CurDir, MAX_PATH, "%s", tmp.c_str());
-        DLOG_C("SetCurdir back %s\n", CurDir);
+        gCurDir = cur.string();
+        FixDirSlashes(gCurDir);
+        DLOG_C("SetCurdir back %s\n", gCurDir.c_str());
         IF.status = STA_NORMAL;
         return;
     }
@@ -2401,14 +2457,11 @@ void SetCurDir(const char* branch)
         newCur = fs::path(branch).relative_path();
     }
 
-    // Normalize: remove trailing slash
-    newCur = newCur.lexically_normal();
+    // String based host files
+    gCurDir = newCur.string();
+    FixDirSlashes(gCurDir);
 
-    std::string tmp = newCur.string();
-    std::replace(tmp.begin(), tmp.end(), '\\', '/');
-    std::snprintf(CurDir, MAX_PATH, "%s", tmp.c_str());
-
-    DLOG_C("SetCurdir set to '%s'\n", CurDir);
+    DLOG_C("SetCurdir set to '%s'\n", gCurDir.c_str());
     IF.status = STA_NORMAL;
 }
 
@@ -2418,41 +2471,39 @@ void SetCurDir(const char* branch)
 
 bool SearchFile(const char* pattern)
 {
-    namespace fs = std::filesystem;
-
-    // Build the full search path
-    fs::path base = fs::path(SDCard);
-
-    if (*pattern == '/') {
-        base /= fs::path(pattern).relative_path();
-    } else {
-        base /= fs::path(CurDir);
-        base /= pattern;
-    }
-    DLOG_C("SearchFile %s\n", base.string().c_str());
-
     // Close previous search
     if (hFind != INVALID_HANDLE_VALUE) {
         FindClose(hFind);
         hFind = INVALID_HANDLE_VALUE;
     }
 
-    hFind = FindFirstFileA(base.string().c_str(), &dFound);
-    if (hFind == INVALID_HANDLE_VALUE) {
-        SeaDir[0] = '\0';
-        return false;
+    namespace fs = std::filesystem;
+
+    // Build the full search path
+    fs::path base = fs::path(gSDRoot);
+
+    if (*pattern == '/') {
+        base /= fs::path(pattern).relative_path();
+    } else {
+        base /= fs::path(gCurDir);
+        base /= pattern;
     }
 
+    std::string search = base.string();
+    FixDirSlashes(search);
+
     // Extract directory portion for later use
-    fs::path dir = base.parent_path();
+    gSeaDir = base.parent_path().string();
+    FixDirSlashes(gSeaDir);
 
-    std::string sea = dir.string();
-    std::replace(sea.begin(), sea.end(), '\\', '/');
+    DLOG_C("SearchFile %s\n", search.c_str());
 
-    // Ensure trailing slash
-    if (!sea.empty() && sea.back() != '/') sea.push_back('/');
-
-    std::snprintf(SeaDir, MAX_PATH, "%s", sea.c_str());
+    hFind = FindFirstFileA(search.c_str(), &dFound);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        DLOG_C("SearchFile fail\n");
+        gSeaDir = "";
+        return false;
+    }
 
     return true;
 }
@@ -2510,12 +2561,10 @@ void LoadDirPage()
 //----------------------------------------------------------------------
 // Determine if path is a direcory
 //----------------------------------------------------------------------
-bool IsDirectory(const char * path)
+inline bool IsDirectory(const std::string& path)
 {
-    struct _stat file_stat;
-    int result = _stat(path,&file_stat);
-    if (result != 0) return false;
-    return ((file_stat.st_mode & _S_IFDIR) != 0);
+    std::error_code ec;
+    return std::filesystem::is_directory(path, ec) && !ec;
 }
 
 //----------------------------------------------------------------------
@@ -2533,12 +2582,19 @@ char * LastErrorTxt() {
 }
 
 //------------------------------------------------------------
-// Convert path slashes
+// Convert path slashes.  SDC expects forward slashes as path
+// delimiter but Windows uses backslashes. This is the fix.
 //------------------------------------------------------------
-void ConvertSlashes(char * path)
+void FixDirSlashes(std::string &dir)
 {
-    for(size_t i=0; i < strlen(path); i++) {
-        if (path[i] == '\\') path[i] = '/';
-    }
+    if (dir.empty()) return;
+    std::replace(dir.begin(), dir.end(), '\\', '/');
+    if (dir.back() == '/') dir.pop_back();
 }
-
+void FixDirSlashes(char *dir)
+{
+    if (!dir) return;
+    std::string tmp(dir);
+    FixDirSlashes(tmp);
+    strcpy(dir, tmp.c_str());
+}
