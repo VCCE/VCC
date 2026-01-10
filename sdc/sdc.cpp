@@ -322,7 +322,7 @@ enum DiskType {
 };
 
 // Mounted image data
-struct SDC_disk_t {
+struct CocoDisk_t {
     HANDLE hFile;              // stream handle
     unsigned int size;         // number of bytes total
     unsigned int headersize;   // number of bytes in header
@@ -333,8 +333,20 @@ struct SDC_disk_t {
     char name[MAX_PATH];       // name of file (8.3)
     char fullpath[MAX_PATH];   // full file path
     struct FileRecord filerec;
+    // Constructor
+    CocoDisk_t() noexcept
+        : hFile(INVALID_HANDLE_VALUE),
+          size(0),
+          headersize(0),
+          sectorsize(0),
+          tracksectors(0),
+          type(DiskType::DTYPE_RAW),
+          doublesided(0) {
+        name[0] = '\0';
+        fullpath[0] = '\0';
+    };
 };
-SDC_disk_t SDC_disk[2] = {};
+CocoDisk_t gCocoDisk[2] {};
 
 // Flash banks
 static char FlashFile[8][MAX_PATH];
@@ -399,6 +411,24 @@ static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 //======================================================================
 extern "C"
 {
+    // PakInitialize gets called first, sets up dynamic menues and captures callbacks
+    __declspec(dllexport) void PakInitialize(
+        void* const callback_context,
+        const char* const configuration_path,
+        HWND hVccWnd,
+        const cpak_callbacks* const callbacks)
+    {
+        gVccWindow = hVccWnd;
+        DLOG_C("SDC %p %p %p %p %p\n",*callbacks);
+        gCallbackContext = callback_context;
+        CartMenuCallback = callbacks->add_menu_item;
+        AssertIntCallback = callbacks->assert_interrupt;
+        strcpy(IniFile, configuration_path);
+
+        LoadConfig();
+        BuildCartridgeMenu();
+    }
+
     __declspec(dllexport) const char* PakGetName()
     {
         static char string_buffer[MAX_LOADSTRING];
@@ -418,24 +448,6 @@ extern "C"
         static char string_buffer[MAX_LOADSTRING];
         LoadString(gModuleInstance, IDS_DESCRIPTION, string_buffer, MAX_LOADSTRING);
         return string_buffer;
-    }
-
-    // PakInitialize gets called first, sets up dynamic menues and captures callbacks
-    __declspec(dllexport) void PakInitialize(
-        void* const callback_context,
-        const char* const configuration_path,
-        HWND hVccWnd,
-        const cpak_callbacks* const callbacks)
-    {
-        gVccWindow = hVccWnd;
-        DLOG_C("SDC %p %p %p %p %p\n",*callbacks);
-        gCallbackContext = callback_context;
-        CartMenuCallback = callbacks->add_menu_item;
-        AssertIntCallback = callbacks->assert_interrupt;
-        strcpy(IniFile, configuration_path);
-
-        LoadConfig();
-        BuildCartridgeMenu();
     }
 
     // Clean up must also be done on DLL_UNLOAD incase VCC is closed!
@@ -543,10 +555,10 @@ void BuildCartridgeMenu()
     CartMenuCallback(gCallbackContext, "", MID_ENTRY, MIT_Seperator);
     CartMenuCallback(gCallbackContext, "SDC Drive 0",MID_ENTRY,MIT_Head);
     char tmp[64]={};
-    if (strcmp(SDC_disk[0].name,"") == 0) {
+    if (strcmp(gCocoDisk[0].name,"") == 0) {
         strcpy(tmp,"empty");
     } else {
-        strcpy(tmp,SDC_disk[0].name);
+        strcpy(tmp,gCocoDisk[0].name);
         strcat(tmp," (load next)");
     }
     CartMenuCallback(gCallbackContext, tmp, ControlId(11),MIT_Slave);
@@ -661,7 +673,7 @@ void LoadConfig()
     DLOG_C("LoadConfig gSDRoot %s\n",gSDRoot);
 
     if (!IsDirectory(gSDRoot)) {
-        MessageBox (nullptr,"Invalid SDCard Path in VCC init","Error",0);
+        MessageBox (gVccWindow,"Invalid SDCard Path in VCC init","Error",0);
     }
 
     for (int i=0;i<8;i++) {
@@ -681,7 +693,7 @@ void LoadConfig()
 bool SaveConfig(HWND hDlg)
 {
     if (!IsDirectory(gSDRoot)) {
-        MessageBox(nullptr,"Invalid SDCard Path\n","Error",0);
+        MessageBox(gVccWindow,"Invalid SDCard Path\n","Error",0);
         return false;
     }
     WritePrivateProfileString("SDC","SDCardPath",gSDRoot.c_str(),IniFile);
@@ -849,8 +861,8 @@ void SDCInit()
 
     SetCurDir(""); // May be changed by ParseStartup()
 
-    SDC_disk[0] = {};
-    SDC_disk[1] = {};
+    gCocoDisk[0] = {};
+    gCocoDisk[1] = {};
 
     // Process the startup config file
     ParseStartup();
@@ -866,12 +878,14 @@ void SDCInit()
 //-------------------------------------------------------------
 void LoadRom(unsigned char bank)
 {
-
     unsigned char ch;
     int ctr = 0;
     char *p_rom;
     char *RomFile;
 
+    DLOG_C("LoadRom load flash bank %d\n",bank);
+
+    // Skip if bank is already active
     if (bank == CurrentBank) return;
 
     // Make sure flash file is closed
@@ -880,12 +894,13 @@ void LoadRom(unsigned char bank)
         h_RomFile = nullptr;
     }
 
+    // If bank contents have been changed write to the flash file
     if (BankDirty) {
         RomFile = FlashFile[CurrentBank];
         DLOG_C("LoadRom switching out dirty bank %d %s\n",CurrentBank,RomFile);
         h_RomFile = fopen(RomFile,"wb");
-        if (h_RomFile == nullptr) {
-            DLOG_C("LoadRom failed to open bank file%d\n",bank);
+        if (!h_RomFile) {
+            MessageBox (gVccWindow,"Can not write Rom file","SDC Rom Save Failed",0);
         } else {
             ctr = 0;
             p_rom = PakRom;
@@ -896,7 +911,6 @@ void LoadRom(unsigned char bank)
         BankDirty = 0;
     }
 
-    DLOG_C("LoadRom load flash bank %d\n",bank);
     RomFile = FlashFile[bank];
     CurrentBank = bank;
 
@@ -909,13 +923,16 @@ void LoadRom(unsigned char bank)
         }
     }
 
-    // Open romfile for read or write if not startup bank
-    h_RomFile = fopen(RomFile,"rb");
+    // Open romfile for write if not startup bank
+    if (CurrentBank != StartupBank) 
+        h_RomFile = fopen(RomFile,"wb");
+
+    if (CurrentBank == StartupBank || h_RomFile == nullptr)
+        h_RomFile = fopen(RomFile,"rb");
+
     if (h_RomFile == nullptr) {
-        if (CurrentBank != StartupBank) h_RomFile = fopen(RomFile,"wb");
-    }
-    if (h_RomFile == nullptr) {
-        DLOG_C("LoadRom '%s' failed %s \n",RomFile,LastErrorTxt());
+        std::string msg="Check Rom Path and SDC Config\n"+std::string(RomFile);
+        MessageBox (gVccWindow,msg.c_str(),"SDC Startup Rom Load Failed",0);
         return;
     }
 
@@ -1208,7 +1225,7 @@ void FloppySeek()
 // uses CHS addressing while hard drives, and the SDC, use LBA addressing.
 // FIXME:
 //  Nine sector tracks, (512 byte sectors)
-//  disk type: SDC_disk[drive].type
+//  disk type: gCocoDisk[drive].type
 unsigned int FloppyLSN(
         unsigned int drive,   // 0 or 1
         unsigned int track,   // 0 to num tracks
@@ -1226,7 +1243,7 @@ void FloppyReadDisk()
 
     snprintf(SDC_Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
     if (SeekSector(FlopDrive,lsn)) {
-        if (ReadFile(SDC_disk[FlopDrive].hFile,FlopRdBuf,256,&FlopRdCnt,nullptr)) {
+        if (ReadFile(gCocoDisk[FlopDrive].hFile,FlopRdBuf,256,&FlopRdCnt,nullptr)) {
             DLOG_C("FloppyReadDisk %d %d\n",FlopDrive,lsn);
             FlopStatus = FLP_DATAREQ;
         } else {
@@ -1603,15 +1620,15 @@ bool SeekSector(unsigned char cmdcode, unsigned int lsn)
     int drive = cmdcode & 1; // Drive number 0 or 1
     int sside = cmdcode & 2; // Single sided LSN flag
 
-    int trk = lsn / SDC_disk[drive].tracksectors;
-    int sec = lsn % SDC_disk[drive].tracksectors;
+    int trk = lsn / gCocoDisk[drive].tracksectors;
+    int sec = lsn % gCocoDisk[drive].tracksectors;
 
     // The single sided LSN flag tells the controller that the lsn
     // assumes the disk image is a single-sided floppy disk. If the
     // disk is actually double-sided the LSN must be adjusted.
-    if (sside && SDC_disk[drive].doublesided) {
+    if (sside && gCocoDisk[drive].doublesided) {
         DLOG_C("SeekSector sside %d %d\n",drive,lsn);
-        lsn = 2 * SDC_disk[drive].tracksectors * trk + sec;
+        lsn = 2 * gCocoDisk[drive].tracksectors * trk + sec;
     }
 
     // Allow seek to expand a writable file to a resonable limit
@@ -1622,9 +1639,9 @@ bool SeekSector(unsigned char cmdcode, unsigned int lsn)
 
     // Seek to logical sector on drive.
     LARGE_INTEGER pos{0};
-    pos.QuadPart = lsn * SDC_disk[drive].sectorsize + SDC_disk[drive].headersize;
+    pos.QuadPart = lsn * gCocoDisk[drive].sectorsize + gCocoDisk[drive].headersize;
 
-    if (!SetFilePointerEx(SDC_disk[drive].hFile,pos,nullptr,FILE_BEGIN)) {
+    if (!SetFilePointerEx(gCocoDisk[drive].hFile,pos,nullptr,FILE_BEGIN)) {
         DLOG_C("SeekSector error %s\n",LastErrorTxt());
         return false;
     }
@@ -1639,7 +1656,7 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
     char buf[520];
     DWORD cnt = 0;
     int drive = cmdcode & 1;
-    if (SDC_disk[drive].hFile == nullptr) {
+    if (gCocoDisk[drive].hFile == nullptr) {
         DLOG_C("ReadDrive %d not open\n");
         return false;
     }
@@ -1648,12 +1665,12 @@ bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
         return false;
     }
 
-    if (!ReadFile(SDC_disk[drive].hFile,buf,SDC_disk[drive].sectorsize,&cnt,nullptr)) {
+    if (!ReadFile(gCocoDisk[drive].hFile,buf,gCocoDisk[drive].sectorsize,&cnt,nullptr)) {
         DLOG_C("ReadDrive %d %s\n",drive,LastErrorTxt());
         return false;
     }
 
-    if (cnt != SDC_disk[drive].sectorsize) {
+    if (cnt != gCocoDisk[drive].sectorsize) {
         DLOG_C("ReadDrive %d short read\n",drive);
         return false;
     }
@@ -1701,10 +1718,10 @@ void StreamImage()
 
     // For now can only stream 512 byte sectors
     int drive = stream_cmdcode & 1;
-    SDC_disk[drive].sectorsize = 512;
-    SDC_disk[drive].tracksectors = 9;
+    gCocoDisk[drive].sectorsize = 512;
+    gCocoDisk[drive].tracksectors = 9;
 
-    if (stream_lsn > (SDC_disk[drive].size/SDC_disk[drive].sectorsize)) {
+    if (stream_lsn > (gCocoDisk[drive].size/gCocoDisk[drive].sectorsize)) {
         DLOG_C("StreamImage done\n");
         streaming = 0;
         return;
@@ -1729,7 +1746,7 @@ void WriteSector()
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
     snprintf(SDC_Status,16,"SDC:%d Wr %d,%d",CurrentBank,drive,lsn);
 
-    if (SDC_disk[drive].hFile == nullptr) {
+    if (gCocoDisk[drive].hFile == nullptr) {
         IF.status = STA_FAIL;
         return;
     }
@@ -1738,13 +1755,13 @@ void WriteSector()
         IF.status = STA_FAIL;
         return;
     }
-    if (!WriteFile(SDC_disk[drive].hFile,IF.blkbuf,
-                   SDC_disk[drive].sectorsize,&cnt,nullptr)) {
+    if (!WriteFile(gCocoDisk[drive].hFile,IF.blkbuf,
+                   gCocoDisk[drive].sectorsize,&cnt,nullptr)) {
         DLOG_C("WriteSector %d %s\n",drive,LastErrorTxt());
         IF.status = STA_FAIL;
         return;
     }
-    if (cnt != SDC_disk[drive].sectorsize) {
+    if (cnt != gCocoDisk[drive].sectorsize) {
         DLOG_C("WriteSector %d short write\n",drive);
         IF.status = STA_FAIL;
         return;
@@ -1759,7 +1776,7 @@ void WriteSector()
 void  GetSectorCount() {
 
     int drive = IF.cmdcode & 1;
-    unsigned int numsec = SDC_disk[drive].size/SDC_disk[drive].sectorsize;
+    unsigned int numsec = gCocoDisk[drive].size/gCocoDisk[drive].sectorsize;
     IF.reply3 = numsec & 0xFF;
     numsec = numsec >> 8;
     IF.reply2 = numsec & 0xFF;
@@ -1774,12 +1791,12 @@ void  GetSectorCount() {
 void GetMountedImageRec()
 {
     int drive = IF.cmdcode & 1;
-    //DLOG_C("GetMountedImageRec %d %s\n",drive,SDC_disk[drive].fullpath);
-    if (strlen(SDC_disk[drive].fullpath) == 0) {
+    //DLOG_C("GetMountedImageRec %d %s\n",drive,gCocoDisk[drive].fullpath);
+    if (strlen(gCocoDisk[drive].fullpath) == 0) {
         IF.status = STA_FAIL;
     } else {
         IF.reply_mode = 0;
-        LoadReply(&SDC_disk[drive].filerec,sizeof(FileRecord));
+        LoadReply(&gCocoDisk[drive].filerec,sizeof(FileRecord));
     }
 }
 
@@ -1929,7 +1946,7 @@ void MountNewDisk (int drive, const char * path, int raw)
 
     // Close and clear previous entry
     CloseDrive(drive);
-    SDC_disk[drive] = {};
+    gCocoDisk[drive] = {};
 
     // Convert from SDC format
     char file[MAX_PATH];
@@ -1961,7 +1978,7 @@ void MountDisk (int drive, const char * path, int raw)
 
     // Close and clear previous entry
     CloseDrive(drive);
-    SDC_disk[drive] = {};
+    gCocoDisk[drive] = {};
 
     // Check for UNLOAD.  Path will be an empty string.
     if (*path == '\0') {
@@ -2064,45 +2081,45 @@ void OpenNew( int drive, const char * path, int raw)
     }
 
     CloseDrive(drive);
-    strncpy(SDC_disk[drive].fullpath,fqn.string().c_str(),MAX_PATH);
+    strncpy(gCocoDisk[drive].fullpath,fqn.string().c_str(),MAX_PATH);
 
     // Open file for write
-    SDC_disk[drive].hFile = CreateFile(
-        SDC_disk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
+    gCocoDisk[drive].hFile = CreateFile(
+        gCocoDisk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
         nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
 
-    if (SDC_disk[drive].hFile == INVALID_HANDLE_VALUE) {
-        DLOG_C("OpenNew fail %d file %s\n",drive,SDC_disk[drive].fullpath);
+    if (gCocoDisk[drive].hFile == INVALID_HANDLE_VALUE) {
+        DLOG_C("OpenNew fail %d file %s\n",drive,gCocoDisk[drive].fullpath);
         DLOG_C("... %s\n",LastErrorTxt());
         IF.status = STA_FAIL | STA_WIN_ERROR;
         return;
     }
 
     // Sectorsize and sectors per track
-    SDC_disk[drive].sectorsize = 256;
-    SDC_disk[drive].tracksectors = 18;
+    gCocoDisk[drive].sectorsize = 256;
+    gCocoDisk[drive].tracksectors = 18;
 
     IF.status = STA_FAIL;
     if (raw) {
         // New raw file is empty - can be any format
         IF.status = STA_NORMAL;
-        SDC_disk[drive].doublesided = 0;
-        SDC_disk[drive].headersize = 0;
-        SDC_disk[drive].size = 0;
+        gCocoDisk[drive].doublesided = 0;
+        gCocoDisk[drive].headersize = 0;
+        gCocoDisk[drive].size = 0;
     } else {
         // TODO: handle SDF
         // Create headerless 35 track JVC file
-        SDC_disk[drive].doublesided = 0;
-        SDC_disk[drive].headersize = 0;
-        SDC_disk[drive].size = 35
-                         * SDC_disk[drive].sectorsize
-                         * SDC_disk[drive].tracksectors
-                         + SDC_disk[drive].headersize;
+        gCocoDisk[drive].doublesided = 0;
+        gCocoDisk[drive].headersize = 0;
+        gCocoDisk[drive].size = 35
+                         * gCocoDisk[drive].sectorsize
+                         * gCocoDisk[drive].tracksectors
+                         + gCocoDisk[drive].headersize;
         // Extend file to size
         LARGE_INTEGER l_siz;
-        l_siz.QuadPart = SDC_disk[drive].size;
-        if (SetFilePointerEx(SDC_disk[drive].hFile,l_siz,nullptr,FILE_BEGIN)) {
-            if (SetEndOfFile(SDC_disk[drive].hFile)) {
+        l_siz.QuadPart = gCocoDisk[drive].size;
+        if (SetFilePointerEx(gCocoDisk[drive].hFile,l_siz,nullptr,FILE_BEGIN)) {
+            if (SetEndOfFile(gCocoDisk[drive].hFile)) {
                 IF.status = STA_NORMAL;
             } else {
                 IF.status = STA_FAIL | STA_WIN_ERROR;
@@ -2121,10 +2138,10 @@ void OpenFound (int drive,int raw)
     int writeprotect = 0;
 
     DLOG_C("OpenFound drive %d %s hfile %d\n",
-        drive, dFound.cFileName, SDC_disk[drive].hFile);
+        drive, dFound.cFileName, gCocoDisk[drive].hFile);
 
     CloseDrive(drive);
-    *SDC_disk[drive].name = '\0';
+    *gCocoDisk[drive].name = '\0';
 
     namespace fs = std::filesystem;
 
@@ -2151,7 +2168,7 @@ void OpenFound (int drive,int raw)
 
     std::string file = fqn.string();
 
-    SDC_disk[drive].hFile = CreateFileA(
+    gCocoDisk[drive].hFile = CreateFileA(
         file.c_str(),
         GENERIC_READ,
         FILE_SHARE_READ,
@@ -2161,7 +2178,7 @@ void OpenFound (int drive,int raw)
         nullptr
     );
 
-    if (SDC_disk[drive].hFile == INVALID_HANDLE_VALUE) {
+    if (gCocoDisk[drive].hFile == INVALID_HANDLE_VALUE) {
         DLOG_C("OpenFound fail %d file %s\n",drive,file.c_str());
         DLOG_C("... %s\n",LastErrorTxt());
         int ecode = GetLastError();
@@ -2173,27 +2190,27 @@ void OpenFound (int drive,int raw)
         return;
     }
 
-    strncpy(SDC_disk[drive].fullpath,file.c_str(),MAX_PATH);
-    strncpy(SDC_disk[drive].name,dFound.cFileName,MAX_PATH);
+    strncpy(gCocoDisk[drive].fullpath,file.c_str(),MAX_PATH);
+    strncpy(gCocoDisk[drive].name,dFound.cFileName,MAX_PATH);
 
     // Default sectorsize and sectors per track
-    SDC_disk[drive].sectorsize = 256;
-    SDC_disk[drive].tracksectors = 18;
+    gCocoDisk[drive].sectorsize = 256;
+    gCocoDisk[drive].tracksectors = 18;
 
     // Grab filesize from found record
-    SDC_disk[drive].size = dFound.nFileSizeLow;
+    gCocoDisk[drive].size = dFound.nFileSizeLow;
 
     // Determine file type (RAW,DSK,JVC,VDK,SDF)
     if (raw) {
         writeprotect = 0;
-        SDC_disk[drive].type = DTYPE_RAW;
-        SDC_disk[drive].headersize = 0;
-        SDC_disk[drive].doublesided = 0;
+        gCocoDisk[drive].type = DTYPE_RAW;
+        gCocoDisk[drive].headersize = 0;
+        gCocoDisk[drive].doublesided = 0;
     } else {
 
         // Read a few bytes of the file to determine it's type
         unsigned char header[16];
-        if (ReadFile(SDC_disk[drive].hFile,header,12,nullptr,nullptr) == 0) {
+        if (ReadFile(gCocoDisk[drive].hFile,header,12,nullptr,nullptr) == 0) {
             DLOG_C("OpenFound header read error\n");
             IF.status = STA_FAIL | STA_INVALID;
             return;
@@ -2203,44 +2220,44 @@ void OpenFound (int drive,int raw)
         // track record is 6250 bytes. Assume at least 35 tracks so
         // minimum size of a SDF file is 219262 bytes. The first four
         // bytes of the header contains "SDF1"
-        if ((SDC_disk[drive].size >= 219262) &&  // is this reasonable?
+        if ((gCocoDisk[drive].size >= 219262) &&  // is this reasonable?
             (strncmp("SDF1",(const char *) header,4) == 0)) {
-            SDC_disk[drive].type = DTYPE_SDF;
+            gCocoDisk[drive].type = DTYPE_SDF;
             DLOG_C("OpenFound SDF file unsupported\n");
             IF.status = STA_FAIL | STA_INVALID;
             return;
         }
 
         unsigned int numsec;
-        SDC_disk[drive].headersize = SDC_disk[drive].size & 255;
-        DLOG_C("OpenFound headersize %d\n",SDC_disk[drive].headersize);
-        switch (SDC_disk[drive].headersize) {
+        gCocoDisk[drive].headersize = gCocoDisk[drive].size & 255;
+        DLOG_C("OpenFound headersize %d\n",gCocoDisk[drive].headersize);
+        switch (gCocoDisk[drive].headersize) {
         // JVC optional header bytes
         case 4: // First Sector     = header[3]   1 assumed
         case 3: // Sector Size code = header[2] 256 assumed {128,256,512,1024}
         case 2: // Number of sides  = header[1]   1 or 2
         case 1: // Sectors per trk  = header[0]  18 assumed
-            SDC_disk[drive].doublesided = (header[1] == 2);
-            SDC_disk[drive].type = DTYPE_JVC;
+            gCocoDisk[drive].doublesided = (header[1] == 2);
+            gCocoDisk[drive].type = DTYPE_JVC;
             break;
         // No apparant header
         // JVC or OS9 disk if no header, side count per file size
         case 0:
-            numsec = SDC_disk[drive].size >> 8;
+            numsec = gCocoDisk[drive].size >> 8;
             DLOG_C("OpenFound JVC/OS9 sectors %d\n",numsec);
-            SDC_disk[drive].doublesided = ((numsec > 720) && (numsec <= 2880));
-            SDC_disk[drive].type = DTYPE_JVC;
+            gCocoDisk[drive].doublesided = ((numsec > 720) && (numsec <= 2880));
+            gCocoDisk[drive].type = DTYPE_JVC;
             break;
         // VDK
         case 12:
-            SDC_disk[drive].doublesided = (header[8] == 2);
+            gCocoDisk[drive].doublesided = (header[8] == 2);
             writeprotect = header[9] & 1;
-            SDC_disk[drive].type = DTYPE_VDK;
+            gCocoDisk[drive].type = DTYPE_VDK;
             break;
         // Unknown or unsupported
         default: // More than 4 byte header is not supported
             DLOG_C("OpenFound unsuported image type %d %d\n",
-                drive, SDC_disk[drive].headersize);
+                drive, gCocoDisk[drive].headersize);
             IF.status = STA_FAIL | STA_INVALID;
             return;
             break;
@@ -2248,22 +2265,22 @@ void OpenFound (int drive,int raw)
     }
 
     // Fill in image info.
-    LoadFoundFile(&SDC_disk[drive].filerec);
+    LoadFoundFile(&gCocoDisk[drive].filerec);
 
     // Set readonly attrib per find status or file header
-    if ((SDC_disk[drive].filerec.FR_attrib & ATTR_RDONLY) != 0) {
+    if ((gCocoDisk[drive].filerec.FR_attrib & ATTR_RDONLY) != 0) {
         writeprotect = 1;
     } else if (writeprotect) {
-        SDC_disk[drive].filerec.FR_attrib |= ATTR_RDONLY;
+        gCocoDisk[drive].filerec.FR_attrib |= ATTR_RDONLY;
     }
 
     // If file is writeable reopen read/write
     if (!writeprotect) {
-        CloseHandle(SDC_disk[drive].hFile);
-        SDC_disk[drive].hFile = CreateFile(
-            SDC_disk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
+        CloseHandle(gCocoDisk[drive].hFile);
+        gCocoDisk[drive].hFile = CreateFile(
+            gCocoDisk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
             nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
-        if (SDC_disk[drive].hFile == INVALID_HANDLE_VALUE) {
+        if (gCocoDisk[drive].hFile == INVALID_HANDLE_VALUE) {
             DLOG_C("OpenFound reopen fail %d\n",drive);
             DLOG_C("... %s\n",LastErrorTxt());
             IF.status = STA_FAIL | STA_WIN_ERROR;
@@ -2380,9 +2397,9 @@ void MakeDirectory(const char *name)
 void CloseDrive (int drive)
 {
     drive &= 1;
-    if (SDC_disk[drive].hFile && SDC_disk[drive].hFile != INVALID_HANDLE_VALUE) {
-        CloseHandle(SDC_disk[drive].hFile);
-        SDC_disk[drive].hFile = INVALID_HANDLE_VALUE;
+    if (gCocoDisk[drive].hFile && gCocoDisk[drive].hFile != INVALID_HANDLE_VALUE) {
+        CloseHandle(gCocoDisk[drive].hFile);
+        gCocoDisk[drive].hFile = INVALID_HANDLE_VALUE;
     }
 }
 
