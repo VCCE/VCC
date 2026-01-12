@@ -1,8 +1,6 @@
-//#define USE_LOGGING
+#define USE_LOGGING
 //======================================================================
-// SDC simulator DLL
-//
-// By E J Jaquay 2025
+// SDC simulator.  EJ Jaquay 2025
 //
 // This file is part of VCC (Virtual Color Computer).
 // Vcc is Copyright 2015 by Joseph Forgione
@@ -23,20 +21,19 @@
 //
 //======================================================================
 //
-//  SDC Floppy port conflicts
-//  -------------------------
-//  The SDC interface shares ports with the FD502 floppy controller.
+//  SDC Floppy port
+//  ---------------
+//  The SDC interface shares ports with the FDC floppy emulator.
 //
-//  $FF40 ; controller latch (write)
+//  $FF40 ; SDC latch / FDC control
 //  $FF42 ; flash data register
 //  $FF43 ; flash control register
-//  $FF48 ; command register (write)
-//  $FF48 ; status register (read)
-//  $FF49 ; param register 1
-//  $FF4A ; param register 2
-//  $FF4B ; param register 3
+//  $FF48 ; command / status
+//  $FF49 ; param register 1 / FDC Track
+//  $FF4A ; param register 2 / FDC Sector
+//  $FF4B ; param register 3 / FDC Data
 //
-//  The FD502 interface uses following ports;
+//  The FDC emulation uses following ports;
 //
 //  $FF40 ; Control register (write)
 //      Bit 7 halt flag 0 = disabled 1 = enabled
@@ -48,6 +45,9 @@
 //      Bit 1 drive select 1
 //      Bit 0 drive select 0
 //
+//  SDC latch code is 0x43 which is unlikey to be used for FDC
+//  control because that would be multiple drives selected.
+//
 //  $FF48 ; Command register (write)
 //      high order nibble; low order nibble type; command
 //      0x0 ;   I ; Restore
@@ -56,9 +56,9 @@
 //      0x4 ;   I ; Step in
 //      0x5 ;   I ; Step out
 //      0x8 ;  II ; Read sector
-//      0x9 ;  II ; Read sector multiple
+//      0x9 ;  II ; Read sector mfm
 //      0xA ;  II ; write sector
-//      0xB ;  II ; write sector multiple
+//      0xB ;  II ; write sector mfm
 //      0xC ; III ; read address
 //      0xD ; III ; force interrupt
 //      0xE ; III ; read track
@@ -69,20 +69,9 @@
 //       II ; b3 side compare enable, b2 delay, b1 side, b0 0
 //      III ; b2 delay others 0
 //       IV ; interrupt control b3 immediate, b2 index pulse, b1 notready, b0 ready
-//  $FF48 ; Status register (read)
-//  $FF49 ; Track register (read/write)
-//  $FF4A ; Sector register (read/write)
-//  $FF4B ; Data register (read/write)
 //
-//  Port conflicts are resolved in the MPI by using the SCS (select
-//  cart signal) to direct the floppy ports ($FF40-$FF5F) to the
-//  selected cartridge slot, either SDC or FD502.
-//
-//  Sometime in the past the VCC cart select was disabled in mmi.cpp. This
-//  had to be be re-enabled for for sdc to co-exist with FD502. Additionally
-//  the becker port (drivewire) uses port $FF41 for status and port $FF42
-//  for data so these must be always alowed for becker.dll to work. This
-//  means sdc.dll requires the new version of mmi.dll to work properly.
+//  The becker port (drivewire) uses port $FF41 for status and port $FF42
+//  for data so these must be always allowed for becker.dll to work.
 //
 //  NOTE: Stock SDCDOS does not in support the becker ports, it expects
 //  drivewire to be on the bitbanger ports. RGBDOS does, however, and will
@@ -125,20 +114,15 @@
 //  bank is stored. When a bank is selected the file is read into ROM.
 //  The SDC-DOS RUN@n command can be used to select a bank.
 //
-//  This simulator has no provision for writing to the banks or the
-//  associated files. These are easily managed using the host system.
-//
 //  Data written to the flash data port (0x42) can be read back.
 //  When the flash data port (0x43) is written the three low bits
 //  select the ROM from the corresponding flash bank (0-7). When
 //  read the flash control port returns the currently selected bank
 //  in the three low bits and the five bits from the Flash Data port.
 //
-//  SDC-DOS is typically in bank zero and disk basic in bank one. These
-//  ROMS require their respective .DLL's to be installed to function,
-//  these are typically in MMI slot 3 and 4 respectively.
-//
+//  SDC-DOS is typically in bank zero.
 //======================================================================
+
 #include <string>
 #include <algorithm>
 #include <iostream>
@@ -164,12 +148,253 @@
 #include <vcc/core/limits.h>
 #include "sdc.h"
 
-//======================================================================
-
 static ::vcc::devices::rtc::cloud9 cloud9_rtc;
 
+
+//=========================================================================
+// Host file utilities.  Most of these are general purpose
+//=========================================================================
+
+// Get most recent windows error text
+inline const char * LastErrorTxt();
+inline std::string LastErrorString();
+
+// Convert backslashes to slashes in directory string / char
+void FixDirSlashes(std::string &dir);
+void FixDirSlashes(char *dir);
+
+// copy string into fixed-size char array and blank-pad
+template <size_t N>
+void copy_to_fixed_char(char (&dest)[N], const std::string& src);
+
+// Return copy of string with spaces trimmed from end of a string
+inline std::string trim_right_spaces(const std::string &s);
+
+// Convert LFN to FAT filename parts, 8 char name, 3 char ext
+void sfn_from_lfn(char (&name)[8], char (&ext)[3], const std::string& lfn);
+
+// Convert FAT file name parts to LFN. Returns empty string if invalid LFN
+std::string lfn_from_sfn(const char (&name)[8], const char (&ext)[3]);
+
+// Return slash normalized directory part of a path
+inline std::string GetDirectoryPart(const std::string& input);
+
+// Return filename part of a path
+inline std::string GetFileNamePart(const std::string& input);
+
+// SDC interface often presents a path which does not use a dot to 
+// delimit name and extension: "FOODIR/FOO     DSK" -> FOODIR/FOO.DSK
+std::string FixFATPath(const std::string& sdcpath);
+void FixFATPath(char* path, const char* sdcpath);
+
+// Determine if path is a direcory
+inline bool IsDirectory(const std::string& path);
+
+//----------------------------------------------------------------------
+// Get most recent windows error text
+//----------------------------------------------------------------------
+inline const char * LastErrorTxt() {
+    static char msg[200];
+    DWORD error_code = GetLastError();
+    FormatMessageA( FORMAT_MESSAGE_FROM_SYSTEM |
+                    FORMAT_MESSAGE_IGNORE_INSERTS,
+                    nullptr, error_code,
+                    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                    msg, sizeof(msg), nullptr );
+    return msg;
+}
+inline std::string LastErrorString() {
+    return LastErrorTxt();
+}
+
+//-------------------------------------------------------------------
+// SDC expects forward slashes as path delimiter, not backslashes
+//-------------------------------------------------------------------
+void FixDirSlashes(std::string &dir)
+{
+    if (dir.empty()) return;
+    std::replace(dir.begin(), dir.end(), '\\', '/');
+    if (dir.back() == '/') dir.pop_back();
+}
+void FixDirSlashes(char *dir)
+{
+    if (!dir) return;
+    std::string tmp(dir);
+    FixDirSlashes(tmp);
+    strcpy(dir, tmp.c_str());
+}
+
+//-------------------------------------------------------------------
+// Copy string to fixed size char array (non terminated)
+//-------------------------------------------------------------------
+template <size_t N>
+void copy_to_fixed_char(char (&dest)[N], const std::string& src)
+{
+    size_t i = 0;
+    for (; i < src.size() && i < N; ++i)
+        dest[i] = src[i];
+    for (; i < N; ++i)
+        dest[i] = ' ';
+}
+
+//-------------------------------------------------------------------
+// Return copy of string with spaces trimmed from end of a string
+//-------------------------------------------------------------------
+inline std::string trim_right_spaces(const std::string& s)
+{
+    size_t end = s.find_last_not_of(' ');
+    if (end == std::string::npos)
+        return {};
+    return s.substr(0, end + 1);
+}
+
+//-------------------------------------------------------------------
+// Convert LFN to FAT filename parts, 8 char name, 3 char ext
+// A LNF file is less than 4GB and has a short (8.3) name.
+//-------------------------------------------------------------------
+void sfn_from_lfn(char (&name)[8], char (&ext)[3], const std::string& lfn)
+{
+    // Special case: parent directory
+    if (lfn == "..") {
+        copy_to_fixed_char(name, "..");
+        std::fill(ext, ext + 3, ' ');
+        return;
+    }
+
+    size_t dot = lfn.find('.');
+    std::string base, extension;
+
+    if (dot == std::string::npos) {
+        base = lfn;
+    } else {
+        base = lfn.substr(0, dot);
+        extension = lfn.substr(dot + 1);
+    }
+
+    copy_to_fixed_char(name, base);
+    copy_to_fixed_char(ext, extension);
+}
+
+//-------------------------------------------------------------------
+// Convert FAT filename parts to LFN. Returns empty string if invalid
+//-------------------------------------------------------------------
+std::string lfn_from_sfn(const char (&name)[8], const char (&ext)[3])
+{
+    std::string base(name, 8);
+    std::string extension(ext, 3);
+
+    base = trim_right_spaces(base);
+    extension = trim_right_spaces(extension);
+
+    if (base == ".." && extension.empty())
+    return "..";
+
+    std::string lfn = base;
+
+    if (!extension.empty())
+    lfn += "." + extension;
+
+    if (lfn.empty())
+        return {};
+
+    if (!PathIsLFNFileSpecA(lfn.c_str()))
+        return {};
+
+    return lfn;
+}
+
+//-------------------------------------------------------------------
+// Return slash normalized directory part of a path
+//-------------------------------------------------------------------
+inline std::string GetDirectoryPart(const std::string& input)
+{
+    std::filesystem::path p(input);
+    std::string out = p.parent_path().string();
+    FixDirSlashes(out);
+    return out;
+}
+
+//-------------------------------------------------------------------
+// Return filename part of a path
+//-------------------------------------------------------------------
+inline std::string GetFileNamePart(const std::string& input)
+{
+    std::filesystem::path p(input);
+    return p.filename().string();
+}
+
+//-------------------------------------------------------------------
+// Convert string containing possible FAT name and extension to an
+// LFN string. Returns empty string if invalid LFN
+//-------------------------------------------------------------------
+std::string NormalizeInputToLFN(const std::string& s)
+{
+    if (s.empty()) return {};
+    if (s.size() > 11) return {};
+    if (s == "..") return "..";
+
+    // LFN candidate
+    if (s.find('.') != std::string::npos) {
+        if (!PathIsLFNFileSpecA(s.c_str()))
+            return {}; // invalid
+        return s;
+    }
+
+    // SFN candidate
+    char name[8];
+    char ext[3];
+    sfn_from_lfn(name,ext,s);
+    return lfn_from_sfn(name,ext);
+}
+
+//-------------------------------------------------------------------
+// Determine if path is a direcory
+//-------------------------------------------------------------------
+inline bool IsDirectory(const std::string& path)
+{
+    std::error_code ec;
+    return std::filesystem::is_directory(path, ec) && !ec;
+}
+
+//----------------------------------------------------------------------
+// A file path may use 11 char FAT format which does not use a separater
+// between name and extension. User is free to use standard dot format.
+//    "FOODIR/FOO.DSK"     = FOODIR/FOO.DSK
+//    "FOODIR/FOO     DSK" = FOODIR/FOO.DSK
+//    "FOODIR/ALONGFOODSK" = FOODIR/ALONGFOO.DSK
+//----------------------------------------------------------------------
+std::string FixFATPath(const std::string& sdcpath)
+{
+    std::filesystem::path p(sdcpath);
+
+    auto chop = [](std::string s) {
+        size_t space = s.find(' ');
+        if (space != std::string::npos) s.erase(space);
+        return s;
+    };
+
+    std::string fname = p.filename().string();
+    if (fname.length() == 11 && fname.find('.') == std::string::npos) {
+        auto nam = chop(fname.substr(0,8));
+        auto ext = chop(fname.substr(8,3));
+        fname = ext.empty() ? nam : nam + "." + ext;
+    }
+
+    std::filesystem::path out = p.parent_path() / fname;
+
+    DLOG_C("FixFATPath in %s out %s\n",sdcpath.c_str(),out.generic_string().c_str());
+    return out.generic_string();
+}
+
+void FixFATPath(char* path, const char* sdcpath)
+{
+    std::string fixed = FixFATPath(std::string(sdcpath));
+    strncpy(path, fixed.c_str(), MAX_PATH);
+    path[MAX_PATH - 1] = '\0';
+}
+
 //======================================================================
-// Private functions
+// SDC specific funtions
 //======================================================================
 
 LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
@@ -181,127 +406,185 @@ void UpdateFlashItem(int);
 void InitCardBox();
 void InitFlashBoxes();
 void FitEditTextPath(HWND, int, const char *);
-inline bool IsDirectory(const std::string&);
-char * LastErrorTxt();
-void SDCInit();
+void InitSDC();
 void LoadRom(unsigned char);
-void SDCWrite(unsigned char,unsigned char);
-unsigned char SDCRead(unsigned char port);
 void ParseStartup();
-void SDCCommand();
-void ReadSector();
-void StreamImage();
-void WriteSector();
-bool SeekSector(unsigned char,unsigned int);
-bool ReadDrive(unsigned char,unsigned int);
-void GetDriveInfo();
-void SDCControl();
-void UpdateSD();
-bool LoadFoundFile(struct FileRecord *);
-std::string FixSDCPath(const std::string&);
-void FixSDCPath(char *,const char *);
-void MountDisk(int,const char *,int);
-void MountNewDisk(int,const char *,int);
-bool MountNext(int);
-void OpenNew(int,const char *,int);
-void CloseDrive(int);
-void OpenFound(int,int);
-void LoadReply(const void *, int);
-void BlockReceive(unsigned char);
-void FlashControl(unsigned char);
-void LoadDirPage();
-void SetCurDir(const char *);
 bool SearchFile(const char *);
-bool InitiateDir(const char *);
-std::string GetFullPath(const std::string&);
-void GetFullPath(char *,const char *);
-void RenameFile(const char *);
-void KillFile(const char *);
-void MakeDirectory(const char *);
-void GetMountedImageRec();
-void GetSectorCount();
-void GetDirectoryLeaf();
-unsigned char PickReplyByte(unsigned char);
-unsigned char WriteFlashBank(unsigned short);
-
-void FloppyCommand(unsigned char);
-void FloppyRestore();
-void FloppySeek();
-void FloppyReadDisk();
-void FloppyWriteDisk();
-void FloppyTrack(unsigned char);
-void FloppySector(unsigned char);
-void FloppyWriteData(unsigned char);
-unsigned int FloppyLSN(unsigned int,unsigned int,unsigned int);
-unsigned char FloppyStatus();
-unsigned char FloppyReadData();
 
 //======================================================================
-// Globals
+// SDC interface functions
+//======================================================================
+void SDCReadSector();
+void SDCStreamImage();
+void SDCWriteSector();
+void SDCGetDriveInfo();
+void SDCUpdateSD();
+void SDCSetCurDir(const char *);
+bool SDCInitiateDir(const char *);
+void SDCRenameFile(const char *);
+void SDCKillFile(const char *);
+void SDCMakeDirectory(const char *);
+void SDCGetMountedImageRec();
+void SDCGetSectorCount();
+void SDCGetDirectoryLeaf();
+void SDCMountDisk(int,const char *,int);
+void SDCMountNewDisk(int,const char *,int);
+bool SDCMountNext(int);
+unsigned char SDCRead(unsigned char port);
+void SDCOpenFound(int,int);
+void SDCOpenNew(int,const char *,int);
+void SDCWrite(unsigned char,unsigned char);
+void SDCControl();
+void SDCCommand();
+void SDCBlockReceive(unsigned char);
+void SDCFlashControl(unsigned char);
+void SDCFloppyCommand(unsigned char);
+void SDCFloppyRestore();
+void SDCFloppySeek();
+void SDCFloppyReadDisk();
+void SDCFloppyWriteDisk();
+void SDCFloppyTrack(unsigned char);
+void SDCFloppySector(unsigned char);
+void SDCFloppyWriteData(unsigned char);
+unsigned int SDCFloppyLSN(unsigned int,unsigned int,unsigned int);
+unsigned char SDCFloppyStatus();
+unsigned char SDCFloppyReadData();
+unsigned char SDCPickReplyByte(unsigned char);
+unsigned char SDCWriteFlashBank(unsigned short);
+void SDCLoadReply(const void *, int);
+bool SDCSeekSector(unsigned char,unsigned int);
+bool SDCReadDrive(unsigned char,unsigned int);
+bool SDCLoadNextDirPage();
+std::string SDCGetFullPath(const std::string&);
+
 //======================================================================
 
-// Idle Status counter
-int idle_ctr = 0;
+//=========================================================================
+// Host directory handling
+//=========================================================================
 
-// SDC CoCo Interface
-struct Interface
-{
-    int sdclatch;
-    unsigned char cmdcode;
-    unsigned char status;
-    unsigned char reply1;
-    unsigned char reply2;
-    unsigned char reply3;
-    unsigned char param1;
-    unsigned char param2;
-    unsigned char param3;
-    unsigned char reply_mode;  // 0=words, 1=bytes
-    unsigned char reply_status;
-    unsigned char half_sent;
-    int bufcnt;
-    char *bufptr;
-    char blkbuf[600];
-};
-static Interface IF = {};
-
-// Cart ROM
-char PakRom[0x4000];
-
-static char IniFile[MAX_PATH] = {};  // Vcc ini file name
-
-// Directory globals
+// Host Directory globals
 static std::string gSDRoot {}; // SD card root directory
 static std::string gCurDir {}; // Current directory relative to root
-static std::string gSeaDir {}; // Last directory searched
 
-// A less than 4GB host file with a short name
-// File location is gSeaDir
+//-------------------------------------------------------------------
+// HostFile contains a file name, it's size, and directory and readonly flags
+// gFileList is a list of HostFiles found within a particular host directory
+// using a search pattern. The pattern may include a directory specifier.
+// Host file name, size, and attributes are kept in HostFile structs.
+//-------------------------------------------------------------------
+
 struct HostFile {
-    std::string name;
-    DWORD size;
-    bool isDirectory;
-    bool isReadonly;
-    // Constructor
-    HostFile(const char* cName, DWORD nSize, DWORD attr) :
-        name(cName),
-        size(nSize),
-        isDirectory((attr & FILE_ATTRIBUTE_DIRECTORY) != 0),
-        isReadonly((attr & FILE_ATTRIBUTE_READONLY)   != 0)
-    {}
+    std::string name;   // LFN 8.3 name
+    DWORD size;         // < 4GB
+    bool isDir;         // is a directory
+    bool isRdOnly;      // is read only
+    HostFile() {}
+    // Construct a HostFile from an argument list
+    HostFile(const char* cName, DWORD nSize, bool isDir, bool isRdOnly) :
+        name(cName), size(nSize), isDir(isDir), isRdOnly(isRdOnly) {}
+    // Construct a HostFile from a WIN32_FIND_DATAA record.
+    HostFile(WIN32_FIND_DATAA fd) :
+        name(fd.cFileName), size(fd.nFileSizeLow),
+        isDir((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0),
+        isRdOnly((fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY) != 0) {}
 };
 
-// Global list of host files TODO: Use these
-static std::vector<HostFile> gFileList;
-static size_t gLastFileLoaded {};
-static size_t gLastDirPageFile {};
+struct FileList {
+    std::vector<HostFile> files;    // files
+    std::string directory;          // directory files are in
+    size_t cursor = 0;              // current file curspr
+    bool nextload_flag = false;     // enable next disk loading
+    // append a host file to the list
+    void append(const HostFile& hf) { files.push_back(hf); }
+};
 
-// Clean up slashes on directory or path
-void FixDirSlashes(std::string &dir);
-void FixDirSlashes(char *dir);
+static FileList gFileList;
 
-// Packed file records for interface
-#pragma pack(1)
-struct FileRecord {
+void GetFileList(const std::string& pattern);
+void SortFileList();
+
+//-------------------------------------------------------------------
+// Get list of files matching pattern starting from CurDir or SDRoot
+//-------------------------------------------------------------------
+void GetFileList(const std::string& pattern)
+{
+
+    DLOG_C("GetFileList %s\n",pattern.c_str());
+
+    // Init search results
+    gFileList = {};
+
+    // None if pattern is empty
+    if (pattern.empty()) return;
+
+    // Set up search path.
+    bool not_at_root = !gCurDir.empty();
+    bool rel_pattern = pattern.front() != '/';
+
+    std::string search_path = gSDRoot;
+    if (rel_pattern) {
+        search_path += "/";
+        if (not_at_root)
+            search_path += gCurDir + "/";
+    }
+    search_path += pattern;
+
+    // A directory lookup if pattern name is "*" or "*.*";
+    std::string fnpat = GetFileNamePart(pattern);
+    bool dir_lookup = (fnpat == "*" || fnpat == "*.*");
+
+    std::string search_dir = GetDirectoryPart(search_path);
+
+    // Include ".." if dir_lookup and search_dir is not SDRoot
+    if (dir_lookup && GetDirectoryPart(search_path) != gSDRoot) {
+        gFileList.append({"..", 0, true, false});
+    }
+
+    // Add matching files to the list
+    WIN32_FIND_DATAA fd;
+    HANDLE hFind = FindFirstFileA(search_path.c_str(), &fd);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        gFileList = {};
+        return;
+    }
+    do {
+        if (strcmp(fd.cFileName,".") == 0) continue;    // exclude single dot file
+        if (PathIsLFNFileSpecA(fd.cFileName)) continue; // exclude ugly or long filenames
+        if (fd.nFileSizeHigh != 0) continue;            // exclude files > 4 GB
+        gFileList.append({fd});
+    } while (FindNextFileA(hFind, &fd));
+    FindClose(hFind);
+
+    // Save directory
+    gFileList.directory = search_dir;
+
+    DLOG_C("GetFileList found %d\n",gFileList.files.size());
+}
+
+//-------------------------------------------------------------------
+// SortFileList() may be needed when mounting a directory
+//-------------------------------------------------------------------
+void SortFileList()
+{
+    std::sort(
+        gFileList.files.begin(),
+        gFileList.files.end(),
+        [] (const HostFile& a, const HostFile& b) {
+            return a.name < b.name;
+        }
+    );
+    gFileList.cursor = 0;
+}
+
+//=========================================================================
+// FileRecord is 16 packed bytes file name, type, attrib, and size that can
+// be passed directly via the SDC interface. gDirPage is a 256 byte block 
+// containing up to 16 packed FileRecords.
+//=========================================================================
+#pragma pack(push, 1)
+struct FileRecord
+{
     char FR_name[8];
     char FR_type[3];
     char FR_attrib;
@@ -309,9 +592,30 @@ struct FileRecord {
     char FR_lohi_size;
     char FR_hilo_size;
     char FR_lolo_size;
+    FileRecord() noexcept {};
+    // Construct FileRecord from a HostFile object.
+    FileRecord(const HostFile& hf) noexcept { 
+        memset(this, 0, sizeof(*this));
+        // name and type
+        sfn_from_lfn(FR_name, FR_type, hf.name);
+        // Attributes
+        FR_attrib = 0;
+        if (hf.isDir)     FR_attrib |= 0x10;
+        if (hf.isRdOnly)  FR_attrib |= 0x01;
+        // Size -> 4 reversed endian bytes
+        DWORD s = hf.size;
+        FR_hihi_size = (s >> 24) & 0xFF;
+        FR_lohi_size = (s >> 16) & 0xFF;
+        FR_hilo_size = (s >> 8)  & 0xFF;
+        FR_lolo_size = (s >> 0)  & 0xFF;
+    }
 };
-#pragma pack()
-static struct FileRecord DirPage[16];
+static struct FileRecord gDirPage[16] = {};
+#pragma pack(pop)
+
+//=========================================================================
+// CocoDisk contains info about mounted disk files 0 and 1 
+//=========================================================================
 
 enum DiskType {
     DTYPE_RAW = 0,
@@ -322,93 +626,94 @@ enum DiskType {
 };
 
 // Mounted image data
-struct CocoDisk_t {
-    HANDLE hFile;              // stream handle
-    unsigned int size;         // number of bytes total
-    unsigned int headersize;   // number of bytes in header
-    DWORD sectorsize;          // number of bytes per sector
-    DWORD tracksectors;        // number of sectors per side
-    DiskType type;             // Disk image type (RAW,DSK,JVC,VDK,SDF)
-    char doublesided;          // false:1 side, true:2 sides
-    char name[MAX_PATH];       // name of file (8.3)
-    char fullpath[MAX_PATH];   // full file path
+struct CocoDisk {
+    HANDLE hFile;               // file handle
+    unsigned int size;          // number of bytes total
+    unsigned int headersize;    // number of bytes in header
+    DWORD sectorsize;           // number of bytes per sector
+    DWORD tracksectors;         // number of sectors per side
+    DiskType type;              // Disk image type (RAW,DSK,JVC,VDK,SDF)
+    char doublesided;           // false:1 side, true:2 sides
+    char name[MAX_PATH];        // name of file (8.3)
+    char fullpath[MAX_PATH];    // full file path
+    struct HostFile hf{"",0,false,false}; //name,size,isDir,isRdOnly
     struct FileRecord filerec;
     // Constructor
-    CocoDisk_t() noexcept
+    CocoDisk() noexcept
         : hFile(INVALID_HANDLE_VALUE),
           size(0),
           headersize(0),
-          sectorsize(0),
-          tracksectors(0),
+          sectorsize(256),
+          tracksectors(18),
           type(DiskType::DTYPE_RAW),
-          doublesided(0) {
+          doublesided(1) {
         name[0] = '\0';
         fullpath[0] = '\0';
     };
 };
-CocoDisk_t gCocoDisk[2] {};
+CocoDisk gCocoDisk[2] {};
 
-// Flash banks
-static char FlashFile[8][MAX_PATH];
-static FILE *h_RomFile = nullptr;
-static unsigned char StartupBank = 0;
-static unsigned char CurrentBank = 0xff;
-static unsigned char EnableBankWrite = 0;
-static unsigned char BankWriteNum = 0;
-static unsigned char BankWriteState = 0;
-static unsigned char BankDirty = 0;
-static unsigned char BankData = 0;
+//----------------------------------------------------------------------
+//  Host File search.
+//----------------------------------------------------------------------
 
-// Dll handle
-static HINSTANCE gModuleInstance;
+bool SearchFile(const char* pattern)
+{
+    std::string s = pattern;
+    GetFileList(s);
+    DLOG_C("SearchFile found %d pat %s\n",gFileList.files.size(),s.c_str());
 
-// Clock enable IDC_CLOCK
-static int ClockEnable;
+    // Update menu to show next disk status
+    BuildCartridgeMenu();
 
-// Windows file lookup handle and data
-static HANDLE hFind = INVALID_HANDLE_VALUE;
-static WIN32_FIND_DATAA dFound;
+    return (gFileList.files.size() > 0);
+}
 
-// Window handles
-static HWND gVccWindow = nullptr;
-static HWND hConfigureDlg = nullptr;
-static HWND hSDCardBox = nullptr;
-static HWND hStartupBank = nullptr;
+//======================================================================
+// Static Globals
+//======================================================================
 
-// Streaming control
-static int streaming;
-static unsigned char stream_cmdcode;
-static unsigned int stream_lsn;
+static HINSTANCE gModuleInstance; // Dll handle
+static int idle_ctr = 0; // Idle Status counter
 
-// Status for VCC status line
-static char SDC_Status[16] = {};
-
-// Floppy I/O
-static char FlopDrive = 0;
-static char FlopData = 0;
-static char FlopTrack = 0;
-static char FlopSector = 0;
-static char FlopStatus = 0;
-static DWORD FlopWrCnt = 0;
-static DWORD FlopRdCnt = 0;
-static char FlopWrBuf[256];
-static char FlopRdBuf[256];
-
-static int EDBOXES[8] = {ID_TEXT0,ID_TEXT1,ID_TEXT2,ID_TEXT3,
-                         ID_TEXT4,ID_TEXT5,ID_TEXT6,ID_TEXT7};
-static int UPDBTNS[8] = {ID_UPDATE0,ID_UPDATE1,ID_UPDATE2,ID_UPDATE3,
-                         ID_UPDATE4,ID_UPDATE5,ID_UPDATE6,ID_UPDATE7};
-
-static char MPIPath[MAX_PATH];
-
-// DLL Callback pointers
+// Callback pointers
 static void* gCallbackContext = nullptr;
 static PakAssertInteruptHostCallback AssertIntCallback = nullptr;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
+static char IniFile[MAX_PATH] = {};  // Vcc ini file name
+
+// Data used elsewhere
+static HWND gVccWindow = nullptr;
+static HWND hConfigureDlg = nullptr;
+static int ClockEnable = 0;
+static char SDC_Status[16] = {};
+static char PakRom[0x4000] = {};
+static unsigned char CurrentBank = 0xff;
+static unsigned char EnableBankWrite = 0;
+static unsigned char BankWriteState = 0;
 
 //======================================================================
-// DLL exports
+// DLL interface
 //======================================================================
+
+//----------------------------------------------------------------------
+// Functions referenced by DLL interface
+//----------------------------------------------------------------------
+
+void LoadConfig();
+void BuildCartridgeMenu();
+//void CloseDrive(int);
+void UnloadDisk(int);
+void SDCWrite(unsigned char,unsigned char);
+unsigned char SDCRead(unsigned char port);
+LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
+bool SDCMountNext(int);
+void InitSDC();
+unsigned char SDCWriteFlashBank(unsigned short);
+
+//----------------------------------------------------------------------
+// DLL exports
+//----------------------------------------------------------------------
 extern "C"
 {
     // PakInitialize gets called first, sets up dynamic menues and captures callbacks
@@ -455,8 +760,10 @@ extern "C"
     {
         CloseCartDialog(hConfigureDlg);
         hConfigureDlg = nullptr;
-        CloseDrive(0);
-        CloseDrive(1);
+        UnloadDisk(0);
+        UnloadDisk(1);
+        //CloseDrive(0);
+        //CloseDrive(1);
     }
 
     // Write to port
@@ -482,7 +789,7 @@ extern "C"
     __declspec(dllexport) void PakReset()
     {
         DLOG_C("PakReset\n");
-        SDCInit();
+        InitSDC();
     }
 
     //  Dll export run config dialog
@@ -497,7 +804,7 @@ extern "C"
             ShowWindow(hConfigureDlg,1);
             break;
         case 11:
-            MountNext (0);
+            SDCMountNext (0);
             break;
         }
         BuildCartridgeMenu();
@@ -521,7 +828,7 @@ extern "C"
     {
         adr &= 0x3FFF;
         if (EnableBankWrite) {
-            return WriteFlashBank(adr);
+            return SDCWriteFlashBank(adr);
         } else {
             BankWriteState = 0;  // Any read resets write state
             return(PakRom[adr]);
@@ -529,9 +836,10 @@ extern "C"
     }
 }
 
-//-------------------------------------------------------------
-// Dll Main here so it can use PakTerminate
-//-------------------------------------------------------------
+//----------------------------------------------------------------------
+// DLL main
+//----------------------------------------------------------------------
+
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 {
     if (reason == DLL_PROCESS_ATTACH) {
@@ -541,6 +849,86 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
     }
     return TRUE;
 }
+
+//======================================================================
+// Unsorted Globals
+//======================================================================
+
+// SDC CoCo Interface
+struct Interface
+{
+    int sdclatch;
+    unsigned char cmdcode;
+    unsigned char status;
+    unsigned char reply1;
+    unsigned char reply2;
+    unsigned char reply3;
+    unsigned char param1;
+    unsigned char param2;
+    unsigned char param3;
+    unsigned char reply_mode;  // 0=words, 1=bytes
+    unsigned char reply_status;
+    unsigned char half_sent;
+    int bufcnt;
+    char *bufptr;
+    char blkbuf[600];
+};
+static Interface IF = {};
+
+//static std::string gSeaDir {}; // Last directory searched
+
+// Flash banks
+static char FlashFile[8][MAX_PATH];
+static FILE *h_RomFile = nullptr;
+static unsigned char StartupBank = 0;
+static unsigned char BankWriteNum = 0;
+static unsigned char BankDirty = 0;
+static unsigned char BankData = 0;
+// Following are in DLL section
+//static unsigned char CurrentBank = 0xff;
+//static unsigned char EnableBankWrite = 0;
+//static unsigned char BankWriteState = 0;
+
+// Clock enable IDC_CLOCK
+//static int ClockEnable;
+
+// Windows file lookup handle and data
+//static HANDLE hFind = INVALID_HANDLE_VALUE;
+//static WIN32_FIND_DATAA dFound;
+
+// Window handles
+static HWND hSDCardBox = nullptr;
+static HWND hStartupBank = nullptr;
+// Following two are in DLL section
+//static HWND hConfigureDlg = nullptr;
+//static HWND gVccWindow = nullptr;
+
+// Streaming control
+static int streaming;
+static unsigned char stream_cmdcode;
+static unsigned int stream_lsn;
+
+// Status for VCC status line
+//static char SDC_Status[16] = {};
+
+// Floppy I/O
+static char FlopDrive = 0;
+static char FlopData = 0;
+static char FlopTrack = 0;
+static char FlopSector = 0;
+static char FlopStatus = 0;
+static DWORD FlopWrCnt = 0;
+static DWORD FlopRdCnt = 0;
+static char FlopWrBuf[256];
+static char FlopRdBuf[256];
+
+static int EDBOXES[8] = {ID_TEXT0,ID_TEXT1,ID_TEXT2,ID_TEXT3,
+                         ID_TEXT4,ID_TEXT5,ID_TEXT6,ID_TEXT7};
+static int UPDBTNS[8] = {ID_UPDATE0,ID_UPDATE1,ID_UPDATE2,ID_UPDATE3,
+                         ID_UPDATE4,ID_UPDATE5,ID_UPDATE6,ID_UPDATE7};
+
+static char MPIPath[MAX_PATH];
+
 
 //=====================================================================
 // User interface
@@ -559,7 +947,11 @@ void BuildCartridgeMenu()
         strcpy(tmp,"empty");
     } else {
         strcpy(tmp,gCocoDisk[0].name);
-        strcat(tmp," (load next)");
+        if (gFileList.nextload_flag) {
+            strcat(tmp," (load next)");
+        } else {
+            strcat(tmp," (no next)");
+        }
     }
     CartMenuCallback(gCallbackContext, tmp, ControlId(11),MIT_Slave);
     CartMenuCallback(gCallbackContext, "SDC Config", ControlId(10), MIT_StandAlone);
@@ -840,29 +1232,28 @@ void SelectCardBox()
 //----------------------------------------------------------------------
 // Init the controller. This gets called by PakReset
 //----------------------------------------------------------------------
-void SDCInit()
+void InitSDC()
 {
 
-    DLOG_C("\nSDCInit\n");
+    DLOG_C("\nInitSDC\n");
 #ifdef USE_LOGGING
     MoveWindow(GetConsoleWindow(),0,0,300,800,TRUE);
 #endif
 
-    // Init the hFind handle (otherwise could crash on dll load)
-    hFind = INVALID_HANDLE_VALUE;
-
     // Make sure drives are unloaded
-    MountDisk (0,"",0);
-    MountDisk (1,"",0);
+    SDCMountDisk (0,"",0);
+    SDCMountDisk (1,"",0);
 
     // Load SDC settings
     LoadConfig();
     LoadRom(StartupBank);
 
-    SetCurDir(""); // May be changed by ParseStartup()
+    SDCSetCurDir(""); // May be changed by ParseStartup()
 
     gCocoDisk[0] = {};
     gCocoDisk[1] = {};
+
+    gFileList = {};
 
     // Process the startup config file
     ParseStartup();
@@ -983,18 +1374,23 @@ void ParseStartup()
         // Attempt to mount drive
         switch (drv) {
         case '0':
-            MountDisk(0,&buf[2],0);
+            SDCMountDisk(0,&buf[2],0);
             break;
         case '1':
-            MountDisk(1,&buf[2],0);
+            SDCMountDisk(1,&buf[2],0);
             break;
         case 'D':
-            SetCurDir(&buf[2]);
+            SDCSetCurDir(&buf[2]);
             break;
         }
     }
     fclose(su);
 }
+
+
+//=====================================================================
+// SDC Interface functions
+//=====================================================================
 
 //----------------------------------------------------------------------
 // Write port.  If a command needs a data block to complete it
@@ -1022,14 +1418,14 @@ void SDCWrite(unsigned char data,unsigned char port)
         // Command param #2 or block data receive
         case 0x4A:
             if (IF.bufcnt > 0)
-                BlockReceive(data);
+                SDCBlockReceive(data);
             else
                 IF.param2 = data;
             break;
         // Command param #3 or block data receive
         case 0x4B:
             if (IF.bufcnt > 0)
-                BlockReceive(data);
+                SDCBlockReceive(data);
             else
                 IF.param3 = data;
             break;
@@ -1073,23 +1469,23 @@ void SDCWrite(unsigned char data,unsigned char port)
             break;
         // Flash Control
         case 0x43:
-            FlashControl(data);
+            SDCFlashControl(data);
             break;
         // floppy command
         case 0x48:
-            FloppyCommand(data);
+            SDCFloppyCommand(data);
             break;
         // floppy set track
         case 0x49:
-            FloppyTrack(data);
+            SDCFloppyTrack(data);
             break;
         // floppy set sector
         case 0x4A:
-            FloppySector(data);
+            SDCFloppySector(data);
             break;
         // floppy write data
         case 0x4B:
-            FloppyWriteData(data);
+            SDCFloppyWriteData(data);
             break;
         // Unhandled
         default:
@@ -1123,7 +1519,7 @@ unsigned char SDCRead(unsigned char port)
         // Reply data 2 or block reply
         case 0x4A:
             if (IF.bufcnt > 0) {
-                rpy = PickReplyByte(port);
+                rpy = SDCPickReplyByte(port);
             } else {
                 rpy = IF.reply2;
             }
@@ -1131,7 +1527,7 @@ unsigned char SDCRead(unsigned char port)
         // Reply data 3 or block reply
         case 0x4B:
             if (IF.bufcnt > 0) {
-                rpy = PickReplyByte(port);
+                rpy = SDCPickReplyByte(port);
             } else {
                 rpy = IF.reply3;
             }
@@ -1143,17 +1539,34 @@ unsigned char SDCRead(unsigned char port)
         }
     } else {
         switch (port) {
+        case 0x40:
+            //Nitros9 driver reads this
+            DLOG_C("SDCRead floppy port 40?\n");
+            rpy = 0;
+            break;
         // Flash control read is used by SDCDOS to detect the SDC
         case 0x43:
             rpy = CurrentBank | (BankData & 0xF8);
             break;
         // Floppy read status
         case 0x48:
-            rpy = FloppyStatus();
+            rpy = SDCFloppyStatus();
+            break;
+        // Current Track
+        case 0x49:
+            //Nitros9 driver reads this every sector
+            //DLOG_C("SDCRead floppy track?\n");
+            rpy = 0;
+            break;
+        // Current Sector
+        case 0x4A:
+            //Nitros9 driver reads this every sector
+            //DLOG_C("SDCRead floppy sector?\n");
+            rpy = 0;
             break;
         // Floppy read data
         case 0x4B:
-            rpy = FloppyReadData();
+            rpy = SDCFloppyReadData();
             break;
         default:
             DLOG_C("SDCRead U %02x\n",port);
@@ -1165,18 +1578,52 @@ unsigned char SDCRead(unsigned char port)
 }
 
 //----------------------------------------------------------------------
+//  Dispatch SDC commands
+//----------------------------------------------------------------------
+void SDCCommand()
+{
+    switch (IF.cmdcode & 0xF0) {
+    // Read sector
+    case 0x80:
+        SDCReadSector();
+        break;
+    // Stream 512 byte sectors
+    case 0x90:
+        SDCStreamImage();
+        break;
+    // Get drive info
+    case 0xC0:
+        SDCGetDriveInfo();
+        break;
+     // Control SDC
+    case 0xD0:
+        SDCControl();
+        break;
+    // Next two are block receive commands
+    case 0xA0:
+    case 0xE0:
+        IF.status = STA_READY | STA_BUSY;
+        IF.bufptr = IF.blkbuf;
+        IF.bufcnt = 256;
+        IF.half_sent = 0;
+        break;
+    }
+    return;
+}
+
+//----------------------------------------------------------------------
 // Floppy I/O
 //----------------------------------------------------------------------
 
-void FloppyCommand(unsigned char data)
+void SDCFloppyCommand(unsigned char data)
 {
     unsigned char cmd = data >> 4;
     switch (cmd) {
     case 0:    //RESTORE
-        FloppyRestore();
+        SDCFloppyRestore();
         break;
     case 1:    //SEEK
-        FloppySeek();
+        SDCFloppySeek();
         break;
     //case 2:  //STEP
     //case 3:  //STEPUPD
@@ -1185,25 +1632,137 @@ void FloppyCommand(unsigned char data)
     //case 6:  //STEFOUT
     //case 7:  //STEPOUTUPD
     case 8:    //READSECTOR
-        FloppyReadDisk();
+    case 9:    //READSECTORM
+        SDCFloppyReadDisk();
         break;
-    //case 9:  //READSECTORM
     case 10:   //WRITESECTOR
-        FloppyWriteDisk();
+    case 11:   //WRITESECTORM
+        SDCFloppyWriteDisk();
         break;
-    //case 11: //WRITESECTORM
-    //case 12: //READADDRESS
-    //case 13: //FORCEINTERUPT
+    case 12: //READADDRESS
+        //Nitros9 driver does this
+        DLOG_C("SDCFloppyCommand read address?\n");
+        break;
+    case 13:   //FORCEINTERUPT
+        //Nitros9 driver does this
+        DLOG_C("SDCFloppyCommand force interrupt?\n");
+        break;
     //case 14: //READTRACK
     //case 15: //WRITETRACK
     default:
-        DLOG_C("Floppy cmd not implemented %d\n",cmd);
+        DLOG_C("SDCFloppyCommand %d not implemented\n",cmd);
         break;
     }
 }
 
+//----------------------------------------------------------------------
+// Get drive information
+//----------------------------------------------------------------------
+void SDCGetDriveInfo()
+{
+    int drive = IF.cmdcode & 1;
+    switch (IF.param1) {
+    case 0x49:
+        // 'I' - return drive information in block
+        SDCGetMountedImageRec();
+        break;
+    case 0x43:
+        // 'C' Return current directory leaf in block
+        SDCGetDirectoryLeaf();
+        break;
+    case 0x51:
+        // 'Q' Return the size of disk image in p1,p2,p3
+        SDCGetSectorCount();
+        break;
+    case 0x3E:
+        // '>' Get directory page
+        SDCLoadNextDirPage();
+        IF.reply_mode=0;
+        SDCLoadReply(gDirPage,256);
+        break;
+    case 0x2B:
+        // '+' Mount next next disk in set.
+        SDCMountNext(drive);
+        break;
+    case 0x56:
+        // 'V' Get BCD firmware version number in p2, p3.
+        IF.reply2 = 0x00;
+        IF.reply3 = 0x01;
+        break;
+    }
+}
+
+//----------------------------------------------------------------------
+//  Update SD Commands.
+//----------------------------------------------------------------------
+void SDCUpdateSD()
+{
+    switch (IF.blkbuf[0]) {
+    case 0x4D: //M
+        SDCMountDisk(IF.cmdcode&1,&IF.blkbuf[2],0);
+        break;
+    case 0x6D: //m
+        SDCMountDisk(IF.cmdcode&1,&IF.blkbuf[2],1);
+        break;
+    case 0x4E: //N
+        SDCMountNewDisk(IF.cmdcode&1,&IF.blkbuf[2],0);
+        break;
+    case 0x6E: //n
+        SDCMountNewDisk(IF.cmdcode&1,&IF.blkbuf[2],1);
+        break;
+    case 0x44: //D
+        SDCSetCurDir(&IF.blkbuf[2]);
+        break;
+    case 0x4C: //L
+        SDCInitiateDir(&IF.blkbuf[2]);
+        break;
+    case 0x4B: //K
+        SDCMakeDirectory(&IF.blkbuf[2]);
+        break;
+    case 0x52: //R
+        SDCRenameFile(&IF.blkbuf[2]);
+        break;
+    case 0x58: //X
+        SDCKillFile(&IF.blkbuf[2]);
+        break;
+    default:
+        DLOG_C("SDCUpdateSD %02x not Supported\n",IF.blkbuf[0]);
+        IF.status = STA_FAIL;
+        break;
+    }
+}
+
+//-------------------------------------------------------------------
+// Load a DirPage from FileList. Called until list is exhausted
+//-------------------------------------------------------------------
+bool SDCLoadNextDirPage()
+{
+    DLOG_C("SDCLoadNextDirPage cur:%d siz:%d\n",
+            gFileList.cursor,gFileList.files.size());
+
+    std::memset(gDirPage, 0, sizeof gDirPage);
+
+    if (gFileList.cursor >= gFileList.files.size()) {
+        DLOG_C("SDCLoadNextDirPage no files left\n");
+        return false;
+    }
+
+    size_t count = 0;
+    while (count < 16 && gFileList.cursor < gFileList.files.size()) {
+        gDirPage[count++] = FileRecord(gFileList.files[gFileList.cursor]);
+        ++gFileList.cursor;
+    }
+
+    // gFileList.cursor not valid for next file loading
+    gFileList.nextload_flag = false;
+
+    return true;
+}
+
+//----------------------------------------------------------------------
 // floppy restore
-void FloppyRestore()
+//----------------------------------------------------------------------
+void SDCFloppyRestore()
 {
     DLOG_C("FloppyRestore\n");
     FlopTrack = 0;
@@ -1214,19 +1773,23 @@ void FloppyRestore()
     AssertIntCallback(gCallbackContext, INT_NMI, IS_NMI);
 }
 
+//----------------------------------------------------------------------
 // floppy seek.  No attempt is made to simulate seek times here.
-void FloppySeek()
+//----------------------------------------------------------------------
+void SDCFloppySeek()
 {
     DLOG_C("FloppySeek %d %d\n",FlopTrack,FlopData);
     FlopTrack = FlopData;
 }
 
+//----------------------------------------------------------------------
 // convert side (drive), track, sector, to LSN.  The floppy controller
 // uses CHS addressing while hard drives, and the SDC, use LBA addressing.
 // FIXME:
 //  Nine sector tracks, (512 byte sectors)
 //  disk type: gCocoDisk[drive].type
-unsigned int FloppyLSN(
+//----------------------------------------------------------------------
+unsigned int SDCFloppyLSN(
         unsigned int drive,   // 0 or 1
         unsigned int track,   // 0 to num tracks
         unsigned int sector   // 1 to 18
@@ -1235,14 +1798,16 @@ unsigned int FloppyLSN(
     return track * 18 + sector - 1;
 }
 
+//----------------------------------------------------------------------
 // floppy read sector
-void FloppyReadDisk()
+//----------------------------------------------------------------------
+void SDCFloppyReadDisk()
 {
-    auto lsn = FloppyLSN(FlopDrive,FlopTrack,FlopSector);
+    auto lsn = SDCFloppyLSN(FlopDrive,FlopTrack,FlopSector);
     //DLOG_C("FloppyReadDisk %d %d\n",FlopDrive,lsn);
 
     snprintf(SDC_Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
-    if (SeekSector(FlopDrive,lsn)) {
+    if (SDCSeekSector(FlopDrive,lsn)) {
         if (ReadFile(gCocoDisk[FlopDrive].hFile,FlopRdBuf,256,&FlopRdCnt,nullptr)) {
             DLOG_C("FloppyReadDisk %d %d\n",FlopDrive,lsn);
             FlopStatus = FLP_DATAREQ;
@@ -1256,8 +1821,10 @@ void FloppyReadDisk()
     }
 }
 
+//----------------------------------------------------------------------
 // floppy write sector
-void FloppyWriteDisk()
+//----------------------------------------------------------------------
+void SDCFloppyWriteDisk()
 {
     // write not implemented
     int lsn = FlopTrack * 18 + FlopSector - 1;
@@ -1265,14 +1832,18 @@ void FloppyWriteDisk()
     FlopStatus = FLP_READONLY;
 }
 
+//----------------------------------------------------------------------
 // floppy set track
-void FloppyTrack(unsigned char data)
+//----------------------------------------------------------------------
+void SDCFloppyTrack(unsigned char data)
 {
     FlopTrack = data;
 }
 
+//----------------------------------------------------------------------
 // floppy set sector
-void FloppySector(unsigned char data)
+//----------------------------------------------------------------------
+void SDCFloppySector(unsigned char data)
 {
     FlopSector = data;  // Sector num in track (1-18)
     //int lsn = FlopTrack * 18 + FlopSector - 1;
@@ -1280,8 +1851,10 @@ void FloppySector(unsigned char data)
     FlopStatus = FLP_NORMAL;
 }
 
+//----------------------------------------------------------------------
 // floppy write data
-void FloppyWriteData(unsigned char data)
+//----------------------------------------------------------------------
+void SDCFloppyWriteData(unsigned char data)
 {
     //DLOG_C("FloppyWriteData %d\n",data);
     if (FlopWrCnt<256)  {
@@ -1295,15 +1868,19 @@ void FloppyWriteData(unsigned char data)
     FlopData = data;
 }
 
+//----------------------------------------------------------------------
 // floppy get status
-unsigned char FloppyStatus()
+//----------------------------------------------------------------------
+unsigned char SDCFloppyStatus()
 {
     //DLOG_C("FloppyStatus %02x\n",FlopStatus);
     return FlopStatus;
 }
 
+//----------------------------------------------------------------------
 // floppy read data
-unsigned char FloppyReadData()
+//----------------------------------------------------------------------
+unsigned char SDCFloppyReadData()
 {
     unsigned char rpy;
     if (FlopRdCnt>0)  {
@@ -1323,7 +1900,7 @@ unsigned char FloppyReadData()
 // has most replies in words and the order the word bytes are read can
 // vary so we play games to send the right ones
 //----------------------------------------------------------------------
-unsigned char PickReplyByte(unsigned char port)
+unsigned char SDCPickReplyByte(unsigned char port)
 {
     unsigned char rpy = 0;
 
@@ -1350,50 +1927,15 @@ unsigned char PickReplyByte(unsigned char port)
     }
 
     // Keep stream going until stopped
-    if ((IF.bufcnt < 1) && streaming) StreamImage();
+    if ((IF.bufcnt < 1) && streaming) SDCStreamImage();
 
     return rpy;
 }
 
 //----------------------------------------------------------------------
-//  Dispatch SDC commands
-//----------------------------------------------------------------------
-void SDCCommand()
-{
-
-    switch (IF.cmdcode & 0xF0) {
-    // Read sector
-    case 0x80:
-        ReadSector();
-        break;
-    // Stream 512 byte sectors
-    case 0x90:
-        StreamImage();
-        break;
-    // Get drive info
-    case 0xC0:
-        GetDriveInfo();
-        break;
-     // Control SDC
-    case 0xD0:
-        SDCControl();
-        break;
-    // Next two are block receive commands
-    case 0xA0:
-    case 0xE0:
-        IF.status = STA_READY | STA_BUSY;
-        IF.bufptr = IF.blkbuf;
-        IF.bufcnt = 256;
-        IF.half_sent = 0;
-        break;
-    }
-    return;
-}
-
-//----------------------------------------------------------------------
 // Receive block data
 //----------------------------------------------------------------------
-void BlockReceive(unsigned char byte)
+void SDCBlockReceive(unsigned char byte)
 {
     if (IF.bufcnt > 0) {
         IF.bufcnt--;
@@ -1404,53 +1946,16 @@ void BlockReceive(unsigned char byte)
     if (IF.bufcnt < 1) {
         switch (IF.cmdcode & 0xF0) {
         case 0xA0:
-            WriteSector();
+            SDCWriteSector();
             break;
         case 0xE0:
-            UpdateSD();
+            SDCUpdateSD();
             break;
         default:
-            DLOG_C("BlockReceive invalid cmd %d\n",IF.cmdcode);
+            DLOG_C("SDCBlockReceive invalid cmd %d\n",IF.cmdcode);
             IF.status = STA_FAIL;
             break;
         }
-    }
-}
-
-//----------------------------------------------------------------------
-// Get drive information
-//----------------------------------------------------------------------
-void GetDriveInfo()
-{
-    int drive = IF.cmdcode & 1;
-    switch (IF.param1) {
-    case 0x49:
-        // 'I' - return drive information in block
-        GetMountedImageRec();
-        break;
-    case 0x43:
-        // 'C' Return current directory leaf in block
-        GetDirectoryLeaf();
-        break;
-    case 0x51:
-        // 'Q' Return the size of disk image in p1,p2,p3
-        GetSectorCount();
-        break;
-    case 0x3E:
-        // '>' Get directory page
-        LoadDirPage();
-        IF.reply_mode=0;
-        LoadReply(DirPage,256);
-        break;
-    case 0x2B:
-        // '+' Mount next next disk in set.
-        MountNext(drive);
-        break;
-    case 0x56:
-        // 'V' Get BCD firmware version number in p2, p3.
-        IF.reply2 = 0x00;
-        IF.reply3 = 0x01;
-        break;
     }
 }
 
@@ -1462,7 +1967,7 @@ void GetDriveInfo()
 // path when restore last session is active. The full path is saved in
 // SDCX.CFG for the next session.
 //----------------------------------------------------------------------
-void GetDirectoryLeaf()
+void SDCGetDirectoryLeaf()
 {
     namespace fs = std::filesystem;
 
@@ -1476,56 +1981,16 @@ void GetDirectoryLeaf()
     } else {
         IF.reply_status = STA_FAIL | STA_NOTFOUND;
     }
-    DLOG_C("GetDirectoryLeaf CurDir '%s' leaf '%s' \n", gCurDir.c_str(),leaf);
+    DLOG_C("SDCGetDirectoryLeaf CurDir '%s' leaf '%s' \n", gCurDir.c_str(),leaf);
 
     IF.reply_mode = 0;
-    LoadReply(leaf, sizeof(leaf));
-}
-
-//----------------------------------------------------------------------
-//  Update SD Commands.
-//----------------------------------------------------------------------
-void UpdateSD()
-{
-    switch (IF.blkbuf[0]) {
-    case 0x4D: //M
-        MountDisk(IF.cmdcode&1,&IF.blkbuf[2],0);
-        break;
-    case 0x6D: //m
-        MountDisk(IF.cmdcode&1,&IF.blkbuf[2],1);
-        break;
-    case 0x4E: //N
-        MountNewDisk(IF.cmdcode&1,&IF.blkbuf[2],0);
-        break;
-    case 0x6E: //n
-        MountNewDisk(IF.cmdcode&1,&IF.blkbuf[2],1);
-        break;
-    case 0x44: //D
-        SetCurDir(&IF.blkbuf[2]);
-        break;
-    case 0x4C: //L
-        InitiateDir(&IF.blkbuf[2]);
-        break;
-    case 0x4B: //K
-        MakeDirectory(&IF.blkbuf[2]);
-        break;
-    case 0x52: //R
-        RenameFile(&IF.blkbuf[2]);
-        break;
-    case 0x58: //X
-        KillFile(&IF.blkbuf[2]);
-        break;
-    default:
-        DLOG_C("UpdateSD %02x not Supported\n",IF.blkbuf[0]);
-        IF.status = STA_FAIL;
-        break;
-    }
+    SDCLoadReply(leaf, sizeof(leaf));
 }
 
 //----------------------------------------------------------------------
 // Flash control
 //----------------------------------------------------------------------
-void FlashControl(unsigned char data)
+void SDCFlashControl(unsigned char data)
 {
     unsigned char bank = data & 7;
     EnableBankWrite = data & 0x80;
@@ -1558,9 +2023,9 @@ void FlashControl(unsigned char data)
 //    state 6 write bank # adr sect val 30 kill bank # sect (adr & 0x3000)
 //
 //----------------------------------------------------------------------
-unsigned char WriteFlashBank(unsigned short adr)
+unsigned char SDCWriteFlashBank(unsigned short adr)
 {
-    DLOG_C("WriteFlashBank %d %d %04X %02X\n",
+    DLOG_C("SDCWriteFlashBank %d %d %04X %02X\n",
             BankWriteState,BankWriteNum,adr,BankData);
 
     // BankWriteState controls the write or kill
@@ -1608,93 +2073,20 @@ unsigned char WriteFlashBank(unsigned short adr)
 }
 
 //----------------------------------------------------------------------
-// Seek sector in drive image
-//  cmdcode:
-//    b0 drive number
-//    b1 single sided LSN flag
-//    b2 eight bit transfer flag
-//
-//----------------------------------------------------------------------
-bool SeekSector(unsigned char cmdcode, unsigned int lsn)
-{
-    int drive = cmdcode & 1; // Drive number 0 or 1
-    int sside = cmdcode & 2; // Single sided LSN flag
-
-    int trk = lsn / gCocoDisk[drive].tracksectors;
-    int sec = lsn % gCocoDisk[drive].tracksectors;
-
-    // The single sided LSN flag tells the controller that the lsn
-    // assumes the disk image is a single-sided floppy disk. If the
-    // disk is actually double-sided the LSN must be adjusted.
-    if (sside && gCocoDisk[drive].doublesided) {
-        DLOG_C("SeekSector sside %d %d\n",drive,lsn);
-        lsn = 2 * gCocoDisk[drive].tracksectors * trk + sec;
-    }
-
-    // Allow seek to expand a writable file to a resonable limit
-    if (lsn > MAX_DSK_SECTORS) {
-        DLOG_C("SeekSector exceed max image %d %d\n",drive,lsn);
-        return false;
-    }
-
-    // Seek to logical sector on drive.
-    LARGE_INTEGER pos{0};
-    pos.QuadPart = lsn * gCocoDisk[drive].sectorsize + gCocoDisk[drive].headersize;
-
-    if (!SetFilePointerEx(gCocoDisk[drive].hFile,pos,nullptr,FILE_BEGIN)) {
-        DLOG_C("SeekSector error %s\n",LastErrorTxt());
-        return false;
-    }
-    return true;
-}
-
-//----------------------------------------------------------------------
-// Read a sector from drive image and load reply
-//----------------------------------------------------------------------
-bool ReadDrive(unsigned char cmdcode, unsigned int lsn)
-{
-    char buf[520];
-    DWORD cnt = 0;
-    int drive = cmdcode & 1;
-    if (gCocoDisk[drive].hFile == nullptr) {
-        DLOG_C("ReadDrive %d not open\n");
-        return false;
-    }
-
-    if (!SeekSector(cmdcode,lsn)) {
-        return false;
-    }
-
-    if (!ReadFile(gCocoDisk[drive].hFile,buf,gCocoDisk[drive].sectorsize,&cnt,nullptr)) {
-        DLOG_C("ReadDrive %d %s\n",drive,LastErrorTxt());
-        return false;
-    }
-
-    if (cnt != gCocoDisk[drive].sectorsize) {
-        DLOG_C("ReadDrive %d short read\n",drive);
-        return false;
-    }
-
-    snprintf(SDC_Status,16,"SDC:%d Rd %d,%d",CurrentBank,drive,lsn);
-    LoadReply(buf,cnt);
-    return true;
-}
-
-//----------------------------------------------------------------------
 // Read logical sector
 // cmdcode:
 //    b0 drive number
 //    b1 single sided flag
 //    b2 eight bit transfer flag
 //----------------------------------------------------------------------
-void ReadSector()
+void SDCReadSector()
 {
     unsigned int lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
 
-    DLOG_C("R%d\n",lsn);
+    //DLOG_C("R%d\n",lsn);
 
     IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1; // words : bytes
-    if (!ReadDrive(IF.cmdcode,lsn))
+    if (!SDCReadDrive(IF.cmdcode,lsn))
         IF.status = STA_FAIL | STA_READERROR;
     else
         IF.status = STA_NORMAL;
@@ -1703,7 +2095,7 @@ void ReadSector()
 //----------------------------------------------------------------------
 // Stream image data
 //----------------------------------------------------------------------
-void StreamImage()
+void SDCStreamImage()
 {
     // If already streaming continue
     if (streaming) {
@@ -1713,7 +2105,7 @@ void StreamImage()
         stream_cmdcode = IF.cmdcode;
         IF.reply_mode = ((IF.cmdcode & 4) == 0) ? 0 : 1;
         stream_lsn = (IF.param1 << 16) + (IF.param2 << 8) + IF.param3;
-        DLOG_C("StreamImage lsn %d\n",stream_lsn);
+        DLOG_C("SDCStreamImage lsn %d\n",stream_lsn);
     }
 
     // For now can only stream 512 byte sectors
@@ -1722,13 +2114,13 @@ void StreamImage()
     gCocoDisk[drive].tracksectors = 9;
 
     if (stream_lsn > (gCocoDisk[drive].size/gCocoDisk[drive].sectorsize)) {
-        DLOG_C("StreamImage done\n");
+        DLOG_C("SDCStreamImage done\n");
         streaming = 0;
         return;
     }
 
-    if (!ReadDrive(stream_cmdcode,stream_lsn)) {
-        DLOG_C("StreamImage read error %s\n",LastErrorTxt());
+    if (!SDCReadDrive(stream_cmdcode,stream_lsn)) {
+        DLOG_C("SDCStreamImage read error %s\n",LastErrorTxt());
         IF.status = STA_FAIL;
         streaming = 0;
         return;
@@ -1739,7 +2131,7 @@ void StreamImage()
 //----------------------------------------------------------------------
 // Write logical sector
 //----------------------------------------------------------------------
-void WriteSector()
+void SDCWriteSector()
 {
     DWORD cnt = 0;
     int drive = IF.cmdcode & 1;
@@ -1751,18 +2143,18 @@ void WriteSector()
         return;
     }
 
-    if (!SeekSector(drive,lsn)) {
+    if (!SDCSeekSector(drive,lsn)) {
         IF.status = STA_FAIL;
         return;
     }
     if (!WriteFile(gCocoDisk[drive].hFile,IF.blkbuf,
                    gCocoDisk[drive].sectorsize,&cnt,nullptr)) {
-        DLOG_C("WriteSector %d %s\n",drive,LastErrorTxt());
+        DLOG_C("SDCWriteSector %d %s\n",drive,LastErrorTxt());
         IF.status = STA_FAIL;
         return;
     }
     if (cnt != gCocoDisk[drive].sectorsize) {
-        DLOG_C("WriteSector %d short write\n",drive);
+        DLOG_C("SDCWriteSector %d short write\n",drive);
         IF.status = STA_FAIL;
         return;
     }
@@ -1773,7 +2165,7 @@ void WriteSector()
 //----------------------------------------------------------------------
 // Return sector count for mounted disk image
 //----------------------------------------------------------------------
-void  GetSectorCount() {
+void  SDCGetSectorCount() {
 
     int drive = IF.cmdcode & 1;
     unsigned int numsec = gCocoDisk[drive].size/gCocoDisk[drive].sectorsize;
@@ -1788,15 +2180,15 @@ void  GetSectorCount() {
 //----------------------------------------------------------------------
 // Return file record for mounted disk image
 //----------------------------------------------------------------------
-void GetMountedImageRec()
+void SDCGetMountedImageRec()
 {
     int drive = IF.cmdcode & 1;
-    //DLOG_C("GetMountedImageRec %d %s\n",drive,gCocoDisk[drive].fullpath);
+    //DLOG_C("SDCGetMountedImageRec %d %s\n",drive,gCocoDisk[drive].fullpath);
     if (strlen(gCocoDisk[drive].fullpath) == 0) {
         IF.status = STA_FAIL;
     } else {
         IF.reply_mode = 0;
-        LoadReply(&gCocoDisk[drive].filerec,sizeof(FileRecord));
+        SDCLoadReply(&gCocoDisk[drive].filerec,sizeof(FileRecord));
     }
 }
 
@@ -1822,12 +2214,85 @@ void SDCControl()
 }
 
 //----------------------------------------------------------------------
+// Seek sector in drive image
+//  cmdcode:
+//    b0 drive number
+//    b1 single sided LSN flag
+//    b2 eight bit transfer flag
+//
+//----------------------------------------------------------------------
+bool SDCSeekSector(unsigned char cmdcode, unsigned int lsn)
+{
+    int drive = cmdcode & 1; // Drive number 0 or 1
+    int sside = cmdcode & 2; // Single sided LSN flag
+
+    int trk = lsn / gCocoDisk[drive].tracksectors;
+    int sec = lsn % gCocoDisk[drive].tracksectors;
+
+    // The single sided LSN flag tells the controller that the lsn
+    // assumes the disk image is a single-sided floppy disk. If the
+    // disk is actually double-sided the LSN must be adjusted.
+    if (sside && gCocoDisk[drive].doublesided) {
+        DLOG_C("SDCSeekSector sside %d %d\n",drive,lsn);
+        lsn = 2 * gCocoDisk[drive].tracksectors * trk + sec;
+    }
+
+    // Allow seek to expand a writable file to a resonable limit
+    if (lsn > MAX_DSK_SECTORS) {
+        DLOG_C("SDCSeekSector exceed max image %d %d\n",drive,lsn);
+        return false;
+    }
+
+    // Seek to logical sector on drive.
+    LARGE_INTEGER pos{0};
+    pos.QuadPart = lsn * gCocoDisk[drive].sectorsize + gCocoDisk[drive].headersize;
+
+    if (!SetFilePointerEx(gCocoDisk[drive].hFile,pos,nullptr,FILE_BEGIN)) {
+        DLOG_C("SDCSeekSector error %s\n",LastErrorTxt());
+        return false;
+    }
+    return true;
+}
+
+//----------------------------------------------------------------------
+// Read a sector from drive image and load reply
+//----------------------------------------------------------------------
+bool SDCReadDrive(unsigned char cmdcode, unsigned int lsn)
+{
+    char buf[520];
+    DWORD cnt = 0;
+    int drive = cmdcode & 1;
+    if (gCocoDisk[drive].hFile == nullptr) {
+        DLOG_C("SDCReadDrive %d not open\n");
+        return false;
+    }
+
+    if (!SDCSeekSector(cmdcode,lsn)) {
+        return false;
+    }
+
+    if (!ReadFile(gCocoDisk[drive].hFile,buf,gCocoDisk[drive].sectorsize,&cnt,nullptr)) {
+        DLOG_C("SDCReadDrive %d %s\n",drive,LastErrorTxt());
+        return false;
+    }
+
+    if (cnt != gCocoDisk[drive].sectorsize) {
+        DLOG_C("SDCReadDrive %d short read\n",drive);
+        return false;
+    }
+
+    snprintf(SDC_Status,16,"SDC:%d Rd %d,%d",CurrentBank,drive,lsn);
+    SDCLoadReply(buf,cnt);
+    return true;
+}
+
+//----------------------------------------------------------------------
 // Load reply. Count is bytes, 512 max.
 //----------------------------------------------------------------------
-void LoadReply(const void *data, int count)
+void SDCLoadReply(const void *data, int count)
 {
     if ((count < 2) | (count > 512)) {
-        DLOG_C("LoadReply bad count %d\n",count);
+        DLOG_C("SDCLoadReply bad count %d\n",count);
         return;
     }
 
@@ -1845,121 +2310,47 @@ void LoadReply(const void *data, int count)
 }
 
 //----------------------------------------------------------------------
-// A file path may use SDC format which does not use a dot to separate
-// the name from the extension. User is free to use standard dot format.
-//    "FOODIR/FOO.DSK"     = FOODIR/FOO.DSK
-//    "FOODIR/FOO     DSK" = FOODIR/FOO.DSK
-//    "FOODIR/ALONGFOODSK" = FOODIR/ALONGFOO.DSK
-//----------------------------------------------------------------------
-std::string FixSDCPath(const std::string& sdcpath)
-{
-    std::filesystem::path p(sdcpath);
-
-    auto chop = [](std::string s) {
-        size_t space = s.find(' ');
-        if (space != std::string::npos) s.erase(space);
-        return s;
-    };
-
-    std::string fname = p.filename().string();
-    if (fname.length() == 11 && fname.find('.') == std::string::npos) {
-        auto nam = chop(fname.substr(0,8));
-        auto ext = chop(fname.substr(8,3));
-        fname = ext.empty() ? nam : nam + "." + ext;
-    }
-
-    std::filesystem::path out = p.parent_path() / fname;
-
-    DLOG_C("FixSDCPath in %s out %s\n",sdcpath.c_str(),out.generic_string().c_str());
-    return out.generic_string();
-}
-
-void FixSDCPath(char* path, const char* sdcpath)
-{
-    std::string fixed = FixSDCPath(std::string(sdcpath));
-    strncpy(path, fixed.c_str(), MAX_PATH);
-    path[MAX_PATH - 1] = '\0';
-}
-
-//----------------------------------------------------------------------
-// Load a file record with the file found by Find File
-//----------------------------------------------------------------------
-bool LoadFoundFile(struct FileRecord * rec)
-{
-    std::string fname = dFound.cFileName;
-
-    // clear the file record
-    memset(rec,0,sizeof(rec));
-
-    // Ignore single dot or two dots if current dir is root
-    if (fname == ".") return false;
-    if (fname == ".." && gCurDir == "") return false;
-
-    // Split found file name into name and extension
-    std::string nam, ext;
-
-    // Two dots or no dot is a file without an extension
-    auto dot = fname.find_last_of('.');
-    if (fname == ".." || dot == std::string::npos) {
-        nam = fname;
-        ext = "";
-    } else {
-        nam = fname.substr(0, dot);
-        ext = fname.substr(dot + 1);
-    }
-
-    // Fill or trim as required to fit 8.3
-    nam.resize(8,' ');
-    ext.resize(3,' ');
-    std::memcpy(rec->FR_name, nam.data(), 8);
-    std::memcpy(rec->FR_type, ext.data(), 3);
-
-    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
-        rec->FR_attrib |= ATTR_RDONLY;
-    }
-
-    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        rec->FR_attrib |= ATTR_DIR;
-    }
-
-    // Filesize max 4G. Byte order is reversed so copy byte by byte
-    rec->FR_lolo_size = (dFound.nFileSizeLow) & 0xFF;
-    rec->FR_hilo_size = (dFound.nFileSizeLow >> 8) & 0xFF;
-    rec->FR_lohi_size = (dFound.nFileSizeLow >> 16) & 0xFF;
-    rec->FR_hihi_size = (dFound.nFileSizeLow >> 24) & 0xFF;
-
-    return true;
-}
-
-//----------------------------------------------------------------------
 // Create and mount a new disk image
 //  IF.param1 == 0 create 161280 byte JVC file
 //  IF.param1 SDF image number of cylinders
 //  IF.param2 SDC image number of sides
 //----------------------------------------------------------------------
-void MountNewDisk (int drive, const char * path, int raw)
+void SDCMountNewDisk (int drive, const char * path, int raw)
 {
-    //DLOG_C("MountNewDisk %d %s %d\n",drive,path,raw);
-
+    DLOG_C("SDCMountNewDisk %d %s %d\n",drive,path,raw);
     // limit drive to 0 or 1
     drive &= 1;
 
     // Close and clear previous entry
-    CloseDrive(drive);
-    gCocoDisk[drive] = {};
+    UnloadDisk(drive);
+    //CloseDrive(drive);
+    //gCocoDisk[drive] = {};
 
     // Convert from SDC format
     char file[MAX_PATH];
-    FixSDCPath(file,path);
+    FixFATPath(file,path);
 
     // Look for pre-existing file
     if (SearchFile(file)) {
-        OpenFound(drive,raw);
+        SDCOpenFound(drive,raw);
         return;
     }
 
-    OpenNew(drive,path,raw);
+    SDCOpenNew(drive,path,raw);
     return;
+}
+
+//----------------------------------------------------------------------
+// Unload disk in drive
+//----------------------------------------------------------------------
+void UnloadDisk(int drive) {
+    int d = drive & 1;
+    if ( gCocoDisk[d].hFile && 
+         gCocoDisk[d].hFile != INVALID_HANDLE_VALUE) {
+        CloseHandle(gCocoDisk[d].hFile);
+        DLOG_C("UnloadDisk %d %s\n",drive,gCocoDisk[d].name);
+    }
+    gCocoDisk[d] = {};
 }
 
 //----------------------------------------------------------------------
@@ -1970,19 +2361,18 @@ void MountNewDisk (int drive, const char * path, int raw)
 // the 'Next Disk' function.
 // TODO: Sets of type SOMEAPPn.DSK
 //----------------------------------------------------------------------
-void MountDisk (int drive, const char * path, int raw)
+void SDCMountDisk (int drive, const char * path, int raw)
 {
-    DLOG_C("MountDisk %d %s %d\n",drive,path,raw);
+    DLOG_C("SDCMountDisk %d %s %d\n",drive,path,raw);
 
     drive &= 1;
 
-    // Close and clear previous entry
-    CloseDrive(drive);
-    gCocoDisk[drive] = {};
+    // Unload previous dsk
+    UnloadDisk(drive);
 
     // Check for UNLOAD.  Path will be an empty string.
     if (*path == '\0') {
-        DLOG_C("MountDisk unload %d %s\n",drive,path);
+        DLOG_C("SDCMountDisk unload %d %s\n",drive,path);
         IF.status = STA_NORMAL;
         if (drive == 0) BuildCartridgeMenu();
         return;
@@ -1990,7 +2380,7 @@ void MountDisk (int drive, const char * path, int raw)
 
     // Convert from SDC format
     char file[MAX_PATH];
-    FixSDCPath(file,path);
+    FixFATPath(file,path);  //TODO use new routine
 
     // Look for the file
     bool found = SearchFile(file);
@@ -2011,31 +2401,46 @@ void MountDisk (int drive, const char * path, int raw)
 
     // Give up
     if (!found) {
-        DLOG_C("MountDisk not found '%s'\n",file);
+        DLOG_C("SDCMountDisk not found '%s'\n",file);
         IF.status = STA_FAIL | STA_NOTFOUND;
         return;
     }
 
     // Mount first image found
-    OpenFound(drive,raw);
+    SDCOpenFound(drive,raw);
     return;
 }
 
 //----------------------------------------------------------------------
 // Mount Next Disk from found set
 //----------------------------------------------------------------------
-bool MountNext (int drive)
+bool SDCMountNext (int drive)
 {
-    //FIXME: should loop back to first file at end of set
-    if (FindNextFile(hFind,&dFound) == 0) {
-        DLOG_C("MountNext no more\n");
-        FindClose(hFind);
-        hFind = INVALID_HANDLE_VALUE;
+
+    // Can't mount next unless disk set has been loaded
+    if (!gFileList.nextload_flag) {
+        DLOG_C("SDCMountNext disabled\n");
         return false;
     }
 
+    if (gFileList.files.size() <= 1) {
+        DLOG_C("SDCMountNext List empty or only one file\n");
+        return false;
+    }
+
+    gFileList.cursor++;
+
+    if (gFileList.cursor >= gFileList.files.size()) {
+        gFileList.cursor = 0;
+        DLOG_C("SDCMountNext reset cursor\n");
+    }
+    
+    DLOG_C("SDCMountNext %d %d\n", 
+                gFileList.cursor, gFileList.files.size());
+
     // Open next image found on the drive
-    OpenFound(drive,0);
+    SDCOpenFound(drive,0);
+
     return true;
 }
 
@@ -2045,18 +2450,18 @@ bool MountNext (int drive)
 //  IF.Param1: $FF49 B   number of cylinders for SDF
 //  IF.Param2: $FF4A X.H number of sides for SDF image
 //
-//  OpenNew 0 'A.DSK' 0 40 0 NEW
-//  OpenNew 0 'B.DSK' 0 40 1 NEW++ one side
-//  OpenNew 0 'C.DSK' 0 40 2 NEW++ two sides
+//  SDCOpenNew 0 'A.DSK' 0 40 0 NEW
+//  SDCOpenNew 0 'B.DSK' 0 40 1 NEW++ one side
+//  SDCOpenNew 0 'C.DSK' 0 40 2 NEW++ two sides
 //
 //  Currently new JVC files are 35 cylinders, one sided
 //  Possibly future num cylinders could specify 40 or more
 //  cylinders with num cyl controlling num sides
 //
 //----------------------------------------------------------------------
-void OpenNew( int drive, const char * path, int raw)
+void SDCOpenNew( int drive, const char * path, int raw)
 {
-    DLOG_C("OpenNew %d '%s' %d %d %d\n",
+    DLOG_C("SDCOpenNew %d '%s' %d %d %d\n",
           drive,path,raw,IF.param1,IF.param2);
 
     // Number of sides controls file type
@@ -2066,7 +2471,7 @@ void OpenNew( int drive, const char * path, int raw)
         break;
     case 1:    //NEW+
     case 2:    //NEW++
-        DLOG_C("OpenNew SDF file not supported\n");
+        DLOG_C("SDCOpenNew SDF file not supported\n");
         IF.status = STA_FAIL | STA_INVALID;
         return;
     }
@@ -2075,12 +2480,12 @@ void OpenNew( int drive, const char * path, int raw)
     fs::path fqn = fs::path(gSDRoot) / gCurDir / path;
 
     if (fs::is_directory(fqn)) {
-        DLOG_C("OpenNew %s is a directory\n",path);
+        DLOG_C("SDCOpenNew %s is a directory\n",path);
         IF.status = STA_FAIL | STA_INVALID;
         return;
     }
+    UnloadDisk(drive);
 
-    CloseDrive(drive);
     strncpy(gCocoDisk[drive].fullpath,fqn.string().c_str(),MAX_PATH);
 
     // Open file for write
@@ -2089,7 +2494,7 @@ void OpenNew( int drive, const char * path, int raw)
         nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
 
     if (gCocoDisk[drive].hFile == INVALID_HANDLE_VALUE) {
-        DLOG_C("OpenNew fail %d file %s\n",drive,gCocoDisk[drive].fullpath);
+        DLOG_C("SDCOpenNew fail %d file %s\n",drive,gCocoDisk[drive].fullpath);
         DLOG_C("... %s\n",LastErrorTxt());
         IF.status = STA_FAIL | STA_WIN_ERROR;
         return;
@@ -2132,41 +2537,36 @@ void OpenNew( int drive, const char * path, int raw)
 //----------------------------------------------------------------------
 // Open disk image found.  Raw flag skips file type checks
 //----------------------------------------------------------------------
-void OpenFound (int drive,int raw)
+void SDCOpenFound (int drive,int raw)
 {
     drive &= 1;
     int writeprotect = 0;
 
-    DLOG_C("OpenFound drive %d %s hfile %d\n",
-        drive, dFound.cFileName, gCocoDisk[drive].hFile);
+    if (gFileList.cursor >= gFileList.files.size()) {
+        DLOG_C("SDCOpenFound no file %d %d %d\n",
+            drive, gFileList.cursor, gFileList.files.size());
+        return;
+    }
 
-    CloseDrive(drive);
-    *gCocoDisk[drive].name = '\0';
+    UnloadDisk(drive);
 
-    namespace fs = std::filesystem;
+    std::string name = gFileList.files[gFileList.cursor].name.c_str();
+    DLOG_C("SDCOpenFound drive %d %d %s\n",
+            drive, gFileList.cursor, name.c_str());
 
-    // If found item is a directory
-    if (dFound.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+    if (gFileList.files[gFileList.cursor].isDir)
     {
-        // Build: "<dirname>/*.DSK"
-        fs::path dir = dFound.cFileName;
-        fs::path pattern = dir / "*.DSK";
-
-        std::string pat = pattern.string();
-        FixDirSlashes(pat);
-
-        if (InitiateDir(pat.c_str())) {
-            DLOG_C("OpenFound %s in directory\n", dFound.cFileName);
-            OpenFound(drive, 0);
+        std::string pattern = name + "/*.DSK";
+        DLOG_C("SDCOpenFound %s directory initiate\n",pattern.c_str());
+        if (SDCInitiateDir(pattern.c_str())) {
+            SDCOpenFound(drive, 0);
             if (drive == 0) BuildCartridgeMenu();
         }
         return;
     }
 
-    // Found item is a file
-    fs::path fqn = fs::path(gSeaDir) / dFound.cFileName;
-
-    std::string file = fqn.string();
+    std::string file = gFileList.directory + "/" + name;
+    DLOG_C("SDCOpenFound %s\n", file.c_str());
 
     gCocoDisk[drive].hFile = CreateFileA(
         file.c_str(),
@@ -2179,7 +2579,7 @@ void OpenFound (int drive,int raw)
     );
 
     if (gCocoDisk[drive].hFile == INVALID_HANDLE_VALUE) {
-        DLOG_C("OpenFound fail %d file %s\n",drive,file.c_str());
+        DLOG_C("SDCOpenFound fail %d file %s\n",drive,file.c_str());
         DLOG_C("... %s\n",LastErrorTxt());
         int ecode = GetLastError();
         if (ecode == ERROR_SHARING_VIOLATION) {
@@ -2190,15 +2590,18 @@ void OpenFound (int drive,int raw)
         return;
     }
 
+    // If more than one file in list enable nextload function
+    if (gFileList.files.size() > 1) gFileList.nextload_flag = true;
+
     strncpy(gCocoDisk[drive].fullpath,file.c_str(),MAX_PATH);
-    strncpy(gCocoDisk[drive].name,dFound.cFileName,MAX_PATH);
+    strncpy(gCocoDisk[drive].name,name.c_str(),MAX_PATH);
 
     // Default sectorsize and sectors per track
     gCocoDisk[drive].sectorsize = 256;
     gCocoDisk[drive].tracksectors = 18;
 
-    // Grab filesize from found record
-    gCocoDisk[drive].size = dFound.nFileSizeLow;
+    // Grab filesize 
+    gCocoDisk[drive].size = gFileList.files[gFileList.cursor].size;
 
     // Determine file type (RAW,DSK,JVC,VDK,SDF)
     if (raw) {
@@ -2211,7 +2614,7 @@ void OpenFound (int drive,int raw)
         // Read a few bytes of the file to determine it's type
         unsigned char header[16];
         if (ReadFile(gCocoDisk[drive].hFile,header,12,nullptr,nullptr) == 0) {
-            DLOG_C("OpenFound header read error\n");
+            DLOG_C("SDCOpenFound header read error\n");
             IF.status = STA_FAIL | STA_INVALID;
             return;
         }
@@ -2223,14 +2626,14 @@ void OpenFound (int drive,int raw)
         if ((gCocoDisk[drive].size >= 219262) &&  // is this reasonable?
             (strncmp("SDF1",(const char *) header,4) == 0)) {
             gCocoDisk[drive].type = DTYPE_SDF;
-            DLOG_C("OpenFound SDF file unsupported\n");
+            DLOG_C("SDCOpenFound SDF file unsupported\n");
             IF.status = STA_FAIL | STA_INVALID;
             return;
         }
 
         unsigned int numsec;
         gCocoDisk[drive].headersize = gCocoDisk[drive].size & 255;
-        DLOG_C("OpenFound headersize %d\n",gCocoDisk[drive].headersize);
+        DLOG_C("SDCOpenFound headersize %d\n",gCocoDisk[drive].headersize);
         switch (gCocoDisk[drive].headersize) {
         // JVC optional header bytes
         case 4: // First Sector     = header[3]   1 assumed
@@ -2244,7 +2647,7 @@ void OpenFound (int drive,int raw)
         // JVC or OS9 disk if no header, side count per file size
         case 0:
             numsec = gCocoDisk[drive].size >> 8;
-            DLOG_C("OpenFound JVC/OS9 sectors %d\n",numsec);
+            DLOG_C("SDCOpenFound JVC/OS9 sectors %d\n",numsec);
             gCocoDisk[drive].doublesided = ((numsec > 720) && (numsec <= 2880));
             gCocoDisk[drive].type = DTYPE_JVC;
             break;
@@ -2256,7 +2659,7 @@ void OpenFound (int drive,int raw)
             break;
         // Unknown or unsupported
         default: // More than 4 byte header is not supported
-            DLOG_C("OpenFound unsuported image type %d %d\n",
+            DLOG_C("SDCOpenFound unsuported image type %d %d\n",
                 drive, gCocoDisk[drive].headersize);
             IF.status = STA_FAIL | STA_INVALID;
             return;
@@ -2264,8 +2667,8 @@ void OpenFound (int drive,int raw)
         }
     }
 
-    // Fill in image info.
-    LoadFoundFile(&gCocoDisk[drive].filerec);
+    gCocoDisk[drive].hf = gFileList.files[gFileList.cursor];
+    gCocoDisk[drive].filerec = FileRecord(gCocoDisk[drive].hf);
 
     // Set readonly attrib per find status or file header
     if ((gCocoDisk[drive].filerec.FR_attrib & ATTR_RDONLY) != 0) {
@@ -2281,7 +2684,7 @@ void OpenFound (int drive,int raw)
             gCocoDisk[drive].fullpath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,
             nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
         if (gCocoDisk[drive].hFile == INVALID_HANDLE_VALUE) {
-            DLOG_C("OpenFound reopen fail %d\n",drive);
+            DLOG_C("SDCOpenFound reopen fail %d\n",drive);
             DLOG_C("... %s\n",LastErrorTxt());
             IF.status = STA_FAIL | STA_WIN_ERROR;
             return;
@@ -2295,19 +2698,16 @@ void OpenFound (int drive,int raw)
 }
 
 //----------------------------------------------------------------------
-// Convert file name from SDC format and prepend current dir.
+// Convert file name from FAT format and prepend current dir.
 //----------------------------------------------------------------------
-std::string GetFullPath(const std::string& file)
+std::string SDCGetFullPath(const std::string& file)
 {
-    std::string out = gSDRoot + '/' + gCurDir + '/' + FixSDCPath(file);
-    DLOG_C("GetFullPath in %s out %s\n",file,out);
-    return (out);
-}
+    std::string out = gSDRoot;
+    if (gCurDir.size() > 0) out += '/' + gCurDir;
+    out += '/' + FixFATPath(file);
 
-void GetFullPath(char * path, const char * file)
-{
-    std::string full = GetFullPath(std::string(file));
-    std::snprintf(path, MAX_PATH, "%s", full.c_str());
+    DLOG_C("SDCGetFullPath in %s out %s\n",file.c_str(),out.c_str());
+    return (out);
 }
 
 //----------------------------------------------------------------------
@@ -2315,18 +2715,19 @@ void GetFullPath(char * path, const char * file)
 //   names contains two consecutive null terminated name strings
 //   first is file or directory to rename, second is target name
 //----------------------------------------------------------------------
-void RenameFile(const char *names)
+void SDCRenameFile(const char *names)
 {
-    char from[MAX_PATH];
-    char target[MAX_PATH];
+    const char* p = names;
+    std::string sfrom = p;
+    p += sfrom.size() + 1;
+    std::string starget = p;
 
-    GetFullPath(from,names);
-    GetFullPath(target,1+strchr(names,'\0'));
+    DLOG_C("SDCRenameFile %s to %s\n",sfrom.c_str(),starget.c_str());
+    std::string from = SDCGetFullPath(sfrom);
+    std::string target = SDCGetFullPath(starget);
 
-    DLOG_C("UpdateSD rename %s %s\n",from,target);
-
-    if (std::rename(from,target)) {
-        DLOG_C("RenameFile %s\n", strerror(errno));
+    if (std::rename(from.c_str(),target.c_str())) {
+        DLOG_C("SDCRenameFile %s\n", strerror(errno));
         IF.status = STA_FAIL | STA_WIN_ERROR;
     } else {
         IF.status = STA_NORMAL;
@@ -2337,69 +2738,76 @@ void RenameFile(const char *names)
 //----------------------------------------------------------------------
 // Delete disk or directory
 //----------------------------------------------------------------------
-void KillFile(const char *file)
+void SDCKillFile(const char* file)
 {
-    char path[MAX_PATH];
-    GetFullPath(path,file);
-    DLOG_C("KillFile delete %s\n",path);
+    namespace fs = std::filesystem;
 
-    if (IsDirectory(path)) {
-        if (PathIsDirectoryEmpty(path)) {
-            if (RemoveDirectory(path)) {
-                IF.status = STA_NORMAL;
-            } else {
-                DLOG_C("Deletefile %s\n", strerror(errno));
-                IF.status = STA_FAIL | STA_NOTFOUND;
-            }
-        } else {
-            IF.status = STA_FAIL | STA_NOTEMPTY;
-        }
-    } else {
-        if (DeleteFile(path)) {
+    fs::path p = SDCGetFullPath(std::string(file));
+    std::error_code ec;
+
+    DLOG_C("SDCKillFile %s\n",file);
+
+    // Does it exist?
+    if (!fs::exists(p, ec)) {
+        DLOG_C("SDCKillFile does not exist\n");
+        IF.status = STA_FAIL | STA_NOTFOUND;
+        return;
+    }
+    // Regular file
+    if (fs::is_regular_file(p, ec)) {
+        if (fs::remove(p, ec)) {
             IF.status = STA_NORMAL;
         } else {
-            DLOG_C("Deletefile %s\n", strerror(errno));
-            IF.status = STA_FAIL | STA_NOTFOUND;
+            DLOG_C("SDCKillFile error: %s\n", ec.message().c_str());
+            IF.status = STA_FAIL | STA_WPROTECT;
         }
+        return;
     }
-    return;
+    // Directory
+    if (fs::is_directory(p, ec)) {
+        if (fs::is_empty(p, ec)) {
+            if (fs::remove(p, ec)) {
+                IF.status = STA_NORMAL;
+            } else {
+                IF.status = STA_FAIL | STA_WPROTECT;
+                DLOG_C("SDCKillFile dir error: %s\n", ec.message().c_str());
+            }
+        } else {
+            DLOG_C("SDCKillFile directory not empty\n");
+            IF.status = STA_FAIL | STA_NOTEMPTY;
+        }
+        return;
+    }
+    // Not a file or directory (symlink, device, etc.)
+    IF.status = STA_FAIL;
 }
 
 //----------------------------------------------------------------------
 // Create directory
 //----------------------------------------------------------------------
-void MakeDirectory(const char *name)
-{
-    char path[MAX_PATH];
-    GetFullPath(path,name);
-    DLOG_C("MakeDirectory %s\n",path);
 
-    // Make sure directory is not in use
-    struct _stat file_stat;
-    int result = _stat(path,&file_stat);
-    if (result == 0) {
+void SDCMakeDirectory(const char* name)
+{
+    namespace fs = std::filesystem;
+
+    std::string s = SDCGetFullPath(std::string(name));
+    fs::path p(s);
+
+    DLOG_C("SDCMakeDirectory %s\n", s.c_str());
+
+    std::error_code ec;
+
+    if (fs::exists(p, ec)) {
+        DLOG_C("SDCMakeDirectory already exists\n");
         IF.status = STA_FAIL | STA_INVALID;
         return;
     }
 
-    if (CreateDirectory(path,nullptr)) {
+    if (fs::create_directory(p, ec)) {
         IF.status = STA_NORMAL;
     } else {
-        DLOG_C("MakeDirectory %s\n", strerror(errno));
+        DLOG_C("SDCMakeDirectory error: %s\n", ec.message().c_str());
         IF.status = STA_FAIL | STA_WIN_ERROR;
-    }
-    return;
-}
-
-//----------------------------------------------------------------------
-// Close virtual disk
-//----------------------------------------------------------------------
-void CloseDrive (int drive)
-{
-    drive &= 1;
-    if (gCocoDisk[drive].hFile && gCocoDisk[drive].hFile != INVALID_HANDLE_VALUE) {
-        CloseHandle(gCocoDisk[drive].hFile);
-        gCocoDisk[drive].hFile = INVALID_HANDLE_VALUE;
     }
 }
 
@@ -2408,7 +2816,7 @@ void CloseDrive (int drive)
 // This is complicated by the many ways a user can change the directory
 //----------------------------------------------------------------------
 
-void SetCurDir(const char* branch)
+void SDCSetCurDir(const char* branch)
 {
     namespace fs = std::filesystem;
 
@@ -2483,53 +2891,12 @@ void SetCurDir(const char* branch)
 }
 
 //----------------------------------------------------------------------
-//  Start File search.  Searches start from the root of the SDCard.
+// SDCInitiateDir command.
 //----------------------------------------------------------------------
-
-bool SearchFile(const char* pattern)
+bool SDCInitiateDir(const char * path)
 {
-    // Close previous search
-    if (hFind != INVALID_HANDLE_VALUE) {
-        FindClose(hFind);
-        hFind = INVALID_HANDLE_VALUE;
-    }
+    DLOG_C("SDCInitiateDir '%s'\n",path);
 
-    namespace fs = std::filesystem;
-
-    // Build the full search path
-    fs::path base = fs::path(gSDRoot);
-
-    if (*pattern == '/') {
-        base /= fs::path(pattern).relative_path();
-    } else {
-        base /= fs::path(gCurDir);
-        base /= pattern;
-    }
-
-    std::string search = base.string();
-    FixDirSlashes(search);
-
-    // Extract directory portion for later use
-    gSeaDir = base.parent_path().string();
-    FixDirSlashes(gSeaDir);
-
-    DLOG_C("SearchFile %s\n", search.c_str());
-
-    hFind = FindFirstFileA(search.c_str(), &dFound);
-    if (hFind == INVALID_HANDLE_VALUE) {
-        DLOG_C("SearchFile fail\n");
-        gSeaDir = "";
-        return false;
-    }
-
-    return true;
-}
-
-//----------------------------------------------------------------------
-// InitiateDir command.
-//----------------------------------------------------------------------
-bool InitiateDir(const char * path)
-{
     bool rc;
     // Append "*.*" if last char in path was '/';
     int l = strlen(path);
@@ -2548,70 +2915,4 @@ bool InitiateDir(const char * path)
         IF.status = STA_FAIL | STA_INVALID;
         return false;
     }
-}
-
-//----------------------------------------------------------------------
-// Load directory page containing up to 16 file records that match
-// the pattern used in SearchFile. Can be called multiple times until
-// there are no more matches.
-//----------------------------------------------------------------------
-void LoadDirPage()
-{
-    memset(DirPage,0,sizeof(DirPage));
-
-    if (hFind == INVALID_HANDLE_VALUE) {
-        DLOG_C("LoadDirPage Search fail\n");
-        return;
-    }
-
-    int cnt = 0;
-    while (cnt < 16) {
-        if (LoadFoundFile(&DirPage[cnt])) cnt++;
-        if (FindNextFile(hFind,&dFound) == 0) {
-            FindClose(hFind);
-            hFind = INVALID_HANDLE_VALUE;
-            break;
-        }
-    }
-}
-
-//----------------------------------------------------------------------
-// Determine if path is a direcory
-//----------------------------------------------------------------------
-inline bool IsDirectory(const std::string& path)
-{
-    std::error_code ec;
-    return std::filesystem::is_directory(path, ec) && !ec;
-}
-
-//----------------------------------------------------------------------
-// Get most recent windows error text
-//----------------------------------------------------------------------
-char * LastErrorTxt() {
-    static char msg[200];
-    DWORD error_code = GetLastError();
-    FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM |
-                   FORMAT_MESSAGE_IGNORE_INSERTS,
-                   nullptr, error_code,
-                   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                   msg, 200, nullptr );
-    return msg;
-}
-
-//------------------------------------------------------------
-// Convert path slashes.  SDC expects forward slashes as path
-// delimiter but Windows uses backslashes. This is the fix.
-//------------------------------------------------------------
-void FixDirSlashes(std::string &dir)
-{
-    if (dir.empty()) return;
-    std::replace(dir.begin(), dir.end(), '\\', '/');
-    if (dir.back() == '/') dir.pop_back();
-}
-void FixDirSlashes(char *dir)
-{
-    if (!dir) return;
-    std::string tmp(dir);
-    FixDirSlashes(tmp);
-    strcpy(dir, tmp.c_str());
 }
