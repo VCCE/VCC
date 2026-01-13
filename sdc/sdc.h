@@ -19,7 +19,11 @@
 // along with VCC (Virtual Color Computer).  If not, see
 // <http://www.gnu.org/licenses/>.
 //
+//======================================================================
 
+#pragma once
+
+#include <Windows.h>
 #include <vcc/core/logger.h>
 #include <vcc/core/interrupts.h>
 
@@ -58,6 +62,109 @@
 #define ATTR_SDF      0x04
 #define ATTR_DIR      0x10
 
-// Self imposed limit on maximum dsk file size.
+// Disk Types
+enum DiskType {
+    DTYPE_RAW = 0,
+    DTYPE_DSK,
+    DTYPE_JVC,
+    DTYPE_VDK,
+    DTYPE_SDF
+};
+
+// Limit maximum dsk file size.
 #define MAX_DSK_SECTORS 2097152
+
+// HostFile contains a file name, it's size, and directory and readonly flags
+struct HostFile
+{
+    std::string name;   // LFN 8.3 name
+    DWORD size;         // < 4GB
+    bool isDir;         // is a directory
+    bool isRdOnly;      // is read only
+    HostFile() {}
+    // Construct a HostFile from an argument list
+    HostFile(const char* cName, DWORD nSize, bool isDir, bool isRdOnly) :
+        name(cName), size(nSize), isDir(isDir), isRdOnly(isRdOnly) {}
+    // Construct a HostFile from a WIN32_FIND_DATAA record.
+    HostFile(WIN32_FIND_DATAA fd) :
+        name(fd.cFileName), size(fd.nFileSizeLow),
+        isDir((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0),
+        isRdOnly((fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY) != 0) {}
+};
+
+// FileList contains a list of HostFiles
+struct FileList
+{
+    std::vector<HostFile> files;    // files
+    std::string directory;          // directory files are in
+    size_t cursor = 0;              // current file curspr
+    bool nextload_flag = false;     // enable next disk loading
+    // append a host file to the list
+    void append(const HostFile& hf) { files.push_back(hf); }
+};
+
+// FileRecord is 16 packed bytes file name, type, attrib, and size that can
+// be passed directly via the SDC interface.
+#pragma pack(push, 1)
+struct FileRecord
+{
+    char FR_name[8];
+    char FR_type[3];
+    char FR_attrib;
+    char FR_hihi_size;
+    char FR_lohi_size;
+    char FR_hilo_size;
+    char FR_lolo_size;
+    FileRecord() noexcept {};
+    FileRecord(const HostFile& hf) noexcept;
+};
+#pragma pack(pop)
+
+// CocoDisk contains info about mounted disk files 0 and 1 
+struct CocoDisk
+{
+    HANDLE hFile;               // file handle
+    unsigned int size;          // number of bytes total
+    unsigned int headersize;    // number of bytes in header
+    DWORD sectorsize;           // number of bytes per sector
+    DWORD tracksectors;         // number of sectors per side
+    DiskType type;              // Disk image type (RAW,DSK,JVC,VDK,SDF)
+    char doublesided;           // false:1 side, true:2 sides
+    char name[MAX_PATH];        // name of file (8.3)
+    char fullpath[MAX_PATH];    // full file path
+    struct HostFile hf{"",0,false,false}; //name,size,isDir,isRdOnly
+    struct FileRecord filerec;
+    // Constructor
+    CocoDisk() noexcept
+        : hFile(INVALID_HANDLE_VALUE),
+          size(0),
+          headersize(0),
+          sectorsize(256),
+          tracksectors(18),
+          type(DiskType::DTYPE_RAW),
+          doublesided(1) {
+        name[0] = '\0';
+        fullpath[0] = '\0';
+    };
+};
+
+// SDC CoCo Interface
+struct Interface
+{
+    int sdclatch;
+    unsigned char cmdcode;
+    unsigned char status;
+    unsigned char reply1;
+    unsigned char reply2;
+    unsigned char reply3;
+    unsigned char param1;
+    unsigned char param2;
+    unsigned char param3;
+    unsigned char reply_mode;  // 0=words, 1=bytes
+    unsigned char reply_status;
+    unsigned char half_sent;
+    int bufcnt;
+    char *bufptr;
+    char blkbuf[600];
+};
 
