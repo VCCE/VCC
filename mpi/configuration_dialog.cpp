@@ -297,6 +297,10 @@ INT_PTR configuration_dialog::process_message(
 			return TRUE;
 		case IDC_RESET:
 			SendMessage(gVccWnd,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
+			close();
+			return TRUE;
+		case IDOK:
+			close();
 			return TRUE;
 		} // End switch LOWORD
 		break;
