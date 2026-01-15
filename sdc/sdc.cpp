@@ -212,7 +212,7 @@ static int UPDBTNS[8] = {ID_UPDATE0,ID_UPDATE1,ID_UPDATE2,ID_UPDATE3,
 static char ROMPath[MAX_PATH];
 
 //======================================================================
-//  Compile unit functions
+//  Functions
 //======================================================================
 
 LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
@@ -275,115 +275,6 @@ bool SDCReadDrive(unsigned char,unsigned int);
 bool SDCLoadNextDirPage();
 std::string SDCGetFullPath(const std::string&);
 
-//=========================================================================
-// Host file handling
-//=========================================================================
-
-// Construct FileRecord from a HostFile object.
-FileRecord::FileRecord(const HostFile& hf) noexcept
-{ 
-    memset(this, 0, sizeof(*this));
-    // name and type
-    sfn_from_lfn(FR_name, FR_type, hf.name);
-    // Attributes
-    FR_attrib = 0;
-    if (hf.isDir)     FR_attrib |= 0x10;
-    if (hf.isRdOnly)  FR_attrib |= 0x01;
-    // Size -> 4 reversed endian bytes
-    DWORD s = hf.size;
-    FR_hihi_size = (s >> 24) & 0xFF;
-    FR_lohi_size = (s >> 16) & 0xFF;
-    FR_hilo_size = (s >> 8)  & 0xFF;
-    FR_lolo_size = (s >> 0)  & 0xFF;
-}
-
-//-------------------------------------------------------------------
-// Get list of files matching pattern starting from CurDir or SDRoot
-//-------------------------------------------------------------------
-void GetFileList(const std::string& pattern)
-{
-    DLOG_C("GetFileList %s\n",pattern.c_str());
-
-    // Init search results
-    gFileList = {};
-
-    // None if pattern is empty
-    if (pattern.empty()) return;
-
-    // Set up search path.
-    bool not_at_root = !gCurDir.empty();
-    bool rel_pattern = pattern.front() != '/';
-
-    std::string search_path = gSDRoot;
-    if (rel_pattern) {
-        search_path += "/";
-        if (not_at_root)
-            search_path += gCurDir + "/";
-    }
-    search_path += pattern;
-
-    // A directory lookup if pattern name is "*" or "*.*";
-    std::string fnpat = GetFileNamePart(pattern);
-    bool dir_lookup = (fnpat == "*" || fnpat == "*.*");
-
-    std::string search_dir = GetDirectoryPart(search_path);
-
-    // Include ".." if dir_lookup and search_dir is not SDRoot
-    if (dir_lookup && GetDirectoryPart(search_path) != gSDRoot) {
-        gFileList.append({"..", 0, true, false});
-    }
-
-    // Add matching files to the list
-    WIN32_FIND_DATAA fd;
-    HANDLE hFind = FindFirstFileA(search_path.c_str(), &fd);
-    if (hFind == INVALID_HANDLE_VALUE) {
-        gFileList = {};
-        return;
-    }
-    do {
-        if (strcmp(fd.cFileName,".") == 0) continue;    // exclude single dot file
-        if (PathIsLFNFileSpecA(fd.cFileName)) continue; // exclude ugly or long filenames
-        if (fd.nFileSizeHigh != 0) continue;            // exclude files > 4 GB
-        gFileList.append({fd});
-    } while (FindNextFileA(hFind, &fd));
-    FindClose(hFind);
-
-    // Save directory
-    gFileList.directory = search_dir;
-
-    DLOG_C("GetFileList found %d\n",gFileList.files.size());
-}
-
-//-------------------------------------------------------------------
-// SortFileList() may be needed when mounting a directory
-//-------------------------------------------------------------------
-void SortFileList()
-{
-    std::sort(
-        gFileList.files.begin(),
-        gFileList.files.end(),
-        [] (const HostFile& a, const HostFile& b) {
-            return a.name < b.name;
-        }
-    );
-    gFileList.cursor = 0;
-}
-
-//----------------------------------------------------------------------
-//  Host File search.
-//----------------------------------------------------------------------
-bool SearchFile(const char* pattern)
-{
-    std::string s = pattern;
-    GetFileList(s);
-
-    DLOG_C("SearchFile found %d pat %s\n",gFileList.files.size(),s.c_str());
-
-    // Update menu to show next disk status
-    BuildCartridgeMenu();
-
-    return (gFileList.files.size() > 0);
-}
 
 //======================================================================
 // DLL interface
@@ -815,7 +706,7 @@ void SelectCardBox()
 }
 
 //=====================================================================
-// SDC Simulation
+// SDC startup
 //======================================================================
 
 //----------------------------------------------------------------------
@@ -850,82 +741,6 @@ void InitSDC()
     // init the interface
     IFace = {};
 
-    return;
-}
-
-//-------------------------------------------------------------
-// Load rom from flash bank
-//-------------------------------------------------------------
-void LoadRom(unsigned char bank)
-{
-    unsigned char ch;
-    int ctr = 0;
-    char *p_rom;
-    char *RomFile;
-
-    DLOG_C("LoadRom load flash bank %d\n",bank);
-
-    // Skip if bank is already active
-    if (bank == CurrentBank) return;
-
-    // Make sure flash file is closed
-    if (h_RomFile) {
-        fclose(h_RomFile);
-        h_RomFile = nullptr;
-    }
-
-    // If bank contents have been changed write to the flash file
-    if (BankDirty) {
-        RomFile = FlashFile[CurrentBank];
-        DLOG_C("LoadRom switching out dirty bank %d %s\n",CurrentBank,RomFile);
-        h_RomFile = fopen(RomFile,"wb");
-        if (!h_RomFile) {
-            MessageBox (gVccWindow,"Can not write Rom file","SDC Rom Save Failed",0);
-        } else {
-            ctr = 0;
-            p_rom = PakRom;
-            while (ctr++ < 0x4000) fputc(*p_rom++, h_RomFile);
-            fclose(h_RomFile);
-            h_RomFile = nullptr;
-        }
-        BankDirty = 0;
-    }
-
-    RomFile = FlashFile[bank];
-    CurrentBank = bank;
-
-    // If bank is empty and is the StartupBank load SDC-DOS
-    if (*FlashFile[CurrentBank] == '\0') {
-        DLOG_C("LoadRom bank %d is empty\n",CurrentBank);
-        if (CurrentBank == StartupBank) {
-            DLOG_C("LoadRom loading default SDC-DOS\n");
-            strncpy(RomFile,"SDC-DOS.ROM",MAX_PATH);
-        }
-    }
-
-    // Open romfile for write if not startup bank
-    if (CurrentBank != StartupBank) 
-        h_RomFile = fopen(RomFile,"wb");
-
-    if (CurrentBank == StartupBank || h_RomFile == nullptr)
-        h_RomFile = fopen(RomFile,"rb");
-
-    if (h_RomFile == nullptr) {
-        std::string msg="Check Rom Path and SDC Config\n"+std::string(RomFile);
-        MessageBox (gVccWindow,msg.c_str(),"SDC Startup Rom Load Failed",0);
-        return;
-    }
-
-    // Load rom from flash
-    memset(PakRom, 0xFF, 0x4000);
-    ctr = 0;
-    p_rom = PakRom;
-    while (ctr++ < 0x4000) {
-        if ((ch = fgetc(h_RomFile)) < 0) break;
-        *p_rom++ = (char) ch;
-    }
-
-    fclose(h_RomFile);
     return;
 }
 
@@ -976,8 +791,84 @@ void ParseStartup()
     fclose(su);
 }
 
+//-------------------------------------------------------------
+// Load rom from flash bank
+//-------------------------------------------------------------
+void LoadRom(unsigned char bank)
+{
+    unsigned char ch;
+    int ctr = 0;
+    char *p_rom;
+    char *RomFile;
+
+    DLOG_C("LoadRom load flash bank %d\n",bank);
+
+    // Skip if bank is already active
+    if (bank == CurrentBank) return;
+
+    // Make sure flash file is closed
+    if (h_RomFile) {
+        fclose(h_RomFile);
+        h_RomFile = nullptr;
+    }
+
+    // If bank contents have been changed write the flash file
+    if (BankDirty) {
+        RomFile = FlashFile[CurrentBank];
+        DLOG_C("LoadRom switching out dirty bank %d %s\n",CurrentBank,RomFile);
+        h_RomFile = fopen(RomFile,"wb");
+        if (!h_RomFile) {
+            MessageBox (gVccWindow,"Can not write Rom file","SDC Rom Save Failed",0);
+        } else {
+            ctr = 0;
+            p_rom = PakRom;
+            while (ctr++ < 0x4000) fputc(*p_rom++, h_RomFile);
+            fclose(h_RomFile);
+            h_RomFile = nullptr;
+        }
+        BankDirty = 0;
+    }
+
+    RomFile = FlashFile[bank];
+    CurrentBank = bank;
+
+    // If bank is empty and is the StartupBank load SDC-DOS
+    if (*FlashFile[CurrentBank] == '\0') {
+        DLOG_C("LoadRom bank %d is empty\n",CurrentBank);
+        if (CurrentBank == StartupBank) {
+            DLOG_C("LoadRom loading default SDC-DOS\n");
+            strncpy(RomFile,"SDC-DOS.ROM",MAX_PATH);
+        }
+    }
+
+    // Open romfile for write if not startup bank
+    if (CurrentBank != StartupBank)
+        h_RomFile = fopen(RomFile,"wb");
+
+    if (CurrentBank == StartupBank || h_RomFile == nullptr)
+        h_RomFile = fopen(RomFile,"rb");
+
+    if (h_RomFile == nullptr) {
+        std::string msg="Check Rom Path and SDC Config\n"+std::string(RomFile);
+        MessageBox (gVccWindow,msg.c_str(),"SDC Startup Rom Load Failed",0);
+        return;
+    }
+
+    // Load rom from flash
+    memset(PakRom, 0xFF, 0x4000);
+    ctr = 0;
+    p_rom = PakRom;
+    while (ctr++ < 0x4000) {
+        if ((ch = fgetc(h_RomFile)) < 0) break;
+        *p_rom++ = (char) ch;
+    }
+
+    fclose(h_RomFile);
+    return;
+}
+
 //=====================================================================
-// SDC Interface functions
+// SDC Interface
 //=====================================================================
 
 //----------------------------------------------------------------------
@@ -1125,6 +1016,7 @@ unsigned char SDCRead(unsigned char port)
             rpy = 0;
             break;
         }
+    // If not SDC latched do floppy controller simulation
     } else {
         switch (port) {
         case 0x40:
@@ -1933,7 +1825,7 @@ void SDCMountNewDisk (int drive, const char * path, int raw)
 //----------------------------------------------------------------------
 void UnloadDisk(int drive) {
     int d = drive & 1;
-    if ( gCocoDisk[d].hFile && 
+    if ( gCocoDisk[d].hFile &&
          gCocoDisk[d].hFile != INVALID_HANDLE_VALUE) {
         CloseHandle(gCocoDisk[d].hFile);
         DLOG_C("UnloadDisk %d %s\n",drive,gCocoDisk[d].name);
@@ -2022,8 +1914,8 @@ bool SDCMountNext (int drive)
         gFileList.cursor = 0;
         DLOG_C("SDCMountNext reset cursor\n");
     }
-    
-    DLOG_C("SDCMountNext %d %d\n", 
+
+    DLOG_C("SDCMountNext %d %d\n",
                 gFileList.cursor, gFileList.files.size());
 
     // Open next image found on the drive
@@ -2188,7 +2080,7 @@ void SDCOpenFound (int drive,int raw)
     gCocoDisk[drive].sectorsize = 256;
     gCocoDisk[drive].tracksectors = 18;
 
-    // Grab filesize 
+    // Grab filesize
     gCocoDisk[drive].size = gFileList.files[gFileList.cursor].size;
 
     // Determine file type (RAW,DSK,JVC,VDK,SDF)
@@ -2504,3 +2396,114 @@ bool SDCInitiateDir(const char * path)
         return false;
     }
 }
+
+//=========================================================================
+// Host file handling
+//=========================================================================
+
+// Construct FileRecord from a HostFile object.
+FileRecord::FileRecord(const HostFile& hf) noexcept
+{
+    memset(this, 0, sizeof(*this));
+    // name and type
+    sfn_from_lfn(FR_name, FR_type, hf.name);
+    // Attributes
+    FR_attrib = 0;
+    if (hf.isDir)     FR_attrib |= 0x10;
+    if (hf.isRdOnly)  FR_attrib |= 0x01;
+    // Size -> 4 reversed endian bytes
+    DWORD s = hf.size;
+    FR_hihi_size = (s >> 24) & 0xFF;
+    FR_lohi_size = (s >> 16) & 0xFF;
+    FR_hilo_size = (s >> 8)  & 0xFF;
+    FR_lolo_size = (s >> 0)  & 0xFF;
+}
+
+//-------------------------------------------------------------------
+// Get list of files matching pattern starting from CurDir or SDRoot
+//-------------------------------------------------------------------
+void GetFileList(const std::string& pattern)
+{
+    DLOG_C("GetFileList %s\n",pattern.c_str());
+
+    // Init search results
+    gFileList = {};
+
+    // None if pattern is empty
+    if (pattern.empty()) return;
+
+    // Set up search path.
+    bool not_at_root = !gCurDir.empty();
+    bool rel_pattern = pattern.front() != '/';
+
+    std::string search_path = gSDRoot;
+    if (rel_pattern) {
+        search_path += "/";
+        if (not_at_root)
+            search_path += gCurDir + "/";
+    }
+    search_path += pattern;
+
+    // A directory lookup if pattern name is "*" or "*.*";
+    std::string fnpat = GetFileNamePart(pattern);
+    bool dir_lookup = (fnpat == "*" || fnpat == "*.*");
+
+    std::string search_dir = GetDirectoryPart(search_path);
+
+    // Include ".." if dir_lookup and search_dir is not SDRoot
+    if (dir_lookup && GetDirectoryPart(search_path) != gSDRoot) {
+        gFileList.append({"..", 0, true, false});
+    }
+
+    // Add matching files to the list
+    WIN32_FIND_DATAA fd;
+    HANDLE hFind = FindFirstFileA(search_path.c_str(), &fd);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        gFileList = {};
+        return;
+    }
+    do {
+        if (strcmp(fd.cFileName,".") == 0) continue;    // exclude single dot file
+        if (PathIsLFNFileSpecA(fd.cFileName)) continue; // exclude ugly or long filenames
+        if (fd.nFileSizeHigh != 0) continue;            // exclude files > 4 GB
+        gFileList.append({fd});
+    } while (FindNextFileA(hFind, &fd));
+    FindClose(hFind);
+
+    // Save directory
+    gFileList.directory = search_dir;
+
+    DLOG_C("GetFileList found %d\n",gFileList.files.size());
+}
+
+//-------------------------------------------------------------------
+// SortFileList() may be needed when mounting a directory
+//-------------------------------------------------------------------
+void SortFileList()
+{
+    std::sort(
+        gFileList.files.begin(),
+        gFileList.files.end(),
+        [] (const HostFile& a, const HostFile& b) {
+            return a.name < b.name;
+        }
+    );
+    gFileList.cursor = 0;
+}
+
+//----------------------------------------------------------------------
+//  Host File search.
+//----------------------------------------------------------------------
+bool SearchFile(const char* pattern)
+{
+    std::string s = pattern;
+    GetFileList(s);
+
+    DLOG_C("SearchFile found %d pat %s\n",gFileList.files.size(),s.c_str());
+
+    // Update menu to show next disk status
+    BuildCartridgeMenu();
+
+    return (gFileList.files.size() > 0);
+}
+
