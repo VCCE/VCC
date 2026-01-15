@@ -1,3 +1,4 @@
+//#define USE_LOGGING
 ////////////////////////////////////////////////////////////////////////////////
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
@@ -15,7 +16,6 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-//#define USE_LOGGING
 #include "multipak_cartridge.h"
 #include "multipak_cartridge_context.h"
 #include "mpi.h"
@@ -108,7 +108,10 @@ void multipak_cartridge::start()
 		const auto path(vcc::core::utils::find_pak_module_path(configuration_.slot_cartridge_path(slot)));
 		if (!path.empty())
 		{
-			mount_cartridge(slot, path);
+			if (mount_cartridge(slot, path) != vcc::core::cartridge_loader_status::success) {
+				DLOG_C("Clearing configured slot path %d\n",slot);
+				configuration_.slot_cartridge_path(slot,"");
+			}
 		}
 	}
 
@@ -338,6 +341,8 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		slot,
 		*context_,
 		*multipakHost);
+
+	DLOG_C("load cart %d  %s\n",slot,filename);
 
 	auto loadedCartridge = vcc::core::load_cartridge(
 		filename,

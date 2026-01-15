@@ -1,3 +1,4 @@
+//#define USE_LOGGING
 ////////////////////////////////////////////////////////////////////////////////
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
@@ -180,6 +181,7 @@ void configuration_dialog::cart_type_menu(unsigned int Button)
 
 void configuration_dialog::eject_or_select_new_cartridge(unsigned int Button)
 {
+
 	// Disable Slot changes if parent is disabled.  This prevents user using the
 	// config dialog to eject a cartridge while VCC main is using a modal dialog
 	// Otherwise user can crash VCC by unloading a disk cart while inserting a disk
