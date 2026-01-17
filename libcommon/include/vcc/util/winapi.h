@@ -16,15 +16,16 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
+#include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <Windows.h>
+#include <string>
 
-LIBCOMMON_EXPORT void PathStripPath(char*);
-LIBCOMMON_EXPORT void ValidatePath(char* Path);
-LIBCOMMON_EXPORT int CheckPath(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveFileSpec(char*);
-LIBCOMMON_EXPORT BOOL PathRemoveExtension(char*);
-LIBCOMMON_EXPORT char* PathFindExtension(char*);
-LIBCOMMON_EXPORT DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
-LIBCOMMON_EXPORT BOOL FilePrintf(HANDLE, const char*, ...);
+// I think winapi is intended to contain windows api calls. Not sure why it
+// was created because that could be any thing used to interact with Windows.
 
+namespace vcc::core::utils
+{
+    // Load resource string
+	LIBCOMMON_EXPORT std::string load_string(HINSTANCE instance, UINT id);
+
+}

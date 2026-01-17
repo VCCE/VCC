@@ -42,8 +42,8 @@
 #include <commdlg.h>
 #include <stdio.h>
 #include <mmsystem.h>
-#include <vcc/core/FileOps.h>
-#include <vcc/core/DialogOps.h>
+#include <vcc/util/FileOps.h>
+#include <vcc/util/DialogOps.h>
 #include "defines.h"
 #include "resource.h"
 #include "joystickinput.h"
@@ -66,8 +66,8 @@
 #include "Cassette.h"
 
 #include "CommandLine.h"
-#include <vcc/core/logger.h>
-#include <vcc/core/limits.h>
+#include <vcc/util/logger.h>
+#include <vcc/util/limits.h>
 #include "memdump.h"
 
 #include "MemoryMap.h"

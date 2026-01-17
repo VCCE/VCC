@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "Cartridge.h"
-#include <vcc/core/winapi.h>
+#include <vcc/util/winapi.h>
 
 
 namespace detail

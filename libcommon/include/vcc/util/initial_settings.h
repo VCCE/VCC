@@ -15,36 +15,33 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-
-#include <vcc/core/winapi.h>
+#pragma once
+#include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <string>
-#include <windows.h>
 
-namespace vcc::core::utils
+namespace vcc::core
 {
-	LIBCOMMON_EXPORT std::string load_string(HINSTANCE instance, UINT id)
+
+	class initial_settings
 	{
-		const wchar_t* buffer_ptr;
-		// Get len of string to load
-		const int length = LoadStringW(instance, id, reinterpret_cast<LPWSTR>(&buffer_ptr), 0);
-		if (length == 0)
-			return {};
+	public:
 
-		// Copy load string to wide_str
-		const std::wstring wide_str(buffer_ptr, length);
+		using path_type = std::string;
+		using string_type = std::string;
 
-		// Get len of string when converted
-		const int utf8_len = WideCharToMultiByte(CP_UTF8, 0, wide_str.data(), wide_str.size(), nullptr, 0, nullptr, nullptr);
-		if (utf8_len == 0)
-		{
-			return {};
-		}
+	public:
 
-		// Convert string from wide_str to utf8_str
-		std::string utf8_str(utf8_len, '\0');
-		WideCharToMultiByte(CP_UTF8, 0, wide_str.data(), wide_str.size(), utf8_str.data(), utf8_len, nullptr, nullptr);
+		LIBCOMMON_EXPORT explicit initial_settings(path_type path);
 
-		return utf8_str;
-	}
+		LIBCOMMON_EXPORT void write(const string_type& section, const string_type& key, int value) const;
+		LIBCOMMON_EXPORT void write(const string_type& section, const string_type& key, const string_type& value) const;
+
+		LIBCOMMON_EXPORT int read(const string_type& section, const string_type& key, int default_value) const;
+		LIBCOMMON_EXPORT string_type read(const string_type& section, const string_type& key, const string_type& default_value = {}) const;
+
+
+	private:
+
+		const path_type path_;
+	};
 }
-

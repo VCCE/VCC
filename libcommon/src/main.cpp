@@ -1,6 +1,6 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include <Windows.h>
-#include <vcc/core/exports.h>
+#include <vcc/util/exports.h>
 // NOTE: The following includes are here to force exporting implicit
 // definitions.
 #include <vcc/bus/null_cartridge.h>

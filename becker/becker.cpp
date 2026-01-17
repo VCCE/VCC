@@ -8,10 +8,10 @@
 #include "resource.h" 
 #include "../CartridgeMenu.h"
 #include <vcc/bus/cpak_cartridge_definitions.h>
-#include <vcc/core/limits.h>
-#include <vcc/core/logger.h>
-#include <vcc/core/FileOps.h>
-#include <vcc/core/DialogOps.h>
+#include <vcc/util/limits.h>
+#include <vcc/util/logger.h>
+#include <vcc/util/FileOps.h>
+#include <vcc/util/DialogOps.h>
 
 // socket
 static SOCKET dwSocket = 0;

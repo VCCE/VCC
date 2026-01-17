@@ -24,10 +24,10 @@ This file is part of VCC (Virtual Color Computer).
 #include <Windows.h>
 #include <stdio.h>
 #include "resource.h"
-#include <vcc/core/FileOps.h>
+#include <vcc/util/FileOps.h>
 #include <vcc/bus/cpak_cartridge_definitions.h>
-#include <vcc/core/limits.h>
-#include <vcc/core/logger.h>
+#include <vcc/util/limits.h>
+#include <vcc/util/logger.h>
 
 static HINSTANCE gModuleInstance;
 static void* gCallbackContext = nullptr;

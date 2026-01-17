@@ -15,7 +15,7 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/core/DialogOps.h>
+#include <vcc/util/DialogOps.h>
 #include <string>
 #include <filesystem>
 //#include <Windows.h>

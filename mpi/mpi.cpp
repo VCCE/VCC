@@ -20,9 +20,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "mpi.h"
 #include "resource.h"
-#include <vcc/core/DialogOps.h>
-#include <vcc/core/limits.h>
-#include <vcc/core/logger.h>
+#include <vcc/util/DialogOps.h>
+#include <vcc/util/limits.h>
+#include <vcc/util/logger.h>
 
 HINSTANCE gModuleInstance = nullptr;
 static std::string gConfigurationFilename;

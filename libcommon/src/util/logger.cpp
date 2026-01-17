@@ -23,7 +23,7 @@
 #include <io.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <vcc/core/logger.h>
+#include <vcc/util/logger.h>
 
 static HANDLE hLog_Out = nullptr;
 static const auto LogFileName = "VccLog.txt";

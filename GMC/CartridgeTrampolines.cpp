@@ -1,8 +1,8 @@
 #include "CartridgeTrampolines.h"
 #include "Cartridge.h"
 #include "resource.h"
-#include <vcc/core/limits.h>
-#include <vcc/core/logger.h>
+#include <vcc/util/limits.h>
+#include <vcc/util/logger.h>
 
 //#define USE_LOGGING
 

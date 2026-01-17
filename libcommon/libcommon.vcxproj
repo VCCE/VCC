@@ -112,13 +112,13 @@
     <ClCompile Include="src\bus\rom_cartridge.cpp" />
     <ClCompile Include="src\bus\cartridge_loader.cpp" />
     <ClCompile Include="src\bus\rom_image.cpp" />
-    <ClCompile Include="src\core\initial_settings.cpp" />
-    <ClCompile Include="src\core\filesystem.cpp" />
-    <ClCompile Include="src\core\winapi.cpp" />
-    <ClCompile Include="src\core\DialogOps.cpp" />
-    <ClCompile Include="src\core\Fileops.cpp" />
-    <ClCompile Include="src\core\logger.cpp" />
-    <ClCompile Include="src\core\fileutil.cpp" />
+    <ClCompile Include="src\util\initial_settings.cpp" />
+    <ClCompile Include="src\util\filesystem.cpp" />
+    <ClCompile Include="src\util\winapi.cpp" />
+    <ClCompile Include="src\util\DialogOps.cpp" />
+    <ClCompile Include="src\util\Fileops.cpp" />
+    <ClCompile Include="src\util\logger.cpp" />
+    <ClCompile Include="src\util\fileutil.cpp" />
     <ClCompile Include="src\devices\cloud9.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
@@ -134,16 +134,16 @@
     <ClInclude Include="include\vcc\bus\null_cartridge.h" />
     <ClInclude Include="include\vcc\bus\rom_cartridge.h" />
     <ClInclude Include="include\vcc\bus\rom_image.h" />
-    <ClInclude Include="include\vcc\core\DialogOps.h" />
-    <ClInclude Include="include\vcc\core\FileOps.h" />
-    <ClInclude Include="include\vcc\core\interrupts.h" />
-    <ClInclude Include="include\vcc\core\limits.h" />
-    <ClInclude Include="include\vcc\core\logger.h" />
-    <ClInclude Include="include\vcc\core\fileutil.h" />
-    <ClInclude Include="include\vcc\core\initial_settings.h" />
-    <ClInclude Include="include\vcc\core\critical_section.h" />
-    <ClInclude Include="include\vcc\core\filesystem.h" />
-    <ClInclude Include="include\vcc\core\winapi.h" />
+    <ClInclude Include="include\vcc\util\DialogOps.h" />
+    <ClInclude Include="include\vcc\util\FileOps.h" />
+    <ClInclude Include="include\vcc\util\interrupts.h" />
+    <ClInclude Include="include\vcc\util\limits.h" />
+    <ClInclude Include="include\vcc\util\logger.h" />
+    <ClInclude Include="include\vcc\util\fileutil.h" />
+    <ClInclude Include="include\vcc\util\initial_settings.h" />
+    <ClInclude Include="include\vcc\util\critical_section.h" />
+    <ClInclude Include="include\vcc\util\filesystem.h" />
+    <ClInclude Include="include\vcc\util\winapi.h" />
     <ClInclude Include="include\vcc\devices\cloud9.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

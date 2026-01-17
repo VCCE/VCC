@@ -24,8 +24,8 @@
 #pragma once
 
 #include <Windows.h>
-#include <vcc/core/logger.h>
-#include <vcc/core/interrupts.h>
+#include <vcc/util/logger.h>
+#include <vcc/util/interrupts.h>
 
 #include "resource.h"
 

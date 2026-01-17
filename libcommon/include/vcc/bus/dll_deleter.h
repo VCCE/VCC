@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/logger.h>
+#include <vcc/util/logger.h>
 #include <Windows.h>
 
 namespace vcc::core

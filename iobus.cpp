@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "pakinterface.h"
 #include "tcc1014registers.h"
 #include "tcc1014mmu.h"
-#include <vcc/core/logger.h>
+#include <vcc/util/logger.h>
 #include "config.h"
 unsigned char port_read(unsigned short addr)
 {

@@ -27,11 +27,11 @@
 #include "resource.h"
 #include <vcc/bus/null_cartridge.h>
 #include <vcc/bus/dll_deleter.h>
-#include <vcc/core/limits.h>
-#include <vcc/core/winapi.h>
-#include <vcc/core/logger.h>
-#include <vcc/core/FileOps.h>
-#include <vcc/core/DialogOps.h>
+#include <vcc/util/limits.h>
+#include <vcc/util/winapi.h>
+#include <vcc/util/logger.h>
+#include <vcc/util/FileOps.h>
+#include <vcc/util/DialogOps.h>
 #include <fstream>
 #include <Windows.h>
 #include <commdlg.h>

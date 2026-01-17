@@ -21,8 +21,8 @@
 
 #include "acia.h"
 #include "sc6551.h"
-#include <vcc/core/interrupts.h>
-#include <vcc/core/logger.h>
+#include <vcc/util/interrupts.h>
+#include <vcc/util/logger.h>
 #include <atomic>
 
 //------------------------------------------------------------------------

@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "hd6309.h"
 #include "hd6309defs.h"
 #include "tcc1014mmu.h"
-#include <vcc/core/logger.h>
+#include <vcc/util/logger.h>
 #include "string.h"
 #include "OpDecoder.h"
 #include "Disassembler.h"

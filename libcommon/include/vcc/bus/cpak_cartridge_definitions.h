@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/interrupts.h>
+#include <vcc/util/interrupts.h>
 #include <windows.h>
 
 // This defines the hardware cartridge interface, it is included by all hardware packs.

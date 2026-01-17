@@ -23,7 +23,7 @@
 #include "DebuggerUtils.h"
 #include "defines.h"
 #include "resource.h"
-#include <vcc/core/DialogOps.h>
+#include <vcc/util/DialogOps.h>
 #include <map>
 #include <fstream>
 #include <string>

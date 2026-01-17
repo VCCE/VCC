@@ -36,7 +36,7 @@ This file is part of VCC (Virtual Color Computer)
 #include "defines.h"
 #include "config.h"
 
-#include <vcc/core/logger.h>
+#include <vcc/util/logger.h>
 #include "keyboard.h"
 #include "keyboardLayout.h"
 #include "keyboardEdit.h"

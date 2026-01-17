@@ -19,10 +19,10 @@
 #include "configuration_dialog.h"
 #include "mpi.h"
 #include "resource.h"
-#include <vcc/core/DialogOps.h>
-#include <vcc/core/critical_section.h>
-#include <vcc/core/filesystem.h>
-#include <vcc/core/logger.h>
+#include <vcc/util/DialogOps.h>
+#include <vcc/util/critical_section.h>
+#include <vcc/util/filesystem.h>
+#include <vcc/util/logger.h>
 
 namespace
 {
