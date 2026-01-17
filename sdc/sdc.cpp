@@ -1616,7 +1616,7 @@ void SDCStreamImage()
     }
 
     if (!SDCReadDrive(stream_cmdcode,stream_lsn)) {
-        DLOG_C("SDCStreamImage read error %s\n",LastErrorTxt());
+        DLOG_C("SDCStreamImage read error %s\n",util::LastErrorTxt());
         IFace.status = STA_FAIL;
         streaming = 0;
         return;
@@ -1645,7 +1645,7 @@ void SDCWriteSector()
     }
     if (!WriteFile(gCocoDisk[drive].hFile,IFace.blkbuf,
                    gCocoDisk[drive].sectorsize,&cnt,nullptr)) {
-        DLOG_C("SDCWriteSector %d %s\n",drive,LastErrorTxt());
+        DLOG_C("SDCWriteSector %d %s\n",drive,util::LastErrorTxt());
         IFace.status = STA_FAIL;
         return;
     }
@@ -1744,7 +1744,7 @@ bool SDCSeekSector(unsigned char cmdcode, unsigned int lsn)
     pos.QuadPart = lsn * gCocoDisk[drive].sectorsize + gCocoDisk[drive].headersize;
 
     if (!SetFilePointerEx(gCocoDisk[drive].hFile,pos,nullptr,FILE_BEGIN)) {
-        DLOG_C("SDCSeekSector error %s\n",LastErrorTxt());
+        DLOG_C("SDCSeekSector error %s\n",util::LastErrorTxt());
         return false;
     }
     return true;
@@ -1768,7 +1768,7 @@ bool SDCReadDrive(unsigned char cmdcode, unsigned int lsn)
     }
 
     if (!ReadFile(gCocoDisk[drive].hFile,buf,gCocoDisk[drive].sectorsize,&cnt,nullptr)) {
-        DLOG_C("SDCReadDrive %d %s\n",drive,LastErrorTxt());
+        DLOG_C("SDCReadDrive %d %s\n",drive,util::LastErrorTxt());
         return false;
     }
 
@@ -1989,7 +1989,7 @@ void SDCOpenNew( int drive, const char * path, int raw)
 
     if (gCocoDisk[drive].hFile == INVALID_HANDLE_VALUE) {
         DLOG_C("SDCOpenNew fail %d file %s\n",drive,gCocoDisk[drive].fullpath);
-        DLOG_C("... %s\n",LastErrorTxt());
+        DLOG_C("... %s\n",util::LastErrorTxt());
         IFace.status = STA_FAIL | STA_WIN_ERROR;
         return;
     }
@@ -2074,7 +2074,7 @@ void SDCOpenFound (int drive,int raw)
 
     if (gCocoDisk[drive].hFile == INVALID_HANDLE_VALUE) {
         DLOG_C("SDCOpenFound fail %d file %s\n",drive,file.c_str());
-        DLOG_C("... %s\n",LastErrorTxt());
+        DLOG_C("... %s\n",util::LastErrorTxt());
         int ecode = GetLastError();
         if (ecode == ERROR_SHARING_VIOLATION) {
             IFace.status = STA_FAIL | STA_INUSE;
@@ -2179,7 +2179,7 @@ void SDCOpenFound (int drive,int raw)
             nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
         if (gCocoDisk[drive].hFile == INVALID_HANDLE_VALUE) {
             DLOG_C("SDCOpenFound reopen fail %d\n",drive);
-            DLOG_C("... %s\n",LastErrorTxt());
+            DLOG_C("... %s\n",util::LastErrorTxt());
             IFace.status = STA_FAIL | STA_WIN_ERROR;
             return;
         }
