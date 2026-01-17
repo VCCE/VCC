@@ -16,32 +16,15 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
-#include <string>
+#include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
+#include <Windows.h>
 
-namespace vcc::core
-{
+LIBCOMMON_EXPORT void PathStripPath(char*);
+LIBCOMMON_EXPORT void ValidatePath(char* Path);
+LIBCOMMON_EXPORT int CheckPath(char*);
+LIBCOMMON_EXPORT BOOL PathRemoveFileSpec(char*);
+LIBCOMMON_EXPORT BOOL PathRemoveExtension(char*);
+LIBCOMMON_EXPORT char* PathFindExtension(char*);
+LIBCOMMON_EXPORT DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
+LIBCOMMON_EXPORT BOOL FilePrintf(HANDLE, const char*, ...);
 
-	class initial_settings
-	{
-	public:
-
-		using path_type = std::string;
-		using string_type = std::string;
-
-	public:
-
-		LIBCOMMON_EXPORT explicit initial_settings(path_type path);
-
-		LIBCOMMON_EXPORT void write(const string_type& section, const string_type& key, int value) const;
-		LIBCOMMON_EXPORT void write(const string_type& section, const string_type& key, const string_type& value) const;
-
-		LIBCOMMON_EXPORT int read(const string_type& section, const string_type& key, int default_value) const;
-		LIBCOMMON_EXPORT string_type read(const string_type& section, const string_type& key, const string_type& default_value = {}) const;
-
-
-	private:
-
-		const path_type path_;
-	};
-}

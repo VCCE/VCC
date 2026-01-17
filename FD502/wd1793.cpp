@@ -37,8 +37,8 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdlib.h>
 #include <winioctl.h>
 #include "defines.h"
-#include <vcc/core/interrupts.h>
-#include <vcc/core/logger.h>
+#include <vcc/util/interrupts.h>
+#include <vcc/util/logger.h>
 #include "wd1793.h"
 #include "fd502.h"
 #include "fdrawcmd.h"	// http://simonowen.com/fdrawcmd/

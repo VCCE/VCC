@@ -32,10 +32,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "distortc.h"
 #include "fd502.h"
 #include "../CartridgeMenu.h"
-#include <vcc/core/limits.h>
-#include <vcc/core/FileOps.h>
-#include <vcc/core/DialogOps.h>
-#include <vcc/core/logger.h>
+#include <vcc/util/limits.h>
+#include <vcc/util/FileOps.h>
+#include <vcc/util/DialogOps.h>
+#include <vcc/util/logger.h>
 
 //include becker code if COMBINE_BECKER is defined in fd502.h
 #ifdef COMBINE_BECKER

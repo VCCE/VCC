@@ -24,12 +24,12 @@ This file is part of VCC (Virtual Color Computer).
 #include "IdeBus.h"
 #include <vcc/devices/cloud9.h>
 #include "logger.h"
-#include <vcc/core/FileOps.h>
+#include <vcc/util/FileOps.h>
 #include "../CartridgeMenu.h"
-#include <vcc/core/DialogOps.h>
+#include <vcc/util/DialogOps.h>
 #include <vcc/bus/cpak_cartridge_definitions.h>
-#include <vcc/core/limits.h>
-#include <vcc/core/logger.h>
+#include <vcc/util/limits.h>
+#include <vcc/util/logger.h>
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };

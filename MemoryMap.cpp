@@ -30,8 +30,8 @@
 #include "tcc1014mmu.h"
 #include "resource.h"
 #include "pakinterface.h"
-#include <vcc/core/logger.h>
-#include <vcc/core/DialogOps.h>
+#include <vcc/util/logger.h>
+#include <vcc/util/DialogOps.h>
 #include <fstream>
 
 namespace VCC::Debugger::UI {

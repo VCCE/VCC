@@ -23,11 +23,9 @@
 
 #include <string>
 #include <filesystem>
-#include <Shlwapi.h>
+#include <Windows.h>
 
-// FIXME: directory names in libcommon are wrong
-// libcommon/include/vcc/core should be libcommon/include/vcc/util
-// libcommon/src/core should be libcommon/include/util
+#include <vcc/util/exports.h>
 
 //=========================================================================
 // Host file utilities.  Most of these are general purpose
@@ -36,27 +34,27 @@
 namespace VCC::Util {
 
 	// Get most recent windows error text
-	std::string LastErrorString();
+	LIBCOMMON_EXPORT std::string LastErrorString();
 	const char * LastErrorTxt();
 
 	// Convert backslashes to slashes in directory string
-	void FixDirSlashes(std::string &dir);
+	LIBCOMMON_EXPORT void FixDirSlashes(std::string &dir);
 
 	// Return copy of string with spaces trimmed from end of a string
-	std::string trim_right_spaces(const std::string &s);
+	LIBCOMMON_EXPORT std::string trim_right_spaces(const std::string &s);
 
 	// Return slash normalized directory part of a path
-	std::string GetDirectoryPart(const std::string& input);
+	LIBCOMMON_EXPORT std::string GetDirectoryPart(const std::string& input);
 
 	// Return filename part of a path
-	std::string GetFileNamePart(const std::string& input);
+	LIBCOMMON_EXPORT std::string GetFileNamePart(const std::string& input);
 
 	// Determine if path is a direcory
-	bool IsDirectory(const std::string& path);
+	LIBCOMMON_EXPORT bool IsDirectory(const std::string& path);
 
 	// Get path of loaded module or current application
-	std::string get_module_path(HMODULE module_handle);
+	LIBCOMMON_EXPORT std::string get_module_path(HMODULE module_handle);
 
 	// If path is in the application directory strip directory
-	std::string strip_application_path(std::string path);
+	LIBCOMMON_EXPORT std::string strip_application_path(std::string path);
 }

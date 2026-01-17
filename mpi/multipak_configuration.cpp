@@ -1,5 +1,5 @@
 #include "multipak_configuration.h"
-#include <vcc/core/initial_settings.h>
+#include <vcc/util/initial_settings.h>
 
 using settings = ::vcc::core::initial_settings;
 

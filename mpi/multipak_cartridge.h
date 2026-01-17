@@ -20,7 +20,7 @@
 #include "multipak_configuration.h"
 #include <vcc/bus/basic_cartridge.h>
 #include <vcc/bus/cartridge_loader.h>
-#include <vcc/core/critical_section.h>
+#include <vcc/util/critical_section.h>
 #include "../CartridgeMenu.h"
 #include <array>
 

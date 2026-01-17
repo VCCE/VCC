@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <Windows.h>
 #include "GMCCartridge.h"
-#include <vcc/core/DialogOps.h>
+#include <vcc/util/DialogOps.h>
 
 HINSTANCE gModuleInstance = nullptr;
 GMCCartridge theCart;

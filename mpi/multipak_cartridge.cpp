@@ -20,9 +20,9 @@
 #include "multipak_cartridge_context.h"
 #include "mpi.h"
 #include "resource.h"
-#include <vcc/core/winapi.h>
-#include <vcc/core/filesystem.h>
-#include <vcc/core/logger.h>
+#include <vcc/util/winapi.h>
+#include <vcc/util/filesystem.h>
+#include <vcc/util/logger.h>
 
 namespace
 {

@@ -52,7 +52,7 @@
 
 #include <queue>
 #include <sstream>
-#include <vcc/core/logger.h>
+#include <vcc/util/logger.h>
 
 /*****************************************************************************/
 /*

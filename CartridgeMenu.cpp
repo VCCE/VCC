@@ -19,7 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 // TODO: move this to libcommon
 
 #include "CartridgeMenu.h"
-#include <vcc/core/logger.h>
+#include <vcc/util/logger.h>
 #include "defines.h"
 
 CartridgeMenu::CartridgeMenu() {};

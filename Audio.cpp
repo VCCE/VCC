@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include "coco3.h"
 #include "audio.h"
-#include <vcc/core/logger.h>
+#include <vcc/util/logger.h>
 #include "BuildConfig.h"
 #include "Cassette.h"
 

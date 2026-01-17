@@ -24,12 +24,8 @@
 #include <string>
 #include <filesystem>
 #include <Shlwapi.h>
-#include <vcc/core/logger.h>
-#include <vcc/core/fileutil.h>
-
-// FIXME:  directory names in libcommon are wrong 
-// libcommon/include/vcc/core should be libcommon/include/vcc/util
-// libcommon/src/core should be libcommon/include/util
+#include <vcc/util/logger.h>
+#include <vcc/util/fileutil.h>
 
 namespace VCC::Util
 {

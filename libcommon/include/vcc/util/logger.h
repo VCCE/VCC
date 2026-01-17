@@ -16,16 +16,17 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/core/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
-#include <Windows.h>
-#include <string>
+#include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 
-// I think winapi is intended to contain windows api calls. Not sure why it
-// was created because that could be any thing used to interact with Windows.
+LIBCOMMON_EXPORT void PrintLogC(const char* fmt, ...);
+LIBCOMMON_EXPORT void PrintLogF(const char* fmt, ...);
 
-namespace vcc::core::utils
-{
-    // Load resource string
-	LIBCOMMON_EXPORT std::string load_string(HINSTANCE instance, UINT id);
+// Debug logging if USE_LOGGING is defined
 
-}
+#ifdef USE_LOGGING
+#define DLOG_C(...) PrintLogC(__VA_ARGS__)
+#define DLOG_F(...) PrintLogF(__VA_ARGS__)
+#else
+#define DLOG_C(...) ((void)0)
+#define DLOG_F(...) ((void)0)
+#endif

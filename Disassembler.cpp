@@ -33,7 +33,7 @@
 #include "defines.h"
 #include "Vcc.h"
 #include "resource.h"
-#include <vcc/core/logger.h>
+#include <vcc/util/logger.h>
 #include "tcc1014mmu.h"
 #include "Debugger.h"
 #include "DebuggerUtils.h"

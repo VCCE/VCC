@@ -135,14 +135,14 @@
 #include <Windows.h>
 
 #include <vcc/devices/cloud9.h>
-#include <vcc/core/logger.h>
-#include <vcc/core/DialogOps.h>
+#include <vcc/util/logger.h>
+#include <vcc/util/DialogOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/bus/cpak_cartridge_definitions.h>
-#include <vcc/core/limits.h>
+#include <vcc/util/limits.h>
 
 //#include "fileutil.h"
-#include <vcc/core/fileutil.h>
+#include <vcc/util/fileutil.h>
 
 #include "sdc.h"
 
