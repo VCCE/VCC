@@ -20,13 +20,11 @@
 #include <string>
 #include <Windows.h>
 
+//TODO replace get_directory_from_path and get_filename with fileutil functions
+//TODO move find_pak_module_path to point of use
 namespace vcc::core::utils
 {
-
-	LIBCOMMON_EXPORT std::string get_module_path(HMODULE module_handle = nullptr);
 	LIBCOMMON_EXPORT std::string find_pak_module_path(std::string path);
 	LIBCOMMON_EXPORT std::string get_directory_from_path(std::string path);
 	LIBCOMMON_EXPORT std::string get_filename(std::string path);
-	LIBCOMMON_EXPORT std::string strip_application_path(std::string path);
-
 }

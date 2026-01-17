@@ -118,6 +118,7 @@
     <ClCompile Include="src\core\DialogOps.cpp" />
     <ClCompile Include="src\core\Fileops.cpp" />
     <ClCompile Include="src\core\logger.cpp" />
+    <ClCompile Include="src\core\fileutil.cpp" />
     <ClCompile Include="src\devices\cloud9.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
@@ -138,6 +139,7 @@
     <ClInclude Include="include\vcc\core\interrupts.h" />
     <ClInclude Include="include\vcc\core\limits.h" />
     <ClInclude Include="include\vcc\core\logger.h" />
+    <ClInclude Include="include\vcc\core\fileutil.h" />
     <ClInclude Include="include\vcc\core\initial_settings.h" />
     <ClInclude Include="include\vcc\core\critical_section.h" />
     <ClInclude Include="include\vcc\core\filesystem.h" />

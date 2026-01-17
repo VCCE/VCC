@@ -25,42 +25,38 @@
 #include <filesystem>
 #include <Shlwapi.h>
 
+// FIXME: directory names in libcommon are wrong
+// libcommon/include/vcc/core should be libcommon/include/vcc/util
+// libcommon/src/core should be libcommon/include/util
+
 //=========================================================================
 // Host file utilities.  Most of these are general purpose
 //=========================================================================
 
-// Get most recent windows error text
-const char * LastErrorTxt();
-std::string LastErrorString();
+namespace VCC::Util {
 
-// Convert backslashes to slashes in directory string / char
-void FixDirSlashes(std::string &dir);
-void FixDirSlashes(char *dir);
+	// Get most recent windows error text
+	std::string LastErrorString();
+	const char * LastErrorTxt();
 
-// copy string into fixed-size char array and blank-pad
-template <size_t N>
-void copy_to_fixed_char(char (&dest)[N], const std::string& src);
+	// Convert backslashes to slashes in directory string
+	void FixDirSlashes(std::string &dir);
 
-// Return copy of string with spaces trimmed from end of a string
-std::string trim_right_spaces(const std::string &s);
+	// Return copy of string with spaces trimmed from end of a string
+	std::string trim_right_spaces(const std::string &s);
 
-// Convert LFN to FAT filename parts, 8 char name, 3 char ext
-void sfn_from_lfn(char (&name)[8], char (&ext)[3], const std::string& lfn);
+	// Return slash normalized directory part of a path
+	std::string GetDirectoryPart(const std::string& input);
 
-// Convert FAT file name parts to LFN. Returns empty string if invalid LFN
-std::string lfn_from_sfn(const char (&name)[8], const char (&ext)[3]);
+	// Return filename part of a path
+	std::string GetFileNamePart(const std::string& input);
 
-// Return slash normalized directory part of a path
-std::string GetDirectoryPart(const std::string& input);
+	// Determine if path is a direcory
+	bool IsDirectory(const std::string& path);
 
-// Return filename part of a path
-std::string GetFileNamePart(const std::string& input);
+	// Get path of loaded module or current application
+	std::string get_module_path(HMODULE module_handle);
 
-// SDC interface often presents a path which does not use a dot to 
-// delimit name and extension: "FOODIR/FOO     DSK" -> FOODIR/FOO.DSK
-std::string FixFATPath(const std::string& sdcpath);
-void FixFATPath(char* path, const char* sdcpath);
-
-// Determine if path is a direcory
-bool IsDirectory(const std::string& path);
-
+	// If path is in the application directory strip directory
+	std::string strip_application_path(std::string path);
+}

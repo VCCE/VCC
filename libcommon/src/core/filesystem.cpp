@@ -15,39 +15,17 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
+#include <vcc/core/fileutil.h>
 #include <vcc/core/filesystem.h>
 #include <vcc/core/winapi.h>
 
+//TODO filesystem.cpp should be depreciated
+//TODO replace get_directory_from_path and get_filename with fileutil functions
+//TODO move find_pak_module_path to point of use
 
 namespace vcc::core::utils
 {
-
-
-	LIBCOMMON_EXPORT std::string get_module_path(HMODULE module_handle)
-	{
-		std::string text(MAX_PATH, 0);
-
-		for (;;)
-		{
-			DWORD ret = GetModuleFileName(module_handle, &text[0], text.size());
-			if (ret == 0)
-			{
-				// An error occurred; return an empty string
-				return {};
-			}
-
-			if (ret < text.size())
-			{
-				text.resize(ret);
-
-				return text;
-			}
-
-			// Buffer was too small, double its size and try again
-			text.resize(text.size() * 2);
-		}
-	}
-
+	// TODO: move this
 	LIBCOMMON_EXPORT std::string find_pak_module_path(std::string path)
 	{
 		if (path.empty())
@@ -58,7 +36,7 @@ namespace vcc::core::utils
 		auto file_handle(CreateFile(path.c_str(), 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
 		if (file_handle == INVALID_HANDLE_VALUE)
 		{
-			const auto application_path = get_directory_from_path(::vcc::core::utils::get_module_path());
+			const auto application_path = get_directory_from_path(::VCC::Util::get_module_path(NULL));
 			const auto alternate_path = application_path + path;
 			file_handle = CreateFile(alternate_path.c_str(), 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 			if (file_handle == INVALID_HANDLE_VALUE)
@@ -72,6 +50,7 @@ namespace vcc::core::utils
 		return path;
 	}
 
+	// TODO: replace with ::VCC::Util::GetDirectoryPart(const std::string& input)
 	LIBCOMMON_EXPORT std::string get_directory_from_path(std::string path)
 	{
 		const auto last_separator(path.find_last_of('\\'));
@@ -83,18 +62,7 @@ namespace vcc::core::utils
 		return path;
 	}		
 
-	LIBCOMMON_EXPORT std::string strip_application_path(std::string path)
-	{
-		const auto module_path = get_directory_from_path(vcc::core::utils::get_module_path(nullptr));
-		auto temp_path(get_directory_from_path(path));
-		if (module_path == temp_path)	// If they match remove the Path
-		{
-			path = get_filename(path);
-		}
-
-		return path;
-	}
-
+	//TODO: replace with ::VCC::Util::GetFileNamePart(const std::string& input)
 	LIBCOMMON_EXPORT std::string get_filename(std::string path)
 	{
 		const auto last_seperator = path.find_last_of('\\');
@@ -107,5 +75,4 @@ namespace vcc::core::utils
 
 		return path;
 	}
-
 }
