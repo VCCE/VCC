@@ -20,7 +20,7 @@
 #include <string>
 #include <windows.h>
 
-namespace vcc::core::utils
+namespace VCC::Util
 {
 	LIBCOMMON_EXPORT std::string load_string(HINSTANCE instance, UINT id)
 	{

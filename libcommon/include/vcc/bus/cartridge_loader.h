@@ -25,7 +25,7 @@
 #include <Windows.h>
 
 
-namespace vcc::core
+namespace VCC::Core
 {
 
 	enum class cartridge_file_type
@@ -48,8 +48,8 @@ namespace vcc::core
 
 	struct LIBCOMMON_EXPORT cartridge_loader_result
 	{
-		using handle_type = std::unique_ptr<std::remove_pointer_t<HMODULE>, vcc::core::dll_deleter>;
-		using cartridge_ptr_type = std::unique_ptr<vcc::core::cartridge>;
+		using handle_type = std::unique_ptr<std::remove_pointer_t<HMODULE>, VCC::Core::dll_deleter>;
+		using cartridge_ptr_type = std::unique_ptr<VCC::Core::cartridge>;
 
 #pragma warning(push)
 #pragma warning(disable: 4251)

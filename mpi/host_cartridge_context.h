@@ -27,7 +27,7 @@ extern "C" __declspec(dllexport) void PakInitialize(
 	const cpak_callbacks* const callbacks);
 
 // FIXME: this should be unnecessary here. VCC (or the 'host') should provide it
-class host_cartridge_context : public ::vcc::core::cartridge_context
+class host_cartridge_context : public ::VCC::Core::cartridge_context
 {
 public:
 

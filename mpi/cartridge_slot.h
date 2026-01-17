@@ -21,23 +21,23 @@
 #include "../CartridgeMenu.h"
 
 
-namespace vcc::modules::mpi
+namespace VCC::Core
 {
 
 	class cartridge_slot
 	{
 	public:
 
-		using name_type = ::vcc::core::cartridge::name_type;
-		using catalog_id_type = ::vcc::core::cartridge::catalog_id_type;
-		using description_type = ::vcc::core::cartridge::description_type;
+		using name_type = ::VCC::Core::cartridge::name_type;
+		using catalog_id_type = ::VCC::Core::cartridge::catalog_id_type;
+		using description_type = ::VCC::Core::cartridge::description_type;
 		using path_type = std::string;
 		using label_type = std::string;
-		using handle_type = ::vcc::core::cartridge_loader_result::handle_type;
-		using cartridge_ptr_type = std::unique_ptr<::vcc::core::cartridge>;
+		using handle_type = ::VCC::Core::cartridge_loader_result::handle_type;
+		using cartridge_ptr_type = std::unique_ptr<::VCC::Core::cartridge>;
 		using menu_item_type = CartMenuItem;
 		using menu_item_collection_type = std::vector<menu_item_type>;
-		using context_type = ::vcc::core::cartridge_context;
+		using context_type = ::VCC::Core::cartridge_context;
 
 
 	public:

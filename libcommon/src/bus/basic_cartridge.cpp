@@ -18,7 +18,7 @@
 #include <vcc/bus/basic_cartridge.h>
 
 
-namespace vcc::core::cartridges
+namespace VCC::Core
 {
 
 	basic_cartridge::name_type basic_cartridge::name() const

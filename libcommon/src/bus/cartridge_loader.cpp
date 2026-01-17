@@ -23,7 +23,7 @@
 #include <iterator>
 
 
-namespace vcc::core
+namespace VCC::Core
 {
 
 	namespace
@@ -93,7 +93,7 @@ namespace vcc::core
 
 		return {
 			nullptr,
-			std::make_unique<vcc::core::cartridges::rom_cartridge>(
+			std::make_unique<VCC::Core::rom_cartridge>(
 				move(context),
 				extract_filename(filename),
 				"",
@@ -130,7 +130,7 @@ namespace vcc::core
 
 		if (GetProcAddress(details.handle.get(), "PakInitialize") != nullptr)
 		{
-			details.cartridge = std::make_unique<vcc::core::cartridges::cpak_cartridge>(
+			details.cartridge = std::make_unique<VCC::Core::cpak_cartridge>(
 				details.handle.get(),
 				host_context,
 				iniPath,
@@ -160,17 +160,17 @@ namespace vcc::core
 		HWND hVccWnd,
 		const cpak_callbacks& cpak_callbacks)
 	{
-		switch (vcc::core::determine_cartridge_type(filename))
+		switch (VCC::Core::determine_cartridge_type(filename))
 		{
 		default:
 		case cartridge_file_type::not_opened:	//	File doesn't exist or can't be opened
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 
 		case cartridge_file_type::rom_image:	//	File is a ROM image
-			return vcc::core::load_rom_cartridge(move(cartridge_context), filename);
+			return VCC::Core::load_rom_cartridge(move(cartridge_context), filename);
 
 		case cartridge_file_type::library:		//	File is a DLL
-			return vcc::core::load_cpak_cartridge(
+			return VCC::Core::load_cpak_cartridge(
 				filename,
 				move(cartridge_context),
 				host_context,

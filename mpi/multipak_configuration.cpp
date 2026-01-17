@@ -1,7 +1,7 @@
 #include "multipak_configuration.h"
 #include <vcc/util/initial_settings.h>
 
-using settings = ::vcc::core::initial_settings;
+using settings = ::VCC::Core::initial_settings;
 
 // Constructor sets the section
 multipak_configuration::multipak_configuration(string_type section)

@@ -20,7 +20,7 @@
 #include <string>
 
 
-namespace vcc::core
+namespace VCC::Core
 {
 
 	struct LIBCOMMON_EXPORT cartridge

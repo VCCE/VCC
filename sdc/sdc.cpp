@@ -156,7 +156,7 @@
 
 namespace util = VCC::Util;
 
-static ::vcc::devices::rtc::cloud9 cloud9_rtc;
+static ::VCC::Device::rtc::cloud9 cloud9_rtc;
 
 //======================================================================
 // Globals

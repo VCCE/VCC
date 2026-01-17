@@ -21,7 +21,7 @@
 #include <vcc/bus/cpak_cartridge.h>
 #include <stdexcept>
 
-namespace vcc::core::cartridges
+namespace VCC::Core
 {
 
 	namespace

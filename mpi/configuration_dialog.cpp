@@ -27,7 +27,7 @@
 namespace
 {
 
-	using cartridge_loader_status = vcc::core::cartridge_loader_status;
+	using cartridge_loader_status = VCC::Core::cartridge_loader_status;
 
 	struct cartridge_ui_element_identifiers
 	{

@@ -26,7 +26,7 @@ along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licens
 #include <vcc/devices/cloud9.h>
 #include <Windows.h>
 
-namespace vcc::devices::rtc
+namespace VCC::Device::rtc
 {
 
 	unsigned char cloud9::read_port(unsigned short port)

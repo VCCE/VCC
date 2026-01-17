@@ -4,7 +4,7 @@
 #include <Windows.h>
 
 //TODO: depreciate this - it is used only in mpi/multipak_cartridge.cpp:
-namespace vcc::core::utils
+namespace VCC::Util
 {
 	LIBCOMMON_EXPORT std::string find_pak_module_path(std::string path);
 }

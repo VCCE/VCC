@@ -19,7 +19,7 @@
 #include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <string>
 
-namespace vcc::core
+namespace VCC::Core
 {
 
 	class initial_settings

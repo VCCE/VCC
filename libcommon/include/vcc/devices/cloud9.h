@@ -2,7 +2,7 @@
 #include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <Windows.h>
 
-namespace vcc::devices::rtc
+namespace VCC::Device::rtc
 {
 
 	class LIBCOMMON_EXPORT cloud9

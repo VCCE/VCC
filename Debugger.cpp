@@ -30,7 +30,7 @@ namespace VCC::Debugger
 
 	void Debugger::Reset()
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		ExecutionMode_ = ExecutionMode::Run;
 		PendingCommand_ = ExecutionMode::Halt;
@@ -50,7 +50,7 @@ namespace VCC::Debugger
 
 	void Debugger::RegisterClient(HWND window, std::unique_ptr<Client> client)
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		if (!client)
 		{
@@ -68,7 +68,7 @@ namespace VCC::Debugger
 	
 	void Debugger::RemoveClient(HWND window)
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		if (RegisteredClients_.find(window) == RegisteredClients_.end())
 		{
@@ -99,7 +99,7 @@ namespace VCC::Debugger
 		}
 
 		{
-			vcc::core::utils::section_locker lock(Section_);
+			VCC::Util::section_locker lock(Section_);
 			returnPc = ProcessorState_.PC;
 		}
 
@@ -116,7 +116,7 @@ namespace VCC::Debugger
 
 	CPUState Debugger::GetProcessorStateCopy() const
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		return ProcessorState_;
 	}
@@ -142,7 +142,7 @@ namespace VCC::Debugger
 
 	void Debugger::SetBreakpoints(breakpointsbuffer_type breakpoints)
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		Breakpoints_ = move(breakpoints);
 		BreakpointsChanged_ = true;
@@ -279,14 +279,14 @@ namespace VCC::Debugger
 		TraceEnabled_ = false;
 		TraceRunning_ = false;
 		{
-			vcc::core::utils::section_locker lock(Section_);
+			VCC::Util::section_locker lock(Section_);
 			Decoder_->Reset(TraceMaxSamples_);
 		}
 	}
 
 	void Debugger::SetTraceMaxSamples(long samples)
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		TraceMaxSamples_ = samples;
 		Decoder_->Reset(TraceMaxSamples_);
@@ -294,7 +294,7 @@ namespace VCC::Debugger
 
 	void Debugger::SetTraceStartTriggers(triggerbuffer_type startTriggers)
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		TraceStartTriggers_ = move(startTriggers);
 		TraceTriggerChanged_ = true;
@@ -302,7 +302,7 @@ namespace VCC::Debugger
 
 	void Debugger::SetTraceStopTriggers(triggerbuffer_type stopTriggers)
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		TraceStopTriggers_ = move(stopTriggers);
 		TraceTriggerChanged_ = true;
@@ -310,7 +310,7 @@ namespace VCC::Debugger
 
 	void Debugger::SetTraceOptions(bool screen, bool emulation)
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		TraceScreen_ = screen;
 		TraceEmulation_ = emulation;
@@ -318,7 +318,7 @@ namespace VCC::Debugger
 
 	long Debugger::GetTraceSamples() const
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		return Decoder_->GetSampleCount();
 	}
@@ -330,7 +330,7 @@ namespace VCC::Debugger
 
 	void Debugger::SetTraceMark(int mark, long sample)
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		TraceMarks_[mark] = sample;
 	}
@@ -338,14 +338,14 @@ namespace VCC::Debugger
 
 	void Debugger::ClearTraceMarks()
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		TraceMarks_.clear();
 	}
 
 	void Debugger::GetTraceMarkSamples(tracebuffer_type &result) const
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		result.clear();
 
@@ -360,7 +360,7 @@ namespace VCC::Debugger
 	void Debugger::QueueRun()
 	{
 		ApplyHaltpoints(true);
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		PendingCommand_ = ExecutionMode::Run;
 		HasPendingCommand_ = true;
@@ -368,7 +368,7 @@ namespace VCC::Debugger
 
 	void Debugger::QueueStep()
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		PendingCommand_ = ExecutionMode::Step;
 		HasPendingCommand_ = true;
@@ -377,7 +377,7 @@ namespace VCC::Debugger
 	void Debugger::QueueHalt()
 	{
 		ApplyHaltpoints(false);
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		PendingCommand_ = ExecutionMode::Halt;
 		HasPendingCommand_ = true;
@@ -397,7 +397,7 @@ namespace VCC::Debugger
 	void Debugger::Update()
 	{
 		{
-			vcc::core::utils::section_locker lock(Section_);
+			VCC::Util::section_locker lock(Section_);
 
 			ProcessorState_ = CPUGetState();
 
@@ -457,7 +457,7 @@ namespace VCC::Debugger
 
 	void Debugger::QueueWrite(unsigned short addr, unsigned char value)
 	{
-		vcc::core::utils::section_locker lock(Section_);
+		VCC::Util::section_locker lock(Section_);
 
 		PendingWrite_ = PendingWrite(addr, value);
 		HasPendingWrite_ = true;

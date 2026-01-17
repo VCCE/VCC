@@ -19,11 +19,11 @@
 #include "multipak_cartridge.h"
 
 
-class multipak_cartridge_context : public ::vcc::core::cartridge_context
+class multipak_cartridge_context : public ::VCC::Core::cartridge_context
 {
 public:
 
-	multipak_cartridge_context(size_t slot_id, ::vcc::core::cartridge_context& parent_context, multipak_cartridge& multipak)
+	multipak_cartridge_context(size_t slot_id, ::VCC::Core::cartridge_context& parent_context, multipak_cartridge& multipak)
 		:
 		slot_id_(slot_id),
 		parent_context_(parent_context),
@@ -69,6 +69,6 @@ public:
 private:
 
 	const size_t slot_id_;
-	::vcc::core::cartridge_context& parent_context_;
+	::VCC::Core::cartridge_context& parent_context_;
 	multipak_cartridge& multipak_;
 };

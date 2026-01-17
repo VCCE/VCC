@@ -114,7 +114,7 @@ std::string FmtLine(
 /*            Static Variables                    */
 /**************************************************/
 
-vcc::core::utils::critical_section Section_;
+VCC::Util::critical_section Section_;
 
 HINSTANCE hVccInst;
 
@@ -790,7 +790,7 @@ void UnHilitePC()
 /***************************************************/
 void ApplyHaltPoint(Haltpoint &hp,bool flag)
 {
-	vcc::core::utils::section_locker lock(Section_);
+	VCC::Util::section_locker lock(Section_);
     if (flag) {
         if (!hp.placed) {
             // Be sure really not placed
