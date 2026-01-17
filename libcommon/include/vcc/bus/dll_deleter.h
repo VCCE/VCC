@@ -18,19 +18,17 @@
 #pragma once
 #include <vcc/util/logger.h>
 #include <Windows.h>
-
+// How nuts is this?  Just friggen call FreeLibrary at the point that is decided
 namespace vcc::core
 {
-
 	struct LIBCOMMON_EXPORT dll_deleter
 	{
 		void operator()(HMODULE instance) const
 		{
 			if (instance != nullptr)
 			{
-				const auto result(FreeLibrary(instance));
+				BOOL result = FreeLibrary(instance);
 			}
 		};
 	};
-
 }
