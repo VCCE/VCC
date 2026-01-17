@@ -19,29 +19,38 @@
 #include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <string>
 
-namespace VCC::Core
+namespace VCC::Util
 {
-
-	class initial_settings
+	class settings
 	{
 	public:
-
 		using path_type = std::string;
 		using string_type = std::string;
 
 	public:
+		LIBCOMMON_EXPORT explicit settings(path_type path);
 
-		LIBCOMMON_EXPORT explicit initial_settings(path_type path);
+		LIBCOMMON_EXPORT void write
+			(const string_type& section,
+			 const string_type& key,
+			 int value) const;
 
-		LIBCOMMON_EXPORT void write(const string_type& section, const string_type& key, int value) const;
-		LIBCOMMON_EXPORT void write(const string_type& section, const string_type& key, const string_type& value) const;
+		LIBCOMMON_EXPORT void write
+			(const string_type& section,
+			 const string_type& key,
+			 const string_type& value) const;
 
-		LIBCOMMON_EXPORT int read(const string_type& section, const string_type& key, int default_value) const;
-		LIBCOMMON_EXPORT string_type read(const string_type& section, const string_type& key, const string_type& default_value = {}) const;
+		LIBCOMMON_EXPORT int read
+			(const string_type& section,
+			 const string_type& key,
+			 int default_value) const;
 
+		LIBCOMMON_EXPORT string_type read
+			(const string_type& section,
+			 const string_type& key,
+			 const string_type& default_value = {}) const;
 
 	private:
-
 		const path_type path_;
 	};
 }
