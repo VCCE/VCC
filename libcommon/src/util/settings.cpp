@@ -18,16 +18,13 @@
 #include <vcc/util/initial_settings.h>
 #include <Windows.h>
 
-
-namespace VCC::Core
+namespace VCC::Util
 {
-
-	initial_settings::initial_settings(path_type path)
+	settings::settings(path_type path)
 		: path_(move(path))
-	{
-	}
+	{}
 
-	void initial_settings::write(
+	void settings::write(
 		const string_type& section,
 		const string_type& key,
 		int value) const
@@ -39,7 +36,7 @@ namespace VCC::Core
 			path_.c_str());
 	}
 
-	void initial_settings::write(
+	void settings::write(
 		const string_type& section,
 		const string_type& key,
 		const string_type& value) const
@@ -47,17 +44,16 @@ namespace VCC::Core
 		WritePrivateProfileString(section.c_str(), key.c_str(), value.c_str(), path_.c_str());
 	}
 
-	int initial_settings::read(const string_type& section, const string_type& key, int default_value) const
+	int settings::read(const string_type& section, const string_type& key, int default_value) const
 	{
 		return GetPrivateProfileInt(section.c_str(), key.c_str(), default_value, path_.c_str());
 	}
 
-	initial_settings::string_type initial_settings::read(
+	settings::string_type settings::read(
 		const string_type& section,
 		const string_type& key,
 		const string_type& default_value) const
 	{
-		// FIXME-CHET: Need to determine the size of the string
 		char loaded_string[MAX_PATH] = {};
 
 		GetPrivateProfileString(
@@ -70,5 +66,4 @@ namespace VCC::Core
 
 		return loaded_string;
 	}
-
 }
