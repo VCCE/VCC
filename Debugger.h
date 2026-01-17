@@ -146,7 +146,7 @@ namespace VCC::Debugger
 
 	private:
 
-		mutable vcc::core::utils::critical_section	Section_;
+		mutable VCC::Util::critical_section	Section_;
 		bool							HasPendingCommand_ = false;
 		ExecutionMode					PendingCommand_ = ExecutionMode::Halt;
 		breakpointsbuffer_type			Breakpoints_;

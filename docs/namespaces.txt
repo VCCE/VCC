@@ -1,25 +1,26 @@
-We let namspaces get a bit overboard. Namespaces are for preventing
-name collisions, not to fully classify sources or to define directory
+
+We let namspaces get a bit overboard. Namespaces are for loosely
+grouping objects and preventing object name collisions. They
+should not be used to over classify sources or to define directory
 or common library structures.
 
-Also we let the case of the VCC namespace change. This gains nothing
+Also we let the case of the VCC namespace change and we have 
+namespaces the use either VCC:: or vcc::  This gains nothing
 but confusion.  I see two choices here. a) go all lowercase or 
-b) use CamelCase.  Since we already had CamelCase I suggest we stick
-with it:
+b) use CamelCase.  Since we previously had CamelCase I decided
+to return to it.
 
-Valid VCC namespaces 
+After applying CamelCase there is now the following:
 
-VCC                // The VCC core emulator
-VCC::UI            // The VCC core user interface (future)
-VCC::Util          // Generic utilities used by VCC
-VCC::Debugger      // Coco Debugger code
-VCC::Debugger::UI  // Coco Debugger user interface
+VCC::			   // Any VCC object
+VCC::Core          // VCC core objects
+VCC::UI            // VCC user interface objects
+VCC::Util          // VCC utility objects
+VCC::Debugger      // Coco Debugger objects
+VCC::Debugger::UI  // Coco Debugger UI objects
+VCC::Device		   // VCC device objects
 
-The following are invalid and should be changed when touched:
-
-namespace vcc                   -> namespace VCC
-namespace vcc::core             -> namespace VCC
-namespace vcc::core::cartridges -> namespace VCC
-namespace vcc::core::utils      -> namespace VCC::Util
-namespace vcc::devices::rtc     -> namespace VCC
-namespace vcc::modules::mpi     -> namespace VCC
+I used 'sed -i' modify all namespaces to this standard.  If CamelCase
+causes much heartburn it is simple to use sed to make them all
+lowercase.  If done properly renaming the namespaces should cause
+no effect on compiled code.

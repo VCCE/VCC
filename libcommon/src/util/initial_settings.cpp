@@ -19,7 +19,7 @@
 #include <Windows.h>
 
 
-namespace vcc::core
+namespace VCC::Core
 {
 
 	initial_settings::initial_settings(path_type path)

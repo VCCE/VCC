@@ -19,7 +19,7 @@
 #include <vcc/util/logger.h>
 #include <Windows.h>
 // How nuts is this?  Just friggen call FreeLibrary at the point that is decided
-namespace vcc::core
+namespace VCC::Core
 {
 	struct LIBCOMMON_EXPORT dll_deleter
 	{

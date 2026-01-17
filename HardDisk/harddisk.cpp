@@ -39,7 +39,7 @@ static char *VHDfile; // Selected drive file name
 static char NewVHDfile[MAX_PATH];
 static char IniFile[MAX_PATH]  { 0 };
 static char HardDiskPath[MAX_PATH];
-static ::vcc::devices::rtc::cloud9 cloud9_rtc;
+static ::VCC::Device::rtc::cloud9 cloud9_rtc;
 
 static void* gCallbackContext = nullptr;
 static PakReadMemoryByteHostCallback MemRead8 = nullptr;

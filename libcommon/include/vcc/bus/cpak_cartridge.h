@@ -22,7 +22,7 @@
 #include <string>
 
 
-namespace vcc::core::cartridges
+namespace VCC::Core
 {
 
 	class cpak_cartridge: public cartridge

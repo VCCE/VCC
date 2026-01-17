@@ -19,10 +19,10 @@
 #include <vcc/bus/cartridge.h>
 
 //TODO: Stomp this bad boy out. It has no purpose
-namespace vcc::core::cartridges
+namespace VCC::Core
 {
 
-	struct LIBCOMMON_EXPORT basic_cartridge : public ::vcc::core::cartridge
+	struct LIBCOMMON_EXPORT basic_cartridge : public ::VCC::Core::cartridge
 	{
 	public:
 

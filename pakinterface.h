@@ -24,7 +24,7 @@ unsigned char PakReadPort (unsigned char);
 void PakWritePort(unsigned char,unsigned char);
 unsigned char PackMem8Read (unsigned short);
 void GetModuleStatus( SystemState *);
-vcc::core::cartridge_loader_status PakLoadCartridge(const char* filename);
+VCC::Core::cartridge_loader_status PakLoadCartridge(const char* filename);
 void PakLoadCartridgeUI(int);
 unsigned short PackAudioSample();
 void ResetBus();

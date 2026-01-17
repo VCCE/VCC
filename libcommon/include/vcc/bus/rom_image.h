@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-namespace vcc::core
+namespace VCC::Core
 {
 
 	class rom_image

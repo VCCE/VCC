@@ -31,7 +31,7 @@ namespace {
 	const COLORREF rgbViolet = RGB(100,   0, 170);
 	const COLORREF rgbGray   = RGB(120, 120, 120);
 
-	vcc::core::utils::critical_section Section_;
+	VCC::Util::critical_section Section_;
 	MMUState MMUState_;
 
 	HWND MMUMonitorWindow = nullptr;
@@ -44,7 +44,7 @@ namespace {
 		void OnReset() override {
 		}
 		void OnUpdate() override {
-			vcc::core::utils::section_locker lock(Section_);
+			VCC::Util::section_locker lock(Section_);
 			MMUState_ = GetMMUState();
 		}
 	};
@@ -107,7 +107,7 @@ namespace {
 		// Quick pull out MMU state
 		MMUState regs;
 		{
-			vcc::core::utils::section_locker lock(Section_);
+			VCC::Util::section_locker lock(Section_);
 			regs = MMUState_;
 		}
 

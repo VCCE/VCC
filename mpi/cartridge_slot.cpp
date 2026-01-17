@@ -19,11 +19,11 @@
 #include <vcc/bus/null_cartridge.h>
 
 
-namespace vcc::modules::mpi
+namespace VCC::Core
 {
 
 	cartridge_slot::cartridge_slot()
-		: cartridge_(std::make_unique<::vcc::core::cartridges::null_cartridge>())
+		: cartridge_(std::make_unique<::VCC::Core::null_cartridge>())
 	{}
 
 	cartridge_slot::cartridge_slot(path_type path, handle_type handle, cartridge_ptr_type cartridge)

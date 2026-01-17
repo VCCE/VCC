@@ -34,7 +34,7 @@ This file is part of VCC (Virtual Color Computer).
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
 static char SuperIDEPath[MAX_PATH];
-static ::vcc::devices::rtc::cloud9 cloud9_rtc;
+static ::VCC::Device::rtc::cloud9 cloud9_rtc;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 static unsigned char BaseAddress=0x50;
 void BuildCartridgeMenu();

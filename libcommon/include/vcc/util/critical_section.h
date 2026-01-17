@@ -18,7 +18,7 @@
 #pragma once
 #include <Windows.h>
 
-namespace vcc::core::utils
+namespace VCC::Util
 {
 
 	class critical_section

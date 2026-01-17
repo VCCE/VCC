@@ -27,12 +27,12 @@
 
 constexpr size_t NUMSLOTS = 4u;
 
-class multipak_cartridge : public ::vcc::core::cartridge
+class multipak_cartridge : public ::VCC::Core::cartridge
 {
 public:
 
-	using context_type = ::vcc::core::cartridge_context;
-	using mount_status_type = ::vcc::core::cartridge_loader_status;
+	using context_type = ::VCC::Core::cartridge_context;
+	using mount_status_type = ::VCC::Core::cartridge_loader_status;
 	using slot_id_type = std::size_t;
 	using path_type = std::string;
 	using label_type = std::string;
@@ -94,10 +94,10 @@ private:
 	static const size_t default_switch_slot_value = 0x03;
 	static const size_t default_slot_register_value = 0xff;
 
-	vcc::core::utils::critical_section mutex_;
+	VCC::Util::critical_section mutex_;
 	multipak_configuration& configuration_;
 	std::shared_ptr<context_type> context_;
-	std::array<vcc::modules::mpi::cartridge_slot, NUMSLOTS> slots_;
+	std::array<VCC::Core::cartridge_slot, NUMSLOTS> slots_;
 	unsigned char slot_register_ = default_slot_register_value;
 	slot_id_type switch_slot_ = default_switch_slot_value;
 	slot_id_type cached_cts_slot_ = default_switch_slot_value;

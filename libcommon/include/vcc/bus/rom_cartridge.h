@@ -22,14 +22,14 @@
 #include <memory>
 
 // TODO:  This could be alot simpler
-namespace vcc::core::cartridges
+namespace VCC::Core
 {
 
 	class rom_cartridge : public basic_cartridge
 	{
 	public:
 
-		using context_type = ::vcc::core::cartridge_context;
+		using context_type = ::VCC::Core::cartridge_context;
 		using buffer_type = std::vector<uint8_t>;
 		using size_type = std::size_t;
 

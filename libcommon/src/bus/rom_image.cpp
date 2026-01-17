@@ -20,7 +20,7 @@
 #include <Windows.h>
 
 
-namespace vcc::core
+namespace VCC::Core
 {
 
 	bool rom_image::load(path_type filename)

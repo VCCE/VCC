@@ -18,7 +18,7 @@
 #include <vcc/bus/rom_cartridge.h>
 
 
-namespace vcc::core::cartridges
+namespace VCC::Core
 {
 
 	rom_cartridge::rom_cartridge(
