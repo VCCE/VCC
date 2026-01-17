@@ -112,6 +112,7 @@ namespace vcc::core
 		HWND hVccWnd,
 		const cpak_callbacks& cpak_callbacks)
 	{
+
 		if (GetModuleHandle(filename.c_str()) != nullptr)
 		{
 			return { nullptr, nullptr, cartridge_loader_status::already_loaded };

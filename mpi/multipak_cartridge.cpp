@@ -50,6 +50,7 @@ namespace
 	// allowing cartridges to call back into multipak using a uniform API
 	// while the trampolines route the request to the correct slot.
 	// Multipak uses two slot specific callbacks, the rest are just passed from vcc.
+	// TODO: This could have been done with just a slot number!
 	struct cartridge_slot_callbacks
 	{
 		PakAssertCartridgeLineHostCallback set_cartridge_line;
@@ -313,6 +314,7 @@ bool multipak_cartridge::empty(slot_id_type slot) const
 
 void multipak_cartridge::eject_cartridge(slot_id_type slot)
 {
+
 	vcc::core::utils::section_locker lock(mutex_);
 	slots_[slot].stop();
 	slots_[slot] = {};
@@ -341,6 +343,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		slot,
 		*context_,
 		*multipakHost);
+
 
 	DLOG_C("load cart %d  %s\n",slot,filename);
 

@@ -1,27 +1,31 @@
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
+//#define USE_LOGGING
+//======================================================================
+// This file is part of VCC (Virtual Color Computer).
+// Vcc is Copyright 2015 by Joseph Forgione
+//
+// VCC (Virtual Color Computer) is free software, you can redistribute
+// and/or modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will
+// be useful, but WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with VCC (Virtual Color Computer).  If not, see
+// <http://www.gnu.org/licenses/>.
+//
+//======================================================================
 
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
 /********************************************************************************************
 *	fd502.cpp : Defines the entry point for the DLL application.							*
 *	DLL for use with Vcc 1.0 or higher. DLL interface 1.0 Beta								*
 *	This Module will emulate a Tandy Floppy Disk Model FD-502 With 3 DSDD drives attached	*
 *	Copyright 2006 (c) by Joseph Forgione 													*
 *********************************************************************************************/
-//#define USE_LOGGING
+
 #pragma warning( disable : 4800 ) // For legacy builds
 
 #include <Windows.h>
@@ -139,6 +143,9 @@ extern "C"
 
 	__declspec(dllexport) void PakTerminate()
 	{
+#ifdef COMBINE_BECKER
+		becker_enable(0);
+#endif
 		CloseCartDialog(g_hConfDlg);
 		for (unsigned char Drive = 0; Drive <= 3; Drive++)
 		{
