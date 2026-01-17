@@ -15,6 +15,9 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
+
+// TODO: FileOps should be depreciated and functions moved to fileutil.cpp
+
 #include <Windows.h>
 #include <stdio.h>
 #include <stdbool.h>

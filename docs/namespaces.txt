@@ -1,0 +1,25 @@
+We let namspaces get a bit overboard. Namespaces are for preventing
+name collisions, not to fully classify sources or to define directory
+or common library structures.
+
+Also we let the case of the VCC namespace change. This gains nothing
+but confusion.  I see two choices here. a) go all lowercase or 
+b) use CamelCase.  Since we already had CamelCase I suggest we stick
+with it:
+
+Valid VCC namespaces 
+
+VCC                // The VCC core emulator
+VCC::UI            // The VCC core user interface (future)
+VCC::Util          // Generic utilities used by VCC
+VCC::Debugger      // Coco Debugger code
+VCC::Debugger::UI  // Coco Debugger user interface
+
+The following are invalid and should be changed when touched:
+
+namespace vcc                   -> namespace VCC
+namespace vcc::core             -> namespace VCC
+namespace vcc::core::cartridges -> namespace VCC
+namespace vcc::core::utils      -> namespace VCC::Util
+namespace vcc::devices::rtc     -> namespace VCC
+namespace vcc::modules::mpi     -> namespace VCC

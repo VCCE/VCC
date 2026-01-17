@@ -141,8 +141,20 @@
 #include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/core/limits.h>
 
+//#include "fileutil.h"
+#include <vcc/core/fileutil.h>
+
 #include "sdc.h"
-#include "fileutil.h"
+
+#ifdef VCC
+#pragma message("VCC is defined as a macro!")
+#endif
+
+#ifdef Util
+#pragma message("Util is defined as a macro!")
+#endif
+
+namespace util = VCC::Util;
 
 static ::vcc::devices::rtc::cloud9 cloud9_rtc;
 
@@ -223,14 +235,18 @@ void SelectCardBox();
 void UpdateFlashItem(int);
 void InitCardBox();
 void InitFlashBoxes();
-void FitEditTextPath(HWND, int, const char *);
+void FitEditTextPath(HWND, int, const std::string&);
 void InitSDC();
 void LoadRom(unsigned char);
 void ParseStartup();
-bool SearchFile(const char *);
+bool SearchFile(const std::string&);
 void UnloadDisk(int);
 void GetFileList(const std::string&);
 void SortFileList();
+std::string FixFATPath(const std::string&);
+std::string lfn_from_sfn(const char (&name)[8], const char (&ext)[3]);
+void sfn_from_lfn(char (&name)[8], char (&ext)[3], const std::string& lfn);
+template <size_t N> void copy_to_fixed_char(char (&dest)[N], const std::string& src);
 
 void SDCReadSector();
 void SDCStreamImage();
@@ -472,7 +488,7 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
                 GetWindowText(hSDCardBox,tmp,MAX_PATH);
                 if (*tmp != '\0') {
                     gCurDir = tmp;
-                    FixDirSlashes(gCurDir);
+                    util::FixDirSlashes(gCurDir);
                     //strncpy(SDCard,tmp,MAX_PATH);
                 }
             }
@@ -539,12 +555,12 @@ void LoadConfig()
         ("SDC", "SDCardPath", "", tmp, MAX_PATH, IniFile);
 
     gSDRoot = tmp;
-    FixDirSlashes(gSDRoot);
+    util::FixDirSlashes(gSDRoot);
 
     DLOG_C("LoadConfig ROMPath %s\n",ROMPath);
     DLOG_C("LoadConfig gSDRoot %s\n",gSDRoot);
 
-    if (!IsDirectory(gSDRoot)) {
+    if (!util::IsDirectory(gSDRoot)) {
         MessageBox (gVccWindow,"Invalid SDCard Path in VCC init","Error",0);
     }
 
@@ -564,7 +580,7 @@ void LoadConfig()
 //------------------------------------------------------------
 bool SaveConfig(HWND hDlg)
 {
-    if (!IsDirectory(gSDRoot)) {
+    if (!util::IsDirectory(gSDRoot)) {
         MessageBox(gVccWindow,"Invalid SDCard Path\n","Error",0);
         return false;
     }
@@ -587,21 +603,21 @@ bool SaveConfig(HWND hDlg)
     return true;
 }
 
-//------------------------------------------------------------
-// Fit path in edit text box (Box must be ES_READONLY)
-//------------------------------------------------------------
-void FitEditTextPath(HWND hDlg, int ID, const char * path) {
+void FitEditTextPath(HWND hDlg, int ID, const std::string& path)
+{
     HDC c;
     HWND h;
     RECT r;
-    char p[MAX_PATH];
+
     if ((c = GetDC(hDlg)) == NULL) return;
     if ((h = GetDlgItem(hDlg, ID)) == NULL) return;
+
     GetClientRect(h, &r);
-    strncpy(p, path, MAX_PATH);
-    PathCompactPath(c, p, r.right);
-    FixDirSlashes(p);
-    SetWindowText(h, p);
+    std::string p = path;
+    p.resize(MAX_PATH);
+    PathCompactPathA(c, p.data(), r.right);
+    util::FixDirSlashes(p);
+    SetWindowTextA(h, p.c_str());
     ReleaseDC(hDlg, c);
 }
 
@@ -697,7 +713,7 @@ void SelectCardBox()
         if (SHGetPathFromIDList(pidl, tmp))
         {
             gSDRoot = tmp;
-            FixDirSlashes(gSDRoot);
+            util::FixDirSlashes(gSDRoot);
             SendMessage(hSDCardBox, WM_SETTEXT, 0, (LPARAM)gSDRoot.c_str());
         }
 
@@ -1803,12 +1819,10 @@ void SDCMountNewDisk (int drive, const char * path, int raw)
 
     // Close and clear previous entry
     UnloadDisk(drive);
-    //CloseDrive(drive);
-    //gCocoDisk[drive] = {};
 
     // Convert from SDC format
-    char file[MAX_PATH];
-    FixFATPath(file,path);
+    char file[MAX_PATH] {};
+    strncpy(file,FixFATPath(path).c_str(),MAX_PATH-1);
 
     // Look for pre-existing file
     if (SearchFile(file)) {
@@ -1859,8 +1873,8 @@ void SDCMountDisk (int drive, const char * path, int raw)
     }
 
     // Convert from SDC format
-    char file[MAX_PATH];
-    FixFATPath(file,path);  //TODO use new routine
+    char file[MAX_PATH] {};
+    strncpy(file,FixFATPath(path).c_str(),MAX_PATH-1);
 
     // Look for the file
     bool found = SearchFile(file);
@@ -2324,7 +2338,7 @@ void SDCSetCurDir(const char* branch)
     if (strcmp(branch, "..") == 0) {
         cur = cur.parent_path();
         gCurDir = cur.string();
-        FixDirSlashes(gCurDir);
+        util::FixDirSlashes(gCurDir);
         DLOG_C("SetCurdir back %s\n", gCurDir.c_str());
         IFace.status = STA_NORMAL;
         return;
@@ -2364,7 +2378,7 @@ void SDCSetCurDir(const char* branch)
 
     // String based host files
     gCurDir = newCur.string();
-    FixDirSlashes(gCurDir);
+    util::FixDirSlashes(gCurDir);
 
     DLOG_C("SetCurdir set to '%s'\n", gCurDir.c_str());
     IFace.status = STA_NORMAL;
@@ -2375,19 +2389,17 @@ void SDCSetCurDir(const char* branch)
 //----------------------------------------------------------------------
 bool SDCInitiateDir(const char * path)
 {
+    bool rc;
     DLOG_C("SDCInitiateDir '%s'\n",path);
 
-    bool rc;
-    // Append "*.*" if last char in path was '/';
-    int l = strlen(path);
+    // Append "*.*" if last char in path is '/';
+    size_t l = strlen(path);
     if (path[l-1] == '/') {
-        char tmp[MAX_PATH];
-        strncpy(tmp,path,MAX_PATH);
-        strncat(tmp,"*.*",MAX_PATH);
-        rc = SearchFile(tmp);
+        rc = SearchFile(std::string(path) + "*.*");
     } else {
         rc = SearchFile(path);
     }
+
     if (rc) {
         IFace.status = STA_NORMAL;
         return true;
@@ -2445,13 +2457,13 @@ void GetFileList(const std::string& pattern)
     search_path += pattern;
 
     // A directory lookup if pattern name is "*" or "*.*";
-    std::string fnpat = GetFileNamePart(pattern);
+    std::string fnpat = util::GetFileNamePart(pattern);
     bool dir_lookup = (fnpat == "*" || fnpat == "*.*");
 
-    std::string search_dir = GetDirectoryPart(search_path);
+    std::string search_dir = util::GetDirectoryPart(search_path);
 
     // Include ".." if dir_lookup and search_dir is not SDRoot
-    if (dir_lookup && GetDirectoryPart(search_path) != gSDRoot) {
+    if (dir_lookup && util::GetDirectoryPart(search_path) != gSDRoot) {
         gFileList.append({"..", 0, true, false});
     }
 
@@ -2494,16 +2506,136 @@ void SortFileList()
 //----------------------------------------------------------------------
 //  Host File search.
 //----------------------------------------------------------------------
-bool SearchFile(const char* pattern)
+bool SearchFile(const std::string& pat)
 {
-    std::string s = pattern;
-    GetFileList(s);
-
-    DLOG_C("SearchFile found %d pat %s\n",gFileList.files.size(),s.c_str());
-
+    // Fill gFileList with files found.
+    GetFileList(pat);
     // Update menu to show next disk status
     BuildCartridgeMenu();
-
+    // Return true if something found
     return (gFileList.files.size() > 0);
+}
+
+//----------------------------------------------------------------------
+// A file path may use 11 char FAT format which does not use a separater
+// between name and extension. User is free to use standard dot format.
+//    "FOODIR/FOO.DSK"     = FOODIR/FOO.DSK
+//    "FOODIR/FOO     DSK" = FOODIR/FOO.DSK
+//    "FOODIR/ALONGFOODSK" = FOODIR/ALONGFOO.DSK
+//----------------------------------------------------------------------
+std::string FixFATPath(const std::string& sdcpath)
+{
+    std::filesystem::path p(sdcpath);
+
+    auto chop = [](std::string s) {
+        size_t space = s.find(' ');
+        if (space != std::string::npos) s.erase(space);
+        return s;
+    };
+
+    std::string fname = p.filename().string();
+    if (fname.length() == 11 && fname.find('.') == std::string::npos) {
+        auto nam = chop(fname.substr(0,8));
+        auto ext = chop(fname.substr(8,3));
+        fname = ext.empty() ? nam : nam + "." + ext;
+    }
+
+    std::filesystem::path out = p.parent_path() / fname;
+
+    DLOG_C("FixFATPath in %s out %s\n",sdcpath.c_str(),out.generic_string().c_str());
+    return out.generic_string();
+}
+
+
+//-------------------------------------------------------------------
+// Convert string containing possible FAT name and extension to an
+// LFN string. Returns empty string if invalid LFN
+//-------------------------------------------------------------------
+std::string NormalizeInputToLFN(const std::string& s)
+{
+    if (s.empty()) return {};
+    if (s.size() > 11) return {};
+    if (s == "..") return "..";
+
+    // LFN candidate
+    if (s.find('.') != std::string::npos) {
+        if (!PathIsLFNFileSpecA(s.c_str()))
+            return {}; // invalid
+        return s;
+    }
+
+    // SFN candidate
+    char name[8];
+    char ext[3];
+    sfn_from_lfn(name,ext,s);
+    return lfn_from_sfn(name,ext);
+}
+
+//-------------------------------------------------------------------
+// Convert LFN to FAT filename parts, 8 char name, 3 char ext
+// A LNF file is less than 4GB and has a short (8.3) name.
+//-------------------------------------------------------------------
+void sfn_from_lfn(char (&name)[8], char (&ext)[3], const std::string& lfn)
+{
+    // Special case: parent directory
+    if (lfn == "..") {
+        copy_to_fixed_char(name, "..");
+        std::fill(ext, ext + 3, ' ');
+        return;
+    }
+
+    size_t dot = lfn.find('.');
+    std::string base, extension;
+
+    if (dot == std::string::npos) {
+        base = lfn;
+    } else {
+        base = lfn.substr(0, dot);
+        extension = lfn.substr(dot + 1);
+    }
+
+    copy_to_fixed_char(name, base);
+    copy_to_fixed_char(ext, extension);
+}
+
+//-------------------------------------------------------------------
+// Convert FAT filename parts to LFN. Returns empty string if invalid
+//-------------------------------------------------------------------
+std::string lfn_from_sfn(const char (&name)[8], const char (&ext)[3])
+{
+    std::string base(name, 8);
+    std::string extension(ext, 3);
+
+    base = util::trim_right_spaces(base);
+    extension = util::trim_right_spaces(extension);
+
+    if (base == ".." && extension.empty())
+    return "..";
+
+    std::string lfn = base;
+
+    if (!extension.empty())
+    lfn += "." + extension;
+
+    if (lfn.empty())
+        return {};
+
+    if (!PathIsLFNFileSpecA(lfn.c_str()))
+        return {};
+
+    return lfn;
+}
+
+//-------------------------------------------------------------------
+// Copy string to fixed size char array (non terminated)
+//-------------------------------------------------------------------
+template <size_t N>
+void copy_to_fixed_char(char (&dest)[N], const std::string& src)
+{
+    size_t i = 0;
+    for (; i < src.size() && i < N; ++i)
+        dest[i] = src[i];
+    for (; i < N; ++i)
+        dest[i] = ' ';
 }
 

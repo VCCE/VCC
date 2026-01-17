@@ -97,12 +97,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="sdc.cpp" />
-    <ClCompile Include="fileutil.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sdc.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="fileutil.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sdc.rc" />
