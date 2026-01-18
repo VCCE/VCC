@@ -57,4 +57,43 @@ namespace VCC::Util {
 
 	// If path is in the application directory strip directory
 	LIBCOMMON_EXPORT std::string strip_application_path(std::string path);
+
+    // TODO: following stuff should go elsewhere
+
+	// Return string with case conversion	
+	inline std::string to_lower(std::string s) {
+		std::transform(s.begin(), s.end(), s.begin(),
+			[](unsigned char c){ return std::tolower(c); });
+		return s;
+	}
+
+	inline std::string to_upper(std::string s) {
+		std::transform(s.begin(), s.end(), s.begin(),
+			[](unsigned char c){ return std::toupper(c); });
+		return s;
+	}
+
+	// Convert case of string inplace
+	inline void make_lower(std::string& s) {
+		std::transform(s.begin(), s.end(), s.begin(),
+			[](unsigned char c){ return std::tolower(c); });
+	}
+
+	inline void make_lower(char* s) {
+		if (!s) return;
+		for (char* p = s; *p; ++p)
+			*p = static_cast<char>(std::tolower(static_cast<unsigned char>(*p)));
+	}
+
+	inline void make_upper(std::string& s) {
+		std::transform(s.begin(), s.end(), s.begin(),
+			[](unsigned char c){ return std::toupper(c); });
+	}
+
+	inline void make_upper(char* s) {
+		if (!s) return;
+		for (char* p = s; *p; ++p)
+			*p = static_cast<char>(std::toupper(static_cast<unsigned char>(*p)));
+	}
+
 }

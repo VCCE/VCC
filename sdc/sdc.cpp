@@ -141,8 +141,8 @@
 #include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/util/limits.h>
 
-//#include "fileutil.h"
 #include <vcc/util/fileutil.h>
+#include <vcc/util/settings.h>
 
 #include "sdc.h"
 
@@ -154,9 +154,8 @@
 #pragma message("Util is defined as a macro!")
 #endif
 
-namespace util = VCC::Util;
-
 static ::VCC::Device::rtc::cloud9 cloud9_rtc;
+namespace util = ::VCC::Util;
 
 //======================================================================
 // Globals
@@ -169,19 +168,19 @@ static int idle_ctr = 0; // Idle Status counter
 static void* gCallbackContext = nullptr;
 static PakAssertInteruptHostCallback AssertIntCallback = nullptr;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
-static char IniFile[MAX_PATH] = {};  // Vcc ini file name
 
+// Settings
+static char IniFile[MAX_PATH] = {};
+
+// Window handles
 static HWND gVccWindow = nullptr;
 static HWND hConfigureDlg = nullptr;
 static HWND hSDCardBox = nullptr;
-static HWND hStartupBank = nullptr;
+static HWND hStartBankBox = nullptr;
 
 static int ClockEnable = 0;
 static char SDC_Status[16] = {};
 static char PakRom[0x4000] = {};
-static unsigned char CurrentBank = 0xff;
-static unsigned char EnableBankWrite = 0;
-static unsigned char BankWriteState = 0;
 
 static std::string gSDRoot {}; // SD card root directory
 static std::string gCurDir {}; // Current directory relative to root
@@ -194,11 +193,15 @@ static Interface IFace {};
 
 // Flash banks
 static char FlashFile[8][MAX_PATH];
-static FILE *h_RomFile = nullptr;
-static unsigned char StartupBank = 0;
 static unsigned char BankWriteNum = 0;
-static unsigned char BankDirty = 0;
 static unsigned char BankData = 0;
+static unsigned char EnableBankWrite = 0;
+static unsigned char BankWriteState = 0;
+
+static unsigned char gStartupBank = 0;
+static unsigned char gLoadedBank = 0xff;  // Currently loaded bank
+static unsigned char gRomDirty = 0;       // RomDirty flag
+
 
 // Streaming control
 static int streaming;
@@ -221,7 +224,7 @@ static int EDBOXES[8] = {ID_TEXT0,ID_TEXT1,ID_TEXT2,ID_TEXT3,
 static int UPDBTNS[8] = {ID_UPDATE0,ID_UPDATE1,ID_UPDATE2,ID_UPDATE3,
                          ID_UPDATE4,ID_UPDATE5,ID_UPDATE6,ID_UPDATE7};
 
-static char ROMPath[MAX_PATH];
+static std::string gRomPath {};
 
 //======================================================================
 //  Functions
@@ -291,7 +294,6 @@ bool SDCReadDrive(unsigned char,unsigned int);
 bool SDCLoadNextDirPage();
 std::string SDCGetFullPath(const std::string&);
 
-
 //======================================================================
 // DLL interface
 //======================================================================
@@ -310,7 +312,6 @@ extern "C"
         CartMenuCallback = callbacks->add_menu_item;
         AssertIntCallback = callbacks->assert_interrupt;
         strcpy(IniFile, configuration_path);
-
         LoadConfig();
         BuildCartridgeMenu();
     }
@@ -397,7 +398,7 @@ extern "C"
             idle_ctr++;
         } else {
             idle_ctr = 0;
-            snprintf(SDC_Status,16,"SDC:%d idle",CurrentBank);
+            snprintf(SDC_Status,16,"SDC:%d idle",gLoadedBank);
         }
         strncpy(text_buffer,SDC_Status,buffer_size);
     }
@@ -472,10 +473,10 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
         InitFlashBoxes();
         InitCardBox();
         SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnable,0);
-        hStartupBank = GetDlgItem(hDlg,ID_STARTUP_BANK);
+        hStartBankBox = GetDlgItem(hDlg,ID_STARTUP_BANK);
         char tmp[4];
-        snprintf(tmp,4,"%d",(StartupBank & 7));
-        SetWindowText(hStartupBank,tmp);
+        snprintf(tmp,4,"%d",(gStartupBank & 7));
+        SetWindowText(hStartBankBox,tmp);
         break;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
@@ -520,13 +521,13 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
         case ID_STARTUP_BANK:
             if (HIWORD(wParam) == EN_CHANGE) {
                 char tmp[4];
-                GetWindowText(hStartupBank,tmp,4);
-                StartupBank = atoi(tmp);// & 7;
-                if (StartupBank > 7) {
-                    StartupBank &= 7;
+                GetWindowText(hStartBankBox,tmp,4);
+                gStartupBank = atoi(tmp);// & 7;
+                if (gStartupBank > 7) {
+                    gStartupBank &= 7;
                     char tmp[4];
-                    snprintf(tmp,4,"%d",StartupBank);
-                    SetWindowText(hStartupBank,tmp);
+                    snprintf(tmp,4,"%d",gStartupBank);
+                    SetWindowText(hStartBankBox,tmp);
                 }
             }
             break;
@@ -545,34 +546,26 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 //------------------------------------------------------------
 void LoadConfig()
 {
-    char tmp[MAX_PATH];
+    util::settings settings(IniFile);
 
-    // FIXME should be "SDCRomPath" and saved when changed
-    GetPrivateProfileString
-        ("DefaultPaths", "MPIPath", "", ROMPath, MAX_PATH, IniFile);
+    gRomPath = settings.read("DefaultPaths", "RomPath", "");
+    gSDRoot  = settings.read("SDC", "SDCardPath", "");
 
-    GetPrivateProfileString
-        ("SDC", "SDCardPath", "", tmp, MAX_PATH, IniFile);
+    DLOG_C("LoadConfig gRomPath %s\n",gRomPath.c_str());
+    DLOG_C("LoadConfig gSDRoot %s\n",gSDRoot.c_str());
 
-    gSDRoot = tmp;
     util::FixDirSlashes(gSDRoot);
-
-    DLOG_C("LoadConfig ROMPath %s\n",ROMPath);
-    DLOG_C("LoadConfig gSDRoot %s\n",gSDRoot);
-
     if (!util::IsDirectory(gSDRoot)) {
         MessageBox (gVccWindow,"Invalid SDCard Path in VCC init","Error",0);
     }
 
     for (int i=0;i<8;i++) {
-        char txt[32];
-        snprintf(txt,MAX_PATH,"FlashFile_%d",i);
-        GetPrivateProfileString
-            ("SDC", txt, "", FlashFile[i], MAX_PATH, IniFile);
+        std::string tmp = "FlashFile_" + std::to_string(i);
+        settings.read("SDC", tmp, "", FlashFile[i], MAX_PATH);//, IniFile);
     }
-
-    ClockEnable = GetPrivateProfileInt("SDC","ClockEnable",1,IniFile);
-    StartupBank = GetPrivateProfileInt("SDC","StarupBank",0,IniFile);
+    
+    ClockEnable = settings.read("SDC","ClockEnable",1);
+    gStartupBank = settings.read("SDC","StartupBank",0);
 }
 
 //------------------------------------------------------------
@@ -580,26 +573,29 @@ void LoadConfig()
 //------------------------------------------------------------
 bool SaveConfig(HWND hDlg)
 {
+    util::settings settings(IniFile);
+
     if (!util::IsDirectory(gSDRoot)) {
         MessageBox(gVccWindow,"Invalid SDCard Path\n","Error",0);
         return false;
     }
-    WritePrivateProfileString("SDC","SDCardPath",gSDRoot.c_str(),IniFile);
+
+    settings.write("SDC","SDCardPath",gSDRoot);
+    settings.write("DefaultPaths","RomPath",gRomPath);
 
     for (int i=0;i<8;i++) {
-        char txt[32];
-        sprintf(txt,"FlashFile_%d",i);
-        WritePrivateProfileString("SDC",txt,FlashFile[i],IniFile);
+        std::string tmp = "FlashFile_" + std::to_string(i);
+        settings.write("SDC", tmp, FlashFile[i]);
     }
 
     if (SendDlgItemMessage(hDlg,IDC_CLOCK,BM_GETCHECK,0,0)) {
-        WritePrivateProfileString("SDC","ClockEnable","1",IniFile);
+        settings.write("SDC","ClockEnable","1");
     } else {
-        WritePrivateProfileString("SDC","ClockEnable","0",IniFile);
+        settings.write("SDC","ClockEnable","0");
     }
-    char tmp[4];
-    snprintf(tmp,4,"%d",(StartupBank & 7));
-    WritePrivateProfileString("SDC","StarupBank",tmp,IniFile);
+
+    gStartupBank &= 7;
+    settings.write("SDC","StartupBank",std::to_string(gStartupBank));
     return true;
 }
 
@@ -653,6 +649,7 @@ void InitCardBox()
 
 void UpdateFlashItem(int index)
 {
+    util::settings settings(IniFile);
     char filename[MAX_PATH]={};
 
     if ((index < 0) | (index > 7)) return;
@@ -666,10 +663,11 @@ void UpdateFlashItem(int index)
         dlg.setDefExt("rom");
         dlg.setFilter("Rom File\0*.rom\0All Files\0*.*\0\0");
         dlg.setTitle(title);
-        dlg.setInitialDir(ROMPath);
+        dlg.setInitialDir(gRomPath.c_str());
         if (dlg.show(0,hConfigureDlg)) {
             dlg.getupath(filename,MAX_PATH); // cvt to unix style
             strncpy(FlashFile[index],filename,MAX_PATH);
+            gRomPath = util::GetDirectoryPart(filename);
         }
     }
     InitFlashBoxes();
@@ -677,7 +675,8 @@ void UpdateFlashItem(int index)
     // Save path to ini file
     char txt[32];
     sprintf(txt,"FlashFile_%d",index);
-    WritePrivateProfileString("SDC",txt,FlashFile[index],IniFile);
+    settings.write("SDC",txt,FlashFile[index]);
+
 }
 
 //------------------------------------------------------------
@@ -742,7 +741,7 @@ void InitSDC()
 
     // Load SDC settings
     LoadConfig();
-    LoadRom(StartupBank);
+    LoadRom(gStartupBank);
 
     SDCSetCurDir(""); // May be changed by ParseStartup()
 
@@ -819,54 +818,63 @@ void LoadRom(unsigned char bank)
 
     DLOG_C("LoadRom load flash bank %d\n",bank);
 
-    // Skip if bank is already active
-    if (bank == CurrentBank) return;
+//    // Skip if bank is already loaded
+//    if (bank == gLoadedBank) return;
 
-    // Make sure flash file is closed
-    if (h_RomFile) {
-        fclose(h_RomFile);
-        h_RomFile = nullptr;
-    }
+    // Sanity check before trying to save to empty file
+    if (*FlashFile[gLoadedBank] == '\0') gRomDirty = 0;
 
     // If bank contents have been changed write the flash file
-    if (BankDirty) {
-        RomFile = FlashFile[CurrentBank];
-        DLOG_C("LoadRom switching out dirty bank %d %s\n",CurrentBank,RomFile);
-        h_RomFile = fopen(RomFile,"wb");
-        if (!h_RomFile) {
-            MessageBox (gVccWindow,"Can not write Rom file","SDC Rom Save Failed",0);
-        } else {
-            ctr = 0;
-            p_rom = PakRom;
-            while (ctr++ < 0x4000) fputc(*p_rom++, h_RomFile);
-            fclose(h_RomFile);
-            h_RomFile = nullptr;
+    if (gRomDirty) {
+        RomFile = FlashFile[gLoadedBank];
+        int rc = MessageBox(gVccWindow,
+                "Save Rom Contents",
+                "Write Rom File?",
+                MB_YESNOCANCEL);
+        switch (rc) {
+        case IDYES:
+        {
+            FILE *hf = fopen(RomFile,"wb");
+            if (!hf) {
+                MessageBox (gVccWindow,
+                    "Can not write Rom file",
+                    "Write Rom Failed",0);
+            } else {
+                ctr = 0;
+                p_rom = PakRom;
+                while (ctr++ < 0x4000) fputc(*p_rom++, hf);
+                fclose(hf);
+                gRomDirty = 0;
+            }
+            break;
         }
-        BankDirty = 0;
+        case IDNO:
+            gRomDirty = 0;
+            break;
+        }
     }
 
-    RomFile = FlashFile[bank];
-    CurrentBank = bank;
+    // Abort if user canceled or save failed
+    if (gRomDirty) return;
+
+    RomFile = FlashFile[bank];  // RomFile is a pointer
 
     // If bank is empty and is the StartupBank load SDC-DOS
-    if (*FlashFile[CurrentBank] == '\0') {
-        DLOG_C("LoadRom bank %d is empty\n",CurrentBank);
-        if (CurrentBank == StartupBank) {
+    if (*FlashFile[bank] == '\0') {
+        DLOG_C("LoadRom bank %d is empty\n",bank);
+        if (bank == gStartupBank) {
             DLOG_C("LoadRom loading default SDC-DOS\n");
             strncpy(RomFile,"SDC-DOS.ROM",MAX_PATH);
+        } else {
+            return;
         }
     }
 
-    // Open romfile for write if not startup bank
-    if (CurrentBank != StartupBank)
-        h_RomFile = fopen(RomFile,"wb");
-
-    if (CurrentBank == StartupBank || h_RomFile == nullptr)
-        h_RomFile = fopen(RomFile,"rb");
-
-    if (h_RomFile == nullptr) {
+    // Load the rom 
+    FILE *hf = fopen(RomFile,"rb");
+    if (hf == nullptr) {
         std::string msg="Check Rom Path and SDC Config\n"+std::string(RomFile);
-        MessageBox (gVccWindow,msg.c_str(),"SDC Startup Rom Load Failed",0);
+        MessageBox (gVccWindow,msg.c_str(),"SDC Rom Load Failed",0);
         return;
     }
 
@@ -875,11 +883,12 @@ void LoadRom(unsigned char bank)
     ctr = 0;
     p_rom = PakRom;
     while (ctr++ < 0x4000) {
-        if ((ch = fgetc(h_RomFile)) < 0) break;
+        if ((ch = fgetc(hf)) < 0) break;
         *p_rom++ = (char) ch;
     }
 
-    fclose(h_RomFile);
+    gLoadedBank = bank;
+    fclose(hf);
     return;
 }
 
@@ -1042,7 +1051,7 @@ unsigned char SDCRead(unsigned char port)
             break;
         // Flash control read is used by SDCDOS to detect the SDC
         case 0x43:
-            rpy = CurrentBank | (BankData & 0xF8);
+            rpy = gLoadedBank | (BankData & 0xF8);
             break;
         // Floppy read status
         case 0x48:
@@ -1141,6 +1150,7 @@ void SDCFloppyCommand(unsigned char data)
         break;
     case 13:   //FORCEINTERUPT
         //Nitros9 driver does this
+        //SDC-ROM does this after bank switch
         DLOG_C("SDCFloppyCommand force interrupt?\n");
         break;
     //case 14: //READTRACK
@@ -1302,7 +1312,7 @@ void SDCFloppyReadDisk()
     auto lsn = SDCFloppyLSN(FlopDrive,FlopTrack,FlopSector);
     //DLOG_C("FloppyReadDisk %d %d\n",FlopDrive,lsn);
 
-    snprintf(SDC_Status,16,"SDC:%d Rd %d,%d",CurrentBank,FlopDrive,lsn);
+    snprintf(SDC_Status,16,"SDC:%d Rd %d,%d",gLoadedBank,FlopDrive,lsn);
     if (SDCSeekSector(FlopDrive,lsn)) {
         if (ReadFile(gCocoDisk[FlopDrive].hFile,FlopRdBuf,256,&FlopRdCnt,nullptr)) {
             DLOG_C("FloppyReadDisk %d %d\n",FlopDrive,lsn);
@@ -1492,7 +1502,7 @@ void SDCFlashControl(unsigned char data)
     EnableBankWrite = data & 0x80;
     if (EnableBankWrite) {
         BankWriteNum = bank;
-    } else if (CurrentBank != bank) {
+    } else if (gLoadedBank != bank) {
         LoadRom(bank);
     }
 }
@@ -1542,9 +1552,9 @@ unsigned char SDCWriteFlashBank(unsigned short adr)
         break;
     // State three writes data
     case 3:
-        if (BankWriteNum != CurrentBank) LoadRom(BankWriteNum);
+        if (BankWriteNum != gLoadedBank) LoadRom(BankWriteNum);
         PakRom[adr] = BankData;
-        BankDirty = 1;
+        gRomDirty = 1;
         break;
     // State four continues kill sequence
     case 4:
@@ -1558,9 +1568,9 @@ unsigned char SDCWriteFlashBank(unsigned short adr)
     // State six kills (fills with 0xFF) bank sector
     case 6:
         if (BankData == 0x30) {
-            if (BankWriteNum != CurrentBank) LoadRom(BankWriteNum);
+            if (BankWriteNum != gLoadedBank) LoadRom(BankWriteNum);
             memset(PakRom + (adr & 0x3000), 0xFF, 0x1000);
-            BankDirty = 1;
+            gRomDirty = 1;
         }
         break;
     }
@@ -1632,7 +1642,7 @@ void SDCWriteSector()
     DWORD cnt = 0;
     int drive = IFace.cmdcode & 1;
     unsigned int lsn = (IFace.param1 << 16) + (IFace.param2 << 8) + IFace.param3;
-    snprintf(SDC_Status,16,"SDC:%d Wr %d,%d",CurrentBank,drive,lsn);
+    snprintf(SDC_Status,16,"SDC:%d Wr %d,%d",gLoadedBank,drive,lsn);
 
     if (gCocoDisk[drive].hFile == nullptr) {
         IFace.status = STA_FAIL;
@@ -1777,7 +1787,7 @@ bool SDCReadDrive(unsigned char cmdcode, unsigned int lsn)
         return false;
     }
 
-    snprintf(SDC_Status,16,"SDC:%d Rd %d,%d",CurrentBank,drive,lsn);
+    snprintf(SDC_Status,16,"SDC:%d Rd %d,%d",gLoadedBank,drive,lsn);
     SDCLoadReply(buf,cnt);
     return true;
 }
@@ -1926,7 +1936,7 @@ bool SDCMountNext (int drive)
 
     if (gFileList.cursor >= gFileList.files.size()) {
         gFileList.cursor = 0;
-        DLOG_C("SDCMountNext reset cursor\n");
+        DLOG_C("SDCMountNext reset filelist cursor\n");
     }
 
     DLOG_C("SDCMountNext %d %d\n",

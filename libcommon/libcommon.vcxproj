@@ -112,7 +112,7 @@
     <ClCompile Include="src\bus\rom_cartridge.cpp" />
     <ClCompile Include="src\bus\cartridge_loader.cpp" />
     <ClCompile Include="src\bus\rom_image.cpp" />
-    <ClCompile Include="src\util\initial_settings.cpp" />
+    <ClCompile Include="src\util\settings.cpp" />
     <ClCompile Include="src\util\filesystem.cpp" />
     <ClCompile Include="src\util\winapi.cpp" />
     <ClCompile Include="src\util\DialogOps.cpp" />
@@ -140,7 +140,7 @@
     <ClInclude Include="include\vcc\util\limits.h" />
     <ClInclude Include="include\vcc\util\logger.h" />
     <ClInclude Include="include\vcc\util\fileutil.h" />
-    <ClInclude Include="include\vcc\util\initial_settings.h" />
+    <ClInclude Include="include\vcc\util\settings.h" />
     <ClInclude Include="include\vcc\util\critical_section.h" />
     <ClInclude Include="include\vcc\util\filesystem.h" />
     <ClInclude Include="include\vcc\util\winapi.h" />

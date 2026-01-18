@@ -20,7 +20,7 @@
     <ClCompile Include="src\core\filesystem.cpp">
       <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\initial_settings.cpp">
+    <ClCompile Include="src\core\settings.cpp">
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\bus\cpak_cartridge.cpp">
@@ -70,7 +70,7 @@
     <ClInclude Include="include\vcc\core\filesystem.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vcc\core\initial_settings.h">
+    <ClInclude Include="include\vcc\core\settings.h">
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\core\interrupts.h">
