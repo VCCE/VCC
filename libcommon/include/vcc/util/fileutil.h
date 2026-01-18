@@ -96,4 +96,12 @@ namespace VCC::Util {
 			*p = static_cast<char>(std::toupper(static_cast<unsigned char>(*p)));
 	}
 
+	inline bool is_null_or_empty(const char* s) {
+		return s == nullptr || *s == '\0';
+	}
+
+	inline bool is_null_or_empty(const std::string& s) {
+		return s.empty();
+	}
+
 }

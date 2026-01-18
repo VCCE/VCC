@@ -68,6 +68,7 @@
 #include "CommandLine.h"
 #include <vcc/util/logger.h>
 #include <vcc/util/limits.h>
+#include <vcc/util/settings.h>
 #include "memdump.h"
 
 #include "MemoryMap.h"
@@ -915,16 +916,17 @@ unsigned char SetAutoStart(unsigned char Tmp)
 // LoadIniFile allows user to browse for an ini file and reloads the config from it.
 void LoadIniFile()
 {
+	FlushSettings();
+
+	char curini[MAX_PATH]="";
+	GetIniFilePath(curini);
+
 	FileDialog dlg;
 	dlg.setFilter("INI\0*.ini\0\0");
 	dlg.setDefExt("ini");
 	dlg.setInitialDir(AppDirectory() );
 	dlg.setTitle(TEXT("Load Vcc Config File") );
 	dlg.setFlags(OFN_FILEMUSTEXIST);
-
-	// Send current ini file path to dialog
-	char curini[MAX_PATH]="";
-	GetIniFilePath(curini);
 	dlg.setpath(curini);
 
 	if ( dlg.show() ) {
@@ -939,6 +941,11 @@ void LoadIniFile()
 // SaveConfig copies the current ini file to a choosen ini file.
 void SaveConfig() {
 
+	FlushSettings();
+
+	char curini[MAX_PATH]="";
+	GetIniFilePath(curini);
+
 	FileDialog dlg;
 	dlg.setFilter("INI\0*.ini\0\0");
 	dlg.setDefExt("ini");
@@ -947,8 +954,6 @@ void SaveConfig() {
 	dlg.setFlags(OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT);
 
 	// Send current ini file path to dialog
-	char curini[MAX_PATH]="";
-	GetIniFilePath(curini);
 	dlg.setpath(curini);
 
 	if ( dlg.show(1) ) {

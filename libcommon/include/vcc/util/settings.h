@@ -18,6 +18,7 @@
 #pragma once
 #include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <string>
+#include <Windows.h>
 
 namespace VCC::Util
 {
@@ -66,6 +67,24 @@ namespace VCC::Util
 			(const std::string& section,
 			 const std::string& key,
 			 int default_value) const;
+
+		// delete key
+		LIBCOMMON_EXPORT void delete_key 
+			(const std::string& section,
+			 const std::string& key) const
+    		{ ::WritePrivateProfileString
+			  (section.c_str(), key.c_str(), NULL, path_.c_str());}
+
+		// delete section 
+		LIBCOMMON_EXPORT void delete_section 
+			(const std::string& section) const
+    		{ ::WritePrivateProfileString
+			  (section.c_str(), NULL, NULL, path_.c_str());}
+
+		// flush cache 
+		LIBCOMMON_EXPORT void flush () const
+    		{ ::WritePrivateProfileString
+			  (NULL, NULL, NULL, path_.c_str());}
 
 	private:
 		const path_type path_;
