@@ -48,6 +48,7 @@ void SetGimeHorzOffset(unsigned char);
 void SetGimeBoarderColor(unsigned char);
 void SetVidMask(unsigned int);
 void InvalidateBoarder();
+void SetPaletteType();
 
 void GimeInit();
 void GimeReset();

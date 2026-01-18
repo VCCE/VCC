@@ -81,7 +81,7 @@
 #include "IDisplayDebug.h"
 #endif
 
-using namespace VCC;
+using namespace ::VCC; // namespace is everything VCC
 
 static HANDLE hout=nullptr;
 
