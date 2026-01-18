@@ -1,27 +1,34 @@
-#ifndef __COMMANDLINE_H__
-#define __COMMANDLINE_H__
-/*
+//#define USE_LOGGING
+//======================================================================
+// This file is part of VCC (Virtual Color Computer).
+// Vcc is Copyright 2015 by Joseph Forgione
+//
+// VCC (Virtual Color Computer) is free software, you can redistribute
+// and/or modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will
+// be useful, but WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with VCC (Virtual Color Computer).  If not, see
+// <http://www.gnu.org/licenses/>.
+//======================================================================
 
-Copyright 2015 by E J Jaquay
-This file is part of VCC (Virtual Color Computer).
+//----------------------------------------------------------------------
+// Command line arguments and options to VCC
+// E J Jaquay 2020
+//----------------------------------------------------------------------
 
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+#pragma once
 
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-// Declare global variables defined by GetCmdLineArgs
 constexpr auto CL_MAX_PATH = 256u;
 constexpr auto CL_MAX_PASTE = 256u;
+
+// Variables defined by GetCmdLineArgs
 struct CmdLineArguments {
 	char QLoadFile[CL_MAX_PATH];
 	char IniFile[CL_MAX_PATH];
@@ -42,4 +49,3 @@ int  GetCmdLineArgs(const char * lpCmdLine);
 #define CL_ERR_UNKOPT 1  // Unknown option found
 #define CL_ERR_XTRARG 2  // Too many arguments
 
-#endif
