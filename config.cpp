@@ -1,20 +1,22 @@
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
-
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
+//#define USE_LOGGING
+//======================================================================
+// This file is part of VCC (Virtual Color Computer).
+// Vcc is Copyright 2015 by Joseph Forgione
+//
+// VCC (Virtual Color Computer) is free software, you can redistribute
+// and/or modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will
+// be useful, but WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with VCC (Virtual Color Computer).  If not, see
+// <http://www.gnu.org/licenses/>.
+//======================================================================
 
 // FIXME: This should be defined on the command line
 #define DIRECTINPUT_VERSION 0x0800
@@ -51,6 +53,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "Cassette.h"
 #include "CommandLine.h"
 #include <vcc/util/logger.h>
+#include <vcc/util/settings.h>
+#include <vcc/util/fileutil.h>
 
 using namespace std;
 using namespace VCC;
@@ -163,6 +167,15 @@ unsigned char _TranslateScan2Disp[SCAN_TRANS_COUNT] = {
 /***********************************************************/
 /*         Establish ini file and Load Settings            */
 /***********************************************************/
+
+// Flush the settings store
+void FlushSettings()
+{
+    if (Util::is_null_or_empty(IniFilePath)) return;
+	Util::settings settings(IniFilePath);
+	settings.flush();
+}
+
 void LoadConfig(SystemState *LCState)
 {
 	HANDLE hr=nullptr;
@@ -234,67 +247,71 @@ void InitSound()
 // Each config dialog should save the stuff it sets
 unsigned char WriteIniFile()
 {
-	WritePrivateProfileString("Version","Release",AppName,IniFilePath);
+    // TODO:  Deal with missing ini path
+	if (Util::is_null_or_empty(IniFilePath)) return 1;
+	Util::settings setting(IniFilePath);
+
+	setting.write("Version","Release",AppName);
 
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
-	WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
+	setting.write("Module", "OnBoot", CurrentConfig.ModulePath);
 
 	// CPU 
-	WritePrivateProfileInt("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer,IniFilePath);
-	WritePrivateProfileInt("CPU","FrameSkip",CurrentConfig.FrameSkip,IniFilePath);
-	WritePrivateProfileInt("CPU","Throttle",CurrentConfig.SpeedThrottle,IniFilePath);
-	WritePrivateProfileInt("CPU","CpuType",CurrentConfig.CpuType,IniFilePath);
-	WritePrivateProfileInt("CPU","MaxOverClock", CurrentConfig.MaxOverclock, IniFilePath);
-	WritePrivateProfileInt("CPU","BreakEnabled",CurrentConfig.BreakOpcEnabled,IniFilePath);
-	WritePrivateProfileInt("Memory","RamSize",CurrentConfig.RamSize,IniFilePath);
-	WritePrivateProfileInt("Misc","AutoStart",CurrentConfig.AutoStart,IniFilePath);
-	WritePrivateProfileInt("Misc","CartAutoStart",CurrentConfig.CartAutoStart,IniFilePath);
-	WritePrivateProfileInt("Misc","UseExtCocoRom", CurrentConfig.UseExtCocoRom, IniFilePath);
-	WritePrivateProfileInt("Misc","Overclock", CurrentConfig.EnableOverclock, IniFilePath);
-	WritePrivateProfileString("Misc","ExternalBasicImage", CurrentConfig.ExtRomFile,IniFilePath);
+	setting.write("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer);
+	setting.write("CPU","FrameSkip",CurrentConfig.FrameSkip);
+	setting.write("CPU","Throttle",CurrentConfig.SpeedThrottle);
+	setting.write("CPU","CpuType",CurrentConfig.CpuType);
+	setting.write("CPU","MaxOverClock", CurrentConfig.MaxOverclock);
+	setting.write("CPU","BreakEnabled",CurrentConfig.BreakOpcEnabled);
+	setting.write("Memory","RamSize",CurrentConfig.RamSize);
+	setting.write("Misc","AutoStart",CurrentConfig.AutoStart);
+	setting.write("Misc","CartAutoStart",CurrentConfig.CartAutoStart);
+	setting.write("Misc","UseExtCocoRom", CurrentConfig.UseExtCocoRom);
+	setting.write("Misc","Overclock", CurrentConfig.EnableOverclock);
+	setting.write("Misc","ExternalBasicImage", CurrentConfig.ExtRomFile);
 
 	// Audio
-	WritePrivateProfileString("Audio","SndCard",CurrentConfig.SoundCardName,IniFilePath);
-	WritePrivateProfileInt("Audio","Rate",CurrentConfig.AudioRate,IniFilePath);
+	setting.write("Audio","SndCard",CurrentConfig.SoundCardName);
+	setting.write("Audio","Rate",CurrentConfig.AudioRate);
 
 	// Video
 	Rect winRect = GetCurWindowSize();
-	WritePrivateProfileInt("Video","MonitorType",CurrentConfig.MonitorType,IniFilePath);
-	WritePrivateProfileInt("Video","PaletteType",CurrentConfig.PaletteType, IniFilePath);
-	WritePrivateProfileInt("Video","ScanLines",CurrentConfig.ScanLines,IniFilePath);
-	WritePrivateProfileInt("Video","ForceAspect",CurrentConfig.Aspect,IniFilePath);
-	WritePrivateProfileInt("Video","RememberSize", CurrentConfig.RememberSize, IniFilePath);
-	WritePrivateProfileInt("Video","WindowSizeX", winRect.w, IniFilePath);
-	WritePrivateProfileInt("Video","WindowSizeY", winRect.h, IniFilePath);
-	WritePrivateProfileInt("Video","WindowPosX", winRect.x, IniFilePath);
-	WritePrivateProfileInt("Video","WindowPosY", winRect.y, IniFilePath);
+	setting.write("Video","MonitorType",CurrentConfig.MonitorType);
+	setting.write("Video","PaletteType",CurrentConfig.PaletteType);
+	setting.write("Video","ScanLines",CurrentConfig.ScanLines);
+	setting.write("Video","ForceAspect",CurrentConfig.Aspect);
+	setting.write("Video","RememberSize", CurrentConfig.RememberSize);
+	setting.write("Video","WindowSizeX", winRect.w);
+	setting.write("Video","WindowSizeY", winRect.h);
+	setting.write("Video","WindowPosX", winRect.x);
+	setting.write("Video","WindowPosY", winRect.y);
 
 	// Keyboard
-	WritePrivateProfileInt("Misc","KeyMapIndex",CurrentConfig.KeyMap,IniFilePath);
+	setting.write("Misc","KeyMapIndex",CurrentConfig.KeyMap);
 
 	// Joystick
-	WritePrivateProfileInt("LeftJoyStick","UseMouse",LeftJS.UseMouse,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","Left",LeftJS.Left,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","Right",LeftJS.Right,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","Up",LeftJS.Up,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","Down",LeftJS.Down,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","Fire1",LeftJS.Fire1,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","Fire2",LeftJS.Fire2,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick","DiDevice",LeftJS.DiDevice,IniFilePath);
-	WritePrivateProfileInt("LeftJoyStick", "HiResDevice", LeftJS.HiRes, IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","UseMouse",RightJS.UseMouse,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","Left",RightJS.Left,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","Right",RightJS.Right,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","Up",RightJS.Up,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","Down",RightJS.Down,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","Fire1",RightJS.Fire1,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","Fire2",RightJS.Fire2,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick","DiDevice",RightJS.DiDevice,IniFilePath);
-	WritePrivateProfileInt("RightJoyStick", "HiResDevice", RightJS.HiRes, IniFilePath);
-	WritePrivateProfileInt("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer,IniFilePath);
+	setting.write("LeftJoyStick","UseMouse",LeftJS.UseMouse);
+	setting.write("LeftJoyStick","Left",LeftJS.Left);
+	setting.write("LeftJoyStick","Right",LeftJS.Right);
+	setting.write("LeftJoyStick","Up",LeftJS.Up);
+	setting.write("LeftJoyStick","Down",LeftJS.Down);
+	setting.write("LeftJoyStick","Fire1",LeftJS.Fire1);
+	setting.write("LeftJoyStick","Fire2",LeftJS.Fire2);
+	setting.write("LeftJoyStick","DiDevice",LeftJS.DiDevice);
+	setting.write("LeftJoyStick", "HiResDevice", LeftJS.HiRes);
+	setting.write("RightJoyStick","UseMouse",RightJS.UseMouse);
+	setting.write("RightJoyStick","Left",RightJS.Left);
+	setting.write("RightJoyStick","Right",RightJS.Right);
+	setting.write("RightJoyStick","Up",RightJS.Up);
+	setting.write("RightJoyStick","Down",RightJS.Down);
+	setting.write("RightJoyStick","Fire1",RightJS.Fire1);
+	setting.write("RightJoyStick","Fire2",RightJS.Fire2);
+	setting.write("RightJoyStick","DiDevice",RightJS.DiDevice);
+	setting.write("RightJoyStick", "HiResDevice", RightJS.HiRes);
+	setting.write("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer);
     // Force flush inifile  Is this required?
-	WritePrivateProfileString(nullptr,nullptr,nullptr,IniFilePath);
+	setting.flush();
 	return 0;
 }
 
@@ -305,45 +322,49 @@ unsigned char WriteIniFile()
 // FIXME ReadIniFile should apply changes, should hard reset if RAM or CPU changes
 unsigned char ReadIniFile()
 {
+
+    // TODO:  Deal with missing ini path
+	if (Util::is_null_or_empty(IniFilePath)) return 1;
+	Util::settings setting(IniFilePath);
+
 	unsigned char Index=0;
-
 	//Loads the config structure from the hard disk
-	CurrentConfig.CPUMultiplyer = GetPrivateProfileInt("CPU","DoubleSpeedClock",2,IniFilePath);
-	CurrentConfig.FrameSkip = GetPrivateProfileInt("CPU","FrameSkip",1,IniFilePath);
-	CurrentConfig.SpeedThrottle = GetPrivateProfileInt("CPU","Throttle",1,IniFilePath);
-	CurrentConfig.CpuType = GetPrivateProfileInt("CPU","CpuType",0,IniFilePath);
-	CurrentConfig.MaxOverclock = GetPrivateProfileInt("CPU","MaxOverClock",100,IniFilePath);
-	CurrentConfig.BreakOpcEnabled = GetPrivateProfileInt("CPU","BreakEnabled",0,IniFilePath);
+	CurrentConfig.CPUMultiplyer    = setting.read("CPU","DoubleSpeedClock",2);
+	CurrentConfig.FrameSkip        = setting.read("CPU","FrameSkip",1);
+	CurrentConfig.SpeedThrottle    = setting.read("CPU","Throttle",1);
+	CurrentConfig.CpuType          = setting.read("CPU","CpuType",0);
+	CurrentConfig.MaxOverclock     = setting.read("CPU","MaxOverClock",100);
+	CurrentConfig.BreakOpcEnabled  = setting.read("CPU","BreakEnabled",0);
 
-	CurrentConfig.AudioRate = GetPrivateProfileInt("Audio","Rate",3,IniFilePath);
-	GetPrivateProfileString("Audio","SndCard","",CurrentConfig.SoundCardName,63,IniFilePath);
+	CurrentConfig.AudioRate        = setting.read("Audio","Rate",3);
+	setting.read("Audio","SndCard","",CurrentConfig.SoundCardName,63);
 
-	CurrentConfig.MonitorType = GetPrivateProfileInt("Video","MonitorType",1,IniFilePath);
-	CurrentConfig.PaletteType = GetPrivateProfileInt("Video","PaletteType",PALETTE_NTSC,IniFilePath);
-	CurrentConfig.ScanLines = GetPrivateProfileInt("Video","ScanLines",0,IniFilePath);
+	CurrentConfig.MonitorType      = setting.read("Video","MonitorType",1);
+	CurrentConfig.PaletteType      = setting.read("Video","PaletteType",PALETTE_NTSC);
+	CurrentConfig.ScanLines        = setting.read("Video","ScanLines",0);
 
-	CurrentConfig.Aspect = GetPrivateProfileInt("Video","ForceAspect",1,IniFilePath);
-	CurrentConfig.RememberSize = GetPrivateProfileInt("Video","RememberSize",1,IniFilePath);
-	CurrentConfig.WindowRect.w = GetPrivateProfileInt("Video", "WindowSizeX", 640, IniFilePath);
-	CurrentConfig.WindowRect.h = GetPrivateProfileInt("Video", "WindowSizeY", 480, IniFilePath);
-	CurrentConfig.WindowRect.x = GetPrivateProfileInt("Video", "WindowPosX", CW_USEDEFAULT, IniFilePath);
-	CurrentConfig.WindowRect.y = GetPrivateProfileInt("Video", "WindowPosY", CW_USEDEFAULT, IniFilePath);
-	CurrentConfig.AutoStart = GetPrivateProfileInt("Misc","AutoStart",1,IniFilePath);
-	CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc","CartAutoStart",1,IniFilePath);
-	CurrentConfig.ShowMousePointer = GetPrivateProfileInt("Misc","ShowMousePointer",1,IniFilePath);
-	CurrentConfig.UseExtCocoRom=GetPrivateProfileInt("Misc","UseExtCocoRom",0,IniFilePath);
-	CurrentConfig.EnableOverclock=GetPrivateProfileInt("Misc","Overclock",1,IniFilePath);
-	GetPrivateProfileString("Misc","ExternalBasicImage","",CurrentConfig.ExtRomFile,MAX_PATH,IniFilePath);
+	CurrentConfig.Aspect           = setting.read("Video","ForceAspect",1);
+	CurrentConfig.RememberSize     = setting.read("Video","RememberSize",1);
+	CurrentConfig.WindowRect.w     = setting.read("Video","WindowSizeX", 640);
+	CurrentConfig.WindowRect.h     = setting.read("Video","WindowSizeY", 480);
+	CurrentConfig.WindowRect.x     = setting.read("Video","WindowPosX",CW_USEDEFAULT);
+	CurrentConfig.WindowRect.y     = setting.read("Video","WindowPosY",CW_USEDEFAULT);
+	CurrentConfig.AutoStart        = setting.read("Misc","AutoStart",1);
+	CurrentConfig.CartAutoStart    = setting.read("Misc","CartAutoStart",1);
+	CurrentConfig.ShowMousePointer = setting.read("Misc","ShowMousePointer",1);
+	CurrentConfig.UseExtCocoRom    = setting.read("Misc","UseExtCocoRom",0);
+	CurrentConfig.EnableOverclock  = setting.read("Misc","Overclock",1);
+	setting.read("Misc","ExternalBasicImage","",CurrentConfig.ExtRomFile,MAX_PATH);
 
-	CurrentConfig.RamSize = GetPrivateProfileInt("Memory","RamSize",1,IniFilePath);
+	CurrentConfig.RamSize = setting.read("Memory","RamSize",1);
 
-	GetPrivateProfileString("Module","OnBoot","",CurrentConfig.ModulePath,MAX_PATH,IniFilePath);
+	setting.read("Module","OnBoot","",CurrentConfig.ModulePath,MAX_PATH);
 
-	CurrentConfig.KeyMap = GetPrivateProfileInt("Misc","KeyMapIndex",0,IniFilePath);
+	CurrentConfig.KeyMap  = setting.read("Misc","KeyMapIndex",0);
 	if (CurrentConfig.KeyMap>3)
 		CurrentConfig.KeyMap=0;	//Default to DECB Mapping
 
-	GetPrivateProfileString("Misc","CustomKeyMapFile","",KeyMapFilePath,MAX_PATH,IniFilePath);
+	setting.read("Misc","CustomKeyMapFile","",KeyMapFilePath,MAX_PATH);
 	if (*KeyMapFilePath == '\0') {
 		strcpy(KeyMapFilePath, AppDataPath);
 		strcat(KeyMapFilePath, "\\custom.keymap");
@@ -353,27 +374,27 @@ unsigned char ReadIniFile()
 
 	CheckPath(CurrentConfig.ModulePath);
 
-	LeftJS.UseMouse=GetPrivateProfileInt("LeftJoyStick","UseMouse",1,IniFilePath);
-	LeftJS.Left=GetPrivateProfileInt("LeftJoyStick","Left",75,IniFilePath);
-	LeftJS.Right=GetPrivateProfileInt("LeftJoyStick","Right",77,IniFilePath);
-	LeftJS.Up=GetPrivateProfileInt("LeftJoyStick","Up",72,IniFilePath);
-	LeftJS.Down=GetPrivateProfileInt("LeftJoyStick","Down",80,IniFilePath);
-	LeftJS.Fire1=GetPrivateProfileInt("LeftJoyStick","Fire1",59,IniFilePath);
-	LeftJS.Fire2=GetPrivateProfileInt("LeftJoyStick","Fire2",60,IniFilePath);
-	LeftJS.DiDevice=GetPrivateProfileInt("LeftJoyStick","DiDevice",0,IniFilePath);
-	LeftJS.HiRes= GetPrivateProfileInt("LeftJoyStick", "HiResDevice", 0, IniFilePath);
-	RightJS.UseMouse=GetPrivateProfileInt("RightJoyStick","UseMouse",1,IniFilePath);
-	RightJS.Left=GetPrivateProfileInt("RightJoyStick","Left",75,IniFilePath);
-	RightJS.Right=GetPrivateProfileInt("RightJoyStick","Right",77,IniFilePath);
-	RightJS.Up=GetPrivateProfileInt("RightJoyStick","Up",72,IniFilePath);
-	RightJS.Down=GetPrivateProfileInt("RightJoyStick","Down",80,IniFilePath);
-	RightJS.Fire1=GetPrivateProfileInt("RightJoyStick","Fire1",59,IniFilePath);
-	RightJS.Fire2=GetPrivateProfileInt("RightJoyStick","Fire2",60,IniFilePath);
-	RightJS.DiDevice=GetPrivateProfileInt("RightJoyStick","DiDevice",0,IniFilePath);
-	RightJS.HiRes = GetPrivateProfileInt("RightJoyStick", "HiResDevice", 0, IniFilePath);
+	LeftJS.UseMouse  = setting.read("LeftJoyStick" ,"UseMouse",1);
+	LeftJS.Left      = setting.read("LeftJoyStick" ,"Left",75);
+	LeftJS.Right     = setting.read("LeftJoyStick" ,"Right",77);
+	LeftJS.Up        = setting.read("LeftJoyStick" ,"Up",72);
+	LeftJS.Down      = setting.read("LeftJoyStick" ,"Down",80);
+	LeftJS.Fire1     = setting.read("LeftJoyStick" ,"Fire1",59);
+	LeftJS.Fire2     = setting.read("LeftJoyStick" ,"Fire2",60);
+	LeftJS.DiDevice  = setting.read("LeftJoyStick" ,"DiDevice",0);
+	LeftJS.HiRes     = setting.read("LeftJoyStick" ,"HiResDevice",0);
+	RightJS.UseMouse = setting.read("RightJoyStick","UseMouse",1);
+	RightJS.Left     = setting.read("RightJoyStick","Left",75);
+	RightJS.Right    = setting.read("RightJoyStick","Right",77);
+	RightJS.Up       = setting.read("RightJoyStick","Up",72);
+	RightJS.Down     = setting.read("RightJoyStick","Down",80);
+	RightJS.Fire1    = setting.read("RightJoyStick","Fire1",59);
+	RightJS.Fire2    = setting.read("RightJoyStick","Fire2",60);
+	RightJS.DiDevice = setting.read("RightJoyStick","DiDevice",0);
+	RightJS.HiRes    = setting.read("RightJoyStick", "HiResDevice",0);
 
-	GetPrivateProfileString("DefaultPaths", "CassPath", "", CurrentConfig.CassPath, MAX_PATH, IniFilePath);
-	GetPrivateProfileString("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH, IniFilePath);
+	setting.read("DefaultPaths", "CassPath", "", CurrentConfig.CassPath, MAX_PATH);
+	setting.read("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH);
 
 	for (Index = 0; Index < NumberOfSoundCards; Index++)
 	{
@@ -386,10 +407,10 @@ unsigned char ReadIniFile()
 	// Make sure Window geometry is reasonable
 	int sw = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 	int sh = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-	if ( (CurrentConfig.WindowRect.w < 215)  |
-		 (CurrentConfig.WindowRect.h < 160)  |
-		 (CurrentConfig.WindowRect.x < -100) |
-		 (CurrentConfig.WindowRect.y < -80)  |
+	if ( (CurrentConfig.WindowRect.w < 215)    |
+		 (CurrentConfig.WindowRect.h < 160)    |
+		 (CurrentConfig.WindowRect.x < -100)   |
+		 (CurrentConfig.WindowRect.y < -80)    |
 		 (CurrentConfig.WindowRect.x > sw-100) |
 		 (CurrentConfig.WindowRect.y > sh-80) )
 		CurrentConfig.WindowRect = {0,0,640,480};

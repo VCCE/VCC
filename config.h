@@ -26,6 +26,7 @@ void LoadModule();
 unsigned char WriteIniFile();
 unsigned char ReadIniFile();
 void GetIniFilePath( char *);
+void FlushSettings(); // Flush the settings store (vcc init file)
 void UpdateConfig ();
 void UpdateSoundBar(const unsigned int *,unsigned int);
 void UpdateTapeCounter(unsigned int,unsigned char,bool force = false);
