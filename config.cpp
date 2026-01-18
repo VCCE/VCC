@@ -193,14 +193,21 @@ void LoadConfig(SystemState *LCState)
 
 	LCState->ScanLines=0;
 	NumberOfSoundCards=GetSoundCardList(SoundCards);
+
 	ReadIniFile();
+	// The rest of this belongs in ReadIniFile(); maybe it needs a name change
+
+	// FIXME ReadIniFile() should cause hard reset.
 	CurrentConfig.RebootNow=0;
+
+	// FIXME ReadIniFile should apply changes then UpdateConfig() here not needed 
 	UpdateConfig();
 	RefreshJoystickStatus();
 	if (EmuState.WindowHandle != nullptr)
 		InitSound();
 
-//  Try to open the config file.  Create it if necessary.  Abort if failure.
+	// FIXME: This belongs in ReadIniFile(), already called above
+	//  Try to open the config file.  Create it if necessary.  Abort if failure.
 	hr = CreateFile(IniFilePath, GENERIC_READ | GENERIC_WRITE,
 			FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 	lasterror = GetLastError();
@@ -220,47 +227,53 @@ void InitSound()
 }
 
 /***********************************************************/
-/*        Save Configuration Settings to ini file          */
+/*      Save All Configuration Settings to ini file        */
 /***********************************************************/
+
+// FIXME WriteIniFile() is a sledgehammer.
+// Each config dialog should save the stuff it sets
 unsigned char WriteIniFile()
 {
-	Rect winRect = GetCurWindowSize();
+	WritePrivateProfileString("Version","Release",AppName,IniFilePath);
+
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
+	WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
 
-	WritePrivateProfileString("Version","Release",AppName,IniFilePath);
+	// CPU 
 	WritePrivateProfileInt("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer,IniFilePath);
 	WritePrivateProfileInt("CPU","FrameSkip",CurrentConfig.FrameSkip,IniFilePath);
 	WritePrivateProfileInt("CPU","Throttle",CurrentConfig.SpeedThrottle,IniFilePath);
 	WritePrivateProfileInt("CPU","CpuType",CurrentConfig.CpuType,IniFilePath);
-	WritePrivateProfileInt("CPU", "MaxOverClock", CurrentConfig.MaxOverclock, IniFilePath);
+	WritePrivateProfileInt("CPU","MaxOverClock", CurrentConfig.MaxOverclock, IniFilePath);
 	WritePrivateProfileInt("CPU","BreakEnabled",CurrentConfig.BreakOpcEnabled,IniFilePath);
+	WritePrivateProfileInt("Memory","RamSize",CurrentConfig.RamSize,IniFilePath);
+	WritePrivateProfileInt("Misc","AutoStart",CurrentConfig.AutoStart,IniFilePath);
+	WritePrivateProfileInt("Misc","CartAutoStart",CurrentConfig.CartAutoStart,IniFilePath);
+	WritePrivateProfileInt("Misc","UseExtCocoRom", CurrentConfig.UseExtCocoRom, IniFilePath);
+	WritePrivateProfileInt("Misc","Overclock", CurrentConfig.EnableOverclock, IniFilePath);
+	WritePrivateProfileString("Misc","ExternalBasicImage", CurrentConfig.ExtRomFile,IniFilePath);
 
+	// Audio
 	WritePrivateProfileString("Audio","SndCard",CurrentConfig.SoundCardName,IniFilePath);
 	WritePrivateProfileInt("Audio","Rate",CurrentConfig.AudioRate,IniFilePath);
 
+	// Video
+	Rect winRect = GetCurWindowSize();
 	WritePrivateProfileInt("Video","MonitorType",CurrentConfig.MonitorType,IniFilePath);
 	WritePrivateProfileInt("Video","PaletteType",CurrentConfig.PaletteType, IniFilePath);
 	WritePrivateProfileInt("Video","ScanLines",CurrentConfig.ScanLines,IniFilePath);
 	WritePrivateProfileInt("Video","ForceAspect",CurrentConfig.Aspect,IniFilePath);
 	WritePrivateProfileInt("Video","RememberSize", CurrentConfig.RememberSize, IniFilePath);
-	WritePrivateProfileInt("Video", "WindowSizeX", winRect.w, IniFilePath);
-	WritePrivateProfileInt("Video", "WindowSizeY", winRect.h, IniFilePath);
-	WritePrivateProfileInt("Video", "WindowPosX", winRect.x, IniFilePath);
-	WritePrivateProfileInt("Video", "WindowPosY", winRect.y, IniFilePath);
+	WritePrivateProfileInt("Video","WindowSizeX", winRect.w, IniFilePath);
+	WritePrivateProfileInt("Video","WindowSizeY", winRect.h, IniFilePath);
+	WritePrivateProfileInt("Video","WindowPosX", winRect.x, IniFilePath);
+	WritePrivateProfileInt("Video","WindowPosY", winRect.y, IniFilePath);
 
-	WritePrivateProfileInt("Memory","RamSize",CurrentConfig.RamSize,IniFilePath);
-
-	WritePrivateProfileInt("Misc","AutoStart",CurrentConfig.AutoStart,IniFilePath);
-	WritePrivateProfileInt("Misc","CartAutoStart",CurrentConfig.CartAutoStart,IniFilePath);
-	WritePrivateProfileInt("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer,IniFilePath);
+	// Keyboard
 	WritePrivateProfileInt("Misc","KeyMapIndex",CurrentConfig.KeyMap,IniFilePath);
-	WritePrivateProfileInt("Misc", "UseExtCocoRom", CurrentConfig.UseExtCocoRom, IniFilePath);
-	WritePrivateProfileInt("Misc", "Overclock", CurrentConfig.EnableOverclock, IniFilePath);
-	WritePrivateProfileString("Misc", "ExternalBasicImage", CurrentConfig.ExtRomFile,IniFilePath);
 
-	WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
-
+	// Joystick
 	WritePrivateProfileInt("LeftJoyStick","UseMouse",LeftJS.UseMouse,IniFilePath);
 	WritePrivateProfileInt("LeftJoyStick","Left",LeftJS.Left,IniFilePath);
 	WritePrivateProfileInt("LeftJoyStick","Right",LeftJS.Right,IniFilePath);
@@ -279,8 +292,8 @@ unsigned char WriteIniFile()
 	WritePrivateProfileInt("RightJoyStick","Fire2",RightJS.Fire2,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick","DiDevice",RightJS.DiDevice,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick", "HiResDevice", RightJS.HiRes, IniFilePath);
-
-    // Force flush inifile
+	WritePrivateProfileInt("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer,IniFilePath);
+    // Force flush inifile  Is this required?
 	WritePrivateProfileString(nullptr,nullptr,nullptr,IniFilePath);
 	return 0;
 }
@@ -288,6 +301,8 @@ unsigned char WriteIniFile()
 /***********************************************************/
 /*        Load Configuration Settings from ini file        */
 /***********************************************************/
+
+// FIXME ReadIniFile should apply changes, should hard reset if RAM or CPU changes
 unsigned char ReadIniFile()
 {
 	unsigned char Index=0;
@@ -437,34 +452,35 @@ void SetKeyMapFilePath(const char *Path)
 	WritePrivateProfileString("Misc","CustomKeyMapFile",KeyMapFilePath,IniFilePath);
 }
 
-/*****************************************************/
-/*  Apply Current VCC settings. Also Called by Vcc.c */
-/*****************************************************/
+/*******************************************************/
+/*  Apply video and CPU settings. Also Called by Vcc.c */
+/*******************************************************/
 void UpdateConfig ()
 {
+	// Video
 	SetPaletteType();
+	SetMonitorType(CurrentConfig.MonitorType);
 	SetAspect(CurrentConfig.Aspect);
 	SetScanLines(CurrentConfig.ScanLines);
 	SetFrameSkip(CurrentConfig.FrameSkip);
+	EmuState.MousePointer = CurrentConfig.ShowMousePointer;
+	// Cpu
 	SetAutoStart(CurrentConfig.AutoStart);
 	SetSpeedThrottle(CurrentConfig.SpeedThrottle);
 	SetCPUMultiplyer(CurrentConfig.CPUMultiplyer);
 	SetRamSize(CurrentConfig.RamSize);
 	SetCpuType(CurrentConfig.CpuType);
 	SetOverclock(CurrentConfig.EnableOverclock);
-
 	if (CurrentConfig.BreakOpcEnabled) {
 		EmuState.Debugger.Enable_Break(true);
 	} else {
 		EmuState.Debugger.Enable_Break(false);
 	}
-
-	SetMonitorType(CurrentConfig.MonitorType);
 	SetCartAutoStart(CurrentConfig.CartAutoStart);
+
 	if (CurrentConfig.RebootNow)
 		DoReboot();
 	CurrentConfig.RebootNow=0;
-	EmuState.MousePointer = CurrentConfig.ShowMousePointer;
 }
 
 /********************************************/
@@ -536,7 +552,10 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 				GetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile,MAX_PATH);
 			}
 
-			// ResetPending causes Vcc.c to call UpdateConfig().
+			// It is important that Cpu settings are not changed while the
+			// emulation is actually running. ResetPending causes Vcc.c to
+			// call UpdateConfig() which causes the settings to take effect.
+			// TODO: Use lock to avoid race condition instead?
 			if ( (CurrentConfig.RamSize != tmpcfg.RamSize) |
 			     (CurrentConfig.CpuType != tmpcfg.CpuType) |
 			     (CurrentConfig.UseExtCocoRom != tmpcfg.UseExtCocoRom) |
@@ -559,6 +578,10 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 			CurrentConfig.EnableOverclock = tmpcfg.EnableOverclock;
 			strncpy(CurrentConfig.ExtRomFile,tmpcfg.ExtRomFile,MAX_PATH);
 			SetOverclock(CurrentConfig.EnableOverclock);
+
+			// FIXME should only save CPU stuff here
+			WriteIniFile();
+
 			// Exit dialog if IDOK
 			if (LOWORD(wParam)==IDOK) {
 				hCpuDlg = nullptr;
@@ -651,6 +674,7 @@ void IncreaseOverclockSpeed()
 						   0, (LPARAM)(LPCSTR)OutBuffer);
 	}
 	EmuState.ResetPending = 4; // Without this, changing the config does nothing.
+	//SetCPUMultiplyer(CurrentConfig.CPUMultiplyer) may work here instead
 }
 
 /* Decrease the overclock speed */
@@ -668,7 +692,8 @@ void DecreaseOverclockSpeed()
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKDISPLAY, WM_SETTEXT,
 						   0, (LPARAM)(LPCSTR)OutBuffer);
 	}
-	EmuState.ResetPending = 4;
+	EmuState.ResetPending = 4;  // So emulation knows the speed changed
+	//SetCPUMultiplyer(CurrentConfig.CPUMultiplyer) may work here instead
 }
 
 /********************************************/
@@ -721,6 +746,7 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPa
 		case IDOK:
 		case IDAPPLY:
 			UpdateConfig();
+			// FIXME Save changes (TapeFastLoad) to IniFile
 			if (LOWORD(wParam)==IDOK) {
 				hTapeDlg = nullptr;
 				DestroyWindow(hDlg);
@@ -867,7 +893,12 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lP
 			CurrentConfig.AudioRate = tmpcfg.AudioRate;
 			CurrentConfig.SndOutDev = tmpcfg.SndOutDev;
 			strcpy(CurrentConfig.SoundCardName, SoundCards[CurrentConfig.SndOutDev].CardName);
-			UpdateConfig();
+// FIXME Should only save Audio stuff here
+//WritePrivateProfileString("Audio","SndCard",CurrentConfig.SoundCardName,IniFilePath);
+//WritePrivateProfileInt("Audio","Rate",CurrentConfig.AudioRate,IniFilePath);
+			// FIXME Save mute button state (AudioRate) 
+			WriteIniFile();
+
 			if (LOWORD(wParam)==IDOK) {
 				hAudioDlg = nullptr;
 				DestroyWindow(hDlg);
@@ -1000,6 +1031,9 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*
 			CurrentConfig.MonitorType   = tmpcfg.MonitorType;
 			CurrentConfig.PaletteType   = tmpcfg.PaletteType;
 			UpdateConfig();
+
+			// FIXME should only save display stuff here
+			WriteIniFile();
 			if (LOWORD(wParam)==IDOK) {
 				hDisplayDlg = nullptr;
 				DestroyWindow(hDlg);
@@ -1081,6 +1115,8 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lP
 		case IDAPPLY:
 			vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 			UpdateConfig();
+			// FIXME Should only save keyboard stuff here
+			WriteIniFile();
 			if (LOWORD(wParam)==IDOK) {
 				hInputDlg = nullptr;
 				DestroyWindow(hDlg);
@@ -1317,6 +1353,8 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /
 			SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
 			CurrentConfig.ShowMousePointer = tmpcfg.ShowMousePointer;
 			UpdateConfig();
+			// FIXME Should only save joystick stuff here
+			WriteIniFile();
 			if (LOWORD(wParam)==IDOK) {
 				hJoyStickDlg = nullptr;
 				DestroyWindow(hDlg);
@@ -1521,6 +1559,8 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 		case IDOK:
 		case IDAPPLY:
 			UpdateConfig();
+			// FIXME Should save bitbanger here
+			WriteIniFile();
 			if (LOWORD(wParam)==IDOK) {
 				hBitBangerDlg = nullptr;
 				DestroyWindow(hDlg);

@@ -210,8 +210,10 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
 	while (BinaryRunning)
 	{
-		if (FlagEmuStop==TH_WAITING)	//Need to stop the EMU thread for screen mode change
-		{								//As it holds the Secondary screen buffer open while running
+		//Need to stop the EMU thread for screen mode change
+		//As it holds the Secondary screen buffer open while running
+		if (FlagEmuStop==TH_WAITING)
+		{
 			FullScreenToggle();
 			FlagEmuStop=TH_RUNNING;
 		}
@@ -255,7 +257,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	CloseScreen();
 	timeEndPeriod(1);
 	UnloadDll();
-	WriteIniFile(); //Save Any changes to ini File
 	return Msg.wParam;
 }
 
@@ -927,10 +928,9 @@ void LoadIniFile()
 	dlg.setpath(curini);
 
 	if ( dlg.show() ) {
-		WriteIniFile();             // Flush current profile
 		SetIniFilePath(dlg.path());   // Set new ini file path
-		ReadIniFile();              // Load it
-		UpdateConfig();
+		ReadIniFile();                // FIXME ReadIniFile should apply changes
+		UpdateConfig();               // Applies only video and Cpu changes
 		EmuState.ResetPending = 2;
 	}
 	return;
@@ -953,7 +953,6 @@ void SaveConfig() {
 
 	if ( dlg.show(1) ) {
 		SetIniFilePath(dlg.path());   // Set new ini file path
-		WriteIniFile();             // Flush current profile
 		// If ini file has changed
 		if (_stricmp(curini,dlg.path()) != 0) {
 			// Copy current ini to new ini
@@ -1010,8 +1009,9 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 					break;
 
 				case 2:	//Hard Reset
-					UpdateConfig();
-					DoCls(&EmuState);
+					ReadIniFile();     // FIXME ReadIniFile should apply changes
+					UpdateConfig();    // Applies only video and Cpu changes
+					DoCls(&EmuState);  // Clear the screen
 					DoHardReset(&EmuState);
 					break;
 
@@ -1020,7 +1020,7 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 					break;
 
 				case 4:
-					UpdateConfig();
+					UpdateConfig();    // Apply video and cpy changes 
 					DoCls(&EmuState);
 					break;
 
