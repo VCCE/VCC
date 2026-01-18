@@ -1,3 +1,4 @@
+//#define USE_LOGGING
 ////////////////////////////////////////////////////////////////////////////////
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
@@ -15,7 +16,9 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include <vcc/util/initial_settings.h>
+
+#include <vcc/util/settings.h>
+#include <vcc/util/logger.h>
 #include <Windows.h>
 
 namespace VCC::Util
@@ -24,46 +27,80 @@ namespace VCC::Util
 		: path_(move(path))
 	{}
 
+	// save string value
 	void settings::write(
-		const string_type& section,
-		const string_type& key,
-		int value) const
+		const std::string& section,
+		const std::string& key,
+		const std::string& value) const
 	{
-		WritePrivateProfileString(
+		::WritePrivateProfileString(
+				section.c_str(),
+				key.c_str(),
+				value.c_str(),
+				path_.c_str());
+	}
+
+	// save int value
+	void settings::write
+		(const std::string& section,
+		 const std::string& key,
+		 int value) const
+	{
+		::WritePrivateProfileString(
 			section.c_str(),
 			key.c_str(),
 			std::to_string(value).c_str(),
 			path_.c_str());
 	}
 
-	void settings::write(
-		const string_type& section,
-		const string_type& key,
-		const string_type& value) const
-	{
-		WritePrivateProfileString(section.c_str(), key.c_str(), value.c_str(), path_.c_str());
+	// save bool value
+	void settings::write_bool
+		(const std::string& section,
+		 const std::string& key,
+		 bool value) const
+	{ 
+		int ival = value ? 1 : 0;
+		write(section, key, ival);
 	}
 
-	int settings::read(const string_type& section, const string_type& key, int default_value) const
+	// get char * value
+	void settings::read
+		(const std::string& section,
+		 const std::string& key,
+		 const std::string& default_value,
+		 char* buffer,
+		 size_t buffer_size) const
 	{
-		return GetPrivateProfileInt(section.c_str(), key.c_str(), default_value, path_.c_str());
+		::GetPrivateProfileStringA(
+		section.c_str(),
+		key.c_str(),
+		default_value.c_str(),
+		buffer,
+		static_cast<DWORD>(buffer_size),
+		path_.c_str());
 	}
 
-	settings::string_type settings::read(
-		const string_type& section,
-		const string_type& key,
-		const string_type& default_value) const
+	// get string value
+	std::string settings::read
+		(const std::string& section,
+		 const std::string& key,
+		 const std::string& default_value) const
 	{
-		char loaded_string[MAX_PATH] = {};
+		char buffer[MAX_PATH] = {};
+		read(section, key, default_value, buffer, sizeof(buffer));
+		return std::string(buffer);
+	}
 
-		GetPrivateProfileString(
-			section.c_str(),
-			key.c_str(),
-			default_value.c_str(),
-			loaded_string,
-			MAX_PATH,
-			path_.c_str());
-
-		return loaded_string;
+	// get int value
+	int settings::read
+		(const std::string& section,
+		 const std::string& key,
+		 int default_value) const
+	{
+		return ::GetPrivateProfileInt(
+				section.c_str(),
+				key.c_str(),
+				default_value,
+				path_.c_str());
 	}
 }

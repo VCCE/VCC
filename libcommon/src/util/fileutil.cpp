@@ -24,6 +24,8 @@
 #include <string>
 #include <filesystem>
 #include <Shlwapi.h>
+#include <algorithm>
+#include <cctype>
 #include <vcc/util/logger.h>
 #include <vcc/util/fileutil.h>
 
@@ -139,4 +141,5 @@ namespace VCC::Util
 		}
 		return path;
 	}
+
 }
