@@ -23,6 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "coco3.h"
 #include "config.h"
 #include <vcc/util/DialogOps.h>
+#include <vcc/util/fileutil.h>
 #include "Cassette.h"
 #include "stdio.h"
 #include <vcc/util/logger.h>
@@ -463,8 +464,10 @@ unsigned int LoadTape()
 		}
 	}
 	dlg.getdir(CassPath);
-	if (strcmp(CassPath, "") != 0)
+	if (strcmp(CassPath, "") != 0) {
+		VCC::Util::FixDirSlashes(CassPath);
 		Setting().write("DefaultPaths","CassPath",CassPath);
+	}
 	// turn off fast load for wav files
 	if (FileType == WAV) TapeFastLoad = false;
 	TapeWritten = false;

@@ -135,6 +135,8 @@ bool IsShiftKeyDown();
 
 CartridgeMenu CartMenu;
 
+static bool gHasFocus {};
+
 //static CRITICAL_SECTION  FrameRender;
 /*--------------------------------------------------------------------------*/
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
@@ -441,15 +443,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_SETCURSOR:
 			// Hide mouse cursor
             if ((EmuState.MousePointer != 1) && (LOWORD(lParam) == HTCLIENT)) {
-				SetCursor(nullptr);
+				if (gHasFocus) SetCursor(nullptr);
 				return TRUE;
 			}
+			break;
+
+		case WM_SETFOCUS:
+			gHasFocus = true;
 			break;
 
 		case WM_KILLFOCUS:
 			// Force keys up if main widow keyboard focus is lost.  Otherwise
 			// down keys will cause issues with OS-9 on return
 			raise_saved_keys();
+			gHasFocus = false;
 			break;
 
 		case WM_CLOSE:
@@ -916,7 +923,7 @@ unsigned char SetAutoStart(unsigned char Tmp)
 // LoadIniFile allows user to browse for an ini file and reloads the config from it.
 void LoadIniFile()
 {
-	FlushSettings();
+	FlushSettings();  // Make sure all current settings are flused to store
 
 	char curini[MAX_PATH]="";
 	GetIniFilePath(curini);
@@ -930,10 +937,10 @@ void LoadIniFile()
 	dlg.setpath(curini);
 
 	if ( dlg.show() ) {
-		SetIniFilePath(dlg.path());   // Set new ini file path
-		ReadIniFile();                // FIXME ReadIniFile should apply changes
-		UpdateConfig();               // Applies only video and Cpu changes
-		EmuState.ResetPending = 2;
+		SetIniFilePath(dlg.path()); // Set new settings path
+		ReadIniFile();              // Load settings
+		UpdateConfig();             // Apply critical CPU and Video settings
+		EmuState.ResetPending = 2;  // Force reset
 	}
 	return;
 }

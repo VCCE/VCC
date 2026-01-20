@@ -73,6 +73,12 @@ unsigned char TranslateScan2Disp(int);
 void buildTransDisp2ScanTable();
 void SetBootModulePath(const std::string);
 
+void WriteCPUSettings();
+void WriteAudioSettings();
+void WriteVideoSettings();
+void WriteKeyboardSettings();
+void WriteJoystickSettings();
+
 LRESULT CALLBACK CpuConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK AudioConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK DisplayConfig(HWND, UINT, WPARAM, LPARAM);
@@ -133,7 +139,6 @@ static unsigned char NumberofJoysticks=0;
 TCHAR gcAppDataPath[MAX_PATH];
 
 char OutBuffer[MAX_PATH]="";
-char AppName[MAX_LOADSTRING]="";
 
 extern SystemState EmuState;
 extern char StickName[MAXSTICKS][STRLEN];
@@ -181,8 +186,7 @@ void LoadConfig(SystemState *LCState)
 {
 	buildTransDisp2ScanTable();
 
-	// Establish application path
-	LoadString(nullptr, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
+
 	GetModuleFileName(nullptr,ExecDirectory,MAX_PATH);
 	PathRemoveFileSpec(ExecDirectory);
 	strcpy(CurrentConfig.PathtoExe,ExecDirectory);
@@ -215,6 +219,11 @@ void LoadConfig(SystemState *LCState)
 		ini = appData + "/Vcc.ini";
 	}
 	Util::copy_to_char(ini, gcIniFilePath, MAX_PATH);
+
+	// Establish application path
+	char AppName[MAX_LOADSTRING]="";
+	LoadString(nullptr, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
+	Setting().write("Version","Release",AppName);
 
 	// Load settings
 	ReadIniFile();
@@ -341,6 +350,7 @@ unsigned char ReadIniFile()
 	CurrentConfig.MonitorType      = Setting().read("Video","MonitorType",1);
 	CurrentConfig.PaletteType      = Setting().read("Video","PaletteType",PALETTE_NTSC);
 	CurrentConfig.ScanLines        = Setting().read("Video","ScanLines",0);
+	CurrentConfig.FrameSkip        = Setting().read("Video","FrameSkip",1);
 
 	CurrentConfig.Aspect           = Setting().read("Video","ForceAspect",1);
 	CurrentConfig.RememberSize     = Setting().read("Video","RememberSize",1);
@@ -418,19 +428,9 @@ unsigned char ReadIniFile()
 }
 
 //---------------------------------------------------------------
-// Save All Configuration Settings to ini file
+// Save Configuration Settings to ini file
 //---------------------------------------------------------------
-
-// FIXME WriteIniFile() is a sledgehammer.
-// Each config dialog should save the stuff it changes
-unsigned char WriteIniFile()
-{
-
-	// ModulePath is managed by pakinterface.cpp
-	// AppName is set in LoadConfig()
-	Setting().write("Version","Release",AppName);
-
-	// CPU
+void WriteCPUSettings() {
 	Setting().write("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer);
 	Setting().write("CPU","FrameSkip",CurrentConfig.FrameSkip);
 	Setting().write("CPU","Throttle",CurrentConfig.SpeedThrottle);
@@ -440,30 +440,31 @@ unsigned char WriteIniFile()
 	Setting().write("Memory","RamSize",CurrentConfig.RamSize);
 	Setting().write("Misc","AutoStart",CurrentConfig.AutoStart);
 	Setting().write("Misc","CartAutoStart",CurrentConfig.CartAutoStart);
-	Setting().write("Misc","UseExtCocoRom", CurrentConfig.UseExtCocoRom);
+	Setting().write("Misc","UseExtCocoRom",CurrentConfig.UseExtCocoRom);
 	Setting().write("Misc","Overclock", CurrentConfig.EnableOverclock);
 	Setting().write("Misc","ExternalBasicImage", CurrentConfig.ExtRomFile);
-
-	// Audio
+}
+void WriteAudioSettings() {
 	Setting().write("Audio","SndCard",CurrentConfig.SoundCardName);
 	Setting().write("Audio","Rate",CurrentConfig.AudioRate);
-
-	// Video
+}
+void WriteVideoSettings() {
 	Rect winRect = GetCurWindowSize();
 	Setting().write("Video","MonitorType",CurrentConfig.MonitorType);
 	Setting().write("Video","PaletteType",CurrentConfig.PaletteType);
 	Setting().write("Video","ScanLines",CurrentConfig.ScanLines);
 	Setting().write("Video","ForceAspect",CurrentConfig.Aspect);
-	Setting().write("Video","RememberSize", CurrentConfig.RememberSize);
-	Setting().write("Video","WindowSizeX", winRect.w);
-	Setting().write("Video","WindowSizeY", winRect.h);
-	Setting().write("Video","WindowPosX", winRect.x);
-	Setting().write("Video","WindowPosY", winRect.y);
-
-	// Keyboard
+	Setting().write("Video","RememberSize",CurrentConfig.RememberSize);
+	Setting().write("Video","FrameSkip",CurrentConfig.FrameSkip);
+	Setting().write("Video","WindowSizeX",winRect.w);
+	Setting().write("Video","WindowSizeY",winRect.h);
+	Setting().write("Video","WindowPosX",winRect.x);
+	Setting().write("Video","WindowPosY",winRect.y);
+}
+void WriteKeyboardSettings() {
 	Setting().write("Misc","KeyMapIndex",CurrentConfig.KeyMap);
-
-	// Joystick
+}
+void WriteJoystickSettings() {
 	Setting().write("LeftJoyStick","UseMouse",LeftJS.UseMouse);
 	Setting().write("LeftJoyStick","Left",LeftJS.Left);
 	Setting().write("LeftJoyStick","Right",LeftJS.Right);
@@ -483,10 +484,6 @@ unsigned char WriteIniFile()
 	Setting().write("RightJoyStick","DiDevice",RightJS.DiDevice);
 	Setting().write("RightJoyStick", "HiResDevice", RightJS.HiRes);
 	Setting().write("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer);
-
-	// Force flush inifile  Is this required?
-	Setting().flush();
-	return 0;
 }
 
 void LoadModule()
@@ -661,7 +658,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 			SetOverclock(CurrentConfig.EnableOverclock);
 
 			// FIXME should only save CPU stuff here
-			WriteIniFile();
+			WriteCPUSettings();
 
 			// Exit dialog if IDOK
 			if (LOWORD(wParam)==IDOK) {
@@ -720,7 +717,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 				dlg.setTitle("Coco3 Rom Image");
 				dlg.setFlags(OFN_FILEMUSTEXIST);
 				if (dlg.show()) {
-					dlg.getpath(tmpcfg.ExtRomFile,MAX_PATH);
+					dlg.getupath(tmpcfg.ExtRomFile,MAX_PATH);
 					SetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile);
 				}
 			}
@@ -974,8 +971,7 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lP
 			CurrentConfig.AudioRate = tmpcfg.AudioRate;
 			CurrentConfig.SndOutDev = tmpcfg.SndOutDev;
 			strcpy(CurrentConfig.SoundCardName, SoundCards[CurrentConfig.SndOutDev].CardName);
-			// FIXME Save mute button state (AudioRate)
-			WriteIniFile();
+			WriteAudioSettings();
 
 			if (LOWORD(wParam)==IDOK) {
 				hAudioDlg = nullptr;
@@ -1111,7 +1107,8 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*
 			UpdateConfig();
 
 			// FIXME should only save display stuff here
-			WriteIniFile();
+			WriteVideoSettings();
+
 			if (LOWORD(wParam)==IDOK) {
 				hDisplayDlg = nullptr;
 				DestroyWindow(hDlg);
@@ -1193,8 +1190,8 @@ LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lP
 		case IDAPPLY:
 			vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 			UpdateConfig();
-			// FIXME Should only save keyboard stuff here
-			WriteIniFile();
+			WriteKeyboardSettings();
+
 			if (LOWORD(wParam)==IDOK) {
 				hInputDlg = nullptr;
 				DestroyWindow(hDlg);
@@ -1260,27 +1257,28 @@ BOOL SelectKeymapFile(HWND hDlg)
 	FileDialog dlg;
 	dlg.setFilter("Keymap Files\0*.keymap\0\0");
 	dlg.setInitialDir(AppDirectory());
+	dlg.setInitialDir(gcAppDataPath);
 	dlg.setTitle(TEXT("Select Keymap file"));
 	dlg.setFlags(OFN_PATHMUSTEXIST);
 	dlg.setDefExt(".keymap");
 	if ( dlg.show() ) {
 		// Load keymap if file exists
-		DWORD attr = GetFileAttributesA(dlg.path());
+		DWORD attr = GetFileAttributesA(dlg.upath());
 		if ( (attr != INVALID_FILE_ATTRIBUTES) &&
 				!(attr & FILE_ATTRIBUTE_DIRECTORY) ) {
-			LoadCustomKeyMap(dlg.path());
+			LoadCustomKeyMap(dlg.upath());
 		// Else create new file from current selection
 		} else {
 			char txt[MAX_PATH+32];
 			strcpy (txt,"Create ");
-			strcat (txt,dlg.path());
+			strcat (txt,dlg.upath());
 			strcat (txt,"?");
 			if (MessageBox(hDlg,txt,"Warning",MB_YESNO)==IDYES) {
 				CloneStandardKeymap(CurrentConfig.KeyMap);
-				SaveCustomKeyMap(dlg.path());
+				SaveCustomKeyMap(dlg.upath());
 			}
 		}
-		dlg.getpath(KeyMapFilePath,MAX_PATH);
+		dlg.getupath(KeyMapFilePath,MAX_PATH);
 		SetKeyMapFilePath(KeyMapFilePath); // Save filename in Vcc.config
 	}
 	return TRUE;
@@ -1431,8 +1429,8 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /
 			SetStickNumbers(LeftJS.DiDevice,RightJS.DiDevice);
 			CurrentConfig.ShowMousePointer = tmpcfg.ShowMousePointer;
 			UpdateConfig();
-			// FIXME Should only save joystick stuff here
-			WriteIniFile();
+			WriteJoystickSettings();
+
 			if (LOWORD(wParam)==IDOK) {
 				hJoyStickDlg = nullptr;
 				DestroyWindow(hDlg);
@@ -1638,7 +1636,6 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 		case IDAPPLY:
 			UpdateConfig();
 			// FIXME Should save bitbanger here
-			WriteIniFile();
 			if (LOWORD(wParam)==IDOK) {
 				hBitBangerDlg = nullptr;
 				DestroyWindow(hDlg);

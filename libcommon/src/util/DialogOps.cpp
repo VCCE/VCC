@@ -24,6 +24,14 @@
 
 //-------------------------------------------------------------------------------------------
 // FileDialog class shows a dialog for user to select a file for open or save.
+//
+// There is an effort to standardize VCC using slashes as directory seperators
+// but GetSaveFileName() and GetOpenFileName() are old windows functions that
+// do not play well with slashes so there is a bit of converting in and out;
+//
+//  "path"  refers to reverse slash path
+//  "upath" refers to forward slash path
+//
 //-------------------------------------------------------------------------------------------
 
 // FileDialog constructor initializes open file name structure.
@@ -35,7 +43,6 @@ FileDialog::FileDialog() {
 
 // FileDialog::show calls GetOpenFileName() or GetSaveFileName()
 bool FileDialog::show(BOOL Save, HWND Owner) {
-PrintLogC("FileDialog::show %d %p\n",Save,Owner);
 	// instance is that of the current module
 	ofn_.hInstance = GetModuleHandle(nullptr);
 
@@ -57,7 +64,11 @@ PrintLogC("FileDialog::show %d %p\n",Save,Owner);
 		rc = GetOpenFileName(&ofn_) ;
 	}
 
-PrintLogC("FileDialog::rc %d\n",rc);
+	// upath_ is the forward slash version
+	if (rc == 1) {
+		strncpy (upath_,path_,MAX_PATH);
+		VCC::Util::FixDirSlashes(upath_);
+	}
 
 	return ((rc == 1) && (*path_ != '\0'));
 }
@@ -67,7 +78,10 @@ void FileDialog::setDefExt(const char * DefExt) {
 }
 
 void FileDialog::setInitialDir(const char * InitialDir) {
-	ofn_.lpstrInitialDir = InitialDir;
+    if (InitialDir == nullptr) return;
+	strncpy(initialdir_,InitialDir,MAX_PATH);
+	VCC::Util::RevDirSlashes(initialdir_);
+	ofn_.lpstrInitialDir = initialdir_;
 }
 
 void FileDialog::setFilter(const char * Filter) {
@@ -86,8 +100,9 @@ void FileDialog::setTitle(const char * Title) {
 void FileDialog::setpath(const char * NewPath) {
     if (NewPath == nullptr) return;
 	strncpy(path_,NewPath,MAX_PATH);
-	// GetSaveFileName can't deal with forward slashes here
 	VCC::Util::RevDirSlashes(path_);
+	strncpy(upath_,NewPath,MAX_PATH);
+	VCC::Util::FixDirSlashes(upath_);
 }
 
 // Get a copy of the selected file path
@@ -99,14 +114,17 @@ void FileDialog::getpath(char * PathCopy, int maxsize) const {
 // Get a copy of the selected file path with slash delimiters
 void FileDialog::getupath(char * PathCopy, int maxsize) const {
     if (PathCopy == nullptr) return;
-	strncpy(PathCopy,path_,maxsize);
-	VCC::Util::FixDirSlashes(PathCopy);
+	strncpy(PathCopy,upath_,maxsize);
 }
 
 // Get a pointer to the selected file path
 const char *FileDialog::path() const
 {
 	return path_;
+}
+const char *FileDialog::upath() const
+{
+	return upath_;
 }
 
 // FileDialog::getdir() returns the directory portion of the file path

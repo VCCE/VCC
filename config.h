@@ -27,7 +27,6 @@ void FlushSettings();
 void LoadConfig(SystemState *);
 void InitSound();
 void LoadModule();
-unsigned char WriteIniFile();
 unsigned char ReadIniFile();
 
 VCC::Util::settings& Setting(); // New way to manage settings
