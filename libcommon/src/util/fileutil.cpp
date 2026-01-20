@@ -56,76 +56,25 @@ namespace VCC::Util
 		return buffer.c_str();
 	}
 	
-	//TODO: This is generic, move to something for generic utils
-	//----------------------------------------------------------------------
-	// Return copy of string with spaces trimmed from end of a string
-	//----------------------------------------------------------------------
-	std::string trim_right_spaces(const std::string& s)
-	{
-		size_t end = s.find_last_not_of(' ');
-		if (end == std::string::npos)
-			return {};
-		return s.substr(0, end + 1);
-	}
-	
-	//----------------------------------------------------------------------
-	// Return slash normalized directory part of a path
-	//----------------------------------------------------------------------
-	std::string GetDirectoryPart(const std::string& input)
-	{
-		std::filesystem::path p(input);
-		std::string out = p.parent_path().string();
-		FixDirSlashes(out);
-		return out;
-	}
-	
-	//----------------------------------------------------------------------
-	// Return filename part of a path
-	//----------------------------------------------------------------------
-	std::string GetFileNamePart(const std::string& input)
-	{
-		std::filesystem::path p(input);
-		return p.filename().string();
-	}
-	
-	//----------------------------------------------------------------------
-	// Determine if path is a direcory
-	//----------------------------------------------------------------------
-	bool IsDirectory(const std::string& path)
-	{
-		std::error_code ec;
-		return std::filesystem::is_directory(path, ec) && !ec;
-	}
-	
-	//-------------------------------------------------------------------
-	// Convert path directory backslashes to forward slashes
-	//-------------------------------------------------------------------
-	void FixDirSlashes(std::string &dir)
-	{
-		if (dir.empty()) return;
-		std::replace(dir.begin(), dir.end(), '\\', '/');
-		if (dir.back() == '/') dir.pop_back();
-	}
-	
 	//-------------------------------------------------------------------
 	// Get the file path of a loaded module
 	// Current exe path is returned if module_handle is null
 	//-------------------------------------------------------------------
 	std::string get_module_path(HMODULE module_handle)
 	{
-    	std::string text(MAX_PATH, '\0');
-    	for (;;) {
+		std::string text(MAX_PATH, '\0');
+		for (;;) {
 			DWORD ret = GetModuleFileName(module_handle, &text[0], text.size());
-        	if (ret == 0)
+			if (ret == 0)
 				return {}; // error
 
-        	if (ret < text.size() - 1) {
-            	text.resize(ret);
-            	return text;
-        	}
-        	// truncated grow and retry
-        	text.resize(text.size() * 2);
-    	}
+			if (ret < text.size() - 1) {
+				text.resize(ret);
+					return text;
+			}
+			// truncated grow and retry
+			text.resize(text.size() * 2);
+		}
 	}
 
 	//-------------------------------------------------------------------
@@ -143,40 +92,6 @@ namespace VCC::Util
 	}
 
 	//---------------------------------------------------------------
-	// Verify that a file can be opened for read/write
-	//---------------------------------------------------------------
-	bool ValidateRWFile(const std::string& path)
-	{
-		HANDLE h = CreateFile
-			(path.c_str(), GENERIC_READ | GENERIC_WRITE,
-		 	FILE_SHARE_READ, nullptr, OPEN_ALWAYS, 
-		 	FILE_ATTRIBUTE_NORMAL, nullptr);
-
-		if (h==INVALID_HANDLE_VALUE)
-			return false;
-
-		CloseHandle(h);
-		return true;
-	}
-
-	//---------------------------------------------------------------
-	// Verify that a file can be opened for read
-	//---------------------------------------------------------------
-	bool ValidateRDFile(const std::string& path)
-	{
-		HANDLE h = CreateFile
-			(path.c_str(), GENERIC_READ,
-		 	FILE_SHARE_READ, nullptr, OPEN_ALWAYS, 
-		 	FILE_ATTRIBUTE_NORMAL, nullptr);
-
-		if (h==INVALID_HANDLE_VALUE)
-			return false;
-
-		CloseHandle(h);
-		return true;
-	}
-
-	//---------------------------------------------------------------
 	// Fully qualify a file based on current execution directory
 	//---------------------------------------------------------------
 	std::string QualifyPath(const std::string& path)
@@ -191,5 +106,4 @@ namespace VCC::Util
 		std::string dir = Util::GetDirectoryPart(exe);
 		return dir + '/' + mod;
 	}
-
 }
