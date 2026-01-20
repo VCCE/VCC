@@ -225,16 +225,17 @@ void PakLoadCartridgeUI(int type)
 	char inifile[MAX_PATH];
 	GetIniFilePath(inifile);
 
-	static char cartDir[MAX_PATH] = "";
+
+static char cartDir[MAX_PATH] = "";
 	FileDialog dlg;
 	if (type == 0) {
 		dlg.setTitle(TEXT("Load Program Pack"));
 		dlg.setFilter("Hardware Packs\0*.dll\0All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0\0");
-		GetPrivateProfileString("DefaultPaths", "MPIPath", "", cartDir, MAX_PATH, inifile);
+		Setting().read("DefaultPaths", "MPIPath", "", cartDir, MAX_PATH);
 	} else {
 		dlg.setTitle(TEXT("Load ROM"));
 		dlg.setFilter("Rom Packs(*.ccc;*.rom)\0*.ccc;*.rom\0All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0\0");
-		GetPrivateProfileString("DefaultPaths", "PakPath", "", cartDir, MAX_PATH, inifile);
+		Setting().read("DefaultPaths", "PakPath", "", cartDir, MAX_PATH);
 	}
 	dlg.setInitialDir(cartDir);
 	dlg.setFlags(OFN_FILEMUSTEXIST);
@@ -244,9 +245,9 @@ void PakLoadCartridgeUI(int type)
 			dlg.getdir(cartDir);
 			dlg.gettype(filetype);
 			if ((strcmp(filetype,"dll") == 0) | (strcmp(filetype,"DLL") == 0 )) {  // DLL?
-				WritePrivateProfileString("DefaultPaths", "MPIPath", cartDir, inifile);
+				Setting().write("DefaultPaths", "MPIPath", cartDir);
 			} else {
-				WritePrivateProfileString("DefaultPaths", "PAKPath", cartDir, inifile);
+				Setting().write("DefaultPaths", "PAKPath", cartDir);
 			}
 		}
 	}
@@ -269,6 +270,8 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 	const auto result(load_any_cartridge(filename, TempIni));
 	if (result == cartridge_loader_status::success)
 	{
+		DLOG_C("pakinterface load cart %s\n",filename);
+		Setting().write("Module", "OnBoot", filename);
 		return result;
 	}
 
@@ -287,6 +290,11 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	// callback_context is a host-owned opaque per-cartridge state. Passed to the cartridge
 	// at initialization and returned on every callback so the host can route and manage a
 	// specific cartridge instance. Currently for pakinterface it is empty, but MPI uses it.
+
+	// TODO:: Consider using a slot number instead. slot0 for this, slot1-slot4 for MMI
+	// That way all loaded cart context can reside in a simple vector with no reliance
+	// on cart trampolines to maintain context.  With slot_num in the callbacks MPI will
+	// not have intercept to adjust menu_id's and forwarding the callback to main.
 	auto vccContext=std::make_unique<vcc_cartridge_context>();
 
 	cpak_callbacks callbacks {
@@ -357,6 +365,10 @@ void UnloadPack()
 	strcpy(DllPath,"");
 	SetCart(0);
 	EmuState.ResetPending=2;
+
+	char inifile[MAX_PATH];
+	GetIniFilePath(inifile);
+	Setting().delete_key("Module", "OnBoot");
 }
 
 void LoadPack(int type) {

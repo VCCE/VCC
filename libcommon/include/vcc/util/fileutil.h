@@ -58,6 +58,15 @@ namespace VCC::Util {
 	// If path is in the application directory strip directory
 	LIBCOMMON_EXPORT std::string strip_application_path(std::string path);
 
+	// Verify that a file can be opened for read/write
+	LIBCOMMON_EXPORT bool ValidateRWFile(const std::string& path);
+
+	// Verify that a file can be opened for read
+	LIBCOMMON_EXPORT bool ValidateRDFile(const std::string& path);
+
+	// Fully qualify a file based on execution directory
+	LIBCOMMON_EXPORT std::string QualifyPath(const std::string& path);
+
     // TODO: following stuff should go elsewhere
 
 	// Return string with case conversion	
@@ -103,5 +112,4 @@ namespace VCC::Util {
 	inline bool is_null_or_empty(const std::string& s) {
 		return s.empty();
 	}
-
 }

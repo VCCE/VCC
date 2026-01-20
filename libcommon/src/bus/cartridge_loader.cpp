@@ -1,3 +1,4 @@
+//#define USE_LOGGING
 ////////////////////////////////////////////////////////////////////////////////
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
@@ -18,10 +19,10 @@
 #include <vcc/bus/cartridge_loader.h>
 #include <vcc/bus/rom_cartridge.h>
 #include <vcc/bus/cpak_cartridge.h>
+#include <vcc/util/logger.h>
 #include <vector>
 #include <fstream>
 #include <iterator>
-
 
 namespace VCC::Core
 {
@@ -40,20 +41,31 @@ namespace VCC::Core
 		}
 	}
 
-    // Determine cart type by looking for magic 'MZ'
 	cartridge_file_type determine_cartridge_type(const std::string& filename)
 	{
 		std::ifstream input(filename, std::ios::binary);
-		if (!input.is_open())
-		{
+
+		if (!input.is_open()) {
 			return cartridge_file_type::not_opened;
 		}
 
-		if (input.get() == 'M' && input.get() == 'Z')
-		{
+		// Read two bytes from the start of the file
+		unsigned char header[2] = {};
+		input.clear();
+		input.seekg(0, std::ios::beg);
+		input.read(reinterpret_cast<char*>(header), 2);
+		if (!input) {
+			DLOG_C("core::cartridge is too small\n\n");
+			return cartridge_file_type::rom_image;
+		}
+
+		// Check for magic 'MZ' DLL indicator
+		if (header[0] == 'M' && header[1] == 'Z') {
+			DLOG_C("core::cartridge type library\n\n");
 			return cartridge_file_type::library;
 		}
 
+		DLOG_C("core::cartridge assume rom\n\n");
 		return cartridge_file_type::rom_image;
 	}
 
@@ -70,8 +82,7 @@ namespace VCC::Core
 
 		// Open the ROM file, fail if unable to
 		std::ifstream input(filename, std::ios::binary);
-		if (!input.is_open())
-		{
+		if (!input.is_open()) {
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 		}
 
@@ -82,8 +93,7 @@ namespace VCC::Core
 			std::istream_iterator<uint8_t>(),
 			back_inserter(romImage));
 
-		if (romImage.empty())
-		{
+		if (romImage.empty()) {
 			return { nullptr, nullptr, cartridge_loader_status::not_rom };
 		}
 
@@ -160,6 +170,7 @@ namespace VCC::Core
 		HWND hVccWnd,
 		const cpak_callbacks& cpak_callbacks)
 	{
+		DLOG_C("\ncore::load_cartridge %s\n",filename.c_str());
 		switch (VCC::Core::determine_cartridge_type(filename))
 		{
 		default:

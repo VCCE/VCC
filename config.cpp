@@ -29,6 +29,7 @@
 #include <iostream>
 #include <direct.h>
 #include <assert.h>
+#include <string>
 
 #pragma warning(push)
 #pragma warning(disable:4091)
@@ -37,7 +38,6 @@
 
 #include "defines.h"
 #include "resource.h"
-#include "config.h"
 #include "tcc1014graphics.h"
 #include "mc6821.h"
 #include "Vcc.h"
@@ -56,6 +56,8 @@
 #include <vcc/util/settings.h>
 #include <vcc/util/fileutil.h>
 
+#include "config.h"
+
 using namespace std;
 using namespace VCC;
 
@@ -63,11 +65,13 @@ using namespace VCC;
 /*        Local Function Templates          */
 /********************************************/
 
+void EstablishIniFile();
 int SelectFile(char *);
 void RefreshJoystickStatus();
 unsigned char TranslateDisp2Scan(int);
 unsigned char TranslateScan2Disp(int);
 void buildTransDisp2ScanTable();
+void SetBootModulePath(const std::string);
 
 LRESULT CALLBACK CpuConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK AudioConfig(HWND, UINT, WPARAM, LPARAM);
@@ -164,37 +168,23 @@ unsigned char _TranslateScan2Disp[SCAN_TRANS_COUNT] = {
 		37,17,29,28,47,48,49,51,0,53,54,50,66,67,0,0,0,0,0,0,0,0,0,0,58,
 		64,60,0,62,0,63,0,59,65,61,56,57 };
 
+// Pointer for settings
+static Util::settings* gpSettings = nullptr;
+
 /***********************************************************/
 /*         Establish ini file and Load Settings            */
 /***********************************************************/
 
-// Flush the settings store
-void FlushSettings()
-{
-    if (Util::is_null_or_empty(IniFilePath)) return;
-	Util::settings settings(IniFilePath);
-	settings.flush();
-}
-
-void LoadConfig(SystemState *LCState)
-{
-	HANDLE hr=nullptr;
-	int lasterror;
-
-	buildTransDisp2ScanTable();
-
-	LoadString(nullptr, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
-	GetModuleFileName(nullptr,ExecDirectory,MAX_PATH);
-	PathRemoveFileSpec(ExecDirectory);
+//---------------------------------------------------------------
+// Establish the settings storage path (IniFilePath)
+//---------------------------------------------------------------
+void EstablishIniFile()
+{	
+	// Establish full path to inifile
 	if (SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_APPDATA, nullptr, 0, AppDataPath)))
 		OutputDebugString(AppDataPath);
-	strcpy(CurrentConfig.PathtoExe,ExecDirectory);
 
 	strcat(AppDataPath, "\\VCC");
-
-	if (_mkdir(AppDataPath) != 0) {
-		OutputDebugString("Unable to create VCC config folder.");
-	}
 
 	if (*CmdArg.IniFile) {
 		GetFullPathNameA(CmdArg.IniFile,MAX_PATH,IniFilePath,nullptr);
@@ -203,168 +193,176 @@ void LoadConfig(SystemState *LCState)
 		strcat(IniFilePath, "\\");
 		strcat(IniFilePath, IniFileName);
 	}
+}
 
-	LCState->ScanLines=0;
-	NumberOfSoundCards=GetSoundCardList(SoundCards);
+//---------------------------------------------------------------
+// Fatal if this is called before valid IniFilePath is established
+//---------------------------------------------------------------
+VCC::Util::settings& Setting()
+{
+	if (!gpSettings) {
+		// Fatal if ini file can not be opened
+		if (!Util::ValidateRWFile(IniFilePath)) {
+			std::string s = "Can't open settings " 
+					+ std::string(IniFilePath);
+			MessageBox(EmuState.WindowHandle,s.c_str(),"Fatal",0);
+			exit(0);
+		}
+		gpSettings = new Util::settings(IniFilePath);
+	}
+	return *gpSettings;
+}
 
-	ReadIniFile();
-	// The rest of this belongs in ReadIniFile(); maybe it needs a name change
-
-	// FIXME ReadIniFile() should cause hard reset.
-	CurrentConfig.RebootNow=0;
-
-	// FIXME ReadIniFile should apply changes then UpdateConfig() here not needed 
-	UpdateConfig();
-	RefreshJoystickStatus();
-	if (EmuState.WindowHandle != nullptr)
-		InitSound();
-
-	// FIXME: This belongs in ReadIniFile(), already called above
-	//  Try to open the config file.  Create it if necessary.  Abort if failure.
-	hr = CreateFile(IniFilePath, GENERIC_READ | GENERIC_WRITE,
-			FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-	lasterror = GetLastError();
-	if (hr==INVALID_HANDLE_VALUE) { // Fatal could not open ini file
-	    MessageBox(nullptr,"Could not open ini file","Error",0);
-		exit(0);
-	} else {
-		CloseHandle(hr);
-		if (lasterror != ERROR_ALREADY_EXISTS) WriteIniFile();  //!=183
+//---------------------------------------------------------------
+// Change the ini file path.  (from Vcc File menu) 
+//---------------------------------------------------------------
+void SetIniFilePath(const char * path)
+{
+	DLOG_C("SetIniFilePath %s\n",path);
+	if (Util::ValidateRWFile(path)) {
+		strcpy(IniFilePath,path);
+		// Destroy settings object
+		delete gpSettings;
+		gpSettings = nullptr;
+		// Load new settings
+		ReadIniFile();
+		// Reload boot module
+		UnloadPack();
+		LoadModule();
+		// Reset
+		EmuState.ResetPending=2;
+		UpdateConfig();
 	}
 }
 
+//---------------------------------------------------------------
+// Return settings file path
+//---------------------------------------------------------------
+void GetIniFilePath( char *Path)
+{
+	// FIXME convert to returning a string
+	strcpy(Path,IniFilePath);
+	return;
+}
+
+//---------------------------------------------------------------
+// Flush the settings store
+//---------------------------------------------------------------
+void FlushSettings()
+{
+	Setting().flush();
+}
+
+//---------------------------------------------------------------
+//  Initial system config
+//---------------------------------------------------------------
+void LoadConfig(SystemState *LCState)
+{
+	buildTransDisp2ScanTable();
+
+	// Establish application path
+	LoadString(nullptr, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
+	GetModuleFileName(nullptr,ExecDirectory,MAX_PATH);
+	PathRemoveFileSpec(ExecDirectory);
+	strcpy(CurrentConfig.PathtoExe,ExecDirectory);
+
+	// Make sure scanlines is off
+	LCState->ScanLines=0;
+
+	// Get sound cards from audio.cpp 
+	NumberOfSoundCards=GetSoundCardList(SoundCards);
+
+	// Establish settings store
+	EstablishIniFile();
+
+	// Load settings from store
+	ReadIniFile();
+
+	CurrentConfig.RebootNow=0;
+	UpdateConfig();
+
+	RefreshJoystickStatus();
+	if (EmuState.WindowHandle != nullptr) InitSound();
+
+}
+
+//---------------------------------------------------------------
+// Set up sound cards 
+//---------------------------------------------------------------
 void InitSound()
 {
 	SoundInit(EmuState.WindowHandle,
 		SoundCards[CurrentConfig.SndOutDev].Guid, CurrentConfig.AudioRate);
 }
 
-/***********************************************************/
-/*      Save All Configuration Settings to ini file        */
-/***********************************************************/
-
-// FIXME WriteIniFile() is a sledgehammer.
-// Each config dialog should save the stuff it sets
-unsigned char WriteIniFile()
+//--------------------------------------------------------------------------
+// Make sure boot module path is reasonable for cartridge_loader
+// pakinterface loads boot module and saves the ModulePath setting
+// Still need to verify the boot module after switching the ini file
+//--------------------------------------------------------------------------
+void SetBootModulePath(const std::string bootpath)
 {
-    // TODO:  Deal with missing ini path
-	if (Util::is_null_or_empty(IniFilePath)) return 1;
-	Util::settings setting(IniFilePath);
+	memset(CurrentConfig.ModulePath,0,sizeof(CurrentConfig.ModulePath));
+	if (bootpath.empty()) return;
 
-	setting.write("Version","Release",AppName);
-
-	GetCurrentModule(CurrentConfig.ModulePath);
-	ValidatePath(CurrentConfig.ModulePath);
-	setting.write("Module", "OnBoot", CurrentConfig.ModulePath);
-
-	// CPU 
-	setting.write("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer);
-	setting.write("CPU","FrameSkip",CurrentConfig.FrameSkip);
-	setting.write("CPU","Throttle",CurrentConfig.SpeedThrottle);
-	setting.write("CPU","CpuType",CurrentConfig.CpuType);
-	setting.write("CPU","MaxOverClock", CurrentConfig.MaxOverclock);
-	setting.write("CPU","BreakEnabled",CurrentConfig.BreakOpcEnabled);
-	setting.write("Memory","RamSize",CurrentConfig.RamSize);
-	setting.write("Misc","AutoStart",CurrentConfig.AutoStart);
-	setting.write("Misc","CartAutoStart",CurrentConfig.CartAutoStart);
-	setting.write("Misc","UseExtCocoRom", CurrentConfig.UseExtCocoRom);
-	setting.write("Misc","Overclock", CurrentConfig.EnableOverclock);
-	setting.write("Misc","ExternalBasicImage", CurrentConfig.ExtRomFile);
-
-	// Audio
-	setting.write("Audio","SndCard",CurrentConfig.SoundCardName);
-	setting.write("Audio","Rate",CurrentConfig.AudioRate);
-
-	// Video
-	Rect winRect = GetCurWindowSize();
-	setting.write("Video","MonitorType",CurrentConfig.MonitorType);
-	setting.write("Video","PaletteType",CurrentConfig.PaletteType);
-	setting.write("Video","ScanLines",CurrentConfig.ScanLines);
-	setting.write("Video","ForceAspect",CurrentConfig.Aspect);
-	setting.write("Video","RememberSize", CurrentConfig.RememberSize);
-	setting.write("Video","WindowSizeX", winRect.w);
-	setting.write("Video","WindowSizeY", winRect.h);
-	setting.write("Video","WindowPosX", winRect.x);
-	setting.write("Video","WindowPosY", winRect.y);
-
-	// Keyboard
-	setting.write("Misc","KeyMapIndex",CurrentConfig.KeyMap);
-
-	// Joystick
-	setting.write("LeftJoyStick","UseMouse",LeftJS.UseMouse);
-	setting.write("LeftJoyStick","Left",LeftJS.Left);
-	setting.write("LeftJoyStick","Right",LeftJS.Right);
-	setting.write("LeftJoyStick","Up",LeftJS.Up);
-	setting.write("LeftJoyStick","Down",LeftJS.Down);
-	setting.write("LeftJoyStick","Fire1",LeftJS.Fire1);
-	setting.write("LeftJoyStick","Fire2",LeftJS.Fire2);
-	setting.write("LeftJoyStick","DiDevice",LeftJS.DiDevice);
-	setting.write("LeftJoyStick", "HiResDevice", LeftJS.HiRes);
-	setting.write("RightJoyStick","UseMouse",RightJS.UseMouse);
-	setting.write("RightJoyStick","Left",RightJS.Left);
-	setting.write("RightJoyStick","Right",RightJS.Right);
-	setting.write("RightJoyStick","Up",RightJS.Up);
-	setting.write("RightJoyStick","Down",RightJS.Down);
-	setting.write("RightJoyStick","Fire1",RightJS.Fire1);
-	setting.write("RightJoyStick","Fire2",RightJS.Fire2);
-	setting.write("RightJoyStick","DiDevice",RightJS.DiDevice);
-	setting.write("RightJoyStick", "HiResDevice", RightJS.HiRes);
-	setting.write("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer);
-    // Force flush inifile  Is this required?
-	setting.flush();
-	return 0;
+	std::string path = Util::QualifyPath(bootpath);
+	namespace fs = std::filesystem;
+	fs::path p = path;
+	if (fs::exists(p) && (fs::file_size(p) > 2)) {
+		Setting().write("Module","OnBoot",path);
+		strncpy(CurrentConfig.ModulePath,
+				path.c_str(),
+				sizeof(CurrentConfig.ModulePath));
+	} else {
+		// Delete the key if it does not
+		Setting().delete_key("Module","OnBoot");
+		std::string msg = "Invalid boot module '"+bootpath+"' removed";
+		MessageBox(EmuState.WindowHandle,msg.c_str(),"Warn",MB_OK);
+	}
 }
 
-/***********************************************************/
-/*        Load Configuration Settings from ini file        */
-/***********************************************************/
+//---------------------------------------------------------------
+// Load Configuration Settings from ini file
+//---------------------------------------------------------------
 
-// FIXME ReadIniFile should apply changes, should hard reset if RAM or CPU changes
 unsigned char ReadIniFile()
 {
-
-    // TODO:  Deal with missing ini path
-	if (Util::is_null_or_empty(IniFilePath)) return 1;
-	Util::settings setting(IniFilePath);
-
 	unsigned char Index=0;
 	//Loads the config structure from the hard disk
-	CurrentConfig.CPUMultiplyer    = setting.read("CPU","DoubleSpeedClock",2);
-	CurrentConfig.FrameSkip        = setting.read("CPU","FrameSkip",1);
-	CurrentConfig.SpeedThrottle    = setting.read("CPU","Throttle",1);
-	CurrentConfig.CpuType          = setting.read("CPU","CpuType",0);
-	CurrentConfig.MaxOverclock     = setting.read("CPU","MaxOverClock",100);
-	CurrentConfig.BreakOpcEnabled  = setting.read("CPU","BreakEnabled",0);
+	CurrentConfig.CPUMultiplyer    = Setting().read("CPU","DoubleSpeedClock",2);
+	CurrentConfig.FrameSkip        = Setting().read("CPU","FrameSkip",1);
+	CurrentConfig.SpeedThrottle    = Setting().read("CPU","Throttle",1);
+	CurrentConfig.CpuType          = Setting().read("CPU","CpuType",0);
+	CurrentConfig.MaxOverclock     = Setting().read("CPU","MaxOverClock",100);
+	CurrentConfig.BreakOpcEnabled  = Setting().read("CPU","BreakEnabled",0);
 
-	CurrentConfig.AudioRate        = setting.read("Audio","Rate",3);
-	setting.read("Audio","SndCard","",CurrentConfig.SoundCardName,63);
+	CurrentConfig.AudioRate        = Setting().read("Audio","Rate",3);
+	Setting().read("Audio","SndCard","",CurrentConfig.SoundCardName,63);
 
-	CurrentConfig.MonitorType      = setting.read("Video","MonitorType",1);
-	CurrentConfig.PaletteType      = setting.read("Video","PaletteType",PALETTE_NTSC);
-	CurrentConfig.ScanLines        = setting.read("Video","ScanLines",0);
+	CurrentConfig.MonitorType      = Setting().read("Video","MonitorType",1);
+	CurrentConfig.PaletteType      = Setting().read("Video","PaletteType",PALETTE_NTSC);
+	CurrentConfig.ScanLines        = Setting().read("Video","ScanLines",0);
 
-	CurrentConfig.Aspect           = setting.read("Video","ForceAspect",1);
-	CurrentConfig.RememberSize     = setting.read("Video","RememberSize",1);
-	CurrentConfig.WindowRect.w     = setting.read("Video","WindowSizeX", 640);
-	CurrentConfig.WindowRect.h     = setting.read("Video","WindowSizeY", 480);
-	CurrentConfig.WindowRect.x     = setting.read("Video","WindowPosX",CW_USEDEFAULT);
-	CurrentConfig.WindowRect.y     = setting.read("Video","WindowPosY",CW_USEDEFAULT);
-	CurrentConfig.AutoStart        = setting.read("Misc","AutoStart",1);
-	CurrentConfig.CartAutoStart    = setting.read("Misc","CartAutoStart",1);
-	CurrentConfig.ShowMousePointer = setting.read("Misc","ShowMousePointer",1);
-	CurrentConfig.UseExtCocoRom    = setting.read("Misc","UseExtCocoRom",0);
-	CurrentConfig.EnableOverclock  = setting.read("Misc","Overclock",1);
-	setting.read("Misc","ExternalBasicImage","",CurrentConfig.ExtRomFile,MAX_PATH);
+	CurrentConfig.Aspect           = Setting().read("Video","ForceAspect",1);
+	CurrentConfig.RememberSize     = Setting().read("Video","RememberSize",1);
+	CurrentConfig.WindowRect.w     = Setting().read("Video","WindowSizeX", 640);
+	CurrentConfig.WindowRect.h     = Setting().read("Video","WindowSizeY", 480);
+	CurrentConfig.WindowRect.x     = Setting().read("Video","WindowPosX",CW_USEDEFAULT);
+	CurrentConfig.WindowRect.y     = Setting().read("Video","WindowPosY",CW_USEDEFAULT);
+	CurrentConfig.AutoStart        = Setting().read("Misc","AutoStart",1);
+	CurrentConfig.CartAutoStart    = Setting().read("Misc","CartAutoStart",1);
+	CurrentConfig.ShowMousePointer = Setting().read("Misc","ShowMousePointer",1);
+	CurrentConfig.UseExtCocoRom    = Setting().read("Misc","UseExtCocoRom",0);
+	CurrentConfig.EnableOverclock  = Setting().read("Misc","Overclock",1);
+	Setting().read("Misc","ExternalBasicImage","",CurrentConfig.ExtRomFile,MAX_PATH);
 
-	CurrentConfig.RamSize = setting.read("Memory","RamSize",1);
+	CurrentConfig.RamSize = Setting().read("Memory","RamSize",1);
 
-	setting.read("Module","OnBoot","",CurrentConfig.ModulePath,MAX_PATH);
-
-	CurrentConfig.KeyMap  = setting.read("Misc","KeyMapIndex",0);
+	CurrentConfig.KeyMap  = Setting().read("Misc","KeyMapIndex",0);
 	if (CurrentConfig.KeyMap>3)
 		CurrentConfig.KeyMap=0;	//Default to DECB Mapping
 
-	setting.read("Misc","CustomKeyMapFile","",KeyMapFilePath,MAX_PATH);
+	Setting().read("Misc","CustomKeyMapFile","",KeyMapFilePath,MAX_PATH);
 	if (*KeyMapFilePath == '\0') {
 		strcpy(KeyMapFilePath, AppDataPath);
 		strcat(KeyMapFilePath, "\\custom.keymap");
@@ -372,29 +370,31 @@ unsigned char ReadIniFile()
 	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFilePath);
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
-	CheckPath(CurrentConfig.ModulePath);
+	// Set up boot module path
+	std::string bootpath = Util::QualifyPath(Setting().read("Module","OnBoot",""));
+	SetBootModulePath(bootpath);
 
-	LeftJS.UseMouse  = setting.read("LeftJoyStick" ,"UseMouse",1);
-	LeftJS.Left      = setting.read("LeftJoyStick" ,"Left",75);
-	LeftJS.Right     = setting.read("LeftJoyStick" ,"Right",77);
-	LeftJS.Up        = setting.read("LeftJoyStick" ,"Up",72);
-	LeftJS.Down      = setting.read("LeftJoyStick" ,"Down",80);
-	LeftJS.Fire1     = setting.read("LeftJoyStick" ,"Fire1",59);
-	LeftJS.Fire2     = setting.read("LeftJoyStick" ,"Fire2",60);
-	LeftJS.DiDevice  = setting.read("LeftJoyStick" ,"DiDevice",0);
-	LeftJS.HiRes     = setting.read("LeftJoyStick" ,"HiResDevice",0);
-	RightJS.UseMouse = setting.read("RightJoyStick","UseMouse",1);
-	RightJS.Left     = setting.read("RightJoyStick","Left",75);
-	RightJS.Right    = setting.read("RightJoyStick","Right",77);
-	RightJS.Up       = setting.read("RightJoyStick","Up",72);
-	RightJS.Down     = setting.read("RightJoyStick","Down",80);
-	RightJS.Fire1    = setting.read("RightJoyStick","Fire1",59);
-	RightJS.Fire2    = setting.read("RightJoyStick","Fire2",60);
-	RightJS.DiDevice = setting.read("RightJoyStick","DiDevice",0);
-	RightJS.HiRes    = setting.read("RightJoyStick", "HiResDevice",0);
+	LeftJS.UseMouse  = Setting().read("LeftJoyStick" ,"UseMouse",1);
+	LeftJS.Left      = Setting().read("LeftJoyStick" ,"Left",75);
+	LeftJS.Right     = Setting().read("LeftJoyStick" ,"Right",77);
+	LeftJS.Up        = Setting().read("LeftJoyStick" ,"Up",72);
+	LeftJS.Down      = Setting().read("LeftJoyStick" ,"Down",80);
+	LeftJS.Fire1     = Setting().read("LeftJoyStick" ,"Fire1",59);
+	LeftJS.Fire2     = Setting().read("LeftJoyStick" ,"Fire2",60);
+	LeftJS.DiDevice  = Setting().read("LeftJoyStick" ,"DiDevice",0);
+	LeftJS.HiRes     = Setting().read("LeftJoyStick" ,"HiResDevice",0);
+	RightJS.UseMouse = Setting().read("RightJoyStick","UseMouse",1);
+	RightJS.Left     = Setting().read("RightJoyStick","Left",75);
+	RightJS.Right    = Setting().read("RightJoyStick","Right",77);
+	RightJS.Up       = Setting().read("RightJoyStick","Up",72);
+	RightJS.Down     = Setting().read("RightJoyStick","Down",80);
+	RightJS.Fire1    = Setting().read("RightJoyStick","Fire1",59);
+	RightJS.Fire2    = Setting().read("RightJoyStick","Fire2",60);
+	RightJS.DiDevice = Setting().read("RightJoyStick","DiDevice",0);
+	RightJS.HiRes    = Setting().read("RightJoyStick", "HiResDevice",0);
 
-	setting.read("DefaultPaths", "CassPath", "", CurrentConfig.CassPath, MAX_PATH);
-	setting.read("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH);
+	Setting().read("DefaultPaths", "CassPath", "", CurrentConfig.CassPath, MAX_PATH);
+	Setting().read("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH);
 
 	for (Index = 0; Index < NumberOfSoundCards; Index++)
 	{
@@ -415,6 +415,78 @@ unsigned char ReadIniFile()
 		 (CurrentConfig.WindowRect.y > sh-80) )
 		CurrentConfig.WindowRect = {0,0,640,480};
 
+	return 0;
+}
+
+//---------------------------------------------------------------
+// Save All Configuration Settings to ini file
+//---------------------------------------------------------------
+
+// FIXME WriteIniFile() is a sledgehammer.
+// Each config dialog should save the stuff it changes
+unsigned char WriteIniFile()
+{
+
+	// ModulePath is managed by pakinterface.cpp
+	// AppName is set in LoadConfig()
+	Setting().write("Version","Release",AppName);
+
+	// CPU 
+	Setting().write("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer);
+	Setting().write("CPU","FrameSkip",CurrentConfig.FrameSkip);
+	Setting().write("CPU","Throttle",CurrentConfig.SpeedThrottle);
+	Setting().write("CPU","CpuType",CurrentConfig.CpuType);
+	Setting().write("CPU","MaxOverClock", CurrentConfig.MaxOverclock);
+	Setting().write("CPU","BreakEnabled",CurrentConfig.BreakOpcEnabled);
+	Setting().write("Memory","RamSize",CurrentConfig.RamSize);
+	Setting().write("Misc","AutoStart",CurrentConfig.AutoStart);
+	Setting().write("Misc","CartAutoStart",CurrentConfig.CartAutoStart);
+	Setting().write("Misc","UseExtCocoRom", CurrentConfig.UseExtCocoRom);
+	Setting().write("Misc","Overclock", CurrentConfig.EnableOverclock);
+	Setting().write("Misc","ExternalBasicImage", CurrentConfig.ExtRomFile);
+
+	// Audio
+	Setting().write("Audio","SndCard",CurrentConfig.SoundCardName);
+	Setting().write("Audio","Rate",CurrentConfig.AudioRate);
+
+	// Video
+	Rect winRect = GetCurWindowSize();
+	Setting().write("Video","MonitorType",CurrentConfig.MonitorType);
+	Setting().write("Video","PaletteType",CurrentConfig.PaletteType);
+	Setting().write("Video","ScanLines",CurrentConfig.ScanLines);
+	Setting().write("Video","ForceAspect",CurrentConfig.Aspect);
+	Setting().write("Video","RememberSize", CurrentConfig.RememberSize);
+	Setting().write("Video","WindowSizeX", winRect.w);
+	Setting().write("Video","WindowSizeY", winRect.h);
+	Setting().write("Video","WindowPosX", winRect.x);
+	Setting().write("Video","WindowPosY", winRect.y);
+
+	// Keyboard
+	Setting().write("Misc","KeyMapIndex",CurrentConfig.KeyMap);
+
+	// Joystick
+	Setting().write("LeftJoyStick","UseMouse",LeftJS.UseMouse);
+	Setting().write("LeftJoyStick","Left",LeftJS.Left);
+	Setting().write("LeftJoyStick","Right",LeftJS.Right);
+	Setting().write("LeftJoyStick","Up",LeftJS.Up);
+	Setting().write("LeftJoyStick","Down",LeftJS.Down);
+	Setting().write("LeftJoyStick","Fire1",LeftJS.Fire1);
+	Setting().write("LeftJoyStick","Fire2",LeftJS.Fire2);
+	Setting().write("LeftJoyStick","DiDevice",LeftJS.DiDevice);
+	Setting().write("LeftJoyStick", "HiResDevice", LeftJS.HiRes);
+	Setting().write("RightJoyStick","UseMouse",RightJS.UseMouse);
+	Setting().write("RightJoyStick","Left",RightJS.Left);
+	Setting().write("RightJoyStick","Right",RightJS.Right);
+	Setting().write("RightJoyStick","Up",RightJS.Up);
+	Setting().write("RightJoyStick","Down",RightJS.Down);
+	Setting().write("RightJoyStick","Fire1",RightJS.Fire1);
+	Setting().write("RightJoyStick","Fire2",RightJS.Fire2);
+	Setting().write("RightJoyStick","DiDevice",RightJS.DiDevice);
+	Setting().write("RightJoyStick", "HiResDevice", RightJS.HiRes);
+	Setting().write("Misc","ShowMousePointer",CurrentConfig.ShowMousePointer);
+
+	// Force flush inifile  Is this required?
+	Setting().flush();
 	return 0;
 }
 
@@ -445,19 +517,6 @@ void SetWindowRect(const Rect& rect)
 	}
 }
 
-/********************************************/
-/*          Config File paths               */
-/********************************************/
-void GetIniFilePath( char *Path)
-{
-	strcpy(Path,IniFilePath);
-	return;
-}
-void SetIniFilePath( const char *Path)
-{
-    //  Path must be to an existing ini file
-    strcpy(IniFilePath,Path);
-}
 // The following two functions only work after LoadConfig has been called
 char * AppDirectory()
 {
@@ -470,7 +529,7 @@ char * GetKeyMapFilePath()
 void SetKeyMapFilePath(const char *Path)
 {
     strcpy(KeyMapFilePath,Path);
-	WritePrivateProfileString("Misc","CustomKeyMapFile",KeyMapFilePath,IniFilePath);
+	Setting().write("Misc","CustomKeyMapFile",KeyMapFilePath);
 }
 
 /*******************************************************/
@@ -914,9 +973,6 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lP
 			CurrentConfig.AudioRate = tmpcfg.AudioRate;
 			CurrentConfig.SndOutDev = tmpcfg.SndOutDev;
 			strcpy(CurrentConfig.SoundCardName, SoundCards[CurrentConfig.SndOutDev].CardName);
-// FIXME Should only save Audio stuff here
-//WritePrivateProfileString("Audio","SndCard",CurrentConfig.SoundCardName,IniFilePath);
-//WritePrivateProfileInt("Audio","Rate",CurrentConfig.AudioRate,IniFilePath);
 			// FIXME Save mute button state (AudioRate) 
 			WriteIniFile();
 
@@ -1633,8 +1689,7 @@ LRESULT CALLBACK Paths(HWND /*hDlg*/, UINT /*message*/, WPARAM /*wParam*/, LPARA
 int SelectFile(char *FileName)
 {
 	char CapFilePath[MAX_PATH];
-	GetPrivateProfileString
-		("DefaultPaths", "CapFilePath", "", CapFilePath, MAX_PATH, IniFilePath);
+	Setting().read("DefaultPaths", "CapFilePath", "", CapFilePath, MAX_PATH);
 
 	FileDialog dlg;
 	dlg.setTitle("Open print capture file");
@@ -1648,8 +1703,7 @@ int SelectFile(char *FileName)
 		if (OpenPrintFile(dlg.path())) {
 			dlg.getdir(CapFilePath);
 			if (strcmp(CapFilePath,"") != 0) {
-				WritePrivateProfileString
-					("DefaultPaths", "CapFilePath", CapFilePath, IniFilePath);
+				Setting().write("DefaultPaths", "CapFilePath", CapFilePath);
 			}
 		} else {
 			MessageBox(EmuState.WindowHandle,"Can't open file.","Error",0);

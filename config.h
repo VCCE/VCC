@@ -17,15 +17,22 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "defines.h"
 #include <iostream>
+#include <vcc/util/settings.h>
 
+//FIXME only shared functions belong here the rest should be in config.cpp
+void FlushSettings();
 void LoadConfig(SystemState *);
 void InitSound();
 void LoadModule();
 unsigned char WriteIniFile();
 unsigned char ReadIniFile();
-void GetIniFilePath( char *);
+
+VCC::Util::settings& Setting(); // New way to manage settings
+void GetIniFilePath( char *);   // for passing to cart dll's
+
 void FlushSettings(); // Flush the settings store (vcc init file)
 void UpdateConfig ();
 void UpdateSoundBar(const unsigned int *,unsigned int);
