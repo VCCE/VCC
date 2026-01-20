@@ -142,4 +142,54 @@ namespace VCC::Util
 		return path;
 	}
 
+	//---------------------------------------------------------------
+	// Verify that a file can be opened for read/write
+	//---------------------------------------------------------------
+	bool ValidateRWFile(const std::string& path)
+	{
+		HANDLE h = CreateFile
+			(path.c_str(), GENERIC_READ | GENERIC_WRITE,
+		 	FILE_SHARE_READ, nullptr, OPEN_ALWAYS, 
+		 	FILE_ATTRIBUTE_NORMAL, nullptr);
+
+		if (h==INVALID_HANDLE_VALUE)
+			return false;
+
+		CloseHandle(h);
+		return true;
+	}
+
+	//---------------------------------------------------------------
+	// Verify that a file can be opened for read
+	//---------------------------------------------------------------
+	bool ValidateRDFile(const std::string& path)
+	{
+		HANDLE h = CreateFile
+			(path.c_str(), GENERIC_READ,
+		 	FILE_SHARE_READ, nullptr, OPEN_ALWAYS, 
+		 	FILE_ATTRIBUTE_NORMAL, nullptr);
+
+		if (h==INVALID_HANDLE_VALUE)
+			return false;
+
+		CloseHandle(h);
+		return true;
+	}
+
+	//---------------------------------------------------------------
+	// Fully qualify a file based on current execution directory
+	//---------------------------------------------------------------
+	std::string QualifyPath(const std::string& path)
+	{
+		if (path.empty()) return {};
+
+		std::string mod = path;
+		FixDirSlashes(mod);
+		if (mod.find('/') != std::string::npos) return mod;
+
+		std::string exe = Util::get_module_path(NULL);
+		std::string dir = Util::GetDirectoryPart(exe);
+		return dir + '/' + mod;
+	}
+
 }

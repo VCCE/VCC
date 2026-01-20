@@ -450,9 +450,7 @@ void CloseTapeFile()
 unsigned int LoadTape()
 {
 	FileDialog dlg;
-	char IniFilePath[MAX_PATH];
-	GetIniFilePath(IniFilePath);
-	GetPrivateProfileString("DefaultPaths","CassPath","",CassPath,MAX_PATH,IniFilePath);
+	Setting().read("DefaultPaths","CassPath","",CassPath,MAX_PATH);
 	dlg.setInitialDir(CassPath);
 	dlg.setFilter("Cassette Files (.cas,.wav)\0*.cas;*.wav\0\0");
 	dlg.setTitle("Insert Tape Image");
@@ -466,7 +464,7 @@ unsigned int LoadTape()
 	}
 	dlg.getdir(CassPath);
 	if (strcmp(CassPath, "") != 0)
-		WritePrivateProfileString("DefaultPaths","CassPath",CassPath,IniFilePath);
+		Setting().write("DefaultPaths","CassPath",CassPath);
 	// turn off fast load for wav files
 	if (FileType == WAV) TapeFastLoad = false;
 	TapeWritten = false;
