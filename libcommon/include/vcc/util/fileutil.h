@@ -35,22 +35,6 @@ namespace VCC::Util {
 
 	// Get most recent windows error text
 	LIBCOMMON_EXPORT std::string LastErrorString();
-	const char * LastErrorTxt();
-
-	// Convert backslashes to slashes in directory string
-	LIBCOMMON_EXPORT void FixDirSlashes(std::string &dir);
-
-	// Return copy of string with spaces trimmed from end of a string
-	LIBCOMMON_EXPORT std::string trim_right_spaces(const std::string &s);
-
-	// Return slash normalized directory part of a path
-	LIBCOMMON_EXPORT std::string GetDirectoryPart(const std::string& input);
-
-	// Return filename part of a path
-	LIBCOMMON_EXPORT std::string GetFileNamePart(const std::string& input);
-
-	// Determine if path is a direcory
-	LIBCOMMON_EXPORT bool IsDirectory(const std::string& path);
 
 	// Get path of loaded module or current application
 	LIBCOMMON_EXPORT std::string get_module_path(HMODULE module_handle);
@@ -58,16 +42,123 @@ namespace VCC::Util {
 	// If path is in the application directory strip directory
 	LIBCOMMON_EXPORT std::string strip_application_path(std::string path);
 
-	// Verify that a file can be opened for read/write
-	LIBCOMMON_EXPORT bool ValidateRWFile(const std::string& path);
-
-	// Verify that a file can be opened for read
-	LIBCOMMON_EXPORT bool ValidateRDFile(const std::string& path);
-
 	// Fully qualify a file based on execution directory
 	LIBCOMMON_EXPORT std::string QualifyPath(const std::string& path);
 
-    // TODO: following stuff should go elsewhere
+	//------------------------------------------------------------------------
+	// In line functions
+	//------------------------------------------------------------------------
+
+	// Return copy of string with spaces trimmed from end of a string
+	inline std::string trim_right_spaces(const std::string& s)
+	{
+		size_t end = s.find_last_not_of(' ');
+		if (end == std::string::npos) return {};
+		return s.substr(0, end + 1);
+	}
+	
+	// Return filename part of a path
+	inline std::string GetFileNamePart(const std::string& input)
+	{
+		std::filesystem::path p(input);
+		return p.filename().string();
+	}
+	
+	// Determine if path is a direcory
+	inline bool IsDirectory(const std::string& path)
+	{
+		std::error_code ec;
+		return std::filesystem::is_directory(path, ec) && !ec;
+	}
+
+	// Verify that a file can be opened for read/write
+	inline bool ValidateRWFile(const std::string& path)
+	{
+		HANDLE h = CreateFile
+			(path.c_str(), GENERIC_READ | GENERIC_WRITE,
+			FILE_SHARE_READ, nullptr, OPEN_ALWAYS, 
+			FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (h==INVALID_HANDLE_VALUE) return false;
+		CloseHandle(h);
+		return true;
+	}
+
+	// Verify that a file can be opened for read
+	inline bool ValidateRDFile(const std::string& path)
+	{
+		HANDLE h = CreateFile
+			(path.c_str(), GENERIC_READ,
+			FILE_SHARE_READ, nullptr, OPEN_ALWAYS, 
+			FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (h==INVALID_HANDLE_VALUE) return false;
+		CloseHandle(h);
+		return true;
+	}
+
+	// Convert backslashes to slashes within string
+	inline void FixDirSlashes(std::string& dir)
+	{
+		if (dir.empty()) return;
+		std::replace(dir.begin(), dir.end(), '\\', '/');
+		if (dir.back() == '/') dir.pop_back();
+	}
+
+	// Convert backslashes to slashes within char *
+	inline void FixDirSlashes(char* dir)
+	{
+		if (!dir || !*dir) return;
+			for (char* p = dir; *p; ++p)
+				if (*p == '\\') *p = '/';
+	}
+
+	// Convert slashes to backslashes within char * (for legacy win calls)
+	inline void RevDirSlashes(char* dir)
+	{
+		if (!dir || !*dir) return;
+			for (char* p = dir; *p; ++p)
+				if (*p == '/') *p = '\\';
+	}
+
+	// Return copy of path with backslashes converterd
+	inline std::string FixDirSlashes(const std::string& dir)
+	{
+		std::string s = dir;
+		FixDirSlashes(s);
+		return s;
+	}
+
+	// Strip trailing backslash from directory or path 
+	inline void StripTrailingSlash(std::string& dir)
+	{
+		if (dir.back() == '/') dir.pop_back();
+	}
+
+	// Return copy with trailing backslash stripped
+	inline std::string StripTrailingSlash(const std::string& dir)
+	{
+		std::string s = dir;
+		StripTrailingSlash(s);
+		return s;
+	}
+
+	// Conditionally append trailing backslash to directory
+	inline void AppendTrailingSlash(std::string dir)
+	{
+		if (dir.back() != '/') dir += '/';
+	}
+	
+	// Return slash normalized directory part of a path
+	inline std::string GetDirectoryPart(const std::string& input)
+	{
+		std::filesystem::path p(input);
+		std::string out = p.parent_path().string();
+		FixDirSlashes(out);
+		return out;
+	}
+
+	//------------------------------------------------------------------------
+	// TODO: In line functions that should go elsewhere
+	//------------------------------------------------------------------------
 
 	// Return string with case conversion	
 	inline std::string to_lower(std::string s) {
@@ -111,5 +202,13 @@ namespace VCC::Util {
 
 	inline bool is_null_or_empty(const std::string& s) {
 		return s.empty();
+	}
+
+	inline void copy_to_char(const std::string& src, char* dst, size_t dst_size)
+	{
+		if (dst_size == 0) return;
+		const size_t n = std::min(src.size(), dst_size - 1);
+		memcpy(dst, src.data(), n);
+		dst[n] = '\0';
 	}
 }

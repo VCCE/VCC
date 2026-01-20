@@ -1025,7 +1025,7 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 					break;
 
 				case 4:
-					UpdateConfig();    // Apply video and cpy changes 
+					UpdateConfig();    // Apply video and cpy changes
 					DoCls(&EmuState);
 					break;
 

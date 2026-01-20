@@ -26,6 +26,7 @@
 #include <CommCtrl.h>
 #include <stdio.h>
 #include <Richedit.h>
+//#include <shlwapi.h>
 #include <iostream>
 #include <direct.h>
 #include <assert.h>
@@ -65,7 +66,6 @@ using namespace VCC;
 /*        Local Function Templates          */
 /********************************************/
 
-void EstablishIniFile();
 int SelectFile(char *);
 void RefreshJoystickStatus();
 unsigned char TranslateDisp2Scan(int);
@@ -124,14 +124,13 @@ static STRConfig CurrentConfig;
 
 static HICON CpuIcons[2],MonIcons[2],JoystickIcons[4];
 static unsigned char temp=0,temp2=0;
-static char IniFileName[]="Vcc.ini";
-static char IniFilePath[MAX_PATH]="";
+static char gcIniFilePath[MAX_PATH]="";
 static char KeyMapFilePath[MAX_PATH]="";
 static char TapeFileName[MAX_PATH]="";
 static char ExecDirectory[MAX_PATH]="";
 static char SerialCaptureFile[MAX_PATH]="";
 static unsigned char NumberofJoysticks=0;
-TCHAR AppDataPath[MAX_PATH];
+TCHAR gcAppDataPath[MAX_PATH];
 
 char OutBuffer[MAX_PATH]="";
 char AppName[MAX_LOADSTRING]="";
@@ -176,51 +175,83 @@ static Util::settings* gpSettings = nullptr;
 /***********************************************************/
 
 //---------------------------------------------------------------
-// Establish the settings storage path (IniFilePath)
+//  Initial config. This should be called only once when VCC starts up
 //---------------------------------------------------------------
-void EstablishIniFile()
-{	
-	// Establish full path to inifile
-	if (SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_APPDATA, nullptr, 0, AppDataPath)))
-		OutputDebugString(AppDataPath);
+void LoadConfig(SystemState *LCState)
+{
+	buildTransDisp2ScanTable();
 
-	strcat(AppDataPath, "\\VCC");
+	// Establish application path
+	LoadString(nullptr, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
+	GetModuleFileName(nullptr,ExecDirectory,MAX_PATH);
+	PathRemoveFileSpec(ExecDirectory);
+	strcpy(CurrentConfig.PathtoExe,ExecDirectory);
 
-	if (*CmdArg.IniFile) {
-		GetFullPathNameA(CmdArg.IniFile,MAX_PATH,IniFilePath,nullptr);
-	} else {
-		strcpy(IniFilePath, AppDataPath);
-		strcat(IniFilePath, "\\");
-		strcat(IniFilePath, IniFileName);
+	// Make sure scanlines is off
+	LCState->ScanLines=0;
+
+	// Get sound cards from audio.cpp
+	NumberOfSoundCards=GetSoundCardList(SoundCards);
+
+	// Establish application data path
+	TCHAR szPath[MAX_PATH] {};
+	std::string appData {};
+	if (SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_APPDATA, nullptr, 0, szPath))) {
+		Util::FixDirSlashes(szPath);
+		appData = std::string(szPath) + "/VCC";
 	}
+	Util::copy_to_char(appData,gcAppDataPath,MAX_PATH);
+
+	// Establish settings storage (ini file) path
+	std::string ini;
+	if (*CmdArg.IniFile) {
+		char buf[MAX_PATH];
+		if (GetFullPathNameA(CmdArg.IniFile, MAX_PATH, buf, nullptr))
+			ini = buf;
+		else
+			ini = CmdArg.IniFile; // fallback
+		Util::FixDirSlashes(ini);
+	} else {
+		ini = appData + "/Vcc.ini";
+	}
+	Util::copy_to_char(ini, gcIniFilePath, MAX_PATH);
+
+	// Load settings
+	ReadIniFile();
+
+	CurrentConfig.RebootNow=0;
+	UpdateConfig();
+
+	RefreshJoystickStatus();
+	if (EmuState.WindowHandle != nullptr) InitSound();
 }
 
 //---------------------------------------------------------------
-// Fatal if this is called before valid IniFilePath is established
+// Fatal if this is called before valid gcIniFilePath is established
 //---------------------------------------------------------------
 VCC::Util::settings& Setting()
 {
 	if (!gpSettings) {
 		// Fatal if ini file can not be opened
-		if (!Util::ValidateRWFile(IniFilePath)) {
-			std::string s = "Can't open settings " 
-					+ std::string(IniFilePath);
+		if (!Util::ValidateRWFile(gcIniFilePath)) {
+			std::string s = "Can't open settings "
+					+ std::string(gcIniFilePath);
 			MessageBox(EmuState.WindowHandle,s.c_str(),"Fatal",0);
 			exit(0);
 		}
-		gpSettings = new Util::settings(IniFilePath);
+		gpSettings = new Util::settings(gcIniFilePath);
 	}
 	return *gpSettings;
 }
 
 //---------------------------------------------------------------
-// Change the ini file path.  (from Vcc File menu) 
+// Change the ini file path.  (from Vcc File menu)
 //---------------------------------------------------------------
 void SetIniFilePath(const char * path)
 {
-	DLOG_C("SetIniFilePath %s\n",path);
+	DLOG_C("SetgcIniFilePath %s\n",path);
 	if (Util::ValidateRWFile(path)) {
-		strcpy(IniFilePath,path);
+		strcpy(gcIniFilePath,path);
 		// Destroy settings object
 		delete gpSettings;
 		gpSettings = nullptr;
@@ -241,7 +272,8 @@ void SetIniFilePath(const char * path)
 void GetIniFilePath( char *Path)
 {
 	// FIXME convert to returning a string
-	strcpy(Path,IniFilePath);
+	strncpy(Path,gcIniFilePath,MAX_PATH);
+	DLOG_C("GetIniFilePath %s\n",Path);
 	return;
 }
 
@@ -254,40 +286,7 @@ void FlushSettings()
 }
 
 //---------------------------------------------------------------
-//  Initial system config
-//---------------------------------------------------------------
-void LoadConfig(SystemState *LCState)
-{
-	buildTransDisp2ScanTable();
-
-	// Establish application path
-	LoadString(nullptr, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
-	GetModuleFileName(nullptr,ExecDirectory,MAX_PATH);
-	PathRemoveFileSpec(ExecDirectory);
-	strcpy(CurrentConfig.PathtoExe,ExecDirectory);
-
-	// Make sure scanlines is off
-	LCState->ScanLines=0;
-
-	// Get sound cards from audio.cpp 
-	NumberOfSoundCards=GetSoundCardList(SoundCards);
-
-	// Establish settings store
-	EstablishIniFile();
-
-	// Load settings from store
-	ReadIniFile();
-
-	CurrentConfig.RebootNow=0;
-	UpdateConfig();
-
-	RefreshJoystickStatus();
-	if (EmuState.WindowHandle != nullptr) InitSound();
-
-}
-
-//---------------------------------------------------------------
-// Set up sound cards 
+// Set up sound cards
 //---------------------------------------------------------------
 void InitSound()
 {
@@ -364,7 +363,7 @@ unsigned char ReadIniFile()
 
 	Setting().read("Misc","CustomKeyMapFile","",KeyMapFilePath,MAX_PATH);
 	if (*KeyMapFilePath == '\0') {
-		strcpy(KeyMapFilePath, AppDataPath);
+		strcpy(KeyMapFilePath, gcAppDataPath);
 		strcat(KeyMapFilePath, "\\custom.keymap");
 	}
 	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFilePath);
@@ -431,7 +430,7 @@ unsigned char WriteIniFile()
 	// AppName is set in LoadConfig()
 	Setting().write("Version","Release",AppName);
 
-	// CPU 
+	// CPU
 	Setting().write("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer);
 	Setting().write("CPU","FrameSkip",CurrentConfig.FrameSkip);
 	Setting().write("CPU","Throttle",CurrentConfig.SpeedThrottle);
@@ -498,7 +497,7 @@ void LoadModule()
 	}
 }
 
-void SetWindowRect(const Rect& rect) 
+void SetWindowRect(const Rect& rect)
 {
 	if (EmuState.WindowHandle != nullptr)
 	{
@@ -517,18 +516,20 @@ void SetWindowRect(const Rect& rect)
 	}
 }
 
-// The following two functions only work after LoadConfig has been called
+// The following functions only work after LoadConfig has been called
 char * AppDirectory()
 {
-	return AppDataPath;
+	return gcAppDataPath;
 }
+
 char * GetKeyMapFilePath()
 {
 	return KeyMapFilePath;
 }
+
 void SetKeyMapFilePath(const char *Path)
 {
-    strcpy(KeyMapFilePath,Path);
+	strcpy(KeyMapFilePath,Path);
 	Setting().write("Misc","CustomKeyMapFile",KeyMapFilePath);
 }
 
@@ -734,7 +735,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 void SetOverclock(unsigned char flag)
 {
 	EmuState.OverclockFlag = flag;
-    if (hCpuDlg != nullptr)
+	if (hCpuDlg != nullptr)
 		SendDlgItemMessage(hCpuDlg,IDC_OVERCLOCK,BM_SETCHECK,flag,0);
 }
 
@@ -746,7 +747,7 @@ void IncreaseOverclockSpeed()
 	CurrentConfig.CPUMultiplyer = (unsigned char)(CurrentConfig.CPUMultiplyer + 1);
 
 	// Send updates to the dialog if it's open.
-    if (hCpuDlg != nullptr) {
+	if (hCpuDlg != nullptr) {
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKSPEED, TBM_SETPOS,
 						   TRUE, CurrentConfig.CPUMultiplyer);
 		sprintf(OutBuffer, "%2.3f Mhz", (float)CurrentConfig.CPUMultiplyer * 0.894);
@@ -765,7 +766,7 @@ void DecreaseOverclockSpeed()
 	CurrentConfig.CPUMultiplyer = (unsigned char)(CurrentConfig.CPUMultiplyer - 1);
 
 	// Send updates to the dialog if it's open.
-    if (hCpuDlg != nullptr) {
+	if (hCpuDlg != nullptr) {
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKSPEED, TBM_SETPOS,
 						   TRUE, CurrentConfig.CPUMultiplyer);
 		sprintf(OutBuffer, "%2.3f Mhz", (float)CurrentConfig.CPUMultiplyer * 0.894);
@@ -973,7 +974,7 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lP
 			CurrentConfig.AudioRate = tmpcfg.AudioRate;
 			CurrentConfig.SndOutDev = tmpcfg.SndOutDev;
 			strcpy(CurrentConfig.SoundCardName, SoundCards[CurrentConfig.SndOutDev].CardName);
-			// FIXME Save mute button state (AudioRate) 
+			// FIXME Save mute button state (AudioRate)
 			WriteIniFile();
 
 			if (LOWORD(wParam)==IDOK) {
@@ -1177,15 +1178,15 @@ void OpenInputConfig() {
 }
 LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
-    switch (message) {
-    case WM_INITDIALOG:
-        ShowKeymapStatus(hDlg);
-        break;
-    case WM_COMMAND:
-        switch(LOWORD(wParam)) {
+	switch (message) {
+	case WM_INITDIALOG:
+		ShowKeymapStatus(hDlg);
+		break;
+	case WM_COMMAND:
+		switch(LOWORD(wParam)) {
 		case IDCANCEL:
 		case IDCLOSE:
-            hInputDlg = nullptr;
+			hInputDlg = nullptr;
 			DestroyWindow(hDlg);
 			break;
 		case IDOK:

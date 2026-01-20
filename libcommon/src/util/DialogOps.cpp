@@ -16,6 +16,8 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include <vcc/util/DialogOps.h>
+#include <vcc/util/logger.h>
+#include <vcc/util/fileutil.h>
 #include <string>
 #include <filesystem>
 //#include <Windows.h>
@@ -33,7 +35,7 @@ FileDialog::FileDialog() {
 
 // FileDialog::show calls GetOpenFileName() or GetSaveFileName()
 bool FileDialog::show(BOOL Save, HWND Owner) {
-
+PrintLogC("FileDialog::show %d %p\n",Save,Owner);
 	// instance is that of the current module
 	ofn_.hInstance = GetModuleHandle(nullptr);
 
@@ -54,6 +56,9 @@ bool FileDialog::show(BOOL Save, HWND Owner) {
 	} else {
 		rc = GetOpenFileName(&ofn_) ;
 	}
+
+PrintLogC("FileDialog::rc %d\n",rc);
+
 	return ((rc == 1) && (*path_ != '\0'));
 }
 
@@ -81,27 +86,21 @@ void FileDialog::setTitle(const char * Title) {
 void FileDialog::setpath(const char * NewPath) {
     if (NewPath == nullptr) return;
 	strncpy(path_,NewPath,MAX_PATH);
+	// GetSaveFileName can't deal with forward slashes here
+	VCC::Util::RevDirSlashes(path_);
 }
 
 // Get a copy of the selected file path
 void FileDialog::getpath(char * PathCopy, int maxsize) const {
-    if (PathCopy == nullptr || path_ == nullptr || maxsize < 1) return;
+    if (PathCopy == nullptr) return;
 	strncpy(PathCopy,path_,maxsize);
 }
 
-// Get a copy of the selected file path with unix dir delimiters
+// Get a copy of the selected file path with slash delimiters
 void FileDialog::getupath(char * PathCopy, int maxsize) const {
-    if (PathCopy == nullptr || path_ == nullptr || maxsize < 1) return;
-    int i = 0;
-    while (path_[i] != '\0' && i < maxsize - 1) {
-        if (path_[i] == '\\') {
-            PathCopy[i] = '/';
-        } else {
-            PathCopy[i] = path_[i];
-        }
-        i++;
-    }
-    PathCopy[i] = '\0';
+    if (PathCopy == nullptr) return;
+	strncpy(PathCopy,path_,maxsize);
+	VCC::Util::FixDirSlashes(PathCopy);
 }
 
 // Get a pointer to the selected file path
@@ -112,19 +111,20 @@ const char *FileDialog::path() const
 
 // FileDialog::getdir() returns the directory portion of the file path
 void FileDialog::getdir(char * Dir, int maxsize) const {
-    if (Dir == nullptr || path_ == nullptr || maxsize < 1) return;
-	strncpy(Dir,path_,maxsize);
-	if (char * p = strrchr(Dir,'\\')) *p = '\0';
+    if (Dir == nullptr) return;
+	std::string s = VCC::Util::GetDirectoryPart(path_);
+	VCC::Util::copy_to_char(s,Dir,maxsize);
 }
 
 // FileDialog::gettype() returns the file type
 void FileDialog::gettype(char * Type, int maxsize) const {
-    if (Type == nullptr || path_ == nullptr || maxsize < 1) return;
-	const char* dot = strrchr(path_, '.');
-    if (!dot || strchr(dot, '/') || strchr(dot, '\\')) {
-        *Type = '\0';
-    }
-    strncpy(Type,dot+1,maxsize);
+    if (Type == nullptr) return;
+	if (maxsize < 1) return;
+	*Type = '\0';
+	std::string s = VCC::Util::GetFileNamePart(path_);
+	size_t pos = s.rfind('.');
+	if (pos == std::string::npos || pos == s.size()-1) return;
+	VCC::Util::copy_to_char(s.substr(pos+1),Type,maxsize);
 }
 
 // String overloads for path_ and path_ components
