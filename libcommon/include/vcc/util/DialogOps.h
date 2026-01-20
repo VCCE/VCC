@@ -43,6 +43,12 @@ LIBCOMMON_EXPORT void CenterDialog(HWND hDlg);
 // getdir() returns a copy of the directory portion of "Path"
 // getupath() gets a copy of "Path" with all '\' chars replaced by '/'
 //
+// upath_ is a copy of path_ with backslashes converted to slashes
+//
+// There is an effort to standardize VCC using slashes as directory seperators
+// but GetSaveFileName(&ofn_) and GetOpenFileName are older windows functions
+// that do not play well with slashes so there is a bit of converting in and out;
+//
 //-------------------------------------------------------------------------------------------
 #include <windows.h>
 #include <string>
@@ -69,10 +75,13 @@ public:
 	std::string getpath();
 
 	const char *path() const;
+	const char *upath() const;
 
 private:
 
 	OPENFILENAME ofn_;
 	char path_[MAX_PATH] = {};
+	char upath_[MAX_PATH] = {};
+	char initialdir_[MAX_PATH] = {};
 };
 
