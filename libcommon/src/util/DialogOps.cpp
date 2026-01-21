@@ -20,7 +20,6 @@
 #include <vcc/util/fileutil.h>
 #include <string>
 #include <filesystem>
-//#include <Windows.h>
 
 //-------------------------------------------------------------------------------------------
 // FileDialog class shows a dialog for user to select a file for open or save.
@@ -30,19 +29,23 @@
 // do not play well with slashes so there is a bit of converting in and out;
 //
 //  "path"  refers to reverse slash path
-//  "upath" refers to forward slash path
 //
 //-------------------------------------------------------------------------------------------
 
-// FileDialog constructor initializes open file name structure.
-FileDialog::FileDialog() {
-	ZeroMemory(&ofn_, sizeof(ofn_));
-	ofn_.lStructSize = sizeof(ofn_);
-	ofn_.Flags = OFN_HIDEREADONLY;
-}
-
 // FileDialog::show calls GetOpenFileName() or GetSaveFileName()
 bool FileDialog::show(BOOL Save, HWND Owner) {
+
+	char file[MAX_PATH];
+	::VCC::Util::copy_to_char(sFile_,file,sizeof(file));
+	::VCC::Util::RevDirSlashes(file);
+	ofn_.nMaxFile = sizeof(file);
+	ofn_.lpstrFile = file;
+
+	char idir[MAX_PATH];
+	::VCC::Util::copy_to_char(sInitDir_,idir,sizeof(idir));
+	::VCC::Util::RevDirSlashes(idir);
+	ofn_.lpstrInitialDir = idir;
+
 	// instance is that of the current module
 	ofn_.hInstance = GetModuleHandle(nullptr);
 
@@ -53,8 +56,10 @@ bool FileDialog::show(BOOL Save, HWND Owner) {
 		ofn_.hwndOwner = GetActiveWindow();
 	}
 
-	ofn_.nMaxFile = sizeof(path_);
-	ofn_.lpstrFile = path_;
+	ofn_.lpstrDefExt = sDefext_.c_str();
+	ofn_.lpstrFilter = sFilter_.c_str();
+	ofn_.lpstrTitle = sTitle_.c_str();
+	ofn_.Flags |= flags_;
 
 	// Call Save or Open per boolean
 	int rc;
@@ -64,101 +69,14 @@ bool FileDialog::show(BOOL Save, HWND Owner) {
 		rc = GetOpenFileName(&ofn_) ;
 	}
 
-	// upath_ is the forward slash version
-	if (rc == 1) {
-		strncpy (upath_,path_,MAX_PATH);
-		VCC::Util::FixDirSlashes(upath_);
-	}
+	// Copy file selected back
+	if ((rc == 1) && (*file != '\0')) {
+		sFile_.assign(file ? file : "");
+		VCC::Util::FixDirSlashes(sFile_);
+		return true;
+	};
 
-	return ((rc == 1) && (*path_ != '\0'));
-}
-
-void FileDialog::setDefExt(const char * DefExt) {
-	ofn_.lpstrDefExt = DefExt;
-}
-
-void FileDialog::setInitialDir(const char * InitialDir) {
-    if (InitialDir == nullptr) return;
-	strncpy(initialdir_,InitialDir,MAX_PATH);
-	VCC::Util::RevDirSlashes(initialdir_);
-	ofn_.lpstrInitialDir = initialdir_;
-}
-
-void FileDialog::setFilter(const char * Filter) {
-	ofn_.lpstrFilter = Filter;
-}
-
-void FileDialog::setFlags(unsigned int Flags) {
-	ofn_.Flags |= Flags;
-}
-
-void FileDialog::setTitle(const char * Title) {
-	ofn_.lpstrTitle = Title;
-}
-
-// Overwrite what is currently in path_
-void FileDialog::setpath(const char * NewPath) {
-    if (NewPath == nullptr) return;
-	strncpy(path_,NewPath,MAX_PATH);
-	VCC::Util::RevDirSlashes(path_);
-	strncpy(upath_,NewPath,MAX_PATH);
-	VCC::Util::FixDirSlashes(upath_);
-}
-
-// Get a copy of the selected file path
-void FileDialog::getpath(char * PathCopy, int maxsize) const {
-    if (PathCopy == nullptr) return;
-	strncpy(PathCopy,path_,maxsize);
-}
-
-// Get a copy of the selected file path with slash delimiters
-void FileDialog::getupath(char * PathCopy, int maxsize) const {
-    if (PathCopy == nullptr) return;
-	strncpy(PathCopy,upath_,maxsize);
-}
-
-// Get a pointer to the selected file path
-const char *FileDialog::path() const
-{
-	return path_;
-}
-const char *FileDialog::upath() const
-{
-	return upath_;
-}
-
-// FileDialog::getdir() returns the directory portion of the file path
-void FileDialog::getdir(char * Dir, int maxsize) const {
-    if (Dir == nullptr) return;
-	std::string s = VCC::Util::GetDirectoryPart(path_);
-	VCC::Util::copy_to_char(s,Dir,maxsize);
-}
-
-// FileDialog::gettype() returns the file type
-void FileDialog::gettype(char * Type, int maxsize) const {
-    if (Type == nullptr) return;
-	if (maxsize < 1) return;
-	*Type = '\0';
-	std::string s = VCC::Util::GetFileNamePart(path_);
-	size_t pos = s.rfind('.');
-	if (pos == std::string::npos || pos == s.size()-1) return;
-	VCC::Util::copy_to_char(s.substr(pos+1),Type,maxsize);
-}
-
-// String overloads for path_ and path_ components
-std::string FileDialog::getpath() {
-	return path_;
-}
-std::string FileDialog::getdir() {
-    if (path_ == nullptr) return "";
-	std::filesystem::path p(path_);
-	return p.parent_path().string();
-
-}
-std::string FileDialog::gettype() {
-    if (path_ == nullptr) return "";
-	std::filesystem::path p(path_);
-	return p.extension().string();
+	return false;
 }
 
 //------------------------------------------------------------
