@@ -61,7 +61,6 @@ namespace VCC::Core
 
 	LIBCOMMON_EXPORT cartridge_file_type determine_cartridge_type(const std::string& filename);
 
-	// TODO: Eliminate the redundant overloads of loader result
 	LIBCOMMON_EXPORT cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context);
@@ -69,18 +68,18 @@ namespace VCC::Core
 	LIBCOMMON_EXPORT cartridge_loader_result load_cpak_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
-		void* const host_context,
+		void* const pakContainer,
 		const std::string& iniPath,
 		HWND hVccWnd,
 		const cpak_callbacks& cpak_callbacks);
 
 	LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
 		const std::string& filename,                          // Cartridge filename
-		std::unique_ptr<cartridge_context> cartridge_context, // Yet another cartridge context
-		void* const host_context,                             // Even more context
+		std::unique_ptr<cartridge_context> cartridge_context, // Loader context
+		void* const pakContainer,                             // Pak container object 
 		const std::string& iniPath,                           // Path of ini file
-		HWND hVccWnd,                                         // handle to main VCC window proc
-		const cpak_callbacks& cpak_callbacks);                // Callbacks AKA context
+		HWND hVccWnd,                                         // handle to main window 
+		const cpak_callbacks& cpak_callbacks);                // Callbacks
 
 	// Return load error string per cartridge load status
 	LIBCOMMON_EXPORT std::string cartridge_load_error_string(
