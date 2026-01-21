@@ -35,6 +35,7 @@ namespace VCC::Util {
 
 	// Get most recent windows error text
 	LIBCOMMON_EXPORT std::string LastErrorString();
+	LIBCOMMON_EXPORT const char* LastErrorTxt();
 
 	// Get path of loaded module or current application
 	LIBCOMMON_EXPORT std::string get_module_path(HMODULE module_handle);

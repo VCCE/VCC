@@ -490,7 +490,6 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
                 if (*tmp != '\0') {
                     gCurDir = tmp;
                     util::FixDirSlashes(gCurDir);
-                    //strncpy(SDCard,tmp,MAX_PATH);
                 }
             }
             return TRUE;
@@ -561,7 +560,7 @@ void LoadConfig()
 
     for (int i=0;i<8;i++) {
         std::string tmp = "FlashFile_" + std::to_string(i);
-        settings.read("SDC", tmp, "", FlashFile[i], MAX_PATH);//, IniFile);
+        settings.read("SDC", tmp, "", FlashFile[i], MAX_PATH);
     }
     
     ClockEnable = settings.read("SDC","ClockEnable",1);
