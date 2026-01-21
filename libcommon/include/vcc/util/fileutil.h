@@ -161,23 +161,29 @@ namespace VCC::Util {
 	// TODO: In line functions that should go elsewhere
 	//------------------------------------------------------------------------
 
-	// Return string with case conversion	
+	// Return string with case conversion
+	
 	inline std::string to_lower(std::string s) {
-		std::transform(s.begin(), s.end(), s.begin(),
-			[](unsigned char c){ return std::tolower(c); });
-		return s;
-	}
+    	std::transform(s.begin(), s.end(), s.begin(),
+        	[](unsigned char c) {
+            	return static_cast<char>(std::tolower(c));
+        	});
+    	return s;
+	}	
 
 	inline std::string to_upper(std::string s) {
 		std::transform(s.begin(), s.end(), s.begin(),
-			[](unsigned char c){ return std::toupper(c); });
+			[](unsigned char c) {
+            return static_cast<char>(std::toupper(c));
+        });
 		return s;
 	}
 
-	// Convert case of string inplace
 	inline void make_lower(std::string& s) {
-		std::transform(s.begin(), s.end(), s.begin(),
-			[](unsigned char c){ return std::tolower(c); });
+    	std::transform(s.begin(), s.end(), s.begin(),
+        	[](unsigned char c) {
+            	return static_cast<char>(std::tolower(c));
+        	});
 	}
 
 	inline void make_lower(char* s) {
@@ -187,8 +193,10 @@ namespace VCC::Util {
 	}
 
 	inline void make_upper(std::string& s) {
-		std::transform(s.begin(), s.end(), s.begin(),
-			[](unsigned char c){ return std::toupper(c); });
+    	std::transform(s.begin(), s.end(), s.begin(),
+        	[](unsigned char c) {
+            	return static_cast<char>(std::toupper(c));
+        	});
 	}
 
 	inline void make_upper(char* s) {

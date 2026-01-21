@@ -17,6 +17,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
+#include <vcc/util/fileutil.h>
+#include <vcc/util/logger.h>
 #include <Windows.h>
 
 //-------------------------------------------------------------------------------------------
@@ -33,22 +35,6 @@ LIBCOMMON_EXPORT void CenterDialog(HWND hDlg);
 // otherwise the open dialog is shown. If "Owner" is NULL GetActiveWindow() is used.
 // The selected filename is placed in "Path" 
 //
-// setpath() sets "Path" before calling show().
-//
-// setDefExt(), setInitialDir(), setFilter(), setFlags(), and setTitle() set the
-// elements in the OPENFILENAME structure that is used by get save/open file()
-//
-// path() returns a pointer to Path.
-// getpath gets a copy of "Path".
-// getdir() returns a copy of the directory portion of "Path"
-// getupath() gets a copy of "Path" with all '\' chars replaced by '/'
-//
-// upath_ is a copy of path_ with backslashes converted to slashes
-//
-// There is an effort to standardize VCC using slashes as directory seperators
-// but GetSaveFileName(&ofn_) and GetOpenFileName are older windows functions
-// that do not play well with slashes so there is a bit of converting in and out;
-//
 //-------------------------------------------------------------------------------------------
 #include <windows.h>
 #include <string>
@@ -57,31 +43,123 @@ class LIBCOMMON_EXPORT FileDialog
 {
 public:
 
-	FileDialog();
+	FileDialog() {
+		ZeroMemory(&ofn_, sizeof(ofn_));
+		ofn_.lStructSize = sizeof(ofn_);
+		flags_ = OFN_HIDEREADONLY;
+	}
+
+	void init() {
+		ZeroMemory(&ofn_, sizeof(ofn_));
+		ofn_.lStructSize = sizeof(ofn_);
+		flags_ = OFN_HIDEREADONLY;
+	}
 
 	bool show(BOOL Save = FALSE, HWND Owner = nullptr);
-	void setpath(const char * Path);
-	void setDefExt(const char * DefExt);
-	void setInitialDir(const char * InitialDir);
-	void setFilter(const char * Filter);
-	void setFlags(unsigned int Flags);
-	void setTitle(const char * Title);
-	void getdir(char * Dir, int maxsize = MAX_PATH) const;
-	void getpath(char * Path, int maxsize = MAX_PATH) const;
-	void getupath(char * Path, int maxsize = MAX_PATH) const;
-	void gettype(char * Type, int maxsize = 4) const;
-	std::string getdir();
-	std::string gettype();
-	std::string getpath();
 
-	const char *path() const;
-	const char *upath() const;
+	void setDefExt(const char * DefExt)
+	{
+		sDefext_.assign(DefExt ? DefExt : "");
+	}
+
+	void setInitialDir(const char * InitialDir)
+	{
+		sInitDir_.assign(InitialDir ? InitialDir : "");
+	}
+
+    //Set null terminated Filter items
+	void setFilter(const char* Filter)
+	{
+        sFilter_.clear();
+    	if (!Filter) return;
+    	const char* p = Filter;
+    	while (*p) p += std::strlen(p) + 1;
+    	sFilter_.assign(Filter, p + 1 - Filter);
+	}
+
+	void setFlags(unsigned int Flags)
+	{
+		flags_ = Flags | OFN_HIDEREADONLY;
+	}
+
+	void setTitle(const char * Title)
+	{
+		sTitle_.assign(Title ? Title : "");
+	}
+
+	void setpath(const char * File)
+	{
+		sFile_.assign(File ? File : "");
+	}
+
+	// Return selected file
+	std::string getpath() const
+	{
+		return sFile_;
+	}
+
+	// Return selected directory
+	std::string getdir() const
+	{
+		return VCC::Util::GetDirectoryPart(sFile_);
+	}
+
+	// Return selected filetype
+	std::string gettype() const
+	{
+		std::string s = VCC::Util::GetFileNamePart(sFile_);
+		size_t pos = s.rfind('.');
+		if (pos == std::string::npos || pos == s.size()-1) return {};
+		return s.substr(pos+1);
+	}
+
+	// Get a copy of the selected file path
+	void getpath(char * PathCopy, int maxsize=MAX_PATH) const
+	{
+    	if (PathCopy == nullptr) return;
+		strncpy(PathCopy,sFile_.c_str(),maxsize);
+	}
+
+	// Copy of the selected file path
+	void getupath(char * PathCopy, int maxsize=MAX_PATH) const
+	{
+    	if (PathCopy == nullptr) return;
+		strncpy(PathCopy,sFile_.c_str(),maxsize);
+	}
+
+	// copy the directory to c string
+	void getdir(char * Dir, int maxsize=MAX_PATH) const
+	{
+    	if (Dir == nullptr) return;
+		VCC::Util::copy_to_char(getdir(),Dir,maxsize);
+	}
+
+	// copy the file type to c string
+	void gettype(char * Type, int maxsize=16) const
+	{
+    	if (Type == nullptr) return;
+		VCC::Util::copy_to_char(gettype(),Type,maxsize);
+	}
+
+	// Get a pointer to the selected file path
+	const char *path() const
+	{
+		return sFile_.c_str();
+	}
+
+	const char *upath() const
+	{
+		return sFile_.c_str();
+	}
 
 private:
 
 	OPENFILENAME ofn_;
-	char path_[MAX_PATH] = {};
-	char upath_[MAX_PATH] = {};
-	char initialdir_[MAX_PATH] = {};
+	std::string sFile_ {};
+	std::string sInitDir_ {};
+	std::string sTitle_ {};
+	std::string sFilter_ {};
+	std::string sDefext_ {};
+	DWORD flags_;
 };
 
