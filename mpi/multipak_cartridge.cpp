@@ -26,31 +26,26 @@
 
 namespace
 {
-	// Callback trampolines
-	// host_context is the opaque callback_context provided for this cartridge instance.
-	// In multipak this is always a multipak_cartridge*, allowing the trampoline to
-	// bounce the operation to the correct slot without exposing host internals.
+	// pakContainer is a pointer to the cartridge object. It is passed to cartridge DLL's
+	// and returned with callbacks allowing the trampoline to bounce the operation
+	// to the correct slot without exposing host internals
+	// TODO: This could have been done with just a slot number!
 	template<multipak_cartridge::slot_id_type SlotIndex_>
-	void assert_cartridge_line_on_slot(void* host_context, bool line_state)
+	void assert_cartridge_line_on_slot(void* pakContainer, bool line_state)
 	{
-		static_cast<multipak_cartridge*>(host_context)->assert_cartridge_line(
+		static_cast<multipak_cartridge*>(pakContainer)->assert_cartridge_line(
 			SlotIndex_,
 			line_state);
 	}
 	template<multipak_cartridge::slot_id_type SlotIndex_>
-	void append_menu_item_on_slot(void* host_context, const char* text, int id, MenuItemType type)
+	void append_menu_item_on_slot(void* pakContainer, const char* text, int id, MenuItemType type)
 	{
-		static_cast<multipak_cartridge*>(host_context)->append_menu_item(
+		static_cast<multipak_cartridge*>(pakContainer)->append_menu_item(
 			SlotIndex_,
 			{ text, static_cast<unsigned int>(id), type });
 	}
 
 	// Per-slot callback table.
-	// Each entry provides the host-side trampoline functions for that slot,
-	// allowing cartridges to call back into multipak using a uniform API
-	// while the trampolines route the request to the correct slot.
-	// Multipak uses two slot specific callbacks, the rest are just passed from vcc.
-	// TODO: This could have been done with just a slot number!
 	struct cartridge_slot_callbacks
 	{
 		PakAssertCartridgeLineHostCallback set_cartridge_line;
@@ -164,8 +159,8 @@ void multipak_cartridge::write_port(unsigned char port_id, unsigned char value)
 	// slot_select_port_id is 0x7f
 	if (port_id == slot_select_port_id)
 	{
-		// Bits 1-0 SCS slot (FDC)
-		// Bits 5-4 CTS slot (ROM)
+		// Bits 1-0 SCS slot
+		// Bits 5-4 CTS slot
 		cached_scs_slot_ = value & 3;
 		cached_cts_slot_ = (value >> 4) & 3;
 		slot_register_ = value;
@@ -322,6 +317,7 @@ void multipak_cartridge::eject_cartridge(slot_id_type slot)
 		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
 }
 
+// create cartridge object and load cart DLL
 multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	slot_id_type slot, const path_type& filename)
 {
@@ -334,23 +330,20 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	};
 	DLOG_C("%3d %p %p %p %p %p\n",slot,callbacks);
 
-	auto* multipakHost = this;
+	auto* pakContainer = this;
 
-	// callback_context is a host-owned opaque per-cartridge state. Passed to cartridges
-	// at initialization and returned on every callback so the host can route and manage a
-	// specific cartridge instance. MPI currently uses it to know what slot a cart is in.
+	// ctx is passed to the loader but not to cartridge DLL's
 	auto ctx = std::make_unique<multipak_cartridge_context>(
 		slot,
 		*context_,
-		*multipakHost);
-
+		*pakContainer);
 
 	DLOG_C("load cart %d  %s\n",slot,filename);
 
 	auto loadedCartridge = VCC::Core::load_cartridge(
 		filename,
 		std::move(ctx),
-		multipakHost,
+		pakContainer,
 		context_->configuration_path(),
 		gVccWnd,
 		callbacks);

@@ -35,11 +35,11 @@ namespace VCC::Core
 	public:
 
 		LIBCOMMON_EXPORT cpak_cartridge(
-			HMODULE module_handle,                        // Cartridge filename
-			void* const host_context,                     // Yet another cartridge context
-			path_type configuration_path,                 // Path of ini file
-			HWND hVccWnd,                                 // Handle to main VCC window proc 
-			const cpak_callbacks& cpak_callbacks);  // Callbacks AKA context
+			HMODULE module_handle,                   // Cartridge filename
+			void* const pakContainer,                // pointer to container object
+			path_type configuration_path,            // Path of ini file
+			HWND hVccWnd,                            // Handle to main VCC window proc 
+			const cpak_callbacks& cpak_callbacks);   // Callbacks
 
 		LIBCOMMON_EXPORT name_type name() const override;
 		LIBCOMMON_EXPORT catalog_id_type catalog_id() const override;
@@ -61,7 +61,7 @@ namespace VCC::Core
 	private:
 
 		const HMODULE handle_;
-		void* const host_context_;
+		void* const pakContainer_;
 		const HWND hVccWnd_;
 		const path_type configuration_path_;
 		const cpak_callbacks cpak_callbacks_;

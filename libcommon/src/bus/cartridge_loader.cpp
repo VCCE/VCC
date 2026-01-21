@@ -117,7 +117,7 @@ namespace VCC::Core
 	cartridge_loader_result load_cpak_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
-		void* const host_context,
+		void* const pakContainer,
 		const std::string& iniPath,
 		HWND hVccWnd,
 		const cpak_callbacks& cpak_callbacks)
@@ -142,7 +142,7 @@ namespace VCC::Core
 		{
 			details.cartridge = std::make_unique<VCC::Core::cpak_cartridge>(
 				details.handle.get(),
-				host_context,
+				pakContainer,
 				iniPath,
 				hVccWnd,
 				cpak_callbacks);
@@ -156,7 +156,7 @@ namespace VCC::Core
 
     // Load a cartridge; either a ROM image or a pak dll.  Load cartridge is called
 	// by both mpi/multipak_cartridge.cpp and pakinterface.cpp.  cartridge_context is defined
-	// in libcommon/include/vcc/bus/cartridge_context.h.  host_context is a generic 
+	// in libcommon/include/vcc/bus/cartridge_context.h.  pakContainer is a generic 
 	// pointer explicitly cast to multipak_cartridge in mpi/multipak_cartridge.cpp.
 	// mutlipak_cartridge refers specifically to a cart loaded by the multipak.
 	// cpak_callbacks is used by all hardware paks and is defined in 
@@ -165,7 +165,7 @@ namespace VCC::Core
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
-		void* const host_context,
+		void* const pakContainer,
 		const std::string& iniPath,
 		HWND hVccWnd,
 		const cpak_callbacks& cpak_callbacks)
@@ -184,10 +184,10 @@ namespace VCC::Core
 			return VCC::Core::load_cpak_cartridge(
 				filename,
 				move(cartridge_context),
-				host_context,
+				pakContainer,
 				iniPath,
 				hVccWnd,
-				cpak_callbacks);					// Callbacks hidden in here
+				cpak_callbacks);				// Callbacks in here
 		}
 	}
 

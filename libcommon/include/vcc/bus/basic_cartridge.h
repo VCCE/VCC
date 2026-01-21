@@ -18,7 +18,6 @@
 #pragma once
 #include <vcc/bus/cartridge.h>
 
-//TODO: Stomp this bad boy out. It has no purpose
 namespace VCC::Core
 {
 

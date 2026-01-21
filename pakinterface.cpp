@@ -287,14 +287,7 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 // Insert Module returns 0 on success
 static cartridge_loader_status load_any_cartridge(const char *filename, const char* iniPath)
 {
-	// callback_context is a host-owned opaque per-cartridge state. Passed to the cartridge
-	// at initialization and returned on every callback so the host can route and manage a
-	// specific cartridge instance. Currently for pakinterface it is empty, but MPI uses it.
-
-	// TODO:: Consider using a slot number instead. slot0 for this, slot1-slot4 for MMI
-	// That way all loaded cart context can reside in a simple vector with no reliance
-	// on cart trampolines to maintain context.  With slot_num in the callbacks MPI will
-	// not have intercept to adjust menu_id's and forwarding the callback to main.
+	// vccContext is passed to the loader but not to the cart DLL
 	auto vccContext=std::make_unique<vcc_cartridge_context>();
 
 	cpak_callbacks callbacks {
@@ -308,7 +301,7 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	auto loadedCartridge = VCC::Core::load_cartridge(
 		filename,
 		std::move(vccContext),
-		nullptr,                 // No host context for the main app
+		nullptr,                 // pakContainer goes here  
 		iniPath,
 		EmuState.WindowHandle,
 		callbacks);
@@ -318,6 +311,7 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 		return loadedCartridge.load_result;
 	}
 
+	// unload active cartridge
 	UnloadDll();
 
 	VCC::Util::section_locker lock(gPakMutex);
@@ -326,6 +320,8 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	gActiveCartrige = move(loadedCartridge.cartridge);
 	gActiveModule = move(loadedCartridge.handle);
 	BeginCartMenu();
+
+	// initialize the cartridge
 	gActiveCartrige->start();
 
 	// Reset if enabled.  TODO: Send DoHardReset message instead

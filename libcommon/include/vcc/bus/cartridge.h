@@ -19,21 +19,19 @@
 #include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <string>
 
-
 namespace VCC::Core
 {
 
 	struct LIBCOMMON_EXPORT cartridge
 	{
 	public:
-
+        // In Chet's workd strings get a typedef because that keeps things opaque
 		using name_type = std::string;
 		using catalog_id_type = std::string;
 		using description_type = std::string;
 
-
 	public:
-
+        // lock cartridge objects down by deleting move constructers
 		cartridge() = default;
 		cartridge(const cartridge&) = delete;
 		cartridge(cartridge&&) = delete;
@@ -46,7 +44,6 @@ namespace VCC::Core
 
 		virtual void start() = 0;
 		virtual void stop() = 0;
-
 		virtual void reset() = 0;
 		virtual void process_horizontal_sync() = 0;
 		virtual void write_port(unsigned char port_id, unsigned char value) = 0;
