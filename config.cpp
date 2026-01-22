@@ -313,13 +313,16 @@ void SetBootModulePath(const std::string bootpath)
 	memset(CurrentConfig.ModulePath,0,sizeof(CurrentConfig.ModulePath));
 	if (bootpath.empty()) return;
 
-	std::string path = Util::QualifyPath(bootpath);
+	std::string fullpath = Util::QualifyModPath(bootpath);
+	std::string file = Util::StripModPath(bootpath);
+
 	namespace fs = std::filesystem;
-	fs::path p = path;
+	fs::path p = fullpath;
+
 	if (fs::exists(p) && (fs::file_size(p) > 2)) {
-		Setting().write("Module","OnBoot",path);
+		Setting().write("Module","OnBoot",file);
 		strncpy(CurrentConfig.ModulePath,
-				path.c_str(),
+				fullpath.c_str(),
 				sizeof(CurrentConfig.ModulePath));
 	} else {
 		// Delete the key if it does not
@@ -379,8 +382,8 @@ unsigned char ReadIniFile()
 	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFilePath);
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
-	// Set up boot module path
-	std::string bootpath = Util::QualifyPath(Setting().read("Module","OnBoot",""));
+	// If bootpath is relative prepend the current module exe directory
+	std::string bootpath = Util::QualifyModPath(Setting().read("Module","OnBoot",""));
 	SetBootModulePath(bootpath);
 
 	LeftJS.UseMouse  = Setting().read("LeftJoyStick" ,"UseMouse",1);

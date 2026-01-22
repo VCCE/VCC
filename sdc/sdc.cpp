@@ -169,9 +169,6 @@ static void* gCallbackContext = nullptr;
 static PakAssertInteruptHostCallback AssertIntCallback = nullptr;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 
-// Settings
-static char IniFile[MAX_PATH] = {};
-
 // Window handles
 static HWND gVccWindow = nullptr;
 static HWND hConfigureDlg = nullptr;
@@ -225,6 +222,10 @@ static int UPDBTNS[8] = {ID_UPDATE0,ID_UPDATE1,ID_UPDATE2,ID_UPDATE3,
                          ID_UPDATE4,ID_UPDATE5,ID_UPDATE6,ID_UPDATE7};
 
 static std::string gRomPath {};
+
+// Access the settings object
+static VCC::Util::settings* gpSettings = nullptr;
+VCC::Util::settings& Setting() {return *gpSettings;}
 
 //======================================================================
 //  Functions
@@ -311,7 +312,7 @@ extern "C"
         gCallbackContext = callback_context;
         CartMenuCallback = callbacks->add_menu_item;
         AssertIntCallback = callbacks->assert_interrupt;
-        strcpy(IniFile, configuration_path);
+        gpSettings = new VCC::Util::settings(configuration_path);
         LoadConfig();
         BuildCartridgeMenu();
     }
@@ -545,26 +546,30 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 //------------------------------------------------------------
 void LoadConfig()
 {
-    util::settings settings(IniFile);
 
-    gRomPath = settings.read("DefaultPaths", "RomPath", "");
-    gSDRoot  = settings.read("SDC", "SDCardPath", "");
+    gRomPath = Setting().read("DefaultPaths", "RomPath", "");
+    gSDRoot  = Setting().read("SDC", "SDCardPath", "");
 
     DLOG_C("LoadConfig gRomPath %s\n",gRomPath.c_str());
     DLOG_C("LoadConfig gSDRoot %s\n",gSDRoot.c_str());
 
     util::FixDirSlashes(gSDRoot);
     if (!util::IsDirectory(gSDRoot)) {
-        MessageBox (gVccWindow,"Invalid SDCard Path in VCC init","Error",0);
+        MessageBox (gVccWindow,
+                "Invalid SD Card root\n"
+                "Set SDCard Path using SDC Config"
+                ,"Error",0);
     }
 
     for (int i=0;i<8;i++) {
         std::string tmp = "FlashFile_" + std::to_string(i);
-        settings.read("SDC", tmp, "", FlashFile[i], MAX_PATH);
+        std::string fullname = Setting().read("SDC", tmp, "");
+        std::string name = VCC::Util::StripModPath(fullname);
+        VCC::Util::copy_to_char(name,FlashFile[i],MAX_PATH);
     }
     
-    ClockEnable = settings.read("SDC","ClockEnable",1);
-    gStartupBank = settings.read("SDC","StartupBank",0);
+    ClockEnable = Setting().read("SDC","ClockEnable",1);
+    gStartupBank = Setting().read("SDC","StartupBank",0);
 }
 
 //------------------------------------------------------------
@@ -572,32 +577,44 @@ void LoadConfig()
 //------------------------------------------------------------
 bool SaveConfig(HWND hDlg)
 {
-    util::settings settings(IniFile);
 
     if (!util::IsDirectory(gSDRoot)) {
         MessageBox(gVccWindow,"Invalid SDCard Path\n","Error",0);
         return false;
     }
 
-    settings.write("SDC","SDCardPath",gSDRoot);
-    settings.write("DefaultPaths","RomPath",gRomPath);
+    //Save SD Card Path
+    char tmp[MAX_PATH];
+    hSDCardBox = GetDlgItem(hConfigureDlg,ID_SD_BOX);
+    GetDlgItemText(hConfigureDlg, ID_SD_BOX, tmp, sizeof(tmp));
+    if (util::IsDirectory(tmp)) {
+        gSDRoot = tmp;
+    } else {
+        MessageBox (gVccWindow,"Bad SD Card Path. Not changed","Warning",0);
+    }
+
+    Setting().write("SDC","SDCardPath",gSDRoot);
+    Setting().write("DefaultPaths","RomPath",gRomPath);
 
     for (int i=0;i<8;i++) {
         std::string tmp = "FlashFile_" + std::to_string(i);
-        settings.write("SDC", tmp, FlashFile[i]);
+        Setting().write("SDC", tmp, FlashFile[i]);
     }
 
     if (SendDlgItemMessage(hDlg,IDC_CLOCK,BM_GETCHECK,0,0)) {
-        settings.write("SDC","ClockEnable","1");
+        Setting().write("SDC","ClockEnable","1");
     } else {
-        settings.write("SDC","ClockEnable","0");
+        Setting().write("SDC","ClockEnable","0");
     }
 
     gStartupBank &= 7;
-    settings.write("SDC","StartupBank",std::to_string(gStartupBank));
+    Setting().write("SDC","StartupBank",std::to_string(gStartupBank));
     return true;
 }
 
+//------------------------------------------------------------
+// Make filename string fit edit box
+//------------------------------------------------------------
 void FitEditTextPath(HWND hDlg, int ID, const std::string& path)
 {
     HDC c;
@@ -648,9 +665,6 @@ void InitCardBox()
 
 void UpdateFlashItem(int index)
 {
-    util::settings settings(IniFile);
-    char filename[MAX_PATH]={};
-
     if ((index < 0) | (index > 7)) return;
 
     if (*FlashFile[index] != '\0') {
@@ -664,9 +678,10 @@ void UpdateFlashItem(int index)
         dlg.setTitle(title);
         dlg.setInitialDir(gRomPath.c_str());
         if (dlg.show(0,hConfigureDlg)) {
-            dlg.getupath(filename,MAX_PATH); // cvt to unix style
-            strncpy(FlashFile[index],filename,MAX_PATH);
-            gRomPath = util::GetDirectoryPart(filename);
+            std::string fullname = dlg.getpath();
+            std::string name = VCC::Util::StripModPath(fullname);
+            VCC::Util::copy_to_char(name,FlashFile[index],MAX_PATH);
+            gRomPath = util::GetDirectoryPart(fullname);
         }
     }
     InitFlashBoxes();
@@ -674,8 +689,7 @@ void UpdateFlashItem(int index)
     // Save path to ini file
     char txt[32];
     sprintf(txt,"FlashFile_%d",index);
-    settings.write("SDC",txt,FlashFile[index]);
-
+    Setting().write("SDC",txt,FlashFile[index]);
 }
 
 //------------------------------------------------------------
@@ -869,8 +883,9 @@ void LoadRom(unsigned char bank)
         }
     }
 
-    // Load the rom 
-    FILE *hf = fopen(RomFile,"rb");
+    // Load the rom
+    std::string file = VCC::Util::QualifyModPath(RomFile);
+    FILE *hf = fopen(file.c_str(),"rb");
     if (hf == nullptr) {
         std::string msg="Check Rom Path and SDC Config\n"+std::string(RomFile);
         MessageBox (gVccWindow,msg.c_str(),"SDC Rom Load Failed",0);
@@ -2554,7 +2569,6 @@ std::string FixFATPath(const std::string& sdcpath)
     DLOG_C("FixFATPath in %s out %s\n",sdcpath.c_str(),out.generic_string().c_str());
     return out.generic_string();
 }
-
 
 //-------------------------------------------------------------------
 // Convert string containing possible FAT name and extension to an

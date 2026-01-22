@@ -27,6 +27,7 @@
 
 #include <vcc/util/exports.h>
 
+//dLIBCOMMON_EXPORT std::string ModulePath(HMODULE module_handle);
 //=========================================================================
 // Host file utilities.  Most of these are general purpose
 //=========================================================================
@@ -38,13 +39,19 @@ namespace VCC::Util {
 	LIBCOMMON_EXPORT const char* LastErrorTxt();
 
 	// Get path of loaded module or current application
-	LIBCOMMON_EXPORT std::string get_module_path(HMODULE module_handle);
+	LIBCOMMON_EXPORT std::string ModulePath(HMODULE module_handle);
 
 	// If path is in the application directory strip directory
-	LIBCOMMON_EXPORT std::string strip_application_path(std::string path);
+	LIBCOMMON_EXPORT std::string StripModPath(std::string path);
 
 	// Fully qualify a file based on execution directory
-	LIBCOMMON_EXPORT std::string QualifyPath(const std::string& path);
+	LIBCOMMON_EXPORT std::string QualifyModPath(const std::string& path);
+
+	// Verify that a file can be opened for read/write
+	LIBCOMMON_EXPORT bool ValidateRWFile(const std::string& path);
+
+	// Verify that a file can be opened for read
+	LIBCOMMON_EXPORT bool ValidateRDFile(const std::string& path);
 
 	//------------------------------------------------------------------------
 	// In line functions
@@ -57,43 +64,19 @@ namespace VCC::Util {
 		if (end == std::string::npos) return {};
 		return s.substr(0, end + 1);
 	}
-	
+
 	// Return filename part of a path
 	inline std::string GetFileNamePart(const std::string& input)
 	{
 		std::filesystem::path p(input);
 		return p.filename().string();
 	}
-	
+
 	// Determine if path is a direcory
 	inline bool IsDirectory(const std::string& path)
 	{
 		std::error_code ec;
 		return std::filesystem::is_directory(path, ec) && !ec;
-	}
-
-	// Verify that a file can be opened for read/write
-	inline bool ValidateRWFile(const std::string& path)
-	{
-		HANDLE h = CreateFile
-			(path.c_str(), GENERIC_READ | GENERIC_WRITE,
-			FILE_SHARE_READ, nullptr, OPEN_ALWAYS, 
-			FILE_ATTRIBUTE_NORMAL, nullptr);
-		if (h==INVALID_HANDLE_VALUE) return false;
-		CloseHandle(h);
-		return true;
-	}
-
-	// Verify that a file can be opened for read
-	inline bool ValidateRDFile(const std::string& path)
-	{
-		HANDLE h = CreateFile
-			(path.c_str(), GENERIC_READ,
-			FILE_SHARE_READ, nullptr, OPEN_ALWAYS, 
-			FILE_ATTRIBUTE_NORMAL, nullptr);
-		if (h==INVALID_HANDLE_VALUE) return false;
-		CloseHandle(h);
-		return true;
 	}
 
 	// Convert backslashes to slashes within string
@@ -128,7 +111,7 @@ namespace VCC::Util {
 		return s;
 	}
 
-	// Strip trailing backslash from directory or path 
+	// Strip trailing backslash from directory or path
 	inline void StripTrailingSlash(std::string& dir)
 	{
 		if (dir.back() == '/') dir.pop_back();
@@ -147,13 +130,12 @@ namespace VCC::Util {
 	{
 		if (dir.back() != '/') dir += '/';
 	}
-	
+
 	// Return slash normalized directory part of a path
 	inline std::string GetDirectoryPart(const std::string& input)
 	{
 		std::filesystem::path p(input);
 		std::string out = p.parent_path().string();
-		FixDirSlashes(out);
 		return out;
 	}
 
@@ -162,14 +144,14 @@ namespace VCC::Util {
 	//------------------------------------------------------------------------
 
 	// Return string with case conversion
-	
+
 	inline std::string to_lower(std::string s) {
     	std::transform(s.begin(), s.end(), s.begin(),
         	[](unsigned char c) {
             	return static_cast<char>(std::tolower(c));
         	});
     	return s;
-	}	
+	}
 
 	inline std::string to_upper(std::string s) {
 		std::transform(s.begin(), s.end(), s.begin(),
@@ -220,4 +202,6 @@ namespace VCC::Util {
 		memcpy(dst, src.data(), n);
 		dst[n] = '\0';
 	}
+
+
 }

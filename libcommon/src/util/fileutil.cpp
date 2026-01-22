@@ -28,6 +28,7 @@
 #include <cctype>
 #include <vcc/util/logger.h>
 #include <vcc/util/fileutil.h>
+#include <Windows.h>
 
 namespace VCC::Util
 {
@@ -55,46 +56,75 @@ namespace VCC::Util
 		buffer = LastErrorString();
 		return buffer.c_str();
 	}
-	
+
+	//-------------------------------------------------------------------
+	// Verify that a file can be opened for read/write
+	//-------------------------------------------------------------------
+	bool ValidateRWFile(const std::string& path)
+	{
+		HANDLE h = CreateFile
+			(path.c_str(), GENERIC_READ | GENERIC_WRITE,
+			FILE_SHARE_READ, nullptr, OPEN_ALWAYS,
+			FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (h==INVALID_HANDLE_VALUE) return false;
+		CloseHandle(h);
+		return true;
+	}
+
+	//-------------------------------------------------------------------
+	// Verify that a file can be opened for read
+	//-------------------------------------------------------------------
+	bool ValidateRDFile(const std::string& path)
+	{
+		HANDLE h = CreateFile
+			(path.c_str(), GENERIC_READ,
+			FILE_SHARE_READ, nullptr, OPEN_ALWAYS,
+			FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (h==INVALID_HANDLE_VALUE) return false;
+		CloseHandle(h);
+		return true;
+	}
+
 	//-------------------------------------------------------------------
 	// Get the file path of a loaded module
 	// Current exe path is returned if module_handle is null
 	//-------------------------------------------------------------------
-	std::string get_module_path(HMODULE module_handle)
+	std::string ModulePath(HMODULE module_handle)
 	{
 		std::string text(MAX_PATH, '\0');
 		for (;;) {
+			// Windows call to get module filename
 			DWORD ret = GetModuleFileName(module_handle, &text[0], text.size());
-			if (ret == 0)
-				return {}; // error
+			if (ret == 0) return {}; // error
 
-			if (ret < text.size() - 1) {
+			if (ret < text.size()) {
 				text.resize(ret);
-					return text;
+				return text;
 			}
-			// truncated grow and retry
+			// incase it did not fit in MAX_PATH
 			text.resize(text.size() * 2);
 		}
 	}
 
 	//-------------------------------------------------------------------
-	// If path directory matches application directory strip directory
+	// If file directory matches application directory strip directory
 	//-------------------------------------------------------------------
-	std::string strip_application_path(std::string path)
+	std::string StripModPath(const std::string file)
 	{
-		auto app = get_module_path(nullptr);
-		auto app_dir =  GetDirectoryPart(app);
-		auto path_dir = GetDirectoryPart(path);
-		if (path_dir == app_dir) {
-			path = GetFileNamePart(path);
+		// Strip path from file if it matches the exe or dll path
+		auto app_dir =  GetDirectoryPart(ModulePath(nullptr));
+		auto file_dir = GetDirectoryPart(file);
+		std::error_code ec;
+		if (std::filesystem::equivalent(app_dir, file_dir, ec)) {
+			return GetFileNamePart(file);
 		}
-		return path;
+		return file;
 	}
 
 	//---------------------------------------------------------------
 	// Fully qualify a file based on current execution directory
 	//---------------------------------------------------------------
-	std::string QualifyPath(const std::string& path)
+	std::string QualifyModPath(const std::string& path)
 	{
 		if (path.empty()) return {};
 
@@ -102,7 +132,7 @@ namespace VCC::Util
 		FixDirSlashes(mod);
 		if (mod.find('/') != std::string::npos) return mod;
 
-		std::string exe = Util::get_module_path(NULL);
+		std::string exe = Util::ModulePath(NULL);
 		std::string dir = Util::GetDirectoryPart(exe);
 		return dir + '/' + mod;
 	}

@@ -1,5 +1,4 @@
-#ifndef __FD502_H__
-#define __FD502_H__
+#pragma once
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -17,13 +16,19 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include <vcc/bus/cpak_cartridge_definitions.h>
+#include <vcc/util/Settings.h>
 
 extern void*const& gCallbackContext;
 extern PakAssertInteruptHostCallback AssertInt;
 void BuildCartridgeMenu();
 
-// DO NOT REMOVE until becker.dll is retired.  Then FD502 becker becomes permanant.
+// Access settings object
+VCC::Util::settings& Setting();
+
+// DO NOT REMOVE this or references to ituntil becker.dll is retired.
+// Then FD502 becker becomes permanant.
 #define COMBINE_BECKER
 
 // FIXME: These need to be turned into a scoped enum and the signature of functions
@@ -32,4 +37,3 @@ void BuildCartridgeMenu();
 #define TandyDisk 1
 #define RGBDisk 2
 
-#endif
