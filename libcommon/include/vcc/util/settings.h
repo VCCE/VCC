@@ -31,25 +31,25 @@ namespace VCC::Util
 		LIBCOMMON_EXPORT explicit settings(path_type path);
 
 		// write string value
-		LIBCOMMON_EXPORT void write
+		LIBCOMMON_EXPORT bool write
 			(const std::string& section,
 			 const std::string& key,
 			 const std::string& value) const;
 
 		// write int value
-		LIBCOMMON_EXPORT void write
+		LIBCOMMON_EXPORT bool write
 			(const std::string& section,
 			 const std::string& key,
 			 int value) const;
 
 		// write bool value
-		LIBCOMMON_EXPORT void write_bool
+		LIBCOMMON_EXPORT bool write_bool
 			(const std::string& section,
 			 const std::string& key,
 			 bool value) const;
 
 		// get char * value
-		LIBCOMMON_EXPORT void read
+		LIBCOMMON_EXPORT bool read
 			(const std::string& section,
 			 const std::string& key,
 			 const std::string& default_value,
@@ -69,22 +69,28 @@ namespace VCC::Util
 			 int default_value) const;
 
 		// delete key
-		LIBCOMMON_EXPORT void delete_key 
+		LIBCOMMON_EXPORT bool delete_key
 			(const std::string& section,
 			 const std::string& key) const
-    		{ ::WritePrivateProfileString
-			  (section.c_str(), key.c_str(), NULL, path_.c_str());}
+		{
+			return ::WritePrivateProfileString
+				(section.c_str(), key.c_str(), NULL, path_.c_str());
+		}
 
-		// delete section 
-		LIBCOMMON_EXPORT void delete_section 
+		// delete section
+		LIBCOMMON_EXPORT bool delete_section
 			(const std::string& section) const
-    		{ ::WritePrivateProfileString
-			  (section.c_str(), NULL, NULL, path_.c_str());}
+		{
+			return ::WritePrivateProfileString
+				(section.c_str(), NULL, NULL, path_.c_str());
+		}
 
-		// flush cache 
-		LIBCOMMON_EXPORT void flush () const
-    		{ ::WritePrivateProfileString
-			  (NULL, NULL, NULL, path_.c_str());}
+		// flush cache
+		LIBCOMMON_EXPORT bool flush () const
+		{
+			return ::WritePrivateProfileString
+				(NULL, NULL, NULL, path_.c_str());
+		}
 
 	private:
 		const path_type path_;

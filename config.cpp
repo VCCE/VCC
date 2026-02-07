@@ -120,7 +120,7 @@ struct STRConfig
 	char			PathtoExe[MAX_PATH] = { 0 };
 	char			FloppyPath[MAX_PATH] = { 0 };
 	char			CassPath[MAX_PATH] = { 0 };
-    unsigned char   ShowMousePointer = 0;
+	unsigned char   ShowMousePointer = 0;
 	unsigned char	UseExtCocoRom = 0;
 	char        	ExtRomFile[MAX_PATH] = { 0 };
 	unsigned char   EnableOverclock = 0;
@@ -218,11 +218,14 @@ void LoadConfig(SystemState *LCState)
 	} else {
 		ini = appData + "/Vcc.ini";
 	}
+
 	Util::copy_to_char(ini, gcIniFilePath, MAX_PATH);
 
 	// Establish application path
 	char AppName[MAX_LOADSTRING]="";
 	LoadString(nullptr, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
+
+	// Write release to ini file
 	Setting().write("Version","Release",AppName);
 
 	// Load settings
@@ -236,18 +239,11 @@ void LoadConfig(SystemState *LCState)
 }
 
 //---------------------------------------------------------------
-// Fatal if this is called before valid gcIniFilePath is established
+// This must not be called before valid gcIniFilePath is established
 //---------------------------------------------------------------
 VCC::Util::settings& Setting()
 {
 	if (!gpSettings) {
-		// Fatal if ini file can not be opened
-		if (!Util::ValidateRWFile(gcIniFilePath)) {
-			std::string s = "Can't open settings "
-					+ std::string(gcIniFilePath);
-			MessageBox(EmuState.WindowHandle,s.c_str(),"Fatal",0);
-			exit(0);
-		}
 		gpSettings = new Util::settings(gcIniFilePath);
 	}
 	return *gpSettings;

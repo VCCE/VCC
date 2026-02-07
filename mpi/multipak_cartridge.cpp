@@ -26,10 +26,6 @@
 
 namespace
 {
-	// pakContainer is a pointer to the cartridge object. It is passed to cartridge DLL's
-	// and returned with callbacks allowing the trampoline to bounce the operation
-	// to the correct slot without exposing host internals
-	// TODO: This could have been done with just a slot number!
 	template<multipak_cartridge::slot_id_type SlotIndex_>
 	void assert_cartridge_line_on_slot(void* pakContainer, bool line_state)
 	{
@@ -329,6 +325,11 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		gSlotCallbacks[slot].append_menu_item
 	};
 	DLOG_C("%3d %p %p %p %p %p\n",slot,callbacks);
+
+	// pakContainer is a pointer to the multipak object. It is passed
+	// to cartridge DLL's and returned with callbacks to route them
+	// to the correct slot without exposing host internals.
+	// TODO: This could have been done with just a slot number!
 
 	auto* pakContainer = this;
 
