@@ -28,12 +28,12 @@ namespace VCC::Util
 	{}
 
 	// save string value
-	void settings::write(
+	bool settings::write(
 		const std::string& section,
 		const std::string& key,
 		const std::string& value) const
 	{
-		::WritePrivateProfileString(
+		return ::WritePrivateProfileString(
 				section.c_str(),
 				key.c_str(),
 				value.c_str(),
@@ -41,12 +41,12 @@ namespace VCC::Util
 	}
 
 	// save int value
-	void settings::write
+	bool settings::write
 		(const std::string& section,
 		 const std::string& key,
 		 int value) const
 	{
-		::WritePrivateProfileString(
+		return ::WritePrivateProfileString(
 			section.c_str(),
 			key.c_str(),
 			std::to_string(value).c_str(),
@@ -54,24 +54,24 @@ namespace VCC::Util
 	}
 
 	// save bool value
-	void settings::write_bool
+	bool settings::write_bool
 		(const std::string& section,
 		 const std::string& key,
 		 bool value) const
 	{ 
 		int ival = value ? 1 : 0;
-		write(section, key, ival);
+		return write(section, key, ival);
 	}
 
 	// get char * value
-	void settings::read
+	bool settings::read
 		(const std::string& section,
 		 const std::string& key,
 		 const std::string& default_value,
 		 char* buffer,
 		 size_t buffer_size) const
 	{
-		::GetPrivateProfileStringA(
+		return ::GetPrivateProfileStringA(
 		section.c_str(),
 		key.c_str(),
 		default_value.c_str(),

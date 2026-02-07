@@ -5,13 +5,15 @@ This attempts to describe the cartridge interface design for VCC
 
 # VCC Cartridge Types
 
-VCC emulates the physical cartridges that could be plugged into the side expansion slot of a CoCo 3 or into a MultiPak Interface. VCC supports three main categories of cartridges:
+VCC emulates the physical cartridges that could be plugged into the side expansion slot of a CoCo 3
+or into a MultiPak Interface. VCC supports three main categories of cartridges:
 
 ---
 
 ## 1. ROM Cartridges
 
-ROM cartridges contain only read-only memory and the minimal hardware needed to expose that memory to the CoCo.
+ROM cartridges contain only read-only memory and the minimal hardware needed to expose that memory
+to the CoCo 3.
 
 **Key characteristics:**
 
@@ -55,13 +57,14 @@ These cartridges require host-side x86 code to emulate their hardware behavior.
 
 ---
 
-## 3. MultiPak Cartridges
+## 3. MultiPak Cartridge (MPI)
 
-MultiPak cartridges act as hosts for other hardware cartridges.
+MultiPak it not a true cartridge, it is a bus expansion that acts as hosts for other hardware
+cartridges.
 
 **Capabilities:**
 
-- MultiPak Cartridge DLL must export the initMPI call to be valid
+- MultiPak Cartridge DLL must export the init MPI call to be valid
 - Provide multiple cartridge slots.
 - Contains no ROM of it's own
 - Allow slot selection through UI controls or programmatically.
@@ -98,7 +101,6 @@ The cartridge loader determines the cartridge type using the following sequence:
 ---
 
 Cartridge Exports
-
 
 DLL's can export any of the following calls
 
@@ -144,44 +146,20 @@ DLL's can export any of the following calls
   A hardware pack menu item was clicked
   	PakMenuItemClicked (menu_item_id)
 
-
-struct slot_context {
-   void* slot_context;  // contains rounting table  
-   int slot_number;     // 0 = boot slot, 1..N = multipak slots
-   void* callbacks;     // Call back table for this slot.
-};
-
-typedef enum {
-	CART_TYPE_GENERIC = 0;
-	CART_TYPE_MPI	  = 1;
-} cart_type;
-
-typedef struct {
-	unit32_t version     // for future expansion
-	cart_type type;
-	uint32_t flags;      // future: has_audio, has_menu, etc
-} cart_capabilities;
-
-Future exports can be added with out affecting existing cartridges as long as existing
-exports are not changed.
-
 ---
 
 Callbacks
 
-	void assert_cartridge_line(slot_context, bool line_state) = 0;
-	void assert_interrupt(slot_context, Interrupt interrupt, InterruptSource interrupt_source) = 0;
-	void write_memory_byte(slot_context, unsigned char value, unsigned short address) = 0;
-    unsigned char read_memory_byte(slot_context, unsigned short address) = 0;
-    void add_menu_item(slot_context, const char* menu_name, int menu_id, MenuItemType menu_type) = 0;
+  void assert_cartridge_line(slot_context, bool line_state) = 0;
+  void assert_interrupt(slot_context, Interrupt interrupt, InterruptSource interrupt_source) = 0;
+  void write_memory_byte(slot_context, unsigned char value, unsigned short address) = 0;
+  unsigned char read_memory_byte(slot_context, unsigned short address) = 0;
+  void add_menu_item(slot_context, const char* menu_name, int menu_id, MenuItemType menu_type) = 0;
 
-    slot_context is an opaque pointer to data MPI uses to route callbacks
-
-
-It has recently been recognized that there are two classes of callbacks
+It has recently been recognized that there are two classes of callbacks:
 
 - Fast callbacks initiated by events in the CPU loop like asserting interrupts, cart
-ines, or reading and writing memory to handle DMA requests.  These must be syncronous
+lines, or reading and writing memory to handle DMA requests.  These must be syncronous
 and return quickly to not affect emulator timing.  Fast callbacks must use the already
 in place callback mechanisms.  Fast callbacks are determined by Coco's physical bus and
 are not likely to change.
@@ -190,7 +168,7 @@ are not likely to change.
 These can be asyncronous and can rely on exports to recieve replies. A perfect mechanism
 for slow callbacks already exists for free - the main window message loop.  A cartridge 
 can send a message to the  main window and let VCC main dispatch it.  Enhancements to 
-cartridge UI might require future changes or additions to these callbacks.
+cartridge UI that require future changes or additions should use these callbacks.
 
 In the current codebase the messaging mechanism is already being used for a callback. When
 the MPI needs to initiate a hard VCC reset is does so by sending a message to WinMain.
@@ -200,12 +178,32 @@ This callback will be replaced by a Windows message.
 
 ---
 
-A new VCC Design philosophy for the MPI
+The dynamic cartridge menu system.
+
+When cartridges are loaded or unloaded the Cartridge menu must be changed to show items for
+controlling the cartridges. Traditionally the Pakinterface generated the first menu item which
+gives users control over which cartridge is plugged into the side of the coco. If that
+cartridge is the MPI additional menu items are added, the first such item brings up a MPI 
+configuration dialog.  That dialog shows the user what carts are in MPI slots, which cart
+is selected at boot (CTS), a description of the cart in that slot, and controls allowing users
+to modify these settings.  After the MPI config menu item additional menu items are added
+for cartridges currently in MPI slots.  These menu items are added by carts as they are
+initialized. Each cartridge, starting with the MPI, then carts in slots 4 through 1, are 
+intialized. When a cart is initialized to generates AddMenuitem callbacks for it's menu item.
+
+Using the cartridge initialization export to initiate the addition of menu items causes an 
+issue if a cart is removed or added after VCC has started up, specifically carts should not
+be initialized a second time after loading. So add menu item messages are saved in a list and
+the cart menu is cleared then the list is traversed to retore the menuitems after each change.
+
+---
+
+New Design Philosophy For The MPI  (Not yet implemented)
 
 VCC and forks of VCC use run-time loading and unloading of dynamic libraries to simulate
 the inserting and removing of Cartridges.
 
-A special "cartridge" it the Multipak MPI.  On a physical Coco the MPI it is not actually
+A special "cartridge" is the Multipak MPI.  On a physical Coco the MPI it is not actually
 a cartridge. It is more accurately an extension of the bus.
 
 The pakinterface loads and unloads cartridges.  So does the MPI.  If both MPI and pakinterface
@@ -219,27 +217,7 @@ information with the MPI DLL which becomes purely a user interface.
 
 Moving cartridge and slot management from the MPI to the Pakinterface would seem to require
 extensive changes to the interface.  This document attemps to explain how such a move can be 
-done with minimal changes.
-
----
-
-The dynamic cartridge menu system.
-
-When cartridges are loaded or unloaded the Cartridge menu must be changed to show items for
-controlling the cartridges. Traditionally the Pakinterface generated the first menu item which
-gives users control over which cartridge is plugged into the side of the coco. If that
-cartridge is the MPI additional menu items are added, the first such item brings up a MPI 
-configuration dialog.  That dialog shows the user what carts are in MPI slots, which cart
-is selected at boot (CTS), a description of the cart in that slot, and controls allowing users
-to modify these settings.  After the MPI config menu item additional menu items are added
-for cartridges currently in MPI slots.  These menu items are added by carts as they are initialized.
-Each cartridge, starting with the MPI, then carts in slots 4 through 1, are intialized.
-When a cart is initialized to generates AddMenuitem callbacks for it's menu item.
-
-Using the cartridge initialization export to initiate the addition of menu items causes an 
-issue if a cart is removed or added after VCC has started up, specifically carts should not
-be initialized a second time after loading. So add menu item messages are saved in a list and
-the cart menu is cleared then the list is traversed to retore the menuitems after each change.
+done with minimal risk.
 
 ---
 
@@ -258,19 +236,20 @@ To wrap up the pakinterface slot management concept:
 - Any change to current CTS triggers a reset. This is detected and effected by the pakinterface
 
 - Reset stops the CPU, unloads all cartridges, reloads the basic rom, reloads cartridges
-per settings, and then restarts the CPU.
+  per settings, and then restarts the CPU.
 
 - pakInterface sends MPI changes to CTS/SCS via a new MPI export
 
-- The opaque slot_context is renamed to slot_context and is made transparent. Some carts don't work right if
-they are not a specific slot. They can use slot_context->slot_number to verify the slot they are in is valid.
+- The opaque slot_context is renamed to slot_context and is made transparent. Some carts don't
+  work right if they are not a specific slot. They can use slot_number to verify the slot they
+  are in is valid.
 
 - on request pakInterface sends MPI active cart description via a new MPI export
 
 - on request pakInterface sends MPI slot contents
 
 - Then MPI should never call a cartridge DLL directly. It should always request actions through
-messages to the pakInterface using the WinMain message loop.
+  messages to the pakInterface using the WinMain message loop.
 
 - The MPI saves the startup slot setting. Changing this causes no changes to running CPI
 
@@ -289,13 +268,13 @@ messages to the pakInterface using the WinMain message loop.
 Implementation Plan
 
 1. Solidify methods for sending and interpreting messages from DLL's to WinMain message loop.
-Use the VCC Reset message from MPI Config to prove the methods.
+   Use the VCC Reset message from MPI Config to prove the methods.
 
 2. Replace the AddCartMenu callback with a message and modify pakinterface to maintain the cartridge
-dynamic menus.
+   dynamic menus.
 
 3. Move slot maintenance, cartridge loading, and cartidge calls from MPI to pakinterface.
 
-4. Cartridges can use slot_id from now transparent slot_context, if desired.
+4. Cartridges can use slot_id from transparent slot_context, if desired.
 
 
