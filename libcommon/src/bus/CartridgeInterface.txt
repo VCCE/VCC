@@ -173,7 +173,7 @@ cartridge UI that require future changes or additions should use these callbacks
 In the current codebase the messaging mechanism is already being used for a callback. When
 the MPI needs to initiate a hard VCC reset is does so by sending a message to WinMain.
 
-The add_menu_item callback is not tied to the CPU loop and qualifies as a slot callback.
+The add_menu_item callback is not tied to the CPU loop and qualifies as a slow callback.
 This callback will be replaced by a Windows message.
 
 ---

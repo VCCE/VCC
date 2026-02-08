@@ -50,7 +50,7 @@ constexpr auto EXTROMSIZE = 16384u;
 
 using namespace std;
 
-extern DiskInfo Drive[5];
+extern DiskInfo gVirtualDrive[5];
 static unsigned char ExternalRom[EXTROMSIZE];
 static unsigned char DiskRom[EXTROMSIZE];
 static unsigned char RGBDiskRom[EXTROMSIZE];
@@ -81,7 +81,7 @@ static HWND g_hConfDlg = nullptr;
 static HINSTANCE gModuleInstance;
 static unsigned long RealDisks=0;
 long CreateDisk (unsigned char);
-static char TempFileName[MAX_PATH]="";
+static char gSelectedDiskFile[MAX_PATH]="";
 unsigned char LoadExtRom( unsigned char, const char *);
 
 int BeckerEnabled=0;
@@ -147,9 +147,9 @@ extern "C"
 		becker_enable(0);
 #endif
 		CloseCartDialog(g_hConfDlg);
-		for (unsigned char Drive = 0; Drive <= 3; Drive++)
+		for (unsigned char dnum = 0; dnum <= 3; dnum++)
 		{
-			unmount_disk_image(Drive);
+			unmount_disk_image(dnum);
 		}
 	}
 
@@ -267,7 +267,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 {
 	static unsigned char temp=0,temp2=0;
 	long ChipChoice[3]={IDC_EXTROM,IDC_TRSDOS,IDC_RGB};
-	long VirtualDrive[2]={IDC_DISKA,IDC_DISKB};
+	long gVirtualDrive[2]={IDC_DISKA,IDC_DISKB};
 	char VirtualNames[5][16]={"None","Drive 0","Drive 1","Drive 2","Drive 3"};
 
 	switch (message)
@@ -297,7 +297,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 				SendDlgItemMessage(hDlg,ChipChoice[temp],BM_SETCHECK,(temp==TempSelectRom),0);
 			for (temp=0;temp<2;temp++)
 				for (temp2=0;temp2<5;temp2++)
-						SendDlgItemMessage (hDlg,VirtualDrive[temp], CB_ADDSTRING, 0, (LPARAM) VirtualNames[temp2]);
+						SendDlgItemMessage (hDlg,gVirtualDrive[temp], CB_ADDSTRING, 0, (LPARAM) VirtualNames[temp2]);
 
 			SendDlgItemMessage (hDlg, IDC_DISKA,CB_SETCURSEL,(WPARAM)PhysicalDriveA,(LPARAM)0);
 			SendDlgItemMessage (hDlg, IDC_DISKB,CB_SETCURSEL,(WPARAM)PhysicalDriveB,(LPARAM)0);
@@ -413,10 +413,10 @@ void Load_Disk(unsigned char disk)
 	if (dlg.show(0,h_own)) {
 		CreateFlag = 1;
 		HANDLE hr = nullptr;
-		dlg.getpath(TempFileName,MAX_PATH);
+		dlg.getpath(gSelectedDiskFile,MAX_PATH);
 		// Verify file exists
 		hr = CreateFile
-			(TempFileName,0,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+			(gSelectedDiskFile,0,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 		// Create new disk file if it does not
 		if (hr == INVALID_HANDLE_VALUE) {
 			NewDiskNumber = disk;
@@ -427,7 +427,7 @@ void Load_Disk(unsigned char disk)
 		}
 		// Attempt mount if file existed or file create was not canceled
 		if (CreateFlag==1) {
-			if (mount_disk_image(TempFileName,disk)==0) {
+			if (mount_disk_image(gSelectedDiskFile,disk)==0) {
 				MessageBox(g_hConfDlg,"Can't open file","Error",0);
 			} else {
 				dlg.getdir(FloppyPath);
@@ -447,7 +447,7 @@ unsigned char SetChip(unsigned char Tmp)
 
 void BuildCartridgeMenu()
 {
-	char TempMsg[64]="";
+	char TempMsg[MAX_PATH]="";
 	char TempBuf[MAX_PATH]="";
 	if (CartMenuCallback ==nullptr)
 		MessageBox(g_hConfDlg,"No good","Ok",0);
@@ -457,34 +457,34 @@ void BuildCartridgeMenu()
 
 	CartMenuCallback(gCallbackContext, "FD-502 Drive 0",MID_ENTRY,MIT_Head);
 	CartMenuCallback(gCallbackContext, "Insert",ControlId(10),MIT_Slave);
-	strcpy(TempMsg,"Eject: ");
-	strcpy(TempBuf,Drive[0].ImageName);
+	strncpy(TempMsg,"Eject: ",MAX_PATH);
+	strncpy(TempBuf,gVirtualDrive[0].ImageName,MAX_PATH);
 	PathStripPath(TempBuf);
-	strcat(TempMsg,TempBuf);
+	strncat(TempMsg,TempBuf,MAX_PATH);
 	CartMenuCallback(gCallbackContext, TempMsg,ControlId(11),MIT_Slave);
 
 	CartMenuCallback(gCallbackContext, "FD-502 Drive 1",MID_ENTRY,MIT_Head);
 	CartMenuCallback(gCallbackContext, "Insert",ControlId(12),MIT_Slave);
-	strcpy(TempMsg,"Eject: ");
-	strcpy(TempBuf,Drive[1].ImageName);
+	strncpy(TempMsg,"Eject: ",MAX_PATH);
+	strncpy(TempBuf,gVirtualDrive[1].ImageName,MAX_PATH);
 	PathStripPath(TempBuf);
-	strcat(TempMsg,TempBuf);
+	strncat(TempMsg,TempBuf,MAX_PATH);
 	CartMenuCallback(gCallbackContext, TempMsg,ControlId(13),MIT_Slave);
 
 	CartMenuCallback(gCallbackContext, "FD-502 Drive 2",MID_ENTRY,MIT_Head);
 	CartMenuCallback(gCallbackContext, "Insert",ControlId(14),MIT_Slave);
-	strcpy(TempMsg,"Eject: ");
-	strcpy(TempBuf,Drive[2].ImageName);
+	strncpy(TempMsg,"Eject: ",MAX_PATH);
+	strncpy(TempBuf,gVirtualDrive[2].ImageName,MAX_PATH);
 	PathStripPath(TempBuf);
-	strcat(TempMsg,TempBuf);
+	strncat(TempMsg,TempBuf,MAX_PATH);
 	CartMenuCallback(gCallbackContext, TempMsg,ControlId(15),MIT_Slave);
 
 	CartMenuCallback(gCallbackContext, "FD-502 Drive 3",MID_ENTRY,MIT_Head);
 	CartMenuCallback(gCallbackContext, "Insert",ControlId(17),MIT_Slave);
-	strcpy(TempMsg,"Eject: ");
-	strcpy(TempBuf,Drive[3].ImageName);
+	strncpy(TempMsg,"Eject: ",MAX_PATH);
+	strncpy(TempBuf,gVirtualDrive[3].ImageName,MAX_PATH);
 	PathStripPath(TempBuf);
-	strcat(TempMsg,TempBuf);
+	strncat(TempMsg,TempBuf,MAX_PATH);
 	CartMenuCallback(gCallbackContext, TempMsg,ControlId(18),MIT_Slave);
 
 	CartMenuCallback(gCallbackContext, "FD-502 Config",ControlId(16),MIT_StandAlone);
@@ -519,7 +519,7 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam
 			for (temp=0;temp<=2;temp++)
 				SendDlgItemMessage(hDlg,DiskTracks[temp],BM_SETCHECK,(temp==NewDiskTracks),0);
 			SendDlgItemMessage(hDlg,IDC_DBLSIDE,BM_SETCHECK,DblSided,0);
-			strcpy(Dummy,TempFileName);
+			strcpy(Dummy,gSelectedDiskFile);
 			PathStripPath(Dummy);
 			SendDlgItemMessage(hDlg,IDC_TEXT1,WM_SETTEXT,0,(LPARAM)(LPCSTR)Dummy);
 			return TRUE;
@@ -561,17 +561,17 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam
 				case IDOK:
 				{
 					EndDialog(hDlg, LOWORD(wParam));
-					const char *ext = TempFileName + strlen(TempFileName) - 4;
-					if (ext < TempFileName) ext = TempFileName;
+					const char *ext = gSelectedDiskFile + strlen(gSelectedDiskFile) - 4;
+					if (ext < gSelectedDiskFile) ext = gSelectedDiskFile;
 					// if it doesn't end with .dsk, append it
 					if (_stricmp(ext, ".dsk") != 0)
 					{
-						PathRemoveExtension(TempFileName);
-						strcat(TempFileName, ".dsk");
+						PathRemoveExtension(gSelectedDiskFile);
+						strcat(gSelectedDiskFile, ".dsk");
 					}
-					if (CreateDiskHeader(TempFileName, NewDiskType, NewDiskTracks, DblSided))
+					if (CreateDiskHeader(gSelectedDiskFile, NewDiskType, NewDiskTracks, DblSided))
 					{
-						strcpy(TempFileName, "");
+						strcpy(gSelectedDiskFile, "");
 						MessageBox(g_hConfDlg, "Can't create File", "Error", 0);
 					}
 					return TRUE;
@@ -732,7 +732,7 @@ void SaveConfig()
 		for (Index=0;Index<4;Index++)
 		{
 			sprintf(Temp,"Disk#%i",Index);
-			WritePrivateProfileString(ModName,Temp,Drive[Index].ImageName,IniFile);
+			WritePrivateProfileString(ModName,Temp,gVirtualDrive[Index].ImageName,IniFile);
 		}
 	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
 	WritePrivateProfileInt(ModName, "TurboDisk", SetTurboDisk(QUERY), IniFile);

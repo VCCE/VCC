@@ -28,6 +28,7 @@ This file is part of VCC (Virtual Color Computer).
 *  Last change date 06/27/2006 seek time more closely emulated					*
 *  Last change date 05/16/2007 Better DMK support. Diecom protection works now	*
 *  Last change date 05/21/2007 Added fdrawcmd support for real disk access/		*
+*  Last change date 02/07/2026 EJJ Sanitize variable names						*
 *																				*
 ********************************************************************************/
 //#define USE_LOGGING
@@ -75,7 +76,7 @@ bool CmdFormat (HANDLE , PFD_FORMAT_PARAMS , ULONG );
 static unsigned char StepTimesMS[4]={6,12,20,30};
 static unsigned short BytesperSector[4]={128,256,512,1024};
 static unsigned char TransferBuffer[16384]="";
-DiskInfo Drive[5];
+DiskInfo gVirtualDrive[5];
 static unsigned char StatusReg=READY;
 static unsigned char DataReg=0;
 static unsigned char TrackReg=0;
@@ -220,8 +221,8 @@ void DecodeControlReg(unsigned char Tmp)
 	if (Tmp & CTRL_MOTOR_EN)
 	{
 		MotorOn=1;
-		if ( Drive[CurrentDisk].ImageType == RAW)
-			DeviceIoControl(Drive[CurrentDisk].FileHandle, IOCTL_FD_MOTOR_ON, nullptr, 0, nullptr, 0, &dwRet, nullptr);
+		if ( gVirtualDrive[CurrentDisk].ImageType == RAW)
+			DeviceIoControl(gVirtualDrive[CurrentDisk].FileHandle, IOCTL_FD_MOTOR_ON, nullptr, 0, nullptr, 0, &dwRet, nullptr);
 	}
 
 	if ( (Side==1) & (CurrentDisk==NONE) )
@@ -253,11 +254,11 @@ int mount_disk_image(const char *filename,unsigned char drive)
 
 void unmount_disk_image(unsigned char drive)
 {
-	if (Drive[drive].FileHandle !=nullptr)
-		CloseHandle(Drive[drive].FileHandle);
-	Drive[drive].FileHandle=nullptr;
-	Drive[drive].ImageType=0;
-	strcpy(Drive[drive].ImageName,"");
+	if (gVirtualDrive[drive].FileHandle !=nullptr)
+		CloseHandle(gVirtualDrive[drive].FileHandle);
+	gVirtualDrive[drive].FileHandle=nullptr;
+	gVirtualDrive[drive].ImageType=0;
+	strcpy(gVirtualDrive[drive].ImageName,"");
 	DirtyDisk=true;
 	if (drive==(PhysicalDriveA-1))
 		PhysicalDriveA=0;
@@ -269,7 +270,7 @@ void unmount_disk_image(unsigned char drive)
 void DiskStatus(char* text_buffer, size_t buffer_size)
 {
 	if (MotorOn==1)
-		sprintf(text_buffer,"FD-502:Drv:%1.1i %s Trk:%2.2i Sec:%2.2i Hd:%1.1i",CurrentDisk,ImageFormat[Drive[CurrentDisk].ImageType],Drive[CurrentDisk].HeadPosition,SectorReg,Side);
+		sprintf(text_buffer,"FD-502:Drv:%1.1i %s Trk:%2.2i Sec:%2.2i Hd:%1.1i",CurrentDisk,ImageFormat[gVirtualDrive[CurrentDisk].ImageType],gVirtualDrive[CurrentDisk].HeadPosition,SectorReg,Side);
 	else
 		sprintf(text_buffer,"FD-502:Idle");
 }
@@ -281,49 +282,49 @@ unsigned char MountDisk(const char *FileName,unsigned char disk)
 	long TotalSectors=0;
 	unsigned char TmpSides=0,TmpSectors=0,TmpMod=0;
 
-	if (Drive[disk].FileHandle !=nullptr)
+	if (gVirtualDrive[disk].FileHandle !=nullptr)
 		unmount_disk_image(disk);
 	//Image Geometry Defaults
-	Drive[disk].FirstSector=1;
-	Drive[disk].Sides=1;
-	Drive[disk].Sectors=18;
-	Drive[disk].SectorSize=1;
-	Drive[disk].WriteProtect=0;
-	Drive[disk].RawDrive=0;
+	gVirtualDrive[disk].FirstSector=1;
+	gVirtualDrive[disk].Sides=1;
+	gVirtualDrive[disk].Sectors=18;
+	gVirtualDrive[disk].SectorSize=1;
+	gVirtualDrive[disk].WriteProtect=0;
+	gVirtualDrive[disk].RawDrive=0;
 
 	if (!strcmp(FileName,"*Floppy A:"))
-		Drive[disk].RawDrive=1;
+		gVirtualDrive[disk].RawDrive=1;
 	if (!strcmp(FileName,"*Floppy B:"))
-		Drive[disk].RawDrive=2;
+		gVirtualDrive[disk].RawDrive=2;
 
-	if (Drive[disk].RawDrive==0)
+	if (gVirtualDrive[disk].RawDrive==0)
 	{
-		Drive[disk].FileHandle = CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,0,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
-		if (Drive[disk].FileHandle==INVALID_HANDLE_VALUE)
+		gVirtualDrive[disk].FileHandle = CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,0,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+		if (gVirtualDrive[disk].FileHandle==INVALID_HANDLE_VALUE)
 		{	//Can't open read/write might be read only
-			Drive[disk].FileHandle = CreateFile(FileName,GENERIC_READ,0,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
-			Drive[disk].WriteProtect=0xFF;
+			gVirtualDrive[disk].FileHandle = CreateFile(FileName,GENERIC_READ,0,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+			gVirtualDrive[disk].WriteProtect=0xFF;
 		}
-		if (Drive[disk].FileHandle==INVALID_HANDLE_VALUE)
+		if (gVirtualDrive[disk].FileHandle==INVALID_HANDLE_VALUE)
 			return 1; //Give up cant mount it
-		strcpy(Drive[disk].ImageName,FileName);
-		Drive[disk].FileSize= GetFileSize(Drive[disk].FileHandle,nullptr);
-		Drive[disk].HeaderSize = Drive[disk].FileSize % 256;
-		SetFilePointer(Drive[disk].FileHandle,0,nullptr,FILE_BEGIN);
-		ReadFile(Drive[disk].FileHandle,HeaderBlock,HEADERBUFFERSIZE,&BytesRead,nullptr);
+		strcpy(gVirtualDrive[disk].ImageName,FileName);
+		gVirtualDrive[disk].FileSize= GetFileSize(gVirtualDrive[disk].FileHandle,nullptr);
+		gVirtualDrive[disk].HeaderSize = gVirtualDrive[disk].FileSize % 256;
+		SetFilePointer(gVirtualDrive[disk].FileHandle,0,nullptr,FILE_BEGIN);
+		ReadFile(gVirtualDrive[disk].FileHandle,HeaderBlock,HEADERBUFFERSIZE,&BytesRead,nullptr);
 	}
 	else
-		Drive[disk].HeaderSize=0xFF;
+		gVirtualDrive[disk].HeaderSize=0xFF;
 
-	switch (Drive[disk].HeaderSize)
+	switch (gVirtualDrive[disk].HeaderSize)
 	{
 	case 4:
-			Drive[disk].FirstSector=HeaderBlock[3];
+			gVirtualDrive[disk].FirstSector=HeaderBlock[3];
 	case 3:
-			Drive[disk].SectorSize=HeaderBlock[2];
+			gVirtualDrive[disk].SectorSize=HeaderBlock[2];
 	case 2:
-			Drive[disk].Sectors = HeaderBlock[0];
-			Drive[disk].Sides = HeaderBlock[1];
+			gVirtualDrive[disk].Sectors = HeaderBlock[0];
+			gVirtualDrive[disk].Sides = HeaderBlock[1];
 	
 	case 0:	
 		//OS9 Image checks
@@ -333,53 +334,53 @@ unsigned char MountDisk(const char *FileName,unsigned char disk)
 		TmpMod=1;
 		if ( (TmpSides*TmpSectors)!=0)
 			TmpMod = TotalSectors%(TmpSides*TmpSectors);	
-		if ((TmpSectors ==18) & (TmpMod==0) & (Drive[disk].HeaderSize ==0))	//Sanity Check
+		if ((TmpSectors ==18) & (TmpMod==0) & (gVirtualDrive[disk].HeaderSize ==0))	//Sanity Check
 		{
-			Drive[disk].ImageType=OS9;
-			Drive[disk].Sides = TmpSides;
-			Drive[disk].Sectors = TmpSectors;
+			gVirtualDrive[disk].ImageType=OS9;
+			gVirtualDrive[disk].Sides = TmpSides;
+			gVirtualDrive[disk].Sectors = TmpSectors;
 		}
 		else
-			Drive[disk].ImageType=JVC;
-		Drive[disk].TrackSize = Drive[disk].Sectors * BytesperSector[Drive[disk].SectorSize];
+			gVirtualDrive[disk].ImageType=JVC;
+		gVirtualDrive[disk].TrackSize = gVirtualDrive[disk].Sectors * BytesperSector[gVirtualDrive[disk].SectorSize];
 	break;
 
 	case 12:
-		Drive[disk].ImageType=VDK;	//VDK
-		Drive[disk].Sides = HeaderBlock[9];
-		Drive[disk].TrackSize = Drive[disk].Sectors * BytesperSector[Drive[disk].SectorSize];
+		gVirtualDrive[disk].ImageType=VDK;	//VDK
+		gVirtualDrive[disk].Sides = HeaderBlock[9];
+		gVirtualDrive[disk].TrackSize = gVirtualDrive[disk].Sectors * BytesperSector[gVirtualDrive[disk].SectorSize];
 		break;
 
 	case 16:
-		Drive[disk].ImageType=DMK;	//DMK
-		if (Drive[disk].WriteProtect != 0xFF)
-			Drive[disk].WriteProtect = HeaderBlock[0];
-		Drive[disk].TrackSize = (HeaderBlock[3]<<8 | HeaderBlock[2]);
-		Drive[disk].Sides = 2-((HeaderBlock[4] & 16 )>>4);
+		gVirtualDrive[disk].ImageType=DMK;	//DMK
+		if (gVirtualDrive[disk].WriteProtect != 0xFF)
+			gVirtualDrive[disk].WriteProtect = HeaderBlock[0];
+		gVirtualDrive[disk].TrackSize = (HeaderBlock[3]<<8 | HeaderBlock[2]);
+		gVirtualDrive[disk].Sides = 2-((HeaderBlock[4] & 16 )>>4);
 	break;
 
 	case 0xFF:
-		if (Drive[disk].RawDrive)
+		if (gVirtualDrive[disk].RawDrive)
 		{
-			if (Drive[disk].FileHandle !=nullptr)
+			if (gVirtualDrive[disk].FileHandle !=nullptr)
 				unmount_disk_image(disk);
-			Drive[disk].ImageType=RAW;
-			Drive[disk].Sides=2;
+			gVirtualDrive[disk].ImageType=RAW;
+			gVirtualDrive[disk].Sides=2;
 
-			Drive[disk].FileHandle = OpenFloppy(Drive[disk].RawDrive-1);
-			if (Drive[disk].FileHandle == nullptr)
+			gVirtualDrive[disk].FileHandle = OpenFloppy(gVirtualDrive[disk].RawDrive-1);
+			if (gVirtualDrive[disk].FileHandle == nullptr)
 				return 1;
-			strcpy(Drive[disk].ImageName,FileName);
-			if (Drive[disk].RawDrive==1)
+			strcpy(gVirtualDrive[disk].ImageName,FileName);
+			if (gVirtualDrive[disk].RawDrive==1)
 				PhysicalDriveA=disk+1;
-			if (Drive[disk].RawDrive==2)
+			if (gVirtualDrive[disk].RawDrive==2)
 				PhysicalDriveB=disk+1;
 		}
 	break;
 	default:
 		return 1;
 	}
-	strncpy(Drive[disk].ImageTypeName,ImageFormat[Drive[disk].ImageType],4);
+	strncpy(gVirtualDrive[disk].ImageTypeName,ImageFormat[gVirtualDrive[disk].ImageType],4);
 	return 0; //Return 0 on success
 }
 
@@ -403,43 +404,43 @@ long ReadSector (unsigned char Side,	//0 or 1
 	const unsigned char *pva=nullptr;
 //************************
 
-	if (Drive[CurrentDisk].FileHandle==nullptr)
+	if (gVirtualDrive[CurrentDisk].FileHandle==nullptr)
 		return 0;
 
-	switch (Drive[CurrentDisk].ImageType)
+	switch (gVirtualDrive[CurrentDisk].ImageType)
 	{
 		case JVC:
 		case VDK:
 		case OS9:
-			if (((Side+1) > Drive[CurrentDisk].Sides) | (TrackReg != Drive[CurrentDisk].HeadPosition))
+			if (((Side+1) > gVirtualDrive[CurrentDisk].Sides) | (TrackReg != gVirtualDrive[CurrentDisk].HeadPosition))
 				return 0;
 
-			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize) + (BytesperSector[Drive[CurrentDisk].SectorSize] * (Sector - Drive[CurrentDisk].FirstSector) ) ) ;
+			FileOffset= gVirtualDrive[CurrentDisk].HeaderSize + ( (Track * gVirtualDrive[CurrentDisk].Sides * gVirtualDrive[CurrentDisk].TrackSize)+ (Side * gVirtualDrive[CurrentDisk].TrackSize) + (BytesperSector[gVirtualDrive[CurrentDisk].SectorSize] * (Sector - gVirtualDrive[CurrentDisk].FirstSector) ) ) ;
 
 			DLOG_C("FDC S%d trk:%d side:%d sect:%d hsiz:%d nside:%d tsiz:%d ssiz:%d fsec:%d\n",
 					FileOffset, Track, Side, Sector,
-					Drive[CurrentDisk].HeaderSize,
-					Drive[CurrentDisk].Sides,
-					Drive[CurrentDisk].TrackSize,
-					BytesperSector[Drive[CurrentDisk].SectorSize],
-					Drive[CurrentDisk].FirstSector);
+					gVirtualDrive[CurrentDisk].HeaderSize,
+					gVirtualDrive[CurrentDisk].Sides,
+					gVirtualDrive[CurrentDisk].TrackSize,
+					BytesperSector[gVirtualDrive[CurrentDisk].SectorSize],
+					gVirtualDrive[CurrentDisk].FirstSector);
 
-			SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
-			ReadFile(Drive[CurrentDisk].FileHandle,ReturnBuffer,BytesperSector[Drive[CurrentDisk].SectorSize],&BytesRead,nullptr);
-			if (BytesRead != BytesperSector[Drive[CurrentDisk].SectorSize]) //Fake the read for short images
+			SetFilePointer(gVirtualDrive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
+			ReadFile(gVirtualDrive[CurrentDisk].FileHandle,ReturnBuffer,BytesperSector[gVirtualDrive[CurrentDisk].SectorSize],&BytesRead,nullptr);
+			if (BytesRead != BytesperSector[gVirtualDrive[CurrentDisk].SectorSize]) //Fake the read for short images
 			{
-				memset(ReturnBuffer,0xFF,BytesperSector[Drive[CurrentDisk].SectorSize]);
-				BytesRead=BytesperSector[Drive[CurrentDisk].SectorSize];
+				memset(ReturnBuffer,0xFF,BytesperSector[gVirtualDrive[CurrentDisk].SectorSize]);
+				BytesRead=BytesperSector[gVirtualDrive[CurrentDisk].SectorSize];
 			}
-			return(BytesperSector[Drive[CurrentDisk].SectorSize]);
+			return(BytesperSector[gVirtualDrive[CurrentDisk].SectorSize]);
 
 		case DMK:	
-			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize));
-			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
+			FileOffset= gVirtualDrive[CurrentDisk].HeaderSize + ( (Track * gVirtualDrive[CurrentDisk].Sides * gVirtualDrive[CurrentDisk].TrackSize)+ (Side * gVirtualDrive[CurrentDisk].TrackSize));
+			Result=SetFilePointer(gVirtualDrive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 
 			//Need to read the entire track due to the emulation of interleave on these images
-			ReadFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesRead,nullptr);
-			if (BytesRead!=Drive[CurrentDisk].TrackSize) //DMK can't be short the image is corupt
+			ReadFile(gVirtualDrive[CurrentDisk].FileHandle,TempBuffer,gVirtualDrive[CurrentDisk].TrackSize,&BytesRead,nullptr);
+			if (BytesRead!=gVirtualDrive[CurrentDisk].TrackSize) //DMK can't be short the image is corupt
 				return 0;
 			CurrentSector.Sector=Sector;
 			if (GetSectorInfo (&CurrentSector,TempBuffer)==0)
@@ -449,14 +450,14 @@ long ReadSector (unsigned char Side,	//0 or 1
 
 		case RAW:
 			pva=(unsigned char *)RawReadBuf;
-			if (TrackReg != Drive[CurrentDisk].HeadPosition)
+			if (TrackReg != gVirtualDrive[CurrentDisk].HeadPosition)
 				return 0;
 			//Read the entire track and cache it. Speeds up disk reads
-			if (DirtyDisk | (rwp.phead != Side) | (rwp.cyl != Drive[CurrentDisk].HeadPosition ) )
+			if (DirtyDisk | (rwp.phead != Side) | (rwp.cyl != gVirtualDrive[CurrentDisk].HeadPosition ) )
 			{
 				rwp.flags = FD_OPTION_MFM;
 				rwp.phead = Side;
-				rwp.cyl = Drive[CurrentDisk].HeadPosition;
+				rwp.cyl = gVirtualDrive[CurrentDisk].HeadPosition;
 				rwp.head = Side;
 				rwp.sector = 1;
 				rwp.size = 1;	//256 Byte Secotors
@@ -467,8 +468,8 @@ long ReadSector (unsigned char Side,	//0 or 1
 				sp.cyl = Track;
 				sp.head = Side;
 				// seek to cyl
-				DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &sp, sizeof(sp), nullptr, 0, &dwRet, nullptr);
-				Ret=DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_READ_DATA, &rwp, sizeof(rwp), RawReadBuf,4608, &dwRet, nullptr);
+				DeviceIoControl(gVirtualDrive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &sp, sizeof(sp), nullptr, 0, &dwRet, nullptr);
+				Ret=DeviceIoControl(gVirtualDrive[CurrentDisk].FileHandle , IOCTL_FDCMD_READ_DATA, &rwp, sizeof(rwp), RawReadBuf,4608, &dwRet, nullptr);
 				if (dwRet != 4608)
 					return 0;
 				DirtyDisk=false;
@@ -496,25 +497,25 @@ long WriteSector (	unsigned char Side,		//0 or 1
 	unsigned char Ret=0;
 	const unsigned char *pva=nullptr;
 	SectorInfo CurrentSector;
-	if ( (Drive[CurrentDisk].FileHandle==nullptr) | ((Side+1) > Drive[CurrentDisk].Sides) )
+	if ( (gVirtualDrive[CurrentDisk].FileHandle==nullptr) | ((Side+1) > gVirtualDrive[CurrentDisk].Sides) )
 		return 0;
 
-	switch (Drive[CurrentDisk].ImageType)
+	switch (gVirtualDrive[CurrentDisk].ImageType)
 	{
 		case JVC:
 		case VDK:
 		case OS9:
-			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize) + (BytesperSector[Drive[CurrentDisk].SectorSize] * (Sector - Drive[CurrentDisk].FirstSector) ) ) ;
-			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
-			WriteFile(Drive[CurrentDisk].FileHandle,WriteBuffer,BytesperSector[Drive[CurrentDisk].SectorSize],&BytesWritten,nullptr);
+			FileOffset= gVirtualDrive[CurrentDisk].HeaderSize + ( (Track * gVirtualDrive[CurrentDisk].Sides * gVirtualDrive[CurrentDisk].TrackSize)+ (Side * gVirtualDrive[CurrentDisk].TrackSize) + (BytesperSector[gVirtualDrive[CurrentDisk].SectorSize] * (Sector - gVirtualDrive[CurrentDisk].FirstSector) ) ) ;
+			Result=SetFilePointer(gVirtualDrive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
+			WriteFile(gVirtualDrive[CurrentDisk].FileHandle,WriteBuffer,BytesperSector[gVirtualDrive[CurrentDisk].SectorSize],&BytesWritten,nullptr);
 			return BytesWritten;
 
 		case DMK:	//DMK
-			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize));
-			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
+			FileOffset= gVirtualDrive[CurrentDisk].HeaderSize + ( (Track * gVirtualDrive[CurrentDisk].Sides * gVirtualDrive[CurrentDisk].TrackSize)+ (Side * gVirtualDrive[CurrentDisk].TrackSize));
+			Result=SetFilePointer(gVirtualDrive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			//Need to read the entire track due to the emulation of interleave on these images			
-			ReadFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesRead,nullptr);
-			if (BytesRead!=Drive[CurrentDisk].TrackSize)
+			ReadFile(gVirtualDrive[CurrentDisk].FileHandle,TempBuffer,gVirtualDrive[CurrentDisk].TrackSize,&BytesRead,nullptr);
+			if (BytesRead!=gVirtualDrive[CurrentDisk].TrackSize)
 				return 0;
 
 			CurrentSector.Sector=Sector;
@@ -525,9 +526,9 @@ long WriteSector (	unsigned char Side,		//0 or 1
 			Crc=ccitt_crc16(0xE295,&TempBuffer[CurrentSector.DAM] , CurrentSector.Lenth); //0xcdb4
 			TempBuffer[CurrentSector.DAM + CurrentSector.Lenth  ] =Crc>>8;
 			TempBuffer[CurrentSector.DAM + CurrentSector.Lenth +1 ] =(Crc & 0xFF);
-			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize));
-			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
-			WriteFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesWritten,nullptr);
+			FileOffset= gVirtualDrive[CurrentDisk].HeaderSize + ( (Track * gVirtualDrive[CurrentDisk].Sides * gVirtualDrive[CurrentDisk].TrackSize)+ (Side * gVirtualDrive[CurrentDisk].TrackSize));
+			Result=SetFilePointer(gVirtualDrive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
+			WriteFile(gVirtualDrive[CurrentDisk].FileHandle,TempBuffer,gVirtualDrive[CurrentDisk].TrackSize,&BytesWritten,nullptr);
 			return(CurrentSector.Lenth);
 
 		case RAW:
@@ -535,7 +536,7 @@ long WriteSector (	unsigned char Side,		//0 or 1
 			pva=(unsigned char *) RawReadBuf;
 			rwp.flags = FD_OPTION_MFM;
 			rwp.phead = Side;
-			rwp.cyl = Drive[CurrentDisk].HeadPosition;
+			rwp.cyl = gVirtualDrive[CurrentDisk].HeadPosition;
 			rwp.head = Side;
 			rwp.sector = Sector;
 			rwp.size = 1;	//256 Byte Secotors
@@ -546,9 +547,9 @@ long WriteSector (	unsigned char Side,		//0 or 1
 			sp.cyl = Track;
 			sp.head = Side;
 			// seek to cyl
-			DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &Track, sizeof(Track), nullptr, 0, &dwRet, nullptr);
+			DeviceIoControl(gVirtualDrive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &Track, sizeof(Track), nullptr, 0, &dwRet, nullptr);
 			memcpy(RawReadBuf,WriteBuffer,256);
-			Ret=DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_WRITE_DATA, &rwp, sizeof(rwp), RawReadBuf,18*(128<<rwp.size), &dwRet, nullptr);
+			Ret=DeviceIoControl(gVirtualDrive[CurrentDisk].FileHandle , IOCTL_FDCMD_WRITE_DATA, &rwp, sizeof(rwp), RawReadBuf,18*(128<<rwp.size), &dwRet, nullptr);
 			return dwRet;
 	}
 	return 0;
@@ -566,10 +567,10 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 	unsigned char TempChar=0;
 	unsigned short Crc=0,DataBlockPointer=0,Seed=0;	
 
-	if (Drive[CurrentDisk].FileHandle==nullptr)
+	if (gVirtualDrive[CurrentDisk].FileHandle==nullptr)
 		return 0;
 		
-	switch (Drive[CurrentDisk].ImageType)
+	switch (gVirtualDrive[CurrentDisk].ImageType)
 	{
 		case JVC:
 		case VDK:
@@ -588,10 +589,10 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 				if ( WriteBuffer[BufferIndex]== 0xFB)	//Look for D.A.M.
 				{
 					BufferIndex++;
-					FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize) + (BytesperSector[Drive[CurrentDisk].SectorSize] * (xSector - 1) ) ) ;
-					Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
-					WriteFile(Drive[CurrentDisk].FileHandle,&WriteBuffer[BufferIndex],BytesperSector[Drive[CurrentDisk].SectorSize],&BytesWritten,nullptr);				
-					BufferIndex+=BytesperSector[Drive[CurrentDisk].SectorSize];
+					FileOffset= gVirtualDrive[CurrentDisk].HeaderSize + ( (Track * gVirtualDrive[CurrentDisk].Sides * gVirtualDrive[CurrentDisk].TrackSize)+ (Side * gVirtualDrive[CurrentDisk].TrackSize) + (BytesperSector[gVirtualDrive[CurrentDisk].SectorSize] * (xSector - 1) ) ) ;
+					Result=SetFilePointer(gVirtualDrive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
+					WriteFile(gVirtualDrive[CurrentDisk].FileHandle,&WriteBuffer[BufferIndex],BytesperSector[gVirtualDrive[CurrentDisk].SectorSize],&BytesWritten,nullptr);				
+					BufferIndex+=BytesperSector[gVirtualDrive[CurrentDisk].SectorSize];
 				}
 			}
 		break;
@@ -600,9 +601,9 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 			BufferIndex=128;	//Index to cooked buffer
 			WriteIndex=0;		// Index to raw Buffer
 
-			TempBuffer=(unsigned char *)malloc(Drive[CurrentDisk].TrackSize);
-			memset(TempBuffer,0,Drive[CurrentDisk].TrackSize);
-			while (BufferIndex < Drive[CurrentDisk].TrackSize)
+			TempBuffer=(unsigned char *)malloc(gVirtualDrive[CurrentDisk].TrackSize);
+			memset(TempBuffer,0,gVirtualDrive[CurrentDisk].TrackSize);
+			while (BufferIndex < gVirtualDrive[CurrentDisk].TrackSize)
 			{
 				TempChar=WriteBuffer[WriteIndex++];
 				if (TempChar == 0xF7)			//This is working now
@@ -638,17 +639,17 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 				}	
 			}
 
-			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize)  ) ;
-			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
-			WriteFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesWritten,nullptr);				
+			FileOffset= gVirtualDrive[CurrentDisk].HeaderSize + ( (Track * gVirtualDrive[CurrentDisk].Sides * gVirtualDrive[CurrentDisk].TrackSize)+ (Side * gVirtualDrive[CurrentDisk].TrackSize)  ) ;
+			Result=SetFilePointer(gVirtualDrive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
+			WriteFile(gVirtualDrive[CurrentDisk].FileHandle,TempBuffer,gVirtualDrive[CurrentDisk].TrackSize,&BytesWritten,nullptr);				
 			free(TempBuffer);
 		break;
 
 
 		case RAW:
 			DirtyDisk=true;
-			DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &Track, sizeof(Track), nullptr, 0, &dwRet, nullptr);
-			return(FormatTrack (Drive[CurrentDisk].FileHandle , Track , Side, WriteBuffer[100] )); //KLUDGE!
+			DeviceIoControl(gVirtualDrive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &Track, sizeof(Track), nullptr, 0, &dwRet, nullptr);
+			return(FormatTrack (gVirtualDrive[CurrentDisk].FileHandle , Track , Side, WriteBuffer[100] )); //KLUDGE!
 	}
 	
 	return BytesWritten;
@@ -662,24 +663,24 @@ long ReadTrack (	unsigned char Side,		//0 or 1
 	unsigned long BytesRead=0,Result=0;
 	long FileOffset=0;
 
-	if (Drive[CurrentDisk].FileHandle==nullptr)
+	if (gVirtualDrive[CurrentDisk].FileHandle==nullptr)
 		return 0;
 
-	switch (Drive[CurrentDisk].ImageType)
+	switch (gVirtualDrive[CurrentDisk].ImageType)
 	{
 		case JVC:
 		case VDK:
 		case OS9:
-			if ((Side+1) > Drive[CurrentDisk].Sides)
+			if ((Side+1) > gVirtualDrive[CurrentDisk].Sides)
 				return 0;
 			//STUB Write Me
 			return 0;
 
 		case DMK:	
-			FileOffset= Drive[CurrentDisk].HeaderSize + ( (Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize)+128);
-			Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
-			ReadFile(Drive[CurrentDisk].FileHandle,WriteBuffer,(Drive[CurrentDisk].TrackSize-128),&BytesRead,nullptr);
-			if (BytesRead != ((unsigned)Drive[CurrentDisk].TrackSize-128) )
+			FileOffset= gVirtualDrive[CurrentDisk].HeaderSize + ( (Track * gVirtualDrive[CurrentDisk].Sides * gVirtualDrive[CurrentDisk].TrackSize)+ (Side * gVirtualDrive[CurrentDisk].TrackSize)+128);
+			Result=SetFilePointer(gVirtualDrive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
+			ReadFile(gVirtualDrive[CurrentDisk].FileHandle,WriteBuffer,(gVirtualDrive[CurrentDisk].TrackSize-128),&BytesRead,nullptr);
+			if (BytesRead != ((unsigned)gVirtualDrive[CurrentDisk].TrackSize-128) )
 				return 0;
 		break;
 	}
@@ -703,7 +704,7 @@ void PingFdc()
 		wobble/=4;
 	}
 
-	if ( ((CurrentCommand<=7) | (CurrentCommand==IDLE)) & (Drive[CurrentDisk].FileHandle!=nullptr) )
+	if ( ((CurrentCommand<=7) | (CurrentCommand==IDLE)) & (gVirtualDrive[CurrentDisk].FileHandle!=nullptr) )
 	{
 		if (IndexPulse  )
 			StatusReg|=INDEXPULSE;
@@ -722,56 +723,56 @@ void PingFdc()
 	switch (CurrentCommand)
 	{
 		case RESTORE:	
-			if (Drive[CurrentDisk].HeadPosition!=0)
+			if (gVirtualDrive[CurrentDisk].HeadPosition!=0)
 			{
-				Drive[CurrentDisk].HeadPosition-=1;
+				gVirtualDrive[CurrentDisk].HeadPosition-=1;
 				ExecTimeWaiter=(CyclesperStep * StepTimeMS);
-				if (Drive[CurrentDisk].ImageType==RAW)
-					DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, nullptr, 1, nullptr, 0, &dwRet, nullptr);
+				if (gVirtualDrive[CurrentDisk].ImageType==RAW)
+					DeviceIoControl(gVirtualDrive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, nullptr, 1, nullptr, 0, &dwRet, nullptr);
 			}
 			else
 			{
 				TrackReg=0;
 				StatusReg=READY;
 				StatusReg|=TRACK_ZERO;
-				Drive[CurrentDisk].HeadPosition=0;
-				if (Drive[CurrentDisk].WriteProtect)
+				gVirtualDrive[CurrentDisk].HeadPosition=0;
+				if (gVirtualDrive[CurrentDisk].WriteProtect)
 					StatusReg|=WRITEPROTECT;
 				CommandDone();
 			}
 		break;
 
 		case SEEK:	
-			if (Drive[CurrentDisk].HeadPosition!=DataReg)
+			if (gVirtualDrive[CurrentDisk].HeadPosition!=DataReg)
 			{
 				if (StepDirection==1)
-					Drive[CurrentDisk].HeadPosition+=1;
+					gVirtualDrive[CurrentDisk].HeadPosition+=1;
 				else
-					Drive[CurrentDisk].HeadPosition-=1;
+					gVirtualDrive[CurrentDisk].HeadPosition-=1;
 				ExecTimeWaiter=(CyclesperStep * StepTimeMS);
 			}
 			else
 			{			
-				Drive[CurrentDisk].HeadPosition=TrackReg;
+				gVirtualDrive[CurrentDisk].HeadPosition=TrackReg;
 				StatusReg=READY;
-				if (Drive[CurrentDisk].HeadPosition==0)
+				if (gVirtualDrive[CurrentDisk].HeadPosition==0)
 					StatusReg|=TRACK_ZERO;
-				if (Drive[CurrentDisk].WriteProtect)
+				if (gVirtualDrive[CurrentDisk].WriteProtect)
 					StatusReg|=WRITEPROTECT;
 				CommandDone();
 			}
-			if (Drive[CurrentDisk].ImageType==RAW)
-				DeviceIoControl(Drive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &TrackReg, sizeof(TrackReg), nullptr, 0, &dwRet, nullptr);
+			if (gVirtualDrive[CurrentDisk].ImageType==RAW)
+				DeviceIoControl(gVirtualDrive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &TrackReg, sizeof(TrackReg), nullptr, 0, &dwRet, nullptr);
 		break;
 
 		case STEP:
 		case STEPUPD:	
 			if (StepDirection==1)
-					Drive[CurrentDisk].HeadPosition+=1;
+					gVirtualDrive[CurrentDisk].HeadPosition+=1;
 			else
 			{
-				if (Drive[CurrentDisk].HeadPosition >0)
-					Drive[CurrentDisk].HeadPosition-=1;
+				if (gVirtualDrive[CurrentDisk].HeadPosition >0)
+					gVirtualDrive[CurrentDisk].HeadPosition-=1;
 			}
 
 			if (CurrentCommand & 1)
@@ -781,9 +782,9 @@ void PingFdc()
 				else
 					TrackReg-=1;
 			}
-			if ( Drive[CurrentDisk].HeadPosition == 0)
+			if ( gVirtualDrive[CurrentDisk].HeadPosition == 0)
 				StatusReg=TRACK_ZERO;
-			if (Drive[CurrentDisk].WriteProtect)
+			if (gVirtualDrive[CurrentDisk].WriteProtect)
 				StatusReg|=WRITEPROTECT;
 			StatusReg=READY;
 			CommandDone();
@@ -792,10 +793,10 @@ void PingFdc()
 		case STEPIN:
 		case STEPINUPD:	
 			StepDirection=1;
-			Drive[CurrentDisk].HeadPosition+=1;
+			gVirtualDrive[CurrentDisk].HeadPosition+=1;
 			if (CurrentCommand & 1)
 				TrackReg+=1;
-			if (Drive[CurrentDisk].WriteProtect)
+			if (gVirtualDrive[CurrentDisk].WriteProtect)
 				StatusReg|=WRITEPROTECT;
 			StatusReg=READY;
 			CommandDone();
@@ -804,13 +805,13 @@ void PingFdc()
 		case STEPOUT:
 		case STEPOUTUPD:	
 			StepDirection=0;
-			if ( Drive[CurrentDisk].HeadPosition > 0 )
-				Drive[CurrentDisk].HeadPosition-=1;
+			if ( gVirtualDrive[CurrentDisk].HeadPosition > 0 )
+				gVirtualDrive[CurrentDisk].HeadPosition-=1;
 			if (CurrentCommand & 1)
 				TrackReg-=1;
-			if ( Drive[CurrentDisk].HeadPosition == 0)
+			if ( gVirtualDrive[CurrentDisk].HeadPosition == 0)
 				StatusReg=TRACK_ZERO;
-			if (Drive[CurrentDisk].WriteProtect)
+			if (gVirtualDrive[CurrentDisk].WriteProtect)
 				StatusReg|=WRITEPROTECT;
 			StatusReg=READY;
 			CommandDone();
@@ -890,7 +891,7 @@ void DispatchCommand(unsigned char Tmp)
 			ExecTimeWaiter= CyclestoSettle + (CyclesperStep * StepTimeMS);
 			TrackReg=DataReg;
 			StatusReg= BUSY;
-			if ( Drive[CurrentDisk].HeadPosition > DataReg)
+			if ( gVirtualDrive[CurrentDisk].HeadPosition > DataReg)
 				StepDirection=0;
 			else
 				StepDirection=1;
@@ -997,11 +998,11 @@ unsigned char GetBytefromSector ()
 
 	if (TransferBufferSize == 0)
 	{
-		TransferBufferSize = ReadSector(Side,Drive[CurrentDisk].HeadPosition,SectorReg,TransferBuffer);
+		TransferBufferSize = ReadSector(Side,gVirtualDrive[CurrentDisk].HeadPosition,SectorReg,TransferBuffer);
 //		WriteLog("BEGIN Readsector",0);
 	}
 
-	if (TransferBufferSize==0)// IRON| (TrackReg != Drive[CurrentDrive].HeadPosition) ) //| (SectorReg > Drive[CurrentDrive].Sectors)
+	if (TransferBufferSize==0)// IRON| (TrackReg != gVirtualDrive[CurrentDrive].HeadPosition) ) //| (SectorReg > gVirtualDrive[CurrentDrive].Sectors)
 	{
 		CommandDone();
 		StatusReg=RECNOTFOUND;
@@ -1037,25 +1038,25 @@ unsigned char GetBytefromAddress ()
 
 	if (TransferBufferSize == 0)
 	{
-		switch (Drive[CurrentDisk].ImageType)
+		switch (gVirtualDrive[CurrentDisk].ImageType)
 		{
 			case JVC:
 			case VDK:
 			case OS9:
-				TransferBuffer[0]= Drive[CurrentDisk].HeadPosition;
-				TransferBuffer[1]= Drive[CurrentDisk].Sides;
+				TransferBuffer[0]= gVirtualDrive[CurrentDisk].HeadPosition;
+				TransferBuffer[1]= gVirtualDrive[CurrentDisk].Sides;
 				TransferBuffer[2]= IndexCounter/176;
-				TransferBuffer[3]= Drive[CurrentDisk].SectorSize;
+				TransferBuffer[3]= gVirtualDrive[CurrentDisk].SectorSize;
 				TransferBuffer[4]= (Crc >> 8);	
 				TransferBuffer[5]= (Crc & 0xFF);
 				TransferBufferSize=6;
 			break;
 
 			case DMK:
-				TransferBuffer[0]= Drive[CurrentDisk].HeadPosition; //CurrentSector.Track; not right need to get from image
-				TransferBuffer[1]= Drive[CurrentDisk].Sides;
+				TransferBuffer[0]= gVirtualDrive[CurrentDisk].HeadPosition; //CurrentSector.Track; not right need to get from image
+				TransferBuffer[1]= gVirtualDrive[CurrentDisk].Sides;
 				TransferBuffer[2]= IndexCounter/176;
-				TransferBuffer[3]= IndexCounter/176; //Drive[CurrentDrive].SectorSize;
+				TransferBuffer[3]= IndexCounter/176; //gVirtualDrive[CurrentDrive].SectorSize;
 				Crc = 0;//CurrentSector.CRC;
 				TransferBuffer[4]= (Crc >> 8);	
 				TransferBuffer[5]= (Crc & 0xFF);
@@ -1064,7 +1065,7 @@ unsigned char GetBytefromAddress ()
 		} //END Switch
 	}
 
-	if (   Drive[CurrentDisk].FileHandle==nullptr  )
+	if (   gVirtualDrive[CurrentDisk].FileHandle==nullptr  )
 	{
 		StatusReg=RECNOTFOUND;
 		CommandDone();
@@ -1096,11 +1097,11 @@ unsigned char GetBytefromTrack ()
 
 	if (TransferBufferSize == 0)
 	{
-		TransferBufferSize = ReadTrack(Side,Drive[CurrentDisk].HeadPosition,SectorReg,TransferBuffer);
+		TransferBufferSize = ReadTrack(Side,gVirtualDrive[CurrentDisk].HeadPosition,SectorReg,TransferBuffer);
 //		WriteLog("BEGIN READTRACK",0);
 	}
 
-	if (TransferBufferSize==0)//iron | (TrackReg != Drive[CurrentDrive].HeadPosition) ) //| (SectorReg > Drive[CurrentDrive].Sectors)
+	if (TransferBufferSize==0)//iron | (TrackReg != gVirtualDrive[CurrentDrive].HeadPosition) ) //| (SectorReg > gVirtualDrive[CurrentDrive].Sectors)
 	{
 		CommandDone();
 		StatusReg=RECNOTFOUND;
@@ -1138,13 +1139,13 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 	if (TransferBufferSize==0)
 	{
 //		WriteLog("Begining WriteSector data collection Command",0);
-		switch (Drive[CurrentDisk].ImageType)
+		switch (gVirtualDrive[CurrentDisk].ImageType)
 		{
 			case JVC:
 			case VDK:
 			case OS9:
-				TransferBufferSize=BytesperSector[Drive[CurrentDisk].SectorSize];
-				if ((TransferBufferSize==0)  | (TrackReg != Drive[CurrentDisk].HeadPosition) | (SectorReg > Drive[CurrentDisk].Sectors) )
+				TransferBufferSize=BytesperSector[gVirtualDrive[CurrentDisk].SectorSize];
+				if ((TransferBufferSize==0)  | (TrackReg != gVirtualDrive[CurrentDisk].HeadPosition) | (SectorReg > gVirtualDrive[CurrentDisk].Sectors) )
 				{
 					StatusReg=RECNOTFOUND;
 					CommandDone();
@@ -1153,12 +1154,12 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 			break;
 
 			case DMK:
-				FileOffset= Drive[CurrentDisk].HeaderSize + ( (Drive[CurrentDisk].HeadPosition * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize)+ (Side * Drive[CurrentDisk].TrackSize));
-				Result=SetFilePointer(Drive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
-				ReadFile(Drive[CurrentDisk].FileHandle,TempBuffer,Drive[CurrentDisk].TrackSize,&BytesRead,nullptr);
+				FileOffset= gVirtualDrive[CurrentDisk].HeaderSize + ( (gVirtualDrive[CurrentDisk].HeadPosition * gVirtualDrive[CurrentDisk].Sides * gVirtualDrive[CurrentDisk].TrackSize)+ (Side * gVirtualDrive[CurrentDisk].TrackSize));
+				Result=SetFilePointer(gVirtualDrive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
+				ReadFile(gVirtualDrive[CurrentDisk].FileHandle,TempBuffer,gVirtualDrive[CurrentDisk].TrackSize,&BytesRead,nullptr);
 				CurrentSector.Sector=SectorReg;
 				GetSectorInfo(&CurrentSector,TempBuffer);
-				if ( (CurrentSector.DAM == 0) | (BytesRead != Drive[CurrentDisk].TrackSize) )
+				if ( (CurrentSector.DAM == 0) | (BytesRead != gVirtualDrive[CurrentDisk].TrackSize) )
 				{
 					StatusReg=RECNOTFOUND;
 					CommandDone();
@@ -1175,11 +1176,11 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 
 	if (TransferBufferIndex>=TransferBufferSize)
 	{
-		RetVal=WriteSector(Side,Drive[CurrentDisk].HeadPosition,SectorReg,TransferBuffer,TransferBufferSize);
+		RetVal=WriteSector(Side,gVirtualDrive[CurrentDisk].HeadPosition,SectorReg,TransferBuffer,TransferBufferSize);
 		StatusReg=READY;
 		if (( RetVal==0) | (LostDataFlag==1) )
 			StatusReg=LOSTDATA;
-		if (Drive[CurrentDisk].WriteProtect != 0)
+		if (gVirtualDrive[CurrentDisk].WriteProtect != 0)
 			StatusReg=WRITEPROTECT | RECNOTFOUND;
 		CommandDone();	
 		LostDataFlag=0;
@@ -1202,12 +1203,12 @@ unsigned char WriteBytetoTrack (unsigned char Tmp)
 
 	if (TransferBufferIndex>=TransferBufferSize)
 	{
-		RetVal=WriteTrack(Side,Drive[CurrentDisk].HeadPosition,SectorReg,TransferBuffer);
+		RetVal=WriteTrack(Side,gVirtualDrive[CurrentDisk].HeadPosition,SectorReg,TransferBuffer);
 
 		StatusReg=READY;
 		if (( RetVal==0) | (LostDataFlag==1) )
 			StatusReg=LOSTDATA;
-		if (Drive[CurrentDisk].WriteProtect != 0)
+		if (gVirtualDrive[CurrentDisk].WriteProtect != 0)
 			StatusReg=WRITEPROTECT | RECNOTFOUND;
 		CommandDone();
 		LostDataFlag=0;
@@ -1275,7 +1276,7 @@ long GetSectorInfo (SectorInfo *Sector,const unsigned char *TempBuffer)
 	{
 		Temp1= (TempBuffer[IdamIndex+1]<<8) | TempBuffer[IdamIndex];	//Reverse Bytes and Get the pointer
 		Density= Temp1>>15;												//Density flag
-		Temp1=  (0x3FFF & Temp1) % Drive[CurrentDisk].TrackSize;		//Mask and keep from overflowing
+		Temp1=  (0x3FFF & Temp1) % gVirtualDrive[CurrentDisk].TrackSize;		//Mask and keep from overflowing
 		IdamIndex+=2;
 	}
 	while ( (IdamIndex<128) & (Temp1 !=0) & (Sector->Sector != TempBuffer[Temp1+3]) );
