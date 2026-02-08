@@ -72,7 +72,7 @@ void PathStripPath ( char *TextBuffer)
 		return;
 
 	for (; Index >= 0; Index--)
-		if (TextBuffer[Index] == '\\')
+		if (TextBuffer[Index] == '\\' || TextBuffer[Index] == '/')
 			break;
 	
 	if (Index < 0)	//delimiter not found
