@@ -31,12 +31,11 @@ namespace VCC::Core
 
 		using path_type = std::string;
 
-
 	public:
 
 		LIBCOMMON_EXPORT cpak_cartridge(
 			HMODULE module_handle,                   // Cartridge filename
-			void* const pakContainer,                // pointer to container object
+			slot_id_type const SlotId,               // Slot id
 			path_type configuration_path,            // Path of ini file
 			HWND hVccWnd,                            // Handle to main VCC window proc 
 			const cpak_callbacks& cpak_callbacks);   // Callbacks
@@ -61,7 +60,7 @@ namespace VCC::Core
 	private:
 
 		const HMODULE handle_;
-		void* const pakContainer_;
+		slot_id_type SlotId_;
 		const HWND hVccWnd_;
 		const path_type configuration_path_;
 		const cpak_callbacks cpak_callbacks_;

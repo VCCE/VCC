@@ -117,7 +117,7 @@ namespace VCC::Core
 	cartridge_loader_result load_cpak_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
-		void* const pakContainer,
+		slot_id_type SlotId,
 		const std::string& iniPath,
 		HWND hVccWnd,
 		const cpak_callbacks& cpak_callbacks)
@@ -142,7 +142,7 @@ namespace VCC::Core
 		{
 			details.cartridge = std::make_unique<VCC::Core::cpak_cartridge>(
 				details.handle.get(),
-				pakContainer,
+				SlotId,
 				iniPath,
 				hVccWnd,
 				cpak_callbacks);
@@ -154,18 +154,18 @@ namespace VCC::Core
 		return { nullptr, nullptr, cartridge_loader_status::not_expansion };
 	}
 
-    // Load a cartridge; either a ROM image or a pak dll.  Load cartridge is called
-	// by both mpi/multipak_cartridge.cpp and pakinterface.cpp.  cartridge_context is defined
-	// in libcommon/include/vcc/bus/cartridge_context.h.  pakContainer is a generic 
-	// pointer explicitly cast to multipak_cartridge in mpi/multipak_cartridge.cpp.
-	// mutlipak_cartridge refers specifically to a cart loaded by the multipak.
+    // Load a cartridge; either a ROM image or a pak dll. Load cartridge is called
+	// by both mpi/multipak_cartridge.cpp and pakinterface.cpp.
+	// cartridge_loader_result is defined in libcommon/include/vcc/bus/cartridge_loader.h
+	// cartridge_context is defined in libcommon/include/vcc/bus/cartridge_context.h
+	// SlotId is size_t 0-4, 0 = boot slot (side slot), 1-4 = MPI slots.  SlotId is
+	// passed to cpak cart DLLs and is returned as first argment of callbacks
 	// cpak_callbacks is used by all hardware paks and is defined in 
-	// libcommon/include/vcc/bus/cpak_cartridge_definitions.h.  cartridge_loader_result
-	// is defined in libcommon/include/vcc/bus/cartridge_loader.h
+	// libcommon/include/vcc/bus/cpak_cartridge_definitions.h.
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
-		void* const pakContainer,
+		slot_id_type SlotId,
 		const std::string& iniPath,
 		HWND hVccWnd,
 		const cpak_callbacks& cpak_callbacks)
@@ -184,9 +184,9 @@ namespace VCC::Core
 			return VCC::Core::load_cpak_cartridge(
 				filename,
 				move(cartridge_context),
-				pakContainer,
-				iniPath,
-				hVccWnd,
+				SlotId,							// Where cart is inserted
+				iniPath,						// Path to vcc ini file
+				hVccWnd,						// MainVcc window handle
 				cpak_callbacks);				// Callbacks in here
 		}
 	}

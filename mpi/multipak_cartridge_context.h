@@ -23,7 +23,8 @@ class multipak_cartridge_context : public ::VCC::Core::cartridge_context
 {
 public:
 
-	multipak_cartridge_context(size_t slot_id, ::VCC::Core::cartridge_context& parent_context, multipak_cartridge& multipak)
+	multipak_cartridge_context
+		(size_t slot_id, ::VCC::Core::cartridge_context& parent_context, multipak_cartridge& multipak)
 		:
 		slot_id_(slot_id),
 		parent_context_(parent_context),

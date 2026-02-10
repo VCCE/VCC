@@ -80,13 +80,13 @@ namespace VCC::Core
 
 	cpak_cartridge::cpak_cartridge(
 		HMODULE module_handle,
-		void* const pakContainer,
+		slot_id_type SlotId,
 		path_type configuration_path,
 		const HWND hVccWnd,
 		const cpak_callbacks& cpak_callbacks)
 		:
 		handle_(module_handle),
-		pakContainer_(pakContainer),
+		SlotId_(SlotId),
 		configuration_path_(move(configuration_path)),
 		hVccWnd_(hVccWnd),
 		cpak_callbacks_(cpak_callbacks),
@@ -127,7 +127,7 @@ namespace VCC::Core
 
 	void cpak_cartridge::start()
 	{
-		initialize_(pakContainer_, configuration_path_.c_str(), hVccWnd_, &cpak_callbacks_);
+		initialize_(SlotId_, configuration_path_.c_str(), hVccWnd_, &cpak_callbacks_);
 	}
 
 	void cpak_cartridge::stop()

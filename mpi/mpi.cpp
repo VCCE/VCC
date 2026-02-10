@@ -28,8 +28,9 @@ HINSTANCE gModuleInstance = nullptr;
 static std::string gConfigurationFilename;
 HWND gVccWnd;
 
+slot_id_type SlotId = 0;
 const std::shared_ptr<host_cartridge_context>
-	gHostCallbacks(std::make_shared<host_cartridge_context>(nullptr, gConfigurationFilename));
+	gHostCallbacks(std::make_shared<host_cartridge_context>(SlotId, gConfigurationFilename));
 
 // mpi configuration object
 multipak_configuration gMultiPakConfiguration("MPI");
@@ -59,7 +60,7 @@ extern "C"
 
 	//Initialize MPI -	capture callback addresses and build menus.
 	__declspec(dllexport) void PakInitialize(
-		void* const callback_context,
+		slot_id_type SlotId,                   // allways zero
 		const char* const configuration_path,
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks)

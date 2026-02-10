@@ -68,7 +68,8 @@ namespace VCC::Core
 	LIBCOMMON_EXPORT cartridge_loader_result load_cpak_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
-		void* const pakContainer,
+//		void* const pakContainer,
+		slot_id_type SlotId,
 		const std::string& iniPath,
 		HWND hVccWnd,
 		const cpak_callbacks& cpak_callbacks);
@@ -76,7 +77,8 @@ namespace VCC::Core
 	LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
 		const std::string& filename,                          // Cartridge filename
 		std::unique_ptr<cartridge_context> cartridge_context, // Loader context
-		void* const pakContainer,                             // Pak container object 
+//		void* const pakContainer,                             // Pak container object 
+		slot_id_type SlotId,
 		const std::string& iniPath,                           // Path of ini file
 		HWND hVccWnd,                                         // handle to main window 
 		const cpak_callbacks& cpak_callbacks);                // Callbacks

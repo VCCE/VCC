@@ -21,8 +21,8 @@
 
 namespace detail
 {
-	void NullAssetCartridgeLine(void*, bool) {}
-	void NullAddMenuItem(void*, const char *, int, MenuItemType) {}
+	void NullAssetCartridgeLine(slot_id_type, bool) {}
+	void NullAddMenuItem(slot_id_type, const char *, int, MenuItemType) {}
 }
 
 
@@ -47,8 +47,6 @@ Cartridge::~Cartridge()
 }
 
 
-
-
 void Cartridge::LoadConfiguration(const std::string& /*filename*/)
 {
 }
@@ -59,10 +57,9 @@ void Cartridge::LoadMenuItems()
 }
 
 
-
-void Cartridge::SetCallbackContext(void* key)
+void Cartridge::SetSlotId(slot_id_type SlotId)
 {
-	m_CallbackContext = key;
+	m_SlotId = SlotId;
 }
 
 

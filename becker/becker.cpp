@@ -18,7 +18,7 @@ static SOCKET dwSocket = 0;
 
 // vcc stuff
 static HINSTANCE gModuleInstance;
-static void* gCallbackContext = nullptr;
+slot_id_type gSlotId {}; 
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 static PakAssertCartridgeLineHostCallback PakSetCart = nullptr;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
@@ -415,12 +415,12 @@ extern "C"
 	}
 
 	__declspec(dllexport) void PakInitialize(
-		void* const callback_context,
+		slot_id_type SlotId,
 		const char* const configuration_path,
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
-		gCallbackContext = callback_context;
+		gSlotId = SlotId;
 		CartMenuCallback = callbacks->add_menu_item;
 		PakSetCart = callbacks->assert_cartridge_line;
 		strcpy(IniFile, configuration_path);
@@ -536,10 +536,10 @@ extern "C" __declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buf
 
 void BuildCartridgeMenu()
 {
-	CartMenuCallback(gCallbackContext, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gCallbackContext, "", MID_ENTRY, MIT_Seperator);
-	CartMenuCallback(gCallbackContext, "DriveWire Server..", ControlId(16), MIT_StandAlone);
-	CartMenuCallback(gCallbackContext, "", MID_FINISH, MIT_Head);
+	CartMenuCallback(gSlotId, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gSlotId, "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback(gSlotId, "DriveWire Server..", ControlId(16), MIT_StandAlone);
+	CartMenuCallback(gSlotId, "", MID_FINISH, MIT_Head);
 }
 
 extern "C" __declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)

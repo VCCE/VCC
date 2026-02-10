@@ -41,7 +41,7 @@ static char IniFile[MAX_PATH]  { 0 };
 static char HardDiskPath[MAX_PATH];
 static ::VCC::Device::rtc::cloud9 cloud9_rtc;
 
-static void* gCallbackContext = nullptr;
+static slot_id_type gSlotId {};
 static PakReadMemoryByteHostCallback MemRead8 = nullptr;
 static PakWriteMemoryByteHostCallback MemWrite8 = nullptr;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
@@ -64,12 +64,12 @@ using namespace std;
 
 void MemWrite(unsigned char Data, unsigned short Address)
 {
-	MemWrite8(gCallbackContext, Data, Address);
+	MemWrite8(gSlotId, Data, Address);
 }
 
 unsigned char MemRead(unsigned short Address)
 {
-	return MemRead8(gCallbackContext, Address);
+	return MemRead8(gSlotId, Address);
 }
 
 
@@ -104,12 +104,12 @@ extern "C"
 	}
 
 	__declspec(dllexport) void PakInitialize(
-		void* const callback_context,
+		slot_id_type SlotId,
 		const char* const configuration_path,
         HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
-		gCallbackContext = callback_context;
+		gSlotId = SlotId;
 		CartMenuCallback = callbacks->add_menu_item;
 		MemRead8 = callbacks->read_memory_byte;
 		MemWrite8 = callbacks->write_memory_byte;
@@ -378,27 +378,27 @@ void BuildCartridgeMenu()
 	char TempMsg[512] = "";
 	char TempBuf[MAX_PATH] = "";
 
-	CartMenuCallback(gCallbackContext, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gCallbackContext, "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback(gSlotId, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gSlotId, "", MID_ENTRY, MIT_Seperator);
 
-	CartMenuCallback(gCallbackContext, "HD Drive 0", MID_ENTRY, MIT_Head);
-	CartMenuCallback(gCallbackContext, "Insert", ControlId(10), MIT_Slave);
+	CartMenuCallback(gSlotId, "HD Drive 0", MID_ENTRY, MIT_Head);
+	CartMenuCallback(gSlotId, "Insert", ControlId(10), MIT_Slave);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHDfile0);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	CartMenuCallback(gCallbackContext, TempMsg, ControlId(11), MIT_Slave);
+	CartMenuCallback(gSlotId, TempMsg, ControlId(11), MIT_Slave);
 
-	CartMenuCallback(gCallbackContext, "HD Drive 1", MID_ENTRY, MIT_Head);
-	CartMenuCallback(gCallbackContext, "Insert", ControlId(12), MIT_Slave);
+	CartMenuCallback(gSlotId, "HD Drive 1", MID_ENTRY, MIT_Head);
+	CartMenuCallback(gSlotId, "Insert", ControlId(12), MIT_Slave);
 	strcpy(TempMsg, "Eject: ");
 	strcpy(TempBuf, VHDfile1);
 	PathStripPath(TempBuf);
 	strcat(TempMsg, TempBuf);
-	CartMenuCallback(gCallbackContext, TempMsg, ControlId(13), MIT_Slave);
+	CartMenuCallback(gSlotId, TempMsg, ControlId(13), MIT_Slave);
 
-	CartMenuCallback(gCallbackContext, "HD Config", ControlId(14), MIT_StandAlone);
-	CartMenuCallback(gCallbackContext, "", MID_FINISH, MIT_Head);
+	CartMenuCallback(gSlotId, "HD Config", ControlId(14), MIT_StandAlone);
+	CartMenuCallback(gSlotId, "", MID_FINISH, MIT_Head);
 }
 
 // Dialog for creating a new hard disk

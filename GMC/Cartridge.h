@@ -4,8 +4,8 @@
 
 namespace detail
 {
-	void NullAssetCartridgeLine(void*, bool);
-	void NullAddMenuItem(void*, const char*, int, MenuItemType);
+	void NullAssetCartridgeLine(slot_id_type, bool);
+	void NullAddMenuItem(slot_id_type, const char*, int, MenuItemType);
 }
 
 class Cartridge
@@ -20,7 +20,7 @@ public:
 	virtual ~Cartridge();
 
 
-	virtual void SetCallbackContext(void* key);
+	virtual void SetSlotId(slot_id_type SlotId);
 	virtual void SetCartLineAssertCallback(PakAssertCartridgeLineHostCallback callback);
 	virtual void SetMenuBuilderCallback(PakAppendCartridgeMenuHostCallback addMenuCallback);
 	virtual void SetConfigurationPath(std::string path);
@@ -39,12 +39,12 @@ protected:
 
 	void AssetCartridgeLine(bool state) const
 	{
-		AssetCartridgeLinePtr(m_CallbackContext, state);
+		AssetCartridgeLinePtr(m_SlotId, state);
 	}
 
 	void AddMenuItem(const char * name, int id, MenuItemType type)
 	{
-		AddMenuItemPtr(m_CallbackContext, name, id, type);
+		AddMenuItemPtr(m_SlotId, name, id, type);
 	}
 
 	virtual void LoadConfiguration(const std::string& filename);
@@ -55,7 +55,7 @@ private:
 	friend const char* PakGetName();
 	friend const char* PakGetCatalogId();
 	friend void PakInitialize(
-		void* const callback_context,
+		slot_id_type SlotId,
 		const char* const configuration_path,
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks);
@@ -71,7 +71,7 @@ private:
 
 	static Cartridge*	m_Singleton;
 
-	void*				m_CallbackContext = nullptr;
+	slot_id_type		m_SlotId {};
 	std::string			m_Name;
 	std::string			m_CatalogId;
 	std::string			m_ConfigurationPath;
