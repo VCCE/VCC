@@ -26,33 +26,11 @@
 
 namespace
 {
-	template<multipak_cartridge::slot_id_type SlotIndex_>
-	void assert_cartridge_line_on_slot(void* pakContainer, bool line_state)
-	{
-		static_cast<multipak_cartridge*>(pakContainer)->assert_cartridge_line(
-			SlotIndex_,
-			line_state);
-	}
-	template<multipak_cartridge::slot_id_type SlotIndex_>
-	void append_menu_item_on_slot(void* pakContainer, const char* text, int id, MenuItemType type)
-	{
-		static_cast<multipak_cartridge*>(pakContainer)->append_menu_item(
-			SlotIndex_,
-			{ text, static_cast<unsigned int>(id), type });
-	}
 
-	// Per-slot callback table.
-	struct cartridge_slot_callbacks
-	{
-		PakAssertCartridgeLineHostCallback set_cartridge_line;
-		PakAppendCartridgeMenuHostCallback append_menu_item;
-	};
-	const std::array<cartridge_slot_callbacks, NUMSLOTS> gSlotCallbacks = { {
-		{ assert_cartridge_line_on_slot<0>, append_menu_item_on_slot<0> },
-		{ assert_cartridge_line_on_slot<1>, append_menu_item_on_slot<1> },
-		{ assert_cartridge_line_on_slot<2>, append_menu_item_on_slot<2> },
-		{ assert_cartridge_line_on_slot<3>, append_menu_item_on_slot<3> }
-	} };
+// SlotId is an unsigned int 0-4 used to indicate to a cartridge which slot
+// it is in.  SlotId 0 is the boot slot, SlotId's 1-4 are multipak slots
+// mpi_slot indexes used elsewhere in this source differ, they represent only
+// multipak mpi_slots and are numbered 0-3,  (SlotId = mpi_slot+1)
 
 	// Is a port a disk port?
 	constexpr std::pair<size_t, size_t> disk_controller_io_port_range = { 0x40, 0x5f };
@@ -95,14 +73,15 @@ void multipak_cartridge::start()
 	cached_scs_slot_ = switch_slot_;
 
 	// Mount them
-	for (auto slot(0u); slot < slots_.size(); slot++)
+	for (auto mpi_slot(0u); mpi_slot < slots_.size(); mpi_slot++)
 	{
-		const auto path(VCC::Util::find_pak_module_path(configuration_.slot_cartridge_path(slot)));
+		const auto path(VCC::Util::find_pak_module_path(
+					configuration_.slot_cartridge_path(mpi_slot)));
 		if (!path.empty())
 		{
-			if (mount_cartridge(slot, path) != VCC::Core::cartridge_loader_status::success) {
-				DLOG_C("Clearing configured slot path %d\n",slot);
-				configuration_.slot_cartridge_path(slot,"");
+			if (mount_cartridge(mpi_slot, path) != VCC::Core::cartridge_loader_status::success) {
+				DLOG_C("Clearing configured slot path %d\n",mpi_slot);
+				configuration_.slot_cartridge_path(mpi_slot,"");
 			}
 		}
 	}
@@ -116,9 +95,9 @@ void multipak_cartridge::stop()
 {
 	gConfigurationDialog.close();
 
-	for (auto slot(0u); slot < slots_.size(); slot++)
+	for (auto mpi_slot(0u); mpi_slot < slots_.size(); mpi_slot++)
 	{
-		eject_cartridge(slot);
+		eject_cartridge(mpi_slot);
 	}
 }
 
@@ -126,9 +105,9 @@ void multipak_cartridge::reset()
 {
 	VCC::Util::section_locker lock(mutex_);
 
-	unsigned char slot = switch_slot_ & 3;
-	switch_slot_ = cached_cts_slot_ = cached_scs_slot_ = slot;
-	slot_register_ = 0b11001100 | slot | (slot << 4);
+	unsigned char mpi_slot = switch_slot_ & 3;
+	switch_slot_ = cached_cts_slot_ = cached_scs_slot_ = mpi_slot;
+	slot_register_ = 0b11001100 | mpi_slot | (mpi_slot << 4);
 
 	for (const auto& cartridge_slot : slots_)
 	{
@@ -282,80 +261,105 @@ void multipak_cartridge::menu_item_clicked(unsigned char menu_item_id)
 }
 
 
-multipak_cartridge::label_type multipak_cartridge::slot_label(slot_id_type slot) const
+multipak_cartridge::label_type multipak_cartridge::slot_label(slot_id_type mpi_slot) const
 {
 	VCC::Util::section_locker lock(mutex_);
 
-	return slots_[slot].label();
+	return slots_[mpi_slot].label();
 }
 
-multipak_cartridge::description_type multipak_cartridge::slot_description(slot_id_type slot) const
+multipak_cartridge::description_type multipak_cartridge::slot_description(slot_id_type mpi_slot) const
 {
 	VCC::Util::section_locker lock(mutex_);
 
-	return slots_[slot].description();
+	return slots_[mpi_slot].description();
 }
 
-bool multipak_cartridge::empty(slot_id_type slot) const
+bool multipak_cartridge::empty(slot_id_type mpi_slot) const
 {
 	VCC::Util::section_locker lock(mutex_);
 
-	return slots_[slot].empty();
+	return slots_[mpi_slot].empty();
 }
 
-void multipak_cartridge::eject_cartridge(slot_id_type slot)
+void multipak_cartridge::eject_cartridge(slot_id_type mpi_slot)
 {
 
 	VCC::Util::section_locker lock(mutex_);
-	slots_[slot].stop();
-	slots_[slot] = {};
-	if (slot == cached_cts_slot_ || slot == switch_slot_)
+	slots_[mpi_slot].stop();
+	slots_[mpi_slot] = {};
+	if (mpi_slot == cached_cts_slot_ || mpi_slot == switch_slot_)
 		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
 }
 
 // create cartridge object and load cart DLL
 multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
-	slot_id_type slot, const path_type& filename)
+	slot_id_type mpi_slot, const path_type& filename)
 {
+	// Capture pointer to multipak_cartridge
+	static multipak_cartridge* self = nullptr;
+	self = this;
+
+	// Create thunks for slot sensitive callbacks
+	static auto assert_cartridge_line_thunk =
+		+[](slot_id_type SlotId,
+		bool line_state)
+	{
+		self->assert_cartridge_line(SlotId, line_state);
+	};
+
+	static auto append_menu_item_thunk =
+		+[](slot_id_type SlotId,
+		const char* menu_name,
+		int menu_id,
+		MenuItemType menu_type)
+	{
+		menu_item_type item {menu_name, (unsigned int)menu_id, menu_type};
+		self->append_menu_item(SlotId, item);
+	};
+
+	// Build callback table for carts loaded on MPI
 	cpak_callbacks callbacks {
 		gHostCallbacks->assert_interrupt_,
-		gSlotCallbacks[slot].set_cartridge_line,
+		assert_cartridge_line_thunk,
 		gHostCallbacks->write_memory_byte_,
 		gHostCallbacks->read_memory_byte_,
-		gSlotCallbacks[slot].append_menu_item
+		append_menu_item_thunk
 	};
-	DLOG_C("%3d %p %p %p %p %p\n",slot,callbacks);
+	
+	DLOG_C("%3d %p %p %p %p %p\n",mpi_slot,callbacks);
 
-	// pakContainer is a pointer to the multipak object. It is passed
-	// to cartridge DLL's and returned with callbacks to route them
-	// to the correct slot without exposing host internals.
-	// TODO: This could have been done with just a slot number!
-
-	auto* pakContainer = this;
+	std::size_t SlotId = mpi_slot + 1;
 
 	// ctx is passed to the loader but not to cartridge DLL's
+	auto* pakContainer = this;
 	auto ctx = std::make_unique<multipak_cartridge_context>(
-		slot,
+		mpi_slot,
 		*context_,
-		*pakContainer);
+		*pakContainer);  // Why does the loader need this?
 
-	DLOG_C("load cart %d  %s\n",slot,filename);
+	DLOG_C("load cart %d  %s\n",mpi_slot,filename);
 
 	auto loadedCartridge = VCC::Core::load_cartridge(
 		filename,
 		std::move(ctx),
-		pakContainer,
-		context_->configuration_path(),
+		SlotId,
+		context_->configuration_path(),    // ini file name
 		gVccWnd,
 		callbacks);
 
-	if (loadedCartridge.load_result != mount_status_type::success)
-	{
+	if (loadedCartridge.load_result != mount_status_type::success) {
 		// Tell user why load failed
-		auto error_string(VCC::Core::cartridge_load_error_string(loadedCartridge.load_result));
+		auto error_string(
+			VCC::Core::cartridge_load_error_string(
+				loadedCartridge.load_result)
+			);
 		error_string += "\n\n";
 		error_string += filename;
-		MessageBox(GetForegroundWindow(), error_string.c_str(), "Load Error", MB_OK | MB_ICONERROR);
+		MessageBox(GetForegroundWindow(),
+			error_string.c_str(),
+			"Load Error",
+			MB_OK | MB_ICONERROR);
 		return loadedCartridge.load_result;
 	}
 
@@ -363,22 +367,22 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 
 	VCC::Util::section_locker lock(mutex_);
 
-	slots_[slot] = {
+	slots_[mpi_slot] = {
 		filename,
 		move(loadedCartridge.handle),
 		move(loadedCartridge.cartridge)
 	};
 
-	slots_[slot].start();
-	slots_[slot].reset();
+	slots_[mpi_slot].start();
+	slots_[mpi_slot].reset();
 
 	return loadedCartridge.load_result;
 }
 
 // The following has no effect until VCC is reset
-void multipak_cartridge::switch_to_slot(slot_id_type slot)
+void multipak_cartridge::switch_to_slot(slot_id_type mpi_slot)
 {
-	switch_slot_ = slot;
+	switch_slot_ = mpi_slot;
 }
 
 multipak_cartridge::slot_id_type multipak_cartridge::selected_switch_slot() const
@@ -392,28 +396,30 @@ multipak_cartridge::slot_id_type multipak_cartridge::selected_scs_slot() const
 }
 
 // Save cart Menu items into containers per slot
-void multipak_cartridge::append_menu_item(slot_id_type slot, menu_item_type item)
+void multipak_cartridge::append_menu_item(slot_id_type SlotId, menu_item_type item)
 {
+	DLOG_C("menu_item %d %d \n",SlotId,item.menu_id);
+
+	auto mpi_slot = SlotId - 1;
+
 	switch (item.menu_id) {
 	case MID_BEGIN:
 		{
 			VCC::Util::section_locker lock(mutex_);
-			slots_[slot].reset_menu();
+			slots_[mpi_slot].reset_menu();
 			break;
 		}
-
 	case MID_FINISH:
 		build_menu();
 		break;
-
 	default:
 		{
-			// Add 50 times the slot number to control id's
+			// Add 50 times the slot_id to menu_ids so WinMain knows who is calling
 			if (item.menu_id >= MID_CONTROL) {
-				item.menu_id += (slot + 1) * 50;
+				item.menu_id += SlotId * 50;
 			}
 			VCC::Util::section_locker lock(mutex_);
-			slots_[slot].append_menu_item(item);
+			slots_[mpi_slot].append_menu_item(item);
 			break;
 		}
 	}
@@ -422,27 +428,28 @@ void multipak_cartridge::append_menu_item(slot_id_type slot, menu_item_type item
 // This gets called any time a cartridge menu is changed. It draws the entire menu.
 void multipak_cartridge::build_menu()
 {
+	// do we really need this here? menu draw should be async
 	VCC::Util::section_locker lock(mutex_);
 
 	// Init the menu, establish MPI config control, build slot menus, then draw it.
 	context_->add_menu_item("", MID_BEGIN, MIT_Head);
 	context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
 	context_->add_menu_item("MPI Config", ControlId(19), MIT_StandAlone);
-	for (int slot = 3; slot >= 0; slot--)
+	for (int mpi_slot = 3; mpi_slot >= 0; mpi_slot--)
 	{
-		slots_[slot].enumerate_menu_items(*context_);
+		slots_[mpi_slot].enumerate_menu_items(*context_);
 	}
 	context_->add_menu_item("", MID_FINISH, MIT_Head);  // Finish draws the entire menu
 }
 
-
-void multipak_cartridge::assert_cartridge_line(slot_id_type slot, bool line_state)
+void multipak_cartridge::assert_cartridge_line(slot_id_type SlotId, bool line_state)
 {
-	VCC::Util::section_locker lock(mutex_);
+	DLOG_C("cart line %d %d \n",SlotId,line_state);
 
-	slots_[slot].line_state(line_state);
-	if (selected_scs_slot() == slot)
-	{
-		context_->assert_cartridge_line(slots_[slot].line_state());
+	VCC::Util::section_locker lock(mutex_);
+	auto mpi_slot = SlotId - 1;
+	slots_[mpi_slot].line_state(line_state);
+	if (selected_scs_slot() == mpi_slot) {
+		context_->assert_cartridge_line(slots_[mpi_slot].line_state());
 	}
 }

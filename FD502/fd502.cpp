@@ -57,8 +57,7 @@ static unsigned char RGBDiskRom[EXTROMSIZE];
 static char FloppyPath[MAX_PATH];
 static char RomFileName[MAX_PATH]="";
 static char TempRomFileName[MAX_PATH]="";
-static void* gCallbackContextPtr = nullptr;
-void* const& gCallbackContext(gCallbackContextPtr);
+slot_id_type gSlotId {};
 PakAssertInteruptHostCallback AssertInt = nullptr;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 unsigned char PhysicalDriveA=0,PhysicalDriveB=0,OldPhysicalDriveA=0,OldPhysicalDriveB=0;
@@ -120,13 +119,13 @@ extern "C"
 	}
 
 	__declspec(dllexport) void PakInitialize(
-		void* const callback_context,
+		slot_id_type SlotId,
 		const char* const configuration_path,
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
 		DLOG_C("FDC %p %p %p %p %p\n",*callbacks);
-		gCallbackContextPtr = callback_context;
+		gSlotId = SlotId;
 		CartMenuCallback = callbacks->add_menu_item;
 		AssertInt = callbacks->assert_interrupt;
 		strcpy(IniFile, configuration_path);
@@ -452,43 +451,43 @@ void BuildCartridgeMenu()
 	if (CartMenuCallback ==nullptr)
 		MessageBox(g_hConfDlg,"No good","Ok",0);
 
-	CartMenuCallback(gCallbackContext, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gCallbackContext, "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback(gSlotId, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gSlotId, "", MID_ENTRY, MIT_Seperator);
 
-	CartMenuCallback(gCallbackContext, "FD-502 Drive 0",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gCallbackContext, "Insert",ControlId(10),MIT_Slave);
+	CartMenuCallback(gSlotId, "FD-502 Drive 0",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gSlotId, "Insert",ControlId(10),MIT_Slave);
 	strncpy(TempMsg,"Eject: ",MAX_PATH);
 	strncpy(TempBuf,gVirtualDrive[0].ImageName,MAX_PATH);
 	PathStripPath(TempBuf);
 	strncat(TempMsg,TempBuf,MAX_PATH);
-	CartMenuCallback(gCallbackContext, TempMsg,ControlId(11),MIT_Slave);
+	CartMenuCallback(gSlotId, TempMsg,ControlId(11),MIT_Slave);
 
-	CartMenuCallback(gCallbackContext, "FD-502 Drive 1",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gCallbackContext, "Insert",ControlId(12),MIT_Slave);
+	CartMenuCallback(gSlotId, "FD-502 Drive 1",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gSlotId, "Insert",ControlId(12),MIT_Slave);
 	strncpy(TempMsg,"Eject: ",MAX_PATH);
 	strncpy(TempBuf,gVirtualDrive[1].ImageName,MAX_PATH);
 	PathStripPath(TempBuf);
 	strncat(TempMsg,TempBuf,MAX_PATH);
-	CartMenuCallback(gCallbackContext, TempMsg,ControlId(13),MIT_Slave);
+	CartMenuCallback(gSlotId, TempMsg,ControlId(13),MIT_Slave);
 
-	CartMenuCallback(gCallbackContext, "FD-502 Drive 2",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gCallbackContext, "Insert",ControlId(14),MIT_Slave);
+	CartMenuCallback(gSlotId, "FD-502 Drive 2",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gSlotId, "Insert",ControlId(14),MIT_Slave);
 	strncpy(TempMsg,"Eject: ",MAX_PATH);
 	strncpy(TempBuf,gVirtualDrive[2].ImageName,MAX_PATH);
 	PathStripPath(TempBuf);
 	strncat(TempMsg,TempBuf,MAX_PATH);
-	CartMenuCallback(gCallbackContext, TempMsg,ControlId(15),MIT_Slave);
+	CartMenuCallback(gSlotId, TempMsg,ControlId(15),MIT_Slave);
 
-	CartMenuCallback(gCallbackContext, "FD-502 Drive 3",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gCallbackContext, "Insert",ControlId(17),MIT_Slave);
+	CartMenuCallback(gSlotId, "FD-502 Drive 3",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gSlotId, "Insert",ControlId(17),MIT_Slave);
 	strncpy(TempMsg,"Eject: ",MAX_PATH);
 	strncpy(TempBuf,gVirtualDrive[3].ImageName,MAX_PATH);
 	PathStripPath(TempBuf);
 	strncat(TempMsg,TempBuf,MAX_PATH);
-	CartMenuCallback(gCallbackContext, TempMsg,ControlId(18),MIT_Slave);
+	CartMenuCallback(gSlotId, TempMsg,ControlId(18),MIT_Slave);
 
-	CartMenuCallback(gCallbackContext, "FD-502 Config",ControlId(16),MIT_StandAlone);
-	CartMenuCallback(gCallbackContext,"", MID_FINISH, MIT_Head);
+	CartMenuCallback(gSlotId, "FD-502 Config",ControlId(16),MIT_StandAlone);
+	CartMenuCallback(gSlotId,"", MID_FINISH, MIT_Head);
 }
 
 long CreateDisk (unsigned char Disk)

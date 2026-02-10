@@ -4,7 +4,7 @@
 GMC_EXPORT const char* PakGetName();
 GMC_EXPORT const char* PakGetCatalogId();
 GMC_EXPORT void PakInitialize(
-	void* const callback_context,
+	slot_id_type SlotId,
 	const char* const configuration_path,
 	HWND hVccWnd,
 	const cpak_callbacks* const callbacks);

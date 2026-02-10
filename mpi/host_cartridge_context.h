@@ -21,7 +21,7 @@
 // Define the CPAK interface in yet another place but call it something else.
 
 extern "C" __declspec(dllexport) void PakInitialize(
-	void* const callback_context,
+	slot_id_type SlotId,
 	const char* const configuration_path,
 	HWND hVccWnd,
 	const cpak_callbacks* const callbacks);
@@ -37,9 +37,9 @@ public:
 
 public:
 
-	explicit host_cartridge_context(void* callback_context, const path_type& configuration_filename)
+	explicit host_cartridge_context(slot_id_type SlotId, const path_type& configuration_filename)
 		:
-		callback_context_(callback_context),
+		SlotId_(SlotId),
 		configuration_filename_(configuration_filename)
 	{}
 
@@ -55,33 +55,33 @@ public:
 
 	void write_memory_byte(unsigned char value, unsigned short address) override
 	{
-		write_memory_byte_(callback_context_, value, address);
+		write_memory_byte_(SlotId_, value, address);
 	}
 
 	unsigned char read_memory_byte(unsigned short address) override
 	{
-		return read_memory_byte_(callback_context_, address);
+		return read_memory_byte_(SlotId_, address);
 	}
 
 	void assert_cartridge_line(bool line_state) override
 	{
-		assert_cartridge_line_(callback_context_, line_state);
+		assert_cartridge_line_(SlotId_, line_state);
 	}
 
 	void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) override
 	{
-		assert_interrupt_(callback_context_, interrupt, interrupt_source);
+		assert_interrupt_(SlotId_, interrupt, interrupt_source);
 	}
 
 	void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) override
 	{
-		add_menu_item_(callback_context_, menu_name, menu_id, menu_type);
+		add_menu_item_(SlotId_, menu_name, menu_id, menu_type);
 	}
 
 private:
 
 	friend void PakInitialize(
-		void* const callback_context,
+		slot_id_type SlotId,
 		const char* const configuration_path,
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks);
@@ -90,11 +90,11 @@ private:
 
 private:
 
-	void* const							callback_context_;
+	slot_id_type						SlotId_;
 	const path_type&					configuration_filename_;
-	PakWriteMemoryByteHostCallback		write_memory_byte_ = [](void*, unsigned char, unsigned short) {};
-	PakReadMemoryByteHostCallback		read_memory_byte_ = [](void*, unsigned short) -> unsigned char { return 0; };
-	PakAssertCartridgeLineHostCallback	assert_cartridge_line_ = [](void*, bool) {};
-	PakAssertInteruptHostCallback		assert_interrupt_ = [](void*, Interrupt, InterruptSource) {};
-	PakAppendCartridgeMenuHostCallback	add_menu_item_ = [](void*, const char*, int, MenuItemType) {};
+	PakWriteMemoryByteHostCallback		write_memory_byte_ = [](slot_id_type, unsigned char, unsigned short) {};
+	PakReadMemoryByteHostCallback		read_memory_byte_ = [](slot_id_type, unsigned short) -> unsigned char { return 0; };
+	PakAssertCartridgeLineHostCallback	assert_cartridge_line_ = [](slot_id_type, bool) {};
+	PakAssertInteruptHostCallback		assert_interrupt_ = [](slot_id_type, Interrupt, InterruptSource) {};
+	PakAppendCartridgeMenuHostCallback	add_menu_item_ = [](slot_id_type, const char*, int, MenuItemType) {};
 };

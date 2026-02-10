@@ -35,7 +35,7 @@ GMC_EXPORT const char* PakGetDescription()
 
 
 GMC_EXPORT void PakInitialize(
-	void* const callback_context,
+	slot_id_type SlotId,
 	const char* const configuration_path,
 	HWND hVccWnd,
 	const cpak_callbacks* const callbacks)
@@ -47,7 +47,7 @@ GMC_EXPORT void PakInitialize(
             callbacks->read_memory_byte,
             callbacks->add_menu_item);
 
-	Cartridge::m_Singleton->SetCallbackContext(callback_context);
+	Cartridge::m_Singleton->SetSlotId(SlotId);
 	Cartridge::m_Singleton->SetMenuBuilderCallback(callbacks->add_menu_item);
 	Cartridge::m_Singleton->SetCartLineAssertCallback(callbacks->assert_cartridge_line);
 	Cartridge::m_Singleton->SetConfigurationPath(configuration_path);

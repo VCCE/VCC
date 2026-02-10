@@ -99,27 +99,27 @@ struct vcc_cartridge_context : public ::VCC::Core::cartridge_context
 	}
 };
 
-static void PakAssertCartrigeLine(void* /*callback_context*/, bool line_state)
+static void PakAssertCartrigeLine(slot_id_type /*SlotId*/, bool line_state)
 {
 	SetCart(line_state);
 }
 
-static void PakWriteMemoryByte(void* /*callback_context*/, unsigned char data, unsigned short address)
+static void PakWriteMemoryByte(slot_id_type /*SlotId*/, unsigned char data, unsigned short address)
 {
 	MemWrite8(data, address);
 }
 
-static unsigned char PakReadMemoryByte(void* /*callback_context*/, unsigned short address)
+static unsigned char PakReadMemoryByte(slot_id_type /*SlotId*/, unsigned short address)
 {
 	return MemRead8(address);
 }
 
-static void PakAssertInterupt(void* /*callback_context*/, Interrupt interrupt, InterruptSource source)
+static void PakAssertInterupt(slot_id_type /*SlotId*/, Interrupt interrupt, InterruptSource source)
 {
 	PakAssertInterupt(interrupt, source);
 }
 
-static void PakAddMenuItem(void* /*callback_context*/, const char* name, int menu_id, MenuItemType type)
+static void PakAddMenuItem(slot_id_type /*SlotId*/, const char* name, int menu_id, MenuItemType type)
 {
 	CartMenuCallBack(name, menu_id, type);
 }
@@ -298,10 +298,12 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 		PakAddMenuItem
 	};
 
+	slot_id_type SlotId = 0;
+
 	auto loadedCartridge = VCC::Core::load_cartridge(
 		filename,
 		std::move(vccContext),
-		nullptr,                 // pakContainer goes here  
+		SlotId, 
 		iniPath,
 		EmuState.WindowHandle,
 		callbacks);

@@ -164,8 +164,9 @@ namespace util = ::VCC::Util;
 static HINSTANCE gModuleInstance; // Dll handle
 static int idle_ctr = 0; // Idle Status counter
 
+static slot_id_type gSlotId {};
+
 // Callback pointers
-static void* gCallbackContext = nullptr;
 static PakAssertInteruptHostCallback AssertIntCallback = nullptr;
 static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 
@@ -301,14 +302,14 @@ extern "C"
 {
     // PakInitialize gets called first, sets up dynamic menues and captures callbacks
     __declspec(dllexport) void PakInitialize(
-        void* const callback_context,
+        slot_id_type SlotId,
         const char* const configuration_path,
         HWND hVccWnd,
         const cpak_callbacks* const callbacks)
     {
         gVccWindow = hVccWnd;
         DLOG_C("SDC %p %p %p %p %p\n",*callbacks);
-        gCallbackContext = callback_context;
+        gSlotId = SlotId;
         CartMenuCallback = callbacks->add_menu_item;
         AssertIntCallback = callbacks->assert_interrupt;
         strcpy(IniFile, configuration_path);
@@ -435,9 +436,9 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 //-------------------------------------------------------------
 void BuildCartridgeMenu()
 {
-    CartMenuCallback(gCallbackContext, "", MID_BEGIN, MIT_Head);
-    CartMenuCallback(gCallbackContext, "", MID_ENTRY, MIT_Seperator);
-    CartMenuCallback(gCallbackContext, "SDC Drive 0",MID_ENTRY,MIT_Head);
+    CartMenuCallback(gSlotId, "", MID_BEGIN, MIT_Head);
+    CartMenuCallback(gSlotId, "", MID_ENTRY, MIT_Seperator);
+    CartMenuCallback(gSlotId, "SDC Drive 0",MID_ENTRY,MIT_Head);
     char tmp[64]={};
     if (strcmp(gCocoDisk[0].name,"") == 0) {
         strcpy(tmp,"empty");
@@ -449,9 +450,9 @@ void BuildCartridgeMenu()
             strcat(tmp," (no next)");
         }
     }
-    CartMenuCallback(gCallbackContext, tmp, ControlId(11),MIT_Slave);
-    CartMenuCallback(gCallbackContext, "SDC Config", ControlId(10), MIT_StandAlone);
-    CartMenuCallback(gCallbackContext, "", MID_FINISH, MIT_Head);
+    CartMenuCallback(gSlotId, tmp, ControlId(11),MIT_Slave);
+    CartMenuCallback(gSlotId, "SDC Config", ControlId(10), MIT_StandAlone);
+    CartMenuCallback(gSlotId, "", MID_FINISH, MIT_Head);
 }
 
 //------------------------------------------------------------
@@ -1275,7 +1276,7 @@ void SDCFloppyRestore()
     FlopStatus = FLP_NORMAL;
     FlopWrCnt = 0;
     FlopRdCnt = 0;
-    AssertIntCallback(gCallbackContext, INT_NMI, IS_NMI);
+    AssertIntCallback(gSlotId, INT_NMI, IS_NMI);
 }
 
 //----------------------------------------------------------------------
@@ -1368,7 +1369,7 @@ void SDCFloppyWriteData(unsigned char data)
     } else {
         FlopStatus = FLP_NORMAL;
         if ((FlopStatus &= FLP_DATAREQ) != 0)
-            AssertIntCallback(gCallbackContext, INT_NMI, IS_NMI);
+            AssertIntCallback(gSlotId, INT_NMI, IS_NMI);
     }
     FlopData = data;
 }
@@ -1393,7 +1394,7 @@ unsigned char SDCFloppyReadData()
         FlopRdCnt--;
     } else {
         if ((FlopStatus &= FLP_DATAREQ) != 0)
-            AssertIntCallback(gCallbackContext, INT_NMI, IS_NMI);
+            AssertIntCallback(gSlotId, INT_NMI, IS_NMI);
         FlopStatus = FLP_NORMAL;
         rpy = 0;
     }

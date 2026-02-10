@@ -964,7 +964,7 @@ void DispatchCommand(unsigned char Tmp)
 			StatusReg=READY;
 			ExecTimeWaiter=1;
 			if ((Tmp & 15) != 0)
-				AssertInt(gCallbackContext, INT_NMI,IS_NMI);
+				AssertInt(gSlotId, INT_NMI,IS_NMI);
 //			WriteLog("FORCEINTERUPT",0);
 			break;
 
@@ -1309,7 +1309,7 @@ long GetSectorInfo (SectorInfo *Sector,const unsigned char *TempBuffer)
 void CommandDone()
 {
 	if (InteruptEnable)
-		AssertInt(gCallbackContext, INT_NMI,IS_NMI);
+		AssertInt(gSlotId, INT_NMI,IS_NMI);
 	TransferBufferSize=0;
 	CurrentCommand=IDLE;
 }

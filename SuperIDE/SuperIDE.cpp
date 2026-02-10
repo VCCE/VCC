@@ -50,8 +50,7 @@ static bool ClockReadOnly = true;
 static unsigned char DataLatch=0;
 static HINSTANCE gModuleInstance;
 static HWND hConfDlg = nullptr;
-static void* gCallbackContextPtr = nullptr;
-static void* const& gCallbackContext(gCallbackContextPtr);
+static slot_id_type gSlotId {};
 
 using namespace std;
 
@@ -87,12 +86,12 @@ extern "C"
 	}
 
 	__declspec(dllexport) void PakInitialize(
-		void* const callback_context,
+		slot_id_type SlotId,
 		const char* const configuration_path,
         HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
-		gCallbackContextPtr = callback_context;
+		gSlotId = SlotId;
 		CartMenuCallback = callbacks->add_menu_item;
 		strcpy(IniFile, configuration_path);
 
@@ -221,24 +220,24 @@ void BuildCartridgeMenu()
 {
 	char TempMsg[512]="";
 	char TempBuf[MAX_PATH]="";
-	CartMenuCallback(gCallbackContext, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gCallbackContext, "", MID_ENTRY, MIT_Seperator);
-	CartMenuCallback(gCallbackContext, "IDE Master",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gCallbackContext, "Insert",ControlId(10),MIT_Slave);
+	CartMenuCallback(gSlotId, "", MID_BEGIN, MIT_Head);
+	CartMenuCallback(gSlotId, "", MID_ENTRY, MIT_Seperator);
+	CartMenuCallback(gSlotId, "IDE Master",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gSlotId, "Insert",ControlId(10),MIT_Slave);
 	QueryDisk(MASTER,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback(gCallbackContext, TempMsg,ControlId(11),MIT_Slave);
-	CartMenuCallback(gCallbackContext, "IDE Slave",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gCallbackContext, "Insert",ControlId(12),MIT_Slave);
+	CartMenuCallback(gSlotId, TempMsg,ControlId(11),MIT_Slave);
+	CartMenuCallback(gSlotId, "IDE Slave",MID_ENTRY,MIT_Head);
+	CartMenuCallback(gSlotId, "Insert",ControlId(12),MIT_Slave);
 	QueryDisk(SLAVE,TempBuf);
 	strcpy(TempMsg,"Eject: ");
 	PathStripPath (TempBuf);
 	strcat(TempMsg,TempBuf);
-	CartMenuCallback(gCallbackContext, TempMsg,ControlId(13),MIT_Slave);
-	CartMenuCallback(gCallbackContext, "IDE Config",ControlId(14),MIT_StandAlone);
-	CartMenuCallback(gCallbackContext, "", MID_FINISH, MIT_Head);
+	CartMenuCallback(gSlotId, TempMsg,ControlId(13),MIT_Slave);
+	CartMenuCallback(gSlotId, "IDE Config",ControlId(14),MIT_StandAlone);
+	CartMenuCallback(gSlotId, "", MID_FINISH, MIT_Head);
 }
 
 LRESULT CALLBACK IDE_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)

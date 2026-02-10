@@ -30,7 +30,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/util/logger.h>
 
 static HINSTANCE gModuleInstance;
-static void* gCallbackContext = nullptr;
+static slot_id_type gSlotId {};
 static PakAssertCartridgeLineHostCallback PakSetCart = nullptr;
 static unsigned char LeftChannel=0,RightChannel=0;
 static unsigned char Rom[8192];
@@ -67,13 +67,13 @@ extern "C"
 	}
 
 	__declspec(dllexport) void PakInitialize(
-		void* const callback_context,
+		slot_id_type SlotId,
 		const char* const /*configuration_path*/,
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
 		DLOG_C("orch90 init\n");
-		gCallbackContext = callback_context;
+		gSlotId = SlotId;
 		PakSetCart = callbacks->assert_cartridge_line;
 	}
 
@@ -100,7 +100,7 @@ extern "C"
 	__declspec(dllexport) void PakReset()
 	{
 		DLOG_C("orch90 reset\n");
-		if (LoadRom()) PakSetCart(gCallbackContext, 1);
+		if (LoadRom()) PakSetCart(gSlotId, 1);
 	}
 
 	__declspec(dllexport) unsigned char PakReadMemoryByte(unsigned short Address)

@@ -69,7 +69,7 @@ extern char AciaFileRdPath[MAX_PATH]; // Path for file reads
 extern char AciaFileWrPath[MAX_PATH]; // Path for file writes
 
 extern PakAssertInteruptHostCallback AssertInt;
-extern void* const& gCallbackContext;
+extern slot_id_type gSlotId;
 
 // Device
 extern void sc6551_init();
