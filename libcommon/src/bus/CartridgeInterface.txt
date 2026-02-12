@@ -1,29 +1,26 @@
 
-This attempts to describe the cartridge interface design for VCC
+This describes the cartridge interface design for VCC
 
 ---
 
 # VCC Cartridge Types
 
-VCC emulates the physical cartridges that could be plugged into the side expansion slot of a CoCo 3
-or into a MultiPak Interface. VCC supports three main categories of cartridges:
+VCC emulates the physical cartridges that could be plugged into the side expansion slot
+of a CoCo 3 or into a MultiPak Interface. VCC supports three main categories of cartridges:
 
 ---
 
 ## 1. ROM Cartridges
 
-ROM cartridges contain only read-only memory and the minimal hardware needed to expose that memory
-to the CoCo 3.
+ROM cartridges contain only read-only memory and the minimal hardware needed to expose that
+memory to the CoCo 3.
 
-**Key characteristics:**
+**Characteristics:**
 
 - Typically contain 6809 or 6309 executable code.
 - The CoCo reads data directly from mapped ROM addresses.  
 - Some cartridges support bank switching by writing to I/O ports.
 - In VCC, all ROM banking logic is implemented inside the emulator itself.
-
-**Implications for VCC:**
-
 - ROM cartridges require no host-side code.  
 - They are stored as simple binary files.
 - Some ROM files include headers or signatures to indicate special mapping or banking behavior.  
@@ -47,7 +44,7 @@ These cartridges require host-side x86 code to emulate their hardware behavior.
 
 - Hardware cartridges are implemented as **Windows DLLs**.  
 - VCC identifies them by checking for the `MZ` signature at the start of the file.
-- Hardware DLL's must export the initCart call to be valid
+- Hardware DLL's must export the PakInitialize call to be valid
 - ROM data for these cartridges is usually stored separately, though this is not required.  
 - Some hardware cartridges can load multiple ROMs and switch between them under program control.  
 - The DLL is responsible for loading and managing these ROMs.  
@@ -59,8 +56,8 @@ These cartridges require host-side x86 code to emulate their hardware behavior.
 
 ## 3. MultiPak Cartridge (MPI)
 
-MultiPak it not a true cartridge, it is a bus expansion that acts as hosts for other hardware
-cartridges.
+MultiPak is a special type of hardware cartridge, not really a true cartridge, it is a
+bus expansion that acts as hosts for other hardware cartridges.
 
 **Capabilities:**
 
@@ -97,18 +94,20 @@ The cartridge loader determines the cartridge type using the following sequence:
 
 5. Continue with loading and initialization
 
-
 ---
 
-Cartridge Exports
+#Cartridge Exports
 
 DLL's can export any of the following calls
 
-  Get cart type and capabilities (required)
-  	Const cart_capabilities* PakGetCapabilities (void);
+  Initiate pack (REQUIRED)
+  	PakInitialize (SLotId, settings_path, hVccWnd, &callbacks);
 
-  Initiate pack (required)
-  	PakInitialize (slot_context, settings_path, hVccWnd_, &callbacks);
+  Retrieve cart menu (NEW)
+    PakGetMenuItems(menu_items, count);
+ 
+  Get cart capabilities (PROPOSED)
+  	PakGetCapabilities (void);
 
   Terminate pack, prepare for DLL unload
   	PakTerminate ()
@@ -137,7 +136,7 @@ DLL's can export any of the following calls
   Read I/O port
   	unsigned char PakReadPort (Port)
 
-  Read ROM byten
+  Read ROM byte
   	unsigned char PakReadMemoryByte (Address)
 
   Sample audio line
@@ -148,57 +147,43 @@ DLL's can export any of the following calls
 
 ---
 
-Callbacks
+#Callbacks
 
-  void assert_cartridge_line(slot_context, bool line_state) = 0;
-  void assert_interrupt(slot_context, Interrupt interrupt, InterruptSource interrupt_source) = 0;
-  void write_memory_byte(slot_context, unsigned char value, unsigned short address) = 0;
-  unsigned char read_memory_byte(slot_context, unsigned short address) = 0;
-  void add_menu_item(slot_context, const char* menu_name, int menu_id, MenuItemType menu_type) = 0;
+Callbacks are used by cartridge DLL's to initiate host (or MPI) actions. The
+following callbacks currently exist:
 
-It has recently been recognized that there are two classes of callbacks:
+  assert_cartridge_line (SlotId, line_state)
 
-- Fast callbacks initiated by events in the CPU loop like asserting interrupts, cart
-lines, or reading and writing memory to handle DMA requests.  These must be syncronous
-and return quickly to not affect emulator timing.  Fast callbacks must use the already
-in place callback mechanisms.  Fast callbacks are determined by Coco's physical bus and
-are not likely to change.
+  assert_interrupt (SlotId, interrupt, interrupt_source)
 
-- Slow callbacks initiated by UI like adding menu items or inserting cartridges in slots.
-These can be asyncronous and can rely on exports to recieve replies. A perfect mechanism
-for slow callbacks already exists for free - the main window message loop.  A cartridge 
-can send a message to the  main window and let VCC main dispatch it.  Enhancements to 
-cartridge UI that require future changes or additions should use these callbacks.
+  write_memory_byte (SlotId, value, address)
 
-In the current codebase the messaging mechanism is already being used for a callback. When
-the MPI needs to initiate a hard VCC reset is does so by sending a message to WinMain.
+  read_memory_byte (SlotId, unsigned short address)
+
+  add_menu_item (SlotId, menu_name, menu_id, menu_type)  **depreciated**
+
+SlotId is used by the MPI to filter assert_cartridge_line and to bias menu items. 
+
+There are two type of callbacks:
+
+- Fast callbacks initiated by 6x09 code running inside the CPU loop such as asserting
+interrupts, cart lines, or reading and writing memory to handle DMA requests. These
+are syncronous and must return quickly to not affect emulator timing. Fast callbacks
+are determined by Coco3's physical bus and are not likely to change.
+
+- Notifications initiated by cartridge UI events like adding menu items or inserting
+cartridges in slots. These are asyncronous and can rely on DLL exports for details.
+A good mechanism for these is Vcc's main window message loop. The main window handle
+(hVccWnd) has been added to PakInitialize() and a message to it is used by the MPI to
+initiate a VCC reset.
 
 The add_menu_item callback is not tied to the CPU loop and qualifies as a slow callback.
-This callback will be replaced by a Windows message.
+This callback is being replaced by windows menu item change message and a new export.
+See **CartridgeMenuSystem.txt** for a description of this change.               
 
 ---
 
-The dynamic cartridge menu system.
-
-When cartridges are loaded or unloaded the Cartridge menu must be changed to show items for
-controlling the cartridges. Traditionally the Pakinterface generated the first menu item which
-gives users control over which cartridge is plugged into the side of the coco. If that
-cartridge is the MPI additional menu items are added, the first such item brings up a MPI 
-configuration dialog.  That dialog shows the user what carts are in MPI slots, which cart
-is selected at boot (CTS), a description of the cart in that slot, and controls allowing users
-to modify these settings.  After the MPI config menu item additional menu items are added
-for cartridges currently in MPI slots.  These menu items are added by carts as they are
-initialized. Each cartridge, starting with the MPI, then carts in slots 4 through 1, are 
-intialized. When a cart is initialized to generates AddMenuitem callbacks for it's menu item.
-
-Using the cartridge initialization export to initiate the addition of menu items causes an 
-issue if a cart is removed or added after VCC has started up, specifically carts should not
-be initialized a second time after loading. So add menu item messages are saved in a list and
-the cart menu is cleared then the list is traversed to retore the menuitems after each change.
-
----
-
-New Design Philosophy For The MPI  (Not yet implemented)
+#A New Design Philosophy For The MPI  (In progress)
 
 VCC and forks of VCC use run-time loading and unloading of dynamic libraries to simulate
 the inserting and removing of Cartridges.
@@ -211,17 +196,11 @@ call cartridge DLLs directly there are now two modules, VCC and MPI, that need t
 cartridge lifetimes, handles, exports, and inports. All loading and unloading of carts belongs
 in one place and that place is the PakInterface part of VCC main.
 
-When slot management is moved to the Pakinterface the logic that controls the CTS and SCS and
+If slot management is moved to the Pakinterface the logic that controls the CTS and SCS and
 the management of saved slot content settings must move too.  The pakinterface must share this
 information with the MPI DLL which becomes purely a user interface.
 
-Moving cartridge and slot management from the MPI to the Pakinterface would seem to require
-extensive changes to the interface.  This document attemps to explain how such a move can be 
-done with minimal risk.
-
----
-
-To wrap up the pakinterface slot management concept:
+The pakinterface slot management concept:
 
 - The pakinterface maintains a list indexed by slot number of loaded cartridges.
 
@@ -240,18 +219,18 @@ To wrap up the pakinterface slot management concept:
 
 - pakInterface sends MPI changes to CTS/SCS via a new MPI export
 
-- The opaque slot_context is renamed to slot_context and is made transparent. Some carts don't
-  work right if they are not a specific slot. They can use slot_number to verify the slot they
-  are in is valid.
+- The opaque slot_context is renamed to SlotId (0-4) and is made transparent. Some carts
+  don't work right if they are not a specific slot. They can use SlotId to verify the slot
+  they are in is right for them. (This has been completed)
 
-- on request pakInterface sends MPI active cart description via a new MPI export
+- On request pakInterface sends MPI active cart description via a new MPI export
 
-- on request pakInterface sends MPI slot contents
+- On request pakInterface sends MPI slot contents
 
 - Then MPI should never call a cartridge DLL directly. It should always request actions through
   messages to the pakInterface using the WinMain message loop.
 
-- The MPI saves the startup slot setting. Changing this causes no changes to running CPI
+- The MPI saves the startup slot setting. Changing this causes no changes to running CPU
 
 - The MPI requests cartridge loads / unloads by sending messages to WinMain.
 
@@ -267,14 +246,11 @@ To wrap up the pakinterface slot management concept:
 
 Implementation Plan
 
-1. Solidify methods for sending and interpreting messages from DLL's to WinMain message loop.
-   Use the VCC Reset message from MPI Config to prove the methods.
+1. Replace opaque slot_context pointer in init export with transparent SlotId. Cartridges can
+   use SlotId or simply return it in callbacks.  (This is complete)
 
-2. Replace the AddCartMenu callback with a message and modify pakinterface to maintain the cartridge
-   dynamic menus.
+2. Replace the AddCartMenu callback with a message and modify pakinterface to maintain the
+   cartridge dynamic menus. See **CartridgeMenuSystem.txt** for more description.
 
 3. Move slot maintenance, cartridge loading, and cartidge calls from MPI to pakinterface.
-
-4. Cartridges can use slot_id from transparent slot_context, if desired.
-
 
