@@ -31,7 +31,6 @@ cartridge_menu gCartMenu;
 // ------------------------------------------------------------
 HMENU cartridge_menu::draw(HWND hWnd, int position, const std::string& title)
 {
-	PrintLogC("Draw\n");
 	auto hMenuBar = GetMenu(hWnd);
 
 	// Erase the Existing Cartridge Menu.  Vcc.rc defines

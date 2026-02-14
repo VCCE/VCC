@@ -77,17 +77,11 @@ private:
 
 public:
 
-	// Constructor maybe logs
-	cartridge_menu() {
-		PrintLogC("Construct\n");
-	}
+	// Constructor
+	cartridge_menu() {}
 
     // Clear all items
-    void clear()
-	{
-		PrintLogC("Clear\n");
-		menu_.clear();
-	}
+    void clear() { menu_.clear(); }
 
     // Reserve capacity (for deterministic growth)
     void reserve(size_t count) { menu_.reserve(count); }
