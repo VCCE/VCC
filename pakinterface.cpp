@@ -19,13 +19,15 @@
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "tcc1014registers.h"
-#include "CartridgeMenu.h"
+#include "CartridgeMenu.h"  //OLD
 #include "pakinterface.h"
 #include "config.h"
 #include "Vcc.h"
 #include "mc6821.h"
 #include "resource.h"
 #include <vcc/bus/null_cartridge.h>
+#include <vcc/bus/cartridge_menu.h>
+#include <vcc/bus/cartridge_messages.h>
 #include <vcc/bus/dll_deleter.h>
 #include <vcc/util/limits.h>
 #include <vcc/util/winapi.h>
@@ -69,7 +71,7 @@ struct vcc_cartridge_context : public ::VCC::Core::cartridge_context
 
 	void reset() override
 	{
-		//SendMessage(EmuState.WindowHandle,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
+		//SendMessage(EmuState.WindowHandle,WM_COMMAND,(WPARAM) IDC_MSG_CPU_RESET,(LPARAM) 0);
 		EmuState.ResetPending = 2;
 	}
 
@@ -188,8 +190,38 @@ unsigned short PackAudioSample()
 	return gActiveCartrige->sample_audio();
 }
 
+// Temporary bridge from old to new
+
+
+// Build entries for cartridge menu.
+void BuildCartMenu()
+{
+	// lock goes into program paks, not needed here
+	//VCC::Util::section_locker lock(gPakMutex);
+	using VCC::Bus::gCartMenu;
+	gCartMenu.clear();
+	gCartMenu.add("Cartridge", 0, MIT_Head);
+	if (!gActiveCartrige->name().empty()) {
+		std::string tmp = "Eject " + gActiveCartrige->name();
+		gCartMenu.add(tmp, ControlId(2), MIT_Slave);
+		// Add items from loaded pak
+		menu_item_entry item;
+		for (size_t index=0;index<MAX_MENU_ITEMS;index++) {
+			if (gActiveCartrige->get_menu_item(&item,index)) {
+				gCartMenu.add(item.name,item.menu_id,item.type);
+			} else {
+				break;
+			}
+		}
+	} else {
+		gCartMenu.add("Load MPI", ControlId(3), MIT_Slave);
+		gCartMenu.add("Load DLL", ControlId(1), MIT_Slave);
+		gCartMenu.add("Load ROM", ControlId(4), MIT_Slave);
+	}
+}
+
 // Create entries for cartridge menu. The rest will be for MPI
-// ControlId(MenuId) set what control does
+// ControlId(MenuId) set what control does **OLD***
 void BeginCartMenu()
 {
 	VCC::Util::section_locker lock(gPakMutex);
@@ -321,7 +353,8 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	strcpy(DllPath, filename);
 	gActiveCartrige = move(loadedCartridge.cartridge);
 	gActiveModule = move(loadedCartridge.handle);
-	BeginCartMenu();
+	BeginCartMenu(); // OLD
+	SendMessage(EmuState.WindowHandle,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 
 	// initialize the cartridge
 	gActiveCartrige->start();
@@ -342,7 +375,8 @@ void UnloadDll()
 	gActiveCartrige = std::make_unique<VCC::Core::null_cartridge>();
 	gActiveModule.reset();
 
-	BeginCartMenu();
+	BeginCartMenu(); //OLD
+	SendMessage(EmuState.WindowHandle,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 	gActiveCartrige->start();
 }
 

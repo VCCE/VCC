@@ -260,6 +260,33 @@ void multipak_cartridge::menu_item_clicked(unsigned char menu_item_id)
 	}
 }
 
+bool multipak_cartridge::get_menu_item(
+			menu_item_entry* item, size_t index)
+{
+
+// build list	
+//		for (int mpi_slot = 3; mpi_slot >= 0; mpi_slot--)
+//		{
+//			return false;
+//		}	
+
+	// Test
+	switch (index) {
+	case 0:
+		strcpy(item->name,"");
+		item->menu_id = 0;
+		item->type = MIT_Seperator;
+		return true;
+	case 1:
+		strcpy(item->name,"MPI Config");
+		item->menu_id = ControlId(19);
+		item->type = MIT_StandAlone;
+		return true;
+	default:
+		return false;
+	}
+}
+
 
 multipak_cartridge::label_type multipak_cartridge::slot_label(slot_id_type mpi_slot) const
 {

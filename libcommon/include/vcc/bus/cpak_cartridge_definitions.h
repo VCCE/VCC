@@ -22,6 +22,7 @@
 
 #pragma once
 #include <vcc/util/interrupts.h>
+#include <vcc/bus/cartridge_menuitem.h> // for MenuItemType
 #include <cstddef>   // for std::size_t
 #include <windows.h>
 
@@ -74,5 +75,5 @@ extern "C"
 	using PakReadPortModuleFunction        = unsigned char (*)(unsigned char port);
 	using PakSampleAudioModuleFunction     = unsigned short (*)();
 	using PakMenuItemClickedModuleFunction = void (*)(unsigned char itemId);
-
+	using PakGetMenuItemFunction           = bool (*)(menu_item_entry* item, size_t index);
 }

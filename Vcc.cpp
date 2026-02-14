@@ -78,6 +78,9 @@
 #include "MMUMonitor.h"
 #include "ExecutionTrace.h"
 
+#include <vcc/bus/cartridge_menu.h>
+#include <vcc/bus/cartridge_messages.h>
+
 #if USE_DEBUG_MOUSE
 #include "IDisplayDebug.h"
 #endif
@@ -119,6 +122,7 @@ void raise_saved_keys();
 void FunctionHelpBox(HWND);
 void SetupClock();
 HMENU GetConfMenu();
+HMENU DrawCartMenu(HWND hWnd);
 
 // Globals
 static 	HANDLE hEMUThread ;
@@ -133,7 +137,8 @@ static unsigned char FlagEmuStop=TH_RUNNING;
 
 bool IsShiftKeyDown();
 
-CartridgeMenu CartMenu;
+CartridgeMenu CartMenu;    //OLD
+using VCC::Bus::gCartMenu; //NEW
 
 static bool gHasFocus {};
 
@@ -144,6 +149,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 					  _In_ LPSTR    lpCmdLine,
 					  _In_ int       nCmdShow)
 {
+
 	MSG  Msg;
 
 	EmuState.WindowInstance = hInstance;
@@ -164,6 +170,10 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	LoadConfig(&EmuState);
 	EmuState.ResetPending=2; // after LoadConfig pls
 	InitInstance(hInstance, nCmdShow);
+
+	// Fill initial cartridge menu before main win starts?
+	BuildCartMenu();
+
 	if ((CmdArg.NoOutput && !CreateNullWindow(&EmuState)) ||
 		(!CmdArg.NoOutput && !CreateDDWindow(&EmuState)))
 	{
@@ -171,9 +181,9 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		exit(0);
 	}
 
-	// Set up the cartridge menu. This gets drawn after modules are loaded
-	CartMenu.init();
-	BeginCartMenu();
+	// initial set up the cartridge menu.
+	CartMenu.init();  //old
+	BeginCartMenu();  //old
 
 	InitSound();
 	LoadModule();
@@ -303,7 +313,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			// Parse the menu selections:
 			
 			// Check if ID is in cartridge menu range
-			if ( (wmId >= MID_CONTROL) & (wmId < MID_CONTROL + 250) )
+			if ( (wmId >= MID_CONTROL) & (wmId < MID_CONTROL + 200) )
 			{
 				CartMenuActivated(wmId-MID_CONTROL);
 				break;
@@ -352,8 +362,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 
 				case ID_FILE_RESET:
+				case IDC_MSG_CPU_RESET:
 					if (EmuState.EmulationRunning)
 						EmuState.ResetPending=2;
+					break;
+
+				case IDC_MSG_UPD_MENU:
+					BuildCartMenu();
+					DrawCartMenu(hWnd);
 					break;
 
 				case ID_FILE_RUN:
@@ -432,13 +448,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
-#ifdef _LEGACY_VCC
 		case WM_CREATE:
+			DrawCartMenu(hWnd);
+#ifdef _LEGACY_VCC
 			{	char title[80] = "Legacy ";
 				strncat(title,g_szAppName,80);
 				SetWindowTextA(hWnd,title); }
-			break;
 #endif
+			break;
 
 		case WM_SETCURSOR:
 			// Hide mouse cursor
@@ -568,7 +585,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					if ( IsShiftKeyDown() ) {
 						hMenu = GetConfMenu();
 					} else {
-						hMenu = CartMenu.draw();
+						hMenu = DrawCartMenu(hWnd);
 					}
 					if (hMenu && EmuState.FullScreen) {
 						RECT r;
@@ -685,6 +702,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return 0;
 	}
 	return DefWindowProc(hWnd, message, wParam, lParam);
+}
+
+//--------------------------------------------------------------------------
+// Draw the cartridge menu 
+//--------------------------------------------------------------------------
+HMENU DrawCartMenu (HWND hWnd)
+{
+	gCartMenu.log();
+	return gCartMenu.draw(hWnd,5,"Cartridge");
 }
 
 //--------------------------------------------------------------------------

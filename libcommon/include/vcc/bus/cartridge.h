@@ -17,15 +17,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
+#include <vcc/bus/cartridge_menuitem.h>
 #include <string>
 
 namespace VCC::Core
 {
-
 	struct LIBCOMMON_EXPORT cartridge
 	{
 	public:
-        // In Chet's workd strings get a typedef because that keeps things opaque
 		using name_type = std::string;
 		using catalog_id_type = std::string;
 		using description_type = std::string;
@@ -52,6 +51,7 @@ namespace VCC::Core
 		virtual void status(char* text_buffer, size_t buffer_size) = 0;
 		virtual unsigned short sample_audio() = 0;
 		virtual void menu_item_clicked(unsigned char menu_item_id) = 0;
+		virtual bool get_menu_item(menu_item_entry* item, size_t index) = 0;
 	};
 
 }

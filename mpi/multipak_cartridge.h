@@ -20,6 +20,7 @@
 #include "multipak_configuration.h"
 #include <vcc/bus/basic_cartridge.h>
 #include <vcc/bus/cartridge_loader.h>
+#include <vcc/bus/cartridge_menuitem.h>
 #include <vcc/util/critical_section.h>
 #include "../CartridgeMenu.h"
 #include <array>
@@ -67,6 +68,7 @@ public:
 	void status(char* text_buffer, size_t buffer_size) override;
 	unsigned short sample_audio() override;
 	void menu_item_clicked(unsigned char menu_item_id) override;
+	bool get_menu_item(menu_item_entry* item, size_t index) override;
 
 	//	Multi-pak implementation
 	label_type slot_label(slot_id_type slot) const;

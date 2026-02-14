@@ -32,6 +32,7 @@ void GetCurrentModule(char *);
 void UpdateBusPointer();
 void UnloadDll();
 void UnloadPack();
-void BeginCartMenu();
+void BeginCartMenu(); //Remove this after testing
+void BuildCartMenu();
 void CartMenuActivated(unsigned int);
 
