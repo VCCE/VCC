@@ -84,4 +84,8 @@ namespace VCC::Core
 	void basic_cartridge::initialize_bus()
 	{}
 
+	bool basic_cartridge::get_menu_item( menu_item_entry* item, size_t index)
+	{ 
+		return false;
+	}
 }

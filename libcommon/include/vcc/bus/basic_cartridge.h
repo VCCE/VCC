@@ -48,12 +48,11 @@ namespace VCC::Core
 		void status(char* text_buffer, size_t buffer_size) override;
 		unsigned short sample_audio() override;
 		void menu_item_clicked(unsigned char menu_item_id) override;
-
+		bool get_menu_item(menu_item_entry* item, size_t index) override;
 
 	protected:
 
 		virtual void initialize_pak();
 		virtual void initialize_bus();
 	};
-
 }

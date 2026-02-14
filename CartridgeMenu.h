@@ -21,6 +21,7 @@
 #include <Windows.h>
 #include <vector>
 #include <string>
+#include <vcc/bus/cartridge_menuitem.h> // for menu item type
 
 // A menu ID is either a small unsigned integer less than or equal to 50 used
 // to identify cart menu functions with control id in the range 5000 - 5050.
@@ -45,16 +46,6 @@ constexpr auto MID_CONTROL = 5000;
 
 // constexpr to convert menu id number to control id
 constexpr int ControlId(int id) { return MID_CONTROL + id; };
-
-// Menu item types, one of the following.
-enum MenuItemType
-{
-	MIT_Head,       // Menu header with no associated control, may have slave items
-	MIT_Slave,      // Slave items with associated control in header submenu.
-	MIT_StandAlone, // Menu item with an associated control
-	MIT_Seperator,  // Draws a horizontal line to seperate groups of menu items
-};
-
 
 struct CartMenuItem {
 	std::string name;

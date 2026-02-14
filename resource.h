@@ -412,6 +412,12 @@
 #define IDC_EDIT_RANGE_BEG              2152
 #define IDC_EDIT_RANGE_END              2153
 #define IDC_EDIT_RANGE_SEP              2154
+
+//-----------------------------------------------------
+// ID 5000 - 5249 are reserved for cartridge menus
+// ID 5251 - 5299 are reseverd for cartridge messaging
+//-----------------------------------------------------
+
 #define IDM_USER_WIKI                   40001
 #define ID_FILE_EXIT                    40002
 #define IDM_HELP_ABOUT                  40003
@@ -464,6 +470,7 @@
 #define ID_BITBANGER_CONFIG             40057
 #define ID_SWAP_JOYSTICKS               40058
 #define IDM_HELP_FUNKEY                 40059
+
 #define ID_CONFIGURE_OPTIONS            65535
 
 

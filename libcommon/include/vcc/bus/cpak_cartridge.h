@@ -18,9 +18,9 @@
 #pragma once
 #include <vcc/bus/cartridge.h>
 #include <vcc/bus/cpak_cartridge_definitions.h>
+#include <vcc/bus/cartridge_menuitem.h>
 #include <Windows.h>
 #include <string>
-
 
 namespace VCC::Core
 {
@@ -55,7 +55,7 @@ namespace VCC::Core
 		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memory_address) override;
 		LIBCOMMON_EXPORT unsigned short sample_audio() override;
 		LIBCOMMON_EXPORT void menu_item_clicked(unsigned char menu_item_id) override;
-
+		LIBCOMMON_EXPORT bool get_menu_item(menu_item_entry* item, size_t index) override;
 
 	private:
 
@@ -79,6 +79,7 @@ namespace VCC::Core
 		const PakReadMemoryByteModuleFunction read_memory_byte_;
 		const PakSampleAudioModuleFunction sample_audio_;
 		const PakMenuItemClickedModuleFunction menu_item_clicked_;
+		const PakGetMenuItemFunction get_menu_item_;
 	};
 
 }

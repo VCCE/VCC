@@ -19,6 +19,7 @@
 // TODO: Rename this to hardware_cartridge (cpak_cartridge?)
 
 #include <vcc/bus/cpak_cartridge.h>
+#include <vcc/bus/cartridge_menuitem.h>
 #include <stdexcept>
 
 namespace VCC::Core
@@ -75,6 +76,11 @@ namespace VCC::Core
 			return "";
 		}
 
+		bool default_get_menu_item(menu_item_entry*, size_t) 
+		{
+			return false;
+		}
+
 	}
 
 
@@ -90,19 +96,34 @@ namespace VCC::Core
 		configuration_path_(move(configuration_path)),
 		hVccWnd_(hVccWnd),
 		cpak_callbacks_(cpak_callbacks),
-		initialize_(GetImportedProcAddress<PakInitializeModuleFunction>(module_handle, "PakInitialize", nullptr)),
-		terminate_(GetImportedProcAddress(module_handle, "PakTerminate", default_stop)),
-		get_name_(GetImportedProcAddress(module_handle, "PakGetName", default_get_empty_string)),
-		get_catalog_id_(GetImportedProcAddress(module_handle, "PakGetCatalogId", default_get_empty_string)),
-		get_description_(GetImportedProcAddress(module_handle, "PakGetDescription", default_get_empty_string)),
-		reset_(GetImportedProcAddress(module_handle, "PakReset", default_reset)),
-		heartbeat_(GetImportedProcAddress(module_handle, "PakProcessHorizontalSync", default_heartbeat)),
-		status_(GetImportedProcAddress(module_handle, "PakGetStatus", default_status)),
-		write_port_(GetImportedProcAddress(module_handle, "PakWritePort", default_write_port)),
-		read_port_(GetImportedProcAddress(module_handle, "PakReadPort", default_read_port)),
-		read_memory_byte_(GetImportedProcAddress(module_handle, "PakReadMemoryByte", default_read_memory_byte)),
-		sample_audio_(GetImportedProcAddress(module_handle, "PakSampleAudio", default_sample_audio)),
-		menu_item_clicked_(GetImportedProcAddress(module_handle, "PakMenuItemClicked", default_menu_item_clicked))
+		initialize_(GetImportedProcAddress<PakInitializeModuleFunction>(
+					module_handle, "PakInitialize", nullptr)),
+		terminate_(GetImportedProcAddress(
+					module_handle, "PakTerminate", default_stop)),
+		get_name_(GetImportedProcAddress(
+					module_handle, "PakGetName", default_get_empty_string)),
+		get_catalog_id_(GetImportedProcAddress(
+					module_handle, "PakGetCatalogId", default_get_empty_string)),
+		get_description_(GetImportedProcAddress(
+					module_handle, "PakGetDescription", default_get_empty_string)),
+		reset_(GetImportedProcAddress(
+					module_handle, "PakReset", default_reset)),
+		heartbeat_(GetImportedProcAddress(
+					module_handle, "PakProcessHorizontalSync", default_heartbeat)),
+		status_(GetImportedProcAddress(
+					module_handle, "PakGetStatus", default_status)),
+		write_port_(GetImportedProcAddress(
+					module_handle, "PakWritePort", default_write_port)),
+		read_port_(GetImportedProcAddress(
+					module_handle, "PakReadPort", default_read_port)),
+		read_memory_byte_(GetImportedProcAddress(
+					module_handle, "PakReadMemoryByte", default_read_memory_byte)),
+		sample_audio_(GetImportedProcAddress(
+					module_handle, "PakSampleAudio", default_sample_audio)),
+		menu_item_clicked_(GetImportedProcAddress(
+					module_handle, "PakMenuItemClicked", default_menu_item_clicked)),
+		get_menu_item_(GetImportedProcAddress(
+					module_handle, "PakGetMenuItem", default_get_menu_item))
 	{
 		if (initialize_ == nullptr)
 		{
@@ -173,6 +194,11 @@ namespace VCC::Core
 	void cpak_cartridge::menu_item_clicked(unsigned char menu_item_id)
 	{
 		menu_item_clicked_(menu_item_id);
+	}
+
+	bool cpak_cartridge::get_menu_item(menu_item_entry* item, size_t index)
+	{
+		return get_menu_item_(item, index);
 	}
 
 }

@@ -103,8 +103,8 @@ DLL's can export any of the following calls
   Initiate pack (REQUIRED)
   	PakInitialize (SLotId, settings_path, hVccWnd, &callbacks);
 
-  Retrieve cart menu (NEW)
-    PakGetMenuItems(menu_items, count);
+  Retrieve cart menu item
+    PakGetMenuItem(item, index);
  
   Get cart capabilities (PROPOSED)
   	PakGetCapabilities (void);

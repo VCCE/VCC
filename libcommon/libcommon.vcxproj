@@ -111,6 +111,7 @@
     <ClCompile Include="src\bus\cpak_cartridge.cpp" />
     <ClCompile Include="src\bus\rom_cartridge.cpp" />
     <ClCompile Include="src\bus\cartridge_loader.cpp" />
+    <ClCompile Include="src\bus\cartridge_menu.cpp" />
     <ClCompile Include="src\bus\rom_image.cpp" />
     <ClCompile Include="src\util\settings.cpp" />
     <ClCompile Include="src\util\filesystem.cpp" />
@@ -127,6 +128,7 @@
     <ClInclude Include="include\vcc\bus\cartridge.h" />
     <ClInclude Include="include\vcc\bus\cartridge_callbacks.h" />
     <ClInclude Include="include\vcc\bus\cartridge_loader.h" />
+    <ClInclude Include="include\vcc\bus\cartridge_menu.h" />
     <ClInclude Include="include\vcc\bus\dll_deleter.h" />
     <ClInclude Include="include\vcc\bus\exports.h" />
     <ClInclude Include="include\vcc\bus\cpak_cartridge.h" />

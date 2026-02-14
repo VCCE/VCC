@@ -23,6 +23,7 @@
 #include <vcc/util/DialogOps.h>
 #include <vcc/util/limits.h>
 #include <vcc/util/logger.h>
+#include <vcc/bus/cartridge_menuitem.h> // for MenuItemType
 
 HINSTANCE gModuleInstance = nullptr;
 static std::string gConfigurationFilename;
@@ -85,6 +86,12 @@ extern "C"
 	__declspec(dllexport) void PakMenuItemClicked(unsigned char menu_item_id)
 	{
 		gMultiPakInterface.menu_item_clicked(menu_item_id);
+	}
+
+	// Fetch menu item list for MPI and carts it has loaded
+	__declspec(dllexport) bool PakGetMenuItem(menu_item_entry* item, size_t count)
+	{
+		return gMultiPakInterface.get_menu_item(item, count);
 	}
 
 	// Write to port
