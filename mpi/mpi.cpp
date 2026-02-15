@@ -89,9 +89,9 @@ extern "C"
 	}
 
 	// Fetch menu item list for MPI and carts it has loaded
-	__declspec(dllexport) bool PakGetMenuItem(menu_item_entry* item, size_t count)
+	__declspec(dllexport) bool PakGetMenuItem(menu_item_entry* item, size_t index)
 	{
-		return gMultiPakInterface.get_menu_item(item, count);
+		return gMultiPakInterface.get_menu_item(item, index);
 	}
 
 	// Write to port

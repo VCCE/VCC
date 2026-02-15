@@ -414,7 +414,7 @@
 #define IDC_EDIT_RANGE_SEP              2154
 
 //-----------------------------------------------------
-// ID 5000 - 5249 are reserved for cartridge menus
+// ID 5000 - 5250 are reserved for cartridge menus
 // ID 5251 - 5299 are reseverd for cartridge messaging
 //-----------------------------------------------------
 

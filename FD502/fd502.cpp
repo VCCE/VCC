@@ -40,6 +40,9 @@
 #include <vcc/util/FileOps.h>
 #include <vcc/util/DialogOps.h>
 #include <vcc/util/logger.h>
+#include <vcc/bus/cartridge_menu.h>
+#include <vcc/bus/cartridge_messages.h>
+#include <vcc/util/fileutil.h>
 
 //include becker code if COMBINE_BECKER is defined in fd502.h
 #ifdef COMBINE_BECKER
@@ -74,6 +77,7 @@ LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 void LoadConfig();
 void SaveConfig();
 long CreateDiskHeader(const char *,unsigned char,unsigned char,unsigned char);
+void Unload_Disk(unsigned char);
 void Load_Disk(unsigned char);
 
 static HWND g_hConfDlg = nullptr;
@@ -83,9 +87,13 @@ long CreateDisk (unsigned char);
 static char gSelectedDiskFile[MAX_PATH]="";
 unsigned char LoadExtRom( unsigned char, const char *);
 
+bool get_menu_item(menu_item_entry*, size_t index);
+
 int BeckerEnabled=0;
 char BeckerAddr[MAX_PATH]="";
 char BeckerPort[32]="";
+
+static HWND gVccWnd = nullptr;
 
 //----------------------------------------------------------------------------
 extern "C"
@@ -126,6 +134,7 @@ extern "C"
 	{
 		DLOG_C("FDC %p %p %p %p %p\n",*callbacks);
 		gSlotId = SlotId;
+		gVccWnd = hVccWnd;
 		CartMenuCallback = callbacks->add_menu_item;
 		AssertInt = callbacks->assert_interrupt;
 		strcpy(IniFile, configuration_path);
@@ -133,6 +142,8 @@ extern "C"
 		RealDisks = InitController();
 		LoadConfig();
 		BuildCartridgeMenu();
+		// Request menu rebuild
+		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 	}
 
 	__declspec(dllexport) void PakReset()
@@ -152,6 +163,11 @@ extern "C"
 		}
 	}
 
+	__declspec(dllexport) bool PakGetMenuItem(menu_item_entry* item, size_t index)
+	{
+		return get_menu_item(item, index);
+	}
+
 	__declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
 	{
 		HWND h_own = GetActiveWindow();
@@ -161,37 +177,35 @@ extern "C"
 				Load_Disk(0);
 				break;
 			case 11:
-				unmount_disk_image(0);
-				SaveConfig();
+				Unload_Disk(0);
 				break;
 			case 12:
 				Load_Disk(1);
 				break;
 			case 13:
-				unmount_disk_image(1);
-				SaveConfig();
+				Unload_Disk(1);
 				break;
 			case 14:
 				Load_Disk(2);
 				break;
 			case 15:
-				unmount_disk_image(2);
-				SaveConfig();
-				break;
-			case 16:
-				if (g_hConfDlg == nullptr)
-					g_hConfDlg = CreateDialog(gModuleInstance,(LPCTSTR)IDD_CONFIG,h_own,(DLGPROC)Config);
-				ShowWindow(g_hConfDlg,1);
+				Unload_Disk(2);
 				break;
 			case 17:
 				Load_Disk(3);
 				break;
 			case 18:
-				unmount_disk_image(3);
-				SaveConfig();
+				Unload_Disk(3);
+				break;
+			case 16:
+				if (g_hConfDlg == nullptr)
+					g_hConfDlg = CreateDialog(
+							gModuleInstance,(LPCTSTR)IDD_CONFIG,h_own,(DLGPROC)Config);
+				ShowWindow(g_hConfDlg,1);
 				break;
 		}
-		BuildCartridgeMenu();
+		//FIXME: Menu rebuild should not be here
+		BuildCartridgeMenu(); //OLD REMOVE
 		return;
 	}
 
@@ -400,6 +414,12 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
     return FALSE;
 }
 
+void Unload_Disk(unsigned char disk) {
+	unmount_disk_image(disk);
+	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	SaveConfig();
+}
+
 void Load_Disk(unsigned char disk)
 {
 	HWND h_own = GetActiveWindow();
@@ -430,6 +450,7 @@ void Load_Disk(unsigned char disk)
 				MessageBox(g_hConfDlg,"Can't open file","Error",0);
 			} else {
 				dlg.getdir(FloppyPath);
+				SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 				SaveConfig();
 			}
 		}
@@ -444,6 +465,39 @@ unsigned char SetChip(unsigned char Tmp)
 	return SelectRom;
 }
 
+// Return items for cartridge menu. Called for each item
+bool get_menu_item(menu_item_entry* item, size_t index)
+{
+	using VCC::Bus::gDllCartMenu;
+	std::string disk;
+	if (!item) return false;
+	// request zero rebuilds the menu list
+	if (index == 0) {
+		gDllCartMenu.clear();
+		gDllCartMenu.add("", 0, MIT_Seperator);
+		gDllCartMenu.add("FD-502 Drive 0",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("Insert",ControlId(10),MIT_Slave);
+		disk = VCC::Util::GetFileNamePart(gVirtualDrive[0].ImageName);
+		gDllCartMenu.add("Eject: "+disk,ControlId(11),MIT_Slave);
+		gDllCartMenu.add("FD-502 Drive 1",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("Insert",ControlId(12),MIT_Slave);
+		disk = VCC::Util::GetFileNamePart(gVirtualDrive[1].ImageName);
+		gDllCartMenu.add("Eject: "+disk,ControlId(13),MIT_Slave);
+		gDllCartMenu.add("FD-502 Drive 2",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("Insert",ControlId(14),MIT_Slave);
+		disk = VCC::Util::GetFileNamePart(gVirtualDrive[2].ImageName);
+		gDllCartMenu.add("Eject: "+disk,ControlId(15),MIT_Slave);
+		gDllCartMenu.add("FD-502 Drive 3",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("Insert",ControlId(17),MIT_Slave);
+		disk = VCC::Util::GetFileNamePart(gVirtualDrive[3].ImageName);
+		gDllCartMenu.add("Eject: "+disk,ControlId(18),MIT_Slave);
+		gDllCartMenu.add("FD-502 Config",ControlId(16),MIT_StandAlone);
+	}
+	// return requested list item or false
+	return gDllCartMenu.copy_item(*item, index);
+}
+
+// Following is OLD depreciated
 void BuildCartridgeMenu()
 {
 	char TempMsg[MAX_PATH]="";
@@ -713,7 +767,9 @@ void LoadConfig()  // Called on SetIniPath
 	ClockEnabled=GetPrivateProfileInt(ModName,"ClkEnable",1,IniFile);
 	SetTurboDisk(GetPrivateProfileInt(ModName, "TurboDisk", 1, IniFile));
 
-	BuildCartridgeMenu();
+	BuildCartridgeMenu(); //OLD
+	// Request menu rebuild
+	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 	return;
 }
 
