@@ -83,15 +83,13 @@ public:
     // Clear all items
     void clear() { menu_.clear(); }
 
-    // Reserve capacity (for deterministic growth)
-    void reserve(size_t count) { menu_.reserve(count); }
-
     // Add a single item
     void add(const std::string& name, unsigned int menu_id, MenuItemType type)
     {
         menu_.push_back({ name, menu_id, type });
     }
 
+	// fetch an item
 	CartMenuItem& operator[](size_t i)
 	{ 
 		return menu_[i];
@@ -99,6 +97,9 @@ public:
 
     // Number of items in list
     size_t size() const { return menu_.size(); }
+
+	// copy an item to API structure
+	bool copy_item(menu_item_entry& out, size_t index) const;
 
 	// debug logging
 	void log()
@@ -114,7 +115,10 @@ public:
 			const std::string& title="Cartridge");
 };
 
-// create global instance for Vcc.cpp and pakinterface to use.
-extern cartridge_menu gCartMenu;
+// instance for Vcc.cpp and pakinterface to use. Host only!
+extern cartridge_menu gVccCartMenu;
+
+// instance for dll's to use.  DLL's only!
+extern cartridge_menu gDllCartMenu;
 
 } // namespace VCC::Bus

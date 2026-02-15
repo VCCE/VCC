@@ -190,37 +190,34 @@ unsigned short PackAudioSample()
 	return gActiveCartrige->sample_audio();
 }
 
-// Temporary bridge from old to new
-
-
 // Build entries for cartridge menu.
 void BuildCartMenu()
 {
 	// lock goes into program paks, not needed here
 	//VCC::Util::section_locker lock(gPakMutex);
-	using VCC::Bus::gCartMenu;
-	gCartMenu.clear();
-	gCartMenu.add("Cartridge", 0, MIT_Head);
+	using VCC::Bus::gVccCartMenu;
+	gVccCartMenu.clear();
+	gVccCartMenu.add("Cartridge", 0, MIT_Head);
 	if (!gActiveCartrige->name().empty()) {
 		std::string tmp = "Eject " + gActiveCartrige->name();
-		gCartMenu.add(tmp, ControlId(2), MIT_Slave);
+		gVccCartMenu.add(tmp, ControlId(2), MIT_Slave);
 		// Add items from loaded pak
 		menu_item_entry item;
 		for (size_t index=0;index<MAX_MENU_ITEMS;index++) {
 			if (gActiveCartrige->get_menu_item(&item,index)) {
-				gCartMenu.add(item.name,item.menu_id,item.type);
+				gVccCartMenu.add(item.name,item.menu_id,item.type);
 			} else {
 				break;
 			}
 		}
 	} else {
-		gCartMenu.add("Load MPI", ControlId(3), MIT_Slave);
-		gCartMenu.add("Load DLL", ControlId(1), MIT_Slave);
-		gCartMenu.add("Load ROM", ControlId(4), MIT_Slave);
+		gVccCartMenu.add("Load MPI", ControlId(3), MIT_Slave);
+		gVccCartMenu.add("Load DLL", ControlId(1), MIT_Slave);
+		gVccCartMenu.add("Load ROM", ControlId(4), MIT_Slave);
 	}
 }
 
-// Create entries for cartridge menu. The rest will be for MPI
+// OLD Create entries for cartridge menu. The rest will be for MPI
 // ControlId(MenuId) set what control does **OLD***
 void BeginCartMenu()
 {

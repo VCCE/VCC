@@ -18,8 +18,8 @@
 #pragma once
 #include <vcc/bus/cartridge.h>
 #include <vcc/bus/cartridge_loader.h>
+#include <vcc/bus/cartridge_menuitem.h>
 #include "../CartridgeMenu.h"
-
 
 namespace VCC::Core
 {
@@ -145,6 +145,11 @@ namespace VCC::Core
 		void append_menu_item(const menu_item_type& item)
 		{
 			menu_items_.push_back(item);
+		}
+
+		bool get_menu_item(menu_item_entry* item, size_t index)
+		{
+			return cartridge_->get_menu_item(item, index);
 		}
 
 		void enumerate_menu_items(context_type& context) const

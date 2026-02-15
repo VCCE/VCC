@@ -138,7 +138,7 @@ static unsigned char FlagEmuStop=TH_RUNNING;
 bool IsShiftKeyDown();
 
 CartridgeMenu CartMenu;    //OLD
-using VCC::Bus::gCartMenu; //NEW
+using VCC::Bus::gVccCartMenu; //NEW
 
 static bool gHasFocus {};
 
@@ -709,8 +709,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 //--------------------------------------------------------------------------
 HMENU DrawCartMenu (HWND hWnd)
 {
-	gCartMenu.log();
-	return gCartMenu.draw(hWnd,5,"Cartridge");
+	gVccCartMenu.log();
+	return gVccCartMenu.draw(hWnd,5,"Cartridge");
 }
 
 //--------------------------------------------------------------------------
