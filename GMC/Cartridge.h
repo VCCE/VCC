@@ -33,7 +33,7 @@ public:
 	virtual unsigned char OnReadMemory(unsigned short address) const;
 	virtual void OnWritePort(unsigned char port, unsigned char data);
 	virtual unsigned char OnReadPort(unsigned char port) const;
-
+	virtual bool GetMenuItem(menu_item_entry* item, size_t index);
 
 protected:
 
@@ -66,6 +66,7 @@ private:
 	friend void PakWritePort(unsigned char port, unsigned char data);
 	friend unsigned char PakReadPort(unsigned char port);
 	friend unsigned short PakSampleAudio();
+	friend bool PakGetMenuItem(menu_item_entry* item, size_t index);
 
 private:
 

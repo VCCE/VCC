@@ -82,35 +82,28 @@ void Cartridge::SetMenuBuilderCallback(PakAppendCartridgeMenuHostCallback callba
 	AddMenuItemPtr = callback;
 }
 
-
-
 std::string Cartridge::GetStatusMessage() const
 {
 	return std::string();
 }
-
 
 void Cartridge::OnMenuItemSelected(unsigned char /*menuId*/)
 {
 
 }
 
-
-
-
 void Cartridge::OnReset()
 {}
-
-
-
 
 unsigned short Cartridge::UpdateAudio()
 {
 	return 0;
 }
 
-
-
+bool Cartridge::GetMenuItem(menu_item_entry* /*item*/, size_t /*index*/)
+{
+	return false;
+}
 
 unsigned char Cartridge::OnReadMemory(unsigned short /*address*/) const
 {

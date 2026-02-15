@@ -18,12 +18,11 @@ public:
 	unsigned char OnReadMemory(unsigned short address) const override;
 	void OnWritePort(unsigned char port, unsigned char data) override;
 	unsigned char OnReadPort(unsigned char port) const override;
-
+	bool GetMenuItem(menu_item_entry* item, size_t index) override;
 
 protected:
-
+    // probably not needed
 	void LoadMenuItems() override;
-
 
 private:
 

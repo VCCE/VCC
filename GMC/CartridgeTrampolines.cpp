@@ -83,9 +83,6 @@ GMC_EXPORT unsigned char PakReadMemoryByte(unsigned short address)
 	return Cartridge::m_Singleton->OnReadMemory(address);
 }
 
-
-
-
 GMC_EXPORT void PakWritePort(unsigned char port, unsigned char data)
 {
 	Cartridge::m_Singleton->OnWritePort(port, data);
@@ -102,5 +99,11 @@ GMC_EXPORT unsigned char PakReadPort(unsigned char port)
 GMC_EXPORT unsigned short PakSampleAudio()
 {
 	return Cartridge::m_Singleton->UpdateAudio();
+}
+
+// Return menu
+GMC_EXPORT bool PakGetMenuItem(menu_item_entry* item, size_t index)
+{
+	return Cartridge::m_Singleton->GetMenuItem(item, index);
 }
 

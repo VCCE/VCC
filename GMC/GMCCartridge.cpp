@@ -1,6 +1,9 @@
 #include "GMCCartridge.h"
 #include <Windows.h>
+#include <vcc/util/logger.h>
+#include <vcc/bus/cartridge_menu.h>
 
+static VCC::Bus::cartridge_menu GMCMenu {};
 
 void GMCCartridge::LoadConfiguration(const std::string& filename)
 {
@@ -8,12 +11,28 @@ void GMCCartridge::LoadConfiguration(const std::string& filename)
 	m_Configuration = Configuration(filename);
 }
 
+// OLD REMOVE THIS AND THE CALLBACK TOO SOMEWHERE IN THESE WEEDS
 void GMCCartridge::LoadMenuItems()
 {
+	// AddMenuItem is depreciated
     AddMenuItem("",MID_BEGIN,MIT_Head);
 	AddMenuItem("",MID_ENTRY, MIT_Seperator);
     AddMenuItem("Select GMC ROM", ControlId(MenuItems::SelectRom), MIT_StandAlone);
     AddMenuItem("",MID_FINISH,MIT_Head);
+}
+
+bool GMCCartridge::GetMenuItem(menu_item_entry* item, size_t index)
+{
+	if (!item) return false;
+	// request zero rebuilds the menu list but does it ever change?
+	// leave it incase we want to show the loaded rom in the menu
+	if (index == 0) {
+		GMCMenu.clear();
+		GMCMenu.add("", 0, MIT_Seperator);
+		GMCMenu.add("Select GMC ROM", ControlId(MenuItems::SelectRom), MIT_StandAlone);
+	}
+	// return requested list item or false
+	return GMCMenu.copy_item(*item, index);
 }
 
 std::string GMCCartridge::GetStatusMessage() const
