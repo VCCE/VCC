@@ -2,6 +2,7 @@
 #include <string>
 #include "../CartridgeMenu.h"
 #include <vcc/bus/cpak_cartridge_definitions.h>
+#include <vcc/bus/cartridge_menuitem.h>
 
 #ifdef GMC_EXPORTS
 #define GMC_EXPORT extern "C" __declspec(dllexport)

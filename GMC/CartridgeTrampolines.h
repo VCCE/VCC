@@ -16,3 +16,4 @@ GMC_EXPORT unsigned char PakReadMemoryByte(unsigned short address);
 GMC_EXPORT void PakWritePort(unsigned char port, unsigned char data);
 GMC_EXPORT unsigned char PakReadPort(unsigned char port);
 GMC_EXPORT unsigned short PakSampleAudio();
+GMC_EXPORT bool PakGetMenuItem(menu_item_entry* item, size_t index);
