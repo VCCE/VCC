@@ -17,6 +17,8 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <string>
+
 struct IDEINTERFACE {
 	unsigned short	Data;
 	unsigned char	Error[2];
@@ -36,6 +38,8 @@ void DiskStatus(char* text_buffer, size_t buffer_size);
 unsigned char MountDisk(const char *,unsigned char );
 unsigned char DropDisk(unsigned char);
 void QueryDisk(unsigned char,char *);
+std::string QueryDisk(unsigned char);
+
 //Status 
 #define ERR		1	//Previous command ended in an error
 #define IDX		2	//Unused

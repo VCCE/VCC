@@ -25,6 +25,7 @@
 #include <vcc/util/logger.h>
 #include <vcc/bus/cartridge_menu.h>
 #include <vcc/bus/cartridge_menuitem.h>
+#include <vcc/bus/cartridge_messages.h>
 namespace
 {
 
@@ -326,6 +327,7 @@ void multipak_cartridge::eject_cartridge(slot_id_type mpi_slot)
 	slots_[mpi_slot] = {};
 	if (mpi_slot == cached_cts_slot_ || mpi_slot == switch_slot_)
 		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
+	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 }
 
 // create cartridge object and load cart DLL
@@ -412,6 +414,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	slots_[mpi_slot].start();
 	slots_[mpi_slot].reset();
 
+	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 	return loadedCartridge.load_result;
 }
 

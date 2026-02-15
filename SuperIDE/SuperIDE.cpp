@@ -1,21 +1,23 @@
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
-
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
 //#define USE_LOGGING
+//======================================================================
+// This file is part of VCC (Virtual Color Computer).
+// Vcc is Copyright 2015 by Joseph Forgione
+//
+// VCC (Virtual Color Computer) is free software, you can redistribute
+// and/or modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will
+// be useful, but WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with VCC (Virtual Color Computer).  If not, see
+// <http://www.gnu.org/licenses/>.
+//
+//======================================================================
 
 #include <Windows.h>
 #include "stdio.h"
@@ -23,13 +25,16 @@ This file is part of VCC (Virtual Color Computer).
 #include "resource.h" 
 #include "IdeBus.h"
 #include <vcc/devices/cloud9.h>
-#include "logger.h"
 #include <vcc/util/FileOps.h>
 #include "../CartridgeMenu.h"
 #include <vcc/util/DialogOps.h>
 #include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/util/limits.h>
 #include <vcc/util/logger.h>
+// Three includes added for PakGetMenuItem
+#include <vcc/bus/cartridge_menu.h>
+#include <vcc/bus/cartridge_messages.h>
+#include <vcc/util/fileutil.h>
 
 static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
@@ -43,6 +48,7 @@ void Select_Disk(unsigned char);
 void SaveConfig();
 void LoadConfig();
 unsigned char BaseTable[4]={0x40,0x50,0x60,0x70};
+bool get_menu_item(menu_item_entry*, size_t index);
 
 static unsigned char BaseAddr=1;
 static bool ClockEnabled = true;
@@ -52,9 +58,12 @@ static HINSTANCE gModuleInstance;
 static HWND hConfDlg = nullptr;
 static slot_id_type gSlotId {};
 
+static HWND gVccWnd = nullptr;
+
 using namespace std;
 
 
+//----------------------------------------------------------------------------
 extern "C"
 {
 
@@ -92,13 +101,15 @@ extern "C"
 		const cpak_callbacks* const callbacks)
 	{
 		gSlotId = SlotId;
+		gVccWnd = hVccWnd;
 		CartMenuCallback = callbacks->add_menu_item;
 		strcpy(IniFile, configuration_path);
 
 		LoadConfig();
 		IdeInit();
 
-		BuildCartridgeMenu();		
+		BuildCartridgeMenu(); // REMOVE THIS 
+		//SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 	}
 
 	__declspec(dllexport) void PakTerminate()
@@ -161,7 +172,13 @@ extern "C"
 		DiskStatus(text_buffer, buffer_size);
 	}
  
-          
+
+	//PakGetMenuItem export
+	__declspec(dllexport) bool PakGetMenuItem(menu_item_entry* item, size_t index)
+	{
+		return get_menu_item(item, index);
+	}
+
 	__declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
 	{
 		switch (MenuID)
@@ -170,24 +187,28 @@ extern "C"
 			Select_Disk(MASTER);
 			BuildCartridgeMenu();
 			SaveConfig();
+		    SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 			break;
 
 		case 11:
 			DropDisk(MASTER);
 			BuildCartridgeMenu();
 			SaveConfig();
+		    SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 			break;
 
 		case 12:
 			Select_Disk(SLAVE);
 			BuildCartridgeMenu();
 			SaveConfig();
+		    SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 			break;
 
 		case 13:
 			DropDisk(SLAVE);
 			BuildCartridgeMenu();
 			SaveConfig();
+		    SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 			break;
 
 		case 14:
@@ -214,6 +235,31 @@ BOOL WINAPI DllMain(
 		break;
 	}
 	return TRUE;
+}
+
+// Added for PakGetMenuItem export
+// Return items for cartridge menu. Called for each item
+bool get_menu_item(menu_item_entry* item, size_t index)
+{
+	using VCC::Bus::gDllCartMenu;
+	std::string disk;
+	if (!item) return false;
+	// request zero rebuilds the menu list
+	if (index == 0) {
+		gDllCartMenu.clear();
+		gDllCartMenu.add("", 0, MIT_Seperator);
+		gDllCartMenu.add("IDE Master",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("Insert",ControlId(10),MIT_Slave);
+		disk = VCC::Util::GetFileNamePart(QueryDisk(MASTER));
+		gDllCartMenu.add("Eject: "+disk,ControlId(11),MIT_Slave);
+		gDllCartMenu.add("IDE Slave",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("Insert",ControlId(12),MIT_Slave);
+		disk = VCC::Util::GetFileNamePart(QueryDisk(SLAVE));
+		gDllCartMenu.add("Eject: "+disk,ControlId(13),MIT_Slave);
+		gDllCartMenu.add("IDE Config",ControlId(14),MIT_StandAlone);
+	}
+	// return requested list item or false
+	return gDllCartMenu.copy_item(*item, index);
 }
 
 void BuildCartridgeMenu()
@@ -363,5 +409,6 @@ void LoadConfig()
 	cloud9_rtc.set_read_only(ClockReadOnly);
 	MountDisk(FileName ,SLAVE);
 	BuildCartridgeMenu();
+	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 	return;
 }

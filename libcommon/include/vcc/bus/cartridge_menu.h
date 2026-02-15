@@ -1,3 +1,4 @@
+//#define USE_LOGGING
 //======================================================================
 // This file is part of VCC (Virtual Color Computer).
 // Vcc is Copyright 2015 by Joseph Forgione
@@ -65,9 +66,9 @@ constexpr int ControlId(int id) { return MID_CONTROL + id; }
 
 // A single menu entry
 struct CartMenuItem {
-    std::string name;
-    size_t menu_id;
-    MenuItemType type;
+	std::string name;
+	size_t menu_id;
+	MenuItemType type;
 };
 
 class cartridge_menu {
@@ -80,14 +81,14 @@ public:
 	// Constructor
 	cartridge_menu() {}
 
-    // Clear all items
-    void clear() { menu_.clear(); }
+	// Clear all items
+	void clear() { menu_.clear(); }
 
-    // Add a single item
-    void add(const std::string& name, unsigned int menu_id, MenuItemType type)
-    {
-        menu_.push_back({ name, menu_id, type });
-    }
+	// Add a single item
+	void add(const std::string& name, unsigned int menu_id, MenuItemType type)
+	{
+		menu_.push_back({ name, menu_id, type });
+	}
 
 	// fetch an item
 	CartMenuItem& operator[](size_t i)
@@ -95,8 +96,8 @@ public:
 		return menu_[i];
 	}
 
-    // Number of items in list
-    size_t size() const { return menu_.size(); }
+	// Number of items in list
+	size_t size() const { return menu_.size(); }
 
 	// copy an item to API structure
 	bool copy_item(menu_item_entry& out, size_t index) const;
@@ -104,12 +105,12 @@ public:
 	// debug logging
 	void log()
 	{
-    	for (size_t i = 0; i < menu_.size(); ++i) {
-      		PrintLogC("%s %d %d\n", menu_[i].name.c_str(),menu_[i].menu_id,menu_[i].type);
-    	}
+		for (size_t i = 0; i < menu_.size(); ++i) {
+			DLOG_C("%s %d %d\n", menu_[i].name.c_str(),menu_[i].menu_id,menu_[i].type);
+		}
 	}
 
-    // Draw the menu (implemented in catridge_menu.cpp)
+	// Draw the menu (implemented in catridge_menu.cpp)
 	HMENU draw(HWND hWnd,
 			int position=3,
 			const std::string& title="Cartridge");
