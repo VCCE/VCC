@@ -171,9 +171,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	EmuState.ResetPending=2; // after LoadConfig pls
 	InitInstance(hInstance, nCmdShow);
 
-	// Fill initial cartridge menu before main win starts?
-	BuildCartMenu();
-
 	if ((CmdArg.NoOutput && !CreateNullWindow(&EmuState)) ||
 		(!CmdArg.NoOutput && !CreateDDWindow(&EmuState)))
 	{
@@ -312,8 +309,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			// Parse the menu selections:
 			
-			// Check if ID is in cartridge menu range
-			if ( (wmId >= MID_CONTROL) & (wmId < MID_CONTROL + 200) )
+			// Check if ID is in cartridge menu range. Control ID's are
+			// biased by SlotNum, there are five slots each gets 50
+			if ( (wmId >= MID_CONTROL) & (wmId < MID_CONTROL + 250) )
 			{
 				CartMenuActivated(wmId-MID_CONTROL);
 				break;
@@ -367,11 +365,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						EmuState.ResetPending=2;
 					break;
 
-				case IDC_MSG_UPD_MENU:
-					BuildCartMenu();
-					DrawCartMenu(hWnd);
-					break;
-
 				case ID_FILE_RUN:
 					EmuState.EmulationRunning=TRUE;
 					InvalidateBoarder();
@@ -380,6 +373,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				case ID_FILE_RESET_SFT:
 					if (EmuState.EmulationRunning)
 						EmuState.ResetPending=1;
+
+				case IDC_MSG_UPD_MENU:
+					BuildCartMenu();
+					DrawCartMenu(hWnd);
 					break;
 
 				case ID_FILE_LOAD:

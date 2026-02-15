@@ -232,6 +232,7 @@ unsigned short multipak_cartridge::sample_audio()
 
 void multipak_cartridge::menu_item_clicked(unsigned char menu_item_id)
 {
+
 	if (menu_item_id == 19)	//MPI Config
 	{
 		gConfigurationDialog.open();
@@ -291,7 +292,6 @@ bool multipak_cartridge::get_menu_item(menu_item_entry* item, size_t index)
 				}
 			}
 		}
-		if (gDllCartMenu.size() == 0) return 0;
 	}
 	return gDllCartMenu.copy_item( *item, index);
 }
@@ -434,7 +434,6 @@ multipak_cartridge::slot_id_type multipak_cartridge::selected_scs_slot() const
 // *OLD* Save cart Menu items into containers per slot  **OLD**
 void multipak_cartridge::append_menu_item(slot_id_type SlotId, menu_item_type item)
 {
-	DLOG_C("menu_item %d %d \n",SlotId,item.menu_id);
 
 	auto mpi_slot = SlotId - 1;
 
@@ -459,6 +458,7 @@ void multipak_cartridge::append_menu_item(slot_id_type SlotId, menu_item_type it
 			break;
 		}
 	}
+	DLOG_C("menu_item %d %d \n",SlotId,item.menu_id);
 }
 
 
