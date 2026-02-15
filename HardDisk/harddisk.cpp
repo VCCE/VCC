@@ -66,7 +66,7 @@ static HWND hConfDlg = nullptr;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
 
 // Added for PakGetMenuItem export
-bool get_menu_item(menu_item_entry*, size_t index);
+bool get_menu_item(menu_item_entry* item, size_t index);
 
 // Added for PakGetMenuItem export
 static HWND gVccWnd = nullptr;

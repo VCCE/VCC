@@ -1,3 +1,24 @@
+//#define USE_LOGGING
+//======================================================================
+// This file is part of VCC (Virtual Color Computer).
+// Vcc is Copyright 2015 by Joseph Forgione
+//
+// VCC (Virtual Color Computer) is free software, you can redistribute
+// and/or modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will
+// be useful, but WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with VCC (Virtual Color Computer).  If not, see
+// <http://www.gnu.org/licenses/>.
+//
+//======================================================================
+
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include <WinSock2.h>
@@ -12,6 +33,7 @@
 #include <vcc/util/logger.h>
 #include <vcc/util/FileOps.h>
 #include <vcc/util/DialogOps.h>
+#include <vcc/bus/cartridge_menu.h>
 
 // socket
 static SOCKET dwSocket = 0;
@@ -66,6 +88,9 @@ int dw_setport(const char *bufdwport);
 void BuildCartridgeMenu();
 void LoadConfig();
 void SaveConfig();
+
+static VCC::Bus::cartridge_menu BeckerMenu {};
+bool get_menu_item(menu_item_entry* item, size_t index);
 
 
 // dll entry hook
@@ -430,6 +455,12 @@ extern "C"
 		SetDWTCPConnectionEnable(1);
 		BuildCartridgeMenu();
 	}
+
+	__declspec(dllexport) bool PakGetMenuItem(menu_item_entry* item, size_t index)
+	{
+		return get_menu_item(item, index);
+	}
+
 }
 
 
@@ -533,7 +564,17 @@ extern "C" __declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buf
         return;
 	}
 
+bool get_menu_item(menu_item_entry* item, size_t index) {
+	if (!item) return false;
+	if (index == 0) {
+		BeckerMenu.clear();
+		BeckerMenu.add("", 0, MIT_Seperator);
+		BeckerMenu.add("DriveWire Server..", ControlId(16), MIT_StandAlone);
+	}
+	return BeckerMenu.copy_item(*item, index);
+}
 
+// Following is depreciated - remove
 void BuildCartridgeMenu()
 {
 	CartMenuCallback(gSlotId, "", MID_BEGIN, MIT_Head);
