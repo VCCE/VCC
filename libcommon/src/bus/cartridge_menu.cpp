@@ -19,12 +19,38 @@
 //======================================================================
 
 #include <vcc/bus/cartridge_menu.h>
+#include <vcc/bus/cartridge_menuitem.h>
 #include <vcc/util/logger.h>
 
 namespace VCC::Bus {
 
-// Global cart menu for vcc.exe use
-cartridge_menu gCartMenu;
+// Global cart menu for vcc.exe
+// DLL's should never use this
+cartridge_menu gVccCartMenu;
+
+// Cart menu for DLL use
+// Vcc or pakinterface should not use this
+cartridge_menu gDllCartMenu;
+
+// ------------------------------------------------------------
+// Copy a menu item to the API safe structure
+// ------------------------------------------------------------
+bool cartridge_menu::copy_item(menu_item_entry& out, size_t index) const
+{
+	if (index >= menu_.size() || index >= MAX_MENU_ITEMS)
+        return false;
+
+    const auto& src = menu_[index];
+
+    size_t n = std::min(src.name.size(), sizeof(out.name) - 1);
+    memcpy(out.name, src.name.data(), n);
+    out.name[n] = '\0';
+
+    out.menu_id = src.menu_id;
+    out.type    = src.type;
+
+    return true;
+}
 
 // ------------------------------------------------------------
 // Draw the menu.  DLL's should not call this

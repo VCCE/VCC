@@ -23,7 +23,8 @@
 #include <vcc/util/winapi.h>
 #include <vcc/util/filesystem.h>
 #include <vcc/util/logger.h>
-
+#include <vcc/bus/cartridge_menu.h>
+#include <vcc/bus/cartridge_menuitem.h>
 namespace
 {
 
@@ -86,7 +87,7 @@ void multipak_cartridge::start()
 		}
 	}
 
-	// Build the dynamic menu
+	// Build the dynamic menu  **OLD**
 	build_menu();
 }
 
@@ -236,55 +237,63 @@ void multipak_cartridge::menu_item_clicked(unsigned char menu_item_id)
 		gConfigurationDialog.open();
 	}
 
+	// Each slot is allocated 50 menu items and items were
+	// biased by SlotId * 50 so MPI knows which slot the item is for
+	if (menu_item_id < 50) return;  // Nothing more for SlotId 0
+
 	VCC::Util::section_locker lock(mutex_);
 
-	// Menu items for loaded carts. Each slot is allocated 50.
-	if (menu_item_id >= 50 && menu_item_id <= 100)
-	{
+	if (menu_item_id < 100) {
 		slots_[0].menu_item_clicked(menu_item_id - 50);
+		return;
 	}
 
-	if (menu_item_id > 100 && menu_item_id <= 150)
-	{
+	if (menu_item_id < 150) {
 		slots_[1].menu_item_clicked(menu_item_id - 100);
+		return;
 	}
 
-	if (menu_item_id > 150 && menu_item_id <= 200)
-	{
+	if (menu_item_id < 200) {
 		slots_[2].menu_item_clicked(menu_item_id - 150);
+		return;
 	}
 
-	if (menu_item_id > 200 && menu_item_id <= 250)
-	{
+	if (menu_item_id < 250) {
 		slots_[3].menu_item_clicked(menu_item_id - 200);
+		return;
 	}
 }
 
-bool multipak_cartridge::get_menu_item(
-			menu_item_entry* item, size_t index)
+// returns menu item from DLL item list
+bool multipak_cartridge::get_menu_item(menu_item_entry* item, size_t index)
 {
+	using VCC::Bus::gDllCartMenu;
 
-// build list	
-//		for (int mpi_slot = 3; mpi_slot >= 0; mpi_slot--)
-//		{
-//			return false;
-//		}	
+	if (!item) return false;
 
-	// Test
-	switch (index) {
-	case 0:
-		strcpy(item->name,"");
-		item->menu_id = 0;
-		item->type = MIT_Seperator;
-		return true;
-	case 1:
-		strcpy(item->name,"MPI Config");
-		item->menu_id = ControlId(19);
-		item->type = MIT_StandAlone;
-		return true;
-	default:
-		return false;
+	// index 0 is special, it indicates DLL should refresh it's menus
+	if (index == 0) {
+		// Rebuild MPI menu
+		gDllCartMenu.clear();
+		gDllCartMenu.add("", 0, MIT_Seperator);
+		gDllCartMenu.add("MPI Config", ControlId(19), MIT_StandAlone);
+		// Append child menus
+		for (int SlotId = 4; SlotId > 0; SlotId--) {
+			menu_item_entry pakitm;
+			for (int ndx = 0; ndx < MAX_MENU_ITEMS; ndx++) {
+				if (slots_[SlotId-1].get_menu_item(&pakitm,ndx)) {
+					// bias control_ids per slot
+					if (pakitm.menu_id >= MID_CONTROL)
+						pakitm.menu_id += (SlotId * 50);
+					gDllCartMenu.add(pakitm.name,pakitm.menu_id,pakitm.type);
+				} else {
+					break;
+				}
+			}
+		}
+		if (gDllCartMenu.size() == 0) return 0;
 	}
+	return gDllCartMenu.copy_item( *item, index);
 }
 
 
@@ -422,7 +431,7 @@ multipak_cartridge::slot_id_type multipak_cartridge::selected_scs_slot() const
 	return cached_scs_slot_;
 }
 
-// Save cart Menu items into containers per slot
+// *OLD* Save cart Menu items into containers per slot  **OLD**
 void multipak_cartridge::append_menu_item(slot_id_type SlotId, menu_item_type item)
 {
 	DLOG_C("menu_item %d %d \n",SlotId,item.menu_id);
@@ -452,7 +461,8 @@ void multipak_cartridge::append_menu_item(slot_id_type SlotId, menu_item_type it
 	}
 }
 
-// This gets called any time a cartridge menu is changed. It draws the entire menu.
+
+// *OLD* This gets called any time a cartridge menu is changed. It draws the entire menu.
 void multipak_cartridge::build_menu()
 {
 	// do we really need this here? menu draw should be async
