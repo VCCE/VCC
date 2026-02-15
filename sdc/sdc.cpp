@@ -137,12 +137,14 @@
 #include <vcc/devices/cloud9.h>
 #include <vcc/util/logger.h>
 #include <vcc/util/DialogOps.h>
-#include "../CartridgeMenu.h"
+#include "../CartridgeMenu.h"  //REMOVE THIS OLD
 #include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/util/limits.h>
 
 #include <vcc/util/fileutil.h>
 #include <vcc/util/settings.h>
+#include <vcc/bus/cartridge_menu.h>
+#include <vcc/bus/cartridge_messages.h>
 
 #include "sdc.h"
 
@@ -226,6 +228,9 @@ static int UPDBTNS[8] = {ID_UPDATE0,ID_UPDATE1,ID_UPDATE2,ID_UPDATE3,
                          ID_UPDATE4,ID_UPDATE5,ID_UPDATE6,ID_UPDATE7};
 
 static std::string gRomPath {};
+
+static VCC::Bus::cartridge_menu SdcMenu {};
+bool get_menu_item(menu_item_entry* item, size_t index);
 
 //======================================================================
 //  Functions
@@ -386,6 +391,7 @@ extern "C"
             break;
         case 11:
             SDCMountNext (0);
+            SendMessage(gVccWindow,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
             break;
         }
         BuildCartridgeMenu();
@@ -415,6 +421,13 @@ extern "C"
             return(PakRom[adr]);
         }
     }
+
+    // Return SDC menu
+	__declspec(dllexport) bool PakGetMenuItem(menu_item_entry* item, size_t index)
+	{
+		return get_menu_item(item, index);
+	}
+
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
@@ -434,7 +447,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 //-------------------------------------------------------------
 // Generate menu for configuring the SDC
 //-------------------------------------------------------------
-void BuildCartridgeMenu()
+void BuildCartridgeMenu()  //OBSOLETE REMOVE OLD
 {
     CartMenuCallback(gSlotId, "", MID_BEGIN, MIT_Head);
     CartMenuCallback(gSlotId, "", MID_ENTRY, MIT_Seperator);
@@ -453,6 +466,28 @@ void BuildCartridgeMenu()
     CartMenuCallback(gSlotId, tmp, ControlId(11),MIT_Slave);
     CartMenuCallback(gSlotId, "SDC Config", ControlId(10), MIT_StandAlone);
     CartMenuCallback(gSlotId, "", MID_FINISH, MIT_Head);
+}
+
+// Return items for cartridge menu. Called for each item
+bool get_menu_item(menu_item_entry* item, size_t index)
+{
+    if (!item) return false;
+    if (index == 0) {
+        std::string tmp = gCocoDisk[0].name;
+        if (tmp.empty()) {
+            tmp = "empty";
+        } else if (gFileList.nextload_flag) {
+            tmp = tmp + " (load next)";
+        } else {
+            tmp = tmp + " (no next)";
+        }
+        SdcMenu.clear();
+        SdcMenu.add("", 0, MIT_Seperator);
+        SdcMenu.add("SDC Drive 0",MID_ENTRY,MIT_Head);
+        SdcMenu.add(tmp, ControlId(11),MIT_Slave);
+        SdcMenu.add("SDC Config", ControlId(10), MIT_StandAlone);
+    }
+    return SdcMenu.copy_item(*item, index);
 }
 
 //------------------------------------------------------------

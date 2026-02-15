@@ -1,3 +1,4 @@
+//#define USE_LOGGING
 //------------------------------------------------------------------
 // Copyright E J Jaquay 2022
 //
@@ -26,6 +27,7 @@
 #include <vcc/util/limits.h>
 #include <vcc/util/DialogOps.h>
 #include <vcc/util/logger.h>
+#include <vcc/bus/cartridge_menu.h>
 
 //------------------------------------------------------------------------
 // Local Functions
@@ -73,6 +75,9 @@ char AciaFileWrPath[MAX_PATH]; // Path for file writes
 
 static unsigned char Rom[8192];
 unsigned char LoadExtRom(const char *);
+
+static VCC::Bus::cartridge_menu AciaMenu {};
+bool get_menu_item(menu_item_entry* item, size_t index);
 
 //------------------------------------------------------------------------
 //  DLL Entry point
@@ -139,6 +144,11 @@ extern "C"
 		CloseCartDialog(g_hDlg);
 		sc6551_close();
 		AciaStat[0]='\0';
+	}
+
+	__declspec(dllexport) bool PakGetMenuItem(menu_item_entry* item, size_t index)
+	{
+		return get_menu_item(item, index);
 	}
 
 }
@@ -246,6 +256,16 @@ void BuildCartridgeMenu()
 	CartMenuCallback(gSlotId, "", MID_ENTRY, MIT_Seperator);
 	CartMenuCallback(gSlotId, "ACIA Config", ControlId(16), MIT_StandAlone);
 	CartMenuCallback(gSlotId, "", MID_FINISH, MIT_Head);
+}
+
+bool get_menu_item(menu_item_entry* item, size_t index) {
+	if (!item) return false;
+	if (index == 0) {
+		AciaMenu.clear();
+		AciaMenu.add("", 0, MIT_Seperator);
+		AciaMenu.add("ACIA Config", ControlId(16), MIT_StandAlone);
+	}
+	return AciaMenu.copy_item(*item, index);
 }
 
 //-----------------------------------------------------------------------
