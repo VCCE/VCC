@@ -1,22 +1,23 @@
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
-
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-// hardisk.cpp : Defines the entry point for the DLL application.
+//#define USE_LOGGING
+//======================================================================
+// This file is part of VCC (Virtual Color Computer).
+// Vcc is Copyright 2015 by Joseph Forgione
+//
+// VCC (Virtual Color Computer) is free software, you can redistribute
+// and/or modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will
+// be useful, but WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with VCC (Virtual Color Computer).  If not, see
+// <http://www.gnu.org/licenses/>.
+//
+//======================================================================
 
 #include <Windows.h>
 #include <stdio.h>
@@ -29,6 +30,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "../CartridgeMenu.h"
 #include <vcc/util/interrupts.h>
 #include <vcc/bus/cpak_cartridge_definitions.h>
+// Three includes added for PakGetMenuItem
+#include <vcc/bus/cartridge_menu.h>
+#include <vcc/bus/cartridge_messages.h>
+#include <vcc/util/fileutil.h>
 #include <vcc/util/limits.h>
 
 constexpr auto DEF_HD_SIZE = 132480u;
@@ -53,12 +58,20 @@ LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 void LoadHardDisk(int drive);
 void LoadConfig();
 void SaveConfig();
-void BuildCartridgeMenu();
+void BuildCartridgeMenu(); //OLD
 int CreateDisk(HWND,int);
 
 static HINSTANCE gModuleInstance;
 static HWND hConfDlg = nullptr;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM );
+
+// Added for PakGetMenuItem export
+bool get_menu_item(menu_item_entry*, size_t index);
+
+// Added for PakGetMenuItem export
+static HWND gVccWnd = nullptr;
+
+//=================================================================================
 
 using namespace std;
 
@@ -110,7 +123,8 @@ extern "C"
 		const cpak_callbacks* const callbacks)
 	{
 		gSlotId = SlotId;
-		CartMenuCallback = callbacks->add_menu_item;
+		gVccWnd = hVccWnd;
+		CartMenuCallback = callbacks->add_menu_item; //OLD
 		MemRead8 = callbacks->read_memory_byte;
 		MemWrite8 = callbacks->write_memory_byte;
 		strcpy(IniFile, configuration_path);
@@ -119,6 +133,14 @@ extern "C"
 		cloud9_rtc.set_read_only(ClockReadOnly);
 		VhdReset(); // Selects drive zero
 		BuildCartridgeMenu();
+		// Added for PakGetMenuItem export
+		// Request menu rebuild
+		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	}
+
+	__declspec(dllexport) bool PakGetMenuItem(menu_item_entry* item, size_t index)
+	{
+		return get_menu_item(item, index);
 	}
 
 	__declspec(dllexport) void PakTerminate()
@@ -127,9 +149,7 @@ extern "C"
 		UnmountHD(0);
 		UnmountHD(1);
 	}
-
 }
-
 
 // Configure the hard drive(s).  Called from menu
 // Mount or dismount a hard drive and save config
@@ -166,7 +186,9 @@ extern "C"
             return;
         }
         SaveConfig();
-		BuildCartridgeMenu();
+        // FIXME should only rebuild menus if drive is changed
+		BuildCartridgeMenu(); // Old
+		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
         return;
     }
 }
@@ -349,7 +371,9 @@ void LoadConfig()
 	ClockReadOnly = GetPrivateProfileInt(ModName, "ClkRdOnly", 1, IniFile) != 0;
 
     // Create config menu
-	BuildCartridgeMenu();
+	BuildCartridgeMenu(); //OLD
+    // Added for PakGetMenuItem
+	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
     return;
 }
 
@@ -372,7 +396,32 @@ void SaveConfig()
     return;
 }
 
-// Generate menu for mounting the drives
+// Added for PakGetMenuItem export
+// Return items for cartridge menu. Called for each item
+bool get_menu_item(menu_item_entry* item, size_t index)
+{
+	using VCC::Bus::gDllCartMenu;
+	std::string disk;
+	if (!item) return false;
+	// request zero rebuilds the menu list
+	if (index == 0) {
+		gDllCartMenu.clear();
+		gDllCartMenu.add("", 0, MIT_Seperator);
+		gDllCartMenu.add("HD Drive 0",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("Insert",ControlId(10),MIT_Slave);
+		disk = VCC::Util::GetFileNamePart(VHDfile0);
+		gDllCartMenu.add("Eject: "+disk,ControlId(11),MIT_Slave);
+		gDllCartMenu.add("HD Drive 1",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("Insert",ControlId(12),MIT_Slave);
+		disk = VCC::Util::GetFileNamePart(VHDfile1);
+		gDllCartMenu.add("Eject: "+disk,ControlId(13),MIT_Slave);
+		gDllCartMenu.add("HD Config",ControlId(14),MIT_StandAlone);
+	}
+	// return requested list item or false
+	return gDllCartMenu.copy_item(*item, index);
+}
+
+// OLD Generate menu for mounting the drives OLD
 void BuildCartridgeMenu()
 {
 	char TempMsg[512] = "";

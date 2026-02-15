@@ -1,28 +1,31 @@
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
+//#define USE_LOGGING
+//======================================================================
+// This file is part of VCC (Virtual Color Computer).
+// Vcc is Copyright 2015 by Joseph Forgione
+//
+// VCC (Virtual Color Computer) is free software, you can redistribute
+// and/or modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will
+// be useful, but WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with VCC (Virtual Color Computer).  If not, see
+// <http://www.gnu.org/licenses/>.
+//
+//======================================================================
 
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#include "logger.h"
+#include <string>
 #include "IdeBus.h"
 #include <stdio.h>
 #include <Windows.h>
+#include <vcc/util/logger.h>
 
 static unsigned int Lba=0,LastLba;
-char Message[256]="";	//DEBUG
 static unsigned char XferBuffer[512]="";
 
 static unsigned int BufferIndex=0;
@@ -31,7 +34,7 @@ static unsigned char CurrentCommand=0;
 void ExecuteCommand();
 void ByteSwap (char *);
 static IDEINTERFACE Registers;
-static HANDLE hDiskFile[2];
+static HANDLE hDiskFile[2] {};
 static unsigned char DiskSelect=0,LbaEnabled=0;
 unsigned long BytesMoved=0;
 unsigned char BusyCounter=BUSYWAIT;
@@ -40,11 +43,9 @@ static unsigned short IDBlock[2][256];
 static unsigned char Mounted=0,ScanCount=0;
 static char CurrStatus[32]="IDE:Idle ";
 static char FileNames[2][MAX_PATH]={"",""};
+
 void IdeInit()
 {
-
-	hDiskFile[MASTER]=INVALID_HANDLE_VALUE;
-	hDiskFile[SLAVE]=INVALID_HANDLE_VALUE;
 	Registers.Command=0;
 	Registers.Cylinderlsb=0;
 	Registers.Cylindermsb=0;
@@ -342,11 +343,13 @@ unsigned char MountDisk(const char *FileName,unsigned char DiskNumber)
 		return FALSE;
 	strcpy(FileNames[DiskNumber],FileName);
 	Mounted=1;
+	DLOG_C(">>>MountDisk %d %d<<<\n",DiskNumber,hDiskFile[DiskNumber]);
 	return TRUE;
 }
 
 unsigned char DropDisk(unsigned char DiskNumber)
 {
+	DLOG_C(">>>DropDisk %d %d<<<\n",DiskNumber,hDiskFile[DiskNumber]);
 	CloseHandle(hDiskFile[DiskNumber]);
 	hDiskFile[DiskNumber]=INVALID_HANDLE_VALUE;
 	strcpy(FileNames[DiskNumber],"");
@@ -359,3 +362,10 @@ void QueryDisk(unsigned char DiskNumber,char *Name)
 	strcpy(Name,FileNames[DiskNumber]);
 	return;
 }
+
+std::string QueryDisk(unsigned char DiskNumber)
+{
+	return FileNames[DiskNumber];
+}
+
+

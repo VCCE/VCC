@@ -40,6 +40,7 @@
 #include <vcc/util/FileOps.h>
 #include <vcc/util/DialogOps.h>
 #include <vcc/util/logger.h>
+// Three includes added for PakGetMenuItem
 #include <vcc/bus/cartridge_menu.h>
 #include <vcc/bus/cartridge_messages.h>
 #include <vcc/util/fileutil.h>
@@ -87,12 +88,14 @@ long CreateDisk (unsigned char);
 static char gSelectedDiskFile[MAX_PATH]="";
 unsigned char LoadExtRom( unsigned char, const char *);
 
+// Added for PakGetMenuItem export
 bool get_menu_item(menu_item_entry*, size_t index);
 
 int BeckerEnabled=0;
 char BeckerAddr[MAX_PATH]="";
 char BeckerPort[32]="";
 
+// Added for PakGetMenuItem export
 static HWND gVccWnd = nullptr;
 
 //----------------------------------------------------------------------------
@@ -142,6 +145,7 @@ extern "C"
 		RealDisks = InitController();
 		LoadConfig();
 		BuildCartridgeMenu();
+		// Added for PakGetMenuItem export
 		// Request menu rebuild
 		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 	}
@@ -163,6 +167,7 @@ extern "C"
 		}
 	}
 
+	//PakGetMenuItem export
 	__declspec(dllexport) bool PakGetMenuItem(menu_item_entry* item, size_t index)
 	{
 		return get_menu_item(item, index);
@@ -465,6 +470,7 @@ unsigned char SetChip(unsigned char Tmp)
 	return SelectRom;
 }
 
+// Added for PakGetMenuItem export
 // Return items for cartridge menu. Called for each item
 bool get_menu_item(menu_item_entry* item, size_t index)
 {
