@@ -69,7 +69,6 @@ extern "C"
 		gMultiPakConfiguration.configuration_path(configuration_path);
 		gConfigurationFilename = configuration_path;
 		gVccWnd = hVccWnd;
-		gHostCallbacks->add_menu_item_ = callbacks->add_menu_item;
 		gHostCallbacks->read_memory_byte_ = callbacks->read_memory_byte;
 		gHostCallbacks->write_memory_byte_ = callbacks->write_memory_byte;
 		gHostCallbacks->assert_interrupt_ = callbacks->assert_interrupt;

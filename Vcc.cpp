@@ -56,7 +56,7 @@
 #include "mc6821.h"
 #include "keyboard.h"
 #include "coco3.h"
-#include "CartridgeMenu.h"
+//#include "CartridgeMenu.h"
 #include "pakinterface.h"
 #include "audio.h"
 #include "config.h"
@@ -137,13 +137,15 @@ static unsigned char FlagEmuStop=TH_RUNNING;
 
 bool IsShiftKeyDown();
 
-CartridgeMenu CartMenu;    //OLD
-using VCC::Bus::gVccCartMenu; //NEW
+using VCC::Bus::gVccCartMenu;
 
 static bool gHasFocus {};
 
 //static CRITICAL_SECTION  FrameRender;
-/*--------------------------------------------------------------------------*/
+
+//--------------------------------------------------------------------------//
+//  Main entry
+//--------------------------------------------------------------------------//
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 					  _In_opt_ HINSTANCE hPrevInstance,
 					  _In_ LPSTR    lpCmdLine,
@@ -177,10 +179,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		MessageBox(nullptr,"Can't create primary Window","Error",0);
 		exit(0);
 	}
-
-	// initial set up the cartridge menu.
-	CartMenu.init();  //old
-	BeginCartMenu();  //old
 
 	InitSound();
 	LoadModule();
@@ -277,8 +275,10 @@ void CloseApp()
 	UnloadDll();
 }
 
-/*--------------------------------------------------------------------------*/
-// The Window Procedure
+//--------------------------------------------------------------------------//
+// VCC Main Window messaging loop
+//--------------------------------------------------------------------------//
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
@@ -702,12 +702,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 //--------------------------------------------------------------------------
-// Draw the cartridge menu 
+// Refresh the cartridge menu from the menu item list
 //--------------------------------------------------------------------------
 HMENU DrawCartMenu (HWND hWnd)
 {
-	gVccCartMenu.log();
-	return gVccCartMenu.draw(hWnd,3,"Cartridge");
+	//gVccCartMenu.log();
+
+	// window handle, zero based position on menu bar, name on bar.
+	return gVccCartMenu.draw( hWnd, 3, "Cartridge");
 }
 
 //--------------------------------------------------------------------------
@@ -1114,7 +1116,7 @@ void FullScreenToggle()
 		exit(0);
 	}
 	InvalidateBoarder();
-	CartMenu.draw();
+//	CartMenu.draw();
 
 	EmuState.ConfigDialog=nullptr;
 	PauseAudio(false);

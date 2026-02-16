@@ -20,7 +20,6 @@
 #include "multipak_configuration.h"
 #include <Windows.h>
 
-//TODO:  ELiminate this useless class BS.  It gains nothing but obscurity
 class configuration_dialog
 {
 public:

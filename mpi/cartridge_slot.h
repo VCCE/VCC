@@ -19,7 +19,7 @@
 #include <vcc/bus/cartridge.h>
 #include <vcc/bus/cartridge_loader.h>
 #include <vcc/bus/cartridge_menuitem.h>
-#include "../CartridgeMenu.h"
+//#include "../CartridgeMenu.h"
 
 namespace VCC::Core
 {
@@ -35,10 +35,7 @@ namespace VCC::Core
 		using label_type = std::string;
 		using handle_type = ::VCC::Core::cartridge_loader_result::handle_type;
 		using cartridge_ptr_type = std::unique_ptr<::VCC::Core::cartridge>;
-		using menu_item_type = CartMenuItem;
-		using menu_item_collection_type = std::vector<menu_item_type>;
 		using context_type = ::VCC::Core::cartridge_context;
-
 
 	public:
 
@@ -137,36 +134,16 @@ namespace VCC::Core
 			return line_state_;
 		}
 
-		void reset_menu()
-		{
-			menu_items_.clear();
-		}
-
-		void append_menu_item(const menu_item_type& item)
-		{
-			menu_items_.push_back(item);
-		}
-
 		bool get_menu_item(menu_item_entry* item, size_t index)
 		{
 			return cartridge_->get_menu_item(item, index);
 		}
-
-		void enumerate_menu_items(context_type& context) const
-		{
-			for (const auto& item : menu_items_)
-			{
-				context.add_menu_item(item.name.c_str(), item.menu_id, item.type);
-			}
-		}
-
 
 	private:
 
 		path_type path_;
 		handle_type handle_;
 		cartridge_ptr_type cartridge_;
-		menu_item_collection_type menu_items_;
 		bool line_state_ = false;
 	};
 

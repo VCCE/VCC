@@ -36,16 +36,6 @@ public:
 		return parent_context_.configuration_path();
 	}
 
-	void reset() override
-	{
-		parent_context_.reset();
-	}
-
-	void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) override
-	{
-		multipak_.append_menu_item(slot_id_, { menu_name, static_cast<unsigned int>(menu_id), menu_type });
-	}
-
 	void write_memory_byte(unsigned char value, unsigned short address) override
 	{
 		parent_context_.write_memory_byte(value, address);

@@ -40,12 +40,11 @@ GMC_EXPORT void PakInitialize(
 	HWND hVccWnd,
 	const cpak_callbacks* const callbacks)
 {
-    DLOG_C("GMC %p %p %p %p %p\n",
+    DLOG_C("GMC %p %p %p %p\n",
             callbacks->assert_interrupt,
             callbacks->assert_cartridge_line,
             callbacks->write_memory_byte,
-            callbacks->read_memory_byte,
-            callbacks->add_menu_item);
+            callbacks->read_memory_byte);
 
 	Cartridge::m_Singleton->SetSlotId(SlotId);
 	Cartridge::m_Singleton->SetCartLineAssertCallback(callbacks->assert_cartridge_line);

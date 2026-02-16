@@ -149,41 +149,31 @@ DLL's can export any of the following calls
 
 #Callbacks
 
-Callbacks are used by cartridge DLL's to initiate host (or MPI) actions. The
-following callbacks currently exist:
+There are two ways a cartridge can initiate host actions:
 
-  assert_cartridge_line (SlotId, line_state)
-
-  assert_interrupt (SlotId, interrupt, interrupt_source)
-
-  write_memory_byte (SlotId, value, address)
-
-  read_memory_byte (SlotId, unsigned short address)
-
-  add_menu_item (SlotId, menu_name, menu_id, menu_type)  **depreciated**
-
-SlotId is used by the MPI to filter assert_cartridge_line and to bias menu items. 
-
-There are two type of callbacks:
-
-- Fast callbacks initiated by 6x09 code running inside the CPU loop such as asserting
-interrupts, cart lines, or reading and writing memory to handle DMA requests. These
-are syncronous and must return quickly to not affect emulator timing. Fast callbacks
-are determined by Coco3's physical bus and are not likely to change.
-
-- Notifications initiated by cartridge UI events like adding menu items or inserting
+1) Notifications initiated by cartridge UI events like adding menu items or inserting
 cartridges in slots. These are asyncronous and can rely on DLL exports for details.
-A good mechanism for these is Vcc's main window message loop. The main window handle
-(hVccWnd) has been added to PakInitialize() and a message to it is used by the MPI to
-initiate a VCC reset.
+The mechanism for these is Vcc's main window message loop. The window handle (hVccWnd)
+has been added to PakInitialize() for this purpose.  Two notification messages are 
+defined, one to initiate a VCC reset and another to initiate cartridge menu rebuilds.
 
-The add_menu_item callback is not tied to the CPU loop and qualifies as a slow callback.
-This callback is being replaced by windows menu item change message and a new export.
-See **CartridgeMenuSystem.txt** for a description of this change.               
+2) Callbacks initiated by 6x09 code running inside the CPU loop such as asserting
+interrupts, cart lines, or reading and writing memory to handle DMA requests. These
+are syncronous and must return quickly to not affect emulator timing. Callbacks are
+determined by Coco3's physical bus and are not likely to change. There are four
+callbacks:
+
+  void assert_cartridge_line (SlotId, line_state)
+  void assert_interrupt (SlotId, interrupt, interrupt_source)
+  void write_memory_byte (SlotId, value, address)
+  unsigned char read_memory_byte (SlotId, unsigned short address)
+
+SlotId is used by the MPI to filter assert_cartridge_line.  DLL's are passed their slot
+location in PakInitialize().
 
 ---
 
-#A New Design Philosophy For The MPI  (In progress)
+#Proposed New Design Philosophy For The MPI  (under consideration)
 
 VCC and forks of VCC use run-time loading and unloading of dynamic libraries to simulate
 the inserting and removing of Cartridges.
@@ -204,53 +194,18 @@ The pakinterface slot management concept:
 
 - The pakinterface maintains a list indexed by slot number of loaded cartridges.
 
-- Slots are numbered 0-4. Slot 0 is the Boot slot. Slots 1-4 only loaded if MPI is in the Boot slot.
-
-- The pakinterface maintains the cartridge menu and dynamic menu items
+- Slots are numbered 0-4. Slot 0 is the Boot slot. Slots 1-4 loaded if MPI is in the Boot slot.
 
 - The pakInterface routes I/O to slots per CTS/SCS using existing capability / callcacks
            
 - The pakinterface saves slot content to settings.
 
 - Any change to current CTS triggers a reset. This is detected and effected by the pakinterface
-
-- Reset stops the CPU, unloads all cartridges, reloads the basic rom, reloads cartridges
+  Reset stops the CPU, unloads all cartridges, reloads the basic rom, reloads cartridges
   per settings, and then restarts the CPU.
 
-- pakInterface sends MPI changes to CTS/SCS via a new MPI export
-
-- The opaque slot_context is renamed to SlotId (0-4) and is made transparent. Some carts
-  don't work right if they are not a specific slot. They can use SlotId to verify the slot
-  they are in is right for them. (This has been completed)
-
-- On request pakInterface sends MPI active cart description via a new MPI export
-
-- On request pakInterface sends MPI slot contents
-
-- Then MPI should never call a cartridge DLL directly. It should always request actions through
-  messages to the pakInterface using the WinMain message loop.
-
-- The MPI saves the startup slot setting. Changing this causes no changes to running CPU
+- MPI sends changes to startup CTS/SCS via a notification message.  Startup CTS/SCS does not
+  affect the running CPU, a reset is required for them to take effect.
 
 - The MPI requests cartridge loads / unloads by sending messages to WinMain.
-
-- The MPI requests slot and cartridge information by sending messages to WinMain.
-
-- The MPI has new exports to recieve results from slot changes and cartridge information requests.
-
-- The MPI "Reset VCC" button sends a reset message to VCC main.
-
-- With the exception of add_menu_item() all other exports and callbacks remain the same.
-
----
-
-Implementation Plan
-
-1. Replace opaque slot_context pointer in init export with transparent SlotId. Cartridges can
-   use SlotId or simply return it in callbacks.  (This is complete)
-
-2. Replace the AddCartMenu callback with a message and modify pakinterface to maintain the
-   cartridge dynamic menus. See **CartridgeMenuSystem.txt** for more description.
-
-3. Move slot maintenance, cartridge loading, and cartidge calls from MPI to pakinterface.
 
