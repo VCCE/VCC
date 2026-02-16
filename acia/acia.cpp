@@ -23,7 +23,6 @@
 //------------------------------------------------------------------
 
 #include "acia.h"
-#include "../CartridgeMenu.h"
 #include <vcc/util/limits.h>
 #include <vcc/util/DialogOps.h>
 #include <vcc/util/logger.h>
@@ -32,8 +31,6 @@
 //------------------------------------------------------------------------
 // Local Functions
 //------------------------------------------------------------------------
-
-void BuildCartridgeMenu();
 
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig();
@@ -44,7 +41,6 @@ void SaveConfig();
 //------------------------------------------------------------------------
 slot_id_type gSlotId;
 
-static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 PakAssertInteruptHostCallback AssertInt = nullptr;
 
 //------------------------------------------------------------------------
@@ -130,12 +126,10 @@ extern "C"
 		const cpak_callbacks* const callbacks)
 	{
 		gSlotId = SlotId;
-		CartMenuCallback = callbacks->add_menu_item;
 		AssertInt = callbacks->assert_interrupt;
 		strcpy(IniFile, configuration_path);
 
 		LoadConfig();
-		BuildCartridgeMenu();
 		LoadExtRom("RS232.ROM");
 		sc6551_init();
 	}
@@ -246,18 +240,9 @@ __declspec(dllexport) void PakMenuItemClicked(unsigned char /*MenuID*/)
     return;
 }
 
-
 //-----------------------------------------------------------------------
-//  Add config option to Cartridge menu
-//----------------------------------------------------------------------
-void BuildCartridgeMenu()
-{
-	CartMenuCallback(gSlotId, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gSlotId, "", MID_ENTRY, MIT_Seperator);
-	CartMenuCallback(gSlotId, "ACIA Config", ControlId(16), MIT_StandAlone);
-	CartMenuCallback(gSlotId, "", MID_FINISH, MIT_Head);
-}
-
+// Return acia menu items
+//-----------------------------------------------------------------------
 bool get_menu_item(menu_item_entry* item, size_t index) {
 	if (!item) return false;
 	if (index == 0) {

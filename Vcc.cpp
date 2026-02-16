@@ -707,7 +707,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 HMENU DrawCartMenu (HWND hWnd)
 {
 	gVccCartMenu.log();
-	return gVccCartMenu.draw(hWnd,5,"Cartridge");
+	return gVccCartMenu.draw(hWnd,3,"Cartridge");
 }
 
 //--------------------------------------------------------------------------
