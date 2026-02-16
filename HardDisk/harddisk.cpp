@@ -27,7 +27,6 @@
 #include <vcc/devices/cloud9.h>
 #include <vcc/util/FileOps.h>
 #include <vcc/util/DialogOps.h>
-#include "../CartridgeMenu.h"
 #include <vcc/util/interrupts.h>
 #include <vcc/bus/cpak_cartridge_definitions.h>
 // Three includes added for PakGetMenuItem
@@ -49,7 +48,6 @@ static ::VCC::Device::rtc::cloud9 cloud9_rtc;
 static slot_id_type gSlotId {};
 static PakReadMemoryByteHostCallback MemRead8 = nullptr;
 static PakWriteMemoryByteHostCallback MemWrite8 = nullptr;
-static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 static bool ClockEnabled = true;
 static bool ClockReadOnly = true;
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
@@ -58,7 +56,6 @@ LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 void LoadHardDisk(int drive);
 void LoadConfig();
 void SaveConfig();
-void BuildCartridgeMenu(); //OLD
 int CreateDisk(HWND,int);
 
 static HINSTANCE gModuleInstance;
@@ -124,7 +121,6 @@ extern "C"
 	{
 		gSlotId = SlotId;
 		gVccWnd = hVccWnd;
-		CartMenuCallback = callbacks->add_menu_item; //OLD
 		MemRead8 = callbacks->read_memory_byte;
 		MemWrite8 = callbacks->write_memory_byte;
 		strcpy(IniFile, configuration_path);
@@ -132,8 +128,6 @@ extern "C"
 		LoadConfig();
 		cloud9_rtc.set_read_only(ClockReadOnly);
 		VhdReset(); // Selects drive zero
-		BuildCartridgeMenu();
-		// Added for PakGetMenuItem export
 		// Request menu rebuild
 		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 	}
@@ -187,7 +181,6 @@ extern "C"
         }
         SaveConfig();
         // FIXME should only rebuild menus if drive is changed
-		BuildCartridgeMenu(); // Old
 		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
         return;
     }
@@ -371,8 +364,6 @@ void LoadConfig()
 	ClockReadOnly = GetPrivateProfileInt(ModName, "ClkRdOnly", 1, IniFile) != 0;
 
     // Create config menu
-	BuildCartridgeMenu(); //OLD
-    // Added for PakGetMenuItem
 	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
     return;
 }
@@ -407,11 +398,11 @@ bool get_menu_item(menu_item_entry* item, size_t index)
 	if (index == 0) {
 		gDllCartMenu.clear();
 		gDllCartMenu.add("", 0, MIT_Seperator);
-		gDllCartMenu.add("HD Drive 0",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("HD Drive 0",0,MIT_Head);
 		gDllCartMenu.add("Insert",ControlId(10),MIT_Slave);
 		disk = VCC::Util::GetFileNamePart(VHDfile0);
 		gDllCartMenu.add("Eject: "+disk,ControlId(11),MIT_Slave);
-		gDllCartMenu.add("HD Drive 1",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("HD Drive 1",0,MIT_Head);
 		gDllCartMenu.add("Insert",ControlId(12),MIT_Slave);
 		disk = VCC::Util::GetFileNamePart(VHDfile1);
 		gDllCartMenu.add("Eject: "+disk,ControlId(13),MIT_Slave);
@@ -419,35 +410,6 @@ bool get_menu_item(menu_item_entry* item, size_t index)
 	}
 	// return requested list item or false
 	return gDllCartMenu.copy_item(*item, index);
-}
-
-// OLD Generate menu for mounting the drives OLD
-void BuildCartridgeMenu()
-{
-	char TempMsg[512] = "";
-	char TempBuf[MAX_PATH] = "";
-
-	CartMenuCallback(gSlotId, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gSlotId, "", MID_ENTRY, MIT_Seperator);
-
-	CartMenuCallback(gSlotId, "HD Drive 0", MID_ENTRY, MIT_Head);
-	CartMenuCallback(gSlotId, "Insert", ControlId(10), MIT_Slave);
-	strcpy(TempMsg, "Eject: ");
-	strcpy(TempBuf, VHDfile0);
-	PathStripPath(TempBuf);
-	strcat(TempMsg, TempBuf);
-	CartMenuCallback(gSlotId, TempMsg, ControlId(11), MIT_Slave);
-
-	CartMenuCallback(gSlotId, "HD Drive 1", MID_ENTRY, MIT_Head);
-	CartMenuCallback(gSlotId, "Insert", ControlId(12), MIT_Slave);
-	strcpy(TempMsg, "Eject: ");
-	strcpy(TempBuf, VHDfile1);
-	PathStripPath(TempBuf);
-	strcat(TempMsg, TempBuf);
-	CartMenuCallback(gSlotId, TempMsg, ControlId(13), MIT_Slave);
-
-	CartMenuCallback(gSlotId, "HD Config", ControlId(14), MIT_StandAlone);
-	CartMenuCallback(gSlotId, "", MID_FINISH, MIT_Head);
 }
 
 // Dialog for creating a new hard disk

@@ -26,12 +26,10 @@
 #include "IdeBus.h"
 #include <vcc/devices/cloud9.h>
 #include <vcc/util/FileOps.h>
-#include "../CartridgeMenu.h"
 #include <vcc/util/DialogOps.h>
 #include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/util/limits.h>
 #include <vcc/util/logger.h>
-// Three includes added for PakGetMenuItem
 #include <vcc/bus/cartridge_menu.h>
 #include <vcc/bus/cartridge_messages.h>
 #include <vcc/util/fileutil.h>
@@ -40,9 +38,7 @@ static char FileName[MAX_PATH] { 0 };
 static char IniFile[MAX_PATH]  { 0 };
 static char SuperIDEPath[MAX_PATH];
 static ::VCC::Device::rtc::cloud9 cloud9_rtc;
-static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 static unsigned char BaseAddress=0x50;
-void BuildCartridgeMenu();
 LRESULT CALLBACK IDE_Config(HWND, UINT, WPARAM, LPARAM );
 void Select_Disk(unsigned char);
 void SaveConfig();
@@ -102,13 +98,10 @@ extern "C"
 	{
 		gSlotId = SlotId;
 		gVccWnd = hVccWnd;
-		CartMenuCallback = callbacks->add_menu_item;
 		strcpy(IniFile, configuration_path);
 
 		LoadConfig();
 		IdeInit();
-
-		BuildCartridgeMenu(); // REMOVE THIS 
 		//SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 	}
 
@@ -185,28 +178,24 @@ extern "C"
 		{
 		case 10:
 			Select_Disk(MASTER);
-			BuildCartridgeMenu();
 			SaveConfig();
 		    SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 			break;
 
 		case 11:
 			DropDisk(MASTER);
-			BuildCartridgeMenu();
 			SaveConfig();
 		    SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 			break;
 
 		case 12:
 			Select_Disk(SLAVE);
-			BuildCartridgeMenu();
 			SaveConfig();
 		    SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 			break;
 
 		case 13:
 			DropDisk(SLAVE);
-			BuildCartridgeMenu();
 			SaveConfig();
 		    SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 			break;
@@ -248,11 +237,11 @@ bool get_menu_item(menu_item_entry* item, size_t index)
 	if (index == 0) {
 		gDllCartMenu.clear();
 		gDllCartMenu.add("", 0, MIT_Seperator);
-		gDllCartMenu.add("IDE Master",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("IDE Master",0,MIT_Head);
 		gDllCartMenu.add("Insert",ControlId(10),MIT_Slave);
 		disk = VCC::Util::GetFileNamePart(QueryDisk(MASTER));
 		gDllCartMenu.add("Eject: "+disk,ControlId(11),MIT_Slave);
-		gDllCartMenu.add("IDE Slave",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("IDE Slave",0,MIT_Head);
 		gDllCartMenu.add("Insert",ControlId(12),MIT_Slave);
 		disk = VCC::Util::GetFileNamePart(QueryDisk(SLAVE));
 		gDllCartMenu.add("Eject: "+disk,ControlId(13),MIT_Slave);
@@ -260,30 +249,6 @@ bool get_menu_item(menu_item_entry* item, size_t index)
 	}
 	// return requested list item or false
 	return gDllCartMenu.copy_item(*item, index);
-}
-
-void BuildCartridgeMenu()
-{
-	char TempMsg[512]="";
-	char TempBuf[MAX_PATH]="";
-	CartMenuCallback(gSlotId, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gSlotId, "", MID_ENTRY, MIT_Seperator);
-	CartMenuCallback(gSlotId, "IDE Master",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gSlotId, "Insert",ControlId(10),MIT_Slave);
-	QueryDisk(MASTER,TempBuf);
-	strcpy(TempMsg,"Eject: ");
-	PathStripPath (TempBuf);
-	strcat(TempMsg,TempBuf);
-	CartMenuCallback(gSlotId, TempMsg,ControlId(11),MIT_Slave);
-	CartMenuCallback(gSlotId, "IDE Slave",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gSlotId, "Insert",ControlId(12),MIT_Slave);
-	QueryDisk(SLAVE,TempBuf);
-	strcpy(TempMsg,"Eject: ");
-	PathStripPath (TempBuf);
-	strcat(TempMsg,TempBuf);
-	CartMenuCallback(gSlotId, TempMsg,ControlId(13),MIT_Slave);
-	CartMenuCallback(gSlotId, "IDE Config",ControlId(14),MIT_StandAlone);
-	CartMenuCallback(gSlotId, "", MID_FINISH, MIT_Head);
 }
 
 LRESULT CALLBACK IDE_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
@@ -408,7 +373,6 @@ void LoadConfig()
 	BaseAddress=BaseTable[BaseAddr];
 	cloud9_rtc.set_read_only(ClockReadOnly);
 	MountDisk(FileName ,SLAVE);
-	BuildCartridgeMenu();
 	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 	return;
 }
