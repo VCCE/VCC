@@ -56,7 +56,6 @@
 #include "mc6821.h"
 #include "keyboard.h"
 #include "coco3.h"
-//#include "CartridgeMenu.h"
 #include "pakinterface.h"
 #include "audio.h"
 #include "config.h"
@@ -446,6 +445,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case WM_CREATE:
+			// Create initial cartridge menu.  If no carts are loaded at startup
+			// build and draw here are needed to bootstrap the cartridge menu
+			BuildCartMenu();
 			DrawCartMenu(hWnd);
 #ifdef _LEGACY_VCC
 			{	char title[80] = "Legacy ";
@@ -706,7 +708,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 //--------------------------------------------------------------------------
 HMENU DrawCartMenu (HWND hWnd)
 {
-	//gVccCartMenu.log();
+	gVccCartMenu.log();
 
 	// window handle, zero based position on menu bar, name on bar.
 	return gVccCartMenu.draw( hWnd, 3, "Cartridge");
