@@ -5,7 +5,6 @@
 namespace detail
 {
 	void NullAssetCartridgeLine(slot_id_type, bool);
-	void NullAddMenuItem(slot_id_type, const char*, int, MenuItemType);
 }
 
 class Cartridge
@@ -22,7 +21,6 @@ public:
 
 	virtual void SetSlotId(slot_id_type SlotId);
 	virtual void SetCartLineAssertCallback(PakAssertCartridgeLineHostCallback callback);
-	virtual void SetMenuBuilderCallback(PakAppendCartridgeMenuHostCallback addMenuCallback);
 	virtual void SetConfigurationPath(std::string path);
 
 	virtual std::string GetStatusMessage() const;
@@ -40,11 +38,6 @@ protected:
 	void AssetCartridgeLine(bool state) const
 	{
 		AssetCartridgeLinePtr(m_SlotId, state);
-	}
-
-	void AddMenuItem(const char * name, int id, MenuItemType type)
-	{
-		AddMenuItemPtr(m_SlotId, name, id, type);
 	}
 
 	virtual void LoadConfiguration(const std::string& filename);
@@ -77,6 +70,5 @@ private:
 	std::string			m_CatalogId;
 	std::string			m_ConfigurationPath;
 	PakAssertCartridgeLineHostCallback	AssetCartridgeLinePtr = detail::NullAssetCartridgeLine;
-	PakAppendCartridgeMenuHostCallback 	AddMenuItemPtr = detail::NullAddMenuItem;
 };
 

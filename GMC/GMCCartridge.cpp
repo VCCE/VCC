@@ -11,16 +11,6 @@ void GMCCartridge::LoadConfiguration(const std::string& filename)
 	m_Configuration = Configuration(filename);
 }
 
-// OLD REMOVE THIS AND THE CALLBACK TOO SOMEWHERE IN THESE WEEDS
-void GMCCartridge::LoadMenuItems()
-{
-	// AddMenuItem is depreciated
-    AddMenuItem("",MID_BEGIN,MIT_Head);
-	AddMenuItem("",MID_ENTRY, MIT_Seperator);
-    AddMenuItem("Select GMC ROM", ControlId(MenuItems::SelectRom), MIT_StandAlone);
-    AddMenuItem("",MID_FINISH,MIT_Head);
-}
-
 bool GMCCartridge::GetMenuItem(menu_item_entry* item, size_t index)
 {
 	if (!item) return false;

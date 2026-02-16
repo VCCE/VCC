@@ -48,7 +48,6 @@ GMC_EXPORT void PakInitialize(
             callbacks->add_menu_item);
 
 	Cartridge::m_Singleton->SetSlotId(SlotId);
-	Cartridge::m_Singleton->SetMenuBuilderCallback(callbacks->add_menu_item);
 	Cartridge::m_Singleton->SetCartLineAssertCallback(callbacks->assert_cartridge_line);
 	Cartridge::m_Singleton->SetConfigurationPath(configuration_path);
 }
