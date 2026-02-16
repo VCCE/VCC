@@ -43,8 +43,6 @@ extern "C"
 		(slot_id_type SlotId, bool lineState);
 	using PakAssertInteruptHostCallback = void (*)
 		(slot_id_type SlotId, Interrupt interrupt, InterruptSource interrupt_source);
-	using PakAppendCartridgeMenuHostCallback = void (*)
-		(slot_id_type SlotId, const char* menu_name, int menu_id, MenuItemType menu_type);
 
 	// Cartridge Callbacks
 	struct cpak_callbacks
@@ -53,7 +51,6 @@ extern "C"
 		const PakAssertCartridgeLineHostCallback assert_cartridge_line;
 		const PakWriteMemoryByteHostCallback     write_memory_byte;
 		const PakReadMemoryByteHostCallback      read_memory_byte;
-		const PakAppendCartridgeMenuHostCallback add_menu_item;
 	};
 
 	// Cartridge exports. At least PakInitilizeModuleFunction must be implimented

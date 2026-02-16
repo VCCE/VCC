@@ -22,9 +22,7 @@
 #include <vcc/bus/cartridge_loader.h>
 #include <vcc/bus/cartridge_menuitem.h>
 #include <vcc/util/critical_section.h>
-#include "../CartridgeMenu.h"
 #include <array>
-
 
 constexpr size_t NUMSLOTS = 4u;
 
@@ -38,8 +36,6 @@ public:
 	using path_type = std::string;
 	using label_type = std::string;
 	using description_type = std::string;
-	using menu_item_type = CartMenuItem;
-
 
 public:
 
@@ -83,12 +79,8 @@ public:
 	slot_id_type selected_switch_slot() const;
 	slot_id_type selected_scs_slot() const;
 
-	void build_menu();
-
 	// Make automatic when mounting, ejecting, selecting slot, etc.
 	void assert_cartridge_line(slot_id_type slot, bool line_state);
-	void append_menu_item(slot_id_type slot, menu_item_type item);
-
 
 private:
 	

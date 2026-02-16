@@ -1,25 +1,26 @@
-/*
-    Copyright 2015 by Joseph Forgione
-    This file is part of VCC (Virtual Color Computer).
-
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
+//#define USE_LOGGING
+//======================================================================
+// This file is part of VCC (Virtual Color Computer).
+// Vcc is Copyright 2015 by Joseph Forgione
+//
+// VCC (Virtual Color Computer) is free software, you can redistribute
+// and/or modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version.
+//
+// VCC (Virtual Color Computer) is distributed in the hope that it will
+// be useful, but WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with VCC (Virtual Color Computer).  If not, see
+// <http://www.gnu.org/licenses/>.
+//======================================================================
 
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "tcc1014registers.h"
-#include "CartridgeMenu.h"  //OLD
 #include "pakinterface.h"
 #include "config.h"
 #include "Vcc.h"
@@ -38,10 +39,8 @@
 #include <Windows.h>
 #include <commdlg.h>
 
-
 using cartridge_loader_status = VCC::Core::cartridge_loader_status;
 using cartridge_loader_result = VCC::Core::cartridge_loader_result;
-
 
 // Storage for Pak ROMs
 extern SystemState EmuState;
@@ -69,12 +68,6 @@ struct vcc_cartridge_context : public ::VCC::Core::cartridge_context
 		return path_buffer;
 	}
 
-	void reset() override
-	{
-		//SendMessage(EmuState.WindowHandle,WM_COMMAND,(WPARAM) IDC_MSG_CPU_RESET,(LPARAM) 0);
-		EmuState.ResetPending = 2;
-	}
-
 	void write_memory_byte(unsigned char value, unsigned short address) override
 	{
 		MemWrite8(value, address);
@@ -95,10 +88,6 @@ struct vcc_cartridge_context : public ::VCC::Core::cartridge_context
 		PakAssertInterupt(interrupt, interrupt_source);
 	}
 
-	void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) override
-	{
-		CartMenuCallBack(menu_name, menu_id, menu_type);
-	}
 };
 
 static void PakAssertCartrigeLine(slot_id_type /*SlotId*/, bool line_state)
@@ -119,11 +108,6 @@ static unsigned char PakReadMemoryByte(slot_id_type /*SlotId*/, unsigned short a
 static void PakAssertInterupt(slot_id_type /*SlotId*/, Interrupt interrupt, InterruptSource source)
 {
 	PakAssertInterupt(interrupt, source);
-}
-
-static void PakAddMenuItem(slot_id_type /*SlotId*/, const char* name, int menu_id, MenuItemType type)
-{
-	CartMenuCallBack(name, menu_id, type);
 }
 
 void PakTimer()
@@ -193,7 +177,6 @@ unsigned short PackAudioSample()
 // Build entries for cartridge menu.
 void BuildCartMenu()
 {
-	// lock goes into program paks, not needed here
 	//VCC::Util::section_locker lock(gPakMutex);
 	using VCC::Bus::gVccCartMenu;
 	gVccCartMenu.clear();
@@ -217,38 +200,6 @@ void BuildCartMenu()
 	}
 }
 
-// OLD Create entries for cartridge menu. The rest will be for MPI
-// ControlId(MenuId) set what control does **OLD***
-void BeginCartMenu()
-{
-	VCC::Util::section_locker lock(gPakMutex);
-
-	CartMenu.reserve(0);
-	CartMenu.add("", MID_BEGIN, MIT_Head);
-	CartMenu.add("Cartridge", MID_ENTRY, MIT_Head);
-	if (!gActiveCartrige->name().empty())
-	{
-		char tmp[64] = {};
-		snprintf(tmp, 64, "Eject %s", gActiveCartrige->name().c_str());
-		CartMenu.add(tmp, ControlId(2), MIT_Slave);
-		CartMenu.add("", MID_FINISH, MIT_Head);
-		CartMenu.reserve(2);
-	} else {
-		CartMenu.add("Load MPI", ControlId(3), MIT_Slave);
-		CartMenu.add("Load DLL", ControlId(1), MIT_Slave);
-		CartMenu.add("Load ROM", ControlId(4), MIT_Slave);
-		CartMenu.add("", MID_FINISH, MIT_Head);
-		CartMenu.reserve(3);
-	}
-}
-
-// Callback for loaded cart DLLs.
-void CartMenuCallBack(const char *name, int menu_id, MenuItemType type)
-{
-	CartMenu.add(name, menu_id, type);
-}
-
-
 void PakLoadCartridgeUI(int type)
 {
 	char inifile[MAX_PATH];
@@ -259,11 +210,13 @@ static char cartDir[MAX_PATH] = "";
 	FileDialog dlg;
 	if (type == 0) {
 		dlg.setTitle(TEXT("Load Program Pack"));
-		dlg.setFilter("Hardware Packs\0*.dll\0All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0\0");
+		dlg.setFilter("Hardware Packs\0*.dll\0"
+				"All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0\0");
 		Setting().read("DefaultPaths", "MPIPath", "", cartDir, MAX_PATH);
 	} else {
 		dlg.setTitle(TEXT("Load ROM"));
-		dlg.setFilter("Rom Packs(*.ccc;*.rom)\0*.ccc;*.rom\0All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0\0");
+		dlg.setFilter("Rom Packs(*.ccc;*.rom)\0*.ccc;*.rom\0"
+				"All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0\0");
 		Setting().read("DefaultPaths", "PakPath", "", cartDir, MAX_PATH);
 	}
 	dlg.setInitialDir(cartDir);
@@ -323,8 +276,7 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 		PakAssertInterupt,
 		PakAssertCartrigeLine,
 		PakWriteMemoryByte,
-		PakReadMemoryByte,
-		PakAddMenuItem
+		PakReadMemoryByte
 	};
 
 	slot_id_type SlotId = 0;
@@ -350,13 +302,10 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	strcpy(DllPath, filename);
 	gActiveCartrige = move(loadedCartridge.cartridge);
 	gActiveModule = move(loadedCartridge.handle);
-	BeginCartMenu(); // OLD
 	SendMessage(EmuState.WindowHandle,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 
-	// initialize the cartridge
+	// initialize the cartridge and reset the CPU
 	gActiveCartrige->start();
-
-	// Reset if enabled.  TODO: Send DoHardReset message instead
 	EmuState.ResetPending = 2;
 
 	return loadedCartridge.load_result;
@@ -372,7 +321,6 @@ void UnloadDll()
 	gActiveCartrige = std::make_unique<VCC::Core::null_cartridge>();
 	gActiveModule.reset();
 
-	BeginCartMenu(); //OLD
 	SendMessage(EmuState.WindowHandle,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 	gActiveCartrige->start();
 }
@@ -385,7 +333,7 @@ void GetCurrentModule(char *DefaultModule)
 
 void UpdateBusPointer()
 {
-	// Do nothing for now. No clue given what the plan for this was.
+	// Do nothing for now. What the plan was for this is unknown.
 }
 
 void UnloadPack()

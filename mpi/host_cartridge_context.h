@@ -31,9 +31,7 @@ class host_cartridge_context : public ::VCC::Core::cartridge_context
 {
 public:
 
-	// FIXME: Remove this when we derive from cartridge_context
 	using path_type = std::string;
-
 
 public:
 
@@ -46,11 +44,6 @@ public:
 	path_type configuration_path() const override
 	{
 		return configuration_filename_;
-	}
-
-	void reset() override
-	{
-		// FIXME-CHET: this needs to do something
 	}
 
 	void write_memory_byte(unsigned char value, unsigned short address) override
@@ -73,11 +66,6 @@ public:
 		assert_interrupt_(SlotId_, interrupt, interrupt_source);
 	}
 
-	void add_menu_item(const char* menu_name, int menu_id, MenuItemType menu_type) override
-	{
-		add_menu_item_(SlotId_, menu_name, menu_id, menu_type);
-	}
-
 private:
 
 	friend void PakInitialize(
@@ -90,11 +78,15 @@ private:
 
 private:
 
-	slot_id_type						SlotId_;
-	const path_type&					configuration_filename_;
-	PakWriteMemoryByteHostCallback		write_memory_byte_ = [](slot_id_type, unsigned char, unsigned short) {};
-	PakReadMemoryByteHostCallback		read_memory_byte_ = [](slot_id_type, unsigned short) -> unsigned char { return 0; };
-	PakAssertCartridgeLineHostCallback	assert_cartridge_line_ = [](slot_id_type, bool) {};
-	PakAssertInteruptHostCallback		assert_interrupt_ = [](slot_id_type, Interrupt, InterruptSource) {};
-	PakAppendCartridgeMenuHostCallback	add_menu_item_ = [](slot_id_type, const char*, int, MenuItemType) {};
+	slot_id_type SlotId_;
+	const path_type& configuration_filename_;
+	PakWriteMemoryByteHostCallback write_memory_byte_ = []
+			(slot_id_type, unsigned char, unsigned short) {};
+	PakReadMemoryByteHostCallback read_memory_byte_ = []
+			(slot_id_type, unsigned short) -> unsigned char { return 0; };
+	PakAssertCartridgeLineHostCallback assert_cartridge_line_ = []
+			(slot_id_type, bool) {};
+	PakAssertInteruptHostCallback assert_interrupt_ = []
+			(slot_id_type, Interrupt, InterruptSource) {};
 };
+

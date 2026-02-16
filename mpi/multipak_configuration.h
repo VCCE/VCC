@@ -37,7 +37,6 @@ public:
 	void configuration_path(path_type path);
 	path_type configuration_path() const;
 
-	//void last_accessed_module_type(const path_type& path) const;
 	path_type last_accessed_module_type() const;
 
 	void last_accessed_rom_path(const path_type& path) const;
@@ -56,7 +55,6 @@ public:
 private:
 
 	string_type get_slot_path_key(slot_id_type slot) const;
-
 
 private:
 

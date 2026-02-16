@@ -60,7 +60,6 @@ multipak_configuration::path_type multipak_configuration::last_accessed_dll_path
 	return settings(configuration_path()).read("DefaultPaths", "MPIPath");
 }
 
-// selected slot  FIXME:: it is not clear that slot is an int
 void multipak_configuration::selected_slot(slot_id_type slot) const
 {
 	settings(configuration_path()).write(section_, "SWPOSITION", slot);

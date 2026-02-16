@@ -87,9 +87,6 @@ void multipak_cartridge::start()
 			}
 		}
 	}
-
-	// Build the dynamic menu  **OLD**
-	build_menu();
 }
 
 
@@ -346,23 +343,12 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		self->assert_cartridge_line(SlotId, line_state);
 	};
 
-	static auto append_menu_item_thunk =
-		+[](slot_id_type SlotId,
-		const char* menu_name,
-		int menu_id,
-		MenuItemType menu_type)
-	{
-		menu_item_type item {menu_name, (unsigned int)menu_id, menu_type};
-		self->append_menu_item(SlotId, item);
-	};
-
 	// Build callback table for carts loaded on MPI
 	cpak_callbacks callbacks {
 		gHostCallbacks->assert_interrupt_,
 		assert_cartridge_line_thunk,
 		gHostCallbacks->write_memory_byte_,
-		gHostCallbacks->read_memory_byte_,
-		append_menu_item_thunk
+		gHostCallbacks->read_memory_byte_//,
 	};
 	
 	DLOG_C("%3d %p %p %p %p %p\n",mpi_slot,callbacks);
@@ -432,54 +418,6 @@ multipak_cartridge::slot_id_type multipak_cartridge::selected_switch_slot() cons
 multipak_cartridge::slot_id_type multipak_cartridge::selected_scs_slot() const
 {
 	return cached_scs_slot_;
-}
-
-// *OLD* Save cart Menu items into containers per slot  **OLD**
-void multipak_cartridge::append_menu_item(slot_id_type SlotId, menu_item_type item)
-{
-
-	auto mpi_slot = SlotId - 1;
-
-	switch (item.menu_id) {
-	case MID_BEGIN:
-		{
-			VCC::Util::section_locker lock(mutex_);
-			slots_[mpi_slot].reset_menu();
-			break;
-		}
-	case MID_FINISH:
-		build_menu();
-		break;
-	default:
-		{
-			// Add 50 times the slot_id to menu_ids so WinMain knows who is calling
-			if (item.menu_id >= MID_CONTROL) {
-				item.menu_id += SlotId * 50;
-			}
-			VCC::Util::section_locker lock(mutex_);
-			slots_[mpi_slot].append_menu_item(item);
-			break;
-		}
-	}
-	DLOG_C("menu_item %d %d \n",SlotId,item.menu_id);
-}
-
-
-// *OLD* This gets called any time a cartridge menu is changed. It draws the entire menu.
-void multipak_cartridge::build_menu()
-{
-	// do we really need this here? menu draw should be async
-	VCC::Util::section_locker lock(mutex_);
-
-	// Init the menu, establish MPI config control, build slot menus, then draw it.
-	context_->add_menu_item("", MID_BEGIN, MIT_Head);
-	context_->add_menu_item("", MID_ENTRY, MIT_Seperator);
-	context_->add_menu_item("MPI Config", ControlId(19), MIT_StandAlone);
-	for (int mpi_slot = 3; mpi_slot >= 0; mpi_slot--)
-	{
-		slots_[mpi_slot].enumerate_menu_items(*context_);
-	}
-	context_->add_menu_item("", MID_FINISH, MIT_Head);  // Finish draws the entire menu
 }
 
 void multipak_cartridge::assert_cartridge_line(slot_id_type SlotId, bool line_state)

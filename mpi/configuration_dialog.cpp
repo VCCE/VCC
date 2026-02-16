@@ -116,7 +116,7 @@ void configuration_dialog::select_new_cartridge(unsigned int item)
 	}
 
 	update_slot_details(slot);
-	mpi_.build_menu();
+//	mpi_.build_menu();
 }
 
 void configuration_dialog::set_selected_slot(size_t slot)
@@ -217,7 +217,6 @@ void configuration_dialog::eject_or_select_new_cartridge(unsigned int Button)
 		mpi_.eject_cartridge(slot);
 		configuration_.slot_cartridge_path(slot, {});
 		update_slot_details(slot);
-		mpi_.build_menu();
 	}
 	else
 	{
