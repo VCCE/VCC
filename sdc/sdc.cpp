@@ -137,7 +137,6 @@
 #include <vcc/devices/cloud9.h>
 #include <vcc/util/logger.h>
 #include <vcc/util/DialogOps.h>
-#include "../CartridgeMenu.h"  //REMOVE THIS OLD
 #include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/util/limits.h>
 
@@ -170,7 +169,6 @@ static slot_id_type gSlotId {};
 
 // Callback pointers
 static PakAssertInteruptHostCallback AssertIntCallback = nullptr;
-static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 
 // Settings
 static char IniFile[MAX_PATH] = {};
@@ -239,7 +237,6 @@ bool get_menu_item(menu_item_entry* item, size_t index);
 LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig();
 bool SaveConfig(HWND);
-void BuildCartridgeMenu();
 void SelectCardBox();
 void UpdateFlashItem(int);
 void InitCardBox();
@@ -315,11 +312,9 @@ extern "C"
         gVccWindow = hVccWnd;
         DLOG_C("SDC %p %p %p %p %p\n",*callbacks);
         gSlotId = SlotId;
-        CartMenuCallback = callbacks->add_menu_item;
         AssertIntCallback = callbacks->assert_interrupt;
         strcpy(IniFile, configuration_path);
         LoadConfig();
-        BuildCartridgeMenu();
     }
 
     __declspec(dllexport) const char* PakGetName()
@@ -394,7 +389,6 @@ extern "C"
             SendMessage(gVccWindow,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
             break;
         }
-        BuildCartridgeMenu();
         return;
     }
 
@@ -445,30 +439,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID rsvd)
 //======================================================================
 
 //-------------------------------------------------------------
-// Generate menu for configuring the SDC
-//-------------------------------------------------------------
-void BuildCartridgeMenu()  //OBSOLETE REMOVE OLD
-{
-    CartMenuCallback(gSlotId, "", MID_BEGIN, MIT_Head);
-    CartMenuCallback(gSlotId, "", MID_ENTRY, MIT_Seperator);
-    CartMenuCallback(gSlotId, "SDC Drive 0",MID_ENTRY,MIT_Head);
-    char tmp[64]={};
-    if (strcmp(gCocoDisk[0].name,"") == 0) {
-        strcpy(tmp,"empty");
-    } else {
-        strcpy(tmp,gCocoDisk[0].name);
-        if (gFileList.nextload_flag) {
-            strcat(tmp," (load next)");
-        } else {
-            strcat(tmp," (no next)");
-        }
-    }
-    CartMenuCallback(gSlotId, tmp, ControlId(11),MIT_Slave);
-    CartMenuCallback(gSlotId, "SDC Config", ControlId(10), MIT_StandAlone);
-    CartMenuCallback(gSlotId, "", MID_FINISH, MIT_Head);
-}
-
 // Return items for cartridge menu. Called for each item
+//-------------------------------------------------------------
 bool get_menu_item(menu_item_entry* item, size_t index)
 {
     if (!item) return false;
@@ -483,7 +455,7 @@ bool get_menu_item(menu_item_entry* item, size_t index)
         }
         SdcMenu.clear();
         SdcMenu.add("", 0, MIT_Seperator);
-        SdcMenu.add("SDC Drive 0",MID_ENTRY,MIT_Head);
+        SdcMenu.add("SDC Drive 0",0,MIT_Head);
         SdcMenu.add(tmp, ControlId(11),MIT_Slave);
         SdcMenu.add("SDC Config", ControlId(10), MIT_StandAlone);
     }
@@ -1913,7 +1885,8 @@ void SDCMountDisk (int drive, const char * path, int raw)
     if (*path == '\0') {
         DLOG_C("SDCMountDisk unload %d %s\n",drive,path);
         IFace.status = STA_NORMAL;
-        if (drive == 0) BuildCartridgeMenu();
+        if (drive == 0)
+            SendMessage(gVccWindow,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
         return;
     }
 
@@ -2099,7 +2072,8 @@ void SDCOpenFound (int drive,int raw)
         DLOG_C("SDCOpenFound %s directory initiate\n",pattern.c_str());
         if (SDCInitiateDir(pattern.c_str())) {
             SDCOpenFound(drive, 0);
-            if (drive == 0) BuildCartridgeMenu();
+            if (drive == 0)
+                SendMessage(gVccWindow,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
         }
         return;
     }
@@ -2230,7 +2204,8 @@ void SDCOpenFound (int drive,int raw)
         }
     }
 
-    if (drive == 0) BuildCartridgeMenu();
+    if (drive == 0)
+            SendMessage(gVccWindow,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 
     IFace.status = STA_NORMAL;
     return;
@@ -2556,7 +2531,7 @@ bool SearchFile(const std::string& pat)
     // Fill gFileList with files found.
     GetFileList(pat);
     // Update menu to show next disk status
-    BuildCartridgeMenu();
+    SendMessage(gVccWindow,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
     // Return true if something found
     return (gFileList.files.size() > 0);
 }
