@@ -248,7 +248,6 @@ int mount_disk_image(const char *filename,unsigned char drive)
 {
 	unsigned int Temp=0;
 	Temp=MountDisk(filename,drive);
-	BuildCartridgeMenu();
 	return(!Temp);
 }
 

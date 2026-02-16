@@ -35,7 +35,6 @@
 #include "wd1793.h"
 #include "distortc.h"
 #include "fd502.h"
-#include "../CartridgeMenu.h"
 #include <vcc/util/limits.h>
 #include <vcc/util/FileOps.h>
 #include <vcc/util/DialogOps.h>
@@ -63,7 +62,6 @@ static char RomFileName[MAX_PATH]="";
 static char TempRomFileName[MAX_PATH]="";
 slot_id_type gSlotId {};
 PakAssertInteruptHostCallback AssertInt = nullptr;
-static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 unsigned char PhysicalDriveA=0,PhysicalDriveB=0,OldPhysicalDriveA=0,OldPhysicalDriveB=0;
 static unsigned char *RomPointer[3]={ExternalRom,DiskRom,RGBDiskRom};
 static unsigned char SelectRom=0;
@@ -138,15 +136,11 @@ extern "C"
 		DLOG_C("FDC %p %p %p %p %p\n",*callbacks);
 		gSlotId = SlotId;
 		gVccWnd = hVccWnd;
-		CartMenuCallback = callbacks->add_menu_item;
 		AssertInt = callbacks->assert_interrupt;
 		strcpy(IniFile, configuration_path);
 
 		RealDisks = InitController();
 		LoadConfig();
-		BuildCartridgeMenu();
-		// Added for PakGetMenuItem export
-		// Request menu rebuild
 		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 	}
 
@@ -209,8 +203,6 @@ extern "C"
 				ShowWindow(g_hConfDlg,1);
 				break;
 		}
-		//FIXME: Menu rebuild should not be here
-		BuildCartridgeMenu(); //OLD REMOVE
 		return;
 	}
 
@@ -481,19 +473,19 @@ bool get_menu_item(menu_item_entry* item, size_t index)
 	if (index == 0) {
 		gDllCartMenu.clear();
 		gDllCartMenu.add("", 0, MIT_Seperator);
-		gDllCartMenu.add("FD-502 Drive 0",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("FD-502 Drive 0",0,MIT_Head);
 		gDllCartMenu.add("Insert",ControlId(10),MIT_Slave);
 		disk = VCC::Util::GetFileNamePart(gVirtualDrive[0].ImageName);
 		gDllCartMenu.add("Eject: "+disk,ControlId(11),MIT_Slave);
-		gDllCartMenu.add("FD-502 Drive 1",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("FD-502 Drive 1",0,MIT_Head);
 		gDllCartMenu.add("Insert",ControlId(12),MIT_Slave);
 		disk = VCC::Util::GetFileNamePart(gVirtualDrive[1].ImageName);
 		gDllCartMenu.add("Eject: "+disk,ControlId(13),MIT_Slave);
-		gDllCartMenu.add("FD-502 Drive 2",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("FD-502 Drive 2",0,MIT_Head);
 		gDllCartMenu.add("Insert",ControlId(14),MIT_Slave);
 		disk = VCC::Util::GetFileNamePart(gVirtualDrive[2].ImageName);
 		gDllCartMenu.add("Eject: "+disk,ControlId(15),MIT_Slave);
-		gDllCartMenu.add("FD-502 Drive 3",MID_ENTRY,MIT_Head);
+		gDllCartMenu.add("FD-502 Drive 3",0,MIT_Head);
 		gDllCartMenu.add("Insert",ControlId(17),MIT_Slave);
 		disk = VCC::Util::GetFileNamePart(gVirtualDrive[3].ImageName);
 		gDllCartMenu.add("Eject: "+disk,ControlId(18),MIT_Slave);
@@ -501,53 +493,6 @@ bool get_menu_item(menu_item_entry* item, size_t index)
 	}
 	// return requested list item or false
 	return gDllCartMenu.copy_item(*item, index);
-}
-
-// Following is OLD depreciated
-void BuildCartridgeMenu()
-{
-	char TempMsg[MAX_PATH]="";
-	char TempBuf[MAX_PATH]="";
-	if (CartMenuCallback ==nullptr)
-		MessageBox(g_hConfDlg,"No good","Ok",0);
-
-	CartMenuCallback(gSlotId, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gSlotId, "", MID_ENTRY, MIT_Seperator);
-
-	CartMenuCallback(gSlotId, "FD-502 Drive 0",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gSlotId, "Insert",ControlId(10),MIT_Slave);
-	strncpy(TempMsg,"Eject: ",MAX_PATH);
-	strncpy(TempBuf,gVirtualDrive[0].ImageName,MAX_PATH);
-	PathStripPath(TempBuf);
-	strncat(TempMsg,TempBuf,MAX_PATH);
-	CartMenuCallback(gSlotId, TempMsg,ControlId(11),MIT_Slave);
-
-	CartMenuCallback(gSlotId, "FD-502 Drive 1",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gSlotId, "Insert",ControlId(12),MIT_Slave);
-	strncpy(TempMsg,"Eject: ",MAX_PATH);
-	strncpy(TempBuf,gVirtualDrive[1].ImageName,MAX_PATH);
-	PathStripPath(TempBuf);
-	strncat(TempMsg,TempBuf,MAX_PATH);
-	CartMenuCallback(gSlotId, TempMsg,ControlId(13),MIT_Slave);
-
-	CartMenuCallback(gSlotId, "FD-502 Drive 2",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gSlotId, "Insert",ControlId(14),MIT_Slave);
-	strncpy(TempMsg,"Eject: ",MAX_PATH);
-	strncpy(TempBuf,gVirtualDrive[2].ImageName,MAX_PATH);
-	PathStripPath(TempBuf);
-	strncat(TempMsg,TempBuf,MAX_PATH);
-	CartMenuCallback(gSlotId, TempMsg,ControlId(15),MIT_Slave);
-
-	CartMenuCallback(gSlotId, "FD-502 Drive 3",MID_ENTRY,MIT_Head);
-	CartMenuCallback(gSlotId, "Insert",ControlId(17),MIT_Slave);
-	strncpy(TempMsg,"Eject: ",MAX_PATH);
-	strncpy(TempBuf,gVirtualDrive[3].ImageName,MAX_PATH);
-	PathStripPath(TempBuf);
-	strncat(TempMsg,TempBuf,MAX_PATH);
-	CartMenuCallback(gSlotId, TempMsg,ControlId(18),MIT_Slave);
-
-	CartMenuCallback(gSlotId, "FD-502 Config",ControlId(16),MIT_StandAlone);
-	CartMenuCallback(gSlotId,"", MID_FINISH, MIT_Head);
 }
 
 long CreateDisk (unsigned char Disk)
@@ -772,9 +717,6 @@ void LoadConfig()  // Called on SetIniPath
 		}
 	ClockEnabled=GetPrivateProfileInt(ModName,"ClkEnable",1,IniFile);
 	SetTurboDisk(GetPrivateProfileInt(ModName, "TurboDisk", 1, IniFile));
-
-	BuildCartridgeMenu(); //OLD
-	// Request menu rebuild
 	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
 	return;
 }

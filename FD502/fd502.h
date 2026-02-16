@@ -21,7 +21,6 @@ This file is part of VCC (Virtual Color Computer).
 
 extern slot_id_type gSlotId;
 extern PakAssertInteruptHostCallback AssertInt;
-void BuildCartridgeMenu();
 
 // DO NOT REMOVE until becker.dll is retired.  Then FD502 becker becomes permanant.
 #define COMBINE_BECKER
