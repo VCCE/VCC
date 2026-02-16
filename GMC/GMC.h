@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-#include "../CartridgeMenu.h"
 #include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/bus/cartridge_menuitem.h>
 

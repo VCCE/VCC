@@ -20,10 +20,6 @@ public:
 	unsigned char OnReadPort(unsigned char port) const override;
 	bool GetMenuItem(menu_item_entry* item, size_t index) override;
 
-protected:
-    // probably not needed
-	void LoadMenuItems() override;
-
 private:
 
 	struct MenuItems

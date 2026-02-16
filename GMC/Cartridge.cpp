@@ -22,7 +22,6 @@
 namespace detail
 {
 	void NullAssetCartridgeLine(slot_id_type, bool) {}
-	void NullAddMenuItem(slot_id_type, const char *, int, MenuItemType) {}
 }
 
 
@@ -74,12 +73,6 @@ void Cartridge::SetConfigurationPath(std::string path)
 	m_ConfigurationPath = move(path);
 	LoadConfiguration(m_ConfigurationPath);
 	LoadMenuItems();
-}
-
-
-void Cartridge::SetMenuBuilderCallback(PakAppendCartridgeMenuHostCallback callback)
-{
-	AddMenuItemPtr = callback;
 }
 
 std::string Cartridge::GetStatusMessage() const
