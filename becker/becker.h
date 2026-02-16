@@ -10,7 +10,6 @@
 // functions
 void MemWrite(unsigned char,unsigned short );
 unsigned char MemRead(unsigned short );
-void BuildCartridgeMenu();
 
 extern const unsigned char Rom[8192];
 

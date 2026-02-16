@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include "becker.h"
 #include "resource.h" 
-#include "../CartridgeMenu.h"
 #include <vcc/bus/cpak_cartridge_definitions.h>
 #include <vcc/util/limits.h>
 #include <vcc/util/logger.h>
@@ -41,7 +40,6 @@ static SOCKET dwSocket = 0;
 // vcc stuff
 static HINSTANCE gModuleInstance;
 slot_id_type gSlotId {}; 
-static PakAppendCartridgeMenuHostCallback CartMenuCallback = nullptr;
 static PakAssertCartridgeLineHostCallback PakSetCart = nullptr;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
 static char IniFile[MAX_PATH]="";
@@ -85,7 +83,6 @@ unsigned char LoadExtRom(const char *);
 void SetDWTCPConnectionEnable(unsigned int enable);
 int dw_setaddr(const char *bufdwaddr);
 int dw_setport(const char *bufdwport);
-void BuildCartridgeMenu();
 void LoadConfig();
 void SaveConfig();
 
@@ -119,11 +116,6 @@ BOOL APIENTRY DllMain( HINSTANCE  hinstDLL,
 
     return TRUE;
 }
-
-
-
-
-
 
 // coco checks for data
 unsigned char dw_status( void )
@@ -446,14 +438,12 @@ extern "C"
 		const cpak_callbacks* const callbacks)
 	{
 		gSlotId = SlotId;
-		CartMenuCallback = callbacks->add_menu_item;
 		PakSetCart = callbacks->assert_cartridge_line;
 		strcpy(IniFile, configuration_path);
 
 		LastStats = GetTickCount();
 		LoadConfig();
 		SetDWTCPConnectionEnable(1);
-		BuildCartridgeMenu();
 	}
 
 	__declspec(dllexport) bool PakGetMenuItem(menu_item_entry* item, size_t index)
@@ -574,21 +564,11 @@ bool get_menu_item(menu_item_entry* item, size_t index) {
 	return BeckerMenu.copy_item(*item, index);
 }
 
-// Following is depreciated - remove
-void BuildCartridgeMenu()
-{
-	CartMenuCallback(gSlotId, "", MID_BEGIN, MIT_Head);
-	CartMenuCallback(gSlotId, "", MID_ENTRY, MIT_Seperator);
-	CartMenuCallback(gSlotId, "DriveWire Server..", ControlId(16), MIT_StandAlone);
-	CartMenuCallback(gSlotId, "", MID_FINISH, MIT_Head);
-}
-
 extern "C" __declspec(dllexport) void PakMenuItemClicked(unsigned char MenuID)
 	{
 		HWND h_own = GetActiveWindow();
 		CreateDialog(gModuleInstance,(LPCTSTR)IDD_PROPPAGE,h_own,(DLGPROC)Config);
 		ShowWindow(g_hConfigDlg,1);
-		BuildCartridgeMenu();
 		return;
 	}
 
@@ -688,7 +668,6 @@ void LoadConfig()
 		dw_setport("65504");
 
 	
-	BuildCartridgeMenu();
 	GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
 	PathRemoveFileSpec(DiskRomPath);
 	strcat( DiskRomPath, "hdbdwbck.rom");
