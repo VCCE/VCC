@@ -53,7 +53,9 @@ void CartridgeMenu::add(const char * name, unsigned int menu_id, MenuItemType ty
 		// Some older DLLs used message type MIT_Head with an empty name for a seperator.
 		// To support those here is a check for MIT_Head with an empty name.
 		if (type == MIT_Head && strcmp(name,"") == 0) type = MIT_Seperator;
-		menu_.push_back({name,menu_id,type});
+std::string s = "~" + std::string(name);
+menu_.push_back({s,menu_id,type});
+//		menu_.push_back({name,menu_id,type});
 		break;
 	}
 }

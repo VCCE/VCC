@@ -42,10 +42,10 @@ constexpr auto MID_ENTRY  = 2;  // A menu item with no control
 //  it to call the control in the cartridge dll. This allows dynamic cartridge menus to
 //  work properly regardless of which slot they are in.
 
-constexpr auto MID_CONTROL = 5000;
+//constexpr auto MID_CONTROL = 5000;
 
 // constexpr to convert menu id number to control id
-constexpr int ControlId(int id) { return MID_CONTROL + id; };
+//constexpr int ControlId(int id) { return MID_CONTROL + id; };
 
 struct CartMenuItem {
 	std::string name;
@@ -67,7 +67,7 @@ public:
 	CartridgeMenu();
 
 //  Title is menu bar title, position is location menu will be placed on the menu bar.
-	void init(const char * title="Cartridge", int position=3);
+	void init(const char * title="Cartridge", int position=5);
 
 //  Reserve cartmenu items. The reserve value allows the 'Cartridge' menu item and
 //  it's submenu to remain intact when DLL's append items to the menu. The reserve

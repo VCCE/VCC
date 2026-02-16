@@ -48,22 +48,6 @@
 
 namespace VCC::Bus {
 
-// menu_id is an unsigned int between 0 and 49 that can be used by
-// a cart to identify menus it adds. Multipak will bias the Menu ID
-// by 50 times SlotId to as mechanism to determine which slot a
-// message is for.  Control ID is used in windows messages to detect
-// menu button pushes. 5000 is added to menu_id to generate these
-// control messages. 
-
-//-----------------------------------------------------
-// Message ID 5000 - 5249 are reserved for cartridge menus
-// Message ID 5251 - 5299 are reseverd for cartridge messaging
-//-----------------------------------------------------
-
-// Menu ID <-> Command ID mapping
-constexpr auto MID_CONTROL = 5000;
-constexpr int ControlId(int id) { return MID_CONTROL + id; }
-
 // A single menu entry
 struct CartMenuItem {
 	std::string name;
