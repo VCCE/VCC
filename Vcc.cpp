@@ -290,11 +290,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 		case WM_SYSCOMMAND:
-			//-------------------------------------------------------------
-			// Control ATL key menu access.
-			// Here left ALT is hardcoded off and right ALT on
-			// TODO: Add config check boxes to control them
-			//-------------------------------------------------------------
+			// Disable windows seeing Left ALT. (ALT-TAB can not be disabled)
 			if(wParam==SC_KEYMENU) {
 				if (GetKeyState(VK_LMENU) & 0x8000) return 0; // Left off
 			}
@@ -524,6 +520,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case WM_KEYDOWN:
 
+			// Let Windows handle right ALT key
+			{
+				bool isRightAlt = (wParam == VK_MENU && (lParam & (1 << 24)));
+				if (isRightAlt) return DefWindowProc(hWnd, message, wParam, lParam);
+			}
+
 			// get key scan code for emulator control keys
 			OEMscan = (unsigned char) ((lParam >> 16) & 0xFF);
 			Extended=(lParam >> 24) & 1;
@@ -711,7 +713,7 @@ HMENU DrawCartMenu (HWND hWnd)
 	gVccCartMenu.log();
 
 	// window handle, zero based position on menu bar, name on bar.
-	return gVccCartMenu.draw( hWnd, 3, "Cartridge");
+	return gVccCartMenu.draw( hWnd, 3, "&Cartridge");
 }
 
 //--------------------------------------------------------------------------
@@ -1118,7 +1120,6 @@ void FullScreenToggle()
 		exit(0);
 	}
 	InvalidateBoarder();
-//	CartMenu.draw();
 
 	EmuState.ConfigDialog=nullptr;
 	PauseAudio(false);

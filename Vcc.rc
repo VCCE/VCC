@@ -26,7 +26,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 IDR_MENU MENU
 BEGIN
-    POPUP "File"
+    POPUP "&File"
     BEGIN
         MENUITEM "Run",                         ID_FILE_RUN
         MENUITEM "Save Config",                 ID_SAVE_CONFIG
@@ -38,14 +38,14 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Exit",                        ID_FILE_EXIT
     END
-    POPUP "Edit"
+    POPUP "&Edit"
     BEGIN
         MENUITEM "Copy Text",                   ID_COPY_TEXT
         MENUITEM "Paste Text",                  ID_PASTE_TEXT
         MENUITEM "Paste BASIC Code (Merge)",    ID_PASTE_BASIC
         MENUITEM "Paste BASIC Code (with NEW)", ID_PASTE_BASIC_NEW
     END
-    POPUP "Configuration"
+    POPUP "C&onfiguration"
     BEGIN
         MENUITEM "Flip Artifact Colors",        ID_FLIP_ARTIFACTS
         MENUITEM "Swap Joysticks",              ID_SWAP_JOYSTICKS
@@ -61,11 +61,11 @@ BEGIN
 
     END
     // Dummy place holder for Cartrige menu, drawn after carts load
-    POPUP "Cartridge"
+    POPUP "&Cartridge"
     BEGIN
         MENUITEM "Cartridge"                    ID_CARTS_LOAD
     END
-    POPUP "Debugger"
+    POPUP "&Debugger"
     BEGIN
         MENUITEM "Memory Display",              ID_MEMORY_DISPLAY
         MENUITEM "Processor State",             ID_PROCESSOR_STATE
@@ -74,7 +74,7 @@ BEGIN
         MENUITEM "MMU Monitor",                 ID_MMU_MONITOR
         MENUITEM "Execution Trace",             ID_EXEC_TRACE
     END
-    POPUP "Help", HELP
+    POPUP "&Help", HELP
     BEGIN
         MENUITEM "About Vcc",                   IDM_HELP_ABOUT
         MENUITEM "Function Keys",               IDM_HELP_FUNKEY

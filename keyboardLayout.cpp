@@ -186,7 +186,7 @@ keytranslationentry_t keyTranslationsCoCo[] =
 	{ DIK_RBRACKET,   DIK_LSHIFT,    64,     4,    32,    6 }, //   } (CoCo CTRL .)
 
 //	{ DIK_SCROLL,     0,              1,     0,    64,    7 }, //   SCROLL (CoCo SHIFT @)
-	{ DIK_RALT,       0,              1,     0,     0,    0 }, //   @
+//	{ DIK_RALT,       0,              1,     0,     0,    0 }, //   @
 
 	{ DIK_LALT,       0,             64,     3,     0,    0 }, //   ALT
 	{ DIK_LCONTROL,   0,             64,     4,     0,    0 }, //   CTRL
