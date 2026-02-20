@@ -22,7 +22,7 @@
 
 namespace VCC::Util
 {
-	LIBCOMMON_EXPORT std::string load_string(HINSTANCE instance, UINT id)
+	std::string load_string(HINSTANCE instance, UINT id)
 	{
 		const wchar_t* buffer_ptr;
 		// Get len of string to load

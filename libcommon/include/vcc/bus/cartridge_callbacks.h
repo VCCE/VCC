@@ -16,7 +16,6 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <vcc/util/interrupts.h>
 #include <string>
 
@@ -24,7 +23,7 @@ enum MenuItemType;
 
 namespace VCC::Core
 {
-	struct LIBCOMMON_EXPORT cartridge_context
+	struct cartridge_context
 	{
 		using path_type = std::string;
 

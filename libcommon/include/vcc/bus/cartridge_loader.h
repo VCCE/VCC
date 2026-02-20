@@ -46,7 +46,7 @@ namespace VCC::Core
 		not_expansion
 	};
 
-	struct LIBCOMMON_EXPORT cartridge_loader_result
+	struct cartridge_loader_result
 	{
 		using handle_type = std::unique_ptr<std::remove_pointer_t<HMODULE>, VCC::Core::dll_deleter>;
 		using cartridge_ptr_type = std::unique_ptr<VCC::Core::cartridge>;
@@ -59,13 +59,13 @@ namespace VCC::Core
 		cartridge_loader_status load_result = cartridge_loader_status::not_loaded;
 	};
 
-	LIBCOMMON_EXPORT cartridge_file_type determine_cartridge_type(const std::string& filename);
+	cartridge_file_type determine_cartridge_type(const std::string& filename);
 
-	LIBCOMMON_EXPORT cartridge_loader_result load_rom_cartridge(
+	cartridge_loader_result load_rom_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context);
 
-	LIBCOMMON_EXPORT cartridge_loader_result load_cpak_cartridge(
+	cartridge_loader_result load_cpak_cartridge(
 		const std::string& filename,
 		std::unique_ptr<cartridge_context> cartridge_context,
 		slot_id_type SlotId,
@@ -73,7 +73,7 @@ namespace VCC::Core
 		HWND hVccWnd,
 		const cpak_callbacks& cpak_callbacks);
 
-	LIBCOMMON_EXPORT cartridge_loader_result load_cartridge(
+	cartridge_loader_result load_cartridge(
 		const std::string& filename,                          // Cartridge filename
 		std::unique_ptr<cartridge_context> cartridge_context, // Loader context
 		slot_id_type SlotId,
@@ -82,7 +82,7 @@ namespace VCC::Core
 		const cpak_callbacks& cpak_callbacks);                // Callbacks
 
 	// Return load error string per cartridge load status
-	LIBCOMMON_EXPORT std::string cartridge_load_error_string(
+	std::string cartridge_load_error_string(
 			const cartridge_loader_status error_status);
 
 }

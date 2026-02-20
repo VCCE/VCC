@@ -6,7 +6,7 @@
 
 namespace VCC::Util
 {
-	LIBCOMMON_EXPORT std::string find_pak_module_path(std::string path)
+	std::string find_pak_module_path(std::string path)
 	{
 		if (path.empty())
 		{

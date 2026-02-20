@@ -16,7 +16,6 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <string>
 #include <vector>
 
@@ -35,8 +34,8 @@ namespace VCC::Core
 
 	public:
 
-		LIBCOMMON_EXPORT rom_image() = default;
-		LIBCOMMON_EXPORT ~rom_image() = default;
+		rom_image() = default;
+		~rom_image() = default;
 
 		bool empty() const
 		{
@@ -48,7 +47,7 @@ namespace VCC::Core
 			return filename_;
 		}
 
-		LIBCOMMON_EXPORT bool load(path_type filename);
+		bool load(path_type filename);
 
 		void clear()
 		{

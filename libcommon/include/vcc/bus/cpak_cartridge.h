@@ -33,29 +33,29 @@ namespace VCC::Core
 
 	public:
 
-		LIBCOMMON_EXPORT cpak_cartridge(
+		cpak_cartridge(
 			HMODULE module_handle,                   // Cartridge filename
 			slot_id_type const SlotId,               // Slot id
 			path_type configuration_path,            // Path of ini file
 			HWND hVccWnd,                            // Handle to main VCC window proc 
 			const cpak_callbacks& cpak_callbacks);   // Callbacks
 
-		LIBCOMMON_EXPORT name_type name() const override;
-		LIBCOMMON_EXPORT catalog_id_type catalog_id() const override;
-		LIBCOMMON_EXPORT description_type description() const override;
+		name_type name() const override;
+		catalog_id_type catalog_id() const override;
+		description_type description() const override;
 
-		LIBCOMMON_EXPORT void start() override;
-		LIBCOMMON_EXPORT void stop() override;
+		void start() override;
+		void stop() override;
 
-		LIBCOMMON_EXPORT void reset() override;
-		LIBCOMMON_EXPORT void process_horizontal_sync() override;
-		LIBCOMMON_EXPORT void status(char* text_buffer, size_t buffer_size) override;
-		LIBCOMMON_EXPORT void write_port(unsigned char port_id, unsigned char value) override;
-		LIBCOMMON_EXPORT unsigned char read_port(unsigned char port_id) override;
-		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memory_address) override;
-		LIBCOMMON_EXPORT unsigned short sample_audio() override;
-		LIBCOMMON_EXPORT void menu_item_clicked(unsigned char menu_item_id) override;
-		LIBCOMMON_EXPORT bool get_menu_item(menu_item_entry* item, size_t index) override;
+		void reset() override;
+		void process_horizontal_sync() override;
+		void status(char* text_buffer, size_t buffer_size) override;
+		void write_port(unsigned char port_id, unsigned char value) override;
+		unsigned char read_port(unsigned char port_id) override;
+		unsigned char read_memory_byte(unsigned short memory_address) override;
+		unsigned short sample_audio() override;
+		void menu_item_clicked(unsigned char menu_item_id) override;
+		bool get_menu_item(menu_item_entry* item, size_t index) override;
 
 	private:
 

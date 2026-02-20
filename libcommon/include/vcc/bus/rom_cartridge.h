@@ -39,25 +39,25 @@ namespace VCC::Core
 		using basic_cartridge::basic_cartridge;
 
 
-		LIBCOMMON_EXPORT rom_cartridge(
+		rom_cartridge(
 			std::unique_ptr<context_type> context,
 			name_type name,
 			catalog_id_type catalog_id,
 			buffer_type buffer,
 			bool enable_bank_switching);
 		
-		LIBCOMMON_EXPORT name_type name() const override;
-		LIBCOMMON_EXPORT catalog_id_type catalog_id() const override;
-		LIBCOMMON_EXPORT description_type description() const override;
+		name_type name() const override;
+		catalog_id_type catalog_id() const override;
+		description_type description() const override;
 
-		LIBCOMMON_EXPORT void reset() override;
-		LIBCOMMON_EXPORT void write_port(unsigned char port_id, unsigned char value) override;
-		LIBCOMMON_EXPORT unsigned char read_memory_byte(unsigned short memory_address) override;
+		void reset() override;
+		void write_port(unsigned char port_id, unsigned char value) override;
+		unsigned char read_memory_byte(unsigned short memory_address) override;
 
 
 	protected:
 
-		LIBCOMMON_EXPORT void initialize_bus() override;
+		void initialize_bus() override;
 
 
 	private:

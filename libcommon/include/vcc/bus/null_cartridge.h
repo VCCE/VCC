@@ -22,7 +22,7 @@
 namespace VCC::Core
 {
 
-	class LIBCOMMON_EXPORT null_cartridge : public basic_cartridge
+	class null_cartridge : public basic_cartridge
 	{};
 
 }

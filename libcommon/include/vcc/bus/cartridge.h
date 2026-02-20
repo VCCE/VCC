@@ -16,13 +16,12 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <vcc/bus/cartridge_menuitem.h>
 #include <string>
 
 namespace VCC::Core
 {
-	struct LIBCOMMON_EXPORT cartridge
+	struct cartridge
 	{
 	public:
 		using name_type = std::string;

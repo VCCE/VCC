@@ -25,7 +25,6 @@
   <Import Project="..\vcc-base.props" />
   <PropertyGroup>
     <ConfigurationType Condition="'$(LinkageType)' == 'Static'">StaticLibrary</ConfigurationType>
-    <ConfigurationType Condition="'$(LinkageType)' == 'Dynamic'">DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -62,28 +61,21 @@
   <PropertyGroup>
     <ClCompile>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <!--<WholeProgramOptimization Condition="'$(LinkageType)' == 'Static'">true</WholeProgramOptimization>
-          <WholeProgramOptimization Condition="'$(LinkageType)' == 'Dynamic'">false</WholeProgramOptimization>-->
     </ClCompile>
-    <!--<OutDir>$(SolutionDir)__obj\$(LinkTypeSubDir)$(Platform)\$(Configuration)\vcc\out\</OutDir>-->
-    <TargetExt Condition="'$(LinkageType)' == 'Dynamic'">.vcc</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
     <LibraryPath>"$(ProgramFiles(x86))\Windows Kits\8.1\Lib\winv6.3\um\x86;$(LibraryPath)"</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Dynamic'">WIN32;_DEBUG;LIBCOMMON_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Static'">WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <LinkDLL Condition="'$(LinkageType)' == 'Dynamic'">true</LinkDLL>
       <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Dynamic'">WIN32;_USRDLL;LIBCOMMON_EXPORTS;_LEGACY_VCC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Static'">WIN32;_LEGACY_VCC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/arch:SSE</AdditionalOptions>
     </ClCompile>
@@ -92,17 +84,14 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <LinkDLL Condition="'$(LinkageType)' == 'Dynamic'">true</LinkDLL>
       <AdditionalDependencies>Shlwapi.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Dynamic'">WIN32;NDEBUG;LIBCOMMON_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Static'">WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <LinkDLL Condition="'$(LinkageType)' == 'Dynamic'">true</LinkDLL>
       <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -121,7 +110,6 @@
     <ClCompile Include="src\util\logger.cpp" />
     <ClCompile Include="src\util\fileutil.cpp" />
     <ClCompile Include="src\devices\cloud9.cpp" />
-    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\vcc\bus\basic_cartridge.h" />
@@ -130,7 +118,6 @@
     <ClInclude Include="include\vcc\bus\cartridge_loader.h" />
     <ClInclude Include="include\vcc\bus\cartridge_menu.h" />
     <ClInclude Include="include\vcc\bus\dll_deleter.h" />
-    <ClInclude Include="include\vcc\bus\exports.h" />
     <ClInclude Include="include\vcc\bus\cpak_cartridge.h" />
     <ClInclude Include="include\vcc\bus\cpak_cartridge_definitions.h" />
     <ClInclude Include="include\vcc\bus\null_cartridge.h" />

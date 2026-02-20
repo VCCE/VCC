@@ -16,13 +16,12 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 
-LIBCOMMON_EXPORT void PrintLogC(const char* fmt, ...);
-LIBCOMMON_EXPORT void PrintLogF(const char* fmt, ...);
+// Print to Console or File
+void PrintLogC(const char* fmt, ...);
+void PrintLogF(const char* fmt, ...);
 
 // Debug logging if USE_LOGGING is defined
-
 #ifdef USE_LOGGING
 #define DLOG_C(...) PrintLogC(__VA_ARGS__)
 #define DLOG_F(...) PrintLogF(__VA_ARGS__)
