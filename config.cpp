@@ -218,14 +218,11 @@ void LoadConfig(SystemState *LCState)
 	} else {
 		ini = appData + "/Vcc.ini";
 	}
-
 	Util::copy_to_char(ini, gcIniFilePath, MAX_PATH);
 
 	// Establish application path
 	char AppName[MAX_LOADSTRING]="";
 	LoadString(nullptr, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
-
-	// Write release to ini file
 	Setting().write("Version","Release",AppName);
 
 	// Load settings
@@ -239,11 +236,18 @@ void LoadConfig(SystemState *LCState)
 }
 
 //---------------------------------------------------------------
-// This must not be called before valid gcIniFilePath is established
+// Fatal if this is called before valid gcIniFilePath is established
 //---------------------------------------------------------------
 VCC::Util::settings& Setting()
 {
 	if (!gpSettings) {
+		// Fatal if ini file can not be opened
+		if (!Util::ValidateRWFile(gcIniFilePath)) {
+			std::string s = "Can't open settings "
+					+ std::string(gcIniFilePath);
+			MessageBox(EmuState.WindowHandle,s.c_str(),"Fatal",0);
+			exit(0);
+		}
 		gpSettings = new Util::settings(gcIniFilePath);
 	}
 	return *gpSettings;
@@ -309,13 +313,16 @@ void SetBootModulePath(const std::string bootpath)
 	memset(CurrentConfig.ModulePath,0,sizeof(CurrentConfig.ModulePath));
 	if (bootpath.empty()) return;
 
-	std::string path = Util::QualifyPath(bootpath);
+	std::string fullpath = Util::QualifyModPath(bootpath);
+	std::string file = Util::StripModPath(bootpath);
+
 	namespace fs = std::filesystem;
-	fs::path p = path;
+	fs::path p = fullpath;
+
 	if (fs::exists(p) && (fs::file_size(p) > 2)) {
-		Setting().write("Module","OnBoot",path);
+		Setting().write("Module","OnBoot",file);
 		strncpy(CurrentConfig.ModulePath,
-				path.c_str(),
+				fullpath.c_str(),
 				sizeof(CurrentConfig.ModulePath));
 	} else {
 		// Delete the key if it does not
@@ -375,8 +382,8 @@ unsigned char ReadIniFile()
 	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFilePath);
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
-	// Set up boot module path
-	std::string bootpath = Util::QualifyPath(Setting().read("Module","OnBoot",""));
+	// If bootpath is relative prepend the current module exe directory
+	std::string bootpath = Util::QualifyModPath(Setting().read("Module","OnBoot",""));
 	SetBootModulePath(bootpath);
 
 	LeftJS.UseMouse  = Setting().read("LeftJoyStick" ,"UseMouse",1);

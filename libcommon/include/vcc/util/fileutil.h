@@ -36,13 +36,14 @@ namespace VCC::Util {
 	const char* LastErrorTxt();
 
 	// Get path of loaded module or current application
-	std::string get_module_path(HMODULE module_handle);
+	std::string ModulePath(HMODULE module_handle);
 
 	// If path is in the application directory strip directory
-	std::string strip_application_path(std::string path);
+//	std::string strip_application_path(std::string path);
+	std::string StripModPath(std::string path);
 
 	// Fully qualify a file based on execution directory
-	std::string QualifyPath(const std::string& path);
+	std::string QualifyModPath(const std::string& path);
 
 	//------------------------------------------------------------------------
 	// In line functions
@@ -160,7 +161,6 @@ namespace VCC::Util {
 	//------------------------------------------------------------------------
 
 	// Return string with case conversion
-	
 	inline std::string to_lower(std::string s) {
     	std::transform(s.begin(), s.end(), s.begin(),
         	[](unsigned char c) {

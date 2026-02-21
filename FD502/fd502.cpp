@@ -68,7 +68,6 @@ static unsigned char SelectRom=0;
 unsigned char SetChip(unsigned char);
 static unsigned char NewDiskNumber=0,CreateFlag=0;
 static unsigned char PersistDisks=0;
-static char IniFile[MAX_PATH]="";
 static unsigned char TempSelectRom=0;
 static unsigned char ClockEnabled=1;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
@@ -95,6 +94,7 @@ char BeckerPort[32]="";
 
 // Added for PakGetMenuItem export
 static HWND gVccWnd = nullptr;
+static VCC::Util::settings* gpSettings = nullptr; // Pointer to settings object
 
 //----------------------------------------------------------------------------
 extern "C"
@@ -137,8 +137,8 @@ extern "C"
 		gSlotId = SlotId;
 		gVccWnd = hVccWnd;
 		AssertInt = callbacks->assert_interrupt;
-		strcpy(IniFile, configuration_path);
-
+//      Must create settings object before LoadConfig
+		gpSettings = new VCC::Util::settings(configuration_path);
 		RealDisks = InitController();
 		LoadConfig();
 		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
@@ -411,6 +411,12 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
     return FALSE;
 }
 
+// Access the settings object
+VCC::Util::settings& Setting()
+{
+	return *gpSettings;
+}
+
 void Unload_Disk(unsigned char disk) {
 	unmount_disk_image(disk);
 	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
@@ -672,22 +678,22 @@ void LoadConfig()  // Called on SetIniPath
 	unsigned int RetVal=0;
 
 #ifdef COMBINE_BECKER
-	strcpy(ModName,"HDBDOS/DW/Becker");
-	BeckerEnabled=GetPrivateProfileInt(ModName,"DWEnable", 0, IniFile);
-	GetPrivateProfileString(ModName,"DWServerAddr","127.0.0.1",BeckerAddr,MAX_PATH,IniFile);
-	GetPrivateProfileString(ModName,"DWServerPort","65504",BeckerPort,32,IniFile);
+	strcpy(ModName,"DW Becker");
+	BeckerEnabled=Setting().read(ModName,"DWEnable", 0);
+	Setting().read(ModName,"DWServerAddr","127.0.0.1",BeckerAddr,MAX_PATH);
+	Setting().read(ModName,"DWServerPort","65504",BeckerPort,32);
 	if(*BeckerAddr == '\0') strcpy(BeckerAddr,"127.0.0.1");
 	if(*BeckerPort == '\0') strcpy(BeckerPort,"65504");
 	becker_sethost(BeckerAddr,BeckerPort);
 	becker_enable(BeckerEnabled);
 #endif
 
-	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	GetPrivateProfileString("DefaultPaths", "FloppyPath", "", FloppyPath, MAX_PATH, IniFile);
+	Setting().read("DefaultPaths", "FloppyPath", "", FloppyPath, MAX_PATH);
 
-	SelectRom = GetPrivateProfileInt(ModName,"DiskRom",1,IniFile);  //0 External 1=TRSDOS 2=RGB Dos
-	GetPrivateProfileString(ModName,"RomPath","",RomFileName,MAX_PATH,IniFile);
-	PersistDisks=GetPrivateProfileInt(ModName,"Persist",1,IniFile);
+    strcpy(ModName,"FD-502");
+	SelectRom = Setting().read(ModName,"DiskRom",1);  //0 External 1=TRSDOS 2=RGB Dos
+	Setting().read(ModName,"RomPath","",RomFileName,MAX_PATH);
+	PersistDisks=Setting().read(ModName,"Persist",1);
 	CheckPath(RomFileName);
 	LoadExtRom(External,RomFileName); //JF
 	GetModuleFileName(nullptr, DiskRomPath, MAX_PATH);
@@ -701,7 +707,7 @@ void LoadConfig()  // Called on SetIniPath
 		for (Index=0;Index<4;Index++)
 		{
 			sprintf(Temp,"Disk#%i",Index);
-			GetPrivateProfileString(ModName,Temp,"",DiskName,MAX_PATH,IniFile);
+			Setting().read(ModName,Temp,"",DiskName,MAX_PATH);
 			if (strlen(DiskName))
 			{
 				RetVal=mount_disk_image(DiskName,Index);
@@ -715,9 +721,11 @@ void LoadConfig()  // Called on SetIniPath
 				}
 			}
 		}
-	ClockEnabled=GetPrivateProfileInt(ModName,"ClkEnable",1,IniFile);
-	SetTurboDisk(GetPrivateProfileInt(ModName, "TurboDisk", 1, IniFile));
+	ClockEnabled=Setting().read(ModName,"ClkEnable",1);
+	SetTurboDisk(Setting().read(ModName, "TurboDisk", 1));
+
 	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+
 	return;
 }
 
@@ -726,27 +734,27 @@ void SaveConfig()
 	unsigned char Index=0;
 	char ModName[MAX_LOADSTRING]="";
 	char Temp[16]="";
-	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+    strcpy(ModName,"FD502");
 	ValidatePath(RomFileName);
-	WritePrivateProfileInt(ModName,"DiskRom",SelectRom ,IniFile);
-	WritePrivateProfileString(ModName,"RomPath",RomFileName,IniFile);
-	WritePrivateProfileInt(ModName,"Persist",PersistDisks ,IniFile);
+	Setting().write(ModName,"DiskRom",SelectRom );
+	Setting().write(ModName,"RomPath",RomFileName);
+	Setting().write(ModName,"Persist",PersistDisks );
 	if (PersistDisks)
 		for (Index=0;Index<4;Index++)
 		{
 			sprintf(Temp,"Disk#%i",Index);
-			WritePrivateProfileString(ModName,Temp,gVirtualDrive[Index].ImageName,IniFile);
+			Setting().write(ModName,Temp,gVirtualDrive[Index].ImageName);
 		}
-	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
-	WritePrivateProfileInt(ModName, "TurboDisk", SetTurboDisk(QUERY), IniFile);
+	Setting().write(ModName,"ClkEnable",ClockEnabled );
+	Setting().write(ModName, "TurboDisk", SetTurboDisk(QUERY));
 	if (strcmp(FloppyPath, "") != 0) {
-		WritePrivateProfileString("DefaultPaths", "FloppyPath", FloppyPath, IniFile);
+		Setting().write("DefaultPaths", "FloppyPath", FloppyPath);
 	}
 #ifdef COMBINE_BECKER
-    strcpy(ModName,"HDBDOS/DW/Becker");
-	WritePrivateProfileInt(ModName,"DWEnable", BeckerEnabled, IniFile);
-	WritePrivateProfileString(ModName,"DWServerAddr", BeckerAddr, IniFile);
-	WritePrivateProfileString(ModName,"DWServerPort", BeckerPort, IniFile);
+    strcpy(ModName,"DW Becker");
+	Setting().write(ModName,"DWEnable", BeckerEnabled);
+	Setting().write(ModName,"DWServerAddr", BeckerAddr);
+	Setting().write(ModName,"DWServerPort", BeckerPort);
 #endif
 	return;
 }
