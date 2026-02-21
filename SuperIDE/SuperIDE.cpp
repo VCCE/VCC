@@ -22,7 +22,7 @@
 #include <Windows.h>
 #include "stdio.h"
 #include <iostream>
-#include "resource.h" 
+#include "resource.h"
 #include "IdeBus.h"
 #include <vcc/devices/cloud9.h>
 #include <vcc/util/FileOps.h>
@@ -33,9 +33,9 @@
 #include <vcc/bus/cartridge_menu.h>
 #include <vcc/bus/cartridge_messages.h>
 #include <vcc/util/fileutil.h>
+#include <vcc/util/settings.h>
 
 static char FileName[MAX_PATH] { 0 };
-static char IniFile[MAX_PATH]  { 0 };
 static char SuperIDEPath[MAX_PATH];
 static ::VCC::Device::rtc::cloud9 cloud9_rtc;
 static unsigned char BaseAddress=0x50;
@@ -47,8 +47,8 @@ unsigned char BaseTable[4]={0x40,0x50,0x60,0x70};
 bool get_menu_item(menu_item_entry*, size_t index);
 
 static unsigned char BaseAddr=1;
-static bool ClockEnabled = true;
-static bool ClockReadOnly = true;
+static int ClockEnabled = 1;
+static int ClockReadOnly = 1;
 static unsigned char DataLatch=0;
 static HINSTANCE gModuleInstance;
 static HWND hConfDlg = nullptr;
@@ -58,6 +58,9 @@ static HWND gVccWnd = nullptr;
 
 using namespace std;
 
+// Access the settings object
+static VCC::Util::settings* gpSettings = nullptr;
+VCC::Util::settings& Setting() {return *gpSettings;}
 
 //----------------------------------------------------------------------------
 extern "C"
@@ -98,7 +101,7 @@ extern "C"
 	{
 		gSlotId = SlotId;
 		gVccWnd = hVccWnd;
-		strcpy(IniFile, configuration_path);
+        gpSettings = new VCC::Util::settings(configuration_path);
 
 		LoadConfig();
 		IdeInit();
@@ -135,7 +138,7 @@ extern "C"
 	{
 		unsigned char RetVal=0;
 		unsigned short Temp=0;
-		if (((Port == 0x78) | (Port == 0x79) | (Port == 0x7C)) & ClockEnabled)
+		if (((Port == 0x78) || (Port == 0x79) || (Port == 0x7C)) && ClockEnabled)
 			RetVal = cloud9_rtc.read_port(Port);
 
 		if ( (Port >=BaseAddress) & (Port <= (BaseAddress+8)))
@@ -159,12 +162,12 @@ extern "C"
 			
 		return RetVal;
 	}
-          
+
 	__declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
 	{
 		DiskStatus(text_buffer, buffer_size);
 	}
- 
+
 
 	//PakGetMenuItem export
 	__declspec(dllexport) bool PakGetMenuItem(menu_item_entry* item, size_t index)
@@ -274,7 +277,7 @@ LRESULT CALLBACK IDE_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPa
 			EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), TRUE);
 			if (BaseAddr==3)
 			{
-				ClockEnabled = false;
+				ClockEnabled = 0;
 				SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnabled,0);
 				EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), FALSE);
 			}
@@ -284,9 +287,10 @@ LRESULT CALLBACK IDE_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPa
 			switch (LOWORD(wParam))
 			{
 				case IDOK:
-					BaseAddr=(unsigned char)SendDlgItemMessage(hDlg,IDC_BASEADDR,CB_GETCURSEL,0,0);
-					ClockEnabled = (unsigned char)SendDlgItemMessage(hDlg, IDC_CLOCK, BM_GETCHECK, 0, 0) != 0;
-					ClockReadOnly = (unsigned char)SendDlgItemMessage(hDlg, IDC_READONLY, BM_GETCHECK, 0, 0) != 0;
+					BaseAddr=(unsigned char)SendDlgItemMessage(
+							hDlg,IDC_BASEADDR,CB_GETCURSEL,0,0);
+					ClockEnabled = SendDlgItemMessage( hDlg, IDC_CLOCK, BM_GETCHECK, 0, 0);
+					ClockReadOnly = SendDlgItemMessage( hDlg, IDC_READONLY, BM_GETCHECK, 0, 0);
 					BaseAddress=BaseTable[BaseAddr & 3];
 					cloud9_rtc.set_read_only(ClockReadOnly);
 					SaveConfig();
@@ -310,7 +314,7 @@ LRESULT CALLBACK IDE_Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPa
 					EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), TRUE);
 					if (BTemp==3)
 					{
-						ClockEnabled = false;
+						ClockEnabled = 0;
 						SendDlgItemMessage(hDlg,IDC_CLOCK,BM_SETCHECK,ClockEnabled,0);
 						EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), FALSE);
 					}
@@ -342,14 +346,14 @@ void SaveConfig()
 	char ModName[MAX_LOADSTRING]="";
 	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	QueryDisk(MASTER,FileName);
-	WritePrivateProfileString(ModName,"Master",FileName,IniFile);
+	Setting().write(ModName,"Master",FileName);
 	QueryDisk(SLAVE,FileName);
-	WritePrivateProfileString(ModName,"Slave",FileName,IniFile);
-	WritePrivateProfileInt(ModName,"BaseAddr",BaseAddr ,IniFile);
-	WritePrivateProfileInt(ModName,"ClkEnable",ClockEnabled ,IniFile);
-	WritePrivateProfileInt(ModName, "ClkRdOnly", ClockReadOnly, IniFile);
-	if (strcmp(SuperIDEPath, "") != 0) { 
-		WritePrivateProfileString("DefaultPaths", "SuperIDEPath", SuperIDEPath, IniFile); 
+	Setting().write(ModName,"Slave",FileName);
+	Setting().write(ModName,"BaseAddr",BaseAddr);
+	Setting().write(ModName,"ClkEnable", ClockEnabled);
+	Setting().write(ModName, "ClkRdOnly", ClockReadOnly);
+	if (strcmp(SuperIDEPath, "") != 0) {
+		Setting().write("DefaultPaths", "SuperIDEPath", SuperIDEPath);
 	}
 
 	return;
@@ -360,16 +364,16 @@ void LoadConfig()
 	char ModName[MAX_LOADSTRING]="";
 
 	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	GetPrivateProfileString("DefaultPaths", "SuperIDEPath", "", SuperIDEPath, MAX_PATH, IniFile);
-	GetPrivateProfileString(ModName,"Master","",FileName,MAX_PATH,IniFile);
+	Setting().read("DefaultPaths", "SuperIDEPath", "", SuperIDEPath, MAX_PATH);
+	Setting().read(ModName,"Master","",FileName,MAX_PATH);
 	MountDisk(FileName ,MASTER);
-	GetPrivateProfileString(ModName,"Slave","",FileName,MAX_PATH,IniFile);
-	BaseAddr=GetPrivateProfileInt(ModName,"BaseAddr",1,IniFile); 
-	ClockEnabled = GetPrivateProfileInt(ModName, "ClkEnable", true, IniFile) != 0;
-	ClockReadOnly = GetPrivateProfileInt(ModName, "ClkRdOnly", true, IniFile) != 0;
+	Setting().read(ModName,"Slave","",FileName,MAX_PATH);
+	BaseAddr=Setting().read(ModName,"BaseAddr",1);
+	ClockEnabled = Setting().read(ModName, "ClkEnable", 1);
+	ClockReadOnly = Setting().read(ModName, "ClkRdOnly", 1);
 	BaseAddr&=3;
 	if (BaseAddr == 3)
-		ClockEnabled = false;
+		ClockEnabled = 0;
 	BaseAddress=BaseTable[BaseAddr];
 	cloud9_rtc.set_read_only(ClockReadOnly);
 	MountDisk(FileName ,SLAVE);

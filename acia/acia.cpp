@@ -27,6 +27,11 @@
 #include <vcc/util/DialogOps.h>
 #include <vcc/util/logger.h>
 #include <vcc/bus/cartridge_menu.h>
+#include <vcc/util/settings.h>
+
+// Access the settings object
+static VCC::Util::settings* gpSettings = nullptr;
+VCC::Util::settings& Setting() {return *gpSettings;}
 
 //------------------------------------------------------------------------
 // Local Functions
@@ -46,9 +51,8 @@ PakAssertInteruptHostCallback AssertInt = nullptr;
 //------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------
-static HINSTANCE gModuleInstance;      // DLL handle
-static HWND g_hDlg = nullptr;           // Config dialog
-static char IniFile[MAX_PATH];       // Ini file name
+static HINSTANCE gModuleInstance;    // DLL handle
+static HWND g_hDlg = nullptr;        // Config dialog
 static char IniSect[MAX_LOADSTRING]; // Ini file section
 
 // Status for Vcc status line
@@ -127,8 +131,8 @@ extern "C"
 	{
 		gSlotId = SlotId;
 		AssertInt = callbacks->assert_interrupt;
-		strcpy(IniFile, configuration_path);
 
+        gpSettings = new VCC::Util::settings(configuration_path);
 		LoadConfig();
 		LoadExtRom("RS232.ROM");
 		sc6551_init();
@@ -258,23 +262,23 @@ bool get_menu_item(menu_item_entry* item, size_t index) {
 //----------------------------------------------------------------------
 void LoadConfig()
 {
-    AciaComType=GetPrivateProfileInt("Acia","AciaComType",
-                                     COM_CONSOLE,IniFile);
-    AciaComMode=GetPrivateProfileInt("Acia","AciaComMode",
-                                     COM_MODE_DUPLEX,IniFile);
-    AciaBasePort=GetPrivateProfileInt("Acia","AciaBasePort",
-                                     BASE_PORT_RS232,IniFile);
-    AciaTextMode=GetPrivateProfileInt("Acia","AciaTextMode",0,IniFile);
-    GetPrivateProfileString("Acia","AciaComPort","COM3",
-                            AciaComPort,32,IniFile);
-    GetPrivateProfileString("Acia","AciaFileRdPath","AciaFile.txt",
-                            AciaFileRdPath, MAX_PATH,IniFile);
-    GetPrivateProfileString("Acia","AciaFileWrPath","AciaFile.txt",
-                            AciaFileWrPath, MAX_PATH,IniFile);
-    GetPrivateProfileString("Acia","AciaTcpHost","localhost",
-                            AciaTcpHost, MAX_PATH,IniFile);
-    GetPrivateProfileString("Acia","AciaTcpPort","48000",
-                            AciaTcpPort,32,IniFile);
+    AciaComType=Setting().read("Acia","AciaComType",
+                                     COM_CONSOLE);
+    AciaComMode=Setting().read("Acia","AciaComMode",
+                                     COM_MODE_DUPLEX);
+    AciaBasePort=Setting().read("Acia","AciaBasePort",
+                                     BASE_PORT_RS232);
+    AciaTextMode=Setting().read("Acia","AciaTextMode",0);
+    Setting().read("Acia","AciaComPort","COM3",
+                            AciaComPort,32);
+    Setting().read("Acia","AciaFileRdPath","AciaFile.txt",
+                            AciaFileRdPath, MAX_PATH);
+    Setting().read("Acia","AciaFileWrPath","AciaFile.txt",
+                            AciaFileWrPath, MAX_PATH);
+    Setting().read("Acia","AciaTcpHost","localhost",
+                            AciaTcpHost, MAX_PATH);
+    Setting().read("Acia","AciaTcpPort","48000",
+                            AciaTcpPort,32);
 
     // String for Vcc status line
     switch (AciaComType) {
@@ -302,20 +306,15 @@ void LoadConfig()
 //----------------------------------------------------------------------
 void SaveConfig()
 {
-    char txt[16];
-    sprintf(txt,"%d",AciaBasePort);
-    WritePrivateProfileString("Acia","AciaBasePort",txt,IniFile);
-    sprintf(txt,"%d",AciaComType);
-    WritePrivateProfileString("Acia","AciaComType",txt,IniFile);
-    sprintf(txt,"%d",AciaComMode);
-    WritePrivateProfileString("Acia","AciaComMode",txt,IniFile);
-    WritePrivateProfileString("Acia","AciaTcpPort",AciaTcpPort,IniFile);
-    sprintf(txt,"%d",AciaTextMode);
-    WritePrivateProfileString("Acia","AciaTextMode",txt,IniFile);
-    WritePrivateProfileString("Acia","AciaComPort",AciaComPort,IniFile);
-    WritePrivateProfileString("Acia","AciaFileRdPath",AciaFileRdPath,IniFile);
-    WritePrivateProfileString("Acia","AciaFileWrPath",AciaFileWrPath,IniFile);
-    WritePrivateProfileString("Acia","AciaTcpHost",AciaTcpHost,IniFile);
+    Setting().write("Acia","AciaBasePort",AciaBasePort);
+    Setting().write("Acia","AciaComType",AciaComType);
+    Setting().write("Acia","AciaComMode",AciaComMode);
+    Setting().write("Acia","AciaTcpPort",AciaTcpPort);
+    Setting().write("Acia","AciaTextMode",AciaTextMode);
+    Setting().write("Acia","AciaComPort",AciaComPort);
+    Setting().write("Acia","AciaFileRdPath",AciaFileRdPath);
+    Setting().write("Acia","AciaFileWrPath",AciaFileWrPath);
+    Setting().write("Acia","AciaTcpHost",AciaTcpHost);
 }
 
 //-----------------------------------------------------------------------
@@ -529,9 +528,10 @@ LRESULT CALLBACK Config(HWND hDlg,UINT msg,WPARAM wParam,LPARAM /*lParam*/)
                 break;
             }
 
+            SaveConfig();
+
             // Okay exits the dialog
             if (button==IDOK) {
-                SaveConfig();       // Should APPLY also save the config?
                 DestroyWindow(hDlg);
                 g_hDlg = nullptr;
             }

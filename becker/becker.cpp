@@ -33,6 +33,7 @@
 #include <vcc/util/FileOps.h>
 #include <vcc/util/DialogOps.h>
 #include <vcc/bus/cartridge_menu.h>
+#include <vcc/util/settings.h>
 
 // socket
 static SOCKET dwSocket = 0;
@@ -42,7 +43,6 @@ static HINSTANCE gModuleInstance;
 slot_id_type gSlotId {}; 
 static PakAssertCartridgeLineHostCallback PakSetCart = nullptr;
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
-static char IniFile[MAX_PATH]="";
 static unsigned char HDBRom[8192];
 static bool DWTCPEnabled = false;
 
@@ -79,7 +79,7 @@ char msg[MAX_PATH];
 // log lots of stuff...
 static boolean logging = false;
 
-unsigned char LoadExtRom(const char *);
+//unsigned char LoadExtRom(const char *);
 void SetDWTCPConnectionEnable(unsigned int enable);
 int dw_setaddr(const char *bufdwaddr);
 int dw_setport(const char *bufdwport);
@@ -89,6 +89,9 @@ void SaveConfig();
 static VCC::Bus::cartridge_menu BeckerMenu {};
 bool get_menu_item(menu_item_entry* item, size_t index);
 
+// Access the settings object
+static VCC::Util::settings* gpSettings = nullptr;
+VCC::Util::settings& Setting() {return *gpSettings;}
 
 // dll entry hook
 BOOL APIENTRY DllMain( HINSTANCE  hinstDLL, 
@@ -408,7 +411,7 @@ extern "C"
 		static char string_buffer[MAX_LOADSTRING];
 
 		//LoadString(gModuleInstance, IDS_MODULE_NAME, string_buffer, MAX_LOADSTRING);
-		strcpy(string_buffer, "HDBDOS/DW/Becker");
+		strcpy(string_buffer, "Bare Becker Port");
 
 		return string_buffer;
 	}
@@ -417,7 +420,8 @@ extern "C"
 	{
 		static char string_buffer[MAX_LOADSTRING];
 
-		LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+		//LoadString(gModuleInstance, IDS_CATNUMBER, string_buffer, MAX_LOADSTRING);
+		strcpy(string_buffer, "");
 
 		return string_buffer;
 	}
@@ -439,9 +443,8 @@ extern "C"
 	{
 		gSlotId = SlotId;
 		PakSetCart = callbacks->assert_cartridge_line;
-		strcpy(IniFile, configuration_path);
-
 		LastStats = GetTickCount();
+        gpSettings = new VCC::Util::settings(configuration_path);
 		LoadConfig();
 		SetDWTCPConnectionEnable(1);
 	}
@@ -580,6 +583,12 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 	switch (message)
 	{
+    	case WM_CLOSE:
+        	DestroyWindow(hDlg);
+        	g_hConfigDlg=nullptr;
+        	return TRUE;
+        	break;
+
 		case WM_INITDIALOG:
 
 			if ((hwndOwner = GetParent(hDlg)) == NULL) 
@@ -604,9 +613,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
                  0, 0,          // Ignores size arguments. 
                  SWP_NOSIZE); 
 
-		
-    
-
 			SendDlgItemMessage (hDlg,IDC_TCPHOST, WM_SETTEXT, 0,(LPARAM)(LPCSTR)dwaddress);
 			sprintf(msg,"%d", dwsport);
 			SendDlgItemMessage (hDlg,IDC_TCPPORT, WM_SETTEXT, 0,(LPARAM)(LPCSTR)msg);
@@ -625,7 +631,8 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					dw_setport(msg);
 					SaveConfig();
 
-					EndDialog(hDlg, LOWORD(wParam));
+            		DestroyWindow(hDlg);
+            		g_hConfigDlg=nullptr;
 					return TRUE;
 				break;
 
@@ -634,7 +641,8 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 				case IDCANCEL:
-					EndDialog(hDlg, LOWORD(wParam));
+            		DestroyWindow(hDlg);
+            		g_hConfigDlg=nullptr;
 				break;
 			}
 			return TRUE;
@@ -645,17 +653,16 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 
-
 void LoadConfig()
 {
 	char ModName[MAX_LOADSTRING]="";
 	char saddr[MAX_LOADSTRING]="";
 	char sport[MAX_LOADSTRING]="";
-	char DiskRomPath[MAX_PATH];
 
 	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	GetPrivateProfileString(ModName,"DWServerAddr","",saddr, MAX_LOADSTRING,IniFile);
-	GetPrivateProfileString(ModName,"DWServerPort","",sport, MAX_LOADSTRING,IniFile);
+
+	Setting().read(ModName,"DWServerAddr","",saddr, MAX_LOADSTRING);
+	Setting().read(ModName,"DWServerPort","",sport, MAX_LOADSTRING);
 	
 	if (strlen(saddr) > 0)
 		dw_setaddr(saddr);
@@ -666,12 +673,7 @@ void LoadConfig()
 		dw_setport(sport);
 	else
 		dw_setport("65504");
-
 	
-	GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
-	PathRemoveFileSpec(DiskRomPath);
-	strcat( DiskRomPath, "hdbdwbck.rom");
-	LoadExtRom(DiskRomPath);
 	return;
 }
 
@@ -679,28 +681,9 @@ void SaveConfig()
 {
 	char ModName[MAX_LOADSTRING]="";
 	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
-	WritePrivateProfileString(ModName,"DWServerAddr",dwaddress,IniFile);
+	Setting().write(ModName,"DWServerAddr",dwaddress);
 	sprintf(msg, "%d", dwsport);
-	WritePrivateProfileString(ModName,"DWServerPort",msg,IniFile);
+	Setting().write(ModName,"DWServerPort",msg);
 	return;
 }
 
-unsigned char LoadExtRom( const char *FilePath)	//Returns 1 on if loaded
-{
-
-	FILE *rom_handle = NULL;
-	unsigned short index = 0;
-	unsigned char RetVal = 0;
-
-	rom_handle = fopen(FilePath, "rb");
-	if (rom_handle == NULL)
-		memset(HDBRom, 0xFF, 8192);
-	else
-	{
-		while ((feof(rom_handle) == 0) & (index<8192))
-			HDBRom[index++] = fgetc(rom_handle);
-		RetVal = 1;
-		fclose(rom_handle);
-	}
-	return RetVal;
-}

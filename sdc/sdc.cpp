@@ -147,14 +147,6 @@
 
 #include "sdc.h"
 
-#ifdef VCC
-#pragma message("VCC is defined as a macro!")
-#endif
-
-#ifdef Util
-#pragma message("Util is defined as a macro!")
-#endif
-
 static ::VCC::Device::rtc::cloud9 cloud9_rtc;
 namespace util = ::VCC::Util;
 

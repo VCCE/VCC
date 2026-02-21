@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 
 //FIXME only shared functions belong here the rest should be in config.cpp
 void FlushSettings();
-void LoadConfig(SystemState *);
+void InitialLoadConfig(SystemState *);
 void InitSound();
 void LoadModule();
 unsigned char ReadIniFile();
@@ -39,6 +39,7 @@ void UpdateTapeCounter(unsigned int,unsigned char,bool force = false);
 int GetKeyboardLayout();
 void SetWindowRect(const VCC::Rect&);
 void CaptureCurrentWindowRect();
+void WriteWindowSize();
 
 void SetIniFilePath(const char *);
 void SetKeyMapFilePath(const char *);

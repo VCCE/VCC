@@ -134,7 +134,7 @@ BEGIN
     IDS_MODULE_NAME         "HDBDOS/DW/Becker"
     IDS_VERSION             "1.00"
     IDS_CATNUMBER           "00-0000"
-    IDS_DESCRIPTION         "Standalone Becker Port for communicating with Drivewire and a Disto Clock for use with OS-9. Must be selected using SCS spare slot select."
+    IDS_DESCRIPTION         "Standalone Becker Port for communicating with Drivewire. Must be selected using SCS spare slot select. For special use only - the Becker Port included in FD502 is better for most purposes"
 END
 
 #endif    // English (U.S.) resources

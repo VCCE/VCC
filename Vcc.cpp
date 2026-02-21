@@ -168,8 +168,14 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	EmuState.WindowSize.w=DefaultWidth;
 	EmuState.WindowSize.h=DefaultHeight;
 	EmuState.Exiting = false;
-	LoadConfig(&EmuState);
-	EmuState.ResetPending=2; // after LoadConfig pls
+
+	// A reset will read settings from the config file.  Must call
+	// InitialLoadConfig and instantiate settings before a reset occurs. 
+	// Normally pakinterface will do a hard reset after loading a 
+	// cart but in case there is no cart to load force a reset here.
+	InitialLoadConfig(&EmuState);
+	EmuState.ResetPending=2;
+
 	InitInstance(hInstance, nCmdShow);
 
 	if ((CmdArg.NoOutput && !CreateNullWindow(&EmuState)) ||
@@ -269,6 +275,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
 void CloseApp()
 {
+	WriteWindowSize();     // Saves size and position if checkbox is set
 	BinaryRunning = false;
 	SoundDeInit();
 	UnloadDll();
@@ -967,9 +974,7 @@ void LoadIniFile()
 
 	if ( dlg.show() ) {
 		SetIniFilePath(dlg.path()); // Set new settings path
-		ReadIniFile();              // Load settings
-		UpdateConfig();             // Apply critical CPU and Video settings
-		EmuState.ResetPending = 2;  // Force reset
+		EmuState.ResetPending = 2;  // Hard reset loads and updates settings
 	}
 	return;
 }
