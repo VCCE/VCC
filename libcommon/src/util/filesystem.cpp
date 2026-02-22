@@ -6,7 +6,7 @@
 
 namespace VCC::Util
 {
-	LIBCOMMON_EXPORT std::string find_pak_module_path(std::string path)
+	std::string find_pak_module_path(std::string path)
 	{
 		if (path.empty())
 		{
@@ -16,7 +16,7 @@ namespace VCC::Util
 		auto file_handle(CreateFile(path.c_str(), 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
 		if (file_handle == INVALID_HANDLE_VALUE)
 		{
-			const auto application_path = ::VCC::Util::GetDirectoryPart(::VCC::Util::get_module_path(NULL));
+			const auto application_path = ::VCC::Util::GetDirectoryPart(::VCC::Util::ModulePath(NULL));
 			const auto alternate_path = application_path + path;
 			file_handle = CreateFile(alternate_path.c_str(), 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 			if (file_handle == INVALID_HANDLE_VALUE)

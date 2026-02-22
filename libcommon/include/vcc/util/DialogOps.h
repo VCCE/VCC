@@ -16,17 +16,17 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <vcc/util/fileutil.h>
 #include <vcc/util/logger.h>
 #include <Windows.h>
+#include <string>
 
 //-------------------------------------------------------------------------------------------
 // CloseCartDialog closes DLL dialog or force exits Vcc if it can not be.
 // It should be called by cartridge DLL's when they are unloaded.
 //-------------------------------------------------------------------------------------------
-LIBCOMMON_EXPORT void CloseCartDialog(HWND hDlg);
-LIBCOMMON_EXPORT void CenterDialog(HWND hDlg);
+void CloseCartDialog(HWND hDlg);
+void CenterDialog(HWND hDlg);
 
 //-------------------------------------------------------------------------------------------
 // FileDialog wraps dialogs for users to select files.
@@ -36,10 +36,8 @@ LIBCOMMON_EXPORT void CenterDialog(HWND hDlg);
 // The selected filename is placed in "Path" 
 //
 //-------------------------------------------------------------------------------------------
-#include <windows.h>
-#include <string>
 
-class LIBCOMMON_EXPORT FileDialog
+class FileDialog
 {
 public:
 

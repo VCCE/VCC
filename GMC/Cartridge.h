@@ -41,7 +41,7 @@ protected:
 	}
 
 	virtual void LoadConfiguration(const std::string& filename);
-	virtual void LoadMenuItems();
+//	virtual void LoadMenuItems();
 
 private:
 

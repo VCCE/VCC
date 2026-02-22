@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\bus\basic_cartridge.cpp">
       <Filter>bus</Filter>
     </ClCompile>
@@ -59,9 +58,6 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\core\DialogOps.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vcc\bus\exports.h">
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\core\FileOps.h">

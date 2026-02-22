@@ -75,6 +75,7 @@ void SetBootModulePath(const std::string);
 
 void WriteCPUSettings();
 void WriteAudioSettings();
+void WriteWindowSize();
 void WriteVideoSettings();
 void WriteKeyboardSettings();
 void WriteJoystickSettings();
@@ -182,10 +183,9 @@ static Util::settings* gpSettings = nullptr;
 //---------------------------------------------------------------
 //  Initial config. This should be called only once when VCC starts up
 //---------------------------------------------------------------
-void LoadConfig(SystemState *LCState)
+void InitialLoadConfig(SystemState *LCState)
 {
 	buildTransDisp2ScanTable();
-
 
 	GetModuleFileName(nullptr,ExecDirectory,MAX_PATH);
 	PathRemoveFileSpec(ExecDirectory);
@@ -218,32 +218,36 @@ void LoadConfig(SystemState *LCState)
 	} else {
 		ini = appData + "/Vcc.ini";
 	}
-
 	Util::copy_to_char(ini, gcIniFilePath, MAX_PATH);
 
 	// Establish application path
 	char AppName[MAX_LOADSTRING]="";
 	LoadString(nullptr, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
-
-	// Write release to ini file
 	Setting().write("Version","Release",AppName);
 
-	// Load settings
+	// Initial load settings
 	ReadIniFile();
-
-	CurrentConfig.RebootNow=0;
 	UpdateConfig();
 
 	RefreshJoystickStatus();
-	if (EmuState.WindowHandle != nullptr) InitSound();
+
+	//FIXME WindowHandle will always be null at this point!
+	//if (EmuState.WindowHandle != nullptr) InitSound();
 }
 
 //---------------------------------------------------------------
-// This must not be called before valid gcIniFilePath is established
+// Fatal if this is called before valid gcIniFilePath is established
 //---------------------------------------------------------------
 VCC::Util::settings& Setting()
 {
 	if (!gpSettings) {
+		// Fatal if ini file can not be opened
+		if (!Util::ValidateRWFile(gcIniFilePath)) {
+			std::string s = "Can't open settings "
+					+ std::string(gcIniFilePath);
+			MessageBox(EmuState.WindowHandle,s.c_str(),"Fatal",0);
+			exit(0);
+		}
 		gpSettings = new Util::settings(gcIniFilePath);
 	}
 	return *gpSettings;
@@ -309,13 +313,16 @@ void SetBootModulePath(const std::string bootpath)
 	memset(CurrentConfig.ModulePath,0,sizeof(CurrentConfig.ModulePath));
 	if (bootpath.empty()) return;
 
-	std::string path = Util::QualifyPath(bootpath);
+	std::string fullpath = Util::QualifyModPath(bootpath);
+	std::string file = Util::StripModPath(bootpath);
+
 	namespace fs = std::filesystem;
-	fs::path p = path;
+	fs::path p = fullpath;
+
 	if (fs::exists(p) && (fs::file_size(p) > 2)) {
-		Setting().write("Module","OnBoot",path);
+		Setting().write("Module","OnBoot",file);
 		strncpy(CurrentConfig.ModulePath,
-				path.c_str(),
+				fullpath.c_str(),
 				sizeof(CurrentConfig.ModulePath));
 	} else {
 		// Delete the key if it does not
@@ -375,8 +382,8 @@ unsigned char ReadIniFile()
 	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFilePath);
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
-	// Set up boot module path
-	std::string bootpath = Util::QualifyPath(Setting().read("Module","OnBoot",""));
+	// If bootpath is relative prepend the current module exe directory
+	std::string bootpath = Util::QualifyModPath(Setting().read("Module","OnBoot",""));
 	SetBootModulePath(bootpath);
 
 	LeftJS.UseMouse  = Setting().read("LeftJoyStick" ,"UseMouse",1);
@@ -444,18 +451,23 @@ void WriteAudioSettings() {
 	Setting().write("Audio","SndCard",CurrentConfig.SoundCardName);
 	Setting().write("Audio","Rate",CurrentConfig.AudioRate);
 }
+void WriteWindowSize() {
+	if (CurrentConfig.RememberSize) {
+		Rect winRect = GetCurWindowSize();
+		Setting().write("Video","WindowSizeX",winRect.w);
+		Setting().write("Video","WindowSizeY",winRect.h);
+		Setting().write("Video","WindowPosX",winRect.x);
+		Setting().write("Video","WindowPosY",winRect.y);
+	}
+}
 void WriteVideoSettings() {
-	Rect winRect = GetCurWindowSize();
+	WriteWindowSize();
 	Setting().write("Video","MonitorType",CurrentConfig.MonitorType);
 	Setting().write("Video","PaletteType",CurrentConfig.PaletteType);
 	Setting().write("Video","ScanLines",CurrentConfig.ScanLines);
 	Setting().write("Video","ForceAspect",CurrentConfig.Aspect);
 	Setting().write("Video","RememberSize",CurrentConfig.RememberSize);
 	Setting().write("Video","FrameSkip",CurrentConfig.FrameSkip);
-	Setting().write("Video","WindowSizeX",winRect.w);
-	Setting().write("Video","WindowSizeY",winRect.h);
-	Setting().write("Video","WindowPosX",winRect.x);
-	Setting().write("Video","WindowPosY",winRect.y);
 }
 void WriteKeyboardSettings() {
 	Setting().write("Misc","KeyMapIndex",CurrentConfig.KeyMap);
@@ -509,7 +521,7 @@ void SetWindowRect(const Rect& rect)
 	}
 }
 
-// The following functions only work after LoadConfig has been called
+// The following functions only work after InitialLoadConfig has been called
 char * AppDirectory()
 {
 	return gcAppDataPath;

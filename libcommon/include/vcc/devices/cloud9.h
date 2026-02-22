@@ -1,11 +1,9 @@
 #pragma once
-#include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <Windows.h>
 
 namespace VCC::Device::rtc
 {
-
-	class LIBCOMMON_EXPORT cloud9
+	class cloud9
 	{
 	public:
 
@@ -13,11 +11,9 @@ namespace VCC::Device::rtc
 
 		unsigned char read_port(unsigned short port_id);
 
-
 	private:
 
 		void set_time();
-
 
 	private:
 
@@ -32,5 +28,4 @@ namespace VCC::Device::rtc
 		unsigned char CookieRecived = 0;
 		unsigned char WriteEnabled = 0;
 	};
-
 }

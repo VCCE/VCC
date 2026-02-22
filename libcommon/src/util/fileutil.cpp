@@ -28,6 +28,7 @@
 #include <cctype>
 #include <vcc/util/logger.h>
 #include <vcc/util/fileutil.h>
+#include <Windows.h>
 
 namespace VCC::Util
 {
@@ -60,7 +61,7 @@ namespace VCC::Util
 	// Get the file path of a loaded module
 	// Current exe path is returned if module_handle is null
 	//-------------------------------------------------------------------
-	std::string get_module_path(HMODULE module_handle)
+	std::string ModulePath(HMODULE module_handle)
 	{
 		std::string text(MAX_PATH, '\0');
 		for (;;) {
@@ -78,23 +79,24 @@ namespace VCC::Util
 	}
 
 	//-------------------------------------------------------------------
-	// If path directory matches application directory strip directory
+	// If file directory matches application directory strip directory
 	//-------------------------------------------------------------------
-	std::string strip_application_path(std::string path)
+	std::string StripModPath(const std::string file)
 	{
-		auto app = get_module_path(nullptr);
-		auto app_dir =  GetDirectoryPart(app);
-		auto path_dir = GetDirectoryPart(path);
-		if (path_dir == app_dir) {
-			path = GetFileNamePart(path);
+		// Strip path from file if it matches the exe or dll path
+		auto app_dir =  GetDirectoryPart(ModulePath(nullptr));
+		auto file_dir = GetDirectoryPart(file);
+		std::error_code ec;
+		if (std::filesystem::equivalent(app_dir, file_dir, ec)) {
+			return GetFileNamePart(file);
 		}
-		return path;
+		return file;
 	}
 
 	//---------------------------------------------------------------
 	// Fully qualify a file based on current execution directory
 	//---------------------------------------------------------------
-	std::string QualifyPath(const std::string& path)
+	std::string QualifyModPath(const std::string& path)
 	{
 		if (path.empty()) return {};
 
@@ -102,8 +104,24 @@ namespace VCC::Util
 		FixDirSlashes(mod);
 		if (mod.find('/') != std::string::npos) return mod;
 
-		std::string exe = Util::get_module_path(NULL);
+		std::string exe = Util::ModulePath(NULL);
 		std::string dir = Util::GetDirectoryPart(exe);
 		return dir + '/' + mod;
 	}
+
+	//---------------------------------------------------------------
+	// Fully qualify a file based on current execution directory
+	//---------------------------------------------------------------
+//	std::string QualifyPath(const std::string& path)
+//	{
+//		if (path.empty()) return {};
+//
+//		std::string mod = path;
+//		FixDirSlashes(mod);
+//		if (mod.find('/') != std::string::npos) return mod;
+//
+//		std::string exe = Util::ModulePath(NULL);
+//		std::string dir = Util::GetDirectoryPart(exe);
+//		return dir + '/' + mod;
+//	}
 }

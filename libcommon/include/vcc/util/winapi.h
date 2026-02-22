@@ -16,7 +16,6 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <Windows.h>
 #include <string>
 
@@ -26,6 +25,6 @@
 namespace VCC::Util
 {
     // Load resource string
-	LIBCOMMON_EXPORT std::string load_string(HINSTANCE instance, UINT id);
+	std::string load_string(HINSTANCE instance, UINT id);
 
 }

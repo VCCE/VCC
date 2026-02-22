@@ -25,8 +25,6 @@
 #include <filesystem>
 #include <Windows.h>
 
-#include <vcc/util/exports.h>
-
 //=========================================================================
 // Host file utilities.  Most of these are general purpose
 //=========================================================================
@@ -34,17 +32,18 @@
 namespace VCC::Util {
 
 	// Get most recent windows error text
-	LIBCOMMON_EXPORT std::string LastErrorString();
-	LIBCOMMON_EXPORT const char* LastErrorTxt();
+	std::string LastErrorString();
+	const char* LastErrorTxt();
 
 	// Get path of loaded module or current application
-	LIBCOMMON_EXPORT std::string get_module_path(HMODULE module_handle);
+	std::string ModulePath(HMODULE module_handle);
 
 	// If path is in the application directory strip directory
-	LIBCOMMON_EXPORT std::string strip_application_path(std::string path);
+//	std::string strip_application_path(std::string path);
+	std::string StripModPath(std::string path);
 
 	// Fully qualify a file based on execution directory
-	LIBCOMMON_EXPORT std::string QualifyPath(const std::string& path);
+	std::string QualifyModPath(const std::string& path);
 
 	//------------------------------------------------------------------------
 	// In line functions
@@ -162,7 +161,6 @@ namespace VCC::Util {
 	//------------------------------------------------------------------------
 
 	// Return string with case conversion
-	
 	inline std::string to_lower(std::string s) {
     	std::transform(s.begin(), s.end(), s.begin(),
         	[](unsigned char c) {

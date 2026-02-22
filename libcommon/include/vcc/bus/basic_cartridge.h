@@ -21,7 +21,7 @@
 namespace VCC::Core
 {
 
-	struct LIBCOMMON_EXPORT basic_cartridge : public ::VCC::Core::cartridge
+	struct basic_cartridge : public ::VCC::Core::cartridge
 	{
 	public:
 

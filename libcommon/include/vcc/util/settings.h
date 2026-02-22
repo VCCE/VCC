@@ -16,7 +16,6 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vcc/util/exports.h>  // defines LIBCOMMON_EXPORT if libcommon is a DLL
 #include <string>
 #include <Windows.h>
 
@@ -28,28 +27,28 @@ namespace VCC::Util
 		using path_type = std::string;
 
 	public:
-		LIBCOMMON_EXPORT explicit settings(path_type path);
+		explicit settings(path_type path);
 
 		// write string value
-		LIBCOMMON_EXPORT bool write
+		bool write
 			(const std::string& section,
 			 const std::string& key,
 			 const std::string& value) const;
 
 		// write int value
-		LIBCOMMON_EXPORT bool write
+		bool write
 			(const std::string& section,
 			 const std::string& key,
 			 int value) const;
 
 		// write bool value
-		LIBCOMMON_EXPORT bool write_bool
+		bool write_bool
 			(const std::string& section,
 			 const std::string& key,
 			 bool value) const;
 
 		// get char * value
-		LIBCOMMON_EXPORT bool read
+		bool read
 			(const std::string& section,
 			 const std::string& key,
 			 const std::string& default_value,
@@ -57,19 +56,19 @@ namespace VCC::Util
 			 size_t buffer_size) const;
 
 		// get string value
-		LIBCOMMON_EXPORT std::string read
+		std::string read
 			(const std::string& section,
 			 const std::string& key,
 			 const std::string& default_value = {}) const;
 
 		// get int value
-		LIBCOMMON_EXPORT int read
+		int read
 			(const std::string& section,
 			 const std::string& key,
 			 int default_value) const;
 
 		// delete key
-		LIBCOMMON_EXPORT bool delete_key
+		bool delete_key
 			(const std::string& section,
 			 const std::string& key) const
 		{
@@ -78,7 +77,7 @@ namespace VCC::Util
 		}
 
 		// delete section
-		LIBCOMMON_EXPORT bool delete_section
+		bool delete_section
 			(const std::string& section) const
 		{
 			return ::WritePrivateProfileString
@@ -86,7 +85,7 @@ namespace VCC::Util
 		}
 
 		// flush cache
-		LIBCOMMON_EXPORT bool flush () const
+		bool flush () const
 		{
 			return ::WritePrivateProfileString
 				(NULL, NULL, NULL, path_.c_str());

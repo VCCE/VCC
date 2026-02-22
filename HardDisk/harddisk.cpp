@@ -29,11 +29,11 @@
 #include <vcc/util/DialogOps.h>
 #include <vcc/util/interrupts.h>
 #include <vcc/bus/cpak_cartridge_definitions.h>
-// Three includes added for PakGetMenuItem
 #include <vcc/bus/cartridge_menu.h>
 #include <vcc/bus/cartridge_messages.h>
 #include <vcc/util/fileutil.h>
 #include <vcc/util/limits.h>
+#include <vcc/util/settings.h>
 
 constexpr auto DEF_HD_SIZE = 132480u;
 
@@ -41,15 +41,14 @@ static char VHDfile0[MAX_PATH] { 0 };
 static char VHDfile1[MAX_PATH] { 0 };
 static char *VHDfile; // Selected drive file name
 static char NewVHDfile[MAX_PATH];
-static char IniFile[MAX_PATH]  { 0 };
 static char HardDiskPath[MAX_PATH];
 static ::VCC::Device::rtc::cloud9 cloud9_rtc;
 
 static slot_id_type gSlotId {};
 static PakReadMemoryByteHostCallback MemRead8 = nullptr;
 static PakWriteMemoryByteHostCallback MemWrite8 = nullptr;
-static bool ClockEnabled = true;
-static bool ClockReadOnly = true;
+static int ClockEnabled = 1;
+static int ClockReadOnly = 1;
 LRESULT CALLBACK NewDisk(HWND,UINT, WPARAM, LPARAM);
 
 ///void Load_Disk(unsigned char);
@@ -67,6 +66,10 @@ bool get_menu_item(menu_item_entry* item, size_t index);
 
 // Added for PakGetMenuItem export
 static HWND gVccWnd = nullptr;
+
+// Access the settings object
+static VCC::Util::settings* gpSettings = nullptr;
+VCC::Util::settings& Setting() {return *gpSettings;}
 
 //=================================================================================
 
@@ -123,7 +126,7 @@ extern "C"
 		gVccWnd = hVccWnd;
 		MemRead8 = callbacks->read_memory_byte;
 		MemWrite8 = callbacks->write_memory_byte;
-		strcpy(IniFile, configuration_path);
+        gpSettings = new VCC::Util::settings(configuration_path);
 
 		LoadConfig();
 		cloud9_rtc.set_read_only(ClockReadOnly);
@@ -328,40 +331,39 @@ void LoadConfig()
     char ModName[MAX_LOADSTRING]="";
     HANDLE hr;
 
-    GetPrivateProfileString("DefaultPaths", "HardDiskPath", "",
-                             HardDiskPath, MAX_PATH, IniFile);
+    Setting().read("DefaultPaths","HardDiskPath","",HardDiskPath, MAX_PATH);
 
     // Determine module name for config lookups
     LoadString(gModuleInstance,IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
 
     // Verify HD0 image file exists and mount it.
-    GetPrivateProfileString(ModName,"VHDImage" ,"",VHDfile0,MAX_PATH,IniFile);
+    Setting().read(ModName,"VHDImage","",VHDfile0,MAX_PATH);
     CheckPath(VHDfile0);
     hr = CreateFile (VHDfile0,0,FILE_SHARE_READ,nullptr,
                      OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
     if (hr==INVALID_HANDLE_VALUE) {
         strcpy(VHDfile0,"");
-        WritePrivateProfileString(ModName,"VHDImage","",IniFile);
+        Setting().write(ModName,"VHDImage","");
     } else {
         CloseHandle(hr);
         MountHD(VHDfile0,0);
     }
 
     // Verify HD1 image file exists and mount it.
-    GetPrivateProfileString(ModName,"VHDImage1","",VHDfile1,MAX_PATH,IniFile);
+    Setting().read(ModName,"VHDImage1","",VHDfile1,MAX_PATH);
     CheckPath(VHDfile1);
     hr = CreateFile (VHDfile1,0,FILE_SHARE_READ,nullptr,
                      OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
     if (hr==INVALID_HANDLE_VALUE) {
         strcpy(VHDfile1,"");
-        WritePrivateProfileString(ModName,"VHDImage1","",IniFile);
+        Setting().write(ModName,"VHDImage1","");
     } else {
         CloseHandle(hr);
         MountHD(VHDfile1,1);
     }
 
-	ClockEnabled = GetPrivateProfileInt(ModName, "ClkEnable", 1, IniFile) != 0;
-	ClockReadOnly = GetPrivateProfileInt(ModName, "ClkRdOnly", 1, IniFile) != 0;
+    ClockEnabled  = Setting().read(ModName,"ClkEnable",1);
+    ClockReadOnly = Setting().read(ModName,"ClkRdOnly",1);
 
     // Create config menu
 	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
@@ -377,13 +379,12 @@ void SaveConfig()
     ValidatePath(VHDfile0);
     ValidatePath(VHDfile1);
     if (strcmp(HardDiskPath, "") != 0) {
-        WritePrivateProfileString
-            ("DefaultPaths", "HardDiskPath", HardDiskPath, IniFile);
+        Setting().write("DefaultPaths","HardDiskPath",HardDiskPath);
     }
-    WritePrivateProfileString(ModName,"VHDImage",VHDfile0 ,IniFile);
-    WritePrivateProfileString(ModName,"VHDImage1",VHDfile1 ,IniFile);
-	WritePrivateProfileInt(ModName, "ClkEnable", ClockEnabled, IniFile);
-	WritePrivateProfileInt(ModName, "ClkRdOnly", ClockReadOnly, IniFile);
+    Setting().write(ModName,"VHDImage",VHDfile0);
+    Setting().write(ModName,"VHDImage1",VHDfile1);
+    Setting().write(ModName,"ClkEnable",ClockEnabled);
+    Setting().write(ModName,"ClkRdOnly",ClockReadOnly);
     return;
 }
 
