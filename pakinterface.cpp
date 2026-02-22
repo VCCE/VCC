@@ -180,10 +180,9 @@ void BuildCartMenu()
 	//VCC::Util::section_locker lock(gPakMutex);
 	using VCC::Bus::gVccCartMenu;
 	gVccCartMenu.clear();
-	gVccCartMenu.add("Cartridge", 0, MIT_Head);
 	if (!gActiveCartrige->name().empty()) {
-		std::string tmp = "Eject " + gActiveCartrige->name();
-		gVccCartMenu.add(tmp, ControlId(2), MIT_Slave);
+		std::string tmp = "&Eject " + gActiveCartrige->name();
+		gVccCartMenu.add(tmp, ControlId(2), MIT_StandAlone);
 		// Add items from loaded pak
 		menu_item_entry item;
 		for (size_t index=0;index<MAX_MENU_ITEMS;index++) {
@@ -194,9 +193,9 @@ void BuildCartMenu()
 			}
 		}
 	} else {
-		gVccCartMenu.add("Load MPI", ControlId(3), MIT_Slave);
-		gVccCartMenu.add("Load DLL", ControlId(1), MIT_Slave);
-		gVccCartMenu.add("Load ROM", ControlId(4), MIT_Slave);
+		gVccCartMenu.add("Load &MPI", ControlId(3), MIT_StandAlone);
+		gVccCartMenu.add("Load &DLL", ControlId(1), MIT_StandAlone);
+		gVccCartMenu.add("Load &ROM", ControlId(4), MIT_StandAlone);
 	}
 }
 
