@@ -24,6 +24,5 @@ int CheckPath(char*);
 BOOL PathRemoveFileSpec(char*);
 BOOL PathRemoveExtension(char*);
 char* PathFindExtension(char*);
-//DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
 BOOL FilePrintf(HANDLE, const char*, ...);
 

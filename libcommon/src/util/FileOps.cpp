@@ -117,13 +117,6 @@ char* PathFindExtension(char *Path)
 	return(&Path[Index+1]);
 }
 
-DWORD WritePrivateProfileInt(LPCTSTR SectionName,LPCTSTR KeyName,int KeyValue,LPCTSTR IniFileName)
-{
-	char Buffer[32]="";
-	sprintf(Buffer,"%i",KeyValue);
-	return(WritePrivateProfileString(SectionName,KeyName,Buffer,IniFileName));
-}
-
 BOOL FilePrintf(HANDLE hFile, const char* fmt, ...)
 {
 	DWORD dummy;
