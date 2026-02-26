@@ -141,7 +141,7 @@ extern "C"
 		gpSettings = new VCC::Util::settings(configuration_path);
 		RealDisks = InitController();
 		LoadConfig();
-		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+		SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 	}
 
 	__declspec(dllexport) void PakReset()
@@ -419,7 +419,7 @@ VCC::Util::settings& Setting()
 
 void Unload_Disk(unsigned char disk) {
 	unmount_disk_image(disk);
-	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 	SaveConfig();
 }
 
@@ -453,7 +453,7 @@ void Load_Disk(unsigned char disk)
 				MessageBox(g_hConfDlg,"Can't open file","Error",0);
 			} else {
 				dlg.getdir(FloppyPath);
-				SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+				SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 				SaveConfig();
 			}
 		}
@@ -724,7 +724,7 @@ void LoadConfig()  // Called on SetIniPath
 	ClockEnabled=Setting().read(ModName,"ClkEnable",1);
 	SetTurboDisk(Setting().read(ModName, "TurboDisk", 1));
 
-	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 
 	return;
 }

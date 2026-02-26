@@ -382,7 +382,7 @@ extern "C"
             break;
         case 11:
             SDCMountNext (0);
-            SendMessage(gVccWindow,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	        SendMessage(gVccWindow,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
             break;
         }
         return;
@@ -1895,7 +1895,8 @@ void SDCMountDisk (int drive, const char * path, int raw)
         DLOG_C("SDCMountDisk unload %d %s\n",drive,path);
         IFace.status = STA_NORMAL;
         if (drive == 0)
-            SendMessage(gVccWindow,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	        SendMessage(gVccWindow,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
+            //SendMessage(gVccWindow,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
         return;
     }
 
@@ -2082,7 +2083,8 @@ void SDCOpenFound (int drive,int raw)
         if (SDCInitiateDir(pattern.c_str())) {
             SDCOpenFound(drive, 0);
             if (drive == 0)
-                SendMessage(gVccWindow,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	            SendMessage(gVccWindow,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
+                //SendMessage(gVccWindow,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
         }
         return;
     }
@@ -2214,7 +2216,7 @@ void SDCOpenFound (int drive,int raw)
     }
 
     if (drive == 0)
-            SendMessage(gVccWindow,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	        SendMessage(gVccWindow,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 
     IFace.status = STA_NORMAL;
     return;
@@ -2540,7 +2542,7 @@ bool SearchFile(const std::string& pat)
     // Fill gFileList with files found.
     GetFileList(pat);
     // Update menu to show next disk status
-    SendMessage(gVccWindow,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	SendMessage(gVccWindow,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
     // Return true if something found
     return (gFileList.files.size() > 0);
 }

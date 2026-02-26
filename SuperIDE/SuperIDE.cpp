@@ -182,25 +182,25 @@ extern "C"
 		case 10:
 			Select_Disk(MASTER);
 			SaveConfig();
-		    SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+			SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 			break;
 
 		case 11:
 			DropDisk(MASTER);
 			SaveConfig();
-		    SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+			SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 			break;
 
 		case 12:
 			Select_Disk(SLAVE);
 			SaveConfig();
-		    SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+			SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 			break;
 
 		case 13:
 			DropDisk(SLAVE);
 			SaveConfig();
-		    SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+			SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 			break;
 
 		case 14:
@@ -377,6 +377,6 @@ void LoadConfig()
 	BaseAddress=BaseTable[BaseAddr];
 	cloud9_rtc.set_read_only(ClockReadOnly);
 	MountDisk(FileName ,SLAVE);
-	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 	return;
 }

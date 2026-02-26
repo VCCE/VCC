@@ -23,6 +23,7 @@
 #include <vcc/util/critical_section.h>
 #include <vcc/util/filesystem.h>
 #include <vcc/util/logger.h>
+#include <vcc/bus/cartridge_messages.h>
 
 namespace
 {
@@ -295,7 +296,7 @@ INT_PTR configuration_dialog::process_message(
 			select_new_cartridge(button);
 			return TRUE;
 		case IDC_RESET:
-			SendMessage(gVccWnd,WM_COMMAND,(WPARAM) ID_FILE_RESET,(LPARAM) 0);
+			SendMessage(gVccWnd,WM_VCC_CPU_RESET,(WPARAM) 0,(LPARAM) 0);
 			close();
 			return TRUE;
 		case IDOK:

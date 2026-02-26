@@ -22,7 +22,7 @@ Concept:
 
 ## Cartridge DLL
 
-- Sends IDC_MSG_UPD_MENU to the host on internal state changes that affect its menu.
+- Sends WM_VCC_UPD_MENU to the host on internal state changes that affect its menu.
 - Keeps a static list of menu items that represents it's internal state.
 - Implements a GetMenuItemList(item,index) export that:
   - Updates the list as required (see note)
@@ -60,12 +60,12 @@ MPI:
 
 ---
 
-## PakInterface (Host)
+## VCC
 
 The host:
 
 - Creates the master menu item list from which the cartridge menu is drawn
-- Listens for IDC_MSG_UPD_MENU from any DLL including the MPI.
+- Listens for WM_VCC_UPD_MENU from any DLL including the MPI.
 - On receiving the message, updates it's list using calls to the boot slot's
   (slot 0) export and rebuilds the menu.
 
