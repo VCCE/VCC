@@ -296,6 +296,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	switch (message)
 	{
+		// Hard reset VC
+		case WM_VCC_CPU_RESET:
+			if (EmuState.EmulationRunning)
+				EmuState.ResetPending=2;
+			break;
+
+		// Rebuild dynamic menus
+		case WM_VCC_UPD_MENU:
+			BuildCartMenu();
+			DrawCartMenu(hWnd);
+			break;
+
 		case WM_SYSCOMMAND:
 			// Disable windows seeing Left ALT. (ALT-TAB can not be disabled)
 			if(wParam==SC_KEYMENU) {
@@ -362,7 +374,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 
 				case ID_FILE_RESET:
-				case IDC_MSG_CPU_RESET:
 					if (EmuState.EmulationRunning)
 						EmuState.ResetPending=2;
 					break;
@@ -375,11 +386,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				case ID_FILE_RESET_SFT:
 					if (EmuState.EmulationRunning)
 						EmuState.ResetPending=1;
-
-				case IDC_MSG_UPD_MENU:
-					BuildCartMenu();
-					DrawCartMenu(hWnd);
-					break;
 
 				case ID_FILE_LOAD:
 					LoadIniFile();

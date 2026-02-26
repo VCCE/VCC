@@ -132,7 +132,7 @@ extern "C"
 		cloud9_rtc.set_read_only(ClockReadOnly);
 		VhdReset(); // Selects drive zero
 		// Request menu rebuild
-		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	    SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 	}
 
 	__declspec(dllexport) bool PakGetMenuItem(menu_item_entry* item, size_t index)
@@ -184,7 +184,7 @@ extern "C"
         }
         SaveConfig();
         // FIXME should only rebuild menus if drive is changed
-		SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	    SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
         return;
     }
 }
@@ -366,7 +366,7 @@ void LoadConfig()
     ClockReadOnly = Setting().read(ModName,"ClkRdOnly",1);
 
     // Create config menu
-	SendMessage(gVccWnd,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
     return;
 }
 

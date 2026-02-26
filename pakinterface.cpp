@@ -301,9 +301,9 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	strcpy(DllPath, filename);
 	gActiveCartrige = move(loadedCartridge.cartridge);
 	gActiveModule = move(loadedCartridge.handle);
-	SendMessage(EmuState.WindowHandle,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	SendMessage(EmuState.WindowHandle,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 
-	// initialize the cartridge and reset the CPU
+	// initialize the cartridge and reset the CPU *now*
 	gActiveCartrige->start();
 	EmuState.ResetPending = 2;
 
@@ -320,7 +320,7 @@ void UnloadDll()
 	gActiveCartrige = std::make_unique<VCC::Core::null_cartridge>();
 	gActiveModule.reset();
 
-	SendMessage(EmuState.WindowHandle,WM_COMMAND,(WPARAM) IDC_MSG_UPD_MENU,(LPARAM) 0);
+	SendMessage(EmuState.WindowHandle,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 	gActiveCartrige->start();
 }
 
