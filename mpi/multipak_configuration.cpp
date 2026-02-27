@@ -24,63 +24,60 @@
 using settings = ::VCC::Util::settings;
 
 // Constructor sets the section
-multipak_configuration::multipak_configuration(string_type section)
+multipak_configuration::multipak_configuration(std::string section)
 	: section_(move(section))
 {}
 
 // Set ini file path
-void multipak_configuration::configuration_path(path_type path)
+void multipak_configuration::configuration_path(std::string path)
 {
 	configuration_path_ = move(path);
 }
 
 // Return ini file path
-multipak_configuration::path_type multipak_configuration::configuration_path() const
+std::string multipak_configuration::configuration_path() const
 {
 	return configuration_path_;
 }
 
 // last rom path
-void multipak_configuration::last_accessed_rom_path(const path_type& path) const
+void multipak_configuration::last_accessed_rom_path(const std::string& path) const
 {
 	settings(configuration_path()).write("DefaultPaths", "PakPath", path);
 }
-multipak_configuration::path_type multipak_configuration::last_accessed_rom_path() const
+std::string multipak_configuration::last_accessed_rom_path() const
 {
 	return settings(configuration_path()).read("DefaultPaths", "PakPath");
 }
 
 // last dll path
-void multipak_configuration::last_accessed_dll_path(const path_type& path) const
+void multipak_configuration::last_accessed_dll_path(const std::string& path) const
 {
-	settings(configuration_path()).write("DefaultPaths", "MPIPath", path);
+	settings(configuration_path()).write("DefaultPaths", "DLLPath", path);
 }
-multipak_configuration::path_type multipak_configuration::last_accessed_dll_path() const
+std::string multipak_configuration::last_accessed_dll_path() const
 {
-	return settings(configuration_path()).read("DefaultPaths", "MPIPath");
+	return settings(configuration_path()).read("DefaultPaths", "DLLPath");
 }
 
-void multipak_configuration::selected_slot(slot_id_type slot) const
+void multipak_configuration::selected_slot(std::size_t slot) const
 {
 	settings(configuration_path()).write(section_, "SWPOSITION", slot);
 }
-multipak_configuration::slot_id_type multipak_configuration::selected_slot() const
+std::size_t multipak_configuration::selected_slot() const
 {
 	return settings(configuration_path()).read(section_, "SWPOSITION", 3);
 }
 
 // slot path
-void multipak_configuration::slot_cartridge_path(slot_id_type slot, const path_type& path) const
+void multipak_configuration::slot_cartridge_path(std::size_t slot, const std::string& path) const
 {
-	settings(configuration_path()).write(section_, get_slot_path_key(slot), path);
+	std::string key="SLOT" + std::to_string(slot+1);
+	settings(configuration_path()).write(section_, key, path);
 }
-multipak_configuration::path_type multipak_configuration::slot_cartridge_path(slot_id_type slot) const
+std::string multipak_configuration::slot_cartridge_path(std::size_t slot) const
 {
-	return settings(configuration_path()).read(section_, get_slot_path_key(slot));
+	std::string key="SLOT" + std::to_string(slot+1);
+	return settings(configuration_path()).read(section_, key);
 }
 
-// slot path string with SLOT prepended
-multipak_configuration::string_type multipak_configuration::get_slot_path_key(slot_id_type slot) const
-{
-	return "SLOT" + std::to_string(slot + 1);
-}

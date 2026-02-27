@@ -80,9 +80,9 @@ void configuration_dialog::select_new_cartridge(unsigned int item)
 
 	FileDialog dlg;
 
-	int type = (item == IDC_LOAD_DLL) ? 1:0; //1=dll,0=rom
+	int cart_type = (item == IDC_LOAD_DLL) ? 1:0; //1=dll,0=rom
 
-	if (type == 1) {
+	if (cart_type == 1) {
 		dlg.setTitle("Load Hardware Pak");
 		dlg.setInitialDir(configuration_.last_accessed_dll_path().c_str());
 		dlg.setFilter(
@@ -107,7 +107,7 @@ void configuration_dialog::select_new_cartridge(unsigned int item)
 		if (mpi_.mount_cartridge(slot, dlg.path()) == cartridge_loader_status::success)
 		{
 			configuration_.slot_cartridge_path(slot, dlg.path());
-			if ( (dlg.gettype()==".dll") || (dlg.gettype() == ".DLL") ) {  // DLL?
+			if (cart_type == 1) {
 				configuration_.last_accessed_dll_path(dlg.getdir());
 			} else {
 				configuration_.last_accessed_rom_path(dlg.getdir());
@@ -115,9 +115,7 @@ void configuration_dialog::select_new_cartridge(unsigned int item)
 		}
 
 	}
-
 	update_slot_details(slot);
-//	mpi_.build_menu();
 }
 
 void configuration_dialog::set_selected_slot(size_t slot)

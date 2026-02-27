@@ -343,8 +343,7 @@ void Select_Disk(unsigned char Disk)
 
 void SaveConfig()
 {
-	char ModName[MAX_LOADSTRING]="";
-	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	const char* ModName="SuperIDE";
 	QueryDisk(MASTER,FileName);
 	Setting().write(ModName,"Master",FileName);
 	QueryDisk(SLAVE,FileName);
@@ -355,15 +354,12 @@ void SaveConfig()
 	if (strcmp(SuperIDEPath, "") != 0) {
 		Setting().write("DefaultPaths", "SuperIDEPath", SuperIDEPath);
 	}
-
 	return;
 }
 
 void LoadConfig()
 {
-	char ModName[MAX_LOADSTRING]="";
-
-	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	const char* ModName="SuperIDE";
 	Setting().read("DefaultPaths", "SuperIDEPath", "", SuperIDEPath, MAX_PATH);
 	Setting().read(ModName,"Master","",FileName,MAX_PATH);
 	MountDisk(FileName ,MASTER);

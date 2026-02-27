@@ -211,12 +211,12 @@ static char cartDir[MAX_PATH] = "";
 		dlg.setTitle(TEXT("Load Program Pack"));
 		dlg.setFilter("Hardware Packs\0*.dll\0"
 				"All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0\0");
-		Setting().read("DefaultPaths", "MPIPath", "", cartDir, MAX_PATH);
+		Setting().read("DefaultPaths", "DLLPath", "", cartDir, MAX_PATH);
 	} else {
 		dlg.setTitle(TEXT("Load ROM"));
 		dlg.setFilter("Rom Packs(*.ccc;*.rom)\0*.ccc;*.rom\0"
 				"All Supported Formats (*.dll;*.ccc;*.rom)\0*.dll;*.ccc;*.rom\0\0");
-		Setting().read("DefaultPaths", "PakPath", "", cartDir, MAX_PATH);
+		Setting().read("DefaultPaths", "RomPath", "", cartDir, MAX_PATH);
 	}
 	dlg.setInitialDir(cartDir);
 	dlg.setFlags(OFN_FILEMUSTEXIST);
@@ -226,9 +226,9 @@ static char cartDir[MAX_PATH] = "";
 			dlg.getdir(cartDir);
 			dlg.gettype(filetype);
 			if ((strcmp(filetype,"dll") == 0) | (strcmp(filetype,"DLL") == 0 )) {  // DLL?
-				Setting().write("DefaultPaths", "MPIPath", cartDir);
+				Setting().write("DefaultPaths", "DLLPath", cartDir);
 			} else {
-				Setting().write("DefaultPaths", "PAKPath", cartDir);
+				Setting().write("DefaultPaths", "RomPath", cartDir);
 			}
 		}
 	}

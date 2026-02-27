@@ -23,41 +23,30 @@
 
 class multipak_configuration
 {
-public:
-
-	using slot_id_type = std::size_t;
-	using path_type = std::string;
-	using string_type = std::string;
-
 
 public:
 
-	explicit multipak_configuration(string_type section);
+	explicit multipak_configuration(std::string section);
 
-	void configuration_path(path_type path);
-	path_type configuration_path() const;
+	void configuration_path(std::string path);
+	std::string configuration_path() const;
 
-	path_type last_accessed_module_type() const;
+	std::string last_accessed_module_type() const;
 
-	void last_accessed_rom_path(const path_type& path) const;
-	path_type last_accessed_rom_path() const;
+	void last_accessed_rom_path(const std::string& path) const;
+	std::string last_accessed_rom_path() const;
 
-	void last_accessed_dll_path(const path_type& path) const;
-	path_type last_accessed_dll_path() const;
+	void last_accessed_dll_path(const std::string& path) const;
+	std::string last_accessed_dll_path() const;
 
-	void selected_slot(slot_id_type slot) const;
-	slot_id_type selected_slot() const;
+	void selected_slot(std::size_t slot) const;
+	std::size_t selected_slot() const;
 
-	void slot_cartridge_path(slot_id_type slot, const path_type& path) const;
-	path_type slot_cartridge_path(slot_id_type slot) const;
-
-
-private:
-
-	string_type get_slot_path_key(slot_id_type slot) const;
+	void slot_cartridge_path(std::size_t slot, const std::string& path) const;
+	std::string slot_cartridge_path(std::size_t slot) const;
 
 private:
 
-	const string_type section_;
-	path_type configuration_path_;
+	const std::string section_;
+	std::string configuration_path_;
 };

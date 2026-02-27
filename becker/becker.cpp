@@ -655,11 +655,9 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 void LoadConfig()
 {
-	char ModName[MAX_LOADSTRING]="";
+	const char* ModName = "DW Becker";
 	char saddr[MAX_LOADSTRING]="";
 	char sport[MAX_LOADSTRING]="";
-
-	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 
 	Setting().read(ModName,"DWServerAddr","",saddr, MAX_LOADSTRING);
 	Setting().read(ModName,"DWServerPort","",sport, MAX_LOADSTRING);
@@ -679,8 +677,7 @@ void LoadConfig()
 
 void SaveConfig()
 {
-	char ModName[MAX_LOADSTRING]="";
-	LoadString(gModuleInstance,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	const char* ModName = "DW Becker";
 	Setting().write(ModName,"DWServerAddr",dwaddress);
 	sprintf(msg, "%d", dwsport);
 	Setting().write(ModName,"DWServerPort",msg);
