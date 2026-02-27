@@ -441,6 +441,10 @@ bool get_menu_item(menu_item_entry* item, size_t index)
 {
     if (!item) return false;
     if (index == 0) {
+        SdcMenu.clear();
+        SdcMenu.add("", 0, MIT_Seperator);
+        SdcMenu.add("SDC Drive 0",0,MIT_Head);
+
         std::string tmp = gCocoDisk[0].name;
         if (tmp.empty()) {
             tmp = "empty";
@@ -449,10 +453,8 @@ bool get_menu_item(menu_item_entry* item, size_t index)
         } else {
             tmp = tmp + " (no next)";
         }
-        SdcMenu.clear();
-        SdcMenu.add("", 0, MIT_Seperator);
-        SdcMenu.add("SDC Drive 0",0,MIT_Head);
         SdcMenu.add(tmp, ControlId(11),MIT_Slave);
+
         SdcMenu.add("SDC Config", ControlId(10), MIT_StandAlone);
     }
     return SdcMenu.copy_item(*item, index);
