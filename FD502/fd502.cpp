@@ -49,6 +49,11 @@
 #include "becker.h"
 #endif
 
+// Settings module groups used
+const std::string MS_FD502  = "FD-502";
+const std::string MS_BECKER = "DW Becker";
+const std::string MS_PATHS  = "DefaultPaths";
+
 constexpr auto EXTROMSIZE = 16384u;
 
 using namespace std;
@@ -670,7 +675,6 @@ long CreateDiskHeader(const char *FileName,unsigned char Type,unsigned char Trac
 
 void LoadConfig()  // Called on SetIniPath
 {
-	char ModName[MAX_LOADSTRING]="";
 	unsigned char Index=0;
 	char Temp[16]="";
 	char DiskRomPath[MAX_PATH], RGBRomPath[MAX_PATH];
@@ -678,22 +682,20 @@ void LoadConfig()  // Called on SetIniPath
 	unsigned int RetVal=0;
 
 #ifdef COMBINE_BECKER
-	strcpy(ModName,"DW Becker");
-	BeckerEnabled=Setting().read(ModName,"DWEnable", 0);
-	Setting().read(ModName,"DWServerAddr","127.0.0.1",BeckerAddr,MAX_PATH);
-	Setting().read(ModName,"DWServerPort","65504",BeckerPort,32);
+	BeckerEnabled=Setting().read(MS_BECKER,"DWEnable", 0);
+	Setting().read(MS_BECKER,"DWServerAddr","127.0.0.1",BeckerAddr,MAX_PATH);
+	Setting().read(MS_BECKER,"DWServerPort","65504",BeckerPort,32);
 	if(*BeckerAddr == '\0') strcpy(BeckerAddr,"127.0.0.1");
 	if(*BeckerPort == '\0') strcpy(BeckerPort,"65504");
 	becker_sethost(BeckerAddr,BeckerPort);
 	becker_enable(BeckerEnabled);
 #endif
 
-	Setting().read("DefaultPaths", "FloppyPath", "", FloppyPath, MAX_PATH);
+	Setting().read(MS_PATHS, "FloppyPath", "", FloppyPath, MAX_PATH);
 
-    strcpy(ModName,"FD-502");
-	SelectRom = Setting().read(ModName,"DiskRom",1);  //0 External 1=TRSDOS 2=RGB Dos
-	Setting().read(ModName,"RomPath","",RomFileName,MAX_PATH);
-	PersistDisks=Setting().read(ModName,"Persist",1);
+	SelectRom = Setting().read(MS_FD502,"DiskRom",1);  //0 External 1=TRSDOS 2=RGB Dos
+	Setting().read(MS_FD502,"RomPath","",RomFileName,MAX_PATH);
+	PersistDisks=Setting().read(MS_FD502,"Persist",1);
 	CheckPath(RomFileName);
 	LoadExtRom(External,RomFileName); //JF
 	GetModuleFileName(nullptr, DiskRomPath, MAX_PATH);
@@ -707,7 +709,7 @@ void LoadConfig()  // Called on SetIniPath
 		for (Index=0;Index<4;Index++)
 		{
 			sprintf(Temp,"Disk#%i",Index);
-			Setting().read(ModName,Temp,"",DiskName,MAX_PATH);
+			Setting().read(MS_FD502,Temp,"",DiskName,MAX_PATH);
 			if (strlen(DiskName))
 			{
 				RetVal=mount_disk_image(DiskName,Index);
@@ -721,8 +723,8 @@ void LoadConfig()  // Called on SetIniPath
 				}
 			}
 		}
-	ClockEnabled=Setting().read(ModName,"ClkEnable",1);
-	SetTurboDisk(Setting().read(ModName, "TurboDisk", 1));
+	ClockEnabled=Setting().read(MS_FD502,"ClkEnable",1);
+	SetTurboDisk(Setting().read(MS_FD502, "TurboDisk", 1));
 
 	SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 
@@ -732,29 +734,26 @@ void LoadConfig()  // Called on SetIniPath
 void SaveConfig()
 {
 	unsigned char Index=0;
-	char ModName[MAX_LOADSTRING]="";
 	char Temp[16]="";
-    strcpy(ModName,"FD502");
 	ValidatePath(RomFileName);
-	Setting().write(ModName,"DiskRom",SelectRom );
-	Setting().write(ModName,"RomPath",RomFileName);
-	Setting().write(ModName,"Persist",PersistDisks );
+	Setting().write(MS_FD502,"DiskRom",SelectRom );
+	Setting().write(MS_FD502,"RomPath",RomFileName);
+	Setting().write(MS_FD502,"Persist",PersistDisks );
 	if (PersistDisks)
 		for (Index=0;Index<4;Index++)
 		{
 			sprintf(Temp,"Disk#%i",Index);
-			Setting().write(ModName,Temp,gVirtualDrive[Index].ImageName);
+			Setting().write(MS_FD502,Temp,gVirtualDrive[Index].ImageName);
 		}
-	Setting().write(ModName,"ClkEnable",ClockEnabled );
-	Setting().write(ModName, "TurboDisk", SetTurboDisk(QUERY));
+	Setting().write(MS_FD502,"ClkEnable",ClockEnabled );
+	Setting().write(MS_FD502, "TurboDisk", SetTurboDisk(QUERY));
 	if (strcmp(FloppyPath, "") != 0) {
-		Setting().write("DefaultPaths", "FloppyPath", FloppyPath);
+		Setting().write(MS_PATHS, "FloppyPath", FloppyPath);
 	}
 #ifdef COMBINE_BECKER
-    strcpy(ModName,"DW Becker");
-	Setting().write(ModName,"DWEnable", BeckerEnabled);
-	Setting().write(ModName,"DWServerAddr", BeckerAddr);
-	Setting().write(ModName,"DWServerPort", BeckerPort);
+	Setting().write(MS_BECKER,"DWEnable", BeckerEnabled);
+	Setting().write(MS_BECKER,"DWServerAddr", BeckerAddr);
+	Setting().write(MS_BECKER,"DWServerPort", BeckerPort);
 #endif
 	return;
 }
