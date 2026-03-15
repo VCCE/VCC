@@ -55,17 +55,17 @@ namespace VCC::Core
 		input.seekg(0, std::ios::beg);
 		input.read(reinterpret_cast<char*>(header), 2);
 		if (!input) {
-			DLOG_C("core::cartridge is too small\n\n");
+			DLOG_C("cartridge_loader cartridge is too small\n");
 			return cartridge_file_type::rom_image;
 		}
 
 		// Check for magic 'MZ' DLL indicator
 		if (header[0] == 'M' && header[1] == 'Z') {
-			DLOG_C("core::cartridge type library\n\n");
+			DLOG_C("cartridge_loader cartridge type library\n");
 			return cartridge_file_type::library;
 		}
 
-		DLOG_C("core::cartridge assume rom\n\n");
+		DLOG_C("cartridge_loader cartridge type rom\n");
 		return cartridge_file_type::rom_image;
 	}
 
@@ -74,6 +74,7 @@ namespace VCC::Core
 		std::unique_ptr<cartridge_context> context,
 		const std::string& filename)
 	{
+		DLOG_C("cartridge_loader load rom\n");
 		constexpr size_t PAK_MAX_MEM = 0x40000;
 
 		std::vector<uint8_t> romImage;
@@ -83,6 +84,7 @@ namespace VCC::Core
 		// Open the ROM file, fail if unable to
 		std::ifstream input(filename, std::ios::binary);
 		if (!input.is_open()) {
+			DLOG_C("cartridge_loader rom open fail\n");
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 		}
 
@@ -94,6 +96,7 @@ namespace VCC::Core
 			back_inserter(romImage));
 
 		if (romImage.empty()) {
+			DLOG_C("cartridge_loader rom empty\n");
 			return { nullptr, nullptr, cartridge_loader_status::not_rom };
 		}
 
@@ -101,16 +104,21 @@ namespace VCC::Core
 		// it should be enabled.
 		constexpr bool enable_bank_switching = true;
 
-		return {
+		auto rom = std::make_unique<VCC::Core::rom_cartridge>(
+			std::move(context),
+			extract_filename(filename),
+			"",
+			std::move(romImage),
+			enable_bank_switching
+		);
+
+		auto result = cartridge_loader_result {
 			nullptr,
-			std::make_unique<VCC::Core::rom_cartridge>(
-				move(context),
-				extract_filename(filename),
-				"",
-				move(romImage),
-				enable_bank_switching),
-			cartridge_loader_status::success
-		};
+			std::move(rom),
+			cartridge_loader_status::success };
+		DLOG_C("cartridge_loader rom object ret %p\n",result.cartridge.get());
+
+		return result;
 	}
 
 	// Load a legacy cartridge
@@ -132,7 +140,7 @@ namespace VCC::Core
 		HMODULE hCart = LoadLibrary(filename.c_str());
 		details.handle.reset(hCart);
 
-		DLOG_C("pak:LoadLibrary %s %d\n", filename.c_str(), GetLastError());
+		DLOG_C("cartridge_loader LoadLibrary %s %d\n", filename.c_str(), GetLastError());
 		if (details.handle == nullptr)
 		{
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
@@ -160,7 +168,7 @@ namespace VCC::Core
 	// cartridge_context is defined in libcommon/include/vcc/bus/cartridge_context.h
 	// SlotId is size_t 0-4, 0 = boot slot (side slot), 1-4 = MPI slots.  SlotId is
 	// passed to cpak cart DLLs and is returned as first argment of callbacks
-	// cpak_callbacks is used by all hardware paks and is defined in 
+	// cpak_callbacks is used by all hardware paks and is defined in
 	// libcommon/include/vcc/bus/cpak_cartridge_definitions.h.
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
@@ -170,7 +178,7 @@ namespace VCC::Core
 		HWND hVccWnd,
 		const cpak_callbacks& cpak_callbacks)
 	{
-		DLOG_C("\ncore::load_cartridge %s\n",filename.c_str());
+		DLOG_C("cartridge_loader load_cartridge %s\n", filename.c_str());
 		switch (VCC::Core::determine_cartridge_type(filename))
 		{
 		default:

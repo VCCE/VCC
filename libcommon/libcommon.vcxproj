@@ -101,7 +101,6 @@
     <ClCompile Include="src\bus\rom_cartridge.cpp" />
     <ClCompile Include="src\bus\cartridge_loader.cpp" />
     <ClCompile Include="src\bus\cartridge_menu.cpp" />
-    <ClCompile Include="src\bus\rom_image.cpp" />
     <ClCompile Include="src\util\settings.cpp" />
     <ClCompile Include="src\util\filesystem.cpp" />
     <ClCompile Include="src\util\winapi.cpp" />
@@ -122,7 +121,6 @@
     <ClInclude Include="include\vcc\bus\cpak_cartridge_definitions.h" />
     <ClInclude Include="include\vcc\bus\null_cartridge.h" />
     <ClInclude Include="include\vcc\bus\rom_cartridge.h" />
-    <ClInclude Include="include\vcc\bus\rom_image.h" />
     <ClInclude Include="include\vcc\util\DialogOps.h" />
     <ClInclude Include="include\vcc\util\FileOps.h" />
     <ClInclude Include="include\vcc\util\interrupts.h" />
