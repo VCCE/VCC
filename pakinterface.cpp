@@ -204,8 +204,7 @@ void PakLoadCartridgeUI(int type)
 	char inifile[MAX_PATH];
 	GetIniFilePath(inifile);
 
-
-static char cartDir[MAX_PATH] = "";
+	static char cartDir[MAX_PATH] = "";
 	FileDialog dlg;
 	if (type == 0) {
 		dlg.setTitle(TEXT("Load Program Pack"));
@@ -221,7 +220,8 @@ static char cartDir[MAX_PATH] = "";
 	dlg.setInitialDir(cartDir);
 	dlg.setFlags(OFN_FILEMUSTEXIST);
 	if (dlg.show()) {
-		if (PakLoadCartridge(dlg.path()) == cartridge_loader_status::success) {
+		auto status = PakLoadCartridge(dlg.path());
+		if (status == cartridge_loader_status::success) {
 			char filetype[4];
 			dlg.getdir(cartDir);
 			dlg.gettype(filetype);
@@ -251,7 +251,6 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 	const auto result(load_any_cartridge(filename, TempIni));
 	if (result == cartridge_loader_status::success)
 	{
-		DLOG_C("pakinterface load cart %s\n",filename);
 		Setting().write("Module", "OnBoot", filename);
 		return result;
 	}
@@ -280,6 +279,7 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 
 	slot_id_type SlotId = 0;
 
+	// SlotId, iniPath, WindowHandle, and callbacks are unused for ROM carts
 	auto loadedCartridge = VCC::Core::load_cartridge(
 		filename,
 		std::move(vccContext),
@@ -293,7 +293,11 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 		return loadedCartridge.load_result;
 	}
 
-	// unload active cartridge
+	DLOG_C("pakinterface:load_any_cartridge type: %s cart ptr: %p\n",
+			typeid(*loadedCartridge.cartridge.get()).name(),
+			loadedCartridge.cartridge.get());
+
+	// unload active cartridge (UnloadDLL() is poorly named but is called from Vcc.cpp)
 	UnloadDll();
 
 	VCC::Util::section_locker lock(gPakMutex);
@@ -310,11 +314,12 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 	return loadedCartridge.load_result;
 }
 
-
+// TODO: Rename this to UnloadCartridge() because it handles ROM carts as well as DLL's
 void UnloadDll()
 {
 	VCC::Util::section_locker lock(gPakMutex);
 
+	// gActiveCartrige is one of a ROM, DLL, or NULL cartridge
 	gActiveCartrige->stop();
 
 	gActiveCartrige = std::make_unique<VCC::Core::null_cartridge>();

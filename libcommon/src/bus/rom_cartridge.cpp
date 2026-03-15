@@ -1,3 +1,4 @@
+//#define USE_LOGGING
 ////////////////////////////////////////////////////////////////////////////////
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
@@ -16,7 +17,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include <vcc/bus/rom_cartridge.h>
-
+#include <vcc/util/logger.h>
 
 namespace VCC::Core
 {
@@ -34,7 +35,10 @@ namespace VCC::Core
 		buffer_(move(buffer)),
 		enable_bank_switching_(enable_bank_switching),
 		bank_offset_(0)
-	{}
+	{
+		DLOG_C("rom_cartridge ctor type: %s cart ptr: %p buf siz: %zu\n",
+			typeid(*this).name(), this, buffer_.size());
+	}
 
 
 	rom_cartridge::name_type rom_cartridge::name() const
@@ -73,6 +77,7 @@ namespace VCC::Core
 
 	void rom_cartridge::initialize_bus()
 	{
+		DLOG_C("rom_cartridge::initialize_bus: this=%p context=%p\n",this,context_.get());
 		context_->assert_cartridge_line(true);
 	}
 

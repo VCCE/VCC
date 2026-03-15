@@ -340,7 +340,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		+[](slot_id_type SlotId,
 		bool line_state)
 	{
-		self->assert_cartridge_line(SlotId, line_state);
+		self->assert_cartridge_line(SlotId-1, line_state);
 	};
 
 	// Build callback table for carts loaded on MPI
@@ -420,12 +420,12 @@ multipak_cartridge::slot_id_type multipak_cartridge::selected_scs_slot() const
 	return cached_scs_slot_;
 }
 
-void multipak_cartridge::assert_cartridge_line(slot_id_type SlotId, bool line_state)
+void multipak_cartridge::assert_cartridge_line(slot_id_type mpi_slot, bool line_state)
 {
-	DLOG_C("cart line %d %d \n",SlotId,line_state);
+	DLOG_C("multipak_cartridge::assert_cartridge_line cart: %d state: %d scs: %d\n",
+			mpi_slot,line_state,selected_scs_slot());
 
 	VCC::Util::section_locker lock(mutex_);
-	auto mpi_slot = SlotId - 1;
 	slots_[mpi_slot].line_state(line_state);
 	if (selected_scs_slot() == mpi_slot) {
 		context_->assert_cartridge_line(slots_[mpi_slot].line_state());

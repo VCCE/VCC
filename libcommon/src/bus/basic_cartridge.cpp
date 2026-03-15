@@ -1,3 +1,4 @@
+//#define USE_LOGGING
 ////////////////////////////////////////////////////////////////////////////////
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
@@ -16,7 +17,8 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include <vcc/bus/basic_cartridge.h>
-
+#include <vcc/util/logger.h>
+#include <typeinfo>
 
 namespace VCC::Core
 {
@@ -39,6 +41,8 @@ namespace VCC::Core
 
 	void basic_cartridge::start()
 	{
+		DLOG_C("basic_cartridge::start type: %s cart ptr: %p\n",
+			typeid(*this).name(), this);
 		initialize_pak();
 		initialize_bus();
 	}
