@@ -18,16 +18,13 @@
 #pragma once
 #include <vcc/bus/cpak_cartridge_definitions.h>
 
-// Define the CPAK interface in yet another place but call it something else.
-
 extern "C" __declspec(dllexport) void PakInitialize(
 	slot_id_type SlotId,
 	const char* const configuration_path,
 	HWND hVccWnd,
 	const cpak_callbacks* const callbacks);
 
-// FIXME: this should be unnecessary here. VCC (or the 'host') should provide it
-class host_cartridge_context : public ::VCC::Core::cartridge_context
+class host_cartridge_callbacks : public ::VCC::Core::cartridge_callbacks
 {
 public:
 
@@ -35,7 +32,7 @@ public:
 
 public:
 
-	explicit host_cartridge_context(slot_id_type SlotId, const path_type& configuration_filename)
+	explicit host_cartridge_callbacks(slot_id_type SlotId, const path_type& configuration_filename)
 		:
 		SlotId_(SlotId),
 		configuration_filename_(configuration_filename)

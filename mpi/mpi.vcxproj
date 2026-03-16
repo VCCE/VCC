@@ -101,11 +101,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cartridge_slot.h" />
-    <ClInclude Include="host_cartridge_context.h" />
+    <ClInclude Include="cartridge_slot_adapter.h" />
+    <ClInclude Include="host_cartridge_callbacks.h" />
     <ClInclude Include="mpi.h" />
     <ClInclude Include="multipak_cartridge.h" />
     <ClInclude Include="configuration_dialog.h" />
-    <ClInclude Include="multipak_cartridge_context.h" />
     <ClInclude Include="multipak_configuration.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

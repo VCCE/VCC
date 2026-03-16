@@ -71,7 +71,7 @@ namespace VCC::Core
 
 	// Load a ROM cartridge
 	cartridge_loader_result load_rom_cartridge(
-		std::unique_ptr<cartridge_context> context,
+		std::unique_ptr<cartridge_callbacks> parent_callbacks,
 		const std::string& filename)
 	{
 		DLOG_C("cartridge_loader load rom\n");
@@ -105,7 +105,7 @@ namespace VCC::Core
 		constexpr bool enable_bank_switching = true;
 
 		auto rom = std::make_unique<VCC::Core::rom_cartridge>(
-			std::move(context),
+			std::move(parent_callbacks),
 			extract_filename(filename),
 			"",
 			std::move(romImage),
@@ -121,10 +121,10 @@ namespace VCC::Core
 		return result;
 	}
 
-	// Load a legacy cartridge
+	// Load a dll cartridge
 	cartridge_loader_result load_cpak_cartridge(
 		const std::string& filename,
-		std::unique_ptr<cartridge_context> cartridge_context,
+		std::unique_ptr<cartridge_callbacks> parent_callbacks,
 		slot_id_type SlotId,
 		const std::string& iniPath,
 		HWND hVccWnd,
@@ -165,14 +165,14 @@ namespace VCC::Core
     // Load a cartridge; either a ROM image or a pak dll. Load cartridge is called
 	// by both mpi/multipak_cartridge.cpp and pakinterface.cpp.
 	// cartridge_loader_result is defined in libcommon/include/vcc/bus/cartridge_loader.h
-	// cartridge_context is defined in libcommon/include/vcc/bus/cartridge_context.h
+	// cartridge_callbacks is defined in libcommon/include/vcc/bus/cartridge_callbacks.h
 	// SlotId is size_t 0-4, 0 = boot slot (side slot), 1-4 = MPI slots.  SlotId is
 	// passed to cpak cart DLLs and is returned as first argment of callbacks
 	// cpak_callbacks is used by all hardware paks and is defined in
 	// libcommon/include/vcc/bus/cpak_cartridge_definitions.h.
 	cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<cartridge_context> cartridge_context,
+		std::unique_ptr<cartridge_callbacks> parent_callbacks,
 		slot_id_type SlotId,
 		const std::string& iniPath,
 		HWND hVccWnd,
@@ -186,16 +186,16 @@ namespace VCC::Core
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 
 		case cartridge_file_type::rom_image:	//	File is a ROM image
-			return VCC::Core::load_rom_cartridge(move(cartridge_context), filename);
+			return VCC::Core::load_rom_cartridge(move(parent_callbacks), filename);
 
 		case cartridge_file_type::library:		//	File is a DLL
 			return VCC::Core::load_cpak_cartridge(
 				filename,
-				move(cartridge_context),
-				SlotId,							// Where cart is inserted
-				iniPath,						// Path to vcc ini file
-				hVccWnd,						// MainVcc window handle
-				cpak_callbacks);				// Callbacks in here
+				move(parent_callbacks), // parent callback interface
+				SlotId,                 // Where cart is inserted
+				iniPath,                // Path to vcc ini file
+				hVccWnd,                // MainVcc window handle
+				cpak_callbacks);        // DLL callbacks in here
 		}
 	}
 

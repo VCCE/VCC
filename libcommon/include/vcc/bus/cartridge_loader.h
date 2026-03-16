@@ -61,25 +61,34 @@ namespace VCC::Core
 
 	cartridge_file_type determine_cartridge_type(const std::string& filename);
 
-	cartridge_loader_result load_rom_cartridge(
-		const std::string& filename,
-		std::unique_ptr<cartridge_context> cartridge_context);
+//-------------------------------------------------------------------------------
+//  Cartridge Loader. Determine type and call appropriate loader, rom or cpak
+//	cartridge_callbacks is the host to cartridge API used by the cartridge class.
+//	SlotID is the 0-4 slot id; 0 is the side slot and 1-4 are MPI slots.
+//	iniPath is the name of the ini file (typically vcc.ini)
+//	hVccWnd is the VCC main window handle, used for messaging
+//	cpak_callbacks is the cartridge to host API used by the cartridge DLL.
+//-------------------------------------------------------------------------------
 
-	cartridge_loader_result load_cpak_cartridge(
+	cartridge_loader_result load_cartridge(
 		const std::string& filename,
-		std::unique_ptr<cartridge_context> cartridge_context,
+		std::unique_ptr<cartridge_callbacks> cartridge_callbacks,
 		slot_id_type SlotId,
 		const std::string& iniPath,
 		HWND hVccWnd,
 		const cpak_callbacks& cpak_callbacks);
 
-	cartridge_loader_result load_cartridge(
-		const std::string& filename,                          // Cartridge filename
-		std::unique_ptr<cartridge_context> cartridge_context, // Loader context
+	cartridge_loader_result load_cpak_cartridge(
+		const std::string& filename,
+		std::unique_ptr<cartridge_callbacks> cartridge_callbacks,
 		slot_id_type SlotId,
-		const std::string& iniPath,                           // Path of ini file
-		HWND hVccWnd,                                         // handle to main window 
-		const cpak_callbacks& cpak_callbacks);                // Callbacks
+		const std::string& iniPath,
+		HWND hVccWnd,
+		const cpak_callbacks& cpak_callbacks);
+
+	cartridge_loader_result load_rom_cartridge(
+		const std::string& filename,
+		std::unique_ptr<cartridge_callbacks> cartridge_callbacks);
 
 	// Return load error string per cartridge load status
 	std::string cartridge_load_error_string(
