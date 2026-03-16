@@ -56,7 +56,7 @@ void CartMenuCallBack(const char* name, int menu_id, MenuItemType type);
 void PakAssertInterupt(Interrupt interrupt, InterruptSource source);
 
 
-struct vcc_cartridge_context : public ::VCC::Core::cartridge_context
+struct vcc_cartridge_callbacks : public ::VCC::Core::cartridge_callbacks
 {
 
 	path_type configuration_path() const override
@@ -267,9 +267,6 @@ cartridge_loader_status PakLoadCartridge(const char* filename)
 // Insert Module returns 0 on success
 static cartridge_loader_status load_any_cartridge(const char *filename, const char* iniPath)
 {
-	// vccContext is passed to the loader but not to the cart DLL
-	auto vccContext=std::make_unique<vcc_cartridge_context>();
-
 	cpak_callbacks callbacks {
 		PakAssertInterupt,
 		PakAssertCartrigeLine,
@@ -279,10 +276,13 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 
 	slot_id_type SlotId = 0;
 
+	// pakinterface slot adapter only needs callbacks structure
+	auto boot_slot_adapter=std::make_unique<vcc_cartridge_callbacks>();
+
 	// SlotId, iniPath, WindowHandle, and callbacks are unused for ROM carts
 	auto loadedCartridge = VCC::Core::load_cartridge(
 		filename,
-		std::move(vccContext),
+		std::move(boot_slot_adapter),
 		SlotId, 
 		iniPath,
 		EmuState.WindowHandle,

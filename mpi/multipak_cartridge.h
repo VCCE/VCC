@@ -30,7 +30,7 @@ class multipak_cartridge : public ::VCC::Core::cartridge
 {
 public:
 
-	using context_type = ::VCC::Core::cartridge_context;
+	using callbacks_type = ::VCC::Core::cartridge_callbacks;
 	using mount_status_type = ::VCC::Core::cartridge_loader_status;
 	using slot_id_type = std::size_t;
 	using path_type = std::string;
@@ -41,7 +41,7 @@ public:
 
 	multipak_cartridge(
 		multipak_configuration& configuration,
-		std::shared_ptr<context_type> context);
+		std::shared_ptr<callbacks_type> callbacks);
 	multipak_cartridge(const multipak_cartridge&) = delete;
 	multipak_cartridge(multipak_cartridge&&) = delete;
 
@@ -90,7 +90,7 @@ private:
 
 	VCC::Util::critical_section mutex_;
 	multipak_configuration& configuration_;
-	std::shared_ptr<context_type> context_;
+	std::shared_ptr<callbacks_type> callbacks_;
 	std::array<VCC::Core::cartridge_slot, NUMSLOTS> slots_;
 	unsigned char slot_register_ = default_slot_register_value;
 	slot_id_type switch_slot_ = default_switch_slot_value;

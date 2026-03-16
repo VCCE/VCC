@@ -17,7 +17,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #include "multipak_cartridge.h"
-#include "multipak_cartridge_context.h"
+#include "cartridge_slot_adapter.h"
 #include "mpi.h"
 #include "resource.h"
 #include <vcc/util/winapi.h>
@@ -45,10 +45,10 @@ namespace
 
 multipak_cartridge::multipak_cartridge(
 	multipak_configuration& configuration,
-	std::shared_ptr<context_type> context)
+	std::shared_ptr<callbacks_type> callbacks)
 	:
 	configuration_(configuration),
-	context_(move(context))
+	callbacks_(move(callbacks))
 { }
 
 multipak_cartridge::name_type multipak_cartridge::name() const
@@ -113,7 +113,7 @@ void multipak_cartridge::reset()
 		cartridge_slot.reset();
 	}
 
-	context_->assert_cartridge_line(slots_[cached_scs_slot_].line_state());
+	callbacks_->assert_cartridge_line(slots_[cached_scs_slot_].line_state());
 }
 
 void multipak_cartridge::process_horizontal_sync()
@@ -139,7 +139,7 @@ void multipak_cartridge::write_port(unsigned char port_id, unsigned char value)
 		cached_cts_slot_ = (value >> 4) & 3;
 		slot_register_ = value;
 
-		context_->assert_cartridge_line(slots_[cached_scs_slot_].line_state());
+		callbacks_->assert_cartridge_line(slots_[cached_scs_slot_].line_state());
 
 		return;
 	}
@@ -344,7 +344,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	};
 
 	// Build callback table for carts loaded on MPI
-	cpak_callbacks callbacks {
+	cpak_callbacks cpak_callbacks {
 		gHostCallbacks->assert_interrupt_,
 		assert_cartridge_line_thunk,
 		gHostCallbacks->write_memory_byte_,
@@ -356,21 +356,21 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 	std::size_t SlotId = mpi_slot + 1;
 
 	// ctx is passed to the loader but not to cartridge DLL's
-	auto* pakContainer = this;
-	auto ctx = std::make_unique<multipak_cartridge_context>(
+	auto* parent = this;
+	auto slot_adapter = std::make_unique<cartridge_slot_adapter>(
 		mpi_slot,
-		*context_,
-		*pakContainer);  // Why does the loader need this?
+		*callbacks_,
+		*parent );
 
 	DLOG_C("load cart %d  %s\n",mpi_slot,filename);
 
 	auto loadedCartridge = VCC::Core::load_cartridge(
 		filename,
-		std::move(ctx),
+		std::move(slot_adapter),
 		SlotId,
-		context_->configuration_path(),    // ini file name
+		callbacks_->configuration_path(),    // ini file name
 		gVccWnd,
-		callbacks);
+		cpak_callbacks);
 
 	if (loadedCartridge.load_result != mount_status_type::success) {
 		// Tell user why load failed
@@ -428,6 +428,6 @@ void multipak_cartridge::assert_cartridge_line(slot_id_type mpi_slot, bool line_
 	VCC::Util::section_locker lock(mutex_);
 	slots_[mpi_slot].line_state(line_state);
 	if (selected_scs_slot() == mpi_slot) {
-		context_->assert_cartridge_line(slots_[mpi_slot].line_state());
+		callbacks_->assert_cartridge_line(slots_[mpi_slot].line_state());
 	}
 }

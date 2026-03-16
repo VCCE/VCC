@@ -35,7 +35,7 @@ namespace VCC::Core
 		using label_type = std::string;
 		using handle_type = ::VCC::Core::cartridge_loader_result::handle_type;
 		using cartridge_ptr_type = std::unique_ptr<::VCC::Core::cartridge>;
-		using context_type = ::VCC::Core::cartridge_context;
+		using callbacks_type = ::VCC::Core::cartridge_callbacks;
 
 	public:
 

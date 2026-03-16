@@ -30,8 +30,8 @@ static std::string gConfigurationFilename;
 HWND gVccWnd;
 
 slot_id_type SlotId = 0;
-const std::shared_ptr<host_cartridge_context>
-	gHostCallbacks(std::make_shared<host_cartridge_context>(SlotId, gConfigurationFilename));
+const std::shared_ptr<host_cartridge_callbacks>
+	gHostCallbacks(std::make_shared<host_cartridge_callbacks>(SlotId, gConfigurationFilename));
 
 // mpi configuration object
 multipak_configuration gMultiPakConfiguration("MPI");

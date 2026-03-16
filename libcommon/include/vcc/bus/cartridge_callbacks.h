@@ -23,11 +23,11 @@ enum MenuItemType;
 
 namespace VCC::Core
 {
-	struct cartridge_context
+	struct cartridge_callbacks
 	{
 		using path_type = std::string;
 
-		virtual ~cartridge_context() = default;
+		virtual ~cartridge_callbacks() = default;
 		virtual path_type configuration_path() const = 0;
 
 		virtual void assert_cartridge_line(bool line_state) = 0;

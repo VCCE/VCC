@@ -18,32 +18,35 @@
 #pragma once
 #include "multipak_cartridge.h"
 
-
-class multipak_cartridge_context : public ::VCC::Core::cartridge_context
+class cartridge_slot_adapter : public ::VCC::Core::cartridge_callbacks
 {
 public:
 
-	multipak_cartridge_context
-		(size_t slot_id, ::VCC::Core::cartridge_context& parent_context, multipak_cartridge& multipak)
+	cartridge_slot_adapter
+		(
+			size_t slot_id, 
+			::VCC::Core::cartridge_callbacks& mpi_callbacks,
+			multipak_cartridge& multipak
+		)
 		:
 		slot_id_(slot_id),
-		parent_context_(parent_context),
+		mpi_callbacks_(mpi_callbacks),
 		multipak_(multipak)
 	{}
 
 	path_type configuration_path() const override
 	{
-		return parent_context_.configuration_path();
+		return mpi_callbacks_.configuration_path();
 	}
 
 	void write_memory_byte(unsigned char value, unsigned short address) override
 	{
-		parent_context_.write_memory_byte(value, address);
+		mpi_callbacks_.write_memory_byte(value, address);
 	}
 
 	unsigned char read_memory_byte(unsigned short address) override
 	{
-		return parent_context_.read_memory_byte(address);
+		return mpi_callbacks_.read_memory_byte(address);
 	}
 
 	void assert_cartridge_line(bool line_state) override
@@ -53,13 +56,13 @@ public:
 
 	void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) override
 	{
-		parent_context_.assert_interrupt(interrupt, interrupt_source);
+		mpi_callbacks_.assert_interrupt(interrupt, interrupt_source);
 	}
 
 
 private:
 
 	const size_t slot_id_;
-	::VCC::Core::cartridge_context& parent_context_;
+	::VCC::Core::cartridge_callbacks& mpi_callbacks_;
 	multipak_cartridge& multipak_;
 };

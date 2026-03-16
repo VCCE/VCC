@@ -21,26 +21,20 @@
 #include <vector>
 #include <memory>
 
-// TODO:  This could be alot simpler
 namespace VCC::Core
 {
-
 	class rom_cartridge : public basic_cartridge
 	{
 	public:
-
-		using context_type = ::VCC::Core::cartridge_context;
+		using callbacks_type = ::VCC::Core::cartridge_callbacks;
 		using buffer_type = std::vector<uint8_t>;
 		using size_type = std::size_t;
 
-
 	public:
-
 		using basic_cartridge::basic_cartridge;
 
-
 		rom_cartridge(
-			std::unique_ptr<context_type> context,
+			std::unique_ptr<callbacks_type> callbacks,
 			name_type name,
 			catalog_id_type catalog_id,
 			buffer_type buffer,
@@ -54,20 +48,15 @@ namespace VCC::Core
 		void write_port(unsigned char port_id, unsigned char value) override;
 		unsigned char read_memory_byte(unsigned short memory_address) override;
 
-
 	protected:
-
 		void initialize_bus() override;
 
-
 	private:
-
-		const std::unique_ptr<context_type> context_;
+		const std::unique_ptr<callbacks_type> callbacks_;
 		const name_type name_;
 		const catalog_id_type catalog_id_;
 		const buffer_type buffer_;
 		const bool enable_bank_switching_;
 		size_type bank_offset_;
 	};
-
 }

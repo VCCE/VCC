@@ -23,13 +23,13 @@ namespace VCC::Core
 {
 
 	rom_cartridge::rom_cartridge(
-		std::unique_ptr<context_type> context,
+		std::unique_ptr<callbacks_type> callbacks,
 		name_type name,
 		catalog_id_type catalog_id,
 		buffer_type buffer,
 		bool enable_bank_switching)
 		:
-		context_(move(context)),
+		callbacks_(move(callbacks)),
 		name_(move(name)),
 		catalog_id_(move(catalog_id)),
 		buffer_(move(buffer)),
@@ -77,8 +77,8 @@ namespace VCC::Core
 
 	void rom_cartridge::initialize_bus()
 	{
-		DLOG_C("rom_cartridge::initialize_bus: this=%p context=%p\n",this,context_.get());
-		context_->assert_cartridge_line(true);
+		DLOG_C("rom_cartridge::initialize_bus: this=%p callbacks=%p\n",this,callbacks_.get());
+		callbacks_->assert_cartridge_line(true);
 	}
 
 }
