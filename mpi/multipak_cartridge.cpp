@@ -351,7 +351,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		gHostCallbacks->read_memory_byte_//,
 	};
 	
-	DLOG_C("%3d %p %p %p %p %p\n",mpi_slot,callbacks);
+	DLOG_C("%3d %p %p %p %p %p\n",mpi_slot,cpak_callbacks);
 
 	std::size_t SlotId = mpi_slot + 1;
 
