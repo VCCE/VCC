@@ -56,6 +56,7 @@
 #include <vcc/util/logger.h>
 #include <vcc/util/settings.h>
 #include <vcc/util/fileutil.h>
+#include <vcc/util/textutil.h>
 
 #include "config.h"
 

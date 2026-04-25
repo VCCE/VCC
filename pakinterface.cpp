@@ -31,7 +31,7 @@
 #include <vcc/bus/cartridge_messages.h>
 #include <vcc/bus/dll_deleter.h>
 #include <vcc/util/limits.h>
-#include <vcc/util/winapi.h>
+//#include <vcc/util/winapi.h>
 #include <vcc/util/logger.h>
 #include <vcc/util/FileOps.h>
 #include <vcc/util/DialogOps.h>

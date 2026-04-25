@@ -141,6 +141,7 @@
 #include <vcc/util/limits.h>
 
 #include <vcc/util/fileutil.h>
+#include <vcc/util/textutil.h>
 #include <vcc/util/settings.h>
 #include <vcc/bus/cartridge_menu.h>
 #include <vcc/bus/cartridge_messages.h>

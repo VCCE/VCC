@@ -20,7 +20,9 @@
 #include "cartridge_slot_adapter.h"
 #include "mpi.h"
 #include "resource.h"
-#include <vcc/util/winapi.h>
+//#include <vcc/util/winapi.h>
+#include <vcc/util/coreutil.h>
+#include <vcc/util/textutil.h>
 #include <vcc/util/filesystem.h>
 #include <vcc/util/logger.h>
 #include <vcc/bus/cartridge_menu.h>

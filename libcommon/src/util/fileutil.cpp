@@ -28,6 +28,7 @@
 #include <cctype>
 #include <vcc/util/logger.h>
 #include <vcc/util/fileutil.h>
+#include <vcc/util/textutil.h>
 #include <Windows.h>
 
 namespace VCC::Util
@@ -108,20 +109,4 @@ namespace VCC::Util
 		std::string dir = Util::GetDirectoryPart(exe);
 		return dir + '/' + mod;
 	}
-
-	//---------------------------------------------------------------
-	// Fully qualify a file based on current execution directory
-	//---------------------------------------------------------------
-//	std::string QualifyPath(const std::string& path)
-//	{
-//		if (path.empty()) return {};
-//
-//		std::string mod = path;
-//		FixDirSlashes(mod);
-//		if (mod.find('/') != std::string::npos) return mod;
-//
-//		std::string exe = Util::ModulePath(NULL);
-//		std::string dir = Util::GetDirectoryPart(exe);
-//		return dir + '/' + mod;
-//	}
 }

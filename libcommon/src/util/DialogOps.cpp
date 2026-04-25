@@ -18,6 +18,7 @@
 #include <vcc/util/DialogOps.h>
 #include <vcc/util/logger.h>
 #include <vcc/util/fileutil.h>
+#include <vcc/util/textutil.h>
 #include <string>
 #include <filesystem>
 

@@ -21,6 +21,7 @@
 #include <vcc/bus/cartridge_menu.h>
 #include <vcc/bus/cartridge_menuitem.h>
 #include <vcc/util/logger.h>
+#include <vcc/util/coreutil.h>
 
 namespace VCC::Bus {
 
@@ -42,7 +43,11 @@ bool cartridge_menu::copy_item(menu_item_entry& out, size_t index) const
 
     const auto& src = menu_[index];
 
-    size_t n = std::min(src.name.size(), sizeof(out.name) - 1);
+//  std::min won't work for legacy builds so ...
+//	size_t n = sizeof(out.name) -1;
+//	n = src.name.size() < n ? src.name.size() : n;
+	size_t n = VCC::Util::min_compat(src.name.size(), sizeof(out.name) - 1);
+
     memcpy(out.name, src.name.data(), n);
     out.name[n] = '\0';
 
