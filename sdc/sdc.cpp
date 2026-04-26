@@ -827,11 +827,10 @@ void LoadRom(unsigned char bank)
 
     DLOG_C("LoadRom load flash bank %d\n",bank);
 
-//    // Skip if bank is already loaded
-//    if (bank == gLoadedBank) return;
-
-    // Sanity check before trying to save to empty file
-    if (*FlashFile[gLoadedBank] == '\0') gRomDirty = 0;
+    // Sanity check before trying to save empty rom or to empty file
+    if (gRomDirty)
+        if (gLoadedBank >= 0 && gLoadedBank <= 7)
+            if (*FlashFile[gLoadedBank] == '\0') gRomDirty = 0;
 
     // If bank contents have been changed write the flash file
     if (gRomDirty) {
