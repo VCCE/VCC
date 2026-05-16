@@ -156,13 +156,13 @@ namespace {
         }
         // Condition Code bits
         int x = 35;
-        for (int n = 0; n < 8; n++) {
-            if (regs.CC & 1 << n) {
-                DrawCntrTxt(hdc,rect,"1",x,60,25,18);
-            } else {
-                DrawCntrTxt(hdc,rect,"-",x,60,25,18);
-            }
-            x += 25;
+        for (int n = 7; n >= 0; n--) {
+          if (regs.CC & 1 << n) {
+            DrawCntrTxt(hdc, rect, "1", x, 60, 25, 18);
+          } else {
+            DrawCntrTxt(hdc, rect, "-", x, 60, 25, 18);
+          }
+          x += 25;
         }
         // Instruction
         VCC::CPUTrace trace = {};
