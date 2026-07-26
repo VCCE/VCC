@@ -28,7 +28,7 @@
 static HANDLE hLog_Out = nullptr;
 static const auto LogFileName = "VccLog.txt";
 
-// PrintLogC - Put formatted string to the console
+// PrintLogC - Put a formatted debug string to the screen
 void PrintLogC(const char* fmt, ...)
 {
     va_list args;
@@ -37,10 +37,21 @@ void PrintLogC(const char* fmt, ...)
     vsnprintf(msg, 512, fmt, args);
     va_end(args);
 
+    // If running under a debugger use it.
+    if (IsDebuggerPresent()) {
+        OutputDebugStringA(msg);
+        return;
+    }
+
+    // If not running debugger use console
     if (hLog_Out == nullptr) {
         AllocConsole();
         hLog_Out = GetStdHandle(STD_OUTPUT_HANDLE);
         SetConsoleTitle("Logging Window");
+        if (hLog_Out == NULL || hLog_Out == INVALID_HANDLE_VALUE) {
+            OutputDebugStringA(msg);
+            return;
+        }
     }
     WriteFile(hLog_Out,msg,strlen(msg),nullptr,nullptr);
 }

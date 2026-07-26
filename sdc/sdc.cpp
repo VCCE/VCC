@@ -313,6 +313,7 @@ extern "C"
         gSlotId = SlotId;
         AssertIntCallback = callbacks->assert_interrupt;
         gpSettings = new VCC::Util::settings(configuration_path);
+        DLOG_C("SDC %p\n",gpSettings);
     }
 
     __declspec(dllexport) const char* PakGetName()
@@ -1993,6 +1994,7 @@ void SDCOpenNew( int drive, const char * path, int raw)
 
     namespace fs = std::filesystem;
     fs::path fqn = fs::path(gSDRoot) / gCurDir / path;
+    DLOG_C("SDCOpenNew fullpath '%s'\n",fs::path.c_str());
 
     if (fs::is_directory(fqn)) {
         DLOG_C("SDCOpenNew %s is a directory\n",path);
@@ -2128,9 +2130,11 @@ void SDCOpenFound (int drive,int raw)
         gCocoDisk[drive].doublesided = 0;
     } else {
 
-        // Read a few bytes of the file to determine it's type
+        // Read the first 12 bytes of the file to check header.
         unsigned char header[16];
-        if (ReadFile(gCocoDisk[drive].hFile,header,12,nullptr,nullptr) == 0) {
+        DWORD bytes_read = 0;
+        BOOL rc = ReadFile(gCocoDisk[drive].hFile,header,12,&bytes_read,nullptr);
+        if (!rc || bytes_read < 12) {
             DLOG_C("SDCOpenFound header read error\n");
             IFace.status = STA_FAIL | STA_INVALID;
             return;
