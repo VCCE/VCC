@@ -1994,8 +1994,6 @@ void SDCOpenNew( int drive, const char * path, int raw)
 
     namespace fs = std::filesystem;
     fs::path fqn = fs::path(gSDRoot) / gCurDir / path;
-    DLOG_C("SDCOpenNew fullpath '%s'\n",fs::path.c_str());
-
     if (fs::is_directory(fqn)) {
         DLOG_C("SDCOpenNew %s is a directory\n",path);
         IFace.status = STA_FAIL | STA_INVALID;
