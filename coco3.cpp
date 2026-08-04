@@ -106,9 +106,9 @@ void CassOut();
 void CassIn();
 void (*AudioEvent)()=AudioOut;
 void SetMasterTickCounter();
-void (*DrawTopBoarder[4]) (SystemState *)={DrawTopBoarder8,DrawTopBoarder16,DrawTopBoarder24,DrawTopBoarder32};
-void (*DrawBottomBoarder[4]) (SystemState *)={DrawBottomBoarder8,DrawBottomBoarder16,DrawBottomBoarder24,DrawBottomBoarder32};
-void (*UpdateScreen[4]) (SystemState *)={UpdateScreen8,UpdateScreen16,UpdateScreen24,UpdateScreen32};
+void (GimeGpu::*DrawTopBoarder[4])(SystemState *)const ={ &GimeGpu::DrawTopBoarder8,&GimeGpu::DrawTopBoarder16,&GimeGpu::DrawTopBoarder24,&GimeGpu::DrawTopBoarder32 };
+void (GimeGpu::*DrawBottomBoarder[4])(SystemState *)const ={ &GimeGpu::DrawBottomBoarder8,&GimeGpu::DrawBottomBoarder16,&GimeGpu::DrawBottomBoarder24,&GimeGpu::DrawBottomBoarder32 };
+void (GimeGpu::*UpdateScreen[4])(SystemState *) ={ &GimeGpu::UpdateScreen8,&GimeGpu::UpdateScreen16,&GimeGpu::UpdateScreen24,&GimeGpu::UpdateScreen32 };
 std::string GetClipboardText();
 void HLINE();
 void VSYNC(unsigned char level);
@@ -202,7 +202,7 @@ float RenderFrame (SystemState *RFState)
 
 	// Blink state toggle
 	if (BlinkPhase++ > RENDERS_PER_BLINK_TOGGLE) {
-		TogBlinkState();
+		gGimeGpu.TogBlinkState();
 		BlinkPhase = 0;
 	}
 
@@ -242,7 +242,7 @@ float RenderFrame (SystemState *RFState)
 	{
 		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
-			DrawTopBoarder[RFState->BitDepth](RFState);
+			(gGimeGpu.*DrawTopBoarder[RFState->BitDepth])(RFState);
 	}
 
 	// Main Screen begins here: LPF = 192, 200 (actually 199), 225
@@ -251,7 +251,7 @@ float RenderFrame (SystemState *RFState)
 	{
 		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
-			UpdateScreen[RFState->BitDepth](RFState);
+			(gGimeGpu.*UpdateScreen[RFState->BitDepth])(RFState);
 	}
 
 	// Bottom Border begins here.
@@ -260,14 +260,14 @@ float RenderFrame (SystemState *RFState)
 	{
 		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
-			DrawBottomBoarder[RFState->BitDepth](RFState);
+			(gGimeGpu.*DrawBottomBoarder[RFState->BitDepth])(RFState);
 	}
 
 	if (!(FrameCounter % RFState->FrameSkip))
 	{
-		DrawBottomBoarder[RFState->BitDepth](RFState);
+		(gGimeGpu.*DrawBottomBoarder[RFState->BitDepth])(RFState);
 		UnlockScreen(RFState);
-		SetBoarderChange();
+		gGimeGpu.SetBoarderChange();
 	}
 
 	// Bottom Border continues but is offscreen
@@ -357,8 +357,8 @@ void SetLinesperScreen (unsigned char Lines)
 
 DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
 {
-	const float pixelsPerLine = GetDisplayedPixelsPerLine();
-	const float horizontalBorderSize = GetHorizontalBorderSize();
+	const float pixelsPerLine = gGimeGpu.GetDisplayedPixelsPerLine();
+	const float horizontalBorderSize = gGimeGpu.GetHorizontalBorderSize();
 	const float activeLines = 192.0f;	//	FIXME: Needs a symbolic
 
 	DisplayDetails details;
@@ -756,7 +756,7 @@ void PasteText() {
 	using namespace std;
 	std::string tmp;
 	string cliptxt, clipparse, lines, debugout;
-	int GraphicsMode = GetGraphicsMode();
+	int GraphicsMode = gGimeGpu.GetGraphicsMode();
 	if (GraphicsMode != 0) {
 		int tmp = MessageBox(nullptr, "Warning: You are not in text mode. Continue Pasting?", "Clipboard", MB_YESNO);
 		if (tmp != 6) { return; }
@@ -977,9 +977,9 @@ void CopyText() {
 	int lines;
 	int offset;
 	int lastchar;
-	int BytesPerRow = GetBytesPerRow();
-	int GraphicsMode = GetGraphicsMode();
-	unsigned int screenstart = GetStartOfVidram();
+	int BytesPerRow = gGimeGpu.GetBytesPerRow();
+	int GraphicsMode = gGimeGpu.GetGraphicsMode();
+	unsigned int screenstart = gGimeGpu.GetStartOfVidram();
 	if (GraphicsMode != 0) { 
 		MessageBox(nullptr, "ERROR: Graphics screen can not be copied.\nCopy can ONLY use a hardware text screen.", "Clipboard", 0); 
 		return;

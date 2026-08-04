@@ -294,7 +294,7 @@ void pia1_write(unsigned char data,unsigned char port)
 		if (ddb)
 		{
 			regb[port]=(data & regb_dd[port]);
-			SetGimeVdgMode2( (regb[2] & 248) >>3);
+			gGimeGpu.SetGimeVdgMode2( (regb[2] & 248) >>3);
 			Ssample=(regb[port] & 2)<<6;
 		}
 		else

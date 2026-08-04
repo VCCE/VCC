@@ -30,12 +30,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include <CommCtrl.h>	// Windows common controls
 
-using Surface32 = VCC::VideoArray<unsigned int, 640 * 480>;
-
-void SetupDisplay(); //This routine gets called every time a software video register get updated.
-void MakeRGBPalette ();
-void MakeCMPpalette();
-void RenderPMODE4NTSC(Surface32 surface32, size_t surfaceDest, int XpitchDest, const unsigned char* cocoSrc, char scanLines);
+GimeGpu gGimeGpu;
 
 //extern STRConfig CurrentConfig;
 static unsigned char ColorValues[4]={0,85,170,255};
@@ -98,53 +93,22 @@ static unsigned char ArtifactsNTSCIndex[128] = {
 	10, 11, 12, 1, 12, 1, 12, 9, 12, 9, 15, 11, 15, 11, 15, 15, 15, 15
 };
 
-static unsigned int VidMask=0x1FFFF;
-static unsigned char VresIndex=0;
-static unsigned char CC2Offset=0,CC2VDGMode=0,CC2VDGPiaMode=0;
-static unsigned short VerticalOffsetRegister=0;
-static unsigned char CompatMode=0;
 static unsigned char  PalleteLookup8[2][64];	//0 = RGB 1=comp 8BIT
 static unsigned short PalleteLookup16[2][64];	//0 = RGB 1=comp 16BIT
 static unsigned int   PalleteLookup32[2][64];	//0 = RGB 1=comp 32BIT
-static unsigned char MonType=1;
-static unsigned char CC3Vmode=0,CC3Vres=0,CC3BoarderColor=0;
-static unsigned int StartofVidram=0,Start=0,NewStartofVidram=0;
-static unsigned char LinesperScreen=0;
-static unsigned char Bpp=0;
-static unsigned char LinesperRow=1,BytesperRow=32;
-static unsigned char GraphicsMode=0;
-static unsigned char TextFGColor=0,TextBGColor=0;
-static unsigned char TextFGPallete=0,TextBGPallete=0;
-static unsigned char PalleteIndex=0;
-static unsigned short PixelsperLine=0,VPitch=32;
-static unsigned char Stretch=0,PixelsperByte=0;
-static unsigned char HorzCenter=0,VertCenter=0;
-static unsigned char LowerCase=0,InvertAll=0,ExtendedText=1;
-static unsigned char HorzOffsetReg=0;
-static unsigned char Hoffset=0;
-static unsigned short TagY=0;
-static unsigned int BoarderColor32=0;
-static unsigned short BoarderColor16=0;
-static unsigned char BoarderColor8=0;
-static unsigned int DistoOffset=0;
-static unsigned char BoarderChange=3;
-static unsigned char MasterMode=0;
-static unsigned char ColorInvert=1;
-static unsigned char BlinkState=1;
-static bool UserFlipped = false;
-static unsigned int last_mmode = 0;
+
 
 //
 // FF98 bit 4 - monochrome on composite
 // 0 = composite
 // 1 = rgb
-int Pmode4MonType()
+int GimeGpu::Pmode4MonType() const
 {
 	return (CC3Vmode & 0x10) ? 1 : MonType;
 }
 
 // BEGIN of 8 Bit render loop *****************************************************************************************
-void UpdateScreen8 (SystemState *US8State)
+void GimeGpu::UpdateScreen8(SystemState *US8State)
 {
 	unsigned short HorzBeam = 0;
 	unsigned int YStride=0;
@@ -159,7 +123,7 @@ void UpdateScreen8 (SystemState *US8State)
 	Carry1=1;
 	Pcolor=0;
 	
-	if ( (HorzCenter!=0) & (BoarderChange>0) )
+	if ( (HorzCenter!=0) && (BoarderChange>0) )
 		for (unsigned short x=0;x<HorzCenter;x++)
 		{
 			US8State->PTRsurface8[x +(((US8State->LineCounter+VertCenter)*2)*US8State->SurfacePitch)]=BoarderColor8;
@@ -197,7 +161,7 @@ void UpdateScreen8 (SystemState *US8State)
 						Attributes=buffer[Start+(unsigned char)(HorzBeam+Hoffset)+1];
 						if  ( (Attributes & 64) && (US8State->LineCounter%LinesperRow==(LinesperRow-1)) )	//UnderLine
 							Pixel=255;
-						if ((!BlinkState) & !!(Attributes & 128))
+						if ((!BlinkState) && !!(Attributes & 128))
 							Pixel=0;
 					}
 					TextPallete[1]=Pallete8Bit[8+((Attributes & 56)>>3)];
@@ -239,7 +203,7 @@ void UpdateScreen8 (SystemState *US8State)
 						Attributes=buffer[Start+(unsigned char)(HorzBeam+Hoffset)+1];
 						if  ( (Attributes & 64) && (US8State->LineCounter%LinesperRow==(LinesperRow-1)) )	//UnderLine
 							Pixel=255;
-						if ((!BlinkState) & !!(Attributes & 128))
+						if ((!BlinkState) && !!(Attributes & 128))
 							Pixel=0;
 					}
 					TextPallete[1]=Pallete8Bit[8+((Attributes & 56)>>3)];
@@ -359,7 +323,7 @@ void UpdateScreen8 (SystemState *US8State)
 					Pixel=cc3Fontdata8x12[(Character & 127) * 8 + (US8State->LineCounter%8)]; 
 					if  ( (Attributes & 64) && (US8State->LineCounter%8==7) )	//UnderLine
 						Pixel=255;
-					if ((!BlinkState) & !!(Attributes & 128))
+					if ((!BlinkState) && !!(Attributes & 128))
 						Pixel=0;				
 					TextPallete[1]=Pallete8Bit[8+((Attributes & 56)>>3)];
 					TextPallete[0]=Pallete8Bit[Attributes & 7];
@@ -449,7 +413,7 @@ void UpdateScreen8 (SystemState *US8State)
 						Character = Character & 63;
 						TextPallete[0]=Pallete8Bit[TextBGPallete];
 						TextPallete[1]=Pallete8Bit[TextFGPallete];
-						if (LowerCase & (Character < 32))
+						if (LowerCase && (Character < 32))
 							Pixel=ntsc_round_fontdata8x12[(Character + 80)*12+ (US8State->LineCounter%12)];
 						else
 							Pixel=~ntsc_round_fontdata8x12[Character *12+ (US8State->LineCounter%12)];
@@ -3240,7 +3204,7 @@ case 192+63: //Bpp=3 Sr=15
 
 
 // BEGIN of 16 Bit render loop *****************************************************************************************
-void UpdateScreen16 (SystemState *USState16)
+void GimeGpu::UpdateScreen16(SystemState *USState16)
 {
 	unsigned short HorzBeam = 0;
 	unsigned int YStride=0;
@@ -3253,7 +3217,7 @@ void UpdateScreen16 (SystemState *USState16)
 	char Pcolor=0;
 	char Carry1=1;
 
-	if ( (HorzCenter!=0) & (BoarderChange>0) )
+	if ( (HorzCenter!=0) && (BoarderChange>0) )
 		for (unsigned short x=0;x<HorzCenter;x++)
 		{
 			USState16->PTRsurface16[x +(((USState16->LineCounter+VertCenter)*2)*(USState16->SurfacePitch))]=BoarderColor16;
@@ -3291,7 +3255,7 @@ void UpdateScreen16 (SystemState *USState16)
 						Attributes=USState16->RamBuffer[VidMask &(Start+(unsigned char)(HorzBeam+Hoffset)+1)];
 						if  ( (Attributes & 64) && (USState16->LineCounter%LinesperRow==(LinesperRow-1)) )	//UnderLine
 							Pixel=255;
-						if ((!BlinkState) & !!(Attributes & 128))
+						if ((!BlinkState) && !!(Attributes & 128))
 							Pixel=0;
 					}
 					TextPallete[1]=Pallete16Bit[8+((Attributes & 56)>>3)];
@@ -3333,7 +3297,7 @@ void UpdateScreen16 (SystemState *USState16)
 						Attributes=USState16->RamBuffer[VidMask &(Start+(unsigned char)(HorzBeam+Hoffset)+1)];
 						if  ( (Attributes & 64) && (USState16->LineCounter%LinesperRow==(LinesperRow-1)) )	//UnderLine
 							Pixel=255;
-						if ((!BlinkState) & !!(Attributes & 128))
+						if ((!BlinkState) && !!(Attributes & 128))
 							Pixel=0;
 					}
 					TextPallete[1]=Pallete16Bit[8+((Attributes & 56)>>3)];
@@ -3453,7 +3417,7 @@ void UpdateScreen16 (SystemState *USState16)
 					Pixel=cc3Fontdata8x12[(Character & 127) * 8 + (USState16->LineCounter%8)]; 
 					if  ( (Attributes & 64) && (USState16->LineCounter%8==7) )	//UnderLine
 						Pixel=255;
-					if ((!BlinkState) & !!(Attributes & 128))
+					if ((!BlinkState) && !!(Attributes & 128))
 						Pixel=0;				
 					TextPallete[1]=Pallete16Bit[8+((Attributes & 56)>>3)];
 					TextPallete[0]=Pallete16Bit[Attributes & 7];
@@ -3543,7 +3507,7 @@ void UpdateScreen16 (SystemState *USState16)
 						Character = Character & 63;
 						TextPallete[0]=Pallete16Bit[TextBGPallete];
 						TextPallete[1]=Pallete16Bit[TextFGPallete];
-						if (LowerCase & (Character < 32))
+						if (LowerCase && (Character < 32))
 							Pixel=ntsc_round_fontdata8x12[(Character + 80 )*12+ (USState16->LineCounter%12)];
 						else
 							Pixel=~ntsc_round_fontdata8x12[Character*12+ (USState16->LineCounter%12)];
@@ -6333,19 +6297,22 @@ case 192+63: //Bpp=3 Sr=15
 // END of 16 Bit render loop *****************************************************************************************
 
 
-
 // BEGIN of 24 Bit render loop *****************************************************************************************
-void UpdateScreen24 (SystemState * /*USState24*/)
+void GimeGpu::UpdateScreen24(SystemState * /*USState24*/)
 {
-
-	return;
 }
 // END of 24 Bit render loop *****************************************************************************************
 
 
 
 // BEGIN of 32 Bit render loop *****************************************************************************************
-void UpdateScreen32(SystemState *USState32)
+
+void GimeGpu::UpdateScreen32(SystemState* USState32)
+{
+	gGimeGpu.UpdateScreen32To(USState32->RamBuffer, USState32->PTRsurface32, USState32->LineCounter, USState32->SurfacePitch, USState32->ScanLines);
+}
+
+void GimeGpu::UpdateScreen32To(unsigned char *buffer, unsigned int *surface, int lineCounter, int surfacePitch, bool ScanLines)
 {
 	unsigned short HorzBeam = 0;
 	unsigned int YStride = 0;
@@ -6355,41 +6322,39 @@ void UpdateScreen32(SystemState *USState32)
 	//	unsigned char Mask=0,BitCount=0,Peek=0;
 	unsigned char Character = 0, Attributes = 0;
 	unsigned int TextPallete[2] = { 0,0 };
-	unsigned short * WideBuffer = (unsigned short *)USState32->RamBuffer;
-	const unsigned char *buffer = USState32->RamBuffer;
+	unsigned short* WideBuffer = (unsigned short*)buffer;
 	unsigned short WidePixel = 0;
 	//	unsigned short lColor=0;
 	//	unsigned short Yindex[4]={316,308,300,292};
 	char Pix = 0, Bit = 0, Sphase = 0;
 	static char Carry1 = 0, Carry2 = 0;
 	static char Pcolor = 0;
-	Surface32 szSurface32(USState32->PTRsurface32);
-	unsigned short y = USState32->LineCounter;
-	long Xpitch = USState32->SurfacePitch;
+	Surface32 szSurface32(surface);
+	unsigned short y = lineCounter;
+	long Xpitch = surfacePitch;
 	Carry1 = 1;
 	Pcolor = 0;
-	static std::string curr_gmode = "";
-	static std::string last_gmode = "";
+	
 	if (curr_gmode != last_gmode) {
-		std::string tmpout = "Graphics mode switched to " + curr_gmode +"\n";
+		std::string tmpout = "Graphics mode switched to " + std::string(curr_gmode) +"\n";
 		OutputDebugString(tmpout.c_str());
 		last_gmode = curr_gmode;
 	}
-	if ( (HorzCenter!=0) & (BoarderChange>0) )
+	if ( (HorzCenter!=0) && (BoarderChange>0) )
 		for (unsigned short x=0;x<HorzCenter;x++)
 		{
 			auto idx = x + (((y + VertCenter) * 2) * Xpitch);
 			if (idx < 640 * 480) // wtf?
 			{
 				szSurface32[idx] = BoarderColor32;
-				if (!USState32->ScanLines)
+				if (!ScanLines)
 					szSurface32[x + (((y + VertCenter) * 2 + 1) * Xpitch)] = BoarderColor32;
 			}
 			idx = x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((y + VertCenter) * 2) * Xpitch);
 			if (idx < 640 * 480) // wtf?
 			{
 				szSurface32[idx] = BoarderColor32;
-				if (!USState32->ScanLines)
+				if (!ScanLines)
 					szSurface32[x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((y + VertCenter) * 2 + 1) * Xpitch)] = BoarderColor32;
 			}
 		}
@@ -6423,7 +6388,7 @@ void UpdateScreen32(SystemState *USState32)
 						Attributes=buffer[Start+(unsigned char)(HorzBeam+Hoffset)+1];
 						if  ( (Attributes & 64) && (y%LinesperRow==(LinesperRow-1)) )	//UnderLine
 							Pixel=255;
-						if ((!BlinkState) & !!(Attributes & 128))
+						if ((!BlinkState) && !!(Attributes & 128))
 							Pixel=0;
 					}
 					TextPallete[1]=Pallete32Bit[8+((Attributes & 56)>>3)];
@@ -6436,7 +6401,7 @@ void UpdateScreen32(SystemState *USState32)
 					szSurface32[YStride+=1]=TextPallete[(Pixel>>2)&1];
 					szSurface32[YStride+=1]=TextPallete[(Pixel>>1)&1];
 					szSurface32[YStride+=1]=TextPallete[Pixel&1];
-					if (!USState32->ScanLines)
+					if (!ScanLines)
 					{
 						YStride-=8;
 						YStride+=Xpitch;
@@ -6466,7 +6431,7 @@ void UpdateScreen32(SystemState *USState32)
 						Attributes=buffer[Start+(unsigned char)(HorzBeam+Hoffset)+1];
 						if  ( (Attributes & 64) && (y%LinesperRow==(LinesperRow-1)) )	//UnderLine
 							Pixel=255;
-						if ((!BlinkState) & !!(Attributes & 128))
+						if ((!BlinkState) && !!(Attributes & 128))
 							Pixel=0;
 					}
 					TextPallete[1]=Pallete32Bit[8+((Attributes & 56)>>3)];
@@ -6487,7 +6452,7 @@ void UpdateScreen32(SystemState *USState32)
 					szSurface32[YStride+=1]=TextPallete[(Pixel>>1)&1];
 					szSurface32[YStride+=1]=TextPallete[Pixel & 1];
 					szSurface32[YStride+=1]=TextPallete[Pixel & 1];
-					if (!USState32->ScanLines)
+					if (!ScanLines)
 					{
 						YStride-=16;
 						YStride+=Xpitch;
@@ -6586,7 +6551,7 @@ void UpdateScreen32(SystemState *USState32)
 					Pixel=cc3Fontdata8x12[(Character & 127) * 8 + (y%8)]; 
 					if  ( (Attributes & 64) && (y%8==7) )	//UnderLine
 						Pixel=255;
-					if ((!BlinkState) & !!(Attributes & 128))
+					if ((!BlinkState) && !!(Attributes & 128))
 						Pixel=0;				
 					TextPallete[1]=Pallete32Bit[8+((Attributes & 56)>>3)];
 					TextPallete[0]=Pallete32Bit[Attributes & 7];
@@ -6676,7 +6641,7 @@ void UpdateScreen32(SystemState *USState32)
 						Character = Character & 63;
 						TextPallete[0]=Pallete32Bit[TextBGPallete];
 						TextPallete[1]=Pallete32Bit[TextFGPallete];
-						if (LowerCase & (Character < 32))
+						if (LowerCase && (Character < 32))
 							Pixel=ntsc_round_fontdata8x12[(Character + 80)*12+ (y%12)];
 						else
 							Pixel=~ntsc_round_fontdata8x12[Character *12+ (y%12)];
@@ -6714,7 +6679,7 @@ void UpdateScreen32(SystemState *USState32)
 					szSurface32[YStride+=1]=TextPallete[(Pixel>>1)&1];
 					szSurface32[YStride+=1]=TextPallete[Pixel & 1];
 					szSurface32[YStride+=1]=TextPallete[Pixel & 1];
-					if (!USState32->ScanLines)
+					if (!ScanLines)
 					{
 						YStride-=16;
 						YStride+=Xpitch;
@@ -6761,7 +6726,7 @@ case 128+0: //Bpp=0 Sr=0 1BPP Stretch=1
 		szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>10)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>9)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>8)];
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=16;
 			YStride+=Xpitch;
@@ -6826,7 +6791,7 @@ case 128+2:	//Bpp=0 Sr=2
 		szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>8)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>8)];
 
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=32;
 			YStride+=Xpitch;
@@ -6941,7 +6906,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=4
 	szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>8)];
 	szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>8)];
 
-	if (!USState32->ScanLines)
+	if (!ScanLines)
 	{
 		YStride-=64;
 		YStride+=Xpitch;
@@ -7154,7 +7119,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=8
 	szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>8)];
 	szSurface32[YStride+=1]=Pallete32Bit[ 1 & (WidePixel>>8)];
 
-	if (!USState32->ScanLines)
+	if (!ScanLines)
 	{
 		YStride-=128;
 		YStride+=Xpitch;
@@ -7305,7 +7270,7 @@ case 128+16: //BPP=1 Sr=0  2BPP Stretch=1
 		szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>12)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>10)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>8)];
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=8;
 			YStride+=Xpitch;
@@ -7345,7 +7310,7 @@ case 128+18: //Bpp=1 Sr=2
 		szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>8)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>8)];
 
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=16;
 			YStride+=Xpitch;
@@ -7411,7 +7376,7 @@ case 128+22: //Bpp=1 Sr=6
 		szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>8)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>8)];
 
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=32;
 			YStride+=Xpitch;
@@ -7529,7 +7494,7 @@ case 128+30: //Bpp=1 Sr=14
 		szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>8)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>8)];
 
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=64;
 			YStride+=Xpitch;
@@ -7736,7 +7701,7 @@ case 128+31: //Bpp=1 Sr=15 2BPP Stretch=16
 		szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>8)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 3 & (WidePixel>>8)];
 
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=128;
 			YStride+=Xpitch;
@@ -7882,7 +7847,7 @@ case 128+32: //Bpp=2 Sr=0 4BPP Stretch=1
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & WidePixel];
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>12)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>8)];
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=4;
 			YStride+=Xpitch;
@@ -7909,7 +7874,7 @@ case 128+34: //Bpp=2 Sr=2
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>12)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>8)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>8)];
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=8;
 			YStride+=Xpitch;
@@ -7951,7 +7916,7 @@ case 128+38: //Bpp=2 Sr=6
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>8)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>8)];
 
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=16;
 			YStride+=Xpitch;
@@ -8021,7 +7986,7 @@ case 128+46: //Bpp=2 Sr=14
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>8)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>8)];
 
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=32;
 			YStride+=Xpitch;
@@ -8132,7 +8097,7 @@ case 128+47: //Bpp=2 Sr=15 4BPP Stretch=16
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>8)];
 		szSurface32[YStride+=1]=Pallete32Bit[ 15 & (WidePixel>>8)];
 
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=64;
 			YStride+=Xpitch;
@@ -8245,7 +8210,7 @@ case 192+0: //Bpp=0 Sr=0 1BPP Stretch=1
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>10))];
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>9))];
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>8))];
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=16;
 			YStride+=Xpitch;
@@ -8282,7 +8247,7 @@ case 192+2:	//Bpp=0 Sr=2
 		size_t surfaceDest = (((y + VertCenter) * 2) * Xpitch) + HorzCenter - 2;
 		// source coco screens
 		const unsigned char* cocoSrc = cocoRam + (VidMask & (Start + (unsigned char)Hoffset));
-		RenderPMODE4NTSC(szSurface32, surfaceDest, Xpitch, cocoSrc, USState32->ScanLines);
+		RenderPMODE4NTSC(szSurface32, surfaceDest, Xpitch, cocoSrc, ScanLines);
 	}
 	else
 	{
@@ -8313,10 +8278,10 @@ case 192+2:	//Bpp=0 Sr=2
 					case 3:
 						Pcolor = 3;
 						szSurface32[YStride - 1] = Afacts32[ColorInvert][3];
-						if (!USState32->ScanLines)
+						if (!ScanLines)
 							szSurface32[YStride + Xpitch - 1] = Afacts32[ColorInvert][3];
 						szSurface32[YStride] = Afacts32[ColorInvert][3];
-						if (!USState32->ScanLines)
+						if (!ScanLines)
 							szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][3];
 						break;
 					case 7:
@@ -8325,10 +8290,10 @@ case 192+2:	//Bpp=0 Sr=2
 					} //END Switch
 
 					szSurface32[YStride += 1] = Afacts32[ColorInvert][Pcolor];
-					if (!USState32->ScanLines)
+					if (!ScanLines)
 						szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][Pcolor];
 					szSurface32[YStride += 1] = Afacts32[ColorInvert][Pcolor];
-					if (!USState32->ScanLines)
+					if (!ScanLines)
 						szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][Pcolor];
 					Carry2 = Carry1;
 					Carry1 = Pix;
@@ -8355,10 +8320,10 @@ case 192+2:	//Bpp=0 Sr=2
 					case 3:
 						Pcolor = 3;
 						szSurface32[YStride - 1] = Afacts32[ColorInvert][3];
-						if (!USState32->ScanLines)
+						if (!ScanLines)
 							szSurface32[YStride + Xpitch - 1] = Afacts32[ColorInvert][3];
 						szSurface32[YStride] = Afacts32[ColorInvert][3];
-						if (!USState32->ScanLines)
+						if (!ScanLines)
 							szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][3];
 						break;
 					case 7:
@@ -8367,10 +8332,10 @@ case 192+2:	//Bpp=0 Sr=2
 					} //END Switch
 
 					szSurface32[YStride += 1] = Afacts32[ColorInvert][Pcolor];
-					if (!USState32->ScanLines)
+					if (!ScanLines)
 						szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][Pcolor];
 					szSurface32[YStride += 1] = Afacts32[ColorInvert][Pcolor];
-					if (!USState32->ScanLines)
+					if (!ScanLines)
 						szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][Pcolor];
 					Carry2 = Carry1;
 					Carry1 = Pix;
@@ -8411,7 +8376,7 @@ case 192+2:	//Bpp=0 Sr=2
 				szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (1 & (WidePixel >> 9))];
 				szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (1 & (WidePixel >> 8))];
 				szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-				if (!USState32->ScanLines)
+				if (!ScanLines)
 				{
 					YStride -= 32;
 					YStride += Xpitch;
@@ -8530,7 +8495,7 @@ for (HorzBeam=0;HorzBeam<BytesperRow;HorzBeam+=2) //1bbp Stretch=4
 	szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>8))];
 	szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>8))];
 
-	if (!USState32->ScanLines)
+	if (!ScanLines)
 	{
 		YStride-=64;
 		YStride+=Xpitch;
@@ -8743,7 +8708,7 @@ case 192+14: //Bpp=0 Sr=14
 	szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>8))];
 	szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 1 & (WidePixel>>8))];
 
-	if (!USState32->ScanLines)
+	if (!ScanLines)
 	{
 		YStride-=128;
 		YStride+=Xpitch;
@@ -8894,7 +8859,7 @@ case 192+16: //BPP=1 Sr=0  2BPP Stretch=1
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>12))];
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>10))];
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>8))];
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=8;
 			YStride+=Xpitch;
@@ -8934,7 +8899,7 @@ case 192+18: //Bpp=1 Sr=2
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>8))];
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>8))];
 
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=16;
 			YStride+=Xpitch;
@@ -9000,7 +8965,7 @@ case 192+22: //Bpp=1 Sr=6
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>8))];
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>8))];
 
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=32;
 			YStride+=Xpitch;
@@ -9118,7 +9083,7 @@ case 192+30: //Bpp=1 Sr=14
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>8))];
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>8))];
 
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=64;
 			YStride+=Xpitch;
@@ -9325,7 +9290,7 @@ case 192+31: //Bpp=1 Sr=15 2BPP Stretch=16
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>8))];
 		szSurface32[YStride+=1]=Pallete32Bit[PalleteIndex+( 3 & (WidePixel>>8))];
 
-		if (!USState32->ScanLines)
+		if (!ScanLines)
 		{
 			YStride-=128;
 			YStride+=Xpitch;
@@ -9502,7 +9467,7 @@ case 192+63: //Bpp=3 Sr=15
 }
 // END of 32 Bit render loop *****************************************************************************************
 
-void DrawTopBoarder8(SystemState *DTState)
+void GimeGpu::DrawTopBoarder8(SystemState *DTState) const
 {
 	unsigned short x;
 	if (BoarderChange==0)
@@ -9514,10 +9479,9 @@ void DrawTopBoarder8(SystemState *DTState)
 		if (!DTState->ScanLines)
 			DTState->PTRsurface8[x +((DTState->LineCounter*2+1)*DTState->SurfacePitch)]=BoarderColor8|128;
 	}
-	return;
 }
 
-void DrawTopBoarder16(SystemState *DTState)
+void GimeGpu::DrawTopBoarder16(SystemState *DTState) const
 {
 	unsigned short x;
 	if (BoarderChange==0)
@@ -9529,16 +9493,13 @@ void DrawTopBoarder16(SystemState *DTState)
 		if (!DTState->ScanLines)
 			DTState->PTRsurface16[x +((DTState->LineCounter*2+1)*DTState->SurfacePitch)]=BoarderColor16;
 	}
-	return;
 }
 
-void DrawTopBoarder24(SystemState * /*DTState*/)
+void GimeGpu::DrawTopBoarder24(SystemState * /*DTState*/) const
 {
-
-	return;
 }
 
-void DrawTopBoarder32(SystemState *DTState)
+void GimeGpu::DrawTopBoarder32(SystemState *DTState) const
 {
 
 	unsigned short x;
@@ -9551,7 +9512,6 @@ void DrawTopBoarder32(SystemState *DTState)
 		if (!DTState->ScanLines)
 			DTState->PTRsurface32[x +((DTState->LineCounter*2+1)*DTState->SurfacePitch)]=BoarderColor32;
 	}
-	return;
 }
 
 //  Occasionaly the LinesPerScreen and VertCenter values are wrong when
@@ -9560,7 +9520,7 @@ void DrawTopBoarder32(SystemState *DTState)
 //  NitrOS9. As a stop gap the surface index calculated from these values
 //  is checked before being used to draw the lines at the border.
 
-void DrawBottomBoarder8(SystemState *DTState)
+void GimeGpu::DrawBottomBoarder8(SystemState *DTState) const
 {
 	if (BoarderChange==0) return;
 	int ndx = 2 * (LinesperScreen + VertCenter + DTState->LineCounter);
@@ -9571,7 +9531,7 @@ void DrawBottomBoarder8(SystemState *DTState)
 	while(cnt--) *p++ = BoarderColor8|128;
 }
 
-void DrawBottomBoarder16(SystemState *DTState)
+void GimeGpu::DrawBottomBoarder16(SystemState *DTState) const
 {
 	if (BoarderChange==0) return;
 	int ndx = 2 * (LinesperScreen + VertCenter + DTState->LineCounter);
@@ -9580,15 +9540,13 @@ void DrawBottomBoarder16(SystemState *DTState)
 	if (!DTState->ScanLines) cnt *= 2;
 	unsigned short *p = DTState->PTRsurface16 + DTState->SurfacePitch * ndx;
 	while(cnt--) *p++ = BoarderColor16;
-	return;
 }
 
-void DrawBottomBoarder24(SystemState * /*DTState*/)
+void GimeGpu::DrawBottomBoarder24(SystemState * /*DTState*/) const
 {
-	return;
 }
 
-void DrawBottomBoarder32(SystemState *DTState)
+void GimeGpu::DrawBottomBoarder32(SystemState *DTState) const
 {
 	if (BoarderChange==0) return;
 	int ndx = 2 * (LinesperScreen + VertCenter + DTState->LineCounter);
@@ -9597,27 +9555,24 @@ void DrawBottomBoarder32(SystemState *DTState)
 	if (!DTState->ScanLines) cnt *= 2;
 	unsigned int *p = DTState->PTRsurface32 + DTState->SurfacePitch * ndx;
 	while(cnt--) *p++ = BoarderColor32;
-	return;
 }
 
-void TogBlinkState()
+void GimeGpu::TogBlinkState()
 {
 	BlinkState = BlinkState ^ 1;
-	return;
 }
 
 // These grab the Video info for all COCO 2 modes
-void SetGimeVdgOffset (unsigned char Offset)
+void GimeGpu::SetGimeVdgOffset(unsigned char Offset)
 {
 	if ( CC2Offset != Offset)
 	{
 		CC2Offset=Offset;
 		SetupDisplay();
 	}
-	return;
 }
 
-void SetGimeVdgMode (unsigned char VdgMode) //3 bits from SAM Registers
+void GimeGpu::SetGimeVdgMode(unsigned char VdgMode) //3 bits from SAM Registers
 {
 	if (CC2VDGMode != VdgMode)
 	{
@@ -9625,10 +9580,9 @@ void SetGimeVdgMode (unsigned char VdgMode) //3 bits from SAM Registers
 		SetupDisplay();
 		BoarderChange=3;
 	}
-	return;
 }
 
-void SetGimeVdgMode2 (unsigned char Vdgmode2) //5 bits from PIA Register
+void GimeGpu::SetGimeVdgMode2(unsigned char Vdgmode2) //5 bits from PIA Register
 {
 	if (CC2VDGPiaMode != Vdgmode2)
 	{
@@ -9636,12 +9590,11 @@ void SetGimeVdgMode2 (unsigned char Vdgmode2) //5 bits from PIA Register
 		SetupDisplay();
 		BoarderChange=3;
 	}
-	return;
 }
 
 //These grab the Video info for all COCO 3 modes
 
-void SetVerticalOffsetRegister(unsigned short Register)
+void GimeGpu::SetVerticalOffsetRegister(unsigned short Register)
 {
 	if (VerticalOffsetRegister != Register)
 	{
@@ -9649,10 +9602,9 @@ void SetVerticalOffsetRegister(unsigned short Register)
 
 		SetupDisplay();
 	}
-	return;
 }
 
-void SetCompatMode( unsigned char Register)
+void GimeGpu::SetCompatMode(unsigned char Register)
 {
 	if (CompatMode != Register)
 	{
@@ -9660,10 +9612,9 @@ void SetCompatMode( unsigned char Register)
 		SetupDisplay();
 		BoarderChange=3;
 	}
-	return;
 }
 
-void SetGimePallet(unsigned char pallete,unsigned char color)
+void GimeGpu::SetGimePalette(unsigned char pallete,unsigned char color) const
 {
 	// Convert the 6bit rgbrgb value to rrrrrggggggbbbbb for the Real video hardware.
 	//	unsigned char r,g,b;
@@ -9671,10 +9622,9 @@ void SetGimePallet(unsigned char pallete,unsigned char color)
 	Pallete8Bit[pallete]= PalleteLookup8[MonType][color & 63]; 
 	Pallete16Bit[pallete]=PalleteLookup16[MonType][color & 63];
 	Pallete32Bit[pallete]=PalleteLookup32[MonType][color & 63];
-	return;
 }
 
-void SetGimeVmode(unsigned char vmode)
+void GimeGpu::SetGimeVmode(unsigned char vmode)
 {
 	if (CC3Vmode != vmode)
 	{
@@ -9683,10 +9633,9 @@ void SetGimeVmode(unsigned char vmode)
 		BoarderChange=3;
 
 	}
-	return;
 }
 
-void SetGimeVres(unsigned char vres)
+void GimeGpu::SetGimeVres(unsigned char vres)
 {
 	if (CC3Vres != vres)
 	{
@@ -9694,10 +9643,9 @@ void SetGimeVres(unsigned char vres)
 		SetupDisplay();
 		BoarderChange=3;
 	}
-	return;
 }
 
-void SetGimeHorzOffset(unsigned char data)
+void GimeGpu::SetGimeHorzOffset(unsigned char data)
 {
 	if (HorzOffsetReg != data)
 	{
@@ -9705,38 +9653,31 @@ void SetGimeHorzOffset(unsigned char data)
 		HorzOffsetReg=data;
 		SetupDisplay();
 	}
-	return;
 }
-void SetGimeBoarderColor(unsigned char data)
-{
 
+void GimeGpu::SetGimeBoarderColor(unsigned char data)
+{
 	if (CC3BoarderColor != (data & 63) )
 	{
 		CC3BoarderColor= data & 63;
 		SetupDisplay();
 		BoarderChange=3;
 	}
-	return;
 }
 
-void SetBoarderChange ()
+void GimeGpu::SetBoarderChange()
 {
 	if (BoarderChange >0)
 		BoarderChange--;
-	
-	return;
 }
 
-void InvalidateBoarder()
+void GimeGpu::InvalidateBoarder()
 {
 	BoarderChange=5;
-	return;
 }
 
-
-void SetupDisplay()
+void GimeGpu::SetupDisplay()
 {
-
 	static unsigned char CC2Bpp[8]={1,0,1,0,1,0,1,0};
 	static unsigned char CC2LinesperRow[8]={12,3,3,2,2,1,1,1};
 	static unsigned char CC3LinesperRow[8]={1,1,2,8,9,10,11,200};
@@ -9844,16 +9785,14 @@ void SetupDisplay()
 	BoarderColor32=PalleteLookup32[MonType][CC3BoarderColor & 63];
 	NewStartofVidram =(NewStartofVidram & VidMask)+DistoOffset; //DistoOffset for 2M configuration
 	MasterMode= (GraphicsMode <<7) | (CompatMode<<6)  | ((Bpp & 3)<<4) | (Stretch & 15);
-	return;
 }
 
-void GimeInit()
+void GimeGpu::GimeInit()
 {
 	//Nothing but good to have.
-	return;
 }
 
-void GimeReset()
+void GimeGpu::GimeReset()
 {
 	CC3Vmode=0;
 	CC3Vres=0;
@@ -9872,25 +9811,21 @@ void GimeReset()
 	CC2Offset=0;
 	Hoffset=0;
 	VerticalOffsetRegister=0;
-	MiscReset();
-	return;
 }
 
-void SetVidMask(unsigned int data)
+void GimeGpu::SetVidMask(unsigned int data)
 {
 	VidMask=data;
-	return;
 }
 
-void SetVideoBank(unsigned char data)
+void GimeGpu::SetVideoBank(unsigned char data)
 {
 	DistoOffset= data * (512*1024);
 	SetupDisplay();
-	return;
 }
 
 
-void MakeRGBPalette ()
+void GimeGpu::MakeRGBPalette()
 {
 	unsigned char Index=0;
 	unsigned char r,g,b;
@@ -9909,10 +9844,9 @@ void MakeRGBPalette ()
 		b= ColorTable32Bit [(Index & 8 ) >> 2 | (Index & 1) ];		
 		PalleteLookup32[1][Index]= (r* 65536) + (g* 256) + b;
 	}
-	return;
 }
 
-void MakeCMPpalette()	
+void GimeGpu::MakeCMPpalette()
 {
 	double r,g,b;
 	unsigned char rr,gg,bb;
@@ -9976,7 +9910,7 @@ void MakeCMPpalette()
 	}
 }
 
-unsigned char SetMonitorType(unsigned char Type)
+unsigned char GimeGpu::SetMonitorType(unsigned char Type)
 {
 	unsigned char PalNum=0;
 	int tmp = CC3BoarderColor;
@@ -9996,14 +9930,16 @@ unsigned char SetMonitorType(unsigned char Type)
 	SetGimeBoarderColor(tmp);
 	return MonType;
 }
-void SetPaletteType() {
+
+void GimeGpu::SetPaletteType()
+{
 	int tmp = CC3BoarderColor;
 	SetGimeBoarderColor(0);
 	MakeCMPpalette();
 	SetGimeBoarderColor(tmp);
 }
 
-unsigned char SetScanLines(unsigned char Lines)
+unsigned char GimeGpu::SetScanLines(unsigned char Lines)
 {
 	extern SystemState EmuState;
 	if (Lines!=QUERY)
@@ -10014,34 +9950,41 @@ unsigned char SetScanLines(unsigned char Lines)
 	}
 	return 0;
 }
-int GetBytesPerRow() {
+
+int GimeGpu::GetBytesPerRow() const
+{
 	return BytesperRow;
 }
 
-unsigned char GetHorizontalBorderSize()
+unsigned char GimeGpu::GetHorizontalBorderSize() const
 {
 	return HorzCenter / 2;
 }
 
-unsigned short GetDisplayedPixelsPerLine()
+unsigned short GimeGpu::GetDisplayedPixelsPerLine() const
 {
 	return PixelsperLine;
 }
 
-unsigned int GetStartOfVidram() {
+unsigned int GimeGpu::GetStartOfVidram() const
+{
 	return StartofVidram;
 }
-int GetGraphicsMode() {
+
+int GimeGpu::GetGraphicsMode() const
+{
 	return GraphicsMode;
 }
-void FlipArtifacts() {
+
+void GimeGpu::FlipArtifacts()
+{
 	if (ColorInvert == 0) { ColorInvert = 1; }
 	else { ColorInvert = 0; }
 	UserFlipped = true;
 }
 
 // Render even/odd 2x2 ntsc pixels
-void RenderNTSCPixel2x2(Surface32 surface32, size_t surfaceDest, int XpitchDest, char colorIndex, char scanLines)
+void GimeGpu::RenderNTSCPixel2x2(Surface32 surface32, size_t surfaceDest, int XpitchDest, char colorIndex, char scanLines) const
 {
 	colorIndex <<= 1;
 	unsigned int colorEven = ArtifactsNTSC[ColorInvert][ArtifactsNTSCIndex[colorIndex]];
@@ -10061,7 +10004,7 @@ void RenderNTSCPixel2x2(Surface32 surface32, size_t surfaceDest, int XpitchDest,
 }
 
 // Render one raster line to surface 1bbp Stretch=2
-void RenderPMODE4NTSC(Surface32 surface32, size_t surfaceDest, int XpitchDest, const unsigned char* cocoSrc, char scanLines)
+void GimeGpu::RenderPMODE4NTSC(Surface32 surface32, size_t surfaceDest, int XpitchDest, const unsigned char* cocoSrc, char scanLines) const
 {
 	const char cocoBorderPixel = 3; // white
 
