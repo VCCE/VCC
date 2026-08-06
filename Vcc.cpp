@@ -1058,6 +1058,7 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 		}
 
 		StartRender();
+
 		for (uint8_t Frames = 1; Frames <= EmuState.FrameSkip; Frames++)
 		{
 			FrameCounter++;

@@ -30,6 +30,7 @@
 #include "tcc1014mmu.h"
 #include "resource.h"
 #include "pakinterface.h"
+#include "tcc1014graphics.h"
 #include <vcc/util/logger.h>
 #include <vcc/util/DialogOps.h>
 #include <fstream>
@@ -44,7 +45,7 @@ void WriteMemory(int,unsigned char);
 void SetBackBuffer(const RECT&);
 void CreateScrollBar(const RECT&);
 void DrawForm(HDC,LPCRECT);
-void DrawMemory(HDC,LPCRECT);
+bool DrawMemory(HDC,LPCRECT);
 void SetEditPosition(int,int);
 void LocateMemory();
 void ExportMemory();
@@ -53,6 +54,7 @@ void SetMemType();
 void InitializeDialog(HWND);
 void DoScroll(WPARAM);
 int CStrToHex(const char *);
+void ResetMemoryCache();
 
 LRESULT CALLBACK subEditValProc(HWND,UINT,WPARAM,LPARAM);
 LRESULT CALLBACK subEditAdrBegProc(HWND,UINT,WPARAM,LPARAM);
@@ -70,6 +72,10 @@ HWND hEditVal = nullptr;
 WNDPROC EditValProc;
 WNDPROC EditAdrBegProc;
 WNDPROC EditAdrEndProc;
+
+GimeGpu memGpu;
+unsigned char *ramCache = nullptr;
+unsigned int ramPos = -1;
 
 // Enum for memory type being examined
 enum AddrMode
@@ -110,6 +116,14 @@ char DbgHelp[] =
 	"will be displayed next to the box. Enter byte\n"
 	"values in hexadecimal.\n";
 
+
+void ResetMemoryCache()
+{
+	ramPos = -1;
+	delete[] ramCache;
+	ramCache = nullptr;
+}
+
 //------------------------------------------------------------------
 //  Display Memory Dialog
 //------------------------------------------------------------------
@@ -117,6 +131,8 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 		HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
 	switch (message) {
+	case WM_ERASEBKGND:
+		return 1;
 
 	case WM_INITDIALOG:
 		InitializeDialog(hDlg);
@@ -134,22 +150,24 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 		break;
 
 	case WM_MOUSEWHEEL:
-		if ( GET_WHEEL_DELTA_WPARAM(wParam) < 0) {
-			DoScroll( (WPARAM) SB_LINEUP);
-		} else {
-			DoScroll( (WPARAM) SB_LINEDOWN);
-		}
+	{
+		auto delta = GET_WHEEL_DELTA_WPARAM(wParam);
+		auto amount = (delta / 30) != 0 ? (delta / 30) : delta;
+		auto param = amount > 0 ? (WPARAM)SB_LINEUP : (WPARAM)SB_LINEDOWN;
+		for (int i = 0; i < std::abs(amount); ++i)
+			DoScroll((WPARAM)param);
 		break;
+	}
 
-	case WM_PAINT: {
-		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hDlg, &ps);
-
-		DrawMemory(BackBuf.DeviceContext, &BackBuf.Rect);
-		BitBlt(hdc, 0, 0, BackBuf.Width, BackBuf.Height,
-				BackBuf.DeviceContext, 0, 0, SRCCOPY);
-
-		EndPaint(hDlg, &ps);
+	case WM_PAINT: 
+	{
+		if (DrawMemory(BackBuf.DeviceContext, &BackBuf.Rect))
+		{
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hDlg, &ps);
+			BitBlt(hdc, 0, 0, BackBuf.Width, BackBuf.Height, BackBuf.DeviceContext, 0, 0, SRCCOPY);
+			EndPaint(hDlg, &ps);
+		}
 		break;
 	}
 
@@ -167,6 +185,7 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 		switch (LOWORD(wParam)) {
 		case IDC_MEM_TYPE:
 			SetMemType();
+			ResetMemoryCache();
 			InvalidateRect(hDlg, &BackBuf.Rect, FALSE);
 			break;
 		case IDC_BTN_EXPORT_MEM:
@@ -181,10 +200,11 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 		case IDCLOSE:
 		case WM_DESTROY:
 			KillTimer(hDlg, IDT_MEM_TIMER);
-			DeleteDC(BackBuf.DeviceContext);
+			BackBuf.Cleanup(hDlgMem);
 			DestroyWindow(hDlg);
 			AddrMode_ = AddrMode::NotSet;
 			hDlgMem = nullptr;
+			ResetMemoryCache();
 			break;
 		}
 		break;
@@ -445,11 +465,26 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 //------------------------------------------------------------------
 // Fill memory data on form
 //------------------------------------------------------------------
-void DrawMemory(HDC hdc, LPCRECT clientRect)
+bool DrawMemory(HDC hdc, LPCRECT clientRect)
 {
+	memGpu.GimeReset();
+	memGpu.SetVidMask(524287);
+	memGpu.SetCompatMode(1);
+	memGpu.SetupDisplay();
+	memGpu.VertCenter = 0;
+	memGpu.HorzCenter = 0;
+
+	int w = 256;
+	int h = 32;
+	int stride = w * 4;
+	auto p = new char[stride * h];
+
+	int headerHeight = 20;
 	int top = clientRect->top;
 	int lft = clientRect->left;
 	int rgt = clientRect->right;
+	int height = clientRect->bottom - top - headerHeight;
+	int lineHeight = (height / 32) - 1;
 	RECT rc;
 
 	bool hlfound = false;
@@ -457,24 +492,54 @@ void DrawMemory(HDC hdc, LPCRECT clientRect)
 
 	UINT fmt = DT_CENTER | DT_VCENTER | DT_SINGLELINE;
 
-	int ltop = top + 20; // Back buff relative
+	int ltop = top + headerHeight; // Back buff relative
+	bool dirty = false;
+	bool showAscii = false;
+	bool forcedUpdate = false;
 
-	for (int lnum = 0; lnum < 32; lnum++) {
-		
+	if (!ramCache)
+	{
+		forcedUpdate = true;
+		ramCache = new unsigned char[16*32];
+	}
+
+	// if not the same address then it will need repainting
+	if (memoryOffset != ramPos)
+	{
+		dirty = true;
+		ramPos = memoryOffset;
+	}
+
+	for (int lnum = 0; lnum < 32; lnum++, ltop += lineHeight) 
+	{
 		// Draw address of start of line
 		SetTextColor(hdc, RGB(138, 27, 255));
 		s = ToHexString(memoryOffset + lnum * 16, 6, true);
-		SetRect(&rc, lft, ltop, lft+64, ltop+18);
+		SetRect(&rc, lft, ltop, lft+64, ltop+lineHeight);
 		DrawText(hdc, s.c_str(), s.size(), &rc, fmt);
 
 		// Fill in data cells
 		SetTextColor(hdc, RGB(0, 0, 0));
 		int hilite = false;
 
-		std::string ascii;
-		for (int n = 0; n < 16; n++) {
+		bool update = Editing || forcedUpdate;
+		auto address = lnum * 16 + memoryOffset;
+		for (int a = 0; a < 16; ++a)
+		{
+			auto b = ReadMemory(address + a);
+			if (b != ramCache[lnum * 16 + a])
+				ramCache[lnum * 16 + a] = b, update = true;
+		}
 
-            // Get data
+		// skip nothing to update
+		if (!update) continue;
+
+		dirty = true;
+
+		std::string ascii;
+		for (int n = 0; n < 16; n++)
+		{
+			// Get data
 			int adr = lnum * 16 + n + memoryOffset;
 			unsigned char val = ReadMemory(adr);
 
@@ -487,7 +552,7 @@ void DrawMemory(HDC hdc, LPCRECT clientRect)
 				hilite = true;
 			}
 
-			SetRect(&rc,lft+Xoffset[n],ltop,lft+Xoffset[n]+18,ltop+18);
+			SetRect(&rc, lft + Xoffset[n], ltop, lft + Xoffset[n] + 18, ltop + lineHeight);
 			DrawText(hdc, s.c_str(), 2, &rc, fmt);
 
 			// if highlight on turn it off
@@ -497,20 +562,48 @@ void DrawMemory(HDC hdc, LPCRECT clientRect)
 			}
 
 			// Append to ascii
-			if (isprint(val)) ascii += val; else ascii += ".";
+			if (showAscii) ascii += isprint(val) ? val : '.';
 		}
 
-		// Draw the ascii string
-		SetRect(&rc, rgt-133, ltop, rgt-5, ltop+18);
-		DrawText(hdc, ascii.c_str(), ascii.size(), &rc, fmt);
+		if (showAscii)
+		{
+			// Draw the ascii string
+			SetRect(&rc, rgt-133, ltop, rgt-5, ltop+lineHeight);
+			DrawText(hdc, ascii.c_str(), ascii.size(), &rc, fmt);
+		}
+		else
+		{
+			// reset address start to zero
+			memGpu.TagY = 0;
+			memGpu.Start = 0;
+			memGpu.StartofVidram = 0;
+			memGpu.NewStartofVidram = 0;
 
-		ltop += 18;
+			// bytes to copy
+			memGpu.BytesperRow = 16;
+
+			// render 12 lines
+			for (int j = 0; j < 12; ++j)
+				memGpu.UpdateScreen32To(ramCache+lnum*16, (unsigned int*)p, j, w, false);
+
+			// blit to back buffer
+			HBITMAP bm = CreateBitmap(w, h, 1, 32, p);
+			HDC src = CreateCompatibleDC(hdc);
+			auto obj = SelectObject(src, bm);
+			StretchBlt(hdc, rgt - 132, ltop, 8 * 16, lineHeight, src, 0, 0, 16 * 16, 24, SRCCOPY);
+			SelectObject(src, obj);
+			DeleteObject(bm);
+			DeleteDC(src);
+		}
 	}
 
 	// Not editmode if no cell highlighted.
 	if (Editing && !hlfound) {
 		SetEditing(false);
 	}
+
+	delete[] p;
+	return dirty;
 }
 
 //------------------------------------------------------------------
@@ -734,7 +827,7 @@ void InitializeDialog(HWND hDlg)
 		EditValProc = (WNDPROC) SetWindowLongPtr
 				(hEditVal, GWLP_WNDPROC, (LONG_PTR) subEditValProc);
 
-		SetTimer(hDlg, IDT_MEM_TIMER, 64, nullptr);
+		SetTimer(hDlg, IDT_MEM_TIMER, 1000/60, nullptr);
 
 		// Dropdown to select memory type displayed
 		HWND hCtl = GetDlgItem(hDlg, IDC_MEM_TYPE);
@@ -804,7 +897,7 @@ void DoScroll(WPARAM wParam)
 	si.fMask = SIF_POS;
 	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 	GetScrollInfo(hScrollBar, SB_CTL, &si);
-	memoryOffset = si.nPos;
+	memoryOffset = roundDn(si.nPos,16);
 
 	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
 }
