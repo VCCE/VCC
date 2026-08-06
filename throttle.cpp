@@ -56,6 +56,8 @@ void CheckSound()
 	if (GetSoundStatus())
 	{
 		PurgeAuxBuffer();
+		/*
+		* This causes slow downs and FrameWait won't return when it should.
 		if (FrameSkip == 1)
 		{
 			// Dont let the buffer get lest that half full
@@ -66,10 +68,11 @@ void CheckSound()
 			int count = 100; // loop limit
 			while (GetFreeBlockCount() < 1 && count > 0)
 			{
-Sleep(1);
+				Sleep(1);
 				--count;
 			}
 		}
+		*/
 	}
 }
 
@@ -77,7 +80,7 @@ void FrameWait()
 {
 	//If we have more that 2Ms till the end of the frame
 	QueryPerformanceCounter(&CurrentTime);
-	while ( (TargetTime.QuadPart-CurrentTime.QuadPart)> (OneMs.QuadPart*2))	
+	while ( (TargetTime.QuadPart-CurrentTime.QuadPart)> (OneMs.QuadPart*2))
 	{
 		Sleep(1);	//Give about 1Ms back to the system
 		QueryPerformanceCounter(&CurrentTime);	//And check again
@@ -87,7 +90,7 @@ void FrameWait()
 	// moved to its own function so that final poll until frame end is always performed,
 	// otherwise this sound check would exit early.
 	CheckSound();
-
+	
 	//Poll Untill frame end.
 	while ( CurrentTime.QuadPart< TargetTime.QuadPart)	
 		QueryPerformanceCounter(&CurrentTime);
