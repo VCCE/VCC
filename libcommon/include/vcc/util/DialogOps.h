@@ -63,14 +63,19 @@ public:
     void setTitle(const char* Title);
     void setpath(const char* File);
 
-    std::string getpath() const;
+    const std::string& getpath() const;
     std::string getdir() const;
     std::string gettype() const;
 
-    void getpath(char* PathCopy, int maxsize = MAX_PATH) const;
-    void getupath(char* PathCopy, int maxsize = MAX_PATH) const;
-    void getdir(char* Dir, int maxsize = MAX_PATH) const;
-    void gettype(char* Type, int maxsize = 16) const;
+    void getpath(char* pathCopy, int maxsize) const;
+    void getupath(char* pathCopy, int maxsize) const;
+    void getdir(char* dir, int maxsize) const;
+    void gettype(char* type, int maxsize) const;
+
+    template <size_t S> void getpath(char (&pathCopy)[S]) const { getpath(pathCopy, S); }
+    template <size_t S> void getupath(char (&pathCopy)[S]) const { getupath(pathCopy, S); }
+    template <size_t S> void getdir(char (&dir)[S]) const { getdir(dir, S); }
+    template <size_t S> void gettype(char (&type)[S]) const { gettype(type, S); }
 
     const char* path() const;
     const char* upath() const;

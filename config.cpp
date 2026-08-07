@@ -1716,7 +1716,7 @@ int SelectFile(char *FileName)
 			MessageBox(EmuState.WindowHandle,"Can't open file.","Error",0);
 		}
 	}
-	dlg.getpath(FileName);
+	dlg.getpath(FileName, MAX_PATH);
 	return 1;
 }
 

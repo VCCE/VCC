@@ -92,7 +92,7 @@ void FileDialog::setpath(const char* File)
     sFile_.assign(File ? File : "");
 }
 
-std::string FileDialog::getpath() const
+const std::string& FileDialog::getpath() const
 {
     return sFile_;
 }
@@ -113,27 +113,31 @@ std::string FileDialog::gettype() const
 void FileDialog::getpath(char* PathCopy, int maxsize) const
 {
     if (!PathCopy) return;
-    strncpy(PathCopy, sFile_.c_str(), maxsize);
+    strncpy(PathCopy, sFile_.c_str(), maxsize - 1);
+    PathCopy[maxsize - 1] = 0;
 }
 
 void FileDialog::getupath(char* PathCopy, int maxsize) const
 {
     if (!PathCopy) return;
-    strncpy(PathCopy, sFile_.c_str(), maxsize);
+    strncpy(PathCopy, sFile_.c_str(), maxsize - 1);
+    PathCopy[maxsize - 1] = 0;
 }
 
 void FileDialog::getdir(char* Dir, int maxsize) const
 {
     if (!Dir) return;
     std::string d = getdir();
-    strncpy(Dir, d.c_str(), maxsize);
+    strncpy(Dir, d.c_str(), maxsize - 1);
+    Dir[maxsize - 1] = 0;
 }
 
 void FileDialog::gettype(char* Type, int maxsize) const
 {
     if (!Type) return;
     std::string t = gettype();
-    strncpy(Type, t.c_str(), maxsize);
+    strncpy(Type, t.c_str(), maxsize - 1);
+    Type[maxsize - 1] = 0;
 }
 
 const char* FileDialog::path() const
