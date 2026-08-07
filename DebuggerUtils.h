@@ -59,11 +59,14 @@ namespace VCC::Debugger::UI
 
 	struct BackBufferInfo
 	{
-		HDC		DeviceContext;
-		HBITMAP Bitmap;
+		HDC		DeviceContext = nullptr;
+		HBITMAP Bitmap = nullptr;
 		RECT    Rect;
-		int		Width;
-		int		Height;
+		int		Width = 0;
+		int		Height = 0;
+
+        void CleanupDC(HWND hWnd);
+        void CleanupBitmap();
 	};
 
 	BackBufferInfo AttachBackBuffer(HWND hWnd, int widthAdjust, int heightAdjust);

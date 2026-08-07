@@ -8244,7 +8244,7 @@ case 192+2:	//Bpp=0 Sr=2
 		// byte pointer to ram
 		const unsigned char* cocoRam = (unsigned char*)WideBuffer;
 		// destination screen (less 2 pixels for bleed)
-		size_t surfaceDest = (((y + VertCenter) * 2) * Xpitch) + HorzCenter - 2;
+		size_t surfaceDest = (((y + VertCenter) * 2) * Xpitch) + HorzCenter;
 		// source coco screens
 		const unsigned char* cocoSrc = cocoRam + (VidMask & (Start + (unsigned char)Hoffset));
 		RenderPMODE4NTSC(szSurface32, surfaceDest, Xpitch, cocoSrc, ScanLines);

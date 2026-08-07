@@ -55,6 +55,7 @@ void InitializeDialog(HWND);
 void DoScroll(WPARAM);
 int CStrToHex(const char *);
 void ResetMemoryCache();
+void ResizeWindow(int width, int height);
 
 LRESULT CALLBACK subEditValProc(HWND,UINT,WPARAM,LPARAM);
 LRESULT CALLBACK subEditAdrBegProc(HWND,UINT,WPARAM,LPARAM);
@@ -88,6 +89,11 @@ enum AddrMode
 };
 AddrMode AddrMode_ = AddrMode::NotSet;
 
+const int HeaderHeight = 20;
+const int TopBarStaticWidth = 510;
+const int TopBarHeight = 34;
+const int ScrollBarWidth = 20;
+
 int MemSize = 0;
 int memoryOffset = 0;
 int selectionRangeBeg = -1;
@@ -96,8 +102,32 @@ unsigned char *Rom = nullptr;
 bool Editing = false;
 int editAddress = 0;
 
+struct MemoryBackBufferInfo : BackBufferInfo
+{
+	HPEN Pen = nullptr;
+	HFONT Font = nullptr;
+
+	HBITMAP FontBitmap = nullptr;
+	HBITMAP FontRedBitmap = nullptr;
+	HBITMAP FontAsciiBitmap = nullptr;
+	HDC FontDC = nullptr;
+	HDC FontRedDC = nullptr;
+	HDC FontAsciiDC = nullptr;
+
+	int DataWidth = 0;
+	int DataHeight = 0;
+	int DataStride = 0;
+	char* Data = nullptr;
+
+	void Init();
+	void CleanupFonts(HWND hWnd);
+	void CleanupPen();
+	void CleanupFont();
+	void Cleanup(HWND hWnd);
+};
+
 // Backing buffer used for painting memory data
-BackBufferInfo BackBuf;
+MemoryBackBufferInfo BackBuf;
 
 // Data cell X offsets relative to the backing buffer
 // Cells are 18 pixels square with a 15 pixel gap between 7 & 8
@@ -124,6 +154,52 @@ void ResetMemoryCache()
 	ramCache = nullptr;
 }
 
+void MemoryBackBufferInfo::Init()
+{
+	DataWidth = 640;
+	DataHeight = 32;
+	DataStride = DataWidth * 4;
+	Data = new char[DataStride * DataHeight];
+}
+
+void MemoryBackBufferInfo::CleanupPen()
+{
+	DeleteObject(Pen);
+	Pen = nullptr;
+}
+
+void MemoryBackBufferInfo::CleanupFont()
+{
+	DeleteObject(Font);
+	Font = nullptr;
+}
+
+void MemoryBackBufferInfo::CleanupFonts(HWND hWnd)
+{
+	DeleteObject(FontBitmap);
+	DeleteObject(FontRedBitmap);
+	DeleteObject(FontAsciiBitmap);
+	ReleaseDC(hWnd, FontDC);
+	DeleteDC(FontDC);
+	FontDC = nullptr;
+	ReleaseDC(hWnd, FontRedDC);
+	DeleteDC(FontRedDC);
+	FontRedDC = nullptr;
+	ReleaseDC(hWnd, FontAsciiDC);
+	DeleteDC(FontAsciiDC);
+	FontAsciiDC = nullptr;
+}
+
+void MemoryBackBufferInfo::Cleanup(HWND hWnd)
+{
+	delete[] Data;
+	CleanupFonts(hWnd);
+	CleanupFont();
+	CleanupPen();
+	CleanupBitmap();
+	CleanupDC(hWnd);
+}
+
 //------------------------------------------------------------------
 //  Display Memory Dialog
 //------------------------------------------------------------------
@@ -137,6 +213,25 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 	case WM_INITDIALOG:
 		InitializeDialog(hDlg);
 		break;
+
+	case WM_GETMINMAXINFO:
+	{
+		MINMAXINFO* mmi = (MINMAXINFO*)lParam;
+
+		// Set minimum tracking size (width, height)
+		mmi->ptMinTrackSize.x = 540; // Minimum width in pixels
+		mmi->ptMinTrackSize.y = 540; // Minimum height in pixels
+
+		return 0;
+	}
+
+	case WM_SIZE:
+	{
+		UINT width = LOWORD(lParam);
+		UINT height = HIWORD(lParam);
+		ResizeWindow(width, height);
+		return 0;
+	}
 
 	case WM_LBUTTONDOWN:
 		if (AddrMode_ == AddrMode::PAK)
@@ -200,7 +295,7 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 		case IDCLOSE:
 		case WM_DESTROY:
 			KillTimer(hDlg, IDT_MEM_TIMER);
-			BackBuf.Cleanup(hDlgMem);
+			DeleteDC(BackBuf.DeviceContext);
 			DestroyWindow(hDlg);
 			AddrMode_ = AddrMode::NotSet;
 			hDlgMem = nullptr;
@@ -210,6 +305,22 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 		break;
 	}
 	return FALSE;
+}
+
+void ResizeWindow(int width, int height)
+{
+	RECT Rect;
+	GetClientRect(hDlgMem, &Rect);
+
+	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
+
+	// recreate the back buffer
+	ResetMemoryCache();
+	SetBackBuffer(Rect);
+	DrawForm(BackBuf.DeviceContext, &BackBuf.Rect);
+
+	// reposition scroll bar
+	MoveWindow(hScrollBar, Rect.right - ScrollBarWidth, TopBarHeight, ScrollBarWidth, Rect.bottom - TopBarHeight, TRUE);
 }
 
 //------------------------------------------------------------------
@@ -370,25 +481,77 @@ void WriteMemory(int addr, unsigned char value)
 void SetBackBuffer(const RECT& rc)
 {
 	HDC hdc = GetDC(hDlgMem);
-	FillRect(hdc, &rc, (HBRUSH) (COLOR_WINDOW+1));
+
+	RECT frc;
+	SetRect(&frc, 0, 0, 7 * 16, 14);
+
+	if (!BackBuf.Font)
+	{
+		// Set display Font
+		BackBuf.Font = CreateFont(14, 0, 0, 0, FW_BOLD, FALSE, FALSE,
+			FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+			CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FIXED_PITCH,
+			TEXT("Consolas"));
+	}
+
+	UINT fmt = DT_LEFT | DT_VCENTER | DT_SINGLELINE;
+
+	BackBuf.FontDC = CreateCompatibleDC(hdc);
+	BackBuf.FontBitmap = CreateCompatibleBitmap(hdc, 7 * 16, 14);
+	SelectObject(BackBuf.FontDC, BackBuf.FontBitmap);
+	SelectObject(BackBuf.FontDC, BackBuf.Font);
+	DrawText(BackBuf.FontDC, "0123456789ABCDEF", 32, &frc, fmt);
+
+	BackBuf.FontRedDC = CreateCompatibleDC(hdc);
+	BackBuf.FontRedBitmap = CreateCompatibleBitmap(hdc, 7 * 16, 14);
+	SelectObject(BackBuf.FontRedDC, BackBuf.FontRedBitmap);
+	SelectObject(BackBuf.FontRedDC, BackBuf.Font);
+	SetTextColor(BackBuf.FontRedDC, RGB(255, 0, 0));  // Red
+	DrawText(BackBuf.FontRedDC, "0123456789ABCDEF", 32, &frc, fmt);
+
+	frc.right = 7 * 96;
+	BackBuf.FontAsciiDC = CreateCompatibleDC(hdc);
+	BackBuf.FontAsciiBitmap = CreateCompatibleBitmap(hdc, 7 * 96, 14);
+	SelectObject(BackBuf.FontAsciiDC, BackBuf.FontAsciiBitmap);
+	SelectObject(BackBuf.FontAsciiDC, BackBuf.Font);
+	DrawText(BackBuf.FontAsciiDC, "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[.]^_`abcdefghijklmnopqrstuvwxyz{|}~.", 96, &frc, fmt);
+
+	RECT topBar;
+	topBar.left = rc.left + TopBarStaticWidth;
+	topBar.right = rc.right;
+	topBar.top = rc.top;
+	topBar.bottom = TopBarHeight;
+
+	// fill top bar
+	FillRect(hdc, &topBar, (HBRUSH)(COLOR_WINDOW + 1));
 
 	// Adjust backing buffer location on client
 	BackBuf.Rect.left   = rc.left;
-	BackBuf.Rect.right  = rc.right  - 22;
-	BackBuf.Rect.top    = rc.top    + 34;
-	BackBuf.Rect.bottom = rc.bottom + 34;
+	BackBuf.Rect.right  = rc.right  - ScrollBarWidth;
+	BackBuf.Rect.top    = rc.top    + TopBarHeight;
+	BackBuf.Rect.bottom = rc.bottom + TopBarHeight;
 
 	BackBuf.Width  = BackBuf.Rect.right  - BackBuf.Rect.left;
 	BackBuf.Height = BackBuf.Rect.bottom - BackBuf.Rect.top;
 
-	BackBuf.Bitmap = CreateCompatibleBitmap
-				(hdc, BackBuf.Width, BackBuf.Height);
-	
+	BackBuf.CleanupBitmap();
+	BackBuf.CleanupDC(hDlgMem);
+
 	BackBuf.DeviceContext = CreateCompatibleDC(hdc);
-	HBITMAP old = (HBITMAP) SelectObject
-				(BackBuf.DeviceContext, BackBuf.Bitmap);
+	BackBuf.Bitmap = CreateCompatibleBitmap(hdc, BackBuf.Width, BackBuf.Height);
+	
+	HBITMAP old = (HBITMAP) SelectObject(BackBuf.DeviceContext, BackBuf.Bitmap);
 	DeleteObject(old);
 	ReleaseDC(hDlgMem, hdc);
+
+	if (!BackBuf.Pen)
+	{
+		// Set display pen color
+		BackBuf.Pen = CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
+	}
+	SelectObject(BackBuf.DeviceContext, BackBuf.Pen);
+
+	SelectObject(BackBuf.DeviceContext, BackBuf.Font);
 }
 
 //------------------------------------------------------------------
@@ -401,10 +564,10 @@ void CreateScrollBar(const RECT& Rect)
 			"SCROLLBAR",
 			nullptr,
 			WS_VISIBLE | WS_CHILD | SBS_VERT,
-			Rect.right - 21,   //top x
-			38,                //top y
-			20,                //width
-			Rect.bottom - 42,  //height
+			Rect.right - ScrollBarWidth,   //top x
+			TopBarHeight,      //top y
+			ScrollBarWidth,     //width
+			Rect.bottom - TopBarHeight,  //height
 			hDlgMem,
 			(HMENU)IDC_MEM_VSCROLLBAR,
 			(HINSTANCE)GetWindowLong(hDlgMem, GWL_HINSTANCE),
@@ -425,6 +588,8 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 	int lft = clientRect->left;
 	int rgt = clientRect->right;
 	int bot = clientRect->bottom;
+	int width = rgt - lft;
+	int column2Width = width - 388;
 	RECT rc;
 
 	// Clear background.
@@ -439,13 +604,16 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 	MoveToEx(hdc,lft,top+20,nullptr);  LineTo(hdc,rgt,top+20);
 	MoveToEx(hdc,lft+1,top,nullptr);   LineTo(hdc,lft+1,bot-1);
 	MoveToEx(hdc,lft+60,top,nullptr);  LineTo(hdc,lft+60,bot-1);
-	MoveToEx(hdc,rgt-135,top,nullptr); LineTo(hdc,rgt-135,bot);
+	MoveToEx(hdc,rgt-column2Width-2,top,nullptr); LineTo(hdc,rgt-column2Width-2,bot);
 	MoveToEx(hdc,rgt-1,top,nullptr);   LineTo(hdc,rgt-1,bot);
 
 	// Horizontal separators every four rows
-	int ltop = top + 20;
-	for (int lnum = 3; lnum < 32; lnum+=4) {
-		ltop += 18*4;
+	int height = clientRect->bottom - top - HeaderHeight;
+	int lineHeight = (height / 32) - 1;
+	int ltop = top + 28 - lineHeight/2;
+
+	for (int lnum = 0; lnum < 32; lnum+=4) {
+		ltop += lineHeight * 4;
 		MoveToEx(hdc,lft,ltop,nullptr); LineTo(hdc,rgt,ltop);
 	}
 
@@ -458,7 +626,7 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 		const std::string s(ToHexString(n, 2, false));
 		DrawText(hdc, s.c_str(), 2, &rc, fmt);
 	}
-	SetRect(&rc, rgt - 135, top, rgt - 5, top + 20);
+	SetRect(&rc, rgt - column2Width - 2, top, rgt - 5, top + 20);
 	DrawText(hdc, "ASCII", 6, &rc, fmt);
 }
 
@@ -468,39 +636,42 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 bool DrawMemory(HDC hdc, LPCRECT clientRect)
 {
 	memGpu.GimeReset();
-	memGpu.SetVidMask(524287);
 	memGpu.SetCompatMode(1);
+
+	// sg4
+	memGpu.SetVidMask(524287);
+
+	// pmode 4
+	//memGpu.SetMonitorType(0);
+	//memGpu.SetGimeVdgMode(6);
+	//memGpu.SetGimeVdgMode2(31);
+
 	memGpu.SetupDisplay();
 	memGpu.VertCenter = 0;
 	memGpu.HorzCenter = 0;
 
-	int w = 256;
-	int h = 32;
-	int stride = w * 4;
-	auto p = new char[stride * h];
-
-	int headerHeight = 20;
 	int top = clientRect->top;
 	int lft = clientRect->left;
 	int rgt = clientRect->right;
-	int height = clientRect->bottom - top - headerHeight;
+	int height = clientRect->bottom - top - HeaderHeight;
+	int width = rgt - lft;
 	int lineHeight = (height / 32) - 1;
-	RECT rc;
+	int column2Width = width - 388;
 
 	bool hlfound = false;
-	std::string s;
-
 	UINT fmt = DT_CENTER | DT_VCENTER | DT_SINGLELINE;
 
-	int ltop = top + headerHeight; // Back buff relative
+	int ltop = top + HeaderHeight; // Back buff relative
 	bool dirty = false;
 	bool showAscii = false;
 	bool forcedUpdate = false;
+	int dataWidth = 16;
+	int pixelHeight = memGpu.LinesperRow;
 
 	if (!ramCache)
 	{
 		forcedUpdate = true;
-		ramCache = new unsigned char[16*32];
+		ramCache = new unsigned char[dataWidth*32];
 	}
 
 	// if not the same address then it will need repainting
@@ -512,23 +683,26 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 
 	for (int lnum = 0; lnum < 32; lnum++, ltop += lineHeight) 
 	{
-		// Draw address of start of line
-		SetTextColor(hdc, RGB(138, 27, 255));
-		s = ToHexString(memoryOffset + lnum * 16, 6, true);
-		SetRect(&rc, lft, ltop, lft+64, ltop+lineHeight);
-		DrawText(hdc, s.c_str(), s.size(), &rc, fmt);
+		unsigned int offset = lnum * dataWidth;
+		unsigned int address = memoryOffset + offset;
 
-		// Fill in data cells
-		SetTextColor(hdc, RGB(0, 0, 0));
-		int hilite = false;
+		int x = lft + 10;
+		int y = ltop + 2;
+
+		// Draw address of start of line
+		BitBlt(hdc, x, y, 7, 12, BackBuf.FontDC, 7 * ((address >> 20) & 15), 0, SRCCOPY);
+		BitBlt(hdc, x + 7, y, 7, 12, BackBuf.FontDC, 7 * ((address >> 16) & 15), 0, SRCCOPY);
+		BitBlt(hdc, x + 14, y, 7, 12, BackBuf.FontDC, 7 * ((address >> 12) & 15), 0, SRCCOPY);
+		BitBlt(hdc, x + 21, y, 7, 12, BackBuf.FontDC, 7 * ((address >> 8) & 15), 0, SRCCOPY);
+		BitBlt(hdc, x + 28, y, 7, 12, BackBuf.FontDC, 7 * ((address >> 4) & 15), 0, SRCCOPY);
+		BitBlt(hdc, x + 35, y, 7, 12, BackBuf.FontDC, 7 * ((address >> 0) & 15), 0, SRCCOPY);
 
 		bool update = Editing || forcedUpdate;
-		auto address = lnum * 16 + memoryOffset;
-		for (int a = 0; a < 16; ++a)
+		for (int a = 0; a < dataWidth; ++a)
 		{
 			auto b = ReadMemory(address + a);
-			if (b != ramCache[lnum * 16 + a])
-				ramCache[lnum * 16 + a] = b, update = true;
+			if (b != ramCache[offset + a])
+				ramCache[offset + a] = b, update = true;
 		}
 
 		// skip nothing to update
@@ -536,42 +710,31 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 
 		dirty = true;
 
-		std::string ascii;
-		for (int n = 0; n < 16; n++)
+		for (int n = 0; n < dataWidth; n++)
 		{
 			// Get data
-			int adr = lnum * 16 + n + memoryOffset;
-			unsigned char val = ReadMemory(adr);
-
-			// Get hex string to display.
-			s = ToHexString(val, 2, true);
+			unsigned char val = ramCache[offset + n];
 
 			// Highlight data if cell is being edited
-			if (Editing && editAddress == adr) {
-				SetTextColor(hdc, RGB(255, 0, 0));  // Red
-				hilite = true;
-			}
+			bool isRed = Editing && editAddress == address + n;
+			if (isRed) hlfound = true;
 
-			SetRect(&rc, lft + Xoffset[n], ltop, lft + Xoffset[n] + 18, ltop + lineHeight);
-			DrawText(hdc, s.c_str(), 2, &rc, fmt);
-
-			// if highlight on turn it off
-			if (hilite) {
-				SetTextColor(hdc, RGB(0, 0, 0));
-				hlfound = true;
-			}
+			x = lft + Xoffset[n] + 3;
+			y = ltop + 2;
+			BitBlt(hdc, x, y, 7, 12, isRed ? BackBuf.FontRedDC : BackBuf.FontDC, 7 * (val >> 4), 0, SRCCOPY);
+			BitBlt(hdc, x + 7, y, 7, 12, isRed ? BackBuf.FontRedDC : BackBuf.FontDC, 7 * (val & 15), 0, SRCCOPY);
 
 			// Append to ascii
-			if (showAscii) ascii += isprint(val) ? val : '.';
+			if (showAscii)
+			{
+				auto ch = val >= 32 && val < 127 ? val : '.';
+				x = rgt - column2Width + n * 7 + 1;
+				y = ltop + 2;
+				BitBlt(hdc, x, y, 7, 12, BackBuf.FontAsciiDC, 7 * (ch - 34), 0, SRCCOPY);
+			}
 		}
 
-		if (showAscii)
-		{
-			// Draw the ascii string
-			SetRect(&rc, rgt-133, ltop, rgt-5, ltop+lineHeight);
-			DrawText(hdc, ascii.c_str(), ascii.size(), &rc, fmt);
-		}
-		else
+		if (!showAscii)
 		{
 			// reset address start to zero
 			memGpu.TagY = 0;
@@ -580,17 +743,18 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 			memGpu.NewStartofVidram = 0;
 
 			// bytes to copy
-			memGpu.BytesperRow = 16;
+			memGpu.BytesperRow = dataWidth;
 
 			// render 12 lines
-			for (int j = 0; j < 12; ++j)
-				memGpu.UpdateScreen32To(ramCache+lnum*16, (unsigned int*)p, j, w, false);
+			for (int j = 0; j < pixelHeight; ++j)
+				memGpu.UpdateScreen32To(ramCache+lnum*dataWidth, (unsigned int*)BackBuf.Data, j, BackBuf.DataWidth, false);
 
 			// blit to back buffer
-			HBITMAP bm = CreateBitmap(w, h, 1, 32, p);
+			HBITMAP bm = CreateBitmap(BackBuf.DataWidth, BackBuf.DataHeight, 1, 32, BackBuf.Data);
 			HDC src = CreateCompatibleDC(hdc);
 			auto obj = SelectObject(src, bm);
-			StretchBlt(hdc, rgt - 132, ltop, 8 * 16, lineHeight, src, 0, 0, 16 * 16, 24, SRCCOPY);
+			int column = (column2Width - 2) & (~0xF);
+			StretchBlt(hdc, rgt - column2Width, ltop, column, lineHeight, src, 0, 0, dataWidth * 16, pixelHeight*2, SRCCOPY);
 			SelectObject(src, obj);
 			DeleteObject(bm);
 			DeleteDC(src);
@@ -602,7 +766,6 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 		SetEditing(false);
 	}
 
-	delete[] p;
 	return dirty;
 }
 
@@ -811,6 +974,7 @@ void InitializeDialog(HWND hDlg)
 		RECT Rect;
 		GetClientRect(hDlg, &Rect);
 
+		BackBuf.Init();
 		SetBackBuffer(Rect);
 		CreateScrollBar(Rect);
 
@@ -837,19 +1001,7 @@ void InitializeDialog(HWND hDlg)
 		SendMessage(hCtl,CB_ADDSTRING,(WPARAM) 0, (LPARAM) "PAK");
 		SendMessage(hCtl,CB_SETCURSEL,(WPARAM) 0, (LPARAM) 0);
 		SetMemType();
-
-		// Set display pen color
-		HPEN pen = CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
-		SelectObject(BackBuf.DeviceContext, pen);
-		DeleteObject(pen);
-
-		// Set display Font
-		HFONT hFont = CreateFont (14, 0, 0, 0, FW_BOLD, FALSE, FALSE,
-				FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-				CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FIXED_PITCH,
-				TEXT("Consolas"));
-		SelectObject(BackBuf.DeviceContext, hFont);
-		DeleteObject(hFont);
+		SetBackBuffer(Rect);
 
 		// Draw the form for memory data
 		DrawForm(BackBuf.DeviceContext, &BackBuf.Rect);
