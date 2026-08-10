@@ -9794,6 +9794,8 @@ void GimeGpu::GimeInit()
 
 void GimeGpu::GimeReset()
 {
+	CC2VDGPiaMode=0;
+	CC2VDGMode=0;
 	CC3Vmode=0;
 	CC3Vres=0;
 	StartofVidram=0;
@@ -9805,7 +9807,7 @@ void GimeGpu::GimeReset()
 	HorzOffsetReg=0;
 	TagY=0;
 	DistoOffset=0;
-	MakeRGBPalette ();
+	MakeRGBPalette();
 	MakeCMPpalette();
 	BoarderChange=3;
 	CC2Offset=0;

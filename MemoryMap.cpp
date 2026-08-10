@@ -68,6 +68,7 @@ HWND hScrollBar = nullptr;
 HWND hEditAdrBeg = nullptr;
 HWND hEditAdrEnd = nullptr;
 HWND hEditVal = nullptr;
+HWND hStatic = nullptr;
 
 // Original controls
 WNDPROC EditValProc;
@@ -88,6 +89,15 @@ enum AddrMode
 	NotSet
 };
 AddrMode AddrMode_ = AddrMode::NotSet;
+
+enum ViewMode
+{
+	VM_ASCII,
+	VM_SG4,
+	VM_PMODE4_NTSC,
+	VM_PMODE4_RGB
+};
+ViewMode viewMode = VM_SG4;
 
 const int HeaderHeight = 20;
 const int TopBarStaticWidth = 510;
@@ -200,6 +210,23 @@ void MemoryBackBufferInfo::Cleanup(HWND hWnd)
 	CleanupDC(hWnd);
 }
 
+void SetViewType()
+{
+	HWND hCtl = GetDlgItem(hDlgMem, IDC_VIEW_TYPE);
+	ViewMode mode = (ViewMode)SendMessage(hCtl, CB_GETCURSEL, 0, 0);
+	if (viewMode == mode) return;
+	viewMode = mode;
+	ResetMemoryCache();
+	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
+
+	// clear backbuffer
+	HBRUSH brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	FillRect(BackBuf.DeviceContext, &BackBuf.Rect, brush);
+
+	// redraw headers
+	DrawForm(BackBuf.DeviceContext, &BackBuf.Rect);
+}
+
 //------------------------------------------------------------------
 //  Display Memory Dialog
 //------------------------------------------------------------------
@@ -277,30 +304,34 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 		break;
 
 	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDC_MEM_TYPE:
-			SetMemType();
-			ResetMemoryCache();
-			InvalidateRect(hDlg, &BackBuf.Rect, FALSE);
-			break;
-		case IDC_BTN_EXPORT_MEM:
-			LocateMemory();
-			ExportMemory();
-			SetFocus(hEditAdrBeg);
-			break;
-		case IDC_BTN_HELP:
-			MessageBox(hDlg,DbgHelp,"Usage",0);
-			SetFocus(hEditAdrBeg);
-			break;
-		case IDCLOSE:
-		case WM_DESTROY:
-			KillTimer(hDlg, IDT_MEM_TIMER);
-			DeleteDC(BackBuf.DeviceContext);
-			DestroyWindow(hDlg);
-			AddrMode_ = AddrMode::NotSet;
-			hDlgMem = nullptr;
-			ResetMemoryCache();
-			break;
+		switch (LOWORD(wParam)) 
+		{
+			case IDC_MEM_TYPE:
+				SetMemType();
+				ResetMemoryCache();
+				InvalidateRect(hDlg, &BackBuf.Rect, FALSE);
+				break;
+			case IDC_VIEW_TYPE:
+				SetViewType();
+				break;
+			case IDC_BTN_EXPORT_MEM:
+				LocateMemory();
+				ExportMemory();
+				SetFocus(hEditAdrBeg);
+				break;
+			case IDC_BTN_HELP:
+				MessageBox(hDlg,DbgHelp,"Usage",0);
+				SetFocus(hEditAdrBeg);
+				break;
+			case IDCLOSE:
+			case WM_DESTROY:
+				KillTimer(hDlg, IDT_MEM_TIMER);
+				DeleteDC(BackBuf.DeviceContext);
+				DestroyWindow(hDlg);
+				AddrMode_ = AddrMode::NotSet;
+				hDlgMem = nullptr;
+				ResetMemoryCache();
+				break;
 		}
 		break;
 	}
@@ -321,6 +352,7 @@ void ResizeWindow(int width, int height)
 
 	// reposition scroll bar
 	MoveWindow(hScrollBar, Rect.right - ScrollBarWidth, TopBarHeight, ScrollBarWidth, Rect.bottom - TopBarHeight, TRUE);
+	MoveWindow(hStatic, Rect.left, 0, Rect.right, TopBarHeight, TRUE);
 }
 
 //------------------------------------------------------------------
@@ -522,9 +554,6 @@ void SetBackBuffer(const RECT& rc)
 	topBar.top = rc.top;
 	topBar.bottom = TopBarHeight;
 
-	// fill top bar
-	FillRect(hdc, &topBar, (HBRUSH)(COLOR_WINDOW + 1));
-
 	// Adjust backing buffer location on client
 	BackBuf.Rect.left   = rc.left;
 	BackBuf.Rect.right  = rc.right  - ScrollBarWidth;
@@ -627,7 +656,8 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 		DrawText(hdc, s.c_str(), 2, &rc, fmt);
 	}
 	SetRect(&rc, rgt - column2Width - 2, top, rgt - 5, top + 20);
-	DrawText(hdc, "ASCII", 6, &rc, fmt);
+	const char* viewModes[] = { "ASCII", "Semi Graphics 4", "PMODE 4 NTSC", "PMODE 4 RGB"};
+	DrawText(hdc, viewModes[viewMode], strlen(viewModes[viewMode]), &rc, fmt);
 }
 
 //------------------------------------------------------------------
@@ -638,13 +668,24 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 	memGpu.GimeReset();
 	memGpu.SetCompatMode(1);
 
-	// sg4
-	memGpu.SetVidMask(524287);
+	bool showAscii = viewMode == VM_ASCII;
 
-	// pmode 4
-	//memGpu.SetMonitorType(0);
-	//memGpu.SetGimeVdgMode(6);
-	//memGpu.SetGimeVdgMode2(31);
+	if (viewMode == VM_SG4)
+	{
+		memGpu.SetVidMask(524287);
+	}
+	else if (viewMode == VM_PMODE4_NTSC)
+	{
+		memGpu.SetMonitorType(0);
+		memGpu.SetGimeVdgMode(6);
+		memGpu.SetGimeVdgMode2(31);
+	}
+	else if (viewMode == VM_PMODE4_RGB)
+	{
+		memGpu.SetMonitorType(1);
+		memGpu.SetGimeVdgMode(6);
+		memGpu.SetGimeVdgMode2(31);
+	}
 
 	memGpu.SetupDisplay();
 	memGpu.VertCenter = 0;
@@ -663,7 +704,6 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 
 	int ltop = top + HeaderHeight; // Back buff relative
 	bool dirty = false;
-	bool showAscii = false;
 	bool forcedUpdate = false;
 	int dataWidth = 16;
 	int pixelHeight = memGpu.LinesperRow;
@@ -978,6 +1018,8 @@ void InitializeDialog(HWND hDlg)
 		SetBackBuffer(Rect);
 		CreateScrollBar(Rect);
 
+		hStatic = GetDlgItem(hDlg,-1);
+
 		//Subclass edit boxes
 		hEditAdrBeg = GetDlgItem(hDlg, IDC_EDIT_RANGE_BEG);
 		EditAdrBegProc = (WNDPROC) SetWindowLongPtr
@@ -1001,6 +1043,15 @@ void InitializeDialog(HWND hDlg)
 		SendMessage(hCtl,CB_ADDSTRING,(WPARAM) 0, (LPARAM) "PAK");
 		SendMessage(hCtl,CB_SETCURSEL,(WPARAM) 0, (LPARAM) 0);
 		SetMemType();
+
+		hCtl = GetDlgItem(hDlg, IDC_VIEW_TYPE);
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"ASCII");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"SG4");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE4 NTSC");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE4 RGB");
+		SendMessage(hCtl, CB_SETCURSEL, (WPARAM)VM_SG4, (LPARAM)0);
+		SetViewType();
+
 		SetBackBuffer(Rect);
 
 		// Draw the form for memory data
