@@ -61,7 +61,7 @@ namespace VCC::Debugger::UI
 	{
 		HDC		DeviceContext = nullptr;
 		HBITMAP Bitmap = nullptr;
-		RECT    Rect;
+        RECT    Rect{};
 		int		Width = 0;
 		int		Height = 0;
 

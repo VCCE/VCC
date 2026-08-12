@@ -358,6 +358,7 @@
 #define IDT_TRC_VSCROLLBAR              2005
 #define IDT_MMU_VSCROLLBAR              2006
 #define IDT_TRC_HSCROLLBAR              2007
+#define IDC_MEM_HSCROLLBAR              2008
 
 #define IDC_EDIT_SOURCE                 2100
 #define IDC_BTN_SOURCE_BROWSE           2101
