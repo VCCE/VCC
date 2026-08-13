@@ -74,8 +74,6 @@ constexpr auto RENDERS_PER_BLINK_TOGGLE = 16u;
 //*****************************************************
 
 static unsigned char HorzInteruptEnabled=0,VertInteruptEnabled=0;
-static unsigned char TopBoarder=0,BottomBoarder=0,TopOffScreen=0,BottomOffScreen=0;
-static unsigned char LinesperScreen;
 static unsigned char TimerInteruptEnabled=0;
 static int MasterTimer=0; 
 static unsigned int TimerClockRate=0;
@@ -225,7 +223,7 @@ float RenderFrame (SystemState *RFState)
 	}
 
 	// Top Border actually begins here, but is offscreen
-	for (RFState->LineCounter = 0; RFState->LineCounter < TopOffScreen; RFState->LineCounter++)
+	for (RFState->LineCounter = 0; RFState->LineCounter < gGimeGpu.TopOffScreen; RFState->LineCounter++)
 	{
 		HLINE();
 	}
@@ -238,7 +236,7 @@ float RenderFrame (SystemState *RFState)
 
 	// Visible Top Border begins here. (Remove 4 lines for centering)
 	RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenTopBorder, 0);
-	for (RFState->LineCounter = 0; RFState->LineCounter < TopBoarder; RFState->LineCounter++)
+	for (RFState->LineCounter = 0; RFState->LineCounter < gGimeGpu.TopBoarder; RFState->LineCounter++)
 	{
 		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
@@ -247,7 +245,7 @@ float RenderFrame (SystemState *RFState)
 
 	// Main Screen begins here: LPF = 192, 200 (actually 199), 225
 	RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenRender, 0);
-	for (RFState->LineCounter = 0; RFState->LineCounter < LinesperScreen; RFState->LineCounter++)		
+	for (RFState->LineCounter = 0; RFState->LineCounter < gGimeGpu.LinesperScreen; RFState->LineCounter++)
 	{
 		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
@@ -256,7 +254,7 @@ float RenderFrame (SystemState *RFState)
 
 	// Bottom Border begins here.
 	RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenBottomBorder, 0);
-	for (RFState->LineCounter=0;RFState->LineCounter < BottomBoarder;RFState->LineCounter++)
+	for (RFState->LineCounter=0;RFState->LineCounter < gGimeGpu.BottomBoarder;RFState->LineCounter++)
 	{
 		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
@@ -271,7 +269,7 @@ float RenderFrame (SystemState *RFState)
 	}
 
 	// Bottom Border continues but is offscreen
-	for (RFState->LineCounter = 0; RFState->LineCounter < BottomOffScreen; RFState->LineCounter++)
+	for (RFState->LineCounter = 0; RFState->LineCounter < gGimeGpu.BottomOffScreen; RFState->LineCounter++)
 	{
 		HLINE();
 	}
@@ -343,18 +341,6 @@ void SetVertInteruptState(unsigned char State)
 	return;
 }
 
-void SetLinesperScreen (unsigned char Lines)
-{
-	Lines = (Lines & 3);
-	LinesperScreen=Lpf[Lines];
-	TopBoarder=VcenterTable[Lines];
-	BottomBoarder = 239 - (TopBoarder + LinesperScreen);
-	TopOffScreen = TopOffScreenTable[Lines];
-	BottomOffScreen = BottomOffScreenTable[Lines];
-	return;
-}
-
-
 DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
 {
 	const float pixelsPerLine = gGimeGpu.GetDisplayedPixelsPerLine();
@@ -371,16 +357,16 @@ DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
 
 	// calculate the content size including the borders in surface coords
 	float contentWidth = pixelsPerLine + horizontalBorderSize * 2;
-	float contentHeight = activeLines + TopBoarder + BottomBoarder;
+	float contentHeight = activeLines + gGimeGpu.TopBoarder + gGimeGpu.BottomBoarder;
 
 	// now get scale difference between both previous equivalent boxes
 	float horizontalScale = deviceScreenWidth / contentWidth;
 	float verticalScale = deviceScreenHeight / contentHeight;
 
 	// fill in details by scalling the coco screen into device coords
-	details.contentRows = static_cast<int>(LinesperScreen * verticalScale);
-	details.topBorderRows = static_cast<int>(TopBoarder * verticalScale) + extraBorderPadding.y;
-	details.bottomBorderRows = static_cast<int>(BottomBoarder * verticalScale) + extraBorderPadding.y;
+	details.contentRows = static_cast<int>(gGimeGpu.LinesperScreen * verticalScale);
+	details.topBorderRows = static_cast<int>(gGimeGpu.TopBoarder * verticalScale) + extraBorderPadding.y;
+	details.bottomBorderRows = static_cast<int>(gGimeGpu.BottomBoarder * verticalScale) + extraBorderPadding.y;
 
 	details.contentColumns = static_cast<int>(pixelsPerLine * horizontalScale);
 	details.leftBorderColumns = static_cast<int>(horizontalBorderSize * horizontalScale) + extraBorderPadding.x;

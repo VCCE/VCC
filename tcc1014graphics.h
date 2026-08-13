@@ -40,8 +40,8 @@ struct GimeGpu
 	unsigned char LinesperRow = 1, BytesperRow = 32;
 	unsigned char GraphicsMode = 0;
 	unsigned char TextFGColor = 0, TextBGColor = 0;
-	unsigned char TextFGPallete = 0, TextBGPallete = 0;
-	unsigned char PalleteIndex = 0;
+	unsigned char TextFGPalette = 0, TextBGPalette = 0;
+	unsigned char PaletteIndex = 0;
 	unsigned short PixelsperLine = 0, VPitch = 32;
 	unsigned char Stretch = 0, PixelsperByte = 0;
 	unsigned char HorzCenter = 0, VertCenter = 0;
@@ -57,11 +57,15 @@ struct GimeGpu
 	unsigned char MasterMode = 0;
 	unsigned char ColorInvert = 1;
 	unsigned char BlinkState = 1;
+	unsigned char TopBoarder = 0, BottomBoarder = 0, TopOffScreen = 0, BottomOffScreen = 0;
 	bool UserFlipped = false;
 	unsigned int last_mmode = 0;
 	const char* curr_gmode = "";
 	const char* last_gmode = "";
-
+	unsigned char  Palette[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };		//Coco 3 6 bit colors
+	unsigned char  Palette8Bit[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+	unsigned short Palette16Bit[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };	//Color values translated to 16bit 32BIT
+	unsigned int   Palette32Bit[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };	//Color values translated to 24/32 bits
 
 	//This routine gets called every time a software video register get updated.
 	void SetupDisplay();
@@ -75,6 +79,7 @@ struct GimeGpu
 	unsigned char SetScanLines(unsigned char Lines);
 	unsigned int GetStartOfVidram() const;
 	unsigned short GetDisplayedPixelsPerLine() const;
+	void SetLinesperScreen(unsigned char Lines);
 	void FlipArtifacts();
 	void GimeInit();
 	void GimeReset();
@@ -83,7 +88,7 @@ struct GimeGpu
 	void SetCompatMode(unsigned char Register);
 	void SetGimeBoarderColor(unsigned char data);
 	void SetGimeHorzOffset(unsigned char data);
-	void SetGimePalette(unsigned char pallete, unsigned char color) const;
+	void SetGimePalette(unsigned char palette, unsigned char color);
 	void SetGimeVdgMode(unsigned char VdgMode);
 	void SetGimeVdgMode2(unsigned char Vdgmode2);
 	void SetGimeVdgOffset(unsigned char Offset);
@@ -93,6 +98,7 @@ struct GimeGpu
 	void SetVerticalOffsetRegister(unsigned short Register);
 	void SetVideoBank(unsigned char data);
 	void SetVidMask(unsigned int data);
+	bool CopyPalette(const GimeGpu& other);
 
 	void DrawTopBoarder8(SystemState* DTState) const;
 	void DrawTopBoarder16(SystemState* DTState) const;

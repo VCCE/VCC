@@ -136,7 +136,7 @@ namespace VCC
                 pal[i + 128].peFlags = PC_RESERVED | PC_NOCOLLAPSE;
             }
             g_pDD->CreatePalette(DDPCAPS_8BIT | DDPCAPS_ALLOW256, pal, &ddpal, nullptr);
-            g_pDDS->SetPalette(ddpal); // Set pallete for Primary surface
+            g_pDDS->SetPalette(ddpal); // Set palette for Primary surface
             //**********************************END TEST***************************************
         }
         else

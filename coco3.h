@@ -31,7 +31,6 @@ struct DisplayDetails
 
 
 void SetClockSpeed(unsigned int Cycles);
-void SetLinesperScreen(unsigned char Lines);
 DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight);
 void SetHorzInteruptState(unsigned char);
 void SetVertInteruptState(unsigned char);

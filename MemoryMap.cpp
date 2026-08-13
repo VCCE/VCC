@@ -95,8 +95,21 @@ enum ViewMode
 {
 	VM_ASCII,
 	VM_SG4,
+	VM_PMODE0_S0,
+	VM_PMODE0_S1,
+	VM_PMODE1_S0,
+	VM_PMODE1_S1,
+	VM_PMODE2_S0,
+	VM_PMODE2_S1,
+	VM_PMODE3_S0,
+	VM_PMODE3_S1,
+	VM_PMODE4_RGB_S0,
+	VM_PMODE4_RGB_S1,
 	VM_PMODE4_NTSC,
-	VM_PMODE4_RGB
+	VM_HSCREEN1,
+	VM_HSCREEN2,
+	VM_HSCREEN3,
+	VM_HSCREEN4,
 };
 ViewMode viewMode = VM_SG4;
 
@@ -115,7 +128,6 @@ unsigned char *Rom = nullptr;
 bool Editing = false;
 int editAddress = 0;
 int dataWidth = 16;
-int viewColumns = 16;
 
 struct Measurements
 {
@@ -126,13 +138,16 @@ struct Measurements
 	int right;
 	int height;
 	int width;
+	int hexDigitsWidth;		// width of hex digits
+	int hexMinColums;		// hex shown columns
+	int hexColumns;			// hex columns visible
+	int hexWidth;			// hex window width (pixels)
+	int viewWidth;			// view window width (pixels)
+	int viewOffset;			// view window buffer offset
+	int viewColumns;		// view window columns (bytes)
+	int viewMaxWidth;		// view window maximum width (pixels)
+	int viewWinWidth;		// view window minimum width (pixels)
 	int lineHeight;
-	int hexDigitsWidth;
-	int hexColumns;
-	int hexWidth;
-	int viewWidth;
-	int viewOffset;
-	int viewMaxWidth;
 	int currLineTop;
 
 	const int fontHeight = 12;
@@ -154,13 +169,14 @@ struct Measurements
 		
 		// hex column info
 		hexDigitsWidth = 18;
-		hexColumns = dataWidth < 16 ? 16 : dataWidth > 32 ? 32 : dataWidth;
-		hexWidth = hexColumnPos(hexColumns);
+		hexColumns = dataWidth > 32 ? 32 : dataWidth;
+		hexMinColums = hexColumns < 16 ? 16 : hexColumns;
+		hexWidth = hexColumnPos(hexMinColums);
 
 		// view column info
-		viewColumns = (dataWidth > 32 ? 32 : dataWidth);
-		viewWidth = width - hexWidth;
-		viewMaxWidth = (viewWidth - 2) & (~0xF);
+		viewColumns = (dataWidth > 32 ? 32 : dataWidth);	// bytes to render
+		viewWidth = width - hexWidth;						// view width is remaining width
+		viewMaxWidth = (viewWidth - 2) & (~0xF);			// round view width
 		viewOffset = 0;
 
 		// line rows
@@ -169,19 +185,67 @@ struct Measurements
 
 		if (viewMode == VM_SG4)
 		{
-			if (viewMaxWidth > dataWidth * 16)
-				viewMaxWidth = dataWidth * 16;
+			// sg4 is limited to 40 characters wide (320 pixels)
+			viewColumns = (dataWidth > 40 ? 40 : dataWidth);
+			viewWinWidth = viewColumns * 16;
+			// restrict width to character size
+			if (viewMaxWidth > viewColumns * 16)
+				viewMaxWidth = viewColumns * 16;
 		}
 		else if (viewMode == VM_PMODE4_NTSC)
 		{
 			viewOffset = 4;
-			if (viewMaxWidth > dataWidth * 16 * 8)
-				viewMaxWidth = dataWidth * 16 * 8;
+			// restrict window render width to 32 (256 pixels)
+			viewColumns = (dataWidth > 32 ? 32 : dataWidth);
+			viewWinWidth = viewColumns * 16;
+			// restrict maximum pixel width for small widths
+			if (viewMaxWidth > viewColumns * 16 * 8)
+				viewMaxWidth = viewColumns * 16 * 8;
 		}
-		else if (viewMode == VM_PMODE4_RGB)
+		else if (viewMode == VM_PMODE0_S0 || viewMode == VM_PMODE0_S1 || viewMode == VM_PMODE2_S0 || viewMode == VM_PMODE2_S1)
 		{
-			if (viewMaxWidth > dataWidth * 16 * 8)
-				viewMaxWidth = dataWidth * 16 * 8;
+			// restrict window render width to 16 (128 pixels)
+			viewColumns = (dataWidth > 16 ? 16 : dataWidth);
+			viewWinWidth = viewColumns * 16;
+			// restrict maximum pixel width for small widths
+			if (viewMaxWidth > viewColumns * 16 * 8)
+				viewMaxWidth = viewColumns * 16 * 8;
+		}
+		else if (viewMode == VM_PMODE1_S0 || viewMode == VM_PMODE1_S1 || viewMode == VM_PMODE3_S0 || viewMode == VM_PMODE3_S1)
+		{
+			// restrict window render width to 32 (128 pixels)
+			viewColumns = (dataWidth > 32 ? 32 : dataWidth);
+			viewWinWidth = viewColumns * 16;
+			// restrict maximum pixel width for small widths
+			if (viewMaxWidth > viewColumns * 16 * 8)
+				viewMaxWidth = viewColumns * 16 * 8;
+		}
+		else if (viewMode == VM_PMODE4_RGB_S0 || viewMode == VM_PMODE4_RGB_S1)
+		{
+			// restrict window render width to 32 (256 pixels)
+			viewColumns = (dataWidth > 32 ? 32 : dataWidth);
+			viewWinWidth = viewColumns * 16;
+			// restrict maximum pixel width for small widths
+			if (viewMaxWidth > viewColumns * 16 * 8)
+				viewMaxWidth = viewColumns * 16 * 8;
+		}
+		else if (viewMode == VM_HSCREEN1 || viewMode == VM_HSCREEN2)
+		{
+			// restrict this mode to 160 (320 pixels)
+			viewColumns = (dataWidth > 160 ? 160 : dataWidth);
+			viewWinWidth = viewColumns * 2 * 2;
+			// restrict maximum pixel width for small widths
+			if (viewMaxWidth > viewColumns * 16 * 2)
+				viewMaxWidth = viewColumns * 16 * 2;
+		}
+		else if (viewMode == VM_HSCREEN3 || viewMode == VM_HSCREEN4)
+		{
+			// restrict this mode to 160 (320 pixels)
+			viewColumns = (dataWidth > 80 ? 80 : dataWidth);
+			viewWinWidth = viewColumns * 2;
+			// restrict maximum pixel width for small widths
+			if (viewMaxWidth > viewColumns * 16)
+				viewMaxWidth = viewColumns * 16;
 		}
 	}
 
@@ -285,9 +349,9 @@ char DbgHelp[] =
 	"Select memory to be edited by clicking on a\n"
 	"cell. The cell will turn red and it's address\n"
 	"will be displayed next to the box. Enter byte\n"
-	"values in hexadecimal.\n"
+	"values in hexadecimal.\n\n"
 	"[ ] dec/inc row width by 1.\n"
-	"Shift + [ ] dec/inc row width by 8.\n"
+	"{ } dec/inc row width by 8.\n"
 	"";
 
 
@@ -689,7 +753,7 @@ LRESULT CALLBACK subEditAdrBegProc(
 				if (dataWidth > 256) dataWidth = 256;
 			}
 			else
-				dataWidth = dataWidth < 255 ? dataWidth + 1 : dataWidth;
+				dataWidth = dataWidth < 256 ? dataWidth + 1 : dataWidth;
 			SetupDataWidth();
 			return 0;
 
@@ -919,14 +983,33 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 	SetTextColor(hdc, RGB(138, 27, 255));
 	SetRect(&rc, m.left, m.top, m.left + cAddressWidth, m.top + cHeaderHeight);
 	DrawText(hdc, "Address", 7, &rc, fmt);
-	for (int n = 0; n < viewColumns; n++)
+	for (int n = 0; n < m.hexColumns; n++)
 	{
 		SetRect(&rc, m.hexColumnPos(n), m.top, m.hexColumnPos(n) + m.hexDigitsWidth - 4, m.top + cHeaderHeight);
 		const std::string s(ToHexString(n, 2, false));
 		DrawText(hdc, s.c_str(), 2, &rc, fmt);
 	}
 	SetRect(&rc, m.right - m.viewWidth - 2, m.top, m.right - 5, m.top + cHeaderHeight);
-	const char* viewModes[] = { "ASCII", "Semi Graphics 4", "PMODE 4 NTSC", "PMODE 4 RGB" };
+	const char* viewModes[] = 
+	{
+		"ASCII", 
+		"Semi Graphics 4", 
+		"PMODE 0 SCREEN 0 (2 colors)",
+		"PMODE 0 SCREEN 1 (2 colors)",
+		"PMODE 1 SCREEN 0 (4 colors)",
+		"PMODE 1 SCREEN 1 (4 colors)",
+		"PMODE 2 SCREEN 0 (2 colors)",
+		"PMODE 2 SCREEN 1 (2 colors)",
+		"PMODE 3 SCREEN 0 (4 colors)",
+		"PMODE 3 SCREEN 1 (4 colors)",
+		"PMODE 4 SCREEN 0 RGB (2 colors)", 
+		"PMODE 4 SCREEN 1 RGB (2 colors)",
+		"PMODE 4 NTSC (artifact colors)",
+		"HSCREEN 1 (4 Colors)",
+		"HSCREEN 2 (16 Colors)",
+		"HSCREEN 3 (2 Colors)", 
+		"HSCREEN 4 (4 Colors)" 
+	};
 	DrawText(hdc, viewModes[viewMode], strlen(viewModes[viewMode]), &rc, fmt);
 }
 
@@ -936,8 +1019,16 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 //------------------------------------------------------------------
 bool DrawMemory(HDC hdc, LPCRECT clientRect)
 {
+	bool dirty = false;
+	bool forcedUpdate = false;
+
 	memGpu.GimeReset();
 	memGpu.SetCompatMode(1);
+	memGpu.SetMonitorType(1);
+
+	// if palette changes pixels will need rewriting
+	if (memGpu.CopyPalette(gGimeGpu))
+		ResetMemoryCache();
 
 	if (viewMode == VM_SG4)
 	{
@@ -949,11 +1040,80 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 		memGpu.SetGimeVdgMode(6);
 		memGpu.SetGimeVdgMode2(31);
 	}
-	else if (viewMode == VM_PMODE4_RGB)
+	else if (viewMode == VM_PMODE0_S0)
+	{
+		memGpu.SetGimeVdgMode(3);
+		memGpu.SetGimeVdgMode2(22);
+	}
+	else if (viewMode == VM_PMODE0_S1)
+	{
+		memGpu.SetGimeVdgMode(3);
+		memGpu.SetGimeVdgMode2(23);
+	}
+	else if (viewMode == VM_PMODE1_S0)
+	{
+		memGpu.SetGimeVdgMode(4);
+		memGpu.SetGimeVdgMode2(24);
+	}
+	else if (viewMode == VM_PMODE1_S1)
+	{
+		memGpu.SetGimeVdgMode(4);
+		memGpu.SetGimeVdgMode2(25);
+	}
+	else if (viewMode == VM_PMODE2_S0)
+	{
+		memGpu.SetGimeVdgMode(5);
+		memGpu.SetGimeVdgMode2(26);
+	}
+	else if (viewMode == VM_PMODE2_S1)
+	{
+		memGpu.SetGimeVdgMode(5);
+		memGpu.SetGimeVdgMode2(27);
+	}
+	else if (viewMode == VM_PMODE3_S0)
+	{
+		memGpu.SetGimeVdgMode(6);
+		memGpu.SetGimeVdgMode2(28);
+	}
+	else if (viewMode == VM_PMODE3_S1)
+	{
+		memGpu.SetGimeVdgMode(6);
+		memGpu.SetGimeVdgMode2(29);
+	}
+	else if (viewMode == VM_PMODE4_RGB_S0)
 	{
 		memGpu.SetMonitorType(1);
 		memGpu.SetGimeVdgMode(6);
+		memGpu.SetGimeVdgMode2(30);
+	}
+	else if (viewMode == VM_PMODE4_RGB_S1)
+	{
+		memGpu.SetGimeVdgMode(6);
 		memGpu.SetGimeVdgMode2(31);
+	}
+	else if (viewMode == VM_HSCREEN1)
+	{
+		memGpu.SetCompatMode(0);
+		memGpu.SetGimeVmode(128);
+		memGpu.SetGimeVres(21);
+	}
+	else if (viewMode == VM_HSCREEN2)
+	{
+		memGpu.SetCompatMode(0);
+		memGpu.SetGimeVmode(128);
+		memGpu.SetGimeVres(122);
+	}
+	else if (viewMode == VM_HSCREEN3)
+	{
+		memGpu.SetCompatMode(0);
+		memGpu.SetGimeVmode(128);
+		memGpu.SetGimeVres(20);
+	}
+	else if (viewMode == VM_HSCREEN4)
+	{
+		memGpu.SetCompatMode(0);
+		memGpu.SetGimeVmode(128);
+		memGpu.SetGimeVres(29);
 	}
 
 	memGpu.SetupDisplay();
@@ -965,9 +1125,6 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 	int pixelHeight = memGpu.LinesperRow;
 	bool hlfound = false;
 	UINT fmt = DT_CENTER | DT_VCENTER | DT_SINGLELINE;
-
-	bool dirty = false;
-	bool forcedUpdate = false;
 
 	if (!ramCache)
 	{
@@ -1000,7 +1157,7 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 
 		// update ram cache
 		bool update = Editing || forcedUpdate;
-		for (int a = 0; a < viewColumns; ++a)
+		for (int a = 0; a < dataWidth; ++a)
 		{
 			auto b = ReadMemory(address + a);
 			if (b != ramCache[offset + a])
@@ -1008,11 +1165,14 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 		}
 
 		// skip nothing to update
-		if (!update) continue;
+		if (!update)
+		{
+			continue;
+		}
 		dirty = true;
 
 		// draw hex columns & view
-		for (int n = 0; n < viewColumns; n++)
+		for (int n = 0; n < m.hexColumns; n++)
 		{
 			// Get data
 			unsigned char val = ramCache[offset + n];
@@ -1043,7 +1203,7 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 			memGpu.NewStartofVidram = 0;
 
 			// bytes to copy
-			memGpu.BytesperRow = viewColumns;
+			memGpu.BytesperRow = m.viewColumns;
 
 			// render 12 lines
 			for (int j = 0; j < pixelHeight; ++j)
@@ -1053,8 +1213,7 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 			HBITMAP bm = CreateBitmap(BackBuf.DataWidth, BackBuf.DataHeight, 1, 32, BackBuf.Data);
 			HDC src = CreateCompatibleDC(hdc);
 			auto obj = SelectObject(src, bm);
-			int column = m.viewMaxWidth;
-			StretchBlt(hdc, m.right - m.viewWidth, m.currLineTop, column, m.lineHeight, src, m.viewOffset, 0, dataWidth * 16, pixelHeight*2, SRCCOPY);
+			StretchBlt(hdc, m.right - m.viewWidth, m.currLineTop, m.viewMaxWidth, m.lineHeight, src, m.viewOffset, 0, m.viewWinWidth, pixelHeight*2, SRCCOPY);
 			SelectObject(src, obj);
 			DeleteObject(bm);
 			DeleteDC(src);
@@ -1294,8 +1453,21 @@ void InitializeDialog(HWND hDlg)
 		hCtl = GetDlgItem(hDlg, IDC_VIEW_TYPE);
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"ASCII");
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"SG4");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE0 S0");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE0 S1");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE1 S0");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE1 S1");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE2 S0");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE2 S1");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE3 S0");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE3 S1");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE4 S0 RGB");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE4 S1 RGB");
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE4 NTSC");
-		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE4 RGB");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"HSCREEN1");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"HSCREEN2");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"HSCREEN3");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"HSCREEN4");
 		SendMessage(hCtl, CB_SETCURSEL, (WPARAM)VM_SG4, (LPARAM)0);
 		SetViewType();
 
