@@ -53,6 +53,7 @@ void CommitValue();
 void SetMemType();
 void InitializeDialog(HWND);
 void DoScroll(WPARAM);
+void DoHorzScroll(WPARAM);
 int CStrToHex(const char *);
 void ResetMemoryCache();
 void ResizeWindow(int width, int height);
@@ -120,6 +121,16 @@ const int cHeaderHeight = 20;			// header with labels
 const int cVertScrollBarWidth = 20;
 const int cHorzScrollBarHeight = 20;	// bottom scroll bar
 const int cAddressWidth = 60;			// address column width
+const int cAsciiCharWidth = 7;
+
+// windows will allow the track bar to be positioned
+// pixel by pixel, but it will snap to the
+// nearest whole value. as the horizontal scrolling 
+// will use small numbers, this causes a visible jumping
+// of the track bar which is distracting, so instead
+// allow higher resolution for the track bar and scale
+// the result.
+const int cHorzScrollFactor = 10;
 
 int MemSize = 0;
 int memoryOffset = 0;
@@ -130,6 +141,7 @@ bool Editing = false;
 bool Hex = true;
 int editAddress = 0;
 int dataWidth = 16;
+int dataPosX = 0;
 
 struct Measurements
 {
@@ -150,14 +162,16 @@ struct Measurements
 	int viewColumns;		// view window columns (bytes)
 	int viewMaxWidth;		// view window maximum width (pixels)
 	int viewWinWidth;		// view window minimum width (pixels)
+	float viewCellWidth;
 	int lineHeight;
 	int currLineTop;
+	int viewPosX;			// view window horizontal scroll
 
 	const int fontHeight = 12;
 
 	const int maxDataWidth[VM_MAX] =
 	{
-		40,//VM_ASCII,
+		256,//VM_ASCII,
 		32,//VM_SG4,
 		16,//VM_PMODE0_S0,
 		16,//VM_PMODE0_S1,
@@ -180,23 +194,22 @@ struct Measurements
 	{
 		8,//VM_ASCII,
 		8,//VM_SG4,
-		8,//VM_PMODE0_S0,
-		8,//VM_PMODE0_S1,
+		16,//VM_PMODE0_S0,
+		16,//VM_PMODE0_S1,
 		8,//VM_PMODE1_S0,
 		8,//VM_PMODE1_S1,
-		8,//VM_PMODE2_S0,
-		8,//VM_PMODE2_S1,
+		16,//VM_PMODE2_S0,
+		16,//VM_PMODE2_S1,
 		8,//VM_PMODE3_S0,
 		8,//VM_PMODE3_S1,
 		8,//VM_PMODE4_RGB_S0,
 		8,//VM_PMODE4_RGB_S1,
 		8,//VM_PMODE4_NTSC,
-		2,//VM_HSCREEN1,
+		4,//VM_HSCREEN1,
 		2,//VM_HSCREEN2,
-		1,//VM_HSCREEN3,
-		1,//VM_HSCREEN4
+		4,//VM_HSCREEN3,
+		2,//VM_HSCREEN4
 	};
-
 
 	//
 	// construct display measurements from back buffer client rectangle
@@ -226,9 +239,12 @@ struct Measurements
 			hexColumns = 0;
 		}
 
+		// include a gutter after width of 16
+		int gutter = (hexColumns > 16 && hexColumns & 7) ? 10 : 0;
+
 		// view column info
 		viewColumns = (dataWidth > maxDataWidth[viewMode] ? maxDataWidth[viewMode] : dataWidth);
-		viewWidth = width - hexWidth;						// view width is remaining width
+		viewWidth = width - hexWidth - gutter;				// view width is remaining width
 		viewWinWidth = viewColumns * 2 * pixelViewWidth[viewMode];
 		viewMaxWidth = (viewWidth - 2) & (~0xF);			// round view width
 		viewOffset = 0;
@@ -245,14 +261,41 @@ struct Measurements
 				viewMaxWidth = viewColumns * 16;
 		}
 
+		viewCellWidth = ((float)viewMaxWidth / viewWinWidth) * pixelViewWidth[viewMode] * 2;
+
+		if (viewMode == VM_ASCII)
+		{
+			viewMaxWidth = (viewWidth - 2) & (~0xF);
+			viewColumns = std::min(viewMaxWidth / cAsciiCharWidth, dataWidth);
+			viewCellWidth = 7;
+		}
+
 		if (viewMode == VM_PMODE4_NTSC)
 			viewOffset = 4;
+
+		// reposition view so hex is always visible
+		const float rounding = 0.000001f; // adjust for rounding
+		float visible = hexColumns;
+		float pos = dataPosX / (dataWidth - visible);
+		viewPosX = std::max(0, (int)((dataWidth - viewColumns) * (pos + rounding)));
+
 	}
 
 	//
 	// left edge of hex column
 	//
 	int hexLeft() const { return left + cAddressWidth + 5; }
+
+	//
+	// left edge of view 
+	//
+	int viewLeft() const { return right - viewWidth; }
+
+	//
+	// left/right pos of hex window in view
+	//
+	int viewHexLeft() const { return viewLeft() + (int)(viewCellWidth * (dataPosX - viewPosX)); }
+	int viewHexRight() const { return viewHexLeft() + (int)(viewCellWidth * hexColumns); }
 
 	//
 	// return pos (pixel offset) of hex value column n
@@ -314,6 +357,7 @@ struct Measurements
 struct MemoryBackBufferInfo : BackBufferInfo
 {
 	HPEN Pen = nullptr;
+	HPEN PenBlack = nullptr;
 	HFONT Font = nullptr;
 
 	HBITMAP FontBitmap = nullptr;
@@ -385,6 +429,7 @@ void MemoryBackBufferInfo::Init()
 
 	// Set display pen color
 	Pen = CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
+	PenBlack = CreatePen(PS_SOLID, 1, RGB(0,0,0));
 
 	UINT fmt = DT_LEFT | DT_VCENTER | DT_SINGLELINE;
 	// cache main hex font (black)
@@ -417,6 +462,8 @@ void MemoryBackBufferInfo::CleanupPen()
 {
 	DeleteObject(Pen);
 	Pen = nullptr;
+	DeleteObject(PenBlack);
+	PenBlack = nullptr;
 }
 
 void MemoryBackBufferInfo::CleanupFont()
@@ -468,30 +515,40 @@ void RepaintAll()
 }
 
 //
-// setup new type of view
-//
-void SetViewType()
-{
-	HWND hCtl = GetDlgItem(hDlgMem, IDC_VIEW_TYPE);
-	ViewMode mode = (ViewMode)SendMessage(hCtl, CB_GETCURSEL, 0, 0);
-	if (viewMode == mode) return;
-	viewMode = mode;
-	RepaintAll();
-}
-
-//
 // adjust vertical scroll bar based on data width
 //
 void UpdateVertScrollBar()
 {
-	SCROLLINFO si = {0};
+	SCROLLINFO si = { 0 };
+	int visible = 32 * dataWidth;
 	si.cbSize = sizeof(si);
-	si.fMask = SIF_RANGE | SIF_POS;
+	si.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
 	si.nMin = 0;
-	si.nPage = 32 * dataWidth;
-	si.nMax = MemSize - si.nPage;
+	si.nPage = visible;
+	si.nMax = (MemSize > visible) ? MemSize - 1 : 0;
 	si.nPos = memoryOffset;
 	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
+}
+
+
+//
+// adjust horizontal scroll bar based on data width
+//
+void UpdateHorzScrollBar()
+{
+	Measurements m(&BackBuf.Rect);
+	int visible = cHorzScrollFactor * m.hexColumns;
+	int total = cHorzScrollFactor * dataWidth;
+	int pos = cHorzScrollFactor * dataPosX;
+
+	SCROLLINFO si = { 0 };
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
+	si.nMin = 0;
+	si.nPage = visible;
+	si.nMax = total > visible ? total - 1 : 0;
+	si.nPos = pos;
+	SetScrollInfo(hHorzScrollBar, SB_CTL, &si, TRUE);
 }
 
 //
@@ -504,12 +561,28 @@ void UpdateWidthDisplay()
 	SetDlgItemText(hDlgMem, IDC_ADRTXT, info);
 }
 
+//
+// setup new type of view
+//
+void SetViewType()
+{
+	HWND hCtl = GetDlgItem(hDlgMem, IDC_VIEW_TYPE);
+	ViewMode mode = (ViewMode)SendMessage(hCtl, CB_GETCURSEL, 0, 0);
+	if (viewMode == mode) return;
+	viewMode = mode;
+	UpdateHorzScrollBar();
+	RepaintAll();
+}
 
 //
 // setup for new data width
 //
 void SetupDataWidth()
 {
+	Measurements m(&BackBuf.Rect);
+	if (dataPosX + m.hexColumns > dataWidth)
+		dataPosX = dataWidth - m.hexColumns;
+
 	UpdateWidthDisplay();
 
 	ResetMemoryCache();
@@ -521,6 +594,7 @@ void SetupDataWidth()
 
 	// adjust vertical scrolling size
 	UpdateVertScrollBar();
+	UpdateHorzScrollBar();
 
 	// redraw headers
 	DrawForm(BackBuf.DeviceContext, &BackBuf.Rect);
@@ -569,6 +643,10 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 
 	case WM_VSCROLL:
 		DoScroll(wParam);
+		break;
+
+	case WM_HSCROLL:
+		DoHorzScroll(wParam);
 		break;
 
 	case WM_MOUSEWHEEL:
@@ -1015,7 +1093,7 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 	for (int n = 0; n < m.hexColumns; n++)
 	{
 		SetRect(&rc, m.hexColumnPos(n), m.top, m.hexColumnPos(n) + m.hexDigitsWidth - 4, m.top + cHeaderHeight);
-		const std::string s(ToHexString(n, 2, false));
+		const std::string s(ToHexString(dataPosX + n, 2, false));
 		DrawText(hdc, s.c_str(), 2, &rc, fmt);
 	}
 	SetRect(&rc, m.right - m.viewWidth - 2, m.top, m.right - 5, m.top + cHeaderHeight);
@@ -1040,6 +1118,27 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 		"HSCREEN 4 (4 Colors)" 
 	};
 	DrawText(hdc, viewModes[viewMode], strlen(viewModes[viewMode]), &rc, fmt);
+
+	// draw hex region
+	int left = std::max(m.viewLeft(), m.viewHexLeft());
+	int right = m.viewHexRight();
+	SetRect(&rc, left, m.top + cHeaderHeight - 4, right, m.top + cHeaderHeight - 2);
+
+	// draw horz bar
+	HBRUSH blackBrush = (HBRUSH)GetStockObject(BLACK_BRUSH);
+	FillRect(BackBuf.DeviceContext, &rc, blackBrush);
+
+	auto drawBarEnd = [blackBrush](RECT rc, int x)
+	{
+		rc.top -= 2;
+		rc.bottom += 2;
+		rc.left = x;
+		rc.right = x + 1;
+		FillRect(BackBuf.DeviceContext, &rc, blackBrush);
+	};
+
+	drawBarEnd(rc,left);
+	drawBarEnd(rc,right - 1);
 }
 
 
@@ -1204,26 +1303,29 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 		for (int n = 0; n < m.hexColumns; n++)
 		{
 			// Get data
-			unsigned char val = ramCache[offset + n];
+			unsigned char val = ramCache[dataPosX + offset + n];
 
 			// Highlight data if cell is being edited
-			bool isRed = Editing && editAddress == address + n;
+			bool isRed = Editing && editAddress == address + dataPosX + n;
 			if (isRed) hlfound = true;
 
 			x = m.hexColumnPos(n);
 			BitBlt(hdc, x, y, 7, 11, isRed ? BackBuf.FontRedDC : BackBuf.FontDC, 7 * (val >> 4), 1, SRCCOPY);
 			BitBlt(hdc, x + 7, y, 7, 11, isRed ? BackBuf.FontRedDC : BackBuf.FontDC, 7 * (val & 15), 1, SRCCOPY);
-
-			// render ascii
-			if (m.showAscii)
-			{
-				auto ch = val >= 32 && val < 127 ? val : '.';
-				x = m.right - m.viewWidth + n * 7 + 1;
-				BitBlt(hdc, x, y, 7, 11, BackBuf.FontAsciiDC, 7 * (ch - 34), 1, SRCCOPY);
-			}
 		}
 
-		if (!m.showAscii)
+		// render ascii
+		if (m.showAscii)
+		{
+			for (int n = 0; n < m.viewColumns; n++)
+			{
+				unsigned char val = ramCache[offset + n + m.viewPosX];
+				auto ch = val >= 32 && val < 127 ? val : '.';
+				x = m.right - m.viewWidth + n * 7 + 1;
+				BitBlt(hdc, x, y, 7, 11, BackBuf.FontAsciiDC, cAsciiCharWidth * (ch - 34), 1, SRCCOPY);
+			}
+		}
+		else
 		{
 			// reset address start to zero
 			memGpu.TagY = 0;
@@ -1236,7 +1338,7 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 
 			// render 12 lines
 			for (int j = 0; j < pixelHeight; ++j)
-				memGpu.UpdateScreen32To(ramCache+lnum*dataWidth, (unsigned int*)BackBuf.Data, j, BackBuf.DataWidth, false);
+				memGpu.UpdateScreen32To(ramCache+lnum*dataWidth+m.viewPosX, (unsigned int*)BackBuf.Data, j, BackBuf.DataWidth, false);
 
 			// blit to back buffer
 			HBITMAP bm = CreateBitmap(BackBuf.DataWidth, BackBuf.DataHeight, 1, 32, BackBuf.Data);
@@ -1294,7 +1396,7 @@ void SetEditPosition(int xPos, int yPos)
 	if (col < 0 || col >= m.hexColumns) return edit(false);
 
 	// hit
-	editAddress = memoryOffset + col + row * dataWidth;
+	editAddress = memoryOffset + col + row * dataWidth + dataPosX;
 	return edit(true);
 }
 
@@ -1447,6 +1549,7 @@ void SetMemType()
 	}
 
 	UpdateVertScrollBar();
+	UpdateHorzScrollBar();
 }
 
 
@@ -1519,6 +1622,53 @@ void InitializeDialog(HWND hDlg)
 		// Not edit mode
 		SetEditing(false);
 }
+
+
+void DoHorzScroll(WPARAM wParam)
+{
+	SCROLLINFO si = { 0 };
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_ALL;
+	GetScrollInfo(hHorzScrollBar, SB_CTL, &si);
+	int pos = si.nPos;
+	switch ((int)LOWORD(wParam)) {
+		case SB_THUMBPOSITION:
+		case SB_THUMBTRACK:
+			si.nPos = si.nTrackPos;
+			break;
+		case SB_PAGEUP:
+			si.nPos -= si.nPage;
+			break;
+		case SB_PAGEDOWN:
+			si.nPos += si.nPage;
+			break;
+		case SB_TOP:
+			si.nPos = 0;
+			break;
+		case SB_BOTTOM:
+			si.nPos = si.nMax;
+			break;
+		case SB_ENDSCROLL:
+			break;
+		case SB_LINEUP:
+			si.nPos -= cHorzScrollFactor;
+			break;
+		case SB_LINEDOWN:
+			si.nPos += cHorzScrollFactor;
+			break;
+	}
+
+	si.fMask = SIF_POS;
+	SetScrollInfo(hHorzScrollBar, SB_CTL, &si, TRUE);
+	GetScrollInfo(hHorzScrollBar, SB_CTL, &si);
+	if (pos != si.nPos)
+	{
+		dataPosX = si.nPos / cHorzScrollFactor;
+		SetEditing(false);
+		RepaintAll();
+	}
+}
+
 
 //------------------------------------------------------------------
 //  Scroll handler
