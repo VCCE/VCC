@@ -107,6 +107,8 @@ enum ViewMode
 	VM_PMODE4_RGB_S0,
 	VM_PMODE4_RGB_S1,
 	VM_PMODE4_NTSC,
+	VM_TEXT40,
+	VM_TEXT80,
 	VM_HSCREEN1,
 	VM_HSCREEN2,
 	VM_HSCREEN3,
@@ -166,6 +168,7 @@ struct Measurements
 	int lineHeight;
 	int currLineTop;
 	int viewPosX;			// view window horizontal scroll
+	int viewStep;			// scrolling increment
 
 	const int fontHeight = 12;
 
@@ -184,6 +187,8 @@ struct Measurements
 		32,//VM_PMODE4_RGB_S0,
 		32,//VM_PMODE4_RGB_S1,
 		32,//VM_PMODE4_NTSC,
+		40,//VM_TEXT40,
+		80,//VM_TEXT80,
 		160,//VM_HSCREEN1,
 		160,//VM_HSCREEN2,
 		80,//VM_HSCREEN3,
@@ -205,6 +210,8 @@ struct Measurements
 		8,//VM_PMODE4_RGB_S0,
 		8,//VM_PMODE4_RGB_S1,
 		8,//VM_PMODE4_NTSC,
+		4,//VM_TEXT40,
+		2,//VM_TEXT80,
 		4,//VM_HSCREEN1,
 		2,//VM_HSCREEN2,
 		4,//VM_HSCREEN3,
@@ -248,8 +255,18 @@ struct Measurements
 		viewWinWidth = viewColumns * 2 * pixelViewWidth[viewMode];
 		viewMaxWidth = (viewWidth - 2) & (~0xF);			// round view width
 		viewOffset = 0;
-		if (viewMaxWidth > viewColumns * 16 * pixelViewWidth[viewMode])
-			viewMaxWidth = viewColumns * 16 * pixelViewWidth[viewMode];
+
+		int charWidth = 16;
+		viewStep = 1;
+		if (viewMode == VM_TEXT40 || viewMode == VM_TEXT80)
+		{
+			dataWidth = roundDn(dataWidth, 2);
+			charWidth = 4;
+			viewStep = 2;
+		}
+
+		if (viewMaxWidth > viewColumns * charWidth * pixelViewWidth[viewMode])
+			viewMaxWidth = viewColumns * charWidth * pixelViewWidth[viewMode];
 
 		// line rows
 		lineHeight = (height / 32) - 1;
@@ -275,9 +292,8 @@ struct Measurements
 
 		// reposition view so hex is always visible
 		const float rounding = 0.000001f; // adjust for rounding
-		float visible = hexColumns;
-		float pos = dataPosX / (dataWidth - visible);
-		viewPosX = std::max(0, (int)((dataWidth - viewColumns) * (pos + rounding)));
+		float pos = dataWidth <= hexColumns ? 0 : (float)dataPosX / (dataWidth - hexColumns);
+		viewPosX = roundDn(std::max(0, (int)((dataWidth - viewColumns) * (pos + rounding))), viewStep);
 
 	}
 
@@ -537,9 +553,9 @@ void UpdateVertScrollBar()
 void UpdateHorzScrollBar()
 {
 	Measurements m(&BackBuf.Rect);
-	int visible = cHorzScrollFactor * m.hexColumns;
-	int total = cHorzScrollFactor * dataWidth;
-	int pos = cHorzScrollFactor * dataPosX;
+	int visible = (cHorzScrollFactor * m.hexColumns) / m.viewStep;
+	int total = (cHorzScrollFactor * dataWidth) / m.viewStep;
+	int pos = (cHorzScrollFactor * dataPosX) / m.viewStep;
 
 	SCROLLINFO si = { 0 };
 	si.cbSize = sizeof(si);
@@ -572,16 +588,39 @@ void SetViewType()
 	viewMode = mode;
 	UpdateHorzScrollBar();
 	RepaintAll();
+	UpdateWidthDisplay();
 }
 
 //
 // setup for new data width
 //
-void SetupDataWidth()
+void SetupDataWidth(int delta)
 {
 	Measurements m(&BackBuf.Rect);
+
+	if (delta < 0)
+	{
+		if (GetAsyncKeyState(VK_SHIFT))
+		{
+			dataWidth = (dataWidth & 7) ? dataWidth & (~7) : dataWidth - 8;
+			if (dataWidth < m.viewStep) dataWidth = m.viewStep;
+		}
+		else
+			dataWidth = dataWidth > m.viewStep ? dataWidth - m.viewStep : dataWidth;
+	}
+	else if (delta > 0)
+	{
+		if (GetAsyncKeyState(VK_SHIFT))
+		{
+			dataWidth = (dataWidth & 7) ? (dataWidth + 8) & (~7) : dataWidth + 8;
+			if (dataWidth > 256) dataWidth = 256;
+		}
+		else
+			dataWidth = dataWidth < (257 - m.viewStep) ? dataWidth + m.viewStep : dataWidth;
+	}
+
 	if (dataPosX + m.hexColumns > dataWidth)
-		dataPosX = dataWidth - m.hexColumns;
+		dataPosX = std::max(0, dataWidth - m.hexColumns);
 
 	UpdateWidthDisplay();
 
@@ -839,24 +878,10 @@ LRESULT CALLBACK subEditAdrBegProc(
 			DoScroll((WPARAM)SB_BOTTOM);
 			return 0;
 		case VK_OEM_4:
-			if (GetAsyncKeyState(VK_SHIFT))
-			{
-				dataWidth = (dataWidth & 7) ? dataWidth & (~7) : dataWidth - 8;
-				if (dataWidth < 1) dataWidth = 1;
-			}
-			else
-				dataWidth = dataWidth > 1 ? dataWidth - 1 : dataWidth;
-			SetupDataWidth();
+			SetupDataWidth(-1);
 			return 0;
 		case VK_OEM_6:
-			if (GetAsyncKeyState(VK_SHIFT))
-			{
-				dataWidth = (dataWidth & 7) ? (dataWidth + 8) & (~7) : dataWidth + 8;
-				if (dataWidth > 256) dataWidth = 256;
-			}
-			else
-				dataWidth = dataWidth < 256 ? dataWidth + 1 : dataWidth;
-			SetupDataWidth();
+			SetupDataWidth(1);
 			return 0;
 
 		}
@@ -912,12 +937,10 @@ LRESULT CALLBACK subEditAdrEndProc(
 			DoScroll((WPARAM)SB_BOTTOM);
 			return 0;
 		case VK_OEM_4:
-			dataWidth = dataWidth > 1 ? dataWidth - 1 : dataWidth;
-			SetupDataWidth();
+			SetupDataWidth(-1);
 			return 0;
 		case VK_OEM_6:
-			dataWidth = dataWidth < 255 ? dataWidth + 1 : dataWidth;
-			SetupDataWidth();
+			SetupDataWidth(1);
 			return 0;
 		}
 		break;
@@ -1112,6 +1135,8 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 		"PMODE 4 SCREEN 0 RGB (2 colors)", 
 		"PMODE 4 SCREEN 1 RGB (2 colors)",
 		"PMODE 4 NTSC (artifact colors)",
+		"TEXT 40",
+		"TEXT 80",
 		"HSCREEN 1 (4 Colors)",
 		"HSCREEN 2 (16 Colors)",
 		"HSCREEN 3 (2 Colors)", 
@@ -1218,6 +1243,18 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 	{
 		memGpu.SetGimeVdgMode(6);
 		memGpu.SetGimeVdgMode2(31);
+	}
+	else if (viewMode == VM_TEXT40)
+	{
+		memGpu.SetCompatMode(0);
+		memGpu.SetGimeVmode(3);
+		memGpu.SetGimeVres(5);
+	}
+	else if (viewMode == VM_TEXT80)
+	{
+		memGpu.SetCompatMode(0);
+		memGpu.SetGimeVmode(3);
+		memGpu.SetGimeVres(21);
 	}
 	else if (viewMode == VM_HSCREEN1)
 	{
@@ -1607,6 +1644,8 @@ void InitializeDialog(HWND hDlg)
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE4 S0 RGB");
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE4 S1 RGB");
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"PMODE4 NTSC");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"TEXT40");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"TEXT80");
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"HSCREEN1");
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"HSCREEN2");
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"HSCREEN3");
@@ -1663,7 +1702,8 @@ void DoHorzScroll(WPARAM wParam)
 	GetScrollInfo(hHorzScrollBar, SB_CTL, &si);
 	if (pos != si.nPos)
 	{
-		dataPosX = si.nPos / cHorzScrollFactor;
+		Measurements m(&BackBuf.Rect);
+		dataPosX = (si.nPos / cHorzScrollFactor) * m.viewStep;
 		SetEditing(false);
 		RepaintAll();
 	}
