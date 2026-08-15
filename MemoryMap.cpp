@@ -110,6 +110,7 @@ enum ViewMode
 	VM_HSCREEN2,
 	VM_HSCREEN3,
 	VM_HSCREEN4,
+	VM_MAX
 };
 ViewMode viewMode = VM_SG4;
 
@@ -126,11 +127,13 @@ int selectionRangeBeg = -1;
 int selectionRangeEnd = -1;
 unsigned char *Rom = nullptr;
 bool Editing = false;
+bool Hex = true;
 int editAddress = 0;
 int dataWidth = 16;
 
 struct Measurements
 {
+	bool showHex;
 	bool showAscii;
 	int top;
 	int bottom;
@@ -152,11 +155,55 @@ struct Measurements
 
 	const int fontHeight = 12;
 
+	const int maxDataWidth[VM_MAX] =
+	{
+		40,//VM_ASCII,
+		32,//VM_SG4,
+		16,//VM_PMODE0_S0,
+		16,//VM_PMODE0_S1,
+		32,//VM_PMODE1_S0,
+		32,//VM_PMODE1_S1,
+		16,//VM_PMODE2_S0,
+		16,//VM_PMODE2_S1,
+		32,//VM_PMODE3_S0,
+		32,//VM_PMODE3_S1,
+		32,//VM_PMODE4_RGB_S0,
+		32,//VM_PMODE4_RGB_S1,
+		32,//VM_PMODE4_NTSC,
+		160,//VM_HSCREEN1,
+		160,//VM_HSCREEN2,
+		80,//VM_HSCREEN3,
+		80,//VM_HSCREEN4
+	};
+
+	const int pixelViewWidth[VM_MAX] =
+	{
+		8,//VM_ASCII,
+		8,//VM_SG4,
+		8,//VM_PMODE0_S0,
+		8,//VM_PMODE0_S1,
+		8,//VM_PMODE1_S0,
+		8,//VM_PMODE1_S1,
+		8,//VM_PMODE2_S0,
+		8,//VM_PMODE2_S1,
+		8,//VM_PMODE3_S0,
+		8,//VM_PMODE3_S1,
+		8,//VM_PMODE4_RGB_S0,
+		8,//VM_PMODE4_RGB_S1,
+		8,//VM_PMODE4_NTSC,
+		2,//VM_HSCREEN1,
+		2,//VM_HSCREEN2,
+		1,//VM_HSCREEN3,
+		1,//VM_HSCREEN4
+	};
+
+
 	//
 	// construct display measurements from back buffer client rectangle
 	//
 	Measurements(LPCRECT clientRect)
 	{
+		showHex = Hex;
 		showAscii = viewMode == VM_ASCII;
 
 		// rect
@@ -173,11 +220,20 @@ struct Measurements
 		hexMinColums = hexColumns < 16 ? 16 : hexColumns;
 		hexWidth = hexColumnPos(hexMinColums);
 
+		if (!showHex)
+		{
+			hexWidth = hexColumnPos(0) + 10;
+			hexColumns = 0;
+		}
+
 		// view column info
-		viewColumns = (dataWidth > 32 ? 32 : dataWidth);	// bytes to render
+		viewColumns = (dataWidth > maxDataWidth[viewMode] ? maxDataWidth[viewMode] : dataWidth);
 		viewWidth = width - hexWidth;						// view width is remaining width
+		viewWinWidth = viewColumns * 2 * pixelViewWidth[viewMode];
 		viewMaxWidth = (viewWidth - 2) & (~0xF);			// round view width
 		viewOffset = 0;
+		if (viewMaxWidth > viewColumns * 16 * pixelViewWidth[viewMode])
+			viewMaxWidth = viewColumns * 16 * pixelViewWidth[viewMode];
 
 		// line rows
 		lineHeight = (height / 32) - 1;
@@ -185,68 +241,12 @@ struct Measurements
 
 		if (viewMode == VM_SG4)
 		{
-			// sg4 is limited to 40 characters wide (320 pixels)
-			viewColumns = (dataWidth > 40 ? 40 : dataWidth);
-			viewWinWidth = viewColumns * 16;
-			// restrict width to character size
 			if (viewMaxWidth > viewColumns * 16)
 				viewMaxWidth = viewColumns * 16;
 		}
-		else if (viewMode == VM_PMODE4_NTSC)
-		{
+
+		if (viewMode == VM_PMODE4_NTSC)
 			viewOffset = 4;
-			// restrict window render width to 32 (256 pixels)
-			viewColumns = (dataWidth > 32 ? 32 : dataWidth);
-			viewWinWidth = viewColumns * 16;
-			// restrict maximum pixel width for small widths
-			if (viewMaxWidth > viewColumns * 16 * 8)
-				viewMaxWidth = viewColumns * 16 * 8;
-		}
-		else if (viewMode == VM_PMODE0_S0 || viewMode == VM_PMODE0_S1 || viewMode == VM_PMODE2_S0 || viewMode == VM_PMODE2_S1)
-		{
-			// restrict window render width to 16 (128 pixels)
-			viewColumns = (dataWidth > 16 ? 16 : dataWidth);
-			viewWinWidth = viewColumns * 16;
-			// restrict maximum pixel width for small widths
-			if (viewMaxWidth > viewColumns * 16 * 8)
-				viewMaxWidth = viewColumns * 16 * 8;
-		}
-		else if (viewMode == VM_PMODE1_S0 || viewMode == VM_PMODE1_S1 || viewMode == VM_PMODE3_S0 || viewMode == VM_PMODE3_S1)
-		{
-			// restrict window render width to 32 (128 pixels)
-			viewColumns = (dataWidth > 32 ? 32 : dataWidth);
-			viewWinWidth = viewColumns * 16;
-			// restrict maximum pixel width for small widths
-			if (viewMaxWidth > viewColumns * 16 * 8)
-				viewMaxWidth = viewColumns * 16 * 8;
-		}
-		else if (viewMode == VM_PMODE4_RGB_S0 || viewMode == VM_PMODE4_RGB_S1)
-		{
-			// restrict window render width to 32 (256 pixels)
-			viewColumns = (dataWidth > 32 ? 32 : dataWidth);
-			viewWinWidth = viewColumns * 16;
-			// restrict maximum pixel width for small widths
-			if (viewMaxWidth > viewColumns * 16 * 8)
-				viewMaxWidth = viewColumns * 16 * 8;
-		}
-		else if (viewMode == VM_HSCREEN1 || viewMode == VM_HSCREEN2)
-		{
-			// restrict this mode to 160 (320 pixels)
-			viewColumns = (dataWidth > 160 ? 160 : dataWidth);
-			viewWinWidth = viewColumns * 2 * 2;
-			// restrict maximum pixel width for small widths
-			if (viewMaxWidth > viewColumns * 16 * 2)
-				viewMaxWidth = viewColumns * 16 * 2;
-		}
-		else if (viewMode == VM_HSCREEN3 || viewMode == VM_HSCREEN4)
-		{
-			// restrict this mode to 160 (320 pixels)
-			viewColumns = (dataWidth > 80 ? 80 : dataWidth);
-			viewWinWidth = viewColumns * 2;
-			// restrict maximum pixel width for small widths
-			if (viewMaxWidth > viewColumns * 16)
-				viewMaxWidth = viewColumns * 16;
-		}
 	}
 
 	//
@@ -346,12 +346,15 @@ char DbgHelp[] =
 	"In addition to the scroll bar the mouse wheel,\n"
 	"Home, End, PgUp, PgDn, Up, and Down keys\n"
 	"will scroll the display.\n\n"
-	"Select memory to be edited by clicking on a\n"
+	"Select hex to be edited by clicking on a\n"
 	"cell. The cell will turn red and it's address\n"
 	"will be displayed next to the box. Enter byte\n"
-	"values in hexadecimal.\n\n"
-	"[ ] dec/inc row width by 1.\n"
-	"{ } dec/inc row width by 8.\n"
+	"values in hexadecimal. ESC to end edit.\n\n"
+	"Select display mode: Ascii, SG4, PMODE, HSCREEN.\n\n"
+	"Click hex title to collapse/expand hex.\n\n"
+	"Other Keys:\n"
+	" [  ]  Dec/inc data row width by 1.\n"
+	" {  }  Dec/inc data row width by 8.\n"
 	"";
 
 
@@ -449,14 +452,10 @@ void MemoryBackBufferInfo::Cleanup(HWND hWnd)
 }
 
 //
-// setup new type of view
+// refresh the whole window
 //
-void SetViewType()
+void RepaintAll()
 {
-	HWND hCtl = GetDlgItem(hDlgMem, IDC_VIEW_TYPE);
-	ViewMode mode = (ViewMode)SendMessage(hCtl, CB_GETCURSEL, 0, 0);
-	if (viewMode == mode) return;
-	viewMode = mode;
 	ResetMemoryCache();
 	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
 
@@ -466,6 +465,18 @@ void SetViewType()
 
 	// redraw headers
 	DrawForm(BackBuf.DeviceContext, &BackBuf.Rect);
+}
+
+//
+// setup new type of view
+//
+void SetViewType()
+{
+	HWND hCtl = GetDlgItem(hDlgMem, IDC_VIEW_TYPE);
+	ViewMode mode = (ViewMode)SendMessage(hCtl, CB_GETCURSEL, 0, 0);
+	if (viewMode == mode) return;
+	viewMode = mode;
+	RepaintAll();
 }
 
 //
@@ -484,10 +495,23 @@ void UpdateVertScrollBar()
 }
 
 //
+// show current width
+//
+void UpdateWidthDisplay()
+{
+	char info[64];
+	sprintf(info, "Width\n%d", dataWidth);
+	SetDlgItemText(hDlgMem, IDC_ADRTXT, info);
+}
+
+
+//
 // setup for new data width
 //
 void SetupDataWidth()
 {
+	UpdateWidthDisplay();
+
 	ResetMemoryCache();
 	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
 
@@ -983,6 +1007,11 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 	SetTextColor(hdc, RGB(138, 27, 255));
 	SetRect(&rc, m.left, m.top, m.left + cAddressWidth, m.top + cHeaderHeight);
 	DrawText(hdc, "Address", 7, &rc, fmt);
+	if (!m.showHex)
+	{
+		rc.left = m.hexColumnPos(0) + 10;
+		DrawText(hdc, ">", 1, &rc, fmt);
+	}
 	for (int n = 0; n < m.hexColumns; n++)
 	{
 		SetRect(&rc, m.hexColumnPos(n), m.top, m.hexColumnPos(n) + m.hexDigitsWidth - 4, m.top + cHeaderHeight);
@@ -1240,6 +1269,17 @@ void SetEditPosition(int xPos, int yPos)
 		SetEditing(b);
 		InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
 	};
+
+	if (yPos < m.currLineTop)
+	{
+		// in title then collapse hex
+		if (xPos > m.hexColumnPos(0) - 10 && xPos < m.hexColumnPos(m.showHex ? m.hexColumns : 1))
+		{
+			Hex = !Hex;
+			RepaintAll();
+		}
+		return edit(false);
+	}
 
 	// work out which row
 	int row = (yPos - m.currLineTop) / m.lineHeight;
@@ -1537,6 +1577,7 @@ int CStrToHex(const char * buf)
 	return n;
 }
 
+
 //------------------------------------------------------------------
 //  Set edit mode
 //------------------------------------------------------------------
@@ -1552,8 +1593,8 @@ void SetEditing(bool tf)
 	else 
 	{
 		ResetMemoryCache();
-		SetDlgItemText(hDlgMem, IDC_ADRTXT, "");
 		SetFocus(hEditAdrBeg);
+		UpdateWidthDisplay();
 	}
 	SetDlgItemText(hDlgMem, IDC_EDIT_VALUE, "");
 }
