@@ -31,6 +31,7 @@
 #include "resource.h"
 #include "pakinterface.h"
 #include "tcc1014graphics.h"
+#include "config.h"
 #include <vcc/util/logger.h>
 #include <vcc/util/DialogOps.h>
 #include <fstream>
@@ -62,6 +63,19 @@ LRESULT CALLBACK subEditValProc(HWND,UINT,WPARAM,LPARAM);
 LRESULT CALLBACK subEditAdrBegProc(HWND,UINT,WPARAM,LPARAM);
 LRESULT CALLBACK subEditAdrEndProc(HWND,UINT,WPARAM,LPARAM);
 INT_PTR CALLBACK MemoryMapDlgProc(HWND,UINT,WPARAM,LPARAM);
+
+const std::string cMemoryWindow("MemoryWindow");
+const std::string cWindowSizeX("WindowSizeX");
+const std::string cWindowSizeY("WindowSizeY");
+const std::string cWindowPosX("WindowPosX");
+const std::string cWindowPosY("WindowPosY");
+const std::string cAddress("Address");
+const std::string cAddressMode("AddressMode");
+const std::string cViewMode("ViewMode");
+const std::string cHex("Hex");
+const std::string cWide("Wide");
+const std::string cDataWidth("DataWidth");
+const std::string cDataPosX("DataPosX");
 
 // Global handles
 HWND hDlgMem = nullptr;
@@ -141,6 +155,7 @@ int selectionRangeEnd = -1;
 unsigned char *Rom = nullptr;
 bool Editing = false;
 bool Hex = true;
+bool WideView = false;
 int editAddress = 0;
 int dataWidth = 16;
 int dataPosX = 0;
@@ -162,6 +177,7 @@ struct Measurements
 	int viewWidth;			// view window width (pixels)
 	int viewOffset;			// view window buffer offset
 	int viewColumns;		// view window columns (bytes)
+	int viewMaxColumns;		// maximum number of view columns (gime)
 	int viewMaxWidth;		// view window maximum width (pixels)
 	int viewWinWidth;		// view window minimum width (pixels)
 	float viewCellWidth;
@@ -189,7 +205,7 @@ struct Measurements
 		32,//VM_PMODE4_NTSC,
 		40,//VM_TEXT40,
 		80,//VM_TEXT80,
-		160,//VM_HSCREEN1,
+		80,//VM_HSCREEN1,
 		160,//VM_HSCREEN2,
 		80,//VM_HSCREEN3,
 		80,//VM_HSCREEN4
@@ -250,7 +266,8 @@ struct Measurements
 		int gutter = (hexColumns > 16 && hexColumns & 7) ? 10 : 0;
 
 		// view column info
-		viewColumns = (dataWidth > maxDataWidth[viewMode] ? maxDataWidth[viewMode] : dataWidth);
+		viewMaxColumns = (dataWidth > maxDataWidth[viewMode] ? maxDataWidth[viewMode] : dataWidth);
+		viewColumns = WideView ? dataWidth : viewMaxColumns;
 		viewWidth = width - hexWidth - gutter;				// view width is remaining width
 		viewWinWidth = viewColumns * 2 * pixelViewWidth[viewMode];
 		viewMaxWidth = (viewWidth - 2) & (~0xF);			// round view width
@@ -373,7 +390,6 @@ struct Measurements
 struct MemoryBackBufferInfo : BackBufferInfo
 {
 	HPEN Pen = nullptr;
-	HPEN PenBlack = nullptr;
 	HFONT Font = nullptr;
 
 	HBITMAP FontBitmap = nullptr;
@@ -445,7 +461,6 @@ void MemoryBackBufferInfo::Init()
 
 	// Set display pen color
 	Pen = CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
-	PenBlack = CreatePen(PS_SOLID, 1, RGB(0,0,0));
 
 	UINT fmt = DT_LEFT | DT_VCENTER | DT_SINGLELINE;
 	// cache main hex font (black)
@@ -478,8 +493,6 @@ void MemoryBackBufferInfo::CleanupPen()
 {
 	DeleteObject(Pen);
 	Pen = nullptr;
-	DeleteObject(PenBlack);
-	PenBlack = nullptr;
 }
 
 void MemoryBackBufferInfo::CleanupFont()
@@ -507,6 +520,7 @@ void MemoryBackBufferInfo::CleanupFonts(HWND hWnd)
 void MemoryBackBufferInfo::Cleanup(HWND hWnd)
 {
 	delete[] Data;
+	Data = nullptr;
 	CleanupFonts(hWnd);
 	CleanupFont();
 	CleanupPen();
@@ -553,7 +567,7 @@ void UpdateVertScrollBar()
 void UpdateHorzScrollBar()
 {
 	Measurements m(&BackBuf.Rect);
-	int visible = (cHorzScrollFactor * m.hexColumns) / m.viewStep;
+	int visible = (cHorzScrollFactor * (Hex ? m.hexColumns : m.viewColumns)) / m.viewStep;
 	int total = (cHorzScrollFactor * dataWidth) / m.viewStep;
 	int pos = (cHorzScrollFactor * dataPosX) / m.viewStep;
 
@@ -589,6 +603,71 @@ void SetViewType()
 	UpdateHorzScrollBar();
 	RepaintAll();
 	UpdateWidthDisplay();
+}
+
+//
+// save memory window state
+//
+void SaveSettings()
+{
+	RECT CurWindow;
+	::GetWindowRect(hDlgMem, &CurWindow);
+	RECT CurScreen;
+	::GetClientRect(hDlgMem, &CurScreen);
+	int clientWidth = (int)CurScreen.right;
+	int clientHeight = (int)CurScreen.bottom;
+
+	//if (!IsMaximized(DFState) && !DFState->FullScreen && !DFState->Exiting)
+	{
+		VCC::Rect rect;
+		// remember positioning:
+		rect.x = CurWindow.left;
+		rect.y = CurWindow.top;
+
+		// remember size:
+		rect.w = clientWidth; // Used for saving new window size to the ini file.
+		rect.h = clientHeight - cHeaderHeight;
+
+		auto& s = Setting();
+		s.write(cMemoryWindow, cWindowSizeX, rect.w);
+		s.write(cMemoryWindow, cWindowSizeY, rect.h);
+		s.write(cMemoryWindow, cWindowPosX, rect.x);
+		s.write(cMemoryWindow, cWindowPosY, rect.y);
+
+		// other state
+		s.write(cMemoryWindow, cAddress, memoryOffset);
+		s.write(cMemoryWindow, cAddressMode, (int)AddrMode_);
+		s.write(cMemoryWindow, cViewMode, (int)viewMode);
+		s.write(cMemoryWindow, cHex, Hex);
+		s.write(cMemoryWindow, cWide, WideView);
+		s.write(cMemoryWindow, cDataWidth, dataWidth);
+		s.write(cMemoryWindow, cDataPosX, dataPosX);
+	}
+}
+
+//
+// load memory window state
+//
+void LoadSettings()
+{
+	auto& s = Setting();
+	s.Read(cMemoryWindow, cAddress, memoryOffset);
+	s.Read(cMemoryWindow, cAddressMode, (int&)AddrMode_);
+	s.Read(cMemoryWindow, cViewMode, (int&)viewMode);
+	s.Read(cMemoryWindow, cHex, (int&)Hex);
+	s.Read(cMemoryWindow, cWide, (int&)WideView);
+	s.Read(cMemoryWindow, cDataWidth, dataWidth);
+	s.Read(cMemoryWindow, cDataPosX, dataPosX);
+
+	if (GetAsyncKeyState(VK_SHIFT))
+	{
+		dataPosX = 0;
+		dataWidth = 16;
+		WideView = false;
+		Hex = true;
+		viewMode = VM_SG4;
+		AddrMode_ = Cpu;
+	}
 }
 
 //
@@ -637,6 +716,23 @@ void SetupDataWidth(int delta)
 
 	// redraw headers
 	DrawForm(BackBuf.DeviceContext, &BackBuf.Rect);
+}
+
+
+//
+// shutdown the memory window
+//
+void Shutdown()
+{
+	if (hDlgMem)
+	{
+		SaveSettings();
+		KillTimer(hDlgMem, IDT_MEM_TIMER);
+		BackBuf.Cleanup(hDlgMem);
+		DestroyWindow(hDlgMem);
+		hDlgMem = nullptr;
+		ResetMemoryCache();
+	}
 }
 
 //------------------------------------------------------------------
@@ -720,6 +816,11 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 		}
 		break;
 
+	case WM_CLOSE:
+	case WM_DESTROY:
+		Shutdown();
+		break;
+
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) 
 		{
@@ -741,13 +842,7 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 				SetFocus(hEditAdrBeg);
 				break;
 			case IDCLOSE:
-			case WM_DESTROY:
-				KillTimer(hDlg, IDT_MEM_TIMER);
-				DeleteDC(BackBuf.DeviceContext);
-				DestroyWindow(hDlg);
-				AddrMode_ = AddrMode::NotSet;
-				hDlgMem = nullptr;
-				ResetMemoryCache();
+				Shutdown();
 				break;
 		}
 		break;
@@ -774,6 +869,7 @@ void ResizeWindow(int width, int height)
 	MoveWindow(hHorzScrollBar, Rect.left, Rect.bottom - cHorzScrollBarHeight, Rect.right - cVertScrollBarWidth, cHorzScrollBarHeight, TRUE);
 	MoveWindow(hStatic, Rect.left, 0, Rect.right, cTopBarHeight, TRUE);
 }
+
 
 //------------------------------------------------------------------
 //  Subclassed Edit Value Proc
@@ -1142,7 +1238,10 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 		"HSCREEN 3 (2 Colors)", 
 		"HSCREEN 4 (4 Colors)" 
 	};
-	DrawText(hdc, viewModes[viewMode], strlen(viewModes[viewMode]), &rc, fmt);
+	char temp[80];
+	strcpy(temp, viewModes[viewMode]);
+	if (WideView) strcat(temp, " - Wide");
+	DrawText(hdc, temp, strlen(temp), &rc, fmt);
 
 	// draw hex region
 	int left = std::max(m.viewLeft(), m.viewHexLeft());
@@ -1364,27 +1463,39 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 		}
 		else
 		{
-			// reset address start to zero
-			memGpu.TagY = 0;
-			memGpu.Start = 0;
-			memGpu.StartofVidram = 0;
-			memGpu.NewStartofVidram = 0;
+			float columns = (float)m.viewMaxWidth / m.viewColumns;
+			int columnCount = (m.viewColumns + m.viewMaxColumns - 1) / m.viewMaxColumns;
+			int left = m.right - m.viewWidth;
+			for (int s = 0; s < columnCount; ++s)
+			{
+				// reset address start to zero
+				memGpu.TagY = 0;
+				memGpu.Start = 0;
+				memGpu.StartofVidram = 0;
+				memGpu.NewStartofVidram = 0;
 
-			// bytes to copy
-			memGpu.BytesperRow = m.viewColumns;
+				int columnPos = s * m.viewMaxColumns;
+				int columnRem = std::min(m.viewMaxColumns, m.viewColumns - columnPos);
 
-			// render 12 lines
-			for (int j = 0; j < pixelHeight; ++j)
-				memGpu.UpdateScreen32To(ramCache+lnum*dataWidth+m.viewPosX, (unsigned int*)BackBuf.Data, j, BackBuf.DataWidth, false);
+				// bytes to copy
+				memGpu.BytesperRow = columnRem;
 
-			// blit to back buffer
-			HBITMAP bm = CreateBitmap(BackBuf.DataWidth, BackBuf.DataHeight, 1, 32, BackBuf.Data);
-			HDC src = CreateCompatibleDC(hdc);
-			auto obj = SelectObject(src, bm);
-			StretchBlt(hdc, m.right - m.viewWidth, m.currLineTop, m.viewMaxWidth, m.lineHeight, src, m.viewOffset, 0, m.viewWinWidth, pixelHeight*2, SRCCOPY);
-			SelectObject(src, obj);
-			DeleteObject(bm);
-			DeleteDC(src);
+				// render 12 lines
+				for (int j = 0; j < pixelHeight; ++j)
+					memGpu.UpdateScreen32To(ramCache + lnum * dataWidth + m.viewPosX + columnPos, (unsigned int*)BackBuf.Data, j, BackBuf.DataWidth, false);
+
+				// blit to back buffer
+				HBITMAP bm = CreateBitmap(BackBuf.DataWidth, BackBuf.DataHeight, 1, 32, BackBuf.Data);
+				HDC src = CreateCompatibleDC(hdc);
+				auto obj = SelectObject(src, bm);
+				int width = (int)(columnRem * columns);
+				int renderedWidth = std::min(columnRem * 2 * m.pixelViewWidth[viewMode], m.viewWinWidth);
+				StretchBlt(hdc, left, m.currLineTop, width, m.lineHeight, src, m.viewOffset, 0, renderedWidth, pixelHeight * 2, SRCCOPY);
+				left += width;
+				SelectObject(src, obj);
+				DeleteObject(bm);
+				DeleteDC(src);
+			}
 		}
 	}
 
@@ -1409,12 +1520,24 @@ void SetEditPosition(int xPos, int yPos)
 		InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
 	};
 
+	// ignore tool bar area
+	if (yPos < cHeaderHeight)
+		return edit(false);
+
+	// check title area
 	if (yPos < m.currLineTop)
 	{
 		// in title then collapse hex
 		if (xPos > m.hexColumnPos(0) - 10 && xPos < m.hexColumnPos(m.showHex ? m.hexColumns : 1))
 		{
 			Hex = !Hex;
+			UpdateHorzScrollBar();
+			RepaintAll();
+		}
+		else if (xPos > m.hexColumnPos(m.showHex ? m.hexColumns : 1))
+		{
+			WideView = !WideView;
+			UpdateHorzScrollBar();
 			RepaintAll();
 		}
 		return edit(false);
@@ -1627,7 +1750,7 @@ void InitializeDialog(HWND hDlg)
 		SendMessage(hCtl,CB_ADDSTRING,(WPARAM) 0, (LPARAM) "REAL");
 		SendMessage(hCtl,CB_ADDSTRING,(WPARAM) 0, (LPARAM) "ROM");
 		SendMessage(hCtl,CB_ADDSTRING,(WPARAM) 0, (LPARAM) "PAK");
-		SendMessage(hCtl,CB_SETCURSEL,(WPARAM) 0, (LPARAM) 0);
+		SendMessage(hCtl,CB_SETCURSEL,(WPARAM)AddrMode_, (LPARAM) 0);
 		SetMemType();
 
 		hCtl = GetDlgItem(hDlg, IDC_VIEW_TYPE);
@@ -1650,7 +1773,7 @@ void InitializeDialog(HWND hDlg)
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"HSCREEN2");
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"HSCREEN3");
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"HSCREEN4");
-		SendMessage(hCtl, CB_SETCURSEL, (WPARAM)VM_SG4, (LPARAM)0);
+		SendMessage(hCtl, CB_SETCURSEL, (WPARAM)viewMode, (LPARAM)0);
 		SetViewType();
 
 		SetBackBuffer(Rect);
@@ -1799,6 +1922,40 @@ void FlashDialogWindow()
 	FlashWindow(hDlgMem,false);
 }
 
+void SetWindowRect()
+{
+	if (hDlgMem != nullptr)
+	{
+		Rect rect;
+		auto& s = Setting();
+		rect.w = s.read(cMemoryWindow, cWindowSizeX, 640);
+		rect.h = s.read(cMemoryWindow, cWindowSizeY, 480);
+		rect.x = s.read(cMemoryWindow, cWindowPosX, CW_USEDEFAULT);
+		rect.y = s.read(cMemoryWindow, cWindowPosY, CW_USEDEFAULT);
+
+		if (GetAsyncKeyState(VK_SHIFT))
+		{
+			rect.x = CW_USEDEFAULT;
+			rect.y = CW_USEDEFAULT;
+			rect.w = 640;
+			rect.h = 480;
+		}
+
+		RECT ra = { 0,0,0,0 };  // left,top,right,bottom
+		::AdjustWindowRect(&ra, WS_OVERLAPPEDWINDOW, TRUE);
+		int windowBorderWidth = ra.right - ra.left;
+		int windowBorderHeight = ra.bottom - ra.top;
+		::GetWindowRect(hDlgMem, &ra);
+
+		int width = rect.w + windowBorderWidth;
+		int height = rect.h + windowBorderHeight + 0; /*GetRenderWindowStatusBarHeight();*/
+		int flags = SWP_NOOWNERZORDER | SWP_NOZORDER;
+		int x = rect.IsDefaultX() ? ra.left : rect.x;
+		int y = rect.IsDefaultY() ? ra.top : rect.y;
+		SetWindowPos(hDlgMem, nullptr, x, y, width, height, flags);
+	}
+}
+
 } }  // end namespace
 
 //------------------------------------------------------------------
@@ -1806,6 +1963,8 @@ void FlashDialogWindow()
 //------------------------------------------------------------------
 void VCC::Debugger::UI::OpenMemoryMapWindow(HINSTANCE hInst,HWND parent)
 {
+	LoadSettings();
+
 	if (hDlgMem == nullptr) {
 		CreateDialog( hInst, MAKEINTRESOURCE(IDD_MEMORY_MAP),
 		              parent, MemoryMapDlgProc );
@@ -1819,5 +1978,8 @@ void VCC::Debugger::UI::OpenMemoryMapWindow(HINSTANCE hInst,HWND parent)
 
 	ShowWindow(hDlgMem, SW_SHOWNORMAL);
 	SetFocus(hEditAdrBeg);
+	SetWindowRect();
+	UpdateVertScrollBar();
+	UpdateHorzScrollBar();
 }
 
