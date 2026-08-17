@@ -414,6 +414,7 @@
 #define IDC_EDIT_RANGE_BEG              2152
 #define IDC_EDIT_RANGE_END              2153
 #define IDC_EDIT_RANGE_SEP              2154
+#define IDC_MEM_WIDTH                   2155
 
 //-----------------------------------------------------
 // ID 5000 - 5250 are reserved for cartridge menus
@@ -481,7 +482,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        181
 #define _APS_NEXT_COMMAND_VALUE         40060
-#define _APS_NEXT_CONTROL_VALUE         2155
+#define _APS_NEXT_CONTROL_VALUE         2156
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

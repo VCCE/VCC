@@ -36,6 +36,7 @@
 #include <vcc/util/DialogOps.h>
 #include <fstream>
 #include <unordered_map>
+#include <windowsx.h>
 
 namespace VCC::Debugger::UI {
 namespace {
@@ -71,7 +72,9 @@ const char *cDbgHelp =
 	"will be displayed next to the box. Enter byte\n"
 	"values in hexadecimal. ESC to end edit.\n\n"
 	"Select display mode: Ascii, SG4, PMODE, HSCREEN.\n\n"
-	"Click hex title to collapse/expand hex.\n\n"
+	"Click hex title to collapse/expand hex.\n"
+	"Click view title to switch between normal/gime width\n"
+	"and the full width.\n\n"
 	"Other Keys:\n"
 	" [  ]  Dec/inc data row width by 1.\n"
 	" {  }  Dec/inc data row width by 8.\n"
@@ -505,8 +508,63 @@ void MemoryWindow::UpdateHorzScrollBar()
 void MemoryWindow::UpdateWidthDisplay()
 {
 	char info[64];
-	sprintf(info, "Width\n%d", dataWidth);
-	SetDlgItemText(hDlgMem, IDC_ADRTXT, info);
+	sprintf(info, "%d", dataWidth);
+	HWND hCtl = GetDlgItem(hDlgMem, IDC_MEM_WIDTH);
+	SendMessage(hCtl, WM_SETTEXT, 0, (LPARAM)info);
+}
+
+//
+// on user entering a new width
+//
+void MemoryWindow::CommitWidth()
+{
+	char info[64];
+	HWND hCtl = GetDlgItem(hDlgMem, IDC_MEM_WIDTH);
+	ComboBox_GetText(hCtl, info, 64);
+	CommitWidth(info);
+}
+
+//
+// commit new width value or revert
+//
+void MemoryWindow::CommitWidth(const char* value)
+{
+	Measurements m(this, &BackBuf.Rect);
+	SetFocus(hEditAdrBeg);
+	int width = atoi(value);
+	if (width < m.viewStep || width > 256)
+	{
+		UpdateWidthDisplay();
+		return;
+	}
+	dataWidth = width;
+	// if goes over end step back one line
+	if (dataPosX + m.hexColumns > dataWidth)
+		dataPosX = std::max(0, dataWidth - m.hexColumns);
+	if (memOffset + 32*dataWidth + dataPosX > memSize)
+	{
+		dataPosX = 0;
+		memOffset = memSize - 32*dataWidth;
+	}
+	ResetMemoryCache();
+	UpdateWidthDisplay();
+	UpdateHorzScrollBar();
+	UpdateVertScrollBar();
+	RepaintAll();
+}
+
+//
+// on user picking new width from combo box
+//
+void MemoryWindow::SelectWidth()
+{
+	char info[64];
+	strcpy(info, "-1");
+	HWND hCtl = GetDlgItem(hDlgMem, IDC_MEM_WIDTH);
+	int index = (int)SendMessage(hCtl, CB_GETCURSEL, 0, 0);
+	if (index != CB_ERR)
+		SendMessage(hCtl, CB_GETLBTEXT, index, (LPARAM)info);
+	CommitWidth(info);
 }
 
 //
@@ -860,6 +918,7 @@ void MemoryWindow::ResizeWindow(int width, int height)
 void MemoryWindow::Escape()
 {
 	SetEditing(false);
+	UpdateWidthDisplay();
 	SetFocus(hEditAdrBeg);
 	ResetMemoryCache();
 	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
@@ -885,6 +944,8 @@ LRESULT CALLBACK SubEditValProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam
 			case '}':
 			case VK_OEM_4:
 			case VK_OEM_6:
+			case VK_RETURN:
+			case VK_ESCAPE:
 				return 0;
 		}
 	}
@@ -914,6 +975,69 @@ LRESULT CALLBACK SubEditValProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam
 	}
 	return CallWindowProc(memoryWindow()->editValProc, wnd, msg, wParam, lParam);
 }
+
+//
+// width combo box edit field handling
+//
+LRESULT CALLBACK MemWidthEditSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+	auto memoryWindow = [dwRefData]() { return (MemoryWindow*)dwRefData; };
+
+	switch (uMsg)
+	{
+		case WM_CHAR:
+		case WM_KEYDOWN:
+		{
+			switch (wParam) 
+			{
+				case VK_RETURN:
+					memoryWindow()->CommitWidth();
+					return 0;
+				case VK_TAB:
+				case VK_ESCAPE:
+					memoryWindow()->Escape();
+					return 0;
+			}
+			break;
+		}
+
+		case WM_NCDESTROY:
+			RemoveWindowSubclass(hWnd, &MemWidthEditSubclassProc, uIdSubclass);
+			break;
+	};
+
+	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
+
+//
+// width combo box handling
+//
+LRESULT CALLBACK MemWidthComboSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+	auto memoryWindow = [dwRefData]() { return (MemoryWindow*)dwRefData; };
+
+	switch (uMsg)
+	{
+		case WM_COMMAND:
+		{
+			switch (HIWORD(wParam))
+			{
+				case CBN_SELCHANGE:
+				case CBN_EDITCHANGE:
+					memoryWindow()->SelectWidth();
+					return 0;
+			}
+			break;
+		}
+		case WM_NCDESTROY:
+			RemoveWindowSubclass(hWnd, &MemWidthComboSubclassProc, uIdSubclass);
+			break;
+	};
+
+	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
 
 
 void MemoryWindow::SelectAdrEnd()
@@ -1718,6 +1842,22 @@ void MemoryWindow::InitializeDialog(HWND hDlg)
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"HSCREEN4");
 		SendMessage(hCtl, CB_SETCURSEL, (WPARAM)viewMode, (LPARAM)0);
 
+		hCtl = GetDlgItem(hDlg, IDC_MEM_WIDTH);
+		COMBOBOXINFO cbi = { sizeof(cbi) };
+		if (GetComboBoxInfo(hCtl, &cbi) && cbi.hwndItem)
+			SetWindowSubclass(cbi.hwndItem, &MemWidthEditSubclassProc, (UINT_PTR)this, (DWORD_PTR)this);
+		SetWindowSubclass(hCtl, &MemWidthComboSubclassProc, (UINT_PTR)this, (DWORD_PTR)this);
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"16");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"20");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"32");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"40");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"64");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"80");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"128");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"160");
+		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"256");
+
+
 		SetBackBuffer(Rect);
 
 		// Draw the form for memory data
@@ -1846,13 +1986,16 @@ void MemoryWindow::SetEditing(bool tf)
 	{
 		std::string s = "Editing " + ToHexString(editAddress,6,true);
 		SetDlgItemText(hDlgMem, IDC_ADRTXT, s.c_str());
+		ShowWindow(hEditVal, SW_SHOW);
 		SetFocus(hEditVal);
 	} 
 	else 
 	{
 		ResetMemoryCache();
-		SetFocus(hEditAdrBeg);
 		UpdateWidthDisplay();
+		SetFocus(hEditAdrBeg);
+		SetDlgItemText(hDlgMem, IDC_ADRTXT, "");
+		ShowWindow(hEditVal, SW_HIDE);
 	}
 	SetDlgItemText(hDlgMem, IDC_EDIT_VALUE, "");
 }

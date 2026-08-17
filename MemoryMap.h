@@ -154,6 +154,9 @@ namespace VCC::Debugger::UI
 		void LocateMemory();
 		void ExportMemory();
 		void CommitValue();
+		void CommitWidth();
+		void CommitWidth(const char *value);
+		void SelectWidth();
 		void SetMemType();
 		void InitializeDialog(HWND);
 		void DoScroll(WPARAM);
