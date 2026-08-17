@@ -29,12 +29,6 @@ namespace VCC::Util
 	public:
 		explicit settings(path_type path);
 
-		template <typename T>
-		void Read(const std::string& section, const std::string& key, T& value) const
-		{
-			value = read(section, key, value);
-		}
-
 		// write string value
 		bool write
 			(const std::string& section,

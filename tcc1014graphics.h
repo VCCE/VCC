@@ -18,6 +18,8 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "defines.h"
+
 static unsigned char Lpf[4]={192,199,225,225}; // 2 is really undefined but I gotta put something here.
 static unsigned char VcenterTable[4] = { 25,19,8,8 };
 static unsigned char TopOffScreenTable[4] = { 11,14,11,11 };

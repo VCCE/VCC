@@ -35,109 +35,13 @@
 #include <vcc/util/logger.h>
 #include <vcc/util/DialogOps.h>
 #include <fstream>
+#include <unordered_map>
 
 namespace VCC::Debugger::UI {
 namespace {
 
-// Local functions
-void SetEditing(bool);
-void FlashDialogWindow();
-void WriteMemory(int,unsigned char);
-void SetBackBuffer(const RECT&);
-void CreateScrollBar(const RECT&);
-void DrawForm(HDC,LPCRECT);
-bool DrawMemory(HDC,LPCRECT);
-void SetEditPosition(int,int);
-void LocateMemory();
-void ExportMemory();
-void CommitValue();
-void SetMemType();
-void InitializeDialog(HWND);
-void DoScroll(WPARAM);
-void DoHorzScroll(WPARAM);
-int CStrToHex(const char *);
-void ResetMemoryCache();
-void ResizeWindow(int width, int height);
-
-LRESULT CALLBACK subEditValProc(HWND,UINT,WPARAM,LPARAM);
-LRESULT CALLBACK subEditAdrBegProc(HWND,UINT,WPARAM,LPARAM);
-LRESULT CALLBACK subEditAdrEndProc(HWND,UINT,WPARAM,LPARAM);
-INT_PTR CALLBACK MemoryMapDlgProc(HWND,UINT,WPARAM,LPARAM);
-
-const std::string cMemoryWindow("MemoryWindow");
-const std::string cWindowSizeX("WindowSizeX");
-const std::string cWindowSizeY("WindowSizeY");
-const std::string cWindowPosX("WindowPosX");
-const std::string cWindowPosY("WindowPosY");
-const std::string cAddress("Address");
-const std::string cAddressMode("AddressMode");
-const std::string cViewMode("ViewMode");
-const std::string cHex("Hex");
-const std::string cWide("Wide");
-const std::string cDataWidth("DataWidth");
-const std::string cDataPosX("DataPosX");
-
-// Global handles
-HWND hDlgMem = nullptr;
-HWND hScrollBar = nullptr;
-HWND hHorzScrollBar = nullptr;
-HWND hEditAdrBeg = nullptr;
-HWND hEditAdrEnd = nullptr;
-HWND hEditVal = nullptr;
-HWND hStatic = nullptr;
-
-// Original controls
-WNDPROC EditValProc;
-WNDPROC EditAdrBegProc;
-WNDPROC EditAdrEndProc;
-
-GimeGpu memGpu;
-unsigned char *ramCache = nullptr;
-unsigned int ramPos = -1;
-
-// Enum for memory type being examined
-enum AddrMode
-{
-	Cpu,
-	Real,
-	ROM,
-	PAK,
-	NotSet
-};
-AddrMode AddrMode_ = AddrMode::NotSet;
-
-enum ViewMode
-{
-	VM_ASCII,
-	VM_SG4,
-	VM_PMODE0_S0,
-	VM_PMODE0_S1,
-	VM_PMODE1_S0,
-	VM_PMODE1_S1,
-	VM_PMODE2_S0,
-	VM_PMODE2_S1,
-	VM_PMODE3_S0,
-	VM_PMODE3_S1,
-	VM_PMODE4_RGB_S0,
-	VM_PMODE4_RGB_S1,
-	VM_PMODE4_NTSC,
-	VM_TEXT40,
-	VM_TEXT80,
-	VM_HSCREEN1,
-	VM_HSCREEN2,
-	VM_HSCREEN3,
-	VM_HSCREEN4,
-	VM_MAX
-};
-ViewMode viewMode = VM_SG4;
-
-const int cTopBarStaticWidth = 510;		// the tool bar
-const int cTopBarHeight = 34;
-const int cHeaderHeight = 20;			// header with labels
-const int cVertScrollBarWidth = 20;
-const int cHorzScrollBarHeight = 20;	// bottom scroll bar
-const int cAddressWidth = 60;			// address column width
-const int cAsciiCharWidth = 7;
+std::unordered_map<HWND, MemoryWindow*> gMemoryWindowHandles;
+MemoryWindow* gMemoryWindows[2] = { 0, 0 };
 
 // windows will allow the track bar to be positioned
 // pixel by pixel, but it will snap to the
@@ -146,23 +50,53 @@ const int cAsciiCharWidth = 7;
 // of the track bar which is distracting, so instead
 // allow higher resolution for the track bar and scale
 // the result.
-const int cHorzScrollFactor = 10;
+constexpr int cHorzScrollFactor = 10;
+constexpr int cTopBarStaticWidth = 510;		// the tool bar
+constexpr int cTopBarHeight = 34;
+constexpr int cHeaderHeight = 20;			// header with labels
+constexpr int cVertScrollBarWidth = 20;
+constexpr int cHorzScrollBarHeight = 20;	// bottom scroll bar
+constexpr int cAddressWidth = 60;			// address column width
+constexpr int cAsciiCharWidth = 7;
 
-int MemSize = 0;
-int memoryOffset = 0;
-int selectionRangeBeg = -1;
-int selectionRangeEnd = -1;
-unsigned char *Rom = nullptr;
-bool Editing = false;
-bool Hex = true;
-bool WideView = false;
-int editAddress = 0;
-int dataWidth = 16;
-int dataPosX = 0;
+// Help text
+const char *cDbgHelp =
+	"The default memory type displayed is 'CPU'.\n"
+	"Dropdown will select 'REAL', 'ROM', or 'PAK'.\n\n"
+	"In addition to the scroll bar the mouse wheel,\n"
+	"Home, End, PgUp, PgDn, Up, and Down keys\n"
+	"will scroll the display.\n\n"
+	"Select hex to be edited by clicking on a\n"
+	"cell. The cell will turn red and it's address\n"
+	"will be displayed next to the box. Enter byte\n"
+	"values in hexadecimal. ESC to end edit.\n\n"
+	"Select display mode: Ascii, SG4, PMODE, HSCREEN.\n\n"
+	"Click hex title to collapse/expand hex.\n\n"
+	"Other Keys:\n"
+	" [  ]  Dec/inc data row width by 1.\n"
+	" {  }  Dec/inc data row width by 8.\n"
+	"";
 
-struct Measurements
+}
+
+const std::string MemoryWindow::cMemoryWindow("MemoryWindow");
+const std::string MemoryWindow::cMemoryWindow2("MemoryWindow2");
+const std::string MemoryWindow::cWindowSizeX("WindowSizeX");
+const std::string MemoryWindow::cWindowSizeY("WindowSizeY");
+const std::string MemoryWindow::cWindowPosX("WindowPosX");
+const std::string MemoryWindow::cWindowPosY("WindowPosY");
+const std::string MemoryWindow::cAddress("Address");
+const std::string MemoryWindow::cAddressMode("AddressMode");
+const std::string MemoryWindow::cViewMode("ViewMode");
+const std::string MemoryWindow::cHex("Hex");
+const std::string MemoryWindow::cWide("Wide");
+const std::string MemoryWindow::cDataWidth("DataWidth");
+const std::string MemoryWindow::cDataPosX("DataPosX");
+
+struct MemoryWindow::Measurements
 {
-	bool showHex;
+	const MemoryWindow* mem;
+	int showHex;
 	bool showAscii;
 	int top;
 	int bottom;
@@ -188,7 +122,7 @@ struct Measurements
 
 	const int fontHeight = 12;
 
-	const int maxDataWidth[VM_MAX] =
+	const int maxDataWidth[MemoryWindow::VM_MAX] =
 	{
 		256,//VM_ASCII,
 		32,//VM_SG4,
@@ -211,7 +145,7 @@ struct Measurements
 		80,//VM_HSCREEN4
 	};
 
-	const int pixelViewWidth[VM_MAX] =
+	const int pixelViewWidth[MemoryWindow::VM_MAX] =
 	{
 		8,//VM_ASCII,
 		8,//VM_SG4,
@@ -237,10 +171,10 @@ struct Measurements
 	//
 	// construct display measurements from back buffer client rectangle
 	//
-	Measurements(LPCRECT clientRect)
+	Measurements(const MemoryWindow *mem, LPCRECT clientRect) : mem(mem)
 	{
-		showHex = Hex;
-		showAscii = viewMode == VM_ASCII;
+		showHex = mem->showHex;
+		showAscii = mem->viewMode == MemoryWindow::VM_ASCII;
 
 		// rect
 		top = clientRect->top;
@@ -252,13 +186,13 @@ struct Measurements
 		
 		// hex column info
 		hexDigitsWidth = 18;
-		hexColumns = dataWidth > 32 ? 32 : dataWidth;
+		hexColumns = mem->dataWidth > 32 ? 32 : mem->dataWidth;
 		hexMinColums = hexColumns < 16 ? 16 : hexColumns;
-		hexWidth = hexColumnPos(hexMinColums);
+		hexWidth = HexColumnPos(hexMinColums);
 
 		if (!showHex)
 		{
-			hexWidth = hexColumnPos(0) + 10;
+			hexWidth = HexColumnPos(0) + 10;
 			hexColumns = 0;
 		}
 
@@ -266,74 +200,73 @@ struct Measurements
 		int gutter = (hexColumns > 16 && hexColumns & 7) ? 10 : 0;
 
 		// view column info
-		viewMaxColumns = (dataWidth > maxDataWidth[viewMode] ? maxDataWidth[viewMode] : dataWidth);
-		viewColumns = WideView ? dataWidth : viewMaxColumns;
+		viewMaxColumns = (mem->dataWidth > maxDataWidth[mem->viewMode] ? maxDataWidth[mem->viewMode] : mem->dataWidth);
+		viewColumns = mem->showWideView ? mem->dataWidth : viewMaxColumns;
 		viewWidth = width - hexWidth - gutter;				// view width is remaining width
-		viewWinWidth = viewColumns * 2 * pixelViewWidth[viewMode];
+		viewWinWidth = viewColumns * 2 * pixelViewWidth[mem->viewMode];
 		viewMaxWidth = (viewWidth - 2) & (~0xF);			// round view width
 		viewOffset = 0;
 
 		int charWidth = 16;
 		viewStep = 1;
-		if (viewMode == VM_TEXT40 || viewMode == VM_TEXT80)
+		if (mem->viewMode == MemoryWindow::VM_TEXT40 || mem->viewMode == MemoryWindow::VM_TEXT80)
 		{
-			dataWidth = roundDn(dataWidth, 2);
 			charWidth = 4;
 			viewStep = 2;
 		}
 
-		if (viewMaxWidth > viewColumns * charWidth * pixelViewWidth[viewMode])
-			viewMaxWidth = viewColumns * charWidth * pixelViewWidth[viewMode];
+		if (viewMaxWidth > viewColumns * charWidth * pixelViewWidth[mem->viewMode])
+			viewMaxWidth = viewColumns * charWidth * pixelViewWidth[mem->viewMode];
 
 		// line rows
 		lineHeight = (height / 32) - 1;
 		currLineTop = top + cHeaderHeight;
 
-		if (viewMode == VM_SG4)
+		if (mem->viewMode == MemoryWindow::VM_SG4)
 		{
 			if (viewMaxWidth > viewColumns * 16)
 				viewMaxWidth = viewColumns * 16;
 		}
 
-		viewCellWidth = ((float)viewMaxWidth / viewWinWidth) * pixelViewWidth[viewMode] * 2;
+		viewCellWidth = ((float)viewMaxWidth / viewWinWidth) * pixelViewWidth[mem->viewMode] * 2;
 
-		if (viewMode == VM_ASCII)
+		if (mem->viewMode == MemoryWindow::VM_ASCII)
 		{
 			viewMaxWidth = (viewWidth - 2) & (~0xF);
-			viewColumns = std::min(viewMaxWidth / cAsciiCharWidth, dataWidth);
+			viewColumns = std::min(viewMaxWidth / cAsciiCharWidth, mem->dataWidth);
 			viewCellWidth = 7;
 		}
 
-		if (viewMode == VM_PMODE4_NTSC)
+		if (mem->viewMode == MemoryWindow::VM_PMODE4_NTSC)
 			viewOffset = 4;
 
 		// reposition view so hex is always visible
 		const float rounding = 0.000001f; // adjust for rounding
-		float pos = dataWidth <= hexColumns ? 0 : (float)dataPosX / (dataWidth - hexColumns);
-		viewPosX = roundDn(std::max(0, (int)((dataWidth - viewColumns) * (pos + rounding))), viewStep);
+		float pos = mem->dataWidth <= hexColumns ? 0 : (float)mem->dataPosX / (mem->dataWidth - hexColumns);
+		viewPosX = roundDn(std::max(0, (int)((mem->dataWidth - viewColumns) * (pos + rounding))), viewStep);
 
 	}
 
 	//
 	// left edge of hex column
 	//
-	int hexLeft() const { return left + cAddressWidth + 5; }
+	int HexLeft() const { return left + cAddressWidth + 5; }
 
 	//
 	// left edge of view 
 	//
-	int viewLeft() const { return right - viewWidth; }
+	int ViewLeft() const { return right - viewWidth; }
 
 	//
 	// left/right pos of hex window in view
 	//
-	int viewHexLeft() const { return viewLeft() + (int)(viewCellWidth * (dataPosX - viewPosX)); }
-	int viewHexRight() const { return viewHexLeft() + (int)(viewCellWidth * hexColumns); }
+	int ViewHexLeft() const { return ViewLeft() + (int)(viewCellWidth * (mem->dataPosX - viewPosX)); }
+	int ViewHexRight() const { return ViewHexLeft() + (int)(viewCellWidth * hexColumns); }
 
 	//
 	// return pos (pixel offset) of hex value column n
 	//
-	int hexColumnPos(int n) const
+	int HexColumnPos(int n) const
 	{
 		// hex cell spacing
 		const int minorSpacing = hexDigitsWidth;
@@ -344,16 +277,16 @@ struct Measurements
 		// calculate minor & major column position
 		int minorColumn = n & 7;
 		int majorColumn = n / 8;
-		return hexLeft() + minorColumn * minorSpacing + majorColumn * (minorSpacing * 8 + majorSpacing);
+		return HexLeft() + minorColumn * minorSpacing + majorColumn * (minorSpacing * 8 + majorSpacing);
 	}
 
 	//
 	// reverse of hexColumnPos(x) given relative pixel offset
 	//
-	int hexPosColumn(int x) const
+	int HexPosColumn(int x) const
 	{
 		// move origin
-		x -= hexLeft();
+		x -= HexLeft();
 		const int minorSpacing = hexDigitsWidth;
 		const int majorSpacing = 10;
 		int minorColumnWidth = minorSpacing;
@@ -373,7 +306,7 @@ struct Measurements
 	//
 	// left edge of address column
 	//
-	int rowAddressPos() const
+	int RowAddressPos() const
 	{
 		return left + 10;
 	}
@@ -381,72 +314,57 @@ struct Measurements
 	//
 	// return current row, centered for text 
 	//
-	int rowTextY() const
+	int RowTextY() const
 	{
 		return currLineTop + (lineHeight - fontHeight) / 2;
 	}
 };
 
-struct MemoryBackBufferInfo : BackBufferInfo
+
+MemoryWindow::MemoryWindow(int index) :
+	hDlgMem(nullptr),
+	hScrollBar(nullptr),
+	hHorzScrollBar(nullptr),
+	hEditAdrBeg(nullptr),
+	hEditAdrEnd(nullptr),
+	hEditVal(nullptr),
+	hStatic(nullptr),
+	editValProc(nullptr),
+	editAdrBegProc(nullptr),
+	editAdrEndProc(nullptr),
+	ramCache(nullptr),
+	ramPos(-1),
+	addrMode(NotSet),
+	viewMode(VM_SG4),
+	winIndex(index),
+	memSize(0),
+	memOffset(0),
+	selectionRangeBeg(1),
+	selectionRangeEnd(1),
+	rom(nullptr),
+	isEditing(false),
+	showHex(1),
+	showWideView(0),
+	editAddress(0),
+	dataWidth(16),
+	dataPosX(0)
 {
-	HPEN Pen = nullptr;
-	HFONT Font = nullptr;
-
-	HBITMAP FontBitmap = nullptr;
-	HBITMAP FontRedBitmap = nullptr;
-	HBITMAP FontAsciiBitmap = nullptr;
-	HDC FontDC = nullptr;
-	HDC FontRedDC = nullptr;
-	HDC FontAsciiDC = nullptr;
-
-	int DataWidth = 0;
-	int DataHeight = 0;
-	int DataStride = 0;
-	char* Data = nullptr;
-
-	void Init();
-	void CleanupFonts(HWND hWnd);
-	void CleanupPen();
-	void CleanupFont();
-	void Cleanup(HWND hWnd);
-};
-
-// Backing buffer used for painting memory data
-MemoryBackBufferInfo BackBuf;
+}
 
 
-// Help text
-char DbgHelp[] =
-	"The default memory type displayed is 'CPU'.\n"
-	"Dropdown will select 'REAL', 'ROM', or 'PAK'.\n\n"
-	"In addition to the scroll bar the mouse wheel,\n"
-	"Home, End, PgUp, PgDn, Up, and Down keys\n"
-	"will scroll the display.\n\n"
-	"Select hex to be edited by clicking on a\n"
-	"cell. The cell will turn red and it's address\n"
-	"will be displayed next to the box. Enter byte\n"
-	"values in hexadecimal. ESC to end edit.\n\n"
-	"Select display mode: Ascii, SG4, PMODE, HSCREEN.\n\n"
-	"Click hex title to collapse/expand hex.\n\n"
-	"Other Keys:\n"
-	" [  ]  Dec/inc data row width by 1.\n"
-	" {  }  Dec/inc data row width by 8.\n"
-	"";
-
-
-void ResetMemoryCache()
+void MemoryWindow::ResetMemoryCache()
 {
 	ramPos = -1;
 	delete[] ramCache;
 	ramCache = nullptr;
 }
 
-void MemoryBackBufferInfo::Init()
+void MemoryBackBufferInfo::Init(HWND hDlgMem)
 {
-	DataWidth = 640;
-	DataHeight = 32;
-	DataStride = DataWidth * 4;
-	Data = new char[DataStride * DataHeight];
+	dataWidth = 640;
+	dataHeight = 32;
+	dataStride = dataWidth * 4;
+	data = new char[dataStride * dataHeight];
 
 	HDC hdc = GetDC(hDlgMem);
 
@@ -454,73 +372,73 @@ void MemoryBackBufferInfo::Init()
 	SetRect(&frc, 0, 0, 7 * 16, 14);
 
 	// Set display Font
-	Font = CreateFont(14, 0, 0, 0, FW_BOLD, FALSE, FALSE,
+	font = CreateFont(14, 0, 0, 0, FW_BOLD, FALSE, FALSE,
 		FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
 		CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FIXED_PITCH,
 		TEXT("Consolas"));
 
 	// Set display pen color
-	Pen = CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
+	pen = CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
 
 	UINT fmt = DT_LEFT | DT_VCENTER | DT_SINGLELINE;
 	// cache main hex font (black)
-	BackBuf.FontDC = CreateCompatibleDC(hdc);
-	BackBuf.FontBitmap = CreateCompatibleBitmap(hdc, 7 * 16, 14);
-	SelectObject(BackBuf.FontDC, BackBuf.FontBitmap);
-	SelectObject(BackBuf.FontDC, BackBuf.Font);
-	DrawText(BackBuf.FontDC, "0123456789ABCDEF", 32, &frc, fmt);
+	fontDC = CreateCompatibleDC(hdc);
+	fontBitmap = CreateCompatibleBitmap(hdc, 7 * 16, 14);
+	SelectObject(fontDC, fontBitmap);
+	SelectObject(fontDC, font);
+	DrawText(fontDC, "0123456789ABCDEF", 32, &frc, fmt);
 
 	// cache secondary hex font (red)
-	BackBuf.FontRedDC = CreateCompatibleDC(hdc);
-	BackBuf.FontRedBitmap = CreateCompatibleBitmap(hdc, 7 * 16, 14);
-	SelectObject(BackBuf.FontRedDC, BackBuf.FontRedBitmap);
-	SelectObject(BackBuf.FontRedDC, BackBuf.Font);
-	SetTextColor(BackBuf.FontRedDC, RGB(255, 0, 0));  // Red
-	DrawText(BackBuf.FontRedDC, "0123456789ABCDEF", 32, &frc, fmt);
+	fontRedDC = CreateCompatibleDC(hdc);
+	fontRedBitmap = CreateCompatibleBitmap(hdc, 7 * 16, 14);
+	SelectObject(fontRedDC, fontRedBitmap);
+	SelectObject(fontRedDC, font);
+	SetTextColor(fontRedDC, RGB(255, 0, 0));  // Red
+	DrawText(fontRedDC, "0123456789ABCDEF", 32, &frc, fmt);
 
 	// cache ascii font
 	frc.right = 7 * 96;
-	BackBuf.FontAsciiDC = CreateCompatibleDC(hdc);
-	BackBuf.FontAsciiBitmap = CreateCompatibleBitmap(hdc, 7 * 96, 14);
-	SelectObject(BackBuf.FontAsciiDC, BackBuf.FontAsciiBitmap);
-	SelectObject(BackBuf.FontAsciiDC, BackBuf.Font);
-	DrawText(BackBuf.FontAsciiDC, "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[.]^_`abcdefghijklmnopqrstuvwxyz{|}~.", 96, &frc, fmt);
+	fontAsciiDC = CreateCompatibleDC(hdc);
+	fontAsciiBitmap = CreateCompatibleBitmap(hdc, 7 * 96, 14);
+	SelectObject(fontAsciiDC, fontAsciiBitmap);
+	SelectObject(fontAsciiDC, font);
+	DrawText(fontAsciiDC, "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[.]^_`abcdefghijklmnopqrstuvwxyz{|}~.", 96, &frc, fmt);
 
 	ReleaseDC(hDlgMem, hdc);
 }
 
 void MemoryBackBufferInfo::CleanupPen()
 {
-	DeleteObject(Pen);
-	Pen = nullptr;
+	DeleteObject(pen);
+	pen = nullptr;
 }
 
 void MemoryBackBufferInfo::CleanupFont()
 {
-	DeleteObject(Font);
-	Font = nullptr;
+	DeleteObject(font);
+	font = nullptr;
 }
 
 void MemoryBackBufferInfo::CleanupFonts(HWND hWnd)
 {
-	DeleteObject(FontBitmap);
-	DeleteObject(FontRedBitmap);
-	DeleteObject(FontAsciiBitmap);
-	ReleaseDC(hWnd, FontDC);
-	DeleteDC(FontDC);
-	FontDC = nullptr;
-	ReleaseDC(hWnd, FontRedDC);
-	DeleteDC(FontRedDC);
-	FontRedDC = nullptr;
-	ReleaseDC(hWnd, FontAsciiDC);
-	DeleteDC(FontAsciiDC);
-	FontAsciiDC = nullptr;
+	DeleteObject(fontBitmap);
+	DeleteObject(fontRedBitmap);
+	DeleteObject(fontAsciiBitmap);
+	ReleaseDC(hWnd, fontDC);
+	DeleteDC(fontDC);
+	fontDC = nullptr;
+	ReleaseDC(hWnd, fontRedDC);
+	DeleteDC(fontRedDC);
+	fontRedDC = nullptr;
+	ReleaseDC(hWnd, fontAsciiDC);
+	DeleteDC(fontAsciiDC);
+	fontAsciiDC = nullptr;
 }
 
 void MemoryBackBufferInfo::Cleanup(HWND hWnd)
 {
-	delete[] Data;
-	Data = nullptr;
+	delete[] data;
+	data = nullptr;
 	CleanupFonts(hWnd);
 	CleanupFont();
 	CleanupPen();
@@ -531,7 +449,7 @@ void MemoryBackBufferInfo::Cleanup(HWND hWnd)
 //
 // refresh the whole window
 //
-void RepaintAll()
+void MemoryWindow::RepaintAll()
 {
 	ResetMemoryCache();
 	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
@@ -547,7 +465,7 @@ void RepaintAll()
 //
 // adjust vertical scroll bar based on data width
 //
-void UpdateVertScrollBar()
+void MemoryWindow::UpdateVertScrollBar()
 {
 	SCROLLINFO si = { 0 };
 	int visible = 32 * dataWidth;
@@ -555,8 +473,8 @@ void UpdateVertScrollBar()
 	si.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
 	si.nMin = 0;
 	si.nPage = visible;
-	si.nMax = (MemSize > visible) ? MemSize - 1 : 0;
-	si.nPos = memoryOffset;
+	si.nMax = (memSize > visible) ? memSize - 1 : 0;
+	si.nPos = memOffset;
 	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 }
 
@@ -564,10 +482,10 @@ void UpdateVertScrollBar()
 //
 // adjust horizontal scroll bar based on data width
 //
-void UpdateHorzScrollBar()
+void MemoryWindow::UpdateHorzScrollBar()
 {
-	Measurements m(&BackBuf.Rect);
-	int visible = (cHorzScrollFactor * (Hex ? m.hexColumns : m.viewColumns)) / m.viewStep;
+	Measurements m(this,&BackBuf.Rect);
+	int visible = (cHorzScrollFactor * (showHex ? m.hexColumns : m.viewColumns)) / m.viewStep;
 	int total = (cHorzScrollFactor * dataWidth) / m.viewStep;
 	int pos = (cHorzScrollFactor * dataPosX) / m.viewStep;
 
@@ -584,7 +502,7 @@ void UpdateHorzScrollBar()
 //
 // show current width
 //
-void UpdateWidthDisplay()
+void MemoryWindow::UpdateWidthDisplay()
 {
 	char info[64];
 	sprintf(info, "Width\n%d", dataWidth);
@@ -594,21 +512,23 @@ void UpdateWidthDisplay()
 //
 // setup new type of view
 //
-void SetViewType()
+void MemoryWindow::SetViewType()
 {
 	HWND hCtl = GetDlgItem(hDlgMem, IDC_VIEW_TYPE);
 	ViewMode mode = (ViewMode)SendMessage(hCtl, CB_GETCURSEL, 0, 0);
 	if (viewMode == mode) return;
 	viewMode = mode;
-	UpdateHorzScrollBar();
-	RepaintAll();
-	UpdateWidthDisplay();
+	if (viewMode == VM_TEXT40 || viewMode == VM_TEXT80)
+	{
+		memOffset = roundDn(memOffset, 2);
+		dataWidth = roundDn(dataWidth, 2);
+	}
 }
 
 //
 // save memory window state
 //
-void SaveSettings()
+void MemoryWindow::SaveSettings()
 {
 	RECT CurWindow;
 	::GetWindowRect(hDlgMem, &CurWindow);
@@ -629,53 +549,65 @@ void SaveSettings()
 		rect.h = clientHeight - cHeaderHeight;
 
 		auto& s = Setting();
-		s.write(cMemoryWindow, cWindowSizeX, rect.w);
-		s.write(cMemoryWindow, cWindowSizeY, rect.h);
-		s.write(cMemoryWindow, cWindowPosX, rect.x);
-		s.write(cMemoryWindow, cWindowPosY, rect.y);
+		auto& section = winIndex ? cMemoryWindow2 : cMemoryWindow;
+		auto write = [&](const std::string& key, int value)
+		{
+			s.write(section, key, value);
+		};
+		write(cWindowSizeX, rect.w);
+		write(cWindowSizeY, rect.h);
+		write(cWindowPosX, rect.x);
+		write(cWindowPosY, rect.y);
 
 		// other state
-		s.write(cMemoryWindow, cAddress, memoryOffset);
-		s.write(cMemoryWindow, cAddressMode, (int)AddrMode_);
-		s.write(cMemoryWindow, cViewMode, (int)viewMode);
-		s.write(cMemoryWindow, cHex, Hex);
-		s.write(cMemoryWindow, cWide, WideView);
-		s.write(cMemoryWindow, cDataWidth, dataWidth);
-		s.write(cMemoryWindow, cDataPosX, dataPosX);
+		write(cAddress, memOffset);
+		write(cAddressMode, (int)addrMode);
+		write(cViewMode, (int)viewMode);
+		write(cHex, (int)showHex);
+		write(cWide, (int)showWideView);
+		write(cDataWidth, dataWidth);
+		write(cDataPosX, dataPosX);
 	}
 }
 
 //
 // load memory window state
 //
-void LoadSettings()
+void MemoryWindow::LoadSettings()
 {
 	auto& s = Setting();
-	s.Read(cMemoryWindow, cAddress, memoryOffset);
-	s.Read(cMemoryWindow, cAddressMode, (int&)AddrMode_);
-	s.Read(cMemoryWindow, cViewMode, (int&)viewMode);
-	s.Read(cMemoryWindow, cHex, (int&)Hex);
-	s.Read(cMemoryWindow, cWide, (int&)WideView);
-	s.Read(cMemoryWindow, cDataWidth, dataWidth);
-	s.Read(cMemoryWindow, cDataPosX, dataPosX);
+	auto& section = winIndex ? cMemoryWindow2 : cMemoryWindow;
+	auto read = [&](const std::string& key, int& value)
+	{
+		value = s.read(section, key, value);
+	};
+
+	read(cAddress, memOffset);
+	read(cAddressMode, (int&)addrMode);
+	read(cViewMode, (int&)viewMode);
+	read(cHex, (int&)showHex);
+	read(cWide, (int&)showWideView);
+	read(cDataWidth, dataWidth);
+	read(cDataPosX, dataPosX);
 
 	if (GetAsyncKeyState(VK_SHIFT))
 	{
 		dataPosX = 0;
 		dataWidth = 16;
-		WideView = false;
-		Hex = true;
+		showWideView = 0;
+		showHex = 1;
 		viewMode = VM_SG4;
-		AddrMode_ = Cpu;
+		addrMode = Cpu;
+		memOffset = 0;
 	}
 }
 
 //
 // setup for new data width
 //
-void SetupDataWidth(int delta)
+void MemoryWindow::SetupDataWidth(int delta)
 {
-	Measurements m(&BackBuf.Rect);
+	Measurements m(this,&BackBuf.Rect);
 
 	if (delta < 0)
 	{
@@ -722,33 +654,92 @@ void SetupDataWidth(int delta)
 //
 // shutdown the memory window
 //
-void Shutdown()
+void MemoryWindow::Shutdown()
 {
 	if (hDlgMem)
 	{
 		SaveSettings();
 		KillTimer(hDlgMem, IDT_MEM_TIMER);
 		BackBuf.Cleanup(hDlgMem);
-		DestroyWindow(hDlgMem);
+		//DestroyWindow(hDlgMem);
 		hDlgMem = nullptr;
 		ResetMemoryCache();
 	}
 }
 
+void MemoryWindow::OnTimer(HWND hDlg)
+{
+	if (addrMode == AddrMode::Cpu || addrMode == AddrMode::Real)
+	{
+		InvalidateRect(hDlg, &BackBuf.Rect, FALSE);
+	}
+}
+
+void MemoryWindow::Paint(HWND hDlg)
+{
+	if (DrawMemory(BackBuf.DeviceContext, &BackBuf.Rect))
+	{
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hDlg, &ps);
+		BitBlt(hdc, 0, 0, BackBuf.Width, BackBuf.Height, BackBuf.DeviceContext, 0, 0, SRCCOPY);
+		EndPaint(hDlg, &ps);
+	}	
+}
+
+void MemoryWindow::Help(HWND hDlg)
+{
+	MessageBox(hDlg,cDbgHelp,"Usage",0);
+	SetFocus(hEditAdrBeg);
+}
+
+void MemoryWindow::Export()
+{
+	LocateMemory();
+	ExportMemory();
+	SetFocus(hEditAdrBeg);
+}
+
+void MemoryWindow::ViewType()
+{
+	SetViewType();
+	UpdateVertScrollBar();
+	UpdateHorzScrollBar();
+	RepaintAll();
+	UpdateWidthDisplay();
+}
+
+void MemoryWindow::MemType(HWND hDlg)
+{
+	SetMemType();
+	UpdateVertScrollBar();
+	UpdateHorzScrollBar();
+	ResetMemoryCache();
+	InvalidateRect(hDlg, &BackBuf.Rect, FALSE);
+}
+
+void MemoryWindow::LeftButton(int x, int y)
+{
+	if (addrMode == AddrMode::PAK)
+		FlashDialogWindow();
+	else
+		SetEditPosition(x,y);
+}
+
 //------------------------------------------------------------------
 //  Display Memory Dialog
 //------------------------------------------------------------------
-INT_PTR CALLBACK MemoryMapDlgProc(
-		HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
+INT_PTR CALLBACK StaticMemoryMapProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
+	auto memoryWindow = [hDlg]() { return gMemoryWindowHandles[hDlg]; };
+
 	switch (message) {
 	case WM_ERASEBKGND:
 		return 1;
 
 	case WM_INITDIALOG:
-		InitializeDialog(hDlg);
+		gMemoryWindowHandles[hDlg] = (MemoryWindow*)lParam;
+		memoryWindow()->InitializeDialog(hDlg);
 		break;
-
 
 	case WM_GETMINMAXINFO:
 	{
@@ -765,23 +756,20 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 	{
 		UINT width = LOWORD(lParam);
 		UINT height = HIWORD(lParam);
-		ResizeWindow(width, height);
+		memoryWindow()->ResizeWindow(width, height);
 		return 0;
 	}
 
 	case WM_LBUTTONDOWN:
-		if (AddrMode_ == AddrMode::PAK)
-			FlashDialogWindow();
-		else
-			SetEditPosition(LOWORD(lParam),HIWORD(lParam));
+		memoryWindow()->LeftButton(LOWORD(lParam),HIWORD(lParam));
 		break;
 
 	case WM_VSCROLL:
-		DoScroll(wParam);
+		memoryWindow()->DoScroll(wParam);
 		break;
 
 	case WM_HSCROLL:
-		DoHorzScroll(wParam);
+		memoryWindow()->DoHorzScroll(wParam);
 		break;
 
 	case WM_MOUSEWHEEL:
@@ -789,60 +777,58 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 		auto delta = GET_WHEEL_DELTA_WPARAM(wParam);
 		auto amount = (delta / 30) != 0 ? (delta / 30) : delta;
 		auto param = amount > 0 ? (WPARAM)SB_LINEUP : (WPARAM)SB_LINEDOWN;
+		auto mw = memoryWindow();
 		for (int i = 0; i < std::abs(amount); ++i)
-			DoScroll((WPARAM)param);
+			mw->DoScroll((WPARAM)param);
 		break;
 	}
 
 	case WM_PAINT: 
 	{
-		if (DrawMemory(BackBuf.DeviceContext, &BackBuf.Rect))
-		{
-			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(hDlg, &ps);
-			BitBlt(hdc, 0, 0, BackBuf.Width, BackBuf.Height, BackBuf.DeviceContext, 0, 0, SRCCOPY);
-			EndPaint(hDlg, &ps);
-		}
+		memoryWindow()->Paint(hDlg);
 		break;
 	}
 
 	case WM_TIMER:
 		switch (wParam) {
 		case IDT_MEM_TIMER:
-			if ( AddrMode_ == AddrMode::Cpu ||
-				 AddrMode_ == AddrMode::Real ) {
-				InvalidateRect(hDlg, &BackBuf.Rect, FALSE);
-			}
+			memoryWindow()->OnTimer(hDlg);
 		}
 		break;
 
 	case WM_CLOSE:
-	case WM_DESTROY:
-		Shutdown();
+		DestroyWindow(hDlg);
 		break;
+
+	case WM_NCDESTROY:
+	{
+		auto mw = memoryWindow();
+		if (mw)
+		{
+			mw->Shutdown();
+			gMemoryWindows[mw->winIndex] = nullptr;
+			gMemoryWindowHandles.erase(hDlg);
+			delete mw;
+		}
+		break;
+	}
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) 
 		{
 			case IDC_MEM_TYPE:
-				SetMemType();
-				ResetMemoryCache();
-				InvalidateRect(hDlg, &BackBuf.Rect, FALSE);
+				memoryWindow()->MemType(hDlg);
 				break;
 			case IDC_VIEW_TYPE:
-				SetViewType();
+				memoryWindow()->ViewType();
 				break;
 			case IDC_BTN_EXPORT_MEM:
-				LocateMemory();
-				ExportMemory();
-				SetFocus(hEditAdrBeg);
+				memoryWindow()->Export();
 				break;
 			case IDC_BTN_HELP:
-				MessageBox(hDlg,DbgHelp,"Usage",0);
-				SetFocus(hEditAdrBeg);
+				memoryWindow()->Help(hDlg);
 				break;
 			case IDCLOSE:
-				Shutdown();
 				break;
 		}
 		break;
@@ -853,7 +839,7 @@ INT_PTR CALLBACK MemoryMapDlgProc(
 //
 // resize the window
 //
-void ResizeWindow(int width, int height)
+void MemoryWindow::ResizeWindow(int width, int height)
 {
 	RECT Rect;
 	GetClientRect(hDlgMem, &Rect);
@@ -871,12 +857,22 @@ void ResizeWindow(int width, int height)
 }
 
 
+void MemoryWindow::Escape()
+{
+	SetEditing(false);
+	SetFocus(hEditAdrBeg);
+	ResetMemoryCache();
+	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
+}
+
+
 //------------------------------------------------------------------
 //  Subclassed Edit Value Proc
 //------------------------------------------------------------------
-LRESULT CALLBACK subEditValProc(
-		HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK SubEditValProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	auto memoryWindow = [wnd]() { return gMemoryWindowHandles[GetParent(wnd)]; };
+
 	switch (msg) {
 	case WM_CHAR:
 	case WM_KEYUP:
@@ -897,14 +893,11 @@ LRESULT CALLBACK subEditValProc(
 	case WM_KEYDOWN:
 		switch (wParam) {
 		case VK_RETURN:
-			CommitValue();
+			memoryWindow()->CommitValue();
 			return 0;
 		case VK_TAB:
 		case VK_ESCAPE:
-			SetEditing(false);
-			SetFocus(hEditAdrBeg);
-			ResetMemoryCache();
-			InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
+			memoryWindow()->Escape();
 			return 0;
 		case VK_UP:
 		case VK_DOWN:
@@ -912,22 +905,37 @@ LRESULT CALLBACK subEditValProc(
 		case VK_NEXT:
 		case VK_HOME:
 		case VK_END:
-			FlashDialogWindow();
+			memoryWindow()->FlashDialogWindow();
 			return 0;
 		case VK_OEM_4:
 		case VK_OEM_6:
 			return 0;
 		}
 	}
-	return CallWindowProc(EditValProc, wnd, msg, wParam, lParam);
+	return CallWindowProc(memoryWindow()->editValProc, wnd, msg, wParam, lParam);
+}
+
+
+void MemoryWindow::SelectAdrEnd()
+{
+	LocateMemory();
+	SendMessage(hEditAdrEnd, EM_SETSEL, 0, -1);
+	SetFocus(hEditAdrEnd);
+}
+
+void MemoryWindow::SelectAdrBeg()
+{
+	LocateMemory();
+	SetFocus(hEditAdrBeg);
 }
 
 //------------------------------------------------------------------
 //  Subclassed Edit Address Proc
 //------------------------------------------------------------------
-LRESULT CALLBACK subEditAdrBegProc(
-		HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK SubEditAdrBegProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	auto memoryWindow = [wnd]() { return gMemoryWindowHandles[GetParent(wnd)]; };
+
 	switch (msg) {
 	case WM_KEYUP:
 	case WM_CHAR:
@@ -948,47 +956,46 @@ LRESULT CALLBACK subEditAdrBegProc(
 	case WM_KEYDOWN:
 		switch (wParam) {
 		case VK_RETURN:
-			LocateMemory();
+			memoryWindow()->LocateMemory();
 			return 0;
 		case VK_TAB:
-			LocateMemory();
-			SendMessage(hEditAdrEnd, EM_SETSEL, 0, -1);
-			SetFocus(hEditAdrEnd);
+			memoryWindow()->SelectAdrEnd();
 			return 0;
 		case VK_UP:
-			DoScroll((WPARAM)SB_LINEUP);
+			memoryWindow()->DoScroll((WPARAM)SB_LINEUP);
 			return 0;
 		case VK_DOWN:
-			DoScroll((WPARAM)SB_LINEDOWN);
+			memoryWindow()->DoScroll((WPARAM)SB_LINEDOWN);
 			return 0;
 		case VK_PRIOR:
-			DoScroll((WPARAM)SB_PAGEUP);
+			memoryWindow()->DoScroll((WPARAM)SB_PAGEUP);
 			return 0;
 		case VK_NEXT:
-			DoScroll((WPARAM)SB_PAGEDOWN);
+			memoryWindow()->DoScroll((WPARAM)SB_PAGEDOWN);
 			return 0;
 		case VK_HOME:
-			DoScroll((WPARAM)SB_TOP);
+			memoryWindow()->DoScroll((WPARAM)SB_TOP);
 			return 0;
 		case VK_END:
-			DoScroll((WPARAM)SB_BOTTOM);
+			memoryWindow()->DoScroll((WPARAM)SB_BOTTOM);
 			return 0;
 		case VK_OEM_4:
-			SetupDataWidth(-1);
+			memoryWindow()->SetupDataWidth(-1);
 			return 0;
 		case VK_OEM_6:
-			SetupDataWidth(1);
+			memoryWindow()->SetupDataWidth(1);
 			return 0;
 
 		}
 		break;
 	}
-	return CallWindowProc(EditValProc, wnd, msg, wParam, lParam);
+	return CallWindowProc(memoryWindow()->editValProc, wnd, msg, wParam, lParam);
 }
 
-LRESULT CALLBACK subEditAdrEndProc(
-	HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK SubEditAdrEndProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	auto memoryWindow = [wnd]() { return gMemoryWindowHandles[GetParent(wnd)]; };
+
 	switch (msg) 
 	{
 	case WM_CHAR:
@@ -1008,49 +1015,48 @@ LRESULT CALLBACK subEditAdrEndProc(
 	case WM_KEYDOWN:
 		switch (wParam) {
 		case VK_RETURN:
-			LocateMemory();
+			memoryWindow()->LocateMemory();
 			return 0;
 		case VK_TAB:
-			LocateMemory();
-			SetFocus(hEditAdrBeg);
+			memoryWindow()->SelectAdrBeg();
 			return 0;
 		case VK_UP:
-			DoScroll((WPARAM)SB_LINEUP);
+			memoryWindow()->DoScroll((WPARAM)SB_LINEUP);
 			return 0;
 		case VK_DOWN:
-			DoScroll((WPARAM)SB_LINEDOWN);
+			memoryWindow()->DoScroll((WPARAM)SB_LINEDOWN);
 			return 0;
 		case VK_PRIOR:
-			DoScroll((WPARAM)SB_PAGEUP);
+			memoryWindow()->DoScroll((WPARAM)SB_PAGEUP);
 			return 0;
 		case VK_NEXT:
-			DoScroll((WPARAM)SB_PAGEDOWN);
+			memoryWindow()->DoScroll((WPARAM)SB_PAGEDOWN);
 			return 0;
 		case VK_HOME:
-			DoScroll((WPARAM)SB_TOP);
+			memoryWindow()->DoScroll((WPARAM)SB_TOP);
 			return 0;
 		case VK_END:
-			DoScroll((WPARAM)SB_BOTTOM);
+			memoryWindow()->DoScroll((WPARAM)SB_BOTTOM);
 			return 0;
 		case VK_OEM_4:
-			SetupDataWidth(-1);
+			memoryWindow()->SetupDataWidth(-1);
 			return 0;
 		case VK_OEM_6:
-			SetupDataWidth(1);
+			memoryWindow()->SetupDataWidth(1);
 			return 0;
 		}
 		break;
 	}
 
-	return CallWindowProc(EditValProc, wnd, msg, wParam, lParam);
+	return CallWindowProc(memoryWindow()->editValProc, wnd, msg, wParam, lParam);
 }
 
 //------------------------------------------------------------------
 // Read a byte from Coco Memory
 //------------------------------------------------------------------
-unsigned char ReadMemory(int addr)
+unsigned char MemoryWindow::ReadMemory(int addr)
 {
-	switch (AddrMode_) {
+	switch (addrMode) {
 
 	case AddrMode::Cpu:
 		return SafeMemRead8(addr & 0xFFFF);
@@ -1059,8 +1065,8 @@ unsigned char ReadMemory(int addr)
 		return (unsigned char) GetMem(addr);
 
 	case AddrMode::ROM:
-		if (Rom == nullptr) Rom = Getint_rom_pointer();
-		return Rom[addr & 0x7FFF];
+		if (rom == nullptr) rom = Getint_rom_pointer();
+		return rom[addr & 0x7FFF];
 
 	case AddrMode::PAK:
 		return PackMem8Read(addr & 0x7FFF);
@@ -1071,9 +1077,9 @@ unsigned char ReadMemory(int addr)
 //------------------------------------------------------------------
 // Write a byte to Coco Memory
 //------------------------------------------------------------------
-void WriteMemory(int addr, unsigned char value)
+void MemoryWindow::WriteMemory(int addr, unsigned char value)
 {
-	switch (AddrMode_) {
+	switch (addrMode) {
 
 	case AddrMode::Cpu:
 		EmuState.Debugger.QueueWrite(addr & 0xFFFF, value);
@@ -1084,8 +1090,8 @@ void WriteMemory(int addr, unsigned char value)
 		break;
 
 	case AddrMode::ROM:
-		if (Rom == nullptr) Rom = Getint_rom_pointer();
-		Rom[addr & 0x7FFF] = value;
+		if (rom == nullptr) rom = Getint_rom_pointer();
+		rom[addr & 0x7FFF] = value;
 		break;
 
 	case AddrMode::PAK:
@@ -1096,7 +1102,7 @@ void WriteMemory(int addr, unsigned char value)
 //------------------------------------------------------------------
 // Setup back buffer for data display
 //------------------------------------------------------------------
-void SetBackBuffer(const RECT& rc)
+void MemoryWindow::SetBackBuffer(const RECT& rc)
 {
 	RECT topBar = {0};
 	topBar.left = rc.left + cTopBarStaticWidth;
@@ -1125,14 +1131,14 @@ void SetBackBuffer(const RECT& rc)
 	DeleteObject(old);
 	ReleaseDC(hDlgMem, hdc);
 
-	SelectObject(BackBuf.DeviceContext, BackBuf.Pen);
-	SelectObject(BackBuf.DeviceContext, BackBuf.Font);
+	SelectObject(BackBuf.DeviceContext, BackBuf.pen);
+	SelectObject(BackBuf.DeviceContext, BackBuf.font);
 }
 
 //------------------------------------------------------------------
 // Create vertical scroll bar
 //------------------------------------------------------------------
-void CreateScrollBar(const RECT& Rect)
+void MemoryWindow::CreateScrollBar(const RECT& Rect)
 {
 		hScrollBar = CreateWindowEx(
 			0,
@@ -1146,7 +1152,7 @@ void CreateScrollBar(const RECT& Rect)
 			hDlgMem,
 			(HMENU)IDC_MEM_VSCROLLBAR,
 			(HINSTANCE)GetWindowLong(hDlgMem, GWL_HINSTANCE),
-			nullptr);
+			this);
 
 		if (!hScrollBar) {
 			MessageBox(nullptr, "Vertical Scroll Bar Failed.", "Error",
@@ -1165,7 +1171,7 @@ void CreateScrollBar(const RECT& Rect)
 			hDlgMem,
 			(HMENU)IDC_MEM_HSCROLLBAR,
 			(HINSTANCE)GetWindowLong(hDlgMem, GWL_HINSTANCE),
-			nullptr);
+			this);
 
 		if (!hHorzScrollBar) {
 			MessageBox(nullptr, "Horizontal Scroll Bar Failed.", "Error",
@@ -1176,10 +1182,10 @@ void CreateScrollBar(const RECT& Rect)
 //------------------------------------------------------------------
 // Draw display form with header and vert guide lines
 //------------------------------------------------------------------
-void DrawForm(HDC hdc,LPCRECT clientRect)
+void MemoryWindow::DrawForm(HDC hdc,LPCRECT clientRect)
 {
 	RECT rc;
-	Measurements m(clientRect);
+	Measurements m(this,clientRect);
 
 	// Clear background.
 	HBRUSH brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
@@ -1206,12 +1212,12 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 	DrawText(hdc, "Address", 7, &rc, fmt);
 	if (!m.showHex)
 	{
-		rc.left = m.hexColumnPos(0) + 10;
+		rc.left = m.HexColumnPos(0) + 10;
 		DrawText(hdc, ">", 1, &rc, fmt);
 	}
 	for (int n = 0; n < m.hexColumns; n++)
 	{
-		SetRect(&rc, m.hexColumnPos(n), m.top, m.hexColumnPos(n) + m.hexDigitsWidth - 4, m.top + cHeaderHeight);
+		SetRect(&rc, m.HexColumnPos(n), m.top, m.HexColumnPos(n) + m.hexDigitsWidth - 4, m.top + cHeaderHeight);
 		const std::string s(ToHexString(dataPosX + n, 2, false));
 		DrawText(hdc, s.c_str(), 2, &rc, fmt);
 	}
@@ -1240,19 +1246,19 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 	};
 	char temp[80];
 	strcpy(temp, viewModes[viewMode]);
-	if (WideView) strcat(temp, " - Wide");
+	if (showWideView) strcat(temp, " - Wide");
 	DrawText(hdc, temp, strlen(temp), &rc, fmt);
 
 	// draw hex region
-	int left = std::max(m.viewLeft(), m.viewHexLeft());
-	int right = m.viewHexRight();
+	int left = std::max(m.ViewLeft(), m.ViewHexLeft());
+	int right = m.ViewHexRight();
 	SetRect(&rc, left, m.top + cHeaderHeight - 4, right, m.top + cHeaderHeight - 2);
 
 	// draw horz bar
 	HBRUSH blackBrush = (HBRUSH)GetStockObject(BLACK_BRUSH);
 	FillRect(BackBuf.DeviceContext, &rc, blackBrush);
 
-	auto drawBarEnd = [blackBrush](RECT rc, int x)
+	auto drawBarEnd = [blackBrush,this](RECT rc, int x)
 	{
 		rc.top -= 2;
 		rc.bottom += 2;
@@ -1269,7 +1275,7 @@ void DrawForm(HDC hdc,LPCRECT clientRect)
 //------------------------------------------------------------------
 // Fill memory data on form
 //------------------------------------------------------------------
-bool DrawMemory(HDC hdc, LPCRECT clientRect)
+bool MemoryWindow::DrawMemory(HDC hdc, LPCRECT clientRect)
 {
 	bool dirty = false;
 	bool forcedUpdate = false;
@@ -1282,109 +1288,48 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 	if (memGpu.CopyPalette(gGimeGpu))
 		ResetMemoryCache();
 
-	if (viewMode == VM_SG4)
+	auto pmode = [this](int mode, int mode2) 
+	{ 
+		memGpu.SetGimeVdgMode(mode);
+		memGpu.SetGimeVdgMode2(mode2); 
+	};
+
+	auto mon = [this](int monitor)
 	{
-		memGpu.SetVidMask(524287);
-	}
-	else if (viewMode == VM_PMODE4_NTSC)
-	{
-		memGpu.SetMonitorType(0);
-		memGpu.SetGimeVdgMode(6);
-		memGpu.SetGimeVdgMode2(31);
-	}
-	else if (viewMode == VM_PMODE0_S0)
-	{
-		memGpu.SetGimeVdgMode(3);
-		memGpu.SetGimeVdgMode2(22);
-	}
-	else if (viewMode == VM_PMODE0_S1)
-	{
-		memGpu.SetGimeVdgMode(3);
-		memGpu.SetGimeVdgMode2(23);
-	}
-	else if (viewMode == VM_PMODE1_S0)
-	{
-		memGpu.SetGimeVdgMode(4);
-		memGpu.SetGimeVdgMode2(24);
-	}
-	else if (viewMode == VM_PMODE1_S1)
-	{
-		memGpu.SetGimeVdgMode(4);
-		memGpu.SetGimeVdgMode2(25);
-	}
-	else if (viewMode == VM_PMODE2_S0)
-	{
-		memGpu.SetGimeVdgMode(5);
-		memGpu.SetGimeVdgMode2(26);
-	}
-	else if (viewMode == VM_PMODE2_S1)
-	{
-		memGpu.SetGimeVdgMode(5);
-		memGpu.SetGimeVdgMode2(27);
-	}
-	else if (viewMode == VM_PMODE3_S0)
-	{
-		memGpu.SetGimeVdgMode(6);
-		memGpu.SetGimeVdgMode2(28);
-	}
-	else if (viewMode == VM_PMODE3_S1)
-	{
-		memGpu.SetGimeVdgMode(6);
-		memGpu.SetGimeVdgMode2(29);
-	}
-	else if (viewMode == VM_PMODE4_RGB_S0)
-	{
-		memGpu.SetMonitorType(1);
-		memGpu.SetGimeVdgMode(6);
-		memGpu.SetGimeVdgMode2(30);
-	}
-	else if (viewMode == VM_PMODE4_RGB_S1)
-	{
-		memGpu.SetGimeVdgMode(6);
-		memGpu.SetGimeVdgMode2(31);
-	}
-	else if (viewMode == VM_TEXT40)
+		memGpu.SetMonitorType(monitor);
+	};
+
+	auto gime = [this](int mode, int vres)
 	{
 		memGpu.SetCompatMode(0);
-		memGpu.SetGimeVmode(3);
-		memGpu.SetGimeVres(5);
-	}
-	else if (viewMode == VM_TEXT80)
-	{
-		memGpu.SetCompatMode(0);
-		memGpu.SetGimeVmode(3);
-		memGpu.SetGimeVres(21);
-	}
-	else if (viewMode == VM_HSCREEN1)
-	{
-		memGpu.SetCompatMode(0);
-		memGpu.SetGimeVmode(128);
-		memGpu.SetGimeVres(21);
-	}
-	else if (viewMode == VM_HSCREEN2)
-	{
-		memGpu.SetCompatMode(0);
-		memGpu.SetGimeVmode(128);
-		memGpu.SetGimeVres(122);
-	}
-	else if (viewMode == VM_HSCREEN3)
-	{
-		memGpu.SetCompatMode(0);
-		memGpu.SetGimeVmode(128);
-		memGpu.SetGimeVres(20);
-	}
-	else if (viewMode == VM_HSCREEN4)
-	{
-		memGpu.SetCompatMode(0);
-		memGpu.SetGimeVmode(128);
-		memGpu.SetGimeVres(29);
-	}
+		memGpu.SetGimeVmode(mode);
+		memGpu.SetGimeVres(vres);
+	};
+
+	if (viewMode == VM_SG4)	memGpu.SetVidMask(524287);
+	else if (viewMode == VM_PMODE4_NTSC) pmode(6,31),mon(0);
+	else if (viewMode == VM_PMODE0_S0) pmode(3,22);
+	else if (viewMode == VM_PMODE0_S1) pmode(3,23);
+	else if (viewMode == VM_PMODE1_S0) pmode(4,24);
+	else if (viewMode == VM_PMODE1_S1) pmode(4,25);
+	else if (viewMode == VM_PMODE2_S0) pmode(5,26);
+	else if (viewMode == VM_PMODE2_S1) pmode(5,27);
+	else if (viewMode == VM_PMODE3_S0) pmode(6,28);
+	else if (viewMode == VM_PMODE3_S1) pmode(6,29);
+	else if (viewMode == VM_PMODE4_RGB_S0) pmode(6,30),mon(1);
+	else if (viewMode == VM_PMODE4_RGB_S1) pmode(6,31);
+	else if (viewMode == VM_TEXT40) gime(3,5);
+	else if (viewMode == VM_TEXT80) gime(3,21);
+	else if (viewMode == VM_HSCREEN1) gime(128,21);
+	else if (viewMode == VM_HSCREEN2) gime(128,122);
+	else if (viewMode == VM_HSCREEN3) gime(128,20);
+	else if (viewMode == VM_HSCREEN4) gime(128,29);
 
 	memGpu.SetupDisplay();
 	memGpu.VertCenter = 0;
 	memGpu.HorzCenter = 0;
 
-	Measurements m(clientRect);
+	Measurements m(this,clientRect);
 
 	int pixelHeight = memGpu.LinesperRow;
 	bool hlfound = false;
@@ -1397,30 +1342,30 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 	}
 
 	// if not the same address then it will need repainting
-	if (memoryOffset != ramPos)
+	if (memOffset != ramPos)
 	{
 		dirty = true;
-		ramPos = memoryOffset;
+		ramPos = memOffset;
 	}
 
 	for (int lnum = 0; lnum < 32; lnum++, m.currLineTop += m.lineHeight)
 	{
 		unsigned int offset = lnum * dataWidth;
-		unsigned int address = memoryOffset + offset;
+		unsigned int address = memOffset + offset;
 
-		int x = m.rowAddressPos();
-		int y = m.rowTextY()+1;
+		int x = m.RowAddressPos();
+		int y = m.RowTextY()+1;
 
 		// Draw address of start of line
-		BitBlt(hdc, x, y, 7, 12, BackBuf.FontDC, 7 * ((address >> 20) & 15), 1, SRCCOPY);
-		BitBlt(hdc, x + 7, y, 7, 12, BackBuf.FontDC, 7 * ((address >> 16) & 15), 1, SRCCOPY);
-		BitBlt(hdc, x + 14, y, 7, 12, BackBuf.FontDC, 7 * ((address >> 12) & 15), 1, SRCCOPY);
-		BitBlt(hdc, x + 21, y, 7, 12, BackBuf.FontDC, 7 * ((address >> 8) & 15), 1, SRCCOPY);
-		BitBlt(hdc, x + 28, y, 7, 12, BackBuf.FontDC, 7 * ((address >> 4) & 15), 1, SRCCOPY);
-		BitBlt(hdc, x + 35, y, 7, 12, BackBuf.FontDC, 7 * ((address >> 0) & 15), 1, SRCCOPY);
+		BitBlt(hdc, x, y, 7, 12, BackBuf.fontDC, 7 * ((address >> 20) & 15), 1, SRCCOPY);
+		BitBlt(hdc, x + 7, y, 7, 12, BackBuf.fontDC, 7 * ((address >> 16) & 15), 1, SRCCOPY);
+		BitBlt(hdc, x + 14, y, 7, 12, BackBuf.fontDC, 7 * ((address >> 12) & 15), 1, SRCCOPY);
+		BitBlt(hdc, x + 21, y, 7, 12, BackBuf.fontDC, 7 * ((address >> 8) & 15), 1, SRCCOPY);
+		BitBlt(hdc, x + 28, y, 7, 12, BackBuf.fontDC, 7 * ((address >> 4) & 15), 1, SRCCOPY);
+		BitBlt(hdc, x + 35, y, 7, 12, BackBuf.fontDC, 7 * ((address >> 0) & 15), 1, SRCCOPY);
 
 		// update ram cache
-		bool update = Editing || forcedUpdate;
+		bool update = isEditing || forcedUpdate;
 		for (int a = 0; a < dataWidth; ++a)
 		{
 			auto b = ReadMemory(address + a);
@@ -1442,12 +1387,12 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 			unsigned char val = ramCache[dataPosX + offset + n];
 
 			// Highlight data if cell is being edited
-			bool isRed = Editing && editAddress == address + dataPosX + n;
+			bool isRed = isEditing && editAddress == address + dataPosX + n;
 			if (isRed) hlfound = true;
 
-			x = m.hexColumnPos(n);
-			BitBlt(hdc, x, y, 7, 11, isRed ? BackBuf.FontRedDC : BackBuf.FontDC, 7 * (val >> 4), 1, SRCCOPY);
-			BitBlt(hdc, x + 7, y, 7, 11, isRed ? BackBuf.FontRedDC : BackBuf.FontDC, 7 * (val & 15), 1, SRCCOPY);
+			x = m.HexColumnPos(n);
+			BitBlt(hdc, x, y, 7, 11, isRed ? BackBuf.fontRedDC : BackBuf.fontDC, 7 * (val >> 4), 1, SRCCOPY);
+			BitBlt(hdc, x + 7, y, 7, 11, isRed ? BackBuf.fontRedDC : BackBuf.fontDC, 7 * (val & 15), 1, SRCCOPY);
 		}
 
 		// render ascii
@@ -1458,7 +1403,7 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 				unsigned char val = ramCache[offset + n + m.viewPosX];
 				auto ch = val >= 32 && val < 127 ? val : '.';
 				x = m.right - m.viewWidth + n * 7 + 1;
-				BitBlt(hdc, x, y, 7, 11, BackBuf.FontAsciiDC, cAsciiCharWidth * (ch - 34), 1, SRCCOPY);
+				BitBlt(hdc, x, y, 7, 11, BackBuf.fontAsciiDC, cAsciiCharWidth * (ch - 34), 1, SRCCOPY);
 			}
 		}
 		else
@@ -1482,10 +1427,10 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 
 				// render 12 lines
 				for (int j = 0; j < pixelHeight; ++j)
-					memGpu.UpdateScreen32To(ramCache + lnum * dataWidth + m.viewPosX + columnPos, (unsigned int*)BackBuf.Data, j, BackBuf.DataWidth, false);
+					memGpu.UpdateScreen32To(ramCache + lnum * dataWidth + m.viewPosX + columnPos, (unsigned int*)BackBuf.data, j, BackBuf.dataWidth, false);
 
 				// blit to back buffer
-				HBITMAP bm = CreateBitmap(BackBuf.DataWidth, BackBuf.DataHeight, 1, 32, BackBuf.Data);
+				HBITMAP bm = CreateBitmap(BackBuf.dataWidth, BackBuf.dataHeight, 1, 32, BackBuf.data);
 				HDC src = CreateCompatibleDC(hdc);
 				auto obj = SelectObject(src, bm);
 				int width = (int)(columnRem * columns);
@@ -1500,7 +1445,7 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 	}
 
 	// Not editmode if no cell highlighted.
-	if (Editing && !hlfound) {
+	if (isEditing && !hlfound) {
 		SetEditing(false);
 	}
 
@@ -1510,11 +1455,11 @@ bool DrawMemory(HDC hdc, LPCRECT clientRect)
 //------------------------------------------------------------------
 //  Determine byte to edit based on click location
 //------------------------------------------------------------------
-void SetEditPosition(int xPos, int yPos)
+void MemoryWindow::SetEditPosition(int xPos, int yPos)
 {
-	Measurements m(&BackBuf.Rect);
+	Measurements m(this,&BackBuf.Rect);
 
-	auto edit = [](bool b)
+	auto edit = [this](bool b)
 	{
 		SetEditing(b);
 		InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
@@ -1528,15 +1473,15 @@ void SetEditPosition(int xPos, int yPos)
 	if (yPos < m.currLineTop)
 	{
 		// in title then collapse hex
-		if (xPos > m.hexColumnPos(0) - 10 && xPos < m.hexColumnPos(m.showHex ? m.hexColumns : 1))
+		if (xPos > m.HexColumnPos(0) - 10 && xPos < m.HexColumnPos(m.showHex ? m.hexColumns : 1))
 		{
-			Hex = !Hex;
+			showHex ^= 1;
 			UpdateHorzScrollBar();
 			RepaintAll();
 		}
-		else if (xPos > m.hexColumnPos(m.showHex ? m.hexColumns : 1))
+		else if (xPos > m.HexColumnPos(m.showHex ? m.hexColumns : 1))
 		{
-			WideView = !WideView;
+			showWideView ^= 1;
 			UpdateHorzScrollBar();
 			RepaintAll();
 		}
@@ -1550,20 +1495,20 @@ void SetEditPosition(int xPos, int yPos)
 	if (row < 0 || row >= 32) return edit(false);
 
 	// work out which column
-	int col = m.hexPosColumn(xPos);
+	int col = m.HexPosColumn(xPos);
 
 	// if out of bounds abort
 	if (col < 0 || col >= m.hexColumns) return edit(false);
 
 	// hit
-	editAddress = memoryOffset + col + row * dataWidth + dataPosX;
+	editAddress = memOffset + col + row * dataWidth + dataPosX;
 	return edit(true);
 }
 
 //------------------------------------------------------------------
 // Determine data to display based on address box
 //------------------------------------------------------------------
-void LocateMemory()
+void MemoryWindow::LocateMemory()
 {
 	char buf[32] = {0};
 
@@ -1581,11 +1526,11 @@ void LocateMemory()
 		selectionRangeEnd = selectionRangeBeg;
 	}
 
-	std::string begstr = ToHexString(selectionRangeBeg, 6, true);
-	std::string endstr = ToHexString(selectionRangeEnd, 6, true);
+	std::string begStr = ToHexString(selectionRangeBeg, 6, true);
+	std::string endStr = ToHexString(selectionRangeEnd, 6, true);
 
-	SetDlgItemText(hDlgMem, IDC_EDIT_RANGE_BEG, begstr.c_str());
-	SetDlgItemText(hDlgMem, IDC_EDIT_RANGE_END, endstr.c_str());
+	SetDlgItemText(hDlgMem, IDC_EDIT_RANGE_BEG, begStr.c_str());
+	SetDlgItemText(hDlgMem, IDC_EDIT_RANGE_END, endStr.c_str());
 
 	if (selectionRangeBeg < 0) {
 		selectionRangeBeg = selectionRangeEnd = -1;
@@ -1604,7 +1549,7 @@ void LocateMemory()
 	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 	GetScrollInfo(hScrollBar, SB_CTL, &si);
 
-	memoryOffset = si.nPos;
+	memOffset = si.nPos;
 
 	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
 }
@@ -1612,7 +1557,7 @@ void LocateMemory()
 //------------------------------------------------------------------
 // Export the selected range to disk
 //------------------------------------------------------------------
-void ExportMemory()
+void MemoryWindow::ExportMemory()
 {
 	if (selectionRangeBeg < 0 || selectionRangeEnd < 0) {
 		FlashDialogWindow();
@@ -1642,9 +1587,9 @@ void ExportMemory()
 //------------------------------------------------------------------
 //  Commit edit value to memory
 //------------------------------------------------------------------
-void CommitValue()
+void MemoryWindow::CommitValue()
 {
-	if (!Editing) {
+	if (!isEditing) {
 		FlashDialogWindow();
 		SetDlgItemText(hDlgMem, IDC_EDIT_VALUE, "");
 		return;
@@ -1668,7 +1613,7 @@ void CommitValue()
 
 	// Attempt to advance to next cell
 	editAddress += 1;
-	if (editAddress >= MemSize) {
+	if (editAddress >= memSize) {
 		FlashDialogWindow();
 		editAddress = 0;
 		SetEditing(false);
@@ -1682,48 +1627,46 @@ void CommitValue()
 //------------------------------------------------------------------
 // Set memory type and size as per combobox index
 //------------------------------------------------------------------
-void SetMemType()
+void MemoryWindow::SetMemType()
 {
 	int PhySiz[4] = { 0x20000,0x80000,0x200000,0x800000 };
 
 	HWND hCtl = GetDlgItem(hDlgMem, IDC_MEM_TYPE);
 	AddrMode mode = (AddrMode)SendMessage(hCtl, CB_GETCURSEL, 0, 0);
-	if (AddrMode_ == mode) return;  // Not changed
+	if (addrMode == mode) return;  // Not changed
 
-	memoryOffset = 0;
-
-	AddrMode_ = mode;
-	switch (AddrMode_) {
+	addrMode = mode;
+	switch (addrMode) {
 		case AddrMode::Cpu:
-			MemSize = 0x10000;
+			memSize = 0x10000;
 			break;
 		case AddrMode::Real:
-			MemSize = PhySiz[EmuState.RamSize];
+			memSize = PhySiz[EmuState.RamSize];
 			break;
 		case AddrMode::ROM:
-			MemSize = 0x8000;
+			memSize = 0x8000;
 			break;
 		case AddrMode::PAK:
-			MemSize = 0x8000;
+			memSize = 0x8000;
 			break;
 	}
 
-	UpdateVertScrollBar();
-	UpdateHorzScrollBar();
+	if (memOffset > memSize)
+		memOffset = 0;
 }
 
 
 //------------------------------------------------------------------
 // Memory Dialog initialization
 //------------------------------------------------------------------
-void InitializeDialog(HWND hDlg)
+void MemoryWindow::InitializeDialog(HWND hDlg)
 {
 		hDlgMem = hDlg;
 
 		RECT Rect;
 		GetClientRect(hDlg, &Rect);
 
-		BackBuf.Init();
+		BackBuf.Init(hDlg);
 		SetBackBuffer(Rect);
 		CreateScrollBar(Rect);
 
@@ -1731,16 +1674,13 @@ void InitializeDialog(HWND hDlg)
 
 		//Subclass edit boxes
 		hEditAdrBeg = GetDlgItem(hDlg, IDC_EDIT_RANGE_BEG);
-		EditAdrBegProc = (WNDPROC) SetWindowLongPtr
-				(hEditAdrBeg, GWLP_WNDPROC, (LONG_PTR) subEditAdrBegProc);
+		editAdrBegProc = (WNDPROC)SetWindowLongPtr(hEditAdrBeg, GWLP_WNDPROC, (LONG_PTR)SubEditAdrBegProc);
 
 		hEditAdrEnd = GetDlgItem(hDlg, IDC_EDIT_RANGE_END);
-		EditAdrEndProc = (WNDPROC)SetWindowLongPtr
-				(hEditAdrEnd, GWLP_WNDPROC, (LONG_PTR)subEditAdrEndProc);
+		editAdrEndProc = (WNDPROC)SetWindowLongPtr(hEditAdrEnd, GWLP_WNDPROC, (LONG_PTR)SubEditAdrEndProc);
 
 		hEditVal = GetDlgItem(hDlg, IDC_EDIT_VALUE);
-		EditValProc = (WNDPROC) SetWindowLongPtr
-				(hEditVal, GWLP_WNDPROC, (LONG_PTR) subEditValProc);
+		editValProc = (WNDPROC)SetWindowLongPtr(hEditVal, GWLP_WNDPROC, (LONG_PTR)SubEditValProc);
 
 		SetTimer(hDlg, IDT_MEM_TIMER, 1000/60, nullptr);
 
@@ -1750,7 +1690,10 @@ void InitializeDialog(HWND hDlg)
 		SendMessage(hCtl,CB_ADDSTRING,(WPARAM) 0, (LPARAM) "REAL");
 		SendMessage(hCtl,CB_ADDSTRING,(WPARAM) 0, (LPARAM) "ROM");
 		SendMessage(hCtl,CB_ADDSTRING,(WPARAM) 0, (LPARAM) "PAK");
-		SendMessage(hCtl,CB_SETCURSEL,(WPARAM)AddrMode_, (LPARAM) 0);
+		SendMessage(hCtl,CB_SETCURSEL,(WPARAM)addrMode, (LPARAM) 0);
+
+		// force this to update to set MemSize correctly
+		addrMode = NotSet;
 		SetMemType();
 
 		hCtl = GetDlgItem(hDlg, IDC_VIEW_TYPE);
@@ -1774,7 +1717,6 @@ void InitializeDialog(HWND hDlg)
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"HSCREEN3");
 		SendMessage(hCtl, CB_ADDSTRING, (WPARAM)0, (LPARAM)"HSCREEN4");
 		SendMessage(hCtl, CB_SETCURSEL, (WPARAM)viewMode, (LPARAM)0);
-		SetViewType();
 
 		SetBackBuffer(Rect);
 
@@ -1783,10 +1725,13 @@ void InitializeDialog(HWND hDlg)
 
 		// Not edit mode
 		SetEditing(false);
+
+		UpdateVertScrollBar();
+		UpdateHorzScrollBar();
 }
 
 
-void DoHorzScroll(WPARAM wParam)
+void MemoryWindow::DoHorzScroll(WPARAM wParam)
 {
 	SCROLLINFO si = { 0 };
 	si.cbSize = sizeof(si);
@@ -1825,7 +1770,7 @@ void DoHorzScroll(WPARAM wParam)
 	GetScrollInfo(hHorzScrollBar, SB_CTL, &si);
 	if (pos != si.nPos)
 	{
-		Measurements m(&BackBuf.Rect);
+		Measurements m(this,&BackBuf.Rect);
 		dataPosX = (si.nPos / cHorzScrollFactor) * m.viewStep;
 		SetEditing(false);
 		RepaintAll();
@@ -1836,7 +1781,7 @@ void DoHorzScroll(WPARAM wParam)
 //------------------------------------------------------------------
 //  Scroll handler
 //------------------------------------------------------------------
-void DoScroll(WPARAM wParam)
+void MemoryWindow::DoScroll(WPARAM wParam)
 {
 	SCROLLINFO si = {0};
 	si.cbSize = sizeof(si);
@@ -1872,7 +1817,7 @@ void DoScroll(WPARAM wParam)
 	si.fMask = SIF_POS;
 	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 	GetScrollInfo(hScrollBar, SB_CTL, &si);
-	memoryOffset = si.nPos;//roundDn(si.nPos,dataWidth); nice but unusable with widths>16
+	memOffset = roundDn(si.nPos,dataWidth);
 
 	InvalidateRect(hDlgMem, &BackBuf.Rect, FALSE);
 }
@@ -1880,7 +1825,7 @@ void DoScroll(WPARAM wParam)
 //------------------------------------------------------------------
 // Convert hexadecimal string to a positive long. Return -1 on error
 //------------------------------------------------------------------
-int CStrToHex(const char * buf)
+int MemoryWindow::CStrToHex(const char * buf)
 {
 	char *p;
 	if (*buf == 0) return -1;
@@ -1894,10 +1839,10 @@ int CStrToHex(const char * buf)
 //------------------------------------------------------------------
 //  Set edit mode
 //------------------------------------------------------------------
-void SetEditing(bool tf) 
+void MemoryWindow::SetEditing(bool tf) 
 {
-	Editing = tf;
-	if (Editing) 
+	isEditing = tf;
+	if (isEditing) 
 	{
 		std::string s = "Editing " + ToHexString(editAddress,6,true);
 		SetDlgItemText(hDlgMem, IDC_ADRTXT, s.c_str());
@@ -1915,30 +1860,37 @@ void SetEditing(bool tf)
 //------------------------------------------------------------------
 //  Input error flash
 //------------------------------------------------------------------
-void FlashDialogWindow()
+void MemoryWindow::FlashDialogWindow()
 {
 	FlashWindow(hDlgMem,true);
 	Sleep(350);
 	FlashWindow(hDlgMem,false);
 }
 
-void SetWindowRect()
+void MemoryWindow::SetWindowRect()
 {
 	if (hDlgMem != nullptr)
 	{
 		Rect rect;
-		auto& s = Setting();
-		rect.w = s.read(cMemoryWindow, cWindowSizeX, 640);
-		rect.h = s.read(cMemoryWindow, cWindowSizeY, 480);
-		rect.x = s.read(cMemoryWindow, cWindowPosX, CW_USEDEFAULT);
-		rect.y = s.read(cMemoryWindow, cWindowPosY, CW_USEDEFAULT);
 
-		if (GetAsyncKeyState(VK_SHIFT))
+		rect.x = CW_USEDEFAULT;
+		rect.y = CW_USEDEFAULT;
+		rect.w = 640;
+		rect.h = 480;
+
+		if (!GetAsyncKeyState(VK_SHIFT))
 		{
-			rect.x = CW_USEDEFAULT;
-			rect.y = CW_USEDEFAULT;
-			rect.w = 640;
-			rect.h = 480;
+			auto& s = Setting();
+			auto& section = winIndex ? cMemoryWindow2 : cMemoryWindow;
+			auto read = [&](const std::string& key, int& value)
+			{
+				value = s.read(section, key, value);
+			};
+
+			read(cWindowSizeX, rect.w);
+			read(cWindowSizeY, rect.h);
+			read(cWindowPosX, rect.x);
+			read(cWindowPosY, rect.y);
 		}
 
 		RECT ra = { 0,0,0,0 };  // left,top,right,bottom
@@ -1956,30 +1908,40 @@ void SetWindowRect()
 	}
 }
 
-} }  // end namespace
+bool MemoryWindow::Init()
+{
+	if (hDlgMem == nullptr)
+	{
+		return false;
+	}
+
+	ShowWindow(hDlgMem, SW_SHOWNORMAL);
+	SetFocus(hEditAdrBeg);
+	SetWindowRect();
+	return true;
+
+}
+
+}  // end namespace
 
 //------------------------------------------------------------------
 // Launch Memory Dialog
 //------------------------------------------------------------------
 void VCC::Debugger::UI::OpenMemoryMapWindow(HINSTANCE hInst,HWND parent)
 {
-	LoadSettings();
+	int i = 0;
+	while (i < 2 && gMemoryWindows[i]) ++i;
+	if (i == 2) return;
 
-	if (hDlgMem == nullptr) {
-		CreateDialog( hInst, MAKEINTRESOURCE(IDD_MEMORY_MAP),
-		              parent, MemoryMapDlgProc );
-	}
+	auto memoryWindow = gMemoryWindows[i] = new MemoryWindow(i);
+	memoryWindow->LoadSettings();
+	CreateDialogParam( hInst, MAKEINTRESOURCE(IDD_MEMORY_MAP),
+		            parent, StaticMemoryMapProc, (LPARAM)memoryWindow);
 
-	if (hDlgMem == nullptr)
+	if (!memoryWindow->Init())
 	{
 		MessageBox(nullptr, "CreateDialog", "Error", MB_OK | MB_ICONERROR);
-		return;
+		delete memoryWindow;
 	}
-
-	ShowWindow(hDlgMem, SW_SHOWNORMAL);
-	SetFocus(hEditAdrBeg);
-	SetWindowRect();
-	UpdateVertScrollBar();
-	UpdateHorzScrollBar();
 }
 
