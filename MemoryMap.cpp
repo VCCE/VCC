@@ -35,13 +35,11 @@
 #include <vcc/util/logger.h>
 #include <vcc/util/DialogOps.h>
 #include <fstream>
-#include <unordered_map>
 #include <windowsx.h>
 
 namespace VCC::Debugger::UI {
 namespace {
 
-std::unordered_map<HWND, MemoryWindow*> gMemoryWindowHandles;
 MemoryWindow* gMemoryWindows[2] = { 0, 0 };
 
 // windows will allow the track bar to be positioned
@@ -332,9 +330,6 @@ MemoryWindow::MemoryWindow(int index) :
 	hEditAdrEnd(nullptr),
 	hEditVal(nullptr),
 	hStatic(nullptr),
-	editValProc(nullptr),
-	editAdrBegProc(nullptr),
-	editAdrEndProc(nullptr),
 	ramCache(nullptr),
 	ramPos(-1),
 	addrMode(NotSet),
@@ -786,112 +781,111 @@ void MemoryWindow::LeftButton(int x, int y)
 //------------------------------------------------------------------
 //  Display Memory Dialog
 //------------------------------------------------------------------
-INT_PTR CALLBACK StaticMemoryMapProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
+LRESULT CALLBACK MemoryWindowSubclassProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
-	auto memoryWindow = [hDlg]() { return gMemoryWindowHandles[hDlg]; };
+	auto memoryWindow = [dwRefData]() { return (MemoryWindow*)dwRefData; };
 
-	switch (message) {
-	case WM_ERASEBKGND:
-		return 1;
-
-	case WM_INITDIALOG:
-		gMemoryWindowHandles[hDlg] = (MemoryWindow*)lParam;
-		memoryWindow()->InitializeDialog(hDlg);
-		break;
-
-	case WM_GETMINMAXINFO:
+	switch (uMsg) 
 	{
-		MINMAXINFO* mmi = (MINMAXINFO*)lParam;
+		case WM_ERASEBKGND:
+			return 1;
 
-		// Set minimum tracking size (width, height)
-		mmi->ptMinTrackSize.x = 540; // Minimum width in pixels
-		mmi->ptMinTrackSize.y = 540; // Minimum height in pixels
-
-		return 0;
-	}
-
-	case WM_SIZE:
-	{
-		UINT width = LOWORD(lParam);
-		UINT height = HIWORD(lParam);
-		memoryWindow()->ResizeWindow(width, height);
-		return 0;
-	}
-
-	case WM_LBUTTONDOWN:
-		memoryWindow()->LeftButton(LOWORD(lParam),HIWORD(lParam));
-		break;
-
-	case WM_VSCROLL:
-		memoryWindow()->DoScroll(wParam);
-		break;
-
-	case WM_HSCROLL:
-		memoryWindow()->DoHorzScroll(wParam);
-		break;
-
-	case WM_MOUSEWHEEL:
-	{
-		auto delta = GET_WHEEL_DELTA_WPARAM(wParam);
-		auto amount = (delta / 30) != 0 ? (delta / 30) : delta;
-		auto param = amount > 0 ? (WPARAM)SB_LINEUP : (WPARAM)SB_LINEDOWN;
-		auto mw = memoryWindow();
-		for (int i = 0; i < std::abs(amount); ++i)
-			mw->DoScroll((WPARAM)param);
-		break;
-	}
-
-	case WM_PAINT: 
-	{
-		memoryWindow()->Paint(hDlg);
-		break;
-	}
-
-	case WM_TIMER:
-		switch (wParam) {
-		case IDT_MEM_TIMER:
-			memoryWindow()->OnTimer(hDlg);
-		}
-		break;
-
-	case WM_CLOSE:
-		DestroyWindow(hDlg);
-		break;
-
-	case WM_NCDESTROY:
-	{
-		auto mw = memoryWindow();
-		if (mw)
+		case WM_GETMINMAXINFO:
 		{
-			mw->Shutdown();
-			gMemoryWindows[mw->winIndex] = nullptr;
-			gMemoryWindowHandles.erase(hDlg);
-			delete mw;
+			MINMAXINFO* mmi = (MINMAXINFO*)lParam;
+
+			// Set minimum tracking size (width, height)
+			mmi->ptMinTrackSize.x = 540; // Minimum width in pixels
+			mmi->ptMinTrackSize.y = 540; // Minimum height in pixels
+
+			return 0;
 		}
-		break;
+
+		case WM_SIZE:
+		{
+			UINT width = LOWORD(lParam);
+			UINT height = HIWORD(lParam);
+			memoryWindow()->ResizeWindow(width, height);
+			return 0;
+		}
+
+		case WM_LBUTTONDOWN:
+			memoryWindow()->LeftButton(LOWORD(lParam), HIWORD(lParam));
+			break;
+
+		case WM_VSCROLL:
+			memoryWindow()->DoScroll(wParam);
+			break;
+
+		case WM_HSCROLL:
+			memoryWindow()->DoHorzScroll(wParam);
+			break;
+
+		case WM_MOUSEWHEEL:
+		{
+			auto delta = GET_WHEEL_DELTA_WPARAM(wParam);
+			auto amount = (delta / 30) != 0 ? (delta / 30) : delta;
+			auto param = amount > 0 ? (WPARAM)SB_LINEUP : (WPARAM)SB_LINEDOWN;
+			auto mw = memoryWindow();
+			for (int i = 0; i < std::abs(amount); ++i)
+				mw->DoScroll((WPARAM)param);
+			break;
+		}
+
+		case WM_PAINT:
+		{
+			memoryWindow()->Paint(hDlg);
+			break;
+		}
+
+		case WM_TIMER:
+			switch (wParam) {
+				case IDT_MEM_TIMER:
+					memoryWindow()->OnTimer(hDlg);
+			}
+			break;
+
+		case WM_CLOSE:
+			DestroyWindow(hDlg);
+			break;
+
+		case WM_NCDESTROY:
+		{
+			auto mw = memoryWindow();
+			if (mw)
+			{
+				mw->Shutdown();
+				gMemoryWindows[mw->winIndex] = nullptr;
+				delete mw;
+			}
+			RemoveWindowSubclass(hDlg, MemoryWindowSubclassProc, uIdSubclass);
+			break;
+		}
+
+		case WM_COMMAND:
+		{
+			switch (LOWORD(wParam))
+			{
+				case IDC_MEM_TYPE:
+					memoryWindow()->MemType(hDlg);
+					break;
+				case IDC_VIEW_TYPE:
+					memoryWindow()->ViewType();
+					break;
+				case IDC_BTN_EXPORT_MEM:
+					memoryWindow()->Export();
+					break;
+				case IDC_BTN_HELP:
+					memoryWindow()->Help(hDlg);
+					break;
+				case IDCLOSE:
+					break;
+			}
+			break;
+		}
 	}
 
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) 
-		{
-			case IDC_MEM_TYPE:
-				memoryWindow()->MemType(hDlg);
-				break;
-			case IDC_VIEW_TYPE:
-				memoryWindow()->ViewType();
-				break;
-			case IDC_BTN_EXPORT_MEM:
-				memoryWindow()->Export();
-				break;
-			case IDC_BTN_HELP:
-				memoryWindow()->Help(hDlg);
-				break;
-			case IDCLOSE:
-				break;
-		}
-		break;
-	}
-	return FALSE;
+	return DefSubclassProc(hDlg, uMsg, wParam, lParam);
 }
 
 //
@@ -925,55 +919,65 @@ void MemoryWindow::Escape()
 }
 
 
-//------------------------------------------------------------------
-//  Subclassed Edit Value Proc
-//------------------------------------------------------------------
-LRESULT CALLBACK SubEditValProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
+//
+// Subclassed Edit Value Proc
+//
+LRESULT CALLBACK EditSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
-	auto memoryWindow = [wnd]() { return gMemoryWindowHandles[GetParent(wnd)]; };
+	auto memoryWindow = [dwRefData]() { return (MemoryWindow*)dwRefData; };
 
-	switch (msg) {
-	case WM_CHAR:
-	case WM_KEYUP:
+	switch (uMsg)
 	{
-		switch (wParam)
+		case WM_CHAR:
+		case WM_KEYUP:
 		{
-			case '[':
-			case ']':
-			case '{':
-			case '}':
-			case VK_OEM_4:
-			case VK_OEM_6:
-			case VK_RETURN:
-			case VK_ESCAPE:
-				return 0;
+			switch (wParam)
+			{
+				case '[':
+				case ']':
+				case '{':
+				case '}':
+				case VK_OEM_4:
+				case VK_OEM_6:
+				case VK_RETURN:
+				case VK_ESCAPE:
+					return 0;
+			}
+			break;
 		}
-	}
-	break;
 
-	case WM_KEYDOWN:
-		switch (wParam) {
-		case VK_RETURN:
-			memoryWindow()->CommitValue();
-			return 0;
-		case VK_TAB:
-		case VK_ESCAPE:
-			memoryWindow()->Escape();
-			return 0;
-		case VK_UP:
-		case VK_DOWN:
-		case VK_PRIOR:
-		case VK_NEXT:
-		case VK_HOME:
-		case VK_END:
-			memoryWindow()->FlashDialogWindow();
-			return 0;
-		case VK_OEM_4:
-		case VK_OEM_6:
-			return 0;
+		case WM_KEYDOWN:
+		{
+			switch (wParam)
+			{
+				case VK_RETURN:
+					memoryWindow()->CommitValue();
+					return 0;
+				case VK_TAB:
+				case VK_ESCAPE:
+					memoryWindow()->Escape();
+					return 0;
+				case VK_UP:
+				case VK_DOWN:
+				case VK_PRIOR:
+				case VK_NEXT:
+				case VK_HOME:
+				case VK_END:
+					memoryWindow()->FlashDialogWindow();
+					return 0;
+				case VK_OEM_4:
+				case VK_OEM_6:
+					return 0;
+			}
+			break;
 		}
-	}
-	return CallWindowProc(memoryWindow()->editValProc, wnd, msg, wParam, lParam);
+
+		case WM_NCDESTROY:
+			RemoveWindowSubclass(hWnd, &EditSubclassProc, uIdSubclass);
+			break;
+	};
+
+	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
 //
@@ -1053,126 +1057,138 @@ void MemoryWindow::SelectAdrBeg()
 	SetFocus(hEditAdrBeg);
 }
 
-//------------------------------------------------------------------
-//  Subclassed Edit Address Proc
-//------------------------------------------------------------------
-LRESULT CALLBACK SubEditAdrBegProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
+//
+// Subclassed Edit Address Proc
+//
+LRESULT CALLBACK EditAdrBegSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
-	auto memoryWindow = [wnd]() { return gMemoryWindowHandles[GetParent(wnd)]; };
+	auto memoryWindow = [dwRefData]() { return (MemoryWindow*)dwRefData; };
 
-	switch (msg) {
-	case WM_KEYUP:
-	case WM_CHAR:
+	switch (uMsg) 
 	{
-		switch (wParam)
+		case WM_KEYUP:
+		case WM_CHAR:
 		{
-			case '[':
-			case ']':
-			case '{':
-			case '}':
-			case VK_OEM_4:
-			case VK_OEM_6:
-				return 0;
-		}
-	}
-	break;
-
-	case WM_KEYDOWN:
-		switch (wParam) {
-		case VK_RETURN:
-			memoryWindow()->LocateMemory();
-			return 0;
-		case VK_TAB:
-			memoryWindow()->SelectAdrEnd();
-			return 0;
-		case VK_UP:
-			memoryWindow()->DoScroll((WPARAM)SB_LINEUP);
-			return 0;
-		case VK_DOWN:
-			memoryWindow()->DoScroll((WPARAM)SB_LINEDOWN);
-			return 0;
-		case VK_PRIOR:
-			memoryWindow()->DoScroll((WPARAM)SB_PAGEUP);
-			return 0;
-		case VK_NEXT:
-			memoryWindow()->DoScroll((WPARAM)SB_PAGEDOWN);
-			return 0;
-		case VK_HOME:
-			memoryWindow()->DoScroll((WPARAM)SB_TOP);
-			return 0;
-		case VK_END:
-			memoryWindow()->DoScroll((WPARAM)SB_BOTTOM);
-			return 0;
-		case VK_OEM_4:
-			memoryWindow()->SetupDataWidth(-1);
-			return 0;
-		case VK_OEM_6:
-			memoryWindow()->SetupDataWidth(1);
-			return 0;
-
+			switch (wParam)
+			{
+				case '[':
+				case ']':
+				case '{':
+				case '}':
+				case VK_OEM_4:
+				case VK_OEM_6:
+					return 0;
+			}
 		}
 		break;
-	}
-	return CallWindowProc(memoryWindow()->editValProc, wnd, msg, wParam, lParam);
+
+		case WM_KEYDOWN:
+			switch (wParam) 
+			{
+				case VK_RETURN:
+					memoryWindow()->LocateMemory();
+					return 0;
+				case VK_TAB:
+					memoryWindow()->SelectAdrEnd();
+					return 0;
+				case VK_UP:
+					memoryWindow()->DoScroll((WPARAM)SB_LINEUP);
+					return 0;
+				case VK_DOWN:
+					memoryWindow()->DoScroll((WPARAM)SB_LINEDOWN);
+					return 0;
+				case VK_PRIOR:
+					memoryWindow()->DoScroll((WPARAM)SB_PAGEUP);
+					return 0;
+				case VK_NEXT:
+					memoryWindow()->DoScroll((WPARAM)SB_PAGEDOWN);
+					return 0;
+				case VK_HOME:
+					memoryWindow()->DoScroll((WPARAM)SB_TOP);
+					return 0;
+				case VK_END:
+					memoryWindow()->DoScroll((WPARAM)SB_BOTTOM);
+					return 0;
+				case VK_OEM_4:
+					memoryWindow()->SetupDataWidth(-1);
+					return 0;
+				case VK_OEM_6:
+					memoryWindow()->SetupDataWidth(1);
+					return 0;
+
+			}
+			break;
+
+		case WM_NCDESTROY:
+			RemoveWindowSubclass(hWnd, &EditAdrBegSubclassProc, uIdSubclass);
+			break;
+	};
+
+	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+
 }
 
-LRESULT CALLBACK SubEditAdrEndProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK EditAdrEndSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
-	auto memoryWindow = [wnd]() { return gMemoryWindowHandles[GetParent(wnd)]; };
+	auto memoryWindow = [dwRefData]() { return (MemoryWindow*)dwRefData; };
 
-	switch (msg) 
+	switch (uMsg) 
 	{
-	case WM_CHAR:
-	case WM_KEYUP:
-	{
-		switch (wParam)
+		case WM_CHAR:
+		case WM_KEYUP:
 		{
-			case '[':
-			case ']':
-			case VK_OEM_4:
-			case VK_OEM_6:
-				return 0;
-		}
-	}
-	break;
-
-	case WM_KEYDOWN:
-		switch (wParam) {
-		case VK_RETURN:
-			memoryWindow()->LocateMemory();
-			return 0;
-		case VK_TAB:
-			memoryWindow()->SelectAdrBeg();
-			return 0;
-		case VK_UP:
-			memoryWindow()->DoScroll((WPARAM)SB_LINEUP);
-			return 0;
-		case VK_DOWN:
-			memoryWindow()->DoScroll((WPARAM)SB_LINEDOWN);
-			return 0;
-		case VK_PRIOR:
-			memoryWindow()->DoScroll((WPARAM)SB_PAGEUP);
-			return 0;
-		case VK_NEXT:
-			memoryWindow()->DoScroll((WPARAM)SB_PAGEDOWN);
-			return 0;
-		case VK_HOME:
-			memoryWindow()->DoScroll((WPARAM)SB_TOP);
-			return 0;
-		case VK_END:
-			memoryWindow()->DoScroll((WPARAM)SB_BOTTOM);
-			return 0;
-		case VK_OEM_4:
-			memoryWindow()->SetupDataWidth(-1);
-			return 0;
-		case VK_OEM_6:
-			memoryWindow()->SetupDataWidth(1);
-			return 0;
+			switch (wParam)
+			{
+				case '[':
+				case ']':
+				case VK_OEM_4:
+				case VK_OEM_6:
+					return 0;
+			}
 		}
 		break;
-	}
 
-	return CallWindowProc(memoryWindow()->editValProc, wnd, msg, wParam, lParam);
+		case WM_KEYDOWN:
+			switch (wParam) {
+				case VK_RETURN:
+					memoryWindow()->LocateMemory();
+					return 0;
+				case VK_TAB:
+					memoryWindow()->SelectAdrBeg();
+					return 0;
+				case VK_UP:
+					memoryWindow()->DoScroll((WPARAM)SB_LINEUP);
+					return 0;
+				case VK_DOWN:
+					memoryWindow()->DoScroll((WPARAM)SB_LINEDOWN);
+					return 0;
+				case VK_PRIOR:
+					memoryWindow()->DoScroll((WPARAM)SB_PAGEUP);
+					return 0;
+				case VK_NEXT:
+					memoryWindow()->DoScroll((WPARAM)SB_PAGEDOWN);
+					return 0;
+				case VK_HOME:
+					memoryWindow()->DoScroll((WPARAM)SB_TOP);
+					return 0;
+				case VK_END:
+					memoryWindow()->DoScroll((WPARAM)SB_BOTTOM);
+					return 0;
+				case VK_OEM_4:
+					memoryWindow()->SetupDataWidth(-1);
+					return 0;
+				case VK_OEM_6:
+					memoryWindow()->SetupDataWidth(1);
+					return 0;
+			}
+			break;
+
+		case WM_NCDESTROY:
+			RemoveWindowSubclass(hWnd, &EditAdrEndSubclassProc, uIdSubclass);
+			break;
+	};
+
+	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
 //------------------------------------------------------------------
@@ -1798,13 +1814,13 @@ void MemoryWindow::InitializeDialog(HWND hDlg)
 
 		//Subclass edit boxes
 		hEditAdrBeg = GetDlgItem(hDlg, IDC_EDIT_RANGE_BEG);
-		editAdrBegProc = (WNDPROC)SetWindowLongPtr(hEditAdrBeg, GWLP_WNDPROC, (LONG_PTR)SubEditAdrBegProc);
+		SetWindowSubclass(hEditAdrBeg, &EditAdrBegSubclassProc, (UINT_PTR)this, (DWORD_PTR)this);
 
 		hEditAdrEnd = GetDlgItem(hDlg, IDC_EDIT_RANGE_END);
-		editAdrEndProc = (WNDPROC)SetWindowLongPtr(hEditAdrEnd, GWLP_WNDPROC, (LONG_PTR)SubEditAdrEndProc);
+		SetWindowSubclass(hEditAdrEnd, &EditAdrEndSubclassProc, (UINT_PTR)this, (DWORD_PTR)this);
 
 		hEditVal = GetDlgItem(hDlg, IDC_EDIT_VALUE);
-		editValProc = (WNDPROC)SetWindowLongPtr(hEditVal, GWLP_WNDPROC, (LONG_PTR)SubEditValProc);
+		SetWindowSubclass(hEditVal, &EditSubclassProc, (UINT_PTR)this, (DWORD_PTR)this);
 
 		SetTimer(hDlg, IDT_MEM_TIMER, 1000/60, nullptr);
 
@@ -2065,6 +2081,24 @@ bool MemoryWindow::Init()
 
 }
 
+//
+// main dialog procecure, only contains initdialog
+//
+INT_PTR CALLBACK MemoryWindowDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (uMsg == WM_INITDIALOG) 
+	{
+		auto memoryWindow = [lParam]() { return (MemoryWindow*)lParam; };
+		SetWindowSubclass(hDlg, MemoryWindowSubclassProc, lParam, lParam);
+		memoryWindow()->InitializeDialog(hDlg);
+		
+		// set focus
+		return TRUE;
+	}
+	return FALSE;
+}
+
+
 }  // end namespace
 
 //------------------------------------------------------------------
@@ -2079,7 +2113,7 @@ void VCC::Debugger::UI::OpenMemoryMapWindow(HINSTANCE hInst,HWND parent)
 	auto memoryWindow = gMemoryWindows[i] = new MemoryWindow(i);
 	memoryWindow->LoadSettings();
 	CreateDialogParam( hInst, MAKEINTRESOURCE(IDD_MEMORY_MAP),
-		            parent, StaticMemoryMapProc, (LPARAM)memoryWindow);
+		            parent, MemoryWindowDialogProc, (LPARAM)memoryWindow);
 
 	if (!memoryWindow->Init())
 	{

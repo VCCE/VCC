@@ -97,11 +97,6 @@ namespace VCC::Debugger::UI
 		HWND hEditVal;
 		HWND hStatic;
 
-		// Original controls
-		WNDPROC editValProc;
-		WNDPROC editAdrBegProc;
-		WNDPROC editAdrEndProc;
-
 		GimeGpu memGpu;
 		unsigned char *ramCache = nullptr;
 		unsigned int ramPos = -1;
