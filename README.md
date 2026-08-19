@@ -16,19 +16,18 @@ VCC emulates a stock 128k CoCo 3 and additional products, including:
 - **SDC Simulator**: Simulates a COCO SDC floppy emulator.
 
 ## Obtaining VCC
-
 Sources and binaries for VCC versions since v2.0.1 can be found at [VCC Releases](https://github.com/VCCE/VCC/releases). It is recommended to use the "latest" release.
 
 VCC version numbering is somewhat erratic. Currently, the version number consists of "Vcc-" followed by four numbers separated by dots, for example: "Vcc-2.1.8.3". The first number represents a fork; the current fork is "2". The second number represents a major version, the third number represents releases that make additions or significant changes, and the fourth number represents bug fixes or minor changes.
 
-Please be aware that the binaries provided with VCC releases, including the installers, do not contain verification certificates. It is likely you will be presented with Windows security warnings when you first run them. Alternatively, you can build the version of your choice from the sources available with the release.  Occasionally Virus detection software might flag VCC binaries due to false positives, even if you build from sources. If you encounter these issues you may be able to add an exception for VCC in the protection software you are using.  Every effort is taken to keep VCC safe to use but be aware there is no warranty that the instance of VCC you are running actually is.
+VCC binaries provided before v2.1.9.3 are not digitally signed and newer versions are privately signed by a VCC team developer.  It is likely you will be presented with Windows security warnings when you first run them.  Occasionally Virus detection software might flag VCC binaries due to false positives, even if you build from sources.  Every effort is taken to keep VCC safe to use but there is no warranty that it is.
 
 ## Building VCC
-VCC is written in C++ and Microsoft Visual Studio 2022 Community is used to build VCC.  VS2022 is available for free download from Microsoft. The standard VCC build will run on Windows 10 and above. Optionally Visual Studio 2022 can be used to build a "legacy" VCC version using xp build tools that will run on Windows XP.
+VCC is written in C++ and Microsoft Visual Studio 2022 Community is used to build VCC.  VS2022 is available for free download from Microsoft. The standard VCC build will run on Windows 10 and above. Optionally Visual Studio 2022 can be used to build a "legacy" VCC version using xp build tools that will run on Windows XP.  It is planned that VCC version 2.1.9.3 will be the last version to support XP.
 
 To build VCC from the command line, launch the "Developer Command Prompt for VS 2022". From there, change to the directory containing the VCC sources and type "Build" or "BuildClean".
 
-Within Visual Studio, the "Release" and "Debug" configurations build VCC binaries that will run on current Windows versions. The "Legacy" configuration builds binaries that will run on Windows XP. "Legacy" uses the v141_xp build tools from which you need to find and install.  Maintaining a VCC version that will run on XP is becoming difficult and it is likely a future version will no longer support it.
+Within Visual Studio, the "Release" and "Debug" configurations build VCC binaries that will run on current Windows versions. The "Legacy" configuration builds binaries that will run on Windows XP. "Legacy" uses the v141_xp build tools from which you need to find and install.
 
 Portions of VCC code have been modified to use features of the C++17 standard.
 
