@@ -2,14 +2,15 @@
 <!-- This is included first in every VCC project -->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-    <!-- Add a default Manifest to keep defender happy -->
-    <ItemDefinitionGroup>
+  <!-- Add a default Manifest to keep defender happy -->
+  <ItemDefinitionGroup>
     <Link>
       <GenerateManifest>true</GenerateManifest>
-       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
-        <UACUIAccess>false</UACUIAccess>
+      <EmbedManifest>true</EmbedManifest>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+      <UACUIAccess>false</UACUIAccess>
     </Link>
-   </ItemDefinitionGroup>
+  </ItemDefinitionGroup>
 
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
