@@ -545,10 +545,10 @@ void SetKeyMapFilePath(const char *Path)
 void UpdateConfig ()
 {
 	// Video
-	SetPaletteType();
-	SetMonitorType(CurrentConfig.MonitorType);
+	gGimeGpu.SetPaletteType();
+	gGimeGpu.SetMonitorType(CurrentConfig.MonitorType);
 	SetAspect(CurrentConfig.Aspect);
-	SetScanLines(CurrentConfig.ScanLines);
+	gGimeGpu.SetScanLines(CurrentConfig.ScanLines);
 	SetFrameSkip(CurrentConfig.FrameSkip);
 	EmuState.MousePointer = CurrentConfig.ShowMousePointer;
 	// Cpu

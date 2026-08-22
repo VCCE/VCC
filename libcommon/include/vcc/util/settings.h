@@ -25,7 +25,7 @@ namespace VCC::Util
 	{
 	public:
 		using path_type = std::string;
-
+		
 	public:
 		explicit settings(path_type path);
 

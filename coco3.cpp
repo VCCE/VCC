@@ -74,8 +74,6 @@ constexpr auto RENDERS_PER_BLINK_TOGGLE = 16u;
 //*****************************************************
 
 static unsigned char HorzInteruptEnabled=0,VertInteruptEnabled=0;
-static unsigned char TopBoarder=0,BottomBoarder=0,TopOffScreen=0,BottomOffScreen=0;
-static unsigned char LinesperScreen;
 static unsigned char TimerInteruptEnabled=0;
 static int MasterTimer=0; 
 static unsigned int TimerClockRate=0;
@@ -106,9 +104,9 @@ void CassOut();
 void CassIn();
 void (*AudioEvent)()=AudioOut;
 void SetMasterTickCounter();
-void (*DrawTopBoarder[4]) (SystemState *)={DrawTopBoarder8,DrawTopBoarder16,DrawTopBoarder24,DrawTopBoarder32};
-void (*DrawBottomBoarder[4]) (SystemState *)={DrawBottomBoarder8,DrawBottomBoarder16,DrawBottomBoarder24,DrawBottomBoarder32};
-void (*UpdateScreen[4]) (SystemState *)={UpdateScreen8,UpdateScreen16,UpdateScreen24,UpdateScreen32};
+void (GimeGpu::*DrawTopBoarder[4])(SystemState *)const ={ &GimeGpu::DrawTopBoarder8,&GimeGpu::DrawTopBoarder16,&GimeGpu::DrawTopBoarder24,&GimeGpu::DrawTopBoarder32 };
+void (GimeGpu::*DrawBottomBoarder[4])(SystemState *)const ={ &GimeGpu::DrawBottomBoarder8,&GimeGpu::DrawBottomBoarder16,&GimeGpu::DrawBottomBoarder24,&GimeGpu::DrawBottomBoarder32 };
+void (GimeGpu::*UpdateScreen[4])(SystemState *) ={ &GimeGpu::UpdateScreen8,&GimeGpu::UpdateScreen16,&GimeGpu::UpdateScreen24,&GimeGpu::UpdateScreen32 };
 std::string GetClipboardText();
 void HLINE();
 void VSYNC(unsigned char level);
@@ -202,7 +200,7 @@ float RenderFrame (SystemState *RFState)
 
 	// Blink state toggle
 	if (BlinkPhase++ > RENDERS_PER_BLINK_TOGGLE) {
-		TogBlinkState();
+		gGimeGpu.TogBlinkState();
 		BlinkPhase = 0;
 	}
 
@@ -225,7 +223,7 @@ float RenderFrame (SystemState *RFState)
 	}
 
 	// Top Border actually begins here, but is offscreen
-	for (RFState->LineCounter = 0; RFState->LineCounter < TopOffScreen; RFState->LineCounter++)
+	for (RFState->LineCounter = 0; RFState->LineCounter < gGimeGpu.TopOffScreen; RFState->LineCounter++)
 	{
 		HLINE();
 	}
@@ -238,40 +236,40 @@ float RenderFrame (SystemState *RFState)
 
 	// Visible Top Border begins here. (Remove 4 lines for centering)
 	RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenTopBorder, 0);
-	for (RFState->LineCounter = 0; RFState->LineCounter < TopBoarder; RFState->LineCounter++)
+	for (RFState->LineCounter = 0; RFState->LineCounter < gGimeGpu.TopBoarder; RFState->LineCounter++)
 	{
 		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
-			DrawTopBoarder[RFState->BitDepth](RFState);
+			(gGimeGpu.*DrawTopBoarder[RFState->BitDepth])(RFState);
 	}
 
 	// Main Screen begins here: LPF = 192, 200 (actually 199), 225
 	RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenRender, 0);
-	for (RFState->LineCounter = 0; RFState->LineCounter < LinesperScreen; RFState->LineCounter++)		
+	for (RFState->LineCounter = 0; RFState->LineCounter < gGimeGpu.LinesperScreen; RFState->LineCounter++)
 	{
 		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
-			UpdateScreen[RFState->BitDepth](RFState);
+			(gGimeGpu.*UpdateScreen[RFState->BitDepth])(RFState);
 	}
 
 	// Bottom Border begins here.
 	RFState->Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenBottomBorder, 0);
-	for (RFState->LineCounter=0;RFState->LineCounter < BottomBoarder;RFState->LineCounter++)
+	for (RFState->LineCounter=0;RFState->LineCounter < gGimeGpu.BottomBoarder;RFState->LineCounter++)
 	{
 		HLINE();
 		if (!(FrameCounter % RFState->FrameSkip))
-			DrawBottomBoarder[RFState->BitDepth](RFState);
+			(gGimeGpu.*DrawBottomBoarder[RFState->BitDepth])(RFState);
 	}
 
 	if (!(FrameCounter % RFState->FrameSkip))
 	{
-		DrawBottomBoarder[RFState->BitDepth](RFState);
+		(gGimeGpu.*DrawBottomBoarder[RFState->BitDepth])(RFState);
 		UnlockScreen(RFState);
-		SetBoarderChange();
+		gGimeGpu.SetBoarderChange();
 	}
 
 	// Bottom Border continues but is offscreen
-	for (RFState->LineCounter = 0; RFState->LineCounter < BottomOffScreen; RFState->LineCounter++)
+	for (RFState->LineCounter = 0; RFState->LineCounter < gGimeGpu.BottomOffScreen; RFState->LineCounter++)
 	{
 		HLINE();
 	}
@@ -343,22 +341,10 @@ void SetVertInteruptState(unsigned char State)
 	return;
 }
 
-void SetLinesperScreen (unsigned char Lines)
-{
-	Lines = (Lines & 3);
-	LinesperScreen=Lpf[Lines];
-	TopBoarder=VcenterTable[Lines];
-	BottomBoarder = 239 - (TopBoarder + LinesperScreen);
-	TopOffScreen = TopOffScreenTable[Lines];
-	BottomOffScreen = BottomOffScreenTable[Lines];
-	return;
-}
-
-
 DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
 {
-	const float pixelsPerLine = GetDisplayedPixelsPerLine();
-	const float horizontalBorderSize = GetHorizontalBorderSize();
+	const float pixelsPerLine = gGimeGpu.GetDisplayedPixelsPerLine();
+	const float horizontalBorderSize = gGimeGpu.GetHorizontalBorderSize();
 	const float activeLines = 192.0f;	//	FIXME: Needs a symbolic
 
 	DisplayDetails details;
@@ -371,16 +357,16 @@ DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
 
 	// calculate the content size including the borders in surface coords
 	float contentWidth = pixelsPerLine + horizontalBorderSize * 2;
-	float contentHeight = activeLines + TopBoarder + BottomBoarder;
+	float contentHeight = activeLines + gGimeGpu.TopBoarder + gGimeGpu.BottomBoarder;
 
 	// now get scale difference between both previous equivalent boxes
 	float horizontalScale = deviceScreenWidth / contentWidth;
 	float verticalScale = deviceScreenHeight / contentHeight;
 
 	// fill in details by scalling the coco screen into device coords
-	details.contentRows = static_cast<int>(LinesperScreen * verticalScale);
-	details.topBorderRows = static_cast<int>(TopBoarder * verticalScale) + extraBorderPadding.y;
-	details.bottomBorderRows = static_cast<int>(BottomBoarder * verticalScale) + extraBorderPadding.y;
+	details.contentRows = static_cast<int>(gGimeGpu.LinesperScreen * verticalScale);
+	details.topBorderRows = static_cast<int>(gGimeGpu.TopBoarder * verticalScale) + extraBorderPadding.y;
+	details.bottomBorderRows = static_cast<int>(gGimeGpu.BottomBoarder * verticalScale) + extraBorderPadding.y;
 
 	details.contentColumns = static_cast<int>(pixelsPerLine * horizontalScale);
 	details.leftBorderColumns = static_cast<int>(horizontalBorderSize * horizontalScale) + extraBorderPadding.x;
@@ -756,7 +742,7 @@ void PasteText() {
 	using namespace std;
 	std::string tmp;
 	string cliptxt, clipparse, lines, debugout;
-	int GraphicsMode = GetGraphicsMode();
+	int GraphicsMode = gGimeGpu.GetGraphicsMode();
 	if (GraphicsMode != 0) {
 		int tmp = MessageBox(nullptr, "Warning: You are not in text mode. Continue Pasting?", "Clipboard", MB_YESNO);
 		if (tmp != 6) { return; }
@@ -977,9 +963,9 @@ void CopyText() {
 	int lines;
 	int offset;
 	int lastchar;
-	int BytesPerRow = GetBytesPerRow();
-	int GraphicsMode = GetGraphicsMode();
-	unsigned int screenstart = GetStartOfVidram();
+	int BytesPerRow = gGimeGpu.GetBytesPerRow();
+	int GraphicsMode = gGimeGpu.GetGraphicsMode();
+	unsigned int screenstart = gGimeGpu.GetStartOfVidram();
 	if (GraphicsMode != 0) { 
 		MessageBox(nullptr, "ERROR: Graphics screen can not be copied.\nCopy can ONLY use a hardware text screen.", "Clipboard", 0); 
 		return;

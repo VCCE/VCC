@@ -31,7 +31,6 @@ struct DisplayDetails
 
 
 void SetClockSpeed(unsigned int Cycles);
-void SetLinesperScreen(unsigned char Lines);
 DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight);
 void SetHorzInteruptState(unsigned char);
 void SetVertInteruptState(unsigned char);
@@ -47,7 +46,6 @@ void PasteBASIC();
 void PasteText();
 void QueueText(const char *);
 void CopyText();
-void FlipArtifacts();
 unsigned int SetAudioRate(unsigned int);
 
 #endif

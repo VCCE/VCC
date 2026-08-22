@@ -94,15 +94,15 @@ void GimeWrite(unsigned char port,unsigned char data)
 		break;
 
 	case 0x98:
-		SetGimeVmode(data);
+		gGimeGpu.SetGimeVmode(data);
 		break;
 
 	case 0x99:
-		SetGimeVres(data);
+		gGimeGpu.SetGimeVres(data);
 		break;
 
 	case 0x9A:
-		SetGimeBoarderColor(data);
+		gGimeGpu.SetGimeBoarderColor(data);
 		break;
 
 	case 0x9B:
@@ -114,11 +114,11 @@ void GimeWrite(unsigned char port,unsigned char data)
 
 	case 0x9D:
 	case 0x9E:
-		SetVerticalOffsetRegister ((GimeRegisters[0x9D]<<8) | GimeRegisters[0x9E]);
+		gGimeGpu.SetVerticalOffsetRegister((GimeRegisters[0x9D]<<8) | GimeRegisters[0x9E]);
 		break;
 
 	case 0x9F:
-		SetGimeHorzOffset(data);
+		gGimeGpu.SetGimeHorzOffset(data);
 		break;
 
 	case 0xA0:
@@ -156,7 +156,7 @@ void GimeWrite(unsigned char port,unsigned char data)
 	case 0xBD:
 	case 0xBE:
 	case 0xBF:
-		SetGimePallet(port-0xB0,data & 63);
+		gGimeGpu.SetGimePalette(port-0xB0,data & 63);
 		break;
 	}
 	return;
@@ -191,7 +191,7 @@ unsigned char GimeRead(unsigned char port)
 
 void SetInit0(unsigned char data)
 {
-	SetCompatMode ( !!(data & 128));
+	gGimeGpu.SetCompatMode(!!(data & 128));
 	Set_MmuEnabled (!!(data & 64)); //MMUEN
 	SetRomMap ( data & 3);			//MC0-MC1
 	SetVectors( data & 8);			//MC3
@@ -381,7 +381,7 @@ void sam_write(unsigned char port)
 		Dis_Offset= Dis_Offset & (0xFF-mask); //Shut the bit off
 		if (port & 1)
 			Dis_Offset= Dis_Offset | mask;
-		SetGimeVdgOffset(Dis_Offset);
+		gGimeGpu.SetGimeVdgOffset(Dis_Offset);
 	}
 
 	if ((port >=0xC0) & (port <=0xC5))	//VDG Mode
@@ -392,7 +392,7 @@ void sam_write(unsigned char port)
 		VDG_Mode = VDG_Mode & (0xFF-mask);
 		if (port & 1)
 			VDG_Mode = VDG_Mode | mask;
-		SetGimeVdgMode(VDG_Mode);
+		gGimeGpu.SetGimeVdgMode(VDG_Mode);
 	}
 
 	if ( (port==0xDE) | (port ==0xDF))

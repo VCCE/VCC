@@ -358,6 +358,7 @@
 #define IDT_TRC_VSCROLLBAR              2005
 #define IDT_MMU_VSCROLLBAR              2006
 #define IDT_TRC_HSCROLLBAR              2007
+#define IDC_MEM_HSCROLLBAR              2008
 
 #define IDC_EDIT_SOURCE                 2100
 #define IDC_BTN_SOURCE_BROWSE           2101
@@ -405,6 +406,7 @@
 #define IDC_MEM_TYPE                    2143
 #define IDC_EDIT_VALUE                  2144
 #define IDC_BTN_AUTO                    2145
+#define IDC_VIEW_TYPE                   2145
 #define IDC_BTN_EXPORT                  2146
 #define IDC_EDIT_START                  2147
 #define IDC_EDIT_STOP                   2148
@@ -412,6 +414,7 @@
 #define IDC_EDIT_RANGE_BEG              2152
 #define IDC_EDIT_RANGE_END              2153
 #define IDC_EDIT_RANGE_SEP              2154
+#define IDC_MEM_WIDTH                   2155
 
 //-----------------------------------------------------
 // ID 5000 - 5250 are reserved for cartridge menus
@@ -455,7 +458,6 @@
 #define IDC_REMEMBER_SIZE               40039
 #define ID_MEMORY_DISPLAY               40040
 #define ID_PROCESSOR_STATE              40041
-#define ID_BREAKPOINTS                  43332
 #define ID_MMU_MONITOR                  40043
 #define ID_EXEC_TRACE                   40044
 #define ID_PAUSE_EMULATION              40045
@@ -470,7 +472,7 @@
 #define ID_BITBANGER_CONFIG             40057
 #define ID_SWAP_JOYSTICKS               40058
 #define IDM_HELP_FUNKEY                 40059
-
+#define ID_BREAKPOINTS                  43332
 #define ID_CONFIGURE_OPTIONS            65535
 
 
@@ -478,9 +480,9 @@
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        180
+#define _APS_NEXT_RESOURCE_VALUE        181
 #define _APS_NEXT_COMMAND_VALUE         40060
-#define _APS_NEXT_CONTROL_VALUE         2155
+#define _APS_NEXT_CONTROL_VALUE         2156
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

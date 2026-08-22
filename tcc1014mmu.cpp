@@ -88,7 +88,7 @@ unsigned char * MmuInit(unsigned char RamConfig)
 		else 
 			memory[Index1]=0xFF;
 	}
-	SetVidMask(VidMask[CurrentRamConfig]);
+	gGimeGpu.SetVidMask(VidMask[CurrentRamConfig]);
 	if (InternalRomBuffer != nullptr)
 		free(InternalRomBuffer);
 	InternalRomBuffer=nullptr;
@@ -389,12 +389,12 @@ void SetDistoRamBank(unsigned char data)
 		return;
 		break;
 	case 2:	//2048K
-		SetVideoBank(data & 3);
+		gGimeGpu.SetVideoBank(data & 3);
 		SetMmuPrefix(0);
 		return;
 		break;
 	case 3:	//8192K	//No Can 3 
-		SetVideoBank(data & 0x0F);
+		gGimeGpu.SetVideoBank(data & 0x0F);
 		SetMmuPrefix( (data & 0x30)>>4);
 		return;
 		break;
