@@ -413,6 +413,24 @@ unsigned char ReadIniFile()
 	Setting().read("DefaultPaths", "CassPath", "", CurrentConfig.CassPath, MAX_PATH);
 	Setting().read("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH);
 
+	static char tmp[MAX_PATH] = "";
+
+	// Check DLL path, use exe directory if missing
+	Setting().read("DefaultPaths", "DLLPath", "", tmp, MAX_PATH);
+	if (tmp[0] == '\0') {
+		GetModuleFileName(nullptr,tmp,MAX_PATH);
+		std::string exedir = VCC::Util::GetDirectoryPart(tmp);
+		Setting().write("DefaultPaths", "DLLPath", exedir.c_str());
+	}
+
+	// Check ROM path, use appdata directory if missing
+	Setting().read("DefaultPaths", "RomPath", "", tmp, MAX_PATH);
+	if (tmp[0] == '\0') {
+		std::string appdir = VCC::Util::GetDirectoryPart(gcIniFilePath);
+		Setting().write("DefaultPaths", "RomPath", appdir.c_str());
+	}
+
+	// Enumerate sound cards
 	for (Index = 0; Index < NumberOfSoundCards; Index++)
 	{
 		if (!strcmp(SoundCards[Index].CardName, CurrentConfig.SoundCardName))

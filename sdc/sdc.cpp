@@ -369,7 +369,13 @@ extern "C"
     __declspec(dllexport) void PakReset()
     {
         DLOG_C("PakReset\n");
-        InitSDC();
+        // Only initialize SDC if the forground is enabled to avoid hangs
+        // This can be revisited if the VCC main handles module loads
+        // instead of the MPI.dll
+        HWND fg = GetForegroundWindow();
+        if (fg && IsWindowEnabled(fg)) {
+            InitSDC();
+         }
     }
 
     //  Dll export run config dialog
@@ -553,23 +559,15 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 //------------------------------------------------------------
 void LoadConfig()
 {
+
     gRomPath = Setting().read("DefaultPaths", "RomPath", "");
     gSDRoot  = Setting().read("SDC", "SDCardPath", "");
+    util::FixDirSlashes(gSDRoot);
 
     DLOG_C("LoadConfig gRomPath %s\n",gRomPath.c_str());
     DLOG_C("LoadConfig gSDRoot %s\n",gSDRoot.c_str());
 
-    util::FixDirSlashes(gSDRoot);
-    if (!util::IsDirectory(gSDRoot)) {
-        // LoadConfig getting called twice (why?), only warn once
-        if (!BadSDRoot) {
-            MessageBox (gVccWindow,
-                "Invalid SD Card root\n"
-                "Set SDCard Path using SDC Config"
-                ,"Error",0);
-           BadSDRoot = true;
-        }
-    }
+    // TODO: Validate root
 
     for (int i=0;i<8;i++) {
         std::string tmp = "FlashFile_" + std::to_string(i);
@@ -1877,6 +1875,7 @@ void UnloadDisk(int drive) {
 //----------------------------------------------------------------------
 void SDCMountDisk (int drive, const char * path, int raw)
 {
+
     DLOG_C("SDCMountDisk %d %s %d\n",drive,path,raw);
 
     drive &= 1;
