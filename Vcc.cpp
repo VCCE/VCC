@@ -35,6 +35,11 @@
 #define TH_REQWAIT	1
 #define TH_WAITING	2
 
+// To eliminate ShellExecute for displaying Wiki
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.System.h>
+#pragma comment(lib, "runtimeobject.lib")
+
 #include "BuildConfig.h"
 #include <objbase.h>
 #include <windowsx.h>
@@ -340,9 +345,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			switch (wmId)
 			{	
 				case IDM_USER_WIKI:
-					ShellExecute(nullptr, "open",
-								 "https://github.com/VCCE/VCC/wiki/UserGuide",
-								 nullptr, nullptr, SW_SHOWNORMAL);
+					winrt::Windows::System::Launcher::LaunchUriAsync(
+						winrt::Windows::Foundation::Uri(
+							L"https://github.com/VCCE/VCC/wiki/UserGuide"));
 					break;
 				case IDM_HELP_ABOUT:
 					DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_ABOUTBOX,
