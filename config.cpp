@@ -205,6 +205,10 @@ void InitialLoadConfig(SystemState *LCState)
 		Util::FixDirSlashes(szPath);
 		appData = std::string(szPath) + "/VCC";
 	}
+
+    // Create the directory if it does not exist
+    CreateDirectoryA(appData.c_str(), nullptr);
+
 	Util::copy_to_char(appData,gcAppDataPath,MAX_PATH);
 
 	// Establish settings storage (ini file) path
