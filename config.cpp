@@ -230,6 +230,24 @@ void InitialLoadConfig(SystemState *LCState)
 	LoadString(nullptr, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
 	Setting().write("Version","Release",AppName);
 
+	// If missing use reasonable values for common default paths
+	std::string exedir = VCC::Util::GetExecutableDir();
+	std::string usrdir = VCC::Util::GetUserDir();
+	//std::string appdir = VCC::Util::GetDirectoryPart(gcIniFilePath);
+
+	if ( Setting().read("DefaultPaths", "DLLPath", "").empty() ) {
+		Setting().write("DefaultPaths", "DLLPath", exedir);
+	}
+	if ( Setting().read("DefaultPaths", "RomPath", "").empty() ) {
+		Setting().write("DefaultPaths", "RomPath", usrdir);
+	}
+	if ( Setting().read("DefaultPaths", "CassPath", "").empty() ) {
+		Setting().write("DefaultPaths", "CassPath", usrdir);
+	}
+	if ( Setting().read("DefaultPaths", "FloppyPath", "").empty() ) {
+		Setting().write("DefaultPaths", "FloppyPath", usrdir);
+	}
+
 	// Initial load settings
 	ReadIniFile();
 	UpdateConfig();
@@ -412,23 +430,6 @@ unsigned char ReadIniFile()
 
 	Setting().read("DefaultPaths", "CassPath", "", CurrentConfig.CassPath, MAX_PATH);
 	Setting().read("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH);
-
-	static char tmp[MAX_PATH] = "";
-
-	// Check DLL path, use exe directory if missing
-	Setting().read("DefaultPaths", "DLLPath", "", tmp, MAX_PATH);
-	if (tmp[0] == '\0') {
-		GetModuleFileName(nullptr,tmp,MAX_PATH);
-		std::string exedir = VCC::Util::GetDirectoryPart(tmp);
-		Setting().write("DefaultPaths", "DLLPath", exedir.c_str());
-	}
-
-	// Check ROM path, use appdata directory if missing
-	Setting().read("DefaultPaths", "RomPath", "", tmp, MAX_PATH);
-	if (tmp[0] == '\0') {
-		std::string appdir = VCC::Util::GetDirectoryPart(gcIniFilePath);
-		Setting().write("DefaultPaths", "RomPath", appdir.c_str());
-	}
 
 	// Enumerate sound cards
 	for (Index = 0; Index < NumberOfSoundCards; Index++)
