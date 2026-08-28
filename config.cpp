@@ -393,16 +393,21 @@ unsigned char ReadIniFile()
 
 	CurrentConfig.RamSize = Setting().read("Memory","RamSize",1);
 
+	// Set up keymap
+	Setting().read("Misc","CustomKeyMapFile","",KeyMapFilePath,MAX_PATH);
 	CurrentConfig.KeyMap  = Setting().read("Misc","KeyMapIndex",0);
 	if (CurrentConfig.KeyMap>3)
 		CurrentConfig.KeyMap=0;	//Default to DECB Mapping
 
-	Setting().read("Misc","CustomKeyMapFile","",KeyMapFilePath,MAX_PATH);
-	if (*KeyMapFilePath == '\0') {
-		strcpy(KeyMapFilePath, gcAppDataPath);
-		strcat(KeyMapFilePath, "\\custom.keymap");
+	if (CurrentConfig.KeyMap == kKBLayoutCustom) {
+		if (*KeyMapFilePath == '\0') {
+			strcpy(KeyMapFilePath, gcAppDataPath);
+			strcat(KeyMapFilePath, "/custom.keymap");
+			Setting().write("Misc","CustomKeyMapFile",KeyMapFilePath);
+		}
+		LoadCustomKeyMap(KeyMapFilePath);
 	}
-	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFilePath);
+
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
 	// If bootpath is relative prepend the current module exe directory
@@ -1261,6 +1266,14 @@ int SetCurrentKeyMap(int keymap) {
     // Force any changes to take immediate effect
     if (keymap != CurrentConfig.KeyMap) {
         vccKeyboardBuildRuntimeTable((keyboardlayout_e)keymap);
+        if (keymap == kKBLayoutCustom) {
+			if (*KeyMapFilePath == '\0') {
+				strcpy(KeyMapFilePath, gcAppDataPath);
+				strcat(KeyMapFilePath, "/custom.keymap");
+				Setting().write("Misc","CustomKeyMapFile",KeyMapFilePath);
+			}
+			LoadCustomKeyMap(KeyMapFilePath);
+		}
     }
     CurrentConfig.KeyMap = keymap;
     return keymap;
@@ -1301,14 +1314,8 @@ BOOL SelectKeymapFile(HWND hDlg)
 			LoadCustomKeyMap(dlg.upath());
 		// Else create new file from current selection
 		} else {
-			char txt[MAX_PATH+32];
-			strcpy (txt,"Create ");
-			strcat (txt,dlg.upath());
-			strcat (txt,"?");
-			if (MessageBox(hDlg,txt,"Warning",MB_YESNO)==IDYES) {
-				CloneStandardKeymap(CurrentConfig.KeyMap);
-				SaveCustomKeyMap(dlg.upath());
-			}
+			CloneStandardKeymap(CurrentConfig.KeyMap);
+			SaveCustomKeyMap(dlg.upath());
 		}
 		dlg.getupath(KeyMapFilePath,MAX_PATH);
 		SetKeyMapFilePath(KeyMapFilePath); // Save filename in Vcc.config

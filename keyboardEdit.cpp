@@ -122,13 +122,14 @@ int LoadCustomKeyMap(const char* keymapfile)
 	// Do nothing if keymap file path is empty
 	if (*keymapfile == '\0') return 1;
 
-    // Open the keymap file. Abort operation if open fails.
+    // Open the keymap file. Create default if open fails.
     if ((keymap = fopen(keymapfile,"r")) == nullptr) {
         if (! UserWarned) {
             UserWarned = 1;
-            sprintf(buf,"%s open failed. Using defaults",  keymapfile);
-            MessageBox(GetActiveWindow(),buf,"Warning",0);
+            MessageBox(GetActiveWindow(),
+					"Custom keymap read failed. Using defaults","Warning",0);
         }
+		SaveCustomKeyMap(keymapfile);
         return 1;
     }
     UserWarned = 0;
@@ -574,7 +575,6 @@ CoCoKey * cctable_rowcol_lookup(unsigned char RowMask, unsigned char Col)
 
 BOOL CALLBACK KeyMapProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-//    PrintLogC("%04x %08x %08x\n",msg,wParam,lParam);
     switch (msg) {
     case WM_INITDIALOG:
         return InitKeymapDialog(hWnd);
