@@ -43,11 +43,11 @@ std::string multipak_configuration::configuration_path() const
 // last rom path
 void multipak_configuration::last_accessed_rom_path(const std::string& path) const
 {
-	settings(configuration_path()).write("DefaultPaths", "PakPath", path);
+	settings(configuration_path()).write("DefaultPaths", "RomPath", path);
 }
 std::string multipak_configuration::last_accessed_rom_path() const
 {
-	return settings(configuration_path()).read("DefaultPaths", "PakPath");
+	return settings(configuration_path()).read("DefaultPaths", "RomPath");
 }
 
 // last dll path

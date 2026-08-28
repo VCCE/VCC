@@ -166,4 +166,17 @@ namespace VCC::Util {
 		FixDirSlashes(out);
 		return out;
 	}
+
+	// Return slash normalized user directory
+	inline std::string GetUserDir()
+	{
+    	const char* p = getenv("USERPROFILE");
+    	return p ? FixDirSlashes(std::string(p)) : std::string();
+	}
+
+	// Return slash normaized executable directory
+	inline std::string GetExecutableDir()
+	{
+		return GetDirectoryPart(ModulePath(nullptr));
+	}
 }
