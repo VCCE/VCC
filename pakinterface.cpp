@@ -285,7 +285,7 @@ static cartridge_loader_status load_any_cartridge(const char *filename, const ch
 		std::move(boot_slot_adapter),
 		SlotId, 
 		iniPath,
-		EmuState.WindowHandle,
+		EmuState.hMsgProxy,
 		callbacks);
 
 	if (loadedCartridge.load_result != cartridge_loader_status::success)

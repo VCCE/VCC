@@ -1,4 +1,5 @@
 // Application Windows Messages sent to VCC main message loop
+// Be sure to add these to proxy_msgwin
 
 #include <Winuser.h>
 
