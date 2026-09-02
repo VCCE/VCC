@@ -24,7 +24,9 @@ This file is part of VCC (Virtual Color Computer).
 #define _WIN32_WINNT 0x05010000 // I want to support XP
 
 #include "BuildConfig.h"
+#include <vcc/bus/proxy_msgwin.h>
 #include <vcc/util/limits.h>
+#include <vcc/util/logger.h>
 #include <Windows.h>
 #include <CommCtrl.h>	// Windows common controls
 #include "defines.h"
@@ -196,7 +198,10 @@ bool CreateDDWindow(SystemState *CWState)
 											 nullptr, nullptr, g_hInstance, nullptr);
 		if (!CWState->WindowHandle)	// Can't create window
 		   return false;
-		
+
+		// Set up stable proxy window for DLL messages
+		CWState->hMsgProxy = Core::ProxyMsgWin::SetProxy(CWState->WindowHandle);
+
 		// Create the Status Bar Window at the bottom
 		hwndStatusBar = ::CreateStatusWindow(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | CCS_BOTTOM , "Ready", CWState->WindowHandle, 2);
 		if (!hwndStatusBar) // Can't create Status bar

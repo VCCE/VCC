@@ -172,7 +172,7 @@ namespace VCC
     struct ISystemState
     {
         enum { OK };
-		virtual ~ISystemState() = default;
+        virtual ~ISystemState() = default;
 
         virtual int GetWindowHandle(void** handle) = 0;
         virtual int GetRect(int rectOption, Rect* rect) = 0;
@@ -184,6 +184,7 @@ struct SystemState
 {
     HWND			WindowHandle = nullptr;
     HWND			ConfigDialog = nullptr;
+    HWND			hMsgProxy = nullptr;
 
     HINSTANCE		WindowInstance = nullptr;
     unsigned char	*RamBuffer = nullptr;

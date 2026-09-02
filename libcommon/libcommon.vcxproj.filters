@@ -7,6 +7,9 @@
     <ClCompile Include="src\bus\cartridge_loader.cpp">
       <Filter>bus</Filter>
     </ClCompile>
+    <ClCompile Include="src\bus\proxy_msgwin.cpp">
+      <Filter>bus</Filter>
+    </ClCompile>
     <ClCompile Include="src\devices\cloud9.cpp">
       <Filter>devices</Filter>
     </ClCompile>
@@ -46,6 +49,9 @@
       <Filter>bus</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\bus\cartridge_loader.h">
+      <Filter>bus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vcc\bus\proxy_msgwin.h">
       <Filter>bus</Filter>
     </ClInclude>
     <ClInclude Include="include\vcc\devices\cloud9.h">
