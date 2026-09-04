@@ -9845,6 +9845,12 @@ void GimeGpu::SetVideoBank(unsigned char data)
 	SetupDisplay();
 }
 
+void GimeGpu::SetDefaultPalette()
+{
+	static uint8_t pal[16] = {18,36,11,7,63,31,9,38,0,18,0,63,0,18,0,38};
+	for (size_t i = 0; i < 16; ++i)
+		SetGimePalette((uint8_t)i, pal[i]);
+}
 
 void GimeGpu::MakeRGBPalette()
 {

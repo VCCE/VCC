@@ -1427,10 +1427,11 @@ bool MemoryWindow::DrawMemory(HDC hdc, LPCRECT clientRect)
 
 	memGpu.GimeReset();
 	memGpu.SetCompatMode(1);
+	memGpu.SetDefaultPalette();
 	memGpu.SetMonitorType(1);
 
 	// if palette changes pixels will need rewriting
-	if (memGpu.CopyPalette(gGimeGpu))
+	if (viewMode != VM_SG4 && memGpu.CopyPalette(gGimeGpu))
 		ResetMemoryCache();
 
 	auto pmode = [this](int mode, int mode2) 

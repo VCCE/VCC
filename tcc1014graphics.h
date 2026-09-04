@@ -101,6 +101,7 @@ struct GimeGpu
 	void SetVideoBank(unsigned char data);
 	void SetVidMask(unsigned int data);
 	bool CopyPalette(const GimeGpu& other);
+	void SetDefaultPalette();
 
 	void DrawTopBoarder8(SystemState* DTState) const;
 	void DrawTopBoarder16(SystemState* DTState) const;
