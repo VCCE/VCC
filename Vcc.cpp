@@ -25,7 +25,11 @@
 
 // FIXME: This should be defined on the command line
 #define DIRECTINPUT_VERSION 0x0800
+#ifdef _LEGACY_VCC
 #define _WIN32_WINNT 0x0500
+#else
+#define _WIN32_WINNT 0x0601 // Windows 7
+#endif
 #ifndef ABOVE_NORMAL_PRIORITY_CLASS
 //#define ABOVE_NORMAL_PRIORITY_CLASS  32768
 #endif
@@ -43,6 +47,7 @@
 #include "BuildConfig.h"
 #include <objbase.h>
 #include <windowsx.h>
+#include <WinUser.h>
 #include <process.h>
 #include <commdlg.h>
 #include <stdio.h>
@@ -138,6 +143,7 @@ static	HANDLE hEMUQuit;
 static char g_szAppName[MAX_LOADSTRING] = "";
 bool BinaryRunning;
 static unsigned char FlagEmuStop=TH_RUNNING;
+const GUID* PowerGUID;
 
 bool IsShiftKeyDown();
 
@@ -145,7 +151,30 @@ using VCC::Bus::gVccCartMenu;
 
 static bool gHasFocus {};
 
-//static CRITICAL_SECTION  FrameRender;
+#ifndef _LEGACY_VCC
+extern "C" NTSTATUS NTAPI RtlGetVersion(POSVERSIONINFOW);
+#pragma comment(lib, "ntdll")
+
+bool IsWin8_OrLater()
+{
+	OSVERSIONINFOW osvi = { sizeof(osvi) };
+	RtlGetVersion(&osvi);
+	return (osvi.dwMajorVersion > 6) ||
+		(osvi.dwMajorVersion == 6 && osvi.dwMinorVersion >= 2);
+}
+#endif
+
+void RegisterDisplayNotification(HWND hWnd)
+{
+#ifndef _LEGACY_VCC
+	if (IsWin8_OrLater())
+		PowerGUID = &GUID_CONSOLE_DISPLAY_STATE;   // Win 8+
+	else
+		PowerGUID = &GUID_MONITOR_POWER_ON;        // Win 7 fallback
+
+	RegisterPowerSettingNotification(hWnd, PowerGUID, DEVICE_NOTIFY_WINDOW_HANDLE);
+#endif
+}
 
 //--------------------------------------------------------------------------//
 //  Main entry
@@ -190,6 +219,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		exit(0);
 	}
 
+	RegisterDisplayNotification(EmuState.WindowHandle);
 	InitSound();
 	LoadModule();
 	SetClockSpeed(1);	//Default clock speed .89 MHZ	
@@ -301,6 +331,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	switch (message)
 	{
+#ifndef _LEGACY_VCC
+		case WM_POWERBROADCAST:
+			if (wParam == PBT_POWERSETTINGCHANGE) 
+			{
+				auto p = reinterpret_cast<POWERBROADCAST_SETTING*>(lParam);
+				if (p->PowerSetting == *PowerGUID) 
+				{
+					DWORD state = *reinterpret_cast<LPDWORD>(p->Data);
+					// 0 = off, 1 = on, 2 = dimmed
+					if (state == 1) OnMonitorRestored();
+				}
+			}
+			break;
+#endif
+
 		// Hard reset VCC
 		case WM_VCC_CPU_RESET:
 			if (EmuState.EmulationRunning)

@@ -153,7 +153,7 @@ void UpdateAudio()
 #endif // USE_DEBUG_AUDIOTAPE
 
 	// keep audio system full by tiny expansion of sound
-	if (AudioFreeBlockCount > 1 && (AudioIndex & 63) == 1)
+	if (AudioFreeBlockCount > 1 && (AudioIndex & 63) == 1 && AudioIndex < 16384-2)
 	{
 		unsigned int last = AudioBuffer[AudioIndex - 1];
 		AudioBuffer[AudioIndex++] = last;
@@ -610,6 +610,11 @@ unsigned int SetAudioRate (unsigned int Rate)
 	}
 	SoundRate=Rate;
 	return 0;
+}
+
+unsigned int GetAudioRate()
+{
+	return SoundRate;
 }
 
 void AudioOut()

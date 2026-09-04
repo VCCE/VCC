@@ -32,7 +32,9 @@ namespace VCC
         {
             ERR_UNSUPPORTED = 100,          // unsupported command
             ERR_BADOPTION,                  // invalid option being set
-            ERR_UNKNOWN
+            ERR_WRONGMODE,                  // mode has changed
+            ERR_CANTLOCK,
+            ERR_UNKNOWN,
         };
 
 		explicit DirectX(ISystemState* state);

@@ -35,5 +35,6 @@ struct SndCardList
 const int AUDIO_RATE = 44100;
 
 int GetSoundCardList (SndCardList *);
+void OnMonitorRestored();
 
 #endif

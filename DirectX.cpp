@@ -285,6 +285,15 @@ namespace VCC
                 return Result(ERR_UNKNOWN);
 
             hr = g_pDDS->Blt(&rcDest, g_pDDSBack, &rcSrc, DDBLT_WAIT, nullptr); // DDBLT_WAIT
+            if (hr == DDERR_SURFACELOST)
+            {
+                hr = g_pDDS->Restore();
+                if (hr == DDERR_WRONGMODE) return Result(ERR_WRONGMODE);
+                if (FAILED(hr)) return Result(ERR_UNKNOWN);
+                g_pDDSBack->Restore();
+                hr = g_pDDS->Blt(&rcDest, g_pDDSBack, &rcSrc, DDBLT_WAIT, nullptr); // DDBLT_WAIT
+                if (hr == E_FAIL) return Result(OK);
+            }
             if (FAILED(hr)) return Result(ERR_UNKNOWN);
         }
 
@@ -354,10 +363,8 @@ namespace VCC
 
         // Lock entire surface, wait if it is busy, return surface memory pointer
         hr = g_pDDSBack->Lock(nullptr, &ddsd, DDLOCK_WAIT | DDLOCK_SURFACEMEMORYPTR, nullptr);
-        if (FAILED(hr))
-        {
-            return Result(ERR_UNKNOWN);
-        }
+        if (hr == E_FAIL) return ERR_CANTLOCK;
+        if (FAILED(hr)) return Result(ERR_UNKNOWN);
 
         switch (ddsd.ddpfPixelFormat.dwRGBBitCount)
         {

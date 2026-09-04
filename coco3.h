@@ -47,5 +47,6 @@ void PasteText();
 void QueueText(const char *);
 void CopyText();
 unsigned int SetAudioRate(unsigned int);
+unsigned int GetAudioRate();
 
 #endif

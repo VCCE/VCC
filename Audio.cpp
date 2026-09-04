@@ -60,6 +60,7 @@ static char AuxBufferPointer=0;
 static int CardCount=0;
 static unsigned int CurrentRate=0;
 static unsigned char AudioPause=0;
+static bool AudioStall = false;
 static SndCardList *Cards=nullptr;
 BOOL CALLBACK DSEnumCallback(LPGUID,LPCSTR,LPCSTR,LPVOID);
 
@@ -150,6 +151,7 @@ int SoundInit (HWND main_window_handle,const _GUID * Guid,unsigned int Rate)
 			return 1;
 		InitPassed=1;
 		AudioPause=0;
+		AudioStall = false;
 	}
 	SetAudioRate(AUDIO_RATE);
 	return 0;
@@ -217,13 +219,38 @@ void FlushAudioBuffer(unsigned int *Abuffer,unsigned int Lenth)
 }
 
 
+void OnMonitorRestored()
+{
+	if (!AudioStall) return;
+	InitSound();
+	AudioStall = false;
+}
+
 int GetFreeBlockCount() //return 0 on full buffer
- {
+{
+	static unsigned long LastPlayCursor = 0;
+	static int LastCount = 0;
+
 	unsigned long WriteCursor=0,PlayCursor=0;
 	long RetVal=0,MaxSize=0;
-	if ((!InitPassed) | AudioPause)
+	if (!InitPassed || AudioPause)
 		return AUDIOBUFFERS;
 	RetVal=lpdsbuffer1->GetCurrentPosition(&PlayCursor,&WriteCursor);
+	if (PlayCursor == LastPlayCursor)
+	{
+		if (++LastCount > 100)
+		{
+			AudioStall = true;
+			LastCount = 0;
+			LastPlayCursor = 0;
+			return AUDIOBUFFERS;
+		}
+	}
+	else
+	{
+		LastPlayCursor = PlayCursor;
+		LastCount = 0;
+	}
 	if (BuffOffset <=PlayCursor)
 		MaxSize= PlayCursor - BuffOffset;
 	else
@@ -234,7 +261,7 @@ int GetFreeBlockCount() //return 0 on full buffer
 
  void PurgeAuxBuffer()
  {
-	if ((!InitPassed) | AudioPause)
+	if (!InitPassed || AudioPause)
 		return;
 	return;
 	AuxBufferPointer--;			//Normally points to next free block Point to last used block
