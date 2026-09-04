@@ -239,7 +239,7 @@ struct MemoryWindow::Measurements
 		}
 
 		if (mem->viewMode == MemoryWindow::VM_PMODE4_NTSC)
-			viewOffset = 4;
+			viewOffset = GetPaletteType() == 2 ? 4 : 0;
 
 		// reposition view so hex is always visible
 		const float rounding = 0.000001f; // adjust for rounding

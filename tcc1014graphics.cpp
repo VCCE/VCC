@@ -8273,12 +8273,15 @@ case 192+2:	//Bpp=0 Sr=2
 						break;
 					case 3:
 						Pcolor = 3;
-						szSurface32[YStride - 1] = Afacts32[ColorInvert][3];
-						if (!ScanLines)
-							szSurface32[YStride + Xpitch - 1] = Afacts32[ColorInvert][3];
-						szSurface32[YStride] = Afacts32[ColorInvert][3];
-						if (!ScanLines)
-							szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][3];
+						if ((int)YStride > 0)
+						{
+							szSurface32[YStride - 1] = Afacts32[ColorInvert][3];
+							if (!ScanLines)
+								szSurface32[YStride + Xpitch - 1] = Afacts32[ColorInvert][3];
+							szSurface32[YStride] = Afacts32[ColorInvert][3];
+							if (!ScanLines)
+								szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][3];
+						}
 						break;
 					case 7:
 						Pcolor = 3;
