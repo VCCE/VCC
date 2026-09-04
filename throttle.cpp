@@ -50,34 +50,17 @@ void EndRender(unsigned char Skip)
 	return;
 }
 
-void CheckSound()
-{
-	// Lean on the sound card a bit for timing
-	if (GetSoundStatus())
-	{
-		PurgeAuxBuffer();
-		/*
-		* This causes slow downs and FrameWait won't return when it should.
-		if (FrameSkip == 1)
-		{
-			// Dont let the buffer get lest that half full
-			if (GetFreeBlockCount() > AUDIOBUFFERS / 2)
-				return;
-
-			// Dont let it fill up either
-			int count = 100; // loop limit
-			while (GetFreeBlockCount() < 1 && count > 0)
-			{
-				Sleep(1);
-				--count;
-			}
-		}
-		*/
-	}
-}
 
 void FrameWait()
 {
+	//If we have more that 10Ms till the end of the frame
+	QueryPerformanceCounter(&CurrentTime);
+	while ((TargetTime.QuadPart - CurrentTime.QuadPart) > (OneMs.QuadPart * 10))
+	{
+		Sleep(5);	//Give about 5Ms back to the system
+		QueryPerformanceCounter(&CurrentTime);	//And check again
+	}
+
 	//If we have more that 2Ms till the end of the frame
 	QueryPerformanceCounter(&CurrentTime);
 	while ( (TargetTime.QuadPart-CurrentTime.QuadPart)> (OneMs.QuadPart*2))
@@ -86,10 +69,28 @@ void FrameWait()
 		QueryPerformanceCounter(&CurrentTime);	//And check again
 	}
 
-	// Bug#281
-	// moved to its own function so that final poll until frame end is always performed,
-	// otherwise this sound check would exit early.
-	CheckSound();
+	// Lean on the sound card a bit for timing
+	if (GetSoundStatus())
+	{
+		PurgeAuxBuffer();
+		if (FrameSkip == 1)
+		{
+			// Dont let the buffer get less that half full
+			// Returning early increases the framerate slightly in
+			// order to write more sound data.
+			if (GetFreeBlockCount() > AUDIOBUFFERS / 2)
+				return;
+
+			// Dont let it fill up either
+			// Slow framerate to allow sound buffer to empty.
+			int count = 4; // loop limit
+			while (GetFreeBlockCount() < 1 && count > 0)
+			{
+				Sleep(1);
+				--count;
+			}
+		}
+	}
 	
 	//Poll Untill frame end.
 	while ( CurrentTime.QuadPart< TargetTime.QuadPart)	
