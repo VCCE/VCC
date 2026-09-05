@@ -23,9 +23,16 @@
 #include "resource.h"
 #include <string>
 #include <stdexcept>
+#include "config.h"
 
 namespace VCC::Debugger::UI { 
 namespace {
+
+	const std::string cWindowSizeX("WindowSizeX");
+	const std::string cWindowSizeY("WindowSizeY");
+	const std::string cWindowPosX("WindowPosX");
+	const std::string cWindowPosY("WindowPosY");
+
 	// Color constants
 	const COLORREF rgbBlack  = RGB(  0,   0,   0);
 	const COLORREF rgbViolet = RGB(100,   0, 170);
@@ -201,6 +208,82 @@ namespace {
 		DeleteObject(hFont);
 	}
 
+	void SaveSettings(HWND hDlg)
+	{
+		constexpr int cHeaderHeight = 20;			// header with labels
+
+		RECT CurWindow;
+		::GetWindowRect(hDlg, &CurWindow);
+		RECT CurScreen;
+		::GetClientRect(hDlg, &CurScreen);
+		int clientWidth = (int)CurScreen.right;
+		int clientHeight = (int)CurScreen.bottom;
+
+		{
+			VCC::Rect rect;
+			// remember positioning:
+			rect.x = CurWindow.left;
+			rect.y = CurWindow.top;
+
+			// remember size:
+			rect.w = clientWidth; // Used for saving new window size to the ini file.
+			rect.h = clientHeight - cHeaderHeight;
+
+			auto& s = Setting();
+			std::string section("MMUMonitor");
+			auto write = [&](const std::string& key, int value)
+			{
+				s.write(section, key, value);
+			};
+			write(cWindowSizeX, rect.w);
+			write(cWindowSizeY, rect.h);
+			write(cWindowPosX, rect.x);
+			write(cWindowPosY, rect.y);
+		}
+	}
+
+	void LoadSettings(HWND hDlg)
+	{
+		if (hDlg != nullptr)
+		{
+			Rect rect;
+
+			rect.x = CW_USEDEFAULT;
+			rect.y = CW_USEDEFAULT;
+			rect.w = 336;
+			rect.h = 270;
+
+			if (!GetAsyncKeyState(VK_SHIFT))
+			{
+				auto& s = Setting();
+				std::string section("MMUMonitor");
+				auto read = [&](const std::string& key, int& value)
+				{
+					value = s.read(section, key, value);
+				};
+
+				read(cWindowSizeX, rect.w);
+				read(cWindowSizeY, rect.h);
+				read(cWindowPosX, rect.x);
+				read(cWindowPosY, rect.y);
+			}
+
+			RECT ra = { 0,0,0,0 };  // left,top,right,bottom
+			::AdjustWindowRect(&ra, WS_OVERLAPPEDWINDOW, TRUE);
+			int windowBorderWidth = ra.right - ra.left;
+			int windowBorderHeight = ra.bottom - ra.top;
+			::GetWindowRect(hDlg, &ra);
+
+			int width = rect.w + windowBorderWidth;
+			int height = rect.h + windowBorderHeight + 0; /*GetRenderWindowStatusBarHeight();*/
+			int flags = SWP_NOOWNERZORDER | SWP_NOZORDER;
+			int x = rect.IsDefaultX() ? ra.left : rect.x;
+			int y = rect.IsDefaultY() ? ra.top : rect.y;
+			SetWindowPos(hDlg, nullptr, x, y, width, height, flags);
+		}
+	}
+
+
 	INT_PTR CALLBACK MMUMonitorDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 	{
 		switch (message)
@@ -213,6 +296,7 @@ namespace {
 			BackBuffer_ = AttachBackBuffer(hDlg, 0, -36);
 			SetTimer(hDlg, IDT_PROC_TIMER, 64, nullptr);
 			EmuState.Debugger.RegisterClient(hDlg, std::make_unique<MMUMonitorDebugClient>());
+			LoadSettings(hDlg);
 			break;
 		}
 
@@ -236,17 +320,27 @@ namespace {
 			}
 			break;
 
+		case WM_NCDESTROY:
+			if (MMUMonitorWindow)
+			{
+				SaveSettings(hDlg);
+				KillTimer(hDlg, IDT_PROC_TIMER);
+				DeleteDC(BackBuffer_.DeviceContext);
+				EmuState.Debugger.RemoveClient(hDlg);
+				MMUMonitorWindow = nullptr;
+			}
+			break;
+
+		case WM_CLOSE:
+			DestroyWindow(hDlg);
+			break;
+
 		case WM_COMMAND:
 			switch (LOWORD(wParam))
 			{
 
 			case IDCLOSE:
-			case WM_DESTROY:
-				KillTimer(hDlg, IDT_PROC_TIMER);
-				DeleteDC(BackBuffer_.DeviceContext);
 				DestroyWindow(hDlg);
-				MMUMonitorWindow = nullptr;
-				EmuState.Debugger.RemoveClient(hDlg);
 				break;
 			}
 
