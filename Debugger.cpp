@@ -261,6 +261,7 @@ namespace VCC::Debugger
 	void Debugger::SetTraceDisable()
 	{
 		TraceEnabled_ = false;
+		TraceRunning_ = false;
 	}
 
 	void Debugger::TraceStart()

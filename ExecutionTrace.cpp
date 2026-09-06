@@ -30,11 +30,18 @@ This file is part of VCC (Virtual Color Computer).
 #include <vcc/util/FileOps.h>
 #include <vcc/util/DialogOps.h>
 #include <vcc/util/logger.h>
+#include "config.h"
 
 static HINSTANCE g_hinstDLG;
 
 namespace VCC::Debugger::UI
 {
+	const std::string cWindowSizeX("WindowSizeX");
+	const std::string cWindowSizeY("WindowSizeY");
+	const std::string cWindowPosX("WindowPosX");
+	const std::string cWindowPosY("WindowPosY");
+	const std::string cSection("ExecutionTrace");
+
 	HWND ExecutionTraceWindow = nullptr;
 	HWND hWndExecutionTrace;
 	HWND hWndVScrollBar;
@@ -50,14 +57,14 @@ namespace VCC::Debugger::UI
 
 	enum class TraceStatus
 	{
-		Empty,
+		Stopped,
 		Enabled,
 		Collecting,
 		LoadPage,
 		Loaded
 	};
 
-	TraceStatus status = TraceStatus::Empty;
+	TraceStatus status = TraceStatus::Stopped;
 	long traceOffset = 0;
 	long tracePage = 50;
 	long traceCursor = 0;
@@ -191,13 +198,32 @@ namespace VCC::Debugger::UI
 		DeleteObject(pen);
 	}
 
+	void UpdateTraceStatus(TraceStatus s)
+	{
+		const char* statusLabel[] =
+		{
+			"Stopped",
+			"Enabled",
+			"Collecting",
+			"LoadPage",
+			"Loaded"
+		};
+
+		char buf[100];
+		sprintf(buf, "%s", statusLabel[(int)s]);
+		auto samples = EmuState.Debugger.GetTraceSamples();
+		if (samples > 0)
+			sprintf(buf + strlen(buf), " (%d)", samples);
+
+		status = s;
+		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_STATUS);
+		SetWindowText(hCtl, buf);
+	}
+
 //-------------------------------------------------------------------------------
 	void DrawSamplingInProgress(HDC hdc)
 	{
-		status = TraceStatus::Collecting;
-
-		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_STATUS);
-		SetWindowText(hCtl, "Trace is running");
+		UpdateTraceStatus(TraceStatus::Collecting);
 
 		RECT rect;
 		GetClientRect(hWndTrace, &rect);
@@ -218,20 +244,18 @@ namespace VCC::Debugger::UI
 //-------------------------------------------------------------------------------
 	void DrawNoSamplesCollected(HDC hdc)
 	{
-		status = TraceStatus::Empty;
-
-		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_STATUS);
-		SetWindowText(hCtl, "Trace is stopped");
-
 		RECT rect;
 		GetClientRect(hWndTrace, &rect);
 
 		HFONT hFont = CreateFont(24, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-			CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FIXED_PITCH, TEXT("Consolas"));
+		CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FIXED_PITCH, TEXT("Consolas"));
 		SelectObject(hdc, hFont);
 
-		std::string s = "Press Enable to start collection";
-		DrawText(hdc, s.c_str(), s.size(), &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		const char* s = "Press Enable to start collection";
+		if (status == TraceStatus::Enabled && EmuState.Debugger.GetTraceSamples() == 0)
+			s = "Trace enabled, waiting collection";
+
+		DrawText(hdc, s, strlen(s), &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 		DeleteObject(hFont);
 	}
@@ -249,11 +273,7 @@ namespace VCC::Debugger::UI
 		}
 
 		// Indicate what we collected.
-		std::stringstream ss;
-		ss << samples << " collected";
-
-		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_STATUS);
-		SetWindowText(hCtl, ss.str().c_str());
+		UpdateTraceStatus(TraceStatus::Stopped);
 
 		// Adjust Vertical Scrollbar based on samples collected.
 		SCROLLINFO si;
@@ -279,7 +299,7 @@ namespace VCC::Debugger::UI
 		// Load page?
 		if (currentTrace.size() == 0 || status == TraceStatus::LoadPage)
 		{
-			status = TraceStatus::Loaded;
+			UpdateTraceStatus(TraceStatus::Loaded);
 		}
 
 		// Draw our header line.
@@ -372,6 +392,8 @@ namespace VCC::Debugger::UI
 			int x = 10;
 
 			long n = i + traceOffset;
+
+			if (n >= (long)currentTrace.size()) continue;
 
 			if (n == traceCursor)
 			{
@@ -675,7 +697,7 @@ namespace VCC::Debugger::UI
 
 		if (status == TraceStatus::Loaded)
 		{
-			status = TraceStatus::LoadPage;
+			UpdateTraceStatus(TraceStatus::LoadPage);
 		}
 
 		InvalidateRect(hWndTrace, &BackBuffer_.Rect, FALSE);
@@ -766,13 +788,18 @@ namespace VCC::Debugger::UI
 		EmuState.Debugger.SetTraceMaxSamples(maxSamples);
 		ExportStop = maxSamples;
 
+		auto total = maxSamples;
+		auto visible = tracePage;
+		auto pos = 0;
+
 		SCROLLINFO si;
 		si.cbSize = sizeof(si);
-		si.fMask = SIF_ALL;
+		si.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
 		si.nMin = 0;
-		si.nMax = maxSamples;
-		si.nPage = tracePage;
-		si.nPos = 0;
+		si.nPage = visible;
+		si.nMax = total > visible ? total - 1 : 0;
+		si.nPos = pos;
+
 		SetScrollInfo(hWndVScrollBar, SB_CTL, &si, TRUE);
 	}
 
@@ -917,17 +944,14 @@ namespace VCC::Debugger::UI
 		UpdateTriggers(IDC_LIST_START_TRACE);
 		UpdateTriggers(IDC_LIST_STOP_TRACE);
 		EmuState.Debugger.SetTraceEnable();
-		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_STATUS);
-		SetWindowText(hCtl, "Trace is running");
-		status = TraceStatus::Enabled;
+		UpdateTraceStatus(TraceStatus::Enabled);
 	}
 
 //-------------------------------------------------------------------------------
 	void StopTrace()
 	{
 		EmuState.Debugger.SetTraceDisable();
-		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_STATUS);
-		SetWindowText(hCtl, "Trace is stopped");
+		UpdateTraceStatus(TraceStatus::Stopped);
 	}
 
 //-------------------------------------------------------------------------------
@@ -935,8 +959,7 @@ namespace VCC::Debugger::UI
 	{
 		traceOffset = 0;
 		EmuState.Debugger.ResetTrace();
-		HWND hCtl = GetDlgItem(hWndExecutionTrace, IDC_TRACE_STATUS);
-		SetWindowText(hCtl, "Trace is disabled");
+		UpdateTraceStatus(TraceStatus::Stopped);
 	}
 
 //-------------------------------------------------------------------------------
@@ -1281,6 +1304,79 @@ namespace VCC::Debugger::UI
 		return FALSE;
 	}
 
+	void SaveSettings(HWND hDlg)
+	{
+		constexpr int cHeaderHeight = 20;			// header with labels
+
+		RECT CurWindow;
+		::GetWindowRect(hDlg, &CurWindow);
+		RECT CurScreen;
+		::GetClientRect(hDlg, &CurScreen);
+		int clientWidth = (int)CurScreen.right;
+		int clientHeight = (int)CurScreen.bottom;
+
+		{
+			VCC::Rect rect;
+			// remember positioning:
+			rect.x = CurWindow.left;
+			rect.y = CurWindow.top;
+
+			// remember size:
+			rect.w = clientWidth; // Used for saving new window size to the ini file.
+			rect.h = clientHeight - cHeaderHeight;
+
+			auto& s = Setting();
+			auto write = [&](const std::string& key, int value)
+			{
+				s.write(cSection, key, value);
+			};
+			write(cWindowSizeX, rect.w);
+			write(cWindowSizeY, rect.h);
+			write(cWindowPosX, rect.x);
+			write(cWindowPosY, rect.y);
+		}
+	}
+
+	void LoadSettings(HWND hDlg)
+	{
+		if (hDlg != nullptr)
+		{
+			Rect rect;
+
+			rect.x = CW_USEDEFAULT;
+			rect.y = CW_USEDEFAULT;
+			rect.w = 465;
+			rect.h = 485;
+
+			if (!GetAsyncKeyState(VK_SHIFT))
+			{
+				auto& s = Setting();
+				auto read = [&](const std::string& key, int& value)
+				{
+					value = s.read(cSection, key, value);
+				};
+
+				read(cWindowSizeX, rect.w);
+				read(cWindowSizeY, rect.h);
+				read(cWindowPosX, rect.x);
+				read(cWindowPosY, rect.y);
+			}
+
+			RECT ra = { 0,0,0,0 };  // left,top,right,bottom
+			::AdjustWindowRect(&ra, WS_OVERLAPPEDWINDOW, TRUE);
+			int windowBorderWidth = ra.right - ra.left;
+			int windowBorderHeight = ra.bottom - ra.top;
+			::GetWindowRect(hDlg, &ra);
+
+			int width = rect.w + windowBorderWidth;
+			int height = rect.h + windowBorderHeight + 0; /*GetRenderWindowStatusBarHeight();*/
+			int flags = SWP_NOOWNERZORDER | SWP_NOZORDER;
+			int x = rect.IsDefaultX() ? ra.left : rect.x;
+			int y = rect.IsDefaultY() ? ra.top : rect.y;
+			SetWindowPos(hDlg, nullptr, x, y, width, height, flags);
+		}
+	}
+
 //-------------------------------------------------------------------------------
 // Trace window processing
 //-------------------------------------------------------------------------------
@@ -1297,7 +1393,8 @@ namespace VCC::Debugger::UI
 
 			SetupControls(hDlg);
 
-			SetTimer(hDlg, IDT_PROC_TIMER, 64, nullptr);
+			SetTimer(hDlg, IDT_PROC_TIMER, 100, nullptr);
+			LoadSettings(hDlg);
 
 			break;
 		}
@@ -1443,10 +1540,31 @@ namespace VCC::Debugger::UI
 		case WM_TIMER:
 			switch (wParam)
 			{
-			case IDT_PROC_TIMER:
-				InvalidateRect(hWndTrace, &BackBuffer_.Rect, FALSE);
-				return 0;
+				case IDT_PROC_TIMER:
+				{
+					// only refresh display if something actually changed!
+					static TraceStatus oldStatus = TraceStatus::Stopped;
+					static long oldSamples = 0;
+					auto samples = EmuState.Debugger.GetTraceSamples();
+					if (oldStatus != status || oldSamples != samples)
+					{
+						oldStatus = status;
+						oldSamples = samples;
+						InvalidateRect(hWndTrace, &BackBuffer_.Rect, FALSE);
+					}
+					return 0;
+				}
 			}
+			break;
+
+		case WM_CLOSE:
+			DestroyWindow(hDlg);
+			break;
+
+		case WM_NCDESTROY:
+			SaveSettings(hDlg);
+			KillTimer(hDlg, IDT_PROC_TIMER);
+			ExecutionTraceWindow = nullptr;
 			break;
 
 		case WM_COMMAND:
@@ -1488,10 +1606,6 @@ namespace VCC::Debugger::UI
 				SetTraceConfiguration();
 				break;
 			case IDCLOSE:
-			case WM_DESTROY:
-				KillTimer(hDlg, IDT_PROC_TIMER);
-				DestroyWindow(hDlg);
-				ExecutionTraceWindow = nullptr;
 				break;
 			}
 
