@@ -179,13 +179,16 @@ unsigned char GimeRead(unsigned char port)
 		CPUDeAssertInterupt(IS_GIME, INT_FIRQ);
 		return data;
 	default:
-		if (port >= 0xA0) {
-			data = GimeRegisters[port];
-		    if (port >= 0xB0) data &= 0x3F;
-			return data;
-	    } else {
-			return 0x1B;
+		data = GimeRegisters[port];
+		// if 128k or 512k upper bits are not driven by gime
+		if (port >= 0xA0 && port <= 0xBF && EmuState.RamSize <= 1)
+		{
+			VCC::CPUState MC6809GetState();
+			auto lastBus = MemRead8(MC6809GetState().PC);
+			return (lastBus & 0xC0) | (data & 0x3F);
 		}
+		// else 2mb/8mb return all bits.
+		return data;
 	}
 }
 
