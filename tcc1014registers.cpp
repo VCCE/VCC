@@ -277,6 +277,13 @@ unsigned char SafeGimeRead(unsigned char port)
 
 unsigned char GimeRead(unsigned char port)
 {
+	auto lastBus = []()
+	{
+		VCC::CPUState MC6809GetState();
+		auto cpuState = MC6809GetState();
+		return cpuState.PC < 0xFF00 ? MemRead8(cpuState.PC) : 0;
+	};
+
 	// iobus sets port range 0x90 to 0xBF
 	auto data = 0;
 	switch (port)
@@ -290,14 +297,25 @@ unsigned char GimeRead(unsigned char port)
 		case 0x93:
 			// note, as above.
 			return GimeClearFirq(0);
-	default:
-		if (port >= 0xA0) {
+		default:
 			data = GimeRegisters[port];
-		    if (port >= 0xB0) data &= 0x3F;
-			return data;
-	    } else {
-			return 0x1B;
-		}
+			// mmu registers, 
+			if (port >= 0xA0 && port <= 0xAF)
+			{
+				// - if 128k or 512k upper bits are not driven by gime
+				if (EmuState.RamSize <= 1)
+					return (lastBus() & 0xC0) | (data & 0x3F);
+
+				// - else if 2048/8192k read all bits
+				return data;
+			}
+
+			// palette registers, read lower bits
+			if (port >= 0xB0 && port <= 0xBF)
+				return (lastBus() & 0xC0) | (data & 0x3F);
+
+			// other gime registers are unreadable
+			return lastBus();
 	}
 }
 
