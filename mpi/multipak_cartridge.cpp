@@ -221,13 +221,39 @@ unsigned short multipak_cartridge::sample_audio()
 {
 	VCC::Util::section_locker lock(mutex_);
 
-	unsigned short sample = 0;
+	// 780TECH:
+	// Cartridge audio is two packed unsigned 8-bit channels. Audio-producing
+	// cartridges use 0x80 as the quiescent/midpoint level, while cartridges
+	// without PakSampleAudio return 0 through the compatibility shim. The old
+	// code added complete 16-bit packed samples, which allowed the right channel
+	// to carry into the left channel and made two 0x8080 midpoint samples wrap to
+	// 0x0100. Mix the channels independently around 0x80 instead.
+	const int c = 0x80;
+	int left = 0;
+	int right = 0;
+	bool have_audio_sample = false;
+
 	for (const auto& cartridge_slot : slots_)
 	{
-		sample += cartridge_slot.sample_audio();
+		auto sample = cartridge_slot.sample_audio();
+
+		// A zero sample is the legacy/default result for a cartridge with no
+		// PakSampleAudio export. Treat it as no contribution.
+		if (sample == 0)
+			continue;
+
+		have_audio_sample = true;
+		left += static_cast<int>((sample >> 8) & 0xFF) - c;
+		right += static_cast<int>(sample & 0xFF) - c;
 	}
 
-	return sample;
+	if (!have_audio_sample)
+		return 0;
+
+	left = std::clamp(left + c, 0, 255);
+	right = std::clamp(right + c, 0, 255);
+
+	return static_cast<unsigned short>((left << 8) | right);
 }
 
 void multipak_cartridge::menu_item_clicked(unsigned char menu_item_id)
