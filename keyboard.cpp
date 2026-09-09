@@ -143,7 +143,7 @@ vccKeyboardGetScan(unsigned char Col)
 		static unsigned char IrqFlag = 0;
 		if ((ret_val & 0x7F) != 0x7F)
 		{
-			if ((IrqFlag == 0) & GimeGetKeyboardInteruptState())
+			if ((IrqFlag == 0))
 			{
 				GimeAssertKeyboardInterupt();
 				IrqFlag = 1;
@@ -289,9 +289,7 @@ void vccKeyboardHandleKey(unsigned char ScanCode, keyevent_e keyState)
 			}
 			_vccKeyboardUpdateRolloverTable();
 
-			if ( GimeGetKeyboardInteruptState() ) {
-				GimeAssertKeyboardInterupt();
-			}
+			GimeAssertKeyboardInterupt();
 		break;
 
 		// Key Up

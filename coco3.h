@@ -32,12 +32,9 @@ struct DisplayDetails
 
 void SetClockSpeed(unsigned int Cycles);
 DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight);
-void SetHorzInteruptState(unsigned char);
-void SetVertInteruptState(unsigned char);
 void SetSndOutMode(unsigned char);
 float RenderFrame (SystemState *);
 
-void SetTimerInteruptState(unsigned char);
 void SetTimerClockRate (unsigned char);	
 void SetInteruptTimer(unsigned int);
 void MiscReset();

@@ -72,9 +72,6 @@ constexpr auto RENDERS_PER_BLINK_TOGGLE = 16u;
 	static unsigned int StateSwitch=0;
 	unsigned int SoundRate=0;
 //*****************************************************
-
-static unsigned char HorzInteruptEnabled=0,VertInteruptEnabled=0;
-static unsigned char TimerInteruptEnabled=0;
 static int MasterTimer=0; 
 static unsigned int TimerClockRate=0;
 static int TimerCycleCount=0;
@@ -297,8 +294,7 @@ void VSYNC(unsigned char level)
 	{
 		EmuState.Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenVSYNCLow, 0);
 		irq_fs(0);
-		if (VertInteruptEnabled)
-			GimeAssertVertInterupt();
+		GimeAssertVertInterupt();
 	}
 	else
 	{
@@ -312,8 +308,7 @@ void HSYNC(unsigned char level)
 	if (level == 0)
 	{
 		EmuState.Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenHSYNCLow, 0);
-		if (HorzInteruptEnabled)
-			GimeAssertHorzInterupt();
+		GimeAssertHorzInterupt();
 		irq_hs(0);
 	}
 	else
@@ -329,17 +324,6 @@ void SetClockSpeed(unsigned int Cycles)
 	return;
 }
 
-void SetHorzInteruptState(unsigned char State)
-{
-	HorzInteruptEnabled= !!State;
-	return;
-}
-
-void SetVertInteruptState(unsigned char State)
-{
-	VertInteruptEnabled= !!State;
-	return;
-}
 
 DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
 {
@@ -535,12 +519,6 @@ _inline void CPUCycle(double NanosToRun)
 	EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 20, 0, 0, 0, emulationCycles, emulationDrift);
 }
 
-void SetTimerInteruptState(unsigned char State)
-{
-	TimerInteruptEnabled=State;
-	return;
-}
-
 void SetInteruptTimer(unsigned int Timer)
 {
 	UnxlatedTickCounter=(Timer & 0xFFF);
@@ -572,9 +550,6 @@ void SetMasterTickCounter()
 
 void MiscReset()
 {
-	HorzInteruptEnabled=0;
-	VertInteruptEnabled=0;
-	TimerInteruptEnabled=0;
 	MasterTimer=0; 
 	TimerClockRate=0;
 	MasterTickCounter=0;

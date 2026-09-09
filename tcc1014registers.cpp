@@ -32,29 +32,122 @@ static unsigned char MPU_Rate=0;
 static unsigned char *rom;
 static unsigned char GimeRegisters[256];
 static unsigned short VerticalOffsetRegister=0;
-static unsigned char EnhancedFIRQFlag=0,EnhancedIRQFlag=0;
 static int InteruptTimer=0;
 void SetInit0(unsigned char);
 void SetInit1(unsigned char);
-void SetGimeIRQStearing();
-void SetGimeFIRQStearing();
 void SetTimerMSB();
 void SetTimerLSB();
 unsigned char GetInit0();
-static unsigned char IRQStearing[8]={0,0,0,0,0,0,0,0};
-static unsigned char FIRQStearing[8]={0,0,0,0,0,0,0,0};
-static unsigned char LastIrq = 0, LastFirq = 0;
 
-static unsigned char KeyboardInteruptEnabled = 0;
+//
+// Gime interrupt bits
+//
+constexpr auto GIME_INTR_TIMER = 1u << 5;
+constexpr auto GIME_INTR_HSYNC = 1u << 4;
+constexpr auto GIME_INTR_VSYNC = 1u << 3;
+constexpr auto GIME_INTR_RS232 = 1u << 2;
+constexpr auto GIME_INTR_KEYB = 1u << 1;
+constexpr auto GIME_INTR_CART = 1u << 0;
 
-unsigned char GimeGetKeyboardInteruptState()
+//
+// Gime interrupt status
+//
+static auto GimeFirqState = 0u;
+static auto GimeIrqState = 0u;
+static auto LastGimeFirq = 0u;
+static auto LastGimeIrq = 0u;
+
+//
+// Gime irq/firq enabled to cpu?
+//
+bool GimeIrqToCpuEnabled() { return GimeRegisters[0x90] & 0x20; }
+bool GimeFirqToCpuEnabled() { return GimeRegisters[0x90] & 0x10; }
+
+//
+// Set interrupt GIME_INTR* flag
+//
+void GimeSetInterrupt(unsigned int flag)
 {
-	return KeyboardInteruptEnabled;
+	// merge to internal state when enabled
+	GimeIrqState |= (flag & GimeRegisters[0x92]) & 0x3F;
+	GimeFirqState |= (flag & GimeRegisters[0x93]) & 0x3F;
+
+	// update state for enabled interrupt to cpu
+	auto prevIrq = LastGimeIrq;
+	auto prevFirq = LastGimeFirq;
+	LastGimeIrq = GimeIrqToCpuEnabled() ? GimeIrqState : 0;
+	LastGimeFirq = GimeFirqToCpuEnabled() ? GimeFirqState : 0;
+
+	// on state changed update irq line to cpu
+	if (prevIrq != LastGimeIrq)
+	{
+		if (LastGimeIrq)
+			CPUAssertInterupt(IS_GIME, INT_IRQ);
+		else
+			CPUDeAssertInterupt(IS_GIME, INT_IRQ);
+	}
+
+	// on state changed update firq line to cpu
+	if (prevFirq != LastGimeFirq)
+	{
+		if (LastGimeFirq)
+			CPUAssertInterupt(IS_GIME, INT_FIRQ);
+		else
+			CPUDeAssertInterupt(IS_GIME, INT_FIRQ);
+	}
 }
 
-void GimeSetKeyboardInteruptState(unsigned char State)
+//
+// Clear gime irq GIME_INTR* flag, returns previous state.
+//
+unsigned char GimeClearIrq(unsigned int nflag)
 {
-	KeyboardInteruptEnabled = !!State;
+	auto prevIrqState = GimeIrqState;
+	auto prevIrq = LastGimeIrq;
+	GimeIrqState &= nflag;
+	LastGimeIrq &= nflag;
+
+	// if was previously set, clear line
+	if (prevIrq && !LastGimeIrq)
+		CPUDeAssertInterupt(IS_GIME, INT_IRQ);
+
+	return (unsigned char)prevIrqState;
+}
+
+//
+// Clear gime firq GIME_INTR* flag, returns previous state.
+//
+unsigned char GimeClearFirq(unsigned int nflag)
+{
+	auto prevFirqState = GimeFirqState;
+	auto prevFirq = LastGimeFirq;
+	GimeFirqState &= nflag;
+	LastGimeFirq &= nflag;
+
+	// if was previously set, clear line
+	if (prevFirq && !LastGimeFirq)
+		CPUDeAssertInterupt(IS_GIME, INT_FIRQ);
+
+	return (unsigned char)prevFirqState;
+}
+
+//
+// Reset gime registers to defaults
+//
+void GimeRegistersReset()
+{
+	memset(GimeRegisters, 0, sizeof(GimeRegisters));
+
+	GimeFirqState = 0u;
+	GimeIrqState = 0u;
+	LastGimeFirq = 0u;
+	LastGimeIrq = 0u;
+
+	VDG_Mode = 0;
+	Dis_Offset = 0;
+	MPU_Rate = 0;
+	VerticalOffsetRegister = 0;
+	InteruptTimer = 0;
 }
 
 void GimeWrite(unsigned char port,unsigned char data)
@@ -72,11 +165,11 @@ void GimeWrite(unsigned char port,unsigned char data)
 		break;
 
 	case 0x92:
-		SetGimeIRQStearing();
+		GimeClearIrq(~data); // TODO: Verify this
 		break;
 
 	case 0x93:
-		SetGimeFIRQStearing();
+		GimeClearFirq(~data); // TODO: Verify this
 		break;
 
 	case 0x94:
@@ -168,16 +261,15 @@ unsigned char GimeRead(unsigned char port)
 	auto data = 0;
 	switch (port)
 	{
-	case 0x92:
-		data=LastIrq;
-		LastIrq=0;
-		CPUDeAssertInterupt(IS_GIME, INT_IRQ);
-		return data;
-	case 0x93:
-		data=LastFirq;
-		LastFirq=0;
-		CPUDeAssertInterupt(IS_GIME, INT_FIRQ);
-		return data;
+		case 0x92:
+			// note, clear all irq flags & interrupt line should be cleared if was
+			// set otherwise extra interrupts will occur. this is noticable in robocop
+			// the sound will repeat/stutter.
+			// note, return internal flags to program, see rtaylor's timer dsk.
+			return GimeClearIrq(0);
+		case 0x93:
+			// note, as above.
+			return GimeClearFirq(0);
 	default:
 		if (port >= 0xA0) {
 			data = GimeRegisters[port];
@@ -195,8 +287,6 @@ void SetInit0(unsigned char data)
 	Set_MmuEnabled (!!(data & 64)); //MMUEN
 	SetRomMap ( data & 3);			//MC0-MC1
 	SetVectors( data & 8);			//MC3
-	EnhancedFIRQFlag=(data & 16)>>4;
-	EnhancedIRQFlag=(data & 32)>>5;
 	return;
 }
 
@@ -213,153 +303,42 @@ unsigned char GetInit0()
 	return data;
 }
 
-void SetGimeIRQStearing() //92
-{
-	// FIXME: GimeIRQStearing for CART (bit 0)
-
-	if ( (GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2) )
-		GimeSetKeyboardInteruptState(1);
-	else
-		GimeSetKeyboardInteruptState(0);
-
-	if ( (GimeRegisters[0x92] & 8) | (GimeRegisters[0x93] & 8) )
-		SetVertInteruptState(1); 
-	else
-		SetVertInteruptState(0);
-
-	if ( (GimeRegisters[0x92] & 16) | (GimeRegisters[0x93] & 16) )
-		SetHorzInteruptState(1);
-	else
-		SetHorzInteruptState(0);
-
-	if ( (GimeRegisters[0x92] & 32) | (GimeRegisters[0x93] & 32) )
-		SetTimerInteruptState(1);
-	else
-		SetTimerInteruptState(0);
-	return;
-}
-
-void SetGimeFIRQStearing() //93
-{
-	// FIXME: GimeFIRQStearing for CART (bit 0)
-
-	if ( (GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2) )
-		GimeSetKeyboardInteruptState(1);
-	else
-		GimeSetKeyboardInteruptState(0);
-
-	if ( (GimeRegisters[0x92] & 8) | (GimeRegisters[0x93] & 8) )
-		SetVertInteruptState(1);
-	else
-		SetVertInteruptState(0);
-
-	if ( (GimeRegisters[0x92] & 16) | (GimeRegisters[0x93] & 16) )
-		SetHorzInteruptState(1);
-	else
-		SetHorzInteruptState(0);
-	// Moon Patrol Demo Using Timer for FIRQ Side Scroll 
-	if ( (GimeRegisters[0x92] & 32) | (GimeRegisters[0x93] & 32) )
-		SetTimerInteruptState(1);
-	else
-		SetTimerInteruptState(0);
-
-	return;
-}
-
 void SetTimerMSB() //94
 {
 	unsigned short Temp;
 	Temp=((GimeRegisters[0x94] <<8)+ GimeRegisters[0x95]) & 4095;
 	SetInteruptTimer(Temp);
-	return;	
 }
 
 void SetTimerLSB() //95
 {
-	unsigned short Temp;
-	Temp=((GimeRegisters[0x94] <<8)+ GimeRegisters[0x95]) & 4095;
-	SetInteruptTimer(Temp);
-	return;
+	// does not restart timer
 }
 
 void GimeAssertKeyboardInterupt() 
 {
-	if ((GimeRegisters[0x93] & 2) && EnhancedFIRQFlag == 1)
-	{
-		CPUAssertInterupt(IS_GIME, INT_FIRQ);
-		LastFirq = LastFirq | 2;
-	}
-	else if ((GimeRegisters[0x92] & 2) && EnhancedIRQFlag == 1)
-	{
-		CPUAssertInterupt(IS_GIME, INT_IRQ);
-		LastIrq = LastIrq | 2;
-	}
+	GimeSetInterrupt(GIME_INTR_KEYB);
 }
 
 void GimeAssertVertInterupt()
 {
-	if ((GimeRegisters[0x93] & 8) && EnhancedFIRQFlag == 1)
-	{
-		CPUAssertInterupt(IS_GIME, INT_FIRQ); //FIRQ
-		LastFirq = LastFirq | 8;
-	}
-	else if ((GimeRegisters[0x92] & 8) && EnhancedIRQFlag == 1)
-	{
-		CPUAssertInterupt(IS_GIME, INT_IRQ); //IRQ moon patrol demo using this
-		LastIrq = LastIrq | 8;
-	}
+	GimeSetInterrupt(GIME_INTR_VSYNC);
 }
 
 void GimeAssertHorzInterupt()
 {
-	if ((GimeRegisters[0x93] & 16) && EnhancedFIRQFlag == 1)
-	{
-		CPUAssertInterupt(IS_GIME, INT_FIRQ);
-		LastFirq = LastFirq | 16;
-	}
-	else if ((GimeRegisters[0x92] & 16) && EnhancedIRQFlag == 1)
-	{
-		CPUAssertInterupt(IS_GIME, INT_IRQ);
-		LastIrq = LastIrq | 16;
-	}
+	GimeSetInterrupt(GIME_INTR_HSYNC);
 }
 
-// Timer [F]IRQ bit gets set even if interrupt is not enabled.
-// TODO: What about other gime interrupts? Are they simular?
 void GimeAssertTimerInterupt()
 {
-	if (GimeRegisters[0x93] & 32) 
-	{
-		LastFirq = LastFirq | 32;
-		if (EnhancedFIRQFlag == 1) 
-			CPUAssertInterupt(IS_GIME, INT_FIRQ);
-	}
-	else if (GimeRegisters[0x92] & 32) 
-	{
-		LastIrq = LastIrq | 32;
-		if (EnhancedIRQFlag == 1) 
-			CPUAssertInterupt(IS_GIME, INT_IRQ);
-	}
-	return;
+	GimeSetInterrupt(GIME_INTR_TIMER);
 }
 
-// CART
 void GimeAssertCartInterupt()
 {
-	if (GimeRegisters[0x93] & 1)
-	{
-		LastFirq = LastFirq | 1;
-		if (EnhancedFIRQFlag == 1)
-			CPUAssertInterupt(IS_GIME, INT_FIRQ);
-	}
-	else if (GimeRegisters[0x92] & 1)
-	{
-		LastIrq = LastIrq | 1;
-		if (EnhancedIRQFlag == 1)
-			CPUAssertInterupt(IS_GIME, INT_IRQ);
-	}
+	GimeSetInterrupt(GIME_INTR_CART);
 }
-
 unsigned char sam_read(unsigned char port) //SAM don't talk much :)
 {
 	

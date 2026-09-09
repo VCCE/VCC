@@ -907,6 +907,7 @@ void DoHardReset(SystemState* const HRState)
 	CPUInit();
 	CPUReset();		// Zero all CPU Registers and sets the PC to VRESET
 	gGimeGpu.GimeReset();
+	GimeRegistersReset();
 	MiscReset();
 	UpdateBusPointer();
 	EmuState.TurboSpeedFlag=1;
