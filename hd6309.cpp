@@ -235,6 +235,7 @@ void HD6309Reset()
 	cc[I]=1;
 	cc[F]=1;
 	SyncWaiting=0;
+	ClearInterrupts();
 	PC_REG=MemRead16(VRESET);	//PC gets its reset vector
 	SetMapType(0);	//shouldn't be here
 	return;
