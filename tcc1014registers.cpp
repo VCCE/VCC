@@ -263,6 +263,18 @@ void GimeWrite(unsigned char port,unsigned char data)
 	return;
 }
 
+//
+// return gime registers (normally unreadable) for the debugger/memory window
+// and without changing any state.
+//
+unsigned char SafeGimeRead(unsigned char port)
+{
+	// TODO: return last irq state
+	if (port == 0x92) return GimeRegisters[port];
+	if (port == 0x93) return GimeRegisters[port];
+	return GimeRegisters[port];
+}
+
 unsigned char GimeRead(unsigned char port)
 {
 	// iobus sets port range 0x90 to 0xBF

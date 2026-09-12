@@ -25,6 +25,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "iobus.h"
 #include "config.h"
 #include "tcc1014graphics.h"
+#include "tcc1014registers.h"
 #include "pakinterface.h"
 #include <vcc/util/logger.h>
 #include "hd6309.h"
@@ -260,6 +261,8 @@ unsigned char SafeMemRead8(unsigned short address)
 	if (mem_initializing) return 0;
 	// Filter port reads that are not GIME or SAM
 	if ((address > 0xFEFF) && (address < 0xFF90)) return memory[address];
+	// Return gime registers without state change, e.g. ff92/ff93 change state
+	if (address >= 0xFF90 && address <= 0xFFBF) return SafeGimeRead((uint8_t)(address&0xFF));
 	// Otherwise use normal MMU MemRead8
 	return MemRead8(address);
 }
