@@ -76,6 +76,7 @@ void SetBootModulePath(const std::string);
 
 void WriteCPUSettings();
 void WriteAudioSettings();
+void WriteTapeSettings();
 void WriteWindowSize();
 void WriteVideoSettings();
 void WriteKeyboardSettings();
@@ -126,6 +127,7 @@ struct STRConfig
 	unsigned char	UseExtCocoRom = 0;
 	char        	ExtRomFile[MAX_PATH] = { 0 };
 	unsigned char   EnableOverclock = 0;
+	unsigned char	TapeFastLoad = 1;
 };
 
 static STRConfig CurrentConfig;
@@ -389,6 +391,7 @@ unsigned char ReadIniFile()
 	CurrentConfig.ShowMousePointer = Setting().read("Misc","ShowMousePointer",1);
 	CurrentConfig.UseExtCocoRom    = Setting().read("Misc","UseExtCocoRom",0);
 	CurrentConfig.EnableOverclock  = Setting().read("Misc","Overclock",1);
+	CurrentConfig.TapeFastLoad = Setting().read("Misc", "TapeFastLoad", 1);
 	Setting().read("Misc","ExternalBasicImage","",CurrentConfig.ExtRomFile,MAX_PATH);
 
 	CurrentConfig.RamSize = Setting().read("Memory","RamSize",1);
@@ -477,8 +480,11 @@ void WriteCPUSettings() {
 	Setting().write("Misc","ExternalBasicImage", CurrentConfig.ExtRomFile);
 }
 void WriteAudioSettings() {
-	Setting().write("Audio","SndCard",CurrentConfig.SoundCardName);
-	Setting().write("Audio","Rate",CurrentConfig.AudioRate);
+	Setting().write("Audio", "SndCard", CurrentConfig.SoundCardName);
+	Setting().write("Audio", "Rate", CurrentConfig.AudioRate);
+}
+void WriteTapeSettings() {
+	Setting().write("Misc", "TapeFastLoad", CurrentConfig.TapeFastLoad);
 }
 void WriteWindowSize() {
 	if (CurrentConfig.RememberSize) {
@@ -592,6 +598,7 @@ void UpdateConfig ()
 		EmuState.Debugger.Enable_Break(false);
 	}
 	SetCartAutoStart(CurrentConfig.CartAutoStart);
+	TapeFastLoad = CurrentConfig.TapeFastLoad;
 
 	if (CurrentConfig.RebootNow)
 		DoReboot();
@@ -849,6 +856,7 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPa
 		SendDlgItemMessage(hDlg,IDC_MODE,EM_SETBKGNDCOLOR ,0,(LPARAM)RGB(0,0,0));
 		SendDlgItemMessage(hDlg,IDC_MODE,EM_SETCHARFORMAT ,SCF_ALL,(LPARAM)&CounterText);
 		SendDlgItemMessage(hDlg,IDC_FASTLOAD, BM_SETCHECK, TapeFastLoad, 0);
+		EnableWindow(GetDlgItem(hDlg, IDC_FASTLOAD), !IsTapeWav());
 		break;
 
 	case WM_COMMAND:
@@ -860,8 +868,8 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPa
 			break;
 		case IDOK:
 		case IDAPPLY:
-			UpdateConfig();
-			// FIXME Save changes (TapeFastLoad) to IniFile
+			CurrentConfig.TapeFastLoad = TapeFastLoad;
+			WriteTapeSettings();
 			if (LOWORD(wParam)==IDOK) {
 				hTapeDlg = nullptr;
 				DestroyWindow(hDlg);
@@ -892,6 +900,7 @@ LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPa
 			TapeFastLoad = (unsigned char)SendDlgItemMessage(hDlg, IDC_FASTLOAD, BM_GETCHECK, 0, 0);
 			break;
 		}
+		EnableWindow(GetDlgItem(hDlg, IDC_FASTLOAD), !IsTapeWav());
 		break;	//End WM_COMMAND
 	}
 	return 0;
