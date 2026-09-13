@@ -64,6 +64,14 @@ bool GimeIrqToCpuEnabled() { return GimeRegisters[0x90] & 0x20; }
 bool GimeFirqToCpuEnabled() { return GimeRegisters[0x90] & 0x10; }
 
 //
+// Returns the current timer counter 
+//
+unsigned short GimeTimerCounter()
+{
+	return ((GimeRegisters[0x94] << 8) + GimeRegisters[0x95]) & 0xFFF;
+}
+
+//
 // Set interrupt GIME_INTR* flag
 //
 void GimeSetInterrupt(unsigned int flag)
@@ -305,9 +313,7 @@ unsigned char GetInit0()
 
 void SetTimerMSB() //94
 {
-	unsigned short Temp;
-	Temp=((GimeRegisters[0x94] <<8)+ GimeRegisters[0x95]) & 4095;
-	SetInteruptTimer(Temp);
+	SetInteruptTimer(GimeTimerCounter());
 }
 
 void SetTimerLSB() //95
