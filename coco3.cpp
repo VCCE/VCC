@@ -75,7 +75,7 @@ constexpr auto RENDERS_PER_BLINK_TOGGLE = 16u;
 static int MasterTimer=0; 
 static unsigned int TimerClockRate=0;
 static int TimerCycleCount=0;
-static double MasterTickCounter=0,UnxlatedTickCounter=0,OldMaster=0;
+static double MasterTickCounter=0,UnxlatedTickCounter=0;
 static double NanosThisLine=0;
 static unsigned char BlinkPhase=1;
 static unsigned int AudioBuffer[16384];
@@ -540,12 +540,7 @@ void SetMasterTickCounter()
 	double Rate[2]={NANOSECOND/(TARGETFRAMERATE*LINESPERSCREEN),NANOSECOND/COLORBURST};
 	// Master count contains at least one tick. EJJ 10mar25
 	MasterTickCounter = (UnxlatedTickCounter+1) * Rate[TimerClockRate];
-	if (MasterTickCounter != OldMaster)  
-	{
-		OldMaster=MasterTickCounter;
-		NanosToInterrupt=MasterTickCounter;
-	}
-	return;
+	NanosToInterrupt=MasterTickCounter;
 }
 
 void MiscReset()
@@ -554,7 +549,6 @@ void MiscReset()
 	TimerClockRate=0;
 	MasterTickCounter=0;
 	UnxlatedTickCounter=0;
-	OldMaster=0;
 //*************************
 	SoundInterupt=0;//PICOSECOND/44100;
 	NanosToSoundSample=SoundInterupt;
