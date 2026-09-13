@@ -109,6 +109,7 @@ void MC6809Reset()
 	cc[I]=true;
 	cc[F]=true;
 	SyncWaiting=0;
+	ClearInterrupts();
 	pc.Reg=MemRead16(VRESET);	//PC gets its reset vector
 	SetMapType(0);
 }
