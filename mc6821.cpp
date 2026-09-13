@@ -127,6 +127,7 @@ static bool CartInserted = false, CartAutoStart = true;
 static unsigned char AddLF=0;
 static HANDLE hPrintFile=INVALID_HANDLE_VALUE;
 void CaptureBit(unsigned char);
+bool GetTapePlaybackFastLoad();
 static HANDLE hout=nullptr;
 void WritePrintMon(char *);
 LRESULT CALLBACK PrintMon(HWND, UINT , WPARAM , LPARAM );
@@ -205,7 +206,7 @@ unsigned char pia1_read(unsigned char port)
 			{
 				regb[1]=(regb[1] & 63); //Cass In
 				CPUDeAssertInterupt(IS_PIA1_CD, INT_FIRQ);
-				if (TapeFastLoad)
+				if (GetTapePlaybackFastLoad())
 					Flag = (regb[port] & 0xFE) | CassInBitStream();
 				else
 					Flag = regb[port];//& regb_dd[port];

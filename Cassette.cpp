@@ -37,7 +37,8 @@ static char CassPath[MAX_PATH];
 static unsigned char TempBuffer[8192];
 static unsigned char *CasBuffer=nullptr;
 static char TapeWritten = 0;
-static char FileType=0;
+static char FileType = TAPE_UNKNOWN;
+extern unsigned char TapeFastLoad;
 unsigned long BytesMoved=0;
 static unsigned int TempIndex=0;
 static unsigned int TapeRate=CAS_TAPEAUDIORATE;
@@ -144,6 +145,14 @@ unsigned char GetMotorState()
 	return MotorState;
 }
 
+//
+// true if tape playback is fast load cas
+//
+bool GetTapePlaybackFastLoad()
+{
+	return !IsTapeWav() && TapeFastLoad && TapeMode == PLAY && TotalSize > 0;
+}
+
 void Motor(unsigned char State)
 {
 	MotorState=State;
@@ -159,6 +168,7 @@ void Motor(unsigned char State)
 
 				case PLAY:
 					Quiet = 15;
+					StalledCtr = 0;
 					TempIndex = 0;
 					MotorOffDelay = 10;
 				break;
@@ -201,6 +211,11 @@ unsigned int GetTapeCounter()
 	return TapeOffset;
 }
 
+bool IsTapeWav()
+{
+	return TapeHandle && FileType == TAPE_WAV;
+}
+
 void SetTapeCounter(unsigned int Count, bool forced)
 {
 	TapeOffset=Count;
@@ -212,14 +227,17 @@ void SetTapeCounter(unsigned int Count, bool forced)
 
 void UpdateTapeStatus(char* status, int max)
 {
-	if (PrvOffset != TapeOffset) {
-		StalledCtr = 0;
-		PrvOffset = TapeOffset;
-	} else {
-		StalledCtr++;
+	if (TapeMode == PLAY && TapeOffset >= TotalSize)
+	{
+		++StalledCtr;
+		if (StalledCtr >= 100)
+		{
+			TapeMode = STOP;
+			UpdateTapeCounter(TapeOffset, TapeMode, true);
+		}
 	}
-	if (TotalSize > 0 && StalledCtr < 1000)
-		snprintf(status, max, " | Tape:%05lu (%lu%%)", TapeOffset, (TapeOffset + 50) * 100 / TotalSize);
+	if (TotalSize > 0 && StalledCtr < 100)
+		snprintf(status, max, " | Tape:%05lu (%0.0f%%)", TapeOffset, ((float)std::min(TotalSize, (TapeOffset + 50)) * 100.0f / TotalSize));
 }
 
 void SetTapeMode(unsigned char Mode)	//Handles button pressed from Dialog
@@ -284,7 +302,7 @@ void FlushCassetteBuffer(const unsigned char *Buffer,unsigned int *Len)
 	TapeWritten = true;
 	switch(FileType)
 	{
-	case WAV:
+	case TAPE_WAV:
 		SetFilePointer(TapeHandle,TapeOffset+44,nullptr,FILE_BEGIN);
 		WriteFile(TapeHandle,Buffer,Length,&BytesMoved,nullptr);
 		if (Length!=BytesMoved)
@@ -294,7 +312,7 @@ void FlushCassetteBuffer(const unsigned char *Buffer,unsigned int *Len)
 			TotalSize=TapeOffset;
 	break;
 
-	case CAS:
+	case TAPE_CAS:
 		WavtoCas(Buffer, Length);
 		break;
 	}
@@ -315,7 +333,7 @@ void LoadCassetteBuffer(unsigned char *CassBuffer, unsigned int* CassBufferSize)
 	unsigned int offset = TapeOffset;
 	switch (FileType)
 	{
-		case WAV:
+		case TAPE_WAV:
 		{
 			if (TapeHandle)
 			{
@@ -334,7 +352,7 @@ void LoadCassetteBuffer(unsigned char *CassBuffer, unsigned int* CassBufferSize)
 			break;
 		}
 
-		case CAS:
+		case TAPE_CAS:
 		{
 			CastoWav(CassBuffer, CAS_TAPEREADAHEAD);
 			*CassBufferSize = CAS_TAPEREADAHEAD;
@@ -357,7 +375,7 @@ int MountTape( const char *FileName)	//Return 1 on sucess 0 on fail
 	}
 
 	WriteProtect=0;
-	FileType=0;	//0=wav 1=cas
+	FileType = TAPE_UNKNOWN;	//1=wav 2=cas
 	TapeHandle = CreateFile(FileName,GENERIC_READ | GENERIC_WRITE,0,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr); //CREATE_NEW OPEN_ALWAYS
 	if (TapeHandle == INVALID_HANDLE_VALUE)	//Can't open read/write. try read only
 	{
@@ -374,6 +392,7 @@ int MountTape( const char *FileName)	//Return 1 on sucess 0 on fail
 	TapeOffset=0;
 	TapeRate = CAS_TAPEAUDIORATE;
 	TapeSampleSize = 1;
+	StalledCtr = 0;
 	SetFilePointer(TapeHandle, 0, nullptr, FILE_BEGIN);
 	strcpy(Extension,&FileName[strlen(FileName)-3]);
 	for (Index=0;Index<strlen(Extension);Index++)
@@ -411,12 +430,12 @@ int MountTape( const char *FileName)	//Return 1 on sucess 0 on fail
 		}
 		if (!Conversion) return 0;
 		CasBuffer = (unsigned char*)malloc(CAS_WRITEBUFFERSIZE);
-		FileType = WAV;
+		FileType = TAPE_WAV;
 		TapeRate = formatBlock.bitRate;
 	}
 	else if (strcmp(Extension, "CAS") == 0)
 	{
-		FileType=CAS;
+		FileType= TAPE_CAS;
 		LastTrans=0;
 		Mask=0;
 		Byte=0;	
@@ -468,8 +487,6 @@ unsigned int LoadTape()
 		VCC::Util::FixDirSlashes(CassPath);
 		Setting().write("DefaultPaths","CassPath",CassPath);
 	}
-	// turn off fast load for wav files
-	if (FileType == WAV) TapeFastLoad = false;
 	TapeWritten = false;
 	return 1;
 }
@@ -498,7 +515,7 @@ void SyncFileBuffer ()
 	SetFilePointer(TapeHandle,0,nullptr,FILE_BEGIN);
 	switch (FileType)
 	{
-	case CAS:
+	case TAPE_CAS:
 		CasBuffer[TapeOffset]=Byte;	//capture the last byte
 		LastTrans=0;	//reset all static inter-call variables
 		Mask=0;
@@ -508,7 +525,7 @@ void SyncFileBuffer ()
 		WriteFile(TapeHandle,CasBuffer,TapeOffset,&BytesMoved,nullptr);
 	break;
 
-	case WAV:
+	case TAPE_WAV:
 		sprintf(Buffer,"RIFF");
 		WriteFile(TapeHandle,Buffer,4,&BytesMoved,nullptr);
 		WriteFile(TapeHandle,&FileSize,4,&BytesMoved,nullptr);
@@ -567,7 +584,7 @@ void CastoWav(unsigned char *Buffer,unsigned int BytestoConvert)
 	while (TempIndex < BytestoConvert && TapeOffset < TotalSize)
 	{
 		Byte=CasBuffer[(TapeOffset++)%TotalSize];
-		if (TapeFastLoad)
+		if (GetTapePlaybackFastLoad())
 		{
 			for (Mask = 0; Mask <= 7; ++Mask, Byte >>= 1)
 			{

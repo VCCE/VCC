@@ -22,8 +22,10 @@ constexpr auto STOP		= 0u;
 constexpr auto PLAY		= 1u;
 constexpr auto REC		= 2u;
 constexpr auto EJECT	= 3u;
-constexpr auto CAS		= 1u;
-constexpr auto WAV		= 0u;
+
+constexpr auto TAPE_CAS		= 2u;
+constexpr auto TAPE_WAV		= 1u;
+constexpr auto TAPE_UNKNOWN = 0u;
 
 constexpr auto CAS_WRITEBUFFERSIZE = 0x40000u;
 constexpr auto CAS_TAPEREADAHEAD = 1000u; // decoded batch size
@@ -32,6 +34,8 @@ constexpr auto CAS_TAPEAUDIORATE = 44100u;
 
 unsigned int GetTapeCounter();
 unsigned int LoadTape();
+bool IsTapeWav();
+
 void SetTapeCounter(unsigned int, bool force = false);
 void SetTapeMode(unsigned char);
 void Motor(unsigned char);
@@ -40,8 +44,8 @@ void FlushCassetteBuffer(const unsigned char *,unsigned int *);
 void GetTapeName(char *);
 void UpdateTapeStatus(char* status, int max);
 uint8_t CassInBitStream();
+bool GetTapePlaybackFastLoad();
 
-extern unsigned char TapeFastLoad;
 unsigned int GetTapeRate();
 unsigned char GetMotorState();
 
