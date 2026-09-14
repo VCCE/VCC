@@ -32,7 +32,6 @@ static unsigned char MPU_Rate=0;
 static unsigned char *rom;
 static unsigned char GimeRegisters[256];
 static unsigned short VerticalOffsetRegister=0;
-static int InteruptTimer=0;
 void SetInit0(unsigned char);
 void SetInit1(unsigned char);
 void SetTimerMSB();
@@ -155,17 +154,26 @@ void GimeRegistersReset()
 	Dis_Offset = 0;
 	MPU_Rate = 0;
 	VerticalOffsetRegister = 0;
-	InteruptTimer = 0;
 }
 
 void GimeWrite(unsigned char port,unsigned char data)
 {
-	GimeRegisters[port]=data;
+	auto changed = GimeRegisters[port] ^ data;
+
+	// when timer is 0 and its enabled, it interrupts almost immediately
+	auto ifZeroTimerInterrupt = [changed,data]()
+	{
+		if ((data & changed & GIME_INTR_TIMER) && GimeTimerCounter() == 0)
+			GimeAssertTimerInterupt();
+	};
+
+	GimeRegisters[port] = data;
 
 	switch (port)
 	{
 	case 0x90:
 		SetInit0(data);
+		GimeSetInterrupt(GimeIrqState | GimeFirqState);
 		break;
 
 	case 0x91:
@@ -173,11 +181,13 @@ void GimeWrite(unsigned char port,unsigned char data)
 		break;
 
 	case 0x92:
-		GimeClearIrq(~data); // TODO: Verify this
+		GimeClearIrq(data);
+		ifZeroTimerInterrupt();
 		break;
 
 	case 0x93:
-		GimeClearFirq(~data); // TODO: Verify this
+		GimeClearFirq(data);
+		ifZeroTimerInterrupt();
 		break;
 
 	case 0x94:
@@ -323,16 +333,14 @@ void SetInit0(unsigned char data)
 {
 	gGimeGpu.SetCompatMode(!!(data & 128));
 	Set_MmuEnabled (!!(data & 64)); //MMUEN
-	SetRomMap ( data & 3);			//MC0-MC1
-	SetVectors( data & 8);			//MC3
-	return;
+	SetRomMap(data & 3);			//MC0-MC1
+	SetVectors(data & 8);			//MC3
 }
 
 void SetInit1(unsigned char data)
 {
 	Set_MmuTask(data & 1);			//TR
-	SetTimerClockRate (data & 32);	//TINS
-	return;
+	SetTimerClockRate(data & 32);	//TINS
 }
 
 unsigned char GetInit0()
