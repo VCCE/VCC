@@ -75,7 +75,8 @@ constexpr auto RENDERS_PER_BLINK_TOGGLE = 16u;
 static int MasterTimer=0; 
 static unsigned int TimerClockRate=0;
 static int TimerCycleCount=0;
-static double MasterTickCounter=0,UnxlatedTickCounter=0;
+static double MasterTickCounter = 0;
+static int UnxlatedTickCounter = 0;
 static double NanosThisLine=0;
 static unsigned char BlinkPhase=1;
 static unsigned int AudioBuffer[16384];
@@ -391,9 +392,9 @@ _inline void CPUCycle(double NanosToRun)
 	while (NanosThisLine >= 1)
 	{
 		StateSwitch = 0;
-		if ((NanosToInterrupt <= NanosThisLine) & IntEnable)	//Does this iteration need to Timer Interupt
+		if ((NanosToInterrupt <= NanosThisLine) && IntEnable)	//Does this iteration need to Timer Interupt
 			StateSwitch = 1;
-		if ((NanosToSoundSample <= NanosThisLine) & SndEnable)//Does it need to collect an Audio sample
+		if ((NanosToSoundSample <= NanosThisLine) && SndEnable)//Does it need to collect an Audio sample
 			StateSwitch += 2;
 		switch (StateSwitch)
 		{
@@ -519,28 +520,52 @@ _inline void CPUCycle(double NanosToRun)
 	EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 20, 0, 0, 0, emulationCycles, emulationDrift);
 }
 
-void SetInteruptTimer(unsigned int Timer)
+//
+// Setup new timer value.
+// 
+// Note: zero is done by caller.
+//
+void SetInteruptTimer(unsigned int timer)
 {
-	UnxlatedTickCounter=(Timer & 0xFFF);
-	SetMasterTickCounter();
-	IntEnable = 1;  // Gime always sets timer flag when timer expires.  EJJ 25oct24
-	return;
+	UnxlatedTickCounter = timer & 0xFFF;
+
+	// if non-zero, update nanos to interrupt, otherwise if zero clear event.
+	IntEnable = UnxlatedTickCounter > 0 ? 1 : 0;
+
+	if (IntEnable)
+		SetMasterTickCounter();
 }
 
-void SetTimerClockRate (unsigned char Tmp)	//1= 279.265nS (1/ColorBurst) 
-{											//0= 63.695uS  (1/60*262)  1 scanline time
-	TimerClockRate=!!Tmp;
+//
+// Setup new timer clock rate, if changed.
+// 
+// 0 = 63.695uS  (1/60*262)  1 scanline time
+// 1 = 279.265nS (1/ColorBurst) 
+//
+void SetTimerClockRate(unsigned char rate)	
+{											
+	auto clockRate = rate ? 1 : 0;
+	// only update clock rate if changed
+	if (TimerClockRate == clockRate) return;
+	TimerClockRate = clockRate;
 	SetMasterTickCounter();
-	return;
 }
 
+//
+// Setup the master time to timer interrupt based on current rate.
+//
+// timerOffset: depends on Gime version:
+//   1 = Gime'87
+//   2 = Gime'86
+//
 void SetMasterTickCounter()
 {
 	// Rate = { 63613.2315, 279.265 };
 	double Rate[2]={NANOSECOND/(TARGETFRAMERATE*LINESPERSCREEN),NANOSECOND/COLORBURST};
 	// Master count contains at least one tick. EJJ 10mar25
-	MasterTickCounter = (UnxlatedTickCounter+1) * Rate[TimerClockRate];
-	NanosToInterrupt=MasterTickCounter;
+	const unsigned int timerOffset = 1; // 1 = Gime'87, 2 = Gime'86
+	MasterTickCounter = Rate[TimerClockRate] * (UnxlatedTickCounter + timerOffset);
+	NanosToInterrupt = MasterTickCounter;
 }
 
 void MiscReset()
