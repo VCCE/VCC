@@ -340,7 +340,8 @@ int MC6809Exec(int CycleFor)
 	// Instruction Loop
 	while (CycleCounter<CycleFor) {
 
-		// CPU is halted.
+		// label a
+		// CPU is halted. 
 		if (EmuState.Debugger.IsHalted()) {
 			return(CycleFor - CycleCounter);
 		}
@@ -361,16 +362,33 @@ int MC6809Exec(int CycleFor)
 
 		LatchInterrupts();
 
+		// if at label c (Wait for Sync)
+		if (SyncWaiting)
+		{
+			if (NMI() || FIRQ() || IRQ())
+			{
+				++CycleCounter;
+				SyncWaiting = 0;
+
+				// label b, continue
+			}
+			else
+			{
+				// use up remaining cycles if any
+				if (CycleCounter < CycleFor)
+					CycleCounter = CycleFor;
+
+				// goto label a, for halt check
+				return(CycleFor - CycleCounter);
+			}
+		}
+
 		if (NMI())
 			cpu_nmi();
 		else if (FIRQ() && !cc[F])
 			cpu_firq();
 		else if (IRQ() && !cc[I])
 			cpu_irq();
-
-		// Wait for Sync
-		if (SyncWaiting==1)	// Note: Assert interrupt clears sync waiting
-			return 0;
 
 		// Any CPU Breakpoints set?
 		if (!EmuState.Debugger.IsStepping() && !CPUBreakpoints.empty()) {
@@ -567,7 +585,7 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case SYNC_I: //13
-		CycleCounter=CycleFor;
+		CycleCounter+=2;
 		SyncWaiting=1;
 		break;
 
@@ -1053,7 +1071,7 @@ void Do_Opcode(int CycleFor)
 	case CWAI_I: //3C
 		postbyte=MemRead8(pc.Reg++);
 		set_cc_flags(get_cc_flags() & postbyte);
-		CycleCounter=CycleFor;
+		CycleCounter+=2;
 		SyncWaiting=1;
 		break;
 
@@ -3349,9 +3367,6 @@ void MC6809AssertInterupt(InterruptSource src, Interrupt interrupt)
 	assert(interrupt >= INT_IRQ && interrupt <= INT_NMI);
 
 	InterruptLine[src] |= Bit(interrupt);
-	if (SyncWaiting || interrupt == INT_NMI)
-		LatchInterrupts();
-	SyncWaiting = 0;
 
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptRequest(interrupt, CycleCounter, MC6809GetState());
