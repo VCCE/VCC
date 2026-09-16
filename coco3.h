@@ -36,7 +36,8 @@ void SetSndOutMode(unsigned char);
 float RenderFrame (SystemState *);
 
 void SetTimerClockRate (unsigned char);	
-void SetInteruptTimer(unsigned int);
+void RestartInterruptTimer(unsigned int);
+void SetMasterTickCounter(unsigned int);
 void MiscReset();
 void PasteBASICWithNew();
 void PasteBASIC();
