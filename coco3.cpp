@@ -76,7 +76,7 @@ static int MasterTimer=0;
 static unsigned int TimerClockRate=0;
 static int TimerCycleCount=0;
 static double MasterTickCounter = 0;
-static int UnxlatedTickCounter = 0;
+static unsigned int UnxlatedTickCounter = 0;
 static double NanosThisLine=0;
 static unsigned char BlinkPhase=1;
 static unsigned int AudioBuffer[16384];
@@ -521,19 +521,19 @@ _inline void CPUCycle(double NanosToRun)
 }
 
 //
-// Setup new timer value.
+// Restart with new timer value.
 // 
 // Note: zero is done by caller.
 //
-void SetInteruptTimer(unsigned int timer)
+void RestartInterruptTimer(unsigned int timer)
 {
-	UnxlatedTickCounter = timer & 0xFFF;
-
-	// if non-zero, update nanos to interrupt, otherwise if zero clear event.
-	IntEnable = UnxlatedTickCounter > 0 ? 1 : 0;
+	SetMasterTickCounter(timer);
 
 	if (IntEnable)
-		SetMasterTickCounter();
+	{
+		// restart timer
+		NanosToInterrupt = MasterTickCounter;
+	}
 }
 
 //
@@ -547,8 +547,10 @@ void SetTimerClockRate(unsigned char rate)
 	auto clockRate = rate ? 1 : 0;
 	// only update clock rate if changed
 	if (TimerClockRate == clockRate) return;
+
+	// clock rate changed
 	TimerClockRate = clockRate;
-	SetMasterTickCounter();
+	RestartInterruptTimer(UnxlatedTickCounter);
 }
 
 //
@@ -558,14 +560,18 @@ void SetTimerClockRate(unsigned char rate)
 //   1 = Gime'87
 //   2 = Gime'86
 //
-void SetMasterTickCounter()
+void SetMasterTickCounter(unsigned int timer)
 {
+	UnxlatedTickCounter = timer & 0xFFF;
+
+	// if non-zero, update nanos to interrupt, otherwise if zero clear event.
+	IntEnable = UnxlatedTickCounter > 0 ? 1 : 0;
+
 	// Rate = { 63613.2315, 279.265 };
 	double Rate[2]={NANOSECOND/(TARGETFRAMERATE*LINESPERSCREEN),NANOSECOND/COLORBURST};
 	// Master count contains at least one tick. EJJ 10mar25
 	const unsigned int timerOffset = 1; // 1 = Gime'87, 2 = Gime'86
 	MasterTickCounter = Rate[TimerClockRate] * (UnxlatedTickCounter + timerOffset);
-	NanosToInterrupt = MasterTickCounter;
 }
 
 void MiscReset()

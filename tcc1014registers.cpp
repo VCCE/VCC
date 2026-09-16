@@ -351,12 +351,13 @@ unsigned char GetInit0()
 
 void SetTimerMSB() //94
 {
-	SetInteruptTimer(GimeTimerCounter());
+	RestartInterruptTimer(GimeTimerCounter());
 }
 
 void SetTimerLSB() //95
 {
-	// does not restart timer
+	// does not restart timer but just update the cached time
+	SetMasterTickCounter(GimeTimerCounter());
 }
 
 void GimeAssertKeyboardInterupt() 
