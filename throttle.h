@@ -22,6 +22,6 @@ void CalibrateThrottle();
 void StartRender();
 void EndRender(unsigned char);
 void FrameWait();
-float CalculateFPS();
+float CalculateFPS(bool wasHalted);
 
 #endif

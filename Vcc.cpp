@@ -1112,7 +1112,9 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 
 		for (uint8_t Frames = 1; Frames <= EmuState.FrameSkip; Frames++)
 		{
-			FrameCounter++;
+			if (!EmuState.Debugger.IsHalted())
+				FrameCounter++;
+
 			if (EmuState.ResetPending != 0) {
 				switch (EmuState.ResetPending)
 				{
