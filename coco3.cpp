@@ -197,7 +197,7 @@ float RenderFrame (SystemState *RFState)
 //********************************Start of frame Render*****************************************************
 
 	// Blink state toggle
-	if (BlinkPhase++ > RENDERS_PER_BLINK_TOGGLE) {
+	if (BlinkPhase++ > RENDERS_PER_BLINK_TOGGLE && !EmuState.Debugger.IsHalted()) {
 		gGimeGpu.TogBlinkState();
 		BlinkPhase = 0;
 	}
@@ -237,7 +237,7 @@ float RenderFrame (SystemState *RFState)
 	for (RFState->LineCounter = 0; RFState->LineCounter < gGimeGpu.TopBoarder; RFState->LineCounter++)
 	{
 		HLINE();
-		if (!(FrameCounter % RFState->FrameSkip))
+		if (!(FrameCounter % RFState->FrameSkip) && !EmuState.Debugger.IsHalted())
 			(gGimeGpu.*DrawTopBoarder[RFState->BitDepth])(RFState);
 	}
 
@@ -246,7 +246,7 @@ float RenderFrame (SystemState *RFState)
 	for (RFState->LineCounter = 0; RFState->LineCounter < gGimeGpu.LinesperScreen; RFState->LineCounter++)
 	{
 		HLINE();
-		if (!(FrameCounter % RFState->FrameSkip))
+		if (!(FrameCounter % RFState->FrameSkip) && !EmuState.Debugger.IsHalted())
 			(gGimeGpu.*UpdateScreen[RFState->BitDepth])(RFState);
 	}
 
@@ -255,13 +255,14 @@ float RenderFrame (SystemState *RFState)
 	for (RFState->LineCounter=0;RFState->LineCounter < gGimeGpu.BottomBoarder;RFState->LineCounter++)
 	{
 		HLINE();
-		if (!(FrameCounter % RFState->FrameSkip))
+		if (!(FrameCounter % RFState->FrameSkip) && !EmuState.Debugger.IsHalted())
 			(gGimeGpu.*DrawBottomBoarder[RFState->BitDepth])(RFState);
 	}
 
 	if (!(FrameCounter % RFState->FrameSkip))
 	{
-		(gGimeGpu.*DrawBottomBoarder[RFState->BitDepth])(RFState);
+		if (!EmuState.Debugger.IsHalted())
+			(gGimeGpu.*DrawBottomBoarder[RFState->BitDepth])(RFState);
 		UnlockScreen(RFState);
 		gGimeGpu.SetBoarderChange();
 	}
@@ -286,7 +287,19 @@ float RenderFrame (SystemState *RFState)
 	// Only affect frame rate if a debug window is open.
 	RFState->Debugger.Update();
 
-	return(CalculateFPS());
+	static bool wasHalted = false;
+	if (EmuState.Debugger.IsHalted())
+	{
+		wasHalted = true;
+		return 0;
+	}
+	else if (wasHalted)
+	{
+		return CalculateFPS(true);
+		wasHalted = false;
+	}
+
+	return CalculateFPS(false);
 }
 
 void VSYNC(unsigned char level)
@@ -362,6 +375,9 @@ DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
 
 _inline void HLINE()
 {
+	if (EmuState.Debugger.IsHalted())
+		return; 
+
 	UpdateAudio();
 
 	// First part of the line

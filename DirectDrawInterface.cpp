@@ -527,7 +527,7 @@ float Static(SystemState *STState)
 	DisplaySignalLostMessage();
 	g_Display->Present();
 
-	return CalculateFPS();
+	return CalculateFPS(false);
 }
 
 const Rect& GetCurWindowSize() 
