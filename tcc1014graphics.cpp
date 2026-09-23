@@ -107,15 +107,16 @@ int GimeGpu::Pmode4MonType() const
 void GimeGpu::UpdateScreen8(SystemState *US8State)
 {
 	unsigned short HorzBeam = 0;
-	unsigned int YStride=0;
 	unsigned char Pixel=0;
 	unsigned char Character=0,Attributes=0;
 	unsigned char TextPalette[2]={0,0};
 	unsigned short WidePixel=0;
 	char Pix=0,Bit=0,Sphase=0;
-	static char Carry1=0,Carry2=0;
-	static char Pcolor=0;
+	char Carry1=0,Carry2=0;
+	char Pcolor=0;
 	const unsigned char *buffer=US8State->RamBuffer;
+	unsigned short y = US8State->LineCounter;
+	long Xpitch = US8State->SurfacePitch;
 	Carry1=1;
 	Pcolor=0;
 	
@@ -140,8 +141,10 @@ void GimeGpu::UpdateScreen8(SystemState *US8State)
 		StartofVidram=NewStartofVidram;
 		TagY=US8State->LineCounter;
 	}
-	Start=StartofVidram+(TagY/LinesperRow)*(VPitch*ExtendedText);
-	YStride=(((US8State->LineCounter+VertCenter)*2)*US8State->SurfacePitch)+HorzCenter-1;
+
+	auto rowLine = GetRowLine(y);
+	auto Start = GetAddressStart(TagY);
+	auto YStride = GetYStride(y, Xpitch);
 
 	switch (MasterMode) // (GraphicsMode <<7) | (CompatMode<<6)  | ((Bpp & 3)<<4) | (Stretch & 15);
 		{
@@ -150,12 +153,12 @@ void GimeGpu::UpdateScreen8(SystemState *US8State)
 				for (HorzBeam=0;HorzBeam<BytesperRow*ExtendedText;HorzBeam+=ExtendedText)
 				{									
 					Character=buffer[Start+(unsigned char)(HorzBeam+Hoffset)];
-					Pixel=cc3Fontdata8x12[Character * 12 + (US8State->LineCounter%LinesperRow)]; 
+					Pixel = GetFontRowCC3(Character, rowLine);
 
 					if (ExtendedText==2)
 					{
 						Attributes=buffer[Start+(unsigned char)(HorzBeam+Hoffset)+1];
-						if  ( (Attributes & 64) && (US8State->LineCounter%LinesperRow==(LinesperRow-1)) )	//UnderLine
+						if  ((Attributes & 64) && rowLine == UnderlineRow)	//UnderLine
 							Pixel=255;
 						if ((!BlinkState) && !!(Attributes & 128))
 							Pixel=0;
@@ -193,11 +196,11 @@ void GimeGpu::UpdateScreen8(SystemState *US8State)
 				for (HorzBeam=0;HorzBeam<BytesperRow*ExtendedText;HorzBeam+=ExtendedText)
 				{									
 					Character=buffer[Start+(unsigned char)(HorzBeam+Hoffset)];
-					Pixel=cc3Fontdata8x12[Character  * 12 + (US8State->LineCounter%LinesperRow)]; 
+					Pixel = GetFontRowCC3(Character, rowLine);
 					if (ExtendedText==2)
 					{
 						Attributes=buffer[Start+(unsigned char)(HorzBeam+Hoffset)+1];
-						if  ( (Attributes & 64) && (US8State->LineCounter%LinesperRow==(LinesperRow-1)) )	//UnderLine
+						if  ((Attributes & 64) && rowLine == UnderlineRow)	//UnderLine
 							Pixel=255;
 						if ((!BlinkState) && !!(Attributes & 128))
 							Pixel=0;
@@ -3203,13 +3206,14 @@ case 192+63: //Bpp=3 Sr=15
 void GimeGpu::UpdateScreen16(SystemState *USState16)
 {
 	unsigned short HorzBeam = 0;
-	unsigned int YStride=0;
-	static unsigned char Pixel=0;
-	static unsigned char Character=0,Attributes=0;
-	static unsigned short TextPalette[2]={0,0};
-	static unsigned short WidePixel=0;
-	static char Pix=0,Bit=0,Sphase=0;
-	static char Carry2=0;
+	unsigned char Pixel=0;
+	unsigned char Character=0,Attributes=0;
+	unsigned short TextPalette[2]={0,0};
+	unsigned short WidePixel=0;
+	char Pix=0,Bit=0,Sphase=0;
+	char Carry2=0;
+	unsigned short y = USState16->LineCounter;
+	long Xpitch = USState16->SurfacePitch;
 	char Pcolor=0;
 	char Carry1=1;
 
@@ -3229,13 +3233,15 @@ void GimeGpu::UpdateScreen16(SystemState *USState16)
 
 	auto pmode4MonType = Pmode4MonType();
 
-	if (!USState16->LineCounter)
+	if (!y)
 	{
 		StartofVidram=NewStartofVidram;
-		TagY=USState16->LineCounter;
+		TagY=y;
 	}
-	Start=StartofVidram+(TagY/LinesperRow)*(VPitch*ExtendedText);
-	YStride=(((USState16->LineCounter+VertCenter)*2)*USState16->SurfacePitch)+(HorzCenter*1)-1;
+
+	auto rowLine = GetRowLine(y);
+	auto Start = GetAddressStart(TagY);
+	auto YStride = GetYStride(y, Xpitch);
 
 	switch (MasterMode) // (GraphicsMode <<7) | (CompatMode<<6)  | ((Bpp & 3)<<4) | (Stretch & 15);
 		{
@@ -3244,12 +3250,12 @@ void GimeGpu::UpdateScreen16(SystemState *USState16)
 				for (HorzBeam=0;HorzBeam<BytesperRow*ExtendedText;HorzBeam+=ExtendedText)
 				{									
 					Character=USState16->RamBuffer[VidMask & (Start+(unsigned char)(HorzBeam+Hoffset))];
-					Pixel=cc3Fontdata8x12[Character * 12 + (USState16->LineCounter%LinesperRow)]; 
+					Pixel = GetFontRowCC3(Character, rowLine);
 
 					if (ExtendedText==2)
 					{
 						Attributes=USState16->RamBuffer[VidMask &(Start+(unsigned char)(HorzBeam+Hoffset)+1)];
-						if  ( (Attributes & 64) && (USState16->LineCounter%LinesperRow==(LinesperRow-1)) )	//UnderLine
+						if  ((Attributes & 64) && rowLine == UnderlineRow)	//UnderLine
 							Pixel=255;
 						if ((!BlinkState) && !!(Attributes & 128))
 							Pixel=0;
@@ -3287,11 +3293,11 @@ void GimeGpu::UpdateScreen16(SystemState *USState16)
 				for (HorzBeam=0;HorzBeam<BytesperRow*ExtendedText;HorzBeam+=ExtendedText)
 				{									
 					Character=USState16->RamBuffer[VidMask &(Start+(unsigned char)(HorzBeam+Hoffset))];
-					Pixel=cc3Fontdata8x12[Character  * 12 + (USState16->LineCounter%LinesperRow)]; 
+					Pixel = GetFontRowCC3(Character, rowLine);
 					if (ExtendedText==2)
 					{
 						Attributes=USState16->RamBuffer[VidMask &(Start+(unsigned char)(HorzBeam+Hoffset)+1)];
-						if  ( (Attributes & 64) && (USState16->LineCounter%LinesperRow==(LinesperRow-1)) )	//UnderLine
+						if  ((Attributes & 64) && rowLine == UnderlineRow)	//UnderLine
 							Pixel=255;
 						if ((!BlinkState) && !!(Attributes & 128))
 							Pixel=0;
@@ -6311,7 +6317,6 @@ void GimeGpu::UpdateScreen32(SystemState* USState32)
 void GimeGpu::UpdateScreen32To(unsigned char *buffer, unsigned int *surface, int lineCounter, int surfacePitch, bool ScanLines)
 {
 	unsigned short HorzBeam = 0;
-	unsigned int YStride = 0;
 	//	unsigned int TextColor=0;
 	unsigned char Pixel = 0;
 	//	unsigned char StretchCount=0;
@@ -6365,24 +6370,25 @@ void GimeGpu::UpdateScreen32To(unsigned char *buffer, unsigned int *surface, int
 		StartofVidram=NewStartofVidram;
 		TagY=y;
 	}
-	Start=StartofVidram+(TagY/LinesperRow)*(VPitch*ExtendedText);
-	YStride=(((y+VertCenter)*2)*Xpitch)+(HorzCenter*1)-1;
+
+	auto rowLine = GetRowLine(y);
+	auto Start = GetAddressStart(TagY);
+	auto YStride = GetYStride(y, Xpitch);
 
 	switch (MasterMode) // (GraphicsMode <<7) | (CompatMode<<6)  | ((Bpp & 3)<<4) | (Stretch & 15);
 		{
 			case 0: //Width 80
 				curr_gmode = "80 Col. Text";
 				Attributes=0;
-				if (HorzOffsetReg & 128) { Start = StartofVidram + (TagY / LinesperRow)*VPitch; } //Fix for Horizontal Offset Register in text mode.
 				for (HorzBeam=0;HorzBeam<BytesperRow*ExtendedText;HorzBeam+=ExtendedText)
 				{									
 					Character=buffer[Start+(unsigned char)(HorzBeam+Hoffset)];
-					Pixel=cc3Fontdata8x12[Character * 12 + (y%LinesperRow)]; 
+					Pixel = GetFontRowCC3(Character, rowLine);
 
 					if (ExtendedText==2)
 					{
 						Attributes=buffer[Start+(unsigned char)(HorzBeam+Hoffset)+1];
-						if  ( (Attributes & 64) && (y%LinesperRow==(LinesperRow-1)) )	//UnderLine
+						if  ((Attributes & 64) && rowLine == UnderlineRow)	//UnderLine
 							Pixel=255;
 						if ((!BlinkState) && !!(Attributes & 128))
 							Pixel=0;
@@ -6419,13 +6425,13 @@ void GimeGpu::UpdateScreen32To(unsigned char *buffer, unsigned int *surface, int
 				curr_gmode = "40 Col. Text";
 				Attributes=0;
 				for (HorzBeam=0;HorzBeam<BytesperRow*ExtendedText;HorzBeam+=ExtendedText)
-				{									
+				{
 					Character=buffer[Start+(unsigned char)(HorzBeam+Hoffset)];
-					Pixel=cc3Fontdata8x12[Character  * 12 + (y%LinesperRow)]; 
+					Pixel = GetFontRowCC3(Character, rowLine);
 					if (ExtendedText==2)
 					{
 						Attributes=buffer[Start+(unsigned char)(HorzBeam+Hoffset)+1];
-						if  ( (Attributes & 64) && (y%LinesperRow==(LinesperRow-1)) )	//UnderLine
+						if  ((Attributes & 64) && rowLine == UnderlineRow)	//UnderLine
 							Pixel=255;
 						if ((!BlinkState) && !!(Attributes & 128))
 							Pixel=0;
@@ -9603,6 +9609,22 @@ void GimeGpu::SetVerticalOffsetRegister(unsigned short Register)
 	}
 }
 
+void GimeGpu::SetVerticalScroll(unsigned char scroll)
+{
+	static const unsigned int vsc[8][16] = 
+	{ 
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // 1
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // 1
+		{ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // 2
+		{ 0, 1, 2, 3, 4, 5, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0 }, // 8
+		{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 8, 0, 8, 0, 8, 0 }, // 9
+		{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 8, 9, 0, 0 }, // 10
+		{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 8, 9, 10, 0 }, // 11
+		{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }, // 16
+	};
+	VertScroll = vsc[CC3Vmode & 7][scroll & 0xF];
+}
+
 void GimeGpu::SetCompatMode(unsigned char Register)
 {
 	if (CompatMode != Register)
@@ -9699,7 +9721,7 @@ void GimeGpu::SetupDisplay()
 {
 	static unsigned char CC2Bpp[8]={1,0,1,0,1,0,1,0};
 	static unsigned char CC2LinesperRow[8]={12,3,3,2,2,1,1,1};
-	static unsigned char CC3LinesperRow[8]={1,1,2,8,9,10,11,200};
+	static unsigned char CC3LinesperRow[8]={1,1,2,8,9,10,11,16};
 	static unsigned char CC2BytesperRow[8]={16,16,32,16,32,16,32,32};
 	static unsigned char CC3BytesperRow[8]={16,20,32,40,64,80,128,160};
 	static unsigned char CC3BytesperTextRow[8]={32,40,32,40,64,80,64,80};
@@ -9713,7 +9735,6 @@ void GimeGpu::SetupDisplay()
 		NewStartofVidram=VerticalOffsetRegister*8; 
 		GraphicsMode=(CC3Vmode & 128)>>7;
 		VresIndex=(CC3Vres & 96) >> 5;
-		CC3LinesperRow[7]=LinesperScreen;	// For 1 pixel high modes
 		Bpp=CC3Vres & 3;
 		LinesperRow=CC3LinesperRow[CC3Vmode & 7];
 		BytesperRow=CC3BytesperRow[(CC3Vres & 28)>> 2];
@@ -9785,6 +9806,13 @@ void GimeGpu::SetupDisplay()
 	assert(Bpp >= 0 && Bpp < sizeof(CCPixelsperByte));
 	PixelsperLine= BytesperRow*CCPixelsperByte[Bpp];
 	PixelsperByte=CCPixelsperByte[Bpp];
+	switch (CC3Vmode & 7)
+	{
+		case 3: UnderlineRow = 7; break;
+		case 4: case 5: UnderlineRow = 8; break;
+		case 6: UnderlineRow = 9; break;
+		default: UnderlineRow = -1; break;
+	}
 
 	if (PixelsperLine % 40)
 	{

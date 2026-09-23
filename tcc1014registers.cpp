@@ -221,6 +221,7 @@ void GimeWrite(unsigned char port,unsigned char data)
 		break;
 
 	case 0x9C:
+		gGimeGpu.SetVerticalScroll(GimeRegisters[0x9C]);
 		break;
 
 	case 0x9D:

@@ -1561,7 +1561,6 @@ bool MemoryWindow::DrawMemory(HDC hdc, LPCRECT clientRect)
 			{
 				// reset address start to zero
 				memGpu.TagY = 0;
-				memGpu.Start = 0;
 				memGpu.StartofVidram = 0;
 				memGpu.NewStartofVidram = 0;
 
