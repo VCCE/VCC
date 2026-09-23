@@ -36,7 +36,7 @@ struct GimeGpu
 	unsigned char CompatMode = 0;
 	unsigned char MonType = 1;
 	unsigned char CC3Vmode = 0, CC3Vres = 0, CC3BoarderColor = 0;
-	unsigned int StartofVidram = 0, Start = 0, NewStartofVidram = 0;
+	unsigned int StartofVidram = 0, NewStartofVidram = 0;
 	unsigned char LinesperScreen = 0;
 	unsigned char Bpp = 0;
 	unsigned char LinesperRow = 1, BytesperRow = 32;
@@ -51,6 +51,8 @@ struct GimeGpu
 	unsigned char HorzOffsetReg = 0;
 	unsigned char Hoffset = 0;
 	unsigned short TagY = 0;
+	unsigned char VertScroll = 0;
+	unsigned char UnderlineRow = 0;
 	unsigned int BoarderColor32 = 0;
 	unsigned short BoarderColor16 = 0;
 	unsigned char BoarderColor8 = 0;
@@ -74,6 +76,34 @@ struct GimeGpu
 	int Pmode4MonType() const;
 	void TogBlinkState();
 
+	unsigned int GetRowLine(int y)
+	{
+		auto vScroll = CompatMode == 0 ? VertScroll : 0;
+		auto rowLine = (y + vScroll) % LinesperRow;
+		return rowLine;
+	}
+
+	unsigned int GetAddressStart(int y)
+	{
+		auto vScroll = CompatMode == 0 ? VertScroll : 0;
+		auto row = (y + vScroll) / LinesperRow;
+		if ((CC3Vmode & 7) == 7) row = 0;
+		return StartofVidram + (row * VPitch * ExtendedText);
+	}
+
+	unsigned int GetYStride(int y, unsigned int pitch)
+	{
+		return (((y + VertCenter) * 2) * pitch) + HorzCenter - 1;
+	}
+
+	unsigned char GetFontRowCC3(unsigned char ch, unsigned int line)
+	{
+		extern unsigned char cc3Fontdata8x12[];
+		if (line > 11) return 0;
+		return cc3Fontdata8x12[ch * 12 + line];
+	}
+
+
 	int GetBytesPerRow() const;
 	int GetGraphicsMode() const;
 	unsigned char GetHorizontalBorderSize() const;
@@ -94,6 +124,7 @@ struct GimeGpu
 	void SetGimeVdgMode(unsigned char VdgMode);
 	void SetGimeVdgMode2(unsigned char Vdgmode2);
 	void SetGimeVdgOffset(unsigned char Offset);
+	void SetVerticalScroll(unsigned char scroll);
 	void SetGimeVmode(unsigned char vmode);
 	void SetGimeVres(unsigned char vres);
 	void SetPaletteType();

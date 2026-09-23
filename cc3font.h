@@ -18,7 +18,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-static unsigned char cc3Fontdata8x12[] =
+unsigned char cc3Fontdata8x12[] =
 {
 	/* Fixed chrs 0-31 */
 	0x38,0x44,0x40,0x40,0x40,0x44,0x38,0x10,0x08,0x00,0x00,0x00,	// C
