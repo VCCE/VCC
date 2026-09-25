@@ -25,6 +25,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifndef USE_NEWTIMING
+#define USE_NEWTIMING true
+#endif
+
 //
 // Enable the use of OpenGL display driver
 //
@@ -102,6 +106,28 @@
 #define USE_DEBUG_OPTIONS false
 #endif
 
+//
+// Enable test code
+//
+#ifndef USE_DEBUG_TESTS
+#define USE_DEBUG_TESTS true
+#endif
+
+//
+// Show fps
+//
+#ifndef USE_FPS
+#define USE_FPS true
+#endif
+
+//
+// Enable bounds checking on video buffer.
+// Disable by default as it slows debug down.
+//
+#ifndef USE_DEBUG_VIDEO_BUFFER
+#define USE_DEBUG_VIDEO_BUFFER false
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // 
 // Edit options above rather than these:
@@ -117,5 +143,11 @@
 #define USE_DEBUG_AUDIOTAPE false
 #undef USE_DEBUG_MOUSE
 #define USE_DEBUG_MOUSE false
+#undef USE_DEBUG_TESTS
+#define USE_DEBUG_TESTS false
+#undef USE_FPS
+#define USE_FPS false
+#undef USE_DEBUG_VIDEO_BUFFER
+#define USE_DEBUG_VIDEO_BUFFER false
 #endif
 

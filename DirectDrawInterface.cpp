@@ -295,10 +295,10 @@ void DisplayFlip(SystemState *DFState)	// Double buffering flip
 
 #if USE_DEBUG_AUDIOTAPE
 		// put these here for now as it needs to be on top
-		DebugPrint(10, 250, 20, "Audio Out");
-		DebugPrint(10, 400, 20, "Audio In");
-		DebugPrint(10, 515, 20, "Motor");
-		DebugPrint(10, 545, 20, "MUX");
+		DebugPrint(10, 250, 20, "Audio Out", VCC::ColorWhite);
+		DebugPrint(10, 400, 20, "Audio In", VCC::ColorWhite);
+		DebugPrint(10, 515, 20, "Motor", VCC::ColorWhite);
+		DebugPrint(10, 545, 20, "MUX", VCC::ColorWhite);
 #endif // USE_DEBUG_AUDIOTAPE
 #endif // USE_OPENGL
 
@@ -581,10 +581,10 @@ void DebugDrawBox(float x, float y, float w, float h, Pixel color)
 		g_Display->DebugDrawBox(x, y, w, h, color);
 }
 
-void DebugPrint(float x, float y, float size, const char* str)
+void DebugPrint(float x, float y, float size, const char* str, Pixel color)
 {
 	if (g_OpenGLDisplay && LoadOpenGLFont())
-		g_OpenGLDisplay->RenderText(g_DisplayFont, x, y, size, str);
+		g_OpenGLDisplay->DebugDrawText(g_DisplayFont, x, y, size, str, color);
 }
 
 void DumpScreenshot(const char* fname)

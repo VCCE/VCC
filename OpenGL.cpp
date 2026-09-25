@@ -94,6 +94,8 @@ namespace VCC
 		#if USE_DEBUG_LINES
 		struct Line { float x1; float y1; float x2; float y2; Pixel color; };
 		std::vector<Line> debugLines;
+		struct Text { const OpenGLFont* font; float x1; float y1; float size; std::string str; Pixel color; };
+		std::vector<Text> debugTexts;
 		#endif // USE_DEBUG_LINES
 
 		OpenGL::Detail(ISystemState *state)
@@ -419,6 +421,15 @@ namespace VCC
 				glDisable(GL_BLEND);
 				debugLines.clear();
 			}
+
+			if (debugTexts.size())
+			{
+				for (auto &t : debugTexts)
+				{
+					RenderText(t.font, t.x1, t.y1, t.size, t.str.c_str());
+				}
+				debugTexts.clear();
+			}
 			#endif // USE_DEBUG_LINES
 
 			wglMakeCurrent(nullptr, nullptr);
@@ -428,7 +439,7 @@ namespace VCC
 		int Cleanup()
 		{
 			if (!isInitialized) return Result(ERR_NOTINITIALIZED);
-			if (pixels) delete pixels;
+			if (pixels) delete[] pixels;
 			if (hDC) ReleaseDC(hWnd, hDC);
 			if (hWnd) DestroyWindow(hWnd);
 			UnregisterClass(OpenGLClass, GetModuleHandle(nullptr));
@@ -601,8 +612,12 @@ namespace VCC
 		#if USE_DEBUG_LINES
 		void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color)
 		{
-			Line line = { x1, y1, x2, y2, color };
-			debugLines.push_back(line);
+			debugLines.push_back({ x1, y1, x2, y2, color });
+		}
+
+		void DebugDrawText(const OpenGLFont* font, float x, float y, float size, const char* text, Pixel color)
+		{
+			debugTexts.push_back({ font, x, y, size, text, color });
 		}
 		#endif // USE_DEBUG_LINES
 
@@ -785,6 +800,14 @@ namespace VCC
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
+
+	void OpenGL::DebugDrawText(const OpenGLFont* font, float x, float y, float size, const char* text, Pixel color)
+	{
+		#if USE_DEBUG_LINES
+		if (detail)
+			detail->DebugDrawText(font, x, y, size, text, color);
+		#endif
+	}
 
 	void OpenGL::DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color)
 	{

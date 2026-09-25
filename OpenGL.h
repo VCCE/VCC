@@ -69,6 +69,7 @@ namespace VCC
 		int LoadFont(const OpenGLFont** outFont, int bitmapRes, const OpenGLFontGlyph* glyphs, int start, int end) override;
 		int LockSurface() override;
 
+		void DebugDrawText(const OpenGLFont* font, float x, float y, float size, const char* text, Pixel color);
 		void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color) override;
 		void DebugDrawBox(float x, float y, float w, float h, Pixel color) override;
 

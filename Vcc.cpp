@@ -105,6 +105,10 @@ static unsigned char Qflag=0;
 static unsigned char Pflag=0;
 static char CpuName[20]="CPUNAME";
 
+#if USE_FPS
+#include "IDisplayDebug.h"
+#endif
+
 /***Forward declarations of functions included in this code module*****/
 BOOL InitInstance (HINSTANCE, int);
 BOOL CALLBACK About(HWND, UINT, WPARAM, LPARAM);
@@ -869,6 +873,10 @@ void raise_saved_keys() {
 void SetCPUMultiplyerFlag (unsigned char double_speed)
 {
 	EmuState.DoubleSpeedFlag=double_speed;
+#if USE_NEWTIMING
+	VCC::gEvents.SetOverclock(EmuState.DoubleSpeedMultiplyer - 1);
+	VCC::gEvents.SetClocksPerCycle(double_speed ? 8 : 16);
+#endif
 	SetupClock();
 	return;
 }
@@ -896,7 +904,11 @@ void SetupClock()
 	SetClockSpeed(1);
 	if (EmuState.DoubleSpeedFlag)
 		SetClockSpeed( mult * EmuState.TurboSpeedFlag);
+#if USE_NEWTIMING
+	EmuState.CPUCurrentSpeed = Event::ClockFreq / 16 / 1000000.0;
+#else
 	EmuState.CPUCurrentSpeed = .894;
+#endif
 	if (EmuState.DoubleSpeedFlag)
 		EmuState.CPUCurrentSpeed*=(mult*EmuState.TurboSpeedFlag);
 	return;
@@ -948,14 +960,15 @@ void DoHardReset(SystemState* const HRState)
 	mc6883_reset();	//Captures interal rom pointer for CPU Interupt Vectors
 	CPUInit();
 	CPUReset();		// Zero all CPU Registers and sets the PC to VRESET
+	EmuState.TurboSpeedFlag = 1;
+	SetCPUMultiplyerFlag(0);
+	gEvents.Reset();
 	gGimeGpu.GimeReset();
 	GimeRegistersReset();
 	MiscReset();
+	MmuReset();
 	UpdateBusPointer();
-	EmuState.TurboSpeedFlag=1;
 	ResetBus();
-	SetCPUMultiplyerFlag(0);
-	SetClockSpeed(1);
 	return;
 }
 
@@ -964,13 +977,14 @@ void SoftReset()
 	mc6883_reset();
 	PiaReset();
 	CPUReset();
+	EmuState.TurboSpeedFlag = 1;
+	SetCPUMultiplyerFlag(0);
+	gEvents.Reset();
 	gGimeGpu.GimeReset();
 	MiscReset();
 	MmuReset();
 	LoadRom();
 	ResetBus();
-	SetCPUMultiplyerFlag(0);
-	EmuState.TurboSpeedFlag=1;
 	return;
 }
 
@@ -1116,8 +1130,19 @@ void SaveConfig() {
 	return;
 }
 
+#if USE_FPS
+const int FPSHistorySize = 120;
+float gFPSHistory[FPSHistorySize];
+#endif
+
 unsigned __stdcall EmuLoop(HANDLE hEvent)
 {
+	_LARGE_INTEGER Now{};
+#if USE_FPS
+	_LARGE_INTEGER LastNow{}, OneMs{};
+	QueryPerformanceFrequency(&Now);
+	OneMs.QuadPart = Now.QuadPart / 1000;
+#endif
 	static float FPS;
 	static unsigned int FrameCounter=0;
 	CalibrateThrottle();
@@ -1149,6 +1174,12 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 			Pflag=0;
 			QueueText(CmdArg.PasteText);
 		}
+
+#if USE_FPS
+		// do not include throttling just rendering time
+		QueryPerformanceCounter(&LastNow);
+		Now = LastNow;
+#endif
 
 		StartRender();
 
@@ -1186,7 +1217,7 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 				EmuState.ResetPending = 0;
 			}
 			if (EmuState.EmulationRunning == 1) {
-				FPS += RenderFrame(&EmuState);
+				FPS += RenderFrame(&EmuState,Now);
 			} else {
 				FPS += Static(&EmuState);
 			}
@@ -1218,6 +1249,25 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 				DumpScreenshot(CmdArg.Screenshot);
 			CloseApp();
 		}
+
+#if USE_FPS
+		auto intervalMS = (float)(Now.QuadPart - LastNow.QuadPart) / OneMs.QuadPart;
+		memcpy(&gFPSHistory[0], &gFPSHistory[1], sizeof(gFPSHistory) - sizeof(*gFPSHistory));
+		auto constexpr height = 100.0f;
+		gFPSHistory[FPSHistorySize - 1] = std::min(intervalMS, height);
+		VCC::Pixel col(VCC::ColorYellow); col.a = 200;
+		for (int i = 1; i < FPSHistorySize;++i)
+		{
+			auto& data = gFPSHistory[i];
+			float xp = 10 + (float)i;
+			float yp = 10 + height;
+			DebugDrawLine(xp, yp - gFPSHistory[i-1], xp + 1, yp - gFPSHistory[i], col);
+		}
+		DebugDrawBox(10, 10, FPSHistorySize, 100, col);
+		char ms[32];
+		sprintf(ms, "Render:%.1fms", intervalMS);
+		DebugPrint(12, 22, 14, ms, VCC::ColorWhite);
+#endif
 
 		if (EmuState.Throttle)	//Do nothing untill the frame is over returning unused time to OS
 			FrameWait();

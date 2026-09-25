@@ -44,6 +44,7 @@ namespace VCC
 		ScreenVSYNCHigh,		// Screen vertical synchronization end
 		ScreenHSYNCLow,			// Screen HSYNC synchronization start
 		ScreenHSYNCHigh,		// Screen HSYNC syncrhonization end
+		ScreenReg,
 		ScreenTopBorder,		// Screen is drawing - top border
 		ScreenRender,			// Screen is drawing - active region
 		ScreenBottomBorder,		// Screen is drawing - bottom border,
@@ -58,6 +59,8 @@ namespace VCC
 		int frame = 0;						// Frame being rendered
 		int line = 0;						// Line being rendered
 		long cycleTime = 0;					// Time since Trace start in CPU cycles
+		size_t clock = 0;
+		size_t frameStart = 0;
 		unsigned short pc = 0;				// Program Counter at time of event
 		std::vector<unsigned char> bytes;	// Op code bytes
 		std::string instruction;			// Instruction

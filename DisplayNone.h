@@ -70,6 +70,7 @@ namespace VCC
 		int Present() override { return OK; }
 		int UnlockSurface() override { return OK; }
 		int SetOption(int flagOption, bool enabled) override { return OK; }
+		void DebugDrawText(const OpenGLFont* font, float x, float y, float size, const char* text, Pixel color) override {}
 		void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color) override {}
 		void DebugDrawBox(float x, float y, float w, float h, Pixel color) override {}
 		int RenderSignalLostMessage() override { return OK; }

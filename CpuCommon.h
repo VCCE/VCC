@@ -32,9 +32,9 @@ static inline bool CC(char flag)
 //
 // Interrupt lines reading from output of the latch
 //
-static inline bool FIRQ() { return InterruptLatch.Q & Bit(INT_FIRQ) ? true : false; }
-static inline bool IRQ() { return InterruptLatch.Q & Bit(INT_IRQ) ? true : false; }
-static inline bool NMI() { return InterruptLatch.Q & Bit(INT_NMI) ? true : false; }
+static inline bool FIRQ() { return InterruptLatch & Bit(INT_FIRQ) ? true : false; }
+static inline bool IRQ() { return InterruptLatch & Bit(INT_IRQ) ? true : false; }
+static inline bool NMI() { return InterruptLatch & Bit(INT_NMI) ? true : false; }
 
 //
 // Latch the interrupt lines
@@ -47,7 +47,7 @@ static inline void LatchInterrupts()
 		OR |= InterruptLine[is];
 
 	// clock next input
-	InterruptLatch.Clock(OR);
+	InterruptLatch = OR;
 }
 
 //
@@ -66,6 +66,6 @@ static inline void ClearInterrupts()
 {
 	for (int is = 0; is < IS_MAX; ++is)
 		InterruptLine[is] = 0;
-	InterruptLatch.Reset();
+	InterruptLatch = 0;
 }
 

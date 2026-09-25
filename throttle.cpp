@@ -17,6 +17,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <Windows.h>
+#include "BuildConfig.h"
 #include "throttle.h"
 #include "audio.h"
 #include "defines.h"
@@ -31,7 +32,11 @@ void CalibrateThrottle()
 {
 	timeBeginPeriod(1);	//Needed to get max resolution from the timer normally its 10Ms
 	QueryPerformanceFrequency(&MasterClock);
+#if USE_NEW_TIMING
+	OneFrame.QuadPart = (long long) ((double)MasterClock.QuadPart / FRAMESPERSECORD);
+#else
 	OneFrame.QuadPart = MasterClock.QuadPart / TARGETFRAMERATE;
+#endif
 	OneMs.QuadPart=MasterClock.QuadPart/1000;
 	fMasterClock=(float)MasterClock.QuadPart;
 }
@@ -53,6 +58,7 @@ void EndRender(unsigned char Skip)
 
 void FrameWait()
 {
+#if 0
 	//If we have more that 10Ms till the end of the frame
 	QueryPerformanceCounter(&CurrentTime);
 	while ((TargetTime.QuadPart - CurrentTime.QuadPart) > (OneMs.QuadPart * 10))
@@ -60,7 +66,7 @@ void FrameWait()
 		Sleep(5);	//Give about 5Ms back to the system
 		QueryPerformanceCounter(&CurrentTime);	//And check again
 	}
-
+#endif
 	//If we have more that 2Ms till the end of the frame
 	QueryPerformanceCounter(&CurrentTime);
 	while ( (TargetTime.QuadPart-CurrentTime.QuadPart)> (OneMs.QuadPart*2))

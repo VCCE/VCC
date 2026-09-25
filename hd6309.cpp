@@ -129,7 +129,7 @@ static unsigned int  temp32;
 static int stemp32;
 static unsigned char temp8; 
 static unsigned char InterruptLine[IS_MAX] = { 0 };
-static VCC::DFF InterruptLatch;
+static unsigned char InterruptLatch;
 static unsigned char Source=0,Dest=0;
 static unsigned char postbyte=0;
 static short unsigned postword=0;

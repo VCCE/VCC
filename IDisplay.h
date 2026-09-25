@@ -158,6 +158,11 @@ namespace VCC
 		virtual int RenderText(const OpenGLFont* font, float x, float y, float size, const char* text) = 0;
 
 		//
+		// render debug text for current frame
+		//
+		virtual void DebugDrawText(const OpenGLFont* font, float x, float y, float size, const char* text, Pixel color) = 0;
+
+		//
 		// create a new font from bitmapRes window resource
 		// out: outFont or null
 		//

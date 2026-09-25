@@ -40,7 +40,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <iostream>
 #include "config.h"
 #include "tcc1014mmu.h"
-
+#include "Event.h"
 
 #if USE_DEBUG_AUDIOTAPE
 #include "IDisplayDebug.h"
@@ -59,6 +59,8 @@ int gAudioHistoryCount = 0;
 constexpr auto RENDERS_PER_BLINK_TOGGLE = 16u;
 
 //****************************************
+#if USE_NEWTIMING
+#else
 	static double SoundInterupt=0;
 	static double NanosToSoundSample=SoundInterupt;
 	static double NanosToAudioSample = SoundInterupt;
@@ -69,51 +71,67 @@ constexpr auto RENDERS_PER_BLINK_TOGGLE = 16u;
 	static double CyclesPerLine = CyclesPerSecord / LinesPerSecond;
 	static double CycleDrift=0;
 	static double CyclesThisLine=0;
+#endif
 	static unsigned int StateSwitch=0;
 	unsigned int SoundRate=0;
 //*****************************************************
 static int MasterTimer=0; 
-static unsigned int TimerClockRate=0;
+unsigned int TimerClockRate=0;
 static int TimerCycleCount=0;
+#if !USE_NEWTIMING
 static double MasterTickCounter = 0;
+#endif
 static unsigned int UnxlatedTickCounter = 0;
+#if !USE_NEWTIMING
 static double NanosThisLine=0;
+#endif
 static unsigned char BlinkPhase=1;
 static unsigned int AudioBuffer[16384];
 static unsigned char CassBuffer[8192];
 static unsigned int AudioIndex = 0;
 static unsigned int CassIndex = 0;
 static unsigned int CassBufferSize = 0;
+#if !USE_NEWTIMING
 double NanosToInterrupt=0;
 static int IntEnable=0;
 static int SndEnable=1;
+#endif
 static int OverClock=1;
 static unsigned char SoundOutputMode=0;	//Default to Speaker 1= Cassette
+#if !USE_NEWTIMING
 static double emulatedCycles;
 double TimeToHSYNCLow = 0;
 double TimeToHSYNCHigh = 0;
+#endif
 static unsigned char LastMotorState;
 static int AudioFreeBlockCount;
 
+#if !USE_NEWTIMING
 static int clipcycle = 1, cyclewait=2000;
+#endif
 bool codepaste, PasteWithNew = false; 
 void AudioOut();
 void CassOut();
 void CassIn();
 void (*AudioEvent)()=AudioOut;
-void SetMasterTickCounter();
-void (GimeGpu::*DrawTopBoarder[4])(SystemState *)const ={ &GimeGpu::DrawTopBoarder8,&GimeGpu::DrawTopBoarder16,&GimeGpu::DrawTopBoarder24,&GimeGpu::DrawTopBoarder32 };
-void (GimeGpu::*DrawBottomBoarder[4])(SystemState *)const ={ &GimeGpu::DrawBottomBoarder8,&GimeGpu::DrawBottomBoarder16,&GimeGpu::DrawBottomBoarder24,&GimeGpu::DrawBottomBoarder32 };
+#if !USE_NEWTIMING
+void (GimeGpu::*DrawTopBoarder[4])(SystemState *) ={ &GimeGpu::DrawTopBoarder8,&GimeGpu::DrawTopBoarder16,&GimeGpu::DrawTopBoarder24,&GimeGpu::DrawTopBoarder32 };
+void (GimeGpu::*DrawBottomBoarder[4])(SystemState *) ={ &GimeGpu::DrawBottomBoarder8,&GimeGpu::DrawBottomBoarder16,&GimeGpu::DrawBottomBoarder24,&GimeGpu::DrawBottomBoarder32 };
 void (GimeGpu::*UpdateScreen[4])(SystemState *) ={ &GimeGpu::UpdateScreen8,&GimeGpu::UpdateScreen16,&GimeGpu::UpdateScreen24,&GimeGpu::UpdateScreen32 };
+#endif
 std::string GetClipboardText();
+#if !USE_NEWTIMING
 void HLINE();
 void VSYNC(unsigned char level);
 void HSYNC(unsigned char level);
+#endif // USE_NEWTIMING
 std::string CvtStrToSC(std::string);
 
 using namespace std;
 
+#if !USE_NEWTIMING
 _inline void CPUCycle(double nanoseconds);
+#endif
 
 void UpdateAudio()
 {
@@ -185,8 +203,93 @@ void DebugDrawAudio()
 #endif // USE_DEBUG_AUDIOTAPE
 }
 
+void HorizSync(int n)
+{
+	irq_hs(n);
+	if (n == 0) PakTimer();
+}
 
-float RenderFrame (SystemState *RFState)
+#if USE_NEWTIMING
+
+GimeGpu gGimeGpu(HorizSync, irq_fs);
+
+namespace VCC
+{
+	struct RenderFrame
+	{
+		static float EndFrame(_LARGE_INTEGER& now)
+		{
+			switch (SoundOutputMode)
+			{
+				case 1:
+					FlushCassetteBuffer(CassBuffer, &CassIndex);
+					break;
+			}
+			FlushAudioBuffer(AudioBuffer, AudioIndex << 2);
+			AudioIndex = 0;
+
+			DebugDrawAudio();
+
+			// Only affect frame rate if a debug window is open.
+			EmuState.Debugger.Update();
+
+			QueryPerformanceCounter(&now);
+
+			static bool wasHalted = false;
+			if (EmuState.Debugger.IsHalted())
+			{
+				wasHalted = true;
+				return 0;
+			}
+			else if (wasHalted)
+			{
+				return CalculateFPS(true);
+				wasHalted = false;
+			}
+
+			return CalculateFPS(false);
+		}
+
+
+		static float Render(_LARGE_INTEGER& now)
+		{
+			if (LockScreen())
+				return 0;
+
+			if (!EmuState.Debugger.IsHalted())
+			{
+				// once per frame
+				LastMotorState = GetMotorState();
+				AudioFreeBlockCount = GetFreeBlockCount();
+
+				// blink state toggle
+				if (BlinkPhase++ > RENDERS_PER_BLINK_TOGGLE) 
+				{
+					gGimeGpu.TogBlinkState();
+					BlinkPhase = 0;
+				}
+
+				while (!gGimeGpu.FrameFinished())
+					CPUExec(2); // TODO: remove arg, just loop 
+			}
+
+			UnlockScreen(&EmuState);
+
+			return EndFrame(now);
+		}
+	};
+}
+
+float RenderFrame(SystemState* RFState, _LARGE_INTEGER& now)
+{
+	return VCC::RenderFrame::Render(now);
+}
+
+#else // !USE_NEWTIMING
+
+GimeGpu gGimeGpu;
+
+float RenderFrame (SystemState *RFState, _LARGE_INTEGER &now)
 {
 	static unsigned int FrameCounter=0;
 
@@ -287,6 +390,8 @@ float RenderFrame (SystemState *RFState)
 	// Only affect frame rate if a debug window is open.
 	RFState->Debugger.Update();
 
+	QueryPerformanceCounter(&now);
+
 	static bool wasHalted = false;
 	if (EmuState.Debugger.IsHalted())
 	{
@@ -332,6 +437,8 @@ void HSYNC(unsigned char level)
 	}
 }
 
+#endif // USE_NEWTIMING
+
 void SetClockSpeed(unsigned int Cycles)
 {
 	OverClock=Cycles;
@@ -373,10 +480,12 @@ DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight)
 	return details;
 }
 
+#if !USE_NEWTIMING
+
 _inline void HLINE()
 {
 	if (EmuState.Debugger.IsHalted())
-		return; 
+		return;
 
 	UpdateAudio();
 
@@ -393,6 +502,7 @@ _inline void HLINE()
 	// HSYNC goes high
 	HSYNC(1);
 }
+
 
 _inline void CPUCycle(double NanosToRun)
 {
@@ -536,6 +646,9 @@ _inline void CPUCycle(double NanosToRun)
 	EmuState.Debugger.TraceEmulatorCycle(VCC::TraceEvent::EmulatorCycle, 20, 0, 0, 0, emulationCycles, emulationDrift);
 }
 
+#endif // !USE_NEWTIMING
+
+
 //
 // Restart with new timer value.
 // 
@@ -544,12 +657,16 @@ _inline void CPUCycle(double NanosToRun)
 void RestartInterruptTimer(unsigned int timer)
 {
 	SetMasterTickCounter(timer);
+#if USE_NEWTIMING
+	gGimeGpu.ResetTimer();
+#else
 
 	if (IntEnable)
 	{
 		// restart timer
 		NanosToInterrupt = MasterTickCounter;
 	}
+#endif
 }
 
 //
@@ -580,6 +697,10 @@ void SetMasterTickCounter(unsigned int timer)
 {
 	UnxlatedTickCounter = timer & 0xFFF;
 
+#if USE_NEWTIMING
+	const unsigned int timerOffset = 2; // 1 = Gime'87, 2 = Gime'86
+	gGimeGpu.SetTimer(UnxlatedTickCounter + timerOffset);
+#else
 	// if non-zero, update nanos to interrupt, otherwise if zero clear event.
 	IntEnable = UnxlatedTickCounter > 0 ? 1 : 0;
 
@@ -588,15 +709,19 @@ void SetMasterTickCounter(unsigned int timer)
 	// Master count contains at least one tick. EJJ 10mar25
 	const unsigned int timerOffset = 1; // 1 = Gime'87, 2 = Gime'86
 	MasterTickCounter = Rate[TimerClockRate] * (UnxlatedTickCounter + timerOffset);
+#endif
 }
 
 void MiscReset()
 {
 	MasterTimer=0; 
 	TimerClockRate=0;
+#if !USE_NEWTIMING
 	MasterTickCounter=0;
+#endif
 	UnxlatedTickCounter=0;
 //*************************
+#if !USE_NEWTIMING
 	SoundInterupt=0;//PICOSECOND/44100;
 	NanosToSoundSample=SoundInterupt;
 	NanosToAudioSample = SoundInterupt;
@@ -604,14 +729,31 @@ void MiscReset()
 	CyclesThisLine=0;
 	NanosThisLine=0;
 	IntEnable=0;
+#endif
 	AudioIndex=0;
 	ResetAudio();
 	return;
 }
 
+#if USE_NEWTIMING
+void SampleAudio()
+{
+	using namespace VCC;
+	auto audioRate = GetAudioRate();
+	if (audioRate > 0)
+	{
+		// slightly faster than audio rate to keep up
+		gEvents.Queue(Event::Hz{ audioRate+25 }, SampleAudio, ET_AUDIO);
+		AudioEvent();
+	}
+	else
+		gEvents.Erase(ET_AUDIO);
+}
+#endif
+
 unsigned int SetAudioRate (unsigned int Rate)
 {
-
+#if !USE_NEWTIMING
 	SndEnable=1;
 	SoundInterupt=0;
 	CycleDrift=0;
@@ -624,6 +766,10 @@ unsigned int SetAudioRate (unsigned int Rate)
 		NanosToSoundSample=SoundInterupt;
 		NanosToAudioSample = NANOSECOND/AUDIO_RATE;
 	}
+#else
+	VCC::gEvents.Erase(VCC::ET_AUDIO);
+	SampleAudio();
+#endif
 	SoundRate=Rate;
 	return 0;
 }
@@ -666,12 +812,14 @@ void OutputAudio(unsigned int dac, unsigned int cas)
 	auto right = (getRight(casChannel) * fade + getRight(dacChannel) * (FADE_TIME - fade)) / FADE_TIME;
 	auto sample = (unsigned int)(left + (right << 16));
 
+#if !USE_NEWTIMING
 	while (NanosToAudioSample > 0)
 	{
 		AudioBuffer[AudioIndex++] = sample;
 		NanosToAudioSample -= NANOSECOND / AUDIO_RATE;
 	}
 	NanosToAudioSample += SoundInterupt;
+#endif
 }
 
 void AudioOut()
