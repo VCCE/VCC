@@ -105,6 +105,10 @@ static unsigned char Qflag=0;
 static unsigned char Pflag=0;
 static char CpuName[20]="CPUNAME";
 
+#if USE_FPS
+#include "IDisplayDebug.h"
+#endif
+
 /***Forward declarations of functions included in this code module*****/
 BOOL InitInstance (HINSTANCE, int);
 BOOL CALLBACK About(HWND, UINT, WPARAM, LPARAM);
@@ -222,7 +226,9 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	RegisterDisplayNotification(EmuState.WindowHandle);
 	InitSound();
 	LoadModule();
+#if !USE_NEWTIMING
 	SetClockSpeed(1);	//Default clock speed .89 MHZ
+#endif
 	BinaryRunning = true;
 	EmuState.EmulationRunning=AutoStart;
 
@@ -478,7 +484,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case ID_FILE_RUN:
 					EmuState.EmulationRunning=TRUE;
+#if !USE_NEWTIMING
 					gGimeGpu.InvalidateBoarder();
+#endif
 					break;
 
 				case ID_FILE_RESET_SFT:
@@ -712,7 +720,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					if (FlagEmuStop == TH_RUNNING) {
 						if (IsShiftKeyDown()) {
 							SetInfoBand(!SetInfoBand(QUERY));
+#if !USE_NEWTIMING
 							gGimeGpu.InvalidateBoarder();
+#endif
 						} else {
 							FlagEmuStop = TH_REQWAIT;
 							EmuState.FullScreen =!EmuState.FullScreen;
@@ -892,11 +902,25 @@ unsigned char SetCPUMultiplyer(unsigned char Multiplyer)
 
 void SetupClock()
 {
-	int mult = (EmuState.OverclockFlag) ? EmuState.DoubleSpeedMultiplyer : 2;
+	int mult = EmuState.OverclockFlag ? EmuState.DoubleSpeedMultiplyer : 2;
+#if USE_NEWTIMING
+        // clocks @ 14.31818mhz (NTSC)
+	constexpr auto ClockFreq = 14318180;
+	EmuState.CPUCurrentSpeed = ClockFreq / 16 / 1000000.0;
+	int speed = 1;
+	if (EmuState.DoubleSpeedFlag)
+	{
+		// -1 as double speed is set in clocks per cycle
+		speed = EmuState.TurboSpeedFlag * (mult - 1);
+	}
+	VCC::gEvents.SetOverclock(speed);
+	VCC::gEvents.SetClocksPerCycle(EmuState.DoubleSpeedFlag ? 8 : 16);
+#else
 	SetClockSpeed(1);
 	if (EmuState.DoubleSpeedFlag)
-		SetClockSpeed( mult * EmuState.TurboSpeedFlag);
+		SetClockSpeed(mult * EmuState.TurboSpeedFlag);
 	EmuState.CPUCurrentSpeed = .894;
+#endif
 	if (EmuState.DoubleSpeedFlag)
 		EmuState.CPUCurrentSpeed*=(mult*EmuState.TurboSpeedFlag);
 	return;
@@ -948,14 +972,15 @@ void DoHardReset(SystemState* const HRState)
 	mc6883_reset();	//Captures interal rom pointer for CPU Interupt Vectors
 	CPUInit();
 	CPUReset();		// Zero all CPU Registers and sets the PC to VRESET
+	EmuState.TurboSpeedFlag = 1;
+	SetCPUMultiplyerFlag(0);
+	gEvents.Reset();
 	gGimeGpu.GimeReset();
 	GimeRegistersReset();
 	MiscReset();
+	MmuReset();
 	UpdateBusPointer();
-	EmuState.TurboSpeedFlag=1;
 	ResetBus();
-	SetCPUMultiplyerFlag(0);
-	SetClockSpeed(1);
 	return;
 }
 
@@ -964,13 +989,14 @@ void SoftReset()
 	mc6883_reset();
 	PiaReset();
 	CPUReset();
+	EmuState.TurboSpeedFlag = 1;
+	SetCPUMultiplyerFlag(0);
+	gEvents.Reset();
 	gGimeGpu.GimeReset();
 	MiscReset();
 	MmuReset();
 	LoadRom();
 	ResetBus();
-	SetCPUMultiplyerFlag(0);
-	EmuState.TurboSpeedFlag=1;
 	return;
 }
 
@@ -1116,8 +1142,20 @@ void SaveConfig() {
 	return;
 }
 
+#if USE_FPS
+const int FPSHistorySize = 120;
+struct FPS { float render; float frame; };
+FPS gFPSHistory[FPSHistorySize];
+#endif
+
 unsigned __stdcall EmuLoop(HANDLE hEvent)
 {
+	_LARGE_INTEGER Now{};
+#if USE_FPS
+	_LARGE_INTEGER LastNow{}, OneMs{}, LastFrame{};
+	QueryPerformanceFrequency(&Now);
+	OneMs.QuadPart = Now.QuadPart / 1000;
+#endif
 	static float FPS;
 	static unsigned int FrameCounter=0;
 	CalibrateThrottle();
@@ -1149,6 +1187,12 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 			Pflag=0;
 			QueueText(CmdArg.PasteText);
 		}
+
+#if USE_FPS
+		// do not include throttling just rendering time
+		QueryPerformanceCounter(&LastNow);
+		Now = LastNow;
+#endif
 
 		StartRender();
 
@@ -1186,7 +1230,7 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 				EmuState.ResetPending = 0;
 			}
 			if (EmuState.EmulationRunning == 1) {
-				FPS += RenderFrame(&EmuState);
+				FPS += RenderFrame(&EmuState,Now);
 			} else {
 				FPS += Static(&EmuState);
 			}
@@ -1219,6 +1263,39 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 			CloseApp();
 		}
 
+#if USE_FPS
+		auto intervalMS = (float)(Now.QuadPart - LastNow.QuadPart) / OneMs.QuadPart;
+		QueryPerformanceCounter(&Now);
+		auto frameIntervalMS = (float)(Now.QuadPart - LastFrame.QuadPart) / OneMs.QuadPart;
+		LastFrame = Now;
+		memcpy(&gFPSHistory[0], &gFPSHistory[1], sizeof(gFPSHistory) - sizeof(*gFPSHistory));
+		auto constexpr scale = 2.0f;
+		auto constexpr height = 50.0f*scale;
+		extern int gHsyncs;
+		gFPSHistory[FPSHistorySize - 1].render = std::min(intervalMS*scale, height);
+		gFPSHistory[FPSHistorySize - 1].frame = std::min(frameIntervalMS*scale, height);
+
+		VCC::Pixel col1(VCC::ColorBlue); col1.a = 150;
+		VCC::Pixel col(VCC::ColorYellow); col.a = 200;
+		VCC::Pixel col2(VCC::ColorWhite); col2.a = 200;
+		VCC::Pixel col3(VCC::ColorGreen); col3.a = 200;
+		DebugDrawBox(10, 10, FPSHistorySize, (int)height, col1, true);
+		DebugDrawBox(10, 10, FPSHistorySize, (int)height, col2, false);
+		for (int i = 1; i < FPSHistorySize;++i)
+		{
+			auto& data = gFPSHistory[i];
+			float xp = 10 + (float)i;
+			float yp = 10 + height;
+			DebugDrawLine(xp, yp - gFPSHistory[i - 1].render, xp + 1, yp - gFPSHistory[i].render, col);
+			DebugDrawLine(xp, yp - gFPSHistory[i - 1].frame, xp + 1, yp - gFPSHistory[i].frame, col2);
+		}
+		char ms[32];
+		sprintf(ms, "Frame :%.1fms", frameIntervalMS);
+		DebugPrint(12, 22, 13, ms, VCC::ColorWhite);
+		sprintf(ms, "Render:%.1fms", intervalMS);
+		DebugPrint(12, 22+12, 13, ms, VCC::ColorYellow);
+#endif
+
 		if (EmuState.Throttle)	//Do nothing untill the frame is over returning unused time to OS
 			FrameWait();
 	} //Still Emulating
@@ -1234,7 +1311,9 @@ void FullScreenToggle()
 		MessageBox(nullptr,"Can't rebuild primary Window","Error",0);
 		exit(0);
 	}
+#if !USE_NEWTIMING
 	gGimeGpu.InvalidateBoarder();
+#endif
 
 	EmuState.ConfigDialog=nullptr;
 	PauseAudio(false);

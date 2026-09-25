@@ -54,6 +54,8 @@
 #include <sstream>
 #include <vcc/util/logger.h>
 
+#include "Event.h"
+
 /*****************************************************************************/
 /*
 	Forward declarations
@@ -75,9 +77,11 @@ constexpr auto KBTABLE_ENTRY_COUNT = 100u;
 
 // Simulated Keypresses for Clipboard pasting.
 std::queue<unsigned char> PasteInputQueue;
+#if !USE_NEWTIMING
 LARGE_INTEGER Frequency;
 LARGE_INTEGER LastAdvance;
 double PasteDelay = 0.008;		// This is the interkey delay in seconds - it sets the time between KEYDOWN and KEYUP
+#endif
 
 int CurrentThrottle = 0;
 bool IsShift = false;
@@ -532,14 +536,33 @@ void PasteIntoQueue(const std::string& txt)
 	{
 		PasteInputQueue.push(c);
 	}
+#if USE_NEWTIMING
+	using namespace VCC;
+	CurrentPasteState = PasteState::KeyDown;
+	CurrentThrottle = SetSpeedThrottle(QUERY);
+	SetSpeedThrottle(0);
+#else
 	QueryPerformanceFrequency(&Frequency);
 	QueryPerformanceCounter(&LastAdvance);
 	CurrentPasteState = PasteState::KeyDown;
 	CurrentThrottle = SetSpeedThrottle(QUERY);
 	SetSpeedThrottle(0);
+#endif
 	SetPaste(true);
 }
 
+#if USE_NEWTIMING
+// wait fixed 1/75s long enough for basic to register key
+bool KeyboardDelay()
+{
+	using namespace VCC;
+	static bool isDelay = false;
+	if (isDelay) return true;
+	gEvents.Queue(Event::Hz{ 75 }, []() { isDelay = false; });
+	isDelay = true;
+	return false;
+}
+#endif
 
 bool GetNextScanInPasteQueue()
 {
@@ -547,7 +570,9 @@ bool GetNextScanInPasteQueue()
 	{
 		return false;
 	}
-
+#if USE_NEWTIMING
+	if (KeyboardDelay()) return true;
+#else
 	// Get the Current Tick
 	LARGE_INTEGER now;
 	QueryPerformanceCounter(&now);
@@ -560,7 +585,7 @@ bool GetNextScanInPasteQueue()
 	}
 
 	LastAdvance = now;
-
+#endif
 	switch (CurrentPasteState)
 	{
 	case PasteState::KeyDown:

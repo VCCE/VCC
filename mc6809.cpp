@@ -24,6 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014mmu.h"
 #include "OpDecoder.h"
 #include "Disassembler.h"
+#include "Event.h"
 
 //Global variables for CPU Emulation-----------------------
 
@@ -57,13 +58,21 @@ typedef union
 
 static cpuregister pc,x,y,u,s,dp,d;
 static std::array<bool, 8> cc;
-static int CycleCounter=0;
+#if USE_NEWTIMING
+// temporarily hide this
+namespace Private
+{
+	static int CycleCounter = 0;
+}
+#else
+static int CycleCounter = 0;
+#endif
 static unsigned int SyncWaiting=0;
 static unsigned int temp32;
 static unsigned short temp16;
 static unsigned char temp8;
 static unsigned char InterruptLine[IS_MAX] = { 0 };
-static VCC::DFF InterruptLatch;
+static unsigned char InterruptLatch;
 static unsigned char Source=0,Dest=0;
 static unsigned char postbyte=0;
 static short unsigned postword=0;
@@ -72,6 +81,7 @@ static signed short *spostword=(signed short *)&postword;
 static std::vector<unsigned short> CPUBreakpoints;
 static std::vector<unsigned short> CPUTraceTriggers;
 static int HaltedInsPending = 0;
+static std::function<void(size_t)> CyclesFunc;
 
 //END Global variables for CPU Emulation-------------------
 
@@ -87,6 +97,34 @@ static void P2_Opcode();
 static void P3_Opcode();
 
 #include "CpuCommon.h"
+
+void Cycles(unsigned int cycles)
+{
+#if USE_NEWTIMING
+	VCC::gEvents.Tick(cycles);
+	Private::CycleCounter += cycles;
+#else
+	CycleCounter += cycles;
+#endif
+}
+
+void ResetCycles()
+{
+#if USE_NEWTIMING
+	Private::CycleCounter = 0;
+#else
+	CycleCounter = 0;
+#endif
+}
+
+int GetCycles()
+{
+#if USE_NEWTIMING
+	return Private::CycleCounter;
+#else
+	return CycleCounter;
+#endif
+}
 
 //END Fuction Prototypes-----------------------------------
 void MC6809Init()
@@ -335,20 +373,30 @@ int MC6809Exec(int CycleFor)
 {
 	extern int JS_Ramp_Clock;
 	int PrevCycleCount = 0;
-	CycleCounter=0;
+	ResetCycles(); //CycleCounter = 0;
+
+	auto updateRamp = [&]()
+	{
+		// Advance the JoyStick Ramp timer
+		if (JS_Ramp_Clock < 0xFFFF) {
+			JS_Ramp_Clock += GetCycles() - PrevCycleCount;
+		}
+		PrevCycleCount = GetCycles();
+	};
 
 	// Instruction Loop
-	while (CycleCounter<CycleFor) {
+	while (GetCycles() < CycleFor) {
 
-		// CPU is halted.
+		// label a
+		// CPU is halted. 
 		if (EmuState.Debugger.IsHalted()) {
-			return(CycleFor - CycleCounter);
+			return(CycleFor - GetCycles());
 		}
 		// CPU is stepping.
 		if (EmuState.Debugger.IsStepping()) {
 			Do_Opcode(CycleFor);
 			EmuState.Debugger.Halt();
-			return(CycleFor - CycleCounter);
+			return(CycleFor - GetCycles());
 		}
 		// Halted instruction pending.
 		if (HaltedInsPending) {
@@ -356,10 +404,29 @@ int MC6809Exec(int CycleFor)
 			Do_Opcode(CycleFor);
 			VCC::ApplyHaltpoints(true);
 			HaltedInsPending = 0;
-			return(CycleFor - CycleCounter);
+			return(CycleFor - GetCycles());
 		}
 
 		LatchInterrupts();
+
+		// if at label c (Wait for Sync)
+		if (SyncWaiting)
+		{
+			Cycles(1); //++CycleCounter; // nvma cycle
+
+			if (NMI() || FIRQ() || IRQ())
+			{
+				Cycles(1); //++CycleCounter; // nvma cycle
+
+				SyncWaiting = 0;
+				// label b, continue
+			}
+			else
+			{
+				updateRamp();
+				continue;
+			}
+		}
 
 		if (NMI())
 			cpu_nmi();
@@ -368,16 +435,12 @@ int MC6809Exec(int CycleFor)
 		else if (IRQ() && !cc[I])
 			cpu_irq();
 
-		// Wait for Sync
-		if (SyncWaiting==1)	// Note: Assert interrupt clears sync waiting
-			return 0;
-
 		// Any CPU Breakpoints set?
 		if (!EmuState.Debugger.IsStepping() && !CPUBreakpoints.empty()) {
 			if (find(CPUBreakpoints.begin(), CPUBreakpoints.end(), pc.Reg) != CPUBreakpoints.end())
 			{
 				EmuState.Debugger.Halt();
-				return(CycleFor - CycleCounter);
+				return(CycleFor - GetCycles());
 			}
 		}
 
@@ -398,7 +461,7 @@ int MC6809Exec(int CycleFor)
 
 		// Trace is running.
 		if (EmuState.Debugger.IsTracing()) {
-			EmuState.Debugger.TraceCaptureBefore(CycleCounter, MC6809GetState());
+			EmuState.Debugger.TraceCaptureBefore(GetCycles(), MC6809GetState());
 		}
 
 		// Do an instruction
@@ -406,18 +469,14 @@ int MC6809Exec(int CycleFor)
 
 		// After instruction trace capture
 		if (EmuState.Debugger.IsTracing()) {
-			EmuState.Debugger.TraceCaptureAfter(CycleCounter, MC6809GetState());
-		}
-		// Advance the JoyStick Ramp timer
-		if (JS_Ramp_Clock < 0xFFFF) {
-			JS_Ramp_Clock += CycleCounter-PrevCycleCount;
+			EmuState.Debugger.TraceCaptureAfter(GetCycles(), MC6809GetState());
 		}
 
-		PrevCycleCount = CycleCounter;
+		updateRamp();
 
 	} // End instruction loop
 
-	return(CycleFor-CycleCounter);
+	return(CycleFor - GetCycles());
 
 } // End MC6809Exec
 
@@ -426,6 +485,7 @@ int MC6809Exec(int CycleFor)
 void Do_Opcode(int CycleFor)
 {
 	static unsigned char msn,lsn; //Most signifcant, least significant nibbles
+	auto currentCycleCounter = GetCycles();
 
 	switch (MemRead8(pc.Reg++)) {
 
@@ -438,7 +498,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case COM_D: //3
@@ -450,7 +510,7 @@ void Do_Opcode(int CycleFor)
 		cc[C]=true;
 		cc[V] = false;
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case LSR_D: //4
@@ -461,7 +521,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		cc[N]=false;
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case ROR_D: //6
@@ -473,7 +533,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		cc[N]= NTEST8(temp8);
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case ASR_D: //7
@@ -484,7 +544,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		cc[N]= NTEST8(temp8);
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case ASL_D: //8
@@ -496,7 +556,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case ROL_D:	//9
@@ -509,7 +569,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		cc[N]= NTEST8(temp8);
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case DEC_D: //A
@@ -519,7 +579,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[V]= temp8==0x7F;
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case INC_D: //C
@@ -529,7 +589,7 @@ void Do_Opcode(int CycleFor)
 		cc[V]= temp8==0x80;
 		cc[N]= NTEST8(temp8);
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case TST_D: //D
@@ -537,12 +597,12 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		cc[N]= NTEST8(temp8);
 		cc[V] = false;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case JMP_D: //E
 		pc.Reg = dp.Reg | MemRead8(pc.Reg);
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case CLR_D: //F
@@ -551,7 +611,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]=false;
 		cc[V] = false;
 		cc[C]=false;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case Page2: //10
@@ -563,11 +623,11 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case NOP_I: //12
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case SYNC_I: //13
-		CycleCounter=CycleFor;
+		Cycles(2);//CycleCounter+=2;
 		SyncWaiting=1;
 		break;
 
@@ -578,7 +638,7 @@ void Do_Opcode(int CycleFor)
 			EmuState.Debugger.Halt();
 			PC_REG -= 1;
 		} else {
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 		}
 		break;
 
@@ -586,7 +646,7 @@ void Do_Opcode(int CycleFor)
 		*spostword=MemRead16(pc.Reg);
 		pc.Reg+=2;
 		pc.Reg+=*spostword;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBSR_R: //17
@@ -596,7 +656,7 @@ void Do_Opcode(int CycleFor)
 		MemWrite8(pc.B.lsb,s.Reg--);
 		MemWrite8(pc.B.msb,s.Reg);
 		pc.Reg+=*spostword;
-		CycleCounter+=9;
+		Cycles(9);//CycleCounter+=9;
 		break;
 
 	case DAA_I: //19
@@ -617,7 +677,7 @@ void Do_Opcode(int CycleFor)
 		A_REG= temp16 & 0xFF;
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ORCC_M: //1A
@@ -625,7 +685,7 @@ void Do_Opcode(int CycleFor)
 		temp8=get_cc_flags();
 		temp8 = (temp8 | postbyte);
 		set_cc_flags(temp8);
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case ANDCC_M: //1C
@@ -633,14 +693,14 @@ void Do_Opcode(int CycleFor)
 		temp8=get_cc_flags();
 		temp8 = (temp8 & postbyte);
 		set_cc_flags(temp8);
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case SEX_I: //1D
 		A_REG= 0-(B_REG>>7);
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case EXG_M: //1E
@@ -668,12 +728,11 @@ void Do_Opcode(int CycleFor)
 				first_value = MC6809ReadExgRegister(first_register);
 				second_value = MC6809ReadExgRegister(second_register);
 			}
-
 			MC6809WriteTfrExgRegister(second_register, first_value);
 			MC6809WriteTfrExgRegister(first_register, second_value);
 		}
 
-		CycleCounter+=8;
+		Cycles(8);//CycleCounter+=8;
 		break;
 
 	case TFR_M: //1F
@@ -688,17 +747,18 @@ void Do_Opcode(int CycleFor)
 			MC6809WriteTfrExgRegister(Dest, value);
 		}
 
-		CycleCounter += 6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case BRA_R: //20
+		Cycles(3);//CycleCounter+=3;
 		*spostbyte=MemRead8(pc.Reg++);
 		pc.Reg+=*spostbyte;
-		CycleCounter+=3;
+		//Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BRN_R: //21
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		pc.Reg++;
 		break;
 
@@ -706,170 +766,175 @@ void Do_Opcode(int CycleFor)
 		if  (!(cc[C] | cc[Z]))
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BLS_R: //23
 		if (cc[C] | cc[Z])
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BHS_R: //24
 		if (!cc[C])
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BLO_R: //25
 		if (cc[C])
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BNE_R: //26
 		if (!cc[Z])
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BEQ_R: //27
 		if (cc[Z])
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BVC_R: //28
 		if (!cc[V])
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BVS_R: //29
 		if ( cc[V])
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BPL_R: //2A
 		if (!cc[N])
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BMI_R: //2B
 		if ( cc[N])
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BGE_R: //2C
 		if (! (cc[N] ^ cc[V]))
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BLT_R: //2D
 		if ( cc[V] ^ cc[N])
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BGT_R: //2E
 		if ( !( cc[Z] | (cc[N]^cc[V] ) ))
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case BLE_R: //2F
 		if ( cc[Z] | (cc[N]^cc[V]) )
 			pc.Reg+=(signed char)MemRead8(pc.Reg);
 		pc.Reg++;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case LEAX_X: //30
 		x.Reg=CalculateEA(MemRead8(pc.Reg++));
 		cc[Z]= ZTEST(x.Reg);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case LEAY_X: //31
 		y.Reg=CalculateEA(MemRead8(pc.Reg++));
 		cc[Z]= ZTEST(y.Reg);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case LEAS_X: //32
 		s.Reg=CalculateEA(MemRead8(pc.Reg++));
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case LEAU_X: //33
 		u.Reg=CalculateEA(MemRead8(pc.Reg++));
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case PSHS_M: //34
+		Cycles(5);//CycleCounter+=1;
 		postbyte=MemRead8(pc.Reg++);
 		if (postbyte & 0x80)
 		{
+			Cycles(1);//CycleCounter+=2;
 			MemWrite8( pc.B.lsb,--s.Reg);
+			Cycles(1);//CycleCounter+=1;
 			MemWrite8( pc.B.msb,--s.Reg);
-			CycleCounter+=2;
 		}
 		if (postbyte & 0x40)
 		{
+			Cycles(1);//CycleCounter+=2;
 			MemWrite8( u.B.lsb,--s.Reg);
+			Cycles(1);//CycleCounter+=1;
 			MemWrite8( u.B.msb,--s.Reg);
-			CycleCounter+=2;
 		}
 		if (postbyte & 0x20)
 		{
+			Cycles(1);//CycleCounter+=2;
 			MemWrite8( y.B.lsb,--s.Reg);
+			Cycles(1);//CycleCounter+=1;
 			MemWrite8( y.B.msb,--s.Reg);
-			CycleCounter+=2;
 		}
 		if (postbyte & 0x10)
 		{
+			Cycles(1);//CycleCounter+=2;
 			MemWrite8( x.B.lsb,--s.Reg);
+			Cycles(1);//CycleCounter+=1;
 			MemWrite8( x.B.msb,--s.Reg);
-			CycleCounter+=2;
 		}
 		if (postbyte & 0x08)
 		{
+			Cycles(1);//CycleCounter+=1;
 			MemWrite8( dp.B.msb,--s.Reg);
-			CycleCounter+=1;
 		}
 		if (postbyte & 0x04)
 		{
+			Cycles(1);//CycleCounter+=1;
 			MemWrite8(B_REG,--s.Reg);
-			CycleCounter+=1;
 		}
 		if (postbyte & 0x02)
 		{
+			Cycles(1);//CycleCounter+=1;
 			MemWrite8(A_REG,--s.Reg);
-			CycleCounter+=1;
 		}
 		if (postbyte & 0x01)
 		{
+			Cycles(1);//CycleCounter+=1;
 			MemWrite8(get_cc_flags(),--s.Reg);
-			CycleCounter+=1;
 		}
 
-		CycleCounter+=5;
+		//Cycles(5);//CycleCounter+=5;
 		break;
 
 	case PULS_M: //35
@@ -877,48 +942,48 @@ void Do_Opcode(int CycleFor)
 		if (postbyte & 0x01)
 		{
 			set_cc_flags(MemRead8(s.Reg++));
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		if (postbyte & 0x02)
 		{
 			A_REG=MemRead8(s.Reg++);
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		if (postbyte & 0x04)
 		{
 			B_REG=MemRead8(s.Reg++);
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		if (postbyte & 0x08)
 		{
 			dp.B.msb=MemRead8(s.Reg++);
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		if (postbyte & 0x10)
 		{
 			x.B.msb=MemRead8( s.Reg++);
 			x.B.lsb=MemRead8( s.Reg++);
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 		}
 		if (postbyte & 0x20)
 		{
 			y.B.msb=MemRead8( s.Reg++);
 			y.B.lsb=MemRead8( s.Reg++);
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 		}
 		if (postbyte & 0x40)
 		{
 			u.B.msb=MemRead8( s.Reg++);
 			u.B.lsb=MemRead8( s.Reg++);
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 		}
 		if (postbyte & 0x80)
 		{
 			pc.B.msb=MemRead8( s.Reg++);
 			pc.B.lsb=MemRead8( s.Reg++);
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 		}
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case PSHU_M: //36
@@ -927,47 +992,47 @@ void Do_Opcode(int CycleFor)
 		{
 			MemWrite8( pc.B.lsb,--u.Reg);
 			MemWrite8( pc.B.msb,--u.Reg);
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 		}
 		if (postbyte & 0x40)
 		{
 			MemWrite8( s.B.lsb,--u.Reg);
 			MemWrite8( s.B.msb,--u.Reg);
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 		}
 		if (postbyte & 0x20)
 		{
 			MemWrite8( y.B.lsb,--u.Reg);
 			MemWrite8( y.B.msb,--u.Reg);
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 		}
 		if (postbyte & 0x10)
 		{
 			MemWrite8( x.B.lsb,--u.Reg);
 			MemWrite8( x.B.msb,--u.Reg);
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 		}
 		if (postbyte & 0x08)
 		{
 			MemWrite8( dp.B.msb,--u.Reg);
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		if (postbyte & 0x04)
 		{
 			MemWrite8(B_REG,--u.Reg);
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		if (postbyte & 0x02)
 		{
 			MemWrite8(A_REG,--u.Reg);
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		if (postbyte & 0x01)
 		{
 			MemWrite8(get_cc_flags(),--u.Reg);
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case PULU_M: //37
@@ -975,64 +1040,64 @@ void Do_Opcode(int CycleFor)
 		if (postbyte & 0x01)
 		{
 			set_cc_flags(MemRead8(u.Reg++));
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		if (postbyte & 0x02)
 		{
 			A_REG=MemRead8(u.Reg++);
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		if (postbyte & 0x04)
 		{
 			B_REG=MemRead8(u.Reg++);
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		if (postbyte & 0x08)
 		{
 			dp.B.msb=MemRead8(u.Reg++);
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		if (postbyte & 0x10)
 		{
 			x.B.msb=MemRead8( u.Reg++);
 			x.B.lsb=MemRead8( u.Reg++);
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 		}
 		if (postbyte & 0x20)
 		{
 			y.B.msb=MemRead8( u.Reg++);
 			y.B.lsb=MemRead8( u.Reg++);
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 		}
 		if (postbyte & 0x40)
 		{
 			s.B.msb=MemRead8( u.Reg++);
 			s.B.lsb=MemRead8( u.Reg++);
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 		}
 		if (postbyte & 0x80)
 		{
 			pc.B.msb=MemRead8( u.Reg++);
 			pc.B.lsb=MemRead8( u.Reg++);
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 		}
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case RTS_I: //39
 		pc.B.msb=MemRead8(s.Reg++);
 		pc.B.lsb=MemRead8(s.Reg++);
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case ABX_I: //3A
 		x.Reg=x.Reg+B_REG;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case RTI_I: //3B
 		set_cc_flags(MemRead8(s.Reg++));
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		if (cc[E])
 		{
 			A_REG=MemRead8(s.Reg++);
@@ -1044,7 +1109,7 @@ void Do_Opcode(int CycleFor)
 			y.B.lsb=MemRead8(s.Reg++);
 			u.B.msb=MemRead8(s.Reg++);
 			u.B.lsb=MemRead8(s.Reg++);
-			CycleCounter+=9;
+			Cycles(9);//CycleCounter+=9;
 		}
 		pc.B.msb=MemRead8(s.Reg++);
 		pc.B.lsb=MemRead8(s.Reg++);
@@ -1053,7 +1118,7 @@ void Do_Opcode(int CycleFor)
 	case CWAI_I: //3C
 		postbyte=MemRead8(pc.Reg++);
 		set_cc_flags(get_cc_flags() & postbyte);
-		CycleCounter=CycleFor;
+		Cycles(2);//CycleCounter+=2;
 		SyncWaiting=1;
 		break;
 
@@ -1061,7 +1126,7 @@ void Do_Opcode(int CycleFor)
 		D_REG = A_REG * B_REG;
 		cc[C]= B_REG >0x7F;
 		cc[Z]= ZTEST(D_REG);
-		CycleCounter+=11;
+		Cycles(11);//CycleCounter+=11;
 		break;
 
 	case RESET:	//Undocumented
@@ -1083,7 +1148,7 @@ void Do_Opcode(int CycleFor)
 		MemWrite8(A_REG,--s.Reg);
 		MemWrite8(get_cc_flags(),--s.Reg);
 		pc.Reg=MemRead16(VSWI);
-		CycleCounter+=19;
+		Cycles(19);//CycleCounter+=19;
 		cc[I]=true;
 		cc[F]=true;
 		break;
@@ -1095,7 +1160,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		A_REG= temp8;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case COMA_I: //43
@@ -1104,7 +1169,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(A_REG);
 		cc[C]= true;
 		cc[V]= false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case LSRA_I: //44
@@ -1112,7 +1177,7 @@ void Do_Opcode(int CycleFor)
 		A_REG= A_REG>>1;
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case RORA_I: //46
@@ -1121,7 +1186,7 @@ void Do_Opcode(int CycleFor)
 		A_REG= (A_REG>>1) | postbyte;
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= NTEST8(A_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ASRA_I: //47
@@ -1129,7 +1194,7 @@ void Do_Opcode(int CycleFor)
 		A_REG= (A_REG & 0x80) | (A_REG >> 1);
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= NTEST8(A_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ASLA_I: //48 JF
@@ -1138,7 +1203,7 @@ void Do_Opcode(int CycleFor)
 		A_REG= A_REG<<1;
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ROLA_I: //49
@@ -1148,7 +1213,7 @@ void Do_Opcode(int CycleFor)
 		A_REG= (A_REG<<1) | postbyte;
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= NTEST8(A_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case DECA_I: //4A
@@ -1156,7 +1221,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= A_REG==0x7F;
 		cc[N]= NTEST8(A_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case INCA_I: //4C
@@ -1164,14 +1229,14 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= A_REG==0x80;
 		cc[N]= NTEST8(A_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case TSTA_I: //4D
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= NTEST8(A_REG);
 		cc[V]= false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case CLRA_I: //4F
@@ -1180,7 +1245,7 @@ void Do_Opcode(int CycleFor)
 		cc[V] = false;
 		cc[N]=false;
 		cc[Z]=true;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case NEGB_I: //50
@@ -1190,7 +1255,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		B_REG= temp8;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case COMB_I: //53
@@ -1199,7 +1264,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(B_REG);
 		cc[C]= true;
 		cc[V]= false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case LSRB_I: //54
@@ -1207,7 +1272,7 @@ void Do_Opcode(int CycleFor)
 		B_REG= B_REG>>1;
 		cc[Z]= ZTEST(B_REG);
 		cc[N]= false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case RORB_I: //56
@@ -1216,7 +1281,7 @@ void Do_Opcode(int CycleFor)
 		B_REG= (B_REG>>1) | postbyte;
 		cc[Z]= ZTEST(B_REG);
 		cc[N]= NTEST8(B_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ASRB_I: //57
@@ -1224,7 +1289,7 @@ void Do_Opcode(int CycleFor)
 		B_REG= (B_REG & 0x80) | (B_REG >> 1);
 		cc[Z]= ZTEST(B_REG);
 		cc[N]= NTEST8(B_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ASLB_I: //58
@@ -1233,7 +1298,7 @@ void Do_Opcode(int CycleFor)
 		B_REG= B_REG<<1;
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ROLB_I: //59
@@ -1243,7 +1308,7 @@ void Do_Opcode(int CycleFor)
 		B_REG= (B_REG<<1) | postbyte;
 		cc[Z]= ZTEST(B_REG);
 		cc[N]= NTEST8(B_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case DECB_I: //5A
@@ -1251,7 +1316,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(B_REG);
 		cc[V]= B_REG==0x7F;
 		cc[N]= NTEST8(B_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case INCB_I: //5C
@@ -1259,14 +1324,14 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(B_REG);
 		cc[V]= B_REG==0x80;
 		cc[N]= NTEST8(B_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case TSTB_I: //5D
 		cc[Z]= ZTEST(B_REG);
 		cc[N]= NTEST8(B_REG);
 		cc[V]= false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case CLRB_I: //5F
@@ -1275,7 +1340,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]=false;
 		cc[V] = false;
 		cc[Z]=true;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case NEG_X: //60
@@ -1287,7 +1352,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case COM_X: //63
@@ -1299,7 +1364,7 @@ void Do_Opcode(int CycleFor)
 		cc[V]= false;
 		cc[C]= true;
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case LSR_X: //64
@@ -1310,7 +1375,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		cc[N]= false;
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case ROR_X: //66
@@ -1322,7 +1387,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		cc[N]= NTEST8(temp8);
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case ASR_X: //67
@@ -1333,7 +1398,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		cc[N]= NTEST8(temp8);
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case ASL_X: //68
@@ -1345,7 +1410,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case ROL_X: //69
@@ -1358,7 +1423,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		cc[N]= NTEST8(temp8);
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case DEC_X: //6A
@@ -1369,7 +1434,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[V]= (temp8==0x7F);
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case INC_X: //6C
@@ -1380,7 +1445,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		MemWrite8(temp8,temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case TST_X: //6D
@@ -1388,12 +1453,12 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		cc[N]= NTEST8(temp8);
 		cc[V]= false;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case JMP_X: //6E
 		pc.Reg=CalculateEA(MemRead8(pc.Reg++));
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case CLR_X: //6F
@@ -1402,7 +1467,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= false;
 		cc[V]= false;
 		cc[Z]= true;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case NEG_E: //70
@@ -1415,7 +1480,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		MemWrite8(temp8,temp16);
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case COM_E: //73
@@ -1428,7 +1493,7 @@ void Do_Opcode(int CycleFor)
 		cc[V]= false;
 		MemWrite8(temp8,temp16);
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case LSR_E:  //74
@@ -1440,7 +1505,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= false;
 		MemWrite8(temp8,temp16);
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case ROR_E: //76
@@ -1453,7 +1518,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		MemWrite8(temp8,temp16);
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case ASR_E: //77
@@ -1465,7 +1530,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		MemWrite8(temp8,temp16);
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case ASL_E: //78
@@ -1478,7 +1543,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		MemWrite8(temp8,temp16);
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case ROL_E: //79
@@ -1492,7 +1557,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		MemWrite8(temp8,temp16);
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case DEC_E: //7A
@@ -1504,7 +1569,7 @@ void Do_Opcode(int CycleFor)
 		cc[V]= temp8==0x7F;
 		MemWrite8(temp8,temp16);
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case INC_E: //7C
@@ -1516,7 +1581,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		MemWrite8(temp8,temp16);
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case TST_E: //7D
@@ -1525,12 +1590,12 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case JMP_E: //7E
 		pc.Reg=MemRead16(pc.Reg);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case CLR_E: //7F
@@ -1540,7 +1605,7 @@ void Do_Opcode(int CycleFor)
 		cc[V]= false;
 		cc[Z]= true;
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case SUBA_M: //80
@@ -1551,7 +1616,7 @@ void Do_Opcode(int CycleFor)
 		A_REG=(temp16 & 0xFF);
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= NTEST8(A_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case CMPA_M: //81
@@ -1561,7 +1626,7 @@ void Do_Opcode(int CycleFor)
 		cc[V]= OTEST8(cc[C],postbyte,temp8,A_REG);
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case SBCA_M:  //82
@@ -1572,7 +1637,7 @@ void Do_Opcode(int CycleFor)
 		A_REG = (temp16 & 0xFF);
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case SUBD_M: //83
@@ -1584,7 +1649,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
 		pc.Reg+=2;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ANDA_M: //84
@@ -1592,7 +1657,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case BITA_M: //85
@@ -1600,7 +1665,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		cc[V]= false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case LDA_M: //86
@@ -1608,7 +1673,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= NTEST8(A_REG);
 		cc[V]= false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case EORA_M: //88
@@ -1616,7 +1681,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ADCA_M: //89
@@ -1628,7 +1693,7 @@ void Do_Opcode(int CycleFor)
 		A_REG= (temp16 & 0xFF);
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ORA_M: //8A
@@ -1636,7 +1701,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ADDA_M: //8B
@@ -1648,7 +1713,7 @@ void Do_Opcode(int CycleFor)
 		A_REG=(temp16 & 0xFF);
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case CMPX_M: //8C
@@ -1659,7 +1724,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST16(temp16);
 		cc[Z] = ZTEST(temp16);
 		pc.Reg+=2;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case BSR_R: //8D
@@ -1668,7 +1733,7 @@ void Do_Opcode(int CycleFor)
 		MemWrite8(pc.B.lsb,s.Reg--);
 		MemWrite8(pc.B.msb,s.Reg);
 		pc.Reg+=*spostbyte;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case LDX_M: //8E
@@ -1677,7 +1742,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST16(x.Reg);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case SUBA_D: //90
@@ -1688,7 +1753,7 @@ void Do_Opcode(int CycleFor)
 		A_REG=(temp16 & 0xFF);
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= NTEST8(A_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case CMPA_D: //91
@@ -1698,7 +1763,7 @@ void Do_Opcode(int CycleFor)
 		cc[V]= OTEST8(cc[C],postbyte,temp8,A_REG);
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case SBCA_D: //92
@@ -1709,7 +1774,7 @@ void Do_Opcode(int CycleFor)
 		A_REG = (temp16 & 0xFF);
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case SUBD_D: //93
@@ -1720,7 +1785,7 @@ void Do_Opcode(int CycleFor)
 		D_REG=(temp32 & 0xFFFF);
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case ANDA_D: //94
@@ -1728,7 +1793,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case BITA_D: //95
@@ -1736,7 +1801,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		cc[V]= false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case LDA_D: //96
@@ -1744,15 +1809,17 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= NTEST8(A_REG);
 		cc[V]= false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case STA_D: //97
+		Cycles(3);//2r+1d
 		MemWrite8( A_REG,(dp.Reg |MemRead8(pc.Reg++)));
+		Cycles(1);//w
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= NTEST8(A_REG);
 		cc[V]= false;
-		CycleCounter+=4;
+		//Cycles(4);//CycleCounter+=4;
 		break;
 
 	case EORA_D: //98
@@ -1760,7 +1827,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ADCA_D: //99
@@ -1772,7 +1839,7 @@ void Do_Opcode(int CycleFor)
 		A_REG= (temp16 & 0xFF);
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ORA_D: //9A
@@ -1780,7 +1847,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ADDA_D: //9B
@@ -1792,7 +1859,7 @@ void Do_Opcode(int CycleFor)
 		A_REG=(temp16 & 0xFF);
 		cc[N]= NTEST8(A_REG);
 		cc[Z] = ZTEST(A_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case CMPX_D: //9C
@@ -1802,7 +1869,7 @@ void Do_Opcode(int CycleFor)
 		cc[V]= OTEST16(cc[C],postword,temp16,X_REG);
 		cc[N]= NTEST16(temp16);
 		cc[Z] = ZTEST(temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case BSR_D: //9D
@@ -1811,7 +1878,7 @@ void Do_Opcode(int CycleFor)
 		MemWrite8(pc.B.lsb,s.Reg--);
 		MemWrite8(pc.B.msb,s.Reg);
 		pc.Reg=temp16;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case LDX_D: //9E
@@ -1819,15 +1886,16 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(x.Reg);
 		cc[N]= NTEST16(x.Reg);
 		cc[V]= false;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case STX_D: //9F
+		Cycles(5);//CycleCounter+=5;
 		MemWrite16(x.Reg,(dp.Reg |MemRead8(pc.Reg++)));
 		cc[Z]= ZTEST(x.Reg);
 		cc[N]= NTEST16(x.Reg);
 		cc[V]= false;
-		CycleCounter+=5;
+		//Cycles(5);//CycleCounter+=5;
 		break;
 
 	case SUBA_X: //A0
@@ -1838,7 +1906,7 @@ void Do_Opcode(int CycleFor)
 		A_REG=(temp16 & 0xFF);
 		cc[Z] = ZTEST(A_REG);
 		cc[N]=NTEST8(A_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case CMPA_X: //A1
@@ -1848,7 +1916,7 @@ void Do_Opcode(int CycleFor)
 		cc[V]= OTEST8(cc[C],postbyte,temp8,A_REG);
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case SBCA_X: //A2
@@ -1859,7 +1927,7 @@ void Do_Opcode(int CycleFor)
 		A_REG = (temp16 & 0xFF);
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case SUBD_X: //A3
@@ -1870,7 +1938,7 @@ void Do_Opcode(int CycleFor)
 		D_REG= (temp32 & 0xFFFF);
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case ANDA_X: //A4
@@ -1878,7 +1946,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case BITA_X:  //A5
@@ -1886,7 +1954,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		cc[V]= false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case LDA_X: //A6
@@ -1894,7 +1962,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= NTEST8(A_REG);
 		cc[V]= false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case STA_X: //A7
@@ -1902,7 +1970,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= NTEST8(A_REG);
 		cc[V]= false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case EORA_X: //A8
@@ -1910,7 +1978,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ADCA_X: //A9
@@ -1922,7 +1990,7 @@ void Do_Opcode(int CycleFor)
 		A_REG= (temp16 & 0xFF);
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ORA_X: //AA
@@ -1930,7 +1998,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ADDA_X: //AB
@@ -1942,7 +2010,7 @@ void Do_Opcode(int CycleFor)
 		A_REG=(temp16 & 0xFF);
 		cc[N]= NTEST8(A_REG);
 		cc[Z] = ZTEST(A_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case CMPX_X: //AC
@@ -1952,7 +2020,7 @@ void Do_Opcode(int CycleFor)
 		cc[V]= OTEST16(cc[C],postword,temp16,X_REG);
 		cc[N]= NTEST16(temp16);
 		cc[Z] = ZTEST(temp16);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case BSR_X: //AD
@@ -1962,7 +2030,7 @@ void Do_Opcode(int CycleFor)
 		MemWrite8(pc.B.lsb,s.Reg--);
 		MemWrite8(pc.B.msb,s.Reg);
 		pc.Reg=temp16;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case LDX_X: //AE
@@ -1970,7 +2038,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(x.Reg);
 		cc[N]= NTEST16(x.Reg);
 		cc[V]= false;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case STX_X: //AF
@@ -1978,7 +2046,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(x.Reg);
 		cc[N]= NTEST16(x.Reg);
 		cc[V] = false;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case SUBA_E: //B0
@@ -1990,7 +2058,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z] = ZTEST(A_REG);
 		cc[N]=NTEST8(A_REG);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case	CMPA_E: //B1
@@ -2001,7 +2069,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case SBCA_E: //B2
@@ -2013,7 +2081,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case SUBD_E: //B3
@@ -2025,7 +2093,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case ANDA_E: //B4
@@ -2035,7 +2103,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case BITA_E: //B5
@@ -2044,25 +2112,28 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LDA_E: //B6
+		Cycles(5);
 		A_REG= MemRead8(MemRead16(pc.Reg));
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= NTEST8(A_REG);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=5;
+		//Cycles(5);//CycleCounter+=5;
 		break;
 
 	case STA_E: //B7
+		Cycles(4);//3r+1e
 		MemWrite8(A_REG,MemRead16(pc.Reg));
+		Cycles(1);//w
 		cc[Z]= ZTEST(A_REG);
 		cc[N]= NTEST8(A_REG);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=5;
+		//Cycles(5);//CycleCounter+=5;
 		break;
 
 	case EORA_E:  //B8
@@ -2071,7 +2142,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case ADCA_E: //B9
@@ -2084,7 +2155,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case ORA_E: //BA
@@ -2093,7 +2164,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(A_REG);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case ADDA_E: //BB
@@ -2106,7 +2177,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(A_REG);
 		cc[Z]= ZTEST(A_REG);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case CMPX_E: //BC
@@ -2117,7 +2188,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case BSR_E: //BD
@@ -2127,7 +2198,7 @@ void Do_Opcode(int CycleFor)
 		MemWrite8(pc.B.lsb,s.Reg--);
 		MemWrite8(pc.B.msb,s.Reg);
 		pc.Reg=postword;
-		CycleCounter+=8;
+		Cycles(8);//CycleCounter+=8;
 		break;
 
 	case LDX_E: //BE
@@ -2136,7 +2207,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST16(x.Reg);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case STX_E: //BF
@@ -2145,7 +2216,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST16(x.Reg);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case SUBB_M: //C0
@@ -2156,7 +2227,7 @@ void Do_Opcode(int CycleFor)
 		B_REG=(temp16 & 0xFF);
 		cc[Z] = ZTEST(B_REG);
 		cc[N]=NTEST8(B_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case CMPB_M: //C1
@@ -2166,7 +2237,7 @@ void Do_Opcode(int CycleFor)
 		cc[V]= OTEST8(cc[C],postbyte,temp8,B_REG);
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case SBCB_M: //C3
@@ -2177,7 +2248,7 @@ void Do_Opcode(int CycleFor)
 		B_REG = (temp16 & 0xFF);
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ADDD_M: //C3
@@ -2189,7 +2260,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
 		pc.Reg+=2;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ANDB_M: //C4
@@ -2197,7 +2268,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
 		cc[V] = false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case BITB_M: //C5
@@ -2205,7 +2276,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		cc[V]= false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case LDB_M: //C6
@@ -2213,7 +2284,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(B_REG);
 		cc[N]= NTEST8(B_REG);
 		cc[V]= false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case EORB_M: //C8
@@ -2221,7 +2292,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]=NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
 		cc[V] = false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ADCB_M: //C9
@@ -2233,7 +2304,7 @@ void Do_Opcode(int CycleFor)
 		B_REG= (temp16 & 0xFF);
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ORB_M: //CA
@@ -2241,7 +2312,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
 		cc[V] = false;
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case ADDB_M: //CB
@@ -2253,7 +2324,7 @@ void Do_Opcode(int CycleFor)
 		B_REG=(temp16 & 0xFF);
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
-		CycleCounter+=2;
+		Cycles(2);//CycleCounter+=2;
 		break;
 
 	case LDD_M: //CC
@@ -2262,7 +2333,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST16(D_REG);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case LDU_M: //CE
@@ -2271,7 +2342,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST16(u.Reg);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=3;
+		Cycles(3);//CycleCounter+=3;
 		break;
 
 	case SUBB_D: //D0
@@ -2282,7 +2353,7 @@ void Do_Opcode(int CycleFor)
 		B_REG=(temp16 & 0xFF);
 		cc[Z] = ZTEST(B_REG);
 		cc[N]= NTEST8(B_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case CMPB_D: //D1
@@ -2292,7 +2363,7 @@ void Do_Opcode(int CycleFor)
 		cc[V]= OTEST8(cc[C],postbyte,temp8,B_REG);
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case SBCB_D: //D2
@@ -2303,7 +2374,7 @@ void Do_Opcode(int CycleFor)
 		B_REG = (temp16 & 0xFF);
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ADDD_D: //D3
@@ -2314,7 +2385,7 @@ void Do_Opcode(int CycleFor)
 		D_REG= (temp32 & 0xFFFF);
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case ANDB_D: //D4
@@ -2322,7 +2393,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]=NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
 		cc[V] = false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case BITB_D: //D5
@@ -2330,7 +2401,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z] = ZTEST(temp8);
 		cc[V] = false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case LDB_D: //D6
@@ -2338,15 +2409,17 @@ void Do_Opcode(int CycleFor)
 		cc[Z] = ZTEST(B_REG);
 		cc[N]= NTEST8(B_REG);
 		cc[V] = false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case STB_D: //D7
+		Cycles(3);//2r+1d
 		MemWrite8( B_REG,(dp.Reg |MemRead8(pc.Reg++)));
+		Cycles(1);//w
 		cc[Z] = ZTEST(B_REG);
 		cc[N]= NTEST8(B_REG);
 		cc[V] = false;
-		CycleCounter+=4;
+		//Cycles(4);//CycleCounter+=4;
 		break;
 
 	case EORB_D: //D8
@@ -2354,7 +2427,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
 		cc[V] = false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ADCB_D: //D9
@@ -2366,7 +2439,7 @@ void Do_Opcode(int CycleFor)
 		B_REG= (temp16 & 0xFF);
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ORB_D: //DA
@@ -2374,7 +2447,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
 		cc[V] = false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ADDB_D: //DB
@@ -2386,7 +2459,7 @@ void Do_Opcode(int CycleFor)
 		B_REG=(temp16 & 0xFF);
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case LDD_D: //DC
@@ -2394,7 +2467,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
 		cc[V]= false;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case STD_D: //DD
@@ -2402,7 +2475,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
 		cc[V]= false;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LDU_D: //DE
@@ -2410,7 +2483,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(u.Reg);
 		cc[N]= NTEST16(u.Reg);
 		cc[V]= false;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case STU_D: //DF
@@ -2418,7 +2491,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(u.Reg);
 		cc[N]= NTEST16(u.Reg);
 		cc[V]= false;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case SUBB_X: //E0
@@ -2429,7 +2502,7 @@ void Do_Opcode(int CycleFor)
 		B_REG= (temp16 & 0xFF);
 		cc[Z]= ZTEST(B_REG);
 		cc[N]= NTEST8(B_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case CMPB_X: //E1
@@ -2439,7 +2512,7 @@ void Do_Opcode(int CycleFor)
 		cc[V]= OTEST8(cc[C],postbyte,temp8,B_REG);
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case SBCB_X: //E2
@@ -2450,7 +2523,7 @@ void Do_Opcode(int CycleFor)
 		B_REG = (temp16 & 0xFF);
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ADDD_X: //E3
@@ -2461,7 +2534,7 @@ void Do_Opcode(int CycleFor)
 		D_REG= (temp32 & 0xFFFF);
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case ANDB_X: //E4
@@ -2469,7 +2542,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
 		cc[V]= false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case BITB_X: //E5
@@ -2477,7 +2550,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		cc[V] = false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case LDB_X: //E6
@@ -2485,15 +2558,17 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(B_REG);
 		cc[N]= NTEST8(B_REG);
 		cc[V]= false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case STB_X: //E7
+		Cycles(3);
 		MemWrite8(B_REG,CalculateEA(MemRead8(pc.Reg++)));
+		Cycles(1);
 		cc[Z]= ZTEST(B_REG);
 		cc[N]= NTEST8(B_REG);
 		cc[V]= false;
-		CycleCounter+=4;
+		//Cycles(4);//CycleCounter+=4;
 		break;
 
 	case EORB_X: //E8
@@ -2502,7 +2577,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
 		cc[V] = false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ADCB_X: //E9
@@ -2514,7 +2589,7 @@ void Do_Opcode(int CycleFor)
 		B_REG= (temp16 & 0xFF);
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ORB_X: //EA
@@ -2522,7 +2597,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
 		cc[V] = false;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case ADDB_X: //EB
@@ -2534,7 +2609,7 @@ void Do_Opcode(int CycleFor)
 		B_REG=(temp16 & 0xFF);
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case LDD_X: //EC
@@ -2543,7 +2618,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
 		cc[V] = false;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case STD_X: //ED
@@ -2551,7 +2626,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
 		cc[V] = false;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LDU_X: //EE
@@ -2559,7 +2634,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z] = ZTEST(u.Reg);
 		cc[N]=NTEST16(u.Reg);
 		cc[V] = false;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case STU_X: //EF
@@ -2567,7 +2642,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z] = ZTEST(u.Reg);
 		cc[N]=NTEST16(u.Reg);
 		cc[V] = false;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case SUBB_E: //F0
@@ -2579,7 +2654,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z] = ZTEST(B_REG);
 		cc[N]= NTEST8(B_REG);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case CMPB_E: //F1
@@ -2590,7 +2665,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(temp8);
 		cc[Z]= ZTEST(temp8);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case SBCB_E: //F2
@@ -2602,7 +2677,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case ADDD_E: //F3
@@ -2614,7 +2689,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(D_REG);
 		cc[N]= NTEST16(D_REG);
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case ANDB_E:  //F4
@@ -2623,7 +2698,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(B_REG);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case BITB_E: //F5
@@ -2632,7 +2707,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z]= ZTEST(temp8);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LDB_E: //F6
@@ -2641,16 +2716,18 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(B_REG);
 		cc[V] = false;
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case STB_E: //F7
+		Cycles(4);
 		MemWrite8(B_REG,MemRead16(pc.Reg));
+		Cycles(1);
 		cc[Z] = ZTEST(B_REG);
 		cc[N] = NTEST8(B_REG);
 		cc[V] = false;
 		pc.Reg+=2;
-		CycleCounter+=5;
+		//Cycles(5);//CycleCounter+=5;
 		break;
 
 	case EORB_E: //F8
@@ -2659,7 +2736,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z] = ZTEST(B_REG);
 		cc[V] = false;
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case ADCB_E: //F9
@@ -2672,7 +2749,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(B_REG);
 		cc[Z]= ZTEST(B_REG);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case ORB_E: //FA
@@ -2681,7 +2758,7 @@ void Do_Opcode(int CycleFor)
 		cc[Z] = ZTEST(B_REG);
 		cc[V] = false;
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case ADDB_E: //FB
@@ -2694,7 +2771,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST8(B_REG);
 		cc[Z] = ZTEST(B_REG);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LDD_E: //FC
@@ -2703,7 +2780,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST16(D_REG);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case STD_E: //FD
@@ -2712,7 +2789,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]=NTEST16(D_REG);
 		cc[V] = false;
 		pc.Reg+=2;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case LDU_E: //FE
@@ -2721,7 +2798,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST16(u.Reg);
 		cc[V] = false;
 		pc.Reg+=2;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case STU_E: //FF
@@ -2730,7 +2807,7 @@ void Do_Opcode(int CycleFor)
 		cc[N]= NTEST16(u.Reg);
 		cc[V] = false;
 		pc.Reg+=2;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	default:
@@ -2749,15 +2826,15 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBRN_R: //1021
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBHI_R: //1022
@@ -2765,10 +2842,10 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBLS_R: //1023
@@ -2776,10 +2853,10 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBHS_R: //1024
@@ -2787,10 +2864,10 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case LBCS_R: //1025
@@ -2798,10 +2875,10 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBNE_R: //1026
@@ -2809,10 +2886,10 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBVC_R: //1028
@@ -2820,10 +2897,10 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBVS_R: //1029
@@ -2831,10 +2908,10 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBPL_R: //102A
@@ -2842,10 +2919,10 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBMI_R: //102B
@@ -2853,10 +2930,10 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBGE_R: //102C
@@ -2864,10 +2941,10 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBLT_R: //102D
@@ -2875,10 +2952,10 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBGT_R: //102E
@@ -2886,10 +2963,10 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LBLE_R:	//102F
@@ -2897,10 +2974,10 @@ void P2_Opcode()
 		{
 			*spostword=MemRead16(pc.Reg);
 			pc.Reg+=*spostword;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 		}
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case SWI2_I: //103F
@@ -2918,7 +2995,7 @@ void P2_Opcode()
 		MemWrite8(A_REG,--s.Reg);
 		MemWrite8(get_cc_flags(),--s.Reg);
 		pc.Reg=MemRead16(VSWI2);
-		CycleCounter+=20;
+		Cycles(20);//CycleCounter+=20;
 		break;
 
 	case CMPD_M: //1083
@@ -2929,7 +3006,7 @@ void P2_Opcode()
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case CMPY_M: //108C
@@ -2940,7 +3017,7 @@ void P2_Opcode()
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case LDY_M: //108E
@@ -2949,7 +3026,7 @@ void P2_Opcode()
 		cc[N]= NTEST16(y.Reg);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case CMPD_D: //1093
@@ -2959,7 +3036,7 @@ void P2_Opcode()
 		cc[V]= OTEST16(cc[C],postword,temp16,D_REG);
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case CMPY_D:	//109C
@@ -2969,7 +3046,7 @@ void P2_Opcode()
 		cc[V]= OTEST16(cc[C],postword,temp16,y.Reg);
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case LDY_D: //109E
@@ -2977,7 +3054,7 @@ void P2_Opcode()
 		cc[Z]= ZTEST(y.Reg);
 		cc[N]= NTEST16(y.Reg);
 		cc[V]= false;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case STY_D: //109F
@@ -2985,7 +3062,7 @@ void P2_Opcode()
 		cc[Z]= ZTEST(y.Reg);
 		cc[N]= NTEST16(y.Reg);
 		cc[V]= false;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case CMPD_X: //10A3
@@ -2995,7 +3072,7 @@ void P2_Opcode()
 		cc[V]= OTEST16(cc[C],postword,temp16,D_REG);
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case CMPY_X: //10AC
@@ -3005,7 +3082,7 @@ void P2_Opcode()
 		cc[V]= OTEST16(cc[C],postword,temp16,Y_REG);
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case LDY_X: //10AE
@@ -3013,7 +3090,7 @@ void P2_Opcode()
 		cc[Z]= ZTEST(y.Reg);
 		cc[N]= NTEST16(y.Reg);
 		cc[V]= false;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case STY_X: //10AF
@@ -3021,7 +3098,7 @@ void P2_Opcode()
 		cc[Z]= ZTEST(y.Reg);
 		cc[N]= NTEST16(y.Reg);
 		cc[V]= false;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case CMPD_E: //10B3
@@ -3032,7 +3109,7 @@ void P2_Opcode()
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		pc.Reg+=2;
-		CycleCounter+=8;
+		Cycles(8);//CycleCounter+=8;
 		break;
 
 	case CMPY_E: //10BC
@@ -3043,7 +3120,7 @@ void P2_Opcode()
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		pc.Reg+=2;
-		CycleCounter+=8;
+		Cycles(8);//CycleCounter+=8;
 		break;
 
 	case LDY_E: //10BE
@@ -3052,7 +3129,7 @@ void P2_Opcode()
 		cc[N]= NTEST16(y.Reg);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case STY_E: //10BF
@@ -3061,7 +3138,7 @@ void P2_Opcode()
 		cc[N]= NTEST16(y.Reg);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case LDS_I:  //10CE
@@ -3070,7 +3147,7 @@ void P2_Opcode()
 		cc[N]= NTEST16(s.Reg);
 		cc[V] = false;
 		pc.Reg+=2;
-		CycleCounter+=4;
+		Cycles(4);//CycleCounter+=4;
 		break;
 
 	case LDS_D: //10DE
@@ -3078,7 +3155,7 @@ void P2_Opcode()
 		cc[Z]= ZTEST(s.Reg);
 		cc[N]= NTEST16(s.Reg);
 		cc[V] = false;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case STS_D: //10DF
@@ -3086,7 +3163,7 @@ void P2_Opcode()
 		cc[Z]= ZTEST(s.Reg);
 		cc[N]= NTEST16(s.Reg);
 		cc[V]= false;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case LDS_X: //10EE
@@ -3094,7 +3171,7 @@ void P2_Opcode()
 		cc[Z]= ZTEST(s.Reg);
 		cc[N]= NTEST16(s.Reg);
 		cc[V]= false;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case STS_X: //10EF
@@ -3102,7 +3179,7 @@ void P2_Opcode()
 		cc[Z]= ZTEST(s.Reg);
 		cc[N]= NTEST16(s.Reg);
 		cc[V]= false;
-		CycleCounter+=6;
+		Cycles(6);//CycleCounter+=6;
 		break;
 
 	case LDS_E: //10FE
@@ -3111,7 +3188,7 @@ void P2_Opcode()
 		cc[N]= NTEST16(s.Reg);
 		cc[V]= false;
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case STS_E: //10FF
@@ -3120,7 +3197,7 @@ void P2_Opcode()
 		cc[N]= NTEST16(s.Reg);
 		cc[V] = false;
 		pc.Reg+=2;
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	default:
@@ -3137,7 +3214,7 @@ void P3_Opcode()
 		if (EmuState.Debugger.Break_Enabled()) {
 			EmuState.Debugger.Halt();
 		} else {
-			CycleCounter+=4;
+			Cycles(4);//CycleCounter+=4;
 		}
 		break;
 
@@ -3156,7 +3233,7 @@ void P3_Opcode()
 		MemWrite8(A_REG,--s.Reg);
 		MemWrite8(get_cc_flags(),--s.Reg);
 		pc.Reg=MemRead16(VSWI3);
-		CycleCounter+=20;
+		Cycles(20);//CycleCounter+=20;
 		break;
 
 	case CMPU_M: //1183
@@ -3167,7 +3244,7 @@ void P3_Opcode()
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case CMPS_M: //118C
@@ -3178,7 +3255,7 @@ void P3_Opcode()
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		pc.Reg+=2;
-		CycleCounter+=5;
+		Cycles(5);//CycleCounter+=5;
 		break;
 
 	case CMPU_D: //1193
@@ -3188,7 +3265,7 @@ void P3_Opcode()
 		cc[V]= OTEST16(cc[C],postword,temp16,U_REG);
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case CMPS_D: //119C
@@ -3198,7 +3275,7 @@ void P3_Opcode()
 		cc[V]= OTEST16(cc[C],postword,temp16,S_REG);
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case CMPU_X: //11A3
@@ -3208,7 +3285,7 @@ void P3_Opcode()
 		cc[V]= OTEST16(cc[C],postword,temp16,U_REG);
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case CMPS_X:  //11AC
@@ -3218,7 +3295,7 @@ void P3_Opcode()
 		cc[V]= OTEST16(cc[C],postword,temp16,S_REG);
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
-		CycleCounter+=7;
+		Cycles(7);//CycleCounter+=7;
 		break;
 
 	case CMPU_E: //11B3
@@ -3229,7 +3306,7 @@ void P3_Opcode()
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		pc.Reg+=2;
-		CycleCounter+=8;
+		Cycles(8);//CycleCounter+=8;
 		break;
 
 	case CMPS_E: //11BC
@@ -3240,7 +3317,7 @@ void P3_Opcode()
 		cc[N]= NTEST16(temp16);
 		cc[Z]= ZTEST(temp16);
 		pc.Reg+=2;
-		CycleCounter+=8;
+		Cycles(8);//CycleCounter+=8;
 		break;
 
 	default:
@@ -3252,7 +3329,7 @@ void P3_Opcode()
 void cpu_firq()
 {
 	if (EmuState.Debugger.IsTracing())
-		EmuState.Debugger.TraceCaptureInterruptServicing(INT_FIRQ, CycleCounter, MC6809GetState());
+		EmuState.Debugger.TraceCaptureInterruptServicing(INT_FIRQ, GetCycles(), MC6809GetState());
 
 	cc[E] = false; // Turn E flag off
 	MemWrite8(pc.B.lsb, --s.Reg);
@@ -3262,16 +3339,16 @@ void cpu_firq()
 	cc[F] = true;
 	pc.Reg = MemRead16(VFIRQ);
 
-	CycleCounter += 15;			// 10 Cycles to respond, 5 cycles to stack and load PC.
+	Cycles(10);//Cycles(15);//CycleCounter += 15;			// 10 Cycles to respond, 5 cycles to stack and load PC.
 
 	if (EmuState.Debugger.IsTracing())
-		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_FIRQ, CycleCounter, MC6809GetState());
+		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_FIRQ, GetCycles(), MC6809GetState());
 }
 
 void cpu_irq()
 {
 	if (EmuState.Debugger.IsTracing())
-		EmuState.Debugger.TraceCaptureInterruptServicing(INT_IRQ, CycleCounter, MC6809GetState());
+		EmuState.Debugger.TraceCaptureInterruptServicing(INT_IRQ, GetCycles(), MC6809GetState());
 
 	cc[E] = true;
 	MemWrite8(pc.B.lsb, --s.Reg);
@@ -3290,16 +3367,16 @@ void cpu_irq()
 	pc.Reg = MemRead16(VIRQ);
 	cc[I] = true;
 
-	CycleCounter += 24;			// 10 Cycles to respond, 14 cycles to stack and load PC.
+	Cycles(19);//Cycles(24);//CycleCounter += 24;			// 10 Cycles to respond, 14 cycles to stack and load PC.
 
 	if (EmuState.Debugger.IsTracing())
-		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_IRQ, CycleCounter, MC6809GetState());
+		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_IRQ, GetCycles(), MC6809GetState());
 }
 
 void cpu_nmi()
 {
 	if (EmuState.Debugger.IsTracing())
-		EmuState.Debugger.TraceCaptureInterruptServicing(INT_NMI, CycleCounter, MC6809GetState());
+		EmuState.Debugger.TraceCaptureInterruptServicing(INT_NMI, GetCycles(), MC6809GetState());
 
 	cc[E] = true;
 	MemWrite8(pc.B.lsb, --s.Reg);
@@ -3318,10 +3395,10 @@ void cpu_nmi()
 	cc[F] = true;
 	pc.Reg = MemRead16(VNMI);
 
-	CycleCounter += 24;			// 10 Cycles to respond, 14 cycles to stack and load PC.
+	Cycles(19);//Cycles(24);//CycleCounter += 24;			// 10 Cycles to respond, 14 cycles to stack and load PC.
 
 	if (EmuState.Debugger.IsTracing())
-		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_NMI, CycleCounter, MC6809GetState());
+		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_NMI, GetCycles(), MC6809GetState());
 
 	ClearNMI();
 }
@@ -3349,12 +3426,9 @@ void MC6809AssertInterupt(InterruptSource src, Interrupt interrupt)
 	assert(interrupt >= INT_IRQ && interrupt <= INT_NMI);
 
 	InterruptLine[src] |= Bit(interrupt);
-	if (SyncWaiting || interrupt == INT_NMI)
-		LatchInterrupts();
-	SyncWaiting = 0;
 
 	if (EmuState.Debugger.IsTracing())
-		EmuState.Debugger.TraceCaptureInterruptRequest(interrupt, CycleCounter, MC6809GetState());
+		EmuState.Debugger.TraceCaptureInterruptRequest(interrupt, GetCycles(), MC6809GetState());
 }
 
 void MC6809DeAssertInterupt(InterruptSource src, Interrupt interrupt)
@@ -3396,25 +3470,25 @@ static unsigned short CalculateEA(unsigned char postbyte)
 		case 0:
 			ea=(*indexableRegisters[Register]);
 			(*indexableRegisters[Register])++;
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 			break;
 
 		case 1:
 			ea=(*indexableRegisters[Register]);
 			(*indexableRegisters[Register])+=2;
-			CycleCounter+=3;
+			Cycles(3);//CycleCounter+=3;
 			break;
 
 		case 2:
 			(*indexableRegisters[Register])-=1;
 			ea=(*indexableRegisters[Register]);
-			CycleCounter+=2;
+			Cycles(2);//CycleCounter+=2;
 			break;
 
 		case 3:
 			(*indexableRegisters[Register])-=2;
 			ea=(*indexableRegisters[Register]);
-			CycleCounter+=3;
+			Cycles(3);//CycleCounter+=3;
 			break;
 
 		case 4:
@@ -3423,52 +3497,52 @@ static unsigned short CalculateEA(unsigned char postbyte)
 
 		case 5:
 			ea=(*indexableRegisters[Register])+((signed char)B_REG);
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 			break;
 
 		case 6:
 			ea=(*indexableRegisters[Register])+((signed char)A_REG);
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 			break;
 
 		case 7:
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 			break;
 
 		case 8:
 			ea=(*indexableRegisters[Register])+(signed char)MemRead8(pc.Reg++);
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 			break;
 
 		case 9:
 			ea=(*indexableRegisters[Register])+MemRead16(pc.Reg);
-			CycleCounter+=4;
+			Cycles(4);//CycleCounter+=4;
 			pc.Reg+=2;
 			break;
 
 		case 10:
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 			break;
 
 		case 11:
 			ea=(*indexableRegisters[Register])+D_REG; //Changed to unsigned 03/14/2005 NG Was signed
-			CycleCounter+=4;
+			Cycles(4);//CycleCounter+=4;
 			break;
 
 		case 12:
 			ea=(signed short)pc.Reg+(signed char)MemRead8(pc.Reg)+1;
-			CycleCounter+=1;
+			Cycles(1);//CycleCounter+=1;
 			pc.Reg++;
 			break;
 
 		case 13: //MM
 			ea=pc.Reg+MemRead16(pc.Reg)+2;
-			CycleCounter+=5;
+			Cycles(5);//CycleCounter+=5;
 			pc.Reg+=2;
 			break;
 
 		case 14:
-			CycleCounter+=4;
+			Cycles(4);//CycleCounter+=4;
 			break;
 
 		case 15: //01111
@@ -3508,89 +3582,89 @@ static unsigned short CalculateEA(unsigned char postbyte)
 			ea=(*indexableRegisters[Register]);
 			(*indexableRegisters[Register])+=2;
 			ea=MemRead16(ea);
-			CycleCounter+=6;
+			Cycles(6);//CycleCounter+=6;
 			break;
 
 		case 18: //10010
-			CycleCounter+=6;
+			Cycles(6);//CycleCounter+=6;
 			break;
 
 		case 19: //10011
 			(*indexableRegisters[Register])-=2;
 			ea=(*indexableRegisters[Register]);
 			ea=MemRead16(ea);
-			CycleCounter+=6;
+			Cycles(6);//CycleCounter+=6;
 			break;
 
 		case 20: //10100
 			ea=(*indexableRegisters[Register]);
 			ea=MemRead16(ea);
-			CycleCounter+=3;
+			Cycles(3);//CycleCounter+=3;
 			break;
 
 		case 21: //10101
 			ea=(*indexableRegisters[Register])+((signed char)B_REG);
 			ea=MemRead16(ea);
-			CycleCounter+=4;
+			Cycles(4);//CycleCounter+=4;
 			break;
 
 		case 22: //10110
 			ea=(*indexableRegisters[Register])+((signed char)A_REG);
 			ea=MemRead16(ea);
-			CycleCounter+=4;
+			Cycles(4);//CycleCounter+=4;
 			break;
 
 		case 23: //10111
 			ea=MemRead16(ea);
-			CycleCounter+=4;
+			Cycles(4);//CycleCounter+=4;
 			break;
 
 		case 24: //11000
 			ea=(*indexableRegisters[Register])+(signed char)MemRead8(pc.Reg++);
 			ea=MemRead16(ea);
-			CycleCounter+=4;
+			Cycles(4);//CycleCounter+=4;
 			break;
 
 		case 25: //11001
 			ea=(*indexableRegisters[Register])+MemRead16(pc.Reg);
 			ea=MemRead16(ea);
-			CycleCounter+=7;
+			Cycles(7);//CycleCounter+=7;
 			pc.Reg+=2;
 			break;
 		case 26: //11010
 			ea=MemRead16(ea);
-			CycleCounter+=4;
+			Cycles(4);//CycleCounter+=4;
 			break;
 
 		case 27: //11011
 			ea=(*indexableRegisters[Register])+D_REG;
 			ea=MemRead16(ea);
-			CycleCounter+=7;
+			Cycles(7);//CycleCounter+=7;
 			break;
 
 		case 28: //11100
 			ea=(signed short)pc.Reg+(signed char)MemRead8(pc.Reg)+1;
 			ea=MemRead16(ea);
-			CycleCounter+=4;
+			Cycles(4);//CycleCounter+=4;
 			pc.Reg++;
 			break;
 
 		case 29: //11101
 			ea=pc.Reg+MemRead16(pc.Reg)+2;
 			ea=MemRead16(ea);
-			CycleCounter+=8;
+			Cycles(8);//CycleCounter+=8;
 			pc.Reg+=2;
 			break;
 
 		case 30: //11110
 			ea=MemRead16(ea);
-			CycleCounter+=7;
+			Cycles(7);//CycleCounter+=7;
 			break;
 
 		case 31: //11111
 			ea=MemRead16(pc.Reg);
 			ea=MemRead16(ea);
-			CycleCounter+=8;
+			Cycles(8);//CycleCounter+=8;
 			pc.Reg+=2;
 			break;
 
@@ -3602,7 +3676,7 @@ static unsigned short CalculateEA(unsigned char postbyte)
 		byte= (byte << 3);
 		byte= byte /8;
 		ea= *indexableRegisters[Register]+byte; //Was signed
-		CycleCounter+=1;
+		Cycles(1);//CycleCounter+=1;
 	}
 return ea;
 }

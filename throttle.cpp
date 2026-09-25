@@ -17,6 +17,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <Windows.h>
+#include "BuildConfig.h"
 #include "throttle.h"
 #include "audio.h"
 #include "defines.h"
@@ -25,7 +26,6 @@ This file is part of VCC (Virtual Color Computer).
 static _LARGE_INTEGER StartTime,EndTime,OneFrame,CurrentTime,SleepRes,TargetTime,OneMs;
 static _LARGE_INTEGER MasterClock,Now;
 static unsigned char FrameSkip=0;
-static float fMasterClock=0;
 
 void CalibrateThrottle()
 {
@@ -33,7 +33,6 @@ void CalibrateThrottle()
 	QueryPerformanceFrequency(&MasterClock);
 	OneFrame.QuadPart = MasterClock.QuadPart / TARGETFRAMERATE;
 	OneMs.QuadPart=MasterClock.QuadPart/1000;
-	fMasterClock=(float)MasterClock.QuadPart;
 }
 
 
@@ -53,17 +52,9 @@ void EndRender(unsigned char Skip)
 
 void FrameWait()
 {
-	//If we have more that 10Ms till the end of the frame
-	QueryPerformanceCounter(&CurrentTime);
-	while ((TargetTime.QuadPart - CurrentTime.QuadPart) > (OneMs.QuadPart * 10))
-	{
-		Sleep(5);	//Give about 5Ms back to the system
-		QueryPerformanceCounter(&CurrentTime);	//And check again
-	}
-
 	//If we have more that 2Ms till the end of the frame
 	QueryPerformanceCounter(&CurrentTime);
-	while ( (TargetTime.QuadPart-CurrentTime.QuadPart)> (OneMs.QuadPart*2))
+	while ((TargetTime.QuadPart - CurrentTime.QuadPart) > OneMs.QuadPart*3)
 	{
 		Sleep(1);	//Give about 1Ms back to the system
 		QueryPerformanceCounter(&CurrentTime);	//And check again
@@ -93,7 +84,7 @@ void FrameWait()
 	}
 	
 	//Poll Untill frame end.
-	while ( CurrentTime.QuadPart< TargetTime.QuadPart)	
+	while (CurrentTime.QuadPart < TargetTime.QuadPart)
 		QueryPerformanceCounter(&CurrentTime);
 
 	return;
