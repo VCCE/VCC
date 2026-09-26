@@ -3650,7 +3650,7 @@ void Nop_I()
 
 void Sync_I()
 { //13
-	CycleCounter += NatEmuCycles21;
+	CycleCounter=gCycleFor;
 	SyncWaiting=1;
 }
 
@@ -4239,7 +4239,7 @@ void Cwai_I()
 	ccbits=getcc();
 	ccbits = ccbits & postbyte;
 	setcc(ccbits);
-	CycleCounter += NatEmuCycles21;
+	CycleCounter=gCycleFor;
 	SyncWaiting=1;
 }
 
@@ -7041,33 +7041,16 @@ int HD6309Exec(int CycleFor)
 
 		LatchInterrupts();
 
-		// if at label c (Wait for Sync)
-		if (SyncWaiting)
-		{
-			if (NMI() || FIRQ() || IRQ())
-			{
-				++CycleCounter;
-				SyncWaiting = 0;
-
-				// label b, continue
-			}
-			else
-			{
-				// use up remaining cycles if any
-				if (CycleCounter < CycleFor)
-					CycleCounter = CycleFor;
-
-				// goto label a, for halt check
-				return(CycleFor - CycleCounter);
-			}
-		}
-
 		if (NMI())
 			cpu_nmi();
 		else if (FIRQ() && !CC(F))
 			cpu_firq();
 		else if (IRQ() && !CC(I))
 			cpu_irq();
+
+		if (SyncWaiting == 1)	//Abort the run nothing happens asyncronously from the CPU
+			return 0; // WDZ - Experimental SyncWaiting should still return used cycles (and not zero) by breaking from loop
+
 
 		// ANy CPU Breakpoints set?
 		if (!EmuState.Debugger.IsStepping() && !CPUBreakpoints.empty())
@@ -7536,6 +7519,9 @@ void HD6309AssertInterupt(InterruptSource src, Interrupt interrupt)
 	assert(interrupt >= INT_IRQ && interrupt <= INT_NMI);
 
 	InterruptLine[src] |= Bit(interrupt);
+	if (SyncWaiting || interrupt == INT_NMI)
+		LatchInterrupts();
+	SyncWaiting = 0;
 
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptRequest(interrupt, CycleCounter, HD6309GetState());
