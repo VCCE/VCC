@@ -1,6 +1,6 @@
 /*
  * XSID.dll for VCC - CoCo X-SID compatible cartridge interface
- * v0.2.0 high-fidelity TEST build (2026-09-04)
+ * v0.3.5 original-SID-clock compatibility build (2026-09-29)
  *
  * External interface is unchanged from locked v0.1.0:
  *   CoCo SCS $FF40-$FF5F -> SID register $00-$1F
@@ -22,10 +22,22 @@ typedef unsigned int u32;
 typedef signed int s32;
 typedef unsigned int size32;
 
+#ifndef SID_CLOCK
 #define SID_CLOCK 1000000u
-#define VCC_AUDIO_RATE 15720u
+#endif
+#ifndef XSID_NAME
+#define XSID_NAME "SID (1.000 MHz)"
+#endif
+#ifndef XSID_CATALOG
+#define XSID_CATALOG "XSID-VCC-031-F"
+#endif
+#ifndef XSID_DESC
+#define XSID_DESC "CoCo X-SID write-only cartridge emulation, original SID 1.000 MHz clock"
+#endif
+#define VCC_AUDIO_RATE 44100u
 #define INTERNAL_DIV 4u
 #define PHASE_MASK 0x00ffffffu
+#define OUTPUT_FULLSCALE_DIV 48 /* calibrated: 3 voices at ENV=255,VOL=15 reach ~127 without gain clipping */
 
 #define CTRL_GATE  0x01
 #define CTRL_SYNC  0x02
@@ -332,8 +344,13 @@ static s32 render_subsample_q8(void)
         filt_bp -= filt_bp >> 8;
     }
 
-    /* Preserve fractional precision until the final PakSampleAudio result. */
-    direct = (direct * (s32)vol * 256) / (15 * 48);
+    /* Maximum-clean output calibration.
+       At VOL=15, three simultaneously full-scale unfiltered voices reach
+       approximately the VCC signed 8-bit rail.  A smaller divisor would
+       necessarily clip that valid SID worst case, so OUTPUT_FULLSCALE_DIV=48
+       is the maximum fixed clean gain.  Lower SID master-volume values retain
+       their programmed proportional level. */
+    direct = (direct * (s32)vol * 256) / (15 * OUTPUT_FULLSCALE_DIV);
     direct = clamp_s32(direct, -32512, 32512);
     return direct;
 }
@@ -356,17 +373,17 @@ static void sid_write(u8 reg, u8 value)
 
 __declspec(dllexport) const char* PakGetName(void)
 {
-    return "CoCo X-SID HiFi";
+    return XSID_NAME;
 }
 
 __declspec(dllexport) const char* PakGetCatalogId(void)
 {
-    return "XSID-VCC-020";
+    return XSID_CATALOG;
 }
 
 __declspec(dllexport) const char* PakGetDescription(void)
 {
-    return "CoCo X-SID compatible MOS8580 cartridge emulation, oversampled test core";
+    return XSID_DESC;
 }
 
 __declspec(dllexport) void PakInitialize(size32 slot_id,
@@ -394,7 +411,7 @@ __declspec(dllexport) void PakWritePort(u8 port, u8 data)
 __declspec(dllexport) u8 PakReadPort(u8 port)
 {
     if (port >= 0x40u && port <= 0x5fu)
-        return sid_read((u8)(port - 0x40u));
+        return 0xffu;
     return 0xffu;
 }
 
