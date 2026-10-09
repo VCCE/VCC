@@ -24,13 +24,13 @@ private:
 
 	struct MenuItems
 	{
-		static const unsigned int SelectRom = 3;
+		static const unsigned int SelectRom = 10;
 	};
 
 	struct Ports
 	{
-		static const unsigned char BankSelect = 0x40;
-		static const unsigned char PSG = 0x41;
+		static const unsigned char BankSelect = 0;
+		static const unsigned char PSG = 1;
 	};
 
 	ROM				m_ROMImage;
