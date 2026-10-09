@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <vcc/util/logger.h>
 #include <vcc/bus/cartridge_menu.h>
+#include <vcc/bus/cartridge_messages.h>
 
 static VCC::Bus::cartridge_menu GMCMenu {};
 
@@ -47,22 +48,13 @@ void GMCCartridge::OnMenuItemSelected(unsigned char menuId)
 	if (menuId == MenuItems::SelectRom)
 	{
 		const auto selectedFile(SelectROMFile());
-		if (selectedFile.empty())
-		{
-			return;
-		}
-
-		MessageBoxA(
-			nullptr,
-			"A new ROM file has been selected. Press F9 to reset\nyour Color Computer and activate the ROM.",
-			"ROM Selected",
-			MB_OK);
-
 		m_Configuration.SetActiveRom(selectedFile);
+
+		extern HWND gVccWnd;
+		SendMessage(gVccWnd, WM_VCC_CPU_RESET, (WPARAM)0, (LPARAM)0);
 
 		AssetCartridgeLine(false);
 		AssetCartridgeLine(true);
-
 	}
 }
 
@@ -102,7 +94,7 @@ unsigned char GMCCartridge::OnReadMemory(unsigned short address) const
 
 void GMCCartridge::OnWritePort(unsigned char port, unsigned char data)
 {
-	switch (port)
+	switch (port&1)
 	{
 	case Ports::BankSelect:
 		m_ROMImage.SetBank(data);
@@ -117,7 +109,7 @@ void GMCCartridge::OnWritePort(unsigned char port, unsigned char data)
 
 unsigned char GMCCartridge::OnReadPort(unsigned char port) const
 {
-	if (port == Ports::BankSelect)
+	if ((port&1) == Ports::BankSelect)
 	{
 		return m_ROMImage.GetBank();
 	}

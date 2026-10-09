@@ -33,13 +33,15 @@ GMC_EXPORT const char* PakGetDescription()
 	return string_buffer;
 }
 
-
+HWND gVccWnd;
 GMC_EXPORT void PakInitialize(
 	slot_id_type SlotId,
 	const char* const configuration_path,
 	HWND hVccWnd,
 	const cpak_callbacks* const callbacks)
 {
+	gVccWnd = hVccWnd;
+
     DLOG_C("GMC %p %p %p %p\n",
             callbacks->assert_interrupt,
             callbacks->assert_cartridge_line,

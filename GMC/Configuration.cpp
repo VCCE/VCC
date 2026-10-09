@@ -30,6 +30,7 @@ std::string Configuration::GetActiveRom() const
 
 void Configuration::SetActiveRom(std::string filename)
 {
+	m_ActiveROM = filename;
 	settings(m_Filename).write("GMC-SN74689","ROM",filename);
 
 //	m_MRURoms.emplace_back(m_ActiveROM);
