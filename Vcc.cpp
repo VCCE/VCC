@@ -442,6 +442,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				case ID_FILE_RESET_SFT:
 					if (EmuState.EmulationRunning)
 						EmuState.ResetPending=1;
+					break;
 
 				case ID_FILE_LOAD:
 					LoadIniFile();
