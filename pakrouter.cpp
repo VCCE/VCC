@@ -219,7 +219,7 @@ namespace VCC::Core
 		// MPI ports priority scan
 		for (int i = 1; i <= 4; i++) {
 			unsigned char data = PakRouter::slot_read_port(i, port);
-			if (data != i) return data;
+			if (data != 0) return data;
 		}
 		return 0;
 	}
