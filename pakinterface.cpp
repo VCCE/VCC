@@ -1,4 +1,4 @@
-//#define USE_LOGGING
+//define USE_LOGGING
 //======================================================================
 // This file is part of VCC (Virtual Color Computer).
 // Vcc is Copyright 2015 by Joseph Forgione
@@ -17,28 +17,18 @@
 // along with VCC (Virtual Color Computer).  If not, see
 // <http://www.gnu.org/licenses/>.
 //======================================================================
-
-//======================================================================
 //
-// As of VCC version 2.1.10 the MPI cartridge no longer loads the DLL's
-// and  ROM files that represent cartridges,  instead it  messages this
-// interface  with cart load and infomation requests to satisfy the MPI.
+// As of VCC version 2.1.10 the MPI cartridge no longer loads DLL and
+// ROM files that represent cartridges. Instead it sends messages to
+// pakinterface with cartridge update requests. An invidible proxy
+// window is used to forward the messages so messaging is not affected
+// by VCC full screen toggles.
 //
-// Windows messages fromx MPI are sent to a proxy that forwards to Vcc's
-// WndProc to give direction from the MPI. The proxy exists to allow VCC
-// to enter/exit full screen mode. When the mode change modifies the VCC
-// window  handle the proxy is notified  so it can  continuie to forward
-// the requests. Vcc.cpp uses the messages to call routines defined here
-// to fulfill the MPI requests.
-// 
-// An array of 5 slots contain the  cartridge objects used to keep track
-// of loaded cartridges. Slot 0 is the boot  slot and  slots 1-4 are the
+// An array of 5 slots holds the cartridge objects used to keep track of
+// loaded cartridges. Slot 0 is the COCO boot slot and slots 1-4 are
 // mulipak slots.
 //
-// Excepting UI driven cartridge  start and init  the router manages the
-// memory and port traffic with the cartridges.  These are CPU driven.
-//
-//==========================================================================
+//======================================================================
 
 #include "defines.h"
 #include "tcc1014mmu.h"
@@ -71,7 +61,6 @@ static VCC::Util::critical_section gPakMutex;
 static char DllPath[MAX_PATH] = "";
 
 void CartMenuCallBack(const char* name, int menu_id, MenuItemType type);
-//void PakAssertInterupt(Interrupt interrupt, InterruptSource source);
 
 // Arrays for holding cartridge slots. Slot 0 is boot slot.
 #define NumCartSlots 5
@@ -84,7 +73,7 @@ static std::array<plugin_ptr, NumCartSlots> gCartSlots{
 	std::make_unique<VCC::Core::null_cartridge>()
 };
 
-// Router object manages CPU driven cartridge exports and callbacks
+// Router object manages cartridge exports and callbacks
 static VCC::Core::PakRouter gPakRouter(gCartSlots);
 
 // A list of smart handles for unloading dll's
@@ -93,8 +82,6 @@ static std::array<plugin_handle, NumCartSlots> gCartDlls{};
 
 void UnloadCartridge(int slot);
 static cartridge_loader_status load_any_cartridge(int slot, const char *filename);
-
-//==========================================================================
 
 //--------------------------------------------------------
 // Define cartridge callbacks for the router
@@ -288,7 +275,7 @@ void UnloadCartridge(int slot)
 	// If slot 0 is unloaded then all other slots must be
 	// unloaded first. MPI no longer does this when stopped.
 	// Doing here gets that previous recursion in plain sight
-	if (slot == 0) { 
+	if (slot == 0) {
 		UnloadCartridge(4);
 		UnloadCartridge(3);
 		UnloadCartridge(2);
@@ -296,8 +283,7 @@ void UnloadCartridge(int slot)
 		gPakRouter.set_active_slot(0);
 	}
 
-	// Cartridge teardown has to be done carefully to 
-	// avoid conflicts and VCC crashes.
+	// Cartridge teardown must be done carefully to avoid VCC crashes.
 
 	// Stop the cartridge
 	gCartSlots[slot]->stop();
@@ -310,7 +296,7 @@ void UnloadCartridge(int slot)
 	// traffic running from it or VCC will crash. DLL's are
 	// responsible for cleanig up threads and traffic when
 	// asked to stop. A short pause here gives the exiting
-	// DLL a moment to complete those tasks. 
+	// DLL a moment to complete those tasks.
 	Sleep(5);
 
 	// Smart pointer reset() now unloads the dll
@@ -321,7 +307,7 @@ void UnloadCartridge(int slot)
 }
 
 //--------------------------------------------------------
-// VCC uses this to unload the slots
+// Unload boot cartridge called by Vcc.cpp
 //--------------------------------------------------------
 void UnloadDll()
 {
@@ -330,9 +316,8 @@ void UnloadDll()
 }
 
 //--------------------------------------------------------
-// Load cartridge to slot
+// Load cartridge
 //--------------------------------------------------------
-
 static cartridge_loader_status load_any_cartridge(int slot, const char *filename)
 {
 	DLOG_C("\npakinterface.load_any_cartridge slot %d %s called\n", slot, filename);
@@ -393,7 +378,6 @@ void UpdateBusPointer()
 //--------------------------------------------------------
 void UnloadPack()
 {
-	//UnloadDll();
 	DLOG_C("pakinterface.UnloadPack\n");
 	UnloadCartridge(0);
 	
@@ -416,11 +400,11 @@ void LoadPack(int type) {
 	gPakRouter.set_active_slot(0);
 	EmuState.ResetPending=2;
 	// Assert cart line for ROMs so they can auto run
-	if (type) SetCart(1);   
+	if (type) SetCart(1);
 }
 
 //--------------------------------------------------------
-// CartMenuActivated is called from VCC WndPrc when a 
+// CartMenuActivated is called from VCC WndPrc when a
 // cartridge menu item is clicked. MenuID is less than 250
 //--------------------------------------------------------
 void CartMenuActivated(unsigned int MenuID)
@@ -451,7 +435,7 @@ void CartMenuActivated(unsigned int MenuID)
 		break;
 
 	default:
-		// pakrouter handles clicks for plugin UIs
+		// Let pakrouter handle clicks for multipak slots
 		gPakRouter.menu_item_clicked(MenuID);
 	}
 }
@@ -460,36 +444,24 @@ void CartMenuActivated(unsigned int MenuID)
 // Messages from MPI
 // -------------------------------------------------------------
 
-// Set startup slot currenly comes from a radio button click in the MPI.
-// TODO: Vcc init sets it to zero.  MPI send it from settings via message.
-bool SetActiveSlot(unsigned int cts)
+// Set startup slot currenly comes from a radio button in MPI config.
+bool SetActiveSlot(unsigned int startup_slot)
 {
-	DLOG_C("Pakinterface SetActiveSlot CTS/SCS: %d\n",cts);
-
-	// Startup slot is 0-4 (cts+1).  This allows the pakrouter to decide where to
-	// apply memory and regsister I/O requests from the Coco CPU.  If startup slot
-	// is zero the MPI slots are ignored. If start up slot is non zero it controls
-	// the cts/scs functions of the mpi slots, numbered 1-4.
-
-	gPakRouter.set_active_slot(cts+1);
+	DLOG_C("Pakinterface SetActiveSlot %d\n",startup_slot);
+	// Startup slot is 0-3 One is added to set the active slot.
+	gPakRouter.set_active_slot(startup_slot+1);
 	return true;
 }
 
 // Unload slot contents
-// mpi/configuration_dialog.cpp:231
-// mpi/multipak_cartridge.cpp:338
-
 bool UnloadSlot(unsigned int slot)
 {
 	DLOG_C("Pakinterface UnloadSlot: %d\n",slot);
-//	if (slot == 0) SetActiveSlot(0);
 	UnloadCartridge(slot);
 	return true;
 }
 
-// Load slot (1-4)
-// mpi/configuration_dialog.cpp
-// mpi/multipak_cartridge.cpp
+// Load multi slot (1-4)
 bool LoadSlot(unsigned int slot, const CartLoadRequest * data)
 {
 	DLOG_C("pakinterface LoadSlot %d %s\n",slot,data->pluginPath);

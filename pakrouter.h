@@ -34,11 +34,11 @@ using plugin_ptr = typename cartridge_loader_result::cartridge_ptr_type;
 	class PakRouter
 	{
 	public:
-		// Constructor 
+		// Constructor
 		PakRouter::PakRouter(std::array<plugin_ptr, NumCartSlots>& slots)
 			: slots_(slots) {};
 
-		// UI driven 
+		// UI driven
 		void reset();
 
 		void set_slots(std::array<cartridge*, 5> slots) {};
