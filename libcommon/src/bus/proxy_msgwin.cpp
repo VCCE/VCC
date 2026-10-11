@@ -27,24 +27,20 @@ namespace VCC::Core
 	const char PROXY_CLASS[] = "ProxyMessageWindow";
 
 //------------------------------------------------------------------------------
-// Private message handler forwards messages defined in cartridge_messages.h 
+// Private message handler forwards messages defined in cartridge_messages.h
 //------------------------------------------------------------------------------
 
-	LRESULT CALLBACK ProxyMsgWin::ProxyProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	LRESULT CALLBACK ProxyMsgWin::ProxyProc(
+			HWND hwnd,
+			UINT uMsg,
+			WPARAM wParam,
+			LPARAM lParam)
 	{
-    	switch (uMsg)
-    	{
-			// allow create
-        	case WM_NCCREATE:
-            	return TRUE;
-			// forwared defined messages
-			case WM_VCC_CPU_RESET:
-			case WM_VCC_UPD_MENU:
-			case WM_VCC_SOFT_RESET:
-        		SendMessageA(h_target_, uMsg, wParam, lParam);
-				DLOG_C("DLL msg %d\n", uMsg);
-    	}
-		return 0;
+		if (uMsg >= WM_APP + 100 && uMsg <= WM_APP + 200) {
+			DLOG_C("DLL msg %d\n", uMsg);
+			return SendMessageA(h_target_, uMsg, wParam, lParam);
+		}
+		return TRUE;
 	}
 
 //------------------------------------------------------------------------------
@@ -55,36 +51,39 @@ namespace VCC::Core
 
 	HWND ProxyMsgWin::SetProxy(HWND h_VccWndProc)
 	{
-		HINSTANCE h_inst = GetModuleHandle(NULL);
+		// Save target handle (VCC WndProc)
+    	h_target_ = h_VccWndProc;
 
 		// One time create proxy msg window
-    	if (h_proxy_ == nullptr) {
+		if (h_proxy_ == nullptr) {
 
-    		WNDCLASSA wc = { };
-    		wc.lpfnWndProc   = ProxyProc;
-    		wc.hInstance     = h_inst;
-    		wc.lpszClassName = PROXY_CLASS;
+			HINSTANCE h_inst = GetModuleHandle(nullptr);
 
-    		if (!RegisterClassA(&wc)) {
-				DLOG_C("Failed to register window class\n");
-        		return h_VccWndProc;
-    		}
+			WNDCLASSA wc = { };
+			wc.lpfnWndProc   = ProxyProc;
+			wc.hInstance     = h_inst;
+			wc.lpszClassName = PROXY_CLASS;
 
-    		h_proxy_ = CreateWindowExA(
-        		0, PROXY_CLASS, "ProxyWindow",
-        		0, 0, 0, 0, 0, HWND_MESSAGE,
-        		nullptr, h_inst, nullptr
-    		);
+			if (!RegisterClassA(&wc)) {
+				const DWORD err = GetLastError();
+				if (err != ERROR_CLASS_ALREADY_EXISTS) {
+					DLOG_C("RegisterClass failed, error = %lu\n", err);
+					return h_VccWndProc; // fallback
+				}
+			}
 
-			if (!h_proxy_) {
-    			DWORD err = GetLastError();
+			h_proxy_ = CreateWindowExA(
+				0, PROXY_CLASS, "ProxyWindow",
+				0, 0, 0, 0, 0, HWND_MESSAGE,
+				nullptr, h_inst, nullptr
+			);
+
+			if (h_proxy_ == nullptr) {
+				const DWORD err = GetLastError();
 				DLOG_C("CreateWindowExA failed, error = %lu\n", err);
 				return h_VccWndProc;
 			}
 		}
-
-		// Save target handle (VCC WndProc)
-    	h_target_ = h_VccWndProc;
 
 		// Return proxy handle
 		return h_proxy_;

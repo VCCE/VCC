@@ -416,10 +416,11 @@
 #define IDC_EDIT_RANGE_SEP              2154
 #define IDC_MEM_WIDTH                   2155
 
-//-----------------------------------------------------
+//------------------------------------------------
 // ID 5000 - 5250 are reserved for cartridge menus
-// ID 5251 - 5299 are reseverd for cartridge messaging
-//-----------------------------------------------------
+// ID WM_APP+100 - WM_APP+200 (32868 - 32968) are
+// reserved for cartridge messaging (proxy)
+//------------------------------------------------
 
 #define IDM_USER_WIKI                   40001
 #define ID_FILE_EXIT                    40002

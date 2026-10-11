@@ -21,6 +21,9 @@
 //======================================================================
 #pragma once
 
+// following pragma could be avoided by adjusting project files
+#pragma comment(lib, "version.lib")
+
 #include <string>
 #include <filesystem>
 #include <algorithm>
@@ -46,6 +49,9 @@ namespace VCC::Util {
 	// Fully qualify a file based on execution directory
 	std::string QualifyModPath(const std::string& path);
 
+	// Get version information from EXE or DLL
+	std::string GetVersionInfo(const char* filename, const char* key);
+
 	//------------------------------------------------------------------------
 	// In line functions
 	//------------------------------------------------------------------------
@@ -57,14 +63,14 @@ namespace VCC::Util {
 		if (end == std::string::npos) return {};
 		return s.substr(0, end + 1);
 	}
-	
+
 	// Return filename part of a path
 	inline std::string GetFileNamePart(const std::string& input)
 	{
 		std::filesystem::path p(input);
 		return p.filename().string();
 	}
-	
+
 	// Determine if path is a direcory
 	inline bool IsDirectory(const std::string& path)
 	{
@@ -77,7 +83,7 @@ namespace VCC::Util {
 	{
 		HANDLE h = CreateFile
 			(path.c_str(), GENERIC_READ | GENERIC_WRITE,
-			FILE_SHARE_READ, nullptr, OPEN_ALWAYS, 
+			FILE_SHARE_READ, nullptr, OPEN_ALWAYS,
 			FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (h==INVALID_HANDLE_VALUE) return false;
 		CloseHandle(h);
@@ -89,7 +95,7 @@ namespace VCC::Util {
 	{
 		HANDLE h = CreateFile
 			(path.c_str(), GENERIC_READ,
-			FILE_SHARE_READ, nullptr, OPEN_ALWAYS, 
+			FILE_SHARE_READ, nullptr, OPEN_ALWAYS,
 			FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (h==INVALID_HANDLE_VALUE) return false;
 		CloseHandle(h);
@@ -138,7 +144,7 @@ namespace VCC::Util {
 		return s;
 	}
 
-	// Strip trailing backslash from directory or path 
+	// Strip trailing backslash from directory or path
 	inline void StripTrailingSlash(std::string& dir)
 	{
 		if (dir.back() == '/') dir.pop_back();
@@ -157,7 +163,7 @@ namespace VCC::Util {
 	{
 		if (dir.back() != '/') dir += '/';
 	}
-	
+
 	// Return slash normalized directory part of a path
 	inline std::string GetDirectoryPart(const std::string& input)
 	{

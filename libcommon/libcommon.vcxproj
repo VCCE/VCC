@@ -123,6 +123,7 @@
     <ClInclude Include="include\vcc\bus\null_cartridge.h" />
     <ClInclude Include="include\vcc\bus\rom_cartridge.h" />
     <ClInclude Include="include\vcc\bus\proxy_msgwin.h" />
+    <ClInclude Include="include\vcc\bus\plugin_callbacks.h" />
     <ClInclude Include="include\vcc\util\DialogOps.h" />
     <ClInclude Include="include\vcc\util\FileOps.h" />
     <ClInclude Include="include\vcc\util\interrupts.h" />

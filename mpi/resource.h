@@ -34,8 +34,6 @@
 #define IDC_SCS_DISABLE                 1102
 #define IDC_RESET                       1103
 
-#define ID_FILE_RESET                   40005 // From vcc/resource.h
-
 extern HINSTANCE gModuleInstance;
 // Next default values for new objects
 //

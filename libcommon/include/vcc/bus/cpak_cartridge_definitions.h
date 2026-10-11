@@ -16,50 +16,27 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 
-	//=========================================================//
-	// This defines the binary interface used by all pak DLLs. //
-	//=========================================================//
+//===============================================================//
+//    This defines the exports that can be used by plugins       //
+//===============================================================//
 
 #pragma once
 #include <vcc/util/interrupts.h>
-#include <vcc/bus/cartridge_menuitem.h> // for MenuItemType
-#include <cstddef>   // for std::size_t
+#include <vcc/bus/plugin_callbacks.h>
+#include <vcc/bus/cartridge_menuitem.h>
 #include <windows.h>
 
 //----------------------------------------------------------------
 // ABI identity is based on SlotId; 0 = Boot Slot, 1-4 = MPI slots
 //----------------------------------------------------------------
-using slot_id_type = std::size_t;
-
 extern "C"
 {
-	enum MenuItemType;
-
-	using PakWriteMemoryByteHostCallback = void (*)
-		(slot_id_type SlotId, unsigned char value, unsigned short address);
-	using PakReadMemoryByteHostCallback = unsigned char (*)
-		(slot_id_type SlotId, unsigned short address);
-	using PakAssertCartridgeLineHostCallback = void (*)
-		(slot_id_type SlotId, bool lineState);
-	using PakAssertInteruptHostCallback = void (*)
-		(slot_id_type SlotId, Interrupt interrupt, InterruptSource interrupt_source);
-
-	// Cartridge Callbacks
-	struct cpak_callbacks
-	{
-		const PakAssertInteruptHostCallback      assert_interrupt;
-		const PakAssertCartridgeLineHostCallback assert_cartridge_line;
-		const PakWriteMemoryByteHostCallback     write_memory_byte;
-		const PakReadMemoryByteHostCallback      read_memory_byte;
-	};
-
 	// Cartridge exports. At least PakInitilizeModuleFunction must be implimented
 	using PakInitializeModuleFunction = void (*)(
 		slot_id_type SlotId,                   // SlotId 
 		const char* const configuration_path,  // Path of ini file
-		HWND hVccWnd,                          // VCC Main window HWND
-		const cpak_callbacks* const context);  // Callback
-
+		HWND hVccWnd,                          // VCC proxy handle
+		const cpak_callbacks* const context);  // Callbacks
 	using PakTerminateModuleFunction       = void (*)();
 	using PakGetNameModuleFunction         = const char* (*)();
 	using PakGetCatalogIdModuleFunction    = const char* (*)();

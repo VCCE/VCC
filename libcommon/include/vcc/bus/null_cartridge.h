@@ -21,8 +21,6 @@
 // Basically not a cartridge but by another name
 namespace VCC::Core
 {
-
 	class null_cartridge : public basic_cartridge
 	{};
-
 }

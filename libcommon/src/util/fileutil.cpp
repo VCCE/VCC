@@ -22,6 +22,7 @@
 //======================================================================
 
 #include <string>
+#include <vector>
 #include <filesystem>
 #include <Shlwapi.h>
 #include <algorithm>
@@ -57,7 +58,7 @@ namespace VCC::Util
 		buffer = LastErrorString();
 		return buffer.c_str();
 	}
-	
+
 	//-------------------------------------------------------------------
 	// Get the file path of a loaded module
 	// Current exe path is returned if module_handle is null
@@ -106,9 +107,45 @@ namespace VCC::Util
 		std::string mod = path;
 		FixDirSlashes(mod);
 
-		// Quit if path is absolute 
+		// Quit if path is absolute
 		if (mod.find('/') != std::string::npos) return mod;
 
 		return GetExecutableDir() + '/' + mod;
+	}
+
+	//---------------------------------------------------------------
+	// Get Version infomation from exe or dll file
+	// Common keys: (these are defined in the .rc file)
+	//      "FileVersion"     Version infomation
+	//      "FileDescription" Short description
+	//      "Comments"        Detailed description
+	//---------------------------------------------------------------
+	std::string GetVersionInfo(const char* filename, const char* key)
+	{
+		DWORD size = GetFileVersionInfoSizeA(filename, nullptr);
+		if (size == 0) return "";
+
+		std::vector<char> data(size);
+		if (!GetFileVersionInfoA(filename, 0, size, data.data())) return "";
+
+		// Get Translation table (language + codepage)
+		LPVOID trans = nullptr;
+		UINT transLen = 0;
+		if (!VerQueryValueA(data.data(), "\\VarFileInfo\\Translation", &trans, &transLen))
+			return "";
+
+		// Build the complete query for key
+		DWORD langCode = *(DWORD*)trans;
+		WORD lang = LOWORD(langCode);
+		WORD code = HIWORD(langCode);
+		char query[256];
+		sprintf_s(query, "\\StringFileInfo\\%04X%04X\\%s", lang, code, key);
+
+		// Query the key
+		LPVOID value = nullptr;
+		UINT valueLen = 0;
+		if (!VerQueryValueA(data.data(), query, &value, &valueLen)) return "";
+
+		return std::string((char*)value);
 	}
 }

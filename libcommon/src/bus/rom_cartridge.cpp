@@ -21,25 +21,24 @@
 
 namespace VCC::Core
 {
-
 	rom_cartridge::rom_cartridge(
-		std::unique_ptr<callbacks_type> callbacks,
+		const cpak_callbacks& callbacks,
 		name_type name,
 		catalog_id_type catalog_id,
 		buffer_type buffer,
-		bool enable_bank_switching)
-		:
-		callbacks_(move(callbacks)),
-		name_(move(name)),
-		catalog_id_(move(catalog_id)),
-		buffer_(move(buffer)),
-		enable_bank_switching_(enable_bank_switching),
-		bank_offset_(0)
+		bool enable_bank_switching,
+		slot_id_type slotId 
+	)
+		: callbacks_(callbacks),
+		  name_(move(name)),
+		  catalog_id_(move(catalog_id)),
+		  buffer_(move(buffer)),
+		  enable_bank_switching_(enable_bank_switching),
+		  bank_offset_(0),
+		  slotId_(slotId)
 	{
-		DLOG_C("rom_cartridge ctor type: %s cart ptr: %p buf siz: %zu\n",
-			typeid(*this).name(), this, buffer_.size());
+		DLOG_C("rom_cartridge ctor slot %d %s\n",slotId_, name_.c_str());
 	}
-
 
 	rom_cartridge::name_type rom_cartridge::name() const
 	{
@@ -51,14 +50,14 @@ namespace VCC::Core
 		return catalog_id_;
 	}
 
-	rom_cartridge::description_type rom_cartridge:: description() const
+	rom_cartridge::description_type rom_cartridge::description() const
 	{
 		return {};
 	}
 
-
 	void rom_cartridge::reset()
 	{
+		DLOG_C("rom_cartridge reset\n");
 		bank_offset_ = 0;
 	}
 
@@ -77,8 +76,8 @@ namespace VCC::Core
 
 	void rom_cartridge::initialize_bus()
 	{
-		DLOG_C("rom_cartridge::initialize_bus: this=%p callbacks=%p\n",this,callbacks_.get());
-		callbacks_->assert_cartridge_line(true);
+		DLOG_C("rom_cartridge.initialize_bus assert line slot %d\n",slotId_);
+		callbacks_.assert_cartridge_line(slotId_,true);
 	}
 
 }

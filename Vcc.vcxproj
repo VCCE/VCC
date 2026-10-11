@@ -161,6 +161,7 @@
     <ClCompile Include="OpCodeTables.cpp" />
     <ClCompile Include="OpDecoder.cpp" />
     <ClCompile Include="pakinterface.cpp" />
+    <ClCompile Include="pakrouter.cpp" />
     <ClCompile Include="ProcessorState.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
@@ -223,6 +224,7 @@
     <ClInclude Include="OpCodeTables.h" />
     <ClInclude Include="OpDecoder.h" />
     <ClInclude Include="pakinterface.h" />
+    <ClInclude Include="pakrouter.h" />
     <ClInclude Include="ProcessorState.h" />
     <ClInclude Include="quickload.h" />
     <ClInclude Include="resource.h" />

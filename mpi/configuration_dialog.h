@@ -16,7 +16,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "multipak_cartridge.h"
+#include "multipak_supervisor.h"
 #include "multipak_configuration.h"
 #include <Windows.h>
 
@@ -26,7 +26,7 @@ public:
 
 	configuration_dialog(
 		multipak_configuration& configuration,
-		multipak_cartridge& mpi);
+		multipak_supervisor& mpi);
 
 	configuration_dialog(const configuration_dialog&) = delete;
 	configuration_dialog(configuration_dialog&&) = delete;
@@ -36,7 +36,6 @@ public:
 
 	void open();
 	void close();
-
 
 private:
 
@@ -61,7 +60,7 @@ private:
 
     size_t slot_to_load_;
 	multipak_configuration& configuration_;
-	multipak_cartridge& mpi_;
+	multipak_supervisor& mpi_;
 	HWND dialog_handle_ = nullptr;
 	HWND parent_handle_ = nullptr;
 };

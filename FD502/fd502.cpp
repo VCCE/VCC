@@ -138,7 +138,11 @@ extern "C"
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
-		DLOG_C("FDC %p %p %p %p %p\n",*callbacks);
+        DLOG_C("fd502 callbacks write=%p cart=%p read=%p int=%p\n",
+            callbacks->write_memory_byte,
+            callbacks->assert_cartridge_line,
+            callbacks->read_memory_byte,
+            callbacks->assert_interrupt);
 		gSlotId = SlotId;
 		gVccWnd = hVccWnd;
 		AssertInt = callbacks->assert_interrupt;

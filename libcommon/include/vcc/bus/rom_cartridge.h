@@ -17,7 +17,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <vcc/bus/basic_cartridge.h>
-#include <vcc/bus/cartridge_callbacks.h>
+#include <vcc/bus/cartridge_callbacks.h>  //depreciated
+#include <vcc/bus/plugin_callbacks.h>
 #include <vector>
 #include <memory>
 
@@ -34,11 +35,13 @@ namespace VCC::Core
 		using basic_cartridge::basic_cartridge;
 
 		rom_cartridge(
-			std::unique_ptr<callbacks_type> callbacks,
+			const cpak_callbacks& callbacks,
 			name_type name,
 			catalog_id_type catalog_id,
 			buffer_type buffer,
-			bool enable_bank_switching);
+			bool enable_bank_switching,
+			slot_id_type slotId
+		);
 		
 		name_type name() const override;
 		catalog_id_type catalog_id() const override;
@@ -52,11 +55,13 @@ namespace VCC::Core
 		void initialize_bus() override;
 
 	private:
-		const std::unique_ptr<callbacks_type> callbacks_;
+		const cpak_callbacks& callbacks_;
 		const name_type name_;
 		const catalog_id_type catalog_id_;
 		const buffer_type buffer_;
 		const bool enable_bank_switching_;
 		size_type bank_offset_;
+		const std::string filename_;
+		slot_id_type slotId_;
 	};
 }

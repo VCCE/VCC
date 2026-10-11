@@ -15,13 +15,9 @@
 //	You should have received a copy of the GNU General Public License along with
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
-#include "multipak_cartridge.h"
-#include "host_cartridge_callbacks.h"
 #include "configuration_dialog.h"
 #include <Windows.h>
 
 extern HWND	gVccWnd;
-extern const std::shared_ptr<host_cartridge_callbacks> gHostCallbacks;
-extern multipak_cartridge gMultiPakInterface;
 extern configuration_dialog gConfigurationDialog;
 extern std::string gLastAccessedPath;

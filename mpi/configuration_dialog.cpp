@@ -24,10 +24,10 @@
 #include <vcc/util/filesystem.h>
 #include <vcc/util/logger.h>
 #include <vcc/bus/cartridge_messages.h>
+#include <array>
 
 namespace
 {
-
 	using cartridge_loader_status = VCC::Core::cartridge_loader_status;
 
 	struct cartridge_ui_element_identifiers
@@ -47,12 +47,18 @@ namespace
 
 configuration_dialog::configuration_dialog(
 	multipak_configuration& configuration,
-	multipak_cartridge& mpi)
+	multipak_supervisor& mpi)
 	:
 	configuration_(configuration),
 	mpi_(mpi)
 {}
 
+// Array for slot names
+struct slot_info {
+	std::string name{};
+	uint32_t type; // 0==empty or Null
+};
+std::array<slot_info,5> gSlots{};
 
 void configuration_dialog::open()
 {
@@ -65,7 +71,6 @@ void configuration_dialog::open()
 			callback_procedure,
 			reinterpret_cast<LPARAM>(this));
 	}
-
 	ShowWindow(dialog_handle_, SW_SHOWNORMAL);
 }
 
@@ -100,33 +105,44 @@ void configuration_dialog::select_new_cartridge(unsigned int item)
 			"\0");
 	}
 	dlg.setFlags(OFN_FILEMUSTEXIST);
-	if (dlg.show(0, dialog_handle_))
-	{
-		mpi_.eject_cartridge(slot);
 
-		if (mpi_.mount_cartridge(slot, dlg.path()) == cartridge_loader_status::success)
+	if (dlg.show(0, dialog_handle_)) {
+	
+		SendUnloadSlot(gVccWnd, slot+1); // Slot is 1-4
+
+		DLOG_C("MMI Config mount cartridge %d, %s\n",slot+1,dlg.path());
+
+		CartLoadRequest slotData{};
+		strcpy_s(slotData.pluginPath, slotData.size, dlg.path());
+
+		if (SendLoadSlot(gVccWnd, slot+1, slotData) )
 		{
 			configuration_.slot_cartridge_path(slot, dlg.path());
+		    // Update default module directory setting
 			if (cart_type == 1) {
 				configuration_.last_accessed_dll_path(dlg.getdir());
 			} else {
 				configuration_.last_accessed_rom_path(dlg.getdir());
 			}
 		}
-
 	}
 	update_slot_details(slot);
 }
 
 void configuration_dialog::set_selected_slot(size_t slot)
 {
+	// Get cart description if there is a cart in the slot
+	// Sends message to pakinterface requesting the description
+	CartDescReply rpy;
+	GetCartDesc(gVccWnd, slot+1, rpy);
 
 	SendDlgItemMessage(
 		dialog_handle_,
 		IDC_MODINFO,
 		WM_SETTEXT,
 		0,
-		reinterpret_cast<LPARAM>(mpi_.slot_description(slot).c_str()));
+		reinterpret_cast<LPARAM>(rpy.description)
+	);
 
 	for (auto ndx(0u); ndx < gSlotUiElementIds.size(); ndx++)
 	{
@@ -138,27 +154,38 @@ void configuration_dialog::set_selected_slot(size_t slot)
 			0);
 	}
 
-	// FIXME: Maybe move this to the callsite or when the dialog closes or at least make it optional?
 	mpi_.switch_to_slot(slot);
 	configuration_.selected_slot(slot);
 }
 
-
 void configuration_dialog::update_slot_details(size_t slot)
 {
+	// Get cart name if there is a cart in the slot
+	// Sends message to pakinterface requesting the name
+	CartNameReply rpy;
+	GetCartName(gVccWnd, slot+1, rpy);
 	SendDlgItemMessage(
 		dialog_handle_,
 		gSlotUiElementIds[slot].edit_box_id,
 		WM_SETTEXT,
 		0,
-		reinterpret_cast<LPARAM>(mpi_.slot_label(slot).c_str()));
+		reinterpret_cast<LPARAM>(rpy.name)
+	);
+
+	gSlots[slot].name = rpy.name;
+
+	// Kluge until slot type is in base cart object
+	// and a request from pakinterface to obtain it
+	// zero implies the null or empty cartridge
+	gSlots[slot].type = rpy.name[0] ? 1 : 0;
 
 	SendDlgItemMessage(
 		dialog_handle_,
 		gSlotUiElementIds[slot].insert_button_id,
 		WM_SETTEXT,
 		0,
-		reinterpret_cast<LPARAM>(mpi_.empty(slot) ? ">" : "X"));
+		reinterpret_cast<LPARAM>(gSlots[slot].type==0 ? ">" : "X")
+	);
 }
 
 // This could be expanded to include MRU, etc
@@ -211,9 +238,16 @@ void configuration_dialog::eject_or_select_new_cartridge(unsigned int Button)
 			break;
 	}	
 
-	if (!mpi_.empty(slot))
+	// type 0 means no slot
+	// TODO slot types should be an enum
+	if (gSlots[slot].type != 0)
 	{
-		mpi_.eject_cartridge(slot);
+		// This probably does not belong except
+		// mpi_ does need to maintain a cartridge list
+		// mpi_.eject_cartridge(slot);
+		SendUnloadSlot(gVccWnd, slot+1); // Slot is 1-4
+		SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
+
 		configuration_.slot_cartridge_path(slot, {});
 		update_slot_details(slot);
 	}
@@ -240,7 +274,6 @@ INT_PTR CALLBACK configuration_dialog::callback_procedure(
 	return dialog->process_message(hDlg, message, wParam);
 }
 
-
 INT_PTR configuration_dialog::process_message(
 	HWND hDlg,
 	UINT message,
@@ -263,7 +296,7 @@ INT_PTR configuration_dialog::process_message(
 		{
 			update_slot_details(slot);
 		}
-
+		// Tell pakinterface switch position
 		set_selected_slot(mpi_.selected_switch_slot());
 		return TRUE;
 
@@ -294,7 +327,7 @@ INT_PTR configuration_dialog::process_message(
 			select_new_cartridge(button);
 			return TRUE;
 		case IDC_RESET:
-			SendMessage(gVccWnd,WM_VCC_CPU_RESET,(WPARAM) 0,(LPARAM) 0);
+			SendHardReset(gVccWnd);
 			close();
 			return TRUE;
 		case IDOK:

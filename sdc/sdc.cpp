@@ -309,11 +309,14 @@ extern "C"
         const cpak_callbacks* const callbacks)
     {
         gVccWindow = hVccWnd;
-        DLOG_C("SDC %p %p %p %p %p\n",*callbacks);
+        DLOG_C("callbacks write=%p cart=%p read=%p int=%p\n",
+            callbacks->write_memory_byte,
+            callbacks->assert_cartridge_line,
+            callbacks->read_memory_byte,
+            callbacks->assert_interrupt);
         gSlotId = SlotId;
         AssertIntCallback = callbacks->assert_interrupt;
         gpSettings = new VCC::Util::settings(configuration_path);
-        DLOG_C("SDC %p\n",gpSettings);
     }
 
     __declspec(dllexport) const char* PakGetName()
@@ -368,7 +371,7 @@ extern "C"
     // Reset module
     __declspec(dllexport) void PakReset()
     {
-        DLOG_C("PakReset\n");
+        DLOG_C("SDC reset\n");
         // Only initialize SDC if the forground is enabled to avoid hangs
         // This can be revisited if the VCC main handles module loads
         // instead of the MPI.dll
@@ -615,7 +618,7 @@ bool SaveConfig(HWND hDlg)
         Setting().write("SDC","SDCardPath",gSDRoot);
         UnloadDisk(0);
         UnloadDisk(1);
-        SendMessage(gVccWindow,WM_VCC_CPU_RESET,(WPARAM) 0,(LPARAM) 0);
+        SendHardReset(gVccWindow);
     }
     return true;
 }

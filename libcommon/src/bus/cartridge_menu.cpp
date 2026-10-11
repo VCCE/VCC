@@ -88,9 +88,6 @@ HMENU cartridge_menu::draw(HWND hWnd, int position, const std::string& title)
 	unsigned int pos = 0u;
 	for (CartMenuItem item : menu_) {
 		DLOG_C("%4d %d '%s'\n",item.menu_id,item.type,item.name.c_str());
-//		should this also be done inside the loop?
-//		memset(&Mii,0,sizeof(MENUITEMINFO));
-//		Mii.cbSize= sizeof(MENUITEMINFO);
 		switch (item.type) {
 		case MIT_Head:
 			hMenu = CreatePopupMenu();

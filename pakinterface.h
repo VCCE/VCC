@@ -19,6 +19,7 @@
 
 #pragma once
 #include <vcc/bus/cartridge_loader.h>
+#include <vcc/bus/cartridge_messages.h>
 
 void PakTimer();
 unsigned char PakReadPort (unsigned char);
@@ -26,7 +27,6 @@ void PakWritePort(unsigned char,unsigned char);
 unsigned char PackMem8Read (unsigned short);
 void GetModuleStatus( SystemState *);
 VCC::Core::cartridge_loader_status PakLoadCartridge(const char* filename);
-void PakLoadCartridgeUI(int);
 unsigned short PackAudioSample();
 void ResetBus();
 void GetCurrentModule(char *);
@@ -35,4 +35,8 @@ void UnloadDll();
 void UnloadPack();
 void BuildCartMenu();
 void CartMenuActivated(unsigned int);
-
+bool SetActiveSlot(unsigned int);
+bool UnloadSlot(unsigned int);
+bool LoadSlot(unsigned int, const CartLoadRequest *);
+bool GetSlotCartName(unsigned int slot, CartNameReply *);
+bool GetSlotCartDescript(unsigned int slot, CartDescReply *);

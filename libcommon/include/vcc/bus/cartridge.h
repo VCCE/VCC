@@ -29,11 +29,13 @@ namespace VCC::Core
 		using description_type = std::string;
 
 	public:
-        // lock cartridge objects down by deleting move constructers
+        // Protect cartridge objects by deleting move constructers
 		cartridge() = default;
 		cartridge(const cartridge&) = delete;
 		cartridge(cartridge&&) = delete;
 
+		// Default destructor ensures deleting a cartridge* calls
+		// the destructor of cpak_cartridge or rom_cartridge
 		virtual ~cartridge() = default;
 
 		virtual name_type name() const = 0;
@@ -50,7 +52,8 @@ namespace VCC::Core
 		virtual void status(char* text_buffer, size_t buffer_size) = 0;
 		virtual unsigned short sample_audio() = 0;
 		virtual void menu_item_clicked(unsigned char menu_item_id) = 0;
+
+		// TODO following is no longer used. Should be cleaned up
 		virtual bool get_menu_item(menu_item_entry* item, size_t index) = 0;
 	};
-
 }

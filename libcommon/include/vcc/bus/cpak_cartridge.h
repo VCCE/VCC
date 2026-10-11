@@ -28,11 +28,9 @@ namespace VCC::Core
 	class cpak_cartridge: public cartridge
 	{
 	public:
-
 		using path_type = std::string;
 
 	public:
-
 		cpak_cartridge(
 			HMODULE module_handle,                   // Cartridge filename
 			slot_id_type const SlotId,               // Slot id
@@ -81,5 +79,4 @@ namespace VCC::Core
 		const PakMenuItemClickedModuleFunction menu_item_clicked_;
 		const PakGetMenuItemFunction get_menu_item_;
 	};
-
 }

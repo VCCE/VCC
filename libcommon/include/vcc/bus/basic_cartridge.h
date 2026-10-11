@@ -28,7 +28,6 @@ namespace VCC::Core
 		using name_type = std::string;
 		using catalog_id_type = std::string;
 
-
 	public:
 
 		using cartridge::cartridge;
