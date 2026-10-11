@@ -1,6 +1,7 @@
 @echo off
 :: Build VCC 
 
+set _CL_=
 set VCC_CONFIG=Release
 if exist "%VSINSTALLDIR%\MSBuild\Current\Bin\MSBuild.exe" (
   msbuild vcc.sln /m /p:Configuration=%VCC_CONFIG% /p:Platform=x86
