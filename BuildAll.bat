@@ -1,5 +1,5 @@
 @echo off
-:: Clean Build VCC 
+:: Build without and with logging
 
 set VCC_CONFIG=Release
 if exist "%VSINSTALLDIR%\MSBuild\Current\Bin\MSBuild.exe" (
