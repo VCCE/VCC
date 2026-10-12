@@ -19,7 +19,6 @@
 #include <vcc/bus/cartridge.h>
 #include <vcc/bus/cartridge_callbacks.h>
 #include <vcc/bus/cpak_cartridge_definitions.h>
-#include <vcc/bus/dll_deleter.h>
 #include <string>
 #include <memory>
 #include <Windows.h>
@@ -44,13 +43,19 @@ namespace VCC::Core
 		not_expansion
 	};
 
+	struct dll_deleter {
+		void operator()(HMODULE h) const {
+			if (h) FreeLibrary(h);
+		}
+	};
+
 	struct cartridge_loader_result
 	{
-		using handle_type = 
+		using dll_module_type =
 			std::unique_ptr<std::remove_pointer_t<HMODULE>,VCC::Core::dll_deleter>;
 		using cartridge_ptr_type = std::unique_ptr<VCC::Core::cartridge>;
 
-		handle_type handle;
+		dll_module_type dll_module;
 		cartridge_ptr_type cartridge;
 		cartridge_loader_status load_result = cartridge_loader_status::not_loaded;
 	};

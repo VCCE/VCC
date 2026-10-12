@@ -42,7 +42,6 @@
 #include <vcc/bus/null_cartridge.h>
 #include <vcc/bus/cartridge_menu.h>
 #include <vcc/bus/cartridge_messages.h>
-#include <vcc/bus/dll_deleter.h>
 #include <vcc/util/limits.h>
 #include <vcc/util/logger.h>
 #include <vcc/util/FileOps.h>
@@ -77,8 +76,8 @@ static std::array<plugin_ptr, NumCartSlots> gCartSlots{
 static VCC::Core::PakRouter gPakRouter(gCartSlots);
 
 // A list of smart handles for unloading dll's
-using plugin_handle = cartridge_loader_result::handle_type;
-static std::array<plugin_handle, NumCartSlots> gCartDlls{};
+using module_ptr = cartridge_loader_result::dll_module_type;
+static std::array<module_ptr, NumCartSlots> gCartDlls{};
 
 void UnloadCartridge(int slot);
 static cartridge_loader_status load_any_cartridge(int slot, const char *filename);
@@ -347,7 +346,7 @@ static cartridge_loader_status load_any_cartridge(int slot, const char *filename
 
 	DLOG_C("pakinterface.load_any_cartridge move cart object to slot %d %s\n",slot,filename);
 	gCartSlots[slot] = std::move(loadedCartridge.cartridge);
-	gCartDlls[slot]  = std::move(loadedCartridge.handle);
+	gCartDlls[slot]  = std::move(loadedCartridge.dll_module);
 
 	DLOG_C("pakinterface.load_any_cartridge start and initialize slot %d\n",slot);
 	gCartSlots[slot]->start();
