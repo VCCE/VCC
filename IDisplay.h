@@ -133,7 +133,7 @@ namespace VCC
 		// draw line/box in surface coordinates
 		//
 		virtual void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color) = 0;
-		virtual void DebugDrawBox(float x, float y, float w, float h, Pixel color) = 0;
+		virtual void DebugDrawBox(float x, float y, float w, float h, Pixel color, bool filled) = 0;
 
 		//
 		// for access to GetSurface

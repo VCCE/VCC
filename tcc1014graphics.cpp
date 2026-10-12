@@ -9947,7 +9947,7 @@ void GimeGpu::SetGimeVdgMode2(unsigned char Vdgmode2) //5 bits from PIA Register
 	auto changed = CC2VDGPiaMode ^ Vdgmode2;
 	CC2VDGPiaMode = Vdgmode2;
 
-	if (changed & 1)
+	if (changed == 1)
 	{
 		if (mImmediate)
 		{
@@ -9956,6 +9956,17 @@ void GimeGpu::SetGimeVdgMode2(unsigned char Vdgmode2) //5 bits from PIA Register
 		else PushLineUpdate([=]() 
 		{ 
 			SetupColorSet(Vdgmode2 & 1); 
+		});
+	}
+	else if (changed) // other changes
+	{
+		if (mImmediate)
+		{
+			SetupDisplay();
+		}
+		else PushLineUpdate([=]()
+		{
+			SetupDisplay();
 		});
 	}
 #else

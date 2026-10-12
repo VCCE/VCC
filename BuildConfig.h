@@ -51,6 +51,20 @@
 #endif
 
 //
+// Force directX to use 16 bit surface
+//
+#ifndef USE_DIRECTX_16BIT_SURFACE
+#define USE_DIRECTX_16BIT_SURFACE false
+#endif
+
+//
+// Force directX to use 8 bit surface
+//
+#ifndef USE_DIRECTX_8BIT_SURFACE
+#define USE_DIRECTX_8BIT_SURFACE false
+#endif
+
+//
 // Enable black fill to preserve aspect ratio, otherwise replicate border color.
 //
 #ifndef USE_BLACKEDGES
@@ -115,6 +129,7 @@
 
 //
 // Show fps
+// Requires USE_DEBUG_LINES
 //
 #ifndef USE_FPS
 #define USE_FPS true

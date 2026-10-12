@@ -59,7 +59,7 @@ typedef union
 static cpuregister pc,x,y,u,s,dp,d;
 static std::array<bool, 8> cc;
 #if USE_NEWTIMING
-// temporarly hide this
+// temporarily hide this
 namespace Private
 {
 	static int CycleCounter = 0;
@@ -3428,7 +3428,7 @@ void MC6809AssertInterupt(InterruptSource src, Interrupt interrupt)
 	InterruptLine[src] |= Bit(interrupt);
 
 	if (EmuState.Debugger.IsTracing())
-		EmuState.Debugger.TraceCaptureInterruptRequest(interrupt, 0, MC6809GetState());
+		EmuState.Debugger.TraceCaptureInterruptRequest(interrupt, GetCycles(), MC6809GetState());
 }
 
 void MC6809DeAssertInterupt(InterruptSource src, Interrupt interrupt)

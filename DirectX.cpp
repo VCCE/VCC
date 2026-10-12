@@ -155,6 +155,23 @@ namespace VCC
             ddsd.dwWidth = windowRect.w;								// Make our off-screen surface 
             ddsd.dwHeight = windowRect.h;
             ddsd.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY;				// Try to create back buffer in video RAM
+
+#if USE_DIRECTX_16BIT_SURFACE
+            // Set 16-bit pixel format (5-6-5)
+            ddsd.dwFlags |= DDSD_PIXELFORMAT;
+            ddsd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+            ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+            ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
+            ddsd.ddpfPixelFormat.dwRBitMask = 0xF800; // 5 bits Red
+            ddsd.ddpfPixelFormat.dwGBitMask = 0x07E0; // 6 bits Green
+            ddsd.ddpfPixelFormat.dwBBitMask = 0x001F; // 5 bits Blue
+#elif USE_DIRECTX_8BIT_SURFACE
+            ddsd.dwFlags |= DDSD_PIXELFORMAT;
+            ddsd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+            ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8;
+            ddsd.ddpfPixelFormat.dwRGBBitCount = 8;
+#endif
+
             hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, nullptr);
             if (FAILED(hr))													// If not enough Video Ram 			
             {

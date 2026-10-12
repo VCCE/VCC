@@ -575,10 +575,10 @@ void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color)
 		g_Display->DebugDrawLine(x1, y1, x2, y2, color);
 }
 
-void DebugDrawBox(float x, float y, float w, float h, Pixel color)
+void DebugDrawBox(float x, float y, float w, float h, Pixel color, bool filled)
 {
 	if (g_Display)
-		g_Display->DebugDrawBox(x, y, w, h, color);
+		g_Display->DebugDrawBox(x, y, w, h, color, filled);
 }
 
 void DebugPrint(float x, float y, float size, const char* str, Pixel color)

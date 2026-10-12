@@ -1132,14 +1132,15 @@ void SaveConfig() {
 
 #if USE_FPS
 const int FPSHistorySize = 120;
-float gFPSHistory[FPSHistorySize];
+struct FPS { float render; float frame; };
+FPS gFPSHistory[FPSHistorySize];
 #endif
 
 unsigned __stdcall EmuLoop(HANDLE hEvent)
 {
 	_LARGE_INTEGER Now{};
 #if USE_FPS
-	_LARGE_INTEGER LastNow{}, OneMs{};
+	_LARGE_INTEGER LastNow{}, OneMs{}, LastFrame{};
 	QueryPerformanceFrequency(&Now);
 	OneMs.QuadPart = Now.QuadPart / 1000;
 #endif
@@ -1252,21 +1253,32 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 
 #if USE_FPS
 		auto intervalMS = (float)(Now.QuadPart - LastNow.QuadPart) / OneMs.QuadPart;
+		QueryPerformanceCounter(&Now);
+		auto frameIntervalMS = (float)(Now.QuadPart - LastFrame.QuadPart) / OneMs.QuadPart;
+		LastFrame = Now;
 		memcpy(&gFPSHistory[0], &gFPSHistory[1], sizeof(gFPSHistory) - sizeof(*gFPSHistory));
 		auto constexpr height = 100.0f;
-		gFPSHistory[FPSHistorySize - 1] = std::min(intervalMS, height);
+		gFPSHistory[FPSHistorySize - 1].render = std::min(intervalMS*2, height);
+		gFPSHistory[FPSHistorySize - 1].frame = std::min(frameIntervalMS*2, height);
+
+		VCC::Pixel col1(VCC::ColorBlue); col1.a = 150;
 		VCC::Pixel col(VCC::ColorYellow); col.a = 200;
+		VCC::Pixel col2(VCC::ColorWhite); col2.a = 200;
+		DebugDrawBox(10, 10, FPSHistorySize, 100, col1, true);
+		DebugDrawBox(10, 10, FPSHistorySize, 100, col2, false);
 		for (int i = 1; i < FPSHistorySize;++i)
 		{
 			auto& data = gFPSHistory[i];
 			float xp = 10 + (float)i;
 			float yp = 10 + height;
-			DebugDrawLine(xp, yp - gFPSHistory[i-1], xp + 1, yp - gFPSHistory[i], col);
+			DebugDrawLine(xp, yp - gFPSHistory[i - 1].render, xp + 1, yp - gFPSHistory[i].render, col);
+			DebugDrawLine(xp, yp - gFPSHistory[i - 1].frame, xp + 1, yp - gFPSHistory[i].frame, col2);
 		}
-		DebugDrawBox(10, 10, FPSHistorySize, 100, col);
 		char ms[32];
 		sprintf(ms, "Render:%.1fms", intervalMS);
-		DebugPrint(12, 22, 14, ms, VCC::ColorWhite);
+		DebugPrint(12, 22, 13, ms, VCC::ColorWhite);
+		sprintf(ms, "Frame :%.1fms", frameIntervalMS);
+		DebugPrint(12, 34, 13, ms, VCC::ColorWhite);
 #endif
 
 		if (EmuState.Throttle)	//Do nothing untill the frame is over returning unused time to OS
