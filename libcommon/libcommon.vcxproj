@@ -117,7 +117,6 @@
     <ClInclude Include="vcc\bus\cartridge_callbacks.h" />
     <ClInclude Include="vcc\bus\cartridge_loader.h" />
     <ClInclude Include="vcc\bus\cartridge_menu.h" />
-    <ClInclude Include="vcc\bus\dll_deleter.h" />
     <ClInclude Include="vcc\bus\cpak_cartridge.h" />
     <ClInclude Include="vcc\bus\cpak_cartridge_definitions.h" />
     <ClInclude Include="vcc\bus\null_cartridge.h" />

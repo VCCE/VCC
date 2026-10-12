@@ -152,19 +152,19 @@ namespace VCC::Core
 		// Load the cart DLL
 		cartridge_loader_result details;
 		HMODULE hCart = LoadLibrary(filename.c_str());
-		details.handle.reset(hCart);
+		details.dll_module.reset(hCart);
 
-		if (details.handle == nullptr)
+		if (details.dll_module == nullptr)
 		{
 			DLOG_C("cartridge_loader.load_cpak_cartridge dll load failed\n");
 			return { nullptr, nullptr, cartridge_loader_status::cannot_open };
 		}
 
 		// Create cartridge object if DLL has a PakInitialize export
-		if (GetProcAddress(details.handle.get(), "PakInitialize") != nullptr)
+		if (GetProcAddress(details.dll_module.get(), "PakInitialize") != nullptr)
 		{
 			details.cartridge = std::make_unique<VCC::Core::cpak_cartridge>(
-				details.handle.get(),
+				details.dll_module.get(),
 				SlotId,
 				iniPath,
 				hVccWnd,
