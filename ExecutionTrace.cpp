@@ -304,9 +304,9 @@ namespace VCC::Debugger::UI
 
 		// Draw our header line.
 		SetTextColor(hdc, RGB(138, 27, 255));
-		std::vector<const char *> headers = { "Sample", "Cycles", "Address", "Memory", "Instruction", "CPU Cycles", "State Changes", "CC", "D", "X", "Y", "U", "S", "DP" };
-		std::vector<int> columns = { 60, 60, 60, 90, 90, 80, 100, 80, 40, 40, 40, 40, 40, 40 };
-		std::vector<int> priority = { 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1 };
+		std::vector<const char *> headers = { "Sample", "Clock", "Cycles", "Address", "Memory", "Instruction", "CPU Cycles", "State Changes", "CC", "D", "X", "Y", "U", "S", "DP" };
+		std::vector<int> columns = { 60, 90, 60, 60, 90, 90, 80, 100, 80, 40, 40, 40, 40, 40, 40 };
+		std::vector<int> priority = { 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1 };
 
 		bool Is6309 = EmuState.CpuType == 1;
 
@@ -449,6 +449,13 @@ namespace VCC::Debugger::UI
 			s = ToDecimalString(n + 1, 10, false);
 			DrawText(hdc, s.c_str(), s.size(), &rc, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
 
+			setColumn(col++);
+			s = ToDecimalString(currentTrace[n].clock, 0, false);
+			s += "(+";
+			s += ToDecimalString(currentTrace[n].clock - currentTrace[n].frameStart, 0, false);
+			s += ")";
+			DrawText(hdc, s.c_str(), s.size(), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+
 			if (currentTrace[n].event == TraceEvent::Instruction)
 			{
 				setColumn(col++);
@@ -584,10 +591,13 @@ namespace VCC::Debugger::UI
 				DrawText(hdc, s.c_str(), s.size(), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
 				setColumn(col++);
-				s = ToDecimalString(currentTrace[n].execCycles, 2, false);
-				s += " / ";
-				s += ToDecimalString(currentTrace[n].decodeCycles, 2, false);
-				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				if (currentTrace[n].execCycles || currentTrace[n].decodeCycles)
+				{
+					s = ToDecimalString(currentTrace[n].execCycles, 2, false);
+					s += " / ";
+					s += ToDecimalString(currentTrace[n].decodeCycles, 2, false);
+					DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				}
 				y += rowHeight;
 			}
 			else if (currentTrace[n].event > TraceEvent::IRQStart && currentTrace[n].event < TraceEvent::IRQEnd)
@@ -603,10 +613,13 @@ namespace VCC::Debugger::UI
 				DrawText(hdc, s.c_str(), s.size(), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
 				setColumn(col++);
-				s = ToDecimalString(currentTrace[n].execCycles, 2, false);
-				s += " / ";
-				s += ToDecimalString(currentTrace[n].decodeCycles, 2, false);
-				DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				if (currentTrace[n].execCycles || currentTrace[n].decodeCycles)
+				{
+					s = ToDecimalString(currentTrace[n].execCycles, 2, false);
+					s += " / ";
+					s += ToDecimalString(currentTrace[n].decodeCycles, 2, false);
+					DrawText(hdc, s.c_str(), s.size(), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				}
 				y += rowHeight;
 			}
 		}

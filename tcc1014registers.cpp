@@ -158,6 +158,18 @@ void GimeRegistersReset()
 
 void GimeWrite(unsigned char port,unsigned char data)
 {
+#if USE_NEWTIMING
+	auto clock = VCC::gEvents.GetClocks();
+	auto log = [](const char *f, auto ...v)
+	{
+		if (!EmuState.Debugger.IsTracingEnabled()) return;
+		char tmp[80];
+		sprintf(tmp, f, v...);
+		EmuState.Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenReg, 0, 0, tmp);
+	};
+	auto ifZeroTimerInterrupt = []() {};
+#else
+	auto log = [](auto...) {};
 	auto changed = GimeRegisters[port] ^ data;
 
 	// when timer is 0 and its enabled, it interrupts almost immediately
@@ -166,6 +178,7 @@ void GimeWrite(unsigned char port,unsigned char data)
 		if ((data & changed & GIME_INTR_TIMER) && GimeTimerCounter() == 0)
 			GimeAssertTimerInterupt();
 	};
+#endif
 
 	GimeRegisters[port] = data;
 
@@ -191,10 +204,12 @@ void GimeWrite(unsigned char port,unsigned char data)
 		break;
 
 	case 0x94:
+		log("TMRH = %d", ((GimeRegisters[0x94] & 15) << 8) | GimeRegisters[0x95]);
 		SetTimerMSB();
 		break;
 
 	case 0x95:
+		log("TMRL = %d", ((GimeRegisters[0x94] & 15) << 8) | GimeRegisters[0x95]);
 		SetTimerLSB();
 		break;
 
@@ -205,14 +220,17 @@ void GimeWrite(unsigned char port,unsigned char data)
 		break;
 
 	case 0x98:
+		log("VMODE = %02X", data);
 		gGimeGpu.SetGimeVmode(data);
 		break;
 
 	case 0x99:
+		log("VRES = LPF=%d HRES=%d CRES=%d", ((data >> 5) & 3), ((data >> 2) & 7), data & 3);
 		gGimeGpu.SetGimeVres(data);
 		break;
 
 	case 0x9A:
+		log("BDRC = %02X", data);
 		gGimeGpu.SetGimeBoarderColor(data);
 		break;
 
@@ -221,15 +239,18 @@ void GimeWrite(unsigned char port,unsigned char data)
 		break;
 
 	case 0x9C:
+		log("VSC = %d", data & 15);
 		gGimeGpu.SetVerticalScroll(GimeRegisters[0x9C]);
 		break;
 
 	case 0x9D:
 	case 0x9E:
+		log("VOFF = %05X", ((GimeRegisters[0x9D] << 8) | GimeRegisters[0x9E]) * 8);
 		gGimeGpu.SetVerticalOffsetRegister((GimeRegisters[0x9D]<<8) | GimeRegisters[0x9E]);
 		break;
 
 	case 0x9F:
+		log("HOFF = %d  V = %d", (data & 127) << 1, data >> 7);
 		gGimeGpu.SetGimeHorzOffset(data);
 		break;
 
@@ -268,6 +289,7 @@ void GimeWrite(unsigned char port,unsigned char data)
 	case 0xBD:
 	case 0xBE:
 	case 0xBF:
+		log("PAL = %d = %d", port - 0xB0, data & 63);
 		gGimeGpu.SetGimePalette(port-0xB0,data & 63);
 		break;
 	}
