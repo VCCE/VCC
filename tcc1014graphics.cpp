@@ -9815,8 +9815,10 @@ case 192+63: //Bpp=3 Sr=15
 void GimeGpu::DrawTopBoarder8(SystemState *DTState)
 {
 	unsigned short x;
+#if !USE_NEWTIMING
 	if (BoarderChange==0)
 		return;
+#endif
 
 	for (x=0;x<DTState->WindowSize.w;x++)
 	{
@@ -9829,8 +9831,10 @@ void GimeGpu::DrawTopBoarder8(SystemState *DTState)
 void GimeGpu::DrawTopBoarder16(SystemState *DTState)
 {
 	unsigned short x;
+#if !USE_NEWTIMING
 	if (BoarderChange==0)
 		return;
+#endif
 
 	for (x=0;x<DTState->WindowSize.w;x++)
 	{
@@ -9847,8 +9851,10 @@ void GimeGpu::DrawTopBoarder24(SystemState * /*DTState*/)
 void GimeGpu::DrawTopBoarder32(SystemState *DTState)
 {
 	unsigned short x;
+#if !USE_NEWTIMING
 	if (BoarderChange==0)
 		return;
+#endif
 
 	for (x=0;x<DTState->WindowSize.w;x++)
 	{
@@ -9869,7 +9875,9 @@ void GimeGpu::DrawTopBoarder32(SystemState *DTState)
 
 void GimeGpu::DrawBottomBoarder8(SystemState *DTState)
 {
+#if !USE_NEWTIMING
 	if (BoarderChange==0) return;
+#endif
 	int ndx = 2 * (LinesperScreen + VertCenter + DTState->LineCounter);
 	if (ndx >= DTState->WindowSize.h) return;  // Range check
 	unsigned int cnt = DTState->WindowSize.w;
@@ -9880,7 +9888,9 @@ void GimeGpu::DrawBottomBoarder8(SystemState *DTState)
 
 void GimeGpu::DrawBottomBoarder16(SystemState *DTState)
 {
+#if !USE_NEWTIMING
 	if (BoarderChange==0) return;
+#endif
 	int ndx = 2 * (LinesperScreen + VertCenter + DTState->LineCounter);
 	if (ndx >= DTState->WindowSize.h) return;  // Range check
 	unsigned int cnt = DTState->WindowSize.w;
@@ -9895,7 +9905,9 @@ void GimeGpu::DrawBottomBoarder24(SystemState * /*DTState*/)
 
 void GimeGpu::DrawBottomBoarder32(SystemState *DTState)
 {
+#if !USE_NEWTIMING
 	if (BoarderChange==0) return;
+#endif
 	int ndx = 2 * (LinesperScreen + VertCenter + DTState->LineCounter);
 	if (ndx >= DTState->WindowSize.h) return;  // Range check
 	unsigned int cnt = DTState->WindowSize.w;
@@ -9937,7 +9949,9 @@ void GimeGpu::SetGimeVdgMode(unsigned char VdgMode) //3 bits from SAM Registers
 	{
 		CC2VDGMode=VdgMode;
 		SetupDisplay();
+#if !USE_NEWTIMING
 		BoarderChange=3;
+#endif
 	}
 }
 
@@ -10013,7 +10027,9 @@ void GimeGpu::SetCompatMode(unsigned char Register)
 	{
 		CompatMode=Register;
 		SetupDisplay();
+#if !USE_NEWTIMING
 		BoarderChange=3;
+#endif
 	}
 }
 
@@ -10063,8 +10079,9 @@ void GimeGpu::SetGimeVmode(unsigned char vmode)
 	{
 		CC3Vmode=vmode;
 		SetupDisplay();
+#if !USE_NEWTIMING
 		BoarderChange=3;
-
+#endif
 	}
 }
 
@@ -10074,7 +10091,9 @@ void GimeGpu::SetGimeVres(unsigned char vres)
 	{
 		CC3Vres=vres;
 		SetupDisplay();
+#if !USE_NEWTIMING
 		BoarderChange=3;
+#endif
 	}
 }
 
@@ -10130,6 +10149,7 @@ void GimeGpu::SetGimeBoarderColor(unsigned char data)
 #endif
 }
 
+#if !USE_NEWTIMING
 void GimeGpu::SetBoarderChange()
 {
 	if (BoarderChange >0)
@@ -10140,7 +10160,7 @@ void GimeGpu::InvalidateBoarder()
 {
 	BoarderChange=5;
 }
-
+#endif
 void GimeGpu::SetLinesperScreen(unsigned char Lines)
 {
 	Lines = (Lines & 3);
@@ -10300,7 +10320,9 @@ void GimeGpu::SetupDisplay()
 
 	case 1:					//Color Computer 2 Mode
 		CC3BoarderColor=0;	//Black for text modes
+#if !USE_NEWTIMING
 		BoarderChange=3;
+#endif
 		NewStartofVidram= (512*CC2Offset)+(VerticalOffsetRegister & 0xE0FF)*8; 
 		GraphicsMode=( CC2VDGPiaMode & 16 )>>4; //PIA Set on graphics clear on text
 		VresIndex=0;
@@ -10316,8 +10338,8 @@ void GimeGpu::SetupDisplay()
 				CC3BoarderColor = 18; //18 Bright Green
 			else
 				CC3BoarderColor = 63; //63 White 
+			BoarderChange = 3;
 #endif
-			BoarderChange=3;
 			Bpp=CC2Bpp[ (CC2VDGPiaMode & 15) >>1 ];
 			BytesperRow=CC2BytesperRow[ (CC2VDGPiaMode & 15) >>1 ];
 			Temp1= (CC2VDGPiaMode &1) << 1 | (Bpp & 1);
@@ -10428,7 +10450,9 @@ void GimeGpu::GimeReset()
 	DistoOffset=0;
 	MakeRGBPalette();
 	MakeCMPpalette();
+#if !USE_NEWTIMING
 	BoarderChange=3;
+#endif
 	CC2Offset=0;
 	Hoffset=0;
 	VerticalOffsetRegister=0;
@@ -10553,22 +10577,16 @@ void GimeGpu::MakeCMPpalette()
 unsigned char GimeGpu::SetMonitorType(unsigned char Type)
 {
 #if USE_NEWTIMING
-	unsigned char PalNum=0;
-	int tmp = CC3BoarderColor;
-	SetGimeBoarderColor(0); 
-	
 	if (Type != QUERY)
 	{
-		MonType=Type & 1;
-		for (PalNum=0;PalNum<16;PalNum++)
+		MonType = Type & 1;
+		for (auto PalNum = 0;PalNum < 16;PalNum++)
 		{
-			Palette16Bit[PalNum]=PaletteLookup16[MonType][Palette[PalNum]];
-			Palette32Bit[PalNum]=PaletteLookup32[MonType][Palette[PalNum]];
-			Palette8Bit[PalNum]= PaletteLookup8[MonType][Palette[PalNum]];
+			Palette16Bit[PalNum] = PaletteLookup16[MonType][Palette[PalNum]];
+			Palette32Bit[PalNum] = PaletteLookup32[MonType][Palette[PalNum]];
+			Palette8Bit[PalNum] = PaletteLookup8[MonType][Palette[PalNum]];
 		}
-//		CurrentConfig.MonitorType=MonType;
 	}
-	SetGimeBoarderColor(tmp);
 #else
 	unsigned char PalNum = 0;
 	int tmp = CC3BoarderColor;
@@ -10612,7 +10630,9 @@ unsigned char GimeGpu::SetScanLines(unsigned char Lines)
 	{
 		EmuState.ScanLines=Lines;
 		Cls(0,&EmuState);
+#if !USE_NEWTIMING
 		BoarderChange=3;
+#endif
 	}
 	return 0;
 }

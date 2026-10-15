@@ -74,7 +74,9 @@ struct GimeGpu
 	unsigned short BoarderColor16 = 0;
 	unsigned char BoarderColor8 = 0;
 	unsigned int DistoOffset = 0;
+#if !USE_NEWTIMING
 	unsigned char BoarderChange = 3;
+#endif
 	unsigned char MasterMode = 0;
 	unsigned char ColorInvert = 1;
 	unsigned char BlinkState = 1;
@@ -132,8 +134,10 @@ struct GimeGpu
 	void FlipArtifacts();
 	void GimeInit();
 	void GimeReset();
+#if !USE_NEWTIMING
 	void InvalidateBoarder();
 	void SetBoarderChange();
+#endif
 	void SetCompatMode(unsigned char Register);
 	void SetGimeBoarderColor(unsigned char data);
 	void SetGimeHorzOffset(unsigned char data);

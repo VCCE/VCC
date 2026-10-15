@@ -482,7 +482,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case ID_FILE_RUN:
 					EmuState.EmulationRunning=TRUE;
+#if !USE_NEWTIMING
 					gGimeGpu.InvalidateBoarder();
+#endif
 					break;
 
 				case ID_FILE_RESET_SFT:
@@ -716,7 +718,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					if (FlagEmuStop == TH_RUNNING) {
 						if (IsShiftKeyDown()) {
 							SetInfoBand(!SetInfoBand(QUERY));
+#if !USE_NEWTIMING
 							gGimeGpu.InvalidateBoarder();
+#endif
 						} else {
 							FlagEmuStop = TH_REQWAIT;
 							EmuState.FullScreen =!EmuState.FullScreen;
@@ -1296,7 +1300,9 @@ void FullScreenToggle()
 		MessageBox(nullptr,"Can't rebuild primary Window","Error",0);
 		exit(0);
 	}
+#if !USE_NEWTIMING
 	gGimeGpu.InvalidateBoarder();
+#endif
 
 	EmuState.ConfigDialog=nullptr;
 	PauseAudio(false);
