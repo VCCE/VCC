@@ -698,8 +698,7 @@ void SetMasterTickCounter(unsigned int timer)
 	UnxlatedTickCounter = timer & 0xFFF;
 
 #if USE_NEWTIMING
-	const unsigned int timerOffset = 2; // 1 = Gime'87, 2 = Gime'86
-	gGimeGpu.SetTimer(UnxlatedTickCounter + timerOffset);
+	gGimeGpu.SetTimer(UnxlatedTickCounter);
 #else
 	// if non-zero, update nanos to interrupt, otherwise if zero clear event.
 	IntEnable = UnxlatedTickCounter > 0 ? 1 : 0;

@@ -84,12 +84,13 @@ void GimeGpu::TimerRetrigger()
 	extern unsigned int TimerClockRate;
 	using namespace VCC; // TODO move Gime to VCC
 
-	mTimerCount = mTimer;
+	const unsigned int timerOffset = 2; // 1 = Gime'87, 2 = Gime'86
+	mTimerCount = mTimer > 0 ? mTimer + timerOffset : 0;
 
 	if (TimerClockRate)
 	{
 		if (mTimerCount > 0)
-			VCC::gEvents.ReQueue(mTimer * 4, [=]() { TimerInterrupt(CLK_TIMER_IRQ_DELAY); }, ET_TIMER);
+			VCC::gEvents.ReQueue(mTimerCount * 4, [=]() { TimerInterrupt(CLK_TIMER_IRQ_DELAY); }, ET_TIMER);
 		else
 			VCC::gEvents.Erase(ET_TIMER);
 	}
@@ -108,9 +109,11 @@ void GimeGpu::TimerInterrupt(int delay)
 
 void GimeGpu::DecrementTimerAndSet()
 {
+	extern unsigned int TimerClockRate;
+	if (TimerClockRate) return;
 	if (mTimerSet) return;
-	if (mTimerCount > 0) --mTimerCount;
-	if (mTimerCount == 0) mTimerSet = true;
+	if (mTimerCount > 0 && --mTimerCount == 0)
+		mTimerSet = true;
 }
 
 //
@@ -197,7 +200,9 @@ void GimeGpu::HSyncFall()
 	if (mTimerSet) TimerInterrupt(0);
 
 	// decrement timer just before end of line
-	gEvents.Queue(CLK_TIMER_DECR_DELAY, [=]() { DecrementTimerAndSet(); });
+	extern unsigned int TimerClockRate;
+	if (!TimerClockRate)
+		gEvents.Queue(CLK_TIMER_DECR_DELAY, [=]() { DecrementTimerAndSet(); });
 
 	// horizontal sync fall event
 	HSYNC(0);
