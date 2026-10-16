@@ -94,6 +94,8 @@ unsigned char GMCCartridge::OnReadMemory(unsigned short address) const
 
 void GMCCartridge::OnWritePort(unsigned char port, unsigned char data)
 {
+	if (port < 0x40 && port > 0x5f) return;
+		
 	switch (port&1)
 	{
 	case Ports::BankSelect:
@@ -109,6 +111,8 @@ void GMCCartridge::OnWritePort(unsigned char port, unsigned char data)
 
 unsigned char GMCCartridge::OnReadPort(unsigned char port) const
 {
+	if (port < 0x40 && port > 0x5f) return 0;
+
 	if ((port&1) == Ports::BankSelect)
 	{
 		return m_ROMImage.GetBank();
