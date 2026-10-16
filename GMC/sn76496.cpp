@@ -128,6 +128,9 @@
   * add PSSJ-3 support for the later Tandy 1000 series computers.
   * NCR8496's output is inverted, PSSJ-3's output is not.
 
+  16/10/2026: Craig Allsop
+  * fix integration with vcc and return the expected format.
+
   TODO: * Implement the TMS9919 - any difference to sn94624?
         * Implement the T6W28; has registers in a weird order, needs writes
           to be 'sanitized' first. Also is stereo, similar to game gear.
@@ -138,8 +141,16 @@
 
 ***************************************************************************/
 #include "sn76496.h"
+#include <algorithm>
+#include <assert.h>
 
-#define MAX_OUTPUT 0x7fff
+// was: #define MAX_OUTPUT 0x7fff
+// changed to use the full range since output is always positive atm, each
+// channel is given MAX_OUTPUT/4, this is rounded to integer so there is
+// already loss. See: https://www.smspower.org/Development/SN76489 actual
+// output is 0/1 (before filtering). If this is changed to +-0.5 then this
+// should be updated of course.
+#define MAX_OUTPUT 0xffff
 
 
 void SN76489Device::device_start()
@@ -348,17 +359,22 @@ SN76489Device::stream_sample_t SN76489Device::sound_stream_update(stream_sample_
 			+((m_output[1]!=0)? m_volume[1]:0)
 			+((m_output[2]!=0)? m_volume[2]:0)
 			+((m_output[3]!=0)? m_volume[3]:0);
-	}
 
-	if (m_negate)
-	{
-		out = -out;
-		out2 = -out2;
+		// output mono to both channels
+		out2 = out;
 	}
 
 	lbuffer = static_cast<stream_sample_t>(out);
 	rbuffer = static_cast<stream_sample_t>(out2);
 
-	return lbuffer + rbuffer;
+	// assumed positive
+	assert(lbuffer >= 0 && lbuffer <= MAX_OUTPUT);
+	assert(rbuffer >= 0 && lbuffer <= MAX_OUTPUT);
+
+	// vcc expects unsigned short as 0xLLRR, as lrbuffer is
+	// never negative just convert to unsigned byte.
+	uint8_t left = std::clamp(lbuffer >> 8, 0, 255);
+	uint8_t right = std::clamp(rbuffer >> 8, 0, 255);
+	return (left << 8) | right;
 }
 

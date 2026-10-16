@@ -31,7 +31,6 @@ private:
 	const int32_t	m_feedback_mask = 0x4000;	// mask for feedback
 	const int32_t	m_whitenoise_tap1 = 0x01;	// mask for white noise tap 1 (higher one, usually bit 14)
 	const int32_t	m_whitenoise_tap2 = 0x02;	// mask for white noise tap 2 (lower one, usually bit 13)
-	const bool		m_negate = false;			// output negate flag
 	const bool		m_stereo = false;			// whether we're dealing with stereo or not
 	const float		m_period_divider = 6.11f;	// period divider
 	const bool		m_ncr_style_psg = false;	// flag to ignore writes to regs 1,3,5,6,7 with bit 7 low
