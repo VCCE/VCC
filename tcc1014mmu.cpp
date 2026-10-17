@@ -82,13 +82,18 @@ unsigned char * MmuInit(unsigned char RamConfig)
 		return nullptr;
 	}
 
-	for (Index1=0;Index1<RamSize;Index1++)
+	// initialize ram which could contain anything really.
+	// note: wildcatting accesses uninitialized memory and so
+	// depends on what happens here. this gives a checkboard pattern
+	// starting with ones and swapping the pattern every 256 bytes.
+	uint32_t v = 0xFFFFFFFF;
+	for (size_t i = 0; i < RamSize; i += 4)
 	{
-		if (Index1 & 1)
-			memory[Index1]=0;
-		else 
-			memory[Index1]=0xFF;
+		if ((i & 0xFF) != 0)
+			v ^= 0xFFFFFFFF;
+		*(uint32_t*)(memory + i) = v;
 	}
+
 	gGimeGpu.SetVidMask(VidMask[CurrentRamConfig]);
 	if (InternalRomBuffer != nullptr)
 		free(InternalRomBuffer);
