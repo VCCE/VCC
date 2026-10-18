@@ -71,3 +71,41 @@ void PrintLogF(const char* fmt, ...)
     _write(flog, msg, strlen(msg));
     _close(flog);
 }
+
+//-------------------------------------------------------------
+//  Time stamped and compressed logging to console or debugger
+//  duplicate entries are compressed to two lines, second has count
+//-------------------------------------------------------------
+
+void PrintStampedLog(uint32_t ts, std::string log, bool tofile) {
+
+	static int dup_count=0;
+	static std::string last_log{};
+
+	char stamp[16];
+	snprintf(stamp,16,"%10u ",ts);
+
+	if (log == last_log) {
+		dup_count++;
+	} else {
+		if (dup_count > 1) {
+			std::string d = " dup(" + std::to_string(dup_count+1) + ")\n";
+			std::string s = stamp + last_log + d;
+			if (tofile)
+				PrintLogF(s.c_str());
+			else
+				PrintLogC(s.c_str());
+		}
+		// empty log string only flushes dups
+		if (!log.empty()) {
+			std::string s = stamp + log + "\n";
+			if (tofile)
+				PrintLogF(s.c_str());
+			else
+				PrintLogC(s.c_str());
+		}
+		last_log = log;
+		dup_count = 0;
+	}
+}
+

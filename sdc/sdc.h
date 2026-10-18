@@ -23,13 +23,15 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
 #include <Windows.h>
 #include <vcc/util/logger.h>
 #include <vcc/util/interrupts.h>
 
 #include "resource.h"
 
-// Return values for status register
+// Return values for status register (sdc mode)
 #define STA_NORMAL    0x00
 #define STA_BUSY      0x01
 #define STA_READY     0x02   // reply from command is ready
@@ -45,6 +47,7 @@
 #define STA_WPROTECT  0x40   // write protect error
 #define STA_FAIL      0x80
 
+/*
 #define FLP_NORMAL    0x00
 #define FLP_BUSY      0x01   // b0 Busy
 #define FLP_DATAREQ   0x02   // b1 DRQ
@@ -54,6 +57,7 @@
 #define FLP_WRITEERR  0x20   // b5 Write error (Fault)
 #define FLP_READONLY  0x40   // b6 Write protected
 #define FLP_NOTREADY  0x80   // b7 Not ready
+*/
 
 // Single byte file attributes for File info records
 #define ATTR_NORM     0x00
@@ -147,6 +151,7 @@ struct CocoDisk
         fullpath[0] = '\0';
     };
 };
+extern CocoDisk gCocoDisk[2];
 
 // SDC CoCo Interface
 struct Interface
@@ -167,4 +172,21 @@ struct Interface
     char *bufptr;
     char blkbuf[600];
 };
+
+// Used by SDC_Floppy
+extern void AssertNMI();
+extern bool SDCSeekSector(unsigned char,unsigned int);
+
+// Defined by SDC_Floppy
+extern void PingFloppy();
+extern void FloppyPortWrite(unsigned char data, unsigned char port);
+extern unsigned char FloppyPortRead(unsigned char port);
+
+// Debug Log port traffic
+extern void log_traffic(std::string txt, unsigned char, unsigned char);
+#ifdef USE_STAMPEDLOG
+#define LOG_TRAFFIC(txt,port,val) log_traffic(txt,port,val)
+#else
+#define LOG_TRAFFIC(txt,port,val)
+#endif
 

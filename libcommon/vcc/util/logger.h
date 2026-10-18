@@ -17,9 +17,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-// Print to Console or File
+#include <string>
+
+// Print to Console or debugger
 void PrintLogC(const char* fmt, ...);
+
+// Print to File
 void PrintLogF(const char* fmt, ...);
+
+// Timestamp log entries with duplicate squashing. default is to console.
+void PrintStampedLog(uint32_t ts, std::string txt, bool tofile=false);
 
 // Debug logging if USE_LOGGING is defined
 #ifdef USE_LOGGING
@@ -28,4 +35,11 @@ void PrintLogF(const char* fmt, ...);
 #else
 #define DLOG_C(...) ((void)0)
 #define DLOG_F(...) ((void)0)
+#endif
+
+// Time stamped logging
+#ifdef USE_STAMPEDLOG
+#define LOG_STAMPED(ts,txt) PrintStampedLog(ts,txt,false)
+#else
+#define LOG_STAMPED(ts,txt) ((void)0)
 #endif

@@ -164,6 +164,7 @@ using plugin_ptr = typename cartridge_loader_result::cartridge_ptr_type;
 		// Additionally anytime SCS is changed the router forwards the value
 		// saved for the SCS slot.
 		std::array<bool,5> line_states_{}; // (CART line state pin 8)
+
 	};
 }
 

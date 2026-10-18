@@ -1,4 +1,6 @@
-/*
+//#define USE_LOGGING
+#define USE_STAMPEDLOG
+/*------------------------------------------------------------------------------------
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
 
@@ -14,14 +16,14 @@ This file is part of VCC (Virtual Color Computer).
 
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
+----------------------------------------------------------------------------------------*/
 
 /********************************************************************************
 *  File name: wd1793.c															*
 *  Copyright 2005 by Joseph Forgione											*
 *  This will Emulate the Western Digital wd1793 Floppy Disk Controller chip		*
 *  and  support circuts as implemented in the Tandy Color Computer 1,2 and 3.	*
-*  Last change date 03/16/2005													*				
+*  Last change date 03/16/2005													*
 *  Last change date 07/14/2005 Changes NMI assert fucntion						*
 *  Last change date 07/26/2005 Complete rewrite to get F**king nitros09 to boot	*
 *  Last change date 02/04/2006 rewritten again for DMK and writetrack support	*
@@ -31,7 +33,6 @@ This file is part of VCC (Virtual Color Computer).
 *  Last change date 02/07/2026 EJJ Sanitize variable names						*
 *																				*
 ********************************************************************************/
-//#define USE_LOGGING
 
 #include <Windows.h>
 #include <stdio.h>
@@ -43,6 +44,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "wd1793.h"
 #include "fd502.h"
 #include "fdrawcmd.h"	// http://simonowen.com/fdrawcmd/
+
 /****************Fuction Protos for this Module************/
 
 unsigned char GetBytefromSector ();
@@ -116,7 +118,35 @@ static FD_READ_WRITE_PARAMS rwp;
 static bool DirtyDisk=true;
 char ImageFormat[5][4]={"JVC","VDK","DMK","OS9","RAW"};
 
-/*************************************************************/
+//================================================================
+
+// Log port traffic if USE_STAMPEDLOG defined. Last arg of
+// PrintStampedLog() logs to file if true, defaults to console/debugger
+
+uint32_t data_sum = 0;    // sum of DATREG reads at command done
+uint32_t hsync_clock=0;   // Increment on hsync (PingFdc)
+
+#ifdef USE_STAMPEDLOG
+#define LOG_TRAFFIC(txt,port,val) log_traffic(txt,port,val)
+#else
+#define LOG_TRAFFIC(txt,port,val) ((void)0)
+#endif
+
+void log_traffic(std::string txt, unsigned char port, unsigned char value)
+{
+	char tmp[16];
+	snprintf(tmp,16,"%02x",port);
+	std::string log = txt + tmp;
+    // ignore DataReg to avoid flooding log
+	if (port != 0x4b) { 
+		snprintf(tmp,16," %02x",value);
+		log += tmp;
+	}
+	LOG_STAMPED(hsync_clock,log);
+}
+
+//-------------------------------------------------------------
+
 unsigned char disk_io_read(unsigned char port)
 {
 	unsigned char temp;
@@ -140,19 +170,30 @@ unsigned char disk_io_read(unsigned char port)
 				temp=DataReg;
 			else
 				temp=GetBytefromDisk();
+#ifdef USE_STAMPEDLOG
+			data_sum += temp;
+#endif
 			break;
-
 		case 0x40:	//Control Register can't be read
 			temp=0;
 			break;
 		default:
 			return 0;
 	}	//END Switch port
+
+#ifdef USE_STAMPEDLOG
+	log_traffic("wd1793 read port ",port,temp);
+#endif
 	return temp;
 }
 
 void disk_io_write(unsigned char data,unsigned char port)
 {
+#ifdef USE_STAMPEDLOG
+	if (port >= 0x40 && port <= 0x50)
+		log_traffic("wd1793 write port ",port,data);
+#endif
+
 	switch (port)
 	{
 	case	0x48:	//Command Register
@@ -416,13 +457,28 @@ long ReadSector (unsigned char Side,	//0 or 1
 
 			FileOffset= gVirtualDrive[CurrentDisk].HeaderSize + ( (Track * gVirtualDrive[CurrentDisk].Sides * gVirtualDrive[CurrentDisk].TrackSize)+ (Side * gVirtualDrive[CurrentDisk].TrackSize) + (BytesperSector[gVirtualDrive[CurrentDisk].SectorSize] * (Sector - gVirtualDrive[CurrentDisk].FirstSector) ) ) ;
 
-			DLOG_C("FDC S%d trk:%d side:%d sect:%d hsiz:%d nside:%d tsiz:%d ssiz:%d fsec:%d\n",
-					FileOffset, Track, Side, Sector,
-					gVirtualDrive[CurrentDisk].HeaderSize,
-					gVirtualDrive[CurrentDisk].Sides,
-					gVirtualDrive[CurrentDisk].TrackSize,
-					BytesperSector[gVirtualDrive[CurrentDisk].SectorSize],
-					gVirtualDrive[CurrentDisk].FirstSector);
+#ifdef USE_STAMPEDLOG
+{
+    char log[64];
+	unsigned int lsn;
+    if (gVirtualDrive[CurrentDisk].Sides == 2)
+        lsn = (Track * 2 + Side) * 18 + (Sector - 1);
+    else
+        lsn = Track * 18 + Sector - 1;
+    snprintf(log,sizeof(log),"wd1793 Read dr:%d si:%d t:%d s:%d lsn:%u",
+		CurrentDisk,Side,Track,Sector,lsn);
+	LOG_STAMPED(hsync_clock,log);
+}
+#endif
+
+//			DLOG_C("FDC S%d trk:%d side:%d sect:%d hsiz:%d nside:%d tsiz:%d ssiz:%d fsec:%d\n",
+//            FlopDrive,FlopSide,FlopTrack,FlopSector,lsn);
+//					FileOffset, Track, Side, Sector,
+//					gVirtualDrive[CurrentDisk].HeaderSize,
+//					gVirtualDrive[CurrentDisk].Sides,
+//					gVirtualDrive[CurrentDisk].TrackSize,
+//					BytesperSector[gVirtualDrive[CurrentDisk].SectorSize],
+//					gVirtualDrive[CurrentDisk].FirstSector);
 
 			SetFilePointer(gVirtualDrive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			ReadFile(gVirtualDrive[CurrentDisk].FileHandle,ReturnBuffer,BytesperSector[gVirtualDrive[CurrentDisk].SectorSize],&BytesRead,nullptr);
@@ -443,7 +499,7 @@ long ReadSector (unsigned char Side,	//0 or 1
 				return 0;
 			CurrentSector.Sector=Sector;
 			if (GetSectorInfo (&CurrentSector,TempBuffer)==0)
-				return 0;
+			return 0;
 			memcpy(ReturnBuffer,&TempBuffer[CurrentSector.DAM],CurrentSector.Lenth);
 			return(CurrentSector.Lenth);
 
@@ -689,6 +745,7 @@ long ReadTrack (	unsigned char Side,		//0 or 1
 //This gets called at the end of every scan line so the controller has acurate timing.
 void PingFdc()
 {
+hsync_clock++;
 	static char wobble=0;
 	if (MotorOn==0)
 		return;
@@ -964,6 +1021,7 @@ void DispatchCommand(unsigned char Tmp)
 			ExecTimeWaiter=1;
 			if ((Tmp & 15) != 0)
 				AssertInt(gSlotId, INT_NMI,IS_NMI);
+DLOG_C("%8d wd1793 force interrupt\n", hsync_clock);
 //			WriteLog("FORCEINTERUPT",0);
 			break;
 
@@ -1307,8 +1365,23 @@ long GetSectorInfo (SectorInfo *Sector,const unsigned char *TempBuffer)
 
 void CommandDone()
 {
+
+#ifdef USE_STAMPEDLOG
+{
+    char log[64];
+    if (InteruptEnable) {
+        snprintf(log,sizeof(log),"wd1793 command DONE sum %d assert NMI",data_sum);
+    } else {
+        snprintf(log,sizeof(log),"wd1793 command DONE sum %d",data_sum);
+    }
+	LOG_STAMPED(hsync_clock,log);
+    data_sum = 0;
+}
+#endif
+
 	if (InteruptEnable)
 		AssertInt(gSlotId, INT_NMI,IS_NMI);
+
 	TransferBufferSize=0;
 	CurrentCommand=IDLE;
 }

@@ -1,4 +1,4 @@
-//#define USE_LOGGING
+#define USE_STAMPEDLOG
 ////////////////////////////////////////////////////////////////////////////////
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
@@ -178,10 +178,25 @@ namespace VCC::Core
 		if (port == 0x7F) {
 			int scs = value & 3;
 			int cts = (value >> 4) & 3;
+
+#ifdef USE_STAMPEDLOG
+			bool changed = 
+				(disk_slot_ != (scs + 1)) || (active_slot_ != (cts + 1));
+#endif
 			disk_slot_ = scs + 1;
 			active_slot_ = cts + 1;
+
+#ifdef USE_STAMPEDLOG
+			if (changed) {
+				std::string log = "router set scs, cts slot " 
+					+ std::to_string(disk_slot_) + ", "
+					+ std::to_string(active_slot_);
+				PrintStampedLog(0,log);
+			}
+#endif
 			return;
 		}
+
 		// Disk controller ports (0x40–0x5F) scs slot only
 		if (is_disk_port(port)) {
 			PakRouter::slot_write_port(disk_slot_, port, value);
@@ -243,6 +258,7 @@ namespace VCC::Core
 		}
 		std::snprintf(out, maxout, "%.*s", maxout, buf.tmp);
 	}
+
 	void PakRouter::plugin_status(char* txt, size_t len)
 	{
 		txt[0] = '\0';
