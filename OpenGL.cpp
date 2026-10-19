@@ -94,6 +94,10 @@ namespace VCC
 		#if USE_DEBUG_LINES
 		struct Line { float x1; float y1; float x2; float y2; Pixel color; };
 		std::vector<Line> debugLines;
+		struct Box { float x1; float y1; float w; float h; Pixel color; bool filled; };
+		std::vector<Box> debugBoxes;
+		struct Text { const OpenGLFont* font; float x1; float y1; float size; std::string str; Pixel color; };
+		std::vector<Text> debugTexts;
 		#endif // USE_DEBUG_LINES
 
 		OpenGL::Detail(ISystemState *state)
@@ -397,6 +401,57 @@ namespace VCC
 			glEnd();
 
 			#if USE_DEBUG_LINES
+			if (debugBoxes.size())
+			{
+				Pixel lastColor(debugBoxes[0].color);
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glColor4ub(lastColor.r, lastColor.g, lastColor.b, lastColor.a);
+
+				for (size_t i = 0; i < debugBoxes.size(); ++i)
+				{
+					auto x = debugBoxes[i].x1;
+					auto y = debugBoxes[i].y1;
+					auto w = debugBoxes[i].w;
+					auto h = debugBoxes[i].h;
+
+					if (lastColor != debugBoxes[i].color)
+					{
+						lastColor = debugBoxes[i].color;
+						glColor4ub(lastColor.r, lastColor.g, lastColor.b, lastColor.a);
+					}
+
+					if (debugBoxes[i].filled)
+					{
+						glBegin(GL_QUADS);
+						glVertex3f(x, y, 0);
+						glVertex3f(x + w, y, 0);
+						glVertex3f(x + w, y + h, 0);
+						glVertex3f(x, y + h, 0);
+						glEnd();
+					}
+					else
+					{
+						glBegin(GL_LINES);
+						glVertex3f(x, y, 0);
+						glVertex3f(x + w, y, 0);
+
+						glVertex3f(x + w, y, 0);
+						glVertex3f(x + w, y + h, 0);
+
+						glVertex3f(x + w, y + h, 0);
+						glVertex3f(x, y + h, 0);
+
+						glVertex3f(x, y + h, 0);
+						glVertex3f(x, y, 0);
+						glEnd();
+					}
+				}
+
+				glDisable(GL_BLEND);
+				debugBoxes.clear();
+			}
+
 			// draw some debug lines
 			if (debugLines.size())
 			{
@@ -419,6 +474,15 @@ namespace VCC
 				glDisable(GL_BLEND);
 				debugLines.clear();
 			}
+
+			if (debugTexts.size())
+			{
+				for (auto &t : debugTexts)
+				{
+					RenderText(t.font, t.x1, t.y1, t.size, t.str.c_str());
+				}
+				debugTexts.clear();
+			}
 			#endif // USE_DEBUG_LINES
 
 			wglMakeCurrent(nullptr, nullptr);
@@ -428,7 +492,7 @@ namespace VCC
 		int Cleanup()
 		{
 			if (!isInitialized) return Result(ERR_NOTINITIALIZED);
-			if (pixels) delete pixels;
+			if (pixels) delete[] pixels;
 			if (hDC) ReleaseDC(hWnd, hDC);
 			if (hWnd) DestroyWindow(hWnd);
 			UnregisterClass(OpenGLClass, GetModuleHandle(nullptr));
@@ -601,8 +665,16 @@ namespace VCC
 		#if USE_DEBUG_LINES
 		void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color)
 		{
-			Line line = { x1, y1, x2, y2, color };
-			debugLines.push_back(line);
+			debugLines.push_back({ x1, y1, x2, y2, color });
+		}
+
+		void DebugDrawText(const OpenGLFont* font, float x, float y, float size, const char* text, Pixel color)
+		{
+			debugTexts.push_back({ font, x, y, size, text, color });
+		}
+		void DebugDrawBox(float x1, float y1, float w, float h, Pixel color, bool filled)
+		{
+			debugBoxes.push_back({ x1, y1, w, h, color, filled });
 		}
 		#endif // USE_DEBUG_LINES
 
@@ -786,6 +858,14 @@ namespace VCC
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 
+	void OpenGL::DebugDrawText(const OpenGLFont* font, float x, float y, float size, const char* text, Pixel color)
+	{
+		#if USE_DEBUG_LINES
+		if (detail)
+			detail->DebugDrawText(font, x, y, size, text, color);
+		#endif
+	}
+
 	void OpenGL::DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color)
 	{
 		#if USE_DEBUG_LINES
@@ -793,18 +873,22 @@ namespace VCC
 			detail->DebugDrawLine(x1, y1, x2, y2, color);
 		#endif // USE_DEBUG_LINES
 	}
-	void OpenGL::DebugDrawBox(float x, float y, float w, float h, Pixel color)
+	void OpenGL::DebugDrawBox(float x, float y, float w, float h, Pixel color, bool filled)
 	{
 		#if USE_DEBUG_LINES
 		if (detail)
+			detail->DebugDrawBox(x, y, w, h, color, filled);
+/*
 		{
 			float x2 = x + w;
 			float y2 = y + h;
-			detail->DebugDrawLine(x, y, x2, y, color);
-			detail->DebugDrawLine(x2, y, x2, y2, color);
-			detail->DebugDrawLine(x2, y2, x, y2, color);
-			detail->DebugDrawLine(x, y2, x, y, color);
+			detail->RenderBox(x, y, x2 - x, y2 - y, color, filled);
+			//detail->DebugDrawLine(x, y, x2, y, color);
+			//detail->DebugDrawLine(x2, y, x2, y2, color);
+			//detail->DebugDrawLine(x2, y2, x, y2, color);
+			//detail->DebugDrawLine(x, y2, x, y, color);
 		}
+*/
 		#endif // USE_DEBUG_LINES
 	}
 }

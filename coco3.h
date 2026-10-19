@@ -33,7 +33,7 @@ struct DisplayDetails
 void SetClockSpeed(unsigned int Cycles);
 DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight);
 void SetSndOutMode(unsigned char);
-float RenderFrame (SystemState *);
+float RenderFrame (SystemState *, _LARGE_INTEGER&);
 
 void SetTimerClockRate (unsigned char);	
 void RestartInterruptTimer(unsigned int);

@@ -220,7 +220,27 @@ namespace VCC::Debugger
 			return;
 		}
 	}
+#if USE_NEWTIMING
+	void Debugger::TraceCaptureScreenEvent(TraceEvent evt, double cycles, unsigned int n)
+	{
+		if (!TraceRunning_ || !TraceScreen_)
+		{
+			return;
+		}
 
+		Decoder_->CaptureScreenEvent(evt, cycles, n);
+	}
+
+	void Debugger::TraceCaptureScreenEvent(TraceEvent evt, double cycles, unsigned int n, const char* s)
+	{
+		if (!TraceRunning_ || !TraceScreen_)
+		{
+			return;
+		}
+
+		Decoder_->CaptureScreenEvent(evt, cycles, n, s);
+	}
+#else
 	void Debugger::TraceCaptureScreenEvent(TraceEvent evt, double cycles)
 	{
 		if (!TraceRunning_ || !TraceScreen_)
@@ -230,6 +250,8 @@ namespace VCC::Debugger
 
 		Decoder_->CaptureScreenEvent(evt, cycles);
 	}
+
+#endif
 
 	void Debugger::TraceEmulatorCycle(TraceEvent evt, int state, double lineNS, double irqNS, double soundNS, double cycles, double drift)
 	{

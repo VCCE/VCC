@@ -133,7 +133,7 @@ namespace VCC
 		// draw line/box in surface coordinates
 		//
 		virtual void DebugDrawLine(float x1, float y1, float x2, float y2, Pixel color) = 0;
-		virtual void DebugDrawBox(float x, float y, float w, float h, Pixel color) = 0;
+		virtual void DebugDrawBox(float x, float y, float w, float h, Pixel color, bool filled) = 0;
 
 		//
 		// for access to GetSurface
@@ -156,6 +156,11 @@ namespace VCC
 		// render the text on screen for full screen
 		//
 		virtual int RenderText(const OpenGLFont* font, float x, float y, float size, const char* text) = 0;
+
+		//
+		// render debug text for current frame
+		//
+		virtual void DebugDrawText(const OpenGLFont* font, float x, float y, float size, const char* text, Pixel color) = 0;
 
 		//
 		// create a new font from bitmapRes window resource

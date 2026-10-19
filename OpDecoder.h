@@ -15,6 +15,7 @@
 //		OpDecoder Interface - Part of the Debugger package for VCC
 //		Author: Mike Rojas
 #pragma once
+#include "BuildConfig.h"
 #include "Windows.h"
 #include <string>
 #include <array>
@@ -45,7 +46,12 @@ namespace VCC::Debugger
 		void CaptureBefore(long cycleTime, const CPUState& state);
 		void CaptureAfter(long cycleTime, const CPUState& state);
 		void CaptureInterrupt(TraceEvent evt, IRQType irq, long cycleTime, const CPUState& state);
+#if USE_NEWTIMING
+		void CaptureScreenEvent(TraceEvent evt, double cycles, unsigned int line);
+		void CaptureScreenEvent(TraceEvent evt, double cycles, unsigned int line, const char *s);
+#else
 		void CaptureScreenEvent(TraceEvent evt, double cycles);
+#endif
 		void CaptureEmulatorCycle(TraceEvent evt, int state, double lineNS, double irqNS, double soundNS, double cycles, double drift);
 
 		const std::vector<CPUTrace>& GetTrace() const;
@@ -59,7 +65,11 @@ namespace VCC::Debugger
 	protected:
 
 		bool DecodeInterrupt(TraceEvent evt, IRQType irq, std::string& interrupt) const;
+#if USE_NEWTIMING
+		bool DecodeScreen(TraceEvent evt, std::string& screen, unsigned int n, const char *s);
+#else
 		bool DecodeScreen(TraceEvent evt, std::string& screen);
+#endif
 		bool DecodePage2Instruction(unsigned short PC, const CPUState& state, CPUTrace& trace);
 		bool DecodePage3Instruction(unsigned short PC, const CPUState& state, CPUTrace& trace);
 
