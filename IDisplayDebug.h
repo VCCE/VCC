@@ -25,13 +25,13 @@
 // NOTE: USE_DEBUG_LINES must be enabled to see debug lines.
 //
 
-void DebugDrawBox(float x, float y, float w, float h, VCC::Pixel color);
+void DebugDrawBox(float x, float y, float w, float h, VCC::Pixel color, bool filled);
 void DebugDrawLine(float x, float y, float x2, float y2, VCC::Pixel color);
-void DebugPrint(float x, float y, float size, const char* str);
+void DebugPrint(float x, float y, float size, const char* str, VCC::Pixel color);
 
-inline void DebugDrawBox(int x, int y, int w, int h, VCC::Pixel color) 
+inline void DebugDrawBox(int x, int y, int w, int h, VCC::Pixel color, bool filled) 
 {
-	DebugDrawBox((float)x, (float)y, (float)w, (float)h, color);
+	DebugDrawBox((float)x, (float)y, (float)w, (float)h, color, filled);
 }
 
 inline void DebugDrawLine(int x1, int y1, int x2, int y2, VCC::Pixel color) 

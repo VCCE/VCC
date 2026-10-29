@@ -20,6 +20,9 @@
 #include "tcc1014mmu.h"
 #include "DebuggerUtils.h"
 #include "defines.h"
+#include "Event.h"
+#include "tcc1014graphics.h"
+
 
 namespace VCC::Debugger
 {
@@ -37,6 +40,10 @@ namespace VCC::Debugger
 		BeforeCycles_ = cycleTime;
 		CurrentTrace_.event = TraceEvent::Instruction;
 		CurrentTrace_.startState = state;
+#if USE_NEWTIMING
+		CurrentTrace_.clock = VCC::gEvents.GetClocks();
+		CurrentTrace_.frameStart = gGimeGpu.GetLineStartClock();
+#endif
 		CurrentTrace_.pc = state.PC;
 		CurrentTrace_.bytes.clear();
 		CurrentTrace_.instruction.clear();
@@ -60,6 +67,10 @@ namespace VCC::Debugger
 		CPUTrace interrupt;
 		interrupt.event = evt;
 		interrupt.cycleTime = TotalCycles_;
+#if USE_NEWTIMING
+		interrupt.clock = VCC::gEvents.GetClocks();
+		interrupt.frameStart = gGimeGpu.GetLineStartClock();
+#endif
 		CurrentTrace_.pc = state.PC;
 		interrupt.startState = state;
 		interrupt.endState = state;
@@ -69,7 +80,46 @@ namespace VCC::Debugger
 		DecodeInterrupt(evt, irq, interrupt.instruction);
 		TraceCaptured_.push_back(interrupt);
 	}
-
+#if USE_NEWTIMING
+	void OpDecoder::CaptureScreenEvent(TraceEvent evt, double cycles, unsigned int line, const char* s)
+	{
+		int execCycles = (int)floor(cycles);
+		CPUTrace screen;
+		DecodeScreen(evt, screen.instruction, line, s);
+		screen.event = evt;
+		screen.clock = VCC::gEvents.GetClocks();
+		screen.frameStart = gGimeGpu.GetLineStartClock();
+		screen.cycleTime = TotalCycles_;
+		screen.pc = 0;
+		screen.startState = { 0 };
+		screen.endState = { 0 };
+		screen.decodeCycles = execCycles;
+		screen.execCycles = execCycles;
+		screen.frame = CurrentFrame_;
+		screen.line = line;
+		//		TotalCycles_ += screen.execCycles;
+		TraceCaptured_.push_back(screen);
+	}
+	void OpDecoder::CaptureScreenEvent(TraceEvent evt, double cycles, unsigned int line)
+	{
+		int execCycles = (int)floor(cycles);
+		CPUTrace screen;
+		DecodeScreen(evt, screen.instruction, line, "");
+		screen.event = evt;
+		screen.clock = VCC::gEvents.GetClocks();
+		screen.frameStart = gGimeGpu.GetLineStartClock();
+		screen.cycleTime = TotalCycles_;
+		screen.pc = 0;
+		screen.startState = { 0 };
+		screen.endState = { 0 };
+		screen.decodeCycles = execCycles;
+		screen.execCycles = execCycles;
+		screen.frame = CurrentFrame_;
+		screen.line = line;
+		//		TotalCycles_ += screen.execCycles;
+		TraceCaptured_.push_back(screen);
+	}
+#else
 	void OpDecoder::CaptureScreenEvent(TraceEvent evt, double cycles)
 	{
 		int execCycles = (int)floor(cycles);
@@ -87,12 +137,16 @@ namespace VCC::Debugger
 //		TotalCycles_ += screen.execCycles;
 		TraceCaptured_.push_back(screen);
 	}
-
+#endif
 	void OpDecoder::CaptureEmulatorCycle(TraceEvent evt, int state, double lineNS, double irqNS, double soundNS, double cycles, double drift)
 	{
 		CPUTrace emulator;
 		emulator.event = evt;
 		emulator.cycleTime = 0;
+#if USE_NEWTIMING
+		emulator.clock = VCC::gEvents.GetClocks();
+		emulator.frameStart = gGimeGpu.GetLineStartClock();
+#endif
 		emulator.startState = { 0 };
 		emulator.endState = { 0 };
 		emulator.decodeCycles = 0;
@@ -167,6 +221,52 @@ namespace VCC::Debugger
 		return true;
 	}
 
+#if USE_NEWTIMING
+	bool OpDecoder::DecodeScreen(TraceEvent evt, std::string& screen, unsigned int n, const char *s)
+	{
+		switch (evt)
+		{
+		case TraceEvent::ScreenTopBorder:
+			screen = "[Top Border]";
+			break;
+		case TraceEvent::ScreenRender:
+			screen = "[Render]";
+			break;
+		case TraceEvent::ScreenBottomBorder:
+			screen = "[Bot Border]";
+			break;
+		case TraceEvent::ScreenVSYNCLow:
+			screen = "[VSync Low ";
+			screen += std::to_string(n);
+			screen += "]";
+			CurrentLine_ = 0;
+			TotalCycles_ = 0;
+			break;
+		case TraceEvent::ScreenVSYNCHigh:
+			screen = "[VSync High ";
+			screen += std::to_string(n);
+			screen += "]";
+			break;
+		case TraceEvent::ScreenHSYNCLow:
+			screen = "[HSync Low ";
+			screen += std::to_string(n);
+			screen += "]";
+			break;
+		case TraceEvent::ScreenHSYNCHigh:
+			screen = "[HSync High ";
+			screen += std::to_string(n);
+			screen += "]";
+			break;
+		case TraceEvent::ScreenReg:
+			screen = "[";
+			screen += s;
+			screen += "]";
+			break;
+		}
+
+		return true;
+	}
+#else
 	bool OpDecoder::DecodeScreen(TraceEvent evt, std::string& screen)
 	{
 		switch (evt)
@@ -206,6 +306,7 @@ namespace VCC::Debugger
 
 		return true;
 	}
+#endif
 
 	bool OpDecoder::DecodeInstruction(const CPUState& state, CPUTrace& trace)
 	{

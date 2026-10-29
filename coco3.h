@@ -29,11 +29,12 @@ struct DisplayDetails
 	int rightBorderColumns = 0;
 };
 
-
+#if !USE_NEWTIMING
 void SetClockSpeed(unsigned int Cycles);
+#endif
 DisplayDetails GetDisplayDetails(const int clientWidth, const int clientHeight);
 void SetSndOutMode(unsigned char);
-float RenderFrame (SystemState *);
+float RenderFrame (SystemState *, _LARGE_INTEGER&);
 
 void SetTimerClockRate (unsigned char);	
 void RestartInterruptTimer(unsigned int);

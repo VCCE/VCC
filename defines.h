@@ -20,6 +20,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include "MachineDefs.h"
+#include "BuildConfig.h"
 #include "Debugger.h"
 #include <cstdint>
 #include <atomic>
@@ -35,8 +36,12 @@ constexpr auto SAMPLESPERFRAME = 262u;
 
 
 //CPU 
+#if USE_NEWTIMING
+constexpr auto LINESPERSCREEN = 263;
+#else
 constexpr auto FRAMESPERSECORD = 59.923;	//The coco really runs at about 59.923 Frames per second
 constexpr auto LINESPERSCREEN = 262.0;
+#endif
 constexpr auto NANOSECOND = 1000000000.0;
 constexpr auto COLORBURST = 3579545.0;
 constexpr auto AUDIOBUFFERS = 12u;
@@ -131,6 +136,7 @@ namespace VCC
     {    
 		explicit VideoArray(T* p) : data(p) {}
 
+#if USE_DEBUG_VIDEO_BUFFER
         T& operator[](size_t index) 
         {
             assert(index < Size);
@@ -142,28 +148,21 @@ namespace VCC
             assert(index < Size);
             return data[index % Size]; 
         }
+#else
+        inline T& operator[](size_t index)
+        {
+            return data[index];
+        }
+
+        inline const T& operator[](size_t index) const
+        {
+            return data[index];
+        }
+
+#endif
 
     private:
         T* data;
-    };
-
-
-    // delayed flip flop
-    struct DFF 
-    {
-        uint8_t D{}; // most recent Clock input
-        uint8_t Q{}; // previous Clock input
-
-        void Reset()
-        {
-            D = Q = 0;
-        }
-
-        void Clock(uint8_t d)
-        {
-            Q = D;
-            D = d;
-        }
     };
 
     //

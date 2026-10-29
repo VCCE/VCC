@@ -107,12 +107,12 @@ void GimeSetInterrupt(unsigned int flag)
 //
 // Clear gime irq GIME_INTR* flag, returns previous state.
 //
-unsigned char GimeClearIrq(unsigned int nflag)
+unsigned char GimeClearIrq()
 {
 	auto prevIrqState = GimeIrqState;
 	auto prevIrq = LastGimeIrq;
-	GimeIrqState &= nflag;
-	LastGimeIrq &= nflag;
+	GimeIrqState = 0;
+	LastGimeIrq = 0;
 
 	// if was previously set, clear line
 	if (prevIrq && !LastGimeIrq)
@@ -124,12 +124,12 @@ unsigned char GimeClearIrq(unsigned int nflag)
 //
 // Clear gime firq GIME_INTR* flag, returns previous state.
 //
-unsigned char GimeClearFirq(unsigned int nflag)
+unsigned char GimeClearFirq()
 {
 	auto prevFirqState = GimeFirqState;
 	auto prevFirq = LastGimeFirq;
-	GimeFirqState &= nflag;
-	LastGimeFirq &= nflag;
+	GimeFirqState = 0;
+	LastGimeFirq = 0;
 
 	// if was previously set, clear line
 	if (prevFirq && !LastGimeFirq)
@@ -158,7 +158,28 @@ void GimeRegistersReset()
 
 void GimeWrite(unsigned char port,unsigned char data)
 {
+#if USE_NEWTIMING
+	auto log = [](const char* fmt, auto ...args)
+	{
+		if (!EmuState.Debugger.IsTracingEnabled()) return;
+		char tmp[100];
+		sprintf(tmp, fmt, args...);
+		EmuState.Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenReg, 0, 0, tmp);
+	};
 	auto changed = GimeRegisters[port] ^ data;
+	auto ifZeroTimerInterrupt = [changed]()
+	{
+		// interrupt on timer being enabled (Arkanoid sound)
+		if ((changed & GIME_INTR_TIMER) && GimeTimerCounter() == 0)
+			GimeAssertTimerInterupt();
+	};
+	auto bit = [data](int n) { return (data >> n) & 1; };
+	auto bits = [data](int n, int m) { return (data >> n) & ((1 << (m - n + 1)) - 1); };
+#else
+	auto log = [](auto...) {};
+	auto changed = GimeRegisters[port] ^ data;
+	auto bit = [](int) { return 0; };
+	auto bits = [](int,int) { return 0; };
 
 	// when timer is 0 and its enabled, it interrupts almost immediately
 	auto ifZeroTimerInterrupt = [changed,data]()
@@ -166,109 +187,100 @@ void GimeWrite(unsigned char port,unsigned char data)
 		if ((data & changed & GIME_INTR_TIMER) && GimeTimerCounter() == 0)
 			GimeAssertTimerInterupt();
 	};
+#endif
 
 	GimeRegisters[port] = data;
 
 	switch (port)
 	{
 	case 0x90:
+		log("INIT0: %02X CC1=%d MMU=%d IEN=%d FEN=%d", data, bit(7), bit(6), bit(5), bit(4));
 		SetInit0(data);
 		GimeSetInterrupt(GimeIrqState | GimeFirqState);
 		break;
 
 	case 0x91:
+		log("INIT1: %02X TINS=%d Task=%d", data, bit(5), bit(0));
 		SetInit1(data);
 		break;
 
 	case 0x92:
-		GimeClearIrq(data);
+		log("IRQ: %02X", data);
+		if (!data) GimeClearIrq(); // 3.3,3.8
 		ifZeroTimerInterrupt();
 		break;
 
 	case 0x93:
-		GimeClearFirq(data);
+		log("FIRQ: %02X", data);
+		if (!data) GimeClearFirq(); // as above
 		ifZeroTimerInterrupt();
 		break;
 
 	case 0x94:
+		log("TMRH: %d", ((GimeRegisters[0x94] & 15) << 8) | GimeRegisters[0x95]);
 		SetTimerMSB();
 		break;
 
 	case 0x95:
+		log("TMRL: %d", ((GimeRegisters[0x94] & 15) << 8) | GimeRegisters[0x95]);
 		SetTimerLSB();
 		break;
 
 	case 0x96:
+		log("TURBO: %02X", data);
 		SetTurboMode(data & 1);
 		break;
+
 	case 0x97:
+		log("$97: %02X", data);
 		break;
 
 	case 0x98:
+		log("VMODE: %02X BP=%d LPR=%d", data, bit(7), bits(0, 2));
 		gGimeGpu.SetGimeVmode(data);
 		break;
 
 	case 0x99:
+		log("VRES: LPF=%d HR=%d CR=%d", bits(5, 6), bits(2, 4), bits(0, 1));
 		gGimeGpu.SetGimeVres(data);
 		break;
 
 	case 0x9A:
+		log("BDRC: %d", data);
 		gGimeGpu.SetGimeBoarderColor(data);
 		break;
 
 	case 0x9B:
+		log("BANK: %02X", data);
 		SetDistoRamBank(data);
 		break;
 
 	case 0x9C:
+		log("VSC: %d", bits(0, 3));
 		gGimeGpu.SetVerticalScroll(GimeRegisters[0x9C]);
 		break;
 
 	case 0x9D:
 	case 0x9E:
-		gGimeGpu.SetVerticalOffsetRegister((GimeRegisters[0x9D]<<8) | GimeRegisters[0x9E]);
+		log("VOFF: %05X", ((GimeRegisters[0x9D] << 8) | GimeRegisters[0x9E]) * 8);
+		gGimeGpu.SetVerticalOffsetRegister((GimeRegisters[0x9D] << 8) | GimeRegisters[0x9E]);
 		break;
 
 	case 0x9F:
+		log("HOFF: %d HVEN=%d", bits(0, 6) * 2, bit(7));
 		gGimeGpu.SetGimeHorzOffset(data);
 		break;
 
-	case 0xA0:
-	case 0xA1:
-	case 0xA2:
-	case 0xA3:
-	case 0xA4:
-	case 0xA5:
-	case 0xA6:
-	case 0xA7:
-	case 0xA8:
-	case 0xA9:
-	case 0xAA:
-	case 0xAB:
-	case 0xAC:
-	case 0xAD:
-	case 0xAE:
-	case 0xAF:
-		SetMmuRegister(port,data);
+	case 0xA0:case 0xA1:case 0xA2:case 0xA3:case 0xA4:case 0xA5:case 0xA6:case 0xA7:
+	case 0xA8:case 0xA9:case 0xAA:case 0xAB:case 0xAC:case 0xAD:case 0xAE:case 0xAF:
+		log("MMU: %X=%02X (%02X...)", port, data, data*2);
+		SetMmuRegister(port, data);
 		break;
 
-	case 0xB0:
-	case 0xB1:
-	case 0xB2:
-	case 0xB3:
-	case 0xB4:
-	case 0xB5:
-	case 0xB6:
-	case 0xB7:
-	case 0xB8:
-	case 0xB9:
-	case 0xBA:
-	case 0xBB:
-	case 0xBC:
-	case 0xBD:
-	case 0xBE:
-	case 0xBF:
-		gGimeGpu.SetGimePalette(port-0xB0,data & 63);
+	case 0xB0:case 0xB1:case 0xB2:case 0xB3:case 0xB4:case 0xB5:case 0xB6:case 0xB7:
+	case 0xB8:case 0xB9:case 0xBA:case 0xBB:case 0xBC:case 0xBD:case 0xBE:case 0xBF:
+		log("PAL: %d=%d", port - 0xB0, bits(0, 5));
+		gGimeGpu.SetGimePalette(port - 0xB0, data & 63);
 		break;
 	}
 	return;
@@ -304,10 +316,10 @@ unsigned char GimeRead(unsigned char port)
 			// set otherwise extra interrupts will occur. this is noticable in robocop
 			// the sound will repeat/stutter.
 			// note, return internal flags to program, see rtaylor's timer dsk.
-			return GimeClearIrq(0);
+			return GimeClearIrq();
 		case 0x93:
 			// note, as above.
-			return GimeClearFirq(0);
+			return GimeClearFirq();
 		default:
 			data = GimeRegisters[port];
 			// mmu registers, 
@@ -464,4 +476,9 @@ unsigned char VDG_Modes()
 {
 	return VDG_Mode;
 }
+
+// notes:
+// 3.3 - zero reg resets flags
+// 3.8 - clear partial flags has no effect
+//
 
