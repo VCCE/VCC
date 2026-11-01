@@ -29,6 +29,47 @@ namespace Screenshot
 {
     typedef std::uint8_t uint8_t;
 
+    int SnapSurface(IDisplay* display, Option opt, uint8_t **rgb, int *width, int *height)
+    {
+        if (display->LockSurface() != IDisplay::OK) return ERR_NOLOCK;
+
+        auto cleanup = [&](int code) -> int
+        {
+            if (display->UnlockSurface() != IDisplay::OK) return ERR_NOUNLOCK;
+            return code;
+        };
+
+        // get surface
+        Pixel* pixels;
+        if (display->GetSurface(&pixels) != IDisplay::OK) return cleanup(ERR_NOSURFACE);
+
+        // get dimensions of display surface
+        IDisplay::Rect rect;
+        if (display->GetRect(IDisplay::OPT_RECT_SURFACE, &rect) != IDisplay::OK) return cleanup(ERR_NOAREA);
+
+        auto w = (int)rect.w;
+        auto h = (int)rect.h;
+
+        if (width) *width = w;
+        if (height) *height = h;
+
+        // convert argb to rgb
+        int length = w * h * (opt == OPT_RGB) ? 3 : 4;
+        *rgb = new uint8_t[length];
+        if (!*rgb) return cleanup(1);
+
+        uint8_t* p = *rgb;
+        for (int i = 0; i < w * h; ++i, ++pixels)
+        {
+            *(p++) = pixels->r;
+            *(p++) = pixels->g;
+            *(p++) = pixels->b;
+            if (opt == OPT_RGBA)
+                *(p++) = 255;
+        }
+        return cleanup(OK);
+    }
+
     int Snap(IDisplay* display, const char* fname)
     {
 		char path[_MAX_PATH];
@@ -56,38 +97,13 @@ namespace Screenshot
 			fname = path;
 		}
 
-        if (display->LockSurface() != IDisplay::OK) return ERR_NOLOCK;
+        uint8_t* rgb;
+        int w;
+        int h;
 
-        auto cleanup = [&](int code) -> int
-        {
-            if (display->UnlockSurface() != IDisplay::OK) return ERR_NOUNLOCK;
-            return code;
-        };
-
-        // get surface
-        Pixel* pixels;
-        if (display->GetSurface(&pixels) != IDisplay::OK) return cleanup(ERR_NOSURFACE);
-
-        // get dimensions of display surface
-        IDisplay::Rect rect;
-        if (display->GetRect(IDisplay::OPT_RECT_SURFACE, &rect) != IDisplay::OK) return cleanup(ERR_NOAREA);
-
-        auto w = (int)rect.w;
-        auto h = (int)rect.h;
-
-        // convert argb to rgb
-        uint8_t* rgb = new uint8_t[w * h * 3];
-        if (!rgb) return cleanup(1);
-
-        auto cleanupMem = [&](int code) { delete[] rgb; return cleanup(code); };
-
-        uint8_t* p = rgb;
-        for (int i = 0; i < w * h; ++i, ++pixels)
-        {
-            *(p++) = pixels->r;
-            *(p++) = pixels->g;
-            *(p++) = pixels->b;
-        }
+        int result = SnapSurface(display, OPT_RGB, &rgb, &w, &h);
+        auto cleanupMem = [&](int code) { delete[] rgb; return code; };
+        if (result != OK) return cleanupMem(result);
 
         // write the png
         if (stbi_write_png(fname, w, h, 3, rgb, w * 3) == 0)

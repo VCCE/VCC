@@ -19,6 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include "defines.h"
+#include "IDisplay.h"
 
 BOOL InitInstance(HINSTANCE,int);
 void UnlockScreen(SystemState *);
@@ -38,5 +39,6 @@ void DisplayFlip(SystemState *);
 POINT GetForcedAspectBorderPadding();
 void CloseScreen();
 void DumpScreenshot(const char* fname = nullptr);
+VCC::IDisplay* GetDisplay();
 
 #endif

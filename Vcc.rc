@@ -67,6 +67,8 @@ BEGIN
     END
     POPUP "&Debugger"
     BEGIN
+        MENUITEM "Debug Server",                ID_DEBUGGER_DEBUGSERVER
+        MENUITEM SEPARATOR
         MENUITEM "&Memory Display",              ID_MEMORY_DISPLAY
         MENUITEM "&Processor State",             ID_PROCESSOR_STATE
         MENUITEM "&Disassembler",                ID_DISASSEMBLER

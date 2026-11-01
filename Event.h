@@ -1,3 +1,21 @@
+/*
+Copyright 2015 by Joseph Forgione
+This file is part of VCC (Virtual Color Computer).
+
+    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #pragma once
 
 #include <functional>
@@ -10,6 +28,7 @@ namespace VCC
     {
         ET_TIMER = 1,
         ET_AUDIO = 2,
+        ET_COMMAND = 3,
     };
 
     //
@@ -27,6 +46,7 @@ namespace VCC
         using Clocks = size_t;
         using Cycles = size_t;
         struct Hz { size_t value; };
+        struct Frames { size_t value; };
         using Func = std::function<void()>;
 
         Event();
@@ -45,6 +65,12 @@ namespace VCC
         // Queue up func at dt in hz from now
         //
         void Queue(Hz dtHz, Func func, size_t id = 0);
+
+        //
+        // Queue up func in x frames from now
+        // (130 max @ 128 resolution)
+        //
+        void Queue(Frames frames, Func func, size_t id = 0);
 
         //
         // Reschedule 'id' from now, if id not found just queue.

@@ -73,6 +73,7 @@
 #include "throttle.h"
 #include "DirectDrawInterface.h"
 #include "Cassette.h"
+#include "Screenshot.h"
 
 #include "CommandLine.h"
 #include <vcc/util/logger.h>
@@ -86,6 +87,8 @@
 #include "Disassembler.h"
 #include "MMUMonitor.h"
 #include "ExecutionTrace.h"
+#include "DebugMgr.h"
+#include "CommandQueue.h"
 
 #include <vcc/bus/cartridge_menu.h>
 #include <vcc/bus/cartridge_messages.h>
@@ -115,6 +118,7 @@ BOOL CALLBACK About(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK FunctionKeys(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM);
 
+void InitializeDap(Dap& dap);
 void SoftReset();
 void LoadIniFile();
 void SaveConfig();
@@ -305,6 +309,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 			}
 		}
 	}
+
+	VCC::EnableDebugServer(false);
 	CloseHandle( hEvent ) ;
 	CloseHandle( hEMUQuit ) ;
 	CloseHandle( hEMUThread ) ;
@@ -519,7 +525,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 
 				case ID_FLIP_ARTIFACTS:
-					gGimeGpu.FlipArtifacts();
+					QEMU(gGimeGpu.FlipArtifacts());
 					break;
 
 				case ID_SWAP_JOYSTICKS:
@@ -554,6 +560,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					VCC::OpenDisassemblerWindow(EmuState.WindowInstance, EmuState.WindowHandle);
 					break;
 
+				case ID_DEBUGGER_DEBUGSERVER:
+				{
+					HMENU hMenuBar = GetMenu(hWnd);
+					HMENU hDebuggerMenu = GetSubMenu(hMenuBar, 4);
+					DWORD state = GetMenuState(hDebuggerMenu, ID_DEBUGGER_DEBUGSERVER, MF_BYCOMMAND);
+					bool isChecked = (state & MF_CHECKED) != 0;
+					isChecked = !isChecked;
+					EnableDebugServer(isChecked, CmdArg.Dap ? CmdArg.Dap : 6666);
+					CheckMenuItem(hDebuggerMenu, ID_DEBUGGER_DEBUGSERVER, isChecked ? MF_CHECKED : MF_UNCHECKED);
+					break;
+				}
+
 				default:
 				   return DefWindowProc(hWnd, message, wParam, lParam);
 			}
@@ -569,6 +587,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				strncat(title,g_szAppName,80);
 				SetWindowTextA(hWnd,title); }
 #endif
+			if (CmdArg.Dap)
+			{
+				HMENU hMenuBar = GetMenu(hWnd);
+				HMENU hDebuggerMenu = GetSubMenu(hMenuBar, 4);
+				CheckMenuItem(hDebuggerMenu, ID_DEBUGGER_DEBUGSERVER, MF_CHECKED);
+				EnableDebugServer(true, CmdArg.Dap);
+			}
 			break;
 
 		case WM_SETCURSOR:
@@ -670,9 +695,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				case DIK_F6:
 					if (IsShiftKeyDown())
-						gGimeGpu.FlipArtifacts();
+						QEMU(gGimeGpu.FlipArtifacts());
 					else
-						gGimeGpu.SetMonitorType(!gGimeGpu.SetMonitorType(QUERY));
+						QEMU(gGimeGpu.SetMonitorType(!gGimeGpu.SetMonitorType(QUERY)));
 				break;
 
 				case DIK_F7:
@@ -1206,6 +1231,7 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 				{
 				case 1:	//Soft Reset
 					SoftReset();
+					gEmuOnReset.Execute();
 					break;
 
 				case 2:	//Hard Reset
@@ -1213,6 +1239,7 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 					UpdateConfig();    // Applies only video and Cpu changes
 					DoCls(&EmuState);  // Clear the screen
 					DoHardReset(&EmuState);
+					gEmuOnReset.Execute();
 					break;
 
 				case 3:
