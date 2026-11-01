@@ -57,6 +57,7 @@
 #include <vcc/util/settings.h>
 #include <vcc/util/fileutil.h>
 #include <vcc/util/textutil.h>
+#include "CommandQueue.h"
 
 #include "config.h"
 
@@ -579,10 +580,12 @@ void SetKeyMapFilePath(const char *Path)
 void UpdateConfig ()
 {
 	// Video
-	gGimeGpu.SetPaletteType();
-	gGimeGpu.SetMonitorType(CurrentConfig.MonitorType);
 	SetAspect(CurrentConfig.Aspect);
-	gGimeGpu.SetScanLines(CurrentConfig.ScanLines);
+	auto monitorType = CurrentConfig.MonitorType;
+	auto scanLines = CurrentConfig.ScanLines;
+	QEMU(gGimeGpu.SetPaletteType();
+		gGimeGpu.SetMonitorType(monitorType);
+		gGimeGpu.SetScanLines(scanLines));
 	SetFrameSkip(CurrentConfig.FrameSkip);
 	EmuState.MousePointer = CurrentConfig.ShowMousePointer;
 	// Cpu

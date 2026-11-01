@@ -347,6 +347,9 @@ void UnlockScreen(SystemState *USState)
 	if (g_DirectXDisplay && InfoBand)
 		g_DirectXDisplay->RenderStatusLine(StatusText);
 
+	if (!g_Display)
+		return;
+
 	if (g_Display->UnlockSurface() != IDisplay::OK)
 		return;
 
@@ -599,4 +602,9 @@ void DumpScreenshot(const char* fname)
 		sprintf(msg, "Unable to take screenshot! (%d)", result);
 		MessageBox(nullptr, msg, "Error", 0);
 	}
+}
+
+VCC::IDisplay* GetDisplay()
+{
+	return g_Display;
 }

@@ -204,6 +204,11 @@ void Set_MmuEnabled (unsigned char usingmmu)
 	MmuState= (!MmuEnabled)<<1 | MmuTask;
 	return;
 }
+
+unsigned char GetMmuTask()
+{
+	return MmuTask;
+}
  
 unsigned char * Getint_rom_pointer()
 {

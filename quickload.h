@@ -18,7 +18,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-unsigned char QuickLoad(char *BinFileName);
+unsigned char QuickLoad(const char *BinFileName, uint16_t *start = nullptr);
 unsigned short GetXferAddr();
 
 #endif

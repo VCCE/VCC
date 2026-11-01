@@ -204,16 +204,16 @@ void FlushAudioBuffer(unsigned int *Abuffer,unsigned int Lenth)
 		VCC::Pixel col(VCC::ColorYellow); col.a = 200;
 		int x = (char*)data.aBuf - (char*)AudioBaseAddress;
 		int y = 400 + i * 8;
-		DebugDrawBox(xp + x / s, y, data.aSize / s, 3, col);
+		DebugDrawBox(xp + x / s, y, data.aSize / s, 3, col, false);
 		if (data.bBuf)
 		{
 			VCC::Pixel col(VCC::ColorGreen); col.a = 200;
 			int x1 = (char*)data.bBuf - (char*)AudioBaseAddress;
-			DebugDrawBox(xp + x1 / s, y, data.bSize / s, 3, col);
+			DebugDrawBox(xp + x1 / s, y, data.bSize / s, 3, col, false);
 		}
 		DebugDrawLine(xp + data.playPos / s, y - 1, xp + data.playPos / s, y + 5, VCC::ColorGreen);
 		DebugDrawLine(xp + data.writePos / s, y - 1, xp + data.writePos / s, y + 5, VCC::ColorRed);
-		DebugDrawBox(xp - 20, y, data.freeBlocks, 3, col);
+		DebugDrawBox(xp - 20, y, data.freeBlocks, 3, col, false);
 	}
 #endif
 }

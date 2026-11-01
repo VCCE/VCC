@@ -37,7 +37,7 @@ static unsigned char Flag=1;
 static int temp=255;
 static char Extension[MAX_PATH]="";
 
-unsigned char QuickLoad(char *BinFileName)
+unsigned char QuickLoad(const char *BinFileName, uint16_t* start)
 {
 	unsigned int MemIndex=0;
 
@@ -89,6 +89,7 @@ unsigned char QuickLoad(char *BinFileName)
 				fclose(BinImage);
 				free(MemImage);
 				CPUForcePC(XferAddress);
+				if (start) *start = XferAddress;
 				return 0;				
 				break;
 			default:

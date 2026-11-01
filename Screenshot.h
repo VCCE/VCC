@@ -34,6 +34,13 @@ namespace Screenshot
         ERR_WRITEPNG,
     };
 
+    enum Option
+    {
+        OPT_RGB,
+        OPT_RGBA,
+    };
+
+    int SnapSurface(VCC::IDisplay* display, Option opt, uint8_t** rgb, int* width, int* height);
     int Snap(VCC::IDisplay* display, const char* fname);
 }
 

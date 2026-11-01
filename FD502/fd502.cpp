@@ -447,7 +447,7 @@ void Load_Disk(unsigned char disk)
 		dlg.getpath(gSelectedDiskFile,MAX_PATH);
 		// Verify file exists
 		hr = CreateFile
-			(gSelectedDiskFile,0,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+			(gSelectedDiskFile,0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 		// Create new disk file if it does not
 		if (hr == INVALID_HANDLE_VALUE) {
 			NewDiskNumber = disk;
