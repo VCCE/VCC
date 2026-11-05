@@ -97,6 +97,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="sdc.cpp" />
+    <ClCompile Include="card_import.cpp" />
+    <ClCompile Include="..\3rdparty\miniz\miniz.c" />
+    <ClCompile Include="..\3rdparty\miniz\miniz_tinfl.c" />
+    <ClCompile Include="..\3rdparty\miniz\miniz_tdef.c" />
+    <ClCompile Include="..\3rdparty\miniz\miniz_zip.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sdc.h" />
