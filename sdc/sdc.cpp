@@ -124,6 +124,7 @@
 //======================================================================
 
 #include <string>
+#include <cstring>
 #include <algorithm>
 #include <filesystem>
 #include <stdio.h>
@@ -147,6 +148,8 @@
 #include <vcc/bus/cartridge_messages.h>
 
 #include "sdc.h"
+#include "card_import.h"
+#include <stdexcept>
 
 static ::VCC::Device::rtc::cloud9 cloud9_rtc;
 namespace util = ::VCC::Util;
@@ -237,6 +240,9 @@ LRESULT CALLBACK SDC_Configure(HWND, UINT, WPARAM, LPARAM);
 void LoadConfig();
 bool SaveConfig(HWND);
 void SelectCardBox();
+void MountCardFolder();
+void MountCardZip();
+bool AttachCard(const std::string&);
 void UpdateFlashItem(int);
 void InitCardBox();
 void InitFlashBoxes();
@@ -392,6 +398,12 @@ extern "C"
                          GetActiveWindow(), (DLGPROC) SDC_Configure);
             ShowWindow(hConfigureDlg,1);
             break;
+        case 12:
+            MountCardFolder();
+            break;
+        case 13:
+            MountCardZip();
+            break;
         case 11:
             SDCMountNext (0);
 	        SendMessage(gVccWindow,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
@@ -467,6 +479,8 @@ bool get_menu_item(menu_item_entry* item, size_t index)
         }
         SdcMenu.add(tmp, ControlId(11),MIT_Slave);
 
+        SdcMenu.add("Mount folder as SD card...", ControlId(12), MIT_StandAlone);
+        SdcMenu.add("Mount ZIP as SD card...", ControlId(13), MIT_StandAlone);
         SdcMenu.add("SDC Config", ControlId(10), MIT_StandAlone);
     }
     return SdcMenu.copy_item(*item, index);
@@ -501,14 +515,7 @@ SDC_Configure(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
             SelectCardBox();
             break;
         case ID_SD_BOX:
-            if (HIWORD(wParam) == EN_CHANGE) {
-                char tmp[MAX_PATH];
-                GetWindowText(hSDCardBox,tmp,MAX_PATH);
-                if (*tmp != '\0') {
-                    gCurDir = tmp;
-                    util::FixDirSlashes(gCurDir);
-                }
-            }
+            // Editing a pending path must not change the running card's directory.
             return TRUE;
         case ID_UPDATE0:
             UpdateFlashItem(0);
@@ -729,6 +736,73 @@ void SelectCardBox()
     }
 #endif
 
+}
+
+// Attach only after selection/import has succeeded. The same-folder case also
+// resets so STARTUP.CFG is applied consistently with an explicitly attached card.
+bool AttachCard(const std::string& selected)
+{
+    try 
+    {
+        std::string path=std::filesystem::absolute(selected).string();
+        util::FixDirSlashes(path);
+        if (path.size() >= MAX_PATH || !util::IsDirectory(path))
+            throw std::runtime_error("The selected SD-card folder is invalid or its path is too long.");
+        if (!Setting().write("SDC", "SDCardPath", path))
+            throw std::runtime_error("Cannot save the SD-card path. Check access to the VCC settings file.");
+        UnloadDisk(0);
+        UnloadDisk(1);
+        gSDRoot = path;
+        gCurDir.clear();
+        BadSDRoot = false;
+        if (hConfigureDlg)
+            SetDlgItemText(hConfigureDlg, ID_SD_BOX, path.c_str());
+        SendMessage(gVccWindow, WM_VCC_CPU_RESET, 0, 0);
+        SendMessage(gVccWindow, WM_VCC_UPD_MENU, 0, 0);
+        return true;
+    }
+    catch(const std::exception& e) 
+    {
+        MessageBox(gVccWindow,e.what(),"SD card not mounted",MB_OK|MB_ICONERROR);
+        return false;
+    }
+}
+
+void MountCardFolder()
+{
+    FileDialog dlg;
+    dlg.setTitle("Mount folder as SD card");
+    dlg.setInitialDir(gSDRoot);
+    if (dlg.show_folder(gVccWindow))
+        AttachCard(dlg.getpath());
+}
+
+void MountCardZip()
+{
+    FileDialog dlg;
+    dlg.setTitle("Mount ZIP as SD card");
+    dlg.setFilter("SD card ZIP archives\0*.zip\0All files\0*.*\0\0");
+    dlg.setFlags(OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR);
+    if (!dlg.show(FALSE, gVccWindow)) return;
+    HCURSOR old = SetCursor(LoadCursor(nullptr, IDC_WAIT));
+    try 
+    {
+        char local[MAX_PATH];
+        if (FAILED(SHGetFolderPathA(nullptr, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, nullptr, SHGFP_TYPE_CURRENT, local)))
+            throw std::runtime_error("Cannot locate writable local application storage.");
+        auto card = sdc_card::import_zip(dlg.getpath(), std::filesystem::path(local) / "VCC" / "SDCards");
+        SetCursor(old);
+        if (AttachCard(card.string())) 
+        {
+            std::string message = "SD card mounted from:\n" + card.string() + "\n\nChanges and game saves are written to this folder. The original ZIP is unchanged.\nUse Mount folder as SD card to reopen this card later.";
+            MessageBox(gVccWindow, message.c_str(), "SD card imported", MB_OK | MB_ICONINFORMATION);
+        }
+    }
+    catch (const std::exception& e) 
+    {
+        SetCursor(old);
+        MessageBox(gVccWindow, e.what(), "ZIP not mounted", MB_OK | MB_ICONERROR); 
+    }
 }
 
 //=====================================================================
