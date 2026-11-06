@@ -214,6 +214,15 @@ static char FlopStatus = 0;
 static DWORD FlopWrCnt = 0;
 static DWORD FlopRdCnt = 0;
 static char FlopWrBuf[256];
+
+// On the real hardware the SDC status and response registers are the
+// same registers as the FDC status, track, sector and data registers.
+// The documented protocol leaves command mode (write 0 to $FF40) and
+// then reads the status and response bytes. Keep the last command's
+// status and responses readable in floppy mode until the next floppy
+// register write.
+static bool CmdRegsHeld = false;
+static unsigned char HeldRegs[4];   // $FF48 status, $FF49-$FF4B responses
 static char FlopRdBuf[256];
 
 static int EDBOXES[8] = {ID_TEXT0,ID_TEXT1,ID_TEXT2,ID_TEXT3,
@@ -773,6 +782,7 @@ void InitSDC()
 
     // init the interface
     IFace = {};
+    CmdRegsHeld = false;
 
     return;
 }
@@ -944,6 +954,11 @@ void SDCWrite(unsigned char data,unsigned char port)
             if ((data & 0x43) == 0x43) break;
             // Leaving command mode ends any stream in progress
             if (streaming) SDCStreamStop(STA_NORMAL);
+            HeldRegs[0] = IFace.status;
+            HeldRegs[1] = IFace.reply1;
+            HeldRegs[2] = IFace.reply2;
+            HeldRegs[3] = IFace.reply3;
+            CmdRegsHeld = true;
             IFace = {};
             break;
         // Command registor
@@ -979,6 +994,8 @@ void SDCWrite(unsigned char data,unsigned char port)
             break;
         }
     } else {
+        // Any FDC register write replaces the held command registers
+        if (port >= 0x48 && port <= 0x4B) CmdRegsHeld = false;
         switch (port) {
         case 0x40:
             // Command latch and floppy drive select
@@ -1079,6 +1096,10 @@ unsigned char SDCRead(unsigned char port)
             rpy = 0;
             break;
         }
+    // Status and responses of the last command, read after leaving
+    // command mode (see CmdRegsHeld)
+    } else if (CmdRegsHeld && port >= 0x48 && port <= 0x4B) {
+        rpy = HeldRegs[port - 0x48];
     // If not SDC latched do floppy controller simulation
     } else {
         switch (port) {
@@ -1234,8 +1255,10 @@ void SDCGetDriveInfo()
         break;
     case 0x56:
         // 'V' Get BCD firmware version number in p2, p3.
-        IFace.reply2 = 0x00;
-        IFace.reply3 = 0x01;
+        // Report 1.20: STREAM (117) and MOUNT NEXT (120) are emulated;
+        // MOUNT DISK # (124) is not. Games such as Gridfall need 117+.
+        IFace.reply2 = 0x01;
+        IFace.reply3 = 0x20;
         break;
     }
 }

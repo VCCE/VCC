@@ -218,6 +218,22 @@ int main(int argc, char** argv) {
         printf("  blocks=%d fin=%02X %s\n", n, st, (!bad && n == 64 && st == 0) ? "PASS" : "FAIL");
         wr(0x48, 0xD0); waitnb(st); cmdoff();
     }
+    // T11: Gridfall pattern - VERSION command, then leave command mode
+    // (CLR $FF40) before reading the response with LDD $FF4A, as the
+    // guide's protocol describes. Needs 117 (STREAM) or later.
+    printf("T11 version read after leaving command mode\n");
+    {
+        cmdon(); waitnb(st);
+        wr(0x49, 'V'); wr(0x48, 0xC0); waitnb(st);
+        unsigned v1 = (rd(0x4A) << 8) | rd(0x4B);
+        cmdoff();
+        unsigned char fs = rd(0x48);
+        unsigned v2 = (rd(0x4A) << 8) | rd(0x4B);
+        printf("  st=%02X cmd=%04X floppy=%04X fst=%02X %s\n", st, v1, v2, fs,
+            (!(st & 0x80) && v1 >= 0x117 && v2 == v1 && fs == st) ? "PASS" : "FAIL");
+        wr(0x4A, 1);  // an FDC register write drops the held values
+        printf("  after FDC write sector reg=%02X %s\n", rd(0x4A), rd(0x4A) == 0 ? "PASS" : "FAIL");
+    }
     printf("interrupts asserted: %d\n", nmi_count);
     return 0;
 }
