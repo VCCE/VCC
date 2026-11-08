@@ -472,15 +472,16 @@ void sam_write(unsigned char port, unsigned char data)
 	if ( (port==0xDE) | (port ==0xDF))
 		SetMapType(port&1);
 
-	// RAM high speed poke. GIME-X (x2 firmware): two consecutive writes of $A5
-	// to $FFD9 select turbo (2.86 MHz), as RAMTEST does. Hardware stayed at
-	// high speed for a single $A5 after another value (GXPROBE T6). Any other
-	// value selects high speed.
+	// RAM high speed poke. GIME-X (x2 firmware, $FFEF=$21): two consecutive
+	// writes of $5A to $FFD9 select turbo (2.86 MHz). Measured on hardware
+	// (GXPROBE3 X7SPEED): $5A,$5A gave turbo; $A5,$A5 / $00,$A5 / $A5 x3 all
+	// stayed at high speed, despite the document naming $A5. Any other value
+	// selects high speed.
 	static int lastD9 = -1;
 	if (port==0xD9)
 	{
 		if (GimeXEnabled())
-			SetGimeXTurbo(data == 0xA5 && lastD9 == 0xA5);
+			SetGimeXTurbo(data == 0x5A && lastD9 == 0x5A);
 		lastD9 = data;
 		SetCPUMultiplyerFlag(1);
 	}
