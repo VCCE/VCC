@@ -980,7 +980,7 @@ void DoHardReset(SystemState* const HRState)
 	MiscReset();
 	MmuReset();
 	UpdateBusPointer();
-	ResetBus();
+	ResetBus(true);		// hard reset = power cycle for carts
 	return;
 }
 
