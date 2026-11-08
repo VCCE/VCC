@@ -9,6 +9,7 @@
 #include "defines.h"
 #include "gimex.h"
 #include "tcc1014mmu.h"
+#include "tcc1014graphics.h"
 #include "Vcc.h"
 
 namespace
@@ -28,7 +29,7 @@ namespace
 	unsigned int sDest = 0;            // $FFE1-$FFE3
 	unsigned int sSource = 0;          // $FFE4-$FFE6
 	unsigned char sControl = 0;        // $FFE7
-	unsigned char sPalette256Index = 0; // $FFE0 (used in Phase 2)
+	unsigned char sPalette256Index = 0; // $FFE0, last 256-colour entry written
 
 	// physical RAM size, mirrored like the MMU does for smaller configs
 	unsigned int PhysicalMask()
@@ -91,7 +92,10 @@ void GimeXWrite(unsigned char port, unsigned char data)
 {
 	switch (port)
 	{
-	case 0xE0: sPalette256Index = data; break;
+	case 0xE0:
+		sPalette256Index = data;
+		gGimeGpu.SetPalette256FromPalette0(data);
+		break;
 	case 0xE1: SetHigh(sDest, data); break;
 	case 0xE2: SetMid(sDest, data); break;
 	case 0xE3: SetLow(sDest, data); break;

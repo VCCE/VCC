@@ -10,7 +10,7 @@
 // GIME-X: FPGA replacement for the CoCo 3 GIME (Zippster hardware, Gary Becker Verilog).
 //
 // Extensions emulated here (see "Extended CoCo3 features in GIME-X"):
-//   $FFE0        256-colour palette select (Phase 2, latched only for now)
+//   $FFE0        256-colour palette: copies palette 0 (9 bit) to entry <data>
 //   $FFE1-$FFE3  DMA destination address (21 bits)
 //   $FFE4-$FFE6  DMA source address (21 bits)
 //   $FFE7        DMA control: bit 0 = write auto-increment, bit 1 = read auto-increment

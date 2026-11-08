@@ -917,9 +917,12 @@ void SDCWrite(unsigned char data,unsigned char port)
 
     if (IFace.sdclatch) {
         switch (port) {
-        // Toggle Control Latch
+        // Control latch: writing $43 again stays in command mode (and
+        // clears any pending command state); any other value returns
+        // to floppy emulation mode.
         case 0x40:
-            if (IFace.sdclatch) IFace = {};
+            IFace = {};
+            if ((data & 0x43) == 0x43) IFace.sdclatch = true;
             break;
         // Command registor
         case 0x48:
@@ -2338,9 +2341,19 @@ void SDCMakeDirectory(const char* name)
 // This is complicated by the many ways a user can change the directory
 //----------------------------------------------------------------------
 
-void SDCSetCurDir(const char* branch)
+void SDCSetCurDir(const char* rawbranch)
 {
     namespace fs = std::filesystem;
+
+    // Directory names often come straight from an 8.3 directory record and
+    // are padded with trailing spaces (e.g. "PICS    "). Windows ignores the
+    // padding when validating the path, but FindFirstFile does not once it is
+    // part of CurDir, so strip it here. Also accept the 11 char FAT form.
+    std::string trimmed(rawbranch);
+    trimmed.erase(trimmed.find_last_not_of(' ') + 1);
+    if (trimmed.length() == 11 && trimmed.find('.') == std::string::npos)
+        trimmed = FixFATPath(trimmed);
+    const char* branch = trimmed.c_str();
 
     DLOG_C("SetCurdir '%s'\n", branch);
 
