@@ -175,6 +175,7 @@
     <ClCompile Include="tcc1014graphics.cpp" />
     <ClCompile Include="tcc1014mmu.cpp" />
     <ClCompile Include="tcc1014registers.cpp" />
+    <ClCompile Include="gimex.cpp" />
     <ClCompile Include="throttle.cpp" />
     <ClCompile Include="Vcc.cpp" />
     <ClCompile Include="_xDebug.cpp" />
@@ -233,6 +234,7 @@
     <ClInclude Include="tcc1014graphics.h" />
     <ClInclude Include="tcc1014mmu.h" />
     <ClInclude Include="tcc1014registers.h" />
+    <ClInclude Include="gimex.h" />
     <ClInclude Include="throttle.h" />
     <ClInclude Include="DebuggerUtils.h" />
     <ClInclude Include="Vcc.h" />

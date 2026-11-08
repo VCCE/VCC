@@ -21,6 +21,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 #include "tcc1014graphics.h"
 #include "tcc1014registers.h"
+#include "gimex.h"
 #include "ddraw.h"
 #include "coco3.h"
 #include "cc2font.h"
@@ -10219,6 +10220,13 @@ void GimeGpu::SetLinesperScreen(unsigned char Lines)
 	Lines = (Lines & 3);
 	LinesperScreen = Lpf[Lines];
 	TopBoarder = VcenterTable[Lines];
+	// LPF=10 is broken on the original GIME; GIME-X implements it as 210 lines
+	// (per Super Extended BASIC Unravelled).
+	if (Lines == 2 && GimeXEnabled())
+	{
+		LinesperScreen = 210;
+		TopBoarder = 16;
+	}
 #if USE_NEWTIMING
 	BottomBoarder = (LINESPERSCREEN - 24) - (TopBoarder + LinesperScreen);
 #else
@@ -10432,9 +10440,8 @@ void GimeGpu::SetupDisplay()
 		break;
 }
 	if(!UserFlipped) ColorInvert= (CC3Vmode & 32)>>5;
-	LinesperScreen=Lpf[VresIndex];
 	SetLinesperScreen(VresIndex);
-	VertCenter = VcenterTable[VresIndex];
+	VertCenter = TopBoarder;	// == VcenterTable[VresIndex], except GIME-X 210 lines
 	assert(Bpp >= 0 && Bpp < sizeof(CCPixelsperByte));
 	PixelsperLine= BytesperRow*CCPixelsperByte[Bpp];
 	PixelsperByte=CCPixelsperByte[Bpp];

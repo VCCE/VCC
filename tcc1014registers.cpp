@@ -20,6 +20,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "tcc1014registers.h"
+#include "gimex.h"
 #include "tcc1014graphics.h"
 #include "coco3.h"
 #include "keyboard.h"
@@ -228,7 +229,11 @@ void GimeWrite(unsigned char port,unsigned char data)
 
 	case 0x96:
 		log("TURBO: %02X", data);
-		SetTurboMode(data & 1);
+		// GIME-X implements the NoCan3 $FF96 bit 0 switch as its 2.86 MHz turbo
+		if (GimeXEnabled())
+			SetGimeXTurbo(data & 1);
+		else
+			SetTurboMode(data & 1);
 		break;
 
 	case 0x97:
@@ -405,7 +410,7 @@ unsigned char sam_read(unsigned char port) //SAM don't talk much :)
 
 	return 0;
 }
-void sam_write(unsigned char port)
+void sam_write(unsigned char port, unsigned char data)
 {
 	unsigned char mask=0;
 	unsigned char reg=0;
@@ -435,12 +440,20 @@ void sam_write(unsigned char port)
 	if ( (port==0xDE) | (port ==0xDF))
 		SetMapType(port&1);
 
-	// RAM high speed poke
+	// RAM high speed poke. GIME-X: $A5 written to $FFD9 selects turbo (2.86 MHz),
+	// any other value selects high speed.
 	if (port==0xD9)
+	{
+		if (GimeXEnabled())
+			SetGimeXTurbo(data == 0xA5);
 		SetCPUMultiplyerFlag(1);
+	}
 
 	if (port==0xD8)
+	{
+		SetGimeXTurbo(false);
 		SetCPUMultiplyerFlag(0);
+	}
 
 //
 // todo: ROM high speed poke, currently unsupported by vcc

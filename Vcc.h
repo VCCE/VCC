@@ -23,6 +23,7 @@
 
 void SetCPUMultiplyerFlag (unsigned char);     //tcc1014registers.cpp
 void SetTurboMode(unsigned char);              //tcc1014registers.cpp
+void SetupClock();                             //gimex.cpp
 unsigned char SetCPUMultiplyer(unsigned char); //tcc1014registers.cpp, config.cpp
 unsigned char SetRamSize(unsigned char);       //config.cpp
 unsigned char SetSpeedThrottle(unsigned char); //config.cpp, keyboard.cpp
