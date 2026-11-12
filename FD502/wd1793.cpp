@@ -1,5 +1,6 @@
-//#define USE_LOGGING
+#define USE_LOGGING
 #define USE_STAMPEDLOG
+//#define USE_LOGFILE
 /*------------------------------------------------------------------------------------
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -126,25 +127,6 @@ char ImageFormat[5][4]={"JVC","VDK","DMK","OS9","RAW"};
 uint32_t data_sum = 0;    // sum of DATREG reads at command done
 uint32_t hsync_clock=0;   // Increment on hsync (PingFdc)
 
-#ifdef USE_STAMPEDLOG
-#define LOG_TRAFFIC(txt,port,val) log_traffic(txt,port,val)
-#else
-#define LOG_TRAFFIC(txt,port,val) ((void)0)
-#endif
-
-void log_traffic(std::string txt, unsigned char port, unsigned char value)
-{
-	char tmp[16];
-	snprintf(tmp,16,"%02x",port);
-	std::string log = txt + tmp;
-    // ignore DataReg to avoid flooding log
-	if (port != 0x4b) { 
-		snprintf(tmp,16," %02x",value);
-		log += tmp;
-	}
-	LOG_STAMPED(hsync_clock,log);
-}
-
 //-------------------------------------------------------------
 
 unsigned char disk_io_read(unsigned char port)
@@ -165,15 +147,15 @@ unsigned char disk_io_read(unsigned char port)
 			temp=SectorReg;
 			break;
 
-		case 0x4B:						//Reading data from disk
-			if (CurrentCommand==IDLE)
+		case 0x4B:
+			if (CurrentCommand==IDLE) {
+                // Nitros rb1773 driver uses DataReg echo to verify drive exists
 				temp=DataReg;
-			else
+			} else {
 				temp=GetBytefromDisk();
-#ifdef USE_STAMPEDLOG
-			data_sum += temp;
-#endif
+			}
 			break;
+
 		case 0x40:	//Control Register can't be read
 			temp=0;
 			break;
@@ -182,17 +164,25 @@ unsigned char disk_io_read(unsigned char port)
 	}	//END Switch port
 
 #ifdef USE_STAMPEDLOG
-	log_traffic("wd1793 read port ",port,temp);
+	if (port == 0x4B) {
+		if (CurrentCommand==IDLE) {
+            LOG_STAMPED(hsync_clock,"wd1793 idle read data %02x",temp);
+		} else {
+            LOG_STAMPED(hsync_clock,"wd1793 read data"); //gives count
+			data_sum += temp;
+		}
+	} else {
+        LOG_STAMPED(hsync_clock,"wd1793 read port %02x %02x",port,temp);
+	}
 #endif
+
 	return temp;
 }
 
 void disk_io_write(unsigned char data,unsigned char port)
 {
-#ifdef USE_STAMPEDLOG
 	if (port >= 0x40 && port <= 0x50)
-		log_traffic("wd1793 write port ",port,data);
-#endif
+		LOG_STAMPED(hsync_clock,"wd1792 write port %02x %02x",port,data);
 
 	switch (port)
 	{
@@ -209,10 +199,13 @@ void disk_io_write(unsigned char data,unsigned char port)
 	break;
 
 	case	0x4B:	//Writing Data to disk
-		if (CurrentCommand==IDLE)
+		if (CurrentCommand==IDLE) {
+            LOG_STAMPED(hsync_clock,"wd1793 idle write data %02x",data);
 			DataReg=data;
-		else
+		} else {
+            LOG_STAMPED(hsync_clock,"wd1793 write data"); //logs count
 			WriteBytetoDisk(data);
+		}
 	break;
 			
 	case	0x40:
@@ -240,7 +233,7 @@ void DecodeControlReg(unsigned char Tmp)
 
 	KBLeds=0;
 	MotorOn=0;
-	CurrentDisk=NONE;
+	CurrentDisk=NONE;  // 4
 	Side=0;
 	InteruptEnable=0;
 	HaltEnable=0;
@@ -281,6 +274,10 @@ void DecodeControlReg(unsigned char Tmp)
 		InteruptEnable=1;
 	if (Tmp & CTRL_HALT_FLAG)
 		HaltEnable=1;
+
+	LOG_STAMPED(hsync_clock,
+		"wd1793 control dr:%d si:%d halt:%d ienab:%d Mot:%d",
+		CurrentDisk, Side, HaltEnable, InteruptEnable, MotorOn);
 
 	return;
 }
@@ -459,15 +456,17 @@ long ReadSector (unsigned char Side,	//0 or 1
 
 #ifdef USE_STAMPEDLOG
 {
-    char log[64];
+//    char log[64];
 	unsigned int lsn;
     if (gVirtualDrive[CurrentDisk].Sides == 2)
         lsn = (Track * 2 + Side) * 18 + (Sector - 1);
     else
         lsn = Track * 18 + Sector - 1;
-    snprintf(log,sizeof(log),"wd1793 Read dr:%d si:%d t:%d s:%d lsn:%u",
+//    snprintf(log,sizeof(log),"wd1793 Read dr:%d si:%d t:%d s:%d lsn:%u",
+//		CurrentDisk,Side,Track,Sector,lsn);
+//	LOG_STAMPED(hsync_clock,log);
+	LOG_STAMPED(hsync_clock,"wd1793 Read dr:%d si:%d t:%d s:%d lsn:%u",
 		CurrentDisk,Side,Track,Sector,lsn);
-	LOG_STAMPED(hsync_clock,log);
 }
 #endif
 
@@ -1021,7 +1020,8 @@ void DispatchCommand(unsigned char Tmp)
 			ExecTimeWaiter=1;
 			if ((Tmp & 15) != 0)
 				AssertInt(gSlotId, INT_NMI,IS_NMI);
-DLOG_C("%8d wd1793 force interrupt\n", hsync_clock);
+				LOG_STAMPED(hsync_clock,"wd1793 force interrupt");
+//DLOG_C("%8d wd1793 force interrupt\n", hsync_clock);
 //			WriteLog("FORCEINTERUPT",0);
 			break;
 
@@ -1368,13 +1368,9 @@ void CommandDone()
 
 #ifdef USE_STAMPEDLOG
 {
-    char log[64];
-    if (InteruptEnable) {
-        snprintf(log,sizeof(log),"wd1793 command DONE sum %d assert NMI",data_sum);
-    } else {
-        snprintf(log,sizeof(log),"wd1793 command DONE sum %d",data_sum);
-    }
-	LOG_STAMPED(hsync_clock,log);
+	LOG_STAMPED(hsync_clock,"wd1793 command DONE sum %d NMI:%d",data_sum,InteruptEnable);
+//	LOG_STAMPED(hsync_clock,"wd1793 debug 100 ms CPU pause");
+//	Sleep(100);
     data_sum = 0;
 }
 #endif

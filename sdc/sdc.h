@@ -154,9 +154,10 @@ struct CocoDisk
 extern CocoDisk gCocoDisk[2];
 
 // SDC CoCo Interface
-struct Interface
+
+/*struct Interface
 {
-    int sdclatch;
+    int cmdlatch;
     unsigned char cmdcode;
     unsigned char status;
     unsigned char reply1;
@@ -171,6 +172,55 @@ struct Interface
     int bufcnt;
     char *bufptr;
     char blkbuf[600];
+
+
+};*/
+
+struct Interface
+{
+    bool cmdlatch;
+    unsigned char cmdcode;
+    unsigned char status;
+    unsigned char reply1;
+    unsigned char reply2;
+    unsigned char reply3;
+    unsigned char param1;
+    unsigned char param2;
+    unsigned char param3;
+    unsigned char reply_mode;
+    unsigned char reply_status;
+    unsigned char half_sent;
+    int bufcnt;
+    char *bufptr;
+    char blkbuf[600];
+
+    Interface() :
+        cmdlatch(false),
+        cmdcode(0),
+        status(0),
+        reply1(0),
+        reply2(0),
+        reply3(0),
+        param1(0),
+        param2(0),
+        param3(0),
+        reply_mode(0),
+        reply_status(0),
+        half_sent(0),
+        bufcnt(0),
+        bufptr(blkbuf) {}
+    void Reset() {
+        cmdlatch = false;
+        cmdcode = 0;
+        param1 = 0;
+        param2 = 0;
+        param3 = 0;
+        reply_mode = 0;
+        reply_status = 0;
+        half_sent = 0;
+        bufcnt = 0;
+        bufptr = blkbuf;
+    }
 };
 
 // Used by SDC_Floppy
@@ -181,12 +231,4 @@ extern bool SDCSeekSector(unsigned char,unsigned int);
 extern void PingFloppy();
 extern void FloppyPortWrite(unsigned char data, unsigned char port);
 extern unsigned char FloppyPortRead(unsigned char port);
-
-// Debug Log port traffic
-extern void log_traffic(std::string txt, unsigned char, unsigned char);
-#ifdef USE_STAMPEDLOG
-#define LOG_TRAFFIC(txt,port,val) log_traffic(txt,port,val)
-#else
-#define LOG_TRAFFIC(txt,port,val)
-#endif
 
