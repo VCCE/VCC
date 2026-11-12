@@ -20,6 +20,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "tcc1014registers.h"
+#include "gimex.h"
 #include "tcc1014graphics.h"
 #include "coco3.h"
 #include "keyboard.h"
@@ -189,6 +190,7 @@ void GimeWrite(unsigned char port,unsigned char data)
 	};
 #endif
 
+	const unsigned char oldData = GimeRegisters[port];
 	GimeRegisters[port] = data;
 
 	switch (port)
@@ -228,7 +230,9 @@ void GimeWrite(unsigned char port,unsigned char data)
 
 	case 0x96:
 		log("TURBO: %02X", data);
-		SetTurboMode(data & 1);
+		// GIME-X hardware ignores $FF96 (its turbo is $A5 to $FFD9 only)
+		if (!GimeXEnabled())
+			SetTurboMode(data & 1);
 		break;
 
 	case 0x97:
@@ -280,7 +284,24 @@ void GimeWrite(unsigned char port,unsigned char data)
 	case 0xB0:case 0xB1:case 0xB2:case 0xB3:case 0xB4:case 0xB5:case 0xB6:case 0xB7:
 	case 0xB8:case 0xB9:case 0xBA:case 0xBB:case 0xBC:case 0xBD:case 0xBE:case 0xBF:
 		log("PAL: %d=%d", port - 0xB0, bits(0, 5));
-		gGimeGpu.SetGimePalette(port - 0xB0, data & 63);
+		if (GimeXEnabled())
+		{
+			// GIME-X hardware (x2 firmware): any write with bit 7 set sets the
+			// 3 extra colour bits from data bits 5-3 and leaves the 6 bit colour
+			// (and its readback) alone. A normal write clears the extra bits.
+			if (data & 0x80)
+			{
+				GimeRegisters[port] = oldData;
+				gGimeGpu.SetGimePaletteExt(port - 0xB0, (data >> 3) & 7);
+			}
+			else
+			{
+				gGimeGpu.SetGimePalette(port - 0xB0, data & 63);
+				gGimeGpu.SetGimePaletteExt(port - 0xB0, 0);
+			}
+		}
+		else
+			gGimeGpu.SetGimePalette(port - 0xB0, data & 63);
 		break;
 	}
 	return;
@@ -322,7 +343,23 @@ unsigned char GimeRead(unsigned char port)
 			return GimeClearFirq();
 		default:
 			data = GimeRegisters[port];
-			// mmu registers, 
+			// GIME-X (FPGA) registers read back what was written; software
+			// such as the GIME-X image viewer saves and restores the video
+			// setup this way. Palette reads return the 6 bit colour only so
+			// writing a saved value back is never seen as an extended write.
+			// Matches readback measured on GIME-X hardware: $FF94 holds the
+			// 4 bit timer MSB, $FF96/$FF97 are not implemented (bus value).
+			if (GimeXEnabled())
+			{
+				if (port >= 0xB0 && port <= 0xBF)
+					return data & 0x3F;
+				if (port == 0x94)
+					return data & 0x0F;
+				if (port == 0x96 || port == 0x97)
+					return lastBus();
+				return data;
+			}
+			// mmu registers,
 			if (port >= 0xA0 && port <= 0xAF)
 			{
 				// - if 128k or 512k upper bits are not driven by gime
@@ -405,7 +442,7 @@ unsigned char sam_read(unsigned char port) //SAM don't talk much :)
 
 	return 0;
 }
-void sam_write(unsigned char port)
+void sam_write(unsigned char port, unsigned char data)
 {
 	unsigned char mask=0;
 	unsigned char reg=0;
@@ -435,12 +472,26 @@ void sam_write(unsigned char port)
 	if ( (port==0xDE) | (port ==0xDF))
 		SetMapType(port&1);
 
-	// RAM high speed poke
+	// RAM high speed poke. GIME-X (x2 firmware, $FFEF=$21): two consecutive
+	// writes of $5A to $FFD9 select turbo (2.86 MHz). Measured on hardware
+	// (GXPROBE3 X7SPEED): $5A,$5A gave turbo; $A5,$A5 / $00,$A5 / $A5 x3 all
+	// stayed at high speed, despite the document naming $A5. Any other value
+	// selects high speed.
+	static int lastD9 = -1;
 	if (port==0xD9)
+	{
+		if (GimeXEnabled())
+			SetGimeXTurbo(data == 0x5A && lastD9 == 0x5A);
+		lastD9 = data;
 		SetCPUMultiplyerFlag(1);
+	}
 
 	if (port==0xD8)
+	{
+		lastD9 = -1;
+		SetGimeXTurbo(false);
 		SetCPUMultiplyerFlag(0);
+	}
 
 //
 // todo: ROM high speed poke, currently unsupported by vcc

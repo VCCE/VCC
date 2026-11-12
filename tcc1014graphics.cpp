@@ -21,6 +21,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 #include "tcc1014graphics.h"
 #include "tcc1014registers.h"
+#include "gimex.h"
 #include "ddraw.h"
 #include "coco3.h"
 #include "cc2font.h"
@@ -6658,6 +6659,9 @@ void GimeGpu::UpdateScreen32To(unsigned char *buffer, unsigned int *surface, int
 	auto Start = GetAddressStart(TagY);
 	auto YStride = GetYStride(y, Xpitch);
 
+	if (GimeXWideMode)
+		RenderGimeXLine32(buffer, szSurface32, Start, YStride, Xpitch, ScanLines);
+	else
 	switch (MasterMode) // (GraphicsMode <<7) | (CompatMode<<6)  | ((Bpp & 3)<<4) | (Stretch & 15);
 		{
 			case 0: //Width 80
@@ -10086,18 +10090,12 @@ void GimeGpu::SetGimePalette(unsigned char palette,unsigned char color)
 	if (mImmediate)
 	{
 		Palette[palette] = color & 63;
-		Palette8Bit[palette] = PaletteLookup8[MonType][color & 63];
-		Palette16Bit[palette] = PaletteLookup16[MonType][color & 63];
-		Palette32Bit[palette] = PaletteLookup32[MonType][color & 63];
+		UpdatePaletteEntry(palette);
 	}
 	else PushLineUpdate([=]()
 	{
-		// Convert the 6bit rgbrgb value to rrrrrggggggbbbbb for the Real video hardware.
-		//	unsigned char r,g,b;
 		Palette[palette] = color & 63;
-		Palette8Bit[palette] = PaletteLookup8[MonType][color & 63];
-		Palette16Bit[palette] = PaletteLookup16[MonType][color & 63];
-		Palette32Bit[palette] = PaletteLookup32[MonType][color & 63];
+		UpdatePaletteEntry(palette);
 	});
 
 #else
@@ -10117,7 +10115,96 @@ bool GimeGpu::CopyPalette(const GimeGpu& other)
 	memcpy(Palette8Bit, other.Palette8Bit, sizeof(Palette8Bit));
 	memcpy(Palette16Bit, other.Palette16Bit, sizeof(Palette16Bit));
 	memcpy(Palette32Bit, other.Palette32Bit, sizeof(Palette32Bit));
+	memcpy(PaletteExt, other.PaletteExt, sizeof(PaletteExt));
+	memcpy(Palette256, other.Palette256, sizeof(Palette256));
+	memcpy(Palette256_32Bit, other.Palette256_32Bit, sizeof(Palette256_32Bit));
 	return cmp != 0;
+}
+
+//
+// GIME-X 9 bit colour. The normal 6 bit palette value supplies the upper two bits
+// of each channel (R1G1B1R0G0B0 -> bits 2 and 1) and the GIME-X extension supplies
+// the LSB. Intensities are chosen so an extension of 0 matches the standard RGB table.
+// TODO: compare intensities against real GIME-X VGA/RGB output.
+//
+// Linear 3 bit DAC levels (255*n/7), measured from a GIME-X VGA capture of
+// the default 256 colour palette. Default blue has no LSB so it tops out at 219.
+static const unsigned char GimeXIntensity[8] = { 0,36,73,109,146,182,219,255 };
+
+static unsigned short ToColor9(unsigned char c6, unsigned char ext)
+{
+	unsigned r = ((c6 >> 5) & 1) << 2 | ((c6 >> 2) & 1) << 1 | ((ext >> 2) & 1);
+	unsigned g = ((c6 >> 4) & 1) << 2 | ((c6 >> 1) & 1) << 1 | ((ext >> 1) & 1);
+	unsigned b = ((c6 >> 3) & 1) << 2 | ((c6 >> 0) & 1) << 1 | ((ext >> 0) & 1);
+	return (unsigned short)((r << 6) | (g << 3) | b);
+}
+
+static unsigned int Color9To32(unsigned short c9)
+{
+	return (GimeXIntensity[(c9 >> 6) & 7] << 16) | (GimeXIntensity[(c9 >> 3) & 7] << 8) | GimeXIntensity[c9 & 7];
+}
+
+unsigned int GimeGpu::PaletteColor32(unsigned char color6, unsigned char ext) const
+{
+	// composite and plain GIME use the existing lookup tables
+	if (ext == 0 || MonType == 0)
+		return PaletteLookup32[MonType][color6 & 63];
+	return Color9To32(ToColor9(color6, ext));
+}
+
+void GimeGpu::UpdatePaletteEntry(unsigned char palette)
+{
+	auto color = Palette[palette] & 63;
+	Palette8Bit[palette] = PaletteLookup8[MonType][color];
+	Palette16Bit[palette] = PaletteLookup16[MonType][color];
+	Palette32Bit[palette] = PaletteColor32(color, PaletteExt[palette]);
+}
+
+void GimeGpu::SetGimePaletteExt(unsigned char palette, unsigned char ext)
+{
+	auto apply = [=]()
+	{
+		PaletteExt[palette] = ext & 7;
+		UpdatePaletteEntry(palette);
+	};
+#if USE_NEWTIMING
+	if (mImmediate) apply();
+	else PushLineUpdate(apply);
+#else
+	apply();
+#endif
+}
+
+// $FFE0: copy palette 0 (9 bits) into the 256 colour palette at index
+void GimeGpu::SetPalette256FromPalette0(unsigned char index)
+{
+	auto apply = [=]()
+	{
+		Palette256[index] = ToColor9(Palette[0], PaletteExt[0]);
+		Palette256_32Bit[index] = Color9To32(Palette256[index]);
+	};
+#if USE_NEWTIMING
+	if (mImmediate) apply();
+	else PushLineUpdate(apply);
+#else
+	apply();
+#endif
+}
+
+// default 256 colour palette: index bits 7..0 = R2 G2 B2 R1 G1 B1 R0 G0
+void GimeGpu::ResetPalette256()
+{
+	for (unsigned n = 0; n < 256; ++n)
+	{
+		unsigned r = ((n >> 7) & 1) << 2 | ((n >> 4) & 1) << 1 | ((n >> 1) & 1);
+		unsigned g = ((n >> 6) & 1) << 2 | ((n >> 3) & 1) << 1 | ((n >> 0) & 1);
+		unsigned b = ((n >> 5) & 1) << 2 | ((n >> 2) & 1) << 1;
+		Palette256[n] = (unsigned short)((r << 6) | (g << 3) | b);
+		Palette256_32Bit[n] = Color9To32(Palette256[n]);
+	}
+	memset(PaletteExt, 0, sizeof(PaletteExt));
+	for (unsigned char i = 0; i < 16; ++i)
+		UpdatePaletteEntry(i);
 }
 
 void GimeGpu::SetGimeVmode(unsigned char vmode)
@@ -10219,6 +10306,13 @@ void GimeGpu::SetLinesperScreen(unsigned char Lines)
 	Lines = (Lines & 3);
 	LinesperScreen = Lpf[Lines];
 	TopBoarder = VcenterTable[Lines];
+	// LPF=10 is broken on the original GIME; GIME-X implements it as 210 lines
+	// (per Super Extended BASIC Unravelled).
+	if (Lines == 2 && GimeXEnabled())
+	{
+		LinesperScreen = 210;
+		TopBoarder = 16;
+	}
 #if USE_NEWTIMING
 	BottomBoarder = (LINESPERSCREEN - 24) - (TopBoarder + LinesperScreen);
 #else
@@ -10351,6 +10445,7 @@ void GimeGpu::SetupDisplay()
 	static unsigned char ColorSet = 0, Temp1;
 #endif
 	ExtendedText=1;
+	GimeXWideMode = false;
 	switch (CompatMode)
 	{
 	case 0:		//Color Computer 3 Mode
@@ -10367,6 +10462,15 @@ void GimeGpu::SetupDisplay()
 				ExtendedText=2;
 			Bpp=0;
 			BytesperRow=CC3BytesperTextRow[(CC3Vres & 28)>> 2];
+		}
+		else if (GimeXEnabled())
+		{
+			// GIME-X: $FF98 bit 6 extends the horizontal resolution field
+			// (256/320/512/640 bytes per row) and colour resolution 11 is 256 colours.
+			static const unsigned short GimeXBytesperRow[8] = { 256,320,512,640,256,320,512,640 };
+			if (CC3Vmode & 0x40)
+				BytesperRow = GimeXBytesperRow[(CC3Vres & 28) >> 2];
+			GimeXWideMode = (Bpp == 3) || (BytesperRow > 160);
 		}
 		break;
 
@@ -10432,12 +10536,17 @@ void GimeGpu::SetupDisplay()
 		break;
 }
 	if(!UserFlipped) ColorInvert= (CC3Vmode & 32)>>5;
-	LinesperScreen=Lpf[VresIndex];
 	SetLinesperScreen(VresIndex);
-	VertCenter = VcenterTable[VresIndex];
+	VertCenter = TopBoarder;	// == VcenterTable[VresIndex], except GIME-X 210 lines
 	assert(Bpp >= 0 && Bpp < sizeof(CCPixelsperByte));
 	PixelsperLine= BytesperRow*CCPixelsperByte[Bpp];
 	PixelsperByte=CCPixelsperByte[Bpp];
+	if (GimeXWideMode)
+	{
+		if (Bpp == 3) PixelsperByte = 1;
+		PixelsperLine = BytesperRow * PixelsperByte;
+		if (PixelsperLine > 640) PixelsperLine = 640;	// wider than the display, clip
+	}
 	switch (CC3Vmode & 7)
 	{
 		case 3: UnderlineRow = 7; break;
@@ -10457,7 +10566,7 @@ void GimeGpu::SetupDisplay()
 		HorzCenter=0;
 	}
 	VPitch=BytesperRow;
-	if (HorzOffsetReg & 128)
+	if ((HorzOffsetReg & 128) && BytesperRow <= 256)
 		VPitch=256;
 	BoarderColor8=((CC3BoarderColor & 63) |128);
 	BoarderColor16=PaletteLookup16[MonType][CC3BoarderColor & 63];
@@ -10504,6 +10613,7 @@ void GimeGpu::GimeReset()
 	DistoOffset=0;
 	MakeRGBPalette();
 	MakeCMPpalette();
+	ResetPalette256();
 #if !USE_NEWTIMING
 	BoarderChange=3;
 #endif
@@ -10635,11 +10745,7 @@ unsigned char GimeGpu::SetMonitorType(unsigned char Type)
 	{
 		MonType = Type & 1;
 		for (auto PalNum = 0;PalNum < 16;PalNum++)
-		{
-			Palette16Bit[PalNum] = PaletteLookup16[MonType][Palette[PalNum]];
-			Palette32Bit[PalNum] = PaletteLookup32[MonType][Palette[PalNum]];
-			Palette8Bit[PalNum] = PaletteLookup8[MonType][Palette[PalNum]];
-		}
+			UpdatePaletteEntry((unsigned char)PalNum);
 	}
 #else
 	unsigned char PalNum = 0;
@@ -10724,6 +10830,43 @@ void GimeGpu::FlipArtifacts()
 }
 
 // Render even/odd 2x2 ntsc pixels
+//
+// GIME-X extended graphics: 256 colour (1 byte per pixel) and/or rows wider than
+// 160 bytes. Pixels are clipped to the 640 (or 512) pixel display width.
+//
+void GimeGpu::RenderGimeXLine32(const unsigned char* buffer, Surface32& surface, unsigned int start, unsigned int yStride, long xpitch, bool scanLines)
+{
+	curr_gmode = (Bpp == 3) ? "GIME-X 256 colour" : "GIME-X wide";
+	static const unsigned char bitsPerPixel[4] = { 1,2,4,8 };
+	const unsigned bits = bitsPerPixel[Bpp & 3];
+	const unsigned mask = (1u << bits) - 1;
+	const unsigned reps = Stretch + 1u;
+	const unsigned limit = PixelsperLine * reps;
+	const unsigned base = yStride + 1;
+	unsigned x = 0;
+
+	for (unsigned col = 0; col < BytesperRow && x < limit; ++col)
+	{
+#if USE_NEWTIMING
+		ProcessCpuLine(HorzCenter + x);
+#endif
+		// keep the original 256 byte wrap for horizontal virtual scrolling
+		unsigned off = (BytesperRow <= 256) ? (unsigned char)(Hoffset + col) : (Hoffset + col);
+		unsigned char data = buffer[VidMask & (start + off)];
+		for (int shift = 8 - (int)bits; shift >= 0 && x < limit; shift -= bits)
+		{
+			unsigned idx = (data >> shift) & mask;
+			unsigned int color = (Bpp == 3) ? Palette256_32Bit[idx] : Palette32Bit[idx];
+			for (unsigned r = 0; r < reps && x < limit; ++r, ++x)
+			{
+				surface[base + x] = color;
+				if (!scanLines)
+					surface[base + x + xpitch] = color;
+			}
+		}
+	}
+}
+
 void GimeGpu::RenderNTSCPixel2x2(Surface32 surface32, size_t surfaceDest, int XpitchDest, char colorIndex, char scanLines)
 {
 	colorIndex <<= 1;

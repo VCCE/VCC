@@ -196,10 +196,14 @@ static unsigned char gStartupBank = 0;
 static unsigned char gLoadedBank = 0xff;  // Currently loaded bank
 static unsigned char gRomDirty = 0;       // RomDirty flag
 
-// Streaming control
-static int streaming;
-static unsigned char stream_cmdcode;
-static unsigned int stream_lsn;
+// Streaming control. A stream ($9x) reads the raw file mounted in a
+// drive as consecutive 512 byte SD card blocks. It is independent of
+// the disk image geometry (header, sector size, sides).
+#define STREAM_BLOCK_SIZE 512
+static bool streaming = false;
+static int stream_drive = 0;
+static unsigned int stream_block = 0;   // next block to send
+static unsigned int stream_blocks = 0;  // total blocks in file
 
 // Floppy I/O
 static char FlopDrive = 0;
@@ -210,6 +214,15 @@ static char FlopStatus = 0;
 static DWORD FlopWrCnt = 0;
 static DWORD FlopRdCnt = 0;
 static char FlopWrBuf[256];
+
+// On the real hardware the SDC status and response registers are the
+// same registers as the FDC status, track, sector and data registers.
+// The documented protocol leaves command mode (write 0 to $FF40) and
+// then reads the status and response bytes. Keep the last command's
+// status and responses readable in floppy mode until the next floppy
+// register write.
+static bool CmdRegsHeld = false;
+static unsigned char HeldRegs[4];   // $FF48 status, $FF49-$FF4B responses
 static char FlopRdBuf[256];
 
 static int EDBOXES[8] = {ID_TEXT0,ID_TEXT1,ID_TEXT2,ID_TEXT3,
@@ -255,6 +268,8 @@ template <size_t N> void copy_to_fixed_char(char (&dest)[N], const std::string& 
 
 void SDCReadSector();
 void SDCStreamImage();
+void SDCStreamNextBlock();
+void SDCStreamStop(unsigned char);
 void SDCWriteSector();
 void SDCGetDriveInfo();
 void SDCUpdateSD();
@@ -276,6 +291,7 @@ void SDCWrite(unsigned char,unsigned char);
 void SDCControl();
 void SDCCommand();
 void SDCBlockReceive(unsigned char);
+bool SDCReceivingBlock();
 void SDCFlashControl(unsigned char);
 void SDCFloppyCommand(unsigned char);
 void SDCFloppyRestore();
@@ -766,6 +782,7 @@ void InitSDC()
 
     // init the interface
     IFace = {};
+    CmdRegsHeld = false;
 
     return;
 }
@@ -915,11 +932,34 @@ void SDCWrite(unsigned char data,unsigned char port)
 {
     if (port < 0x40 || port > 0x4F) return;
 
+    // Flash registers are separate from the FDC/command interface and
+    // work in both floppy and command mode. Software (e.g. NTM movie
+    // players) also uses $FF42 as a byte of scratch RAM while streaming.
+    if (port == 0x42) {
+        BankData = data;
+        return;
+    }
+    if (port == 0x43) {
+        SDCFlashControl(data);
+        return;
+    }
+
     if (IFace.sdclatch) {
         switch (port) {
-        // Toggle Control Latch
+        // Control Latch. Writing $43 enables command mode; writing it
+        // again while already in command mode must leave the controller
+        // in command mode (programs commonly re-send $43 before each
+        // command). Any other value returns to floppy emulation mode.
         case 0x40:
-            if (IFace.sdclatch) IFace = {};
+            if ((data & 0x43) == 0x43) break;
+            // Leaving command mode ends any stream in progress
+            if (streaming) SDCStreamStop(STA_NORMAL);
+            HeldRegs[0] = IFace.status;
+            HeldRegs[1] = IFace.reply1;
+            HeldRegs[2] = IFace.reply2;
+            HeldRegs[3] = IFace.reply3;
+            CmdRegsHeld = true;
+            IFace = {};
             break;
         // Command registor
         case 0x48:
@@ -930,16 +970,20 @@ void SDCWrite(unsigned char data,unsigned char port)
         case 0x49:
             IFace.param1 = data;
             break;
-        // Command param #2 or block data receive
+        // Command param #2 or block data receive. Only a send-block
+        // command ($Ax write sector, $Ex SD update) takes data here.
+        // While a reply or stream is being read, writes must not eat
+        // the reply buffer (some stream players write $FF4A by mistake;
+        // real hardware ignores it).
         case 0x4A:
-            if (IFace.bufcnt > 0)
+            if (SDCReceivingBlock())
                 SDCBlockReceive(data);
             else
                 IFace.param2 = data;
             break;
         // Command param #3 or block data receive
         case 0x4B:
-            if (IFace.bufcnt > 0)
+            if (SDCReceivingBlock())
                 SDCBlockReceive(data);
             else
                 IFace.param3 = data;
@@ -950,6 +994,8 @@ void SDCWrite(unsigned char data,unsigned char port)
             break;
         }
     } else {
+        // Any FDC register write replaces the held command registers
+        if (port >= 0x48 && port <= 0x4B) CmdRegsHeld = false;
         switch (port) {
         case 0x40:
             // Command latch and floppy drive select
@@ -977,14 +1023,6 @@ void SDCWrite(unsigned char data,unsigned char port)
                 DLOG_C("SDC invalid select %d\n",data);
                 break;
             }
-            break;
-        // Flash Data
-        case 0x42:
-            BankData = data;
-            break;
-        // Flash Control
-        case 0x43:
-            SDCFlashControl(data);
             break;
         // floppy command
         case 0x48:
@@ -1017,6 +1055,12 @@ void SDCWrite(unsigned char data,unsigned char port)
 unsigned char SDCRead(unsigned char port)
 {
     unsigned char rpy = 0;
+
+    // Flash registers are readable in both floppy and command mode.
+    // $FF42 returns the last byte written (usable as scratch RAM).
+    // $FF43 read is used by SDCDOS to detect the SDC.
+    if (port == 0x42) return BankData;
+    if (port == 0x43) return gLoadedBank | (BankData & 0xF8);
 
     if (IFace.sdclatch) {
         switch (port) {
@@ -1052,6 +1096,10 @@ unsigned char SDCRead(unsigned char port)
             rpy = 0;
             break;
         }
+    // Status and responses of the last command, read after leaving
+    // command mode (see CmdRegsHeld)
+    } else if (CmdRegsHeld && port >= 0x48 && port <= 0x4B) {
+        rpy = HeldRegs[port - 0x48];
     // If not SDC latched do floppy controller simulation
     } else {
         switch (port) {
@@ -1059,10 +1107,6 @@ unsigned char SDCRead(unsigned char port)
             //Nitros9 driver reads this
             DLOG_C("SDCRead floppy port 40?\n");
             rpy = 0;
-            break;
-        // Flash control read is used by SDCDOS to detect the SDC
-        case 0x43:
-            rpy = gLoadedBank | (BankData & 0xF8);
             break;
         // Floppy read status
         case 0x48:
@@ -1098,6 +1142,14 @@ unsigned char SDCRead(unsigned char port)
 //----------------------------------------------------------------------
 void SDCCommand()
 {
+    // Each command starts with a fresh reply status
+    IFace.reply_status = 0;
+
+    // Any new command other than abort ($D0) ends a stream in progress.
+    // A new stream command ($9x) always restarts at its own block number.
+    if (streaming && (IFace.cmdcode & 0xF0) != 0xD0)
+        SDCStreamStop(STA_NORMAL);
+
     switch (IFace.cmdcode & 0xF0) {
     // Read sector
     case 0x80:
@@ -1203,8 +1255,10 @@ void SDCGetDriveInfo()
         break;
     case 0x56:
         // 'V' Get BCD firmware version number in p2, p3.
-        IFace.reply2 = 0x00;
-        IFace.reply3 = 0x01;
+        // Report 1.20: STREAM (117) and MOUNT NEXT (120) are emulated;
+        // MOUNT DISK # (124) is not. Games such as Gridfall need 117+.
+        IFace.reply2 = 0x01;
+        IFace.reply3 = 0x20;
         break;
     }
 }
@@ -1443,10 +1497,20 @@ unsigned char SDCPickReplyByte(unsigned char port)
         }
     }
 
-    // Keep stream going until stopped
-    if ((IFace.bufcnt < 1) && streaming) SDCStreamImage();
+    // When a stream block is exhausted load the next one
+    if ((IFace.bufcnt < 1) && streaming) SDCStreamNextBlock();
 
     return rpy;
+}
+
+//----------------------------------------------------------------------
+// True while a send-block command ($Ax or $Ex) is waiting for its data
+//----------------------------------------------------------------------
+bool SDCReceivingBlock()
+{
+    if (IFace.bufcnt < 1 || streaming) return false;
+    unsigned char cmd = IFace.cmdcode & 0xF0;
+    return (cmd == 0xA0 || cmd == 0xE0);
 }
 
 //----------------------------------------------------------------------
@@ -1610,39 +1674,100 @@ void SDCReadSector()
 }
 
 //----------------------------------------------------------------------
-// Stream image data
+// Stream image data ($9x)
+//
+// Per the CoCo SDC user guide the stream is a continuous read of the
+// mounted file's data in 512 byte blocks (the SD card native block
+// size). The 24 bit block number in the param registers selects the
+// first block. Block N is at file offset N*512; the disk image header,
+// sector size and single/double sided geometry do not apply.
+//
+//  cmdcode:
+//    b0 drive number
+//    b2 set for 8 bit transfers in $FF4B, clear for 16 bit $FF4A/$FF4B
+//
+// The CoCo polls for READY before the first byte of each block. The
+// stream ends (BUSY clears) after the last block is transferred, or
+// when aborted by the $D0 command.
 //----------------------------------------------------------------------
 void SDCStreamImage()
 {
-    // If already streaming continue
-    if (streaming) {
-        stream_lsn++;
-    // Else start streaming
-    } else {
-        stream_cmdcode = IFace.cmdcode;
-        IFace.reply_mode = ((IFace.cmdcode & 4) == 0) ? 0 : 1;
-        stream_lsn = (IFace.param1 << 16) + (IFace.param2 << 8) + IFace.param3;
-        DLOG_C("SDCStreamImage lsn %d\n",stream_lsn);
+    stream_drive = IFace.cmdcode & 1;
+    IFace.reply_mode = ((IFace.cmdcode & 4) == 0) ? 0 : 1; // words : bytes
+    stream_block = (IFace.param1 << 16) + (IFace.param2 << 8) + IFace.param3;
+    stream_blocks = 0;
+
+    HANDLE hFile = gCocoDisk[stream_drive].hFile;
+    if (hFile == nullptr || hFile == INVALID_HANDLE_VALUE) {
+        DLOG_C("SDCStreamImage drive %d not mounted\n",stream_drive);
+        SDCStreamStop(STA_FAIL);
+        return;
     }
 
-    // For now can only stream 512 byte sectors
-    int drive = stream_cmdcode & 1;
-    gCocoDisk[drive].sectorsize = 512;
-    gCocoDisk[drive].tracksectors = 9;
+    // Size the stream from the actual file length
+    LARGE_INTEGER fsize{};
+    if (!GetFileSizeEx(hFile,&fsize)) {
+        DLOG_C("SDCStreamImage size error %s\n",util::LastErrorTxt());
+        SDCStreamStop(STA_FAIL);
+        return;
+    }
+    stream_blocks = (unsigned int)
+        ((fsize.QuadPart + STREAM_BLOCK_SIZE - 1) / STREAM_BLOCK_SIZE);
 
-    if (stream_lsn > (gCocoDisk[drive].size/gCocoDisk[drive].sectorsize)) {
+    DLOG_C("SDCStreamImage drive %d block %u of %u mode %d\n",
+            stream_drive,stream_block,stream_blocks,IFace.reply_mode);
+
+    streaming = true;
+    SDCStreamNextBlock();
+}
+
+//----------------------------------------------------------------------
+// Load the next stream block into the reply buffer, or end the stream
+// if all blocks have been sent.
+//----------------------------------------------------------------------
+void SDCStreamNextBlock()
+{
+    if (!streaming) return;
+
+    if (stream_block >= stream_blocks) {
         DLOG_C("SDCStreamImage done\n");
-        streaming = 0;
+        SDCStreamStop(STA_NORMAL);
         return;
     }
 
-    if (!SDCReadDrive(stream_cmdcode,stream_lsn)) {
-        DLOG_C("SDCStreamImage read error %s\n",util::LastErrorTxt());
-        IFace.status = STA_FAIL;
-        streaming = 0;
+    HANDLE hFile = gCocoDisk[stream_drive].hFile;
+    LARGE_INTEGER pos{};
+    pos.QuadPart = (LONGLONG) stream_block * STREAM_BLOCK_SIZE;
+    if (!SetFilePointerEx(hFile,pos,nullptr,FILE_BEGIN)) {
+        DLOG_C("SDCStreamImage seek error %s\n",util::LastErrorTxt());
+        SDCStreamStop(STA_FAIL);
         return;
     }
-    streaming = 1;
+
+    // A short final block is padded with zeros
+    char buf[STREAM_BLOCK_SIZE] = {};
+    DWORD cnt = 0;
+    if (!ReadFile(hFile,buf,STREAM_BLOCK_SIZE,&cnt,nullptr)) {
+        DLOG_C("SDCStreamImage read error %s\n",util::LastErrorTxt());
+        SDCStreamStop(STA_FAIL);
+        return;
+    }
+
+    snprintf(SDC_Status,16,"SDC:%d St %d,%u",gLoadedBank,stream_drive,stream_block);
+    SDCLoadReply(buf,STREAM_BLOCK_SIZE);
+    IFace.status = STA_BUSY | STA_READY;
+    stream_block++;
+}
+
+//----------------------------------------------------------------------
+// End a stream and set the final controller status
+//----------------------------------------------------------------------
+void SDCStreamStop(unsigned char status)
+{
+    streaming = false;
+    IFace.bufcnt = 0;
+    IFace.half_sent = 0;
+    IFace.status = status;
 }
 
 //----------------------------------------------------------------------
@@ -1716,12 +1841,11 @@ void SDCGetMountedImageRec()
 //----------------------------------------------------------------------
 void SDCControl()
 {
-    // If streaming is in progress abort it.
-    if (streaming) {
-        DLOG_C ("Streaming abort");
-        streaming = 0;
-        IFace.status = STA_READY;
-        IFace.bufcnt = 0;
+    // Mount in set has '#' in $FF49. Anything else is Abort Stream,
+    // which is harmless if no stream is in progress.
+    if (streaming || IFace.param1 != '#') {
+        if (streaming) DLOG_C("SDCControl stream abort\n");
+        SDCStreamStop(STA_NORMAL);
     } else {
         // TODO: Mount in set
         DLOG_C("SDCControl Mount in set unsupported %d %d %d \n",
@@ -1779,8 +1903,9 @@ bool SDCReadDrive(unsigned char cmdcode, unsigned int lsn)
     char buf[520];
     DWORD cnt = 0;
     int drive = cmdcode & 1;
-    if (gCocoDisk[drive].hFile == nullptr) {
-        DLOG_C("SDCReadDrive %d not open\n");
+    if (gCocoDisk[drive].hFile == nullptr ||
+        gCocoDisk[drive].hFile == INVALID_HANDLE_VALUE) {
+        DLOG_C("SDCReadDrive %d not open\n",drive);
         return false;
     }
 
@@ -1860,6 +1985,7 @@ void SDCMountNewDisk (int drive, const char * path, int raw)
 //----------------------------------------------------------------------
 void UnloadDisk(int drive) {
     int d = drive & 1;
+    if (streaming && stream_drive == d) SDCStreamStop(STA_NORMAL);
     if ( gCocoDisk[d].hFile &&
          gCocoDisk[d].hFile != INVALID_HANDLE_VALUE) {
         CloseHandle(gCocoDisk[d].hFile);
@@ -2338,11 +2464,35 @@ void SDCMakeDirectory(const char* name)
 // This is complicated by the many ways a user can change the directory
 //----------------------------------------------------------------------
 
-void SDCSetCurDir(const char* branch)
+void SDCSetCurDir(const char* rawbranch)
 {
     namespace fs = std::filesystem;
 
-    DLOG_C("SetCurdir '%s'\n", branch);
+    DLOG_C("SetCurdir '%s'\n", rawbranch);
+
+    // Programs often send a directory name straight from a directory
+    // record: the 8 character FAT name, padded with trailing spaces
+    // (e.g. "VIDEO   "). Strip trailing spaces from each path component
+    // so the host path matches the real directory.
+    std::string trimmed;
+    {
+        std::string s(rawbranch);
+        size_t start = 0;
+        while (true) {
+            size_t slash = s.find('/', start);
+            std::string part = s.substr(start, slash == std::string::npos
+                                               ? std::string::npos : slash - start);
+            trimmed += util::trim_right_spaces(part);
+            if (slash == std::string::npos) break;
+            trimmed += '/';
+            start = slash + 1;
+        }
+    }
+    // Also accept the 11 character FAT form of a single name with an
+    // extension (e.g. "SUBDIR  EXT").
+    if (trimmed.length() == 11 && trimmed.find_first_of("./") == std::string::npos)
+        trimmed = FixFATPath(trimmed);
+    const char* branch = trimmed.c_str();
 
     fs::path cur  = gCurDir;    // current relative directory
     fs::path root = gSDRoot;    // SD card root
@@ -2447,6 +2597,11 @@ FileRecord::FileRecord(const HostFile& hf) noexcept
     memset(this, 0, sizeof(*this));
     // name and type
     sfn_from_lfn(FR_name, FR_type, hf.name);
+    // FAT short names are always upper case on a real SD card, and CoCo
+    // software compares against upper case (e.g. "DSK", "CSM"). The host
+    // file system is case-insensitive, so names sent back still match.
+    for (char& c : FR_name) c = (char) toupper((unsigned char) c);
+    for (char& c : FR_type) c = (char) toupper((unsigned char) c);
     // Attributes
     FR_attrib = 0;
     if (hf.isDir)     FR_attrib |= 0x10;

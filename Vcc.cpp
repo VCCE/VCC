@@ -61,6 +61,7 @@
 #include "tcc1014mmu.h"
 #include "tcc1014graphics.h"
 #include "tcc1014registers.h"
+#include "gimex.h"
 #include "hd6309.h"
 #include "mc6809.h"
 #include "mc6821.h"
@@ -908,21 +909,34 @@ void SetupClock()
 	constexpr auto ClockFreq = 14318180;
 	EmuState.CPUCurrentSpeed = ClockFreq / 16 / 1000000.0;
 	int speed = 1;
+	int clocksPerCycle = 16;
 	if (EmuState.DoubleSpeedFlag)
 	{
 		// -1 as double speed is set in clocks per cycle
 		speed = EmuState.TurboSpeedFlag * (mult - 1);
+		clocksPerCycle = 8;
+		// GIME-X turbo: 28.63636 MHz / 10 = 14.31818 MHz / 5
+		if (EmuState.GimeXTurboFlag)
+		{
+			speed = mult - 1;
+			clocksPerCycle = 5;
+		}
 	}
 	VCC::gEvents.SetOverclock(speed);
-	VCC::gEvents.SetClocksPerCycle(EmuState.DoubleSpeedFlag ? 8 : 16);
+	VCC::gEvents.SetClocksPerCycle(clocksPerCycle);
 #else
 	SetClockSpeed(1);
 	if (EmuState.DoubleSpeedFlag)
-		SetClockSpeed(mult * EmuState.TurboSpeedFlag);
+		SetClockSpeed(EmuState.GimeXTurboFlag ? (mult * 3) / 2 : mult * EmuState.TurboSpeedFlag);
 	EmuState.CPUCurrentSpeed = .894;
 #endif
 	if (EmuState.DoubleSpeedFlag)
-		EmuState.CPUCurrentSpeed*=(mult*EmuState.TurboSpeedFlag);
+	{
+		if (EmuState.GimeXTurboFlag)
+			EmuState.CPUCurrentSpeed *= mult * 1.6;	// 16 / 5 clocks = 3.2x at default mult of 2
+		else
+			EmuState.CPUCurrentSpeed *= (mult * EmuState.TurboSpeedFlag);
+	}
 	return;
 }
 
@@ -973,6 +987,7 @@ void DoHardReset(SystemState* const HRState)
 	CPUInit();
 	CPUReset();		// Zero all CPU Registers and sets the PC to VRESET
 	EmuState.TurboSpeedFlag = 1;
+	GimeXReset();
 	SetCPUMultiplyerFlag(0);
 	gEvents.Reset();
 	gGimeGpu.GimeReset();
@@ -980,7 +995,7 @@ void DoHardReset(SystemState* const HRState)
 	MiscReset();
 	MmuReset();
 	UpdateBusPointer();
-	ResetBus();
+	ResetBus(true);		// hard reset = power cycle for carts
 	return;
 }
 
@@ -990,6 +1005,7 @@ void SoftReset()
 	PiaReset();
 	CPUReset();
 	EmuState.TurboSpeedFlag = 1;
+	GimeXReset();
 	SetCPUMultiplyerFlag(0);
 	gEvents.Reset();
 	gGimeGpu.GimeReset();

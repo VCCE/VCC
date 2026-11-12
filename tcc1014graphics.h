@@ -55,7 +55,8 @@ struct GimeGpu
 	unsigned int StartofVidram = 0, NewStartofVidram = 0;
 	unsigned char LinesperScreen = 0;
 	unsigned char Bpp = 0;
-	unsigned char LinesperRow = 1, BytesperRow = 32;
+	unsigned char LinesperRow = 1;
+	unsigned short BytesperRow = 32;	// up to 640 with GIME-X extended rows
 	unsigned char GraphicsMode = 0;
 	unsigned char TextFGColor = 0, TextBGColor = 0;
 	unsigned char TextFGPalette = 0, TextBGPalette = 0;
@@ -89,6 +90,13 @@ struct GimeGpu
 	unsigned char  Palette8Bit[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 	unsigned short Palette16Bit[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };	//Color values translated to 16bit 32BIT
 	unsigned int   Palette32Bit[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };	//Color values translated to 24/32 bits
+	// GIME-X: 3 extra (LSB) colour bits per palette entry (R,G,B in bits 2..0)
+	unsigned char  PaletteExt[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+	// GIME-X: 256-colour palette, 9-bit rrrgggbbb and translated 32 bit colours
+	unsigned short Palette256[256] = {};
+	unsigned int   Palette256_32Bit[256] = {};
+	// true while a GIME-X extended graphics mode (256 colour or >160 byte rows) is active
+	bool GimeXWideMode = false;
 
 	//This routine gets called every time a software video register get updated.
 	void SetupDisplay();
@@ -142,6 +150,10 @@ struct GimeGpu
 	void SetGimeBoarderColor(unsigned char data);
 	void SetGimeHorzOffset(unsigned char data);
 	void SetGimePalette(unsigned char palette, unsigned char color);
+	// GIME-X palette extensions
+	void SetGimePaletteExt(unsigned char palette, unsigned char ext);
+	void SetPalette256FromPalette0(unsigned char index);
+	void ResetPalette256();
 	void SetGimeVdgMode(unsigned char VdgMode);
 	void SetGimeVdgMode2(unsigned char Vdgmode2);
 	void SetGimeVdgOffset(unsigned char Offset);
@@ -199,6 +211,10 @@ struct GimeGpu
 private:
 	void RenderNTSCPixel2x2(Surface32 surface32, size_t surfaceDest, int XpitchDest, char colorIndex, char scanLines);
 	void RenderPMODE4NTSC(Surface32 surface32, size_t surfaceDest, int XpitchDest, const unsigned char* cocoSrc, char scanLines);
+	// GIME-X extended graphics line (256 colour / wide rows), 32 bit surface
+	void RenderGimeXLine32(const unsigned char* buffer, Surface32& surface, unsigned int start, unsigned int yStride, long xpitch, bool scanLines);
+	unsigned int PaletteColor32(unsigned char color6, unsigned char ext) const;
+	void UpdatePaletteEntry(unsigned char palette);
 
 	static void MakeRGBPalette();
 	static void MakeCMPpalette();

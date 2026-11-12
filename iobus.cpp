@@ -24,12 +24,16 @@ This file is part of VCC (Virtual Color Computer).
 #include "pakinterface.h"
 #include "tcc1014registers.h"
 #include "tcc1014mmu.h"
+#include "gimex.h"
 #include <vcc/util/logger.h>
 #include "config.h"
 unsigned char port_read(unsigned short addr)
 {
 	unsigned char port=0,temp=0;
 	port = (addr & 0xFF);
+
+	if (GimeXOwnsPort(port))
+		return GimeXRead(port);
 
 	switch (port)
 	{
@@ -165,6 +169,12 @@ void port_write(unsigned char data,unsigned short addr)
 	unsigned char port=0;
 	port = (addr & 0xFF);
 
+	if (GimeXOwnsPort(port))
+	{
+		GimeXWrite(port, data);
+		return;
+	}
+
 	switch (port)
 	{
 
@@ -214,7 +224,7 @@ void port_write(unsigned char data,unsigned short addr)
 		case 0xDD:
 		case 0xDE:
 		case 0xDF:
-			sam_write(port);	//MC6883 S.A.M. address range $FFC0-$FFDF
+			sam_write(port,data);	//MC6883 S.A.M. address range $FFC0-$FFDF
 		break;
 
 		case 0x90:

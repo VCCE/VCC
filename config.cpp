@@ -43,6 +43,7 @@
 #include "mc6821.h"
 #include "Vcc.h"
 #include "tcc1014mmu.h"
+#include "gimex.h"
 #include "audio.h"
 #include "pakinterface.h"
 #include "DirectDrawInterface.h"
@@ -128,6 +129,7 @@ struct STRConfig
 	char        	ExtRomFile[MAX_PATH] = { 0 };
 	unsigned char   EnableOverclock = 0;
 	unsigned char	TapeFastLoad = 1;
+	unsigned char	GimeX = 0;		// emulate GIME-X extended GIME
 };
 
 static STRConfig CurrentConfig;
@@ -395,6 +397,7 @@ unsigned char ReadIniFile()
 	Setting().read("Misc","ExternalBasicImage","",CurrentConfig.ExtRomFile,MAX_PATH);
 
 	CurrentConfig.RamSize = Setting().read("Memory","RamSize",1);
+	CurrentConfig.GimeX = Setting().read("CPU","GimeX",0);
 
 	// Set up keymap
 	Setting().read("Misc","CustomKeyMapFile","",KeyMapFilePath,MAX_PATH);
@@ -473,6 +476,7 @@ void WriteCPUSettings() {
 	Setting().write("CPU","MaxOverClock", CurrentConfig.MaxOverclock);
 	Setting().write("CPU","BreakEnabled",CurrentConfig.BreakOpcEnabled);
 	Setting().write("Memory","RamSize",CurrentConfig.RamSize);
+	Setting().write("CPU","GimeX",CurrentConfig.GimeX);
 	Setting().write("Misc","AutoStart",CurrentConfig.AutoStart);
 	Setting().write("Misc","CartAutoStart",CurrentConfig.CartAutoStart);
 	Setting().write("Misc","UseExtCocoRom",CurrentConfig.UseExtCocoRom);
@@ -590,6 +594,7 @@ void UpdateConfig ()
 	SetSpeedThrottle(CurrentConfig.SpeedThrottle);
 	SetCPUMultiplyer(CurrentConfig.CPUMultiplyer);
 	SetRamSize(CurrentConfig.RamSize);
+	SetGimeXEnabled(CurrentConfig.GimeX != 0);
 	SetCpuType(CurrentConfig.CpuType);
 	SetOverclock(CurrentConfig.EnableOverclock);
 	if (CurrentConfig.BreakOpcEnabled) {
@@ -650,6 +655,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 		SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_SETCHECK,tmpcfg.CartAutoStart,0);
 		SendDlgItemMessage(hDlg,IDC_USE_EXTROM,BM_SETCHECK,tmpcfg.UseExtCocoRom,0);
 		SendDlgItemMessage(hDlg,IDC_OVERCLOCK,BM_SETCHECK,tmpcfg.EnableOverclock,0);
+		SendDlgItemMessage(hDlg,IDC_GIMEX,BM_SETCHECK,tmpcfg.GimeX,0);
 		SetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile);
 		break;
 
@@ -680,6 +686,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 			// TODO: Use lock to avoid race condition instead?
 			if ( (CurrentConfig.RamSize != tmpcfg.RamSize) |
 			     (CurrentConfig.CpuType != tmpcfg.CpuType) |
+			     (CurrentConfig.GimeX != tmpcfg.GimeX) |
 			     (CurrentConfig.UseExtCocoRom != tmpcfg.UseExtCocoRom) |
 				 (strcmp(CurrentConfig.ExtRomFile,tmpcfg.ExtRomFile) != 0)) {
 				EmuState.ResetPending = 2;   // Hard reset
@@ -689,6 +696,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 			// Commit any CPU modifications
 			CurrentConfig.RamSize         = tmpcfg.RamSize;
 			CurrentConfig.CpuType         = tmpcfg.CpuType;
+			CurrentConfig.GimeX           = tmpcfg.GimeX;
 			CurrentConfig.BreakOpcEnabled = tmpcfg.BreakOpcEnabled;
 			CurrentConfig.CPUMultiplyer   = tmpcfg.CPUMultiplyer;
 			// Set CPU icon in dialog window
@@ -753,6 +761,10 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 		case IDC_OVERCLOCK:
 			tmpcfg.EnableOverclock = (unsigned char)
 						SendDlgItemMessage(hDlg,IDC_OVERCLOCK,BM_GETCHECK,0,0);
+			break;
+		case IDC_GIMEX:
+			tmpcfg.GimeX = (unsigned char)
+						SendDlgItemMessage(hDlg,IDC_GIMEX,BM_GETCHECK,0,0);
 			break;
 		case IDC_BROWSE: {
 				FileDialog dlg;

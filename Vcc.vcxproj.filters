@@ -52,6 +52,9 @@
     <ClCompile Include="tcc1014registers.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="gimex.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="tcc1014mmu.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -181,6 +184,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="tcc1014registers.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="gimex.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="tcc1014mmu.h">

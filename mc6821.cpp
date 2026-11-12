@@ -103,6 +103,7 @@ Bit 0 CART FIRQ 0 = FIRQ disabled 1 = enabled
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#include <algorithm>
 #include "defines.h"
 #include "mc6821.h"
 #include "hd6309.h"
@@ -436,15 +437,23 @@ void SetCart(bool lineState)
 unsigned int GetDACSample()
 {
 	auto pakSample = PackAudioSample();
-	auto pakLeft = pakSample >> 8;
-	auto pakRight = pakSample & 0xFF;
-	auto dacSample = Asample;
-	auto bitSample = Ssample;
-	auto left = (pakLeft + dacSample + bitSample) << 7;
-	auto right = (pakRight + dacSample + bitSample) << 7;
-	// removed previous "slow high pass filter" that 
+	int pakLeft = pakSample >> 8;
+	int pakRight = pakSample & 0xFF;
+	// The analog mux routes one source to the sound output; the 6-bit DAC
+	// is only heard while the mux selects it. Asample keeps the last DAC
+	// write, so without this a level left behind by DAC audio (e.g. a
+	// player that was interrupted) is added to cartridge audio such as
+	// the Orchestra-90 and pushes it out of range.
+	int dacSample = (GetMuxState() == PIA_MUX_DAC) ? Asample : 0;
+	int bitSample = Ssample;
+	// Saturate rather than wrap: the sum is sent as a signed 16-bit sample
+	// (value << 7), so anything above 255 would wrap to a large negative
+	// value and click or distort.
+	int left = std::min(pakLeft + dacSample + bitSample, 255) << 7;
+	int right = std::min(pakRight + dacSample + bitSample, 255) << 7;
+	// removed previous "slow high pass filter" that
 	// destroys daggorath's proper heartbeat sound -ca 2025-06-02
-	return (left << 16) | (right & 0xFFFF);
+	return (unsigned(left) << 16) | (unsigned(right) & 0xFFFF);
 }
 
 unsigned char SetCartAutoStart(unsigned char Tmp)

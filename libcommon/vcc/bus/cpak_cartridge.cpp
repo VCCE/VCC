@@ -121,7 +121,11 @@ namespace VCC::Core
 		menu_item_clicked_(GetImportedProcAddress(
 					module_handle, "PakMenuItemClicked", default_menu_item_clicked)),
 		get_menu_item_(GetImportedProcAddress(
-					module_handle, "PakGetMenuItem", default_get_menu_item))
+					module_handle, "PakGetMenuItem", default_get_menu_item)),
+		power_on_reset_(GetImportedProcAddress<PakPowerOnResetModuleFunction>(
+					module_handle, "PakPowerOnReset", nullptr)),
+		write_memory_byte_(GetImportedProcAddress<PakWriteMemoryByteModuleFunction>(
+					module_handle, "PakWriteMemoryByte", nullptr))
 	{
 		if (initialize_ == nullptr)
 		{
@@ -158,6 +162,20 @@ namespace VCC::Core
 	void cpak_cartridge::reset()
 	{
 		reset_();
+	}
+
+	void cpak_cartridge::write_memory_byte(unsigned short address, unsigned char value)
+	{
+		if (write_memory_byte_)
+			write_memory_byte_(address, value);
+	}
+
+	void cpak_cartridge::power_on_reset()
+	{
+		if (power_on_reset_)
+			power_on_reset_();
+		else
+			reset_();
 	}
 
 	void cpak_cartridge::process_horizontal_sync()

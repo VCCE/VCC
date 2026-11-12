@@ -26,6 +26,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include "tcc1014graphics.h"
 #include "tcc1014registers.h"
+#include "gimex.h"
 #include "pakinterface.h"
 #include <vcc/util/logger.h>
 #include "hd6309.h"
@@ -268,6 +269,8 @@ unsigned char SafeMemRead8(unsigned short address)
 	if ((address > 0xFEFF) && (address < 0xFF90)) return memory[address];
 	// Return gime registers without state change, e.g. ff92/ff93 change state
 	if (address >= 0xFF90 && address <= 0xFFBF) return SafeGimeRead((uint8_t)(address&0xFF));
+	// GIME-X DMA data port reads auto-increment
+	if (address >= 0xFF00 && GimeXOwnsPort((uint8_t)(address & 0xFF))) return GimeXSafeRead((uint8_t)(address & 0xFF));
 	// Otherwise use normal MMU MemRead8
 	return MemRead8(address);
 }
@@ -278,6 +281,8 @@ void MemWrite8(unsigned char data,unsigned short address)
 	{
 		if (MapType | (MmuRegisters[MmuState][address>>13] <VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address>>13] > VectorMask[CurrentRamConfig]))
 			MemPages[MmuRegisters[MmuState][address>>13]][address & 0x1FFF]=data;
+		else
+			PackMem8Write(address, data);	// ROM space: carts may decode the write
 		return;
 	}
 	if (address>0xFEFF)
@@ -292,6 +297,10 @@ void MemWrite8(unsigned char data,unsigned short address)
 	else if (MapType | (MmuRegisters[MmuState][address >> 13] < VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address >> 13] > VectorMask[CurrentRamConfig]))
 	{
 		MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
+	}
+	else
+	{
+		PackMem8Write(address, data);
 	}
 
 	return;
@@ -331,6 +340,8 @@ void __fastcall fMemWrite8(unsigned char data,unsigned short address)
 	{
 		if (MapType | (MmuRegisters[MmuState][address>>13] <VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address>>13] > VectorMask[CurrentRamConfig]))
 			MemPages[MmuRegisters[MmuState][address>>13]][address & 0x1FFF]=data;
+		else
+			PackMem8Write(address, data);	// ROM space: carts may decode the write
 		return;
 	}
 	if (address>0xFEFF)
@@ -347,6 +358,10 @@ void __fastcall fMemWrite8(unsigned char data,unsigned short address)
 		if (MapType | (MmuRegisters[MmuState][address >> 13] < VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address >> 13] > VectorMask[CurrentRamConfig]))
 		{
 			MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
+		}
+		else
+		{
+			PackMem8Write(address, data);
 		}
 	}
 	return;

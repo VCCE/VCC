@@ -29,7 +29,7 @@ void GimeAssertVertInterupt();
 void GimeAssertTimerInterupt();
 void GimeAssertCartInterupt();
 unsigned char sam_read(unsigned char);
-void sam_write(unsigned char);
+void sam_write(unsigned char port, unsigned char data);
 void mc6883_reset();
 unsigned char VDG_Offset();
 unsigned char VDG_Modes();

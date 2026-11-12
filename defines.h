@@ -193,6 +193,7 @@ struct SystemState
     unsigned char	DoubleSpeedMultiplyer = 0;
     unsigned char	DoubleSpeedFlag = 0;
     unsigned char	TurboSpeedFlag = 0;
+    bool			GimeXTurboFlag = false;	// GIME-X 2.86 MHz turbo
     unsigned char	CpuType = 0;
     unsigned char	FrameSkip = 0;
     unsigned char	BitDepth = 0;
