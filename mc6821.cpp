@@ -439,17 +439,28 @@ unsigned int GetDACSample()
 	auto pakSample = PackAudioSample();
 	int pakLeft = pakSample >> 8;
 	int pakRight = pakSample & 0xFF;
-	// The analog mux routes one source to the sound output, and that
-	// output only reaches the speaker while sound is enabled ($FF23 bit 3).
-	// So the 6-bit DAC is heard only with sound enabled and the mux on the
-	// DAC. Asample keeps the last DAC write, so without the mux check a
-	// level left behind by DAC audio (e.g. a player that was interrupted)
-	// is added to cartridge audio such as the Orchestra-90 and pushes it
-	// out of range. Without the sound enable check, joystick reads (which
-	// step the mux through the axes with sound off) switch that stale
-	// level on and off and buzz loudly.
-	const bool soundEnabled = (regb[3] & 8) != 0;
-	int dacSample = (soundEnabled && GetMuxState() == PIA_MUX_DAC) ? Asample : 0;
+	// The analog mux routes one source to the sound output, and that output
+	// only reaches the speaker while sound is enabled ($FF23 bit 3). Asample
+	// keeps the last DAC write, so a level left behind by DAC audio (e.g. a
+	// player that was interrupted) must not be added to cartridge audio such
+	// as the Orchestra-90, which selects the cartridge source: the sum would
+	// go out of range.
+	//
+	// Joystick reads, though, switch sound off and step the mux through the
+	// axes for around 100us at a time. On a real CoCo the output's coupling
+	// capacitor rides through gaps that short; cutting the DAC instantly
+	// turns every read into a full-depth dropout, heard as a buzz under DAC
+	// music (e.g. Ghostbusters). So the DAC is only dropped once it has been
+	// off the output for longer than a joystick read (2ms).
+	static unsigned int dacOffSamples = 0;
+	const bool dacRouted = (regb[3] & 8) != 0 && GetMuxState() == PIA_MUX_DAC;
+	if (dacRouted)
+		dacOffSamples = 0;
+	else if (dacOffSamples < 0x7FFFFFFF)
+		dacOffSamples++;
+	const unsigned int rate = GetAudioRate();
+	const unsigned int holdSamples = (rate ? rate : 44100) / 500;	// 2ms
+	int dacSample = (dacOffSamples <= holdSamples) ? Asample : 0;
 	int bitSample = Ssample;
 	// Saturate rather than wrap: the sum is sent as a signed 16-bit sample
 	// (value << 7), so anything above 255 would wrap to a large negative
