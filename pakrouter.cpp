@@ -1,4 +1,5 @@
 //#define USE_LOGGING
+//#define USE_STAMPEDLOG
 ////////////////////////////////////////////////////////////////////////////////
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).
@@ -17,6 +18,7 @@
 //	VCC (Virtual Color Computer). If not, see <http://www.gnu.org/licenses/>.
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "defines.h"
 #include "mc6821.h"
 #include "MachineDefs.h"
 #include "tcc1014registers.h"
@@ -178,13 +180,23 @@ namespace VCC::Core
 		if (port == 0x7F) {
 			int scs = value & 3;
 			int cts = (value >> 4) & 3;
-			disk_slot_ = scs + 1;
-			active_slot_ = cts + 1;
+			if ((disk_slot_ != (scs+1)) || (active_slot_ != (cts+1))) {
+				LOG_STAMPED(EmuState.HsyncCounter,
+					"router set scs, cts slot %d, %d", scs+1, cts+1);
+			}
+			disk_slot_ = scs+1;
+			active_slot_ = cts+1;
 			return;
 		}
+
 		// Disk controller ports (0x40–0x5F) scs slot only
 		if (is_disk_port(port)) {
 			PakRouter::slot_write_port(disk_slot_, port, value);
+
+// Debugging nitros9 boot.  Break when setting track 7
+// This occurs while krn is loading OS9Boot before krnp2 starts.
+//if (port == 0x49 && value == 0x07) __debugbreak();
+
 			return;
 		}
 		// Broadcast other port writes
@@ -243,6 +255,7 @@ namespace VCC::Core
 		}
 		std::snprintf(out, maxout, "%.*s", maxout, buf.tmp);
 	}
+
 	void PakRouter::plugin_status(char* txt, size_t len)
 	{
 		txt[0] = '\0';

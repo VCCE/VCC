@@ -426,6 +426,7 @@ void HSYNC(unsigned char level)
 {
 	if (level == 0)
 	{
+		EmuState.HsyncCounter++; 
 		EmuState.Debugger.TraceCaptureScreenEvent(VCC::TraceEvent::ScreenHSYNCLow, 0);
 		GimeAssertHorzInterupt();
 		irq_hs(0);

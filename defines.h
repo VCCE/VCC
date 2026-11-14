@@ -211,6 +211,7 @@ struct SystemState
     unsigned char	MousePointer = 0;
     unsigned char	OverclockFlag = 0;
 	char			StatusLine[256] = { 0 };
+	unsigned int	HsyncCounter = 0; 
 
 	// Debugger Package	
 	VCC::Debugger::Debugger Debugger;

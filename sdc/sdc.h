@@ -23,13 +23,15 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
 #include <Windows.h>
 #include <vcc/util/logger.h>
 #include <vcc/util/interrupts.h>
 
 #include "resource.h"
 
-// Return values for status register
+// Return values for status register (sdc mode)
 #define STA_NORMAL    0x00
 #define STA_BUSY      0x01
 #define STA_READY     0x02   // reply from command is ready
@@ -45,6 +47,7 @@
 #define STA_WPROTECT  0x40   // write protect error
 #define STA_FAIL      0x80
 
+/*
 #define FLP_NORMAL    0x00
 #define FLP_BUSY      0x01   // b0 Busy
 #define FLP_DATAREQ   0x02   // b1 DRQ
@@ -54,6 +57,7 @@
 #define FLP_WRITEERR  0x20   // b5 Write error (Fault)
 #define FLP_READONLY  0x40   // b6 Write protected
 #define FLP_NOTREADY  0x80   // b7 Not ready
+*/
 
 // Single byte file attributes for File info records
 #define ATTR_NORM     0x00
@@ -147,11 +151,13 @@ struct CocoDisk
         fullpath[0] = '\0';
     };
 };
+extern CocoDisk gCocoDisk[2];
 
 // SDC CoCo Interface
-struct Interface
+
+/*struct Interface
 {
-    int sdclatch;
+    int cmdlatch;
     unsigned char cmdcode;
     unsigned char status;
     unsigned char reply1;
@@ -166,5 +172,63 @@ struct Interface
     int bufcnt;
     char *bufptr;
     char blkbuf[600];
+
+
+};*/
+
+struct Interface
+{
+    bool cmdlatch;
+    unsigned char cmdcode;
+    unsigned char status;
+    unsigned char reply1;
+    unsigned char reply2;
+    unsigned char reply3;
+    unsigned char param1;
+    unsigned char param2;
+    unsigned char param3;
+    unsigned char reply_mode;
+    unsigned char reply_status;
+    unsigned char half_sent;
+    int bufcnt;
+    char *bufptr;
+    char blkbuf[600];
+
+    Interface() :
+        cmdlatch(false),
+        cmdcode(0),
+        status(0),
+        reply1(0),
+        reply2(0),
+        reply3(0),
+        param1(0),
+        param2(0),
+        param3(0),
+        reply_mode(0),
+        reply_status(0),
+        half_sent(0),
+        bufcnt(0),
+        bufptr(blkbuf) {}
+    void Reset() {
+        cmdlatch = false;
+        cmdcode = 0;
+        param1 = 0;
+        param2 = 0;
+        param3 = 0;
+        reply_mode = 0;
+        reply_status = 0;
+        half_sent = 0;
+        bufcnt = 0;
+        bufptr = blkbuf;
+    }
 };
+
+// Used by SDC_Floppy
+extern void AssertNMI();
+extern bool SDCSeekSector(unsigned char,unsigned int);
+
+// Defined by SDC_Floppy
+extern void PingFloppy();
+extern void FloppyPortWrite(unsigned char data, unsigned char port);
+extern unsigned char FloppyPortRead(unsigned char port);
 

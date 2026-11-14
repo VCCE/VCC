@@ -71,3 +71,49 @@ void PrintLogF(const char* fmt, ...)
     _write(flog, msg, strlen(msg));
     _close(flog);
 }
+
+//-------------------------------------------------------------
+//  Time stamped and compressed logging to console or debugger
+//  duplicate entries are compressed to two lines, second has count
+//  Timestamp rolls over at 32bits (4294967295)
+//-------------------------------------------------------------
+void PrintStampedLog(bool tofile, unsigned int ts, const char * fmt, ...) {
+
+	static int dup_count=0;
+	static std::string last_log{};
+
+    va_list args;
+    char msg[512];
+    va_start(args, fmt);
+    vsnprintf(msg, 512, fmt, args);
+    va_end(args);
+
+	std::string log = msg;
+
+	char stamp[16];
+	snprintf(stamp,16,"%10u ",static_cast<uint32_t>(ts));
+
+	if (log == last_log) {
+		dup_count++;
+	} else {
+		if (dup_count > 1) {
+			std::string d = " dup(" + std::to_string(dup_count+1) + ")\n";
+			std::string s = stamp + last_log + d;
+			if (tofile)
+				PrintLogF(s.c_str());
+			else
+				PrintLogC(s.c_str());
+		}
+		// empty log string only flushes dups
+		if (!log.empty()) {
+			std::string s = stamp + log + "\n";
+			if (tofile)
+				PrintLogF(s.c_str());
+			else
+				PrintLogC(s.c_str());
+		}
+		last_log = log;
+		dup_count = 0;
+	}
+}
+
