@@ -120,12 +120,13 @@ void PakTimer()
 	gPakRouter.horizontal_sync();
 }
 
-// Send reset to all loaded carts. This gets called when VCC is reset.
-void ResetBus()
+// Send reset to all loaded carts. This gets called when VCC is reset;
+// power_on is true for a hard reset (power cycle).
+void ResetBus(bool power_on)
 {
-	DLOG_C("\npakinterface ResetBus()\n");
+	DLOG_C("\npakinterface ResetBus(%d)\n", power_on);
 	VCC::Util::section_locker lock(gPakMutex);
-	gPakRouter.reset();
+	gPakRouter.reset(power_on);
 }
 
 // Gather status line for all loaded carts
@@ -150,6 +151,12 @@ unsigned char PackMem8Read (unsigned short Address)
 {
 	VCC::Util::section_locker lock(gPakMutex);
 	return gPakRouter.read_memory_byte(Address&32767);
+}
+
+void PackMem8Write (unsigned short address, unsigned char data)
+{
+	VCC::Util::section_locker lock(gPakMutex);
+	gPakRouter.write_memory_byte(address, data);
 }
 
 unsigned short PackAudioSample()

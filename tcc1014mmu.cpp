@@ -278,6 +278,8 @@ void MemWrite8(unsigned char data,unsigned short address)
 	{
 		if (MapType | (MmuRegisters[MmuState][address>>13] <VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address>>13] > VectorMask[CurrentRamConfig]))
 			MemPages[MmuRegisters[MmuState][address>>13]][address & 0x1FFF]=data;
+		else
+			PackMem8Write(address, data);	// ROM space: carts may decode the write
 		return;
 	}
 	if (address>0xFEFF)
@@ -292,6 +294,10 @@ void MemWrite8(unsigned char data,unsigned short address)
 	else if (MapType | (MmuRegisters[MmuState][address >> 13] < VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address >> 13] > VectorMask[CurrentRamConfig]))
 	{
 		MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
+	}
+	else
+	{
+		PackMem8Write(address, data);
 	}
 
 	return;
@@ -331,6 +337,8 @@ void __fastcall fMemWrite8(unsigned char data,unsigned short address)
 	{
 		if (MapType | (MmuRegisters[MmuState][address>>13] <VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address>>13] > VectorMask[CurrentRamConfig]))
 			MemPages[MmuRegisters[MmuState][address>>13]][address & 0x1FFF]=data;
+		else
+			PackMem8Write(address, data);	// ROM space: carts may decode the write
 		return;
 	}
 	if (address>0xFEFF)
@@ -347,6 +355,10 @@ void __fastcall fMemWrite8(unsigned char data,unsigned short address)
 		if (MapType | (MmuRegisters[MmuState][address >> 13] < VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address >> 13] > VectorMask[CurrentRamConfig]))
 		{
 			MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
+		}
+		else
+		{
+			PackMem8Write(address, data);
 		}
 	}
 	return;
