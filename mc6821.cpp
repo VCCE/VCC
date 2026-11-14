@@ -439,12 +439,17 @@ unsigned int GetDACSample()
 	auto pakSample = PackAudioSample();
 	int pakLeft = pakSample >> 8;
 	int pakRight = pakSample & 0xFF;
-	// The analog mux routes one source to the sound output; the 6-bit DAC
-	// is only heard while the mux selects it. Asample keeps the last DAC
-	// write, so without this a level left behind by DAC audio (e.g. a
-	// player that was interrupted) is added to cartridge audio such as
-	// the Orchestra-90 and pushes it out of range.
-	int dacSample = (GetMuxState() == PIA_MUX_DAC) ? Asample : 0;
+	// The analog mux routes one source to the sound output, and that
+	// output only reaches the speaker while sound is enabled ($FF23 bit 3).
+	// So the 6-bit DAC is heard only with sound enabled and the mux on the
+	// DAC. Asample keeps the last DAC write, so without the mux check a
+	// level left behind by DAC audio (e.g. a player that was interrupted)
+	// is added to cartridge audio such as the Orchestra-90 and pushes it
+	// out of range. Without the sound enable check, joystick reads (which
+	// step the mux through the axes with sound off) switch that stale
+	// level on and off and buzz loudly.
+	const bool soundEnabled = (regb[3] & 8) != 0;
+	int dacSample = (soundEnabled && GetMuxState() == PIA_MUX_DAC) ? Asample : 0;
 	int bitSample = Ssample;
 	// Saturate rather than wrap: the sum is sent as a signed 16-bit sample
 	// (value << 7), so anything above 255 would wrap to a large negative
