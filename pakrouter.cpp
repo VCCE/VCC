@@ -1,5 +1,5 @@
-#define USE_LOGGING
-#define USE_STAMPEDLOG
+//#define USE_LOGGING
+//#define USE_STAMPEDLOG
 ////////////////////////////////////////////////////////////////////////////////
 //	Copyright 2015 by Joseph Forgione
 //	This file is part of VCC (Virtual Color Computer).

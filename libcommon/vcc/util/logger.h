@@ -27,38 +27,46 @@
 
 // Print to Console or debugger
 void PrintLogC(const char* fmt, ...);
+
 inline void PrintLogC(std::string log) {
 	PrintLogC("%s",log.c_str());
 }
 
 // Print to File
 void PrintLogF(const char* fmt, ...);
+
 inline void PrintLogF(std::string log) {
 	PrintLogF("%s",log.c_str());
 }
 
 // Timestamp log entries with duplicate squashing with friendly overloads
 void PrintStampedLog(bool tofile, unsigned int ts, const char *fmt, ...);
+
 inline void PrintStampedLog(bool tofile, unsigned int ts, std::string log) {
 	PrintStampedLog(tofile, ts, "%s", log.c_str() );
 }
 
 // Debug logging if USE_LOGGING is defined
 #ifdef USE_LOGGING
-// DLOG and friends
+
+// DLOG_C and DLOG_F
+#define DLOG_C(...) PrintLogC(__VA_ARGS__)
+#define DLOG_F(...) PrintLogF(__VA_ARGS__)
+
+// DLOG defaults to PrintLogC() unless USE_LOGFILE is defined
 #ifdef USE_LOGFILE
 #define DLOG(...) PrintLogF(__VA_ARGS__)
 #else
-#define DLOG(...) PrintLogF(__VA_ARGS__)
+#define DLOG(...) PrintLogC(__VA_ARGS__)
 #endif
-#define DLOG_C(...) PrintLogC(__VA_ARGS__)
-#define DLOG_F(...) PrintLogF(__VA_ARGS__)
+
 // Time stamped logging
 #ifdef USE_LOGFILE
 #define LOG_STAMPED(ts,...) PrintStampedLog(true,ts,__VA_ARGS__)
 #else
 #define LOG_STAMPED(ts,...) PrintStampedLog(false,ts,__VA_ARGS__)
 #endif
+
 // void macros if USE_LOGGING not defined
 #else
 #define DLOG_C(...) ((void)0)

@@ -1,5 +1,5 @@
-#define USE_LOGGING
-#define USE_STAMPEDLOG
+//#define USE_LOGGING
+//#define USE_STAMPEDLOG
 //#define USE_LOGFILE
 //======================================================================
 // SDC simulator.  EJ Jaquay 2025
@@ -293,7 +293,7 @@ void DecodeControlRegister(unsigned char data)  {
     }
 
     LOG_STAMPED(hsync_clock,
-        "floppy control dr:%d si:%d halt:%d ienab:%d Mot:%d",
+        "floppy decode control dr:%d si:%d halt:%d ienab:%d Mot:%d",
          FlopDrive, FlopSide, FlopHaltEnable, FlopNMIenable, FlopMotorOn);
 }
 
@@ -333,7 +333,6 @@ void FloppyCommand(unsigned char data)
     case READSECTORM:
         LOG_STAMPED(hsync_clock,"floppy READSECTOR");
         FloppyReadSector();
-// fails delay_execution(1, FloppyReadSector);
         break;
     case WRITESECTOR:
     case WRITESECTORM:

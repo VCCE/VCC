@@ -1,5 +1,5 @@
-#define USE_LOGGING
-#define USE_STAMPEDLOG
+//#define USE_LOGGING
+//#define USE_STAMPEDLOG
 //#define USE_LOGFILE
 /*------------------------------------------------------------------------------------
 Copyright 2015 by Joseph Forgione
