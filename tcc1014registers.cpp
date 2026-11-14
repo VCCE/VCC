@@ -472,23 +472,22 @@ void sam_write(unsigned char port, unsigned char data)
 	if ( (port==0xDE) | (port ==0xDF))
 		SetMapType(port&1);
 
-	// RAM high speed poke. GIME-X (x2 firmware, $FFEF=$21): two consecutive
-	// writes of $5A to $FFD9 select turbo (2.86 MHz). Measured on hardware
-	// (GXPROBE3 X7SPEED): $5A,$5A gave turbo; $A5,$A5 / $00,$A5 / $A5 x3 all
-	// stayed at high speed, despite the document naming $A5. Any other value
-	// selects high speed.
-	static int lastD9 = -1;
+	// RAM high speed poke. GIME-X (x2 firmware): writing $5A to $FFD9
+	// selects turbo (2.86 MHz); any other value selects high speed (1.78
+	// MHz). NitrOS-9 EOU (GIME-X build) relies on this: it boots with
+	// clr $FFD9 then $5A -> $FFD9, and its SDC drivers drop to 1.78 MHz
+	// with clr $FFD9 and return with $5A. Hardware probes (GXPROBE3 X7SPEED)
+	// agree: $5A,$5A gave turbo; $A5,$A5 / $00,$A5 / $A5 x3 stayed at high
+	// speed, despite the document naming $A5.
 	if (port==0xD9)
 	{
 		if (GimeXEnabled())
-			SetGimeXTurbo(data == 0x5A && lastD9 == 0x5A);
-		lastD9 = data;
+			SetGimeXTurbo(data == 0x5A);
 		SetCPUMultiplyerFlag(1);
 	}
 
 	if (port==0xD8)
 	{
-		lastD9 = -1;
 		SetGimeXTurbo(false);
 		SetCPUMultiplyerFlag(0);
 	}
