@@ -1,9 +1,4 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-name: Build
+name: Build VCC for Windows
 
 on:
   push:
@@ -14,29 +9,57 @@ on:
     branches:
       - main
       - '*'
-
-env:
-  # Path to the solution file relative to the root of the project.
-  SOLUTION_FILE_PATH: .
-
-  # Configuration type to build.
-  # You can convert this to a build matrix if you need coverage of multiple configuration types.
-  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-  BUILD_CONFIGURATION: Release
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   build:
+    name: Build Release (Win32)
     runs-on: windows-latest
 
     steps:
-    - name: Setup Developer Command Prompt
-      uses: ilammy/msvc-dev-cmd@release/v1
+      - name: Check out source
+        uses: actions/checkout@v4
 
-    - uses: actions/checkout@v4
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@release/v1
+        with:
+          arch: x86
+          host_arch: x64
 
-    - name: Build
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: cmd.exe /c BuildAll.bat
+      - name: Build VCC solution
+        shell: cmd
+        run: msbuild Vcc.sln /m /t:Rebuild /p:Configuration=Release /p:Platform=x86
+
+      - name: Verify build output
+        shell: pwsh
+        run: |
+          $output = Join-Path $env:GITHUB_WORKSPACE "__bin/Win32/Release"
+          $exe = Join-Path $output "vcc.exe"
+
+          if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) {
+            throw "Build did not produce the expected executable: $exe"
+          }
+
+          $dlls = @(Get-ChildItem -LiteralPath $output -Filter "*.dll" -File)
+          if ($dlls.Count -eq 0) {
+            throw "Build produced vcc.exe but no runtime DLLs were found in $output"
+          }
+
+          Write-Host "Executable: $exe"
+          Write-Host "Runtime DLL count: $($dlls.Count)"
+          Get-ChildItem -LiteralPath $output -File |
+            Select-Object Name, Length |
+            Format-Table -AutoSize
+
+      - name: Upload test build
+        uses: actions/upload-artifact@v4
+        with:
+          name: VCC-EDB-MAIN-Windows-x86
+          path: |
+            __bin/Win32/Release/*.exe
+            __bin/Win32/Release/*.dll
+          if-no-files-found: error
+          retention-days: 14
