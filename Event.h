@@ -79,9 +79,14 @@ namespace VCC
         void SetClocksPerCycle(Clocks c);
 
         //
-        // set a positive CPU clock multiplier (used as a master-clock divider).
+        // set an integer CPU clock multiplier (used as a master-clock divider).
         //
         void SetOverclock(size_t factor);
+
+        // Set a rational CPU clock multiplier: numerator / denominator.
+        // This keeps fractional overclock rates exact without floating-point drift.
+        //
+        void SetClockRatio(size_t numerator, size_t denominator);
 
         //
         // set the resolution (clock multiplier) for a tick, default is 256.
@@ -119,8 +124,10 @@ namespace VCC
         InternalClocks mResolution;             // internal units per master clock
         InternalClocks mClocksPerCycle;         // active clocks per cycle, scaled by resolution
         InternalClocks mReqClocksPerCycle;      // next clocks per cycle
-        size_t mReqOverclock;                   // next overclock
-        size_t mOverclock;                      // current overclock multiplier
+        size_t mReqOverclockNumerator;          // next overclock ratio numerator
+        size_t mReqOverclockDenominator;        // next overclock ratio denominator
+        size_t mOverclockNumerator;             // active overclock ratio numerator
+        size_t mOverclockDenominator;           // active overclock ratio denominator
         InternalClocks mClockRemainder;         // fractional clock numerator carried between ticks
 
         void QueueInternal(InternalClocks dt, Func func, size_t id);

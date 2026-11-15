@@ -1,6 +1,7 @@
 #include "BuildConfig.h"
 #include "Event.h"
 #include <algorithm>
+#include <numeric>
 #include <assert.h>
 
 namespace VCC
@@ -11,8 +12,10 @@ namespace VCC
         mResolution(256),
         mClocksPerCycle(DefaultClocksPerCycle * mResolution),
         mReqClocksPerCycle(DefaultClocksPerCycle),
-        mReqOverclock(1),
-        mOverclock(1),
+        mReqOverclockNumerator(1),
+        mReqOverclockDenominator(1),
+        mOverclockNumerator(1),
+        mOverclockDenominator(1),
         mClockRemainder(0)
     {}
 
@@ -22,7 +25,8 @@ namespace VCC
     void Event::Reset()
     {
         mClocks = 0;
-        mOverclock = 1;
+        mOverclockNumerator = 1;
+        mOverclockDenominator = 1;
         mClocksPerCycle = DefaultClocksPerCycle * mResolution;
         mClockRemainder = 0;
         mEvents.clear();
@@ -42,8 +46,20 @@ namespace VCC
     //
     void Event::SetOverclock(size_t factor)
     {
-        assert(factor > 0);
-        mReqOverclock = factor;
+        SetClockRatio(factor, 1);
+    }
+
+    //
+    // set a positive rational CPU clock multiplier
+    //
+    void Event::SetClockRatio(size_t numerator, size_t denominator)
+    {
+        assert(numerator > 0);
+        assert(denominator > 0);
+
+        const auto divisor = std::gcd(numerator, denominator);
+        mReqOverclockNumerator = numerator / divisor;
+        mReqOverclockDenominator = denominator / divisor;
     }
 
     //
@@ -71,10 +87,13 @@ namespace VCC
         for (auto& e : mEvents)
             e.time -= now;
 
-        const auto previousOverclock = mOverclock;
-        mOverclock = mReqOverclock;
+        const auto previousNumerator = mOverclockNumerator;
+        const auto previousDenominator = mOverclockDenominator;
+        mOverclockNumerator = mReqOverclockNumerator;
+        mOverclockDenominator = mReqOverclockDenominator;
         mClocksPerCycle = mReqClocksPerCycle * mResolution;
-        if (mOverclock != previousOverclock)
+        if (mOverclockNumerator != previousNumerator ||
+            mOverclockDenominator != previousDenominator)
             mClockRemainder = 0;
     }
 
@@ -143,9 +162,10 @@ namespace VCC
         // Convert the full cycle batch with a carried remainder. Dividing
         // each cycle independently truncates too much at high multipliers.
         const auto clockNumerator =
-            static_cast<InternalClocks>(cycles) * mClocksPerCycle + mClockRemainder;
-        auto clocks = clockNumerator / mOverclock;
-        mClockRemainder = clockNumerator % mOverclock;
+            static_cast<InternalClocks>(cycles) * mClocksPerCycle *
+            mOverclockDenominator + mClockRemainder;
+        auto clocks = clockNumerator / mOverclockNumerator;
+        mClockRemainder = clockNumerator % mOverclockNumerator;
 
         // while events less than time + cycles
         while (!mEvents.empty() && mEvents[0].time < mClocks + clocks)
@@ -316,22 +336,40 @@ namespace VCC
         // Validate average master-clock advance across multiple Tick() calls.
         // These cases exercise non-integral divisions, including the maximum
         // configured 100x multiplier combined with 2x turbo.
-        auto measureClockRate = [](size_t multiplier, size_t cpuCycles)
+        auto measureClockRate = [](size_t numerator, size_t denominator, size_t cpuCycles)
         {
             Event e;
             e.SetClocksPerCycle(16);
-            e.SetOverclock(multiplier);
+            e.SetClockRatio(numerator, denominator);
             e.Rebase();
             for (size_t i = 0; i < cpuCycles; ++i)
                 e.Tick(1);
             return e.GetClocks();
         };
-        assert(measureClockRate(2, 1000) == 8000);
-        assert(measureClockRate(3, 1000) == 5333);
-        assert(measureClockRate(6, 1000) == 2666);
-        assert(measureClockRate(10, 1000) == 1600);
-        assert(measureClockRate(100, 1000) == 160);
-        assert(measureClockRate(200, 1000) == 80);
+        assert(measureClockRate(2, 1, 1000) == 8000);
+        assert(measureClockRate(3, 1, 1000) == 5333);
+        assert(measureClockRate(6, 1, 1000) == 2666);
+        assert(measureClockRate(10, 1, 1000) == 1600);
+        assert(measureClockRate(100, 1, 1000) == 160);
+        assert(measureClockRate(200, 1, 1000) == 80);
+
+        // 125.160 MHz / (14.31818 MHz / 16) reduces exactly to
+        // the rational overclock ratio 100128000 / 715909.
+        constexpr size_t exactClockNumerator = 100128000;
+        constexpr size_t exactClockDenominator = 715909;
+        constexpr size_t fractionalTestCycles = 10000;
+        const auto expectedFractionalClocks = static_cast<size_t>(
+            (static_cast<std::uint64_t>(fractionalTestCycles) * 16 *
+                exactClockDenominator) / exactClockNumerator);
+        assert(measureClockRate(exactClockNumerator, exactClockDenominator,
+            fractionalTestCycles) == expectedFractionalClocks);
+
+        Event fractionalBatch;
+        fractionalBatch.SetClocksPerCycle(16);
+        fractionalBatch.SetClockRatio(exactClockNumerator, exactClockDenominator);
+        fractionalBatch.Rebase();
+        fractionalBatch.Tick(fractionalTestCycles);
+        assert(fractionalBatch.GetClocks() == expectedFractionalClocks);
         return 0;
     }
     static bool gTestEvents = TestEvents();

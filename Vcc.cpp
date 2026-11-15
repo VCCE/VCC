@@ -901,44 +901,38 @@ unsigned char SetCPUMultiplyer(unsigned char Multiplyer)
 }
 
 #if USE_NEWTIMING
-namespace
-{
-	constexpr unsigned int CalculateEventClockMultiplier(
-		bool doubleSpeed, unsigned int multiplier, unsigned int turboMultiplier) noexcept
-	{
-		return doubleSpeed ? multiplier * turboMultiplier : 1u;
-	}
-
-	// Compile-time regression cases for normal, overclocked, turbo and maximum settings.
-	static_assert(CalculateEventClockMultiplier(false, 100u, 2u) == 1u);
-	static_assert(CalculateEventClockMultiplier(true, 2u, 1u) == 2u);
-	static_assert(CalculateEventClockMultiplier(true, 3u, 1u) == 3u);
-	static_assert(CalculateEventClockMultiplier(true, 10u, 1u) == 10u);
-	static_assert(CalculateEventClockMultiplier(true, 3u, 2u) == 6u);
-	static_assert(CalculateEventClockMultiplier(true, 100u, 2u) == 200u);
-}
-#endif
-
-void SetupClock()
-{
-	const unsigned int mult = EmuState.OverclockFlag
-		? static_cast<unsigned int>(EmuState.DoubleSpeedMultiplyer)
-		: 2u;
-#if USE_NEWTIMING
 	// NTSC master clock: 14.31818 MHz; normal CPU cycle: 16 master clocks.
 	constexpr double ClockFreqHz = 14318180.0;
-	const unsigned int eventMultiplier = CalculateEventClockMultiplier(
-		EmuState.DoubleSpeedFlag != 0,
-		mult,
-		static_cast<unsigned int>(EmuState.TurboSpeedFlag));
+	constexpr size_t CpuClockRatioDenominator = 3579545u; // 14.31818 MHz / 4
+	const auto turboMultiplier =
+		static_cast<unsigned int>(EmuState.TurboSpeedFlag);
+	const bool useExactClock = EmuState.DoubleSpeedFlag != 0 &&
+		EmuState.OverclockFlag != 0 && EmuState.DoubleSpeedClockHz != 0;
 
-	// Set the complete multiplier once. The event scheduler divides its
-	// master-clock advance by this value; using 8 clocks/cycle as well would
-	// count double speed twice.
+	// Keep the existing integer multiplier path for normal speed and standard
+	// presets. A user-entered target is represented as an exact rational ratio.
 	VCC::gEvents.SetClocksPerCycle(16);
-	VCC::gEvents.SetOverclock(eventMultiplier);
-	EmuState.CPUCurrentSpeed =
-		(ClockFreqHz / 16.0 / 1000000.0) * eventMultiplier;
+	if (useExactClock)
+	{
+		const auto numerator =
+			static_cast<std::uint64_t>(EmuState.DoubleSpeedClockHz) *
+			4u * turboMultiplier;
+		VCC::gEvents.SetClockRatio(
+			static_cast<size_t>(numerator), CpuClockRatioDenominator);
+		EmuState.CPUCurrentSpeed =
+			(static_cast<double>(EmuState.DoubleSpeedClockHz) / 1000000.0) *
+			turboMultiplier;
+	}
+	else
+	{
+		const unsigned int eventMultiplier = CalculateEventClockMultiplier(
+			EmuState.DoubleSpeedFlag != 0,
+			mult,
+			turboMultiplier);
+		VCC::gEvents.SetOverclock(eventMultiplier);
+		EmuState.CPUCurrentSpeed =
+			(ClockFreqHz / 16.0 / 1000000.0) * eventMultiplier;
+	}
 #else
 	SetClockSpeed(1);
 	if (EmuState.DoubleSpeedFlag)
@@ -1265,7 +1259,7 @@ unsigned __stdcall EmuLoop(HANDLE hEvent)
 
 		char tstatus[128];
 		char tspeed[32];
-		snprintf(tspeed,sizeof(tspeed),"%2.2fMhz",EmuState.CPUCurrentSpeed);
+		snprintf(tspeed,sizeof(tspeed),"%2.3fMhz",EmuState.CPUCurrentSpeed);
 		// Append "+" to speed if overclocking is enabled
 		if (EmuState.OverclockFlag && (EmuState.DoubleSpeedMultiplyer>2))
 			strncat (tspeed,"+",sizeof(tspeed));

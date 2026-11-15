@@ -190,6 +190,8 @@ struct SystemState
     unsigned short	*WRamBuffer = nullptr;
     std::atomic<unsigned char>	RamSize = 0;
     double			CPUCurrentSpeed = 0.0;
+    // Optional exact double-speed CPU clock target in Hz; zero uses the integer multiplier.
+    unsigned int	DoubleSpeedClockHz = 0;
     unsigned char	DoubleSpeedMultiplyer = 0;
     unsigned char	DoubleSpeedFlag = 0;
     unsigned char	TurboSpeedFlag = 0;

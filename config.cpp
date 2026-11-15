@@ -31,6 +31,9 @@
 #include <direct.h>
 #include <assert.h>
 #include <string>
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
 
 #pragma warning(push)
 #pragma warning(disable:4091)
@@ -100,6 +103,7 @@ struct STRConfig
 {
 	unsigned char	CPUMultiplyer = 0;
 	unsigned short	MaxOverclock = 0;
+	unsigned int	DoubleSpeedClockHz = 0;
 	unsigned char	FrameSkip = 0;
 	unsigned char	SpeedThrottle = 0;
 	unsigned char	CpuType = 0;
@@ -131,6 +135,71 @@ struct STRConfig
 };
 
 static STRConfig CurrentConfig;
+
+namespace
+{
+    constexpr double NtscCpuClockHz = 14318180.0 / 16.0;
+
+    double ConfiguredCpuClockMHz(const STRConfig& config)
+    {
+        if (config.DoubleSpeedClockHz != 0)
+            return static_cast<double>(config.DoubleSpeedClockHz) / 1000000.0;
+        return (NtscCpuClockHz * config.CPUMultiplyer) / 1000000.0;
+    }
+
+    void UpdateCpuClockDisplay(HWND dialog, const STRConfig& config)
+    {
+        char text[32];
+        sprintf_s(text, sizeof(text), "%.3f", ConfiguredCpuClockMHz(config));
+        SetDlgItemTextA(dialog, IDC_CLOCKDISPLAY, text);
+    }
+
+    bool ParseCpuClockDisplay(HWND dialog, STRConfig& config)
+    {
+        char text[64] {};
+        if (GetDlgItemTextA(dialog, IDC_CLOCKDISPLAY, text,
+            static_cast<int>(sizeof(text))) == 0)
+            return false;
+
+        char* end = nullptr;
+        const double mhz = std::strtod(text, &end);
+        while (*end == ' ' || *end == '\t' || *end == '\r' || *end == '\n')
+            ++end;
+        if (end == text || *end != '\0' || !std::isfinite(mhz))
+            return false;
+
+        const double requestedHz = mhz * 1000000.0;
+        unsigned int maximumMultiplier = config.MaxOverclock;
+        if (maximumMultiplier > 255u)
+            maximumMultiplier = 255u;
+        if (maximumMultiplier < 2u ||
+            requestedHz < (NtscCpuClockHz * 2.0) - 0.5 ||
+            requestedHz > (NtscCpuClockHz * maximumMultiplier) + 0.5)
+            return false;
+
+        const auto clockHz = static_cast<std::uint32_t>(std::llround(requestedHz));
+        const double fractionalMultiplier =
+            (static_cast<double>(clockHz) * 4.0) / 3579545.0;
+        auto sliderMultiplier = static_cast<unsigned int>(
+            std::floor(fractionalMultiplier + 0.5));
+        if (sliderMultiplier < 2u)
+            sliderMultiplier = 2u;
+        if (sliderMultiplier > maximumMultiplier)
+            sliderMultiplier = maximumMultiplier;
+
+        config.CPUMultiplyer = static_cast<unsigned char>(sliderMultiplier);
+        const auto integerClockHz = static_cast<std::uint64_t>(
+            std::llround(NtscCpuClockHz * sliderMultiplier));
+        const auto difference = (clockHz > integerClockHz)
+            ? (clockHz - integerClockHz)
+            : (integerClockHz - clockHz);
+
+        // The readout is rounded to 1 kHz. Treat a value within half that
+        // unit of the integer preset as the preset, not as a custom ratio.
+        config.DoubleSpeedClockHz = difference > 500u ? clockHz : 0u;
+        return true;
+    }
+}
 
 static HICON CpuIcons[2],MonIcons[2],JoystickIcons[4];
 static unsigned char temp=0,temp2=0;
@@ -366,6 +435,7 @@ unsigned char ReadIniFile()
 	unsigned char Index=0;
 	//Loads the config structure from the hard disk
 	CurrentConfig.CPUMultiplyer    = Setting().read("CPU","DoubleSpeedClock",2);
+	CurrentConfig.DoubleSpeedClockHz = Setting().read("CPU","DoubleSpeedClockHz",0u);
 	CurrentConfig.FrameSkip        = Setting().read("CPU","FrameSkip",1);
 	CurrentConfig.SpeedThrottle    = Setting().read("CPU","Throttle",1);
 	CurrentConfig.CpuType          = Setting().read("CPU","CpuType",0);
@@ -467,6 +537,7 @@ unsigned char ReadIniFile()
 //---------------------------------------------------------------
 void WriteCPUSettings() {
 	Setting().write("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer);
+	Setting().write("CPU","DoubleSpeedClockHz",CurrentConfig.DoubleSpeedClockHz);
 	Setting().write("CPU","FrameSkip",CurrentConfig.FrameSkip);
 	Setting().write("CPU","Throttle",CurrentConfig.SpeedThrottle);
 	Setting().write("CPU","CpuType",CurrentConfig.CpuType);
@@ -588,10 +659,11 @@ void UpdateConfig ()
 	// Cpu
 	SetAutoStart(CurrentConfig.AutoStart);
 	SetSpeedThrottle(CurrentConfig.SpeedThrottle);
+	EmuState.DoubleSpeedClockHz = CurrentConfig.DoubleSpeedClockHz;
+	SetOverclock(CurrentConfig.EnableOverclock);
 	SetCPUMultiplyer(CurrentConfig.CPUMultiplyer);
 	SetRamSize(CurrentConfig.RamSize);
 	SetCpuType(CurrentConfig.CpuType);
-	SetOverclock(CurrentConfig.EnableOverclock);
 	if (CurrentConfig.BreakOpcEnabled) {
 		EmuState.Debugger.Enable_Break(true);
 	} else {
@@ -627,15 +699,15 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 	static STRConfig tmpcfg;
 
 	HWND hClkSpd = GetDlgItem(hDlg,IDC_CLOCKSPEED);
-	HWND hClkDsp = GetDlgItem(hDlg,IDC_CLOCKDISPLAY);
 	switch (message) {
 	case WM_INITDIALOG:
 		tmpcfg = CurrentConfig;
 		CpuIcons[0]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_MOTO);
 		CpuIcons[1]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_HITACHI2);
-		SendMessage(hClkSpd,TBM_SETRANGE,TRUE,MAKELONG(2,CurrentConfig.MaxOverclock));
-		sprintf(OutBuffer,"%2.3f Mhz",(float)CurrentConfig.CPUMultiplyer*.894);
-		SendMessage(hClkDsp,WM_SETTEXT,0,(LPARAM)(LPCSTR)OutBuffer);
+		const auto maxSliderMultiplier = (CurrentConfig.MaxOverclock > 255u)
+			? 255u : static_cast<unsigned int>(CurrentConfig.MaxOverclock);
+		SendMessage(hClkSpd,TBM_SETRANGE,TRUE,MAKELONG(2,maxSliderMultiplier));
+		UpdateCpuClockDisplay(hDlg, tmpcfg);
 		SendMessage(hClkSpd,TBM_SETPOS,TRUE, CurrentConfig.CPUMultiplyer);
 		for (temp=0;temp<=3;temp++)
 			SendDlgItemMessage(hDlg,Ramchoice[temp],BM_SETCHECK,
@@ -655,8 +727,8 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 
 	case WM_HSCROLL:
 		tmpcfg.CPUMultiplyer = (unsigned char) SendMessage (hClkSpd,TBM_GETPOS,0,0);
-		sprintf(OutBuffer,"%2.3f Mhz",(float)tmpcfg.CPUMultiplyer*.894);
-		SendDlgItemMessage(hDlg,IDC_CLOCKDISPLAY,WM_SETTEXT,0,(LPARAM)(LPCSTR)OutBuffer);
+		tmpcfg.DoubleSpeedClockHz = 0;
+		UpdateCpuClockDisplay(hDlg, tmpcfg);
 		break;
 
 	case WM_COMMAND:
@@ -668,6 +740,15 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 			break;
 		case IDOK:
 		case IDAPPLY:
+			if (!ParseCpuClockDisplay(hDlg, tmpcfg)) {
+				MessageBox(hDlg,
+					"Enter a CPU clock within the configured overclock range, for example 125.160.",
+					"Invalid CPU clock", MB_ICONWARNING | MB_OK);
+				UpdateCpuClockDisplay(hDlg, tmpcfg);
+				return 0;
+			}
+			SendMessage(hClkSpd, TBM_SETPOS, TRUE, tmpcfg.CPUMultiplyer);
+			UpdateCpuClockDisplay(hDlg, tmpcfg);
 
 			// Get coco3.rom path from dialog if external
 			if (tmpcfg.UseExtCocoRom) {
@@ -691,6 +772,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 			CurrentConfig.CpuType         = tmpcfg.CpuType;
 			CurrentConfig.BreakOpcEnabled = tmpcfg.BreakOpcEnabled;
 			CurrentConfig.CPUMultiplyer   = tmpcfg.CPUMultiplyer;
+			CurrentConfig.DoubleSpeedClockHz = tmpcfg.DoubleSpeedClockHz;
 			// Set CPU icon in dialog window
 			SendDlgItemMessage ( hDlg,IDC_CPUICON,STM_SETIMAGE,(WPARAM)IMAGE_ICON,
 			                     (LPARAM)CpuIcons[CurrentConfig.CpuType] );
@@ -786,14 +868,13 @@ void IncreaseOverclockSpeed()
 	if (CurrentConfig.CPUMultiplyer >= CurrentConfig.MaxOverclock) return;
 
 	CurrentConfig.CPUMultiplyer = (unsigned char)(CurrentConfig.CPUMultiplyer + 1);
+	CurrentConfig.DoubleSpeedClockHz = 0;
 
 	// Send updates to the dialog if it's open.
 	if (hCpuDlg != nullptr) {
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKSPEED, TBM_SETPOS,
 						   TRUE, CurrentConfig.CPUMultiplyer);
-		sprintf(OutBuffer, "%2.3f Mhz", (float)CurrentConfig.CPUMultiplyer * 0.894);
-		SendDlgItemMessage(hCpuDlg, IDC_CLOCKDISPLAY, WM_SETTEXT,
-						   0, (LPARAM)(LPCSTR)OutBuffer);
+		UpdateCpuClockDisplay(hCpuDlg, CurrentConfig);
 	}
 	EmuState.ResetPending = 4; // Without this, changing the config does nothing.
 	//SetCPUMultiplyer(CurrentConfig.CPUMultiplyer) may work here instead
@@ -805,14 +886,13 @@ void DecreaseOverclockSpeed()
 	if (CurrentConfig.CPUMultiplyer == 2) return;
 
 	CurrentConfig.CPUMultiplyer = (unsigned char)(CurrentConfig.CPUMultiplyer - 1);
+	CurrentConfig.DoubleSpeedClockHz = 0;
 
 	// Send updates to the dialog if it's open.
 	if (hCpuDlg != nullptr) {
 		SendDlgItemMessage(hCpuDlg, IDC_CLOCKSPEED, TBM_SETPOS,
 						   TRUE, CurrentConfig.CPUMultiplyer);
-		sprintf(OutBuffer, "%2.3f Mhz", (float)CurrentConfig.CPUMultiplyer * 0.894);
-		SendDlgItemMessage(hCpuDlg, IDC_CLOCKDISPLAY, WM_SETTEXT,
-						   0, (LPARAM)(LPCSTR)OutBuffer);
+		UpdateCpuClockDisplay(hCpuDlg, CurrentConfig);
 	}
 	EmuState.ResetPending = 4;  // So emulation knows the speed changed
 	//SetCPUMultiplyer(CurrentConfig.CPUMultiplyer) may work here instead
