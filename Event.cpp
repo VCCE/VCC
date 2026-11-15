@@ -105,10 +105,9 @@ namespace VCC
     //
     void Event::QueueInternal(InternalClocks time, Func func, size_t id)
     {
-        // lower_bound requires a strict ordering predicate; equal-time events
-        // remain ordered while new equal-time events are inserted before them.
-        auto where = std::lower_bound(mEvents.begin(), mEvents.end(), time,
-            [](const EventItem& event, InternalClocks t) { return event.time < t; });
+        // Insert after equal-time events so their original FIFO ordering is preserved.
+        auto where = std::upper_bound(mEvents.begin(), mEvents.end(), time,
+            [](InternalClocks t, const EventItem& event) { return t < event.time; });
         mEvents.insert(where, { id,time,func });
     }
 
@@ -304,6 +303,15 @@ namespace VCC
         assert(calls(testAdd3) == 3);       // multiple ticks/queues called 3
         assert(past(testAdd3) == false);    // last is not already due
         assert(firstTime(testAdd3) == 327); // ensure last is 327 (t192+q135)
+
+        // Events scheduled for the same clock retain insertion (FIFO) order.
+        Event sameTimeEvents;
+        std::vector<int> sameTimeOrder;
+        sameTimeEvents.Queue(10, [&]() { sameTimeOrder.push_back(1); });
+        sameTimeEvents.Queue(10, [&]() { sameTimeOrder.push_back(2); });
+        sameTimeEvents.Queue(10, [&]() { sameTimeOrder.push_back(3); });
+        sameTimeEvents.Tick(10);
+        assert((sameTimeOrder == std::vector<int>{ 1, 2, 3 }));
 
         // Validate average master-clock advance across multiple Tick() calls.
         // These cases exercise non-integral divisions, including the maximum
