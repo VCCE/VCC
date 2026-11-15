@@ -1,18 +1,19 @@
 #include "BuildConfig.h"
 #include "Event.h"
+#include <algorithm>
 #include <assert.h>
 
 namespace VCC
 {
     Event gEvents;
-    Event::Event() : 
-        mClocks(0), 
-        mClocksPerCycle(DefaultClocksPerCycle),
-        mReqClocksPerCycle(DefaultClocksPerCycle),
+    Event::Event() :
+        mClocks(0),
         mResolution(256),
-        mClocksPerCycleWithOC(DefaultClocksPerCycle * mResolution),
+        mClocksPerCycle(DefaultClocksPerCycle * mResolution),
+        mReqClocksPerCycle(DefaultClocksPerCycle),
         mReqOverclock(1),
-        mOverclock(1)
+        mOverclock(1),
+        mClockRemainder(0)
     {}
 
     //
@@ -22,8 +23,8 @@ namespace VCC
     {
         mClocks = 0;
         mOverclock = 1;
-        mClocksPerCycle = DefaultClocksPerCycle;
-        mClocksPerCycleWithOC = DefaultClocksPerCycle * mResolution;
+        mClocksPerCycle = DefaultClocksPerCycle * mResolution;
+        mClockRemainder = 0;
         mEvents.clear();
     }
 
@@ -37,7 +38,7 @@ namespace VCC
     }
 
     //
-    // set an overclock factor, 1..64
+    // set a positive CPU clock multiplier
     //
     void Event::SetOverclock(size_t factor)
     {
@@ -50,8 +51,10 @@ namespace VCC
     //
     void Event::SetResolution(size_t factor)
     {
+        assert(factor > 0);
         mResolution = factor;
-        mClocksPerCycleWithOC = DefaultClocksPerCycle * mResolution;
+        mClocksPerCycle = DefaultClocksPerCycle * mResolution;
+        mClockRemainder = 0;
     }
 
     //
@@ -68,9 +71,11 @@ namespace VCC
         for (auto& e : mEvents)
             e.time -= now;
 
+        const auto previousOverclock = mOverclock;
         mOverclock = mReqOverclock;
         mClocksPerCycle = mReqClocksPerCycle * mResolution;
-        mClocksPerCycleWithOC = mClocksPerCycle / mOverclock;
+        if (mOverclock != previousOverclock)
+            mClockRemainder = 0;
     }
 
     //
@@ -133,7 +138,12 @@ namespace VCC
     //
     void Event::Tick(Cycles cycles)
     {
-        auto clocks = cycles * mClocksPerCycleWithOC;
+        // Convert the full cycle batch with a carried remainder. Dividing
+        // each cycle independently truncates too much at high multipliers.
+        const auto clockNumerator =
+            static_cast<InternalClocks>(cycles) * mClocksPerCycle + mClockRemainder;
+        auto clocks = clockNumerator / mOverclock;
+        mClockRemainder = clockNumerator % mOverclock;
 
         // while events less than time + cycles
         while (!mEvents.empty() && mEvents[0].time < mClocks + clocks)
@@ -161,7 +171,7 @@ namespace VCC
     //
     Event::Clocks Event::GetClocks() const
     {
-        return mClocks / mResolution;
+        return static_cast<Clocks>(mClocks / mResolution);
     }
 
     //
@@ -291,6 +301,26 @@ namespace VCC
         assert(calls(testAdd3) == 3);       // multiple ticks/queues called 3
         assert(past(testAdd3) == false);    // last is not already due
         assert(firstTime(testAdd3) == 327); // ensure last is 327 (t192+q135)
+
+        // Validate average master-clock advance across multiple Tick() calls.
+        // These cases exercise non-integral divisions, including the maximum
+        // configured 100x multiplier combined with 2x turbo.
+        auto measureClockRate = [](size_t multiplier, size_t cpuCycles)
+        {
+            Event e;
+            e.SetClocksPerCycle(16);
+            e.SetOverclock(multiplier);
+            e.Rebase();
+            for (size_t i = 0; i < cpuCycles; ++i)
+                e.Tick(1);
+            return e.GetClocks();
+        };
+        assert(measureClockRate(2, 1000) == 8000);
+        assert(measureClockRate(3, 1000) == 5333);
+        assert(measureClockRate(6, 1000) == 2666);
+        assert(measureClockRate(10, 1000) == 1600);
+        assert(measureClockRate(100, 1000) == 160);
+        assert(measureClockRate(200, 1000) == 80);
         return 0;
     }
     static bool gTestEvents = TestEvents();
