@@ -701,6 +701,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 	HWND hClkSpd = GetDlgItem(hDlg,IDC_CLOCKSPEED);
 	switch (message) {
 	case WM_INITDIALOG:
+	{
 		tmpcfg = CurrentConfig;
 		CpuIcons[0]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_MOTO);
 		CpuIcons[1]=LoadIcon(EmuState.WindowInstance,(LPCTSTR)IDI_HITACHI2);
@@ -724,6 +725,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 		SendDlgItemMessage(hDlg,IDC_OVERCLOCK,BM_SETCHECK,tmpcfg.EnableOverclock,0);
 		SetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile);
 		break;
+	}
 
 	case WM_HSCROLL:
 		tmpcfg.CPUMultiplyer = (unsigned char) SendMessage (hClkSpd,TBM_GETPOS,0,0);
