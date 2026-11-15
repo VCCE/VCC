@@ -29,6 +29,25 @@ jobs:
           arch: x86
           host_arch: x64
 
+      - name: Validate event clock conversion
+        shell: pwsh
+        run: |
+          $testMain = Join-Path $env:RUNNER_TEMP "EventTimingTestMain.cpp"
+          $testExe = Join-Path $env:RUNNER_TEMP "EventTimingTests.exe"
+          Set-Content -LiteralPath $testMain -Value "int main() { return 0; }" -Encoding ascii
+
+          cl /nologo /std:c++17 /EHsc /D_DEBUG /I. Event.cpp $testMain "/Fe:$testExe"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Event timing test harness failed to compile."
+          }
+
+          & $testExe
+          if ($LASTEXITCODE -ne 0) {
+            throw "Event timing regression tests failed."
+          }
+
+          Write-Host "Event timing regression tests passed."
+
       - name: Build VCC solution
         shell: cmd
         run: msbuild Vcc.sln /m /t:Rebuild /p:Configuration=Release /p:Platform=x86
