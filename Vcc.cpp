@@ -900,29 +900,53 @@ unsigned char SetCPUMultiplyer(unsigned char Multiplyer)
 	return(EmuState.DoubleSpeedMultiplyer);
 }
 
+#if USE_NEWTIMING
+namespace
+{
+	constexpr unsigned int CalculateEventClockMultiplier(
+		bool doubleSpeed, unsigned int multiplier, unsigned int turboMultiplier) noexcept
+	{
+		return doubleSpeed ? multiplier * turboMultiplier : 1u;
+	}
+
+	// Compile-time regression cases for normal, overclocked, turbo and maximum settings.
+	static_assert(CalculateEventClockMultiplier(false, 100u, 2u) == 1u);
+	static_assert(CalculateEventClockMultiplier(true, 2u, 1u) == 2u);
+	static_assert(CalculateEventClockMultiplier(true, 3u, 1u) == 3u);
+	static_assert(CalculateEventClockMultiplier(true, 10u, 1u) == 10u);
+	static_assert(CalculateEventClockMultiplier(true, 3u, 2u) == 6u);
+	static_assert(CalculateEventClockMultiplier(true, 100u, 2u) == 200u);
+}
+#endif
+
 void SetupClock()
 {
-	int mult = EmuState.OverclockFlag ? EmuState.DoubleSpeedMultiplyer : 2;
+	const unsigned int mult = EmuState.OverclockFlag
+		? static_cast<unsigned int>(EmuState.DoubleSpeedMultiplyer)
+		: 2u;
 #if USE_NEWTIMING
-        // clocks @ 14.31818mhz (NTSC)
-	constexpr auto ClockFreq = 14318180;
-	EmuState.CPUCurrentSpeed = ClockFreq / 16 / 1000000.0;
-	int speed = 1;
-	if (EmuState.DoubleSpeedFlag)
-	{
-		// -1 as double speed is set in clocks per cycle
-		speed = EmuState.TurboSpeedFlag * (mult - 1);
-	}
-	VCC::gEvents.SetOverclock(speed);
-	VCC::gEvents.SetClocksPerCycle(EmuState.DoubleSpeedFlag ? 8 : 16);
+	// NTSC master clock: 14.31818 MHz; normal CPU cycle: 16 master clocks.
+	constexpr double ClockFreqHz = 14318180.0;
+	const unsigned int eventMultiplier = CalculateEventClockMultiplier(
+		EmuState.DoubleSpeedFlag != 0,
+		mult,
+		static_cast<unsigned int>(EmuState.TurboSpeedFlag));
+
+	// Set the complete multiplier once. The event scheduler divides its
+	// master-clock advance by this value; using 8 clocks/cycle as well would
+	// count double speed twice.
+	VCC::gEvents.SetClocksPerCycle(16);
+	VCC::gEvents.SetOverclock(eventMultiplier);
+	EmuState.CPUCurrentSpeed =
+		(ClockFreqHz / 16.0 / 1000000.0) * eventMultiplier;
 #else
 	SetClockSpeed(1);
 	if (EmuState.DoubleSpeedFlag)
 		SetClockSpeed(mult * EmuState.TurboSpeedFlag);
 	EmuState.CPUCurrentSpeed = .894;
-#endif
 	if (EmuState.DoubleSpeedFlag)
-		EmuState.CPUCurrentSpeed*=(mult*EmuState.TurboSpeedFlag);
+		EmuState.CPUCurrentSpeed *= (mult * EmuState.TurboSpeedFlag);
+#endif
 	return;
 }
 
