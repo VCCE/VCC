@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <vector>
 #include <tuple>
@@ -77,7 +79,7 @@ namespace VCC
         void SetClocksPerCycle(Clocks c);
 
         //
-        // set an overclock factor, 1..64 (clock divider)
+        // set a positive CPU clock multiplier (used as a master-clock divider).
         //
         void SetOverclock(size_t factor);
 
@@ -95,11 +97,15 @@ namespace VCC
     private:
 
         template <typename T> using Vector = std::vector<T>;
-        
+
+        // Internal time uses 64-bit units so the x86 build can safely retain
+        // sub-clock precision while converting CPU cycles into master clocks.
+        using InternalClocks = std::uint64_t;
+
         struct EventItem
         {
             size_t id;
-            Clocks time;
+            InternalClocks time;
             Func func;
         };
 
@@ -108,17 +114,14 @@ namespace VCC
         // cycles = clocks/16
         static constexpr size_t DefaultClocksPerCycle = 16;
 
-        // internally use multiplier of 256 to support overclocking
-        using InternalClocks = size_t;
-        
         EventsVector mEvents;                   // events list
         InternalClocks mClocks;                 // current clock position
-        InternalClocks mClocksPerCycleWithOC;   // clocks per cycle including overclock
-        InternalClocks mClocksPerCycle;         // clocks per cycle
+        InternalClocks mResolution;             // internal units per master clock
+        InternalClocks mClocksPerCycle;         // active clocks per cycle, scaled by resolution
         InternalClocks mReqClocksPerCycle;      // next clocks per cycle
         size_t mReqOverclock;                   // next overclock
         size_t mOverclock;                      // current overclock multiplier
-        size_t mResolution;                     // tick resolution
+        InternalClocks mClockRemainder;         // fractional clock numerator carried between ticks
 
         void QueueInternal(InternalClocks dt, Func func, size_t id);
 
