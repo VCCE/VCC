@@ -103,9 +103,12 @@ namespace VCC
     //
     // Insert in order after existing elements
     //
-    void Event::QueueInternal(size_t time, Func func, size_t id)
+    void Event::QueueInternal(InternalClocks time, Func func, size_t id)
     {
-        auto where = std::lower_bound(mEvents.begin(), mEvents.end(), time, [](auto& e, auto t) { return e.time <= t; });
+        // lower_bound requires a strict ordering predicate; equal-time events
+        // remain ordered while new equal-time events are inserted before them.
+        auto where = std::lower_bound(mEvents.begin(), mEvents.end(), time,
+            [](const EventItem& event, InternalClocks t) { return event.time < t; });
         mEvents.insert(where, { id,time,func });
     }
 
