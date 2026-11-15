@@ -901,6 +901,34 @@ unsigned char SetCPUMultiplyer(unsigned char Multiplyer)
 }
 
 #if USE_NEWTIMING
+namespace
+{
+	constexpr unsigned int CalculateEventClockMultiplier(
+		bool doubleSpeed, unsigned int multiplier, unsigned int turboMultiplier) noexcept
+	{
+		return doubleSpeed ? multiplier * turboMultiplier : 1u;
+	}
+
+	// Compile-time regression cases for normal, overclocked, turbo and maximum settings.
+	static_assert(CalculateEventClockMultiplier(false, 100u, 2u) == 1u);
+	static_assert(CalculateEventClockMultiplier(true, 2u, 1u) == 2u);
+	static_assert(CalculateEventClockMultiplier(true, 3u, 1u) == 3u);
+	static_assert(CalculateEventClockMultiplier(true, 10u, 1u) == 10u);
+	static_assert(CalculateEventClockMultiplier(true, 3u, 2u) == 6u);
+	static_assert(CalculateEventClockMultiplier(true, 100u, 2u) == 200u);
+
+	// 125.160 MHz relative to the 14.31818 MHz / 16 base clock.
+	static_assert(125160000ULL * 4ULL * 715909ULL ==
+		3579545ULL * 100128000ULL);
+}
+#endif
+
+void SetupClock()
+{
+	const unsigned int mult = EmuState.OverclockFlag
+		? static_cast<unsigned int>(EmuState.DoubleSpeedMultiplyer)
+		: 2u;
+#if USE_NEWTIMING
 	// NTSC master clock: 14.31818 MHz; normal CPU cycle: 16 master clocks.
 	constexpr double ClockFreqHz = 14318180.0;
 	constexpr size_t CpuClockRatioDenominator = 3579545u; // 14.31818 MHz / 4
