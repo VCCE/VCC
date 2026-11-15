@@ -55,5 +55,7 @@ namespace VCC::Core
 
 		// TODO following is no longer used. Should be cleaned up
 		virtual bool get_menu_item(menu_item_entry* item, size_t index) = 0;
+		virtual void cpu_memory_write(unsigned char, unsigned short) {}
+		virtual bool cpu_memory_read(unsigned short, unsigned char*) { return false; }
 	};
 }

@@ -34,6 +34,7 @@ namespace VCC::Core
 		virtual void assert_interrupt(Interrupt interrupt, InterruptSource interrupt_source) = 0;
 		virtual void write_memory_byte(unsigned char value, unsigned short address) = 0;
 		virtual unsigned char read_memory_byte(unsigned short address) = 0;
+		virtual void set_cpu_memory_write_watch(std::size_t, unsigned short, bool) {}
 	};
 }
 

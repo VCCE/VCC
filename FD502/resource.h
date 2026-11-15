@@ -8,6 +8,7 @@
 #define IDS_DESCRIPTION                 4
 #define IDD_CONFIG                      101
 #define IDD_NEWDISK                     102
+#define IDD_AUTOSEQUENCE                103
 #define IDC_DRIVE0                      1000
 #define IDC_DRIVE1                      1001
 #define IDC_DRIVE2                      1002
@@ -45,15 +46,23 @@
 #define IDC_BECKER_ENAB                 1033
 #define IDC_BECKER_HOST                 1034
 #define IDC_BECKER_PORT                 1035
+#define IDC_AS_ADDRESS                  1036
+#define IDC_AS_WRAP                     1037
+#define IDC_AS_PLAYLIST                 1038
+#define IDC_AS_ADD                      1039
+#define IDC_AS_REMOVE                   1040
+#define IDC_AS_UP                       1041
+#define IDC_AS_DOWN                     1042
+#define IDC_AS_COUNT                    1043
 
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        105
+#define _APS_NEXT_RESOURCE_VALUE        104
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1036
+#define _APS_NEXT_CONTROL_VALUE         1044
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

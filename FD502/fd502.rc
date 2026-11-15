@@ -113,6 +113,26 @@ BEGIN
 END
 
 
+IDD_AUTOSEQUENCE DIALOGEX 0, 0, 330, 224
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Drive 3 AutoSequence Playlist"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    LTEXT           "Memory-write address (hex):",IDC_STATIC,8,9,104,10
+    EDITTEXT        IDC_AS_ADDRESS,114,7,56,14,ES_AUTOHSCROLL | ES_UPPERCASE
+    CONTROL         "Wrap after last entry",IDC_AS_WRAP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,190,8,130,12
+    GROUPBOX        "Numbered DSK playlist (1-255)",IDC_STATIC,8,28,238,164,BS_CENTER
+    LISTBOX         IDC_AS_PLAYLIST,14,41,226,145,LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_BORDER | WS_TABSTOP
+    PUSHBUTTON      "Add...",IDC_AS_ADD,253,43,68,16
+    PUSHBUTTON      "Remove",IDC_AS_REMOVE,253,64,68,16
+    PUSHBUTTON      "Up",IDC_AS_UP,253,97,68,16
+    PUSHBUTTON      "Down",IDC_AS_DOWN,253,118,68,16
+    LTEXT           "0 / 255 entries",IDC_AS_COUNT,14,198,120,10
+    LTEXT           "POKE address,0 = next; 1-255 = select.",IDC_STATIC,138,198,180,10
+    DEFPUSHBUTTON   "Save",IDOK,199,209,54,14
+    PUSHBUTTON      "Cancel",IDCANCEL,261,209,54,14
+END
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // DESIGNINFO

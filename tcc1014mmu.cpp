@@ -368,6 +368,32 @@ void MemWrite16(unsigned short data,unsigned short addr)
 	return;
 }
 
+
+/*
+ * CPU-only memory hooks support plugin virtual registers without diverting
+ * debugger, DMA, or direct host writes away from the ordinary MMU path.
+ */
+unsigned char CpuMemRead8(unsigned short address)
+{
+	unsigned char value = 0;
+	if (PakCpuMemoryReadIsWatched(address) && PakCpuMemoryRead(address, &value))
+		return value;
+	return MemRead8(address);
+}
+
+void CpuMemWrite8(unsigned char data, unsigned short address)
+{
+	if (PakCpuMemoryWriteIsWatched(address))
+		PakCpuMemoryWrite(data, address);
+	MemWrite8(data, address);
+}
+
+void CpuMemWrite16(unsigned short data, unsigned short address)
+{
+	CpuMemWrite8(static_cast<unsigned char>(data >> 8), address);
+	CpuMemWrite8(static_cast<unsigned char>(data & 0xFF), static_cast<unsigned short>(address + 1));
+}
+
 unsigned short GetMem(unsigned long address) {
 	if (mem_initializing) return 0;  // To prevent access exceptions
 	if (address < RamSize)

@@ -79,7 +79,7 @@ bool CmdFormat (HANDLE , PFD_FORMAT_PARAMS , ULONG );
 static unsigned char StepTimesMS[4]={6,12,20,30};
 static unsigned short BytesperSector[4]={128,256,512,1024};
 static unsigned char TransferBuffer[16384]="";
-DiskInfo gVirtualDrive[5];
+DiskInfo gVirtualDrive[6];
 static unsigned char StatusReg=READY;
 static unsigned char DataReg=0;
 static unsigned char TrackReg=0;
@@ -1496,6 +1496,29 @@ bool FormatTrack (HANDLE h_, BYTE cyl_, BYTE head_, BYTE Fill)
 bool CmdFormat (HANDLE h_, PFD_FORMAT_PARAMS pfp_, ULONG ulSize_)
 {
     return !!DeviceIoControl(h_, IOCTL_FDCMD_FORMAT_TRACK, pfp_, ulSize_, nullptr, 0, &dwRet, nullptr);
+}
+
+
+/* Abort an in-flight WD1793 transfer without unmounting mounted media. */
+bool FdcIsIdle()
+{
+	return CurrentCommand == IDLE;
+}
+
+void ResetController()
+{
+	DispatchCommand(0xD0); // FORCE INTERRUPT, no interrupt condition bits.
+	CurrentCommand = IDLE;
+	StatusReg = READY;
+	TransferBufferIndex = 0;
+	TransferBufferSize = 0;
+	IOWaiter = 0;
+	IndexCounter = 0;
+	ExecTimeWaiter = 0;
+	MSectorFlag = 0;
+	LostDataFlag = 0;
+	GetBytefromDisk = &GetBytefromSector;
+	WriteBytetoDisk = &WriteBytetoSector;
 }
 
 unsigned short InitController ()

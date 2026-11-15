@@ -80,6 +80,10 @@ namespace VCC::Core
 			return false;
 		}
 
+		void default_cpu_memory_write(unsigned char, unsigned short) {}
+		bool default_cpu_memory_read(unsigned short, unsigned char*) { return false; }
+		void default_set_window_handle(HWND) {}
+
 	}
 
 	cpak_cartridge::cpak_cartridge(
@@ -121,7 +125,13 @@ namespace VCC::Core
 		menu_item_clicked_(GetImportedProcAddress(
 					module_handle, "PakMenuItemClicked", default_menu_item_clicked)),
 		get_menu_item_(GetImportedProcAddress(
-					module_handle, "PakGetMenuItem", default_get_menu_item))
+					module_handle, "PakGetMenuItem", default_get_menu_item)),
+		cpu_memory_write_(GetImportedProcAddress(
+					module_handle, "PakCpuMemoryWrite", default_cpu_memory_write)),
+		cpu_memory_read_(GetImportedProcAddress(
+					module_handle, "PakCpuMemoryRead", default_cpu_memory_read)),
+		set_window_handle_(GetImportedProcAddress(
+					module_handle, "PakSetWindowHandle", default_set_window_handle))
 	{
 		if (initialize_ == nullptr)
 		{
@@ -198,6 +208,22 @@ namespace VCC::Core
 	bool cpak_cartridge::get_menu_item(menu_item_entry* item, size_t index)
 	{
 		return get_menu_item_(item, index);
+	}
+
+	void cpak_cartridge::cpu_memory_write(unsigned char value, unsigned short address)
+	{
+		cpu_memory_write_(value, address);
+	}
+
+	bool cpak_cartridge::cpu_memory_read(unsigned short address, unsigned char* value)
+	{
+		return cpu_memory_read_(address, value);
+	}
+
+	void cpak_cartridge::set_window_handle(HWND hVccWnd)
+	{
+		hVccWnd_ = hVccWnd;
+		set_window_handle_(hVccWnd);
 	}
 
 }

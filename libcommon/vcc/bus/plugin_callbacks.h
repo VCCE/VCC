@@ -39,6 +39,7 @@ extern "C"
 		(slot_id_type SlotId, bool lineState);
 	using PakAssertInteruptHostCallback = void (*)
 		(slot_id_type SlotId, Interrupt interrupt, InterruptSource interrupt_source);
+	using PakSetCpuMemoryWriteWatchHostCallback = void (*)(slot_id_type SlotId, unsigned short address, bool enabled);
 
 	// Plugin (cartridge) callbacks
 	struct cpak_callbacks
@@ -47,6 +48,7 @@ extern "C"
 		const PakAssertCartridgeLineHostCallback assert_cartridge_line;
 		const PakWriteMemoryByteHostCallback     write_memory_byte;
 		const PakReadMemoryByteHostCallback      read_memory_byte;
+		const PakSetCpuMemoryWriteWatchHostCallback set_cpu_memory_write_watch;
 	};
 }
 

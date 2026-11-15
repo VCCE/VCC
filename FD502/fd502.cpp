@@ -31,6 +31,13 @@
 #include <Windows.h>
 #include <stdio.h>
 #include <iostream>
+#include <algorithm>
+#include <cctype>
+#include <cstdlib>
+#include <deque>
+#include <mutex>
+#include <vector>
+#include <filesystem>
 #include "resource.h"
 #include "wd1793.h"
 #include "distortc.h"
@@ -58,7 +65,7 @@ constexpr auto EXTROMSIZE = 16384u;
 
 using namespace std;
 
-extern DiskInfo gVirtualDrive[5];
+extern DiskInfo gVirtualDrive[6];
 static unsigned char ExternalRom[EXTROMSIZE];
 static unsigned char DiskRom[EXTROMSIZE];
 static unsigned char RGBDiskRom[EXTROMSIZE];
@@ -100,6 +107,41 @@ char BeckerPort[32]="";
 // Added for PakGetMenuItem export
 static HWND gVccWnd = nullptr;
 static VCC::Util::settings* gpSettings = nullptr; // Pointer to settings object
+static bool gPakInitialized = false;
+static PakSetCpuMemoryWriteWatchHostCallback SetCpuMemoryWriteWatch = nullptr;
+
+struct AutoSequenceRequest
+{
+	unsigned char value = 0;
+	unsigned short address = 0;
+};
+
+static std::mutex gAutoSequenceMutex;
+static std::vector<std::string> gAutoSequencePlaylist;
+static std::deque<AutoSequenceRequest> gAutoSequenceRequests;
+static unsigned short gAutoSequenceAddress = 0x7F00;
+static constexpr size_t AUTO_SEQUENCE_MAX_PENDING_REQUESTS = 16;
+static constexpr unsigned char AUTO_SEQUENCE_STAGING_DRIVE = 5;
+static bool gAutoSequenceWrap = true;
+static int gAutoSequenceCurrentEntry = -1;
+static const char* const AUTO_SEQUENCE_SECTION = "FD-502 AutoSequence";
+
+struct AutoSequenceDialogState
+{
+	std::vector<std::string> playlist;
+	unsigned short address = 0x7F00;
+	bool wrap = true;
+	std::string current_path;
+};
+
+static INT_PTR CALLBACK AutoSequenceDialogProc(HWND, UINT, WPARAM, LPARAM);
+static void OpenAutoSequenceDialog(HWND owner);
+static void LoadAutoSequenceConfig();
+static void SaveAutoSequenceConfigLocked();
+static void RegisterAutoSequenceWatch();
+static void ProcessPendingAutoSequence();
+static bool ReplaceDrive3Image(const std::string& path);
+
 
 //----------------------------------------------------------------------------
 extern "C"
@@ -138,36 +180,85 @@ extern "C"
 		HWND hVccWnd,
 		const cpak_callbacks* const callbacks)
 	{
-        DLOG_C("fd502 callbacks write=%p cart=%p read=%p int=%p\n",
-            callbacks->write_memory_byte,
-            callbacks->assert_cartridge_line,
-            callbacks->read_memory_byte,
-            callbacks->assert_interrupt);
+		if (!callbacks || !configuration_path) return;
 		gSlotId = SlotId;
 		gVccWnd = hVccWnd;
 		AssertInt = callbacks->assert_interrupt;
-//      Must create settings object before LoadConfig
+		SetCpuMemoryWriteWatch = callbacks->set_cpu_memory_write_watch;
+		if (gpSettings) {
+			delete gpSettings;
+			gpSettings = nullptr;
+		}
 		gpSettings = new VCC::Util::settings(configuration_path);
 		RealDisks = InitController();
 		LoadConfig();
+		LoadAutoSequenceConfig();
+		RegisterAutoSequenceWatch();
+		gPakInitialized = true;
 		SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 	}
 
 	__declspec(dllexport) void PakReset()
 	{
+		ResetController();
 		LoadExtRom(External,RomFileName);
+	}
+
+	__declspec(dllexport) void PakSetWindowHandle(HWND hVccWnd)
+	{
+		gVccWnd = hVccWnd;
+	}
+
+	// Every CPU store is queued independently, even when consecutive values
+	// are identical. The MMU observer never consumes the real RAM write.
+	__declspec(dllexport) void PakCpuMemoryWrite(unsigned char value, unsigned short address)
+	{
+		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
+		if (gAutoSequencePlaylist.empty() || gAutoSequenceAddress >= 0xFFFF ||
+			(address != gAutoSequenceAddress &&
+			 address != static_cast<unsigned short>(gAutoSequenceAddress + 1)))
+			return;
+		if (gAutoSequenceRequests.size() >= AUTO_SEQUENCE_MAX_PENDING_REQUESTS) {
+			DLOG_C("AutoSequence: command queue full; dropping command\\n");
+			return;
+		}
+		gAutoSequenceRequests.push_back({ value, address });
+	}
+
+	__declspec(dllexport) bool PakCpuMemoryRead(unsigned short address, unsigned char* value)
+	{
+		if (!value) return false;
+		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
+		if (gAutoSequencePlaylist.empty() || gAutoSequenceAddress >= 0xFFFF ||
+			address != static_cast<unsigned short>(gAutoSequenceAddress + 1))
+			return false;
+		*value = (gAutoSequenceCurrentEntry >= 0 &&
+			gAutoSequenceCurrentEntry < static_cast<int>(gAutoSequencePlaylist.size()))
+			? static_cast<unsigned char>(gAutoSequenceCurrentEntry + 1) : 0;
+		return true;
 	}
 
 	__declspec(dllexport) void PakTerminate()
 	{
+		if (!gPakInitialized && gpSettings == nullptr)
+			return;
+		if (SetCpuMemoryWriteWatch)
+			SetCpuMemoryWriteWatch(gSlotId, gAutoSequenceAddress, false);
+		SetCpuMemoryWriteWatch = nullptr;
+		{
+			std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
+			gAutoSequenceRequests.clear();
+		}
+		gPakInitialized = false;
 #ifdef COMBINE_BECKER
 		becker_enable(0);
 #endif
 		CloseCartDialog(g_hConfDlg);
 		for (unsigned char dnum = 0; dnum <= 3; dnum++)
-		{
 			unmount_disk_image(dnum);
-		}
+		unmount_disk_image(AUTO_SEQUENCE_STAGING_DRIVE);
+		delete gpSettings;
+		gpSettings = nullptr;
 	}
 
 	//PakGetMenuItem export
@@ -204,6 +295,9 @@ extern "C"
 				break;
 			case 18:
 				Unload_Disk(3);
+				break;
+			case 19:
+				OpenAutoSequenceDialog(h_own);
 				break;
 			case 16:
 				if (g_hConfDlg == nullptr)
@@ -244,6 +338,7 @@ extern "C"
 	__declspec(dllexport) void PakProcessHorizontalSync()
 	{
 		PingFdc();
+		ProcessPendingAutoSequence();
 		return;
 	}
 
@@ -504,6 +599,8 @@ bool get_menu_item(menu_item_entry* item, size_t index)
 		gDllCartMenu.add("Insert",ControlId(17),MIT_Slave);
 		disk = VCC::Util::GetFileNamePart(gVirtualDrive[3].ImageName);
 		gDllCartMenu.add("Eject: "+disk,ControlId(18),MIT_Slave);
+		gDllCartMenu.add("FD-502 Drive 3 AutoSequence",0,MIT_Head);
+		gDllCartMenu.add("Playlist / Settings",ControlId(19),MIT_Slave);
 		gDllCartMenu.add("FD-502 Config",ControlId(16),MIT_StandAlone);
 	}
 	// return requested list item or false
@@ -675,6 +772,397 @@ long CreateDiskHeader(const char *FileName,unsigned char Type,unsigned char Trac
 	WriteFile(hr,&Dummy,1,&BytesWritten,nullptr);
 	CloseHandle(hr);
 	return 0;
+}
+
+static void LoadAutoSequenceConfig()
+{
+	std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
+	gAutoSequencePlaylist.clear();
+	gAutoSequenceRequests.clear();
+
+	int address = Setting().read(AUTO_SEQUENCE_SECTION, "MemoryAddress", 0x7F00);
+	// The command and status/readback bytes must not wrap past the address space.
+	if (address < 0 || address > 0xFFFE) address = 0x7F00;
+	gAutoSequenceAddress = static_cast<unsigned short>(address);
+	gAutoSequenceWrap = Setting().read(AUTO_SEQUENCE_SECTION, "Wrap", 1) != 0;
+
+	int count = Setting().read(AUTO_SEQUENCE_SECTION, "PlaylistCount", 0);
+	if (count < 0) count = 0;
+	if (count > 255) count = 255;
+
+	for (int i = 1; i <= count; ++i)
+	{
+		char key[32] = {};
+		sprintf(key, "Entry%03d", i);
+		std::string disk_path = Setting().read(AUTO_SEQUENCE_SECTION, key, "");
+		if (!disk_path.empty())
+			gAutoSequencePlaylist.push_back(disk_path);
+	}
+
+	int current = Setting().read(AUTO_SEQUENCE_SECTION, "CurrentEntry", 0) - 1;
+	gAutoSequenceCurrentEntry = (current >= 0 && current < static_cast<int>(gAutoSequencePlaylist.size()))
+		? current : -1;
+
+	// When the persisted Drive 3 image is part of the playlist, use that as
+	// the authoritative current entry. Otherwise retain the saved playlist index.
+	if (gVirtualDrive[3].ImageName[0])
+	{
+		for (size_t i = 0; i < gAutoSequencePlaylist.size(); ++i)
+		{
+			if (_stricmp(gVirtualDrive[3].ImageName, gAutoSequencePlaylist[i].c_str()) == 0)
+			{
+				gAutoSequenceCurrentEntry = static_cast<int>(i);
+				break;
+			}
+		}
+	}
+}
+
+static void SaveAutoSequenceConfigLocked()
+{
+	Setting().delete_section(AUTO_SEQUENCE_SECTION);
+	Setting().write(AUTO_SEQUENCE_SECTION, "MemoryAddress", static_cast<int>(gAutoSequenceAddress));
+	Setting().write(AUTO_SEQUENCE_SECTION, "Wrap", gAutoSequenceWrap ? 1 : 0);
+	Setting().write(AUTO_SEQUENCE_SECTION, "PlaylistCount", static_cast<int>(gAutoSequencePlaylist.size()));
+	Setting().write(AUTO_SEQUENCE_SECTION, "CurrentEntry",
+		gAutoSequenceCurrentEntry >= 0 ? gAutoSequenceCurrentEntry + 1 : 0);
+
+	for (size_t i = 0; i < gAutoSequencePlaylist.size() && i < 255; ++i)
+	{
+		char key[32] = {};
+		sprintf(key, "Entry%03u", static_cast<unsigned int>(i + 1));
+		Setting().write(AUTO_SEQUENCE_SECTION, key, gAutoSequencePlaylist[i]);
+	}
+	Setting().flush();
+}
+
+static void RegisterAutoSequenceWatch()
+{
+	if (!SetCpuMemoryWriteWatch) return;
+	unsigned short address = 0;
+	bool enabled = false;
+	{
+		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
+		address = gAutoSequenceAddress;
+		enabled = !gAutoSequencePlaylist.empty();
+	}
+	SetCpuMemoryWriteWatch(gSlotId, address, enabled);
+}
+
+static bool ReplaceDrive3Image(const std::string& path)
+{
+	if (!FdcIsIdle())
+		return false;
+
+	// Slot 4 is the controller's NONE sentinel.  Never use it as temporary
+	// storage: CurrentDisk can legitimately equal NONE while the FDC is idle.
+	// Slot 5 is a private staging slot outside the four emulated drives and
+	// the NONE sentinel.
+	const unsigned char drive3_head_position = gVirtualDrive[3].HeadPosition;
+	if (gVirtualDrive[AUTO_SEQUENCE_STAGING_DRIVE].FileHandle != nullptr)
+		unmount_disk_image(AUTO_SEQUENCE_STAGING_DRIVE);
+
+	if (mount_disk_image(path.c_str(), AUTO_SEQUENCE_STAGING_DRIVE) == 0)
+	{
+		unmount_disk_image(AUTO_SEQUENCE_STAGING_DRIVE);
+		return false;
+	}
+
+	// The physical drive head remains at its existing track while media changes.
+	gVirtualDrive[AUTO_SEQUENCE_STAGING_DRIVE].HeadPosition = drive3_head_position;
+
+	// Drive 3 may previously have represented a raw physical device.
+	// Once the staged DSK replaces it, clear the old physical-drive mapping.
+	if (PhysicalDriveA == 4) PhysicalDriveA = 0;
+	if (PhysicalDriveB == 4) PhysicalDriveB = 0;
+
+	std::swap(gVirtualDrive[3], gVirtualDrive[AUTO_SEQUENCE_STAGING_DRIVE]);
+	unmount_disk_image(AUTO_SEQUENCE_STAGING_DRIVE); // closes former Drive 3 media
+	return true;
+}
+
+static void ProcessPendingAutoSequence()
+{
+	if (!FdcIsIdle())
+		return;
+
+	AutoSequenceRequest request{};
+	int target = -1;
+	std::string target_path;
+
+	{
+		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
+		if (gAutoSequenceRequests.empty() || gAutoSequencePlaylist.empty())
+			return;
+
+		request = gAutoSequenceRequests.front();
+		gAutoSequenceRequests.pop_front();
+
+		const int current_entry = gAutoSequenceCurrentEntry;
+		const int playlist_size = static_cast<int>(gAutoSequencePlaylist.size());
+		const bool previous_command =
+			request.address == static_cast<unsigned short>(gAutoSequenceAddress + 1);
+
+		if (previous_command)
+		{
+			if (current_entry > 0)
+				target = current_entry - 1;
+			else if (gAutoSequenceWrap)
+				target = playlist_size - 1;
+		}
+		else if (request.address == gAutoSequenceAddress)
+		{
+			if (request.value == 0)
+			{
+				if (current_entry < 0)
+					target = 0;
+				else if (current_entry + 1 < playlist_size)
+					target = current_entry + 1;
+				else if (gAutoSequenceWrap)
+					target = 0;
+			}
+			else if (request.value <= playlist_size)
+			{
+				target = static_cast<int>(request.value) - 1;
+			}
+		}
+
+		if (target < 0 || target >= playlist_size)
+			return;
+
+		target_path = gAutoSequencePlaylist[static_cast<size_t>(target)];
+	}
+
+	// Recheck immediately before the media swap. If a command began since the
+	// first test, preserve this request for the next idle scanline.
+	if (!FdcIsIdle())
+	{
+		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
+		gAutoSequenceRequests.push_front(request);
+		return;
+	}
+
+	const bool already_mounted =
+		gVirtualDrive[3].FileHandle != nullptr &&
+		_stricmp(gVirtualDrive[3].ImageName, target_path.c_str()) == 0;
+
+	if (!already_mounted && !ReplaceDrive3Image(target_path))
+	{
+		DLOG_C("AutoSequence: could not mount playlist entry %d: %s\n", target + 1, target_path.c_str());
+		return;
+	}
+
+	{
+		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
+		gAutoSequenceCurrentEntry = target;
+		SaveAutoSequenceConfigLocked();
+	}
+
+	if (PersistDisks)
+		Setting().write(MS_FD502, "Disk#3", gVirtualDrive[3].ImageName);
+
+	SendMessage(gVccWnd, WM_VCC_UPD_MENU, (WPARAM)0, (LPARAM)0);
+}
+
+static void RefreshAutoSequenceList(HWND hDlg, const AutoSequenceDialogState& state)
+{
+	SendDlgItemMessage(hDlg, IDC_AS_PLAYLIST, LB_RESETCONTENT, 0, 0);
+	for (size_t i = 0; i < state.playlist.size(); ++i)
+	{
+		char row[MAX_PATH + 16] = {};
+		const std::string name = VCC::Util::GetFileNamePart(state.playlist[i]);
+		sprintf(row, "%03u  %s", static_cast<unsigned int>(i + 1), name.c_str());
+		SendDlgItemMessage(hDlg, IDC_AS_PLAYLIST, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(row));
+	}
+
+	char count[48] = {};
+	sprintf(count, "%u / 255 entries", static_cast<unsigned int>(state.playlist.size()));
+	SetDlgItemText(hDlg, IDC_AS_COUNT, count);
+}
+
+static INT_PTR CALLBACK AutoSequenceDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	auto* state = reinterpret_cast<AutoSequenceDialogState*>(GetWindowLongPtr(hDlg, GWLP_USERDATA));
+
+	switch (message)
+	{
+	case WM_INITDIALOG:
+		state = reinterpret_cast<AutoSequenceDialogState*>(lParam);
+		SetWindowLongPtr(hDlg, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(state));
+		{
+			char address[16] = {};
+			sprintf(address, "%04X", state->address);
+			SetDlgItemText(hDlg, IDC_AS_ADDRESS, address);
+			SendDlgItemMessage(hDlg, IDC_AS_WRAP, BM_SETCHECK, state->wrap ? BST_CHECKED : BST_UNCHECKED, 0);
+			RefreshAutoSequenceList(hDlg, *state);
+		}
+		return TRUE;
+
+	case WM_COMMAND:
+		if (!state) return TRUE;
+		switch (LOWORD(wParam))
+		{
+		case IDC_AS_ADD:
+			if (state->playlist.size() >= 255)
+			{
+				MessageBox(hDlg, "The Drive 3 AutoSequence playlist is limited to 255 entries.", "AutoSequence", MB_OK | MB_ICONINFORMATION);
+				return TRUE;
+			}
+			{
+				FileDialog dlg;
+				dlg.setInitialDir(FloppyPath);
+				dlg.setFilter("Disk Images (*.dsk)\0*.dsk\0\0");
+				dlg.setDefExt("dsk");
+				dlg.setTitle("Add Drive 3 AutoSequence Disk");
+				dlg.setFlags(OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST);
+				if (dlg.show(0, hDlg))
+				{
+					char path[MAX_PATH] = {};
+					dlg.getpath(path, MAX_PATH);
+					if (path[0])
+					{
+						state->playlist.emplace_back(path);
+						dlg.getdir(FloppyPath);
+						RefreshAutoSequenceList(hDlg, *state);
+						SendDlgItemMessage(hDlg, IDC_AS_PLAYLIST, LB_SETCURSEL,
+							static_cast<WPARAM>(state->playlist.size() - 1), 0);
+					}
+				}
+			}
+			return TRUE;
+
+		case IDC_AS_REMOVE:
+			{
+				const LRESULT selected = SendDlgItemMessage(hDlg, IDC_AS_PLAYLIST, LB_GETCURSEL, 0, 0);
+				if (selected != LB_ERR && selected < static_cast<LRESULT>(state->playlist.size()))
+				{
+					state->playlist.erase(state->playlist.begin() + selected);
+					RefreshAutoSequenceList(hDlg, *state);
+					if (!state->playlist.empty())
+					{
+						const size_t next = (static_cast<size_t>(selected) < state->playlist.size())
+							? static_cast<size_t>(selected) : state->playlist.size() - 1;
+						SendDlgItemMessage(hDlg, IDC_AS_PLAYLIST, LB_SETCURSEL, next, 0);
+					}
+				}
+			}
+			return TRUE;
+
+		case IDC_AS_UP:
+		case IDC_AS_DOWN:
+			{
+				const LRESULT selected = SendDlgItemMessage(hDlg, IDC_AS_PLAYLIST, LB_GETCURSEL, 0, 0);
+				if (selected == LB_ERR) return TRUE;
+				const size_t from = static_cast<size_t>(selected);
+				const size_t to = (LOWORD(wParam) == IDC_AS_UP)
+					? (from == 0 ? from : from - 1)
+					: (from + 1 >= state->playlist.size() ? from : from + 1);
+				if (from != to)
+				{
+					std::swap(state->playlist[from], state->playlist[to]);
+					RefreshAutoSequenceList(hDlg, *state);
+					SendDlgItemMessage(hDlg, IDC_AS_PLAYLIST, LB_SETCURSEL, to, 0);
+				}
+			}
+			return TRUE;
+
+		case IDOK:
+			{
+				char address_text[32] = {};
+				GetDlgItemText(hDlg, IDC_AS_ADDRESS, address_text, sizeof(address_text));
+				char* number_text = address_text;
+				while (*number_text && isspace(static_cast<unsigned char>(*number_text))) ++number_text;
+				if (number_text[0] == '&' && (number_text[1] == 'H' || number_text[1] == 'h'))
+					number_text += 2;
+
+				char* end = nullptr;
+				const unsigned long parsed = strtoul(number_text, &end, 16);
+				while (end && *end && isspace(static_cast<unsigned char>(*end))) ++end;
+				if (number_text[0] == '\0' || end == number_text || (end && *end) || parsed > 0xFDFC)
+				{
+					MessageBox(hDlg, "Enter a hexadecimal address from 0000 to FFFE; the next byte is reserved for AutoSequence status.", "AutoSequence", MB_OK | MB_ICONWARNING);
+					return TRUE;
+				}
+				state->address = static_cast<unsigned short>(parsed);
+				state->wrap = (SendDlgItemMessage(hDlg, IDC_AS_WRAP, BM_GETCHECK, 0, 0) == BST_CHECKED);
+				EndDialog(hDlg, IDOK);
+				return TRUE;
+			}
+
+		case IDCANCEL:
+			EndDialog(hDlg, IDCANCEL);
+			return TRUE;
+		}
+		break;
+
+	case WM_CLOSE:
+		EndDialog(hDlg, IDCANCEL);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static void OpenAutoSequenceDialog(HWND owner)
+{
+	AutoSequenceDialogState state;
+	{
+		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
+		state.playlist = gAutoSequencePlaylist;
+		state.address = gAutoSequenceAddress;
+		state.wrap = gAutoSequenceWrap;
+		if (gAutoSequenceCurrentEntry >= 0 &&
+			gAutoSequenceCurrentEntry < static_cast<int>(gAutoSequencePlaylist.size()))
+			state.current_path = gAutoSequencePlaylist[static_cast<size_t>(gAutoSequenceCurrentEntry)];
+	}
+
+	const INT_PTR result = DialogBoxParam(
+		gModuleInstance,
+		(LPCTSTR)IDD_AUTOSEQUENCE,
+		owner,
+		(DLGPROC)AutoSequenceDialogProc,
+		reinterpret_cast<LPARAM>(&state));
+
+	if (result != IDOK)
+		return;
+
+	{
+		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
+		gAutoSequencePlaylist = state.playlist;
+		gAutoSequenceAddress = state.address;
+		gAutoSequenceWrap = state.wrap;
+		gAutoSequenceCurrentEntry = -1;
+
+		if (!state.current_path.empty())
+		{
+			for (size_t i = 0; i < gAutoSequencePlaylist.size(); ++i)
+			{
+				if (_stricmp(state.current_path.c_str(), gAutoSequencePlaylist[i].c_str()) == 0)
+				{
+					gAutoSequenceCurrentEntry = static_cast<int>(i);
+					break;
+				}
+			}
+		}
+		if (gAutoSequenceCurrentEntry < 0 && gVirtualDrive[3].ImageName[0])
+		{
+			for (size_t i = 0; i < gAutoSequencePlaylist.size(); ++i)
+			{
+				if (_stricmp(gVirtualDrive[3].ImageName, gAutoSequencePlaylist[i].c_str()) == 0)
+				{
+					gAutoSequenceCurrentEntry = static_cast<int>(i);
+					break;
+				}
+			}
+		}
+
+		gAutoSequenceRequests.clear();
+		SaveAutoSequenceConfigLocked();
+		if (FloppyPath[0])
+			Setting().write(MS_PATHS, "FloppyPath", FloppyPath);
+	}
+
+	RegisterAutoSequenceWatch();
+	SendMessage(gVccWnd, WM_VCC_UPD_MENU, (WPARAM)0, (LPARAM)0);
 }
 
 void LoadConfig()  // Called on SetIniPath

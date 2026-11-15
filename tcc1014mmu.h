@@ -43,6 +43,9 @@ void GetMMUPage(size_t page, std::array<unsigned char, 8192>& outBuffer);
 
 void MemWrite8(unsigned char,unsigned short );
 void MemWrite16(unsigned short,unsigned short );
+unsigned char CpuMemRead8(unsigned short);
+void CpuMemWrite8(unsigned char, unsigned short);
+void CpuMemWrite16(unsigned short, unsigned short);
 
 unsigned short MemRead16(unsigned short);
 unsigned char MemRead8(unsigned short);

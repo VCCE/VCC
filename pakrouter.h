@@ -18,6 +18,8 @@
 #pragma once
 
 #include <vcc/bus/cartridge.h>
+#include <Windows.h>
+#include <atomic>
 
 // The PakRouter handles routing and control of the plugin binary interface.
 // An array of pointers to installed plugin objects is maintained. The array
@@ -61,6 +63,13 @@ using plugin_ptr = typename cartridge_loader_result::cartridge_ptr_type;
 		unsigned char cart_read_memory(int slot,unsigned short adr);
 		void cart_assert_line(int slot, bool state);  // see line_states_
 		void cart_assert_interrupt(int slot, Interrupt intr, InterruptSource src);
+
+		void set_cpu_memory_write_watch(size_t slot, unsigned short address, bool enabled);
+		bool cpu_memory_write_is_watched(unsigned short address) const;
+		void cpu_memory_write(unsigned char value, unsigned short address);
+		bool cpu_memory_read_is_watched(unsigned short address) const;
+		bool cpu_memory_read(unsigned short address, unsigned char* value);
+		void set_window_handle(HWND hVccWnd);
 
 		// Test for inactive MPI
 		inline bool mpi_not_active() const
@@ -164,6 +173,10 @@ using plugin_ptr = typename cartridge_loader_result::cartridge_ptr_type;
 		// Additionally anytime SCS is changed the router forwards the value
 		// saved for the SCS slot.
 		std::array<bool,5> line_states_{}; // (CART line state pin 8)
+
+		std::array<std::atomic<unsigned short>, NumCartSlots> cpu_write_watch_address_{};
+		std::array<std::atomic_bool, NumCartSlots> cpu_write_watch_enabled_{};
+		std::atomic<unsigned int> cpu_watch_slot_{0};
 
 	};
 }

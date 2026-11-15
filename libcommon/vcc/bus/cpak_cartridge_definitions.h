@@ -50,4 +50,7 @@ extern "C"
 	using PakSampleAudioModuleFunction     = unsigned short (*)();
 	using PakMenuItemClickedModuleFunction = void (*)(unsigned char itemId);
 	using PakGetMenuItemFunction           = bool (*)(menu_item_entry* item, size_t index);
+	using PakCpuMemoryWriteModuleFunction  = void (*)(unsigned char value, unsigned short address);
+	using PakCpuMemoryReadModuleFunction   = bool (*)(unsigned short address, unsigned char* value);
+	using PakSetWindowHandleModuleFunction = void (*)(HWND hVccWnd);
 }

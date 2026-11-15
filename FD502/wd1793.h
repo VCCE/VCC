@@ -28,6 +28,8 @@ unsigned char SetTurboDisk( unsigned char);
 //unsigned char UseKeyboardLeds(unsigned char);
 DWORD GetDriverVersion ();
 unsigned short InitController ();
+void ResetController();
+bool FdcIsIdle();
 //unsigned long UseRawDisk(unsigned char,unsigned char);
 // Commands for the wd1793 disk controller $FF48
 

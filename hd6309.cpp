@@ -30,6 +30,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "Disassembler.h"
 #include "Event.h"
 
+// Route instruction data accesses through the CPU-aware MMU observers.
+#define MemRead8 CpuMemRead8
+#define MemWrite8 CpuMemWrite8
+#define MemWrite16 CpuMemWrite16
+
 #if defined(_WIN64)
 #define MSABI 
 #else

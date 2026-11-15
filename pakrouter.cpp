@@ -47,6 +47,7 @@ namespace VCC::Core
 		DLOG_C("PakRouter::set_active_slot %d\n",active_slot);
 		disk_slot_ = active_slot;
 		active_slot_ = active_slot;
+		cpu_watch_slot_.store(active_slot, std::memory_order_release);
 		SetCart(line_states_[active_slot]);
 	}
 
@@ -81,6 +82,63 @@ namespace VCC::Core
 	{
 		return MemRead8(adr);
 	};
+
+	void PakRouter::set_cpu_memory_write_watch(size_t slot, unsigned short address, bool enabled)
+	{
+		if (slot >= NumCartSlots) return;
+		cpu_write_watch_address_[slot].store(address, std::memory_order_relaxed);
+		cpu_write_watch_enabled_[slot].store(enabled, std::memory_order_release);
+	}
+
+	bool PakRouter::cpu_memory_write_is_watched(unsigned short address) const
+	{
+		const unsigned int slot = cpu_watch_slot_.load(std::memory_order_acquire);
+		if (slot >= NumCartSlots || !cpu_write_watch_enabled_[slot].load(std::memory_order_acquire))
+			return false;
+		const unsigned short base = cpu_write_watch_address_[slot].load(std::memory_order_relaxed);
+		return base < 0xFFFF && (address == base || address == static_cast<unsigned short>(base + 1));
+	}
+
+	void PakRouter::cpu_memory_write(unsigned char value, unsigned short address)
+	{
+		const unsigned int slot = cpu_watch_slot_.load(std::memory_order_acquire);
+		if (slot >= NumCartSlots || !cpu_write_watch_enabled_[slot].load(std::memory_order_acquire))
+			return;
+		const unsigned short base = cpu_write_watch_address_[slot].load(std::memory_order_relaxed);
+		if (base >= 0xFFFF || (address != base && address != static_cast<unsigned short>(base + 1)))
+			return;
+		if (auto& cart = slots_[slot]) cart->cpu_memory_write(value, address);
+	}
+
+	bool PakRouter::cpu_memory_read_is_watched(unsigned short address) const
+	{
+		const unsigned int slot = cpu_watch_slot_.load(std::memory_order_acquire);
+		if (slot >= NumCartSlots || !cpu_write_watch_enabled_[slot].load(std::memory_order_acquire))
+			return false;
+		const unsigned short base = cpu_write_watch_address_[slot].load(std::memory_order_relaxed);
+		return base < 0xFFFF && address == static_cast<unsigned short>(base + 1);
+	}
+
+	bool PakRouter::cpu_memory_read(unsigned short address, unsigned char* value)
+	{
+		if (!value) return false;
+		const unsigned int slot = cpu_watch_slot_.load(std::memory_order_acquire);
+		if (slot >= NumCartSlots || !cpu_write_watch_enabled_[slot].load(std::memory_order_acquire))
+			return false;
+		const unsigned short base = cpu_write_watch_address_[slot].load(std::memory_order_relaxed);
+		if (base >= 0xFFFF || address != static_cast<unsigned short>(base + 1))
+			return false;
+		if (auto& cart = slots_[slot]) return cart->cpu_memory_read(address, value);
+		return false;
+	}
+
+	void PakRouter::set_window_handle(HWND hVccWnd)
+	{
+		for (size_t slot = 0; slot < NumCartSlots; ++slot) {
+			if (auto* cpak = dynamic_cast<cpak_cartridge*>(slots_[slot].get()))
+				cpak->set_window_handle(hVccWnd);
+		}
+	}
 
 	// Assert line is the only callback that is slot sensitive
 	void PakRouter::cart_assert_line(int slot, bool state)

@@ -54,12 +54,15 @@ namespace VCC::Core
 		unsigned short sample_audio() override;
 		void menu_item_clicked(unsigned char menu_item_id) override;
 		bool get_menu_item(menu_item_entry* item, size_t index) override;
+		void cpu_memory_write(unsigned char value, unsigned short address) override;
+		bool cpu_memory_read(unsigned short address, unsigned char* value) override;
+		void set_window_handle(HWND hVccWnd);
 
 	private:
 
 		const HMODULE handle_;
 		slot_id_type SlotId_;
-		const HWND hVccWnd_;
+		HWND hVccWnd_;
 		const path_type configuration_path_;
 		const cpak_callbacks cpak_callbacks_;
 
@@ -78,5 +81,8 @@ namespace VCC::Core
 		const PakSampleAudioModuleFunction sample_audio_;
 		const PakMenuItemClickedModuleFunction menu_item_clicked_;
 		const PakGetMenuItemFunction get_menu_item_;
+		const PakCpuMemoryWriteModuleFunction cpu_memory_write_;
+		const PakCpuMemoryReadModuleFunction cpu_memory_read_;
+		const PakSetWindowHandleModuleFunction set_window_handle_;
 	};
 }

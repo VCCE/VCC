@@ -102,11 +102,16 @@ static void assert_interrupt_impl(size_t slot, Interrupt intr, InterruptSource s
     gPakRouter.cart_assert_interrupt(slot, intr, src);
 }
 
+static void set_cpu_memory_write_watch_impl(size_t slot, unsigned short address, bool enabled) {
+	gPakRouter.set_cpu_memory_write_watch(slot, address, enabled);
+}
+
 struct cpak_callbacks slot_callbacks = {
 	assert_interrupt_impl,
 	assert_cart_line_impl,
 	write_memory_byte_impl,
-	read_memory_byte_impl
+	read_memory_byte_impl,
+	set_cpu_memory_write_watch_impl
 };
 
 //--------------------------------------------------------
@@ -126,6 +131,35 @@ void ResetBus()
 	DLOG_C("\npakinterface ResetBus()\n");
 	VCC::Util::section_locker lock(gPakMutex);
 	gPakRouter.reset();
+}
+
+bool PakCpuMemoryWriteIsWatched(unsigned short address)
+{
+	return gPakRouter.cpu_memory_write_is_watched(address);
+}
+
+void PakCpuMemoryWrite(unsigned char value, unsigned short address)
+{
+	VCC::Util::section_locker lock(gPakMutex);
+	gPakRouter.cpu_memory_write(value, address);
+}
+
+bool PakCpuMemoryReadIsWatched(unsigned short address)
+{
+	return gPakRouter.cpu_memory_read_is_watched(address);
+}
+
+bool PakCpuMemoryRead(unsigned short address, unsigned char* value)
+{
+	if (!value) return false;
+	VCC::Util::section_locker lock(gPakMutex);
+	return gPakRouter.cpu_memory_read(address, value);
+}
+
+void RefreshPakWindowHandle()
+{
+	VCC::Util::section_locker lock(gPakMutex);
+	gPakRouter.set_window_handle(EmuState.hMsgProxy);
 }
 
 // Gather status line for all loaded carts

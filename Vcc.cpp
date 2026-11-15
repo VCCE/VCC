@@ -1360,6 +1360,7 @@ void FullScreenToggle()
 #if !USE_NEWTIMING
 	gGimeGpu.InvalidateBoarder();
 #endif
+	RefreshPakWindowHandle();
 
 	EmuState.ConfigDialog=nullptr;
 	PauseAudio(false);
