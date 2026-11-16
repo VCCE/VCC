@@ -3,6 +3,63 @@ VCC is an emulator for the Tandy Color Computer 3, designed to run on Microsoft 
 
 VCC is licensed under the GNU General Public License v3.0. See the [LICENSE](COPYING) file for more details.
 
+## VCC-EDB Features the following patches:
+
+    FD502 reset handling: corrected reset and lifecycle behavior.
+    WD1793 floppy controller: reset handling for in-flight disk transfers.
+    MPI cartridge window: refresh of window handles after cartridge changes.
+    Cartridge DLL lifecycle: initialization and cleanup fixes.
+    Plugin lifecycle: hard-disk and SDC plugin initialization/cleanup.
+
+With a new extended storage solution:
+Programmable disk-image playlist system...
+
+    Up to 255 numbered DSK images
+    Select disk using POKE &H7F00,N
+
+Additional safeguards:
+
+    Repeated identical CPU writes each detected as separate commands.
+    Disk swaps are queued until the floppy controller is idle.
+    Disk switching does not reset the CoCo.
+    Never interrupts an active disk operation.
+
+## DOWNLOAD THE CUSTOM COCO DECB ROMS!!
+
+CoCo3 EXTENDED COLOR BASIC v2.01 and DISK EXTENDED COLOR BASIC v2.11
+These ROMs can be burned and installed in your CoCo3, or used in emulators like VCC.
+Changes for CoCo3 ROM:
+
+    aesthetic improvements for boot up, no FoC (flash of color) corruption on both paths
+    path 1 is standard ECB 2.01 boot up (normal), this is when there is NO DISK CONTROLLER PRESENT. This will exit normally to ECB but it will say v2.01 so you know it has EDB auto-boot capabilities.
+    path 2 is all black, overclocked boot up, this is when there IS A DISK CONTROLLER PRESENT. hands it off to the disk controller for continued boot...
+
+Changes to DISK ROM:
+
+    aesthetic improvements for boot up, no FoC corruption on both paths.
+    path 1 is standard DECB 2.11 boot up (normal), this is when there is NO EDB BOOT DISK in drive 0 (NOR any disk with *.BAS on it)
+    path 2 is continued ALL BLACK OVERCLOCKED EBD boot, this is when there IS THE EDB BOOT DISK in drive 0 (OR any disk with *.BAS on it)
+
+You can download these and select them in VCC under CPU, and under FD502 disk controller.
+
+DOWNLOAD HERE! https://www.facebook.com/share/p/1MbmLtcLpH/
+
+## Portable EDB first-run files
+
+For the EDB portable profile, keep these companion files beside `Vcc.exe`:
+
+- `coco3_201_edb.rom` — external CoCo 3 BASIC ROM.
+- `disk_211_edb.rom` — external FD-502 disk-controller ROM.
+- `custom.keymap` — portable custom keyboard map.
+
+A new configuration defaults the keyboard layout to **Custom** and looks for
+`custom.keymap` in the application directory. The initial hard reset is
+performed after the MPI and its FD-502 slot are loaded, so the configured CoCo
+and disk-controller ROMs are active before the first emulated instruction.
+App-local keymap paths are stored relative to the executable directory so the
+portable folder can be moved as a unit. If `custom.keymap` is absent or cannot
+be read, VCC falls back to its built-in CoCo keyboard layout for that session.
+
 ## Features
 VCC emulates a stock 128k CoCo 3 and additional products, including:
 - **Tandy MultiPak Interface (MPI)**: Four expansion slots.
