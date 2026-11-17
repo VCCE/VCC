@@ -10266,6 +10266,9 @@ void GimeGpu::SetupColorSet(unsigned char set)
 				break;
 		}
 	}
+	BoarderColor8 = ((CC3BoarderColor & 63) | 128);
+	BoarderColor16 = PaletteLookup16[MonType][CC3BoarderColor & 63];
+	BoarderColor32 = PaletteLookup32[MonType][CC3BoarderColor & 63];
 }
 
 //
