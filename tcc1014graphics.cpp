@@ -10269,6 +10269,10 @@ void GimeGpu::SetupColorSet(unsigned char set)
 	BoarderColor8 = ((CC3BoarderColor & 63) | 128);
 	BoarderColor16 = PaletteLookup16[MonType][CC3BoarderColor & 63];
 	BoarderColor32 = PaletteLookup32[MonType][CC3BoarderColor & 63];
+	auto Temp1 = (CC2VDGPiaMode & 1) << 1 | (Bpp & 1);
+	static unsigned int CC2PaletteSet[4] = { 8,0,10,4 };
+	PaletteIndex = CC2PaletteSet[Temp1];
+
 }
 
 //
@@ -10339,7 +10343,6 @@ void GimeGpu::SetupDisplay()
 	static unsigned int CC2BytesperRow[8] = { 16,16,32,16,32,16,32,32 };
 	static unsigned int CC3BytesperRow[8] = { 16,20,32,40,64,80,128,160 };
 	static unsigned int CC3BytesperTextRow[8] = { 32,40,32,40,64,80,64,80 };
-	static unsigned int CC2PaletteSet[4] = { 8,0,10,4 };
 	static unsigned int CCPixelsperByte[4] = { 8,4,2,2 };
 	static unsigned char Temp1;
 #else
@@ -10397,8 +10400,10 @@ void GimeGpu::SetupDisplay()
 #endif
 			Bpp=CC2Bpp[ (CC2VDGPiaMode & 15) >>1 ];
 			BytesperRow=CC2BytesperRow[ (CC2VDGPiaMode & 15) >>1 ];
+#if !USE_NEWTIMING
 			Temp1= (CC2VDGPiaMode &1) << 1 | (Bpp & 1);
 			PaletteIndex=CC2PaletteSet[Temp1];
+#endif
 		}
 		else
 		{	//Setup for 32x16 text Mode
