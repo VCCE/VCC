@@ -9314,6 +9314,35 @@ case 192+22: //Bpp=1 Sr=6
 		szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & WidePixel)];
 		szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & WidePixel)];
 		szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & WidePixel)];
+
+		if (!ScanLines)
+		{
+			YStride -= 16;
+			YStride += Xpitch;
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & (WidePixel >> 6))];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & (WidePixel >> 6))];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & (WidePixel >> 6))];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & (WidePixel >> 6))];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & (WidePixel >> 4))];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & (WidePixel >> 4))];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & (WidePixel >> 4))];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & (WidePixel >> 4))];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & (WidePixel >> 2))];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & (WidePixel >> 2))];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & (WidePixel >> 2))];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & (WidePixel >> 2))];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & WidePixel)];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & WidePixel)];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & WidePixel)];
+			szSurface32[YStride += 1] = Palette32Bit[PaletteIndex + (3 & WidePixel)];
+			//YStride += 16;
+			YStride -= Xpitch;
+		}
+
+#if USE_NEWTIMING
+		ProcessCpuLine(HorzCenter + (HorzBeam + 1) * 16);
+#endif
+
 		szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>14))];
 		szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>14))];
 		szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>14))];
@@ -9333,24 +9362,8 @@ case 192+22: //Bpp=1 Sr=6
 
 		if (!ScanLines)
 		{
-			YStride-=32;
-			YStride+=Xpitch;
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>6))];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>6))];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>6))];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>6))];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>4))];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>4))];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>4))];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>4))];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>2))];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>2))];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>2))];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>2))];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & WidePixel)];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & WidePixel)];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & WidePixel)];
-			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & WidePixel)];
+			YStride -= 16;
+			YStride += Xpitch;
 			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>14))];
 			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>14))];
 			szSurface32[YStride+=1]=Palette32Bit[PaletteIndex+( 3 & (WidePixel>>14))];
