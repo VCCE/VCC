@@ -41,6 +41,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include "tcc1014mmu.h"
 #include "Event.h"
+#include "CommandQueue.h"
+
+VCC::CommandQueue gEmuCommand;
+VCC::CommandQueue gEmuOnReset;
 
 #if USE_DEBUG_AUDIOTAPE
 #include "IDisplayDebug.h"
@@ -270,7 +274,11 @@ namespace VCC
 				}
 
 				while (!gGimeGpu.FrameFinished())
+				{
 					CPUExec(2); // TODO: remove arg, just loop 
+					if (gEmuCommand.Size())
+						gEmuCommand.ExecuteNext();
+				}
 			}
 
 			UnlockScreen(&EmuState);

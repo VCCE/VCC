@@ -109,6 +109,31 @@
     <ClCompile Include="Event.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="pakrouter.cpp" />
+    <ClCompile Include="Dap.cpp">
+      <Filter>Source\Dap</Filter>
+    </ClCompile>
+    <ClCompile Include="Socket.cpp">
+      <Filter>Source\Dap</Filter>
+    </ClCompile>
+    <ClCompile Include="Json.cpp">
+      <Filter>Source\Dap</Filter>
+    </ClCompile>
+    <ClCompile Include="StringUtils.cpp">
+      <Filter>Source\Dap</Filter>
+    </ClCompile>
+    <ClCompile Include="Base64.cpp">
+      <Filter>Source\Dap</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandQueue.cpp">
+      <Filter>Source\Dap</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugMgr.cpp">
+      <Filter>Source\Dap</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceMgr.cpp">
+      <Filter>Source\Dap</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h">
@@ -266,6 +291,34 @@
     <ClInclude Include="Event.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="pakrouter.h" />
+    <ClInclude Include="Dap.h">
+      <Filter>Source\Dap</Filter>
+    </ClInclude>
+    <ClInclude Include="Socket.h">
+      <Filter>Source\Dap</Filter>
+    </ClInclude>
+    <ClInclude Include="Json.h">
+      <Filter>Source\Dap</Filter>
+    </ClInclude>
+    <ClInclude Include="StringUtils.h">
+      <Filter>Source\Dap</Filter>
+    </ClInclude>
+    <ClInclude Include="Base64.h">
+      <Filter>Source\Dap</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandQueue.h">
+      <Filter>Source\Dap</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugMgr.h">
+      <Filter>Source\Dap</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceMgr.h">
+      <Filter>Source\Dap</Filter>
+    </ClInclude>
+    <ClInclude Include="Strong.h">
+      <Filter>Source\Dap</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\3guys.bmp">
@@ -339,6 +392,9 @@
     </Filter>
     <Filter Include="Headers\Debugger">
       <UniqueIdentifier>{8e101e68-6057-477e-b4ea-0ae8d7d2fdc3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Dap">
+      <UniqueIdentifier>{69849455-8014-4414-9c1d-55f0dcdc0938}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

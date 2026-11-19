@@ -1,3 +1,22 @@
+/*
+Copyright 2015 by Joseph Forgione
+This file is part of VCC (Virtual Color Computer).
+
+    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
 #include "BuildConfig.h"
 #include "Event.h"
 #include <assert.h>
@@ -9,7 +28,7 @@ namespace VCC
         mClocks(0), 
         mClocksPerCycle(DefaultClocksPerCycle),
         mReqClocksPerCycle(DefaultClocksPerCycle),
-        mResolution(256),
+        mResolution(128),
         mClocksPerCycleWithOC(DefaultClocksPerCycle * mResolution),
         mReqOverclock(1),
         mOverclock(1)
@@ -46,7 +65,7 @@ namespace VCC
     }
 
     //
-    // set the multiplier factor for a tick, default is 256.
+    // set the multiplier factor for a tick, default is 128.
     //
     void Event::SetResolution(size_t factor)
     {
@@ -84,13 +103,25 @@ namespace VCC
     }
 
     //
+    // Queue up func in x frames from now
+    //
+    void Event::Queue(Frames frames, Func func, size_t id)
+    {
+        const auto oneFrame = 57u * 263u * 16u;
+        auto dt = 1ll * oneFrame * frames.value * mResolution;
+        assert((dt + mClocks) < SIZE_MAX);
+        auto time = mClocks + (InternalClocks)dt;
+        QueueInternal(time, func, id);
+    }
+
+    //
     // Queue up func at dt in hz from now
     //
     void Event::Queue(Hz dtHz, Func func, size_t id)
     {
         // insert with increasing order
         auto dt = 14318180ll * mResolution / dtHz.value;
-        assert(dt < SIZE_MAX);
+        assert((dt + mClocks) < SIZE_MAX);
         auto time = mClocks + (InternalClocks)dt;
         QueueInternal(time, func, id);
     }

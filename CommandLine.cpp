@@ -154,6 +154,13 @@ int GetCmdLineArgs(const char *CmdString)
                 break;
 #endif
 
+            case 'z':
+                if (*(token + 2))
+                    CmdArg.Dap = atoi(token + 2);
+                else
+                    CmdArg.Dap = 6666;
+                break;
+
             // "-d[level]" enables logging console and sets log level
             // level is optional. It defaults to 1 and is forced to be
             // a positive integer 0 to 3.

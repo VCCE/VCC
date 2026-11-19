@@ -473,6 +473,7 @@
 #define ID_BITBANGER_CONFIG             40057
 #define ID_SWAP_JOYSTICKS               40058
 #define IDM_HELP_FUNKEY                 40059
+#define ID_DEBUGGER_DEBUGSERVER         40060
 #define ID_BREAKPOINTS                  43332
 #define ID_CONFIGURE_OPTIONS            65535
 
@@ -482,7 +483,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        181
-#define _APS_NEXT_COMMAND_VALUE         40060
+#define _APS_NEXT_COMMAND_VALUE         40061
 #define _APS_NEXT_CONTROL_VALUE         2156
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

@@ -600,3 +600,8 @@ void DumpScreenshot(const char* fname)
 		MessageBox(nullptr, msg, "Error", 0);
 	}
 }
+
+VCC::IDisplay* GetDisplay()
+{
+	return g_Display;
+}

@@ -43,6 +43,7 @@ static unsigned char MmuState=0;	// Composite variable handles MmuTask and MmuEn
 static unsigned char RomMap=0;		// $FF90 bit 1-0
 static unsigned char MapType=0;		// $FFDE/FFDF toggle Map type 0 = ram/rom
 static unsigned short MmuRegisters[4][8];	// $FFA0 - FFAF
+static unsigned short MmuRegistersOrig[4][8];	// $FFA0 - FFAF
 static unsigned int MemConfig[4]={0x20000,0x80000,0x200000,0x800000};
 static unsigned short RamMask[4]={15,63,255,1023};
 static unsigned char StateSwitch[4]={8,56,56,56};
@@ -174,7 +175,15 @@ void SetMmuRegister(unsigned char Register,unsigned char data)
 	BankRegister = Register & 7;
 	Task=!!(Register & 8);
 	MmuRegisters[Task][BankRegister]= MmuPrefix |(data & RamMask[CurrentRamConfig]); //gime.c returns what was written so I can get away with this
+	MmuRegistersOrig[Task][BankRegister] = MmuPrefix | data;
 	return;
+}
+
+uint32_t CpuToRealAddress(uint16_t address)
+{
+	int task = MmuState & 1;
+	int reg = address >> 13;
+	return MmuRegistersOrig[task][reg]*0x2000 + (address & 0x1FFF);
 }
 
 void SetRomMap(unsigned char data)

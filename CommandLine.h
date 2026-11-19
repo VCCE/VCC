@@ -37,6 +37,7 @@ struct CmdLineArguments {
     bool NoOutput;
     char Screenshot[CL_MAX_PATH];
     unsigned int MaxFrames;
+	int Dap;
 };
 extern struct CmdLineArguments CmdArg;
 
