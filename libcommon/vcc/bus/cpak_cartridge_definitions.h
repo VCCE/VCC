@@ -50,4 +50,10 @@ extern "C"
 	using PakSampleAudioModuleFunction     = unsigned short (*)();
 	using PakMenuItemClickedModuleFunction = void (*)(unsigned char itemId);
 	using PakGetMenuItemFunction           = bool (*)(menu_item_entry* item, size_t index);
+	// Optional. Called instead of PakReset on a hard reset (power cycle), so a
+	// cart whose state survives the reset button can tell the two apart.
+	using PakPowerOnResetModuleFunction    = void (*)();
+	// Optional. CPU write to ROM space ($8000-$FEFF while in ROM mode), with
+	// the full CPU address. Lets carts with RAM or FLASH see writes.
+	using PakWriteMemoryByteModuleFunction = void (*)(unsigned short address, unsigned char value);
 }

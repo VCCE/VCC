@@ -25,10 +25,12 @@ void PakTimer();
 unsigned char PakReadPort (unsigned char);
 void PakWritePort(unsigned char,unsigned char);
 unsigned char PackMem8Read (unsigned short);
+// CPU write to ROM space ($8000-$FEFF in ROM mode); address is the CPU address.
+void PackMem8Write (unsigned short address, unsigned char data);
 void GetModuleStatus( SystemState *);
 VCC::Core::cartridge_loader_status PakLoadCartridge(const char* filename);
 unsigned short PackAudioSample();
-void ResetBus();
+void ResetBus(bool power_on = false);
 void GetCurrentModule(char *);
 void UpdateBusPointer();
 void UnloadDll();

@@ -45,6 +45,10 @@ namespace VCC::Core
 		virtual void start() = 0;
 		virtual void stop() = 0;
 		virtual void reset() = 0;
+		// Hard reset / power cycle. Defaults to the same as reset().
+		virtual void power_on_reset() { reset(); }
+		// CPU write to ROM space ($8000-$FEFF in ROM mode), CPU address.
+		virtual void write_memory_byte(unsigned short /*address*/, unsigned char /*value*/) {}
 		virtual void process_horizontal_sync() = 0;
 		virtual void write_port(unsigned char port_id, unsigned char value) = 0;
 		virtual unsigned char read_port(unsigned char port_id) = 0;

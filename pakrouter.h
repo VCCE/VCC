@@ -38,8 +38,11 @@ using plugin_ptr = typename cartridge_loader_result::cartridge_ptr_type;
 		PakRouter::PakRouter(std::array<plugin_ptr, NumCartSlots>& slots)
 			: slots_(slots) {};
 
-		// UI driven
-		void reset();
+		// UI driven. power_on: hard reset (power cycle) rather than the reset button.
+		void reset(bool power_on = false);
+		// CPU write to ROM space, offered to every cart (the cart bus carries
+		// writes to all slots; carts that don't decode them ignore it).
+		void write_memory_byte(unsigned short address, unsigned char value);
 
 		void set_slots(std::array<cartridge*, 5> slots) {};
 
@@ -96,10 +99,14 @@ using plugin_ptr = typename cartridge_loader_result::cartridge_ptr_type;
 		}
 
 		// slot reset
-		inline void slot_reset(int slot)
+		inline void slot_reset(int slot, bool power_on = false)
 		{
-			if (auto& cart = slots_[slot])
-        		cart->reset();
+			if (auto& cart = slots_[slot]) {
+				if (power_on)
+					cart->power_on_reset();
+				else
+					cart->reset();
+			}
 		}
 
 		// slot hsync
