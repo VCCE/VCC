@@ -46,6 +46,8 @@ namespace VCC::Core
 		void stop() override;
 
 		void reset() override;
+		void power_on_reset() override;
+		void write_memory_byte(unsigned short address, unsigned char value) override;
 		void process_horizontal_sync() override;
 		void status(char* text_buffer, size_t buffer_size) override;
 		void write_port(unsigned char port_id, unsigned char value) override;
@@ -78,5 +80,7 @@ namespace VCC::Core
 		const PakSampleAudioModuleFunction sample_audio_;
 		const PakMenuItemClickedModuleFunction menu_item_clicked_;
 		const PakGetMenuItemFunction get_menu_item_;
+		const PakPowerOnResetModuleFunction power_on_reset_;
+		const PakWriteMemoryByteModuleFunction write_memory_byte_;
 	};
 }

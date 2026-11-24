@@ -50,12 +50,20 @@ namespace VCC::Core
 		SetCart(line_states_[active_slot]);
 	}
 
-	// reset() is invoked on hard reset or power up.
-	void PakRouter::reset()
+	void PakRouter::write_memory_byte(unsigned short address, unsigned char value)
 	{
-		DLOG_C("PakRouter::reset\n");
 		for (int i = 0; i <= 4; i++)
-			slot_reset(i);
+			if (auto& cart = slots_[i])
+				cart->write_memory_byte(address, value);
+	}
+
+	// reset() is invoked on every VCC reset; power_on is true for a hard
+	// reset (power cycle) and false for the reset button (soft reset).
+	void PakRouter::reset(bool power_on)
+	{
+		DLOG_C("PakRouter::reset %d\n", power_on);
+		for (int i = 0; i <= 4; i++)
+			slot_reset(i, power_on);
 	}
 
 	// Process external menu item clicks
