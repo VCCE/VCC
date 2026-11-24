@@ -231,8 +231,54 @@ int main(int argc, char** argv) {
         unsigned v2 = (rd(0x4A) << 8) | rd(0x4B);
         printf("  st=%02X cmd=%04X floppy=%04X fst=%02X %s\n", st, v1, v2, fs,
             (!(st & 0x80) && v1 >= 0x117 && v2 == v1 && fs == st) ? "PASS" : "FAIL");
-        wr(0x4A, 1);  // an FDC register write drops the held values
-        printf("  after FDC write sector reg=%02X %s\n", rd(0x4A), rd(0x4A) == 0 ? "PASS" : "FAIL");
+    }
+    // T11b: the held values must be dropped by the next FDC register
+    // write, or floppy reads keep returning the old reply. Use QUERY SIZE,
+    // whose reply is non-zero ($000080 for the 128 sector STRM512.DAT).
+    printf("T11b held reply dropped by an FDC register write\n");
+    if (domount("STRM512.DAT")) {
+        wr(0x49, 'Q'); wr(0x48, 0xC1); waitnb(st);   // drive 1, as mounted
+        unsigned q = (rd(0x49) << 16) | (rd(0x4A) << 8) | rd(0x4B);
+        cmdoff();
+        unsigned char held = rd(0x4B);
+        wr(0x4A, 1);                                  // FDC sector register
+        unsigned char after = rd(0x4B);               // FDC data register
+        printf("  Q=%06X held=%02X after=%02X %s\n", q, held, after,
+            (q == 0x80 && held == 0x80 && after == 0) ? "PASS" : "FAIL");
+    }
+    cmdoff();
+    // T12: directory records report FAT style upper case names.
+    // Programs such as SDCM.BIN match the type against "CSM".
+    printf("T12 directory names are upper case\n");
+    {
+        std::string lower = std::string(argv[2]) + "\\lower12.dat";
+        FILE* lf = fopen(lower.c_str(), "wb"); if (lf) { fputc(0, lf); fclose(lf); }
+        unsigned char blk[256] = {};
+        strcpy((char*)blk, "L:*.*");
+        cmdon(); waitnb(st);
+        wr(0x48, 0xE0);
+        int found = 0, ok = 0;
+        if (waitrdy(st) == RC_RDY) {
+            for (int i = 0; i < 256; i += 2) { wr(0x4A, blk[i]); wr(0x4B, blk[i + 1]); }
+            waitnb(st);
+            for (int page = 0; page < 16 && !found; page++) {
+                wr(0x49, '>'); wr(0x48, 0xC0);
+                if (waitrdy(st) != RC_RDY) break;
+                for (int i = 0; i < 256; i += 2) { buf[i] = rd(0x4A); buf[i + 1] = rd(0x4B); }
+                waitnb(st);
+                for (int r = 0; r < 256; r += 16) {
+                    if (buf[r] == 0) { page = 16; break; }
+                    if (!_strnicmp((char*)buf + r, "LOWER12 DAT", 11)) {
+                        found = 1; ok = !memcmp(buf + r, "LOWER12 DAT", 11);
+                        printf("  record '%.8s' '%.3s'\n", buf + r, buf + r + 8);
+                        break;
+                    }
+                }
+            }
+        }
+        cmdoff();
+        remove(lower.c_str());
+        printf("  %s\n", (found && ok) ? "PASS" : "FAIL");
     }
     printf("interrupts asserted: %d\n", nmi_count);
     return 0;

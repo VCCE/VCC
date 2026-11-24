@@ -1052,10 +1052,6 @@ void SDCPortWrite(unsigned char data,unsigned char port)
 
         // Not latched
         } else {
-            // Any floppy register write replaces the held command registers
-            if (port >= 0x48 && port <= 0x4B) CmdRegsHeld = false;
-            //CmdRegsHeld = false;
-
             // Ignore unlatch requests
             if (unlatch) {
                 LOG_STAMPED(hsync_clock,"SDC already unlatched");
@@ -1075,6 +1071,9 @@ void SDCPortWrite(unsigned char data,unsigned char port)
     if (IFace.cmdlatch) {
         CommandPortWrite(data,port);
     } else {
+        // Any FDC register write ($FF48-$FF4B) replaces the command
+        // status and responses held from the last command
+        if (port >= 0x48 && port <= 0x4B) CmdRegsHeld = false;
         FloppyPortWrite(data, port);
     }
 
@@ -1276,10 +1275,6 @@ void SDCUpdateSD()
     case 0x52: //R
         SDCRenameFile(&IFace.blkbuf[2]);
         break;
-//    case 0x56: // Check Does this belong here?
-//        DLOG("UpdateSD VERSION??\n");
-//        IFace.reply2 = 0x01;
-//        IFace.reply3 = 0x20;
     case 0x58: //X
         SDCKillFile(&IFace.blkbuf[2]);
         break;
@@ -1329,8 +1324,8 @@ void SDCGetDriveInfo()
         // 1.20: adds MOUNT NEXT
         // 1.24: adds MOUNT DISK # (not supported)
         DLOG("GetDriveInfo version 1.20\n");
-        IFace.reply2 = 0x00;
-        IFace.reply3 = 0x01;
+        IFace.reply2 = 0x01;
+        IFace.reply3 = 0x20;
         break;
     }
 }
@@ -2439,6 +2434,10 @@ FileRecord::FileRecord(const HostFile& hf) noexcept
     memset(this, 0, sizeof(*this));
     // name and type
     sfn_from_lfn(FR_name, FR_type, hf.name);
+    // FAT short names are upper case. Programs compare directory
+    // records against upper case names (e.g. SDCM.BIN filters on "CSM").
+    for (auto& c : FR_name) c = (char) toupper((unsigned char) c);
+    for (auto& c : FR_type) c = (char) toupper((unsigned char) c);
     // Attributes
     FR_attrib = 0;
     if (hf.isDir)     FR_attrib |= 0x10;
