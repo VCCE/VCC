@@ -298,10 +298,10 @@ unsigned char MountDisk(const char *FileName,unsigned char disk)
 
 	if (gVirtualDrive[disk].RawDrive==0)
 	{
-		gVirtualDrive[disk].FileHandle = CreateFile( FileName,GENERIC_READ | GENERIC_WRITE,0,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+		gVirtualDrive[disk].FileHandle = CreateFile( FileName,GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 		if (gVirtualDrive[disk].FileHandle==INVALID_HANDLE_VALUE)
 		{	//Can't open read/write might be read only
-			gVirtualDrive[disk].FileHandle = CreateFile(FileName,GENERIC_READ,0,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+			gVirtualDrive[disk].FileHandle = CreateFile(FileName,GENERIC_READ, FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 			gVirtualDrive[disk].WriteProtect=0xFF;
 		}
 		if (gVirtualDrive[disk].FileHandle==INVALID_HANDLE_VALUE)
