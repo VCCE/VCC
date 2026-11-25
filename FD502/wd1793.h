@@ -20,7 +20,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "defines.h"
 unsigned char disk_io_read(unsigned char port);
 void disk_io_write(unsigned char data,unsigned char port);	
-int mount_disk_image(const char *,unsigned char );
+int mount_disk_image(const char *,unsigned char, int );
 void unmount_disk_image(unsigned char drive);
 void DiskStatus(char* text_buffer, size_t buffer_size);
 void PingFdc();
@@ -43,7 +43,7 @@ struct DiskInfo
 	unsigned char FirstSector;	// 0 or 1
 	unsigned char ImageType;	//0=JVC 1=VDK 2=DMK 3=OS9
 	unsigned short TrackSize;
-	unsigned char WriteProtect;
+	unsigned char WriteProtect{ 1 };
 	unsigned char HeadPosition;	// The "Physical" Track the head is over
 	unsigned char RawDrive;
 	char ImageTypeName[4];

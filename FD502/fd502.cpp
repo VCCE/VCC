@@ -82,6 +82,7 @@ void SaveConfig();
 long CreateDiskHeader(const char *,unsigned char,unsigned char,unsigned char);
 void Unload_Disk(unsigned char);
 void Load_Disk(unsigned char);
+void Toggle_Access(unsigned char);
 
 static HWND g_hConfDlg = nullptr;
 static HINSTANCE gModuleInstance;
@@ -205,6 +206,21 @@ extern "C"
 			case 18:
 				Unload_Disk(3);
 				break;
+			case 20:
+				Toggle_Access(0);
+				break;
+			case 21:
+				Toggle_Access(1);
+				break;
+			case 22:
+				Toggle_Access(2);
+				break;
+			case 23:
+				Toggle_Access(3);
+				break;
+
+
+
 			case 16:
 				if (g_hConfDlg == nullptr)
 					g_hConfDlg = CreateDialog(
@@ -350,14 +366,14 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 							if (OldPhysicalDriveA!=0)
 								unmount_disk_image(OldPhysicalDriveA-1);
 							if (PhysicalDriveA!=0)
-								mount_disk_image("*Floppy A:",PhysicalDriveA-1);
+								mount_disk_image("*Floppy A:",PhysicalDriveA-1,0);
 						}
 						if (PhysicalDriveB != OldPhysicalDriveB)	//Drive changed
 						{
 							if (OldPhysicalDriveB!=0)
 								unmount_disk_image(OldPhysicalDriveB-1);
 							if (PhysicalDriveB!=0)
-								mount_disk_image("*Floppy B:",PhysicalDriveB-1);
+								mount_disk_image("*Floppy B:",PhysicalDriveB-1,0);
 						}
 					}
 					SelectRom=TempSelectRom;
@@ -432,6 +448,33 @@ void Unload_Disk(unsigned char disk) {
 	SaveConfig();
 }
 
+void Toggle_Access(unsigned char disk)
+{
+	char temp[MAX_PATH];
+	if (gVirtualDrive[disk].WriteProtect)
+	{
+		if (gVirtualDrive[disk].FileHandle)
+		{
+			// reopen as writeable
+			strcpy(temp, gVirtualDrive[disk].ImageName);
+			unmount_disk_image(disk);
+			mount_disk_image(temp, disk, 0);
+		}
+	}
+	else
+	{
+		if (gVirtualDrive[disk].FileHandle)
+		{
+			// reopen as read only
+			strcpy(temp, gVirtualDrive[disk].ImageName);
+			unmount_disk_image(disk);
+			mount_disk_image(temp, disk, 1);
+		}
+	}
+	SendMessage(gVccWnd, WM_VCC_UPD_MENU, (WPARAM)0, (LPARAM)0);
+	SaveConfig();
+}
+
 void Load_Disk(unsigned char disk)
 {
 	HWND h_own = GetActiveWindow();
@@ -458,7 +501,7 @@ void Load_Disk(unsigned char disk)
 		}
 		// Attempt mount if file existed or file create was not canceled
 		if (CreateFlag==1) {
-			if (mount_disk_image(gSelectedDiskFile,disk)==0) {
+			if (mount_disk_image(gSelectedDiskFile, disk, gVirtualDrive[disk].WriteProtect)==0) {
 				MessageBox(g_hConfDlg,"Can't open file","Error",0);
 			} else {
 				dlg.getdir(FloppyPath);
@@ -492,18 +535,26 @@ bool get_menu_item(menu_item_entry* item, size_t index)
 		gDllCartMenu.add("Insert",ControlId(10),MIT_Slave);
 		disk = VCC::Util::GetFileNamePart(gVirtualDrive[0].ImageName);
 		gDllCartMenu.add("Eject: "+disk,ControlId(11),MIT_Slave);
+		disk = gVirtualDrive[0].WriteProtect == 0 ? "Writable" : "ReadOnly";
+		gDllCartMenu.add("Access: " + disk, ControlId(20), MIT_Slave);
 		gDllCartMenu.add("FD-502 Drive 1",0,MIT_Head);
 		gDllCartMenu.add("Insert",ControlId(12),MIT_Slave);
 		disk = VCC::Util::GetFileNamePart(gVirtualDrive[1].ImageName);
 		gDllCartMenu.add("Eject: "+disk,ControlId(13),MIT_Slave);
+		disk = gVirtualDrive[1].WriteProtect == 0 ? "Writable" : "ReadOnly";
+		gDllCartMenu.add("Access: " + disk, ControlId(21), MIT_Slave);
 		gDllCartMenu.add("FD-502 Drive 2",0,MIT_Head);
 		gDllCartMenu.add("Insert",ControlId(14),MIT_Slave);
 		disk = VCC::Util::GetFileNamePart(gVirtualDrive[2].ImageName);
 		gDllCartMenu.add("Eject: "+disk,ControlId(15),MIT_Slave);
+		disk = gVirtualDrive[2].WriteProtect == 0 ? "Writable" : "ReadOnly";
+		gDllCartMenu.add("Access: " + disk, ControlId(22), MIT_Slave);
 		gDllCartMenu.add("FD-502 Drive 3",0,MIT_Head);
 		gDllCartMenu.add("Insert",ControlId(17),MIT_Slave);
 		disk = VCC::Util::GetFileNamePart(gVirtualDrive[3].ImageName);
 		gDllCartMenu.add("Eject: "+disk,ControlId(18),MIT_Slave);
+		disk = gVirtualDrive[3].WriteProtect == 0 ? "Writable" : "ReadOnly";
+		gDllCartMenu.add("Access: " + disk, ControlId(23), MIT_Slave);
 		gDllCartMenu.add("FD-502 Config",ControlId(16),MIT_StandAlone);
 	}
 	// return requested list item or false
@@ -680,7 +731,7 @@ long CreateDiskHeader(const char *FileName,unsigned char Type,unsigned char Trac
 void LoadConfig()  // Called on SetIniPath
 {
 	unsigned char Index=0;
-	char Temp[16]="";
+	char Temp[64]="";
 	char DiskRomPath[MAX_PATH], RGBRomPath[MAX_PATH];
 	char DiskName[MAX_PATH]="";
 	unsigned int RetVal=0;
@@ -714,9 +765,11 @@ void LoadConfig()  // Called on SetIniPath
 		{
 			sprintf(Temp,"Disk#%i",Index);
 			Setting().read(MS_FD502,Temp,"",DiskName,MAX_PATH);
+			sprintf(Temp, "Disk#%iAccessReadOnly", Index);
+			int accessReadOnly = Setting().read(MS_FD502, Temp, 1);
 			if (strlen(DiskName))
 			{
-				RetVal=mount_disk_image(DiskName,Index);
+				RetVal=mount_disk_image(DiskName,Index,accessReadOnly);
 				//MessageBox(0, "Disk load attempt", "OK", 0);
 				if (RetVal)
 				{
@@ -738,7 +791,7 @@ void LoadConfig()  // Called on SetIniPath
 void SaveConfig()
 {
 	unsigned char Index=0;
-	char Temp[16]="";
+	char Temp[64]="";
 	ValidatePath(RomFileName);
 	Setting().write(MS_FD502,"DiskRom",SelectRom );
 	Setting().write(MS_FD502,"RomPath",RomFileName);
@@ -748,6 +801,8 @@ void SaveConfig()
 		{
 			sprintf(Temp,"Disk#%i",Index);
 			Setting().write(MS_FD502,Temp,gVirtualDrive[Index].ImageName);
+			sprintf(Temp, "Disk#%iAccessReadOnly", Index);
+			Setting().write(MS_FD502, Temp, gVirtualDrive[Index].WriteProtect > 0 ? 1 : 0);
 		}
 	Setting().write(MS_FD502,"ClkEnable",ClockEnabled );
 	Setting().write(MS_FD502, "TurboDisk", SetTurboDisk(QUERY));

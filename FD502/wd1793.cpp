@@ -54,7 +54,7 @@ unsigned char WriteBytetoSector (unsigned char);
 unsigned char WriteBytetoTrack  (unsigned char);
 unsigned char (*WriteBytetoDisk)(unsigned char)=&WriteBytetoSector;
 
-unsigned char MountDisk(const char *filename,unsigned char);
+unsigned char MountDisk(const char *filename,unsigned char,int);
 void DispatchCommand(unsigned char);
 void DecodeControlReg(unsigned char);
 void SetType1Flags(unsigned char);
@@ -244,10 +244,10 @@ void DecodeControlReg(unsigned char Tmp)
 	return;
 }
 
-int mount_disk_image(const char *filename,unsigned char drive)
+int mount_disk_image(const char *filename,unsigned char drive, int accessReadOnly)
 {
 	unsigned int Temp=0;
-	Temp=MountDisk(filename,drive);
+	Temp=MountDisk(filename,drive,accessReadOnly);
 	return(!Temp);
 }
 
@@ -274,7 +274,7 @@ void DiskStatus(char* text_buffer, size_t buffer_size)
 		sprintf(text_buffer,"FD-502:Idle");
 }
 
-unsigned char MountDisk(const char *FileName,unsigned char disk)
+unsigned char MountDisk(const char *FileName,unsigned char disk,int accessReadOnly)
 {
 	unsigned long BytesRead=0;
 	unsigned char HeaderBlock[HEADERBUFFERSIZE]="";
@@ -288,7 +288,7 @@ unsigned char MountDisk(const char *FileName,unsigned char disk)
 	gVirtualDrive[disk].Sides=1;
 	gVirtualDrive[disk].Sectors=18;
 	gVirtualDrive[disk].SectorSize=1;
-	gVirtualDrive[disk].WriteProtect=0;
+	gVirtualDrive[disk].WriteProtect=0xFF;
 	gVirtualDrive[disk].RawDrive=0;
 
 	if (!strcmp(FileName,"*Floppy A:"))
@@ -298,10 +298,14 @@ unsigned char MountDisk(const char *FileName,unsigned char disk)
 
 	if (gVirtualDrive[disk].RawDrive==0)
 	{
-		gVirtualDrive[disk].FileHandle = CreateFile( FileName,GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
-		if (gVirtualDrive[disk].FileHandle==INVALID_HANDLE_VALUE)
+		if (!accessReadOnly)
+		{
+			gVirtualDrive[disk].FileHandle = CreateFile(FileName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+			gVirtualDrive[disk].WriteProtect = 0;
+		}
+		if (accessReadOnly || gVirtualDrive[disk].FileHandle==INVALID_HANDLE_VALUE)
 		{	//Can't open read/write might be read only
-			gVirtualDrive[disk].FileHandle = CreateFile(FileName,GENERIC_READ, FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+			gVirtualDrive[disk].FileHandle = CreateFile(FileName,GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
 			gVirtualDrive[disk].WriteProtect=0xFF;
 		}
 		if (gVirtualDrive[disk].FileHandle==INVALID_HANDLE_VALUE)
