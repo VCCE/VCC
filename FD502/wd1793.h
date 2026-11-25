@@ -46,6 +46,7 @@ struct DiskInfo
 	unsigned char WriteProtect{ 1 };
 	unsigned char HeadPosition;	// The "Physical" Track the head is over
 	unsigned char RawDrive;
+	long Locked{ 0 };
 	char ImageTypeName[4];
 };
 
@@ -59,6 +60,8 @@ struct SectorInfo
 	long DAM = 0;
 	unsigned char Density = 0;
 };
+
+#define LOCK_TIME 263*60*5
 
 
 #define IDLE 255

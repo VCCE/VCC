@@ -244,6 +244,21 @@ void DecodeControlReg(unsigned char Tmp)
 	return;
 }
 
+HANDLE OpenWritableSharedFile(const char* path)
+{
+	return CreateFile(path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+}
+
+HANDLE OpenWritableExclusiveFile(const char* path)
+{
+	return CreateFile(path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+}
+
+HANDLE OpenReadOnlyFile(const char* path)
+{
+	return CreateFile(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+}
+
 int mount_disk_image(const char *filename,unsigned char drive, int accessReadOnly)
 {
 	unsigned int Temp=0;
@@ -300,12 +315,12 @@ unsigned char MountDisk(const char *FileName,unsigned char disk,int accessReadOn
 	{
 		if (!accessReadOnly)
 		{
-			gVirtualDrive[disk].FileHandle = CreateFile(FileName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+			gVirtualDrive[disk].FileHandle = OpenWritableSharedFile(FileName);
 			gVirtualDrive[disk].WriteProtect = 0;
 		}
 		if (accessReadOnly || gVirtualDrive[disk].FileHandle==INVALID_HANDLE_VALUE)
 		{	//Can't open read/write might be read only
-			gVirtualDrive[disk].FileHandle = CreateFile(FileName,GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+			gVirtualDrive[disk].FileHandle = OpenReadOnlyFile(FileName);
 			gVirtualDrive[disk].WriteProtect=0xFF;
 		}
 		if (gVirtualDrive[disk].FileHandle==INVALID_HANDLE_VALUE)
@@ -484,6 +499,33 @@ long ReadSector (unsigned char Side,	//0 or 1
 	return 0;
 }
 
+bool LockFile(unsigned char disk)
+{
+	auto handle = gVirtualDrive[disk].FileHandle;
+	if (gVirtualDrive[disk].Locked == 0)
+	{
+		CloseHandle(gVirtualDrive[disk].FileHandle);
+		auto path = gVirtualDrive[disk].ImageName;
+		auto handle = OpenWritableExclusiveFile(path);
+
+		// if cant open for exclusive write
+		if (handle == INVALID_HANDLE_VALUE)
+		{
+			gVirtualDrive[disk].FileHandle = OpenWritableSharedFile(path);
+			OutputDebugString("wp\n");
+			StatusReg = WRITEPROTECT;
+			CommandDone();
+			return false;
+		}
+
+		// swap to exclusive handle
+		gVirtualDrive[disk].FileHandle = handle;
+		OutputDebugString("locked\n");
+	}
+	gVirtualDrive[disk].Locked = LOCK_TIME;
+	return true;
+}
+
 long WriteSector (	unsigned char Side,		//0 or 1
 					unsigned char Track,	//0 to 255 "REAL" values are 1 to 80
 					unsigned char Sector,	//1 to 18 could be 0 to 17
@@ -502,6 +544,8 @@ long WriteSector (	unsigned char Side,		//0 or 1
 	SectorInfo CurrentSector;
 	if ( (gVirtualDrive[CurrentDisk].FileHandle==nullptr) | ((Side+1) > gVirtualDrive[CurrentDisk].Sides) )
 		return 0;
+
+	if (!LockFile(CurrentDisk)) return 0;
 
 	switch (gVirtualDrive[CurrentDisk].ImageType)
 	{
@@ -524,7 +568,7 @@ long WriteSector (	unsigned char Side,		//0 or 1
 			CurrentSector.Sector=Sector;
 			if (GetSectorInfo(&CurrentSector,TempBuffer)==0)
 				return 0;
-			
+
 			memcpy(&TempBuffer[CurrentSector.DAM],WriteBuffer,BytestoWrite);
 			Crc=ccitt_crc16(0xE295,&TempBuffer[CurrentSector.DAM] , CurrentSector.Lenth); //0xcdb4
 			TempBuffer[CurrentSector.DAM + CurrentSector.Lenth  ] =Crc>>8;
@@ -572,7 +616,9 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 
 	if (gVirtualDrive[CurrentDisk].FileHandle==nullptr)
 		return 0;
-		
+
+	if (!LockFile(CurrentDisk)) return 0;
+
 	switch (gVirtualDrive[CurrentDisk].ImageType)
 	{
 		case JVC:
@@ -598,7 +644,7 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 					BufferIndex+=BytesperSector[gVirtualDrive[CurrentDisk].SectorSize];
 				}
 			}
-		break;
+			break;
 
 		case DMK:
 			BufferIndex=128;	//Index to cooked buffer
@@ -633,7 +679,7 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 						DataBlockPointer = BufferIndex;
 						Seed = 0xCDB4;
 					}
-					
+
 					if (TempChar == 0xF5)
 						TempBuffer[BufferIndex]=0xA1;
 					if (TempChar == 0xF6)
@@ -646,7 +692,7 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 			Result=SetFilePointer(gVirtualDrive[CurrentDisk].FileHandle,FileOffset,nullptr,FILE_BEGIN);
 			WriteFile(gVirtualDrive[CurrentDisk].FileHandle,TempBuffer,gVirtualDrive[CurrentDisk].TrackSize,&BytesWritten,nullptr);				
 			free(TempBuffer);
-		break;
+			break;
 
 
 		case RAW:
@@ -654,7 +700,7 @@ long WriteTrack (	unsigned char Side,		//0 or 1
 			DeviceIoControl(gVirtualDrive[CurrentDisk].FileHandle , IOCTL_FDCMD_SEEK, &Track, sizeof(Track), nullptr, 0, &dwRet, nullptr);
 			return(FormatTrack (gVirtualDrive[CurrentDisk].FileHandle , Track , Side, WriteBuffer[100] )); //KLUDGE!
 	}
-	
+
 	return BytesWritten;
 }
 
@@ -694,6 +740,24 @@ long ReadTrack (	unsigned char Side,		//0 or 1
 void PingFdc()
 {
 	static char wobble=0;
+
+	for (auto disk = 0; disk < 4; ++disk)
+	{
+		if (gVirtualDrive[disk].Locked > 1)
+			--gVirtualDrive[disk].Locked;
+
+		// after timeout or motor stopped unlock file
+		if (gVirtualDrive[disk].Locked == 1 || (MotorOn == 0 && gVirtualDrive[disk].Locked > 0))
+		{
+			auto path = gVirtualDrive[disk].ImageName;
+			CloseHandle(gVirtualDrive[disk].FileHandle);
+			gVirtualDrive[disk].FileHandle = OpenWritableSharedFile(path);
+
+			OutputDebugString("unlocked\n");
+			gVirtualDrive[disk].Locked = 0;
+		}
+	}
+
 	if (MotorOn==0)
 		return;
 	IndexCounter++;
@@ -1139,9 +1203,11 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 	unsigned char TempBuffer[16384];
 	SectorInfo CurrentSector;
 
+	if (!LockFile(CurrentDisk)) return 0;
+
 	if (TransferBufferSize==0)
 	{
-//		WriteLog("Begining WriteSector data collection Command",0);
+		//		WriteLog("Begining WriteSector data collection Command",0);
 		switch (gVirtualDrive[CurrentDisk].ImageType)
 		{
 			case JVC:
@@ -1154,7 +1220,7 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 					CommandDone();
 					return 0;
 				}
-			break;
+				break;
 
 			case DMK:
 				FileOffset= gVirtualDrive[CurrentDisk].HeaderSize + ( (gVirtualDrive[CurrentDisk].HeadPosition * gVirtualDrive[CurrentDisk].Sides * gVirtualDrive[CurrentDisk].TrackSize)+ (Side * gVirtualDrive[CurrentDisk].TrackSize));
@@ -1169,11 +1235,11 @@ unsigned char WriteBytetoSector (unsigned char Tmp)
 					return 0;
 				}
 				TransferBufferSize = CurrentSector.Lenth;
-			break;
+				break;
 
 			case RAW:
 				TransferBufferSize = 256;
-			break;
+				break;
 		}	//END Switch
 	}	//END if
 
@@ -1203,6 +1269,7 @@ unsigned char WriteBytetoTrack (unsigned char Tmp)
 	if (TransferBufferSize==0)
 		TransferBufferSize=6272 ;
 
+	if (!LockFile(CurrentDisk)) return 0;
 
 	if (TransferBufferIndex>=TransferBufferSize)
 	{
