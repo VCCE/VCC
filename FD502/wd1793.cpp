@@ -501,6 +501,13 @@ long ReadSector (unsigned char Side,	//0 or 1
 
 bool LockFile(unsigned char disk)
 {
+	if (gVirtualDrive[disk].WriteProtect)
+	{
+		StatusReg = WRITEPROTECT;
+		CommandDone();
+		return false;
+	}
+
 	auto handle = gVirtualDrive[disk].FileHandle;
 	if (gVirtualDrive[disk].Locked == 0)
 	{
@@ -512,7 +519,6 @@ bool LockFile(unsigned char disk)
 		if (handle == INVALID_HANDLE_VALUE)
 		{
 			gVirtualDrive[disk].FileHandle = OpenWritableSharedFile(path);
-			OutputDebugString("wp\n");
 			StatusReg = WRITEPROTECT;
 			CommandDone();
 			return false;
@@ -520,7 +526,6 @@ bool LockFile(unsigned char disk)
 
 		// swap to exclusive handle
 		gVirtualDrive[disk].FileHandle = handle;
-		OutputDebugString("locked\n");
 	}
 	gVirtualDrive[disk].Locked = LOCK_TIME;
 	return true;
@@ -752,8 +757,6 @@ void PingFdc()
 			auto path = gVirtualDrive[disk].ImageName;
 			CloseHandle(gVirtualDrive[disk].FileHandle);
 			gVirtualDrive[disk].FileHandle = OpenWritableSharedFile(path);
-
-			OutputDebugString("unlocked\n");
 			gVirtualDrive[disk].Locked = 0;
 		}
 	}
