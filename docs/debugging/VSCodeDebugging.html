@@ -524,11 +524,11 @@ code {
 <li>Set the entry point (start address) of your binary. We'll make it <code>$2000</code> for our sample.</li>
 <li>Save (Ctrl+S) and close this file.</li>
 </ol>
-<p>For more complex projects and detailed information about these options, please refer to the <a href="Usage.md">Usage Guide</a>.</p>
+<p>For more complex projects and detailed information about these options, please refer to the <a href="#usage">Usage Guide</a>.</p>
 <p><img src="imgs/vcc-debug3.gif" alt="Customize launch.json"></p>
 <hr>
 <h3 id="8-next-step">8. Next Step</h3>
-<p>For a simple example, follow along with the <a href="Example.md">Example</a>.</p>
+<p>For a simple example, follow along with the <a href="#example">Example</a>.</p>
 <hr>
 <p align="center">
   <sub><sup>Written by Craig Allsop · Updated 2026-11-27 · <a href="#">Back to top</a></sup></sub>
@@ -638,7 +638,7 @@ code {
 </p>
 <div class="page"></div>
 <h1 id="example">Example</h1>
-<p>The following is a short example of debugging assembly with Visual Studio Code and VCC. It assumes you've already followed the steps in <a href="Installation.md">Installation</a> to set up your environment.</p>
+<p>The following is a short example of debugging assembly with Visual Studio Code and VCC. It assumes you've already followed the steps in <a href="#installation">Installation</a> to set up your environment.</p>
 <h4 id="contents-2">Contents</h4>
 <ul>
 <li><a href="#1-create-mainasm">1. Create main.asm</a></li>
@@ -768,7 +768,7 @@ clean:
 <li>A Terminal window should already be open, but if not, open a new one from the menu, then type <code>make</code> to build our project.</li>
 <li>If successful, you should end up with two extra files: <code>main.bin</code> and <code>main.lst</code>.</li>
 </ol>
-<p>These are the filenames we added to launch.json in the <a href="Installation.md#6-customize-launchjson">Installation</a> steps 6 &amp; 7.</p>
+<p>These are the filenames we added to launch.json in the <a href="#7-customize-launchjson">Installation</a> steps 6 &amp; 7.</p>
 <p><img src="imgs/vcc-debug12.gif" alt="Building"></p>
 <h3 id="6-activate-debug-server">6. Activate Debug Server</h3>
 <p>Launch VCC and enable the debug server:</p>
@@ -794,7 +794,7 @@ clean:
 <p>To continue executing the program, press <code>F5</code>.</p>
 <p>To stop, just select a line and press <code>F9</code> to add a breakpoint.</p>
 <p>To end debugging, use <code>Shift+F5</code>.</p>
-<p>See <a href="Usage.md#keyboard-shortcuts">keyboard shortcuts</a> for more shortcuts.</p>
+<p>See <a href="#keyboard-shortcuts">keyboard shortcuts</a> for more shortcuts.</p>
 <p><img src="imgs/vcc-debug7.gif" alt="Debugging Session"></p>
 <h3 id="8-automate-building">8. Automate Building</h3>
 <p>As it stands, we have to type <code>make</code> in the Terminal window when we make changes to the source. It's tedious, so let's automate it. We'll need a <code>tasks.json</code> for this.</p>

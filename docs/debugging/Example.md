@@ -1,6 +1,6 @@
 # Example
 
-The following is a short example of debugging assembly with Visual Studio Code and VCC. It assumes you've already followed the steps in [Installation](Installation.md) to set up your environment.
+The following is a short example of debugging assembly with Visual Studio Code and VCC. It assumes you've already followed the steps in [Installation](#installation) to set up your environment.
 
 #### Contents
 
@@ -151,7 +151,7 @@ After restarting Visual Studio Code:
 2. A Terminal window should already be open, but if not, open a new one from the menu, then type `make` to build our project.
 3. If successful, you should end up with two extra files: `main.bin` and `main.lst`.
 
-These are the filenames we added to launch.json in the [Installation](Installation.md#6-customize-launchjson) steps 6 & 7.
+These are the filenames we added to launch.json in the [Installation](#7-customize-launchjson) steps 6 & 7.
 
 ![Building](imgs/vcc-debug12.gif)
 
@@ -187,7 +187,7 @@ To stop, just select a line and press `F9` to add a breakpoint.
 
 To end debugging, use `Shift+F5`.
 
-See [keyboard shortcuts](Usage.md#keyboard-shortcuts) for more shortcuts.
+See [keyboard shortcuts](#keyboard-shortcuts) for more shortcuts.
 
 ![Debugging Session](imgs/vcc-debug7.gif)
 

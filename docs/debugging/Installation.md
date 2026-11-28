@@ -101,7 +101,7 @@ Customize the launch.json for your project:
 3. Set the entry point (start address) of your binary. We'll make it `$2000` for our sample.
 4. Save (Ctrl+S) and close this file.
 
-For more complex projects and detailed information about these options, please refer to the [Usage Guide](Usage.md).
+For more complex projects and detailed information about these options, please refer to the [Usage Guide](#usage).
 
 ![Customize launch.json](imgs/vcc-debug3.gif)   
 
@@ -109,7 +109,7 @@ For more complex projects and detailed information about these options, please r
 
 ### 8. Next Step
 
-For a simple example, follow along with the [Example](Example.md).
+For a simple example, follow along with the [Example](#example).
 
 
 <hr>
