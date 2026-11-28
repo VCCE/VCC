@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>VSCodeDebugging.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+<link rel="stylesheet" href="file://z:\git\coco\VCC3\docs\debugging\pdf-style.css" type="text/css">
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<nav class="toc-sidebar">
+  <strong>Contents</strong>
+  <ul>
+    <li><a href="#installation">Installation</a>
+      <ul>
+        <li><a href="#1-install-vcc">1. Install VCC</a></li>
+        <li><a href="#7-install-lwtools">2. Install Lwtools</a></li>
+        <li><a href="#3-install-visual-studio-code">3. Install Visual Studio Code</a></li>
+        <li><a href="#4-install-the-visual-studio-code-extension">4. Install the Extension</a></li>
+        <li><a href="#5-open-an-assembly-project">5. Open an Assembly Project</a></li>
+        <li><a href="#6-create-a-launchjson">6. Create a launch.json</a></li>
+        <li><a href="#7-customize-launchjson">7. Customize launch.json</a></li>
+        <li><a href="#8-next-step">8. Next Step</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a>
+      <ul>
+        <li><a href="#launchjson-options">Launch.json Options</a></li>
+        <li><a href="#keyboard-shortcuts">Keyboard Shortcuts</a></li>
+      </ul>
+    </li>
+    <li><a href="#example">Example</a>
+      <ul>
+        <li><a href="#1-create-mainasm">1. Create main.asm</a></li>
+        <li><a href="#2-write-some-code">2. Write some code</a></li>
+        <li><a href="#3-make">3. Make</a></li>
+        <li><a href="#4-build">4. Build</a></li>
+        <li><a href="#5-build-continued">5. Build, continued</a></li>
+        <li><a href="#6-activate-debug-server">6. Activate Debug Server</a></li>
+        <li><a href="#7-debugging">7. Debugging</a></li>
+        <li><a href="#8-automate-building">8. Automate Building</a></li>
+      </ul>
+    </li>
+    <li><a href="#projects">Projects</a>
+      <ul>
+        <li><a href="#wargame-3">Wargame 3</a></li>
+        <li><a href="#burger-time">Burger Time</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+<h1 id="coco-3-development-with-vs-code--vcc">CoCo 3 Development with VS Code &amp; VCC</h1>
+<p>Written by Craig Allsop - 2026</p>
+<h2 id="overview">Overview</h2>
+<p>This document described how to use <strong>Visual Studio Code</strong> as a debugger with <strong>VCC</strong> (Virtual Color Computer) to develop and debug DECB programs.</p>
+<h2 id="contents">Contents</h2>
+<ul>
+<li><a href="#installation">Installation</a> - The installation and setup information.</li>
+<li><a href="#usage">Usage</a> - Usage information.</li>
+<li><a href="#example">Example</a> - A simple example.</li>
+<li><a href="#projects">Projects</a> - Usage by other projects.</li>
+</ul>
+<hr>
+<p align="center">
+  <sub><sup>Written by Craig Allsop · Updated 2026-11-27 · <a href="#">Back to top</a></sup></sub>
+</p>
+<div class="page"></div>
+<h1 id="installation">Installation</h1>
+<h2 id="prerequisites">Prerequisites</h2>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Version</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VCC</td>
+<td>2.1.10+</td>
+<td>Windows — <a href="https://github.com/VCCE/VCC/releases">GitHub releases</a></td>
+</tr>
+<tr>
+<td>Visual Studio Code</td>
+<td>1.147.0+</td>
+<td>Editor — <a href="http://code.visualstudio.com">code.visualstudio.com</a></td>
+</tr>
+<tr>
+<td>VCC Debug Extension Package (.vsix)</td>
+<td>1.0.0.0+</td>
+<td>Extension for Visual Studio Code —<br/> <a href="https://github.com/callsop/vcc-debug">GitHub vcc-debug</a></td>
+</tr>
+<tr>
+<td>Lwtools</td>
+<td>4.25+</td>
+<td><a href="https://www.lwtools.ca/">Lwtools Webpage</a><br/> See 4.25 link has win64 Windows binaries.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="setup">Setup</h2>
+<p>To prepare for debugging with Visual Studio Code, follow these steps, or skip a step if already done.</p>
+<h4 id="contents-1">Contents</h4>
+<ul>
+<li><a href="#1-install-vcc">1. Install VCC</a></li>
+<li><a href="#7-install-lwtools">2. Install Lwtools</a></li>
+<li><a href="#3-install-visual-studio-code">3. Install Visual Studio Code</a></li>
+<li><a href="#4-install-the-visual-studio-code-extension">4. Install the Visual Studio Code Extension</a></li>
+<li><a href="#5-open-an-assembly-project">5. Open an Assembly Project</a></li>
+<li><a href="#6-create-a-launchjson">6. Create a launch.json</a></li>
+<li><a href="#7-customize-launchjson">7. Customize launch.json</a></li>
+<li><a href="#8-next-step">8. Next Step</a></li>
+</ul>
+<h3 id="1-install-vcc">1. Install VCC</h3>
+<h4 id="using-windows-store">Using Windows Store</h4>
+<p>This is generally the quickest and easiest option.</p>
+<ol>
+<li>Launch the Windows Store from the Start menu.</li>
+<li>Type 'VCC' in the search box to find the app.</li>
+<li>When you see VCC, click the Install button.</li>
+</ol>
+<h4 id="using-zip">Using Zip</h4>
+<p>This is useful if you have multiple versions, or don't want to use the installer.</p>
+<ol>
+<li>Download the latest VCC release from the <a href="https://github.com/VCCE/VCC/releases">VCCE/VCC GitHub</a>.</li>
+<li>Extract to a suitable path, e.g. <code>C:\programs\vcc-2.1.10\</code>.</li>
+</ol>
+<hr>
+<h3 id="2-install-lwtools">2. Install Lwtools</h3>
+<p>With the downloaded win64 zip, extract the files into a suitable location on your machine.</p>
+<p>Such as <code>C:\programs\lwtools-2.25-win64\</code></p>
+<hr>
+<h3 id="3-install-visual-studio-code">3. Install Visual Studio Code</h3>
+<p>Download and install Visual Studio Code from <a href="http://code.visualstudio.com">code.visualstudio.com</a>. There is a download link in the top right.</p>
+<hr>
+<h3 id="4-install-the-visual-studio-code-extension">4. Install the Visual Studio Code Extension</h3>
+<p>This step is only required once, or when there is a new version of the .vsix package. This will add support to Visual Studio Code for attaching to VCC in a debugging session.</p>
+<p>With Visual Studio Code running:</p>
+<ol>
+<li>Click on the 'Extensions' tab in the panel on the left edge.</li>
+<li>Drag and drop the .vsix package file onto the Extensions panel, as shown below.</li>
+</ol>
+<p><img src="imgs/vcc-debug1.jpg" alt="Install VCC Debug Extension"></p>
+<hr>
+<h3 id="5-open-an-assembly-project">5. Open an Assembly Project</h3>
+<p>To open a project with Visual Studio Code, either launch it and choose 'Open Folder...' to pick the directory containing your project.</p>
+<p>OR from a shell, run Visual Studio Code from the directory containing your project (e.g. workspace):</p>
+<pre class="hljs"><code><div>&gt; cd workspace
+&gt; code .
+</div></code></pre>
+<hr>
+<h3 id="6-create-a-launchjson">6. Create a launch.json</h3>
+<p>In order to configure Visual Studio Code for attaching to VCC, a launch.json is required. This contains the instructions relevant to your project. The file is stored in your workspace at <code>.vscode/launch.json</code>.</p>
+<p>To create it:</p>
+<ol>
+<li>Click on the 'Debugger' tab in the panel on the left edge.</li>
+<li>A panel will appear with a blue button and, under it, a link to 'create a launch.json'. Click this link and a menu will appear listing the available debuggers.</li>
+<li>Choose 'VCC' from the list (this depends on Step 4).</li>
+</ol>
+<p><img src="imgs/vcc-debug2.gif" alt="Creating a launch.json"></p>
+<hr>
+<h3 id="7-customize-launchjson">7. Customize launch.json</h3>
+<p>Customize the launch.json for your project:</p>
+<ol>
+<li>Change <code>${WorkspaceFolderBasename}</code> to the binary of your top-level assembly file. Also change the listing(s) to your <code>.lst</code> file produced by lwasm.</li>
+<li>Comment out any lines you don't need for now.</li>
+<li>Set the entry point (start address) of your binary. We'll make it <code>$2000</code> for our sample.</li>
+<li>Save (Ctrl+S) and close this file.</li>
+</ol>
+<p>For more complex projects and detailed information about these options, please refer to the <a href="#usage">Usage Guide</a>.</p>
+<p><img src="imgs/vcc-debug3.gif" alt="Customize launch.json"></p>
+<hr>
+<h3 id="8-next-step">8. Next Step</h3>
+<p>For a simple example, follow along with the <a href="#example">Example</a>.</p>
+<hr>
+<p align="center">
+  <sub><sup>Written by Craig Allsop · Updated 2026-11-27 · <a href="#">Back to top</a></sup></sub>
+</p>
+<div class="page"></div>
+<h1 id="usage">Usage</h1>
+<h3 id="launchjson-options">Launch.json Options</h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>type</td>
+<td>Which debugger extension to use, which is <code>vcc</code> for our purposes.</td>
+</tr>
+<tr>
+<td>request</td>
+<td>The kind of launch request. <code>attach</code> means it will attempt to attach to a running VCC process. Other debuggers support <code>launch</code>, but this one does not.</td>
+</tr>
+<tr>
+<td>name</td>
+<td>It's just the label shown in the Run &amp; Debug dropdown; can be anything you like.</td>
+</tr>
+<tr>
+<td>port</td>
+<td>The socket port to attach to, which for VCC is 6666.</td>
+</tr>
+<tr>
+<td>paste</td>
+<td>Optional. A string to 'type' (paste) into VCC prior to debugging to start. Some projects may launch their program via a basic loader, so you can specify <code>run\&quot;loader\&quot;\n</code> or similar. Double quotes must be escaped with a backslash. The <code>ENTER</code> key is represented by <code>\n</code>.</td>
+</tr>
+<tr>
+<td>entryPoint</td>
+<td>Optional. The debugger will stop on entry at this address. Specify it in hexadecimal, starting with a <code>$</code> sign, e.g. <code>$2000</code>. When used with <code>paste</code>, this option will automatically run VCC at its fastest speed until it reaches the entry point address.</td>
+</tr>
+<tr>
+<td>reset</td>
+<td>Optional. Reset VCC on attach. If <code>paste</code> has a value, it will be pasted after 30 frames to allow time for DOS/ECB to initialize. VCC will be reset when Visual Studio Code disconnects from the debugging session, ready for the next one.</td>
+</tr>
+<tr>
+<td>program</td>
+<td>Optional. If specified, the binary will be loaded directly into memory. Version 2.1.10 supports only DECB binaries.</td>
+</tr>
+<tr>
+<td>listings</td>
+<td>Required in version 2.1.10. Should point to a listing file produced by lwasm for your binary. This corresponds to the <code>--list=x</code> option.</td>
+</tr>
+<tr>
+<td>preLaunchTask</td>
+<td>Optional. Specifies a task label from <code>tasks.json</code> to run before the debugging session starts. This is useful for compiling the project in preparation for debugging before you press F5 to start.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="keyboard-shortcuts">Keyboard Shortcuts</h3>
+<p>These are the standard Visual Studio debugging keys.</p>
+<div align="center">
+<table>
+<thead>
+<tr>
+<th>Shortcut</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>F5</code></td>
+<td>Start debugging / Continue (resume after pause)</td>
+</tr>
+<tr>
+<td><code>Shift+F5</code></td>
+<td>Stop debugging</td>
+</tr>
+<tr>
+<td><code>F9</code></td>
+<td>Toggle breakpoint on current line</td>
+</tr>
+<tr>
+<td><code>F10</code></td>
+<td>Step over (next line, don't enter functions)</td>
+</tr>
+<tr>
+<td><code>F11</code></td>
+<td>Step into (enter the function call)</td>
+</tr>
+<tr>
+<td><code>Shift+F11</code></td>
+<td>Step out (finish current function, return to caller)</td>
+</tr>
+<tr>
+<td><code>Ctrl+Shift+Y</code></td>
+<td>Open Debug Console</td>
+</tr>
+<tr>
+<td><code>Ctrl+Shift+D</code></td>
+<td>Open Run and Debug sidebar</td>
+</tr>
+</tbody>
+</table>
+</div>   
+<hr>
+<p align="center">
+  <sub><sup>Written by Craig Allsop · Updated 2026-11-27 · <a href="#">Back to top</a></sup></sub>
+</p>
+<div class="page"></div>
+<h1 id="example">Example</h1>
+<p>The following is a short example of debugging assembly with Visual Studio Code and VCC. It assumes you've already followed the steps in <a href="#installation">Installation</a> to set up your environment.</p>
+<h4 id="contents-2">Contents</h4>
+<ul>
+<li><a href="#1-create-mainasm">1. Create main.asm</a></li>
+<li><a href="#2-write-some-code">2. Write some code</a></li>
+<li><a href="#3-make">3. Make</a></li>
+<li><a href="#4-build">4. Build</a></li>
+<li><a href="#5-build-continued">5. Build, continued</a></li>
+<li><a href="#6-activate-debug-server">6. Activate Debug Server</a></li>
+<li><a href="#7-debugging">7. Debugging</a></li>
+<li><a href="#8-automate-building">8. Automate Building</a></li>
+</ul>
+<p>Open Visual Studio Code and the 'workspace' folder.</p>
+<h3 id="1-create-mainasm">1. Create main.asm</h3>
+<p>Create a top-level assembly file.</p>
+<ol>
+<li>Click the File Explorer at the top left. This will show the File Explorer, a panel which from top to bottom shows the currently opened files, a tree view of the workspace, and near the bottom (not seen in the picture) the current file's Outline and Timeline.</li>
+<li>Create a main.asm file by clicking on the 'New File' icon, usually after choosing which folder you want it in.</li>
+<li>Type in the name main.asm and press ENTER. You'll notice in the open editors above that it will show '.vscode' next to main.asm, indicating that the file is currently in this folder. As we don't yet have any other folders, it happens to create it in the .vscode folder, which is a little odd, but never mind — we'll move it.</li>
+<li>To move it to the workspace root, drag the file to the blank space below it.</li>
+<li>It will ask if you wish to move it to 'workspace', so agree by pressing the 'Move' button.</li>
+</ol>
+<p>Now we're ready to begin coding.</p>
+<p><img src="imgs/vcc-debug4.gif" alt="Customize launch.json"></p>
+<hr>
+<h3 id="2-write-some-code">2. Write some code</h3>
+<p>Write your own code if you wish but otherwise here is a small program to try. Just copy and paste it into your main.asm file.</p>
+<p>It loads at $2000, takes a color (text character) and calls 'paint' function 4 times for the 4 entries in a table that define how. Increments the color and loops.</p>
+<pre class="hljs"><code><div>        org     $2000
+
+start   lda     &gt;color          ; start with a color
+repeat  ldy     #table          ; make y out table pointer
+        bsr     paint           ; paint a line x 4
+        bsr     paint
+        bsr     paint
+        bsr     paint
+        lda     &gt;color          ; get the color
+        adda    #$10            ; increment to next color
+        ora     #$80            ; ensure its upper chars
+        sta     &gt;color          ; store color
+        sync                    ; wait for frame sync x 4
+        sync
+        sync
+        sync
+        jmp     repeat          ; loop back to continue
+
+screen  equ     $400            ; the screen address
+color   fcb     143             ; a starting color
+table   fdb     screen+2        ; start address
+        fcb     14              ; how many to paint (right)
+        fcb     2               ; direction to paint
+        fdb     screen+30+32-2  ; top right corner down a line
+        fcb     14              ; how many to paint
+        fcb     32              ; direction to paint (down)
+        fdb     screen+32*16-4  ; bottom corner
+        fcb     14              ; how many to paint
+        fcb     -2              ; direction (left)
+        fdb     screen+32*14+2  ; bottom left corner
+        fcb     14              ; how many to paint
+        fcb     -32             ; direction (up)
+
+****************************************************
+* paint - draws colors starting with color in 'a'
+* Entry: 
+*   a - starting color
+*   y - table pointer: address, count, offset
+****************************************************
+paint   ldx     ,y++            ; x = address
+        ldb     ,y+             ; b = count
+        pshs    b               ; push to stack
+        ldb     ,y+             ; b = offset
+loop    sta     ,x              ; write a at address
+        sta     1,x             ; write a at address+1
+        adda    #$10            ; increment the color
+        ora     #$80            ; keep in upper chars
+        leax    b,x             ; update address pointer
+        dec     ,s              ; decrement count
+        bne     loop            ; loop if not done
+        puls    b,pc            ; return (pull count, pc)
+
+        end     start           ; finish with exec address
+
+</div></code></pre>
+<p>Refer to the 6809 <a href="https://colorcomputerarchive.com/repo/Documents/Books/Motorola%206809%20and%20Hitachi%206309%20Programming%20Reference%20(Darren%20Atkinson).pdf">Assembly Instruction Reference</a> for description of the individual instructions.</p>
+<h3 id="3-make">3. Make</h3>
+<p>To build our project, we can use the 'make' utility.</p>
+<ol>
+<li>
+<p>Click on 'New File' from the Explorer panel.</p>
+</li>
+<li>
+<p>Type in 'Makefile' for the filename. (A capital letter is the standard.)</p>
+</li>
+<li>
+<p>Press ENTER and you can cut and paste the following:</p>
+<pre class="hljs"><code><div>LWASM = C:/programs/lwtools-4.25-win64/lwasm.exe
+OPTS = --6809 --format=decb
+
+main.bin: main.asm
+	$(LWASM) --output=$@ --list=$(basename $@).lst $(OPTS) $&lt;
+
+clean:
+	del main.bin main.lst
+</div></code></pre>
+</li>
+</ol>
+<p>This is pretty straightforward. The first two lines just define some values we'll use on the lines below them. My lwtools is at <code>c:\programs\lwtools-4.25-win64\</code> so replace this path with yours.</p>
+<p>The next section tells make to build <code>main.bin</code> whenever its dependent, i.e. <code>main.asm</code> (there could be multiple), is changed, by running the shell commands (indented) under this rule. A variable such as LWASM will be expanded to the value we previously set. The <code>$@</code> represents the target (main.bin) and <code>$&lt;</code> represents the first dependent.</p>
+<p>The next section tells make that when we run <code>make clean</code>, it should run these shell commands (indented). In this case, it just removes the two files created by the previous section.</p>
+<p>That's it, simple.</p>
+<p>Note: Indentation is important in a Makefile; the shell commands are indented by one tab.</p>
+<p><img src="imgs/vcc-debug10.gif" alt="Create Makefile"></p>
+<hr>
+<h3 id="4-build">4. Build</h3>
+<p>Now that we have our Makefile, we can manually run it to build the project.</p>
+<ol>
+<li>Open a new Terminal window.</li>
+<li>Type <code>make</code>. It may fail if you don't have make installed.</li>
+<li>If so, use winget to install it: type <code>winget install ezwinports.make</code>.</li>
+<li>Once make is successfully installed, close Visual Studio Code and reopen it so that it picks up the updated path to make.</li>
+</ol>
+<p><img src="imgs/vcc-debug11.gif" alt="Create Makefile"></p>
+<hr>
+<h3 id="5-build-continued">5. Build, continued</h3>
+<p>After restarting Visual Studio Code:</p>
+<ol>
+<li>Click on the recent project — 'workspace' in our case — to continue the project.</li>
+<li>A Terminal window should already be open, but if not, open a new one from the menu, then type <code>make</code> to build our project.</li>
+<li>If successful, you should end up with two extra files: <code>main.bin</code> and <code>main.lst</code>.</li>
+</ol>
+<p>These are the filenames we added to launch.json in the <a href="#7-customize-launchjson">Installation</a> steps 6 &amp; 7.</p>
+<p><img src="imgs/vcc-debug12.gif" alt="Building"></p>
+<h3 id="6-activate-debug-server">6. Activate Debug Server</h3>
+<p>Launch VCC and enable the debug server:</p>
+<ol>
+<li>Click on the 'Debugger' menu.</li>
+<li>Select 'Debug Server' to enable it.</li>
+</ol>
+<p>A tick will appear next to it when it's enabled.</p>
+<p><img src="imgs/vcc-debug5.gif" alt="Activate Debug Server"></p>
+<h3 id="7-debugging">7. Debugging</h3>
+<p>Now we're ready to begin debugging. Press <code>F5</code> to launch the program in VCC; Visual Studio Code will switch to the debugging tab and stop with the cursor on the first instruction at $2000, as seen below.</p>
+<p>The following are the various components of the debugging session:</p>
+<ol>
+<li>Currently paused on a breakpoint — the highlighted line showing where the CPU is currently stopped. Here it's stopped at the entry point we specified in launch.json.</li>
+<li>The CPU registers and their values.</li>
+<li>The stack contents — this shows bytes that were pushed to the stack along with a return address, which starts with 'r'. The offset is how far from the current stack pointer (SP).</li>
+<li>The watch window, where expressions are evaluated while stopped.</li>
+<li>The call stack, showing the address, which function we're in, and the byte offset from the start of that function (the nearest symbol), along with the file and line number. As more functions are called, this will grow to multiple lines; clicking on any of them takes you to the caller.</li>
+<li>The breakpoints window (collapsed here) will show current locations in the source code where breakpoints are set, clicking on one will jump to that place.</li>
+<li>The Debug Console &amp; Terminal windows. The Debug Console allows commands to be issued to the debugger (future). The Terminal window will appear when building to show the output.</li>
+<li>The debugger controls: Pause-Run (F5), Step Over (F10), Step In (F11), Step Out (Shift+F11), Restart (Ctrl-Shift+F5), Disconnect (Shift+F5).</li>
+</ol>
+<p>To continue executing the program, press <code>F5</code>.</p>
+<p>To stop, just select a line and press <code>F9</code> to add a breakpoint.</p>
+<p>To end debugging, use <code>Shift+F5</code>.</p>
+<p>See <a href="#keyboard-shortcuts">keyboard shortcuts</a> for more shortcuts.</p>
+<p><img src="imgs/vcc-debug7.gif" alt="Debugging Session"></p>
+<h3 id="8-automate-building">8. Automate Building</h3>
+<p>As it stands, we have to type <code>make</code> in the Terminal window when we make changes to the source. It's tedious, so let's automate it. We'll need a <code>tasks.json</code> for this.</p>
+<ol>
+<li>Press <code>Ctrl-Shift-P</code> for the Command Palette (a list of commands) and type <code>tasks</code> to filter this list for all task-related commands, and find the one called <code>Tasks: Configure Task</code> and select it.</li>
+<li>A list will appear with various options; scroll down to <code>Create tasks.json from template</code> and select it.</li>
+<li>Another shorter list will appear; from this, select <code>Others: Example to run an arbitrary external command</code>. This will give us a simple echo test task.</li>
+<li>Change the 'label' to <code>Build</code>.</li>
+<li>Change the 'command' to <code>make</code> and save the file.</li>
+</ol>
+<p><img src="imgs/vcc-debug16.gif" alt="Automate Building"></p>
+<p>Now we need to update the <code>launch.json</code> to tell Visual Studio Code what task to run when F5 is pressed.</p>
+<ol>
+<li>Select the <code>launch.json</code> from the <code>.vscode</code> directory.</li>
+<li>Ensure there is a comma after the <code>]</code>, and on the next line type a double quote <code>&quot;</code> and then <code>preLaunchTask</code>. You can press <code>TAB</code> to complete the word and a menu will appear.</li>
+<li>Select the &quot;Build&quot; option, save the file.</li>
+<li>Click on <code>main.asm</code>.</li>
+<li>Make some changes, such as commenting out the sync lines, and then press F5 to start debugging.</li>
+<li>You will notice that it ran <code>make</code> in the terminal and will stop at the start of the program; you can press F5 to run it.</li>
+</ol>
+<p><img src="imgs/vcc-debug17.gif" alt="Automate Building 2"></p>
+<p>Now, any changes made will be automatically built before debugging. Good luck!</p>
+<hr>
+<p align="center">
+  <sub><sup>Written by Craig Allsop · Updated 2026-11-27 · <a href="#">Back to top</a></sup></sub>
+</p>
+<div class="page"></div>
+<h1 id="projects">Projects</h1>
+<h4 id="contents-3">Contents</h4>
+<ul>
+<li><a href="#wargame-3">Wargame 3</a></li>
+<li><a href="#burger-time">Burger Time</a></li>
+</ul>
+<h3 id="wargame-3">Wargame 3</h3>
+<div align="center">
+<img src="imgs/vcc-debug-wargame3.gif" width="50%">
+</div>
+<p>In this project, there is just one .asm file, so building is similar to that of the Example. However, there is a lot of data which goes with the game: 3 DSKs. These can be mounted in floppy disks 1, 2, and 3 in VCC, and the game has a config program to allow this scenario.</p>
+<p>For debugging this game, the launch.json shall use the 'paste' option to start the game by typing <code>run&quot;wg&quot;</code> into DOS. The entry point is $3000.</p>
+<p>.vscode/launch.json:</p>
+<pre class="hljs"><code><div>{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	&quot;version&quot;: &quot;0.2.0&quot;,
+	&quot;configurations&quot;: [
+		{
+			&quot;type&quot;: &quot;vcc&quot;,
+			&quot;request&quot;: &quot;attach&quot;,
+			&quot;name&quot;: &quot;Attach to VCC&quot;,
+			&quot;port&quot;: 6666,
+			&quot;preLaunchTask&quot;: &quot;build&quot;,
+			&quot;reset&quot;: true,
+			&quot;paste&quot;: &quot;run\&quot;wg\n&quot;,
+			&quot;entryPoint&quot;: &quot;$3000&quot;,
+			&quot;listings&quot;: [
+				&quot;${workspaceFolder}/WARGAME3.lst&quot;
+			]
+		}
+	]
+}
+</div></code></pre>
+<p>For the pre-launch build task, this will be called before debugging starts to ensure it's up to date.</p>
+<p>.vscode/tasks.json:</p>
+<pre class="hljs"><code><div>{
+	&quot;version&quot;: &quot;2.0.0&quot;,
+	&quot;tasks&quot;: [
+		{
+            &quot;label&quot;: &quot;build&quot;,
+            &quot;type&quot;: &quot;shell&quot;,
+            &quot;command&quot;: &quot;b.bat&quot;,
+            &quot;problemMatcher&quot;: &quot;$lwasm&quot;,
+            &quot;group&quot;: {
+                &quot;kind&quot;: &quot;build&quot;,
+                &quot;isDefault&quot;: true
+            }
+		}
+	]
+}
+</div></code></pre>
+<p>The b.bat is just a batch file containing the shell commands to call lwasm and produce <code>WARGAME3.bin</code> and <code>WARGAME3.lst</code>, then copy it onto DSK 2 where the game is stored.</p>
+<p>b.bat:</p>
+<pre class="hljs"><code><div>c:\Programs\lwtools-4.25-win64\lwasm.exe --6309 --list=WARGAME3.LST --output=WARGAME3.BIN --format=decb WARGAME3.ASM
+c:\Programs\toolshed-2.6.0\decb.exe copy -2 -b WARGAME3.BIN -r WARGAME2.DSK,WARGAME3.BIN
+</div></code></pre>
+<p>Here we can see it stopped at a breakpoint in a function called _putc (draws a character). The Call Stack shows the callers of _putc.</p>
+<p><img src="imgs/vcc-debug-prj1.gif" alt="Wargame 3 Debugging"></p>
+</div>
+<hr>
+<h3 id="burger-time">Burger Time</h3>
+<div align="center">
+<img src="imgs/vcc-debug-bt.gif" width="50%">
+</div>
+<p>In this project, there are many assembly files. A top-level assembly file includes the sources, so it's a single compile command.</p>
+<p>This project uses M4, the macro preprocessor, for macros, and all the assembly files are run through the processor. This results in line numbers being different in the final LWASM listing file; however, M4 can emit source line information with -s. The debugger will use these alternative source line mappings if they are present. This allows breakpoints to be set in the original files.</p>
+<p>The assets for this project also generate assembly files, a file for each sprite (a compiled sprite). These also get included by the top-level file, but have no source (the source is the image.png file). Thus, we see below (see 3) that stopping on one of them will show the generated file instead.</p>
+<p>For this launch.json, it executes the binary directly as everything for the game is contained within it, including its assets. It modifies the MMU as it loads. I haven't specified the entry point since I didn't want it to stop after loading.</p>
+<p>The launch.json:</p>
+<pre class="hljs"><code><div>{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	&quot;version&quot;: &quot;0.2.0&quot;,
+	&quot;configurations&quot;: [
+		{
+			&quot;type&quot;: &quot;vcc&quot;,
+			&quot;request&quot;: &quot;attach&quot;,
+			&quot;name&quot;: &quot;Attach to VCC&quot;,
+			&quot;port&quot;: 6666,
+			&quot;reset&quot;: true,			
+			&quot;program&quot;: &quot;${workspaceFolder}/gen/bt.bin&quot;,
+			&quot;reset&quot;: true,
+			&quot;listings&quot;: [
+				&quot;${workspaceFolder}/bt.lst&quot;
+			]
+		}
+	]
+}
+</div></code></pre>
+<ol>
+<li>The debugger is active and stopped on burger_lettuce compiled sprite.</li>
+<li>Clicking the Explorer shows the source files view.</li>
+<li>Here we see that burger_lettuce has come from the generated directory.</li>
+</ol>
+<p><img src="imgs/vcc-debug15.gif" alt="Burger Time Debugging"></p>
+<hr>
+<p align="center">
+  <sub><sup>Written by Craig Allsop · Updated 2026-11-27 · <a href="#">Back to top</a></sup></sub>
+</p>
+
+</body>
+</html>

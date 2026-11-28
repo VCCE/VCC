@@ -23,6 +23,6 @@ void ValidatePath(char* Path);
 int CheckPath(char*);
 BOOL PathRemoveFileSpec(char*);
 BOOL PathRemoveExtension(char*);
-char* PathFindExtension(char*);
+const char* PathFindExtension(const char*);
 BOOL FilePrintf(HANDLE, const char*, ...);
 

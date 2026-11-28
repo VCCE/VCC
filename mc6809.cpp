@@ -25,6 +25,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "OpDecoder.h"
 #include "Disassembler.h"
 #include "Event.h"
+#include "IDebug.h"
 
 //Global variables for CPU Emulation-----------------------
 
@@ -68,6 +69,7 @@ namespace Private
 static int CycleCounter = 0;
 #endif
 static unsigned int SyncWaiting=0;
+static unsigned int CwaiWaiting = 0;
 static unsigned int temp32;
 static unsigned short temp16;
 static unsigned char temp8;
@@ -337,8 +339,12 @@ static void MC6809WriteTfrExgRegister(uint8_t reg, uint16_t value)
 		break;
 
 	case  4:	// S
+	{
+		auto oS_REG = S_REG;
 		S_REG = value;
+		IDEBUG(SetStack(S_REG, oS_REG));
 		break;
+	}
 
 	case  5:	// PC
 		PC_REG = value;
@@ -398,6 +404,7 @@ int MC6809Exec(int CycleFor)
 			EmuState.Debugger.Halt();
 			return(CycleFor - GetCycles());
 		}
+		IDEBUG(CheckBreakpoints(PC_REG));
 		// Halted instruction pending.
 		if (HaltedInsPending) {
 			VCC::ApplyHaltpoints(false);
@@ -650,14 +657,19 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case LBSR_R: //17
-		*spostword=MemRead16(pc.Reg);
-		pc.Reg+=2;
+	{
+		*spostword = MemRead16(pc.Reg);
+		auto sPC_REG = PC_REG - 1;
+		pc.Reg += 2;
+		auto nPC_REG = PC_REG;
 		s.Reg--;
-		MemWrite8(pc.B.lsb,s.Reg--);
-		MemWrite8(pc.B.msb,s.Reg);
-		pc.Reg+=*spostword;
+		MemWrite8(pc.B.lsb, s.Reg--);
+		MemWrite8(pc.B.msb, s.Reg);
+		pc.Reg += *spostword;
 		Cycles(9);//CycleCounter+=9;
+		IDEBUG(Call(PC_REG, sPC_REG, nPC_REG));
 		break;
+	}
 
 	case DAA_I: //19
 		msn=(A_REG & 0xF0) ;
@@ -979,9 +991,11 @@ void Do_Opcode(int CycleFor)
 		}
 		if (postbyte & 0x80)
 		{
+			auto oPC_REG = PC_REG;
 			pc.B.msb=MemRead8( s.Reg++);
 			pc.B.lsb=MemRead8( s.Reg++);
 			Cycles(2);//CycleCounter+=2;
+			IDEBUG(Return(PC_REG, oPC_REG));
 		}
 		Cycles(5);//CycleCounter+=5;
 		break;
@@ -1085,10 +1099,14 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case RTS_I: //39
-		pc.B.msb=MemRead8(s.Reg++);
-		pc.B.lsb=MemRead8(s.Reg++);
+	{
+		auto oPC_REG = PC_REG;
+		pc.B.msb = MemRead8(s.Reg++);
+		pc.B.lsb = MemRead8(s.Reg++);
 		Cycles(5);//CycleCounter+=5;
+		IDEBUG(Return(PC_REG, oPC_REG));
 		break;
+	}
 
 	case ABX_I: //3A
 		x.Reg=x.Reg+B_REG;
@@ -1111,15 +1129,34 @@ void Do_Opcode(int CycleFor)
 			u.B.lsb=MemRead8(s.Reg++);
 			Cycles(9);//CycleCounter+=9;
 		}
-		pc.B.msb=MemRead8(s.Reg++);
-		pc.B.lsb=MemRead8(s.Reg++);
+		{
+			auto oPC_REG = PC_REG;
+			pc.B.msb = MemRead8(s.Reg++);
+			pc.B.lsb = MemRead8(s.Reg++);
+			IDEBUG(Return(PC_REG, oPC_REG));
+		}
 		break;
 
 	case CWAI_I: //3C
 		postbyte=MemRead8(pc.Reg++);
 		set_cc_flags(get_cc_flags() & postbyte);
-		Cycles(2);//CycleCounter+=2;
+		cc[E] = true;
+		MemWrite8(pc.B.lsb, --s.Reg);
+		MemWrite8(pc.B.msb, --s.Reg);
+		MemWrite8(u.B.lsb, --s.Reg);
+		MemWrite8(u.B.msb, --s.Reg);
+		MemWrite8(y.B.lsb, --s.Reg);
+		MemWrite8(y.B.msb, --s.Reg);
+		MemWrite8(x.B.lsb, --s.Reg);
+		MemWrite8(x.B.msb, --s.Reg);
+		MemWrite8(dp.B.msb, --s.Reg);
+		MemWrite8(B_REG, --s.Reg);
+		MemWrite8(A_REG, --s.Reg);
+		MemWrite8(get_cc_flags(), --s.Reg);
+		Cycles(3+12);//CycleCounter+=2;
 		SyncWaiting=1;
+		CwaiWaiting = 1;
+		IDEBUG(Cwai(PC_REG,X_REG,Y_REG,U_REG,S_REG,A_REG,B_REG));
 		break;
 
 	case MUL_I: //3D
@@ -1728,13 +1765,18 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case BSR_R: //8D
-		*spostbyte=MemRead8(pc.Reg++);
+	{
+		auto sPC_REG = PC_REG - 1;
+		*spostbyte = MemRead8(pc.Reg++);
+		auto nPC_REG = PC_REG;
 		s.Reg--;
-		MemWrite8(pc.B.lsb,s.Reg--);
-		MemWrite8(pc.B.msb,s.Reg);
-		pc.Reg+=*spostbyte;
+		MemWrite8(pc.B.lsb, s.Reg--);
+		MemWrite8(pc.B.msb, s.Reg);
+		pc.Reg += *spostbyte;
 		Cycles(7);//CycleCounter+=7;
+		IDEBUG(Call(PC_REG, sPC_REG, nPC_REG));
 		break;
+	}
 
 	case LDX_M: //8E
 		x.Reg= MemRead16(pc.Reg);
@@ -1873,13 +1915,18 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case BSR_D: //9D
-		temp16=(dp.Reg |MemRead8(pc.Reg++));
+	{
+		auto sPC_REG = PC_REG - 1;
+		temp16 = (dp.Reg | MemRead8(pc.Reg++));
+		auto nPC_REG = PC_REG;
 		s.Reg--;
-		MemWrite8(pc.B.lsb,s.Reg--);
-		MemWrite8(pc.B.msb,s.Reg);
-		pc.Reg=temp16;
+		MemWrite8(pc.B.lsb, s.Reg--);
+		MemWrite8(pc.B.msb, s.Reg);
+		pc.Reg = temp16;
 		Cycles(7);//CycleCounter+=7;
+		IDEBUG(Call(PC_REG, sPC_REG, nPC_REG));
 		break;
+	}
 
 	case LDX_D: //9E
 		x.Reg=MemRead16(dp.Reg |MemRead8(pc.Reg++));
@@ -2024,14 +2071,18 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case BSR_X: //AD
-		temp16=CalculateEA(MemRead8(pc.Reg++));
-
+	{
+		auto sPC_REG = PC_REG - 1;
+		temp16 = CalculateEA(MemRead8(pc.Reg++));
+		auto nPC_REG = PC_REG;
 		s.Reg--;
-		MemWrite8(pc.B.lsb,s.Reg--);
-		MemWrite8(pc.B.msb,s.Reg);
-		pc.Reg=temp16;
+		MemWrite8(pc.B.lsb, s.Reg--);
+		MemWrite8(pc.B.msb, s.Reg);
+		pc.Reg = temp16;
 		Cycles(7);//CycleCounter+=7;
+		IDEBUG(Call(PC_REG, sPC_REG, nPC_REG));
 		break;
+	}
 
 	case LDX_X: //AE
 		x.Reg=MemRead16(CalculateEA(MemRead8(pc.Reg++)));
@@ -2192,14 +2243,19 @@ void Do_Opcode(int CycleFor)
 		break;
 
 	case BSR_E: //BD
-		postword=MemRead16(pc.Reg);
-		pc.Reg+=2;
+	{
+		auto sPC_REG = PC_REG - 1;
+		postword = MemRead16(pc.Reg);
+		pc.Reg += 2;
+		auto nPC_REG = PC_REG;
 		s.Reg--;
-		MemWrite8(pc.B.lsb,s.Reg--);
-		MemWrite8(pc.B.msb,s.Reg);
-		pc.Reg=postword;
+		MemWrite8(pc.B.lsb, s.Reg--);
+		MemWrite8(pc.B.msb, s.Reg);
+		pc.Reg = postword;
 		Cycles(8);//CycleCounter+=8;
+		IDEBUG(Call(PC_REG, sPC_REG, nPC_REG));
 		break;
+	}
 
 	case LDX_E: //BE
 		x.Reg=MemRead16(MemRead16(pc.Reg));
@@ -3142,13 +3198,17 @@ void P2_Opcode()
 		break;
 
 	case LDS_I:  //10CE
-		s.Reg=MemRead16(pc.Reg);
-		cc[Z]= ZTEST(s.Reg);
-		cc[N]= NTEST16(s.Reg);
+	{
+		s.Reg = MemRead16(pc.Reg);
+		cc[Z] = ZTEST(s.Reg);
+		cc[N] = NTEST16(s.Reg);
 		cc[V] = false;
-		pc.Reg+=2;
+		pc.Reg += 2;
+		auto oS_REG = S_REG;
 		Cycles(4);//CycleCounter+=4;
+		IDEBUG(SetStack(S_REG, oS_REG));
 		break;
+	}
 
 	case LDS_D: //10DE
 		s.Reg=MemRead16(dp.Reg |MemRead8(pc.Reg++));
@@ -3331,15 +3391,21 @@ void cpu_firq()
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptServicing(INT_FIRQ, GetCycles(), MC6809GetState());
 
-	cc[E] = false; // Turn E flag off
-	MemWrite8(pc.B.lsb, --s.Reg);
-	MemWrite8(pc.B.msb, --s.Reg);
-	MemWrite8(get_cc_flags(), --s.Reg);
+	auto sPC_REG = PC_REG;
+	if (!CwaiWaiting)
+	{
+		cc[E] = false; // Turn E flag off
+		MemWrite8(pc.B.lsb, --s.Reg);
+		MemWrite8(pc.B.msb, --s.Reg);
+		MemWrite8(get_cc_flags(), --s.Reg);
+		Cycles(3);
+	}
+	CwaiWaiting = 0;
 	cc[I] = true;
 	cc[F] = true;
 	pc.Reg = MemRead16(VFIRQ);
-
-	Cycles(10);//Cycles(15);//CycleCounter += 15;			// 10 Cycles to respond, 5 cycles to stack and load PC.
+	Cycles(10-3);//Cycles(15);//CycleCounter += 15;			// 10 Cycles to respond, 5 cycles to stack and load PC.
+	IDEBUG(Call(PC_REG, sPC_REG, sPC_REG));
 
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_FIRQ, GetCycles(), MC6809GetState());
@@ -3350,24 +3416,30 @@ void cpu_irq()
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptServicing(INT_IRQ, GetCycles(), MC6809GetState());
 
-	cc[E] = true;
-	MemWrite8(pc.B.lsb, --s.Reg);
-	MemWrite8(pc.B.msb, --s.Reg);
-	MemWrite8(u.B.lsb, --s.Reg);
-	MemWrite8(u.B.msb, --s.Reg);
-	MemWrite8(y.B.lsb, --s.Reg);
-	MemWrite8(y.B.msb, --s.Reg);
-	MemWrite8(x.B.lsb, --s.Reg);
-	MemWrite8(x.B.msb, --s.Reg);
-	MemWrite8(dp.B.msb, --s.Reg);
-	MemWrite8(B_REG, --s.Reg);
-	MemWrite8(A_REG, --s.Reg);
-	MemWrite8(get_cc_flags(), --s.Reg);
+	auto sPC_REG = PC_REG;
+	if (!CwaiWaiting)
+	{
+		cc[E] = true;
+		MemWrite8(pc.B.lsb, --s.Reg);
+		MemWrite8(pc.B.msb, --s.Reg);
+		MemWrite8(u.B.lsb, --s.Reg);
+		MemWrite8(u.B.msb, --s.Reg);
+		MemWrite8(y.B.lsb, --s.Reg);
+		MemWrite8(y.B.msb, --s.Reg);
+		MemWrite8(x.B.lsb, --s.Reg);
+		MemWrite8(x.B.msb, --s.Reg);
+		MemWrite8(dp.B.msb, --s.Reg);
+		MemWrite8(B_REG, --s.Reg);
+		MemWrite8(A_REG, --s.Reg);
+		MemWrite8(get_cc_flags(), --s.Reg);
+		Cycles(12);
+	}
+	CwaiWaiting = 0;
 
 	pc.Reg = MemRead16(VIRQ);
 	cc[I] = true;
-
-	Cycles(19);//Cycles(24);//CycleCounter += 24;			// 10 Cycles to respond, 14 cycles to stack and load PC.
+	Cycles(19-12);//Cycles(24);//CycleCounter += 24;			// 10 Cycles to respond, 14 cycles to stack and load PC.
+	IDEBUG(Call(PC_REG, sPC_REG, sPC_REG));
 
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_IRQ, GetCycles(), MC6809GetState());
@@ -3378,24 +3450,30 @@ void cpu_nmi()
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptServicing(INT_NMI, GetCycles(), MC6809GetState());
 
-	cc[E] = true;
-	MemWrite8(pc.B.lsb, --s.Reg);
-	MemWrite8(pc.B.msb, --s.Reg);
-	MemWrite8(u.B.lsb, --s.Reg);
-	MemWrite8(u.B.msb, --s.Reg);
-	MemWrite8(y.B.lsb, --s.Reg);
-	MemWrite8(y.B.msb, --s.Reg);
-	MemWrite8(x.B.lsb, --s.Reg);
-	MemWrite8(x.B.msb, --s.Reg);
-	MemWrite8(dp.B.msb, --s.Reg);
-	MemWrite8(B_REG, --s.Reg);
-	MemWrite8(A_REG, --s.Reg);
-	MemWrite8(get_cc_flags(), --s.Reg);
+	auto sPC_REG = PC_REG;
+	if (!CwaiWaiting)
+	{
+		cc[E] = true;
+		MemWrite8(pc.B.lsb, --s.Reg);
+		MemWrite8(pc.B.msb, --s.Reg);
+		MemWrite8(u.B.lsb, --s.Reg);
+		MemWrite8(u.B.msb, --s.Reg);
+		MemWrite8(y.B.lsb, --s.Reg);
+		MemWrite8(y.B.msb, --s.Reg);
+		MemWrite8(x.B.lsb, --s.Reg);
+		MemWrite8(x.B.msb, --s.Reg);
+		MemWrite8(dp.B.msb, --s.Reg);
+		MemWrite8(B_REG, --s.Reg);
+		MemWrite8(A_REG, --s.Reg);
+		MemWrite8(get_cc_flags(), --s.Reg);
+		Cycles(12);
+	}
+	CwaiWaiting = 0;
 	cc[I] = true;
 	cc[F] = true;
 	pc.Reg = MemRead16(VNMI);
-
-	Cycles(19);//Cycles(24);//CycleCounter += 24;			// 10 Cycles to respond, 14 cycles to stack and load PC.
+	Cycles(19-12);//Cycles(24);//CycleCounter += 24;			// 10 Cycles to respond, 14 cycles to stack and load PC.
+	IDEBUG(Call(PC_REG, sPC_REG, sPC_REG));
 
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_NMI, GetCycles(), MC6809GetState());

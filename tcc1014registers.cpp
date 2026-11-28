@@ -156,6 +156,14 @@ void GimeRegistersReset()
 	VerticalOffsetRegister = 0;
 }
 
+uint32_t CpuToRealAddress(uint16_t address)
+{
+	unsigned char GetMmuTask();
+	int task = GetMmuTask() & 1;
+	int reg = address >> 13;
+	return GimeRegisters[0xA0 + task * 8 + reg] * 0x2000 + (address & 0x1FFF);
+}
+
 void GimeWrite(unsigned char port,unsigned char data)
 {
 #if USE_NEWTIMING

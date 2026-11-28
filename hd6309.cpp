@@ -29,6 +29,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "OpDecoder.h"
 #include "Disassembler.h"
 #include "Event.h"
+#include "DebugMgr.h"
 
 #if defined(_WIN64)
 #define MSABI 
@@ -2130,7 +2131,9 @@ void Lds_I()
 	cc[N] = NTEST16(S_REG);
 	cc[V] = 0;
 	PC_REG+=2;
+	auto oS_REG = S_REG;
 	Cycles(4);//CycleCounter+=4;
+	IDEBUG(SetStack(S_REG, oS_REG));
 }
 
 void Ldq_D()
@@ -3690,13 +3693,16 @@ void Lbra_R()
 
 void Lbsr_R()
 { //17
+	auto sPC_REG = PC_REG - 1;
 	*spostword=IMMADDRESS(PC_REG);
 	PC_REG+=2;
+	auto nPC_REG = PC_REG;
 	S_REG--;
 	MemWrite8(pc.B.lsb,S_REG--);
 	MemWrite8(pc.B.msb,S_REG);
 	PC_REG+=*spostword;
 	Cycles(NatEmuCycles97);//CycleCounter+=NatEmuCycles97;
+	IDEBUG(Call(PC_REG, sPC_REG, nPC_REG));
 }
 
 void Daa_I()
@@ -4101,9 +4107,11 @@ void Puls_M()
 	}
 	if (postbyte & 0x80)
 	{
+		auto oPC_REG = PC_REG;
 		pc.B.msb=MemRead8( S_REG++);
 		pc.B.lsb=MemRead8( S_REG++);
 		Cycles(2);//CycleCounter+=2;
+		IDEBUG(Return(PC_REG, oPC_REG));
 	}
 	Cycles(NatEmuCycles54);//CycleCounter+=NatEmuCycles54;
 }
@@ -4210,9 +4218,11 @@ void Pulu_M()
 
 void Rts_I()
 { //39
+	auto oPC_REG = PC_REG;
 	pc.B.msb=MemRead8(S_REG++);
 	pc.B.lsb=MemRead8(S_REG++);
 	Cycles(NatEmuCycles51);//CycleCounter+=NatEmuCycles51;
+	IDEBUG(Return(PC_REG, oPC_REG));
 }
 
 void Abx_I()
@@ -4244,8 +4254,10 @@ void Rti_I()
 		u.B.lsb=MemRead8(S_REG++);
 		Cycles(9);//CycleCounter+=9;
 	}
+	auto oPC_REG = PC_REG;
 	pc.B.msb=MemRead8(S_REG++);
 	pc.B.lsb=MemRead8(S_REG++);
+	IDEBUG(Return(PC_REG, oPC_REG));
 }
 
 void Cwai_I()
@@ -5030,12 +5042,15 @@ void Cmpx_M()
 
 void Bsr_R()
 { //8D
+	auto sPC_REG = PC_REG - 1;
 	*spostbyte=MemRead8(PC_REG++);
 	S_REG--;
+	auto nPC_REG = PC_REG;
 	MemWrite8(pc.B.lsb,S_REG--);
 	MemWrite8(pc.B.msb,S_REG);
 	PC_REG+=*spostbyte;
 	Cycles(NatEmuCycles76);//CycleCounter+=NatEmuCycles76;
+	IDEBUG(Call(PC_REG, sPC_REG, nPC_REG));
 }
 
 void Ldx_M()
@@ -5190,12 +5205,15 @@ void Cmpx_D()
 
 void Jsr_D()
 { //9D
+	auto sPC_REG = PC_REG - 1;
 	temp16 = DPADDRESS(PC_REG++);
+	auto nPC_REG = PC_REG;
 	S_REG--;
 	MemWrite8(pc.B.lsb,S_REG--);
 	MemWrite8(pc.B.msb,S_REG);
 	PC_REG=temp16;
 	Cycles(NatEmuCycles76);//CycleCounter+=NatEmuCycles76;
+	IDEBUG(Call(PC_REG, sPC_REG, nPC_REG));
 }
 
 void Ldx_D()
@@ -5359,12 +5377,15 @@ void Cmpx_X()
 
 void Jsr_X()
 { //AD
+	auto sPC_REG = PC_REG - 1;
 	temp16=INDADDRESS(PC_REG++);
+	auto nPC_REG = PC_REG;
 	S_REG--;
 	MemWrite8(pc.B.lsb,S_REG--);
 	MemWrite8(pc.B.msb,S_REG);
 	PC_REG=temp16;
 	Cycles(NatEmuCycles76);//CycleCounter+=NatEmuCycles76;
+	IDEBUG(Call(PC_REG, sPC_REG, nPC_REG));
 }
 
 void Ldx_X()
@@ -5541,13 +5562,16 @@ void Cmpx_E()
 
 void Bsr_E()
 { //BD
+	auto sPC_REG = PC_REG - 1;
 	postword=IMMADDRESS(PC_REG);
 	PC_REG+=2;
+	auto nPC_REG = PC_REG;
 	S_REG--;
 	MemWrite8(pc.B.lsb,S_REG--);
 	MemWrite8(pc.B.msb,S_REG);
 	PC_REG=postword;
 	Cycles(NatEmuCycles87);//CycleCounter+=NatEmuCycles87;
+	IDEBUG(Call(PC_REG, sPC_REG, nPC_REG));
 }
 
 void Ldx_E()
@@ -7068,7 +7092,7 @@ int HD6309Exec(int CycleFor)
 			EmuState.Debugger.Halt();
 			return(CycleFor - GetCycles());
 		}
-
+		IDEBUG(CheckBreakpoints(PC_REG));
 		// Halted instruction pending.
 		if (HaltedInsPending) {
 			VCC::ApplyHaltpoints(false);
@@ -7169,6 +7193,7 @@ void cpu_firq()
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptServicing(INT_FIRQ, GetCycles(), HD6309GetState());
 
+	auto sPC_REG = PC_REG;
 	switch (md[FIRQMODE])
 	{
 		case 0:
@@ -7180,6 +7205,7 @@ void cpu_firq()
 			cc[F] = 1;
 			PC_REG = MemRead16(VFIRQ);
 			Cycles(10);
+			IDEBUG(Call(PC_REG, sPC_REG, sPC_REG));
 			break;
 
 		case 1:		//6309
@@ -7206,6 +7232,7 @@ void cpu_firq()
 			cc[F] = 1;
 			PC_REG = MemRead16(VFIRQ);
 			Cycles(19);
+			IDEBUG(Call(PC_REG, sPC_REG, sPC_REG));
 			break;
 	}
 
@@ -7218,6 +7245,7 @@ void cpu_irq()
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptServicing(INT_IRQ, GetCycles(), HD6309GetState());
 
+	auto sPC_REG = PC_REG;
 	cc[E] = 1;
 	MemWrite8(pc.B.lsb, --S_REG);
 	MemWrite8(pc.B.msb, --S_REG);
@@ -7240,6 +7268,7 @@ void cpu_irq()
 	PC_REG = MemRead16(VIRQ);
 	cc[I] = 1;
 	Cycles(19);
+	IDEBUG(Call(PC_REG, sPC_REG, sPC_REG));
 
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_IRQ, GetCycles(), HD6309GetState());
@@ -7250,6 +7279,7 @@ void cpu_nmi()
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptServicing(INT_NMI, GetCycles(), HD6309GetState());
 
+	auto sPC_REG = PC_REG;
 	cc[E] = 1;
 	MemWrite8(pc.B.lsb, --S_REG);
 	MemWrite8(pc.B.msb, --S_REG);
@@ -7273,6 +7303,7 @@ void cpu_nmi()
 	cc[F] = 1;
 	PC_REG = MemRead16(VNMI);
 	Cycles(19);
+	IDEBUG(Call(PC_REG, sPC_REG, sPC_REG));
 
 	if (EmuState.Debugger.IsTracing())
 		EmuState.Debugger.TraceCaptureInterruptExecuting(INT_NMI, GetCycles(), HD6309GetState());
