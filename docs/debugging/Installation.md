@@ -17,12 +17,12 @@ To prepare for debugging with Visual Studio Code, follow these steps, or skip a 
 #### Contents
 
 - [1. Install VCC](#1-install-vcc)
-- [2. Install Visual Studio Code](#2-install-visual-studio-code)
-- [3. Install the Visual Studio Code Extension](#3-install-the-visual-studio-code-extension)
-- [4. Open an Assembly Project](#4-open-an-assembly-project)
-- [5. Create a launch.json](#5-create-a-launchjson)
-- [6. Customize launch.json](#6-customize-launchjson)
-- [7. Install Lwtools](#7-install-lwtools)
+- [2. Install Lwtools](#7-install-lwtools)
+- [3. Install Visual Studio Code](#3-install-visual-studio-code)
+- [4. Install the Visual Studio Code Extension](#4-install-the-visual-studio-code-extension)
+- [5. Open an Assembly Project](#5-open-an-assembly-project)
+- [6. Create a launch.json](#6-create-a-launchjson)
+- [7. Customize launch.json](#7-customize-launchjson)
 - [8. Next Step](#8-next-step)
 
 ### 1. Install VCC
@@ -38,18 +38,25 @@ This is generally the quickest and easiest option.
 
 This is useful if you have multiple versions, or don't want to use the installer.
 1. Download the latest VCC release from the [VCCE/VCC GitHub](https://github.com/VCCE/VCC/releases).
-2. Extract to a suitable path, e.g. `C:\vcc-2.1.9.10\`.
-3. Place your CoCo 3 ROM in the VCC directory (or configure the path in `vcc.ini`).
+2. Extract to a suitable path, e.g. `C:\programs\vcc-2.1.10\`.
 
 ---
 
-### 2. Install Visual Studio Code
+### 2. Install Lwtools
+
+With the downloaded win64 zip, extract the files into a suitable location on your machine. 
+
+Such as `C:\programs\lwtools-2.25-win64\`
+
+---
+
+### 3. Install Visual Studio Code
 
 Download and install Visual Studio Code from [code.visualstudio.com](http://code.visualstudio.com). There is a download link in the top right.
 
 ---
 
-### 3. Install the Visual Studio Code Extension
+### 4. Install the Visual Studio Code Extension
 
 This step is only required once, or when there is a new version of the .vsix package. This will add support to Visual Studio Code for attaching to VCC in a debugging session.
 
@@ -61,7 +68,7 @@ With Visual Studio Code running:
 
 ---
 
-### 4. Open an Assembly Project
+### 5. Open an Assembly Project
 
 To open a project with Visual Studio Code, either launch it and choose 'Open Folder...' to pick the directory containing your project.
 
@@ -73,7 +80,7 @@ OR from a shell, run Visual Studio Code from the directory containing your proje
 
 ---
 
-### 5. Create a launch.json
+### 6. Create a launch.json
 
 In order to configure Visual Studio Code for attaching to VCC, a launch.json is required. This contains the instructions relevant to your project. The file is stored in your workspace at `.vscode/launch.json`.
 
@@ -86,7 +93,7 @@ To create it:
 
 ---
 
-### 6. Customize launch.json
+### 7. Customize launch.json
 
 Customize the launch.json for your project:
 1. Change `${WorkspaceFolderBasename}` to the binary of your top-level assembly file. Also change the listing(s) to your `.lst` file produced by lwasm.
@@ -100,15 +107,9 @@ For more complex projects and detailed information about these options, please r
 
 ---
 
-### 7. Install Lwtools
-
-With the downloaded win64 zip, extract the files into a suitable location on your machine. Such as 'C:\programs\lwtools-2.25-win64\`
-
----
-
 ### 8. Next Step
 
-For a beginner friendly example, follow along with the [Example](Example.md).
+For a simple example, follow along with the [Example](Example.md).
 
 
 <hr>

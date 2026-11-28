@@ -199,7 +199,7 @@ As it stands, we have to type `make` in the Terminal window when we make changes
 2. A list will appear with various options; scroll down to `Create tasks.json from template` and select it.
 3. Another shorter list will appear; from this, select `Others: Example to run an arbitrary external command`. This will give us a simple echo test task.
 4. Change the 'label' to `Build`.
-5. Change the 'command' to `make`.
+5. Change the 'command' to `make` and save the file.
 
 ![Automate Building](imgs/vcc-debug16.gif)
 

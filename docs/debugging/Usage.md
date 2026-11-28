@@ -12,7 +12,7 @@
 | entryPoint | Optional. The debugger will stop on entry at this address. Specify it in hexadecimal, starting with a `$` sign, e.g. `$2000`. When used with `paste`, this option will automatically run VCC at its fastest speed until it reaches the entry point address. |
 | reset | Optional. Reset VCC on attach. If `paste` has a value, it will be pasted after 30 frames to allow time for DOS/ECB to initialize. VCC will be reset when Visual Studio Code disconnects from the debugging session, ready for the next one. |
 | program | Optional. If specified, the binary will be loaded directly into memory. Version 2.1.10 supports only DECB binaries. |
-| listings | Required in version 2.1.10. Should point to a listing file produced by lwasm for your binary. This corresponds to the `--listing=x` option. |
+| listings | Required in version 2.1.10. Should point to a listing file produced by lwasm for your binary. This corresponds to the `--list=x` option. |
 | preLaunchTask | Optional. Specifies a task label from `tasks.json` to run before the debugging session starts. This is useful for compiling the project in preparation for debugging before you press F5 to start. |
 
 ### Keyboard Shortcuts
